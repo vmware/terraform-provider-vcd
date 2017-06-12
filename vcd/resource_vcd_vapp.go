@@ -66,6 +66,10 @@ func resourceVcdVApp() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 			},
+			"ovf": &schema.Schema{
+				Type:     schema.TypeMap,
+				Optional: true,
+			},
 			"href": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -113,9 +117,10 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		createvapp := &types.InstantiateVAppTemplateParams{
-			Ovf:   "http://schemas.dmtf.org/ovf/envelope/1",
-			Xmlns: "http://www.vmware.com/vcloud/v1.5",
-			Name:  d.Get("name").(string),
+			Ovf:     "http://schemas.dmtf.org/ovf/envelope/1",
+			Xmlns:   "http://www.vmware.com/vcloud/v1.5",
+			Name:    d.Get("name").(string),
+			PowerOn: false,
 			InstantiationParams: &types.InstantiationParams{
 				NetworkConfigSection: &types.NetworkConfigSection{
 					Info: "Configuration parameters for logical networks",
@@ -190,6 +195,32 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 
+		if ovf, ok := d.GetOk("ovf"); ok {
+			err := retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+				task, err := vapp.SetOvf(convertToStringMap(ovf.(map[string]interface{})))
+
+				if err != nil {
+					return resource.RetryableError(fmt.Errorf("Error set ovf: %#v", err))
+				}
+				return resource.RetryableError(task.WaitTaskCompletion())
+			})
+			if err != nil {
+				return fmt.Errorf("Error completing tasks: %#v", err)
+			}
+		}
+
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := vapp.PowerOn()
+			if err != nil {
+				return resource.RetryableError(fmt.Errorf("Error powerOn machine: %#v", err))
+			}
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
+
+		if err != nil {
+			return fmt.Errorf("Error completing powerOn tasks: %#v", err)
+		}
+
 	} else {
 		err := retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 			e := vcdClient.OrgVdc.ComposeRawVApp(d.Get("name").(string))
@@ -254,7 +285,7 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	}
 
-	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("power_on") {
+	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("power_on") || d.HasChange("ovf") {
 
 		if status != "POWERED_OFF" {
 
@@ -308,6 +339,20 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 				return fmt.Errorf("Error Powering Up: %#v", err)
 			}
 			err = task.WaitTaskCompletion()
+			if err != nil {
+				return fmt.Errorf("Error completing tasks: %#v", err)
+			}
+		}
+
+		if ovf, ok := d.GetOk("ovf"); ok {
+			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+				task, err := vapp.SetOvf(convertToStringMap(ovf.(map[string]interface{})))
+
+				if err != nil {
+					return resource.RetryableError(fmt.Errorf("Error set ovf: %#v", err))
+				}
+				return resource.RetryableError(task.WaitTaskCompletion())
+			})
 			if err != nil {
 				return fmt.Errorf("Error completing tasks: %#v", err)
 			}
