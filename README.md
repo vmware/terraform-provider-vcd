@@ -64,7 +64,7 @@ $ make testacc
 
 The acceptance tests will run against your own vCloud Air setup, using the enviroment variables you should have set below:
 
-```
+```sh
 export VCD_USER=***********
 export VCD_PASSWORD=************
 export VCD_ORG=**********

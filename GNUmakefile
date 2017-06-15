@@ -47,6 +47,9 @@ errcheck:
 vendor-status:
 	@govendor status
 
+fetchvendor:
+	@govendor fetch github.com/ukcloud/govcloudair && govendor  fetch github.com/ukcloud/govcloudair/types && govendor  fetch github.com/ukcloud/govcloudair/types/v56 
+
 test-compile: fmtcheck
 	@if [ "$(TEST)" = "./..." ]; then \
 		echo "ERROR: Set TEST to a specific package. For example,"; \
