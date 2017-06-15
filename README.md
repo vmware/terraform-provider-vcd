@@ -72,6 +72,7 @@ export VCD_EXTERNAL_IP=xxx.xxx.xxx.xxx
 export VCD_URL=https://api.vcd.xxxxxxxx.xxxxxxxx.com/api
 export VCD_EDGE_GATEWAY=xxxxxxxxx
 export VCD_VDC="xxxxxxxx"
+```
 
 Pulling in the 'Go vCloud Air' (govcloudair) Library
 --------------------------------------------------------
