@@ -83,7 +83,7 @@ func createFirewallRulesConfigs(existingRules *govcd.EdgeGateway) string {
 	if err != nil {
 		return fmt.Sprintf(testAccCheckVcdFirewallRules_add, "", "")
 	}
-	edgeGateway, _ := conn.OrgVdc.FindEdgeGateway(os.Getenv("VCD_EDGE_GATWEWAY"))
+	edgeGateway, _ := conn.OrgVdc.FindEdgeGateway(os.Getenv("VCD_EDGE_GATEWAY"))
 	*existingRules = edgeGateway
 	log.Printf("[DEBUG] Edge gateway: %#v", edgeGateway)
 	firewallRules := *edgeGateway.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.FirewallService
