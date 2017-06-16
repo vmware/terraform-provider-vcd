@@ -5,16 +5,20 @@
 package govcloudair
 
 import (
+	"bytes"
+	"encoding/xml"
 	"fmt"
 	types "github.com/ukcloud/govcloudair/types/v56"
 	"log"
 	"net/url"
+	"os"
 	"strings"
 )
 
 type Vdc struct {
-	Vdc *types.Vdc
-	c   *Client
+	Vdc  *types.Vdc
+	c    *Client
+	VApp *types.VApp
 }
 
 func NewVdc(c *Client) *Vdc {
@@ -209,6 +213,58 @@ func (v *Vdc) FindEdgeGateway(edgegateway string) (EdgeGateway, error) {
 	}
 	return EdgeGateway{}, fmt.Errorf("can't find Edge Gateway")
 
+}
+
+func (v *Vdc) ComposeRawVApp(name string) error {
+	vcomp := &types.ComposeVAppParams{
+		Ovf:     "http://schemas.dmtf.org/ovf/envelope/1",
+		Xsi:     "http://www.w3.org/2001/XMLSchema-instance",
+		Xmlns:   "http://www.vmware.com/vcloud/v1.5",
+		Deploy:  false,
+		Name:    name,
+		PowerOn: false,
+	}
+
+	output, err := xml.MarshalIndent(vcomp, "  ", "    ")
+	if err != nil {
+		return fmt.Errorf("error marshaling vapp compose: %s", err)
+	}
+
+	debug := os.Getenv("GOVCLOUDAIR_DEBUG")
+
+	if debug == "true" {
+		fmt.Printf("\n\nXML DEBUG: %s\n\n", string(output))
+	}
+
+	b := bytes.NewBufferString(xml.Header + string(output))
+
+	s := v.c.VCDVDCHREF
+	s.Path += "/action/composeVApp"
+
+	req := v.c.NewRequest(map[string]string{}, "POST", s, b)
+
+	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.composeVAppParams+xml")
+
+	resp, err := checkResp(v.c.Http.Do(req))
+	if err != nil {
+		return fmt.Errorf("error instantiating a new vApp: %s", err)
+	}
+
+	if err = decodeBody(resp, v.VApp); err != nil {
+		return fmt.Errorf("error decoding vApp response: %s", err)
+	}
+
+	task := NewTask(v.c)
+
+	for _, t := range v.VApp.Tasks.Task {
+		task.Task = t
+		err = task.WaitTaskCompletion()
+		if err != nil {
+			return fmt.Errorf("Error performing task: %#v", err)
+		}
+	}
+
+	return nil
 }
 
 func (v *Vdc) FindVAppByName(vapp string) (VApp, error) {

@@ -24,7 +24,7 @@ func TestAccVcdSNAT_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckVcdSNATDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: fmt.Sprintf(testAccCheckVcdSnat_basic, os.Getenv("VCD_EDGE_GATWEWAY"), os.Getenv("VCD_EXTERNAL_IP")),
+				Config: fmt.Sprintf(testAccCheckVcdSnat_basic, os.Getenv("VCD_EDGE_GATEWAY"), os.Getenv("VCD_EXTERNAL_IP")),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdSNATExists("vcd_snat.bar", &e),
 					resource.TestCheckResourceAttr(

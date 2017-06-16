@@ -657,8 +657,6 @@ func (e *EdgeGateway) AddIpsecVPN(ipsecVPNConfig *types.EdgeGatewayServiceConfig
 	s, _ := url.ParseRequestURI(e.EdgeGateway.HREF)
 	s.Path += "/action/configureServices"
 
-	fmt.Println(s)
-
 	req := e.c.NewRequest(map[string]string{}, "POST", *s, b)
 
 	req.Header.Add("Content-Type", "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")

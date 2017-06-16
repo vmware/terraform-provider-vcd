@@ -530,16 +530,16 @@
 			"revisionTime": "2016-09-27T10:08:44Z"
 		},
 		{
-			"checksumSHA1": "dA4Aw1HN/az0CkoZCRjja2DNRQ4=",
+			"checksumSHA1": "jndRpQ2TK7rbM1Ntppdni46XQh0=",
 			"path": "github.com/ukcloud/govcloudair",
-			"revision": "21a03d42696f78a0e601327ee53ae969e95f5877",
-			"revisionTime": "2017-06-09T14:42:01Z"
+			"revision": "2818339f04d6b2fe36ddc3e4f6a779acb22c74b2",
+			"revisionTime": "2017-06-16T08:44:56Z"
 		},
 		{
 			"checksumSHA1": "8FHandxT6XIwsawRe0eNupivqho=",
 			"path": "github.com/ukcloud/govcloudair/types/v56",
-			"revision": "21a03d42696f78a0e601327ee53ae969e95f5877",
-			"revisionTime": "2017-06-09T14:42:01Z"
+			"revision": "2818339f04d6b2fe36ddc3e4f6a779acb22c74b2",
+			"revisionTime": "2017-06-16T08:44:56Z"
 		},
 		{
 			"checksumSHA1": "vE43s37+4CJ2CDU6TlOUOYE0K9c=",
@@ -562,5 +562,5 @@
 			"versionExact": "v1.6.1"
 		}
 	],
-	"rootPath": "github.com/hashicorp/terraform-provider-vcd"
+	"rootPath": "github.com/terraform-providers/terraform-provider-vcd"
 }

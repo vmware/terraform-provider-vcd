@@ -47,10 +47,10 @@ resource "vcd_edgegateway_vpn" "vpn" {
 	description         = "Description"
 	encryption_protocol = "AES256"
     mtu                 = 1400
-    peer_id             = "51.179.218.195"
-    peer_ip_address     = "51.179.218.195"
-    local_id            = "51.179.218.196"
-    local_ip_address    = "51.179.218.196"
+    peer_id             = "51.179.218.208"
+    peer_ip_address     = "51.179.218.208"
+    local_id            = "51.179.218.207"
+    local_ip_address    = "51.179.218.207"
     shared_secret       = "yZ4B8pxS5334m6ho692hjbtb7zo2vbesn7pe8ry5hyud86M433tbnnfxt6Dqn73g"
     
     peer_subnets {
