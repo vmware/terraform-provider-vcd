@@ -25,13 +25,13 @@ func resourceVcdVApp() *schema.Resource {
 
 			"template_name": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 				ForceNew: true,
 			},
 
 			"catalog_name": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 			},
 
 			"network_href": &schema.Schema{
@@ -41,7 +41,7 @@ func resourceVcdVApp() *schema.Resource {
 
 			"network_name": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 				ForceNew: true,
 			},
 			"memory": &schema.Schema{
@@ -83,109 +83,129 @@ func resourceVcdVApp() *schema.Resource {
 func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	catalog, err := vcdClient.Org.FindCatalog(d.Get("catalog_name").(string))
-	if err != nil {
-		return fmt.Errorf("Error finding catalog: %#v", err)
-	}
+	if _, ok := d.GetOk("template_name"); ok {
 
-	catalogitem, err := catalog.FindCatalogItem(d.Get("template_name").(string))
-	if err != nil {
-		return fmt.Errorf("Error finding catelog item: %#v", err)
-	}
+		catalog, err := vcdClient.Org.FindCatalog(d.Get("catalog_name").(string))
+		if err != nil {
+			return fmt.Errorf("Error finding catalog: %#v", err)
+		}
 
-	vapptemplate, err := catalogitem.GetVAppTemplate()
-	if err != nil {
-		return fmt.Errorf("Error finding VAppTemplate: %#v", err)
-	}
+		catalogitem, err := catalog.FindCatalogItem(d.Get("template_name").(string))
+		if err != nil {
+			return fmt.Errorf("Error finding catalog item: %#v", err)
+		}
 
-	log.Printf("[DEBUG] VAppTemplate: %#v", vapptemplate)
-	var networkHref string
-	net, err := vcdClient.OrgVdc.FindVDCNetwork(d.Get("network_name").(string))
-	if err != nil {
-		return fmt.Errorf("Error finding OrgVCD Network: %#v", err)
-	}
-	if attr, ok := d.GetOk("network_href"); ok {
-		networkHref = attr.(string)
-	} else {
-		networkHref = net.OrgVDCNetwork.HREF
-	}
-	// vapptemplate := govcd.NewVAppTemplate(&vcdClient.Client)
-	//
-	createvapp := &types.InstantiateVAppTemplateParams{
-		Ovf:   "http://schemas.dmtf.org/ovf/envelope/1",
-		Xmlns: "http://www.vmware.com/vcloud/v1.5",
-		Name:  d.Get("name").(string),
-		InstantiationParams: &types.InstantiationParams{
-			NetworkConfigSection: &types.NetworkConfigSection{
-				Info: "Configuration parameters for logical networks",
-				NetworkConfig: &types.VAppNetworkConfiguration{
-					NetworkName: d.Get("network_name").(string),
-					Configuration: &types.NetworkConfiguration{
-						ParentNetwork: &types.Reference{
-							HREF: networkHref,
+		vapptemplate, err := catalogitem.GetVAppTemplate()
+		if err != nil {
+			return fmt.Errorf("Error finding VAppTemplate: %#v", err)
+		}
+
+		log.Printf("[DEBUG] VAppTemplate: %#v", vapptemplate)
+		var networkHref string
+		net, err := vcdClient.OrgVdc.FindVDCNetwork(d.Get("network_name").(string))
+		if err != nil {
+			return fmt.Errorf("Error finding OrgVCD Network: %#v", err)
+		}
+		if attr, ok := d.GetOk("network_href"); ok {
+			networkHref = attr.(string)
+		} else {
+			networkHref = net.OrgVDCNetwork.HREF
+		}
+
+		createvapp := &types.InstantiateVAppTemplateParams{
+			Ovf:   "http://schemas.dmtf.org/ovf/envelope/1",
+			Xmlns: "http://www.vmware.com/vcloud/v1.5",
+			Name:  d.Get("name").(string),
+			InstantiationParams: &types.InstantiationParams{
+				NetworkConfigSection: &types.NetworkConfigSection{
+					Info: "Configuration parameters for logical networks",
+					NetworkConfig: &types.VAppNetworkConfiguration{
+						NetworkName: d.Get("network_name").(string),
+						Configuration: &types.NetworkConfiguration{
+							ParentNetwork: &types.Reference{
+								HREF: networkHref,
+							},
+							FenceMode: "bridged",
 						},
-						FenceMode: "bridged",
 					},
 				},
 			},
-		},
-		Source: &types.Reference{
-			HREF: vapptemplate.VAppTemplate.HREF,
-		},
-	}
-
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		e := vcdClient.OrgVdc.InstantiateVAppTemplate(createvapp)
-
-		if e != nil {
-			return resource.RetryableError(fmt.Errorf("Error: %#v", e))
+			Source: &types.Reference{
+				HREF: vapptemplate.VAppTemplate.HREF,
+			},
 		}
 
-		e = vcdClient.OrgVdc.Refresh()
-		if e != nil {
-			return resource.RetryableError(fmt.Errorf("Error: %#v", e))
-		}
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-
-	vapp, err := vcdClient.OrgVdc.FindVAppByName(d.Get("name").(string))
-
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := vapp.ChangeVMName(d.Get("name").(string))
-		if err != nil {
-			return resource.RetryableError(fmt.Errorf("Error with vm name change: %#v", err))
-		}
-
-		return resource.RetryableError(task.WaitTaskCompletion())
-	})
-	if err != nil {
-		return fmt.Errorf("Error changing vmname: %#v", err)
-	}
-
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := vapp.ChangeNetworkConfig(d.Get("network_name").(string), d.Get("ip").(string))
-		if err != nil {
-			return resource.RetryableError(fmt.Errorf("Error with Networking change: %#v", err))
-		}
-		return resource.RetryableError(task.WaitTaskCompletion())
-	})
-	if err != nil {
-		return fmt.Errorf("Error changing network: %#v", err)
-	}
-
-	if initscript, ok := d.GetOk("initscript"); ok {
 		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := vapp.RunCustomizationScript(d.Get("name").(string), initscript.(string))
+			e := vcdClient.OrgVdc.InstantiateVAppTemplate(createvapp)
+
+			if e != nil {
+				return resource.RetryableError(fmt.Errorf("Error: %#v", e))
+			}
+
+			e = vcdClient.OrgVdc.Refresh()
+			if e != nil {
+				return resource.RetryableError(fmt.Errorf("Error: %#v", e))
+			}
+			return nil
+		})
+		if err != nil {
+			return err
+		}
+
+		vapp, err := vcdClient.OrgVdc.FindVAppByName(d.Get("name").(string))
+
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := vapp.ChangeVMName(d.Get("name").(string))
 			if err != nil {
-				return resource.RetryableError(fmt.Errorf("Error with setting init script: %#v", err))
+				return resource.RetryableError(fmt.Errorf("Error with vm name change: %#v", err))
+			}
+
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
+		if err != nil {
+			return fmt.Errorf("Error changing vmname: %#v", err)
+		}
+
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := vapp.ChangeNetworkConfig(d.Get("network_name").(string), d.Get("ip").(string))
+			if err != nil {
+				return resource.RetryableError(fmt.Errorf("Error with Networking change: %#v", err))
 			}
 			return resource.RetryableError(task.WaitTaskCompletion())
 		})
 		if err != nil {
-			return fmt.Errorf("Error completing tasks: %#v", err)
+			return fmt.Errorf("Error changing network: %#v", err)
+		}
+
+		if initscript, ok := d.GetOk("initscript"); ok {
+			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+				task, err := vapp.RunCustomizationScript(d.Get("name").(string), initscript.(string))
+				if err != nil {
+					return resource.RetryableError(fmt.Errorf("Error with setting init script: %#v", err))
+				}
+				return resource.RetryableError(task.WaitTaskCompletion())
+			})
+			if err != nil {
+				return fmt.Errorf("Error completing tasks: %#v", err)
+			}
+		}
+
+	} else {
+		err := retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			e := vcdClient.OrgVdc.ComposeRawVApp(d.Get("name").(string))
+
+			if e != nil {
+				return resource.RetryableError(fmt.Errorf("Error: %#v", e))
+			}
+
+			e = vcdClient.OrgVdc.Refresh()
+			if e != nil {
+				return resource.RetryableError(fmt.Errorf("Error: %#v", e))
+			}
+			return nil
+		})
+		if err != nil {
+			return err
 		}
 	}
 
@@ -235,14 +255,22 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("power_on") {
+
 		if status != "POWERED_OFF" {
+
 			task, err := vapp.PowerOff()
 			if err != nil {
-				return fmt.Errorf("Error Powering Off: %#v", err)
+				// can't *always* power off an empty vApp so not necesarrily an error
+				if _, ok := d.GetOk("template_name"); ok {
+					return fmt.Errorf("Error Powering Off: %#v", err)
+				}
 			}
-			err = task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf("Error completing tasks: %#v", err)
+
+			if task.Task != nil {
+				err = task.WaitTaskCompletion()
+				if err != nil {
+					return fmt.Errorf("Error completing tasks: %#v", err)
+				}
 			}
 		}
 
@@ -305,11 +333,15 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 		return nil
 	}
 
-	ip, err := getVAppIPAddress(d, meta)
-	if err != nil {
-		return err
+	if _, ok := d.GetOk("template_name"); ok {
+		ip, err := getVAppIPAddress(d, meta)
+		if err != nil {
+			return err
+		}
+		d.Set("ip", ip)
+	} else {
+		d.Set("ip", nil)
 	}
-	d.Set("ip", ip)
 
 	return nil
 }
