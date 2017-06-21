@@ -530,16 +530,16 @@
 			"revisionTime": "2016-09-27T10:08:44Z"
 		},
 		{
-			"checksumSHA1": "93mDCkhp7GK4EBMuy10FoDT1STI=",
+			"checksumSHA1": "Oj5eIb9iXaRAOBPFnqCXt9c9Mc0=",
 			"path": "github.com/ukcloud/govcloudair",
-			"revision": "ac9df96c984ad65c837065c93210f32b00bb34ce",
-			"revisionTime": "2017-06-16T12:07:11Z"
+			"revision": "9465bfdf84092358a732deb8c2207714c9470999",
+			"revisionTime": "2017-06-19T11:48:46Z"
 		},
 		{
-			"checksumSHA1": "8FHandxT6XIwsawRe0eNupivqho=",
+			"checksumSHA1": "+wyGuIN/awqkQCKFVqbLPHpLTaI=",
 			"path": "github.com/ukcloud/govcloudair/types/v56",
-			"revision": "ac9df96c984ad65c837065c93210f32b00bb34ce",
-			"revisionTime": "2017-06-16T12:07:11Z"
+			"revision": "9465bfdf84092358a732deb8c2207714c9470999",
+			"revisionTime": "2017-06-19T11:48:46Z"
 		},
 		{
 			"checksumSHA1": "vE43s37+4CJ2CDU6TlOUOYE0K9c=",

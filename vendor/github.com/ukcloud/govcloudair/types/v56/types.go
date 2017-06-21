@@ -236,6 +236,10 @@ type VAppNetworkConfiguration struct {
 type NetworkConfigSection struct {
 	// Extends OVF Section_Type
 	// FIXME: Fix the OVF section
+	XMLName xml.Name `xml:"NetworkConfigSection"`
+	Xmlns   string   `xml:"xmlns,attr,omitempty"`
+	Ovf     string   `xml:"xmlns:ovf,attr"`
+
 	Info string `xml:"ovf:Info"`
 	//
 	HREF          string                    `xml:"href,attr,omitempty"`

@@ -68,6 +68,16 @@ func resourceVcdVAppVm() *schema.Resource {
 				Optional: true,
 				Default:  true,
 			},
+			"network_href": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+
+			"network_name": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
 		},
 	}
 }
@@ -91,39 +101,57 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	vapp, err := vcdClient.OrgVdc.FindVAppByName(d.Get("vapp_name").(string))
-
-	// get the network of the first child
-
-	if len(vapp.VApp.Children.VM) == 0 {
-		d.SetId("")
-		return fmt.Errorf("Current multi-VM support requires network to be determinted by initial VM. No VM's found so aborting.")
+	if err != nil {
+		return fmt.Errorf("Error finding Vapp: %#v", err)
 	}
 
-	netname := vapp.VApp.Children.VM[0].NetworkConnectionSection.NetworkConnection.Network
-
-	log.Printf("[TRACE] Network name found: %s", netname)
-
-	net, err := vcdClient.OrgVdc.FindVDCNetwork(netname)
+	net, err := vcdClient.OrgVdc.FindVDCNetwork(d.Get("network_name").(string))
 	if err != nil {
 		return fmt.Errorf("Error finding OrgVCD Network: %#v", err)
 	}
 
+	vAppNetworkConfig, err := vapp.GetNetworkConfig()
+
+	netname := net.OrgVDCNetwork.Name
+	vAppNetworkName := "blank"
+	if vAppNetworkConfig.NetworkConfig != nil {
+		vAppNetworkName = vAppNetworkConfig.NetworkConfig.NetworkName
+	} else {
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := vapp.AddRAWNetworkConfig(netname, net.OrgVDCNetwork.HREF)
+			if err != nil {
+				return resource.RetryableError(fmt.Errorf("Error assigning network to vApp: %#v", err))
+			}
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
+
+		if err != nil {
+			return fmt.Errorf("Error2 assigning network to vApp:: %#v", err)
+		} else {
+			vAppNetworkName = netname
+		}
+
+	}
+
+	if vAppNetworkName != netname {
+		return fmt.Errorf("The VDC network '%s' must be assigned to the vApp. Currently the vApp network date is %s", netname, vAppNetworkName)
+	}
+
+	log.Printf("[TRACE] Network name found: %s", netname)
+
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 		log.Printf("[TRACE] Creating VM: %s", d.Get("name").(string))
-		e := vapp.AddVM(net, vapptemplate, d.Get("name").(string))
+		task, err := vapp.AddVM(net, vapptemplate, d.Get("name").(string))
 
-		if e != nil {
-			return resource.RetryableError(fmt.Errorf("Error: %#v", e))
+		if err != nil {
+			return resource.RetryableError(fmt.Errorf("Error adding VM: %#v", err))
 		}
 
-		e = vcdClient.OrgVdc.Refresh()
-		if e != nil {
-			return resource.RetryableError(fmt.Errorf("Error: %#v", e))
-		}
-		return nil
+		return resource.RetryableError(task.WaitTaskCompletion())
 	})
+
 	if err != nil {
-		return err
+		return fmt.Errorf("Error completing tasks: %#v", err)
 	}
 
 	vm, err := vcdClient.OrgVdc.FindVMByName(vapp, d.Get("name").(string))
