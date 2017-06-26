@@ -1061,8 +1061,6 @@ func (v *VApp) GetNetworkConfig() (*types.NetworkConfigSection, error) {
 		return networkConfig, fmt.Errorf("error retrieving task: %s", err)
 	}
 
-	fmt.Println(resp)
-
 	if err = decodeBody(resp, networkConfig); err != nil {
 		return networkConfig, fmt.Errorf("error decoding task response: %s", err)
 	}
@@ -1094,8 +1092,6 @@ func (v *VApp) AddRAWNetworkConfig(networkName string, networkHref string) (Task
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 	}
-
-	fmt.Println(string(output))
 
 	log.Printf("[DEBUG] NetworkXML: %s", output)
 

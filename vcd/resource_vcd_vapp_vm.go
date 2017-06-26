@@ -105,18 +105,33 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error finding Vapp: %#v", err)
 	}
 
+	netname := "blank"
 	net, err := vcdClient.OrgVdc.FindVDCNetwork(d.Get("network_name").(string))
-	if err != nil {
-		return fmt.Errorf("Error finding OrgVCD Network: %#v", err)
+
+	if err == nil {
+		netname = net.OrgVDCNetwork.Name
 	}
 
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 
-	netname := net.OrgVDCNetwork.Name
 	vAppNetworkName := "blank"
 	if vAppNetworkConfig.NetworkConfig != nil {
 		vAppNetworkName = vAppNetworkConfig.NetworkConfig.NetworkName
+		if netname == "blank" {
+			net, err = vcdClient.OrgVdc.FindVDCNetwork(vAppNetworkName)
+			if err != nil {
+				return fmt.Errorf("Error finding vApp network: %#v", err)
+			}
+
+			netname = net.OrgVDCNetwork.Name
+		}
+
 	} else {
+
+		if netname == "blank" {
+			return fmt.Errorf("'network_name' must be valid when adding VM to raw vapp")
+		}
+
 		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 			task, err := vapp.AddRAWNetworkConfig(netname, net.OrgVDCNetwork.HREF)
 			if err != nil {
