@@ -238,7 +238,7 @@ type NetworkConfigSection struct {
 	// FIXME: Fix the OVF section
 	XMLName xml.Name `xml:"NetworkConfigSection"`
 	Xmlns   string   `xml:"xmlns,attr,omitempty"`
-	Ovf     string   `xml:"xmlns:ovf,attr"`
+	Ovf     string   `xml:"xmlns:ovf,attr,omitempty"`
 
 	Info string `xml:"ovf:Info"`
 	//
