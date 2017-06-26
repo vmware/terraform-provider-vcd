@@ -60,7 +60,7 @@ func (v *VApp) Refresh() error {
 	return nil
 }
 
-func (v *VApp) AddVM(orgvdcnetwork OrgVDCNetwork, vapptemplate VAppTemplate, name string) error {
+func (v *VApp) AddVM(orgvdcnetwork OrgVDCNetwork, vapptemplate VAppTemplate, name string) (Task, error) {
 
 	vcomp := &types.ReComposeVAppParams{
 		Ovf:         "http://schemas.dmtf.org/ovf/envelope/1",
@@ -109,45 +109,18 @@ func (v *VApp) AddVM(orgvdcnetwork OrgVDCNetwork, vapptemplate VAppTemplate, nam
 
 	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.recomposeVAppParams+xml")
 
-	task := NewTask(v.c)
-	v.Refresh()
-	if v.VApp.Tasks != nil {
-		log.Printf("[TRACE] Beginning Task of Adding VM: %s", name)
-		for _, t := range v.VApp.Tasks.Task {
-			task.Task = t
-			log.Printf("[TRACE] Awaiting Task to Finish: %s", task.Task.Name)
-			log.Printf("[TRACE] Awaiting Task to Finish: %s", task.Task.Description)
-			log.Printf("[TRACE] Awaiting Task to Finish: %s", task.Task.StartTime)
-			log.Printf("[TRACE] Awaiting Task to Finish: %s", task.Task.Status)
-			if task.Task.Status == "error" {
-				log.Printf("[WARN] Errored Idle Task: %s", task.Task.Error.Message)
-				log.Printf("[INFO] Moving onto next Task")
-				continue
-			}
-			err := task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf("Error performing task: %#v", err)
-			}
-		}
-	}
-
 	resp, err := checkResp(v.c.Http.Do(req))
 	if err != nil {
-		return fmt.Errorf("error instantiating a new vApp: %s", err)
+		return Task{}, fmt.Errorf("error instantiating a new VM: %s", err)
 	}
 
-	task = NewTask(v.c)
+	task := NewTask(v.c)
 
 	if err = decodeBody(resp, task.Task); err != nil {
-		return fmt.Errorf("error decoding task response: %s", err)
+		return Task{}, fmt.Errorf("error decoding task response: %s", err)
 	}
 
-	err = task.WaitTaskCompletion()
-	if err != nil {
-		return fmt.Errorf("Error performing task: %#v", err)
-	}
-
-	return nil
+	return *task, nil
 }
 
 func (v *VApp) RemoveVM(vm VM) error {
@@ -1056,6 +1029,84 @@ func (v *VApp) ChangeMemorySize(size int) (Task, error) {
 	resp, err := checkResp(v.c.Http.Do(req))
 	if err != nil {
 		return Task{}, fmt.Errorf("error customizing VM: %s", err)
+	}
+
+	task := NewTask(v.c)
+
+	if err = decodeBody(resp, task.Task); err != nil {
+		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
+	}
+
+	// The request was successful
+	return *task, nil
+
+}
+
+func (v *VApp) GetNetworkConfig() (*types.NetworkConfigSection, error) {
+
+	networkConfig := &types.NetworkConfigSection{}
+
+	if v.VApp.HREF == "" {
+		return networkConfig, fmt.Errorf("cannot refresh, Object is empty")
+	}
+
+	u, _ := url.ParseRequestURI(v.VApp.HREF + "/networkConfigSection/")
+
+	req := v.c.NewRequest(map[string]string{}, "GET", *u, nil)
+
+	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.networkConfigSection+xml")
+
+	resp, err := checkResp(v.c.Http.Do(req))
+	if err != nil {
+		return networkConfig, fmt.Errorf("error retrieving task: %s", err)
+	}
+
+	if err = decodeBody(resp, networkConfig); err != nil {
+		return networkConfig, fmt.Errorf("error decoding task response: %s", err)
+	}
+
+	// The request was successful
+	return networkConfig, nil
+}
+
+func (v *VApp) AddRAWNetworkConfig(networkName string, networkHref string) (Task, error) {
+
+	networkConfig := &types.NetworkConfigSection{
+		Info: "Configuration parameters for logical networks",
+		NetworkConfig: &types.VAppNetworkConfiguration{
+			NetworkName: networkName,
+			Configuration: &types.NetworkConfiguration{
+				ParentNetwork: &types.Reference{
+					HREF: networkHref,
+				},
+				FenceMode: "bridged",
+			},
+		},
+	}
+
+	networkConfig.Ovf = "http://schemas.dmtf.org/ovf/envelope/1"
+	networkConfig.Type = "application/vnd.vmware.vcloud.networkConfigSection+xml"
+	networkConfig.Xmlns = "http://www.vmware.com/vcloud/v1.5"
+
+	output, err := xml.MarshalIndent(networkConfig, "  ", "    ")
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
+	}
+
+	log.Printf("[DEBUG] NetworkXML: %s", output)
+
+	b := bytes.NewBufferString(xml.Header + string(output))
+
+	s, _ := url.ParseRequestURI(v.VApp.HREF)
+	s.Path += "/networkConfigSection/"
+
+	req := v.c.NewRequest(map[string]string{}, "PUT", *s, b)
+
+	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.networkconfigsection+xml")
+
+	resp, err := checkResp(v.c.Http.Do(req))
+	if err != nil {
+		return Task{}, fmt.Errorf("error adding vApp Network: %s", err)
 	}
 
 	task := NewTask(v.c)

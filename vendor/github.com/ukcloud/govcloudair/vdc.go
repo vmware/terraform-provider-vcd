@@ -250,18 +250,15 @@ func (v *Vdc) ComposeRawVApp(name string) error {
 		return fmt.Errorf("error instantiating a new vApp: %s", err)
 	}
 
-	if err = decodeBody(resp, v.VApp); err != nil {
-		return fmt.Errorf("error decoding vApp response: %s", err)
-	}
-
 	task := NewTask(v.c)
 
-	for _, t := range v.VApp.Tasks.Task {
-		task.Task = t
-		err = task.WaitTaskCompletion()
-		if err != nil {
-			return fmt.Errorf("Error performing task: %#v", err)
-		}
+	if err = decodeBody(resp, task.Task); err != nil {
+		return fmt.Errorf("error decoding task response: %s", err)
+	}
+
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return fmt.Errorf("Error performing task: %#v", err)
 	}
 
 	return nil
