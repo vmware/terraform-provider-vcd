@@ -1,13 +1,13 @@
-## 0.1.1 (Unreleased)
+## 0.1.1 (June 28, 2017)
 
 FEATURES:
 
-* **New VM Resource**: `vcd_vapp_vm` [GH-9]
+* **New VM Resource**: `vcd_vapp_vm` ([#9](https://github.com/terraform-providers/terraform-provider-vcd/issues/9))
 * **New VPN Resource**: `vcd_edgegateway_vpn`
 
 IMPROVEMENTS:
 
-* resource/vcd_dnat: Added a new (optional) param translated_port [GH-14]
+* resource/vcd_dnat: Added a new (optional) param translated_port ([#14](https://github.com/terraform-providers/terraform-provider-vcd/issues/14))
 
 ## 0.1.0 (June 20, 2017)
 
