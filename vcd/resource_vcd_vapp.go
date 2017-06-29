@@ -29,11 +29,6 @@ func resourceVcdVApp() *schema.Resource {
 				ForceNew: true,
 			},
 
-			"network_href": {
-				Type:     schema.TypeString,
-				Optional: true,
-			},
-
 			"catalog_name": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -115,15 +110,9 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 			}
 
 			log.Printf("[DEBUG] VAppTemplate: %#v", vapptemplate)
-			var networkHref string
 			net, err := vcdClient.OrgVdc.FindVDCNetwork(d.Get("network_name").(string))
 			if err != nil {
 				return fmt.Errorf("Error finding OrgVCD Network: %#v", err)
-			}
-			if attr, ok := d.GetOk("network_href"); ok {
-				networkHref = attr.(string)
-			} else {
-				networkHref = net.OrgVDCNetwork.HREF
 			}
 
 			storage_profile_reference := types.Reference{}
@@ -157,7 +146,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 				vapp = vcdClient.NewVApp(&vcdClient.Client)
 
 				err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-					task, err := vapp.ComposeVApp(networkHref, vapptemplate, storage_profile_reference, d.Get("name").(string), d.Get("description").(string))
+					task, err := vapp.ComposeVApp(net, vapptemplate, storage_profile_reference, d.Get("name").(string), d.Get("description").(string))
 					if err != nil {
 						return resource.RetryableError(fmt.Errorf("Error creating vapp: %#v", err))
 					}
