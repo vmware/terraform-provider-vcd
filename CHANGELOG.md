@@ -1,4 +1,9 @@
 ## 0.1.2 (Unreleased)
+
+IMPROVEMENTS:
+
+* Possibility to add OVF parameters to a vApp
+
 ## 0.1.1 (June 28, 2017)
 
 FEATURES:
