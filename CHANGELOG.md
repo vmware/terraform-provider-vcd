@@ -2,7 +2,7 @@
 
 IMPROVEMENTS:
 
-* Possibility to add OVF parameters to a vApp
+* Possibility to add OVF parameters to a vApp ([#1](https://github.com/terraform-providers/terraform-provider-vcd/pull/1))
 
 ## 0.1.1 (June 28, 2017)
 
