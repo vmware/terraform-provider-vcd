@@ -3,7 +3,9 @@
 IMPROVEMENTS:
 
 * `vcd_vapp` - Setting the computer name regardless of init script [GH-31]
+* `vcd_vapp` - Fixes the power_on issue introduced in 0.1.2 [GH-33]
 * `vcd_vapp_vm` - Setting the computer name regardless of init script [GH-31]
+
 
 ## 0.1.2 (August 03, 2017)
 
