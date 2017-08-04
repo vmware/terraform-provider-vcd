@@ -187,17 +187,17 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error changing network: %#v", err)
 	}
 
-	if initscript, ok := d.GetOk("initscript"); ok {
-		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := vm.RunCustomizationScript(d.Get("name").(string), initscript.(string))
-			if err != nil {
-				return resource.RetryableError(fmt.Errorf("Error with setting init script: %#v", err))
-			}
-			return resource.RetryableError(task.WaitTaskCompletion())
-		})
+	initscript := d.Get("initscript").(string)
+
+	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+		task, err := vm.RunCustomizationScript(d.Get("name").(string), initscript)
 		if err != nil {
-			return fmt.Errorf("Error completing tasks: %#v", err)
+			return resource.RetryableError(fmt.Errorf("Error with setting init script: %#v", err))
 		}
+		return resource.RetryableError(task.WaitTaskCompletion())
+	})
+	if err != nil {
+		return fmt.Errorf("Error completing tasks: %#v", err)
 	}
 
 	d.SetId(d.Get("name").(string))
