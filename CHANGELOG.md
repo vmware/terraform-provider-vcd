@@ -1,4 +1,9 @@
 ## 0.1.3 (Unreleased)
+
+IMPROVEMENTS:
+
+* `vcd_vapp` - Setting the computer name regardless of init script [GH-31]
+
 ## 0.1.2 (August 03, 2017)
 
 IMPROVEMENTS:
