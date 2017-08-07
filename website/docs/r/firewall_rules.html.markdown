@@ -16,7 +16,7 @@ modify, and delete firewall settings and rules.
 ```hcl
 resource "vcd_firewall_rules" "fw" {
   edge_gateway   = "Edge Gateway Name"
-  default_action = "drop"
+  default_action = "deny"
 
   rule {
     description      = "deny-ftp-out"
