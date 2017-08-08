@@ -31,6 +31,19 @@ func TestAccVcdVApp_PowerOff(t *testing.T) {
 						"vcd_vapp.foobar", "power_on", "true"),
 				),
 			},
+
+			resource.TestStep{
+				Config: fmt.Sprintf(testAccCheckVcdVApp_basic, os.Getenv("VCD_EDGE_GATEWAY")),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.foobar_allocated", "name", "foobar-allocated"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.foobar_allocated", "ip", "allocated"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.foobar_allocated", "power_on", "true"),
+				),
+			},
+
 			resource.TestStep{
 				Config: fmt.Sprintf(testAccCheckVcdVApp_powerOff, os.Getenv("VCD_EDGE_GATEWAY")),
 				Check: resource.ComposeTestCheckFunc(
@@ -39,7 +52,7 @@ func TestAccVcdVApp_PowerOff(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_vapp.foobar", "name", "foobar"),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp.foobar", "ip", "10.10.102.160"),
+						"vcd_vapp.foobar", "ip", "10.10.103.160"),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp.foobar", "power_on", "false"),
 				),
@@ -145,25 +158,13 @@ resource "vcd_network" "foonet" {
 	}
 }
 
-resource "vcd_vapp" "foobar" {
-  name = "foobar"
-  template_name = "Skyscape_CentOS_6_4_x64_50GB_Small_v1.0.1"
-  catalog_name = "Skyscape Catalogue"
-  network_name = "${vcd_network.foonet.name}"
-  memory = 1024
-	cpus = 1
-	ip = "10.10.102.160"
-}
-`
-
-const testAccCheckVcdVApp_powerOff = `
-resource "vcd_network" "foonet" {
-	name = "foonet"
+resource "vcd_network" "foonet3" {
+	name = "foonet3"
 	edge_gateway = "%s"
-	gateway = "10.10.102.1"
+	gateway = "10.10.202.1"
 	static_ip_pool {
-		start_address = "10.10.102.2"
-		end_address = "10.10.102.254"
+		start_address = "10.10.202.2"
+		end_address = "10.10.202.254"
 	}
 }
 
@@ -175,6 +176,43 @@ resource "vcd_vapp" "foobar" {
   memory        = 1024
   cpus          = 1
   ip            = "10.10.102.160"
+}
+
+resource "vcd_vapp" "foobar_allocated" {
+  name          = "foobar-allocated"
+  template_name = "Skyscape_CentOS_6_4_x64_50GB_Small_v1.0.1"
+  catalog_name  = "Skyscape Catalogue"
+  network_name  = "${vcd_network.foonet3.name}"
+  memory        = 1024
+  cpus          = 1
+  ip            = "allocated"
+}
+`
+
+const testAccCheckVcdVApp_powerOff = `
+resource "vcd_network" "foonet2" {
+	name = "foonet2"
+	edge_gateway = "%s"
+	gateway = "10.10.103.1"
+	static_ip_pool {
+		start_address = "10.10.103.2"
+		end_address = "10.10.103.170"
+	}
+
+	dhcp_pool {
+		start_address = "10.10.103.171"
+		end_address = "10.10.103.254"
+	}
+}
+
+resource "vcd_vapp" "foobar" {
+  name          = "foobar"
+  template_name = "Skyscape_CentOS_6_4_x64_50GB_Small_v1.0.1"
+  catalog_name  = "Skyscape Catalogue"
+  network_name  = "${vcd_network.foonet2.name}"
+  memory        = 1024
+  cpus          = 1
+  ip            = "10.10.103.160"
   power_on      = false
 }
 `

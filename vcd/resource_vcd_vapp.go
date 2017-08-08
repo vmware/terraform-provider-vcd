@@ -396,14 +396,26 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 		return nil
 	}
 
-	if _, ok := d.GetOk("template_name"); ok {
-		ip, err := getVAppIPAddress(d, meta)
-		if err != nil {
-			return err
+	if _, ok := d.GetOk("ip"); ok {
+		ip := "allocated"
+
+		oldIp, newIp := d.GetChange("ip")
+
+		log.Printf("[DEBUG] IP has changes, old: %s - new: %s", oldIp, newIp)
+
+		if newIp != "allocated" {
+			log.Printf("[DEBUG] IP is assigned. Lets get it (%s)", d.Get("ip"))
+			ip, err = getVAppIPAddress(d, meta)
+			if err != nil {
+				return err
+			}
+		} else {
+			log.Printf("[DEBUG] IP is 'allocated'")
 		}
+
 		d.Set("ip", ip)
 	} else {
-		d.Set("ip", nil)
+		d.Set("ip", "allocated")
 	}
 
 	return nil
