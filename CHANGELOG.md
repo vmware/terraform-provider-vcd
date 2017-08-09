@@ -1,12 +1,12 @@
-## 0.1.3 (Unreleased)
+## 0.1.3 (August 09, 2017)
 
 IMPROVEMENTS:
 
-* `vcd_vapp` - Setting the computer name regardless of init script [GH-31]
-* `vcd_vapp` - Fixes the power_on issue introduced in 0.1.2 [GH-33]
-* `vcd_vapp` - Fixes issue with allocated IP address affecting tf plan [GH-17 & GH-29]
-* `vcd_vapp_vm` - Setting the computer name regardless of init script [GH-31]
-* `vcd_firewall_rules` - corrected typo in docs [GH-35]
+* `vcd_vapp` - Setting the computer name regardless of init script ([#31](https://github.com/terraform-providers/terraform-provider-vcd/issues/31))
+* `vcd_vapp` - Fixes the power_on issue introduced in 0.1.2 ([#33](https://github.com/terraform-providers/terraform-provider-vcd/issues/33))
+* `vcd_vapp` - Fixes issue with allocated IP address affecting tf plan ([#17](https://github.com/terraform-providers/terraform-provider-vcd/issues/17) & [#29](https://github.com/terraform-providers/terraform-provider-vcd/issues/29))
+* `vcd_vapp_vm` - Setting the computer name regardless of init script ([#31](https://github.com/terraform-providers/terraform-provider-vcd/issues/31))
+* `vcd_firewall_rules` - corrected typo in docs ([#35](https://github.com/terraform-providers/terraform-provider-vcd/issues/35))
 
 
 ## 0.1.2 (August 03, 2017)
