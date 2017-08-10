@@ -45,6 +45,12 @@ func Provider() terraform.ResourceProvider {
 			},
 
 			"maxRetryTimeout": &schema.Schema{
+				Type:       schema.TypeInt,
+				Optional:   true,
+				Deprecated: "Deprecated. Use max_retry_timeout instead.",
+			},
+
+			"max_retry_timeout": &schema.Schema{
 				Type:        schema.TypeInt,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_MAX_RETRY_TIMEOUT", 60),
@@ -74,13 +80,20 @@ func Provider() terraform.ResourceProvider {
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
+	maxRetryTimeout := d.Get("max_retry_timeout").(int)
+
+	// TODO: Deprecated, remove in next major release
+	if v, ok := d.GetOk("maxRetryTimeout"); ok {
+		maxRetryTimeout = v.(int)
+	}
+
 	config := Config{
 		User:            d.Get("user").(string),
 		Password:        d.Get("password").(string),
 		Org:             d.Get("org").(string),
 		Href:            d.Get("url").(string),
 		VDC:             d.Get("vdc").(string),
-		MaxRetryTimeout: d.Get("maxRetryTimeout").(int),
+		MaxRetryTimeout: maxRetryTimeout,
 		InsecureFlag:    d.Get("allow_unverified_ssl").(bool),
 	}
 
