@@ -117,25 +117,12 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 
 			storage_profile_reference := types.Reference{}
 
-			// Use default_storage_profile as fallback
-			storage_profile_query_params := make(map[string]string)
-			storage_profile_query_params["type"] = "orgVdcStorageProfile"
-			storage_profile_query_params["format"] = "records"
-			storage_profiles, err := vcdClient.VCDClient.Query(storage_profile_query_params)
-			default_storage_profile, err := vcdClient.OrgVdc.GetDefaultStorageProfileReference(storage_profiles.Results)
-			if err != nil {
-				return fmt.Errorf("Couldn't find storage_profile and no default storage_profile avaiable %s", err)
-			}
-
 			// Override default_storage_profile if we find the given storage profile
 			if d.Get("storage_profile").(string) != "" {
 				storage_profile_reference, err = vcdClient.OrgVdc.FindStorageProfileReference(d.Get("storage_profile").(string))
 				if err != nil {
-					storage_profile_reference = default_storage_profile
-					log.Printf("Using default storage_profile: %s", storage_profile_reference)
+					return fmt.Errorf("Error finding storage profile %s", d.Get("storage_profile").(string))
 				}
-			} else {
-				storage_profile_reference = default_storage_profile
 			}
 
 			log.Printf("storage_profile %s", storage_profile_reference)
