@@ -1,4 +1,4 @@
-## 1.0.0 (Unreleased)
+## 1.0.0 (August 17, 2017)
 
 IMPROVEMENTS:
 
@@ -6,7 +6,7 @@ IMPROVEMENTS:
 
 BACKWARDS INCOMPATIBILITIES / NOTES:
 
-* provider: Deprecate `maxRetryTimeout` in favour of `max_retry_timeout` [GH-40]
+* provider: Deprecate `maxRetryTimeout` in favour of `max_retry_timeout` ([#40](https://github.com/terraform-providers/terraform-provider-vcd/issues/40))
 
 ## 0.1.3 (August 09, 2017)
 
