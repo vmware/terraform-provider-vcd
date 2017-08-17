@@ -41,18 +41,30 @@ resource "vcd_vapp" "web" {
 }
 ```
 
+## Example RAW vApp with No VMS
+
+```hcl
+resource "vcd_network" "net" {
+  # ...
+}
+
+resource "vcd_vapp" "web" {
+  name          = "web"
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
 
 * `name` - (Required) A unique name for the vApp
-* `catalog_name` - (Required) The catalog name in which to find the given vApp Template
-* `template_name` - (Required) The name of the vApp Template to use
+* `catalog_name` - (Optional) The catalog name in which to find the given vApp Template
+* `template_name` - (Optional) The name of the vApp Template to use
 * `memory` - (Optional) The amount of RAM (in MB) to allocate to the vApp
 * `cpus` - (Optional) The number of virtual CPUs to allocate to the vApp
 * `initscript` (Optional) A script to be run only on initial boot
-* `network_name` - (Required) Name of the network this vApp should join
-* `network_href` - (Optional) The vCloud Director generated href of the network this vApp
+* `network_name` - (Optional) Name of the network this vApp should join
+* `network_href` - (Deprecated) The vCloud Director generated href of the network this vApp
   should join. If empty it will use the network name and query vCloud Director to discover
   this
 * `ip` - (Optional) The IP to assign to this vApp. Must be an IP address or
