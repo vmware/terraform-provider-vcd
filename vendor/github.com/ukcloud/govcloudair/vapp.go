@@ -230,8 +230,11 @@ func (v *VApp) ComposeVApp(orgvdcnetwork OrgVDCNetwork, vapptemplate VAppTemplat
 				InnerNetwork:     orgvdcnetwork.OrgVDCNetwork.Name,
 				ContainerNetwork: orgvdcnetwork.OrgVDCNetwork.Name,
 			},
-			StorageProfile: &storageprofileref,
 		},
+	}
+
+	if storageprofileref.HREF != "" {
+		vcomp.SourcedItem.StorageProfile = &storageprofileref
 	}
 
 	output, err := xml.MarshalIndent(vcomp, "  ", "    ")
@@ -244,6 +247,8 @@ func (v *VApp) ComposeVApp(orgvdcnetwork OrgVDCNetwork, vapptemplate VAppTemplat
 	if debug == "true" {
 		fmt.Printf("\n\nXML DEBUG: %s\n\n", string(output))
 	}
+
+	log.Printf("\n\nXML DEBUG: %s\n\n", string(output))
 
 	b := bytes.NewBufferString(xml.Header + string(output))
 
