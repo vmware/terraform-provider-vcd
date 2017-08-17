@@ -1,5 +1,9 @@
 ## 0.1.4 (Unreleased)
 
+IMPROVEMENTS:
+
+* `vcd_vapp` - Fixes an issue with storage profiles introduced in 0.1.2 ([#39](https://github.com/terraform-providers/terraform-provider-vcd/issues/39))
+
 BACKWARDS INCOMPATIBILITIES / NOTES:
 
 * provider: Deprecate `maxRetryTimeout` in favour of `max_retry_timeout` [GH-40]
