@@ -94,6 +94,18 @@ func resourceVcdNetwork() *schema.Resource {
 							Type:     schema.TypeString,
 							Required: true,
 						},
+
+						"default_lease_time": &schema.Schema{
+							Type:     schema.TypeInt,
+							Default:  3600,
+							Optional: true,
+						},
+
+						"max_lease_time": &schema.Schema{
+							Type:     schema.TypeInt,
+							Default:  7200,
+							Optional: true,
+						},
 					},
 				},
 				Set: resourceVcdNetworkIPAddressHash,

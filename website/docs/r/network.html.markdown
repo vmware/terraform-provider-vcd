@@ -50,7 +50,12 @@ The following arguments are supported:
 <a id="ip-pools"></a>
 ## IP Pools
 
-Network interfaces support the following attributes:
+Static IP Pools and DHCP Pools support the following attributes:
 
 * `start_address` - (Required) The first address in the IP Range
 * `end_address` - (Required) The final address in the IP Range
+
+DHCP Pools additionally support the following attributes:
+
+* `default_lease_time` - (Optional) The default DHCP lease time to use. Defaults to `3600`.
+* `max_lease_time` - (Optional) The maximum DHCP lease time to use. Defaults to `7200`.
