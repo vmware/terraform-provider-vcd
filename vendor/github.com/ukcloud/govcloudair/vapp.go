@@ -220,7 +220,6 @@ func (v *VApp) ComposeVApp(orgvdcnetwork OrgVDCNetwork, vapptemplate VAppTemplat
 					PrimaryNetworkConnectionIndex: vapptemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.PrimaryNetworkConnectionIndex,
 					NetworkConnection: &types.NetworkConnection{
 						Network:                 orgvdcnetwork.OrgVDCNetwork.Name,
-						NetworkConnectionIndex:  vapptemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.NetworkConnection.NetworkConnectionIndex,
 						IsConnected:             true,
 						IPAddressAllocationMode: "POOL",
 					},
@@ -235,6 +234,13 @@ func (v *VApp) ComposeVApp(orgvdcnetwork OrgVDCNetwork, vapptemplate VAppTemplat
 
 	if storageprofileref.HREF != "" {
 		vcomp.SourcedItem.StorageProfile = &storageprofileref
+	}
+
+	// ensure network connection index is valid, if not use primary index
+	if vapptemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.NetworkConnection != nil {
+		vcomp.SourcedItem.InstantiationParams.NetworkConnectionSection.NetworkConnection.NetworkConnectionIndex = vapptemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.NetworkConnection.NetworkConnectionIndex
+	} else {
+		vcomp.SourcedItem.InstantiationParams.NetworkConnectionSection.NetworkConnection.NetworkConnectionIndex = vcomp.SourcedItem.InstantiationParams.NetworkConnectionSection.PrimaryNetworkConnectionIndex
 	}
 
 	output, err := xml.MarshalIndent(vcomp, "  ", "    ")
