@@ -59,7 +59,7 @@ func resourceVcdVApp() *schema.Resource {
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  "terrafrom vapp",
+				Default:  "terraform vapp",
 			},
 			"initscript": {
 				Type:     schema.TypeString,
