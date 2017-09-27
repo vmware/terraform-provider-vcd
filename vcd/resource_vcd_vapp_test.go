@@ -172,20 +172,21 @@ resource "vcd_vapp" "foobar" {
   name          = "foobar"
   template_name = "Skyscape_CentOS_6_4_x64_50GB_Small_v1.0.1"
   catalog_name  = "Skyscape Catalogue"
-  network_name  = "${vcd_network.foonet.name}"
+  networks      = [
+    {
+      "orgnetwork" = "${vcd_network.foonet.name}",
+      "ip"         = "10.10.102.160",
+      "is_primary" = true,
+    },
+    {
+      "orgnetwork" = "${vcd_network.foonet3.name}",
+      "ip"         = "allocated",
+      "is_primary" = true,
+	}
+  ]
   memory        = 1024
   cpus          = 1
   ip            = "10.10.102.160"
-}
-
-resource "vcd_vapp" "foobar_allocated" {
-  name          = "foobar-allocated"
-  template_name = "Skyscape_CentOS_6_4_x64_50GB_Small_v1.0.1"
-  catalog_name  = "Skyscape Catalogue"
-  network_name  = "${vcd_network.foonet3.name}"
-  memory        = 1024
-  cpus          = 1
-  ip            = "allocated"
 }
 `
 
@@ -209,7 +210,11 @@ resource "vcd_vapp" "foobar" {
   name          = "foobar"
   template_name = "Skyscape_CentOS_6_4_x64_50GB_Small_v1.0.1"
   catalog_name  = "Skyscape Catalogue"
-  network_name  = "${vcd_network.foonet2.name}"
+  networks      = [
+    {
+      "orgnetwork" = "${vcd_network.foonet2.name}",
+    }
+  ]
   memory        = 1024
   cpus          = 1
   ip            = "10.10.103.160"

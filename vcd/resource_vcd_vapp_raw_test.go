@@ -96,8 +96,10 @@ resource "vcd_vapp_vm" "moo" {
   template_name = "Skyscape_CentOS_6_4_x64_50GB_Small_v1.0.1"
   memory        = 1024
   cpus          = 1
-
-  network_name  = "${vcd_network.foonet.name}"
+  networks      = [
+    {
+      "orgnetwork" = "${vcd_network.foonet.name}"
+    }
   ip            = "10.10.102.161"
 }
 `

@@ -31,10 +31,28 @@ func resourceVcdVApp() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"network_name": {
-				Type:     schema.TypeString,
+			"networks": {
+				Type:     schema.TypeSet,
 				Optional: true,
 				ForceNew: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"orgnetwork": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"ip": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+						},
+						"is_primary": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Default:  false,
+						},
+					},
+				},
 			},
 			"memory": {
 				Type:     schema.TypeInt,
@@ -106,9 +124,18 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 			}
 
 			log.Printf("[DEBUG] VAppTemplate: %#v", vapptemplate)
-			net, err := vcdClient.OrgVdc.FindVDCNetwork(d.Get("network_name").(string))
-			if err != nil {
-				return fmt.Errorf("Error finding OrgVCD Network: %#v", err)
+
+			networks := []*types.OrgVDCNetwork{}
+
+			if nets := d.Get("networks").(*schema.Set).List(); nets != nil {
+				for _, network := range nets {
+					n := network.(map[string]interface{})
+					net, err := vcdClient.OrgVdc.FindVDCNetwork(n["orgnetwork"].(string))
+					networks = append(networks, net.OrgVDCNetwork)
+					if err != nil {
+						return fmt.Errorf("Error finding OrgVCD Network: %#v", err)
+					}
+				}
 			}
 
 			storage_profile_reference := types.Reference{}
@@ -129,7 +156,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 				vapp = vcdClient.NewVApp(&vcdClient.Client)
 
 				err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-					task, err := vapp.ComposeVApp(net, vapptemplate, storage_profile_reference, d.Get("name").(string), d.Get("description").(string))
+					task, err := vapp.ComposeVApp(networks, vapptemplate, storage_profile_reference, d.Get("name").(string), d.Get("description").(string))
 					if err != nil {
 						return resource.RetryableError(fmt.Errorf("Error creating vapp: %#v", err))
 					}
@@ -154,8 +181,14 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 				return fmt.Errorf("Error changing vmname: %#v", err)
 			}
 
+			n := []map[string]interface{}{}
+
+			nets := d.Get("networks").(*schema.Set).List()
+			for _, network := range nets {
+				n = append(n, network.(map[string]interface{}))
+			}
 			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-				task, err := vapp.ChangeNetworkConfig(d.Get("network_name").(string), d.Get("ip").(string))
+				task, err := vapp.ChangeNetworkConfig(n, d.Get("ip").(string))
 				if err != nil {
 					return resource.RetryableError(fmt.Errorf("Error with Networking change: %#v", err))
 				}
@@ -272,6 +305,25 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	}
 
+	if d.HasChange("networks") {
+		n := []map[string]interface{}{}
+
+		nets := d.Get("networks").(*schema.Set).List()
+		for _, network := range nets {
+			n = append(n, network.(map[string]interface{}))
+		}
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := vapp.ChangeNetworkConfig(n, d.Get("ip").(string))
+			if err != nil {
+				return resource.RetryableError(fmt.Errorf("Error with Networking change: %#v", err))
+			}
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
+		if err != nil {
+			return fmt.Errorf("Error changing network: %#v", err)
+		}
+	}
+
 	if d.HasChange("storage_profile") {
 		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 			task, err := vapp.ChangeStorageProfile(d.Get("storage_profile").(string))
@@ -380,7 +432,7 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if _, ok := d.GetOk("ip"); ok {
-		ip := "allocated"
+		var ip string
 
 		oldIp, newIp := d.GetChange("ip")
 
@@ -399,6 +451,26 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 		d.Set("ip", ip)
 	} else {
 		d.Set("ip", "allocated")
+	}
+
+	if _, ok := d.GetOk("networks"); ok {
+		networks := []map[string]interface{}{}
+
+		oldNetworks, newNetworks := d.GetChange("networks")
+
+		log.Printf("[DEBUG] Networks has changes, old: %s - new: %s", oldNetworks, newNetworks)
+
+		if newNetworks != "allocated" {
+			log.Printf("[DEBUG] IP is assigned. Lets get it (%s)", d.Get("ip"))
+			networks, err = getVAppNetwork(d, meta)
+			if err != nil {
+				return err
+			}
+		} else {
+			log.Printf("[DEBUG] IP is 'allocated'")
+		}
+
+		d.Set("networks", networks)
 	}
 
 	return nil
@@ -423,7 +495,7 @@ func getVAppIPAddress(d *schema.ResourceData, meta interface{}) (string, error) 
 		// 'first' one, and tests will fail sometimes (annoying huh?)
 		vm, err := vcdClient.OrgVdc.FindVMByName(vapp, d.Get("name").(string))
 
-		ip = vm.VM.NetworkConnectionSection.NetworkConnection.IPAddress
+		ip = vm.VM.NetworkConnectionSection.NetworkConnection[vm.VM.NetworkConnectionSection.PrimaryNetworkConnectionIndex].IPAddress
 		if ip == "" {
 			return resource.RetryableError(fmt.Errorf("Timeout: VM did not acquire IP address"))
 		}
@@ -431,6 +503,42 @@ func getVAppIPAddress(d *schema.ResourceData, meta interface{}) (string, error) 
 	})
 
 	return ip, err
+}
+
+func getVAppNetwork(d *schema.ResourceData, meta interface{}) ([]map[string]interface{}, error) {
+	vcdClient := meta.(*VCDClient)
+	networks := []map[string]interface{}{}
+
+	err := retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+		err := vcdClient.OrgVdc.Refresh()
+		if err != nil {
+			return resource.RetryableError(fmt.Errorf("Error refreshing vdc: %#v", err))
+		}
+		vapp, err := vcdClient.OrgVdc.FindVAppByName(d.Id())
+		if err != nil {
+			return resource.RetryableError(fmt.Errorf("Unable to find vapp."))
+		}
+
+		// getting the IP of the specific Vm, rather than index zero.
+		// Required as once we add more VM's, index zero doesn't guarantee the
+		// 'first' one, and tests will fail sometimes (annoying huh?)
+		vm, err := vcdClient.OrgVdc.FindVMByName(vapp, d.Get("name").(string))
+
+		for _, v := range vm.VM.NetworkConnectionSection.NetworkConnection {
+			if v.IPAddress != "" {
+				n := make(map[string]interface{})
+				n["orgnetwork"] = v.Network
+				n["ip"] = v.IPAddress
+				networks = append(networks, n)
+			}
+		}
+		if networks == nil {
+			return resource.RetryableError(fmt.Errorf("Timeout: VM did not acquire IP address"))
+		}
+		return nil
+	})
+
+	return networks, err
 }
 
 func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
