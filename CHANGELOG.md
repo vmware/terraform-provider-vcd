@@ -1,4 +1,15 @@
 ## 1.0.1 (Unreleased)
+
+IMPROVEMENTS:
+
+* `vcd_vapp` - Fixes an issue with Networks in vApp templates being required, also introduced in 0.1.2 ([#38](https://github.com/terraform-providers/terraform-provider-vcd/issues/38))
+
+FEATURES:
+
+* `vcd_vapp` - Add support for defining shared vcd_networks ([#46](https://github.com/terraform-providers/terraform-provider-vcd/pull/46))
+* `vcd_vapp` - Added options to configure dhcp lease times ([#47](https://github.com/terraform-providers/terraform-provider-vcd/pull/47))
+
+
 ## 1.0.0 (August 17, 2017)
 
 IMPROVEMENTS:
