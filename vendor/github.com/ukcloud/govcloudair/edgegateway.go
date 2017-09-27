@@ -55,14 +55,22 @@ func (e *EdgeGateway) AddDhcpPool(network *types.OrgVDCNetwork, dhcppool []inter
 	for _, v := range dhcppool {
 		data := v.(map[string]interface{})
 
+		if data["default_lease_time"] == nil {
+			data["default_lease_time"] = 3600
+		}
+
+		if data["max_lease_time"] == nil {
+			data["max_lease_time"] = 7200
+		}
+
 		dhcprule := &types.DhcpPoolService{
 			IsEnabled: true,
 			Network: &types.Reference{
 				HREF: network.HREF,
 				Name: network.Name,
 			},
-			DefaultLeaseTime: 3600,
-			MaxLeaseTime:     7200,
+			DefaultLeaseTime: data["default_lease_time"].(int),
+			MaxLeaseTime:     data["max_lease_time"].(int),
 			LowIPAddress:     data["start_address"].(string),
 			HighIPAddress:    data["end_address"].(string),
 		}
