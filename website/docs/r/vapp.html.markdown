@@ -24,9 +24,12 @@ resource "vcd_vapp" "web" {
   template_name = "lampstack-1.10.1-ubuntu-10.04"
   memory        = 2048
   cpus          = 1
-
-  network_name = "${vcd_network.net.name}"
-  network_href = "${vcd_network.net.href}"
+  networks      = [
+    {
+      "orgnetwork" = "${vcd_network.net.name}"
+      "is_primary" = true
+    }
+  ]
   ip           = "10.10.104.160"
 
   metadata {
@@ -63,10 +66,11 @@ The following arguments are supported:
 * `memory` - (Optional) The amount of RAM (in MB) to allocate to the vApp
 * `cpus` - (Optional) The number of virtual CPUs to allocate to the vApp
 * `initscript` (Optional) A script to be run only on initial boot
-* `network_name` - (Optional) Name of the network this vApp should join
-* `network_href` - (Deprecated) The vCloud Director generated href of the network this vApp
-  should join. If empty it will use the network name and query vCloud Director to discover
-  this
+* `networks` - (Optional) List of network adapter definitions
+  - `orgnetwork` (Required) name of organization network to use
+  - `ip` (Optional) see below
+  - `is_primary` (Optional) A boolean value which ensures that the network adapter is
+  primary
 * `ip` - (Optional) The IP to assign to this vApp. Must be an IP address or
   one of dhcp, allocated or none. If given the address must be within the
   `static_ip_pool` set for the network. If left blank, and the network has
