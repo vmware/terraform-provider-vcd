@@ -22,18 +22,15 @@ func resourceVcdVApp() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-
 			"template_name": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
-
 			"catalog_name": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-
 			"network_name": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -59,7 +56,6 @@ func resourceVcdVApp() *schema.Resource {
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  "terrafrom vapp",
 			},
 			"initscript": {
 				Type:     schema.TypeString,
