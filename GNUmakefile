@@ -35,6 +35,9 @@ errcheck:
 vendor-status:
 	@govendor status
 
+fetchvendor:
+	@govendor fetch github.com/ukcloud/govcloudair
+
 test-compile:
 	@if [ "$(TEST)" = "./..." ]; then \
 		echo "ERROR: Set TEST to a specific package. For example,"; \
