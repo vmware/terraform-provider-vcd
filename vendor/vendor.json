@@ -642,5 +642,5 @@
 			"versionExact": "v1.6.1"
 		}
 	],
-	"rootPath": "github.com/floriankammermann/terraform-provider-vcd"
+	"rootPath": "github.com/terraform-providers/terraform-provider-vcd"
 }
