@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/ukcloud/govcloudair/types/v56"
 )
 
 func resourceVcdSNAT() *schema.Resource {
@@ -17,6 +18,12 @@ func resourceVcdSNAT() *schema.Resource {
 			"edge_gateway": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
+			},
+
+			"network_name": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
 				ForceNew: true,
 			},
 
@@ -52,8 +59,20 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Unable to find edge gateway: %#v", err)
 	}
 
+	var networkForName *types.OrgVDCNetwork
+	var errNetworkForName error
+	if networkname := d.Get("network_name").(string); networkname != "" {
+		networkForName, errNetworkForName = getNetwork(vcdClient, networkname)
+	}
+	if errNetworkForName != nil {
+		return fmt.Errorf("Unable to find network: %s", d.Get("network_name").(string))
+	}
+
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := edgeGateway.AddNATMapping("SNAT", d.Get("internal_ip").(string),
+		task, err := edgeGateway.AddNATPortMappingWithUplink(networkForName,
+			"SNAT",
+			d.Get("internal_ip").(string),
+			"any",
 			d.Get("external_ip").(string),
 			"any")
 		if err != nil {

@@ -5,6 +5,9 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
+	"log"
+
+	types "github.com/ukcloud/govcloudair/types/v56"
 )
 
 func resourceVcdDNAT() *schema.Resource {
@@ -23,6 +26,12 @@ func resourceVcdDNAT() *schema.Resource {
 			"external_ip": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
+			},
+
+			"network_name": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
 				ForceNew: true,
 			},
 
@@ -66,13 +75,23 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Unable to find edge gateway: %#v", err)
 	}
 
+	var networkForName *types.OrgVDCNetwork
+	var errNetworkForName error
+	if networkname := d.Get("network_name").(string); networkname != "" {
+		networkForName, errNetworkForName = getNetwork(vcdClient, networkname)
+	}
+	if errNetworkForName != nil {
+		return fmt.Errorf("Unable to find network: %s", d.Get("network_name").(string))
+	}
+
 	// Creating a loop to offer further protection from the edge gateway erroring
 	// due to being busy eg another person is using another client so wouldn't be
 	// constrained by out lock. If the edge gateway reurns with a busy error, wait
 	// 3 seconds and then try again. Continue until a non-busy error or success
 
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := edgeGateway.AddNATPortMapping("DNAT",
+		task, err := edgeGateway.AddNATPortMappingWithUplink(networkForName,
+			"DNAT",
 			d.Get("external_ip").(string),
 			portString,
 			d.Get("internal_ip").(string),
@@ -154,4 +173,23 @@ func resourceVcdDNATDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error completing tasks: %#v", err)
 	}
 	return nil
+}
+
+func getNetwork(vcdClient *VCDClient, networkname string) (*types.OrgVDCNetwork, error) {
+
+	log.Printf("[DEBUG] VCD Client configuration: %#v", vcdClient)
+	log.Printf("[DEBUG] VCD Client configuration: %#v", vcdClient.OrgVdc)
+
+	err := vcdClient.OrgVdc.Refresh()
+	if err != nil {
+		return nil, fmt.Errorf("Error refreshing vdc: %#v", err)
+	}
+
+	network, err := vcdClient.OrgVdc.FindVDCNetwork(networkname)
+	if err != nil {
+		log.Printf("[DEBUG] Network doesn't exist: " + networkname)
+		return nil, err
+	}
+
+	return network.OrgVDCNetwork, nil
 }

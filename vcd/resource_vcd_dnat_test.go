@@ -8,6 +8,9 @@ import (
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 	govcd "github.com/ukcloud/govcloudair"
+	//"regexp"
+	//"github.com/hashicorp/terraform/helper/schema"
+	"regexp"
 )
 
 func TestAccVcdDNAT_Basic(t *testing.T) {
@@ -56,6 +59,52 @@ func TestAccVcdDNAT_tlate(t *testing.T) {
 				Config: fmt.Sprintf(testAccCheckVcdDnat_tlate, os.Getenv("VCD_EDGE_GATEWAY"), os.Getenv("VCD_EXTERNAL_IP")),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdDNATtlateExists("vcd_dnat.bar", &e),
+					resource.TestCheckResourceAttr(
+						"vcd_dnat.bar", "external_ip", os.Getenv("VCD_EXTERNAL_IP")),
+					resource.TestCheckResourceAttr(
+						"vcd_dnat.bar", "port", "7777"),
+					resource.TestCheckResourceAttr(
+						"vcd_dnat.bar", "internal_ip", "10.10.102.60"),
+					resource.TestCheckResourceAttr(
+						"vcd_dnat.bar", "translated_port", "77"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccVcdDNAT_network(t *testing.T) {
+	if v := os.Getenv("VCD_EXTERNAL_IP"); v == "" {
+		t.Skip("Environment variable VCD_EXTERNAL_IP must be set to run DNAT tests")
+		return
+	}
+
+	var network govcd.OrgVDCNetwork
+	generatedHrefRegexp := regexp.MustCompile("^https://")
+
+	var e govcd.EdgeGateway
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVcdDNATDestroy,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: fmt.Sprintf(testAccCheckVcdDnat_network, os.Getenv("VCD_EDGE_GATEWAY"), os.Getenv("VCD_EDGE_GATEWAY"), "foonet", os.Getenv("VCD_EXTERNAL_IP")),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdNetworkExists("vcd_network.foonet", &network),
+					testAccCheckVcdNetworkAttributes(&network),
+					resource.TestCheckResourceAttr(
+						"vcd_network.foonet", "name", "foonet"),
+					resource.TestCheckResourceAttr(
+						"vcd_network.foonet", "static_ip_pool.#", "1"),
+					resource.TestCheckResourceAttr(
+						"vcd_network.foonet", "gateway", "10.10.102.1"),
+					resource.TestMatchResourceAttr(
+						"vcd_network.foonet", "href", generatedHrefRegexp),
+					testAccCheckVcdDNATtlateExists("vcd_dnat.bar", &e),
+					resource.TestCheckResourceAttr(
+						"vcd_dnat.bar", "network_name", "foonet"),
 					resource.TestCheckResourceAttr(
 						"vcd_dnat.bar", "external_ip", os.Getenv("VCD_EXTERNAL_IP")),
 					resource.TestCheckResourceAttr(
@@ -193,6 +242,27 @@ resource "vcd_dnat" "bar" {
 const testAccCheckVcdDnat_tlate = `
 resource "vcd_dnat" "bar" {
 	edge_gateway = "%s"
+	external_ip = "%s"
+	port = 7777
+	internal_ip = "10.10.102.60"
+	translated_port = 77
+}
+`
+const testAccCheckVcdDnat_network = `
+resource "vcd_network" "foonet" {
+	name = "foonet"
+	edge_gateway = "%s"
+	gateway = "10.10.102.1"
+	static_ip_pool {
+		start_address = "10.10.102.2"
+		end_address = "10.10.102.254"
+	}
+}
+
+resource "vcd_dnat" "bar" {
+	depends_on = ["vcd_network.foonet"]
+	edge_gateway = "%s"
+	network_name = "%s"
 	external_ip = "%s"
 	port = 7777
 	internal_ip = "10.10.102.60"
