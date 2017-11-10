@@ -98,8 +98,9 @@ resource "vcd_vapp_vm" "moo" {
   cpus          = 1
   networks      = [
     {
-      "orgnetwork" = "${vcd_network.foonet.name}"
+      "orgnetwork" = "${vcd_network.foonet.name}",
+      "ip"            = "10.10.102.161"
     }
-  ip            = "10.10.102.161"
+  ]
 }
 `
