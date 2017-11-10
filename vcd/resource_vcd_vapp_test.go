@@ -213,11 +213,11 @@ resource "vcd_vapp" "foobar" {
   networks      = [
     {
       "orgnetwork" = "${vcd_network.foonet2.name}",
+      "ip"         = "10.10.103.160"
     }
   ]
   memory        = 1024
   cpus          = 1
-  ip            = "10.10.103.160"
   power_on      = false
 }
 `
