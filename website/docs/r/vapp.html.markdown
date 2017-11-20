@@ -67,7 +67,7 @@ The following arguments are supported:
 * `network_href` - (Deprecated) The vCloud Director generated href of the network this vApp
   should join. If empty it will use the network name and query vCloud Director to discover
   this
-* `ip_allocation_mode` - (Optional) Instruct how the virtual machine must acquire an IP address if not a static one is provided. Can be either `allocated` for vCloud to provide an IP from the `static_ip_pool` or `dhcp` for DHCP acquistition.
+* `ip_allocation_mode` - (Optional) Instruct how the virtual machine must acquire an IP address if not a static one is provided. Can be either `allocated` for vCloud to provide an IP from the `static_ip_pool` or `dhcp` for DHCP acquisition.
 * `ip` - (Optional) The IP to assign to this vApp. Must be an IP address or blank. If given the address must be within the
   `static_ip_pool` set for the network. If left blank, `ip_allocation_mode` should be set, or DHCP is used.
 * `metadata` - (Optional) Key value map of metadata to assign to this vApp
