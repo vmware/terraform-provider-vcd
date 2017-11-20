@@ -2,9 +2,10 @@ package vcd
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	"log"
 )
 
 func resourceVcdVAppVm() *schema.Resource {
@@ -77,6 +78,10 @@ func resourceVcdVAppVm() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
+			},
+			"nested_hypervisor_enabled": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
 			},
 		},
 	}
@@ -227,7 +232,7 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error getting VM status: %#v", err)
 	}
 
-	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("power_on") {
+	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("nested_hypervisor_enabled") || d.HasChange("power_on") {
 		if status != "POWERED_OFF" {
 			task, err := vm.PowerOff()
 			if err != nil {
@@ -256,6 +261,20 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 		if d.HasChange("cpus") {
 			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 				task, err := vm.ChangeCPUcount(d.Get("cpus").(int))
+				if err != nil {
+					return resource.RetryableError(fmt.Errorf("Error changing cpu count: %#v", err))
+				}
+
+				return resource.RetryableError(task.WaitTaskCompletion())
+			})
+			if err != nil {
+				return fmt.Errorf("Error completing task: %#v", err)
+			}
+		}
+
+		if d.HasChange("nested_hypervisor_enabled") {
+			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+				task, err := vm.ChangeNestedHypervisor(d.Get("nested_hypervisor_enabled").(bool))
 				if err != nil {
 					return resource.RetryableError(fmt.Errorf("Error changing cpu count: %#v", err))
 				}

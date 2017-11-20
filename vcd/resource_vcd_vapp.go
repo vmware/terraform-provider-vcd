@@ -80,6 +80,10 @@ func resourceVcdVApp() *schema.Resource {
 				Optional: true,
 				Default:  true,
 			},
+			"nested_hypervisor_enabled": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
 		},
 	}
 }
@@ -286,7 +290,7 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("power_on") || d.HasChange("ovf") {
+	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("power_on") || d.HasChange("nested_hypervisor_enabled") || d.HasChange("ovf") {
 
 		if status != "POWERED_OFF" {
 
@@ -323,6 +327,20 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		if d.HasChange("cpus") {
 			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 				task, err := vapp.ChangeCPUcount(d.Get("cpus").(int))
+				if err != nil {
+					return resource.RetryableError(fmt.Errorf("Error changing cpu count: %#v", err))
+				}
+
+				return resource.RetryableError(task.WaitTaskCompletion())
+			})
+			if err != nil {
+				return fmt.Errorf("Error completing task: %#v", err)
+			}
+		}
+
+		if d.HasChange("nested_hypervisor_enabled") {
+			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+				task, err := vapp.ChangeNestedHypervisor(d.Get("nested_hypervisor_enabled").(bool))
 				if err != nil {
 					return resource.RetryableError(fmt.Errorf("Error changing cpu count: %#v", err))
 				}
