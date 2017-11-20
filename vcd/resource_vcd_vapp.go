@@ -44,10 +44,15 @@ func resourceVcdVApp() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
-			"ip": {
+			"ip": &schema.Schema{
+				Type:             schema.TypeString,
+				Optional:         true,
+				Computed:         true,
+				DiffSuppressFunc: suppressIpDifferences,
+			},
+			"ip_allocation_mode": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
 			},
 			"storage_profile": {
 				Type:     schema.TypeString,
@@ -155,7 +160,17 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 			}
 
 			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-				task, err := vapp.ChangeNetworkConfig(d.Get("network_name").(string), d.Get("ip").(string))
+				ip := ""
+
+				if d.Get("ip_allocation_mode").(string) == "allocated" {
+					ip = "allocated"
+				} else if d.Get("ip_allocation_mode").(string) == "dhcp" {
+					ip = "dhcp"
+				} else {
+					ip = d.Get("ip").(string)
+				}
+
+				task, err := vapp.ChangeNetworkConfig(d.Get("network_name").(string), ip)
 				if err != nil {
 					return resource.RetryableError(fmt.Errorf("Error with Networking change: %#v", err))
 				}

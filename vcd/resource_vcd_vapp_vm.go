@@ -2,9 +2,11 @@ package vcd
 
 import (
 	"fmt"
+	"log"
+	"net"
+
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	"log"
 )
 
 func resourceVcdVAppVm() *schema.Resource {
@@ -48,9 +50,14 @@ func resourceVcdVAppVm() *schema.Resource {
 				Optional: true,
 			},
 			"ip": &schema.Schema{
+				Type:             schema.TypeString,
+				Optional:         true,
+				Computed:         true,
+				DiffSuppressFunc: suppressIpDifferences,
+			},
+			"ip_allocation_mode": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Computed: true,
 			},
 			"initscript": &schema.Schema{
 				Type:     schema.TypeString,
@@ -177,7 +184,17 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := vm.ChangeNetworkConfig(netname, d.Get("ip").(string))
+		ip := ""
+
+		if d.Get("ip_allocation_mode").(string) == "allocated" {
+			ip = "allocated"
+		} else if d.Get("ip_allocation_mode").(string) == "dhcp" {
+			ip = "dhcp"
+		} else {
+			ip = d.Get("ip").(string)
+		}
+
+		task, err := vm.ChangeNetworkConfig(netname, ip)
 		if err != nil {
 			return resource.RetryableError(fmt.Errorf("Error with Networking change: %#v", err))
 		}
@@ -372,4 +389,15 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	return err
+}
+
+// Suppress Diff on equal ip
+func suppressIpDifferences(k, old, new string, d *schema.ResourceData) bool {
+	o := net.ParseIP(old)
+	n := net.ParseIP(new)
+
+	if o != nil && n != nil {
+		return o.Equal(n)
+	}
+	return false
 }
