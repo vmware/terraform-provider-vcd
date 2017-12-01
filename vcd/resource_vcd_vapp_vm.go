@@ -2,22 +2,30 @@ package vcd
 
 import (
 	"fmt"
+	"log"
+	"net"
+
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	"log"
+	"github.com/hashicorp/terraform/helper/validation"
 )
 
-func resourceVcdVAppVm() *schema.Resource {
-	return &schema.Resource{
-		Create: resourceVcdVAppVmCreate,
-		Update: resourceVcdVAppVmUpdate,
-		Read:   resourceVcdVAppVmRead,
-		Delete: resourceVcdVAppVmDelete,
+var virtualMachineNetworkAdapterTypeAllowedValues = []string{
+	"vmxnet3",
+	"e1000",
+}
 
-		Schema: map[string]*schema.Schema{
-			"vapp_name": &schema.Schema{
+var ipAllocationAllowedValues = []string{
+	"DHCP",
+	"MANUAL",
+	"NONE",
+	"POOL"
+}
+
+VMSchema = map[string]*schema.Schema{
+			"vapp_href": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: true,
+				Computed: true,
 				ForceNew: true,
 			},
 
@@ -41,17 +49,58 @@ func resourceVcdVAppVm() *schema.Resource {
 
 			"memory": &schema.Schema{
 				Type:     schema.TypeInt,
-				Optional: true,
+				Required: true,
 			},
 			"cpus": &schema.Schema{
 				Type:     schema.TypeInt,
-				Optional: true,
+				Required: true,
 			},
-			"ip": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+			"network": {
+				Type:     schema.TypeList,
+				Required: true,
+				ForceNew: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"network_href": &schema.Schema{
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"ip": {
+							Type:             schema.TypeString,
+							Optional:         true,
+							Computed:         true,
+							DiffSuppressFunc: suppressIPDifferences,
+						},
+						"ip_allocation_mode": &schema.Schema{
+							Type:     schema.TypeString,
+							Required: true,
+							ValidateFunc: validation.StringInSlice(ipAllocationAllowedValues, false)
+						},
+						"is_primary": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Default:  false,
+						},
+						"is_connected": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Default:  true,
+						},
+						"adapter_type": &schema.Schema{
+							Type:         schema.TypeString,
+							Optional:     true,
+							ForceNew:     true,
+							Default:      "vmxnet3",
+							ValidateFunc: validation.StringInSlice(virtualMachineNetworkAdapterTypeAllowedValues, false),
+						},
+					},
+				},
 			},
+
 			"initscript": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -60,7 +109,6 @@ func resourceVcdVAppVm() *schema.Resource {
 
 			"href": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
 				Computed: true,
 			},
 			"power_on": &schema.Schema{
@@ -68,17 +116,18 @@ func resourceVcdVAppVm() *schema.Resource {
 				Optional: true,
 				Default:  true,
 			},
-			"network_href": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-			},
+		}
+	
 
-			"network_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-			},
-		},
+
+func resourceVcdVAppVm() *schema.Resource {
+	return &schema.Resource{
+		Create: resourceVcdVAppVmCreate,
+		Update: resourceVcdVAppVmUpdate,
+		Read:   resourceVcdVAppVmRead,
+		Delete: resourceVcdVAppVmDelete,
+
+		Schema: VMSchema
 	}
 }
 
@@ -372,4 +421,15 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	return err
+}
+
+// Suppress Diff on equal ip
+func suppressIPDifferences(k, old, new string, d *schema.ResourceData) bool {
+	o := net.ParseIP(old)
+	n := net.ParseIP(new)
+
+	if o != nil && n != nil {
+		return o.Equal(n)
+	}
+	return false
 }

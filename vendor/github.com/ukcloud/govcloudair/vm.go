@@ -21,7 +21,7 @@ type VM struct {
 	c  *Client
 }
 
-func NewVM(c *Client) *VM {
+func NewVM(c *Client) *VM {orgvdcnetwork OrgVDCNetwork, vapptemplate VAppTemplate, name string
 	return &VM{
 		VM: new(types.VM),
 		c:  c,
