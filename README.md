@@ -1,6 +1,8 @@
 Terraform Provider
 ==================
 
+NOTE: We are in the process of planning v2 of the provider which will not be backwards compatible. See the [v2Plan](https://github.com/terraform-providers/terraform-provider-vcd/blob/master/v2Plan.md) for further details.
+
 - Website: https://www.terraform.io
 - [![Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)
 - Mailing list: [Google Groups](http://groups.google.com/group/terraform-tool)
