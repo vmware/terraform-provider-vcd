@@ -19,7 +19,8 @@ resource "vcd_dnat" "bar" {
 	port = 7777
 	internal_ip = "10.10.102.60"
 	translated_port = 77
-}```
+}
+```
 
 ```
 resource "vcd_vpn" "vpn" {
@@ -59,6 +60,7 @@ resource "vcd_vpn" "vpn" {
     }
 }
 ```
+
 ```
 resource "vcd_firewall_rules" "bar" {
   edge_gateway = "%s"
@@ -114,6 +116,4 @@ resource "vcd_vapp" "foobar" {
 	  }
   }
 }
-
-
 ```
