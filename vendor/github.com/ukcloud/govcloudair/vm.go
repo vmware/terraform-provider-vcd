@@ -263,6 +263,45 @@ func (v *VM) ChangeMemorySize(size int) (Task, error) {
 
 }
 
+func (v *VM) ChangeNestedHypervisor(value bool) (Task, error) {
+	err := v.Refresh()
+	if err != nil {
+		return Task{}, fmt.Errorf("error refreshing vapp before running customization: %v", err)
+	}
+
+	log.Printf("[DEBUG] Nested Hypervisor is: %t", v.VM.NestedHypervisorEnabled)
+
+	b := bytes.NewBufferString(xml.Header)
+
+	s, _ := url.ParseRequestURI(v.VM.HREF)
+
+	if value {
+		s.Path += "/action/enableNestedHypervisor"
+	} else {
+		s.Path += "/action/disableNestedHypervisor"
+	}
+
+	log.Printf("[DEBUG] URL for NestedHypervisor setting: %s", s)
+
+	req := v.c.NewRequest(map[string]string{}, "POST", *s, b)
+
+	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.vm+xml")
+
+	resp, err := checkResp(v.c.Http.Do(req))
+	if err != nil {
+		return Task{}, fmt.Errorf("error customizing VM: %s", err)
+	}
+
+	task := NewTask(v.c)
+
+	if err = decodeBody(resp, task.Task); err != nil {
+		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
+	}
+
+	// The request was successful
+	return *task, nil
+}
+
 func (v *VM) ChangeNetworkConfig(network, ip string) (Task, error) {
 	err := v.Refresh()
 	if err != nil {

@@ -109,7 +109,7 @@ func composeSourceItems(vms []*types.NewVMDescription) []*types.SourcedCompositi
 			&types.SourcedCompositionItemParam{
 				Source: &types.Reference{
 					HREF: vm.VAppTemplate.Children.VM[0].HREF,
-					Name: vm.VAppTemplate.Children.VM[0].Name,
+					Name: vm.Name,
 				},
 				InstantiationParams: &types.InstantiationParams{
 					NetworkConnectionSection: &types.NetworkConnectionSection{

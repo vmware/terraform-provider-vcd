@@ -63,6 +63,10 @@ var VMSchema = map[string]*schema.Schema{
 		Optional: true,
 		Default:  true,
 	},
+	"nested_hypervisor_enabled": {
+		Type:     schema.TypeBool,
+		Optional: true,
+	},
 }
 
 var NetworkSchema = map[string]*schema.Schema{
@@ -103,7 +107,6 @@ var NetworkSchema = map[string]*schema.Schema{
 	"adapter_type": {
 		Type:     schema.TypeString,
 		Optional: true,
-		ForceNew: true,
 		Default:  "VMXNET3",
 		// ValidateFunc: validation.StringInSlice([]string{
 		// 	"VMXNET3",
