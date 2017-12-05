@@ -254,8 +254,9 @@ type NetworkConfigSection struct {
 // Description: Represents a network connection in the virtual machine.
 // Since: 0.9
 type NetworkConnection struct {
-	Network                 string `xml:"network,attr"`                      // Name of the network to which this NIC is connected.
-	NetworkConnectionIndex  int    `xml:"NetworkConnectionIndex"`            // Virtual slot number associated with this NIC. First slot number is 0.
+	Network                string `xml:"network,attr"`           // Name of the network to which this NIC is connected.
+	NetworkConnectionIndex int    `xml:"NetworkConnectionIndex"` // Virtual slot number associated with this NIC. First slot number is 0.
+	// NetworkAdapterType		string `xml:"NetworkAdapterType"`				 // Set the adapter type (e.g. E1000, E1000E, VMXNET3)
 	NeedsCustomization      bool   `xml:"needsCustomization,attr,omitempty"` // True if this NIC needs customization.
 	ExternalIPAddress       string `xml:"ExternalIpAddress,omitempty"`       // If the network to which this NIC connects provides NAT services, the external address assigned to this NIC appears here.
 	IPAddress               string `xml:"IpAddress,omitempty"`               // IP address assigned to this NIC.
@@ -1741,12 +1742,13 @@ type QueryResultOrgVdcStorageProfileRecordType struct {
 
 type NewVMDescription struct {
 	Name         string
-	VAppTemplate VAppTemplate
-	Networks     []NetworkOrgDescription
+	VAppTemplate *VAppTemplate
+	Networks     []*NetworkOrgDescription
 }
 type NetworkOrgDescription struct {
 	Name             string
 	IsPrimary        bool
 	IsConnected      bool
 	IPAllocationMode string
+	AdapterType      string
 }

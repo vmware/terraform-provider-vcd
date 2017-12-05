@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	types "github.com/ukcloud/govcloudair/types/v56"
-
 )
 
 func resourceVcdVApp() *schema.Resource {
@@ -33,7 +32,8 @@ func resourceVcdVApp() *schema.Resource {
 				Type:     schema.TypeList,
 				Optional: true,
 				ForceNew: false,
-				Elem:     &schema.Schema{Type: VMSchema},
+				Elem: &schema.Resource{
+					Schema: VMSchema},
 			},
 			"description": {
 				Type:     schema.TypeString,
@@ -61,82 +61,98 @@ func resourceVcdVApp() *schema.Resource {
 	}
 }
 
-func createVMDescription(vmData *VMSchema.ResourceData, vAppNetworks []string) (*types.NewVMDescription, error) {
+func createVMDescription(vmData map[string]interface{}, vAppNetworks []string, meta interface{}) (*types.NewVMDescription, error) {
+	vcdClient := meta.(*VCDClient)
 
-			catalog, err := vcdClient.Org.FindCatalog(d.Get("catalog_name").(string))
-			if err != nil {
-				return fmt.Errorf("Error finding catalog: %#v", err)
-			}
+	catalog, err := vcdClient.Org.FindCatalog(vmData["catalog_name"].(string))
+	if err != nil {
+		return nil, fmt.Errorf("Error finding catalog: %#v", err)
+	}
 
-			catalogitem, err := catalog.FindCatalogItem(d.Get("template_name").(string))
-			if err != nil {
-				return fmt.Errorf("Error finding catalog item: %#v", err)
-			}
+	catalogitem, err := catalog.FindCatalogItem(vmData["template_name"].(string))
+	if err != nil {
+		return nil, fmt.Errorf("Error finding catalog item: %#v", err)
+	}
 
-			vapptemplate, err := catalogitem.GetVAppTemplate()
-			if err != nil {
-				return fmt.Errorf("Error finding VAppTemplate: %#v", err)
-			}
+	vapptemplate, err := catalogitem.GetVAppTemplate()
+	if err != nil {
+		return nil, fmt.Errorf("Error finding VAppTemplate: %#v", err)
+	}
 
-			log.Printf("[DEBUG] VAppTemplate: %#v", vapptemplate)
+	log.Printf("[DEBUG] VAppTemplate: %#v", vapptemplate)
 
+	networks := vmData["network"].([]interface{})
+	if err != nil {
+		return nil, fmt.Errorf("Error reading networks for vm: %#v", err)
+	}
 
-			networks, err := d.Get("network")
-			if err != nil {
-				return fmt.Errorf("Error reading networks for vm: %#v", err)
-			}
+	var nets []*types.NetworkOrgDescription
+	for _, n := range networks {
 
-			var nets []*types.NetworkOrgDescription
+		network := n.(map[string]interface{})
+		// Check if VM network is assigned to vApp
+		if !isMember(vAppNetworks, network["name"].(string)) {
+			return nil, fmt.Errorf("Network (%s) assigned to VM is not assigned to vApp, vApp has the following networks: %#v", network["name"].(string), vAppNetworks)
+		}
 
-			for index, network := range networks.([]map[string]interface{}) {
+		nets = append(nets,
+			&types.NetworkOrgDescription{
+				Name:             network["name"].(string),
+				IsPrimary:        network["is_primary"].(bool),
+				IsConnected:      network["is_connected"].(bool),
+				IPAllocationMode: network["ip_allocation_mode"].(string),
+				AdapterType:      network["adapter_type"].(string),
+			},
+		)
+	}
 
-				// Check if VM network is assigned to vApp
-				if !isMember(vAppNetworks, network["name"].(string)) {
-					return fmt.Errorf("Network (%s) assigned to VM is not assigned to vApp, vApp has the following networks: %#v", network["name"].(string), vAppNetworks)
-				}
+	// net, err := vcdClient.OrgVdc.FindVDCNetwork(d.Get("network_name").(string))
+	// if err != nil {
+	// 	return fmt.Errorf("Error finding OrgVCD Network: %#v", err)
+	// }
 
-				nets = append(nets, 
-					&types.NetworkOrgDescription{
-						Name             network["name"].(string) 
-						IsPrimary        network["is_primary"].(bool)
-						IsConnected      network["is_connected"].(bool)
-						IPAllocationMode network["ip_allocation_mode"].(string)
-					}
-				)
-			}
+	// storage_profile_reference := types.Reference{}
 
-			// net, err := vcdClient.OrgVdc.FindVDCNetwork(d.Get("network_name").(string))
-			// if err != nil {
-			// 	return fmt.Errorf("Error finding OrgVCD Network: %#v", err)
-			// }
+	// // Override default_storage_profile if we find the given storage profile
+	// if d.Get("storage_profile").(string) != "" {
+	// 	storage_profile_reference, err = vcdClient.OrgVdc.FindStorageProfileReference(d.Get("storage_profile").(string))
+	// 	if err != nil {
+	// 		return fmt.Errorf("Error finding storage profile %s", d.Get("storage_profile").(string))
+	// 	}
+	// }
 
-			// storage_profile_reference := types.Reference{}
+	vmDescription := &types.NewVMDescription{
+		Name:         vmData["name"].(string),
+		VAppTemplate: vapptemplate.VAppTemplate,
+		Networks:     nets,
+	}
 
-			// // Override default_storage_profile if we find the given storage profile
-			// if d.Get("storage_profile").(string) != "" {
-			// 	storage_profile_reference, err = vcdClient.OrgVdc.FindStorageProfileReference(d.Get("storage_profile").(string))
-			// 	if err != nil {
-			// 		return fmt.Errorf("Error finding storage profile %s", d.Get("storage_profile").(string))
-			// 	}
-			// }
+	log.Printf("[DEBUG] NewVMDescription: %#v", vmDescription)
 
-			vmDescription := &types.NewVMDescription{
-				Name: d.Get("name").(string)
-				VAppTemplate: vapptemplate
-				Networks : nets
-			}
-
-			log.Printf("[DEBUG] NewVMDescription: %#v", vmDescription)
-
-			return vmDescription, nil
+	return vmDescription, nil
 
 }
 
 func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	// TODO NETWORKS
-	networks = d.Get("network").([]string)
+	networks := interfaceListToStringList(d.Get("network").([]interface{}))
+	log.Printf("[TRACE] Networks from state: %#v", networks)
+
+	// Get VMs and create descriptions for the vAppCompose
+	vmData := d.Get("vm").([]interface{})
+
+	var vmDescriptions []*types.NewVMDescription
+	for _, vm := range vmData {
+		vmResource := vm.(map[string]interface{})
+		vmDescription, err := createVMDescription(vmResource, networks, meta)
+
+		if err != nil {
+			return err
+		}
+
+		vmDescriptions = append(vmDescriptions, vmDescription)
+	}
 
 	var orgnetworks []*types.OrgVDCNetwork
 	for _, network := range networks {
@@ -145,109 +161,98 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 			return fmt.Errorf("Error finding vdc org network: %s, %#v", network, err)
 		}
 
-		orgnetworks = append(orgnetworks, orgnetwork)
-	}
-
-
-	// Get VMs and create descriptions for the vAppCompose
-	vmData = d.Get("vm").([]VMSchema) 
-
-	var vmDescriptions []*types.NewVMDescription
-	for _, vm := range vmData {
-		vmDescriptions = append(vmDescriptions, createVMDescription(vm, vAppNetworks))
+		orgnetworks = append(orgnetworks, orgnetwork.OrgVDCNetwork)
 	}
 
 	// See if vApp exists
 	vapp, err := vcdClient.OrgVdc.FindVAppByID(d.Get("href").(string))
-	log.Printf("[TRACE] Looking for existing vapp, found %s", vapp)
-	
+	log.Printf("[TRACE] Looking for existing vapp, found %#v", vapp)
+
+	if err != nil {
+		log.Printf("[TRACE] No vApp found, preparing creation")
+		vapp = vcdClient.NewVApp(&vcdClient.Client)
+
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := vapp.ComposeVApp(d.Get("name").(string), d.Get("description").(string), orgnetworks, vmDescriptions)
 			if err != nil {
-				log.Printf("[TRACE] No vApp found, preparing creation")
-				vapp = vcdClient.NewVApp(&vcdClient.Client)
-
-				err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-					task, err := vapp.ComposeVApp(d.Get("name").(string), d.Get("description").(string), orgnetworks, vmDescriptions)
-					if err != nil {
-						return resource.RetryableError(fmt.Errorf("Error creating vapp: %#v", err))
-					}
-
-					return resource.RetryableError(task.WaitTaskCompletion())
-				})
-
-				if err != nil {
-					return fmt.Errorf("Error creating vapp: %#v", err)
-				}
+				return resource.RetryableError(fmt.Errorf("Error creating vapp: %#v", err))
 			}
 
-			log.Printf("[DEBUG] vApp created with href:  %s", vapp.VApp.HREF)
-			d.Set("href", vapp.VApp.HREF)
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
 
-			// err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			// 	task, err := vapp.ChangeVMName(d.Get("name").(string))
-			// 	if err != nil {
-			// 		return resource.RetryableError(fmt.Errorf("Error with vm name change: %#v", err))
-			// 	}
+		if err != nil {
+			return fmt.Errorf("Error creating vapp: %#v", err)
+		}
+	}
 
-			// 	return resource.RetryableError(task.WaitTaskCompletion())
-			// })
-			// if err != nil {
-			// 	return fmt.Errorf("Error changing vmname: %#v", err)
-			// }
+	log.Printf("[DEBUG] vApp created with href:  %s", vapp.VApp.HREF)
+	d.Set("href", vapp.VApp.HREF)
 
-			// err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			// 	task, err := vapp.ChangeNetworkConfig(d.Get("network_name").(string), d.Get("ip").(string))
-			// 	if err != nil {
-			// 		return resource.RetryableError(fmt.Errorf("Error with Networking change: %#v", err))
-			// 	}
-			// 	return resource.RetryableError(task.WaitTaskCompletion())
-			// })
-			// if err != nil {
-			// 	return fmt.Errorf("Error changing network: %#v", err)
-			// }
+	// err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+	// 	task, err := vapp.ChangeVMName(d.Get("name").(string))
+	// 	if err != nil {
+	// 		return resource.RetryableError(fmt.Errorf("Error with vm name change: %#v", err))
+	// 	}
 
-			// if ovf, ok := d.GetOk("ovf"); ok {
-			// 	err := retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			// 		task, err := vapp.SetOvf(convertToStringMap(ovf.(map[string]interface{})))
+	// 	return resource.RetryableError(task.WaitTaskCompletion())
+	// })
+	// if err != nil {
+	// 	return fmt.Errorf("Error changing vmname: %#v", err)
+	// }
 
-			// 		if err != nil {
-			// 			return resource.RetryableError(fmt.Errorf("Error set ovf: %#v", err))
-			// 		}
-			// 		return resource.RetryableError(task.WaitTaskCompletion())
-			// 	})
-			// 	if err != nil {
-			// 		return fmt.Errorf("Error completing tasks: %#v", err)
-			// 	}
-			// }
+	// err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+	// 	task, err := vapp.ChangeNetworkConfig(d.Get("network_name").(string), d.Get("ip").(string))
+	// 	if err != nil {
+	// 		return resource.RetryableError(fmt.Errorf("Error with Networking change: %#v", err))
+	// 	}
+	// 	return resource.RetryableError(task.WaitTaskCompletion())
+	// })
+	// if err != nil {
+	// 	return fmt.Errorf("Error changing network: %#v", err)
+	// }
 
-			if d.Get("power_on").(bool) == true {
-				err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-					task, err := vapp.PowerOn()
-					if err != nil {
-						return resource.RetryableError(fmt.Errorf("Error powerOn machine: %#v", err))
-					}
-					return resource.RetryableError(task.WaitTaskCompletion())
-				})
+	// if ovf, ok := d.GetOk("ovf"); ok {
+	// 	err := retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+	// 		task, err := vapp.SetOvf(convertToStringMap(ovf.(map[string]interface{})))
 
-				if err != nil {
-					return fmt.Errorf("Error completing powerOn tasks: %#v", err)
-				}
+	// 		if err != nil {
+	// 			return resource.RetryableError(fmt.Errorf("Error set ovf: %#v", err))
+	// 		}
+	// 		return resource.RetryableError(task.WaitTaskCompletion())
+	// 	})
+	// 	if err != nil {
+	// 		return fmt.Errorf("Error completing tasks: %#v", err)
+	// 	}
+	// }
+
+	if d.Get("power_on").(bool) == true {
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := vapp.PowerOn()
+			if err != nil {
+				return resource.RetryableError(fmt.Errorf("Error powerOn machine: %#v", err))
 			}
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
 
-			// initscript := d.Get("initscript").(string)
+		if err != nil {
+			return fmt.Errorf("Error completing powerOn tasks: %#v", err)
+		}
+	}
 
-			// err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			// 	log.Printf("running customisation script")
-			// 	task, err := vapp.RunCustomizationScript(d.Get("name").(string), initscript)
-			// 	if err != nil {
-			// 		return resource.RetryableError(fmt.Errorf("Error with setting init script: %#v", err))
-			// 	}
-			// 	return resource.RetryableError(task.WaitTaskCompletion())
-			// })
-			// if err != nil {
-			// 	return fmt.Errorf("Error completing tasks: %#v", err)
-			// }
+	// initscript := d.Get("initscript").(string)
 
-
+	// err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+	// 	log.Printf("running customisation script")
+	// 	task, err := vapp.RunCustomizationScript(d.Get("name").(string), initscript)
+	// 	if err != nil {
+	// 		return resource.RetryableError(fmt.Errorf("Error with setting init script: %#v", err))
+	// 	}
+	// 	return resource.RetryableError(task.WaitTaskCompletion())
+	// })
+	// if err != nil {
+	// 	return fmt.Errorf("Error completing tasks: %#v", err)
+	// }
 
 	d.SetId(d.Get("name").(string))
 
@@ -264,35 +269,35 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	status, err := vapp.GetStatus()
 	if err != nil {
-		return fmt.Errorf("Error getting VApp status: %#v", err)
+		return fmt.Errorf("Error getting VApp status: %#v, %s", err, status)
 	}
 
-	if d.HasChange("metadata") {
-		oraw, nraw := d.GetChange("metadata")
-		metadata := oraw.(map[string]interface{})
-		for k := range metadata {
-			task, err := vapp.DeleteMetadata(k)
-			if err != nil {
-				return fmt.Errorf("Error deleting metadata: %#v", err)
-			}
-			err = task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf("Error completing tasks: %#v", err)
-			}
-		}
-		metadata = nraw.(map[string]interface{})
-		for k, v := range metadata {
-			task, err := vapp.AddMetadata(k, v.(string))
-			if err != nil {
-				return fmt.Errorf("Error adding metadata: %#v", err)
-			}
-			err = task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf("Error completing tasks: %#v", err)
-			}
-		}
+	// if d.HasChange("metadata") {
+	// 	oraw, nraw := d.GetChange("metadata")
+	// 	metadata := oraw.(map[string]interface{})
+	// 	for k := range metadata {
+	// 		task, err := vapp.DeleteMetadata(k)
+	// 		if err != nil {
+	// 			return fmt.Errorf("Error deleting metadata: %#v", err)
+	// 		}
+	// 		err = task.WaitTaskCompletion()
+	// 		if err != nil {
+	// 			return fmt.Errorf("Error completing tasks: %#v", err)
+	// 		}
+	// 	}
+	// 	metadata = nraw.(map[string]interface{})
+	// 	for k, v := range metadata {
+	// 		task, err := vapp.AddMetadata(k, v.(string))
+	// 		if err != nil {
+	// 			return fmt.Errorf("Error adding metadata: %#v", err)
+	// 		}
+	// 		err = task.WaitTaskCompletion()
+	// 		if err != nil {
+	// 			return fmt.Errorf("Error completing tasks: %#v", err)
+	// 		}
+	// 	}
 
-	}
+	// }
 
 	if d.HasChange("power_on") || d.HasChange("ovf") {
 
@@ -307,19 +312,19 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 
-		if ovf, ok := d.GetOk("ovf"); ok {
-			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-				task, err := vapp.SetOvf(convertToStringMap(ovf.(map[string]interface{})))
+		// if ovf, ok := d.GetOk("ovf"); ok {
+		// 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+		// 		task, err := vapp.SetOvf(convertToStringMap(ovf.(map[string]interface{})))
 
-				if err != nil {
-					return resource.RetryableError(fmt.Errorf("Error set ovf: %#v", err))
-				}
-				return resource.RetryableError(task.WaitTaskCompletion())
-			})
-			if err != nil {
-				return fmt.Errorf("Error completing tasks: %#v", err)
-			}
-		}
+		// 		if err != nil {
+		// 			return resource.RetryableError(fmt.Errorf("Error set ovf: %#v", err))
+		// 		}
+		// 		return resource.RetryableError(task.WaitTaskCompletion())
+		// 	})
+		// 	if err != nil {
+		// 		return fmt.Errorf("Error completing tasks: %#v", err)
+		// 	}
+		// }
 
 	}
 
@@ -341,59 +346,63 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 		return nil
 	}
 
-	if _, ok := d.GetOk("ip"); ok {
-		ip := "allocated"
+	// if _, ok := d.GetOk("ip"); ok {
+	// 	ip := "allocated"
 
-		oldIp, newIp := d.GetChange("ip")
+	// 	oldIp, newIp := d.GetChange("ip")
 
-		log.Printf("[DEBUG] IP has changes, old: %s - new: %s", oldIp, newIp)
+	// 	log.Printf("[DEBUG] IP has changes, old: %s - new: %s", oldIp, newIp)
 
-		if newIp != "allocated" {
-			log.Printf("[DEBUG] IP is assigned. Lets get it (%s)", d.Get("ip"))
-			ip, err = getVAppIPAddress(d, meta)
-			if err != nil {
-				return err
-			}
-		} else {
-			log.Printf("[DEBUG] IP is 'allocated'")
-		}
+	// 	if newIp != "allocated" {
+	// 		log.Printf("[DEBUG] IP is assigned. Lets get it (%s)", d.Get("ip"))
+	// 		ip, err = getVAppIPAddress(d, meta)
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 	} else {
+	// 		log.Printf("[DEBUG] IP is 'allocated'")
+	// 	}
 
-		d.Set("ip", ip)
-	} else {
-		d.Set("ip", "allocated")
-	}
+	// 	d.Set("ip", ip)
+	// } else {
+	// 	d.Set("ip", "allocated")
+	// }
 
 	return nil
 }
 
-func getVAppIPAddress(d *schema.ResourceData, meta interface{}) (string, error) {
-	vcdClient := meta.(*VCDClient)
-	var ip string
+// func getVAppIPAddresses(d *schema.ResourceData, meta interface{}) ([]string, error) {
+// 	vcdClient := meta.(*VCDClient)
+// 	var ips []string
 
-	err := retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		err := vcdClient.OrgVdc.Refresh()
-		if err != nil {
-			return resource.RetryableError(fmt.Errorf("Error refreshing vdc: %#v", err))
-		}
-		vapp, err := vcdClient.OrgVdc.FindVAppByName(d.Id())
-		if err != nil {
-			return resource.RetryableError(fmt.Errorf("Unable to find vapp."))
-		}
+// 	err := retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+// 		err := vcdClient.OrgVdc.Refresh()
+// 		if err != nil {
+// 			return resource.RetryableError(fmt.Errorf("Error refreshing vdc: %#v", err))
+// 		}
+// 		vapp, err := vcdClient.OrgVdc.FindVAppByID(d.Get("href").(string))
+// 		if err != nil {
+// 			return resource.RetryableError(fmt.Errorf("Unable to find vapp."))
+// 		}
 
-		// getting the IP of the specific Vm, rather than index zero.
-		// Required as once we add more VM's, index zero doesn't guarantee the
-		// 'first' one, and tests will fail sometimes (annoying huh?)
-		vm, err := vcdClient.OrgVdc.FindVMByName(vapp, d.Get("name").(string))
+// 		// getting the IP of the specific Vm, rather than index zero.
+// 		// Required as once we add more VM's, index zero doesn't guarantee the
+// 		// 'first' one, and tests will fail sometimes (annoying huh?)
+// 		// vm, err := vcdClient.OrgVdc.FindVM(vapp, d.Get("name").(string))
 
-		ip = vm.VM.NetworkConnectionSection.NetworkConnection.IPAddress
-		if ip == "" {
-			return resource.RetryableError(fmt.Errorf("Timeout: VM did not acquire IP address"))
-		}
-		return nil
-	})
+// 		for index, vm := range vapp.VApp.Children.VM {
+// 			ip := vm.NetworkConnectionSection.NetworkConnection.IPAddress
+// 			if ip == "" {
+// 				return resource.RetryableError(fmt.Errorf("Timeout: VM (%s) did not acquire IP address", vm.Name))
+// 			}
+// 			ips = append(ips, ip)
+// 		}
 
-	return ip, err
-}
+// 		return nil
+// 	})
+
+// 	return ips, err
+// }
 
 func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
@@ -428,12 +437,19 @@ func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
 	return err
 }
 
-
-func isMember(list []interface{}, element interface{}) bool {
+func isMember(list []string, element string) bool {
 	for _, item := range list {
 		if item == element {
 			return true
 		}
 	}
 	return false
+}
+
+func interfaceListToStringList(old []interface{}) []string {
+	new := make([]string, len(old))
+	for i, v := range old {
+		new[i] = v.(string)
+	}
+	return new
 }

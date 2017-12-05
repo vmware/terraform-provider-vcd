@@ -21,7 +21,7 @@ type VM struct {
 	c  *Client
 }
 
-func NewVM(c *Client) *VM {orgvdcnetwork OrgVDCNetwork, vapptemplate VAppTemplate, name string
+func NewVM(c *Client) *VM {
 	return &VM{
 		VM: new(types.VM),
 		c:  c,
@@ -286,13 +286,14 @@ func (v *VM) ChangeNetworkConfig(network, ip string) (Task, error) {
 		ipAddress = ip
 	}
 
-	networkConnection := &types.NetworkConnection{
+	networkConnection := []*types.NetworkConnection{&types.NetworkConnection{
 		Network:                 network,
 		NeedsCustomization:      true,
 		NetworkConnectionIndex:  0,
 		IPAddress:               ipAddress,
 		IsConnected:             true,
 		IPAddressAllocationMode: ipAllocationMode,
+	},
 	}
 
 	newnetwork := &types.NetworkConnectionSection{

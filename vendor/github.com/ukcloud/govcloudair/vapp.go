@@ -58,6 +58,7 @@ func (v *VApp) Refresh() error {
 
 	resp, err := checkResp(v.c.Http.Do(req))
 	if err != nil {
+		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
 		return fmt.Errorf("error retrieving task: %s", err)
 	}
 
@@ -81,21 +82,22 @@ func composeSourceItems(vms []*types.NewVMDescription) []*types.SourcedCompositi
 		var networkAssignments []*types.NetworkAssignment
 		var primeryNetworkConnectionIndex int
 
-		for index, orgnetwork := range vm.networks {
-			if orgnetwork.isPrimary {
+		for index, orgnetwork := range vm.Networks {
+			if orgnetwork.IsPrimary {
 				primeryNetworkConnectionIndex = index
 			}
 
-			networkConnections.append(networkConnections,
+			networkConnections = append(networkConnections,
 				&types.NetworkConnection{
 					Network:                 orgnetwork.Name,
 					NetworkConnectionIndex:  index,
-					IsConnected:             orgnetwork.isConnected,
-					IPAddressAllocationMode: orgnetwork.ipAllocationMode,
+					IsConnected:             orgnetwork.IsConnected,
+					IPAddressAllocationMode: orgnetwork.IPAllocationMode,
+					// NetworkAdapterType:      orgnetwork.AdapterType,
 				},
 			)
 
-			networkAssignments.append(networkAssignments,
+			networkAssignments = append(networkAssignments,
 				&types.NetworkAssignment{
 					InnerNetwork:     orgnetwork.Name,
 					ContainerNetwork: orgnetwork.Name,
@@ -106,13 +108,13 @@ func composeSourceItems(vms []*types.NewVMDescription) []*types.SourcedCompositi
 		sourceItems = append(sourceItems,
 			&types.SourcedCompositionItemParam{
 				Source: &types.Reference{
-					HREF: vm.vapptemplate.VAppTemplate.Children.VM[0].HREF,
-					Name: vm.Name,
+					HREF: vm.VAppTemplate.Children.VM[0].HREF,
+					Name: vm.VAppTemplate.Children.VM[0].Name,
 				},
 				InstantiationParams: &types.InstantiationParams{
 					NetworkConnectionSection: &types.NetworkConnectionSection{
-						Type: vm.vapptemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.Type,
-						HREF: vm.vapptemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.HREF,
+						Type: vm.VAppTemplate.Children.VM[0].NetworkConnectionSection.Type,
+						HREF: vm.VAppTemplate.Children.VM[0].NetworkConnectionSection.HREF,
 						Info: "Network config for sourced item",
 						PrimaryNetworkConnectionIndex: primeryNetworkConnectionIndex,
 						NetworkConnection:             networkConnections,
@@ -133,13 +135,13 @@ func composeNetworkConfigs(orgnetworks []*types.OrgVDCNetwork) []*types.VAppNetw
 	for _, orgnetwork := range orgnetworks {
 		networkConfigs = append(networkConfigs,
 			&types.VAppNetworkConfiguration{
-				NetworkName: orgnetwork.OrgVDCNetwork.Name,
+				NetworkName: orgnetwork.Name,
 				Configuration: &types.NetworkConfiguration{
 					FenceMode: "bridged",
 					ParentNetwork: &types.Reference{
-						HREF: orgnetwork.OrgVDCNetwork.HREF,
-						Name: orgnetwork.OrgVDCNetwork.Name,
-						Type: orgnetwork.OrgVDCNetwork.Type,
+						HREF: orgnetwork.HREF,
+						Name: orgnetwork.Name,
+						Type: orgnetwork.Type,
 					},
 				},
 			},
@@ -179,6 +181,7 @@ func (v *VApp) AddVMs(vms []*types.NewVMDescription) (Task, error) {
 
 	resp, err := checkResp(v.c.Http.Do(req))
 	if err != nil {
+		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
 		return Task{}, fmt.Errorf("error instantiating a new VM: %s", err)
 	}
 
@@ -232,6 +235,7 @@ func (v *VApp) RemoveVMs(vms []VM) error {
 
 	resp, err := checkResp(v.c.Http.Do(req))
 	if err != nil {
+		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
 		return fmt.Errorf("error instantiating a new vApp: %s", err)
 	}
 
@@ -284,6 +288,7 @@ func (v *VApp) ChangeNetworks(orgnetworks []*types.OrgVDCNetwork) (Task, error) 
 
 	resp, err := checkResp(v.c.Http.Do(req))
 	if err != nil {
+		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
 		return Task{}, fmt.Errorf("error instantiating a new VM: %s", err)
 	}
 
@@ -339,13 +344,7 @@ func (v *VApp) ComposeVApp(name string, description string, orgnetworks []*types
 		return Task{}, fmt.Errorf("error marshaling vapp compose: %s", err)
 	}
 
-	debug := os.Getenv("GOVCLOUDAIR_DEBUG")
-
-	if debug == "true" {
-		fmt.Printf("\n\nXML DEBUG: %s\n\n", string(output))
-	}
-
-	log.Printf("\n\nXML DEBUG: %s\n\n", string(output))
+	log.Printf("[DEBUG] XML: \n %s", string(output))
 
 	b := bytes.NewBufferString(xml.Header + string(output))
 
@@ -354,16 +353,23 @@ func (v *VApp) ComposeVApp(name string, description string, orgnetworks []*types
 
 	req := v.c.NewRequest(map[string]string{}, "POST", s, b)
 
+	log.Printf("[TRACE] URL: %s", s.String())
+
 	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.composeVAppParams+xml")
 
 	resp, err := checkResp(v.c.Http.Do(req))
 	if err != nil {
+		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
 		return Task{}, fmt.Errorf("error instantiating a new vApp: %s", err)
 	}
+
+	log.Printf("[TRACE] Response status: %s", resp.Status)
 
 	if err = decodeBody(resp, v.VApp); err != nil {
 		return Task{}, fmt.Errorf("error decoding vApp response: %s", err)
 	}
+
+	log.Printf("[TRACE] Response: %#v", resp)
 
 	task := NewTask(v.c)
 	task.Task = v.VApp.Tasks.Task[0]
@@ -382,6 +388,7 @@ func (v *VApp) PowerOn() (Task, error) {
 
 	resp, err := checkResp(v.c.Http.Do(req))
 	if err != nil {
+		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
 		return Task{}, fmt.Errorf("error powering on vApp: %s", err)
 	}
 
@@ -405,6 +412,7 @@ func (v *VApp) PowerOff() (Task, error) {
 
 	resp, err := checkResp(v.c.Http.Do(req))
 	if err != nil {
+		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
 		return Task{}, fmt.Errorf("error powering off vApp: %s", err)
 	}
 
@@ -428,6 +436,7 @@ func (v *VApp) Reboot() (Task, error) {
 
 	resp, err := checkResp(v.c.Http.Do(req))
 	if err != nil {
+		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
 		return Task{}, fmt.Errorf("error rebooting vApp: %s", err)
 	}
 
@@ -457,6 +466,7 @@ func (v *VApp) Reset() (Task, error) {
 	task := NewTask(v.c)
 
 	if err = decodeBody(resp, task.Task); err != nil {
+		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
 		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
 	}
 
@@ -474,6 +484,7 @@ func (v *VApp) Suspend() (Task, error) {
 
 	resp, err := checkResp(v.c.Http.Do(req))
 	if err != nil {
+		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
 		return Task{}, fmt.Errorf("error suspending vApp: %s", err)
 	}
 
@@ -497,6 +508,7 @@ func (v *VApp) Shutdown() (Task, error) {
 
 	resp, err := checkResp(v.c.Http.Do(req))
 	if err != nil {
+		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
 		return Task{}, fmt.Errorf("error shutting down vApp: %s", err)
 	}
 
@@ -540,6 +552,7 @@ func (v *VApp) Undeploy() (Task, error) {
 
 	resp, err := checkResp(v.c.Http.Do(req))
 	if err != nil {
+		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
 		return Task{}, fmt.Errorf("error undeploy vApp: %s", err)
 	}
 
@@ -583,6 +596,7 @@ func (v *VApp) Deploy() (Task, error) {
 
 	resp, err := checkResp(v.c.Http.Do(req))
 	if err != nil {
+		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
 		return Task{}, fmt.Errorf("error undeploy vApp: %s", err)
 	}
 
@@ -605,6 +619,7 @@ func (v *VApp) Delete() (Task, error) {
 
 	resp, err := checkResp(v.c.Http.Do(req))
 	if err != nil {
+		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
 		return Task{}, fmt.Errorf("error deleting vApp: %s", err)
 	}
 
@@ -1173,9 +1188,8 @@ func (v *VApp) GetStatus() (string, error) {
 
 func (v *VApp) AddRAWNetworkConfig(networkName string, networkHref string) (Task, error) {
 
-	networkConfig := &types.NetworkConfigSection{
-		Info: "Configuration parameters for logical networks",
-		NetworkConfig: &types.VAppNetworkConfiguration{
+	networkConfig := []*types.VAppNetworkConfiguration{
+		&types.VAppNetworkConfiguration{
 			NetworkName: networkName,
 			Configuration: &types.NetworkConfiguration{
 				ParentNetwork: &types.Reference{
@@ -1186,11 +1200,16 @@ func (v *VApp) AddRAWNetworkConfig(networkName string, networkHref string) (Task
 		},
 	}
 
-	networkConfig.Ovf = "http://schemas.dmtf.org/ovf/envelope/1"
-	networkConfig.Type = "application/vnd.vmware.vcloud.networkConfigSection+xml"
-	networkConfig.Xmlns = "http://www.vmware.com/vcloud/v1.5"
+	networkConfigSection := &types.NetworkConfigSection{
+		Info:          "Configuration parameters for logical networks",
+		NetworkConfig: networkConfig,
+	}
 
-	output, err := xml.MarshalIndent(networkConfig, "  ", "    ")
+	networkConfigSection.Ovf = "http://schemas.dmtf.org/ovf/envelope/1"
+	networkConfigSection.Type = "application/vnd.vmware.vcloud.networkConfigSection+xml"
+	networkConfigSection.Xmlns = "http://www.vmware.com/vcloud/v1.5"
+
+	output, err := xml.MarshalIndent(networkConfigSection, "  ", "    ")
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 	}
@@ -1208,6 +1227,7 @@ func (v *VApp) AddRAWNetworkConfig(networkName string, networkHref string) (Task
 
 	resp, err := checkResp(v.c.Http.Do(req))
 	if err != nil {
+		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
 		return Task{}, fmt.Errorf("error adding vApp Network: %s", err)
 	}
 
