@@ -90,12 +90,23 @@ resource "vcd_network" "foonet" {
 }
 ```
 
+```
+resource "vcd_vapp_network" "foovappnet" {
+  name = "foovappnet"
+  gateway = "192.168.0.1"
+  static_ip_pool {
+    start_address = "192.168.0.100"
+    end_address = "192.168.0.199"
+  }
+}
+```
 
 ```
 resource "vcd_vapp" "foobar" {
   name = "foobar"
 
-  networks = ["network1", "network2"]
+  org_networks = ["network1", "network2"]
+  vapp_networks = ["foovappnet"]
 
   vm {
 	  name          = "moo"
@@ -104,16 +115,22 @@ resource "vcd_vapp" "foobar" {
 	  memory        = 1024
 	  cpus          = 1
 	  
-	  network  {
+	  org_network  {
 	  	name = "network1"
 	  	ip_allocation_mode = "dhcp"
 	  }
 
-	  network  {
+	  org_network  {
 	  	name = "network2"
 	  	ip   = "10.10.102.161"
-	  	ip_allocation_mode = "allocated"
+	  	ip_allocation_mode = "manual"
+	  }
+
+	  vapp_network  {
+	  	name = "foovappnet"
+	  	ip_allocation_mode = "pool"
 	  }
   }
 }
 ```
+
