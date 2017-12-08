@@ -8,6 +8,8 @@ import (
 	"os"
 	"sync"
 	"time"
+
+	types "github.com/ukcloud/govcloudair/types/v56"
 )
 
 type VCDClient struct {
@@ -78,7 +80,7 @@ func (c *VCDClient) vcdauthorize(user, pass, org string) error {
 	req.SetBasicAuth(user+"@"+org, pass)
 
 	// Add the Accept header for vCA
-	req.Header.Add("Accept", "application/*+xml;version=5.5")
+	req.Header.Add(GetVersionHeader(types.ApiVersion))
 
 	resp, err := checkResp(c.Client.Http.Do(req))
 	if err != nil {
@@ -141,7 +143,7 @@ func (c *VCDClient) vcdauthorize(user, pass, org string) error {
 func (c *VCDClient) RetrieveOrg(vcdname string) (Org, error) {
 
 	req := c.Client.NewRequest(map[string]string{}, "GET", c.OrgHREF, nil)
-	req.Header.Add("Accept", "application/*+xml;version=5.5")
+	req.Header.Add(GetVersionHeader(types.ApiVersion))
 
 	// TODO: wrap into checkresp to parse error
 	resp, err := checkResp(c.Client.Http.Do(req))
@@ -176,11 +178,11 @@ func (c *VCDClient) RetrieveOrg(vcdname string) (Org, error) {
 	return *org, nil
 }
 
-func NewVCDClient(vcdEndpoint url.URL, insecure bool) *VCDClient {
+func NewVCDClient(vcdEndpoint url.URL, insecure bool, apiVersion string) *VCDClient {
 
 	return &VCDClient{
 		Client: Client{
-			APIVersion: "5.5",
+			APIVersion: apiVersion,
 			VCDVDCHREF: vcdEndpoint,
 			Http: http.Client{
 				Transport: &http.Transport{
@@ -233,7 +235,7 @@ func (c *VCDClient) Disconnect() error {
 	req := c.Client.NewRequest(map[string]string{}, "DELETE", c.sessionHREF, nil)
 
 	// Add the Accept header for vCA
-	req.Header.Add("Accept", "application/xml;version=5.5")
+	req.Header.Add(GetVersionHeader(types.ApiVersion90))
 
 	// Set Authorization Header
 	req.Header.Add(c.Client.VCDAuthHeader, c.Client.VCDToken)

@@ -25,7 +25,7 @@ func NewResults(c *Client) *Results {
 func (c *VCDClient) Query(params map[string]string) (Results, error) {
 
 	req := c.Client.NewRequest(params, "GET", c.QueryHREF, nil)
-	req.Header.Add("Accept", "vnd.vmware.vcloud.org+xml;version=5.5")
+	req.Header.Add(GetVersionHeader(types.ApiVersion))
 
 	resp, err := checkResp(c.Client.Http.Do(req))
 	if err != nil {

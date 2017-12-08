@@ -42,6 +42,32 @@ var VDCStatuses = map[int]string{
 	3:  "UNRECOGNIZED",
 }
 
+// https://blogs.vmware.com/vapp/2009/11/virtual-hardware-in-ovf-part-1.html
+const ResourceTypeOther = 0
+const ResourceTypeProcessor = 3
+const ResourceTypeMemory = 4
+const ResourceTypeIDE = 5
+const ResourceTypeSCSI = 6
+const ResourceTypeEthernet = 10
+const ResourceTypeFloppy = 14
+const ResourceTypeCD = 15
+const ResourceTypeDVD = 16
+const ResourceTypeDisk = 17
+const ResourceTypeUSB = 23
+
+// Officially supported APIs by VMware
+// https://vdc-download.vmware.com/vmwb-repository/dcr-public/3ae3f17c-6666-4efa-83bd-3dae5031d559/08a66e37-540e-4987-85b0-ba1cdd40f7c6/vcloud_sp_api_guide_29_0.pdf
+const ApiVersion55 = "5.5"   // vCloud Director 5.5
+const ApiVersion56 = "5.6"   // vCloud Director 5.6
+const ApiVersion90 = "9.0"   // vCloud Director 8.0
+const ApiVersion130 = "13.0" // vCloud Air Compute Service
+const ApiVersion170 = "17.0" // vCloud Air Compute Service
+const ApiVersion200 = "20.0" // vCloud Director 8.10
+const ApiVersion270 = "27.0" // vCloud Director 8.20
+const ApiVersion290 = "29.0" // vCloud Director 9.0
+
+const ApiVersion = ApiVersion90
+
 // VCD API
 
 // DefaultStorageProfileSection is the name of the storage profile that will be specified for this virtual machine. The named storage profile must exist in the organization vDC that contains the virtual machine. If not specified, the default storage profile for the vDC is used.
@@ -254,15 +280,16 @@ type NetworkConfigSection struct {
 // Description: Represents a network connection in the virtual machine.
 // Since: 0.9
 type NetworkConnection struct {
-	Network                string `xml:"network,attr"`           // Name of the network to which this NIC is connected.
-	NetworkConnectionIndex int    `xml:"NetworkConnectionIndex"` // Virtual slot number associated with this NIC. First slot number is 0.
-	// NetworkAdapterType		string `xml:"NetworkAdapterType"`				 // Set the adapter type (e.g. E1000, E1000E, VMXNET3)
+	Network                 string `xml:"network,attr"`                      // Name of the network to which this NIC is connected.
+	NetworkConnectionIndex  int    `xml:"NetworkConnectionIndex"`            // Virtual slot number associated with this NIC. First slot number is 0.
 	NeedsCustomization      bool   `xml:"needsCustomization,attr,omitempty"` // True if this NIC needs customization.
 	ExternalIPAddress       string `xml:"ExternalIpAddress,omitempty"`       // If the network to which this NIC connects provides NAT services, the external address assigned to this NIC appears here.
 	IPAddress               string `xml:"IpAddress,omitempty"`               // IP address assigned to this NIC.
 	IsConnected             bool   `xml:"IsConnected"`                       // If the virtual machine is undeployed, this value specifies whether the NIC should be connected upon deployment. If the virtual machine is deployed, this value reports the current status of this NIC's connection, and can be updated to change that connection status.
 	IPAddressAllocationMode string `xml:"IpAddressAllocationMode"`           // IP address allocation mode for this connection. One of: POOL (A static IP address is allocated automatically from a pool of addresses.) DHCP (The IP address is obtained from a DHCP service.) MANUAL (The IP address is assigned manually in the IpAddress element.) NONE (No IP addressing mode specified.)
 	MACAddress              string `xml:"MACAddress,omitempty"`              // MAC address associated with the NIC.
+	NetworkAdapterType      string `xml:"NetworkAdapterType"`                // Set the adapter type (e.g. E1000, E1000E, VMXNET3)
+
 }
 
 // NetworkConnectionSection the container for the network connections of this virtual machine.

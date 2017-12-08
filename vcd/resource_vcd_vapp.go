@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
+	helper "github.com/terraform-providers/terraform-provider-vcd/vcd/helper"
 	types "github.com/ukcloud/govcloudair/types/v56"
 )
 
@@ -49,14 +50,6 @@ func resourceVcdVApp() *schema.Resource {
 				Optional: true,
 				Default:  false,
 			},
-			// "metadata": {
-			// 	Type:     schema.TypeMap,
-			// 	Optional: true,
-			// },
-			// "ovf": {
-			// 	Type:     schema.TypeMap,
-			// 	Optional: true,
-			// },
 		},
 	}
 }
@@ -70,30 +63,32 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 	// Get VMs and create descriptions for the vAppCompose
 	vmResources := d.Get("vm").([]interface{})
 
-	var vmDescriptions []*types.NewVMDescription
-	for _, vm := range vmResources {
+	vmDescriptions := make([]*types.NewVMDescription, len(vmResources))
+	for index, vm := range vmResources {
 		vmResource := vm.(map[string]interface{})
-		vmDescription, err := createVMDescription(vmResource, networks, meta)
+		vmDescription, err := helper.CreateVMDescription(vmResource, networks, meta)
 
 		if err != nil {
 			return err
 		}
 
-		vmDescriptions = append(vmDescriptions, vmDescription)
+		log.Printf("[TRACE] VMDescription order: %d %s", index, vmDescription.Name)
+
+		vmDescriptions[index] = vmDescription
 	}
 
-	var orgnetworks []*types.OrgVDCNetwork
-	for _, network := range networks {
+	orgnetworks := make([]*types.OrgVDCNetwork, len(networks))
+	for index, network := range networks {
 		orgnetwork, err := vcdClient.OrgVdc.FindVDCNetwork(network)
 		if err != nil {
 			return fmt.Errorf("Error finding vdc org network: %s, %#v", network, err)
 		}
 
-		orgnetworks = append(orgnetworks, orgnetwork.OrgVDCNetwork)
+		orgnetworks[index] = orgnetwork.OrgVDCNetwork
 	}
 
 	// See if vApp exists
-	vapp, err := vcdClient.OrgVdc.FindVAppByID(d.Get("href").(string))
+	vapp, err := vcdClient.OrgVdc.FindVAppByName(d.Id())
 	log.Printf("[TRACE] Looking for existing vapp, found %#v", vapp)
 
 	if err != nil {
@@ -130,30 +125,32 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error refreshing vApp: %#v", err)
 	}
 
-	var newVMResources []map[string]interface{}
+	newVMResources := make([]map[string]interface{}, len(vmResources))
 
 	for index, vmData := range vmResources {
 		vmResource := vmData.(map[string]interface{})
 
 		href := vapp.VApp.Children.VM[index].HREF
+		// Update vmResourceMap
+		vmResource["href"] = href
 
-		vmResourceAfterConfiguration, err := configureVM(vmResource, meta)
+		vmResourceAfterConfiguration, err := helper.ConfigureVM(vmResource, meta)
 
 		if err != nil {
 			return err
 		}
 
-		// Update vmResourceMap
-		vmResource["href"] = href
-		// vmResource["network"] = readVmNetwork()
-		newVMResources = append(newVMResources, vmResourceAfterConfiguration)
+		log.Printf("[TRACE] VMResourceAfterConfigure order: %d %s", index, vmResourceAfterConfiguration["name"])
+
+		newVMResources[index] = vmResourceAfterConfiguration
 	}
 
-	d.SetId(d.Get("href").(string))
 	d.Set("vm", newVMResources)
+	log.Printf("[TRACE] State after SET VM: %#v", d.Get("vm"))
 
-	// TODO: Remove this coupling
-	// return resourceVcdVAppUpdate(d, meta)
+	// This should be HREF, but FindVAppByHREF is buggy
+	d.SetId(d.Get("name").(string))
+
 	return nil
 }
 
@@ -163,7 +160,7 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	// TODO: HERE WE MUST CHECK AND ADD NEW OR REMOVE VMs
 
 	// Should be fetched by ID/HREF
-	vapp, err := vcdClient.OrgVdc.FindVAppByName(d.Get("name").(string))
+	vapp, err := vcdClient.OrgVdc.FindVAppByName(d.Id())
 
 	if err != nil {
 		return fmt.Errorf("Error finding VApp: %#v", err)
@@ -175,18 +172,18 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	vmResources := d.Get("vm").([]interface{})
-	var newVMResources []map[string]interface{}
+	newVMResources := make([]map[string]interface{}, len(vmResources))
 
-	for _, vmData := range vmResources {
+	for index, vmData := range vmResources {
 		vmResource := vmData.(map[string]interface{})
 
-		vmResourceAfterConfiguration, err := configureVM(vmResource, meta)
+		vmResourceAfterConfiguration, err := helper.ConfigureVM(vmResource, meta)
 
 		if err != nil {
 			return err
 		}
 
-		newVMResources = append(newVMResources, vmResourceAfterConfiguration)
+		newVMResources[index] = vmResourceAfterConfiguration
 	}
 
 	d.Set("vm", newVMResources)
@@ -204,13 +201,34 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Should be fetched by ID/HREF
-	_, err = vcdClient.OrgVdc.FindVAppByName(d.Get("name").(string))
+	_, err = vcdClient.OrgVdc.FindVAppByName(d.Id())
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find vapp. Removing from tfstate")
 		d.SetId("")
 		return nil
 	}
 
+	// Get VMs and create descriptions for the vAppCompose
+	vmResources := d.Get("vm").([]interface{})
+
+	newVMResources := make([]map[string]interface{}, len(vmResources))
+
+	for index, vmData := range vmResources {
+		vmResource := vmData.(map[string]interface{})
+
+		vmResourceAfterReRead, err := helper.ReadVM(vmResource, meta)
+
+		if err != nil {
+			return err
+		}
+
+		log.Printf("[TRACE] vmResourceAfterReRead order: %d %s", index, vmResourceAfterReRead["name"])
+
+		newVMResources[index] = vmResourceAfterReRead
+
+	}
+
+	d.Set("VM", newVMResources)
 	return nil
 }
 
@@ -223,14 +241,15 @@ func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
 	// * List of Network of VMs
 
 	// Should be fetched by ID/HREF
-	vapp, err := vcdClient.OrgVdc.FindVAppByName(d.Get("name").(string))
+	vapp, err := vcdClient.OrgVdc.FindVAppByName(d.Id())
 
 	if err != nil {
-		return fmt.Errorf("error finding vapp: %s", err)
+		return fmt.Errorf("Error finding VApp: %#v", err)
 	}
 
+	status, err := vapp.GetStatus()
 	if err != nil {
-		return fmt.Errorf("Error getting VApp status: %#v", err)
+		return fmt.Errorf("Error getting VApp status: %#v, %s", err, status)
 	}
 
 	_ = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
@@ -252,173 +271,6 @@ func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
 	})
 
 	return err
-}
-
-func createVMDescription(vmData map[string]interface{}, vAppNetworks []string, meta interface{}) (*types.NewVMDescription, error) {
-	vcdClient := meta.(*VCDClient)
-
-	catalog, err := vcdClient.Org.FindCatalog(vmData["catalog_name"].(string))
-	if err != nil {
-		return nil, fmt.Errorf("Error finding catalog: %#v", err)
-	}
-
-	catalogitem, err := catalog.FindCatalogItem(vmData["template_name"].(string))
-	if err != nil {
-		return nil, fmt.Errorf("Error finding catalog item: %#v", err)
-	}
-
-	vapptemplate, err := catalogitem.GetVAppTemplate()
-	if err != nil {
-		return nil, fmt.Errorf("Error finding VAppTemplate: %#v", err)
-	}
-
-	log.Printf("[DEBUG] VAppTemplate: %#v", vapptemplate)
-
-	networks := vmData["network"].([]interface{})
-	if err != nil {
-		return nil, fmt.Errorf("Error reading networks for vm: %#v", err)
-	}
-
-	var nets []*types.NetworkOrgDescription
-	for _, n := range networks {
-
-		network := n.(map[string]interface{})
-		// Check if VM network is assigned to vApp
-		if !isMember(vAppNetworks, network["name"].(string)) {
-			return nil, fmt.Errorf("Network (%s) assigned to VM is not assigned to vApp, vApp has the following networks: %#v", network["name"].(string), vAppNetworks)
-		}
-
-		nets = append(nets,
-			&types.NetworkOrgDescription{
-				Name:             network["name"].(string),
-				IsPrimary:        network["is_primary"].(bool),
-				IsConnected:      network["is_connected"].(bool),
-				IPAllocationMode: network["ip_allocation_mode"].(string),
-				AdapterType:      network["adapter_type"].(string),
-			},
-		)
-	}
-
-	// net, err := vcdClient.OrgVdc.FindVDCNetwork(d.Get("network_name").(string))
-	// if err != nil {
-	// 	return fmt.Errorf("Error finding OrgVCD Network: %#v", err)
-	// }
-
-	// storage_profile_reference := types.Reference{}
-
-	// // Override default_storage_profile if we find the given storage profile
-	// if d.Get("storage_profile").(string) != "" {
-	// 	storage_profile_reference, err = vcdClient.OrgVdc.FindStorageProfileReference(d.Get("storage_profile").(string))
-	// 	if err != nil {
-	// 		return fmt.Errorf("Error finding storage profile %s", d.Get("storage_profile").(string))
-	// 	}
-	// }
-
-	vmDescription := &types.NewVMDescription{
-		Name:         vmData["name"].(string),
-		VAppTemplate: vapptemplate.VAppTemplate,
-		Networks:     nets,
-	}
-
-	log.Printf("[DEBUG] NewVMDescription: %#v", vmDescription)
-
-	return vmDescription, nil
-
-}
-
-func configureVM(vmResource map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
-	vcdClient := meta.(*VCDClient)
-
-	// Get VM object from VCD
-	vm, err := vcdClient.FindVMByHREF(vmResource["href"].(string))
-
-	if err != nil {
-		return nil, fmt.Errorf("Could not find VM (%s) in VCD", vmResource["href"].(string))
-	}
-
-	// TODO: Detect change in subResourceData
-	// TODO: Power off/on logic
-
-	// Configure VM with initscript
-	log.Printf("[TRACE] Configuring vm (%s) with initscript", vmResource["name"].(string))
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := vm.RunCustomizationScript(vmResource["name"].(string), vmResource["initscript"].(string))
-		if err != nil {
-			return resource.NonRetryableError(fmt.Errorf("Error with setting init script: %#v", err))
-		}
-		return resource.RetryableError(task.WaitTaskCompletion())
-	})
-	if err != nil {
-		return nil, fmt.Errorf("Error completing tasks: %#v", err)
-	}
-
-	// Change CPU count of VM
-	log.Printf("[TRACE] Changing CPU of vm (%s)", vmResource["name"].(string))
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := vm.ChangeCPUcount(vmResource["cpus"].(int))
-		if err != nil {
-			return resource.NonRetryableError(fmt.Errorf("Error changing cpu count: %#v", err))
-		}
-
-		return resource.RetryableError(task.WaitTaskCompletion())
-	})
-	if err != nil {
-		return nil, fmt.Errorf("Error completing task: %#v", err)
-	}
-
-	// Change Memory of VM
-	log.Printf("[TRACE] Changing memory of vm (%s)", vmResource["name"].(string))
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := vm.ChangeMemorySize(vmResource["memory"].(int))
-		if err != nil {
-			return resource.NonRetryableError(fmt.Errorf("Error changing memory size: %#v", err))
-		}
-
-		return resource.RetryableError(task.WaitTaskCompletion())
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	// Change nested hypervisor setting of VM
-	log.Printf("[TRACE] Changing nested hypervisor setting of vm (%s)", vmResource["name"].(string))
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := vm.ChangeNestedHypervisor(vmResource["nested_hypervisor_enabled"].(bool))
-		if err != nil {
-			return resource.NonRetryableError(fmt.Errorf("Error changing nested hypervisor setting count: %#v", err))
-		}
-
-		return resource.RetryableError(task.WaitTaskCompletion())
-	})
-	if err != nil {
-		return nil, fmt.Errorf("Error completing task: %#v", err)
-	}
-
-	// TODO: Network changes
-
-	return vmResource, nil
-}
-
-func readVM(vmResource map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
-
-	return nil, nil
-}
-
-func configureNetwork(networkResource map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
-	return nil, nil
-}
-
-func readNetwork(networkResource map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
-	return nil, nil
-}
-
-func isMember(list []string, element string) bool {
-	for _, item := range list {
-		if item == element {
-			return true
-		}
-	}
-	return false
 }
 
 func interfaceListToStringList(old []interface{}) []string {

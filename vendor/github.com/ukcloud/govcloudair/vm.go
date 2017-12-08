@@ -153,7 +153,7 @@ func (v *VM) ChangeCPUcount(size int) (Task, error) {
 		ElementName:     strconv.Itoa(size) + " virtual CPU(s)",
 		InstanceID:      4,
 		Reservation:     0,
-		ResourceType:    3,
+		ResourceType:    types.ResourceTypeProcessor,
 		VirtualQuantity: size,
 		Weight:          0,
 		Link: &types.Link{
@@ -217,7 +217,7 @@ func (v *VM) ChangeMemorySize(size int) (Task, error) {
 		ElementName:     strconv.Itoa(size) + " MB of memory",
 		InstanceID:      5,
 		Reservation:     0,
-		ResourceType:    4,
+		ResourceType:    types.ResourceTypeMemory,
 		VirtualQuantity: size,
 		Weight:          0,
 		Link: &types.Link{
@@ -476,4 +476,49 @@ func (v *VM) Undeploy() (Task, error) {
 	// The request was successful
 	return *task, nil
 
+}
+
+func (v *VM) getVirtualHardwareItemsByResourceType(resourceType int) ([]*types.VirtualHardwareItem, error) {
+	err := v.Refresh()
+	if err != nil {
+		return nil, fmt.Errorf("error refreshing VM before running customization: %v", err)
+	}
+
+	var items []*types.VirtualHardwareItem
+
+	for _, item := range v.VM.VirtualHardwareSection.Item {
+		if item.ResourceType == resourceType {
+			items = append(items, item)
+		}
+	}
+
+	return items, nil
+}
+
+func (v *VM) GetCPUCount() (int, error) {
+	items, err := v.getVirtualHardwareItemsByResourceType(types.ResourceTypeProcessor)
+	if err != nil {
+		return 0, err
+	}
+
+	// The amount of CPU items must be one
+	if len(items) != 1 {
+		return 0, fmt.Errorf("error: Did not find any CPU on the given vm (%s)", v.VM.Name)
+	}
+
+	return items[0].VirtualQuantity, nil
+}
+
+func (v *VM) GetMemoryCount() (int, error) {
+	items, err := v.getVirtualHardwareItemsByResourceType(types.ResourceTypeMemory)
+	if err != nil {
+		return 0, err
+	}
+
+	// The amount of memory items must be one
+	if len(items) != 1 {
+		return 0, fmt.Errorf("error: Did not find any Memory on the given vm (%s)", v.VM.Name)
+	}
+
+	return items[0].VirtualQuantity, nil
 }

@@ -5,6 +5,7 @@ import (
 	"net/url"
 
 	govcd "github.com/ukcloud/govcloudair" // Forked from vmware/govcloudair
+	types "github.com/ukcloud/govcloudair/types/v56"
 )
 
 type Config struct {
@@ -30,7 +31,7 @@ func (c *Config) Client() (*VCDClient, error) {
 	}
 
 	vcdclient := &VCDClient{
-		govcd.NewVCDClient(*u, c.InsecureFlag),
+		govcd.NewVCDClient(*u, c.InsecureFlag, types.ApiVersion),
 		c.MaxRetryTimeout, c.InsecureFlag}
 	org, vcd, err := vcdclient.Authenticate(c.User, c.Password, c.Org, c.VDC)
 	if err != nil {

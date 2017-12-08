@@ -75,11 +75,11 @@ func (v *VApp) Refresh() error {
 }
 
 func composeSourceItems(vms []*types.NewVMDescription) []*types.SourcedCompositionItemParam {
-	var sourceItems []*types.SourcedCompositionItemParam
-	for _, vm := range vms {
+	sourceItems := make([]*types.SourcedCompositionItemParam, len(vms))
+	for i, vm := range vms {
 
-		var networkConnections []*types.NetworkConnection
-		var networkAssignments []*types.NetworkAssignment
+		networkConnections := make([]*types.NetworkConnection, len(vm.Networks))
+		networkAssignments := make([]*types.NetworkAssignment, len(vm.Networks))
 		var primeryNetworkConnectionIndex int
 
 		for index, orgnetwork := range vm.Networks {
@@ -87,42 +87,38 @@ func composeSourceItems(vms []*types.NewVMDescription) []*types.SourcedCompositi
 				primeryNetworkConnectionIndex = index
 			}
 
-			networkConnections = append(networkConnections,
+			networkConnections[index] =
 				&types.NetworkConnection{
 					Network:                 orgnetwork.Name,
 					NetworkConnectionIndex:  index,
 					IsConnected:             orgnetwork.IsConnected,
 					IPAddressAllocationMode: orgnetwork.IPAllocationMode,
-					// NetworkAdapterType:      orgnetwork.AdapterType,
-				},
-			)
+					NetworkAdapterType:      orgnetwork.AdapterType,
+				}
 
-			networkAssignments = append(networkAssignments,
+			networkAssignments[index] =
 				&types.NetworkAssignment{
 					InnerNetwork:     orgnetwork.Name,
 					ContainerNetwork: orgnetwork.Name,
-				},
-			)
+				}
 		}
 
-		sourceItems = append(sourceItems,
-			&types.SourcedCompositionItemParam{
-				Source: &types.Reference{
-					HREF: vm.VAppTemplate.Children.VM[0].HREF,
-					Name: vm.Name,
-				},
-				InstantiationParams: &types.InstantiationParams{
-					NetworkConnectionSection: &types.NetworkConnectionSection{
-						Type: vm.VAppTemplate.Children.VM[0].NetworkConnectionSection.Type,
-						HREF: vm.VAppTemplate.Children.VM[0].NetworkConnectionSection.HREF,
-						Info: "Network config for sourced item",
-						PrimaryNetworkConnectionIndex: primeryNetworkConnectionIndex,
-						NetworkConnection:             networkConnections,
-					},
-				},
-				NetworkAssignment: networkAssignments,
+		sourceItems[i] = &types.SourcedCompositionItemParam{
+			Source: &types.Reference{
+				HREF: vm.VAppTemplate.Children.VM[0].HREF,
+				Name: vm.Name,
 			},
-		)
+			InstantiationParams: &types.InstantiationParams{
+				NetworkConnectionSection: &types.NetworkConnectionSection{
+					Type: vm.VAppTemplate.Children.VM[0].NetworkConnectionSection.Type,
+					HREF: vm.VAppTemplate.Children.VM[0].NetworkConnectionSection.HREF,
+					Info: "Network config for sourced item",
+					PrimaryNetworkConnectionIndex: primeryNetworkConnectionIndex,
+					NetworkConnection:             networkConnections,
+				},
+			},
+			NetworkAssignment: networkAssignments,
+		}
 	}
 
 	return sourceItems
@@ -130,22 +126,20 @@ func composeSourceItems(vms []*types.NewVMDescription) []*types.SourcedCompositi
 
 func composeNetworkConfigs(orgnetworks []*types.OrgVDCNetwork) []*types.VAppNetworkConfiguration {
 
-	var networkConfigs []*types.VAppNetworkConfiguration
+	networkConfigs := make([]*types.VAppNetworkConfiguration, len(orgnetworks))
 
-	for _, orgnetwork := range orgnetworks {
-		networkConfigs = append(networkConfigs,
-			&types.VAppNetworkConfiguration{
-				NetworkName: orgnetwork.Name,
-				Configuration: &types.NetworkConfiguration{
-					FenceMode: "bridged",
-					ParentNetwork: &types.Reference{
-						HREF: orgnetwork.HREF,
-						Name: orgnetwork.Name,
-						Type: orgnetwork.Type,
-					},
+	for index, orgnetwork := range orgnetworks {
+		networkConfigs[index] = &types.VAppNetworkConfiguration{
+			NetworkName: orgnetwork.Name,
+			Configuration: &types.NetworkConfiguration{
+				FenceMode: "bridged",
+				ParentNetwork: &types.Reference{
+					HREF: orgnetwork.HREF,
+					Name: orgnetwork.Name,
+					Type: orgnetwork.Type,
 				},
 			},
-		)
+		}
 	}
 
 	return networkConfigs
@@ -208,11 +202,11 @@ func (v *VApp) RemoveVMs(vms []VM) error {
 		}
 	}
 
-	var deleteItems []*types.DeleteItem
-	for _, vm := range vms {
-		deleteItems = append(deleteItems, &types.DeleteItem{
+	deleteItems := make([]*types.DeleteItem, len(vms))
+	for index, vm := range vms {
+		deleteItems[index] = &types.DeleteItem{
 			HREF: vm.VM.HREF,
-		})
+		}
 	}
 
 	vcomp := &types.ReComposeVAppParams{
@@ -356,6 +350,8 @@ func (v *VApp) ComposeVApp(name string, description string, orgnetworks []*types
 	log.Printf("[TRACE] URL: %s", s.String())
 
 	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.composeVAppParams+xml")
+
+	log.Printf("[TRACE] vApp recompose headers: %#v", req.Header)
 
 	resp, err := checkResp(v.c.Http.Do(req))
 	if err != nil {
