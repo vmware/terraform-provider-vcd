@@ -362,55 +362,33 @@ var NetworkSchema = map[string]*schema.Schema{
 // 		return fmt.Errorf("Error getting VM4 : %#v", err)
 // 	}
 
-// 	status, err := vapp.GetStatus()
-// 	if err != nil {
-// 		return fmt.Errorf("Error getting vApp status: %#v", err)
-// 	}
-
-// 	log.Printf("[TRACE] Vapp Status:: %s", status)
-// 	if status != "POWERED_OFF" {
-// 		log.Printf("[TRACE] Undeploying vApp: %s", vapp.VApp.Name)
-// 		task, err := vapp.Undeploy()
-// 		if err != nil {
-// 			return fmt.Errorf("Error Undeploying vApp: %#v", err)
-// 		}
-// 		err = task.WaitTaskCompletion()
-// 		if err != nil {
-// 			return fmt.Errorf("Error completing tasks: %#v", err)
-// 		}
-// 	}
-
-// 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-// 		log.Printf("[TRACE] Removing VM: %s", vm.VM.Name)
-// 		err := vapp.RemoveVM(vm)
-// 		if err != nil {
-// 			return resource.RetryableError(fmt.Errorf("Error deleting: %#v", err))
-// 		}
-
-// 		return nil
-// 	})
-
-// 	if status != "POWERED_OFF" {
-// 		log.Printf("[TRACE] Redeploying vApp: %s", vapp.VApp.Name)
-// 		task, err := vapp.Deploy()
-// 		if err != nil {
-// 			return fmt.Errorf("Error Deploying vApp: %#v", err)
-// 		}
-// 		err = task.WaitTaskCompletion()
-// 		if err != nil {
-// 			return fmt.Errorf("Error completing tasks: %#v", err)
-// 		}
-
-// 		log.Printf("[TRACE] Powering on vApp: %s", vapp.VApp.Name)
-// 		task, err = vapp.PowerOn()
-// 		if err != nil {
-// 			return fmt.Errorf("Error Powering on vApp: %#v", err)
-// 		}
-// 		err = task.WaitTaskCompletion()
-// 		if err != nil {
-// 			return fmt.Errorf("Error completing tasks: %#v", err)
-// 		}
-// 	}
+// status, err := vm.GetStatus()
+// if err != nil {
+// 	return fmt.Errorf("Error getting VM status: %#v", err)
+// }
+//
+// log.Printf("[TRACE] VM Status: %s", status)
+// if status != "POWERED_OFF" {
+//	log.Printf("[TRACE] Undeploying vApp: %s", vapp.VApp.Name)
+//	task, err := vm.Undeploy()
+//	if err != nil {
+//		return fmt.Errorf("Error Undeploying VM: %#v", err)
+//	}
+//	err = task.WaitTaskCompletion()
+//	if err != nil {
+//		return fmt.Errorf("Error completing tasks: %#v", err)
+//	}
+//}
+//
+// err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+//	log.Printf("[TRACE] Removing VM: %s", vm.VM.Name)
+//	err := vapp.RemoveVM(vm)
+//	if err != nil {
+//		return resource.RetryableError(fmt.Errorf("Error deleting: %#v", err))
+//	}
+//
+//	return nil
+//})
 
 // 	return err
 // }
