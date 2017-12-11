@@ -48,7 +48,7 @@ func (c *Client) NewRequest(params map[string]string, method string, u url.URL, 
 		// Add the authorization header
 		req.Header.Add(c.VCDAuthHeader, c.VCDToken)
 		// Add the Accept header for VCD
-		req.Header.Add("Accept", "application/*+xml;version="+c.APIVersion)
+		req.Header.Add(GetVersionHeader(c.APIVersion))
 	}
 
 	return req

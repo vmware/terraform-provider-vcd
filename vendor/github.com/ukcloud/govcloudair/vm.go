@@ -153,7 +153,7 @@ func (v *VM) ChangeCPUcount(size int) (Task, error) {
 		ElementName:     strconv.Itoa(size) + " virtual CPU(s)",
 		InstanceID:      4,
 		Reservation:     0,
-		ResourceType:    3,
+		ResourceType:    types.ResourceTypeProcessor,
 		VirtualQuantity: size,
 		Weight:          0,
 		Link: &types.Link{
@@ -217,7 +217,7 @@ func (v *VM) ChangeMemorySize(size int) (Task, error) {
 		ElementName:     strconv.Itoa(size) + " MB of memory",
 		InstanceID:      5,
 		Reservation:     0,
-		ResourceType:    4,
+		ResourceType:    types.ResourceTypeMemory,
 		VirtualQuantity: size,
 		Weight:          0,
 		Link: &types.Link{
@@ -263,6 +263,45 @@ func (v *VM) ChangeMemorySize(size int) (Task, error) {
 
 }
 
+func (v *VM) ChangeNestedHypervisor(value bool) (Task, error) {
+	err := v.Refresh()
+	if err != nil {
+		return Task{}, fmt.Errorf("error refreshing vapp before running customization: %v", err)
+	}
+
+	log.Printf("[DEBUG] Nested Hypervisor is: %t", v.VM.NestedHypervisorEnabled)
+
+	b := bytes.NewBufferString(xml.Header)
+
+	s, _ := url.ParseRequestURI(v.VM.HREF)
+
+	if value {
+		s.Path += "/action/enableNestedHypervisor"
+	} else {
+		s.Path += "/action/disableNestedHypervisor"
+	}
+
+	log.Printf("[DEBUG] URL for NestedHypervisor setting: %s", s)
+
+	req := v.c.NewRequest(map[string]string{}, "POST", *s, b)
+
+	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.vm+xml")
+
+	resp, err := checkResp(v.c.Http.Do(req))
+	if err != nil {
+		return Task{}, fmt.Errorf("error customizing VM: %s", err)
+	}
+
+	task := NewTask(v.c)
+
+	if err = decodeBody(resp, task.Task); err != nil {
+		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
+	}
+
+	// The request was successful
+	return *task, nil
+}
+
 func (v *VM) ChangeNetworkConfig(network, ip string) (Task, error) {
 	err := v.Refresh()
 	if err != nil {
@@ -286,13 +325,14 @@ func (v *VM) ChangeNetworkConfig(network, ip string) (Task, error) {
 		ipAddress = ip
 	}
 
-	networkConnection := &types.NetworkConnection{
+	networkConnection := []*types.NetworkConnection{&types.NetworkConnection{
 		Network:                 network,
 		NeedsCustomization:      true,
 		NetworkConnectionIndex:  0,
 		IPAddress:               ipAddress,
 		IsConnected:             true,
 		IPAddressAllocationMode: ipAllocationMode,
+	},
 	}
 
 	newnetwork := &types.NetworkConnectionSection{
@@ -436,4 +476,49 @@ func (v *VM) Undeploy() (Task, error) {
 	// The request was successful
 	return *task, nil
 
+}
+
+func (v *VM) getVirtualHardwareItemsByResourceType(resourceType int) ([]*types.VirtualHardwareItem, error) {
+	err := v.Refresh()
+	if err != nil {
+		return nil, fmt.Errorf("error refreshing VM before running customization: %v", err)
+	}
+
+	var items []*types.VirtualHardwareItem
+
+	for _, item := range v.VM.VirtualHardwareSection.Item {
+		if item.ResourceType == resourceType {
+			items = append(items, item)
+		}
+	}
+
+	return items, nil
+}
+
+func (v *VM) GetCPUCount() (int, error) {
+	items, err := v.getVirtualHardwareItemsByResourceType(types.ResourceTypeProcessor)
+	if err != nil {
+		return 0, err
+	}
+
+	// The amount of CPU items must be one
+	if len(items) != 1 {
+		return 0, fmt.Errorf("error: Did not find any CPU on the given vm (%s)", v.VM.Name)
+	}
+
+	return items[0].VirtualQuantity, nil
+}
+
+func (v *VM) GetMemoryCount() (int, error) {
+	items, err := v.getVirtualHardwareItemsByResourceType(types.ResourceTypeMemory)
+	if err != nil {
+		return 0, err
+	}
+
+	// The amount of memory items must be one
+	if len(items) != 1 {
+		return 0, fmt.Errorf("error: Did not find any Memory on the given vm (%s)", v.VM.Name)
+	}
+
+	return items[0].VirtualQuantity, nil
 }

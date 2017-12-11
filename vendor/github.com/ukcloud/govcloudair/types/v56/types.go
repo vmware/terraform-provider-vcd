@@ -42,6 +42,32 @@ var VDCStatuses = map[int]string{
 	3:  "UNRECOGNIZED",
 }
 
+// https://blogs.vmware.com/vapp/2009/11/virtual-hardware-in-ovf-part-1.html
+const ResourceTypeOther = 0
+const ResourceTypeProcessor = 3
+const ResourceTypeMemory = 4
+const ResourceTypeIDE = 5
+const ResourceTypeSCSI = 6
+const ResourceTypeEthernet = 10
+const ResourceTypeFloppy = 14
+const ResourceTypeCD = 15
+const ResourceTypeDVD = 16
+const ResourceTypeDisk = 17
+const ResourceTypeUSB = 23
+
+// Officially supported APIs by VMware
+// https://vdc-download.vmware.com/vmwb-repository/dcr-public/3ae3f17c-6666-4efa-83bd-3dae5031d559/08a66e37-540e-4987-85b0-ba1cdd40f7c6/vcloud_sp_api_guide_29_0.pdf
+const ApiVersion55 = "5.5"   // vCloud Director 5.5
+const ApiVersion56 = "5.6"   // vCloud Director 5.6
+const ApiVersion90 = "9.0"   // vCloud Director 8.0
+const ApiVersion130 = "13.0" // vCloud Air Compute Service
+const ApiVersion170 = "17.0" // vCloud Air Compute Service
+const ApiVersion200 = "20.0" // vCloud Director 8.10
+const ApiVersion270 = "27.0" // vCloud Director 8.20
+const ApiVersion290 = "29.0" // vCloud Director 9.0
+
+const ApiVersion = ApiVersion90
+
 // VCD API
 
 // DefaultStorageProfileSection is the name of the storage profile that will be specified for this virtual machine. The named storage profile must exist in the organization vDC that contains the virtual machine. If not specified, the default storage profile for the vDC is used.
@@ -242,10 +268,10 @@ type NetworkConfigSection struct {
 
 	Info string `xml:"ovf:Info"`
 	//
-	HREF          string                    `xml:"href,attr,omitempty"`
-	Type          string                    `xml:"type,attr,omitempty"`
-	Link          *Link                     `xml:"Link,omitempty"`
-	NetworkConfig *VAppNetworkConfiguration `xml:"NetworkConfig,omitempty"`
+	HREF          string                      `xml:"href,attr,omitempty"`
+	Type          string                      `xml:"type,attr,omitempty"`
+	Link          *Link                       `xml:"Link,omitempty"`
+	NetworkConfig []*VAppNetworkConfiguration `xml:"NetworkConfig,omitempty"`
 }
 
 // NetworkConnection represents a network connection in the virtual machine.
@@ -262,6 +288,8 @@ type NetworkConnection struct {
 	IsConnected             bool   `xml:"IsConnected"`                       // If the virtual machine is undeployed, this value specifies whether the NIC should be connected upon deployment. If the virtual machine is deployed, this value reports the current status of this NIC's connection, and can be updated to change that connection status.
 	IPAddressAllocationMode string `xml:"IpAddressAllocationMode"`           // IP address allocation mode for this connection. One of: POOL (A static IP address is allocated automatically from a pool of addresses.) DHCP (The IP address is obtained from a DHCP service.) MANUAL (The IP address is assigned manually in the IpAddress element.) NONE (No IP addressing mode specified.)
 	MACAddress              string `xml:"MACAddress,omitempty"`              // MAC address associated with the NIC.
+	NetworkAdapterType      string `xml:"NetworkAdapterType"`                // Set the adapter type (e.g. E1000, E1000E, VMXNET3)
+
 }
 
 // NetworkConnectionSection the container for the network connections of this virtual machine.
@@ -278,11 +306,11 @@ type NetworkConnectionSection struct {
 
 	Info string `xml:"ovf:Info"`
 	//
-	HREF                          string             `xml:"href,attr,omitempty"`
-	Type                          string             `xml:"type,attr,omitempty"`
-	Link                          *Link              `xml:"Link,omitempty"`
-	PrimaryNetworkConnectionIndex int                `xml:"PrimaryNetworkConnectionIndex"`
-	NetworkConnection             *NetworkConnection `xml:"NetworkConnection,omitempty"`
+	HREF                          string               `xml:"href,attr,omitempty"`
+	Type                          string               `xml:"type,attr,omitempty"`
+	Link                          *Link                `xml:"Link,omitempty"`
+	PrimaryNetworkConnectionIndex int                  `xml:"PrimaryNetworkConnectionIndex"`
+	NetworkConnection             []*NetworkConnection `xml:"NetworkConnection,omitempty"`
 }
 
 // InstantiationParams is a container for ovf:Section_Type elements that specify vApp configuration on instantiate, compose, or recompose.
@@ -684,11 +712,11 @@ type ComposeVAppParams struct {
 	PowerOn     bool   `xml:"powerOn,attr"`               // True if the vApp should be powered-on at instantiation. Defaults to true.
 	LinkedClone bool   `xml:"linkedClone,attr,omitempty"` // Reserved. Unimplemented.
 	// Elements
-	Description         string                       `xml:"Description,omitempty"`         // Optional description.
-	VAppParent          *Reference                   `xml:"VAppParent,omitempty"`          // Reserved. Unimplemented.
-	InstantiationParams *InstantiationParams         `xml:"InstantiationParams,omitempty"` // Instantiation parameters for the composed vApp.
-	SourcedItem         *SourcedCompositionItemParam `xml:"SourcedItem,omitempty"`         // Composition item. One of: vApp vAppTemplate Vm.
-	AllEULAsAccepted    bool                         `xml:"AllEULAsAccepted,omitempty"`    // True confirms acceptance of all EULAs in a vApp template. Instantiation fails if this element is missing, empty, or set to false and one or more EulaSection elements are present.
+	Description         string                         `xml:"Description,omitempty"`         // Optional description.
+	VAppParent          *Reference                     `xml:"VAppParent,omitempty"`          // Reserved. Unimplemented.
+	InstantiationParams *InstantiationParams           `xml:"InstantiationParams,omitempty"` // Instantiation parameters for the composed vApp.
+	SourcedItem         []*SourcedCompositionItemParam `xml:"SourcedItem,omitempty"`         // Composition item. One of: vApp vAppTemplate Vm.
+	AllEULAsAccepted    bool                           `xml:"AllEULAsAccepted,omitempty"`    // True confirms acceptance of all EULAs in a vApp template. Instantiation fails if this element is missing, empty, or set to false and one or more EulaSection elements are present.
 }
 
 type ReComposeVAppParams struct {
@@ -702,12 +730,12 @@ type ReComposeVAppParams struct {
 	PowerOn     bool   `xml:"powerOn,attr"`               // True if the vApp should be powered-on at instantiation. Defaults to true.
 	LinkedClone bool   `xml:"linkedClone,attr,omitempty"` // Reserved. Unimplemented.
 	// Elements
-	Description         string                       `xml:"Description,omitempty"`         // Optional description.
-	VAppParent          *Reference                   `xml:"VAppParent,omitempty"`          // Reserved. Unimplemented.
-	InstantiationParams *InstantiationParams         `xml:"InstantiationParams,omitempty"` // Instantiation parameters for the composed vApp.
-	SourcedItem         *SourcedCompositionItemParam `xml:"SourcedItem,omitempty"`         // Composition item. One of: vApp vAppTemplate Vm.
-	AllEULAsAccepted    bool                         `xml:"AllEULAsAccepted,omitempty"`
-	DeleteItem          *DeleteItem                  `xml:"DeleteItem,omitempty"`
+	Description         string                         `xml:"Description,omitempty"`         // Optional description.
+	VAppParent          *Reference                     `xml:"VAppParent,omitempty"`          // Reserved. Unimplemented.
+	InstantiationParams *InstantiationParams           `xml:"InstantiationParams,omitempty"` // Instantiation parameters for the composed vApp.
+	SourcedItem         []*SourcedCompositionItemParam `xml:"SourcedItem,omitempty"`         // Composition item. One of: vApp vAppTemplate Vm.
+	AllEULAsAccepted    bool                           `xml:"AllEULAsAccepted,omitempty"`
+	DeleteItem          []*DeleteItem                  `xml:"DeleteItem,omitempty"`
 }
 
 type DeleteItem struct {
@@ -727,7 +755,7 @@ type SourcedCompositionItemParam struct {
 	VMGeneralParams     *VMGeneralParams     `xml:"VmGeneralParams,omitempty"`     // Specify name, description, and other properties of a VM during instantiation.
 	VAppScopedLocalID   string               `xml:"VAppScopedLocalId,omitempty"`   // If Source references a Vm, this value provides a unique identifier for the Vm in the scope of the composed vApp.
 	InstantiationParams *InstantiationParams `xml:"InstantiationParams,omitempty"` // If Source references a Vm this can include any of the following OVF sections: VirtualHardwareSection OperatingSystemSection NetworkConnectionSection GuestCustomizationSection.
-	NetworkAssignment   *NetworkAssignment   `xml:"NetworkAssignment,omitempty"`   // If Source references a Vm, this element maps a network name specified in the Vm to the network name of a vApp network defined in the composed vApp.
+	NetworkAssignment   []*NetworkAssignment `xml:"NetworkAssignment,omitempty"`   // If Source references a Vm, this element maps a network name specified in the Vm to the network name of a vApp network defined in the composed vApp.
 	StorageProfile      *Reference           `xml:"StorageProfile,omitempty"`      // If Source references a Vm, this element contains a reference to a storage profile to be used for the Vm. The specified storage profile must exist in the organization vDC that contains the composed vApp. If not specified, the default storage profile for the vDC is used.
 	LocalityParams      *LocalityParams      `xml:"LocalityParams,omitempty"`      // Represents locality parameters. Locality parameters provide a hint that may help the placement engine optimize placement of a VM and an independent a Disk so that the VM can make efficient use of the disk.
 }
@@ -1735,4 +1763,19 @@ type QueryResultOrgVdcStorageProfileRecordType struct {
 	NumberOfConditions      int    `xml:"numberOfConditions,attr,omitempty"`
 	StorageUsedMB           int    `xml:"storageUsedMB,attr,omitempty"`
 	StorageLimitMB          int    `xml:"storageLimitMB,attr,omitempty"`
+}
+
+// This should probably reside somewhere else
+
+type NewVMDescription struct {
+	Name         string
+	VAppTemplate *VAppTemplate
+	Networks     []*NetworkOrgDescription
+}
+type NetworkOrgDescription struct {
+	Name             string
+	IsPrimary        bool
+	IsConnected      bool
+	IPAllocationMode string
+	AdapterType      string
 }
