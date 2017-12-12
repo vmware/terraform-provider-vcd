@@ -119,3 +119,23 @@ func convertToStringMap(param map[string]interface{}) map[string]string {
 	}
 	return temp
 }
+
+func interfaceListToMapStringInterface(list []interface{}) []map[string]interface{} {
+	newList := make([]map[string]interface{}, len(list))
+
+	for index, item := range list {
+		newList[index] = item.(map[string]interface{})
+	}
+
+	return newList
+}
+
+func interfaceListToStringList(list []interface{}) []string {
+	newList := make([]string, len(list))
+
+	for index, item := range list {
+		newList[index] = item.(string)
+	}
+
+	return newList
+}

@@ -1237,3 +1237,42 @@ func (v *VApp) AddRAWNetworkConfig(networkName string, networkHref string) (Task
 	return *task, nil
 
 }
+
+func (v *VApp) GetVmByName(name string) (*types.VM, error) {
+	err := v.Refresh()
+	if err != nil {
+		return nil, fmt.Errorf("error refreshing vapp: %v", err)
+	}
+	for _, vm := range v.VApp.Children.VM {
+		if vm.Name == name {
+			return vm, nil
+		}
+	}
+	return nil, nil
+}
+
+func (v *VApp) GetVmByHREF(href string) (*types.VM, error) {
+	err := v.Refresh()
+	if err != nil {
+		return nil, fmt.Errorf("error refreshing vapp: %v", err)
+	}
+	for _, vm := range v.VApp.Children.VM {
+		if vm.HREF == href {
+			return vm, nil
+		}
+	}
+	return nil, nil
+}
+
+func (v *VApp) GetNetworkByName(name string) (*types.VAppNetworkConfiguration, error) {
+	err := v.Refresh()
+	if err != nil {
+		return nil, fmt.Errorf("error refreshing vapp: %v", err)
+	}
+	for _, networkConfig := range v.VApp.NetworkConfigSection.NetworkConfig {
+		if networkConfig.NetworkName == name {
+			return networkConfig, nil
+		}
+	}
+	return nil, nil
+}

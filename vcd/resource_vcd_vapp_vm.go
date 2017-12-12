@@ -74,6 +74,10 @@ var NetworkSchema = map[string]*schema.Schema{
 		Type:     schema.TypeString,
 		Required: true,
 	},
+	"href": {
+		Type:     schema.TypeString,
+		Computed: true,
+	},
 	"ip": {
 		Type:             schema.TypeString,
 		Optional:         true,

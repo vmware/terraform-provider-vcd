@@ -43,30 +43,34 @@ var VDCStatuses = map[int]string{
 }
 
 // https://blogs.vmware.com/vapp/2009/11/virtual-hardware-in-ovf-part-1.html
-const ResourceTypeOther = 0
-const ResourceTypeProcessor = 3
-const ResourceTypeMemory = 4
-const ResourceTypeIDE = 5
-const ResourceTypeSCSI = 6
-const ResourceTypeEthernet = 10
-const ResourceTypeFloppy = 14
-const ResourceTypeCD = 15
-const ResourceTypeDVD = 16
-const ResourceTypeDisk = 17
-const ResourceTypeUSB = 23
+type ResourceType = int
+
+const ResourceTypeOther ResourceType = 0
+const ResourceTypeProcessor ResourceType = 3
+const ResourceTypeMemory ResourceType = 4
+const ResourceTypeIDE ResourceType = 5
+const ResourceTypeSCSI ResourceType = 6
+const ResourceTypeEthernet ResourceType = 10
+const ResourceTypeFloppy ResourceType = 14
+const ResourceTypeCD ResourceType = 15
+const ResourceTypeDVD ResourceType = 16
+const ResourceTypeDisk ResourceType = 17
+const ResourceTypeUSB ResourceType = 23
 
 // Officially supported APIs by VMware
 // https://vdc-download.vmware.com/vmwb-repository/dcr-public/3ae3f17c-6666-4efa-83bd-3dae5031d559/08a66e37-540e-4987-85b0-ba1cdd40f7c6/vcloud_sp_api_guide_29_0.pdf
-const ApiVersion55 = "5.5"   // vCloud Director 5.5
-const ApiVersion56 = "5.6"   // vCloud Director 5.6
-const ApiVersion90 = "9.0"   // vCloud Director 8.0
-const ApiVersion130 = "13.0" // vCloud Air Compute Service
-const ApiVersion170 = "17.0" // vCloud Air Compute Service
-const ApiVersion200 = "20.0" // vCloud Director 8.10
-const ApiVersion270 = "27.0" // vCloud Director 8.20
-const ApiVersion290 = "29.0" // vCloud Director 9.0
+type ApiVersionType = string
 
-const ApiVersion = ApiVersion90
+const ApiVersion55 ApiVersionType = "5.5"   // vCloud Director 5.5
+const ApiVersion56 ApiVersionType = "5.6"   // vCloud Director 5.6
+const ApiVersion90 ApiVersionType = "9.0"   // vCloud Director 8.0
+const ApiVersion130 ApiVersionType = "13.0" // vCloud Air Compute Service
+const ApiVersion170 ApiVersionType = "17.0" // vCloud Air Compute Service
+const ApiVersion200 ApiVersionType = "20.0" // vCloud Director 8.10
+const ApiVersion270 ApiVersionType = "27.0" // vCloud Director 8.20
+const ApiVersion290 ApiVersionType = "29.0" // vCloud Director 9.0
+
+const ApiVersion ApiVersionType = ApiVersion90
 
 // VCD API
 
@@ -244,7 +248,7 @@ type NetworkConfiguration struct {
 // Description: Represents a vApp network configuration.
 // Since: 0.9
 type VAppNetworkConfiguration struct {
-	HREF        string `xml:"href,attr,omitempty"`
+	// HREF        string `xml:"href,attr,omitempty"`
 	Type        string `xml:"type,attr,omitempty"`
 	NetworkName string `xml:"networkName,attr"`
 
@@ -821,6 +825,9 @@ type VApp struct {
 	InMaintenanceMode bool            `xml:"InMaintenanceMode,omitempty"` // True if this vApp is in maintenance mode. Prevents users from changing vApp metadata.
 	Children          *VAppChildren   `xml:"Children,omitempty"`          // Container for virtual machines included in this vApp.
 	ProductSection    *ProductSection `xml:"ProductSection,omitempty"`
+
+	// This is not documented in the API, however it exists so we use it.
+	NetworkConfigSection *NetworkConfigSection `xml:"NetworkConfigSection,omitempty"`
 }
 
 type ProductSectionList struct {
@@ -991,7 +998,7 @@ type VirtualHardwareSection struct {
 // Each ovf:Item parsed from the ovf:VirtualHardwareSection
 type VirtualHardwareItem struct {
 	XMLName             xml.Name                       `xml:"Item"`
-	ResourceType        int                            `xml:"ResourceType,omitempty"`
+	ResourceType        ResourceType                   `xml:"ResourceType,omitempty"`
 	ResourceSubType     string                         `xml:"ResourceSubType,omitempty"`
 	ElementName         string                         `xml:"ElementName,omitempty"`
 	Description         string                         `xml:"Description,omitempty"`
@@ -1045,21 +1052,21 @@ type SnapshotItem struct {
 
 // OVFItem is a horrible kludge to process OVF, needs to be fixed with proper types.
 type OVFItem struct {
-	XMLName         xml.Name `xml:"vcloud:Item"`
-	XmlnsRasd       string   `xml:"xmlns:rasd,attr"`
-	XmlnsVCloud     string   `xml:"xmlns:vcloud,attr"`
-	XmlnsXsi        string   `xml:"xmlns:xsi,attr"`
-	VCloudHREF      string   `xml:"vcloud:href,attr"`
-	VCloudType      string   `xml:"vcloud:type,attr"`
-	AllocationUnits string   `xml:"rasd:AllocationUnits"`
-	Description     string   `xml:"rasd:Description"`
-	ElementName     string   `xml:"rasd:ElementName"`
-	InstanceID      int      `xml:"rasd:InstanceID"`
-	Reservation     int      `xml:"rasd:Reservation"`
-	ResourceType    int      `xml:"rasd:ResourceType"`
-	VirtualQuantity int      `xml:"rasd:VirtualQuantity"`
-	Weight          int      `xml:"rasd:Weight"`
-	Link            *Link    `xml:"vcloud:Link"`
+	XMLName         xml.Name     `xml:"vcloud:Item"`
+	XmlnsRasd       string       `xml:"xmlns:rasd,attr"`
+	XmlnsVCloud     string       `xml:"xmlns:vcloud,attr"`
+	XmlnsXsi        string       `xml:"xmlns:xsi,attr"`
+	VCloudHREF      string       `xml:"vcloud:href,attr"`
+	VCloudType      string       `xml:"vcloud:type,attr"`
+	AllocationUnits string       `xml:"rasd:AllocationUnits"`
+	Description     string       `xml:"rasd:Description"`
+	ElementName     string       `xml:"rasd:ElementName"`
+	InstanceID      int          `xml:"rasd:InstanceID"`
+	Reservation     int          `xml:"rasd:Reservation"`
+	ResourceType    ResourceType `xml:"rasd:ResourceType"`
+	VirtualQuantity int          `xml:"rasd:VirtualQuantity"`
+	Weight          int          `xml:"rasd:Weight"`
+	Link            *Link        `xml:"vcloud:Link"`
 }
 
 // DeployVAppParams are the parameters to a deploy vApp request

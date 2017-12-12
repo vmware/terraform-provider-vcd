@@ -1,4 +1,4 @@
-package helper
+package vcd
 
 import (
 	"fmt"
@@ -6,10 +6,9 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	types "github.com/ukcloud/govcloudair/types/v56"
-	"github.com/terraform-providers/terraform-provider-vcd/vcd
 )
 
-func CreateVMDescription(vmData map[string]interface{}, vAppNetworks []string, meta interface{}) (*types.NewVMDescription, error) {
+func createVMDescription(vmData map[string]interface{}, vAppNetworks []string, meta interface{}) (*types.NewVMDescription, error) {
 	vcdClient := meta.(*VCDClient)
 
 	catalog, err := vcdClient.Org.FindCatalog(vmData["catalog_name"].(string))
@@ -79,7 +78,7 @@ func CreateVMDescription(vmData map[string]interface{}, vAppNetworks []string, m
 
 }
 
-func ConfigureVM(vmResource map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+func configureVM(vmResource map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 	vcdClient := meta.(*VCDClient)
 
 	// Get VM object from VCD
@@ -160,7 +159,7 @@ func ConfigureVM(vmResource map[string]interface{}, meta interface{}) (map[strin
 
 	// d.Partial(false)
 
-	log.Printf("[TRACE] Done configureing %s, vmresource before reread: %#v", vmResource["name"], vmResource)
+	log.Printf("[TRACE] (%s) Done configuring %s, vmresource before reread: %#v", vmResource["name"].(string), vmResource["href"].(string), vmResource)
 	vmResourceAfterReRead, err := readVM(vmResource, meta)
 
 	if err != nil {
@@ -170,8 +169,10 @@ func ConfigureVM(vmResource map[string]interface{}, meta interface{}) (map[strin
 	return vmResourceAfterReRead, nil
 }
 
-func ReadVM(vmResource map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+func readVM(vmResource map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
 	vcdClient := meta.(*VCDClient)
+
+	log.Printf("[TRACE] (%s) readVM got vmResource with href %s", vmResource["name"].(string), vmResource["href"].(string))
 
 	// Get VM object from VCD
 	vm, err := vcdClient.FindVMByHREF(vmResource["href"].(string))
@@ -185,7 +186,8 @@ func ReadVM(vmResource map[string]interface{}, meta interface{}) (map[string]int
 		return nil, fmt.Errorf("error refreshing VM before running customization: %v", err)
 	}
 
-	log.Printf("[TRACE] Reading inforamtion of VM (%s)", vm.VM.Name)
+	log.Printf("[TRACE] (%s) Reading information of VM struct, href: (%s)", vm.VM.Name, vm.VM.HREF)
+	log.Printf("[TRACE] (%s) Reading information of vmResource, href: (%s)", vmResource["name"].(string), vmResource["href"].(string))
 
 	// Read network information
 	log.Printf("[TRACE] Reading network information for vm (%s)", vm.VM.Name)
@@ -196,7 +198,7 @@ func ReadVM(vmResource map[string]interface{}, meta interface{}) (map[string]int
 
 	for index, networkConnection := range networkConnections {
 
-		readNetwork := readNetwork(networkConnection, primaryInterfaceIndex)
+		readNetwork := readVmNetwork(networkConnection, primaryInterfaceIndex)
 
 		readNetworks[index] = readNetwork
 	}
@@ -222,6 +224,30 @@ func ReadVM(vmResource map[string]interface{}, meta interface{}) (map[string]int
 	vmResource["href"] = vm.VM.HREF
 
 	return vmResource, nil
+}
+
+func configureVmNetwork(networkConnection map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+	// TODO: Network changes
+	// name
+	// ip
+	// ip_allocation_mode
+	// is_primary
+	// is_connected
+	// adapter_type
+	return nil, nil
+}
+
+func readVmNetwork(networkConnection *types.NetworkConnection, primaryInterfaceIndex int) map[string]interface{} {
+	readNetwork := make(map[string]interface{})
+
+	readNetwork["name"] = networkConnection.Network
+	readNetwork["ip"] = networkConnection.IPAddress
+	readNetwork["ip_allocation_mode"] = networkConnection.IPAddressAllocationMode
+	readNetwork["is_primary"] = (primaryInterfaceIndex == networkConnection.NetworkConnectionIndex)
+	readNetwork["is_connected"] = networkConnection.IsConnected
+	readNetwork["adapter_type"] = networkConnection.NetworkAdapterType
+
+	return readNetwork
 }
 
 func isMember(list []string, element string) bool {

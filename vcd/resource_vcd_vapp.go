@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	helper "github.com/terraform-providers/terraform-provider-vcd/vcd/helper"
 	types "github.com/ukcloud/govcloudair/types/v56"
 )
 
@@ -57,16 +56,15 @@ func resourceVcdVApp() *schema.Resource {
 func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	networks := interfaceListToStringList(d.Get("network").([]interface{}))
+	networks := d.Get("network").([]interface{})
 	log.Printf("[TRACE] Networks from state: %#v", networks)
 
 	// Get VMs and create descriptions for the vAppCompose
-	vmResources := d.Get("vm").([]interface{})
+	vmResources := interfaceListToMapStringInterface(d.Get("vm").([]interface{}))
 
 	vmDescriptions := make([]*types.NewVMDescription, len(vmResources))
-	for index, vm := range vmResources {
-		vmResource := vm.(map[string]interface{})
-		vmDescription, err := helper.CreateVMDescription(vmResource, networks, meta)
+	for index, vmResource := range vmResources {
+		vmDescription, err := createVMDescription(vmResource, interfaceListToStringList(networks), meta)
 
 		if err != nil {
 			return err
@@ -79,7 +77,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 
 	orgnetworks := make([]*types.OrgVDCNetwork, len(networks))
 	for index, network := range networks {
-		orgnetwork, err := vcdClient.OrgVdc.FindVDCNetwork(network)
+		orgnetwork, err := vcdClient.OrgVdc.FindVDCNetwork(network.(string))
 		if err != nil {
 			return fmt.Errorf("Error finding vdc org network: %s, %#v", network, err)
 		}
@@ -127,14 +125,24 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 
 	newVMResources := make([]map[string]interface{}, len(vmResources))
 
-	for index, vmData := range vmResources {
-		vmResource := vmData.(map[string]interface{})
+	for index, vmResource := range vmResources {
 
-		href := vapp.VApp.Children.VM[index].HREF
-		// Update vmResourceMap
+		// BUG: There is an ordering problem here, the vms are not given
+		// in the correct order
+		// href := vapp.VApp.Children.VM[index].HREF
+		vm, err := vapp.GetVmByName(vmResource["name"].(string))
+
+		if err != nil {
+			return err
+		}
+
+		href := vm.HREF
+
+		log.Printf("[TRACE] (%s) has HREF %s in child list of vApp", vm.Name, vm.HREF)
+
 		vmResource["href"] = href
 
-		vmResourceAfterConfiguration, err := helper.ConfigureVM(vmResource, meta)
+		vmResourceAfterConfiguration, err := configureVM(vmResource, meta)
 
 		if err != nil {
 			return err
@@ -146,7 +154,6 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.Set("vm", newVMResources)
-	log.Printf("[TRACE] State after SET VM: %#v", d.Get("vm"))
 
 	// This should be HREF, but FindVAppByHREF is buggy
 	d.SetId(d.Get("name").(string))
@@ -177,7 +184,7 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	for index, vmData := range vmResources {
 		vmResource := vmData.(map[string]interface{})
 
-		vmResourceAfterConfiguration, err := helper.ConfigureVM(vmResource, meta)
+		vmResourceAfterConfiguration, err := configureVM(vmResource, meta)
 
 		if err != nil {
 			return err
@@ -194,7 +201,6 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 
 func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-
 	err := vcdClient.OrgVdc.Refresh()
 	if err != nil {
 		return fmt.Errorf("Error refreshing vdc: %#v", err)
@@ -208,6 +214,12 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 		return nil
 	}
 
+	err = readVApp(d, meta)
+
+	if err != nil {
+		return err
+	}
+
 	// Get VMs and create descriptions for the vAppCompose
 	vmResources := d.Get("vm").([]interface{})
 
@@ -216,7 +228,7 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 	for index, vmData := range vmResources {
 		vmResource := vmData.(map[string]interface{})
 
-		vmResourceAfterReRead, err := helper.ReadVM(vmResource, meta)
+		vmResourceAfterReRead, err := readVM(vmResource, meta)
 
 		if err != nil {
 			return err
@@ -271,12 +283,4 @@ func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
 	})
 
 	return err
-}
-
-func interfaceListToStringList(old []interface{}) []string {
-	new := make([]string, len(old))
-	for i, v := range old {
-		new[i] = v.(string)
-	}
-	return new
 }
