@@ -302,45 +302,45 @@ func (v *VM) ChangeNestedHypervisor(value bool) (Task, error) {
 	return *task, nil
 }
 
-func (v *VM) ChangeNetworkConfig(network, ip string) (Task, error) {
+func (v *VM) ChangeNetworkConfig(networkConnections []*types.NetworkConnection, primaryNetworkConnectionIndex int) (Task, error) {
 	err := v.Refresh()
 	if err != nil {
 		return Task{}, fmt.Errorf("error refreshing VM before running customization: %v", err)
 	}
 
-	// Determine what type of address is requested for the vApp
-	ipAllocationMode := "NONE"
-	ipAddress := "Any"
+	// // Determine what type of address is requested for the vApp
+	// ipAllocationMode := "NONE"
+	// ipAddress := "Any"
 
-	// TODO: Review current behaviour of using DHCP when left blank
-	if ip == "" || ip == "dhcp" {
-		ipAllocationMode = "DHCP"
-	} else if ip == "allocated" {
-		ipAllocationMode = "POOL"
-	} else if ip == "none" {
-		ipAllocationMode = "NONE"
-	} else if ip != "" {
-		ipAllocationMode = "MANUAL"
-		// TODO: Check a valid IP has been given
-		ipAddress = ip
-	}
+	// // TODO: Review current behaviour of using DHCP when left blank
+	// if ip == "" || ip == "dhcp" {
+	// 	ipAllocationMode = "DHCP"
+	// } else if ip == "allocated" {
+	// 	ipAllocationMode = "POOL"
+	// } else if ip == "none" {
+	// 	ipAllocationMode = "NONE"
+	// } else if ip != "" {
+	// 	ipAllocationMode = "MANUAL"
+	// 	// TODO: Check a valid IP has been given
+	// 	ipAddress = ip
+	// }
 
-	networkConnection := []*types.NetworkConnection{&types.NetworkConnection{
-		Network:                 network,
-		NeedsCustomization:      true,
-		NetworkConnectionIndex:  0,
-		IPAddress:               ipAddress,
-		IsConnected:             true,
-		IPAddressAllocationMode: ipAllocationMode,
-	},
-	}
+	// networkConnection := []*types.NetworkConnection{&types.NetworkConnection{
+	// 	Network:                 network,
+	// 	NeedsCustomization:      true,
+	// 	NetworkConnectionIndex:  0,
+	// 	IPAddress:               ipAddress,
+	// 	IsConnected:             true,
+	// 	IPAddressAllocationMode: ipAllocationMode,
+	// },
+	// }
 
 	newnetwork := &types.NetworkConnectionSection{
 		Xmlns: "http://www.vmware.com/vcloud/v1.5",
 		Ovf:   "http://schemas.dmtf.org/ovf/envelope/1",
 		Info:  "Specifies the available VM network connections",
-		PrimaryNetworkConnectionIndex: 0,
-		NetworkConnection:             networkConnection,
+		PrimaryNetworkConnectionIndex: primaryNetworkConnectionIndex,
+		NetworkConnection:             networkConnections,
 	}
 
 	output, err := xml.MarshalIndent(newnetwork, "  ", "    ")

@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 
@@ -77,7 +76,7 @@ func decodeBody(resp *http.Response, out interface{}) error {
 		return err
 	}
 
-	log.Printf("[TRACE] XML OUTPUT: %s", body)
+	// log.Printf("[TRACE] XML OUTPUT: %s", body)
 
 	// Unmarshal the XML.
 	if err = xml.Unmarshal(body, &out); err != nil {

@@ -10,25 +10,25 @@ var VMSchema = map[string]*schema.Schema{
 	"vapp_href": {
 		Type:     schema.TypeString,
 		Computed: true,
-		ForceNew: true,
+		ForceNew: false,
 	},
 
 	"name": {
 		Type:     schema.TypeString,
 		Required: true,
-		ForceNew: true,
+		ForceNew: false,
 	},
 
 	"template_name": {
 		Type:     schema.TypeString,
 		Required: true,
-		ForceNew: true,
+		ForceNew: false,
 	},
 
 	"catalog_name": {
 		Type:     schema.TypeString,
 		Required: true,
-		ForceNew: true,
+		ForceNew: false,
 	},
 
 	"memory": {
@@ -42,7 +42,7 @@ var VMSchema = map[string]*schema.Schema{
 	"network": {
 		Type:     schema.TypeList,
 		Required: true,
-		ForceNew: true,
+		ForceNew: false,
 		Elem: &schema.Resource{
 			Schema: NetworkSchema,
 		},
@@ -51,7 +51,7 @@ var VMSchema = map[string]*schema.Schema{
 	"initscript": {
 		Type:     schema.TypeString,
 		Optional: true,
-		ForceNew: true,
+		ForceNew: false,
 	},
 
 	"href": {

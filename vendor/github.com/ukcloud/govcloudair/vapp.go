@@ -188,7 +188,7 @@ func (v *VApp) AddVMs(vms []*types.NewVMDescription) (Task, error) {
 	return *task, nil
 }
 
-func (v *VApp) RemoveVMs(vms []VM) error {
+func (v *VApp) RemoveVMs(vms []*types.VM) (Task, error) {
 
 	v.Refresh()
 	task := NewTask(v.c)
@@ -197,7 +197,7 @@ func (v *VApp) RemoveVMs(vms []VM) error {
 			task.Task = t
 			err := task.WaitTaskCompletion()
 			if err != nil {
-				return fmt.Errorf("Error performing task: %#v", err)
+				return Task{}, fmt.Errorf("Error performing task: %#v", err)
 			}
 		}
 	}
@@ -205,7 +205,7 @@ func (v *VApp) RemoveVMs(vms []VM) error {
 	deleteItems := make([]*types.DeleteItem, len(vms))
 	for index, vm := range vms {
 		deleteItems[index] = &types.DeleteItem{
-			HREF: vm.VM.HREF,
+			HREF: vm.HREF,
 		}
 	}
 
@@ -230,21 +230,16 @@ func (v *VApp) RemoveVMs(vms []VM) error {
 	resp, err := checkResp(v.c.Http.Do(req))
 	if err != nil {
 		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
-		return fmt.Errorf("error instantiating a new vApp: %s", err)
+		return Task{}, fmt.Errorf("error instantiating a new vApp: %s", err)
 	}
 
 	task = NewTask(v.c)
 
 	if err = decodeBody(resp, task.Task); err != nil {
-		return fmt.Errorf("error decoding task response: %s", err)
+		return Task{}, fmt.Errorf("error decoding task response: %s", err)
 	}
 
-	err = task.WaitTaskCompletion()
-	if err != nil {
-		return fmt.Errorf("Error performing task: %#v", err)
-	}
-
-	return nil
+	return *task, nil
 }
 
 func (v *VApp) ChangeNetworks(orgnetworks []*types.OrgVDCNetwork) (Task, error) {
@@ -321,17 +316,6 @@ func (v *VApp) ComposeVApp(name string, description string, orgnetworks []*types
 		},
 		SourcedItem: sourceItems,
 	}
-
-	// if storageprofileref.HREF != "" {
-	// 	vcomp.SourcedItem.StorageProfile = &storageprofileref
-	// }
-
-	// ensure network connection index is valid, if not use primary index
-	// if vapptemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.NetworkConnection != nil {
-	// 	vcomp.SourcedItem.InstantiationParams.NetworkConnectionSection.NetworkConnection.NetworkConnectionIndex = vapptemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.NetworkConnection.NetworkConnectionIndex
-	// } else {
-	// 	vcomp.SourcedItem.InstantiationParams.NetworkConnectionSection.NetworkConnection.NetworkConnectionIndex = vcomp.SourcedItem.InstantiationParams.NetworkConnectionSection.PrimaryNetworkConnectionIndex
-	// }
 
 	output, err := xml.MarshalIndent(vcomp, "  ", "    ")
 	if err != nil {

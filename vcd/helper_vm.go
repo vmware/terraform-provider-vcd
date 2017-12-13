@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/hashicorp/terraform/helper/resource"
+	govcd "github.com/ukcloud/govcloudair"
 	types "github.com/ukcloud/govcloudair/types/v56"
 )
 
@@ -38,7 +39,7 @@ func createVMDescription(vmData map[string]interface{}, vAppNetworks []string, m
 
 		network := n.(map[string]interface{})
 		// Check if VM network is assigned to vApp
-		if !isMember(vAppNetworks, network["name"].(string)) {
+		if !isStringMember(vAppNetworks, network["name"].(string)) {
 			return nil, fmt.Errorf("Network (%s) assigned to VM is not assigned to vApp, vApp has the following networks: %#v", network["name"].(string), vAppNetworks)
 		}
 
@@ -95,7 +96,7 @@ func configureVM(vmResource map[string]interface{}, meta interface{}) (map[strin
 	//d.Partial(true)
 
 	// Configure VM with initscript
-	log.Printf("[TRACE] Configuring vm (%s) with initscript", vmResource["name"].(string))
+	log.Printf("[TRACE] (%s) Configuring vm with initscript", vmResource["name"].(string))
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 		task, err := vm.RunCustomizationScript(vmResource["name"].(string), vmResource["initscript"].(string))
 		if err != nil {
@@ -108,7 +109,7 @@ func configureVM(vmResource map[string]interface{}, meta interface{}) (map[strin
 	}
 
 	// Change CPU count of VM
-	log.Printf("[TRACE] Changing CPU of vm (%s)", vmResource["name"].(string))
+	log.Printf("[TRACE] (%s) Changing CPU", vmResource["name"].(string))
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 		task, err := vm.ChangeCPUcount(vmResource["cpus"].(int))
 		if err != nil {
@@ -122,7 +123,7 @@ func configureVM(vmResource map[string]interface{}, meta interface{}) (map[strin
 	}
 
 	// Change Memory of VM
-	log.Printf("[TRACE] Changing memory of vm (%s)", vmResource["name"].(string))
+	log.Printf("[TRACE] (%s) Changing memory", vmResource["name"].(string))
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 		task, err := vm.ChangeMemorySize(vmResource["memory"].(int))
 		if err != nil {
@@ -136,7 +137,7 @@ func configureVM(vmResource map[string]interface{}, meta interface{}) (map[strin
 	}
 
 	// Change nested hypervisor setting of VM
-	log.Printf("[TRACE] Changing nested hypervisor setting of vm (%s)", vmResource["name"].(string))
+	log.Printf("[TRACE] (%s) Changing nested hypervisor setting", vmResource["name"].(string))
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 		task, err := vm.ChangeNestedHypervisor(vmResource["nested_hypervisor_enabled"].(bool))
 		if err != nil {
@@ -149,13 +150,22 @@ func configureVM(vmResource map[string]interface{}, meta interface{}) (map[strin
 		return nil, fmt.Errorf("Error completing task: %#v", err)
 	}
 
-	// TODO: Network changes
-	// name
-	// ip
-	// ip_allocation_mode
-	// is_primary
-	// is_connected
-	// adapter_type
+	// Change networks setting of VM
+	log.Printf("[TRACE] (%s) Changing network settings", vmResource["name"].(string))
+
+	networks := interfaceListToMapStringInterface(vmResource["network"].([]interface{}))
+
+	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+		task, err := configureVmNetwork(networks, vm)
+		if err != nil {
+			return resource.NonRetryableError(fmt.Errorf("Error changing nested hypervisor setting count: %#v", err))
+		}
+
+		return resource.RetryableError(task.WaitTaskCompletion())
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Error completing task: %#v", err)
+	}
 
 	// d.Partial(false)
 
@@ -226,15 +236,31 @@ func readVM(vmResource map[string]interface{}, meta interface{}) (map[string]int
 	return vmResource, nil
 }
 
-func configureVmNetwork(networkConnection map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
-	// TODO: Network changes
-	// name
-	// ip
-	// ip_allocation_mode
-	// is_primary
-	// is_connected
-	// adapter_type
-	return nil, nil
+func configureVmNetwork(networkConnections []map[string]interface{}, vm govcd.VM) (govcd.Task, error) {
+
+	err := vm.Refresh()
+	if err != nil {
+		return govcd.Task{}, fmt.Errorf("error refreshing VM before running customization: %v", err)
+	}
+
+	var primaryNetworkConnectionIndex int
+	newNetworkConnections := make([]*types.NetworkConnection, len(networkConnections))
+	for index, network := range networkConnections {
+
+		if network["is_primary"].(bool) {
+			primaryNetworkConnectionIndex = index
+		}
+
+		newNetworkConnections[index] = &types.NetworkConnection{
+			Network:                 network["name"].(string),
+			NetworkConnectionIndex:  index,
+			IsConnected:             network["is_connected"].(bool),
+			IPAddressAllocationMode: network["ip_allocation_mode"].(string),
+			NetworkAdapterType:      network["adapter_type"].(string),
+		}
+	}
+
+	return vm.ChangeNetworkConfig(newNetworkConnections, primaryNetworkConnectionIndex)
 }
 
 func readVmNetwork(networkConnection *types.NetworkConnection, primaryInterfaceIndex int) map[string]interface{} {
@@ -250,9 +276,18 @@ func readVmNetwork(networkConnection *types.NetworkConnection, primaryInterfaceI
 	return readNetwork
 }
 
-func isMember(list []string, element string) bool {
+func isStringMember(list []string, element string) bool {
 	for _, item := range list {
 		if item == element {
+			return true
+		}
+	}
+	return false
+}
+
+func isVMMapStringInterfaceMember(list []map[string]interface{}, vm map[string]interface{}) bool {
+	for _, item := range list {
+		if item["href"] == vm["href"] {
 			return true
 		}
 	}

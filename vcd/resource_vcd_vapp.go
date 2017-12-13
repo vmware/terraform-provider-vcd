@@ -165,6 +165,9 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
 	// TODO: HERE WE MUST CHECK AND ADD NEW OR REMOVE VMs
+	// new/remove vm
+	// new/remove vapp networks
+	// changes to vms...?
 
 	// Should be fetched by ID/HREF
 	vapp, err := vcdClient.OrgVdc.FindVAppByName(d.Id())
@@ -178,22 +181,138 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error getting VApp status: %#v, %s", err, status)
 	}
 
-	vmResources := d.Get("vm").([]interface{})
-	newVMResources := make([]map[string]interface{}, len(vmResources))
+	// Update networks
+	if d.HasChange("network") {
+		log.Printf("[TRACE] (%s) Updating vApp networks", vapp.VApp.Name)
+		networks := d.Get("network").([]interface{})
+		orgnetworks := make([]*types.OrgVDCNetwork, len(networks))
+		for index, network := range networks {
+			orgnetwork, err := vcdClient.OrgVdc.FindVDCNetwork(network.(string))
+			if err != nil {
+				return fmt.Errorf("Error finding vdc org network: %s, %#v", network, err)
+			}
 
-	for index, vmData := range vmResources {
-		vmResource := vmData.(map[string]interface{})
-
-		vmResourceAfterConfiguration, err := configureVM(vmResource, meta)
-
-		if err != nil {
-			return err
+			orgnetworks[index] = orgnetwork.OrgVDCNetwork
 		}
-
-		newVMResources[index] = vmResourceAfterConfiguration
 	}
 
-	d.Set("vm", newVMResources)
+	// Updates VMs
+	if d.HasChange("vm") {
+		oldState, newState := d.GetChange("vm")
+
+		oldStateMap := interfaceListToMapStringInterface(oldState.([]interface{}))
+		newStateMap := interfaceListToMapStringInterface(newState.([]interface{}))
+
+		newVms := make([]map[string]interface{}, 0)
+		removedVms := make([]map[string]interface{}, 0)
+		changedVms := make([]map[string]interface{}, 0)
+
+		for _, oldStateVM := range oldStateMap {
+			if !isVMMapStringInterfaceMember(newStateMap, oldStateVM) {
+				removedVms = append(removedVms, oldStateVM)
+			}
+		}
+		log.Printf("[TRACE] (%s) VMs to remove: %#v", vapp.VApp.Name, removedVms)
+
+		for _, newStateVM := range newStateMap {
+			if !isVMMapStringInterfaceMember(oldStateMap, newStateVM) {
+				newVms = append(newVms, newStateVM)
+			}
+			changedVms = append(changedVms, newStateVM)
+		}
+		log.Printf("[TRACE] (%s) VMs to add: %#v", vapp.VApp.Name, newVms)
+		log.Printf("[TRACE] (%s) VMs to change: %#v", vapp.VApp.Name, changedVms)
+
+		// Delete VMs
+		removedVmsAsVMType := make([]*types.VM, 0)
+		for _, v := range removedVms {
+			vm, err := vapp.GetVmByHREF(v["href"].(string))
+
+			if err != nil {
+				return err
+			}
+
+			if vm != nil {
+				removedVmsAsVMType = append(removedVmsAsVMType, vm)
+			}
+		}
+
+		// Send delete request to vApp
+		log.Printf("[TRACE] (%s) Removing VMs", vapp.VApp.Name)
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := vapp.RemoveVMs(removedVmsAsVMType)
+			if err != nil {
+				return resource.NonRetryableError(fmt.Errorf("Error deleting VMs: %#v", err))
+			}
+
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
+		if err != nil {
+			return fmt.Errorf("Error completing task: %#v", err)
+		}
+
+		// Add VMs
+		networks := d.Get("network").([]interface{})
+
+		newVmDescriptions := make([]*types.NewVMDescription, len(newVms))
+		for index, vmResource := range newVms {
+			vmDescription, err := createVMDescription(vmResource, interfaceListToStringList(networks), meta)
+
+			if err != nil {
+				return err
+			}
+
+			log.Printf("[TRACE] VMDescription order: %d %s", index, vmDescription.Name)
+
+			newVmDescriptions[index] = vmDescription
+		}
+
+		// Send add request to vApp
+		log.Printf("[TRACE] (%s) Adding VMs", vapp.VApp.Name)
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := vapp.AddVMs(newVmDescriptions)
+			if err != nil {
+				return resource.NonRetryableError(fmt.Errorf("Error adding VMs: %#v", err))
+			}
+
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
+		if err != nil {
+			return fmt.Errorf("Error completing task: %#v", err)
+		}
+
+		// Find HREF for new virtual machines
+		log.Printf("[TRACE] (%s) Adding HREF for new VMs", vapp.VApp.Name)
+		vmResources := make([]map[string]interface{}, len(changedVms))
+		for index, vmResource := range changedVms {
+			if vmResource["href"].(string) == "" {
+				log.Printf("[TRACE] (%s) VM found with no HREF: %s", vapp.VApp.Name, vmResource["name"].(string))
+				vm, err := vapp.GetVmByName(vmResource["name"].(string))
+				if err != nil {
+					return err
+				}
+
+				vmResource["href"] = vm.HREF
+			}
+			vmResources[index] = vmResource
+		}
+
+		// Start configuring the machines
+		log.Printf("[TRACE] (%s) Updating virtual machines", vapp.VApp.Name)
+		newVMResources := make([]map[string]interface{}, len(vmResources))
+
+		for index, vmResource := range vmResources {
+
+			vmResourceAfterConfiguration, err := configureVM(vmResource, meta)
+
+			if err != nil {
+				return err
+			}
+			newVMResources[index] = vmResourceAfterConfiguration
+		}
+
+		d.Set("vm", newVMResources)
+	}
 
 	// TODO: MAybe remove this coupling
 	return resourceVcdVAppRead(d, meta)
@@ -246,11 +365,6 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 
 func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-
-	// TODO: Delete logic
-	// * Whole vApp
-	// * List of VMs
-	// * List of Network of VMs
 
 	// Should be fetched by ID/HREF
 	vapp, err := vcdClient.OrgVdc.FindVAppByName(d.Id())
