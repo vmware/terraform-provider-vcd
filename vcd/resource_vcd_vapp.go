@@ -20,20 +20,17 @@ func resourceVcdVApp() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 			},
 			"network": {
 				Type:     schema.TypeList,
 				Optional: true,
-				ForceNew: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 			"vm": {
 				Type:     schema.TypeList,
 				Optional: true,
-				ForceNew: false,
 				Elem: &schema.Resource{
-					Schema: VMSchema},
+					Schema: VirtualMachineSubresourceSchema()},
 			},
 			"description": {
 				Type:     schema.TypeString,
