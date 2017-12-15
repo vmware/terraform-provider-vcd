@@ -8,7 +8,7 @@ func VirtualMachineSubresourceSchema() map[string]*schema.Schema {
 	s := map[string]*schema.Schema{
 		"name": {
 			Type:     schema.TypeString,
-			Required: true,
+			Computed: true,
 		},
 		"catalog_name": {
 			Type:     schema.TypeString,
@@ -60,7 +60,7 @@ type VirtualMachineSubresource struct {
 	*Subresource
 }
 
-func NewVirtualMachineSubresource(client *VCDClient, d, old map[string]interface{}, idx int) *VirtualMachineSubresource {
+func NewVirtualMachineSubresource(d, old map[string]interface{}, idx int) *VirtualMachineSubresource {
 	sr := &VirtualMachineSubresource{
 		Subresource: &Subresource{
 			schema:  VirtualMachineSubresourceSchema(),

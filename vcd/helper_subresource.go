@@ -80,9 +80,6 @@ type Subresource struct {
 	// later on with common keys for all subresources, namely the internal ID.
 	schema map[string]*schema.Schema
 
-	// The client connection.
-	client *VCDClient
-
 	// The resource data - this should be loaded when the resource is created.
 	data map[string]interface{}
 
@@ -92,25 +89,7 @@ type Subresource struct {
 	// Either a root-level ResourceData or ResourceDiff. The one that is
 	// specifically present will depend on the context the Subresource is being
 	// used in.
-	rdd resourceDataDiff
-}
-
-// subresourceSchema is a map[string]*schema.Schema of common schema fields.
-// This includes the internal_id field, which is used as a unique ID for the
-// lifecycle of this resource.
-func subresourceSchema() map[string]*schema.Schema {
-	return map[string]*schema.Schema{
-		"key": {
-			Type:        schema.TypeInt,
-			Computed:    true,
-			Description: "The unique device ID for this device within its virtual machine.",
-		},
-		"device_address": {
-			Type:        schema.TypeString,
-			Computed:    true,
-			Description: "The internally-computed address of this device, such as scsi:0:1, denoting scsi bus #0 and device unit 1.",
-		},
-	}
+	// rdd resourceDataDiff
 }
 
 // Get hands off to r.data.Get, with an address relative to this subresource.

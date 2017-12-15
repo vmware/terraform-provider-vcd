@@ -79,14 +79,14 @@ func createVMDescription(vmData map[string]interface{}, vAppNetworks []string, m
 
 }
 
-func configureVM(vmResource map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+func configureVM(vmResource *VirtualMachineSubresource, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
 	// Get VM object from VCD
-	vm, err := vcdClient.FindVMByHREF(vmResource["href"].(string))
+	vm, err := vcdClient.FindVMByHREF(vmResource.Get("href").(string))
 
 	if err != nil {
-		return nil, fmt.Errorf("Could not find VM (%s) in VCD", vmResource["href"].(string))
+		return fmt.Errorf("Could not find VM (%s) in VCD", vmResource.Get("href").(string))
 	}
 
 	// TODO: Detect change in subResourceData
@@ -96,22 +96,22 @@ func configureVM(vmResource map[string]interface{}, meta interface{}) (map[strin
 	//d.Partial(true)
 
 	// Configure VM with initscript
-	log.Printf("[TRACE] (%s) Configuring vm with initscript", vmResource["name"].(string))
+	log.Printf("[TRACE] (%s) Configuring vm with initscript", vmResource.Get("name").(string))
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := vm.RunCustomizationScript(vmResource["name"].(string), vmResource["initscript"].(string))
+		task, err := vm.RunCustomizationScript(vmResource.Get("name").(string), vmResource.Get("initscript").(string))
 		if err != nil {
 			return resource.NonRetryableError(fmt.Errorf("Error with setting init script: %#v", err))
 		}
 		return resource.RetryableError(task.WaitTaskCompletion())
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Error completing tasks: %#v", err)
+		return fmt.Errorf("Error completing tasks: %#v", err)
 	}
 
 	// Change CPU count of VM
-	log.Printf("[TRACE] (%s) Changing CPU", vmResource["name"].(string))
+	log.Printf("[TRACE] (%s) Changing CPU", vmResource.Get("name").(string))
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := vm.ChangeCPUcount(vmResource["cpus"].(int))
+		task, err := vm.ChangeCPUcount(vmResource.Get("cpus").(int))
 		if err != nil {
 			return resource.NonRetryableError(fmt.Errorf("Error changing cpu count: %#v", err))
 		}
@@ -119,13 +119,13 @@ func configureVM(vmResource map[string]interface{}, meta interface{}) (map[strin
 		return resource.RetryableError(task.WaitTaskCompletion())
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Error completing task: %#v", err)
+		return fmt.Errorf("Error completing task: %#v", err)
 	}
 
 	// Change Memory of VM
-	log.Printf("[TRACE] (%s) Changing memory", vmResource["name"].(string))
+	log.Printf("[TRACE] (%s) Changing memory", vmResource.Get("name").(string))
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := vm.ChangeMemorySize(vmResource["memory"].(int))
+		task, err := vm.ChangeMemorySize(vmResource.Get("memory").(int))
 		if err != nil {
 			return resource.NonRetryableError(fmt.Errorf("Error changing memory size: %#v", err))
 		}
@@ -133,13 +133,13 @@ func configureVM(vmResource map[string]interface{}, meta interface{}) (map[strin
 		return resource.RetryableError(task.WaitTaskCompletion())
 	})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Change nested hypervisor setting of VM
-	log.Printf("[TRACE] (%s) Changing nested hypervisor setting", vmResource["name"].(string))
+	log.Printf("[TRACE] (%s) Changing nested hypervisor setting", vmResource.Get("name").(string))
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := vm.ChangeNestedHypervisor(vmResource["nested_hypervisor_enabled"].(bool))
+		task, err := vm.ChangeNestedHypervisor(vmResource.Get("nested_hypervisor_enabled").(bool))
 		if err != nil {
 			return resource.NonRetryableError(fmt.Errorf("Error changing nested hypervisor setting count: %#v", err))
 		}
@@ -147,13 +147,13 @@ func configureVM(vmResource map[string]interface{}, meta interface{}) (map[strin
 		return resource.RetryableError(task.WaitTaskCompletion())
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Error completing task: %#v", err)
+		return fmt.Errorf("Error completing task: %#v", err)
 	}
 
 	// Change networks setting of VM
-	log.Printf("[TRACE] (%s) Changing network settings", vmResource["name"].(string))
+	log.Printf("[TRACE] (%s) Changing network settings", vmResource.Get("name").(string))
 
-	networks := interfaceListToMapStringInterface(vmResource["network"].([]interface{}))
+	networks := interfaceListToMapStringInterface(vmResource.Get("network").([]interface{}))
 
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 		task, err := configureVmNetwork(networks, vm)
@@ -164,40 +164,40 @@ func configureVM(vmResource map[string]interface{}, meta interface{}) (map[strin
 		return resource.RetryableError(task.WaitTaskCompletion())
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Error completing task: %#v", err)
+		return fmt.Errorf("Error completing task: %#v", err)
 	}
 
 	// d.Partial(false)
 
-	log.Printf("[TRACE] (%s) Done configuring %s, vmresource before reread: %#v", vmResource["name"].(string), vmResource["href"].(string), vmResource)
-	vmResourceAfterReRead, err := readVM(vmResource, meta)
+	log.Printf("[TRACE] (%s) Done configuring %s, vmresource before reread: %#v", vmResource.Get("name").(string), vmResource.Get("href").(string), vmResource)
+	err = readVM(vmResource, meta)
 
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return vmResourceAfterReRead, nil
+	return nil
 }
 
-func readVM(vmResource map[string]interface{}, meta interface{}) (map[string]interface{}, error) {
+func readVM(vmResource *VirtualMachineSubresource, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	log.Printf("[TRACE] (%s) readVM got vmResource with href %s", vmResource["name"].(string), vmResource["href"].(string))
+	log.Printf("[TRACE] (%s) readVM got vmResource with href %s", vmResource.Get("name").(string), vmResource.Get("href").(string))
 
 	// Get VM object from VCD
-	vm, err := vcdClient.FindVMByHREF(vmResource["href"].(string))
+	vm, err := vcdClient.FindVMByHREF(vmResource.Get("href").(string))
 
 	if err != nil {
-		return nil, fmt.Errorf("Could not find VM (%s) in VCD", vmResource["href"].(string))
+		return fmt.Errorf("Could not find VM (%s) in VCD", vmResource.Get("href").(string))
 	}
 
 	err = vm.Refresh()
 	if err != nil {
-		return nil, fmt.Errorf("error refreshing VM before running customization: %v", err)
+		return fmt.Errorf("error refreshing VM before running customization: %v", err)
 	}
 
 	log.Printf("[TRACE] (%s) Reading information of VM struct, href: (%s)", vm.VM.Name, vm.VM.HREF)
-	log.Printf("[TRACE] (%s) Reading information of vmResource, href: (%s)", vmResource["name"].(string), vmResource["href"].(string))
+	log.Printf("[TRACE] (%s) Reading information of vmResource, href: (%s)", vmResource.Get("name").(string), vmResource.Get("href").(string))
 
 	// Read network information
 	log.Printf("[TRACE] Reading network information for vm (%s)", vm.VM.Name)
@@ -216,24 +216,24 @@ func readVM(vmResource map[string]interface{}, meta interface{}) (map[string]int
 	// Read cpu count
 	cpuCount, err := vm.GetCPUCount()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	// Read memory count
 	memoryCount, err := vm.GetMemoryCount()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	// vmResource["vapp_href"] = vm.VM.VAppParent.HREF
-	vmResource["name"] = vm.VM.Name
-	vmResource["memory"] = memoryCount
-	vmResource["cpus"] = cpuCount
-	vmResource["network"] = readNetworks
-	vmResource["nested_hypervisor_enabled"] = vm.VM.NestedHypervisorEnabled
-	vmResource["href"] = vm.VM.HREF
+	// vmResource.Set("vapp_href", vm.VM.VAppParent.HREF)
+	vmResource.Set("name", vm.VM.Name)
+	vmResource.Set("memory", memoryCount)
+	vmResource.Set("cpus", cpuCount)
+	vmResource.Set("network", readNetworks)
+	vmResource.Set("nested_hypervisor_enabled", vm.VM.NestedHypervisorEnabled)
+	vmResource.Set("href", vm.VM.HREF)
 
-	return vmResource, nil
+	return nil
 }
 
 func configureVmNetwork(networkConnections []map[string]interface{}, vm govcd.VM) (govcd.Task, error) {
@@ -292,4 +292,20 @@ func isVMMapStringInterfaceMember(list []map[string]interface{}, vm map[string]i
 		}
 	}
 	return false
+}
+
+func mapStringInterfaceToMapStringMapStringInterface(m map[string]interface{}) map[string]map[string]interface{} {
+	newMap := make(map[string]map[string]interface{})
+	for key, value := range m {
+		newMap[key] = value.(map[string]interface{})
+	}
+	return newMap
+}
+
+func getKeys(m map[string]map[string]interface{}) []string {
+	keys := make([]string, 0)
+	for key := range m {
+		keys = append(keys, key)
+	}
+	return keys
 }

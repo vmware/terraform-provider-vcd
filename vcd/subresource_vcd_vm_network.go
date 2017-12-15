@@ -9,10 +9,10 @@ import (
 func VirtualMachineNetworkSubresourceSchema() map[string]*schema.Schema {
 
 	s := map[string]*schema.Schema{
-		"name": {
-			Type:     schema.TypeString,
-			Required: true,
-		},
+		// "name": {
+		// 	Type:     schema.TypeString,
+		// 	Required: true,
+		// },
 		"href": {
 			Type:     schema.TypeString,
 			Computed: true,
@@ -61,7 +61,7 @@ type VirtualMachineNetworkSubresource struct {
 	*Subresource
 }
 
-func NewVirtualMachineNetworkSubresource(client *VCDClient, d, old map[string]interface{}, idx int) *VirtualMachineNetworkSubresource {
+func NewVirtualMachineNetworkSubresource(d, old map[string]interface{}, idx int) *VirtualMachineNetworkSubresource {
 	sr := &VirtualMachineNetworkSubresource{
 		Subresource: &Subresource{
 			schema:  VirtualMachineNetworkSubresourceSchema(),
