@@ -8,7 +8,7 @@ func VirtualMachineSubresourceSchema() map[string]*schema.Schema {
 	s := map[string]*schema.Schema{
 		"name": {
 			Type:     schema.TypeString,
-			Computed: true,
+			Required: true,
 		},
 		"catalog_name": {
 			Type:     schema.TypeString,

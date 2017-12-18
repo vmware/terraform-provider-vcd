@@ -27,7 +27,7 @@ func resourceVcdVApp() *schema.Resource {
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 			"vm": {
-				Type:     schema.TypeMap,
+				Type:     schema.TypeList,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: VirtualMachineSubresourceSchema()},
@@ -59,19 +59,18 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 	// Get VMs and create descriptions for the vAppCompose
 	oldState, newState := d.GetChange("vm")
 
-	oldStateMap := mapStringInterfaceToMapStringMapStringInterface(oldState.(map[string]interface{}))
-	newStateMap := mapStringInterfaceToMapStringMapStringInterface(newState.(map[string]interface{}))
+	oldStateListOfVms := interfaceListToMapStringInterface(oldState.([]interface{}))
+	newStateListOfVms := interfaceListToMapStringInterface(newState.([]interface{}))
 
-	newVmDescriptions := make([]*types.NewVMDescription, 0)
-	for key, _ := range newStateMap {
-		newStateMap[key]["name"] = key
-		vmDescription, err := createVMDescription(newStateMap[key], interfaceListToStringList(networks), meta)
+	newVMDescriptions := make([]*types.NewVMDescription, len(newStateListOfVms))
+	for index := range newStateListOfVms {
+		vmDescription, err := createVMDescription(newStateListOfVms[index], interfaceListToStringList(networks), meta)
 
 		if err != nil {
 			return err
 		}
 
-		newVmDescriptions = append(newVmDescriptions, vmDescription)
+		newVMDescriptions = append(newVMDescriptions, vmDescription)
 	}
 
 	orgnetworks := make([]*types.OrgVDCNetwork, len(networks))
@@ -93,7 +92,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 		vapp = vcdClient.NewVApp(&vcdClient.Client)
 
 		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := vapp.ComposeVApp(d.Get("name").(string), d.Get("description").(string), orgnetworks, newVmDescriptions)
+			task, err := vapp.ComposeVApp(d.Get("name").(string), d.Get("description").(string), orgnetworks, newVMDescriptions)
 			if err != nil {
 				return resource.NonRetryableError(fmt.Errorf("Error creating vapp: %#v", err))
 			}
@@ -126,16 +125,16 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[TRACE] (%s) Updating virtual machines", vapp.VApp.Name)
 	// newVMResources := make([]map[string]interface{}, len(vmResources))
 
-	for key := range newStateMap {
-		vm, err := vapp.GetVmByName(key)
+	for index := range newStateListOfVms {
+		vm, err := vapp.GetVmByName(newStateListOfVms[index]["name"].(string))
 
 		if err != nil {
 			return err
 		}
 
 		href := vm.HREF
-		newStateMap[key]["href"] = href
-		vmSubResource := NewVirtualMachineSubresource(newStateMap[key], oldStateMap[key], 0)
+		newStateListOfVms[index]["href"] = href
+		vmSubResource := NewVirtualMachineSubresource(newStateListOfVms[index], oldStateListOfVms[index], 0)
 
 		err = configureVM(vmSubResource, meta)
 
@@ -143,10 +142,10 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 			return err
 		}
 		// newVMResources[index] = vmResourceAfterConfiguration
-		newStateMap[key] = vmSubResource.Data()
+		newStateListOfVms[index] = vmSubResource.Data()
 	}
 
-	d.Set("vm", newStateMap)
+	d.Set("vm", newStateListOfVms)
 
 	// This should be HREF, but FindVAppByHREF is buggy
 	d.SetId(d.Get("name").(string))
@@ -193,33 +192,31 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	if d.HasChange("vm") {
 		oldState, newState := d.GetChange("vm")
 
-		oldStateMap := mapStringInterfaceToMapStringMapStringInterface(oldState.(map[string]interface{}))
-		newStateMap := mapStringInterfaceToMapStringMapStringInterface(newState.(map[string]interface{}))
+		oldStateListOfVms := interfaceListToMapStringInterface(oldState.([]interface{}))
+		newStateListOfVms := interfaceListToMapStringInterface(newState.([]interface{}))
 
-		newVms := make([]string, 0)
-		removedVms := make([]string, 0)
-		//changedVms := make([]map[string]interface{}, 0)
+		newVms := make([]map[string]interface{}, 0)
+		removedVms := make([]map[string]interface{}, 0)
 
-		for _, oldStateVM := range getKeys(oldStateMap) {
-			if !isStringMember(getKeys(newStateMap), oldStateVM) {
-				removedVms = append(removedVms, oldStateVM)
+		for index := range oldStateListOfVms {
+			if !isVMMapStringInterfaceMember(newStateListOfVms, oldStateListOfVms[index]) {
+				removedVms = append(removedVms, oldStateListOfVms[index])
 			}
 		}
 		log.Printf("[TRACE] (%s) VMs to remove: %#v", vapp.VApp.Name, removedVms)
 
-		for _, newStateVM := range getKeys(newStateMap) {
-			if !isStringMember(getKeys(oldStateMap), newStateVM) {
-				newVms = append(newVms, newStateVM)
+		for index := range newStateListOfVms {
+			if !isVMMapStringInterfaceMember(oldStateListOfVms, newStateListOfVms[index]) {
+				newVms = append(newVms, newStateListOfVms[index])
 			}
-			//changedVms = append(changedVms, newStateVM)
 		}
 		log.Printf("[TRACE] (%s) VMs to add: %#v", vapp.VApp.Name, newVms)
 		// log.Printf("[TRACE] (%s) VMs to change: %#v", vapp.VApp.Name, changedVms)
 
 		// Delete VMs
 		removedVmsAsVMType := make([]*types.VM, 0)
-		for _, key := range removedVms {
-			vm, err := vapp.GetVmByHREF(oldStateMap[key]["href"].(string))
+		for index := range removedVms {
+			vm, err := vapp.GetVmByHREF(removedVms[index]["href"].(string))
 
 			if err != nil {
 				return err
@@ -248,8 +245,8 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		networks := d.Get("network").([]interface{})
 
 		newVmDescriptions := make([]*types.NewVMDescription, len(newVms))
-		for index, key := range newVms {
-			vmDescription, err := createVMDescription(newStateMap[key], interfaceListToStringList(networks), meta)
+		for index := range newVms {
+			vmDescription, err := createVMDescription(newVms[index], interfaceListToStringList(networks), meta)
 
 			if err != nil {
 				return err
@@ -277,23 +274,26 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		// Find HREF for new virtual machines
 		log.Printf("[TRACE] (%s) Adding HREF for new VMs", vapp.VApp.Name)
 		// vmResources := make([]map[string]interface{}, len(changedVms))
-		for _, key := range newVms {
-			log.Printf("[TRACE] (%s) VM found with no HREF: %s", vapp.VApp.Name, newStateMap[key]["name"].(string))
-			vm, err := vapp.GetVmByName(newStateMap[key]["name"].(string))
-			if err != nil {
-				return err
+		for index := range newVms {
+			log.Printf("[TRACE] (%s) VM found with no HREF: %s", vapp.VApp.Name, newVms[index]["name"].(string))
 
-			}
-			newStateMap[key]["href"] = vm.HREF
 		}
 
 		// Start configuring the machines
 		log.Printf("[TRACE] (%s) Updating virtual machines", vapp.VApp.Name)
 		// newVMResources := make([]map[string]interface{}, len(vmResources))
 
-		for key := range newStateMap {
+		for index := range newStateListOfVms {
+			if newStateListOfVms[index]["href"] != "" {
+				vm, err := vapp.GetVmByName(newVms[index]["name"].(string))
+				if err != nil {
+					return err
 
-			vmSubResource := NewVirtualMachineSubresource(newStateMap[key], oldStateMap[key], 0)
+				}
+				newStateListOfVms[index]["href"] = vm.HREF
+			}
+
+			vmSubResource := NewVirtualMachineSubresource(newStateListOfVms[index], oldStateListOfVms[index], 0)
 
 			err := configureVM(vmSubResource, meta)
 
@@ -301,10 +301,10 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 				return err
 			}
 			// newVMResources[index] = vmResourceAfterConfiguration
-			newStateMap[key] = vmSubResource.Data()
+			newStateListOfVms[index] = vmSubResource.Data()
 		}
 
-		d.Set("vm", newStateMap)
+		d.Set("vm", newStateListOfVms)
 	}
 
 	// TODO: MAybe remove this coupling
