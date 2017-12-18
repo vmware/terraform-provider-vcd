@@ -95,76 +95,123 @@ func configureVM(vmResource *VirtualMachineSubresource, meta interface{}) error 
 	// TODO: Use partial state
 	//d.Partial(true)
 
-	// Configure VM with initscript
-	log.Printf("[TRACE] (%s) Configuring vm with initscript", vmResource.Get("name").(string))
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := vm.RunCustomizationScript(vmResource.Get("name").(string), vmResource.Get("initscript").(string))
-		if err != nil {
-			return resource.NonRetryableError(fmt.Errorf("Error with setting init script: %#v", err))
-		}
-		return resource.RetryableError(task.WaitTaskCompletion())
-	})
-	if err != nil {
-		return fmt.Errorf("Error completing tasks: %#v", err)
-	}
-
-	// Change CPU count of VM
-	log.Printf("[TRACE] (%s) Changing CPU", vmResource.Get("name").(string))
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := vm.ChangeCPUcount(vmResource.Get("cpus").(int))
-		if err != nil {
-			return resource.NonRetryableError(fmt.Errorf("Error changing cpu count: %#v", err))
-		}
-
-		return resource.RetryableError(task.WaitTaskCompletion())
-	})
-	if err != nil {
-		return fmt.Errorf("Error completing task: %#v", err)
-	}
-
-	// Change Memory of VM
-	log.Printf("[TRACE] (%s) Changing memory", vmResource.Get("name").(string))
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := vm.ChangeMemorySize(vmResource.Get("memory").(int))
-		if err != nil {
-			return resource.NonRetryableError(fmt.Errorf("Error changing memory size: %#v", err))
-		}
-
-		return resource.RetryableError(task.WaitTaskCompletion())
-	})
-	if err != nil {
-		return err
-	}
-
-	// Change nested hypervisor setting of VM
-	log.Printf("[TRACE] (%s) Changing nested hypervisor setting", vmResource.Get("name").(string))
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := vm.ChangeNestedHypervisor(vmResource.Get("nested_hypervisor_enabled").(bool))
-		if err != nil {
-			return resource.NonRetryableError(fmt.Errorf("Error changing nested hypervisor setting count: %#v", err))
-		}
-
-		return resource.RetryableError(task.WaitTaskCompletion())
-	})
-	if err != nil {
-		return fmt.Errorf("Error completing task: %#v", err)
-	}
-
 	// Change networks setting of VM
-	log.Printf("[TRACE] (%s) Changing network settings", vmResource.Get("name").(string))
+	if vmResource.HasChange("network") {
+		log.Printf("[TRACE] (%s) Changing network settings", vmResource.Get("name").(string))
 
-	networks := interfaceListToMapStringInterface(vmResource.Get("network").([]interface{}))
+		networks := interfaceListToMapStringInterface(vmResource.Get("network").([]interface{}))
 
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := configureVmNetwork(networks, vm)
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := configureVMNetwork(networks, vm)
+			if err != nil {
+				return resource.NonRetryableError(fmt.Errorf("Error changing nested hypervisor setting count: %#v", err))
+			}
+
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
 		if err != nil {
-			return resource.NonRetryableError(fmt.Errorf("Error changing nested hypervisor setting count: %#v", err))
+			return fmt.Errorf("Error completing task: %#v", err)
+		}
+	}
+
+	// Some changes requires the VM to be off or restarted
+	if vmResource.HasChange("initscript") ||
+		vmResource.HasChange("cpus") ||
+		vmResource.HasChange("memory") ||
+		vmResource.HasChange("nested_hypervisor_enabled") ||
+		vmResource.HasChange("power_on") {
+		log.Printf("[TRACE] (%s) Changing settings that require power off or restart", vmResource.Get("name").(string))
+
+		status, err := vm.GetStatus()
+		if err != nil {
+			return fmt.Errorf("Error getting VM status: %#v", err)
 		}
 
-		return resource.RetryableError(task.WaitTaskCompletion())
-	})
-	if err != nil {
-		return fmt.Errorf("Error completing task: %#v", err)
+		// Check that the VM is powered off, and turn off if not.
+		if status != types.VAppStatuses[8] {
+			task, err := vm.PowerOff()
+			if err != nil {
+				return fmt.Errorf("Error Powering Off: %#v", err)
+			}
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				return fmt.Errorf("Error completing tasks: %#v", err)
+			}
+		}
+
+		// Configure VM with initscript
+		if vmResource.HasChange("initscript") {
+			log.Printf("[TRACE] (%s) Configuring vm with initscript", vmResource.Get("name").(string))
+			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+				task, err := vm.RunCustomizationScript(vmResource.Get("name").(string), vmResource.Get("initscript").(string))
+				if err != nil {
+					return resource.NonRetryableError(fmt.Errorf("Error with setting init script: %#v", err))
+				}
+				return resource.RetryableError(task.WaitTaskCompletion())
+			})
+			if err != nil {
+				return fmt.Errorf("Error completing tasks: %#v", err)
+			}
+		}
+
+		// Change CPU count of VM
+		if vmResource.HasChange("cpus") {
+			log.Printf("[TRACE] (%s) Changing CPU", vmResource.Get("name").(string))
+			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+				task, err := vm.ChangeCPUcount(vmResource.Get("cpus").(int))
+				if err != nil {
+					return resource.NonRetryableError(fmt.Errorf("Error changing cpu count: %#v", err))
+				}
+
+				return resource.RetryableError(task.WaitTaskCompletion())
+			})
+			if err != nil {
+				return fmt.Errorf("Error completing task: %#v", err)
+			}
+		}
+
+		// Change Memory of VM
+		if vmResource.HasChange("memory") {
+			log.Printf("[TRACE] (%s) Changing memory", vmResource.Get("name").(string))
+			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+				task, err := vm.ChangeMemorySize(vmResource.Get("memory").(int))
+				if err != nil {
+					return resource.NonRetryableError(fmt.Errorf("Error changing memory size: %#v", err))
+				}
+
+				return resource.RetryableError(task.WaitTaskCompletion())
+			})
+			if err != nil {
+				return err
+			}
+		}
+
+		// Change nested hypervisor setting of VM
+		if vmResource.HasChange("nested_hypervisor_enabled") {
+			log.Printf("[TRACE] (%s) Changing nested hypervisor setting", vmResource.Get("name").(string))
+			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+				task, err := vm.ChangeNestedHypervisor(vmResource.Get("nested_hypervisor_enabled").(bool))
+				if err != nil {
+					return resource.NonRetryableError(fmt.Errorf("Error changing nested hypervisor setting count: %#v", err))
+				}
+
+				return resource.RetryableError(task.WaitTaskCompletion())
+			})
+			if err != nil {
+				return fmt.Errorf("Error completing task: %#v", err)
+			}
+		}
+
+		if vmResource.Get("power_on").(bool) {
+			task, err := vm.PowerOn()
+			if err != nil {
+				return fmt.Errorf("Error Powering Up: %#v", err)
+			}
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				return fmt.Errorf("Error completing tasks: %#v", err)
+			}
+		}
 	}
 
 	// d.Partial(false)
@@ -208,7 +255,7 @@ func readVM(vmResource *VirtualMachineSubresource, meta interface{}) error {
 
 	for index, networkConnection := range networkConnections {
 
-		readNetwork := readVmNetwork(networkConnection, primaryInterfaceIndex)
+		readNetwork := readVMNetwork(networkConnection, primaryInterfaceIndex)
 
 		readNetworks[index] = readNetwork
 	}
@@ -236,7 +283,7 @@ func readVM(vmResource *VirtualMachineSubresource, meta interface{}) error {
 	return nil
 }
 
-func configureVmNetwork(networkConnections []map[string]interface{}, vm govcd.VM) (govcd.Task, error) {
+func configureVMNetwork(networkConnections []map[string]interface{}, vm govcd.VM) (govcd.Task, error) {
 
 	err := vm.Refresh()
 	if err != nil {
@@ -263,7 +310,7 @@ func configureVmNetwork(networkConnections []map[string]interface{}, vm govcd.VM
 	return vm.ChangeNetworkConfig(newNetworkConnections, primaryNetworkConnectionIndex)
 }
 
-func readVmNetwork(networkConnection *types.NetworkConnection, primaryInterfaceIndex int) map[string]interface{} {
+func readVMNetwork(networkConnection *types.NetworkConnection, primaryInterfaceIndex int) map[string]interface{} {
 	readNetwork := make(map[string]interface{})
 
 	readNetwork["name"] = networkConnection.Network

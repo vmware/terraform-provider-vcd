@@ -276,7 +276,6 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		// vmResources := make([]map[string]interface{}, len(changedVms))
 		for index := range newVms {
 			log.Printf("[TRACE] (%s) VM found with no HREF: %s", vapp.VApp.Name, newVms[index]["name"].(string))
-
 		}
 
 		// Start configuring the machines
