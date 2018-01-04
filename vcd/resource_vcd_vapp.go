@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	types "github.com/ukcloud/govcloudair/types/v56"
@@ -57,10 +58,12 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[TRACE] Networks from state: %#v", networks)
 
 	// Get VMs and create descriptions for the vAppCompose
-	oldState, newState := d.GetChange("vm")
+	_, newState := d.GetChange("vm")
 
-	oldStateListOfVms := interfaceListToMapStringInterface(oldState.([]interface{}))
+	// oldStateListOfVms := interfaceListToMapStringInterface(oldState.([]interface{}))
 	newStateListOfVms := interfaceListToMapStringInterface(newState.([]interface{}))
+
+	log.Printf("[TRACE] New state: %#v", newStateListOfVms)
 
 	newVMDescriptions := make([]*types.NewVMDescription, len(newStateListOfVms))
 	for index := range newStateListOfVms {
@@ -70,8 +73,10 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 			return err
 		}
 
-		newVMDescriptions = append(newVMDescriptions, vmDescription)
+		newVMDescriptions[index] = vmDescription
 	}
+
+	log.Printf("[TRACE] New state2: %#v", newStateListOfVms)
 
 	orgnetworks := make([]*types.OrgVDCNetwork, len(networks))
 	for index, network := range networks {
@@ -82,6 +87,10 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 
 		orgnetworks[index] = orgnetwork.OrgVDCNetwork
 	}
+
+	log.Printf("[TRACE] NEWVMDESC: %#v", newVMDescriptions)
+
+	log.Printf("[TRACE] New state3: %#v", newStateListOfVms)
 
 	// See if vApp exists
 	vapp, err := vcdClient.OrgVdc.FindVAppByName(d.Id())
@@ -105,24 +114,30 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	log.Printf("[TRACE] New state4: %#v", newStateListOfVms)
+
 	log.Printf("[DEBUG] vApp created with href:  %s", vapp.VApp.HREF)
 	d.Set("href", vapp.VApp.HREF)
 
+	log.Printf("[TRACE] New state5: %#v", newStateListOfVms)
+
 	// Refresh vcd and vApp to get the new versions
-	log.Printf("[TRACE] Refreshing vcd")
+	log.Printf("[TRACE] Updating state from VCD")
 	err = vcdClient.OrgVdc.Refresh()
 	if err != nil {
 		return fmt.Errorf("Error refreshing vdc: %#v", err)
 	}
 
-	log.Printf("[TRACE] Refreshing vApp (%s)", vapp.VApp.Name)
+	log.Printf("[TRACE] Updateing vApp (%s) state", vapp.VApp.Name)
 	err = vapp.Refresh()
 	if err != nil {
 		return fmt.Errorf("Error refreshing vApp: %#v", err)
 	}
 
+	log.Printf("[TRACE] New state6: %#v", newStateListOfVms)
+
 	// Start configuring the machines
-	log.Printf("[TRACE] (%s) Updating virtual machines", vapp.VApp.Name)
+	log.Printf("[TRACE] (%s) Configuring virtual machines", vapp.VApp.Name)
 	// newVMResources := make([]map[string]interface{}, len(vmResources))
 
 	for index := range newStateListOfVms {
@@ -134,8 +149,19 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 
 		href := vm.HREF
 		newStateListOfVms[index]["href"] = href
-		vmSubResource := NewVirtualMachineSubresource(newStateListOfVms[index], oldStateListOfVms[index], 0)
 
+		copyVMResource, err := deepCopyMap(newStateListOfVms[index])
+		if err != nil {
+			return err
+		}
+
+		readVMSubResource := NewVirtualMachineSubresource(copyVMResource, nil)
+		err = readVM(readVMSubResource, meta)
+		if err != nil {
+			return err
+		}
+
+		vmSubResource := NewVirtualMachineSubresource(newStateListOfVms[index], readVMSubResource.Data())
 		err = configureVM(vmSubResource, meta)
 
 		if err != nil {
@@ -144,6 +170,8 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 		// newVMResources[index] = vmResourceAfterConfiguration
 		newStateListOfVms[index] = vmSubResource.Data()
 	}
+
+	log.Printf("[TRACE] New state7: %#v", newStateListOfVms)
 
 	d.Set("vm", newStateListOfVms)
 
@@ -155,6 +183,11 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 
 func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
+	log.Printf("[TRACE] Updating state from VCD")
+	err := vcdClient.OrgVdc.Refresh()
+	if err != nil {
+		return fmt.Errorf("Error refreshing vdc: %#v", err)
+	}
 
 	// TODO: HERE WE MUST CHECK AND ADD NEW OR REMOVE VMs
 	// new/remove vm
@@ -195,6 +228,9 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		oldStateListOfVms := interfaceListToMapStringInterface(oldState.([]interface{}))
 		newStateListOfVms := interfaceListToMapStringInterface(newState.([]interface{}))
 
+		log.Printf("[TRACE] OLD STATE LIST: \n %s", spew.Sdump(oldStateListOfVms))
+		log.Printf("[TRACE] NEW STATE LIST: \n %s", spew.Sdump(newStateListOfVms))
+
 		newVms := make([]map[string]interface{}, 0)
 		removedVms := make([]map[string]interface{}, 0)
 
@@ -206,7 +242,7 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[TRACE] (%s) VMs to remove: %#v", vapp.VApp.Name, removedVms)
 
 		for index := range newStateListOfVms {
-			if !isVMMapStringInterfaceMember(oldStateListOfVms, newStateListOfVms[index]) {
+			if newStateListOfVms[index]["href"] == "" {
 				newVms = append(newVms, newStateListOfVms[index])
 			}
 		}
@@ -271,11 +307,10 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 			return fmt.Errorf("Error completing task: %#v", err)
 		}
 
-		// Find HREF for new virtual machines
-		log.Printf("[TRACE] (%s) Adding HREF for new VMs", vapp.VApp.Name)
-		// vmResources := make([]map[string]interface{}, len(changedVms))
-		for index := range newVms {
-			log.Printf("[TRACE] (%s) VM found with no HREF: %s", vapp.VApp.Name, newVms[index]["name"].(string))
+		log.Printf("[TRACE] Updating vApp (%s) state", vapp.VApp.Name)
+		err = vapp.Refresh()
+		if err != nil {
+			return fmt.Errorf("Error refreshing vApp: %#v", err)
 		}
 
 		// Start configuring the machines
@@ -283,18 +318,31 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		// newVMResources := make([]map[string]interface{}, len(vmResources))
 
 		for index := range newStateListOfVms {
-			if newStateListOfVms[index]["href"] != "" {
-				vm, err := vapp.GetVmByName(newVms[index]["name"].(string))
+			log.Printf("[TRACE] THIS IS THE HREF, %#v", newStateListOfVms[index]["href"])
+			if newStateListOfVms[index]["href"] == "" {
+				log.Printf("[TRACE] (%s) Adding HREF for new VM (%s)", vapp.VApp.Name, newStateListOfVms[index]["name"].(string))
+				vm, err := vapp.GetVmByName(newStateListOfVms[index]["name"].(string))
 				if err != nil {
 					return err
-
 				}
+				log.Printf("[TRACE] VM HRTEF: %s", vm.HREF)
 				newStateListOfVms[index]["href"] = vm.HREF
 			}
+			log.Printf("[TRACE] THIS IS THE HREF NOW, %#v", newStateListOfVms[index]["href"])
 
-			vmSubResource := NewVirtualMachineSubresource(newStateListOfVms[index], oldStateListOfVms[index], 0)
+			copyVMResource, err := deepCopyMap(newStateListOfVms[index])
+			if err != nil {
+				return err
+			}
 
-			err := configureVM(vmSubResource, meta)
+			readVMSubResource := NewVirtualMachineSubresource(copyVMResource, nil)
+			err = readVM(readVMSubResource, meta)
+			if err != nil {
+				return err
+			}
+
+			vmSubResource := NewVirtualMachineSubresource(newStateListOfVms[index], readVMSubResource.Data())
+			err = configureVM(vmSubResource, meta)
 
 			if err != nil {
 				return err
@@ -307,11 +355,13 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// TODO: MAybe remove this coupling
-	return resourceVcdVAppRead(d, meta)
+	//return resourceVcdVAppRead(d, meta)
+	return nil
 }
 
 func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
+	log.Printf("[TRACE] Updating state from VCD")
 	err := vcdClient.OrgVdc.Refresh()
 	if err != nil {
 		return fmt.Errorf("Error refreshing vdc: %#v", err)
@@ -334,12 +384,13 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 	// Get VMs and create descriptions for the vAppCompose
 	oldState, newState := d.GetChange("vm")
 
-	oldStateMap := mapStringInterfaceToMapStringMapStringInterface(oldState.(map[string]interface{}))
-	newStateMap := mapStringInterfaceToMapStringMapStringInterface(newState.(map[string]interface{}))
+	oldStateListOfVms := interfaceListToMapStringInterface(oldState.([]interface{}))
+	newStateListOfVms := interfaceListToMapStringInterface(newState.([]interface{}))
 
-	for key := range newStateMap {
+	for index := range newStateListOfVms {
 
-		vmSubResource := NewVirtualMachineSubresource(newStateMap[key], oldStateMap[key], 0)
+		href := newStateListOfVms[index]["href"].(string)
+		vmSubResource := NewVirtualMachineSubresource(newStateListOfVms[index], getVMResourcebyHrefFromList(href, oldStateListOfVms))
 
 		err := readVM(vmSubResource, meta)
 
@@ -347,15 +398,20 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 			return err
 		}
 		// newVMResources[index] = vmResourceAfterConfiguration
-		newStateMap[key] = vmSubResource.Data()
+		newStateListOfVms[index] = vmSubResource.Data()
 	}
 
-	d.Set("vm", newStateMap)
+	d.Set("vm", newStateListOfVms)
 	return nil
 }
 
 func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
+	log.Printf("[TRACE] Updating state from VCD")
+	err := vcdClient.OrgVdc.Refresh()
+	if err != nil {
+		return fmt.Errorf("Error refreshing vdc: %#v", err)
+	}
 
 	// Should be fetched by ID/HREF
 	vapp, err := vcdClient.OrgVdc.FindVAppByName(d.Id())

@@ -76,7 +76,6 @@ func createVMDescription(vmData map[string]interface{}, vAppNetworks []string, m
 	log.Printf("[DEBUG] NewVMDescription: %#v", vmDescription)
 
 	return vmDescription, nil
-
 }
 
 func configureVM(vmResource *VirtualMachineSubresource, meta interface{}) error {
@@ -86,7 +85,7 @@ func configureVM(vmResource *VirtualMachineSubresource, meta interface{}) error 
 	vm, err := vcdClient.FindVMByHREF(vmResource.Get("href").(string))
 
 	if err != nil {
-		return fmt.Errorf("Could not find VM (%s) in VCD", vmResource.Get("href").(string))
+		return fmt.Errorf("Could not find VM (%s)(%s) in VCD", vmResource.Get("name").(string), vmResource.Get("href").(string))
 	}
 
 	// TODO: Detect change in subResourceData
@@ -113,6 +112,8 @@ func configureVM(vmResource *VirtualMachineSubresource, meta interface{}) error 
 			return fmt.Errorf("Error completing task: %#v", err)
 		}
 	}
+
+	log.Printf("[TRACE] CPU HAS CHANGED: %b", vmResource.HasChange("cpus"))
 
 	// Some changes requires the VM to be off or restarted
 	if vmResource.HasChange("initscript") ||
@@ -235,7 +236,7 @@ func readVM(vmResource *VirtualMachineSubresource, meta interface{}) error {
 	vm, err := vcdClient.FindVMByHREF(vmResource.Get("href").(string))
 
 	if err != nil {
-		return fmt.Errorf("Could not find VM (%s) in VCD", vmResource.Get("href").(string))
+		return fmt.Errorf("Could not find VM (%s)(%s) in VCD", vmResource.Get("name").(string), vmResource.Get("href").(string))
 	}
 
 	err = vm.Refresh()
@@ -339,6 +340,15 @@ func isVMMapStringInterfaceMember(list []map[string]interface{}, vm map[string]i
 		}
 	}
 	return false
+}
+
+func getVMResourcebyHrefFromList(href string, list []map[string]interface{}) map[string]interface{} {
+	for _, vm := range list {
+		if vm["href"] == href {
+			return vm
+		}
+	}
+	return nil
 }
 
 func mapStringInterfaceToMapStringMapStringInterface(m map[string]interface{}) map[string]map[string]interface{} {

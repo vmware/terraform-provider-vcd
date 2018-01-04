@@ -60,7 +60,7 @@ type VirtualMachineSubresource struct {
 	*Subresource
 }
 
-func NewVirtualMachineSubresource(d, old map[string]interface{}, idx int) *VirtualMachineSubresource {
+func NewVirtualMachineSubresource(d, old map[string]interface{}) *VirtualMachineSubresource {
 	sr := &VirtualMachineSubresource{
 		Subresource: &Subresource{
 			schema:  VirtualMachineSubresourceSchema(),
@@ -69,6 +69,5 @@ func NewVirtualMachineSubresource(d, old map[string]interface{}, idx int) *Virtu
 			// rdd:     rdd,
 		},
 	}
-	sr.Index = idx
 	return sr
 }

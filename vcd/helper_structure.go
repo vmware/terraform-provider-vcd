@@ -1,6 +1,8 @@
 package vcd
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -181,4 +183,25 @@ func NormalizeValue(v interface{}) interface{} {
 		v = reflect.ValueOf(v).Convert(reflect.TypeOf(float64(0))).Interface()
 	}
 	return v
+}
+
+func init() {
+	gob.Register(map[string]interface{}{})
+}
+
+// Map performs a deep copy of the given map m.
+func deepCopyMap(m map[string]interface{}) (map[string]interface{}, error) {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	dec := gob.NewDecoder(&buf)
+	err := enc.Encode(m)
+	if err != nil {
+		return nil, err
+	}
+	var copy map[string]interface{}
+	err = dec.Decode(&copy)
+	if err != nil {
+		return nil, err
+	}
+	return copy, nil
 }
