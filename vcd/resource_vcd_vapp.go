@@ -28,10 +28,14 @@ func resourceVcdVApp() *schema.Resource {
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
 			"vm": {
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: VirtualMachineSubresourceSchema()},
+				Set: func(i interface{}) int {
+					vm := i.(map[string]interface{})
+					return schema.HashString(vm["name"])
+				},
 			},
 			"description": {
 				Type:     schema.TypeString,
@@ -60,8 +64,8 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 	// Get VMs and create descriptions for the vAppCompose
 	_, newState := d.GetChange("vm")
 
-	// oldStateListOfVms := interfaceListToMapStringInterface(oldState.([]interface{}))
-	newStateListOfVms := interfaceListToMapStringInterface(newState.([]interface{}))
+	// oldStateListOfVms := interfaceListToMapStringInterface(oldState.(*schema.Set).List())
+	newStateListOfVms := interfaceListToMapStringInterface(newState.(*schema.Set).List())
 
 	log.Printf("[TRACE] New state: %#v", newStateListOfVms)
 
@@ -225,27 +229,36 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	if d.HasChange("vm") {
 		oldState, newState := d.GetChange("vm")
 
-		oldStateListOfVms := interfaceListToMapStringInterface(oldState.([]interface{}))
-		newStateListOfVms := interfaceListToMapStringInterface(newState.([]interface{}))
+		oldStateListOfVms := interfaceListToMapStringInterface(oldState.(*schema.Set).List())
+		newStateListOfVms := interfaceListToMapStringInterface(newState.(*schema.Set).List())
 
 		log.Printf("[TRACE] OLD STATE LIST: \n %s", spew.Sdump(oldStateListOfVms))
 		log.Printf("[TRACE] NEW STATE LIST: \n %s", spew.Sdump(newStateListOfVms))
 
-		newVms := make([]map[string]interface{}, 0)
-		removedVms := make([]map[string]interface{}, 0)
+		// newVms := make([]map[string]interface{}, 0)
+		// removedVms := make([]map[string]interface{}, 0)
 
-		for index := range oldStateListOfVms {
-			if !isVMMapStringInterfaceMember(newStateListOfVms, oldStateListOfVms[index]) {
-				removedVms = append(removedVms, oldStateListOfVms[index])
-			}
-		}
+		// for index := range oldStateListOfVms {
+		// 	if !isVMMapStringInterfaceMember(newStateListOfVms, oldStateListOfVms[index]) {
+		// 		removedVms = append(removedVms, oldStateListOfVms[index])
+		// 	}
+		// }
+
+		removedVms := interfaceListToMapStringInterface(
+			oldState.(*schema.Set).Difference(
+				newState.(*schema.Set)).List())
 		log.Printf("[TRACE] (%s) VMs to remove: %#v", vapp.VApp.Name, removedVms)
 
-		for index := range newStateListOfVms {
-			if newStateListOfVms[index]["href"] == "" {
-				newVms = append(newVms, newStateListOfVms[index])
-			}
-		}
+		// for index := range newStateListOfVms {
+		// 	if newStateListOfVms[index]["href"] == "" {
+		// 		newVms = append(newVms, newStateListOfVms[index])
+		// 	}
+		// }
+
+		newVms := interfaceListToMapStringInterface(
+			newState.(*schema.Set).Difference(
+				oldState.(*schema.Set)).List())
+
 		log.Printf("[TRACE] (%s) VMs to add: %#v", vapp.VApp.Name, newVms)
 		// log.Printf("[TRACE] (%s) VMs to change: %#v", vapp.VApp.Name, changedVms)
 
@@ -384,8 +397,8 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 	// Get VMs and create descriptions for the vAppCompose
 	oldState, newState := d.GetChange("vm")
 
-	oldStateListOfVms := interfaceListToMapStringInterface(oldState.([]interface{}))
-	newStateListOfVms := interfaceListToMapStringInterface(newState.([]interface{}))
+	oldStateListOfVms := interfaceListToMapStringInterface(oldState.(*schema.Set).List())
+	newStateListOfVms := interfaceListToMapStringInterface(newState.(*schema.Set).List())
 
 	for index := range newStateListOfVms {
 

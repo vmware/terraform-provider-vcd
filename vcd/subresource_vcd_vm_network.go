@@ -4,6 +4,7 @@ import (
 	"net"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 )
 
 func VirtualMachineNetworkSubresourceSchema() map[string]*schema.Schema {
@@ -26,12 +27,12 @@ func VirtualMachineNetworkSubresourceSchema() map[string]*schema.Schema {
 		"ip_allocation_mode": {
 			Type:     schema.TypeString,
 			Required: true,
-			// ValidateFunc: validation.StringInSlice([]string{
-			// 	"DHCP",
-			// 	"MANUAL",
-			// 	"NONE",
-			// 	"POOL",
-			// }, false),
+			ValidateFunc: validation.StringInSlice([]string{
+				"DHCP",
+				"MANUAL",
+				"NONE",
+				"POOL",
+			}, false),
 		},
 		"is_primary": {
 			Type:     schema.TypeBool,
@@ -47,11 +48,11 @@ func VirtualMachineNetworkSubresourceSchema() map[string]*schema.Schema {
 			Type:     schema.TypeString,
 			Optional: true,
 			Default:  "VMXNET3",
-			// ValidateFunc: validation.StringInSlice([]string{
-			// 	"VMXNET3",
-			// 	"E1000",
-			//  "E1000E",
-			// }, false),
+			ValidateFunc: validation.StringInSlice([]string{
+				"VMXNET3",
+				"E1000",
+				"E1000E",
+			}, false),
 		},
 	}
 	return s
