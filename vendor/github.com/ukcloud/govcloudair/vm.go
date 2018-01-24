@@ -11,7 +11,6 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"strconv"
 
 	types "github.com/ukcloud/govcloudair/types/v56"
@@ -128,7 +127,11 @@ func (v *VM) Reconfigure() (Task, error) {
 
 	log.Printf("[DEBUG] VM: %s", output)
 
-	return ExecuteRequest(string(output), v.VM.HREF+"/action/reconfigureVm", "POST", "application/vnd.vmware.vcloud.vm+xml", v.c)
+	return ExecuteRequest(string(output),
+		v.VM.HREF+"/action/reconfigureVm",
+		"POST",
+		"application/vnd.vmware.vcloud.vm+xml",
+		v.c)
 }
 
 func (c *VCDClient) FindVMByHREF(vmhref string) (VM, error) {
@@ -158,49 +161,19 @@ func (c *VCDClient) FindVMByHREF(vmhref string) (VM, error) {
 }
 
 func (v *VM) PowerOn() (Task, error) {
-
-	s, _ := url.ParseRequestURI(v.VM.HREF)
-	s.Path += "/power/action/powerOn"
-
-	req := v.c.NewRequest(map[string]string{}, "POST", *s, nil)
-
-	resp, err := checkResp(v.c.Http.Do(req))
-	if err != nil {
-		return Task{}, fmt.Errorf("error powering on VM: %s", err)
-	}
-
-	task := NewTask(v.c)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-	}
-
-	// The request was successful
-	return *task, nil
-
+	return ExecuteRequest("",
+		v.VM.HREF+"/power/action/powerOn",
+		"POST",
+		"application/vnd.vmware.vcloud.vm+xml",
+		v.c)
 }
 
 func (v *VM) PowerOff() (Task, error) {
-
-	s, _ := url.ParseRequestURI(v.VM.HREF)
-	s.Path += "/power/action/powerOff"
-
-	req := v.c.NewRequest(map[string]string{}, "POST", *s, nil)
-
-	resp, err := checkResp(v.c.Http.Do(req))
-	if err != nil {
-		return Task{}, fmt.Errorf("error powering off VM: %s", err)
-	}
-
-	task := NewTask(v.c)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-	}
-
-	// The request was successful
-	return *task, nil
-
+	return ExecuteRequest("",
+		v.VM.HREF+"/power/action/powerOff",
+		"POST",
+		"application/vnd.vmware.vcloud.vm+xml",
+		v.c)
 }
 
 func (v *VM) Undeploy() (Task, error) {
@@ -215,35 +188,11 @@ func (v *VM) Undeploy() (Task, error) {
 		fmt.Printf("error: %v\n", err)
 	}
 
-	debug := os.Getenv("GOVCLOUDAIR_DEBUG")
-
-	if debug == "true" {
-		fmt.Printf("\n\nXML DEBUG: %s\n\n", string(output))
-	}
-
-	b := bytes.NewBufferString(xml.Header + string(output))
-
-	s, _ := url.ParseRequestURI(v.VM.HREF)
-	s.Path += "/action/undeploy"
-
-	req := v.c.NewRequest(map[string]string{}, "POST", *s, b)
-
-	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.undeployVAppParams+xml")
-
-	resp, err := checkResp(v.c.Http.Do(req))
-	if err != nil {
-		return Task{}, fmt.Errorf("error undeploy vApp: %s", err)
-	}
-
-	task := NewTask(v.c)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-	}
-
-	// The request was successful
-	return *task, nil
-
+	return ExecuteRequest(string(output),
+		v.VM.HREF+"/action/undeploy",
+		"POST",
+		"application/vnd.vmware.vcloud.undeployVAppParams+xml",
+		v.c)
 }
 
 func (v *VM) getVirtualHardwareItemsByResourceType(resourceType int) ([]*types.VirtualHardwareItem, error) {
@@ -292,11 +241,6 @@ func (v *VM) GetMemoryCount() (int, error) {
 }
 
 func (v *VM) correctAddressOnParentForNetworkHardware() error {
-	// items, err := v.getVirtualHardwareItemsByResourceType(types.ResourceTypeEthernet)
-	// if err != nil {
-	// 	return err
-	// }
-
 	for index := range v.VM.VirtualHardwareSection.Item {
 		if v.VM.VirtualHardwareSection.Item[index].ResourceType == types.ResourceTypeEthernet {
 			v.VM.VirtualHardwareSection.Item[index].AddressOnParent = v.VM.VirtualHardwareSection.Item[index].InstanceID
@@ -335,6 +279,21 @@ func (v *VM) SetMemoryCount(count int) {
 
 func (v *VM) SetNestedHypervisor(value bool) {
 	v.VM.NestedHypervisorEnabled = value
+}
+
+func (v *VM) SetNestedHypervisorWithRequest(value bool) (Task, error) {
+	url := ""
+	if value {
+		url = "/action/enableNestedHypervisor"
+	} else {
+		url = "/action/disableNestedHypervisor"
+	}
+
+	return ExecuteRequest("",
+		v.VM.HREF+url,
+		"POST",
+		"application/vnd.vmware.vcloud.vm+xml",
+		v.c)
 }
 
 // func (v *VM) SetStorageProfile(name string, meta interface{}) error {
