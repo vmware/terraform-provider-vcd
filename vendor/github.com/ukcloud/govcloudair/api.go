@@ -65,7 +65,8 @@ func parseErr(resp *http.Response) error {
 		return fmt.Errorf("error parsing error body for non-200 request: %s", err)
 	}
 
-	return fmt.Errorf("API Error: %d: %s", errBody.MajorErrorCode, errBody.Message)
+	// return fmt.Errorf("API Error: %d: %s", errBody.MajorErrorCode, errBody.Message)
+	return errBody
 }
 
 // decodeBody is used to XML decode a response body

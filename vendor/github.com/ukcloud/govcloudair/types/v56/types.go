@@ -6,6 +6,9 @@ package types
 
 import (
 	"encoding/xml"
+	"fmt"
+
+	"github.com/jinzhu/copier"
 )
 
 // Maps status Attribute Values for VAppTemplate, VApp, Vm, and Media Objects
@@ -287,11 +290,11 @@ type NetworkConnection struct {
 	Network                 string `xml:"network,attr"`                      // Name of the network to which this NIC is connected.
 	NetworkConnectionIndex  int    `xml:"NetworkConnectionIndex"`            // Virtual slot number associated with this NIC. First slot number is 0.
 	NeedsCustomization      bool   `xml:"needsCustomization,attr,omitempty"` // True if this NIC needs customization.
-	ExternalIPAddress       string `xml:"ExternalIpAddress,omitempty"`       // If the network to which this NIC connects provides NAT services, the external address assigned to this NIC appears here.
 	IPAddress               string `xml:"IpAddress,omitempty"`               // IP address assigned to this NIC.
+	ExternalIPAddress       string `xml:"ExternalIpAddress,omitempty"`       // If the network to which this NIC connects provides NAT services, the external address assigned to this NIC appears here.
 	IsConnected             bool   `xml:"IsConnected"`                       // If the virtual machine is undeployed, this value specifies whether the NIC should be connected upon deployment. If the virtual machine is deployed, this value reports the current status of this NIC's connection, and can be updated to change that connection status.
-	IPAddressAllocationMode string `xml:"IpAddressAllocationMode"`           // IP address allocation mode for this connection. One of: POOL (A static IP address is allocated automatically from a pool of addresses.) DHCP (The IP address is obtained from a DHCP service.) MANUAL (The IP address is assigned manually in the IpAddress element.) NONE (No IP addressing mode specified.)
 	MACAddress              string `xml:"MACAddress,omitempty"`              // MAC address associated with the NIC.
+	IPAddressAllocationMode string `xml:"IpAddressAllocationMode"`           // IP address allocation mode for this connection. One of: POOL (A static IP address is allocated automatically from a pool of addresses.) DHCP (The IP address is obtained from a DHCP service.) MANUAL (The IP address is assigned manually in the IpAddress element.) NONE (No IP addressing mode specified.)
 	NetworkAdapterType      string `xml:"NetworkAdapterType"`                // Set the adapter type (e.g. E1000, E1000E, VMXNET3)
 
 }
@@ -308,13 +311,14 @@ type NetworkConnectionSection struct {
 	Xmlns   string   `xml:"xmlns,attr,omitempty"`
 	Ovf     string   `xml:"xmlns:ovf,attr,omitempty"`
 
+	HREF string `xml:"href,attr,omitempty"`
+	Type string `xml:"type,attr,omitempty"`
+
 	Info string `xml:"ovf:Info"`
-	//
-	HREF                          string               `xml:"href,attr,omitempty"`
-	Type                          string               `xml:"type,attr,omitempty"`
-	Link                          *Link                `xml:"Link,omitempty"`
+
 	PrimaryNetworkConnectionIndex int                  `xml:"PrimaryNetworkConnectionIndex"`
 	NetworkConnection             []*NetworkConnection `xml:"NetworkConnection,omitempty"`
+	Link                          *Link                `xml:"Link,omitempty"`
 }
 
 // InstantiationParams is a container for ovf:Section_Type elements that specify vApp configuration on instantiate, compose, or recompose.
@@ -633,6 +637,10 @@ type Error struct {
 	StackTrace              string `xml:"stackTrace,attr,omitempty"`
 }
 
+func (e *Error) Error() string {
+	return fmt.Sprintf("API Error: %d: %s", e.MajorErrorCode, e.Message)
+}
+
 // File represents a file to be transferred (uploaded or downloaded).
 // Type: FileType
 // Namespace: http://www.vmware.com/vcloud/v1.5
@@ -942,9 +950,13 @@ type VAppTemplate struct {
 type VM struct {
 	// Attributes
 	XMLName xml.Name `xml:"Vm"`
+	Vcloud  string   `xml:"xmlns:vcloud,attr,omitempty"`
 	Ovf     string   `xml:"xmlns:ovf,attr,omitempty"`
 	Xsi     string   `xml:"xmlns:xsi,attr,omitempty"`
 	Xmlns   string   `xml:"xmlns,attr,omitempty"`
+	Rasd    string   `xml:"xmlns:rasd,attr,omitempty"`
+	Vmw     string   `xml:"xmlns:vmw,attr,omitempty"`
+	Vssd    string   `xml:"xmlns:vssd,attr,omitempty"`
 
 	HREF                    string `xml:"href,attr,omitempty"`                    // The URI of the entity.
 	Type                    string `xml:"type,attr,omitempty"`                    // The MIME type of the entity.
@@ -955,43 +967,69 @@ type VM struct {
 	Deployed                bool   `xml:"deployed,attr,omitempty"`                // True if the virtual machine is deployed.
 	NeedsCustomization      bool   `xml:"needsCustomization,attr,omitempty"`      // True if this virtual machine needs customization.
 	NestedHypervisorEnabled bool   `xml:"nestedHypervisorEnabled,attr,omitempty"` // True if hardware-assisted CPU virtualization capabilities in the host should be exposed to the guest operating system.
+
 	// Elements
 	Link        LinkList         `xml:"Link,omitempty"`        // A reference to an entity or operation associated with this object.
 	Description string           `xml:"Description,omitempty"` // Optional description.
 	Tasks       *TasksInProgress `xml:"Tasks,omitempty"`       // A list of queued, running, or recently completed tasks associated with this entity.
 	Files       *FilesList       `xml:"FilesList,omitempty"`   // Represents a list of files to be transferred (uploaded or downloaded). Each File in the list is part of the ResourceEntity.
 	VAppParent  *Reference       `xml:"VAppParent,omitempty"`  // Reserved. Unimplemented.
+
 	// TODO: OVF Sections to be implemented
 	// Section OVF_Section `xml:"Section,omitempty"
-	DateCreated string `xml:"DateCreated,omitempty"` // Creation date/time of the vApp.
 
 	// Section ovf:VirtualHardwareSection
 	VirtualHardwareSection *VirtualHardwareSection `xml:"VirtualHardwareSection,omitempty"`
 
+	// This is a workaround, see bottom of this file
+	OVFVirtualHardwareSection *OVFVirtualHardwareSection `xml:"ovf:VirtualHardwareSection,omitempty"`
+
 	// FIXME: Upstream bug? Missing NetworkConnectionSection
 	NetworkConnectionSection *NetworkConnectionSection `xml:"NetworkConnectionSection,omitempty"`
 
-	VAppScopedLocalID string `xml:"VAppScopedLocalId,omitempty"` // A unique identifier for the virtual machine in the scope of the vApp.
+	// FIXME: Upstream bug? Missing GuestCustomizationSection
+	GuestCustomizationSection *GuestCustomizationSection `xml:"GuestCustomizationSection,omitempty"`
 
 	Snapshots *SnapshotSection `xml:"SnapshotSection,omitempty"`
+
+	ProductSection *ProductSection `xml:"ProductSection,omitempty"`
+
+	DateCreated string `xml:"DateCreated,omitempty"` // Creation date/time of the vApp.
+
+	VAppScopedLocalID string `xml:"VAppScopedLocalId,omitempty"` // A unique identifier for the virtual machine in the scope of the vApp.
 
 	// TODO: OVF Sections to be implemented
 	// Environment OVF_Environment `xml:"Environment,omitempty"
 
 	VMCapabilities *VMCapabilities `xml:"VmCapabilities,omitempty"` // Allows you to specify certain capabilities of this virtual machine.
 	StorageProfile *Reference      `xml:"StorageProfile,omitempty"` // A reference to a storage profile to be used for this object. The specified storage profile must exist in the organization vDC that contains the object. If not specified, the default storage profile for the vDC is used.
-	ProductSection *ProductSection `xml:"ProductSection,omitempty"`
+
+	BootOptions *BootOptions `xml:"BootOptions,omitempty"`
+}
+
+type BootOptions struct {
+	BootDelay      int64 `xml:BootOptions,omitempty`
+	EnterBIOSSetup bool  `xml:EnterBIOSSetup,omitempty`
+	Link           *Link `xml:"vcloud:Link"`
 }
 
 // ovf:VirtualHardwareSection from VM struct
 type VirtualHardwareSection struct {
 	// Extends OVF Section_Type
+
 	XMLName xml.Name `xml:"VirtualHardwareSection"`
-	Xmlns   string   `xml:"vcloud,attr,omitempty"`
+
+	Xmlns  string `xml:"xmlns,attr,omitempty"`
+	Vcloud string `xml:"xmlns:vcloud,attr,omitempty"`
+	Ovf    string `xml:"xmlns:ovf,attr,omitempty"`
+	Rasd   string `xml:"xmlns:rasd,attr,omitempty"`
+	Vmw    string `xml:"xmlns:vmw,attr,omitempty"`
+	Vssd   string `xml:"xmlns:vssd,attr,omitempty"`
+	Xsi    string `xml:"xmlns:xsi,attr,omitempty"`
 
 	Info string                 `xml:"Info"`
-	HREF string                 `xml:"href,attr,omitempty"`
-	Type string                 `xml:"type,attr,omitempty"`
+	HREF string                 `xml:"vcloud:href,attr,omitempty"`
+	Type string                 `xml:"vcloud:type,attr,omitempty"`
 	Item []*VirtualHardwareItem `xml:"Item,omitempty"`
 }
 
@@ -1036,8 +1074,10 @@ type VirtualHardwareHostResource struct {
 // SnapshotSection from VM struct
 type SnapshotSection struct {
 	// Extends OVF Section_Type
-	XMLName  xml.Name        `xml:"SnapshotSection"`
-	Info     string          `xml:"Info"`
+	XMLName xml.Name `xml:"SnapshotSection"`
+	Ovf     string   `xml:"xmlns:ovf,attr,omitempty"`
+
+	Info     string          `xml:"ovf:Info"`
 	HREF     string          `xml:"href,attr,omitempty"`
 	Type     string          `xml:"type,attr,omitempty"`
 	Snapshot []*SnapshotItem `xml:"Snapshot,omitempty"`
@@ -1775,9 +1815,10 @@ type QueryResultOrgVdcStorageProfileRecordType struct {
 // This should probably reside somewhere else
 
 type NewVMDescription struct {
-	Name         string
-	VAppTemplate *VAppTemplate
-	Networks     []*NetworkOrgDescription
+	Name           string
+	VAppTemplate   *VAppTemplate
+	Networks       []*NetworkOrgDescription
+	StorageProfile *Reference
 }
 type NetworkOrgDescription struct {
 	Name             string
@@ -1785,4 +1826,103 @@ type NetworkOrgDescription struct {
 	IsConnected      bool
 	IPAllocationMode string
 	AdapterType      string
+}
+
+// This section contains types which at the moment is needed to work
+// around the missing namespace xml support in go
+
+// ovf:VirtualHardwareSection from VM struct
+type OVFVirtualHardwareSection struct {
+	// Extends OVF Section_Type
+
+	XMLName xml.Name `xml:"ovf:VirtualHardwareSection"`
+
+	Xmlns  string `xml:"xmlns,attr,omitempty"`
+	Vcloud string `xml:"xmlns:vcloud,attr,omitempty"`
+	Ovf    string `xml:"xmlns:ovf,attr,omitempty"`
+	Rasd   string `xml:"xmlns:rasd,attr,omitempty"`
+	Vmw    string `xml:"xmlns:vmw,attr,omitempty"`
+	Vssd   string `xml:"xmlns:vssd,attr,omitempty"`
+	Xsi    string `xml:"xmlns:xsi,attr,omitempty"`
+
+	Info string                    `xml:"ovf:Info"`
+	HREF string                    `xml:"vcloud:href,attr,omitempty"`
+	Type string                    `xml:"vcloud:type,attr,omitempty"`
+	Item []*OVFVirtualHardwareItem `xml:"ovf:Item,omitempty"`
+}
+
+// Each ovf:Item parsed from the ovf:VirtualHardwareSection
+type OVFVirtualHardwareItem struct {
+	XMLName             xml.Name                          `xml:"ovf:Item"`
+	Address             string                            `xml:"rasd:Address,omitempty"`
+	AddressOnParent     int                               `xml:"rasd:AddressOnParent,omitempty"`
+	AutomaticAllocation bool                              `xml:"rasd:AutomaticAllocation,omitempty"`
+	Connection          []*OVFVirtualHardwareConnection   `xml:"rasd:Connection,omitempty"`
+	AllocationUnits     string                            `xml:"rasd:AllocationUnits,omitempty"`
+	Description         string                            `xml:"rasd:Description,omitempty"`
+	ElementName         string                            `xml:"rasd:ElementName,omitempty"`
+	HostResource        []*OVFVirtualHardwareHostResource `xml:"rasd:HostResource,omitempty"`
+	InstanceID          int                               `xml:"rasd:InstanceID,omitempty"`
+	Reservation         int                               `xml:"rasd:Reservation,omitempty"`
+	ResourceSubType     string                            `xml:"rasd:ResourceSubType,omitempty"`
+	ResourceType        ResourceType                      `xml:"rasd:ResourceType,omitempty"`
+	VirtualQuantity     int                               `xml:"rasd:VirtualQuantity,omitempty"`
+	Weight              int                               `xml:"rasd:Weight,omitempty"`
+	CoresPerSocket      int                               `xml:"vmw:CoresPerSocket,omitempty"`
+}
+
+// Connection info from ResourceType=10 (Network Interface)
+type OVFVirtualHardwareConnection struct {
+	IPAddress         string `xml:"vcloud:ipAddress,attr,omitempty"`
+	PrimaryConnection bool   `xml:"vcloud:primaryNetworkConnection,attr,omitempty"`
+	IpAddressingMode  string `xml:"vcloud:ipAddressingMode,attr,omitempty"`
+	NetworkName       string `xml:",chardata"`
+}
+
+// HostResource info from ResourceType=17 (Hard Disk)
+type OVFVirtualHardwareHostResource struct {
+	BusType           int    `xml:"vcloud:busType,attr,omitempty"`
+	BusSubType        string `xml:"vcloud:busSubType,attr,omitempty"`
+	Capacity          int    `xml:"vcloud:capacity,attr,omitempty"`
+	StorageProfile    string `xml:"vcloud:storageProfileHref,attr,omitempty"`
+	OverrideVmDefault bool   `xml:"vcloud:storageProfileOverrideVmDefault,attr,omitempty"`
+}
+
+func (v *VirtualHardwareSection) ConvertToOVF() *OVFVirtualHardwareSection {
+	ovf := OVFVirtualHardwareSection{}
+
+	copier.Copy(&ovf, &v)
+
+	items := make([]*OVFVirtualHardwareItem, len(v.Item))
+
+	for index := range v.Item {
+		item := OVFVirtualHardwareItem{}
+		copier.Copy(&item, &v.Item[index])
+
+		connections := make([]*OVFVirtualHardwareConnection, len(v.Item[index].Connection))
+		for i := range v.Item[index].Connection {
+			connection := OVFVirtualHardwareConnection{}
+			copier.Copy(&connection, &v.Item[index].Connection[i])
+
+			connections[i] = &connection
+		}
+
+		resources := make([]*OVFVirtualHardwareHostResource, len(v.Item[index].HostResource))
+		for i := range v.Item[index].HostResource {
+			resource := OVFVirtualHardwareHostResource{}
+			copier.Copy(&resource, &v.Item[index].HostResource[i])
+
+			resources[i] = &resource
+		}
+
+		item.Connection = connections
+		item.HostResource = resources
+
+		items[index] = &item
+	}
+
+	fmt.Printf("OVF ITEMS: \n %#v \n\n", items)
+
+	ovf.Item = items
+	return &ovf
 }

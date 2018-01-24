@@ -9,6 +9,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	"log"
+	"net/http"
 	"net/url"
 	"os"
 	"strconv"
@@ -61,6 +62,73 @@ func (v *VM) Refresh() error {
 
 	// The request was successful
 	return nil
+}
+
+func ExecuteRequest(payload, path, type_, contentType string, client *Client) (Task, error) {
+	s, _ := url.ParseRequestURI(path)
+
+	var req *http.Request
+	if type_ == "POST" {
+		b := bytes.NewBufferString(xml.Header + payload)
+		req = client.NewRequest(map[string]string{}, type_, *s, b)
+	} else if type_ == "GET" {
+		req = client.NewRequest(map[string]string{}, type_, *s, nil)
+
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	resp, err := checkResp(client.Http.Do(req))
+	if err != nil {
+		return Task{}, fmt.Errorf("error reconfiguring VM: %s", err)
+	}
+
+	task := NewTask(client)
+
+	if err = decodeBody(resp, task.Task); err != nil {
+		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
+	}
+
+	// The request was successful
+	return *task, nil
+
+}
+
+func (v *VM) Reconfigure() (Task, error) {
+	// err := v.Refresh()
+	// if err != nil {
+	// 	return Task{}, fmt.Errorf("error refreshing VM before running customization: %v", err)
+	// }
+
+	// WORKAROUND for XML namespace support in go, see bottom of types.go
+	// github.com/ukcloud/govcloudair/types/v56
+	log.Printf("[TRACE] (%s) Testing variable what3: %s", v.VM.Name, v.VM.NestedHypervisorEnabled)
+	v.correctAddressOnParentForNetworkHardware()
+
+	log.Printf("[TRACE] (%s) Testing variable what4: %s", v.VM.Name, v.VM.NestedHypervisorEnabled)
+	v.SetXMLNamespaces()
+
+	ovfVirtualHardwareSection := v.VM.VirtualHardwareSection.ConvertToOVF()
+	log.Printf("[TRACE] (%s) Testing variable what5: %s", v.VM.Name, v.VM.NestedHypervisorEnabled)
+	virtualHardwareSection := v.VM.VirtualHardwareSection
+	v.VM.VirtualHardwareSection = nil
+	v.VM.OVFVirtualHardwareSection = ovfVirtualHardwareSection
+	log.Printf("[TRACE] (%s) Testing variable what6: %s", v.VM.Name, v.VM.NestedHypervisorEnabled)
+
+	output, err := xml.MarshalIndent(v.VM, "  ", "    ")
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
+	}
+
+	log.Printf("[TRACE] (%s) Testing variable what7: %s", v.VM.Name, v.VM.NestedHypervisorEnabled)
+
+	v.VM.VirtualHardwareSection = virtualHardwareSection
+
+	v.VM.OVFVirtualHardwareSection = nil
+
+	log.Printf("[DEBUG] VM: %s", output)
+
+	return ExecuteRequest(string(output), v.VM.HREF+"/action/reconfigureVm", "POST", "application/vnd.vmware.vcloud.vm+xml", v.c)
 }
 
 func (c *VCDClient) FindVMByHREF(vmhref string) (VM, error) {
@@ -133,306 +201,6 @@ func (v *VM) PowerOff() (Task, error) {
 	// The request was successful
 	return *task, nil
 
-}
-
-func (v *VM) ChangeCPUcount(size int) (Task, error) {
-
-	err := v.Refresh()
-	if err != nil {
-		return Task{}, fmt.Errorf("error refreshing VM before running customization: %v", err)
-	}
-
-	newcpu := &types.OVFItem{
-		XmlnsRasd:       "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData",
-		XmlnsVCloud:     "http://www.vmware.com/vcloud/v1.5",
-		XmlnsXsi:        "http://www.w3.org/2001/XMLSchema-instance",
-		VCloudHREF:      v.VM.HREF + "/virtualHardwareSection/cpu",
-		VCloudType:      "application/vnd.vmware.vcloud.rasdItem+xml",
-		AllocationUnits: "hertz * 10^6",
-		Description:     "Number of Virtual CPUs",
-		ElementName:     strconv.Itoa(size) + " virtual CPU(s)",
-		InstanceID:      4,
-		Reservation:     0,
-		ResourceType:    types.ResourceTypeProcessor,
-		VirtualQuantity: size,
-		Weight:          0,
-		Link: &types.Link{
-			HREF: v.VM.HREF + "/virtualHardwareSection/cpu",
-			Rel:  "edit",
-			Type: "application/vnd.vmware.vcloud.rasdItem+xml",
-		},
-	}
-
-	output, err := xml.MarshalIndent(newcpu, "  ", "    ")
-	if err != nil {
-		fmt.Printf("error: %v\n", err)
-	}
-
-	debug := os.Getenv("GOVCLOUDAIR_DEBUG")
-
-	if debug == "true" {
-		fmt.Printf("\n\nXML DEBUG: %s\n\n", string(output))
-	}
-
-	b := bytes.NewBufferString(xml.Header + string(output))
-
-	s, _ := url.ParseRequestURI(v.VM.HREF)
-	s.Path += "/virtualHardwareSection/cpu"
-
-	req := v.c.NewRequest(map[string]string{}, "PUT", *s, b)
-
-	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.rasdItem+xml")
-
-	resp, err := checkResp(v.c.Http.Do(req))
-	if err != nil {
-		return Task{}, fmt.Errorf("error customizing VM: %s", err)
-	}
-
-	task := NewTask(v.c)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-	}
-
-	// The request was successful
-	return *task, nil
-
-}
-
-func (v *VM) ChangeMemorySize(size int) (Task, error) {
-
-	err := v.Refresh()
-	if err != nil {
-		return Task{}, fmt.Errorf("error refreshing VM before running customization: %v", err)
-	}
-
-	newmem := &types.OVFItem{
-		XmlnsRasd:       "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData",
-		XmlnsVCloud:     "http://www.vmware.com/vcloud/v1.5",
-		XmlnsXsi:        "http://www.w3.org/2001/XMLSchema-instance",
-		VCloudHREF:      v.VM.HREF + "/virtualHardwareSection/memory",
-		VCloudType:      "application/vnd.vmware.vcloud.rasdItem+xml",
-		AllocationUnits: "byte * 2^20",
-		Description:     "Memory Size",
-		ElementName:     strconv.Itoa(size) + " MB of memory",
-		InstanceID:      5,
-		Reservation:     0,
-		ResourceType:    types.ResourceTypeMemory,
-		VirtualQuantity: size,
-		Weight:          0,
-		Link: &types.Link{
-			HREF: v.VM.HREF + "/virtualHardwareSection/memory",
-			Rel:  "edit",
-			Type: "application/vnd.vmware.vcloud.rasdItem+xml",
-		},
-	}
-
-	output, err := xml.MarshalIndent(newmem, "  ", "    ")
-	if err != nil {
-		fmt.Printf("error: %v\n", err)
-	}
-
-	debug := os.Getenv("GOVCLOUDAIR_DEBUG")
-
-	if debug == "true" {
-		fmt.Printf("\n\nXML DEBUG: %s\n\n", string(output))
-	}
-
-	b := bytes.NewBufferString(xml.Header + string(output))
-
-	s, _ := url.ParseRequestURI(v.VM.HREF)
-	s.Path += "/virtualHardwareSection/memory"
-
-	req := v.c.NewRequest(map[string]string{}, "PUT", *s, b)
-
-	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.rasdItem+xml")
-
-	resp, err := checkResp(v.c.Http.Do(req))
-	if err != nil {
-		return Task{}, fmt.Errorf("error customizing VM: %s", err)
-	}
-
-	task := NewTask(v.c)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-	}
-
-	// The request was successful
-	return *task, nil
-
-}
-
-func (v *VM) ChangeNestedHypervisor(value bool) (Task, error) {
-	err := v.Refresh()
-	if err != nil {
-		return Task{}, fmt.Errorf("error refreshing vapp before running customization: %v", err)
-	}
-
-	log.Printf("[DEBUG] Nested Hypervisor is: %t", v.VM.NestedHypervisorEnabled)
-
-	b := bytes.NewBufferString(xml.Header)
-
-	s, _ := url.ParseRequestURI(v.VM.HREF)
-
-	if value {
-		s.Path += "/action/enableNestedHypervisor"
-	} else {
-		s.Path += "/action/disableNestedHypervisor"
-	}
-
-	log.Printf("[DEBUG] URL for NestedHypervisor setting: %s", s)
-
-	req := v.c.NewRequest(map[string]string{}, "POST", *s, b)
-
-	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.vm+xml")
-
-	resp, err := checkResp(v.c.Http.Do(req))
-	if err != nil {
-		return Task{}, fmt.Errorf("error customizing VM: %s", err)
-	}
-
-	task := NewTask(v.c)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-	}
-
-	// The request was successful
-	return *task, nil
-}
-
-func (v *VM) ChangeNetworkConfig(networkConnections []*types.NetworkConnection, primaryNetworkConnectionIndex int) (Task, error) {
-	err := v.Refresh()
-	if err != nil {
-		return Task{}, fmt.Errorf("error refreshing VM before running customization: %v", err)
-	}
-
-	// // Determine what type of address is requested for the vApp
-	// ipAllocationMode := "NONE"
-	// ipAddress := "Any"
-
-	// // TODO: Review current behaviour of using DHCP when left blank
-	// if ip == "" || ip == "dhcp" {
-	// 	ipAllocationMode = "DHCP"
-	// } else if ip == "allocated" {
-	// 	ipAllocationMode = "POOL"
-	// } else if ip == "none" {
-	// 	ipAllocationMode = "NONE"
-	// } else if ip != "" {
-	// 	ipAllocationMode = "MANUAL"
-	// 	// TODO: Check a valid IP has been given
-	// 	ipAddress = ip
-	// }
-
-	// networkConnection := []*types.NetworkConnection{&types.NetworkConnection{
-	// 	Network:                 network,
-	// 	NeedsCustomization:      true,
-	// 	NetworkConnectionIndex:  0,
-	// 	IPAddress:               ipAddress,
-	// 	IsConnected:             true,
-	// 	IPAddressAllocationMode: ipAllocationMode,
-	// },
-	// }
-
-	newnetwork := &types.NetworkConnectionSection{
-		Xmlns: "http://www.vmware.com/vcloud/v1.5",
-		Ovf:   "http://schemas.dmtf.org/ovf/envelope/1",
-		Info:  "Specifies the available VM network connections",
-		PrimaryNetworkConnectionIndex: primaryNetworkConnectionIndex,
-		NetworkConnection:             networkConnections,
-	}
-
-	output, err := xml.MarshalIndent(newnetwork, "  ", "    ")
-	if err != nil {
-		fmt.Printf("error: %v\n", err)
-	}
-
-	log.Printf("[DEBUG] NetworkXML: %s", output)
-
-	b := bytes.NewBufferString(xml.Header + string(output))
-
-	s, _ := url.ParseRequestURI(v.VM.HREF)
-	s.Path += "/networkConnectionSection/"
-
-	req := v.c.NewRequest(map[string]string{}, "PUT", *s, b)
-
-	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.networkConnectionSection+xml")
-
-	resp, err := checkResp(v.c.Http.Do(req))
-	if err != nil {
-		return Task{}, fmt.Errorf("error customizing VM Network: %s", err)
-	}
-
-	task := NewTask(v.c)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-	}
-
-	// The request was successful
-	return *task, nil
-}
-
-func (v *VM) RunCustomizationScript(computername, script string) (Task, error) {
-	return v.Customize(computername, script, false)
-}
-
-func (v *VM) Customize(computername, script string, changeSid bool) (Task, error) {
-	err := v.Refresh()
-	if err != nil {
-		return Task{}, fmt.Errorf("error refreshing VM before running customization: %v", err)
-	}
-
-	vu := &types.GuestCustomizationSection{
-		Ovf:   "http://schemas.dmtf.org/ovf/envelope/1",
-		Xsi:   "http://www.w3.org/2001/XMLSchema-instance",
-		Xmlns: "http://www.vmware.com/vcloud/v1.5",
-
-		HREF:                v.VM.HREF,
-		Type:                "application/vnd.vmware.vcloud.guestCustomizationSection+xml",
-		Info:                "Specifies Guest OS Customization Settings",
-		Enabled:             true,
-		ComputerName:        computername,
-		CustomizationScript: script,
-		ChangeSid:           false,
-	}
-
-	output, err := xml.MarshalIndent(vu, "  ", "    ")
-	if err != nil {
-		fmt.Printf("error: %v\n", err)
-	}
-
-	log.Printf("[DEBUG] VCD Client configuration: %s", output)
-
-	debug := os.Getenv("GOVCLOUDAIR_DEBUG")
-
-	if debug == "true" {
-		fmt.Printf("\n\nXML DEBUG: %s\n\n", string(output))
-	}
-
-	b := bytes.NewBufferString(xml.Header + string(output))
-
-	s, _ := url.ParseRequestURI(v.VM.HREF)
-	s.Path += "/guestCustomizationSection/"
-
-	req := v.c.NewRequest(map[string]string{}, "PUT", *s, b)
-
-	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.guestCustomizationSection+xml")
-
-	resp, err := checkResp(v.c.Http.Do(req))
-	if err != nil {
-		return Task{}, fmt.Errorf("error customizing VM: %s", err)
-	}
-
-	task := NewTask(v.c)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-	}
-
-	// The request was successful
-	return *task, nil
 }
 
 func (v *VM) Undeploy() (Task, error) {
@@ -521,4 +289,75 @@ func (v *VM) GetMemoryCount() (int, error) {
 	}
 
 	return items[0].VirtualQuantity, nil
+}
+
+func (v *VM) correctAddressOnParentForNetworkHardware() error {
+	// items, err := v.getVirtualHardwareItemsByResourceType(types.ResourceTypeEthernet)
+	// if err != nil {
+	// 	return err
+	// }
+
+	for index := range v.VM.VirtualHardwareSection.Item {
+		if v.VM.VirtualHardwareSection.Item[index].ResourceType == types.ResourceTypeEthernet {
+			v.VM.VirtualHardwareSection.Item[index].AddressOnParent = v.VM.VirtualHardwareSection.Item[index].InstanceID
+		}
+	}
+	return nil
+}
+
+func (v *VM) SetXMLNamespaces() {
+	v.VM.Xmlns = "http://www.vmware.com/vcloud/v1.5"
+	v.VM.Vcloud = "http://www.vmware.com/vcloud/v1.5"
+	v.VM.Ovf = "http://schemas.dmtf.org/ovf/envelope/1"
+	v.VM.Vmw = "http://www.vmware.com/schema/ovf"
+	v.VM.Xsi = "http://www.w3.org/2001/XMLSchema-instance"
+	v.VM.Rasd = "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData"
+	v.VM.Vssd = "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData"
+}
+
+func (v *VM) SetCPUCount(count int) {
+	for index := range v.VM.VirtualHardwareSection.Item {
+		if v.VM.VirtualHardwareSection.Item[index].ResourceType == types.ResourceTypeProcessor {
+			v.VM.VirtualHardwareSection.Item[index].ElementName = strconv.Itoa(count) + " virtual CPU(s)"
+			v.VM.VirtualHardwareSection.Item[index].VirtualQuantity = count
+		}
+	}
+}
+
+func (v *VM) SetMemoryCount(count int) {
+	for index := range v.VM.VirtualHardwareSection.Item {
+		if v.VM.VirtualHardwareSection.Item[index].ResourceType == types.ResourceTypeMemory {
+			v.VM.VirtualHardwareSection.Item[index].ElementName = strconv.Itoa(count) + " MB of memory"
+			v.VM.VirtualHardwareSection.Item[index].VirtualQuantity = count
+		}
+	}
+}
+
+func (v *VM) SetNestedHypervisor(value bool) {
+	v.VM.NestedHypervisorEnabled = value
+}
+
+// func (v *VM) SetStorageProfile(name string, meta interface{}) error {
+// 	vcdClient := meta.(*govcloudair.VCDClient)
+
+// }
+
+func (v *VM) SetInitscript(value string) {
+	v.VM.GuestCustomizationSection.CustomizationScript = value
+}
+
+func (v *VM) SetNetworkConnectionSection(networks *types.NetworkConnectionSection) {
+	v.VM.NetworkConnectionSection = networks
+}
+
+func (v *VM) SetAdminPasswordAuto(value bool) {
+	v.VM.GuestCustomizationSection.AdminPasswordAuto = value
+}
+
+func (v *VM) SetAdminPassword(value string) {
+	v.VM.GuestCustomizationSection.AdminPassword = value
+}
+
+func (v *VM) SetHostName(value string) {
+	v.VM.GuestCustomizationSection.ComputerName = value
 }
