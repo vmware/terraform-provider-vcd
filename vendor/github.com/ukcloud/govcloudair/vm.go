@@ -5,11 +5,9 @@
 package govcloudair
 
 import (
-	"bytes"
 	"encoding/xml"
 	"fmt"
 	"log"
-	"net/http"
 	"net/url"
 	"strconv"
 
@@ -61,36 +59,6 @@ func (v *VM) Refresh() error {
 
 	// The request was successful
 	return nil
-}
-
-func ExecuteRequest(payload, path, type_, contentType string, client *Client) (Task, error) {
-	s, _ := url.ParseRequestURI(path)
-
-	var req *http.Request
-	if type_ == "POST" {
-		b := bytes.NewBufferString(xml.Header + payload)
-		req = client.NewRequest(map[string]string{}, type_, *s, b)
-	} else if type_ == "GET" {
-		req = client.NewRequest(map[string]string{}, type_, *s, nil)
-
-	}
-
-	req.Header.Add("Content-Type", contentType)
-
-	resp, err := checkResp(client.Http.Do(req))
-	if err != nil {
-		return Task{}, fmt.Errorf("error reconfiguring VM: %s", err)
-	}
-
-	task := NewTask(client)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-	}
-
-	// The request was successful
-	return *task, nil
-
 }
 
 func (v *VM) Reconfigure() (Task, error) {
@@ -299,6 +267,15 @@ func (v *VM) SetNestedHypervisorWithRequest(value bool) (Task, error) {
 // func (v *VM) SetStorageProfile(name string, meta interface{}) error {
 // 	vcdClient := meta.(*govcloudair.VCDClient)
 
+// }
+
+// func (v *VM) SetStorageProfileWithRequest(name string, vdc Vdc) (Task, error) {
+// 	storageProfile, err := vdc.FindStorageProfileReference(name)
+// 	if err != nil {
+// 		return Task{}, fmt.Errorf("Storage profile %s was not found in the given organization", name)
+// 	}
+
+// 	return Task{}, nil
 // }
 
 func (v *VM) SetInitscript(value string) {

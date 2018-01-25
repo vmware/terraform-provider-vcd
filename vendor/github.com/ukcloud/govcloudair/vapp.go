@@ -5,12 +5,10 @@
 package govcloudair
 
 import (
-	"bytes"
 	"encoding/xml"
 	"fmt"
 	"log"
 	"net/url"
-	"os"
 
 	types "github.com/ukcloud/govcloudair/types/v56"
 )
@@ -64,7 +62,6 @@ func composeSourceItems(vms []*types.NewVMDescription) []*types.SourcedCompositi
 	sourceItems := make([]*types.SourcedCompositionItemParam, len(vms))
 	for i, vm := range vms {
 
-		log.Printf("[TRACE] WTF: %#v", vm)
 		networkConnections := make([]*types.NetworkConnection, len(vm.Networks))
 		networkAssignments := make([]*types.NetworkAssignment, len(vm.Networks))
 		var primeryNetworkConnectionIndex int
@@ -165,32 +162,16 @@ func (v *VApp) AddVMs(vms []*types.NewVMDescription) (Task, error) {
 		SourcedItem: sourceItems,
 	}
 
-	output, _ := xml.MarshalIndent(vcomp, "  ", "    ")
-
-	s, _ := url.ParseRequestURI(v.VApp.HREF)
-	s.Path += "/action/recomposeVApp"
-
-	log.Printf("[TRACE] Recompose XML: %s", string(output))
-
-	b := bytes.NewBufferString(xml.Header + string(output))
-
-	req := v.c.NewRequest(map[string]string{}, "POST", *s, b)
-
-	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.recomposeVAppParams+xml")
-
-	resp, err := checkResp(v.c.Http.Do(req))
+	output, err := xml.MarshalIndent(vcomp, "  ", "    ")
 	if err != nil {
-		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
-		return Task{}, err
+		return Task{}, fmt.Errorf("error marshaling vapp compose: %s", err)
 	}
 
-	task = NewTask(v.c)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding task response: %s", err)
-	}
-
-	return *task, nil
+	return ExecuteRequest(string(output),
+		v.VApp.HREF+"/action/recomposeVApp",
+		"POST",
+		"application/vnd.vmware.vcloud.recomposeVAppParams+xml",
+		v.c)
 }
 
 func (v *VApp) RemoveVMs(vms []*types.VM) (Task, error) {
@@ -221,30 +202,16 @@ func (v *VApp) RemoveVMs(vms []*types.VM) (Task, error) {
 		DeleteItem: deleteItems,
 	}
 
-	output, _ := xml.MarshalIndent(vcomp, "  ", "    ")
-
-	s, _ := url.ParseRequestURI(v.VApp.HREF)
-	s.Path += "/action/recomposeVApp"
-
-	b := bytes.NewBufferString(xml.Header + string(output))
-
-	req := v.c.NewRequest(map[string]string{}, "POST", *s, b)
-
-	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.recomposeVAppParams+xml")
-
-	resp, err := checkResp(v.c.Http.Do(req))
+	output, err := xml.MarshalIndent(vcomp, "  ", "    ")
 	if err != nil {
-		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
-		return Task{}, fmt.Errorf("error instantiating a new vApp: %s", err)
+		return Task{}, fmt.Errorf("error marshaling vapp compose: %s", err)
 	}
 
-	task = NewTask(v.c)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding task response: %s", err)
-	}
-
-	return *task, nil
+	return ExecuteRequest(string(output),
+		v.VApp.HREF+"/action/recomposeVApp",
+		"POST",
+		"application/vnd.vmware.vcloud.recomposeVAppParams+xml",
+		v.c)
 }
 
 func (v *VApp) ChangeNetworks(orgnetworks []*types.OrgVDCNetwork) (Task, error) {
@@ -267,32 +234,16 @@ func (v *VApp) ChangeNetworks(orgnetworks []*types.OrgVDCNetwork) (Task, error) 
 		},
 	}
 
-	output, _ := xml.MarshalIndent(vcomp, "  ", "    ")
-
-	s, _ := url.ParseRequestURI(v.VApp.HREF)
-	s.Path += "/action/recomposeVApp"
-
-	log.Printf("[TRACE] Recompose XML: %s", string(output))
-
-	b := bytes.NewBufferString(xml.Header + string(output))
-
-	req := v.c.NewRequest(map[string]string{}, "POST", *s, b)
-
-	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.recomposeVAppParams+xml")
-
-	resp, err := checkResp(v.c.Http.Do(req))
+	output, err := xml.MarshalIndent(vcomp, "  ", "    ")
 	if err != nil {
-		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
-		return Task{}, fmt.Errorf("error instantiating a new VM: %s", err)
+		return Task{}, fmt.Errorf("error marshaling vapp compose: %s", err)
 	}
 
-	task := NewTask(v.c)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding task response: %s", err)
-	}
-
-	return *task, nil
+	return ExecuteRequest(string(output),
+		v.VApp.HREF+"/action/recomposeVApp",
+		"POST",
+		"application/vnd.vmware.vcloud.recomposeVAppParams+xml",
+		v.c)
 }
 
 func (v *VApp) ComposeVApp(name string, description string, orgnetworks []*types.OrgVDCNetwork) (Task, error) {
@@ -325,186 +276,13 @@ func (v *VApp) ComposeVApp(name string, description string, orgnetworks []*types
 		return Task{}, fmt.Errorf("error marshaling vapp compose: %s", err)
 	}
 
-	log.Printf("[DEBUG] XML: \n %s", string(output))
-
-	b := bytes.NewBufferString(xml.Header + string(output))
-
-	s := v.c.VCDVDCHREF
-	s.Path += "/action/composeVApp"
-
-	req := v.c.NewRequest(map[string]string{}, "POST", s, b)
-
-	log.Printf("[TRACE] URL: %s", s.String())
-
-	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.composeVAppParams+xml")
-
-	log.Printf("[TRACE] vApp recompose headers: %#v", req.Header)
-
-	resp, err := checkResp(v.c.Http.Do(req))
-	if err != nil {
-		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
-		return Task{}, fmt.Errorf("error instantiating a new vApp: %s", err)
-	}
-
-	log.Printf("[TRACE] Response status: %s", resp.Status)
-
-	if err = decodeBody(resp, v.VApp); err != nil {
-		return Task{}, fmt.Errorf("error decoding vApp response: %s", err)
-	}
-
-	log.Printf("[TRACE] Response: %#v", resp)
-
-	task := NewTask(v.c)
-	task.Task = v.VApp.Tasks.Task[0]
-
-	// The request was successful
-	return *task, nil
+	return ExecuteRequest(string(output),
+		v.c.VCDVDCHREF.Path+"/action/composeVApp",
+		"POST",
+		"application/vnd.vmware.vcloud.composeVAppParams+xml",
+		v.c)
 
 }
-
-// func (v *VApp) PowerOn() (Task, error) {
-
-// 	s, _ := url.ParseRequestURI(v.VApp.HREF)
-// 	s.Path += "/power/action/powerOn"
-
-// 	req := v.c.NewRequest(map[string]string{}, "POST", *s, nil)
-
-// 	resp, err := checkResp(v.c.Http.Do(req))
-// 	if err != nil {
-// 		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
-// 		return Task{}, fmt.Errorf("error powering on vApp: %s", err)
-// 	}
-
-// 	task := NewTask(v.c)
-
-// 	if err = decodeBody(resp, task.Task); err != nil {
-// 		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-// 	}
-
-// 	// The request was successful
-// 	return *task, nil
-
-// }
-
-// func (v *VApp) PowerOff() (Task, error) {
-
-// 	s, _ := url.ParseRequestURI(v.VApp.HREF)
-// 	s.Path += "/power/action/powerOff"
-
-// 	req := v.c.NewRequest(map[string]string{}, "POST", *s, nil)
-
-// 	resp, err := checkResp(v.c.Http.Do(req))
-// 	if err != nil {
-// 		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
-// 		return Task{}, fmt.Errorf("error powering off vApp: %s", err)
-// 	}
-
-// 	task := NewTask(v.c)
-
-// 	if err = decodeBody(resp, task.Task); err != nil {
-// 		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-// 	}
-
-// 	// The request was successful
-// 	return *task, nil
-
-// }
-
-// func (v *VApp) Reboot() (Task, error) {
-
-// 	s, _ := url.ParseRequestURI(v.VApp.HREF)
-// 	s.Path += "/power/action/reboot"
-
-// 	req := v.c.NewRequest(map[string]string{}, "POST", *s, nil)
-
-// 	resp, err := checkResp(v.c.Http.Do(req))
-// 	if err != nil {
-// 		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
-// 		return Task{}, fmt.Errorf("error rebooting vApp: %s", err)
-// 	}
-
-// 	task := NewTask(v.c)
-
-// 	if err = decodeBody(resp, task.Task); err != nil {
-// 		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-// 	}
-
-// 	// The request was successful
-// 	return *task, nil
-
-// }
-
-// func (v *VApp) Reset() (Task, error) {
-
-// 	s, _ := url.ParseRequestURI(v.VApp.HREF)
-// 	s.Path += "/power/action/reset"
-
-// 	req := v.c.NewRequest(map[string]string{}, "POST", *s, nil)
-
-// 	resp, err := checkResp(v.c.Http.Do(req))
-// 	if err != nil {
-// 		return Task{}, fmt.Errorf("error resetting vApp: %s", err)
-// 	}
-
-// 	task := NewTask(v.c)
-
-// 	if err = decodeBody(resp, task.Task); err != nil {
-// 		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
-// 		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-// 	}
-
-// 	// The request was successful
-// 	return *task, nil
-
-// }
-
-// func (v *VApp) Suspend() (Task, error) {
-
-// 	s, _ := url.ParseRequestURI(v.VApp.HREF)
-// 	s.Path += "/power/action/suspend"
-
-// 	req := v.c.NewRequest(map[string]string{}, "POST", *s, nil)
-
-// 	resp, err := checkResp(v.c.Http.Do(req))
-// 	if err != nil {
-// 		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
-// 		return Task{}, fmt.Errorf("error suspending vApp: %s", err)
-// 	}
-
-// 	task := NewTask(v.c)
-
-// 	if err = decodeBody(resp, task.Task); err != nil {
-// 		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-// 	}
-
-// 	// The request was successful
-// 	return *task, nil
-
-// }
-
-// func (v *VApp) Shutdown() (Task, error) {
-
-// 	s, _ := url.ParseRequestURI(v.VApp.HREF)
-// 	s.Path += "/power/action/shutdown"
-
-// 	req := v.c.NewRequest(map[string]string{}, "POST", *s, nil)
-
-// 	resp, err := checkResp(v.c.Http.Do(req))
-// 	if err != nil {
-// 		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
-// 		return Task{}, fmt.Errorf("error shutting down vApp: %s", err)
-// 	}
-
-// 	task := NewTask(v.c)
-
-// 	if err = decodeBody(resp, task.Task); err != nil {
-// 		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-// 	}
-
-// 	// The request was successful
-// 	return *task, nil
-
-// }
 
 func (v *VApp) Undeploy() (Task, error) {
 
@@ -518,35 +296,11 @@ func (v *VApp) Undeploy() (Task, error) {
 		fmt.Printf("error: %v\n", err)
 	}
 
-	debug := os.Getenv("GOVCLOUDAIR_DEBUG")
-
-	if debug == "true" {
-		fmt.Printf("\n\nXML DEBUG: %s\n\n", string(output))
-	}
-
-	b := bytes.NewBufferString(xml.Header + string(output))
-
-	s, _ := url.ParseRequestURI(v.VApp.HREF)
-	s.Path += "/action/undeploy"
-
-	req := v.c.NewRequest(map[string]string{}, "POST", *s, b)
-
-	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.undeployVAppParams+xml")
-
-	resp, err := checkResp(v.c.Http.Do(req))
-	if err != nil {
-		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
-		return Task{}, fmt.Errorf("error undeploy vApp: %s", err)
-	}
-
-	task := NewTask(v.c)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-	}
-
-	// The request was successful
-	return *task, nil
+	return ExecuteRequest(string(output),
+		v.VApp.HREF+"/action/undeploy",
+		"POST",
+		"application/vnd.vmware.vcloud.undeployVAppParams+xml",
+		v.c)
 
 }
 
@@ -562,59 +316,19 @@ func (v *VApp) Deploy() (Task, error) {
 		fmt.Printf("error: %v\n", err)
 	}
 
-	debug := os.Getenv("GOVCLOUDAIR_DEBUG")
-
-	if debug == "true" {
-		fmt.Printf("\n\nXML DEBUG: %s\n\n", string(output))
-	}
-
-	b := bytes.NewBufferString(xml.Header + string(output))
-
-	s, _ := url.ParseRequestURI(v.VApp.HREF)
-	s.Path += "/action/deploy"
-
-	req := v.c.NewRequest(map[string]string{}, "POST", *s, b)
-
-	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.deployVAppParams+xml")
-
-	resp, err := checkResp(v.c.Http.Do(req))
-	if err != nil {
-		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
-		return Task{}, fmt.Errorf("error undeploy vApp: %s", err)
-	}
-
-	task := NewTask(v.c)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-	}
-
-	// The request was successful
-	return *task, nil
-
+	return ExecuteRequest(string(output),
+		v.VApp.HREF+"/action/deploy",
+		"POST",
+		"application/vnd.vmware.vcloud.deployVAppParams+xml",
+		v.c)
 }
 
 func (v *VApp) Delete() (Task, error) {
-
-	s, _ := url.ParseRequestURI(v.VApp.HREF)
-
-	req := v.c.NewRequest(map[string]string{}, "DELETE", *s, nil)
-
-	resp, err := checkResp(v.c.Http.Do(req))
-	if err != nil {
-		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
-		return Task{}, fmt.Errorf("error deleting vApp: %s", err)
-	}
-
-	task := NewTask(v.c)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-	}
-
-	// The request was successful
-	return *task, nil
-
+	return ExecuteRequest("",
+		v.VApp.HREF,
+		"DELETE",
+		"",
+		v.c)
 }
 
 func (v *VApp) GetStatus() (string, error) {
