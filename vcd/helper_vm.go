@@ -178,7 +178,20 @@ func configureVM(d *schema.ResourceData, meta interface{}) error {
 			log.Printf("[TRACE] (%s) Changing nested hypervisor setting", d.Get("name").(string))
 
 			// This cannot be reconfigured with reconfigureVM until vCloud 9.0
-			vm.SetNestedHypervisor(d.Get("nested_hypervisor_enabled").(bool))
+			// vm.SetNestedHypervisor(d.Get("nested_hypervisor_enabled").(bool))
+
+			// vCloud 8.2 and older
+			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+				task, err := vm.SetNestedHypervisorWithRequest(d.Get("nested_hypervisor_enabled").(bool))
+				if err != nil {
+					return resource.NonRetryableError(fmt.Errorf("Error setting nested hyperv VM: %#v", err))
+				}
+
+				return resource.RetryableError(task.WaitTaskCompletion())
+			})
+			if err != nil {
+				return fmt.Errorf("Error completing task: %#v", err)
+			}
 		}
 
 		// Change storage profile of VM
@@ -210,6 +223,9 @@ func configureVM(d *schema.ResourceData, meta interface{}) error {
 
 				return resource.RetryableError(task.WaitTaskCompletion())
 			})
+			if err != nil {
+				return fmt.Errorf("Error completing task: %#v", err)
+			}
 
 		}
 

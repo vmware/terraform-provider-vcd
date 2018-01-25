@@ -5,6 +5,7 @@
 package govcloudair
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
 	"log"
@@ -276,12 +277,30 @@ func (v *VApp) ComposeVApp(name string, description string, orgnetworks []*types
 		return Task{}, fmt.Errorf("error marshaling vapp compose: %s", err)
 	}
 
-	return ExecuteRequest(string(output),
-		v.c.VCDVDCHREF.Path+"/action/composeVApp",
-		"POST",
-		"application/vnd.vmware.vcloud.composeVAppParams+xml",
-		v.c)
+	b := bytes.NewBufferString(xml.Header + string(output))
 
+	s := v.c.VCDVDCHREF
+	s.Path += "/action/composeVApp"
+
+	req := v.c.NewRequest(map[string]string{}, "POST", s, b)
+
+	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.composeVAppParams+xml")
+
+	resp, err := checkResp(v.c.Http.Do(req))
+	if err != nil {
+		log.Printf("[DEBUG] Error from HTTP Request: %#v", err)
+		return Task{}, fmt.Errorf("error instantiating a new vApp: %s", err)
+	}
+
+	if err = decodeBody(resp, v.VApp); err != nil {
+		return Task{}, fmt.Errorf("error decoding vApp response: %s", err)
+	}
+
+	task := NewTask(v.c)
+	task.Task = v.VApp.Tasks.Task[0]
+
+	// The request was successful
+	return *task, nil
 }
 
 func (v *VApp) Undeploy() (Task, error) {
