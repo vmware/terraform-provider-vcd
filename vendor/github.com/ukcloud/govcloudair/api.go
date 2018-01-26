@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"net/url"
 
@@ -65,7 +66,8 @@ func parseErr(resp *http.Response) error {
 		return fmt.Errorf("error parsing error body for non-200 request: %s", err)
 	}
 
-	return fmt.Errorf("API Error: %d: %s", errBody.MajorErrorCode, errBody.Message)
+	// return fmt.Errorf("API Error: %d: %s", errBody.MajorErrorCode, errBody.Message)
+	return errBody
 }
 
 // decodeBody is used to XML decode a response body
@@ -76,7 +78,7 @@ func decodeBody(resp *http.Response, out interface{}) error {
 		return err
 	}
 
-	// log.Printf("[TRACE] XML OUTPUT: %s", body)
+	log.Printf("[TRACE] XML DECODE BODY: %s", body)
 
 	// Unmarshal the XML.
 	if err = xml.Unmarshal(body, &out); err != nil {

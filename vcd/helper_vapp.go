@@ -3,7 +3,6 @@ package vcd
 import (
 	"fmt"
 	"log"
-	"math"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	types "github.com/ukcloud/govcloudair/types/v56"
@@ -26,34 +25,37 @@ func readVApp(d *schema.ResourceData, meta interface{}) error {
 
 	// Reading networks defined on the vApp
 
-	networksFromState := interfaceListToStringList(
-		d.Get("network").([]interface{}))
+	// networksFromState := interfaceListToStringList(
+	// d.Get("organization_network").([]interface{}))
 
 	// Read collection
-	newNetworks := make([]string,
-		int(math.Max(
-			float64(len(vapp.VApp.NetworkConfigSection.NetworkConfig)),
-			float64(len(networksFromState)))))
+	newNetworks := make([]string, 0)
 
-	// Order is not guarenteed, so we will have to check what we have first
-	// First look for networks that we already have
-	for index, network := range networksFromState {
-		vAppNetwork, err := vapp.GetNetworkByName(network)
+	// // Order is not guarenteed, so we will have to check what we have first
+	// // First look for networks that we already have
+	// for index, network := range networksFromState {
+	// 	vAppNetwork, err := vapp.GetNetworkByName(network)
 
-		if err != nil {
-			return err
-		}
+	// 	if err != nil {
+	// 		return err
+	// 	}
 
-		if vAppNetwork != nil {
-			newNetworks[index] = network
-		}
-	}
+	// 	if vAppNetwork != nil {
+	// 		newNetworks[index] = network
+	// 	}
+	// }
 
-	log.Printf("[TRACE] (%s) Networks read after step 1: %#v", vapp.VApp.Name, newNetworks)
+	// log.Printf("[TRACE] (%s) Networks read after step 1: %#v", vapp.VApp.Name, newNetworks)
 
-	// Second, look for new networks added on remote site.
+	// // Second, look for new networks added on remote site.
+	// for _, network := range vapp.VApp.NetworkConfigSection.NetworkConfig {
+	// 	if !networkInList(newNetworks, network) {
+	// 		newNetworks = append(newNetworks, network.NetworkName)
+	// 	}
+	// }
+
 	for _, network := range vapp.VApp.NetworkConfigSection.NetworkConfig {
-		if !networkInList(newNetworks, network) {
+		if network.Configuration.FenceMode == types.FenceModeBridged {
 			newNetworks = append(newNetworks, network.NetworkName)
 		}
 	}
