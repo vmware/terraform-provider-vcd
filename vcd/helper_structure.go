@@ -1,7 +1,10 @@
 package vcd
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -118,4 +121,87 @@ func convertToStringMap(param map[string]interface{}) map[string]string {
 		temp[k] = v.(string)
 	}
 	return temp
+}
+
+func interfaceListToMapStringInterface(list []interface{}) []map[string]interface{} {
+	newList := make([]map[string]interface{}, len(list))
+
+	for index, item := range list {
+		newList[index] = item.(map[string]interface{})
+	}
+
+	return newList
+}
+
+func interfaceListToStringList(list []interface{}) []string {
+	newList := make([]string, len(list))
+
+	for index, item := range list {
+		newList[index] = item.(string)
+	}
+
+	return newList
+}
+
+// Methods borrowed from the vSphere provider project
+
+// DeRef returns the value pointed to by the interface if the interface is a
+// pointer and is not nil, otherwise returns nil, or the direct value if it's
+// not a pointer.
+func DeRef(v interface{}) interface{} {
+	if v == nil {
+		return nil
+	}
+	k := reflect.TypeOf(v).Kind()
+	if k != reflect.Ptr {
+		return v
+	}
+	if reflect.ValueOf(v) == reflect.Zero(reflect.TypeOf(v)) {
+		// All zero-value pointers are nil
+		return nil
+	}
+	return reflect.ValueOf(v).Elem().Interface()
+}
+
+// NormalizeValue converts a value to something that is suitable to be set in a
+// ResourceData and can be useful in situations where there is not access to
+// normal helper/schema functionality, but you still need saved fields to
+// behave in the same way.
+//
+// Specifically, this will run the value through DeRef to dereference any
+// pointers first, and then convert numeric primitives, if necessary.
+func NormalizeValue(v interface{}) interface{} {
+	v = DeRef(v)
+	if v == nil {
+		return nil
+	}
+	k := reflect.TypeOf(v).Kind()
+	switch {
+	case k >= reflect.Int8 && k <= reflect.Uint64:
+		v = reflect.ValueOf(v).Convert(reflect.TypeOf(int(0))).Interface()
+	case k == reflect.Float32:
+		v = reflect.ValueOf(v).Convert(reflect.TypeOf(float64(0))).Interface()
+	}
+	return v
+}
+
+func init() {
+	gob.Register(map[string]interface{}{})
+}
+
+// Map performs a deep copy of the given map m.
+func deepCopyMap(m map[string]interface{}) (map[string]interface{}, error) {
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	dec := gob.NewDecoder(&buf)
+	err := enc.Encode(m)
+	if err != nil {
+		return nil, err
+	}
+	var copy map[string]interface{}
+	err = dec.Decode(&copy)
+	if err != nil {
+		return nil, err
+	}
+	return copy, nil
 }

@@ -6,6 +6,9 @@ package types
 
 import (
 	"encoding/xml"
+	"fmt"
+
+	"github.com/jinzhu/copier"
 )
 
 // Maps status Attribute Values for VAppTemplate, VApp, Vm, and Media Objects
@@ -41,6 +44,42 @@ var VDCStatuses = map[int]string{
 	2:  "UNKNOWN",
 	3:  "UNRECOGNIZED",
 }
+
+// https://blogs.vmware.com/vapp/2009/11/virtual-hardware-in-ovf-part-1.html
+type ResourceType = int
+
+const ResourceTypeOther ResourceType = 0
+const ResourceTypeProcessor ResourceType = 3
+const ResourceTypeMemory ResourceType = 4
+const ResourceTypeIDE ResourceType = 5
+const ResourceTypeSCSI ResourceType = 6
+const ResourceTypeEthernet ResourceType = 10
+const ResourceTypeFloppy ResourceType = 14
+const ResourceTypeCD ResourceType = 15
+const ResourceTypeDVD ResourceType = 16
+const ResourceTypeDisk ResourceType = 17
+const ResourceTypeUSB ResourceType = 23
+
+type FenceMode = string
+
+const FenceModeIsolated FenceMode = "isolated"
+const FenceModeBridged FenceMode = "bridged"
+const FenceModeNAT FenceMode = "natRouted"
+
+// Officially supported APIs by VMware
+// https://vdc-download.vmware.com/vmwb-repository/dcr-public/3ae3f17c-6666-4efa-83bd-3dae5031d559/08a66e37-540e-4987-85b0-ba1cdd40f7c6/vcloud_sp_api_guide_29_0.pdf
+type ApiVersionType = string
+
+const ApiVersion55 ApiVersionType = "5.5"   // vCloud Director 5.5
+const ApiVersion56 ApiVersionType = "5.6"   // vCloud Director 5.6
+const ApiVersion90 ApiVersionType = "9.0"   // vCloud Director 8.0
+const ApiVersion130 ApiVersionType = "13.0" // vCloud Air Compute Service
+const ApiVersion170 ApiVersionType = "17.0" // vCloud Air Compute Service
+const ApiVersion200 ApiVersionType = "20.0" // vCloud Director 8.10
+const ApiVersion270 ApiVersionType = "27.0" // vCloud Director 8.20
+const ApiVersion290 ApiVersionType = "29.0" // vCloud Director 9.0
+
+const ApiVersion ApiVersionType = ApiVersion90
 
 // VCD API
 
@@ -201,15 +240,27 @@ type IPScopes struct {
 // Description: The configurations applied to a network. This is an abstract base type. The concrete types include those for vApp and Organization wide networks.
 // Since: 0.9
 type NetworkConfiguration struct {
-	BackwardCompatibilityMode      bool             `xml:"BackwardCompatibilityMode"`
-	Features                       *NetworkFeatures `xml:"Features,omitempty"`
-	ParentNetwork                  *Reference       `xml:"ParentNetwork,omitempty"`
-	IPScopes                       *IPScopes        `xml:"IpScopes,omitempty"`
-	FenceMode                      string           `xml:"FenceMode"`
-	RetainNetInfoAcrossDeployments bool             `xml:"RetainNetInfoAcrossDeployments"`
-	// TODO: Not Implemented
-	// RouterInfo                     RouterInfo           `xml:"RouterInfo,omitempty"`
-	// SyslogServerSettings           SyslogServerSettings `xml:"SyslogServerSettings,omitempty"`
+	BackwardCompatibilityMode      bool                  `xml:"BackwardCompatibilityMode"`
+	IPScopes                       *IPScopes             `xml:"IpScopes,omitempty"`
+	ParentNetwork                  *Reference            `xml:"ParentNetwork,omitempty"`
+	FenceMode                      FenceMode             `xml:"FenceMode"`
+	RetainNetInfoAcrossDeployments bool                  `xml:"RetainNetInfoAcrossDeployments"`
+	Features                       *NetworkFeatures      `xml:"Features,omitempty"`
+	RouterInfo                     *RouterInfo           `xml:"RouterInfo,omitempty"`
+	SyslogServerSettings           *SyslogServerSettings `xml:"SyslogServerSettings,omitempty"`
+	AdvancedNetworkingEnabled      bool                  `xml:"AdvancedNetworkingEnabled,omitempty"`
+	SubInterface                   bool                  `xml:"SubInterface,omitempty"`
+	DistributedInterface           bool                  `xml:"DistributedInterface,omitempty"`
+	GuestVlanAllowed               bool                  `xml:"GuestVlanAllowed,omitempty"`
+}
+
+type RouterInfo struct {
+	ExternalIp string `xml:"ExternalIp,omitempty"`
+}
+
+type SyslogServerSettings struct {
+	SyslogServerIp1 string `xml:"SyslogServerIp1,omitempty"`
+	SyslogServerIp2 string `xml:"SyslogServerIp2,omitempty"`
 }
 
 // VAppNetworkConfiguration representa a vApp network configuration
@@ -218,7 +269,7 @@ type NetworkConfiguration struct {
 // Description: Represents a vApp network configuration.
 // Since: 0.9
 type VAppNetworkConfiguration struct {
-	HREF        string `xml:"href,attr,omitempty"`
+	// HREF        string `xml:"href,attr,omitempty"`
 	Type        string `xml:"type,attr,omitempty"`
 	NetworkName string `xml:"networkName,attr"`
 
@@ -242,10 +293,10 @@ type NetworkConfigSection struct {
 
 	Info string `xml:"ovf:Info"`
 	//
-	HREF          string                    `xml:"href,attr,omitempty"`
-	Type          string                    `xml:"type,attr,omitempty"`
-	Link          *Link                     `xml:"Link,omitempty"`
-	NetworkConfig *VAppNetworkConfiguration `xml:"NetworkConfig,omitempty"`
+	HREF          string                      `xml:"href,attr,omitempty"`
+	Type          string                      `xml:"type,attr,omitempty"`
+	Link          *Link                       `xml:"Link,omitempty"`
+	NetworkConfig []*VAppNetworkConfiguration `xml:"NetworkConfig,omitempty"`
 }
 
 // NetworkConnection represents a network connection in the virtual machine.
@@ -257,11 +308,13 @@ type NetworkConnection struct {
 	Network                 string `xml:"network,attr"`                      // Name of the network to which this NIC is connected.
 	NetworkConnectionIndex  int    `xml:"NetworkConnectionIndex"`            // Virtual slot number associated with this NIC. First slot number is 0.
 	NeedsCustomization      bool   `xml:"needsCustomization,attr,omitempty"` // True if this NIC needs customization.
-	ExternalIPAddress       string `xml:"ExternalIpAddress,omitempty"`       // If the network to which this NIC connects provides NAT services, the external address assigned to this NIC appears here.
 	IPAddress               string `xml:"IpAddress,omitempty"`               // IP address assigned to this NIC.
+	ExternalIPAddress       string `xml:"ExternalIpAddress,omitempty"`       // If the network to which this NIC connects provides NAT services, the external address assigned to this NIC appears here.
 	IsConnected             bool   `xml:"IsConnected"`                       // If the virtual machine is undeployed, this value specifies whether the NIC should be connected upon deployment. If the virtual machine is deployed, this value reports the current status of this NIC's connection, and can be updated to change that connection status.
-	IPAddressAllocationMode string `xml:"IpAddressAllocationMode"`           // IP address allocation mode for this connection. One of: POOL (A static IP address is allocated automatically from a pool of addresses.) DHCP (The IP address is obtained from a DHCP service.) MANUAL (The IP address is assigned manually in the IpAddress element.) NONE (No IP addressing mode specified.)
 	MACAddress              string `xml:"MACAddress,omitempty"`              // MAC address associated with the NIC.
+	IPAddressAllocationMode string `xml:"IpAddressAllocationMode"`           // IP address allocation mode for this connection. One of: POOL (A static IP address is allocated automatically from a pool of addresses.) DHCP (The IP address is obtained from a DHCP service.) MANUAL (The IP address is assigned manually in the IpAddress element.) NONE (No IP addressing mode specified.)
+	NetworkAdapterType      string `xml:"NetworkAdapterType"`                // Set the adapter type (e.g. E1000, E1000E, VMXNET3)
+
 }
 
 // NetworkConnectionSection the container for the network connections of this virtual machine.
@@ -276,13 +329,14 @@ type NetworkConnectionSection struct {
 	Xmlns   string   `xml:"xmlns,attr,omitempty"`
 	Ovf     string   `xml:"xmlns:ovf,attr,omitempty"`
 
+	HREF string `xml:"href,attr,omitempty"`
+	Type string `xml:"type,attr,omitempty"`
+
 	Info string `xml:"ovf:Info"`
-	//
-	HREF                          string             `xml:"href,attr,omitempty"`
-	Type                          string             `xml:"type,attr,omitempty"`
-	Link                          *Link              `xml:"Link,omitempty"`
-	PrimaryNetworkConnectionIndex int                `xml:"PrimaryNetworkConnectionIndex"`
-	NetworkConnection             *NetworkConnection `xml:"NetworkConnection,omitempty"`
+
+	PrimaryNetworkConnectionIndex int                  `xml:"PrimaryNetworkConnectionIndex"`
+	NetworkConnection             []*NetworkConnection `xml:"NetworkConnection,omitempty"`
+	Link                          *Link                `xml:"Link,omitempty"`
 }
 
 // InstantiationParams is a container for ovf:Section_Type elements that specify vApp configuration on instantiate, compose, or recompose.
@@ -601,6 +655,10 @@ type Error struct {
 	StackTrace              string `xml:"stackTrace,attr,omitempty"`
 }
 
+func (e *Error) Error() string {
+	return fmt.Sprintf("API Error: %d: %s", e.MajorErrorCode, e.Message)
+}
+
 // File represents a file to be transferred (uploaded or downloaded).
 // Type: FileType
 // Namespace: http://www.vmware.com/vcloud/v1.5
@@ -684,11 +742,11 @@ type ComposeVAppParams struct {
 	PowerOn     bool   `xml:"powerOn,attr"`               // True if the vApp should be powered-on at instantiation. Defaults to true.
 	LinkedClone bool   `xml:"linkedClone,attr,omitempty"` // Reserved. Unimplemented.
 	// Elements
-	Description         string                       `xml:"Description,omitempty"`         // Optional description.
-	VAppParent          *Reference                   `xml:"VAppParent,omitempty"`          // Reserved. Unimplemented.
-	InstantiationParams *InstantiationParams         `xml:"InstantiationParams,omitempty"` // Instantiation parameters for the composed vApp.
-	SourcedItem         *SourcedCompositionItemParam `xml:"SourcedItem,omitempty"`         // Composition item. One of: vApp vAppTemplate Vm.
-	AllEULAsAccepted    bool                         `xml:"AllEULAsAccepted,omitempty"`    // True confirms acceptance of all EULAs in a vApp template. Instantiation fails if this element is missing, empty, or set to false and one or more EulaSection elements are present.
+	Description         string                         `xml:"Description,omitempty"`         // Optional description.
+	VAppParent          *Reference                     `xml:"VAppParent,omitempty"`          // Reserved. Unimplemented.
+	InstantiationParams *InstantiationParams           `xml:"InstantiationParams,omitempty"` // Instantiation parameters for the composed vApp.
+	SourcedItem         []*SourcedCompositionItemParam `xml:"SourcedItem,omitempty"`         // Composition item. One of: vApp vAppTemplate Vm.
+	AllEULAsAccepted    bool                           `xml:"AllEULAsAccepted,omitempty"`    // True confirms acceptance of all EULAs in a vApp template. Instantiation fails if this element is missing, empty, or set to false and one or more EulaSection elements are present.
 }
 
 type ReComposeVAppParams struct {
@@ -702,12 +760,12 @@ type ReComposeVAppParams struct {
 	PowerOn     bool   `xml:"powerOn,attr"`               // True if the vApp should be powered-on at instantiation. Defaults to true.
 	LinkedClone bool   `xml:"linkedClone,attr,omitempty"` // Reserved. Unimplemented.
 	// Elements
-	Description         string                       `xml:"Description,omitempty"`         // Optional description.
-	VAppParent          *Reference                   `xml:"VAppParent,omitempty"`          // Reserved. Unimplemented.
-	InstantiationParams *InstantiationParams         `xml:"InstantiationParams,omitempty"` // Instantiation parameters for the composed vApp.
-	SourcedItem         *SourcedCompositionItemParam `xml:"SourcedItem,omitempty"`         // Composition item. One of: vApp vAppTemplate Vm.
-	AllEULAsAccepted    bool                         `xml:"AllEULAsAccepted,omitempty"`
-	DeleteItem          *DeleteItem                  `xml:"DeleteItem,omitempty"`
+	Description         string                         `xml:"Description,omitempty"`         // Optional description.
+	VAppParent          *Reference                     `xml:"VAppParent,omitempty"`          // Reserved. Unimplemented.
+	InstantiationParams *InstantiationParams           `xml:"InstantiationParams,omitempty"` // Instantiation parameters for the composed vApp.
+	SourcedItem         []*SourcedCompositionItemParam `xml:"SourcedItem,omitempty"`         // Composition item. One of: vApp vAppTemplate Vm.
+	AllEULAsAccepted    bool                           `xml:"AllEULAsAccepted,omitempty"`
+	DeleteItem          []*DeleteItem                  `xml:"DeleteItem,omitempty"`
 }
 
 type DeleteItem struct {
@@ -727,7 +785,7 @@ type SourcedCompositionItemParam struct {
 	VMGeneralParams     *VMGeneralParams     `xml:"VmGeneralParams,omitempty"`     // Specify name, description, and other properties of a VM during instantiation.
 	VAppScopedLocalID   string               `xml:"VAppScopedLocalId,omitempty"`   // If Source references a Vm, this value provides a unique identifier for the Vm in the scope of the composed vApp.
 	InstantiationParams *InstantiationParams `xml:"InstantiationParams,omitempty"` // If Source references a Vm this can include any of the following OVF sections: VirtualHardwareSection OperatingSystemSection NetworkConnectionSection GuestCustomizationSection.
-	NetworkAssignment   *NetworkAssignment   `xml:"NetworkAssignment,omitempty"`   // If Source references a Vm, this element maps a network name specified in the Vm to the network name of a vApp network defined in the composed vApp.
+	NetworkAssignment   []*NetworkAssignment `xml:"NetworkAssignment,omitempty"`   // If Source references a Vm, this element maps a network name specified in the Vm to the network name of a vApp network defined in the composed vApp.
 	StorageProfile      *Reference           `xml:"StorageProfile,omitempty"`      // If Source references a Vm, this element contains a reference to a storage profile to be used for the Vm. The specified storage profile must exist in the organization vDC that contains the composed vApp. If not specified, the default storage profile for the vDC is used.
 	LocalityParams      *LocalityParams      `xml:"LocalityParams,omitempty"`      // Represents locality parameters. Locality parameters provide a hint that may help the placement engine optimize placement of a VM and an independent a Disk so that the VM can make efficient use of the disk.
 }
@@ -793,6 +851,9 @@ type VApp struct {
 	InMaintenanceMode bool            `xml:"InMaintenanceMode,omitempty"` // True if this vApp is in maintenance mode. Prevents users from changing vApp metadata.
 	Children          *VAppChildren   `xml:"Children,omitempty"`          // Container for virtual machines included in this vApp.
 	ProductSection    *ProductSection `xml:"ProductSection,omitempty"`
+
+	// This is not documented in the API, however it exists so we use it.
+	NetworkConfigSection *NetworkConfigSection `xml:"NetworkConfigSection,omitempty"`
 }
 
 type ProductSectionList struct {
@@ -907,9 +968,13 @@ type VAppTemplate struct {
 type VM struct {
 	// Attributes
 	XMLName xml.Name `xml:"Vm"`
+	Vcloud  string   `xml:"xmlns:vcloud,attr,omitempty"`
 	Ovf     string   `xml:"xmlns:ovf,attr,omitempty"`
 	Xsi     string   `xml:"xmlns:xsi,attr,omitempty"`
 	Xmlns   string   `xml:"xmlns,attr,omitempty"`
+	Rasd    string   `xml:"xmlns:rasd,attr,omitempty"`
+	Vmw     string   `xml:"xmlns:vmw,attr,omitempty"`
+	Vssd    string   `xml:"xmlns:vssd,attr,omitempty"`
 
 	HREF                    string `xml:"href,attr,omitempty"`                    // The URI of the entity.
 	Type                    string `xml:"type,attr,omitempty"`                    // The MIME type of the entity.
@@ -920,50 +985,76 @@ type VM struct {
 	Deployed                bool   `xml:"deployed,attr,omitempty"`                // True if the virtual machine is deployed.
 	NeedsCustomization      bool   `xml:"needsCustomization,attr,omitempty"`      // True if this virtual machine needs customization.
 	NestedHypervisorEnabled bool   `xml:"nestedHypervisorEnabled,attr,omitempty"` // True if hardware-assisted CPU virtualization capabilities in the host should be exposed to the guest operating system.
+
 	// Elements
 	Link        LinkList         `xml:"Link,omitempty"`        // A reference to an entity or operation associated with this object.
 	Description string           `xml:"Description,omitempty"` // Optional description.
 	Tasks       *TasksInProgress `xml:"Tasks,omitempty"`       // A list of queued, running, or recently completed tasks associated with this entity.
 	Files       *FilesList       `xml:"FilesList,omitempty"`   // Represents a list of files to be transferred (uploaded or downloaded). Each File in the list is part of the ResourceEntity.
 	VAppParent  *Reference       `xml:"VAppParent,omitempty"`  // Reserved. Unimplemented.
+
 	// TODO: OVF Sections to be implemented
 	// Section OVF_Section `xml:"Section,omitempty"
-	DateCreated string `xml:"DateCreated,omitempty"` // Creation date/time of the vApp.
 
 	// Section ovf:VirtualHardwareSection
 	VirtualHardwareSection *VirtualHardwareSection `xml:"VirtualHardwareSection,omitempty"`
 
+	// This is a workaround, see bottom of this file
+	OVFVirtualHardwareSection *OVFVirtualHardwareSection `xml:"ovf:VirtualHardwareSection,omitempty"`
+
 	// FIXME: Upstream bug? Missing NetworkConnectionSection
 	NetworkConnectionSection *NetworkConnectionSection `xml:"NetworkConnectionSection,omitempty"`
 
-	VAppScopedLocalID string `xml:"VAppScopedLocalId,omitempty"` // A unique identifier for the virtual machine in the scope of the vApp.
+	// FIXME: Upstream bug? Missing GuestCustomizationSection
+	GuestCustomizationSection *GuestCustomizationSection `xml:"GuestCustomizationSection,omitempty"`
 
 	Snapshots *SnapshotSection `xml:"SnapshotSection,omitempty"`
+
+	ProductSection *ProductSection `xml:"ProductSection,omitempty"`
+
+	DateCreated string `xml:"DateCreated,omitempty"` // Creation date/time of the vApp.
+
+	VAppScopedLocalID string `xml:"VAppScopedLocalId,omitempty"` // A unique identifier for the virtual machine in the scope of the vApp.
 
 	// TODO: OVF Sections to be implemented
 	// Environment OVF_Environment `xml:"Environment,omitempty"
 
 	VMCapabilities *VMCapabilities `xml:"VmCapabilities,omitempty"` // Allows you to specify certain capabilities of this virtual machine.
 	StorageProfile *Reference      `xml:"StorageProfile,omitempty"` // A reference to a storage profile to be used for this object. The specified storage profile must exist in the organization vDC that contains the object. If not specified, the default storage profile for the vDC is used.
-	ProductSection *ProductSection `xml:"ProductSection,omitempty"`
+
+	BootOptions *BootOptions `xml:"BootOptions,omitempty"`
+}
+
+type BootOptions struct {
+	BootDelay      int64 `xml:BootOptions,omitempty`
+	EnterBIOSSetup bool  `xml:EnterBIOSSetup,omitempty`
+	Link           *Link `xml:"vcloud:Link"`
 }
 
 // ovf:VirtualHardwareSection from VM struct
 type VirtualHardwareSection struct {
 	// Extends OVF Section_Type
+
 	XMLName xml.Name `xml:"VirtualHardwareSection"`
-	Xmlns   string   `xml:"vcloud,attr,omitempty"`
+
+	Xmlns  string `xml:"xmlns,attr,omitempty"`
+	Vcloud string `xml:"xmlns:vcloud,attr,omitempty"`
+	Ovf    string `xml:"xmlns:ovf,attr,omitempty"`
+	Rasd   string `xml:"xmlns:rasd,attr,omitempty"`
+	Vmw    string `xml:"xmlns:vmw,attr,omitempty"`
+	Vssd   string `xml:"xmlns:vssd,attr,omitempty"`
+	Xsi    string `xml:"xmlns:xsi,attr,omitempty"`
 
 	Info string                 `xml:"Info"`
-	HREF string                 `xml:"href,attr,omitempty"`
-	Type string                 `xml:"type,attr,omitempty"`
+	HREF string                 `xml:"vcloud:href,attr,omitempty"`
+	Type string                 `xml:"vcloud:type,attr,omitempty"`
 	Item []*VirtualHardwareItem `xml:"Item,omitempty"`
 }
 
 // Each ovf:Item parsed from the ovf:VirtualHardwareSection
 type VirtualHardwareItem struct {
 	XMLName             xml.Name                       `xml:"Item"`
-	ResourceType        int                            `xml:"ResourceType,omitempty"`
+	ResourceType        ResourceType                   `xml:"ResourceType,omitempty"`
 	ResourceSubType     string                         `xml:"ResourceSubType,omitempty"`
 	ElementName         string                         `xml:"ElementName,omitempty"`
 	Description         string                         `xml:"Description,omitempty"`
@@ -1001,8 +1092,10 @@ type VirtualHardwareHostResource struct {
 // SnapshotSection from VM struct
 type SnapshotSection struct {
 	// Extends OVF Section_Type
-	XMLName  xml.Name        `xml:"SnapshotSection"`
-	Info     string          `xml:"Info"`
+	XMLName xml.Name `xml:"SnapshotSection"`
+	Ovf     string   `xml:"xmlns:ovf,attr,omitempty"`
+
+	Info     string          `xml:"ovf:Info"`
 	HREF     string          `xml:"href,attr,omitempty"`
 	Type     string          `xml:"type,attr,omitempty"`
 	Snapshot []*SnapshotItem `xml:"Snapshot,omitempty"`
@@ -1017,21 +1110,21 @@ type SnapshotItem struct {
 
 // OVFItem is a horrible kludge to process OVF, needs to be fixed with proper types.
 type OVFItem struct {
-	XMLName         xml.Name `xml:"vcloud:Item"`
-	XmlnsRasd       string   `xml:"xmlns:rasd,attr"`
-	XmlnsVCloud     string   `xml:"xmlns:vcloud,attr"`
-	XmlnsXsi        string   `xml:"xmlns:xsi,attr"`
-	VCloudHREF      string   `xml:"vcloud:href,attr"`
-	VCloudType      string   `xml:"vcloud:type,attr"`
-	AllocationUnits string   `xml:"rasd:AllocationUnits"`
-	Description     string   `xml:"rasd:Description"`
-	ElementName     string   `xml:"rasd:ElementName"`
-	InstanceID      int      `xml:"rasd:InstanceID"`
-	Reservation     int      `xml:"rasd:Reservation"`
-	ResourceType    int      `xml:"rasd:ResourceType"`
-	VirtualQuantity int      `xml:"rasd:VirtualQuantity"`
-	Weight          int      `xml:"rasd:Weight"`
-	Link            *Link    `xml:"vcloud:Link"`
+	XMLName         xml.Name     `xml:"vcloud:Item"`
+	XmlnsRasd       string       `xml:"xmlns:rasd,attr"`
+	XmlnsVCloud     string       `xml:"xmlns:vcloud,attr"`
+	XmlnsXsi        string       `xml:"xmlns:xsi,attr"`
+	VCloudHREF      string       `xml:"vcloud:href,attr"`
+	VCloudType      string       `xml:"vcloud:type,attr"`
+	AllocationUnits string       `xml:"rasd:AllocationUnits"`
+	Description     string       `xml:"rasd:Description"`
+	ElementName     string       `xml:"rasd:ElementName"`
+	InstanceID      int          `xml:"rasd:InstanceID"`
+	Reservation     int          `xml:"rasd:Reservation"`
+	ResourceType    ResourceType `xml:"rasd:ResourceType"`
+	VirtualQuantity int          `xml:"rasd:VirtualQuantity"`
+	Weight          int          `xml:"rasd:Weight"`
+	Link            *Link        `xml:"vcloud:Link"`
 }
 
 // DeployVAppParams are the parameters to a deploy vApp request
@@ -1735,4 +1828,119 @@ type QueryResultOrgVdcStorageProfileRecordType struct {
 	NumberOfConditions      int    `xml:"numberOfConditions,attr,omitempty"`
 	StorageUsedMB           int    `xml:"storageUsedMB,attr,omitempty"`
 	StorageLimitMB          int    `xml:"storageLimitMB,attr,omitempty"`
+}
+
+// This should probably reside somewhere else
+
+type NewVMDescription struct {
+	Name           string
+	VAppTemplate   *VAppTemplate
+	Networks       []*NetworkOrgDescription
+	StorageProfile *Reference
+}
+type NetworkOrgDescription struct {
+	Name             string
+	IsPrimary        bool
+	IsConnected      bool
+	IPAllocationMode string
+	AdapterType      string
+}
+
+// This section contains types which at the moment is needed to work
+// around the missing namespace xml support in go
+
+// ovf:VirtualHardwareSection from VM struct
+type OVFVirtualHardwareSection struct {
+	// Extends OVF Section_Type
+
+	XMLName xml.Name `xml:"ovf:VirtualHardwareSection"`
+
+	Xmlns  string `xml:"xmlns,attr,omitempty"`
+	Vcloud string `xml:"xmlns:vcloud,attr,omitempty"`
+	Ovf    string `xml:"xmlns:ovf,attr,omitempty"`
+	Rasd   string `xml:"xmlns:rasd,attr,omitempty"`
+	Vmw    string `xml:"xmlns:vmw,attr,omitempty"`
+	Vssd   string `xml:"xmlns:vssd,attr,omitempty"`
+	Xsi    string `xml:"xmlns:xsi,attr,omitempty"`
+
+	Info string                    `xml:"ovf:Info"`
+	HREF string                    `xml:"vcloud:href,attr,omitempty"`
+	Type string                    `xml:"vcloud:type,attr,omitempty"`
+	Item []*OVFVirtualHardwareItem `xml:"ovf:Item,omitempty"`
+}
+
+// Each ovf:Item parsed from the ovf:VirtualHardwareSection
+type OVFVirtualHardwareItem struct {
+	XMLName             xml.Name                          `xml:"ovf:Item"`
+	Address             string                            `xml:"rasd:Address,omitempty"`
+	AddressOnParent     int                               `xml:"rasd:AddressOnParent,omitempty"`
+	AutomaticAllocation bool                              `xml:"rasd:AutomaticAllocation,omitempty"`
+	Connection          []*OVFVirtualHardwareConnection   `xml:"rasd:Connection,omitempty"`
+	AllocationUnits     string                            `xml:"rasd:AllocationUnits,omitempty"`
+	Description         string                            `xml:"rasd:Description,omitempty"`
+	ElementName         string                            `xml:"rasd:ElementName,omitempty"`
+	HostResource        []*OVFVirtualHardwareHostResource `xml:"rasd:HostResource,omitempty"`
+	InstanceID          int                               `xml:"rasd:InstanceID,omitempty"`
+	Reservation         int                               `xml:"rasd:Reservation,omitempty"`
+	ResourceSubType     string                            `xml:"rasd:ResourceSubType,omitempty"`
+	ResourceType        ResourceType                      `xml:"rasd:ResourceType,omitempty"`
+	VirtualQuantity     int                               `xml:"rasd:VirtualQuantity,omitempty"`
+	Weight              int                               `xml:"rasd:Weight,omitempty"`
+	CoresPerSocket      int                               `xml:"vmw:CoresPerSocket,omitempty"`
+}
+
+// Connection info from ResourceType=10 (Network Interface)
+type OVFVirtualHardwareConnection struct {
+	IPAddress         string `xml:"vcloud:ipAddress,attr,omitempty"`
+	PrimaryConnection bool   `xml:"vcloud:primaryNetworkConnection,attr,omitempty"`
+	IpAddressingMode  string `xml:"vcloud:ipAddressingMode,attr,omitempty"`
+	NetworkName       string `xml:",chardata"`
+}
+
+// HostResource info from ResourceType=17 (Hard Disk)
+type OVFVirtualHardwareHostResource struct {
+	BusType           int    `xml:"vcloud:busType,attr,omitempty"`
+	BusSubType        string `xml:"vcloud:busSubType,attr,omitempty"`
+	Capacity          int    `xml:"vcloud:capacity,attr,omitempty"`
+	StorageProfile    string `xml:"vcloud:storageProfileHref,attr,omitempty"`
+	OverrideVmDefault bool   `xml:"vcloud:storageProfileOverrideVmDefault,attr,omitempty"`
+}
+
+func (v *VirtualHardwareSection) ConvertToOVF() *OVFVirtualHardwareSection {
+	ovf := OVFVirtualHardwareSection{}
+
+	copier.Copy(&ovf, &v)
+
+	items := make([]*OVFVirtualHardwareItem, len(v.Item))
+
+	for index := range v.Item {
+		item := OVFVirtualHardwareItem{}
+		copier.Copy(&item, &v.Item[index])
+
+		connections := make([]*OVFVirtualHardwareConnection, len(v.Item[index].Connection))
+		for i := range v.Item[index].Connection {
+			connection := OVFVirtualHardwareConnection{}
+			copier.Copy(&connection, &v.Item[index].Connection[i])
+
+			connections[i] = &connection
+		}
+
+		resources := make([]*OVFVirtualHardwareHostResource, len(v.Item[index].HostResource))
+		for i := range v.Item[index].HostResource {
+			resource := OVFVirtualHardwareHostResource{}
+			copier.Copy(&resource, &v.Item[index].HostResource[i])
+
+			resources[i] = &resource
+		}
+
+		item.Connection = connections
+		item.HostResource = resources
+
+		items[index] = &item
+	}
+
+	fmt.Printf("OVF ITEMS: \n %#v \n\n", items)
+
+	ovf.Item = items
+	return &ovf
 }
