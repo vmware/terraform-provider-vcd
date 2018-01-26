@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	types "github.com/ukcloud/govcloudair/types/v56"
 )
 
 func resourceVcdVApp() *schema.Resource {
@@ -48,71 +47,9 @@ func resourceVcdVApp() *schema.Resource {
 func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	// vApp Network
-	vAppNetworksInterfaceList := d.Get("vapp_network").([]interface{})
-	vAppNetworks := interfaceListToMapStringInterface(vAppNetworksInterfaceList)
-
-	vAppNetworkConfigurations := make([]*types.VAppNetworkConfiguration, len(vAppNetworks))
-	for index := range vAppNetworks {
-		vAppNetwork := NewVAppNetworkSubresource(vAppNetworks[index], nil)
-
-		configuration := &types.NetworkConfiguration{
-			FenceMode: types.FenceModeIsolated,
-			Features:  &types.NetworkFeatures{},
-			IPScopes: &types.IPScopes{
-				IPScope: types.IPScope{
-					IsInherited: false,
-					Gateway:     vAppNetwork.Get("gateway").(string),
-					Netmask:     vAppNetwork.Get("netmask").(string),
-					DNS1:        vAppNetwork.Get("dns1").(string),
-					DNS2:        vAppNetwork.Get("dns2").(string),
-					IsEnabled:   true,
-					IPRanges: &types.IPRanges{
-						IPRange: []*types.IPRange{&types.IPRange{
-							StartAddress: vAppNetwork.Get("start").(string),
-							EndAddress:   vAppNetwork.Get("end").(string),
-						}},
-					},
-				},
-			},
-		}
-
-		// if vAppNetworks.Get("dhcp").(bool) {
-		// 	configuration.Features = &types.NetworkFeatures{
-		// 		DhcpService: &types.DhcpService{
-		// 			IsEnabled: True,
-
-		// 		}
-		// 	}
-		// }
-
-		if vAppNetwork.Get("nat").(bool) {
-			configuration.Features.NatService = &types.NatService{
-				IsEnabled: true,
-				NatType:   "ipTranslation",
-				Policy:    "allowTrafficIn",
-				// We need to set parent
-			}
-			configuration.FenceMode = types.FenceModeNAT
-		}
-
-		vAppNetworkConfigurations[index] = &types.VAppNetworkConfiguration{
-			Configuration: configuration,
-			NetworkName:   vAppNetwork.Get("name").(string),
-		}
-	}
-
-	// Organization Network
-	organizationNetworks := d.Get("organization_network").([]interface{})
-	log.Printf("[TRACE] Networks from state: %#v", organizationNetworks)
-
-	orgnetworks := make([]*types.OrgVDCNetwork, len(organizationNetworks))
-	for index, network := range organizationNetworks {
-		orgnetwork, err := vcdClient.OrgVdc.FindVDCNetwork(network.(string))
-		if err != nil {
-			return fmt.Errorf("Error finding vdc org network: %s, %#v", network, err)
-		}
-		orgnetworks[index] = orgnetwork.OrgVDCNetwork
+	networks, err := createNetworkConfiguration(d, meta)
+	if err != nil {
+		return err
 	}
 
 	// See if vApp exists
@@ -124,7 +61,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 		vapp = vcdClient.NewVApp(&vcdClient.Client)
 
 		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := vapp.ComposeVApp(d.Get("name").(string), d.Get("description").(string), orgnetworks, vAppNetworkConfigurations)
+			task, err := vapp.ComposeVApp(d.Get("name").(string), d.Get("description").(string), networks)
 			if err != nil {
 				return resource.NonRetryableError(fmt.Errorf("Error creating vapp: %#v", err))
 			}
@@ -180,17 +117,22 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Update networks
-	if d.HasChange("network") {
-		log.Printf("[TRACE] (%s) Updating vApp networks", vapp.VApp.Name)
-		networks := d.Get("organization_network").([]interface{})
-		orgnetworks := make([]*types.OrgVDCNetwork, len(networks))
-		for index, network := range networks {
-			orgnetwork, err := vcdClient.OrgVdc.FindVDCNetwork(network.(string))
+	if d.HasChange("organization_network") || d.HasChange("vapp_network") {
+		networks, err := createNetworkConfiguration(d, meta)
+		if err != nil {
+			return err
+		}
+
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := vapp.SetNetworkConfigurations(networks)
 			if err != nil {
-				return fmt.Errorf("Error finding vdc org network: %s, %#v", network, err)
+				return resource.NonRetryableError(fmt.Errorf("Error setting nested hyperv VM: %#v", err))
 			}
 
-			orgnetworks[index] = orgnetwork.OrgVDCNetwork
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
+		if err != nil {
+			return fmt.Errorf("Error completing task: %#v", err)
 		}
 	}
 

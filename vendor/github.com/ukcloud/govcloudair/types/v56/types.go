@@ -66,6 +66,15 @@ const FenceModeIsolated FenceMode = "isolated"
 const FenceModeBridged FenceMode = "bridged"
 const FenceModeNAT FenceMode = "natRouted"
 
+type IPv4Address = string
+
+type IPAllocationMode = string
+
+const IPAllocationModeDHCP IPAllocationMode = "DHCP"
+const IPAllocationModeManual IPAllocationMode = "MANUAL"
+const IPAllocationModeNone IPAllocationMode = "NONE"
+const IPAllocationModePool IPAllocationMode = "POOL"
+
 // Officially supported APIs by VMware
 // https://vdc-download.vmware.com/vmwb-repository/dcr-public/3ae3f17c-6666-4efa-83bd-3dae5031d559/08a66e37-540e-4987-85b0-ba1cdd40f7c6/vcloud_sp_api_guide_29_0.pdf
 type ApiVersionType = string
@@ -139,15 +148,15 @@ type IPRange struct {
 // Description: Represents a DHCP network service.
 // Since:
 type DhcpService struct {
-	DefaultLeaseTime    int      `xml:"DefaultLeaseTime,omitempty"`    // Default lease in seconds for DHCP addresses.
-	DomainName          string   `xml:"DomainName,omitempty"`          //	The domain name.
-	IPRange             *IPRange `xml:"IpRange"`                       //	IP range for DHCP addresses.
-	IsEnabled           bool     `xml:"IsEnabled"`                     // Enable or disable the service using this flag
-	MaxLeaseTime        int      `xml:"MaxLeaseTime"`                  //	Max lease in seconds for DHCP addresses.
-	PrimaryNameServer   string   `xml:"PrimaryNameServer,omitempty"`   // The primary name server.
-	RouterIP            string   `xml:"RouterIp,omitempty"`            // Router IP.
-	SecondaryNameServer string   `xml:"SecondaryNameServer,omitempty"` // The secondary name server.
-	SubMask             string   `xml:"SubMask,omitempty"`             // The subnet mask.
+	DefaultLeaseTime    int         `xml:"DefaultLeaseTime,omitempty"`    // Default lease in seconds for DHCP addresses.
+	DomainName          string      `xml:"DomainName,omitempty"`          //	The domain name.
+	IPRange             *IPRange    `xml:"IpRange"`                       //	IP range for DHCP addresses.
+	IsEnabled           bool        `xml:"IsEnabled"`                     // Enable or disable the service using this flag
+	MaxLeaseTime        int         `xml:"MaxLeaseTime"`                  //	Max lease in seconds for DHCP addresses.
+	PrimaryNameServer   string      `xml:"PrimaryNameServer,omitempty"`   // The primary name server.
+	RouterIP            IPv4Address `xml:"RouterIp,omitempty"`            // Router IP.
+	SecondaryNameServer string      `xml:"SecondaryNameServer,omitempty"` // The secondary name server.
+	SubMask             string      `xml:"SubMask,omitempty"`             // The subnet mask.
 }
 
 // NetworkFeatures represents features of a network.
@@ -190,8 +199,8 @@ type IPRanges struct {
 // Since: 0.9
 type IPScope struct {
 	IsInherited          bool            `xml:"IsInherited"`                    // True if the IP scope is inherit from parent network.
-	Gateway              string          `xml:"Gateway,omitempty"`              // Gateway of the network.
-	Netmask              string          `xml:"Netmask,omitempty"`              // Network mask.
+	Gateway              IPv4Address     `xml:"Gateway,omitempty"`              // Gateway of the network.
+	Netmask              IPv4Address     `xml:"Netmask,omitempty"`              // Network mask.
 	DNS1                 string          `xml:"Dns1,omitempty"`                 // Primary DNS server.
 	DNS2                 string          `xml:"Dns2,omitempty"`                 // Secondary DNS server.
 	DNSSuffix            string          `xml:"DnsSuffix,omitempty"`            // DNS suffix.
@@ -259,8 +268,8 @@ type RouterInfo struct {
 }
 
 type SyslogServerSettings struct {
-	SyslogServerIp1 string `xml:"SyslogServerIp1,omitempty"`
-	SyslogServerIp2 string `xml:"SyslogServerIp2,omitempty"`
+	SyslogServerIp1 IPv4Address `xml:"SyslogServerIp1,omitempty"`
+	SyslogServerIp2 IPv4Address `xml:"SyslogServerIp2,omitempty"`
 }
 
 // VAppNetworkConfiguration representa a vApp network configuration
@@ -305,15 +314,15 @@ type NetworkConfigSection struct {
 // Description: Represents a network connection in the virtual machine.
 // Since: 0.9
 type NetworkConnection struct {
-	Network                 string `xml:"network,attr"`                      // Name of the network to which this NIC is connected.
-	NetworkConnectionIndex  int    `xml:"NetworkConnectionIndex"`            // Virtual slot number associated with this NIC. First slot number is 0.
-	NeedsCustomization      bool   `xml:"needsCustomization,attr,omitempty"` // True if this NIC needs customization.
-	IPAddress               string `xml:"IpAddress,omitempty"`               // IP address assigned to this NIC.
-	ExternalIPAddress       string `xml:"ExternalIpAddress,omitempty"`       // If the network to which this NIC connects provides NAT services, the external address assigned to this NIC appears here.
-	IsConnected             bool   `xml:"IsConnected"`                       // If the virtual machine is undeployed, this value specifies whether the NIC should be connected upon deployment. If the virtual machine is deployed, this value reports the current status of this NIC's connection, and can be updated to change that connection status.
-	MACAddress              string `xml:"MACAddress,omitempty"`              // MAC address associated with the NIC.
-	IPAddressAllocationMode string `xml:"IpAddressAllocationMode"`           // IP address allocation mode for this connection. One of: POOL (A static IP address is allocated automatically from a pool of addresses.) DHCP (The IP address is obtained from a DHCP service.) MANUAL (The IP address is assigned manually in the IpAddress element.) NONE (No IP addressing mode specified.)
-	NetworkAdapterType      string `xml:"NetworkAdapterType"`                // Set the adapter type (e.g. E1000, E1000E, VMXNET3)
+	Network                 string           `xml:"network,attr"`                      // Name of the network to which this NIC is connected.
+	NetworkConnectionIndex  int              `xml:"NetworkConnectionIndex"`            // Virtual slot number associated with this NIC. First slot number is 0.
+	NeedsCustomization      bool             `xml:"needsCustomization,attr,omitempty"` // True if this NIC needs customization.
+	IPAddress               IPv4Address      `xml:"IpAddress,omitempty"`               // IP address assigned to this NIC.
+	ExternalIPAddress       string           `xml:"ExternalIpAddress,omitempty"`       // If the network to which this NIC connects provides NAT services, the external address assigned to this NIC appears here.
+	IsConnected             bool             `xml:"IsConnected"`                       // If the virtual machine is undeployed, this value specifies whether the NIC should be connected upon deployment. If the virtual machine is deployed, this value reports the current status of this NIC's connection, and can be updated to change that connection status.
+	MACAddress              string           `xml:"MACAddress,omitempty"`              // MAC address associated with the NIC.
+	IPAddressAllocationMode IPAllocationMode `xml:"IpAddressAllocationMode"`           // IP address allocation mode for this connection. One of: POOL (A static IP address is allocated automatically from a pool of addresses.) DHCP (The IP address is obtained from a DHCP service.) MANUAL (The IP address is assigned manually in the IpAddress element.) NONE (No IP addressing mode specified.)
+	NetworkAdapterType      string           `xml:"NetworkAdapterType"`                // Set the adapter type (e.g. E1000, E1000E, VMXNET3)
 
 }
 
@@ -1074,10 +1083,10 @@ type VirtualHardwareItem struct {
 
 // Connection info from ResourceType=10 (Network Interface)
 type VirtualHardwareConnection struct {
-	IPAddress         string `xml:"ipAddress,attr,omitempty"`
-	PrimaryConnection bool   `xml:"primaryNetworkConnection,attr,omitempty"`
-	IpAddressingMode  string `xml:"ipAddressingMode,attr,omitempty"`
-	NetworkName       string `xml:",chardata"`
+	IPAddress         IPv4Address `xml:"ipAddress,attr,omitempty"`
+	PrimaryConnection bool        `xml:"primaryNetworkConnection,attr,omitempty"`
+	IpAddressingMode  string      `xml:"ipAddressingMode,attr,omitempty"`
+	NetworkName       string      `xml:",chardata"`
 }
 
 // HostResource info from ResourceType=17 (Hard Disk)
@@ -1106,25 +1115,6 @@ type SnapshotItem struct {
 	Created   string `xml:"created,attr,omitempty"`
 	PoweredOn bool   `xml:"poweredOn,attr,omitempty"`
 	Size      int    `xml:"size,attr,omitempty"`
-}
-
-// OVFItem is a horrible kludge to process OVF, needs to be fixed with proper types.
-type OVFItem struct {
-	XMLName         xml.Name     `xml:"vcloud:Item"`
-	XmlnsRasd       string       `xml:"xmlns:rasd,attr"`
-	XmlnsVCloud     string       `xml:"xmlns:vcloud,attr"`
-	XmlnsXsi        string       `xml:"xmlns:xsi,attr"`
-	VCloudHREF      string       `xml:"vcloud:href,attr"`
-	VCloudType      string       `xml:"vcloud:type,attr"`
-	AllocationUnits string       `xml:"rasd:AllocationUnits"`
-	Description     string       `xml:"rasd:Description"`
-	ElementName     string       `xml:"rasd:ElementName"`
-	InstanceID      int          `xml:"rasd:InstanceID"`
-	Reservation     int          `xml:"rasd:Reservation"`
-	ResourceType    ResourceType `xml:"rasd:ResourceType"`
-	VirtualQuantity int          `xml:"rasd:VirtualQuantity"`
-	Weight          int          `xml:"rasd:Weight"`
-	Link            *Link        `xml:"vcloud:Link"`
 }
 
 // DeployVAppParams are the parameters to a deploy vApp request
@@ -1272,10 +1262,10 @@ type GatewayInterface struct {
 // Description: Allows to chose which subnets a gateway can be part of
 // Since: 5.1
 type SubnetParticipation struct {
-	Gateway   string    `xml:"Gateway"`             // Gateway for subnet
-	IPAddress string    `xml:"IpAddress,omitempty"` // Ip Address to be assigned. Keep empty or ommit element for auto assignment
-	IPRanges  *IPRanges `xml:"IpRanges,omitempty"`  // Range of IP addresses available for external interfaces.
-	Netmask   string    `xml:"Netmask"`             // Nestmask for the subnet
+	Gateway   IPv4Address `xml:"Gateway"`             // Gateway for subnet
+	IPAddress IPv4Address `xml:"IpAddress,omitempty"` // Ip Address to be assigned. Keep empty or ommit element for auto assignment
+	IPRanges  *IPRanges   `xml:"IpRanges,omitempty"`  // Range of IP addresses available for external interfaces.
+	Netmask   IPv4Address `xml:"Netmask"`             // Nestmask for the subnet
 }
 
 type EdgeGatewayServiceConfiguration struct {
@@ -1320,11 +1310,11 @@ type StaticRoutingService struct {
 // Description:
 // Since:
 type StaticRoute struct {
-	Name             string     `xml:"Name"`                       // Name for the static route.
-	Network          string     `xml:"Network"`                    // Network specification in CIDR.
-	NextHopIP        string     `xml:"NextHopIp"`                  // IP Address of Next Hop router/gateway.
-	Interface        string     `xml:"Interface,omitempty"`        // Interface to use for static routing. Internal and External are the supported values.
-	GatewayInterface *Reference `xml:"GatewayInterface,omitempty"` // Gateway interface to which static route is bound.
+	Name             string      `xml:"Name"`                       // Name for the static route.
+	Network          string      `xml:"Network"`                    // Network specification in CIDR.
+	NextHopIP        IPv4Address `xml:"NextHopIp"`                  // IP Address of Next Hop router/gateway.
+	Interface        string      `xml:"Interface,omitempty"`        // Interface to use for static routing. Internal and External are the supported values.
+	GatewayInterface *Reference  `xml:"GatewayInterface,omitempty"` // Gateway interface to which static route is bound.
 }
 
 // LoadBalancerService represents gateway load balancer service.
@@ -1459,8 +1449,8 @@ type GatewayIpsecVpnService struct {
 // Description: Represents an IPSec VPN endpoint.
 // Since: 5.1
 type GatewayIpsecVpnEndpoint struct {
-	Network  *Reference `xml:"Network"`            // External network reference.
-	PublicIP string     `xml:"PublicIp,omitempty"` // Public IP for IPSec endpoint.
+	Network  *Reference  `xml:"Network"`            // External network reference.
+	PublicIP IPv4Address `xml:"PublicIp,omitempty"` // Public IP for IPSec endpoint.
 }
 
 // GatewayIpsecVpnTunnel represents an IPSec VPN tunnel.
@@ -1474,9 +1464,9 @@ type GatewayIpsecVpnTunnel struct {
 	// TODO: Fix this in a better way
 	IpsecVpnThirdPartyPeer *IpsecVpnThirdPartyPeer `xml:"IpsecVpnThirdPartyPeer,omitempty"` // Details about the peer network.
 	IpsecVpnLocalPeer      *IpsecVpnLocalPeer      `xml:"IpsecVpnLocalPeer"`                // Details about the local peer network.
-	PeerIPAddress          string                  `xml:"PeerIpAddress"`                    // IP address of the peer endpoint.
+	PeerIPAddress          IPv4Address             `xml:"PeerIpAddress"`                    // IP address of the peer endpoint.
 	PeerID                 string                  `xml:"PeerId"`                           // Id for the peer end point
-	LocalIPAddress         string                  `xml:"LocalIpAddress"`                   // Address of the local network.
+	LocalIPAddress         IPv4Address             `xml:"LocalIpAddress"`                   // Address of the local network.
 	LocalID                string                  `xml:"LocalId"`                          // Id for local end point
 	LocalSubnet            []*IpsecVpnSubnet       `xml:"LocalSubnet"`                      // List of local subnets in the tunnel.
 	PeerSubnet             []*IpsecVpnSubnet       `xml:"PeerSubnet"`                       // List of peer subnets in the tunnel.
@@ -1527,12 +1517,12 @@ type GatewayDhcpService struct {
 // Description: Represents DHCP pool service.
 // Since: 5.1
 type DhcpPoolService struct {
-	IsEnabled        bool       `xml:"IsEnabled,omitempty"`        // True if this DHCP Pool is enabled.
-	Network          *Reference `xml:"Network"`                    // Org vDC network to which the DHCP range is applicable.
-	DefaultLeaseTime int        `xml:"DefaultLeaseTime,omitempty"` // Default lease period for DHCP range.
-	MaxLeaseTime     int        `xml:"MaxLeaseTime"`               // Maximum lease period for DHCP range.
-	LowIPAddress     string     `xml:"LowIpAddress"`               // Low IP address in DHCP range.
-	HighIPAddress    string     `xml:"HighIpAddress"`              // High IP address in DHCP range.
+	IsEnabled        bool        `xml:"IsEnabled,omitempty"`        // True if this DHCP Pool is enabled.
+	Network          *Reference  `xml:"Network"`                    // Org vDC network to which the DHCP range is applicable.
+	DefaultLeaseTime int         `xml:"DefaultLeaseTime,omitempty"` // Default lease period for DHCP range.
+	MaxLeaseTime     int         `xml:"MaxLeaseTime"`               // Maximum lease period for DHCP range.
+	LowIPAddress     IPv4Address `xml:"LowIpAddress"`               // Low IP address in DHCP range.
+	HighIPAddress    IPv4Address `xml:"HighIpAddress"`              // High IP address in DHCP range.
 }
 
 // VMSelection represents details of an vm+nic+iptype selection.
@@ -1575,11 +1565,11 @@ type FirewallRule struct {
 	IcmpSubType          string                 `xml:"IcmpSubType,omitempty"`          // ICMP subtype. One of: address-mask-request, address-mask-reply, destination-unreachable, echo-request, echo-reply, parameter-problem, redirect, router-advertisement, router-solicitation, source-quench, time-exceeded, timestamp-request, timestamp-reply, any.
 	Port                 int                    `xml:"Port,omitempty"`                 // The port to which this rule applies. A value of -1 matches any port.
 	DestinationPortRange string                 `xml:"DestinationPortRange,omitempty"` // Destination port range to which this rule applies.
-	DestinationIP        string                 `xml:"DestinationIp,omitempty"`        // Destination IP address to which the rule applies. A value of Any matches any IP address.
+	DestinationIP        IPv4Address            `xml:"DestinationIp,omitempty"`        // Destination IP address to which the rule applies. A value of Any matches any IP address.
 	DestinationVM        *VMSelection           `xml:"DestinationVm,omitempty"`        // Details of the destination VM
 	SourcePort           int                    `xml:"SourcePort,omitempty"`           // Destination port to which this rule applies. A value of -1 matches any port.
 	SourcePortRange      string                 `xml:"SourcePortRange,omitempty"`      // Source port range to which this rule applies.
-	SourceIP             string                 `xml:"SourceIp,omitempty"`             // Source IP address to which the rule applies. A value of Any matches any IP address.
+	SourceIP             IPv4Address            `xml:"SourceIp,omitempty"`             // Source IP address to which the rule applies. A value of Any matches any IP address.
 	SourceVM             *VMSelection           `xml:"SourceVm,omitempty"`             // Details of the source Vm
 	Direction            string                 `xml:"Direction,omitempty"`            // Direction of traffic to which rule applies. One of: in (rule applies to incoming traffic. This is the default value), out (rule applies to outgoing traffic).
 	EnableLogging        bool                   `xml:"EnableLogging"`                  // Used to enable or disable firewall rule logging. Default value is false.
@@ -1605,11 +1595,11 @@ type FirewallService struct {
 type NatService struct {
 	Xmlns string `xml:"xmlns,attr,omitempty"`
 	// Elements
-	IsEnabled  bool       `xml:"IsEnabled"`            // Enable or disable the service using this flag
-	NatType    string     `xml:"NatType,omitempty"`    // One of: ipTranslation (use IP translation), portForwarding (use port forwarding)
-	Policy     string     `xml:"Policy,omitempty"`     // One of: allowTraffic (Allow all traffic), allowTrafficIn (Allow inbound traffic only)
-	NatRule    []*NatRule `xml:"NatRule,omitempty"`    // A NAT rule.
-	ExternalIP string     `xml:"ExternalIp,omitempty"` // External IP address for rule.
+	IsEnabled  bool        `xml:"IsEnabled"`            // Enable or disable the service using this flag
+	NatType    string      `xml:"NatType,omitempty"`    // One of: ipTranslation (use IP translation), portForwarding (use port forwarding)
+	Policy     string      `xml:"Policy,omitempty"`     // One of: allowTraffic (Allow all traffic), allowTrafficIn (Allow inbound traffic only)
+	NatRule    []*NatRule  `xml:"NatRule,omitempty"`    // A NAT rule.
+	ExternalIP IPv4Address `xml:"ExternalIp,omitempty"` // External IP address for rule.
 }
 
 // NatRule represents a NAT rule.
@@ -1639,13 +1629,13 @@ type NatRule struct {
 type GatewayNatRule struct {
 	Xmlns string `xml:"xmlns,attr,omitempty"`
 	// Elements
-	Interface      *Reference `xml:"Interface,omitempty"`      // Interface to which rule is applied.
-	OriginalIP     string     `xml:"OriginalIp"`               // Original IP for rule.
-	OriginalPort   string     `xml:"OriginalPort,omitempty"`   // Original port for rule.
-	TranslatedIP   string     `xml:"TranslatedIp"`             // Translated IP for rule.
-	TranslatedPort string     `xml:"TranslatedPort,omitempty"` // Translated port for rule.
-	Protocol       string     `xml:"Protocol,omitempty"`       // Protocol for rule.
-	IcmpSubType    string     `xml:"IcmpSubType,omitempty"`    // ICMP subtype. One of: address-mask-request, address-mask-reply, destination-unreachable, echo-request, echo-reply, parameter-problem, redirect, router-advertisement, router-solicitation, source-quench, time-exceeded, timestamp-request, timestamp-reply, any.
+	Interface      *Reference  `xml:"Interface,omitempty"`      // Interface to which rule is applied.
+	OriginalIP     IPv4Address `xml:"OriginalIp"`               // Original IP for rule.
+	OriginalPort   string      `xml:"OriginalPort,omitempty"`   // Original port for rule.
+	TranslatedIP   IPv4Address `xml:"TranslatedIp"`             // Translated IP for rule.
+	TranslatedPort string      `xml:"TranslatedPort,omitempty"` // Translated port for rule.
+	Protocol       string      `xml:"Protocol,omitempty"`       // Protocol for rule.
+	IcmpSubType    string      `xml:"IcmpSubType,omitempty"`    // ICMP subtype. One of: address-mask-request, address-mask-reply, destination-unreachable, echo-request, echo-reply, parameter-problem, redirect, router-advertisement, router-solicitation, source-quench, time-exceeded, timestamp-request, timestamp-reply, any.
 }
 
 // NatOneToOneBasicRule represents the NAT basic rule for one to one mapping of internal and external IP addresses from a network.
@@ -1891,10 +1881,10 @@ type OVFVirtualHardwareItem struct {
 
 // Connection info from ResourceType=10 (Network Interface)
 type OVFVirtualHardwareConnection struct {
-	IPAddress         string `xml:"vcloud:ipAddress,attr,omitempty"`
-	PrimaryConnection bool   `xml:"vcloud:primaryNetworkConnection,attr,omitempty"`
-	IpAddressingMode  string `xml:"vcloud:ipAddressingMode,attr,omitempty"`
-	NetworkName       string `xml:",chardata"`
+	IPAddress         IPv4Address `xml:"vcloud:ipAddress,attr,omitempty"`
+	PrimaryConnection bool        `xml:"vcloud:primaryNetworkConnection,attr,omitempty"`
+	IpAddressingMode  string      `xml:"vcloud:ipAddressingMode,attr,omitempty"`
+	NetworkName       string      `xml:",chardata"`
 }
 
 // HostResource info from ResourceType=17 (Hard Disk)

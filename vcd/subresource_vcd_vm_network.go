@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
+	types "github.com/ukcloud/govcloudair/types/v56"
 )
 
 func VirtualMachineNetworkSubresourceSchema() map[string]*schema.Schema {
@@ -23,15 +24,16 @@ func VirtualMachineNetworkSubresourceSchema() map[string]*schema.Schema {
 			Optional:         true,
 			Computed:         true,
 			DiffSuppressFunc: suppressIPDifferences,
+			ValidateFunc:     ValidateIPv4(),
 		},
 		"ip_allocation_mode": {
 			Type:     schema.TypeString,
 			Required: true,
 			ValidateFunc: validation.StringInSlice([]string{
-				"DHCP",
-				"MANUAL",
-				"NONE",
-				"POOL",
+				types.IPAllocationModeDHCP,
+				types.IPAllocationModeManual,
+				types.IPAllocationModeNone,
+				types.IPAllocationModePool,
 			}, false),
 		},
 		"is_primary": {

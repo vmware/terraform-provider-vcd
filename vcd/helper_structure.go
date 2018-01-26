@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
+	"net"
 	"reflect"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -204,4 +206,23 @@ func deepCopyMap(m map[string]interface{}) (map[string]interface{}, error) {
 		return nil, err
 	}
 	return copy, nil
+}
+
+func IsIPv4(str string) bool {
+	ip := net.ParseIP(str)
+	return ip != nil && strings.Contains(str, ".")
+}
+
+func ValidateIPv4() schema.SchemaValidateFunc {
+	return func(i interface{}, k string) (s []string, es []error) {
+		v, ok := i.(string)
+		if !ok {
+			es = append(es, fmt.Errorf("expected type of %s to be string", k))
+			return
+		}
+		if !IsIPv4(v) {
+			es = append(es, fmt.Errorf("expected value: %s to be an IPv4 address", v))
+		}
+		return
+	}
 }

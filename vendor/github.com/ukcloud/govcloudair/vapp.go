@@ -115,27 +115,6 @@ func composeSourceItems(vms []*types.NewVMDescription) []*types.SourcedCompositi
 	return sourceItems
 }
 
-func composeNetworkConfigs(orgnetworks []*types.OrgVDCNetwork) []*types.VAppNetworkConfiguration {
-
-	networkConfigs := make([]*types.VAppNetworkConfiguration, len(orgnetworks))
-
-	for index, orgnetwork := range orgnetworks {
-		networkConfigs[index] = &types.VAppNetworkConfiguration{
-			NetworkName: orgnetwork.Name,
-			Configuration: &types.NetworkConfiguration{
-				FenceMode: types.FenceModeBridged,
-				ParentNetwork: &types.Reference{
-					HREF: orgnetwork.HREF,
-					Name: orgnetwork.Name,
-					Type: orgnetwork.Type,
-				},
-			},
-		}
-	}
-
-	return networkConfigs
-}
-
 func (v *VApp) AddVMs(vms []*types.NewVMDescription) (Task, error) {
 
 	v.Refresh()
@@ -215,9 +194,7 @@ func (v *VApp) RemoveVMs(vms []*types.VM) (Task, error) {
 		v.c)
 }
 
-func (v *VApp) ChangeNetworks(orgnetworks []*types.OrgVDCNetwork) (Task, error) {
-
-	networkConfigs := composeNetworkConfigs(orgnetworks)
+func (v *VApp) SetNetworkConfigurations(networkConfigurations []*types.VAppNetworkConfiguration) (Task, error) {
 
 	vcomp := &types.ReComposeVAppParams{
 		Ovf:         "http://schemas.dmtf.org/ovf/envelope/1",
@@ -230,7 +207,7 @@ func (v *VApp) ChangeNetworks(orgnetworks []*types.OrgVDCNetwork) (Task, error) 
 		InstantiationParams: &types.InstantiationParams{
 			NetworkConfigSection: &types.NetworkConfigSection{
 				// Info:          "Configuration parameters for logical networks",
-				NetworkConfig: networkConfigs,
+				NetworkConfig: networkConfigurations,
 			},
 		},
 	}
@@ -247,14 +224,11 @@ func (v *VApp) ChangeNetworks(orgnetworks []*types.OrgVDCNetwork) (Task, error) 
 		v.c)
 }
 
-func (v *VApp) ComposeVApp(name string, description string, orgnetworks []*types.OrgVDCNetwork, vAppNetworkConfigurations []*types.VAppNetworkConfiguration) (Task, error) {
+func (v *VApp) ComposeVApp(name string, description string, networkConfigurations []*types.VAppNetworkConfiguration) (Task, error) {
 
 	// if vapptemplate.VAppTemplate.Children == nil || orgvdcnetwork.OrgVDCNetwork == nil {
 	// 	return Task{}, fmt.Errorf("can't compose a new vApp, objects passed are not valid")
 	// }
-
-	networkConfigs := composeNetworkConfigs(orgnetworks)
-	networkConfigs = append(networkConfigs, vAppNetworkConfigurations...)
 
 	// Build request XML
 	vcomp := &types.ComposeVAppParams{
@@ -268,7 +242,7 @@ func (v *VApp) ComposeVApp(name string, description string, orgnetworks []*types
 		InstantiationParams: &types.InstantiationParams{
 			NetworkConfigSection: &types.NetworkConfigSection{
 				// Info:          "Configuration parameters for logical networks",
-				NetworkConfig: networkConfigs,
+				NetworkConfig: networkConfigurations,
 			},
 		},
 	}

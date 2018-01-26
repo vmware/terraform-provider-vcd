@@ -17,12 +17,14 @@ func VAppNetworkSubresourceSchema() map[string]*schema.Schema {
 		},
 
 		"gateway": {
-			Type:     schema.TypeString,
-			Required: true,
+			Type:         schema.TypeString,
+			Required:     true,
+			ValidateFunc: ValidateIPv4(),
 		},
 		"netmask": {
-			Type:     schema.TypeString,
-			Required: true,
+			Type:         schema.TypeString,
+			Required:     true,
+			ValidateFunc: ValidateIPv4(),
 		},
 		"dns1": {
 			Type:     schema.TypeString,
@@ -33,12 +35,14 @@ func VAppNetworkSubresourceSchema() map[string]*schema.Schema {
 			Required: true,
 		},
 		"start": {
-			Type:     schema.TypeString,
-			Required: true,
+			Type:         schema.TypeString,
+			Required:     true,
+			ValidateFunc: ValidateIPv4(),
 		},
 		"end": {
-			Type:     schema.TypeString,
-			Required: true,
+			Type:         schema.TypeString,
+			Required:     true,
+			ValidateFunc: ValidateIPv4(),
 		},
 
 		"nat": {
