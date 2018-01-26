@@ -247,13 +247,15 @@ func (v *VApp) ChangeNetworks(orgnetworks []*types.OrgVDCNetwork) (Task, error) 
 		v.c)
 }
 
-func (v *VApp) ComposeVApp(name string, description string, orgnetworks []*types.OrgVDCNetwork) (Task, error) {
+func (v *VApp) ComposeVApp(name string, description string, orgnetworks []*types.OrgVDCNetwork, vAppNetworkConfigurations []*types.VAppNetworkConfiguration) (Task, error) {
 
 	// if vapptemplate.VAppTemplate.Children == nil || orgvdcnetwork.OrgVDCNetwork == nil {
 	// 	return Task{}, fmt.Errorf("can't compose a new vApp, objects passed are not valid")
 	// }
 
 	networkConfigs := composeNetworkConfigs(orgnetworks)
+	networkConfigs = append(networkConfigs, vAppNetworkConfigurations...)
+	// networkConfigs := vAppNetworkConfigurations
 
 	// Build request XML
 	vcomp := &types.ComposeVAppParams{
@@ -276,6 +278,8 @@ func (v *VApp) ComposeVApp(name string, description string, orgnetworks []*types
 	if err != nil {
 		return Task{}, fmt.Errorf("error marshaling vapp compose: %s", err)
 	}
+
+	log.Printf("[TRACE] XML vApp: %s\n", output)
 
 	b := bytes.NewBufferString(xml.Header + string(output))
 

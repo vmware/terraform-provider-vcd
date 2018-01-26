@@ -240,15 +240,27 @@ type IPScopes struct {
 // Description: The configurations applied to a network. This is an abstract base type. The concrete types include those for vApp and Organization wide networks.
 // Since: 0.9
 type NetworkConfiguration struct {
-	BackwardCompatibilityMode      bool             `xml:"BackwardCompatibilityMode"`
-	Features                       *NetworkFeatures `xml:"Features,omitempty"`
-	ParentNetwork                  *Reference       `xml:"ParentNetwork,omitempty"`
-	IPScopes                       *IPScopes        `xml:"IpScopes,omitempty"`
-	FenceMode                      FenceMode        `xml:"FenceMode"`
-	RetainNetInfoAcrossDeployments bool             `xml:"RetainNetInfoAcrossDeployments"`
-	// TODO: Not Implemented
-	// RouterInfo                     RouterInfo           `xml:"RouterInfo,omitempty"`
-	// SyslogServerSettings           SyslogServerSettings `xml:"SyslogServerSettings,omitempty"`
+	BackwardCompatibilityMode      bool                  `xml:"BackwardCompatibilityMode"`
+	IPScopes                       *IPScopes             `xml:"IpScopes,omitempty"`
+	ParentNetwork                  *Reference            `xml:"ParentNetwork,omitempty"`
+	FenceMode                      FenceMode             `xml:"FenceMode"`
+	RetainNetInfoAcrossDeployments bool                  `xml:"RetainNetInfoAcrossDeployments"`
+	Features                       *NetworkFeatures      `xml:"Features,omitempty"`
+	RouterInfo                     *RouterInfo           `xml:"RouterInfo,omitempty"`
+	SyslogServerSettings           *SyslogServerSettings `xml:"SyslogServerSettings,omitempty"`
+	AdvancedNetworkingEnabled      bool                  `xml:"AdvancedNetworkingEnabled,omitempty"`
+	SubInterface                   bool                  `xml:"SubInterface,omitempty"`
+	DistributedInterface           bool                  `xml:"DistributedInterface,omitempty"`
+	GuestVlanAllowed               bool                  `xml:"GuestVlanAllowed,omitempty"`
+}
+
+type RouterInfo struct {
+	ExternalIp string `xml:"ExternalIp,omitempty"`
+}
+
+type SyslogServerSettings struct {
+	SyslogServerIp1 string `xml:"SyslogServerIp1,omitempty"`
+	SyslogServerIp2 string `xml:"SyslogServerIp2,omitempty"`
 }
 
 // VAppNetworkConfiguration representa a vApp network configuration

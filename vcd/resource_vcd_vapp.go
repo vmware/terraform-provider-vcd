@@ -26,7 +26,13 @@ func resourceVcdVApp() *schema.Resource {
 				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-
+			"vapp_network": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Elem: &schema.Resource{
+					Schema: VAppNetworkSubresourceSchema(),
+				},
+			},
 			"description": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -42,11 +48,66 @@ func resourceVcdVApp() *schema.Resource {
 func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	networks := d.Get("organization_network").([]interface{})
-	log.Printf("[TRACE] Networks from state: %#v", networks)
+	// vApp Network
+	vAppNetworksInterfaceList := d.Get("vapp_network").([]interface{})
+	vAppNetworks := interfaceListToMapStringInterface(vAppNetworksInterfaceList)
 
-	orgnetworks := make([]*types.OrgVDCNetwork, len(networks))
-	for index, network := range networks {
+	vAppNetworkConfigurations := make([]*types.VAppNetworkConfiguration, len(vAppNetworks))
+	for index := range vAppNetworks {
+		vAppNetwork := NewVAppNetworkSubresource(vAppNetworks[index], nil)
+
+		configuration := &types.NetworkConfiguration{
+			FenceMode: types.FenceModeIsolated,
+			Features:  &types.NetworkFeatures{},
+			IPScopes: &types.IPScopes{
+				IPScope: types.IPScope{
+					IsInherited: false,
+					Gateway:     vAppNetwork.Get("gateway").(string),
+					Netmask:     vAppNetwork.Get("netmask").(string),
+					DNS1:        vAppNetwork.Get("dns1").(string),
+					DNS2:        vAppNetwork.Get("dns2").(string),
+					IsEnabled:   true,
+					IPRanges: &types.IPRanges{
+						IPRange: []*types.IPRange{&types.IPRange{
+							StartAddress: vAppNetwork.Get("start").(string),
+							EndAddress:   vAppNetwork.Get("end").(string),
+						}},
+					},
+				},
+			},
+		}
+
+		// if vAppNetworks.Get("dhcp").(bool) {
+		// 	configuration.Features = &types.NetworkFeatures{
+		// 		DhcpService: &types.DhcpService{
+		// 			IsEnabled: True,
+
+		// 		}
+		// 	}
+		// }
+
+		if vAppNetwork.Get("nat").(bool) {
+			configuration.Features.NatService = &types.NatService{
+				IsEnabled: true,
+				NatType:   "ipTranslation",
+				Policy:    "allowTrafficIn",
+				// We need to set parent
+			}
+			configuration.FenceMode = types.FenceModeNAT
+		}
+
+		vAppNetworkConfigurations[index] = &types.VAppNetworkConfiguration{
+			Configuration: configuration,
+			NetworkName:   vAppNetwork.Get("name").(string),
+		}
+	}
+
+	// Organization Network
+	organizationNetworks := d.Get("organization_network").([]interface{})
+	log.Printf("[TRACE] Networks from state: %#v", organizationNetworks)
+
+	orgnetworks := make([]*types.OrgVDCNetwork, len(organizationNetworks))
+	for index, network := range organizationNetworks {
 		orgnetwork, err := vcdClient.OrgVdc.FindVDCNetwork(network.(string))
 		if err != nil {
 			return fmt.Errorf("Error finding vdc org network: %s, %#v", network, err)
@@ -63,7 +124,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 		vapp = vcdClient.NewVApp(&vcdClient.Client)
 
 		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := vapp.ComposeVApp(d.Get("name").(string), d.Get("description").(string), orgnetworks)
+			task, err := vapp.ComposeVApp(d.Get("name").(string), d.Get("description").(string), orgnetworks, vAppNetworkConfigurations)
 			if err != nil {
 				return resource.NonRetryableError(fmt.Errorf("Error creating vapp: %#v", err))
 			}
