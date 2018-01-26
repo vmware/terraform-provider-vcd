@@ -255,7 +255,6 @@ func (v *VApp) ComposeVApp(name string, description string, orgnetworks []*types
 
 	networkConfigs := composeNetworkConfigs(orgnetworks)
 	networkConfigs = append(networkConfigs, vAppNetworkConfigurations...)
-	// networkConfigs := vAppNetworkConfigurations
 
 	// Build request XML
 	vcomp := &types.ComposeVAppParams{
