@@ -60,6 +60,12 @@ const ResourceTypeDVD ResourceType = 16
 const ResourceTypeDisk ResourceType = 17
 const ResourceTypeUSB ResourceType = 23
 
+type FenceMode = string
+
+const FenceModeIsolated FenceMode = "isolated"
+const FenceModeBridged FenceMode = "bridged"
+const FenceModeNAT FenceMode = "natRouted"
+
 // Officially supported APIs by VMware
 // https://vdc-download.vmware.com/vmwb-repository/dcr-public/3ae3f17c-6666-4efa-83bd-3dae5031d559/08a66e37-540e-4987-85b0-ba1cdd40f7c6/vcloud_sp_api_guide_29_0.pdf
 type ApiVersionType = string
@@ -238,7 +244,7 @@ type NetworkConfiguration struct {
 	Features                       *NetworkFeatures `xml:"Features,omitempty"`
 	ParentNetwork                  *Reference       `xml:"ParentNetwork,omitempty"`
 	IPScopes                       *IPScopes        `xml:"IpScopes,omitempty"`
-	FenceMode                      string           `xml:"FenceMode"`
+	FenceMode                      FenceMode        `xml:"FenceMode"`
 	RetainNetInfoAcrossDeployments bool             `xml:"RetainNetInfoAcrossDeployments"`
 	// TODO: Not Implemented
 	// RouterInfo                     RouterInfo           `xml:"RouterInfo,omitempty"`

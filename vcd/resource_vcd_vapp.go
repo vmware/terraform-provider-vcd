@@ -21,7 +21,7 @@ func resourceVcdVApp() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
-			"network": {
+			"organization_network": {
 				Type:     schema.TypeList,
 				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
@@ -35,11 +35,6 @@ func resourceVcdVApp() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			// "power_on": {
-			// 	Type:     schema.TypeBool,
-			// 	Optional: true,
-			// 	Default:  false,
-			// },
 		},
 	}
 }
@@ -47,7 +42,7 @@ func resourceVcdVApp() *schema.Resource {
 func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	networks := d.Get("network").([]interface{})
+	networks := d.Get("organization_network").([]interface{})
 	log.Printf("[TRACE] Networks from state: %#v", networks)
 
 	orgnetworks := make([]*types.OrgVDCNetwork, len(networks))
@@ -126,7 +121,7 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	// Update networks
 	if d.HasChange("network") {
 		log.Printf("[TRACE] (%s) Updating vApp networks", vapp.VApp.Name)
-		networks := d.Get("network").([]interface{})
+		networks := d.Get("organization_network").([]interface{})
 		orgnetworks := make([]*types.OrgVDCNetwork, len(networks))
 		for index, network := range networks {
 			orgnetwork, err := vcdClient.OrgVdc.FindVDCNetwork(network.(string))

@@ -123,7 +123,7 @@ func composeNetworkConfigs(orgnetworks []*types.OrgVDCNetwork) []*types.VAppNetw
 		networkConfigs[index] = &types.VAppNetworkConfiguration{
 			NetworkName: orgnetwork.Name,
 			Configuration: &types.NetworkConfiguration{
-				FenceMode: "bridged",
+				FenceMode: types.FenceModeBridged,
 				ParentNetwork: &types.Reference{
 					HREF: orgnetwork.HREF,
 					Name: orgnetwork.Name,
