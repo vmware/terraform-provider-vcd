@@ -19,6 +19,7 @@ func resourceVcdVApp() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},
 			"organization_network": {
 				Type:     schema.TypeList,
@@ -117,6 +118,21 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Update networks
+	if d.HasChange("description") {
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := vapp.SetDescription(d.Get("description").(string))
+			if err != nil {
+				return resource.NonRetryableError(fmt.Errorf("Error setting description: %#v", err))
+			}
+
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
+		if err != nil {
+			return fmt.Errorf("Error completing task: %#v", err)
+		}
+	}
+
+	// Update networks
 	if d.HasChange("organization_network") || d.HasChange("vapp_network") {
 		networks, err := createNetworkConfiguration(d, meta)
 		if err != nil {
@@ -126,7 +142,7 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 			task, err := vapp.SetNetworkConfigurations(networks)
 			if err != nil {
-				return resource.NonRetryableError(fmt.Errorf("Error setting nested hyperv VM: %#v", err))
+				return resource.NonRetryableError(fmt.Errorf("Error setting network: %#v", err))
 			}
 
 			return resource.RetryableError(task.WaitTaskCompletion())

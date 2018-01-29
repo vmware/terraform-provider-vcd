@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/ukcloud/govcloudair"
 	types "github.com/ukcloud/govcloudair/types/v56"
 )
 
@@ -20,6 +20,10 @@ func resourceVcdVM() *schema.Resource {
 			"name": {
 				Type:     schema.TypeString,
 				Required: true,
+			},
+			"description": {
+				Type:     schema.TypeString,
+				Optional: true,
 			},
 			"catalog_name": {
 				Type:     schema.TypeString,
@@ -105,7 +109,7 @@ func resourceVcdVMCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error getting VApp status: %#v, %s", err, status)
 	}
 
-	vmDescription, err := createVMDescription(d, meta)
+	sourceItem, err := composeSourceItem(d, meta)
 	if err != nil {
 		return fmt.Errorf("Failed to create VMDescription: %#v", err)
 	}
@@ -116,37 +120,8 @@ func resourceVcdVMCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error refreshing vApp: %#v", err)
 	}
 
-	// rand.Seed(time.Now().UnixNano())
-	// waitTime := int64(schema.HashString(d.Get("name").(string)))
-	// log.Printf("[TRACE] Backoff time: %d", waitTime)
-	// duration := time.Duration(waitTime) * time.Nanosecond
-	// log.Printf("[TRACE] Sleeping for %s", duration)
-	// time.Sleep(duration)
-
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		log.Printf("[TRACE] Submitting new vm request")
-		task, err := vapp.AddVMs([]*types.NewVMDescription{vmDescription})
-		log.Printf("[TRACE] Submitted new vm request")
-		if err != nil {
-			switch err.(type) {
-			default:
-				log.Printf("[TRACE] ERROR: %#v", err)
-				return resource.NonRetryableError(fmt.Errorf("Error adding VMs: %#v", err))
-			case *types.Error:
-				vmError := err.(*types.Error)
-				if vmError.MajorErrorCode == 500 &&
-					vmError.MinorErrorCode == "INTERNAL_SERVER_ERROR" {
-					return resource.RetryableError(err)
-				}
-				if vmError.MajorErrorCode == 400 &&
-					vmError.MinorErrorCode == "BUSY_ENTITY" {
-					return resource.RetryableError(err)
-				}
-				return resource.NonRetryableError(fmt.Errorf("Error adding VMs: %#v", err))
-			}
-		}
-
-		return resource.RetryableError(task.WaitTaskCompletion())
+	err = retryCallWithVcloudErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
+		return vapp.AddVMs([]*types.SourcedCompositionItemParam{sourceItem})
 	})
 
 	if err != nil {
@@ -158,12 +133,21 @@ func resourceVcdVMCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	d.Set("href", vm.HREF)
-	d.SetId(vm.HREF)
+	d.Set("href", vm.VM.HREF)
+	d.SetId(vm.VM.HREF)
 
 	log.Printf("[DEBUG] (%s) Starting to configure", d.Get("name").(string))
-	err = configureVM(d, meta)
 
+	err = configureVM(d, vm)
+
+	if err != nil {
+		return err
+	}
+
+	log.Printf("[DEBUG] (%s) Sending reconfiguration event to VCD", vm.VM.Name)
+	err = retryCallWithVcloudErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
+		return vm.Reconfigure()
+	})
 	if err != nil {
 		return err
 	}
@@ -172,14 +156,54 @@ func resourceVcdVMCreate(d *schema.ResourceData, meta interface{}) error {
 
 	if err != nil {
 		return err
+	}
+
+	status, err = vm.GetStatus()
+	if err != nil {
+		return fmt.Errorf("Error getting vm status: %#v, %s", err, status)
+	}
+
+	if d.Get("power_on").(bool) && status != types.VAppStatuses[4] {
+		log.Printf("[DEBUG] (%s) Powering on VM", vm.VM.Name)
+		err = retryCallWithVcloudErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
+			return vm.PowerOn()
+		})
+		if err != nil {
+			return err
+		}
+	} else if !d.Get("power_on").(bool) && status != types.VAppStatuses[8] {
+		log.Printf("[DEBUG] (%s) Powering off VM", vm.VM.Name)
+		err = retryCallWithVcloudErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
+			return vm.PowerOff()
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
 func resourceVcdVMUpdate(d *schema.ResourceData, meta interface{}) error {
-	err := configureVM(d, meta)
+	vcdClient := meta.(*VCDClient)
 
+	// Get VM object from VCD
+	vm, err := vcdClient.FindVMByHREF(d.Get("href").(string))
+
+	if err != nil {
+		return fmt.Errorf("Could not find VM (%s)(%s) in VCD", d.Get("name").(string), d.Get("href").(string))
+	}
+
+	err = configureVM(d, &vm)
+
+	if err != nil {
+		return err
+	}
+
+	log.Printf("[DEBUG] (%s) Sending reconfiguration event to VCD", vm.VM.Name)
+	err = retryCallWithVcloudErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
+		return vm.Reconfigure()
+	})
 	if err != nil {
 		return err
 	}
@@ -188,6 +212,29 @@ func resourceVcdVMUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	if err != nil {
 		return err
+	}
+
+	status, err := vm.GetStatus()
+	if err != nil {
+		return fmt.Errorf("Error getting vm status: %#v, %s", err, status)
+	}
+
+	if d.Get("power_on").(bool) && status != types.VAppStatuses[4] {
+		log.Printf("[DEBUG] (%s) Powering on VM", vm.VM.Name)
+		err = retryCallWithVcloudErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
+			return vm.PowerOn()
+		})
+		if err != nil {
+			return err
+		}
+	} else if !d.Get("power_on").(bool) && status != types.VAppStatuses[8] {
+		log.Printf("[DEBUG] (%s) Powering off VM", vm.VM.Name)
+		err = retryCallWithVcloudErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
+			return vm.PowerOff()
+		})
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -229,29 +276,12 @@ func resourceVcdVMDelete(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := vapp.RemoveVMs([]*types.VM{vm})
-		if err != nil {
-			switch err.(type) {
-			default:
-				log.Printf("[TRACE] ERROR: %#v", err)
-				return resource.NonRetryableError(fmt.Errorf("Error adding VMs: %#v", err))
-			case *types.Error:
-				vmError := err.(*types.Error)
-				if vmError.MajorErrorCode == 500 &&
-					vmError.MinorErrorCode == "INTERNAL_SERVER_ERROR" {
-					return resource.RetryableError(err)
-				}
-				if vmError.MajorErrorCode == 400 &&
-					vmError.MinorErrorCode == "BUSY_ENTITY" {
-					return resource.RetryableError(err)
-				}
-				return resource.NonRetryableError(fmt.Errorf("Error adding VMs: %#v", err))
-			}
-		}
-
-		return resource.RetryableError(task.WaitTaskCompletion())
+	err = retryCallWithVcloudErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
+		return vapp.RemoveVMs([]*types.VM{vm.VM})
 	})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

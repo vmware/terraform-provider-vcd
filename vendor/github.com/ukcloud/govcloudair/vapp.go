@@ -59,63 +59,7 @@ func (v *VApp) Refresh() error {
 	return nil
 }
 
-func composeSourceItems(vms []*types.NewVMDescription) []*types.SourcedCompositionItemParam {
-	sourceItems := make([]*types.SourcedCompositionItemParam, len(vms))
-	for i, vm := range vms {
-
-		networkConnections := make([]*types.NetworkConnection, len(vm.Networks))
-		networkAssignments := make([]*types.NetworkAssignment, len(vm.Networks))
-		var primeryNetworkConnectionIndex int
-
-		for index, orgnetwork := range vm.Networks {
-			if orgnetwork.IsPrimary {
-				primeryNetworkConnectionIndex = index
-			}
-
-			networkConnections[index] =
-				&types.NetworkConnection{
-					Network:                 orgnetwork.Name,
-					NetworkConnectionIndex:  index,
-					IsConnected:             orgnetwork.IsConnected,
-					IPAddressAllocationMode: orgnetwork.IPAllocationMode,
-					NetworkAdapterType:      orgnetwork.AdapterType,
-				}
-
-			networkAssignments[index] =
-				&types.NetworkAssignment{
-					InnerNetwork:     orgnetwork.Name,
-					ContainerNetwork: orgnetwork.Name,
-				}
-		}
-
-		sourceItems[i] = &types.SourcedCompositionItemParam{
-			Source: &types.Reference{
-				HREF: vm.VAppTemplate.Children.VM[0].HREF,
-				Name: vm.Name,
-			},
-			InstantiationParams: &types.InstantiationParams{
-				NetworkConnectionSection: &types.NetworkConnectionSection{
-					Type: vm.VAppTemplate.Children.VM[0].NetworkConnectionSection.Type,
-					HREF: vm.VAppTemplate.Children.VM[0].NetworkConnectionSection.HREF,
-					// Info: "Network config for sourced item",
-					PrimaryNetworkConnectionIndex: primeryNetworkConnectionIndex,
-					NetworkConnection:             networkConnections,
-				},
-			},
-			NetworkAssignment: networkAssignments,
-		}
-
-		// Add storage profile if it is providedpolation
-		if vm.StorageProfile != nil {
-			sourceItems[i].StorageProfile = vm.StorageProfile
-		}
-
-	}
-
-	return sourceItems
-}
-
-func (v *VApp) AddVMs(vms []*types.NewVMDescription) (Task, error) {
+func (v *VApp) AddVMs(sourceItems []*types.SourcedCompositionItemParam) (Task, error) {
 
 	v.Refresh()
 	task := NewTask(v.c)
@@ -129,12 +73,15 @@ func (v *VApp) AddVMs(vms []*types.NewVMDescription) (Task, error) {
 		}
 	}
 
-	sourceItems := composeSourceItems(vms)
-
 	vcomp := &types.ReComposeVAppParams{
-		Ovf:         "http://schemas.dmtf.org/ovf/envelope/1",
-		Xsi:         "http://www.w3.org/2001/XMLSchema-instance",
-		Xmlns:       "http://www.vmware.com/vcloud/v1.5",
+		Xmlns:  types.XMLNamespaceXMLNS,
+		Vcloud: types.XMLNamespaceVCloud,
+		Ovf:    types.XMLNamespaceOVF,
+		Vmw:    types.XMLNamespaceVMW,
+		Xsi:    types.XMLNamespaceXSI,
+		Rasd:   types.XMLNamespaceRASD,
+		Vssd:   types.XMLNamespaceVSSD,
+
 		Deploy:      false,
 		Name:        v.VApp.Name,
 		PowerOn:     false,
@@ -155,7 +102,6 @@ func (v *VApp) AddVMs(vms []*types.NewVMDescription) (Task, error) {
 }
 
 func (v *VApp) RemoveVMs(vms []*types.VM) (Task, error) {
-
 	v.Refresh()
 	task := NewTask(v.c)
 	if v.VApp.Tasks != nil {
@@ -210,6 +156,30 @@ func (v *VApp) SetNetworkConfigurations(networkConfigurations []*types.VAppNetwo
 				NetworkConfig: networkConfigurations,
 			},
 		},
+	}
+
+	output, err := xml.MarshalIndent(vcomp, "  ", "    ")
+	if err != nil {
+		return Task{}, fmt.Errorf("error marshaling vapp compose: %s", err)
+	}
+
+	return ExecuteRequest(string(output),
+		v.VApp.HREF+"/action/recomposeVApp",
+		"POST",
+		"application/vnd.vmware.vcloud.recomposeVAppParams+xml",
+		v.c)
+}
+
+func (v *VApp) SetDescription(value string) (Task, error) {
+
+	vcomp := &types.ReComposeVAppParams{
+		Ovf:         "http://schemas.dmtf.org/ovf/envelope/1",
+		Xsi:         "http://www.w3.org/2001/XMLSchema-instance",
+		Xmlns:       "http://www.vmware.com/vcloud/v1.5",
+		Deploy:      false,
+		Name:        v.VApp.Name,
+		PowerOn:     false,
+		Description: value,
 	}
 
 	output, err := xml.MarshalIndent(vcomp, "  ", "    ")
@@ -335,27 +305,32 @@ func (v *VApp) GetStatus() (string, error) {
 	return types.VAppStatuses[v.VApp.Status], nil
 }
 
-func (v *VApp) GetVmByName(name string) (*types.VM, error) {
+func (v *VApp) GetVmByName(name string) (*VM, error) {
 	err := v.Refresh()
+
 	if err != nil {
 		return nil, fmt.Errorf("error refreshing vapp: %v", err)
 	}
 	for _, vm := range v.VApp.Children.VM {
 		if vm.Name == name {
-			return vm, nil
+			newvm := NewVM(v.c)
+			newvm.VM = vm
+			return newvm, nil
 		}
 	}
 	return nil, nil
 }
 
-func (v *VApp) GetVmByHREF(href string) (*types.VM, error) {
+func (v *VApp) GetVmByHREF(href string) (*VM, error) {
 	err := v.Refresh()
 	if err != nil {
 		return nil, fmt.Errorf("error refreshing vapp: %v", err)
 	}
 	for _, vm := range v.VApp.Children.VM {
 		if vm.HREF == href {
-			return vm, nil
+			newvm := NewVM(v.c)
+			newvm.VM = vm
+			return newvm, nil
 		}
 	}
 	return nil, nil

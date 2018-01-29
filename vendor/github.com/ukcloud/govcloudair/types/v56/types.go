@@ -75,6 +75,16 @@ const IPAllocationModeManual IPAllocationMode = "MANUAL"
 const IPAllocationModeNone IPAllocationMode = "NONE"
 const IPAllocationModePool IPAllocationMode = "POOL"
 
+type XMLNamespace = string
+
+const XMLNamespaceXMLNS XMLNamespace = "http://www.vmware.com/vcloud/v1.5"
+const XMLNamespaceVCloud XMLNamespace = "http://www.vmware.com/vcloud/v1.5"
+const XMLNamespaceOVF XMLNamespace = "http://schemas.dmtf.org/ovf/envelope/1"
+const XMLNamespaceVMW XMLNamespace = "http://www.vmware.com/schema/ovf"
+const XMLNamespaceXSI XMLNamespace = "http://www.w3.org/2001/XMLSchema-instance"
+const XMLNamespaceRASD XMLNamespace = "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData"
+const XMLNamespaceVSSD XMLNamespace = "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData"
+
 // Officially supported APIs by VMware
 // https://vdc-download.vmware.com/vmwb-repository/dcr-public/3ae3f17c-6666-4efa-83bd-3dae5031d559/08a66e37-540e-4987-85b0-ba1cdd40f7c6/vcloud_sp_api_guide_29_0.pdf
 type ApiVersionType = string
@@ -334,9 +344,9 @@ type NetworkConnection struct {
 type NetworkConnectionSection struct {
 	// Extends OVF Section_Type
 	// FIXME: Fix the OVF section
-	XMLName xml.Name `xml:"NetworkConnectionSection"`
-	Xmlns   string   `xml:"xmlns,attr,omitempty"`
-	Ovf     string   `xml:"xmlns:ovf,attr,omitempty"`
+	XMLName xml.Name     `xml:"NetworkConnectionSection"`
+	Xmlns   XMLNamespace `xml:"xmlns,attr,omitempty"`
+	Ovf     XMLNamespace `xml:"xmlns:ovf,attr,omitempty"`
 
 	HREF string `xml:"href,attr,omitempty"`
 	Type string `xml:"type,attr,omitempty"`
@@ -358,11 +368,17 @@ type InstantiationParams struct {
 	DefaultStorageProfileSection *DefaultStorageProfileSection `xml:"DefaultStorageProfileSection,omitempty"`
 	GuestCustomizationSection    *GuestCustomizationSection    `xml:"GuestCustomizationSection,omitempty"`
 	LeaseSettingsSection         *LeaseSettingsSection         `xml:"LeaseSettingsSection,omitempty"`
-	NetworkConfigSection         *NetworkConfigSection         `xml:"NetworkConfigSection,omitempty"`
-	NetworkConnectionSection     *NetworkConnectionSection     `xml:"NetworkConnectionSection,omitempty"`
-	ProductSection               *ProductSection               `xml:"ProductSection,omitempty"`
-	// TODO: Not Implemented
-	// SnapshotSection              SnapshotSection              `xml:"SnapshotSection,omitempty"`
+	// Section ovf:VirtualHardwareSection
+	VirtualHardwareSection *VirtualHardwareSection `xml:"VirtualHardwareSection,omitempty"`
+
+	// This is a workaround, see bottom of this file
+	OVFVirtualHardwareSection *OVFVirtualHardwareSection `xml:"ovf:VirtualHardwareSection,omitempty"`
+
+	NetworkConfigSection     *NetworkConfigSection     `xml:"NetworkConfigSection,omitempty"`
+	NetworkConnectionSection *NetworkConnectionSection `xml:"NetworkConnectionSection,omitempty"`
+	ProductSection           *ProductSection           `xml:"ProductSection,omitempty"`
+
+	Snapshots *SnapshotSection `xml:"SnapshotSection,omitempty"`
 }
 
 // OrgVDCNetwork represents an Org vDC network in the vCloud model.
@@ -372,7 +388,7 @@ type InstantiationParams struct {
 // Since: 5.1
 type OrgVDCNetwork struct {
 	XMLName       xml.Name              `xml:"OrgVdcNetwork"`
-	Xmlns         string                `xml:"xmlns,attr,imitempty"`
+	Xmlns         XMLNamespace          `xml:"xmlns,attr,omitempty"`
 	HREF          string                `xml:"href,attr,omitempty"`
 	Type          string                `xml:"type,attr,omitempty"`
 	ID            string                `xml:"id,attr,omitempty"`
@@ -702,8 +718,8 @@ type FilesList struct {
 // Description: Parameters to an undeploy vApp request.
 // Since: 0.9
 type UndeployVAppParams struct {
-	Xmlns               string `xml:"xmlns,attr"`
-	UndeployPowerAction string `xml:"UndeployPowerAction,omitempty"`
+	Xmlns               XMLNamespace `xml:"xmlns,attr"`
+	UndeployPowerAction string       `xml:"UndeployPowerAction,omitempty"`
 }
 
 // VMCapabilities allows you to specify certain capabilities of this virtual machine.
@@ -741,10 +757,10 @@ type VMs struct {
 // Description: Represents vApp composition parameters.
 // Since: 0.9
 type ComposeVAppParams struct {
-	XMLName xml.Name `xml:"ComposeVAppParams"`
-	Ovf     string   `xml:"xmlns:ovf,attr"`
-	Xsi     string   `xml:"xmlns:xsi,attr"`
-	Xmlns   string   `xml:"xmlns,attr"`
+	XMLName xml.Name     `xml:"ComposeVAppParams"`
+	Ovf     XMLNamespace `xml:"xmlns:ovf,attr"`
+	Xsi     XMLNamespace `xml:"xmlns:xsi,attr"`
+	Xmlns   XMLNamespace `xml:"xmlns,attr"`
 	// Attributes
 	Name        string `xml:"name,attr,omitempty"`        // Typically used to name or identify the subject of the request. For example, the name of the object being created or modified.
 	Deploy      bool   `xml:"deploy,attr"`                // True if the vApp should be deployed at instantiation. Defaults to true.
@@ -759,10 +775,15 @@ type ComposeVAppParams struct {
 }
 
 type ReComposeVAppParams struct {
-	XMLName xml.Name `xml:"RecomposeVAppParams"`
-	Ovf     string   `xml:"xmlns:ovf,attr"`
-	Xsi     string   `xml:"xmlns:xsi,attr"`
-	Xmlns   string   `xml:"xmlns,attr"`
+	XMLName xml.Name     `xml:"RecomposeVAppParams"`
+	Vcloud  XMLNamespace `xml:"xmlns:vcloud,attr,omitempty"`
+	Ovf     XMLNamespace `xml:"xmlns:ovf,attr,omitempty"`
+	Xsi     XMLNamespace `xml:"xmlns:xsi,attr,omitempty"`
+	Xmlns   XMLNamespace `xml:"xmlns,attr,omitempty"`
+	Rasd    XMLNamespace `xml:"xmlns:rasd,attr,omitempty"`
+	Vmw     XMLNamespace `xml:"xmlns:vmw,attr,omitempty"`
+	Vssd    XMLNamespace `xml:"xmlns:vssd,attr,omitempty"`
+
 	// Attributes
 	Name        string `xml:"name,attr,omitempty"`        // Typically used to name or identify the subject of the request. For example, the name of the object being created or modified.
 	Deploy      bool   `xml:"deploy,attr"`                // True if the vApp should be deployed at instantiation. Defaults to true.
@@ -867,8 +888,8 @@ type VApp struct {
 
 type ProductSectionList struct {
 	XMLName        xml.Name        `xml:"ProductSectionList"`
-	Ovf            string          `xml:"xmlns:ovf,attr,omitempty"`
-	Xmlns          string          `xml:"xmlns,attr"`
+	Ovf            XMLNamespace    `xml:"xmlns:ovf,attr,omitempty"`
+	Xmlns          XMLNamespace    `xml:"xmlns,attr"`
 	ProductSection *ProductSection `xml:"http://schemas.dmtf.org/ovf/envelope/1 ProductSection,omitempty"`
 }
 
@@ -892,10 +913,10 @@ type Value struct {
 }
 
 type MetadataValue struct {
-	XMLName    xml.Name    `xml:"MetadataValue"`
-	Xsi        string      `xml:"xmlns:xsi,attr"`
-	Xmlns      string      `xml:"xmlns,attr"`
-	TypedValue *TypedValue `xml:"TypedValue"`
+	XMLName    xml.Name     `xml:"MetadataValue"`
+	Xsi        XMLNamespace `xml:"xmlns:xsi,attr"`
+	Xmlns      XMLNamespace `xml:"xmlns,attr"`
+	TypedValue *TypedValue  `xml:"TypedValue"`
 }
 
 type TypedValue struct {
@@ -929,7 +950,7 @@ type TasksInProgress struct {
 // Since: 0.9
 type VAppTemplateChildren struct {
 	// Elements
-	VM []*VAppTemplate `xml:"Vm"` // Represents a virtual machine in this vApp template.
+	VM []*VM `xml:"Vm"` // Represents a virtual machine in this vApp template.
 }
 
 // VAppTemplate represents a vApp template.
@@ -976,14 +997,14 @@ type VAppTemplate struct {
 // Since: 0.9
 type VM struct {
 	// Attributes
-	XMLName xml.Name `xml:"Vm"`
-	Vcloud  string   `xml:"xmlns:vcloud,attr,omitempty"`
-	Ovf     string   `xml:"xmlns:ovf,attr,omitempty"`
-	Xsi     string   `xml:"xmlns:xsi,attr,omitempty"`
-	Xmlns   string   `xml:"xmlns,attr,omitempty"`
-	Rasd    string   `xml:"xmlns:rasd,attr,omitempty"`
-	Vmw     string   `xml:"xmlns:vmw,attr,omitempty"`
-	Vssd    string   `xml:"xmlns:vssd,attr,omitempty"`
+	XMLName xml.Name     `xml:"Vm"`
+	Vcloud  XMLNamespace `xml:"xmlns:vcloud,attr,omitempty"`
+	Ovf     XMLNamespace `xml:"xmlns:ovf,attr,omitempty"`
+	Xsi     XMLNamespace `xml:"xmlns:xsi,attr,omitempty"`
+	Xmlns   XMLNamespace `xml:"xmlns,attr,omitempty"`
+	Rasd    XMLNamespace `xml:"xmlns:rasd,attr,omitempty"`
+	Vmw     XMLNamespace `xml:"xmlns:vmw,attr,omitempty"`
+	Vssd    XMLNamespace `xml:"xmlns:vssd,attr,omitempty"`
 
 	HREF                    string `xml:"href,attr,omitempty"`                    // The URI of the entity.
 	Type                    string `xml:"type,attr,omitempty"`                    // The MIME type of the entity.
@@ -1046,13 +1067,13 @@ type VirtualHardwareSection struct {
 
 	XMLName xml.Name `xml:"VirtualHardwareSection"`
 
-	Xmlns  string `xml:"xmlns,attr,omitempty"`
-	Vcloud string `xml:"xmlns:vcloud,attr,omitempty"`
-	Ovf    string `xml:"xmlns:ovf,attr,omitempty"`
-	Rasd   string `xml:"xmlns:rasd,attr,omitempty"`
-	Vmw    string `xml:"xmlns:vmw,attr,omitempty"`
-	Vssd   string `xml:"xmlns:vssd,attr,omitempty"`
-	Xsi    string `xml:"xmlns:xsi,attr,omitempty"`
+	Xmlns  XMLNamespace `xml:"xmlns,attr,omitempty"`
+	Vcloud XMLNamespace `xml:"xmlns:vcloud,attr,omitempty"`
+	Ovf    XMLNamespace `xml:"xmlns:ovf,attr,omitempty"`
+	Rasd   XMLNamespace `xml:"xmlns:rasd,attr,omitempty"`
+	Vmw    XMLNamespace `xml:"xmlns:vmw,attr,omitempty"`
+	Vssd   XMLNamespace `xml:"xmlns:vssd,attr,omitempty"`
+	Xsi    XMLNamespace `xml:"xmlns:xsi,attr,omitempty"`
 
 	Info string                 `xml:"Info"`
 	HREF string                 `xml:"vcloud:href,attr,omitempty"`
@@ -1101,8 +1122,8 @@ type VirtualHardwareHostResource struct {
 // SnapshotSection from VM struct
 type SnapshotSection struct {
 	// Extends OVF Section_Type
-	XMLName xml.Name `xml:"SnapshotSection"`
-	Ovf     string   `xml:"xmlns:ovf,attr,omitempty"`
+	XMLName xml.Name     `xml:"SnapshotSection"`
+	Ovf     XMLNamespace `xml:"xmlns:ovf,attr,omitempty"`
 
 	Info     string          `xml:"ovf:Info"`
 	HREF     string          `xml:"href,attr,omitempty"`
@@ -1123,8 +1144,8 @@ type SnapshotItem struct {
 // Description: Parameters to a deploy vApp request.
 // Since: 0.9
 type DeployVAppParams struct {
-	XMLName xml.Name `xml:"DeployVAppParams"`
-	Xmlns   string   `xml:"xmlns,attr"`
+	XMLName xml.Name     `xml:"DeployVAppParams"`
+	Xmlns   XMLNamespace `xml:"xmlns,attr"`
 	// Attributes
 	PowerOn                bool `xml:"powerOn,attr"`                          // Used to specify whether to power on vapp on deployment, if not set default value is true.
 	DeploymentLeaseSeconds int  `xml:"deploymentLeaseSeconds,attr,omitempty"` // Lease in seconds for deployment. A value of 0 is replaced by the organization default deploymentLeaseSeconds value.
@@ -1139,9 +1160,9 @@ type DeployVAppParams struct {
 type GuestCustomizationSection struct {
 	// Extends OVF Section_Type
 	// Attributes
-	Ovf   string `xml:"xmlns:ovf,attr,omitempty"`
-	Xsi   string `xml:"xmlns:xsi,attr,omitempty"`
-	Xmlns string `xml:"xmlns,attr,omitempty"`
+	Ovf   XMLNamespace `xml:"xmlns:ovf,attr,omitempty"`
+	Xsi   XMLNamespace `xml:"xmlns:xsi,attr,omitempty"`
+	Xmlns XMLNamespace `xml:"xmlns,attr,omitempty"`
 
 	HREF string `xml:"href,attr,omitempty"` // A reference to the section in URL format.
 	Type string `xml:"type,attr,omitempty"` // The MIME type of the section.
@@ -1174,10 +1195,10 @@ type GuestCustomizationSection struct {
 // Description: Represents vApp template instantiation parameters.
 // Since: 0.9
 type InstantiateVAppTemplateParams struct {
-	XMLName xml.Name `xml:"InstantiateVAppTemplateParams"`
-	Ovf     string   `xml:"xmlns:ovf,attr"`
-	Xsi     string   `xml:"xmlns:xsi,attr,omitempty"`
-	Xmlns   string   `xml:"xmlns,attr"`
+	XMLName xml.Name     `xml:"InstantiateVAppTemplateParams"`
+	Ovf     XMLNamespace `xml:"xmlns:ovf,attr"`
+	Xsi     XMLNamespace `xml:"xmlns:xsi,attr,omitempty"`
+	Xmlns   XMLNamespace `xml:"xmlns,attr"`
 	// Attributes
 	Name        string `xml:"name,attr,omitempty"`        // Typically used to name or identify the subject of the request. For example, the name of the object being created or modified.
 	Deploy      bool   `xml:"deploy,attr"`                // True if the vApp should be deployed at instantiation. Defaults to true.
@@ -1270,7 +1291,7 @@ type SubnetParticipation struct {
 
 type EdgeGatewayServiceConfiguration struct {
 	XMLName                xml.Name                `xml:"EdgeGatewayServiceConfiguration"`
-	Xmlns                  string                  `xml:"xmlns,attr,omitempty"`
+	Xmlns                  XMLNamespace            `xml:"xmlns,attr,omitempty"`
 	GatewayDhcpService     *GatewayDhcpService     `xml:"GatewayDhcpService,omitempty"`
 	FirewallService        *FirewallService        `xml:"FirewallService,omitempty"`
 	NatService             *NatService             `xml:"NatService,omitempty"`
@@ -1285,7 +1306,7 @@ type EdgeGatewayServiceConfiguration struct {
 // Since: 5.1
 type GatewayFeatures struct {
 	XMLName                xml.Name
-	Xmlns                  string                  `xml:"xmlns,attr,omitempty"`
+	Xmlns                  XMLNamespace            `xml:"xmlns,attr,omitempty"`
 	FirewallService        *FirewallService        `xml:"FirewallService,omitempty"`        // Substitute for NetworkService. Firewall service settings
 	NatService             *NatService             `xml:"NatService,omitempty"`             // Substitute for NetworkService. NAT service settings
 	GatewayDhcpService     *GatewayDhcpService     `xml:"GatewayDhcpService,omitempty"`     // Substitute for NetworkService. Gateway DHCP service settings
@@ -1608,7 +1629,7 @@ type NatService struct {
 // Description: Represents a NAT rule.
 // Since: 0.9
 type NatRule struct {
-	Xmlns string `xml:"xmlns,attr,omitempty"`
+	Xmlns XMLNamespace `xml:"xmlns,attr,omitempty"`
 	// Elements
 	Description        string                 `xml:"Description,omitempty"`        // A description of the rule.
 	RuleType           string                 `xml:"RuleType,omitempty"`           // Type of NAT rule. One of: SNAT (source NAT), DNAT (destination NAT)
@@ -1627,7 +1648,7 @@ type NatRule struct {
 // Description: Represents the SNAT and DNAT rules.
 // Since: 5.1
 type GatewayNatRule struct {
-	Xmlns string `xml:"xmlns,attr,omitempty"`
+	Xmlns XMLNamespace `xml:"xmlns,attr,omitempty"`
 	// Elements
 	Interface      *Reference  `xml:"Interface,omitempty"`      // Interface to which rule is applied.
 	OriginalIP     IPv4Address `xml:"OriginalIp"`               // Original IP for rule.
@@ -1644,7 +1665,7 @@ type GatewayNatRule struct {
 // Description: Represents the NAT basic rule for one to one mapping of internal and external IP addresses from a network.
 // Since: 0.9
 type NatOneToOneBasicRule struct {
-	Xmlns string `xml:"xmlns,attr,omitempty"`
+	Xmlns XMLNamespace `xml:"xmlns,attr,omitempty"`
 	// Elements
 	MappingMode       string `xml:"MappingMode"`       // One of: automatic (map IP addresses automatically), manual (map IP addresses manually using ExternalIpAddress and InternalIpAddress)
 	ExternalIPAddress string `xml:"ExternalIpAddress"` // External IP address to map.
@@ -1657,7 +1678,7 @@ type NatOneToOneBasicRule struct {
 // Description: Represents the NAT rule for one to one mapping of VM NIC and external IP addresses from a network.
 // Since: 0.9
 type NatOneToOneVMRule struct {
-	Xmlns string `xml:"xmlns,attr,omitempty"`
+	Xmlns XMLNamespace `xml:"xmlns,attr,omitempty"`
 	// Elements
 	MappingMode       string `xml:"MappingMode"`       // Mapping mode.
 	ExternalIPAddress string `xml:"ExternalIpAddress"` // External IP address to map.
@@ -1822,19 +1843,13 @@ type QueryResultOrgVdcStorageProfileRecordType struct {
 
 // This should probably reside somewhere else
 
-type NewVMDescription struct {
-	Name           string
-	VAppTemplate   *VAppTemplate
-	Networks       []*NetworkOrgDescription
-	StorageProfile *Reference
-}
-type NetworkOrgDescription struct {
-	Name             string
-	IsPrimary        bool
-	IsConnected      bool
-	IPAllocationMode string
-	AdapterType      string
-}
+// type NetworkOrgDescription struct {
+// 	Name             string
+// 	IsPrimary        bool
+// 	IsConnected      bool
+// 	IPAllocationMode string
+// 	AdapterType      string
+// }
 
 // This section contains types which at the moment is needed to work
 // around the missing namespace xml support in go
@@ -1845,13 +1860,13 @@ type OVFVirtualHardwareSection struct {
 
 	XMLName xml.Name `xml:"ovf:VirtualHardwareSection"`
 
-	Xmlns  string `xml:"xmlns,attr,omitempty"`
-	Vcloud string `xml:"xmlns:vcloud,attr,omitempty"`
-	Ovf    string `xml:"xmlns:ovf,attr,omitempty"`
-	Rasd   string `xml:"xmlns:rasd,attr,omitempty"`
-	Vmw    string `xml:"xmlns:vmw,attr,omitempty"`
-	Vssd   string `xml:"xmlns:vssd,attr,omitempty"`
-	Xsi    string `xml:"xmlns:xsi,attr,omitempty"`
+	Xmlns  XMLNamespace `xml:"xmlns,attr,omitempty"`
+	Vcloud XMLNamespace `xml:"xmlns:vcloud,attr,omitempty"`
+	Ovf    XMLNamespace `xml:"xmlns:ovf,attr,omitempty"`
+	Rasd   XMLNamespace `xml:"xmlns:rasd,attr,omitempty"`
+	Vmw    XMLNamespace `xml:"xmlns:vmw,attr,omitempty"`
+	Vssd   XMLNamespace `xml:"xmlns:vssd,attr,omitempty"`
+	Xsi    XMLNamespace `xml:"xmlns:xsi,attr,omitempty"`
 
 	Info string                    `xml:"ovf:Info"`
 	HREF string                    `xml:"vcloud:href,attr,omitempty"`

@@ -42,7 +42,7 @@ func ExecuteRequest(payload, path, type_, contentType string, client *Client) (T
 
 	resp, err := checkResp(client.Http.Do(req))
 	if err != nil {
-		return Task{}, fmt.Errorf("error reconfiguring VM: %s", err)
+		return Task{}, err
 	}
 
 	task := NewTask(client)

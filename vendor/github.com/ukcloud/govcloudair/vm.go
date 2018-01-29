@@ -69,25 +69,19 @@ func (v *VM) Reconfigure() (Task, error) {
 
 	// WORKAROUND for XML namespace support in go, see bottom of types.go
 	// github.com/ukcloud/govcloudair/types/v56
-	log.Printf("[TRACE] (%s) Testing variable what3: %s", v.VM.Name, v.VM.NestedHypervisorEnabled)
-	v.correctAddressOnParentForNetworkHardware()
+	v.CorrectAddressOnParentForNetworkHardware()
 
-	log.Printf("[TRACE] (%s) Testing variable what4: %s", v.VM.Name, v.VM.NestedHypervisorEnabled)
 	v.SetXMLNamespaces()
 
 	ovfVirtualHardwareSection := v.VM.VirtualHardwareSection.ConvertToOVF()
-	log.Printf("[TRACE] (%s) Testing variable what5: %s", v.VM.Name, v.VM.NestedHypervisorEnabled)
 	virtualHardwareSection := v.VM.VirtualHardwareSection
 	v.VM.VirtualHardwareSection = nil
 	v.VM.OVFVirtualHardwareSection = ovfVirtualHardwareSection
-	log.Printf("[TRACE] (%s) Testing variable what6: %s", v.VM.Name, v.VM.NestedHypervisorEnabled)
 
 	output, err := xml.MarshalIndent(v.VM, "  ", "    ")
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 	}
-
-	log.Printf("[TRACE] (%s) Testing variable what7: %s", v.VM.Name, v.VM.NestedHypervisorEnabled)
 
 	v.VM.VirtualHardwareSection = virtualHardwareSection
 
@@ -208,7 +202,7 @@ func (v *VM) GetMemoryCount() (int, error) {
 	return items[0].VirtualQuantity, nil
 }
 
-func (v *VM) correctAddressOnParentForNetworkHardware() error {
+func (v *VM) CorrectAddressOnParentForNetworkHardware() error {
 	for index := range v.VM.VirtualHardwareSection.Item {
 		if v.VM.VirtualHardwareSection.Item[index].ResourceType == types.ResourceTypeEthernet {
 			v.VM.VirtualHardwareSection.Item[index].AddressOnParent = v.VM.VirtualHardwareSection.Item[index].InstanceID
@@ -218,13 +212,13 @@ func (v *VM) correctAddressOnParentForNetworkHardware() error {
 }
 
 func (v *VM) SetXMLNamespaces() {
-	v.VM.Xmlns = "http://www.vmware.com/vcloud/v1.5"
-	v.VM.Vcloud = "http://www.vmware.com/vcloud/v1.5"
-	v.VM.Ovf = "http://schemas.dmtf.org/ovf/envelope/1"
-	v.VM.Vmw = "http://www.vmware.com/schema/ovf"
-	v.VM.Xsi = "http://www.w3.org/2001/XMLSchema-instance"
-	v.VM.Rasd = "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData"
-	v.VM.Vssd = "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData"
+	v.VM.Xmlns = types.XMLNamespaceXMLNS
+	v.VM.Vcloud = types.XMLNamespaceVCloud
+	v.VM.Ovf = types.XMLNamespaceOVF
+	v.VM.Vmw = types.XMLNamespaceVMW
+	v.VM.Xsi = types.XMLNamespaceXSI
+	v.VM.Rasd = types.XMLNamespaceRASD
+	v.VM.Vssd = types.XMLNamespaceVSSD
 }
 
 func (v *VM) SetCPUCount(count int) {
@@ -294,6 +288,14 @@ func (v *VM) SetAdminPassword(value string) {
 	v.VM.GuestCustomizationSection.AdminPassword = value
 }
 
+func (v *VM) SetName(value string) {
+	v.VM.Name = value
+}
+
 func (v *VM) SetHostName(value string) {
 	v.VM.GuestCustomizationSection.ComputerName = value
+}
+
+func (v *VM) SetDescription(value string) {
+	v.VM.Description = value
 }
