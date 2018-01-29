@@ -19,7 +19,6 @@ func ExecuteRequest(payload, path, type_, contentType string, client *Client) (T
 	s, _ := url.ParseRequestURI(path)
 
 	log.Printf("[TRACE] URL: %s", path)
-	log.Printf("[TRACE] URL: %#v", s)
 	log.Printf("[TRACE] Type: %s", type_)
 	log.Printf("[TRACE] ContentType: %s", contentType)
 

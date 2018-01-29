@@ -120,7 +120,7 @@ func resourceVcdVMCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error refreshing vApp: %#v", err)
 	}
 
-	err = retryCallWithVcloudErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
+	err = retryCallWithVAppErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
 		return vapp.AddVMs([]*types.SourcedCompositionItemParam{sourceItem})
 	})
 
@@ -145,7 +145,7 @@ func resourceVcdVMCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	log.Printf("[DEBUG] (%s) Sending reconfiguration event to VCD", vm.VM.Name)
-	err = retryCallWithVcloudErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
+	err = retryCallWithBusyEntityErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
 		return vm.Reconfigure()
 	})
 	if err != nil {
@@ -165,7 +165,7 @@ func resourceVcdVMCreate(d *schema.ResourceData, meta interface{}) error {
 
 	if d.Get("power_on").(bool) && status != types.VAppStatuses[4] {
 		log.Printf("[DEBUG] (%s) Powering on VM", vm.VM.Name)
-		err = retryCallWithVcloudErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
+		err = retryCallWithBusyEntityErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
 			return vm.PowerOn()
 		})
 		if err != nil {
@@ -173,7 +173,7 @@ func resourceVcdVMCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	} else if !d.Get("power_on").(bool) && status != types.VAppStatuses[8] {
 		log.Printf("[DEBUG] (%s) Powering off VM", vm.VM.Name)
-		err = retryCallWithVcloudErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
+		err = retryCallWithBusyEntityErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
 			return vm.PowerOff()
 		})
 		if err != nil {
@@ -207,7 +207,7 @@ func resourceVcdVMUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	if status != types.VAppStatuses[8] {
 		log.Printf("[DEBUG] (%s) Powering off VM", vm.VM.Name)
-		err = retryCallWithVcloudErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
+		err = retryCallWithBusyEntityErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
 			return vm.PowerOff()
 		})
 		if err != nil {
@@ -216,7 +216,7 @@ func resourceVcdVMUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	log.Printf("[DEBUG] (%s) Sending reconfiguration event to VCD", vm.VM.Name)
-	err = retryCallWithVcloudErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
+	err = retryCallWithBusyEntityErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
 		return vm.Reconfigure()
 	})
 	if err != nil {
@@ -236,7 +236,7 @@ func resourceVcdVMUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	if d.Get("power_on").(bool) && status != types.VAppStatuses[4] {
 		log.Printf("[DEBUG] (%s) Powering on VM", vm.VM.Name)
-		err = retryCallWithVcloudErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
+		err = retryCallWithBusyEntityErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
 			return vm.PowerOn()
 		})
 		if err != nil {
@@ -244,7 +244,7 @@ func resourceVcdVMUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 	} else if !d.Get("power_on").(bool) && status != types.VAppStatuses[8] {
 		log.Printf("[DEBUG] (%s) Powering off VM", vm.VM.Name)
-		err = retryCallWithVcloudErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
+		err = retryCallWithBusyEntityErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
 			return vm.PowerOff()
 		})
 		if err != nil {
@@ -291,7 +291,7 @@ func resourceVcdVMDelete(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	err = retryCallWithVcloudErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
+	err = retryCallWithVAppErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
 		return vapp.RemoveVMs([]*types.VM{vm.VM})
 	})
 	if err != nil {

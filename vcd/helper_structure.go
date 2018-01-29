@@ -119,7 +119,7 @@ func retryCall(seconds int, f resource.RetryFunc) error {
 	return resource.Retry(time.Duration(seconds)*time.Second, f)
 }
 
-func retryCallWithVcloudErrorHandling(seconds int, f func() (govcloudair.Task, error)) error {
+func retryCallWithVAppErrorHandling(seconds int, f func() (govcloudair.Task, error)) error {
 	return retryCall(seconds, func() *resource.RetryError {
 		task, err := f()
 		if err != nil {
@@ -133,6 +133,28 @@ func retryCallWithVcloudErrorHandling(seconds int, f func() (govcloudair.Task, e
 					vmError.MinorErrorCode == "INTERNAL_SERVER_ERROR" {
 					return resource.RetryableError(err)
 				}
+				if vmError.MajorErrorCode == 400 &&
+					vmError.MinorErrorCode == "BUSY_ENTITY" {
+					return resource.RetryableError(err)
+				}
+				return resource.NonRetryableError(fmt.Errorf("Error adding in retry call: %#v", err))
+			}
+		}
+
+		return resource.RetryableError(task.WaitTaskCompletion())
+	})
+}
+
+func retryCallWithBusyEntityErrorHandling(seconds int, f func() (govcloudair.Task, error)) error {
+	return retryCall(seconds, func() *resource.RetryError {
+		task, err := f()
+		if err != nil {
+			switch err.(type) {
+			default:
+				log.Printf("[TRACE] ERROR: %#v", err)
+				return resource.NonRetryableError(fmt.Errorf("Error adding in retry call: %#v", err))
+			case *types.Error:
+				vmError := err.(*types.Error)
 				if vmError.MajorErrorCode == 400 &&
 					vmError.MinorErrorCode == "BUSY_ENTITY" {
 					return resource.RetryableError(err)
