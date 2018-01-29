@@ -200,6 +200,21 @@ func resourceVcdVMUpdate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
+	status, err := vm.GetStatus()
+	if err != nil {
+		return fmt.Errorf("Error getting vm status: %#v, %s", err, status)
+	}
+
+	if status != types.VAppStatuses[8] {
+		log.Printf("[DEBUG] (%s) Powering off VM", vm.VM.Name)
+		err = retryCallWithVcloudErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
+			return vm.PowerOff()
+		})
+		if err != nil {
+			return err
+		}
+	}
+
 	log.Printf("[DEBUG] (%s) Sending reconfiguration event to VCD", vm.VM.Name)
 	err = retryCallWithVcloudErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
 		return vm.Reconfigure()
@@ -214,7 +229,7 @@ func resourceVcdVMUpdate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	status, err := vm.GetStatus()
+	status, err = vm.GetStatus()
 	if err != nil {
 		return fmt.Errorf("Error getting vm status: %#v, %s", err, status)
 	}
