@@ -27,12 +27,6 @@ import (
 func composeSourceItem(d *schema.ResourceData, meta interface{}) (*types.SourcedCompositionItemParam, error) {
 	vcdClient := meta.(*VCDClient)
 
-	// // Should be fetched by ID/HREF
-	// vapp, err := vcdClient.OrgVdc.FindVAppByName(d.Get("vapp_href").(string))
-	// if err != nil {
-	// 	return nil, fmt.Errorf("Error finding VApp: %#v", err)
-	// }
-
 	catalog, err := vcdClient.Org.FindCatalog(d.Get("catalog_name").(string))
 	if err != nil {
 		return nil, fmt.Errorf("Error finding catalog: %#v", err)
@@ -61,18 +55,10 @@ func composeSourceItem(d *schema.ResourceData, meta interface{}) (*types.Sourced
 			Name: d.Get("name").(string),
 		},
 		InstantiationParams: &types.InstantiationParams{
-			// NetworkConnectionSection: &types.NetworkConnectionSection{
-			// 	Type: vAppTemplate.Children.VM[0].NetworkConnectionSection.Type,
-			// 	HREF: vAppTemplate.Children.VM[0].NetworkConnectionSection.HREF,
-			// 	// Info: "Network config for sourced item",
-			// 	PrimaryNetworkConnectionIndex: primeryNetworkConnectionIndex,
-			// 	NetworkConnection:             networkConnections,
-			// },
 			NetworkConnectionSection:  vm.VM.NetworkConnectionSection,
 			GuestCustomizationSection: vm.VM.GuestCustomizationSection,
 			OVFVirtualHardwareSection: vm.VM.VirtualHardwareSection.ConvertToOVF(),
 		},
-		// NetworkAssignment: networkAssignments,
 	}
 
 	storageProfile, err := vcdClient.OrgVdc.FindStorageProfileReference(d.Get("storage_profile").(string))
@@ -93,13 +79,6 @@ func composeSourceItem(d *schema.ResourceData, meta interface{}) (*types.Sourced
 func configureVM(d *schema.ResourceData, vm *govcd.VM) error {
 	// vcdClient := meta.(*VCDClient)
 
-	// // Get VM object from VCD
-	// vm, err := vcdClient.FindVMByHREF(d.Get("href").(string))
-
-	// if err != nil {
-	// 	return fmt.Errorf("Could not find VM (%s)(%s) in VCD", d.Get("name").(string), d.Get("href").(string))
-	// }
-
 	// Some changes requires the VM to be off or restarted
 	if d.HasChange("cpus") ||
 		d.HasChange("memory") ||
@@ -107,27 +86,6 @@ func configureVM(d *schema.ResourceData, vm *govcd.VM) error {
 		d.HasChange("storage_profile") {
 
 		log.Printf("[TRACE] (%s) Changing settings that require power off or restart", d.Get("name").(string))
-
-		// status, err := vm.GetStatus()
-		// if err != nil {
-		// 	return fmt.Errorf("Error getting VM status: %#v", err)
-		// }
-
-		// // Check that the VM is powered off, and turn off if not.
-		// if status != types.VAppStatuses[8] {
-		// 	// Turn off VM
-		// 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		// 		task, err := vm.PowerOff()
-		// 		if err != nil {
-		// 			return resource.NonRetryableError(fmt.Errorf("Error turning off VM: %#v", err))
-		// 		}
-
-		// 		return resource.RetryableError(task.WaitTaskCompletion())
-		// 	})
-		// 	if err != nil {
-		// 		return fmt.Errorf("Error completing task: %#v", err)
-		// 	}
-		// }
 
 		// Change CPU count of VM
 		if d.HasChange("cpus") {
@@ -168,34 +126,8 @@ func configureVM(d *schema.ResourceData, vm *govcd.VM) error {
 		if d.HasChange("storage_profile") {
 			log.Printf("[TRACE] (%s) Changing storage profile", d.Get("name").(string))
 
-			// err := vm.SetStorageProfile(d.Get("storage_profile").(string), meta)
-			// if err != nil {
-			// 	return fmt.Errorf("(%s) %s", d.Get("name").(string), err)
-			// }
-
-			// This cannot be reconfigured with reconfigureVM until vCloud 9.0
-			// if d.Get("storage_profile").(string) != "" {
-			// 	storageProfile, err := vcdClient.OrgVdc.FindStorageProfileReference(d.Get("storage_profile").(string))
-			// 	if err != nil {
-			// 		return fmt.Errorf("Storage profile %s was not found in the given organization", d.Get("storage_profile").(string))
-			// 	}
-			// 	vm.VM.StorageProfile = &storageProfile
-			// }
-
 		}
 
-		// log.Printf("[DEBUG] (%s) Sending reconfiguration event to VCD", vm.VM.Name)
-		// err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		// 	task, err := vm.Reconfigure()
-		// 	if err != nil {
-		// 		return resource.NonRetryableError(fmt.Errorf("Error reconfiguring VM: %#v", err))
-		// 	}
-
-		// 	return resource.RetryableError(task.WaitTaskCompletion())
-		// })
-		// if err != nil {
-		// 	return fmt.Errorf("Error completing task: %#v", err)
-		// }
 	}
 
 	// Here we need a powered on VM
@@ -207,27 +139,6 @@ func configureVM(d *schema.ResourceData, vm *govcd.VM) error {
 		d.HasChange("initscript") ||
 		d.HasChange("admin_password_auto") ||
 		d.HasChange("admin_password") {
-
-		// Power on VM
-
-		// status, err := vm.GetStatus()
-		// if err != nil {
-		// 	return fmt.Errorf("Error getting VM status: %#v", err)
-		// }
-
-		// if status != types.VAppStatuses[4] {
-		// 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		// 		task, err := vm.PowerOn()
-		// 		if err != nil {
-		// 			return resource.NonRetryableError(fmt.Errorf("Error Powering Up: %#v", err))
-		// 		}
-
-		// 		return resource.RetryableError(task.WaitTaskCompletion())
-		// 	})
-		// 	if err != nil {
-		// 		return fmt.Errorf("Error completing task: %#v", err)
-		// 	}
-		// }
 
 		// Change networks setting of VM
 		if d.HasChange("network") {
@@ -272,52 +183,7 @@ func configureVM(d *schema.ResourceData, vm *govcd.VM) error {
 			vm.SetAdminPassword(d.Get("admin_password").(string))
 		}
 
-		// log.Printf("[DEBUG] (%s) Sending reconfiguration event to VCD", vm.VM.Name)
-		// err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		// 	task, err := vm.Reconfigure()
-		// 	if err != nil {
-		// 		return resource.NonRetryableError(fmt.Errorf("Error reconfiguring VM: %#v", err))
-		// 	}
-
-		// 	return resource.RetryableError(task.WaitTaskCompletion())
-		// })
-		// if err != nil {
-		// 	return fmt.Errorf("Error completing task: %#v", err)
-		// }
-
 	}
-
-	// status, err := vm.GetStatus()
-	// if err != nil {
-	// 	return fmt.Errorf("Error getting VM status: %#v", err)
-	// }
-
-	// // Power on/off VM
-	// if d.Get("power_on").(bool) && status != types.VAppStatuses[4] {
-	// 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-	// 		task, err := vm.PowerOn()
-	// 		if err != nil {
-	// 			return resource.NonRetryableError(fmt.Errorf("Error Powering Up: %#v", err))
-	// 		}
-
-	// 		return resource.RetryableError(task.WaitTaskCompletion())
-	// 	})
-	// 	if err != nil {
-	// 		return fmt.Errorf("Error completing task: %#v", err)
-	// 	}
-	// } else if !d.Get("power_on").(bool) && status != types.VAppStatuses[8] {
-	// 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-	// 		task, err := vm.PowerOff()
-	// 		if err != nil {
-	// 			return resource.NonRetryableError(fmt.Errorf("Error Powering Up: %#v", err))
-	// 		}
-
-	// 		return resource.RetryableError(task.WaitTaskCompletion())
-	// 	})
-	// 	if err != nil {
-	// 		return fmt.Errorf("Error completing task: %#v", err)
-	// 	}
-	// }
 
 	log.Printf("[TRACE] (%s) Done configuring %s, d before reread: %#v", d.Get("name").(string), d.Get("href").(string), d)
 
@@ -368,6 +234,17 @@ func readVM(d *schema.ResourceData, meta interface{}) error {
 	memoryCount, err := vm.GetMemoryCount()
 	if err != nil {
 		return err
+	}
+
+	// Read power state
+	status, err := vm.GetStatus()
+	if err != nil {
+		return fmt.Errorf("Error getting VM status: %#v", err)
+	}
+
+	// Check that the VM is powered off, and turn off if not.
+	if status == types.VAppStatuses[4] {
+		d.Set("power_on", true)
 	}
 
 	// d.Set("vapp_href", vm.VM.VAppParent.HREF)
