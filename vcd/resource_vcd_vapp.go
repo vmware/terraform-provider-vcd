@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/ukcloud/govcloudair"
 )
 
 func resourceVcdVApp() *schema.Resource {
@@ -54,24 +55,18 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// See if vApp exists
-	vapp, err := vcdClient.OrgVdc.FindVAppByName(d.Id())
+	vapp, err := vcdClient.OrgVdc.GetVAppByHREF(d.Id())
 	log.Printf("[TRACE] Looking for existing vapp, found %#v", vapp)
 
 	if err != nil {
 		log.Printf("[TRACE] No vApp found, preparing creation")
 		vapp = vcdClient.NewVApp(&vcdClient.Client)
 
-		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := vapp.ComposeVApp(d.Get("name").(string), d.Get("description").(string), networks)
-			if err != nil {
-				return resource.NonRetryableError(fmt.Errorf("Error creating vapp: %#v", err))
-			}
-
-			return resource.RetryableError(task.WaitTaskCompletion())
+		err = retryCallWithBusyEntityErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
+			return vapp.ComposeVApp(d.Get("name").(string), d.Get("description").(string), networks)
 		})
-
 		if err != nil {
-			return fmt.Errorf("Error creating vapp: %#v", err)
+			return err
 		}
 	}
 
@@ -85,14 +80,14 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error refreshing vdc: %#v", err)
 	}
 
-	log.Printf("[TRACE] Updateing vApp (%s) state", vapp.VApp.Name)
+	log.Printf("[TRACE] Updateing vApp (%s) state href: (%s)", vapp.VApp.Name, vapp.VApp.HREF)
 	err = vapp.Refresh()
 	if err != nil {
 		return fmt.Errorf("Error refreshing vApp: %#v", err)
 	}
 
 	// This should be HREF, but FindVAppByHREF is buggy
-	d.SetId(d.Get("name").(string))
+	d.SetId(vapp.VApp.HREF)
 
 	return nil
 }
@@ -106,7 +101,7 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Should be fetched by ID/HREF
-	vapp, err := vcdClient.OrgVdc.FindVAppByName(d.Id())
+	vapp, err := vcdClient.OrgVdc.GetVAppByHREF(d.Id())
 
 	if err != nil {
 		return fmt.Errorf("Error finding VApp: %#v", err)
@@ -164,7 +159,7 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Should be fetched by ID/HREF
-	_, err = vcdClient.OrgVdc.FindVAppByName(d.Id())
+	_, err = vcdClient.OrgVdc.GetVAppByHREF(d.Id())
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find vapp. Removing from tfstate")
 		d.SetId("")
@@ -189,7 +184,7 @@ func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Should be fetched by ID/HREF
-	vapp, err := vcdClient.OrgVdc.FindVAppByName(d.Id())
+	vapp, err := vcdClient.OrgVdc.GetVAppByHREF(d.Id())
 
 	if err != nil {
 		return fmt.Errorf("Error finding VApp: %#v", err)

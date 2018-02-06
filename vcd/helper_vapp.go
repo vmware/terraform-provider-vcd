@@ -12,7 +12,7 @@ func readVApp(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
 	// Should be fetched by ID/HREF
-	vapp, err := vcdClient.OrgVdc.FindVAppByName(d.Id())
+	vapp, err := vcdClient.OrgVdc.GetVAppByHREF(d.Id())
 
 	if err != nil {
 		return fmt.Errorf("Error finding VApp: %#v", err)
@@ -149,8 +149,11 @@ func createNetworkConfiguration(d *schema.ResourceData, meta interface{}) ([]*ty
 
 		if vAppNetwork.Get("dhcp").(bool) {
 			configuration.Features.DhcpService = &types.DhcpService{
-				IsEnabled:           true,
-				IPRange:             configuration.IPScopes.IPScope.IPRanges.IPRange[0],
+				IsEnabled: true,
+				IPRange: &types.IPRange{
+					StartAddress: vAppNetwork.Get("dhcp_start").(string),
+					EndAddress:   vAppNetwork.Get("dhcp_end").(string),
+				},
 				PrimaryNameServer:   configuration.IPScopes.IPScope.DNS1,
 				SecondaryNameServer: configuration.IPScopes.IPScope.DNS1,
 				SubMask:             configuration.IPScopes.IPScope.Netmask,

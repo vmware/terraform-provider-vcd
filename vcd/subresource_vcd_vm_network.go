@@ -32,7 +32,7 @@ func VirtualMachineNetworkSubresourceSchema() map[string]*schema.Schema {
 			ValidateFunc: validation.StringInSlice([]string{
 				types.IPAllocationModeDHCP,
 				types.IPAllocationModeManual,
-				types.IPAllocationModeNone,
+				// types.IPAllocationModeNone, This is not accepted by vCloud for some reason
 				types.IPAllocationModePool,
 			}, false),
 		},
@@ -64,7 +64,7 @@ type VirtualMachineNetworkSubresource struct {
 	*Subresource
 }
 
-func NewVirtualMachineNetworkSubresource(d, old map[string]interface{}, idx int) *VirtualMachineNetworkSubresource {
+func NewVirtualMachineNetworkSubresource(d, old map[string]interface{}) *VirtualMachineNetworkSubresource {
 	sr := &VirtualMachineNetworkSubresource{
 		Subresource: &Subresource{
 			schema:  VirtualMachineNetworkSubresourceSchema(),
@@ -73,7 +73,6 @@ func NewVirtualMachineNetworkSubresource(d, old map[string]interface{}, idx int)
 			// rdd:     rdd,
 		},
 	}
-	sr.Index = idx
 	return sr
 }
 

@@ -44,7 +44,7 @@ func resourceVcdVM() *schema.Resource {
 			},
 			"network": {
 				Type:     schema.TypeList,
-				Required: true,
+				Optional: true,
 
 				Elem: &schema.Resource{
 					Schema: VirtualMachineNetworkSubresourceSchema(),
@@ -99,7 +99,7 @@ func resourceVcdVMCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Should be fetched by ID/HREF
-	vapp, err := vcdClient.OrgVdc.FindVAppByName(d.Get("vapp_href").(string))
+	vapp, err := vcdClient.OrgVdc.GetVAppByHREF(d.Get("vapp_href").(string))
 	if err != nil {
 		return fmt.Errorf("Error finding VApp: %#v", err)
 	}
@@ -152,6 +152,13 @@ func resourceVcdVMCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
+	log.Printf("[TRACE] (%s) Starting configuration that needs separate requests", vm.VM.Name)
+	err = configureVMWorkaround(d, vm, meta)
+
+	if err != nil {
+		return err
+	}
+
 	err = readVM(d, meta)
 
 	if err != nil {
@@ -164,7 +171,7 @@ func resourceVcdVMCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if d.Get("power_on").(bool) && status != types.VAppStatuses[4] {
-		log.Printf("[DEBUG] (%s) Powering on VM", vm.VM.Name)
+		log.Printf("[DEBUG] (%s) Powering on VM after Create", vm.VM.Name)
 		err = retryCallWithBusyEntityErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
 			return vm.PowerOn()
 		})
@@ -172,7 +179,7 @@ func resourceVcdVMCreate(d *schema.ResourceData, meta interface{}) error {
 			return err
 		}
 	} else if !d.Get("power_on").(bool) && status != types.VAppStatuses[8] {
-		log.Printf("[DEBUG] (%s) Powering off VM", vm.VM.Name)
+		log.Printf("[DEBUG] (%s) Powering off VM after Create", vm.VM.Name)
 		err = retryCallWithBusyEntityErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
 			return vm.PowerOff()
 		})
@@ -188,16 +195,10 @@ func resourceVcdVMUpdate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
 	// Get VM object from VCD
-	vm, err := vcdClient.FindVMByHREF(d.Get("href").(string))
+	vm, err := vcdClient.OrgVdc.GetVMByHREF(d.Get("href").(string))
 
 	if err != nil {
 		return fmt.Errorf("Could not find VM (%s)(%s) in VCD", d.Get("name").(string), d.Get("href").(string))
-	}
-
-	err = configureVM(d, &vm)
-
-	if err != nil {
-		return err
 	}
 
 	status, err := vm.GetStatus()
@@ -206,7 +207,7 @@ func resourceVcdVMUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if status != types.VAppStatuses[8] {
-		log.Printf("[DEBUG] (%s) Powering off VM", vm.VM.Name)
+		log.Printf("[DEBUG] (%s) Powering off VM for reconfiguring", vm.VM.Name)
 		err = retryCallWithBusyEntityErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
 			return vm.PowerOff()
 		})
@@ -215,10 +216,39 @@ func resourceVcdVMUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	// If a network interface adapter has changed, we need to remove it and
+	// add it again. GJ VMware.
+	if d.HasChange("network") {
+		vm.VM.NetworkConnectionSection.NetworkConnection = []*types.NetworkConnection{}
+		// vm.VM.VirtualHardwareSection.Item = []*types.VirtualHardwareItem{}
+		vm.RemoveVirtualHardwareItemByResourceType(types.ResourceTypeEthernet)
+
+		log.Printf("[DEBUG] (%s) Sending reconfiguration event to VCD to remove nics", vm.VM.Name)
+		err = retryCallWithBusyEntityErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
+			return vm.Reconfigure()
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	err = configureVM(d, &vm)
+
+	if err != nil {
+		return err
+	}
+
 	log.Printf("[DEBUG] (%s) Sending reconfiguration event to VCD", vm.VM.Name)
 	err = retryCallWithBusyEntityErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
 		return vm.Reconfigure()
 	})
+	if err != nil {
+		return err
+	}
+
+	log.Printf("[TRACE] (%s) Starting configuration that needs separate requests", vm.VM.Name)
+	err = configureVMWorkaround(d, &vm, meta)
+
 	if err != nil {
 		return err
 	}
@@ -235,7 +265,7 @@ func resourceVcdVMUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if d.Get("power_on").(bool) && status != types.VAppStatuses[4] {
-		log.Printf("[DEBUG] (%s) Powering on VM", vm.VM.Name)
+		log.Printf("[DEBUG] (%s) Powering on VM after Update", vm.VM.Name)
 		err = retryCallWithBusyEntityErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
 			return vm.PowerOn()
 		})
@@ -243,7 +273,7 @@ func resourceVcdVMUpdate(d *schema.ResourceData, meta interface{}) error {
 			return err
 		}
 	} else if !d.Get("power_on").(bool) && status != types.VAppStatuses[8] {
-		log.Printf("[DEBUG] (%s) Powering off VM", vm.VM.Name)
+		log.Printf("[DEBUG] (%s) Powering off VM after Update", vm.VM.Name)
 		err = retryCallWithBusyEntityErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
 			return vm.PowerOff()
 		})
@@ -274,7 +304,7 @@ func resourceVcdVMDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Should be fetched by ID/HREF
-	vapp, err := vcdClient.OrgVdc.FindVAppByName(d.Get("vapp_href").(string))
+	vapp, err := vcdClient.OrgVdc.GetVAppByHREF(d.Get("vapp_href").(string))
 	if err != nil {
 		return fmt.Errorf("Error finding VApp: %#v", err)
 	}
@@ -285,12 +315,40 @@ func resourceVcdVMDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error refreshing vApp: %#v", err)
 	}
 
-	vm, err := vapp.GetVmByHREF(d.Id())
+	vm, err := vcdClient.OrgVdc.GetVMByHREF(d.Id())
 
 	if err != nil {
 		return err
 	}
 
+	log.Printf("[TRACE] (%s) Getting status of VM before deleting", d.Get("name").(string))
+	status, err := vm.GetStatus()
+	if err != nil {
+		return fmt.Errorf("Error getting vm status: %#v, %s", err, status)
+	}
+
+	log.Printf("[TRACE] (%s) VM has status: %s", d.Get("name").(string), status)
+	log.Printf("[DEBUG] (%s) Undeploying VM", vm.VM.Name)
+	err = retryCallWithBusyEntityErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
+		return vm.Undeploy(types.UndeployPowerActionPowerOff)
+	})
+	// if err != nil {
+	// 	return err
+	// }
+	// switch err.(type) {
+	// case *types.Error:
+	// 	vmError := err.(*types.Error)
+
+	// 	if vmError.MajorErrorCode == 400 &&
+	// 		vmError.MinorErrorCode == "BAD_REQUEST" {
+	// 		log.Printf("[TRACE] (%s) VM failed to turn off, probably already off:\n %s", d.Get("name").(string), vmError.Message)
+	// 	}
+	// 	break
+	// default:
+	// 	return err
+	// }
+
+	log.Printf("[TRACE] (%s) Sending remove request to VCD", d.Get("name").(string))
 	err = retryCallWithVAppErrorHandling(vcdClient.MaxRetryTimeout, func() (govcloudair.Task, error) {
 		return vapp.RemoveVMs([]*types.VM{vm.VM})
 	})

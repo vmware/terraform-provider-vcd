@@ -57,6 +57,16 @@ func VAppNetworkSubresourceSchema() map[string]*schema.Schema {
 			Type:     schema.TypeBool,
 			Required: true,
 		},
+		"dhcp_start": {
+			Type:         schema.TypeString,
+			Optional:     true,
+			ValidateFunc: ValidateIPv4(),
+		},
+		"dhcp_end": {
+			Type:         schema.TypeString,
+			Optional:     true,
+			ValidateFunc: ValidateIPv4(),
+		},
 	}
 	return s
 }

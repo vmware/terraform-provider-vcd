@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	govcd "github.com/ukcloud/govcloudair" // Forked from vmware/govcloudair
 	types "github.com/ukcloud/govcloudair/types/v56"
@@ -45,9 +46,10 @@ func composeSourceItem(d *schema.ResourceData, meta interface{}) (*types.Sourced
 	vm := govcd.NewVM(&vcdClient.Client)
 	vm.VM = vapptemplate.VAppTemplate.Children.VM[0]
 
-	configureVM(d, vm)
+	// Remove the Network connections from the template
+	vm.VM.NetworkConnectionSection.NetworkConnection = []*types.NetworkConnection{}
 
-	vm.CorrectAddressOnParentForNetworkHardware()
+	configureVM(d, vm)
 
 	sourceItem := &types.SourcedCompositionItemParam{
 		Source: &types.Reference{
@@ -55,23 +57,27 @@ func composeSourceItem(d *schema.ResourceData, meta interface{}) (*types.Sourced
 			Name: d.Get("name").(string),
 		},
 		InstantiationParams: &types.InstantiationParams{
-			NetworkConnectionSection:  vm.VM.NetworkConnectionSection,
-			GuestCustomizationSection: vm.VM.GuestCustomizationSection,
+			NetworkConnectionSection: vm.VM.NetworkConnectionSection,
+			// GuestCustomizationSection: vm.VM.GuestCustomizationSection,
 			OVFVirtualHardwareSection: vm.VM.VirtualHardwareSection.ConvertToOVF(),
 		},
 	}
 
-	storageProfile, err := vcdClient.OrgVdc.FindStorageProfileReference(d.Get("storage_profile").(string))
+	var storageProfile types.Reference
 
-	// TODO: Better logic here...
-	if err != nil && d.Get("storage_profile").(string) != "" {
-		return nil, fmt.Errorf("(%s) Storage profile %s was not found in the given organization", d.Get("name").(string), d.Get("storage_profile").(string))
-	}
-
-	// Add storage profile if it is providedpolation
 	if d.Get("storage_profile").(string) != "" {
-		sourceItem.StorageProfile = &storageProfile
+		storageProfile, err = vcdClient.OrgVdc.FindStorageProfileReference(d.Get("storage_profile").(string))
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		storageProfile, err = vcdClient.OrgVdc.GetDefaultStorageProfileReference()
+		if err != nil {
+			return nil, err
+		}
 	}
+
+	sourceItem.StorageProfile = &storageProfile
 
 	return sourceItem, nil
 }
@@ -79,113 +85,146 @@ func composeSourceItem(d *schema.ResourceData, meta interface{}) (*types.Sourced
 func configureVM(d *schema.ResourceData, vm *govcd.VM) error {
 	// vcdClient := meta.(*VCDClient)
 
-	// Some changes requires the VM to be off or restarted
-	if d.HasChange("cpus") ||
-		d.HasChange("memory") ||
-		d.HasChange("nested_hypervisor_enabled") ||
-		d.HasChange("storage_profile") {
+	// Remove network hardware from virtualhw list.
+	vm.RemoveVirtualHardwareItemByResourceType(types.ResourceTypeEthernet)
 
-		log.Printf("[TRACE] (%s) Changing settings that require power off or restart", d.Get("name").(string))
+	// // Some changes requires the VM to be off or restarted
+	// if d.HasChange("cpus") ||
+	// 	d.HasChange("memory") ||
+	// 	d.HasChange("nested_hypervisor_enabled") ||
+	// 	d.HasChange("network") ||
+	// 	d.HasChange("storage_profile") {
 
-		// Change CPU count of VM
-		if d.HasChange("cpus") {
-			log.Printf("[TRACE] (%s) Changing CPU", d.Get("name").(string))
+	log.Printf("[TRACE] (%s) Changing settings that require power off or restart", d.Get("name").(string))
 
-			vm.SetCPUCount(d.Get("cpus").(int))
-		}
+	// Change CPU count of VM
+	if d.HasChange("cpus") {
+		log.Printf("[TRACE] (%s) Changing CPU", d.Get("name").(string))
 
-		// Change Memory of VM
-		if d.HasChange("memory") {
-			log.Printf("[TRACE] (%s) Changing memory", d.Get("name").(string))
-
-			vm.SetMemoryCount(d.Get("memory").(int))
-		}
-
-		// Change nested hypervisor setting of VM
-		if d.HasChange("nested_hypervisor_enabled") {
-			log.Printf("[TRACE] (%s) Changing nested hypervisor setting", d.Get("name").(string))
-
-			// This cannot be reconfigured with reconfigureVM until vCloud 9.0
-			vm.SetNestedHypervisor(d.Get("nested_hypervisor_enabled").(bool))
-
-			// vCloud 8.2 and older
-			// err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			// 	task, err := vm.SetNestedHypervisorWithRequest(d.Get("nested_hypervisor_enabled").(bool))
-			// 	if err != nil {
-			// 		return resource.NonRetryableError(fmt.Errorf("Error setting nested hyperv VM: %#v", err))
-			// 	}
-
-			// 	return resource.RetryableError(task.WaitTaskCompletion())
-			// })
-			// if err != nil {
-			// 	return fmt.Errorf("Error completing task: %#v", err)
-			// }
-		}
-
-		// Change storage profile of VM
-		if d.HasChange("storage_profile") {
-			log.Printf("[TRACE] (%s) Changing storage profile", d.Get("name").(string))
-
-		}
-
+		vm.SetCPUCount(d.Get("cpus").(int))
 	}
+
+	// Change Memory of VM
+	if d.HasChange("memory") {
+		log.Printf("[TRACE] (%s) Changing memory", d.Get("name").(string))
+
+		vm.SetMemoryCount(d.Get("memory").(int))
+	}
+
+	// See func configureVMWorkaround
+	// // Change nested hypervisor setting of VM
+	// if d.HasChange("nested_hypervisor_enabled") {
+	// 	log.Printf("[TRACE] (%s) Changing nested hypervisor setting", d.Get("name").(string))
+
+	// 	// This cannot be reconfigured with reconfigureVM until vCloud 9.0
+	// 	vm.SetNestedHypervisor(d.Get("nested_hypervisor_enabled").(bool))
+
+	// }
+
+	// Change networks setting of VM
+	if d.HasChange("network") {
+		log.Printf("[TRACE] (%s) Changing network settings", d.Get("name").(string))
+
+		networks := interfaceListToMapStringInterface(d.Get("network").([]interface{}))
+		vm.SetNetworkConnectionSection(createNetworkConnectionSection(networks))
+	}
+
+	// See func configureVMWorkaround
+	// Change storage profile of VM
+	if d.HasChange("storage_profile") {
+		log.Printf("[TRACE] (%s) Changing storage profile", d.Get("name").(string))
+		err := vm.SetStorageProfile(d.Get("storage_profile").(string))
+		if err != nil {
+			return err
+		}
+	}
+
+	// vm.SetNeedsCustomization(true)
+	// }
 
 	// Here we need a powered on VM
 
 	// Some changes requires the VM to be off or restarted
-	if d.HasChange("network") ||
-		d.HasChange("description") ||
-		d.HasChange("name") ||
-		d.HasChange("initscript") ||
-		d.HasChange("admin_password_auto") ||
-		d.HasChange("admin_password") {
+	// if d.HasChange("description") ||
+	// 	d.HasChange("name") ||
+	// 	d.HasChange("initscript") ||
+	// 	d.HasChange("admin_password_auto") ||
+	// 	d.HasChange("admin_password") {
 
-		// Change networks setting of VM
-		if d.HasChange("network") {
-			log.Printf("[TRACE] (%s) Changing network settings", d.Get("name").(string))
+	if d.HasChange("description") {
+		log.Printf("[TRACE] (%s) Changing description", d.Get("name").(string))
 
-			networks := interfaceListToMapStringInterface(d.Get("network").([]interface{}))
-			vm.SetNetworkConnectionSection(createNetworkConnectionSection(networks))
-		}
-
-		if d.HasChange("description") {
-			log.Printf("[TRACE] (%s) Changing description", d.Get("name").(string))
-
-			vm.SetDescription(d.Get("description").(string))
-		}
-
-		// Change hostname of VM
-		if d.HasChange("name") {
-			log.Printf("[TRACE] (%s) Changing hostname", d.Get("name").(string))
-
-			vm.SetName(d.Get("name").(string))
-			vm.SetHostName(d.Get("name").(string))
-		}
-
-		// Change nested hypervisor setting of VM
-		if d.HasChange("initscript") {
-			log.Printf("[TRACE] (%s) Changing initscript", d.Get("name").(string))
-
-			vm.SetInitscript(d.Get("initscript").(string))
-		}
-
-		// Change nested hypervisor setting of VM
-		if d.HasChange("admin_password_auto") {
-			log.Printf("[TRACE] (%s) Changing admin_password_auto", d.Get("name").(string))
-
-			vm.SetAdminPasswordAuto(d.Get("admin_password_auto").(bool))
-		}
-
-		// Change nested hypervisor setting of VM
-		if d.HasChange("admin_password") {
-			log.Printf("[TRACE] (%s) Changing admin_password", d.Get("name").(string))
-
-			vm.SetAdminPassword(d.Get("admin_password").(string))
-		}
-
+		vm.SetDescription(d.Get("description").(string))
 	}
 
-	log.Printf("[TRACE] (%s) Done configuring %s, d before reread: %#v", d.Get("name").(string), d.Get("href").(string), d)
+	// Change hostname of VM
+	if d.HasChange("name") {
+		log.Printf("[TRACE] (%s) Changing hostname", d.Get("name").(string))
+
+		vm.SetName(d.Get("name").(string))
+		vm.SetHostName(d.Get("name").(string))
+	}
+
+	// Change nested hypervisor setting of VM
+	if d.HasChange("initscript") {
+		log.Printf("[TRACE] (%s) Changing initscript", d.Get("name").(string))
+
+		vm.SetInitscript(d.Get("initscript").(string))
+	}
+
+	// Change nested hypervisor setting of VM
+	if d.HasChange("admin_password_auto") {
+		log.Printf("[TRACE] (%s) Changing admin_password_auto", d.Get("name").(string))
+
+		vm.SetAdminPasswordAuto(d.Get("admin_password_auto").(bool))
+	}
+
+	// Change nested hypervisor setting of VM
+	if d.HasChange("admin_password") {
+		log.Printf("[TRACE] (%s) Changing admin_password", d.Get("name").(string))
+
+		vm.SetAdminPassword(d.Get("admin_password").(string))
+	}
+
+	vm.SetNeedsCustomization(true)
+	// }
+
+	// log.Printf("[TRACE] (%s) Done configuring %s, d before reread: %#v", d.Get("name").(string), d.Get("href").(string), d)
+
+	return nil
+}
+
+// Before vCloud 9.0, some elements cannot be configured by reconfigureVM,
+// nestedhypervisor and storage profile, this has to be done in seperate calls
+func configureVMWorkaround(d *schema.ResourceData, vm *govcd.VM, meta interface{}) error {
+	vcdClient := meta.(*VCDClient)
+
+	// Change nested hypervisor setting of VM
+	if d.HasChange("nested_hypervisor_enabled") {
+		log.Printf("[TRACE] (%s) Changing nested hypervisor setting", d.Get("name").(string))
+
+		// This cannot be reconfigured with reconfigureVM until vCloud 9.0
+		// vm.SetNestedHypervisor(d.Get("nested_hypervisor_enabled").(bool))
+
+		// vCloud 8.2 and older
+		err := retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := vm.SetNestedHypervisorWithRequest(d.Get("nested_hypervisor_enabled").(bool))
+			if err != nil {
+				return resource.NonRetryableError(fmt.Errorf("Error setting nested hyperv VM: %#v", err))
+			}
+
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
+		if err != nil {
+			return fmt.Errorf("Error completing task: %#v", err)
+		}
+	}
+
+	// // Change storage profile of VM
+	// if d.HasChange("storage_profile") {
+	// 	log.Printf("[TRACE] (%s) Changing storage profile", d.Get("name").(string))
+
+	// }
 
 	return nil
 }
@@ -196,7 +235,7 @@ func readVM(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[TRACE] (%s) readVM got d with href %s", d.Get("name").(string), d.Get("href").(string))
 
 	// Get VM object from VCD
-	vm, err := vcdClient.FindVMByHREF(d.Get("href").(string))
+	vm, err := vcdClient.OrgVdc.GetVMByHREF(d.Get("href").(string))
 
 	if err != nil {
 		return fmt.Errorf("Could not find VM (%s)(%s) in VCD", d.Get("name").(string), d.Get("href").(string))
