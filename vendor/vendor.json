@@ -896,7 +896,7 @@
 			"versionExact": "v0.11.1"
 		},
 		{
-			"path": "github.com/hashicorp/terraform/helper/validationa",
+			"path": "github.com/hashicorp/terraform/helper/validation",
 			"revision": "v0.11",
 			"version": "v0.11",
 			"versionExact": "v0.11.1"
