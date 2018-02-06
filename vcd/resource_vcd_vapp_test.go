@@ -2,98 +2,21 @@ package vcd
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	govcd "github.com/ukcloud/govcloudair"
 )
-
-func TestAccVcdVApp_PowerOff(t *testing.T) {
-	var vapp govcd.VApp
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdVAppDestroy,
-		Steps: []resource.TestStep{
-			resource.TestStep{
-				Config: fmt.Sprintf(testAccCheckVcdVApp_basic, os.Getenv("VCD_EDGE_GATEWAY"), os.Getenv("VCD_EDGE_GATEWAY")),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVAppExists("vcd_vapp.foobar", &vapp),
-					testAccCheckVcdVAppAttributes(&vapp),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp.foobar", "name", "foobar"),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp.foobar", "ip", "10.10.102.160"),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp.foobar", "power_on", "true"),
-				),
-			},
-
-			resource.TestStep{
-				Config: fmt.Sprintf(testAccCheckVcdVApp_basic, os.Getenv("VCD_EDGE_GATEWAY"), os.Getenv("VCD_EDGE_GATEWAY")),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(
-						"vcd_vapp.foobar_allocated", "name", "foobar-allocated"),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp.foobar_allocated", "ip", "allocated"),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp.foobar_allocated", "power_on", "true"),
-				),
-			},
-
-			resource.TestStep{
-				Config: fmt.Sprintf(testAccCheckVcdVApp_powerOff, os.Getenv("VCD_EDGE_GATEWAY")),
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVAppExists("vcd_vapp.foobar", &vapp),
-					testAccCheckVcdVAppAttributes_off(&vapp),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp.foobar", "name", "foobar"),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp.foobar", "ip", "10.10.103.160"),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp.foobar", "power_on", "false"),
-				),
-			},
-		},
-	})
-}
-
-func testAccCheckVcdVAppExists(n string, vapp *govcd.VApp) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("Not found: %s", n)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("No VAPP ID is set")
-		}
-
-		conn := testAccProvider.Meta().(*VCDClient)
-
-		resp, err := conn.OrgVdc.FindVAppByName(rs.Primary.ID)
-		if err != nil {
-			return err
-		}
-
-		*vapp = resp
-
-		return nil
-	}
-}
 
 func testAccCheckVcdVAppDestroy(s *terraform.State) error {
 	conn := testAccProvider.Meta().(*VCDClient)
 
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "vcd_vapp" {
+		if rs.Type != "vcd_vm" {
 			continue
 		}
 
-		_, err := conn.OrgVdc.FindVAppByName(rs.Primary.ID)
+		_, err := conn.OrgVdc.GetVAppByHREF(rs.Primary.ID)
 
 		if err == nil {
 			return fmt.Errorf("VPCs still exist")
@@ -105,114 +28,409 @@ func testAccCheckVcdVAppDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckVcdVAppAttributes(vapp *govcd.VApp) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
+func TestAccVcdVApp_Basic(t *testing.T) {
+	// var vapp govcd.VApp
+	// var vm govcd.VM
 
-		if vapp.VApp.Name != "foobar" {
-			return fmt.Errorf("Bad name: %s", vapp.VApp.Name)
-		}
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVcdVAppDestroy,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: fmt.Sprintf(testAccCheckVcdVApp_basic),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "name", "kdalby-dev-vapp-test-only-vapp-basic"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "organization_network.#", "2"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "organization_network.0", "FCI-IRT_ISN6_ORG-SRV"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "organization_network.1", "FCI-IRT_ISN6_ORG-MGT"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "vapp_network.#", "2"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "vapp_network.0.name", "test"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "vapp_network.1.name", "test2"),
+				),
+			},
+			resource.TestStep{
+				Config: fmt.Sprintf(testAccCheckVcdVApp_basic2),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "name", "kdalby-dev-vapp-test-only-vapp-basic"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "organization_network.#", "2"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "organization_network.0", "FCI-IRT_ISN6_ORG-SRV"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "organization_network.1", "FCI-IRT_ISN6_ORG-MGT"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "vapp_network.#", "2"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "vapp_network.0.name", "test"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "vapp_network.1.name", "test2"),
+				),
+			},
+			resource.TestStep{
+				Config: fmt.Sprintf(testAccCheckVcdVApp_basic3),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "name", "kdalby-dev-vapp-test-only-vapp-basic"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "organization_network.#", "2"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "organization_network.0", "FCI-IRT_ISN6_ORG-SRV"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "organization_network.1", "FCI-IRT_ISN6_ORG-MGT"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "vapp_network.#", "2"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "vapp_network.0.name", "test"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "vapp_network.1.name", "test2"),
+				),
+			},
+		},
+	})
 
-		if vapp.VApp.Name != vapp.VApp.Children.VM[0].Name {
-			return fmt.Errorf("VApp and VM names do not match. %s != %s",
-				vapp.VApp.Name, vapp.VApp.Children.VM[0].Name)
-		}
-
-		status, _ := vapp.GetStatus()
-		if status != "POWERED_ON" {
-			return fmt.Errorf("VApp is not powered on")
-		}
-
-		return nil
-	}
-}
-
-func testAccCheckVcdVAppAttributes_off(vapp *govcd.VApp) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		if vapp.VApp.Name != "foobar" {
-			return fmt.Errorf("Bad name: %s", vapp.VApp.Name)
-		}
-
-		if vapp.VApp.Name != vapp.VApp.Children.VM[0].Name {
-			return fmt.Errorf("VApp and VM names do not match. %s != %s",
-				vapp.VApp.Name, vapp.VApp.Children.VM[0].Name)
-		}
-
-		status, _ := vapp.GetStatus()
-		if status != "POWERED_OFF" {
-			return fmt.Errorf("VApp is still powered on")
-		}
-
-		return nil
-	}
 }
 
 const testAccCheckVcdVApp_basic = `
-resource "vcd_network" "foonet" {
-	name = "foonet"
-	edge_gateway = "%s"
-	gateway = "10.10.102.1"
-	static_ip_pool {
-		start_address = "10.10.102.2"
-		end_address = "10.10.102.254"
-	}
-}
+resource "vcd_vapp" "test-vapp" {
+  name     = "kdalby-dev-vapp-test-only-vapp-basic"
 
-resource "vcd_network" "foonet3" {
-	name = "foonet3"
-	edge_gateway = "%s"
-	gateway = "10.10.202.1"
-	static_ip_pool {
-		start_address = "10.10.202.2"
-		end_address = "10.10.202.254"
-	}
-}
+  organization_network = [
+    "FCI-IRT_ISN6_ORG-SRV",
+    "FCI-IRT_ISN6_ORG-MGT",
+  ]
 
-resource "vcd_vapp" "foobar" {
-  name          = "foobar"
-  template_name = "Skyscape_CentOS_6_4_x64_50GB_Small_v1.0.1"
-  catalog_name  = "Skyscape Catalogue"
-  network_name  = "${vcd_network.foonet.name}"
-  memory        = 1024
-  cpus          = 1
-  ip            = "10.10.102.160"
-}
+  vapp_network {
+     name = "test"
+     description = ""
+     gateway = "192.168.2.1"
+     netmask = "255.255.255.0"
+     dns1 = "8.8.8.8"
+     dns2 = "8.8.4.4"
+     start = "192.168.2.100"
+     end = "192.168.2.199"
+     nat = false
+     parent = "FCI-IRT_ISN6_ORG-SRV"
+     dhcp = false
+  }
+  vapp_network {
+     name = "test2"
+     description = ""
+     gateway = "192.168.3.1"
+     netmask = "255.255.255.0"
+     dns1 = "8.8.8.8"
+     dns2 = "8.8.4.4"
+     start = "192.168.3.100"
+     end = "192.168.3.199"
+     nat = true
+     parent = "FCI-IRT_ISN6_ORG-SRV"
+     dhcp = true
+     dhcp_start = "192.168.3.200"
+     dhcp_end = "192.168.3.249"
+  }
 
-resource "vcd_vapp" "foobar_allocated" {
-  name          = "foobar-allocated"
-  template_name = "Skyscape_CentOS_6_4_x64_50GB_Small_v1.0.1"
-  catalog_name  = "Skyscape Catalogue"
-  network_name  = "${vcd_network.foonet3.name}"
-  memory        = 1024
-  cpus          = 1
-  ip            = "allocated"
 }
 `
 
-const testAccCheckVcdVApp_powerOff = `
-resource "vcd_network" "foonet2" {
-	name = "foonet2"
-	edge_gateway = "%s"
-	gateway = "10.10.103.1"
-	static_ip_pool {
-		start_address = "10.10.103.2"
-		end_address = "10.10.103.170"
-	}
+const testAccCheckVcdVApp_basic2 = `
+resource "vcd_vapp" "test-vapp" {
+  name     = "kdalby-dev-vapp-test-only-vapp-basic"
 
-	dhcp_pool {
-		start_address = "10.10.103.171"
-		end_address = "10.10.103.254"
-	}
+  organization_network = [
+    "FCI-IRT_ISN6_ORG-SRV",
+    "FCI-IRT_ISN6_ORG-MGT",
+  ]
+
+  vapp_network {
+     name = "test"
+     description = ""
+     gateway = "192.168.2.1"
+     netmask = "255.255.255.0"
+     dns1 = "8.8.8.8"
+     dns2 = "8.8.4.4"
+     start = "192.168.2.100"
+     end = "192.168.2.199"
+     nat = false
+     parent = "FCI-IRT_ISN6_ORG-SRV"
+     dhcp = false
+  }
+  vapp_network {
+     name = "test2"
+     description = ""
+     gateway = "192.168.3.1"
+     netmask = "255.255.255.0"
+     dns1 = "8.8.8.8"
+     dns2 = "8.8.4.4"
+     start = "192.168.3.100"
+     end = "192.168.3.199"
+     nat = true
+     parent = "FCI-IRT_ISN6_ORG-SRV"
+     dhcp = true
+     dhcp_start = "192.168.3.200"
+     dhcp_end = "192.168.3.249"
+  }
+
+}
+`
+
+const testAccCheckVcdVApp_basic3 = `
+resource "vcd_vapp" "test-vapp" {
+  name     = "kdalby-dev-vapp-test-only-vapp-basic"
+
+  organization_network = [
+    "FCI-IRT_ISN6_ORG-SRV",
+    "FCI-IRT_ISN6_ORG-MGT",
+  ]
+
+  vapp_network {
+     name = "test"
+     description = ""
+     gateway = "192.168.2.1"
+     netmask = "255.255.255.0"
+     dns1 = "8.8.8.8"
+     dns2 = "8.8.4.4"
+     start = "192.168.2.100"
+     end = "192.168.2.199"
+     nat = false
+     parent = "FCI-IRT_ISN6_ORG-SRV"
+     dhcp = false
+  }
+  vapp_network {
+     name = "test2"
+     description = ""
+     gateway = "192.168.3.1"
+     netmask = "255.255.255.0"
+     dns1 = "8.8.8.8"
+     dns2 = "8.8.4.4"
+     start = "192.168.3.100"
+     end = "192.168.3.199"
+     nat = true
+     parent = "FCI-IRT_ISN6_ORG-SRV"
+     dhcp = true
+     dhcp_start = "192.168.3.200"
+     dhcp_end = "192.168.3.249"
+  }
+
+}
+`
+
+func TestAccVcdVApp_Complex(t *testing.T) {
+	// var vapp govcd.VApp
+	// var vm govcd.VM
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVcdVAppDestroy,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: fmt.Sprintf(testAccCheckVcdVApp_complex),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "name", "kdalby-dev-vapp-test-only-vapp-complex"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "organization_network.#", "2"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "organization_network.0", "FCI-IRT_ISN6_ORG-SRV"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "organization_network.1", "FCI-IRT_ISN6_ORG-MGT"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "vapp_network.#", "2"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "vapp_network.0.name", "test"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "vapp_network.1.name", "test2"),
+				),
+			},
+			resource.TestStep{
+				Config: fmt.Sprintf(testAccCheckVcdVApp_complex2),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "name", "kdalby-dev-vapp-test-only-vapp-complex"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "organization_network.#", "2"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "organization_network.0", "FCI-IRT_ISN6_ORG-MGT"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "organization_network.1", "FCI-IRT_ISN6_ORG-SRV"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "vapp_network.#", "2"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "vapp_network.0.name", "test2"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "vapp_network.1.name", "test"),
+				),
+			},
+			resource.TestStep{
+				Config: fmt.Sprintf(testAccCheckVcdVApp_complex3),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "name", "kdalby-dev-vapp-test-only-vapp-complex"),
+					resource.TestCheckNoResourceAttr(
+						"vcd_vapp.test-vapp", "organization_network"),
+					resource.TestCheckNoResourceAttr(
+						"vcd_vapp.test-vapp", "vapp_network"),
+				),
+			},
+			resource.TestStep{
+				Config: fmt.Sprintf(testAccCheckVcdVApp_complex4),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "name", "kdalby-dev-vapp-test-only-vapp-complex"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "organization_network.#", "2"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "organization_network.0", "FCI-IRT_ISN6_ORG-SRV"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "organization_network.1", "FCI-IRT_ISN6_ORG-MGT"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "vapp_network.#", "2"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "vapp_network.0.name", "test"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp.test-vapp", "vapp_network.1.name", "test2"),
+				),
+			},
+		},
+	})
+
 }
 
-resource "vcd_vapp" "foobar" {
-  name          = "foobar"
-  template_name = "Skyscape_CentOS_6_4_x64_50GB_Small_v1.0.1"
-  catalog_name  = "Skyscape Catalogue"
-  network_name  = "${vcd_network.foonet2.name}"
-  memory        = 1024
-  cpus          = 1
-  ip            = "10.10.103.160"
-  power_on      = false
+const testAccCheckVcdVApp_complex = `
+resource "vcd_vapp" "test-vapp" {
+  name     = "kdalby-dev-vapp-test-only-vapp-complex"
+
+  organization_network = [
+    "FCI-IRT_ISN6_ORG-SRV",
+    "FCI-IRT_ISN6_ORG-MGT",
+  ]
+
+  vapp_network {
+     name = "test"
+     description = ""
+     gateway = "192.168.2.1"
+     netmask = "255.255.255.0"
+     dns1 = "8.8.8.8"
+     dns2 = "8.8.4.4"
+     start = "192.168.2.100"
+     end = "192.168.2.199"
+     nat = false
+     parent = "FCI-IRT_ISN6_ORG-SRV"
+     dhcp = false
+  }
+  vapp_network {
+     name = "test2"
+     description = ""
+     gateway = "192.168.3.1"
+     netmask = "255.255.255.0"
+     dns1 = "8.8.8.8"
+     dns2 = "8.8.4.4"
+     start = "192.168.3.100"
+     end = "192.168.3.199"
+     nat = true
+     parent = "FCI-IRT_ISN6_ORG-SRV"
+     dhcp = true
+     dhcp_start = "192.168.3.200"
+     dhcp_end = "192.168.3.249"
+  }
+
+}
+`
+
+const testAccCheckVcdVApp_complex2 = `
+resource "vcd_vapp" "test-vapp" {
+  name     = "kdalby-dev-vapp-test-only-vapp-complex"
+
+  organization_network = [
+    "FCI-IRT_ISN6_ORG-MGT",
+    "FCI-IRT_ISN6_ORG-SRV",
+  ]
+
+  vapp_network {
+     name = "test2"
+     description = ""
+     gateway = "192.168.3.1"
+     netmask = "255.255.255.0"
+     dns1 = "8.8.8.8"
+     dns2 = "8.8.4.4"
+     start = "192.168.3.100"
+     end = "192.168.3.199"
+     nat = true
+     parent = "FCI-IRT_ISN6_ORG-SRV"
+     dhcp = true
+     dhcp_start = "192.168.3.200"
+     dhcp_end = "192.168.3.249"
+  }
+  vapp_network {
+     name = "test"
+     description = ""
+     gateway = "192.168.2.1"
+     netmask = "255.255.255.0"
+     dns1 = "8.8.8.8"
+     dns2 = "8.8.4.4"
+     start = "192.168.2.100"
+     end = "192.168.2.199"
+     nat = false
+     parent = "FCI-IRT_ISN6_ORG-SRV"
+     dhcp = false
+  }
+
+}
+`
+
+const testAccCheckVcdVApp_complex3 = `
+resource "vcd_vapp" "test-vapp" {
+  name     = "kdalby-dev-vapp-test-only-vapp-complex"
+
+
+}
+`
+
+const testAccCheckVcdVApp_complex4 = `
+resource "vcd_vapp" "test-vapp" {
+  name     = "kdalby-dev-vapp-test-only-vapp-complex"
+
+  organization_network = [
+    "FCI-IRT_ISN6_ORG-SRV",
+    "FCI-IRT_ISN6_ORG-MGT",
+  ]
+
+  vapp_network {
+     name = "test"
+     description = ""
+     gateway = "192.168.2.1"
+     netmask = "255.255.255.0"
+     dns1 = "8.8.8.8"
+     dns2 = "8.8.4.4"
+     start = "192.168.2.100"
+     end = "192.168.2.199"
+     nat = false
+     parent = "FCI-IRT_ISN6_ORG-SRV"
+     dhcp = false
+  }
+  vapp_network {
+     name = "test2"
+     description = ""
+     gateway = "192.168.3.1"
+     netmask = "255.255.255.0"
+     dns1 = "8.8.8.8"
+     dns2 = "8.8.4.4"
+     start = "192.168.3.100"
+     end = "192.168.3.199"
+     nat = true
+     parent = "FCI-IRT_ISN6_ORG-SRV"
+     dhcp = true
+     dhcp_start = "192.168.3.200"
+     dhcp_end = "192.168.3.249"
+  }
+
 }
 `
