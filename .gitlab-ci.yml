@@ -7,6 +7,7 @@ stages:
   - test
 
 before_script:
+    - mkdir -p /go/src/github.com
     - cp -r /builds/KristofferDalby /go/src/github.com/KristofferDalby/
     - cd /go/src/github.com/KristofferDalby/terraform-provider-vcd
     - bash scripts/gogetcookie.sh
