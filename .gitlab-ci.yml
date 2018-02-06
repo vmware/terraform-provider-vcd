@@ -1,0 +1,32 @@
+image: golang:1.9.3
+
+variables:
+
+stages:
+  - build
+  - test
+
+before_script:
+    - bash scripts/gogetcookie.sh
+    - go get github.com/kardianos/govendor
+
+build:
+  stage: build
+  script:
+      - make build
+
+test:
+  stage: test
+  script:
+      - export "VCD_USER=$VCD_USER"
+      - export "VCD_PASSWORD=$VCD_PASSWORD"
+      - export "VCD_ORG=$VCD_ORG"
+      - export "VCD_URL=$VCD_URL"
+      - export "VCD_VDC=$VCD_VDC"
+      - export "VCD_MAX_RETRY_TIMEOUT=3000"
+      - export "VCD_ALLOW_UNVERIFIED_SSL=true"
+      - export "VCD_EDGE_GATEWAY=derp"
+
+      - make testacc
+      - make vendor-status
+      - make vet
