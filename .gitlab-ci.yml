@@ -32,5 +32,3 @@ test:
       - export "VCD_EDGE_GATEWAY=derp"
 
       - make testacc
-      - make vendor-status
-      - make vet
