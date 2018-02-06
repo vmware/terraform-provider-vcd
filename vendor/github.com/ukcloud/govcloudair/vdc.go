@@ -8,11 +8,11 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
-	types "github.com/ukcloud/govcloudair/types/v56"
 	"log"
 	"net/url"
 	"os"
-	"strings"
+
+	types "github.com/ukcloud/govcloudair/types/v56"
 )
 
 type Vdc struct {
@@ -122,7 +122,30 @@ func (v *Vdc) FindStorageProfileReference(name string) (types.Reference, error) 
 	return types.Reference{}, fmt.Errorf("can't find any VDC Storage_profiles")
 }
 
-func (v *Vdc) GetDefaultStorageProfileReference(storageprofiles *types.QueryResultRecordsType) (types.Reference, error) {
+func (v *Vdc) GetDefaultStorageProfileReference() (types.Reference, error) {
+
+	// storageprofiles *types.QueryResultRecordsType
+	query := fmt.Sprintf("%s?type=orgVdcStorageProfile&type=records&filter=(vdcName==%s)", v.c.VCDVDCHREF, v.Vdc.Name)
+
+	u, err := url.ParseRequestURI(query)
+
+	if err != nil {
+		return types.Reference{}, fmt.Errorf("error decoding vdc response: %s", err)
+	}
+
+	// Querying the Result list
+	req := v.c.NewRequest(map[string]string{}, "GET", *u, nil)
+
+	resp, err := checkResp(v.c.Http.Do(req))
+	if err != nil {
+		return types.Reference{}, fmt.Errorf("error retrieving edge gateway records: %s", err)
+	}
+
+	storageprofiles := new(types.QueryResultRecordsType)
+
+	if err = decodeBody(resp, storageprofiles); err != nil {
+		return types.Reference{}, fmt.Errorf("error decoding edge gateway query response: %s", err)
+	}
 
 	for _, spr := range storageprofiles.OrgVdcStorageProfileRecord {
 		if spr.IsDefaultStorageProfile {
@@ -354,53 +377,102 @@ func (v *Vdc) FindVMByName(vapp VApp, vm string) (VM, error) {
 	return VM{}, fmt.Errorf("can't find vm: %s", vm)
 }
 
-func (v *Vdc) FindVAppByID(vappid string) (VApp, error) {
+func (v *Vdc) GetVMByHREF(vmhref string) (VM, error) {
 
-	// Horrible hack to fetch a vapp with its id.
-	// urn:vcloud:vapp:00000000-0000-0000-0000-000000000000
+	u, err := url.ParseRequestURI(vmhref)
 
-	err := v.Refresh()
 	if err != nil {
-		return VApp{}, fmt.Errorf("error refreshing vdc: %s", err)
+		return VM{}, fmt.Errorf("error decoding vm HREF: %s", err)
 	}
 
-	urnslice := strings.SplitAfter(vappid, ":")
-	urnid := urnslice[len(urnslice)-1]
+	// Querying the VApp
+	req := v.c.NewRequest(map[string]string{}, "GET", *u, nil)
 
-	for _, resents := range v.Vdc.ResourceEntities {
-		for _, resent := range resents.ResourceEntity {
-
-			hrefslice := strings.SplitAfter(resent.HREF, "/")
-			hrefslice = strings.SplitAfter(hrefslice[len(hrefslice)-1], "-")
-			res := strings.Join(hrefslice[1:], "")
-
-			if res == urnid && resent.Type == "application/vnd.vmware.vcloud.vApp+xml" {
-
-				u, err := url.ParseRequestURI(resent.HREF)
-
-				if err != nil {
-					return VApp{}, fmt.Errorf("error decoding vdc response: %s", err)
-				}
-
-				// Querying the VApp
-				req := v.c.NewRequest(map[string]string{}, "GET", *u, nil)
-
-				resp, err := checkResp(v.c.Http.Do(req))
-				if err != nil {
-					return VApp{}, fmt.Errorf("error retrieving vApp: %s", err)
-				}
-
-				newvapp := NewVApp(v.c)
-
-				if err = decodeBody(resp, newvapp.VApp); err != nil {
-					return VApp{}, fmt.Errorf("error decoding vApp response: %s", err)
-				}
-
-				return *newvapp, nil
-
-			}
-		}
+	resp, err := checkResp(v.c.Http.Do(req))
+	if err != nil {
+		return VM{}, fmt.Errorf("error retrieving VM: %s", err)
 	}
-	return VApp{}, fmt.Errorf("can't find vApp")
 
+	newvm := NewVM(v.c)
+
+	if err = decodeBody(resp, newvm.VM); err != nil {
+		return VM{}, fmt.Errorf("error decoding VM response: %s", err)
+	}
+
+	return *newvm, nil
 }
+
+func (v *Vdc) GetVAppByHREF(vmhref string) (VApp, error) {
+	u, err := url.ParseRequestURI(vmhref)
+
+	if err != nil {
+		return VApp{}, fmt.Errorf("error decoding vm HREF: %s", err)
+	}
+
+	// Querying the VApp
+	req := v.c.NewRequest(map[string]string{}, "GET", *u, nil)
+
+	resp, err := checkResp(v.c.Http.Do(req))
+	if err != nil {
+		return VApp{}, fmt.Errorf("error retrieving VApp: %s", err)
+	}
+
+	newVApp := NewVApp(v.c)
+
+	if err = decodeBody(resp, newVApp.VApp); err != nil {
+		return VApp{}, fmt.Errorf("error decoding VApp response: %s", err)
+	}
+
+	return *newVApp, nil
+}
+
+// func (v *Vdc) FindVAppByID(vappid string) (VApp, error) {
+
+// 	// Horrible hack to fetch a vapp with its id.
+// 	// urn:vcloud:vapp:00000000-0000-0000-0000-000000000000
+
+// 	err := v.Refresh()
+// 	if err != nil {
+// 		return VApp{}, fmt.Errorf("error refreshing vdc: %s", err)
+// 	}
+
+// 	urnslice := strings.SplitAfter(vappid, ":")
+// 	urnid := urnslice[len(urnslice)-1]
+
+// 	for _, resents := range v.Vdc.ResourceEntities {
+// 		for _, resent := range resents.ResourceEntity {
+
+// 			hrefslice := strings.SplitAfter(resent.HREF, "/")
+// 			hrefslice = strings.SplitAfter(hrefslice[len(hrefslice)-1], "-")
+// 			res := strings.Join(hrefslice[1:], "")
+
+// 			if res == urnid && resent.Type == "application/vnd.vmware.vcloud.vApp+xml" {
+
+// 				u, err := url.ParseRequestURI(resent.HREF)
+
+// 				if err != nil {
+// 					return VApp{}, fmt.Errorf("error decoding vdc response: %s", err)
+// 				}
+
+// 				// Querying the VApp
+// 				req := v.c.NewRequest(map[string]string{}, "GET", *u, nil)
+
+// 				resp, err := checkResp(v.c.Http.Do(req))
+// 				if err != nil {
+// 					return VApp{}, fmt.Errorf("error retrieving vApp: %s", err)
+// 				}
+
+// 				newvapp := NewVApp(v.c)
+
+// 				if err = decodeBody(resp, newvapp.VApp); err != nil {
+// 					return VApp{}, fmt.Errorf("error decoding vApp response: %s", err)
+// 				}
+
+// 				return *newvapp, nil
+
+// 			}
+// 		}
+// 	}
+// 	return VApp{}, fmt.Errorf("can't find vApp")
+
+// }

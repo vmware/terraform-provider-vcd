@@ -100,6 +100,14 @@ const ApiVersion290 ApiVersionType = "29.0" // vCloud Director 9.0
 
 const ApiVersion ApiVersionType = ApiVersion90
 
+type UndeployPowerAction = string
+
+const UndeployPowerActionPowerOff UndeployPowerAction = "powerOff"
+const UndeployPowerActionSuspend UndeployPowerAction = "suspend"
+const UndeployPowerActionShutdown UndeployPowerAction = "shutdown"
+const UndeployPowerActionForce UndeployPowerAction = "force"
+const UndeployPowerActionDefault UndeployPowerAction = "default"
+
 // VCD API
 
 // DefaultStorageProfileSection is the name of the storage profile that will be specified for this virtual machine. The named storage profile must exist in the organization vDC that contains the virtual machine. If not specified, the default storage profile for the vDC is used.
@@ -158,15 +166,15 @@ type IPRange struct {
 // Description: Represents a DHCP network service.
 // Since:
 type DhcpService struct {
-	DefaultLeaseTime    int         `xml:"DefaultLeaseTime,omitempty"`    // Default lease in seconds for DHCP addresses.
-	DomainName          string      `xml:"DomainName,omitempty"`          //	The domain name.
-	IPRange             *IPRange    `xml:"IpRange"`                       //	IP range for DHCP addresses.
 	IsEnabled           bool        `xml:"IsEnabled"`                     // Enable or disable the service using this flag
+	DefaultLeaseTime    int         `xml:"DefaultLeaseTime,omitempty"`    // Default lease in seconds for DHCP addresses.
 	MaxLeaseTime        int         `xml:"MaxLeaseTime"`                  //	Max lease in seconds for DHCP addresses.
-	PrimaryNameServer   string      `xml:"PrimaryNameServer,omitempty"`   // The primary name server.
+	IPRange             *IPRange    `xml:"IpRange"`                       //	IP range for DHCP addresses.
 	RouterIP            IPv4Address `xml:"RouterIp,omitempty"`            // Router IP.
-	SecondaryNameServer string      `xml:"SecondaryNameServer,omitempty"` // The secondary name server.
 	SubMask             string      `xml:"SubMask,omitempty"`             // The subnet mask.
+	PrimaryNameServer   string      `xml:"PrimaryNameServer,omitempty"`   // The primary name server.
+	SecondaryNameServer string      `xml:"SecondaryNameServer,omitempty"` // The secondary name server.
+	DomainName          string      `xml:"DomainName,omitempty"`          //	The domain name.
 }
 
 // NetworkFeatures represents features of a network.
@@ -470,15 +478,15 @@ type Task struct {
 	EndTime          string           `xml:"endTime,attr,omitempty"`
 	ExpiryTime       string           `xml:"expiryTime,attr,omitempty"`
 	CancelRequested  bool             `xml:"cancelRequested,attr,omitempty"`
-	Description      string           `xml:"Description,omitempty"`
-	Details          string           `xml:"Details,omitempty"`
-	Error            *Error           `xml:"Error,omitempty"`
 	Link             *Link            `xml:"Link,omitempty"`
-	Organization     *Reference       `xml:"Organization,omitempty"`
-	Owner            *Reference       `xml:"Owner,omitempty"`
-	Progress         int              `xml:"Progress,omitempty"`
+	Description      string           `xml:"Description,omitempty"`
 	Tasks            *TasksInProgress `xml:"Tasks,omitempty"`
+	Owner            *Reference       `xml:"Owner,omitempty"`
+	Error            *Error           `xml:"Error,omitempty"`
 	User             *Reference       `xml:"User,omitempty"`
+	Organization     *Reference       `xml:"Organization,omitempty"`
+	Progress         int              `xml:"Progress,omitempty"`
+	Details          string           `xml:"Details,omitempty"`
 }
 
 // CapacityWithUsage represents a capacity and usage of a given resource.
@@ -718,8 +726,8 @@ type FilesList struct {
 // Description: Parameters to an undeploy vApp request.
 // Since: 0.9
 type UndeployVAppParams struct {
-	Xmlns               XMLNamespace `xml:"xmlns,attr"`
-	UndeployPowerAction string       `xml:"UndeployPowerAction,omitempty"`
+	Xmlns               XMLNamespace        `xml:"xmlns,attr"`
+	UndeployPowerAction UndeployPowerAction `xml:"UndeployPowerAction,omitempty"`
 }
 
 // VMCapabilities allows you to specify certain capabilities of this virtual machine.
@@ -1943,8 +1951,6 @@ func (v *VirtualHardwareSection) ConvertToOVF() *OVFVirtualHardwareSection {
 
 		items[index] = &item
 	}
-
-	fmt.Printf("OVF ITEMS: \n %#v \n\n", items)
 
 	ovf.Item = items
 	return &ovf

@@ -69,7 +69,7 @@ func (v *VM) Reconfigure() (Task, error) {
 
 	// WORKAROUND for XML namespace support in go, see bottom of types.go
 	// github.com/ukcloud/govcloudair/types/v56
-	v.CorrectAddressOnParentForNetworkHardware()
+	// v.CorrectAddressOnParentForNetworkHardware()
 
 	v.SetXMLNamespaces()
 
@@ -87,39 +87,13 @@ func (v *VM) Reconfigure() (Task, error) {
 
 	v.VM.OVFVirtualHardwareSection = nil
 
-	log.Printf("[DEBUG] VM: %s", output)
+	log.Printf("[DEBUG] Reconfigured VM: \n%s", output)
 
 	return ExecuteRequest(string(output),
 		v.VM.HREF+"/action/reconfigureVm",
 		"POST",
 		"application/vnd.vmware.vcloud.vm+xml",
 		v.c)
-}
-
-func (c *VCDClient) FindVMByHREF(vmhref string) (VM, error) {
-
-	u, err := url.ParseRequestURI(vmhref)
-
-	if err != nil {
-		return VM{}, fmt.Errorf("error decoding vm HREF: %s", err)
-	}
-
-	// Querying the VApp
-	req := c.Client.NewRequest(map[string]string{}, "GET", *u, nil)
-
-	resp, err := checkResp(c.Client.Http.Do(req))
-	if err != nil {
-		return VM{}, fmt.Errorf("error retrieving VM: %s", err)
-	}
-
-	newvm := NewVM(&c.Client)
-
-	if err = decodeBody(resp, newvm.VM); err != nil {
-		return VM{}, fmt.Errorf("error decoding VM response: %s", err)
-	}
-
-	return *newvm, nil
-
 }
 
 func (v *VM) PowerOn() (Task, error) {
@@ -138,11 +112,19 @@ func (v *VM) PowerOff() (Task, error) {
 		v.c)
 }
 
-func (v *VM) Undeploy() (Task, error) {
+func (v *VM) Shutdown() (Task, error) {
+	return ExecuteRequest("",
+		v.VM.HREF+"/power/action/shutdown",
+		"POST",
+		"application/vnd.vmware.vcloud.vm+xml",
+		v.c)
+}
+
+func (v *VM) Undeploy(action types.UndeployPowerAction) (Task, error) {
 
 	vu := &types.UndeployVAppParams{
 		Xmlns:               "http://www.vmware.com/vcloud/v1.5",
-		UndeployPowerAction: "powerOff",
+		UndeployPowerAction: action,
 	}
 
 	output, err := xml.MarshalIndent(vu, "  ", "    ")
@@ -202,14 +184,14 @@ func (v *VM) GetMemoryCount() (int, error) {
 	return items[0].VirtualQuantity, nil
 }
 
-func (v *VM) CorrectAddressOnParentForNetworkHardware() error {
-	for index := range v.VM.VirtualHardwareSection.Item {
-		if v.VM.VirtualHardwareSection.Item[index].ResourceType == types.ResourceTypeEthernet {
-			v.VM.VirtualHardwareSection.Item[index].AddressOnParent = v.VM.VirtualHardwareSection.Item[index].InstanceID
-		}
-	}
-	return nil
-}
+// func (v *VM) CorrectAddressOnParentForNetworkHardware() error {
+// 	for index := range v.VM.VirtualHardwareSection.Item {
+// 		if v.VM.VirtualHardwareSection.Item[index].ResourceType == types.ResourceTypeEthernet {
+// 			v.VM.VirtualHardwareSection.Item[index].AddressOnParent = v.VM.VirtualHardwareSection.Item[index].InstanceID
+// 		}
+// 	}
+// 	return nil
+// }
 
 func (v *VM) SetXMLNamespaces() {
 	v.VM.Xmlns = types.XMLNamespaceXMLNS
@@ -228,6 +210,18 @@ func (v *VM) SetCPUCount(count int) {
 			v.VM.VirtualHardwareSection.Item[index].VirtualQuantity = count
 		}
 	}
+
+	// Needs item list WITHOUT cpu item
+	// item := &types.VirtualHardwareItem{
+	// 	AllocationUnits: "hertz * 10^6",
+	// 	Description:     "Number of Virtual CPUs",
+	// 	ElementName:     strconv.Itoa(count) + " virtual CPU(s)",
+	// 	ResourceType:    types.ResourceTypeProcessor,
+	// 	VirtualQuantity: count,
+	// 	CoresPerSocket:  1,
+	// }
+
+	// v.VM.VirtualHardwareSection.Item = append(v.VM.VirtualHardwareSection.Item, item)
 }
 
 func (v *VM) SetMemoryCount(count int) {
@@ -237,6 +231,17 @@ func (v *VM) SetMemoryCount(count int) {
 			v.VM.VirtualHardwareSection.Item[index].VirtualQuantity = count
 		}
 	}
+
+	// Needs item list WITHOUT memory item
+	// item := &types.VirtualHardwareItem{
+	// 	AllocationUnits: "byte * 2^20",
+	// 	Description:     "Memory Size",
+	// 	ElementName:     strconv.Itoa(count) + " MB of memory",
+	// 	ResourceType:    types.ResourceTypeMemory,
+	// 	VirtualQuantity: count,
+	// }
+
+	// v.VM.VirtualHardwareSection.Item = append(v.VM.VirtualHardwareSection.Item, item)
 }
 
 func (v *VM) SetNestedHypervisor(value bool) {
@@ -258,16 +263,30 @@ func (v *VM) SetNestedHypervisorWithRequest(value bool) (Task, error) {
 		v.c)
 }
 
-// func (v *VM) SetStorageProfile(name string, meta interface{}) error {
-// 	vcdClient := meta.(*govcloudair.VCDClient)
+func (v *VM) SetStorageProfile(name string) error {
 
-// }
+	vdc, _ := v.c.retrieveVDC()
 
-// func (v *VM) SetStorageProfileWithRequest(name string, vdc Vdc) (Task, error) {
-// 	storageProfile, err := vdc.FindStorageProfileReference(name)
-// 	if err != nil {
-// 		return Task{}, fmt.Errorf("Storage profile %s was not found in the given organization", name)
-// 	}
+	var storageProfile types.Reference
+	var err error
+
+	if name != "" {
+		storageProfile, err = vdc.FindStorageProfileReference(name)
+		if err != nil {
+			return err
+		}
+	} else {
+		storageProfile, err = vdc.GetDefaultStorageProfileReference()
+		if err != nil {
+			return err
+		}
+	}
+
+	v.VM.StorageProfile = &storageProfile
+	return nil
+}
+
+// func (v *VM) SetStorageProfileWithRequest(storageProfile types.Reference) (Task, error) {
 
 // 	return Task{}, nil
 // }
@@ -298,4 +317,18 @@ func (v *VM) SetHostName(value string) {
 
 func (v *VM) SetDescription(value string) {
 	v.VM.Description = value
+}
+
+func (v *VM) SetNeedsCustomization(value bool) {
+	v.VM.NeedsCustomization = value
+}
+
+func (v *VM) RemoveVirtualHardwareItemByResourceType(type_ types.ResourceType) {
+	preservedItems := make([]*types.VirtualHardwareItem, 0)
+	for _, item := range v.VM.VirtualHardwareSection.Item {
+		if item.ResourceType != type_ {
+			preservedItems = append(preservedItems, item)
+		}
+	}
+	v.VM.VirtualHardwareSection.Item = preservedItems
 }
