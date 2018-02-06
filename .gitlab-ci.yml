@@ -7,8 +7,8 @@ stages:
   - test
 
 before_script:
-      - cp -r /builds/KristofferDalby /go/src/github.com/KristofferDalby/
-      - cd /go/src/github.com/KristofferDalby/terraform-provider-vcd
+    - cp -r /builds/KristofferDalby /go/src/github.com/KristofferDalby/
+    - cd /go/src/github.com/KristofferDalby/terraform-provider-vcd
     - bash scripts/gogetcookie.sh
     - go get github.com/kardianos/govendor
 
