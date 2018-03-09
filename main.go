@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/hashicorp/terraform/plugin"
-	"github.com/terraform-providers/terraform-provider-vcd/vcd"
+	"github.com/kradalby/terraform-provider-vcd/vcd"
 )
 
 func main() {
