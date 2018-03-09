@@ -1,0 +1,22 @@
+build:
+  image: golang
+  commands:
+    - go get -t
+    - go get golang.org/x/tools/cmd/cover
+    - go get github.com/mattn/goveralls
+    - hack/coverage
+    - goveralls -coverprofile=.cover/cover.out -service drone.io
+  environment:
+    - COVERALLS_TOKEN=rV578IYwiOWZLEujCjHhS7ciQ4vd4I8Cn
+notify:
+  webhook:
+    urls:
+      - https://webhooks.gitter.im/e/ec455a4f33bad0f3c06b
+    on_success: true
+    on_failure: true
+publish:
+  coverage:
+    server: https://coverage.vmware.run
+    token: $$COVERAGE_TOKEN
+    when:
+      branch: master
