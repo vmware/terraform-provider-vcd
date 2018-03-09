@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	types "github.com/ukcloud/govcloudair/types/v56"
+	types "github.com/kradalby/govcloudair/types/v56"
 	"log"
 )
 

@@ -6,8 +6,8 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	govcd "github.com/ukcloud/govcloudair" // Forked from vmware/govcloudair
-	types "github.com/ukcloud/govcloudair/types/v56"
+	govcd "github.com/kradalby/govcloudair" // Forked from vmware/govcloudair
+	types "github.com/kradalby/govcloudair/types/v56"
 )
 
 // func createVMDescription() (*types.NewVMDescription, error) {

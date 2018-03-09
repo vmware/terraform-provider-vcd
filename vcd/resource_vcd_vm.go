@@ -5,8 +5,8 @@ import (
 	"log"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/ukcloud/govcloudair"
-	types "github.com/ukcloud/govcloudair/types/v56"
+	"github.com/kradalby/govcloudair"
+	types "github.com/kradalby/govcloudair/types/v56"
 )
 
 func resourceVcdVM() *schema.Resource {
