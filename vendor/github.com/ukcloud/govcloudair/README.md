@@ -1,4 +1,4 @@
-# govcloudair [![Build Status](https://ci.vmware.run/api/badges/ukcloud/govcloudair/status.svg)](https://ci.vmware.run/ukcloud/govcloudair) [![Build Status](https://travis-ci.org/ukcloud/govcloudair.svg?branch=master)](https://travis-ci.org/ukcloud/govcloudair) [![Coverage Status](https://coveralls.io/repos/ukcloud/govcloudair/badge.svg?branch=master&service=github)](https://coveralls.io/github/ukcloud/govcloudair?branch=master) [![GoDoc](https://godoc.org/github.com/ukcloud/govcloudair?status.svg)](http://godoc.org/github.com/ukcloud/govcloudair) [![Join the chat at https://gitter.im/ukcloud/govcloudair](https://badges.gitter.im/ukcloud/govcloudair.svg)](https://gitter.im/ukcloud/govcloudair?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+# govcloudair [![Build Status](https://ci.vmware.run/api/badges/ukcloud/govcloudair/status.svg)](https://ci.vmware.run/ukcloud/govcloudair) [![Build Status](https://travis-ci.org/UKCloud/govcloudair.svg?branch=master)](https://travis-ci.org/UKCloud/govcloudair) [![Coverage Status](https://coveralls.io/repos/ukcloud/govcloudair/badge.svg?branch=master&service=github)](https://coveralls.io/github/ukcloud/govcloudair?branch=master) [![GoDoc](https://godoc.org/github.com/UKCloud/govcloudair?status.svg)](http://godoc.org/github.com/UKCloud/govcloudair) [![Join the chat at https://gitter.im/ukcloud/govcloudair](https://badges.gitter.im/ukcloud/govcloudair.svg)](https://gitter.im/ukcloud/govcloudair?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 This repo provides the `govcloudair` package which offers an interface to the vCloud Air 5.6 and 5.7 API and vCloud Director 5.5 API.
 
 It serves as a foundation for a project currently in development, there are plans to make it a general purpose API in the future. The `govcloudair` package is used by the Terraform provider for vCloud Director.
@@ -17,7 +17,7 @@ import (
         "net/url"
         "os"
 
-        govcd "github.com/ukcloud/govcloudair"
+        govcd "github.com/UKCloud/govcloudair"
 )
 
 type Config struct {
@@ -62,4 +62,3 @@ func main() {
   fmt.Printf("Org URL: %s\n", client.OrgHREF.String())
 }
 ```
-

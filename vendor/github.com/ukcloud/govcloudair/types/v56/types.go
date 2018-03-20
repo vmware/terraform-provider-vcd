@@ -1623,8 +1623,8 @@ type QueryResultEdgeGatewayRecordsType struct {
 	PageSize int     `xml:"pageSize,attr,omitempty"` // Page size, as a number of records or references.
 	Total    float64 `xml:"total,attr,omitempty"`    // Total number of records or references in the container.
 	// Elements
-	Link              LinkList                          `xml:"Link,omitempty"`    // A reference to an entity or operation associated with this object.
-	EdgeGatewayRecord *QueryResultEdgeGatewayRecordType `xml:"EdgeGatewayRecord"` // A record representing a query result.
+	Link              LinkList                            `xml:"Link,omitempty"`    // A reference to an entity or operation associated with this object.
+	EdgeGatewayRecord []*QueryResultEdgeGatewayRecordType `xml:"EdgeGatewayRecord"` // A record representing a query result.
 }
 
 type QueryResultRecordsType struct {
