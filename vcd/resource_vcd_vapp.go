@@ -522,6 +522,11 @@ func getVAppNetwork(d *schema.ResourceData, meta interface{}) ([]map[string]inte
 		// 'first' one, and tests will fail sometimes (annoying huh?)
 		vm, err := vcdClient.OrgVdc.FindVMByName(vapp, d.Get("name").(string))
 
+		if err != nil {
+			fmt.Errorf("unable to find any VMs in vApp %s", d.Id())
+			return nil
+		}
+
 		for _, v := range vm.VM.NetworkConnectionSection.NetworkConnection {
 			if v.IPAddress != "" {
 				n := make(map[string]interface{})

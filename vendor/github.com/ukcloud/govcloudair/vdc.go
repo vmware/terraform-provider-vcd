@@ -328,6 +328,12 @@ func (v *Vdc) FindVMByName(vapp VApp, vm string) (VM, error) {
 		return VM{}, fmt.Errorf("error refreshing vapp: %s", err)
 	}
 
+	//vApp Might Not Have Any VMs
+
+	if vapp.VApp.Children == nil {
+		return VM{}, fmt.Errorf("VApp Has No VMs")
+	}
+
 	log.Printf("[TRACE] Looking for VM: %s", vm)
 	for _, child := range vapp.VApp.Children.VM {
 
