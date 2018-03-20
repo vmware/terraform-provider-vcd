@@ -449,7 +449,7 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		d.Set("ip", ip)
-	} 
+	}
 
 	if _, ok := d.GetOk("networks"); ok {
 		networks := []map[string]interface{}{}
