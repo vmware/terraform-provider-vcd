@@ -97,7 +97,6 @@ resource "vcd_vapp" "foobar" {
   name          = "foobar"
   template_name = "Skyscape_CentOS_6_4_x64_50GB_Small_v1.0.1"
   catalog_name  = "Skyscape Catalogue"
-  network_name  = "${vcd_network.foonet.name}"
   memory        = 1024
   cpus          = 1
   ip            = "10.10.102.160"
@@ -108,6 +107,13 @@ resource "vcd_vapp_vm" "moo" {
   name          = "moo"
   catalog_name  = "Skyscape Catalogue"
   template_name = "Skyscape_CentOS_6_4_x64_50GB_Small_v1.0.1"
+  networks      = [
+    {
+      "orgnetwork" = "${vcd_network.foonet.name}",
+      "ip" = "allocated",
+      "is_primary" = true,
+    }
+  ]
   memory        = 1024
   cpus          = 1
   ip            = "10.10.102.161"

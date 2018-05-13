@@ -242,10 +242,10 @@ type NetworkConfigSection struct {
 
 	Info string `xml:"ovf:Info"`
 	//
-	HREF          string                    `xml:"href,attr,omitempty"`
-	Type          string                    `xml:"type,attr,omitempty"`
-	Link          *Link                     `xml:"Link,omitempty"`
-	NetworkConfig *VAppNetworkConfiguration `xml:"NetworkConfig,omitempty"`
+	HREF          string                     `xml:"href,attr,omitempty"`
+	Type          string                     `xml:"type,attr,omitempty"`
+	Link          *Link                      `xml:"Link,omitempty"`
+	NetworkConfig []VAppNetworkConfiguration `xml:"NetworkConfig,omitempty"`
 }
 
 // NetworkConnection represents a network connection in the virtual machine.
@@ -278,11 +278,11 @@ type NetworkConnectionSection struct {
 
 	Info string `xml:"ovf:Info"`
 	//
-	HREF                          string             `xml:"href,attr,omitempty"`
-	Type                          string             `xml:"type,attr,omitempty"`
-	Link                          *Link              `xml:"Link,omitempty"`
-	PrimaryNetworkConnectionIndex int                `xml:"PrimaryNetworkConnectionIndex"`
-	NetworkConnection             *NetworkConnection `xml:"NetworkConnection,omitempty"`
+	HREF                          string               `xml:"href,attr,omitempty"`
+	Type                          string               `xml:"type,attr,omitempty"`
+	PrimaryNetworkConnectionIndex int                  `xml:"PrimaryNetworkConnectionIndex"`
+	NetworkConnection             []*NetworkConnection `xml:"NetworkConnection,omitempty"`
+	Link                          *Link                `xml:"Link,omitempty"`
 }
 
 // InstantiationParams is a container for ovf:Section_Type elements that specify vApp configuration on instantiate, compose, or recompose.
@@ -727,7 +727,7 @@ type SourcedCompositionItemParam struct {
 	VMGeneralParams     *VMGeneralParams     `xml:"VmGeneralParams,omitempty"`     // Specify name, description, and other properties of a VM during instantiation.
 	VAppScopedLocalID   string               `xml:"VAppScopedLocalId,omitempty"`   // If Source references a Vm, this value provides a unique identifier for the Vm in the scope of the composed vApp.
 	InstantiationParams *InstantiationParams `xml:"InstantiationParams,omitempty"` // If Source references a Vm this can include any of the following OVF sections: VirtualHardwareSection OperatingSystemSection NetworkConnectionSection GuestCustomizationSection.
-	NetworkAssignment   *NetworkAssignment   `xml:"NetworkAssignment,omitempty"`   // If Source references a Vm, this element maps a network name specified in the Vm to the network name of a vApp network defined in the composed vApp.
+	NetworkAssignment   []*NetworkAssignment `xml:"NetworkAssignment,omitempty"`   // If Source references a Vm, this element maps a network name specified in the Vm to the network name of a vApp network defined in the composed vApp.
 	StorageProfile      *Reference           `xml:"StorageProfile,omitempty"`      // If Source references a Vm, this element contains a reference to a storage profile to be used for the Vm. The specified storage profile must exist in the organization vDC that contains the composed vApp. If not specified, the default storage profile for the vDC is used.
 	LocalityParams      *LocalityParams      `xml:"LocalityParams,omitempty"`      // Represents locality parameters. Locality parameters provide a hint that may help the placement engine optimize placement of a VM and an independent a Disk so that the VM can make efficient use of the disk.
 }
