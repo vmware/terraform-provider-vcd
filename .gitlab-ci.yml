@@ -8,7 +8,7 @@ stages:
   - deploy
 
 before_script:
-    - mkdir -p $GOPATH/src/github.com
+    - mkdir -p $GOPATH/src/github.com/kradalby
     - ln -svf $CI_PROJECT_DIR $GOPATH/src/github.com/kradalby/terraform-provider-vcd
     - cd $GOPATH/src/github.com/kradalby/terraform-provider-vcd
     - bash scripts/gogetcookie.sh
