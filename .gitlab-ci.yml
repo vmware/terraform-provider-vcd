@@ -19,7 +19,6 @@ build:
   stage: build
   script:
       - make build
-      - cp -r bin $CI_PROJECT_DIR/.
   artifacts:
       paths:
           - ./bin/terraform-provider-vcd-linux-amd64
