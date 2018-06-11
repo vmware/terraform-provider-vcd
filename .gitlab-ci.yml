@@ -8,9 +8,9 @@ stages:
   - deploy
 
 before_script:
-    - mkdir -p /go/src/github.com
-    - cp -r /builds/KristofferDalby /go/src/github.com/kradalby/
-    - cd /go/src/github.com/kradalby/terraform-provider-vcd
+    - mkdir -p $GOPATH/src/github.com
+    - ln -svf $CI_PROJECT_DIR $GOPATH/src/github.com/kradalby/terraform-provider-vcd
+    - cd $GOPATH/src/github.com/kradalby/terraform-provider-vcd
     - bash scripts/gogetcookie.sh
       #    - go get github.com/kardianos/govendor
       #    - go get github.com/jinzhu/copier
