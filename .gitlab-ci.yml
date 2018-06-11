@@ -11,8 +11,8 @@ before_script:
     - cp -r /builds/KristofferDalby /go/src/github.com/terraform-providers/
     - cd /go/src/github.com/terraform-providers/terraform-provider-vcd
     - bash scripts/gogetcookie.sh
-    - go get github.com/kardianos/govendor
-    - go get github.com/jinzhu/copier
+      #    - go get github.com/kardianos/govendor
+      #    - go get github.com/jinzhu/copier
 
 build:
   stage: build

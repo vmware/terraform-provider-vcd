@@ -8,7 +8,13 @@ install:
 	cp $(GOPATH)/bin/terraform-provider-vcd $(HOME)/.terraform.d/plugins/terraform-provider-vcd_v1.0.0_x4
 
 build: fmtcheck
-	go install
+	GOOS=linux GOARCH=amd64 go build
+	mv terraform-provider-vcd terraform-provider-vcd-linux-amd64
+	GOOS=freebsd GOARCH=amd64 go build
+	mv terraform-provider-vcd terraform-provider-vcd-freebsd-amd64
+	GOOS=darwin GOARCH=amd64 go build
+	mv terraform-provider-vcd terraform-provider-vcd-darwin-amd64
+	GOOS=windows GOARCH=amd64 go build
 
 test: fmtcheck
 	go test -i $(TEST) || exit 1
