@@ -23,7 +23,6 @@ build:
   artifacts:
       paths:
           - ./bin/terraform-provider-vcd-linux-amd64
-          - ./bin/terraform-provider-vcd-freebsd-amd64
           - ./bin/terraform-provider-vcd-darwin-amd64
           - ./bin/terraform-provider-vcd-win-amd64.exe
 
@@ -45,7 +44,6 @@ pages:
     stage: deploy
     script:
       - cp bin/terraform-provider-vcd-linux-amd64 public/. 
-      - cp bin/terraform-provider-vcd-freebsd-amd64 public/. 
       - cp bin/terraform-provider-vcd-darwin-amd64 public/. 
       - cp bin/terraform-provider-vcd-win-amd64.exe public/. 
     artifacts:
