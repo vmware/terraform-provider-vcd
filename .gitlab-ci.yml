@@ -19,6 +19,7 @@ build:
   stage: build
   script:
       - make build
+      - ls -lah bin
   artifacts:
       paths:
           - ./bin/terraform-provider-vcd-linux-amd64
