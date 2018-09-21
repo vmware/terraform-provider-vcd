@@ -91,7 +91,7 @@ func resourceVcdVApp() *schema.Resource {
 				Optional: true,
 				Default:  true,
 			},
-			"accept_all_eulas:": {
+			"accept_all_eulas": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  true,
@@ -226,18 +226,19 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 				}
 			}
 
-			initscript := d.Get("initscript").(string)
-
-			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-				log.Printf("running customisation script")
-				task, err := vapp.RunCustomizationScript(d.Get("name").(string), initscript)
+			initscript, ok := d.GetOk("initscript")
+			if ok {
+				err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+					log.Printf("running customisation script")
+					task, err := vapp.RunCustomizationScript(d.Get("name").(string), initscript.(string))
+					if err != nil {
+						return resource.RetryableError(fmt.Errorf("Error with setting init script: %#v", err))
+					}
+					return resource.RetryableError(task.WaitTaskCompletion())
+				})
 				if err != nil {
-					return resource.RetryableError(fmt.Errorf("Error with setting init script: %#v", err))
+					return fmt.Errorf("Error completing tasks: %#v", err)
 				}
-				return resource.RetryableError(task.WaitTaskCompletion())
-			})
-			if err != nil {
-				return fmt.Errorf("Error completing tasks: %#v", err)
 			}
 
 		}
