@@ -64,8 +64,8 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Could not find Org: %v", err)
 	}
 	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
-	if err != nil {
-		return fmt.Errorf("Could not find vdc: %v", err)
+	if err != nil || vdc == (govcd.Vdc{}) {
+		return fmt.Errorf("Could not find vdc: %s, %s", d.Get("org").(string), d.Get("vdc").(string))
 	}
 
 	// Multiple VCD components need to run operations on the Edge Gateway, as

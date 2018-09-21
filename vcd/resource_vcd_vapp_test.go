@@ -19,7 +19,7 @@ func TestAccVcdVApp_PowerOff(t *testing.T) {
 		CheckDestroy: testAccCheckVcdVAppDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: fmt.Sprintf(testAccCheckVcdVApp_basic, os.Getenv("VCD_EDGE_GATEWAY"), os.Getenv("VCD_EDGE_GATEWAY")),
+				Config: fmt.Sprintf(testAccCheckVcdVApp_basic, testOrg, testVDC, os.Getenv("VCD_EDGE_GATEWAY"), testOrg, testVDC, os.Getenv("VCD_EDGE_GATEWAY"), testOrg, testVDC, testOrg, testVDC),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppExists("vcd_vapp.foobar", &vapp),
 					testAccCheckVcdVAppAttributes(&vapp),
@@ -33,7 +33,7 @@ func TestAccVcdVApp_PowerOff(t *testing.T) {
 			},
 
 			resource.TestStep{
-				Config: fmt.Sprintf(testAccCheckVcdVApp_basic, os.Getenv("VCD_EDGE_GATEWAY"), os.Getenv("VCD_EDGE_GATEWAY")),
+				Config: fmt.Sprintf(testAccCheckVcdVApp_basic, testOrg, testVDC, os.Getenv("VCD_EDGE_GATEWAY"), testOrg, testVDC, os.Getenv("VCD_EDGE_GATEWAY"), testOrg, testVDC, testOrg, testVDC),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"vcd_vapp.foobar_allocated", "name", "foobar-allocated"),
@@ -45,7 +45,7 @@ func TestAccVcdVApp_PowerOff(t *testing.T) {
 			},
 
 			resource.TestStep{
-				Config: fmt.Sprintf(testAccCheckVcdVApp_powerOff, os.Getenv("VCD_EDGE_GATEWAY")),
+				Config: fmt.Sprintf(testAccCheckVcdVApp_powerOff, testOrg, testVDC, os.Getenv("VCD_EDGE_GATEWAY"), testOrg, testVDC),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppExists("vcd_vapp.foobar", &vapp),
 					testAccCheckVcdVAppAttributes_off(&vapp),
@@ -73,8 +73,15 @@ func testAccCheckVcdVAppExists(n string, vapp *govcd.VApp) resource.TestCheckFun
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
-
-		resp, err := conn.OrgVdc.FindVAppByName(rs.Primary.ID)
+		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+		if err != nil {
+			return fmt.Errorf("Could not find test Org")
+		}
+		vdc, err := org.GetVdcByName(testVDC)
+		if err != nil {
+			return fmt.Errorf("Could not find test Vdc")
+		}
+		resp, err := vdc.FindVAppByName(rs.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -92,8 +99,15 @@ func testAccCheckVcdVAppDestroy(s *terraform.State) error {
 		if rs.Type != "vcd_vapp" {
 			continue
 		}
-
-		_, err := conn.OrgVdc.FindVAppByName(rs.Primary.ID)
+		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+		if err != nil {
+			return fmt.Errorf("Could not find test Org")
+		}
+		vdc, err := org.GetVdcByName(testVDC)
+		if err != nil {
+			return fmt.Errorf("Could not find test Vdc")
+		}
+		_, err = vdc.FindVAppByName(rs.Primary.ID)
 
 		if err == nil {
 			return fmt.Errorf("VPCs still exist")
@@ -150,6 +164,8 @@ func testAccCheckVcdVAppAttributes_off(vapp *govcd.VApp) resource.TestCheckFunc 
 const testAccCheckVcdVApp_basic = `
 resource "vcd_network" "foonet" {
 	name = "foonet"
+	org = "%s"
+	vdc = "%s"
 	edge_gateway = "%s"
 	gateway = "10.10.102.1"
 	static_ip_pool {
@@ -160,6 +176,8 @@ resource "vcd_network" "foonet" {
 
 resource "vcd_network" "foonet3" {
 	name = "foonet3"
+	org = "%s"
+	vdc = "%s"
 	edge_gateway = "%s"
 	gateway = "10.10.202.1"
 	static_ip_pool {
@@ -169,6 +187,8 @@ resource "vcd_network" "foonet3" {
 }
 
 resource "vcd_vapp" "foobar" {
+  org = "%s"
+  vdc = "%s"
   name          = "foobar"
   template_name = "Skyscape_CentOS_6_4_x64_50GB_Small_v1.0.1"
   catalog_name  = "Skyscape Catalogue"
@@ -179,6 +199,8 @@ resource "vcd_vapp" "foobar" {
 }
 
 resource "vcd_vapp" "foobar_allocated" {
+  org = "%s"
+  vdc = "%s"
   name          = "foobar-allocated"
   template_name = "Skyscape_CentOS_6_4_x64_50GB_Small_v1.0.1"
   catalog_name  = "Skyscape Catalogue"
@@ -191,6 +213,8 @@ resource "vcd_vapp" "foobar_allocated" {
 
 const testAccCheckVcdVApp_powerOff = `
 resource "vcd_network" "foonet2" {
+	org = "%s"
+	vdc = "%s"
 	name = "foonet2"
 	edge_gateway = "%s"
 	gateway = "10.10.103.1"
@@ -206,6 +230,8 @@ resource "vcd_network" "foonet2" {
 }
 
 resource "vcd_vapp" "foobar" {
+  org = "%s"
+  vdc = "%s"
   name          = "foobar"
   template_name = "Skyscape_CentOS_6_4_x64_50GB_Small_v1.0.1"
   catalog_name  = "Skyscape Catalogue"
