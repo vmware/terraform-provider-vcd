@@ -1,18 +1,17 @@
-/*****************************************************************
-* terraform-provider-vcloud-director
-* Copyright (c) 2017 VMware, Inc. All Rights Reserved.
-* SPDX-License-Identifier: BSD-2-Clause
-******************************************************************/
+// /*****************************************************************
+// * terraform-provider-vcloud-director
+// * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+// * SPDX-License-Identifier: BSD-2-Clause
+// ******************************************************************/
 
 package vcd
 
 import (
 	"fmt"
-	//"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	govcd "github.com/ukcloud/govcloudair"
+	govcd "github.com/vmware/go-vcloud-director/govcd"
+	types "github.com/vmware/go-vcloud-director/types/v56"
 	"log"
-	"strconv"
 	"strings"
 )
 
@@ -43,18 +42,22 @@ func resourceOrg() *schema.Resource {
 			"deployed_vm_quota": &schema.Schema{
 				Type:     schema.TypeInt,
 				Optional: true,
+				Default:  -1,
 			},
 			"stored_vm_quota": &schema.Schema{
 				Type:     schema.TypeInt,
 				Optional: true,
+				Default:  -1,
 			},
 			"can_publish_catalogs": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
+				Default:  true,
 			},
 			"use_server_boot_sequence": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
+				Default:  true,
 			},
 			"delay_after_power_on_seconds": &schema.Schema{
 				Type:     schema.TypeInt,
@@ -83,32 +86,7 @@ func resourceOrgCreate(d *schema.ResourceData, m interface{}) error {
 	fullName := d.Get("full_name").(string)
 	isEnabled := d.Get("is_enabled").(bool)
 
-	settings := map[string]string{}
-
-	canPublishCatalogs, ok := d.GetOk("can_publish_catalogs")
-	if ok {
-		settings["CanPublishCatalogs"] = strconv.FormatBool(canPublishCatalogs.(bool))
-	}
-
-	vmQuota, ok := d.GetOk("deployed_vm_quota")
-	if ok {
-		settings["DeployedVMQuota"] = strconv.Itoa(vmQuota.(int))
-	}
-
-	vmQuota, ok = d.GetOk("stored_vm_quota")
-	if ok {
-		settings["StoredVMQuota"] = strconv.Itoa(vmQuota.(int))
-	}
-
-	delay, ok := d.GetOk("delay_after_power_on_seconds")
-	if ok {
-		settings["DelayAfterPowerOnSeconds"] = strconv.Itoa(delay.(int))
-	}
-
-	serverboot, ok := d.GetOk("use_server_boot_sequence")
-	if ok {
-		settings["UseServerBootSequence"] = strconv.FormatBool(serverboot.(bool))
-	}
+	settings := getSettings(d)
 
 	log.Printf("CREATING ORG: %s", orgName)
 	task, err := govcd.CreateOrg(vcdClient.VCDClient, orgName, fullName, isEnabled, settings)
@@ -123,6 +101,28 @@ func resourceOrgCreate(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
+func getSettings(d *schema.ResourceData) *types.OrgSettings {
+	settings := &types.OrgSettings{}
+	General := &types.OrgGeneralSettings{}
+	if d.Get("deployed_vm_quota").(int) != -1 {
+		General.DeployedVMQuota = d.Get("deployed_vm_quota").(int)
+	}
+	if d.Get("stored_vm_quota").(int) != -1 {
+		General.StoredVMQuota = d.Get("stored_vm_quota").(int)
+	}
+
+	delay, ok := d.GetOk("delay_after_power_on_seconds")
+	if ok {
+		General.DelayAfterPowerOnSeconds = delay.(int)
+	}
+
+	General.CanPublishCatalogs = d.Get("can_publish_catalogs").(bool)
+	General.UseServerBootSequence = d.Get("use_server_boot_sequence").(bool)
+
+	settings.OrgGeneralSettings = General
+	return settings
+}
+
 //Deletes org
 func resourceOrgDelete(d *schema.ResourceData, m interface{}) error {
 
@@ -133,7 +133,7 @@ func resourceOrgDelete(d *schema.ResourceData, m interface{}) error {
 
 	//fetches org
 	log.Printf("Reading org with id %s", d.State().ID)
-	org, err := govcd.GetAdminOrgById(vcdClient.VCDClient, d.State().ID)
+	org, err := govcd.GetAdminOrgByName(vcdClient.VCDClient, d.Get("name").(string))
 	if err != nil {
 		return fmt.Errorf("Error fetching org: %#v", err)
 	}
@@ -167,37 +167,14 @@ func resourceOrgUpdate(d *schema.ResourceData, m interface{}) error {
 
 	log.Printf("Reading org with id %s", d.State().ID)
 
-	org, err := govcd.GetAdminOrgById(vcdClient.VCDClient, d.State().ID)
+	org, err := govcd.GetAdminOrgByName(vcdClient.VCDClient, d.Get("name").(string))
 
 	if err != nil {
 		return fmt.Errorf("Error fetching org: %#v", err)
 	}
-
+	settings := getSettings(d)
 	org.AdminOrg.Name = orgName
-	canPublishCatalogs, ok := d.GetOk("can_publish_catalogs")
-	if ok {
-		org.AdminOrg.OrgSettings.General.CanPublishCatalogs = canPublishCatalogs.(bool)
-	}
-
-	vmQuota, ok := d.GetOk("deployed_vm_quota")
-	if ok {
-		org.AdminOrg.OrgSettings.General.DeployedVMQuota = vmQuota.(int)
-	}
-
-	vmQuota, ok = d.GetOk("stored_vm_quota")
-	if ok {
-		org.AdminOrg.OrgSettings.General.StoredVMQuota = vmQuota.(int)
-	}
-
-	delay, ok := d.GetOk("delay_after_power_on_seconds")
-	if ok {
-		org.AdminOrg.OrgSettings.General.DelayAfterPowerOnSeconds = delay.(int)
-	}
-
-	serverboot, ok := d.GetOk("use_server_boot_sequence")
-	if ok {
-		org.AdminOrg.OrgSettings.General.UseServerBootSequence = serverboot.(bool)
-	}
+	org.AdminOrg.OrgSettings.OrgGeneralSettings = settings.OrgGeneralSettings
 
 	log.Printf("org with id %s found", d.State().ID)
 	_, err = org.Update()
@@ -215,7 +192,7 @@ func resourceOrgRead(d *schema.ResourceData, m interface{}) error {
 	vcdClient := m.(*VCDClient)
 
 	log.Printf("Reading org with id %s", d.State().ID)
-	_, err := govcd.GetAdminOrgById(vcdClient.VCDClient, d.State().ID)
+	_, err := govcd.GetAdminOrgByName(vcdClient.VCDClient, d.Get("name").(string))
 
 	if err != nil {
 		log.Printf("Org with id %s not found. Setting ID to nothing", d.State().ID)
