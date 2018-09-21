@@ -91,13 +91,23 @@ func resourceOrgDelete(d *schema.ResourceData, m interface{}) error {
 
 	//DELETING
 	vcdClient := m.(*VCDClient)
-	log.Printf("Deleting Org with id %s", d.State().ID)
 	force := d.Get("force").(bool)
 	recursive := d.Get("recursive").(bool)
 
-	//deletes organization
-	err := vcdClient.DeleteOrg(d.State().ID, force, recursive)
+	//fetches org
+	log.Printf("Reading org with id %s", d.State().ID)
+	org, err := vcdClient.GetOrg(d.State().ID)
 	if err != nil {
+		return fmt.Errorf("Error fetching org: %#v", err)
+	}
+
+	log.Printf("org with id %s found", d.State().ID)
+	//deletes organization
+	log.Printf("Deleting Org with id %s", d.State().ID)
+
+	err = org.Delete(force, recursive)
+	if err != nil {
+		log.Printf("Error Deleting Org with id %s and error : %#v", d.State().ID, err)
 		return err
 	}
 	log.Printf("Org with id %s deleted", d.State().ID)
@@ -141,11 +151,22 @@ func resourceOrgUpdate(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("__ERROR__ Not Updating org_full_name , API NOT IMPLEMENTED !!!!")
 	}
 
-	_, err := vcdClient.UpdateOrg(orgName, oldOrgFullName, *settings, d.State().ID, isEnabled)
+	log.Printf("Reading org with id %s", d.State().ID)
+
+	org, err := vcdClient.GetOrg(d.State().ID)
+	if err != nil {
+		return fmt.Errorf("Error fetching org: %#v", err)
+	}
+
+	log.Printf("org with id %s found", d.State().ID)
+	_, err = org.Update(orgName, oldOrgFullName, *settings, isEnabled)
 
 	if err != nil {
-		fmt.Errorf("Error updating org %#v", err)
+		log.Printf("Error updating org with id %s : %#v", d.State().ID, err)
+		return fmt.Errorf("Error updating org %#v", err)
 	}
+
+	log.Printf("Org with id %s updated", d.State().ID)
 	return nil
 }
 
@@ -153,14 +174,14 @@ func resourceOrgRead(d *schema.ResourceData, m interface{}) error {
 	vcdClient := m.(*VCDClient)
 
 	log.Printf("Reading org with id %s", d.State().ID)
-	_, _, err := vcdClient.GetOrg(d.State().ID)
+	_, err := vcdClient.GetOrg(d.State().ID)
 
-	log.Printf("Org with id %s found", d.State().ID)
 	if err != nil {
 		log.Printf("Org with id %s not found. Setting ID to nothing", d.State().ID)
 		d.SetId("")
 		return nil
 	}
+	log.Printf("Org with id %s found", d.State().ID)
 	return nil
 
 }
