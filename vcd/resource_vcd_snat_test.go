@@ -24,7 +24,7 @@ func TestAccVcdSNAT_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckVcdSNATDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: fmt.Sprintf(testAccCheckVcdSnat_basic, os.Getenv("VCD_EDGE_GATEWAY"), os.Getenv("VCD_EXTERNAL_IP")),
+				Config: fmt.Sprintf(testAccCheckVcdSnat_basic, testOrg, testVDC, os.Getenv("VCD_EDGE_GATEWAY"), os.Getenv("VCD_EXTERNAL_IP")),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdSNATExists("vcd_snat.bar", &e),
 					resource.TestCheckResourceAttr(
@@ -53,7 +53,15 @@ func testAccCheckVcdSNATExists(n string, gateway *govcd.EdgeGateway) resource.Te
 		conn := testAccProvider.Meta().(*VCDClient)
 
 		gatewayName := rs.Primary.Attributes["edge_gateway"]
-		edgeGateway, err := conn.OrgVdc.FindEdgeGateway(gatewayName)
+		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+		if err != nil {
+			return fmt.Errorf("Could not find test Org")
+		}
+		vdc, err := org.GetVdcByName(testVDC)
+		if err != nil {
+			return fmt.Errorf("Could not find test Vdc")
+		}
+		edgeGateway, err := vdc.FindEdgeGateway(gatewayName)
 
 		if err != nil {
 			return fmt.Errorf("Could not find edge gateway")
@@ -86,7 +94,15 @@ func testAccCheckVcdSNATDestroy(s *terraform.State) error {
 		}
 
 		gatewayName := rs.Primary.Attributes["edge_gateway"]
-		edgeGateway, err := conn.OrgVdc.FindEdgeGateway(gatewayName)
+		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+		if err != nil {
+			return fmt.Errorf("Could not find test Org")
+		}
+		vdc, err := org.GetVdcByName(testVDC)
+		if err != nil {
+			return fmt.Errorf("Could not find test Vdc")
+		}
+		edgeGateway, err := vdc.FindEdgeGateway(gatewayName)
 
 		if err != nil {
 			return fmt.Errorf("Could not find edge gateway")
@@ -112,6 +128,8 @@ func testAccCheckVcdSNATDestroy(s *terraform.State) error {
 
 const testAccCheckVcdSnat_basic = `
 resource "vcd_snat" "bar" {
+	org         = "%s"
+	vdc         = "%s"
 	edge_gateway = "%s"
 	external_ip = "%s"
 	internal_ip = "10.10.102.0/24"

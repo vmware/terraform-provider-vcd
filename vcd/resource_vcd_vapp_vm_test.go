@@ -20,7 +20,7 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckVcdVAppVmDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: fmt.Sprintf(testAccCheckVcdVAppVm_basic, os.Getenv("VCD_EDGE_GATEWAY")),
+				Config: fmt.Sprintf(testAccCheckVcdVAppVm_basic, testOrg, testVDC, os.Getenv("VCD_EDGE_GATEWAY"), testOrg, testVDC, testOrg, testVDC),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppVmExists("vcd_vapp_vm.moo", &vapp, &vm),
 					resource.TestCheckResourceAttr(
@@ -47,10 +47,17 @@ func testAccCheckVcdVAppVmExists(n string, vapp *govcd.VApp, vm *govcd.VM) resou
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
+		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+		if err != nil {
+			return fmt.Errorf("Could not find test Org")
+		}
+		vdc, err := org.GetVdcByName(testVDC)
+		if err != nil {
+			return fmt.Errorf("Could not find test Vdc")
+		}
+		vapp, err := vdc.FindVAppByName("foobar")
 
-		vapp, err := conn.OrgVdc.FindVAppByName("foobar")
-
-		resp, err := conn.OrgVdc.FindVMByName(vapp, "moo")
+		resp, err := vdc.FindVMByName(vapp, "moo")
 
 		if err != nil {
 			return err
@@ -69,8 +76,15 @@ func testAccCheckVcdVAppVmDestroy(s *terraform.State) error {
 		if rs.Type != "vcd_vapp" {
 			continue
 		}
-
-		_, err := conn.OrgVdc.FindVAppByName("foobar")
+		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+		if err != nil {
+			return fmt.Errorf("Could not find test Org")
+		}
+		vdc, err := org.GetVdcByName(testVDC)
+		if err != nil {
+			return fmt.Errorf("Could not find test Vdc")
+		}
+		_, err = vdc.FindVAppByName("foobar")
 
 		if err == nil {
 			return fmt.Errorf("VPCs still exist")
@@ -85,6 +99,8 @@ func testAccCheckVcdVAppVmDestroy(s *terraform.State) error {
 const testAccCheckVcdVAppVm_basic = `
 resource "vcd_network" "foonet" {
 	name = "foonet"
+	org = "%s"
+	vdc = "%s"
 	edge_gateway = "%s"
 	gateway = "10.10.102.1"
 	static_ip_pool {
@@ -95,6 +111,8 @@ resource "vcd_network" "foonet" {
 
 resource "vcd_vapp" "foobar" {
   name          = "foobar"
+  org = "%s"
+  vdc = "%s"
   template_name = "Skyscape_CentOS_6_4_x64_50GB_Small_v1.0.1"
   catalog_name  = "Skyscape Catalogue"
   network_name  = "${vcd_network.foonet.name}"
@@ -104,6 +122,8 @@ resource "vcd_vapp" "foobar" {
 }
 
 resource "vcd_vapp_vm" "moo" {
+  org = "%s"
+  vdc = "%s"
   vapp_name     = "${vcd_vapp.foobar.name}"
   name          = "moo"
   catalog_name  = "Skyscape Catalogue"

@@ -21,7 +21,7 @@ func TestAccVcdNetwork_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckVcdNetworkDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: fmt.Sprintf(testAccCheckVcdNetwork_basic, os.Getenv("VCD_EDGE_GATEWAY")),
+				Config: fmt.Sprintf(testAccCheckVcdNetwork_basic, testOrg, testVDC, os.Getenv("VCD_EDGE_GATEWAY")),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdNetworkExists("vcd_network.foonet", &network),
 					testAccCheckVcdNetworkAttributes(&network),
@@ -51,8 +51,15 @@ func testAccCheckVcdNetworkExists(n string, network *govcd.OrgVDCNetwork) resour
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
-
-		resp, err := conn.OrgVdc.FindVDCNetwork(rs.Primary.ID)
+		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+		if err != nil {
+			return fmt.Errorf("Could not find test Org")
+		}
+		vdc, err := org.GetVdcByName(testVDC)
+		if err != nil {
+			return fmt.Errorf("Could not find test Vdc")
+		}
+		resp, err := vdc.FindVDCNetwork(rs.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("Network does not exist.")
 		}
@@ -70,8 +77,15 @@ func testAccCheckVcdNetworkDestroy(s *terraform.State) error {
 		if rs.Type != "vcd_network" {
 			continue
 		}
-
-		_, err := conn.OrgVdc.FindVDCNetwork(rs.Primary.ID)
+		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+		if err != nil {
+			return fmt.Errorf("Could not find test Org")
+		}
+		vdc, err := org.GetVdcByName(testVDC)
+		if err != nil {
+			return fmt.Errorf("Could not find test Vdc")
+		}
+		_, err = vdc.FindVDCNetwork(rs.Primary.ID)
 
 		if err == nil {
 			return fmt.Errorf("Network still exists.")
@@ -97,6 +111,8 @@ func testAccCheckVcdNetworkAttributes(network *govcd.OrgVDCNetwork) resource.Tes
 const testAccCheckVcdNetwork_basic = `
 resource "vcd_network" "foonet" {
 	name = "foonet"
+	org  = "%s"
+	vdc  = "%s"
 	edge_gateway = "%s"
 	gateway = "10.10.102.1"
 	static_ip_pool {
