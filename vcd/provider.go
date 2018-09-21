@@ -73,6 +73,7 @@ func Provider() terraform.ResourceProvider {
 			"vcd_snat":            resourceVcdSNAT(),
 			"vcd_edgegateway_vpn": resourceVcdEdgeGatewayVpn(),
 			"vcd_vapp_vm":         resourceVcdVAppVm(),
+			"vcd_org":             resourceOrg(),
 		},
 
 		ConfigureFunc: providerConfigure,
