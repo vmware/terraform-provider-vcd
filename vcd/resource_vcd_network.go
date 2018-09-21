@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
+	govcd "github.com/ukcloud/govcloudair"
 	types "github.com/ukcloud/govcloudair/types/v56"
 )
 
@@ -25,7 +26,16 @@ func resourceVcdNetwork() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-
+			"org": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+			"vdc": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
 			"fence_mode": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -146,7 +156,16 @@ func resourceVcdNetworkCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient.Mutex.Lock()
 	defer vcdClient.Mutex.Unlock()
 
-	edgeGateway, err := vcdClient.OrgVdc.FindEdgeGateway(d.Get("edge_gateway").(string))
+	org, err := govcd.GetOrgFromName(vcdClient.VCDClient, d.Get("org").(string))
+	if err != nil {
+		return fmt.Errorf("Could not find Org: %v", err)
+	}
+	vdc, err := org.GetVDCFromName(d.Get("vdc").(string))
+	if err != nil {
+		return fmt.Errorf("Could not find vdc: %v", err)
+	}
+
+	edgeGateway, err := vdc.FindEdgeGateway(d.Get("edge_gateway").(string))
 
 	ipRanges := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
 
@@ -177,18 +196,18 @@ func resourceVcdNetworkCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[INFO] NETWORK: %#v", newnetwork)
 
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		return resource.RetryableError(vcdClient.OrgVdc.CreateOrgVDCNetwork(newnetwork))
+		return resource.RetryableError(vdc.CreateOrgVDCNetwork(newnetwork))
 	})
 	if err != nil {
 		return fmt.Errorf("Error: %#v", err)
 	}
 
-	err = vcdClient.OrgVdc.Refresh()
+	err = vdc.Refresh()
 	if err != nil {
 		return fmt.Errorf("Error refreshing vdc: %#v", err)
 	}
 
-	network, err := vcdClient.OrgVdc.FindVDCNetwork(d.Get("name").(string))
+	network, err := vdc.FindVDCNetwork(d.Get("name").(string))
 	if err != nil {
 		return fmt.Errorf("Error finding network: %#v", err)
 	}
@@ -216,14 +235,23 @@ func resourceVcdNetworkCreate(d *schema.ResourceData, meta interface{}) error {
 func resourceVcdNetworkRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	log.Printf("[DEBUG] VCD Client configuration: %#v", vcdClient)
-	log.Printf("[DEBUG] VCD Client configuration: %#v", vcdClient.OrgVdc)
+	//log.Printf("[DEBUG] VCD Client configuration: %#v", vcdClient.OrgVdc)
 
-	err := vcdClient.OrgVdc.Refresh()
+	org, err := govcd.GetOrgFromName(vcdClient.VCDClient, d.Get("org").(string))
+	if err != nil {
+		return fmt.Errorf("Could not find Org: %v", err)
+	}
+	vdc, err := org.GetVDCFromName(d.Get("vdc").(string))
+	if err != nil {
+		return fmt.Errorf("Could not find vdc: %v", err)
+	}
+
+	err = vdc.Refresh()
 	if err != nil {
 		return fmt.Errorf("Error refreshing vdc: %#v", err)
 	}
 
-	network, err := vcdClient.OrgVdc.FindVDCNetwork(d.Id())
+	network, err := vdc.FindVDCNetwork(d.Id())
 	if err != nil {
 		log.Printf("[DEBUG] Network no longer exists. Removing from tfstate")
 		d.SetId("")
@@ -249,12 +277,22 @@ func resourceVcdNetworkDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.Mutex.Lock()
 	defer vcdClient.Mutex.Unlock()
-	err := vcdClient.OrgVdc.Refresh()
+
+	org, err := govcd.GetOrgFromName(vcdClient.VCDClient, d.Get("org").(string))
+	if err != nil {
+		return fmt.Errorf("Could not find Org: %v", err)
+	}
+	vdc, err := org.GetVDCFromName(d.Get("vdc").(string))
+	if err != nil {
+		return fmt.Errorf("Could not find vdc: %v", err)
+	}
+
+	err = vdc.Refresh()
 	if err != nil {
 		return fmt.Errorf("Error refreshing vdc: %#v", err)
 	}
 
-	network, err := vcdClient.OrgVdc.FindVDCNetwork(d.Id())
+	network, err := vdc.FindVDCNetwork(d.Id())
 	if err != nil {
 		return fmt.Errorf("Error finding network: %#v", err)
 	}
