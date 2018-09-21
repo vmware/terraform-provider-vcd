@@ -52,11 +52,11 @@ func testAccCheckVcdNetworkExists(n string, network *govcd.OrgVDCNetwork) resour
 
 		conn := testAccProvider.Meta().(*VCDClient)
 		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
-		if err != nil {
+		if err != nil || org == (govcd.Org{}) {
 			return fmt.Errorf("Could not find test Org")
 		}
 		vdc, err := org.GetVdcByName(testVDC)
-		if err != nil {
+		if err != nil || vdc == (govcd.Vdc{}) {
 			return fmt.Errorf("Could not find test Vdc")
 		}
 		resp, err := vdc.FindVDCNetwork(rs.Primary.ID)
@@ -78,11 +78,11 @@ func testAccCheckVcdNetworkDestroy(s *terraform.State) error {
 			continue
 		}
 		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
-		if err != nil {
+		if err != nil || org == (govcd.Org{}) {
 			return fmt.Errorf("Could not find test Org")
 		}
 		vdc, err := org.GetVdcByName(testVDC)
-		if err != nil {
+		if err != nil || vdc == (govcd.Vdc{}) {
 			return fmt.Errorf("Could not find test Vdc")
 		}
 		_, err = vdc.FindVDCNetwork(rs.Primary.ID)

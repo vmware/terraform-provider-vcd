@@ -134,8 +134,8 @@ func resourceOrgDelete(d *schema.ResourceData, m interface{}) error {
 	//fetches org
 	log.Printf("Reading org with id %s", d.State().ID)
 	org, err := govcd.GetAdminOrgByName(vcdClient.VCDClient, d.Get("name").(string))
-	if err != nil {
-		return fmt.Errorf("Error fetching org: %#v", err)
+	if err != nil || org == (govcd.AdminOrg{}) {
+		return fmt.Errorf("Error fetching org: %s", d.Get("name").(string))
 	}
 
 	log.Printf("org with id %s found", d.State().ID)
@@ -169,9 +169,10 @@ func resourceOrgUpdate(d *schema.ResourceData, m interface{}) error {
 
 	org, err := govcd.GetAdminOrgByName(vcdClient.VCDClient, d.Get("name").(string))
 
-	if err != nil {
-		return fmt.Errorf("Error fetching org: %#v", err)
+	if err != nil || org == (govcd.AdminOrg{}) {
+		return fmt.Errorf("Error fetching org: %s", d.Get("name").(string))
 	}
+
 	settings := getSettings(d)
 	org.AdminOrg.Name = orgName
 	org.AdminOrg.OrgSettings.OrgGeneralSettings = settings.OrgGeneralSettings
@@ -192,9 +193,9 @@ func resourceOrgRead(d *schema.ResourceData, m interface{}) error {
 	vcdClient := m.(*VCDClient)
 
 	log.Printf("Reading org with id %s", d.State().ID)
-	_, err := govcd.GetAdminOrgByName(vcdClient.VCDClient, d.Get("name").(string))
+	org, err := govcd.GetAdminOrgByName(vcdClient.VCDClient, d.Get("name").(string))
 
-	if err != nil {
+	if err != nil || org == (govcd.AdminOrg{}) {
 		log.Printf("Org with id %s not found. Setting ID to nothing", d.State().ID)
 		d.SetId("")
 		return nil

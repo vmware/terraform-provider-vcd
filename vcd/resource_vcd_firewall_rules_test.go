@@ -46,11 +46,11 @@ func testAccCheckVcdFirewallRulesExists(n string, gateway *govcd.EdgeGateway) re
 
 		conn := testAccProvider.Meta().(*VCDClient)
 		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
-		if err != nil {
+		if err != nil || org == (govcd.Org{}) {
 			return fmt.Errorf("Could not find test Org")
 		}
 		vdc, err := org.GetVdcByName(testVDC)
-		if err != nil {
+		if err != nil || vdc == (govcd.Vdc{}) {
 			return fmt.Errorf("Could not find test Vdc")
 		}
 		resp, err := vdc.FindEdgeGateway(rs.Primary.ID)
@@ -90,11 +90,11 @@ func createFirewallRulesConfigs(existingRules *govcd.EdgeGateway) string {
 		return fmt.Sprintf(testAccCheckVcdFirewallRules_add, testOrg, testVDC, "", "")
 	}
 	org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
-	if err != nil {
+	if err != nil || org == (govcd.Org{}) {
 		return fmt.Sprintf("Could not find test Org")
 	}
 	vdc, err := org.GetVdcByName(testVDC)
-	if err != nil {
+	if err != nil || vdc == (govcd.Vdc{}) {
 		return fmt.Sprintf("Could not find test Vdc")
 	}
 	edgeGateway, _ := vdc.FindEdgeGateway(os.Getenv("VCD_EDGE_GATEWAY"))
