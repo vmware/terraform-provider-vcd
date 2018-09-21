@@ -8,6 +8,7 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	types "github.com/ukcloud/govcloudair/types/v56"
 	"log"
@@ -96,6 +97,24 @@ func resourceOrgDelete(d *schema.ResourceData, m interface{}) error {
 	//DELETING
 	vcdClient := m.(*VCDClient)
 	log.Printf("Deleting Org with id %s", d.State().ID)
+	force := d.Get("force").(bool)
+	recursive := d.Get("recursive").(bool)
+
+	if force && recursive {
+		err := retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := vcdClient.RemoveAllVDCs(d.State().ID)
+			if err != nil {
+				return resource.RetryableError(fmt.Errorf("Error changing memory size: %#v", err))
+			}
+			if *task.Task == (types.Task{}) {
+				return nil
+			}
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
+		if err != nil {
+			return err
+		}
+	}
 	_, err := vcdClient.DeleteOrg(d.State().ID)
 	log.Printf("Org with id %s deleted", d.State().ID)
 	return err
