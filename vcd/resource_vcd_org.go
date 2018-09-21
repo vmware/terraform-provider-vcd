@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 	govcd "github.com/ukcloud/govcloudair"
 	"log"
+	"strconv"
 	"strings"
 )
 
@@ -39,15 +40,25 @@ func resourceOrg() *schema.Resource {
 				Required: true,
 				ForceNew: false,
 			},
-			"vm_quota": &schema.Schema{
+			"deployed_vm_quota": &schema.Schema{
 				Type:     schema.TypeInt,
 				Optional: true,
-				Default:  -1,
+			},
+			"stored_vm_quota": &schema.Schema{
+				Type:     schema.TypeInt,
+				Optional: true,
 			},
 			"can_publish_catalogs": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
-				Default:  true,
+			},
+			"use_server_boot_sequence": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+			},
+			"delay_after_power_on_seconds": &schema.Schema{
+				Type:     schema.TypeInt,
+				Optional: true,
 			},
 			"force": &schema.Schema{
 				Type:     schema.TypeBool,
@@ -71,11 +82,36 @@ func resourceOrgCreate(d *schema.ResourceData, m interface{}) error {
 	orgName := d.Get("name").(string)
 	fullName := d.Get("full_name").(string)
 	isEnabled := d.Get("is_enabled").(bool)
-	canPublishCatalogs := d.Get("can_publish_catalogs").(bool)
-	vmQuota := d.Get("vm_quota").(int)
+
+	settings := map[string]string{}
+
+	canPublishCatalogs, ok := d.GetOk("can_publish_catalogs")
+	if ok {
+		settings["CanPublishCatalogs"] = strconv.FormatBool(canPublishCatalogs.(bool))
+	}
+
+	vmQuota, ok := d.GetOk("deployed_vm_quota")
+	if ok {
+		settings["DeployedVMQuota"] = strconv.Itoa(vmQuota.(int))
+	}
+
+	vmQuota, ok = d.GetOk("stored_vm_quota")
+	if ok {
+		settings["StoredVMQuota"] = strconv.Itoa(vmQuota.(int))
+	}
+
+	delay, ok := d.GetOk("delay_after_power_on_seconds")
+	if ok {
+		settings["DelayAfterPowerOnSeconds"] = strconv.Itoa(delay.(int))
+	}
+
+	serverboot, ok := d.GetOk("use_server_boot_sequence")
+	if ok {
+		settings["UseServerBootSequence"] = strconv.FormatBool(serverboot.(bool))
+	}
 
 	log.Printf("CREATING ORG: %s", orgName)
-	task, err := govcd.CreateOrg(vcdClient.VCDClient, orgName, fullName, isEnabled, canPublishCatalogs, vmQuota)
+	task, err := govcd.CreateOrg(vcdClient.VCDClient, orgName, fullName, isEnabled, settings)
 
 	if err != nil {
 		log.Printf("Error creating organization: %#v", err)
@@ -124,9 +160,6 @@ func resourceOrgUpdate(d *schema.ResourceData, m interface{}) error {
 	oldOrgFullNameRaw, newOrgFullNameRaw := d.GetChange("full_name")
 	oldOrgFullName := oldOrgFullNameRaw.(string)
 	newOrgFullName := newOrgFullNameRaw.(string)
-	isEnabled := d.Get("is_enabled").(bool)
-	canPublishCatalogs := d.Get("can_publish_catalogs").(bool)
-	vmQuota := d.Get("vm_quota").(int)
 
 	if !strings.EqualFold(oldOrgFullName, newOrgFullName) {
 		return fmt.Errorf("__ERROR__ Not Updating org_full_name , API NOT IMPLEMENTED !!!!")
@@ -135,12 +168,39 @@ func resourceOrgUpdate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("Reading org with id %s", d.State().ID)
 
 	org, err := govcd.GetAdminOrgById(vcdClient.VCDClient, d.State().ID)
+
 	if err != nil {
 		return fmt.Errorf("Error fetching org: %#v", err)
 	}
 
+	org.AdminOrg.Name = orgName
+	canPublishCatalogs, ok := d.GetOk("can_publish_catalogs")
+	if ok {
+		org.AdminOrg.OrgSettings.General.CanPublishCatalogs = canPublishCatalogs.(bool)
+	}
+
+	vmQuota, ok := d.GetOk("deployed_vm_quota")
+	if ok {
+		org.AdminOrg.OrgSettings.General.DeployedVMQuota = vmQuota.(int)
+	}
+
+	vmQuota, ok = d.GetOk("stored_vm_quota")
+	if ok {
+		org.AdminOrg.OrgSettings.General.StoredVMQuota = vmQuota.(int)
+	}
+
+	delay, ok := d.GetOk("delay_after_power_on_seconds")
+	if ok {
+		org.AdminOrg.OrgSettings.General.DelayAfterPowerOnSeconds = delay.(int)
+	}
+
+	serverboot, ok := d.GetOk("use_server_boot_sequence")
+	if ok {
+		org.AdminOrg.OrgSettings.General.UseServerBootSequence = serverboot.(bool)
+	}
+
 	log.Printf("org with id %s found", d.State().ID)
-	_, err = org.Update(orgName, oldOrgFullName, isEnabled, canPublishCatalogs, vmQuota)
+	_, err = org.Update()
 
 	if err != nil {
 		log.Printf("Error updating org with id %s : %#v", d.State().ID, err)
