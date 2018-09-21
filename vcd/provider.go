@@ -37,13 +37,6 @@ func Provider() terraform.ResourceProvider {
 				Description: "The vcd url for vcd API operations.",
 			},
 
-			"vdc": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("VCD_VDC", ""),
-				Description: "The name of the VDC to run operations on",
-			},
-
 			"maxRetryTimeout": &schema.Schema{
 				Type:       schema.TypeInt,
 				Optional:   true,
@@ -93,7 +86,6 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		Password:        d.Get("password").(string),
 		Org:             d.Get("org").(string),
 		Href:            d.Get("url").(string),
-		VDC:             d.Get("vdc").(string),
 		MaxRetryTimeout: maxRetryTimeout,
 		InsecureFlag:    d.Get("allow_unverified_ssl").(bool),
 	}

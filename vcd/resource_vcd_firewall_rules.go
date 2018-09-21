@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
+	govcd "github.com/ukcloud/govcloudair"
 	types "github.com/ukcloud/govcloudair/types/v56"
 )
 
@@ -28,7 +29,16 @@ func resourceVcdFirewallRules() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-
+			"org": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+			"vdc": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
 			"rule": &schema.Schema{
 				Type:     schema.TypeList,
 				Optional: true,
@@ -84,10 +94,20 @@ func resourceVcdFirewallRules() *schema.Resource {
 
 func resourceVcdFirewallRulesCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
+
+	org, err := govcd.GetOrgFromName(vcdClient.VCDClient, d.Get("org").(string))
+	if err != nil {
+		return fmt.Errorf("Could not find Org: %v", err)
+	}
+	vdc, err := org.GetVDCFromName(d.Get("vdc").(string))
+	if err != nil {
+		return fmt.Errorf("Could not find vdc: %v", err)
+	}
+
 	vcdClient.Mutex.Lock()
 	defer vcdClient.Mutex.Unlock()
 
-	edgeGateway, err := vcdClient.OrgVdc.FindEdgeGateway(d.Get("edge_gateway").(string))
+	edgeGateway, err := vdc.FindEdgeGateway(d.Get("edge_gateway").(string))
 	if err != nil {
 		return fmt.Errorf("Unable to find edge gateway: %s", err)
 	}
@@ -115,10 +135,20 @@ func resourceVcdFirewallRulesCreate(d *schema.ResourceData, meta interface{}) er
 
 func resourceFirewallRulesDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
+
+	org, err := govcd.GetOrgFromName(vcdClient.VCDClient, d.Get("org").(string))
+	if err != nil {
+		return fmt.Errorf("Could not find Org: %v", err)
+	}
+	vdc, err := org.GetVDCFromName(d.Get("vdc").(string))
+	if err != nil {
+		return fmt.Errorf("Could not find vdc: %v", err)
+	}
+
 	vcdClient.Mutex.Lock()
 	defer vcdClient.Mutex.Unlock()
 
-	edgeGateway, err := vcdClient.OrgVdc.FindEdgeGateway(d.Get("edge_gateway").(string))
+	edgeGateway, err := vdc.FindEdgeGateway(d.Get("edge_gateway").(string))
 
 	firewallRules := deleteFirewallRules(d, edgeGateway.EdgeGateway)
 	defaultAction := edgeGateway.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.FirewallService.DefaultAction
@@ -138,7 +168,16 @@ func resourceFirewallRulesDelete(d *schema.ResourceData, meta interface{}) error
 func resourceFirewallRulesRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	edgeGateway, err := vcdClient.OrgVdc.FindEdgeGateway(d.Get("edge_gateway").(string))
+	org, err := govcd.GetOrgFromName(vcdClient.VCDClient, d.Get("org").(string))
+	if err != nil {
+		return fmt.Errorf("Could not find Org: %v", err)
+	}
+	vdc, err := org.GetVDCFromName(d.Get("vdc").(string))
+	if err != nil {
+		return fmt.Errorf("Could not find vdc: %v", err)
+	}
+
+	edgeGateway, err := vdc.FindEdgeGateway(d.Get("edge_gateway").(string))
 	if err != nil {
 		return fmt.Errorf("Error finding edge gateway: %#v", err)
 	}
