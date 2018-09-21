@@ -10,8 +10,8 @@ import (
 	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	govcd "github.com/ukcloud/govcloudair"
-	types "github.com/ukcloud/govcloudair/types/v56"
+	govcd "github.com/vmware/go-vcloud-director/govcd"
+	types "github.com/vmware/go-vcloud-director/types/v56"
 )
 
 func resourceVcdNetwork() *schema.Resource {
@@ -156,11 +156,11 @@ func resourceVcdNetworkCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient.Mutex.Lock()
 	defer vcdClient.Mutex.Unlock()
 
-	org, err := govcd.GetOrgFromName(vcdClient.VCDClient, d.Get("org").(string))
+	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
 	if err != nil {
 		return fmt.Errorf("Could not find Org: %v", err)
 	}
-	vdc, err := org.GetVDCFromName(d.Get("vdc").(string))
+	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
 	if err != nil {
 		return fmt.Errorf("Could not find vdc: %v", err)
 	}
@@ -237,11 +237,11 @@ func resourceVcdNetworkRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] VCD Client configuration: %#v", vcdClient)
 	//log.Printf("[DEBUG] VCD Client configuration: %#v", vcdClient.OrgVdc)
 
-	org, err := govcd.GetOrgFromName(vcdClient.VCDClient, d.Get("org").(string))
+	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
 	if err != nil {
 		return fmt.Errorf("Could not find Org: %v", err)
 	}
-	vdc, err := org.GetVDCFromName(d.Get("vdc").(string))
+	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
 	if err != nil {
 		return fmt.Errorf("Could not find vdc: %v", err)
 	}
@@ -278,11 +278,11 @@ func resourceVcdNetworkDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient.Mutex.Lock()
 	defer vcdClient.Mutex.Unlock()
 
-	org, err := govcd.GetOrgFromName(vcdClient.VCDClient, d.Get("org").(string))
+	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
 	if err != nil {
 		return fmt.Errorf("Could not find Org: %v", err)
 	}
-	vdc, err := org.GetVDCFromName(d.Get("vdc").(string))
+	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
 	if err != nil {
 		return fmt.Errorf("Could not find vdc: %v", err)
 	}

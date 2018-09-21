@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	govcd "github.com/ukcloud/govcloudair"
+	govcd "github.com/vmware/go-vcloud-director/govcd"
+	types "github.com/vmware/go-vcloud-director/types/v56"
 	"log"
 )
 
@@ -99,11 +100,11 @@ func resourceVcdVAppVm() *schema.Resource {
 
 func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-	org, err := govcd.GetOrgFromName(vcdClient.VCDClient, d.Get("org").(string))
+	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
 	if err != nil {
 		return fmt.Errorf("Could not find Org: %v", err)
 	}
-	vdc, err := org.GetVDCFromName(d.Get("vdc").(string))
+	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
 	if err != nil {
 		return fmt.Errorf("Could not find vdc: %v", err)
 	}
@@ -114,7 +115,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 
 	catalogitem, err := catalog.FindCatalogItem(d.Get("template_name").(string))
 	if err != nil {
-		return fmt.Errorf("Error finding catelog item: %#v", err)
+		return fmt.Errorf("Error finding catalog item: %#v", err)
 	}
 
 	vapptemplate, err := catalogitem.GetVAppTemplate()
@@ -136,11 +137,13 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		netname = net.OrgVDCNetwork.Name
 	}
 
+	nets := []*types.OrgVDCNetwork{net.OrgVDCNetwork}
+
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 
 	vAppNetworkName := "blank"
 	if vAppNetworkConfig.NetworkConfig != nil {
-		vAppNetworkName = vAppNetworkConfig.NetworkConfig.NetworkName
+		vAppNetworkName = vAppNetworkConfig.NetworkConfig[0].NetworkName
 		if netname == "blank" {
 			net, err = vdc.FindVDCNetwork(vAppNetworkName)
 			if err != nil {
@@ -157,7 +160,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := vapp.AddRAWNetworkConfig(netname, net.OrgVDCNetwork.HREF)
+			task, err := vapp.AddRAWNetworkConfig(nets)
 			if err != nil {
 				return resource.RetryableError(fmt.Errorf("Error assigning network to vApp: %#v", err))
 			}
@@ -180,7 +183,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 		log.Printf("[TRACE] Creating VM: %s", d.Get("name").(string))
-		task, err := vapp.AddVM(net, vapptemplate, d.Get("name").(string), accept_eulas)
+		task, err := vapp.AddVM(nets, vapptemplate, d.Get("name").(string), accept_eulas)
 
 		if err != nil {
 			return resource.RetryableError(fmt.Errorf("Error adding VM: %#v", err))
@@ -201,7 +204,12 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := vm.ChangeNetworkConfig(netname, d.Get("ip").(string))
+		networks := []map[string]interface{}{map[string]interface{}{
+			"ip":         d.Get("ip").(string),
+			"is_primary": true,
+			"orgnetwork": netname,
+		}}
+		task, err := vm.ChangeNetworkConfig(networks, d.Get("ip").(string))
 		if err != nil {
 			return resource.RetryableError(fmt.Errorf("Error with Networking change: %#v", err))
 		}
@@ -233,11 +241,11 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	vcdClient := meta.(*VCDClient)
 
-	org, err := govcd.GetOrgFromName(vcdClient.VCDClient, d.Get("org").(string))
+	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
 	if err != nil {
 		return fmt.Errorf("Could not find Org: %v", err)
 	}
-	vdc, err := org.GetVDCFromName(d.Get("vdc").(string))
+	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
 	if err != nil {
 		return fmt.Errorf("Could not find vdc: %v", err)
 	}
@@ -319,11 +327,11 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	org, err := govcd.GetOrgFromName(vcdClient.VCDClient, d.Get("org").(string))
+	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
 	if err != nil {
 		return fmt.Errorf("Could not find Org: %v", err)
 	}
-	vdc, err := org.GetVDCFromName(d.Get("vdc").(string))
+	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
 	if err != nil {
 		return fmt.Errorf("Could not find vdc: %v", err)
 	}
@@ -342,7 +350,7 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.Set("name", vm.VM.Name)
-	d.Set("ip", vm.VM.NetworkConnectionSection.NetworkConnection.IPAddress)
+	d.Set("ip", vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddress)
 	d.Set("href", vm.VM.HREF)
 
 	return nil
@@ -351,11 +359,11 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	org, err := govcd.GetOrgFromName(vcdClient.VCDClient, d.Get("org").(string))
+	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
 	if err != nil {
 		return fmt.Errorf("Could not find Org: %v", err)
 	}
-	vdc, err := org.GetVDCFromName(d.Get("vdc").(string))
+	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
 	if err != nil {
 		return fmt.Errorf("Could not find vdc: %v", err)
 	}
