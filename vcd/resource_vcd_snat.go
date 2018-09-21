@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
+	govcd "github.com/ukcloud/govcloudair"
 )
 
 func resourceVcdSNAT() *schema.Resource {
@@ -14,6 +15,16 @@ func resourceVcdSNAT() *schema.Resource {
 		Read:   resourceVcdSNATRead,
 
 		Schema: map[string]*schema.Schema{
+			"org": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+			"vdc": {
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
 			"edge_gateway": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
@@ -37,6 +48,14 @@ func resourceVcdSNAT() *schema.Resource {
 
 func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
+	org, err := govcd.GetOrgFromName(vcdClient.VCDClient, d.Get("org").(string))
+	if err != nil {
+		return fmt.Errorf("Could not find Org: %v", err)
+	}
+	vdc, err := org.GetVDCFromName(d.Get("vdc").(string))
+	if err != nil {
+		return fmt.Errorf("Could not find vdc: %v", err)
+	}
 	// Multiple VCD components need to run operations on the Edge Gateway, as
 	// the edge gatway will throw back an error if it is already performing an
 	// operation we must wait until we can aquire a lock on the client
@@ -47,7 +66,8 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 	// due to being busy eg another person is using another client so wouldn't be
 	// constrained by out lock. If the edge gateway reurns with a busy error, wait
 	// 3 seconds and then try again. Continue until a non-busy error or success
-	edgeGateway, err := vcdClient.OrgVdc.FindEdgeGateway(d.Get("edge_gateway").(string))
+
+	edgeGateway, err := vdc.FindEdgeGateway(d.Get("edge_gateway").(string))
 	if err != nil {
 		return fmt.Errorf("Unable to find edge gateway: %#v", err)
 	}
@@ -71,7 +91,16 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 
 func resourceVcdSNATRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-	e, err := vcdClient.OrgVdc.FindEdgeGateway(d.Get("edge_gateway").(string))
+	org, err := govcd.GetOrgFromName(vcdClient.VCDClient, d.Get("org").(string))
+	if err != nil {
+		return fmt.Errorf("Could not find Org: %v", err)
+	}
+	vdc, err := org.GetVDCFromName(d.Get("vdc").(string))
+	if err != nil {
+		return fmt.Errorf("Could not find vdc: %v", err)
+	}
+
+	e, err := vdc.FindEdgeGateway(d.Get("edge_gateway").(string))
 
 	if err != nil {
 		return fmt.Errorf("Unable to find edge gateway: %#v", err)
@@ -96,13 +125,21 @@ func resourceVcdSNATRead(d *schema.ResourceData, meta interface{}) error {
 
 func resourceVcdSNATDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
+	org, err := govcd.GetOrgFromName(vcdClient.VCDClient, d.Get("org").(string))
+	if err != nil {
+		return fmt.Errorf("Could not find Org: %v", err)
+	}
+	vdc, err := org.GetVDCFromName(d.Get("vdc").(string))
+	if err != nil {
+		return fmt.Errorf("Could not find vdc: %v", err)
+	}
 	// Multiple VCD components need to run operations on the Edge Gateway, as
 	// the edge gatway will throw back an error if it is already performing an
 	// operation we must wait until we can aquire a lock on the client
 	vcdClient.Mutex.Lock()
 	defer vcdClient.Mutex.Unlock()
 
-	edgeGateway, err := vcdClient.OrgVdc.FindEdgeGateway(d.Get("edge_gateway").(string))
+	edgeGateway, err := vdc.FindEdgeGateway(d.Get("edge_gateway").(string))
 	if err != nil {
 		return fmt.Errorf("Unable to find edge gateway: %#v", err)
 	}
