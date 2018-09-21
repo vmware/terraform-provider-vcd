@@ -63,6 +63,11 @@ func resourceVcdVAppVm() *schema.Resource {
 				Optional: true,
 				Computed: true,
 			},
+			"accept_all_eulas": &schema.Schema{
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  true,
+			},
 			"power_on": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -99,6 +104,8 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf("Error finding VAppTemplate: %#v", err)
 	}
+
+	accept_eulas := d.Get("accept_all_eulas").(bool)
 
 	vapp, err := vcdClient.OrgVdc.FindVAppByName(d.Get("vapp_name").(string))
 	if err != nil {
@@ -156,7 +163,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 		log.Printf("[TRACE] Creating VM: %s", d.Get("name").(string))
-		task, err := vapp.AddVM(net, vapptemplate, d.Get("name").(string))
+		task, err := vapp.AddVM(net, vapptemplate, d.Get("name").(string), accept_eulas)
 
 		if err != nil {
 			return resource.RetryableError(fmt.Errorf("Error adding VM: %#v", err))
