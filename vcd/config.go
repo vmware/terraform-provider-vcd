@@ -32,7 +32,7 @@ func (c *Config) Client() (*VCDClient, error) {
 	vcdclient := &VCDClient{
 		govcd.NewVCDClient(*u, c.InsecureFlag),
 		c.MaxRetryTimeout, c.InsecureFlag}
-	org, vcd, err := vcdclient.Authenticate(c.User, c.Password, c.Org, c.VDC)
+	org, vcd, err := vcdclient.Authenticate(c.User, c.Password, c.Org, c.VDC, true)
 	if err != nil {
 		return nil, fmt.Errorf("Something went wrong: %s", err)
 	}
