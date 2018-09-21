@@ -64,27 +64,6 @@ In order to run the full suite of Acceptance tests, run `make testacc`.
 $ make testacc
 ```
 
-The acceptance tests will run against your own vCloud Air setup, using the enviroment variables you should have set below:
-
-```sh
-export VCD_USER=***********
-export VCD_PASSWORD=************
-export VCD_ORG=**********
-export VCD_EXTERNAL_IP=xxx.xxx.xxx.xxx
-export VCD_URL=https://api.vcd.xxxxxxxx.xxxxxxxx.com/api
-export VCD_EDGE_GATEWAY=xxxxxxxxx
-export VCD_VDC="xxxxxxxx"
-```
-
-Pulling in the 'Go vCloud Air' (govcloudair) Library
---------------------------------------------------------
-
-If you've also been adding in functionality to the govcloudair library, you need to ensure your changes have been merged and then run:
-
-```sh
-$ make fetchvendor
-```
-
-This will pull in the latest version, including your changes, and you will be able to develop against the updated library.
-
+The acceptance tests will run against your own vCloud Director setup, using the configuration in your file `./vcd/vcd_test_config.json`
+See the file `./vcd/sample_vcd_test_config.json` for an example of which variables need to be defined.
 
