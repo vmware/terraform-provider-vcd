@@ -1,0 +1,47 @@
+{
+  "//": "Rename this file to vcd_test_config.json and change the values to suit your system",
+  "//": "You can safely remove the comments or leave them. The parser will ignore them.",
+  "provider": {
+    "//"  : "This section contains credentials related to the VCD admin user",
+    "user": "root",
+    "password": "somePassword",
+    "url": "https://10.13.21.20/api",
+    "sysOrg": "System",
+    "//": "allowInsecure will skip the check on self-signed certificates",
+    "allowInsecure": true,
+    "//": "tfAcceptanceTests is needed to allow the whole test suite to run",
+    "//": "Warning: it may cost time (from 14 to 40 min) and possibly money",
+    "tfAcceptanceTests": false
+  },
+  "vcd": {
+    "//": "This section contains the organization composition",
+    "org": "myorg",
+    "vdc": "myvdc",
+    "catalog": {
+      "name": "mycatalog",
+      "catalogItem": "photon-hw11"
+    }
+  },
+  "networking": {
+    "//": "Networking relates to communication, gateways, and vpn", 
+    "edgeGateway": "tfEdgeGW",
+
+    "//": "The IP of the gateway (must exist)", 
+    "externalIp": "10.15.21.10",
+
+    "//": "A free IP in the Org vDC network", 
+    "internalIp": "192.168.4.30",
+     "//": "sharedSecret is defined in the edge gateway service configuration", 
+    "sharedSecret": "my-secret-string",
+    "local": {
+      "//": "Local definition for a vpn", 
+      "localIp": "10.15.21.11",
+      "localSubnetGw": "10.15.19.1"
+    },
+    "peer": {
+      "//": "Peer definition for a vpn", 
+      "peerIp": "192.168.5.1",
+      "peerSubnetGw": "192.168.5.1"
+    }
+  }
+}

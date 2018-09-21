@@ -10,11 +10,14 @@ build: fmtcheck
 
 test: fmtcheck
 	go test -i $(TEST) || exit 1
-	echo $(TEST) | \
-		xargs -t -n4 go test $(TESTARGS) -timeout=30s -parallel=4
+	cd vcd ; VCD_SHORT_TEST=1 go test -v . -timeout 3m
 
 testacc: fmtcheck
-	TF_ACC=1 go test $(TEST) -v $(TESTARGS) -timeout 120m
+	if [ ! -f vcd/vcd_test_config.json ] ; then \
+		echo "ERROR: test configuration file vcd/vcd_test_config.json is missing"; \
+		exit 1; \
+	fi
+	cd vcd ; TF_ACC=1 go test -v . -timeout 30m
 
 vet:
 	@echo "go vet ."

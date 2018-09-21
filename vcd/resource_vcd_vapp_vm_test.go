@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"testing"
 
@@ -10,25 +11,43 @@ import (
 	govcd "github.com/vmware/go-vcloud-director/govcd"
 )
 
+var vappName2 string = "TestAccVcdVAppVmVapp"
+var vmName string = "TestAccVcdVAppVmVm"
+
 func TestAccVcdVAppVm_Basic(t *testing.T) {
 	var vapp govcd.VApp
 	var vm govcd.VM
 
+	var params = StringMap{
+		"Org":         testConfig.VCD.Org,
+		"Vdc":         testConfig.VCD.Vdc,
+		"EdgeGateway": testConfig.Networking.EdgeGateway,
+		"NetworkName": "TestAccVcdVAppVmNet",
+		"Catalog":     testConfig.VCD.Catalog.Name,
+		"CatalogItem": testConfig.VCD.Catalog.Catalogitem,
+		"VappName":    vappName2,
+		"VmName":      vmName,
+	}
+
+	configText := templateFill(testAccCheckVcdVAppVm_basic, params)
+	if os.Getenv("GOVCD_DEBUG") != "" {
+		log.Printf("#[DEBUG] CONFIGURATION: %s\n", configText)
+	}
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckVcdVAppVmDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: fmt.Sprintf(testAccCheckVcdVAppVm_basic, testOrg, testVDC, os.Getenv("VCD_EDGE_GATEWAY"), testOrg, testVDC, testOrg, testVDC),
+				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVAppVmExists("vcd_vapp_vm.moo", &vapp, &vm),
+					testAccCheckVcdVAppVmExists("vcd_vapp_vm."+vmName, &vapp, &vm),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_vm.moo", "name", "moo"),
+						"vcd_vapp_vm."+vmName, "name", vmName),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_vm.moo", "ip", "10.10.102.161"),
+						"vcd_vapp_vm."+vmName, "ip", "10.10.102.161"),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_vm.moo", "power_on", "true"),
+						"vcd_vapp_vm."+vmName, "power_on", "true"),
 				),
 			},
 		},
@@ -47,17 +66,17 @@ func testAccCheckVcdVAppVmExists(n string, vapp *govcd.VApp, vm *govcd.VM) resou
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
-		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+		org, err := govcd.GetOrgByName(conn.VCDClient, testConfig.VCD.Org)
 		if err != nil || org == (govcd.Org{}) {
 			return fmt.Errorf("Could not find test Org")
 		}
-		vdc, err := org.GetVdcByName(testVDC)
+		vdc, err := org.GetVdcByName(testConfig.VCD.Vdc)
 		if err != nil || vdc == (govcd.Vdc{}) {
 			return fmt.Errorf("Could not find test Vdc")
 		}
-		vapp, err := vdc.FindVAppByName("foobar")
+		vapp, err := vdc.FindVAppByName(vappName2)
 
-		resp, err := vdc.FindVMByName(vapp, "moo")
+		resp, err := vdc.FindVMByName(vapp, vmName)
 
 		if err != nil {
 			return err
@@ -76,15 +95,15 @@ func testAccCheckVcdVAppVmDestroy(s *terraform.State) error {
 		if rs.Type != "vcd_vapp" {
 			continue
 		}
-		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+		org, err := govcd.GetOrgByName(conn.VCDClient, testConfig.VCD.Org)
 		if err != nil || org == (govcd.Org{}) {
 			return fmt.Errorf("Could not find test Org")
 		}
-		vdc, err := org.GetVdcByName(testVDC)
+		vdc, err := org.GetVdcByName(testConfig.VCD.Vdc)
 		if err != nil || vdc == (govcd.Vdc{}) {
 			return fmt.Errorf("Could not find test Vdc")
 		}
-		_, err = vdc.FindVAppByName("foobar")
+		_, err = vdc.FindVAppByName(vappName2)
 
 		if err == nil {
 			return fmt.Errorf("VPCs still exist")
@@ -97,39 +116,35 @@ func testAccCheckVcdVAppVmDestroy(s *terraform.State) error {
 }
 
 const testAccCheckVcdVAppVm_basic = `
-resource "vcd_network" "foonet" {
-	name = "foonet"
-	org = "%s"
-	vdc = "%s"
-	edge_gateway = "%s"
-	gateway = "10.10.102.1"
+resource "vcd_network" "{{.NetworkName}}" {
+	name          = "{{.NetworkName}}"
+	org           = "{{.Org}}"
+	vdc           = "{{.Vdc}}"
+	edge_gateway  = "{{.EdgeGateway}}"
+	gateway 	  = "10.10.102.1"
 	static_ip_pool {
 		start_address = "10.10.102.2"
-		end_address = "10.10.102.254"
+		end_address   = "10.10.102.254"
 	}
 }
 
-resource "vcd_vapp" "foobar" {
-  name          = "foobar"
-  org = "%s"
-  vdc = "%s"
-  template_name = "Skyscape_CentOS_6_4_x64_50GB_Small_v1.0.1"
-  catalog_name  = "Skyscape Catalogue"
-  network_name  = "${vcd_network.foonet.name}"
-  memory        = 1024
-  cpus          = 1
-  ip            = "10.10.102.160"
+resource "vcd_vapp" "{{.VappName}}" {
+  name          = "{{.VappName}}"
+  org           = "{{.Org}}"
+  vdc           = "{{.Vdc}}"
 }
 
-resource "vcd_vapp_vm" "moo" {
-  org = "%s"
-  vdc = "%s"
-  vapp_name     = "${vcd_vapp.foobar.name}"
-  name          = "moo"
-  catalog_name  = "Skyscape Catalogue"
-  template_name = "Skyscape_CentOS_6_4_x64_50GB_Small_v1.0.1"
+resource "vcd_vapp_vm" "{{.VmName}}" {
+  org           = "{{.Org}}"
+  vdc           = "{{.Vdc}}"
+  vapp_name     = "${vcd_vapp.{{.VappName}}.name}"
+  network_name  = "${vcd_network.{{.NetworkName}}.name}"
+  name          = "{{.VmName}}"
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
   memory        = 1024
   cpus          = 1
   ip            = "10.10.102.161"
+  depends_on    = ["vcd_vapp.{{.VappName}}"]
 }
 `

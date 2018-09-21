@@ -11,8 +11,13 @@ import (
 	govcd "github.com/vmware/go-vcloud-director/govcd"
 )
 
-func TestAccVcdFirewallRules_basic(t *testing.T) {
+var itemName string = "TestAccVcdFirewallRules_basic"
 
+func TestAccVcdFirewallRules_basic(t *testing.T) {
+	if testConfig.Networking.ExternalIp == "" {
+		t.Skip("Variable networking.externalIp must be set to run DNAT tests")
+		return
+	}
 	var existingRules, fwRules govcd.EdgeGateway
 	newConfig := createFirewallRulesConfigs(&existingRules)
 
@@ -23,7 +28,7 @@ func TestAccVcdFirewallRules_basic(t *testing.T) {
 			resource.TestStep{
 				Config: newConfig,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdFirewallRulesExists("vcd_firewall_rules.bar", &fwRules),
+					testAccCheckVcdFirewallRulesExists("vcd_firewall_rules."+itemName, &fwRules),
 					testAccCheckVcdFirewallRulesAttributes(&fwRules, &existingRules),
 				),
 			},
@@ -45,11 +50,11 @@ func testAccCheckVcdFirewallRulesExists(n string, gateway *govcd.EdgeGateway) re
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
-		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+		org, err := govcd.GetOrgByName(conn.VCDClient, testConfig.VCD.Org)
 		if err != nil || org == (govcd.Org{}) {
 			return fmt.Errorf("Could not find test Org")
 		}
-		vdc, err := org.GetVdcByName(testVDC)
+		vdc, err := org.GetVdcByName(testConfig.VCD.Vdc)
 		if err != nil || vdc == (govcd.Vdc{}) {
 			return fmt.Errorf("Could not find test Vdc")
 		}
@@ -79,37 +84,59 @@ func testAccCheckVcdFirewallRulesAttributes(newRules, existingRules *govcd.EdgeG
 
 func createFirewallRulesConfigs(existingRules *govcd.EdgeGateway) string {
 	config := Config{
-		User:            os.Getenv("VCD_USER"),
-		Password:        os.Getenv("VCD_PASSWORD"),
-		Org:             os.Getenv("VCD_ORG"),
-		Href:            os.Getenv("VCD_URL"),
-		MaxRetryTimeout: 240,
+		User:            testConfig.Provider.User,
+		Password:        testConfig.Provider.Password,
+		Org:             testConfig.Provider.SysOrg,
+		Href:            testConfig.Provider.Url,
+		InsecureFlag:    testConfig.Provider.AllowInsecure,
+		MaxRetryTimeout: 140,
 	}
+
 	conn, err := config.Client()
 	if err != nil {
-		return fmt.Sprintf(testAccCheckVcdFirewallRules_add, testOrg, testVDC, "", "")
+		panic(err)
 	}
-	org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+	org, err := govcd.GetOrgByName(conn.VCDClient, testConfig.VCD.Org)
 	if err != nil || org == (govcd.Org{}) {
-		return fmt.Sprintf("Could not find test Org")
+		panic(err)
 	}
-	vdc, err := org.GetVdcByName(testVDC)
+	vdc, err := org.GetVdcByName(testConfig.VCD.Vdc)
 	if err != nil || vdc == (govcd.Vdc{}) {
-		return fmt.Sprintf("Could not find test Vdc")
+		panic(err)
 	}
-	edgeGateway, _ := vdc.FindEdgeGateway(os.Getenv("VCD_EDGE_GATEWAY"))
+	edgeGatewayName := testConfig.Networking.EdgeGateway
+	if edgeGatewayName == "" {
+		panic(fmt.Errorf("Could not get an Edge Gateway. Variable networking.edgeGateway is not set"))
+	}
+	edgeGateway, err := vdc.FindEdgeGateway(edgeGatewayName)
+	if err != nil {
+		panic(err)
+	}
 	*existingRules = edgeGateway
-	log.Printf("[DEBUG] Edge gateway: %#v", edgeGateway)
+	if os.Getenv("GOVCD_DEBUG") != "" {
+		log.Printf("[DEBUG] Edge gateway: %#v", edgeGateway)
+	}
 	firewallRules := *edgeGateway.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.FirewallService
-	return fmt.Sprintf(testAccCheckVcdFirewallRules_add, testOrg, testVDC, os.Getenv("VCD_EDGE_GATEWAY"), firewallRules.DefaultAction)
+	var params = StringMap{
+		"Org":           testConfig.VCD.Org,
+		"Vdc":           testConfig.VCD.Vdc,
+		"EdgeGateway":   edgeGatewayName,
+		"DefaultAction": firewallRules.DefaultAction,
+		"FuncName":      itemName,
+	}
+	configText := templateFill(testAccCheckVcdFirewallRules_add, params)
+	if os.Getenv("GOVCD_DEBUG") != "" {
+		log.Printf("#[DEBUG] CONFIGURATION: %s", configText)
+	}
+	return configText
 }
 
 const testAccCheckVcdFirewallRules_add = `
-resource "vcd_firewall_rules" "bar" {
-	org            = "%s"
-	vdc            = "%s"
-    edge_gateway = "%s"
-	default_action = "%s"
+resource "vcd_firewall_rules" "{{.FuncName}}" {
+	org            = "{{.Org}}"
+	vdc            = "{{.Vdc}}"
+    edge_gateway   = "{{.EdgeGateway}}"
+	default_action = "{{.DefaultAction}}"
 
 	rule {
 		description = "Test rule"

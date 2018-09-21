@@ -2,6 +2,8 @@ package vcd
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -9,9 +11,19 @@ import (
 	govcd "github.com/vmware/go-vcloud-director/govcd"
 )
 
+var orgNameTestAccVcdOrgBasic string = "TestAccVcdOrgBasic"
+
 func TestAccVcdOrgBasic(t *testing.T) {
 
 	var e govcd.Org
+	var params = StringMap{
+		"OrgName": orgNameTestAccVcdOrgBasic,
+	}
+
+	configText := templateFill(testAccCheckVcdOrg_basic, params)
+	if os.Getenv("GOVCD_DEBUG") != "" {
+		log.Printf("#[DEBUG] CONFIGURATION: %s", configText)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -19,15 +31,15 @@ func TestAccVcdOrgBasic(t *testing.T) {
 		CheckDestroy: testAccCheckOrgDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: fmt.Sprintf(testAccCheckVcdOrg_basic),
+				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdOrgExists("vcd_org.test1", &e),
+					testAccCheckVcdOrgExists("vcd_org."+orgNameTestAccVcdOrgBasic, &e),
 					resource.TestCheckResourceAttr(
-						"vcd_org.test1", "name", "test1"),
+						"vcd_org."+orgNameTestAccVcdOrgBasic, "name", orgNameTestAccVcdOrgBasic),
 					resource.TestCheckResourceAttr(
-						"vcd_org.test1", "full_name", "test1"),
+						"vcd_org."+orgNameTestAccVcdOrgBasic, "full_name", orgNameTestAccVcdOrgBasic),
 					resource.TestCheckResourceAttr(
-						"vcd_org.test1", "is_enabled", "true"),
+						"vcd_org."+orgNameTestAccVcdOrgBasic, "is_enabled", "true"),
 				),
 			},
 		},
@@ -61,7 +73,7 @@ func testAccCheckVcdOrgExists(n string, org *govcd.Org) resource.TestCheckFunc {
 func testAccCheckOrgDestroy(s *terraform.State) error {
 	conn := testAccProvider.Meta().(*VCDClient)
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "vcd_org" && rs.Primary.Attributes["name"] != "test1" {
+		if rs.Type != "vcd_org" && rs.Primary.Attributes["name"] != orgNameTestAccVcdOrgBasic {
 			continue
 		}
 
@@ -76,9 +88,9 @@ func testAccCheckOrgDestroy(s *terraform.State) error {
 }
 
 const testAccCheckVcdOrg_basic = `
-resource "vcd_org" "test1"{
-  name = "test1"
-  full_name = "test1"
+resource "vcd_org" "{{.OrgName}}"{
+  name = "{{.OrgName}}"
+  full_name = "{{.OrgName}}"
   is_enabled = "true"
   force = "true"
   recursive = "true"

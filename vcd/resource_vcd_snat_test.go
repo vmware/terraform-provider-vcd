@@ -2,21 +2,36 @@ package vcd
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	govcd "github.com/vmware/go-vcloud-director/govcd"
+	"github.com/vmware/go-vcloud-director/govcd"
 )
 
 func TestAccVcdSNAT_Basic(t *testing.T) {
-	if v := os.Getenv("VCD_EXTERNAL_IP"); v == "" {
-		t.Skip("Environment variable VCD_EXTERNAL_IP must be set to run SNAT tests")
+	if testConfig.Networking.ExternalIp == "" {
+		t.Skip("Variable networking.extarnalIp must be set to run SNAT tests")
 		return
 	}
 
 	var e govcd.EdgeGateway
+
+	snatName := "TestAccVcdSNAT"
+	var params = StringMap{
+		"Org":         testConfig.VCD.Org,
+		"Vdc":         testConfig.VCD.Vdc,
+		"EdgeGateway": testConfig.Networking.EdgeGateway,
+		"ExternalIp":  testConfig.Networking.ExternalIp,
+		"SnatName":    snatName,
+	}
+
+	configText := templateFill(testAccCheckVcdSnat_basic, params)
+	if os.Getenv("GOVCD_DEBUG") != "" {
+		log.Printf("#[DEBUG] CONFIGURATION: %s", configText)
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -24,13 +39,13 @@ func TestAccVcdSNAT_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckVcdSNATDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: fmt.Sprintf(testAccCheckVcdSnat_basic, testOrg, testVDC, os.Getenv("VCD_EDGE_GATEWAY"), os.Getenv("VCD_EXTERNAL_IP")),
+				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdSNATExists("vcd_snat.bar", &e),
+					testAccCheckVcdSNATExists("vcd_snat."+snatName, &e),
 					resource.TestCheckResourceAttr(
-						"vcd_snat.bar", "external_ip", os.Getenv("VCD_EXTERNAL_IP")),
+						"vcd_snat."+snatName, "external_ip", testConfig.Networking.ExternalIp),
 					resource.TestCheckResourceAttr(
-						"vcd_snat.bar", "internal_ip", "10.10.102.0/24"),
+						"vcd_snat."+snatName, "internal_ip", "10.10.102.0/24"),
 				),
 			},
 		},
@@ -44,8 +59,6 @@ func testAccCheckVcdSNATExists(n string, gateway *govcd.EdgeGateway) resource.Te
 			return fmt.Errorf("Not found: %s", n)
 		}
 
-		//return fmt.Errorf("Check this: %#v", rs.Primary)
-
 		if rs.Primary.ID == "" {
 			return fmt.Errorf("No SNAT ID is set")
 		}
@@ -53,11 +66,11 @@ func testAccCheckVcdSNATExists(n string, gateway *govcd.EdgeGateway) resource.Te
 		conn := testAccProvider.Meta().(*VCDClient)
 
 		gatewayName := rs.Primary.Attributes["edge_gateway"]
-		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+		org, err := govcd.GetOrgByName(conn.VCDClient, testConfig.VCD.Org)
 		if err != nil || org == (govcd.Org{}) {
 			return fmt.Errorf("Could not find test Org")
 		}
-		vdc, err := org.GetVdcByName(testVDC)
+		vdc, err := org.GetVdcByName(testConfig.VCD.Vdc)
 		if err != nil || vdc == (govcd.Vdc{}) {
 			return fmt.Errorf("Could not find test Vdc")
 		}
@@ -72,7 +85,7 @@ func testAccCheckVcdSNATExists(n string, gateway *govcd.EdgeGateway) resource.Te
 			if v.RuleType == "SNAT" &&
 				v.GatewayNatRule.OriginalIP == "10.10.102.0/24" &&
 				v.GatewayNatRule.OriginalPort == "" &&
-				v.GatewayNatRule.TranslatedIP == os.Getenv("VCD_EXTERNAL_IP") {
+				v.GatewayNatRule.TranslatedIP == testConfig.Networking.ExternalIp {
 				found = true
 			}
 		}
@@ -94,11 +107,11 @@ func testAccCheckVcdSNATDestroy(s *terraform.State) error {
 		}
 
 		gatewayName := rs.Primary.Attributes["edge_gateway"]
-		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+		org, err := govcd.GetOrgByName(conn.VCDClient, testConfig.VCD.Org)
 		if err != nil || org == (govcd.Org{}) {
 			return fmt.Errorf("Could not find test Org")
 		}
-		vdc, err := org.GetVdcByName(testVDC)
+		vdc, err := org.GetVdcByName(testConfig.VCD.Vdc)
 		if err != nil || vdc == (govcd.Vdc{}) {
 			return fmt.Errorf("Could not find test Vdc")
 		}
@@ -113,7 +126,7 @@ func testAccCheckVcdSNATDestroy(s *terraform.State) error {
 			if v.RuleType == "SNAT" &&
 				v.GatewayNatRule.OriginalIP == "10.10.102.0/24" &&
 				v.GatewayNatRule.OriginalPort == "" &&
-				v.GatewayNatRule.TranslatedIP == os.Getenv("VCD_EXTERNAL_IP") {
+				v.GatewayNatRule.TranslatedIP == testConfig.Networking.ExternalIp {
 				found = true
 			}
 		}
@@ -127,11 +140,11 @@ func testAccCheckVcdSNATDestroy(s *terraform.State) error {
 }
 
 const testAccCheckVcdSnat_basic = `
-resource "vcd_snat" "bar" {
-	org         = "%s"
-	vdc         = "%s"
-	edge_gateway = "%s"
-	external_ip = "%s"
+resource "vcd_snat" "{{.SnatName}}" {
+	org = "{{.Org}}"
+	vdc = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
+	external_ip = "{{.ExternalIp}}"
 	internal_ip = "10.10.102.0/24"
 }
 `
