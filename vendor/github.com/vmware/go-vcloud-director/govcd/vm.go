@@ -2,7 +2,7 @@
  * Copyright 2014 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
  */
 
-package govcloudair
+package govcd
 
 import (
 	"bytes"
@@ -13,7 +13,7 @@ import (
 	"os"
 	"strconv"
 
-	types "github.com/ukcloud/govcloudair/types/v56"
+	types "github.com/vmware/go-vcloud-director/types/v56"
 )
 
 type VM struct {
@@ -61,6 +61,33 @@ func (v *VM) Refresh() error {
 
 	// The request was successful
 	return nil
+}
+
+func (v *VM) GetNetworkConnectionSection() (*types.NetworkConnectionSection, error) {
+
+	networkConnectionSection := &types.NetworkConnectionSection{}
+
+	if v.VM.HREF == "" {
+		return networkConnectionSection, fmt.Errorf("cannot refresh, Object is empty")
+	}
+
+	u, _ := url.ParseRequestURI(v.VM.HREF + "/networkConnectionSection/")
+
+	req := v.c.NewRequest(map[string]string{}, "GET", *u, nil)
+
+	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.networkConnectionSection+xml")
+
+	resp, err := checkResp(v.c.Http.Do(req))
+	if err != nil {
+		return networkConnectionSection, fmt.Errorf("error retrieving task: %s", err)
+	}
+
+	if err = decodeBody(resp, networkConnectionSection); err != nil {
+		return networkConnectionSection, fmt.Errorf("error decoding task response: %s", err)
+	}
+
+	// The request was successful
+	return networkConnectionSection, nil
 }
 
 func (c *VCDClient) FindVMByHREF(vmhref string) (VM, error) {
@@ -199,6 +226,86 @@ func (v *VM) ChangeCPUcount(size int) (Task, error) {
 
 }
 
+func (v *VM) ChangeNetworkConfig(networks []map[string]interface{}, ip string) (Task, error) {
+	err := v.Refresh()
+	if err != nil {
+		return Task{}, fmt.Errorf("error refreshing VM before running customization: %v", err)
+	}
+
+	networksection, err := v.GetNetworkConnectionSection()
+
+	for index, network := range networks {
+		// Determine what type of address is requested for the vApp
+		ipAllocationMode := "NONE"
+		ipAddress := "Any"
+
+		// TODO: Review current behaviour of using DHCP when left blank
+		if ip == "dhcp" || network["ip"].(string) == "dhcp" {
+			ipAllocationMode = "DHCP"
+		} else if ip == "allocated" || network["ip"].(string) == "allocated" {
+			ipAllocationMode = "POOL"
+		} else if ip == "none" || network["ip"].(string) == "none" {
+			ipAllocationMode = "NONE"
+		} else if ip != "" {
+			ipAllocationMode = "MANUAL"
+			// TODO: Check a valid IP has been given
+			ipAddress = ip
+		} else if network["ip"].(string) != "" {
+			ipAllocationMode = "MANUAL"
+			// TODO: Check a valid IP has been given
+			ipAddress = network["ip"].(string)
+		} else if ip == "" {
+			ipAllocationMode = "DHCP"
+		}
+
+		log.Printf("[DEBUG] Function ChangeNetworkConfig() for %s invoked", network["orgnetwork"])
+
+		networksection.Xmlns = "http://www.vmware.com/vcloud/v1.5"
+		networksection.Ovf = "http://schemas.dmtf.org/ovf/envelope/1"
+		networksection.Info = "Specifies the available VM network connections"
+
+		networksection.NetworkConnection[index].NeedsCustomization = true
+		networksection.NetworkConnection[index].IPAddress = ipAddress
+		networksection.NetworkConnection[index].IPAddressAllocationMode = ipAllocationMode
+		networksection.NetworkConnection[index].MACAddress = ""
+
+		if network["is_primary"] == true {
+			networksection.PrimaryNetworkConnectionIndex = index
+		}
+
+	}
+
+	output, err := xml.MarshalIndent(networksection, "  ", "    ")
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
+	}
+
+	log.Printf("[DEBUG] NetworkXML: %s", output)
+
+	b := bytes.NewBufferString(xml.Header + string(output))
+
+	s, _ := url.ParseRequestURI(v.VM.HREF)
+	s.Path += "/networkConnectionSection/"
+
+	req := v.c.NewRequest(map[string]string{}, "PUT", *s, b)
+
+	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.networkConnectionSection+xml")
+
+	resp, err := checkResp(v.c.Http.Do(req))
+	if err != nil {
+		return Task{}, fmt.Errorf("error customizing VM Network: %s", err)
+	}
+
+	task := NewTask(v.c)
+
+	if err = decodeBody(resp, task.Task); err != nil {
+		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
+	}
+
+	// The request was successful
+	return *task, nil
+}
+
 func (v *VM) ChangeMemorySize(size int) (Task, error) {
 
 	err := v.Refresh()
@@ -261,77 +368,6 @@ func (v *VM) ChangeMemorySize(size int) (Task, error) {
 	// The request was successful
 	return *task, nil
 
-}
-
-func (v *VM) ChangeNetworkConfig(network, ip string) (Task, error) {
-	err := v.Refresh()
-	if err != nil {
-		return Task{}, fmt.Errorf("error refreshing VM before running customization: %v", err)
-	}
-
-	// Determine what type of address is requested for the vApp
-	ipAllocationMode := "NONE"
-	ipAddress := "Any"
-
-	// TODO: Review current behaviour of using DHCP when left blank
-	if ip == "" || ip == "dhcp" {
-		ipAllocationMode = "DHCP"
-	} else if ip == "allocated" {
-		ipAllocationMode = "POOL"
-	} else if ip == "none" {
-		ipAllocationMode = "NONE"
-	} else if ip != "" {
-		ipAllocationMode = "MANUAL"
-		// TODO: Check a valid IP has been given
-		ipAddress = ip
-	}
-
-	networkConnection := &types.NetworkConnection{
-		Network:                 network,
-		NeedsCustomization:      true,
-		NetworkConnectionIndex:  0,
-		IPAddress:               ipAddress,
-		IsConnected:             true,
-		IPAddressAllocationMode: ipAllocationMode,
-	}
-
-	newnetwork := &types.NetworkConnectionSection{
-		Xmlns: "http://www.vmware.com/vcloud/v1.5",
-		Ovf:   "http://schemas.dmtf.org/ovf/envelope/1",
-		Info:  "Specifies the available VM network connections",
-		PrimaryNetworkConnectionIndex: 0,
-		NetworkConnection:             networkConnection,
-	}
-
-	output, err := xml.MarshalIndent(newnetwork, "  ", "    ")
-	if err != nil {
-		fmt.Printf("error: %v\n", err)
-	}
-
-	log.Printf("[DEBUG] NetworkXML: %s", output)
-
-	b := bytes.NewBufferString(xml.Header + string(output))
-
-	s, _ := url.ParseRequestURI(v.VM.HREF)
-	s.Path += "/networkConnectionSection/"
-
-	req := v.c.NewRequest(map[string]string{}, "PUT", *s, b)
-
-	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.networkConnectionSection+xml")
-
-	resp, err := checkResp(v.c.Http.Do(req))
-	if err != nil {
-		return Task{}, fmt.Errorf("error customizing VM Network: %s", err)
-	}
-
-	task := NewTask(v.c)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-	}
-
-	// The request was successful
-	return *task, nil
 }
 
 func (v *VM) RunCustomizationScript(computername, script string) (Task, error) {
