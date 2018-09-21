@@ -33,6 +33,32 @@ func (v *VCDClient) NewVApp(c *Client) VApp {
 	return *newvapp
 }
 
+func (v *VApp) getParentVDC() (Vdc, error) {
+	for _, a := range v.VApp.Link {
+		if a.Type == "application/vnd.vmware.vcloud.vdc+xml" {
+			u, err := url.ParseRequestURI(a.HREF)
+
+			if err != nil {
+				return Vdc{}, fmt.Errorf("Cannot parse HREF : %v", err)
+			}
+
+			req := v.c.NewRequest(map[string]string{}, "GET", *u, nil)
+
+			resp, err := checkResp(v.c.Http.Do(req))
+
+			vdc := NewVdc(v.c)
+
+			if err = decodeBody(resp, vdc.Vdc); err != nil {
+				return Vdc{}, fmt.Errorf("error decoding task response: %s", err)
+			}
+
+			return *vdc, nil
+
+		}
+	}
+	return Vdc{}, fmt.Errorf("Could not find a parent Vdc")
+}
+
 func (v *VApp) Refresh() error {
 
 	if v.VApp.HREF == "" {
@@ -60,7 +86,7 @@ func (v *VApp) Refresh() error {
 	return nil
 }
 
-func (v *VApp) AddVM(orgvdcnetwork OrgVDCNetwork, vapptemplate VAppTemplate, name string) (Task, error) {
+func (v *VApp) AddVM(orgvdcnetwork OrgVDCNetwork, vapptemplate VAppTemplate, name string, accept_all_eulas bool) (Task, error) {
 
 	vcomp := &types.ReComposeVAppParams{
 		Ovf:         "http://schemas.dmtf.org/ovf/envelope/1",
@@ -94,6 +120,7 @@ func (v *VApp) AddVM(orgvdcnetwork OrgVDCNetwork, vapptemplate VAppTemplate, nam
 				ContainerNetwork: orgvdcnetwork.OrgVDCNetwork.Name,
 			},
 		},
+		AllEULAsAccepted: accept_all_eulas,
 	}
 
 	output, _ := xml.MarshalIndent(vcomp, "  ", "    ")
@@ -174,112 +201,6 @@ func (v *VApp) RemoveVM(vm VM) error {
 	}
 
 	return nil
-}
-
-func (v *VApp) ComposeVApp(orgvdcnetwork OrgVDCNetwork, vapptemplate VAppTemplate, storageprofileref types.Reference, name string, description string) (Task, error) {
-
-	if vapptemplate.VAppTemplate.Children == nil || orgvdcnetwork.OrgVDCNetwork == nil {
-		return Task{}, fmt.Errorf("can't compose a new vApp, objects passed are not valid")
-	}
-
-	// Build request XML
-	vcomp := &types.ComposeVAppParams{
-		Ovf:         "http://schemas.dmtf.org/ovf/envelope/1",
-		Xsi:         "http://www.w3.org/2001/XMLSchema-instance",
-		Xmlns:       "http://www.vmware.com/vcloud/v1.5",
-		Deploy:      false,
-		Name:        name,
-		PowerOn:     false,
-		Description: description,
-		InstantiationParams: &types.InstantiationParams{
-			NetworkConfigSection: &types.NetworkConfigSection{
-				Info: "Configuration parameters for logical networks",
-				NetworkConfig: &types.VAppNetworkConfiguration{
-					NetworkName: orgvdcnetwork.OrgVDCNetwork.Name,
-					Configuration: &types.NetworkConfiguration{
-						FenceMode: "bridged",
-						ParentNetwork: &types.Reference{
-							HREF: orgvdcnetwork.OrgVDCNetwork.HREF,
-							Name: orgvdcnetwork.OrgVDCNetwork.Name,
-							Type: orgvdcnetwork.OrgVDCNetwork.Type,
-						},
-					},
-				},
-			},
-		},
-		SourcedItem: &types.SourcedCompositionItemParam{
-			Source: &types.Reference{
-				HREF: vapptemplate.VAppTemplate.Children.VM[0].HREF,
-				Name: vapptemplate.VAppTemplate.Children.VM[0].Name,
-			},
-			InstantiationParams: &types.InstantiationParams{
-				NetworkConnectionSection: &types.NetworkConnectionSection{
-					Type: vapptemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.Type,
-					HREF: vapptemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.HREF,
-					Info: "Network config for sourced item",
-					PrimaryNetworkConnectionIndex: vapptemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.PrimaryNetworkConnectionIndex,
-					NetworkConnection: &types.NetworkConnection{
-						Network:                 orgvdcnetwork.OrgVDCNetwork.Name,
-						IsConnected:             true,
-						IPAddressAllocationMode: "POOL",
-					},
-				},
-			},
-			NetworkAssignment: &types.NetworkAssignment{
-				InnerNetwork:     orgvdcnetwork.OrgVDCNetwork.Name,
-				ContainerNetwork: orgvdcnetwork.OrgVDCNetwork.Name,
-			},
-		},
-	}
-
-	if storageprofileref.HREF != "" {
-		vcomp.SourcedItem.StorageProfile = &storageprofileref
-	}
-
-	// ensure network connection index is valid, if not use primary index
-	if vapptemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.NetworkConnection != nil {
-		vcomp.SourcedItem.InstantiationParams.NetworkConnectionSection.NetworkConnection.NetworkConnectionIndex = vapptemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.NetworkConnection.NetworkConnectionIndex
-	} else {
-		vcomp.SourcedItem.InstantiationParams.NetworkConnectionSection.NetworkConnection.NetworkConnectionIndex = vcomp.SourcedItem.InstantiationParams.NetworkConnectionSection.PrimaryNetworkConnectionIndex
-	}
-
-	output, err := xml.MarshalIndent(vcomp, "  ", "    ")
-	if err != nil {
-		return Task{}, fmt.Errorf("error marshaling vapp compose: %s", err)
-	}
-
-	debug := os.Getenv("GOVCLOUDAIR_DEBUG")
-
-	if debug == "true" {
-		fmt.Printf("\n\nXML DEBUG: %s\n\n", string(output))
-	}
-
-	log.Printf("\n\nXML DEBUG: %s\n\n", string(output))
-
-	b := bytes.NewBufferString(xml.Header + string(output))
-
-	s := v.c.VCDVDCHREF
-	s.Path += "/action/composeVApp"
-
-	req := v.c.NewRequest(map[string]string{}, "POST", s, b)
-
-	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.composeVAppParams+xml")
-
-	resp, err := checkResp(v.c.Http.Do(req))
-	if err != nil {
-		return Task{}, fmt.Errorf("error instantiating a new vApp: %s", err)
-	}
-
-	if err = decodeBody(resp, v.VApp); err != nil {
-		return Task{}, fmt.Errorf("error decoding vApp response: %s", err)
-	}
-
-	task := NewTask(v.c)
-	task.Task = v.VApp.Tasks.Task[0]
-
-	// The request was successful
-	return *task, nil
-
 }
 
 func (v *VApp) PowerOn() (Task, error) {
@@ -448,6 +369,7 @@ func (v *VApp) Undeploy() (Task, error) {
 	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.undeployVAppParams+xml")
 
 	resp, err := checkResp(v.c.Http.Do(req))
+
 	if err != nil {
 		return Task{}, fmt.Errorf("error undeploy vApp: %s", err)
 	}
@@ -513,6 +435,7 @@ func (v *VApp) Delete() (Task, error) {
 	req := v.c.NewRequest(map[string]string{}, "DELETE", *s, nil)
 
 	resp, err := checkResp(v.c.Http.Do(req))
+
 	if err != nil {
 		return Task{}, fmt.Errorf("error deleting vApp: %s", err)
 	}
@@ -681,7 +604,7 @@ func (v *VApp) ChangeStorageProfile(name string) (Task, error) {
 		return Task{}, fmt.Errorf("vApp doesn't contain any children, aborting customization")
 	}
 
-	vdc, err := v.c.retrieveVDC()
+	vdc, err := v.getParentVDC()
 	storageprofileref, err := vdc.FindStorageProfileReference(name)
 
 	newprofile := &types.VM{
