@@ -2,13 +2,13 @@
  * Copyright 2014 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
  */
 
-package govcloudair
+package govcd
 
 import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
-	types "github.com/ukcloud/govcloudair/types/v56"
+	types "github.com/vmware/go-vcloud-director/types/v56"
 	"net/url"
 )
 
@@ -29,15 +29,15 @@ func (v *Vdc) InstantiateVAppTemplate(template *types.InstantiateVAppTemplatePar
 	if err != nil {
 		return fmt.Errorf("Error finding VAppTemplate: %#v", err)
 	}
-	b := bytes.NewBufferString(xml.Header + string(output))
+	requestData := bytes.NewBufferString(xml.Header + string(output))
 
-	s, err := url.ParseRequestURI(v.Vdc.HREF)
+	vdcHref, err := url.ParseRequestURI(v.Vdc.HREF)
 	if err != nil {
-		return fmt.Errorf("Error fetching vdcHref : %s", err)
+		return fmt.Errorf("error getting vdc href: %v", err)
 	}
-	s.Path += "/action/instantiateVAppTemplate"
+	vdcHref.Path += "/action/instantiateVAppTemplate"
 
-	req := v.c.NewRequest(map[string]string{}, "POST", *s, b)
+	req := v.c.NewRequest(map[string]string{}, "POST", *vdcHref, requestData)
 	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.instantiateVAppTemplateParams+xml")
 
 	resp, err := checkResp(v.c.Http.Do(req))
