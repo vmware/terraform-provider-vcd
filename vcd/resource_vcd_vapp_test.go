@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"testing"
 
@@ -10,51 +11,76 @@ import (
 	govcd "github.com/vmware/go-vcloud-director/govcd"
 )
 
+var vappName string = "TestAccVcdVAppVapp"
+var vappNameAllocated = "TestAccVcdVAppVappAllocated"
+
 func TestAccVcdVApp_PowerOff(t *testing.T) {
 	var vapp govcd.VApp
 
+	var params = StringMap{
+		"Org":               testConfig.VCD.Org,
+		"Vdc":               testConfig.VCD.Vdc,
+		"EdgeGateway":       testConfig.Networking.EdgeGateway,
+		"NetworkName":       "TestAccVcdVAppNet",
+		"NetworkName2":      "TestAccVcdVAppNet2",
+		"NetworkName3":      "TestAccVcdVAppNet3",
+		"Catalog":           testConfig.VCD.Catalog.Name,
+		"CatalogItem":       testConfig.VCD.Catalog.Catalogitem,
+		"VappName":          vappName,
+		"VappNameAllocated": vappNameAllocated,
+		"FuncName":          "testAccCheckVcdVApp_basic",
+	}
+	configText := templateFill(testAccCheckVcdVApp_basic, params)
+
+	params["FuncName"] = "testAccCheckVcdVApp_powerOff"
+
+	configTextPoweroff := templateFill(testAccCheckVcdVApp_powerOff, params)
+	if os.Getenv("GOVCD_DEBUG") != "" {
+		log.Printf("#[DEBUG] CONFIGURATION basic: %s\n", configText)
+		log.Printf("#[DEBUG] CONFIGURATION poweroff: %s\n", configTextPoweroff)
+	}
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckVcdVAppDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: fmt.Sprintf(testAccCheckVcdVApp_basic, testOrg, testVDC, os.Getenv("VCD_EDGE_GATEWAY"), testOrg, testVDC, os.Getenv("VCD_EDGE_GATEWAY"), testOrg, testVDC, testOrg, testVDC),
+				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVAppExists("vcd_vapp.foobar", &vapp),
+					testAccCheckVcdVAppExists("vcd_vapp."+vappName, &vapp),
 					testAccCheckVcdVAppAttributes(&vapp),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp.foobar", "name", "foobar"),
+						"vcd_vapp."+vappName, "name", vappName),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp.foobar", "ip", "10.10.102.160"),
+						"vcd_vapp."+vappName, "ip", "10.10.102.160"),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp.foobar", "power_on", "true"),
+						"vcd_vapp."+vappName, "power_on", "true"),
 				),
 			},
 
 			resource.TestStep{
-				Config: fmt.Sprintf(testAccCheckVcdVApp_basic, testOrg, testVDC, os.Getenv("VCD_EDGE_GATEWAY"), testOrg, testVDC, os.Getenv("VCD_EDGE_GATEWAY"), testOrg, testVDC, testOrg, testVDC),
+				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"vcd_vapp.foobar_allocated", "name", "foobar-allocated"),
+						"vcd_vapp."+vappNameAllocated, "name", vappNameAllocated),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp.foobar_allocated", "ip", "allocated"),
+						"vcd_vapp."+vappNameAllocated, "ip", "allocated"),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp.foobar_allocated", "power_on", "true"),
+						"vcd_vapp."+vappNameAllocated, "power_on", "true"),
 				),
 			},
 
 			resource.TestStep{
-				Config: fmt.Sprintf(testAccCheckVcdVApp_powerOff, testOrg, testVDC, os.Getenv("VCD_EDGE_GATEWAY"), testOrg, testVDC),
+				Config: configTextPoweroff,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVAppExists("vcd_vapp.foobar", &vapp),
+					testAccCheckVcdVAppExists("vcd_vapp."+vappName, &vapp),
 					testAccCheckVcdVAppAttributes_off(&vapp),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp.foobar", "name", "foobar"),
+						"vcd_vapp."+vappName, "name", vappName),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp.foobar", "ip", "10.10.103.160"),
+						"vcd_vapp."+vappName, "ip", "10.10.103.160"),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp.foobar", "power_on", "false"),
+						"vcd_vapp."+vappName, "power_on", "false"),
 				),
 			},
 		},
@@ -73,11 +99,11 @@ func testAccCheckVcdVAppExists(n string, vapp *govcd.VApp) resource.TestCheckFun
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
-		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+		org, err := govcd.GetOrgByName(conn.VCDClient, testConfig.VCD.Org)
 		if err != nil || org == (govcd.Org{}) {
 			return fmt.Errorf("Could not find test Org")
 		}
-		vdc, err := org.GetVdcByName(testVDC)
+		vdc, err := org.GetVdcByName(testConfig.VCD.Vdc)
 		if err != nil || vdc == (govcd.Vdc{}) {
 			return fmt.Errorf("Could not find test Vdc")
 		}
@@ -99,11 +125,11 @@ func testAccCheckVcdVAppDestroy(s *terraform.State) error {
 		if rs.Type != "vcd_vapp" {
 			continue
 		}
-		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+		org, err := govcd.GetOrgByName(conn.VCDClient, testConfig.VCD.Org)
 		if err != nil || org == (govcd.Org{}) {
 			return fmt.Errorf("Could not find test Org")
 		}
-		vdc, err := org.GetVdcByName(testVDC)
+		vdc, err := org.GetVdcByName(testConfig.VCD.Vdc)
 		if err != nil || vdc == (govcd.Vdc{}) {
 			return fmt.Errorf("Could not find test Vdc")
 		}
@@ -122,7 +148,7 @@ func testAccCheckVcdVAppDestroy(s *terraform.State) error {
 func testAccCheckVcdVAppAttributes(vapp *govcd.VApp) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
-		if vapp.VApp.Name != "foobar" {
+		if vapp.VApp.Name != vappName {
 			return fmt.Errorf("Bad name: %s", vapp.VApp.Name)
 		}
 
@@ -143,7 +169,7 @@ func testAccCheckVcdVAppAttributes(vapp *govcd.VApp) resource.TestCheckFunc {
 func testAccCheckVcdVAppAttributes_off(vapp *govcd.VApp) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
-		if vapp.VApp.Name != "foobar" {
+		if vapp.VApp.Name != vappName {
 			return fmt.Errorf("Bad name: %s", vapp.VApp.Name)
 		}
 
@@ -162,11 +188,11 @@ func testAccCheckVcdVAppAttributes_off(vapp *govcd.VApp) resource.TestCheckFunc 
 }
 
 const testAccCheckVcdVApp_basic = `
-resource "vcd_network" "foonet" {
-	name = "foonet"
-	org = "%s"
-	vdc = "%s"
-	edge_gateway = "%s"
+resource "vcd_network" "{{.NetworkName}}" {
+	name = "{{.NetworkName}}"
+	org = "{{.Org}}"
+	vdc = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
 	gateway = "10.10.102.1"
 	static_ip_pool {
 		start_address = "10.10.102.2"
@@ -174,11 +200,11 @@ resource "vcd_network" "foonet" {
 	}
 }
 
-resource "vcd_network" "foonet3" {
-	name = "foonet3"
-	org = "%s"
-	vdc = "%s"
-	edge_gateway = "%s"
+resource "vcd_network" "{{.NetworkName3}}" {
+	name = "{{.NetworkName3}}"
+	org = "{{.Org}}"
+	vdc = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
 	gateway = "10.10.202.1"
 	static_ip_pool {
 		start_address = "10.10.202.2"
@@ -186,25 +212,25 @@ resource "vcd_network" "foonet3" {
 	}
 }
 
-resource "vcd_vapp" "foobar" {
-  org = "%s"
-  vdc = "%s"
-  name          = "foobar"
-  template_name = "Skyscape_CentOS_6_4_x64_50GB_Small_v1.0.1"
-  catalog_name  = "Skyscape Catalogue"
-  network_name  = "${vcd_network.foonet.name}"
+resource "vcd_vapp" "{{.VappName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+  name          = "{{.VappName}}"
+  template_name = "{{.CatalogItem}}"
+  catalog_name  = "{{.Catalog}}"
+  network_name  = "${vcd_network.{{.NetworkName}}.name}"
   memory        = 1024
   cpus          = 1
   ip            = "10.10.102.160"
 }
 
-resource "vcd_vapp" "foobar_allocated" {
-  org = "%s"
-  vdc = "%s"
-  name          = "foobar-allocated"
-  template_name = "Skyscape_CentOS_6_4_x64_50GB_Small_v1.0.1"
-  catalog_name  = "Skyscape Catalogue"
-  network_name  = "${vcd_network.foonet3.name}"
+resource "vcd_vapp" "{{.VappNameAllocated}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+  name          = "{{.VappNameAllocated}}"
+  template_name = "{{.CatalogItem}}"
+  catalog_name  = "{{.Catalog}}"
+  network_name  = "${vcd_network.{{.NetworkName3}}.name}"
   memory        = 1024
   cpus          = 1
   ip            = "allocated"
@@ -212,11 +238,11 @@ resource "vcd_vapp" "foobar_allocated" {
 `
 
 const testAccCheckVcdVApp_powerOff = `
-resource "vcd_network" "foonet2" {
-	org = "%s"
-	vdc = "%s"
-	name = "foonet2"
-	edge_gateway = "%s"
+resource "vcd_network" "{{.NetworkName2}}" {
+	org = "{{.Org}}"
+	vdc = "{{.Vdc}}"
+	name = "{{.NetworkName2}}"
+	edge_gateway = "{{.EdgeGateway}}"
 	gateway = "10.10.103.1"
 	static_ip_pool {
 		start_address = "10.10.103.2"
@@ -229,13 +255,13 @@ resource "vcd_network" "foonet2" {
 	}
 }
 
-resource "vcd_vapp" "foobar" {
-  org = "%s"
-  vdc = "%s"
-  name          = "foobar"
-  template_name = "Skyscape_CentOS_6_4_x64_50GB_Small_v1.0.1"
-  catalog_name  = "Skyscape Catalogue"
-  network_name  = "${vcd_network.foonet2.name}"
+resource "vcd_vapp" "{{.VappName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+  name          = "{{.VappName}}"
+  template_name = "{{.CatalogItem}}"
+  catalog_name  = "{{.Catalog}}"
+  network_name  = "${vcd_network.{{.NetworkName2}}.name}"
   memory        = 1024
   cpus          = 1
   ip            = "10.10.103.160"

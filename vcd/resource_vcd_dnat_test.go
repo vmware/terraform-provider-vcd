@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"testing"
 
@@ -10,28 +11,42 @@ import (
 	govcd "github.com/vmware/go-vcloud-director/govcd"
 )
 
+var baseDnatName string = "TestAccVcdDNAT"
+
 func TestAccVcdDNAT_Basic(t *testing.T) {
-	if v := os.Getenv("VCD_EXTERNAL_IP"); v == "" {
-		t.Skip("Environment variable VCD_EXTERNAL_IP must be set to run DNAT tests")
+	if testConfig.Networking.ExternalIp == "" {
+		t.Skip("Variable networking.externalIp must be set to run DNAT tests")
 		return
 	}
 	var e govcd.EdgeGateway
 
+	var dnatName string = baseDnatName + "_Basic"
+	var params = StringMap{
+		"Org":         testConfig.VCD.Org,
+		"Vdc":         testConfig.VCD.Vdc,
+		"EdgeGateway": testConfig.Networking.EdgeGateway,
+		"ExternalIp":  testConfig.Networking.ExternalIp,
+		"DnatName":    dnatName,
+	}
+	configText := templateFill(testAccCheckVcdDnat_basic, params)
+	if os.Getenv("GOVCD_DEBUG") != "" {
+		log.Printf("#[DEBUG] CONFIGURATION: %s", configText)
+	}
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckVcdDNATDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: fmt.Sprintf(testAccCheckVcdDnat_basic, testOrg, testVDC, os.Getenv("VCD_EDGE_GATEWAY"), os.Getenv("VCD_EXTERNAL_IP")),
+				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdDNATExists("vcd_dnat.bar", &e),
+					testAccCheckVcdDNATExists("vcd_dnat."+dnatName, &e),
 					resource.TestCheckResourceAttr(
-						"vcd_dnat.bar", "external_ip", os.Getenv("VCD_EXTERNAL_IP")),
+						"vcd_dnat."+dnatName, "external_ip", testConfig.Networking.ExternalIp),
 					resource.TestCheckResourceAttr(
-						"vcd_dnat.bar", "port", "7777"),
+						"vcd_dnat."+dnatName, "port", "7777"),
 					resource.TestCheckResourceAttr(
-						"vcd_dnat.bar", "internal_ip", "10.10.102.60"),
+						"vcd_dnat."+dnatName, "internal_ip", "10.10.102.60"),
 				),
 			},
 		},
@@ -39,30 +54,42 @@ func TestAccVcdDNAT_Basic(t *testing.T) {
 }
 
 func TestAccVcdDNAT_tlate(t *testing.T) {
-	if v := os.Getenv("VCD_EXTERNAL_IP"); v == "" {
-		t.Skip("Environment variable VCD_EXTERNAL_IP must be set to run DNAT tests")
+	if testConfig.Networking.ExternalIp == "" {
+		t.Skip("Variable networking.externalIp must be set to run DNAT tests")
 		return
 	}
-	fmt.Printf(testOrg)
 	var e govcd.EdgeGateway
 
+	var dnatName string = baseDnatName + "_tlate"
+	var params = StringMap{
+		"Org":         testConfig.VCD.Org,
+		"Vdc":         testConfig.VCD.Vdc,
+		"EdgeGateway": testConfig.Networking.EdgeGateway,
+		"ExternalIp":  testConfig.Networking.ExternalIp,
+		"DnatName":    dnatName,
+	}
+
+	configText := templateFill(testAccCheckVcdDnat_tlate, params)
+	if os.Getenv("GOVCD_DEBUG") != "" {
+		log.Printf("#[DEBUG] CONFIGURATION: %s", configText)
+	}
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckVcdDNATDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: fmt.Sprintf(testAccCheckVcdDnat_tlate, testOrg, testVDC, os.Getenv("VCD_EDGE_GATEWAY"), os.Getenv("VCD_EXTERNAL_IP")),
+				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdDNATtlateExists("vcd_dnat.bar", &e),
+					testAccCheckVcdDNATtlateExists("vcd_dnat."+dnatName, &e),
 					resource.TestCheckResourceAttr(
-						"vcd_dnat.bar", "external_ip", os.Getenv("VCD_EXTERNAL_IP")),
+						"vcd_dnat."+dnatName, "external_ip", testConfig.Networking.ExternalIp),
 					resource.TestCheckResourceAttr(
-						"vcd_dnat.bar", "port", "7777"),
+						"vcd_dnat."+dnatName, "port", "7777"),
 					resource.TestCheckResourceAttr(
-						"vcd_dnat.bar", "internal_ip", "10.10.102.60"),
+						"vcd_dnat."+dnatName, "internal_ip", "10.10.102.60"),
 					resource.TestCheckResourceAttr(
-						"vcd_dnat.bar", "translated_port", "77"),
+						"vcd_dnat."+dnatName, "translated_port", "77"),
 				),
 			},
 		},
@@ -83,13 +110,13 @@ func testAccCheckVcdDNATExists(n string, gateway *govcd.EdgeGateway) resource.Te
 		conn := testAccProvider.Meta().(*VCDClient)
 
 		gatewayName := rs.Primary.Attributes["edge_gateway"]
-		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+		org, err := govcd.GetOrgByName(conn.VCDClient, testConfig.VCD.Org)
 		if err != nil && org == (govcd.Org{}) {
 			return fmt.Errorf("Could not find test Org")
 		}
-		vdc, err := org.GetVdcByName(testVDC)
+		vdc, err := org.GetVdcByName(testConfig.VCD.Vdc)
 		if err != nil || vdc == (govcd.Vdc{}) {
-			return fmt.Errorf("Could not find test Vdc %s", testVDC)
+			return fmt.Errorf("Could not find test Vdc %s", testConfig.VCD.Vdc)
 		}
 		edgeGateway, err := vdc.FindEdgeGateway(gatewayName)
 
@@ -100,7 +127,7 @@ func testAccCheckVcdDNATExists(n string, gateway *govcd.EdgeGateway) resource.Te
 		var found bool
 		for _, v := range edgeGateway.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
 			if v.RuleType == "DNAT" &&
-				v.GatewayNatRule.OriginalIP == os.Getenv("VCD_EXTERNAL_IP") &&
+				v.GatewayNatRule.OriginalIP == testConfig.Networking.ExternalIp &&
 				v.GatewayNatRule.OriginalPort == "7777" &&
 				v.GatewayNatRule.TranslatedIP == "10.10.102.60" {
 				found = true
@@ -130,12 +157,12 @@ func testAccCheckVcdDNATtlateExists(n string, gateway *govcd.EdgeGateway) resour
 		conn := testAccProvider.Meta().(*VCDClient)
 
 		gatewayName := rs.Primary.Attributes["edge_gateway"]
-		fmt.Printf(testOrg)
-		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+		// fmt.Printf(testConfig.VCD.Org)
+		org, err := govcd.GetOrgByName(conn.VCDClient, testConfig.VCD.Org)
 		if err != nil {
 			return fmt.Errorf("Could not find test Org")
 		}
-		vdc, err := org.GetVdcByName(testVDC)
+		vdc, err := org.GetVdcByName(testConfig.VCD.Vdc)
 		if err != nil {
 			return fmt.Errorf("Could not find test Vdc")
 		}
@@ -148,7 +175,7 @@ func testAccCheckVcdDNATtlateExists(n string, gateway *govcd.EdgeGateway) resour
 		var found bool
 		for _, v := range edgeGateway.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
 			if v.RuleType == "DNAT" &&
-				v.GatewayNatRule.OriginalIP == os.Getenv("VCD_EXTERNAL_IP") &&
+				v.GatewayNatRule.OriginalIP == testConfig.Networking.ExternalIp &&
 				v.GatewayNatRule.OriginalPort == "7777" &&
 				v.GatewayNatRule.TranslatedIP == "10.10.102.60" &&
 				v.GatewayNatRule.TranslatedPort == "77" {
@@ -171,11 +198,11 @@ func testAccCheckVcdDNATDestroy(s *terraform.State) error {
 		if rs.Type != "vcd_dnat" {
 			continue
 		}
-		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+		org, err := govcd.GetOrgByName(conn.VCDClient, testConfig.VCD.Org)
 		if err != nil {
 			return fmt.Errorf("Could not find test Org")
 		}
-		vdc, err := org.GetVdcByName(testVDC)
+		vdc, err := org.GetVdcByName(testConfig.VCD.Vdc)
 		if err != nil {
 			return fmt.Errorf("Could not find test Vdc")
 		}
@@ -189,7 +216,7 @@ func testAccCheckVcdDNATDestroy(s *terraform.State) error {
 		var found bool
 		for _, v := range edgeGateway.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
 			if v.RuleType == "DNAT" &&
-				v.GatewayNatRule.OriginalIP == os.Getenv("VCD_EXTERNAL_IP") &&
+				v.GatewayNatRule.OriginalIP == testConfig.Networking.ExternalIp &&
 				v.GatewayNatRule.OriginalPort == "7777" &&
 				v.GatewayNatRule.TranslatedIP == "10.10.102.60" &&
 				v.GatewayNatRule.TranslatedPort == "77" {
@@ -206,21 +233,21 @@ func testAccCheckVcdDNATDestroy(s *terraform.State) error {
 }
 
 const testAccCheckVcdDnat_basic = `
-resource "vcd_dnat" "bar" {
-	org = "%s"
-	vdc = "%s"
-	edge_gateway = "%s"
-	external_ip = "%s"
+resource "vcd_dnat" "{{.DnatName}}" {
+	org = "{{.Org}}"
+	vdc = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
+	external_ip = "{{.ExternalIp}}"
 	port = 7777
 	internal_ip = "10.10.102.60"
 }
 `
 const testAccCheckVcdDnat_tlate = `
-resource "vcd_dnat" "bar" {
-	org = "%s"
-	vdc = "%s"
-	edge_gateway = "%s"
-	external_ip = "%s"
+resource "vcd_dnat" "{{.DnatName}}" {
+	org = "{{.Org}}"
+	vdc = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
+	external_ip = "{{.ExternalIp}}"
 	port = 7777
 	internal_ip = "10.10.102.60"
 	translated_port = 77

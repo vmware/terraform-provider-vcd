@@ -2,37 +2,50 @@ package vcd
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	govcd "github.com/vmware/go-vcloud-director/govcd"
+	"github.com/vmware/go-vcloud-director/govcd"
 )
 
 func TestAccVcdNetwork_Basic(t *testing.T) {
 	var network govcd.OrgVDCNetwork
 	generatedHrefRegexp := regexp.MustCompile("^https://")
 
+	networkName := "TestAccVcdNetwork"
+	var params = StringMap{
+		"Org":         testConfig.VCD.Org,
+		"Vdc":         testConfig.VCD.Vdc,
+		"EdgeGateway": testConfig.Networking.EdgeGateway,
+		"NetworkName": networkName,
+	}
+
+	configText := templateFill(testAccCheckVcdNetwork_basic, params)
+	if os.Getenv("GOVCD_DEBUG") != "" {
+		log.Printf("#[DEBUG] CONFIGURATION: %s", configText)
+	}
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckVcdNetworkDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: fmt.Sprintf(testAccCheckVcdNetwork_basic, testOrg, testVDC, os.Getenv("VCD_EDGE_GATEWAY")),
+				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdNetworkExists("vcd_network.foonet", &network),
-					testAccCheckVcdNetworkAttributes(&network),
+					testAccCheckVcdNetworkExists("vcd_network."+networkName, &network),
+					testAccCheckVcdNetworkAttributes(networkName, &network),
 					resource.TestCheckResourceAttr(
-						"vcd_network.foonet", "name", "foonet"),
+						"vcd_network."+networkName, "name", networkName),
 					resource.TestCheckResourceAttr(
-						"vcd_network.foonet", "static_ip_pool.#", "1"),
+						"vcd_network."+networkName, "static_ip_pool.#", "1"),
 					resource.TestCheckResourceAttr(
-						"vcd_network.foonet", "gateway", "10.10.102.1"),
+						"vcd_network."+networkName, "gateway", "10.10.102.1"),
 					resource.TestMatchResourceAttr(
-						"vcd_network.foonet", "href", generatedHrefRegexp),
+						"vcd_network."+networkName, "href", generatedHrefRegexp),
 				),
 			},
 		},
@@ -51,11 +64,11 @@ func testAccCheckVcdNetworkExists(n string, network *govcd.OrgVDCNetwork) resour
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
-		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+		org, err := govcd.GetOrgByName(conn.VCDClient, testConfig.VCD.Org)
 		if err != nil || org == (govcd.Org{}) {
 			return fmt.Errorf("Could not find test Org")
 		}
-		vdc, err := org.GetVdcByName(testVDC)
+		vdc, err := org.GetVdcByName(testConfig.VCD.Vdc)
 		if err != nil || vdc == (govcd.Vdc{}) {
 			return fmt.Errorf("Could not find test Vdc")
 		}
@@ -77,11 +90,11 @@ func testAccCheckVcdNetworkDestroy(s *terraform.State) error {
 		if rs.Type != "vcd_network" {
 			continue
 		}
-		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+		org, err := govcd.GetOrgByName(conn.VCDClient, testConfig.VCD.Org)
 		if err != nil || org == (govcd.Org{}) {
 			return fmt.Errorf("Could not find test Org")
 		}
-		vdc, err := org.GetVdcByName(testVDC)
+		vdc, err := org.GetVdcByName(testConfig.VCD.Vdc)
 		if err != nil || vdc == (govcd.Vdc{}) {
 			return fmt.Errorf("Could not find test Vdc")
 		}
@@ -97,10 +110,10 @@ func testAccCheckVcdNetworkDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckVcdNetworkAttributes(network *govcd.OrgVDCNetwork) resource.TestCheckFunc {
+func testAccCheckVcdNetworkAttributes(name string, network *govcd.OrgVDCNetwork) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
-		if network.OrgVDCNetwork.Name != "foonet" {
+		if network.OrgVDCNetwork.Name != name {
 			return fmt.Errorf("Bad name: %s", network.OrgVDCNetwork.Name)
 		}
 
@@ -109,11 +122,11 @@ func testAccCheckVcdNetworkAttributes(network *govcd.OrgVDCNetwork) resource.Tes
 }
 
 const testAccCheckVcdNetwork_basic = `
-resource "vcd_network" "foonet" {
-	name = "foonet"
-	org  = "%s"
-	vdc  = "%s"
-	edge_gateway = "%s"
+resource "vcd_network" "{{.NetworkName}}" {
+	name = "{{.NetworkName}}"
+	org = "{{.Org}}"
+	vdc = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
 	gateway = "10.10.102.1"
 	static_ip_pool {
 		start_address = "10.10.102.2"
