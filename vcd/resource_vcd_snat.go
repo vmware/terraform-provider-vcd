@@ -50,11 +50,17 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
 	if err != nil {
-		return fmt.Errorf("Could not find Org: %v", err)
+		return fmt.Errorf("Could not get Org: %s with error %v", d.Get("org").(string), err)
+	}
+	if org == (govcd.Org{}) {
+		return fmt.Errorf("Could not find Org: %s", d.Get("org").(string))
 	}
 	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
-	if err != nil {
-		return fmt.Errorf("Could not find vdc: %v", err)
+	if err != nil || vdc == (govcd.Vdc{}) {
+		return fmt.Errorf("Could not get vdc: %s with error %v", d.Get("vdc").(string), err)
+	}
+	if vdc == (govcd.Vdc{}) {
+		return fmt.Errorf("Could not find vdc: %s", d.Get("vdc").(string))
 	}
 	// Multiple VCD components need to run operations on the Edge Gateway, as
 	// the edge gatway will throw back an error if it is already performing an
@@ -93,11 +99,17 @@ func resourceVcdSNATRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
 	if err != nil {
-		return fmt.Errorf("Could not find Org: %v", err)
+		return fmt.Errorf("Could not get Org: %s with error %v", d.Get("org").(string), err)
+	}
+	if org == (govcd.Org{}) {
+		return fmt.Errorf("Could not find Org: %s", d.Get("org").(string))
 	}
 	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
-	if err != nil {
-		return fmt.Errorf("Could not find vdc: %v", err)
+	if err != nil || vdc == (govcd.Vdc{}) {
+		return fmt.Errorf("Could not get vdc: %s with error %v", d.Get("vdc").(string), err)
+	}
+	if vdc == (govcd.Vdc{}) {
+		return fmt.Errorf("Could not find vdc: %s", d.Get("vdc").(string))
 	}
 
 	e, err := vdc.FindEdgeGateway(d.Get("edge_gateway").(string))
@@ -127,11 +139,17 @@ func resourceVcdSNATDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
 	if err != nil {
-		return fmt.Errorf("Could not find Org: %v", err)
+		return fmt.Errorf("Could not get Org: %s with error %v", d.Get("org").(string), err)
+	}
+	if org == (govcd.Org{}) {
+		return fmt.Errorf("Could not find Org: %s", d.Get("org").(string))
 	}
 	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
-	if err != nil {
-		return fmt.Errorf("Could not find vdc: %v", err)
+	if err != nil || vdc == (govcd.Vdc{}) {
+		return fmt.Errorf("Could not get vdc: %s with error %v", d.Get("vdc").(string), err)
+	}
+	if vdc == (govcd.Vdc{}) {
+		return fmt.Errorf("Could not find vdc: %s", d.Get("vdc").(string))
 	}
 	// Multiple VCD components need to run operations on the Edge Gateway, as
 	// the edge gatway will throw back an error if it is already performing an

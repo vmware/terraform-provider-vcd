@@ -54,11 +54,11 @@ func testAccCheckVcdSNATExists(n string, gateway *govcd.EdgeGateway) resource.Te
 
 		gatewayName := rs.Primary.Attributes["edge_gateway"]
 		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
-		if err != nil {
+		if err != nil || org == (govcd.Org{}) {
 			return fmt.Errorf("Could not find test Org")
 		}
 		vdc, err := org.GetVdcByName(testVDC)
-		if err != nil {
+		if err != nil || vdc == (govcd.Vdc{}) {
 			return fmt.Errorf("Could not find test Vdc")
 		}
 		edgeGateway, err := vdc.FindEdgeGateway(gatewayName)
@@ -95,11 +95,11 @@ func testAccCheckVcdSNATDestroy(s *terraform.State) error {
 
 		gatewayName := rs.Primary.Attributes["edge_gateway"]
 		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
-		if err != nil {
+		if err != nil || org == (govcd.Org{}) {
 			return fmt.Errorf("Could not find test Org")
 		}
 		vdc, err := org.GetVdcByName(testVDC)
-		if err != nil {
+		if err != nil || vdc == (govcd.Vdc{}) {
 			return fmt.Errorf("Could not find test Vdc")
 		}
 		edgeGateway, err := vdc.FindEdgeGateway(gatewayName)

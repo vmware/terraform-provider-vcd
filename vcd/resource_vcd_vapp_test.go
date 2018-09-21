@@ -74,11 +74,11 @@ func testAccCheckVcdVAppExists(n string, vapp *govcd.VApp) resource.TestCheckFun
 
 		conn := testAccProvider.Meta().(*VCDClient)
 		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
-		if err != nil {
+		if err != nil || org == (govcd.Org{}) {
 			return fmt.Errorf("Could not find test Org")
 		}
 		vdc, err := org.GetVdcByName(testVDC)
-		if err != nil {
+		if err != nil || vdc == (govcd.Vdc{}) {
 			return fmt.Errorf("Could not find test Vdc")
 		}
 		resp, err := vdc.FindVAppByName(rs.Primary.ID)
@@ -100,11 +100,11 @@ func testAccCheckVcdVAppDestroy(s *terraform.State) error {
 			continue
 		}
 		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
-		if err != nil {
+		if err != nil || org == (govcd.Org{}) {
 			return fmt.Errorf("Could not find test Org")
 		}
 		vdc, err := org.GetVdcByName(testVDC)
-		if err != nil {
+		if err != nil || vdc == (govcd.Vdc{}) {
 			return fmt.Errorf("Could not find test Vdc")
 		}
 		_, err = vdc.FindVAppByName(rs.Primary.ID)
