@@ -39,11 +39,6 @@ func resourceOrg() *schema.Resource {
 				Required: true,
 				ForceNew: false,
 			},
-			"network_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-			},
 			"vm_quota": &schema.Schema{
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -79,19 +74,19 @@ func resourceOrgCreate(d *schema.ResourceData, m interface{}) error {
 
 	settings := getSettings(d)
 	log.Printf("CREATING ORG: %s", orgName)
-	_, id, err := vcdClient.CreateOrg(orgName, fullName, *settings, isEnabled)
+	task, err := vcdClient.CreateOrg(orgName, fullName, *settings, isEnabled)
 
 	if err != nil {
 		log.Printf("Error creating organization: %#v", err)
 		return fmt.Errorf("Error creating organization: %#v", err)
 	}
 
-	log.Printf("Org %s Created with id: %s", orgName, id[15:])
-	d.SetId(id[15:])
+	log.Printf("Org %s Created with id: %s", orgName, task.Task.ID[15:])
+	d.SetId(task.Task.ID[15:])
 	return nil
 }
 
-//Delete org //only works if the org is empty //TODO: gonna add stuff to delete everything in the org
+//Delete org //only works if the org is empty //TODO: add vapp deletion and networking
 func resourceOrgDelete(d *schema.ResourceData, m interface{}) error {
 
 	//DELETING
@@ -101,10 +96,27 @@ func resourceOrgDelete(d *schema.ResourceData, m interface{}) error {
 	recursive := d.Get("recursive").(bool)
 
 	if force && recursive {
+		_, org, _ := (vcdClient.GetOrg(d.State().ID))
+		//deletion of networks
 		err := retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := vcdClient.RemoveAllVDCs(d.State().ID)
+			task, err := org.removeAllOrgNetworks(vcdClient.HREF)
 			if err != nil {
-				return resource.RetryableError(fmt.Errorf("Error changing memory size: %#v", err))
+				return resource.RetryableError(fmt.Errorf("Error deleting network: %#v", err))
+			}
+			if *task.Task == (types.Task{}) {
+				return nil
+			}
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
+		if err != nil {
+			return err
+		}
+
+		//deletions of vdc's
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := org.removeAllOrgVDCs(vcdClient.HREF)
+			if err != nil {
+				return resource.RetryableError(fmt.Errorf("Error deleting vdc: %#v", err))
 			}
 			if *task.Task == (types.Task{}) {
 				return nil
@@ -153,19 +165,11 @@ func resourceOrgUpdate(d *schema.ResourceData, m interface{}) error {
 
 	settings := getSettings(d)
 
-	vcomp := &types.OrgParams{
-		Xmlns:       "http://www.vmware.com/vcloud/v1.5",
-		Name:        orgName,
-		IsEnabled:   isEnabled,
-		FullName:    oldOrgFullName,
-		OrgSettings: settings,
-	}
-
 	if !strings.EqualFold(oldOrgFullName, newOrgFullName) {
 		return fmt.Errorf("__ERROR__ Not Updating org_full_name , API NOT IMPLEMENTED !!!!")
 	}
 
-	_, err := vcdClient.UpdateOrg(vcomp, d.State().ID)
+	_, err := vcdClient.UpdateOrg(orgName, oldOrgFullName, *settings, d.State().ID, isEnabled)
 
 	if err != nil {
 		fmt.Errorf("Error updating org %#v", err)
