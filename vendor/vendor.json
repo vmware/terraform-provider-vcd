@@ -1,6 +1,6 @@
 {
 	"comment": "",
-	"ignore": "appengine test github.com/hashicorp/nomad/ github.com/hashicorp/terraform/backend",
+	"ignore": "test",
 	"package": [
 		{
 			"checksumSHA1": "FIL83loX9V9APvGQIjJpbxq53F0=",
@@ -556,16 +556,22 @@
 			"revisionTime": "2016-09-27T10:08:44Z"
 		},
 		{
-			"checksumSHA1": "qMOkrANHz1tOrTd/5BXgo5R/6wk=",
-			"path": "github.com/ukcloud/govcloudair",
-			"revision": "0f21764a359bbdc9cde213653efb19b97377b3b2",
-			"revisionTime": "2017-08-18T20:24:03Z"
+			"checksumSHA1": "DoDfdXxorxHMA4qcba11d7FSmMs=",
+			"path": "github.com/vmware/go-vcloud-director/govcd",
+			"revision": "9f070c202155bcc9ab767a13afa0bbd409b0d339",
+			"revisionTime": "2018-08-29T22:22:34Z"
 		},
 		{
-			"checksumSHA1": "GVsFa1M6rXXXdRfwIg6cRKEkG0M=",
-			"path": "github.com/ukcloud/govcloudair/types/v56",
-			"revision": "48650057ccf982e29144214373b50d5a411f86b3",
-			"revisionTime": "2017-08-17T14:08:21Z"
+			"checksumSHA1": "8VOW1vcmGzONx3PWbgKoyVrhyYU=",
+			"path": "github.com/vmware/go-vcloud-director/types/v56",
+			"revision": "9f070c202155bcc9ab767a13afa0bbd409b0d339",
+			"revisionTime": "2018-08-29T22:22:34Z"
+		},
+		{
+			"checksumSHA1": "0jRVx/JX3deM1pUwoBfWxpxwNak=",
+			"path": "github.com/vmware/go-vcloud-director/util",
+			"revision": "9f070c202155bcc9ab767a13afa0bbd409b0d339",
+			"revisionTime": "2018-08-29T22:22:34Z"
 		},
 		{
 			"checksumSHA1": "vE43s37+4CJ2CDU6TlOUOYE0K9c=",
