@@ -10,7 +10,7 @@ import (
 	"fmt"
 	//"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	types "github.com/ukcloud/govcloudair/types/v56"
+	//types "github.com/ukcloud/govcloudair/types/v56"
 	"log"
 	"strings"
 )
@@ -71,10 +71,11 @@ func resourceOrgCreate(d *schema.ResourceData, m interface{}) error {
 	orgName := d.Get("name").(string)
 	fullName := d.Get("full_name").(string)
 	isEnabled := d.Get("is_enabled").(bool)
+	canPublishCatalogs := d.Get("can_publish_catalogs").(bool)
+	vmQuota := d.Get("vm_quota").(int)
 
-	settings := getSettings(d)
 	log.Printf("CREATING ORG: %s", orgName)
-	task, err := vcdClient.CreateOrg(orgName, fullName, *settings, isEnabled)
+	task, err := vcdClient.CreateOrg(orgName, fullName, isEnabled, canPublishCatalogs, vmQuota)
 
 	if err != nil {
 		log.Printf("Error creating organization: %#v", err)
@@ -96,7 +97,7 @@ func resourceOrgDelete(d *schema.ResourceData, m interface{}) error {
 
 	//fetches org
 	log.Printf("Reading org with id %s", d.State().ID)
-	org, err := vcdClient.GetOrg(d.State().ID)
+	org, err := vcdClient.GetAdminOrgById(d.State().ID)
 	if err != nil {
 		return fmt.Errorf("Error fetching org: %#v", err)
 	}
@@ -114,26 +115,6 @@ func resourceOrgDelete(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func getSettings(d *schema.ResourceData) *types.OrgSettings {
-	var settings *types.OrgSettings
-	if d.Get("vm_quota").(int) != -1 {
-		settings = &types.OrgSettings{
-			General: &types.OrgGeneralSettings{
-				CanPublishCatalogs: d.Get("can_publish_catalogs").(bool),
-				DeployedVMQuota:    d.Get("vm_quota").(int),
-				StoredVMQuota:      d.Get("vm_quota").(int),
-			},
-		}
-	} else {
-		settings = &types.OrgSettings{
-			General: &types.OrgGeneralSettings{
-				CanPublishCatalogs: d.Get("can_publish_catalogs").(bool),
-			},
-		}
-	}
-	return settings
-}
-
 //updated the resource
 func resourceOrgUpdate(d *schema.ResourceData, m interface{}) error {
 
@@ -144,8 +125,8 @@ func resourceOrgUpdate(d *schema.ResourceData, m interface{}) error {
 	oldOrgFullName := oldOrgFullNameRaw.(string)
 	newOrgFullName := newOrgFullNameRaw.(string)
 	isEnabled := d.Get("is_enabled").(bool)
-
-	settings := getSettings(d)
+	canPublishCatalogs := d.Get("can_publish_catalogs").(bool)
+	vmQuota := d.Get("vm_quota").(int)
 
 	if !strings.EqualFold(oldOrgFullName, newOrgFullName) {
 		return fmt.Errorf("__ERROR__ Not Updating org_full_name , API NOT IMPLEMENTED !!!!")
@@ -153,13 +134,13 @@ func resourceOrgUpdate(d *schema.ResourceData, m interface{}) error {
 
 	log.Printf("Reading org with id %s", d.State().ID)
 
-	org, err := vcdClient.GetOrg(d.State().ID)
+	org, err := vcdClient.GetAdminOrgById(d.State().ID)
 	if err != nil {
 		return fmt.Errorf("Error fetching org: %#v", err)
 	}
 
 	log.Printf("org with id %s found", d.State().ID)
-	_, err = org.Update(orgName, oldOrgFullName, *settings, isEnabled)
+	_, err = org.Update(orgName, oldOrgFullName, isEnabled, canPublishCatalogs, vmQuota)
 
 	if err != nil {
 		log.Printf("Error updating org with id %s : %#v", d.State().ID, err)
@@ -174,7 +155,7 @@ func resourceOrgRead(d *schema.ResourceData, m interface{}) error {
 	vcdClient := m.(*VCDClient)
 
 	log.Printf("Reading org with id %s", d.State().ID)
-	_, err := vcdClient.GetOrg(d.State().ID)
+	_, err := vcdClient.GetAdminOrgById(d.State().ID)
 
 	if err != nil {
 		log.Printf("Org with id %s not found. Setting ID to nothing", d.State().ID)
