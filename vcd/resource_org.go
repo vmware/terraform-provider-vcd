@@ -86,7 +86,7 @@ func resourceOrgCreate(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-//Delete org //only works if the org is empty //TODO: add vapp deletion and networking
+//Deletes org 
 func resourceOrgDelete(d *schema.ResourceData, m interface{}) error {
 
 	//DELETING
@@ -97,9 +97,41 @@ func resourceOrgDelete(d *schema.ResourceData, m interface{}) error {
 
 	if force && recursive {
 		_, org, _ := (vcdClient.GetOrg(d.State().ID))
-		//deletion of networks
+		//undeploys vapp
 		err := retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := org.removeAllOrgNetworks(vcdClient.HREF)
+			task, err := org.UndeployAllVApps()
+			if err != nil {
+				return resource.RetryableError(fmt.Errorf("Error undeploying vapp: %#v", err))
+			}
+			if task.Task == nil {
+				return nil
+			}
+			if *task.Task == (types.Task{}) {
+				return nil
+			}
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
+		if err != nil {
+			return err
+		}
+		//deletes vapp
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := org.RemoveAllVApps()
+			if err != nil {
+				return resource.RetryableError(fmt.Errorf("Error deleting vapp: %#v", err))
+			}
+			if *task.Task == (types.Task{}) {
+				return nil
+			}
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
+		if err != nil {
+			return err
+		}
+
+		//deletion of networks
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := org.RemoveAllOrgNetworks()
 			if err != nil {
 				return resource.RetryableError(fmt.Errorf("Error deleting network: %#v", err))
 			}
@@ -114,7 +146,7 @@ func resourceOrgDelete(d *schema.ResourceData, m interface{}) error {
 
 		//deletions of vdc's
 		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := org.removeAllOrgVDCs(vcdClient.HREF)
+			task, err := org.RemoveAllOrgVDCs()
 			if err != nil {
 				return resource.RetryableError(fmt.Errorf("Error deleting vdc: %#v", err))
 			}
@@ -127,6 +159,7 @@ func resourceOrgDelete(d *schema.ResourceData, m interface{}) error {
 			return err
 		}
 	}
+	//deletes organization
 	_, err := vcdClient.DeleteOrg(d.State().ID)
 	log.Printf("Org with id %s deleted", d.State().ID)
 	return err
