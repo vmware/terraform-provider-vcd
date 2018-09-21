@@ -45,8 +45,15 @@ func testAccCheckVcdFirewallRulesExists(n string, gateway *govcd.EdgeGateway) re
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
-
-		resp, err := conn.OrgVdc.FindEdgeGateway(rs.Primary.ID)
+		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+		if err != nil {
+			return fmt.Errorf("Could not find test Org")
+		}
+		vdc, err := org.GetVdcByName(testVDC)
+		if err != nil {
+			return fmt.Errorf("Could not find test Vdc")
+		}
+		resp, err := vdc.FindEdgeGateway(rs.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("Edge Gateway does not exist.")
 		}
@@ -76,23 +83,32 @@ func createFirewallRulesConfigs(existingRules *govcd.EdgeGateway) string {
 		Password:        os.Getenv("VCD_PASSWORD"),
 		Org:             os.Getenv("VCD_ORG"),
 		Href:            os.Getenv("VCD_URL"),
-		VDC:             os.Getenv("VCD_VDC"),
 		MaxRetryTimeout: 240,
 	}
 	conn, err := config.Client()
 	if err != nil {
-		return fmt.Sprintf(testAccCheckVcdFirewallRules_add, "", "")
+		return fmt.Sprintf(testAccCheckVcdFirewallRules_add, testOrg, testVDC, "", "")
 	}
-	edgeGateway, _ := conn.OrgVdc.FindEdgeGateway(os.Getenv("VCD_EDGE_GATEWAY"))
+	org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+	if err != nil {
+		return fmt.Sprintf("Could not find test Org")
+	}
+	vdc, err := org.GetVdcByName(testVDC)
+	if err != nil {
+		return fmt.Sprintf("Could not find test Vdc")
+	}
+	edgeGateway, _ := vdc.FindEdgeGateway(os.Getenv("VCD_EDGE_GATEWAY"))
 	*existingRules = edgeGateway
 	log.Printf("[DEBUG] Edge gateway: %#v", edgeGateway)
 	firewallRules := *edgeGateway.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.FirewallService
-	return fmt.Sprintf(testAccCheckVcdFirewallRules_add, os.Getenv("VCD_EDGE_GATEWAY"), firewallRules.DefaultAction)
+	return fmt.Sprintf(testAccCheckVcdFirewallRules_add, testOrg, testVDC, os.Getenv("VCD_EDGE_GATEWAY"), firewallRules.DefaultAction)
 }
 
 const testAccCheckVcdFirewallRules_add = `
 resource "vcd_firewall_rules" "bar" {
-  edge_gateway = "%s"
+	org            = "%s"
+	vdc            = "%s"
+    edge_gateway = "%s"
 	default_action = "%s"
 
 	rule {

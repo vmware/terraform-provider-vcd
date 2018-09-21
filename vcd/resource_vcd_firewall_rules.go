@@ -109,7 +109,7 @@ func resourceVcdFirewallRulesCreate(d *schema.ResourceData, meta interface{}) er
 
 	edgeGateway, err := vdc.FindEdgeGateway(d.Get("edge_gateway").(string))
 	if err != nil {
-		return fmt.Errorf("Unable to find edge gateway: %s", err)
+		return fmt.Errorf("Unable to find edge gateway: %s, %s", d.Get("edge_gateway").(string), err)
 	}
 
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {

@@ -19,7 +19,7 @@ func TestAccVcdVAppRaw_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckVcdVAppRawDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: fmt.Sprintf(testAccCheckVcdVAppRaw_basic, os.Getenv("VCD_EDGE_GATEWAY")),
+				Config: fmt.Sprintf(testAccCheckVcdVAppRaw_basic, testOrg, testVDC, os.Getenv("VCD_EDGE_GATEWAY"), testOrg, testVDC, testOrg, testVDC),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppRawExists("vcd_vapp.foobar", &vapp),
 					resource.TestCheckResourceAttr(
@@ -42,8 +42,15 @@ func testAccCheckVcdVAppRawExists(n string, vapp *govcd.VApp) resource.TestCheck
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
-
-		resp, err := conn.OrgVdc.FindVAppByName(rs.Primary.ID)
+		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+		if err != nil {
+			return fmt.Errorf("Could not find test Org")
+		}
+		vdc, err := org.GetVdcByName(testVDC)
+		if err != nil {
+			return fmt.Errorf("Could not find test Vdc")
+		}
+		resp, err := vdc.FindVAppByName(rs.Primary.ID)
 		if err != nil {
 			return err
 		}
@@ -61,8 +68,15 @@ func testAccCheckVcdVAppRawDestroy(s *terraform.State) error {
 		if rs.Type != "vcd_vapp" {
 			continue
 		}
-
-		_, err := conn.OrgVdc.FindVAppByName(rs.Primary.ID)
+		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
+		if err != nil {
+			return fmt.Errorf("Could not find test Org")
+		}
+		vdc, err := org.GetVdcByName(testVDC)
+		if err != nil {
+			return fmt.Errorf("Could not find test Vdc")
+		}
+		_, err = vdc.FindVAppByName(rs.Primary.ID)
 
 		if err == nil {
 			return fmt.Errorf("VPCs still exist")
@@ -77,6 +91,8 @@ func testAccCheckVcdVAppRawDestroy(s *terraform.State) error {
 const testAccCheckVcdVAppRaw_basic = `
 resource "vcd_network" "foonet" {
 	name = "foonet"
+	org          = "%s"
+	vdc          = "%s"
 	edge_gateway = "%s"
 	gateway = "10.10.102.1"
 	static_ip_pool {
@@ -86,10 +102,14 @@ resource "vcd_network" "foonet" {
 }
 
 resource "vcd_vapp" "foobar" {
+  org          = "%s"
+  vdc          = "%s"
   name = "foobar"
 }
 
 resource "vcd_vapp_vm" "moo" {
+  org          = "%s"
+  vdc          = "%s"
   vapp_name     = "${vcd_vapp.foobar.name}"
   name          = "moo"
   catalog_name  = "Skyscape Catalogue"

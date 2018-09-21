@@ -17,7 +17,7 @@ func TestAccVcdVpn_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckVcdVpnDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: fmt.Sprintf(testAccCheckVcdVpn_basic, os.Getenv("VCD_EDGE_GATEWAY")),
+				Config: fmt.Sprintf(testAccCheckVcdVpn_basic, testOrg, testVDC, os.Getenv("VCD_EDGE_GATEWAY")),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"vcd_edgegateway_vpn.vpn", "encryption_protocol", "AES256"),
@@ -42,6 +42,8 @@ func testAccCheckVcdVpnDestroy(s *terraform.State) error {
 
 const testAccCheckVcdVpn_basic = `
 resource "vcd_edgegateway_vpn" "vpn" {
+	org 				= "%s"
+	vdc                 = "%s"
     edge_gateway        = "%s"
     name                = "west-to-east"
 	description         = "Description"
