@@ -84,7 +84,7 @@ func testAccCheckVcdDNATExists(n string, gateway *govcd.EdgeGateway) resource.Te
 
 		gatewayName := rs.Primary.Attributes["edge_gateway"]
 		org, err := govcd.GetOrgByName(conn.VCDClient, testOrg)
-		if err != nil {
+		if err != nil && org == (govcd.Org{}) {
 			return fmt.Errorf("Could not find test Org")
 		}
 		vdc, err := org.GetVdcByName(testVDC)

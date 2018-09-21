@@ -142,11 +142,17 @@ func resourceVcdEdgeGatewayVpnCreate(d *schema.ResourceData, meta interface{}) e
 	log.Printf("[TRACE] CLIENT: %#v", vcdClient)
 	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
 	if err != nil {
-		return fmt.Errorf("Could not find Org: %v", err)
+		return fmt.Errorf("Could not get Org: %s with error %v", d.Get("org").(string), err)
+	}
+	if org == (govcd.Org{}) {
+		return fmt.Errorf("Could not find Org: %s", d.Get("org").(string))
 	}
 	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
-	if err != nil {
-		return fmt.Errorf("Could not find vdc: %v", err)
+	if err != nil || vdc == (govcd.Vdc{}) {
+		return fmt.Errorf("Could not get vdc: %s with error %v", d.Get("vdc").(string), err)
+	}
+	if vdc == (govcd.Vdc{}) {
+		return fmt.Errorf("Could not find vdc: %s", d.Get("vdc").(string))
 	}
 	vcdClient.Mutex.Lock()
 	defer vcdClient.Mutex.Unlock()
@@ -236,11 +242,17 @@ func resourceVcdEdgeGatewayVpnDelete(d *schema.ResourceData, meta interface{}) e
 
 	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
 	if err != nil {
-		return fmt.Errorf("Could not find Org: %v", err)
+		return fmt.Errorf("Could not get Org: %s with error %v", d.Get("org").(string), err)
+	}
+	if org == (govcd.Org{}) {
+		return fmt.Errorf("Could not find Org: %s", d.Get("org").(string))
 	}
 	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
-	if err != nil {
-		return fmt.Errorf("Could not find vdc: %v", err)
+	if err != nil || vdc == (govcd.Vdc{}) {
+		return fmt.Errorf("Could not get vdc: %s with error %v", d.Get("vdc").(string), err)
+	}
+	if vdc == (govcd.Vdc{}) {
+		return fmt.Errorf("Could not find vdc: %s", d.Get("vdc").(string))
 	}
 
 	vcdClient.Mutex.Lock()
@@ -286,11 +298,17 @@ func resourceVcdEdgeGatewayVpnRead(d *schema.ResourceData, meta interface{}) err
 
 	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
 	if err != nil {
-		return fmt.Errorf("Could not find Org: %v", err)
+		return fmt.Errorf("Could not get Org: %s with error %v", d.Get("org").(string), err)
+	}
+	if org == (govcd.Org{}) {
+		return fmt.Errorf("Could not find Org: %s", d.Get("org").(string))
 	}
 	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
-	if err != nil {
-		return fmt.Errorf("Could not find vdc: %v", err)
+	if err != nil || vdc == (govcd.Vdc{}) {
+		return fmt.Errorf("Could not get vdc: %s with error %v", d.Get("vdc").(string), err)
+	}
+	if vdc == (govcd.Vdc{}) {
+		return fmt.Errorf("Could not find vdc: %s", d.Get("vdc").(string))
 	}
 
 	edgeGateway, err := vdc.FindEdgeGateway(d.Get("edge_gateway").(string))

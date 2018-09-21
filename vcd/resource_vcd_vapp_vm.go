@@ -102,15 +102,21 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
 	if err != nil {
-		return fmt.Errorf("Could not find Org: %v", err)
+		return fmt.Errorf("Could not get Org: %s with error %v", d.Get("org").(string), err)
+	}
+	if org == (govcd.Org{}) {
+		return fmt.Errorf("Could not find Org: %s", d.Get("org").(string))
 	}
 	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
-	if err != nil {
-		return fmt.Errorf("Could not find vdc: %v", err)
+	if err != nil || vdc == (govcd.Vdc{}) {
+		return fmt.Errorf("Could not get vdc: %s with error %v", d.Get("vdc").(string), err)
+	}
+	if vdc == (govcd.Vdc{}) {
+		return fmt.Errorf("Could not find vdc: %s", d.Get("vdc").(string))
 	}
 	catalog, err := org.FindCatalog(d.Get("catalog_name").(string))
-	if err != nil {
-		return fmt.Errorf("Error finding catalog: %#v", err)
+	if err != nil || catalog == (govcd.Catalog{}) {
+		return fmt.Errorf("Error finding catalog: %s", d.Get("catalog_name").(string))
 	}
 
 	catalogitem, err := catalog.FindCatalogItem(d.Get("template_name").(string))
@@ -244,11 +250,17 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
 	if err != nil {
-		return fmt.Errorf("Could not find Org: %v", err)
+		return fmt.Errorf("Could not get Org: %s with error %v", d.Get("org").(string), err)
+	}
+	if org == (govcd.Org{}) {
+		return fmt.Errorf("Could not find Org: %s", d.Get("org").(string))
 	}
 	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
-	if err != nil {
-		return fmt.Errorf("Could not find vdc: %v", err)
+	if err != nil || vdc == (govcd.Vdc{}) {
+		return fmt.Errorf("Could not get vdc: %s with error %v", d.Get("vdc").(string), err)
+	}
+	if vdc == (govcd.Vdc{}) {
+		return fmt.Errorf("Could not find vdc: %s", d.Get("vdc").(string))
 	}
 
 	vapp, err := vdc.FindVAppByName(d.Get("vapp_name").(string))
@@ -330,11 +342,17 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 
 	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
 	if err != nil {
-		return fmt.Errorf("Could not find Org: %v", err)
+		return fmt.Errorf("Could not get Org: %s with error %v", d.Get("org").(string), err)
+	}
+	if org == (govcd.Org{}) {
+		return fmt.Errorf("Could not find Org: %s", d.Get("org").(string))
 	}
 	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
-	if err != nil {
-		return fmt.Errorf("Could not find vdc: %v", err)
+	if err != nil || vdc == (govcd.Vdc{}) {
+		return fmt.Errorf("Could not get vdc: %s with error %v", d.Get("vdc").(string), err)
+	}
+	if vdc == (govcd.Vdc{}) {
+		return fmt.Errorf("Could not find vdc: %s", d.Get("vdc").(string))
 	}
 
 	vapp, err := vdc.FindVAppByName(d.Get("vapp_name").(string))
@@ -362,11 +380,17 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 
 	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
 	if err != nil {
-		return fmt.Errorf("Could not find Org: %v", err)
+		return fmt.Errorf("Could not get Org: %s with error %v", d.Get("org").(string), err)
+	}
+	if org == (govcd.Org{}) {
+		return fmt.Errorf("Could not find Org: %s", d.Get("org").(string))
 	}
 	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
-	if err != nil {
-		return fmt.Errorf("Could not find vdc: %v", err)
+	if err != nil || vdc == (govcd.Vdc{}) {
+		return fmt.Errorf("Could not get vdc: %s with error %v", d.Get("vdc").(string), err)
+	}
+	if vdc == (govcd.Vdc{}) {
+		return fmt.Errorf("Could not find vdc: %s", d.Get("vdc").(string))
 	}
 
 	vapp, err := vdc.FindVAppByName(d.Get("vapp_name").(string))
