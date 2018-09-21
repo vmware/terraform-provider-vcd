@@ -8,7 +8,7 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform/helper/resource"
+	//"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	types "github.com/ukcloud/govcloudair/types/v56"
 	"log"
@@ -86,7 +86,7 @@ func resourceOrgCreate(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-//Deletes org 
+//Deletes org
 func resourceOrgDelete(d *schema.ResourceData, m interface{}) error {
 
 	//DELETING
@@ -95,74 +95,13 @@ func resourceOrgDelete(d *schema.ResourceData, m interface{}) error {
 	force := d.Get("force").(bool)
 	recursive := d.Get("recursive").(bool)
 
-	if force && recursive {
-		_, org, _ := (vcdClient.GetOrg(d.State().ID))
-		//undeploys vapp
-		err := retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := org.UndeployAllVApps()
-			if err != nil {
-				return resource.RetryableError(fmt.Errorf("Error undeploying vapp: %#v", err))
-			}
-			if task.Task == nil {
-				return nil
-			}
-			if *task.Task == (types.Task{}) {
-				return nil
-			}
-			return resource.RetryableError(task.WaitTaskCompletion())
-		})
-		if err != nil {
-			return err
-		}
-		//deletes vapp
-		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := org.RemoveAllVApps()
-			if err != nil {
-				return resource.RetryableError(fmt.Errorf("Error deleting vapp: %#v", err))
-			}
-			if *task.Task == (types.Task{}) {
-				return nil
-			}
-			return resource.RetryableError(task.WaitTaskCompletion())
-		})
-		if err != nil {
-			return err
-		}
-
-		//deletion of networks
-		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := org.RemoveAllOrgNetworks()
-			if err != nil {
-				return resource.RetryableError(fmt.Errorf("Error deleting network: %#v", err))
-			}
-			if *task.Task == (types.Task{}) {
-				return nil
-			}
-			return resource.RetryableError(task.WaitTaskCompletion())
-		})
-		if err != nil {
-			return err
-		}
-
-		//deletions of vdc's
-		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := org.RemoveAllOrgVDCs()
-			if err != nil {
-				return resource.RetryableError(fmt.Errorf("Error deleting vdc: %#v", err))
-			}
-			if *task.Task == (types.Task{}) {
-				return nil
-			}
-			return resource.RetryableError(task.WaitTaskCompletion())
-		})
-		if err != nil {
-			return err
-		}
-	}
 	//deletes organization
-	_, err := vcdClient.DeleteOrg(d.State().ID)
+	err := vcdClient.DeleteOrg(d.State().ID, force, recursive)
+	if err != nil {
+		return err
+	}
 	log.Printf("Org with id %s deleted", d.State().ID)
-	return err
+	return nil
 }
 
 func getSettings(d *schema.ResourceData) *types.OrgSettings {
