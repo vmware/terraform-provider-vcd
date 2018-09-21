@@ -75,7 +75,7 @@ func resourceOrgCreate(d *schema.ResourceData, m interface{}) error {
 	vmQuota := d.Get("vm_quota").(int)
 
 	log.Printf("CREATING ORG: %s", orgName)
-	task, err := vcdClient.CreateOrg(orgName, fullName, isEnabled, canPublishCatalogs, vmQuota)
+	task, err := vcdClient.System.CreateOrg(orgName, fullName, isEnabled, canPublishCatalogs, vmQuota)
 
 	if err != nil {
 		log.Printf("Error creating organization: %#v", err)
@@ -97,7 +97,7 @@ func resourceOrgDelete(d *schema.ResourceData, m interface{}) error {
 
 	//fetches org
 	log.Printf("Reading org with id %s", d.State().ID)
-	org, err := vcdClient.GetAdminOrgById(d.State().ID)
+	org, err := vcdClient.System.GetAdminOrgById(d.State().ID)
 	if err != nil {
 		return fmt.Errorf("Error fetching org: %#v", err)
 	}
@@ -134,7 +134,7 @@ func resourceOrgUpdate(d *schema.ResourceData, m interface{}) error {
 
 	log.Printf("Reading org with id %s", d.State().ID)
 
-	org, err := vcdClient.GetAdminOrgById(d.State().ID)
+	org, err := vcdClient.System.GetAdminOrgById(d.State().ID)
 	if err != nil {
 		return fmt.Errorf("Error fetching org: %#v", err)
 	}
@@ -155,7 +155,7 @@ func resourceOrgRead(d *schema.ResourceData, m interface{}) error {
 	vcdClient := m.(*VCDClient)
 
 	log.Printf("Reading org with id %s", d.State().ID)
-	_, err := vcdClient.GetAdminOrgById(d.State().ID)
+	_, err := vcdClient.System.GetAdminOrgById(d.State().ID)
 
 	if err != nil {
 		log.Printf("Org with id %s not found. Setting ID to nothing", d.State().ID)
