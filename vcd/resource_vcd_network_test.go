@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	govcd "github.com/ukcloud/govcloudair"
+	govcd "github.com/vmware/go-vcloud-director/govcd"
 )
 
 func TestAccVcdNetwork_Basic(t *testing.T) {

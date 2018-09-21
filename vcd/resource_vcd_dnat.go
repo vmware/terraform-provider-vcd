@@ -5,7 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	govcd "github.com/ukcloud/govcloudair"
+	govcd "github.com/vmware/go-vcloud-director/govcd"
 )
 
 func resourceVcdDNAT() *schema.Resource {
@@ -59,11 +59,11 @@ func resourceVcdDNAT() *schema.Resource {
 
 func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-	org, err := govcd.GetOrgFromName(vcdClient.VCDClient, d.Get("org").(string))
+	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
 	if err != nil {
 		return fmt.Errorf("Could not find Org: %v", err)
 	}
-	vdc, err := org.GetVDCFromName(d.Get("vdc").(string))
+	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
 	if err != nil {
 		return fmt.Errorf("Could not find vdc: %v", err)
 	}
@@ -115,11 +115,11 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 func resourceVcdDNATRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	org, err := govcd.GetOrgFromName(vcdClient.VCDClient, d.Get("org").(string))
+	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
 	if err != nil {
 		return fmt.Errorf("Could not find Org: %v", err)
 	}
-	vdc, err := org.GetVDCFromName(d.Get("vdc").(string))
+	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
 	if err != nil {
 		return fmt.Errorf("Could not find vdc: %v", err)
 	}
@@ -150,11 +150,11 @@ func resourceVcdDNATRead(d *schema.ResourceData, meta interface{}) error {
 
 func resourceVcdDNATDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-	org, err := govcd.GetOrgFromName(vcdClient.VCDClient, d.Get("org").(string))
+	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
 	if err != nil {
 		return fmt.Errorf("Could not find Org: %v", err)
 	}
-	vdc, err := org.GetVDCFromName(d.Get("vdc").(string))
+	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
 	if err != nil {
 		return fmt.Errorf("Could not find vdc: %v", err)
 	}
