@@ -9,7 +9,7 @@ import (
 	"encoding/xml"
 	"fmt"
 	types "github.com/vmware/go-vcloud-director/types/v56"
-	"log"
+	"github.com/vmware/go-vcloud-director/util"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -20,36 +20,36 @@ import (
 // OrgVDCNetwork an org vdc network client
 type OrgVDCNetwork struct {
 	OrgVDCNetwork *types.OrgVDCNetwork
-	c             *Client
+	client        *Client
 }
 
 // NewOrgVDCNetwork creates an org vdc network client
-func NewOrgVDCNetwork(c *Client) *OrgVDCNetwork {
+func NewOrgVDCNetwork(cli *Client) *OrgVDCNetwork {
 	return &OrgVDCNetwork{
 		OrgVDCNetwork: new(types.OrgVDCNetwork),
-		c:             c,
+		client:        cli,
 	}
 }
 
-func (o *OrgVDCNetwork) Refresh() error {
-	if o.OrgVDCNetwork.HREF == "" {
+func (orgVdcNet *OrgVDCNetwork) Refresh() error {
+	if orgVdcNet.OrgVDCNetwork.HREF == "" {
 		return fmt.Errorf("cannot refresh, Object is empty")
 	}
 
-	u, _ := url.ParseRequestURI(o.OrgVDCNetwork.HREF)
+	refreshUrl, _ := url.ParseRequestURI(orgVdcNet.OrgVDCNetwork.HREF)
 
-	req := o.c.NewRequest(map[string]string{}, "GET", *u, nil)
+	req := orgVdcNet.client.NewRequest(map[string]string{}, "GET", *refreshUrl, nil)
 
-	resp, err := checkResp(o.c.Http.Do(req))
+	resp, err := checkResp(orgVdcNet.client.Http.Do(req))
 	if err != nil {
 		return fmt.Errorf("error retrieving task: %s", err)
 	}
 
 	// Empty struct before a new unmarshal, otherwise we end up with duplicate
 	// elements in slices.
-	o.OrgVDCNetwork = &types.OrgVDCNetwork{}
+	orgVdcNet.OrgVDCNetwork = &types.OrgVDCNetwork{}
 
-	if err = decodeBody(resp, o.OrgVDCNetwork); err != nil {
+	if err = decodeBody(resp, orgVdcNet.OrgVDCNetwork); err != nil {
 		return fmt.Errorf("error decoding task response: %s", err)
 	}
 
@@ -57,21 +57,21 @@ func (o *OrgVDCNetwork) Refresh() error {
 	return nil
 }
 
-func (o *OrgVDCNetwork) Delete() (Task, error) {
-	err := o.Refresh()
+func (orgVdcNet *OrgVDCNetwork) Delete() (Task, error) {
+	err := orgVdcNet.Refresh()
 	if err != nil {
 		return Task{}, fmt.Errorf("Error refreshing network: %s", err)
 	}
-	pathArr := strings.Split(o.OrgVDCNetwork.HREF, "/")
-	s, _ := url.ParseRequestURI(o.OrgVDCNetwork.HREF)
-	s.Path = "/api/admin/network/" + pathArr[len(pathArr)-1]
+	pathArr := strings.Split(orgVdcNet.OrgVDCNetwork.HREF, "/")
+	apiEndpoint, _ := url.ParseRequestURI(orgVdcNet.OrgVDCNetwork.HREF)
+	apiEndpoint.Path = "/api/admin/network/" + pathArr[len(pathArr)-1]
 
 	var resp *http.Response
 	for {
-		req := o.c.NewRequest(map[string]string{}, "DELETE", *s, nil)
-		resp, err = checkResp(o.c.Http.Do(req))
+		req := orgVdcNet.client.NewRequest(map[string]string{}, "DELETE", *apiEndpoint, nil)
+		resp, err = checkResp(orgVdcNet.client.Http.Do(req))
 		if err != nil {
-			if v, _ := regexp.MatchString("is busy, cannot proceed with the operation.$", err.Error()); v {
+			if match, _ := regexp.MatchString("is busy, cannot proceed with the operation.$", err.Error()); match {
 				time.Sleep(3 * time.Second)
 				continue
 			}
@@ -80,7 +80,7 @@ func (o *OrgVDCNetwork) Delete() (Task, error) {
 		break
 	}
 
-	task := NewTask(o.c)
+	task := NewTask(orgVdcNet.client)
 
 	if err = decodeBody(resp, task.Task); err != nil {
 		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
@@ -90,10 +90,10 @@ func (o *OrgVDCNetwork) Delete() (Task, error) {
 	return *task, nil
 }
 
-func (v *Vdc) CreateOrgVDCNetwork(networkConfig *types.OrgVDCNetwork) error {
-	for _, av := range v.Vdc.Link {
+func (vdc *Vdc) CreateOrgVDCNetwork(networkConfig *types.OrgVDCNetwork) error {
+	for _, av := range vdc.Vdc.Link {
 		if av.Rel == "add" && av.Type == "application/vnd.vmware.vcloud.orgVdcNetwork+xml" {
-			u, err := url.ParseRequestURI(av.HREF)
+			createUrl, err := url.ParseRequestURI(av.HREF)
 			//return fmt.Errorf("Test output: %#v")
 
 			if err != nil {
@@ -110,12 +110,12 @@ func (v *Vdc) CreateOrgVDCNetwork(networkConfig *types.OrgVDCNetwork) error {
 			var resp *http.Response
 			for {
 				b := bytes.NewBufferString(xml.Header + string(output))
-				log.Printf("[DEBUG] VCD Client configuration: %s", b)
-				req := v.c.NewRequest(map[string]string{}, "POST", *u, b)
+				util.Logger.Printf("[DEBUG] VCD Client configuration: %s", b)
+				req := vdc.client.NewRequest(map[string]string{}, "POST", *createUrl, b)
 				req.Header.Add("Content-Type", av.Type)
-				resp, err = checkResp(v.c.Http.Do(req))
+				resp, err = checkResp(vdc.client.Http.Do(req))
 				if err != nil {
-					if v, _ := regexp.MatchString("is busy, cannot proceed with the operation.$", err.Error()); v {
+					if match, _ := regexp.MatchString("is busy, cannot proceed with the operation.$", err.Error()); match {
 						time.Sleep(3 * time.Second)
 						continue
 					}
@@ -123,13 +123,13 @@ func (v *Vdc) CreateOrgVDCNetwork(networkConfig *types.OrgVDCNetwork) error {
 				}
 				break
 			}
-			newstuff := NewOrgVDCNetwork(v.c)
+			newstuff := NewOrgVDCNetwork(vdc.client)
 			if err = decodeBody(resp, newstuff.OrgVDCNetwork); err != nil {
 				return fmt.Errorf("error decoding orgvdcnetwork response: %s", err)
 			}
-			task := NewTask(v.c)
-			for _, t := range newstuff.OrgVDCNetwork.Tasks.Task {
-				task.Task = t
+			task := NewTask(vdc.client)
+			for _, taskItem := range newstuff.OrgVDCNetwork.Tasks.Task {
+				task.Task = taskItem
 				err = task.WaitTaskCompletion()
 				if err != nil {
 					return fmt.Errorf("Error performing task: %#v", err)

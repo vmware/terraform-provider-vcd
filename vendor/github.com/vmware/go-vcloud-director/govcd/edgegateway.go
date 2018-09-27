@@ -8,52 +8,51 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
-	"os"
 	"regexp"
 	"time"
 
 	types "github.com/vmware/go-vcloud-director/types/v56"
+	"github.com/vmware/go-vcloud-director/util"
 )
 
 type EdgeGateway struct {
 	EdgeGateway *types.EdgeGateway
-	c           *Client
+	client      *Client
 }
 
-func NewEdgeGateway(c *Client) *EdgeGateway {
+func NewEdgeGateway(cli *Client) *EdgeGateway {
 	return &EdgeGateway{
 		EdgeGateway: new(types.EdgeGateway),
-		c:           c,
+		client:      cli,
 	}
 }
 
-func (e *EdgeGateway) AddDhcpPool(network *types.OrgVDCNetwork, dhcppool []interface{}) (Task, error) {
-	newedgeconfig := e.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration
-	log.Printf("[DEBUG] EDGE GATEWAY: %#v", newedgeconfig)
-	log.Printf("[DEBUG] EDGE GATEWAY SERVICE: %#v", newedgeconfig.GatewayDhcpService)
+func (eGW *EdgeGateway) AddDhcpPool(network *types.OrgVDCNetwork, dhcppool []interface{}) (Task, error) {
+	newedgeconfig := eGW.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration
+	util.Logger.Printf("[DEBUG] EDGE GATEWAY: %#v", newedgeconfig)
+	util.Logger.Printf("[DEBUG] EDGE GATEWAY SERVICE: %#v", newedgeconfig.GatewayDhcpService)
 	newdchpservice := &types.GatewayDhcpService{}
 	if newedgeconfig.GatewayDhcpService == nil {
 		newdchpservice.IsEnabled = true
 	} else {
 		newdchpservice.IsEnabled = newedgeconfig.GatewayDhcpService.IsEnabled
 
-		for _, v := range newedgeconfig.GatewayDhcpService.Pool {
+		for _, dhcpPoolService := range newedgeconfig.GatewayDhcpService.Pool {
 
 			// Kludgy IF to avoid deleting DNAT rules not created by us.
 			// If matches, let's skip it and continue the loop
-			if v.Network.HREF == network.HREF {
+			if dhcpPoolService.Network.HREF == network.HREF {
 				continue
 			}
 
-			newdchpservice.Pool = append(newdchpservice.Pool, v)
+			newdchpservice.Pool = append(newdchpservice.Pool, dhcpPoolService)
 		}
 	}
 
-	for _, v := range dhcppool {
-		data := v.(map[string]interface{})
+	for _, item := range dhcppool {
+		data := item.(map[string]interface{})
 
 		if data["default_lease_time"] == nil {
 			data["default_lease_time"] = 3600
@@ -89,20 +88,20 @@ func (e *EdgeGateway) AddDhcpPool(network *types.OrgVDCNetwork, dhcppool []inter
 
 	var resp *http.Response
 	for {
-		b := bytes.NewBufferString(xml.Header + string(output))
+		buffer := bytes.NewBufferString(xml.Header + string(output))
 
-		s, _ := url.ParseRequestURI(e.EdgeGateway.HREF)
-		s.Path += "/action/configureServices"
+		apiEndpoint, _ := url.ParseRequestURI(eGW.EdgeGateway.HREF)
+		apiEndpoint.Path += "/action/configureServices"
 
-		req := e.c.NewRequest(map[string]string{}, "POST", *s, b)
-		log.Printf("[DEBUG] POSTING TO URL: %s", s.Path)
-		log.Printf("[DEBUG] XML TO SEND:\n%s", b)
+		req := eGW.client.NewRequest(map[string]string{}, "POST", *apiEndpoint, buffer)
+		util.Logger.Printf("[DEBUG] POSTING TO URL: %s", apiEndpoint.Path)
+		util.Logger.Printf("[DEBUG] XML TO SEND:\n%s", buffer)
 
 		req.Header.Add("Content-Type", "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")
 
-		resp, err = checkResp(e.c.Http.Do(req))
+		resp, err = checkResp(eGW.client.Http.Do(req))
 		if err != nil {
-			if v, _ := regexp.MatchString("is busy completing an operation.$", err.Error()); v {
+			if match, _ := regexp.MatchString("is busy completing an operation.$", err.Error()); match {
 				time.Sleep(3 * time.Second)
 				continue
 			}
@@ -111,7 +110,7 @@ func (e *EdgeGateway) AddDhcpPool(network *types.OrgVDCNetwork, dhcppool []inter
 		break
 	}
 
-	task := NewTask(e.c)
+	task := NewTask(eGW.client)
 
 	if err = decodeBody(resp, task.Task); err != nil {
 		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
@@ -122,21 +121,21 @@ func (e *EdgeGateway) AddDhcpPool(network *types.OrgVDCNetwork, dhcppool []inter
 
 }
 
-func (e *EdgeGateway) RemoveNATMapping(nattype, externalIP, internalIP, port string) (Task, error) {
-	return e.RemoveNATPortMapping(nattype, externalIP, port, internalIP, port)
+func (eGW *EdgeGateway) RemoveNATMapping(nattype, externalIP, internalIP, port string) (Task, error) {
+	return eGW.RemoveNATPortMapping(nattype, externalIP, port, internalIP, port)
 }
 
-func (e *EdgeGateway) RemoveNATPortMapping(nattype, externalIP, externalPort string, internalIP, internalPort string) (Task, error) {
+func (eGW *EdgeGateway) RemoveNATPortMapping(nattype, externalIP, externalPort string, internalIP, internalPort string) (Task, error) {
 	// Find uplink interface
 	var uplink types.Reference
-	for _, gi := range e.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
+	for _, gi := range eGW.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
 		if gi.InterfaceType != "uplink" {
 			continue
 		}
 		uplink = *gi.Network
 	}
 
-	newedgeconfig := e.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration
+	newedgeconfig := eGW.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration
 
 	// Take care of the NAT service
 	newnatservice := &types.NatService{}
@@ -146,19 +145,19 @@ func (e *EdgeGateway) RemoveNATPortMapping(nattype, externalIP, externalPort str
 	newnatservice.Policy = newedgeconfig.NatService.Policy
 	newnatservice.ExternalIP = newedgeconfig.NatService.ExternalIP
 
-	for _, v := range newedgeconfig.NatService.NatRule {
+	for _, natRule := range newedgeconfig.NatService.NatRule {
 
 		// Kludgy IF to avoid deleting DNAT rules not created by us.
 		// If matches, let's skip it and continue the loop
-		if v.RuleType == nattype &&
-			v.GatewayNatRule.OriginalIP == externalIP &&
-			v.GatewayNatRule.OriginalPort == externalPort &&
-			v.GatewayNatRule.Interface.HREF == uplink.HREF {
-			log.Printf("[DEBUG] REMOVING %s Rule: %#v", v.RuleType, v.GatewayNatRule)
+		if natRule.RuleType == nattype &&
+			natRule.GatewayNatRule.OriginalIP == externalIP &&
+			natRule.GatewayNatRule.OriginalPort == externalPort &&
+			natRule.GatewayNatRule.Interface.HREF == uplink.HREF {
+			util.Logger.Printf("[DEBUG] REMOVING %s Rule: %#v", natRule.RuleType, natRule.GatewayNatRule)
 			continue
 		}
-		log.Printf("[DEBUG] KEEPING %s Rule: %#v", v.RuleType, v.GatewayNatRule)
-		newnatservice.NatRule = append(newnatservice.NatRule, v)
+		util.Logger.Printf("[DEBUG] KEEPING %s Rule: %#v", natRule.RuleType, natRule.GatewayNatRule)
+		newnatservice.NatRule = append(newnatservice.NatRule, natRule)
 	}
 
 	newedgeconfig.NatService = newnatservice
@@ -173,24 +172,24 @@ func (e *EdgeGateway) RemoveNATPortMapping(nattype, externalIP, externalPort str
 		return Task{}, fmt.Errorf("error reconfiguring Edge Gateway: %s", err)
 	}
 
-	b := bytes.NewBufferString(xml.Header + string(output))
+	buffer := bytes.NewBufferString(xml.Header + string(output))
 
-	s, _ := url.ParseRequestURI(e.EdgeGateway.HREF)
-	s.Path += "/action/configureServices"
+	apiEndpoint, _ := url.ParseRequestURI(eGW.EdgeGateway.HREF)
+	apiEndpoint.Path += "/action/configureServices"
 
-	req := e.c.NewRequest(map[string]string{}, "POST", *s, b)
-	log.Printf("[DEBUG] POSTING TO URL: %s", s.Path)
-	log.Printf("[DEBUG] XML TO SEND:\n%s", b)
+	req := eGW.client.NewRequest(map[string]string{}, "POST", *apiEndpoint, buffer)
+	util.Logger.Printf("[DEBUG] POSTING TO URL: %s", apiEndpoint.Path)
+	util.Logger.Printf("[DEBUG] XML TO SEND:\n%s", buffer)
 
 	req.Header.Add("Content-Type", "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")
 
-	resp, err := checkResp(e.c.Http.Do(req))
+	resp, err := checkResp(eGW.client.Http.Do(req))
 	if err != nil {
-		log.Printf("[DEBUG] Error is: %#v", err)
+		util.Logger.Printf("[DEBUG] Error is: %#v", err)
 		return Task{}, fmt.Errorf("error reconfiguring Edge Gateway: %s", err)
 	}
 
-	task := NewTask(e.c)
+	task := NewTask(eGW.client)
 
 	if err = decodeBody(resp, task.Task); err != nil {
 		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
@@ -201,17 +200,17 @@ func (e *EdgeGateway) RemoveNATPortMapping(nattype, externalIP, externalPort str
 
 }
 
-func (e *EdgeGateway) AddNATMapping(nattype, externalIP, internalIP, port string) (Task, error) {
-	return e.AddNATPortMapping(nattype, externalIP, port, internalIP, port)
+func (eGW *EdgeGateway) AddNATMapping(nattype, externalIP, internalIP, port string) (Task, error) {
+	return eGW.AddNATPortMapping(nattype, externalIP, port, internalIP, port)
 }
 
-func (e *EdgeGateway) AddNATPortMapping(nattype, externalIP, externalPort string, internalIP, internalPort string) (Task, error) {
-	return e.AddNATPortMappingWithUplink(nil, nattype, externalIP, externalPort, internalIP, internalPort)
+func (eGW *EdgeGateway) AddNATPortMapping(nattype, externalIP, externalPort string, internalIP, internalPort string) (Task, error) {
+	return eGW.AddNATPortMappingWithUplink(nil, nattype, externalIP, externalPort, internalIP, internalPort)
 }
 
-func (e *EdgeGateway) getFirstUplink() types.Reference {
+func (eGW *EdgeGateway) getFirstUplink() types.Reference {
 	var uplink types.Reference
-	for _, gi := range e.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
+	for _, gi := range eGW.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
 		if gi.InterfaceType != "uplink" {
 			continue
 		}
@@ -220,17 +219,17 @@ func (e *EdgeGateway) getFirstUplink() types.Reference {
 	return uplink
 }
 
-func (e *EdgeGateway) AddNATPortMappingWithUplink(network *types.OrgVDCNetwork, nattype, externalIP, externalPort string, internalIP, internalPort string) (Task, error) {
+func (eGW *EdgeGateway) AddNATPortMappingWithUplink(network *types.OrgVDCNetwork, nattype, externalIP, externalPort string, internalIP, internalPort string) (Task, error) {
 	// if a network is provided take it, otherwise find first uplink on the edgegateway
 	var uplinkRef string
 
 	if network != nil {
 		uplinkRef = network.HREF
 	} else {
-		uplinkRef = e.getFirstUplink().HREF
+		uplinkRef = eGW.getFirstUplink().HREF
 	}
 
-	newedgeconfig := e.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration
+	newedgeconfig := eGW.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration
 
 	// Take care of the NAT service
 	newnatservice := &types.NatService{}
@@ -243,20 +242,20 @@ func (e *EdgeGateway) AddNATPortMappingWithUplink(network *types.OrgVDCNetwork, 
 		newnatservice.Policy = newedgeconfig.NatService.Policy
 		newnatservice.ExternalIP = newedgeconfig.NatService.ExternalIP
 
-		for _, v := range newedgeconfig.NatService.NatRule {
+		for _, natRule := range newedgeconfig.NatService.NatRule {
 
 			// Kludgy IF to avoid deleting DNAT rules not created by us.
 			// If matches, let's skip it and continue the loop
-			if v.RuleType == nattype &&
-				v.GatewayNatRule.OriginalIP == externalIP &&
-				v.GatewayNatRule.OriginalPort == externalPort &&
-				v.GatewayNatRule.TranslatedIP == internalIP &&
-				v.GatewayNatRule.TranslatedPort == internalPort &&
-				v.GatewayNatRule.Interface.HREF == uplinkRef {
+			if natRule.RuleType == nattype &&
+				natRule.GatewayNatRule.OriginalIP == externalIP &&
+				natRule.GatewayNatRule.OriginalPort == externalPort &&
+				natRule.GatewayNatRule.TranslatedIP == internalIP &&
+				natRule.GatewayNatRule.TranslatedPort == internalPort &&
+				natRule.GatewayNatRule.Interface.HREF == uplinkRef {
 				continue
 			}
 
-			newnatservice.NatRule = append(newnatservice.NatRule, v)
+			newnatservice.NatRule = append(newnatservice.NatRule, natRule)
 		}
 	}
 
@@ -289,24 +288,24 @@ func (e *EdgeGateway) AddNATPortMappingWithUplink(network *types.OrgVDCNetwork, 
 		return Task{}, fmt.Errorf("error reconfiguring Edge Gateway: %s", err)
 	}
 
-	b := bytes.NewBufferString(xml.Header + string(output))
+	buffer := bytes.NewBufferString(xml.Header + string(output))
 
-	s, _ := url.ParseRequestURI(e.EdgeGateway.HREF)
-	s.Path += "/action/configureServices"
+	apiEndpoint, _ := url.ParseRequestURI(eGW.EdgeGateway.HREF)
+	apiEndpoint.Path += "/action/configureServices"
 
-	req := e.c.NewRequest(map[string]string{}, "POST", *s, b)
-	log.Printf("[DEBUG] POSTING TO URL: %s", s.Path)
-	log.Printf("[DEBUG] XML TO SEND:\n%s", b)
+	req := eGW.client.NewRequest(map[string]string{}, "POST", *apiEndpoint, buffer)
+	util.Logger.Printf("[DEBUG] POSTING TO URL: %s", apiEndpoint.Path)
+	util.Logger.Printf("[DEBUG] XML TO SEND:\n%s", buffer)
 
 	req.Header.Add("Content-Type", "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")
 
-	resp, err := checkResp(e.c.Http.Do(req))
+	resp, err := checkResp(eGW.client.Http.Do(req))
 	if err != nil {
-		log.Printf("[DEBUG] Error is: %#v", err)
+		util.Logger.Printf("[DEBUG] Error is: %#v", err)
 		return Task{}, fmt.Errorf("error reconfiguring Edge Gateway: %s", err)
 	}
 
-	task := NewTask(e.c)
+	task := NewTask(eGW.client)
 
 	if err = decodeBody(resp, task.Task); err != nil {
 		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
@@ -317,8 +316,8 @@ func (e *EdgeGateway) AddNATPortMappingWithUplink(network *types.OrgVDCNetwork, 
 
 }
 
-func (e *EdgeGateway) CreateFirewallRules(defaultAction string, rules []*types.FirewallRule) (Task, error) {
-	err := e.Refresh()
+func (eGW *EdgeGateway) CreateFirewallRules(defaultAction string, rules []*types.FirewallRule) (Task, error) {
+	err := eGW.Refresh()
 	if err != nil {
 		return Task{}, fmt.Errorf("error: %v\n", err)
 	}
@@ -340,20 +339,20 @@ func (e *EdgeGateway) CreateFirewallRules(defaultAction string, rules []*types.F
 
 	var resp *http.Response
 	for {
-		b := bytes.NewBufferString(xml.Header + string(output))
+		buffer := bytes.NewBufferString(xml.Header + string(output))
 
-		s, _ := url.ParseRequestURI(e.EdgeGateway.HREF)
-		s.Path += "/action/configureServices"
+		apiEndpoint, _ := url.ParseRequestURI(eGW.EdgeGateway.HREF)
+		apiEndpoint.Path += "/action/configureServices"
 
-		req := e.c.NewRequest(map[string]string{}, "POST", *s, b)
-		log.Printf("[DEBUG] POSTING TO URL: %s", s.Path)
-		log.Printf("[DEBUG] XML TO SEND:\n%s", b)
+		req := eGW.client.NewRequest(map[string]string{}, "POST", *apiEndpoint, buffer)
+		util.Logger.Printf("[DEBUG] POSTING TO URL: %s", apiEndpoint.Path)
+		util.Logger.Printf("[DEBUG] XML TO SEND:\n%s", buffer)
 
 		req.Header.Add("Content-Type", "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")
 
-		resp, err = checkResp(e.c.Http.Do(req))
+		resp, err = checkResp(eGW.client.Http.Do(req))
 		if err != nil {
-			if v, _ := regexp.MatchString("is busy completing an operation.$", err.Error()); v {
+			if match, _ := regexp.MatchString("is busy completing an operation.$", err.Error()); match {
 				time.Sleep(3 * time.Second)
 				continue
 			}
@@ -362,7 +361,7 @@ func (e *EdgeGateway) CreateFirewallRules(defaultAction string, rules []*types.F
 		break
 	}
 
-	task := NewTask(e.c)
+	task := NewTask(eGW.client)
 
 	if err = decodeBody(resp, task.Task); err != nil {
 		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
@@ -372,26 +371,26 @@ func (e *EdgeGateway) CreateFirewallRules(defaultAction string, rules []*types.F
 	return *task, nil
 }
 
-func (e *EdgeGateway) Refresh() error {
+func (eGW *EdgeGateway) Refresh() error {
 
-	if e.EdgeGateway == nil {
+	if eGW.EdgeGateway == nil {
 		return fmt.Errorf("cannot refresh, Object is empty")
 	}
 
-	u, _ := url.ParseRequestURI(e.EdgeGateway.HREF)
+	apiEndpoint, _ := url.ParseRequestURI(eGW.EdgeGateway.HREF)
 
-	req := e.c.NewRequest(map[string]string{}, "GET", *u, nil)
+	req := eGW.client.NewRequest(map[string]string{}, "GET", *apiEndpoint, nil)
 
-	resp, err := checkResp(e.c.Http.Do(req))
+	resp, err := checkResp(eGW.client.Http.Do(req))
 	if err != nil {
 		return fmt.Errorf("error retreiving Edge Gateway: %s", err)
 	}
 
 	// Empty struct before a new unmarshal, otherwise we end up with duplicate
 	// elements in slices.
-	e.EdgeGateway = &types.EdgeGateway{}
+	eGW.EdgeGateway = &types.EdgeGateway{}
 
-	if err = decodeBody(resp, e.EdgeGateway); err != nil {
+	if err = decodeBody(resp, eGW.EdgeGateway); err != nil {
 		return fmt.Errorf("error decoding Edge Gateway response: %s", err)
 	}
 
@@ -399,22 +398,22 @@ func (e *EdgeGateway) Refresh() error {
 	return nil
 }
 
-func (e *EdgeGateway) Remove1to1Mapping(internal, external string) (Task, error) {
+func (eGW *EdgeGateway) Remove1to1Mapping(internal, external string) (Task, error) {
 
 	// Refresh EdgeGateway rules
-	err := e.Refresh()
+	err := eGW.Refresh()
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 	}
 
 	var uplinkif string
-	for _, gifs := range e.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
+	for _, gifs := range eGW.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
 		if gifs.InterfaceType == "uplink" {
 			uplinkif = gifs.Network.HREF
 		}
 	}
 
-	newedgeconfig := e.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration
+	newedgeconfig := eGW.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration
 
 	// Take care of the NAT service
 	newnatservice := &types.NatService{}
@@ -425,32 +424,32 @@ func (e *EdgeGateway) Remove1to1Mapping(internal, external string) (Task, error)
 	newnatservice.Policy = newedgeconfig.NatService.Policy
 	newnatservice.ExternalIP = newedgeconfig.NatService.ExternalIP
 
-	for k, v := range newedgeconfig.NatService.NatRule {
+	for i, natRule := range newedgeconfig.NatService.NatRule {
 
 		// Kludgy IF to avoid deleting DNAT rules not created by us.
 		// If matches, let's skip it and continue the loop
-		if v.RuleType == "DNAT" &&
-			v.GatewayNatRule.OriginalIP == external &&
-			v.GatewayNatRule.TranslatedIP == internal &&
-			v.GatewayNatRule.OriginalPort == "any" &&
-			v.GatewayNatRule.TranslatedPort == "any" &&
-			v.GatewayNatRule.Protocol == "any" &&
-			v.GatewayNatRule.Interface.HREF == uplinkif {
+		if natRule.RuleType == "DNAT" &&
+			natRule.GatewayNatRule.OriginalIP == external &&
+			natRule.GatewayNatRule.TranslatedIP == internal &&
+			natRule.GatewayNatRule.OriginalPort == "any" &&
+			natRule.GatewayNatRule.TranslatedPort == "any" &&
+			natRule.GatewayNatRule.Protocol == "any" &&
+			natRule.GatewayNatRule.Interface.HREF == uplinkif {
 			continue
 		}
 
 		// Kludgy IF to avoid deleting SNAT rules not created by us.
 		// If matches, let's skip it and continue the loop
-		if v.RuleType == "SNAT" &&
-			v.GatewayNatRule.OriginalIP == internal &&
-			v.GatewayNatRule.TranslatedIP == external &&
-			v.GatewayNatRule.Interface.HREF == uplinkif {
+		if natRule.RuleType == "SNAT" &&
+			natRule.GatewayNatRule.OriginalIP == internal &&
+			natRule.GatewayNatRule.TranslatedIP == external &&
+			natRule.GatewayNatRule.Interface.HREF == uplinkif {
 			continue
 		}
 
 		// If doesn't match the above IFs, it's something we need to preserve,
 		// let's add it to the new NatService struct
-		newnatservice.NatRule = append(newnatservice.NatRule, newedgeconfig.NatService.NatRule[k])
+		newnatservice.NatRule = append(newnatservice.NatRule, newedgeconfig.NatService.NatRule[i])
 
 	}
 
@@ -465,33 +464,33 @@ func (e *EdgeGateway) Remove1to1Mapping(internal, external string) (Task, error)
 	newfwservice.DefaultAction = newedgeconfig.FirewallService.DefaultAction
 	newfwservice.LogDefaultAction = newedgeconfig.FirewallService.LogDefaultAction
 
-	for k, v := range newedgeconfig.FirewallService.FirewallRule {
+	for i, firewallRule := range newedgeconfig.FirewallService.FirewallRule {
 
 		// Kludgy IF to avoid deleting inbound FW rules not created by us.
 		// If matches, let's skip it and continue the loop
-		if v.Policy == "allow" &&
-			v.Protocols.Any == true &&
-			v.DestinationPortRange == "Any" &&
-			v.SourcePortRange == "Any" &&
-			v.SourceIP == "Any" &&
-			v.DestinationIP == external {
+		if firewallRule.Policy == "allow" &&
+			firewallRule.Protocols.Any == true &&
+			firewallRule.DestinationPortRange == "Any" &&
+			firewallRule.SourcePortRange == "Any" &&
+			firewallRule.SourceIP == "Any" &&
+			firewallRule.DestinationIP == external {
 			continue
 		}
 
 		// Kludgy IF to avoid deleting outbound FW rules not created by us.
 		// If matches, let's skip it and continue the loop
-		if v.Policy == "allow" &&
-			v.Protocols.Any == true &&
-			v.DestinationPortRange == "Any" &&
-			v.SourcePortRange == "Any" &&
-			v.SourceIP == internal &&
-			v.DestinationIP == "Any" {
+		if firewallRule.Policy == "allow" &&
+			firewallRule.Protocols.Any == true &&
+			firewallRule.DestinationPortRange == "Any" &&
+			firewallRule.SourcePortRange == "Any" &&
+			firewallRule.SourceIP == internal &&
+			firewallRule.DestinationIP == "Any" {
 			continue
 		}
 
 		// If doesn't match the above IFs, it's something we need to preserve,
 		// let's add it to the new FirewallService struct
-		newfwservice.FirewallRule = append(newfwservice.FirewallRule, newedgeconfig.FirewallService.FirewallRule[k])
+		newfwservice.FirewallRule = append(newfwservice.FirewallRule, newedgeconfig.FirewallService.FirewallRule[i])
 
 	}
 
@@ -506,27 +505,23 @@ func (e *EdgeGateway) Remove1to1Mapping(internal, external string) (Task, error)
 		fmt.Printf("error: %v\n", err)
 	}
 
-	debug := os.Getenv("GOVCLOUDAIR_DEBUG")
+	util.Logger.Printf("\n\nXML DEBUG: %s\n\n", string(output))
 
-	if debug == "true" {
-		fmt.Printf("\n\nXML DEBUG: %s\n\n", string(output))
-	}
+	buffer := bytes.NewBufferString(xml.Header + string(output))
 
-	b := bytes.NewBufferString(xml.Header + string(output))
+	apiEndpoint, _ := url.ParseRequestURI(eGW.EdgeGateway.HREF)
+	apiEndpoint.Path += "/action/configureServices"
 
-	s, _ := url.ParseRequestURI(e.EdgeGateway.HREF)
-	s.Path += "/action/configureServices"
-
-	req := e.c.NewRequest(map[string]string{}, "POST", *s, b)
+	req := eGW.client.NewRequest(map[string]string{}, "POST", *apiEndpoint, buffer)
 
 	req.Header.Add("Content-Type", "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")
 
-	resp, err := checkResp(e.c.Http.Do(req))
+	resp, err := checkResp(eGW.client.Http.Do(req))
 	if err != nil {
 		return Task{}, fmt.Errorf("error reconfiguring Edge Gateway: %s", err)
 	}
 
-	task := NewTask(e.c)
+	task := NewTask(eGW.client)
 
 	if err = decodeBody(resp, task.Task); err != nil {
 		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
@@ -537,22 +532,22 @@ func (e *EdgeGateway) Remove1to1Mapping(internal, external string) (Task, error)
 
 }
 
-func (e *EdgeGateway) Create1to1Mapping(internal, external, description string) (Task, error) {
+func (eGW *EdgeGateway) Create1to1Mapping(internal, external, description string) (Task, error) {
 
 	// Refresh EdgeGateway rules
-	err := e.Refresh()
+	err := eGW.Refresh()
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 	}
 
 	var uplinkif string
-	for _, gifs := range e.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
+	for _, gifs := range eGW.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
 		if gifs.InterfaceType == "uplink" {
 			uplinkif = gifs.Network.HREF
 		}
 	}
 
-	newedgeconfig := e.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration
+	newedgeconfig := eGW.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration
 
 	snat := &types.NatRule{
 		Description: description,
@@ -625,27 +620,23 @@ func (e *EdgeGateway) Create1to1Mapping(internal, external, description string) 
 		fmt.Printf("error: %v\n", err)
 	}
 
-	debug := os.Getenv("GOVCLOUDAIR_DEBUG")
+	util.Logger.Printf("\n\nXML DEBUG: %s\n\n", string(output))
 
-	if debug == "true" {
-		fmt.Printf("\n\nXML DEBUG: %s\n\n", string(output))
-	}
+	buffer := bytes.NewBufferString(xml.Header + string(output))
 
-	b := bytes.NewBufferString(xml.Header + string(output))
+	apiEndpoint, _ := url.ParseRequestURI(eGW.EdgeGateway.HREF)
+	apiEndpoint.Path += "/action/configureServices"
 
-	s, _ := url.ParseRequestURI(e.EdgeGateway.HREF)
-	s.Path += "/action/configureServices"
-
-	req := e.c.NewRequest(map[string]string{}, "POST", *s, b)
+	req := eGW.client.NewRequest(map[string]string{}, "POST", *apiEndpoint, buffer)
 
 	req.Header.Add("Content-Type", "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")
 
-	resp, err := checkResp(e.c.Http.Do(req))
+	resp, err := checkResp(eGW.client.Http.Do(req))
 	if err != nil {
 		return Task{}, fmt.Errorf("error reconfiguring Edge Gateway: %s", err)
 	}
 
-	task := NewTask(e.c)
+	task := NewTask(eGW.client)
 
 	if err = decodeBody(resp, task.Task); err != nil {
 		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
@@ -656,9 +647,9 @@ func (e *EdgeGateway) Create1to1Mapping(internal, external, description string) 
 
 }
 
-func (e *EdgeGateway) AddIpsecVPN(ipsecVPNConfig *types.EdgeGatewayServiceConfiguration) (Task, error) {
+func (eGW *EdgeGateway) AddIpsecVPN(ipsecVPNConfig *types.EdgeGatewayServiceConfiguration) (Task, error) {
 
-	err := e.Refresh()
+	err := eGW.Refresh()
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 	}
@@ -668,28 +659,24 @@ func (e *EdgeGateway) AddIpsecVPN(ipsecVPNConfig *types.EdgeGatewayServiceConfig
 		return Task{}, fmt.Errorf("error marshaling ipsecVPNConfig compose: %s", err)
 	}
 
-	debug := os.Getenv("GOVCLOUDAIR_DEBUG")
+	util.Logger.Printf("\n\nXML DEBUG: %s\n\n", string(output))
 
-	if debug == "true" {
-		fmt.Printf("\n\nXML DEBUG: %s\n\n", string(output))
-	}
+	buffer := bytes.NewBufferString(xml.Header + string(output))
+	util.Logger.Printf("[DEBUG] ipsecVPN configuration: %s", buffer)
 
-	b := bytes.NewBufferString(xml.Header + string(output))
-	log.Printf("[DEBUG] ipsecVPN configuration: %s", b)
+	apiEndpoint, _ := url.ParseRequestURI(eGW.EdgeGateway.HREF)
+	apiEndpoint.Path += "/action/configureServices"
 
-	s, _ := url.ParseRequestURI(e.EdgeGateway.HREF)
-	s.Path += "/action/configureServices"
-
-	req := e.c.NewRequest(map[string]string{}, "POST", *s, b)
+	req := eGW.client.NewRequest(map[string]string{}, "POST", *apiEndpoint, buffer)
 
 	req.Header.Add("Content-Type", "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")
 
-	resp, err := checkResp(e.c.Http.Do(req))
+	resp, err := checkResp(eGW.client.Http.Do(req))
 	if err != nil {
 		return Task{}, fmt.Errorf("error reconfiguring Edge Gateway: %s", err)
 	}
 
-	task := NewTask(e.c)
+	task := NewTask(eGW.client)
 
 	if err = decodeBody(resp, task.Task); err != nil {
 		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
