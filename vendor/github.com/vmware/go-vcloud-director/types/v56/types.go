@@ -758,6 +758,67 @@ type Catalog struct {
 	VersionNumber int64            `xml:"VersionNumber"`
 }
 
+// AdminCatalog represents the Admin view of a Catalog object.
+// Type: AdminCatalogType
+// Namespace: http://www.vmware.com/vcloud/v1.5
+// Description: Represents the Admin view of a Catalog object.
+// Since: 0.9
+type AdminCatalog struct {
+	XMLName                      xml.Name                      `xml:"AdminCatalog"`
+	Xmlns                        string                        `xml:"xmlns,attr"`
+	HREF                         string                        `xml:"href,attr,omitempty"`
+	Type                         string                        `xml:"type,attr,omitempty"`
+	ID                           string                        `xml:"id,attr,omitempty"`
+	OperationKey                 string                        `xml:"operationKey,attr,omitempty"`
+	Name                         string                        `xml:"name,attr"`
+	CatalogItems                 []*CatalogItems               `xml:"CatalogItems,omitempty"`
+	DateCreated                  string                        `xml:"DateCreated,omitempty"`
+	PublishExternalCatalogParams *PublishExternalCatalogParams `xml:"PublishExternalCatalogParams,omitempty"`
+	CatalogStorageProfiles       *CatalogStorageProfiles       `xml:"CatalogStorageProfiles,omitempty"`
+	ExternalCatalogSubscription  *ExternalCatalogSubscription  `xml:"ExternalCatalogSubscriptionParams,omitempty"`
+	Description                  string                        `xml:"Description"`
+	IsPublished                  bool                          `xml:"IsPublished,omitempty"`
+	Link                         LinkList                      `xml:"Link,omitempty"`
+	Owner                        *Owner                        `xml:"Owner,omitempty"`
+	Tasks                        *TasksInProgress              `xml:"Tasks,omitempty"`
+	VersionNumber                int64                         `xml:"VersionNumber"`
+}
+
+// PublishExternalCatalogParamsType represents the configuration parameters of a catalog published externally
+// Type: PublishExternalCatalogParamsType
+// Namespace: http://www.vmware.com/vcloud/v1.5
+// Description: Represents the configuration parameters of a catalog published externally.
+// Since: 5.5
+type PublishExternalCatalogParams struct {
+	IsCachedEnabled          bool   `xml:"IsCacheEnabled,omitempty"`
+	IsPublishedExternally    bool   `xml:"IsPublishedExternally,omitempty"`
+	Password                 string `xml:"Password,omitempty"`
+	PreserveIdentityInfoFlag bool   `xml:"PreserveIdentityInfoFlag,omitempty"`
+	catalogPublishedUrl      string `xml:"catalogPublishedUrl,omitempty"`
+}
+
+// ExternalCatalogSubscription represents the configuration parameters for a catalog that has an external subscription
+// Type: ExternalCatalogSubscriptionParamsType
+// Namespace: http://www.vmware.com/vcloud/v1.5
+// Description: Represents the configuration parameters for a catalog that has an external subscription.
+// Since: 5.5
+type ExternalCatalogSubscription struct {
+	ExpectedSslThumbprint    bool   `xml:"ExpectedSslThumbprint,omitempty"`
+	LocalCopy                bool   `xml:"LocalCopy,omitempty"`
+	Password                 string `xml:"Password,omitempty"`
+	SubscribeToExternalFeeds bool   `xml:"SubscribeToExternalFeeds,omitempty"`
+	Location                 string `xml:"Location,omitempty"`
+}
+
+// CatalogStorageProfiles represents a container for storage profiles used by this catalog
+// Type: CatalogStorageProfiles
+// Namespace: http://www.vmware.com/vcloud/v1.5
+// Description: Represents a container for storage profiles used by this catalog
+// Since: 5.5
+type CatalogStorageProfiles struct {
+	VdcStorageProfile []*Reference `xml:"VdcStorageProfile,omitempty"`
+}
+
 // Owner represents the owner of this entity.
 // Type: OwnerType
 // Namespace: http://www.vmware.com/vcloud/v1.5

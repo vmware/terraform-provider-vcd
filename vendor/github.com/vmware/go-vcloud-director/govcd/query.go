@@ -12,27 +12,27 @@ import (
 
 type Results struct {
 	Results *types.QueryResultRecordsType
-	c       *Client
+	client  *Client
 }
 
-func NewResults(c *Client) *Results {
+func NewResults(cli *Client) *Results {
 	return &Results{
 		Results: new(types.QueryResultRecordsType),
-		c:       c,
+		client:  cli,
 	}
 }
 
-func (c *VCDClient) Query(params map[string]string) (Results, error) {
+func (vdcCli *VCDClient) Query(params map[string]string) (Results, error) {
 
-	req := c.Client.NewRequest(params, "GET", c.QueryHREF, nil)
+	req := vdcCli.Client.NewRequest(params, "GET", vdcCli.QueryHREF, nil)
 	req.Header.Add("Accept", "vnd.vmware.vcloud.org+xml;version=5.5")
 
-	resp, err := checkResp(c.Client.Http.Do(req))
+	resp, err := checkResp(vdcCli.Client.Http.Do(req))
 	if err != nil {
 		return Results{}, fmt.Errorf("error retreiving query: %s", err)
 	}
 
-	results := NewResults(&c.Client)
+	results := NewResults(&vdcCli.Client)
 
 	if err = decodeBody(resp, results.Results); err != nil {
 		return Results{}, fmt.Errorf("error decoding query results: %s", err)
