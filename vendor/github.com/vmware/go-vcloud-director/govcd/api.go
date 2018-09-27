@@ -6,14 +6,16 @@
 package govcd
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
+	"github.com/vmware/go-vcloud-director/types/v56"
+	"github.com/vmware/go-vcloud-director/util"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-
-	types "github.com/vmware/go-vcloud-director/types/v56"
+	"reflect"
 )
 
 // Client provides a client to vCloud Director, values can be populated automatically using the Authenticate method.
@@ -27,30 +29,52 @@ type Client struct {
 
 // NewRequest creates a new HTTP request and applies necessary auth headers if
 // set.
-func (c *Client) NewRequest(params map[string]string, method string, u url.URL, body io.Reader) *http.Request {
+func (cli *Client) NewRequest(params map[string]string, method string, reqUrl url.URL, body io.Reader) *http.Request {
 
-	p := url.Values{}
+	reqValues := url.Values{}
 
 	// Build up our request parameters
-	for k, v := range params {
-		p.Add(k, v)
+	for key, value := range params {
+		reqValues.Add(key, value)
 	}
 
 	// Add the params to our URL
-	u.RawQuery = p.Encode()
+	reqUrl.RawQuery = reqValues.Encode()
 
 	// Build the request, no point in checking for errors here as we're just
 	// passing a string version of an url.URL struct and http.NewRequest returns
 	// error only if can't process an url.ParseRequestURI().
-	req, _ := http.NewRequest(method, u.String(), body)
+	req, _ := http.NewRequest(method, reqUrl.String(), body)
 
-	if c.VCDAuthHeader != "" && c.VCDToken != "" {
+	if cli.VCDAuthHeader != "" && cli.VCDToken != "" {
 		// Add the authorization header
-		req.Header.Add(c.VCDAuthHeader, c.VCDToken)
+		req.Header.Add(cli.VCDAuthHeader, cli.VCDToken)
 		// Add the Accept header for VCD
-		req.Header.Add("Accept", "application/*+xml;version="+c.APIVersion)
+		req.Header.Add("Accept", "application/*+xml;version="+cli.APIVersion)
 	}
 
+	// Avoids passing data if the logging of requests is disabled
+	if util.LogHttpRequest {
+		// Makes a safe copy of the request body, and passes it
+		// to the processing function.
+		payload := ""
+		if req.ContentLength > 0 {
+			// We try to convert body to a *bytes.Buffer
+			var ibody interface{}
+			ibody = body
+			bbody, ok := ibody.(*bytes.Buffer)
+			// If the inner object is a bytes.Buffer, we get a safe copy of the data.
+			// If it is really just an io.Reader, we don't, as the copy would empty the reader
+			if ok {
+				payload = bbody.String()
+			} else {
+				// With this content, we'll know that the payload is not really empty, but
+				// it was unavailable due to the body type.
+				payload = fmt.Sprintf("<Not retrieved from type %s>", reflect.TypeOf(body))
+			}
+		}
+		util.ProcessRequestOutput(util.CallFuncName(), method, reqUrl.String(), payload, req)
+	}
 	return req
 
 }
@@ -72,6 +96,8 @@ func parseErr(resp *http.Response) error {
 func decodeBody(resp *http.Response, out interface{}) error {
 
 	body, err := ioutil.ReadAll(resp.Body)
+
+	util.ProcessResponseOutput(util.CallFuncName(), resp, fmt.Sprintf("%s", body))
 	if err != nil {
 		return err
 	}

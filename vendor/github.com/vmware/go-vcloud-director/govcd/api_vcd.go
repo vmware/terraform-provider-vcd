@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 	"sync"
 	"time"
 )
@@ -24,12 +23,12 @@ type supportedVersions struct {
 	} `xml:"VersionInfo"`
 }
 
-func (c *VCDClient) vcdloginurl() error {
-	s := c.Client.VCDHREF
-	s.Path += "/versions"
+func (vdcCli *VCDClient) vcdloginurl() error {
+	apiEndpoint := vdcCli.Client.VCDHREF
+	apiEndpoint.Path += "/versions"
 	// No point in checking for errors here
-	req := c.Client.NewRequest(map[string]string{}, "GET", s, nil)
-	resp, err := checkResp(c.Client.Http.Do(req))
+	req := vdcCli.Client.NewRequest(map[string]string{}, "GET", apiEndpoint, nil)
+	resp, err := checkResp(vdcCli.Client.Http.Do(req))
 	if err != nil {
 		return err
 	}
@@ -40,41 +39,45 @@ func (c *VCDClient) vcdloginurl() error {
 	if err != nil {
 		return fmt.Errorf("error decoding versions response: %s", err)
 	}
-	u, err := url.Parse(supportedVersions.VersionInfo.LoginUrl)
+	loginUrl, err := url.Parse(supportedVersions.VersionInfo.LoginUrl)
 	if err != nil {
 		return fmt.Errorf("couldn't find a LoginUrl in versions")
 	}
-	c.sessionHREF = *u
+	vdcCli.sessionHREF = *loginUrl
 	return nil
 }
 
-func (c *VCDClient) vcdauthorize(user, pass, org string) error {
+func (vdcCli *VCDClient) vcdauthorize(user, pass, org string) error {
+	var missing_items []string
 	if user == "" {
-		user = os.Getenv("VCLOUD_USERNAME")
+		missing_items = append(missing_items, "user")
 	}
 	if pass == "" {
-		pass = os.Getenv("VCLOUD_PASSWORD")
+		missing_items = append(missing_items, "password")
 	}
 	if org == "" {
-		org = os.Getenv("VCLOUD_ORG")
+		missing_items = append(missing_items, "org")
+	}
+	if len(missing_items) > 0 {
+		return fmt.Errorf("Authorization is not possible because of these missing items: %v", missing_items)
 	}
 	// No point in checking for errors here
-	req := c.Client.NewRequest(map[string]string{}, "POST", c.sessionHREF, nil)
+	req := vdcCli.Client.NewRequest(map[string]string{}, "POST", vdcCli.sessionHREF, nil)
 	// Set Basic Authentication Header
 	req.SetBasicAuth(user+"@"+org, pass)
 	// Add the Accept header for vCA
 	req.Header.Add("Accept", "application/*+xml;version=5.5")
-	resp, err := checkResp(c.Client.Http.Do(req))
+	resp, err := checkResp(vdcCli.Client.Http.Do(req))
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 	// Store the authentication header
-	c.Client.VCDToken = resp.Header.Get("x-vcloud-authorization")
-	c.Client.VCDAuthHeader = "x-vcloud-authorization"
+	vdcCli.Client.VCDToken = resp.Header.Get("x-vcloud-authorization")
+	vdcCli.Client.VCDAuthHeader = "x-vcloud-authorization"
 	// Get query href
-	c.QueryHREF = c.Client.VCDHREF
-	c.QueryHREF.Path += "/query"
+	vdcCli.QueryHREF = vdcCli.Client.VCDHREF
+	vdcCli.QueryHREF.Path += "/query"
 	return nil
 }
 
@@ -98,14 +101,14 @@ func NewVCDClient(vcdEndpoint url.URL, insecure bool) *VCDClient {
 }
 
 // Authenticate is an helper function that performs a login in vCloud Director.
-func (c *VCDClient) Authenticate(username, password, org string) error {
+func (vdcCli *VCDClient) Authenticate(username, password, org string) error {
 	// LoginUrl
-	err := c.vcdloginurl()
+	err := vdcCli.vcdloginurl()
 	if err != nil {
 		return fmt.Errorf("error finding LoginUrl: %s", err)
 	}
 	// Authorize
-	err = c.vcdauthorize(username, password, org)
+	err = vdcCli.vcdauthorize(username, password, org)
 	if err != nil {
 		return fmt.Errorf("error authorizing: %s", err)
 	}
@@ -113,16 +116,16 @@ func (c *VCDClient) Authenticate(username, password, org string) error {
 }
 
 // Disconnect performs a disconnection from the vCloud Director API endpoint.
-func (c *VCDClient) Disconnect() error {
-	if c.Client.VCDToken == "" && c.Client.VCDAuthHeader == "" {
+func (vdcCli *VCDClient) Disconnect() error {
+	if vdcCli.Client.VCDToken == "" && vdcCli.Client.VCDAuthHeader == "" {
 		return fmt.Errorf("cannot disconnect, client is not authenticated")
 	}
-	req := c.Client.NewRequest(map[string]string{}, "DELETE", c.sessionHREF, nil)
+	req := vdcCli.Client.NewRequest(map[string]string{}, "DELETE", vdcCli.sessionHREF, nil)
 	// Add the Accept header for vCA
 	req.Header.Add("Accept", "application/xml;version=5.5")
 	// Set Authorization Header
-	req.Header.Add(c.Client.VCDAuthHeader, c.Client.VCDToken)
-	if _, err := checkResp(c.Client.Http.Do(req)); err != nil {
+	req.Header.Add(vdcCli.Client.VCDAuthHeader, vdcCli.Client.VCDToken)
+	if _, err := checkResp(vdcCli.Client.Http.Do(req)); err != nil {
 		return fmt.Errorf("error processing session delete for vCloud Director: %s", err)
 	}
 	return nil

@@ -13,6 +13,7 @@ import (
 // The Organization created will have these settings specified in the
 // settings parameter. The settings variable is defined in types.go.
 // Method will fail unless user has an admin token.
+// API Documentation: https://code.vmware.com/apis/220/vcloud#/doc/doc/operations/POST-CreateOrganization.html
 func CreateOrg(vcdClient *VCDClient, name string, fullName string, isEnabled bool, settings *types.OrgSettings) (Task, error) {
 	vcomp := &types.AdminOrg{
 		Xmlns:       "http://www.vmware.com/vcloud/v1.5",
@@ -71,6 +72,7 @@ func GetOrgByName(vcdClient *VCDClient, orgname string) (Org, error) {
 // If no valid org is found, it returns an empty
 // org and no error. Otherwise returns an empty AdminOrg
 // and an error.
+// API Documentation: https://code.vmware.com/apis/220/vcloud#/doc/doc/operations/GET-Organization-AdminView.html
 func GetAdminOrgByName(vcdClient *VCDClient, orgname string) (AdminOrg, error) {
 	orgUrl, err := getOrgHREF(vcdClient, orgname)
 	if err != nil {
@@ -104,9 +106,9 @@ func getOrgHREF(vcdClient *VCDClient, orgname string) (string, error) {
 		return "", fmt.Errorf("error decoding response: %s", err)
 	}
 	// Look for orgname within OrgList
-	for _, a := range orgList.Org {
-		if a.Name == orgname {
-			return a.HREF, nil
+	for _, org := range orgList.Org {
+		if org.Name == orgname {
+			return org.HREF, nil
 		}
 	}
 	return "", fmt.Errorf("Couldn't find org with name: %s", orgname)
