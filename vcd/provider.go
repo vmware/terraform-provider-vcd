@@ -7,34 +7,53 @@ import (
 
 // Provider returns a terraform.ResourceProvider.
 func Provider() terraform.ResourceProvider {
+
+	caller := callFuncName()
+	debugPrintf("[%s] Provider\n", caller)
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"user": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_USER", nil),
-				Description: "The user name for vcd API operations.",
+				Description: "The user name for VCD API operations.",
 			},
 
 			"password": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_PASSWORD", nil),
-				Description: "The user password for vcd API operations.",
+				Description: "The user password for VCD API operations.",
+			},
+
+			"sysorg": &schema.Schema{
+				Type:        schema.TypeString,
+				Required:    false,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("VCD_SYS_ORG", nil),
+				Description: "The VCD Org for user authentication",
 			},
 
 			"org": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_ORG", nil),
-				Description: "The vcd org for API operations",
+				Description: "The VCD Org for API operations",
+			},
+
+			"vdc": &schema.Schema{
+				Type:        schema.TypeString,
+				Required:    false,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("VCD_VDC", nil),
+				Description: "The VDC for API operations",
 			},
 
 			"url": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_URL", nil),
-				Description: "The vcd url for vcd API operations.",
+				Description: "The VCD url for VCD API operations.",
 			},
 
 			"maxRetryTimeout": &schema.Schema{
@@ -74,6 +93,9 @@ func Provider() terraform.ResourceProvider {
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
+
+	caller := callFuncName()
+	debugPrintf("[%s] providerConfigure\n", caller)
 	maxRetryTimeout := d.Get("max_retry_timeout").(int)
 
 	// TODO: Deprecated, remove in next major release
@@ -81,10 +103,16 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		maxRetryTimeout = v.(int)
 	}
 
+	connectOrg := d.Get("sysorg").(string)
+	if connectOrg == "" {
+		connectOrg = d.Get("org").(string)
+	}
 	config := Config{
 		User:            d.Get("user").(string),
 		Password:        d.Get("password").(string),
+		SysOrg:          connectOrg,
 		Org:             d.Get("org").(string),
+		Vdc:             d.Get("vdc").(string),
 		Href:            d.Get("url").(string),
 		MaxRetryTimeout: maxRetryTimeout,
 		InsecureFlag:    d.Get("allow_unverified_ssl").(bool),

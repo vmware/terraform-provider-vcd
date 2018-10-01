@@ -12,6 +12,10 @@ import (
 )
 
 func TestAccVcdSNAT_Basic(t *testing.T) {
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	if testConfig.Networking.ExternalIp == "" {
 		t.Skip("Variable networking.extarnalIp must be set to run SNAT tests")
 		return
@@ -56,28 +60,21 @@ func testAccCheckVcdSNATExists(n string, gateway *govcd.EdgeGateway) resource.Te
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
-			return fmt.Errorf("Not found: %s", n)
+			return fmt.Errorf("not found: %s", n)
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("No SNAT ID is set")
+			return fmt.Errorf("no SNAT ID is set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
 
 		gatewayName := rs.Primary.Attributes["edge_gateway"]
-		org, err := govcd.GetOrgByName(conn.VCDClient, testConfig.VCD.Org)
-		if err != nil || org == (govcd.Org{}) {
-			return fmt.Errorf("Could not find test Org")
-		}
-		vdc, err := org.GetVdcByName(testConfig.VCD.Vdc)
-		if err != nil || vdc == (govcd.Vdc{}) {
-			return fmt.Errorf("Could not find test Vdc")
-		}
-		edgeGateway, err := vdc.FindEdgeGateway(gatewayName)
+
+		edgeGateway, err := conn.GetEdgeGateway(testConfig.VCD.Org, testConfig.VCD.Vdc, gatewayName)
 
 		if err != nil {
-			return fmt.Errorf("Could not find edge gateway")
+			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
 
 		var found bool
@@ -107,18 +104,10 @@ func testAccCheckVcdSNATDestroy(s *terraform.State) error {
 		}
 
 		gatewayName := rs.Primary.Attributes["edge_gateway"]
-		org, err := govcd.GetOrgByName(conn.VCDClient, testConfig.VCD.Org)
-		if err != nil || org == (govcd.Org{}) {
-			return fmt.Errorf("Could not find test Org")
-		}
-		vdc, err := org.GetVdcByName(testConfig.VCD.Vdc)
-		if err != nil || vdc == (govcd.Vdc{}) {
-			return fmt.Errorf("Could not find test Vdc")
-		}
-		edgeGateway, err := vdc.FindEdgeGateway(gatewayName)
 
+		edgeGateway, err := conn.GetEdgeGateway(testConfig.VCD.Org, testConfig.VCD.Vdc, gatewayName)
 		if err != nil {
-			return fmt.Errorf("Could not find edge gateway")
+			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
 		var found bool
@@ -141,10 +130,10 @@ func testAccCheckVcdSNATDestroy(s *terraform.State) error {
 
 const testAccCheckVcdSnat_basic = `
 resource "vcd_snat" "{{.SnatName}}" {
-	org = "{{.Org}}"
-	vdc = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	external_ip = "{{.ExternalIp}}"
-	internal_ip = "10.10.102.0/24"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  external_ip  = "{{.ExternalIp}}"
+  internal_ip  = "10.10.102.0/24"
 }
 `

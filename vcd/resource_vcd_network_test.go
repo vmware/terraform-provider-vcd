@@ -15,6 +15,10 @@ import (
 func TestAccVcdNetwork_Basic(t *testing.T) {
 	var network govcd.OrgVDCNetwork
 	generatedHrefRegexp := regexp.MustCompile("^https://")
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 
 	networkName := "TestAccVcdNetwork"
 	var params = StringMap{
@@ -56,25 +60,23 @@ func testAccCheckVcdNetworkExists(n string, network *govcd.OrgVDCNetwork) resour
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
-			return fmt.Errorf("Not found: %s", n)
+			return fmt.Errorf("not found: %s", n)
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("No VAPP ID is set")
+			return fmt.Errorf("no network ID is set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
-		org, err := govcd.GetOrgByName(conn.VCDClient, testConfig.VCD.Org)
-		if err != nil || org == (govcd.Org{}) {
-			return fmt.Errorf("Could not find test Org")
+
+		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
-		vdc, err := org.GetVdcByName(testConfig.VCD.Vdc)
-		if err != nil || vdc == (govcd.Vdc{}) {
-			return fmt.Errorf("Could not find test Vdc")
-		}
+
 		resp, err := vdc.FindVDCNetwork(rs.Primary.ID)
 		if err != nil {
-			return fmt.Errorf("Network does not exist.")
+			return fmt.Errorf("network %s does not exist (%#v)", rs.Primary.ID, resp)
 		}
 
 		*network = resp
@@ -90,18 +92,16 @@ func testAccCheckVcdNetworkDestroy(s *terraform.State) error {
 		if rs.Type != "vcd_network" {
 			continue
 		}
-		org, err := govcd.GetOrgByName(conn.VCDClient, testConfig.VCD.Org)
-		if err != nil || org == (govcd.Org{}) {
-			return fmt.Errorf("Could not find test Org")
+
+		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
-		vdc, err := org.GetVdcByName(testConfig.VCD.Vdc)
-		if err != nil || vdc == (govcd.Vdc{}) {
-			return fmt.Errorf("Could not find test Vdc")
-		}
+
 		_, err = vdc.FindVDCNetwork(rs.Primary.ID)
 
 		if err == nil {
-			return fmt.Errorf("Network still exists.")
+			return fmt.Errorf("network %s still exists.", rs.Primary.ID)
 		}
 
 		return nil
@@ -114,7 +114,7 @@ func testAccCheckVcdNetworkAttributes(name string, network *govcd.OrgVDCNetwork)
 	return func(s *terraform.State) error {
 
 		if network.OrgVDCNetwork.Name != name {
-			return fmt.Errorf("Bad name: %s", network.OrgVDCNetwork.Name)
+			return fmt.Errorf("bad name: %s", network.OrgVDCNetwork.Name)
 		}
 
 		return nil
@@ -123,14 +123,15 @@ func testAccCheckVcdNetworkAttributes(name string, network *govcd.OrgVDCNetwork)
 
 const testAccCheckVcdNetwork_basic = `
 resource "vcd_network" "{{.NetworkName}}" {
-	name = "{{.NetworkName}}"
-	org = "{{.Org}}"
-	vdc = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	gateway = "10.10.102.1"
-	static_ip_pool {
-		start_address = "10.10.102.2"
-		end_address = "10.10.102.254"
-	}
+  name         = "{{.NetworkName}}"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  gateway      = "10.10.102.1"
+
+  static_ip_pool {
+    start_address = "10.10.102.2"
+    end_address   = "10.10.102.254"
+  }
 }
 `

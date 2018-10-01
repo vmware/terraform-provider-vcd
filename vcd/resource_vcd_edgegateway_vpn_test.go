@@ -11,6 +11,11 @@ import (
 
 func TestAccVcdVpn_Basic(t *testing.T) {
 	var vpnName string = "TestAccVcdVpnVpn"
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	// String map to fill the template
 	var params = StringMap{
 		"Org":           testConfig.VCD.Org,
@@ -66,41 +71,41 @@ func testAccCheckVcdVpnDestroy(s *terraform.State) error {
 
 const testAccCheckVcdVpn_basic = `
 resource "vcd_edgegateway_vpn" "{{.VpnName}}" {
-    org                 = "{{.Org}}"
-    vdc                 = "{{.Vdc}}"
-    edge_gateway        = "{{.EdgeGateway}}"
-    name                = "{{.SiteName}}"
-    description         = "Description"
-    encryption_protocol = "AES256"
-    mtu                 = 1400
-    peer_id             = "{{.PeerID}}"
-    peer_ip_address     = "{{.PeerIP}}"
-    local_id            = "{{.LocalID}}"
-    local_ip_address    = "{{.LocalIP}}"
-    shared_secret       = "{{.SharedSecret}}"
-    
-    peer_subnets {
-        peer_subnet_name = "DMZ_WEST"
-        peer_subnet_gateway = "{{.PeerSubnetGW}}"
-        peer_subnet_mask = "255.255.255.0"
-    }
+  org                 = "{{.Org}}"
+  vdc                 = "{{.Vdc}}"
+  edge_gateway        = "{{.EdgeGateway}}"
+  name                = "{{.SiteName}}"
+  description         = "Description"
+  encryption_protocol = "AES256"
+  mtu                 = 1400
+  peer_id             = "{{.PeerID}}"
+  peer_ip_address     = "{{.PeerIP}}"
+  local_id            = "{{.LocalID}}"
+  local_ip_address    = "{{.LocalIP}}"
+  shared_secret       = "{{.SharedSecret}}"
 
-    peer_subnets {
-        peer_subnet_name = "WEB_WEST"
-        peer_subnet_gateway = "{{.PeerSubnetGW}}"
-        peer_subnet_mask = "255.255.255.0"
-    }
+  peer_subnets {
+    peer_subnet_name    = "DMZ_WEST"
+    peer_subnet_gateway = "{{.PeerSubnetGW}}"
+    peer_subnet_mask    = "255.255.255.0"
+  }
 
-    local_subnets {
-        local_subnet_name = "DMZ_EAST"
-        local_subnet_gateway = "{{.LocalSubnetGW}}"
-        local_subnet_mask = "255.255.255.0"
-    }
+  peer_subnets {
+    peer_subnet_name    = "WEB_WEST"
+    peer_subnet_gateway = "{{.PeerSubnetGW}}"
+    peer_subnet_mask    = "255.255.255.0"
+  }
 
-    local_subnets {
-        local_subnet_name = "WEB_EAST"
-        local_subnet_gateway = "{{.LocalSubnetGW}}"
-        local_subnet_mask = "255.255.255.0"
-    }
+  local_subnets {
+    local_subnet_name    = "DMZ_EAST"
+    local_subnet_gateway = "{{.LocalSubnetGW}}"
+    local_subnet_mask    = "255.255.255.0"
+  }
+
+  local_subnets {
+    local_subnet_name    = "WEB_EAST"
+    local_subnet_gateway = "{{.LocalSubnetGW}}"
+    local_subnet_mask    = "255.255.255.0"
+  }
 }
 `
