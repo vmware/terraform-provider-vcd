@@ -8,12 +8,16 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	govcd "github.com/vmware/go-vcloud-director/govcd"
+	"github.com/vmware/go-vcloud-director/govcd"
 )
 
 var itemName string = "TestAccVcdFirewallRules_basic"
 
 func TestAccVcdFirewallRules_basic(t *testing.T) {
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	if testConfig.Networking.ExternalIp == "" {
 		t.Skip("Variable networking.externalIp must be set to run DNAT tests")
 		return
@@ -50,20 +54,13 @@ func testAccCheckVcdFirewallRulesExists(n string, gateway *govcd.EdgeGateway) re
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
-		org, err := govcd.GetOrgByName(conn.VCDClient, testConfig.VCD.Org)
-		if err != nil || org == (govcd.Org{}) {
-			return fmt.Errorf("Could not find test Org")
-		}
-		vdc, err := org.GetVdcByName(testConfig.VCD.Vdc)
-		if err != nil || vdc == (govcd.Vdc{}) {
-			return fmt.Errorf("Could not find test Vdc")
-		}
-		resp, err := vdc.FindEdgeGateway(rs.Primary.ID)
+
+		edgeGateway, err := conn.GetEdgeGateway(testConfig.VCD.Org, testConfig.VCD.Vdc, rs.Primary.ID)
 		if err != nil {
-			return fmt.Errorf("Edge Gateway does not exist.")
+			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
-		*gateway = resp
+		*gateway = edgeGateway
 
 		return nil
 	}
@@ -86,7 +83,9 @@ func createFirewallRulesConfigs(existingRules *govcd.EdgeGateway) string {
 	config := Config{
 		User:            testConfig.Provider.User,
 		Password:        testConfig.Provider.Password,
-		Org:             testConfig.Provider.SysOrg,
+		SysOrg:          testConfig.Provider.SysOrg,
+		Org:             testConfig.VCD.Org,
+		Vdc:             testConfig.VCD.Vdc,
 		Href:            testConfig.Provider.Url,
 		InsecureFlag:    testConfig.Provider.AllowInsecure,
 		MaxRetryTimeout: 140,
@@ -96,19 +95,17 @@ func createFirewallRulesConfigs(existingRules *govcd.EdgeGateway) string {
 	if err != nil {
 		panic(err)
 	}
-	org, err := govcd.GetOrgByName(conn.VCDClient, testConfig.VCD.Org)
-	if err != nil || org == (govcd.Org{}) {
-		panic(err)
-	}
-	vdc, err := org.GetVdcByName(testConfig.VCD.Vdc)
-	if err != nil || vdc == (govcd.Vdc{}) {
-		panic(err)
-	}
+
+	//_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+	//if err != nil {
+	//	panic(err)
+	//}
 	edgeGatewayName := testConfig.Networking.EdgeGateway
 	if edgeGatewayName == "" {
-		panic(fmt.Errorf("Could not get an Edge Gateway. Variable networking.edgeGateway is not set"))
+		panic(fmt.Errorf("could not get an Edge Gateway. Variable networking.edgeGateway is not set"))
 	}
-	edgeGateway, err := vdc.FindEdgeGateway(edgeGatewayName)
+	//edgeGateway, err := vdc.FindEdgeGateway(edgeGatewayName)
+	edgeGateway, err := conn.GetEdgeGateway(testConfig.VCD.Org, testConfig.VCD.Vdc, edgeGatewayName)
 	if err != nil {
 		panic(err)
 	}
@@ -133,19 +130,19 @@ func createFirewallRulesConfigs(existingRules *govcd.EdgeGateway) string {
 
 const testAccCheckVcdFirewallRules_add = `
 resource "vcd_firewall_rules" "{{.FuncName}}" {
-	org            = "{{.Org}}"
-	vdc            = "{{.Vdc}}"
-    edge_gateway   = "{{.EdgeGateway}}"
-	default_action = "{{.DefaultAction}}"
+  org            = "{{.Org}}"
+  vdc            = "{{.Vdc}}"
+  edge_gateway   = "{{.EdgeGateway}}"
+  default_action = "{{.DefaultAction}}"
 
-	rule {
-		description = "Test rule"
-		policy = "allow"
-		protocol = "any"
-		destination_port = "any"
-		destination_ip = "any"
-		source_port = "any"
-		source_ip = "any"
-	}
+  rule {
+    description      = "Test rule"
+    policy           = "allow"
+    protocol         = "any"
+    destination_port = "any"
+    destination_ip   = "any"
+    source_port      = "any"
+    source_ip        = "any"
+  }
 }
 `

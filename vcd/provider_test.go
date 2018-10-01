@@ -39,9 +39,6 @@ func testAccPreCheck(t *testing.T) {
 	if testConfig.Provider.SysOrg == "" {
 		t.Fatal("provider.sysOrg must be set for acceptance tests")
 	}
-	if testConfig.Provider.SysOrg == "" {
-		t.Fatal("provider.sysOrg must be set for acceptance tests")
-	}
 	if testConfig.VCD.Org == "" {
 		t.Fatal("vcd.org must be set for acceptance tests")
 	}

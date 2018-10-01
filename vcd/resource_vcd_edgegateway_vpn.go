@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	govcd "github.com/vmware/go-vcloud-director/govcd"
-	types "github.com/vmware/go-vcloud-director/types/v56"
+	"github.com/vmware/go-vcloud-director/types/v56"
 	"log"
 )
 
@@ -30,12 +29,14 @@ func resourceVcdEdgeGatewayVpn() *schema.Resource {
 			},
 			"org": {
 				Type:     schema.TypeString,
-				Required: true,
+				Required: false,
+				Optional: true,
 				ForceNew: true,
 			},
 			"vdc": {
 				Type:     schema.TypeString,
-				Required: true,
+				Required: false,
+				Optional: true,
 				ForceNew: true,
 			},
 			"description": &schema.Schema{
@@ -140,24 +141,14 @@ func resourceVcdEdgeGatewayVpn() *schema.Resource {
 func resourceVcdEdgeGatewayVpnCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	log.Printf("[TRACE] CLIENT: %#v", vcdClient)
-	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
-	if err != nil {
-		return fmt.Errorf("Could not get Org: %s with error %v", d.Get("org").(string), err)
-	}
-	if org == (govcd.Org{}) {
-		return fmt.Errorf("Could not find Org: %s", d.Get("org").(string))
-	}
-	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
-	if err != nil || vdc == (govcd.Vdc{}) {
-		return fmt.Errorf("Could not get vdc: %s with error %v", d.Get("vdc").(string), err)
-	}
-	if vdc == (govcd.Vdc{}) {
-		return fmt.Errorf("Could not find vdc: %s", d.Get("vdc").(string))
-	}
+
 	vcdClient.Mutex.Lock()
 	defer vcdClient.Mutex.Unlock()
 
-	edgeGateway, err := vdc.FindEdgeGateway(d.Get("edge_gateway").(string))
+	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
+	if err != nil {
+		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
+	}
 
 	localSubnetsList := d.Get("local_subnets").(*schema.Set).List()
 	peerSubnetsList := d.Get("peer_subnets").(*schema.Set).List()
@@ -221,13 +212,13 @@ func resourceVcdEdgeGatewayVpnCreate(d *schema.ResourceData, meta interface{}) e
 		if err != nil {
 			log.Printf("[INFO] Error setting ipsecVPNConfig rules: %s", err)
 			return resource.RetryableError(
-				fmt.Errorf("Error setting ipsecVPNConfig rules: %#v", err))
+				fmt.Errorf("error setting ipsecVPNConfig rules: %#v", err))
 		}
 
 		return resource.RetryableError(task.WaitTaskCompletion())
 	})
 	if err != nil {
-		return fmt.Errorf("Error completing tasks: %#v", err)
+		return fmt.Errorf(errorCompletingTask, err)
 	}
 
 	d.SetId(d.Get("edge_gateway").(string))
@@ -240,25 +231,13 @@ func resourceVcdEdgeGatewayVpnDelete(d *schema.ResourceData, meta interface{}) e
 
 	log.Printf("[TRACE] CLIENT: %#v", vcdClient)
 
-	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
-	if err != nil {
-		return fmt.Errorf("Could not get Org: %s with error %v", d.Get("org").(string), err)
-	}
-	if org == (govcd.Org{}) {
-		return fmt.Errorf("Could not find Org: %s", d.Get("org").(string))
-	}
-	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
-	if err != nil || vdc == (govcd.Vdc{}) {
-		return fmt.Errorf("Could not get vdc: %s with error %v", d.Get("vdc").(string), err)
-	}
-	if vdc == (govcd.Vdc{}) {
-		return fmt.Errorf("Could not find vdc: %s", d.Get("vdc").(string))
-	}
-
 	vcdClient.Mutex.Lock()
 	defer vcdClient.Mutex.Unlock()
 
-	edgeGateway, err := vdc.FindEdgeGateway(d.Get("edge_gateway").(string))
+	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
+	if err != nil {
+		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
+	}
 
 	ipsecVPNConfig := &types.EdgeGatewayServiceConfiguration{
 		Xmlns: "http://www.vmware.com/vcloud/v1.5",
@@ -275,19 +254,19 @@ func resourceVcdEdgeGatewayVpnDelete(d *schema.ResourceData, meta interface{}) e
 		if err != nil {
 			log.Printf("[INFO] Error setting ipsecVPNConfig rules: %s", err)
 			return resource.RetryableError(
-				fmt.Errorf("Error setting ipsecVPNConfig rules: %#v", err))
+				fmt.Errorf("error setting ipsecVPNConfig rules: %#v", err))
 		}
 
 		return resource.RetryableError(task.WaitTaskCompletion())
 	})
 	if err != nil {
-		return fmt.Errorf("Error completing tasks: %#v", err)
+		return fmt.Errorf(errorCompletingTask, err)
 	}
 
 	d.SetId(d.Get("edge_gateway").(string))
 
 	if err != nil {
-		return fmt.Errorf("Error finding edge gateway: %#v", err)
+		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
 	return nil
@@ -296,24 +275,9 @@ func resourceVcdEdgeGatewayVpnDelete(d *schema.ResourceData, meta interface{}) e
 func resourceVcdEdgeGatewayVpnRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
+	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {
-		return fmt.Errorf("Could not get Org: %s with error %v", d.Get("org").(string), err)
-	}
-	if org == (govcd.Org{}) {
-		return fmt.Errorf("Could not find Org: %s", d.Get("org").(string))
-	}
-	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
-	if err != nil || vdc == (govcd.Vdc{}) {
-		return fmt.Errorf("Could not get vdc: %s with error %v", d.Get("vdc").(string), err)
-	}
-	if vdc == (govcd.Vdc{}) {
-		return fmt.Errorf("Could not find vdc: %s", d.Get("vdc").(string))
-	}
-
-	edgeGateway, err := vdc.FindEdgeGateway(d.Get("edge_gateway").(string))
-	if err != nil {
-		return fmt.Errorf("Error finding edge gateway: %#v", err)
+		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
 	egsc := edgeGateway.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.GatewayIpsecVpnService
@@ -337,7 +301,7 @@ func resourceVcdEdgeGatewayVpnRead(d *schema.ResourceData, meta interface{}) err
 		d.Set("local_subnets", tunnel.LocalSubnet)
 		d.Set("peer_subnets", tunnel.PeerSubnet)
 	} else {
-		return fmt.Errorf("Multiple tunnels not currently supported")
+		return fmt.Errorf("multiple tunnels not currently supported")
 	}
 
 	return nil
