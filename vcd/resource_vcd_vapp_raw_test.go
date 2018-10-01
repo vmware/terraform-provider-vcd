@@ -13,6 +13,10 @@ import (
 func TestAccVcdVAppRaw_Basic(t *testing.T) {
 	var vapp govcd.VApp
 
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
 		"Vdc":         testConfig.VCD.Vdc,
@@ -48,22 +52,19 @@ func testAccCheckVcdVAppRawExists(n string, vapp *govcd.VApp) resource.TestCheck
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
-			return fmt.Errorf("Not found: %s", n)
+			return fmt.Errorf("not found: %s", n)
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("No VAPP ID is set")
+			return fmt.Errorf("no VAPP ID is set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
-		org, err := govcd.GetOrgByName(conn.VCDClient, testConfig.VCD.Org)
-		if err != nil || org == (govcd.Org{}) {
-			return fmt.Errorf("Could not find test Org")
+		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
-		vdc, err := org.GetVdcByName(testConfig.VCD.Vdc)
-		if err != nil || vdc == (govcd.Vdc{}) {
-			return fmt.Errorf("Could not find test Vdc")
-		}
+
 		resp, err := vdc.FindVAppByName(rs.Primary.ID)
 		if err != nil {
 			return err
@@ -82,14 +83,11 @@ func testAccCheckVcdVAppRawDestroy(s *terraform.State) error {
 		if rs.Type != "vcd_vapp" {
 			continue
 		}
-		org, err := govcd.GetOrgByName(conn.VCDClient, testConfig.VCD.Org)
-		if err != nil || org == (govcd.Org{}) {
-			return fmt.Errorf("Could not find test Org")
+		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
-		vdc, err := org.GetVdcByName(testConfig.VCD.Vdc)
-		if err != nil || vdc == (govcd.Vdc{}) {
-			return fmt.Errorf("Could not find test Vdc")
-		}
+
 		_, err = vdc.FindVAppByName(rs.Primary.ID)
 
 		if err == nil {
@@ -104,21 +102,22 @@ func testAccCheckVcdVAppRawDestroy(s *terraform.State) error {
 
 const testAccCheckVcdVAppRaw_basic = `
 resource "vcd_network" "{{.NetworkName}}" {
-	name = "{{.NetworkName}}"
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	gateway      = "10.10.102.1"
-	static_ip_pool {
-		start_address = "10.10.102.2"
-		end_address = "10.10.102.254"
-	}
+  name         = "{{.NetworkName}}"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  gateway      = "10.10.102.1"
+
+  static_ip_pool {
+    start_address = "10.10.102.2"
+    end_address   = "10.10.102.254"
+  }
 }
 
 resource "vcd_vapp" "{{.VappName}}" {
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  name         = "{{.VappName}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+  name = "{{.VappName}}"
 }
 
 resource "vcd_vapp_vm" "{{.VmName}}" {
@@ -131,8 +130,8 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   memory        = 1024
   cpus          = 1
 
-  network_name  = "${vcd_network.{{.NetworkName}}.name}"
-  ip            = "10.10.102.161"
-  depends_on    = ["vcd_vapp.{{.VappName}}"]
+  network_name = "${vcd_network.{{.NetworkName}}.name}"
+  ip           = "10.10.102.161"
+  depends_on   = ["vcd_vapp.{{.VappName}}"]
 }
 `

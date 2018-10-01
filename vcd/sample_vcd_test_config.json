@@ -43,5 +43,13 @@
       "peerIp": "192.168.5.1",
       "peerSubnetGw": "192.168.5.1"
     }
+  },
+  "logging" : {
+    "//": "Enables logging from go-vcloud-director in vendor",
+    "enabled": false,
+    "logFileName": "go-vcloud-director.log",
+    "//": "If logging is enabled, logs automatically HTTP requests and responses",
+    "logHttpRequest" : true,
+    "logHttpResponse" : true
   }
 }

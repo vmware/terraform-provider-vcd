@@ -8,7 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	govcd "github.com/vmware/go-vcloud-director/govcd"
+	"github.com/vmware/go-vcloud-director/govcd"
 )
 
 var orgNameTestAccVcdOrgBasic string = "TestAccVcdOrgBasic"
@@ -20,6 +20,10 @@ func TestAccVcdOrgBasic(t *testing.T) {
 		"OrgName": orgNameTestAccVcdOrgBasic,
 	}
 
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	configText := templateFill(testAccCheckVcdOrg_basic, params)
 	if os.Getenv("GOVCD_DEBUG") != "" {
 		log.Printf("#[DEBUG] CONFIGURATION: %s", configText)
@@ -50,11 +54,11 @@ func testAccCheckVcdOrgExists(n string, org *govcd.Org) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
-			return fmt.Errorf("Not found: %s", n)
+			return fmt.Errorf("not found: %s", n)
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("No ORG ID is set")
+			return fmt.Errorf("no Org ID is set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
@@ -63,7 +67,7 @@ func testAccCheckVcdOrgExists(n string, org *govcd.Org) resource.TestCheckFunc {
 
 		new_org, err := govcd.GetOrgByName(conn.VCDClient, orgName)
 		if err != nil {
-			return fmt.Errorf("error could not find org: %v", err)
+			return fmt.Errorf("error: could not find Org: %v", err)
 		}
 		org = &new_org
 		return nil
@@ -79,7 +83,7 @@ func testAccCheckOrgDestroy(s *terraform.State) error {
 
 		org, err := govcd.GetOrgByName(conn.VCDClient, rs.Primary.Attributes["name"])
 		if org != (govcd.Org{}) || err != nil {
-			return fmt.Errorf("Org with name %s was found", rs.Primary.Attributes["name"])
+			return fmt.Errorf("org with name %s was found", rs.Primary.Attributes["name"])
 		}
 
 	}
@@ -88,11 +92,11 @@ func testAccCheckOrgDestroy(s *terraform.State) error {
 }
 
 const testAccCheckVcdOrg_basic = `
-resource "vcd_org" "{{.OrgName}}"{
-  name = "{{.OrgName}}"
-  full_name = "{{.OrgName}}"
+resource "vcd_org" "{{.OrgName}}" {
+  name       = "{{.OrgName}}"
+  full_name  = "{{.OrgName}}"
   is_enabled = "true"
-  force = "true"
-  recursive = "true"
+  force      = "true"
+  recursive  = "true"
 }
 `

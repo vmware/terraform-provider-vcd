@@ -8,12 +8,16 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	govcd "github.com/vmware/go-vcloud-director/govcd"
+	"github.com/vmware/go-vcloud-director/govcd"
 )
 
 var baseDnatName string = "TestAccVcdDNAT"
 
 func TestAccVcdDNAT_Basic(t *testing.T) {
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	if testConfig.Networking.ExternalIp == "" {
 		t.Skip("Variable networking.externalIp must be set to run DNAT tests")
 		return
@@ -54,6 +58,10 @@ func TestAccVcdDNAT_Basic(t *testing.T) {
 }
 
 func TestAccVcdDNAT_tlate(t *testing.T) {
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	if testConfig.Networking.ExternalIp == "" {
 		t.Skip("Variable networking.externalIp must be set to run DNAT tests")
 		return
@@ -110,18 +118,11 @@ func testAccCheckVcdDNATExists(n string, gateway *govcd.EdgeGateway) resource.Te
 		conn := testAccProvider.Meta().(*VCDClient)
 
 		gatewayName := rs.Primary.Attributes["edge_gateway"]
-		org, err := govcd.GetOrgByName(conn.VCDClient, testConfig.VCD.Org)
-		if err != nil && org == (govcd.Org{}) {
-			return fmt.Errorf("Could not find test Org")
-		}
-		vdc, err := org.GetVdcByName(testConfig.VCD.Vdc)
-		if err != nil || vdc == (govcd.Vdc{}) {
-			return fmt.Errorf("Could not find test Vdc %s", testConfig.VCD.Vdc)
-		}
-		edgeGateway, err := vdc.FindEdgeGateway(gatewayName)
+
+		edgeGateway, err := conn.GetEdgeGateway(testConfig.VCD.Org, testConfig.VCD.Vdc, gatewayName)
 
 		if err != nil {
-			return fmt.Errorf("Could not find edge gateway")
+			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
 		var found bool
@@ -147,29 +148,20 @@ func testAccCheckVcdDNATtlateExists(n string, gateway *govcd.EdgeGateway) resour
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
-			return fmt.Errorf("Not found: %s", n)
+			return fmt.Errorf("not found: %s", n)
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("No DNAT ID is set")
+			return fmt.Errorf("no DNAT ID is set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
 
 		gatewayName := rs.Primary.Attributes["edge_gateway"]
-		// fmt.Printf(testConfig.VCD.Org)
-		org, err := govcd.GetOrgByName(conn.VCDClient, testConfig.VCD.Org)
-		if err != nil {
-			return fmt.Errorf("Could not find test Org")
-		}
-		vdc, err := org.GetVdcByName(testConfig.VCD.Vdc)
-		if err != nil {
-			return fmt.Errorf("Could not find test Vdc")
-		}
-		edgeGateway, err := vdc.FindEdgeGateway(gatewayName)
 
+		edgeGateway, err := conn.GetEdgeGateway(testConfig.VCD.Org, testConfig.VCD.Vdc, gatewayName)
 		if err != nil {
-			return fmt.Errorf("Could not find edge gateway")
+			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
 		var found bool
@@ -198,19 +190,12 @@ func testAccCheckVcdDNATDestroy(s *terraform.State) error {
 		if rs.Type != "vcd_dnat" {
 			continue
 		}
-		org, err := govcd.GetOrgByName(conn.VCDClient, testConfig.VCD.Org)
-		if err != nil {
-			return fmt.Errorf("Could not find test Org")
-		}
-		vdc, err := org.GetVdcByName(testConfig.VCD.Vdc)
-		if err != nil {
-			return fmt.Errorf("Could not find test Vdc")
-		}
+
 		gatewayName := rs.Primary.Attributes["edge_gateway"]
-		edgeGateway, err := vdc.FindEdgeGateway(gatewayName)
+		edgeGateway, err := conn.GetEdgeGateway(testConfig.VCD.Org, testConfig.VCD.Vdc, gatewayName)
 
 		if err != nil {
-			return fmt.Errorf("Could not find edge gateway")
+			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
 		var found bool
@@ -234,22 +219,22 @@ func testAccCheckVcdDNATDestroy(s *terraform.State) error {
 
 const testAccCheckVcdDnat_basic = `
 resource "vcd_dnat" "{{.DnatName}}" {
-	org = "{{.Org}}"
-	vdc = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	external_ip = "{{.ExternalIp}}"
-	port = 7777
-	internal_ip = "10.10.102.60"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  external_ip  = "{{.ExternalIp}}"
+  port         = 7777
+  internal_ip  = "10.10.102.60"
 }
 `
 const testAccCheckVcdDnat_tlate = `
 resource "vcd_dnat" "{{.DnatName}}" {
-	org = "{{.Org}}"
-	vdc = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	external_ip = "{{.ExternalIp}}"
-	port = 7777
-	internal_ip = "10.10.102.60"
-	translated_port = 77
+  org             = "{{.Org}}"
+  vdc             = "{{.Vdc}}"
+  edge_gateway    = "{{.EdgeGateway}}"
+  external_ip     = "{{.ExternalIp}}"
+  port            = 7777
+  internal_ip     = "10.10.102.60"
+  translated_port = 77
 }
 `

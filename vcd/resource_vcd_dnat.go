@@ -5,7 +5,6 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	govcd "github.com/vmware/go-vcloud-director/govcd"
 )
 
 func resourceVcdDNAT() *schema.Resource {
@@ -22,12 +21,14 @@ func resourceVcdDNAT() *schema.Resource {
 			},
 			"org": {
 				Type:     schema.TypeString,
-				Required: true,
+				Required: false,
+				Optional: true,
 				ForceNew: true,
 			},
 			"vdc": {
 				Type:     schema.TypeString,
-				Required: true,
+				Required: false,
+				Optional: true,
 				ForceNew: true,
 			},
 			"external_ip": &schema.Schema{
@@ -59,20 +60,6 @@ func resourceVcdDNAT() *schema.Resource {
 
 func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
-	if err != nil {
-		return fmt.Errorf("Could not get Org: %s with error %v", d.Get("org").(string), err)
-	}
-	if org == (govcd.Org{}) {
-		return fmt.Errorf("Could not find Org: %s", d.Get("org").(string))
-	}
-	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
-	if err != nil || vdc == (govcd.Vdc{}) {
-		return fmt.Errorf("Could not get vdc: %s with error %v", d.Get("vdc").(string), err)
-	}
-	if vdc == (govcd.Vdc{}) {
-		return fmt.Errorf("Could not find vdc: %s", d.Get("vdc").(string))
-	}
 
 	// Multiple VCD components need to run operations on the Edge Gateway, as
 	// the edge gatway will throw back an error if it is already performing an
@@ -85,10 +72,9 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 		translatedPortString = getPortString(d.Get("translated_port").(int))
 	}
 
-	edgeGateway, err := vdc.FindEdgeGateway(d.Get("edge_gateway").(string))
-
+	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {
-		return fmt.Errorf("Unable to find edge gateway: %#v", err)
+		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
 	// Creating a loop to offer further protection from the edge gateway erroring
@@ -104,14 +90,14 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 			translatedPortString)
 		if err != nil {
 			return resource.RetryableError(
-				fmt.Errorf("Error setting DNAT rules: %#v", err))
+				fmt.Errorf("error setting DNAT rules: %#v", err))
 		}
 
 		return resource.RetryableError(task.WaitTaskCompletion())
 	})
 
 	if err != nil {
-		return fmt.Errorf("Error completing tasks: %#v", err)
+		return fmt.Errorf("error completing tasks: %#v", err)
 	}
 
 	d.SetId(d.Get("external_ip").(string) + ":" + portString + " > " + d.Get("internal_ip").(string) + ":" + translatedPortString)
@@ -121,25 +107,10 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 func resourceVcdDNATRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
-	if err != nil {
-		return fmt.Errorf("Could not get Org: %s with error %v", d.Get("org").(string), err)
-	}
-	if org == (govcd.Org{}) {
-		return fmt.Errorf("Could not find Org: %s", d.Get("org").(string))
-	}
-	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
-	if err != nil || vdc == (govcd.Vdc{}) {
-		return fmt.Errorf("Could not get vdc: %s with error %v", d.Get("vdc").(string), err)
-	}
-	if vdc == (govcd.Vdc{}) {
-		return fmt.Errorf("Could not find vdc: %s", d.Get("vdc").(string))
-	}
-
-	e, err := vdc.FindEdgeGateway(d.Get("edge_gateway").(string))
+	e, err := vcdClient.GetEdgeGatewayFromResource(d)
 
 	if err != nil {
-		return fmt.Errorf("Unable to find edge gateway: %#v", err)
+		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
 	var found bool
@@ -162,20 +133,6 @@ func resourceVcdDNATRead(d *schema.ResourceData, meta interface{}) error {
 
 func resourceVcdDNATDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
-	if err != nil {
-		return fmt.Errorf("Could not get Org: %s with error %v", d.Get("org").(string), err)
-	}
-	if org == (govcd.Org{}) {
-		return fmt.Errorf("Could not find Org: %s", d.Get("org").(string))
-	}
-	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
-	if err != nil || vdc == (govcd.Vdc{}) {
-		return fmt.Errorf("Could not get vdc: %s with error %v", d.Get("vdc").(string), err)
-	}
-	if vdc == (govcd.Vdc{}) {
-		return fmt.Errorf("Could not find vdc: %s", d.Get("vdc").(string))
-	}
 
 	// Multiple VCD components need to run operations on the Edge Gateway, as
 	// the edge gatway will throw back an error if it is already performing an
@@ -188,10 +145,10 @@ func resourceVcdDNATDelete(d *schema.ResourceData, meta interface{}) error {
 		translatedPortString = getPortString(d.Get("translated_port").(int))
 	}
 
-	edgeGateway, err := vdc.FindEdgeGateway(d.Get("edge_gateway").(string))
+	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 
 	if err != nil {
-		return fmt.Errorf("Unable to find edge gateway: %#v", err)
+		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 		task, err := edgeGateway.RemoveNATPortMapping("DNAT",
@@ -201,13 +158,13 @@ func resourceVcdDNATDelete(d *schema.ResourceData, meta interface{}) error {
 			translatedPortString)
 		if err != nil {
 			return resource.RetryableError(
-				fmt.Errorf("Error setting DNAT rules: %#v", err))
+				fmt.Errorf("error setting DNAT rules: %#v", err))
 		}
 
 		return resource.RetryableError(task.WaitTaskCompletion())
 	})
 	if err != nil {
-		return fmt.Errorf("Error completing tasks: %#v", err)
+		return fmt.Errorf("error completing tasks: %#v", err)
 	}
 	return nil
 }

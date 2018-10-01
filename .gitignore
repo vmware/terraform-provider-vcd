@@ -24,6 +24,8 @@ website/node_modules
 *.test
 *.iml
 
+vcd/vcd_test_config.json
+vcd/go-vcloud-director.log
 website/vendor
 
 # Test exclusions

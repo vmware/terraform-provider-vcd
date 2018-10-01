@@ -10,8 +10,7 @@ import (
 	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	govcd "github.com/vmware/go-vcloud-director/govcd"
-	types "github.com/vmware/go-vcloud-director/types/v56"
+	"github.com/vmware/go-vcloud-director/types/v56"
 )
 
 func resourceVcdNetwork() *schema.Resource {
@@ -28,12 +27,14 @@ func resourceVcdNetwork() *schema.Resource {
 			},
 			"org": {
 				Type:     schema.TypeString,
-				Required: true,
+				Required: false,
+				Optional: true,
 				ForceNew: true,
 			},
 			"vdc": {
 				Type:     schema.TypeString,
-				Required: true,
+				Required: false,
+				Optional: true,
 				ForceNew: true,
 			},
 			"fence_mode": &schema.Schema{
@@ -156,22 +157,15 @@ func resourceVcdNetworkCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient.Mutex.Lock()
 	defer vcdClient.Mutex.Unlock()
 
-	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf("Could not get Org: %s with error %v", d.Get("org").(string), err)
-	}
-	if org == (govcd.Org{}) {
-		return fmt.Errorf("Could not find Org: %s", d.Get("org").(string))
-	}
-	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
-	if err != nil || vdc == (govcd.Vdc{}) {
-		return fmt.Errorf("Could not get vdc: %s with error %v", d.Get("vdc").(string), err)
-	}
-	if vdc == (govcd.Vdc{}) {
-		return fmt.Errorf("Could not find vdc: %s", d.Get("vdc").(string))
+		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	edgeGateway, err := vdc.FindEdgeGateway(d.Get("edge_gateway").(string))
+	if err != nil {
+		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
+	}
 
 	ipRanges := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
 
@@ -210,12 +204,12 @@ func resourceVcdNetworkCreate(d *schema.ResourceData, meta interface{}) error {
 
 	err = vdc.Refresh()
 	if err != nil {
-		return fmt.Errorf("Error refreshing vdc: %#v", err)
+		return fmt.Errorf("error refreshing VDC: %#v", err)
 	}
 
 	network, err := vdc.FindVDCNetwork(d.Get("name").(string))
 	if err != nil {
-		return fmt.Errorf("Error finding network: %#v", err)
+		return fmt.Errorf("error finding network: %#v", err)
 	}
 
 	if dhcp, ok := d.GetOk("dhcp_pool"); ok {
@@ -228,7 +222,7 @@ func resourceVcdNetworkCreate(d *schema.ResourceData, meta interface{}) error {
 			return resource.RetryableError(task.WaitTaskCompletion())
 		})
 		if err != nil {
-			return fmt.Errorf("Error completing tasks: %#v", err)
+			return fmt.Errorf(errorCompletingTask, err)
 		}
 
 	}
@@ -243,24 +237,14 @@ func resourceVcdNetworkRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] VCD Client configuration: %#v", vcdClient)
 	//log.Printf("[DEBUG] VCD Client configuration: %#v", vcdClient.OrgVdc)
 
-	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf("Could not get Org: %s with error %v", d.Get("org").(string), err)
-	}
-	if org == (govcd.Org{}) {
-		return fmt.Errorf("Could not find Org: %s", d.Get("org").(string))
-	}
-	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
-	if err != nil || vdc == (govcd.Vdc{}) {
-		return fmt.Errorf("Could not get vdc: %s with error %v", d.Get("vdc").(string), err)
-	}
-	if vdc == (govcd.Vdc{}) {
-		return fmt.Errorf("Could not find vdc: %s", d.Get("vdc").(string))
+		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	err = vdc.Refresh()
 	if err != nil {
-		return fmt.Errorf("Error refreshing vdc: %#v", err)
+		return fmt.Errorf("error refreshing VDC: %#v", err)
 	}
 
 	network, err := vdc.FindVDCNetwork(d.Id())
@@ -290,36 +274,26 @@ func resourceVcdNetworkDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient.Mutex.Lock()
 	defer vcdClient.Mutex.Unlock()
 
-	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf("Could not get Org: %s with error %v", d.Get("org").(string), err)
-	}
-	if org == (govcd.Org{}) {
-		return fmt.Errorf("Could not find Org: %s", d.Get("org").(string))
-	}
-	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
-	if err != nil || vdc == (govcd.Vdc{}) {
-		return fmt.Errorf("Could not get vdc: %s with error %v", d.Get("vdc").(string), err)
-	}
-	if vdc == (govcd.Vdc{}) {
-		return fmt.Errorf("Could not find vdc: %s", d.Get("vdc").(string))
+		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	err = vdc.Refresh()
 	if err != nil {
-		return fmt.Errorf("Error refreshing vdc: %#v", err)
+		return fmt.Errorf("error refreshing VDC: %#v", err)
 	}
 
 	network, err := vdc.FindVDCNetwork(d.Id())
 	if err != nil {
-		return fmt.Errorf("Error finding network: %#v", err)
+		return fmt.Errorf("error finding network: %#v", err)
 	}
 
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 		task, err := network.Delete()
 		if err != nil {
 			return resource.RetryableError(
-				fmt.Errorf("Error Deleting Network: %#v", err))
+				fmt.Errorf("error Deleting Network: %#v", err))
 		}
 		return resource.RetryableError(task.WaitTaskCompletion())
 	})

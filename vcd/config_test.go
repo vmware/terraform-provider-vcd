@@ -7,11 +7,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/vmware/go-vcloud-director/util"
 	"html/template"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"testing"
 )
@@ -50,21 +52,24 @@ type TestConfig struct {
 			PeerSubnetGateway string `json:"peerSubnetGw"`
 		} `json:"peer"`
 	} `json:"networking"`
-	/*
-		// FOR FUTURE USE
-		Logging struct {
-			Enabled         bool   `json:"enabled,omitempty"`
-			LogFileName     string `json:"logFileName,omitempty"`
-			LogHttpRequest  bool   `json:"logHttpRequest,omitempty"`
-			LogHttpResponse bool   `json:"logHttpResponse,omitempty"`
-			VerboseCleanup  bool   `json:"verboseCleanup,omitempty"`
-		} `json:"logging"`
-	*/
+	Logging struct {
+		Enabled         bool   `json:"enabled,omitempty"`
+		LogFileName     string `json:"logFileName,omitempty"`
+		LogHttpRequest  bool   `json:"logHttpRequest,omitempty"`
+		LogHttpResponse bool   `json:"logHttpResponse,omitempty"`
+	} `json:"logging"`
 }
+
+const (
+	acceptanceTestsSkipped = "Acceptance tests skipped unless env 'TF_ACC' set"
+)
 
 // This is a global variable shared across all tests. It contains
 // the information from the configuration file.
-var testConfig TestConfig
+var (
+	testConfig   TestConfig
+	vcdShortTest bool = os.Getenv("VCD_SHORT_TEST") != ""
+)
 
 // Checks if a directory exists
 func dirExists(filename string) bool {
@@ -92,7 +97,7 @@ func templateFill(tmpl string, data StringMap) string {
 	// the caller name.
 	funcName, ok := data["FuncName"]
 	if ok {
-		caller = funcName.(string)
+		caller = "vcd." + funcName.(string)
 	}
 
 	// Creates a template. The template gets the same name of the calling function, to generate a better
@@ -111,6 +116,14 @@ func templateFill(tmpl string, data StringMap) string {
 	if os.Getenv("VCD_SKIP_TEMPLATE_WRITING") != "" {
 		TemplateWriting = false
 	}
+	var writeStr []byte = buf.Bytes()
+	if os.Getenv("REMOVE_ORG_VDC_FROM_TEMPLATE") != "" {
+		re_org := regexp.MustCompile(`\sorg\s*=`)
+		buf2 := re_org.ReplaceAll(buf.Bytes(), []byte("# org = "))
+		re_vdc := regexp.MustCompile(`\svdc\s*=`)
+		buf2 = re_vdc.ReplaceAll(buf2, []byte("# vdc = "))
+		writeStr = buf2
+	}
 	if TemplateWriting {
 		testArtifacts := "test-artifacts"
 		if !dirExists(testArtifacts) {
@@ -119,35 +132,21 @@ func templateFill(tmpl string, data StringMap) string {
 				panic(fmt.Errorf("Error creating directory %s: %s", testArtifacts, err))
 			}
 		}
-		templateFile := path.Join(testArtifacts, caller)
-		file, err := os.Create(templateFile)
+		resourceFile := path.Join(testArtifacts, caller) + ".tf"
+		file, err := os.Create(resourceFile)
 		if err != nil {
-			panic(fmt.Errorf("Error creating file %s: %s", templateFile, err))
+			panic(fmt.Errorf("Error creating file %s: %s", resourceFile, err))
 		}
 		writer := bufio.NewWriter(file)
-		count, err := writer.Write(buf.Bytes())
+		count, err := writer.Write(writeStr)
 		if err != nil || count == 0 {
-			panic(fmt.Errorf("Error writing to file %s. Reported %d bytes written. %s", templateFile, count, err))
+			panic(fmt.Errorf("Error writing to file %s. Reported %d bytes written. %s", resourceFile, count, err))
 		}
 		writer.Flush()
 		file.Close()
 	}
 	// Returns the populated template
-	return buf.String()
-}
-
-// Returns the name of the function that called the
-// current function.
-func callFuncName() string {
-	fpcs := make([]uintptr, 1)
-	n := runtime.Callers(3, fpcs)
-	if n > 0 {
-		fun := runtime.FuncForPC(fpcs[0] - 1)
-		if fun != nil {
-			return fun.Name()
-		}
-	}
-	return ""
+	return string(writeStr)
 }
 
 // Reads the configuration file and returns its contents as a TestConfig structure
@@ -191,13 +190,32 @@ func getConfigStruct() TestConfig {
 		os.Setenv("TF_ACC", "1")
 	}
 	// The following variables are used in ./provider.go
-	// TODO: eliminate also these variables and replace them with a proper structure
+	if config_struct.Provider.SysOrg == "" {
+		config_struct.Provider.SysOrg = config_struct.VCD.Org
+	}
 	os.Setenv("VCD_USER", config_struct.Provider.User)
 	os.Setenv("VCD_PASSWORD", config_struct.Provider.Password)
 	os.Setenv("VCD_URL", config_struct.Provider.Url)
-	os.Setenv("VCD_ORG", config_struct.Provider.SysOrg)
+	os.Setenv("VCD_SYS_ORG", config_struct.Provider.SysOrg)
+	os.Setenv("VCD_ORG", config_struct.VCD.Org)
+	os.Setenv("VCD_VDC", config_struct.VCD.Vdc)
 	if config_struct.Provider.AllowInsecure {
 		os.Setenv("VCD_ALLOW_UNVERIFIED_SSL", "1")
+	}
+
+	// Define logging parameters if enabled
+	if config_struct.Logging.Enabled {
+		util.EnableLogging = true
+		if config_struct.Logging.LogFileName != "" {
+			util.ApiLogFileName = config_struct.Logging.LogFileName
+		}
+		if config_struct.Logging.LogHttpResponse {
+			util.LogHttpResponse = true
+		}
+		if config_struct.Logging.LogHttpRequest {
+			util.LogHttpRequest = true
+		}
+		util.InitLogging()
 	}
 	return config_struct
 }
@@ -206,7 +224,9 @@ func getConfigStruct() TestConfig {
 func TestMain(m *testing.M) {
 	// Fills the configuration variable: it will be available to all tests,
 	// or the whole suite will fail if it is not found.
-	if os.Getenv("VCD_SHORT_TEST") == "" {
+	// If VCD_SHORT_TEST is defined, it means that "make test" is called,
+	// and we won't really run any tests involving vcd connections.
+	if !vcdShortTest {
 		testConfig = getConfigStruct()
 	}
 

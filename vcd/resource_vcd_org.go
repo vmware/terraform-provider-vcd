@@ -9,8 +9,8 @@ package vcd
 import (
 	"fmt"
 	"github.com/hashicorp/terraform/helper/schema"
-	govcd "github.com/vmware/go-vcloud-director/govcd"
-	types "github.com/vmware/go-vcloud-director/types/v56"
+	"github.com/vmware/go-vcloud-director/govcd"
+	"github.com/vmware/go-vcloud-director/types/v56"
 	"log"
 	"strings"
 )
@@ -88,12 +88,12 @@ func resourceOrgCreate(d *schema.ResourceData, m interface{}) error {
 
 	settings := getSettings(d)
 
-	log.Printf("CREATING ORG: %s", orgName)
+	log.Printf("Creating Org: %s", orgName)
 	task, err := govcd.CreateOrg(vcdClient.VCDClient, orgName, fullName, isEnabled, settings)
 
 	if err != nil {
-		log.Printf("Error creating organization: %#v", err)
-		return fmt.Errorf("Error creating organization: %#v", err)
+		log.Printf("Error creating Org: %#v", err)
+		return fmt.Errorf("error creating Org: %#v", err)
 	}
 
 	log.Printf("Org %s Created with id: %s", orgName, task.Task.ID[15:])
@@ -132,13 +132,13 @@ func resourceOrgDelete(d *schema.ResourceData, m interface{}) error {
 	recursive := d.Get("recursive").(bool)
 
 	//fetches org
-	log.Printf("Reading org with id %s", d.State().ID)
+	log.Printf("Reading Org with id %s", d.State().ID)
 	org, err := govcd.GetAdminOrgByName(vcdClient.VCDClient, d.Get("name").(string))
 	if err != nil || org == (govcd.AdminOrg{}) {
-		return fmt.Errorf("Error fetching org: %s", d.Get("name").(string))
+		return fmt.Errorf("error fetching Org: %s", d.Get("name").(string))
 	}
 
-	log.Printf("org with id %s found", d.State().ID)
+	log.Printf("Org with id %s found", d.State().ID)
 	//deletes organization
 	log.Printf("Deleting Org with id %s", d.State().ID)
 
@@ -165,24 +165,24 @@ func resourceOrgUpdate(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("__ERROR__ Not Updating org_full_name , API NOT IMPLEMENTED !!!!")
 	}
 
-	log.Printf("Reading org with id %s", d.State().ID)
+	log.Printf("Reading Org WIth id %s", d.State().ID)
 
 	org, err := govcd.GetAdminOrgByName(vcdClient.VCDClient, d.Get("name").(string))
 
 	if err != nil || org == (govcd.AdminOrg{}) {
-		return fmt.Errorf("Error fetching org: %s", d.Get("name").(string))
+		return fmt.Errorf("error fetching Org: %s", d.Get("name").(string))
 	}
 
 	settings := getSettings(d)
 	org.AdminOrg.Name = orgName
 	org.AdminOrg.OrgSettings.OrgGeneralSettings = settings.OrgGeneralSettings
 
-	log.Printf("org with id %s found", d.State().ID)
+	log.Printf("Org with id %s found", d.State().ID)
 	_, err = org.Update()
 
 	if err != nil {
-		log.Printf("Error updating org with id %s : %#v", d.State().ID, err)
-		return fmt.Errorf("Error updating org %#v", err)
+		log.Printf("Error updating Org with id %s : %#v", d.State().ID, err)
+		return fmt.Errorf("error updating Org %#v", err)
 	}
 
 	log.Printf("Org with id %s updated", d.State().ID)
@@ -192,7 +192,7 @@ func resourceOrgUpdate(d *schema.ResourceData, m interface{}) error {
 func resourceOrgRead(d *schema.ResourceData, m interface{}) error {
 	vcdClient := m.(*VCDClient)
 
-	log.Printf("Reading org with id %s", d.State().ID)
+	log.Printf("Reading Org with id %s", d.State().ID)
 	org, err := govcd.GetAdminOrgByName(vcdClient.VCDClient, d.Get("name").(string))
 
 	if err != nil || org == (govcd.AdminOrg{}) {

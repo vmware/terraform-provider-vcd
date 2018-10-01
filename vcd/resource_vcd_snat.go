@@ -5,7 +5,6 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	govcd "github.com/vmware/go-vcloud-director/govcd"
 )
 
 func resourceVcdSNAT() *schema.Resource {
@@ -17,12 +16,14 @@ func resourceVcdSNAT() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
-				Required: true,
+				Required: false,
+				Optional: true,
 				ForceNew: true,
 			},
 			"vdc": {
 				Type:     schema.TypeString,
-				Required: true,
+				Required: false,
+				Optional: true,
 				ForceNew: true,
 			},
 			"edge_gateway": &schema.Schema{
@@ -48,20 +49,7 @@ func resourceVcdSNAT() *schema.Resource {
 
 func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
-	if err != nil {
-		return fmt.Errorf("Could not get Org: %s with error %v", d.Get("org").(string), err)
-	}
-	if org == (govcd.Org{}) {
-		return fmt.Errorf("Could not find Org: %s", d.Get("org").(string))
-	}
-	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
-	if err != nil || vdc == (govcd.Vdc{}) {
-		return fmt.Errorf("Could not get vdc: %s with error %v", d.Get("vdc").(string), err)
-	}
-	if vdc == (govcd.Vdc{}) {
-		return fmt.Errorf("Could not find vdc: %s", d.Get("vdc").(string))
-	}
+
 	// Multiple VCD components need to run operations on the Edge Gateway, as
 	// the edge gatway will throw back an error if it is already performing an
 	// operation we must wait until we can aquire a lock on the client
@@ -73,9 +61,9 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 	// constrained by out lock. If the edge gateway reurns with a busy error, wait
 	// 3 seconds and then try again. Continue until a non-busy error or success
 
-	edgeGateway, err := vdc.FindEdgeGateway(d.Get("edge_gateway").(string))
+	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {
-		return fmt.Errorf("Unable to find edge gateway: %#v", err)
+		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
@@ -83,7 +71,7 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 			d.Get("external_ip").(string),
 			"any")
 		if err != nil {
-			return resource.RetryableError(fmt.Errorf("Error setting SNAT rules: %#v", err))
+			return resource.RetryableError(fmt.Errorf("error setting SNAT rules: %#v", err))
 		}
 		return resource.RetryableError(task.WaitTaskCompletion())
 	})
@@ -97,25 +85,10 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 
 func resourceVcdSNATRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
-	if err != nil {
-		return fmt.Errorf("Could not get Org: %s with error %v", d.Get("org").(string), err)
-	}
-	if org == (govcd.Org{}) {
-		return fmt.Errorf("Could not find Org: %s", d.Get("org").(string))
-	}
-	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
-	if err != nil || vdc == (govcd.Vdc{}) {
-		return fmt.Errorf("Could not get vdc: %s with error %v", d.Get("vdc").(string), err)
-	}
-	if vdc == (govcd.Vdc{}) {
-		return fmt.Errorf("Could not find vdc: %s", d.Get("vdc").(string))
-	}
 
-	e, err := vdc.FindEdgeGateway(d.Get("edge_gateway").(string))
-
+	e, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {
-		return fmt.Errorf("Unable to find edge gateway: %#v", err)
+		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
 	var found bool
@@ -137,29 +110,16 @@ func resourceVcdSNATRead(d *schema.ResourceData, meta interface{}) error {
 
 func resourceVcdSNATDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-	org, err := govcd.GetOrgByName(vcdClient.VCDClient, d.Get("org").(string))
-	if err != nil {
-		return fmt.Errorf("Could not get Org: %s with error %v", d.Get("org").(string), err)
-	}
-	if org == (govcd.Org{}) {
-		return fmt.Errorf("Could not find Org: %s", d.Get("org").(string))
-	}
-	vdc, err := org.GetVdcByName(d.Get("vdc").(string))
-	if err != nil || vdc == (govcd.Vdc{}) {
-		return fmt.Errorf("Could not get vdc: %s with error %v", d.Get("vdc").(string), err)
-	}
-	if vdc == (govcd.Vdc{}) {
-		return fmt.Errorf("Could not find vdc: %s", d.Get("vdc").(string))
-	}
+
 	// Multiple VCD components need to run operations on the Edge Gateway, as
 	// the edge gatway will throw back an error if it is already performing an
 	// operation we must wait until we can aquire a lock on the client
 	vcdClient.Mutex.Lock()
 	defer vcdClient.Mutex.Unlock()
 
-	edgeGateway, err := vdc.FindEdgeGateway(d.Get("edge_gateway").(string))
+	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {
-		return fmt.Errorf("Unable to find edge gateway: %#v", err)
+		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
@@ -167,7 +127,7 @@ func resourceVcdSNATDelete(d *schema.ResourceData, meta interface{}) error {
 			d.Get("external_ip").(string),
 			"")
 		if err != nil {
-			return resource.RetryableError(fmt.Errorf("Error setting SNAT rules: %#v", err))
+			return resource.RetryableError(fmt.Errorf("error setting SNAT rules: %#v", err))
 		}
 		return resource.RetryableError(task.WaitTaskCompletion())
 	})
