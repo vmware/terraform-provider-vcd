@@ -62,8 +62,8 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
 	// Multiple VCD components need to run operations on the Edge Gateway, as
-	// the edge gatway will throw back an error if it is already performing an
-	// operation we must wait until we can aquire a lock on the client
+	// the edge gateway will throw back an error if it is already performing an
+	// operation we must wait until we can acquire a lock on the client
 	vcdClient.Mutex.Lock()
 	defer vcdClient.Mutex.Unlock()
 	portString := getPortString(d.Get("port").(int))
