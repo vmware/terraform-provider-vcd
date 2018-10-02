@@ -2,8 +2,6 @@ package vcd
 
 import (
 	"fmt"
-	"log"
-	"os"
 	"regexp"
 	"testing"
 
@@ -90,9 +88,6 @@ func runTest(def networkDef, t *testing.T) {
 	}
 	var network govcd.OrgVDCNetwork
 	configText := templateFill(def.configText, params)
-	if os.Getenv("GOVCD_DEBUG") != "" {
-		log.Printf("#[DEBUG] CONFIGURATION: %s", configText)
-	}
 
 	// steps for external network
 	var steps = []resource.TestStep{
@@ -113,6 +108,7 @@ func runTest(def networkDef, t *testing.T) {
 	// Basic tests for isolated and routed
 	if def.externalNetwork == "" {
 		steps = []resource.TestStep{
+
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
@@ -223,7 +219,6 @@ resource "vcd_network_isolated" "{{.NetworkName}}" {
   vdc        = "{{.Vdc}}"
   gateway    = "{{.Gateway}}"
   dns1       = "192.168.2.1"
-
   static_ip_pool {
     start_address = "{{.StartIpAddress}}"
     end_address   = "{{.EndIpAddress}}"
@@ -247,10 +242,8 @@ resource "vcd_network_routed" "{{.NetworkName}}" {
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
   gateway      = "{{.Gateway}}"
-
   static_ip_pool {
     start_address = "{{.StartIpAddress}}"
     end_address   = "{{.EndIpAddress}}"
   }
 }
-`

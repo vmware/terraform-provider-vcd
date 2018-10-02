@@ -34,17 +34,20 @@ type VCDClient struct {
 }
 
 const (
-	errorRetrievingOrgAndVdc     = "error retrieving Org and VDC: %s"
-	errorRetrievingVdcFromOrg    = "error retrieving VDC %s from Org %s: %s"
-	errorUnableToFindEdgeGateway = "unable to find edge gateway: %s"
-	errorCompletingTask          = "error completing tasks: %s"
-)
+	// Most common error messages in the library
 
-func debugPrintf(format string, args ...interface{}) {
-	if os.Getenv("GOVCD_DEBUG") != "" {
-		fmt.Printf(format, args...)
-	}
-}
+	// Used when a call to GetOrgAndVdc fails. The placeholder is for the error
+	errorRetrievingOrgAndVdc = "error retrieving Org and VDC: %s"
+
+	// Used when a call to GetOrgAndVdc fails. The placeholders are for vdc, org, and the error
+	errorRetrievingVdcFromOrg = "error retrieving VDC %s from Org %s: %s"
+
+	// Used when we can't get a valid edge gateway. The placeholder is for the error
+	errorUnableToFindEdgeGateway = "unable to find edge gateway: %s"
+
+	// Used when a task fails. The placeholder is for the error
+	errorCompletingTask = "error completing tasks: %s"
+)
 
 // Cache values for vCD connection.
 // When the Client() function is called with the same parameters, it will return
@@ -55,11 +58,34 @@ type cachedConnection struct {
 	connection *VCDClient
 }
 
-var cachedVCDClients = make(map[string]cachedConnection)
-var cacheClientServedCount int = 0
+var (
+	// Enables the caching of authenticated connections
+	enableConnectionCache bool = os.Getenv("VCD_CACHE") != ""
 
-// Invalidates the cache after a given time (connection tokens usually expire after 20 to 30 minutes)
-var maxConnectionValidity time.Duration = 20 * time.Minute
+	// Cached VDC authenticated connection
+	cachedVCDClients = make(map[string]cachedConnection)
+
+	// Records how many times we have cached a connection
+	cacheClientServedCount int = 0
+
+	// Invalidates the cache after a given time (connection tokens usually expire after 20 to 30 minutes)
+	maxConnectionValidity time.Duration = 20 * time.Minute
+
+	enableDebug bool = os.Getenv("GOVCD_DEBUG") != ""
+	enableTrace bool = os.Getenv("GOVCD_TRACE") != ""
+)
+
+// Displays conditional messages
+func debugPrintf(format string, args ...interface{}) {
+	// When GOVCD_TRACE is enabled, we also display the function that generated the message
+	if enableTrace {
+		format = fmt.Sprintf("[%s] %s", filepath.Base(callFuncName()), format)
+	}
+	// The formatted message passed to this function is displayed only when GOVCD_DEBUG is enabled.
+	if enableDebug {
+		fmt.Printf(format, args...)
+	}
+}
 
 // GetOrgAndVdc finds a pair of org and vdc using the names provided
 // in the args. If the names are empty, it will use the default
@@ -130,12 +156,12 @@ func (c *Config) Client() (*VCDClient, error) {
 		c.SysOrg + "#" +
 		c.Href
 	checksum := fmt.Sprintf("%x", sha1.Sum([]byte(rawData)))
-	caller := filepath.Base(callFuncName())
+
+	// The cached connection is served only if the variable VCD_CACHE is set
 	client, ok := cachedVCDClients[checksum]
-	if ok && os.Getenv("VCD_CACHE") != "" {
+	if ok && enableConnectionCache {
 		cacheClientServedCount += 1
-		debugPrintf("[%s] cached connection served %d times (size:%d)\n",
-			caller, cacheClientServedCount, len(cachedVCDClients))
+		// debugPrintf("[%s] cached connection served %d times (size:%d)\n",
 		elapsed := time.Since(client.initTime)
 		if elapsed > maxConnectionValidity {
 			debugPrintf("cached connection invalidated after %2.0f minutes \n", maxConnectionValidity.Minutes())
@@ -157,7 +183,6 @@ func (c *Config) Client() (*VCDClient, error) {
 		Vdc:             c.Vdc,
 		MaxRetryTimeout: c.MaxRetryTimeout,
 		InsecureFlag:    c.InsecureFlag}
-	debugPrintf("[%s] %#v\n", caller, c)
 	err = vcdclient.Authenticate(c.User, c.Password, c.SysOrg)
 	if err != nil {
 		return nil, fmt.Errorf("something went wrong during authentication: %s", err)
@@ -169,6 +194,7 @@ func (c *Config) Client() (*VCDClient, error) {
 
 // Returns the name of the function that called the
 // current function.
+// It is used for tracing
 func callFuncName() string {
 	fpcs := make([]uintptr, 1)
 	n := runtime.Callers(3, fpcs)
