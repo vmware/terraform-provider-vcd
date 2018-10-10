@@ -38,6 +38,7 @@ const (
 	errorRetrievingVdcFromOrg    = "error retrieving VDC %s from Org %s: %s"
 	errorUnableToFindEdgeGateway = "unable to find edge gateway: %s"
 	errorCompletingTask          = "error completing tasks: %s"
+	errorRetrievingOrg           = "error retrieving Org: %s"
 )
 
 func debugPrintf(format string, args ...interface{}) {
