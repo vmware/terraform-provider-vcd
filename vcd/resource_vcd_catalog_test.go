@@ -5,8 +5,6 @@ import (
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/vmware/go-vcloud-director/govcd"
-	"log"
-	"os"
 	"testing"
 )
 
@@ -28,9 +26,7 @@ func TestAccVcdCatalogBasic(t *testing.T) {
 		return
 	}
 	configText := templateFill(testAccCheckVcdCatalogBasic, params)
-	if os.Getenv("GOVCD_DEBUG") != "" {
-		log.Printf("#[DEBUG] CONFIGURATION: %s", configText)
-	}
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -113,7 +109,7 @@ resource "vcd_catalog" "{{.CatalogName}}" {
   name = "{{.CatalogName}}"
   description = "{{.Description}}"
 
-  force      = "true"
-  recursive  = "true"
+  delete_force      = "true"
+  delete_recursive  = "true"
 }
 `

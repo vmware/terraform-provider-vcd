@@ -13,16 +13,6 @@ func resourceVcdCatalog() *schema.Resource {
 		Delete: resourceVcdCatalogDelete,
 		Read:   resourceVcdCatalogRead,
 
-		//resource "vcd_catalog" "OperatingSystems" {
-		//org = "Solpan" # Optional, if defined at provider level
-		//vdc = "SolpanVDC" # Optional, if defined at provider level
-		//
-		//name = "OperatingSystems"
-		//description = "Fresh OS templates"
-		//
-		//force      = "true"
-		//recursive  = "true"
-		//}
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
@@ -44,18 +34,21 @@ func resourceVcdCatalog() *schema.Resource {
 
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: true,
+				Required: false,
+				Optional: true,
 				ForceNew: true,
 			},
-			"force": &schema.Schema{
-				Type:     schema.TypeBool,
-				Required: true,
-				ForceNew: true,
+			"delete_force": &schema.Schema{
+				Type:        schema.TypeBool,
+				Required:    true,
+				ForceNew:    true,
+				Description: "force=True along with recursive=True to remove a catalog and any objects it contains, regardless of their state.",
 			},
-			"recursive": &schema.Schema{
-				Type:     schema.TypeBool,
-				Required: true,
-				ForceNew: true,
+			"delete_recursive": &schema.Schema{
+				Type:        schema.TypeBool,
+				Required:    true,
+				ForceNew:    true,
+				Description: "recursive=True to remove a Catalog and any objects it contains that are in a state that normally allows removal.",
 			},
 		},
 	}
@@ -122,7 +115,7 @@ func resourceVcdCatalogDelete(d *schema.ResourceData, meta interface{}) error {
 		return nil
 	}
 
-	err = adminCatalog.Delete(d.Get("force").(bool), d.Get("recursive").(bool))
+	err = adminCatalog.Delete(d.Get("delete_force").(bool), d.Get("delete_recursive").(bool))
 	if err != nil {
 		log.Printf("Error removing catalog %#v", err)
 		return fmt.Errorf("error removing catalog %#v", err)
