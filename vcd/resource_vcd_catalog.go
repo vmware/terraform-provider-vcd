@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/govcd"
-	"github.com/vmware/go-vcloud-director/util"
 	"log"
 )
 
@@ -86,8 +85,6 @@ func resourceVcdCatalogCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
-	util.EnableLogging = true
-	util.InitLogging()
 	log.Printf("[TRACE] Catalog read initiated")
 
 	vcdClient := meta.(*VCDClient)
