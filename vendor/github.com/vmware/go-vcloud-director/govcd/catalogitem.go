@@ -1,14 +1,14 @@
 /*
- * Copyright 2014 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
+ * Copyright 2018 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
  */
 
 package govcd
 
 import (
 	"fmt"
+	"github.com/vmware/go-vcloud-director/types/v56"
+	"github.com/vmware/go-vcloud-director/util"
 	"net/url"
-
-	types "github.com/vmware/go-vcloud-director/types/v56"
 )
 
 type CatalogItem struct {
@@ -23,21 +23,21 @@ func NewCatalogItem(cli *Client) *CatalogItem {
 	}
 }
 
-func (ci *CatalogItem) GetVAppTemplate() (VAppTemplate, error) {
-	catalogItemUrl, err := url.ParseRequestURI(ci.CatalogItem.Entity.HREF)
+func (catalogItem *CatalogItem) GetVAppTemplate() (VAppTemplate, error) {
+	catalogItemUrl, err := url.ParseRequestURI(catalogItem.CatalogItem.Entity.HREF)
 
 	if err != nil {
 		return VAppTemplate{}, fmt.Errorf("error decoding catalogitem response: %s", err)
 	}
 
-	req := ci.client.NewRequest(map[string]string{}, "GET", *catalogItemUrl, nil)
+	req := catalogItem.client.NewRequest(map[string]string{}, "GET", *catalogItemUrl, nil)
 
-	resp, err := checkResp(ci.client.Http.Do(req))
+	resp, err := checkResp(catalogItem.client.Http.Do(req))
 	if err != nil {
 		return VAppTemplate{}, fmt.Errorf("error retreiving vapptemplate: %s", err)
 	}
 
-	cat := NewVAppTemplate(ci.client)
+	cat := NewVAppTemplate(catalogItem.client)
 
 	if err = decodeBody(resp, cat.VAppTemplate); err != nil {
 		return VAppTemplate{}, fmt.Errorf("error decoding vapptemplate response: %s", err)
@@ -46,4 +46,24 @@ func (ci *CatalogItem) GetVAppTemplate() (VAppTemplate, error) {
 	// The request was successful
 	return *cat, nil
 
+}
+
+// Deletes the Catalog Item, returning an error if the vCD call fails.
+// Link to API call: https://code.vmware.com/apis/220/vcloud#/doc/doc/operations/DELETE-CatalogItem.html
+func (catalogItem *CatalogItem) Delete() error {
+	util.Logger.Printf("[TRACE] Deleting catalog item: %#v", catalogItem.CatalogItem)
+	catalogItemHREF := catalogItem.client.VCDHREF
+	catalogItemHREF.Path += "/catalogItem/" + catalogItem.CatalogItem.ID[23:]
+
+	util.Logger.Printf("[TRACE] Url for deleting catalog item: %#v and name: %s", catalogItemHREF, catalogItem.CatalogItem.Name)
+
+	req := catalogItem.client.NewRequest(map[string]string{}, "DELETE", catalogItemHREF, nil)
+
+	_, err := checkResp(catalogItem.client.Http.Do(req))
+
+	if err != nil {
+		return fmt.Errorf("error deleting Catalog item %s: %s", catalogItem.CatalogItem.ID, err)
+	}
+
+	return nil
 }
