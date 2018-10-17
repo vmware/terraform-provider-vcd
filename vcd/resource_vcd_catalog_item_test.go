@@ -20,9 +20,9 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 		"Catalog":         testConfig.VCD.Catalog.Name,
 		"CatalogItemName": TestAccVcdCatalogItem,
 		"Description":     TestAccVcdCatalogItemDescription,
-		"ovaPath":         "../test-resources/test_vapp_template.ova",
-		"pieceSize":       "2000000",
-		"progress":        true,
+		"OvaPath":         testConfig.Ova.OvaPath,
+		"UploadChunkSize": testConfig.Ova.UploadChunkSize,
+		"UploadProgress":  testConfig.Ova.UploadProgress,
 	}
 
 	if vcdShortTest {
@@ -124,8 +124,8 @@ catalog = "{{.Catalog}}"
 
 name = "{{.CatalogItemName}}"
 description = "{{.Description}}"
-ova_path = "{{.ovaPath}}"
-upload_piece_size = "{{.pieceSize}}"
-show_upload_progress = true
+ova_path = "{{.OvaPath}}"
+upload_piece_size = {{.UploadChunkSize}}
+show_upload_progress = "{{.UploadProgress}}"
 }
 `

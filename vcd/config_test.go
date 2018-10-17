@@ -58,6 +58,11 @@ type TestConfig struct {
 		LogHttpRequest  bool   `json:"logHttpRequest,omitempty"`
 		LogHttpResponse bool   `json:"logHttpResponse,omitempty"`
 	} `json:"logging"`
+	Ova struct {
+		OvaPath         string `json:"ovaPath,omitempty"`
+		UploadChunkSize int64  `json:"uploadChunkSize,omitempty"`
+		UploadProgress  bool   `json:"uploadProgress,omitempty"`
+	} `json:"ova"`
 }
 
 const (

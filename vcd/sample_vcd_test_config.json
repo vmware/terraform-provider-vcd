@@ -51,5 +51,10 @@
     "//": "If logging is enabled, logs automatically HTTP requests and responses",
     "logHttpRequest" : true,
     "logHttpResponse" : true
+  },
+  "ova": {
+    "ovaPath": "../test-resources/test_vapp_template.ova",
+    "uploadChunkSize": 2000000,
+    "uploadProgress": true
   }
 }
