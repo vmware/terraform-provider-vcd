@@ -2,8 +2,6 @@ package vcd
 
 import (
 	"fmt"
-	"log"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -110,9 +108,7 @@ func createFirewallRulesConfigs(existingRules *govcd.EdgeGateway) string {
 		panic(err)
 	}
 	*existingRules = edgeGateway
-	if os.Getenv("GOVCD_DEBUG") != "" {
-		log.Printf("[DEBUG] Edge gateway: %#v", edgeGateway)
-	}
+	debugPrintf("[DEBUG] Edge gateway: %#v", edgeGateway)
 	firewallRules := *edgeGateway.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.FirewallService
 	var params = StringMap{
 		"Org":           testConfig.VCD.Org,
@@ -122,9 +118,7 @@ func createFirewallRulesConfigs(existingRules *govcd.EdgeGateway) string {
 		"FuncName":      itemName,
 	}
 	configText := templateFill(testAccCheckVcdFirewallRules_add, params)
-	if os.Getenv("GOVCD_DEBUG") != "" {
-		log.Printf("#[DEBUG] CONFIGURATION: %s", configText)
-	}
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	return configText
 }
 
