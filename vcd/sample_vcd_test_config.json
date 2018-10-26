@@ -54,7 +54,7 @@
   },
   "ova": {
     "ovaPath": "../test-resources/test_vapp_template.ova",
-    "uploadChunkSize": 2000000,
+    "uploadPieceSize": 2000000,
     "uploadProgress": true
   }
 }

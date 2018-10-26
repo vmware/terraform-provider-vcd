@@ -20,7 +20,7 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 		"CatalogItemName": TestAccVcdCatalogItem,
 		"Description":     TestAccVcdCatalogItemDescription,
 		"OvaPath":         testConfig.Ova.OvaPath,
-		"UploadChunkSize": testConfig.Ova.UploadChunkSize,
+		"UploadPieceSize": testConfig.Ova.UploadPieceSize,
 		"UploadProgress":  testConfig.Ova.UploadProgress,
 	}
 
@@ -123,7 +123,7 @@ catalog = "{{.Catalog}}"
 name = "{{.CatalogItemName}}"
 description = "{{.Description}}"
 ova_path = "{{.OvaPath}}"
-upload_piece_size = {{.UploadChunkSize}}
+upload_piece_size = {{.UploadPieceSize}}
 show_upload_progress = "{{.UploadProgress}}"
 }
 `

@@ -27,7 +27,7 @@ func resourceVcdCatalogItem() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "catalog name where upload the ova file",
+				Description: "catalog name where upload the OVA file",
 			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
@@ -45,7 +45,7 @@ func resourceVcdCatalogItem() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "absolute or relative path to ova",
+				Description: "absolute or relative path to OVA",
 			},
 			"upload_piece_size": &schema.Schema{
 				Type:        schema.TypeInt,
