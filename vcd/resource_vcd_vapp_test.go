@@ -2,8 +2,6 @@ package vcd
 
 import (
 	"fmt"
-	"log"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -39,10 +37,8 @@ func TestAccVcdVApp_PowerOff(t *testing.T) {
 	params["FuncName"] = "TestAccCheckVcdVApp_powerOff"
 
 	configTextPoweroff := templateFill(testAccCheckVcdVApp_powerOff, params)
-	if os.Getenv("GOVCD_DEBUG") != "" {
-		log.Printf("#[DEBUG] CONFIGURATION basic: %s\n", configText)
-		log.Printf("#[DEBUG] CONFIGURATION poweroff: %s\n", configTextPoweroff)
-	}
+	debugPrintf("#[DEBUG] CONFIGURATION basic: %s\n", configText)
+	debugPrintf("#[DEBUG] CONFIGURATION poweroff: %s\n", configTextPoweroff)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,

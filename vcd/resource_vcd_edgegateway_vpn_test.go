@@ -3,8 +3,6 @@ package vcd
 import (
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	"log"
-	"os"
 	"regexp"
 	"testing"
 )
@@ -32,9 +30,7 @@ func TestAccVcdVpn_Basic(t *testing.T) {
 		"VpnName":       vpnName,
 	}
 	configText := templateFill(testAccCheckVcdVpn_basic, params)
-	if os.Getenv("GOVCD_DEBUG") != "" {
-		log.Printf("#[DEBUG] CONFIGURATION: %s", configText)
-	}
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,

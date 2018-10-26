@@ -8,8 +8,6 @@ import (
 // Provider returns a terraform.ResourceProvider.
 func Provider() terraform.ResourceProvider {
 
-	caller := callFuncName()
-	debugPrintf("[%s] Provider\n", caller)
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"user": &schema.Schema{
@@ -56,11 +54,11 @@ func Provider() terraform.ResourceProvider {
 				Description: "The VCD url for VCD API operations.",
 			},
 
-			"maxRetryTimeout": &schema.Schema{
-				Type:       schema.TypeInt,
-				Optional:   true,
-				Deprecated: "Deprecated. Use max_retry_timeout instead.",
-			},
+			// "maxRetryTimeout": &schema.Schema{
+			// 	Type:       schema.TypeInt,
+			// 	Optional:   true,
+			// 	Deprecated: "Deprecated. Use max_retry_timeout instead.",
+			// },
 
 			"max_retry_timeout": &schema.Schema{
 				Type:        schema.TypeInt,
@@ -95,16 +93,15 @@ func Provider() terraform.ResourceProvider {
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
-
-	caller := callFuncName()
-	debugPrintf("[%s] providerConfigure\n", caller)
 	maxRetryTimeout := d.Get("max_retry_timeout").(int)
 
 	// TODO: Deprecated, remove in next major release
-	if v, ok := d.GetOk("maxRetryTimeout"); ok {
-		maxRetryTimeout = v.(int)
-	}
+	// if v, ok := d.GetOk("maxRetryTimeout"); ok {
+	// 	maxRetryTimeout = v.(int)
+	// }
 
+	// If sysOrg is defined, we use it for authentication.
+	// Otherwise, we use the default org defined for regular usage
 	connectOrg := d.Get("sysorg").(string)
 	if connectOrg == "" {
 		connectOrg = d.Get("org").(string)
@@ -112,9 +109,9 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	config := Config{
 		User:            d.Get("user").(string),
 		Password:        d.Get("password").(string),
-		SysOrg:          connectOrg,
-		Org:             d.Get("org").(string),
-		Vdc:             d.Get("vdc").(string),
+		SysOrg:          connectOrg,            // Connection org
+		Org:             d.Get("org").(string), // Default org for operations
+		Vdc:             d.Get("vdc").(string), // Default vdc
 		Href:            d.Get("url").(string),
 		MaxRetryTimeout: maxRetryTimeout,
 		InsecureFlag:    d.Get("allow_unverified_ssl").(bool),
