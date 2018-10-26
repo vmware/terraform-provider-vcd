@@ -16,7 +16,6 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 	var catalogItem govcd.CatalogItem
 	var params = StringMap{
 		"Org":             testConfig.VCD.Org,
-		"Vdc":             testConfig.VCD.Vdc,
 		"Catalog":         testConfig.VCD.Catalog.Name,
 		"CatalogItemName": TestAccVcdCatalogItem,
 		"Description":     TestAccVcdCatalogItemDescription,
@@ -119,7 +118,6 @@ func testAccCheckCatalogItemDestroy(s *terraform.State) error {
 const testAccCheckVcdCatalogItemBasic = `
 resource "vcd_catalog_item"  "{{.CatalogItemName}}" {
 org = "{{.Org}}"
-vdc = "{{.Vdc}}"
 catalog = "{{.Catalog}}"
 
 name = "{{.CatalogItemName}}"

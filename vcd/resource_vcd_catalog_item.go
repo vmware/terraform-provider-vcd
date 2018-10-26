@@ -23,12 +23,6 @@ func resourceVcdCatalogItem() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 			},
-			"vdc": {
-				Type:     schema.TypeString,
-				Required: false,
-				Optional: true,
-				ForceNew: true,
-			},
 			"catalog": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
