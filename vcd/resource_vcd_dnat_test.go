@@ -2,8 +2,6 @@ package vcd
 
 import (
 	"fmt"
-	"log"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -33,9 +31,7 @@ func TestAccVcdDNAT_Basic(t *testing.T) {
 		"DnatName":    dnatName,
 	}
 	configText := templateFill(testAccCheckVcdDnat_basic, params)
-	if os.Getenv("GOVCD_DEBUG") != "" {
-		log.Printf("#[DEBUG] CONFIGURATION: %s", configText)
-	}
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -78,9 +74,7 @@ func TestAccVcdDNAT_tlate(t *testing.T) {
 	}
 
 	configText := templateFill(testAccCheckVcdDnat_tlate, params)
-	if os.Getenv("GOVCD_DEBUG") != "" {
-		log.Printf("#[DEBUG] CONFIGURATION: %s", configText)
-	}
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
