@@ -45,8 +45,11 @@ const (
 	// Used when we can't get a valid edge gateway. The placeholder is for the error
 	errorUnableToFindEdgeGateway = "unable to find edge gateway: %s"
 
-	// Used when a task fails. The placeholder is for the error
+  // Used when a task fails. The placeholder is for the error
 	errorCompletingTask = "error completing tasks: %s"
+  
+  // Used when a call to GetAdminOrgFromResource fails. The placeholder is for the error
+  errorRetrievingOrg = "error retrieving Org: %s"
 )
 
 // Cache values for vCD connection.
@@ -115,11 +118,36 @@ func (cli *VCDClient) GetOrgAndVdc(orgName, vdcName string) (org govcd.Org, vdc 
 	return org, vdc, err
 }
 
+// GetAdminOrg finds org using the names provided in the args.
+// If the name is empty, it will use the default
+// org name from the provider.
+func (cli *VCDClient) GetAdminOrg(orgName string) (org govcd.AdminOrg, err error) {
+
+	if orgName == "" {
+		orgName = cli.Org
+	}
+	if orgName == "" {
+		return govcd.AdminOrg{}, fmt.Errorf("empty Org name provided")
+	}
+
+	org, err = govcd.GetAdminOrgByName(cli.VCDClient, orgName)
+	if err != nil {
+		return govcd.AdminOrg{}, fmt.Errorf("error retrieving Org %s: %s", orgName, err)
+	}
+	return org, err
+}
+
 // Same as GetOrgAndVdc, but using data from the resource, if available.
 func (cli *VCDClient) GetOrgAndVdcFromResource(d *schema.ResourceData) (org govcd.Org, vdc govcd.Vdc, err error) {
 	orgName := d.Get("org").(string)
 	vdcName := d.Get("vdc").(string)
 	return cli.GetOrgAndVdc(orgName, vdcName)
+}
+
+// Same as GetOrgAndVdc, but using data from the resource, if available.
+func (cli *VCDClient) GetAdminOrgFromResource(d *schema.ResourceData) (org govcd.AdminOrg, err error) {
+	orgName := d.Get("org").(string)
+	return cli.GetAdminOrg(orgName)
 }
 
 // Gets an edge gateway when you don't need org or vdc for other purposes
