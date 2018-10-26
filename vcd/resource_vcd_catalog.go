@@ -37,13 +37,13 @@ func resourceVcdCatalog() *schema.Resource {
 				Type:        schema.TypeBool,
 				Required:    true,
 				ForceNew:    false,
-				Description: "when deleting force=True along with recursive=True to remove a catalog and any objects it contains, regardless of their state.",
+				Description: "When destroying use delete_force=True with delete_recursive=True to remove a catalog and any objects it contains, regardless of their state.",
 			},
 			"delete_recursive": &schema.Schema{
 				Type:        schema.TypeBool,
 				Required:    true,
 				ForceNew:    false,
-				Description: "when deleting recursive=True to remove a Catalog and any objects it contains that are in a state that normally allows removal.",
+				Description: "When destroying use delete_recursive=True to remove the catalog and any objects it contains that are in a state that normally allows removal.",
 			},
 		},
 	}
