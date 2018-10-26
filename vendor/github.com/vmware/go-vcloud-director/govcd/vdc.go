@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
+ * Copyright 2018 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
  */
 
 package govcd
@@ -32,7 +32,7 @@ func (vdc *Vdc) getVdcVAppbyHREF(vappHREF *url.URL) (*VApp, error) {
 	req := vdc.client.NewRequest(map[string]string{}, "GET", *vappHREF, nil)
 	resp, err := checkResp(vdc.client.Http.Do(req))
 	if err != nil {
-		return &VApp{}, fmt.Errorf("error retreiving VApp: %s", err)
+		return &VApp{}, fmt.Errorf("error retrieving VApp: %s", err)
 	}
 
 	vapp := NewVApp(vdc.client)
@@ -45,6 +45,10 @@ func (vdc *Vdc) getVdcVAppbyHREF(vappHREF *url.URL) (*VApp, error) {
 
 // Undeploys every vapp in the vdc
 func (vdc *Vdc) undeployAllVdcVApps() error {
+	err := vdc.Refresh()
+	if err != nil {
+		return fmt.Errorf("error refreshing vdc: %s", err)
+	}
 	for _, resents := range vdc.Vdc.ResourceEntities {
 		for _, resent := range resents.ResourceEntity {
 			if resent.Type == "application/vnd.vmware.vcloud.vApp+xml" {
@@ -69,6 +73,10 @@ func (vdc *Vdc) undeployAllVdcVApps() error {
 
 // Removes all vapps in the vdc
 func (vdc *Vdc) removeAllVdcVApps() error {
+	err := vdc.Refresh()
+	if err != nil {
+		return fmt.Errorf("error refreshing vdc: %s", err)
+	}
 	for _, resents := range vdc.Vdc.ResourceEntities {
 		for _, resent := range resents.ResourceEntity {
 			if resent.Type == "application/vnd.vmware.vcloud.vApp+xml" {
@@ -78,15 +86,15 @@ func (vdc *Vdc) removeAllVdcVApps() error {
 				}
 				vapp, err := vdc.getVdcVAppbyHREF(vappHREF)
 				if err != nil {
-					return fmt.Errorf("Error retrieving vapp with url: %s and with error %s", vappHREF.Path, err)
+					return fmt.Errorf("error retrieving vapp with url: %s and with error %s", vappHREF.Path, err)
 				}
 				task, err := vapp.Delete()
 				if err != nil {
-					return fmt.Errorf("Error deleting vapp: %s", err)
+					return fmt.Errorf("error deleting vapp: %s", err)
 				}
 				err = task.WaitTaskCompletion()
 				if err != nil {
-					return fmt.Errorf("Couldn't finish removing vapp %#v", err)
+					return fmt.Errorf("couldn't finish removing vapp %#v", err)
 				}
 			}
 		}
@@ -106,7 +114,7 @@ func (vdc *Vdc) Refresh() error {
 
 	resp, err := checkResp(vdc.client.Http.Do(req))
 	if err != nil {
-		return fmt.Errorf("error retreiving Edge Gateway: %s", err)
+		return fmt.Errorf("error retrieving Edge Gateway: %s", err)
 	}
 
 	// Empty struct before a new unmarshal, otherwise we end up with duplicate
@@ -125,6 +133,10 @@ func (vdc *Vdc) Refresh() error {
 
 func (vdc *Vdc) FindVDCNetwork(network string) (OrgVDCNetwork, error) {
 
+	err := vdc.Refresh()
+	if err != nil {
+		return OrgVDCNetwork{}, fmt.Errorf("error refreshing vdc: %s", err)
+	}
 	for _, an := range vdc.Vdc.AvailableNetworks {
 		for _, reference := range an.Network {
 			if reference.Name == network {
@@ -137,7 +149,7 @@ func (vdc *Vdc) FindVDCNetwork(network string) (OrgVDCNetwork, error) {
 
 				resp, err := checkResp(vdc.client.Http.Do(req))
 				if err != nil {
-					return OrgVDCNetwork{}, fmt.Errorf("error retreiving orgvdcnetwork: %s", err)
+					return OrgVDCNetwork{}, fmt.Errorf("error retrieving orgvdcnetwork: %s", err)
 				}
 
 				orgnet := NewOrgVDCNetwork(vdc.client)
@@ -158,6 +170,10 @@ func (vdc *Vdc) FindVDCNetwork(network string) (OrgVDCNetwork, error) {
 
 func (vdc *Vdc) FindStorageProfileReference(name string) (types.Reference, error) {
 
+	err := vdc.Refresh()
+	if err != nil {
+		return types.Reference{}, fmt.Errorf("error refreshing vdc: %s", err)
+	}
 	for _, sps := range vdc.Vdc.VdcStorageProfiles {
 		for _, sp := range sps.VdcStorageProfile {
 			if sp.Name == name {
@@ -171,6 +187,10 @@ func (vdc *Vdc) FindStorageProfileReference(name string) (types.Reference, error
 
 func (vdc *Vdc) GetDefaultStorageProfileReference(storageprofiles *types.QueryResultRecordsType) (types.Reference, error) {
 
+	err := vdc.Refresh()
+	if err != nil {
+		return types.Reference{}, fmt.Errorf("error refreshing vdc: %s", err)
+	}
 	for _, spr := range storageprofiles.OrgVdcStorageProfileRecord {
 		if spr.IsDefaultStorageProfile {
 			return types.Reference{HREF: spr.HREF, Name: spr.Name}, nil
@@ -181,6 +201,10 @@ func (vdc *Vdc) GetDefaultStorageProfileReference(storageprofiles *types.QueryRe
 
 func (vdc *Vdc) FindEdgeGateway(edgegateway string) (EdgeGateway, error) {
 
+	err := vdc.Refresh()
+	if err != nil {
+		return EdgeGateway{}, fmt.Errorf("error refreshing vdc: %s", err)
+	}
 	for _, av := range vdc.Vdc.Link {
 		if av.Rel == "edgeGateways" && av.Type == "application/vnd.vmware.vcloud.query.records+xml" {
 			findUrl, err := url.ParseRequestURI(av.HREF)

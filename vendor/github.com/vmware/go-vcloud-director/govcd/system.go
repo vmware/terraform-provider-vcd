@@ -1,3 +1,7 @@
+/*
+ * Copyright 2018 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
+ */
+
 package govcd
 
 import (
@@ -52,12 +56,12 @@ func GetOrgByName(vcdClient *VCDClient, orgname string) (Org, error) {
 	}
 	orgHREF, err := url.ParseRequestURI(orgUrl)
 	if err != nil {
-		return Org{}, fmt.Errorf("Error parsing org href: %v", err)
+		return Org{}, fmt.Errorf("error parsing org href: %v", err)
 	}
 	req := vcdClient.Client.NewRequest(map[string]string{}, "GET", *orgHREF, nil)
 	resp, err := checkResp(vcdClient.Client.Http.Do(req))
 	if err != nil {
-		return Org{}, fmt.Errorf("error retreiving org: %s", err)
+		return Org{}, fmt.Errorf("error retrieving org: %s", err)
 	}
 
 	org := NewOrg(&vcdClient.Client)
@@ -83,7 +87,7 @@ func GetAdminOrgByName(vcdClient *VCDClient, orgname string) (AdminOrg, error) {
 	req := vcdClient.Client.NewRequest(map[string]string{}, "GET", orgHREF, nil)
 	resp, err := checkResp(vcdClient.Client.Http.Do(req))
 	if err != nil {
-		return AdminOrg{}, fmt.Errorf("error retreiving org: %s", err)
+		return AdminOrg{}, fmt.Errorf("error retrieving org: %s", err)
 	}
 	org := NewAdminOrg(&vcdClient.Client)
 	if err = decodeBody(resp, org.AdminOrg); err != nil {
@@ -99,7 +103,7 @@ func getOrgHREF(vcdClient *VCDClient, orgname string) (string, error) {
 	req := vcdClient.Client.NewRequest(map[string]string{}, "GET", orgListHREF, nil)
 	resp, err := checkResp(vcdClient.Client.Http.Do(req))
 	if err != nil {
-		return "", fmt.Errorf("error retreiving org list: %s", err)
+		return "", fmt.Errorf("error retrieving org list: %s", err)
 	}
 	orgList := new(types.OrgList)
 	if err = decodeBody(resp, orgList); err != nil {
@@ -111,5 +115,5 @@ func getOrgHREF(vcdClient *VCDClient, orgname string) (string, error) {
 			return org.HREF, nil
 		}
 	}
-	return "", fmt.Errorf("Couldn't find org with name: %s", orgname)
+	return "", fmt.Errorf("couldn't find org with name: %s", orgname)
 }

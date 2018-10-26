@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
+ * Copyright 2018 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
  */
 
 package types
@@ -135,7 +135,7 @@ type IPAddresses struct {
 	IPAddress string `xml:"IpAddress,omitempty"` // An IP address.
 }
 
-// IPRanges representsa list of IP ranges.
+// IPRanges represents a list of IP ranges.
 // Type: IpRangesType
 // Namespace: http://www.vmware.com/vcloud/v1.5
 // Description: Represents a list of IP ranges.
@@ -195,7 +195,8 @@ type IPScopes struct {
 	IPScope IPScope `xml:"IpScope"` // IP scope.
 }
 
-// NetworkConfiguration the configuration applied to a network. This is an abstract base type. The concrete types include thos for vApp and Organization wide networks.
+// NetworkConfiguration is the configuration applied to a network. This is an abstract base type.
+// The concrete types include those for vApp and Organization wide networks.
 // Type: NetworkConfigurationType
 // Namespace: http://www.vmware.com/vcloud/v1.5
 // Description: The configurations applied to a network. This is an abstract base type. The concrete types include those for vApp and Organization wide networks.
@@ -212,7 +213,7 @@ type NetworkConfiguration struct {
 	// SyslogServerSettings           SyslogServerSettings `xml:"SyslogServerSettings,omitempty"`
 }
 
-// VAppNetworkConfiguration representa a vApp network configuration
+// VAppNetworkConfiguration represents a vApp network configuration
 // Type: VAppNetworkConfigurationType
 // Namespace: http://www.vmware.com/vcloud/v1.5
 // Description: Represents a vApp network configuration.
@@ -794,7 +795,7 @@ type PublishExternalCatalogParams struct {
 	IsPublishedExternally    bool   `xml:"IsPublishedExternally,omitempty"`
 	Password                 string `xml:"Password,omitempty"`
 	PreserveIdentityInfoFlag bool   `xml:"PreserveIdentityInfoFlag,omitempty"`
-	catalogPublishedUrl      string `xml:"catalogPublishedUrl,omitempty"`
+	CatalogPublishedUrl      string `xml:"catalogPublishedUrl,omitempty"`
 }
 
 // ExternalCatalogSubscription represents the configuration parameters for a catalog that has an external subscription
@@ -911,7 +912,7 @@ type VMs struct {
  * Types that are completely valid (position, comment, coverage complete)
  */
 
-// ComposeVAppParams represetns vApp composition parameters
+// ComposeVAppParams represents vApp composition parameters
 // Type: ComposeVAppParamsType
 // Namespace: http://www.vmware.com/vcloud/v1.5
 // Description: Represents vApp composition parameters.
@@ -1008,7 +1009,7 @@ type VMGeneralParams struct {
 	NeedsCustomization bool   `xml:"NeedsCustomization,omitempty"` // True if this VM needs guest customization
 }
 
-// VApp representa a vApp
+// VApp represents a vApp
 // Type: VAppType
 // Namespace: http://www.vmware.com/vcloud/v1.5
 // Description: Represents a vApp.
@@ -1082,7 +1083,7 @@ type TypedValue struct {
 // Description: Container for virtual machines included in this vApp.
 // Since: 0.9
 type VAppChildren struct {
-	VM []*VM `xml:"Vm,omitempty"` // Rerpresents a virtual machine.
+	VM []*VM `xml:"Vm,omitempty"` // Represents a virtual machine.
 }
 
 // TasksInProgress is a list of queued, running, or recently completed tasks.
@@ -1382,7 +1383,7 @@ type EdgeGateway struct {
 type GatewayConfiguration struct {
 	Xmlns string `xml:"xmlns,attr,omitempty"`
 	// Elements
-	BackwardCompatibilityMode       bool               `xml:"BackwardCompatibilityMode,omitempty"`       // Compatibilty mode. Default is false. If set to true, will allow users to write firewall rules in the old 1.5 format. The new format does not require to use direction in firewall rules. Also, for firewall rules to allow NAT traffic the filter is applied on the original IP addresses. Once set to true cannot be reverted back to false.
+	BackwardCompatibilityMode       bool               `xml:"BackwardCompatibilityMode,omitempty"`       // Compatibility mode. Default is false. If set to true, will allow users to write firewall rules in the old 1.5 format. The new format does not require to use direction in firewall rules. Also, for firewall rules to allow NAT traffic the filter is applied on the original IP addresses. Once set to true cannot be reverted back to false.
 	GatewayBackingConfig            string             `xml:"GatewayBackingConfig"`                      // Configuration of the vShield edge VM for this gateway. One of: compact, full.
 	GatewayInterfaces               *GatewayInterfaces `xml:"GatewayInterfaces"`                         // List of Gateway interfaces.
 	EdgeGatewayServiceConfiguration *GatewayFeatures   `xml:"EdgeGatewayServiceConfiguration,omitempty"` // Represents Gateway Features.
@@ -1423,9 +1424,9 @@ type GatewayInterface struct {
 // Since: 5.1
 type SubnetParticipation struct {
 	Gateway   string    `xml:"Gateway"`             // Gateway for subnet
-	IPAddress string    `xml:"IpAddress,omitempty"` // Ip Address to be assigned. Keep empty or ommit element for auto assignment
+	IPAddress string    `xml:"IpAddress,omitempty"` // Ip Address to be assigned. Keep empty or omit element for auto assignment
 	IPRanges  *IPRanges `xml:"IpRanges,omitempty"`  // Range of IP addresses available for external interfaces.
-	Netmask   string    `xml:"Netmask"`             // Nestmask for the subnet
+	Netmask   string    `xml:"Netmask"`             // Netmask for the subnet
 }
 
 type EdgeGatewayServiceConfiguration struct {
@@ -1978,4 +1979,21 @@ type QueryResultOrgVdcStorageProfileRecordType struct {
 	NumberOfConditions      int    `xml:"numberOfConditions,attr,omitempty"`
 	StorageUsedMB           int    `xml:"storageUsedMB,attr,omitempty"`
 	StorageLimitMB          int    `xml:"storageLimitMB,attr,omitempty"`
+}
+
+// Namespace: http://www.vmware.com/vcloud/v1.5
+// Retrieve a list of extension objects and operations.
+// Since: 1.0
+type Extension struct {
+	Link LinkList `xml:"Link,omitempty"` // A reference to an entity or operation associated with this object.
+}
+
+type ExternalNetworkReferences struct {
+	ExternalNetworkReference []*ExternalNetworkReference `xml:"ExternalNetworkReference,omitempty"` // A reference to an entity or operation associated with this object.
+}
+
+type ExternalNetworkReference struct {
+	HREF string `xml:"href,attr"`
+	Type string `xml:"type,attr,omitempty"`
+	Name string `xml:"name,attr,omitempty"`
 }

@@ -1,0 +1,24 @@
+provider:
+    user: root
+    password: ca$hc0w
+    url: https://10.138.2.201/api
+    sysOrg: System
+vcd:
+    org: west
+    vdc: westvdc
+    catalog: 
+        name: westcat2
+        catalogItem: photon-hw11
+        # catalogItem: tiny_template
+        description: West catalog
+        catalogItemDescription: upload from go-vcd
+        # catalogItemDescription: tiny template
+    network: tfOrgNetwork
+    storageProfile: 
+        storageProfile1: "*"
+    edgeGateway: tfEdgeGW
+    externalIp: 10.150.211.105
+    internalIp: 192.168.1.30
+logging:
+    enabled: true
+
