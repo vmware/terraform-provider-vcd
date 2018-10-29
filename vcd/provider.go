@@ -85,6 +85,7 @@ func Provider() terraform.ResourceProvider {
 			"vcd_vapp_vm":         resourceVcdVAppVm(),
 			"vcd_org":             resourceOrg(),
 			"vcd_catalog":         resourceVcdCatalog(),
+			"vcd_catalog_item":    resourceVcdCatalogItem(),
 		},
 
 		ConfigureFunc: providerConfigure,
