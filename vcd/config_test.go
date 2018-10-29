@@ -62,6 +62,11 @@ type TestConfig struct {
 		LogHttpRequest  bool   `json:"logHttpRequest,omitempty"`
 		LogHttpResponse bool   `json:"logHttpResponse,omitempty"`
 	} `json:"logging"`
+	Ova struct {
+		OvaPath         string `json:"ovaPath,omitempty"`
+		UploadPieceSize int64  `json:"uploadPieceSize,omitempty"`
+		UploadProgress  bool   `json:"uploadProgress,omitempty"`
+	} `json:"ova"`
 }
 
 const (
@@ -83,7 +88,7 @@ provider "vcd" {
 var (
 	// This is a global variable shared across all tests. It contains
 	// the information from the configuration file.
-	testConfig   TestConfig
+	testConfig TestConfig
 
 	// Enables the short test (used by "make test")
 	vcdShortTest bool = os.Getenv("VCD_SHORT_TEST") != ""

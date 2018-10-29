@@ -76,7 +76,6 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-
 			"vcd_network":          resourceVcdNetwork(), // DEPRECATED
 			"vcd_network_routed":   resourceVcdNetworkRouted(),
 			"vcd_network_direct":   resourceVcdNetworkDirect(),
@@ -89,6 +88,7 @@ func Provider() terraform.ResourceProvider {
 			"vcd_vapp_vm":          resourceVcdVAppVm(),
 			"vcd_org":              resourceOrg(),
 			"vcd_catalog":          resourceVcdCatalog(),
+			"vcd_catalog_item":     resourceVcdCatalogItem(),
 		},
 
 		ConfigureFunc: providerConfigure,
