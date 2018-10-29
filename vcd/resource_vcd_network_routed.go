@@ -1,25 +1,19 @@
 package vcd
 
 import (
-	"bytes"
+	"github.com/vmware/go-vcloud-director/util"
+	"log"
+
 	"fmt"
-	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/govcd"
 	"github.com/vmware/go-vcloud-director/types/v56"
-	"github.com/vmware/go-vcloud-director/util"
-	"log"
-	"strings"
 )
 
-// DEPRECATED: use vcd_network_routed instead
-func resourceVcdNetwork() *schema.Resource {
+func resourceVcdNetworkRouted() *schema.Resource {
 	return &schema.Resource{
-		// DeprecationMessage requires a version of Terraform newer than what
-		// we currently use in the vendor directory
-		// DeprecationMessage: "Deprecated. Use vcd_network_routed instead",
-		Create: resourceVcdNetworkDeprecatedCreate,
+		Create: resourceVcdNetworkRoutedCreate,
 		Read:   resourceVcdNetworkRead,
 		Delete: resourceVcdNetworkDelete,
 
@@ -41,12 +35,6 @@ func resourceVcdNetwork() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 			},
-			"fence_mode": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				Default:  "natRouted",
-			},
 
 			"edge_gateway": &schema.Schema{
 				Type:     schema.TypeString,
@@ -63,7 +51,8 @@ func resourceVcdNetwork() *schema.Resource {
 
 			"gateway": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: true,
+				Required: false,
+				Optional: true,
 				ForceNew: true,
 			},
 
@@ -155,7 +144,7 @@ func resourceVcdNetwork() *schema.Resource {
 	}
 }
 
-func resourceVcdNetworkDeprecatedCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	log.Printf("[TRACE] CLIENT: %#v", vcdClient)
 	vcdClient.Mutex.Lock()
@@ -169,7 +158,6 @@ func resourceVcdNetworkDeprecatedCreate(d *schema.ResourceData, meta interface{}
 	// Collecting components
 	egName, ok := d.GetOk("edge_gateway")
 	var edgeGateway govcd.EdgeGateway
-	fenceMode := "natRouted"
 
 	edgeGatewayName := ""
 	if ok {
@@ -193,8 +181,12 @@ func resourceVcdNetworkDeprecatedCreate(d *schema.ResourceData, meta interface{}
 	orgVDCNetwork := &types.OrgVDCNetwork{
 		Xmlns: "http://www.vmware.com/vcloud/v1.5",
 		Name:  d.Get("name").(string),
+
+		EdgeGateway: &types.Reference{
+			HREF: edgeGateway.EdgeGateway.HREF,
+		},
 		Configuration: &types.NetworkConfiguration{
-			FenceMode: fenceMode,
+			FenceMode: "natRouted",
 			IPScopes: &types.IPScopes{
 				IPScope: types.IPScope{
 					IsInherited: false,
@@ -209,10 +201,6 @@ func resourceVcdNetworkDeprecatedCreate(d *schema.ResourceData, meta interface{}
 			BackwardCompatibilityMode: true,
 		},
 		IsShared: d.Get("shared").(bool),
-	}
-
-	orgVDCNetwork.EdgeGateway = &types.Reference{
-		HREF: edgeGateway.EdgeGateway.HREF,
 	}
 
 	util.Logger.Printf("[INFO] NETWORK: %#v", orgVDCNetwork)
@@ -254,87 +242,4 @@ func resourceVcdNetworkDeprecatedCreate(d *schema.ResourceData, meta interface{}
 	d.SetId(d.Get("name").(string))
 
 	return resourceVcdNetworkRead(d, meta)
-}
-
-func resourceVcdNetworkRead(d *schema.ResourceData, meta interface{}) error {
-	vcdClient := meta.(*VCDClient)
-	log.Printf("[DEBUG] VCD Client configuration: %#v", vcdClient)
-	//log.Printf("[DEBUG] VCD Client configuration: %#v", vcdClient.OrgVdc)
-
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
-	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
-	}
-
-	// err = vdc.Refresh()
-	// if err != nil {
-	// 	return fmt.Errorf("error refreshing VDC: %#v", err)
-	// }
-
-	network, err := vdc.FindVDCNetwork(d.Id())
-	if err != nil {
-		log.Printf("[DEBUG] Network no longer exists. Removing from tfstate")
-		d.SetId("")
-		return nil
-	}
-
-	d.Set("name", network.OrgVDCNetwork.Name)
-	d.Set("href", network.OrgVDCNetwork.HREF)
-	if c := network.OrgVDCNetwork.Configuration; c != nil {
-		d.Set("fence_mode", c.FenceMode)
-		if c.IPScopes != nil {
-			d.Set("gateway", c.IPScopes.IPScope.Gateway)
-			d.Set("netmask", c.IPScopes.IPScope.Netmask)
-			d.Set("dns1", c.IPScopes.IPScope.DNS1)
-			d.Set("dns2", c.IPScopes.IPScope.DNS2)
-		}
-	}
-
-	return nil
-}
-
-func resourceVcdNetworkDelete(d *schema.ResourceData, meta interface{}) error {
-	vcdClient := meta.(*VCDClient)
-	vcdClient.Mutex.Lock()
-	defer vcdClient.Mutex.Unlock()
-
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
-	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
-	}
-
-	// err = vdc.Refresh()
-	// if err != nil {
-	// 	return fmt.Errorf("error refreshing VDC: %#v", err)
-	// }
-
-	network, err := vdc.FindVDCNetwork(d.Id())
-	if err != nil {
-		return fmt.Errorf("error finding network: %#v", err)
-	}
-
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := network.Delete()
-		if err != nil {
-			return resource.RetryableError(
-				fmt.Errorf("error Deleting Network: %#v", err))
-		}
-		return resource.RetryableError(task.WaitTaskCompletion())
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func resourceVcdNetworkIPAddressHash(v interface{}) int {
-	var buf bytes.Buffer
-	m := v.(map[string]interface{})
-	buf.WriteString(fmt.Sprintf("%s-",
-		strings.ToLower(m["start_address"].(string))))
-	buf.WriteString(fmt.Sprintf("%s-",
-		strings.ToLower(m["end_address"].(string))))
-
-	return hashcode.String(buf.String())
 }

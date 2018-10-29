@@ -56,11 +56,11 @@ func Provider() terraform.ResourceProvider {
 				Description: "The VCD url for VCD API operations.",
 			},
 
-			"maxRetryTimeout": &schema.Schema{
-				Type:       schema.TypeInt,
-				Optional:   true,
-				Deprecated: "Deprecated. Use max_retry_timeout instead.",
-			},
+			//"maxRetryTimeout": &schema.Schema{
+			//	Type:       schema.TypeInt,
+			//	Optional:   true,
+			//	Deprecated: "Deprecated. Use max_retry_timeout instead.",
+			//},
 
 			"max_retry_timeout": &schema.Schema{
 				Type:        schema.TypeInt,
@@ -78,14 +78,17 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"vcd_network":         resourceVcdNetwork(),
-			"vcd_vapp":            resourceVcdVApp(),
-			"vcd_firewall_rules":  resourceVcdFirewallRules(),
-			"vcd_dnat":            resourceVcdDNAT(),
-			"vcd_snat":            resourceVcdSNAT(),
-			"vcd_edgegateway_vpn": resourceVcdEdgeGatewayVpn(),
-			"vcd_vapp_vm":         resourceVcdVAppVm(),
-			"vcd_org":             resourceOrg(),
+			"vcd_network":          resourceVcdNetwork(), // DEPRECATED
+			"vcd_network_routed":   resourceVcdNetworkRouted(),
+			"vcd_network_direct":   resourceVcdNetworkDirect(),
+			"vcd_network_isolated": resourceVcdNetworkIsolated(),
+			"vcd_vapp":             resourceVcdVApp(),
+			"vcd_firewall_rules":   resourceVcdFirewallRules(),
+			"vcd_dnat":             resourceVcdDNAT(),
+			"vcd_snat":             resourceVcdSNAT(),
+			"vcd_edgegateway_vpn":  resourceVcdEdgeGatewayVpn(),
+			"vcd_vapp_vm":          resourceVcdVAppVm(),
+			"vcd_org":              resourceOrg(),
 		},
 
 		ConfigureFunc: providerConfigure,
@@ -98,10 +101,10 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	debugPrintf("[%s] providerConfigure\n", caller)
 	maxRetryTimeout := d.Get("max_retry_timeout").(int)
 
-	// TODO: Deprecated, remove in next major release
-	if v, ok := d.GetOk("maxRetryTimeout"); ok {
-		maxRetryTimeout = v.(int)
-	}
+	// It was deprecated, and now removed
+	//if v, ok := d.GetOk("maxRetryTimeout"); ok {
+	//	maxRetryTimeout = v.(int)
+	//}
 
 	connectOrg := d.Get("sysorg").(string)
 	if connectOrg == "" {

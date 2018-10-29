@@ -188,7 +188,7 @@ func testAccCheckVcdVAppAttributes_off(vapp *govcd.VApp) resource.TestCheckFunc 
 }
 
 const testAccCheckVcdVApp_basic = `
-resource "vcd_network" "{{.NetworkName}}" {
+resource "vcd_network_routed" "{{.NetworkName}}" {
   name         = "{{.NetworkName}}"
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
@@ -201,7 +201,7 @@ resource "vcd_network" "{{.NetworkName}}" {
   }
 }
 
-resource "vcd_network" "{{.NetworkName3}}" {
+resource "vcd_network_routed" "{{.NetworkName3}}" {
   name         = "{{.NetworkName3}}"
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
@@ -220,7 +220,7 @@ resource "vcd_vapp" "{{.VappName}}" {
   name          = "{{.VappName}}"
   template_name = "{{.CatalogItem}}"
   catalog_name  = "{{.Catalog}}"
-  network_name  = "${vcd_network.{{.NetworkName}}.name}"
+  network_name  = "${vcd_network_routed.{{.NetworkName}}.name}"
   memory        = 1024
   cpus          = 1
   ip            = "10.10.102.160"
@@ -232,7 +232,7 @@ resource "vcd_vapp" "{{.VappNameAllocated}}" {
   name          = "{{.VappNameAllocated}}"
   template_name = "{{.CatalogItem}}"
   catalog_name  = "{{.Catalog}}"
-  network_name  = "${vcd_network.{{.NetworkName3}}.name}"
+  network_name  = "${vcd_network_routed.{{.NetworkName3}}.name}"
   memory        = 1024
   cpus          = 1
   ip            = "allocated"
@@ -240,7 +240,7 @@ resource "vcd_vapp" "{{.VappNameAllocated}}" {
 `
 
 const testAccCheckVcdVApp_powerOff = `
-resource "vcd_network" "{{.NetworkName2}}" {
+resource "vcd_network_routed" "{{.NetworkName2}}" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
   name         = "{{.NetworkName2}}"
@@ -264,7 +264,7 @@ resource "vcd_vapp" "{{.VappName}}" {
   name          = "{{.VappName}}"
   template_name = "{{.CatalogItem}}"
   catalog_name  = "{{.Catalog}}"
-  network_name  = "${vcd_network.{{.NetworkName2}}.name}"
+  network_name  = "${vcd_network_routed.{{.NetworkName2}}.name}"
   memory        = 1024
   cpus          = 1
   ip            = "10.10.103.160"
