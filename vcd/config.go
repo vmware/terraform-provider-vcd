@@ -45,11 +45,11 @@ const (
 	// Used when we can't get a valid edge gateway. The placeholder is for the error
 	errorUnableToFindEdgeGateway = "unable to find edge gateway: %s"
 
-  // Used when a task fails. The placeholder is for the error
+	// Used when a task fails. The placeholder is for the error
 	errorCompletingTask = "error completing tasks: %s"
-  
-  // Used when a call to GetAdminOrgFromResource fails. The placeholder is for the error
-  errorRetrievingOrg = "error retrieving Org: %s"
+
+	// Used when a call to GetAdminOrgFromResource fails. The placeholder is for the error
+	errorRetrievingOrg = "error retrieving Org: %s"
 )
 
 // Cache values for vCD connection.
