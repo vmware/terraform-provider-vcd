@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
+ * Copyright 2018 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
  */
 
 package govcd
@@ -76,7 +76,7 @@ func (org *Org) FindCatalog(catalogName string) (Catalog, error) {
 
 			resp, err := checkResp(org.client.Http.Do(req))
 			if err != nil {
-				return Catalog{}, fmt.Errorf("error retreiving catalog: %s", err)
+				return Catalog{}, fmt.Errorf("error retrieving catalog: %s", err)
 			}
 
 			cat := NewCatalog(org.client)
@@ -168,13 +168,12 @@ func (adminOrg *AdminOrg) Refresh() error {
 // the given organization. Returns an AdminCatalog that contains a creation
 // task.
 // API Documentation: https://code.vmware.com/apis/220/vcloud#/doc/doc/operations/POST-CreateCatalog.html
-func (adminOrg *AdminOrg) CreateCatalog(Name, Description string, isPublished bool) (AdminCatalog, error) {
+func (adminOrg *AdminOrg) CreateCatalog(Name, Description string) (AdminCatalog, error) {
 
 	vcomp := &types.AdminCatalog{
 		Xmlns:       "http://www.vmware.com/vcloud/v1.5",
 		Name:        Name,
 		Description: Description,
-		IsPublished: isPublished,
 	}
 
 	catalogHREF, err := url.ParseRequestURI(adminOrg.AdminOrg.HREF)
@@ -377,7 +376,7 @@ func (adminOrg *AdminOrg) getVdcByAdminHREF(adminVdcUrl *url.URL) (*Vdc, error) 
 	req := adminOrg.client.NewRequest(map[string]string{}, "GET", *adminVdcUrl, nil)
 	resp, err := checkResp(adminOrg.client.Http.Do(req))
 	if err != nil {
-		return &Vdc{}, fmt.Errorf("error retreiving vdc: %s", err)
+		return &Vdc{}, fmt.Errorf("error retrieving vdc: %s", err)
 	}
 
 	vdc := NewVdc(adminOrg.client)
@@ -488,7 +487,7 @@ func (adminOrg *AdminOrg) FindAdminCatalog(catalogName string) (AdminCatalog, er
 			req := adminOrg.client.NewRequest(map[string]string{}, "GET", *catalogURL, nil)
 			resp, err := checkResp(adminOrg.client.Http.Do(req))
 			if err != nil {
-				return AdminCatalog{}, fmt.Errorf("error retreiving catalog: %s", err)
+				return AdminCatalog{}, fmt.Errorf("error retrieving catalog: %s", err)
 			}
 			adminCatalog := NewAdminCatalog(adminOrg.client)
 			if err = decodeBody(resp, adminCatalog.AdminCatalog); err != nil {
@@ -518,7 +517,7 @@ func (adminOrg *AdminOrg) FindCatalog(catalogName string) (Catalog, error) {
 			req := adminOrg.client.NewRequest(map[string]string{}, "GET", *catalogURL, nil)
 			resp, err := checkResp(adminOrg.client.Http.Do(req))
 			if err != nil {
-				return Catalog{}, fmt.Errorf("error retreiving catalog: %s", err)
+				return Catalog{}, fmt.Errorf("error retrieving catalog: %s", err)
 			}
 			cat := NewCatalog(adminOrg.client)
 

@@ -1,4 +1,5 @@
 /*
+ * Copyright 2018 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
  * Copyright 2016 Skyscape Cloud Services.  All rights reserved.  Licensed under the Apache v2 License.
  */
 
@@ -29,7 +30,7 @@ func (vdcCli *VCDClient) Query(params map[string]string) (Results, error) {
 
 	resp, err := checkResp(vdcCli.Client.Http.Do(req))
 	if err != nil {
-		return Results{}, fmt.Errorf("error retreiving query: %s", err)
+		return Results{}, fmt.Errorf("error retrieving query: %s", err)
 	}
 
 	results := NewResults(&vdcCli.Client)
