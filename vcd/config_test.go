@@ -203,14 +203,14 @@ func getConfigStruct() TestConfig {
 	// First, we see whether the user has indicated a custom configuration file
 	// from a non-standard location
 	config := os.Getenv("VCD_CONFIG")
-	var config_struct TestConfig
+	var configStruct TestConfig
 
 	// If there was no custom file, we look for the default one
 	if config == "" {
 		// Finds the current directory, through the path of this running test
-		_, current_filename, _, _ := runtime.Caller(0)
-		current_directory := filepath.Dir(current_filename)
-		config = current_directory + "/vcd_test_config.json"
+		_, currentFilename, _, _ := runtime.Caller(0)
+		currentDirectory := filepath.Dir(currentFilename)
+		config = currentDirectory + "/vcd_test_config.json"
 	}
 	// Looks if the configuration file exists before attempting to read it
 	_, err := os.Stat(config)
@@ -221,47 +221,46 @@ func getConfigStruct() TestConfig {
 	if err != nil {
 		panic(fmt.Errorf("could not read config file %s: %v", config, err))
 	}
-	err = json.Unmarshal(jsonFile, &config_struct)
+	err = json.Unmarshal(jsonFile, &configStruct)
 	if err != nil {
 		panic(fmt.Errorf("could not unmarshal json file: %v", err))
 	}
 
 	// Reading the configuration file was successful.
 	// Now we fill the environment variables that the library is using for its own initialization.
-	if config_struct.Provider.TerraformAcceptanceTests {
+	if configStruct.Provider.TerraformAcceptanceTests {
 		// defined in vendor/github.com/hashicorp/terraform/helper/resource/testing.go
 		os.Setenv("TF_ACC", "1")
 	}
 	// The following variables are used in ./provider.go
-	if config_struct.Provider.SysOrg == "" {
-		config_struct.Provider.SysOrg = config_struct.VCD.Org
+	if configStruct.Provider.SysOrg == "" {
+		configStruct.Provider.SysOrg = configStruct.VCD.Org
 	}
-	// fmt.Printf("[%s] config_struct %#v\n", callFuncName(), config_struct)
-	os.Setenv("VCD_USER", config_struct.Provider.User)
-	os.Setenv("VCD_PASSWORD", config_struct.Provider.Password)
-	os.Setenv("VCD_URL", config_struct.Provider.Url)
-	os.Setenv("VCD_SYS_ORG", config_struct.Provider.SysOrg)
-	os.Setenv("VCD_ORG", config_struct.VCD.Org)
-	os.Setenv("VCD_VDC", config_struct.VCD.Vdc)
-	if config_struct.Provider.AllowInsecure {
+	os.Setenv("VCD_USER", configStruct.Provider.User)
+	os.Setenv("VCD_PASSWORD", configStruct.Provider.Password)
+	os.Setenv("VCD_URL", configStruct.Provider.Url)
+	os.Setenv("VCD_SYS_ORG", configStruct.Provider.SysOrg)
+	os.Setenv("VCD_ORG", configStruct.VCD.Org)
+	os.Setenv("VCD_VDC", configStruct.VCD.Vdc)
+	if configStruct.Provider.AllowInsecure {
 		os.Setenv("VCD_ALLOW_UNVERIFIED_SSL", "1")
 	}
 
 	// Define logging parameters if enabled
-	if config_struct.Logging.Enabled {
+	if configStruct.Logging.Enabled {
 		util.EnableLogging = true
-		if config_struct.Logging.LogFileName != "" {
-			util.ApiLogFileName = config_struct.Logging.LogFileName
+		if configStruct.Logging.LogFileName != "" {
+			util.ApiLogFileName = configStruct.Logging.LogFileName
 		}
-		if config_struct.Logging.LogHttpResponse {
+		if configStruct.Logging.LogHttpResponse {
 			util.LogHttpResponse = true
 		}
-		if config_struct.Logging.LogHttpRequest {
+		if configStruct.Logging.LogHttpRequest {
 			util.LogHttpRequest = true
 		}
 		util.InitLogging()
 	}
-	return config_struct
+	return configStruct
 }
 
 // This function is called before any other test

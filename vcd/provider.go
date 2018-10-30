@@ -54,12 +54,6 @@ func Provider() terraform.ResourceProvider {
 				Description: "The VCD url for VCD API operations.",
 			},
 
-			// "maxRetryTimeout": &schema.Schema{
-			// 	Type:       schema.TypeInt,
-			// 	Optional:   true,
-			// 	Deprecated: "Deprecated. Use max_retry_timeout instead.",
-			// },
-
 			"max_retry_timeout": &schema.Schema{
 				Type:        schema.TypeInt,
 				Optional:    true,
@@ -76,7 +70,7 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"vcd_network":          resourceVcdNetwork(), // DEPRECATED
+			"vcd_network":          resourceVcdNetwork(), // DEPRECATED: replaced by vcd_network_routed
 			"vcd_network_routed":   resourceVcdNetworkRouted(),
 			"vcd_network_direct":   resourceVcdNetworkDirect(),
 			"vcd_network_isolated": resourceVcdNetworkIsolated(),
@@ -97,11 +91,6 @@ func Provider() terraform.ResourceProvider {
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	maxRetryTimeout := d.Get("max_retry_timeout").(int)
-
-	// TODO: Deprecated, remove in next major release
-	// if v, ok := d.GetOk("maxRetryTimeout"); ok {
-	// 	maxRetryTimeout = v.(int)
-	// }
 
 	// If sysOrg is defined, we use it for authentication.
 	// Otherwise, we use the default org defined for regular usage
