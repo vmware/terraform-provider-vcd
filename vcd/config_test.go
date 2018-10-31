@@ -16,6 +16,9 @@ import (
 	"regexp"
 	"runtime"
 	"testing"
+
+	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/terraform"
 )
 
 type StringMap map[string]interface{}
@@ -39,11 +42,12 @@ type TestConfig struct {
 		} `json:"catalog"`
 	} `json:"vcd"`
 	Networking struct {
-		ExternalIp   string `json:"externalIp,omitempty"`
-		InternalIp   string `json:"internalIp,omitempty"`
-		EdgeGateway  string `json:"edgeGateway,omitempty"`
-		SharedSecret string `json:"sharedSecret"`
-		Local        struct {
+		ExternalIp      string `json:"externalIp,omitempty"`
+		InternalIp      string `json:"internalIp,omitempty"`
+		EdgeGateway     string `json:"edgeGateway,omitempty"`
+		SharedSecret    string `json:"sharedSecret"`
+		ExternalNetwork string `json:"externalNetwork,omitempty"`
+		Local           struct {
 			LocalIp            string `json:"localIp"`
 			LocalSubnetGateway string `json:"localSubnetGw"`
 		} `json:"local"`
@@ -68,6 +72,17 @@ type TestConfig struct {
 const (
 	// Warning message used for all tests
 	acceptanceTestsSkipped = "Acceptance tests skipped unless env 'TF_ACC' set"
+	// This template will be added to test resource snippets on demand
+	providerTemplate = `
+provider "vcd" {
+  user     = "{{.User}}"
+  password = "{{.Password}}"
+  url      = "{{.Url}}"
+  sysorg   = "{{.SysOrg}}"
+  org      = "{{.Org}}"
+}
+
+`
 )
 
 var (
@@ -106,6 +121,20 @@ func templateFill(tmpl string, data StringMap) string {
 	funcName, ok := data["FuncName"]
 	if ok {
 		caller = "vcd." + funcName.(string)
+	}
+
+	// If requested, the provider defined in testConfig will be added to test snippets.
+	if os.Getenv("VCD_ADD_PROVIDER") != "" {
+		// the original template is prefixed with the provider template
+		tmpl = providerTemplate + tmpl
+
+		// The data structure used to fill the template is integrated with
+		// provider data
+		data["User"] = testConfig.Provider.User
+		data["Password"] = testConfig.Provider.Password
+		data["Url"] = testConfig.Provider.Url
+		data["SysOrg"] = testConfig.Provider.SysOrg
+		data["Org"] = testConfig.VCD.Org
 	}
 
 	// Creates a template. The template gets the same name of the calling function, to generate a better
@@ -207,6 +236,7 @@ func getConfigStruct() TestConfig {
 	if config_struct.Provider.SysOrg == "" {
 		config_struct.Provider.SysOrg = config_struct.VCD.Org
 	}
+	// fmt.Printf("[%s] config_struct %#v\n", callFuncName(), config_struct)
 	os.Setenv("VCD_USER", config_struct.Provider.User)
 	os.Setenv("VCD_PASSWORD", config_struct.Provider.Password)
 	os.Setenv("VCD_URL", config_struct.Provider.Url)
@@ -242,6 +272,12 @@ func TestMain(m *testing.M) {
 	// and we won't really run any tests involving vcd connections.
 	if !vcdShortTest {
 		testConfig = getConfigStruct()
+
+		// Provider initialization moved here from provider_test.init
+		testAccProvider = Provider().(*schema.Provider)
+		testAccProviders = map[string]terraform.ResourceProvider{
+			"vcd": testAccProvider,
+		}
 	}
 
 	// Runs all test functions

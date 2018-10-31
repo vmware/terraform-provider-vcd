@@ -411,10 +411,10 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	err = vdc.Refresh()
-	if err != nil {
-		return fmt.Errorf("error refreshing VDC: %#v", err)
-	}
+	// err = vdc.Refresh()
+	// if err != nil {
+	// 	return fmt.Errorf("error refreshing VDC: %#v", err)
+	// }
 
 	_, err = vdc.FindVAppByName(d.Id())
 	if err != nil {
@@ -452,10 +452,10 @@ func getVAppIPAddress(d *schema.ResourceData, meta interface{}, vdc govcd.Vdc, o
 	vcdClient := meta.(*VCDClient)
 	var ip string
 	err := retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		err := vdc.Refresh()
-		if err != nil {
-			return resource.RetryableError(fmt.Errorf("error refreshing VDC: %#v", err))
-		}
+		// err := vdc.Refresh()
+		// if err != nil {
+		// 	return resource.RetryableError(fmt.Errorf("error refreshing VDC: %#v", err))
+		// }
 		vapp, err := vdc.FindVAppByName(d.Id())
 		if err != nil {
 			return resource.RetryableError(fmt.Errorf("unable to find vapp"))

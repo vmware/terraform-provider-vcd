@@ -34,7 +34,7 @@ func (catalogItem *CatalogItem) GetVAppTemplate() (VAppTemplate, error) {
 
 	resp, err := checkResp(catalogItem.client.Http.Do(req))
 	if err != nil {
-		return VAppTemplate{}, fmt.Errorf("error retreiving vapptemplate: %s", err)
+		return VAppTemplate{}, fmt.Errorf("error retrieving vapptemplate: %s", err)
 	}
 
 	cat := NewVAppTemplate(catalogItem.client)

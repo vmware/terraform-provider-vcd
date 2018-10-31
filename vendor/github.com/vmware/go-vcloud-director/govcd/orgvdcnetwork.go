@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
+ * Copyright 2018 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
  */
 
 package govcd
@@ -12,6 +12,7 @@ import (
 	"github.com/vmware/go-vcloud-director/util"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -57,10 +58,12 @@ func (orgVdcNet *OrgVDCNetwork) Refresh() error {
 	return nil
 }
 
+// Delete a network. Fails if the network is busy.
+// Returns a task to monitor the deletion.
 func (orgVdcNet *OrgVDCNetwork) Delete() (Task, error) {
 	err := orgVdcNet.Refresh()
 	if err != nil {
-		return Task{}, fmt.Errorf("Error refreshing network: %s", err)
+		return Task{}, fmt.Errorf("error refreshing network: %s", err)
 	}
 	pathArr := strings.Split(orgVdcNet.OrgVDCNetwork.HREF, "/")
 	apiEndpoint, _ := url.ParseRequestURI(orgVdcNet.OrgVDCNetwork.HREF)
@@ -90,22 +93,60 @@ func (orgVdcNet *OrgVDCNetwork) Delete() (Task, error) {
 	return *task, nil
 }
 
-func (vdc *Vdc) CreateOrgVDCNetwork(networkConfig *types.OrgVDCNetwork) error {
+// Looks for an Org Vdc network and, if found, will delete it.
+func RemoveOrgVdcNetworkIfExists(vdc Vdc, networkName string) error {
+	network, err := vdc.FindVDCNetwork(networkName)
+	if err == nil && network != (OrgVDCNetwork{}) {
+		task, err := network.Delete()
+		if err != nil {
+			return fmt.Errorf("error deleting network [phase 1] %s", networkName)
+		}
+		err = task.WaitTaskCompletion()
+		if err != nil {
+			return fmt.Errorf("error deleting network [task] %s", networkName)
+		}
+	}
+	return nil
+}
+
+// A wrapper call around CreateOrgVDCNetwork.
+// Creates a network and then uses the associated task to monitor its configuration
+func (vdc *Vdc) CreateOrgVDCNetworkWait(networkConfig *types.OrgVDCNetwork) error {
+
+	task, err := vdc.CreateOrgVDCNetwork(networkConfig)
+	if err != nil {
+		return fmt.Errorf("error creating the network: %s", err)
+	}
+	if task == (Task{}) {
+		return fmt.Errorf("NULL task retrieved after network creation")
+
+	}
+	err = task.WaitTaskCompletion()
+	// err = task.WaitInspectTaskCompletion(InspectTask, 10)
+	if err != nil {
+		return fmt.Errorf("error performing task: %#v", err)
+	}
+	return nil
+}
+
+// Fine tuning network creation function.
+// Return an error (the result of the network creation) and a task (used to monitor
+// the network configuration)
+// This function can create any type of Org Vdc network. The exact type is determined by
+// the combination of properties given with the network configuration structure.
+func (vdc *Vdc) CreateOrgVDCNetwork(networkConfig *types.OrgVDCNetwork) (Task, error) {
 	for _, av := range vdc.Vdc.Link {
 		if av.Rel == "add" && av.Type == "application/vnd.vmware.vcloud.orgVdcNetwork+xml" {
 			createUrl, err := url.ParseRequestURI(av.HREF)
-			//return fmt.Errorf("Test output: %#v")
 
 			if err != nil {
-				return fmt.Errorf("error decoding vdc response: %s", err)
+				return Task{}, fmt.Errorf("error decoding vdc response: %s", err)
 			}
 
 			output, err := xml.MarshalIndent(networkConfig, "  ", "    ")
 			if err != nil {
-				return fmt.Errorf("error marshaling OrgVDCNetwork compose: %s", err)
+				return Task{}, fmt.Errorf("error marshaling OrgVDCNetwork compose: %s", err)
 			}
-
-			//return fmt.Errorf("Test output: %s\n%#v", b, v.c)
 
 			var resp *http.Response
 			for {
@@ -119,23 +160,34 @@ func (vdc *Vdc) CreateOrgVDCNetwork(networkConfig *types.OrgVDCNetwork) error {
 						time.Sleep(3 * time.Second)
 						continue
 					}
-					return fmt.Errorf("error instantiating a new OrgVDCNetwork: %s", err)
+					return Task{}, fmt.Errorf("error instantiating a new OrgVDCNetwork: %s", err)
 				}
 				break
 			}
-			newstuff := NewOrgVDCNetwork(vdc.client)
-			if err = decodeBody(resp, newstuff.OrgVDCNetwork); err != nil {
-				return fmt.Errorf("error decoding orgvdcnetwork response: %s", err)
+			orgVDCNetwork := NewOrgVDCNetwork(vdc.client)
+			if err = decodeBody(resp, orgVDCNetwork.OrgVDCNetwork); err != nil {
+				return Task{}, fmt.Errorf("error decoding orgvdcnetwork response: %s", err)
 			}
-			task := NewTask(vdc.client)
-			for _, taskItem := range newstuff.OrgVDCNetwork.Tasks.Task {
-				task.Task = taskItem
-				err = task.WaitTaskCompletion()
-				if err != nil {
-					return fmt.Errorf("Error performing task: %#v", err)
+			activeTasks := 0
+			// Makes sure that there is only one active task for this network.
+			for _, taskItem := range orgVDCNetwork.OrgVDCNetwork.Tasks.Task {
+				if taskItem.HREF != "" {
+					activeTasks += 1
+					if os.Getenv("GOVCD_DEBUG") != "" {
+						fmt.Printf("task %s (%s) is active\n", taskItem.HREF, taskItem.Status)
+					}
 				}
 			}
+			if activeTasks > 1 {
+				// By my understanding of the implementation, there should not be more than one task for this operation.
+				// If there is, we will need to change the logic of this function, as we can only return one task. (GM)
+				return Task{}, fmt.Errorf("found %d active tasks instead of one", activeTasks)
+			}
+			for _, taskItem := range orgVDCNetwork.OrgVDCNetwork.Tasks.Task {
+				return Task{taskItem, vdc.client}, nil
+			}
+			return Task{}, fmt.Errorf("[%s] no suitable task found", util.CurrentFuncName())
 		}
 	}
-	return nil
+	return Task{}, fmt.Errorf("network creation failed: no operational link found")
 }

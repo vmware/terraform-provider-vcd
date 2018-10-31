@@ -61,7 +61,7 @@ func resourceVcdCatalogCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	catalog, err := adminOrg.CreateCatalog(d.Get("name").(string), d.Get("description").(string), false)
+	catalog, err := adminOrg.CreateCatalog(d.Get("name").(string), d.Get("description").(string))
 	if err != nil {
 		log.Printf("Error creating Catalog: %#v", err)
 		return fmt.Errorf("error creating Catalog: %#v", err)
