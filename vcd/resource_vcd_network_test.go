@@ -2,8 +2,6 @@ package vcd
 
 import (
 	"fmt"
-	"log"
-	"os"
 	"regexp"
 	"testing"
 

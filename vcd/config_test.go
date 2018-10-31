@@ -62,9 +62,15 @@ type TestConfig struct {
 		LogHttpRequest  bool   `json:"logHttpRequest,omitempty"`
 		LogHttpResponse bool   `json:"logHttpResponse,omitempty"`
 	} `json:"logging"`
+	Ova struct {
+		OvaPath         string `json:"ovaPath,omitempty"`
+		UploadPieceSize int64  `json:"uploadPieceSize,omitempty"`
+		UploadProgress  bool   `json:"uploadProgress,omitempty"`
+	} `json:"ova"`
 }
 
 const (
+	// Warning message used for all tests
 	acceptanceTestsSkipped = "Acceptance tests skipped unless env 'TF_ACC' set"
 	// This template will be added to test resource snippets on demand
 	providerTemplate = `
@@ -79,10 +85,12 @@ provider "vcd" {
 `
 )
 
-// This is a global variable shared across all tests. It contains
-// the information from the configuration file.
 var (
-	testConfig   TestConfig
+	// This is a global variable shared across all tests. It contains
+	// the information from the configuration file.
+	testConfig TestConfig
+
+	// Enables the short test (used by "make test")
 	vcdShortTest bool = os.Getenv("VCD_SHORT_TEST") != ""
 )
 
@@ -146,6 +154,12 @@ func templateFill(tmpl string, data StringMap) string {
 		TemplateWriting = false
 	}
 	var writeStr []byte = buf.Bytes()
+
+	// This is a quick way of enabling an alternate testing mode:
+	// When REMOVE_ORG_VDC_FROM_TEMPLATE is set, the terraform
+	// templates will be changed on-the-fly, to comment out the
+	// definitions of org and vdc. This will force the test to
+	// borrow org and vcd from the provider.
 	if os.Getenv("REMOVE_ORG_VDC_FROM_TEMPLATE") != "" {
 		re_org := regexp.MustCompile(`\sorg\s*=`)
 		buf2 := re_org.ReplaceAll(buf.Bytes(), []byte("# org = "))
@@ -158,18 +172,18 @@ func templateFill(tmpl string, data StringMap) string {
 		if !dirExists(testArtifacts) {
 			err := os.Mkdir(testArtifacts, 0755)
 			if err != nil {
-				panic(fmt.Errorf("Error creating directory %s: %s", testArtifacts, err))
+				panic(fmt.Errorf("error creating directory %s: %s", testArtifacts, err))
 			}
 		}
 		resourceFile := path.Join(testArtifacts, caller) + ".tf"
 		file, err := os.Create(resourceFile)
 		if err != nil {
-			panic(fmt.Errorf("Error creating file %s: %s", resourceFile, err))
+			panic(fmt.Errorf("error creating file %s: %s", resourceFile, err))
 		}
 		writer := bufio.NewWriter(file)
 		count, err := writer.Write(writeStr)
 		if err != nil || count == 0 {
-			panic(fmt.Errorf("Error writing to file %s. Reported %d bytes written. %s", resourceFile, count, err))
+			panic(fmt.Errorf("error writing to file %s. Reported %d bytes written. %s", resourceFile, count, err))
 		}
 		writer.Flush()
 		file.Close()

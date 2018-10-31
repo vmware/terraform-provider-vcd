@@ -2,8 +2,6 @@ package vcd
 
 import (
 	"fmt"
-	"log"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -33,9 +31,7 @@ func TestAccVcdSNAT_Basic(t *testing.T) {
 	}
 
 	configText := templateFill(testAccCheckVcdSnat_basic, params)
-	if os.Getenv("GOVCD_DEBUG") != "" {
-		log.Printf("#[DEBUG] CONFIGURATION: %s", configText)
-	}
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
