@@ -16,6 +16,9 @@ import (
 	"regexp"
 	"runtime"
 	"testing"
+
+	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/terraform"
 )
 
 type StringMap map[string]interface{}
@@ -39,11 +42,12 @@ type TestConfig struct {
 		} `json:"catalog"`
 	} `json:"vcd"`
 	Networking struct {
-		ExternalIp   string `json:"externalIp,omitempty"`
-		InternalIp   string `json:"internalIp,omitempty"`
-		EdgeGateway  string `json:"edgeGateway,omitempty"`
-		SharedSecret string `json:"sharedSecret"`
-		Local        struct {
+		ExternalIp      string `json:"externalIp,omitempty"`
+		InternalIp      string `json:"internalIp,omitempty"`
+		EdgeGateway     string `json:"edgeGateway,omitempty"`
+		SharedSecret    string `json:"sharedSecret"`
+		ExternalNetwork string `json:"externalNetwork,omitempty"`
+		Local           struct {
 			LocalIp            string `json:"localIp"`
 			LocalSubnetGateway string `json:"localSubnetGw"`
 		} `json:"local"`
@@ -58,16 +62,35 @@ type TestConfig struct {
 		LogHttpRequest  bool   `json:"logHttpRequest,omitempty"`
 		LogHttpResponse bool   `json:"logHttpResponse,omitempty"`
 	} `json:"logging"`
+	Ova struct {
+		OvaPath         string `json:"ovaPath,omitempty"`
+		UploadPieceSize int64  `json:"uploadPieceSize,omitempty"`
+		UploadProgress  bool   `json:"uploadProgress,omitempty"`
+	} `json:"ova"`
 }
 
 const (
+	// Warning message used for all tests
 	acceptanceTestsSkipped = "Acceptance tests skipped unless env 'TF_ACC' set"
+	// This template will be added to test resource snippets on demand
+	providerTemplate = `
+provider "vcd" {
+  user     = "{{.User}}"
+  password = "{{.Password}}"
+  url      = "{{.Url}}"
+  sysorg   = "{{.SysOrg}}"
+  org      = "{{.Org}}"
+}
+
+`
 )
 
-// This is a global variable shared across all tests. It contains
-// the information from the configuration file.
 var (
-	testConfig   TestConfig
+	// This is a global variable shared across all tests. It contains
+	// the information from the configuration file.
+	testConfig TestConfig
+
+	// Enables the short test (used by "make test")
 	vcdShortTest bool = os.Getenv("VCD_SHORT_TEST") != ""
 )
 
@@ -100,6 +123,20 @@ func templateFill(tmpl string, data StringMap) string {
 		caller = "vcd." + funcName.(string)
 	}
 
+	// If requested, the provider defined in testConfig will be added to test snippets.
+	if os.Getenv("VCD_ADD_PROVIDER") != "" {
+		// the original template is prefixed with the provider template
+		tmpl = providerTemplate + tmpl
+
+		// The data structure used to fill the template is integrated with
+		// provider data
+		data["User"] = testConfig.Provider.User
+		data["Password"] = testConfig.Provider.Password
+		data["Url"] = testConfig.Provider.Url
+		data["SysOrg"] = testConfig.Provider.SysOrg
+		data["Org"] = testConfig.VCD.Org
+	}
+
 	// Creates a template. The template gets the same name of the calling function, to generate a better
 	// error message in case of failure
 	unfilledTemplate := template.Must(template.New(caller).Parse(tmpl))
@@ -117,6 +154,12 @@ func templateFill(tmpl string, data StringMap) string {
 		TemplateWriting = false
 	}
 	var writeStr []byte = buf.Bytes()
+
+	// This is a quick way of enabling an alternate testing mode:
+	// When REMOVE_ORG_VDC_FROM_TEMPLATE is set, the terraform
+	// templates will be changed on-the-fly, to comment out the
+	// definitions of org and vdc. This will force the test to
+	// borrow org and vcd from the provider.
 	if os.Getenv("REMOVE_ORG_VDC_FROM_TEMPLATE") != "" {
 		re_org := regexp.MustCompile(`\sorg\s*=`)
 		buf2 := re_org.ReplaceAll(buf.Bytes(), []byte("# org = "))
@@ -129,18 +172,18 @@ func templateFill(tmpl string, data StringMap) string {
 		if !dirExists(testArtifacts) {
 			err := os.Mkdir(testArtifacts, 0755)
 			if err != nil {
-				panic(fmt.Errorf("Error creating directory %s: %s", testArtifacts, err))
+				panic(fmt.Errorf("error creating directory %s: %s", testArtifacts, err))
 			}
 		}
 		resourceFile := path.Join(testArtifacts, caller) + ".tf"
 		file, err := os.Create(resourceFile)
 		if err != nil {
-			panic(fmt.Errorf("Error creating file %s: %s", resourceFile, err))
+			panic(fmt.Errorf("error creating file %s: %s", resourceFile, err))
 		}
 		writer := bufio.NewWriter(file)
 		count, err := writer.Write(writeStr)
 		if err != nil || count == 0 {
-			panic(fmt.Errorf("Error writing to file %s. Reported %d bytes written. %s", resourceFile, count, err))
+			panic(fmt.Errorf("error writing to file %s. Reported %d bytes written. %s", resourceFile, count, err))
 		}
 		writer.Flush()
 		file.Close()
@@ -172,7 +215,7 @@ func getConfigStruct() TestConfig {
 	// Looks if the configuration file exists before attempting to read it
 	_, err := os.Stat(config)
 	if os.IsNotExist(err) {
-		panic(fmt.Errorf("Configuration file %s not found: %s", config, err))
+		panic(fmt.Errorf("configuration file %s not found: %s", config, err))
 	}
 	jsonFile, err := ioutil.ReadFile(config)
 	if err != nil {
@@ -193,6 +236,7 @@ func getConfigStruct() TestConfig {
 	if config_struct.Provider.SysOrg == "" {
 		config_struct.Provider.SysOrg = config_struct.VCD.Org
 	}
+	// fmt.Printf("[%s] config_struct %#v\n", callFuncName(), config_struct)
 	os.Setenv("VCD_USER", config_struct.Provider.User)
 	os.Setenv("VCD_PASSWORD", config_struct.Provider.Password)
 	os.Setenv("VCD_URL", config_struct.Provider.Url)
@@ -228,6 +272,12 @@ func TestMain(m *testing.M) {
 	// and we won't really run any tests involving vcd connections.
 	if !vcdShortTest {
 		testConfig = getConfigStruct()
+
+		// Provider initialization moved here from provider_test.init
+		testAccProvider = Provider().(*schema.Provider)
+		testAccProviders = map[string]terraform.ResourceProvider{
+			"vcd": testAccProvider,
+		}
 	}
 
 	// Runs all test functions

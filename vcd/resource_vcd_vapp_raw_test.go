@@ -5,8 +5,6 @@ import (
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/vmware/go-vcloud-director/govcd"
-	"log"
-	"os"
 	"testing"
 )
 
@@ -28,9 +26,7 @@ func TestAccVcdVAppRaw_Basic(t *testing.T) {
 		"VmName":      "TestAccVcdVAppRawVm",
 	}
 	configText := templateFill(testAccCheckVcdVAppRaw_basic, params)
-	if os.Getenv("GOVCD_DEBUG") != "" {
-		log.Printf("#[DEBUG] CONFIGURATION: %s\n", configText)
-	}
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -101,7 +97,7 @@ func testAccCheckVcdVAppRawDestroy(s *terraform.State) error {
 }
 
 const testAccCheckVcdVAppRaw_basic = `
-resource "vcd_network" "{{.NetworkName}}" {
+resource "vcd_network_routed" "{{.NetworkName}}" {
   name         = "{{.NetworkName}}"
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
@@ -130,7 +126,7 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   memory        = 1024
   cpus          = 1
 
-  network_name = "${vcd_network.{{.NetworkName}}.name}"
+  network_name = "${vcd_network_routed.{{.NetworkName}}.name}"
   ip           = "10.10.102.161"
   depends_on   = ["vcd_vapp.{{.VappName}}"]
 }

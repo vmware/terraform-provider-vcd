@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
+ * Copyright 2018 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
  */
 
 package govcd
@@ -383,7 +383,7 @@ func (eGW *EdgeGateway) Refresh() error {
 
 	resp, err := checkResp(eGW.client.Http.Do(req))
 	if err != nil {
-		return fmt.Errorf("error retreiving Edge Gateway: %s", err)
+		return fmt.Errorf("error retrieving Edge Gateway: %s", err)
 	}
 
 	// Empty struct before a new unmarshal, otherwise we end up with duplicate

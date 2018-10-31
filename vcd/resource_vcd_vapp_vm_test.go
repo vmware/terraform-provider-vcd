@@ -2,8 +2,6 @@ package vcd
 
 import (
 	"fmt"
-	"log"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -34,9 +32,7 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 	}
 
 	configText := templateFill(testAccCheckVcdVAppVm_basic, params)
-	if os.Getenv("GOVCD_DEBUG") != "" {
-		log.Printf("#[DEBUG] CONFIGURATION: %s\n", configText)
-	}
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -114,7 +110,7 @@ func testAccCheckVcdVAppVmDestroy(s *terraform.State) error {
 }
 
 const testAccCheckVcdVAppVm_basic = `
-resource "vcd_network" "{{.NetworkName}}" {
+resource "vcd_network_routed" "{{.NetworkName}}" {
   name         = "{{.NetworkName}}"
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
@@ -137,7 +133,7 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   org           = "{{.Org}}"
   vdc           = "{{.Vdc}}"
   vapp_name     = "${vcd_vapp.{{.VappName}}.name}"
-  network_name  = "${vcd_network.{{.NetworkName}}.name}"
+  network_name  = "${vcd_network_routed.{{.NetworkName}}.name}"
   name          = "{{.VmName}}"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
