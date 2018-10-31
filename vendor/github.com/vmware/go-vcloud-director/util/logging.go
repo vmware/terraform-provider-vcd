@@ -248,3 +248,11 @@ func CallFuncName() string {
 	}
 	return ""
 }
+
+// Returns the name of the current function
+func CurrentFuncName() string {
+	fpcs := make([]uintptr, 1)
+	runtime.Callers(2, fpcs)
+	fun := runtime.FuncForPC(fpcs[0])
+	return fun.Name()
+}

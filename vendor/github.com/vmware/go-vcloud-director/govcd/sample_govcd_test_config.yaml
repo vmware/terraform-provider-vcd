@@ -1,0 +1,89 @@
+# COPY THIS FILE to govcd_test_config.yaml
+# in the same directory and change the values 
+# to match your environment.
+#
+# All items in this file must exist already
+# (They will not be removed or left altered)
+# The test will create a vApp and remove it at the end
+#
+provider:
+    # vCD administrator credentials
+    # (Providing org credentials will skip some tests)
+    user: someuser
+    password: somepassword
+    #
+    # The vCD address, in the format https://vCD_IP/api
+    # or https://vCD_host_name/api
+    url: https://11.111.1.111/api
+    #
+    # The organization you are authenticating with
+    sysOrg: System
+vcd:
+    # Name of the organization (mandatory)
+    org: myorg
+    #
+    # The virtual data center (mandatory)
+    # The tests will create a vApp here
+    #
+    vdc: myvdc
+    # An Org catalog, possibly containing at least one item
+    catalog:
+        name: mycat
+        #
+        # One item in the catalog. It will be used to compose test vApps
+        catalogItem: myitem
+        #
+        # An optional description for the catalog. Its test will be skipped if omitted.
+        # If provided, it must be the current description of the catalog
+        description: mycat for loading
+        #
+        # An optional description for the catalog item
+        catalogItemDescription: myitem to create vapps
+    #
+    network: mynet
+    #
+    # Storage profiles used in the vDC
+    # One or two can be listed
+    storageProfile:
+        # First storage profile (mandatory)
+        storageProfile1: Development
+        # Second storage profile. If omitted, some tests will be skipped.
+        storageProfile2: "*"
+    # An edge gateway
+    # (see https://pubs.vmware.com/vca/topic/com.vmware.vcloud.api.doc_56/GUID-18B0FB8B-385C-4B6D-982C-4B24D271C646.html)
+    edgeGateway: myedgegw
+    #
+    # The IP of the gateway (must exist)
+    externalIp: 10.150.10.10
+    #
+    # A free IP in the Org vDC network
+    internalIp: 192.168.1.10
+    # An external Network name
+    externalNetwork: myexternalnet
+logging:
+    # All items in this section are optional
+    # Logging is disabled by default.
+    # See ./util/LOGGING.md for more info
+    #
+    # Enables or disables logs
+    enabled: true
+    #
+    # changes the log name
+    logFileName: "go-vcloud-director.log"
+    #
+    # Defines whether we log the requests in HTTP operations
+    logHttpRequests: true
+    #
+    # Defines whether we log the responses in HTTP operations
+    logHttpResponses: true
+    # Shows details of cleanup operations after tests
+    verboseCleanup: true
+ova:
+  # The ova for uploading catalog item for tests.
+  # Default paths are simple ova provided by project
+  # Empty values skips the tests
+  # Absolute or relative path
+  ovaPath: ../test-resources/test_vapp_template.ova
+  #
+  # The chunked ova (vmdk inside are split) for tests
+  ovaChunkedPath: ../test-resources/template_with_custom_chunk_size.ova

@@ -1,3 +1,7 @@
+/*
+ * Copyright 2018 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
+ */
+
 package types
 
 // LinkPredicate is a predicate for finding links in a link list
