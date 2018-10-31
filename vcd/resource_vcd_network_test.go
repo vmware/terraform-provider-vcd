@@ -247,3 +247,4 @@ resource "vcd_network_routed" "{{.NetworkName}}" {
     end_address   = "{{.EndIpAddress}}"
   }
 }
+`
