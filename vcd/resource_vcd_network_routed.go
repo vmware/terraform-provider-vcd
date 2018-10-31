@@ -1,9 +1,6 @@
 package vcd
 
 import (
-	"github.com/vmware/go-vcloud-director/util"
-	"log"
-
 	"fmt"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -146,7 +143,6 @@ func resourceVcdNetworkRouted() *schema.Resource {
 
 func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-	log.Printf("[TRACE] CLIENT: %#v", vcdClient)
 	vcdClient.Mutex.Lock()
 	defer vcdClient.Mutex.Unlock()
 
@@ -203,21 +199,12 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 		IsShared: d.Get("shared").(bool),
 	}
 
-	util.Logger.Printf("[INFO] NETWORK: %#v", orgVDCNetwork)
-	util.Logger.Printf("[INFO] NETWORK: %#v", orgVDCNetwork.Configuration)
-	util.Logger.Printf("[INFO] NETWORK: %#v", orgVDCNetwork.Configuration.IPScopes)
-
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 		return resource.RetryableError(vdc.CreateOrgVDCNetworkWait(orgVDCNetwork))
 	})
 	if err != nil {
 		return fmt.Errorf("error: %#v", err)
 	}
-
-	// err = vdc.Refresh()
-	// if err != nil {
-	// 	return fmt.Errorf("error refreshing VDC: %#v", err)
-	// }
 
 	network, err := vdc.FindVDCNetwork(d.Get("name").(string))
 	if err != nil {
