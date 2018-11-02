@@ -49,9 +49,11 @@ func resourceVcdCatalogItem() *schema.Resource {
 			},
 			"upload_piece_size": &schema.Schema{
 				Type:        schema.TypeInt,
-				Required:    true,
+				Required:    false,
+				Optional:    true,
 				ForceNew:    false,
-				Description: "size of upload file piece size in bytes",
+				Default:     1,
+				Description: "size of upload file piece size in mega bytes",
 			},
 			"show_upload_progress": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -81,17 +83,19 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("error finding Catalog: %#v", err)
 	}
 
-	cunkingSize := d.Get("upload_piece_size").(int)
+	uploadPieceSize := d.Get("upload_piece_size").(int)
 	itemName := d.Get("name").(string)
-	task, err := catalog.UploadOvf(d.Get("ova_path").(string), itemName, d.Get("description").(string), int64(cunkingSize))
+	task, err := catalog.UploadOvf(d.Get("ova_path").(string), itemName, d.Get("description").(string), int64(uploadPieceSize)*1024*1024) //convert to from mega bytes to bytes
 	if err != nil {
 		log.Printf("Error upload new catalog item: %#v", err)
 		return fmt.Errorf("error upload new catalog item: %#v", err)
 	}
 
+	terraformStdout := os.NewFile(uintptr(4), "stdout")
+
 	if d.Get("show_upload_progress").(bool) {
 		for {
-			fmt.Fprint(os.NewFile(uintptr(4), "stdout"), "vcd_catalog_item."+itemName+": upload progress "+task.GetUploadProgress()+"%\n")
+			fmt.Fprint(terraformStdout, "vcd_catalog_item."+itemName+": upload progress "+task.GetUploadProgress()+"%\n")
 			if task.GetUploadProgress() == "100.00" {
 				break
 			}
@@ -106,7 +110,7 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 				log.Printf("vCD Error import new catalog item: %#v", err)
 				return fmt.Errorf("vCD Error import new catalog item: %#v", err)
 			}
-			fmt.Fprint(os.NewFile(uintptr(4), "stdout"), "vcd_catalog_item."+itemName+": vCD import catalog item progress "+progress+"%\n")
+			fmt.Fprint(terraformStdout, "vcd_catalog_item."+itemName+": vCD import catalog item progress "+progress+"%\n")
 			if progress == "100" {
 				break
 			}
