@@ -91,7 +91,7 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 
 	if d.Get("show_upload_progress").(bool) {
 		for {
-			fmt.Fprint(os.Stdin, "vcd_catalog_item."+itemName+": upload progress "+task.GetUploadProgress()+"%\n")
+			fmt.Fprint(os.NewFile(uintptr(4), "stdout"), "vcd_catalog_item."+itemName+": upload progress "+task.GetUploadProgress()+"%\n")
 			if task.GetUploadProgress() == "100.00" {
 				break
 			}
@@ -106,7 +106,7 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 				log.Printf("vCD Error import new catalog item: %#v", err)
 				return fmt.Errorf("vCD Error import new catalog item: %#v", err)
 			}
-			fmt.Fprint(os.Stdin, "vcd_catalog_item."+itemName+": vCD import catalog item progress "+progress+"%\n")
+			fmt.Fprint(os.NewFile(uintptr(4), "stdout"), "vcd_catalog_item."+itemName+": vCD import catalog item progress "+progress+"%\n")
 			if progress == "100" {
 				break
 			}
