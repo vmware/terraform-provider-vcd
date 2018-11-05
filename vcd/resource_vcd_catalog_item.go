@@ -85,7 +85,7 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 
 	uploadPieceSize := d.Get("upload_piece_size").(int)
 	itemName := d.Get("name").(string)
-	task, err := catalog.UploadOvf(d.Get("ova_path").(string), itemName, d.Get("description").(string), int64(uploadPieceSize)*1024*1024) //convert to from mega bytes to bytes
+	task, err := catalog.UploadOvf(d.Get("ova_path").(string), itemName, d.Get("description").(string), int64(uploadPieceSize)*1024*1024) //// Convert from megabytes to bytes
 	if err != nil {
 		log.Printf("Error upload new catalog item: %#v", err)
 		return fmt.Errorf("error upload new catalog item: %#v", err)
