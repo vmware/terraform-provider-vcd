@@ -95,7 +95,7 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 
 	if d.Get("show_upload_progress").(bool) {
 		for {
-			fmt.Fprint(terraformStdout, "vcd_catalog_item."+itemName+": upload progress "+task.GetUploadProgress()+"%\n")
+			fmt.Fprint(terraformStdout, "vcd_catalog_item."+itemName+": Upload progress "+task.GetUploadProgress()+"%\n")
 			if task.GetUploadProgress() == "100.00" {
 				break
 			}
