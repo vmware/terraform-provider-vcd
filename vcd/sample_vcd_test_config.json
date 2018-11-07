@@ -54,7 +54,8 @@
   },
   "ova": {
     "ovaPath": "../test-resources/test_vapp_template.ova",
-    "uploadPieceSize": 2000000,
+    "//": "Size in megabytes",
+    "uploadPieceSize": 5,
     "uploadProgress": true
   }
 }
