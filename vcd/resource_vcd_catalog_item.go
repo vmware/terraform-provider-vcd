@@ -97,7 +97,7 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 	if flag.Lookup("test.v") == nil {
 		terraformStdout = os.NewFile(uintptr(4), "stdout")
 	} else {
-		terraformStdout = os.Stdin
+		terraformStdout = os.Stdout
 	}
 
 	if d.Get("show_upload_progress").(bool) {
