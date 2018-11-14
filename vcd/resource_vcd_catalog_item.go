@@ -1,6 +1,7 @@
 package vcd
 
 import (
+	"flag"
 	"fmt"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/govcd"
@@ -91,7 +92,13 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("error upload new catalog item: %#v", err)
 	}
 
-	terraformStdout := os.NewFile(uintptr(4), "stdout")
+	var terraformStdout *os.File
+	// Needed only to avoid error in tests - test fails miserable when uintptr(4) is used
+	if flag.Lookup("test.v") == nil {
+		terraformStdout = os.NewFile(uintptr(4), "stdout")
+	} else {
+		terraformStdout = os.Stdin
+	}
 
 	if d.Get("show_upload_progress").(bool) {
 		for {
