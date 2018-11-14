@@ -93,7 +93,7 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	var terraformStdout *os.File
-	// Needed only to avoid error in tests - test fails miserable when uintptr(4) is used
+	// Needed to avoid errors when uintptr(4) is used
 	if flag.Lookup("test.v") == nil {
 		terraformStdout = os.NewFile(uintptr(4), "stdout")
 	} else {
