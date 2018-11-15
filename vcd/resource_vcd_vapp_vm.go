@@ -114,7 +114,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	catalogitem, err := catalog.FindCatalogItem(d.Get("template_name").(string))
-	if err != nil {
+	if err != nil || catalogitem == (govcd.CatalogItem{}) {
 		return fmt.Errorf("error finding catalog item: %#v", err)
 	}
 
