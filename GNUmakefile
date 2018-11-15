@@ -17,7 +17,7 @@ testacc: fmtcheck
 		echo "ERROR: test configuration file vcd/vcd_test_config.json is missing"; \
 		exit 1; \
 	fi
-	cd vcd ; TF_ACC=1 go test -v . -timeout 30m
+	cd vcd ; TF_ACC=1 go test -v . -timeout 45m
 
 vet:
 	@echo "go vet ."
