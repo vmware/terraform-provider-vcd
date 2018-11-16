@@ -113,28 +113,28 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error finding catalog: %s", d.Get("catalog_name").(string))
 	}
 
-	catalogitem, err := catalog.FindCatalogItem(d.Get("template_name").(string))
-	if err != nil {
+	catalogItem, err := catalog.FindCatalogItem(d.Get("template_name").(string))
+	if err != nil || catalogItem == (govcd.CatalogItem{}) {
 		return fmt.Errorf("error finding catalog item: %#v", err)
 	}
 
-	vapptemplate, err := catalogitem.GetVAppTemplate()
+	vappTemplate, err := catalogItem.GetVAppTemplate()
 	if err != nil {
 		return fmt.Errorf("error finding VAppTemplate: %#v", err)
 	}
 
-	accept_eulas := d.Get("accept_all_eulas").(bool)
+	acceptEulas := d.Get("accept_all_eulas").(bool)
 
 	vapp, err := vdc.FindVAppByName(d.Get("vapp_name").(string))
 	if err != nil {
 		return fmt.Errorf("error finding Vapp: %#v", err)
 	}
 
-	netname := "blank"
+	netName := "blank"
 	net, err := vdc.FindVDCNetwork(d.Get("network_name").(string))
 
 	if err == nil {
-		netname = net.OrgVDCNetwork.Name
+		netName = net.OrgVDCNetwork.Name
 	}
 
 	nets := []*types.OrgVDCNetwork{net.OrgVDCNetwork}
@@ -144,18 +144,18 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	vAppNetworkName := "blank"
 	if vAppNetworkConfig.NetworkConfig != nil {
 		vAppNetworkName = vAppNetworkConfig.NetworkConfig[0].NetworkName
-		if netname == "blank" {
+		if netName == "blank" {
 			net, err = vdc.FindVDCNetwork(vAppNetworkName)
 			if err != nil {
 				return fmt.Errorf("error finding vApp network: %#v", err)
 			}
 
-			netname = net.OrgVDCNetwork.Name
+			netName = net.OrgVDCNetwork.Name
 		}
 
 	} else {
 
-		if netname == "blank" {
+		if netName == "blank" {
 			return fmt.Errorf("'network_name' must be valid when adding VM to raw vapp")
 		}
 
@@ -170,20 +170,20 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		if err != nil {
 			return fmt.Errorf("error assigning network to vApp:: %#v", err)
 		} else {
-			vAppNetworkName = netname
+			vAppNetworkName = netName
 		}
 
 	}
 
-	if vAppNetworkName != netname {
-		return fmt.Errorf("the VDC network '%s' must be assigned to the vApp. Currently the vApp network date is %s", netname, vAppNetworkName)
+	if vAppNetworkName != netName {
+		return fmt.Errorf("the VDC network '%s' must be assigned to the vApp. Currently the vApp network date is %s", netName, vAppNetworkName)
 	}
 
-	log.Printf("[TRACE] Network name found: %s", netname)
+	log.Printf("[TRACE] Network name found: %s", netName)
 
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 		log.Printf("[TRACE] Creating VM: %s", d.Get("name").(string))
-		task, err := vapp.AddVM(nets, vapptemplate, d.Get("name").(string), accept_eulas)
+		task, err := vapp.AddVM(nets, vappTemplate, d.Get("name").(string), acceptEulas)
 
 		if err != nil {
 			return resource.RetryableError(fmt.Errorf("error adding VM: %#v", err))
@@ -207,7 +207,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		networks := []map[string]interface{}{map[string]interface{}{
 			"ip":         d.Get("ip").(string),
 			"is_primary": true,
-			"orgnetwork": netname,
+			"orgnetwork": netName,
 		}}
 		task, err := vm.ChangeNetworkConfig(networks, d.Get("ip").(string))
 		if err != nil {
@@ -219,11 +219,11 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error changing network: %#v", err)
 	}
 
-	initscript, ok := d.GetOk("initscript")
+	initScript, ok := d.GetOk("initscript")
 
 	if ok {
 		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := vm.RunCustomizationScript(d.Get("name").(string), initscript.(string))
+			task, err := vm.RunCustomizationScript(d.Get("name").(string), initScript.(string))
 			if err != nil {
 				return resource.RetryableError(fmt.Errorf("error with setting init script: %#v", err))
 			}
