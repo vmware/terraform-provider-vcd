@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Skyscape Cloud Services.  All rights reserved.  Licensed under the Apache v2 License.
+ * Copyright 2018 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
  */
 
 package govcd
@@ -25,11 +25,11 @@ func NewResults(cli *Client) *Results {
 func (vdcCli *VCDClient) Query(params map[string]string) (Results, error) {
 
 	req := vdcCli.Client.NewRequest(params, "GET", vdcCli.QueryHREF, nil)
-	req.Header.Add("Accept", "vnd.vmware.vcloud.org+xml;version=5.5")
+	req.Header.Add("Accept", "vnd.vmware.vcloud.org+xml;version="+vdcCli.Client.APIVersion)
 
 	resp, err := checkResp(vdcCli.Client.Http.Do(req))
 	if err != nil {
-		return Results{}, fmt.Errorf("error retreiving query: %s", err)
+		return Results{}, fmt.Errorf("error retrieving query: %s", err)
 	}
 
 	results := NewResults(&vdcCli.Client)

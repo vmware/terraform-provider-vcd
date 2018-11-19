@@ -556,10 +556,10 @@
 			"revisionTime": "2016-09-27T10:08:44Z"
 		},
 		{
-			"checksumSHA1": "XOVcK8VdV42a4e0K8K0qbd99ouk=",
+			"checksumSHA1": "7HGSdZdK+4uadpqVZhEsloEh2p0=",
 			"path": "github.com/vmware/go-vcloud-director/govcd",
-			"revision": "14fe89645ad13dc3dbadc35f04dc15a979f675da",
-			"revisionTime": "2018-10-26T12:15:54Z"
+			"revision": "632f18297ddccb80c02fedd5d181c75e1195bb70",
+			"revisionTime": "2018-11-15T09:55:10Z"
 		},
 		{
 			"checksumSHA1": "PfPcGzRL/2qLcfZ9uY33iYs9IDg=",
@@ -570,8 +570,8 @@
 		{
 			"checksumSHA1": "mVNbgXU9MucqAsxc4EhI6kR6bZw=",
 			"path": "github.com/vmware/go-vcloud-director/util",
-			"revision": "14fe89645ad13dc3dbadc35f04dc15a979f675da",
-			"revisionTime": "2018-10-26T12:15:54Z"
+			"revision": "632f18297ddccb80c02fedd5d181c75e1195bb70",
+			"revisionTime": "2018-11-15T09:55:10Z"
 		},
 		{
 			"checksumSHA1": "vE43s37+4CJ2CDU6TlOUOYE0K9c=",

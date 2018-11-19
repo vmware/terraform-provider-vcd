@@ -563,6 +563,9 @@ func (eGW *EdgeGateway) Create1to1Mapping(internal, external, description string
 		},
 	}
 
+	if newedgeconfig.NatService == nil {
+		newedgeconfig.NatService = &types.NatService{}
+	}
 	newedgeconfig.NatService.NatRule = append(newedgeconfig.NatService.NatRule, snat)
 
 	dnat := &types.NatRule{
