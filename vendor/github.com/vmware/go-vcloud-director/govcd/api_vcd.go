@@ -70,7 +70,7 @@ func (vdcCli *VCDClient) vcdauthorize(user, pass, org string) error {
 	// Set Basic Authentication Header
 	req.SetBasicAuth(user+"@"+org, pass)
 	// Add the Accept header for vCA
-	req.Header.Add("Accept", "application/*+xml;version=5.5")
+	req.Header.Add("Accept", "application/*+xml;version="+vdcCli.Client.APIVersion)
 	resp, err := checkResp(vdcCli.Client.Http.Do(req))
 	if err != nil {
 		return err
@@ -89,7 +89,7 @@ func NewVCDClient(vcdEndpoint url.URL, insecure bool) *VCDClient {
 
 	return &VCDClient{
 		Client: Client{
-			APIVersion: "5.5",
+			APIVersion: "27.0", // supported by vCD 8.20, 9.0, 9.1, 9.5
 			VCDHREF:    vcdEndpoint,
 			Http: http.Client{
 				Transport: &http.Transport{
@@ -126,7 +126,7 @@ func (vdcCli *VCDClient) Disconnect() error {
 	}
 	req := vdcCli.Client.NewRequest(map[string]string{}, "DELETE", vdcCli.sessionHREF, nil)
 	// Add the Accept header for vCA
-	req.Header.Add("Accept", "application/xml;version=5.5")
+	req.Header.Add("Accept", "application/xml;version="+vdcCli.Client.APIVersion)
 	// Set Authorization Header
 	req.Header.Add(vdcCli.Client.VCDAuthHeader, vdcCli.Client.VCDToken)
 	if _, err := checkResp(vdcCli.Client.Http.Do(req)); err != nil {

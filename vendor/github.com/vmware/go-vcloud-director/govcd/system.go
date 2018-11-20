@@ -18,6 +18,12 @@ import (
 // settings parameter. The settings variable is defined in types.go.
 // Method will fail unless user has an admin token.
 // API Documentation: https://code.vmware.com/apis/220/vcloud#/doc/doc/operations/POST-CreateOrganization.html
+// Organization creation in vCD has two bugs BZ 2177355, BZ 2228936 (fixes are in 9.1.0.3 and 9.5.0.2) which require
+// organization settings to be provided as workarounds.
+// At least one element among DelayAfterPowerOnSeconds, DeployedVMQuota, StoredVmQuota, UseServerBootSequence, getVdcQuota
+// should be set when providing generalOrgSettings.
+// If either VAppLeaseSettings or VAppTemplateLeaseSettings is provided then all elements need to have values, otherwise don't provide them at all.
+// Overall elements must be in the correct order.
 func CreateOrg(vcdClient *VCDClient, name string, fullName string, isEnabled bool, settings *types.OrgSettings) (Task, error) {
 	vcomp := &types.AdminOrg{
 		Xmlns:       "http://www.vmware.com/vcloud/v1.5",
