@@ -11,9 +11,10 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 	"time"
 
-	types "github.com/vmware/go-vcloud-director/types/v56"
+	"github.com/vmware/go-vcloud-director/types/v56"
 	"github.com/vmware/go-vcloud-director/util"
 )
 
@@ -30,16 +31,16 @@ func NewEdgeGateway(cli *Client) *EdgeGateway {
 }
 
 func (eGW *EdgeGateway) AddDhcpPool(network *types.OrgVDCNetwork, dhcppool []interface{}) (Task, error) {
-	newedgeconfig := eGW.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration
-	util.Logger.Printf("[DEBUG] EDGE GATEWAY: %#v", newedgeconfig)
-	util.Logger.Printf("[DEBUG] EDGE GATEWAY SERVICE: %#v", newedgeconfig.GatewayDhcpService)
-	newdchpservice := &types.GatewayDhcpService{}
-	if newedgeconfig.GatewayDhcpService == nil {
-		newdchpservice.IsEnabled = true
+	newEdgeConfig := eGW.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration
+	util.Logger.Printf("[DEBUG] EDGE GATEWAY: %#v", newEdgeConfig)
+	util.Logger.Printf("[DEBUG] EDGE GATEWAY SERVICE: %#v", newEdgeConfig.GatewayDhcpService)
+	newDchpService := &types.GatewayDhcpService{}
+	if newEdgeConfig.GatewayDhcpService == nil {
+		newDchpService.IsEnabled = true
 	} else {
-		newdchpservice.IsEnabled = newedgeconfig.GatewayDhcpService.IsEnabled
+		newDchpService.IsEnabled = newEdgeConfig.GatewayDhcpService.IsEnabled
 
-		for _, dhcpPoolService := range newedgeconfig.GatewayDhcpService.Pool {
+		for _, dhcpPoolService := range newEdgeConfig.GatewayDhcpService.Pool {
 
 			// Kludgy IF to avoid deleting DNAT rules not created by us.
 			// If matches, let's skip it and continue the loop
@@ -47,7 +48,7 @@ func (eGW *EdgeGateway) AddDhcpPool(network *types.OrgVDCNetwork, dhcppool []int
 				continue
 			}
 
-			newdchpservice.Pool = append(newdchpservice.Pool, dhcpPoolService)
+			newDchpService.Pool = append(newDchpService.Pool, dhcpPoolService)
 		}
 	}
 
@@ -62,7 +63,7 @@ func (eGW *EdgeGateway) AddDhcpPool(network *types.OrgVDCNetwork, dhcppool []int
 			data["max_lease_time"] = 7200
 		}
 
-		dhcprule := &types.DhcpPoolService{
+		dhcpRule := &types.DhcpPoolService{
 			IsEnabled: true,
 			Network: &types.Reference{
 				HREF: network.HREF,
@@ -73,12 +74,12 @@ func (eGW *EdgeGateway) AddDhcpPool(network *types.OrgVDCNetwork, dhcppool []int
 			LowIPAddress:     data["start_address"].(string),
 			HighIPAddress:    data["end_address"].(string),
 		}
-		newdchpservice.Pool = append(newdchpservice.Pool, dhcprule)
+		newDchpService.Pool = append(newDchpService.Pool, dhcpRule)
 	}
 
 	newRules := &types.EdgeGatewayServiceConfiguration{
 		Xmlns:              "http://www.vmware.com/vcloud/v1.5",
-		GatewayDhcpService: newdchpservice,
+		GatewayDhcpService: newDchpService,
 	}
 
 	output, err := xml.MarshalIndent(newRules, "  ", "    ")
@@ -121,11 +122,11 @@ func (eGW *EdgeGateway) AddDhcpPool(network *types.OrgVDCNetwork, dhcppool []int
 
 }
 
-func (eGW *EdgeGateway) RemoveNATMapping(nattype, externalIP, internalIP, port string) (Task, error) {
-	return eGW.RemoveNATPortMapping(nattype, externalIP, port, internalIP, port)
+func (eGW *EdgeGateway) RemoveNATMapping(natType, externalIP, internalIP, port string) (Task, error) {
+	return eGW.RemoveNATPortMapping(natType, externalIP, port, internalIP, port)
 }
 
-func (eGW *EdgeGateway) RemoveNATPortMapping(nattype, externalIP, externalPort string, internalIP, internalPort string) (Task, error) {
+func (eGW *EdgeGateway) RemoveNATPortMapping(natType, externalIP, externalPort string, internalIP, internalPort string) (Task, error) {
 	// Find uplink interface
 	var uplink types.Reference
 	for _, gi := range eGW.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
@@ -135,21 +136,21 @@ func (eGW *EdgeGateway) RemoveNATPortMapping(nattype, externalIP, externalPort s
 		uplink = *gi.Network
 	}
 
-	newedgeconfig := eGW.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration
+	newEdgeConfig := eGW.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration
 
 	// Take care of the NAT service
-	newnatservice := &types.NatService{}
+	newNatService := &types.NatService{}
 
-	newnatservice.IsEnabled = newedgeconfig.NatService.IsEnabled
-	newnatservice.NatType = newedgeconfig.NatService.NatType
-	newnatservice.Policy = newedgeconfig.NatService.Policy
-	newnatservice.ExternalIP = newedgeconfig.NatService.ExternalIP
+	newNatService.IsEnabled = newEdgeConfig.NatService.IsEnabled
+	newNatService.NatType = newEdgeConfig.NatService.NatType
+	newNatService.Policy = newEdgeConfig.NatService.Policy
+	newNatService.ExternalIP = newEdgeConfig.NatService.ExternalIP
 
-	for _, natRule := range newedgeconfig.NatService.NatRule {
+	for _, natRule := range newEdgeConfig.NatService.NatRule {
 
 		// Kludgy IF to avoid deleting DNAT rules not created by us.
 		// If matches, let's skip it and continue the loop
-		if natRule.RuleType == nattype &&
+		if natRule.RuleType == natType &&
 			natRule.GatewayNatRule.OriginalIP == externalIP &&
 			natRule.GatewayNatRule.OriginalPort == externalPort &&
 			natRule.GatewayNatRule.Interface.HREF == uplink.HREF {
@@ -157,14 +158,14 @@ func (eGW *EdgeGateway) RemoveNATPortMapping(nattype, externalIP, externalPort s
 			continue
 		}
 		util.Logger.Printf("[DEBUG] KEEPING %s Rule: %#v", natRule.RuleType, natRule.GatewayNatRule)
-		newnatservice.NatRule = append(newnatservice.NatRule, natRule)
+		newNatService.NatRule = append(newNatService.NatRule, natRule)
 	}
 
-	newedgeconfig.NatService = newnatservice
+	newEdgeConfig.NatService = newNatService
 
 	newRules := &types.EdgeGatewayServiceConfiguration{
 		Xmlns:      "http://www.vmware.com/vcloud/v1.5",
-		NatService: newnatservice,
+		NatService: newNatService,
 	}
 
 	output, err := xml.MarshalIndent(newRules, "  ", "    ")
@@ -200,12 +201,12 @@ func (eGW *EdgeGateway) RemoveNATPortMapping(nattype, externalIP, externalPort s
 
 }
 
-func (eGW *EdgeGateway) AddNATMapping(nattype, externalIP, internalIP, port string) (Task, error) {
-	return eGW.AddNATPortMapping(nattype, externalIP, port, internalIP, port)
+func (eGW *EdgeGateway) AddNATMapping(natType, externalIP, internalIP, port string) (Task, error) {
+	return eGW.AddNATPortMapping(natType, externalIP, port, internalIP, port, "any", "")
 }
 
-func (eGW *EdgeGateway) AddNATPortMapping(nattype, externalIP, externalPort string, internalIP, internalPort string) (Task, error) {
-	return eGW.AddNATPortMappingWithUplink(nil, nattype, externalIP, externalPort, internalIP, internalPort)
+func (eGW *EdgeGateway) AddNATPortMapping(natType, externalIP, externalPort, internalIP, internalPort, protocol, icmpSubType string) (Task, error) {
+	return eGW.AddNATPortMappingWithUplink(nil, natType, externalIP, externalPort, internalIP, internalPort, protocol, icmpSubType)
 }
 
 func (eGW *EdgeGateway) getFirstUplink() types.Reference {
@@ -219,8 +220,46 @@ func (eGW *EdgeGateway) getFirstUplink() types.Reference {
 	return uplink
 }
 
-func (eGW *EdgeGateway) AddNATPortMappingWithUplink(network *types.OrgVDCNetwork, nattype, externalIP, externalPort string, internalIP, internalPort string) (Task, error) {
-	// if a network is provided take it, otherwise find first uplink on the edgegateway
+// Values are matched with VCD UI when creating DNAT for edge gateway.
+func isValidProtocol(protocol string) bool {
+	switch strings.ToUpper(protocol) {
+	case
+		"TCP",
+		"UDP",
+		"TCPUDP",
+		"ICMP",
+		"ANY":
+		return true
+	}
+	return false
+}
+
+// Used values are named here https://code.vmware.com/apis/287/vcloud#/doc/doc/types/GatewayNatRuleType.html
+// Also can be matched in VCD UI when creating DNAT for edge gateway.
+func isValidIcmpSubType(protocol string) bool {
+	switch strings.ToLower(protocol) {
+	case
+		"address-mask-request",
+		"address-mask-reply",
+		"destination-unreachable",
+		"echo-request",
+		"echo-reply",
+		"parameter-problem",
+		"redirect",
+		"router-advertisement",
+		"router-solicitation",
+		"source-quench",
+		"time-exceeded",
+		"timestamp-request",
+		"timestamp-reply",
+		"any":
+		return true
+	}
+	return false
+}
+
+func (eGW *EdgeGateway) AddNATPortMappingWithUplink(network *types.OrgVDCNetwork, natType, externalIP, externalPort, internalIP, internalPort, protocol, icmpSubType string) (Task, error) {
+	// if a network is provided take it, otherwise find first uplink on the edge gateway
 	var uplinkRef string
 
 	if network != nil {
@@ -229,24 +268,32 @@ func (eGW *EdgeGateway) AddNATPortMappingWithUplink(network *types.OrgVDCNetwork
 		uplinkRef = eGW.getFirstUplink().HREF
 	}
 
-	newedgeconfig := eGW.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration
+	if !isValidProtocol(protocol) {
+		return Task{}, fmt.Errorf("provided protocol is not one of TCP, UDP, TCPUDP, ICPM, ANY")
+	}
+
+	if strings.ToUpper(protocol) == "ICMP" && !isValidIcmpSubType(icmpSubType) {
+		return Task{}, fmt.Errorf("provided icmp sub type is not correct")
+	}
+
+	newEdgeConfig := eGW.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration
 
 	// Take care of the NAT service
-	newnatservice := &types.NatService{}
+	newNatService := &types.NatService{}
 
-	if newedgeconfig.NatService == nil {
-		newnatservice.IsEnabled = true
+	if newEdgeConfig.NatService == nil {
+		newNatService.IsEnabled = true
 	} else {
-		newnatservice.IsEnabled = newedgeconfig.NatService.IsEnabled
-		newnatservice.NatType = newedgeconfig.NatService.NatType
-		newnatservice.Policy = newedgeconfig.NatService.Policy
-		newnatservice.ExternalIP = newedgeconfig.NatService.ExternalIP
+		newNatService.IsEnabled = newEdgeConfig.NatService.IsEnabled
+		newNatService.NatType = newEdgeConfig.NatService.NatType
+		newNatService.Policy = newEdgeConfig.NatService.Policy
+		newNatService.ExternalIP = newEdgeConfig.NatService.ExternalIP
 
-		for _, natRule := range newedgeconfig.NatService.NatRule {
+		for _, natRule := range newEdgeConfig.NatService.NatRule {
 
 			// Kludgy IF to avoid deleting DNAT rules not created by us.
 			// If matches, let's skip it and continue the loop
-			if natRule.RuleType == nattype &&
+			if natRule.RuleType == natType &&
 				natRule.GatewayNatRule.OriginalIP == externalIP &&
 				natRule.GatewayNatRule.OriginalPort == externalPort &&
 				natRule.GatewayNatRule.TranslatedIP == internalIP &&
@@ -255,13 +302,13 @@ func (eGW *EdgeGateway) AddNATPortMappingWithUplink(network *types.OrgVDCNetwork
 				continue
 			}
 
-			newnatservice.NatRule = append(newnatservice.NatRule, natRule)
+			newNatService.NatRule = append(newNatService.NatRule, natRule)
 		}
 	}
 
 	//add rule
 	natRule := &types.NatRule{
-		RuleType:  nattype,
+		RuleType:  natType,
 		IsEnabled: true,
 		GatewayNatRule: &types.GatewayNatRule{
 			Interface: &types.Reference{
@@ -271,16 +318,17 @@ func (eGW *EdgeGateway) AddNATPortMappingWithUplink(network *types.OrgVDCNetwork
 			OriginalPort:   externalPort,
 			TranslatedIP:   internalIP,
 			TranslatedPort: internalPort,
-			Protocol:       "tcp",
+			Protocol:       protocol,
+			IcmpSubType:    icmpSubType,
 		},
 	}
-	newnatservice.NatRule = append(newnatservice.NatRule, natRule)
+	newNatService.NatRule = append(newNatService.NatRule, natRule)
 
-	newedgeconfig.NatService = newnatservice
+	newEdgeConfig.NatService = newNatService
 
 	newRules := &types.EdgeGatewayServiceConfiguration{
 		Xmlns:      "http://www.vmware.com/vcloud/v1.5",
-		NatService: newnatservice,
+		NatService: newNatService,
 	}
 
 	output, err := xml.MarshalIndent(newRules, "  ", "    ")
@@ -413,18 +461,18 @@ func (eGW *EdgeGateway) Remove1to1Mapping(internal, external string) (Task, erro
 		}
 	}
 
-	newedgeconfig := eGW.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration
+	newEdgeConfig := eGW.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration
 
 	// Take care of the NAT service
-	newnatservice := &types.NatService{}
+	newNatService := &types.NatService{}
 
 	// Copy over the NAT configuration
-	newnatservice.IsEnabled = newedgeconfig.NatService.IsEnabled
-	newnatservice.NatType = newedgeconfig.NatService.NatType
-	newnatservice.Policy = newedgeconfig.NatService.Policy
-	newnatservice.ExternalIP = newedgeconfig.NatService.ExternalIP
+	newNatService.IsEnabled = newEdgeConfig.NatService.IsEnabled
+	newNatService.NatType = newEdgeConfig.NatService.NatType
+	newNatService.Policy = newEdgeConfig.NatService.Policy
+	newNatService.ExternalIP = newEdgeConfig.NatService.ExternalIP
 
-	for i, natRule := range newedgeconfig.NatService.NatRule {
+	for i, natRule := range newEdgeConfig.NatService.NatRule {
 
 		// Kludgy IF to avoid deleting DNAT rules not created by us.
 		// If matches, let's skip it and continue the loop
@@ -449,22 +497,22 @@ func (eGW *EdgeGateway) Remove1to1Mapping(internal, external string) (Task, erro
 
 		// If doesn't match the above IFs, it's something we need to preserve,
 		// let's add it to the new NatService struct
-		newnatservice.NatRule = append(newnatservice.NatRule, newedgeconfig.NatService.NatRule[i])
+		newNatService.NatRule = append(newNatService.NatRule, newEdgeConfig.NatService.NatRule[i])
 
 	}
 
 	// Fill the new NatService Section
-	newedgeconfig.NatService = newnatservice
+	newEdgeConfig.NatService = newNatService
 
 	// Take care of the Firewall service
-	newfwservice := &types.FirewallService{}
+	newFwService := &types.FirewallService{}
 
 	// Copy over the firewall configuration
-	newfwservice.IsEnabled = newedgeconfig.FirewallService.IsEnabled
-	newfwservice.DefaultAction = newedgeconfig.FirewallService.DefaultAction
-	newfwservice.LogDefaultAction = newedgeconfig.FirewallService.LogDefaultAction
+	newFwService.IsEnabled = newEdgeConfig.FirewallService.IsEnabled
+	newFwService.DefaultAction = newEdgeConfig.FirewallService.DefaultAction
+	newFwService.LogDefaultAction = newEdgeConfig.FirewallService.LogDefaultAction
 
-	for i, firewallRule := range newedgeconfig.FirewallService.FirewallRule {
+	for i, firewallRule := range newEdgeConfig.FirewallService.FirewallRule {
 
 		// Kludgy IF to avoid deleting inbound FW rules not created by us.
 		// If matches, let's skip it and continue the loop
@@ -490,17 +538,17 @@ func (eGW *EdgeGateway) Remove1to1Mapping(internal, external string) (Task, erro
 
 		// If doesn't match the above IFs, it's something we need to preserve,
 		// let's add it to the new FirewallService struct
-		newfwservice.FirewallRule = append(newfwservice.FirewallRule, newedgeconfig.FirewallService.FirewallRule[i])
+		newFwService.FirewallRule = append(newFwService.FirewallRule, newEdgeConfig.FirewallService.FirewallRule[i])
 
 	}
 
 	// Fill the new FirewallService Section
-	newedgeconfig.FirewallService = newfwservice
+	newEdgeConfig.FirewallService = newFwService
 
 	// Fix
-	newedgeconfig.NatService.IsEnabled = true
+	newEdgeConfig.NatService.IsEnabled = true
 
-	output, err := xml.MarshalIndent(newedgeconfig, "  ", "    ")
+	output, err := xml.MarshalIndent(newEdgeConfig, "  ", "    ")
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 	}
@@ -547,7 +595,7 @@ func (eGW *EdgeGateway) Create1to1Mapping(internal, external, description string
 		}
 	}
 
-	newedgeconfig := eGW.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration
+	newEdgeConfig := eGW.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration
 
 	snat := &types.NatRule{
 		Description: description,
@@ -563,10 +611,10 @@ func (eGW *EdgeGateway) Create1to1Mapping(internal, external, description string
 		},
 	}
 
-	if newedgeconfig.NatService == nil {
-		newedgeconfig.NatService = &types.NatService{}
+	if newEdgeConfig.NatService == nil {
+		newEdgeConfig.NatService = &types.NatService{}
 	}
-	newedgeconfig.NatService.NatRule = append(newedgeconfig.NatService.NatRule, snat)
+	newEdgeConfig.NatService.NatRule = append(newEdgeConfig.NatService.NatRule, snat)
 
 	dnat := &types.NatRule{
 		Description: description,
@@ -584,7 +632,7 @@ func (eGW *EdgeGateway) Create1to1Mapping(internal, external, description string
 		},
 	}
 
-	newedgeconfig.NatService.NatRule = append(newedgeconfig.NatService.NatRule, dnat)
+	newEdgeConfig.NatService.NatRule = append(newEdgeConfig.NatService.NatRule, dnat)
 
 	fwin := &types.FirewallRule{
 		Description: description,
@@ -600,7 +648,7 @@ func (eGW *EdgeGateway) Create1to1Mapping(internal, external, description string
 		EnableLogging:        false,
 	}
 
-	newedgeconfig.FirewallService.FirewallRule = append(newedgeconfig.FirewallService.FirewallRule, fwin)
+	newEdgeConfig.FirewallService.FirewallRule = append(newEdgeConfig.FirewallService.FirewallRule, fwin)
 
 	fwout := &types.FirewallRule{
 		Description: description,
@@ -616,9 +664,9 @@ func (eGW *EdgeGateway) Create1to1Mapping(internal, external, description string
 		EnableLogging:        false,
 	}
 
-	newedgeconfig.FirewallService.FirewallRule = append(newedgeconfig.FirewallService.FirewallRule, fwout)
+	newEdgeConfig.FirewallService.FirewallRule = append(newEdgeConfig.FirewallService.FirewallRule, fwout)
 
-	output, err := xml.MarshalIndent(newedgeconfig, "  ", "    ")
+	output, err := xml.MarshalIndent(newEdgeConfig, "  ", "    ")
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 	}

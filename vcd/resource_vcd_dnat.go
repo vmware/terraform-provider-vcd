@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -54,6 +55,18 @@ func resourceVcdDNAT() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+			"protocol": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Default:  "TCP", // keep back compatibility as was hardcoded previously
+			},
+			"icmp_sub_type": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Default:  "any",
+			},
 		},
 	}
 }
@@ -77,6 +90,12 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
+	protocol := d.Get("protocol").(string)
+	icmpSubType := d.Get("icmp_sub_type").(string)
+	if strings.ToUpper(protocol) != "ICMP" {
+		icmpSubType = ""
+	}
+
 	// Creating a loop to offer further protection from the edge gateway erroring
 	// due to being busy eg another person is using another client so wouldn't be
 	// constrained by out lock. If the edge gateway reurns with a busy error, wait
@@ -87,7 +106,8 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 			d.Get("external_ip").(string),
 			portString,
 			d.Get("internal_ip").(string),
-			translatedPortString)
+			translatedPortString, protocol,
+			icmpSubType)
 		if err != nil {
 			return resource.RetryableError(
 				fmt.Errorf("error setting DNAT rules: %#v", err))
