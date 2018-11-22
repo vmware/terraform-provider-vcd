@@ -211,20 +211,6 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 				}
 			}
 
-			if d.Get("power_on").(bool) == true {
-				err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-					task, err := vapp.PowerOn()
-					if err != nil {
-						return resource.RetryableError(fmt.Errorf("error powerOn machine: %#v", err))
-					}
-					return resource.RetryableError(task.WaitTaskCompletion())
-				})
-
-				if err != nil {
-					return fmt.Errorf("error completing powerOn tasks: %#v", err)
-				}
-			}
-
 			initscript, ok := d.GetOk("initscript")
 			if ok {
 				err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
@@ -237,6 +223,20 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 				})
 				if err != nil {
 					return fmt.Errorf(errorCompletingTask, err)
+				}
+			}
+
+			if d.Get("power_on").(bool) == true {
+				err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+					task, err := vapp.PowerOn()
+					if err != nil {
+						return resource.RetryableError(fmt.Errorf("error powerOn machine: %#v", err))
+					}
+					return resource.RetryableError(task.WaitTaskCompletion())
+				})
+
+				if err != nil {
+					return fmt.Errorf("error completing powerOn tasks: %#v", err)
 				}
 			}
 
