@@ -211,10 +211,18 @@ func (adminOrg *AdminOrg) GetVdcByName(vdcname string) (Vdc, error) {
 	for _, vdcs := range adminOrg.AdminOrg.Vdcs.Vdcs {
 		if vdcs.Name == vdcname {
 			splitbyAdminHREF := strings.Split(vdcs.HREF, "/admin")
-			vdcHREF := splitbyAdminHREF[0] + splitbyAdminHREF[1]
+
+			// admin user and normal user will have different urls
+			var vdcHREF string
+			if len(splitbyAdminHREF) == 1 {
+				vdcHREF = vdcs.HREF
+			} else {
+				vdcHREF = splitbyAdminHREF[0] + splitbyAdminHREF[1]
+			}
+
 			vdcURL, err := url.ParseRequestURI(vdcHREF)
 			if err != nil {
-				return Vdc{}, fmt.Errorf("Error parsing url: %v", err)
+				return Vdc{}, fmt.Errorf("error parsing url: %v", err)
 			}
 			req := adminOrg.client.NewRequest(map[string]string{}, "GET", *vdcURL, nil)
 			resp, err := checkResp(adminOrg.client.Http.Do(req))

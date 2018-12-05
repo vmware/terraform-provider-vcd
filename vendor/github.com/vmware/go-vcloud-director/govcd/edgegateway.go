@@ -201,8 +201,8 @@ func (eGW *EdgeGateway) RemoveNATPortMapping(natType, externalIP, externalPort s
 
 }
 
-func (eGW *EdgeGateway) AddNATMapping(natType, externalIP, internalIP, port string) (Task, error) {
-	return eGW.AddNATPortMapping(natType, externalIP, port, internalIP, port, "any", "")
+func (eGW *EdgeGateway) AddNATMapping(natType, externalIP, internalIP string) (Task, error) {
+	return eGW.AddNATPortMapping(natType, externalIP, "any", internalIP, "any", "any", "")
 }
 
 func (eGW *EdgeGateway) AddNATPortMapping(natType, externalIP, externalPort, internalIP, internalPort, protocol, icmpSubType string) (Task, error) {
@@ -269,7 +269,7 @@ func (eGW *EdgeGateway) AddNATPortMappingWithUplink(network *types.OrgVDCNetwork
 	}
 
 	if !isValidProtocol(protocol) {
-		return Task{}, fmt.Errorf("provided protocol is not one of TCP, UDP, TCPUDP, ICPM, ANY")
+		return Task{}, fmt.Errorf("provided protocol is not one of TCP, UDP, TCPUDP, ICMP, ANY")
 	}
 
 	if strings.ToUpper(protocol) == "ICMP" && !isValidIcmpSubType(icmpSubType) {
