@@ -25,12 +25,11 @@ type Client struct {
 	VCDAuthHeader string      // Authorization header
 	VCDHREF       url.URL     // VCD API ENDPOINT
 	Http          http.Client // HttpClient is the client to use. Default will be used if not provided.
+	IsSysAdmin    bool        // flag if client is connected as system administrator
 }
 
-// NewRequest creates a new HTTP request and applies necessary auth headers if
-// set.
-func (cli *Client) NewRequest(params map[string]string, method string, reqUrl url.URL, body io.Reader) *http.Request {
-
+// Function allow to pass complex values params which shouldn't be encoded like for queries. e.g. /query?filter=(name=foo)
+func (cli *Client) NewRequestWitNotEncodedParams(params map[string]string, notEncodedParams map[string]string, method string, reqUrl url.URL, body io.Reader) *http.Request {
 	reqValues := url.Values{}
 
 	// Build up our request parameters
@@ -40,6 +39,12 @@ func (cli *Client) NewRequest(params map[string]string, method string, reqUrl ur
 
 	// Add the params to our URL
 	reqUrl.RawQuery = reqValues.Encode()
+
+	for key, value := range notEncodedParams {
+		if key != "" && value != "" {
+			reqUrl.RawQuery += "&" + key + "=" + value
+		}
+	}
 
 	// Build the request, no point in checking for errors here as we're just
 	// passing a string version of an url.URL struct and http.NewRequest returns
@@ -77,6 +82,12 @@ func (cli *Client) NewRequest(params map[string]string, method string, reqUrl ur
 	}
 	return req
 
+}
+
+// NewRequest creates a new HTTP request and applies necessary auth headers if
+// set.
+func (cli *Client) NewRequest(params map[string]string, method string, reqUrl url.URL, body io.Reader) *http.Request {
+	return cli.NewRequestWitNotEncodedParams(params, nil, method, reqUrl, body)
 }
 
 // parseErr takes an error XML resp and returns a single string for use in error messages.

@@ -87,3 +87,12 @@ ova:
   #
   # The chunked ova (vmdk inside are split) for tests
   ovaChunkedPath: ../test-resources/template_with_custom_chunk_size.ova
+media:
+  # The iso for uploading media item for tests.
+  # Default paths are simple iso provided by project
+  # Empty values skips the tests
+  # Absolute or relative path
+  mediaPath: ../test-resources/test.iso
+  # Existing media in test system
+  mediaName: uploadedMediaName
+

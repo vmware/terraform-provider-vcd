@@ -7,8 +7,9 @@ package govcd
 import (
 	"bytes"
 	"encoding/xml"
+	"errors"
 	"fmt"
-	types "github.com/vmware/go-vcloud-director/types/v56"
+	"github.com/vmware/go-vcloud-director/types/v56"
 	"github.com/vmware/go-vcloud-director/util"
 	"net/url"
 	"strings"
@@ -561,4 +562,30 @@ func (vdc *Vdc) FindVAppByID(vappid string) (VApp, error) {
 	}
 	return VApp{}, fmt.Errorf("can't find vApp")
 
+}
+
+func (vdc *Vdc) FindMediaImage(mediaName string) (MediaItem, error) {
+	util.Logger.Printf("[TRACE] Querying medias by name\n")
+
+	mediaResults, err := queryMediaItemsWithFilter(vdc, "name=="+url.QueryEscape(mediaName))
+	if err != nil {
+		return MediaItem{}, err
+	}
+
+	newMediaItem := NewMediaItem(vdc.client)
+
+	if len(mediaResults) == 1 {
+		newMediaItem.MediaItem = mediaResults[0]
+	}
+
+	if len(mediaResults) == 0 {
+		return MediaItem{}, nil
+	}
+
+	if len(mediaResults) > 1 {
+		return MediaItem{}, errors.New("found more than result")
+	}
+
+	util.Logger.Printf("[TRACE] Found media record by name: %#v \n", mediaResults)
+	return *newMediaItem, nil
 }
