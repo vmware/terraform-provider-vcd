@@ -6,6 +6,7 @@ package govcd
 
 import (
 	"fmt"
+	"github.com/vmware/go-vcloud-director/util"
 	"net/url"
 	"strconv"
 	"time"
@@ -139,4 +140,20 @@ func (task *Task) GetTaskProgress() (string, error) {
 	}
 
 	return strconv.Itoa(task.Task.Progress), nil
+}
+
+func (task *Task) CancelTask() error {
+	cancelTaskURL, err := url.ParseRequestURI(task.Task.HREF + "/action/cancel")
+	if err != nil {
+		util.Logger.Printf("[Error] Error cancelling task %v: %s", cancelTaskURL.String(), err)
+		return err
+	}
+
+	request := task.client.NewRequest(map[string]string{}, "POST", *cancelTaskURL, nil)
+	_, err = checkResp(task.client.Http.Do(request))
+	if err != nil {
+		util.Logger.Printf("[Error] Error cancelling task  %v: %s", cancelTaskURL.String(), err)
+		return err
+	}
+	return nil
 }
