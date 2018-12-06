@@ -288,7 +288,7 @@ func uploadFiles(client *Client, vappTemplate *types.VAppTemplate, ovfFileDesc *
 			number, err := getFileFromDescription(item.Name, ovfFileDesc)
 			if err != nil {
 				util.Logger.Printf("[Error] Error uploading files: %#v", err)
-				uploadError = &err
+				*uploadError = err
 				return err
 			}
 			if ovfFileDesc.File[number].ChunkSize != 0 {
@@ -306,7 +306,7 @@ func uploadFiles(client *Client, vappTemplate *types.VAppTemplate, ovfFileDesc *
 				tempVar, err := uploadMultiPartFile(client, chunkFilePaths, details)
 				if err != nil {
 					util.Logger.Printf("[Error] Error uploading files: %#v", err)
-					uploadError = &err
+					*uploadError = err
 					return err
 				}
 				uploadedBytes += tempVar
@@ -324,7 +324,7 @@ func uploadFiles(client *Client, vappTemplate *types.VAppTemplate, ovfFileDesc *
 				tempVar, err := uploadFile(client, findFilePath(filesAbsPaths, item.Name), details)
 				if err != nil {
 					util.Logger.Printf("[Error] Error uploading files: %#v", err)
-					uploadError = &err
+					*uploadError = err
 					return err
 				}
 				uploadedBytes += tempVar
@@ -336,7 +336,7 @@ func uploadFiles(client *Client, vappTemplate *types.VAppTemplate, ovfFileDesc *
 	err := os.RemoveAll(tempPath)
 	if err != nil {
 		util.Logger.Printf("[Error] Error removing temporary files: %#v", err)
-		uploadError = &err
+		*uploadError = err
 		return err
 	}
 
@@ -663,11 +663,13 @@ func removeCatalogItemOnError(client *Client, vappTemplateLink *url.URL, itemNam
 			}
 		}
 
-		for _, task := range vAppTemplate.Tasks.Task {
-			if itemName == task.Owner.Name {
-				err = cancelTask(client, task.HREF)
+		for _, taskItem := range vAppTemplate.Tasks.Task {
+			if itemName == taskItem.Owner.Name {
+				task := NewTask(client)
+				task.Task = taskItem
+				err = task.CancelTask()
 				if err != nil {
-					util.Logger.Printf("[ERROR] Error canceling task for catalog item upload %#v.\n", err)
+					util.Logger.Printf("[ERROR] Error canceling task for catalog item upload %#v", err)
 				}
 			}
 		}

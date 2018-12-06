@@ -181,11 +181,13 @@ func removeImageOnError(client *Client, media *types.Media, itemName string) {
 			}
 		}
 
-		for _, task := range media.Tasks.Task {
-			if itemName == task.Owner.Name {
-				err = cancelTask(client, task.HREF)
+		for _, taskItem := range media.Tasks.Task {
+			if itemName == taskItem.Owner.Name {
+				task := NewTask(client)
+				task.Task = taskItem
+				err = task.CancelTask()
 				if err != nil {
-					util.Logger.Printf("[ERROR] Error canceling task for media upload %#v.\n", err)
+					util.Logger.Printf("[ERROR] Error canceling task for media upload %#v", err)
 				}
 			}
 		}

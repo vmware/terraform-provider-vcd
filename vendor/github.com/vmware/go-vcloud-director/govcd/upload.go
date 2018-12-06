@@ -201,22 +201,6 @@ func getCallBackFunction() (func(int64, int64), *float64) {
 	return callback, &uploadProgress
 }
 
-func cancelTask(client *Client, taskHREF string) error {
-	cancelTaskURL, err := url.ParseRequestURI(taskHREF + "/action/cancel")
-	if err != nil {
-		util.Logger.Printf("[Error] Error cancellins task %v: %s", taskHREF, err)
-		return err
-	}
-
-	request := client.NewRequest(map[string]string{}, "POST", *cancelTaskURL, nil)
-	_, err = checkResp(client.Http.Do(request))
-	if err != nil {
-		util.Logger.Printf("[Error] Error cancellins task  %v: %s", taskHREF, err)
-		return err
-	}
-	return nil
-}
-
 func validateAndFixFilePath(file string) (string, error) {
 	absolutePath, err := filepath.Abs(file)
 	if err != nil {
