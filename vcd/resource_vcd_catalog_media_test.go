@@ -1,0 +1,129 @@
+package vcd
+
+import (
+	"fmt"
+	"github.com/hashicorp/terraform/helper/resource"
+	"github.com/hashicorp/terraform/terraform"
+	"github.com/vmware/go-vcloud-director/govcd"
+	"testing"
+)
+
+var TestAccVcdCatalogMedia = "TestAccVcdCatalogMediaBasic"
+var TestAccVcdCatalogMediaDescription = "TestAccVcdCatalogMediaBasicDescription"
+
+func TestAccVcdCatalogMediaBasic(t *testing.T) {
+
+	var catalogItem govcd.CatalogItem
+	var params = StringMap{
+		"Org":              testConfig.VCD.Org,
+		"Catalog":          testConfig.VCD.Catalog.Name,
+		"CatalogMediaName": TestAccVcdCatalogMedia,
+		"Description":      TestAccVcdCatalogMediaDescription,
+		"MediaPath":        testConfig.Media.MediaPath,
+		"UploadPieceSize":  testConfig.Media.UploadPieceSize,
+		"UploadProgress":   testConfig.Media.UploadProgress,
+	}
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	configText := templateFill(testAccCheckVcdCatalogMediaBasic, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckCatalogMediaDestroy,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdCatalogMediaExists("vcd_catalog_media."+TestAccVcdCatalogMedia, &catalogItem),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_media."+TestAccVcdCatalogMedia, "name", TestAccVcdCatalogMedia),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_media."+TestAccVcdCatalogMedia, "description", TestAccVcdCatalogMediaDescription),
+				),
+			},
+		},
+	})
+}
+
+func testAccCheckVcdCatalogMediaExists(mediaName string, catalogItem *govcd.CatalogItem) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		catalogMediaRs, ok := s.RootModule().Resources[mediaName]
+		if !ok {
+			return fmt.Errorf("not found: %s", mediaName)
+		}
+
+		if catalogMediaRs.Primary.ID == "" {
+			return fmt.Errorf("no catalog media ID is set")
+		}
+
+		conn := testAccProvider.Meta().(*VCDClient)
+
+		adminOrg, err := conn.GetAdminOrg(testConfig.VCD.Org)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
+		}
+
+		catalog, err := adminOrg.FindCatalog(testConfig.VCD.Catalog.Name)
+		if err != nil {
+			return fmt.Errorf("catalog %s does not exist (%#v)", testConfig.VCD.Catalog.Name, catalog.Catalog)
+		}
+
+		newCatalogItem, err := catalog.FindCatalogItem(catalogMediaRs.Primary.Attributes["name"])
+		if err != nil {
+			return fmt.Errorf("catalog media %s does not exist (%#v)", catalogMediaRs.Primary.ID, catalogItem.CatalogItem)
+		}
+
+		catalogItem = &newCatalogItem
+		return nil
+	}
+}
+
+func testAccCheckCatalogMediaDestroy(s *terraform.State) error {
+	conn := testAccProvider.Meta().(*VCDClient)
+	for _, rs := range s.RootModule().Resources {
+		if rs.Type != "vcd_catalog_media" && rs.Primary.Attributes["name"] != TestAccVcdCatalogMedia {
+			continue
+		}
+
+		adminOrg, err := conn.GetAdminOrg(testConfig.VCD.Org)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
+		}
+
+		catalog, err := adminOrg.FindCatalog(testConfig.VCD.Catalog.Name)
+		if err != nil {
+			return fmt.Errorf("catalog query %s ended with error: %#v", rs.Primary.ID, err)
+		}
+
+		mediaName := rs.Primary.Attributes["name"]
+		catalogItem, err := catalog.FindCatalogItem(mediaName)
+
+		if catalogItem != (govcd.CatalogItem{}) {
+			return fmt.Errorf("catalog media %s still exists", mediaName)
+		}
+		if err != nil {
+			return fmt.Errorf("catalog media %s still exists or other error: %#v", mediaName, err)
+		}
+
+	}
+
+	return nil
+}
+
+const testAccCheckVcdCatalogMediaBasic = `
+resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
+org = "{{.Org}}"
+catalog = "{{.Catalog}}"
+
+name = "{{.CatalogMediaName}}"
+description = "{{.Description}}"
+media_path = "{{.MediaPath}}"
+upload_piece_size = {{.UploadPieceSize}}
+show_upload_progress = "{{.UploadProgress}}"
+}
+`

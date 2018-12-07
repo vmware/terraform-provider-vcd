@@ -94,7 +94,7 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 
 	var terraformStdout *os.File
 	// Needed to avoid errors when uintptr(4) is used
-	if flag.Lookup("test.v") == nil {
+	if v := flag.Lookup("test.v"); v == nil || v.Value.String() != "true" {
 		terraformStdout = os.NewFile(uintptr(4), "stdout")
 	} else {
 		terraformStdout = os.Stdout
@@ -102,6 +102,9 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 
 	if d.Get("show_upload_progress").(bool) {
 		for {
+			if err := getError(task); err != nil {
+				return err
+			}
 			fmt.Fprint(terraformStdout, "vcd_catalog_item."+itemName+": Upload progress "+task.GetUploadProgress()+"%\n")
 			if task.GetUploadProgress() == "100.00" {
 				break
