@@ -35,6 +35,6 @@ The following arguments are supported:
 * `catalog` - (Required) The name catalog where upload media file
 * `name` - (Required) Media file name in catalog
 * `description` - (Optional) - Description of media file
-* `media_path` - (Required) - Absolute ir relative path to file to upload
+* `media_path` - (Required) - Absolute or relative path to file to upload
 * `upload_piece_size` - (Optional) - size in MB for dividing upload size. Possibility to impact upload performance. Default 1MB.
 * `show_upload_progress` - (Optional) - Default false. Allows to see upload progress
