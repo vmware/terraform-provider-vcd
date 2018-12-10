@@ -137,66 +137,11 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 }
 
 func resourceVcdCatalogItemRead(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[TRACE] Catalog item read initiated")
-
-	vcdClient := meta.(*VCDClient)
-
-	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
-	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
-	}
-
-	catalog, err := adminOrg.FindCatalog(d.Get("catalog").(string))
-	if err != nil || catalog == (govcd.Catalog{}) {
-		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
-		d.SetId("")
-		return nil
-	}
-
-	catalogItem, err := catalog.FindCatalogItem(d.Get("name").(string))
-	if err != nil || catalogItem == (govcd.CatalogItem{}) {
-		log.Printf("[DEBUG] Unable to find catalog item. Removing from tfstate")
-		d.SetId("")
-		return nil
-	}
-
-	log.Printf("[TRACE] Catalog item read completed: %#v", catalogItem.CatalogItem)
-	return nil
+	return findCatalogItem(d, meta.(*VCDClient))
 }
 
 func resourceVcdCatalogItemDelete(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[TRACE] Catalog item delete started")
-
-	vcdClient := meta.(*VCDClient)
-
-	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
-	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
-	}
-
-	catalog, err := adminOrg.FindCatalog(d.Get("catalog").(string))
-	if err != nil || catalog == (govcd.Catalog{}) {
-		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
-		d.SetId("")
-		return nil
-	}
-
-	catalogItem, err := catalog.FindCatalogItem(d.Get("name").(string))
-	if err != nil || catalogItem == (govcd.CatalogItem{}) {
-		log.Printf("[DEBUG] Unable to find catalog item. Removing from tfstate")
-		d.SetId("")
-		return nil
-	}
-
-	err = catalogItem.Delete()
-	if err != nil {
-		log.Printf("Error removing catalog item %#v", err)
-		return fmt.Errorf("error removing catalog item %#v", err)
-	}
-
-	log.Printf("[TRACE] Catalog item delete completed: %#v", catalogItem.CatalogItem)
-
-	return nil
+	return deleteCatalogItem(d, meta.(*VCDClient))
 }
 
 //update function for "show_upload_progress" and "upload_piece_size"
