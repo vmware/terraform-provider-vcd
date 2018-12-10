@@ -10,6 +10,8 @@ description: |-
 
 Provides a vCloud Director Media resource. This can be used to upload media to catalog and delete it.
 
+Supported in provider *v2.0+*
+
 ## Example Usage
 
 ```
@@ -18,7 +20,7 @@ resource "vcd_catalog_media" "myNewMedia" {
   catalog = "my-catalog" 
 
   name = "my iso"
-  description = "new os versions 1.2"
+  description = "new os versions"
   media_path = "/home/user/file.iso"
   upload_piece_size = 10 
   show_upload_progress = true
@@ -36,4 +38,3 @@ The following arguments are supported:
 * `media_path` - (Required) - Absolute ir relative path to file to upload
 * `upload_piece_size` - (Optional) - size in MB for dividing upload size. Possibility to impact upload performance. Default 1MB.
 * `show_upload_progress` - (Optional) - Default false. Allows to see upload progress
-t

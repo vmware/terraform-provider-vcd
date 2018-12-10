@@ -7,6 +7,7 @@ import (
 	"log"
 )
 
+// Deletes catalog item which can be vapp template OVA or media ISO file
 func deleteCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) error {
 	log.Printf("[TRACE] Catalog item delete started")
 
@@ -40,6 +41,7 @@ func deleteCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) error {
 	return nil
 }
 
+// Finds catalog item which can be vapp template OVA or media ISO file
 func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) error {
 	log.Printf("[TRACE] Catalog item read initiated")
 
