@@ -55,10 +55,10 @@ func CreateOrg(vcdClient *VCDClient, name string, fullName string, isEnabled boo
 // organization object. If no valid org is found, it returns an empty
 // org and no error. Otherwise it returns an error and an empty
 // Org object
-func GetOrgByName(vcdClient *VCDClient, orgname string) (Org, error) {
-	orgUrl, err := getOrgHREF(vcdClient, orgname)
+func GetOrgByName(vcdClient *VCDClient, orgName string) (Org, error) {
+	orgUrl, err := getOrgHREF(vcdClient, orgName)
 	if err != nil {
-		return Org{}, nil
+		return Org{}, fmt.Errorf("organization '%s' fetch failed: %#v", orgName, err)
 	}
 	orgHREF, err := url.ParseRequestURI(orgUrl)
 	if err != nil {
@@ -86,7 +86,7 @@ func GetOrgByName(vcdClient *VCDClient, orgname string) (Org, error) {
 func GetAdminOrgByName(vcdClient *VCDClient, orgname string) (AdminOrg, error) {
 	orgUrl, err := getOrgHREF(vcdClient, orgname)
 	if err != nil {
-		return AdminOrg{}, nil
+		return AdminOrg{}, err
 	}
 	orgHREF := vcdClient.Client.VCDHREF
 	orgHREF.Path += "/admin/org/" + strings.Split(orgUrl, "/org/")[1]
