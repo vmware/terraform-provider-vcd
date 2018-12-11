@@ -19,9 +19,9 @@ resource "vcd_catalog" "myNewCatalog" {
   org = "my-org"
 
   name = "my-catalog"
-  description = "catalog for files"
-  delete_force      = "true"
+  description = "catalog for files"  
   delete_recursive  = "true"  
+  delete_force      = "true"
 }
 ```
 
