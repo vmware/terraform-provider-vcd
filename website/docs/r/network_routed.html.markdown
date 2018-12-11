@@ -1,22 +1,22 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_network"
-sidebar_current: "docs-vcd-resource-network"
+page_title: "vCloudDirector: vcd_network_routed"
+sidebar_current: "docs-vcd-resource-network-routed"
 description: |-
-  Provides a vCloud Director VDC Network. This can be used to create, modify, and delete internal networks for vApps to connect.
+  Provides a vCloud Director VDC routed Network. This can be used to create, modify, and delete internal networks for vApps to connect.
 ---
 
-# vcd\_network (Deprecated)
+# vcd\_network\_routed (*v2.0+*)
 
-Provides a vCloud Director VDC Network. This can be used to create,
+Provides a vCloud Director VDC routed Network. This can be used to create,
 modify, and delete internal networks for vApps to connect.
-**v2.0+** : this resource is deprecated, and replaced by [vcd-network-routed](vcd-network-routed).
-It is also complemented by [vcd-network-isolated](vcd-network-isolated) and [vcd-network-direct](d-network-direct).
 
 ## Example Usage
 
 ```hcl
-resource "vcd_network" "net" {
+resource "vcd_network_routed" "net" {
+  org          = "my-org"
+  vdc          = "my-vdc"
   name         = "my-net"
   edge_gateway = "Edge Gateway Name"
   gateway      = "10.10.0.1"
