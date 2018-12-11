@@ -155,3 +155,17 @@ The following arguments are used to configure the VMware vCloud Director Provide
   could allow an attacker to intercept your auth token. If omitted, default
   value is false. Can also be specified with the
   `VCD_ALLOW_UNVERIFIED_SSL` environment variable.
+
+* `logging` - (Optional; *v2.0+*) Boolean that enables API calls logging from upstream library `go-vcloud-director`. 
+   The logging file will record all API requests and responses, plus some debug information that is part of this 
+   provider. Logging can also be activated using the `VCD_API_LOGGING` environment variable.
+
+* `logging_file` - (Optional; *v2.0+*) The name of the log file (when `logging` is enabled). By default is 
+  `go-vcloud-director` and it can also be changed using the `VCD_API_LOGGING_FILE` environment variable.
+
+## Connection cache (*2.0+*)
+
+vCloud Director connection calls can be expensive, and if a definition file contains several resources, it may trigger 
+multiple connections. There is a cache engine, disabled by default, which can be activated by the `VCD_CACHE` 
+environment variable. When enabled, the provider will not reconnect, but reuse an active connection for up to 20 
+minutes, and then connect again.
