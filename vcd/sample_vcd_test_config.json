@@ -57,5 +57,11 @@
     "//": "Size in megabytes",
     "uploadPieceSize": 5,
     "uploadProgress": true
+  },
+  "media": {
+    "mediaPath": "../test-resources/test.iso",
+    "//": "Size in megabytes",
+    "uploadPieceSize": 5,
+    "uploadProgress": true
   }
 }

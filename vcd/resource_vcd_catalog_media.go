@@ -10,12 +10,12 @@ import (
 	"time"
 )
 
-func resourceVcdCatalogItem() *schema.Resource {
+func resourceVcdCatalogMedia() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdCatalogItemCreate,
-		Delete: resourceVcdCatalogItemDelete,
-		Read:   resourceVcdCatalogItemRead,
-		Update: resourceVcdCatalogItemUpdate,
+		Create: resourceVcdMediaCreate,
+		Delete: resourceVcdMediaDelete,
+		Read:   resourceVcdMediaRead,
+		Update: resourceVcdMediaUpdate,
 
 		Schema: map[string]*schema.Schema{
 			"org": {
@@ -28,13 +28,13 @@ func resourceVcdCatalogItem() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "catalog name where upload the OVA file",
+				Description: "catalog name where upload the Media file",
 			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "catalog item name",
+				Description: "media name",
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
@@ -42,11 +42,11 @@ func resourceVcdCatalogItem() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 			},
-			"ova_path": &schema.Schema{
+			"media_path": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "absolute or relative path to OVA",
+				Description: "absolute or relative path to Media file",
 			},
 			"upload_piece_size": &schema.Schema{
 				Type:        schema.TypeInt,
@@ -67,8 +67,8 @@ func resourceVcdCatalogItem() *schema.Resource {
 	}
 }
 
-func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[TRACE] Catalog item creation initiated")
+func resourceVcdMediaCreate(d *schema.ResourceData, meta interface{}) error {
+	log.Printf("[TRACE] Catalog media creation initiated")
 
 	vcdClient := meta.(*VCDClient)
 
@@ -85,15 +85,14 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	uploadPieceSize := d.Get("upload_piece_size").(int)
-	itemName := d.Get("name").(string)
-	task, err := catalog.UploadOvf(d.Get("ova_path").(string), itemName, d.Get("description").(string), int64(uploadPieceSize)*1024*1024) // Convert from megabytes to bytes
+	mediaName := d.Get("name").(string)
+	task, err := catalog.UploadMediaImage(mediaName, d.Get("description").(string), d.Get("media_path").(string), int64(uploadPieceSize)*1024*1024) // Convert from megabytes to bytes)
 	if err != nil {
-		log.Printf("Error uploading new catalog item: %#v", err)
-		return fmt.Errorf("error uploading new catalog item: %#v", err)
+		log.Printf("Error uploading new catalog media: %#v", err)
+		return fmt.Errorf("error uploading new catalog media: %#v", err)
 	}
 
 	var terraformStdout *os.File
-	// Needed to avoid errors when uintptr(4) is used
 	if v := flag.Lookup("test.v"); v == nil || v.Value.String() != "true" {
 		terraformStdout = os.NewFile(uintptr(4), "stdout")
 	} else {
@@ -105,7 +104,8 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 			if err := getError(task); err != nil {
 				return err
 			}
-			fmt.Fprint(terraformStdout, "vcd_catalog_item."+itemName+": Upload progress "+task.GetUploadProgress()+"%\n")
+
+			fmt.Fprint(terraformStdout, "vcd_catalog_media."+mediaName+": Upload progress "+task.GetUploadProgress()+"%\n")
 			if task.GetUploadProgress() == "100.00" {
 				break
 			}
@@ -120,7 +120,7 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 				log.Printf("vCD Error importing new catalog item: %#v", err)
 				return fmt.Errorf("vCD Error importing new catalog item: %#v", err)
 			}
-			fmt.Fprint(terraformStdout, "vcd_catalog_item."+itemName+": vCD import catalog item progress "+progress+"%\n")
+			fmt.Fprint(terraformStdout, "vcd_catalog_media."+mediaName+": vCD import catalog item progress "+progress+"%\n")
 			if progress == "100" {
 				break
 			}
@@ -130,21 +130,21 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 
 	task.WaitTaskCompletion()
 
-	d.SetId(catalogName + ":" + itemName)
+	d.SetId(catalogName + ":" + mediaName)
 
-	log.Printf("[TRACE] Catalog item created: %#v", itemName)
-	return resourceVcdCatalogItemRead(d, meta)
+	log.Printf("[TRACE] Catalog media created: %#v", mediaName)
+	return resourceVcdMediaRead(d, meta)
 }
 
-func resourceVcdCatalogItemRead(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdMediaRead(d *schema.ResourceData, meta interface{}) error {
 	return findCatalogItem(d, meta.(*VCDClient))
 }
 
-func resourceVcdCatalogItemDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdMediaDelete(d *schema.ResourceData, meta interface{}) error {
 	return deleteCatalogItem(d, meta.(*VCDClient))
 }
 
 //update function for "show_upload_progress" and "upload_piece_size"
-func resourceVcdCatalogItemUpdate(d *schema.ResourceData, m interface{}) error {
+func resourceVcdMediaUpdate(d *schema.ResourceData, m interface{}) error {
 	return nil
 }

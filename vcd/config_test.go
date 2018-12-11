@@ -67,6 +67,11 @@ type TestConfig struct {
 		UploadPieceSize int64  `json:"uploadPieceSize,omitempty"`
 		UploadProgress  bool   `json:"uploadProgress,omitempty"`
 	} `json:"ova"`
+	Media struct {
+		MediaPath       string `json:"mediaPath,omitempty"`
+		UploadPieceSize int64  `json:"uploadPieceSize,omitempty"`
+		UploadProgress  bool   `json:"uploadProgress,omitempty"`
+	} `json:"media"`
 }
 
 const (
