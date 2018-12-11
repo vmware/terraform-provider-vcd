@@ -72,9 +72,9 @@ func getError(task govcd.UploadTask) error {
 	if task.GetUploadError() != nil {
 		err := task.CancelTask()
 		if err != nil {
-			log.Printf("error cancelling media: %#v", err)
+			log.Printf("error cancelling media upload task: %#v", err)
 		}
-		return fmt.Errorf("error uplo.ading media: %#v", task.GetUploadError())
+		return fmt.Errorf("error uploading media: %#v", task.GetUploadError())
 	}
 	return nil
 }

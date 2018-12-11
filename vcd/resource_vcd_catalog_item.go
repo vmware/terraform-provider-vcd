@@ -61,7 +61,7 @@ func resourceVcdCatalogItem() *schema.Resource {
 				Required:    false,
 				Optional:    true,
 				ForceNew:    false,
-				Description: "shows upload progress in stdin",
+				Description: "shows upload progress in stdout",
 			},
 		},
 	}
@@ -88,8 +88,8 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 	itemName := d.Get("name").(string)
 	task, err := catalog.UploadOvf(d.Get("ova_path").(string), itemName, d.Get("description").(string), int64(uploadPieceSize)*1024*1024) // Convert from megabytes to bytes
 	if err != nil {
-		log.Printf("Error upload new catalog item: %#v", err)
-		return fmt.Errorf("error upload new catalog item: %#v", err)
+		log.Printf("Error uploading new catalog item: %#v", err)
+		return fmt.Errorf("error uploading new catalog item: %#v", err)
 	}
 
 	var terraformStdout *os.File
@@ -117,8 +117,8 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 		for {
 			progress, err := task.GetTaskProgress()
 			if err != nil {
-				log.Printf("vCD Error import new catalog item: %#v", err)
-				return fmt.Errorf("vCD Error import new catalog item: %#v", err)
+				log.Printf("vCD Error importing new catalog item: %#v", err)
+				return fmt.Errorf("vCD Error importing new catalog item: %#v", err)
 			}
 			fmt.Fprint(terraformStdout, "vcd_catalog_item."+itemName+": vCD import catalog item progress "+progress+"%\n")
 			if progress == "100" {

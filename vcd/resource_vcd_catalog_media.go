@@ -61,7 +61,7 @@ func resourceVcdCatalogMedia() *schema.Resource {
 				Required:    false,
 				Optional:    true,
 				ForceNew:    false,
-				Description: "shows upload progress in stdin",
+				Description: "shows upload progress in stdout",
 			},
 		},
 	}
@@ -88,8 +88,8 @@ func resourceVcdMediaCreate(d *schema.ResourceData, meta interface{}) error {
 	mediaName := d.Get("name").(string)
 	task, err := catalog.UploadMediaImage(mediaName, d.Get("description").(string), d.Get("media_path").(string), int64(uploadPieceSize)*1024*1024) // Convert from megabytes to bytes)
 	if err != nil {
-		log.Printf("Error upload new catalog media: %#v", err)
-		return fmt.Errorf("error upload new catalog media: %#v", err)
+		log.Printf("Error uploading new catalog media: %#v", err)
+		return fmt.Errorf("error uploading new catalog media: %#v", err)
 	}
 
 	var terraformStdout *os.File
@@ -117,8 +117,8 @@ func resourceVcdMediaCreate(d *schema.ResourceData, meta interface{}) error {
 		for {
 			progress, err := task.GetTaskProgress()
 			if err != nil {
-				log.Printf("vCD Error import new catalog item: %#v", err)
-				return fmt.Errorf("vCD Error import new catalog item: %#v", err)
+				log.Printf("vCD Error importing new catalog item: %#v", err)
+				return fmt.Errorf("vCD Error importing new catalog item: %#v", err)
 			}
 			fmt.Fprint(terraformStdout, "vcd_catalog_media."+mediaName+": vCD import catalog item progress "+progress+"%\n")
 			if progress == "100" {

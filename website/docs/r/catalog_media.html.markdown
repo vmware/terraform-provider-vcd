@@ -32,9 +32,9 @@ resource "vcd_catalog_media" "myNewMedia" {
 The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, isn't needed if defined/match at provider level
-* `catalog` - (Required) The name catalog where upload media file
+* `catalog` - (Required) The name of the catalog where to upload media file
 * `name` - (Required) Media file name in catalog
 * `description` - (Optional) - Description of media file
 * `media_path` - (Required) - Absolute or relative path to file to upload
-* `upload_piece_size` - (Optional) - size in MB for dividing upload size. Possibility to impact upload performance. Default 1MB.
+* `upload_piece_size` - (Optional) - size in MB for splitting upload size. It can possibly impact upload performance. Default 1MB.
 * `show_upload_progress` - (Optional) - Default false. Allows to see upload progress
