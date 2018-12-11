@@ -65,3 +65,6 @@ The following arguments are supported:
   `dhcp_pool` set with at least one available IP then this will be set with
   DHCP.
 * `power_on` - (Optional) A boolean value stating if this vApp should be powered on. Default to `true`
+* `accept_all_eulas` - (Optional; *v2.0+*) Automatically accept EULA if OVA has it
+* `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
+* `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level

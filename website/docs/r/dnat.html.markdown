@@ -31,3 +31,5 @@ The following arguments are supported:
 * `external_ip` - (Required) One of the external IPs available on your Edge Gateway
 * `port` - (Required) The port number to map
 * `internal_ip` - (Required) The IP of the VM to map to
+* `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
+* `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level

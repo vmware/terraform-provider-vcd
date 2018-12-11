@@ -68,6 +68,8 @@ The following arguments are supported:
 * `shared_secret` - (Required) - Shared Secret
 * `local_subnets` - (Required) - List of Local Subnets see [Local Subnets](#localsubnets) below for details.
 * `peer_subnets` - (Required) - List of Peer Subnets see [Peer Subnets](#peersubnets) below for details.
+* `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
+* `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
 
 <a id="localsubnets"></a>
 ## Local Subnets
