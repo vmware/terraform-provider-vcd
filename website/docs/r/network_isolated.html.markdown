@@ -15,8 +15,8 @@ modify, and delete internal networks for vApps to connect. This network is not a
 
 ```hcl
 resource "vcd_network_isolated" "net" {
-  org          = "my-org"  #Optional
-  vdc          = "my-vdc"  #Optional
+  org          = "my-org" #Optional
+  vdc          = "my-vdc" #Optional
 
   name         = "my-net"
   gateway      = "192.168.2.1"

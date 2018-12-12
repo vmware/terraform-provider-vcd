@@ -15,8 +15,8 @@ modify, and delete internal networks for vApps to connect.
 
 ```hcl
 resource "vcd_network_direct" "net" {
-  org              = "my-org"  #Optional
-  vdc              = "my-vdc"  #Optional
+  org              = "my-org" #Optional
+  vdc              = "my-vdc" #Optional
 
   name             = "my-net"
   external_network = "my-ext-net"
