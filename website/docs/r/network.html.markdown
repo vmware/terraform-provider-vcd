@@ -3,12 +3,12 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_network"
 sidebar_current: "docs-vcd-resource-network"
 description: |-
-  Provides a vCloud Director VDC Network. This can be used to create, modify, and delete internal networks for vApps to connect.
+  Provides a vCloud Director Org VDC Network. This can be used to create, modify, and delete internal networks for vApps to connect.
 ---
 
 # vcd\_network (Deprecated)
 
-Provides a vCloud Director VDC Network. This can be used to create,
+Provides a vCloud Director Org VDC Network. This can be used to create,
 modify, and delete internal networks for vApps to connect.
 **v2.0+** : this resource is deprecated, and replaced by [vcd-network-routed](vcd-network-routed).
 It is also complemented by [vcd-network-isolated](vcd-network-isolated) and [vcd-network-direct](d-network-direct).
