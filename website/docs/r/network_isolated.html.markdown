@@ -3,20 +3,21 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_network_isolated"
 sidebar_current: "docs-vcd-resource-network-isolated"
 description: |-
-  Provides a vCloud Director VDC isolated Network. This can be used to create, modify, and delete internal networks for vApps to connect.
+  Provides a vCloud Director Org VDC isolated Network. This can be used to create, modify, and delete internal networks for vApps to connect.
 ---
 
 # vcd\_network\_isolated (*v2.0+*)
 
-Provides a vCloud Director VDC isolated Network. This can be used to create,
+Provides a vCloud Director Org VDC isolated Network. This can be used to create,
 modify, and delete internal networks for vApps to connect. This network is not attached to external networks or routers.
 
 ## Example Usage
 
 ```hcl
 resource "vcd_network_isolated" "net" {
-  org          = "my-org"
-  vdc          = "my-vdc"
+  org          = "my-org"  #Optional
+  vdc          = "my-vdc"  #Optional
+
   name         = "my-net"
   gateway      = "192.168.2.1"
   dns1         = "192.168.2.1"
@@ -37,6 +38,9 @@ resource "vcd_network_isolated" "net" {
 
 The following arguments are supported:
 
+* `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when 
+  connected as sysadmin working across different organisations
+* `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
 * `name` - (Required) A unique name for the network
 * `netmask` - (Optional) The netmask for the new network. Defaults to `255.255.255.0`
 * `gateway` (Required) The gateway for this network
