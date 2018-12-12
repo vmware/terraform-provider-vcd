@@ -11,18 +11,35 @@ description: |-
 Provides a vCloud Director VM resource. This can be used to create,
 modify, and delete VMs within a vApp.
 
-~> **Note:** There is known bug with this implementation, that to use the vcd_vapp_vm resource, you must set the paralellism parameter to 1. [We are working on this.](https://github.com/terraform-providers/terraform-provider-vcd/issues/27)
+~> **Note:** To make sure resources are created in the right order and both plan apply and destroy succeeds, use the `depends_on` clause (see example below)
 
 
 ## Example Usage
 
 ```hcl
-resource "vcd_network" "net" {
-  # ...
+resource "vcd_network_direct" "net" {
+  name             = "net"
+  external_network = "corp-network"
 }
 
 resource "vcd_vapp" "web" {
   name          = "web"
+  
+  depends_on = ["vcd_network_direct.net"]
+}
+
+resource "vcd_vapp_vm" "web1" {
+  vapp_name     = "${vcd_vapp.web.name}"
+  name          = "web1"
+  catalog_name  = "Boxes"
+  template_name = "lampstack-1.10.1-ubuntu-10.04"
+  memory        = 2048
+  cpus          = 1
+
+  network_name = "net"
+  ip           = "10.10.104.161"
+  
+  depends_on = ["vcd_vapp.web"]
 }
 
 resource "vcd_vapp_vm" "web2" {
@@ -33,18 +50,10 @@ resource "vcd_vapp_vm" "web2" {
   memory        = 2048
   cpus          = 1
 
-  ip           = "10.10.104.161"
-}
-
-resource "vcd_vapp_vm" "web3" {
-  vapp_name     = "${vcd_vapp.web.name}"
-  name          = "web3"
-  catalog_name  = "Boxes"
-  template_name = "lampstack-1.10.1-ubuntu-10.04"
-  memory        = 2048
-  cpus          = 1
-
+  network_name = "net"
   ip           = "10.10.104.162"
+  
+  depends_on = ["vcd_vapp.web"]
 }
 ```
 
@@ -59,9 +68,13 @@ The following arguments are supported:
 * `memory` - (Optional) The amount of RAM (in MB) to allocate to the vApp
 * `cpus` - (Optional) The number of virtual CPUs to allocate to the vApp
 * `initscript` (Optional) A script to be run only on initial boot
+* `network_name` - (Optional) Name of the network this VM should connect to
 * `ip` - (Optional) The IP to assign to this vApp. Must be an IP address or
   one of dhcp, allocated or none. If given the address must be within the
   `static_ip_pool` set for the network. If left blank, and the network has
   `dhcp_pool` set with at least one available IP then this will be set with
   DHCP.
 * `power_on` - (Optional) A boolean value stating if this vApp should be powered on. Default to `true`
+* `accept_all_eulas` - (Optional; *v2.0+*) Automatically accept EULA if OVA has it
+* `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
+* `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level

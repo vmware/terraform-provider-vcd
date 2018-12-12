@@ -14,7 +14,7 @@ modify, and delete vApps.
 ## Example Usage
 
 ```hcl
-resource "vcd_network" "net" {
+resource "vcd_network_routed" "net" {
   # ...
 }
 
@@ -26,7 +26,6 @@ resource "vcd_vapp" "web" {
   cpus          = 1
 
   network_name = "${vcd_network.net.name}"
-  network_href = "${vcd_network.net.href}"
   ip           = "10.10.104.160"
 
   metadata {
@@ -38,18 +37,22 @@ resource "vcd_vapp" "web" {
   ovf {
     hostname = "web"
   }
+  
+  depends_on = ["vcd_network_routed.net"]
 }
 ```
 
-## Example RAW vApp with No VMS
+## Example of Empty vApp with no VMs
 
 ```hcl
-resource "vcd_network" "net" {
+resource "vcd_network_routed" "net" {
   # ...
 }
 
 resource "vcd_vapp" "web" {
   name          = "web"
+  
+  depends_on = ["vcd_network_routed.net"]
 }
 ```
 
@@ -75,3 +78,5 @@ The following arguments are supported:
 * `metadata` - (Optional) Key value map of metadata to assign to this vApp
 * `ovf` - (Optional) Key value map of ovf parameters to assign to VM product section
 * `power_on` - (Optional) A boolean value stating if this vApp should be powered on. Default to `true`
+* `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
+* `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level

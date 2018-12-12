@@ -66,6 +66,8 @@ The following arguments are supported:
 * `edge_gateway` - (Required) The name of the edge gateway on which to apply the Firewall Rules
 * `default_action` - (Required) Either "allow" or "deny". Specifies what to do should none of the rules match
 * `rule` - (Optional) Configures a firewall rule; see [Rules](#rules) below for details.
+* `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
+* `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
 
 <a id="rules"></a>
 ## Rules

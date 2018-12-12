@@ -3,12 +3,12 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_catalog_media"
 sidebar_current: "docs-vcd-resource-catalog-media"
 description: |-
-  Provides a vCloud Director Media resource. This can be used to upload and delete media file in catalog.
+  Provides a vCloud Director media resource. This can be used to upload and delete media (ISO) file inside a catalog.
 ---
 
 # vcd\_catalog\_media
 
-Provides a vCloud Director Media resource. This can be used to upload media to catalog and delete it.
+Provides a vCloud Director media resource. This can be used to upload media to catalog and delete it.
 
 Supported in provider *v2.0+*
 
@@ -31,7 +31,7 @@ resource "vcd_catalog_media" "myNewMedia" {
 
 The following arguments are supported:
 
-* `org` - (Optional) The name of organization to use, isn't needed if defined/match at provider level
+* `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `catalog` - (Required) The name of the catalog where to upload media file
 * `name` - (Required) Media file name in catalog
 * `description` - (Optional) - Description of media file

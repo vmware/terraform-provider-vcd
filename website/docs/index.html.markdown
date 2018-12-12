@@ -128,6 +128,8 @@ The following arguments are used to configure the VMware vCloud Director Provide
   *v2.0+* `org` may be set to "System" when connection as Sys Admin is desired
   (set `user` to "administrator" in this case).
   
+  Note: `org` value is case sensitive.
+  
 * `sysorg` - (Optional; *v2.0+*) - Organization for user authentication. Can also be
    specified with the `VCD_SYS_ORG` environment variable. Set `sysorg` to "System" and
    `user` to "administrator" to free up `org` argument for setting a default organization
