@@ -1,34 +1,35 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_network"
-sidebar_current: "docs-vcd-resource-network"
+page_title: "vCloudDirector: vcd_network_isolated"
+sidebar_current: "docs-vcd-resource-network-isolated"
 description: |-
-  Provides a vCloud Director Org VDC Network. This can be used to create, modify, and delete internal networks for vApps to connect.
+  Provides a vCloud Director Org VDC isolated Network. This can be used to create, modify, and delete internal networks for vApps to connect.
 ---
 
-# vcd\_network (Deprecated)
+# vcd\_network\_isolated (*v2.0+*)
 
-Provides a vCloud Director Org VDC Network. This can be used to create,
-modify, and delete internal networks for vApps to connect.
-**v2.0+** : this resource is deprecated, and replaced by [vcd-network-routed](vcd-network-routed).
-It is also complemented by [vcd-network-isolated](vcd-network-isolated) and [vcd-network-direct](d-network-direct).
+Provides a vCloud Director Org VDC isolated Network. This can be used to create,
+modify, and delete internal networks for vApps to connect. This network is not attached to external networks or routers.
 
 ## Example Usage
 
 ```hcl
-resource "vcd_network" "net" {
+resource "vcd_network_isolated" "net" {
+  org          = "my-org" #Optional
+  vdc          = "my-vdc" #Optional
+
   name         = "my-net"
-  edge_gateway = "Edge Gateway Name"
-  gateway      = "10.10.0.1"
+  gateway      = "192.168.2.1"
+  dns1         = "192.168.2.1"
 
   dhcp_pool {
-    start_address = "10.10.0.2"
-    end_address   = "10.10.0.100"
+    start_address = "192.168.2.2"
+    end_address   = "192.168.2.50"
   }
 
   static_ip_pool {
-    start_address = "10.10.0.152"
-    end_address   = "10.10.0.254"
+    start_address = "192.168.2.51"
+    end_address   = "192.168.2.100"
   }
 }
 ```
@@ -37,8 +38,10 @@ resource "vcd_network" "net" {
 
 The following arguments are supported:
 
+* `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when 
+  connected as sysadmin working across different organisations
+* `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
 * `name` - (Required) A unique name for the network
-* `edge_gateway` - (Required) The name of the edge gateway
 * `netmask` - (Optional) The netmask for the new network. Defaults to `255.255.255.0`
 * `gateway` (Required) The gateway for this network
 * `dns1` - (Optional) First DNS server to use. Defaults to `8.8.8.8`

@@ -1,22 +1,23 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_network"
-sidebar_current: "docs-vcd-resource-network"
+page_title: "vCloudDirector: vcd_network_routed"
+sidebar_current: "docs-vcd-resource-network-routed"
 description: |-
-  Provides a vCloud Director Org VDC Network. This can be used to create, modify, and delete internal networks for vApps to connect.
+  Provides a vCloud Director Org VDC routed Network. This can be used to create, modify, and delete internal networks for vApps to connect.
 ---
 
-# vcd\_network (Deprecated)
+# vcd\_network\_routed (*v2.0+*)
 
-Provides a vCloud Director Org VDC Network. This can be used to create,
+Provides a vCloud Director Org VDC routed Network. This can be used to create,
 modify, and delete internal networks for vApps to connect.
-**v2.0+** : this resource is deprecated, and replaced by [vcd-network-routed](vcd-network-routed).
-It is also complemented by [vcd-network-isolated](vcd-network-isolated) and [vcd-network-direct](d-network-direct).
 
 ## Example Usage
 
 ```hcl
-resource "vcd_network" "net" {
+resource "vcd_network_routed" "net" {
+  org          = "my-org" # Optional
+  vdc          = "my-vdc" # Optional
+
   name         = "my-net"
   edge_gateway = "Edge Gateway Name"
   gateway      = "10.10.0.1"
@@ -37,6 +38,9 @@ resource "vcd_network" "net" {
 
 The following arguments are supported:
 
+* `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when 
+  connected as sysadmin working across different organisations
+* `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
 * `name` - (Required) A unique name for the network
 * `edge_gateway` - (Required) The name of the edge gateway
 * `netmask` - (Optional) The netmask for the new network. Defaults to `255.255.255.0`
