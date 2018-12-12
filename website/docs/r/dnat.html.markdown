@@ -47,6 +47,6 @@ The following arguments are supported:
 * `translated_port` - (Optional) The port number to map
 * `internal_ip` - (Required) The IP of the VM to map to
 * `protocol` - (Optional; *v2.0+*) The protocol type. Possible values TCP, UDP, TCPUDP, ICMP, ANY. TCP is default to be back compatible with previous version
-* `icmp_sub_type` - (Optional; *v2.0+*) The name of ICMP type. Possible values address-mask-request, destination-unreachable,echo-request,echo-reply, parameter-problem, redirect, router-advertisement, router-solicitation, source-quench, time-exceeded, timestamp-request, timestamp-reply, any
+* `icmp_sub_type` - (Optional; *v2.0+*) The name of ICMP type. Possible values address-mask-request, destination-unreachable, echo-request, echo-reply, parameter-problem, redirect, router-advertisement, router-solicitation, source-quench, time-exceeded, timestamp-request, timestamp-reply, any
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
