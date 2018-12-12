@@ -11,7 +11,7 @@ description: |-
 Provides a vCloud Director VM resource. This can be used to create,
 modify, and delete VMs within a vApp.
 
-~> **Note:** To make sure resources are created in the right order and both plan apply and destroy suceeds, use the `depends_on` clause (see example below)
+~> **Note:** To make sure resources are created in the right order and both plan apply and destroy succeeds, use the `depends_on` clause (see example below)
 
 
 ## Example Usage
