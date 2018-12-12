@@ -3,6 +3,7 @@ package vcd
 import (
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/vmware/go-vcloud-director/util"
 )
 
 // Provider returns a terraform.ResourceProvider.
@@ -67,6 +68,20 @@ func Provider() terraform.ResourceProvider {
 				DefaultFunc: schema.EnvDefaultFunc("VCD_ALLOW_UNVERIFIED_SSL", false),
 				Description: "If set, VCDClient will permit unverifiable SSL certificates.",
 			},
+
+			"logging": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("VCD_API_LOGGING", false),
+				Description: "If set, it will enable logging of API requests and responses",
+			},
+
+			"logging_file": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("VCD_API_LOGGING_FILE", "go-vcloud-director.log"),
+				Description: "Defines the full name of the logging file for API calls (requires 'logging')",
+			},
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
@@ -108,6 +123,19 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		Href:            d.Get("url").(string),
 		MaxRetryTimeout: maxRetryTimeout,
 		InsecureFlag:    d.Get("allow_unverified_ssl").(bool),
+	}
+	// If the provider includes logging directives,
+	// it will activate logging from upstream go-vcloud-director
+	logging := d.Get("logging").(bool)
+	// Logging is disabled by default.
+	// If enabled, we set the log file name and invoke the upstream logging set-up
+	if logging {
+		loggingFile := d.Get("logging_file").(string)
+		if loggingFile != "" {
+			util.EnableLogging = true
+			util.ApiLogFileName = loggingFile
+			util.InitLogging()
+		}
 	}
 
 	return config.Client()
