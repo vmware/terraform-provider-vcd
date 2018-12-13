@@ -24,12 +24,13 @@ import (
 // should be set when providing generalOrgSettings.
 // If either VAppLeaseSettings or VAppTemplateLeaseSettings is provided then all elements need to have values, otherwise don't provide them at all.
 // Overall elements must be in the correct order.
-func CreateOrg(vcdClient *VCDClient, name string, fullName string, isEnabled bool, settings *types.OrgSettings) (Task, error) {
+func CreateOrg(vcdClient *VCDClient, name string, fullName string, description string, settings *types.OrgSettings, isEnabled bool) (Task, error) {
 	vcomp := &types.AdminOrg{
 		Xmlns:       "http://www.vmware.com/vcloud/v1.5",
 		Name:        name,
 		IsEnabled:   isEnabled,
 		FullName:    fullName,
+		Description: description,
 		OrgSettings: settings,
 	}
 	output, _ := xml.MarshalIndent(vcomp, "  ", "    ")
@@ -83,8 +84,8 @@ func GetOrgByName(vcdClient *VCDClient, orgName string) (Org, error) {
 // org and no error. Otherwise returns an empty AdminOrg
 // and an error.
 // API Documentation: https://code.vmware.com/apis/220/vcloud#/doc/doc/operations/GET-Organization-AdminView.html
-func GetAdminOrgByName(vcdClient *VCDClient, orgname string) (AdminOrg, error) {
-	orgUrl, err := getOrgHREF(vcdClient, orgname)
+func GetAdminOrgByName(vcdClient *VCDClient, orgName string) (AdminOrg, error) {
+	orgUrl, err := getOrgHREF(vcdClient, orgName)
 	if err != nil {
 		return AdminOrg{}, err
 	}
@@ -102,8 +103,8 @@ func GetAdminOrgByName(vcdClient *VCDClient, orgname string) (AdminOrg, error) {
 	return *org, nil
 }
 
-// Returns the HREF of the org with the name orgname
-func getOrgHREF(vcdClient *VCDClient, orgname string) (string, error) {
+// Returns the HREF of the org with the name orgName
+func getOrgHREF(vcdClient *VCDClient, orgName string) (string, error) {
 	orgListHREF := vcdClient.Client.VCDHREF
 	orgListHREF.Path += "/org"
 	req := vcdClient.Client.NewRequest(map[string]string{}, "GET", orgListHREF, nil)
@@ -115,11 +116,11 @@ func getOrgHREF(vcdClient *VCDClient, orgname string) (string, error) {
 	if err = decodeBody(resp, orgList); err != nil {
 		return "", fmt.Errorf("error decoding response: %s", err)
 	}
-	// Look for orgname within OrgList
+	// Look for orgName within OrgList
 	for _, org := range orgList.Org {
-		if org.Name == orgname {
+		if org.Name == orgName {
 			return org.HREF, nil
 		}
 	}
-	return "", fmt.Errorf("couldn't find org with name: %s", orgname)
+	return "", fmt.Errorf("couldn't find org with name: %s", orgName)
 }

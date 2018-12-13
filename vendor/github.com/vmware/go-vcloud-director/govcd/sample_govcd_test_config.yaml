@@ -1,5 +1,5 @@
 # COPY THIS FILE to govcd_test_config.yaml
-# in the same directory and change the values 
+# in the same directory and change the values
 # to match your environment.
 #
 # All items in this file must exist already
@@ -60,6 +60,15 @@ vcd:
     internalIp: 192.168.1.10
     # An external Network name
     externalNetwork: myexternalnet
+    #
+    # Independent disk parameters for testing
+    disk:
+      #
+      # Disk size (bytes) for create disk, skip disk tests if it is less than or equal to 0
+      size: 1024
+      #
+      # Disk size (bytes) for update disk, skip some disk tests if it is less than or equal to 0
+      sizeForUpdate: 10240
 logging:
     # All items in this section are optional
     # Logging is disabled by default.
