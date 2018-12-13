@@ -31,15 +31,14 @@ The following arguments are supported:
 
 * `name` - (Required) Org name
 * `full_name` - (Required) Org full name
-* `delete_recursive` - (Required) - pass delete_recursive=true as query parameter to remove an organization or VDC and any objects it contains that are in a state that normally allows removal.
-* `delete_force` - (Required) - pass delete_force=true and delete_recursive=true to remove an organization or VDC and 
-   any objects it contains, regardless of their state.
-* `is_enabled` - (Optional) - True if this organization is enabled (allows login and all other operations).
-* `description` - (Optional) - Org description
-* `deployed_vm_quota` - (Optional) - Maximum number of virtual machines that can be deployed simultaneously by a member of this organization.
-* `stored_vm_quota` - (Optional) - Maximum number of virtual machines in vApps or vApp templates that can be stored in an undeployed state by a member of this organization.
-* `can_publish_catalogs` - (Optional) - True if this organization is allowed to share catalogs. 
-* `delay_after_power_on_seconds` - (Optional) - Specifies this organization's default for virtual machine boot delay after power on.
+* `delete_recursive` - (Required) - pass `delete_recursive`=true as query parameter to remove an organization or VDC and any objects it contains that are in a state that normally allows removal.
+* `delete_force` - (Required) - pass `delete_force`=true and `delete_recursive`=true to remove an organization or VDC and any objects it contains, regardless of their state.
+* `is_enabled` - (Optional) - True if this organization is enabled (allows login and all other operations). Default is `false`.
+* `description` - (Optional) - Org description. There is no default value.
+* `deployed_vm_quota` - (Optional) - Maximum number of virtual machines that can be deployed simultaneously by a member of this organization. Default is unlimited (-1)
+* `stored_vm_quota` - (Optional) - Maximum number of virtual machines in vApps or vApp templates that can be stored in an undeployed state by a member of this organization. Default is unlimited (-1)
+* `can_publish_catalogs` - (Optional) - True if this organization is allowed to share catalogs. Default is `true`.
+* `delay_after_power_on_seconds` - (Optional) - Specifies this organization's default for virtual machine boot delay after power on. Default is `0`.
 
 ## Sources
 
