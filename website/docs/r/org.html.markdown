@@ -9,7 +9,7 @@ Provides a vCloud Director Organization resource. This can be used to create and
 # vcd\_org
 
 Provides a vCloud Director Org resource. This can be used to create and delete an organization.
-Requires administrator privileges.
+Requires system administrator privileges.
 
 Supported in provider *v2.0+*
 
