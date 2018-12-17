@@ -6,10 +6,12 @@ description: |-
   Provides a vCloud Director Org VDC routed Network. This can be used to create, modify, and delete internal networks for vApps to connect.
 ---
 
-# vcd\_network\_routed (*v2.0+*)
+# vcd\_network\_routed
 
 Provides a vCloud Director Org VDC routed Network. This can be used to create,
 modify, and delete internal networks for vApps to connect.
+
+Supported in provider *v2.0+*
 
 ## Example Usage
 

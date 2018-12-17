@@ -6,10 +6,12 @@ description: |-
   Provides a vCloud Director Org VDC Network attached to an external one. This can be used to create, modify, and delete internal networks for vApps to connect.
 ---
 
-# vcd\_network\_direct (*v2.0+*)
+# vcd\_network\_direct
 
 Provides a vCloud Director Org VDC Network directly connected to an external network. This can be used to create,
 modify, and delete internal networks for vApps to connect.
+
+Supported in provider *v2.0+*
 
 ## Example Usage
 
