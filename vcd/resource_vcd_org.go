@@ -48,7 +48,7 @@ func resourceOrg() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				ForceNew:    false,
-				Default:     false,
+				Default:     true,
 				Description: "True if this organization is enabled (allows login and all other operations).",
 			},
 			"deployed_vm_quota": &schema.Schema{
