@@ -165,7 +165,7 @@ The following arguments are used to configure the VMware vCloud Director Provide
 * `logging_file` - (Optional; *v2.0+*) The name of the log file (when `logging` is enabled). By default is 
   `go-vcloud-director` and it can also be changed using the `VCD_API_LOGGING_FILE` environment variable.
 
-## Connection cache (*2.0+*)
+## Connection Cache (*2.0+*)
 
 vCloud Director connection calls can be expensive, and if a definition file contains several resources, it may trigger 
 multiple connections. There is a cache engine, disabled by default, which can be activated by the `VCD_CACHE` 

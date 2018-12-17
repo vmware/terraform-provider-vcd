@@ -13,6 +13,59 @@ modify, and delete vApps.
 
 ## Example Usage
 
+Example with more than one VM under a vApp.
+
+```hcl
+resource "vcd_network_direct" "net" {
+  name             = "net"
+  external_network = "corp-network"
+}
+
+resource "vcd_vapp" "web" {
+  name          = "web"
+  
+  metadata {
+    role    = "web"
+    env     = "staging"
+    version = "v1"
+  }
+  
+  depends_on = ["vcd_network_direct.net"]
+}
+
+resource "vcd_vapp_vm" "web1" {
+  vapp_name     = "${vcd_vapp.web.name}"
+  name          = "web1"
+  catalog_name  = "Boxes"
+  template_name = "lampstack-1.10.1-ubuntu-10.04"
+  memory        = 2048
+  cpus          = 1
+
+  network_name = "net"
+  ip           = "10.10.104.161"
+  
+  depends_on = ["vcd_vapp.web"]
+}
+
+resource "vcd_vapp_vm" "web2" {
+  vapp_name     = "${vcd_vapp.web.name}"
+  name          = "web2"
+  catalog_name  = "Boxes"
+  template_name = "lampstack-1.10.1-ubuntu-10.04"
+  memory        = 2048
+  cpus          = 1
+
+  network_name = "net"
+  ip           = "10.10.104.162"
+  
+  depends_on = ["vcd_vapp.web"]
+}
+```
+
+## Example of vApp with single VM
+
+**Not recommended in v2.0+** : in the earlier version of the provider it was possible to define a vApp with a single VM in one resource, but it is not recommended as of *v2.0+* provider. Please define vApp and VM in separate resources instead. 
+
 ```hcl
 resource "vcd_network_routed" "net" {
   # ...

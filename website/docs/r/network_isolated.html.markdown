@@ -6,10 +6,12 @@ description: |-
   Provides a vCloud Director Org VDC isolated Network. This can be used to create, modify, and delete internal networks for vApps to connect.
 ---
 
-# vcd\_network\_isolated (*v2.0+*)
+# vcd\_network\_isolated
 
 Provides a vCloud Director Org VDC isolated Network. This can be used to create,
 modify, and delete internal networks for vApps to connect. This network is not attached to external networks or routers.
+
+Supported in provider *v2.0+*
 
 ## Example Usage
 
