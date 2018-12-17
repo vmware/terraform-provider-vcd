@@ -107,7 +107,12 @@ func resourceVcdFirewallRulesCreate(d *schema.ResourceData, meta interface{}) er
 	}
 
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		edgeGateway.Refresh()
+		err := edgeGateway.Refresh()
+		if err != nil {
+			log.Printf("[INFO] Error refreshing edge gateway: %#v", err)
+			return resource.RetryableError(
+				fmt.Errorf("error error refreshing edge gateway: %#v", err))
+		}
 		firewallRules, _ := expandFirewallRules(d, edgeGateway.EdgeGateway)
 		task, err := edgeGateway.CreateFirewallRules(d.Get("default_action").(string), firewallRules)
 		if err != nil {
@@ -175,8 +180,9 @@ func resourceFirewallRulesRead(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 	}
-	d.Set("rule", ruleList)
-	d.Set("default_action", firewallRules.DefaultAction)
+	// TODO: handle return error from d.Set
+	_ = d.Set("rule", ruleList)
+	_ = d.Set("default_action", firewallRules.DefaultAction)
 
 	return nil
 }

@@ -13,6 +13,7 @@ import (
 
 	types "github.com/vmware/go-vcloud-director/types/v56"
 	"github.com/vmware/go-vcloud-director/util"
+	"net/http"
 )
 
 type VM struct {
@@ -455,4 +456,92 @@ func (vm *VM) Undeploy() (Task, error) {
 	// The request was successful
 	return *task, nil
 
+}
+
+// Attach or detach an independent disk
+// Use the disk/action/attach or disk/action/detach links in a Vm to attach or detach an independent disk.
+// Reference: vCloud API Programming Guide for Service Providers vCloud API 30.0 PDF Page 164 - 165,
+// https://vdc-download.vmware.com/vmwb-repository/dcr-public/1b6cf07d-adb3-4dba-8c47-9c1c92b04857/
+// 241956dd-e128-4fcc-8131-bf66e1edd895/vcloud_sp_api_guide_30_0.pdf
+func (vm *VM) attachOrDetachDisk(diskParams *types.DiskAttachOrDetachParams, rel string) (Task, error) {
+	util.Logger.Printf("[TRACE] Attach or detach disk, href: %s, rel: %s \n", diskParams.Disk.HREF, rel)
+
+	var err error
+	var attachOrDetachDiskLink *types.Link
+	for _, link := range vm.VM.Link {
+		if link.Rel == rel && link.Type == types.MimeDiskAttachOrDetachParams {
+			util.Logger.Printf("[TRACE] Attach or detach disk - found the proper link for request, HREF: %s, name: %s, type: %s, id: %s, rel: %s \n",
+				link.HREF,
+				link.Name,
+				link.Type,
+				link.ID,
+				link.Rel)
+			attachOrDetachDiskLink = link
+		}
+	}
+
+	if attachOrDetachDiskLink == nil {
+		return Task{}, fmt.Errorf("could not find request URL for attach or detach disk in disk Link")
+	}
+
+	reqUrl, err := url.ParseRequestURI(attachOrDetachDiskLink.HREF)
+
+	diskParams.Xmlns = types.NsVCloud
+
+	xmlPayload, err := xml.Marshal(diskParams)
+	if err != nil {
+		return Task{}, fmt.Errorf("error marshal xml: %s", err)
+	}
+
+	// Send request
+	reqPayload := bytes.NewBufferString(xml.Header + string(xmlPayload))
+	req := vm.client.NewRequest(nil, http.MethodPost, *reqUrl, reqPayload)
+	req.Header.Add("Content-Type", attachOrDetachDiskLink.Type)
+	resp, err := checkResp(vm.client.Http.Do(req))
+	if err != nil {
+		return Task{}, fmt.Errorf("error attach or detach disk: %s", err)
+	}
+
+	// Decode response
+	task := NewTask(vm.client)
+	if err = decodeBody(resp, task.Task); err != nil {
+		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
+	}
+
+	// The request was successful
+	return *task, nil
+}
+
+// Attach an independent disk
+// Call attachOrDetachDisk with disk and types.RelDiskAttach to attach an independent disk.
+// Please verify the independent disk is not connected to any VM before calling this function.
+// If the independent disk is connected to a VM, the task will be failed.
+// Reference: vCloud API Programming Guide for Service Providers vCloud API 30.0 PDF Page 164 - 165,
+// https://vdc-download.vmware.com/vmwb-repository/dcr-public/1b6cf07d-adb3-4dba-8c47-9c1c92b04857/
+// 241956dd-e128-4fcc-8131-bf66e1edd895/vcloud_sp_api_guide_30_0.pdf
+func (vm *VM) AttachDisk(diskParams *types.DiskAttachOrDetachParams) (Task, error) {
+	util.Logger.Printf("[TRACE] Attach disk, HREF: %s\n", diskParams.Disk.HREF)
+
+	if diskParams.Disk == nil {
+		return Task{}, fmt.Errorf("could not find disk info for attach")
+	}
+
+	return vm.attachOrDetachDisk(diskParams, types.RelDiskAttach)
+}
+
+// Detach an independent disk
+// Call attachOrDetachDisk with disk and types.RelDiskDetach to detach an independent disk.
+// Please verify the independent disk is connected the VM before calling this function.
+// If the independent disk is not connected to the VM, the task will be failed.
+// Reference: vCloud API Programming Guide for Service Providers vCloud API 30.0 PDF Page 164 - 165,
+// https://vdc-download.vmware.com/vmwb-repository/dcr-public/1b6cf07d-adb3-4dba-8c47-9c1c92b04857/
+// 241956dd-e128-4fcc-8131-bf66e1edd895/vcloud_sp_api_guide_30_0.pdf
+func (vm *VM) DetachDisk(diskParams *types.DiskAttachOrDetachParams) (Task, error) {
+	util.Logger.Printf("[TRACE] Detach disk, HREF: %s\n", diskParams.Disk.HREF)
+
+	if diskParams.Disk == nil {
+		return Task{}, fmt.Errorf("could not find disk info for detach")
+	}
+
+	return vm.attachOrDetachDisk(diskParams, types.RelDiskDetach)
 }

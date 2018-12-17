@@ -1244,6 +1244,8 @@ type VirtualHardwareItem struct {
 	Connection          []*VirtualHardwareConnection   `xml:"Connection,omitempty"`
 	HostResource        []*VirtualHardwareHostResource `xml:"HostResource,omitempty"`
 	Link                []*Link                        `xml:"Link,omitempty"`
+	// Reference: https://code.vmware.com/apis/287/vcloud?h=Director#/doc/doc/operations/GET-DisksRasdItemsList-vApp.html
+	Parent int `xml:"Parent,omitempty"`
 }
 
 // Connection info from ResourceType=10 (Network Interface)
@@ -1255,12 +1257,18 @@ type VirtualHardwareConnection struct {
 }
 
 // HostResource info from ResourceType=17 (Hard Disk)
+// Reference: vCloud API Programming Guide for Service Providers vCloud API 30.0, Page 188 - 189
+// https://vdc-download.vmware.com/vmwb-repository/dcr-public/1b6cf07d-adb3-4dba-8c47-9c1c92b04857/
+// def8435d-a54a-4923-b26a-e2d1915b09c3/vcloud_sp_api_guide_30_0.pdf
 type VirtualHardwareHostResource struct {
 	BusType           int    `xml:"busType,attr,omitempty"`
 	BusSubType        string `xml:"busSubType,attr,omitempty"`
 	Capacity          int    `xml:"capacity,attr,omitempty"`
 	StorageProfile    string `xml:"storageProfileHref,attr,omitempty"`
 	OverrideVmDefault bool   `xml:"storageProfileOverrideVmDefault,attr,omitempty"`
+	Disk              string `xml:"disk,attr,omitempty"`
+	//Iops              int    `xml:"iops,attr,omitempty"`
+	//OsType            string `xml:"osType,attr,omitempty"`
 }
 
 // SnapshotSection from VM struct
@@ -2077,4 +2085,71 @@ type MediaRecordType struct {
 	IsVdcEnabled       bool   `xml:"isVdcEnabled,attr,omitempty"`
 	TaskStatus         string `xml:"taskStatus,attr,omitempty"`
 	TaskDetails        string `xml:"taskDetails,attr,omitempty"`
+}
+
+// DiskCreateParams element for create independent disk
+// Reference: vCloud API 30.0 - DiskCreateParamsType
+// https://code.vmware.com/apis/287/vcloud?h=Director#/doc/doc/types/DiskCreateParamsType.html
+type DiskCreateParams struct {
+	XMLName         xml.Name         `xml:"DiskCreateParams"`
+	Xmlns           string           `xml:"xmlns,attr,omitempty"`
+	Disk            *Disk            `xml:"Disk"`
+	Locality        *Reference       `xml:"Locality,omitempty"`
+	VCloudExtension *VCloudExtension `xml:"VCloudExtension,omitempty"`
+}
+
+// Represents an independent disk
+// Reference: vCloud API 30.0 - DiskType
+// https://code.vmware.com/apis/287/vcloud?h=Director#/doc/doc/types/DiskType.html
+type Disk struct {
+	XMLName         xml.Name         `xml:"Disk"`
+	Xmlns           string           `xml:"xmlns,attr,omitempty"`
+	HREF            string           `xml:"href,attr,omitempty"`
+	Type            string           `xml:"type,attr,omitempty"`
+	Id              string           `xml:"id,attr,omitempty"`
+	OperationKey    string           `xml:"operationKey,attr,omitempty"`
+	Name            string           `xml:"name,attr"`
+	Status          int              `xml:"status,attr,omitempty"`
+	Size            int              `xml:"size,attr"`
+	Iops            *int             `xml:"iops,attr,omitempty"`
+	BusType         string           `xml:"busType,attr,omitempty"`
+	BusSubType      string           `xml:"busSubType,attr,omitempty"`
+	Description     string           `xml:"Description,omitempty"`
+	Files           *FilesList       `xml:"Files,omitempty"`
+	Link            []*Link          `xml:"Link,omitempty"`
+	Owner           *Owner           `xml:"Owner,omitempty"`
+	StorageProfile  *Reference       `xml:"StorageProfile,omitempty"`
+	Tasks           *TasksInProgress `xml:"Tasks,omitempty"`
+	VCloudExtension *VCloudExtension `xml:"VCloudExtension,omitempty"`
+}
+
+// General purpose extension element
+// Not related to extension services
+// Reference: vCloud API 30.0 - DiskAttachOrDetachParamsType
+// https://code.vmware.com/apis/287/vcloud?h=Director#/doc/doc/types/VCloudExtensionType.html
+type VCloudExtension struct {
+	Required bool `xml:"required,attr,omitempty"`
+}
+
+// Parameters for attaching or detaching an independent disk
+// Reference: vCloud API 30.0 - DiskAttachOrDetachParamsType
+// https://code.vmware.com/apis/287/vcloud?h=Director#/doc/doc/types/DiskAttachOrDetachParamsType.html
+type DiskAttachOrDetachParams struct {
+	XMLName         xml.Name         `xml:"DiskAttachOrDetachParams"`
+	Xmlns           string           `xml:"xmlns,attr,omitempty"`
+	BusNumber       *int             `xml:"BusNumber,omitempty"`
+	Disk            *Reference       `xml:"Disk"`
+	UnitNumber      *int             `xml:"UnitNumber,omitempty"`
+	VCloudExtension *VCloudExtension `xml:"VCloudExtension,omitempty"`
+}
+
+// Represents a list of virtual machines
+// Reference: vCloud API 30.0 - VmsType
+// https://code.vmware.com/apis/287/vcloud?h=Director#/doc/doc/types/FilesListType.html
+type Vms struct {
+	XMLName     xml.Name   `xml:"Vms"`
+	Xmlns       string     `xml:"xmlns,attr,omitempty"`
+	Type        string     `xml:"type,attr"`
+	HREF        string     `xml:"href,attr"`
+	VmReference *Reference `xml:"VmReference,omitempty"`
 }

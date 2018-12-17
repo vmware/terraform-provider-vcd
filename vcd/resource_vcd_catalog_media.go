@@ -105,7 +105,7 @@ func resourceVcdMediaCreate(d *schema.ResourceData, meta interface{}) error {
 				return err
 			}
 
-			fmt.Fprint(terraformStdout, "vcd_catalog_media."+mediaName+": Upload progress "+task.GetUploadProgress()+"%\n")
+			_, _ = fmt.Fprint(terraformStdout, "vcd_catalog_media."+mediaName+": Upload progress "+task.GetUploadProgress()+"%\n")
 			if task.GetUploadProgress() == "100.00" {
 				break
 			}
@@ -120,7 +120,7 @@ func resourceVcdMediaCreate(d *schema.ResourceData, meta interface{}) error {
 				log.Printf("vCD Error importing new catalog item: %#v", err)
 				return fmt.Errorf("vCD Error importing new catalog item: %#v", err)
 			}
-			fmt.Fprint(terraformStdout, "vcd_catalog_media."+mediaName+": vCD import catalog item progress "+progress+"%\n")
+			_, _ = fmt.Fprint(terraformStdout, "vcd_catalog_media."+mediaName+": vCD import catalog item progress "+progress+"%\n")
 			if progress == "100" {
 				break
 			}
@@ -128,7 +128,10 @@ func resourceVcdMediaCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	task.WaitTaskCompletion()
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return fmt.Errorf("error waiting from task to complete: %+v", err)
+	}
 
 	d.SetId(catalogName + ":" + mediaName)
 

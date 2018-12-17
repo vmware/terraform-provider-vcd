@@ -207,7 +207,12 @@ func resourceVcdEdgeGatewayVpnCreate(d *schema.ResourceData, meta interface{}) e
 	log.Printf("[INFO] ipsecVPNConfig: %#v", ipsecVPNConfig)
 
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		edgeGateway.Refresh()
+		err := edgeGateway.Refresh()
+		if err != nil {
+			log.Printf("[INFO] Error refreshing edge gateway: %#v", err)
+			return resource.RetryableError(
+				fmt.Errorf("error error refreshing edge gateway: %#v", err))
+		}
 		task, err := edgeGateway.AddIpsecVPN(ipsecVPNConfig)
 		if err != nil {
 			log.Printf("[INFO] Error setting ipsecVPNConfig rules: %s", err)
@@ -249,7 +254,12 @@ func resourceVcdEdgeGatewayVpnDelete(d *schema.ResourceData, meta interface{}) e
 	log.Printf("[INFO] ipsecVPNConfig: %#v", ipsecVPNConfig)
 
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		edgeGateway.Refresh()
+		err := edgeGateway.Refresh()
+		if err != nil {
+			log.Printf("[INFO] Error refreshing edge gateway: %#v", err)
+			return resource.RetryableError(
+				fmt.Errorf("error error refreshing edge gateway: %#v", err))
+		}
 		task, err := edgeGateway.AddIpsecVPN(ipsecVPNConfig)
 		if err != nil {
 			log.Printf("[INFO] Error setting ipsecVPNConfig rules: %s", err)
@@ -289,17 +299,18 @@ func resourceVcdEdgeGatewayVpnRead(d *schema.ResourceData, meta interface{}) err
 
 	if len(egsc.Tunnel) == 1 {
 		tunnel := egsc.Tunnel[0]
-		d.Set("name", tunnel.Name)
-		d.Set("description", tunnel.Description)
-		d.Set("encryption_protocol", tunnel.EncryptionProtocol)
-		d.Set("local_ip_address", tunnel.LocalIPAddress)
-		d.Set("local_id", tunnel.LocalID)
-		d.Set("mtu", tunnel.Mtu)
-		d.Set("peer_ip_address", tunnel.PeerIPAddress)
-		d.Set("peer_id", tunnel.PeerID)
-		d.Set("shared_secret", tunnel.SharedSecret)
-		d.Set("local_subnets", tunnel.LocalSubnet)
-		d.Set("peer_subnets", tunnel.PeerSubnet)
+		// TODO: handle return error from d.Set
+		_ = d.Set("name", tunnel.Name)
+		_ = d.Set("description", tunnel.Description)
+		_ = d.Set("encryption_protocol", tunnel.EncryptionProtocol)
+		_ = d.Set("local_ip_address", tunnel.LocalIPAddress)
+		_ = d.Set("local_id", tunnel.LocalID)
+		_ = d.Set("mtu", tunnel.Mtu)
+		_ = d.Set("peer_ip_address", tunnel.PeerIPAddress)
+		_ = d.Set("peer_id", tunnel.PeerID)
+		_ = d.Set("shared_secret", tunnel.SharedSecret)
+		_ = d.Set("local_subnets", tunnel.LocalSubnet)
+		_ = d.Set("peer_subnets", tunnel.PeerSubnet)
 	} else {
 		return fmt.Errorf("multiple tunnels not currently supported")
 	}

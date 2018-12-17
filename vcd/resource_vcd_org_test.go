@@ -3,13 +3,14 @@ package vcd
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/vmware/go-vcloud-director/govcd"
 )
 
-var orgNameTestAccVcdOrgBasic string = "TestAccVcdOrgBasic"
+const orgNameTestAccVcdOrgBasic string = "TestAccVcdOrgBasic"
 
 func TestAccVcdOrgBasic(t *testing.T) {
 
@@ -38,6 +39,8 @@ func TestAccVcdOrgBasic(t *testing.T) {
 						"vcd_org."+orgNameTestAccVcdOrgBasic, "name", orgNameTestAccVcdOrgBasic),
 					resource.TestCheckResourceAttr(
 						"vcd_org."+orgNameTestAccVcdOrgBasic, "full_name", orgNameTestAccVcdOrgBasic),
+					resource.TestCheckResourceAttr(
+						"vcd_org."+orgNameTestAccVcdOrgBasic, "description", orgNameTestAccVcdOrgBasic),
 					resource.TestCheckResourceAttr(
 						"vcd_org."+orgNameTestAccVcdOrgBasic, "is_enabled", "true"),
 				),
@@ -77,9 +80,20 @@ func testAccCheckOrgDestroy(s *terraform.State) error {
 			continue
 		}
 
-		org, err := govcd.GetOrgByName(conn.VCDClient, rs.Primary.Attributes["name"])
-		if org != (govcd.Org{}) || err != nil {
-			return fmt.Errorf("org with name %s was found", rs.Primary.Attributes["name"])
+		deleted := false
+		var org govcd.Org
+		var err error
+		for N := 0; N < 10; N++ {
+			org, err = govcd.GetOrgByName(conn.VCDClient, rs.Primary.Attributes["name"])
+			deleted = (org == (govcd.Org{})) && (err != nil)
+			if deleted {
+				break
+			}
+			time.Sleep(time.Second)
+		}
+
+		if !deleted {
+			return fmt.Errorf("org with name %s was found (%#v %v)", rs.Primary.Attributes["name"], org, err)
 		}
 
 	}
@@ -91,8 +105,9 @@ const testAccCheckVcdOrg_basic = `
 resource "vcd_org" "{{.OrgName}}" {
   name       = "{{.OrgName}}"
   full_name  = "{{.OrgName}}"
+  description = "{{.OrgName}}"
   is_enabled = "true"
-  force      = "true"
-  recursive  = "true"
+  delete_force      = "true"
+  delete_recursive  = "true"
 }
 `
