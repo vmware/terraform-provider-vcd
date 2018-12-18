@@ -32,6 +32,8 @@ type TestConfig struct {
 		SysOrg                   string `json:"sysOrg"`
 		AllowInsecure            bool   `json:"allowInsecure"`
 		TerraformAcceptanceTests bool   `json:"tfAcceptanceTests"`
+		UseVcdConnectionCache    bool   `json:"useVcdConnectionCache"`
+		MaxRetryTimeout          int    `json:"maxRetryTimeout"`
 	} `json:"provider"`
 	VCD struct {
 		Org     string `json:"org"`
@@ -190,8 +192,11 @@ func templateFill(tmpl string, data StringMap) string {
 		if err != nil || count == 0 {
 			panic(fmt.Errorf("error writing to file %s. Reported %d bytes written. %s", resourceFile, count, err))
 		}
-		writer.Flush()
-		file.Close()
+		err = writer.Flush()
+		if err != nil {
+			panic(fmt.Errorf("error writing to file %s. Reported %d bytes written. %s", resourceFile, count, err))
+		}
+		_ = file.Close()
 	}
 	// Returns the populated template
 	return string(writeStr)
@@ -235,20 +240,30 @@ func getConfigStruct() TestConfig {
 	// Now we fill the environment variables that the library is using for its own initialization.
 	if configStruct.Provider.TerraformAcceptanceTests {
 		// defined in vendor/github.com/hashicorp/terraform/helper/resource/testing.go
-		os.Setenv("TF_ACC", "1")
+		_ = os.Setenv("TF_ACC", "1")
+	}
+	if configStruct.Provider.MaxRetryTimeout == 0 {
+		// Setting a default value that should be reasonable for these tests, as we run many heavy operations
+		_ = os.Setenv("VCD_MAX_RETRY_TIMEOUT", "300")
+	} else {
+		newRetryTimeout := fmt.Sprintf("%d", configStruct.Provider.MaxRetryTimeout)
+		_ = os.Setenv("VCD_MAX_RETRY_TIMEOUT", newRetryTimeout)
 	}
 	// The following variables are used in ./provider.go
 	if configStruct.Provider.SysOrg == "" {
 		configStruct.Provider.SysOrg = configStruct.VCD.Org
 	}
-	os.Setenv("VCD_USER", configStruct.Provider.User)
-	os.Setenv("VCD_PASSWORD", configStruct.Provider.Password)
-	os.Setenv("VCD_URL", configStruct.Provider.Url)
-	os.Setenv("VCD_SYS_ORG", configStruct.Provider.SysOrg)
-	os.Setenv("VCD_ORG", configStruct.VCD.Org)
-	os.Setenv("VCD_VDC", configStruct.VCD.Vdc)
+	_ = os.Setenv("VCD_USER", configStruct.Provider.User)
+	_ = os.Setenv("VCD_PASSWORD", configStruct.Provider.Password)
+	_ = os.Setenv("VCD_URL", configStruct.Provider.Url)
+	_ = os.Setenv("VCD_SYS_ORG", configStruct.Provider.SysOrg)
+	_ = os.Setenv("VCD_ORG", configStruct.VCD.Org)
+	_ = os.Setenv("VCD_VDC", configStruct.VCD.Vdc)
+	if configStruct.Provider.UseVcdConnectionCache {
+		enableConnectionCache = true
+	}
 	if configStruct.Provider.AllowInsecure {
-		os.Setenv("VCD_ALLOW_UNVERIFIED_SSL", "1")
+		_ = os.Setenv("VCD_ALLOW_UNVERIFIED_SSL", "1")
 	}
 
 	// Define logging parameters if enabled
