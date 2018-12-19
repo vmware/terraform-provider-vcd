@@ -14,7 +14,7 @@
     "tfAcceptanceTests": true,
     "//": "If enabled, the test suite will cache the provider connection for up to 20 minutes",
     "//": "and then renew it automatically. This will save some heavy network traffic.",
-    "//": "Disabled by default if UseVcdConnectionCache is not set",
+    "//": "Disabled by default if useVcdConnectionCache is not set",
     "useVcdConnectionCache": true,
     "//": "The Terraform provider default for max retry timeout is 60, which often leads to premature test termination",
     "//": "This value changes the default for the test suite. If no value is provided, it will set to 300",
