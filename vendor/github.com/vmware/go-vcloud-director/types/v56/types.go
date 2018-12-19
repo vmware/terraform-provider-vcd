@@ -373,6 +373,68 @@ type Vdc struct {
 	VMQuota            int                   `xml:"VmQuota"`
 }
 
+// AdminVdc represents the admin view of an organization vDC.
+// Type: AdminVdcType
+// Namespace: http://www.vmware.com/vcloud/v1.5
+// Description: Represents the admin view of an organization vDC.
+// Since: 0.9
+type AdminVdc struct {
+	Vdc
+
+	ResourceGuaranteedMemory float64    `xml:"ResourceGuaranteedMemory,omitempty"`
+	ResourceGuaranteedCpu    float64    `xml:"ResourceGuaranteedCpu,omitempty"`
+	VCpuInMhz                int64      `xml:"VCpuInMhz,omitempty"`
+	IsThinProvision          bool       `xml:"IsThinProvision,omitempty"`
+	NetworkPoolReference     *Reference `xml:"NetworkPoolReference,omitempty"`
+	ProviderVdcReference     *Reference `xml:"ProviderVdcReference"`
+	UsesFastProvisioning     bool       `xml:"UsesFastProvisioning,omitempty"`
+	OverCommitAllowed        bool       `xml:"OverCommitAllowed,omitempty"`
+	VmDiscoveryEnabled       bool       `xml:"VmDiscoveryEnabled,omitempty"`
+}
+
+// VdcStorageProfile represents the parameters to create a storage profile in an organization vDC.
+// Type: VdcStorageProfileParamsType
+// Namespace: http://www.vmware.com/vcloud/v1.5
+// Description: Represents the parameters to create a storage profile in an organization vDC.
+// Since: 5.1
+// https://code.vmware.com/apis/220/vcloud#/doc/doc/types/VdcStorageProfileParamsType.html
+type VdcStorageProfile struct {
+	Enabled                   bool       `xml:"Enabled,omitempty"`
+	Units                     string     `xml:"Units"`
+	Limit                     int64      `xml:"Limit"`
+	Default                   bool       `xml:"Default"`
+	ProviderVdcStorageProfile *Reference `xml:"ProviderVdcStorageProfile"`
+}
+
+// VdcConfiguration models the payload for creating a VDC.
+// Type: CreateVdcParamsType
+// Namespace: http://www.vmware.com/vcloud/v1.5
+// Description: Parameters for creating an organization vDC
+// Since: 5.1
+// https://code.vmware.com/apis/220/vcloud#/doc/doc/types/CreateVdcParamsType.html
+type VdcConfiguration struct {
+	XMLName                  xml.Name           `xml:"CreateVdcParams"`
+	Xmlns                    string             `xml:"xmlns,attr"`
+	Name                     string             `xml:"name,attr"`
+	Description              string             `xml:"Description,omitempty"`
+	AllocationModel          string             `xml:"AllocationModel"`
+	ComputeCapacity          []*ComputeCapacity `xml:"ComputeCapacity"`
+	NicQuota                 int                `xml:"NicQuota,omitempty"`
+	NetworkQuota             int                `xml:"NetworkQuota,omitempty"`
+	VmQuota                  int                `xml:"VmQuota,omitempty"`
+	IsEnabled                bool               `xml:"IsEnabled,omitempty"`
+	VdcStorageProfile        *VdcStorageProfile `xml:"VdcStorageProfile"`
+	ResourceGuaranteedMemory float64            `xml:"ResourceGuaranteedMemory,omitempty"`
+	ResourceGuaranteedCpu    float64            `xml:"ResourceGuaranteedCpu,omitempty"`
+	VCpuInMhz                int64              `xml:"VCpuInMhz,omitempty"`
+	IsThinProvision          bool               `xml:"IsThinProvision,omitempty"`
+	NetworkPoolReference     *Reference         `xml:"NetworkPoolReference,omitempty"`
+	ProviderVdcReference     *Reference         `xml:"ProviderVdcReference"`
+	UsesFastProvisioning     bool               `xml:"UsesFastProvisioning,omitempty"`
+	OverCommitAllowed        bool               `xml:"OverCommitAllowed,omitempty"`
+	VmDiscoveryEnabled       bool               `xml:"VmDiscoveryEnabled,omitempty"`
+}
+
 // Task represents an asynchronous operation in vCloud Director.
 // Type: TaskType
 // Namespace: http://www.vmware.com/vcloud/v1.5
@@ -409,12 +471,12 @@ type Task struct {
 // Description: Represents a capacity and usage of a given resource.
 // Since: 0.9
 type CapacityWithUsage struct {
+	Units     string `xml:"Units"`
 	Allocated int64  `xml:"Allocated,omitempty"`
 	Limit     int64  `xml:"Limit,omitempty"`
-	Overhead  int64  `xml:"Overhead,omitempty"`
 	Reserved  int64  `xml:"Reserved,omitempty"`
-	Units     string `xml:"Units"`
 	Used      int64  `xml:"Used,omitempty"`
+	Overhead  int64  `xml:"Overhead,omitempty"`
 }
 
 // ComputeCapacity represents vDC compute capacity.
@@ -542,7 +604,7 @@ type AdminOrg struct {
 	OrgSettings  *OrgSettings     `xml:"Settings,omitempty"`
 	Vdcs         *VDCList         `xml:"Vdcs,omitempty"`
 	Networks     *NetworksList    `xml:"Networks,omitempty"`
-	Catalogs     *CatalogsList    `xml:"Catalogs,omitemtpy"`
+	Catalogs     *CatalogsList    `xml:"Catalogs,omitempty"`
 }
 
 // OrgSettingsType represents the settings for a vCloud Director organization.
@@ -1909,13 +1971,16 @@ type QueryResultRecordsType struct {
 	PageSize int     `xml:"pageSize,attr,omitempty"` // Page size, as a number of records or references.
 	Total    float64 `xml:"total,attr,omitempty"`    // Total number of records or references in the container.
 	// Elements
-	Link                       []*Link                                      `xml:"Link,omitempty"`             // A reference to an entity or operation associated with this object.
-	EdgeGatewayRecord          []*QueryResultEdgeGatewayRecordType          `xml:"EdgeGatewayRecord"`          // A record representing a EdgeGateway result.
-	VMRecord                   []*QueryResultVMRecordType                   `xml:"VMRecord"`                   // A record representing a VM result.
-	VAppRecord                 []*QueryResultVAppRecordType                 `xml:"VAppRecord"`                 // A record representing a VApp result.
-	OrgVdcStorageProfileRecord []*QueryResultOrgVdcStorageProfileRecordType `xml:"OrgVdcStorageProfileRecord"` // A record representing storage profiles
-	MediaRecord                []*MediaRecordType                           `xml:"MediaRecord"`                // A record representing media
-	AdminMediaRecord           []*MediaRecordType                           `xml:"AdminMediaRecord"`           // A record representing Admin media
+	Link                            []*Link                                           `xml:"Link,omitempty"`                  // A reference to an entity or operation associated with this object.
+	EdgeGatewayRecord               []*QueryResultEdgeGatewayRecordType               `xml:"EdgeGatewayRecord"`               // A record representing a EdgeGateway result.
+	VMRecord                        []*QueryResultVMRecordType                        `xml:"VMRecord"`                        // A record representing a VM result.
+	VAppRecord                      []*QueryResultVAppRecordType                      `xml:"VAppRecord"`                      // A record representing a VApp result.
+	OrgVdcStorageProfileRecord      []*QueryResultOrgVdcStorageProfileRecordType      `xml:"OrgVdcStorageProfileRecord"`      // A record representing storage profiles
+	MediaRecord                     []*MediaRecordType                                `xml:"MediaRecord"`                     // A record representing media
+	AdminMediaRecord                []*MediaRecordType                                `xml:"AdminMediaRecord"`                // A record representing Admin media
+	VMWProviderVdcRecord            []*QueryResultVMWProviderVdcRecordType            `xml:"VMWProviderVdcRecord"`            // A record representing a Provider VDC result.
+	ProviderVdcStorageProfileRecord []*QueryResultProviderVdcStorageProfileRecordType `xml:"ProviderVdcStorageProfileRecord"` // A record representing a Provider VDC storage profile result
+	NetworkPoolRecord               []*QueryResultNetworkPoolRecordType               `xml:"NetworkPoolRecord"`               // A record representing a network pool
 }
 
 // QueryResultEdgeGatewayRecordType represents an edge gateway record as query result.
@@ -2010,6 +2075,57 @@ type QueryResultOrgVdcStorageProfileRecordType struct {
 	NumberOfConditions      int    `xml:"numberOfConditions,attr,omitempty"`
 	StorageUsedMB           int    `xml:"storageUsedMB,attr,omitempty"`
 	StorageLimitMB          int    `xml:"storageLimitMB,attr,omitempty"`
+}
+
+// QueryResultVMWProviderVdcRecordType represents a Provider VDC as query result.
+type QueryResultVMWProviderVdcRecordType struct {
+	// Attributes
+	HREF                    string `xml:"href,attr,omitempty"` // The URI of the entity.
+	Name                    string `xml:"name,attr,omitempty"` // Provider VDC name.
+	Status                  string `xml:"status,attr,omitempty"`
+	IsBusy                  bool   `xml:"isBusy,attr,omitempty"`
+	IsDeleted               bool   `xml:"isDeleted,attr,omitempty"`
+	IsEnabled               bool   `xml:"isEnabled,attr,omitempty"`
+	CpuAllocationMhz        int    `xml:"cpuAllocationMhz,attr,omitempty"`
+	CpuLimitMhz             int    `xml:"cpuLimitMhz,attr,omitempty"`
+	CpuUsedMhz              int    `xml:"cpuUsedMhz,attr,omitempty"`
+	NumberOfDatastores      int    `xml:"numberOfDatastores,attr,omitempty"`
+	NumberOfStorageProfiles int    `xml:"numberOfStorageProfiles,attr,omitempty"`
+	NumberOfVdcs            int    `xml:"numberOfVdcs,attr,omitempty"`
+	MemoryAllocationMB      int64  `xml:"memoryAllocationMB,attr,omitempty"`
+	MemoryLimitMB           int64  `xml:"memoryLimitMB,attr,omitempty"`
+	MemoryUsedMB            int64  `xml:"memoryUsedMB,attr,omitempty"`
+	StorageAllocationMB     int64  `xml:"storageAllocationMB,attr,omitempty"`
+	StorageLimitMB          int64  `xml:"storageLimitMB,attr,omitempty"`
+	StorageUsedMB           int64  `xml:"storageUsedMB,attr,omitempty"`
+	CpuOverheadMhz          int64  `xml:"cpuOverheadMhz,attr,omitempty"`
+	StorageOverheadMB       int64  `xml:"storageOverheadMB,attr,omitempty"`
+	MemoryOverheadMB        int64  `xml:"memoryOverheadMB,attr,omitempty"`
+}
+
+// QueryResultProviderVdcStorageProfileRecordType represents a Provider VDC storage profile as query result.
+type QueryResultProviderVdcStorageProfileRecordType struct {
+	// Attributes
+	HREF                 string `xml:"href,attr,omitempty"` // The URI of the entity.
+	Name                 string `xml:"name,attr,omitempty"` // Provider VDC Storage Profile name.
+	ProviderVdcHREF      string `xml:"providerVdc,attr,omitempty"`
+	VcHREF               string `xml:"vc,attr,omitempty"`
+	StorageProfileMoref  string `xml:"storageProfileMoref,attr,omitempty"`
+	IsEnabled            bool   `xml:"isEnabled,attr,omitempty"`
+	StorageProvisionedMB int64  `xml:"storageProvisionedMB,attr,omitempty"`
+	StorageRequestedMB   int64  `xml:"storageRequestedMB,attr,omitempty"`
+	StorageTotalMB       int64  `xml:"storageTotalMB,attr,omitempty"`
+	StorageUsedMB        int64  `xml:"storageUsedMB,attr,omitempty"`
+	NumberOfConditions   int    `xml:"numberOfConditions,attr,omitempty"`
+}
+
+// QueryResultNetworkPoolRecordType represents a network pool as query result.
+type QueryResultNetworkPoolRecordType struct {
+	// Attributes
+	HREF            string `xml:"href,attr,omitempty"` // The URI of the entity.
+	Name            string `xml:"name,attr,omitempty"` // Network pool name.
+	IsBusy          bool   `xml:"isBusy,attr,omitempty"`
+	NetworkPoolType int    `xml:"networkPoolType,attr,omitempty"`
 }
 
 // Namespace: http://www.vmware.com/vcloud/v1.5

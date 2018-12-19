@@ -26,6 +26,11 @@ vcd:
     # The tests will create a vApp here
     #
     vdc: myvdc
+    # Provider VDC; if omitted, some tests will be skipped
+    provider_vdc:
+      name: myprovidervdc
+      storage_profile: mystorageprofile
+      network_pool: mynetworkpool
     # An Org catalog, possibly containing at least one item
     catalog:
         name: mycat

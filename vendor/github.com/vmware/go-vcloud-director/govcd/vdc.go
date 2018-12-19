@@ -12,6 +12,7 @@ import (
 	"github.com/vmware/go-vcloud-director/types/v56"
 	"github.com/vmware/go-vcloud-director/util"
 	"net/url"
+	"strconv"
 	"strings"
 )
 
@@ -25,6 +26,19 @@ func NewVdc(cli *Client) *Vdc {
 	return &Vdc{
 		Vdc:    new(types.Vdc),
 		client: cli,
+	}
+}
+
+type AdminVdc struct {
+	AdminVdc *types.AdminVdc
+	client   *Client
+	VApp     *types.VApp
+}
+
+func NewAdminVdc(cli *Client) *AdminVdc {
+	return &AdminVdc{
+		AdminVdc: new(types.AdminVdc),
+		client:   cli,
 	}
 }
 
@@ -129,6 +143,51 @@ func (vdc *Vdc) Refresh() error {
 	vdc.Vdc = unmarshalledVdc
 
 	// The request was successful
+	return nil
+}
+
+// Deletes the vdc, returning an error of the vCD call fails.
+// API Documentation: https://code.vmware.com/apis/220/vcloud#/doc/doc/operations/DELETE-Vdc.html
+func (vdc *Vdc) Delete(force bool, recursive bool) (Task, error) {
+	util.Logger.Printf("[TRACE] Vdc.Delete - deleting VDC with force: %t, recursive: %t", force, recursive)
+
+	if vdc.Vdc.HREF == "" {
+		return Task{}, fmt.Errorf("cannot delete, Object is empty")
+	}
+
+	vdcUrl, err := url.ParseRequestURI(vdc.Vdc.HREF)
+	if err != nil {
+		return Task{}, fmt.Errorf("error parsing vdc url: %s", err)
+	}
+
+	req := vdc.client.NewRequest(map[string]string{
+		"force":     strconv.FormatBool(force),
+		"recursive": strconv.FormatBool(recursive),
+	}, "DELETE", *vdcUrl, nil)
+	resp, err := checkResp(vdc.client.Http.Do(req))
+	if err != nil {
+		return Task{}, fmt.Errorf("error deleting vdc: %s", err)
+	}
+	task := NewTask(vdc.client)
+	if err = decodeBody(resp, task.Task); err != nil {
+		return Task{}, fmt.Errorf("error decoding task response: %s", err)
+	}
+	if task.Task.Status == "error" {
+		return Task{}, fmt.Errorf("vdc not properly destroyed")
+	}
+	return *task, nil
+}
+
+// Deletes the vdc and waits for the asynchronous task to complete.
+func (vdc *Vdc) DeleteWait(force bool, recursive bool) error {
+	task, err := vdc.Delete(force, recursive)
+	if err != nil {
+		return err
+	}
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return fmt.Errorf("couldn't finish removing vdc %#v", err)
+	}
 	return nil
 }
 
