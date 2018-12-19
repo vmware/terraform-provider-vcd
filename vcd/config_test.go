@@ -242,14 +242,17 @@ func getConfigStruct() TestConfig {
 		// defined in vendor/github.com/hashicorp/terraform/helper/resource/testing.go
 		_ = os.Setenv("TF_ACC", "1")
 	}
+	// The following variables are used in ./provider.go
 	if configStruct.Provider.MaxRetryTimeout == 0 {
-		// Setting a default value that should be reasonable for these tests, as we run many heavy operations
-		_ = os.Setenv("VCD_MAX_RETRY_TIMEOUT", "300")
+		// If there is no retry timeout in the configuration, and there is no env variable for it, we set a new one
+		if os.Getenv("VCD_MAX_RETRY_TIMEOUT") == "" {
+			// Setting a default value that should be reasonable for these tests, as we run many heavy operations
+			_ = os.Setenv("VCD_MAX_RETRY_TIMEOUT", "300")
+		}
 	} else {
 		newRetryTimeout := fmt.Sprintf("%d", configStruct.Provider.MaxRetryTimeout)
 		_ = os.Setenv("VCD_MAX_RETRY_TIMEOUT", newRetryTimeout)
 	}
-	// The following variables are used in ./provider.go
 	if configStruct.Provider.SysOrg == "" {
 		configStruct.Provider.SysOrg = configStruct.VCD.Org
 	}
