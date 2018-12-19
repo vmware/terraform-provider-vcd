@@ -11,7 +11,14 @@
     "allowInsecure": true,
     "//": "tfAcceptanceTests is needed to allow the whole test suite to run",
     "//": "Warning: it may cost time (from 14 to 40 min) and possibly money",
-    "tfAcceptanceTests": false
+    "tfAcceptanceTests": true,
+    "//": "If enabled, the test suite will cache the provider connection for up to 20 minutes",
+    "//": "and then renew it automatically. This will save some heavy network traffic.",
+    "//": "Disabled by default if useVcdConnectionCache is not set",
+    "useVcdConnectionCache": true,
+    "//": "The Terraform provider default for max retry timeout is 60, which often leads to premature test termination",
+    "//": "This value changes the default for the test suite. If no value is provided, it will set to 300",
+    "maxRetryTimeout": 300
   },
   "vcd": {
     "//": "This section contains the organization composition",
@@ -33,6 +40,8 @@
     "internalIp": "192.168.4.30",
      "//": "sharedSecret is defined in the edge gateway service configuration", 
     "sharedSecret": "my-secret-string",
+    "//": "The name of a vCD external network",
+    "externalNetwork": "my-ext-network",
     "local": {
       "//": "Local definition for a vpn", 
       "localIp": "10.15.21.11",
