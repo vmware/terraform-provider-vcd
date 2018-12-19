@@ -3,6 +3,7 @@ package vcd
 import (
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -140,6 +141,10 @@ func TestAccVcdNetworkRoutedMixed(t *testing.T) {
 func TestAccVcdNetworkDirect(t *testing.T) {
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	if strings.ToLower(testConfig.Provider.SysOrg) != "system" {
+		t.Skip("TestAccVcdNetworkDirect requires system admin privileges")
 		return
 	}
 
