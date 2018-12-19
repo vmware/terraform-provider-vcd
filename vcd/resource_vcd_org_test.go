@@ -2,7 +2,6 @@ package vcd
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 	"time"
 
@@ -25,7 +24,7 @@ func TestAccVcdOrgBasic(t *testing.T) {
 		return
 	}
 
-	if strings.ToLower(testConfig.Provider.SysOrg) != "system" {
+	if !usingSysAdmin() {
 		t.Skip("TestAccVcdOrgBasic requires system admin privileges")
 		return
 	}

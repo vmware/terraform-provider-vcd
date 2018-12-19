@@ -3,7 +3,6 @@ package vcd
 import (
 	"fmt"
 	"regexp"
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -143,7 +142,7 @@ func TestAccVcdNetworkDirect(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	if strings.ToLower(testConfig.Provider.SysOrg) != "system" {
+	if !usingSysAdmin() {
 		t.Skip("TestAccVcdNetworkDirect requires system admin privileges")
 		return
 	}

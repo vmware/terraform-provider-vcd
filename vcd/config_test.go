@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -109,6 +110,16 @@ func dirExists(filename string) bool {
 	}
 	filemode := f.Mode()
 	return filemode.IsDir()
+}
+
+// Returns true if the current configuration uses a system administrator for connections
+func usingSysAdmin() bool {
+	sysOrg := strings.ToLower(testConfig.Provider.SysOrg)
+	org := strings.ToLower(testConfig.VCD.Org)
+	if sysOrg == "system" || (sysOrg == "" && org == "system") {
+		return true
+	}
+	return false
 }
 
 // Fills a template with data provided as a StringMap
