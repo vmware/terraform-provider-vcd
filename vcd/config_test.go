@@ -15,7 +15,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -114,9 +113,11 @@ func dirExists(filename string) bool {
 
 // Returns true if the current configuration uses a system administrator for connections
 func usingSysAdmin() bool {
-	sysOrg := strings.ToLower(testConfig.Provider.SysOrg)
-	org := strings.ToLower(testConfig.VCD.Org)
-	if sysOrg == "system" || (sysOrg == "" && org == "system") {
+	conn, ok := testAccProvider.Meta().(*VCDClient)
+	if ! ok {
+		panic("unable to retrieve connection from provider")
+	}
+	if conn.Client.IsSysAdmin {
 		return true
 	}
 	return false
