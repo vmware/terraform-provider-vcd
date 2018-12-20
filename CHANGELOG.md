@@ -30,7 +30,7 @@ IMPROVEMENTS:
 BACKWARDS INCOMPATIBILITIES / NOTES:
 
 * Resource `vcd_network` deprecated in favor of a new name `vcd_network_routed`
-* Previously deprecated provider's parameter `maxRetryTimeout` removed completely in favor of `max_retry_timeout`
+* Previously deprecated parameter `provider.maxRetryTimeout` removed completely in favor of `provider.max_retry_timeout`
 
 TESTS:
 
