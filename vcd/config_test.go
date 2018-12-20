@@ -114,7 +114,7 @@ func dirExists(filename string) bool {
 // Returns true if the current configuration uses a system administrator for connections
 func usingSysAdmin() bool {
 	conn, ok := testAccProvider.Meta().(*VCDClient)
-	if ! ok {
+	if !ok {
 		panic("unable to retrieve connection from provider")
 	}
 	if conn.Client.IsSysAdmin {

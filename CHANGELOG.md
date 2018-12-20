@@ -1,3 +1,41 @@
+## 2.0.0 (TODO: date)
+
+Please look for "v2.0+" keyword in documentation which is used to emphasize changes and new features.
+
+ARCHITECTURAL:
+
+* Vendor (vCD Golang SDK) switch from the old govcloudair to the newly supported [go-vcloud-director](https://github.com/vmware/go-vcloud-director)
+
+FEATURES:
+
+* vCD 8.2, 9.0, 9.1 and 9.5 version support
+* Sys admin login support (required to support new higher privileged operations) - `provider.org = "System"` or `provider.sysorg = "System"`
+* Ability to select Org and VDC at resource level - `org` and `vdc` parameters
+* New Org resource - `vcd_org`
+* New Catalog resource - `vcd_catalog`
+* New Catalog item resource (upload OVA) - `vcd_catalog_item`
+* New Catalog media resource (upload ISO) - `vcd_catalog_media`
+* New direct and isolated Org VDC network resources (complements the routed network) - `vcd_network_direct`, `vcd_network_isolated` and `vcd_network_routed`
+* DNAT protocol and ICMP sub type setting - `vcd_dnat.protocol` and `vcd_dnat.icmp_sub_type`
+* Ability to accept EULAs when deploying VM - `vcd_vapp_vm.accept_all_eulas`
+* Setting to log API calls for troubleshooting - `provider.logging` and `provider.logging_file`
+
+IMPROVEMENTS:
+
+* Fixes for guest customization issues
+* Improvements to error handling and error messages
+* New tests and test framework improvements
+* Provisional support for connection caching (disabled by default)
+
+BACKWARDS INCOMPATIBILITIES / NOTES:
+
+* Resource `vcd_network` deprecated in favor of a new name `vcd_network_routed`
+* Previously deprecated provider's parameter `maxRetryTimeout` removed completely in favor of `max_retry_timeout`
+
+TESTS:
+
+* Test configuration is now included in a file (create `vcd_test_config.json` from `sample_vcd_test_config.json`) instead of being defined by environment variables
+
 ## 1.0.1 (Unreleased)
 
 IMPROVEMENTS:
