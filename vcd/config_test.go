@@ -111,6 +111,18 @@ func dirExists(filename string) bool {
 	return filemode.IsDir()
 }
 
+// Returns true if the current configuration uses a system administrator for connections
+func usingSysAdmin() bool {
+	conn, ok := testAccProvider.Meta().(*VCDClient)
+	if ! ok {
+		panic("unable to retrieve connection from provider")
+	}
+	if conn.Client.IsSysAdmin {
+		return true
+	}
+	return false
+}
+
 // Fills a template with data provided as a StringMap
 // Returns the text of a ready-to-use Terraform directive.
 // It also saves the filled template to a file, for further troubleshooting.

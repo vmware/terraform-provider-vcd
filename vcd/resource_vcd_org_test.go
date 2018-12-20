@@ -23,6 +23,12 @@ func TestAccVcdOrgBasic(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
+
+	if !usingSysAdmin() {
+		t.Skip("TestAccVcdOrgBasic requires system admin privileges")
+		return
+	}
+
 	configText := templateFill(testAccCheckVcdOrg_basic, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 

@@ -142,6 +142,10 @@ func TestAccVcdNetworkDirect(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
+	if !usingSysAdmin() {
+		t.Skip("TestAccVcdNetworkDirect requires system admin privileges")
+		return
+	}
 
 	var def = networkDef{
 		name:            directNetwork,
