@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_org"
 sidebar_current: "docs-vcd-resource-org"
 description: |-
-Provides a vCloud Director Organization resource. This can be used to create and delete an organization.
+  Provides a vCloud Director Organization resource. This can be used to create and delete an organization.
 ---
 
 # vcd\_org

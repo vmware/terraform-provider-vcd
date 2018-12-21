@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_catalog"
 sidebar_current: "docs-vcd-resource-catalog"
 description: |-
-Provides a vCloud Director catalog resource. This can be used to create and delete a catalog.
+  Provides a vCloud Director catalog resource. This can be used to create and delete a catalog.
 ---
 
 # vcd\_catalog
