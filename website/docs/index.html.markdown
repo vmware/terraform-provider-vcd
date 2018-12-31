@@ -17,6 +17,7 @@ Use the navigation to the left to read about the available resources.
 ## Supported vCD Versions
 
 The following vCloud Director versions are supported by this provider:
+
 * 8.20
 * 9.0
 * 9.1
@@ -114,8 +115,7 @@ resource "vcd_network_routed" "net2" {
 The following arguments are used to configure the VMware vCloud Director Provider:
 
 * `user` - (Required) This is the username for vCloud Director API operations. Can also
-  be specified with the `VCD_USER` environment variable.
-  
+  be specified with the `VCD_USER` environment variable.  
   *v2.0+* `user` may be "administrator" (set `org` or `sysorg` to "System" in this case).
   
 * `password` - (Required) This is the password for vCloud Director API operations. Can
@@ -123,11 +123,9 @@ The following arguments are used to configure the VMware vCloud Director Provide
   
 * `org` - (Required) This is the vCloud Director Org on which to run API
   operations. Can also be specified with the `VCD_ORG` environment
-  variable.
-  
+  variable.  
   *v2.0+* `org` may be set to "System" when connection as Sys Admin is desired
-  (set `user` to "administrator" in this case).
-  
+  (set `user` to "administrator" in this case).  
   Note: `org` value is case sensitive.
   
 * `sysorg` - (Optional; *v2.0+*) - Organization for user authentication. Can also be
