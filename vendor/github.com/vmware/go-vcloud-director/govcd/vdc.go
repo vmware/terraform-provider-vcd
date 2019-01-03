@@ -502,13 +502,13 @@ func (vdc *Vdc) FindVAppByName(vapp string) (VApp, error) {
 					return VApp{}, fmt.Errorf("error retrieving vApp: %s", err)
 				}
 
-				newvapp := NewVApp(vdc.client)
+				newVapp := NewVApp(vdc.client)
 
-				if err = decodeBody(resp, newvapp.VApp); err != nil {
+				if err = decodeBody(resp, newVapp.VApp); err != nil {
 					return VApp{}, fmt.Errorf("error decoding vApp response: %s", err.Error())
 				}
 
-				return *newvapp, nil
+				return *newVapp, nil
 
 			}
 		}
@@ -570,6 +570,44 @@ func (vdc *Vdc) FindVMByName(vapp VApp, vm string) (VM, error) {
 	}
 	util.Logger.Printf("[TRACE] Couldn't find VM: %s", vm)
 	return VM{}, fmt.Errorf("can't find vm: %s", vm)
+}
+
+// Find vm using vApp name and VM name. Returns VMRecord query return type
+func (vdc *Vdc) QueryVM(vappName, vmName string) (VMRecord, error) {
+
+	if vmName == "" {
+		return VMRecord{}, errors.New("error querying vm name is empty")
+	}
+
+	if vappName == "" {
+		return VMRecord{}, errors.New("error querying vapp name is empty")
+	}
+
+	typeMedia := "vm"
+	if vdc.client.IsSysAdmin {
+		typeMedia = "adminVM"
+	}
+
+	results, err := vdc.QueryWithNotEncodedParams(nil, map[string]string{"type": typeMedia,
+		"filter": "(name==" + url.QueryEscape(vmName) + ";containerName==" + url.QueryEscape(vappName) + ")"})
+	if err != nil {
+		return VMRecord{}, fmt.Errorf("error querying vm %#v", err)
+	}
+
+	vmResults := results.Results.VMRecord
+	if vdc.client.IsSysAdmin {
+		vmResults = results.Results.AdminVMRecord
+	}
+
+	newVM := NewVMRecord(vdc.client)
+
+	if len(vmResults) == 1 {
+		newVM.VM = vmResults[0]
+	} else {
+		return VMRecord{}, fmt.Errorf("found results %d", len(vmResults))
+	}
+
+	return *newVM, nil
 }
 
 func (vdc *Vdc) FindVAppByID(vappid string) (VApp, error) {
