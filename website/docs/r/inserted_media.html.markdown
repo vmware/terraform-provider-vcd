@@ -3,12 +3,12 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_inserted_media"
 sidebar_current: "docs-vcd-inserted-media"
 description: |-
-  Provides a vCloud Director inject media resource. This can be used to insert or eject media (ISO) file for the VM.
+  Provides a vCloud Director resource for inserting or ejecting media (ISO) file for the VM. Create this resource for inserting the media, and destroy it for ejecting.
 ---
 
 # vcd\_catalog\_media
 
-Provides a vCloud Director inject media resource. This can be used to insert media for the VM and eject it.
+Provides a vCloud Director resource for inserting or ejecting media (ISO) file for the VM. Create this resource for inserting the media, and destroy it for ejecting.
 
 Supported in provider *v2.0+*
 
