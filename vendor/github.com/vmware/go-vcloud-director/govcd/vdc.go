@@ -572,6 +572,44 @@ func (vdc *Vdc) FindVMByName(vapp VApp, vm string) (VM, error) {
 	return VM{}, fmt.Errorf("can't find vm: %s", vm)
 }
 
+// Find vm using vApp name and VM name. Returns VMRecord query return type
+func (vdc *Vdc) QueryVM(vappName, vmName string) (VMRecord, error) {
+
+	if vmName == "" {
+		return VMRecord{}, errors.New("error querying vm name is empty")
+	}
+
+	if vappName == "" {
+		return VMRecord{}, errors.New("error querying vapp name is empty")
+	}
+
+	typeMedia := "vm"
+	if vdc.client.IsSysAdmin {
+		typeMedia = "adminVM"
+	}
+
+	results, err := vdc.QueryWithNotEncodedParams(nil, map[string]string{"type": typeMedia,
+		"filter": "(name==" + url.QueryEscape(vmName) + ";containerName==" + url.QueryEscape(vappName) + ")"})
+	if err != nil {
+		return VMRecord{}, fmt.Errorf("error querying vm %#v", err)
+	}
+
+	vmResults := results.Results.VMRecord
+	if vdc.client.IsSysAdmin {
+		vmResults = results.Results.AdminVMRecord
+	}
+
+	newVM := NewVMRecord(vdc.client)
+
+	if len(vmResults) == 1 {
+		newVM.VM = vmResults[0]
+	} else {
+		return VMRecord{}, fmt.Errorf("found results %d", len(vmResults))
+	}
+
+	return *newVM, nil
+}
+
 func (vdc *Vdc) FindVAppByID(vappid string) (VApp, error) {
 
 	// Horrible hack to fetch a vapp with its id.

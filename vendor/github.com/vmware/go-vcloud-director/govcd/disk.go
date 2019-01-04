@@ -29,6 +29,10 @@ func NewDisk(cli *Client) *Disk {
 	}
 }
 
+// While theoretically we can use smaller amounts, there is an issue when updating
+// disks with size < 1MB
+const MinimumDiskSize int = 1048576 // = 1Mb
+
 // Create an independent disk in VDC
 // Reference: vCloud API Programming Guide for Service Providers vCloud API 30.0 PDF Page 102 - 103,
 // https://vdc-download.vmware.com/vmwb-repository/dcr-public/1b6cf07d-adb3-4dba-8c47-9c1c92b04857/
@@ -43,8 +47,8 @@ func (vdc *Vdc) CreateDisk(diskCreateParams *types.DiskCreateParams) (Task, erro
 		return Task{}, fmt.Errorf("disk name is required")
 	}
 
-	if diskCreateParams.Disk.Size <= 0 {
-		return Task{}, fmt.Errorf("disk size should be greater than or equal to 1KB")
+	if diskCreateParams.Disk.Size < MinimumDiskSize {
+		return Task{}, fmt.Errorf("disk size should be greater than or equal to 1Mb")
 	}
 
 	var err error
@@ -104,6 +108,7 @@ func (vdc *Vdc) CreateDisk(diskCreateParams *types.DiskCreateParams) (Task, erro
 	task := NewTask(vdc.client)
 	task.Task = disk.Disk.Tasks.Task[0]
 
+	util.Logger.Printf("[TRACE] AFTER CREATE DISK\n %s\n", prettyDisk(*disk.Disk))
 	// Return the disk
 	return *task, nil
 }
@@ -129,8 +134,8 @@ func (d *Disk) Update(newDiskInfo *types.Disk) (Task, error) {
 		return Task{}, fmt.Errorf("disk name is required")
 	}
 
-	if newDiskInfo.Size <= 0 {
-		return Task{}, fmt.Errorf("disk size should be greater than or equal to 1KB")
+	if newDiskInfo.Size < MinimumDiskSize {
+		return Task{}, fmt.Errorf("disk size should be greater than or equal to 1Mb")
 	}
 
 	// Verify the independent disk is not connected to any VM
@@ -180,6 +185,7 @@ func (d *Disk) Update(newDiskInfo *types.Disk) (Task, error) {
 	if err != nil {
 		return Task{}, fmt.Errorf("error xml.Marshal: %s", err)
 	}
+	util.Logger.Printf("[TRACE] BEFORE UPDATE DISK\n %s\n", prettyDisk(*d.Disk))
 
 	// Send request
 	reqPayload := bytes.NewBufferString(xml.Header + string(xmlPayload))
@@ -267,7 +273,7 @@ func (d *Disk) Delete() (Task, error) {
 
 // Refresh the disk information by disk href
 func (d *Disk) Refresh() error {
-	util.Logger.Printf("[TRACE] Disk refersh, HREF: %s\n", d.Disk.HREF)
+	util.Logger.Printf("[TRACE] Disk refresh, HREF: %s\n", d.Disk.HREF)
 
 	disk, err := FindDiskByHREF(d.client, d.Disk.HREF)
 	if err != nil {

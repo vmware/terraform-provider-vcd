@@ -11,7 +11,7 @@ import (
 	"net/url"
 	"strconv"
 
-	types "github.com/vmware/go-vcloud-director/types/v56"
+	"github.com/vmware/go-vcloud-director/types/v56"
 	"github.com/vmware/go-vcloud-director/util"
 	"net/http"
 )
@@ -21,9 +21,22 @@ type VM struct {
 	client *Client
 }
 
+type VMRecord struct {
+	VM     *types.QueryResultVMRecordType
+	client *Client
+}
+
 func NewVM(cli *Client) *VM {
 	return &VM{
 		VM:     new(types.VM),
+		client: cli,
+	}
+}
+
+// create instance with reference to types.QueryResultVMRecordType
+func NewVMRecord(cli *Client) *VMRecord {
+	return &VMRecord{
+		VM:     new(types.QueryResultVMRecordType),
 		client: cli,
 	}
 }
@@ -90,29 +103,29 @@ func (vm *VM) GetNetworkConnectionSection() (*types.NetworkConnectionSection, er
 	return networkConnectionSection, nil
 }
 
-func (vdcCli *VCDClient) FindVMByHREF(vmhref string) (VM, error) {
+func (cli *Client) FindVMByHREF(vmHREF string) (VM, error) {
 
-	findUrl, err := url.ParseRequestURI(vmhref)
+	findUrl, err := url.ParseRequestURI(vmHREF)
 
 	if err != nil {
 		return VM{}, fmt.Errorf("error decoding vm HREF: %s", err)
 	}
 
 	// Querying the VApp
-	req := vdcCli.Client.NewRequest(map[string]string{}, "GET", *findUrl, nil)
+	req := cli.NewRequest(map[string]string{}, "GET", *findUrl, nil)
 
-	resp, err := checkResp(vdcCli.Client.Http.Do(req))
+	resp, err := checkResp(cli.Http.Do(req))
 	if err != nil {
 		return VM{}, fmt.Errorf("error retrieving VM: %s", err)
 	}
 
-	newvm := NewVM(&vdcCli.Client)
+	newVm := NewVM(cli)
 
-	if err = decodeBody(resp, newvm.VM); err != nil {
+	if err = decodeBody(resp, newVm.VM); err != nil {
 		return VM{}, fmt.Errorf("error decoding VM response: %s", err)
 	}
 
-	return *newvm, nil
+	return *newVm, nil
 
 }
 
@@ -544,4 +557,136 @@ func (vm *VM) DetachDisk(diskParams *types.DiskAttachOrDetachParams) (Task, erro
 	}
 
 	return vm.attachOrDetachDisk(diskParams, types.RelDiskDetach)
+}
+
+// Helper function which finds media and calls InsertMedia
+func (vm *VM) HandleInsertMedia(org *Org, catalogName, mediaName string) (Task, error) {
+
+	media, err := FindMediaAsCatalogItem(org, catalogName, mediaName)
+	if err != nil || media == (CatalogItem{}) {
+		return Task{}, err
+	}
+
+	task, err := vm.InsertMedia(&types.MediaInsertOrEjectParams{
+		Media: &types.Reference{
+			HREF: media.CatalogItem.Entity.HREF,
+			Name: media.CatalogItem.Entity.Name,
+			ID:   media.CatalogItem.Entity.ID,
+			Type: media.CatalogItem.Entity.Type,
+		},
+	})
+
+	return task, err
+}
+
+// Helper function which finds media and calls EjectMedia
+func (vm *VM) HandleEjectMedia(org *Org, catalogName, mediaName string) (Task, error) {
+	media, err := FindMediaAsCatalogItem(org, catalogName, mediaName)
+	if err != nil || media == (CatalogItem{}) {
+		return Task{}, err
+	}
+
+	task, err := vm.EjectMedia(&types.MediaInsertOrEjectParams{
+		Media: &types.Reference{
+			HREF: media.CatalogItem.Entity.HREF,
+		},
+	})
+
+	return task, err
+}
+
+// Insert media for VM
+// Call insertOrEjectMedia with media and types.RelMediaInsertMedia to insert media from VM.
+func (vm *VM) InsertMedia(mediaParams *types.MediaInsertOrEjectParams) (Task, error) {
+	util.Logger.Printf("[TRACE] Insert media, HREF: %s\n", mediaParams.Media.HREF)
+
+	err := validateMediaParams(mediaParams)
+	if err != nil {
+		return Task{}, err
+	}
+
+	return vm.insertOrEjectMedia(mediaParams, types.RelMediaInsertMedia)
+}
+
+// Eject media from VM
+// Call insertOrEjectMedia with media and types.RelMediaEjectMedia to eject media from VM.
+// If media isn't inserted then task still will be successful.
+func (vm *VM) EjectMedia(mediaParams *types.MediaInsertOrEjectParams) (Task, error) {
+	util.Logger.Printf("[TRACE] Detach disk, HREF: %s\n", mediaParams.Media.HREF)
+
+	err := validateMediaParams(mediaParams)
+	if err != nil {
+		return Task{}, err
+	}
+
+	vmStatus, err := vm.GetStatus()
+	if err != nil {
+		return Task{}, err
+	}
+
+	if vmStatus != types.VAppStatuses[8] {
+		return Task{}, fmt.Errorf("to eject media, vm has to be in power off state")
+	}
+
+	return vm.insertOrEjectMedia(mediaParams, types.RelMediaEjectMedia)
+}
+
+// validates that media and media.href isn't empty
+func validateMediaParams(mediaParams *types.MediaInsertOrEjectParams) error {
+	if mediaParams.Media == nil {
+		return fmt.Errorf("could not find media info for eject")
+	}
+	if mediaParams.Media.HREF == "" {
+		return fmt.Errorf("could not find media HREF which is required for insert")
+	}
+	return nil
+}
+
+// Insert or eject a media for VM
+// Use the vm/action/insert or vm/action/eject links in a Vm to insert or eject media.
+// Reference:
+// https://code.vmware.com/apis/287/vcloud#/doc/doc/operations/POST-InsertCdRom.html
+// https://code.vmware.com/apis/287/vcloud#/doc/doc/operations/POST-EjectCdRom.html
+func (vm *VM) insertOrEjectMedia(mediaParams *types.MediaInsertOrEjectParams, linkRel string) (Task, error) {
+	util.Logger.Printf("[TRACE] Insert or eject media, href: %s, name: %s, , linkRel: %s \n", mediaParams.Media.HREF, mediaParams.Media.Name, linkRel)
+
+	var err error
+	var insertOrEjectMediaLink *types.Link
+	for _, link := range vm.VM.Link {
+		if link.Rel == linkRel && link.Type == types.MimeMediaInsertOrEjectParams {
+			util.Logger.Printf("[TRACE] Insert or eject media - found the proper link for request, HREF: %s, "+
+				"name: %s, type: %s, id: %s, rel: %s \n", link.HREF, link.Name, link.Type, link.ID, link.Rel)
+			insertOrEjectMediaLink = link
+		}
+	}
+
+	if insertOrEjectMediaLink == nil {
+		return Task{}, fmt.Errorf("could not find request URL for insert or eject media")
+	}
+
+	reqUrl, err := url.ParseRequestURI(insertOrEjectMediaLink.HREF)
+	if err != nil {
+		return Task{}, fmt.Errorf("could not parse request URL for insert or eject media. Error: %#v", err)
+	}
+
+	mediaParams.Xmlns = types.NsVCloud
+	xmlPayload, err := xml.Marshal(mediaParams)
+	if err != nil {
+		return Task{}, fmt.Errorf("error marshal xml: %s", err)
+	}
+
+	reqPayload := bytes.NewBufferString(xml.Header + string(xmlPayload))
+	req := vm.client.NewRequest(nil, http.MethodPost, *reqUrl, reqPayload)
+	req.Header.Add("Content-Type", insertOrEjectMediaLink.Type)
+	resp, err := checkResp(vm.client.Http.Do(req))
+	if err != nil {
+		return Task{}, fmt.Errorf("error insert or eject disk: %s", err)
+	}
+
+	task := NewTask(vm.client)
+	if err = decodeBody(resp, task.Task); err != nil {
+		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
+	}
+
+	return *task, nil
 }

@@ -1974,6 +1974,7 @@ type QueryResultRecordsType struct {
 	Link                            []*Link                                           `xml:"Link,omitempty"`                  // A reference to an entity or operation associated with this object.
 	EdgeGatewayRecord               []*QueryResultEdgeGatewayRecordType               `xml:"EdgeGatewayRecord"`               // A record representing a EdgeGateway result.
 	VMRecord                        []*QueryResultVMRecordType                        `xml:"VMRecord"`                        // A record representing a VM result.
+	AdminVMRecord                   []*QueryResultVMRecordType                        `xml:"AdminVMRecord"`                   // A record representing a Admin VM result.
 	VAppRecord                      []*QueryResultVAppRecordType                      `xml:"VAppRecord"`                      // A record representing a VApp result.
 	OrgVdcStorageProfileRecord      []*QueryResultOrgVdcStorageProfileRecordType      `xml:"OrgVdcStorageProfileRecord"`      // A record representing storage profiles
 	MediaRecord                     []*MediaRecordType                                `xml:"MediaRecord"`                     // A record representing media
@@ -2268,4 +2269,14 @@ type Vms struct {
 	Type        string     `xml:"type,attr"`
 	HREF        string     `xml:"href,attr"`
 	VmReference *Reference `xml:"VmReference,omitempty"`
+}
+
+// Parameters for inserting and ejecting virtual media for VM as CD/DVD
+// Reference: vCloud API 30.0 - MediaInsertOrEjectParamsType
+// https://code.vmware.com/apis/287/vcloud#/doc/doc/types/MediaInsertOrEjectParamsType.html
+type MediaInsertOrEjectParams struct {
+	XMLName         xml.Name         `xml:"MediaInsertOrEjectParams"`
+	Xmlns           string           `xml:"xmlns,attr,omitempty"`
+	Media           *Reference       `xml:"Media"`
+	VCloudExtension *VCloudExtension `xml:"VCloudExtension,omitempty"`
 }

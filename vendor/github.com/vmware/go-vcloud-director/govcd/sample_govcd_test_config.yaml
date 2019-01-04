@@ -70,10 +70,12 @@ vcd:
     disk:
       #
       # Disk size (bytes) for create disk, skip disk tests if it is less than or equal to 0
-      size: 1024
+      size: 1048576
       #
       # Disk size (bytes) for update disk, skip some disk tests if it is less than or equal to 0
-      sizeForUpdate: 10240
+      # The minimum size is 1048576 (1 MB). While theoretically smaller amounts are allowed,
+      # there is an issue when using < 1MB during updates
+      sizeForUpdate: 1048576
 logging:
     # All items in this section are optional
     # Logging is disabled by default.
@@ -90,6 +92,15 @@ logging:
     #
     # Defines whether we log the responses in HTTP operations
     logHttpResponses: true
+    #
+    # Comma-separated list of XML tags to skip from the API logs
+    skipResponseTags: SupportedVersions,VAppTemplate
+    #
+    # Comma-separated list of functions from where we log the API calls.
+    # When this is set, we only log API requests and responses if the name
+    # of the function matches any of the names in this list.
+    logFunctions: FindVAppByName,GetAdminOrgByName
+    #
     # Shows details of cleanup operations after tests
     verboseCleanup: true
 ova:
