@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/govcd"
+	"github.com/vmware/go-vcloud-director/types/v56"
 	"log"
 )
 
@@ -42,13 +43,13 @@ func resourceVcdInsertEjectMedia() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "vapp to use",
+				Description: "vApp to use",
 			},
 			"vm_name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "vm in vapp in which media will be inserted or ejected",
+				Description: "VM in vApp in which media will be inserted or ejected",
 			},
 		},
 	}
@@ -83,7 +84,7 @@ func resourceVcdVmInsertedMediaRead(d *schema.ResourceData, meta interface{}) er
 
 	isIsoMounted := false
 	for _, hardwareItem := range vm.VM.VirtualHardwareSection.Item {
-		if hardwareItem.ResourceSubType == "vmware.cdrom.iso" {
+		if hardwareItem.ResourceSubType == types.VMsCDResourceSubType {
 			isIsoMounted = true
 			break
 		}
@@ -129,12 +130,12 @@ func getVM(d *schema.ResourceData, meta interface{}) (govcd.VM, govcd.Org, error
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find VM. Removing from tfstate")
 		d.SetId("")
-		return govcd.VM{}, govcd.Org{}, fmt.Errorf("unableto find VM. Removing from tfstate. Err: #%v", err)
+		return govcd.VM{}, govcd.Org{}, fmt.Errorf("unable to find VM. Removing from tfstate. Err: #%v", err)
 	}
 
 	vm, err := vcdClient.Client.FindVMByHREF(vmRecord.VM.HREF)
 	if err != nil || vm == (govcd.VM{}) {
-		log.Printf("[DEBUG] Unable to get vm data")
+		log.Printf("[DEBUG] Unable to get VM data")
 		return govcd.VM{}, govcd.Org{}, fmt.Errorf("error getting VM data: %s", err)
 	}
 	return vm, org, nil

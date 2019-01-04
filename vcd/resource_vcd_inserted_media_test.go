@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/vmware/go-vcloud-director/types/v56"
 	"strings"
 	"testing"
 )
@@ -16,7 +17,6 @@ var TestAccVcdCatalogMediaDescriptionForInsert = "TestAccVcdCatalogMediaBasicDes
 var TestAccVcdVAppVmNetForInsert = "TestAccVcdVAppVmNetForInsert"
 
 func TestAccVcdMediaInsertBasic(t *testing.T) {
-	//t.Skip(acceptanceTestsSkipped)
 	var params = StringMap{
 		"Org":              testConfig.VCD.Org,
 		"Vdc":              testConfig.VCD.Vdc,
@@ -35,7 +35,7 @@ func TestAccVcdMediaInsertBasic(t *testing.T) {
 	}
 
 	if vcdShortTest {
-		//	t.Skip(acceptanceTestsSkipped)
+		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 	configText := templateFill(testAccCheckVcdInsertEjectBasic, params)
@@ -88,7 +88,7 @@ func testAccCheckMediaInserted(itemName string) resource.TestCheckFunc {
 		}
 
 		for _, hardwareItem := range vm.VM.VirtualHardwareSection.Item {
-			if hardwareItem.ResourceSubType == "vmware.cdrom.iso" {
+			if hardwareItem.ResourceSubType == types.VMsCDResourceSubType {
 				return nil
 			}
 		}
@@ -126,7 +126,7 @@ func testAccCheckMediaEjected(itemName string) resource.TestCheckFunc {
 		}
 
 		for _, hardwareItem := range vm.VM.VirtualHardwareSection.Item {
-			if hardwareItem.ResourceSubType == "vmware.cdrom.iso" {
+			if hardwareItem.ResourceSubType == types.VMsCDResourceSubType {
 				return nil
 			}
 		}
