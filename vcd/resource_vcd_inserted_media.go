@@ -8,7 +8,7 @@ import (
 	"log"
 )
 
-func resourceVcdInsertMedia() *schema.Resource {
+func resourceVcdInsertedMedia() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceVcdMediaInsert,
 		Delete: resourceVcdMediaEject,
