@@ -29,14 +29,16 @@
 		"externalIp": "10.150.10.10",
 		"internalIp": "192.168.1.10",
     "disk": {
-      "size": 1024,
-      "sizeForUpdate": 10240
+      "size": 1048576,
+      "sizeForUpdate": 1048576
     }
 	},
 	"logging": {
 		"enabled": true,
 		"logFileName": "go-vcloud-director.log",
 		"logHttpRequests": true,
+		"skipResponseTags": "SupportedVersions,VAppTemplate",
+		"apiLogFunctions": "FindVAppByName",
 		"logHttpResponses": true
 	},
   "ova": {

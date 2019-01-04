@@ -98,6 +98,14 @@ func prettyAdminOrg(org types.AdminOrg) string {
 	return ""
 }
 
+func prettyDisk(disk types.Disk) string {
+	byteBuf, err := json.MarshalIndent(disk, " ", " ")
+	if err == nil {
+		return fmt.Sprintf("%s\n", string(byteBuf))
+	}
+	return ""
+}
+
 func prettyExternalNetwork(network types.ExternalNetworkReference) string {
 	byteBuf, err := json.MarshalIndent(network, " ", " ")
 	if err == nil {
@@ -170,6 +178,13 @@ func LogVdc(vdc types.Vdc) {
 	out("log", prettyVdc(vdc))
 }
 
+func ShowDisk(disk types.Disk) {
+	out("screen", prettyDisk(disk))
+}
+
+func LogDisk(disk types.Disk) {
+	out("log", prettyDisk(disk))
+}
 func ShowCatalog(catalog types.Catalog) {
 	out("screen", prettyCatalog(catalog))
 }

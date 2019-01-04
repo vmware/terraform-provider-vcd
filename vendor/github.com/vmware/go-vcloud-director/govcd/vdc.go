@@ -502,13 +502,13 @@ func (vdc *Vdc) FindVAppByName(vapp string) (VApp, error) {
 					return VApp{}, fmt.Errorf("error retrieving vApp: %s", err)
 				}
 
-				newVapp := NewVApp(vdc.client)
+				newvapp := NewVApp(vdc.client)
 
-				if err = decodeBody(resp, newVapp.VApp); err != nil {
+				if err = decodeBody(resp, newvapp.VApp); err != nil {
 					return VApp{}, fmt.Errorf("error decoding vApp response: %s", err.Error())
 				}
 
-				return *newVapp, nil
+				return *newvapp, nil
 
 			}
 		}

@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 	"time"
 )
@@ -80,7 +81,7 @@ func (vdcCli *VCDClient) vcdauthorize(user, pass, org string) error {
 	vdcCli.Client.VCDToken = resp.Header.Get("x-vcloud-authorization")
 	vdcCli.Client.VCDAuthHeader = "x-vcloud-authorization"
 	vdcCli.Client.IsSysAdmin = false
-	if "System" == org {
+	if "system" == strings.ToLower(org) {
 		vdcCli.Client.IsSysAdmin = true
 	}
 	// Get query href

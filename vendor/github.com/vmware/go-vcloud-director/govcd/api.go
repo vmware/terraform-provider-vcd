@@ -78,7 +78,7 @@ func (cli *Client) NewRequestWitNotEncodedParams(params map[string]string, notEn
 				payload = fmt.Sprintf("<Not retrieved from type %s>", reflect.TypeOf(body))
 			}
 		}
-		util.ProcessRequestOutput(util.CallFuncName(), method, reqUrl.String(), payload, req)
+		util.ProcessRequestOutput(util.FuncNameCallStack(), method, reqUrl.String(), payload, req)
 	}
 	return req
 
@@ -97,7 +97,8 @@ func parseErr(resp *http.Response) error {
 
 	// if there was an error decoding the body, just return that
 	if err := decodeBody(resp, errBody); err != nil {
-		return fmt.Errorf("error parsing error body for non-200 request: %s", err)
+		util.Logger.Printf("[parseErr]: unhandled response <--\n%+v\n-->\n", resp)
+		return fmt.Errorf("[parseErr]: error parsing error body for non-200 request: %s (%+v)", err, resp)
 	}
 
 	return fmt.Errorf("API Error: %d: %s", errBody.MajorErrorCode, errBody.Message)
@@ -108,7 +109,7 @@ func decodeBody(resp *http.Response, out interface{}) error {
 
 	body, err := ioutil.ReadAll(resp.Body)
 
-	util.ProcessResponseOutput(util.CallFuncName(), resp, fmt.Sprintf("%s", body))
+	util.ProcessResponseOutput(util.FuncNameCallStack(), resp, fmt.Sprintf("%s", body))
 	if err != nil {
 		return err
 	}
@@ -130,12 +131,41 @@ func checkResp(resp *http.Response, err error) (*http.Response, error) {
 		return resp, err
 	}
 
-	switch i := resp.StatusCode; {
+	switch resp.StatusCode {
 	// Valid request, return the response.
-	case i == 200 || i == 201 || i == 202 || i == 204:
+	case
+		http.StatusOK,        // 200
+		http.StatusCreated,   // 201
+		http.StatusAccepted,  // 202
+		http.StatusNoContent: // 204
 		return resp, nil
 	// Invalid request, parse the XML error returned and return it.
-	case i == 400 || i == 401 || i == 403 || i == 404 || i == 405 || i == 406 || i == 409 || i == 415 || i == 500 || i == 503 || i == 504:
+	case
+		http.StatusBadRequest,                  // 400
+		http.StatusUnauthorized,                // 401
+		http.StatusForbidden,                   // 403
+		http.StatusNotFound,                    // 404
+		http.StatusMethodNotAllowed,            // 405
+		http.StatusNotAcceptable,               // 406
+		http.StatusProxyAuthRequired,           // 407
+		http.StatusRequestTimeout,              // 408
+		http.StatusConflict,                    // 409
+		http.StatusGone,                        // 410
+		http.StatusLengthRequired,              // 411
+		http.StatusPreconditionFailed,          // 412
+		http.StatusRequestEntityTooLarge,       // 413
+		http.StatusRequestURITooLong,           // 414
+		http.StatusUnsupportedMediaType,        // 415
+		http.StatusLocked,                      // 423
+		http.StatusFailedDependency,            // 424
+		http.StatusUpgradeRequired,             // 426
+		http.StatusPreconditionRequired,        // 428
+		http.StatusTooManyRequests,             // 429
+		http.StatusRequestHeaderFieldsTooLarge, // 431
+		http.StatusUnavailableForLegalReasons,  // 451
+		http.StatusInternalServerError,         // 500
+		http.StatusServiceUnavailable,          // 503
+		http.StatusGatewayTimeout:              // 504
 		return nil, parseErr(resp)
 	// Unhandled response.
 	default:
