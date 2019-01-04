@@ -50,8 +50,8 @@ func TestAccVcdMediaInsertBasic(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckMediaInserted("vcd_vm_insert_eject_media."+TestAccVcdMediaInsert),
-					testAccCheckMediaEjected("vcd_vm_insert_eject_media."+TestAccVcdMediaInsert),
+					testAccCheckMediaInserted("vcd_inserted_media."+TestAccVcdMediaInsert),
+					testAccCheckMediaEjected("vcd_inserted_media."+TestAccVcdMediaInsert),
 				),
 			},
 		},
@@ -138,7 +138,7 @@ func testAccResourcesDestroyed(s *terraform.State) error {
 	conn := testAccProvider.Meta().(*VCDClient)
 	for _, rs := range s.RootModule().Resources {
 		itemName := rs.Primary.Attributes["name"]
-		if rs.Type != "vcd_vm_insert_eject_media" && itemName != TestAccVcdMediaInsert {
+		if rs.Type != "vcd_inserted_media" && itemName != TestAccVcdMediaInsert {
 			continue
 		}
 
@@ -207,7 +207,7 @@ resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
   show_upload_progress = "{{.UploadProgress}}"
 }
 
-resource "vcd_vm_insert_eject_media" "{{.InsertMediaName}}" {
+resource "vcd_inserted_media" "{{.InsertMediaName}}" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
   catalog = "{{.Catalog}}"
