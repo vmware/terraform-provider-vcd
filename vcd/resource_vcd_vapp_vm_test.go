@@ -19,7 +19,7 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckVcdVAppVmDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: fmt.Sprintf(testAccCheckVcdVAppVm_basic, os.Getenv("VCD_EDGE_GATEWAY")),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppVmExists("vcd_vapp_vm.moo", &vapp, &vm),

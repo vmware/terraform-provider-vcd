@@ -16,7 +16,7 @@ func TestAccVcdVpn_Basic(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckVcdVpnDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: fmt.Sprintf(testAccCheckVcdVpn_basic, os.Getenv("VCD_EDGE_GATEWAY")),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(

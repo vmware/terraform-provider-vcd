@@ -18,7 +18,7 @@ func TestAccVcdVApp_PowerOff(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckVcdVAppDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: fmt.Sprintf(testAccCheckVcdVApp_basic, os.Getenv("VCD_EDGE_GATEWAY"), os.Getenv("VCD_EDGE_GATEWAY")),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppExists("vcd_vapp.foobar", &vapp),
@@ -32,7 +32,7 @@ func TestAccVcdVApp_PowerOff(t *testing.T) {
 				),
 			},
 
-			resource.TestStep{
+			{
 				Config: fmt.Sprintf(testAccCheckVcdVApp_basic, os.Getenv("VCD_EDGE_GATEWAY"), os.Getenv("VCD_EDGE_GATEWAY")),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
@@ -44,7 +44,7 @@ func TestAccVcdVApp_PowerOff(t *testing.T) {
 				),
 			},
 
-			resource.TestStep{
+			{
 				Config: fmt.Sprintf(testAccCheckVcdVApp_powerOff, os.Getenv("VCD_EDGE_GATEWAY")),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppExists("vcd_vapp.foobar", &vapp),

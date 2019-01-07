@@ -18,7 +18,7 @@ func TestAccVcdVAppRaw_Basic(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckVcdVAppRawDestroy,
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			{
 				Config: fmt.Sprintf(testAccCheckVcdVAppRaw_basic, os.Getenv("VCD_EDGE_GATEWAY")),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppRawExists("vcd_vapp.foobar", &vapp),
