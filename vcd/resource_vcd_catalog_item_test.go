@@ -16,7 +16,7 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 	var catalogItem govcd.CatalogItem
 	var params = StringMap{
 		"Org":             testConfig.VCD.Org,
-		"Catalog":         testConfig.VCD.Catalog.Name,
+		"Catalog":         testSuiteCatalogName,
 		"CatalogItemName": TestAccVcdCatalogItem,
 		"Description":     TestAccVcdCatalogItemDescription,
 		"OvaPath":         testConfig.Ova.OvaPath,
@@ -63,14 +63,14 @@ func testAccCheckVcdCatalogItemExists(itemName string, catalogItem *govcd.Catalo
 
 		conn := testAccProvider.Meta().(*VCDClient)
 
-		adminOrg, err := conn.GetAdminOrg(testConfig.VCD.Org)
+		org, _, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
 		if err != nil {
 			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
 		}
 
-		catalog, err := adminOrg.FindCatalog(testConfig.VCD.Catalog.Name)
+		catalog, err := org.FindCatalog(testSuiteCatalogName)
 		if err != nil {
-			return fmt.Errorf("catalog %s does not exist (%#v)", testConfig.VCD.Catalog.Name, catalog.Catalog)
+			return fmt.Errorf("catalog %s does not exist (%#v)", testSuiteCatalogName, catalog.Catalog)
 		}
 
 		newCatalogItem, err := catalog.FindCatalogItem(catalogItemRs.Primary.Attributes["name"])
@@ -90,12 +90,12 @@ func testAccCheckCatalogItemDestroy(s *terraform.State) error {
 			continue
 		}
 
-		adminOrg, err := conn.GetAdminOrg(testConfig.VCD.Org)
+		org, _, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
 		if err != nil {
 			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
 		}
 
-		catalog, err := adminOrg.FindCatalog(testConfig.VCD.Catalog.Name)
+		catalog, err := org.FindCatalog(testSuiteCatalogName)
 		if err != nil {
 			return fmt.Errorf("catalog query %s ended with error: %#v", rs.Primary.ID, err)
 		}

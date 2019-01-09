@@ -2,10 +2,11 @@
   "//": "Rename this file to vcd_test_config.json and change the values to suit your system",
   "//": "You can safely remove the comments or leave them. The parser will ignore them.",
   "provider": {
-    "//"  : "This section contains credentials related to the VCD admin user",
+    "//"  : "This section contains credentials related to the vCD connection of Sys or Org user",
     "user": "root",
     "password": "somePassword",
     "url": "https://10.13.21.20/api",
+    "//": "Use 'System' if you are Sys admin and Org name if you tenant",
     "sysOrg": "System",
     "//": "allowInsecure will skip the check on self-signed certificates",
     "allowInsecure": true,
@@ -24,9 +25,10 @@
     "//": "This section contains the organization composition",
     "org": "myorg",
     "vdc": "myvdc",
-    "catalog": {
-      "name": "mycatalog",
-      "catalogItem": "photon-hw11"
+    "//": "Fill the values if you want reuse existing resources for testing",
+    "//catalog": {
+      "//name": "existingCatalogName",
+      "//catalogItem": "existingOvaNameInCatalog"
     }
   },
   "networking": {

@@ -12,12 +12,12 @@ test: fmtcheck
 	go test -i $(TEST) || exit 1
 	cd vcd ; VCD_SHORT_TEST=1 go test -v . -timeout 3m
 
-testacc: fmtcheck
+testacc: fmtcheck download-ova
 	if [ ! -f vcd/vcd_test_config.json ] ; then \
 		echo "ERROR: test configuration file vcd/vcd_test_config.json is missing"; \
 		exit 1; \
 	fi
-	cd vcd ; TF_ACC=1 go test -v . -timeout 60m
+	cd vcd ; TF_ACC=1 go test -v . -timeout 120m
 
 vet:
 	@echo "go vet ."
@@ -36,6 +36,9 @@ fmtcheck:
 
 errcheck:
 	@sh -c "'$(CURDIR)/scripts/errcheck.sh'"
+
+download-ova:
+	@sh -c "'$(CURDIR)/scripts/ovadownload.sh' $(CURDIR)"
 
 vendor-status:
 	@govendor status

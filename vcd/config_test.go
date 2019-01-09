@@ -7,9 +7,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/vmware/go-vcloud-director/govcd"
 	"github.com/vmware/go-vcloud-director/util"
 	"html/template"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -40,7 +42,7 @@ type TestConfig struct {
 		Vdc     string `json:"vdc"`
 		Catalog struct {
 			Name        string `json:"name,omitempty"`
-			Catalogitem string `json:"catalogItem,omitempty"`
+			CatalogItem string `json:"catalogItem,omitempty"`
 		} `json:"catalog"`
 	} `json:"vcd"`
 	Networking struct {
@@ -68,6 +70,7 @@ type TestConfig struct {
 		OvaPath         string `json:"ovaPath,omitempty"`
 		UploadPieceSize int64  `json:"uploadPieceSize,omitempty"`
 		UploadProgress  bool   `json:"uploadProgress,omitempty"`
+		OvaTestFileName string `json:"ovaTestFileName,omitempty"`
 	} `json:"ova"`
 	Media struct {
 		MediaPath       string `json:"mediaPath,omitempty"`
@@ -75,6 +78,12 @@ type TestConfig struct {
 		UploadProgress  bool   `json:"uploadProgress,omitempty"`
 	} `json:"media"`
 }
+
+// names for created resources names for all the tests
+var (
+	testSuiteCatalogName    = "TestSuiteCatalog"
+	testSuiteCatalogOVAItem = "TestSuiteOVA"
+)
 
 const (
 	// Warning message used for all tests
@@ -107,8 +116,8 @@ func dirExists(filename string) bool {
 	if os.IsNotExist(err) {
 		return false
 	}
-	filemode := f.Mode()
-	return filemode.IsDir()
+	fileMode := f.Mode()
+	return fileMode.IsDir()
 }
 
 // Returns true if the current configuration uses a system administrator for connections
@@ -180,10 +189,10 @@ func templateFill(tmpl string, data StringMap) string {
 	// definitions of org and vdc. This will force the test to
 	// borrow org and vcd from the provider.
 	if os.Getenv("REMOVE_ORG_VDC_FROM_TEMPLATE") != "" {
-		re_org := regexp.MustCompile(`\sorg\s*=`)
-		buf2 := re_org.ReplaceAll(buf.Bytes(), []byte("# org = "))
-		re_vdc := regexp.MustCompile(`\svdc\s*=`)
-		buf2 = re_vdc.ReplaceAll(buf2, []byte("# vdc = "))
+		reOrg := regexp.MustCompile(`\sorg\s*=`)
+		buf2 := reOrg.ReplaceAll(buf.Bytes(), []byte("# org = "))
+		reVdc := regexp.MustCompile(`\svdc\s*=`)
+		buf2 = reVdc.ReplaceAll(buf2, []byte("# vdc = "))
 		writeStr = buf2
 	}
 	if TemplateWriting {
@@ -314,9 +323,131 @@ func TestMain(m *testing.M) {
 		}
 	}
 
+	createSuiteCatalogAndItem(testConfig)
+
 	// Runs all test functions
 	exitCode := m.Run()
 
+	destroySuiteCatalogAndItem(testConfig)
+
 	// TODO: cleanup leftovers
 	os.Exit(exitCode)
+}
+
+func createSuiteCatalogAndItem(config TestConfig) {
+	fmt.Printf("Creating resources for test suite...\n")
+	vcdClient, err := getTestVCDFromJson(config)
+	if vcdClient == nil || err != nil {
+		panic(err)
+	}
+	err = vcdClient.Authenticate(config.Provider.User, config.Provider.Password, config.Provider.SysOrg)
+	if err != nil {
+		panic(err)
+	}
+
+	org, err := govcd.GetOrgByName(vcdClient, config.VCD.Org)
+	if err != nil || org == (govcd.Org{}) {
+		panic(err)
+	}
+
+	var catalog govcd.Catalog
+
+	if testConfig.VCD.Catalog.Name == "" {
+		fmt.Printf("Creating catalog for test suite...\n")
+		catalog, err = org.CreateCatalog(testSuiteCatalogName, "Test suite purpose")
+		if err != nil || catalog == (govcd.Catalog{}) {
+			panic(err)
+		}
+		fmt.Printf("Catalog created successfuly\n")
+
+	} else {
+		fmt.Printf("Skiping catalog creation - found preconfigured one: %s \n", testConfig.VCD.Catalog.Name)
+
+		catalog, err = org.FindCatalog(testConfig.VCD.Catalog.Name)
+		if err != nil || catalog == (govcd.Catalog{}) {
+			fmt.Printf("Preconfigured catalog wasn't found \n")
+			panic(err)
+		}
+
+		fmt.Printf("Catalog found successfuly\n")
+		testSuiteCatalogName = testConfig.VCD.Catalog.Name
+	}
+
+	if testConfig.VCD.Catalog.CatalogItem == "" {
+		fmt.Printf("Creating catalog item for test suite...\n")
+		task, err := catalog.UploadOvf("../test-resources/"+config.Ova.OvaTestFileName, testSuiteCatalogOVAItem, "Test suite purpose", 20*1024*1024)
+		if err != nil {
+			fmt.Errorf("error uploading new catalog item: %#v", err)
+			panic(err)
+		}
+
+		err = task.ShowUploadProgress()
+		if err != nil {
+			fmt.Errorf("error waiting from task to complete: %+v", err)
+			panic(err)
+		}
+
+		err = task.WaitTaskCompletion()
+		if err != nil {
+			fmt.Errorf("error waiting from task to complete: %+v", err)
+			panic(err)
+		}
+
+		fmt.Printf("Catalog item created successfuly\n")
+
+	} else {
+		fmt.Printf("Skiping catalog item creation - found preconfigured one: %s \n", testConfig.VCD.Catalog.CatalogItem)
+
+		item, err := catalog.FindCatalogItem(testConfig.VCD.Catalog.CatalogItem)
+		if err != nil && item != (govcd.CatalogItem{}) {
+			fmt.Printf("Preconfigured catalog item wasn't found \n")
+			panic(err)
+		}
+		fmt.Printf("Catalog item found successfuly\n")
+		testSuiteCatalogOVAItem = testConfig.VCD.Catalog.CatalogItem
+	}
+
+}
+
+// Creates a VCDClient based on the endpoint given in the TestConfig argument.
+// TestConfig struct can be obtained by calling GetConfigStruct. Throws an error
+// if endpoint given is not a valid url.
+func getTestVCDFromJson(testConfig TestConfig) (*govcd.VCDClient, error) {
+	configUrl, err := url.ParseRequestURI(testConfig.Provider.Url)
+	if err != nil {
+		return &govcd.VCDClient{}, fmt.Errorf("could not parse Url: %s", err)
+	}
+	vcdClient := govcd.NewVCDClient(*configUrl, true)
+	return vcdClient, nil
+}
+
+func destroySuiteCatalogAndItem(config TestConfig) {
+	fmt.Printf("Deleting resources for test suite...\n")
+	vcdClient, err := getTestVCDFromJson(config)
+	if vcdClient == nil || err != nil {
+		panic(err)
+	}
+
+	err = vcdClient.Authenticate(config.Provider.User, config.Provider.Password, config.Provider.SysOrg)
+	if err != nil {
+		panic(err)
+	}
+
+	org, err := govcd.GetOrgByName(vcdClient, config.VCD.Org)
+	if err != nil || org == (govcd.Org{}) {
+		panic(err)
+	}
+
+	catalog, err := org.FindCatalog(testSuiteCatalogName)
+	if err != nil || catalog == (govcd.Catalog{}) {
+		fmt.Errorf("catalog already removed %#v", err)
+		return
+	}
+
+	fmt.Printf("Deleting catalog for test suite...\n")
+	err = catalog.Delete(true, true)
+	if err != nil {
+		fmt.Errorf("error removing catalog %#v", err)
+	}
+	fmt.Printf("Catalog created successfuly\n")
 }
