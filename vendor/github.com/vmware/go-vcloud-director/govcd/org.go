@@ -170,39 +170,69 @@ func (adminOrg *AdminOrg) Refresh() error {
 // the given organization. Returns an AdminCatalog that contains a creation
 // task.
 // API Documentation: https://code.vmware.com/apis/220/vcloud#/doc/doc/operations/POST-CreateCatalog.html
-func (adminOrg *AdminOrg) CreateCatalog(Name, Description string) (AdminCatalog, error) {
+func (adminOrg *AdminOrg) CreateCatalog(name, description string) (AdminCatalog, error) {
+	return CreateCatalog(adminOrg.client, adminOrg.AdminOrg.Link, name, description)
+}
 
-	vcomp := &types.AdminCatalog{
-		Xmlns:       "http://www.vmware.com/vcloud/v1.5",
+// CreateCatalog creates a catalog with given name and description under the
+// the given organization. Returns an Catalog that contains a creation
+// task.
+// API Documentation: https://code.vmware.com/apis/220/vcloud#/doc/doc/operations/POST-CreateCatalog.html
+func (org *Org) CreateCatalog(name, description string) (Catalog, error) {
+	catalog := NewCatalog(org.client)
+	adminCatalog, err := CreateCatalog(org.client, org.Org.Link, name, description)
+	if err != nil {
+		return Catalog{}, err
+	}
+	catalog.Catalog = &adminCatalog.AdminCatalog.Catalog
+	return *catalog, nil
+}
+
+func CreateCatalog(client *Client, links types.LinkList, Name, Description string) (AdminCatalog, error) {
+	reqCatalog := &types.Catalog{
 		Name:        Name,
 		Description: Description,
 	}
+	vcomp := &types.AdminCatalog{
+		Xmlns:   "http://www.vmware.com/vcloud/v1.5",
+		Catalog: *reqCatalog,
+	}
 
-	catalogHREF, err := url.ParseRequestURI(adminOrg.AdminOrg.HREF)
+	var createOrgLink *types.Link
+	for _, link := range links {
+		if link.Rel == "add" && link.Type == types.MimeAdminCatalog {
+			util.Logger.Printf("[TRACE] Create org - found the proper link for request, HREF: %s, "+
+				"name: %s, type: %s, id: %s, rel: %s \n", link.HREF, link.Name, link.Type, link.ID, link.Rel)
+			createOrgLink = link
+		}
+	}
+
+	if createOrgLink == nil {
+		return AdminCatalog{}, fmt.Errorf("creating catalog failed to find url")
+	}
+
+	catalogHREF, err := url.ParseRequestURI(createOrgLink.HREF)
 	if err != nil {
 		return AdminCatalog{}, fmt.Errorf("error parsing admin org's href: %v", err)
 	}
-	catalogHREF.Path += "/catalogs"
 
 	output, _ := xml.MarshalIndent(vcomp, "  ", "    ")
 	xmlData := bytes.NewBufferString(xml.Header + string(output))
 
-	req := adminOrg.client.NewRequest(map[string]string{}, "POST", *catalogHREF, xmlData)
+	req := client.NewRequest(map[string]string{}, "POST", *catalogHREF, xmlData)
 
 	req.Header.Add("Content-Type", "application/vnd.vmware.admin.catalog+xml")
 
-	resp, err := checkResp(adminOrg.client.Http.Do(req))
+	resp, err := checkResp(client.Http.Do(req))
 	if err != nil {
 		return AdminCatalog{}, fmt.Errorf("error creating catalog: %s : %s", err, catalogHREF.Path)
 	}
-
-	catalog := NewAdminCatalog(adminOrg.client)
+	catalog := NewAdminCatalog(client)
 	if err = decodeBody(resp, catalog.AdminCatalog); err != nil {
 		return AdminCatalog{}, fmt.Errorf("error decoding task response: %s", err)
 	}
 	// Task is within the catalog
 	return *catalog, nil
-
 }
 
 // If user specifies valid vdc name then this returns a vdc object.
