@@ -2,10 +2,11 @@ package vcd
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/vmware/go-vcloud-director/govcd"
-	"testing"
 )
 
 func TestAccVcdVAppRaw_Basic(t *testing.T) {

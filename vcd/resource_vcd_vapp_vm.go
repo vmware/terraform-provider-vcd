@@ -2,11 +2,12 @@ package vcd
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/govcd"
 	"github.com/vmware/go-vcloud-director/types/v56"
-	"log"
 )
 
 func resourceVcdVAppVm() *schema.Resource {
@@ -30,13 +31,11 @@ func resourceVcdVAppVm() *schema.Resource {
 			},
 			"org": {
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
 				ForceNew: true,
 			},
 			"vdc": {
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
 				ForceNew: true,
 			},

@@ -2,9 +2,10 @@ package vcd
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/govcd"
-	"log"
 )
 
 func resourceVcdCatalog() *schema.Resource {
@@ -17,7 +18,6 @@ func resourceVcdCatalog() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
 				ForceNew: true,
 			},
@@ -29,7 +29,6 @@ func resourceVcdCatalog() *schema.Resource {
 
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
 				ForceNew: true,
 			},

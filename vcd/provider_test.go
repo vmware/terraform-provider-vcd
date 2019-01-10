@@ -1,9 +1,10 @@
 package vcd
 
 import (
+	"testing"
+
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
-	"testing"
 )
 
 var testAccProviders map[string]terraform.ResourceProvider
