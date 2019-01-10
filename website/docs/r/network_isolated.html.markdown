@@ -17,12 +17,12 @@ Supported in provider *v2.0+*
 
 ```hcl
 resource "vcd_network_isolated" "net" {
-  org          = "my-org" #Optional
-  vdc          = "my-vdc" #Optional
+  org = "my-org" # Optional
+  vdc = "my-vdc" # Optional
 
-  name         = "my-net"
-  gateway      = "192.168.2.1"
-  dns1         = "192.168.2.1"
+  name    = "my-net"
+  gateway = "192.168.2.1"
+  dns1    = "192.168.2.1"
 
   dhcp_pool {
     start_address = "192.168.2.2"

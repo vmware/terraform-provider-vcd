@@ -15,27 +15,27 @@ and delete destination NATs to map an external IP/port to an internal IP/port.
 
 ```hcl
 resource "vcd_dnat" "web" {
-  org              = "my-org" # Optional
-  vdc              = "my-vdc" # Optional
-  
-  edge_gateway = "Edge Gateway Name"
-  external_ip  = "78.101.10.20"
-  port         = 80
-  internal_ip  = "10.10.0.5"
+  org = "my-org" # Optional
+  vdc = "my-vdc" # Optional
+
+  edge_gateway    = "Edge Gateway Name"
+  external_ip     = "78.101.10.20"
+  port            = 80
+  internal_ip     = "10.10.0.5"
   translated_port = 8080
 }
 
 resource "vcd_dnat" "forIcmp" {
-  org              = "my-org" # Optional
-  vdc              = "my-vdc" # Optional
-  
-  edge_gateway = "Edge Gateway Name"
-  external_ip  = "78.101.10.20"
-  port         = -1           # "-1" == "any"
-  internal_ip  = "10.10.0.5"
-  protocol = "ICMP"
+  org = "my-org" # Optional
+  vdc = "my-vdc" # Optional
+
+  edge_gateway  = "Edge Gateway Name"
+  external_ip   = "78.101.10.20"
+  port          = -1                    # "-1" == "any"
+  internal_ip   = "10.10.0.5"
+  protocol      = "ICMP"
   icmp_sub_type = "router-solicitation"
-} 
+}
 ```
 
 ## Argument Reference

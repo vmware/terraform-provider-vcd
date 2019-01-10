@@ -13,42 +13,42 @@ modify, and delete VPN settings and rules.
 
 ## Example Usage
 
-```
+```hcl
 resource "vcd_edgegateway_vpn" "vpn" {
-    edge_gateway        = "Internet_01(nti0000bi2_123-456-2)"
-    name                = "west-to-east"
+  edge_gateway        = "Internet_01(nti0000bi2_123-456-2)"
+  name                = "west-to-east"
   description         = "Description"
   encryption_protocol = "AES256"
-    mtu                 = 1400
-    peer_id             = "64.121.123.11"
-    peer_ip_address     = "64.121.123.11"
-    local_id            = "64.121.123.10"
-    local_ip_address    = "64.121.123.10"
-    shared_secret       = "***********************"
-    
-    peer_subnets {
-        peer_subnet_name = "DMZ_WEST"
-        peer_subnet_gateway = "10.0.10.1"
-        peer_subnet_mask = "255.255.255.0"
-    }
+  mtu                 = 1400
+  peer_id             = "64.121.123.11"
+  peer_ip_address     = "64.121.123.11"
+  local_id            = "64.121.123.10"
+  local_ip_address    = "64.121.123.10"
+  shared_secret       = "***********************"
 
-    peer_subnets {
-        peer_subnet_name = "WEB_WEST"
-        peer_subnet_gateway = "10.0.20.1"
-        peer_subnet_mask = "255.255.255.0"
-    }
+  peer_subnets {
+    peer_subnet_name    = "DMZ_WEST"
+    peer_subnet_gateway = "10.0.10.1"
+    peer_subnet_mask    = "255.255.255.0"
+  }
 
-    local_subnets {
-        local_subnet_name = "DMZ_EAST"
-        local_subnet_gateway = "10.0.1.1"
-        local_subnet_mask = "255.255.255.0"
-    }
+  peer_subnets {
+    peer_subnet_name    = "WEB_WEST"
+    peer_subnet_gateway = "10.0.20.1"
+    peer_subnet_mask    = "255.255.255.0"
+  }
 
-    local_subnets {
-        local_subnet_name = "WEB_EAST"
-        local_subnet_gateway = "10.0.22.1"
-        local_subnet_mask = "255.255.255.0"
-    }
+  local_subnets {
+    local_subnet_name    = "DMZ_EAST"
+    local_subnet_gateway = "10.0.1.1"
+    local_subnet_mask    = "255.255.255.0"
+  }
+
+  local_subnets {
+    local_subnet_name    = "WEB_EAST"
+    local_subnet_gateway = "10.0.22.1"
+    local_subnet_mask    = "255.255.255.0"
+  }
 }
 ```
 

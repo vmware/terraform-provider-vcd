@@ -14,14 +14,14 @@ Supported in provider *v2.0+*
 
 ## Example Usage
 
-```
+```hcl
 resource "vcd_catalog" "myNewCatalog" {
   org = "my-org"
 
-  name = "my-catalog"
-  description = "catalog for files"  
-  delete_recursive  = "true"  
-  delete_force      = "true"
+  name             = "my-catalog"
+  description      = "catalog for files"
+  delete_recursive = "true"
+  delete_force     = "true"
 }
 ```
 

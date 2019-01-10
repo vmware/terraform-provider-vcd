@@ -14,15 +14,15 @@ Supported in provider *v2.0+*
 
 ## Example Usage
 
-```
+```hcl
 resource "vcd_catalog_media" "myNewMedia" {
-  org = "my-org"
-  catalog = "my-catalog" 
+  org     = "my-org"
+  catalog = "my-catalog"
 
-  name = "my iso"
-  description = "new os versions"
-  media_path = "/home/user/file.iso"
-  upload_piece_size = 10 
+  name                 = "my iso"
+  description          = "new os versions"
+  media_path           = "/home/user/file.iso"
+  upload_piece_size    = 10
   show_upload_progress = true
 }
 ```

@@ -66,7 +66,7 @@ provider "vcd" {
 resource "vcd_network_routed" "net1" {
   org = "Org1"
   vdc = "Org1VDC"
-  
+
   # ...
 }
 
@@ -74,7 +74,7 @@ resource "vcd_network_routed" "net1" {
 resource "vcd_network_routed" "net2" {
   org = "Org2"
   vdc = "Org2VDC"
-  
+
   # ...
 }
 ```
@@ -89,8 +89,8 @@ provider "vcd" {
   user                 = "administrator"
   password             = "${var.vcd_pass}"
   sysorg               = "System"
-  org                  = "${var.vcd_org}" # Default for resources
-  vdc                  = "${var.vcd_vdc}" # Default for resources
+  org                  = "${var.vcd_org}"                  # Default for resources
+  vdc                  = "${var.vcd_vdc}"                  # Default for resources
   url                  = "${var.vcd_url}"
   max_retry_timeout    = "${var.vcd_max_retry_timeout}"
   allow_unverified_ssl = "${var.vcd_allow_unverified_ssl}"
@@ -105,7 +105,7 @@ resource "vcd_network_routed" "net1" {
 resource "vcd_network_routed" "net2" {
   org = "OrgZ"
   vdc = "OrgZVDC"
-  
+
   # ...
 }
 ```
