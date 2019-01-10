@@ -17,8 +17,8 @@ Supported in provider *v2.0+*
 
 ```hcl
 resource "vcd_network_routed" "net" {
-  org          = "my-org" # Optional
-  vdc          = "my-vdc" # Optional
+  org = "my-org" # Optional
+  vdc = "my-vdc" # Optional
 
   name         = "my-net"
   edge_gateway = "Edge Gateway Name"

@@ -15,13 +15,14 @@ Supported in provider *v2.0+*
 
 ## Example Usage
 
-```
+```hcl
 provider "vcd" {
-  user                 = "${var.admin_user}"
-  password             = "${var.admin_password}"
-  org                  = "System"
-  url                  = "https://AcmeVcd/api"
+  user     = "${var.admin_user}"
+  password = "${var.admin_password}"
+  org      = "System"
+  url      = "https://AcmeVcd/api"
 }
+
 resource "vcd_org" "my-org" {
   name             = "my-org"
   full_name        = "My organization"

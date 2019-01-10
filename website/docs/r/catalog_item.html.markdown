@@ -14,15 +14,15 @@ Supported in provider *v2.0+*
 
 ## Example Usage
 
-```
+```hcl
 resource "vcd_catalog_item" "myNewCatalogItem" {
-  org = "my-org"
-  catalog = "my-catalog" 
+  org     = "my-org"
+  catalog = "my-catalog"
 
-  name = "my ova"
-  description = "new vapp template"
-  ova_path = "/home/user/file.ova"
-  upload_piece_size = 10 
+  name                 = "my ova"
+  description          = "new vapp template"
+  ova_path             = "/home/user/file.ova"
+  upload_piece_size    = 10
   show_upload_progress = true
 }
 ```
@@ -36,5 +36,5 @@ The following arguments are supported:
 * `name` - (Required) Item name in catalog
 * `description` - (Optional) - Description of item
 * `ova_path` - (Required) - Absolute or relative path to file to upload
-* `upload_piece_size` - (Optional) - size in MB for splitting upload size. It can possibly impact upload performance. Default 1MB.
+* `upload_piece_size` - (Optional) - Size in MB for splitting upload size. It can possibly impact upload performance. Default 1MB.
 * `show_upload_progress` - (Optional) - Default false. Allows to see upload progress
