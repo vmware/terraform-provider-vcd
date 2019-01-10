@@ -444,10 +444,31 @@ func destroySuiteCatalogAndItem(config TestConfig) {
 		return
 	}
 
-	fmt.Printf("Deleting catalog for test suite...\n")
-	err = catalog.Delete(true, true)
-	if err != nil {
-		fmt.Errorf("error removing catalog %#v", err)
+	isCatalogDeleted := false
+	if testConfig.VCD.Catalog.Name == "" {
+		fmt.Printf("Deleting catalog for test suite...\n")
+		err = catalog.Delete(true, true)
+		if err != nil {
+			fmt.Errorf("error removing catalog %#v", err)
+		}
+		isCatalogDeleted = true
+		fmt.Printf("Catalog %s removed successfuly\n", catalog.Catalog.Name)
+	} else {
+		fmt.Printf("Catalog deletion skiped as user defined resource used \n")
 	}
-	fmt.Printf("Catalog created successfuly\n")
+
+	if testConfig.VCD.Catalog.CatalogItem == "" && !isCatalogDeleted {
+		catalogItem, err := catalog.FindCatalogItem(testSuiteCatalogOVAItem)
+		if err != nil {
+			fmt.Errorf("error finding catalog %#v", err)
+		}
+		err = catalogItem.Delete()
+		if err != nil {
+			fmt.Errorf("error removing catalog item %#v", err)
+		}
+		fmt.Printf("Catalog %s item removed successfuly\n", catalogItem.CatalogItem.Name)
+	} else {
+		fmt.Printf("Catalog item deletion skiped as user defined resource is used or removed with catalog\n")
+	}
+
 }
