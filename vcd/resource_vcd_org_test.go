@@ -109,10 +109,10 @@ func testAccCheckOrgDestroy(s *terraform.State) error {
 
 const testAccCheckVcdOrg_basic = `
 resource "vcd_org" "{{.OrgName}}" {
-  name       = "{{.OrgName}}"
-  full_name  = "{{.OrgName}}"
-  description = "{{.OrgName}}"
-  is_enabled = "true"
+  name              = "{{.OrgName}}"
+  full_name         = "{{.OrgName}}"
+  description       = "{{.OrgName}}"
+  is_enabled        = "true"
   delete_force      = "true"
   delete_recursive  = "true"
 }
