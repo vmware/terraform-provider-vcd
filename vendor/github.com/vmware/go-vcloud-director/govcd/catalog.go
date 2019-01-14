@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
+ * Copyright 2019 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
  */
 
 package govcd
@@ -62,23 +62,30 @@ func NewAdminCatalog(client *Client) *AdminCatalog {
 // Deletes the Catalog, returning an error if the vCD call fails.
 // Link to API call: https://code.vmware.com/apis/220/vcloud#/doc/doc/operations/DELETE-Catalog.html
 func (catalog *Catalog) Delete(force, recursive bool) error {
-	adminCatalogHREF, err := url.ParseRequestURI(catalog.Catalog.HREF)
-	if err != nil {
-		return fmt.Errorf("error parsing admin catalog's href: %v", err)
-	}
+
+	adminCatalogHREF := catalog.client.VCDHREF
+	adminCatalogHREF.Path += "/admin/catalog/" + getEntityNumericId(catalog.Catalog.ID)
 
 	req := catalog.client.NewRequest(map[string]string{
 		"force":     strconv.FormatBool(force),
 		"recursive": strconv.FormatBool(recursive),
-	}, "DELETE", *adminCatalogHREF, nil)
+	}, "DELETE", adminCatalogHREF, nil)
 
-	_, err = checkResp(catalog.client.Http.Do(req))
+	_, err := checkResp(catalog.client.Http.Do(req))
 
 	if err != nil {
 		return fmt.Errorf("error deleting Catalog %s: %s", catalog.Catalog.ID, err)
 	}
 
 	return nil
+}
+
+// slice only numeric part from ID:"urn:vcloud:catalog:97384890-180c-4563-b9b7-0dc50a2430b0"
+func getEntityNumericId(catalogId string) string {
+	if catalogId != "" && (len(catalogId) > 19) {
+		return catalogId[19:]
+	}
+	return ""
 }
 
 // Deletes the Catalog, returning an error if the vCD call fails.

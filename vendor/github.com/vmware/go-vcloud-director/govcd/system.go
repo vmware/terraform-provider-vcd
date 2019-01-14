@@ -122,5 +122,5 @@ func getOrgHREF(vcdClient *VCDClient, orgName string) (string, error) {
 			return org.HREF, nil
 		}
 	}
-	return "", fmt.Errorf("couldn't find org with name: %s", orgName)
+	return "", fmt.Errorf("couldn't find org with name: %s. Please check Org name as it is case sensitive", orgName)
 }
