@@ -450,6 +450,7 @@ func destroySuiteCatalogAndItem(config TestConfig) {
 		err = catalog.Delete(true, true)
 		if err != nil {
 			fmt.Errorf("error removing catalog %#v", err)
+			return
 		}
 		isCatalogDeleted = true
 		fmt.Printf("Catalog %s removed successfuly\n", catalog.Catalog.Name)
@@ -461,10 +462,12 @@ func destroySuiteCatalogAndItem(config TestConfig) {
 		catalogItem, err := catalog.FindCatalogItem(testSuiteCatalogOVAItem)
 		if err != nil {
 			fmt.Errorf("error finding catalog %#v", err)
+			return
 		}
 		err = catalogItem.Delete()
 		if err != nil {
 			fmt.Errorf("error removing catalog item %#v", err)
+			return
 		}
 		fmt.Printf("Catalog %s item removed successfuly\n", catalogItem.CatalogItem.Name)
 	} else {
