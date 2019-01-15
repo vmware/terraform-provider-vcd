@@ -342,3 +342,24 @@ func (mediaItem *MediaItem) Delete() (Task, error) {
 	// The request was successful
 	return *task, nil
 }
+
+// Finds media in catalog and returns catalog item
+func FindMediaAsCatalogItem(org *Org, catalogName, mediaName string) (CatalogItem, error) {
+	if catalogName == "" {
+		return CatalogItem{}, errors.New("catalog name is empty")
+	}
+	if mediaName == "" {
+		return CatalogItem{}, errors.New("media name is empty")
+	}
+
+	catalog, err := org.FindCatalog(catalogName)
+	if err != nil || catalog == (Catalog{}) {
+		return CatalogItem{}, fmt.Errorf("catalog not found or error %#v", err)
+	}
+
+	media, err := catalog.FindCatalogItem(mediaName)
+	if err != nil || media == (CatalogItem{}) {
+		return CatalogItem{}, fmt.Errorf("media not found or error %#v", err)
+	}
+	return media, nil
+}

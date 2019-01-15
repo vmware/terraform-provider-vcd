@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
+ * Copyright 2019 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
  */
 
 // Package util provides ancillary functionality to go-vcloud-director library
@@ -13,6 +13,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path"
 	"regexp"
 	"runtime"
 	"strings"
@@ -36,6 +37,12 @@ const (
 
 	// Name of the environment variable that enables logging of HTTP responses
 	envLogSkipHttpResp = "GOVCD_LOG_SKIP_HTTP_RESP"
+
+	// Name of the environment variable with a custom list of of responses to skip from logging
+	envLogSkipTagList = "GOVCD_LOG_SKIP_TAGS"
+
+	// Name of the environment variable with a custom list of of functions to include in the logging
+	envApiLogFunctions = "GOVCD_LOG_FUNCTIONS"
 )
 
 var (
@@ -64,6 +71,13 @@ var (
 	// Enable logging of Http responses
 	// disabled by GOVCD_LOG_SKIP_HTTP_RESP
 	LogHttpResponse bool = true
+
+	// List of tags to be excluded from logging
+	skipTags = []string{"SupportedVersions", "ovf:License"}
+
+	// List of functions included in logging
+	// If this variable is filled, only operations from matching function names will be logged
+	apiLogFunctions []string
 
 	// Sends log to screen. If value is either "stderr" or "err"
 	// logging will go to os.Stderr. For any other value it will
@@ -119,6 +133,12 @@ func SetLog() {
 	} else {
 		Logger = newLogger(ApiLogFileName)
 	}
+	if len(skipTags) > 0 {
+		Logger.Printf("### WILL SKIP THE FOLLOWING TAGS: %+v", skipTags)
+	}
+	if len(apiLogFunctions) > 0 {
+		Logger.Printf("### WILL ONLY INCLUDE API LOGS FROM THE FOLLOWING FUNCTIONS: %+v", apiLogFunctions)
+	}
 }
 
 // Hides passwords that may be used in a request
@@ -132,18 +152,18 @@ func hidePasswords(in string, onScreen bool) string {
 
 // Determines whether a string is likely to contain binary data
 func isBinary(data string, req *http.Request) bool {
-	re_content_range := regexp.MustCompile(`(?i)content-range`)
-	re_multipart := regexp.MustCompile(`(?i)multipart/form`)
-	re_media_xml := regexp.MustCompile(`(?i)media+xml;`)
+	reContentRange := regexp.MustCompile(`(?i)content-range`)
+	reMultipart := regexp.MustCompile(`(?i)multipart/form`)
+	reMediaXml := regexp.MustCompile(`(?i)media+xml;`)
 	for key, value := range req.Header {
-		if re_content_range.MatchString(key) {
+		if reContentRange.MatchString(key) {
 			return true
 		}
-		if re_multipart.MatchString(key) {
+		if reMultipart.MatchString(key) {
 			return true
 		}
 		for _, v := range value {
-			if re_media_xml.MatchString(v) {
+			if reMediaXml.MatchString(v) {
 				return true
 			}
 		}
@@ -151,7 +171,7 @@ func isBinary(data string, req *http.Request) bool {
 	return false
 }
 
-// Scand the header for known keys that contain authentication tokens
+// Scans the header for known keys that contain authentication tokens
 // and hide the contents
 func logSanitizedHeader(input_header http.Header) {
 	for key, value := range input_header {
@@ -163,21 +183,42 @@ func logSanitizedHeader(input_header http.Header) {
 	}
 }
 
+// Returns true if the caller function matches any of the functions in the include function list
+func includeFunction(caller string) bool {
+	if len(apiLogFunctions) > 0 {
+		for _, f := range apiLogFunctions {
+			reFunc := regexp.MustCompile(f)
+			if reFunc.MatchString(caller) {
+				return true
+			}
+		}
+	} else {
+		// If there is no include list, we include everything
+		return true
+	}
+	// If we reach this point, none of the functions in the list matches the caller name
+	return false
+}
+
 // Logs the essentials of a HTTP request
 func ProcessRequestOutput(caller, operation, url, payload string, req *http.Request) {
 	if !LogHttpRequest {
 		return
 	}
+	if !includeFunction(caller) {
+		return
+	}
+
 	Logger.Printf("%s\n", dashLine)
 	Logger.Printf("Request caller: %s\n", caller)
 	Logger.Printf("%s %s\n", operation, url)
 	Logger.Printf("%s\n", dashLine)
-	data_size := len(payload)
+	dataSize := len(payload)
 	if isBinary(payload, req) {
 		payload = "[binary data]"
 	}
-	if data_size > 0 {
-		Logger.Printf("Request data: [%d] %s\n", data_size, hidePasswords(payload, false))
+	if dataSize > 0 {
+		Logger.Printf("Request data: [%d] %s\n", dataSize, hidePasswords(payload, false))
 	}
 	Logger.Printf("Req header:\n")
 	logSanitizedHeader(req.Header)
@@ -188,14 +229,60 @@ func ProcessResponseOutput(caller string, resp *http.Response, result string) {
 	if !LogHttpResponse {
 		return
 	}
+
+	if !includeFunction(caller) {
+		return
+	}
+
+	outText := result
+	if len(skipTags) > 0 {
+		for _, longTag := range skipTags {
+			initialTag := `<` + longTag + `.*>`
+			finalTag := `</` + longTag + `>`
+			reInitialSearchTag := regexp.MustCompile(initialTag)
+
+			// The `(?s)` flag treats the regular expression as a single line.
+			// In this context, the dot matches every character until the next operator
+			// The `.*?` is a non-greedy match of every character until the next operator, but
+			// only matching the shortest possible portion.
+			reSearchBothTags := regexp.MustCompile(`(?s)` + initialTag + `.*?` + finalTag)
+			outRepl := fmt.Sprintf("[SKIPPING '%s' TAG AT USER'S REQUEST]", longTag)
+			// We search for the initial long tag
+			if reInitialSearchTag.MatchString(outText) {
+				// If the first tag was found, we search the text to skip the whole output between the tags
+				// Notice that if the second tag is not found, there won't be any replacement
+				outText = reSearchBothTags.ReplaceAllString(outText, outRepl)
+				break
+			}
+		}
+	}
 	Logger.Printf("%s\n", hashLine)
 	Logger.Printf("Response caller %s\n", caller)
 	Logger.Printf("Response status %s\n", resp.Status)
 	Logger.Printf("%s\n", hashLine)
 	Logger.Printf("Response header:\n")
 	logSanitizedHeader(resp.Header)
-	data_size := len(result)
-	Logger.Printf("Response text: [%d] %s\n", data_size, result)
+	dataSize := len(result)
+	outTextSize := len(outText)
+	if outTextSize != dataSize {
+		Logger.Printf("Response text: [%d -> %d] %s\n", dataSize, outTextSize, outText)
+	} else {
+		Logger.Printf("Response text: [%d] %s\n", dataSize, outText)
+	}
+}
+
+// Sets the list of tahs to skip
+func SetSkipTags(tags string) {
+	if tags != "" {
+		skipTags = strings.Split(tags, ",")
+	}
+}
+
+// Sets the list of functions to include
+func SetApiLogFunctions(functions string) {
+	if functions != "" {
+		apiLogFunctions = strings.Split(functions, ",")
+	}
 }
 
 // Initializes default logging values
@@ -207,6 +294,15 @@ func InitLogging() {
 	if os.Getenv(envLogSkipHttpResp) != "" {
 		LogHttpResponse = false
 	}
+
+	if os.Getenv(envApiLogFunctions) != "" {
+		SetApiLogFunctions(os.Getenv(envApiLogFunctions))
+	}
+
+	if os.Getenv(envLogSkipTagList) != "" {
+		SetSkipTags(os.Getenv(envLogSkipTagList))
+	}
+
 	if os.Getenv(envLogPasswords) != "" {
 		EnableLogging = true
 		LogPasswords = true
@@ -255,4 +351,31 @@ func CurrentFuncName() string {
 	runtime.Callers(2, fpcs)
 	fun := runtime.FuncForPC(fpcs[0])
 	return fun.Name()
+}
+
+// Returns a string containing up to 10 function names
+// from the call stack
+func FuncNameCallStack() string {
+	// Gets the list of function names from the call stack
+	fpcs := make([]uintptr, 10)
+	runtime.Callers(0, fpcs)
+	// Removes the function names from the reflect stack itself and the ones from the API management
+	removeReflect := regexp.MustCompile(`^ runtime.call|reflect.Value|\bNewRequest\b|NewRequestWitNotEncodedParams`)
+	var stackStr []string
+	// Gets up to 10 functions from the stack
+	for N := 0; N < len(fpcs) && N < 10; N++ {
+		fun := runtime.FuncForPC(fpcs[N])
+		funcName := path.Base(fun.Name())
+		if !removeReflect.MatchString(funcName) {
+			stackStr = append(stackStr, funcName)
+		}
+	}
+	// Reverses the function names stack, to make it easier to read
+	var inverseStackStr []string
+	for N := len(stackStr) - 1; N > 1; N-- {
+		if stackStr[N] != "" && stackStr[N] != "." {
+			inverseStackStr = append(inverseStackStr, stackStr[N])
+		}
+	}
+	return strings.Join(inverseStackStr, "-->")
 }
