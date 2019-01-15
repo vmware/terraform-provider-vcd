@@ -41,6 +41,7 @@ func expandFirewallRules(d *schema.ResourceData, gateway *types.EdgeGateway) ([]
 		prefix := fmt.Sprintf("rule.%d", i)
 
 		var protocol *types.FirewallRuleProtocols
+		// Allow upper and lower case protocol names
 		switch strings.ToLower(d.Get(prefix + ".protocol").(string)) {
 		case "tcp":
 			protocol = &types.FirewallRuleProtocols{
