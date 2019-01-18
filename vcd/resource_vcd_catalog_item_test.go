@@ -5,6 +5,7 @@ import (
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/vmware/go-vcloud-director/govcd"
+	"os"
 	"testing"
 )
 
@@ -32,7 +33,7 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
+		PreCheck:     func() { preRunChecks(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckCatalogItemDestroy,
 		Steps: []resource.TestStep{
@@ -48,6 +49,24 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 			},
 		},
 	})
+}
+
+func preRunChecks(t *testing.T) {
+	testAccPreCheck(t)
+	checkOvaPath(t)
+}
+
+func checkOvaPath(t *testing.T) {
+	file, err := os.Stat(testConfig.Ova.OvaPath)
+	if err != nil {
+		t.Fatal("configured catalog item issue. Configured: ", testConfig.Ova.OvaPath, err)
+	}
+	if os.IsNotExist(err) {
+		t.Fatal("configured catalog item isn't found. Configured: ", testConfig.Ova.OvaPath)
+	}
+	if file.IsDir() {
+		t.Fatal("configured catalog item is dir and not a file. Configured: ", testConfig.Ova.OvaPath)
+	}
 }
 
 func testAccCheckVcdCatalogItemExists(itemName string, catalogItem *govcd.CatalogItem) resource.TestCheckFunc {
