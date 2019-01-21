@@ -67,7 +67,11 @@
     "ovaPath": "../test-resources/test_vapp_template.ova",
     "//": "Size in megabytes",
     "uploadPieceSize": 5,
-    "uploadProgress": true
+    "uploadProgress": true,
+    "//": "link will be used to download ova for tests",
+    "ovaDownloadUrl": "http://dl.bintray.com/vmware/photon/2.0/GA/ova/photon-custom-hw11-2.0-304b817.ova",
+    "//": "name for downloaded file which will be saved in test-resources folder",
+    "ovaTestFileName": "photon.ova"
   },
   "media": {
     "mediaPath": "../test-resources/test.iso",
