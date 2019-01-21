@@ -334,6 +334,7 @@ func TestMain(m *testing.M) {
 	os.Exit(exitCode)
 }
 
+//Creates catalog and/or catalog item if they are not preconfigured.
 func createSuiteCatalogAndItem(config TestConfig) {
 	fmt.Printf("Creating resources for test suite...\n")
 	vcdClient, err := getTestVCDFromJson(config)
@@ -358,10 +359,10 @@ func createSuiteCatalogAndItem(config TestConfig) {
 		if err != nil || catalog == (govcd.Catalog{}) {
 			panic(err)
 		}
-		fmt.Printf("Catalog created successfuly\n")
+		fmt.Printf("Catalog created successfully\n")
 
 	} else {
-		fmt.Printf("Skiping catalog creation - found preconfigured one: %s \n", testConfig.VCD.Catalog.Name)
+		fmt.Printf("Skipping catalog creation - found preconfigured one: %s \n", testConfig.VCD.Catalog.Name)
 
 		catalog, err = org.FindCatalog(testConfig.VCD.Catalog.Name)
 		if err != nil || catalog == (govcd.Catalog{}) {
@@ -369,7 +370,7 @@ func createSuiteCatalogAndItem(config TestConfig) {
 			panic(err)
 		}
 
-		fmt.Printf("Catalog found successfuly\n")
+		fmt.Printf("Catalog found successfully\n")
 		testSuiteCatalogName = testConfig.VCD.Catalog.Name
 	}
 
@@ -393,17 +394,17 @@ func createSuiteCatalogAndItem(config TestConfig) {
 			panic(err)
 		}
 
-		fmt.Printf("Catalog item created successfuly\n")
+		fmt.Printf("Catalog item created successfully\n")
 
 	} else {
-		fmt.Printf("Skiping catalog item creation - found preconfigured one: %s \n", testConfig.VCD.Catalog.CatalogItem)
+		fmt.Printf("Skipping catalog item creation - found preconfigured one: %s \n", testConfig.VCD.Catalog.CatalogItem)
 
 		item, err := catalog.FindCatalogItem(testConfig.VCD.Catalog.CatalogItem)
 		if err != nil && item != (govcd.CatalogItem{}) {
 			fmt.Printf("Preconfigured catalog item wasn't found \n")
 			panic(err)
 		}
-		fmt.Printf("Catalog item found successfuly\n")
+		fmt.Printf("Catalog item found successfully\n")
 		testSuiteCatalogOVAItem = testConfig.VCD.Catalog.CatalogItem
 	}
 
@@ -453,7 +454,7 @@ func destroySuiteCatalogAndItem(config TestConfig) {
 			return
 		}
 		isCatalogDeleted = true
-		fmt.Printf("Catalog %s removed successfuly\n", catalog.Catalog.Name)
+		fmt.Printf("Catalog %s removed successfully\n", catalog.Catalog.Name)
 	} else {
 		fmt.Printf("Catalog deletion skiped as user defined resource used \n")
 	}
@@ -469,7 +470,7 @@ func destroySuiteCatalogAndItem(config TestConfig) {
 			fmt.Errorf("error removing catalog item %#v", err)
 			return
 		}
-		fmt.Printf("Catalog %s item removed successfuly\n", catalogItem.CatalogItem.Name)
+		fmt.Printf("Catalog %s item removed successfully\n", catalogItem.CatalogItem.Name)
 	} else {
 		fmt.Printf("Catalog item deletion skiped as user defined resource is used or removed with catalog\n")
 	}
