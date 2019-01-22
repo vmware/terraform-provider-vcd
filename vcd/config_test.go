@@ -331,8 +331,8 @@ func TestMain(m *testing.M) {
 	}
 
 	// forcing item cleanup before test run
-	if os.Getenv("TEST_SUITE_CLEANUP") != "" {
-		fmt.Printf("TEST_SUITE_CLEANUP found and TestSuite resource cleanup initiated\n")
+	if os.Getenv("VCD_TEST_SUITE_CLEANUP") != "" {
+		fmt.Printf("VCD_TEST_SUITE_CLEANUP found and TestSuite resource cleanup initiated\n")
 		destroySuiteCatalogAndItem(testConfig)
 	}
 
@@ -353,7 +353,7 @@ func TestMain(m *testing.M) {
 
 //Creates catalog and/or catalog item if they are not preconfigured.
 func createSuiteCatalogAndItem(config TestConfig) {
-	fmt.Printf("Creating resources for test suite...\n")
+	fmt.Printf("Looking for resources to create for test suite...\n")
 
 	fmt.Printf("Downloading OVA\n")
 
@@ -503,7 +503,7 @@ func getTestVCDFromJson(testConfig TestConfig) (*govcd.VCDClient, error) {
 }
 
 func destroySuiteCatalogAndItem(config TestConfig) {
-	fmt.Printf("Deleting resources for test suite...\n")
+	fmt.Printf("Looking for resources to delete from test suite...\n")
 	vcdClient, err := getTestVCDFromJson(config)
 	if vcdClient == nil || err != nil {
 		panic(err)
