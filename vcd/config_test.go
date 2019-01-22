@@ -355,21 +355,28 @@ func TestMain(m *testing.M) {
 func createSuiteCatalogAndItem(config TestConfig) {
 	fmt.Printf("Checking resources to create for test suite...\n")
 
-	fmt.Printf("Downloading OVA\n")
-
 	ovaFilePath := getCurrentDir() + "/../test-resources/" + config.Ova.OvaTestFileName
-	fmt.Printf("File will be saved as: %s\n", ovaFilePath)
 
-	if _, err := os.Stat(ovaFilePath); err == nil {
-		fmt.Printf("File already exists. Skipping downloading\n")
-	} else if os.IsNotExist(err) {
-		err := downloadFile(ovaFilePath, testConfig.Ova.OvaDownloadUrl)
-		if err != nil {
+	if config.Ova.OvaTestFileName == "" && testConfig.VCD.Catalog.CatalogItem == "" {
+		panic(fmt.Errorf("ovaTestFileName isn't configured. Tests aborted\n"))
+	}
+
+	if config.Ova.OvaDownloadUrl == "" && testConfig.VCD.Catalog.CatalogItem == "" {
+		panic(fmt.Errorf("ovaDownloadUrl isn't configured. Tests aborted\n"))
+	} else if testConfig.VCD.Catalog.CatalogItem == "" {
+		fmt.Printf("Downloading OVA. File will be saved as: %s\n", ovaFilePath)
+
+		if _, err := os.Stat(ovaFilePath); err == nil {
+			fmt.Printf("File already exists. Skipping downloading\n")
+		} else if os.IsNotExist(err) {
+			err := downloadFile(ovaFilePath, testConfig.Ova.OvaDownloadUrl)
+			if err != nil {
+				panic(err)
+			}
+			fmt.Printf("OVA downloaded\n")
+		} else {
 			panic(err)
 		}
-		fmt.Printf("OVA downloaded\n")
-	} else {
-		panic(err)
 	}
 
 	vcdClient, err := getTestVCDFromJson(config)
