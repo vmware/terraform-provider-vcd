@@ -83,7 +83,7 @@ type TestConfig struct {
 	} `json:"media"`
 }
 
-// names for created resources names for all the tests
+// names for created resources for all the tests
 var (
 	testSuiteCatalogName    = "TestSuiteCatalog"
 	testSuiteCatalogOVAItem = "TestSuiteOVA"
@@ -521,7 +521,7 @@ func destroySuiteCatalogAndItem(config TestConfig) {
 
 	catalog, err := org.FindCatalog(testSuiteCatalogName)
 	if err != nil || catalog == (govcd.Catalog{}) {
-		fmt.Errorf("catalog already removed %#v", err)
+		fmt.Printf("catalog already removed %#v", err)
 		return
 	}
 
@@ -530,7 +530,7 @@ func destroySuiteCatalogAndItem(config TestConfig) {
 		fmt.Printf("Deleting catalog for test suite...\n")
 		err = catalog.Delete(true, true)
 		if err != nil {
-			fmt.Errorf("error removing catalog %#v", err)
+			fmt.Printf("error removing catalog %#v", err)
 			return
 		}
 		isCatalogDeleted = true
@@ -542,12 +542,12 @@ func destroySuiteCatalogAndItem(config TestConfig) {
 	if testConfig.VCD.Catalog.CatalogItem == "" && !isCatalogDeleted {
 		catalogItem, err := catalog.FindCatalogItem(testSuiteCatalogOVAItem)
 		if err != nil || catalogItem == (govcd.CatalogItem{}) {
-			fmt.Errorf("error finding catalog item %#v", err)
+			fmt.Printf("error finding catalog item %#v", err)
 			return
 		}
 		err = catalogItem.Delete()
 		if err != nil {
-			fmt.Errorf("error removing catalog item %#v", err)
+			fmt.Printf("error removing catalog item %#v", err)
 			return
 		}
 		fmt.Printf("Catalog %s item removed successfully\n", catalogItem.CatalogItem.Name)
