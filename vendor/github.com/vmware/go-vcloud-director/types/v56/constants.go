@@ -73,6 +73,8 @@ const (
 	MimeDisk = "application/vnd.vmware.vcloud.disk+xml"
 	// Mime for insert or eject media
 	MimeMediaInsertOrEjectParams = "application/vnd.vmware.vcloud.mediaInsertOrEjectParams+xml"
+	// Mime for catalog
+	MimeAdminCatalog = "application/vnd.vmware.admin.catalog+xml"
 )
 
 const (

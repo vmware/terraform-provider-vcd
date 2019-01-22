@@ -20,8 +20,8 @@ func TestAccVcdVAppRaw_Basic(t *testing.T) {
 		"Vdc":         testConfig.VCD.Vdc,
 		"EdgeGateway": testConfig.Networking.EdgeGateway,
 		"NetworkName": "TestAccVcdVAppRawNet",
-		"Catalog":     testConfig.VCD.Catalog.Name,
-		"CatalogItem": testConfig.VCD.Catalog.Catalogitem,
+		"Catalog":     testSuiteCatalogName,
+		"CatalogItem": testSuiteCatalogOVAItem,
 		"VappName":    "TestAccVcdVAppRawVapp",
 		"VmName":      "TestAccVcdVAppRawVm",
 	}
