@@ -10,7 +10,9 @@ import (
 	"github.com/vmware/go-vcloud-director/govcd"
 	"github.com/vmware/go-vcloud-director/util"
 	"html/template"
+	"io"
 	"io/ioutil"
+	"net/http"
 	"net/url"
 	"os"
 	"path"
@@ -71,6 +73,7 @@ type TestConfig struct {
 		UploadPieceSize int64  `json:"uploadPieceSize,omitempty"`
 		UploadProgress  bool   `json:"uploadProgress,omitempty"`
 		OvaTestFileName string `json:"ovaTestFileName,omitempty"`
+		OvaDownloadUrl  string `json:"ovaDownloadUrl,omitempty"`
 	} `json:"ova"`
 	Media struct {
 		MediaPath       string `json:"mediaPath,omitempty"`
@@ -238,10 +241,7 @@ func getConfigStruct() TestConfig {
 
 	// If there was no custom file, we look for the default one
 	if config == "" {
-		// Finds the current directory, through the path of this running test
-		_, currentFilename, _, _ := runtime.Caller(0)
-		currentDirectory := filepath.Dir(currentFilename)
-		config = currentDirectory + "/vcd_test_config.json"
+		config = getCurrentDir() + "/vcd_test_config.json"
 	}
 	// Looks if the configuration file exists before attempting to read it
 	_, err := os.Stat(config)
@@ -307,6 +307,12 @@ func getConfigStruct() TestConfig {
 	return configStruct
 }
 
+// Finds the current directory, through the path of this running test
+func getCurrentDir() string {
+	_, currentFilename, _, _ := runtime.Caller(0)
+	return filepath.Dir(currentFilename)
+}
+
 // This function is called before any other test
 func TestMain(m *testing.M) {
 	// Fills the configuration variable: it will be available to all tests,
@@ -337,6 +343,27 @@ func TestMain(m *testing.M) {
 //Creates catalog and/or catalog item if they are not preconfigured.
 func createSuiteCatalogAndItem(config TestConfig) {
 	fmt.Printf("Creating resources for test suite...\n")
+
+	fmt.Printf("Downloading OVA\n")
+
+	ovaFilePath := getCurrentDir() + "/../test-resources/" + config.Ova.OvaTestFileName
+	fmt.Printf("File will be saved as: %s\n", ovaFilePath)
+
+	if _, err := os.Stat(ovaFilePath); err == nil {
+		fmt.Printf("File already exsit. Skipping downloading\n")
+	} else if os.IsNotExist(err) {
+		err := downloadFile(ovaFilePath, testConfig.Ova.OvaDownloadUrl)
+		if err != nil {
+			panic(err)
+		}
+	} else {
+		panic(err)
+	}
+
+	fmt.Printf("OVA downloaded\n")
+
+	fmt.Printf("Creating resources for test suite...\n")
+
 	vcdClient, err := getTestVCDFromJson(config)
 	if vcdClient == nil || err != nil {
 		panic(err)
@@ -376,7 +403,7 @@ func createSuiteCatalogAndItem(config TestConfig) {
 
 	if testConfig.VCD.Catalog.CatalogItem == "" {
 		fmt.Printf("Creating catalog item for test suite...\n")
-		task, err := catalog.UploadOvf("../test-resources/"+config.Ova.OvaTestFileName, testSuiteCatalogOVAItem, "Test suite purpose", 20*1024*1024)
+		task, err := catalog.UploadOvf(ovaFilePath, testSuiteCatalogOVAItem, "Test suite purpose", 20*1024*1024)
 		if err != nil {
 			fmt.Errorf("error uploading new catalog item: %#v", err)
 			panic(err)
@@ -408,6 +435,33 @@ func createSuiteCatalogAndItem(config TestConfig) {
 		testSuiteCatalogOVAItem = testConfig.VCD.Catalog.CatalogItem
 	}
 
+}
+
+// DownloadFile will download a url to a local file. It's efficient because it will
+// write as it downloads and not load the whole file into memory.
+func downloadFile(filepath string, url string) error {
+
+	// Create the file
+	out, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	// Get the data
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Write the body to file
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Creates a VCDClient based on the endpoint given in the TestConfig argument.
