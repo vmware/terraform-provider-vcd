@@ -429,19 +429,19 @@ func createSuiteCatalogAndItem(config TestConfig) {
 		fmt.Printf("Creating catalog item for test suite...\n")
 		task, err := catalog.UploadOvf(ovaFilePath, testSuiteCatalogOVAItem, "Test suite purpose", 20*1024*1024)
 		if err != nil {
-			fmt.Errorf("error uploading new catalog item: %#v", err)
+			fmt.Printf("error uploading new catalog item: %#v", err)
 			panic(err)
 		}
 
 		err = task.ShowUploadProgress()
 		if err != nil {
-			fmt.Errorf("error waiting from task to complete: %+v", err)
+			fmt.Printf("error waiting from task to complete: %+v", err)
 			panic(err)
 		}
 
 		err = task.WaitTaskCompletion()
 		if err != nil {
-			fmt.Errorf("error waiting from task to complete: %+v", err)
+			fmt.Printf("error waiting from task to complete: %+v", err)
 			panic(err)
 		}
 
