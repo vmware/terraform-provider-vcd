@@ -402,7 +402,7 @@ func createSuiteCatalogAndItem(config TestConfig) {
 		}
 		fmt.Printf("Catalog created successfully\n")
 
-	} else if testConfig.VCD.Catalog.Name != "" && !catalogPreserved {
+	} else if testConfig.VCD.Catalog.Name != "" {
 		fmt.Printf("Skipping catalog creation - found preconfigured one: %s \n", testConfig.VCD.Catalog.Name)
 
 		catalog, err = org.FindCatalog(testConfig.VCD.Catalog.Name)
@@ -445,7 +445,7 @@ func createSuiteCatalogAndItem(config TestConfig) {
 
 		fmt.Printf("Catalog item created successfully\n")
 
-	} else if testConfig.VCD.Catalog.CatalogItem != "" && !catalogItemPreserved {
+	} else if testConfig.VCD.Catalog.CatalogItem != "" {
 		fmt.Printf("Skipping catalog item creation - found preconfigured one: %s \n", testConfig.VCD.Catalog.CatalogItem)
 
 		item, err := catalog.FindCatalogItem(testConfig.VCD.Catalog.CatalogItem)
