@@ -353,7 +353,7 @@ func TestMain(m *testing.M) {
 
 //Creates catalog and/or catalog item if they are not preconfigured.
 func createSuiteCatalogAndItem(config TestConfig) {
-	fmt.Printf("Looking for resources to create for test suite...\n")
+	fmt.Printf("Checking resources to create for test suite...\n")
 
 	fmt.Printf("Downloading OVA\n")
 
@@ -371,8 +371,6 @@ func createSuiteCatalogAndItem(config TestConfig) {
 	} else {
 		panic(err)
 	}
-
-	fmt.Printf("Creating resources for test suite...\n")
 
 	vcdClient, err := getTestVCDFromJson(config)
 	if vcdClient == nil || err != nil {
