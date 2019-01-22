@@ -74,6 +74,7 @@ type TestConfig struct {
 		UploadProgress  bool   `json:"uploadProgress,omitempty"`
 		OvaTestFileName string `json:"ovaTestFileName,omitempty"`
 		OvaDownloadUrl  string `json:"ovaDownloadUrl,omitempty"`
+		Preserve        bool   `json:"preserve,omitempty"`
 	} `json:"ova"`
 	Media struct {
 		MediaPath       string `json:"mediaPath,omitempty"`
@@ -329,12 +330,22 @@ func TestMain(m *testing.M) {
 		}
 	}
 
+	// forcing item cleanup before test run
+	if os.Getenv("TEST_SUITE_CLEANUP") != "" {
+		fmt.Printf("TEST_SUITE_CLEANUP found and TestSuite resource cleanup initiated\n")
+		destroySuiteCatalogAndItem(testConfig)
+	}
+
 	createSuiteCatalogAndItem(testConfig)
 
 	// Runs all test functions
 	exitCode := m.Run()
 
-	destroySuiteCatalogAndItem(testConfig)
+	if !testConfig.Ova.Preserve {
+		destroySuiteCatalogAndItem(testConfig)
+	} else {
+		fmt.Printf("TestSuite destroy skipped - preserve turned on \n")
+	}
 
 	// TODO: cleanup leftovers
 	os.Exit(exitCode)
@@ -356,11 +367,10 @@ func createSuiteCatalogAndItem(config TestConfig) {
 		if err != nil {
 			panic(err)
 		}
+		fmt.Printf("OVA downloaded\n")
 	} else {
 		panic(err)
 	}
-
-	fmt.Printf("OVA downloaded\n")
 
 	fmt.Printf("Creating resources for test suite...\n")
 
@@ -380,7 +390,13 @@ func createSuiteCatalogAndItem(config TestConfig) {
 
 	var catalog govcd.Catalog
 
-	if testConfig.VCD.Catalog.Name == "" {
+	catalogPreserved := true
+	catalog, err = org.FindCatalog(testSuiteCatalogName)
+	if err != nil || catalog == (govcd.Catalog{}) {
+		catalogPreserved = false
+	}
+
+	if testConfig.VCD.Catalog.Name == "" && !catalogPreserved {
 		fmt.Printf("Creating catalog for test suite...\n")
 		catalog, err = org.CreateCatalog(testSuiteCatalogName, "Test suite purpose")
 		if err != nil || catalog == (govcd.Catalog{}) {
@@ -388,7 +404,7 @@ func createSuiteCatalogAndItem(config TestConfig) {
 		}
 		fmt.Printf("Catalog created successfully\n")
 
-	} else {
+	} else if testConfig.VCD.Catalog.Name != "" && !catalogPreserved {
 		fmt.Printf("Skipping catalog creation - found preconfigured one: %s \n", testConfig.VCD.Catalog.Name)
 
 		catalog, err = org.FindCatalog(testConfig.VCD.Catalog.Name)
@@ -399,9 +415,17 @@ func createSuiteCatalogAndItem(config TestConfig) {
 
 		fmt.Printf("Catalog found successfully\n")
 		testSuiteCatalogName = testConfig.VCD.Catalog.Name
+	} else {
+		fmt.Printf("Skipping catalog creation - catalog was preserved from previous creation \n")
 	}
 
-	if testConfig.VCD.Catalog.CatalogItem == "" {
+	catalogItemPreserved := true
+	catalogItem, err := catalog.FindCatalogItem(testSuiteCatalogOVAItem)
+	if err != nil || catalogItem == (govcd.CatalogItem{}) {
+		catalogItemPreserved = false
+	}
+
+	if testConfig.VCD.Catalog.CatalogItem == "" && !catalogItemPreserved {
 		fmt.Printf("Creating catalog item for test suite...\n")
 		task, err := catalog.UploadOvf(ovaFilePath, testSuiteCatalogOVAItem, "Test suite purpose", 20*1024*1024)
 		if err != nil {
@@ -423,7 +447,7 @@ func createSuiteCatalogAndItem(config TestConfig) {
 
 		fmt.Printf("Catalog item created successfully\n")
 
-	} else {
+	} else if testConfig.VCD.Catalog.CatalogItem != "" && !catalogItemPreserved {
 		fmt.Printf("Skipping catalog item creation - found preconfigured one: %s \n", testConfig.VCD.Catalog.CatalogItem)
 
 		item, err := catalog.FindCatalogItem(testConfig.VCD.Catalog.CatalogItem)
@@ -433,6 +457,8 @@ func createSuiteCatalogAndItem(config TestConfig) {
 		}
 		fmt.Printf("Catalog item found successfully\n")
 		testSuiteCatalogOVAItem = testConfig.VCD.Catalog.CatalogItem
+	} else {
+		fmt.Printf("Skipping catalog item creation - catalog item was preserved from previous creation \n")
 	}
 
 }
@@ -515,8 +541,8 @@ func destroySuiteCatalogAndItem(config TestConfig) {
 
 	if testConfig.VCD.Catalog.CatalogItem == "" && !isCatalogDeleted {
 		catalogItem, err := catalog.FindCatalogItem(testSuiteCatalogOVAItem)
-		if err != nil {
-			fmt.Errorf("error finding catalog %#v", err)
+		if err != nil || catalogItem == (govcd.CatalogItem{}) {
+			fmt.Errorf("error finding catalog item %#v", err)
 			return
 		}
 		err = catalogItem.Delete()

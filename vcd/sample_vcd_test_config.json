@@ -71,7 +71,9 @@
     "//": "Link will be used to download OVA for tests",
     "ovaDownloadUrl": "http://dl.bintray.com/vmware/photon/2.0/GA/ova/photon-custom-hw11-2.0-304b817.ova",
     "//": "Name for downloaded file which will be saved in test-resources folder",
-    "ovaTestFileName": "photon.ova"
+    "ovaTestFileName": "photon.ova",
+    "//": "Won't destroy resources created for test suite. Will be reused next time running tests",
+    "preserve": true
   },
   "media": {
     "mediaPath": "../test-resources/test.iso",
