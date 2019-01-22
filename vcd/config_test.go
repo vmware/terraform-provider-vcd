@@ -350,7 +350,7 @@ func createSuiteCatalogAndItem(config TestConfig) {
 	fmt.Printf("File will be saved as: %s\n", ovaFilePath)
 
 	if _, err := os.Stat(ovaFilePath); err == nil {
-		fmt.Printf("File already exsit. Skipping downloading\n")
+		fmt.Printf("File already exists. Skipping downloading\n")
 	} else if os.IsNotExist(err) {
 		err := downloadFile(ovaFilePath, testConfig.Ova.OvaDownloadUrl)
 		if err != nil {
@@ -510,7 +510,7 @@ func destroySuiteCatalogAndItem(config TestConfig) {
 		isCatalogDeleted = true
 		fmt.Printf("Catalog %s removed successfully\n", catalog.Catalog.Name)
 	} else {
-		fmt.Printf("Catalog deletion skiped as user defined resource used \n")
+		fmt.Printf("Catalog deletion skipped as user defined resource used \n")
 	}
 
 	if testConfig.VCD.Catalog.CatalogItem == "" && !isCatalogDeleted {
@@ -526,7 +526,7 @@ func destroySuiteCatalogAndItem(config TestConfig) {
 		}
 		fmt.Printf("Catalog %s item removed successfully\n", catalogItem.CatalogItem.Name)
 	} else {
-		fmt.Printf("Catalog item deletion skiped as user defined resource is used or removed with catalog\n")
+		fmt.Printf("Catalog item deletion skipped as user defined resource is used or removed with catalog\n")
 	}
 
 }
