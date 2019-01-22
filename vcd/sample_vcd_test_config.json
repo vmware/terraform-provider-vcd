@@ -68,9 +68,9 @@
     "//": "Size in megabytes",
     "uploadPieceSize": 5,
     "uploadProgress": true,
-    "//": "link will be used to download ova for tests",
+    "//": "Link will be used to download OVA for tests",
     "ovaDownloadUrl": "http://dl.bintray.com/vmware/photon/2.0/GA/ova/photon-custom-hw11-2.0-304b817.ova",
-    "//": "name for downloaded file which will be saved in test-resources folder",
+    "//": "Name for downloaded file which will be saved in test-resources folder",
     "ovaTestFileName": "photon.ova"
   },
   "media": {
