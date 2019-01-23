@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
+ * Copyright 2019 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
  */
 
 package govcd
@@ -7,9 +7,10 @@ package govcd
 import (
 	"errors"
 	"fmt"
+	"net/url"
+
 	"github.com/vmware/go-vcloud-director/types/v56"
 	"github.com/vmware/go-vcloud-director/util"
-	"net/url"
 )
 
 func GetExternalNetworkByName(vcdClient *VCDClient, networkName string) (*types.ExternalNetworkReference, error) {

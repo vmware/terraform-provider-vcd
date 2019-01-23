@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
+ * Copyright 2019 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
  */
 
 package govcd
@@ -8,8 +8,9 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
-	types "github.com/vmware/go-vcloud-director/types/v56"
 	"net/url"
+
+	"github.com/vmware/go-vcloud-director/types/v56"
 )
 
 type VAppTemplate struct {

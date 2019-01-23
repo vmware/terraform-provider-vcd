@@ -9,9 +9,10 @@ package govcd
 import (
 	"encoding/json"
 	"fmt"
+	"time"
+
 	"github.com/vmware/go-vcloud-director/types/v56"
 	"github.com/vmware/go-vcloud-director/util"
-	"time"
 )
 
 // For each library {entity}, we have two functions: Show{Entity} and Log{Entity}
@@ -30,6 +31,7 @@ import (
 // externalNetwork
 // vapp
 // task
+// Edge Gateway service configuration
 
 func out(destination, format string, args ...interface{}) {
 	switch destination {
@@ -42,6 +44,7 @@ func out(destination, format string, args ...interface{}) {
 	}
 }
 
+// Returns a vApp structure as JSON
 func prettyVapp(vapp types.VApp) string {
 	byteBuf, err := json.MarshalIndent(vapp, " ", " ")
 	if err == nil {
@@ -50,6 +53,7 @@ func prettyVapp(vapp types.VApp) string {
 	return ""
 }
 
+// Returns a VDC structure as JSON
 func prettyVdc(vdc types.Vdc) string {
 	byteBuf, err := json.MarshalIndent(vdc, " ", " ")
 	if err == nil {
@@ -58,6 +62,7 @@ func prettyVdc(vdc types.Vdc) string {
 	return ""
 }
 
+// Returns a Catalog Item structure as JSON
 func prettyCatalogItem(catalogItem types.CatalogItem) string {
 	byteBuf, err := json.MarshalIndent(catalogItem, " ", " ")
 	if err == nil {
@@ -66,6 +71,7 @@ func prettyCatalogItem(catalogItem types.CatalogItem) string {
 	return ""
 }
 
+// Returns a Catalog structure as JSON
 func prettyCatalog(catalog types.Catalog) string {
 	byteBuf, err := json.MarshalIndent(catalog, " ", " ")
 	if err == nil {
@@ -74,6 +80,7 @@ func prettyCatalog(catalog types.Catalog) string {
 	return ""
 }
 
+// Returns an Admin Catalog structure as JSON
 func prettyAdminCatalog(catalog types.AdminCatalog) string {
 	byteBuf, err := json.MarshalIndent(catalog, " ", " ")
 	if err == nil {
@@ -82,6 +89,7 @@ func prettyAdminCatalog(catalog types.AdminCatalog) string {
 	return ""
 }
 
+// Returns an Org structure as JSON
 func prettyOrg(org types.Org) string {
 	byteBuf, err := json.MarshalIndent(org, " ", " ")
 	if err == nil {
@@ -90,6 +98,7 @@ func prettyOrg(org types.Org) string {
 	return ""
 }
 
+// Returns an Admin Org structure as JSON
 func prettyAdminOrg(org types.AdminOrg) string {
 	byteBuf, err := json.MarshalIndent(org, " ", " ")
 	if err == nil {
@@ -98,6 +107,7 @@ func prettyAdminOrg(org types.AdminOrg) string {
 	return ""
 }
 
+// Returns a Disk structure as JSON
 func prettyDisk(disk types.Disk) string {
 	byteBuf, err := json.MarshalIndent(disk, " ", " ")
 	if err == nil {
@@ -106,6 +116,7 @@ func prettyDisk(disk types.Disk) string {
 	return ""
 }
 
+// Returns an External Network structure as JSON
 func prettyExternalNetwork(network types.ExternalNetworkReference) string {
 	byteBuf, err := json.MarshalIndent(network, " ", " ")
 	if err == nil {
@@ -114,6 +125,7 @@ func prettyExternalNetwork(network types.ExternalNetworkReference) string {
 	return ""
 }
 
+// Returns a Network structure as JSON
 func prettyNetworkConf(conf types.OrgVDCNetwork) string {
 	byteBuf, err := json.MarshalIndent(conf, " ", " ")
 	if err == nil {
@@ -122,8 +134,18 @@ func prettyNetworkConf(conf types.OrgVDCNetwork) string {
 	return ""
 }
 
+// Returns a Task structure as JSON
 func prettyTask(task *types.Task) string {
 	byteBuf, err := json.MarshalIndent(task, " ", " ")
+	if err == nil {
+		return fmt.Sprintf("%s\n", string(byteBuf))
+	}
+	return ""
+}
+
+// Returns an Edge Gateway service configuration structure as JSON
+func prettyEdgeGatewayServiceConfiguration(conf *types.EdgeGatewayServiceConfiguration) string {
+	byteBuf, err := json.MarshalIndent(conf, " ", " ")
 	if err == nil {
 		return fmt.Sprintf("%s\n", string(byteBuf))
 	}

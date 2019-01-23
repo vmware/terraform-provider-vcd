@@ -27,11 +27,13 @@
 		},
 		"edgeGateway": "myedgegw",
 		"externalIp": "10.150.10.10",
+		"externalNetmask": "255.255.224.0",
 		"internalIp": "192.168.1.10",
-    "disk": {
-      "size": 1048576,
-      "sizeForUpdate": 1048576
-    }
+		"internalNetmask": "255.255.255.0",
+        "disk": {
+            "size": 1048576,
+            "sizeForUpdate": 1048576
+        }
 	},
 	"logging": {
 		"enabled": true,

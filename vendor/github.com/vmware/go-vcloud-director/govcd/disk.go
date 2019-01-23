@@ -9,10 +9,11 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/vmware/go-vcloud-director/types/v56"
-	"github.com/vmware/go-vcloud-director/util"
 	"net/http"
 	"net/url"
+
+	"github.com/vmware/go-vcloud-director/types/v56"
+	"github.com/vmware/go-vcloud-director/util"
 )
 
 // Independent disk

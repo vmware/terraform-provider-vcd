@@ -61,8 +61,15 @@ vcd:
     # The IP of the gateway (must exist)
     externalIp: 10.150.10.10
     #
+    # netmask for the external IP (MANDATORY for edge GW VPN)
+    externalNetmask: 255.255.224.0
+    #
     # A free IP in the Org vDC network
     internalIp: 192.168.1.10
+    #
+    # netmask for the internal IP (MANDATORY for edge GW VPN)
+    internalNetmask: 255.255.255.0
+    #
     # An external Network name
     externalNetwork: myexternalnet
     #

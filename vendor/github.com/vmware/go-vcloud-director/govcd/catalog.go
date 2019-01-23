@@ -9,8 +9,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"github.com/vmware/go-vcloud-director/types/v56"
-	"github.com/vmware/go-vcloud-director/util"
 	"io"
 	"io/ioutil"
 	"math"
@@ -20,6 +18,9 @@ import (
 	"path/filepath"
 	"strconv"
 	"time"
+
+	"github.com/vmware/go-vcloud-director/types/v56"
+	"github.com/vmware/go-vcloud-director/util"
 )
 
 const (

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -35,7 +36,7 @@ func (eGW *EdgeGateway) AddDhcpPool(network *types.OrgVDCNetwork, dhcppool []int
 	util.Logger.Printf("[DEBUG] EDGE GATEWAY: %#v", newEdgeConfig)
 	util.Logger.Printf("[DEBUG] EDGE GATEWAY SERVICE: %#v", newEdgeConfig.GatewayDhcpService)
 	newDchpService := &types.GatewayDhcpService{}
-	if newEdgeConfig.GatewayDhcpService == nil {
+	if newEdgeConfig.GatewayDhcpService.Pool == nil {
 		newDchpService.IsEnabled = true
 	} else {
 		newDchpService.IsEnabled = newEdgeConfig.GatewayDhcpService.IsEnabled
@@ -727,6 +728,10 @@ func (eGW *EdgeGateway) AddIpsecVPN(ipsecVPNConfig *types.EdgeGatewayServiceConf
 		return Task{}, fmt.Errorf("error reconfiguring Edge Gateway: %s", err)
 	}
 
+	if os.Getenv("GOVCD_DEBUG") != "" {
+		util.Logger.Printf("Edge Gateway Service Configuration: %s\n", prettyEdgeGatewayServiceConfiguration(ipsecVPNConfig))
+	}
+
 	task := NewTask(eGW.client)
 
 	if err = decodeBody(resp, task.Task); err != nil {
@@ -736,4 +741,19 @@ func (eGW *EdgeGateway) AddIpsecVPN(ipsecVPNConfig *types.EdgeGatewayServiceConf
 	// The request was successful
 	return *task, nil
 
+}
+
+// Removes an Edge Gateway VPN, by passing an empty configuration
+func (eGW *EdgeGateway) RemoveIpsecVPN() (Task, error) {
+	err := eGW.Refresh()
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
+	}
+	ipsecVPNConfig := &types.EdgeGatewayServiceConfiguration{
+		Xmlns: "http://www.vmware.com/vcloud/v1.5",
+		GatewayIpsecVpnService: &types.GatewayIpsecVpnService{
+			IsEnabled: false,
+		},
+	}
+	return eGW.AddIpsecVPN(ipsecVPNConfig)
 }
