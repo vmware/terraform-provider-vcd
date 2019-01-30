@@ -79,7 +79,7 @@ type TestConfig struct {
 
 const (
 	// This library major version
-	currentProviderVersion   = "2.0"
+	currentProviderVersion = "2.0"
 	// Warning message used for all tests
 	acceptanceTestsSkipped = "Acceptance tests skipped unless env 'TF_ACC' set"
 	// This template will be added to test resource snippets on demand
@@ -239,7 +239,7 @@ func getConfigStruct() TestConfig {
 		// Finds the current directory, through the path of this running test
 		_, currentFilename, _, _ := runtime.Caller(0)
 		currentDirectory := filepath.Dir(currentFilename)
-		config = path.Join( currentDirectory, "vcd_test_config.json")
+		config = path.Join(currentDirectory, "vcd_test_config.json")
 	}
 	// Looks if the configuration file exists before attempting to read it
 	_, err := os.Stat(config)
