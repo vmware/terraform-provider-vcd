@@ -1,4 +1,4 @@
-## 2.0.0 (TODO: date)
+## 2.0.0 (Unreleased)
 
 Please look for "v2.0+" keyword in documentation which is used to emphasize changes and new features.
 
@@ -35,8 +35,6 @@ BACKWARDS INCOMPATIBILITIES / NOTES:
 TESTS:
 
 * Test configuration is now included in a file (create `vcd_test_config.json` from `sample_vcd_test_config.json`) instead of being defined by environment variables
-
-## 1.0.1 (Unreleased)
 
 IMPROVEMENTS:
 
