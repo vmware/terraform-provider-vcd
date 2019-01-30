@@ -74,19 +74,24 @@ type TestConfig struct {
 		UploadPieceSize int64  `json:"uploadPieceSize,omitempty"`
 		UploadProgress  bool   `json:"uploadProgress,omitempty"`
 	} `json:"media"`
+	EnvVariables map[string]string `json:"envVariables,omitempty"`
 }
 
 const (
+	// This library major version
+	currentProviderVersion   = "2.0"
 	// Warning message used for all tests
 	acceptanceTestsSkipped = "Acceptance tests skipped unless env 'TF_ACC' set"
 	// This template will be added to test resource snippets on demand
 	providerTemplate = `
 provider "vcd" {
-  user     = "{{.User}}"
-  password = "{{.Password}}"
-  url      = "{{.Url}}"
-  sysorg   = "{{.SysOrg}}"
-  org      = "{{.Org}}"
+  user                 = "{{.User}}"
+  password             = "{{.Password}}"
+  url                  = "{{.Url}}"
+  sysorg               = "{{.SysOrg}}"
+  org                  = "{{.Org}}"
+  allow_unverified_ssl = "{{.AllowInsecure}}"
+  version              = "~> {{.VersionRequired}}"
 }
 
 `
@@ -154,6 +159,8 @@ func templateFill(tmpl string, data StringMap) string {
 		data["Url"] = testConfig.Provider.Url
 		data["SysOrg"] = testConfig.Provider.SysOrg
 		data["Org"] = testConfig.VCD.Org
+		data["AllowInsecure"] = testConfig.Provider.AllowInsecure
+		data["VersionRequired"] = currentProviderVersion
 	}
 
 	// Creates a template. The template gets the same name of the calling function, to generate a better
@@ -232,7 +239,7 @@ func getConfigStruct() TestConfig {
 		// Finds the current directory, through the path of this running test
 		_, currentFilename, _, _ := runtime.Caller(0)
 		currentDirectory := filepath.Dir(currentFilename)
-		config = currentDirectory + "/vcd_test_config.json"
+		config = path.Join( currentDirectory, "vcd_test_config.json")
 	}
 	// Looks if the configuration file exists before attempting to read it
 	_, err := os.Stat(config)
@@ -248,6 +255,14 @@ func getConfigStruct() TestConfig {
 		panic(fmt.Errorf("could not unmarshal json file: %v", err))
 	}
 
+	// Sets (or clears) environment variables defined in the configuration file
+	if configStruct.EnvVariables != nil {
+		for key, value := range configStruct.EnvVariables {
+			currentEnvValue := os.Getenv(key)
+			debugPrintf("# Setting environment variable '%s' from '%s' to '%s'\n", key, currentEnvValue, value)
+			_ = os.Setenv(key, value)
+		}
+	}
 	// Reading the configuration file was successful.
 	// Now we fill the environment variables that the library is using for its own initialization.
 	if configStruct.Provider.TerraformAcceptanceTests {
