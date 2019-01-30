@@ -76,8 +76,8 @@
   "envVariables" : {
     "//" : "Environment variables that we want to set (or unset)",
     "GOVCD_DEBUG": "",
-    "VCD_SKIP_TEMPLATE_WRITING": ""
-    "VCD_ADD_PROVIDER": "",
+    "VCD_SKIP_TEMPLATE_WRITING": "",
+    "VCD_ADD_PROVIDER": ""
   }
 
 }
