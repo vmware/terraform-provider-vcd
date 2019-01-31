@@ -16,7 +16,7 @@ modify, and delete firewall settings and rules.
 ```hcl
 resource "vcd_firewall_rules" "fw" {
   edge_gateway   = "Edge Gateway Name"
-  default_action = "deny"
+  default_action = "drop"
 
   rule {
     description      = "deny-ftp-out"
@@ -64,7 +64,7 @@ resource "vcd_firewall_rules" "fw-web" {
 The following arguments are supported:
 
 * `edge_gateway` - (Required) The name of the edge gateway on which to apply the Firewall Rules
-* `default_action` - (Required) Either "allow" or "deny". Specifies what to do should none of the rules match
+* `default_action` - (Required) Either "allow" or "drop". Specifies what to do should none of the rules match
 * `rule` - (Optional) Configures a firewall rule; see [Rules](#rules) below for details.
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
