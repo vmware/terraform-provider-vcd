@@ -96,6 +96,11 @@ func resourceVcdVAppVm() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 			},
+			"vapp_network_name": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
 		},
 	}
 }
@@ -130,60 +135,27 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error finding Vapp: %#v", err)
 	}
 
-	netName := "blank"
-	net, err := vdc.FindVDCNetwork(d.Get("network_name").(string))
+	var networks []*types.OrgVDCNetwork
+	var netName string
 
-	if err == nil {
-		netName = net.OrgVDCNetwork.Name
-	}
-
-	nets := []*types.OrgVDCNetwork{net.OrgVDCNetwork}
-
-	vAppNetworkConfig, err := vapp.GetNetworkConfig()
-
-	vAppNetworkName := "blank"
-	if vAppNetworkConfig.NetworkConfig != nil {
-		vAppNetworkName = vAppNetworkConfig.NetworkConfig[0].NetworkName
-		if netName == "blank" {
-			net, err = vdc.FindVDCNetwork(vAppNetworkName)
-			if err != nil {
-				return fmt.Errorf("error finding vApp network: %#v", err)
-			}
-
-			netName = net.OrgVDCNetwork.Name
-		}
-
-	} else {
-
-		if netName == "blank" {
-			return fmt.Errorf("'network_name' must be valid when adding VM to raw vapp")
-		}
-
-		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := vapp.AddRAWNetworkConfig(nets)
-			if err != nil {
-				return resource.RetryableError(fmt.Errorf("error assigning network to vApp: %#v", err))
-			}
-			return resource.RetryableError(task.WaitTaskCompletion())
-		})
-
+	if d.Get("network_name").(string) != "" {
+		networks, netName, err = addVdcNetwork(d, vdc, vapp, vcdClient)
 		if err != nil {
-			return fmt.Errorf("error assigning network to vApp:: %#v", err)
-		} else {
-			vAppNetworkName = netName
+			return err
 		}
-
 	}
 
-	if vAppNetworkName != netName {
-		return fmt.Errorf("the VDC network '%s' must be assigned to the vApp. Currently the vApp network date is %s", netName, vAppNetworkName)
+	var vappNetworkName string
+	if d.Get("vapp_network_name").(string) != "" {
+		vappNetworkName, err = addVappNetwork(d, vdc, vapp, vcdClient)
+		if err != nil {
+			return err
+		}
 	}
-
-	log.Printf("[TRACE] Network name found: %s", netName)
 
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 		log.Printf("[TRACE] Creating VM: %s", d.Get("name").(string))
-		task, err := vapp.AddVM(nets, vappTemplate, d.Get("name").(string), acceptEulas)
+		task, err := vapp.AddVM(networks, vappNetworkName, vappTemplate, d.Get("name").(string), acceptEulas)
 
 		if err != nil {
 			return resource.RetryableError(fmt.Errorf("error adding VM: %#v", err))
@@ -236,6 +208,81 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	d.SetId(d.Get("name").(string))
 
 	return resourceVcdVAppVmUpdate(d, meta)
+}
+
+// Adds existing org VDC network to VM network configuration
+func addVdcNetwork(d *schema.ResourceData, vdc govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) ([]*types.OrgVDCNetwork, string, error) {
+
+	netName := ""
+	net, err := vdc.FindVDCNetwork(d.Get("network_name").(string))
+
+	if err == nil {
+		netName = net.OrgVDCNetwork.Name
+	}
+
+	vdcNetworks := []*types.OrgVDCNetwork{net.OrgVDCNetwork}
+
+	vAppNetworkConfig, err := vapp.GetNetworkConfig()
+
+	vAppNetworkName := ""
+	if vAppNetworkConfig.NetworkConfig != nil {
+		vAppNetworkName = vAppNetworkConfig.NetworkConfig[0].NetworkName
+		if netName == "" {
+			net, err = vdc.FindVDCNetwork(vAppNetworkName)
+			if err != nil {
+				return []*types.OrgVDCNetwork{}, "", fmt.Errorf("error finding vApp network: %#v", err)
+			}
+
+			netName = net.OrgVDCNetwork.Name
+		}
+
+	} else {
+
+		if netName == "" {
+			return []*types.OrgVDCNetwork{}, "", fmt.Errorf("'network_name' must be valid when adding VM to raw vapp")
+		}
+
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := vapp.AddRAWNetworkConfig(vdcNetworks)
+			if err != nil {
+				return resource.RetryableError(fmt.Errorf("error assigning network to vApp: %#v", err))
+			}
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
+
+		if err != nil {
+			return []*types.OrgVDCNetwork{}, "", fmt.Errorf("error assigning network to vApp:: %#v", err)
+		} else {
+			vAppNetworkName = netName
+		}
+
+	}
+
+	if vAppNetworkName != netName {
+		return []*types.OrgVDCNetwork{}, "", fmt.Errorf("the VDC network '%s' must be assigned to the vApp. Currently the vApp network date is %s", netName, vAppNetworkName)
+	}
+
+	log.Printf("[TRACE] Network name found: %s", netName)
+
+	return vdcNetworks, netName, nil
+}
+
+// Adds existing org vAPP network to VM network configuration
+func addVappNetwork(d *schema.ResourceData, vdc govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (string, error) {
+	vAppNetworkConfig, err := vapp.GetNetworkConfig()
+	if err != nil {
+		return "", fmt.Errorf("error getting vAPP networks: %#v", err)
+	}
+	vAppNetworkName := d.Get("vapp_network_name").(string)
+
+	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
+		if networkConfig.NetworkName == vAppNetworkName {
+			log.Printf("[TRACE] Vapp network found: %s", vAppNetworkName)
+			return vAppNetworkName, nil
+		}
+	}
+
+	return "", fmt.Errorf("configured vAPP network isn't found: %#v", err)
 }
 
 func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
