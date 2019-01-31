@@ -44,7 +44,7 @@ func resourceVcdVappNetwork() *schema.Resource {
 			},
 			"gateway": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
+				Required: true,
 				ForceNew: true,
 			},
 
