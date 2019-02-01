@@ -69,6 +69,7 @@ The following arguments are supported:
 * `cpus` - (Optional) The number of virtual CPUs to allocate to the vApp
 * `initscript` (Optional) A script to be run only on initial boot
 * `network_name` - (Optional) Name of the network this VM should connect to
+* `vapp_network_name` - (Optional) Name of the vApp network this VM should connect to
 * `ip` - (Optional) The IP to assign to this vApp. Must be an IP address or
   one of dhcp, allocated or none. If given the address must be within the
   `static_ip_pool` set for the network. If left blank, and the network has
