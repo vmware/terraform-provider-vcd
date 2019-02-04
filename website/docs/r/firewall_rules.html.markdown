@@ -19,8 +19,8 @@ resource "vcd_firewall_rules" "fw" {
   default_action = "drop"
 
   rule {
-    description      = "deny-ftp-out"
-    policy           = "deny"
+    description      = "drop-ftp-out"
+    policy           = "drop"
     protocol         = "tcp"
     destination_port = "21"
     destination_ip   = "any"
@@ -75,7 +75,7 @@ The following arguments are supported:
 Each firewall rule supports the following attributes:
 
 * `description` - (Required) Description of the fireall rule
-* `policy` - (Required) Specifies what to do when this rule is matched. Either "allow" or "deny"
+* `policy` - (Required) Specifies what to do when this rule is matched. Either "allow" or "drop"
 * `protocol` - (Required) The protocol to match. One of "tcp", "udp", "icmp" or "any"
 * `destination_port` - (Required) The destination port to match. Either a port number or "any"
 * `destination_ip` - (Required) The destination IP to match. Either an IP address, IP range or "any"
