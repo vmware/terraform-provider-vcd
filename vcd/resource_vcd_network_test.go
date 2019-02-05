@@ -383,6 +383,7 @@ resource "vcd_network_routed" "{{.NetworkName}}" {
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
   gateway      = "{{.Gateway}}"
+
   static_ip_pool {
     start_address = "{{.StartIpAddress}}"
     end_address   = "{{.EndIpAddress}}"
@@ -397,6 +398,7 @@ resource "vcd_network_routed" "{{.NetworkName}}" {
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
   gateway      = "{{.Gateway}}"
+
   dhcp_pool {
     start_address = "{{.StartIpAddress}}"
     end_address   = "{{.EndIpAddress}}"
@@ -411,10 +413,12 @@ resource "vcd_network_routed" "{{.NetworkName}}" {
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
   gateway      = "{{.Gateway}}"
+
   static_ip_pool {
     start_address = "{{.StartIpAddress}}"
     end_address   = "{{.EndIpAddress}}"
   }
+
   dhcp_pool {
     start_address = "{{.StartIpAddress2}}"
     end_address   = "{{.EndIpAddress2}}"

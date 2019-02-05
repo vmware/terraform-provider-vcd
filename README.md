@@ -13,7 +13,7 @@ Requirements
 ------------
 
 -	[Terraform](https://www.terraform.io/downloads.html) 0.10.x
--	[Go](https://golang.org/doc/install) 1.8 (to build the provider plugin)
+-	[Go](https://golang.org/doc/install) 1.10 (to build the provider plugin)
 
 Building The Provider
 ---------------------
@@ -39,12 +39,12 @@ Using the provider
 Developing the Provider
 ---------------------------
 
-If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.8+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
+If you wish to work on the provider, you'll first need [Go](http://www.golang.org) installed on your machine (version 1.10+ is *required*). You'll also need to correctly setup a [GOPATH](http://golang.org/doc/code.html#GOPATH), as well as adding `$GOPATH/bin` to your `$PATH`.
 
 To compile the provider, run `make build`. This will build the provider and put the provider binary in the `$GOPATH/bin` directory.
 
 ```sh
-$ make bin
+$ make build
 ...
 $ $GOPATH/bin/terraform-provider-vcd
 ...
@@ -66,4 +66,16 @@ $ make testacc
 
 The acceptance tests will run against your own vCloud Director setup, using the configuration in your file `./vcd/vcd_test_config.json`
 See the file `./vcd/sample_vcd_test_config.json` for an example of which variables need to be defined.
+
+
+Installing the built provider
+------------------------------
+
+For a more thorough test using the Terraform client, you may want to transfer the plugin in the Terraform directory. A `make` command can do this for you:
+
+```sh
+$ make install
+```
+
+This command will build the plugin and transfer it to `$HOME/.terraform/plugins`, with a name that includes the version (as taken from the `./VERSION` file).
 

@@ -3,11 +3,12 @@ package vcd
 import (
 	"flag"
 	"fmt"
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/vmware/go-vcloud-director/govcd"
 	"log"
 	"os"
 	"time"
+
+	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/vmware/go-vcloud-director/govcd"
 )
 
 func resourceVcdCatalogMedia() *schema.Resource {
@@ -20,7 +21,6 @@ func resourceVcdCatalogMedia() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
 				ForceNew: true,
 			},
@@ -38,7 +38,6 @@ func resourceVcdCatalogMedia() *schema.Resource {
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
 				ForceNew: true,
 			},
@@ -50,7 +49,6 @@ func resourceVcdCatalogMedia() *schema.Resource {
 			},
 			"upload_piece_size": &schema.Schema{
 				Type:        schema.TypeInt,
-				Required:    false,
 				Optional:    true,
 				ForceNew:    false,
 				Default:     1,
@@ -58,7 +56,6 @@ func resourceVcdCatalogMedia() *schema.Resource {
 			},
 			"show_upload_progress": &schema.Schema{
 				Type:        schema.TypeBool,
-				Required:    false,
 				Optional:    true,
 				ForceNew:    false,
 				Description: "shows upload progress in stdout",

@@ -16,11 +16,11 @@ modify, and delete firewall settings and rules.
 ```hcl
 resource "vcd_firewall_rules" "fw" {
   edge_gateway   = "Edge Gateway Name"
-  default_action = "deny"
+  default_action = "drop"
 
   rule {
-    description      = "deny-ftp-out"
-    policy           = "deny"
+    description      = "drop-ftp-out"
+    policy           = "drop"
     protocol         = "tcp"
     destination_port = "21"
     destination_ip   = "any"
@@ -64,7 +64,7 @@ resource "vcd_firewall_rules" "fw-web" {
 The following arguments are supported:
 
 * `edge_gateway` - (Required) The name of the edge gateway on which to apply the Firewall Rules
-* `default_action` - (Required) Either "allow" or "deny". Specifies what to do should none of the rules match
+* `default_action` - (Required) Either "allow" or "drop". Specifies what to do should none of the rules match
 * `rule` - (Optional) Configures a firewall rule; see [Rules](#rules) below for details.
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
@@ -75,7 +75,7 @@ The following arguments are supported:
 Each firewall rule supports the following attributes:
 
 * `description` - (Required) Description of the fireall rule
-* `policy` - (Required) Specifies what to do when this rule is matched. Either "allow" or "deny"
+* `policy` - (Required) Specifies what to do when this rule is matched. Either "allow" or "drop"
 * `protocol` - (Required) The protocol to match. One of "tcp", "udp", "icmp" or "any"
 * `destination_port` - (Required) The destination port to match. Either a port number or "any"
 * `destination_ip` - (Required) The destination IP to match. Either an IP address, IP range or "any"

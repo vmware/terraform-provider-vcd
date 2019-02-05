@@ -1,10 +1,11 @@
 package vcd
 
 import (
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
 	"regexp"
 	"testing"
+
+	"github.com/hashicorp/terraform/helper/resource"
+	"github.com/hashicorp/terraform/terraform"
 )
 
 func TestAccVcdVpn_Basic(t *testing.T) {

@@ -3,6 +3,7 @@ package vcd
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -40,7 +41,8 @@ func expandFirewallRules(d *schema.ResourceData, gateway *types.EdgeGateway) ([]
 		prefix := fmt.Sprintf("rule.%d", i)
 
 		var protocol *types.FirewallRuleProtocols
-		switch d.Get(prefix + ".protocol").(string) {
+		// Allow upper and lower case protocol names
+		switch strings.ToLower(d.Get(prefix + ".protocol").(string)) {
 		case "tcp":
 			protocol = &types.FirewallRuleProtocols{
 				TCP: true,

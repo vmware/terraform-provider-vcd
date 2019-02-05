@@ -8,11 +8,12 @@ package vcd
 
 import (
 	"fmt"
+	"log"
+	"strings"
+
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/govcd"
 	"github.com/vmware/go-vcloud-director/types/v56"
-	"log"
-	"strings"
 )
 
 // Organization resource definition

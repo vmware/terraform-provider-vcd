@@ -2,9 +2,10 @@ package vcd
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/govcd"
-	"log"
 )
 
 // Deletes catalog item which can be vapp template OVA or media ISO file
