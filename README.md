@@ -32,9 +32,6 @@ $ cd $GOPATH/src/github.com/terraform-providers/terraform-provider-vcd
 $ make build
 ```
 
-Using the provider
-----------------------
-## Fill in for each provider
 
 Developing the Provider
 ---------------------------
@@ -50,26 +47,12 @@ $ $GOPATH/bin/terraform-provider-vcd
 ...
 ```
 
-In order to test the provider, you can simply run `make test`.
+See TESTING.md for details on how to test.
 
-```sh
-$ make test
-```
+Using the provider
+----------------------
 
-In order to run the full suite of Acceptance tests, run `make testacc`.
-
-*Note:* Acceptance tests create real resources, and often cost money to run.
-
-```sh
-$ make testacc
-```
-
-The acceptance tests will run against your own vCloud Director setup, using the configuration in your file `./vcd/vcd_test_config.json`
-See the file `./vcd/sample_vcd_test_config.json` for an example of which variables need to be defined.
-
-
-Installing the built provider
-------------------------------
+### Installing the built provider
 
 For a more thorough test using the Terraform client, you may want to transfer the plugin in the Terraform directory. A `make` command can do this for you:
 
@@ -77,5 +60,14 @@ For a more thorough test using the Terraform client, you may want to transfer th
 $ make install
 ```
 
-This command will build the plugin and transfer it to `$HOME/.terraform/plugins`, with a name that includes the version (as taken from the `./VERSION` file).
+This command will build the plugin and transfer it to `$HOME/.terraform.d/plugins`, with a name that includes the version (as taken from the `./VERSION` file).
 
+### Using the new plugin
+
+Once you have installed the plugin as mentioned above, you can simply create a new `config.tf` as defined in [the manual](https://www.terraform.io/docs/providers/vcd/index.html) and run 
+
+```sh
+$ terraform init
+$ terraform plan
+$ terraform apply
+```
