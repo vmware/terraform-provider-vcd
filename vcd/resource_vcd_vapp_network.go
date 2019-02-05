@@ -110,7 +110,7 @@ func resourceVcdVappNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 
 	vapp, err := vdc.FindVAppByName(d.Get("vapp_name").(string))
 	if err != nil {
-		return fmt.Errorf("error finding vapp. %#v", err)
+		return fmt.Errorf("error finding vApp. %#v", err)
 	}
 
 	ipRanges := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
@@ -125,7 +125,7 @@ func resourceVcdVappNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 		IPRange:          ipRanges.IPRange,
 		GuestVLANAllowed: d.Get("guest_vlan_allowed").(bool)})
 	if err != nil {
-		return fmt.Errorf("error creating vapp network. %#v", err)
+		return fmt.Errorf("error creating vApp network. %#v", err)
 	}
 
 	err = task.WaitTaskCompletion()
@@ -153,7 +153,7 @@ func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
 
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 	if err != nil {
-		return fmt.Errorf("error getting vAPP networks: %#v", err)
+		return fmt.Errorf("error getting vApp networks: %#v", err)
 	}
 
 	vAppNetwork := types.VAppNetworkConfiguration{}
@@ -196,12 +196,12 @@ func resourceVappNetworkDelete(d *schema.ResourceData, meta interface{}) error {
 
 	vapp, err := vdc.FindVAppByName(d.Get("vapp_name").(string))
 	if err != nil {
-		return fmt.Errorf("error finding Vapp: %#v", err)
+		return fmt.Errorf("error finding vApp: %#v", err)
 	}
 
 	task, err := vapp.RemoveIsolatedNetwork(d.Get("name").(string))
 	if err != nil {
-		return fmt.Errorf("error removing vAPP network: %#v", err)
+		return fmt.Errorf("error removing vApp network: %#v", err)
 	}
 
 	err = task.WaitTaskCompletion()

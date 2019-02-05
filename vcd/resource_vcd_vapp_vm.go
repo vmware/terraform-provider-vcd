@@ -132,7 +132,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 
 	vapp, err := vdc.FindVAppByName(d.Get("vapp_name").(string))
 	if err != nil {
-		return fmt.Errorf("error finding Vapp: %#v", err)
+		return fmt.Errorf("error finding vApp: %#v", err)
 	}
 
 	var networks []*types.OrgVDCNetwork
@@ -239,7 +239,7 @@ func addVdcNetwork(d *schema.ResourceData, vdc govcd.Vdc, vapp govcd.VApp, vcdCl
 	} else {
 
 		if netName == "" {
-			return []*types.OrgVDCNetwork{}, "", fmt.Errorf("'network_name' must be valid when adding VM to raw vapp")
+			return []*types.OrgVDCNetwork{}, "", fmt.Errorf("'network_name' must be valid when adding VM to raw vApp")
 		}
 
 		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
@@ -267,22 +267,22 @@ func addVdcNetwork(d *schema.ResourceData, vdc govcd.Vdc, vapp govcd.VApp, vcdCl
 	return vdcNetworks, netName, nil
 }
 
-// Adds existing org vAPP network to VM network configuration
+// Adds existing org vApp network to VM network configuration
 func addVappNetwork(d *schema.ResourceData, vdc govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (string, error) {
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 	if err != nil {
-		return "", fmt.Errorf("error getting vAPP networks: %#v", err)
+		return "", fmt.Errorf("error getting vApp networks: %#v", err)
 	}
 	vAppNetworkName := d.Get("vapp_network_name").(string)
 
 	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
 		if networkConfig.NetworkName == vAppNetworkName {
-			log.Printf("[TRACE] Vapp network found: %s", vAppNetworkName)
+			log.Printf("[TRACE] vApp network found: %s", vAppNetworkName)
 			return vAppNetworkName, nil
 		}
 	}
 
-	return "", fmt.Errorf("configured vAPP network isn't found: %#v", err)
+	return "", fmt.Errorf("configured vApp network isn't found: %#v", err)
 }
 
 func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -297,7 +297,7 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 	vapp, err := vdc.FindVAppByName(d.Get("vapp_name").(string))
 
 	if err != nil {
-		return fmt.Errorf("error finding vapp: %s", err)
+		return fmt.Errorf("error finding vApp: %s", err)
 	}
 
 	vm, err := vdc.FindVMByName(vapp, d.Get("name").(string))
@@ -379,7 +379,7 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 	vapp, err := vdc.FindVAppByName(d.Get("vapp_name").(string))
 
 	if err != nil {
-		return fmt.Errorf("error finding vapp: %s", err)
+		return fmt.Errorf("error finding vApp: %s", err)
 	}
 
 	vm, err := vdc.FindVMByName(vapp, d.Get("name").(string))
@@ -407,7 +407,7 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 	vapp, err := vdc.FindVAppByName(d.Get("vapp_name").(string))
 
 	if err != nil {
-		return fmt.Errorf("error finding vapp: %s", err)
+		return fmt.Errorf("error finding vApp: %s", err)
 	}
 
 	vm, err := vdc.FindVMByName(vapp, d.Get("name").(string))
@@ -421,7 +421,7 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error getting vApp status: %#v", err)
 	}
 
-	log.Printf("[TRACE] Vapp Status:: %s", status)
+	log.Printf("[TRACE] vApp Status:: %s", status)
 	if status != "POWERED_OFF" {
 		log.Printf("[TRACE] Undeploying vApp: %s", vapp.VApp.Name)
 		task, err := vapp.Undeploy()
