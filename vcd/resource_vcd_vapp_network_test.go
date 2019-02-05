@@ -132,7 +132,6 @@ func isVappNetworkFound(conn *VCDClient, rs *terraform.ResourceState) (bool, err
 }
 
 const testAccCheckVappNetwork_basic = `
-
 resource "vcd_vapp" "{{.vappName}}" {
   name = "{{.vappName}}"
   org  = "{{.Org}}"
@@ -140,21 +139,22 @@ resource "vcd_vapp" "{{.vappName}}" {
 }
 
 resource "vcd_vapp_network" "{{.resourceName}}" {
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  name       = "{{.vappNetworkName}}"
-  vapp_name  = "{{.vappName}}"
-  gateway    = "{{.gateway}}"
-  netmask    = "{{.netmask}}"
-  dns1       = "{{.dns1}}"
-  dns2       = "{{.dns2}}"
-  dns_suffix = "{{.dnsSuffix}}"
+  org                = "{{.Org}}"
+  vdc                = "{{.Vdc}}"
+  name               = "{{.vappNetworkName}}"
+  vapp_name          = "{{.vappName}}"
+  gateway            = "{{.gateway}}"
+  netmask            = "{{.netmask}}"
+  dns1               = "{{.dns1}}"
+  dns2               = "{{.dns2}}"
+  dns_suffix         = "{{.dnsSuffix}}"
   guest_vlan_allowed = "{{.guestVlanAllowed}}"
 
   static_ip_pool {
     start_address = "{{.startAddress}}"
     end_address   = "{{.endAddress}}"
   }
-  depends_on    = ["vcd_vapp.{{.vappName}}"]
+
+  depends_on = ["vcd_vapp.{{.vappName}}"]
 }
 `
