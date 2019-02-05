@@ -2,10 +2,11 @@ package vcd
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/vmware/go-vcloud-director/govcd"
-	"testing"
 )
 
 var TestAccVcdCatalogMedia = "TestAccVcdCatalogMediaBasic"
@@ -116,14 +117,14 @@ func testAccCheckCatalogMediaDestroy(s *terraform.State) error {
 }
 
 const testAccCheckVcdCatalogMediaBasic = `
-resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
-org = "{{.Org}}"
-catalog = "{{.Catalog}}"
+  resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
+  org     = "{{.Org}}"
+  catalog = "{{.Catalog}}"
 
-name = "{{.CatalogMediaName}}"
-description = "{{.Description}}"
-media_path = "{{.MediaPath}}"
-upload_piece_size = {{.UploadPieceSize}}
-show_upload_progress = "{{.UploadProgress}}"
+  name                 = "{{.CatalogMediaName}}"
+  description          = "{{.Description}}"
+  media_path           = "{{.MediaPath}}"
+  upload_piece_size    = {{.UploadPieceSize}}
+  show_upload_progress = "{{.UploadProgress}}"
 }
 `

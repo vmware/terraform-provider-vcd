@@ -2,10 +2,12 @@ package vcd
 
 import (
 	"fmt"
+	"log"
+	"strconv"
+
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/types/v56"
-	"log"
 )
 
 func resourceVcdEdgeGatewayVpn() *schema.Resource {
@@ -29,13 +31,11 @@ func resourceVcdEdgeGatewayVpn() *schema.Resource {
 			},
 			"org": {
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
 				ForceNew: true,
 			},
 			"vdc": {
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
 				ForceNew: true,
 			},
@@ -299,7 +299,6 @@ func resourceVcdEdgeGatewayVpnRead(d *schema.ResourceData, meta interface{}) err
 
 	if len(egsc.Tunnel) == 1 {
 		tunnel := egsc.Tunnel[0]
-		// TODO: handle return error from d.Set
 		_ = d.Set("name", tunnel.Name)
 		_ = d.Set("description", tunnel.Description)
 		_ = d.Set("encryption_protocol", tunnel.EncryptionProtocol)
@@ -309,11 +308,20 @@ func resourceVcdEdgeGatewayVpnRead(d *schema.ResourceData, meta interface{}) err
 		_ = d.Set("peer_ip_address", tunnel.PeerIPAddress)
 		_ = d.Set("peer_id", tunnel.PeerID)
 		_ = d.Set("shared_secret", tunnel.SharedSecret)
-		_ = d.Set("local_subnets", tunnel.LocalSubnet)
-		_ = d.Set("peer_subnets", tunnel.PeerSubnet)
+		convertAndSet("local_subnets", tunnel.LocalSubnet, d)
+		convertAndSet("peer_subnets", tunnel.PeerSubnet, d)
+
 	} else {
 		return fmt.Errorf("multiple tunnels not currently supported")
 	}
 
 	return nil
+}
+
+func convertAndSet(key string, subNets []*types.IpsecVpnSubnet, d *schema.ResourceData) {
+	for i, subNet := range subNets {
+		_ = d.Set(key+"_name_"+strconv.Itoa(i), subNet.Name)
+		_ = d.Set(key+"_getWay_"+strconv.Itoa(i), subNet.Gateway)
+		_ = d.Set(key+"_netMask_"+strconv.Itoa(i), subNet.Netmask)
+	}
 }

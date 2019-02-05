@@ -22,14 +22,14 @@ resource "vcd_network_direct" "net" {
 }
 
 resource "vcd_vapp" "web" {
-  name          = "web"
-  
+  name = "web"
+
   metadata {
     role    = "web"
     env     = "staging"
     version = "v1"
   }
-  
+
   depends_on = ["vcd_network_direct.net"]
 }
 
@@ -43,7 +43,7 @@ resource "vcd_vapp_vm" "web1" {
 
   network_name = "net"
   ip           = "10.10.104.161"
-  
+
   depends_on = ["vcd_vapp.web"]
 }
 
@@ -57,7 +57,7 @@ resource "vcd_vapp_vm" "web2" {
 
   network_name = "net"
   ip           = "10.10.104.162"
-  
+
   depends_on = ["vcd_vapp.web"]
 }
 ```
@@ -90,7 +90,7 @@ resource "vcd_vapp" "web" {
   ovf {
     hostname = "web"
   }
-  
+
   depends_on = ["vcd_network_routed.net"]
 }
 ```
@@ -103,8 +103,8 @@ resource "vcd_network_routed" "net" {
 }
 
 resource "vcd_vapp" "web" {
-  name          = "web"
-  
+  name = "web"
+
   depends_on = ["vcd_network_routed.net"]
 }
 ```
@@ -130,6 +130,7 @@ The following arguments are supported:
   DHCP.
 * `metadata` - (Optional) Key value map of metadata to assign to this vApp
 * `ovf` - (Optional) Key value map of ovf parameters to assign to VM product section
-* `power_on` - (Optional) A boolean value stating if this vApp should be powered on. Default to `true`
+* `power_on` - (Optional) A boolean value stating if this vApp should be powered on. Default is `true`
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
+* `accept_all_eulas` - (Optional; *v2.0+*) Automatically accept EULA if OVA has it. Default is `true`

@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"fmt"
+
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/govcd"
@@ -22,13 +23,11 @@ func resourceVcdNetworkDirect() *schema.Resource {
 			},
 			"org": {
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
 				ForceNew: true,
 			},
 			"vdc": {
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
 				ForceNew: true,
 			},

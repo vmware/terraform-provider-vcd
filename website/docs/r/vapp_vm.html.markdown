@@ -23,8 +23,8 @@ resource "vcd_network_direct" "net" {
 }
 
 resource "vcd_vapp" "web" {
-  name          = "web"
-  
+  name = "web"
+
   depends_on = ["vcd_network_direct.net"]
 }
 
@@ -38,7 +38,7 @@ resource "vcd_vapp_vm" "web1" {
 
   network_name = "net"
   ip           = "10.10.104.161"
-  
+
   depends_on = ["vcd_vapp.web"]
 }
 
@@ -52,7 +52,7 @@ resource "vcd_vapp_vm" "web2" {
 
   network_name = "net"
   ip           = "10.10.104.162"
-  
+
   depends_on = ["vcd_vapp.web"]
 }
 ```
@@ -74,7 +74,7 @@ The following arguments are supported:
   `static_ip_pool` set for the network. If left blank, and the network has
   `dhcp_pool` set with at least one available IP then this will be set with
   DHCP.
-* `power_on` - (Optional) A boolean value stating if this vApp should be powered on. Default to `true`
-* `accept_all_eulas` - (Optional; *v2.0+*) Automatically accept EULA if OVA has it
+* `power_on` - (Optional) A boolean value stating if this vApp should be powered on. Default is `true`
+* `accept_all_eulas` - (Optional; *v2.0+*) Automatically accept EULA if OVA has it. Default is `true`
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level

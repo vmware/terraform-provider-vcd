@@ -8,6 +8,13 @@ default: build
 build: fmtcheck
 	go install
 
+dist:
+	git archive --format=zip -o source.zip HEAD
+	git archive --format=tar HEAD | gzip -c > source.tar.gz
+
+install: build
+	@$(CURDIR)/scripts/install-plugin.sh
+
 test: fmtcheck
 	go test -i $(TEST) || exit 1
 	cd vcd ; VCD_SHORT_TEST=1 go test -v . -timeout 3m

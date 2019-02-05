@@ -2,11 +2,12 @@ package vcd
 
 import (
 	"fmt"
+	"os"
+	"testing"
+
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/vmware/go-vcloud-director/govcd"
-	"os"
-	"testing"
 )
 
 var TestAccVcdCatalogItem = "TestAccVcdCatalogItemBasic"
@@ -135,14 +136,14 @@ func testAccCheckCatalogItemDestroy(s *terraform.State) error {
 }
 
 const testAccCheckVcdCatalogItemBasic = `
-resource "vcd_catalog_item"  "{{.CatalogItemName}}" {
-org = "{{.Org}}"
-catalog = "{{.Catalog}}"
+  resource "vcd_catalog_item" "{{.CatalogItemName}}" {
+  org     = "{{.Org}}"
+  catalog = "{{.Catalog}}"
 
-name = "{{.CatalogItemName}}"
-description = "{{.Description}}"
-ova_path = "{{.OvaPath}}"
-upload_piece_size = {{.UploadPieceSize}}
-show_upload_progress = "{{.UploadProgress}}"
+  name                 = "{{.CatalogItemName}}"
+  description          = "{{.Description}}"
+  ova_path             = "{{.OvaPath}}"
+  upload_piece_size    = {{.UploadPieceSize}}
+  show_upload_progress = "{{.UploadProgress}}"
 }
 `

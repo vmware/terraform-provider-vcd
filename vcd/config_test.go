@@ -7,8 +7,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/vmware/go-vcloud-director/govcd"
-	"github.com/vmware/go-vcloud-director/util"
 	"html/template"
 	"io"
 	"io/ioutil"
@@ -23,6 +21,8 @@ import (
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/vmware/go-vcloud-director/govcd"
+	"github.com/vmware/go-vcloud-director/util"
 )
 
 type StringMap map[string]interface{}

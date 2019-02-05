@@ -27,7 +27,6 @@ func Provider() terraform.ResourceProvider {
 
 			"sysorg": &schema.Schema{
 				Type:        schema.TypeString,
-				Required:    false,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_SYS_ORG", nil),
 				Description: "The VCD Org for user authentication",
@@ -42,7 +41,6 @@ func Provider() terraform.ResourceProvider {
 
 			"vdc": &schema.Schema{
 				Type:        schema.TypeString,
-				Required:    false,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_VDC", nil),
 				Description: "The VDC for API operations",

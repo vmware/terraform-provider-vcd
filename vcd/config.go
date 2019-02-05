@@ -3,13 +3,13 @@ package vcd
 import (
 	"crypto/sha1"
 	"fmt"
-	"github.com/hashicorp/terraform/helper/schema"
 	"net/url"
 	"os"
 	"path/filepath"
 	"runtime"
 	"time"
 
+	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/govcd"
 )
 
