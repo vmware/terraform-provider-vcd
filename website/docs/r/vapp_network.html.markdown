@@ -45,8 +45,8 @@ The following arguments are supported:
 * `name` - (Required) A unique name for the network
 * `netmask` - (Optional) The netmask for the new network. Defaults to `255.255.255.0`
 * `gateway` (Optional) The gateway for this network
-* `dns1` - (Optional) First DNS server to use. Defaults to `8.8.8.8`
-* `dns2` - (Optional) Second DNS server to use. Defaults to `8.8.4.4`
+* `dns1` - (Optional) First DNS server to use. Default is `8.8.8.8`
+* `dns2` - (Optional) Second DNS server to use. Default is `8.8.4.4`
 * `dns_suffix` - (Optional) A FQDN for the virtual machines on this network
 * `guest_vlan_allowed` (Optional) True if Network allows guest VLAN tagging. Default false. This value supported from vCD version 9.0
 * `static_ip_pool` - (Optional) A range of IPs permitted to be used as static IPs for
