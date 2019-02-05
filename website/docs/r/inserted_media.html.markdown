@@ -6,7 +6,7 @@ description: |-
   Provides a vCloud Director resource for inserting or ejecting media (ISO) file for the VM. Create this resource for inserting the media, and destroy it for ejecting.
 ---
 
-# vcd\_catalog\_media
+# vcd\_inserted\_media
 
 Provides a vCloud Director resource for inserting or ejecting media (ISO) file for the VM. Create this resource for inserting the media, and destroy it for ejecting.
 
