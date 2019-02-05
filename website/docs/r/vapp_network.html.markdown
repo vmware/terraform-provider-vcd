@@ -43,7 +43,7 @@ The following arguments are supported:
   connected as sysadmin working across different organisations
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
 * `name` - (Required) A unique name for the network
-* `netmask` - (Optional) The netmask for the new network. Defaults is `255.255.255.0`
+* `netmask` - (Optional) The netmask for the new network. Default is `255.255.255.0`
 * `gateway` (Optional) The gateway for this network
 * `dns1` - (Optional) First DNS server to use. Default is `8.8.8.8`
 * `dns2` - (Optional) Second DNS server to use. Default is `8.8.4.4`
