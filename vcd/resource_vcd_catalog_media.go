@@ -130,7 +130,7 @@ func resourceVcdMediaCreate(d *schema.ResourceData, meta interface{}) error {
 
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		return fmt.Errorf("error waiting from task to complete: %+v", err)
+		return fmt.Errorf("error waiting for task to complete: %+v", err)
 	}
 
 	d.SetId(catalogName + ":" + mediaName)

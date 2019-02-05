@@ -130,7 +130,7 @@ func resourceVcdVappNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		return fmt.Errorf("error waiting from task to complete: %+v", err)
+		return fmt.Errorf("error waiting for task to complete: %+v", err)
 	}
 
 	d.SetId(d.Get("name").(string))
@@ -206,7 +206,7 @@ func resourceVappNetworkDelete(d *schema.ResourceData, meta interface{}) error {
 
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		return fmt.Errorf("error waiting from task to complete: %+v", err)
+		return fmt.Errorf("error waiting for task to complete: %+v", err)
 	}
 
 	d.SetId("")

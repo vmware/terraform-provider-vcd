@@ -211,7 +211,8 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 // Adds existing org VDC network to VM network configuration
-func addVdcNetwork(d *schema.ResourceData, vdc govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) ([]*types.OrgVDCNetwork, string, error) {
+// Returns configured OrgVDCNetwork for Vm, networkName, error if any occur
+func addVdcNetwork(d *schema.ResourceData, vdc govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (vdcNetworks []*types.OrgVDCNetwork, networkName string, err error) {
 
 	netName := ""
 	net, err := vdc.FindVDCNetwork(d.Get("network_name").(string))
@@ -220,7 +221,7 @@ func addVdcNetwork(d *schema.ResourceData, vdc govcd.Vdc, vapp govcd.VApp, vcdCl
 		netName = net.OrgVDCNetwork.Name
 	}
 
-	vdcNetworks := []*types.OrgVDCNetwork{net.OrgVDCNetwork}
+	vdcNetworks = []*types.OrgVDCNetwork{net.OrgVDCNetwork}
 
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 
@@ -259,7 +260,7 @@ func addVdcNetwork(d *schema.ResourceData, vdc govcd.Vdc, vapp govcd.VApp, vcdCl
 	}
 
 	if vAppNetworkName != netName {
-		return []*types.OrgVDCNetwork{}, "", fmt.Errorf("the VDC network '%s' must be assigned to the vApp. Currently the vApp network date is %s", netName, vAppNetworkName)
+		return []*types.OrgVDCNetwork{}, "", fmt.Errorf("the VDC network '%s' must be assigned to the vApp. Currently the vApp network data is %s", netName, vAppNetworkName)
 	}
 
 	log.Printf("[TRACE] Network name found: %s", netName)
