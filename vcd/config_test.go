@@ -78,8 +78,6 @@ type TestConfig struct {
 }
 
 const (
-	// This library major version
-	currentProviderVersion = "2.0"
 	// Warning message used for all tests
 	acceptanceTestsSkipped = "Acceptance tests skipped unless env 'TF_ACC' set"
 	// This template will be added to test resource snippets on demand
@@ -98,6 +96,8 @@ provider "vcd" {
 )
 
 var (
+	// This library major version
+	currentProviderVersion string = getMajorVersion()
 	// This is a global variable shared across all tests. It contains
 	// the information from the configuration file.
 	testConfig TestConfig
@@ -319,6 +319,7 @@ func TestMain(m *testing.M) {
 	// or the whole suite will fail if it is not found.
 	// If VCD_SHORT_TEST is defined, it means that "make test" is called,
 	// and we won't really run any tests involving vcd connections.
+	fmt.Printf(">> VERSION: %s\n", currentProviderVersion)
 	if !vcdShortTest {
 		testConfig = getConfigStruct()
 
@@ -334,4 +335,37 @@ func TestMain(m *testing.M) {
 
 	// TODO: cleanup leftovers
 	os.Exit(exitCode)
+}
+
+// Reads the version from the VERSION file in the root directory
+func getMajorVersion() string {
+
+	// Gets current directory
+	_, currentFilename, _, _ := runtime.Caller(0)
+	currentDirectory := filepath.Dir(currentFilename)
+	versionFile := path.Join(currentDirectory, "..", "VERSION")
+
+	// Checks whether the VERSION file exists
+	_, err := os.Stat(versionFile)
+	if os.IsNotExist(err) {
+		panic("Could not find VERSION file")
+	}
+
+	// Reads the version from the file
+	versionText, err := ioutil.ReadFile(versionFile)
+	if err != nil {
+		panic(fmt.Errorf("could not read VERSION file %s: %v", versionFile, err))
+	}
+
+	// The version is expected to be in the format v#.#.#
+	// We only need the first two numbers
+	reVersion := regexp.MustCompile(`v(\d+\.\d+)\.\d+`)
+	versionList := reVersion.FindAllStringSubmatch(string(versionText), -1)
+	if versionList == nil || len(versionList) == 0 {
+		panic("empty or non-formatted version found in VERSION file")
+	}
+	// A successful match will look like
+	// [][]string{[]string{"v2.0.0", "2.0"}}
+	// Where the first element is the full text matched, and the second one is the first captured text
+	return versionList[0][1]
 }
