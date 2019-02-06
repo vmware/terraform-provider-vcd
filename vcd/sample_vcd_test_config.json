@@ -80,5 +80,12 @@
     "//": "Size in megabytes",
     "uploadPieceSize": 5,
     "uploadProgress": true
+  },
+  "envVariables" : {
+    "//" : "Environment variables that we want the test to set (or unset)",
+    "GOVCD_DEBUG": "",
+    "VCD_SKIP_TEMPLATE_WRITING": "",
+    "VCD_ADD_PROVIDER": "",
+    "REMOVE_ORG_VDC_FROM_TEMPLATE": ""
   }
 }
