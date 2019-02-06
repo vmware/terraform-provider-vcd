@@ -20,7 +20,7 @@ test: fmtcheck
 	cd vcd ; VCD_SHORT_TEST=1 go test -v . -timeout 3m
 
 testacc: fmtcheck
-	if [ ! -f vcd/vcd_test_config.json ] ; then \
+	if [ ! -f vcd/vcd_test_config.jsoni -a -z "${VCD_CONFIG}" ] ; then \
 		echo "ERROR: test configuration file vcd/vcd_test_config.json is missing"; \
 		exit 1; \
 	fi
