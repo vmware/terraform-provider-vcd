@@ -100,15 +100,15 @@ type IPRange struct {
 // Description: Represents a DHCP network service.
 // Since:
 type DhcpService struct {
-	DefaultLeaseTime    int      `xml:"DefaultLeaseTime,omitempty"`    // Default lease in seconds for DHCP addresses.
-	DomainName          string   `xml:"DomainName,omitempty"`          //	The domain name.
-	IPRange             *IPRange `xml:"IpRange"`                       //	IP range for DHCP addresses.
 	IsEnabled           bool     `xml:"IsEnabled"`                     // Enable or disable the service using this flag
+	DefaultLeaseTime    int      `xml:"DefaultLeaseTime,omitempty"`    // Default lease in seconds for DHCP addresses.
 	MaxLeaseTime        int      `xml:"MaxLeaseTime"`                  //	Max lease in seconds for DHCP addresses.
-	PrimaryNameServer   string   `xml:"PrimaryNameServer,omitempty"`   // The primary name server.
+	IPRange             *IPRange `xml:"IpRange"`                       //	IP range for DHCP addresses.
 	RouterIP            string   `xml:"RouterIp,omitempty"`            // Router IP.
-	SecondaryNameServer string   `xml:"SecondaryNameServer,omitempty"` // The secondary name server.
 	SubMask             string   `xml:"SubMask,omitempty"`             // The subnet mask.
+	PrimaryNameServer   string   `xml:"PrimaryNameServer,omitempty"`   // The primary name server.
+	SecondaryNameServer string   `xml:"SecondaryNameServer,omitempty"` // The secondary name server.
+	DomainName          string   `xml:"DomainName,omitempty"`          //	The domain name.
 }
 
 // NetworkFeatures represents features of a network.
