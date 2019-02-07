@@ -81,6 +81,7 @@ type TestConfig struct {
 		UploadPieceSize int64  `json:"uploadPieceSize,omitempty"`
 		UploadProgress  bool   `json:"uploadProgress,omitempty"`
 	} `json:"media"`
+	EnvVariables map[string]string `json:"envVariables,omitempty"`
 }
 
 // names for created resources for all the tests
@@ -95,17 +96,21 @@ const (
 	// This template will be added to test resource snippets on demand
 	providerTemplate = `
 provider "vcd" {
-  user     = "{{.User}}"
-  password = "{{.Password}}"
-  url      = "{{.Url}}"
-  sysorg   = "{{.SysOrg}}"
-  org      = "{{.Org}}"
+  user                 = "{{.User}}"
+  password             = "{{.Password}}"
+  url                  = "{{.Url}}"
+  sysorg               = "{{.SysOrg}}"
+  org                  = "{{.Org}}"
+  allow_unverified_ssl = "{{.AllowInsecure}}"
+  version              = "~> {{.VersionRequired}}"
 }
 
 `
 )
 
 var (
+	// This library major version
+	currentProviderVersion string = getMajorVersion()
 	// This is a global variable shared across all tests. It contains
 	// the information from the configuration file.
 	testConfig TestConfig
@@ -167,6 +172,8 @@ func templateFill(tmpl string, data StringMap) string {
 		data["Url"] = testConfig.Provider.Url
 		data["SysOrg"] = testConfig.Provider.SysOrg
 		data["Org"] = testConfig.VCD.Org
+		data["AllowInsecure"] = testConfig.Provider.AllowInsecure
+		data["VersionRequired"] = currentProviderVersion
 	}
 
 	// Creates a template. The template gets the same name of the calling function, to generate a better
@@ -258,6 +265,14 @@ func getConfigStruct() TestConfig {
 		panic(fmt.Errorf("could not unmarshal json file: %v", err))
 	}
 
+	// Sets (or clears) environment variables defined in the configuration file
+	if configStruct.EnvVariables != nil {
+		for key, value := range configStruct.EnvVariables {
+			currentEnvValue := os.Getenv(key)
+			debugPrintf("# Setting environment variable '%s' from '%s' to '%s'\n", key, currentEnvValue, value)
+			_ = os.Setenv(key, value)
+		}
+	}
 	// Reading the configuration file was successful.
 	// Now we fill the environment variables that the library is using for its own initialization.
 	if configStruct.Provider.TerraformAcceptanceTests {
@@ -328,23 +343,26 @@ func TestMain(m *testing.M) {
 		testAccProviders = map[string]terraform.ResourceProvider{
 			"vcd": testAccProvider,
 		}
-	}
 
-	// forcing item cleanup before test run
-	if os.Getenv("VCD_TEST_SUITE_CLEANUP") != "" {
-		fmt.Printf("VCD_TEST_SUITE_CLEANUP found and TestSuite resource cleanup initiated\n")
-		destroySuiteCatalogAndItem(testConfig)
-	}
+		// forcing item cleanup before test run
+		if os.Getenv("VCD_TEST_SUITE_CLEANUP") != "" {
+			fmt.Printf("VCD_TEST_SUITE_CLEANUP found and TestSuite resource cleanup initiated\n")
+			destroySuiteCatalogAndItem(testConfig)
+		}
 
-	createSuiteCatalogAndItem(testConfig)
+		createSuiteCatalogAndItem(testConfig)
+	}
 
 	// Runs all test functions
 	exitCode := m.Run()
 
-	if !testConfig.Ova.Preserve {
-		destroySuiteCatalogAndItem(testConfig)
-	} else {
-		fmt.Printf("TestSuite destroy skipped - preserve turned on \n")
+	if !vcdShortTest {
+
+		if !testConfig.Ova.Preserve {
+			destroySuiteCatalogAndItem(testConfig)
+		} else {
+			fmt.Printf("TestSuite destroy skipped - preserve turned on \n")
+		}
 	}
 
 	// TODO: cleanup leftovers
@@ -560,4 +578,37 @@ func destroySuiteCatalogAndItem(config TestConfig) {
 		fmt.Printf("Catalog item deletion skipped as user defined resource is used or removed with catalog\n")
 	}
 
+}
+
+// Reads the version from the VERSION file in the root directory
+func getMajorVersion() string {
+
+	versionFile := path.Join(getCurrentDir(), "..", "VERSION")
+
+	// Checks whether the VERSION file exists
+	_, err := os.Stat(versionFile)
+	if os.IsNotExist(err) {
+		panic("Could not find VERSION file")
+	}
+
+	// Reads the version from the file
+	versionText, err := ioutil.ReadFile(versionFile)
+	if err != nil {
+		panic(fmt.Errorf("could not read VERSION file %s: %v", versionFile, err))
+	}
+
+	// The version is expected to be in the format v#.#.#
+	// We only need the first two numbers
+	reVersion := regexp.MustCompile(`v(\d+\.\d+)\.\d+`)
+	versionList := reVersion.FindAllStringSubmatch(string(versionText), -1)
+	if versionList == nil || len(versionList) == 0 {
+		panic("empty or non-formatted version found in VERSION file")
+	}
+	if versionList[0] == nil || len(versionList[0]) < 2 {
+		panic("unable to extract major version from VERSION file")
+	}
+	// A successful match will look like
+	// [][]string{[]string{"v2.0.0", "2.0"}}
+	// Where the first element is the full text matched, and the second one is the first captured text
+	return versionList[0][1]
 }
