@@ -75,6 +75,43 @@ func resourceVcdVappNetwork() *schema.Resource {
 				Default:  false,
 			},
 
+			"dhcp_pool": &schema.Schema{
+				Type:     schema.TypeSet,
+				Optional: true,
+				ForceNew: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"start_address": &schema.Schema{
+							Type:     schema.TypeString,
+							Required: true,
+						},
+
+						"end_address": &schema.Schema{
+							Type:     schema.TypeString,
+							Optional: true,
+						},
+
+						"default_lease_time": &schema.Schema{
+							Type:     schema.TypeInt,
+							Default:  3600,
+							Optional: true,
+						},
+
+						"max_lease_time": &schema.Schema{
+							Type:     schema.TypeInt,
+							Default:  7200,
+							Optional: true,
+						},
+
+						"enabled": &schema.Schema{
+							Type:     schema.TypeBool,
+							Default:  true,
+							Optional: true,
+						},
+					},
+				},
+				Set: resourceVcdNetworkIPAddressHash,
+			},
 			"static_ip_pool": &schema.Schema{
 				Type:     schema.TypeSet,
 				Optional: true,
@@ -113,17 +150,33 @@ func resourceVcdVappNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("error finding vApp. %#v", err)
 	}
 
-	ipRanges := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
+	staticIpRanges := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
 
-	task, err := vapp.AddIsolatedNetwork(&govcd.VappNetworkSettings{
+	vappNetworkSettings := &govcd.VappNetworkSettings{
 		Name:             d.Get("name").(string),
 		Gateway:          d.Get("gateway").(string),
 		NetMask:          d.Get("netmask").(string),
 		DNS1:             d.Get("dns1").(string),
 		DNS2:             d.Get("dns2").(string),
 		DNSSuffix:        d.Get("dns_suffix").(string),
-		IPRange:          ipRanges.IPRange,
-		GuestVLANAllowed: d.Get("guest_vlan_allowed").(bool)})
+		StaticIPRanges:   staticIpRanges.IPRange,
+		GuestVLANAllowed: d.Get("guest_vlan_allowed").(bool),
+	}
+
+	if dhcp, ok := d.GetOk("dhcp_pool"); ok && len(dhcp.(*schema.Set).List()) > 0 {
+		for _, item := range dhcp.(*schema.Set).List() {
+			data := item.(map[string]interface{})
+			vappNetworkSettings.DhcpSettings = &govcd.DhcpSettings{
+				IsEnabled:        data["enabled"].(bool),
+				DefaultLeaseTime: data["default_lease_time"].(int),
+				MaxLeaseTime:     data["max_lease_time"].(int),
+				IPRange: &types.IPRange{StartAddress: data["start_address"].(string),
+					EndAddress: data["end_address"].(string)}}
+		}
+	}
+
+	task, err := vapp.AddIsolatedNetwork(vappNetworkSettings)
+
 	if err != nil {
 		return fmt.Errorf("error creating vApp network. %#v", err)
 	}
@@ -178,7 +231,9 @@ func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
 			d.Set("netmask", c.IPScopes.IPScope.Netmask)
 			d.Set("dns1", c.IPScopes.IPScope.DNS1)
 			d.Set("dns2", c.IPScopes.IPScope.DNS2)
+			d.Set("dnsSuffix", c.IPScopes.IPScope.DNSSuffix)
 		}
+		d.Set("guestVlanAllowed", c.GuestVlanAllowed)
 	}
 
 	return nil

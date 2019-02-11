@@ -12,8 +12,11 @@ import (
 const vappNameForNetworkTest = "TestAccVappForNetworkTest"
 const gateway = "192.168.1.1"
 const dns1 = "8.8.8.8"
+const dns2 = "1.1.1.1"
 const dnsSuffix = "biz.biz"
 const newVappNetworkName = "TestAccVcdVappNetwork_Basic"
+const netmask = "255.255.255.0"
+const guestVlanAllowed = "true"
 
 func TestAccVcdVappNetwork_Basic(t *testing.T) {
 	if vcdShortTest {
@@ -29,14 +32,19 @@ func TestAccVcdVappNetwork_Basic(t *testing.T) {
 		"resourceName":     resourceName,
 		"vappNetworkName":  newVappNetworkName,
 		"gateway":          gateway,
-		"netmask":          "255.255.255.0",
+		"netmask":          netmask,
 		"dns1":             dns1,
-		"dns2":             "1.1.1.1",
+		"dns2":             dns2,
 		"dnsSuffix":        dnsSuffix,
-		"guestVlanAllowed": "true",
+		"guestVlanAllowed": guestVlanAllowed,
 		"startAddress":     "192.168.1.10",
 		"endAddress":       "192.168.1.20",
 		"vappName":         vappNameForNetworkTest,
+		"maxLeaseTime":     "7200",
+		"defaultLeaseTime": "3600",
+		"dhcpStartAddress": "192.168.1.21",
+		"dhcpEndAddress":   "192.168.1.22",
+		"dhcpEnabled":      "true",
 	}
 
 	configText := templateFill(testAccCheckVappNetwork_basic, params)
@@ -54,7 +62,15 @@ func TestAccVcdVappNetwork_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_network."+resourceName, "gateway", gateway),
 					resource.TestCheckResourceAttr(
+						"vcd_vapp_network."+resourceName, "netmask", netmask),
+					resource.TestCheckResourceAttr(
 						"vcd_vapp_network."+resourceName, "dns1", dns1),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp_network."+resourceName, "dns2", dns2),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp_network."+resourceName, "dns_suffix", dnsSuffix),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp_network."+resourceName, "guest_vlan_allowed", guestVlanAllowed),
 				),
 			},
 		},
@@ -153,6 +169,14 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
   static_ip_pool {
     start_address = "{{.startAddress}}"
     end_address   = "{{.endAddress}}"
+  }
+
+  dhcp_pool {
+    max_lease_time     = "{{.maxLeaseTime}}"
+    default_lease_time = "{{.defaultLeaseTime}}"
+    start_address      = "{{.dhcpStartAddress}}"
+    end_address        = "{{.dhcpEndAddress}}"
+    enabled            = "{{.dhcpEnabled}}"
   }
 
   depends_on = ["vcd_vapp.{{.vappName}}"]

@@ -32,6 +32,11 @@ resource "vcd_vapp_network" "vappNet" {
     start_address = "192.168.2.51"
     end_address   = "192.168.2.100"
   }
+
+  dhcp_pool {
+    start_address = "192.168.2.2"
+    end_address   = "192.168.2.50"
+  }
 }
 ```
 
@@ -49,13 +54,19 @@ The following arguments are supported:
 * `dns2` - (Optional) Second DNS server to use. Default is `8.8.4.4`
 * `dns_suffix` - (Optional) A FQDN for the virtual machines on this network
 * `guest_vlan_allowed` (Optional) True if Network allows guest VLAN tagging. Default is false. This value supported from vCD version 9.0
-* `static_ip_pool` - (Optional) A range of IPs permitted to be used as static IPs for
-  virtual machines; see [IP Pools](#ip-pools) below for details.
+* `static_ip_pool` - (Optional) A range of IPs permitted to be used as static IPs for virtual machines; see [IP Pools](#ip-pools) below for details.
+* `dhcp_pool` - (Optional) A range of IPs to issue to virtual machines that don't have a static IP; see [IP Pools](#ip-pools) below for details.
 
 <a id="ip-pools"></a>
 ## IP Pools
 
-Static IP Pools support the following attributes:
+Static IP Pools and DHCP Pools support the following attributes:
 
 * `start_address` - (Required) The first address in the IP Range
 * `end_address` - (Required) The final address in the IP Range
+
+DHCP Pools additionally support the following attributes:
+
+* `default_lease_time` - (Optional) The default DHCP lease time to use. Defaults to `3600`.
+* `max_lease_time` - (Optional) The maximum DHCP lease time to use. Defaults to `7200`.
+* `enabled` - (Optional) Allows to enable or disable service. Default is true.
