@@ -35,18 +35,23 @@ func (vdcCli *VCDClient) NewVApp(client *Client) VApp {
 
 // struct type used to pass information for vApp network creation
 type VappNetworkSettings struct {
-	Name                 string
-	Gateway              string
-	NetMask              string
-	DNS1                 string
-	DNS2                 string
-	DNSSuffix            string
-	GuestVLANAllowed     bool
-	StaticIPRanges       []*types.IPRange
-	DHCPIsEnabled        bool
-	DHCPMaxLeaseTime     int
-	DHCPDefaultLeaseTime int
-	DHCPIPRange          *types.IPRange
+	Name             string
+	Gateway          string
+	NetMask          string
+	DNS1             string
+	DNS2             string
+	DNSSuffix        string
+	GuestVLANAllowed bool
+	StaticIPRanges   []*types.IPRange
+	DhcpSettings     *DhcpSettings
+}
+
+// struct type used to pass information for vApp network DHCP
+type DhcpSettings struct {
+	IsEnabled        bool
+	MaxLeaseTime     int
+	DefaultLeaseTime int
+	IPRange          *types.IPRange
 }
 
 // Returns the vdc where the vapp resides in.
@@ -1071,7 +1076,11 @@ func (vapp *VApp) GetNetworkConfig() (*types.NetworkConfigSection, error) {
 // Function adds existing VDC network to vApp
 func (vapp *VApp) AddRAWNetworkConfig(orgvdcnetworks []*types.OrgVDCNetwork) (Task, error) {
 
-	networkConfigurations := []types.VAppNetworkConfiguration{}
+	vAppNetworkConfig, err := vapp.GetNetworkConfig()
+	if err != nil {
+		return Task{}, fmt.Errorf("error getting vApp networks: %#v", err)
+	}
+	networkConfigurations := vAppNetworkConfig.NetworkConfig
 
 	for _, network := range orgvdcnetworks {
 		networkConfigurations = append(networkConfigurations,
@@ -1098,6 +1107,21 @@ func (vapp *VApp) AddIsolatedNetwork(newIsolatedNetworkSettings *VappNetworkSett
 		return Task{}, err
 	}
 
+	// for case when range is one ip address
+	if newIsolatedNetworkSettings.DhcpSettings != nil && newIsolatedNetworkSettings.DhcpSettings.IPRange != nil && newIsolatedNetworkSettings.DhcpSettings.IPRange.EndAddress == "" {
+		newIsolatedNetworkSettings.DhcpSettings.IPRange.EndAddress = newIsolatedNetworkSettings.DhcpSettings.IPRange.StartAddress
+	}
+
+	// explicitly check if to add data, to not send any values
+	var networkFeatures *types.NetworkFeatures
+	if newIsolatedNetworkSettings.DhcpSettings != nil {
+		networkFeatures = &types.NetworkFeatures{DhcpService: &types.DhcpService{
+			IsEnabled:        newIsolatedNetworkSettings.DhcpSettings.IsEnabled,
+			DefaultLeaseTime: newIsolatedNetworkSettings.DhcpSettings.DefaultLeaseTime,
+			MaxLeaseTime:     newIsolatedNetworkSettings.DhcpSettings.MaxLeaseTime,
+			IPRange:          newIsolatedNetworkSettings.DhcpSettings.IPRange}}
+	}
+
 	networkConfigurations := vapp.VApp.NetworkConfigSection.NetworkConfig
 	networkConfigurations = append(networkConfigurations,
 		types.VAppNetworkConfiguration{
@@ -1105,9 +1129,7 @@ func (vapp *VApp) AddIsolatedNetwork(newIsolatedNetworkSettings *VappNetworkSett
 			Configuration: &types.NetworkConfiguration{
 				FenceMode:        "isolated",
 				GuestVlanAllowed: newIsolatedNetworkSettings.GuestVLANAllowed,
-				Features: &types.NetworkFeatures{DhcpService: &types.DhcpService{IsEnabled: newIsolatedNetworkSettings.DHCPIsEnabled,
-					DefaultLeaseTime: newIsolatedNetworkSettings.DHCPDefaultLeaseTime,
-					MaxLeaseTime:     newIsolatedNetworkSettings.DHCPMaxLeaseTime, IPRange: newIsolatedNetworkSettings.DHCPIPRange}},
+				Features:         networkFeatures,
 				IPScopes: &types.IPScopes{IPScope: types.IPScope{IsInherited: false, Gateway: newIsolatedNetworkSettings.Gateway,
 					Netmask: newIsolatedNetworkSettings.NetMask, DNS1: newIsolatedNetworkSettings.DNS1,
 					DNS2: newIsolatedNetworkSettings.DNS2, DNSSuffix: newIsolatedNetworkSettings.DNSSuffix, IsEnabled: true,
@@ -1137,11 +1159,11 @@ func validateNetworkConfigSettings(networkSettings *VappNetworkSettings) error {
 		return errors.New("network mask config is missing")
 	}
 
-	if networkSettings.DHCPIsEnabled && networkSettings.DHCPIPRange == nil {
+	if networkSettings.DhcpSettings != nil && networkSettings.DhcpSettings.IPRange == nil {
 		return errors.New("network DHCP ip range config is missing")
 	}
 
-	if networkSettings.DHCPIPRange.StartAddress == "" {
+	if networkSettings.DhcpSettings != nil && networkSettings.DhcpSettings.IPRange.StartAddress == "" {
 		return errors.New("network DHCP ip range start address is missing")
 	}
 

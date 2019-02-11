@@ -241,50 +241,53 @@ func (vm *VM) ChangeNetworkConfig(networks []map[string]interface{}, ip string) 
 		return Task{}, fmt.Errorf("error refreshing VM before running customization: %v", err)
 	}
 
-	networksection, err := vm.GetNetworkConnectionSection()
+	networkSection, err := vm.GetNetworkConnectionSection()
 
-	for index, network := range networks {
-		// Determine what type of address is requested for the vApp
-		ipAllocationMode := "NONE"
-		ipAddress := "Any"
+	// changes network config when only matches network name with provided one
+	for _, network := range networks {
+		for index, networkConnection := range networkSection.NetworkConnection {
+			if networkConnection.Network == network["orgnetwork"] { // network name are equal
+				// Determine what type of address is requested for the vApp
+				ipAllocationMode := "NONE"
+				ipAddress := "Any"
 
-		// TODO: Review current behaviour of using DHCP when left blank
-		if ip == "dhcp" || network["ip"].(string) == "dhcp" {
-			ipAllocationMode = "DHCP"
-		} else if ip == "allocated" || network["ip"].(string) == "allocated" {
-			ipAllocationMode = "POOL"
-		} else if ip == "none" || network["ip"].(string) == "none" {
-			ipAllocationMode = "NONE"
-		} else if ip != "" {
-			ipAllocationMode = "MANUAL"
-			// TODO: Check a valid IP has been given
-			ipAddress = ip
-		} else if network["ip"].(string) != "" {
-			ipAllocationMode = "MANUAL"
-			// TODO: Check a valid IP has been given
-			ipAddress = network["ip"].(string)
-		} else if ip == "" {
-			ipAllocationMode = "DHCP"
+				// TODO: Review current behaviour of using DHCP when left blank
+				if ip == "dhcp" || network["ip"].(string) == "dhcp" {
+					ipAllocationMode = "DHCP"
+				} else if ip == "allocated" || network["ip"].(string) == "allocated" {
+					ipAllocationMode = "POOL"
+				} else if ip == "none" || network["ip"].(string) == "none" {
+					ipAllocationMode = "NONE"
+				} else if ip != "" {
+					ipAllocationMode = "MANUAL"
+					// TODO: Check a valid IP has been given
+					ipAddress = ip
+				} else if network["ip"].(string) != "" {
+					ipAllocationMode = "MANUAL"
+					// TODO: Check a valid IP has been given
+					ipAddress = network["ip"].(string)
+				} else if ip == "" {
+					ipAllocationMode = "DHCP"
+				}
+
+				util.Logger.Printf("[DEBUG] Function ChangeNetworkConfig() for %s invoked", network["orgnetwork"])
+
+				networkSection.NetworkConnection[index].NeedsCustomization = true
+				networkSection.NetworkConnection[index].IPAddress = ipAddress
+				networkSection.NetworkConnection[index].IPAddressAllocationMode = ipAllocationMode
+
+				if network["is_primary"] == true {
+					networkSection.PrimaryNetworkConnectionIndex = index
+				}
+			}
 		}
-
-		util.Logger.Printf("[DEBUG] Function ChangeNetworkConfig() for %s invoked", network["orgnetwork"])
-
-		networksection.Xmlns = "http://www.vmware.com/vcloud/v1.5"
-		networksection.Ovf = "http://schemas.dmtf.org/ovf/envelope/1"
-		networksection.Info = "Specifies the available VM network connections"
-
-		networksection.NetworkConnection[index].NeedsCustomization = true
-		networksection.NetworkConnection[index].IPAddress = ipAddress
-		networksection.NetworkConnection[index].IPAddressAllocationMode = ipAllocationMode
-		networksection.NetworkConnection[index].MACAddress = ""
-
-		if network["is_primary"] == true {
-			networksection.PrimaryNetworkConnectionIndex = index
-		}
-
 	}
 
-	output, err := xml.MarshalIndent(networksection, "  ", "    ")
+	networkSection.Xmlns = "http://www.vmware.com/vcloud/v1.5"
+	networkSection.Ovf = "http://schemas.dmtf.org/ovf/envelope/1"
+	networkSection.Info = "Specifies the available VM network connections"
+
+	output, err := xml.MarshalIndent(networkSection, "  ", "    ")
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 	}
