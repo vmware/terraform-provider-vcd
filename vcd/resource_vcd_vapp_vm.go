@@ -238,7 +238,7 @@ func addVdcNetwork(d *schema.ResourceData, vdc govcd.Vdc, vapp govcd.VApp, vcdCl
 
 	net, err := vdc.FindVDCNetwork(networkNameToAdd)
 	if err != nil {
-		fmt.Errorf("network %s wasn't found as VDC network")
+		fmt.Errorf("network %s wasn't found as VDC network", networkNameToAdd)
 	}
 	vdcNetwork := net.OrgVDCNetwork
 
