@@ -11,7 +11,7 @@ description: |-
  Provides a vCloud Director vApp isolated Network. This can be used to create and delete internal networks for vApps to connect.
  This network is not attached to external networks or routers.
 
-Supported in provider *v2.0+*
+Supported in provider *v2.1+*
 
 ## Example Usage
 
