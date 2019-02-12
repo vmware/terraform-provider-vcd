@@ -16,13 +16,10 @@ install:
 
 script:
 - make test
-- make vendor-status
 - make vet
 - make website-test
 
 branches:
-  only:
-  - master
 matrix:
   fast_finish: true
   allow_failures:
