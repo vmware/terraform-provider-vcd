@@ -12,7 +12,7 @@ install:
 - bash scripts/gogetcookie.sh
 
 script:
-- make test
-- make vet
-- make website-test
+- env GO111MODULE=on make test
+- env GO111MODULE=on make vet
+- env GO111MODULE=on make website-test
 
