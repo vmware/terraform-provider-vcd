@@ -144,9 +144,9 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	var vappNetworkName string
-	if d.Get("vapp_network_name").(string) != "" {
-		vappNetworkName, err = addVappNetwork(d, vdc, vapp, vcdClient)
+	vappNetworkName := d.Get("vapp_network_name").(string)
+	if vappNetworkName != "" {
+		isVappNetwork, err := isItVappNetwork(vappNetworkName, vapp)
 		if err != nil {
 			return err
 		}
@@ -269,22 +269,21 @@ func addVdcNetwork(d *schema.ResourceData, vdc govcd.Vdc, vapp govcd.VApp, vcdCl
 	return vdcNetwork, nil
 }
 
-// Adds existing org vApp network to VM network configuration
-func addVappNetwork(d *schema.ResourceData, vdc govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (string, error) {
+// Checks if vapp network available for using
+func isItVappNetwork(vAppNetworkName string, vapp govcd.VApp) (bool, error) {
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 	if err != nil {
-		return "", fmt.Errorf("error getting vApp networks: %#v", err)
+		return false, fmt.Errorf("error getting vApp networks: %#v", err)
 	}
-	vAppNetworkName := d.Get("vapp_network_name").(string)
 
 	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
 		if networkConfig.NetworkName == vAppNetworkName {
 			log.Printf("[TRACE] vApp network found: %s", vAppNetworkName)
-			return vAppNetworkName, nil
+			return true, nil
 		}
 	}
 
-	return "", fmt.Errorf("configured vApp network isn't found: %#v", err)
+	return false, fmt.Errorf("configured vApp network isn't found: %#v", err)
 }
 
 func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
