@@ -56,7 +56,7 @@
     }
   },
   "logging" : {
-    "//": "Enables logging from go-vcloud-director in vendor",
+    "//": "Enables logging from go-vcloud-director",
     "enabled": false,
     "logFileName": "go-vcloud-director.log",
     "//": "If logging is enabled, logs automatically HTTP requests and responses",

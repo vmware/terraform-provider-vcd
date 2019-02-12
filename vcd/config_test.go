@@ -276,7 +276,7 @@ func getConfigStruct() TestConfig {
 	// Reading the configuration file was successful.
 	// Now we fill the environment variables that the library is using for its own initialization.
 	if configStruct.Provider.TerraformAcceptanceTests {
-		// defined in vendor/github.com/hashicorp/terraform/helper/resource/testing.go
+		// defined in github.com/hashicorp/terraform/helper/resource/testing.go
 		_ = os.Setenv("TF_ACC", "1")
 	}
 	// The following variables are used in ./provider.go
