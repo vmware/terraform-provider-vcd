@@ -7,6 +7,7 @@ package govcd
 import (
 	"bytes"
 	"encoding/xml"
+	"errors"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -30,6 +31,27 @@ func NewVApp(cli *Client) *VApp {
 func (vdcCli *VCDClient) NewVApp(client *Client) VApp {
 	newvapp := NewVApp(client)
 	return *newvapp
+}
+
+// struct type used to pass information for vApp network creation
+type VappNetworkSettings struct {
+	Name             string
+	Gateway          string
+	NetMask          string
+	DNS1             string
+	DNS2             string
+	DNSSuffix        string
+	GuestVLANAllowed bool
+	StaticIPRanges   []*types.IPRange
+	DhcpSettings     *DhcpSettings
+}
+
+// struct type used to pass information for vApp network DHCP
+type DhcpSettings struct {
+	IsEnabled        bool
+	MaxLeaseTime     int
+	DefaultLeaseTime int
+	IPRange          *types.IPRange
 }
 
 // Returns the vdc where the vapp resides in.
@@ -80,7 +102,23 @@ func (vapp *VApp) Refresh() error {
 	return nil
 }
 
-func (vapp *VApp) AddVM(orgvdcnetworks []*types.OrgVDCNetwork, vapptemplate VAppTemplate, name string, acceptalleulas bool) (Task, error) {
+// Function create vm in vApp using vApp template
+// orgVdcNetworks - adds org VDC networks to be available for vApp. Can be empty.
+// vappNetworkName - adds vApp network to be available for vApp. Can be empty.
+// vappTemplate - vApp Template which will be used for VM creation.
+// name - name for VM.
+// acceptAllEulas - setting allows to automatically accept or not Eulas.
+func (vapp *VApp) AddVM(orgVdcNetworks []*types.OrgVDCNetwork, vappNetworkName string, vappTemplate VAppTemplate, name string, acceptAllEulas bool) (Task, error) {
+
+	if vappTemplate == (VAppTemplate{}) || vappTemplate.VAppTemplate == nil {
+		return Task{}, fmt.Errorf("vApp Template can not be empty")
+	}
+
+	// Status 8 means The object is resolved and powered off.
+	// https://vdc-repo.vmware.com/vmwb-repository/dcr-public/94b8bd8d-74ff-4fe3-b7a4-41ae31516ed7/1b42f3b5-8b31-4279-8b3f-547f6c7c5aa8/doc/GUID-843BE3AD-5EF6-4442-B864-BCAE44A51867.html
+	if vappTemplate.VAppTemplate.Status != 8 {
+		return Task{}, fmt.Errorf("vApp Template shape is not ok")
+	}
 
 	vcomp := &types.ReComposeVAppParams{
 		Ovf:         "http://schemas.dmtf.org/ovf/envelope/1",
@@ -92,25 +130,25 @@ func (vapp *VApp) AddVM(orgvdcnetworks []*types.OrgVDCNetwork, vapptemplate VApp
 		Description: vapp.VApp.Description,
 		SourcedItem: &types.SourcedCompositionItemParam{
 			Source: &types.Reference{
-				HREF: vapptemplate.VAppTemplate.Children.VM[0].HREF,
+				HREF: vappTemplate.VAppTemplate.Children.VM[0].HREF,
 				Name: name,
 			},
 			InstantiationParams: &types.InstantiationParams{
 				NetworkConnectionSection: &types.NetworkConnectionSection{
-					Type: vapptemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.Type,
-					HREF: vapptemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.HREF,
+					Type: vappTemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.Type,
+					HREF: vappTemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.HREF,
 					Info: "Network config for sourced item",
-					PrimaryNetworkConnectionIndex: vapptemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.PrimaryNetworkConnectionIndex,
+					PrimaryNetworkConnectionIndex: vappTemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.PrimaryNetworkConnectionIndex,
 				},
 			},
 		},
-		AllEULAsAccepted: acceptalleulas,
+		AllEULAsAccepted: acceptAllEulas,
 	}
 
-	for index, orgvdcnetwork := range orgvdcnetworks {
+	for index, orgVdcNetwork := range orgVdcNetworks {
 		vcomp.SourcedItem.InstantiationParams.NetworkConnectionSection.NetworkConnection = append(vcomp.SourcedItem.InstantiationParams.NetworkConnectionSection.NetworkConnection,
 			&types.NetworkConnection{
-				Network:                 orgvdcnetwork.Name,
+				Network:                 orgVdcNetwork.Name,
 				NetworkConnectionIndex:  index,
 				IsConnected:             true,
 				IPAddressAllocationMode: "POOL",
@@ -118,8 +156,25 @@ func (vapp *VApp) AddVM(orgvdcnetworks []*types.OrgVDCNetwork, vapptemplate VApp
 		)
 		vcomp.SourcedItem.NetworkAssignment = append(vcomp.SourcedItem.NetworkAssignment,
 			&types.NetworkAssignment{
-				InnerNetwork:     orgvdcnetwork.Name,
-				ContainerNetwork: orgvdcnetwork.Name,
+				InnerNetwork:     orgVdcNetwork.Name,
+				ContainerNetwork: orgVdcNetwork.Name,
+			},
+		)
+	}
+
+	if vappNetworkName != "" {
+		vcomp.SourcedItem.InstantiationParams.NetworkConnectionSection.NetworkConnection = append(vcomp.SourcedItem.InstantiationParams.NetworkConnectionSection.NetworkConnection,
+			&types.NetworkConnection{
+				Network:                 vappNetworkName,
+				NetworkConnectionIndex:  len(orgVdcNetworks),
+				IsConnected:             true,
+				IPAddressAllocationMode: "POOL",
+			},
+		)
+		vcomp.SourcedItem.NetworkAssignment = append(vcomp.SourcedItem.NetworkAssignment,
+			&types.NetworkAssignment{
+				InnerNetwork:     vappNetworkName,
+				ContainerNetwork: vappNetworkName,
 			},
 		)
 	}
@@ -1018,17 +1073,17 @@ func (vapp *VApp) GetNetworkConfig() (*types.NetworkConfigSection, error) {
 	return networkConfig, nil
 }
 
+// Function adds existing VDC network to vApp
 func (vapp *VApp) AddRAWNetworkConfig(orgvdcnetworks []*types.OrgVDCNetwork) (Task, error) {
 
-	networkConfig := &types.NetworkConfigSection{
-		Info:  "Configuration parameters for logical networks",
-		Ovf:   "http://schemas.dmtf.org/ovf/envelope/1",
-		Type:  "application/vnd.vmware.vcloud.networkConfigSection+xml",
-		Xmlns: "http://www.vmware.com/vcloud/v1.5",
+	vAppNetworkConfig, err := vapp.GetNetworkConfig()
+	if err != nil {
+		return Task{}, fmt.Errorf("error getting vApp networks: %#v", err)
 	}
+	networkConfigurations := vAppNetworkConfig.NetworkConfig
 
 	for _, network := range orgvdcnetworks {
-		networkConfig.NetworkConfig = append(networkConfig.NetworkConfig,
+		networkConfigurations = append(networkConfigurations,
 			types.VAppNetworkConfiguration{
 				NetworkName: network.Name,
 				Configuration: &types.NetworkConfiguration{
@@ -1039,6 +1094,116 @@ func (vapp *VApp) AddRAWNetworkConfig(orgvdcnetworks []*types.OrgVDCNetwork) (Ta
 				},
 			},
 		)
+	}
+
+	return updateNetworkConfigurations(vapp, networkConfigurations)
+}
+
+// Function allows to create isolated network for vApp. This is equivalent to vCD UI function - vApp network creation.
+func (vapp *VApp) AddIsolatedNetwork(newIsolatedNetworkSettings *VappNetworkSettings) (Task, error) {
+
+	err := validateNetworkConfigSettings(newIsolatedNetworkSettings)
+	if err != nil {
+		return Task{}, err
+	}
+
+	// for case when range is one ip address
+	if newIsolatedNetworkSettings.DhcpSettings != nil && newIsolatedNetworkSettings.DhcpSettings.IPRange != nil && newIsolatedNetworkSettings.DhcpSettings.IPRange.EndAddress == "" {
+		newIsolatedNetworkSettings.DhcpSettings.IPRange.EndAddress = newIsolatedNetworkSettings.DhcpSettings.IPRange.StartAddress
+	}
+
+	// explicitly check if to add data, to not send any values
+	var networkFeatures *types.NetworkFeatures
+	if newIsolatedNetworkSettings.DhcpSettings != nil {
+		networkFeatures = &types.NetworkFeatures{DhcpService: &types.DhcpService{
+			IsEnabled:        newIsolatedNetworkSettings.DhcpSettings.IsEnabled,
+			DefaultLeaseTime: newIsolatedNetworkSettings.DhcpSettings.DefaultLeaseTime,
+			MaxLeaseTime:     newIsolatedNetworkSettings.DhcpSettings.MaxLeaseTime,
+			IPRange:          newIsolatedNetworkSettings.DhcpSettings.IPRange}}
+	}
+
+	networkConfigurations := vapp.VApp.NetworkConfigSection.NetworkConfig
+	networkConfigurations = append(networkConfigurations,
+		types.VAppNetworkConfiguration{
+			NetworkName: newIsolatedNetworkSettings.Name,
+			Configuration: &types.NetworkConfiguration{
+				FenceMode:        "isolated",
+				GuestVlanAllowed: newIsolatedNetworkSettings.GuestVLANAllowed,
+				Features:         networkFeatures,
+				IPScopes: &types.IPScopes{IPScope: types.IPScope{IsInherited: false, Gateway: newIsolatedNetworkSettings.Gateway,
+					Netmask: newIsolatedNetworkSettings.NetMask, DNS1: newIsolatedNetworkSettings.DNS1,
+					DNS2: newIsolatedNetworkSettings.DNS2, DNSSuffix: newIsolatedNetworkSettings.DNSSuffix, IsEnabled: true,
+					IPRanges: &types.IPRanges{IPRange: newIsolatedNetworkSettings.StaticIPRanges}}},
+			},
+			IsDeployed: false,
+		})
+
+	return updateNetworkConfigurations(vapp, networkConfigurations)
+
+}
+
+func validateNetworkConfigSettings(networkSettings *VappNetworkSettings) error {
+	if networkSettings.Name == "" {
+		return errors.New("network name is missing")
+	}
+
+	if networkSettings.Gateway == "" {
+		return errors.New("network gateway IP is missing")
+	}
+
+	if networkSettings.NetMask == "" {
+		return errors.New("network mask config is missing")
+	}
+
+	if networkSettings.NetMask == "" {
+		return errors.New("network mask config is missing")
+	}
+
+	if networkSettings.DhcpSettings != nil && networkSettings.DhcpSettings.IPRange == nil {
+		return errors.New("network DHCP ip range config is missing")
+	}
+
+	if networkSettings.DhcpSettings != nil && networkSettings.DhcpSettings.IPRange.StartAddress == "" {
+		return errors.New("network DHCP ip range start address is missing")
+	}
+
+	return nil
+}
+
+// Removes vApp isolated network
+func (vapp *VApp) RemoveIsolatedNetwork(networkName string) (Task, error) {
+
+	if networkName == "" {
+		return Task{}, fmt.Errorf("network name can't be empty")
+	}
+
+	networkConfigurations := vapp.VApp.NetworkConfigSection.NetworkConfig
+	isNetworkFound := false
+	for index, networkConfig := range networkConfigurations {
+		if networkConfig.NetworkName == networkName {
+			isNetworkFound = true
+			networkConfigurations = append(networkConfigurations[:index], networkConfigurations[index+1:]...)
+		}
+	}
+
+	if !isNetworkFound {
+		return Task{}, fmt.Errorf("network to remove %s, wasn't found", networkName)
+	}
+
+	return updateNetworkConfigurations(vapp, networkConfigurations)
+}
+
+// Function allows to update vApp network configuration. This works for updating, deleting and adding.
+// Network configuration has to be full with new, changed elements and unchanged.
+// https://opengrok.eng.vmware.com/source/xref/cloud-sp-main.perforce-shark.1700/sp-main/dev-integration/system-tests/SystemTests/src/main/java/com/vmware/cloud/systemtests/util/VAppNetworkUtils.java#createVAppNetwork
+// http://pubs.vmware.com/vcloud-api-1-5/wwhelp/wwhimpl/js/html/wwhelp.htm#href=api_prog/GUID-92622A15-E588-4FA1-92DA-A22A4757F2A0.html#1_14_12_10_1
+func updateNetworkConfigurations(vapp *VApp, networkConfigurations []types.VAppNetworkConfiguration) (Task, error) {
+	networkConfig := &types.NetworkConfigSection{
+		Info:          "Configuration parameters for logical networks",
+		Ovf:           "http://schemas.dmtf.org/ovf/envelope/1",
+		Type:          "application/vnd.vmware.vcloud.networkConfigSection+xml",
+		Xmlns:         "http://www.vmware.com/vcloud/v1.5",
+		NetworkConfig: networkConfigurations,
 	}
 
 	output, err := xml.MarshalIndent(networkConfig, "  ", "    ")
@@ -1059,7 +1224,7 @@ func (vapp *VApp) AddRAWNetworkConfig(orgvdcnetworks []*types.OrgVDCNetwork) (Ta
 
 	resp, err := checkResp(vapp.client.Http.Do(req))
 	if err != nil {
-		return Task{}, fmt.Errorf("error adding vApp Network: %s", err)
+		return Task{}, fmt.Errorf("error updating vApp Network: %s", err)
 	}
 
 	task := NewTask(vapp.client)
@@ -1070,5 +1235,4 @@ func (vapp *VApp) AddRAWNetworkConfig(orgvdcnetworks []*types.OrgVDCNetwork) (Ta
 
 	// The request was successful
 	return *task, nil
-
 }

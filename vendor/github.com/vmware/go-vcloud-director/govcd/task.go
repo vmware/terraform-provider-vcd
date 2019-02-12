@@ -26,6 +26,26 @@ func NewTask(cli *Client) *Task {
 	}
 }
 
+// If the error is not nil, composes an error message
+// made of the error itself + the information from the task's Error component.
+// See:
+//    https://code.vmware.com/apis/220/vcloud#/doc/doc/types/TaskType.html
+//    https://code.vmware.com/apis/220/vcloud#/doc/doc/types/ErrorType.html
+func (task *Task) getErrorMessage(err error) string {
+	errorMessage := ""
+	if err != nil {
+		errorMessage = err.Error()
+	}
+	if task.Task.Error != nil {
+		errorMessage += " [" +
+			fmt.Sprintf("%d:%s",
+				task.Task.Error.MajorErrorCode,   // The MajorError is a numeric code
+				task.Task.Error.MinorErrorCode) + // The MinorError is a string with a generic definition of the error
+			"] - " + task.Task.Error.Message
+	}
+	return errorMessage
+}
+
 func (task *Task) Refresh() error {
 
 	if task.Task == nil {
@@ -46,7 +66,7 @@ func (task *Task) Refresh() error {
 	task.Task = &types.Task{}
 
 	if err = decodeBody(resp, task.Task); err != nil {
-		return fmt.Errorf("error decoding task response: %s", err)
+		return fmt.Errorf("error decoding task response: %s", task.getErrorMessage(err))
 	}
 
 	// The request was successful
@@ -100,7 +120,7 @@ func (task *Task) WaitInspectTaskCompletion(inspectionFunc InspectionFunc, delay
 				)
 			}
 			if task.Task.Status == "error" {
-				return fmt.Errorf("task did not complete succesfully: %s", task.Task.Description)
+				return fmt.Errorf("task did not complete successfully: %s", task.getErrorMessage(err))
 			}
 			return nil
 		}
@@ -136,7 +156,7 @@ func (task *Task) GetTaskProgress() (string, error) {
 	}
 
 	if task.Task.Status == "error" {
-		return "", fmt.Errorf("task did not complete succesfully: %s", task.Task.Description)
+		return "", fmt.Errorf("task did not complete successfully: %s", task.getErrorMessage(err))
 	}
 
 	return strconv.Itoa(task.Task.Progress), nil

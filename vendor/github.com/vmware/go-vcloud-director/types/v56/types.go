@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
+ * Copyright 2019 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
  */
 
 package types
@@ -100,15 +100,15 @@ type IPRange struct {
 // Description: Represents a DHCP network service.
 // Since:
 type DhcpService struct {
-	DefaultLeaseTime    int      `xml:"DefaultLeaseTime,omitempty"`    // Default lease in seconds for DHCP addresses.
-	DomainName          string   `xml:"DomainName,omitempty"`          //	The domain name.
-	IPRange             *IPRange `xml:"IpRange"`                       //	IP range for DHCP addresses.
 	IsEnabled           bool     `xml:"IsEnabled"`                     // Enable or disable the service using this flag
+	DefaultLeaseTime    int      `xml:"DefaultLeaseTime,omitempty"`    // Default lease in seconds for DHCP addresses.
 	MaxLeaseTime        int      `xml:"MaxLeaseTime"`                  //	Max lease in seconds for DHCP addresses.
-	PrimaryNameServer   string   `xml:"PrimaryNameServer,omitempty"`   // The primary name server.
+	IPRange             *IPRange `xml:"IpRange"`                       //	IP range for DHCP addresses.
 	RouterIP            string   `xml:"RouterIp,omitempty"`            // Router IP.
-	SecondaryNameServer string   `xml:"SecondaryNameServer,omitempty"` // The secondary name server.
 	SubMask             string   `xml:"SubMask,omitempty"`             // The subnet mask.
+	PrimaryNameServer   string   `xml:"PrimaryNameServer,omitempty"`   // The primary name server.
+	SecondaryNameServer string   `xml:"SecondaryNameServer,omitempty"` // The secondary name server.
+	DomainName          string   `xml:"DomainName,omitempty"`          //	The domain name.
 }
 
 // NetworkFeatures represents features of a network.
@@ -156,7 +156,7 @@ type IPScope struct {
 	DNS1                 string          `xml:"Dns1,omitempty"`                 // Primary DNS server.
 	DNS2                 string          `xml:"Dns2,omitempty"`                 // Secondary DNS server.
 	DNSSuffix            string          `xml:"DnsSuffix,omitempty"`            // DNS suffix.
-	IsEnabled            bool            `xml:"IsEnabled"`                      // Indicates if subnet is enabled or not. Default value is True.
+	IsEnabled            bool            `xml:"IsEnabled,omitempty"`            // Indicates if subnet is enabled or not. Default value is True.
 	IPRanges             *IPRanges       `xml:"IpRanges,omitempty"`             // IP ranges used for static pool allocation in the network.
 	AllocatedIPAddresses *IPAddresses    `xml:"AllocatedIpAddresses,omitempty"` // Read-only list of allocated IP addresses in the network.
 	SubAllocations       *SubAllocations `xml:"SubAllocations,omitempty"`       // Read-only list of IP addresses that are sub allocated to edge gateways.
@@ -203,11 +203,12 @@ type IPScopes struct {
 // Since: 0.9
 type NetworkConfiguration struct {
 	BackwardCompatibilityMode      bool             `xml:"BackwardCompatibilityMode"`
-	Features                       *NetworkFeatures `xml:"Features,omitempty"`
-	ParentNetwork                  *Reference       `xml:"ParentNetwork,omitempty"`
 	IPScopes                       *IPScopes        `xml:"IpScopes,omitempty"`
+	ParentNetwork                  *Reference       `xml:"ParentNetwork,omitempty"`
 	FenceMode                      string           `xml:"FenceMode"`
-	RetainNetInfoAcrossDeployments bool             `xml:"RetainNetInfoAcrossDeployments"`
+	RetainNetInfoAcrossDeployments bool             `xml:"RetainNetInfoAcrossDeployments,omitempty"`
+	Features                       *NetworkFeatures `xml:"Features,omitempty"`
+	GuestVlanAllowed               bool             `xml:"GuestVlanAllowed,omitempty"`
 	// TODO: Not Implemented
 	// RouterInfo                     RouterInfo           `xml:"RouterInfo,omitempty"`
 	// SyslogServerSettings           SyslogServerSettings `xml:"SyslogServerSettings,omitempty"`
@@ -223,10 +224,10 @@ type VAppNetworkConfiguration struct {
 	Type        string `xml:"type,attr,omitempty"`
 	NetworkName string `xml:"networkName,attr"`
 
-	Configuration *NetworkConfiguration `xml:"Configuration"`
-	Description   string                `xml:"Description,omitempty"`
-	IsDeployed    bool                  `xml:"IsDeployed"`
 	Link          *Link                 `xml:"Link,omitempty"`
+	Description   string                `xml:"Description,omitempty"`
+	Configuration *NetworkConfiguration `xml:"Configuration"`
+	IsDeployed    bool                  `xml:"IsDeployed"`
 }
 
 // NetworkConfigSection is container for vApp networks.
@@ -256,13 +257,14 @@ type NetworkConfigSection struct {
 // Since: 0.9
 type NetworkConnection struct {
 	Network                 string `xml:"network,attr"`                      // Name of the network to which this NIC is connected.
-	NetworkConnectionIndex  int    `xml:"NetworkConnectionIndex"`            // Virtual slot number associated with this NIC. First slot number is 0.
 	NeedsCustomization      bool   `xml:"needsCustomization,attr,omitempty"` // True if this NIC needs customization.
-	ExternalIPAddress       string `xml:"ExternalIpAddress,omitempty"`       // If the network to which this NIC connects provides NAT services, the external address assigned to this NIC appears here.
+	NetworkConnectionIndex  int    `xml:"NetworkConnectionIndex"`            // Virtual slot number associated with this NIC. First slot number is 0.
 	IPAddress               string `xml:"IpAddress,omitempty"`               // IP address assigned to this NIC.
+	ExternalIPAddress       string `xml:"ExternalIpAddress,omitempty"`       // If the network to which this NIC connects provides NAT services, the external address assigned to this NIC appears here.
 	IsConnected             bool   `xml:"IsConnected"`                       // If the virtual machine is undeployed, this value specifies whether the NIC should be connected upon deployment. If the virtual machine is deployed, this value reports the current status of this NIC's connection, and can be updated to change that connection status.
-	IPAddressAllocationMode string `xml:"IpAddressAllocationMode"`           // IP address allocation mode for this connection. One of: POOL (A static IP address is allocated automatically from a pool of addresses.) DHCP (The IP address is obtained from a DHCP service.) MANUAL (The IP address is assigned manually in the IpAddress element.) NONE (No IP addressing mode specified.)
 	MACAddress              string `xml:"MACAddress,omitempty"`              // MAC address associated with the NIC.
+	IPAddressAllocationMode string `xml:"IpAddressAllocationMode"`           // IP address allocation mode for this connection. One of: POOL (A static IP address is allocated automatically from a pool of addresses.) DHCP (The IP address is obtained from a DHCP service.) MANUAL (The IP address is assigned manually in the IpAddress element.) NONE (No IP addressing mode specified.)
+	NetworkAdapterType      string `xml:"NetworkAdapterType,omitempty"`
 }
 
 // NetworkConnectionSection the container for the network connections of this virtual machine.
@@ -1099,11 +1101,12 @@ type VApp struct {
 	Deployed              bool   `xml:"deployed,attr,omitempty"`              // True if the virtual machine is deployed.
 	OvfDescriptorUploaded bool   `xml:"ovfDescriptorUploaded,attr,omitempty"` // Read-only indicator that the OVF descriptor for this vApp has been uploaded.
 	// Elements
-	Link        LinkList         `xml:"Link,omitempty"`        // A reference to an entity or operation associated with this object.
-	Description string           `xml:"Description,omitempty"` // Optional description.
-	Tasks       *TasksInProgress `xml:"Tasks,omitempty"`       // A list of queued, running, or recently completed tasks associated with this entity.
-	Files       *FilesList       `xml:"Files,omitempty"`       // Represents a list of files to be transferred (uploaded or downloaded). Each File in the list is part of the ResourceEntity.
-	VAppParent  *Reference       `xml:"VAppParent,omitempty"`  // Reserved. Unimplemented.
+	Link                 LinkList              `xml:"Link,omitempty"`                 // A reference to an entity or operation associated with this object.
+	NetworkConfigSection *NetworkConfigSection `xml:"NetworkConfigSection,omitempty"` // Represents vAPP network configuration
+	Description          string                `xml:"Description,omitempty"`          // Optional description.
+	Tasks                *TasksInProgress      `xml:"Tasks,omitempty"`                // A list of queued, running, or recently completed tasks associated with this entity.
+	Files                *FilesList            `xml:"Files,omitempty"`                // Represents a list of files to be transferred (uploaded or downloaded). Each File in the list is part of the ResourceEntity.
+	VAppParent           *Reference            `xml:"VAppParent,omitempty"`           // Reserved. Unimplemented.
 	// TODO: OVF Sections to be implemented
 	// Section OVF_Section `xml:"Section"`
 	DateCreated       string          `xml:"DateCreated,omitempty"`       // Creation date/time of the vApp.

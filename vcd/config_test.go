@@ -458,13 +458,13 @@ func createSuiteCatalogAndItem(config TestConfig) {
 
 		err = task.ShowUploadProgress()
 		if err != nil {
-			fmt.Printf("error waiting from task to complete: %+v", err)
+			fmt.Printf("error waiting for task to complete: %+v", err)
 			panic(err)
 		}
 
 		err = task.WaitTaskCompletion()
 		if err != nil {
-			fmt.Printf("error waiting from task to complete: %+v", err)
+			fmt.Printf("error waiting for task to complete: %+v", err)
 			panic(err)
 		}
 
