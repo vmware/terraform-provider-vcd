@@ -185,8 +185,7 @@ func runTest(def networkDef, t *testing.T) {
 	case directNetwork:
 		steps = []resource.TestStep{
 			resource.TestStep{
-				Config:      configText,
-				ExpectError: regexp.MustCompile(`After applying this step, the plan was not empty`),
+				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdNetworkExists(def.resourceName+"."+networkName, &network),
 					testAccCheckVcdNetworkAttributes(networkName, &network),

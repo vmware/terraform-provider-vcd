@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+echo "errcheck does not seem to work correctly with Go modules"
+echo "DISABLED"
+
+exit 0
+
 # Check gofmt
 echo "==> Checking for unchecked errors..."
 
@@ -12,7 +17,7 @@ err_files=$(errcheck -ignoretests \
                      -ignore 'github.com/hashicorp/terraform/helper/schema:Set' \
                      -ignore 'bytes:.*' \
                      -ignore 'io:Close|Write' \
-                     $(go list ./...| grep -v /vendor/))
+                     $(go list ./... ))
 
 if [[ -n ${err_files} ]]; then
     echo 'Unchecked errors found in the following places:'
