@@ -102,19 +102,19 @@ func resourceVcdVdc() *schema.Resource {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				ForceNew:    false,
-				Description: "Maximum number of network objects that can be deployed in this vDC. Defaults to 0, which means no networks can be deployed.",
+				Description: "Maximum number of network objects that can be deployed in this VDC. Defaults to 0, which means no networks can be deployed.",
 			},
 			"vm_quota": &schema.Schema{
 				Type:        schema.TypeInt,
 				Optional:    true,
 				ForceNew:    false,
-				Description: "The maximum number of VMs that can be created in this vDC. Includes deployed and undeployed VMs in vApps and vApp templates. Defaults to 0, which specifies an unlimited number.",
+				Description: "The maximum number of VMs that can be created in this VDC. Includes deployed and undeployed VMs in vApps and vApp templates. Defaults to 0, which specifies an unlimited number.",
 			},
 			"is_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
 				ForceNew:    false,
-				Description: "True if this vDC is enabled for use by the organization vDCs. A vDC is always enabled on creation.",
+				Description: "True if this VDC is enabled for use by the organization VDCs. A VDC is always enabled on creation.",
 			},
 			"storage_profile": &schema.Schema{
 				Type:     schema.TypeSet,
@@ -125,7 +125,7 @@ func resourceVcdVdc() *schema.Resource {
 						"enabled": {
 							Type:        schema.TypeBool,
 							Optional:    true,
-							Description: "True if this storage profile is enabled for use in the vDC.",
+							Description: "True if this storage profile is enabled for use in the VDC.",
 						},
 						"units": {
 							Type:        schema.TypeString,
@@ -140,28 +140,28 @@ func resourceVcdVdc() *schema.Resource {
 						"default": {
 							Type:        schema.TypeBool,
 							Required:    true,
-							Description: "True if this is default storage profile for this vDC. The default storage profile is used when an object that can specify a storage profile is created with no storage profile specified.",
+							Description: "True if this is default storage profile for this VDC. The default storage profile is used when an object that can specify a storage profile is created with no storage profile specified.",
 						},
 						"provider": {
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: "Reference to a Provider vDC storage profile.",
+							Description: "Reference to a Provider VDC storage profile.",
 						},
 					},
 				},
-				Description: "Storage profiles supported by this vDC.",
+				Description: "Storage profiles supported by this VDC.",
 			},
 			"resource_guaranteed_memory": &schema.Schema{
 				Type:        schema.TypeFloat,
 				Optional:    true,
 				ForceNew:    false,
-				Description: "Percentage of allocated memory resources guaranteed to vApps deployed in this vDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. Value defaults to 1.0 if the element is empty.",
+				Description: "Percentage of allocated memory resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. Value defaults to 1.0 if the element is empty.",
 			},
 			"resource_guaranteed_cpu": &schema.Schema{
 				Type:        schema.TypeFloat,
 				Optional:    true,
 				ForceNew:    false,
-				Description: "Percentage of allocated CPU resources guaranteed to vApps deployed in this vDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. Value defaults to 1.0 if the element is empty.",
+				Description: "Percentage of allocated CPU resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. Value defaults to 1.0 if the element is empty.",
 			},
 			"v_cpu_in_mhz": &schema.Schema{
 				Type:        schema.TypeInt,
@@ -179,13 +179,13 @@ func resourceVcdVdc() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
-				Description: "Reference to a network pool in the Provider vDC. Required if this vDC will contain routed or isolated networks.",
+				Description: "Reference to a network pool in the Provider VDC. Required if this VDC will contain routed or isolated networks.",
 			},
 			"provider_vdc": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    false,
-				Description: "A reference to the Provider vDC from which this organization vDC is provisioned.",
+				Description: "A reference to the Provider VDC from which this organization VDC is provisioned.",
 			},
 			"uses_fast_provisioning": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -203,7 +203,7 @@ func resourceVcdVdc() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				ForceNew:    false,
-				Description: "True if discovery of vCenter VMs is enabled for resource pools backing this vDC. If left unspecified, the actual behaviour depends on enablement at the organization level and at the system level.",
+				Description: "True if discovery of vCenter VMs is enabled for resource pools backing this VDC. If left unspecified, the actual behaviour depends on enablement at the organization level and at the system level.",
 			},
 
 			"delete_force": &schema.Schema{
