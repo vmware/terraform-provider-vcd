@@ -17,33 +17,34 @@ func resourceVcdVdc() *schema.Resource {
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"units": {
-					Type:     schema.TypeString,
-					Required: true,
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: "Units in which capacity is allocated. For CPU capacity, one of: {MHz, GHz}.  For memory capacity, one of: {MB, GB}.",
 				},
 				"allocated": {
-					Type:     schema.TypeInt,
-					Required: false,
-					Optional: true,
+					Type:        schema.TypeInt,
+					Optional:    true,
+					Description: "Capacity that is committed to be available.",
 				},
 				"limit": {
-					Type:     schema.TypeInt,
-					Required: false,
-					Optional: true,
+					Type:        schema.TypeInt,
+					Optional:    true,
+					Description: "Capacity limit relative to the value specified for Allocation. It must not be less than that value. If it is greater than that value, it implies overprovisioning.",
 				},
 				"reserved": {
-					Type:     schema.TypeInt,
-					Required: false,
-					Optional: true,
+					Type:        schema.TypeInt,
+					Optional:    true,
+					Description: "Capacity reserved",
 				},
 				"used": {
-					Type:     schema.TypeInt,
-					Required: false,
-					Optional: true,
+					Type:        schema.TypeInt,
+					Optional:    true,
+					Description: "Capacity used. If the VDC AllocationModel is ReservationPool, this number represents the percentage of the reservation that is in use. For all other allocation models, it represents the percentage of the allocation that is in use.",
 				},
 				"overhead": {
-					Type:     schema.TypeInt,
-					Required: false,
-					Optional: true,
+					Type:        schema.TypeInt,
+					Optional:    true,
+					Description: "Number of Units allocated to system resources such as vShield Manager virtual machines and shadow virtual machines provisioned from this Provider VDC.",
 				},
 			},
 		},
@@ -57,39 +58,27 @@ func resourceVcdVdc() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"org": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Organization to create the VDC in",
 			},
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: false,
 			},
-
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
 				ForceNew: false,
 			},
 			"allocation_model": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: false,
-				ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
-					v := val.(string)
-					switch v {
-					case
-						"AllocationVApp",
-						"AllocationPool",
-						"ReservationPool":
-						return
-					default:
-						errs = append(errs, fmt.Errorf("%q must be one of {AllocationVApp, AllocationPool, ReservationPool}, got: %s", key, v))
-					}
-					return
-				},
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     false,
+				ValidateFunc: validateAllocationModel,
+				Description:  "The allocation model used by this VDC; must be one of {AllocationVApp, AllocationPool, ReservationPool}",
 			},
 			"compute_capacity": &schema.Schema{
 				Required: true,
@@ -101,30 +90,31 @@ func resourceVcdVdc() *schema.Resource {
 						"memory": &capacityWithUsage,
 					},
 				},
+				Description: "The compute capacity allocated to this VDC.",
 			},
 			"nic_quota": &schema.Schema{
-				Type:     schema.TypeInt,
-				Required: false,
-				Optional: true,
-				ForceNew: false,
+				Type:        schema.TypeInt,
+				Optional:    true,
+				ForceNew:    false,
+				Description: "Maximum number of virtual NICs allowed in this VDC. Defaults to 0, which specifies an unlimited number.",
 			},
 			"network_quota": &schema.Schema{
-				Type:     schema.TypeInt,
-				Required: false,
-				Optional: true,
-				ForceNew: false,
+				Type:        schema.TypeInt,
+				Optional:    true,
+				ForceNew:    false,
+				Description: "Maximum number of network objects that can be deployed in this vDC. Defaults to 0, which means no networks can be deployed.",
 			},
 			"vm_quota": &schema.Schema{
-				Type:     schema.TypeInt,
-				Required: false,
-				Optional: true,
-				ForceNew: false,
+				Type:        schema.TypeInt,
+				Optional:    true,
+				ForceNew:    false,
+				Description: "The maximum number of VMs that can be created in this vDC. Includes deployed and undeployed VMs in vApps and vApp templates. Defaults to 0, which specifies an unlimited number.",
 			},
 			"is_enabled": &schema.Schema{
-				Type:     schema.TypeBool,
-				Required: false,
-				Optional: true,
-				ForceNew: false,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				ForceNew:    false,
+				Description: "True if this vDC is enabled for use by the organization vDCs. A vDC is always enabled on creation.",
 			},
 			"storage_profile": &schema.Schema{
 				Type:     schema.TypeSet,
@@ -133,81 +123,87 @@ func resourceVcdVdc() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"enabled": {
-							Type:     schema.TypeBool,
-							Required: false,
-							Optional: true,
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "True if this storage profile is enabled for use in the vDC.",
 						},
 						"units": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Units used to define Limit.",
 						},
 						"limit": {
-							Type:     schema.TypeInt,
-							Required: true,
+							Type:        schema.TypeInt,
+							Required:    true,
+							Description: "Maximum number of Units allocated for this storage profile. A value of 0 specifies unlimited Units.",
 						},
 						"default": {
-							Type:     schema.TypeBool,
-							Required: true,
+							Type:        schema.TypeBool,
+							Required:    true,
+							Description: "True if this is default storage profile for this vDC. The default storage profile is used when an object that can specify a storage profile is created with no storage profile specified.",
 						},
 						"provider": {
-							Type:     schema.TypeString,
-							Required: true,
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Reference to a Provider vDC storage profile.",
 						},
 					},
 				},
+				Description: "Storage profiles supported by this vDC.",
 			},
 			"resource_guaranteed_memory": &schema.Schema{
-				Type:     schema.TypeFloat,
-				Required: false,
-				Optional: true,
-				ForceNew: false,
+				Type:        schema.TypeFloat,
+				Optional:    true,
+				ForceNew:    false,
+				Description: "Percentage of allocated memory resources guaranteed to vApps deployed in this vDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. Value defaults to 1.0 if the element is empty.",
 			},
 			"resource_guaranteed_cpu": &schema.Schema{
-				Type:     schema.TypeFloat,
-				Required: false,
-				Optional: true,
-				ForceNew: false,
+				Type:        schema.TypeFloat,
+				Optional:    true,
+				ForceNew:    false,
+				Description: "Percentage of allocated CPU resources guaranteed to vApps deployed in this vDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. Value defaults to 1.0 if the element is empty.",
 			},
 			"v_cpu_in_mhz": &schema.Schema{
-				Type:     schema.TypeInt,
-				Required: false,
-				Optional: true,
-				ForceNew: false,
+				Type:        schema.TypeInt,
+				Optional:    true,
+				ForceNew:    false,
+				Description: "Specifies the clock frequency, in Megahertz, for any virtual CPU that is allocated to a VM. A VM with 2 vCPUs will consume twice as much of this value. Ignored for ReservationPool. Required when AllocationModel is AllocationVApp or AllocationPool, and may not be less than 256 MHz. Defaults to 1000 MHz if the element is empty or missing.",
 			},
 			"is_thin_provision": &schema.Schema{
-				Type:     schema.TypeBool,
-				Required: false,
-				Optional: true,
-				ForceNew: false,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				ForceNew:    false,
+				Description: "Boolean to request thin provisioning. Request will be honored only if the underlying datastore supports it. Thin provisioning saves storage space by committing it on demand. This allows over-allocation of storage.",
 			},
 			"network_pool": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: false,
-				Optional: true,
-				ForceNew: false,
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    false,
+				Description: "Reference to a network pool in the Provider vDC. Required if this vDC will contain routed or isolated networks.",
 			},
 			"provider_vdc": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: false,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    false,
+				Description: "A reference to the Provider vDC from which this organization vDC is provisioned.",
 			},
 			"uses_fast_provisioning": &schema.Schema{
-				Type:     schema.TypeBool,
-				Required: false,
-				Optional: true,
-				ForceNew: false,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				ForceNew:    false,
+				Description: "Boolean to request fast provisioning. Request will be honored only if the underlying datastore supports it. Fast provisioning can reduce the time it takes to create virtual machines by using vSphere linked clones. If you disable fast provisioning, all provisioning operations will result in full clones.",
 			},
 			"over_commit_allowed": &schema.Schema{
-				Type:     schema.TypeBool,
-				Required: false,
-				Optional: true,
-				ForceNew: false,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				ForceNew:    false,
+				Description: "Set to false to disallow creation of the VDC if the AllocationModel is AllocationPool or ReservationPool and the ComputeCapacity you specified is greater than what the backing Provider VDC can supply. Defaults to true if empty or missing.",
 			},
 			"vm_discovery_enabled": &schema.Schema{
-				Type:     schema.TypeBool,
-				Required: false,
-				Optional: true,
-				ForceNew: false,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				ForceNew:    false,
+				Description: "True if discovery of vCenter VMs is enabled for resource pools backing this vDC. If left unspecified, the actual behaviour depends on enablement at the organization level and at the system level.",
 			},
 
 			"delete_force": &schema.Schema{
@@ -226,6 +222,7 @@ func resourceVcdVdc() *schema.Resource {
 	}
 }
 
+// Creates a new vdc from a resource definition
 func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[TRACE] vdc creation initiated")
 
@@ -253,6 +250,7 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 	return resourceVcdVdcRead(d, meta)
 }
 
+// Fetches information about an existing vdc for a data definition
 func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[TRACE] vdc read initiated")
 
@@ -279,6 +277,7 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
+// Deletes a vdc, optionally removing all objects in it as well
 func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[TRACE] vdc delete started")
 
@@ -306,37 +305,58 @@ func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
+// helper for tranforming the compute capacity section of the resource input into the VdcConfiguration structure
 func capacityWithUsage(d map[string]interface{}) *types.CapacityWithUsage {
-	v := &types.CapacityWithUsage{
+	capacity := &types.CapacityWithUsage{
 		Units: d["units"].(string),
 	}
 
 	if allocated, ok := d["allocated"]; ok {
-		v.Allocated = int64(allocated.(int))
+		capacity.Allocated = int64(allocated.(int))
 	}
 
 	if limit, ok := d["limit"]; ok {
-		v.Limit = int64(limit.(int))
+		capacity.Limit = int64(limit.(int))
 	}
 
 	if reserved, ok := d["reserved"]; ok {
-		v.Reserved = int64(reserved.(int))
+		capacity.Reserved = int64(reserved.(int))
 	}
 
 	if used, ok := d["used"]; ok {
-		v.Used = int64(used.(int))
+		capacity.Used = int64(used.(int))
 	}
 
 	if overhead, ok := d["overhead"]; ok {
-		v.Overhead = int64(overhead.(int))
+		capacity.Overhead = int64(overhead.(int))
 	}
 
-	return v
+	return capacity
 }
 
+// helper for tranforming the resource input into the VdcConfiguration structure
+// any cast operations or default values should be done here so that the create method is simple
 func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcConfiguration, error) {
-	computeCapacity := d.Get("compute_capacity").(*schema.Set).List()[0].(map[string]interface{})
-	storageProfileMap := d.Get("storage_profile").(*schema.Set).List()[0].(map[string]interface{})
+	computeCapacityList := d.Get("compute_capacity").(*schema.Set).List()
+	if len(computeCapacityList) == 0 {
+		return &types.VdcConfiguration{}, errors.new("No compute_capacity field")
+	}
+	computeCapacity := computeCapacityList[0].(map[string]interface{})
+
+	storageProfileList := d.Get("storage_profile").(*schema.Set).List()
+	if len(storageProfileList) == 0 {
+		return &types.VdcConfiguration{}, errors.new("No storage_profile field")
+	}
+	storageProfileMap := storageProfileList[0].(map[string]interface{})
+
+	cpuCapacityList := computeCapacity["cpu"].(*schema.Set).List()
+	if len(cpuCapacityList) == 0 {
+		return &types.VdcConfiguration{}, errors.new("No cpu field in compute_capacity")
+	}
+	memoryCapacityList := computeCapacity["memory"].(*schema.Set).List()
+	if len(memoryCapacityList) == 0 {
+		return &types.VdcConfiguration{}, errors.new("No memory field in compute_capacity")
+	}
 
 	params := &types.VdcConfiguration{
 		Name:            d.Get("name").(string),
@@ -344,8 +364,8 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 		AllocationModel: d.Get("allocation_model").(string),
 		ComputeCapacity: []*types.ComputeCapacity{
 			&types.ComputeCapacity{
-				CPU:    capacityWithUsage(computeCapacity["cpu"].(*schema.Set).List()[0].(map[string]interface{})),
-				Memory: capacityWithUsage(computeCapacity["memory"].(*schema.Set).List()[0].(map[string]interface{})),
+				CPU:    capacityWithUsage(cpuCapacityList[0].(map[string]interface{})),
+				Memory: capacityWithUsage(memoryCapacityList[0].(map[string]interface{})),
 			},
 		},
 		VdcStorageProfile: &types.VdcStorageProfile{
@@ -420,4 +440,19 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 	}
 
 	return params, nil
+}
+
+// validates the input allocation model is a legitimate option
+func validateAllocationModel(val interface{}, key string) (warns []string, errs []error) {
+	v := val.(string)
+	switch v {
+	case
+		"AllocationVApp",
+		"AllocationPool",
+		"ReservationPool":
+		return
+	default:
+		errs = append(errs, fmt.Errorf("%q must be one of {AllocationVApp, AllocationPool, ReservationPool}, got: %s", key, v))
+	}
+	return
 }
