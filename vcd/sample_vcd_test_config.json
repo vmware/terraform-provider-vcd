@@ -29,6 +29,11 @@
     "//catalog": {
       "//name": "existingCatalogName",
       "//catalogItem": "existingOvaNameInCatalog"
+    },
+    "providerVdc": {
+      "id": "<uuid>",
+      "storageProfile": "<uuid>",
+      "networkPool": "<uuid>"
     }
   },
   "networking": {

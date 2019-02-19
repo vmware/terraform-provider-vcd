@@ -246,6 +246,12 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error creating vdc: %#v", err)
 	}
 
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		log.Printf("[DEBUG] Error waiting for vdc to finish: %#v", err)
+		return fmt.Errorf("error waiting for vdc to finish: %#v", err)
+	}
+
 	d.SetId(d.Get("name").(string))
 	log.Printf("[TRACE] vdc created: %#v", task)
 	return resourceVcdVdcRead(d, meta)
@@ -296,7 +302,7 @@ func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
 		return nil
 	}
 
-	_, err = vdc.Delete(d.Get("delete_force").(bool), d.Get("delete_recursive").(bool))
+	err = vdc.DeleteWait(d.Get("delete_force").(bool), d.Get("delete_recursive").(bool))
 	if err != nil {
 		log.Printf("[DEBUG] Error removing vdc %#v", err)
 		return fmt.Errorf("error removing vdc %#v", err)
