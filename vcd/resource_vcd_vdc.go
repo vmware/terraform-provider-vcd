@@ -1,6 +1,7 @@
 package vcd
 
 import (
+	"errors"
 	"fmt"
 	"log"
 
@@ -339,23 +340,23 @@ func capacityWithUsage(d map[string]interface{}) *types.CapacityWithUsage {
 func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcConfiguration, error) {
 	computeCapacityList := d.Get("compute_capacity").(*schema.Set).List()
 	if len(computeCapacityList) == 0 {
-		return &types.VdcConfiguration{}, errors.new("No compute_capacity field")
+		return &types.VdcConfiguration{}, errors.New("No compute_capacity field")
 	}
 	computeCapacity := computeCapacityList[0].(map[string]interface{})
 
 	storageProfileList := d.Get("storage_profile").(*schema.Set).List()
 	if len(storageProfileList) == 0 {
-		return &types.VdcConfiguration{}, errors.new("No storage_profile field")
+		return &types.VdcConfiguration{}, errors.New("No storage_profile field")
 	}
 	storageProfileMap := storageProfileList[0].(map[string]interface{})
 
 	cpuCapacityList := computeCapacity["cpu"].(*schema.Set).List()
 	if len(cpuCapacityList) == 0 {
-		return &types.VdcConfiguration{}, errors.new("No cpu field in compute_capacity")
+		return &types.VdcConfiguration{}, errors.New("No cpu field in compute_capacity")
 	}
 	memoryCapacityList := computeCapacity["memory"].(*schema.Set).List()
 	if len(memoryCapacityList) == 0 {
-		return &types.VdcConfiguration{}, errors.new("No memory field in compute_capacity")
+		return &types.VdcConfiguration{}, errors.New("No memory field in compute_capacity")
 	}
 
 	params := &types.VdcConfiguration{
