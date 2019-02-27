@@ -425,14 +425,10 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 
 		log.Printf("[DEBUG] IP has changes, old: %s - new: %s", oldIp, newIp)
 
-		if newIp != "allocated" {
-			log.Printf("[DEBUG] IP is assigned. Lets get it (%s)", d.Get("ip"))
-			ip, err = getVAppIPAddress(d, meta, vdc, org)
-			if err != nil {
-				return err
-			}
-		} else {
-			log.Printf("[DEBUG] IP is 'allocated'")
+		log.Printf("[DEBUG] IP is assigned. Lets get it (%s)", d.Get("ip"))
+		ip, err = getVAppIPAddress(d, meta, vdc, org)
+		if err != nil {
+			return fmt.Errorf("Error retrieve IP: %#v", err)
 		}
 
 		d.Set("ip", ip)
