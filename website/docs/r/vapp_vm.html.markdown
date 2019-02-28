@@ -44,8 +44,12 @@ resource "vcd_vapp_vm" "web1" {
     bla     = "foo"
   }
 
-  network_name = "net"
-  ip           = "10.10.104.161"
+  networks = [{
+    orgnetwork                 = "net"
+    ip                         = "10.10.104.161"
+    ip_address_allocation_mode = "MANUAL"
+    is_primary                 = true
+  }]
 
   depends_on = ["vcd_vapp.web"]
 }
@@ -65,8 +69,16 @@ resource "vcd_vapp_vm" "web2" {
     my_extra_key = "My extra value"
   }
 
-  network_name = "net"
-  ip           = "10.10.104.162"
+  networks = [{
+    orgnetwork                 = "net"
+    ip                         = "10.10.104.162"
+    ip_address_allocation_mode = "MANUAL"
+    is_primary                 = true
+  },
+  {
+    orgnetwork                 = "net"
+    ip_address_allocation_mode = "POOL"
+  }]
 
   disk {
     name = "logDisk1"
@@ -78,7 +90,7 @@ resource "vcd_vapp_vm" "web2" {
     name = "logDisk2"
     bus_number = 1
     unit_number = 1
-  }  
+  }
 
   depends_on = ["vcd_vapp.web"]
 }
@@ -97,13 +109,24 @@ The following arguments are supported:
 * `cpu_cores` - (Optional; *v2.1+*) The number of cores per socket
 * `metadata` - (Optional; *v2.2+*) Key value map of metadata to assign to this VM
 * `initscript` (Optional) A script to be run only on initial boot
-* `network_name` - (Optional) Name of the network this VM should connect to
+* `network_name` - (**Deprecated**) Name of the network this VM should connect to. **Conflicts with** with networks.
 * `vapp_network_name` - (Optional; *v2.1+*) Name of the vApp network this VM should connect to
-* `ip` - (Optional) The IP to assign to this vApp. Must be an IP address or
-  one of "dhcp", "allocated" or "none". If given the address must be within the
+* `ip` - (**Deprecated**) The IP to assign to this vApp. Must be an IP address or
+one of dhcp, allocated or none. If given the address must be within the
   `static_ip_pool` set for the network. If left blank, and the network has
   `dhcp_pool` set with at least one available IP then this will be set with
-  DHCP.
+DHCP. **Conflicts with** with networks.
+* `networks` - (Optional; *v2.2+*) List of network interfaces to attach to vm. **Conflicts with**: networks, ip. **Note**: all params of this parameter and itself do force recreation of vms!
+  * `orgnetwork` (Required) Name of the network this VM should connect to.
+  * `ip` (Optional) One of: dhcp, allocated, none or an ip.
+  * `ip_allocation_mode` (Optional) IP address allocation mode. Defaults to "POOL". One of:
+    * `POOL` (A static IP address is allocated automatically from a pool of addresses.)
+    * `DHCP` (The IP address is obtained from a DHCP service.)
+    * `MANUAL` (The IP address is assigned manually in the IpAddress element.)
+    * `NONE` (No IP addressing mode specified.)
+  * `is_primary` (Optional) Set to true if network interface should be primary. Defaults to false.
+  * `adapter_type` (Optional) One of Vlance, VMXNET, Flexible, E1000, E1000e, VMXNET2, VMXNET3. For more details about the adapter types visit: https://kb.vmware.com/s/article/1001805 **Note**: Cannot be used right now because changing adapter_type would need a bigger rework of AddVM() function in go-vcloud-director library to allow to set adapter_type while creation of NetworkConnection.
+  * `mac` - (Computed) Mac address of network interface.
 * `power_on` - (Optional) A boolean value stating if this vApp should be powered on. Default is `true`
 * `accept_all_eulas` - (Optional; *v2.0+*) Automatically accept EULA if OVA has it. Default is `true`
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
