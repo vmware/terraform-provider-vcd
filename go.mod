@@ -31,8 +31,11 @@ require (
 	github.com/mitchellh/reflectwalk v0.0.0-20161003174516-92573fe8d000
 	github.com/rancher/go-rancher v0.0.0-20170407040943-ec24b7f12fca
 	github.com/satori/go.uuid v0.0.0-20160927100844-b061729afc07
-	github.com/vmware/go-vcloud-director v0.0.0-20190211140313-3cfc8392166b
+	github.com/vmware/go-vcloud-director/v2 v2.1.0-alpha.2
 	golang.org/x/crypto v0.0.0-20170808112155-b176d7def5d7
 	golang.org/x/net v0.0.0-20170809000501-1c05540f6879
 	k8s.io/kubernetes v1.6.1
 )
+
+replace github.com/vmware/go-vcloud-director/v2 v2.1.0-alpha.2 => github.com/Didainius/go-vcloud-director/v2 v2.1.0-alpha.2
+
