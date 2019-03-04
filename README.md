@@ -42,7 +42,7 @@ and toggle between modes.
 
 ```
 $ cd ~/mydir
-$ clone git@github.com:terraform-providers/terraform-provider-vcd
+$ git clone git@github.com:terraform-providers/terraform-provider-vcd
 $ cd terraform-provider-vcd/
 $ make build
 ```
