@@ -14,25 +14,6 @@ matrix:
   allow_failures:
     - go: tip
   include:
-    - go: "1.10.x"
-      env: GO111MODULE=off
-      script:
-        - make test
-        - make vet
-        - make website-test
-    - go: "1.11.x"
-      env: GO111MODULE=off
-      script:
-        - make test
-        - make vet
-        - make website-test
-    - go: "1.11.x"
-      env: GO111MODULE=on
-      script:
-        - make test
-        - make vet
-        - make vendor-check
-        - make website-test
     - go: "1.12.x"
       env: GO111MODULE=off
       script:
