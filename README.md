@@ -15,23 +15,6 @@ Requirements
 -	[Terraform](https://www.terraform.io/downloads.html) 0.10.x
 -	[Go](https://golang.org/doc/install) 1.12 (to build the provider plugin)
 
-Building The Provider (the vendor way)
---------------------------------------
-
-Clone repository to: `$GOPATH/src/github.com/terraform-providers/terraform-provider-vcd`
-
-```sh
-$ mkdir -p $GOPATH/src/github.com/terraform-providers; cd $GOPATH/src/github.com/terraform-providers
-$ git clone git@github.com:terraform-providers/terraform-provider-vcd
-```
-
-Enter the provider directory and build the provider
-
-```sh
-$ cd $GOPATH/src/github.com/terraform-providers/terraform-provider-vcd
-$ make build
-```
-
 Building The Provider (the modules way)
 --------------------------------------
 
@@ -44,6 +27,26 @@ and toggle between modes.
 $ cd ~/mydir
 $ git clone git@github.com:terraform-providers/terraform-provider-vcd
 $ cd terraform-provider-vcd/
+$ make build
+```
+
+Building The Provider (the old [vendor](https://golang.org/cmd/go/#hdr-Vendor_Directories) way)
+--------------------------------------
+
+Prior to version 2.1 provider used Go vendor directory for dependency management. This method is not recommended
+anymore, but can be used to build provider on Go versions < 1.11.
+
+Clone repository to: `$GOPATH/src/github.com/terraform-providers/terraform-provider-vcd`
+
+```sh
+$ mkdir -p $GOPATH/src/github.com/terraform-providers; cd $GOPATH/src/github.com/terraform-providers
+$ git clone git@github.com:terraform-providers/terraform-provider-vcd
+```
+
+Enter the provider directory and build the provider
+
+```sh
+$ cd $GOPATH/src/github.com/terraform-providers/terraform-provider-vcd
 $ make build
 ```
 
