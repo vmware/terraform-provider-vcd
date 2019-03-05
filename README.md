@@ -13,7 +13,7 @@ Requirements
 ------------
 
 -	[Terraform](https://www.terraform.io/downloads.html) 0.10.x
--	[Go](https://golang.org/doc/install) 1.11+ (to build the provider plugin)
+-	[Go](https://golang.org/doc/install) 1.12 (to build the provider plugin)
 
 Building The Provider (the vendor way)
 --------------------------------------
@@ -51,7 +51,7 @@ $ make build
 Developing the Provider
 ---------------------------
 
-Starting with version 2.1 terraform-provider-vcd now uses Go modules and `vendor` directory is left for backwards
+Starting with version 2.1 terraform-provider-vcd now uses Go modules, while `vendor` directory is left for backwards
 compatibility only. This means a few things:
 * The code no longer needs to stay in your `GOPATH`. It can though -
 [see more](https://github.com/golang/go/wiki/Modules#how-to-use-modules) on how to use modules and toggle between modes.
