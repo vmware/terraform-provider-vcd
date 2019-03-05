@@ -51,7 +51,7 @@ $ make build
 Developing the Provider
 ---------------------------
 
-Starting with version 2.1 terraform-provider-vcd now uses Go modules, while `vendor` directory is left for backwards
+Starting with terraform-provider-vcd version 2.1 Go modules are used, while `vendor` directory is left for backwards
 compatibility only. This means a few things:
 * The code no longer needs to stay in your `GOPATH`. It can though -
 [see more](https://github.com/golang/go/wiki/Modules#how-to-use-modules) on how to use modules and toggle between modes.
