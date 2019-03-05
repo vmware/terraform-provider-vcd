@@ -3,27 +3,28 @@ sudo: required
 services:
 - docker
 language: go
-go:
-- "1.10.x"
-
-install:
-# This script is used by the Travis build to install a cookie for
-# go.googlesource.com so rate limits are higher when using `go get` to fetch
-# packages that live there.
-# See: https://github.com/golang/go/issues/12933
-- bash scripts/gogetcookie.sh
-- go get github.com/kardianos/govendor
-
-script:
-- make test
-- make vendor-status
-- make vet
-- make website-test
 
 branches:
   only:
   - master
+  - vmware-stash-while-master-pr-open
+
 matrix:
   fast_finish: true
   allow_failures:
-  - go: tip
+    - go: tip
+  include:
+    - go: "1.12.x"
+      env: GO111MODULE=off
+      script:
+        - make test
+        - make vet
+        - make website-test
+    - go: "1.12.x"
+      env: GO111MODULE=on
+      script:
+        - make test
+        - make vet
+        - make vendor-check
+        - make website-test
+

@@ -20,7 +20,7 @@ test: fmtcheck
 	cd vcd ; VCD_SHORT_TEST=1 go test -v . -timeout 3m
 
 testacc: fmtcheck
-	if [ ! -f vcd/vcd_test_config.json ] ; then \
+	if [ ! -f vcd/vcd_test_config.json -a -z "${VCD_CONFIG}" ] ; then \
 		echo "ERROR: test configuration file vcd/vcd_test_config.json is missing"; \
 		exit 1; \
 	fi
@@ -44,8 +44,10 @@ fmtcheck:
 errcheck:
 	@sh -c "'$(CURDIR)/scripts/errcheck.sh'"
 
-vendor-status:
-	@govendor status
+vendor-check:
+	go mod tidy
+	go mod vendor
+	git diff --exit-code
 
 test-compile:
 	@if [ "$(TEST)" = "./..." ]; then \
@@ -69,5 +71,5 @@ ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
 endif
 	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
 
-.PHONY: build test testacc vet fmt fmtcheck errcheck vendor-status test-compile website website-test
+.PHONY: build test testacc vet fmt fmtcheck errcheck vendor-check test-compile website website-test
 
