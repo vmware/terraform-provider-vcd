@@ -99,7 +99,7 @@ github.com/mitchellh/mapstructure
 github.com/mitchellh/reflectwalk
 # github.com/satori/go.uuid v0.0.0-20160927100844-b061729afc07
 github.com/satori/go.uuid
-# github.com/vmware/go-vcloud-director/v2 v2.1.0-alpha.2 => github.com/Didainius/go-vcloud-director/v2 v2.1.0-alpha.2
+# github.com/vmware/go-vcloud-director/v2 v2.1.0-alpha.2
 github.com/vmware/go-vcloud-director/v2/govcd
 github.com/vmware/go-vcloud-director/v2/types/v56
 github.com/vmware/go-vcloud-director/v2/util

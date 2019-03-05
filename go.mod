@@ -34,5 +34,3 @@ require (
 	golang.org/x/net v0.0.0-20170809000501-1c05540f6879 // indirect
 	golang.org/x/text v0.3.0 // indirect
 )
-
-replace github.com/vmware/go-vcloud-director/v2 v2.1.0-alpha.2 => github.com/Didainius/go-vcloud-director/v2 v2.1.0-alpha.2
