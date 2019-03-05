@@ -21,8 +21,8 @@ import (
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
-	"github.com/vmware/go-vcloud-director/govcd"
-	"github.com/vmware/go-vcloud-director/util"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
 type StringMap map[string]interface{}

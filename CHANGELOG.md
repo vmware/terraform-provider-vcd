@@ -1,4 +1,10 @@
-## 2.0.1 (Unreleased)
+## 2.1.0 (February 5, 2019)
+
+ARCHITECTURAL:
+
+* Project switched to using Go modules, while `vendor` is left for backwards build compatibility only. It is worth having a
+look at [README.md](README.md) to understand how Go modules impact build and development.
+
 ## 2.0.0 (January 30, 2019)
 
 Please look for "v2.0+" keyword in documentation which is used to emphasize changes and new features.

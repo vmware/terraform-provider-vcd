@@ -3,7 +3,7 @@ package vcd
 import (
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
-	"github.com/vmware/go-vcloud-director/util"
+	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
 // Provider returns a terraform.ResourceProvider.
