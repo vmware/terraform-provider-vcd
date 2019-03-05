@@ -37,6 +37,12 @@ resource "vcd_vapp_vm" "web1" {
   cpus          = 2
   cpu_cores     = 1
 
+  metadata {
+    role    = "web"
+    env     = "staging"
+    version = "v1"
+  }
+
   network_name = "net"
   ip           = "10.10.104.161"
 
@@ -51,15 +57,21 @@ resource "vcd_vapp_vm" "web2" {
   memory        = 2048
   cpus          = 1
 
+  metadata {
+    role    = "web"
+    env     = "staging"
+    version = "v2"
+  }
+
   network_name = "net"
   ip           = "10.10.104.162"
-  
+
   disk {
     name = "logDisk1"
     bus_number = 1
     unit_number = 0
   }
-  
+
   disk {
     name = "logDisk2"
     bus_number = 1
@@ -81,6 +93,7 @@ The following arguments are supported:
 * `memory` - (Optional) The amount of RAM (in MB) to allocate to the VM
 * `cpus` - (Optional) The number of virtual CPUs to allocate to the VM. Socket count is a result of: virtual logical processors/cores per socket
 * `cpu_cores` - (Optional; *v2.1+*) The number of cores per socket
+* `metadata` - (Optional; *v2.1+*) Key value map of metadata to assign to this VM
 * `initscript` (Optional) A script to be run only on initial boot
 * `network_name` - (Optional) Name of the network this VM should connect to
 * `vapp_network_name` - (Optional; *v2.1+*) Name of the vApp network this VM should connect to
