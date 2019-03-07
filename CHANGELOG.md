@@ -7,7 +7,7 @@ look at [README.md](README.md) to understand how Go modules impact build and dev
 
 IMPROVEMENTS:
 
-* Insert Media now supports force ejecting with running VM
+* Insert Media now supports force ejecting on running VM
 
 ## 2.0.0 (January 30, 2019)
 
