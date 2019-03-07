@@ -16,13 +16,15 @@ Supported in provider *v2.0+*
 
 ```
 resource "vcd_inserted_media" "myInsertedMedia" {
-  org = "my-org"
-  vdc = "my-vcd"
-  catalog = "my-catalog" 
-  name = "my-iso"
-  
+  org     = "my-org"
+  vdc     = "my-vcd"
+  catalog = "my-catalog"
+  name    = "my-iso"
+
   vapp_name = "my-vApp"
-  vm_name = "my-VM"
+  vm_name   = "my-VM"
+
+  eject_force = true
 }
 ```
 
@@ -36,3 +38,4 @@ The following arguments are supported:
 * `name` - (Required) Media file name in catalog which will be inserted to VM
 * `vapp_name` - (Required) - The name of vApp to find
 * `vm_name` - (Required) - The name of VM to be used to insert media file
+* `eject_force` - (Optional; *v2.1+*) Allows to pass answer to question when ejecting with not stopped VM. True means "Yes" as answer to question. Default is `true`

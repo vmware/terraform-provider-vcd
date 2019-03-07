@@ -29,7 +29,7 @@ require (
 	github.com/satori/go.uuid v0.0.0-20160927100844-b061729afc07 // indirect
 	github.com/smartystreets/goconvey v0.0.0-20190222223459-a17d461953aa // indirect
 	github.com/stretchr/testify v1.3.0 // indirect
-	github.com/vmware/go-vcloud-director/v2 v2.1.0-alpha.2
+	github.com/vmware/go-vcloud-director/v2 v2.1.0-beta.1
 	golang.org/x/crypto v0.0.0-20170808112155-b176d7def5d7 // indirect
 	golang.org/x/net v0.0.0-20170809000501-1c05540f6879 // indirect
 	golang.org/x/text v0.3.0 // indirect

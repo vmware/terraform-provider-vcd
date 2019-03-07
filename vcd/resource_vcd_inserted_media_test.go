@@ -32,6 +32,7 @@ func TestAccVcdMediaInsertBasic(t *testing.T) {
 		"UploadProgress":   testConfig.Media.UploadProgress,
 		"InsertMediaName":  TestAccVcdMediaInsert,
 		"NetworkName":      TestAccVcdVAppVmNetForInsert,
+		"EjectForce":       true,
 	}
 
 	if vcdShortTest {
@@ -175,16 +176,16 @@ resource "vcd_network_routed" "{{.NetworkName}}" {
 }
 
 resource "vcd_vapp" "{{.VappName}}" {
-  name = "{{.VappName}}"
-  org  = "{{.Org}}"
-  vdc  = "{{.Vdc}}"
-  depends_on    = ["vcd_network_routed.{{.NetworkName}}"]
+  name       = "{{.VappName}}"
+  org        = "{{.Org}}"
+  vdc        = "{{.Vdc}}"
+  depends_on = ["vcd_network_routed.{{.NetworkName}}"]
 }
 
 resource "vcd_vapp_vm" "{{.VmName}}" {
   org           = "{{.Org}}"
   vdc           = "{{.Vdc}}"
-  vapp_name     = "${vcd_vapp.{{.VappName}}.name}" 
+  vapp_name     = "${vcd_vapp.{{.VappName}}.name}"
   name          = "{{.VmName}}"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
@@ -196,25 +197,27 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   depends_on    = ["vcd_vapp.{{.VappName}}"]
 }
 
-resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
-  org = "{{.Org}}"
+resource "vcd_catalog_media" "{{.CatalogMediaName}}" {
+  org     = "{{.Org}}"
   catalog = "{{.Catalog}}"
 
-  name = "{{.CatalogMediaName}}"
-  description = "{{.Description}}"
-  media_path = "{{.MediaPath}}"
-  upload_piece_size = {{.UploadPieceSize}}
+  name                 = "{{.CatalogMediaName}}"
+  description          = "{{.Description}}"
+  media_path           = "{{.MediaPath}}"
+  upload_piece_size    = {{.UploadPieceSize}}
   show_upload_progress = "{{.UploadProgress}}"
 }
 
 resource "vcd_inserted_media" "{{.InsertMediaName}}" {
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
+  org     = "{{.Org}}"
+  vdc     = "{{.Vdc}}"
   catalog = "{{.Catalog}}"
-  name = "{{.CatalogMediaName}}"
-  
-  vapp_name = "${vcd_vapp.{{.VappName}}.name}" 
-  vm_name = "${vcd_vapp_vm.{{.VmName}}.name}" 
+  name    = "{{.CatalogMediaName}}"
+
+  vapp_name  = "${vcd_vapp.{{.VappName}}.name}"
+  vm_name    = "${vcd_vapp_vm.{{.VmName}}.name}"
   depends_on = ["vcd_vapp_vm.{{.VmName}}", "vcd_catalog_media.{{.CatalogMediaName}}"]
+
+  eject_force = "{{.ejectForce}}"
 }
 `
