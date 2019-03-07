@@ -38,7 +38,7 @@ The following arguments are supported:
 * `name` - (Required) Media file name in catalog which will be inserted to VM
 * `vapp_name` - (Required) - The name of vApp to find
 * `vm_name` - (Required) - The name of VM to be used to insert media file
-* `eject_force` - (Optional; *v2.1+*) Allows to pass answer to question 
+* `eject_force` - (Optional; *v2.1+*) Allows to pass answer to question in vCD
 "The guest operating system has locked the CD-ROM door and is probably using the CD-ROM. 
 Disconnect anyway (and override the lock)?" 
 when ejecting from a VM which is powered on. True means "Yes" as answer to question. Default is `true`
