@@ -1350,6 +1350,7 @@ type OVFItem struct {
 	XmlnsRasd       string   `xml:"xmlns:rasd,attr"`
 	XmlnsVCloud     string   `xml:"xmlns:vcloud,attr"`
 	XmlnsXsi        string   `xml:"xmlns:xsi,attr"`
+	XmlnsVmw        string   `xml:"xmlns:vmw,attr,omitempty"`
 	VCloudHREF      string   `xml:"vcloud:href,attr"`
 	VCloudType      string   `xml:"vcloud:type,attr"`
 	AllocationUnits string   `xml:"rasd:AllocationUnits"`
@@ -1360,6 +1361,7 @@ type OVFItem struct {
 	ResourceType    int      `xml:"rasd:ResourceType"`
 	VirtualQuantity int      `xml:"rasd:VirtualQuantity"`
 	Weight          int      `xml:"rasd:Weight"`
+	CoresPerSocket  *int     `xml:"vmw:CoresPerSocket,omitempty"`
 	Link            *Link    `xml:"vcloud:Link"`
 }
 
@@ -1976,6 +1978,8 @@ type QueryResultRecordsType struct {
 	VMWProviderVdcRecord            []*QueryResultVMWProviderVdcRecordType            `xml:"VMWProviderVdcRecord"`            // A record representing a Provider VDC result.
 	ProviderVdcStorageProfileRecord []*QueryResultProviderVdcStorageProfileRecordType `xml:"ProviderVdcStorageProfileRecord"` // A record representing a Provider VDC storage profile result
 	NetworkPoolRecord               []*QueryResultNetworkPoolRecordType               `xml:"NetworkPoolRecord"`               // A record representing a network pool
+	DiskRecord                      []*DiskRecordType                                 `xml:"DiskRecord"`                      // A record representing a independent Disk.
+	AdminDiskRecord                 []*DiskRecordType                                 `xml:"AdminDiskRecord"`                 // A record representing a independent Disk.
 }
 
 // QueryResultEdgeGatewayRecordType represents an edge gateway record as query result.
@@ -2248,8 +2252,8 @@ type VCloudExtension struct {
 type DiskAttachOrDetachParams struct {
 	XMLName         xml.Name         `xml:"DiskAttachOrDetachParams"`
 	Xmlns           string           `xml:"xmlns,attr,omitempty"`
-	BusNumber       *int             `xml:"BusNumber,omitempty"`
 	Disk            *Reference       `xml:"Disk"`
+	BusNumber       *int             `xml:"BusNumber,omitempty"`
 	UnitNumber      *int             `xml:"UnitNumber,omitempty"`
 	VCloudExtension *VCloudExtension `xml:"VCloudExtension,omitempty"`
 }
@@ -2273,4 +2277,63 @@ type MediaInsertOrEjectParams struct {
 	Xmlns           string           `xml:"xmlns,attr,omitempty"`
 	Media           *Reference       `xml:"Media"`
 	VCloudExtension *VCloudExtension `xml:"VCloudExtension,omitempty"`
+}
+
+// Parameters for VM pending questions
+// Reference: vCloud API 27.0 - VmPendingQuestionType
+// https://code.vmware.com/apis/287/vcloud#/doc/doc/types/VmPendingQuestionType.html
+type VmPendingQuestion struct {
+	XMLName    xml.Name                      `xml:"VmPendingQuestion"`
+	Xmlns      string                        `xml:"xmlns,attr,omitempty"`
+	Type       string                        `xml:"type,attr"`
+	HREF       string                        `xml:"href,attr"`
+	Link       LinkList                      `xml:"Link,omitempty"`
+	Question   string                        `xml:"Question"`
+	QuestionId string                        `xml:"QuestionId"`
+	Choices    []*VmQuestionAnswerChoiceType `xml:"Choices"`
+}
+
+// Parameters for VM question answer choice
+// Reference: vCloud API 27.0 - VmQuestionAnswerChoiceType
+// https://code.vmware.com/apis/287/vcloud#/doc/doc/types/VmQuestionAnswerChoiceType.html
+type VmQuestionAnswerChoiceType struct {
+	Id   int    `xml:"Id"`
+	Text string `xml:"Text,omitempty"`
+}
+
+// Parameters for VM question answer
+// Reference: vCloud API 27.0 - VmQuestionAnswerType
+// https://code.vmware.com/apis/287/vcloud#/doc/doc/types/VmQuestionAnswerType.html
+type VmQuestionAnswer struct {
+	XMLName    xml.Name `xml:"VmQuestionAnswer"`
+	Xmlns      string   `xml:"xmlns,attr,omitempty"`
+	ChoiceId   int      `xml:"ChoiceId"`
+	QuestionId string   `xml:"QuestionId"`
+}
+
+// Represents an independent disk record
+// Reference: vCloud API 27.0 - DiskType
+// https://code.vmware.com/apis/287/vcloud#/doc/doc/types/QueryResultDiskRecordType.html
+type DiskRecordType struct {
+	Xmlns              string  `xml:"xmlns,attr,omitempty"`
+	HREF               string  `xml:"href,attr,omitempty"`
+	Id                 string  `xml:"id,attr,omitempty"`
+	Type               string  `xml:"type,attr,omitempty"`
+	Name               string  `xml:"name,attr,omitempty"`
+	Vdc                string  `xml:"vdc,attr,omitempty"`
+	SizeB              int64   `xml:"sizeB,attr,omitempty"`
+	DataStore          string  `xml:"dataStore,attr,omitempty"`
+	DataStoreName      string  `xml:"datastoreName,attr,omitempty"`
+	OwnerName          string  `xml:"ownerName,attr,omitempty"`
+	VdcName            string  `xml:"vdcName,attr,omitempty"`
+	Task               string  `xml:"task,attr,omitempty"`
+	StorageProfile     string  `xml:"storageProfile,attr,omitempty"`
+	StorageProfileName string  `xml:"storageProfileName,attr,omitempty"`
+	Status             string  `xml:"status,attr,omitempty"`
+	BusType            string  `xml:"busType,attr,omitempty"`
+	BusSubType         string  `xml:"busSubType,attr,omitempty"`
+	BusTypeDesc        string  `xml:"busTypeDesc,attr,omitempty"`
+	IsAttached         bool    `xml:"isAttached,attr,omitempty"`
+	Description        string  `xml:"description,attr,omitempty"`
+	Link               []*Link `xml:"Link,omitempty"`
 }
