@@ -150,7 +150,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 			return err
 		}
 		if !isVappNetwork {
-			fmt.Errorf("vapp_network_name: %s is not found", vappNetworkName)
+			return fmt.Errorf("vapp_network_name: %s is not found", vappNetworkName)
 		}
 	}
 
@@ -237,7 +237,7 @@ func addVdcNetwork(d *schema.ResourceData, vdc govcd.Vdc, vapp govcd.VApp, vcdCl
 
 	net, err := vdc.FindVDCNetwork(networkNameToAdd)
 	if err != nil {
-		fmt.Errorf("network %s wasn't found as VDC network", networkNameToAdd)
+		return &types.OrgVDCNetwork{}, fmt.Errorf("network %s wasn't found as VDC network", networkNameToAdd)
 	}
 	vdcNetwork := net.OrgVDCNetwork
 
