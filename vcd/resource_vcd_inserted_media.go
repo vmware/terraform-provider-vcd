@@ -79,7 +79,8 @@ func resourceVcdVmInsertedMediaRead(d *schema.ResourceData, meta interface{}) er
 
 	vm, _, err := getVM(d, meta)
 	if err != nil {
-		return fmt.Errorf("error: %#v", err)
+		// error logged and d.SetId("") is done in getVM function
+		return nil
 	}
 
 	isIsoMounted := false
