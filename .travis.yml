@@ -15,7 +15,7 @@ matrix:
     - go: tip
   include:
     - go: "1.12.x"
-      env: GO111MODULE=off
+      env: GOFLAGS=-mod=vendor GO111MODULE=on
       script:
         - make test
         - make vet
