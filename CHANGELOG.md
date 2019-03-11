@@ -2,6 +2,8 @@
 
 FEATURES:
 
+* **New Attribute:** `networks` - allows for more detailed NIC specification and also adds multiple NIC support ([#118](https://github.com/terraform-providers/terraform-provider-vcd/issues/118))
+* **New Attribute:** `mac` - Gets mac address after network adapter was created
 * `vcd_vapp_vm` - Ability to add metadata to a VM. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES` ([#158](https://github.com/terraform-providers/terraform-provider-vcd/issues/158))
 
 BUG FIXES:
@@ -11,6 +13,10 @@ BUG FIXES:
 BACKWARDS INCOMPATIBILITIES / NOTES:
 
 * `vcd_vapp` - Metadata is no longer added to first VM in vApp it will be added to vApp directly instead. ([#158](https://github.com/terraform-providers/terraform-provider-vcd/issues/158))
+
+NOTES:
+
+* `vcd_vapp_vm` - Deprecated attributes `network_name`, `network_href` and `ip` in favor of `networks`
 
 ## 2.1.0 (March 27, 2019)
 
@@ -37,7 +43,8 @@ IMPROVEMENTS:
 BUG FIXES:
 
 * resource/vcd_vapp, resource/vcd_vapp_vm add vApp status handling when environment is very fast ([#68](https://github.com/terraform-providers/terraform-provider-vcd/issues/68))
-* resource/vcd_vapp_vm add additional validation to check if vApp template is OK [[#157](https://github.com/terraform-providers/terraform-provider-vcd/issues/157)] 
+* resource/vcd_vapp_vm add additional validation to check if vApp template is OK [[#157](https://github.com/terraform-providers/terraform-provider-vcd/issues/157)]
+* Insert Media now supports force ejecting on running VM
 
 ## 2.0.0 (January 30, 2019)
 
@@ -70,7 +77,7 @@ IMPROVEMENTS:
 
 BACKWARDS INCOMPATIBILITIES / NOTES:
 
-* Resource `vcd_network` deprecated in favor of a new name `vcd_network_routed`
+* Deprecates resource `vcd_network` in favor of `vcd_network_routed`
 * Previously deprecated parameter `provider.maxRetryTimeout` removed completely in favor of `provider.max_retry_timeout`
 
 TESTS:
