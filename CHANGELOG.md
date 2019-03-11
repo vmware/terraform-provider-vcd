@@ -15,14 +15,21 @@ FEATURES:
 * **New Resource:** vApp network - `vcd_vapp_network` [GH-155]
 * resource/vcd_vapp_vm has ability to use vApp network [GH-155]
 
+FEATURES:
+
+* `vcd_vapp_vm` - Adds support for adding metadata to vm
+
 IMPROVEMENTS:
 
 * resource/vcd_inserted_media now supports force ejecting on running VM [GH-184]
 * resource/vcd_vapp_vm now support CPU cores configuration [GH-174]
 
 BUG FIXES:
+
 * resource/vcd_vapp, resource/vcd_vapp_vm add vApp status handling when environment is very fast [GH-68]
-* resource/vcd_vapp_vm add additional validation to check if vApp template is OK [GH-157] 
+* resource/vcd_vapp_vm add additional validation to check if vApp template is OK [GH-157]
+* Insert Media now supports force ejecting on running VM
+* `vcd_vapp` - Adds support for adding metadata to empty vapp
 
 ## 2.0.0 (January 30, 2019)
 
