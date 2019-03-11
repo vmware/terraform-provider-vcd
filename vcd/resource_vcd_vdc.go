@@ -421,7 +421,7 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 	}
 
 	if vCpuInMhz, ok := d.GetOk("v_cpu_in_mhz"); ok {
-		params.VCpuInMhz = vCpuInMhz.(int64)
+		params.VCpuInMhz = int64(vCpuInMhz.(int))
 	}
 
 	if isThinProvision, ok := d.GetOk("is_thin_provision"); ok {
