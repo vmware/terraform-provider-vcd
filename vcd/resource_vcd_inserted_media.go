@@ -13,6 +13,7 @@ func resourceVcdInsertedMedia() *schema.Resource {
 		Create: resourceVcdMediaInsert,
 		Delete: resourceVcdMediaEject,
 		Read:   resourceVcdVmInsertedMediaRead,
+		Update: resourceVcdMediaEjectUpdate,
 
 		Schema: map[string]*schema.Schema{
 			"vdc": {
@@ -51,6 +52,13 @@ func resourceVcdInsertedMedia() *schema.Resource {
 				ForceNew:    true,
 				Description: "VM in vApp in which media will be inserted or ejected",
 			},
+			"eject_force": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				ForceNew:    false,
+				Default:     true,
+				Description: "When ejecting answers automatically to question yes",
+			},
 		},
 	}
 }
@@ -64,6 +72,9 @@ func resourceVcdMediaInsert(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	task, err := vm.HandleInsertMedia(&org, d.Get("catalog").(string), d.Get("name").(string))
+	if err != nil {
+		return fmt.Errorf("error: %#v", err)
+	}
 
 	err = task.WaitTaskCompletion()
 	if err != nil {
@@ -79,7 +90,8 @@ func resourceVcdVmInsertedMediaRead(d *schema.ResourceData, meta interface{}) er
 
 	vm, _, err := getVM(d, meta)
 	if err != nil {
-		return fmt.Errorf("error: %#v", err)
+		// error logged and d.SetId("") is done in getVM function
+		return nil
 	}
 
 	isIsoMounted := false
@@ -110,7 +122,7 @@ func resourceVcdMediaEject(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error: %#v", err)
 	}
 
-	err = task.WaitTaskCompletion()
+	err = task.WaitTaskCompletion(d.Get("eject_force").(bool))
 	if err != nil {
 		return fmt.Errorf("error: %#v", err)
 	}
@@ -139,4 +151,10 @@ func getVM(d *schema.ResourceData, meta interface{}) (govcd.VM, govcd.Org, error
 		return govcd.VM{}, govcd.Org{}, fmt.Errorf("error getting VM data: %s", err)
 	}
 	return vm, org, nil
+}
+
+//update function for "eject_force"
+func resourceVcdMediaEjectUpdate(d *schema.ResourceData, m interface{}) error {
+	d.Set("eject_force", d.Get("eject_force"))
+	return nil
 }

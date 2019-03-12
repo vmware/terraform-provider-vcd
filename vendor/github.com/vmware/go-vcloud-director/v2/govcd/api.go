@@ -91,15 +91,15 @@ func (cli *Client) NewRequest(params map[string]string, method string, reqUrl ur
 	return cli.NewRequestWitNotEncodedParams(params, nil, method, reqUrl, body)
 }
 
-// parseErr takes an error XML resp and returns a single string for use in error messages.
-func parseErr(resp *http.Response) error {
+// ParseErr takes an error XML resp and returns a single string for use in error messages.
+func ParseErr(resp *http.Response) error {
 
 	errBody := new(types.Error)
 
 	// if there was an error decoding the body, just return that
 	if err := decodeBody(resp, errBody); err != nil {
-		util.Logger.Printf("[parseErr]: unhandled response <--\n%+v\n-->\n", resp)
-		return fmt.Errorf("[parseErr]: error parsing error body for non-200 request: %s (%+v)", err, resp)
+		util.Logger.Printf("[ParseErr]: unhandled response <--\n%+v\n-->\n", resp)
+		return fmt.Errorf("[ParseErr]: error parsing error body for non-200 request: %s (%+v)", err, resp)
 	}
 
 	return fmt.Errorf("API Error: %d: %s", errBody.MajorErrorCode, errBody.Message)
@@ -167,7 +167,7 @@ func checkResp(resp *http.Response, err error) (*http.Response, error) {
 		http.StatusInternalServerError,         // 500
 		http.StatusServiceUnavailable,          // 503
 		http.StatusGatewayTimeout:              // 504
-		return nil, parseErr(resp)
+		return nil, ParseErr(resp)
 	// Unhandled response.
 	default:
 		return nil, fmt.Errorf("unhandled API response, please report this issue, status code: %s", resp.Status)
