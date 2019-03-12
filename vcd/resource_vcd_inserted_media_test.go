@@ -218,6 +218,6 @@ resource "vcd_inserted_media" "{{.InsertMediaName}}" {
   vm_name    = "${vcd_vapp_vm.{{.VmName}}.name}"
   depends_on = ["vcd_vapp_vm.{{.VmName}}", "vcd_catalog_media.{{.CatalogMediaName}}"]
 
-  eject_force = "{{.ejectForce}}"
+  eject_force = "{{.EjectForce}}"
 }
 `
