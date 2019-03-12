@@ -66,8 +66,8 @@ github.com/smartystreets/goconvey v0.0.0-20190222223459-a17d461953aa/go.mod h1:2
 github.com/stretchr/objx v0.1.0/go.mod h1:HFkY916IF+rwdDfMAkV7OtwuqBVzrE8GR6GFx+wExME=
 github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0Q=
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
-github.com/vmware/go-vcloud-director/v2 v2.1.0-alpha.2 h1:dun5X53kefjvoHnodABGsoFmXlk7LWxiv7EZXxPksHg=
-github.com/vmware/go-vcloud-director/v2 v2.1.0-alpha.2/go.mod h1:/Qy3dfRj5kIe/lvYrvkqChkdJZyRJGEmAUVsonAwmVw=
+github.com/vmware/go-vcloud-director/v2 v2.1.0-beta.1 h1:bYmYJjX+sNdoBzHb9Fhj15J6ZqckzpJ+rgvuHYMHFrA=
+github.com/vmware/go-vcloud-director/v2 v2.1.0-beta.1/go.mod h1:/Qy3dfRj5kIe/lvYrvkqChkdJZyRJGEmAUVsonAwmVw=
 golang.org/x/crypto v0.0.0-20170808112155-b176d7def5d7 h1:pTltqCK8DaN/bs+trgnSNPnBjRpKt+K5GyiIyUWyAw0=
 golang.org/x/crypto v0.0.0-20170808112155-b176d7def5d7/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/net v0.0.0-20170809000501-1c05540f6879 h1:0rFa7EaCGdQPmZVbo9F7MNF65b8dyzS6EUnXjs9Cllk=
