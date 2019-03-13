@@ -376,7 +376,7 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		if d.Get("power_on").(bool) {
 			// Ensure the vApp is not in UNRESOLVED status before powering on. This happens for
 			// less than a second after it is created.
-			err := vapp.StatusWaitNot("UNRESOLVED", vcdClient.MaxRetryTimeout)
+			err := vapp.BlockWhileStatus("UNRESOLVED", vcdClient.MaxRetryTimeout)
 			if err != nil {
 				return fmt.Errorf("could not get vApp status while powering on: %s", err)
 			}
