@@ -56,7 +56,7 @@ func TestAccVcdVApp_PowerOff(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_vapp."+vappName, "power_on", "true"),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp."+vappName, "vapp_metadata", "vApp Metadata."),
+						"vcd_vapp."+vappName, "metadata.vapp_metadata", "vApp Metadata."),
 				),
 			},
 
@@ -70,7 +70,7 @@ func TestAccVcdVApp_PowerOff(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_vapp."+vappNameAllocated, "power_on", "true"),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp."+vappName, "vapp_metadata", "vApp Metadata."),
+						"vcd_vapp."+vappNameAllocated, "metadata.vapp_metadata", "vApp Metadata."),
 				),
 			},
 
@@ -86,7 +86,7 @@ func TestAccVcdVApp_PowerOff(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_vapp."+vappName, "power_on", "false"),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp."+vappName, "vapp_metadata", "vApp Metadata."),
+						"vcd_vapp."+vappName, "metadata.vapp_metadata", "vApp Metadata."),
 				),
 			},
 		},
