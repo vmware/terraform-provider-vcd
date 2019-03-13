@@ -17,7 +17,7 @@ FEATURES:
 
 FEATURES:
 
-* `vcd_vapp_vm` - Added support for adding metadata to VM
+* `vcd_vapp_vm` - Ability to add metadata to a VM. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES`
 
 IMPROVEMENTS:
 
@@ -29,7 +29,7 @@ BUG FIXES:
 * resource/vcd_vapp, resource/vcd_vapp_vm add vApp status handling when environment is very fast [GH-68]
 * resource/vcd_vapp_vm add additional validation to check if vApp template is OK [GH-157]
 * Insert Media now supports force ejecting on running VM
-* `vcd_vapp` - Added support for adding metadata to empty vApp
+* `vcd_vapp` - Ability to add metadata to empty vApp. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES`
 
 BACKWARDS INCOMPATIBILITIES / NOTES:
 
