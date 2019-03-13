@@ -299,7 +299,7 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 		for _, k := range toBeRemoveMetadata {
-			task, err := vapp.DeleteMetadata(k)
+			task, err := vapp.DeleteMetadata(k, vapp.VApp.HREF)
 			if err != nil {
 				return fmt.Errorf("error deleting metadata: %#v", err)
 			}
@@ -309,7 +309,7 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 		for k, v := range nmetdata {
-			task, err := vapp.AddMetadata(k, v.(string))
+			task, err := vapp.AddMetadata(k, v.(string), vapp.VApp.HREF)
 			if err != nil {
 				return fmt.Errorf("error adding metadata: %#v", err)
 			}
