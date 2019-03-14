@@ -43,14 +43,16 @@ func resourceVcdIndependentDisk() *schema.Resource {
 				Description: "size in GB",
 			},
 			"bus_type": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: validateBusType,
 			},
 			"bus_sub_type": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: validateBusSubType,
 			},
 		},
 	}
@@ -182,4 +184,22 @@ func resourceVcdIndependentDiskDelete(d *schema.ResourceData, meta interface{}) 
 	}
 
 	return nil
+}
+
+func validateBusType(v interface{}, k string) (warnings []string, errors []error) {
+	value := v.(string)
+	if "" == busTypes[strings.ToUpper(value)] {
+		errors = append(errors, fmt.Errorf(
+			"%q (%q) value isn't valid", k, value))
+	}
+	return
+}
+
+func validateBusSubType(v interface{}, k string) (warnings []string, errors []error) {
+	value := v.(string)
+	if "" == busSubTypes[strings.ToLower(value)] {
+		errors = append(errors, fmt.Errorf(
+			"%q (%q) value isn't valid", k, value))
+	}
+	return
 }
