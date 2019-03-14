@@ -410,7 +410,7 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 		var toBeRemovedMetadata []string
 		// Check if any key in old metadata was removed in new metadata.
 		// Creates a list of keys to be removed.
-		for k := range newMetdata {
+		for k := range oldMetadata {
 			if _, ok := newMetdata[k]; !ok {
 				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
 			}
