@@ -6,6 +6,11 @@ ARCHITECTURAL:
 look at [README.md](README.md) to understand how Go modules impact build and development.
 * Project dependency of github.com/hashicorp/terraform updated from v0.10.0 to v0.11.13.
 
+FEATURES:
+
+* New Independent disk resource - `vcd_independent_disk`
+* Ability to attach independent disk in `vcd_vapp_vm` 
+
 IMPROVEMENTS:
 
 * Insert Media now supports force ejecting on running VM
