@@ -409,7 +409,7 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 			for _, diskData := range diskProperties {
 				disk, err := vdc.QueryDisk(diskData.name)
 				if err != nil {
-					fmt.Errorf("did not find disk `%s`: %#v", diskData.name, err)
+					return fmt.Errorf("did not find disk `%s`: %#v", diskData.name, err)
 				}
 
 				attachParams := &types.DiskAttachOrDetachParams{Disk: &types.Reference{HREF: disk.Disk.HREF}}
