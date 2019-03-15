@@ -6,7 +6,7 @@ description: |-
   Provides a vCloud Director independent disk resource. This can be used to create and delete independent disks.
 ---
 
-# vcd\_inserted\_media
+# vcd\_independent\_disk
 
 Provides a vCloud Director independent disk resource. This can be used to create and delete independent disks.
 
