@@ -85,7 +85,7 @@ The following arguments are supported:
 * `accept_all_eulas` - (Optional; *v2.0+*) Automatically accept EULA if OVA has it. Default is `true`
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
-* `disk` - (Optional) Independent disk attachment configuration. Details below
+* `disk` - (Optional; *v2.01*) Independent disk attachment configuration. Details below
 
 Independent disk support the following attributes:
 

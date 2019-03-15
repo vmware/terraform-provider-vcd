@@ -25,6 +25,20 @@ resource "vcd_independent_disk" "myNewIndependentDisk" {
   bus_sub_type    = "VirtualSCSI"
   storage_profile = "external"
 }
+
+resource "vcd_vapp_vm" "web2" {
+  vapp_name     = "${vcd_vapp.web.name}"
+
+...
+  
+  disk {
+    name = "${vcd_independent_disk.Disk_1.name}"
+    bus_number = 1
+    unit_number = 0
+  }
+
+  depends_on = ["vcd_independent_disk.myNewIndependentDisk"]
+}
 ```
 
 ## Argument Reference
