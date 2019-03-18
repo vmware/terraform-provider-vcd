@@ -399,13 +399,18 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 
-		// detach current independent disks - only possible when VM power off
+		// detaching independent disks - only possible when VM power off
 		if d.HasChange("disk") {
-			oldValues, _ := d.GetChange("disk")
-			diskProperties, err := expandDisksProperties(oldValues)
+			oldValues, newValues := d.GetChange("disk")
+
+			attachDisks := newValues.(*schema.Set).Difference(oldValues.(*schema.Set))
+			detachDisks := oldValues.(*schema.Set).Difference(newValues.(*schema.Set))
+
+			diskProperties, err := expandDisksProperties(detachDisks)
 			if err != nil {
 				return err
 			}
+
 			for _, diskData := range diskProperties {
 				disk, err := vdc.QueryDisk(diskData.name)
 				if err != nil {
@@ -431,7 +436,7 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 			}
 
 			// attach new independent disks
-			newDiskProperties, err := expandDisksProperties(d.Get("disk"))
+			newDiskProperties, err := expandDisksProperties(attachDisks)
 			if err != nil {
 				return err
 			}
