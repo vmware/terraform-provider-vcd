@@ -112,11 +112,11 @@ func resourceVcdVAppVm() *schema.Resource {
 					},
 					"bus_number": {
 						Type:     schema.TypeString,
-						Optional: true,
+						Required: true,
 					},
 					"unit_number": {
 						Type:     schema.TypeString,
-						Optional: true,
+						Required: true,
 					},
 				}},
 				Optional: true,

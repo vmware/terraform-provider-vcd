@@ -20,7 +20,7 @@ resource "vcd_independent_disk" "myNewIndependentDisk" {
   vdc             = "my-vcd"
   
   name            = "logDisk"
-  size            = "33"
+  size            = "33000"
   bus_type        = "SCSI"
   bus_sub_type    = "VirtualSCSI"
   storage_profile = "external"
@@ -48,7 +48,7 @@ The following arguments are supported:
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
 * `name` - (Required) Disk name
-* `size` - (Required) - Size of disk in GB
+* `size` - (Required) - Size of disk in MB
 * `bus_type` - (Optional) - Disk bus type. Values can be: IDE, SCSI, SATA 
 * `bus_sub_type` - (Optional) - Disk bus subtype. Values can be: "IDE" for IDE. buslogic, lsilogic, lsilogicsas, VirtualSCSI for SCSI and ahci for SATA
 * `storage_profile` - (Optional) - The name of storage profile where disk will be created

@@ -40,7 +40,7 @@ func resourceVcdIndependentDisk() *schema.Resource {
 				Type:        schema.TypeFloat,
 				Required:    true,
 				ForceNew:    true,
-				Description: "size in GB",
+				Description: "size in MB",
 			},
 			"bus_type": &schema.Schema{
 				Type:         schema.TypeString,
@@ -90,7 +90,7 @@ func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) 
 
 	diskCreateParams := &types.DiskCreateParams{Disk: &types.Disk{
 		Name: diskName,
-		Size: int(d.Get("size").(float64) * 1024 * 1024 * 1024),
+		Size: int(d.Get("size").(float64) * 1024 * 1024),
 	}}
 
 	var storageReference types.Reference

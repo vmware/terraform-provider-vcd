@@ -18,7 +18,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 		"Org":                testConfig.VCD.Org,
 		"Vdc":                testConfig.VCD.Vdc,
 		"name":               name,
-		"size":               "5",
+		"size":               "5000",
 		"busType":            "SCSI",
 		"busSubType":         "lsilogicsas",
 		"storageProfileName": "*",
