@@ -18,6 +18,10 @@ provider:
     #
     # The organization you are authenticating with
     sysOrg: System
+    # (Optional) MaxRetryTimeout specifies a time limit (in seconds) for retrying requests made by the SDK
+	  # where vCloud director may take time to respond and retry mechanism is needed.
+  	# This must be >0 to avoid instant timeout errors. If omitted - default value is set.
+    # maxRetryTimeout: 60
 vcd:
     # Name of the organization (mandatory)
     org: myorg

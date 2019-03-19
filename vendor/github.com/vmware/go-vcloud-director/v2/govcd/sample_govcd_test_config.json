@@ -4,7 +4,10 @@
 		"user": "someuser",
 		"password": "somepassword",
 		"url": "https://11.111.1.111/api",
-		"sysOrg": "System"
+		"sysOrg": "System",
+		"//": "(Optional) In some cases the vCloud Director SDK must wait. It can be",
+		"//": "customized using the below var. If it is not set SDK assumes a default value.",
+		"maxRetryTimeout": 60
 	},
 	"vcd": {
 		"org": "myorg",
