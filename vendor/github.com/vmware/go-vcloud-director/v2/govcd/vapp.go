@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
@@ -260,6 +261,11 @@ func (vapp *VApp) RemoveVM(vm VM) error {
 }
 
 func (vapp *VApp) PowerOn() (Task, error) {
+
+	err := vapp.BlockWhileStatus("UNRESOLVED", vapp.client.MaxRetryTimeout)
+	if err != nil {
+		return Task{}, fmt.Errorf("error powering on vApp: %s", err)
+	}
 
 	apiEndpoint, _ := url.ParseRequestURI(vapp.VApp.HREF)
 	apiEndpoint.Path += "/power/action/powerOn"
@@ -565,6 +571,31 @@ func (vapp *VApp) GetStatus() (string, error) {
 		return "", fmt.Errorf("error refreshing vApp: %v", err)
 	}
 	return types.VAppStatuses[vapp.VApp.Status], nil
+}
+
+// BlockWhileStatus blocks until the status of vApp exits unwantedStatus.
+// It sleeps 200 milliseconds between iterations and times out after timeOutAfterSeconds
+// of seconds.
+func (vapp *VApp) BlockWhileStatus(unwantedStatus string, timeOutAfterSeconds int) error {
+	timeoutAfter := time.After(time.Duration(timeOutAfterSeconds) * time.Second)
+	tick := time.Tick(200 * time.Millisecond)
+
+	for {
+		select {
+		case <-timeoutAfter:
+			return fmt.Errorf("timed out waiting for vApp to exit state %s after %d seconds",
+				unwantedStatus, timeOutAfterSeconds)
+		case <-tick:
+			currentStatus, err := vapp.GetStatus()
+
+			if err != nil {
+				return fmt.Errorf("could not get vApp status %s", err)
+			}
+			if currentStatus != unwantedStatus {
+				return nil
+			}
+		}
+	}
 }
 
 func (vapp *VApp) GetNetworkConnectionSection() (*types.NetworkConnectionSection, error) {
