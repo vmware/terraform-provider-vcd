@@ -3,14 +3,15 @@ package vcd
 import (
 	"bytes"
 	"fmt"
+	"log"
+	"sort"
+	"strconv"
+
 	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"log"
-	"sort"
-	"strconv"
 )
 
 func resourceVcdVAppVm() *schema.Resource {
@@ -464,6 +465,7 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 	return resourceVcdVAppVmRead(d, meta)
 }
 
+// updates attached disks to latest state. Removed not needed and add new ones
 func attachDetachDisks(d *schema.ResourceData, vm govcd.VM, vdc govcd.Vdc) error {
 	oldValues, newValues := d.GetChange("disk")
 

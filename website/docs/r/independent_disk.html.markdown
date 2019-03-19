@@ -32,7 +32,7 @@ resource "vcd_vapp_vm" "web2" {
 ...
   
   disk {
-    name = "${vcd_independent_disk.Disk_1.name}"
+    name = "${vcd_independent_disk.myNewIndependentDisk.name}"
     bus_number = 1
     unit_number = 0
   }
