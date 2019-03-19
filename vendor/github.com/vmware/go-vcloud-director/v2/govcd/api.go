@@ -27,6 +27,11 @@ type Client struct {
 	VCDHREF       url.URL     // VCD API ENDPOINT
 	Http          http.Client // HttpClient is the client to use. Default will be used if not provided.
 	IsSysAdmin    bool        // flag if client is connected as system administrator
+
+	// MaxRetryTimeout specifies a time limit (in seconds) for retrying requests made by the SDK
+	// where vCloud director may take time to respond and retry mechanism is needed.
+	// This must be >0 to avoid instant timeout errors.
+	MaxRetryTimeout int
 }
 
 // Function allow to pass complex values params which shouldn't be encoded like for queries. e.g. /query?filter=(name=foo)
