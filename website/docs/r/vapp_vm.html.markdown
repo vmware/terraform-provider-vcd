@@ -52,6 +52,18 @@ resource "vcd_vapp_vm" "web2" {
 
   network_name = "net"
   ip           = "10.10.104.162"
+  
+  disk {
+    name = "logDisk1"
+    bus_number = 1
+    unit_number = 0
+  }
+  
+  disk {
+    name = "logDisk2"
+    bus_number = 1
+    unit_number = 1
+  }  
 
   depends_on = ["vcd_vapp.web"]
 }
@@ -79,3 +91,10 @@ The following arguments are supported:
 * `accept_all_eulas` - (Optional; *v2.0+*) Automatically accept EULA if OVA has it. Default is `true`
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
+* `disk` - (Optional; *v2.1*) Independent disk attachment configuration. Details below
+
+Independent disk support the following attributes:
+
+* `name` - (Required) Independent disk name
+* `bus_number` - (Required) Bus number on which to place the disk controller
+* `unit_number` - (Required) Unit number (slot) on the bus specified by BusNumber.

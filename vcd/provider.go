@@ -99,6 +99,7 @@ func Provider() terraform.ResourceProvider {
 			"vcd_catalog_item":     resourceVcdCatalogItem(),
 			"vcd_catalog_media":    resourceVcdCatalogMedia(),
 			"vcd_inserted_media":   resourceVcdInsertedMedia(),
+			"vcd_independent_disk": resourceVcdIndependentDisk(),
 		},
 
 		ConfigureFunc: providerConfigure,
