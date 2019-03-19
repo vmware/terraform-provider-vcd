@@ -245,7 +245,16 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.SetId(d.Get("name").(string))
 
-	return resourceVcdVAppVmUpdate(d, meta)
+	err = resourceVcdVAppVmUpdate(d, meta)
+	if err != nil {
+		errAttachedDisk := updateStateOfAttachedDisks(d, vm, vdc)
+		if errAttachedDisk != nil {
+			d.Set("disk", nil)
+			return fmt.Errorf("error reading attached disks : %#v and internal error : %#v", errAttachedDisk, err)
+		}
+		return err
+	}
+	return nil
 }
 
 // Adds existing org VDC network to VM network configuration
@@ -401,75 +410,14 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 
 		// detaching independent disks - only possible when VM power off
 		if d.HasChange("disk") {
-			oldValues, newValues := d.GetChange("disk")
-
-			attachDisks := newValues.(*schema.Set).Difference(oldValues.(*schema.Set))
-			detachDisks := oldValues.(*schema.Set).Difference(newValues.(*schema.Set))
-
-			diskProperties, err := expandDisksProperties(detachDisks)
+			err = attachDetachDisks(d, vm, vdc)
 			if err != nil {
-				return err
-			}
-
-			for _, diskData := range diskProperties {
-				disk, err := vdc.QueryDisk(diskData.name)
-				if err != nil {
-					return fmt.Errorf("did not find disk `%s`: %#v", diskData.name, err)
+				errAttachedDisk := updateStateOfAttachedDisks(d, vm, vdc)
+				if errAttachedDisk != nil {
+					d.Set("disk", nil)
+					return fmt.Errorf("error reading attached disks : %#v and internal error : %#v", errAttachedDisk, err)
 				}
-
-				attachParams := &types.DiskAttachOrDetachParams{Disk: &types.Reference{HREF: disk.Disk.HREF}}
-				if diskData.unitNumber != nil {
-					attachParams.UnitNumber = diskData.unitNumber
-				}
-				if diskData.busNumber != nil {
-					attachParams.BusNumber = diskData.busNumber
-				}
-
-				task, err := vm.DetachDisk(attachParams)
-				if err != nil {
-					return fmt.Errorf("error detaching disk `%s` to vm %#v", diskData.name, err)
-				}
-				err = task.WaitTaskCompletion()
-				if err != nil {
-					return fmt.Errorf("error waiting for task to complete detaching disk `%s` to vm %#v", diskData.name, err)
-				}
-			}
-
-			// attach new independent disks
-			newDiskProperties, err := expandDisksProperties(attachDisks)
-			if err != nil {
-				return err
-			}
-
-			sort.SliceStable(newDiskProperties, func(i, j int) bool {
-				if newDiskProperties[i].busNumber == newDiskProperties[j].busNumber {
-					return *newDiskProperties[i].unitNumber > *newDiskProperties[j].unitNumber
-				}
-				return *newDiskProperties[i].busNumber > *newDiskProperties[j].busNumber
-			})
-
-			for _, diskData := range newDiskProperties {
-				disk, err := vdc.QueryDisk(diskData.name)
-				if err != nil {
-					return fmt.Errorf("did not find disk `%s`: %#v", diskData.name, err)
-				}
-
-				attachParams := &types.DiskAttachOrDetachParams{Disk: &types.Reference{HREF: disk.Disk.HREF}}
-				if diskData.unitNumber != nil {
-					attachParams.UnitNumber = diskData.unitNumber
-				}
-				if diskData.busNumber != nil {
-					attachParams.BusNumber = diskData.busNumber
-				}
-
-				task, err := vm.AttachDisk(attachParams)
-				if err != nil {
-					return fmt.Errorf("error attaching disk `%s` to vm %#v", diskData.name, err)
-				}
-				err = task.WaitTaskCompletion()
-				if err != nil {
-					return fmt.Errorf("error waiting for task to complete attaching disk `%s` to vm %#v", diskData.name, err)
-				}
+				return fmt.Errorf("error attaching-detaching  disks when updating resource : %#v", err)
 			}
 		}
 		if d.HasChange("memory") {
@@ -516,6 +464,80 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 	return resourceVcdVAppVmRead(d, meta)
 }
 
+func attachDetachDisks(d *schema.ResourceData, vm govcd.VM, vdc govcd.Vdc) error {
+	oldValues, newValues := d.GetChange("disk")
+
+	attachDisks := newValues.(*schema.Set).Difference(oldValues.(*schema.Set))
+	detachDisks := oldValues.(*schema.Set).Difference(newValues.(*schema.Set))
+
+	removeDiskProperties, err := expandDisksProperties(detachDisks)
+	if err != nil {
+		return err
+	}
+
+	for _, diskData := range removeDiskProperties {
+		disk, err := vdc.QueryDisk(diskData.name)
+		if err != nil {
+			return fmt.Errorf("did not find disk `%s`: %#v", diskData.name, err)
+		}
+
+		attachParams := &types.DiskAttachOrDetachParams{Disk: &types.Reference{HREF: disk.Disk.HREF}}
+		if diskData.unitNumber != nil {
+			attachParams.UnitNumber = diskData.unitNumber
+		}
+		if diskData.busNumber != nil {
+			attachParams.BusNumber = diskData.busNumber
+		}
+
+		task, err := vm.DetachDisk(attachParams)
+		if err != nil {
+			return fmt.Errorf("error detaching disk `%s` to vm %#v", diskData.name, err)
+		}
+		err = task.WaitTaskCompletion()
+		if err != nil {
+			return fmt.Errorf("error waiting for task to complete detaching disk `%s` to vm %#v", diskData.name, err)
+		}
+	}
+
+	// attach new independent disks
+	newDiskProperties, err := expandDisksProperties(attachDisks)
+	if err != nil {
+		return err
+	}
+
+	sort.SliceStable(newDiskProperties, func(i, j int) bool {
+		if newDiskProperties[i].busNumber == newDiskProperties[j].busNumber {
+			return *newDiskProperties[i].unitNumber > *newDiskProperties[j].unitNumber
+		}
+		return *newDiskProperties[i].busNumber > *newDiskProperties[j].busNumber
+	})
+
+	for _, diskData := range newDiskProperties {
+		disk, err := vdc.QueryDisk(diskData.name)
+		if err != nil {
+			return fmt.Errorf("did not find disk `%s`: %#v", diskData.name, err)
+		}
+
+		attachParams := &types.DiskAttachOrDetachParams{Disk: &types.Reference{HREF: disk.Disk.HREF}}
+		if diskData.unitNumber != nil {
+			attachParams.UnitNumber = diskData.unitNumber
+		}
+		if diskData.busNumber != nil {
+			attachParams.BusNumber = diskData.busNumber
+		}
+
+		task, err := vm.AttachDisk(attachParams)
+		if err != nil {
+			return fmt.Errorf("error attaching disk `%s` to vm %#v", diskData.name, err)
+		}
+		err = task.WaitTaskCompletion()
+		if err != nil {
+			return fmt.Errorf("error waiting for task to complete attaching disk `%s` to vm %#v", diskData.name, err)
+		}
+	}
+	return nil
+}
+
 func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
@@ -543,6 +565,16 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.Set("href", vm.VM.HREF)
 
+	err = updateStateOfAttachedDisks(d, vm, vdc)
+	if err != nil {
+		d.Set("disk", nil)
+		return fmt.Errorf("error reading attached disks : %#v", err)
+	}
+
+	return nil
+}
+
+func updateStateOfAttachedDisks(d *schema.ResourceData, vm govcd.VM, vdc govcd.Vdc) error {
 	// Check VM independent disks state
 	diskProperties, err := expandDisksProperties(d.Get("disk"))
 	if err != nil {
@@ -582,8 +614,7 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 		transformed.Add(newValues)
 	}
 
-	d.Set("disks", transformed)
-
+	d.Set("disk", transformed)
 	return nil
 }
 
