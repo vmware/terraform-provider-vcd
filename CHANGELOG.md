@@ -1,4 +1,4 @@
-## 2.1.0 (February 5, 2019)
+## 2.1.0 (March 25, 2019)
 
 ARCHITECTURAL:
 
@@ -9,11 +9,17 @@ look at [README.md](README.md) to understand how Go modules impact build and dev
 FEATURES:
 
 * New Independent disk resource - `vcd_independent_disk`
-* Ability to attach independent disk in `vcd_vapp_vm` 
+* Ability to attach independent disk in `vcd_vapp_vm`
+* New vApp network resource - `vcd_vapp_network`
+* Ability to vApp network in `vcd_vapp_vm` 
 
 IMPROVEMENTS:
 
 * Insert Media now supports force ejecting on running VM
+
+FIXED:
+* 68 Issue - vAPP status handling when env is very fast
+* 157 Issue - added additional validation to check if vApp template is ok 
 
 ## 2.0.0 (January 30, 2019)
 
