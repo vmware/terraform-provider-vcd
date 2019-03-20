@@ -1,6 +1,6 @@
 ## 2.1.0 (March 25, 2019)
 
-BREAKING CHANGES:
+NOTES:
 
 * Project switched to using Go modules, while `vendor` is left for backwards build compatibility only. It is worth having a
 look at [README.md](README.md) to understand how Go modules impact build and development.
