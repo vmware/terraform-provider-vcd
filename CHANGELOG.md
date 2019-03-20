@@ -1,6 +1,6 @@
 ## 2.1.0 (March 25, 2019)
 
-ARCHITECTURAL:
+BREAKING CHANGES:
 
 * Project switched to using Go modules, while `vendor` is left for backwards build compatibility only. It is worth having a
 look at [README.md](README.md) to understand how Go modules impact build and development.
@@ -8,18 +8,18 @@ look at [README.md](README.md) to understand how Go modules impact build and dev
 
 FEATURES:
 
-* New Independent disk resource - `vcd_independent_disk`
-* Ability to attach independent disk in `vcd_vapp_vm`
-* New vApp network resource - `vcd_vapp_network`
-* Ability to vApp network in `vcd_vapp_vm` 
+* **New Resource:** disk resource - `vcd_independent_disk`
+* resource/vcd_vapp_vm ahas ability to attach independent disk in 
+* **New Resource:** vApp network - `vcd_vapp_network`
+* resource/vcd_vapp_vm has ability to use vApp network 
 
 IMPROVEMENTS:
 
-* Insert Media now supports force ejecting on running VM
+* resource/vcd_inserted_media now supports force ejecting on running VM
 
-FIXED:
-* 68 Issue - vAPP status handling when env is very fast
-* 157 Issue - added additional validation to check if vApp template is ok 
+BUG FIXES:
+* [68] Issue - added vAPP status handling when env is very fast
+* [157] Issue - added additional validation to check if vApp template is ok 
 
 ## 2.0.0 (January 30, 2019)
 
