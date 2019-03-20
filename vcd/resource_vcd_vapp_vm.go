@@ -399,7 +399,8 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	// When there is more then one VM in a vApp Terraform will try to parallelise their creation.
 	// However, vApp throws errors when simultaneous requests are executed.
-	// To avoid them, below block is using retryCall in multiple places as a workaround, so that the VMs are created regardless of parallelisation.
+	// To avoid them, below block is using retryCall in multiple places as a workaround,
+	// so that the VMs are created regardless of parallelisation.
 	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("power_on") || d.HasChange("disk") {
 		if status != "POWERED_OFF" {
 			task, err := vm.PowerOff()
