@@ -1,25 +1,27 @@
-## 2.1.0 (March 25, 2019)
+## 2.1.0 (Unreleased)
 
 NOTES:
 
 * Project switched to using Go modules, while `vendor` is left for backwards build compatibility only. It is worth having a
-look at [README.md](README.md) to understand how Go modules impact build and development.
-* Project dependency of github.com/hashicorp/terraform updated from v0.10.0 to v0.11.13.
+look at [README.md](README.md) to understand how Go modules impact build and development [GH-178]
+* Project dependency of github.com/hashicorp/terraform updated from v0.10.0 to v0.11.13 [GH-181]
+* MaxRetryTimeout is shared with underlying SDK `go-vcloud-director` [GH-189]
+* Improved testing functionality [GH-166]
 
 FEATURES:
 
-* **New Resource:** disk resource - `vcd_independent_disk`
-* resource/vcd_vapp_vm ahas ability to attach independent disk in 
-* **New Resource:** vApp network - `vcd_vapp_network`
-* resource/vcd_vapp_vm has ability to use vApp network 
+* **New Resource:** disk resource - `vcd_independent_disk` [GH-188]
+* resource/vcd_vapp_vm has ability to attach independent disk [GH-188]
+* **New Resource:** vApp network - `vcd_vapp_network` [GH-155]
+* resource/vcd_vapp_vm has ability to use vApp network [GH-155]
 
 IMPROVEMENTS:
 
-* resource/vcd_inserted_media now supports force ejecting on running VM
+* resource/vcd_inserted_media now supports force ejecting on running VM [GH-184]
 
 BUG FIXES:
-* [68] Issue - added vAPP status handling when env is very fast
-* [157] Issue - added additional validation to check if vApp template is ok 
+* add vAPP status handling when environment is very fast [GH-68]
+* add additional validation to check if vApp template is ok [GH-157] 
 
 ## 2.0.0 (January 30, 2019)
 
