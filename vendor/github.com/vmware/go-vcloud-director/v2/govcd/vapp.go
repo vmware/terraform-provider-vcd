@@ -628,7 +628,8 @@ func (vapp *VApp) GetNetworkConnectionSection() (*types.NetworkConnectionSection
 // Sets number of available virtual logical processors
 // (i.e. CPUs x cores per socket)
 // https://communities.vmware.com/thread/576209
-func (vapp *VApp) ChangeCPUcount(virtualCpuCount int) (Task, error) {
+// Deprecated: Use vm.ChangeCPUcount()
+func (vapp *VApp) ChangeCPUCount(virtualCpuCount int) (Task, error) {
 	return vapp.ChangeCPUCountWithCore(virtualCpuCount, nil)
 }
 
@@ -636,6 +637,7 @@ func (vapp *VApp) ChangeCPUcount(virtualCpuCount int) (Task, error) {
 // (i.e. CPUs x cores per socket) and cores per socket.
 // Socket count is a result of: virtual logical processors/cores per socket
 // https://communities.vmware.com/thread/576209
+// Deprecated: Use vm.ChangeCPUCountWithCore()
 func (vapp *VApp) ChangeCPUCountWithCore(virtualCpuCount int, coresPerSocket *int) (Task, error) {
 
 	err := vapp.Refresh()

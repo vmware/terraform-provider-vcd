@@ -243,14 +243,14 @@ func CreateCatalog(client *Client, links types.LinkList, Name, Description strin
 func (adminOrg *AdminOrg) GetVdcByName(vdcname string) (Vdc, error) {
 	for _, vdcs := range adminOrg.AdminOrg.Vdcs.Vdcs {
 		if vdcs.Name == vdcname {
-			splitbyAdminHREF := strings.Split(vdcs.HREF, "/admin")
+			splitByAdminHREF := strings.Split(vdcs.HREF, "/api/admin")
 
 			// admin user and normal user will have different urls
 			var vdcHREF string
-			if len(splitbyAdminHREF) == 1 {
+			if len(splitByAdminHREF) == 1 {
 				vdcHREF = vdcs.HREF
 			} else {
-				vdcHREF = splitbyAdminHREF[0] + splitbyAdminHREF[1]
+				vdcHREF = splitByAdminHREF[0] + "/api" + splitByAdminHREF[1]
 			}
 
 			vdcURL, err := url.ParseRequestURI(vdcHREF)
@@ -507,9 +507,10 @@ func (adminOrg *AdminOrg) removeAllVApps() error {
 // Gets a vdc within org associated with an admin vdc url
 func (adminOrg *AdminOrg) getVdcByAdminHREF(adminVdcUrl *url.URL) (*Vdc, error) {
 	// get non admin vdc path
-	non_admin := strings.Split(adminVdcUrl.Path, "/admin")
-	adminVdcUrl.Path = non_admin[0] + non_admin[1]
-	req := adminOrg.client.NewRequest(map[string]string{}, "GET", *adminVdcUrl, nil)
+	vdcURL := adminOrg.client.VCDHREF
+	vdcURL.Path += strings.Split(adminVdcUrl.Path, "/api/admin")[1] //gets id
+
+	req := adminOrg.client.NewRequest(map[string]string{}, "GET", vdcURL, nil)
 	resp, err := checkResp(adminOrg.client.Http.Do(req))
 	if err != nil {
 		return &Vdc{}, fmt.Errorf("error retrieving vdc: %s", err)
@@ -525,9 +526,11 @@ func (adminOrg *AdminOrg) getVdcByAdminHREF(adminVdcUrl *url.URL) (*Vdc, error) 
 // Removes all vdcs in a org
 func (adminOrg *AdminOrg) removeAllOrgVDCs() error {
 	for _, vdcs := range adminOrg.AdminOrg.Vdcs.Vdcs {
+
 		// Get admin Vdc HREF
 		adminVdcUrl := adminOrg.client.VCDHREF
-		adminVdcUrl.Path += "/admin/vdc/" + strings.Split(vdcs.HREF, "/vdc/")[1] + "/action/disable"
+		adminVdcUrl.Path += "/admin/vdc/" + strings.Split(vdcs.HREF, "/api/vdc/")[1] + "/action/disable"
+
 		req := adminOrg.client.NewRequest(map[string]string{}, "POST", adminVdcUrl, nil)
 		_, err := checkResp(adminOrg.client.Http.Do(req))
 		if err != nil {
@@ -565,7 +568,7 @@ func (adminOrg *AdminOrg) removeAllOrgNetworks() error {
 	for _, networks := range adminOrg.AdminOrg.Networks.Networks {
 		// Get Network HREF
 		networkHREF := adminOrg.client.VCDHREF
-		networkHREF.Path += "/admin/network/" + strings.Split(networks.HREF, "/network/")[1] //gets id
+		networkHREF.Path += "/admin/network/" + strings.Split(networks.HREF, "/api/admin/network/")[1] //gets id
 		req := adminOrg.client.NewRequest(map[string]string{}, "DELETE", networkHREF, nil)
 		resp, err := checkResp(adminOrg.client.Http.Do(req))
 		if err != nil {
@@ -592,7 +595,7 @@ func (adminOrg *AdminOrg) removeCatalogs() error {
 	for _, catalogs := range adminOrg.AdminOrg.Catalogs.Catalog {
 		// Get Catalog HREF
 		catalogHREF := adminOrg.client.VCDHREF
-		catalogHREF.Path += "/admin/catalog/" + strings.Split(catalogs.HREF, "/catalog/")[1] //gets id
+		catalogHREF.Path += "/admin/catalog/" + strings.Split(catalogs.HREF, "/api/admin/catalog/")[1] //gets id
 		req := adminOrg.client.NewRequest(map[string]string{
 			"force":     "true",
 			"recursive": "true",
@@ -641,16 +644,12 @@ func (adminOrg *AdminOrg) FindAdminCatalog(catalogName string) (AdminCatalog, er
 // Otherwise it returns an error. Function allows user to use an AdminOrg
 // to also fetch a Catalog.
 func (adminOrg *AdminOrg) FindCatalog(catalogName string) (Catalog, error) {
-	for _, catalogs := range adminOrg.AdminOrg.Catalogs.Catalog {
+	for _, catalog := range adminOrg.AdminOrg.Catalogs.Catalog {
 		// Get Catalog HREF
-		if catalogs.Name == catalogName {
-			splitbyAdminHREF := strings.Split(catalogs.HREF, "/admin")
-			catalogHREF := splitbyAdminHREF[0] + splitbyAdminHREF[1]
-			catalogURL, err := url.ParseRequestURI(catalogHREF)
-			if err != nil {
-				return Catalog{}, fmt.Errorf("error decoding catalog url: %s", err)
-			}
-			req := adminOrg.client.NewRequest(map[string]string{}, "GET", *catalogURL, nil)
+		if catalog.Name == catalogName {
+			catalogURL := adminOrg.client.VCDHREF
+			catalogURL.Path += "/catalog/" + strings.Split(catalog.HREF, "/api/admin/catalog/")[1] //gets id
+			req := adminOrg.client.NewRequest(map[string]string{}, "GET", catalogURL, nil)
 			resp, err := checkResp(adminOrg.client.Http.Do(req))
 			if err != nil {
 				return Catalog{}, fmt.Errorf("error retrieving catalog: %s", err)
