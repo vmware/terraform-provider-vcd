@@ -443,17 +443,13 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 
-		if d.HasChange("cpus") {
+		if d.HasChange("cpus") || d.HasChange("cpu_cores") {
 			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 				var task govcd.Task
 				var err error
-				if d.HasChange("cpu_cores") {
-					if d.Get("cpu_cores") != nil {
-						coreCounts := d.Get("cpu_cores").(int)
-						task, err = vm.ChangeCPUCountWithCore(d.Get("cpus").(int), &coreCounts)
-					} else {
-						return resource.RetryableError(fmt.Errorf("missing cpu_core value: %#v", err))
-					}
+				if d.Get("cpu_cores") != nil {
+					coreCounts := d.Get("cpu_cores").(int)
+					task, err = vm.ChangeCPUCountWithCore(d.Get("cpus").(int), &coreCounts)
 				} else {
 					task, err = vm.ChangeCPUCount(d.Get("cpus").(int))
 				}

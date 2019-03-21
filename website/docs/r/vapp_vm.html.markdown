@@ -75,7 +75,7 @@ resource "vcd_vapp_vm" "web2" {
 The following arguments are supported:
 
 * `vapp_name` - (Required) The vApp this VM should belong to.
-* `name` - (Required) A unique name for the vApp
+* `name` - (Required) A unique name for the VM
 * `catalog_name` - (Required) The catalog name in which to find the given vApp Template
 * `template_name` - (Required) The name of the vApp Template to use
 * `memory` - (Optional) The amount of RAM (in MB) to allocate to the VM
