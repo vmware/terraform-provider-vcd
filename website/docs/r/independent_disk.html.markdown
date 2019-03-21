@@ -45,8 +45,8 @@ resource "vcd_vapp_vm" "web2" {
 
 The following arguments are supported:
 
-* `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
-* `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
+* `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
+* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 * `name` - (Required) Disk name
 * `size` - (Required) - Size of disk in MB
 * `bus_type` - (Optional) - Disk bus type. Values can be: IDE, SCSI, SATA 
