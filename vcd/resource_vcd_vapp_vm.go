@@ -397,6 +397,10 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error getting VM status: %#v", err)
 	}
 
+	// When there is more then one VM in a vApp Terraform will try to parallelise their creation.
+	// However, vApp throws errors when simultaneous requests are executed.
+	// To avoid them, below block is using retryCall in multiple places as a workaround,
+	// so that the VMs are created regardless of parallelisation.
 	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("power_on") || d.HasChange("disk") {
 		if status != "POWERED_OFF" {
 			task, err := vm.PowerOff()
@@ -450,11 +454,14 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		if d.Get("power_on").(bool) {
-			task, err := vm.PowerOn()
-			if err != nil {
-				return fmt.Errorf("error Powering Up: %#v", err)
-			}
-			err = task.WaitTaskCompletion()
+			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+				task, err := vm.PowerOn()
+				if err != nil {
+					return resource.RetryableError(fmt.Errorf("error Powering Up: %#v", err))
+				}
+
+				return resource.RetryableError(task.WaitTaskCompletion())
+			})
 			if err != nil {
 				return fmt.Errorf(errorCompletingTask, err)
 			}
@@ -648,13 +655,16 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[TRACE] vApp Status:: %s", status)
 	if status != "POWERED_OFF" {
 		log.Printf("[TRACE] Undeploying vApp: %s", vapp.VApp.Name)
-		task, err := vapp.Undeploy()
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := vapp.Undeploy()
+			if err != nil {
+				return resource.RetryableError(fmt.Errorf("error Undeploying: %#v", err))
+			}
+
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
 		if err != nil {
 			return fmt.Errorf("error Undeploying vApp: %#v", err)
-		}
-		err = task.WaitTaskCompletion()
-		if err != nil {
-			return fmt.Errorf(errorCompletingTask, err)
 		}
 	}
 
@@ -680,13 +690,16 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		log.Printf("[TRACE] Powering on vApp: %s", vapp.VApp.Name)
-		task, err = vapp.PowerOn()
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err = vapp.PowerOn()
+			if err != nil {
+				return resource.RetryableError(fmt.Errorf("error Powering Up vApp: %#v", err))
+			}
+
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
 		if err != nil {
-			return fmt.Errorf("error Powering on vApp: %#v", err)
-		}
-		err = task.WaitTaskCompletion()
-		if err != nil {
-			return fmt.Errorf(errorCompletingTask, err)
+			return fmt.Errorf("error Powering Up vApp: %#v", err)
 		}
 	}
 
