@@ -441,7 +441,7 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 
 		if d.HasChange("cpus") {
 			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-				task, err := vm.ChangeCPUcount(d.Get("cpus").(int))
+				task, err := vm.ChangeCPUCount(d.Get("cpus").(int))
 				if err != nil {
 					return resource.RetryableError(fmt.Errorf("error changing cpu count: %#v", err))
 				}

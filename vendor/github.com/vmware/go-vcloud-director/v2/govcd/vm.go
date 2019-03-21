@@ -175,7 +175,19 @@ func (vm *VM) PowerOff() (Task, error) {
 
 }
 
-func (vm *VM) ChangeCPUcount(size int) (Task, error) {
+// Sets number of available virtual logical processors
+// (i.e. CPUs x cores per socket)
+// Cpu cores count is inherited from template.
+// https://communities.vmware.com/thread/576209
+func (vm *VM) ChangeCPUCount(virtualCpuCount int) (Task, error) {
+	return vm.ChangeCPUCountWithCore(virtualCpuCount, nil)
+}
+
+// Sets number of available virtual logical processors
+// (i.e. CPUs x cores per socket) and cores per socket.
+// Socket count is a result of: virtual logical processors/cores per socket
+// https://communities.vmware.com/thread/576209
+func (vm *VM) ChangeCPUCountWithCore(virtualCpuCount int, coresPerSocket *int) (Task, error) {
 
 	err := vm.Refresh()
 	if err != nil {
@@ -186,16 +198,18 @@ func (vm *VM) ChangeCPUcount(size int) (Task, error) {
 		XmlnsRasd:       "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData",
 		XmlnsVCloud:     "http://www.vmware.com/vcloud/v1.5",
 		XmlnsXsi:        "http://www.w3.org/2001/XMLSchema-instance",
+		XmlnsVmw:        "http://www.vmware.com/schema/ovf",
 		VCloudHREF:      vm.VM.HREF + "/virtualHardwareSection/cpu",
 		VCloudType:      "application/vnd.vmware.vcloud.rasdItem+xml",
 		AllocationUnits: "hertz * 10^6",
 		Description:     "Number of Virtual CPUs",
-		ElementName:     strconv.Itoa(size) + " virtual CPU(s)",
+		ElementName:     strconv.Itoa(virtualCpuCount) + " virtual CPU(s)",
 		InstanceID:      4,
 		Reservation:     0,
 		ResourceType:    3,
-		VirtualQuantity: size,
+		VirtualQuantity: virtualCpuCount,
 		Weight:          0,
+		CoresPerSocket:  coresPerSocket,
 		Link: &types.Link{
 			HREF: vm.VM.HREF + "/virtualHardwareSection/cpu",
 			Rel:  "edit",
@@ -207,8 +221,6 @@ func (vm *VM) ChangeCPUcount(size int) (Task, error) {
 	if err != nil {
 		fmt.Printf("error: %v\n", err)
 	}
-
-	util.Logger.Printf("\n\nXML DEBUG: %s\n\n", string(output))
 
 	buffer := bytes.NewBufferString(xml.Header + string(output))
 
