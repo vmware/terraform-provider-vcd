@@ -21,7 +21,7 @@ IMPROVEMENTS:
 
 BUG FIXES:
 * resource/vcd_vapp, resource/vcd_vapp_vm add vApp status handling when environment is very fast [GH-68]
-* resource/vcd_vapp_vm add additional validation to check if vApp template is ok [GH-157] 
+* resource/vcd_vapp_vm add additional validation to check if vApp template is OK [GH-157] 
 
 ## 2.0.0 (January 30, 2019)
 
