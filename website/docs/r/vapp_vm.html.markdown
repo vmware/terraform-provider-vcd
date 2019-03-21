@@ -80,7 +80,7 @@ The following arguments are supported:
 * `template_name` - (Required) The name of the vApp Template to use
 * `memory` - (Optional) The amount of RAM (in MB) to allocate to the VM
 * `cpus` - (Optional) The number of virtual CPUs to allocate to the VM. Socket count is a result of: virtual logical processors/cores per socket
-* `cpu_cores` - (Optional) The number of cores per socket
+* `cpu_cores` - (Optional; *v2.1+*) The number of cores per socket
 * `initscript` (Optional) A script to be run only on initial boot
 * `network_name` - (Optional) Name of the network this VM should connect to
 * `vapp_network_name` - (Optional; *v2.1+*) Name of the vApp network this VM should connect to
@@ -93,7 +93,7 @@ The following arguments are supported:
 * `accept_all_eulas` - (Optional; *v2.0+*) Automatically accept EULA if OVA has it. Default is `true`
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
-* `disk` - (Optional; *v2.1*) Independent disk attachment configuration. Details below
+* `disk` - (Optional; *v2.1+*) Independent disk attachment configuration. Details below
 
 Independent disk support the following attributes:
 
