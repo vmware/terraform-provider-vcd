@@ -91,7 +91,8 @@ func GetAdminOrgByName(vcdClient *VCDClient, orgName string) (AdminOrg, error) {
 		return AdminOrg{}, err
 	}
 	orgHREF := vcdClient.Client.VCDHREF
-	orgHREF.Path += "/admin/org/" + strings.Split(orgUrl, "/org/")[1]
+	orgHREF.Path += "/admin/org/" + strings.Split(orgUrl, "/api/org/")[1]
+
 	req := vcdClient.Client.NewRequest(map[string]string{}, "GET", orgHREF, nil)
 	resp, err := checkResp(vcdClient.Client.Http.Do(req))
 	if err != nil {
