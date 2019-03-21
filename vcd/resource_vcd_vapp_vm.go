@@ -63,6 +63,10 @@ func resourceVcdVAppVm() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
+			"cpu_cores": &schema.Schema{
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
 			"ip": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -441,7 +445,18 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 
 		if d.HasChange("cpus") {
 			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-				task, err := vm.ChangeCPUCount(d.Get("cpus").(int))
+				var task govcd.Task
+				var err error
+				if d.HasChange("cpu_cores") {
+					if d.Get("cpu_cores") != nil {
+						coreCounts := d.Get("cpu_cores").(int)
+						task, err = vm.ChangeCPUCountWithCore(d.Get("cpus").(int), &coreCounts)
+					} else {
+						return resource.RetryableError(fmt.Errorf("missing cpu_core value: %#v", err))
+					}
+				} else {
+					task, err = vm.ChangeCPUCount(d.Get("cpus").(int))
+				}
 				if err != nil {
 					return resource.RetryableError(fmt.Errorf("error changing cpu count: %#v", err))
 				}

@@ -18,6 +18,7 @@ FEATURES:
 IMPROVEMENTS:
 
 * resource/vcd_inserted_media now supports force ejecting on running VM [GH-184]
+* resource/vcd_vapp_vm now support cpu cores configuration [GH-168]
 
 BUG FIXES:
 * resource/vcd_vapp, resource/vcd_vapp_vm add vApp status handling when environment is very fast [GH-68]

@@ -34,7 +34,8 @@ resource "vcd_vapp_vm" "web1" {
   catalog_name  = "Boxes"
   template_name = "lampstack-1.10.1-ubuntu-10.04"
   memory        = 2048
-  cpus          = 1
+  cpus          = 2
+  cpu_cores     = 1
 
   network_name = "net"
   ip           = "10.10.104.161"
@@ -77,8 +78,9 @@ The following arguments are supported:
 * `name` - (Required) A unique name for the vApp
 * `catalog_name` - (Required) The catalog name in which to find the given vApp Template
 * `template_name` - (Required) The name of the vApp Template to use
-* `memory` - (Optional) The amount of RAM (in MB) to allocate to the vApp
-* `cpus` - (Optional) The number of virtual CPUs to allocate to the vApp
+* `memory` - (Optional) The amount of RAM (in MB) to allocate to the VM
+* `cpus` - (Optional) The number of virtual CPUs to allocate to the VM. Socket count is a result of: virtual logical processors/cores per socket
+* `cpu_cores` - (Optional) The number of cores per socket
 * `initscript` (Optional) A script to be run only on initial boot
 * `network_name` - (Optional) Name of the network this VM should connect to
 * `vapp_network_name` - (Optional; *v2.1+*) Name of the vApp network this VM should connect to
