@@ -156,7 +156,8 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
   memory        = 1024
-  cpus          = 1
+  cpus          = 2
+  cpu_cores     = 1
   ip            = "10.10.102.161"
 
   disk {
