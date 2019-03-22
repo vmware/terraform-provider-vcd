@@ -133,6 +133,8 @@ github.com/mattn/go-isatty v0.0.0-20161123143637-30a891c33c7c h1:YHHK/dEmr2Jo1cW
 github.com/mattn/go-isatty v0.0.0-20161123143637-30a891c33c7c/go.mod h1:M+lRXTBqGeGNdLjl/ufCoiOlB5xdOkqRJdNxMWT7Zi4=
 github.com/mattn/go-shellwords v1.0.1/go.mod h1:3xCvwCdWdlDJUrvuMn7Wuy9eWs4pE8vqg+NOMyg4B2o=
 github.com/matttproud/golang_protobuf_extensions v1.0.1/go.mod h1:D8He9yQNgCq6Z5Ld7szi9bcBfOoFv/3dc6xSMkL2PC0=
+github.com/megalord/go-vcloud-director/v2 v2.0.0-20190322204507-b761c0905d9a h1:9BitlDLujkAfAiXHuXpazpd0qk4L94RwT9PSTNqwYUI=
+github.com/megalord/go-vcloud-director/v2 v2.0.0-20190322204507-b761c0905d9a/go.mod h1:/Qy3dfRj5kIe/lvYrvkqChkdJZyRJGEmAUVsonAwmVw=
 github.com/miekg/dns v1.0.14/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
 github.com/mitchellh/cli v0.0.0-20171129193617-33edc47170b5 h1:OYr3N2fY3e3kP/x/d81CJXlcZrIV2hH8gPnuRLpiME4=
 github.com/mitchellh/cli v0.0.0-20171129193617-33edc47170b5/go.mod h1:oGumspjLm2kTyiT1QMGpFqRlmxnKHfCvhZEVnx+5UeE=

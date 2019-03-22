@@ -6,3 +6,5 @@ require (
 	github.com/hashicorp/terraform v0.11.13
 	github.com/vmware/go-vcloud-director/v2 v2.2.0-alpha.1
 )
+
+replace github.com/vmware/go-vcloud-director/v2 => github.com/megalord/go-vcloud-director/v2 v2.0.0-20190322204507-b761c0905d9a
