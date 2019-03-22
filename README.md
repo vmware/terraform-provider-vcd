@@ -1,7 +1,14 @@
-Terraform Provider
+Terraform vCloud Director Provider
 ==================
 
-NOTE: We are in the process of planning v2 of the provider which will not be backwards compatible. See the [v2Plan](https://github.com/terraform-providers/terraform-provider-vcd/blob/master/v2Plan.md) for further details.
+The official Terraform provider for [VMware vCloud Director](https://www.vmware.com/products/vcloud-director.html)
+
+- Documentation of the latest binary release available at https://www.terraform.io/docs/providers/vcd/index.html
+- This project is using [go-vcloud-director](https://github.com/vmware/go-vcloud-director) Golang SDK for making API calls to vCD
+- Join through [VMware {code}](https://code.vmware.com/) to [![Chat](https://img.shields.io/badge/chat-on%20slack-brightgreen.svg)](https://vmwarecode.slack.com/messages/CBBBXVB16) in #vcd-terraform-dev channel 
+
+Part of Terraform
+-----------------
 
 - Website: https://www.terraform.io
 - [![Gitter chat](https://badges.gitter.im/hashicorp-terraform/Lobby.png)](https://gitter.im/hashicorp-terraform/Lobby)
@@ -12,7 +19,7 @@ NOTE: We are in the process of planning v2 of the provider which will not be bac
 Requirements
 ------------
 
--	[Terraform](https://www.terraform.io/downloads.html) 0.10.x
+-	[Terraform](https://www.terraform.io/downloads.html) 0.11.13
 -	[Go](https://golang.org/doc/install) 1.12 (to build the provider plugin)
 
 Building The Provider (the modules way)
