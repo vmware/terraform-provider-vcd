@@ -6,8 +6,8 @@ import (
 	"log"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/vmware/go-vcloud-director/govcd"
-	types "github.com/vmware/go-vcloud-director/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
+	types "github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 func resourceVcdVdc() *schema.Resource {
