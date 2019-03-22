@@ -3,7 +3,7 @@ package vcd
 import (
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
-	"github.com/vmware/go-vcloud-director/util"
+	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
 // Provider returns a terraform.ResourceProvider.
@@ -87,6 +87,7 @@ func Provider() terraform.ResourceProvider {
 			"vcd_network_routed":   resourceVcdNetworkRouted(),
 			"vcd_network_direct":   resourceVcdNetworkDirect(),
 			"vcd_network_isolated": resourceVcdNetworkIsolated(),
+			"vcd_vapp_network":     resourceVcdVappNetwork(),
 			"vcd_vapp":             resourceVcdVApp(),
 			"vcd_firewall_rules":   resourceVcdFirewallRules(),
 			"vcd_dnat":             resourceVcdDNAT(),
@@ -98,6 +99,7 @@ func Provider() terraform.ResourceProvider {
 			"vcd_catalog_item":     resourceVcdCatalogItem(),
 			"vcd_catalog_media":    resourceVcdCatalogMedia(),
 			"vcd_inserted_media":   resourceVcdInsertedMedia(),
+			"vcd_independent_disk": resourceVcdIndependentDisk(),
 		},
 
 		ConfigureFunc: providerConfigure,

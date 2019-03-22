@@ -8,7 +8,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
 	"io/ioutil"
+	"net/http"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -18,7 +21,8 @@ import (
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
-	"github.com/vmware/go-vcloud-director/util"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
 type StringMap map[string]interface{}
@@ -40,7 +44,7 @@ type TestConfig struct {
 		Vdc     string `json:"vdc"`
 		Catalog struct {
 			Name        string `json:"name,omitempty"`
-			Catalogitem string `json:"catalogItem,omitempty"`
+			CatalogItem string `json:"catalogItem,omitempty"`
 		} `json:"catalog"`
 	} `json:"vcd"`
 	Networking struct {
@@ -68,13 +72,23 @@ type TestConfig struct {
 		OvaPath         string `json:"ovaPath,omitempty"`
 		UploadPieceSize int64  `json:"uploadPieceSize,omitempty"`
 		UploadProgress  bool   `json:"uploadProgress,omitempty"`
+		OvaTestFileName string `json:"ovaTestFileName,omitempty"`
+		OvaDownloadUrl  string `json:"ovaDownloadUrl,omitempty"`
+		Preserve        bool   `json:"preserve,omitempty"`
 	} `json:"ova"`
 	Media struct {
 		MediaPath       string `json:"mediaPath,omitempty"`
 		UploadPieceSize int64  `json:"uploadPieceSize,omitempty"`
 		UploadProgress  bool   `json:"uploadProgress,omitempty"`
 	} `json:"media"`
+	EnvVariables map[string]string `json:"envVariables,omitempty"`
 }
+
+// names for created resources for all the tests
+var (
+	testSuiteCatalogName    = "TestSuiteCatalog"
+	testSuiteCatalogOVAItem = "TestSuiteOVA"
+)
 
 const (
 	// Warning message used for all tests
@@ -82,17 +96,21 @@ const (
 	// This template will be added to test resource snippets on demand
 	providerTemplate = `
 provider "vcd" {
-  user     = "{{.User}}"
-  password = "{{.Password}}"
-  url      = "{{.Url}}"
-  sysorg   = "{{.SysOrg}}"
-  org      = "{{.Org}}"
+  user                 = "{{.User}}"
+  password             = "{{.Password}}"
+  url                  = "{{.Url}}"
+  sysorg               = "{{.SysOrg}}"
+  org                  = "{{.Org}}"
+  allow_unverified_ssl = "{{.AllowInsecure}}"
+  version              = "~> {{.VersionRequired}}"
 }
 
 `
 )
 
 var (
+	// This library major version
+	currentProviderVersion string = getMajorVersion()
 	// This is a global variable shared across all tests. It contains
 	// the information from the configuration file.
 	testConfig TestConfig
@@ -107,8 +125,8 @@ func dirExists(filename string) bool {
 	if os.IsNotExist(err) {
 		return false
 	}
-	filemode := f.Mode()
-	return filemode.IsDir()
+	fileMode := f.Mode()
+	return fileMode.IsDir()
 }
 
 // Returns true if the current configuration uses a system administrator for connections
@@ -154,6 +172,8 @@ func templateFill(tmpl string, data StringMap) string {
 		data["Url"] = testConfig.Provider.Url
 		data["SysOrg"] = testConfig.Provider.SysOrg
 		data["Org"] = testConfig.VCD.Org
+		data["AllowInsecure"] = testConfig.Provider.AllowInsecure
+		data["VersionRequired"] = currentProviderVersion
 	}
 
 	// Creates a template. The template gets the same name of the calling function, to generate a better
@@ -180,10 +200,10 @@ func templateFill(tmpl string, data StringMap) string {
 	// definitions of org and vdc. This will force the test to
 	// borrow org and vcd from the provider.
 	if os.Getenv("REMOVE_ORG_VDC_FROM_TEMPLATE") != "" {
-		re_org := regexp.MustCompile(`\sorg\s*=`)
-		buf2 := re_org.ReplaceAll(buf.Bytes(), []byte("# org = "))
-		re_vdc := regexp.MustCompile(`\svdc\s*=`)
-		buf2 = re_vdc.ReplaceAll(buf2, []byte("# vdc = "))
+		reOrg := regexp.MustCompile(`\sorg\s*=`)
+		buf2 := reOrg.ReplaceAll(buf.Bytes(), []byte("# org = "))
+		reVdc := regexp.MustCompile(`\svdc\s*=`)
+		buf2 = reVdc.ReplaceAll(buf2, []byte("# vdc = "))
 		writeStr = buf2
 	}
 	if TemplateWriting {
@@ -229,10 +249,7 @@ func getConfigStruct() TestConfig {
 
 	// If there was no custom file, we look for the default one
 	if config == "" {
-		// Finds the current directory, through the path of this running test
-		_, currentFilename, _, _ := runtime.Caller(0)
-		currentDirectory := filepath.Dir(currentFilename)
-		config = currentDirectory + "/vcd_test_config.json"
+		config = getCurrentDir() + "/vcd_test_config.json"
 	}
 	// Looks if the configuration file exists before attempting to read it
 	_, err := os.Stat(config)
@@ -248,6 +265,14 @@ func getConfigStruct() TestConfig {
 		panic(fmt.Errorf("could not unmarshal json file: %v", err))
 	}
 
+	// Sets (or clears) environment variables defined in the configuration file
+	if configStruct.EnvVariables != nil {
+		for key, value := range configStruct.EnvVariables {
+			currentEnvValue := os.Getenv(key)
+			debugPrintf("# Setting environment variable '%s' from '%s' to '%s'\n", key, currentEnvValue, value)
+			_ = os.Setenv(key, value)
+		}
+	}
 	// Reading the configuration file was successful.
 	// Now we fill the environment variables that the library is using for its own initialization.
 	if configStruct.Provider.TerraformAcceptanceTests {
@@ -298,6 +323,12 @@ func getConfigStruct() TestConfig {
 	return configStruct
 }
 
+// Finds the current directory, through the path of this running test
+func getCurrentDir() string {
+	_, currentFilename, _, _ := runtime.Caller(0)
+	return filepath.Dir(currentFilename)
+}
+
 // This function is called before any other test
 func TestMain(m *testing.M) {
 	// Fills the configuration variable: it will be available to all tests,
@@ -312,11 +343,272 @@ func TestMain(m *testing.M) {
 		testAccProviders = map[string]terraform.ResourceProvider{
 			"vcd": testAccProvider,
 		}
+
+		// forcing item cleanup before test run
+		if os.Getenv("VCD_TEST_SUITE_CLEANUP") != "" {
+			fmt.Printf("VCD_TEST_SUITE_CLEANUP found and TestSuite resource cleanup initiated\n")
+			destroySuiteCatalogAndItem(testConfig)
+		}
+
+		createSuiteCatalogAndItem(testConfig)
 	}
 
 	// Runs all test functions
 	exitCode := m.Run()
 
+	if !vcdShortTest {
+
+		if !testConfig.Ova.Preserve {
+			destroySuiteCatalogAndItem(testConfig)
+		} else {
+			fmt.Printf("TestSuite destroy skipped - preserve turned on \n")
+		}
+	}
+
 	// TODO: cleanup leftovers
 	os.Exit(exitCode)
+}
+
+//Creates catalog and/or catalog item if they are not preconfigured.
+func createSuiteCatalogAndItem(config TestConfig) {
+	fmt.Printf("Checking resources to create for test suite...\n")
+
+	ovaFilePath := getCurrentDir() + "/../test-resources/" + config.Ova.OvaTestFileName
+
+	if config.Ova.OvaTestFileName == "" && testConfig.VCD.Catalog.CatalogItem == "" {
+		panic(fmt.Errorf("ovaTestFileName isn't configured. Tests aborted\n"))
+	}
+
+	if config.Ova.OvaDownloadUrl == "" && testConfig.VCD.Catalog.CatalogItem == "" {
+		panic(fmt.Errorf("ovaDownloadUrl isn't configured. Tests aborted\n"))
+	} else if testConfig.VCD.Catalog.CatalogItem == "" {
+		fmt.Printf("Downloading OVA. File will be saved as: %s\n", ovaFilePath)
+
+		if _, err := os.Stat(ovaFilePath); err == nil {
+			fmt.Printf("File already exists. Skipping downloading\n")
+		} else if os.IsNotExist(err) {
+			err := downloadFile(ovaFilePath, testConfig.Ova.OvaDownloadUrl)
+			if err != nil {
+				panic(err)
+			}
+			fmt.Printf("OVA downloaded\n")
+		} else {
+			panic(err)
+		}
+	}
+
+	vcdClient, err := getTestVCDFromJson(config)
+	if vcdClient == nil || err != nil {
+		panic(err)
+	}
+	err = vcdClient.Authenticate(config.Provider.User, config.Provider.Password, config.Provider.SysOrg)
+	if err != nil {
+		panic(err)
+	}
+
+	org, err := govcd.GetOrgByName(vcdClient, config.VCD.Org)
+	if err != nil || org == (govcd.Org{}) {
+		panic(err)
+	}
+
+	var catalog govcd.Catalog
+
+	catalogPreserved := true
+	catalog, err = org.FindCatalog(testSuiteCatalogName)
+	if err != nil || catalog == (govcd.Catalog{}) {
+		catalogPreserved = false
+	}
+
+	if testConfig.VCD.Catalog.Name == "" && !catalogPreserved {
+		fmt.Printf("Creating catalog for test suite...\n")
+		catalog, err = org.CreateCatalog(testSuiteCatalogName, "Test suite purpose")
+		if err != nil || catalog == (govcd.Catalog{}) {
+			panic(err)
+		}
+		fmt.Printf("Catalog created successfully\n")
+
+	} else if testConfig.VCD.Catalog.Name != "" {
+		fmt.Printf("Skipping catalog creation - found preconfigured one: %s \n", testConfig.VCD.Catalog.Name)
+
+		catalog, err = org.FindCatalog(testConfig.VCD.Catalog.Name)
+		if err != nil || catalog == (govcd.Catalog{}) {
+			fmt.Printf("Preconfigured catalog wasn't found \n")
+			panic(err)
+		}
+
+		fmt.Printf("Catalog found successfully\n")
+		testSuiteCatalogName = testConfig.VCD.Catalog.Name
+	} else {
+		fmt.Printf("Skipping catalog creation - catalog was preserved from previous creation \n")
+	}
+
+	catalogItemPreserved := true
+	catalogItem, err := catalog.FindCatalogItem(testSuiteCatalogOVAItem)
+	if err != nil || catalogItem == (govcd.CatalogItem{}) {
+		catalogItemPreserved = false
+	}
+
+	if testConfig.VCD.Catalog.CatalogItem == "" && !catalogItemPreserved {
+		fmt.Printf("Creating catalog item for test suite...\n")
+		task, err := catalog.UploadOvf(ovaFilePath, testSuiteCatalogOVAItem, "Test suite purpose", 20*1024*1024)
+		if err != nil {
+			fmt.Printf("error uploading new catalog item: %#v", err)
+			panic(err)
+		}
+
+		err = task.ShowUploadProgress()
+		if err != nil {
+			fmt.Printf("error waiting for task to complete: %+v", err)
+			panic(err)
+		}
+
+		err = task.WaitTaskCompletion()
+		if err != nil {
+			fmt.Printf("error waiting for task to complete: %+v", err)
+			panic(err)
+		}
+
+		fmt.Printf("Catalog item created successfully\n")
+
+	} else if testConfig.VCD.Catalog.CatalogItem != "" {
+		fmt.Printf("Skipping catalog item creation - found preconfigured one: %s \n", testConfig.VCD.Catalog.CatalogItem)
+
+		item, err := catalog.FindCatalogItem(testConfig.VCD.Catalog.CatalogItem)
+		if err != nil && item != (govcd.CatalogItem{}) {
+			fmt.Printf("Preconfigured catalog item wasn't found \n")
+			panic(err)
+		}
+		fmt.Printf("Catalog item found successfully\n")
+		testSuiteCatalogOVAItem = testConfig.VCD.Catalog.CatalogItem
+	} else {
+		fmt.Printf("Skipping catalog item creation - catalog item was preserved from previous creation \n")
+	}
+
+}
+
+// DownloadFile will download a url to a local file. It's efficient because it will
+// write as it downloads and not load the whole file into memory.
+func downloadFile(filepath string, url string) error {
+
+	// Create the file
+	out, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	// Get the data
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	// Write the body to file
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Creates a VCDClient based on the endpoint given in the TestConfig argument.
+// TestConfig struct can be obtained by calling GetConfigStruct. Throws an error
+// if endpoint given is not a valid url.
+func getTestVCDFromJson(testConfig TestConfig) (*govcd.VCDClient, error) {
+	configUrl, err := url.ParseRequestURI(testConfig.Provider.Url)
+	if err != nil {
+		return &govcd.VCDClient{}, fmt.Errorf("could not parse Url: %s", err)
+	}
+	vcdClient := govcd.NewVCDClient(*configUrl, true)
+	return vcdClient, nil
+}
+
+func destroySuiteCatalogAndItem(config TestConfig) {
+	fmt.Printf("Looking for resources to delete from test suite...\n")
+	vcdClient, err := getTestVCDFromJson(config)
+	if vcdClient == nil || err != nil {
+		panic(err)
+	}
+
+	err = vcdClient.Authenticate(config.Provider.User, config.Provider.Password, config.Provider.SysOrg)
+	if err != nil {
+		panic(err)
+	}
+
+	org, err := govcd.GetOrgByName(vcdClient, config.VCD.Org)
+	if err != nil || org == (govcd.Org{}) {
+		panic(err)
+	}
+
+	catalog, err := org.FindCatalog(testSuiteCatalogName)
+	if err != nil || catalog == (govcd.Catalog{}) {
+		fmt.Printf("catalog already removed %#v", err)
+		return
+	}
+
+	isCatalogDeleted := false
+	if testConfig.VCD.Catalog.Name == "" {
+		fmt.Printf("Deleting catalog for test suite...\n")
+		err = catalog.Delete(true, true)
+		if err != nil {
+			fmt.Printf("error removing catalog %#v", err)
+			return
+		}
+		isCatalogDeleted = true
+		fmt.Printf("Catalog %s removed successfully\n", catalog.Catalog.Name)
+	} else {
+		fmt.Printf("Catalog deletion skipped as user defined resource used \n")
+	}
+
+	if testConfig.VCD.Catalog.CatalogItem == "" && !isCatalogDeleted {
+		catalogItem, err := catalog.FindCatalogItem(testSuiteCatalogOVAItem)
+		if err != nil || catalogItem == (govcd.CatalogItem{}) {
+			fmt.Printf("error finding catalog item %#v", err)
+			return
+		}
+		err = catalogItem.Delete()
+		if err != nil {
+			fmt.Printf("error removing catalog item %#v", err)
+			return
+		}
+		fmt.Printf("Catalog %s item removed successfully\n", catalogItem.CatalogItem.Name)
+	} else {
+		fmt.Printf("Catalog item deletion skipped as user defined resource is used or removed with catalog\n")
+	}
+
+}
+
+// Reads the version from the VERSION file in the root directory
+func getMajorVersion() string {
+
+	versionFile := path.Join(getCurrentDir(), "..", "VERSION")
+
+	// Checks whether the VERSION file exists
+	_, err := os.Stat(versionFile)
+	if os.IsNotExist(err) {
+		panic("Could not find VERSION file")
+	}
+
+	// Reads the version from the file
+	versionText, err := ioutil.ReadFile(versionFile)
+	if err != nil {
+		panic(fmt.Errorf("could not read VERSION file %s: %v", versionFile, err))
+	}
+
+	// The version is expected to be in the format v#.#.#
+	// We only need the first two numbers
+	reVersion := regexp.MustCompile(`v(\d+\.\d+)\.\d+`)
+	versionList := reVersion.FindAllStringSubmatch(string(versionText), -1)
+	if versionList == nil || len(versionList) == 0 {
+		panic("empty or non-formatted version found in VERSION file")
+	}
+	if versionList[0] == nil || len(versionList[0]) < 2 {
+		panic("unable to extract major version from VERSION file")
+	}
+	// A successful match will look like
+	// [][]string{[]string{"v2.0.0", "2.0"}}
+	// Where the first element is the full text matched, and the second one is the first captured text
+	return versionList[0][1]
 }

@@ -1,0 +1,57 @@
+{
+    "comment": "see sample_govcd_test_config.yaml for fields description",
+	"provider": {
+		"user": "someuser",
+		"password": "somepassword",
+		"url": "https://11.111.1.111/api",
+		"sysOrg": "System",
+		"//": "(Optional) In some cases the vCloud Director SDK must wait. It can be",
+		"//": "customized using the below var. If it is not set SDK assumes a default value.",
+		"maxRetryTimeout": 60
+	},
+	"vcd": {
+		"org": "myorg",
+		"vdc": "myvdc",
+		"provider_vdc": {
+			"name": "myprovidervdc",
+			"storage_profile": "mystorageprofile",
+			"network_pool": "mynetworkpool"
+		},
+		"catalog": {
+			"name": "mycat",
+			"catalogItem": "myitem",
+			"description": "my cat for loading",
+			"catalogItemDescription": "my item to create vapps"
+		},
+		"network": "mynet",
+		"storageProfile": {
+			"storageProfile1": "Development",
+			"storageProfile2": "*"
+		},
+		"edgeGateway": "myedgegw",
+		"externalIp": "10.150.10.10",
+		"externalNetmask": "255.255.224.0",
+		"internalIp": "192.168.1.10",
+		"internalNetmask": "255.255.255.0",
+        "disk": {
+            "size": 1048576,
+            "sizeForUpdate": 1048576
+        }
+	},
+	"logging": {
+		"enabled": true,
+		"logFileName": "go-vcloud-director.log",
+		"logHttpRequests": true,
+		"skipResponseTags": "SupportedVersions,VAppTemplate",
+		"apiLogFunctions": "FindVAppByName",
+		"logHttpResponses": true
+	},
+  "ova": {
+    "ovaPath": "../test-resources/test_vapp_template.ova",
+    "ovaChunkedPath": "../test-resources/template_with_custom_chunk_size.ova"
+  },
+  "media": {
+    "mediaPath": "../test-resources/test.iso",
+    "mediaName": "uploadedMediaName"
+  }
+}

@@ -2,11 +2,12 @@ package vcd
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	"github.com/vmware/go-vcloud-director/govcd"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
 var TestAccVcdCatalogItem = "TestAccVcdCatalogItemBasic"
@@ -17,7 +18,7 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 	var catalogItem govcd.CatalogItem
 	var params = StringMap{
 		"Org":             testConfig.VCD.Org,
-		"Catalog":         testConfig.VCD.Catalog.Name,
+		"Catalog":         testSuiteCatalogName,
 		"CatalogItemName": TestAccVcdCatalogItem,
 		"Description":     TestAccVcdCatalogItemDescription,
 		"OvaPath":         testConfig.Ova.OvaPath,
@@ -33,7 +34,7 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
+		PreCheck:     func() { preRunChecks(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckCatalogItemDestroy,
 		Steps: []resource.TestStep{
@@ -51,6 +52,24 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 	})
 }
 
+func preRunChecks(t *testing.T) {
+	testAccPreCheck(t)
+	checkOvaPath(t)
+}
+
+func checkOvaPath(t *testing.T) {
+	file, err := os.Stat(testConfig.Ova.OvaPath)
+	if err != nil {
+		t.Fatal("configured catalog item issue. Configured: ", testConfig.Ova.OvaPath, err)
+	}
+	if os.IsNotExist(err) {
+		t.Fatal("configured catalog item isn't found. Configured: ", testConfig.Ova.OvaPath)
+	}
+	if file.IsDir() {
+		t.Fatal("configured catalog item is dir and not a file. Configured: ", testConfig.Ova.OvaPath)
+	}
+}
+
 func testAccCheckVcdCatalogItemExists(itemName string, catalogItem *govcd.CatalogItem) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		catalogItemRs, ok := s.RootModule().Resources[itemName]
@@ -64,14 +83,14 @@ func testAccCheckVcdCatalogItemExists(itemName string, catalogItem *govcd.Catalo
 
 		conn := testAccProvider.Meta().(*VCDClient)
 
-		adminOrg, err := conn.GetAdminOrg(testConfig.VCD.Org)
+		org, _, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
 		if err != nil {
 			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
 		}
 
-		catalog, err := adminOrg.FindCatalog(testConfig.VCD.Catalog.Name)
+		catalog, err := org.FindCatalog(testSuiteCatalogName)
 		if err != nil {
-			return fmt.Errorf("catalog %s does not exist (%#v)", testConfig.VCD.Catalog.Name, catalog.Catalog)
+			return fmt.Errorf("catalog %s does not exist (%#v)", testSuiteCatalogName, catalog.Catalog)
 		}
 
 		newCatalogItem, err := catalog.FindCatalogItem(catalogItemRs.Primary.Attributes["name"])
@@ -91,12 +110,12 @@ func testAccCheckCatalogItemDestroy(s *terraform.State) error {
 			continue
 		}
 
-		adminOrg, err := conn.GetAdminOrg(testConfig.VCD.Org)
+		org, _, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
 		if err != nil {
 			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
 		}
 
-		catalog, err := adminOrg.FindCatalog(testConfig.VCD.Catalog.Name)
+		catalog, err := org.FindCatalog(testSuiteCatalogName)
 		if err != nil {
 			return fmt.Errorf("catalog query %s ended with error: %#v", rs.Primary.ID, err)
 		}

@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/vmware/go-vcloud-director/govcd"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
 func resourceVcdCatalogItem() *schema.Resource {
@@ -127,7 +127,7 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		return fmt.Errorf("error waiting from task to complete: %+v", err)
+		return fmt.Errorf("error waiting for task to complete: %+v", err)
 	}
 
 	d.SetId(catalogName + ":" + itemName)

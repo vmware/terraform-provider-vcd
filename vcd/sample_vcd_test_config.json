@@ -2,10 +2,11 @@
   "//": "Rename this file to vcd_test_config.json and change the values to suit your system",
   "//": "You can safely remove the comments or leave them. The parser will ignore them.",
   "provider": {
-    "//"  : "This section contains credentials related to the VCD admin user",
+    "//"  : "This section contains credentials related to the vCD connection of Sys or Org user",
     "user": "root",
     "password": "somePassword",
     "url": "https://10.13.21.20/api",
+    "//": "Use 'System' if you are Sys admin and Org name if you tenant",
     "sysOrg": "System",
     "//": "allowInsecure will skip the check on self-signed certificates",
     "allowInsecure": true,
@@ -24,9 +25,10 @@
     "//": "This section contains the organization composition",
     "org": "myorg",
     "vdc": "myvdc",
-    "catalog": {
-      "name": "mycatalog",
-      "catalogItem": "photon-hw11"
+    "//": "Fill the values if you want reuse existing resources for testing",
+    "//catalog": {
+      "//name": "existingCatalogName",
+      "//catalogItem": "existingOvaNameInCatalog"
     }
   },
   "networking": {
@@ -65,12 +67,25 @@
     "ovaPath": "../test-resources/test_vapp_template.ova",
     "//": "Size in megabytes",
     "uploadPieceSize": 5,
-    "uploadProgress": true
+    "uploadProgress": true,
+    "//": "Link will be used to download OVA for tests",
+    "ovaDownloadUrl": "http://dl.bintray.com/vmware/photon/2.0/GA/ova/photon-custom-hw11-2.0-304b817.ova",
+    "//": "Name for downloaded file which will be saved in test-resources folder",
+    "ovaTestFileName": "photon.ova",
+    "//": "Won't destroy resources created for test suite. Will be reused next time running tests",
+    "preserve": true
   },
   "media": {
     "mediaPath": "../test-resources/test.iso",
     "//": "Size in megabytes",
     "uploadPieceSize": 5,
     "uploadProgress": true
+  },
+  "envVariables" : {
+    "//" : "Environment variables that we want the test to set (or unset)",
+    "GOVCD_DEBUG": "",
+    "VCD_SKIP_TEMPLATE_WRITING": "",
+    "VCD_ADD_PROVIDER": "",
+    "REMOVE_ORG_VDC_FROM_TEMPLATE": ""
   }
 }

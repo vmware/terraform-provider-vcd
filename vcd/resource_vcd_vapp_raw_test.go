@@ -6,7 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	"github.com/vmware/go-vcloud-director/govcd"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
 func TestAccVcdVAppRaw_Basic(t *testing.T) {
@@ -21,8 +21,8 @@ func TestAccVcdVAppRaw_Basic(t *testing.T) {
 		"Vdc":         testConfig.VCD.Vdc,
 		"EdgeGateway": testConfig.Networking.EdgeGateway,
 		"NetworkName": "TestAccVcdVAppRawNet",
-		"Catalog":     testConfig.VCD.Catalog.Name,
-		"CatalogItem": testConfig.VCD.Catalog.Catalogitem,
+		"Catalog":     testSuiteCatalogName,
+		"CatalogItem": testSuiteCatalogOVAItem,
 		"VappName":    "TestAccVcdVAppRawVapp",
 		"VmName":      "TestAccVcdVAppRawVm",
 	}

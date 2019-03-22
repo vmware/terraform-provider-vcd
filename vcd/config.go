@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/vmware/go-vcloud-director/govcd"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
 type Config struct {
@@ -205,7 +205,8 @@ func (c *Config) Client() (*VCDClient, error) {
 	}
 
 	vcdclient := &VCDClient{
-		VCDClient:       govcd.NewVCDClient(*authUrl, c.InsecureFlag),
+		VCDClient: govcd.NewVCDClient(*authUrl, c.InsecureFlag,
+			govcd.WithMaxRetryTimeout(c.MaxRetryTimeout)),
 		SysOrg:          c.SysOrg,
 		Org:             c.Org,
 		Vdc:             c.Vdc,

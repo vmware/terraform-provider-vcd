@@ -24,12 +24,6 @@ resource "vcd_network_direct" "net" {
 resource "vcd_vapp" "web" {
   name = "web"
 
-  metadata {
-    role    = "web"
-    env     = "staging"
-    version = "v1"
-  }
-
   depends_on = ["vcd_network_direct.net"]
 }
 

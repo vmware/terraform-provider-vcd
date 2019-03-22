@@ -6,7 +6,7 @@ description: |-
   Provides a vCloud Director resource for inserting or ejecting media (ISO) file for the VM. Create this resource for inserting the media, and destroy it for ejecting.
 ---
 
-# vcd\_catalog\_media
+# vcd\_inserted\_media
 
 Provides a vCloud Director resource for inserting or ejecting media (ISO) file for the VM. Create this resource for inserting the media, and destroy it for ejecting.
 
@@ -16,13 +16,15 @@ Supported in provider *v2.0+*
 
 ```
 resource "vcd_inserted_media" "myInsertedMedia" {
-  org = "my-org"
-  vdc = "my-vcd"
-  catalog = "my-catalog" 
-  name = "my-iso"
-  
+  org     = "my-org"
+  vdc     = "my-vcd"
+  catalog = "my-catalog"
+  name    = "my-iso"
+
   vapp_name = "my-vApp"
-  vm_name = "my-VM"
+  vm_name   = "my-VM"
+
+  eject_force = true
 }
 ```
 
@@ -36,3 +38,7 @@ The following arguments are supported:
 * `name` - (Required) Media file name in catalog which will be inserted to VM
 * `vapp_name` - (Required) - The name of vApp to find
 * `vm_name` - (Required) - The name of VM to be used to insert media file
+* `eject_force` - (Optional; *v2.1+*) Allows to pass answer to question in vCD
+"The guest operating system has locked the CD-ROM door and is probably using the CD-ROM. 
+Disconnect anyway (and override the lock)?" 
+when ejecting from a VM which is powered on. True means "Yes" as answer to question. Default is `true`

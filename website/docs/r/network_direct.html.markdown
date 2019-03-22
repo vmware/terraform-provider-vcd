@@ -13,6 +13,10 @@ modify, and delete internal networks for vApps to connect.
 
 Supported in provider *v2.0+*
 
+~> **Note:** Only `System Administrator` can create an organization virtual datacenter network that connects 
+directly to an external network. You must use `System Adminstrator` account in `provider` configuration
+and then provide `org` and `vdc` arguments for direct networks to work.
+
 ## Example Usage
 
 ```hcl
