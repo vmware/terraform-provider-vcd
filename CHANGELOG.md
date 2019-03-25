@@ -1,7 +1,7 @@
 ## 2.1.0 (Unreleased)
 
 NOTES:
-
+* Please look for "v2.1+" keyword in documentation which is used to emphasize new features.
 * Project switched to using Go modules, while `vendor` is left for backwards build compatibility only. It is worth having a
 look at [README.md](README.md) to understand how Go modules impact build and development [GH-178]
 * Project dependency of github.com/hashicorp/terraform updated from v0.10.0 to v0.11.13 [GH-181]
