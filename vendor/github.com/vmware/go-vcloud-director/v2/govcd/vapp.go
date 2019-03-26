@@ -42,7 +42,7 @@ type VappNetworkSettings struct {
 	DNS1             string
 	DNS2             string
 	DNSSuffix        string
-	GuestVLANAllowed bool
+	GuestVLANAllowed *bool
 	StaticIPRanges   []*types.IPRange
 	DhcpSettings     *DhcpSettings
 }

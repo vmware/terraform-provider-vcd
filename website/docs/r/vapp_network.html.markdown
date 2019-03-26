@@ -55,7 +55,7 @@ The following arguments are supported:
 * `dns1` - (Optional) First DNS server to use. Default is `8.8.8.8`.
 * `dns2` - (Optional) Second DNS server to use. Default is `8.8.4.4`.
 * `dns_suffix` - (Optional) A FQDN for the virtual machines on this network.
-* `guest_vlan_allowed` (Optional) True if Network allows guest VLAN tagging. Default is false. This value supported from vCD version 9.0
+* `guest_vlan_allowed` (Optional) True if Network allows guest VLAN tagging. This value supported from vCD version 9.0
 * `static_ip_pool` - (Optional) A range of IPs permitted to be used as static IPs for virtual machines; see [IP Pools](#ip-pools) below for details.
 * `dhcp_pool` - (Optional) A range of IPs to issue to virtual machines that don't have a static IP; see [IP Pools](#ip-pools) below for details.
 

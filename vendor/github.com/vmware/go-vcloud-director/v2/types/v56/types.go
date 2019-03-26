@@ -208,7 +208,7 @@ type NetworkConfiguration struct {
 	FenceMode                      string           `xml:"FenceMode"`
 	RetainNetInfoAcrossDeployments bool             `xml:"RetainNetInfoAcrossDeployments,omitempty"`
 	Features                       *NetworkFeatures `xml:"Features,omitempty"`
-	GuestVlanAllowed               bool             `xml:"GuestVlanAllowed,omitempty"`
+	GuestVlanAllowed               *bool            `xml:"GuestVlanAllowed,omitempty"`
 	// TODO: Not Implemented
 	// RouterInfo                     RouterInfo           `xml:"RouterInfo,omitempty"`
 	// SyslogServerSettings           SyslogServerSettings `xml:"SyslogServerSettings,omitempty"`
