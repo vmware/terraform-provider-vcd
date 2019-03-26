@@ -31,7 +31,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 	}
 	configText := templateFill(testAccCheckVcdIndependentDiskBasic, params)
 
-	fmt.Printf("#[DEBUG] CONFIGURATION: %s", configText)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
