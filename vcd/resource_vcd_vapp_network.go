@@ -72,7 +72,6 @@ func resourceVcdVappNetwork() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: true,
-				Default:  false,
 			},
 
 			"dhcp_pool": &schema.Schema{
@@ -153,14 +152,18 @@ func resourceVcdVappNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 	staticIpRanges := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
 
 	vappNetworkSettings := &govcd.VappNetworkSettings{
-		Name:             d.Get("name").(string),
-		Gateway:          d.Get("gateway").(string),
-		NetMask:          d.Get("netmask").(string),
-		DNS1:             d.Get("dns1").(string),
-		DNS2:             d.Get("dns2").(string),
-		DNSSuffix:        d.Get("dns_suffix").(string),
-		StaticIPRanges:   staticIpRanges.IPRange,
-		GuestVLANAllowed: d.Get("guest_vlan_allowed").(bool),
+		Name:           d.Get("name").(string),
+		Gateway:        d.Get("gateway").(string),
+		NetMask:        d.Get("netmask").(string),
+		DNS1:           d.Get("dns1").(string),
+		DNS2:           d.Get("dns2").(string),
+		DNSSuffix:      d.Get("dns_suffix").(string),
+		StaticIPRanges: staticIpRanges.IPRange,
+	}
+
+	if _, ok := d.GetOk("guest_vlan_allowed"); ok {
+		convertedValue := d.Get("guest_vlan_allowed").(bool)
+		vappNetworkSettings.GuestVLANAllowed = &convertedValue
 	}
 
 	if dhcp, ok := d.GetOk("dhcp_pool"); ok && len(dhcp.(*schema.Set).List()) > 0 {
@@ -233,7 +236,7 @@ func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
 			d.Set("dns2", c.IPScopes.IPScope.DNS2)
 			d.Set("dnsSuffix", c.IPScopes.IPScope.DNSSuffix)
 		}
-		d.Set("guestVlanAllowed", c.GuestVlanAllowed)
+		d.Set("guest_vlan_allowed", &c.GuestVlanAllowed)
 	}
 
 	return nil
