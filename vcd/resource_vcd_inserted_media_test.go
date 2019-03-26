@@ -40,8 +40,7 @@ func TestAccVcdMediaInsertBasic(t *testing.T) {
 		return
 	}
 	configText := templateFill(testAccCheckVcdInsertEjectBasic, params)
-	//debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
-	fmt.Printf("#[DEBUG] CONFIGURATION: %s", configText)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

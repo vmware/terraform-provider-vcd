@@ -40,8 +40,8 @@
 
     "//": "A free IP in the Org vDC network", 
     "internalIp": "192.168.4.30",
-     "//": "sharedSecret is defined in the edge gateway service configuration", 
-    "sharedSecret": "my-secret-string",
+     "//": "define sharedSecret in the edge gateway service configuration", 
+    "sharedSecret": "ipoojaibooze0aiLooso1hourae9AhfooMoo6een",
     "//": "The name of a vCD external network",
     "externalNetwork": "my-ext-network",
     "local": {
