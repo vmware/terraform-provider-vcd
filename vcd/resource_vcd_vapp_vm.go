@@ -404,9 +404,10 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	// VM does not have to be in POWERED_OFF state for metadata operations
 	if d.HasChange("metadata") {
-		oldRaw, newRaw := d.GetChange("metadata")
-		oldMetadata := oldRaw.(map[string]interface{})
-		newMetdata := newRaw.(map[string]interface{})
+		oldValues, newValues := d.GetChange("metadata")
+
+		newMetadata := newValues.(map[string]interface{}).Difference(oldValues.(map[string]interface{}))
+		oldMetadata := oldValues.(map[string]interface{}).Difference(newValues.(map[string]interface{}))
 		var toBeRemovedMetadata []string
 		// Check if any key in old metadata was removed in new metadata.
 		// Creates a list of keys to be removed.
@@ -425,7 +426,7 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 				return fmt.Errorf(errorCompletingTask, err)
 			}
 		}
-		for k, v := range newMetdata {
+		for k, v := range newMetadata {
 			task, err := vm.AddMetadata(k, v.(string))
 			if err != nil {
 				return fmt.Errorf("error adding metadata: %#v", err)
