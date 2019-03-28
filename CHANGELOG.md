@@ -2,43 +2,42 @@
 
 FEATURES:
 
-* `vcd_vapp_vm` - Ability to add metadata to a VM. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES` [GH-158]
+* `vcd_vapp_vm` - Ability to add metadata to a VM. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES` ([#158](https://github.com/terraform-providers/terraform-provider-vcd/issues/158))
 
 BUG FIXES:
 
-* `vcd_vapp` - Ability to add metadata to empty vApp. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES` [GH-158]
+* `vcd_vapp` - Ability to add metadata to empty vApp. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES` ([#158](https://github.com/terraform-providers/terraform-provider-vcd/issues/158))
 
 BACKWARDS INCOMPATIBILITIES / NOTES:
 
-* `vcd_vapp` - Metadata is no longer added to first VM in vApp it will be added to vApp directly instead. [GH-158]
+* `vcd_vapp` - Metadata is no longer added to first VM in vApp it will be added to vApp directly instead. ([#158](https://github.com/terraform-providers/terraform-provider-vcd/issues/158))
 
-## 2.1.0 (Unreleased)
+## 2.1.0 (March 27, 2019)
 
 NOTES:
 * Please look for "v2.1+" keyword in documentation which is used to emphasize new features.
 * Project switched to using Go modules, while `vendor` is left for backwards build compatibility only. It is worth having a
-look at [README.md](README.md) to understand how Go modules impact build and development [GH-178]
-* Project dependency of github.com/hashicorp/terraform updated from v0.10.0 to v0.11.13 [GH-181]
-* MaxRetryTimeout is shared with underlying SDK `go-vcloud-director` [GH-189]
-* Improved testing functionality [GH-166]
+look at [README.md](README.md) to understand how Go modules impact build and development ([#178](https://github.com/terraform-providers/terraform-provider-vcd/issues/178))
+* Project dependency of github.com/hashicorp/terraform updated from v0.10.0 to v0.11.13 ([#181](https://github.com/terraform-providers/terraform-provider-vcd/issues/181))
+* MaxRetryTimeout is shared with underlying SDK `go-vcloud-director` ([#189](https://github.com/terraform-providers/terraform-provider-vcd/issues/189))
+* Improved testing functionality ([#166](https://github.com/terraform-providers/terraform-provider-vcd/issues/166))
 
 FEATURES:
 
-* **New Resource:** disk resource - `vcd_independent_disk` [GH-188]
-* resource/vcd_vapp_vm has ability to attach independent disk [GH-188]
-* **New Resource:** vApp network - `vcd_vapp_network` [GH-155]
-* resource/vcd_vapp_vm has ability to use vApp network [GH-155]
+* **New Resource:** disk resource - `vcd_independent_disk` ([#188](https://github.com/terraform-providers/terraform-provider-vcd/issues/188))
+* resource/vcd_vapp_vm has ability to attach independent disk ([#188](https://github.com/terraform-providers/terraform-provider-vcd/issues/188))
+* **New Resource:** vApp network - `vcd_vapp_network` ([#155](https://github.com/terraform-providers/terraform-provider-vcd/issues/155))
+* resource/vcd_vapp_vm has ability to use vApp network ([#155](https://github.com/terraform-providers/terraform-provider-vcd/issues/155))
 
 IMPROVEMENTS:
 
-* resource/vcd_inserted_media now supports force ejecting on running VM [GH-184]
-* resource/vcd_vapp_vm now support CPU cores configuration [GH-174]
+* resource/vcd_inserted_media now supports force ejecting on running VM ([#184](https://github.com/terraform-providers/terraform-provider-vcd/issues/184))
+* resource/vcd_vapp_vm now support CPU cores configuration ([#174](https://github.com/terraform-providers/terraform-provider-vcd/issues/174))
 
 BUG FIXES:
 
-* resource/vcd_vapp, resource/vcd_vapp_vm add vApp status handling when environment is very fast [GH-68]
-* resource/vcd_vapp_vm add additional validation to check if vApp template is OK [GH-157]
-* Insert Media now supports force ejecting on running VM
+* resource/vcd_vapp, resource/vcd_vapp_vm add vApp status handling when environment is very fast ([#68](https://github.com/terraform-providers/terraform-provider-vcd/issues/68))
+* resource/vcd_vapp_vm add additional validation to check if vApp template is OK [[#157](https://github.com/terraform-providers/terraform-provider-vcd/issues/157)] 
 
 ## 2.0.0 (January 30, 2019)
 
