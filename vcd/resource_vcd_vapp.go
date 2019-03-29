@@ -289,12 +289,12 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	if d.HasChange("metadata") {
 		oldRaw, newRaw := d.GetChange("metadata")
 		oldMetadata := oldRaw.(map[string]interface{})
-		newMetdata := newRaw.(map[string]interface{})
+		newMetadata := newRaw.(map[string]interface{})
 		var toBeRemovedMetadata []string
 		// Check if any key in old metadata was removed in new metadata.
 		// Creates a list of keys to be removed.
 		for k := range oldMetadata {
-			if _, ok := newMetdata[k]; !ok {
+			if _, ok := newMetadata[k]; !ok {
 				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
 			}
 		}
@@ -308,7 +308,7 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 				return fmt.Errorf(errorCompletingTask, err)
 			}
 		}
-		for k, v := range newMetdata {
+		for k, v := range newMetadata {
 			task, err := vapp.AddMetadata(k, v.(string))
 			if err != nil {
 				return fmt.Errorf("error adding metadata: %#v", err)
