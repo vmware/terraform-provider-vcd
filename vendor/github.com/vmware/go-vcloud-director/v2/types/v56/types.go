@@ -1154,6 +1154,33 @@ type TypedValue struct {
 	Value   string `xml:"Value"`
 }
 
+// Type: MetadataType
+// Namespace: http://www.vmware.com/vcloud/v1.5
+// Description: User-defined metadata associated with with an object.
+// Since: 1.5
+type Metadata struct {
+	XMLName       xml.Name         `xml:"Metadata"`
+	Xmlns         string           `xml:"xmlns,attr"`
+	HREF          string           `xml:"href,attr"`
+	Type          string           `xml:"type,attr,omitempty"`
+	Xsi           string           `xml:"xmlns:xsi,attr"`
+	Link          []*Link          `xml:"Link,omitempty"`
+	MetadataEntry []*MetadataEntry `xml:"MetadataEntry,omitempty"`
+}
+
+// Type: MetadataEntryType
+// Namespace: http://www.vmware.com/vcloud/v1.5
+type MetadataEntry struct {
+	Xmlns      string      `xml:"xmlns,attr"`
+	HREF       string      `xml:"href,attr"`
+	Type       string      `xml:"type,attr,omitempty"`
+	Xsi        string      `xml:"xmlns:xsi,attr"`
+	Domain     string      `xml:"Domain,omitempty"` // A value of SYSTEM places this MetadataEntry in the SYSTEM domain. Omit or leave empty to place this MetadataEntry in the GENERAL domain.
+	Key        string      `xml:"Key"`              // An arbitrary key name. Length cannot exceed 256 UTF-8 characters.
+	Link       []*Link     `xml:"Link,omitempty"`   //A reference to an entity or operation associated with this object.
+	TypedValue *TypedValue `xml:"TypedValue"`
+}
+
 // VAppChildren is a container for virtual machines included in this vApp.
 // Type: VAppChildrenType
 // Namespace: http://www.vmware.com/vcloud/v1.5

@@ -805,27 +805,54 @@ func (vapp *VApp) ChangeVMName(name string) (Task, error) {
 
 }
 
-func (vapp *VApp) DeleteMetadata(key string) (Task, error) {
-	err := vapp.Refresh()
+// GetMetadata() function calls private function getMetadata() with vapp.client and vapp.VApp.HREF
+// which returns a *types.Metadata struct for provided vapp input.
+func (vapp *VApp) GetMetadata() (*types.Metadata, error) {
+	return getMetadata(vapp.client, vapp.VApp.HREF)
+}
+
+func getMetadata(client *Client, requestUri string) (*types.Metadata, error) {
+	metadata := &types.Metadata{}
+
+	getMetadata, _ := url.ParseRequestURI(requestUri + "/metadata/")
+
+	req := client.NewRequest(map[string]string{}, "GET", *getMetadata, nil)
+
+	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.metadata+xml")
+
+	resp, err := checkResp(client.Http.Do(req))
 	if err != nil {
-		return Task{}, fmt.Errorf("error refreshing vApp before running customization: %v", err)
+		return metadata, fmt.Errorf("error retrieving task: %s", err)
 	}
 
-	if vapp.VApp.Children == nil {
-		return Task{}, fmt.Errorf("vApp doesn't contain any children, aborting customization")
+	if err = decodeBody(resp, metadata); err != nil {
+		return metadata, fmt.Errorf("error decoding task response: %s", err)
 	}
 
-	apiEndpoint, _ := url.ParseRequestURI(vapp.VApp.Children.VM[0].HREF)
+	// The request was successful
+	return metadata, nil
+}
+
+// DeleteMetadata() function calls private function deleteMetadata() with vapp.client and vapp.VApp.HREF
+// which deletes metadata depending on key provided as input from vApp.
+func (vapp *VApp) DeleteMetadata(key string) (Task, error) {
+	return deleteMetadata(vapp.client, key, vapp.VApp.HREF)
+}
+
+// Deletes metadata (type MetadataStringValue) from the vApp
+// TODO: Support all MetadataTypedValue types with this function
+func deleteMetadata(client *Client, key string, requestUri string) (Task, error) {
+	apiEndpoint, _ := url.ParseRequestURI(requestUri)
 	apiEndpoint.Path += "/metadata/" + key
 
-	req := vapp.client.NewRequest(map[string]string{}, "DELETE", *apiEndpoint, nil)
+	req := client.NewRequest(map[string]string{}, "DELETE", *apiEndpoint, nil)
 
-	resp, err := checkResp(vapp.client.Http.Do(req))
+	resp, err := checkResp(client.Http.Do(req))
 	if err != nil {
-		return Task{}, fmt.Errorf("error deleting Metadata: %s", err)
+		return Task{}, fmt.Errorf("error deleting metadata: %s", err)
 	}
 
-	task := NewTask(vapp.client)
+	task := NewTask(client)
 
 	if err = decodeBody(resp, task.Task); err != nil {
 		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
@@ -835,16 +862,15 @@ func (vapp *VApp) DeleteMetadata(key string) (Task, error) {
 	return *task, nil
 }
 
-func (vapp *VApp) AddMetadata(key, value string) (Task, error) {
-	err := vapp.Refresh()
-	if err != nil {
-		return Task{}, fmt.Errorf("error refreshing vApp before running customization: %v", err)
-	}
+// AddMetadata() function calls private function addMetadata() with vapp.client and vapp.VApp.HREF
+// which adds metadata key, value pair provided as input.
+func (vapp *VApp) AddMetadata(key string, value string) (Task, error) {
+	return addMetadata(vapp.client, key, value, vapp.VApp.HREF)
+}
 
-	if vapp.VApp.Children == nil {
-		return Task{}, fmt.Errorf("vApp doesn't contain any children, aborting customization")
-	}
-
+// Adds metadata (type MetadataStringValue) to the vApp
+// TODO: Support all MetadataTypedValue types with this function
+func addMetadata(client *Client, key string, value string, requestUri string) (Task, error) {
 	newmetadata := &types.MetadataValue{
 		Xmlns: "http://www.vmware.com/vcloud/v1.5",
 		Xsi:   "http://www.w3.org/2001/XMLSchema-instance",
@@ -856,26 +882,24 @@ func (vapp *VApp) AddMetadata(key, value string) (Task, error) {
 
 	output, err := xml.MarshalIndent(newmetadata, "  ", "    ")
 	if err != nil {
-		fmt.Printf("error: %v\n", err)
+		return Task{}, fmt.Errorf("error adding metadata: %s", err)
 	}
-
-	util.Logger.Printf("[DEBUG] NetworkXML: %s", output)
 
 	buffer := bytes.NewBufferString(xml.Header + string(output))
 
-	apiEndpoint, _ := url.ParseRequestURI(vapp.VApp.Children.VM[0].HREF)
+	apiEndpoint, _ := url.ParseRequestURI(requestUri)
 	apiEndpoint.Path += "/metadata/" + key
 
-	req := vapp.client.NewRequest(map[string]string{}, "PUT", *apiEndpoint, buffer)
+	req := client.NewRequest(map[string]string{}, "PUT", *apiEndpoint, buffer)
 
 	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.metadata.value+xml")
 
-	resp, err := checkResp(vapp.client.Http.Do(req))
+	resp, err := checkResp(client.Http.Do(req))
 	if err != nil {
-		return Task{}, fmt.Errorf("error customizing VM Network: %s", err)
+		return Task{}, fmt.Errorf("error customizing vApp metadata: %s", err)
 	}
 
-	task := NewTask(vapp.client)
+	task := NewTask(client)
 
 	if err = decodeBody(resp, task.Task); err != nil {
 		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
@@ -883,7 +907,6 @@ func (vapp *VApp) AddMetadata(key, value string) (Task, error) {
 
 	// The request was successful
 	return *task, nil
-
 }
 
 func (vapp *VApp) SetOvf(parameters map[string]string) (Task, error) {
