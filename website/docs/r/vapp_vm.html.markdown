@@ -93,7 +93,7 @@ The following arguments are supported:
 * `memory` - (Optional) The amount of RAM (in MB) to allocate to the VM
 * `cpus` - (Optional) The number of virtual CPUs to allocate to the VM. Socket count is a result of: virtual logical processors/cores per socket
 * `cpu_cores` - (Optional; *v2.1+*) The number of cores per socket
-* `metadata` - (Optional; *v2.1+*) Key value map of metadata to assign to this VM
+* `metadata` - (Optional; *v2.2+*) Key value map of metadata to assign to this VM
 * `initscript` (Optional) A script to be run only on initial boot
 * `network_name` - (Optional) Name of the network this VM should connect to
 * `vapp_network_name` - (Optional; *v2.1+*) Name of the vApp network this VM should connect to
