@@ -41,6 +41,7 @@ resource "vcd_vapp_vm" "web1" {
     role    = "web"
     env     = "staging"
     version = "v1"
+    bla     = "foo"
   }
 
   network_name = "net"
@@ -58,9 +59,10 @@ resource "vcd_vapp_vm" "web2" {
   cpus          = 1
 
   metadata {
-    role    = "web"
-    env     = "staging"
-    version = "v2"
+    role         = "web"
+    env          = "staging"
+    version      = "v2"
+    my_extra_key = "My extra value"
   }
 
   network_name = "net"
