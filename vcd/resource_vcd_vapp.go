@@ -78,6 +78,8 @@ func resourceVcdVApp() *schema.Resource {
 			"metadata": {
 				Type:     schema.TypeMap,
 				Optional: true,
+				// For now underlying go-vcloud-director repo only supports
+				// a value of type String in this map.
 			},
 			"ovf": {
 				Type:     schema.TypeMap,
@@ -285,9 +287,18 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if d.HasChange("metadata") {
-		oraw, nraw := d.GetChange("metadata")
-		metadata := oraw.(map[string]interface{})
-		for k := range metadata {
+		oldRaw, newRaw := d.GetChange("metadata")
+		oldMetadata := oldRaw.(map[string]interface{})
+		newMetadata := newRaw.(map[string]interface{})
+		var toBeRemovedMetadata []string
+		// Check if any key in old metadata was removed in new metadata.
+		// Creates a list of keys to be removed.
+		for k := range oldMetadata {
+			if _, ok := newMetadata[k]; !ok {
+				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
+			}
+		}
+		for _, k := range toBeRemovedMetadata {
 			task, err := vapp.DeleteMetadata(k)
 			if err != nil {
 				return fmt.Errorf("error deleting metadata: %#v", err)
@@ -297,8 +308,7 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 				return fmt.Errorf(errorCompletingTask, err)
 			}
 		}
-		metadata = nraw.(map[string]interface{})
-		for k, v := range metadata {
+		for k, v := range newMetadata {
 			task, err := vapp.AddMetadata(k, v.(string))
 			if err != nil {
 				return fmt.Errorf("error adding metadata: %#v", err)
@@ -308,7 +318,6 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 				return fmt.Errorf(errorCompletingTask, err)
 			}
 		}
-
 	}
 
 	if d.HasChange("storage_profile") {

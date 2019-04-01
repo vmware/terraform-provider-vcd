@@ -55,6 +55,8 @@ func TestAccVcdVApp_PowerOff(t *testing.T) {
 						"vcd_vapp."+vappName, "ip", "10.10.102.160"),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp."+vappName, "power_on", "true"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp."+vappName, "metadata.vapp_metadata", "vApp Metadata."),
 				),
 			},
 
@@ -67,6 +69,8 @@ func TestAccVcdVApp_PowerOff(t *testing.T) {
 						"vcd_vapp."+vappNameAllocated, "ip", "allocated"),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp."+vappNameAllocated, "power_on", "true"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp."+vappNameAllocated, "metadata.vapp_metadata", "vApp Metadata."),
 				),
 			},
 
@@ -81,6 +85,8 @@ func TestAccVcdVApp_PowerOff(t *testing.T) {
 						"vcd_vapp."+vappName, "ip", "10.10.103.160"),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp."+vappName, "power_on", "false"),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp."+vappName, "metadata.vapp_metadata", "vApp Metadata."),
 				),
 			},
 		},
@@ -220,6 +226,9 @@ resource "vcd_vapp" "{{.VappName}}" {
   memory        = 1024
   cpus          = 1
   ip            = "10.10.102.160"
+  metadata {
+    vapp_metadata = "vApp Metadata."
+  }
 }
 
 resource "vcd_vapp" "{{.VappNameAllocated}}" {
@@ -232,6 +241,9 @@ resource "vcd_vapp" "{{.VappNameAllocated}}" {
   memory        = 1024
   cpus          = 1
   ip            = "allocated"
+  metadata {
+    vapp_metadata = "vApp Metadata."
+  }
 }
 `
 
@@ -265,5 +277,8 @@ resource "vcd_vapp" "{{.VappName}}" {
   cpus          = 1
   ip            = "10.10.103.160"
   power_on      = false
+  metadata {
+    vapp_metadata = "vApp Metadata."
+  }
 }
 `

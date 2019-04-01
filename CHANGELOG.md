@@ -1,5 +1,17 @@
 ## 2.2.0 (Unreleased)
 
+FEATURES:
+
+* `vcd_vapp_vm` - Ability to add metadata to a VM. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES` ([#158](https://github.com/terraform-providers/terraform-provider-vcd/issues/158))
+
+BUG FIXES:
+
+* `vcd_vapp` - Ability to add metadata to empty vApp. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES` ([#158](https://github.com/terraform-providers/terraform-provider-vcd/issues/158))
+
+BACKWARDS INCOMPATIBILITIES / NOTES:
+
+* `vcd_vapp` - Metadata is no longer added to first VM in vApp it will be added to vApp directly instead. ([#158](https://github.com/terraform-providers/terraform-provider-vcd/issues/158))
+
 ## 2.1.0 (March 27, 2019)
 
 NOTES:
@@ -23,6 +35,7 @@ IMPROVEMENTS:
 * resource/vcd_vapp_vm now support CPU cores configuration ([#174](https://github.com/terraform-providers/terraform-provider-vcd/issues/174))
 
 BUG FIXES:
+
 * resource/vcd_vapp, resource/vcd_vapp_vm add vApp status handling when environment is very fast ([#68](https://github.com/terraform-providers/terraform-provider-vcd/issues/68))
 * resource/vcd_vapp_vm add additional validation to check if vApp template is OK [[#157](https://github.com/terraform-providers/terraform-provider-vcd/issues/157)] 
 

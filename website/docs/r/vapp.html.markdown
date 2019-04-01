@@ -24,6 +24,10 @@ resource "vcd_network_direct" "net" {
 resource "vcd_vapp" "web" {
   name = "web"
 
+  metadata {
+    CostAccount = "Marketing Department"
+  }
+
   depends_on = ["vcd_network_direct.net"]
 }
 
@@ -58,7 +62,7 @@ resource "vcd_vapp_vm" "web2" {
 
 ## Example of vApp with single VM
 
-**Not recommended in v2.0+** : in the earlier version of the provider it was possible to define a vApp with a single VM in one resource, but it is not recommended as of *v2.0+* provider. Please define vApp and VM in separate resources instead. 
+**Not recommended in v2.0+** : in the earlier version of the provider it was possible to define a vApp with a single VM in one resource, but it is not recommended as of *v2.0+* provider. Please define vApp and VM in separate resources instead.
 
 ```hcl
 resource "vcd_network_routed" "net" {
@@ -99,6 +103,11 @@ resource "vcd_network_routed" "net" {
 resource "vcd_vapp" "web" {
   name = "web"
 
+  metadata {
+    boss = "Why is this vApp empty?"
+    john = "I don't really know. Maybe somebody did forget to clean it up."
+  }
+
   depends_on = ["vcd_network_routed.net"]
 }
 ```
@@ -122,7 +131,7 @@ The following arguments are supported:
   `static_ip_pool` set for the network. If left blank, and the network has
   `dhcp_pool` set with at least one available IP then this will be set with
   DHCP.
-* `metadata` - (Optional) Key value map of metadata to assign to this vApp
+* `metadata` - (Optional) Key value map of metadata to assign to this vApp. Key and value can be any string. (Since *v2.2+* metadata is added directly to vApp instead of first VM in vApp)
 * `ovf` - (Optional) Key value map of ovf parameters to assign to VM product section
 * `power_on` - (Optional) A boolean value stating if this vApp should be powered on. Default is `true`
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations

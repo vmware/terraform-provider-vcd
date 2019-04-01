@@ -27,7 +27,6 @@ func resourceVcdVAppVm() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
@@ -48,13 +47,11 @@ func resourceVcdVAppVm() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-
 			"catalog_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
 			},
-
 			"memory": &schema.Schema{
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -77,7 +74,12 @@ func resourceVcdVAppVm() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 			},
-
+			"metadata": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				// For now underlying go-vcloud-director repo only supports
+				// a value of type String in this map.
+			},
 			"href": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -97,7 +99,6 @@ func resourceVcdVAppVm() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-
 			"network_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -399,6 +400,41 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 	status, err := vm.GetStatus()
 	if err != nil {
 		return fmt.Errorf("error getting VM status: %#v", err)
+	}
+
+	// VM does not have to be in POWERED_OFF state for metadata operations
+	if d.HasChange("metadata") {
+		oldRaw, newRaw := d.GetChange("metadata")
+		oldMetadata := oldRaw.(map[string]interface{})
+		newMetadata := newRaw.(map[string]interface{})
+		var toBeRemovedMetadata []string
+		// Check if any key in old metadata was removed in new metadata.
+		// Creates a list of keys to be removed.
+		for k := range oldMetadata {
+			if _, ok := newMetadata[k]; !ok {
+				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
+			}
+		}
+		for _, k := range toBeRemovedMetadata {
+			task, err := vm.DeleteMetadata(k)
+			if err != nil {
+				return fmt.Errorf("error deleting metadata: %#v", err)
+			}
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				return fmt.Errorf(errorCompletingTask, err)
+			}
+		}
+		for k, v := range newMetadata {
+			task, err := vm.AddMetadata(k, v.(string))
+			if err != nil {
+				return fmt.Errorf("error adding metadata: %#v", err)
+			}
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				return fmt.Errorf(errorCompletingTask, err)
+			}
+		}
 	}
 
 	// When there is more then one VM in a vApp Terraform will try to parallelise their creation.
