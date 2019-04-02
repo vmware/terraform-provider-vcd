@@ -45,10 +45,10 @@ resource "vcd_vapp_vm" "web1" {
   }
 
   networks = [{
-    orgnetwork                 = "net"
-    ip                         = "10.10.104.161"
-    ip_address_allocation_mode = "MANUAL"
-    is_primary                 = true
+    orgnetwork         = "net"
+    ip                 = "10.10.104.161"
+    ip_allocation_mode = "MANUAL"
+    is_primary         = true
   }]
 
   depends_on = ["vcd_vapp.web"]
@@ -70,14 +70,14 @@ resource "vcd_vapp_vm" "web2" {
   }
 
   networks = [{
-    orgnetwork                 = "net"
-    ip                         = "10.10.104.162"
-    ip_address_allocation_mode = "MANUAL"
-    is_primary                 = true
+    orgnetwork         = "net"
+    ip                 = "10.10.104.162"
+    ip_allocation_mode = "MANUAL"
+    is_primary         = true
   },
   {
-    orgnetwork                 = "net"
-    ip_address_allocation_mode = "POOL"
+    orgnetwork         = "net"
+    ip_allocation_mode = "POOL"
   }]
 
   disk {
