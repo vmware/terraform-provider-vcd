@@ -69,7 +69,7 @@ func resourceVcdVAppVm() *schema.Resource {
 				Computed:         true,
 				ConflictsWith:    []string{"networks"},
 				Deprecated:       "In favor of networks",
-				DiffSuppressFunc: suppressIfIpIsOneOf(),
+				DiffSuppressFunc: suppressIfIPIsOneOf(),
 				ForceNew:         true,
 				Optional:         true,
 				Type:             schema.TypeString,
@@ -125,7 +125,7 @@ func resourceVcdVAppVm() *schema.Resource {
 						},
 						"ip": {
 							Computed:         true,
-							DiffSuppressFunc: suppressIfIpIsOneOf(),
+							DiffSuppressFunc: suppressIfIPIsOneOf(),
 							ForceNew:         true,
 							Optional:         true,
 							Type:             schema.TypeString,
@@ -135,7 +135,7 @@ func resourceVcdVAppVm() *schema.Resource {
 							ForceNew:     true,
 							Optional:     true,
 							Type:         schema.TypeString,
-							ValidateFunc: checkIpAddressAllocationMode(),
+							ValidateFunc: checkIPAddressAllocationMode(),
 						},
 						"is_primary": {
 							Default:  false,
@@ -195,7 +195,7 @@ func resourceVcdVAppVm() *schema.Resource {
 	}
 }
 
-func checkIpAddressAllocationMode() schema.SchemaValidateFunc {
+func checkIPAddressAllocationMode() schema.SchemaValidateFunc {
 	return func(v interface{}, key string) (warns []string, errs []error) {
 		if v == "POOL" || v == "DHCP" || v == "MANUAL" || v == "NONE" {
 			return
@@ -205,7 +205,7 @@ func checkIpAddressAllocationMode() schema.SchemaValidateFunc {
 	}
 }
 
-func suppressIfIpIsOneOf() schema.SchemaDiffSuppressFunc {
+func suppressIfIPIsOneOf() schema.SchemaDiffSuppressFunc {
 	return func(k string, old string, new string, d *schema.ResourceData) bool {
 		switch {
 		case new == "dhcp" && net.ParseIP(old) != nil:
