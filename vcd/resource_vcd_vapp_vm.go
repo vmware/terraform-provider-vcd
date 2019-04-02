@@ -532,7 +532,7 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 	// However, vApp throws errors when simultaneous requests are executed.
 	// To avoid them, below block is using retryCall in multiple places as a workaround,
 	// so that the VMs are created regardless of parallelisation.
-	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("cpu_cores") || d.HasChange("power_on") || d.HasChange("disk") {
+	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("cpu_cores") || d.HasChange("networks") || d.HasChange("disk") || d.HasChange("power_on") {
 		if status != "POWERED_OFF" {
 			task, err := vm.PowerOff()
 			if err != nil {
@@ -544,18 +544,6 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 
-		// detaching independent disks - only possible when VM power off
-		if d.HasChange("disk") {
-			err = attachDetachDisks(d, vm, vdc)
-			if err != nil {
-				errAttachedDisk := updateStateOfAttachedDisks(d, vm, vdc)
-				if errAttachedDisk != nil {
-					d.Set("disk", nil)
-					return fmt.Errorf("error reading attached disks : %#v and internal error : %#v", errAttachedDisk, err)
-				}
-				return fmt.Errorf("error attaching-detaching  disks when updating resource : %#v", err)
-			}
-		}
 		if d.HasChange("memory") {
 			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 				task, err := vm.ChangeMemorySize(d.Get("memory").(int))
@@ -588,6 +576,38 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 			})
 			if err != nil {
 				return fmt.Errorf(errorCompletingTask, err)
+			}
+		}
+
+		if d.HasChange("networks") {
+			n := []map[string]interface{}{}
+
+			nets := d.Get("networks").([]interface{})
+			for _, network := range nets {
+				n = append(n, network.(map[string]interface{}))
+			}
+			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+				task, err := vm.ChangeNetworkConfig(n)
+				if err != nil {
+					return resource.RetryableError(fmt.Errorf("error changing network: %#v", err))
+				}
+				return resource.RetryableError(task.WaitTaskCompletion())
+			})
+			if err != nil {
+				return fmt.Errorf(errorCompletingTask, err)
+			}
+		}
+
+		// detaching independent disks - only possible when VM power off
+		if d.HasChange("disk") {
+			err = attachDetachDisks(d, vm, vdc)
+			if err != nil {
+				errAttachedDisk := updateStateOfAttachedDisks(d, vm, vdc)
+				if errAttachedDisk != nil {
+					d.Set("disk", nil)
+					return fmt.Errorf("error reading attached disks : %#v and internal error : %#v", errAttachedDisk, err)
+				}
+				return fmt.Errorf("error attaching-detaching  disks when updating resource : %#v", err)
 			}
 		}
 
