@@ -731,18 +731,21 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 	network := d.Get("network_name").(string)
 	switch {
 	// network_name is not set. networks is set in config
-	case network != "" && len(networks) == 0:
+	case network != "":
 		d.Set("ip", vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddress)
 		d.Set("mac", vm.VM.NetworkConnectionSection.NetworkConnection[0].MACAddress)
-	case network == "" && len(networks) > 0:
-		var networks []map[string]interface{}
+	case len(networks) > 0:
+		var nets []map[string]interface{}
 		for index, net := range d.Get("networks").([]interface{}) {
 			n := net.(map[string]interface{})
-			n["ip"] = vm.VM.NetworkConnectionSection.NetworkConnection[index].IPAddress
-			n["mac"] = vm.VM.NetworkConnectionSection.NetworkConnection[index].MACAddress
-			networks = append(networks, n)
-			d.Set("networks", networks)
+			if len(vm.VM.NetworkConnectionSection.NetworkConnection) > 0 {
+				// n["adapter_type"] = vm.VM.NetworkConnectionSection.NetworkConnection[index].NetworkAdapterType
+				n["ip"] = vm.VM.NetworkConnectionSection.NetworkConnection[index].IPAddress
+				n["mac"] = vm.VM.NetworkConnectionSection.NetworkConnection[index].MACAddress
+				nets = append(nets, n)
+			}
 		}
+		d.Set("networks", nets)
 	}
 	d.Set("href", vm.VM.HREF)
 
