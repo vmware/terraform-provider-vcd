@@ -205,7 +205,7 @@ func checkIPAddressAllocationMode() schema.SchemaValidateFunc {
 		if v == "POOL" || v == "DHCP" || v == "MANUAL" || v == "NONE" {
 			return
 		}
-		errs = append(errs, fmt.Errorf("ip_address_allocation_mode must be one of POOL, DHCP, MANUAL or NONE got: %v", v))
+		errs = append(errs, fmt.Errorf("ip_allocation_mode must be one of POOL, DHCP, MANUAL or NONE got: %v", v))
 		return
 	}
 }
