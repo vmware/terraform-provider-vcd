@@ -124,11 +124,16 @@ func resourceVcdVAppVm() *schema.Resource {
 							Type:     schema.TypeString,
 						},
 						"ip": {
-							Computed:         true,
-							DiffSuppressFunc: suppressIfIPIsOneOf(),
-							ForceNew:         true,
-							Optional:         true,
-							Type:             schema.TypeString,
+							Computed: true,
+							ForceNew: true,
+							Optional: true,
+							Type:     schema.TypeString,
+							ValidateFunc: func(val interface{}, key string) (warns []string, errs []error) {
+								if net.ParseIP(val.(string)) == nil {
+									errs = append(errs, fmt.Errorf("IP must be valid, got: %d", val.(string)))
+								}
+								return
+							},
 						},
 						"ip_allocation_mode": {
 							Default:      "POOL",
