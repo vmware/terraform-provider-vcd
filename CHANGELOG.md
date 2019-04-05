@@ -3,6 +3,7 @@
 FEATURES:
 
 * `vcd_vapp_vm` - Ability to add metadata to a VM. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES` ([#158](https://github.com/terraform-providers/terraform-provider-vcd/issues/158))
+* **New Resource:** VDC resource `vcd_vdc` - ([#149](https://github.com/terraform-providers/terraform-provider-vcd/pull/149))
 
 BUG FIXES:
 
