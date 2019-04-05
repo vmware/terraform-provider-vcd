@@ -72,7 +72,7 @@ resource "vcd_vdc" "my-vdc" {
 
 The following arguments are supported:
 
-* `org` - (Required) Organization to create the VDC in
+* `org` - (Optional; *v2.0+*) Organization to create the VDC in, optional if defined at provider level
 * `name` - (Required) VDC name
 * `description` - (Optional) VDC friendly description
 * `allocation_model` - (Required) The allocation model used by this VDC; must be one of {AllocationVApp, AllocationPool, ReservationPool}
