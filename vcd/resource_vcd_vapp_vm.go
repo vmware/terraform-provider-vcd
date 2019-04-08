@@ -785,19 +785,38 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 	case network != "":
 		d.Set("ip", vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddress)
 		d.Set("mac", vm.VM.NetworkConnectionSection.NetworkConnection[0].MACAddress)
+		// case len(networks) > 0:
+		// 	var nets []map[string]interface{}
+		// 	for index, net := range d.Get("networks").([]interface{}) {
+		// 		n := net.(map[string]interface{})
+		// 		if len(vm.VM.NetworkConnectionSection.NetworkConnection) > 0 {
+		// 			// n["adapter_type"] = vm.VM.NetworkConnectionSection.NetworkConnection[index].NetworkAdapterType
+		// 			n["ip"] = vm.VM.NetworkConnectionSection.NetworkConnection[index].IPAddress
+		// 			n["mac"] = vm.VM.NetworkConnectionSection.NetworkConnection[index].MACAddress
+		// 			nets = append(nets, n)
+		// 		}
+		// 	}
+		// We are using networks block and rebuilding statefile
 	case len(networks) > 0:
 		var nets []map[string]interface{}
-		for index, net := range d.Get("networks").([]interface{}) {
-			n := net.(map[string]interface{})
-			if len(vm.VM.NetworkConnectionSection.NetworkConnection) > 0 {
-				// n["adapter_type"] = vm.VM.NetworkConnectionSection.NetworkConnection[index].NetworkAdapterType
-				n["ip"] = vm.VM.NetworkConnectionSection.NetworkConnection[index].IPAddress
-				n["mac"] = vm.VM.NetworkConnectionSection.NetworkConnection[index].MACAddress
-				nets = append(nets, n)
+		// Loop over existing NICs in VM
+		for i, vmNet := range vm.VM.NetworkConnectionSection.NetworkConnection {
+			singleNIC := make(map[string]interface{})
+			singleNIC["ip"] = vmNet.IPAddress
+			singleNIC["mac"] = vmNet.MACAddress
+			singleNIC["orgnetwork"] = vmNet.Network
+			singleNIC["ip_allocation_mode"] = vmNet.IPAddressAllocationMode
+
+			singleNIC["is_primary"] = false
+			if i == vm.VM.NetworkConnectionSection.PrimaryNetworkConnectionIndex {
+				singleNIC["is_primary"] = true
 			}
+
+			nets = append(nets, singleNIC)
 		}
 		d.Set("networks", nets)
 	}
+
 	d.Set("href", vm.VM.HREF)
 
 	err = updateStateOfAttachedDisks(d, vm, vdc)
