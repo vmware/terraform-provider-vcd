@@ -785,18 +785,7 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 	case network != "":
 		d.Set("ip", vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddress)
 		d.Set("mac", vm.VM.NetworkConnectionSection.NetworkConnection[0].MACAddress)
-		// case len(networks) > 0:
-		// 	var nets []map[string]interface{}
-		// 	for index, net := range d.Get("networks").([]interface{}) {
-		// 		n := net.(map[string]interface{})
-		// 		if len(vm.VM.NetworkConnectionSection.NetworkConnection) > 0 {
-		// 			// n["adapter_type"] = vm.VM.NetworkConnectionSection.NetworkConnection[index].NetworkAdapterType
-		// 			n["ip"] = vm.VM.NetworkConnectionSection.NetworkConnection[index].IPAddress
-		// 			n["mac"] = vm.VM.NetworkConnectionSection.NetworkConnection[index].MACAddress
-		// 			nets = append(nets, n)
-		// 		}
-		// 	}
-		// We are using networks block and rebuilding statefile
+	// We are using networks block and rebuilding statefile
 	case len(networks) > 0:
 		var nets []map[string]interface{}
 		// Loop over existing NICs in VM
@@ -811,7 +800,6 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 			if i == vm.VM.NetworkConnectionSection.PrimaryNetworkConnectionIndex {
 				singleNIC["is_primary"] = true
 			}
-
 			nets = append(nets, singleNIC)
 		}
 		d.Set("networks", nets)
