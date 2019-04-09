@@ -18,7 +18,7 @@ func TestAccVcdVdcBasic(t *testing.T) {
 		"VdcName":                   TestAccVcdVdc,
 		"OrgName":                   testConfig.VCD.Org,
 		"AllocationModel":           "ReservationPool",
-		"ProviderVdc":               testConfig.VCD.ProviderVdc.ID,
+		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
 		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 	}
@@ -54,7 +54,7 @@ func TestAccVcdVdcBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_vdc."+TestAccVcdVdc, "network_pool", testConfig.VCD.ProviderVdc.NetworkPool),
 					resource.TestCheckResourceAttr(
-						"vcd_vdc."+TestAccVcdVdc, "provider_vdc", testConfig.VCD.ProviderVdc.ID),
+						"vcd_vdc."+TestAccVcdVdc, "provider_vdc", testConfig.VCD.ProviderVdc.Name),
 					resource.TestCheckResourceAttr(
 						"vcd_vdc."+TestAccVcdVdc, "is_enabled", "true"),
 					resource.TestCheckResourceAttr(

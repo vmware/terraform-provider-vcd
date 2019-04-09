@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
-	types "github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 func resourceVcdVdc() *schema.Resource {
@@ -56,7 +56,6 @@ func resourceVcdVdc() *schema.Resource {
 		Create: resourceVcdVdcCreate,
 		Delete: resourceVcdVdcDelete,
 		Read:   resourceVcdVdcRead,
-		Update: resourceVcdVdcUpdate,
 
 		Schema: map[string]*schema.Schema{
 			"org": {
@@ -280,11 +279,6 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-//update function for "delete_force", "delete_recursive" no actions needed
-func resourceVcdVdcUpdate(d *schema.ResourceData, m interface{}) error {
-	return nil
-}
-
 // Deletes a vdc, optionally removing all objects in it as well
 func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[TRACE] vdc delete started")
@@ -366,6 +360,32 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 		return &types.VdcConfiguration{}, errors.New("No memory field in compute_capacity")
 	}
 
+	providerVdcStorageProfileName := storageProfileMap["provider"].(string)
+	providerVdcStorageResults, err := vcdClient.QueryWithNotEncodedParams(map[string]string{}, map[string]string{
+		"type":   "providerVdcStorageProfile",
+		"filter": fmt.Sprintf("(name==%s)", providerVdcStorageProfileName),
+	})
+	if err != nil {
+		return &types.VdcConfiguration{}, err
+	}
+	if len(providerVdcStorageResults.Results.ProviderVdcStorageProfileRecord) == 0 {
+		return &types.VdcConfiguration{}, fmt.Errorf("No provider VDC storage profile found with name %s", providerVdcStorageProfileName)
+	}
+	providerVdcStorageProfile := providerVdcStorageResults.Results.ProviderVdcStorageProfileRecord[0]
+
+	providerVdcName := d.Get("provider_vdc").(string)
+	providerVdcResults, err := vcdClient.QueryWithNotEncodedParams(map[string]string{}, map[string]string{
+		"type":   "providerVdc",
+		"filter": fmt.Sprintf("(name==%s)", providerVdcName),
+	})
+	if err != nil {
+		return &types.VdcConfiguration{}, err
+	}
+	if len(providerVdcResults.Results.VMWProviderVdcRecord) == 0 {
+		return &types.VdcConfiguration{}, fmt.Errorf("No provider VDC found with name %s", providerVdcName)
+	}
+	providerVdc := providerVdcResults.Results.VMWProviderVdcRecord[0]
+
 	params := &types.VdcConfiguration{
 		Name:            d.Get("name").(string),
 		Xmlns:           "http://www.vmware.com/vcloud/v1.5",
@@ -381,11 +401,11 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 			Limit:   int64(storageProfileMap["limit"].(int)),
 			Default: storageProfileMap["default"].(bool),
 			ProviderVdcStorageProfile: &types.Reference{
-				HREF: fmt.Sprintf("%s/admin/pvdcStorageProfile/%s", vcdClient.Client.VCDHREF.String(), storageProfileMap["provider"].(string)),
+				HREF: providerVdcStorageProfile.HREF,
 			},
 		},
 		ProviderVdcReference: &types.Reference{
-			HREF: fmt.Sprintf("%s/admin/providervdc/%s", vcdClient.Client.VCDHREF.String(), d.Get("provider_vdc").(string)),
+			HREF: providerVdc.HREF,
 		},
 	}
 
@@ -429,9 +449,20 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 		params.IsThinProvision = isThinProvision.(bool)
 	}
 
-	if networkPool, ok := d.GetOk("network_pool"); ok {
+	if networkPoolName, ok := d.GetOk("network_pool"); ok {
+		networkPoolResults, err := vcdClient.QueryWithNotEncodedParams(map[string]string{}, map[string]string{
+			"type":   "networkPool",
+			"filter": fmt.Sprintf("(name==%s)", networkPoolName.(string)),
+		})
+		if err != nil {
+			return &types.VdcConfiguration{}, err
+		}
+		if len(networkPoolResults.Results.NetworkPoolRecord) == 0 {
+			return &types.VdcConfiguration{}, fmt.Errorf("No network pool found with name %s", networkPoolName)
+		}
+		networkPool := networkPoolResults.Results.NetworkPoolRecord[0]
 		params.NetworkPoolReference = &types.Reference{
-			HREF: fmt.Sprintf("%s/admin/extension/networkPool/%s", vcdClient.Client.VCDHREF.String(), networkPool.(string)),
+			HREF: networkPool.HREF,
 		}
 	}
 

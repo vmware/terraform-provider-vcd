@@ -43,7 +43,7 @@ type TestConfig struct {
 		Org         string `json:"org"`
 		Vdc         string `json:"vdc"`
 		ProviderVdc struct {
-			ID             string `json:"id"`
+			Name           string `json:"name"`
 			NetworkPool    string `json:"networkPool"`
 			StorageProfile string `json:"storageProfile"`
 		} `json:"providerVdc"`
