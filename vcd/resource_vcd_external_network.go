@@ -7,7 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
-	types "github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 func resourceVcdExternalNetwork() *schema.Resource {
@@ -15,29 +15,22 @@ func resourceVcdExternalNetwork() *schema.Resource {
 		Create: resourceVcdExternalNetworkCreate,
 		Delete: resourceVcdExternalNetworkDelete,
 		Read:   resourceVcdExternalNetworkRead,
-		Update: resourceVcdExternalNetworkUpdate,
 
 		Schema: map[string]*schema.Schema{
-			"org": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "Organization to create the external network in",
-			},
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: false,
+				ForceNew: true,
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: false,
+				ForceNew: true,
 			},
 			"ip_scope": &schema.Schema{
 				Type:     schema.TypeList,
 				Required: true,
-				ForceNew: false,
+				ForceNew: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"is_inherited": &schema.Schema{
@@ -89,7 +82,7 @@ func resourceVcdExternalNetwork() *schema.Resource {
 			"vim_port_group": &schema.Schema{
 				Type:     schema.TypeList,
 				Required: true,
-				ForceNew: false,
+				ForceNew: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"vim_server": &schema.Schema{
@@ -110,19 +103,19 @@ func resourceVcdExternalNetwork() *schema.Resource {
 			"fence_mode": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    false,
+				ForceNew:    true,
 				Description: "",
 			},
 			"retain_net_info_across_deployments": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
-				ForceNew:    false,
+				ForceNew:    true,
 				Description: "",
 			},
 			"parent_network": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    false,
+				ForceNew:    true,
 				Description: "",
 			},
 		},
@@ -134,12 +127,6 @@ func resourceVcdExternalNetworkCreate(d *schema.ResourceData, meta interface{}) 
 	log.Printf("[TRACE] external network creation initiated")
 
 	vcdClient := meta.(*VCDClient)
-
-	// external network creation is accessible only in administrator API part
-	_, err := vcdClient.GetAdminOrgFromResource(d)
-	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
-	}
 
 	params, err := getExternalNetworkInput(d, vcdClient)
 	if err != nil {
@@ -169,27 +156,13 @@ func resourceVcdExternalNetworkRead(d *schema.ResourceData, meta interface{}) er
 
 	vcdClient := meta.(*VCDClient)
 
-	externalNetworkRef, err := govcd.GetExternalNetworkByName(vcdClient.VCDClient, d.Id())
-	if err != nil || *externalNetworkRef == (types.ExternalNetworkReference{}) {
-		log.Printf("[DEBUG] Unable to find external network. Removing from tfstate")
-		d.SetId("")
-		return nil
-	}
-
-	externalNetwork := govcd.NewExternalNetwork(&vcdClient.VCDClient.Client)
-	externalNetwork.ExternalNetwork.HREF = externalNetworkRef.HREF
-	err = externalNetwork.Refresh()
+	externalNetwork, err := govcd.GetExternalNetworkByName2(vcdClient.VCDClient, d.Id())
 	if err != nil {
-		log.Printf("[DEBUG] Error fetching external network details %#v", err)
+		d.SetId("")
 		return fmt.Errorf("error fetching external network details %#v", err)
 	}
 
-	log.Printf("[TRACE] external network read completed: %#v", externalNetwork)
-	return nil
-}
-
-//update function for "delete_force", "delete_recursive" no actions needed
-func resourceVcdExternalNetworkUpdate(d *schema.ResourceData, m interface{}) error {
+	log.Printf("[TRACE] external network read completed: %#v", externalNetwork.ExternalNetwork)
 	return nil
 }
 
@@ -199,16 +172,7 @@ func resourceVcdExternalNetworkDelete(d *schema.ResourceData, meta interface{}) 
 
 	vcdClient := meta.(*VCDClient)
 
-	externalNetworkRef, err := govcd.GetExternalNetworkByName(vcdClient.VCDClient, d.Id())
-	if err != nil || *externalNetworkRef == (types.ExternalNetworkReference{}) {
-		log.Printf("[DEBUG] Unable to find external network. Removing from tfstate")
-		d.SetId("")
-		return nil
-	}
-
-	externalNetwork := govcd.NewExternalNetwork(&vcdClient.VCDClient.Client)
-	externalNetwork.ExternalNetwork.HREF = externalNetworkRef.HREF
-	err = externalNetwork.Refresh()
+	externalNetwork, err := govcd.GetExternalNetworkByName2(vcdClient.VCDClient, d.Id())
 	if err != nil {
 		log.Printf("[DEBUG] Error fetching external network details %#v", err)
 		return fmt.Errorf("error fetching external network details %#v", err)
@@ -224,7 +188,7 @@ func resourceVcdExternalNetworkDelete(d *schema.ResourceData, meta interface{}) 
 	return nil
 }
 
-// helper for tranforming the resource input into the ExternalNetwork structure
+// helper for transforming the resource input into the ExternalNetwork structure
 // any cast operations or default values should be done here so that the create method is simple
 func getExternalNetworkInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.ExternalNetwork, error) {
 	params := &types.ExternalNetwork{
@@ -236,19 +200,6 @@ func getExternalNetworkInput(d *schema.ResourceData, vcdClient *VCDClient) (*typ
 			FenceMode:                      d.Get("fence_mode").(string),
 			RetainNetInfoAcrossDeployments: d.Get("retain_net_info_across_deployments").(bool),
 		},
-		/*
-			VimPortGroupRefs: &types.VimObjectRefs{
-				VimObjectRef: []*types.VimObjectRef{
-					&types.VimObjectRef{
-						VimServerRef: &types.Reference{
-							HREF: vimServerHref,
-						},
-						MoRef:         vcd.config.VCD.ExternalNetworkPortGroup,
-						VimObjectType: "DV_PORTGROUP",
-					},
-				},
-			},
-		*/
 	}
 
 	ipScopes := d.Get("ip_scope").([]interface{})
