@@ -170,7 +170,7 @@ func resourceVcdExternalNetworkRead(d *schema.ResourceData, meta interface{}) er
 
 	vcdClient := meta.(*VCDClient)
 
-	externalNetwork, err := govcd.GetExternalNetworkByName2(vcdClient.VCDClient, d.Id())
+	externalNetwork, err := govcd.GetExternalNetwork(vcdClient.VCDClient, d.Id())
 	if err != nil {
 		d.SetId("")
 		return fmt.Errorf("error fetching external network details %#v", err)
@@ -186,7 +186,7 @@ func resourceVcdExternalNetworkDelete(d *schema.ResourceData, meta interface{}) 
 
 	vcdClient := meta.(*VCDClient)
 
-	externalNetwork, err := govcd.GetExternalNetworkByName2(vcdClient.VCDClient, d.Id())
+	externalNetwork, err := govcd.GetExternalNetwork(vcdClient.VCDClient, d.Id())
 	if err != nil {
 		log.Printf("[DEBUG] Error fetching external network details %#v", err)
 		return fmt.Errorf("error fetching external network details %#v", err)

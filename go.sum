@@ -137,6 +137,8 @@ github.com/megalord/go-vcloud-director/v2 v2.0.0-20190322204507-b761c0905d9a h1:
 github.com/megalord/go-vcloud-director/v2 v2.0.0-20190322204507-b761c0905d9a/go.mod h1:/Qy3dfRj5kIe/lvYrvkqChkdJZyRJGEmAUVsonAwmVw=
 github.com/megalord/go-vcloud-director/v2 v2.0.0-20190409195100-399b351fdb69 h1:st7+VSiAqsnTV/GvEGFy1nkratN0Gu6Oe7GyuV0BfCg=
 github.com/megalord/go-vcloud-director/v2 v2.0.0-20190409195100-399b351fdb69/go.mod h1:/Qy3dfRj5kIe/lvYrvkqChkdJZyRJGEmAUVsonAwmVw=
+github.com/megalord/go-vcloud-director/v2 v2.0.0-20190410164604-f4845c5f159c h1:2hn5O2c6kwmou8PKuOPnZMqBQ5lniSXO6n9Eo8Jpqd4=
+github.com/megalord/go-vcloud-director/v2 v2.0.0-20190410164604-f4845c5f159c/go.mod h1:/Qy3dfRj5kIe/lvYrvkqChkdJZyRJGEmAUVsonAwmVw=
 github.com/miekg/dns v1.0.14/go.mod h1:W1PPwlIAgtquWBMBEV9nkV9Cazfe8ScdGz/Lj7v3Nrg=
 github.com/mitchellh/cli v0.0.0-20171129193617-33edc47170b5 h1:OYr3N2fY3e3kP/x/d81CJXlcZrIV2hH8gPnuRLpiME4=
 github.com/mitchellh/cli v0.0.0-20171129193617-33edc47170b5/go.mod h1:oGumspjLm2kTyiT1QMGpFqRlmxnKHfCvhZEVnx+5UeE=
