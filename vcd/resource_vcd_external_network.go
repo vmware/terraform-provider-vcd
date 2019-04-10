@@ -28,48 +28,57 @@ func resourceVcdExternalNetwork() *schema.Resource {
 				ForceNew: true,
 			},
 			"ip_scope": &schema.Schema{
-				Type:     schema.TypeList,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeList,
+				Required:    true,
+				ForceNew:    true,
+				Description: "A list of IP scopes for the network",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"is_inherited": &schema.Schema{
-							Type:     schema.TypeBool,
-							Required: true,
+							Type:        schema.TypeBool,
+							Required:    true,
+							Description: "True if the IP scope is inherit from parent network",
 						},
 						"gateway": &schema.Schema{
 							Type:         schema.TypeString,
 							Required:     true,
+							Description:  "Gateway of the network",
 							ValidateFunc: singleIP(),
 						},
 						"netmask": &schema.Schema{
 							Type:         schema.TypeString,
 							Required:     true,
+							Description:  "Network mask",
 							ValidateFunc: singleIP(),
 						},
 						"dns1": &schema.Schema{
 							Type:         schema.TypeString,
 							Required:     true,
+							Description:  "Primary DNS server",
 							ValidateFunc: singleIP(),
 						},
 						"dns2": &schema.Schema{
 							Type:         schema.TypeString,
 							Required:     true,
+							Description:  "Secondary DNS server",
 							ValidateFunc: singleIP(),
 						},
 						"ip_range": &schema.Schema{
-							Type:     schema.TypeList,
-							Optional: true,
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: "IP ranges used for static pool allocation in the network",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"start": &schema.Schema{
 										Type:         schema.TypeString,
 										Required:     true,
+										Description:  "Start address of the IP range",
 										ValidateFunc: singleIP(),
 									},
 									"end": &schema.Schema{
 										Type:         schema.TypeString,
 										Required:     true,
+										Description:  "End address of the IP range",
 										ValidateFunc: singleIP(),
 									},
 								},
@@ -77,46 +86,51 @@ func resourceVcdExternalNetwork() *schema.Resource {
 						},
 					},
 				},
-				Description: "",
 			},
 			"vim_port_group": &schema.Schema{
-				Type:     schema.TypeList,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeList,
+				Required:    true,
+				ForceNew:    true,
+				Description: "A list of DV_PORTGROUP or NETWORK objects that back this network. Each referenced DV_PORTGROUP or NETWORK must exist on a vCenter server registered with the system.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"vim_server": &schema.Schema{
-							Type:     schema.TypeString,
-							Required: true,
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The vCenter server reference",
 						},
 						"mo_ref": &schema.Schema{
-							Type:     schema.TypeString,
-							Required: true,
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "Managed object reference of the object",
 						},
 						"vim_object_type": &schema.Schema{
-							Type:     schema.TypeString,
-							Required: true,
+							Type:         schema.TypeString,
+							Required:     true,
+							Description:  "The vSphere type of the object.  One of: DV_PORTGROUP (distributed virtual portgroup), NETWORK",
+							ValidateFunc: validateVimObjectType,
 						},
 					},
 				},
 			},
 			"fence_mode": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Description:  "Isolation type of the network. If ParentNetwork is specified, this property controls connectivity to the parent. One of: bridged (connected directly to the ParentNetwork), isolated (not connected to any other network), natRouted (connected to the ParentNetwork via a NAT service)",
+				ValidateFunc: validateFenceMode,
 			},
 			"retain_net_info_across_deployments": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "",
+				Description: "Specifies whether the network resources such as IP/MAC of router will be retained across deployments. Default is false.",
 			},
 			"parent_network": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "",
+				Description: "Contains reference to parent network",
 			},
 		},
 	}
@@ -282,4 +296,31 @@ func singleIP() schema.SchemaValidateFunc {
 		}
 		return
 	}
+}
+
+func validateFenceMode(val interface{}, key string) (warns []string, errs []error) {
+	v := val.(string)
+	switch v {
+	case
+		"bridged",
+		"isolated",
+		"natRouted":
+		return
+	default:
+		errs = append(errs, fmt.Errorf("%q must be one of {bridged, isolated, natRouted}, got: %s", key, v))
+	}
+	return
+}
+
+func validateVimObjectType(val interface{}, key string) (warns []string, errs []error) {
+	v := val.(string)
+	switch v {
+	case
+		"DV_PORTGROUP",
+		"NETWORK":
+		return
+	default:
+		errs = append(errs, fmt.Errorf("%q must be one of {DV_PORTGROUP, NETWORK}, got: %s", key, v))
+	}
+	return
 }
