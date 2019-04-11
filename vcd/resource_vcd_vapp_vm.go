@@ -128,6 +128,12 @@ func resourceVcdVAppVm() *schema.Resource {
 				Optional: true,
 				Set:      resourceVcdVmIndependentDiskHash,
 			},
+			"hardware_assisted_virtualization": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Expose hardware-assisted virtualization to guest OS.",
+			},
 		},
 	}
 }
@@ -235,6 +241,19 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error changing network: %#v", err)
 	}
 
+	if d.Get("hardware_assisted_virtualization").(bool) {
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := vm.ToggleHWAssistedVirtualization(true)
+			if err != nil {
+				return resource.RetryableError(fmt.Errorf("error enabling hardware assisted virtualization: %#v", err))
+			}
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
+		if err != nil {
+			return fmt.Errorf(errorCompletingTask, err)
+		}
+	}
+
 	initScript, ok := d.GetOk("initscript")
 
 	if ok {
@@ -279,6 +298,9 @@ func addVdcNetwork(d *schema.ResourceData, vdc govcd.Vdc, vapp govcd.VApp, vcdCl
 	vdcNetwork := net.OrgVDCNetwork
 
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
+	if err != nil {
+		return &types.OrgVDCNetwork{}, fmt.Errorf("could not get network config: %s", err)
+	}
 
 	isAlreadyVappNetwork := false
 	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
@@ -441,7 +463,8 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 	// However, vApp throws errors when simultaneous requests are executed.
 	// To avoid them, below block is using retryCall in multiple places as a workaround,
 	// so that the VMs are created regardless of parallelisation.
-	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("cpu_cores") || d.HasChange("power_on") || d.HasChange("disk") {
+	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("cpu_cores") || d.HasChange("power_on") || d.HasChange("disk") ||
+		d.HasChange("hardware_assisted_virtualization") {
 		if status != "POWERED_OFF" {
 			task, err := vm.PowerOff()
 			if err != nil {
@@ -497,6 +520,20 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 			})
 			if err != nil {
 				return fmt.Errorf(errorCompletingTask, err)
+			}
+		}
+
+		if d.HasChange("hardware_assisted_virtualization") {
+			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+				task, err := vm.ToggleHWAssistedVirtualization(d.Get("hardware_assisted_virtualization").(bool))
+				if err != nil {
+					return resource.RetryableError(fmt.Errorf("error changing hardware assisted virtualization: %#v", err))
+				}
+
+				return resource.RetryableError(task.WaitTaskCompletion())
+			})
+			if err != nil {
+				return err
 			}
 		}
 
@@ -612,7 +649,7 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 
 	if err != nil {
 		d.SetId("")
-		return fmt.Errorf("error getting VM3 : %#v", err)
+		return fmt.Errorf("error getting VM : %#v", err)
 	}
 
 	d.Set("name", vm.VM.Name)
@@ -620,6 +657,7 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 		d.Set("ip", vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddress)
 	}
 	d.Set("href", vm.VM.HREF)
+	d.Set("hardware_assisted_virtualization", vm.VM.NestedHypervisorEnabled)
 
 	err = updateStateOfAttachedDisks(d, vm, vdc)
 	if err != nil {
