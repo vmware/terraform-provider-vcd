@@ -82,6 +82,9 @@ func testAccCheckVcdVAppVmExists(n string, vapp *govcd.VApp, vm *govcd.VM) resou
 		}
 
 		vapp, err := vdc.FindVAppByName(vappName2)
+		if err != nil {
+			return err
+		}
 
 		resp, err := vdc.FindVMByName(vapp, vmName)
 
