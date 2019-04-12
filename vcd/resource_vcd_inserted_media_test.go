@@ -52,8 +52,6 @@ func TestAccVcdMediaInsertBasic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckMediaInserted("vcd_inserted_media."+TestAccVcdMediaInsert),
 					testAccCheckMediaEjected("vcd_inserted_media."+TestAccVcdMediaInsert),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp_vm."+vmNameForInsert, "hardware_assisted_virtualization", "false"),
 				),
 			},
 		},

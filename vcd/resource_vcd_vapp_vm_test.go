@@ -23,30 +23,25 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 		return
 	}
 	var params = StringMap{
-		"Org":                            testConfig.VCD.Org,
-		"Vdc":                            testConfig.VCD.Vdc,
-		"EdgeGateway":                    testConfig.Networking.EdgeGateway,
-		"NetworkName":                    "TestAccVcdVAppVmNet",
-		"Catalog":                        testSuiteCatalogName,
-		"CatalogItem":                    testSuiteCatalogOVAItem,
-		"VappName":                       vappName2,
-		"VmName":                         vmName,
-		"diskName":                       diskName,
-		"size":                           "5",
-		"busType":                        "SCSI",
-		"busSubType":                     "lsilogicsas",
-		"storageProfileName":             "*",
-		"diskResourceName":               diskResourceName,
-		"HardwareAssistedVirtualization": true,
+		"Org":                testConfig.VCD.Org,
+		"Vdc":                testConfig.VCD.Vdc,
+		"EdgeGateway":        testConfig.Networking.EdgeGateway,
+		"NetworkName":        "TestAccVcdVAppVmNet",
+		"Catalog":            testSuiteCatalogName,
+		"CatalogItem":        testSuiteCatalogOVAItem,
+		"VappName":           vappName2,
+		"VmName":             vmName,
+		"diskName":           diskName,
+		"size":               "5",
+		"busType":            "SCSI",
+		"busSubType":         "lsilogicsas",
+		"storageProfileName": "*",
+		"diskResourceName":   diskResourceName,
 	}
 
-	paramsNoHwAssistedVirtualization := params.CopyMutateKey("HardwareAssistedVirtualization", false)
-
 	configText := templateFill(testAccCheckVcdVAppVm_basic, params)
-	configTextNoHwVirt := templateFill(testAccCheckVcdVAppVm_basic, paramsNoHwAssistedVirtualization)
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
-	debugPrintf("#[DEBUG] CONFIGURATION without hardwareAssistedVirtualization: %s\n", configTextNoHwVirt)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -64,17 +59,6 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 						"vcd_vapp_vm."+vmName, "power_on", "true"),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_vm."+vmName, "metadata.vm_metadata", "VM Metadata."),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp_vm."+vmName, "hardware_assisted_virtualization", "true"),
-				),
-			},
-			resource.TestStep{
-				Config: configTextNoHwVirt,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(
-						"vcd_vapp_vm."+vmName, "power_on", "true"),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp_vm."+vmName, "hardware_assisted_virtualization", "false"),
 				),
 			},
 		},
@@ -184,7 +168,6 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   metadata {
     vm_metadata 					= "VM Metadata."
   }
-  hardware_assisted_virtualization	="{{.HardwareAssistedVirtualization}}"
 
   disk {
     name = "${vcd_independent_disk.{{.diskResourceName}}.name}"
