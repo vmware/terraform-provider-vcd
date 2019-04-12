@@ -27,22 +27,6 @@ import (
 
 type StringMap map[string]interface{}
 
-// Copy returns a copy of StringMap so that it can be mutated without affecting original map.
-func (strMap StringMap) Copy() StringMap {
-	newCopy := make(StringMap)
-	for key, value := range strMap {
-		newCopy[key] = value
-	}
-	return newCopy
-}
-
-// CopyMutateKey return a copy of StringMap with mutated key.
-func (strMap StringMap) CopyMutateKey(key string, value interface{}) StringMap {
-	newCopy := strMap.Copy()
-	newCopy[key] = value
-	return newCopy
-}
-
 // Structure to get info from a config json file that the user specifies
 type TestConfig struct {
 	Provider struct {
