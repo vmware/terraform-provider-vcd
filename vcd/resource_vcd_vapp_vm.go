@@ -128,11 +128,11 @@ func resourceVcdVAppVm() *schema.Resource {
 				Optional: true,
 				Set:      resourceVcdVmIndependentDiskHash,
 			},
-			"hardware_assisted_virtualization": &schema.Schema{
+			"expose_hardware_virtualization": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				Description: "Expose hardware-assisted virtualization to guest OS.",
+				Description: "Expose hardware-assisted CPU virtualization to guest OS.",
 			},
 		},
 	}
@@ -240,8 +240,9 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf("error changing network: %#v", err)
 	}
-	// TODO - add a comment about the VM being powered off before the operation.
-	if d.Get("hardware_assisted_virtualization").(bool) {
+	// The below operation assumes VM is powered off and does not check for it because VM is being
+	// powered on in the last stage of create/update cycle
+	if d.Get("expose_hardware_virtualization").(bool) {
 		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 			task, err := vm.ToggleHWAssistedVirtualization(true)
 			if err != nil {
@@ -464,7 +465,7 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 	// To avoid them, below block is using retryCall in multiple places as a workaround,
 	// so that the VMs are created regardless of parallelisation.
 	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("cpu_cores") || d.HasChange("power_on") || d.HasChange("disk") ||
-		d.HasChange("hardware_assisted_virtualization") {
+		d.HasChange("expose_hardware_virtualization") {
 		if status != "POWERED_OFF" {
 			task, err := vm.PowerOff()
 			if err != nil {
@@ -523,9 +524,9 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 
-		if d.HasChange("hardware_assisted_virtualization") {
+		if d.HasChange("expose_hardware_virtualization") {
 			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-				task, err := vm.ToggleHWAssistedVirtualization(d.Get("hardware_assisted_virtualization").(bool))
+				task, err := vm.ToggleHWAssistedVirtualization(d.Get("expose_hardware_virtualization").(bool))
 				if err != nil {
 					return resource.RetryableError(fmt.Errorf("error changing hardware assisted virtualization: %#v", err))
 				}
@@ -657,7 +658,7 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 		d.Set("ip", vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddress)
 	}
 	d.Set("href", vm.VM.HREF)
-	d.Set("hardware_assisted_virtualization", vm.VM.NestedHypervisorEnabled)
+	d.Set("expose_hardware_virtualization", vm.VM.NestedHypervisorEnabled)
 
 	err = updateStateOfAttachedDisks(d, vm, vdc)
 	if err != nil {
