@@ -240,7 +240,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf("error changing network: %#v", err)
 	}
-
+	// TODO - add a comment about the VM being powered off before the operation.
 	if d.Get("hardware_assisted_virtualization").(bool) {
 		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 			task, err := vm.ToggleHWAssistedVirtualization(true)
