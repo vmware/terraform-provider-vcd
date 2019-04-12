@@ -109,9 +109,9 @@ The following arguments are supported:
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
 * `disk` - (Optional; *v2.1+*) Independent disk attachment configuration. Details below
-* `expose_hardware_virtualization` - (Optional; *v2.2+*) Boolean for exposing full CPU virtualization to the guest operating. It
-system so that applications that require hardware virtualization can run on virtual machines without binary translation or
-paravirtualization. Useful for hypervisor nesting provided underlying hardware supports it. Default is `false`.
+* `expose_hardware_virtualization` - (Optional; *v2.2+*) Boolean for exposing full CPU virtualization to the
+guest operating system so that applications that require hardware virtualization can run on virtual machines without binary
+translation or paravirtualization. Useful for hypervisor nesting provided underlying hardware supports it. Default is `false`.
 
 Independent disk support the following attributes:
 
