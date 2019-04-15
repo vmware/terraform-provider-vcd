@@ -71,11 +71,11 @@ resource "vcd_network_routed" "{{.NetworkName}}" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
-  gateway      = "10.10.103.1"
+  gateway      = "10.10.104.1"
 
   static_ip_pool {
-    start_address = "10.10.103.2"
-    end_address   = "10.10.103.254"
+    start_address = "10.10.104.2"
+    end_address   = "10.10.104.254"
   }
 }
 
@@ -96,7 +96,7 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   memory        					= 384
   cpus          					= 2
   cpu_cores     					= 1
-  ip            					= "10.10.103.161"
+  ip            					= "10.10.104.161"
   expose_hardware_virtualization	= "{{.ExposeHardwareVirtualization}}"
 
   depends_on    = ["vcd_vapp.{{.VappName}}", "vcd_network_routed.{{.NetworkName}}"]
