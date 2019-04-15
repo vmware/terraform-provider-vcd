@@ -19,44 +19,36 @@ import (
 type VCDClientOption func(*VCDClient) error
 
 type VCDClient struct {
-	Client      Client  // Client for the underlying VCD instance
-	sessionHREF url.URL // HREF for the session API
-	QueryHREF   url.URL // HREF for the query API
-	Mutex       sync.Mutex
+	Client            Client  // Client for the underlying VCD instance
+	sessionHREF       url.URL // HREF for the session API
+	QueryHREF         url.URL // HREF for the query API
+	Mutex             sync.Mutex
+	supportedVersions SupportedVersions // Versions from /api/versions endpoint
 }
 
-type supportedVersions struct {
-	VersionInfo struct {
-		Version  string `xml:"Version"`
-		LoginUrl string `xml:"LoginUrl"`
-	} `xml:"VersionInfo"`
-}
+func (vcdCli *VCDClient) vcdloginurl() error {
+	if err := vcdCli.validateAPIVersion(); err != nil {
+		return fmt.Errorf("could not find valid version for login: %s", err)
+	}
 
-func (vdcCli *VCDClient) vcdloginurl() error {
-	apiEndpoint := vdcCli.Client.VCDHREF
-	apiEndpoint.Path += "/versions"
-	// No point in checking for errors here
-	req := vdcCli.Client.NewRequest(map[string]string{}, "GET", apiEndpoint, nil)
-	resp, err := checkResp(vdcCli.Client.Http.Do(req))
-	if err != nil {
-		return err
+	// find login address matching the API version
+	var neededVersion VersionInfo
+	for _, versionInfo := range vcdCli.supportedVersions.VersionInfos {
+		if versionInfo.Version == vcdCli.Client.APIVersion {
+			neededVersion = versionInfo
+			break
+		}
 	}
-	defer resp.Body.Close()
 
-	supportedVersions := new(supportedVersions)
-	err = decodeBody(resp, supportedVersions)
+	loginUrl, err := url.Parse(neededVersion.LoginUrl)
 	if err != nil {
-		return fmt.Errorf("error decoding versions response: %s", err)
+		return fmt.Errorf("couldn't find a LoginUrl for version %s", vcdCli.Client.APIVersion)
 	}
-	loginUrl, err := url.Parse(supportedVersions.VersionInfo.LoginUrl)
-	if err != nil {
-		return fmt.Errorf("couldn't find a LoginUrl in versions")
-	}
-	vdcCli.sessionHREF = *loginUrl
+	vcdCli.sessionHREF = *loginUrl
 	return nil
 }
 
-func (vdcCli *VCDClient) vcdauthorize(user, pass, org string) error {
+func (vcdCli *VCDClient) vcdauthorize(user, pass, org string) error {
 	var missing_items []string
 	if user == "" {
 		missing_items = append(missing_items, "user")
@@ -71,26 +63,26 @@ func (vdcCli *VCDClient) vcdauthorize(user, pass, org string) error {
 		return fmt.Errorf("Authorization is not possible because of these missing items: %v", missing_items)
 	}
 	// No point in checking for errors here
-	req := vdcCli.Client.NewRequest(map[string]string{}, "POST", vdcCli.sessionHREF, nil)
+	req := vcdCli.Client.NewRequest(map[string]string{}, "POST", vcdCli.sessionHREF, nil)
 	// Set Basic Authentication Header
 	req.SetBasicAuth(user+"@"+org, pass)
 	// Add the Accept header for vCA
-	req.Header.Add("Accept", "application/*+xml;version="+vdcCli.Client.APIVersion)
-	resp, err := checkResp(vdcCli.Client.Http.Do(req))
+	req.Header.Add("Accept", "application/*+xml;version="+vcdCli.Client.APIVersion)
+	resp, err := checkResp(vcdCli.Client.Http.Do(req))
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 	// Store the authentication header
-	vdcCli.Client.VCDToken = resp.Header.Get("x-vcloud-authorization")
-	vdcCli.Client.VCDAuthHeader = "x-vcloud-authorization"
-	vdcCli.Client.IsSysAdmin = false
+	vcdCli.Client.VCDToken = resp.Header.Get("x-vcloud-authorization")
+	vcdCli.Client.VCDAuthHeader = "x-vcloud-authorization"
+	vcdCli.Client.IsSysAdmin = false
 	if "system" == strings.ToLower(org) {
-		vdcCli.Client.IsSysAdmin = true
+		vcdCli.Client.IsSysAdmin = true
 	}
 	// Get query href
-	vdcCli.QueryHREF = vdcCli.Client.VCDHREF
-	vdcCli.QueryHREF.Path += "/query"
+	vcdCli.QueryHREF = vcdCli.Client.VCDHREF
+	vcdCli.QueryHREF.Path += "/query"
 	return nil
 }
 
@@ -100,7 +92,7 @@ func NewVCDClient(vcdEndpoint url.URL, insecure bool, options ...VCDClientOption
 	// Setting defaults
 	vcdClient := &VCDClient{
 		Client: Client{
-			APIVersion: "27.0", // supported by vCD 8.20, 9.0, 9.1, 9.5
+			APIVersion: "27.0", // supported by vCD 8.20, 9.0, 9.1, 9.5, 9.7
 			VCDHREF:    vcdEndpoint,
 			Http: http.Client{
 				Transport: &http.Transport{
@@ -128,14 +120,15 @@ func NewVCDClient(vcdEndpoint url.URL, insecure bool, options ...VCDClientOption
 }
 
 // Authenticate is an helper function that performs a login in vCloud Director.
-func (vdcCli *VCDClient) Authenticate(username, password, org string) error {
+func (vcdCli *VCDClient) Authenticate(username, password, org string) error {
+
 	// LoginUrl
-	err := vdcCli.vcdloginurl()
+	err := vcdCli.vcdloginurl()
 	if err != nil {
 		return fmt.Errorf("error finding LoginUrl: %s", err)
 	}
 	// Authorize
-	err = vdcCli.vcdauthorize(username, password, org)
+	err = vcdCli.vcdauthorize(username, password, org)
 	if err != nil {
 		return fmt.Errorf("error authorizing: %s", err)
 	}
@@ -143,16 +136,16 @@ func (vdcCli *VCDClient) Authenticate(username, password, org string) error {
 }
 
 // Disconnect performs a disconnection from the vCloud Director API endpoint.
-func (vdcCli *VCDClient) Disconnect() error {
-	if vdcCli.Client.VCDToken == "" && vdcCli.Client.VCDAuthHeader == "" {
+func (vcdCli *VCDClient) Disconnect() error {
+	if vcdCli.Client.VCDToken == "" && vcdCli.Client.VCDAuthHeader == "" {
 		return fmt.Errorf("cannot disconnect, client is not authenticated")
 	}
-	req := vdcCli.Client.NewRequest(map[string]string{}, "DELETE", vdcCli.sessionHREF, nil)
+	req := vcdCli.Client.NewRequest(map[string]string{}, "DELETE", vcdCli.sessionHREF, nil)
 	// Add the Accept header for vCA
-	req.Header.Add("Accept", "application/xml;version="+vdcCli.Client.APIVersion)
+	req.Header.Add("Accept", "application/xml;version="+vcdCli.Client.APIVersion)
 	// Set Authorization Header
-	req.Header.Add(vdcCli.Client.VCDAuthHeader, vdcCli.Client.VCDToken)
-	if _, err := checkResp(vdcCli.Client.Http.Do(req)); err != nil {
+	req.Header.Add(vcdCli.Client.VCDAuthHeader, vcdCli.Client.VCDToken)
+	if _, err := checkResp(vcdCli.Client.Http.Do(req)); err != nil {
 		return fmt.Errorf("error processing session delete for vCloud Director: %s", err)
 	}
 	return nil
@@ -162,6 +155,15 @@ func (vdcCli *VCDClient) Disconnect() error {
 func WithMaxRetryTimeout(timeoutSeconds int) VCDClientOption {
 	return func(vcdClient *VCDClient) error {
 		vcdClient.Client.MaxRetryTimeout = timeoutSeconds
+		return nil
+	}
+}
+
+// WithAPIVersion allows to override default API version. Please be cautious
+// about changing the version as the default specified is the most tested.
+func WithAPIVersion(version string) VCDClientOption {
+	return func(vcdClient *VCDClient) error {
+		vcdClient.Client.APIVersion = version
 		return nil
 	}
 }

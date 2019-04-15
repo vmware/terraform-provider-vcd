@@ -29,7 +29,7 @@ func NewVApp(cli *Client) *VApp {
 	}
 }
 
-func (vdcCli *VCDClient) NewVApp(client *Client) VApp {
+func (vcdCli *VCDClient) NewVApp(client *Client) VApp {
 	newvapp := NewVApp(client)
 	return *newvapp
 }

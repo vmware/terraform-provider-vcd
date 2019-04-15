@@ -129,50 +129,14 @@ func (cli *Client) FindVMByHREF(vmHREF string) (VM, error) {
 
 }
 
+// PowerOn triggers a powerOn action for single VM instance
 func (vm *VM) PowerOn() (Task, error) {
-
-	apiEndpoint, _ := url.ParseRequestURI(vm.VM.HREF)
-	apiEndpoint.Path += "/power/action/powerOn"
-
-	req := vm.client.NewRequest(map[string]string{}, "POST", *apiEndpoint, nil)
-
-	resp, err := checkResp(vm.client.Http.Do(req))
-	if err != nil {
-		return Task{}, fmt.Errorf("error powering on VM: %s", err)
-	}
-
-	task := NewTask(vm.client)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-	}
-
-	// The request was successful
-	return *task, nil
-
+	return vm.postEmptyAction("/power/action/powerOn")
 }
 
+// PowerOff triggers a powerOff action for single VM instance
 func (vm *VM) PowerOff() (Task, error) {
-
-	apiEndpoint, _ := url.ParseRequestURI(vm.VM.HREF)
-	apiEndpoint.Path += "/power/action/powerOff"
-
-	req := vm.client.NewRequest(map[string]string{}, "POST", *apiEndpoint, nil)
-
-	resp, err := checkResp(vm.client.Http.Do(req))
-	if err != nil {
-		return Task{}, fmt.Errorf("error powering off VM: %s", err)
-	}
-
-	task := NewTask(vm.client)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-	}
-
-	// The request was successful
-	return *task, nil
-
+	return vm.postEmptyAction("/power/action/powerOff")
 }
 
 // Sets number of available virtual logical processors
@@ -795,4 +759,39 @@ func (vm *VM) AnswerQuestion(questionId string, choiceId int) error {
 	// The request was successful
 	return nil
 
+}
+
+// ToggleHWAssistedVirtualization allows to either enable or disable hardware assisted
+// CPU virtualization for the VM. It can only be performed on a powered off VM and
+// will return an error otherwise. This is mainly useful for hypervisor nesting.
+func (vm *VM) ToggleHWAssistedVirtualization(isEnabled bool) (Task, error) {
+	// func (vm *VM) ToggleNestedHypervisor(isEnabled bool) (Task, error) {
+	if isEnabled {
+		return vm.postEmptyAction("/action/enableNestedHypervisor")
+	}
+	return vm.postEmptyAction("/action/disableNestedHypervisor")
+}
+
+// postEmptyAction abstracts a common pattern when vm features/states can be actioned with
+// single POST call with empty body and return a Task to track.
+func (vm *VM) postEmptyAction(path string) (Task, error) {
+	if path == "" {
+		return Task{}, fmt.Errorf("cannot perform post operation to empty path")
+	}
+	apiEndpoint, _ := url.ParseRequestURI(vm.VM.HREF)
+	apiEndpoint.Path += path
+
+	req := vm.client.NewRequest(map[string]string{}, "POST", *apiEndpoint, nil)
+
+	resp, err := checkResp(vm.client.Http.Do(req))
+	if err != nil {
+		return Task{}, fmt.Errorf("error posting to %s for VM: %s", path, err)
+	}
+
+	task := NewTask(vm.client)
+	if err = decodeBody(resp, task.Task); err != nil {
+		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
+	}
+
+	return *task, nil
 }
