@@ -1,11 +1,9 @@
 package vcd
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
@@ -45,12 +43,12 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdVAppVmDestroy,
+		CheckDestroy: testAccCheckVcdVAppVmDestroy(vappName2),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVAppVmExists("vcd_vapp_vm."+vmName, &vapp, &vm),
+					testAccCheckVcdVAppVmExists(vappName2, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_vm."+vmName, "name", vmName),
 					resource.TestCheckResourceAttr(
@@ -63,64 +61,6 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 			},
 		},
 	})
-}
-
-func testAccCheckVcdVAppVmExists(n string, vapp *govcd.VApp, vm *govcd.VM) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("not found: %s", n)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("no VAPP ID is set")
-		}
-
-		conn := testAccProvider.Meta().(*VCDClient)
-		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
-		if err != nil {
-			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
-		}
-
-		vapp, err := vdc.FindVAppByName(vappName2)
-		if err != nil {
-			return err
-		}
-
-		resp, err := vdc.FindVMByName(vapp, vmName)
-
-		if err != nil {
-			return err
-		}
-
-		*vm = resp
-
-		return nil
-	}
-}
-
-func testAccCheckVcdVAppVmDestroy(s *terraform.State) error {
-	conn := testAccProvider.Meta().(*VCDClient)
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "vcd_vapp" {
-			continue
-		}
-		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
-		if err != nil {
-			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
-		}
-
-		_, err = vdc.FindVAppByName(vappName2)
-
-		if err == nil {
-			return fmt.Errorf("VPCs still exist")
-		}
-
-		return nil
-	}
-
-	return nil
 }
 
 const testAccCheckVcdVAppVm_basic = `
