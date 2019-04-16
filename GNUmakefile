@@ -16,15 +16,14 @@ install: build
 	@$(CURDIR)/scripts/install-plugin.sh
 
 test: fmtcheck
-	go test -i $(TEST) || exit 1
-	cd vcd ; VCD_SHORT_TEST=1 go test -v . -timeout 3m
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' short"
 
 testacc: fmtcheck
-	if [ ! -f vcd/vcd_test_config.json -a -z "${VCD_CONFIG}" ] ; then \
-		echo "ERROR: test configuration file vcd/vcd_test_config.json is missing"; \
-		exit 1; \
-	fi
-	cd vcd ; TF_ACC=1 go test -v . -timeout 60m
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' acceptance"
+
+testmulti: fmtcheck
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' multiple"
+
 
 vet:
 	@echo "go vet ."
