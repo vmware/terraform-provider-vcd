@@ -244,7 +244,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	// powered on in the last stage of create/update cycle
 	if d.Get("expose_hardware_virtualization").(bool) {
 		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := vm.ToggleHWAssistedVirtualization(true)
+			task, err := vm.ToggleHardwareVirtualization(true)
 			if err != nil {
 				return resource.RetryableError(fmt.Errorf("error enabling hardware assisted virtualization: %#v", err))
 			}
@@ -526,7 +526,7 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 
 		if d.HasChange("expose_hardware_virtualization") {
 			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-				task, err := vm.ToggleHWAssistedVirtualization(d.Get("expose_hardware_virtualization").(bool))
+				task, err := vm.ToggleHardwareVirtualization(d.Get("expose_hardware_virtualization").(bool))
 				if err != nil {
 					return resource.RetryableError(fmt.Errorf("error changing hardware assisted virtualization: %#v", err))
 				}
