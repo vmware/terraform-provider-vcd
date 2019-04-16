@@ -16,13 +16,13 @@ install: build
 	@$(CURDIR)/scripts/install-plugin.sh
 
 test: fmtcheck
-	@$(CURDIR)/scripts/runtest.sh short
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' short"
 
 testacc: fmtcheck
-	@$(CURDIR)/scripts/runtest.sh acceptance
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' acceptance"
 
 testmulti: fmtcheck
-	@$(CURDIR)/scripts/runtest.sh multiple
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' multiple"
 
 
 vet:
