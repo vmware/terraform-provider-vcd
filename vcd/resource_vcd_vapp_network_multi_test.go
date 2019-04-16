@@ -29,9 +29,16 @@ func TestAccVcdVappNetworkMulti(t *testing.T) {
 	}
 
 	const (
-		gatewayMulti1 = "192.168.1.1"
-		gatewayMulti2 = "192.168.2.1"
-		gatewayMulti3 = "192.168.3.1"
+		networkBaseIp1     = "192.168.11"
+		networkBaseIp2     = "192.168.12"
+		networkBaseIp3     = "192.168.13"
+		startStaticAddress = ".11"
+		endStaticAddress   = ".20"
+		startDhcpAddress   = ".21"
+		endDhcpAddress     = ".30"
+		gatewayMulti1      = networkBaseIp1 + ".1"
+		gatewayMulti2      = networkBaseIp2 + ".1"
+		gatewayMulti3      = networkBaseIp3 + ".1"
 	)
 	resourceName1 := "TestVappNetwork1"
 	resourceName2 := "TestVappNetwork2"
@@ -54,21 +61,21 @@ func TestAccVcdVappNetworkMulti(t *testing.T) {
 		"dns2":              dns2,
 		"dnsSuffix":         dnsSuffix,
 		"guestVlanAllowed":  guestVlanAllowed,
-		"startAddress1":     "192.168.1.10",
-		"endAddress1":       "192.168.1.20",
-		"startAddress2":     "192.168.2.10",
-		"endAddress2":       "192.168.2.20",
-		"startAddress3":     "192.168.3.10",
-		"endAddress3":       "192.168.3.20",
+		"startAddress1":     networkBaseIp1 + startStaticAddress,
+		"endAddress1":       networkBaseIp1 + endStaticAddress,
+		"startAddress2":     networkBaseIp2 + startStaticAddress,
+		"endAddress2":       networkBaseIp2 + endStaticAddress,
+		"startAddress3":     networkBaseIp3 + startStaticAddress,
+		"endAddress3":       networkBaseIp3 + endStaticAddress,
 		"vappName":          vappNameForNetworkMulti,
 		"maxLeaseTime":      "7200",
 		"defaultLeaseTime":  "3600",
-		"dhcpStartAddress1": "192.168.1.21",
-		"dhcpEndAddress1":   "192.168.1.22",
-		"dhcpStartAddress2": "192.168.2.21",
-		"dhcpEndAddress2":   "192.168.2.22",
-		"dhcpStartAddress3": "192.168.3.21",
-		"dhcpEndAddress3":   "192.168.3.22",
+		"dhcpStartAddress1": networkBaseIp1 + startDhcpAddress,
+		"dhcpEndAddress1":   networkBaseIp1 + endDhcpAddress,
+		"dhcpStartAddress2": networkBaseIp2 + startDhcpAddress,
+		"dhcpEndAddress2":   networkBaseIp2 + endDhcpAddress,
+		"dhcpStartAddress3": networkBaseIp3 + startDhcpAddress,
+		"dhcpEndAddress3":   networkBaseIp3 + endDhcpAddress,
 		"dhcpEnabled":       "true",
 	}
 
