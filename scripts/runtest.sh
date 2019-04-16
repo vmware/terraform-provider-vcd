@@ -54,12 +54,12 @@ function check_for_config_file {
 function short_test {
     if [ -n "$VERBOSE" ] 
     then
-        echo " go test -i $(TEST) || exit 1"
+        echo " go test -i ${TEST} || exit 1"
 	    echo "VCD_SHORT_TEST=1 go test -v -timeout 3m ."
     fi
     if [ -z "$DRY_RUN" ]
     then
-	    go test -i $(TEST) || exit 1
+	    go test -i ${TEST} || exit 1
 	    VCD_SHORT_TEST=1 go test -v -timeout 3m .
     fi
 }
@@ -79,16 +79,21 @@ function acceptance_test {
 }
 
 function multiple_test {
+    filter=$1
+    if [ -z "$filter" ]
+    then
+        filter='TestAccVcdV.pp.*Multi'
+    fi
     if [ -n "$VERBOSE" ] 
     then
         echo "# check for config file"
-	    echo "TF_ACC=1 go test -v -timeout 60m -tags 'multivm multinetwork' -run 'TestAccVcdV.pp.*Multi' ."
+	    echo "TF_ACC=1 go test -v -timeout 60m -tags 'multivm multinetwork' -run '$filter' ."
     fi
 
     if [ -z "$DRY_RUN" ]
     then
         check_for_config_file
-	    TF_ACC=1 go test -v -timeout 60m -tags 'multivm multinetwork' -run 'TestAccVcdV.pp.*Multi' .
+	    TF_ACC=1 go test -v -timeout 60m -tags 'multivm multinetwork' -run "$filter" .
     fi
 }
 
@@ -98,6 +103,9 @@ case $wanted in
         ;;
     acceptance)
         acceptance_test
+        ;;
+    multinetwork)
+        multiple_test TestAccVcdVappNetworkMulti
         ;;
     multiple)
         multiple_test
