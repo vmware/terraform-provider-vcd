@@ -32,7 +32,7 @@ func TestAccVcdVAppVm_HardwareVirtualization(t *testing.T) {
 	configTextStep0 := templateFill(testAccCheckVcdVAppVm_hardwareVirtualization, params)
 
 	params["ExposeHardwareVirtualization"] = true
-	params["FuncName"] = t.Name() + "step1"
+	params["FuncName"] = t.Name() + "-step1"
 	configTextStep1 := templateFill(testAccCheckVcdVAppVm_hardwareVirtualization, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextStep0)
