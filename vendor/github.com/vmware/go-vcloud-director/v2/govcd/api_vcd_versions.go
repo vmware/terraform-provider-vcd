@@ -6,6 +6,7 @@ package govcd
 
 import (
 	"fmt"
+	"net/http"
 	"sort"
 
 	semver "github.com/hashicorp/go-version"
@@ -92,22 +93,13 @@ func (vcdCli *VCDClient) vcdFetchSupportedVersions() error {
 	apiEndpoint := vcdCli.Client.VCDHREF
 	apiEndpoint.Path += "/versions"
 
-	req := vcdCli.Client.NewRequest(map[string]string{}, "GET", apiEndpoint, nil)
-	resp, err := checkResp(vcdCli.Client.Http.Do(req))
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-
 	suppVersions := new(SupportedVersions)
-	err = decodeBody(resp, suppVersions)
-	if err != nil {
-		return fmt.Errorf("error decoding versions response: %s", err)
-	}
+	_, err := vcdCli.Client.ExecuteRequest(apiEndpoint.String(), http.MethodGet,
+		"", "error fetching versions: %s", nil, suppVersions)
 
 	vcdCli.supportedVersions = *suppVersions
 
-	return nil
+	return err
 }
 
 // maxSupportedVersion parses supported version list and returns the highest version in string format.

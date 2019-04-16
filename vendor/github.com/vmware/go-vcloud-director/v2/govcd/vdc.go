@@ -5,10 +5,9 @@
 package govcd
 
 import (
-	"bytes"
-	"encoding/xml"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -45,18 +44,12 @@ func NewAdminVdc(cli *Client) *AdminVdc {
 
 // Gets a vapp with a specific url vappHREF
 func (vdc *Vdc) getVdcVAppbyHREF(vappHREF *url.URL) (*VApp, error) {
-	req := vdc.client.NewRequest(map[string]string{}, "GET", *vappHREF, nil)
-	resp, err := checkResp(vdc.client.Http.Do(req))
-	if err != nil {
-		return &VApp{}, fmt.Errorf("error retrieving VApp: %s", err)
-	}
-
 	vapp := NewVApp(vdc.client)
 
-	if err = decodeBody(resp, vapp.VApp); err != nil {
-		return &VApp{}, fmt.Errorf("error decoding VApp response: %s", err)
-	}
-	return vapp, nil
+	_, err := vdc.client.ExecuteRequest(vappHREF.String(), http.MethodGet,
+		"", "error retrieving VApp: %s", nil, vapp.VApp)
+
+	return vapp, err
 }
 
 // Undeploys every vapp in the vdc
@@ -124,21 +117,14 @@ func (vdc *Vdc) Refresh() error {
 		return fmt.Errorf("cannot refresh, Object is empty")
 	}
 
-	refreshUrl, _ := url.ParseRequestURI(vdc.Vdc.HREF)
-
-	req := vdc.client.NewRequest(map[string]string{}, "GET", *refreshUrl, nil)
-
-	resp, err := checkResp(vdc.client.Http.Do(req))
-	if err != nil {
-		return fmt.Errorf("error retrieving Edge Gateway: %s", err)
-	}
-
 	// Empty struct before a new unmarshal, otherwise we end up with duplicate
 	// elements in slices.
 	unmarshalledVdc := &types.Vdc{}
 
-	if err = decodeBody(resp, unmarshalledVdc); err != nil {
-		return fmt.Errorf("error decoding vdc response: %s", err)
+	_, err := vdc.client.ExecuteRequest(vdc.Vdc.HREF, http.MethodGet,
+		"", "error refreshing vDC: %s", nil, unmarshalledVdc)
+	if err != nil {
+		return err
 	}
 
 	vdc.Vdc = unmarshalledVdc
@@ -164,7 +150,7 @@ func (vdc *Vdc) Delete(force bool, recursive bool) (Task, error) {
 	req := vdc.client.NewRequest(map[string]string{
 		"force":     strconv.FormatBool(force),
 		"recursive": strconv.FormatBool(recursive),
-	}, "DELETE", *vdcUrl, nil)
+	}, http.MethodDelete, *vdcUrl, nil)
 	resp, err := checkResp(vdc.client.Http.Do(req))
 	if err != nil {
 		return Task{}, fmt.Errorf("error deleting vdc: %s", err)
@@ -201,26 +187,13 @@ func (vdc *Vdc) FindVDCNetwork(network string) (OrgVDCNetwork, error) {
 	for _, an := range vdc.Vdc.AvailableNetworks {
 		for _, reference := range an.Network {
 			if reference.Name == network {
-				findUrl, err := url.ParseRequestURI(reference.HREF)
-				if err != nil {
-					return OrgVDCNetwork{}, fmt.Errorf("error decoding vdc response: %s", err)
-				}
+				orgNet := NewOrgVDCNetwork(vdc.client)
 
-				req := vdc.client.NewRequest(map[string]string{}, "GET", *findUrl, nil)
-
-				resp, err := checkResp(vdc.client.Http.Do(req))
-				if err != nil {
-					return OrgVDCNetwork{}, fmt.Errorf("error retrieving orgvdcnetwork: %s", err)
-				}
-
-				orgnet := NewOrgVDCNetwork(vdc.client)
-
-				if err = decodeBody(resp, orgnet.OrgVDCNetwork); err != nil {
-					return OrgVDCNetwork{}, fmt.Errorf("error decoding orgvdcnetwork response: %s", err)
-				}
+				_, err := vdc.client.ExecuteRequest(reference.HREF, http.MethodGet,
+					"", "error retrieving org vdc network: %s", nil, orgNet.OrgVDCNetwork)
 
 				// The request was successful
-				return *orgnet, nil
+				return *orgNet, err
 
 			}
 		}
@@ -268,24 +241,13 @@ func (vdc *Vdc) FindEdgeGateway(edgegateway string) (EdgeGateway, error) {
 	}
 	for _, av := range vdc.Vdc.Link {
 		if av.Rel == "edgeGateways" && av.Type == "application/vnd.vmware.vcloud.query.records+xml" {
-			findUrl, err := url.ParseRequestURI(av.HREF)
-
-			if err != nil {
-				return EdgeGateway{}, fmt.Errorf("error decoding vdc response: %s", err)
-			}
-
-			// Querying the Result list
-			req := vdc.client.NewRequest(map[string]string{}, "GET", *findUrl, nil)
-
-			resp, err := checkResp(vdc.client.Http.Do(req))
-			if err != nil {
-				return EdgeGateway{}, fmt.Errorf("error retrieving edge gateway records: %s", err)
-			}
 
 			query := new(types.QueryResultEdgeGatewayRecordsType)
 
-			if err = decodeBody(resp, query); err != nil {
-				return EdgeGateway{}, fmt.Errorf("error decoding edge gateway query response: %s", err)
+			_, err := vdc.client.ExecuteRequest(av.HREF, http.MethodGet,
+				"", "error quering edge gateways: %s", nil, query)
+			if err != nil {
+				return EdgeGateway{}, err
 			}
 
 			var href string
@@ -300,26 +262,12 @@ func (vdc *Vdc) FindEdgeGateway(edgegateway string) (EdgeGateway, error) {
 				return EdgeGateway{}, fmt.Errorf("can't find edge gateway with name: %s", edgegateway)
 			}
 
-			findUrl, err = url.ParseRequestURI(href)
-			if err != nil {
-				return EdgeGateway{}, fmt.Errorf("error decoding edge gateway query response: %s", err)
-			}
-
-			// Querying the Result list
-			req = vdc.client.NewRequest(map[string]string{}, "GET", *findUrl, nil)
-
-			resp, err = checkResp(vdc.client.Http.Do(req))
-			if err != nil {
-				return EdgeGateway{}, fmt.Errorf("error retrieving edge gateway: %s", err)
-			}
-
 			edge := NewEdgeGateway(vdc.client)
 
-			if err = decodeBody(resp, edge.EdgeGateway); err != nil {
-				return EdgeGateway{}, fmt.Errorf("error decoding edge gateway response: %s", err)
-			}
+			_, err = vdc.client.ExecuteRequest(href, http.MethodGet,
+				"", "error retrieving edge gateway: %s", nil, edge.EdgeGateway)
 
-			return *edge, nil
+			return *edge, err
 
 		}
 	}
@@ -337,39 +285,18 @@ func (vdc *Vdc) ComposeRawVApp(name string) error {
 		PowerOn: false,
 	}
 
-	output, err := xml.MarshalIndent(vcomp, "  ", "    ")
-	if err != nil {
-		return fmt.Errorf("error marshaling vapp compose: %s", err)
-	}
-
-	util.Logger.Printf("\n\nXML DEBUG: %s\n\n", string(output))
-
-	requestData := bytes.NewBufferString(xml.Header + string(output))
-
 	vdcHref, err := url.ParseRequestURI(vdc.Vdc.HREF)
 	if err != nil {
 		return fmt.Errorf("error getting vdc href: %v", err)
 	}
 	vdcHref.Path += "/action/composeVApp"
 
-	req := vdc.client.NewRequest(map[string]string{}, "POST", *vdcHref, requestData)
-
-	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.composeVAppParams+xml")
-
-	resp, err := checkResp(vdc.client.Http.Do(req))
-	if err != nil {
-		return fmt.Errorf("error instantiating a new vApp: %s", err)
-	}
-
-	task := NewTask(vdc.client)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return fmt.Errorf("error decoding task response: %s", err)
-	}
+	task, err := vdc.client.ExecuteTaskRequest(vdcHref.String(), http.MethodPost,
+		types.MimeComposeVappParams, "error instantiating a new vApp:: %s", vcomp)
 
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		return fmt.Errorf("Error performing task: %#v", err)
+		return fmt.Errorf("error performing task: %#v", err)
 	}
 
 	return nil
@@ -446,35 +373,14 @@ func (vdc *Vdc) ComposeVApp(orgvdcnetworks []*types.OrgVDCNetwork, vapptemplate 
 		vcomp.SourcedItem.StorageProfile = &storageprofileref
 	}
 
-	output, err := xml.MarshalIndent(vcomp, "  ", "    ")
-	if err != nil {
-		return Task{}, fmt.Errorf("error marshaling vapp compose: %s", err)
-	}
-	util.Logger.Printf("\n\nXML DEBUG: %s\n\n", string(output))
-	requestData := bytes.NewBufferString(xml.Header + string(output))
-
 	vdcHref, err := url.ParseRequestURI(vdc.Vdc.HREF)
 	if err != nil {
 		return Task{}, fmt.Errorf("error getting vdc href: %v", err)
 	}
 	vdcHref.Path += "/action/composeVApp"
 
-	req := vdc.client.NewRequest(map[string]string{}, "POST", *vdcHref, requestData)
-	req.Header.Add("Content-Type", "application/vnd.vmware.vcloud.composeVAppParams+xml")
-	resp, err := checkResp(vdc.client.Http.Do(req))
-	if err != nil {
-		return Task{}, fmt.Errorf("error instantiating a new vApp: %s", err)
-	}
-
-	vapp := NewVApp(vdc.client)
-	if err = decodeBody(resp, vapp.VApp); err != nil {
-		return Task{}, fmt.Errorf("error decoding vApp response: %s", err)
-	}
-
-	task := NewTask(vdc.client)
-	task.Task = vapp.VApp.Tasks.Task[0]
-	// The request was successful
-	return *task, nil
+	return vdc.client.ExecuteTaskRequest(vdcHref.String(), http.MethodPost,
+		types.MimeComposeVappParams, "error instantiating a new vApp: %s", vcomp)
 }
 
 func (vdc *Vdc) FindVAppByName(vapp string) (VApp, error) {
@@ -489,27 +395,12 @@ func (vdc *Vdc) FindVAppByName(vapp string) (VApp, error) {
 
 			if resent.Name == vapp && resent.Type == "application/vnd.vmware.vcloud.vApp+xml" {
 
-				findUrl, err := url.ParseRequestURI(resent.HREF)
+				newVapp := NewVApp(vdc.client)
 
-				if err != nil {
-					return VApp{}, fmt.Errorf("error decoding vdc response: %s", err)
-				}
+				_, err := vdc.client.ExecuteRequest(resent.HREF, http.MethodGet,
+					"", "error retrieving vApp: %s", nil, newVapp.VApp)
 
-				// Querying the VApp
-				req := vdc.client.NewRequest(map[string]string{}, "GET", *findUrl, nil)
-
-				resp, err := checkResp(vdc.client.Http.Do(req))
-				if err != nil {
-					return VApp{}, fmt.Errorf("error retrieving vApp: %s", err)
-				}
-
-				newvapp := NewVApp(vdc.client)
-
-				if err = decodeBody(resp, newvapp.VApp); err != nil {
-					return VApp{}, fmt.Errorf("error decoding vApp response: %s", err.Error())
-				}
-
-				return *newvapp, nil
+				return *newVapp, err
 
 			}
 		}
@@ -541,31 +432,12 @@ func (vdc *Vdc) FindVMByName(vapp VApp, vm string) (VM, error) {
 		util.Logger.Printf("[TRACE] Found: %s", child.Name)
 		if child.Name == vm {
 
-			findUrl, err := url.ParseRequestURI(child.HREF)
+			newVm := NewVM(vdc.client)
 
-			if err != nil {
-				return VM{}, fmt.Errorf("error decoding vdc response: %s", err)
-			}
+			_, err := vdc.client.ExecuteRequest(child.HREF, http.MethodGet,
+				"", "error retrieving vm: %s", nil, newVm.VM)
 
-			// Querying the VApp
-			req := vdc.client.NewRequest(map[string]string{}, "GET", *findUrl, nil)
-
-			resp, err := checkResp(vdc.client.Http.Do(req))
-			if err != nil {
-				return VM{}, fmt.Errorf("error retrieving vm: %s", err)
-			}
-
-			newvm := NewVM(vdc.client)
-
-			//body, err := ioutil.ReadAll(resp.Body)
-			//fmt.Println(string(body))
-
-			if err = decodeBody(resp, newvm.VM); err != nil {
-				return VM{}, fmt.Errorf("error decoding vm response: %s", err.Error())
-			}
-
-			return *newvm, nil
-
+			return *newVm, err
 		}
 
 	}
@@ -633,27 +505,12 @@ func (vdc *Vdc) FindVAppByID(vappid string) (VApp, error) {
 
 			if res == urnid && resent.Type == "application/vnd.vmware.vcloud.vApp+xml" {
 
-				findUrl, err := url.ParseRequestURI(resent.HREF)
+				newVapp := NewVApp(vdc.client)
 
-				if err != nil {
-					return VApp{}, fmt.Errorf("error decoding vdc response: %s", err)
-				}
+				_, err := vdc.client.ExecuteRequest(resent.HREF, http.MethodGet,
+					"", "error retrieving vApp: %s", nil, newVapp.VApp)
 
-				// Querying the VApp
-				req := vdc.client.NewRequest(map[string]string{}, "GET", *findUrl, nil)
-
-				resp, err := checkResp(vdc.client.Http.Do(req))
-				if err != nil {
-					return VApp{}, fmt.Errorf("error retrieving vApp: %s", err)
-				}
-
-				newvapp := NewVApp(vdc.client)
-
-				if err = decodeBody(resp, newvapp.VApp); err != nil {
-					return VApp{}, fmt.Errorf("error decoding vApp response: %s", err)
-				}
-
-				return *newvapp, nil
+				return *newVapp, err
 
 			}
 		}

@@ -43,8 +43,6 @@ const (
 	MimeVDC = "application/vnd.vmware.vcloud.vdc+xml"
 	// MimeVAppTemplate mime for a vapp template
 	MimeVAppTemplate = "application/vnd.vmware.vcloud.vAppTemplate+xml"
-	// MimeInstantiateVAppTemplate mime fore instantiate VApp template params
-	MimeInstantiateVAppTemplate = "application/vnd.vmware.vcloud.instantiateVAppTemplateParams+xml"
 	// MimeVApp mime for a vApp
 	MimeVApp = "application/vnd.vmware.vcloud.vApp+xml"
 	// MimeQueryRecords mime for the query records
@@ -75,19 +73,32 @@ const (
 	MimeMediaInsertOrEjectParams = "application/vnd.vmware.vcloud.mediaInsertOrEjectParams+xml"
 	// Mime for catalog
 	MimeAdminCatalog = "application/vnd.vmware.admin.catalog+xml"
-)
-
-const (
-	// HTTPGet the http GET method
-	HTTPGet = "GET"
-	// HTTPPost the http POST method
-	HTTPPost = "POST"
-	// HTTPPut the http PUT method
-	HTTPPut = "PUT"
-	// HTTPPatch the http PATCH method
-	HTTPPatch = "PATCH"
-	// HTTPDelete the http DELETE method
-	HTTPDelete = "DELETE"
+	// Mime for networkConnectionSection
+	MimeNetworkConnectionSection = "application/vnd.vmware.vcloud.networkConnectionSection+xml"
+	// Mime for Item
+	MimeRasdItem = "application/vnd.vmware.vcloud.rasdItem+xml"
+	// Mime for guest customization section
+	MimeGuestCustomizationSection = "application/vnd.vmware.vcloud.guestCustomizationSection+xml"
+	// Mime for network config section
+	MimeNetworkConfigSection = "application/vnd.vmware.vcloud.networkconfigsection+xml"
+	// Mime for recompose vApp params
+	MimeRecomposeVappParams = "application/vnd.vmware.vcloud.recomposeVAppParams+xml"
+	// Mime for compose vApp params
+	MimeComposeVappParams = "application/vnd.vmware.vcloud.composeVAppParams+xml"
+	// Mime for undeploy vApp params
+	MimeUndeployVappParams = "application/vnd.vmware.vcloud.undeployVAppParams+xml"
+	// Mime for deploy vApp params
+	MimeDeployVappParams = "application/vnd.vmware.vcloud.deployVAppParams+xml"
+	// Mime for VM
+	MimeVM = "application/vnd.vmware.vcloud.vm+xml"
+	// Mime for instantiate vApp template params
+	MimeInstantiateVappTemplateParams = "application/vnd.vmware.vcloud.instantiateVAppTemplateParams+xml"
+	// Mime for product section
+	MimeProductSection = "application/vnd.vmware.vcloud.productSections+xml"
+	// Mime for metadata
+	MimeMetaData = "application/vnd.vmware.vcloud.metadata+xml"
+	// Mime for metadata value
+	MimeMetaDataValue = "application/vnd.vmware.vcloud.metadata.value+xml"
 )
 
 const (

@@ -63,7 +63,7 @@ func (vcdCli *VCDClient) vcdauthorize(user, pass, org string) error {
 		return fmt.Errorf("Authorization is not possible because of these missing items: %v", missing_items)
 	}
 	// No point in checking for errors here
-	req := vcdCli.Client.NewRequest(map[string]string{}, "POST", vcdCli.sessionHREF, nil)
+	req := vcdCli.Client.NewRequest(map[string]string{}, http.MethodPost, vcdCli.sessionHREF, nil)
 	// Set Basic Authentication Header
 	req.SetBasicAuth(user+"@"+org, pass)
 	// Add the Accept header for vCA
@@ -140,7 +140,7 @@ func (vcdCli *VCDClient) Disconnect() error {
 	if vcdCli.Client.VCDToken == "" && vcdCli.Client.VCDAuthHeader == "" {
 		return fmt.Errorf("cannot disconnect, client is not authenticated")
 	}
-	req := vcdCli.Client.NewRequest(map[string]string{}, "DELETE", vcdCli.sessionHREF, nil)
+	req := vcdCli.Client.NewRequest(map[string]string{}, http.MethodDelete, vcdCli.sessionHREF, nil)
 	// Add the Accept header for vCA
 	req.Header.Add("Accept", "application/xml;version="+vcdCli.Client.APIVersion)
 	// Set Authorization Header

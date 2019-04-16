@@ -25,14 +25,14 @@ func NewResults(cli *Client) *Results {
 
 func (vcdCli *VCDClient) Query(params map[string]string) (Results, error) {
 
-	req := vcdCli.Client.NewRequest(params, "GET", vcdCli.QueryHREF, nil)
+	req := vcdCli.Client.NewRequest(params, http.MethodGet, vcdCli.QueryHREF, nil)
 	req.Header.Add("Accept", "vnd.vmware.vcloud.org+xml;version="+vcdCli.Client.APIVersion)
 
 	return getResult(&vcdCli.Client, req)
 }
 
 func (vcdCli *VCDClient) QueryWithNotEncodedParams(params map[string]string, notEncodedParams map[string]string) (Results, error) {
-	req := vcdCli.Client.NewRequestWitNotEncodedParams(params, notEncodedParams, "GET", vcdCli.QueryHREF, nil)
+	req := vcdCli.Client.NewRequestWitNotEncodedParams(params, notEncodedParams, http.MethodGet, vcdCli.QueryHREF, nil)
 	req.Header.Add("Accept", "vnd.vmware.vcloud.org+xml;version="+vcdCli.Client.APIVersion)
 
 	return getResult(&vcdCli.Client, req)
@@ -41,7 +41,7 @@ func (vcdCli *VCDClient) QueryWithNotEncodedParams(params map[string]string, not
 func (vdc *Vdc) Query(params map[string]string) (Results, error) {
 	queryUrl := vdc.client.VCDHREF
 	queryUrl.Path += "/query"
-	req := vdc.client.NewRequest(params, "GET", queryUrl, nil)
+	req := vdc.client.NewRequest(params, http.MethodGet, queryUrl, nil)
 	req.Header.Add("Accept", "vnd.vmware.vcloud.org+xml;version="+vdc.client.APIVersion)
 
 	return getResult(vdc.client, req)
@@ -50,7 +50,7 @@ func (vdc *Vdc) Query(params map[string]string) (Results, error) {
 func (vdc *Vdc) QueryWithNotEncodedParams(params map[string]string, notEncodedParams map[string]string) (Results, error) {
 	queryUrl := vdc.client.VCDHREF
 	queryUrl.Path += "/query"
-	req := vdc.client.NewRequestWitNotEncodedParams(params, notEncodedParams, "GET", queryUrl, nil)
+	req := vdc.client.NewRequestWitNotEncodedParams(params, notEncodedParams, http.MethodGet, queryUrl, nil)
 	req.Header.Add("Accept", "vnd.vmware.vcloud.org+xml;version="+vdc.client.APIVersion)
 
 	return getResult(vdc.client, req)
