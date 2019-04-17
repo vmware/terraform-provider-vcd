@@ -1,7 +1,6 @@
 package vcd
 
 import (
-	// "fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -66,19 +65,6 @@ func TestAccVcdVAppVm_HardwareVirtualization(t *testing.T) {
 }
 
 const testAccCheckVcdVAppVm_hardwareVirtualization = `
-resource "vcd_network_routed" "{{.NetworkName}}" {
-  name         = "{{.NetworkName}}"
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
-  gateway      = "10.10.104.1"
-
-  static_ip_pool {
-    start_address = "10.10.104.2"
-    end_address   = "10.10.104.254"
-  }
-}
-
 resource "vcd_vapp" "{{.VappName}}" {
   name = "{{.VappName}}"
   org  = "{{.Org}}"
@@ -89,16 +75,12 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   org           					= "{{.Org}}"
   vdc           					= "{{.Vdc}}"
   vapp_name     					= "${vcd_vapp.{{.VappName}}.name}"
-  network_name  					= "${vcd_network_routed.{{.NetworkName}}.name}"
   name          					= "{{.VmName}}"
   catalog_name  					= "{{.Catalog}}"
   template_name 					= "{{.CatalogItem}}"
   memory        					= 384
   cpus          					= 2
   cpu_cores     					= 1
-  ip            					= "10.10.104.161"
   expose_hardware_virtualization	= "{{.ExposeHardwareVirtualization}}"
-
-  depends_on    = ["vcd_vapp.{{.VappName}}", "vcd_network_routed.{{.NetworkName}}"]
 }
 `
