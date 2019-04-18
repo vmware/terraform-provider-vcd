@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -16,13 +17,11 @@ func resourceVcdSNAT() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
 				ForceNew: true,
 			},
 			"vdc": {
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
 				ForceNew: true,
 			},
@@ -31,7 +30,11 @@ func resourceVcdSNAT() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-
+			"network_name": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
 			"external_ip": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
@@ -66,9 +69,19 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
+	var orgVdcnetwork *types.OrgVDCNetwork
+	if networkName := d.Get("network_name").(string); networkName != "" {
+		orgVdcnetwork, err = getNetwork(d, vcdClient, networkName)
+	}
+	if orgVdcnetwork == nil || orgVdcnetwork == (&types.OrgVDCNetwork{}) {
+		return fmt.Errorf("unable to find orgVdcnetwork: %s, err: %s", d.Get("network_name").(string), err)
+	}
+
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := edgeGateway.AddNATMapping("SNAT", d.Get("internal_ip").(string),
-			d.Get("external_ip").(string))
+
+		task, err := edgeGateway.AddNATPortMappingWithUplink(orgVdcnetwork, "SNAT",
+			d.Get("external_ip").(string), "any", d.Get("internal_ip").(string),
+			"any", "any", "")
 		if err != nil {
 			return resource.RetryableError(fmt.Errorf("error setting SNAT rules: %#v", err))
 		}
@@ -78,7 +91,7 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	d.SetId(d.Get("internal_ip").(string))
+	d.SetId(orgVdcnetwork.Name + ":" + d.Get("internal_ip").(string))
 	return nil
 }
 
@@ -93,7 +106,7 @@ func resourceVcdSNATRead(d *schema.ResourceData, meta interface{}) error {
 	var found bool
 
 	for _, r := range e.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
-		if r.RuleType == "SNAT" &&
+		if r.RuleType == "SNAT" && r.GatewayNatRule.Interface.Name == d.Get("network_name") &&
 			r.GatewayNatRule.OriginalIP == d.Id() {
 			found = true
 			d.Set("external_ip", r.GatewayNatRule.TranslatedIP)

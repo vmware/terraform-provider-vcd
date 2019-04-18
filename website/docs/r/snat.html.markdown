@@ -16,6 +16,7 @@ and delete source NATs to allow vApps to send external traffic.
 ```hcl
 resource "vcd_snat" "outbound" {
   edge_gateway = "Edge Gateway Name"
+  network_name = "Org vDC network name"
   external_ip  = "78.101.10.20"
   internal_ip  = "10.10.0.0/24"
 }
@@ -26,6 +27,7 @@ resource "vcd_snat" "outbound" {
 The following arguments are supported:
 
 * `edge_gateway` - (Required) The name of the edge gateway on which to apply the SNAT
+* `network_name` - (Required *v2.2+*) The name of the organization network name on which to apply the SNAT
 * `external_ip` - (Required) One of the external IPs available on your Edge Gateway
 * `internal_ip` - (Required) The IP or IP Range of the VM(s) to map from
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations

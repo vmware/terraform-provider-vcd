@@ -2,6 +2,8 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"log"
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -22,14 +24,17 @@ func resourceVcdDNAT() *schema.Resource {
 			},
 			"org": {
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
 				ForceNew: true,
 			},
 			"vdc": {
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
+				ForceNew: true,
+			},
+			"network_name": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
 				ForceNew: true,
 			},
 			"external_ip": &schema.Schema{
@@ -96,13 +101,21 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 		icmpSubType = ""
 	}
 
+	var orgVdcnetwork *types.OrgVDCNetwork
+	if networkName := d.Get("network_name").(string); networkName != "" {
+		orgVdcnetwork, err = getNetwork(d, vcdClient, networkName)
+	}
+	if orgVdcnetwork == nil || orgVdcnetwork == (&types.OrgVDCNetwork{}) {
+		return fmt.Errorf("unable to find orgVdcnetwork: %s, err: %s", d.Get("network_name").(string), err)
+	}
+
 	// Creating a loop to offer further protection from the edge gateway erroring
 	// due to being busy eg another person is using another client so wouldn't be
 	// constrained by out lock. If the edge gateway reurns with a busy error, wait
 	// 3 seconds and then try again. Continue until a non-busy error or success
 
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := edgeGateway.AddNATPortMapping("DNAT",
+		task, err := edgeGateway.AddNATPortMappingWithUplink(orgVdcnetwork, "DNAT",
 			d.Get("external_ip").(string),
 			portString,
 			d.Get("internal_ip").(string),
@@ -120,7 +133,7 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error completing tasks: %#v", err)
 	}
 
-	d.SetId(d.Get("external_ip").(string) + ":" + portString + " > " + d.Get("internal_ip").(string) + ":" + translatedPortString)
+	d.SetId(orgVdcnetwork.Name + ":" + d.Get("external_ip").(string) + ":" + portString + " > " + d.Get("internal_ip").(string) + ":" + translatedPortString)
 	return nil
 }
 
@@ -136,7 +149,7 @@ func resourceVcdDNATRead(d *schema.ResourceData, meta interface{}) error {
 	var found bool
 
 	for _, r := range e.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
-		if r.RuleType == "DNAT" &&
+		if r.RuleType == "DNAT" && r.GatewayNatRule.Interface.Name == d.Get("network_name") &&
 			r.GatewayNatRule.OriginalIP == d.Get("external_ip").(string) &&
 			r.GatewayNatRule.OriginalPort == getPortString(d.Get("port").(int)) {
 			found = true
@@ -187,4 +200,20 @@ func resourceVcdDNATDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error completing tasks: %#v", err)
 	}
 	return nil
+}
+
+func getNetwork(d *schema.ResourceData, vcdClient *VCDClient, networkname string) (*types.OrgVDCNetwork, error) {
+
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	if err != nil {
+		return &types.OrgVDCNetwork{}, fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	}
+
+	network, err := vdc.FindVDCNetwork(networkname)
+	if err != nil {
+		log.Printf("[DEBUG] Network doesn't exist: " + networkname)
+		return nil, err
+	}
+
+	return network.OrgVDCNetwork, nil
 }

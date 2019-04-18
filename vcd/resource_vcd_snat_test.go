@@ -2,12 +2,16 @@ package vcd
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
+
+var orgVdcNetworkNameForSnat = "TestAccVcdDNAT_BasicNetworkForSnat"
+var startIpAddress = "10.10.102.51"
 
 func TestAccVcdSNAT_Basic(t *testing.T) {
 	if vcdShortTest {
@@ -23,11 +27,16 @@ func TestAccVcdSNAT_Basic(t *testing.T) {
 
 	snatName := "TestAccVcdSNAT"
 	var params = StringMap{
-		"Org":         testConfig.VCD.Org,
-		"Vdc":         testConfig.VCD.Vdc,
-		"EdgeGateway": testConfig.Networking.EdgeGateway,
-		"ExternalIp":  testConfig.Networking.ExternalIp,
-		"SnatName":    snatName,
+		"Org":               testConfig.VCD.Org,
+		"Vdc":               testConfig.VCD.Vdc,
+		"EdgeGateway":       testConfig.Networking.EdgeGateway,
+		"ExternalIp":        testConfig.Networking.ExternalIp,
+		"ExternalNetwork":   testConfig.Networking.ExternalNetwork,
+		"SnatName":          snatName,
+		"OrgVdcNetworkName": orgVdcNetworkNameForSnat,
+		"Gateway":           "10.10.102.1",
+		"StartIpAddress":    startIpAddress,
+		"EndIpAddress":      "10.10.102.100",
 	}
 
 	configText := templateFill(testAccCheckVcdSnat_basic, params)
@@ -39,13 +48,16 @@ func TestAccVcdSNAT_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckVcdSNATDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: configText,
+				Config:      configText,
+				ExpectError: regexp.MustCompile(`After applying this step and refreshing, the plan was not empty:`),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdSNATExists("vcd_snat."+snatName, &e),
 					resource.TestCheckResourceAttr(
+						"vcd_snat."+snatName, "network_name", orgVdcNetworkNameForSnat),
+					resource.TestCheckResourceAttr(
 						"vcd_snat."+snatName, "external_ip", testConfig.Networking.ExternalIp),
 					resource.TestCheckResourceAttr(
-						"vcd_snat."+snatName, "internal_ip", "10.10.102.0/24"),
+						"vcd_snat."+snatName, "internal_ip", startIpAddress),
 				),
 			},
 		},
@@ -75,10 +87,9 @@ func testAccCheckVcdSNATExists(n string, gateway *govcd.EdgeGateway) resource.Te
 
 		var found bool
 		for _, v := range edgeGateway.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
-			if v.RuleType == "SNAT" &&
-				v.GatewayNatRule.OriginalIP == "10.10.102.0/24" &&
-				v.GatewayNatRule.OriginalPort == "" &&
-				v.GatewayNatRule.TranslatedIP == testConfig.Networking.ExternalIp {
+			if v.RuleType == "SNAT" && v.GatewayNatRule.Interface.Name == orgVdcNetworkNameForSnat &&
+				v.GatewayNatRule.OriginalIP == testConfig.Networking.ExternalIp &&
+				v.GatewayNatRule.TranslatedIP == startIpAddress {
 				found = true
 			}
 		}
@@ -108,9 +119,8 @@ func testAccCheckVcdSNATDestroy(s *terraform.State) error {
 
 		var found bool
 		for _, v := range edgeGateway.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
-			if v.RuleType == "SNAT" &&
-				v.GatewayNatRule.OriginalIP == "10.10.102.0/24" &&
-				v.GatewayNatRule.OriginalPort == "" &&
+			if v.RuleType == "SNAT" && v.GatewayNatRule.Interface.Name == orgVdcNetworkNameForSnat &&
+				v.GatewayNatRule.OriginalIP == startIpAddress &&
 				v.GatewayNatRule.TranslatedIP == testConfig.Networking.ExternalIp {
 				found = true
 			}
@@ -125,11 +135,27 @@ func testAccCheckVcdSNATDestroy(s *terraform.State) error {
 }
 
 const testAccCheckVcdSnat_basic = `
+resource "vcd_network_routed" "{{.OrgVdcNetworkName}}" {
+  name         = "{{.OrgVdcNetworkName}}"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  gateway      = "{{.Gateway}}"
+
+  static_ip_pool {
+    start_address = "{{.StartIpAddress}}"
+    end_address   = "{{.EndIpAddress}}"
+  }
+}
+
+
 resource "vcd_snat" "{{.SnatName}}" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
+  network_name = "{{.OrgVdcNetworkName}}"
   external_ip  = "{{.ExternalIp}}"
-  internal_ip  = "10.10.102.0/24"
+  internal_ip  = "{{.StartIpAddress}}"
+  depends_on      = ["vcd_network_routed.{{.OrgVdcNetworkName}}"]
 }
 `

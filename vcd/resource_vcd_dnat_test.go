@@ -10,6 +10,7 @@ import (
 )
 
 var baseDnatName string = "TestAccVcdDNAT"
+var orgVdcNetworkName = "TestAccVcdDNAT_BasicNetwork"
 
 func TestAccVcdDNAT_Basic(t *testing.T) {
 	if vcdShortTest {
@@ -24,12 +25,17 @@ func TestAccVcdDNAT_Basic(t *testing.T) {
 
 	var dnatName string = baseDnatName + "_Basic"
 	var params = StringMap{
-		"Org":         testConfig.VCD.Org,
-		"Vdc":         testConfig.VCD.Vdc,
-		"EdgeGateway": testConfig.Networking.EdgeGateway,
-		"ExternalIp":  testConfig.Networking.ExternalIp,
-		"DnatName":    dnatName,
+		"Org":               testConfig.VCD.Org,
+		"Vdc":               testConfig.VCD.Vdc,
+		"EdgeGateway":       testConfig.Networking.EdgeGateway,
+		"ExternalIp":        testConfig.Networking.ExternalIp,
+		"DnatName":          dnatName,
+		"OrgVdcNetworkName": orgVdcNetworkName,
+		"Gateway":           "10.10.102.1",
+		"StartIpAddress":    "10.10.102.51",
+		"EndIpAddress":      "10.10.102.100",
 	}
+
 	configText := templateFill(testAccCheckVcdDnat_basic, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
@@ -41,6 +47,8 @@ func TestAccVcdDNAT_Basic(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdDNATExists("vcd_dnat."+dnatName, &e),
+					resource.TestCheckResourceAttr(
+						"vcd_dnat."+dnatName, "network_name", orgVdcNetworkName),
 					resource.TestCheckResourceAttr(
 						"vcd_dnat."+dnatName, "external_ip", testConfig.Networking.ExternalIp),
 					resource.TestCheckResourceAttr(
@@ -66,11 +74,15 @@ func TestAccVcdDNAT_tlate(t *testing.T) {
 
 	var dnatName string = baseDnatName + "_tlate"
 	var params = StringMap{
-		"Org":         testConfig.VCD.Org,
-		"Vdc":         testConfig.VCD.Vdc,
-		"EdgeGateway": testConfig.Networking.EdgeGateway,
-		"ExternalIp":  testConfig.Networking.ExternalIp,
-		"DnatName":    dnatName,
+		"Org":               testConfig.VCD.Org,
+		"Vdc":               testConfig.VCD.Vdc,
+		"EdgeGateway":       testConfig.Networking.EdgeGateway,
+		"ExternalIp":        testConfig.Networking.ExternalIp,
+		"DnatName":          dnatName,
+		"OrgVdcNetworkName": "TestAccVcdDNAT_BasicNetwork",
+		"Gateway":           "10.10.102.1",
+		"StartIpAddress":    "10.10.102.51",
+		"EndIpAddress":      "10.10.102.100",
 	}
 
 	configText := templateFill(testAccCheckVcdDnat_tlate, params)
@@ -84,6 +96,8 @@ func TestAccVcdDNAT_tlate(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdDNATtlateExists("vcd_dnat."+dnatName, &e),
+					resource.TestCheckResourceAttr(
+						"vcd_dnat."+dnatName, "network_name", orgVdcNetworkName),
 					resource.TestCheckResourceAttr(
 						"vcd_dnat."+dnatName, "external_ip", testConfig.Networking.ExternalIp),
 					resource.TestCheckResourceAttr(
@@ -212,23 +226,52 @@ func testAccCheckVcdDNATDestroy(s *terraform.State) error {
 }
 
 const testAccCheckVcdDnat_basic = `
+resource "vcd_network_routed" "{{.OrgVdcNetworkName}}" {
+  name         = "{{.OrgVdcNetworkName}}"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  gateway      = "{{.Gateway}}"
+
+  dhcp_pool {
+    start_address = "{{.StartIpAddress}}"
+    end_address   = "{{.EndIpAddress}}"
+  }
+}
 resource "vcd_dnat" "{{.DnatName}}" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
+  network_name = "{{.OrgVdcNetworkName}}"
   edge_gateway = "{{.EdgeGateway}}"
   external_ip  = "{{.ExternalIp}}"
   port         = 7777
   internal_ip  = "10.10.102.60"
+  depends_on   = ["vcd_network_routed.{{.OrgVdcNetworkName}}"]
 }
 `
 const testAccCheckVcdDnat_tlate = `
+resource "vcd_network_routed" "{{.OrgVdcNetworkName}}" {
+  name         = "{{.OrgVdcNetworkName}}"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  gateway      = "{{.Gateway}}"
+
+  dhcp_pool {
+    start_address = "{{.StartIpAddress}}"
+    end_address   = "{{.EndIpAddress}}"
+  }
+}
+
 resource "vcd_dnat" "{{.DnatName}}" {
   org             = "{{.Org}}"
   vdc             = "{{.Vdc}}"
+  network_name    = "{{.OrgVdcNetworkName}}"
   edge_gateway    = "{{.EdgeGateway}}"
   external_ip     = "{{.ExternalIp}}"
   port            = 7777
   internal_ip     = "10.10.102.60"
   translated_port = 77
+  depends_on      = ["vcd_network_routed.{{.OrgVdcNetworkName}}"]
 }
 `
