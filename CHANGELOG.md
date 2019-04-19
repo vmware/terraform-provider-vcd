@@ -3,7 +3,7 @@
 FEATURES:
 
 * `vcd_vapp_vm` - Ability to add metadata to a VM. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES` ([#158](https://github.com/terraform-providers/terraform-provider-vcd/issues/158))
-* `vcd_snat` and `vcd_dnat` - now supports organization network name. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES` 
+* `vcd_snat` and `vcd_dnat` - now supports organization network name. Until major version increase it's optional, later will be required field.  
 
 BUG FIXES:
 
@@ -12,7 +12,6 @@ BUG FIXES:
 BACKWARDS INCOMPATIBILITIES / NOTES:
 
 * `vcd_vapp` - Metadata is no longer added to first VM in vApp it will be added to vApp directly instead. ([#158](https://github.com/terraform-providers/terraform-provider-vcd/issues/158))
-* `vcd_snat` and `vcd_dnat` network is no longer selected as first one in edge gateway, but now explicitly required to be defined.
 
 ## 2.1.0 (March 27, 2019)
 
