@@ -47,7 +47,6 @@ func resourceVcdSNAT() *schema.Resource {
 				ForceNew: true,
 			},
 		},
-		DeprecationMessage: "This resource will require network_name in the next major version",
 	}
 }
 

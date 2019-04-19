@@ -103,11 +103,12 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	var orgVdcnetwork *types.OrgVDCNetwork
-	if networkName := d.Get("network_name").(string); networkName != "" {
-		orgVdcnetwork, err = getNetwork(d, vcdClient, networkName)
+	providedNetworkName := d.Get("network_name")
+	if nil != providedNetworkName && "" != providedNetworkName {
+		orgVdcnetwork, err = getNetwork(d, vcdClient, providedNetworkName.(string))
 	}
-	if orgVdcnetwork == nil || orgVdcnetwork == (&types.OrgVDCNetwork{}) {
-		return fmt.Errorf("unable to find orgVdcnetwork: %s, err: %s", d.Get("network_name").(string), err)
+	if err != nil {
+		return fmt.Errorf("unable to find orgVdcnetwork: %s, err: %s", providedNetworkName.(string), err)
 	}
 
 	// Creating a loop to offer further protection from the edge gateway erroring
@@ -115,26 +116,48 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 	// constrained by out lock. If the edge gateway reurns with a busy error, wait
 	// 3 seconds and then try again. Continue until a non-busy error or success
 
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := edgeGateway.AddNATPortMappingWithUplink(orgVdcnetwork, "DNAT",
-			d.Get("external_ip").(string),
-			portString,
-			d.Get("internal_ip").(string),
-			translatedPortString, protocol,
-			icmpSubType)
-		if err != nil {
-			return resource.RetryableError(
-				fmt.Errorf("error setting DNAT rules: %#v", err))
-		}
+	if nil != providedNetworkName && providedNetworkName != "" {
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := edgeGateway.AddNATPortMappingWithUplink(orgVdcnetwork, "DNAT",
+				d.Get("external_ip").(string),
+				portString,
+				d.Get("internal_ip").(string),
+				translatedPortString, protocol,
+				icmpSubType)
+			if err != nil {
+				return resource.RetryableError(
+					fmt.Errorf("error setting DNAT rules: %#v", err))
+			}
 
-		return resource.RetryableError(task.WaitTaskCompletion())
-	})
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
+	} else {
+		// TODO remove when major release is done
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := edgeGateway.AddNATPortMapping("DNAT",
+				d.Get("external_ip").(string),
+				portString,
+				d.Get("internal_ip").(string),
+				translatedPortString, protocol,
+				icmpSubType)
+			if err != nil {
+				return resource.RetryableError(
+					fmt.Errorf("error setting DNAT rules: %#v", err))
+			}
+
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
+	}
 
 	if err != nil {
 		return fmt.Errorf("error completing tasks: %#v", err)
 	}
 
-	d.SetId(orgVdcnetwork.Name + ":" + d.Get("external_ip").(string) + ":" + portString + " > " + d.Get("internal_ip").(string) + ":" + translatedPortString)
+	if nil != providedNetworkName && "" != providedNetworkName {
+		d.SetId(orgVdcnetwork.Name + ":" + d.Get("external_ip").(string) + ":" + portString + " > " + d.Get("internal_ip").(string) + ":" + translatedPortString)
+	} else {
+		d.SetId(d.Get("external_ip").(string) + ":" + portString + " > " + d.Get("internal_ip").(string) + ":" + translatedPortString)
+	}
 	return nil
 }
 
@@ -149,12 +172,24 @@ func resourceVcdDNATRead(d *schema.ResourceData, meta interface{}) error {
 
 	var found bool
 
-	for _, r := range e.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
-		if r.RuleType == "DNAT" && r.GatewayNatRule.Interface.Name == d.Get("network_name") &&
-			r.GatewayNatRule.OriginalIP == d.Get("external_ip").(string) &&
-			r.GatewayNatRule.OriginalPort == getPortString(d.Get("port").(int)) {
-			found = true
-			d.Set("internal_ip", r.GatewayNatRule.TranslatedIP)
+	providedNetworkName := d.Get("network_name")
+	if nil != providedNetworkName && providedNetworkName != "" {
+		for _, r := range e.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
+			if r.RuleType == "DNAT" && r.GatewayNatRule.Interface.Name == d.Get("network_name") &&
+				r.GatewayNatRule.OriginalIP == d.Get("external_ip").(string) &&
+				r.GatewayNatRule.OriginalPort == getPortString(d.Get("port").(int)) {
+				found = true
+				d.Set("internal_ip", r.GatewayNatRule.TranslatedIP)
+			}
+		}
+	} else {
+		for _, r := range e.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
+			if r.RuleType == "DNAT" &&
+				r.GatewayNatRule.OriginalIP == d.Get("external_ip").(string) &&
+				r.GatewayNatRule.OriginalPort == getPortString(d.Get("port").(int)) {
+				found = true
+				d.Set("internal_ip", r.GatewayNatRule.TranslatedIP)
+			}
 		}
 	}
 

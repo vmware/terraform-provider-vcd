@@ -275,3 +275,133 @@ resource "vcd_dnat" "{{.DnatName}}" {
   depends_on      = ["vcd_network_routed.{{.OrgVdcNetworkName}}"]
 }
 `
+
+func TestAccVcdDNAT_ForBackCompability(t *testing.T) {
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	if testConfig.Networking.ExternalIp == "" {
+		t.Skip("Variable networking.externalIp must be set to run DNAT tests")
+		return
+	}
+	var e govcd.EdgeGateway
+
+	var dnatName string = baseDnatName + "_tlate"
+	var params = StringMap{
+		"Org":         testConfig.VCD.Org,
+		"Vdc":         testConfig.VCD.Vdc,
+		"EdgeGateway": testConfig.Networking.EdgeGateway,
+		"ExternalIp":  testConfig.Networking.ExternalIp,
+		"DnatName":    dnatName,
+	}
+
+	configText := templateFill(testAccCheckVcdDnat_ForBackCompability, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVcdDNATDestroyForBackCompability,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdDNATExistsForBackCompability("vcd_dnat."+dnatName, &e),
+					resource.TestCheckResourceAttr(
+						"vcd_dnat."+dnatName, "external_ip", testConfig.Networking.ExternalIp),
+					resource.TestCheckResourceAttr(
+						"vcd_dnat."+dnatName, "port", "7777"),
+					resource.TestCheckResourceAttr(
+						"vcd_dnat."+dnatName, "internal_ip", "10.10.102.60"),
+					resource.TestCheckResourceAttr(
+						"vcd_dnat."+dnatName, "translated_port", "77"),
+				),
+			},
+		},
+	})
+}
+
+func testAccCheckVcdDNATExistsForBackCompability(n string, gateway *govcd.EdgeGateway) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("not found: %s", n)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("no DNAT ID is set")
+		}
+
+		conn := testAccProvider.Meta().(*VCDClient)
+
+		gatewayName := rs.Primary.Attributes["edge_gateway"]
+
+		edgeGateway, err := conn.GetEdgeGateway(testConfig.VCD.Org, testConfig.VCD.Vdc, gatewayName)
+		if err != nil {
+			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
+		}
+
+		var found bool
+		for _, v := range edgeGateway.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
+			if v.RuleType == "DNAT" &&
+				v.GatewayNatRule.OriginalIP == testConfig.Networking.ExternalIp &&
+				v.GatewayNatRule.OriginalPort == "7777" &&
+				v.GatewayNatRule.TranslatedIP == "10.10.102.60" &&
+				v.GatewayNatRule.TranslatedPort == "77" {
+				found = true
+			}
+		}
+		if !found {
+			return fmt.Errorf("DNAT rule was not found")
+		}
+
+		*gateway = edgeGateway
+
+		return nil
+	}
+}
+
+func testAccCheckVcdDNATDestroyForBackCompability(s *terraform.State) error {
+	conn := testAccProvider.Meta().(*VCDClient)
+	for _, rs := range s.RootModule().Resources {
+		if rs.Type != "vcd_dnat" {
+			continue
+		}
+
+		gatewayName := rs.Primary.Attributes["edge_gateway"]
+		edgeGateway, err := conn.GetEdgeGateway(testConfig.VCD.Org, testConfig.VCD.Vdc, gatewayName)
+
+		if err != nil {
+			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
+		}
+
+		var found bool
+		for _, v := range edgeGateway.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
+			if v.RuleType == "DNAT" &&
+				v.GatewayNatRule.OriginalIP == testConfig.Networking.ExternalIp &&
+				v.GatewayNatRule.OriginalPort == "7777" &&
+				v.GatewayNatRule.TranslatedIP == "10.10.102.60" &&
+				v.GatewayNatRule.TranslatedPort == "77" {
+				found = true
+			}
+		}
+
+		if found {
+			return fmt.Errorf("DNAT rule still exists.")
+		}
+	}
+
+	return nil
+}
+
+const testAccCheckVcdDnat_ForBackCompability = `
+resource "vcd_dnat" "{{.DnatName}}" {
+  org             = "{{.Org}}"
+  vdc             = "{{.Vdc}}"
+  edge_gateway    = "{{.EdgeGateway}}"
+  external_ip     = "{{.ExternalIp}}"
+  port            = 7777
+  internal_ip     = "10.10.102.60"
+  translated_port = 77
+}
+`
