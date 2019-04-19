@@ -32,7 +32,7 @@ func resourceVcdSNAT() *schema.Resource {
 			},
 			"network_name": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 				ForceNew: true,
 			},
 			"external_ip": &schema.Schema{
@@ -47,6 +47,7 @@ func resourceVcdSNAT() *schema.Resource {
 				ForceNew: true,
 			},
 		},
+		DeprecationMessage: "This resource will require network_name in the next major version",
 	}
 }
 
