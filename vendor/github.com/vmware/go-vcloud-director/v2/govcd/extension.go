@@ -6,11 +6,8 @@ package govcd
 
 import (
 	"errors"
-	"fmt"
-	"net/url"
-
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"github.com/vmware/go-vcloud-director/v2/util"
+	"net/http"
 )
 
 func GetExternalNetworkByName(vcdClient *VCDClient, networkName string) (*types.ExternalNetworkReference, error) {
@@ -21,21 +18,10 @@ func GetExternalNetworkByName(vcdClient *VCDClient, networkName string) (*types.
 		return &types.ExternalNetworkReference{}, err
 	}
 
-	extNetworkURL, err := url.ParseRequestURI(extNetworkHREF)
+	_, err = vcdClient.Client.ExecuteRequest(extNetworkHREF, http.MethodGet,
+		"", "error retrieving external networks: %s", nil, extNetworkRefs)
 	if err != nil {
 		return &types.ExternalNetworkReference{}, err
-	}
-
-	req := vcdClient.Client.NewRequest(map[string]string{}, "GET", *extNetworkURL, nil)
-	resp, err := checkResp(vcdClient.Client.Http.Do(req))
-	if err != nil {
-		util.Logger.Printf("[TRACE] error retrieving external networks: %s", err)
-		return &types.ExternalNetworkReference{}, fmt.Errorf("error retrieving external networks: %s", err)
-	}
-
-	if err = decodeBody(resp, extNetworkRefs); err != nil {
-		util.Logger.Printf("[TRACE] error retrieving  external networks: %s", err)
-		return &types.ExternalNetworkReference{}, fmt.Errorf("error decoding extension  external networks: %s", err)
 	}
 
 	for _, netRef := range extNetworkRefs.ExternalNetworkReference {
@@ -67,17 +53,9 @@ func getExtension(vcdClient *VCDClient) (*types.Extension, error) {
 
 	extensionHREF := vcdClient.Client.VCDHREF
 	extensionHREF.Path += "/admin/extension/"
-	req := vcdClient.Client.NewRequest(map[string]string{}, "GET", extensionHREF, nil)
-	resp, err := checkResp(vcdClient.Client.Http.Do(req))
-	if err != nil {
-		util.Logger.Printf("[TRACE] error retrieving extension: %s", err)
-		return extensions, fmt.Errorf("error retrieving extension: %s", err)
-	}
 
-	if err = decodeBody(resp, extensions); err != nil {
-		util.Logger.Printf("[TRACE] error retrieving extension list: %s", err)
-		return extensions, fmt.Errorf("error decoding extension list response: %s", err)
-	}
+	_, err := vcdClient.Client.ExecuteRequest(extensionHREF.String(), http.MethodGet,
+		"", "error retrieving extension: %s", nil, extensions)
 
-	return extensions, nil
+	return extensions, err
 }

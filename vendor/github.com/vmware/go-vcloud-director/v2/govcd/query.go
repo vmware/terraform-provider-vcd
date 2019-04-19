@@ -23,25 +23,25 @@ func NewResults(cli *Client) *Results {
 	}
 }
 
-func (vdcCli *VCDClient) Query(params map[string]string) (Results, error) {
+func (vcdCli *VCDClient) Query(params map[string]string) (Results, error) {
 
-	req := vdcCli.Client.NewRequest(params, "GET", vdcCli.QueryHREF, nil)
-	req.Header.Add("Accept", "vnd.vmware.vcloud.org+xml;version="+vdcCli.Client.APIVersion)
+	req := vcdCli.Client.NewRequest(params, http.MethodGet, vcdCli.QueryHREF, nil)
+	req.Header.Add("Accept", "vnd.vmware.vcloud.org+xml;version="+vcdCli.Client.APIVersion)
 
-	return getResult(&vdcCli.Client, req)
+	return getResult(&vcdCli.Client, req)
 }
 
-func (vdcCli *VCDClient) QueryWithNotEncodedParams(params map[string]string, notEncodedParams map[string]string) (Results, error) {
-	req := vdcCli.Client.NewRequestWitNotEncodedParams(params, notEncodedParams, "GET", vdcCli.QueryHREF, nil)
-	req.Header.Add("Accept", "vnd.vmware.vcloud.org+xml;version="+vdcCli.Client.APIVersion)
+func (vcdCli *VCDClient) QueryWithNotEncodedParams(params map[string]string, notEncodedParams map[string]string) (Results, error) {
+	req := vcdCli.Client.NewRequestWitNotEncodedParams(params, notEncodedParams, http.MethodGet, vcdCli.QueryHREF, nil)
+	req.Header.Add("Accept", "vnd.vmware.vcloud.org+xml;version="+vcdCli.Client.APIVersion)
 
-	return getResult(&vdcCli.Client, req)
+	return getResult(&vcdCli.Client, req)
 }
 
 func (vdc *Vdc) Query(params map[string]string) (Results, error) {
 	queryUrl := vdc.client.VCDHREF
 	queryUrl.Path += "/query"
-	req := vdc.client.NewRequest(params, "GET", queryUrl, nil)
+	req := vdc.client.NewRequest(params, http.MethodGet, queryUrl, nil)
 	req.Header.Add("Accept", "vnd.vmware.vcloud.org+xml;version="+vdc.client.APIVersion)
 
 	return getResult(vdc.client, req)
@@ -50,7 +50,7 @@ func (vdc *Vdc) Query(params map[string]string) (Results, error) {
 func (vdc *Vdc) QueryWithNotEncodedParams(params map[string]string, notEncodedParams map[string]string) (Results, error) {
 	queryUrl := vdc.client.VCDHREF
 	queryUrl.Path += "/query"
-	req := vdc.client.NewRequestWitNotEncodedParams(params, notEncodedParams, "GET", queryUrl, nil)
+	req := vdc.client.NewRequestWitNotEncodedParams(params, notEncodedParams, http.MethodGet, queryUrl, nil)
 	req.Header.Add("Accept", "vnd.vmware.vcloud.org+xml;version="+vdc.client.APIVersion)
 
 	return getResult(vdc.client, req)

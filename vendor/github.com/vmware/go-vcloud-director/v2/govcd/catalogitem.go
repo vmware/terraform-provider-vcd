@@ -5,11 +5,9 @@
 package govcd
 
 import (
-	"fmt"
-	"net/url"
-
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
+	"net/http"
 )
 
 type CatalogItem struct {
@@ -25,27 +23,14 @@ func NewCatalogItem(cli *Client) *CatalogItem {
 }
 
 func (catalogItem *CatalogItem) GetVAppTemplate() (VAppTemplate, error) {
-	catalogItemUrl, err := url.ParseRequestURI(catalogItem.CatalogItem.Entity.HREF)
-
-	if err != nil {
-		return VAppTemplate{}, fmt.Errorf("error decoding catalogitem response: %s", err)
-	}
-
-	req := catalogItem.client.NewRequest(map[string]string{}, "GET", *catalogItemUrl, nil)
-
-	resp, err := checkResp(catalogItem.client.Http.Do(req))
-	if err != nil {
-		return VAppTemplate{}, fmt.Errorf("error retrieving vapptemplate: %s", err)
-	}
 
 	cat := NewVAppTemplate(catalogItem.client)
 
-	if err = decodeBody(resp, cat.VAppTemplate); err != nil {
-		return VAppTemplate{}, fmt.Errorf("error decoding vapptemplate response: %s", err)
-	}
+	_, err := catalogItem.client.ExecuteRequest(catalogItem.CatalogItem.Entity.HREF, http.MethodGet,
+		"", "error retrieving vApp template: %s", nil, cat.VAppTemplate)
 
 	// The request was successful
-	return *cat, nil
+	return *cat, err
 
 }
 
@@ -58,13 +43,6 @@ func (catalogItem *CatalogItem) Delete() error {
 
 	util.Logger.Printf("[TRACE] Url for deleting catalog item: %#v and name: %s", catalogItemHREF, catalogItem.CatalogItem.Name)
 
-	req := catalogItem.client.NewRequest(map[string]string{}, "DELETE", catalogItemHREF, nil)
-
-	_, err := checkResp(catalogItem.client.Http.Do(req))
-
-	if err != nil {
-		return fmt.Errorf("error deleting Catalog item %s: %s", catalogItem.CatalogItem.ID, err)
-	}
-
-	return nil
+	return catalogItem.client.ExecuteRequestWithoutResponse(catalogItemHREF.String(), http.MethodDelete,
+		"", "error deleting Catalog item: %s", nil)
 }

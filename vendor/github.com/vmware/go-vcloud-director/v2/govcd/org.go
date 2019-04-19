@@ -5,10 +5,9 @@
 package govcd
 
 import (
-	"bytes"
-	"encoding/xml"
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
@@ -45,19 +44,18 @@ func (org *Org) Refresh() error {
 	if *org == (Org{}) {
 		return fmt.Errorf("cannot refresh, Object is empty")
 	}
-	orgHREF, _ := url.ParseRequestURI(org.Org.HREF)
-	req := org.client.NewRequest(map[string]string{}, "GET", *orgHREF, nil)
-	resp, err := checkResp(org.client.Http.Do(req))
-	if err != nil {
-		return fmt.Errorf("error performing request: %s", err)
-	}
+
 	// Empty struct before a new unmarshal, otherwise we end up with duplicate
 	// elements in slices.
 	unmarshalledOrg := &types.Org{}
-	if err = decodeBody(resp, unmarshalledOrg); err != nil {
-		return fmt.Errorf("error decoding org response: %s", err)
+
+	_, err := org.client.ExecuteRequest(org.Org.HREF, http.MethodGet,
+		"", "error refreshing organization: %s", nil, unmarshalledOrg)
+	if err != nil {
+		return err
 	}
 	org.Org = unmarshalledOrg
+
 	// The request was successful
 	return nil
 }
@@ -69,28 +67,13 @@ func (org *Org) FindCatalog(catalogName string) (Catalog, error) {
 
 	for _, link := range org.Org.Link {
 		if link.Rel == "down" && link.Type == "application/vnd.vmware.vcloud.catalog+xml" && link.Name == catalogName {
-			orgHREF, err := url.ParseRequestURI(link.HREF)
-
-			if err != nil {
-				return Catalog{}, fmt.Errorf("error decoding org response: %s", err)
-			}
-
-			req := org.client.NewRequest(map[string]string{}, "GET", *orgHREF, nil)
-
-			resp, err := checkResp(org.client.Http.Do(req))
-			if err != nil {
-				return Catalog{}, fmt.Errorf("error retrieving catalog: %s", err)
-			}
 
 			cat := NewCatalog(org.client)
 
-			if err = decodeBody(resp, cat.Catalog); err != nil {
-				return Catalog{}, fmt.Errorf("error decoding catalog response: %s", err)
-			}
+			_, err := org.client.ExecuteRequest(link.HREF, http.MethodGet,
+				"", "error retrieving catalog: %s", nil, cat.Catalog)
 
-			// The request was successful
-			return *cat, nil
-
+			return *cat, err
 		}
 	}
 
@@ -103,22 +86,12 @@ func (org *Org) FindCatalog(catalogName string) (Catalog, error) {
 func (org *Org) GetVdcByName(vdcname string) (Vdc, error) {
 	for _, link := range org.Org.Link {
 		if link.Name == vdcname {
-			vdcHREF, err := url.ParseRequestURI(link.HREF)
-			if err != nil {
-				return Vdc{}, fmt.Errorf("Error parsing url: %v", err)
-			}
-			req := org.client.NewRequest(map[string]string{}, "GET", *vdcHREF, nil)
-			resp, err := checkResp(org.client.Http.Do(req))
-			if err != nil {
-				return Vdc{}, fmt.Errorf("error getting vdc: %s", err)
-			}
-
 			vdc := NewVdc(org.client)
-			if err = decodeBody(resp, vdc.Vdc); err != nil {
-				return Vdc{}, fmt.Errorf("error decoding vdc response: %s", err)
-			}
-			// The request was successful
-			return *vdc, nil
+
+			_, err := org.client.ExecuteRequest(link.HREF, http.MethodGet,
+				"", "error retrieving vdc: %s", nil, vdc.Vdc)
+
+			return *vdc, err
 		}
 	}
 	return Vdc{}, nil
@@ -150,20 +123,18 @@ func (adminOrg *AdminOrg) Refresh() error {
 	if *adminOrg == (AdminOrg{}) {
 		return fmt.Errorf("cannot refresh, Object is empty")
 	}
-	adminOrgHREF, _ := url.ParseRequestURI(adminOrg.AdminOrg.HREF)
-	req := adminOrg.client.NewRequest(map[string]string{}, "GET", *adminOrgHREF, nil)
-	resp, err := checkResp(adminOrg.client.Http.Do(req))
-	if err != nil {
-		return fmt.Errorf("error performing request: %s", err)
-	}
+
 	// Empty struct before a new unmarshal, otherwise we end up with duplicate
 	// elements in slices.
 	unmarshalledAdminOrg := &types.AdminOrg{}
-	if err = decodeBody(resp, unmarshalledAdminOrg); err != nil {
-		return fmt.Errorf("error decoding org response: %s", err)
+
+	_, err := adminOrg.client.ExecuteRequest(adminOrg.AdminOrg.HREF, http.MethodGet,
+		"", "error refreshing organization: %s", nil, unmarshalledAdminOrg)
+	if err != nil {
+		return err
 	}
 	adminOrg.AdminOrg = unmarshalledAdminOrg
-	// The request was successful
+
 	return nil
 }
 
@@ -195,7 +166,7 @@ func CreateCatalog(client *Client, links types.LinkList, Name, Description strin
 		Description: Description,
 	}
 	vcomp := &types.AdminCatalog{
-		Xmlns:   "http://www.vmware.com/vcloud/v1.5",
+		Xmlns:   types.XMLNamespaceVCloud,
 		Catalog: *reqCatalog,
 	}
 
@@ -212,28 +183,11 @@ func CreateCatalog(client *Client, links types.LinkList, Name, Description strin
 		return AdminCatalog{}, fmt.Errorf("creating catalog failed to find url")
 	}
 
-	catalogHREF, err := url.ParseRequestURI(createOrgLink.HREF)
-	if err != nil {
-		return AdminCatalog{}, fmt.Errorf("error parsing admin org's href: %v", err)
-	}
-
-	output, _ := xml.MarshalIndent(vcomp, "  ", "    ")
-	xmlData := bytes.NewBufferString(xml.Header + string(output))
-
-	req := client.NewRequest(map[string]string{}, "POST", *catalogHREF, xmlData)
-
-	req.Header.Add("Content-Type", "application/vnd.vmware.admin.catalog+xml")
-
-	resp, err := checkResp(client.Http.Do(req))
-	if err != nil {
-		return AdminCatalog{}, fmt.Errorf("error creating catalog: %s : %s", err, catalogHREF.Path)
-	}
 	catalog := NewAdminCatalog(client)
-	if err = decodeBody(resp, catalog.AdminCatalog); err != nil {
-		return AdminCatalog{}, fmt.Errorf("error decoding task response: %s", err)
-	}
-	// Task is within the catalog
-	return *catalog, nil
+	_, err := client.ExecuteRequest(createOrgLink.HREF, http.MethodPost,
+		"application/vnd.vmware.admin.catalog+xml", "error creating catalog: %s", vcomp, catalog.AdminCatalog)
+
+	return *catalog, err
 }
 
 // If user specifies valid vdc name then this returns a vdc object.
@@ -253,22 +207,12 @@ func (adminOrg *AdminOrg) GetVdcByName(vdcname string) (Vdc, error) {
 				vdcHREF = splitByAdminHREF[0] + "/api" + splitByAdminHREF[1]
 			}
 
-			vdcURL, err := url.ParseRequestURI(vdcHREF)
-			if err != nil {
-				return Vdc{}, fmt.Errorf("error parsing url: %v", err)
-			}
-			req := adminOrg.client.NewRequest(map[string]string{}, "GET", *vdcURL, nil)
-			resp, err := checkResp(adminOrg.client.Http.Do(req))
-			if err != nil {
-				return Vdc{}, fmt.Errorf("error getting vdc: %s", err)
-			}
-
 			vdc := NewVdc(adminOrg.client)
-			if err = decodeBody(resp, vdc.Vdc); err != nil {
-				return Vdc{}, fmt.Errorf("error decoding vdc response: %s", err)
-			}
-			// The request was successful
-			return *vdc, nil
+
+			_, err := adminOrg.client.ExecuteRequest(vdcHREF, http.MethodGet,
+				"", "error getting vdc: %s", nil, vdc.Vdc)
+
+			return *vdc, err
 		}
 	}
 	return Vdc{}, nil
@@ -328,29 +272,22 @@ func (org *AdminOrg) CreateVdc(vdcConfiguration *types.VdcConfiguration) (Task, 
 	if err != nil {
 		return Task{}, err
 	}
-	output, err := xml.MarshalIndent(vdcConfiguration, "  ", "    ")
-	if err != nil {
-		return Task{}, fmt.Errorf("error marshalling xml: %s", err)
-	}
-	xmlData := bytes.NewBufferString(xml.Header + string(output))
-	util.Logger.Printf("[TRACE] AdminOrg.CreateVdc - xml payload: %s\n", xmlData)
+
 	vdcCreateHREF, err := url.ParseRequestURI(org.AdminOrg.HREF)
 	if err != nil {
 		return Task{}, fmt.Errorf("error parsing admin org url: %s", err)
 	}
 	vdcCreateHREF.Path += "/vdcsparams"
-	req := org.client.NewRequest(map[string]string{}, "POST", *vdcCreateHREF, xmlData)
-	req.Header.Add("Content-Type", "application/vnd.vmware.admin.createVdcParams+xml")
-	resp, err := checkResp(org.client.Http.Do(req))
-	if err != nil {
-		return Task{}, fmt.Errorf("error instantiating a new VDC: %s", err)
-	}
 
 	adminVdc := NewAdminVdc(org.client)
-	if err = decodeBody(resp, adminVdc.AdminVdc); err != nil {
-		return Task{}, fmt.Errorf("error decoding admin VDC response: %s", err)
+
+	_, err = org.client.ExecuteRequest(vdcCreateHREF.String(), http.MethodPost,
+		"application/vnd.vmware.admin.createVdcParams+xml", "error retrieving vdc: %s", vdcConfiguration, adminVdc.AdminVdc)
+	if err != nil {
+		return Task{}, err
 	}
 
+	// Return the task
 	task := NewTask(org.client)
 	task.Task = adminVdc.AdminVdc.Tasks.Task[0]
 	return *task, nil
@@ -412,7 +349,7 @@ func (adminOrg *AdminOrg) Delete(force bool, recursive bool) error {
 	req := adminOrg.client.NewRequest(map[string]string{
 		"force":     strconv.FormatBool(force),
 		"recursive": strconv.FormatBool(recursive),
-	}, "DELETE", *orgHREF, nil)
+	}, http.MethodDelete, *orgHREF, nil)
 	_, err = checkResp(adminOrg.client.Http.Do(req))
 	if err != nil {
 		return fmt.Errorf("error deleting Org %s: %s", adminOrg.AdminOrg.ID, err)
@@ -428,9 +365,8 @@ func (adminOrg *AdminOrg) Disable() error {
 		return fmt.Errorf("error getting AdminOrg HREF %s : %v", adminOrg.AdminOrg.HREF, err)
 	}
 	orgHREF.Path += "/action/disable"
-	req := adminOrg.client.NewRequest(map[string]string{}, "POST", *orgHREF, nil)
-	_, err = checkResp(adminOrg.client.Http.Do(req))
-	return err
+
+	return adminOrg.client.ExecuteRequestWithoutResponse(orgHREF.String(), http.MethodPost, "", "error disabling organization: %s", nil)
 }
 
 //   Updates the Org definition from current org struct contents.
@@ -439,31 +375,16 @@ func (adminOrg *AdminOrg) Disable() error {
 //   API Documentation: https://code.vmware.com/apis/220/vcloud#/doc/doc/operations/PUT-Organization.html
 func (adminOrg *AdminOrg) Update() (Task, error) {
 	vcomp := &types.AdminOrg{
-		Xmlns:       "http://www.vmware.com/vcloud/v1.5",
+		Xmlns:       types.XMLNamespaceVCloud,
 		Name:        adminOrg.AdminOrg.Name,
 		IsEnabled:   adminOrg.AdminOrg.IsEnabled,
 		FullName:    adminOrg.AdminOrg.FullName,
 		OrgSettings: adminOrg.AdminOrg.OrgSettings,
 	}
-	output, _ := xml.MarshalIndent(vcomp, "  ", "    ")
-	xmlData := bytes.NewBufferString(xml.Header + string(output))
-	// Update org
-	orgHREF, err := url.ParseRequestURI(adminOrg.AdminOrg.HREF)
-	if err != nil {
-		return Task{}, fmt.Errorf("error getting AdminOrg HREF %s : %v", adminOrg.AdminOrg.HREF, err)
-	}
-	req := adminOrg.client.NewRequest(map[string]string{}, "PUT", *orgHREF, xmlData)
-	req.Header.Add("Content-Type", "application/vnd.vmware.admin.organization+xml")
-	resp, err := checkResp(adminOrg.client.Http.Do(req))
-	if err != nil {
-		return Task{}, fmt.Errorf("error updating Org: %s", err)
-	}
-	// Create Return object
-	task := NewTask(adminOrg.client)
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding task response: %s", err)
-	}
-	return *task, nil
+
+	// Return the task
+	return adminOrg.client.ExecuteTaskRequest(adminOrg.AdminOrg.HREF, http.MethodPut,
+		"application/vnd.vmware.admin.organization+xml", "error updating Org: %s", vcomp)
 }
 
 // Undeploys every vapp within an organization
@@ -510,17 +431,12 @@ func (adminOrg *AdminOrg) getVdcByAdminHREF(adminVdcUrl *url.URL) (*Vdc, error) 
 	vdcURL := adminOrg.client.VCDHREF
 	vdcURL.Path += strings.Split(adminVdcUrl.Path, "/api/admin")[1] //gets id
 
-	req := adminOrg.client.NewRequest(map[string]string{}, "GET", vdcURL, nil)
-	resp, err := checkResp(adminOrg.client.Http.Do(req))
-	if err != nil {
-		return &Vdc{}, fmt.Errorf("error retrieving vdc: %s", err)
-	}
-
 	vdc := NewVdc(adminOrg.client)
-	if err = decodeBody(resp, vdc.Vdc); err != nil {
-		return &Vdc{}, fmt.Errorf("error decoding vdc response: %s", err)
-	}
-	return vdc, nil
+
+	_, err := adminOrg.client.ExecuteRequest(vdcURL.String(), http.MethodGet,
+		"", "error retrieving vdc: %s", nil, vdc.Vdc)
+
+	return vdc, err
 }
 
 // Removes all vdcs in a org
@@ -531,7 +447,7 @@ func (adminOrg *AdminOrg) removeAllOrgVDCs() error {
 		adminVdcUrl := adminOrg.client.VCDHREF
 		adminVdcUrl.Path += "/admin/vdc/" + strings.Split(vdcs.HREF, "/api/vdc/")[1] + "/action/disable"
 
-		req := adminOrg.client.NewRequest(map[string]string{}, "POST", adminVdcUrl, nil)
+		req := adminOrg.client.NewRequest(map[string]string{}, http.MethodPost, adminVdcUrl, nil)
 		_, err := checkResp(adminOrg.client.Http.Do(req))
 		if err != nil {
 			return fmt.Errorf("error disabling vdc: %s", err)
@@ -541,7 +457,7 @@ func (adminOrg *AdminOrg) removeAllOrgVDCs() error {
 		req = adminOrg.client.NewRequest(map[string]string{
 			"recursive": "true",
 			"force":     "true",
-		}, "DELETE", adminVdcUrl, nil)
+		}, http.MethodDelete, adminVdcUrl, nil)
 		resp, err := checkResp(adminOrg.client.Http.Do(req))
 		if err != nil {
 			return fmt.Errorf("error deleting vdc: %s", err)
@@ -569,22 +485,19 @@ func (adminOrg *AdminOrg) removeAllOrgNetworks() error {
 		// Get Network HREF
 		networkHREF := adminOrg.client.VCDHREF
 		networkHREF.Path += "/admin/network/" + strings.Split(networks.HREF, "/api/admin/network/")[1] //gets id
-		req := adminOrg.client.NewRequest(map[string]string{}, "DELETE", networkHREF, nil)
-		resp, err := checkResp(adminOrg.client.Http.Do(req))
+
+		task, err := adminOrg.client.ExecuteTaskRequest(networkHREF.String(), http.MethodDelete,
+			"", "error deleting network: %s", nil)
 		if err != nil {
-			return fmt.Errorf("error deleting newtork: %s, %s", err, networkHREF.Path)
+			return err
 		}
 
-		task := NewTask(adminOrg.client)
-		if err = decodeBody(resp, task.Task); err != nil {
-			return fmt.Errorf("error decoding task response: %s", err)
-		}
 		if task.Task.Status == "error" {
 			return fmt.Errorf("network not properly destroyed")
 		}
 		err = task.WaitTaskCompletion()
 		if err != nil {
-			return fmt.Errorf("Couldn't finish removing network %#v", err)
+			return fmt.Errorf("couldn't finish removing network %#v", err)
 		}
 	}
 	return nil
@@ -599,7 +512,7 @@ func (adminOrg *AdminOrg) removeCatalogs() error {
 		req := adminOrg.client.NewRequest(map[string]string{
 			"force":     "true",
 			"recursive": "true",
-		}, "DELETE", catalogHREF, nil)
+		}, http.MethodDelete, catalogHREF, nil)
 		_, err := checkResp(adminOrg.client.Http.Do(req))
 		if err != nil {
 			return fmt.Errorf("error deleting catalog: %s, %s", err, catalogHREF.Path)
@@ -616,24 +529,17 @@ func (adminOrg *AdminOrg) removeCatalogs() error {
 // perform administrator tasks then function returns an error.
 // API Documentation: https://code.vmware.com/apis/220/vcloud#/doc/doc/operations/GET-Catalog-AdminView.html
 func (adminOrg *AdminOrg) FindAdminCatalog(catalogName string) (AdminCatalog, error) {
-	for _, adminCatalog := range adminOrg.AdminOrg.Catalogs.Catalog {
+	for _, catalog := range adminOrg.AdminOrg.Catalogs.Catalog {
 		// Get Catalog HREF
-		if adminCatalog.Name == catalogName {
-			catalogURL, err := url.ParseRequestURI(adminCatalog.HREF)
-			if err != nil {
-				return AdminCatalog{}, fmt.Errorf("error decoding catalog url: %s", err)
-			}
-			req := adminOrg.client.NewRequest(map[string]string{}, "GET", *catalogURL, nil)
-			resp, err := checkResp(adminOrg.client.Http.Do(req))
-			if err != nil {
-				return AdminCatalog{}, fmt.Errorf("error retrieving catalog: %s", err)
-			}
+		if catalog.Name == catalogName {
+
 			adminCatalog := NewAdminCatalog(adminOrg.client)
-			if err = decodeBody(resp, adminCatalog.AdminCatalog); err != nil {
-				return AdminCatalog{}, fmt.Errorf("error decoding catalog response: %s", err)
-			}
+
+			_, err := adminOrg.client.ExecuteRequest(catalog.HREF, http.MethodGet,
+				"", "error retrieving catalog: %s", nil, adminCatalog.AdminCatalog)
+
 			// The request was successful
-			return *adminCatalog, nil
+			return *adminCatalog, err
 		}
 	}
 	return AdminCatalog{}, nil
@@ -649,19 +555,14 @@ func (adminOrg *AdminOrg) FindCatalog(catalogName string) (Catalog, error) {
 		if catalog.Name == catalogName {
 			catalogURL := adminOrg.client.VCDHREF
 			catalogURL.Path += "/catalog/" + strings.Split(catalog.HREF, "/api/admin/catalog/")[1] //gets id
-			req := adminOrg.client.NewRequest(map[string]string{}, "GET", catalogURL, nil)
-			resp, err := checkResp(adminOrg.client.Http.Do(req))
-			if err != nil {
-				return Catalog{}, fmt.Errorf("error retrieving catalog: %s", err)
-			}
+
 			cat := NewCatalog(adminOrg.client)
 
-			if err = decodeBody(resp, cat.Catalog); err != nil {
-				return Catalog{}, fmt.Errorf("error decoding catalog response: %s", err)
-			}
+			_, err := adminOrg.client.ExecuteRequest(catalogURL.String(), http.MethodGet,
+				"", "error retrieving catalog: %s", nil, cat.Catalog)
 
 			// The request was successful
-			return *cat, nil
+			return *cat, err
 		}
 	}
 	return Catalog{}, nil

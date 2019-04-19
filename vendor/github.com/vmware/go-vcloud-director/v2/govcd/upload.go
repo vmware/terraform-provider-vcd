@@ -113,7 +113,7 @@ func uploadFile(client *Client, filePath string, uDetails uploadDetails) (int64,
 func newFileUploadRequest(requestUrl string, filePart []byte, offset, filePartSize, fileSizeToUpload int64) (*http.Request, error) {
 	util.Logger.Printf("[TRACE] Creating file upload request: %s, %v, %v, %v \n", requestUrl, offset, filePartSize, fileSizeToUpload)
 
-	uploadReq, err := http.NewRequest("PUT", requestUrl, bytes.NewReader(filePart))
+	uploadReq, err := http.NewRequest(http.MethodPut, requestUrl, bytes.NewReader(filePart))
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +178,7 @@ func createTaskForVcdImport(client *Client, taskHREF string) (Task, error) {
 		return Task{}, err
 	}
 
-	request := client.NewRequest(map[string]string{}, "GET", *taskURL, nil)
+	request := client.NewRequest(map[string]string{}, http.MethodGet, *taskURL, nil)
 	response, err := checkResp(client.Http.Do(request))
 	if err != nil {
 		return Task{}, err

@@ -6,6 +6,7 @@ package govcd
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"strconv"
 	"time"
@@ -54,7 +55,7 @@ func (task *Task) Refresh() error {
 
 	refreshUrl, _ := url.ParseRequestURI(task.Task.HREF)
 
-	req := task.client.NewRequest(map[string]string{}, "GET", *refreshUrl, nil)
+	req := task.client.NewRequest(map[string]string{}, http.MethodGet, *refreshUrl, nil)
 
 	resp, err := checkResp(task.client.Http.Do(req))
 	if err != nil {
@@ -169,7 +170,7 @@ func (task *Task) CancelTask() error {
 		return err
 	}
 
-	request := task.client.NewRequest(map[string]string{}, "POST", *cancelTaskURL, nil)
+	request := task.client.NewRequest(map[string]string{}, http.MethodPost, *cancelTaskURL, nil)
 	_, err = checkResp(task.client.Http.Do(request))
 	if err != nil {
 		util.Logger.Printf("[Error] Error cancelling task  %v: %s", cancelTaskURL.String(), err)

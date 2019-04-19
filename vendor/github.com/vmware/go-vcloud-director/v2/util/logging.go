@@ -360,7 +360,7 @@ func FuncNameCallStack() string {
 	fpcs := make([]uintptr, 10)
 	runtime.Callers(0, fpcs)
 	// Removes the function names from the reflect stack itself and the ones from the API management
-	removeReflect := regexp.MustCompile(`^ runtime.call|reflect.Value|\bNewRequest\b|NewRequestWitNotEncodedParams`)
+	removeReflect := regexp.MustCompile(`^ runtime.call|reflect.Value|\bNewRequest\b|NewRequestWitNotEncodedParams|ExecuteRequest|ExecuteRequestWithoutResponse|ExecuteTaskRequest`)
 	var stackStr []string
 	// Gets up to 10 functions from the stack
 	for N := 0; N < len(fpcs) && N < 10; N++ {

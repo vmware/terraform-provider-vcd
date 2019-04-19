@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"net/url"
 	"reflect"
+	"strings"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
@@ -177,4 +178,131 @@ func checkResp(resp *http.Response, err error) (*http.Response, error) {
 	default:
 		return nil, fmt.Errorf("unhandled API response, please report this issue, status code: %s", resp.Status)
 	}
+}
+
+// Helper function creates request, runs it, checks response and parses task from response.
+// pathURL - request URL
+// requestType - HTTP method type
+// contentType - value to set for "Content-Type"
+// errorMessage - error message to return when error happens
+// payload - XML struct which will be marshalled and added as body/payload
+// E.g. client.ExecuteTaskRequest(updateDiskLink.HREF, http.MethodPut, updateDiskLink.Type, "error updating disk: %s", xmlPayload)
+func (client *Client) ExecuteTaskRequest(pathURL, requestType, contentType, errorMessage string, payload interface{}) (Task, error) {
+
+	if !isMessageWithPlaceHolder(errorMessage) {
+		return Task{}, fmt.Errorf("error message has to include place holder for error")
+	}
+
+	resp, err := executeRequest(pathURL, requestType, contentType, payload, client)
+	if err != nil {
+		return Task{}, fmt.Errorf(errorMessage, err)
+	}
+
+	task := NewTask(client)
+
+	if err = decodeBody(resp, task.Task); err != nil {
+		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
+	}
+
+	err = resp.Body.Close()
+	if err != nil {
+		return Task{}, fmt.Errorf(errorMessage, err)
+	}
+
+	// The request was successful
+	return *task, nil
+}
+
+// Helper function creates request, runs it, checks response and do not expect any values from it.
+// pathURL - request URL
+// requestType - HTTP method type
+// contentType - value to set for "Content-Type"
+// errorMessage - error message to return when error happens
+// payload - XML struct which will be marshalled and added as body/payload
+// E.g. client.ExecuteRequestWithoutResponse(catalogItemHREF.String(), http.MethodDelete, "", "error deleting Catalog item: %s", nil)
+func (client *Client) ExecuteRequestWithoutResponse(pathURL, requestType, contentType, errorMessage string, payload interface{}) error {
+
+	if !isMessageWithPlaceHolder(errorMessage) {
+		return fmt.Errorf("error message has to include place holder for error")
+	}
+
+	resp, err := executeRequest(pathURL, requestType, contentType, payload, client)
+	if err != nil {
+		return fmt.Errorf(errorMessage, err)
+	}
+
+	err = resp.Body.Close()
+	if err != nil {
+		return fmt.Errorf("error closing response body: %s", err)
+	}
+
+	// The request was successful
+	return nil
+}
+
+// Helper function creates request, runs it, check responses and parses out interface from response.
+// pathURL - request URL
+// requestType - HTTP method type
+// contentType - value to set for "Content-Type"
+// errorMessage - error message to return when error happens
+// payload - XML struct which will be marshalled and added as body/payload
+// out - structure to be used for unmarshalling xml
+// E.g. 	unmarshalledAdminOrg := &types.AdminOrg{}
+// client.ExecuteRequest(adminOrg.AdminOrg.HREF, http.MethodGet, "", "error refreshing organization: %s", nil, unmarshalledAdminOrg)
+func (client *Client) ExecuteRequest(pathURL, requestType, contentType, errorMessage string, payload, out interface{}) (*http.Response, error) {
+
+	if !isMessageWithPlaceHolder(errorMessage) {
+		return &http.Response{}, fmt.Errorf("error message has to include place holder for error")
+	}
+
+	resp, err := executeRequest(pathURL, requestType, contentType, payload, client)
+	if err != nil {
+		return resp, fmt.Errorf(errorMessage, err)
+	}
+
+	if err = decodeBody(resp, out); err != nil {
+		return resp, fmt.Errorf("error decoding response: %s", err)
+	}
+
+	err = resp.Body.Close()
+	if err != nil {
+		return resp, fmt.Errorf("error closing response body: %s", err)
+	}
+
+	// The request was successful
+	return resp, nil
+}
+
+func executeRequest(pathURL, requestType, contentType string, payload interface{}, client *Client) (*http.Response, error) {
+	url, _ := url.ParseRequestURI(pathURL)
+
+	var req *http.Request
+	switch requestType {
+	case http.MethodPost, http.MethodPut:
+
+		marshaledXml, err := xml.MarshalIndent(payload, "  ", "    ")
+		if err != nil {
+			return &http.Response{}, fmt.Errorf("error marshalling xml data %v", err)
+		}
+		body := bytes.NewBufferString(xml.Header + string(marshaledXml))
+
+		req = client.NewRequest(map[string]string{}, requestType, *url, body)
+
+	default:
+		req = client.NewRequest(map[string]string{}, requestType, *url, nil)
+	}
+
+	if contentType != "" {
+		req.Header.Add("Content-Type", contentType)
+	}
+
+	return checkResp(client.Http.Do(req))
+}
+
+func isMessageWithPlaceHolder(message string) bool {
+	err := fmt.Errorf(message, "test error")
+	if strings.Contains(err.Error(), "%!(EXTRA") {
+		return false
+	}
+	return true
 }
