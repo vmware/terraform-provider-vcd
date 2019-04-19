@@ -132,7 +132,7 @@ func createMedia(client *Client, link, mediaName, mediaDescription string, fileS
 	}
 
 	reqBody := bytes.NewBufferString(
-		"<Media xmlns=\"http://www.vmware.com/vcloud/v1.5\" name=\"" + mediaName + "\" imageType=\"" + "iso" + "\" size=\"" + strconv.FormatInt(fileSize, 10) + "\" >" +
+		"<Media xmlns=\"" + types.XMLNamespaceVCloud + "\" name=\"" + mediaName + "\" imageType=\"" + "iso" + "\" size=\"" + strconv.FormatInt(fileSize, 10) + "\" >" +
 			"<Description>" + mediaDescription + "</Description>" +
 			"</Media>")
 

@@ -166,7 +166,7 @@ func CreateCatalog(client *Client, links types.LinkList, Name, Description strin
 		Description: Description,
 	}
 	vcomp := &types.AdminCatalog{
-		Xmlns:   "http://www.vmware.com/vcloud/v1.5",
+		Xmlns:   types.XMLNamespaceVCloud,
 		Catalog: *reqCatalog,
 	}
 
@@ -375,7 +375,7 @@ func (adminOrg *AdminOrg) Disable() error {
 //   API Documentation: https://code.vmware.com/apis/220/vcloud#/doc/doc/operations/PUT-Organization.html
 func (adminOrg *AdminOrg) Update() (Task, error) {
 	vcomp := &types.AdminOrg{
-		Xmlns:       "http://www.vmware.com/vcloud/v1.5",
+		Xmlns:       types.XMLNamespaceVCloud,
 		Name:        adminOrg.AdminOrg.Name,
 		IsEnabled:   adminOrg.AdminOrg.IsEnabled,
 		FullName:    adminOrg.AdminOrg.FullName,

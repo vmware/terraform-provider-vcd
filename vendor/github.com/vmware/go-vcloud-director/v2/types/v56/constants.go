@@ -22,15 +22,6 @@ const (
 )
 
 const (
-	// NsOvf the ovf xml namespace url
-	NsOvf = "http://schemas.dmtf.org/ovf/envelope/1"
-	// NsXMLSchema the xml schema namespace url
-	NsXMLSchema = "http://www.w3.org/2001/XMLSchema-instance"
-	// NsVCloud vcloud xml namespace url
-	NsVCloud = "http://www.vmware.com/vcloud/v1.5"
-)
-
-const (
 	// MimeOrgList mime for org list
 	MimeOrgList = "application/vnd.vmware.vcloud.orgList+xml"
 	// MimeOrg mime for org
@@ -103,4 +94,42 @@ const (
 
 const (
 	VMsCDResourceSubType = "vmware.cdrom.iso"
+)
+
+// https://blogs.vmware.com/vapp/2009/11/virtual-hardware-in-ovf-part-1.html
+
+const (
+	ResourceTypeOther     int = 0
+	ResourceTypeProcessor int = 3
+	ResourceTypeMemory    int = 4
+	ResourceTypeIDE       int = 5
+	ResourceTypeSCSI      int = 6
+	ResourceTypeEthernet  int = 10
+	ResourceTypeFloppy    int = 14
+	ResourceTypeCD        int = 15
+	ResourceTypeDVD       int = 16
+	ResourceTypeDisk      int = 17
+	ResourceTypeUSB       int = 23
+)
+
+const (
+	FenceModeIsolated = "isolated"
+	FenceModeBridged  = "bridged"
+	FenceModeNAT      = "natRouted"
+)
+
+const (
+	IPAllocationModeDHCP   = "DHCP"
+	IPAllocationModeManual = "MANUAL"
+	IPAllocationModeNone   = "NONE"
+	IPAllocationModePool   = "POOL"
+)
+
+const (
+	XMLNamespaceVCloud = "http://www.vmware.com/vcloud/v1.5"
+	XMLNamespaceOVF    = "http://schemas.dmtf.org/ovf/envelope/1"
+	XMLNamespaceVMW    = "http://www.vmware.com/schema/ovf"
+	XMLNamespaceXSI    = "http://www.w3.org/2001/XMLSchema-instance"
+	XMLNamespaceRASD   = "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData"
+	XMLNamespaceVSSD   = "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData"
 )

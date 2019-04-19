@@ -78,7 +78,7 @@ func (eGW *EdgeGateway) AddDhcpPool(network *types.OrgVDCNetwork, dhcppool []int
 	}
 
 	newRules := &types.EdgeGatewayServiceConfiguration{
-		Xmlns:              "http://www.vmware.com/vcloud/v1.5",
+		Xmlns:              types.XMLNamespaceVCloud,
 		GatewayDhcpService: newDchpService,
 	}
 
@@ -164,7 +164,7 @@ func (eGW *EdgeGateway) RemoveNATPortMapping(natType, externalIP, externalPort s
 	newEdgeConfig.NatService = newNatService
 
 	newRules := &types.EdgeGatewayServiceConfiguration{
-		Xmlns:      "http://www.vmware.com/vcloud/v1.5",
+		Xmlns:      types.XMLNamespaceVCloud,
 		NatService: newNatService,
 	}
 
@@ -303,7 +303,7 @@ func (eGW *EdgeGateway) AddNATPortMappingWithUplink(network *types.OrgVDCNetwork
 	newEdgeConfig.NatService = newNatService
 
 	newRules := &types.EdgeGatewayServiceConfiguration{
-		Xmlns:      "http://www.vmware.com/vcloud/v1.5",
+		Xmlns:      types.XMLNamespaceVCloud,
 		NatService: newNatService,
 	}
 
@@ -322,7 +322,7 @@ func (eGW *EdgeGateway) CreateFirewallRules(defaultAction string, rules []*types
 	}
 
 	newRules := &types.EdgeGatewayServiceConfiguration{
-		Xmlns: "http://www.vmware.com/vcloud/v1.5",
+		Xmlns: types.XMLNamespaceVCloud,
 		FirewallService: &types.FirewallService{
 			IsEnabled:        true,
 			DefaultAction:    defaultAction,
@@ -617,7 +617,7 @@ func (eGW *EdgeGateway) RemoveIpsecVPN() (Task, error) {
 		fmt.Printf("error: %v\n", err)
 	}
 	ipsecVPNConfig := &types.EdgeGatewayServiceConfiguration{
-		Xmlns: "http://www.vmware.com/vcloud/v1.5",
+		Xmlns: types.XMLNamespaceVCloud,
 		GatewayIpsecVpnService: &types.GatewayIpsecVpnService{
 			IsEnabled: false,
 		},

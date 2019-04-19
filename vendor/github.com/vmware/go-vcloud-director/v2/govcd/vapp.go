@@ -110,9 +110,9 @@ func (vapp *VApp) AddVM(orgVdcNetworks []*types.OrgVDCNetwork, vappNetworkName s
 	}
 
 	vcomp := &types.ReComposeVAppParams{
-		Ovf:         "http://schemas.dmtf.org/ovf/envelope/1",
-		Xsi:         "http://www.w3.org/2001/XMLSchema-instance",
-		Xmlns:       "http://www.vmware.com/vcloud/v1.5",
+		Ovf:         types.XMLNamespaceOVF,
+		Xsi:         types.XMLNamespaceXSI,
+		Xmlns:       types.XMLNamespaceVCloud,
 		Deploy:      false,
 		Name:        vapp.VApp.Name,
 		PowerOn:     false,
@@ -140,7 +140,7 @@ func (vapp *VApp) AddVM(orgVdcNetworks []*types.OrgVDCNetwork, vappNetworkName s
 				Network:                 orgVdcNetwork.Name,
 				NetworkConnectionIndex:  index,
 				IsConnected:             true,
-				IPAddressAllocationMode: "POOL",
+				IPAddressAllocationMode: types.IPAllocationModePool,
 			},
 		)
 		vcomp.SourcedItem.NetworkAssignment = append(vcomp.SourcedItem.NetworkAssignment,
@@ -157,7 +157,7 @@ func (vapp *VApp) AddVM(orgVdcNetworks []*types.OrgVDCNetwork, vappNetworkName s
 				Network:                 vappNetworkName,
 				NetworkConnectionIndex:  len(orgVdcNetworks),
 				IsConnected:             true,
-				IPAddressAllocationMode: "POOL",
+				IPAddressAllocationMode: types.IPAllocationModePool,
 			},
 		)
 		vcomp.SourcedItem.NetworkAssignment = append(vcomp.SourcedItem.NetworkAssignment,
@@ -192,9 +192,9 @@ func (vapp *VApp) RemoveVM(vm VM) error {
 	}
 
 	vcomp := &types.ReComposeVAppParams{
-		Ovf:   "http://schemas.dmtf.org/ovf/envelope/1",
-		Xsi:   "http://www.w3.org/2001/XMLSchema-instance",
-		Xmlns: "http://www.vmware.com/vcloud/v1.5",
+		Ovf:   types.XMLNamespaceOVF,
+		Xsi:   types.XMLNamespaceXSI,
+		Xmlns: types.XMLNamespaceVCloud,
 		DeleteItem: &types.DeleteItem{
 			HREF: vm.VM.HREF,
 		},
@@ -286,7 +286,7 @@ func (vapp *VApp) Shutdown() (Task, error) {
 func (vapp *VApp) Undeploy() (Task, error) {
 
 	vu := &types.UndeployVAppParams{
-		Xmlns:               "http://www.vmware.com/vcloud/v1.5",
+		Xmlns:               types.XMLNamespaceVCloud,
 		UndeployPowerAction: "powerOff",
 	}
 
@@ -301,7 +301,7 @@ func (vapp *VApp) Undeploy() (Task, error) {
 func (vapp *VApp) Deploy() (Task, error) {
 
 	vu := &types.DeployVAppParams{
-		Xmlns:   "http://www.vmware.com/vcloud/v1.5",
+		Xmlns:   types.XMLNamespaceVCloud,
 		PowerOn: false,
 	}
 
@@ -336,9 +336,9 @@ func (vapp *VApp) Customize(computername, script string, changeSid bool) (Task, 
 	}
 
 	vu := &types.GuestCustomizationSection{
-		Ovf:   "http://schemas.dmtf.org/ovf/envelope/1",
-		Xsi:   "http://www.w3.org/2001/XMLSchema-instance",
-		Xmlns: "http://www.vmware.com/vcloud/v1.5",
+		Ovf:   types.XMLNamespaceOVF,
+		Xsi:   types.XMLNamespaceXSI,
+		Xmlns: types.XMLNamespaceVCloud,
 
 		HREF:                vapp.VApp.Children.VM[0].HREF,
 		Type:                types.MimeGuestCustomizationSection,
@@ -431,10 +431,10 @@ func (vapp *VApp) ChangeCPUCountWithCore(virtualCpuCount int, coresPerSocket *in
 	}
 
 	newcpu := &types.OVFItem{
-		XmlnsRasd:       "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData",
-		XmlnsVCloud:     "http://www.vmware.com/vcloud/v1.5",
-		XmlnsXsi:        "http://www.w3.org/2001/XMLSchema-instance",
-		XmlnsVmw:        "http://www.vmware.com/schema/ovf",
+		XmlnsRasd:       types.XMLNamespaceRASD,
+		XmlnsVCloud:     types.XMLNamespaceVCloud,
+		XmlnsXsi:        types.XMLNamespaceXSI,
+		XmlnsVmw:        types.XMLNamespaceVMW,
 		VCloudHREF:      vapp.VApp.Children.VM[0].HREF + "/virtualHardwareSection/cpu",
 		VCloudType:      types.MimeRasdItem,
 		AllocationUnits: "hertz * 10^6",
@@ -442,7 +442,7 @@ func (vapp *VApp) ChangeCPUCountWithCore(virtualCpuCount int, coresPerSocket *in
 		ElementName:     strconv.Itoa(virtualCpuCount) + " virtual CPU(s)",
 		InstanceID:      4,
 		Reservation:     0,
-		ResourceType:    3,
+		ResourceType:    types.ResourceTypeProcessor,
 		VirtualQuantity: virtualCpuCount,
 		Weight:          0,
 		CoresPerSocket:  coresPerSocket,
@@ -483,7 +483,7 @@ func (vapp *VApp) ChangeStorageProfile(name string) (Task, error) {
 	newProfile := &types.VM{
 		Name:           vapp.VApp.Children.VM[0].Name,
 		StorageProfile: &storageProfileRef,
-		Xmlns:          "http://www.vmware.com/vcloud/v1.5",
+		Xmlns:          types.XMLNamespaceVCloud,
 	}
 
 	// Return the task
@@ -504,7 +504,7 @@ func (vapp *VApp) ChangeVMName(name string) (Task, error) {
 
 	newName := &types.VM{
 		Name:  name,
-		Xmlns: "http://www.vmware.com/vcloud/v1.5",
+		Xmlns: types.XMLNamespaceVCloud,
 	}
 
 	// Return the task
@@ -554,8 +554,8 @@ func (vapp *VApp) AddMetadata(key string, value string) (Task, error) {
 // TODO: Support all MetadataTypedValue types with this function
 func addMetadata(client *Client, key string, value string, requestUri string) (Task, error) {
 	newMetadata := &types.MetadataValue{
-		Xmlns: "http://www.vmware.com/vcloud/v1.5",
-		Xsi:   "http://www.w3.org/2001/XMLSchema-instance",
+		Xmlns: types.XMLNamespaceVCloud,
+		Xsi:   types.XMLNamespaceXSI,
 		TypedValue: &types.TypedValue{
 			XsiType: "MetadataStringValue",
 			Value:   value,
@@ -594,8 +594,8 @@ func (vapp *VApp) SetOvf(parameters map[string]string) (Task, error) {
 	}
 
 	ovf := &types.ProductSectionList{
-		Xmlns:          "http://www.vmware.com/vcloud/v1.5",
-		Ovf:            "http://schemas.dmtf.org/ovf/envelope/1",
+		Xmlns:          types.XMLNamespaceVCloud,
+		Ovf:            types.XMLNamespaceOVF,
 		ProductSection: vapp.VApp.Children.VM[0].ProductSection,
 	}
 
@@ -621,26 +621,26 @@ func (vapp *VApp) ChangeNetworkConfig(networks []map[string]interface{}, ip stri
 
 	for index, network := range networks {
 		// Determine what type of address is requested for the vApp
-		ipAllocationMode := "NONE"
+		ipAllocationMode := types.IPAllocationModeNone
 		ipAddress := "Any"
 
 		// TODO: Review current behaviour of using DHCP when left blank
 		if ip == "" || ip == "dhcp" || network["ip"] == "dhcp" {
-			ipAllocationMode = "DHCP"
+			ipAllocationMode = types.IPAllocationModeDHCP
 		} else if ip == "allocated" || network["ip"] == "allocated" {
-			ipAllocationMode = "POOL"
+			ipAllocationMode = types.IPAllocationModePool
 		} else if ip == "none" || network["ip"] == "none" {
-			ipAllocationMode = "NONE"
+			ipAllocationMode = types.IPAllocationModeNone
 		} else if ip != "" || network["ip"] != "" {
-			ipAllocationMode = "MANUAL"
+			ipAllocationMode = types.IPAllocationModeManual
 			// TODO: Check a valid IP has been given
 			ipAddress = ip
 		}
 
 		util.Logger.Printf("[DEBUG] Function ChangeNetworkConfig() for %s invoked", network["orgnetwork"])
 
-		networksection.Xmlns = "http://www.vmware.com/vcloud/v1.5"
-		networksection.Ovf = "http://schemas.dmtf.org/ovf/envelope/1"
+		networksection.Xmlns = types.XMLNamespaceVCloud
+		networksection.Ovf = types.XMLNamespaceOVF
 		networksection.Info = "Specifies the available VM network connections"
 
 		networksection.NetworkConnection[index].NeedsCustomization = true
@@ -676,9 +676,9 @@ func (vapp *VApp) ChangeMemorySize(size int) (Task, error) {
 	}
 
 	newMem := &types.OVFItem{
-		XmlnsRasd:       "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData",
-		XmlnsVCloud:     "http://www.vmware.com/vcloud/v1.5",
-		XmlnsXsi:        "http://www.w3.org/2001/XMLSchema-instance",
+		XmlnsRasd:       types.XMLNamespaceRASD,
+		XmlnsVCloud:     types.XMLNamespaceVCloud,
+		XmlnsXsi:        types.XMLNamespaceXSI,
 		VCloudHREF:      vapp.VApp.Children.VM[0].HREF + "/virtualHardwareSection/memory",
 		VCloudType:      types.MimeRasdItem,
 		AllocationUnits: "byte * 2^20",
@@ -686,7 +686,7 @@ func (vapp *VApp) ChangeMemorySize(size int) (Task, error) {
 		ElementName:     strconv.Itoa(size) + " MB of memory",
 		InstanceID:      5,
 		Reservation:     0,
-		ResourceType:    4,
+		ResourceType:    types.ResourceTypeMemory,
 		VirtualQuantity: size,
 		Weight:          0,
 		Link: &types.Link{
@@ -736,7 +736,7 @@ func (vapp *VApp) AddRAWNetworkConfig(orgvdcnetworks []*types.OrgVDCNetwork) (Ta
 					ParentNetwork: &types.Reference{
 						HREF: network.HREF,
 					},
-					FenceMode: "bridged",
+					FenceMode: types.FenceModeBridged,
 				},
 			},
 		)
@@ -773,7 +773,7 @@ func (vapp *VApp) AddIsolatedNetwork(newIsolatedNetworkSettings *VappNetworkSett
 		types.VAppNetworkConfiguration{
 			NetworkName: newIsolatedNetworkSettings.Name,
 			Configuration: &types.NetworkConfiguration{
-				FenceMode:        "isolated",
+				FenceMode:        types.FenceModeIsolated,
 				GuestVlanAllowed: newIsolatedNetworkSettings.GuestVLANAllowed,
 				Features:         networkFeatures,
 				IPScopes: &types.IPScopes{IPScope: types.IPScope{IsInherited: false, Gateway: newIsolatedNetworkSettings.Gateway,
@@ -846,9 +846,9 @@ func (vapp *VApp) RemoveIsolatedNetwork(networkName string) (Task, error) {
 func updateNetworkConfigurations(vapp *VApp, networkConfigurations []types.VAppNetworkConfiguration) (Task, error) {
 	networkConfig := &types.NetworkConfigSection{
 		Info:          "Configuration parameters for logical networks",
-		Ovf:           "http://schemas.dmtf.org/ovf/envelope/1",
+		Ovf:           types.XMLNamespaceOVF,
 		Type:          types.MimeNetworkConfigSection,
-		Xmlns:         "http://www.vmware.com/vcloud/v1.5",
+		Xmlns:         types.XMLNamespaceVCloud,
 		NetworkConfig: networkConfigurations,
 	}
 

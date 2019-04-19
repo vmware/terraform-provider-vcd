@@ -25,7 +25,7 @@ import (
 // Overall elements must be in the correct order.
 func CreateOrg(vcdClient *VCDClient, name string, fullName string, description string, settings *types.OrgSettings, isEnabled bool) (Task, error) {
 	vcomp := &types.AdminOrg{
-		Xmlns:       "http://www.vmware.com/vcloud/v1.5",
+		Xmlns:       types.XMLNamespaceVCloud,
 		Name:        name,
 		IsEnabled:   isEnabled,
 		FullName:    fullName,

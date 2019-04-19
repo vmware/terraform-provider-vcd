@@ -109,7 +109,7 @@ func (adminCatalog *AdminCatalog) Update() error {
 		Description: adminCatalog.AdminCatalog.Description,
 	}
 	vcomp := &types.AdminCatalog{
-		Xmlns:       "http://www.vmware.com/vcloud/v1.5",
+		Xmlns:       types.XMLNamespaceVCloud,
 		Catalog:     *reqCatalog,
 		IsPublished: adminCatalog.AdminCatalog.IsPublished,
 	}
@@ -507,7 +507,7 @@ func findFilePath(filesAbsPaths []string, fileName string) string {
 func createItemForUpload(client *Client, createHREF *url.URL, catalogItemName string, itemDescription string) (*url.URL, error) {
 	util.Logger.Printf("[TRACE] createItemForUpload: %s, item name: %v, description: %v \n", createHREF, catalogItemName, itemDescription)
 	reqBody := bytes.NewBufferString(
-		"<UploadVAppTemplateParams xmlns=\"http://www.vmware.com/vcloud/v1.5\" name=\"" + catalogItemName + "\" >" +
+		"<UploadVAppTemplateParams xmlns=\"" + types.XMLNamespaceVCloud + "\" name=\"" + catalogItemName + "\" >" +
 			"<Description>" + itemDescription + "</Description>" +
 			"</UploadVAppTemplateParams>")
 

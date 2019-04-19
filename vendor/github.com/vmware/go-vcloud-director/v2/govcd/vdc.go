@@ -277,9 +277,9 @@ func (vdc *Vdc) FindEdgeGateway(edgegateway string) (EdgeGateway, error) {
 
 func (vdc *Vdc) ComposeRawVApp(name string) error {
 	vcomp := &types.ComposeVAppParams{
-		Ovf:     "http://schemas.dmtf.org/ovf/envelope/1",
-		Xsi:     "http://www.w3.org/2001/XMLSchema-instance",
-		Xmlns:   "http://www.vmware.com/vcloud/v1.5",
+		Ovf:     types.XMLNamespaceOVF,
+		Xsi:     types.XMLNamespaceXSI,
+		Xmlns:   types.XMLNamespaceVCloud,
 		Deploy:  false,
 		Name:    name,
 		PowerOn: false,
@@ -312,9 +312,9 @@ func (vdc *Vdc) ComposeVApp(orgvdcnetworks []*types.OrgVDCNetwork, vapptemplate 
 	}
 	// Build request XML
 	vcomp := &types.ComposeVAppParams{
-		Ovf:         "http://schemas.dmtf.org/ovf/envelope/1",
-		Xsi:         "http://www.w3.org/2001/XMLSchema-instance",
-		Xmlns:       "http://www.vmware.com/vcloud/v1.5",
+		Ovf:         types.XMLNamespaceOVF,
+		Xsi:         types.XMLNamespaceXSI,
+		Xmlns:       types.XMLNamespaceVCloud,
 		Deploy:      false,
 		Name:        name,
 		PowerOn:     false,
@@ -345,7 +345,7 @@ func (vdc *Vdc) ComposeVApp(orgvdcnetworks []*types.OrgVDCNetwork, vapptemplate 
 			types.VAppNetworkConfiguration{
 				NetworkName: orgvdcnetwork.Name,
 				Configuration: &types.NetworkConfiguration{
-					FenceMode: "bridged",
+					FenceMode: types.FenceModeBridged,
 					ParentNetwork: &types.Reference{
 						HREF: orgvdcnetwork.HREF,
 						Name: orgvdcnetwork.Name,
@@ -359,7 +359,7 @@ func (vdc *Vdc) ComposeVApp(orgvdcnetworks []*types.OrgVDCNetwork, vapptemplate 
 				Network:                 orgvdcnetwork.Name,
 				NetworkConnectionIndex:  index,
 				IsConnected:             true,
-				IPAddressAllocationMode: "POOL",
+				IPAddressAllocationMode: types.IPAllocationModePool,
 			},
 		)
 		vcomp.SourcedItem.NetworkAssignment = append(vcomp.SourcedItem.NetworkAssignment,

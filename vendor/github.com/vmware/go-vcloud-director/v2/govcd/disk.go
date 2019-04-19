@@ -86,7 +86,7 @@ func (vdc *Vdc) CreateDisk(diskCreateParams *types.DiskCreateParams) (Task, erro
 	}
 
 	// Prepare the request payload
-	diskCreateParams.Xmlns = types.NsVCloud
+	diskCreateParams.Xmlns = types.XMLNamespaceVCloud
 
 	disk := NewDisk(vdc.client)
 
@@ -163,7 +163,7 @@ func (disk *Disk) Update(newDiskInfo *types.Disk) (Task, error) {
 
 	// Prepare the request payload
 	xmlPayload := &types.Disk{
-		Xmlns:          types.NsVCloud,
+		Xmlns:          types.XMLNamespaceVCloud,
 		Description:    newDiskInfo.Description,
 		Size:           newDiskInfo.Size,
 		Name:           newDiskInfo.Name,

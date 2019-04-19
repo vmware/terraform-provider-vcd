@@ -133,10 +133,10 @@ func (vm *VM) ChangeCPUCountWithCore(virtualCpuCount int, coresPerSocket *int) (
 	}
 
 	newCpu := &types.OVFItem{
-		XmlnsRasd:       "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData",
-		XmlnsVCloud:     "http://www.vmware.com/vcloud/v1.5",
-		XmlnsXsi:        "http://www.w3.org/2001/XMLSchema-instance",
-		XmlnsVmw:        "http://www.vmware.com/schema/ovf",
+		XmlnsRasd:       types.XMLNamespaceRASD,
+		XmlnsVCloud:     types.XMLNamespaceVCloud,
+		XmlnsXsi:        types.XMLNamespaceXSI,
+		XmlnsVmw:        types.XMLNamespaceVMW,
 		VCloudHREF:      vm.VM.HREF + "/virtualHardwareSection/cpu",
 		VCloudType:      types.MimeRasdItem,
 		AllocationUnits: "hertz * 10^6",
@@ -144,7 +144,7 @@ func (vm *VM) ChangeCPUCountWithCore(virtualCpuCount int, coresPerSocket *int) (
 		ElementName:     strconv.Itoa(virtualCpuCount) + " virtual CPU(s)",
 		InstanceID:      4,
 		Reservation:     0,
-		ResourceType:    3,
+		ResourceType:    types.ResourceTypeProcessor,
 		VirtualQuantity: virtualCpuCount,
 		Weight:          0,
 		CoresPerSocket:  coresPerSocket,
@@ -177,26 +177,26 @@ func (vm *VM) ChangeNetworkConfig(networks []map[string]interface{}, ip string) 
 		for index, networkConnection := range networkSection.NetworkConnection {
 			if networkConnection.Network == network["orgnetwork"] { // network name are equal
 				// Determine what type of address is requested for the vApp
-				ipAllocationMode := "NONE"
+				ipAllocationMode := types.IPAllocationModeNone
 				ipAddress := "Any"
 
 				// TODO: Review current behaviour of using DHCP when left blank
 				if ip == "dhcp" || network["ip"].(string) == "dhcp" {
-					ipAllocationMode = "DHCP"
+					ipAllocationMode = types.IPAllocationModeDHCP
 				} else if ip == "allocated" || network["ip"].(string) == "allocated" {
-					ipAllocationMode = "POOL"
+					ipAllocationMode = types.IPAllocationModePool
 				} else if ip == "none" || network["ip"].(string) == "none" {
-					ipAllocationMode = "NONE"
+					ipAllocationMode = types.IPAllocationModeNone
 				} else if ip != "" {
-					ipAllocationMode = "MANUAL"
+					ipAllocationMode = types.IPAllocationModeManual
 					// TODO: Check a valid IP has been given
 					ipAddress = ip
 				} else if network["ip"].(string) != "" {
-					ipAllocationMode = "MANUAL"
+					ipAllocationMode = types.IPAllocationModeManual
 					// TODO: Check a valid IP has been given
 					ipAddress = network["ip"].(string)
 				} else if ip == "" {
-					ipAllocationMode = "DHCP"
+					ipAllocationMode = types.IPAllocationModeDHCP
 				}
 
 				util.Logger.Printf("[DEBUG] Function ChangeNetworkConfig() for %s invoked", network["orgnetwork"])
@@ -212,8 +212,8 @@ func (vm *VM) ChangeNetworkConfig(networks []map[string]interface{}, ip string) 
 		}
 	}
 
-	networkSection.Xmlns = "http://www.vmware.com/vcloud/v1.5"
-	networkSection.Ovf = "http://schemas.dmtf.org/ovf/envelope/1"
+	networkSection.Xmlns = types.XMLNamespaceVCloud
+	networkSection.Ovf = types.XMLNamespaceOVF
 	networkSection.Info = "Specifies the available VM network connections"
 
 	apiEndpoint, _ := url.ParseRequestURI(vm.VM.HREF)
@@ -232,9 +232,9 @@ func (vm *VM) ChangeMemorySize(size int) (Task, error) {
 	}
 
 	newMem := &types.OVFItem{
-		XmlnsRasd:       "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData",
-		XmlnsVCloud:     "http://www.vmware.com/vcloud/v1.5",
-		XmlnsXsi:        "http://www.w3.org/2001/XMLSchema-instance",
+		XmlnsRasd:       types.XMLNamespaceRASD,
+		XmlnsVCloud:     types.XMLNamespaceVCloud,
+		XmlnsXsi:        types.XMLNamespaceXSI,
 		VCloudHREF:      vm.VM.HREF + "/virtualHardwareSection/memory",
 		VCloudType:      types.MimeRasdItem,
 		AllocationUnits: "byte * 2^20",
@@ -242,7 +242,7 @@ func (vm *VM) ChangeMemorySize(size int) (Task, error) {
 		ElementName:     strconv.Itoa(size) + " MB of memory",
 		InstanceID:      5,
 		Reservation:     0,
-		ResourceType:    4,
+		ResourceType:    types.ResourceTypeMemory,
 		VirtualQuantity: size,
 		Weight:          0,
 		Link: &types.Link{
@@ -271,9 +271,9 @@ func (vm *VM) Customize(computername, script string, changeSid bool) (Task, erro
 	}
 
 	vu := &types.GuestCustomizationSection{
-		Ovf:   "http://schemas.dmtf.org/ovf/envelope/1",
-		Xsi:   "http://www.w3.org/2001/XMLSchema-instance",
-		Xmlns: "http://www.vmware.com/vcloud/v1.5",
+		Ovf:   types.XMLNamespaceOVF,
+		Xsi:   types.XMLNamespaceXSI,
+		Xmlns: types.XMLNamespaceVCloud,
 
 		HREF:                vm.VM.HREF,
 		Type:                types.MimeGuestCustomizationSection,
@@ -295,7 +295,7 @@ func (vm *VM) Customize(computername, script string, changeSid bool) (Task, erro
 func (vm *VM) Undeploy() (Task, error) {
 
 	vu := &types.UndeployVAppParams{
-		Xmlns:               "http://www.vmware.com/vcloud/v1.5",
+		Xmlns:               types.XMLNamespaceVCloud,
 		UndeployPowerAction: "powerOff",
 	}
 
@@ -332,7 +332,7 @@ func (vm *VM) attachOrDetachDisk(diskParams *types.DiskAttachOrDetachParams, rel
 		return Task{}, fmt.Errorf("could not find request URL for attach or detach disk in disk Link")
 	}
 
-	diskParams.Xmlns = types.NsVCloud
+	diskParams.Xmlns = types.XMLNamespaceVCloud
 
 	// Return the task
 	return vm.client.ExecuteTaskRequest(attachOrDetachDiskLink.HREF, http.MethodPost,
@@ -471,7 +471,7 @@ func (vm *VM) insertOrEjectMedia(mediaParams *types.MediaInsertOrEjectParams, li
 		return Task{}, fmt.Errorf("could not find request URL for insert or eject media")
 	}
 
-	mediaParams.Xmlns = types.NsVCloud
+	mediaParams.Xmlns = types.XMLNamespaceVCloud
 
 	// Return the task
 	return vm.client.ExecuteTaskRequest(insertOrEjectMediaLink.HREF, http.MethodPost,
@@ -544,7 +544,7 @@ func (vm *VM) AnswerQuestion(questionId string, choiceId int) error {
 	}
 
 	answer := &types.VmQuestionAnswer{
-		Xmlns:      "http://www.vmware.com/vcloud/v1.5",
+		Xmlns:      types.XMLNamespaceVCloud,
 		QuestionId: questionId,
 		ChoiceId:   choiceId,
 	}
