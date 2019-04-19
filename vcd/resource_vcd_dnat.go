@@ -73,7 +73,6 @@ func resourceVcdDNAT() *schema.Resource {
 				Default:  "any",
 			},
 		},
-		DeprecationMessage: "This resource will require network_name in the next major version",
 	}
 }
 
