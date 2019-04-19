@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"net"
 	"sort"
 	"strconv"
 
 	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -65,9 +67,19 @@ func resourceVcdVAppVm() *schema.Resource {
 				Optional: true,
 			},
 			"ip": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Computed:         true,
+				ConflictsWith:    []string{"networks"},
+				Deprecated:       "In favor of networks",
+				DiffSuppressFunc: suppressIfIPIsOneOf(),
+				ForceNew:         true,
+				Optional:         true,
+				Type:             schema.TypeString,
+			},
+			"mac": {
+				Computed:      true,
+				ConflictsWith: []string{"networks"},
+				Optional:      true,
+				Type:          schema.TypeString,
 			},
 			"initscript": &schema.Schema{
 				Type:     schema.TypeString,
@@ -96,13 +108,65 @@ func resourceVcdVAppVm() *schema.Resource {
 				Default:  true,
 			},
 			"network_href": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:       schema.TypeString,
+				Optional:   true,
+				Deprecated: "In favor of networks",
+			},
+			"networks": {
+				ConflictsWith: []string{"ip", "network_name"},
+				ForceNew:      true,
+				Optional:      true,
+				Type:          schema.TypeList,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"orgnetwork": {
+							ForceNew: false,
+							Required: true,
+							Type:     schema.TypeString,
+						},
+						"ip": {
+							Computed:     true,
+							ForceNew:     false,
+							Optional:     true,
+							Type:         schema.TypeString,
+							ValidateFunc: validation.SingleIP(),
+						},
+						"ip_allocation_mode": {
+							Default:      "POOL",
+							ForceNew:     true,
+							Optional:     true,
+							Type:         schema.TypeString,
+							ValidateFunc: checkIPAddressAllocationMode(),
+						},
+						"is_primary": {
+							Default:  false,
+							ForceNew: false,
+							Optional: true,
+							Type:     schema.TypeBool,
+						},
+						//  Cannot be used right now because changing adapter_type would need
+						//  a bigger rework of AddVM() function in go-vcloud-director library
+						//  to allow to set adapter_type while creation of NetworkConnection.
+						//
+						//  "adapter_type": {
+						//  	Type:     schema.TypeString,
+						//  	ForceNew: true,
+						//  	Optional: true,
+						//  },
+						"mac": {
+							Computed: true,
+							Optional: true,
+							Type:     schema.TypeString,
+						},
+					},
+				},
 			},
 			"network_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				ConflictsWith: []string{"networks"},
+				Deprecated:    "In favor of networks",
+				ForceNew:      true,
+				Optional:      true,
+				Type:          schema.TypeString,
 			},
 			"vapp_network_name": &schema.Schema{
 				Type:     schema.TypeString,
@@ -138,6 +202,31 @@ func resourceVcdVAppVm() *schema.Resource {
 	}
 }
 
+func checkIPAddressAllocationMode() schema.SchemaValidateFunc {
+	return func(v interface{}, key string) (warns []string, errs []error) {
+		if v == "POOL" || v == "DHCP" || v == "MANUAL" || v == "NONE" {
+			return
+		}
+		errs = append(errs, fmt.Errorf("ip_allocation_mode must be one of POOL, DHCP, MANUAL or NONE got: %v", v))
+		return
+	}
+}
+
+func suppressIfIPIsOneOf() schema.SchemaDiffSuppressFunc {
+	return func(k string, old string, new string, d *schema.ResourceData) bool {
+		switch {
+		case new == "dhcp" && net.ParseIP(old) != nil:
+			return true
+		case new == "allocated" && net.ParseIP(old) != nil:
+			return true
+		case new == "" && net.ParseIP(old) != nil:
+			return true
+		default:
+			return false
+		}
+	}
+}
+
 func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
@@ -167,11 +256,10 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf("error finding vApp: %#v", err)
 	}
-
 	var network *types.OrgVDCNetwork
 
 	if d.Get("network_name").(string) != "" {
-		network, err = addVdcNetwork(d, vdc, vapp, vcdClient)
+		network, err = addVdcNetwork(d.Get("network_name").(string), vdc, vapp, vcdClient)
 		if err != nil {
 			return err
 		}
@@ -188,18 +276,74 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	var netNames []string
+	var nets []*types.OrgVDCNetwork
+	//var nets []map[string]interface{}
+	networks := d.Get("networks").([]interface{})
+
+	switch {
+	// networks is set in config
+	case len(networks) > 0:
+		for _, network := range networks {
+			n := network.(map[string]interface{})
+			net, err := vdc.FindVDCNetwork(n["orgnetwork"].(string))
+			nets = append(nets, net.OrgVDCNetwork)
+			if err != nil {
+				return fmt.Errorf("Error finding OrgVCD Network: %#v", err)
+			}
+			netNames = append(netNames, net.OrgVDCNetwork.Name)
+		}
+		// network_name is set in config
+	case network != nil:
+		// network := map[string]interface{}{
+		// 	"ip":           d.Get("ip").(string),
+		// 	"is_primary":   true,
+		// 	"orgnetwork":   d.Get("network_name").(string),
+		// 	"adapter_type": "",
+		// }
+		nets = append(nets, network)
+		netNames = append(netNames, d.Get("network_name").(string))
+	}
+
+	vAppNetworkNames := []string{}
+	vAppNetworkConfig, err := vapp.GetNetworkConfig()
+	for _, vAppNetwork := range vAppNetworkConfig.NetworkConfig {
+		vAppNetworkNames = append(vAppNetworkNames, vAppNetwork.NetworkName)
+	}
+	// this checks if a network is assigned to a vapp
+	if len(netNames) > 0 {
+		m := make(map[string]bool)
+		for i := 0; i < len(vAppNetworkNames); i++ {
+			m[vAppNetworkNames[i]] = true
+		}
+		for _, netName := range netNames {
+			// if the network is not assigned, assigne it to vapp
+			if _, ok := m[netName]; !ok {
+				//err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+				n, err := vdc.FindVDCNetwork(netName)
+				_, err = addVdcNetwork(n.OrgVDCNetwork.Name, vdc, vapp, vcdClient)
+				// task, err := vapp.AppendNetworkConfig(n.OrgVDCNetwork)
+				// if err != nil {
+				// 	return resource.RetryableError(fmt.Errorf("failed to add network to vapp: %#v", err))
+				// }
+				// return resource.RetryableError(task.WaitTaskCompletion())
+				//})
+				if err != nil {
+					return fmt.Errorf("the VDC networks '%s' must be assigned to the vApp. Currently this networks are assigned %s", netNames, vAppNetworkNames)
+				}
+			}
+		}
+	}
+
+	log.Printf("[TRACE] Found networks attached to vApp: %s", netNames)
+	log.Printf("[TRACE] Network Connections: %v", nets)
+
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 		log.Printf("[TRACE] Creating VM: %s", d.Get("name").(string))
-		var networks []*types.OrgVDCNetwork
-		if network != nil {
-			networks = append(networks, network)
-		}
-		task, err := vapp.AddVM(networks, vappNetworkName, vappTemplate, d.Get("name").(string), acceptEulas)
-
+		task, err := vapp.AddVM(nets, vappNetworkName, vappTemplate, d.Get("name").(string), acceptEulas)
 		if err != nil {
 			return resource.RetryableError(fmt.Errorf("error adding VM: %#v", err))
 		}
-
 		return resource.RetryableError(task.WaitTaskCompletion())
 	})
 
@@ -230,7 +374,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 				})
 			}
 
-			task, err := vm.ChangeNetworkConfig(networksChanges, d.Get("ip").(string))
+			task, err := vm.ChangeNetworkConfig(networksChanges)
 			if err != nil {
 				return resource.RetryableError(fmt.Errorf("error with Networking change: %#v", err))
 			}
@@ -285,9 +429,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 
 // Adds existing org VDC network to VM network configuration
 // Returns configured OrgVDCNetwork for Vm, networkName, error if any occur
-func addVdcNetwork(d *schema.ResourceData, vdc govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (*types.OrgVDCNetwork, error) {
-
-	networkNameToAdd := d.Get("network_name").(string)
+func addVdcNetwork(networkNameToAdd string, vdc govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (*types.OrgVDCNetwork, error) {
 	if networkNameToAdd == "" {
 		return &types.OrgVDCNetwork{}, fmt.Errorf("'network_name' must be valid when adding VM to raw vApp")
 	}
@@ -464,8 +606,8 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 	// However, vApp throws errors when simultaneous requests are executed.
 	// To avoid them, below block is using retryCall in multiple places as a workaround,
 	// so that the VMs are created regardless of parallelisation.
-	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("cpu_cores") || d.HasChange("power_on") || d.HasChange("disk") ||
-		d.HasChange("expose_hardware_virtualization") {
+	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("cpu_cores") || d.HasChange("networks") ||
+		d.HasChange("disk") || d.HasChange("power_on") || d.HasChange("expose_hardware_virtualization") {
 		if status != "POWERED_OFF" {
 			task, err := vm.PowerOff()
 			if err != nil {
@@ -477,18 +619,6 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 
-		// detaching independent disks - only possible when VM power off
-		if d.HasChange("disk") {
-			err = attachDetachDisks(d, vm, vdc)
-			if err != nil {
-				errAttachedDisk := updateStateOfAttachedDisks(d, vm, vdc)
-				if errAttachedDisk != nil {
-					d.Set("disk", nil)
-					return fmt.Errorf("error reading attached disks : %#v and internal error : %#v", errAttachedDisk, err)
-				}
-				return fmt.Errorf("error attaching-detaching  disks when updating resource : %#v", err)
-			}
-		}
 		if d.HasChange("memory") {
 			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 				task, err := vm.ChangeMemorySize(d.Get("memory").(int))
@@ -535,6 +665,38 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 			})
 			if err != nil {
 				return err
+			}
+		}
+
+		if d.HasChange("networks") {
+			n := []map[string]interface{}{}
+
+			nets := d.Get("networks").([]interface{})
+			for _, network := range nets {
+				n = append(n, network.(map[string]interface{}))
+			}
+			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+				task, err := vm.ChangeNetworkConfig(n)
+				if err != nil {
+					return resource.RetryableError(fmt.Errorf("error changing network: %#v", err))
+				}
+				return resource.RetryableError(task.WaitTaskCompletion())
+			})
+			if err != nil {
+				return fmt.Errorf(errorCompletingTask, err)
+			}
+		}
+
+		// detaching independent disks - only possible when VM power off
+		if d.HasChange("disk") {
+			err = attachDetachDisks(d, vm, vdc)
+			if err != nil {
+				errAttachedDisk := updateStateOfAttachedDisks(d, vm, vdc)
+				if errAttachedDisk != nil {
+					d.Set("disk", nil)
+					return fmt.Errorf("error reading attached disks : %#v and internal error : %#v", errAttachedDisk, err)
+				}
+				return fmt.Errorf("error attaching-detaching  disks when updating resource : %#v", err)
 			}
 		}
 
@@ -654,9 +816,33 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.Set("name", vm.VM.Name)
-	if len(vm.VM.NetworkConnectionSection.NetworkConnection) > 0 {
+	networks := d.Get("networks").([]interface{})
+	network := d.Get("network_name").(string)
+	switch {
+	// network_name is not set. networks is set in config
+	case network != "":
 		d.Set("ip", vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddress)
+		d.Set("mac", vm.VM.NetworkConnectionSection.NetworkConnection[0].MACAddress)
+	// We are using networks block and rebuilding statefile
+	case len(networks) > 0:
+		var nets []map[string]interface{}
+		// Loop over existing NICs in VM
+		for i, vmNet := range vm.VM.NetworkConnectionSection.NetworkConnection {
+			singleNIC := make(map[string]interface{})
+			singleNIC["ip"] = vmNet.IPAddress
+			singleNIC["mac"] = vmNet.MACAddress
+			singleNIC["orgnetwork"] = vmNet.Network
+			singleNIC["ip_allocation_mode"] = vmNet.IPAddressAllocationMode
+
+			singleNIC["is_primary"] = false
+			if i == vm.VM.NetworkConnectionSection.PrimaryNetworkConnectionIndex {
+				singleNIC["is_primary"] = true
+			}
+			nets = append(nets, singleNIC)
+		}
+		d.Set("networks", nets)
 	}
+
 	d.Set("href", vm.VM.HREF)
 	d.Set("expose_hardware_virtualization", vm.VM.NestedHypervisorEnabled)
 
