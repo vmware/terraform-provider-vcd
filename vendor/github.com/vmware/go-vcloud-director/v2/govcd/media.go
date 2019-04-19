@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"os"
 	"strconv"
@@ -131,11 +132,11 @@ func createMedia(client *Client, link, mediaName, mediaDescription string, fileS
 	}
 
 	reqBody := bytes.NewBufferString(
-		"<Media xmlns=\"http://www.vmware.com/vcloud/v1.5\" name=\"" + mediaName + "\" imageType=\"" + "iso" + "\" size=\"" + strconv.FormatInt(fileSize, 10) + "\" >" +
+		"<Media xmlns=\"" + types.XMLNamespaceVCloud + "\" name=\"" + mediaName + "\" imageType=\"" + "iso" + "\" size=\"" + strconv.FormatInt(fileSize, 10) + "\" >" +
 			"<Description>" + mediaDescription + "</Description>" +
 			"</Media>")
 
-	request := client.NewRequest(map[string]string{}, "POST", *uploadUrl, reqBody)
+	request := client.NewRequest(map[string]string{}, http.MethodPost, *uploadUrl, reqBody)
 	request.Header.Add("Content-Type", "application/vnd.vmware.vcloud.media+xml")
 
 	response, err := checkResp(client.Http.Do(request))
@@ -200,23 +201,13 @@ func removeImageOnError(client *Client, media *types.Media, itemName string) {
 func queryMedia(client *Client, mediaUrl string, newItemName string) (*types.Media, error) {
 	util.Logger.Printf("[TRACE] Querying media: %s\n", mediaUrl)
 
-	parsedUrl, err := url.ParseRequestURI(mediaUrl)
-	if err != nil {
-		util.Logger.Printf("[Error] Error parsing url %v: %s", parsedUrl, err)
-	}
-
-	request := client.NewRequest(map[string]string{}, "GET", *parsedUrl, nil)
-	response, err := checkResp(client.Http.Do(request))
-	if err != nil {
-		return nil, err
-	}
-
 	mediaParsed := &types.Media{}
-	if err = decodeBody(response, mediaParsed); err != nil {
+
+	_, err := client.ExecuteRequest(mediaUrl, http.MethodGet,
+		"", "error quering media: %s", nil, mediaParsed)
+	if err != nil {
 		return nil, err
 	}
-
-	defer response.Body.Close()
 
 	for _, task := range mediaParsed.Tasks.Task {
 		if "error" == task.Status && newItemName == task.Owner.Name {
@@ -321,27 +312,9 @@ func RemoveMediaImageIfExists(vdc Vdc, mediaName string) error {
 func (mediaItem *MediaItem) Delete() (Task, error) {
 	util.Logger.Printf("[TRACE] Deleting media item: %#v", mediaItem.MediaItem.Name)
 
-	parsedUrl, err := url.ParseRequestURI(mediaItem.MediaItem.HREF)
-	if err != nil {
-		util.Logger.Printf("[Error] Error parsing url %v: %s", parsedUrl, err)
-	}
-	util.Logger.Printf("[TRACE] Url for deleting media item: %#v and name: %s", parsedUrl, mediaItem.MediaItem.Name)
-
-	req := mediaItem.client.NewRequest(map[string]string{}, "DELETE", *parsedUrl, nil)
-
-	resp, err := checkResp(mediaItem.client.Http.Do(req))
-	if err != nil {
-		return Task{}, fmt.Errorf("error deleting Media item %s: %s", mediaItem.MediaItem.ID, err)
-	}
-
-	task := NewTask(mediaItem.client)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-	}
-
-	// The request was successful
-	return *task, nil
+	// Return the task
+	return mediaItem.client.ExecuteTaskRequest(mediaItem.MediaItem.HREF, http.MethodDelete,
+		"", "error deleting Media item: %s", nil)
 }
 
 // Finds media in catalog and returns catalog item

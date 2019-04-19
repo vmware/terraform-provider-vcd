@@ -38,25 +38,16 @@ func (orgVdcNet *OrgVDCNetwork) Refresh() error {
 		return fmt.Errorf("cannot refresh, Object is empty")
 	}
 
-	refreshUrl, _ := url.ParseRequestURI(orgVdcNet.OrgVDCNetwork.HREF)
-
-	req := orgVdcNet.client.NewRequest(map[string]string{}, "GET", *refreshUrl, nil)
-
-	resp, err := checkResp(orgVdcNet.client.Http.Do(req))
-	if err != nil {
-		return fmt.Errorf("error retrieving task: %s", err)
-	}
+	refreshUrl := orgVdcNet.OrgVDCNetwork.HREF
 
 	// Empty struct before a new unmarshal, otherwise we end up with duplicate
 	// elements in slices.
 	orgVdcNet.OrgVDCNetwork = &types.OrgVDCNetwork{}
 
-	if err = decodeBody(resp, orgVdcNet.OrgVDCNetwork); err != nil {
-		return fmt.Errorf("error decoding task response: %s", err)
-	}
+	_, err := orgVdcNet.client.ExecuteRequest(refreshUrl, http.MethodGet,
+		"", "error retrieving vDC network: %s", nil, orgVdcNet.OrgVDCNetwork)
 
-	// The request was successful
-	return nil
+	return err
 }
 
 // Delete a network. Fails if the network is busy.
@@ -72,7 +63,7 @@ func (orgVdcNet *OrgVDCNetwork) Delete() (Task, error) {
 
 	var resp *http.Response
 	for {
-		req := orgVdcNet.client.NewRequest(map[string]string{}, "DELETE", *apiEndpoint, nil)
+		req := orgVdcNet.client.NewRequest(map[string]string{}, http.MethodDelete, *apiEndpoint, nil)
 		resp, err = checkResp(orgVdcNet.client.Http.Do(req))
 		if err != nil {
 			if match, _ := regexp.MatchString("is busy, cannot proceed with the operation.$", err.Error()); match {
@@ -153,7 +144,7 @@ func (vdc *Vdc) CreateOrgVDCNetwork(networkConfig *types.OrgVDCNetwork) (Task, e
 			for {
 				b := bytes.NewBufferString(xml.Header + string(output))
 				util.Logger.Printf("[DEBUG] VCD Client configuration: %s", b)
-				req := vdc.client.NewRequest(map[string]string{}, "POST", *createUrl, b)
+				req := vdc.client.NewRequest(map[string]string{}, http.MethodPost, *createUrl, b)
 				req.Header.Add("Content-Type", av.Type)
 				resp, err = checkResp(vdc.client.Http.Do(req))
 				if err != nil {

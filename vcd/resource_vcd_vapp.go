@@ -228,7 +228,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 				}
 			}
 
-			if d.Get("power_on").(bool) == true {
+			if d.Get("power_on").(bool) {
 				err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 					task, err := vapp.PowerOn()
 					if err != nil {
@@ -465,6 +465,9 @@ func getVAppIPAddress(d *schema.ResourceData, meta interface{}, vdc govcd.Vdc, o
 		// Required as once we add more VM's, index zero doesn't guarantee the
 		// 'first' one, and tests will fail sometimes (annoying huh?)
 		vm, err := vdc.FindVMByName(vapp, d.Get("name").(string))
+		if err != nil {
+			return resource.RetryableError(fmt.Errorf("unable to find vm: %s", err))
+		}
 
 		ip = vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddress
 		if ip == "" {
@@ -487,10 +490,6 @@ func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
 	vapp, err := vdc.FindVAppByName(d.Id())
 	if err != nil {
 		return fmt.Errorf("error finding vapp: %s", err)
-	}
-
-	if err != nil {
-		return fmt.Errorf("error getting VApp status: %#v", err)
 	}
 
 	_ = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {

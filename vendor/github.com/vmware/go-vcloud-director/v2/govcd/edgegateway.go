@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -79,7 +78,7 @@ func (eGW *EdgeGateway) AddDhcpPool(network *types.OrgVDCNetwork, dhcppool []int
 	}
 
 	newRules := &types.EdgeGatewayServiceConfiguration{
-		Xmlns:              "http://www.vmware.com/vcloud/v1.5",
+		Xmlns:              types.XMLNamespaceVCloud,
 		GatewayDhcpService: newDchpService,
 	}
 
@@ -95,7 +94,7 @@ func (eGW *EdgeGateway) AddDhcpPool(network *types.OrgVDCNetwork, dhcppool []int
 		apiEndpoint, _ := url.ParseRequestURI(eGW.EdgeGateway.HREF)
 		apiEndpoint.Path += "/action/configureServices"
 
-		req := eGW.client.NewRequest(map[string]string{}, "POST", *apiEndpoint, buffer)
+		req := eGW.client.NewRequest(map[string]string{}, http.MethodPost, *apiEndpoint, buffer)
 		util.Logger.Printf("[DEBUG] POSTING TO URL: %s", apiEndpoint.Path)
 		util.Logger.Printf("[DEBUG] XML TO SEND:\n%s", buffer)
 
@@ -165,40 +164,16 @@ func (eGW *EdgeGateway) RemoveNATPortMapping(natType, externalIP, externalPort s
 	newEdgeConfig.NatService = newNatService
 
 	newRules := &types.EdgeGatewayServiceConfiguration{
-		Xmlns:      "http://www.vmware.com/vcloud/v1.5",
+		Xmlns:      types.XMLNamespaceVCloud,
 		NatService: newNatService,
 	}
-
-	output, err := xml.MarshalIndent(newRules, "  ", "    ")
-	if err != nil {
-		return Task{}, fmt.Errorf("error reconfiguring Edge Gateway: %s", err)
-	}
-
-	buffer := bytes.NewBufferString(xml.Header + string(output))
 
 	apiEndpoint, _ := url.ParseRequestURI(eGW.EdgeGateway.HREF)
 	apiEndpoint.Path += "/action/configureServices"
 
-	req := eGW.client.NewRequest(map[string]string{}, "POST", *apiEndpoint, buffer)
-	util.Logger.Printf("[DEBUG] POSTING TO URL: %s", apiEndpoint.Path)
-	util.Logger.Printf("[DEBUG] XML TO SEND:\n%s", buffer)
-
-	req.Header.Add("Content-Type", "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")
-
-	resp, err := checkResp(eGW.client.Http.Do(req))
-	if err != nil {
-		util.Logger.Printf("[DEBUG] Error is: %#v", err)
-		return Task{}, fmt.Errorf("error reconfiguring Edge Gateway: %s", err)
-	}
-
-	task := NewTask(eGW.client)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-	}
-
-	// The request was successful
-	return *task, nil
+	// Return the task
+	return eGW.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPost,
+		"application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml", "error reconfiguring Edge Gateway: %s", newRules)
 
 }
 
@@ -328,41 +303,16 @@ func (eGW *EdgeGateway) AddNATPortMappingWithUplink(network *types.OrgVDCNetwork
 	newEdgeConfig.NatService = newNatService
 
 	newRules := &types.EdgeGatewayServiceConfiguration{
-		Xmlns:      "http://www.vmware.com/vcloud/v1.5",
+		Xmlns:      types.XMLNamespaceVCloud,
 		NatService: newNatService,
 	}
-
-	output, err := xml.MarshalIndent(newRules, "  ", "    ")
-	if err != nil {
-		return Task{}, fmt.Errorf("error reconfiguring Edge Gateway: %s", err)
-	}
-
-	buffer := bytes.NewBufferString(xml.Header + string(output))
 
 	apiEndpoint, _ := url.ParseRequestURI(eGW.EdgeGateway.HREF)
 	apiEndpoint.Path += "/action/configureServices"
 
-	req := eGW.client.NewRequest(map[string]string{}, "POST", *apiEndpoint, buffer)
-	util.Logger.Printf("[DEBUG] POSTING TO URL: %s", apiEndpoint.Path)
-	util.Logger.Printf("[DEBUG] XML TO SEND:\n%s", buffer)
-
-	req.Header.Add("Content-Type", "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")
-
-	resp, err := checkResp(eGW.client.Http.Do(req))
-	if err != nil {
-		util.Logger.Printf("[DEBUG] Error is: %#v", err)
-		return Task{}, fmt.Errorf("error reconfiguring Edge Gateway: %s", err)
-	}
-
-	task := NewTask(eGW.client)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-	}
-
-	// The request was successful
-	return *task, nil
-
+	// Return the task
+	return eGW.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPost,
+		"application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml", "error reconfiguring Edge Gateway: %s", newRules)
 }
 
 func (eGW *EdgeGateway) CreateFirewallRules(defaultAction string, rules []*types.FirewallRule) (Task, error) {
@@ -372,7 +322,7 @@ func (eGW *EdgeGateway) CreateFirewallRules(defaultAction string, rules []*types
 	}
 
 	newRules := &types.EdgeGatewayServiceConfiguration{
-		Xmlns: "http://www.vmware.com/vcloud/v1.5",
+		Xmlns: types.XMLNamespaceVCloud,
 		FirewallService: &types.FirewallService{
 			IsEnabled:        true,
 			DefaultAction:    defaultAction,
@@ -393,7 +343,7 @@ func (eGW *EdgeGateway) CreateFirewallRules(defaultAction string, rules []*types
 		apiEndpoint, _ := url.ParseRequestURI(eGW.EdgeGateway.HREF)
 		apiEndpoint.Path += "/action/configureServices"
 
-		req := eGW.client.NewRequest(map[string]string{}, "POST", *apiEndpoint, buffer)
+		req := eGW.client.NewRequest(map[string]string{}, http.MethodPost, *apiEndpoint, buffer)
 		util.Logger.Printf("[DEBUG] POSTING TO URL: %s", apiEndpoint.Path)
 		util.Logger.Printf("[DEBUG] XML TO SEND:\n%s", buffer)
 
@@ -426,25 +376,16 @@ func (eGW *EdgeGateway) Refresh() error {
 		return fmt.Errorf("cannot refresh, Object is empty")
 	}
 
-	apiEndpoint, _ := url.ParseRequestURI(eGW.EdgeGateway.HREF)
-
-	req := eGW.client.NewRequest(map[string]string{}, "GET", *apiEndpoint, nil)
-
-	resp, err := checkResp(eGW.client.Http.Do(req))
-	if err != nil {
-		return fmt.Errorf("error retrieving Edge Gateway: %s", err)
-	}
+	url := eGW.EdgeGateway.HREF
 
 	// Empty struct before a new unmarshal, otherwise we end up with duplicate
 	// elements in slices.
 	eGW.EdgeGateway = &types.EdgeGateway{}
 
-	if err = decodeBody(resp, eGW.EdgeGateway); err != nil {
-		return fmt.Errorf("error decoding Edge Gateway response: %s", err)
-	}
+	_, err := eGW.client.ExecuteRequest(url, http.MethodGet,
+		"", "error retrieving Edge Gateway: %s", nil, eGW.EdgeGateway)
 
-	// The request was successful
-	return nil
+	return err
 }
 
 func (eGW *EdgeGateway) Remove1to1Mapping(internal, external string) (Task, error) {
@@ -549,35 +490,12 @@ func (eGW *EdgeGateway) Remove1to1Mapping(internal, external string) (Task, erro
 	// Fix
 	newEdgeConfig.NatService.IsEnabled = true
 
-	output, err := xml.MarshalIndent(newEdgeConfig, "  ", "    ")
-	if err != nil {
-		fmt.Printf("error: %v\n", err)
-	}
-
-	util.Logger.Printf("\n\nXML DEBUG: %s\n\n", string(output))
-
-	buffer := bytes.NewBufferString(xml.Header + string(output))
-
 	apiEndpoint, _ := url.ParseRequestURI(eGW.EdgeGateway.HREF)
 	apiEndpoint.Path += "/action/configureServices"
 
-	req := eGW.client.NewRequest(map[string]string{}, "POST", *apiEndpoint, buffer)
-
-	req.Header.Add("Content-Type", "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")
-
-	resp, err := checkResp(eGW.client.Http.Do(req))
-	if err != nil {
-		return Task{}, fmt.Errorf("error reconfiguring Edge Gateway: %s", err)
-	}
-
-	task := NewTask(eGW.client)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-	}
-
-	// The request was successful
-	return *task, nil
+	// Return the task
+	return eGW.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPost,
+		"application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml", "error reconfiguring Edge Gateway: %s", newEdgeConfig)
 
 }
 
@@ -667,35 +585,12 @@ func (eGW *EdgeGateway) Create1to1Mapping(internal, external, description string
 
 	newEdgeConfig.FirewallService.FirewallRule = append(newEdgeConfig.FirewallService.FirewallRule, fwout)
 
-	output, err := xml.MarshalIndent(newEdgeConfig, "  ", "    ")
-	if err != nil {
-		fmt.Printf("error: %v\n", err)
-	}
-
-	util.Logger.Printf("\n\nXML DEBUG: %s\n\n", string(output))
-
-	buffer := bytes.NewBufferString(xml.Header + string(output))
-
 	apiEndpoint, _ := url.ParseRequestURI(eGW.EdgeGateway.HREF)
 	apiEndpoint.Path += "/action/configureServices"
 
-	req := eGW.client.NewRequest(map[string]string{}, "POST", *apiEndpoint, buffer)
-
-	req.Header.Add("Content-Type", "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")
-
-	resp, err := checkResp(eGW.client.Http.Do(req))
-	if err != nil {
-		return Task{}, fmt.Errorf("error reconfiguring Edge Gateway: %s", err)
-	}
-
-	task := NewTask(eGW.client)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-	}
-
-	// The request was successful
-	return *task, nil
+	// Return the task
+	return eGW.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPost,
+		"application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml", "error reconfiguring Edge Gateway: %s", newEdgeConfig)
 
 }
 
@@ -706,40 +601,12 @@ func (eGW *EdgeGateway) AddIpsecVPN(ipsecVPNConfig *types.EdgeGatewayServiceConf
 		fmt.Printf("error: %v\n", err)
 	}
 
-	output, err := xml.MarshalIndent(ipsecVPNConfig, "  ", "    ")
-	if err != nil {
-		return Task{}, fmt.Errorf("error marshaling ipsecVPNConfig compose: %s", err)
-	}
-
-	util.Logger.Printf("\n\nXML DEBUG: %s\n\n", string(output))
-
-	buffer := bytes.NewBufferString(xml.Header + string(output))
-	util.Logger.Printf("[DEBUG] ipsecVPN configuration: %s", buffer)
-
 	apiEndpoint, _ := url.ParseRequestURI(eGW.EdgeGateway.HREF)
 	apiEndpoint.Path += "/action/configureServices"
 
-	req := eGW.client.NewRequest(map[string]string{}, "POST", *apiEndpoint, buffer)
-
-	req.Header.Add("Content-Type", "application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml")
-
-	resp, err := checkResp(eGW.client.Http.Do(req))
-	if err != nil {
-		return Task{}, fmt.Errorf("error reconfiguring Edge Gateway: %s", err)
-	}
-
-	if os.Getenv("GOVCD_DEBUG") != "" {
-		util.Logger.Printf("Edge Gateway Service Configuration: %s\n", prettyEdgeGatewayServiceConfiguration(ipsecVPNConfig))
-	}
-
-	task := NewTask(eGW.client)
-
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
-	}
-
-	// The request was successful
-	return *task, nil
+	// Return the task
+	return eGW.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPost,
+		"application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml", "error reconfiguring Edge Gateway: %s", ipsecVPNConfig)
 
 }
 
@@ -750,7 +617,7 @@ func (eGW *EdgeGateway) RemoveIpsecVPN() (Task, error) {
 		fmt.Printf("error: %v\n", err)
 	}
 	ipsecVPNConfig := &types.EdgeGatewayServiceConfiguration{
-		Xmlns: "http://www.vmware.com/vcloud/v1.5",
+		Xmlns: types.XMLNamespaceVCloud,
 		GatewayIpsecVpnService: &types.GatewayIpsecVpnService{
 			IsEnabled: false,
 		},
