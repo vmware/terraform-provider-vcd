@@ -249,32 +249,6 @@ resource "vcd_dnat" "{{.DnatName}}" {
   depends_on   = ["vcd_network_routed.{{.OrgVdcNetworkName}}"]
 }
 `
-const testAccCheckVcdDnat_tlate = `
-resource "vcd_network_routed" "{{.OrgVdcNetworkName}}" {
-  name         = "{{.OrgVdcNetworkName}}"
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
-  gateway      = "{{.Gateway}}"
-
-  dhcp_pool {
-    start_address = "{{.StartIpAddress}}"
-    end_address   = "{{.EndIpAddress}}"
-  }
-}
-
-resource "vcd_dnat" "{{.DnatName}}" {
-  org             = "{{.Org}}"
-  vdc             = "{{.Vdc}}"
-  network_name    = "{{.OrgVdcNetworkName}}"
-  edge_gateway    = "{{.EdgeGateway}}"
-  external_ip     = "{{.ExternalIp}}"
-  port            = 7777
-  internal_ip     = "10.10.102.60"
-  translated_port = 77
-  depends_on      = ["vcd_network_routed.{{.OrgVdcNetworkName}}"]
-}
-`
 
 func TestAccVcdDNAT_ForBackCompability(t *testing.T) {
 	if vcdShortTest {
@@ -403,5 +377,31 @@ resource "vcd_dnat" "{{.DnatName}}" {
   port            = 7777
   internal_ip     = "10.10.102.60"
   translated_port = 77
+}
+`
+const testAccCheckVcdDnat_tlate = `
+resource "vcd_network_routed" "{{.OrgVdcNetworkName}}" {
+  name         = "{{.OrgVdcNetworkName}}"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  gateway      = "{{.Gateway}}"
+
+  dhcp_pool {
+    start_address = "{{.StartIpAddress}}"
+    end_address   = "{{.EndIpAddress}}"
+  }
+}
+
+resource "vcd_dnat" "{{.DnatName}}" {
+  org             = "{{.Org}}"
+  vdc             = "{{.Vdc}}"
+  network_name    = "{{.OrgVdcNetworkName}}"
+  edge_gateway    = "{{.EdgeGateway}}"
+  external_ip     = "{{.ExternalIp}}"
+  port            = 7777
+  internal_ip     = "10.10.102.60"
+  translated_port = 77
+  depends_on      = ["vcd_network_routed.{{.OrgVdcNetworkName}}"]
 }
 `

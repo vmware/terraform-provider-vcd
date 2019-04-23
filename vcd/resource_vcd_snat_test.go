@@ -134,32 +134,6 @@ func testAccCheckVcdSNATDestroy(s *terraform.State) error {
 	return nil
 }
 
-const testAccCheckVcdSnat_basic = `
-resource "vcd_network_routed" "{{.OrgVdcNetworkName}}" {
-  name         = "{{.OrgVdcNetworkName}}"
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
-  gateway      = "{{.Gateway}}"
-
-  static_ip_pool {
-    start_address = "{{.StartIpAddress}}"
-    end_address   = "{{.EndIpAddress}}"
-  }
-}
-
-
-resource "vcd_snat" "{{.SnatName}}" {
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
-  network_name = "{{.OrgVdcNetworkName}}"
-  external_ip  = "{{.ExternalIp}}"
-  internal_ip  = "{{.StartIpAddress}}"
-  depends_on      = ["vcd_network_routed.{{.OrgVdcNetworkName}}"]
-}
-`
-
 func TestAccVcdSNAT_BackCompability(t *testing.T) {
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -276,6 +250,32 @@ func testAccCheckVcdSNATDestroyForBackCompability(s *terraform.State) error {
 
 	return nil
 }
+
+const testAccCheckVcdSnat_basic = `
+resource "vcd_network_routed" "{{.OrgVdcNetworkName}}" {
+  name         = "{{.OrgVdcNetworkName}}"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  gateway      = "{{.Gateway}}"
+
+  static_ip_pool {
+    start_address = "{{.StartIpAddress}}"
+    end_address   = "{{.EndIpAddress}}"
+  }
+}
+
+
+resource "vcd_snat" "{{.SnatName}}" {
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  network_name = "{{.OrgVdcNetworkName}}"
+  external_ip  = "{{.ExternalIp}}"
+  internal_ip  = "{{.StartIpAddress}}"
+  depends_on      = ["vcd_network_routed.{{.OrgVdcNetworkName}}"]
+}
+`
 
 const testAccCheckVcdSnat_forBackCompability = `
 resource "vcd_snat" "{{.SnatName}}" {
