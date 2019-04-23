@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -16,13 +17,11 @@ func resourceVcdSNAT() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
 				ForceNew: true,
 			},
 			"vdc": {
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
 				ForceNew: true,
 			},
@@ -31,7 +30,11 @@ func resourceVcdSNAT() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-
+			"network_name": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+			},
 			"external_ip": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
@@ -66,19 +69,52 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := edgeGateway.AddNATMapping("SNAT", d.Get("internal_ip").(string),
-			d.Get("external_ip").(string))
+	var orgVdcnetwork *types.OrgVDCNetwork
+	providedNetworkName := d.Get("network_name")
+	if nil != providedNetworkName && "" != providedNetworkName.(string) {
+		orgVdcnetwork, err = getNetwork(d, vcdClient, providedNetworkName.(string))
+	} else {
+		_, _ = fmt.Fprint(GetTerraformStdout(), "WARNING: this resource will require network_name in the next major version \n")
+	}
+	if err != nil {
+		return fmt.Errorf("unable to find orgVdcnetwork: %s, err: %s", providedNetworkName.(string), err)
+	}
+
+	if nil != providedNetworkName && providedNetworkName != "" {
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+
+			task, err := edgeGateway.AddNATRule(orgVdcnetwork, "SNAT",
+				d.Get("external_ip").(string), d.Get("internal_ip").(string))
+			if err != nil {
+				return resource.RetryableError(fmt.Errorf("error setting SNAT rules: %#v", err))
+			}
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
+	} else {
+		// TODO remove when major release is done
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := edgeGateway.AddNATMapping("SNAT", d.Get("internal_ip").(string),
+				d.Get("external_ip").(string))
+			if err != nil {
+				return resource.RetryableError(fmt.Errorf("error setting SNAT rules: %#v", err))
+			}
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
 		if err != nil {
-			return resource.RetryableError(fmt.Errorf("error setting SNAT rules: %#v", err))
+			return err
 		}
-		return resource.RetryableError(task.WaitTaskCompletion())
-	})
+	}
+
 	if err != nil {
 		return err
 	}
 
-	d.SetId(d.Get("internal_ip").(string))
+	if nil != providedNetworkName && "" != providedNetworkName {
+		d.SetId(orgVdcnetwork.Name + ":" + d.Get("internal_ip").(string))
+	} else {
+		// TODO remove when major release is done
+		d.SetId(d.Get("internal_ip").(string))
+	}
 	return nil
 }
 
@@ -92,11 +128,20 @@ func resourceVcdSNATRead(d *schema.ResourceData, meta interface{}) error {
 
 	var found bool
 
-	for _, r := range e.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
-		if r.RuleType == "SNAT" &&
-			r.GatewayNatRule.OriginalIP == d.Id() {
-			found = true
-			d.Set("external_ip", r.GatewayNatRule.TranslatedIP)
+	providedNetworkName := d.Get("network_name")
+	if nil != providedNetworkName && providedNetworkName.(string) != "" {
+		for _, r := range e.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
+			if r.RuleType == "SNAT" && r.GatewayNatRule.OriginalIP == d.Id() {
+				found = true
+				d.Set("external_ip", r.GatewayNatRule.TranslatedIP)
+			}
+		}
+	} else {
+		for _, r := range e.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
+			if r.RuleType == "SNAT" && r.GatewayNatRule.OriginalIP == d.Id() && r.GatewayNatRule.Interface.Name == d.Get("network_name").(string) {
+				found = true
+				d.Set("external_ip", r.GatewayNatRule.TranslatedIP)
+			}
 		}
 	}
 
