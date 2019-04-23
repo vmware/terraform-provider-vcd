@@ -103,7 +103,7 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 
 	var orgVdcnetwork *types.OrgVDCNetwork
 	providedNetworkName := d.Get("network_name")
-	if nil != providedNetworkName && "" != providedNetworkName {
+	if nil != providedNetworkName && "" != providedNetworkName.(string) {
 		orgVdcnetwork, err = getNetwork(d, vcdClient, providedNetworkName.(string))
 	} else {
 		_, _ = fmt.Fprint(GetTerraformStdout(), "WARNING: This resource will require network_name in the next major version \n")
@@ -174,7 +174,7 @@ func resourceVcdDNATRead(d *schema.ResourceData, meta interface{}) error {
 	var found bool
 
 	providedNetworkName := d.Get("network_name")
-	if nil != providedNetworkName && providedNetworkName != "" {
+	if nil != providedNetworkName && providedNetworkName.(string) != "" {
 		for _, r := range e.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
 			if r.RuleType == "DNAT" && r.GatewayNatRule.Interface.Name == d.Get("network_name") &&
 				r.GatewayNatRule.OriginalIP == d.Get("external_ip").(string) &&
