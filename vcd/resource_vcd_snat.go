@@ -83,9 +83,8 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 	if nil != providedNetworkName && providedNetworkName != "" {
 		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 
-			task, err := edgeGateway.AddNATPortMappingWithUplink(orgVdcnetwork, "SNAT",
-				d.Get("external_ip").(string), "any", d.Get("internal_ip").(string),
-				"any", "any", "")
+			task, err := edgeGateway.AddNATRule(orgVdcnetwork, "SNAT",
+				d.Get("external_ip").(string), d.Get("internal_ip").(string))
 			if err != nil {
 				return resource.RetryableError(fmt.Errorf("error setting SNAT rules: %#v", err))
 			}
