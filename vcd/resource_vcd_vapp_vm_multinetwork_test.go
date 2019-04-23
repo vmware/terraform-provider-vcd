@@ -38,7 +38,7 @@ func TestAccVcdVAppVmNetwork(t *testing.T) {
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm."+netVmName1, &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "name", netVmName1),
 
