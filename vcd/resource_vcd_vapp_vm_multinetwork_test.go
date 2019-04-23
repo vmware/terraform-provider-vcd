@@ -133,7 +133,7 @@ resource "vcd_network_routed" "net" {
 	  orgnetwork = "${vcd_network_routed.net.name}"
 	  ip_allocation_mode = "POOL"
 	  is_primary         = false
-	},
+		},
 	  {
 		orgnetwork = "${vcd_network_routed.net.name}"
 		ip_allocation_mode = "DHCP"

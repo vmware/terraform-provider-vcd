@@ -816,21 +816,25 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.Set("name", vm.VM.Name)
-	networks := d.Get("networks").([]interface{})
-	network := d.Get("network_name").(string)
 
 	switch {
 	// network_name is not set. networks is set in config
-	case network != "":
+	case d.Get("network_name").(string) != "":
 		d.Set("ip", vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddress)
 		d.Set("mac", vm.VM.NetworkConnectionSection.NetworkConnection[0].MACAddress)
 	// We are using networks block and rebuilding statefile
-	case len(networks) > 0:
+	case len(d.Get("networks").([]interface{})) > 0:
 		var nets []map[string]interface{}
 		// Loop over existing NICs in VM
+
+		// Sort NIC cards by their virtual slot numbers as the API returns then in random order
+		sort.SliceStable(vm.VM.NetworkConnectionSection.NetworkConnection, func(i, j int) bool {
+			return vm.VM.NetworkConnectionSection.NetworkConnection[i].NetworkConnectionIndex <
+				vm.VM.NetworkConnectionSection.NetworkConnection[j].NetworkConnectionIndex
+		})
+
 		for i, vmNet := range vm.VM.NetworkConnectionSection.NetworkConnection {
 			singleNIC := make(map[string]interface{})
-			singleNIC["nic_index"] = vmNet.NetworkConnectionIndex // Used just for sorting NICs
 			singleNIC["ip"] = vmNet.IPAddress
 			singleNIC["mac"] = vmNet.MACAddress
 			singleNIC["orgnetwork"] = vmNet.Network
@@ -842,21 +846,6 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 			}
 			nets = append(nets, singleNIC)
 		}
-		fmt.Printf("DAINIUS before %#+v\n", nets)
-
-		// Sort by vmNet.NetworkConnectionIndex so that order in statefile is persistent
-		// as the API seems to return results in random fashion and statefile would shuffle
-		// NIC order sometimes
-		sort.Slice(nets, func(i, j int) bool {
-			return nets[i]["nic_index"].(int) < nets[j]["nic_index"].(int)
-		})
-		// Delete nic_index which was used for sorting because terraform loses some vars
-		// while saving to statefile when a field does not exist in schema definition
-		for index := range nets {
-			delete(nets[index], "nic_index")
-		}
-
-		fmt.Printf("DAINIUS after %#+v\n", nets)
 
 		d.Set("networks", nets)
 	}
