@@ -132,9 +132,9 @@ func resourceVcdVAppVm() *schema.Resource {
 							ValidateFunc: validation.SingleIP(),
 						},
 						"ip_allocation_mode": {
-							Default:      "POOL",
+							// Default:      "POOL",
 							ForceNew:     true,
-							Optional:     true,
+							Required:     true,
 							Type:         schema.TypeString,
 							ValidateFunc: checkIPAddressAllocationMode(),
 						},
@@ -818,6 +818,7 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("name", vm.VM.Name)
 	networks := d.Get("networks").([]interface{})
 	network := d.Get("network_name").(string)
+
 	switch {
 	// network_name is not set. networks is set in config
 	case network != "":
@@ -829,6 +830,7 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 		// Loop over existing NICs in VM
 		for i, vmNet := range vm.VM.NetworkConnectionSection.NetworkConnection {
 			singleNIC := make(map[string]interface{})
+			singleNIC["nic_index"] = vmNet.NetworkConnectionIndex // Used just for sorting NICs
 			singleNIC["ip"] = vmNet.IPAddress
 			singleNIC["mac"] = vmNet.MACAddress
 			singleNIC["orgnetwork"] = vmNet.Network
@@ -840,6 +842,22 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 			}
 			nets = append(nets, singleNIC)
 		}
+		fmt.Printf("DAINIUS before %#+v\n", nets)
+
+		// Sort by vmNet.NetworkConnectionIndex so that order in statefile is persistent
+		// as the API seems to return results in random fashion and statefile would shuffle
+		// NIC order sometimes
+		sort.Slice(nets, func(i, j int) bool {
+			return nets[i]["nic_index"].(int) < nets[j]["nic_index"].(int)
+		})
+		// Delete nic_index which was used for sorting because terraform loses some vars
+		// while saving to statefile when a field does not exist in schema definition
+		for index := range nets {
+			delete(nets[index], "nic_index")
+		}
+
+		fmt.Printf("DAINIUS after %#+v\n", nets)
+
 		d.Set("networks", nets)
 	}
 
