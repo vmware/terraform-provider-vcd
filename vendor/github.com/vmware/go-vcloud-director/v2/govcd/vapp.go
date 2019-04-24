@@ -124,10 +124,8 @@ func (vapp *VApp) AddVM(orgVdcNetworks []*types.OrgVDCNetwork, vappNetworkName s
 			},
 			InstantiationParams: &types.InstantiationParams{
 				NetworkConnectionSection: &types.NetworkConnectionSection{
-					Type:                          vappTemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.Type,
-					HREF:                          vappTemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.HREF,
 					Info:                          "Network config for sourced item",
-					PrimaryNetworkConnectionIndex: vappTemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.PrimaryNetworkConnectionIndex,
+					PrimaryNetworkConnectionIndex: 0,
 				},
 			},
 		},
@@ -719,7 +717,48 @@ func (vapp *VApp) GetNetworkConfig() (*types.NetworkConfigSection, error) {
 	return networkConfig, err
 }
 
-// Function adds existing VDC network to vApp
+// AppendNetworkConfig appends a network config to a vApp
+func (vapp *VApp) AppendNetworkConfig(orgvdcnetwork *types.OrgVDCNetwork) (Task, error) {
+
+	// Get existing network config from current vApp
+	networkConfigSection, err := vapp.GetNetworkConfig()
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
+	}
+
+	for _, net := range networkConfigSection.NetworkConfig {
+		// skip if network is already attached to vApp
+		if net.NetworkName == orgvdcnetwork.Name {
+			return Task{}, nil
+		}
+	}
+
+	networkConfigSection.Ovf = types.XMLNamespaceOVF
+	networkConfigSection.Type = types.MimeNetworkConfigSection
+	networkConfigSection.Xmlns = types.XMLNamespaceVCloud
+
+	// Append a new networkConfigSection.NetworkConfig to the existing ones we got earlier
+	networkConfigSection.NetworkConfig = append(networkConfigSection.NetworkConfig,
+		types.VAppNetworkConfiguration{
+			NetworkName: orgvdcnetwork.Name,
+			Configuration: &types.NetworkConfiguration{
+				ParentNetwork: &types.Reference{
+					HREF: orgvdcnetwork.HREF,
+				},
+				FenceMode: "bridged",
+			},
+		},
+	)
+
+	apiEndpoint, _ := url.ParseRequestURI(vapp.VApp.HREF)
+	apiEndpoint.Path += "/networkConfigSection/"
+
+	return vapp.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPut,
+		types.MimeNetworkConfigSection, "error adding vApp Network: %s", networkConfigSection)
+
+}
+
+// AddRAWNetworkConfig adds existing VDC network to vApp
 func (vapp *VApp) AddRAWNetworkConfig(orgvdcnetworks []*types.OrgVDCNetwork) (Task, error) {
 
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()

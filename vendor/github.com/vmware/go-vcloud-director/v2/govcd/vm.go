@@ -6,6 +6,8 @@ package govcd
 
 import (
 	"fmt"
+	"github.com/kr/pretty"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -16,7 +18,7 @@ import (
 
 type VM struct {
 	VM     *types.VM
-	client *Client
+	client *Client /**/
 }
 
 type VMRecord struct {
@@ -66,6 +68,44 @@ func (vm *VM) Refresh() error {
 	return err
 }
 
+// AppendNetworkConnection appends a network connection from OrgVDCNetwork to VM
+func (vm *VM) AppendNetworkConnection(orgvdcnetwork *types.OrgVDCNetwork) (Task, error) {
+
+	// Get existing network connections from current VM
+	networkConnectionSection, err := vm.GetNetworkConnectionSection()
+	if err != nil {
+		fmt.Printf("error: %v\n", err)
+	}
+
+	for _, net := range networkConnectionSection.NetworkConnection {
+		// skip if network is already connected to VM
+		if net.Network == orgvdcnetwork.Name {
+			return Task{}, nil
+		}
+	}
+
+	networkConnectionSection.Ovf = types.XMLNamespaceOVF
+	networkConnectionSection.Type = types.MimeNetworkConnectionSection
+	networkConnectionSection.Xmlns = types.XMLNamespaceVCloud
+
+	// Append a new NetworkConnectionSection.NetworkConnection to existing ones
+	networkConnectionSection.NetworkConnection = append(networkConnectionSection.NetworkConnection,
+		&types.NetworkConnection{
+			Network:                 orgvdcnetwork.Name,
+			NetworkConnectionIndex:  len(networkConnectionSection.NetworkConnection),
+			IsConnected:             true,
+			IPAddressAllocationMode: "POOL",
+		},
+	)
+
+	apiEndpoint, _ := url.ParseRequestURI(vm.VM.HREF)
+	apiEndpoint.Path += "/networkConnectionSection/"
+
+	return vm.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPut,
+		types.MimeNetworkConnectionSection, "error adding VM network connection: %s", networkConnectionSection)
+}
+
+// GetNetworkConnectionSection returns current networks attached to VM
 func (vm *VM) GetNetworkConnectionSection() (*types.NetworkConnectionSection, error) {
 
 	networkConnectionSection := &types.NetworkConnectionSection{}
@@ -164,53 +204,74 @@ func (vm *VM) ChangeCPUCountWithCore(virtualCpuCount int, coresPerSocket *int) (
 
 }
 
-func (vm *VM) ChangeNetworkConfig(networks []map[string]interface{}, ip string) (Task, error) {
-	err := vm.Refresh()
-	if err != nil {
-		return Task{}, fmt.Errorf("error refreshing VM before running customization: %v", err)
-	}
+func (vm *VM) updateNicParameters(networks []map[string]interface{}, networkSection *types.NetworkConnectionSection) {
 
-	networkSection, err := vm.GetNetworkConnectionSection()
+	util.Logger.Printf("[DEBUG] Initial networks %#+ v\n", pretty.Formatter(networks))
+	util.Logger.Printf("[DEBUG] Initial networkconnection %#+ v\n", pretty.Formatter(networkSection.NetworkConnection))
 
-	// changes network config when only matches network name with provided one
-	for _, network := range networks {
-		for index, networkConnection := range networkSection.NetworkConnection {
-			if networkConnection.Network == network["orgnetwork"] { // network name are equal
+	for tfNicSlot, network := range networks { //0, POOL===== 2, MANUAL
+		for loopIndex, networkConnection := range networkSection.NetworkConnection {	//2, POOL; 3, POOL; 0, POOl (==)
+			// THE BELOW IF WAS BAD because it comapared nicSlot to networkSection.NetworkConnection slice element index.
+			// This was not correct if slice 'networkSection.NetworkConnection' was not ordered because it comapared
+			// nicSlot to networkSection.NetworkConnection slice element index (not NetworkConnectionIndex) and mixed up
+			// NIC parameters.
+			//if networkConnection.Network == network["orgnetwork"] && tfNicSlot == loopIndex {	// not nic slot
+
+			// Change network config only if we're attached to the same network and have the same virtual slot number
+			if networkConnection.Network == network["orgnetwork"].(string) &&
+				tfNicSlot == networkSection.NetworkConnection[loopIndex].NetworkConnectionIndex {
+
 				// Determine what type of address is requested for the vApp
 				ipAllocationMode := types.IPAllocationModeNone
 				ipAddress := "Any"
 
 				// TODO: Review current behaviour of using DHCP when left blank
-				if ip == "dhcp" || network["ip"].(string) == "dhcp" {
+				if network["ip"].(string) == "dhcp" {
 					ipAllocationMode = types.IPAllocationModeDHCP
-				} else if ip == "allocated" || network["ip"].(string) == "allocated" {
+				} else if network["ip"].(string) == "allocated" {
 					ipAllocationMode = types.IPAllocationModePool
-				} else if ip == "none" || network["ip"].(string) == "none" {
+				} else if network["ip"].(string) == "none" {
 					ipAllocationMode = types.IPAllocationModeNone
-				} else if ip != "" {
-					ipAllocationMode = types.IPAllocationModeManual
-					// TODO: Check a valid IP has been given
-					ipAddress = ip
 				} else if network["ip"].(string) != "" {
 					ipAllocationMode = types.IPAllocationModeManual
-					// TODO: Check a valid IP has been given
-					ipAddress = network["ip"].(string)
-				} else if ip == "" {
-					ipAllocationMode = types.IPAllocationModeDHCP
+					if net.ParseIP(network["ip"].(string)) != nil {
+						// In this case we have types.IPAllocationModeNone if IP is set
+						// But in fact this would be manual and could still be used.
+						// ipAllocationMode = types.IPAllocationModeManual
+						ipAddress = network["ip"].(string)
+					} else {
+						ipAllocationMode = types.IPAllocationModeDHCP
+					}
+				} else { // If IP is not set we use proper `ip_allocation_mode` specified
+					ipAllocationMode = network["ip_allocation_mode"].(string)
 				}
 
 				util.Logger.Printf("[DEBUG] Function ChangeNetworkConfig() for %s invoked", network["orgnetwork"])
 
-				networkSection.NetworkConnection[index].NeedsCustomization = true
-				networkSection.NetworkConnection[index].IPAddress = ipAddress
-				networkSection.NetworkConnection[index].IPAddressAllocationMode = ipAllocationMode
+				networkSection.NetworkConnection[loopIndex].NeedsCustomization = true
+				networkSection.NetworkConnection[loopIndex].IsConnected = true
+				networkSection.NetworkConnection[loopIndex].IPAddress = ipAddress
+				networkSection.NetworkConnection[loopIndex].IPAddressAllocationMode = ipAllocationMode
 
 				if network["is_primary"] == true {
-					networkSection.PrimaryNetworkConnectionIndex = index
+					networkSection.PrimaryNetworkConnectionIndex = tfNicSlot
 				}
 			}
 		}
 	}
+}
+
+func (vm *VM) ChangeNetworkConfig(networks []map[string]interface{}) (Task, error) {
+	err := vm.Refresh()
+	if err != nil {
+		return Task{}, fmt.Errorf("error refreshing VM before running customization: %v", err)
+	}
+
+	// The API returns unordered list of NICs. This means that networkSection.NetworkConnection[0] will not
+	// necessarily be NIC 0.
+	networkSection, err := vm.GetNetworkConnectionSection()
+
+	vm.updateNicParameters(networks, networkSection)
 
 	networkSection.Xmlns = types.XMLNamespaceVCloud
 	networkSection.Ovf = types.XMLNamespaceOVF
