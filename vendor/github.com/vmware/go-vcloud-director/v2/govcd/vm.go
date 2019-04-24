@@ -106,6 +106,8 @@ func (vm *VM) AppendNetworkConnection(orgvdcnetwork *types.OrgVDCNetwork) (Task,
 }
 
 // GetNetworkConnectionSection returns current networks attached to VM
+//
+// The slice of NICs is not necessarily ordered by NIC index
 func (vm *VM) GetNetworkConnectionSection() (*types.NetworkConnectionSection, error) {
 
 	networkConnectionSection := &types.NetworkConnectionSection{}
@@ -209,17 +211,10 @@ func (vm *VM) updateNicParameters(networks []map[string]interface{}, networkSect
 	util.Logger.Printf("[DEBUG] Initial networks %#+ v\n", pretty.Formatter(networks))
 	util.Logger.Printf("[DEBUG] Initial networkconnection %#+ v\n", pretty.Formatter(networkSection.NetworkConnection))
 
-	for tfNicSlot, network := range networks { //0, POOL===== 2, MANUAL
-		for loopIndex, networkConnection := range networkSection.NetworkConnection {	//2, POOL; 3, POOL; 0, POOl (==)
-			// THE BELOW IF WAS BAD because it comapared nicSlot to networkSection.NetworkConnection slice element index.
-			// This was not correct if slice 'networkSection.NetworkConnection' was not ordered because it comapared
-			// nicSlot to networkSection.NetworkConnection slice element index (not NetworkConnectionIndex) and mixed up
-			// NIC parameters.
-			//if networkConnection.Network == network["orgnetwork"] && tfNicSlot == loopIndex {	// not nic slot
-
-			// Change network config only if we're attached to the same network and have the same virtual slot number
-			if networkConnection.Network == network["orgnetwork"].(string) &&
-				tfNicSlot == networkSection.NetworkConnection[loopIndex].NetworkConnectionIndex {
+	for tfNicSlot, network := range networks {
+		for loopIndex := range networkSection.NetworkConnection {
+			// Change network config only if we have the same virtual slot number as in .tf config
+			if tfNicSlot == networkSection.NetworkConnection[loopIndex].NetworkConnectionIndex {
 
 				// Determine what type of address is requested for the vApp
 				ipAllocationMode := types.IPAllocationModeNone
@@ -252,8 +247,9 @@ func (vm *VM) updateNicParameters(networks []map[string]interface{}, networkSect
 				networkSection.NetworkConnection[loopIndex].IsConnected = true
 				networkSection.NetworkConnection[loopIndex].IPAddress = ipAddress
 				networkSection.NetworkConnection[loopIndex].IPAddressAllocationMode = ipAllocationMode
+				networkSection.NetworkConnection[loopIndex].Network = network["orgnetwork"].(string)
 
-				if network["is_primary"] == true {
+				if network["is_primary"].(bool) {
 					networkSection.PrimaryNetworkConnectionIndex = tfNicSlot
 				}
 			}
@@ -268,7 +264,7 @@ func (vm *VM) ChangeNetworkConfig(networks []map[string]interface{}) (Task, erro
 	}
 
 	// The API returns unordered list of NICs. This means that networkSection.NetworkConnection[0] will not
-	// necessarily be NIC 0.
+	// necessarily be NIC 0 if there is more than one NIC available.
 	networkSection, err := vm.GetNetworkConnectionSection()
 
 	vm.updateNicParameters(networks, networkSection)
