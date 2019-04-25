@@ -249,7 +249,8 @@ func (vm *VM) updateNicParameters(networks []map[string]interface{}, networkSect
 				networkSection.NetworkConnection[loopIndex].IPAddressAllocationMode = ipAllocationMode
 				networkSection.NetworkConnection[loopIndex].Network = network["orgnetwork"].(string)
 
-				if network["is_primary"].(bool) {
+				// If we have one NIC only then it is primary by default, otherwise we check for "is_primary" key
+				if (network["is_primary"] == nil &&  len(networks) == 1) ||network["is_primary"].(bool) {
 					networkSection.PrimaryNetworkConnectionIndex = tfNicSlot
 				}
 			}
