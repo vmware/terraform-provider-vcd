@@ -272,18 +272,6 @@ func testAccCheckVcdNetworkExists(n string, network *govcd.OrgVDCNetwork) resour
 	}
 }
 
-func testAccCheckVcdNetworkIsolatedDestroy(s *terraform.State) error {
-	return testAccCheckVcdNetworkDestroy(s, "vcd_network_isolated")
-}
-
-func testAccCheckVcdNetworkDirectDestroy(s *terraform.State) error {
-	return testAccCheckVcdNetworkDestroy(s, "vcd_network_direct")
-}
-
-func testAccCheckVcdNetworkRoutedDestroy(s *terraform.State) error {
-	return testAccCheckVcdNetworkDestroy(s, "vcd_network_routed")
-}
-
 func testAccCheckVcdNetworkDestroy(s *terraform.State, networkType string) error {
 	conn := testAccProvider.Meta().(*VCDClient)
 

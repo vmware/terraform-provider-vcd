@@ -5,8 +5,6 @@
 package govcd
 
 import (
-	"bytes"
-	"encoding/xml"
 	"errors"
 	"fmt"
 	"net/http"
@@ -87,35 +85,16 @@ func (vdc *Vdc) CreateDisk(diskCreateParams *types.DiskCreateParams) (Task, erro
 		return Task{}, fmt.Errorf("could not find request URL for create disk in vdc Link")
 	}
 
-	// Parse request URI
-	reqUrl, err := url.ParseRequestURI(createDiskLink.HREF)
-	if err != nil {
-		return Task{}, fmt.Errorf("error parse URI: %s", err)
-	}
-
 	// Prepare the request payload
-	diskCreateParams.Xmlns = types.NsVCloud
+	diskCreateParams.Xmlns = types.XMLNamespaceVCloud
 
-	xmlPayload, err := xml.Marshal(diskCreateParams)
-	if err != nil {
-		return Task{}, fmt.Errorf("error xml.Marshal: %s", err)
-	}
-
-	// Send Request
-	reqPayload := bytes.NewBufferString(xml.Header + string(xmlPayload))
-	req := vdc.client.NewRequest(nil, http.MethodPost, *reqUrl, reqPayload)
-	req.Header.Add("Content-Type", createDiskLink.Type)
-	resp, err := checkResp(vdc.client.Http.Do(req))
-	if err != nil {
-		return Task{}, fmt.Errorf("error create disk: %s", err)
-	}
-
-	// Decode response
 	disk := NewDisk(vdc.client)
-	if err = decodeBody(resp, disk.Disk); err != nil {
-		return Task{}, fmt.Errorf("error decoding create disk params response: %s", err)
-	}
 
+	_, err = vdc.client.ExecuteRequest(createDiskLink.HREF, http.MethodPost,
+		createDiskLink.Type, "error create disk: %s", diskCreateParams, disk.Disk)
+	if err != nil {
+		return Task{}, err
+	}
 	// Obtain disk task
 	if disk.Disk.Tasks.Task == nil || len(disk.Disk.Tasks.Task) <= 0 {
 		return Task{}, errors.New("error cannot find disk creation task in API response")
@@ -136,11 +115,11 @@ func (vdc *Vdc) CreateDisk(diskCreateParams *types.DiskCreateParams) (Task, erro
 // Reference: vCloud API Programming Guide for Service Providers vCloud API 30.0 PDF Page 104 - 106,
 // https://vdc-download.vmware.com/vmwb-repository/dcr-public/1b6cf07d-adb3-4dba-8c47-9c1c92b04857/
 // 241956dd-e128-4fcc-8131-bf66e1edd895/vcloud_sp_api_guide_30_0.pdf
-func (d *Disk) Update(newDiskInfo *types.Disk) (Task, error) {
+func (disk *Disk) Update(newDiskInfo *types.Disk) (Task, error) {
 	util.Logger.Printf("[TRACE] Update disk, name: %s, size: %d, HREF: %s \n",
 		newDiskInfo.Name,
 		newDiskInfo.Size,
-		d.Disk.HREF,
+		disk.Disk.HREF,
 	)
 
 	var err error
@@ -154,7 +133,7 @@ func (d *Disk) Update(newDiskInfo *types.Disk) (Task, error) {
 	}
 
 	// Verify the independent disk is not connected to any VM
-	vmRef, err := d.AttachedVM()
+	vmRef, err := disk.AttachedVM()
 	if err != nil {
 		return Task{}, fmt.Errorf("error find attached VM: %s", err)
 	}
@@ -165,7 +144,7 @@ func (d *Disk) Update(newDiskInfo *types.Disk) (Task, error) {
 	var updateDiskLink *types.Link
 
 	// Find the proper link for request
-	for _, diskLink := range d.Disk.Link {
+	for _, diskLink := range disk.Disk.Link {
 		if diskLink.Rel == types.RelEdit && diskLink.Type == types.MimeDisk {
 			util.Logger.Printf("[TRACE] Update disk - found the proper link for request, HREF: %s, name: %s, type: %s,id: %s, rel: %s \n",
 				diskLink.HREF,
@@ -182,43 +161,19 @@ func (d *Disk) Update(newDiskInfo *types.Disk) (Task, error) {
 		return Task{}, fmt.Errorf("could not find request URL for update disk in disk Link")
 	}
 
-	// Parse request URI
-	reqUrl, err := url.ParseRequestURI(updateDiskLink.HREF)
-	if err != nil {
-		return Task{}, fmt.Errorf("error parse URI: %s", err)
-	}
-
 	// Prepare the request payload
-	xmlPayload, err := xml.Marshal(&types.Disk{
-		Xmlns:          types.NsVCloud,
+	xmlPayload := &types.Disk{
+		Xmlns:          types.XMLNamespaceVCloud,
 		Description:    newDiskInfo.Description,
 		Size:           newDiskInfo.Size,
 		Name:           newDiskInfo.Name,
 		StorageProfile: newDiskInfo.StorageProfile,
 		Owner:          newDiskInfo.Owner,
-	})
-	if err != nil {
-		return Task{}, fmt.Errorf("error xml.Marshal: %s", err)
-	}
-	util.Logger.Printf("[TRACE] BEFORE UPDATE DISK\n %s\n", prettyDisk(*d.Disk))
-
-	// Send request
-	reqPayload := bytes.NewBufferString(xml.Header + string(xmlPayload))
-	req := d.client.NewRequest(nil, http.MethodPut, *reqUrl, reqPayload)
-	req.Header.Add("Content-Type", updateDiskLink.Type)
-	resp, err := checkResp(d.client.Http.Do(req))
-	if err != nil {
-		return Task{}, fmt.Errorf("error update disk: %s", err)
-	}
-
-	// Decode response
-	task := NewTask(d.client)
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding find disk response: %s", err)
 	}
 
 	// Return the task
-	return *task, nil
+	return disk.client.ExecuteTaskRequest(updateDiskLink.HREF, http.MethodPut,
+		updateDiskLink.Type, "error updating disk: %s", xmlPayload)
 }
 
 // Remove an independent disk
@@ -229,13 +184,13 @@ func (d *Disk) Update(newDiskInfo *types.Disk) (Task, error) {
 // Reference: vCloud API Programming Guide for Service Providers vCloud API 30.0 PDF Page 106 - 107,
 // https://vdc-download.vmware.com/vmwb-repository/dcr-public/1b6cf07d-adb3-4dba-8c47-9c1c92b04857/
 // 241956dd-e128-4fcc-8131-bf66e1edd895/vcloud_sp_api_guide_30_0.pdf
-func (d *Disk) Delete() (Task, error) {
-	util.Logger.Printf("[TRACE] Delete disk, HREF: %s \n", d.Disk.HREF)
+func (disk *Disk) Delete() (Task, error) {
+	util.Logger.Printf("[TRACE] Delete disk, HREF: %s \n", disk.Disk.HREF)
 
 	var err error
 
 	// Verify the independent disk is not connected to any VM
-	vmRef, err := d.AttachedVM()
+	vmRef, err := disk.AttachedVM()
 	if err != nil {
 		return Task{}, fmt.Errorf("error find attached VM: %s", err)
 	}
@@ -246,7 +201,7 @@ func (d *Disk) Delete() (Task, error) {
 	var deleteDiskLink *types.Link
 
 	// Find the proper link for request
-	for _, diskLink := range d.Disk.Link {
+	for _, diskLink := range disk.Disk.Link {
 		if diskLink.Rel == types.RelRemove {
 			util.Logger.Printf("[TRACE] Delete disk - found the proper link for request, HREF: %s, name: %s, type: %s,id: %s, rel: %s \n",
 				diskLink.HREF,
@@ -263,39 +218,21 @@ func (d *Disk) Delete() (Task, error) {
 		return Task{}, fmt.Errorf("could not find request URL for delete disk in disk Link")
 	}
 
-	// Parse request URI
-	reqUrl, err := url.ParseRequestURI(deleteDiskLink.HREF)
-	if err != nil {
-		return Task{}, fmt.Errorf("error parse uri: %s", err)
-	}
-
-	// Make request
-	req := d.client.NewRequest(nil, http.MethodDelete, *reqUrl, nil)
-	resp, err := checkResp(d.client.Http.Do(req))
-	if err != nil {
-		return Task{}, fmt.Errorf("error delete disk: %s", err)
-	}
-
-	// Decode response
-	task := NewTask(d.client)
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding delete disk params response: %s", err)
-	}
-
 	// Return the task
-	return *task, nil
+	return disk.client.ExecuteTaskRequest(deleteDiskLink.HREF, http.MethodDelete,
+		"", "error delete disk: %s", nil)
 }
 
 // Refresh the disk information by disk href
-func (d *Disk) Refresh() error {
-	util.Logger.Printf("[TRACE] Disk refresh, HREF: %s\n", d.Disk.HREF)
+func (disk *Disk) Refresh() error {
+	util.Logger.Printf("[TRACE] Disk refresh, HREF: %s\n", disk.Disk.HREF)
 
-	disk, err := FindDiskByHREF(d.client, d.Disk.HREF)
+	fetchedDisk, err := FindDiskByHREF(disk.client, disk.Disk.HREF)
 	if err != nil {
 		return err
 	}
 
-	d.Disk = disk.Disk
+	disk.Disk = fetchedDisk.Disk
 
 	return nil
 }
@@ -307,14 +244,13 @@ func (d *Disk) Refresh() error {
 // Reference: vCloud API Programming Guide for Service Providers vCloud API 30.0 PDF Page 107,
 // https://vdc-download.vmware.com/vmwb-repository/dcr-public/1b6cf07d-adb3-4dba-8c47-9c1c92b04857/
 // 241956dd-e128-4fcc-8131-bf66e1edd895/vcloud_sp_api_guide_30_0.pdf
-func (d *Disk) AttachedVM() (*types.Reference, error) {
-	util.Logger.Printf("[TRACE] Disk attached VM, HREF: %s\n", d.Disk.HREF)
+func (disk *Disk) AttachedVM() (*types.Reference, error) {
+	util.Logger.Printf("[TRACE] Disk attached VM, HREF: %s\n", disk.Disk.HREF)
 
 	var attachedVMLink *types.Link
-	var err error
 
 	// Find the proper link for request
-	for _, diskLink := range d.Disk.Link {
+	for _, diskLink := range disk.Disk.Link {
 		if diskLink.Type == types.MimeVMs {
 			util.Logger.Printf("[TRACE] Disk attached VM - found the proper link for request, HREF: %s, name: %s, type: %s,id: %s, rel: %s \n",
 				diskLink.HREF,
@@ -332,24 +268,13 @@ func (d *Disk) AttachedVM() (*types.Reference, error) {
 		return nil, fmt.Errorf("could not find request URL for attached vm in disk Link")
 	}
 
-	// Parse request URI
-	reqUrl, err := url.ParseRequestURI(attachedVMLink.HREF)
-	if err != nil {
-		return nil, fmt.Errorf("error parse uri: %s", err)
-	}
-
-	// Send request
-	req := d.client.NewRequest(nil, http.MethodGet, *reqUrl, nil)
-	req.Header.Add("Content-Type", attachedVMLink.Type)
-	resp, err := checkResp(d.client.Http.Do(req))
-	if err != nil {
-		return nil, fmt.Errorf("error attached vms: %s", err)
-	}
-
 	// Decode request
 	var vms = new(types.Vms)
-	if err = decodeBody(resp, vms); err != nil {
-		return nil, fmt.Errorf("error decoding find disk response: %s", err)
+
+	_, err := disk.client.ExecuteRequest(attachedVMLink.HREF, http.MethodGet,
+		attachedVMLink.Type, "error getting attached vms: %s", nil, vms)
+	if err != nil {
+		return nil, err
 	}
 
 	// If disk is not attached to any VM
@@ -372,27 +297,14 @@ func (vdc *Vdc) FindDiskByHREF(href string) (*Disk, error) {
 func FindDiskByHREF(client *Client, href string) (*Disk, error) {
 	util.Logger.Printf("[TRACE] Find disk By HREF: %s\n", href)
 
-	// Parse request URI
-	reqUrl, err := url.ParseRequestURI(href)
-	if err != nil {
-		return nil, fmt.Errorf("error parse URI: %s", err)
-	}
-
-	// Send request
-	req := client.NewRequest(nil, http.MethodGet, *reqUrl, nil)
-	resp, err := checkResp(client.Http.Do(req))
-	if err != nil {
-		return nil, fmt.Errorf("error find disk: %s", err)
-	}
-
-	// Decode response
 	disk := NewDisk(client)
-	if err = decodeBody(resp, disk.Disk); err != nil {
-		return nil, fmt.Errorf("error decoding find disk response: %s", err)
-	}
+
+	_, err := client.ExecuteRequest(href, http.MethodGet,
+		"", "error finding disk: %s", nil, disk.Disk)
 
 	// Return the disk
-	return disk, nil
+	return disk, err
+
 }
 
 // Find independent disk using disk name. Returns VMRecord query return type

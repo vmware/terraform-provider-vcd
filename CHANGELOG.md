@@ -2,21 +2,23 @@
 
 FEATURES:
 
-* **New Attribute:** `networks` - allows for more detailed NIC specification and also adds multiple NIC support ([#118](https://github.com/terraform-providers/terraform-provider-vcd/issues/118))
-* **New Attribute:** `mac` - Gets mac address after network adapter was created
-* `vcd_vapp_vm` - Ability to add metadata to a VM. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES` ([#158](https://github.com/terraform-providers/terraform-provider-vcd/issues/158))
+* `vcd_vapp_vm` - Ability to add metadata to a VM. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES` [GH-158]
+* `vcd_vapp_vm` - Ability to enable hardware assisted CPU virtualization for VM. It allows hypervisor nesting. [GH-219]
+* resource/vcd_vapp_vm: Add `networks` argument for multiple NIC support and more flexible configuration [GH-118]
+* resource/vcd_vapp_vm: Add `mac` argument to store MAC address in statefile [GH-118]
+
 
 BUG FIXES:
 
-* `vcd_vapp` - Ability to add metadata to empty vApp. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES` ([#158](https://github.com/terraform-providers/terraform-provider-vcd/issues/158))
+* `vcd_vapp` - Ability to add metadata to empty vApp. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES` [GH-158]
 
 BACKWARDS INCOMPATIBILITIES / NOTES:
 
-* `vcd_vapp` - Metadata is no longer added to first VM in vApp it will be added to vApp directly instead. ([#158](https://github.com/terraform-providers/terraform-provider-vcd/issues/158))
+* `vcd_vapp` - Metadata is no longer added to first VM in vApp it will be added to vApp directly instead. [GH-158]
 
 NOTES:
 
-* `vcd_vapp_vm` - Deprecated attributes `network_name`, `network_href` and `ip` in favor of `networks`
+* `vcd_vapp_vm` - Deprecated attributes `network_name`, `network_href` and `ip` in favor of `networks` [GH-118]
 
 ## 2.1.0 (March 27, 2019)
 

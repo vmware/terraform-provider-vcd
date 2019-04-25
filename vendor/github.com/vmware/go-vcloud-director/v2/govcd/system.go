@@ -5,10 +5,8 @@
 package govcd
 
 import (
-	"bytes"
-	"encoding/xml"
 	"fmt"
-	"net/url"
+	"net/http"
 	"strings"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
@@ -27,30 +25,21 @@ import (
 // Overall elements must be in the correct order.
 func CreateOrg(vcdClient *VCDClient, name string, fullName string, description string, settings *types.OrgSettings, isEnabled bool) (Task, error) {
 	vcomp := &types.AdminOrg{
-		Xmlns:       "http://www.vmware.com/vcloud/v1.5",
+		Xmlns:       types.XMLNamespaceVCloud,
 		Name:        name,
 		IsEnabled:   isEnabled,
 		FullName:    fullName,
 		Description: description,
 		OrgSettings: settings,
 	}
-	output, _ := xml.MarshalIndent(vcomp, "  ", "    ")
-	xmlData := bytes.NewBufferString(xml.Header + string(output))
-	// Make Request
+
 	orgCreateHREF := vcdClient.Client.VCDHREF
 	orgCreateHREF.Path += "/admin/orgs"
-	req := vcdClient.Client.NewRequest(map[string]string{}, "POST", orgCreateHREF, xmlData)
-	req.Header.Add("Content-Type", "application/vnd.vmware.admin.organization+xml")
-	resp, err := checkResp(vcdClient.Client.Http.Do(req))
-	if err != nil {
-		return Task{}, fmt.Errorf("error instantiating a new Org: %s", err)
-	}
 
-	task := NewTask(&vcdClient.Client)
-	if err = decodeBody(resp, task.Task); err != nil {
-		return Task{}, fmt.Errorf("error decoding task response: %s", err)
-	}
-	return *task, nil
+	// Return the task
+	return vcdClient.Client.ExecuteTaskRequest(orgCreateHREF.String(), http.MethodPost,
+		"application/vnd.vmware.admin.organization+xml", "error instantiating a new Org: %s", vcomp)
+
 }
 
 // If user specifies a valid organization name, then this returns a
@@ -62,20 +51,14 @@ func GetOrgByName(vcdClient *VCDClient, orgName string) (Org, error) {
 	if err != nil {
 		return Org{}, fmt.Errorf("organization '%s' fetch failed: %#v", orgName, err)
 	}
-	orgHREF, err := url.ParseRequestURI(orgUrl)
+	org := NewOrg(&vcdClient.Client)
+
+	_, err = vcdClient.Client.ExecuteRequest(orgUrl, http.MethodGet,
+		"", "error retrieving org list: %s", nil, org.Org)
 	if err != nil {
-		return Org{}, fmt.Errorf("error parsing org href: %v", err)
-	}
-	req := vcdClient.Client.NewRequest(map[string]string{}, "GET", *orgHREF, nil)
-	resp, err := checkResp(vcdClient.Client.Http.Do(req))
-	if err != nil {
-		return Org{}, fmt.Errorf("error retrieving org: %s", err)
+		return Org{}, err
 	}
 
-	org := NewOrg(&vcdClient.Client)
-	if err = decodeBody(resp, org.Org); err != nil {
-		return Org{}, fmt.Errorf("error decoding org response: %s", err)
-	}
 	return *org, nil
 }
 
@@ -93,15 +76,14 @@ func GetAdminOrgByName(vcdClient *VCDClient, orgName string) (AdminOrg, error) {
 	orgHREF := vcdClient.Client.VCDHREF
 	orgHREF.Path += "/admin/org/" + strings.Split(orgUrl, "/api/org/")[1]
 
-	req := vcdClient.Client.NewRequest(map[string]string{}, "GET", orgHREF, nil)
-	resp, err := checkResp(vcdClient.Client.Http.Do(req))
-	if err != nil {
-		return AdminOrg{}, fmt.Errorf("error retrieving org: %s", err)
-	}
 	org := NewAdminOrg(&vcdClient.Client)
-	if err = decodeBody(resp, org.AdminOrg); err != nil {
-		return AdminOrg{}, fmt.Errorf("error decoding org response: %s", err)
+
+	_, err = vcdClient.Client.ExecuteRequest(orgHREF.String(), http.MethodGet,
+		"", "error retrieving org: %s", nil, org.AdminOrg)
+	if err != nil {
+		return AdminOrg{}, err
 	}
+
 	return *org, nil
 }
 
@@ -109,15 +91,15 @@ func GetAdminOrgByName(vcdClient *VCDClient, orgName string) (AdminOrg, error) {
 func getOrgHREF(vcdClient *VCDClient, orgName string) (string, error) {
 	orgListHREF := vcdClient.Client.VCDHREF
 	orgListHREF.Path += "/org"
-	req := vcdClient.Client.NewRequest(map[string]string{}, "GET", orgListHREF, nil)
-	resp, err := checkResp(vcdClient.Client.Http.Do(req))
-	if err != nil {
-		return "", fmt.Errorf("error retrieving org list: %s", err)
-	}
+
 	orgList := new(types.OrgList)
-	if err = decodeBody(resp, orgList); err != nil {
-		return "", fmt.Errorf("error decoding response: %s", err)
+
+	_, err := vcdClient.Client.ExecuteRequest(orgListHREF.String(), http.MethodGet,
+		"", "error retrieving org list: %s", nil, orgList)
+	if err != nil {
+		return "", err
 	}
+
 	// Look for orgName within OrgList
 	for _, org := range orgList.Org {
 		if org.Name == orgName {
