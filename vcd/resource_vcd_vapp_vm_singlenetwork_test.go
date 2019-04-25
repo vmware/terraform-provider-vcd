@@ -1,7 +1,6 @@
 package vcd
 
 import (
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -88,17 +87,11 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configTextStep0,
-				// ExpectError is old bug/problem with legacy network configuration that on every run it
-				// it stores real IP in the statefile, but in .tf config one sets allocated. Due to
-				// this on every plan/apply user gets similar messages:
-				// UPDATE: vcd_vapp_vm.TestAccVcdVAppVmSingleNICNetworkallocated
-				//          ip: "11.10.0.152" => "allocated"
-				ExpectError: regexp.MustCompile(`ip: "11.10.0.152" => "allocated"`),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(netVappName, netVmNameAllocated, "vcd_vapp_vm."+netVmNameAllocated, &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmNameAllocated, "name", netVmNameAllocated),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmNameAllocated, "network_name", "singlenic-net"),
-					//resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "mac"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmNameAllocated, "mac"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmNameAllocated, "ip", "11.10.0.152"),
 				),
 			},
@@ -110,15 +103,11 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 			},
 			resource.TestStep{
 				Config: configTextStep1,
-				// This is old bug/problem with legacy network configuration that on every run it
-				// it store real IP in the statefile, but in .tf config one sets dhcp. Due to
-				// this on every plan/apply user gets update messages.
-				ExpectError: regexp.MustCompile(`" => "dhcp"`),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(netVappName, netVmNameDHCP, "vcd_vapp_vm."+netVmNameDHCP, &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmNameDHCP, "name", netVmNameDHCP),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmNameDHCP, "network_name", "singlenic-net"),
-					//resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "mac"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmNameDHCP, "mac"),
 
 					// Unfortunatelly DHCP is not guaranteed to report IP due to VMware tools being unavailable
 					// quickly enough or the machine not using DHCP by default.
@@ -137,7 +126,7 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 					testAccCheckVcdVAppVmExists(netVappName, netVmNameManual, "vcd_vapp_vm."+netVmNameManual, &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmNameManual, "name", netVmNameManual),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmNameManual, "network_name", "singlenic-net"),
-					//resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "mac"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmNameManual, "mac"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmNameManual, "ip", "11.10.0.152"),
 				),
 			},
