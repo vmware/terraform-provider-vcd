@@ -24,6 +24,20 @@ testacc: fmtcheck
 testmulti: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' multiple"
 
+testcatalog: fmtcheck
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' catalog"
+
+testvapp: fmtcheck
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' vapp"
+
+testvm: fmtcheck
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' vm"
+
+testgateway: fmtcheck
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' gateway"
+
+testnetwork: fmtcheck
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' network"
 
 vet:
 	@echo "go vet ."
@@ -54,7 +68,7 @@ test-compile:
 		echo "  make test-compile TEST=./$(PKG_NAME)"; \
 		exit 1; \
 	fi
-	go test -c $(TEST) $(TESTARGS)
+	go test -tags ALL -c $(TEST) $(TESTARGS)
 
 website:
 ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))

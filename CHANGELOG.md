@@ -12,6 +12,7 @@ BUG FIXES:
 BACKWARDS INCOMPATIBILITIES / NOTES:
 
 * `vcd_vapp` - Metadata is no longer added to first VM in vApp it will be added to vApp directly instead. [GH-158]
+* Tests files are now all tagged. Running them through Makefile works as before, but manual execution requires specific tags. Run `go test -v .` for tags list.
 
 ## 2.1.0 (March 27, 2019)
 

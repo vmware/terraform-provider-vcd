@@ -1,3 +1,5 @@
+// +build vapp vm ALL functional
+
 package vcd
 
 import (
@@ -61,6 +63,10 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 			},
 		},
 	})
+}
+
+func init() {
+	testingTags["vm"] = "resource_vcd_vapp_vm_test.go"
 }
 
 const testAccCheckVcdVAppVm_basic = `

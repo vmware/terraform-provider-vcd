@@ -1,3 +1,5 @@
+// +build catalog ALL functional
+
 package vcd
 
 import (
@@ -99,6 +101,10 @@ func testAccCheckCatalogDestroy(s *terraform.State) error {
 	}
 
 	return nil
+}
+
+func init() {
+	testingTags["catalog"] = "resource_vcd_catalog_test.go"
 }
 
 const testAccCheckVcdCatalogBasic = `

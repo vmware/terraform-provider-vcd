@@ -25,6 +25,54 @@ template (`catalogItem`) are defined in the configuration file, new ones will be
 the test. You can choose to preserve catalog and vApp template across runs (use the `preserve` field in the
 configuration file).
 
+The tests can run with several tags that define which components are tested.
+Using the Makefile, you can run one of the following:
+
+```bash
+make testcatalog
+make testnetwork
+make testgateway
+make testvapp
+make testvm
+```
+
+For more options, you can run manually in `./vcd`
+When running `go test` without tags, we'll get a list of tags that are available.
+
+```bash
+$ go test -v .
+=== RUN   TestTags
+--- FAIL: TestTags (0.00s)
+    api_test.go:66: # No tags were defined
+    api_test.go:41:
+        # -----------------------------------------------------
+        # Tags are required to run the tests
+        # -----------------------------------------------------
+
+        At least one of the following tags should be defined:
+
+           * ALL :       Runs all the tests
+           * functional: Runs all the acceptance tests
+           * unit:       Runs unit tests that don't need a live vCD (currently unused, but we plan to)
+
+           * catalog:    Runs catalog related tests (also catalog_item, media)
+           * disk:       Runs disk related tests
+           * network:    Runs network related tests
+           * gateway:    Runs edge gateway related tests
+           * org:        Runs org related tests
+           * vapp:       Runs vapp related tests
+           * vdc:        Runs vdc related tests
+           * vm:         Runs vm related tests
+
+        Examples:
+
+        go test -tags functional -v -timeout=45m .
+        go test -tags catalog -v -timeout=15m .
+        go test -tags "org vdc" -v -timeout=5m .
+FAIL
+FAIL	github.com/terraform-providers/terraform-provider-vcd/v2/vcd	0.019s
+```
+
 There are several environment variables that can affect the tests:
 
 * `TF_ACC=1` enables the acceptance tests. It is also set when you run `make testacc`.
