@@ -215,8 +215,7 @@ func checkIPAddressAllocationMode() schema.SchemaValidateFunc {
 func suppressIfIPIsOneOf() schema.SchemaDiffSuppressFunc {
 	return func(k string, old string, new string, d *schema.ResourceData) bool {
 		switch {
-		// In case of DHCP the IP could have been set to ""
-		case new == "dhcp" && (net.ParseIP(old) != nil || old == ""):
+		case new == "dhcp" && net.ParseIP(old) != nil:
 			return true
 		case new == "allocated" && net.ParseIP(old) != nil:
 			return true
@@ -820,8 +819,15 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 
 	switch {
 	// network_name is not set. networks is set in config
+	// TODO remove this case block when we cleanup deprecated 'ip' and 'network_name' attributes
 	case d.Get("network_name").(string) != "":
-		d.Set("ip", vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddress)
+		ip := vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddress
+		if vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddressAllocationMode == types.IPAllocationModeDHCP &&
+			ip == "" {
+			ip = "dhcp"
+		}
+
+		d.Set("ip", ip)
 		d.Set("mac", vm.VM.NetworkConnectionSection.NetworkConnection[0].MACAddress)
 	// We are using networks block and rebuilding statefile
 	case len(d.Get("networks").([]interface{})) > 0:
@@ -845,6 +851,7 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 			if i == vm.VM.NetworkConnectionSection.PrimaryNetworkConnectionIndex {
 				singleNIC["is_primary"] = true
 			}
+
 			nets = append(nets, singleNIC)
 		}
 

@@ -25,14 +25,14 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 		return
 	}
 	var params = StringMap{
-		"Org":         testConfig.VCD.Org,
-		"Vdc":         testConfig.VCD.Vdc,
-		"EdgeGateway": testConfig.Networking.EdgeGateway,
-		"Catalog":     testSuiteCatalogName,
-		"CatalogItem": testSuiteCatalogOVAItem,
+		"Org":           testConfig.VCD.Org,
+		"Vdc":           testConfig.VCD.Vdc,
+		"EdgeGateway":   testConfig.Networking.EdgeGateway,
+		"Catalog":       testSuiteCatalogName,
+		"CatalogItem":   testSuiteCatalogOVAItem,
 		"VMNetworkName": "singlenic-net",
-		"VAppName":    netVappName,
-		"IP":		   "allocated",
+		"VAppName":      netVappName,
+		"IP":            "allocated",
 	}
 
 	// cleanup object is used to get rid of VM with previous configuration type
@@ -41,7 +41,6 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "-vAppcleanup"
 	configTextCleanupVapp := templateFill(testAccCheckVcdVAppVmSingleNICNetworkNoVMNoVapp, params)
-
 
 	// allocated
 	netVmNameAllocated := netVmName1 + "allocated"
@@ -76,8 +75,8 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 	//debugPrintf("#[DEBUG] CONFIGURATION (none): %s\n", configTextStep3)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckVcdVAppVmDestroy(netVmNameAllocated),
 			testAccCheckVcdVAppVmDestroy(netVmNameDHCP),
@@ -110,8 +109,9 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmNameDHCP, "mac"),
 
 					// Unfortunatelly DHCP is not guaranteed to report IP due to VMware tools being unavailable
-					// quickly enough or the machine not using DHCP by default.
-					//resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmNameDHCP, "ip", "11.10.0.2"),
+					// quickly enough or the machine not using DHCP by default. If it is not then we expect at
+					// least "dhcp" string to be set and this allows us to validate if the field is set at all.
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmNameDHCP, "ip"),
 				),
 			},
 			// TODO remove cleanup steps once we have locks on objects
@@ -130,7 +130,6 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmNameManual, "ip", "11.10.0.152"),
 				),
 			},
-
 
 			//// TODO remove cleanup steps once we have locks on objects
 			// This is a hack to remove VM from vApp. And then vApp to avoid breaking network
@@ -155,7 +154,6 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 			//	),
 			//},
 		},
-
 	})
 }
 
