@@ -215,7 +215,8 @@ func checkIPAddressAllocationMode() schema.SchemaValidateFunc {
 func suppressIfIPIsOneOf() schema.SchemaDiffSuppressFunc {
 	return func(k string, old string, new string, d *schema.ResourceData) bool {
 		switch {
-		case new == "dhcp" && net.ParseIP(old) != nil:
+		// In case of DHCP the IP could have been set to ""
+		case new == "dhcp" && (net.ParseIP(old) != nil || old == ""):
 			return true
 		case new == "allocated" && net.ParseIP(old) != nil:
 			return true
