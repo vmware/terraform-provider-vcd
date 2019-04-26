@@ -6,11 +6,12 @@ package govcd
 
 import (
 	"fmt"
-	"github.com/kr/pretty"
 	"net"
 	"net/http"
 	"net/url"
 	"strconv"
+
+	"github.com/kr/pretty"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
@@ -220,24 +221,34 @@ func (vm *VM) updateNicParameters(networks []map[string]interface{}, networkSect
 				ipAllocationMode := types.IPAllocationModeNone
 				ipAddress := "Any"
 
-				// TODO: Review current behaviour of using DHCP when left blank
-				if network["ip"].(string) == "dhcp" {
+				var ipFieldString string
+
+				ipField, ipIsSet := network["ip"]
+				if ipIsSet {
+					ipFieldString = ipField.(string)
+				}
+
+				switch {
+				// TODO 3.0 remove from here when legacy `ip` and `network_name` attributes are removed
+				case ipIsSet && ipFieldString == "dhcp": // Legacy ip="dhcp" mode
 					ipAllocationMode = types.IPAllocationModeDHCP
-				} else if network["ip"].(string) == "allocated" {
+				case ipIsSet && ipFieldString == "allocated": // Legacy ip="allocated" mode
 					ipAllocationMode = types.IPAllocationModePool
-				} else if network["ip"].(string) == "none" {
+				case ipIsSet && ipFieldString == "none": // Legacy ip="none" mode
 					ipAllocationMode = types.IPAllocationModeNone
-				} else if network["ip"].(string) != "" {
+
+				// Legacy ip="valid_ip" mode (currently it is hit by ip_allocation_mode=MANUAL as well)
+				case ipIsSet && net.ParseIP(ipFieldString) != nil:
 					ipAllocationMode = types.IPAllocationModeManual
-					if net.ParseIP(network["ip"].(string)) != nil {
-						// In this case we have types.IPAllocationModeNone if IP is set
-						// But in fact this would be manual and could still be used.
-						// ipAllocationMode = types.IPAllocationModeManual
-						ipAddress = network["ip"].(string)
-					} else {
-						ipAllocationMode = types.IPAllocationModeDHCP
-					}
-				} else { // If IP is not set we use proper `ip_allocation_mode` specified
+					ipAddress = ipFieldString
+				case ipIsSet && ipField != "": // Legacy ip="something_invalid" we default to DHCP. This is odd but backwards compatible.
+					ipAllocationMode = types.IPAllocationModeDHCP
+					// TODO 3.0 remove until here when legacy `ip` and `network_name` attributes are removed
+
+				case ipIsSet && net.ParseIP(ipFieldString) != nil && (network["ip_allocation_mode"].(string) == types.IPAllocationModeManual):
+					ipAllocationMode = types.IPAllocationModeManual
+					ipAddress = ipFieldString
+				default: // New functionality. IP was not set and we're defaulting to provided ip_allocation_mode (only manual requires the IP)
 					ipAllocationMode = network["ip_allocation_mode"].(string)
 				}
 
@@ -247,10 +258,16 @@ func (vm *VM) updateNicParameters(networks []map[string]interface{}, networkSect
 				networkSection.NetworkConnection[loopIndex].IsConnected = true
 				networkSection.NetworkConnection[loopIndex].IPAddress = ipAddress
 				networkSection.NetworkConnection[loopIndex].IPAddressAllocationMode = ipAllocationMode
-				networkSection.NetworkConnection[loopIndex].Network = network["orgnetwork"].(string)
+
+				// for IPAllocationModeNone we hardcode special network name used by vcd 'none'
+				if ipAllocationMode == types.IPAllocationModeNone {
+					networkSection.NetworkConnection[loopIndex].Network = types.NoneNetwork
+				} else {
+					networkSection.NetworkConnection[loopIndex].Network = network["orgnetwork"].(string)
+				}
 
 				// If we have one NIC only then it is primary by default, otherwise we check for "is_primary" key
-				if (network["is_primary"] == nil &&  len(networks) == 1) ||network["is_primary"].(bool) {
+				if (len(networks) == 1) || (network["is_primary"] != nil && network["is_primary"].(bool)) {
 					networkSection.PrimaryNetworkConnectionIndex = tfNicSlot
 				}
 			}
