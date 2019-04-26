@@ -110,7 +110,7 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 
 					// Unfortunatelly DHCP is not guaranteed to report IP due to VMware tools being unavailable
 					// quickly enough or the machine not using DHCP by default. If it is not then we expect at
-					// least "dhcp" string to be set and this allows us to validate if the field is set at all.
+					// least "na" string to be set and this allows us to validate if the field is set at all.
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmNameDHCP, "ip"),
 				),
 			},
@@ -141,7 +141,8 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 				Config: configTextCleanupVapp,
 			},
 
-			//// This last step has a BUG and does not work for now in master branch.
+			// This last step always had BUG and does not work for now in master branch.
+			// Because we're deprecting the `ip` and `network_name` attributes there is no point in fixing it.
 
 			//resource.TestStep{
 			//	Config: configTextStep3,
