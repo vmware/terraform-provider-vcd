@@ -7,12 +7,12 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
-func TestAccVcdVAppVmNetwork(t *testing.T) {
+func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 	var (
 		vapp        govcd.VApp
 		vm          govcd.VM
-		netVappName string = "TestAccVcdVAppNetwork"
-		netVmName1  string = "TestAccVcdVAppVmNetwork"
+		netVappName string = t.Name()
+		netVmName1  string = t.Name() + "VM"
 	)
 
 	if vcdShortTest {
@@ -30,9 +30,6 @@ func TestAccVcdVAppVmNetwork(t *testing.T) {
 	}
 
 	configTextVM := templateFill(testAccCheckVcdVAppVmNetwork, params)
-
-	//params["FuncName"] = t.Name() + "-NetworkOnly"
-	//configTextStepNetwork := templateFill(testAccCheckVcdVAppVmNetworkOnly, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 	resource.Test(t, resource.TestCase{
