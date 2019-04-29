@@ -29,15 +29,19 @@ func TestAccVcdVAppVmNetwork(t *testing.T) {
 		"VMName":      netVmName1,
 	}
 
-	configText := templateFill(testAccCheckVcdVAppVmNetwork, params)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
+	configTextVM := templateFill(testAccCheckVcdVAppVmNetwork, params)
+
+	//params["FuncName"] = t.Name() + "-NetworkOnly"
+	//configTextStepNetwork := templateFill(testAccCheckVcdVAppVmNetworkOnly, params)
+
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckVcdVAppVmDestroy(netVappName),
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: configText,
+				Config: configTextVM,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm."+netVmName1, &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "name", netVmName1),
@@ -85,7 +89,7 @@ func TestAccVcdVAppVmNetwork(t *testing.T) {
 
 ////
 const testAccCheckVcdVAppVmNetwork = `
-resource "vcd_network_routed" "net" {
+	resource "vcd_network_routed" "net" {
 	org = "{{.Org}}"
 	vdc = "{{.Vdc}}"
 
@@ -137,11 +141,6 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 	cpus          = 2
 	cpu_cores     = 1
 
-	# ip = "dhcp"
-	# ip = "allocated"
-	# ip = "11.10.0.155"
-	# network_name = "${vcd_network_routed.net.name}"
-
 	networks = [{
 	  orgnetwork = "${vcd_network_routed.net.name}"
 	  ip_allocation_mode = "POOL"
@@ -174,74 +173,3 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 	]
 }
 `
-
-//
-//const testAccCheckVcdVAppVmNetwork = `
-//resource "vcd_network_routed" "net" {
-//	org = "{{.Org}}"
-//	vdc = "{{.Vdc}}"
-//
-//	name         = "multinic-net"
-//	edge_gateway = "{{.EdgeGateway}}"
-//	gateway      = "11.10.0.1"
-//
-//	dhcp_pool {
-//	  start_address = "11.10.0.2"
-//	  end_address   = "11.10.0.100"
-//	}
-//
-//	static_ip_pool {
-//	  start_address = "11.10.0.152"
-//	  end_address   = "11.10.0.254"
-//	}
-// }
-//
-// resource "vcd_network_routed" "net2" {
-//	org = "{{.Org}}"
-//	vdc = "{{.Vdc}}"
-//
-//	name         = "multinic-net2"
-//	edge_gateway = "{{.EdgeGateway}}"
-//	gateway      = "12.10.0.1"
-//
-//	dhcp_pool {
-//	  start_address = "12.10.0.2"
-//	  end_address   = "12.10.0.100"
-//	}
-//
-//	static_ip_pool {
-//	  start_address = "12.10.0.152"
-//	  end_address   = "12.10.0.254"
-//	}
-// }
-//
-// resource "vcd_vapp" "{{.VAppName}}" {
-//	org = "{{.Org}}"
-//	vdc = "{{.Vdc}}"
-//
-//	name = "{{.VAppName}}"
-// }
-//
-// resource "vcd_vapp_vm" "{{.VMName}}" {
-//	org = "{{.Org}}"
-//	vdc = "{{.Vdc}}"
-//
-//	vapp_name     = "${vcd_vapp.{{.VAppName}}.name}"
-//	name          = "{{.VMName}}"
-//	catalog_name  = "{{.Catalog}}"
-//	template_name = "{{.CatalogItem}}"
-//	memory        = 512
-//	cpus          = 2
-//	cpu_cores     = 1
-//
-//	# ip = "dhcp"
-//	# ip = "allocated"
-//	# ip = "11.10.0.155"
-//	# network_name = "${vcd_network_routed.net.name}"
-//
-//	networks = [{
-//		ip_allocation_mode = "NONE"
-//	  },
-//	]
-// }
-//`
