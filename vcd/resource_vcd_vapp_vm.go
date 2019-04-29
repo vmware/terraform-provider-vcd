@@ -352,15 +352,8 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		for _, netName := range netNames {
 			// if the network is not assigned, assigne it to vapp
 			if _, ok := m[netName]; !ok {
-				//err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 				n, err := vdc.FindVDCNetwork(netName)
 				_, err = addVdcNetwork(n.OrgVDCNetwork.Name, vdc, vapp, vcdClient)
-				// task, err := vapp.AppendNetworkConfig(n.OrgVDCNetwork)
-				// if err != nil {
-				// 	return resource.RetryableError(fmt.Errorf("failed to add network to vapp: %#v", err))
-				// }
-				// return resource.RetryableError(task.WaitTaskCompletion())
-				//})
 				if err != nil {
 					return fmt.Errorf("the VDC networks '%s' must be assigned to the vApp. Currently this networks are assigned %s", netNames, vAppNetworkNames)
 				}
