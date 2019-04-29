@@ -175,7 +175,6 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 }
 `
 
-
 //
 //const testAccCheckVcdVAppVmNetwork = `
 //resource "vcd_network_routed" "net" {
