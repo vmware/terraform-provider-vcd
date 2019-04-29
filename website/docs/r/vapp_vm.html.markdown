@@ -117,16 +117,19 @@ one of dhcp, allocated or none. If given the address must be within the
   `dhcp_pool` set with at least one available IP then this will be set with
 DHCP. **Conflicts with** with networks.
 * `networks` - (Optional; *v2.2+*) List of network interfaces to attach to vm. **Conflicts with**: networks, ip. **Note**: all params of this parameter and itself do force recreation of vms!
-  * `orgnetwork` (Required) Name of the network this VM should connect to.
-  * `ip` (Optional) One of: dhcp, allocated, none or an ip.
-  * `ip_allocation_mode` (Optional) IP address allocation mode. Defaults to "POOL". One of:
-    * `POOL` (A static IP address is allocated automatically from a pool of addresses.)
-    * `DHCP` (The IP address is obtained from a DHCP service.)
-    * `MANUAL` (The IP address is assigned manually in the IpAddress element.)
-    * `NONE` (No IP addressing mode specified.)
-  * `is_primary` (Optional) Set to true if network interface should be primary. Defaults to false.
-  * `adapter_type` (Optional) One of Vlance, VMXNET, Flexible, E1000, E1000e, VMXNET2, VMXNET3. For more details about the adapter types visit: https://kb.vmware.com/s/article/1001805 **Note**: Cannot be used right now because changing adapter_type would need a bigger rework of AddVM() function in go-vcloud-director library to allow to set adapter_type while creation of NetworkConnection.
+  * `orgnetwork` (Optional) Name of the network this VM should connect to. Always required except for`ip_allocation_mode=NONE`.
+  * `ip` (Computed, Optional) Empty or valid IP address if `ip_allocation_mode=MANUAL`. IP address will be set in case of `ip_allocation_mode=POOL`.
+  * `is_primary` (Optional) Set to true if network interface should be primary. First network card in the list will be primary by default.
   * `mac` - (Computed) Mac address of network interface.
+  * `ip_allocation_mode` (Required) IP address allocation mode. One of `POOL`, `DHCP`, `MANUAL`, `NONE`:  
+    
+      **`POOL`** - Static IP address is allocated automatically from defined static pool in network.
+      
+      **`DHCP`** - IP address is obtained from a DHCP service. Ip field is not guaranteed to be populated.
+      
+      **`MANUAL`** - IP address is assigned manually in the `ip` field. Must be valid IP address from static pool.
+      
+      **`NONE`** - No IP addressing mode specified. Network card will be added without any networks attached.
 * `power_on` - (Optional) A boolean value stating if this vApp should be powered on. Default is `true`
 * `accept_all_eulas` - (Optional; *v2.0+*) Automatically accept EULA if OVA has it. Default is `true`
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations

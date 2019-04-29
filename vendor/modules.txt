@@ -102,7 +102,6 @@ github.com/hashicorp/terraform/plugin
 github.com/hashicorp/terraform/helper/hashcode
 github.com/hashicorp/terraform/helper/resource
 github.com/hashicorp/terraform/helper/schema
-github.com/hashicorp/terraform/helper/validation
 github.com/hashicorp/terraform/terraform
 github.com/hashicorp/terraform/plugin/discovery
 github.com/hashicorp/terraform/config/module
@@ -110,7 +109,6 @@ github.com/hashicorp/terraform/helper/config
 github.com/hashicorp/terraform/helper/logging
 github.com/hashicorp/terraform/config
 github.com/hashicorp/terraform/config/configschema
-github.com/hashicorp/terraform/helper/structure
 github.com/hashicorp/terraform/dag
 github.com/hashicorp/terraform/flatmap
 github.com/hashicorp/terraform/helper/hilmapstructure
@@ -163,7 +161,7 @@ github.com/ulikunitz/xz
 github.com/ulikunitz/xz/internal/xlog
 github.com/ulikunitz/xz/lzma
 github.com/ulikunitz/xz/internal/hash
-# github.com/vmware/go-vcloud-director/v2 v2.2.0-alpha.2 => github.com/Didainius/go-vcloud-director/v2 v2.2.0-alpha.2.0.20190425093242-592d71dd5b67
+# github.com/vmware/go-vcloud-director/v2 v2.2.0-alpha.2 => github.com/Didainius/go-vcloud-director/v2 v2.2.0-alpha.2.0.20190426112708-9e9c448ee706
 github.com/vmware/go-vcloud-director/v2/govcd
 github.com/vmware/go-vcloud-director/v2/types/v56
 github.com/vmware/go-vcloud-director/v2/util

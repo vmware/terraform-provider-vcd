@@ -7,11 +7,11 @@ import (
 	"net"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -119,30 +119,33 @@ func resourceVcdVAppVm() *schema.Resource {
 				Type:          schema.TypeList,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"orgnetwork": {
-							ForceNew: false,
-							Required: true,
-							Type:     schema.TypeString,
-						},
-						"ip": {
-							Computed:     true,
-							ForceNew:     false,
-							Optional:     true,
-							Type:         schema.TypeString,
-							ValidateFunc: validation.SingleIP(),
-						},
 						"ip_allocation_mode": {
-							// Default:      "POOL",
 							ForceNew:     true,
 							Required:     true,
 							Type:         schema.TypeString,
 							ValidateFunc: checkIPAddressAllocationMode(),
 						},
+						"orgnetwork": {
+							ForceNew: false,
+							Optional: true, // In case of ip_allocation_mode = NONE it is not required
+							Type:     schema.TypeString,
+						},
+						"ip": {
+							Computed: true,
+							ForceNew: false,
+							Optional: true,
+							Type:     schema.TypeString,
+							// Must accept empty string because of looping over vars purposes
+							ValidateFunc: checkEmptyOrSingleIP(),
+						},
 						"is_primary": {
 							Default:  false,
 							ForceNew: false,
 							Optional: true,
-							Type:     schema.TypeBool,
+							// schema change to false would not do anything useful unless
+							// other adapter is set to true therefore this change is suppressed.
+							DiffSuppressFunc: falseBoolSuppress(),
+							Type:             schema.TypeBool,
 						},
 						//  Cannot be used right now because changing adapter_type would need
 						//  a bigger rework of AddVM() function in go-vcloud-director library
@@ -202,6 +205,22 @@ func resourceVcdVAppVm() *schema.Resource {
 	}
 }
 
+func checkEmptyOrSingleIP() schema.SchemaValidateFunc {
+	return func(i interface{}, k string) (s []string, es []error) {
+		v, ok := i.(string)
+		if !ok {
+			es = append(es, fmt.Errorf("expected type of %s to be string", k))
+			return
+		}
+
+		if net.ParseIP(v) == nil && v != "" {
+			es = append(es, fmt.Errorf(
+				"expected %s to be empty or contain a valid IP, got: %s", k, v))
+		}
+		return
+	}
+}
+
 func checkIPAddressAllocationMode() schema.SchemaValidateFunc {
 	return func(v interface{}, key string) (warns []string, errs []error) {
 		if v == "POOL" || v == "DHCP" || v == "MANUAL" || v == "NONE" {
@@ -212,11 +231,11 @@ func checkIPAddressAllocationMode() schema.SchemaValidateFunc {
 	}
 }
 
+// TODO 3.0 remove once `ip` and `network_name` attributes are removed
 func suppressIfIPIsOneOf() schema.SchemaDiffSuppressFunc {
 	return func(k string, old string, new string, d *schema.ResourceData) bool {
 		switch {
-		// In case of DHCP the IP could have been set to ""
-		case new == "dhcp" && (net.ParseIP(old) != nil || old == ""):
+		case new == "dhcp" && (old == "na" || net.ParseIP(old) != nil):
 			return true
 		case new == "allocated" && net.ParseIP(old) != nil:
 			return true
@@ -225,6 +244,14 @@ func suppressIfIPIsOneOf() schema.SchemaDiffSuppressFunc {
 		default:
 			return false
 		}
+	}
+}
+
+// falseBoolSuppress suppresses change if value is set to false
+func falseBoolSuppress() schema.SchemaDiffSuppressFunc {
+	return func(k string, old string, new string, d *schema.ResourceData) bool {
+		_, isTrue := d.GetOk(k)
+		return !isTrue
 	}
 }
 
@@ -287,6 +314,11 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	case len(networks) > 0:
 		for _, network := range networks {
 			n := network.(map[string]interface{})
+			// Special reference type network 'none' does not exist in OrgVDC
+			if strings.ToLower(n["ip_allocation_mode"].(string)) == types.NoneNetwork {
+				nets = append(nets, &types.OrgVDCNetwork{Name: types.NoneNetwork})
+				continue
+			}
 			net, err := vdc.FindVDCNetwork(n["orgnetwork"].(string))
 			nets = append(nets, net.OrgVDCNetwork)
 			if err != nil {
@@ -820,8 +852,15 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 
 	switch {
 	// network_name is not set. networks is set in config
+	// TODO remove this case block when we cleanup deprecated 'ip' and 'network_name' attributes
 	case d.Get("network_name").(string) != "":
-		d.Set("ip", vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddress)
+		ip := vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddress
+		// If allocation mode is DHCP and we're not getting the IP - we set this to na (not available)
+		if vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddressAllocationMode == types.IPAllocationModeDHCP && ip == "" {
+			ip = "na"
+		}
+
+		d.Set("ip", ip)
 		d.Set("mac", vm.VM.NetworkConnectionSection.NetworkConnection[0].MACAddress)
 	// We are using networks block and rebuilding statefile
 	case len(d.Get("networks").([]interface{})) > 0:
@@ -838,13 +877,16 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 			singleNIC := make(map[string]interface{})
 			singleNIC["ip"] = vmNet.IPAddress
 			singleNIC["mac"] = vmNet.MACAddress
-			singleNIC["orgnetwork"] = vmNet.Network
 			singleNIC["ip_allocation_mode"] = vmNet.IPAddressAllocationMode
+			if vmNet.Network != types.NoneNetwork {
+				singleNIC["orgnetwork"] = vmNet.Network
+			}
 
 			singleNIC["is_primary"] = false
 			if i == vm.VM.NetworkConnectionSection.PrimaryNetworkConnectionIndex {
 				singleNIC["is_primary"] = true
 			}
+
 			nets = append(nets, singleNIC)
 		}
 
