@@ -38,6 +38,9 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 	params["FuncName"] = t.Name() + "-NetOnly"
 	configTextNetwork := templateFill(testAccCheckVcdVAppVmSingleNICNetworkOnly, params)
 
+	params["FuncName"] = t.Name() + "-NetVapp"
+	configTextNetworkVapp := templateFill(testAccCheckVcdVAppVmSingleNICNetworkVapp, params)
+
 	// allocated
 	netVmNameAllocated := netVmName1 + "allocated"
 	params["VMName"] = netVmNameAllocated
@@ -92,9 +95,9 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 			// TODO remove cleanup steps once we have locks on objects
 			// This is a hack to remove VM from vApp before creating new one. Otherwise it will fail due to vApp
 			// is unable to handle removing one VM and creating another one at the same time.
-			//resource.TestStep{
-			//	Config: configTextCleanupVM,
-			//},
+			resource.TestStep{
+				Config: configTextNetworkVapp,
+			},
 			resource.TestStep{
 				Config: configTextStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -112,9 +115,9 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 			// TODO remove cleanup steps once we have locks on objects
 			// This is a hack to remove VM from vApp before creating new one. Otherwise it will fail due to vApp
 			// is unable to handle removing one VM and creating another one at the same time.
-			//resource.TestStep{
-			//	Config: configTextCleanupVM,
-			//},
+			resource.TestStep{
+				Config: configTextNetworkVapp,
+			},
 			resource.TestStep{
 				Config: configTextStep2,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -127,8 +130,11 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 			},
 
 			//// TODO remove cleanup steps once we have locks on objects
-			// This is a hack to remove VM and vApp firstto avoid breaking network
+			// This is a hack to remove VM first, then vApp to avoid breaking network
 			// removal. It mimics parallelism=1. The problem is that vApp undeploy is not
+			resource.TestStep{
+				Config: configTextNetworkVapp,
+			},
 			resource.TestStep{
 				Config: configTextNetwork,
 			},
@@ -172,14 +178,15 @@ resource "vcd_network_routed" "net" {
 }
 `
 
-const testAccCheckVcdVAppVmSingleNICNetwork = testAccCheckVcdVAppVmSingleNICNetworkOnly + `
+const testAccCheckVcdVAppVmSingleNICNetworkVapp = testAccCheckVcdVAppVmSingleNICNetworkOnly + `
 resource "vcd_vapp" "{{.VAppName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
   name = "{{.VAppName}}"
 }
-
+`
+const testAccCheckVcdVAppVmSingleNICNetwork = testAccCheckVcdVAppVmSingleNICNetworkVapp + `
 resource "vcd_vapp_vm" "{{.VMName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
