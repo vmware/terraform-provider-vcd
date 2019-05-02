@@ -186,7 +186,7 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 		Configuration: &types.NetworkConfiguration{
 			FenceMode: "natRouted",
 			IPScopes: &types.IPScopes{
-				IPScope: types.IPScope{
+				IPScope: []*types.IPScope{&types.IPScope{
 					IsInherited: false,
 					Gateway:     gatewayName,
 					Netmask:     d.Get("netmask").(string),
@@ -194,7 +194,7 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 					DNS2:        d.Get("dns2").(string),
 					DNSSuffix:   d.Get("dns_suffix").(string),
 					IPRanges:    &ipRanges,
-				},
+				}},
 			},
 			BackwardCompatibilityMode: true,
 		},
@@ -253,10 +253,10 @@ func resourceVcdNetworkRead(d *schema.ResourceData, meta interface{}) error {
 	if c := network.OrgVDCNetwork.Configuration; c != nil {
 		d.Set("fence_mode", c.FenceMode)
 		if c.IPScopes != nil {
-			d.Set("gateway", c.IPScopes.IPScope.Gateway)
-			d.Set("netmask", c.IPScopes.IPScope.Netmask)
-			d.Set("dns1", c.IPScopes.IPScope.DNS1)
-			d.Set("dns2", c.IPScopes.IPScope.DNS2)
+			d.Set("gateway", c.IPScopes.IPScope[0].Gateway)
+			d.Set("netmask", c.IPScopes.IPScope[0].Netmask)
+			d.Set("dns1", c.IPScopes.IPScope[0].DNS1)
+			d.Set("dns2", c.IPScopes.IPScope[0].DNS2)
 		}
 	}
 
