@@ -48,12 +48,15 @@ type TestConfig struct {
 		} `json:"catalog"`
 	} `json:"vcd"`
 	Networking struct {
-		ExternalIp      string `json:"externalIp,omitempty"`
-		InternalIp      string `json:"internalIp,omitempty"`
-		EdgeGateway     string `json:"edgeGateway,omitempty"`
-		SharedSecret    string `json:"sharedSecret"`
-		ExternalNetwork string `json:"externalNetwork,omitempty"`
-		Local           struct {
+		ExternalIp                   string `json:"externalIp,omitempty"`
+		InternalIp                   string `json:"internalIp,omitempty"`
+		EdgeGateway                  string `json:"edgeGateway,omitempty"`
+		SharedSecret                 string `json:"sharedSecret"`
+		Vcenter                      string `json:"vcenter,omitempty"`
+		ExternalNetwork              string `json:"externalNetwork,omitempty"`
+		ExternalNetworkPortGroup     string `json:"externalNetworkPortGroup,omitempty"`
+		ExternalNetworkPortGroupType string `json:"externalNetworkPortGroupType,omitempty"`
+		Local                        struct {
 			LocalIp            string `json:"localIp"`
 			LocalSubnetGateway string `json:"localSubnetGw"`
 		} `json:"local"`

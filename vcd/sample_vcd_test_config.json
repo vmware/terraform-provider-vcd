@@ -53,7 +53,11 @@
       "//": "Peer definition for a vpn", 
       "peerIp": "192.168.5.1",
       "peerSubnetGw": "192.168.5.1"
-    }
+    },
+    "vcenter" : "vC1",
+    "externalNetwork": "externalNetworkName",
+    "externalNetworkPortGroup": "ForTestingPG",
+    "externalNetworkPortGroupType": "DV_PORTGROUP"
   },
   "logging" : {
     "//": "Enables logging from go-vcloud-director in vendor",
