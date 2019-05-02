@@ -125,7 +125,7 @@ func resourceVcdVAppVm() *schema.Resource {
 							Type:         schema.TypeString,
 							ValidateFunc: checkIPAddressAllocationMode(),
 						},
-						"orgnetwork": {
+						"network_name": {
 							ForceNew: false,
 							Optional: true, // In case of ip_allocation_mode = NONE it is not required
 							Type:     schema.TypeString,
@@ -319,7 +319,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 				nets = append(nets, &types.OrgVDCNetwork{Name: types.NoneNetwork})
 				continue
 			}
-			net, err := vdc.FindVDCNetwork(n["orgnetwork"].(string))
+			net, err := vdc.FindVDCNetwork(n["network_name"].(string))
 			nets = append(nets, net.OrgVDCNetwork)
 			if err != nil {
 				return fmt.Errorf("Error finding OrgVCD Network: %#v", err)
@@ -331,7 +331,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		// network := map[string]interface{}{
 		// 	"ip":           d.Get("ip").(string),
 		// 	"is_primary":   true,
-		// 	"orgnetwork":   d.Get("network_name").(string),
+		// 	"network_name":   d.Get("network_name").(string),
 		// 	"adapter_type": "",
 		// }
 		nets = append(nets, network)
@@ -390,13 +390,13 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 			if vappNetworkName != "" {
 				networksChanges = append(networksChanges, map[string]interface{}{
 					"ip":         d.Get("ip").(string),
-					"orgnetwork": vappNetworkName,
+					"network_name": vappNetworkName,
 				})
 			}
 			if network != nil {
 				networksChanges = append(networksChanges, map[string]interface{}{
 					"ip":         d.Get("ip").(string),
-					"orgnetwork": network.Name,
+					"network_name": network.Name,
 				})
 			}
 
@@ -872,7 +872,7 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 			singleNIC["mac"] = vmNet.MACAddress
 			singleNIC["ip_allocation_mode"] = vmNet.IPAddressAllocationMode
 			if vmNet.Network != types.NoneNetwork {
-				singleNIC["orgnetwork"] = vmNet.Network
+				singleNIC["network_name"] = vmNet.Network
 			}
 
 			singleNIC["is_primary"] = false
