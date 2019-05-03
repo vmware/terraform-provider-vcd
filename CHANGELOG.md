@@ -4,8 +4,7 @@ FEATURES:
 
 * `vcd_vapp_vm` - Ability to add metadata to a VM. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES` [GH-158]
 * `vcd_vapp_vm` - Ability to enable hardware assisted CPU virtualization for VM. It allows hypervisor nesting. [GH-219]
-* `vcd_vapp_vm` - Ability to add metadata to a VM. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES` ([#158](https://github.com/terraform-providers/terraform-provider-vcd/issues/158))
-* **New Resource:** VDC resource `vcd_external_network` - ([#173](https://github.com/terraform-providers/terraform-provider-vcd/issues/173))
+* **New Resource:** VDC resource `vcd_external_network` - [GH-173]
 
 BUG FIXES:
 
