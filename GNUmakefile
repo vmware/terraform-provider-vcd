@@ -63,12 +63,7 @@ vendor-check:
 	git diff --exit-code
 
 test-compile:
-	@if [ "$(TEST)" = "./..." ]; then \
-		echo "ERROR: Set TEST to a specific package. For example,"; \
-		echo "  make test-compile TEST=./$(PKG_NAME)"; \
-		exit 1; \
-	fi
-	go test -tags ALL -c $(TEST) $(TESTARGS)
+	cd vcd && go test -tags ALL -c .
 
 website:
 ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
