@@ -44,36 +44,42 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "name", netVmName1),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.0.network_name", "multinic-net"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.0.network_type", "org"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.0.is_primary", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.0.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.0.ip", "11.10.0.152"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "networks.0.mac"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.1.network_name", "multinic-net"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.1.network_type", "org"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.1.is_primary", "true"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.1.ip_allocation_mode", "DHCP"),
 					//resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "networks.1.ip"), // We cannot guarantee DHCP
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "networks.1.mac"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.2.network_name", "multinic-net"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.2.network_type", "org"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.2.is_primary", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.2.ip_allocation_mode", "MANUAL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.2.ip", "11.10.0.170"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "networks.2.mac"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.3.network_name", "multinic-net2"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.3.network_type", "org"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.3.is_primary", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.3.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.3.ip", "12.10.0.152"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "networks.3.mac"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.4.network_name", ""),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.4.network_type", "none"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.4.is_primary", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.4.ip_allocation_mode", "NONE"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.4.ip", ""),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "networks.4.mac"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.5.network_name", ""),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.5.network_type", "none"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.5.is_primary", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.5.ip_allocation_mode", "NONE"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.5.ip", ""),
@@ -138,32 +144,38 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   cpu_cores     = 1
 
   networks = [{
+	network_type       = "org"
     network_name       = "${vcd_network_routed.net.name}"
     ip_allocation_mode = "POOL"
     is_primary         = false
   },
     {
+      network_type       = "org"
       network_name       = "${vcd_network_routed.net.name}"
       ip_allocation_mode = "DHCP"
       is_primary         = true
     },
     {
+	  network_type       = "org"
       network_name       = "${vcd_network_routed.net.name}"
       ip                 = "11.10.0.170"
       ip_allocation_mode = "MANUAL"
       is_primary         = false
     },
     {
+	  network_type       = "org"
       network_name       = "${vcd_network_routed.net2.name}"
       ip_allocation_mode = "POOL"
       is_primary         = false
     },
     {
+	  network_type       = "none"
       ip_allocation_mode = "NONE"
       ip                 = ""
       network_name       = ""
     },
     {
+	  network_type       = "none"
       ip_allocation_mode = "NONE"
     },
   ]
