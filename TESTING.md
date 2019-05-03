@@ -73,6 +73,11 @@ FAIL
 FAIL	github.com/terraform-providers/terraform-provider-vcd/v2/vcd	0.019s
 ```
 
+When adding new features, we should create a new tag, and add it to the test file, to allow running the new test in isolation. The tag must also be added to `provider_test.go` and `config_test.go`.
+It would be useful to add the new tag to the `tagsHelp` function in `api_test.go`. Notice that this file must NOT have tags, or else the help won't appear.
+
+We must also make sure that the "functional" tag includes the new feature (i.e. the new test has both the new feature tag and `functional`).
+
 There are several environment variables that can affect the tests:
 
 * `TF_ACC=1` enables the acceptance tests. It is also set when you run `make testacc`.
