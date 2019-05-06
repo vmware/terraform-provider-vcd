@@ -119,17 +119,17 @@ func resourceVcdVAppVm() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"network_type": {
-							ForceNew: true,
-							Required: true,
-							Type:     schema.TypeString,
-							ValidateFunc: validation.StringInSlice([]string{"vapp","org", "none"}, false), // none?
-							Description: "Type of network to use 'vapp' or 'org'. 'vapp' uses vApp level network while 'org' attaches Org VDC network.",
+							ForceNew:     true,
+							Required:     true,
+							Type:         schema.TypeString,
+							ValidateFunc: validation.StringInSlice([]string{"vapp", "org", "none"}, false), // none?
+							Description:  "Type of network to use 'vapp' or 'org'. 'vapp' uses vApp level network while 'org' attaches Org VDC network.",
 						},
 						"ip_allocation_mode": {
 							ForceNew:     true,
 							Optional:     true,
 							Type:         schema.TypeString,
-							ValidateFunc: validation.StringInSlice([]string{"POOL","DHCP", "MANUAL", "NONE"}, false),
+							ValidateFunc: validation.StringInSlice([]string{"POOL", "DHCP", "MANUAL", "NONE"}, false),
 						},
 						"network_name": {
 							ForceNew: false,
@@ -178,10 +178,10 @@ func resourceVcdVAppVm() *schema.Resource {
 				Type:          schema.TypeString,
 			},
 			"vapp_network_name": &schema.Schema{
-				Deprecated:    "In favor of networks",
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Deprecated: "In favor of networks",
+				Type:       schema.TypeString,
+				Optional:   true,
+				ForceNew:   true,
 			},
 			"disk": {
 				Type: schema.TypeSet,
@@ -282,7 +282,6 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error finding vApp: %#v", err)
 	}
 
-
 	// Networking part
 
 	// Step 1 - gather vars
@@ -295,7 +294,6 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	var vdcNets []*types.OrgVDCNetwork
 	var legacyNetwork *types.OrgVDCNetwork
 	//var vAppNets []*types.VAppNetworkConfiguration
-
 
 	// Step 2 - process legacy "network_name" and "vapp_network_name"
 	// TODO 3.0 remove when "network_name" and "vapp_network_name" is deprecated
@@ -322,7 +320,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		net := network.(map[string]interface{})
 		netType := net["network_type"].(string)
 		netName := net["network_name"].(string)
-		
+
 		switch netType {
 		case "vapp":
 			isVappNetwork, err := isItVappNetwork(netName, vapp)
@@ -367,7 +365,6 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	// After attaching org vdc networks it is safe to add vApp network names to the list for being added
 	vdcNets = append(vdcNets, vAppNets...)
 
-
 	// Adds all network cards with default settings
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 		log.Printf("[TRACE] Creating VM: %s", d.Get("name").(string))
@@ -398,13 +395,13 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 			var networksChanges []map[string]interface{}
 			if legacyVappNetworkName != "" {
 				networksChanges = append(networksChanges, map[string]interface{}{
-					"ip":         d.Get("ip").(string),
+					"ip":           d.Get("ip").(string),
 					"network_name": legacyVappNetworkName,
 				})
 			}
 			if legacyNetwork != nil {
 				networksChanges = append(networksChanges, map[string]interface{}{
-					"ip":         d.Get("ip").(string),
+					"ip":           d.Get("ip").(string),
 					"network_name": legacyNetwork.Name,
 				})
 			}
