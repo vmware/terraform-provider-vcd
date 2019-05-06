@@ -55,7 +55,7 @@
       "peerSubnetGw": "192.168.5.1"
     },
     "vcenter" : "vC1",
-    "externalNetwork": "externalNetworkName",
+    "externalNetwork": "existingExtNetwork",
     "externalNetworkPortGroup": "ForTestingPG",
     "externalNetworkPortGroupType": "DV_PORTGROUP"
   },
