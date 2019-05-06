@@ -3,8 +3,8 @@ github.com/Azure/azure-sdk-for-go v10.3.0-beta+incompatible/go.mod h1:9XXNKU+eRn
 github.com/Azure/go-autorest v9.10.0+incompatible/go.mod h1:r+4oMnoxhatjLLJ6zxSWATqVooLgysK6ZNox3g/xq24=
 github.com/Azure/go-ntlmssp v0.0.0-20170803034930-c92175d54006/go.mod h1:chxPXzSsl7ZWRAuOIE23GDNzjWuZquvFlgA8xmpunjU=
 github.com/ChrisTrenkamp/goxpath v0.0.0-20170625215350-4fe035839290/go.mod h1:nuWgzSkT5PnyOd+272uUmV0dnAnAn42Mk7PiQC5VzN4=
-github.com/Didainius/go-vcloud-director/v2 v2.2.0-alpha.2.0.20190426112708-9e9c448ee706 h1:7IuujPSeY1tfzj73P6JH48mfkAjEg5NLnIqGWj5DhSA=
-github.com/Didainius/go-vcloud-director/v2 v2.2.0-alpha.2.0.20190426112708-9e9c448ee706/go.mod h1:HonlGxbjJ1NAibWh99eE4/S2l6ZOZ5KJzKK1rh2a9vc=
+github.com/Didainius/go-vcloud-director/v2 v2.2.0-alpha.1.0.20190503105237-3e428d5a3843 h1:yAnzBQTAzUS3z88RQ/bKfttOmbKhYUm9Srhr1eT5q5o=
+github.com/Didainius/go-vcloud-director/v2 v2.2.0-alpha.1.0.20190503105237-3e428d5a3843/go.mod h1:HonlGxbjJ1NAibWh99eE4/S2l6ZOZ5KJzKK1rh2a9vc=
 github.com/Unknwon/com v0.0.0-20151008135407-28b053d5a292/go.mod h1:KYCjqMOeHpNuTOiFQU6WEcTG7poCJrUs0YgyHNtn1no=
 github.com/abdullin/seq v0.0.0-20160510034733-d5467c17e7af/go.mod h1:5Jv4cbFiHJMsVxt52+i0Ha45fjshj6wxYr1r19tB9bw=
 github.com/agext/levenshtein v1.2.1 h1:QmvMAjj2aEICytGiWzmxoE0x2KZvE0fvmqMOfy2tjT8=
