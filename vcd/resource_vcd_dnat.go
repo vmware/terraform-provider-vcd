@@ -2,6 +2,8 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"log"
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -22,13 +24,16 @@ func resourceVcdDNAT() *schema.Resource {
 			},
 			"org": {
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
 				ForceNew: true,
 			},
 			"vdc": {
 				Type:     schema.TypeString,
-				Required: false,
+				Optional: true,
+				ForceNew: true,
+			},
+			"network_name": &schema.Schema{
+				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
@@ -96,31 +101,64 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 		icmpSubType = ""
 	}
 
+	var orgVdcnetwork *types.OrgVDCNetwork
+	providedNetworkName := d.Get("network_name")
+	if nil != providedNetworkName && "" != providedNetworkName.(string) {
+		orgVdcnetwork, err = getNetwork(d, vcdClient, providedNetworkName.(string))
+	} else {
+		_, _ = fmt.Fprint(GetTerraformStdout(), "WARNING: This resource will require network_name in the next major version \n")
+	}
+	if err != nil {
+		return fmt.Errorf("unable to find orgVdcnetwork: %s, err: %s", providedNetworkName.(string), err)
+	}
+
 	// Creating a loop to offer further protection from the edge gateway erroring
 	// due to being busy eg another person is using another client so wouldn't be
 	// constrained by out lock. If the edge gateway reurns with a busy error, wait
 	// 3 seconds and then try again. Continue until a non-busy error or success
 
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := edgeGateway.AddNATPortMapping("DNAT",
-			d.Get("external_ip").(string),
-			portString,
-			d.Get("internal_ip").(string),
-			translatedPortString, protocol,
-			icmpSubType)
-		if err != nil {
-			return resource.RetryableError(
-				fmt.Errorf("error setting DNAT rules: %#v", err))
-		}
+	if nil != providedNetworkName && providedNetworkName != "" {
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := edgeGateway.AddNATPortMappingWithUplink(orgVdcnetwork, "DNAT",
+				d.Get("external_ip").(string),
+				portString,
+				d.Get("internal_ip").(string),
+				translatedPortString, protocol,
+				icmpSubType)
+			if err != nil {
+				return resource.RetryableError(
+					fmt.Errorf("error setting DNAT rules: %#v", err))
+			}
 
-		return resource.RetryableError(task.WaitTaskCompletion())
-	})
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
+	} else {
+		// TODO remove when major release is done
+		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
+			task, err := edgeGateway.AddNATPortMapping("DNAT",
+				d.Get("external_ip").(string),
+				portString,
+				d.Get("internal_ip").(string),
+				translatedPortString, protocol,
+				icmpSubType)
+			if err != nil {
+				return resource.RetryableError(
+					fmt.Errorf("error setting DNAT rules: %#v", err))
+			}
+
+			return resource.RetryableError(task.WaitTaskCompletion())
+		})
+	}
 
 	if err != nil {
 		return fmt.Errorf("error completing tasks: %#v", err)
 	}
 
-	d.SetId(d.Get("external_ip").(string) + ":" + portString + " > " + d.Get("internal_ip").(string) + ":" + translatedPortString)
+	if nil != providedNetworkName && "" != providedNetworkName {
+		d.SetId(orgVdcnetwork.Name + ":" + d.Get("external_ip").(string) + ":" + portString + " > " + d.Get("internal_ip").(string) + ":" + translatedPortString)
+	} else {
+		d.SetId(d.Get("external_ip").(string) + ":" + portString + " > " + d.Get("internal_ip").(string) + ":" + translatedPortString)
+	}
 	return nil
 }
 
@@ -135,12 +173,24 @@ func resourceVcdDNATRead(d *schema.ResourceData, meta interface{}) error {
 
 	var found bool
 
-	for _, r := range e.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
-		if r.RuleType == "DNAT" &&
-			r.GatewayNatRule.OriginalIP == d.Get("external_ip").(string) &&
-			r.GatewayNatRule.OriginalPort == getPortString(d.Get("port").(int)) {
-			found = true
-			d.Set("internal_ip", r.GatewayNatRule.TranslatedIP)
+	providedNetworkName := d.Get("network_name")
+	if nil != providedNetworkName && providedNetworkName.(string) != "" {
+		for _, r := range e.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
+			if r.RuleType == "DNAT" && r.GatewayNatRule.Interface.Name == d.Get("network_name") &&
+				r.GatewayNatRule.OriginalIP == d.Get("external_ip").(string) &&
+				r.GatewayNatRule.OriginalPort == getPortString(d.Get("port").(int)) {
+				found = true
+				d.Set("internal_ip", r.GatewayNatRule.TranslatedIP)
+			}
+		}
+	} else {
+		for _, r := range e.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
+			if r.RuleType == "DNAT" &&
+				r.GatewayNatRule.OriginalIP == d.Get("external_ip").(string) &&
+				r.GatewayNatRule.OriginalPort == getPortString(d.Get("port").(int)) {
+				found = true
+				d.Set("internal_ip", r.GatewayNatRule.TranslatedIP)
+			}
 		}
 	}
 
@@ -187,4 +237,20 @@ func resourceVcdDNATDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error completing tasks: %#v", err)
 	}
 	return nil
+}
+
+func getNetwork(d *schema.ResourceData, vcdClient *VCDClient, networkname string) (*types.OrgVDCNetwork, error) {
+
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	if err != nil {
+		return &types.OrgVDCNetwork{}, fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	}
+
+	network, err := vdc.FindVDCNetwork(networkname)
+	if err != nil {
+		log.Printf("[DEBUG] Network doesn't exist: " + networkname)
+		return nil, err
+	}
+
+	return network.OrgVDCNetwork, nil
 }

@@ -275,6 +275,7 @@ func resourceVcdNetworkDelete(d *schema.ResourceData, meta interface{}) error {
 
 	network, err := vdc.FindVDCNetwork(d.Id())
 	if err != nil {
+		d.SetId("")
 		return fmt.Errorf("error finding network: %#v", err)
 	}
 
