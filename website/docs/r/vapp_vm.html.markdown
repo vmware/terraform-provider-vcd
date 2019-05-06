@@ -110,26 +110,28 @@ The following arguments are supported:
 * `metadata` - (Optional; *v2.2+*) Key value map of metadata to assign to this VM
 * `initscript` (Optional) A script to be run only on initial boot
 * `network_name` - (**Deprecated**) Name of the network this VM should connect to. **Conflicts with** with networks.
-* `vapp_network_name` - (Optional; *v2.1+*) Name of the vApp network this VM should connect to
+* `vapp_network_name` - (**Deprecated**; *v2.1+*) Name of the vApp network this VM should connect to
 * `ip` - (**Deprecated**) The IP to assign to this vApp. Must be an IP address or
 one of dhcp, allocated or none. If given the address must be within the
   `static_ip_pool` set for the network. If left blank, and the network has
   `dhcp_pool` set with at least one available IP then this will be set with
 DHCP. **Conflicts with** with networks.
-* `networks` - (Optional; *v2.2+*) List of network interfaces to attach to vm. **Conflicts with**: networks, ip. **Note**: all params of this parameter and itself do force recreation of vms!
-  * `orgnetwork` (Optional) Name of the network this VM should connect to. Always required except for`ip_allocation_mode=NONE`.
-  * `ip` (Computed, Optional) Empty or valid IP address if `ip_allocation_mode=MANUAL`. IP address will be set in case of `ip_allocation_mode=POOL`.
+* `networks` - (Optional; *v2.2+*) List of network interfaces to attach to vm. **Conflicts with**: `networks`, `ip`, `vapp_network_name`. **Note**: all params of this parameter and itself do force recreation of vms!
+  * `network_type` (Required) Network type, one of: `none`, `vapp` or `vdc`. `none` creates a NIC with no network attached. `vapp` attaches a vApp network, while `vdc` attaches organization VDC network.
+  * `network_name` (Optional) Name of the network this VM should connect to. Always required except for `network_type` `NONE`.
+  * `ip` (Computed, Optional) Empty or valid IP address if `ip_allocation_mode` is `MANUAL`. IP address will be set in case of `ip_allocation_mode` is `POOL` and may be set when it is `DHCP`.
   * `is_primary` (Optional) Set to true if network interface should be primary. First network card in the list will be primary by default.
   * `mac` - (Computed) Mac address of network interface.
   * `ip_allocation_mode` (Required) IP address allocation mode. One of `POOL`, `DHCP`, `MANUAL`, `NONE`:  
     
       **`POOL`** - Static IP address is allocated automatically from defined static pool in network.
       
-      **`DHCP`** - IP address is obtained from a DHCP service. Ip field is not guaranteed to be populated.
+      **`DHCP`** - IP address is obtained from a DHCP service. Ip field is not guaranteed to be populated. Because of this may appear after
+      after multiple `terraform refresh` operations.
       
       **`MANUAL`** - IP address is assigned manually in the `ip` field. Must be valid IP address from static pool.
       
-      **`NONE`** - No IP addressing mode specified. Network card will be added without any networks attached.
+      **`NONE`** - No IP address will be set because VM will have a NIC without network.
 * `power_on` - (Optional) A boolean value stating if this vApp should be powered on. Default is `true`
 * `accept_all_eulas` - (Optional; *v2.0+*) Automatically accept EULA if OVA has it. Default is `true`
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations

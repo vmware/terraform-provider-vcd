@@ -29,7 +29,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 		"VMName":      netVmName1,
 	}
 
-	configTextVM := templateFill(testAccCheckVcdVAppVmNetwork, params)
+	configTextVM := templateFill(testAccCheckVcdVAppVmNetworkVM, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 	resource.Test(t, resource.TestCase{
@@ -84,13 +84,48 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.5.ip_allocation_mode", "NONE"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.5.ip", ""),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "networks.5.mac"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.6.network_name", "vapp-net"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.6.network_type", "vapp"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.6.is_primary", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.6.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "networks.6.ip", "192.168.2.51"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "networks.6.mac"),
 				),
 			},
 		},
 	})
 }
 
-const testAccCheckVcdVAppVmNetwork = `
+const testAccCheckVcdVAppVmNetworkVM = `
+resource "vcd_vapp" "{{.VAppName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  name       = "{{.VAppName}}"
+  depends_on = ["vcd_network_routed.net", "vcd_network_routed.net2"]
+}
+
+resource "vcd_vapp_network" "vappNet" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  name       = "vapp-net"
+  vapp_name  = "${vcd_vapp.{{.VAppName}}.name}"
+  gateway    = "192.168.2.1"
+  netmask    = "255.255.255.0"
+  dns1       = "192.168.2.1"
+  dns2       = "192.168.2.2"
+  dns_suffix = "mybiz.biz"
+
+  static_ip_pool {
+    start_address = "192.168.2.51"
+    end_address   = "192.168.2.100"
+  }
+
+  depends_on = ["vcd_vapp.{{.VAppName}}"]
+}
+
 resource "vcd_network_routed" "net" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
@@ -124,13 +159,6 @@ resource "vcd_network_routed" "net2" {
   }
 }
 
-resource "vcd_vapp" "{{.VAppName}}" {
-  org = "{{.Org}}"
-  vdc = "{{.Vdc}}"
-
-  name = "{{.VAppName}}"
-}
-
 resource "vcd_vapp_vm" "{{.VMName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
@@ -144,7 +172,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   cpu_cores     = 1
 
   networks = [{
-	network_type       = "org"
+    network_type       = "org"
     network_name       = "${vcd_network_routed.net.name}"
     ip_allocation_mode = "POOL"
     is_primary         = false
@@ -156,27 +184,32 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
       is_primary         = true
     },
     {
-	  network_type       = "org"
+      network_type       = "org"
       network_name       = "${vcd_network_routed.net.name}"
       ip                 = "11.10.0.170"
       ip_allocation_mode = "MANUAL"
       is_primary         = false
     },
     {
-	  network_type       = "org"
+      network_type       = "org"
       network_name       = "${vcd_network_routed.net2.name}"
       ip_allocation_mode = "POOL"
       is_primary         = false
     },
     {
-	  network_type       = "none"
+      network_type       = "none"
       ip_allocation_mode = "NONE"
       ip                 = ""
       network_name       = ""
     },
     {
-	  network_type       = "none"
+      network_type       = "none"
       ip_allocation_mode = "NONE"
+    },
+    {
+      network_type       = "vapp"
+      network_name       = "${vcd_vapp_network.vappNet.name}"
+      ip_allocation_mode = "POOL"
     },
   ]
 }

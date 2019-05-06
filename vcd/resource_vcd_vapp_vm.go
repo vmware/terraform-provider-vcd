@@ -118,18 +118,18 @@ func resourceVcdVAppVm() *schema.Resource {
 				Type:          schema.TypeList,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"ip_allocation_mode": {
-							ForceNew:     true,
-							Required:     true,
-							Type:         schema.TypeString,
-							ValidateFunc: validation.StringInSlice([]string{"POOL","DHCP", "MANUAL", "NONE"}, false),
-						},
 						"network_type": {
 							ForceNew: true,
 							Required: true,
 							Type:     schema.TypeString,
 							ValidateFunc: validation.StringInSlice([]string{"vapp","org", "none"}, false), // none?
 							Description: "Type of network to use 'vapp' or 'org'. 'vapp' uses vApp level network while 'org' attaches Org VDC network.",
+						},
+						"ip_allocation_mode": {
+							ForceNew:     true,
+							Optional:     true,
+							Type:         schema.TypeString,
+							ValidateFunc: validation.StringInSlice([]string{"POOL","DHCP", "MANUAL", "NONE"}, false),
 						},
 						"network_name": {
 							ForceNew: false,
@@ -138,7 +138,7 @@ func resourceVcdVAppVm() *schema.Resource {
 						},
 						"ip": {
 							Computed: true,
-							ForceNew: false,
+							ForceNew: true,
 							Optional: true,
 							Type:     schema.TypeString,
 							// Must accept empty string because of looping over vars purposes
@@ -146,7 +146,7 @@ func resourceVcdVAppVm() *schema.Resource {
 						},
 						"is_primary": {
 							Default:  false,
-							ForceNew: false,
+							ForceNew: true,
 							Optional: true,
 							// schema change to false would not do anything useful unless
 							// other adapter is set to true therefore this change is suppressed.
@@ -252,36 +252,6 @@ func falseBoolSuppress() schema.SchemaDiffSuppressFunc {
 	}
 }
 
-
-func filterByKeyValue(searchKey, searchValue string, objects []interface{}) ([]interface{},error)  {
-	var filteredSlice []interface{}
-	for _, object := range objects {
-		// cast key to string
-		o, ok := object.(map[string]interface{})
-		if !ok {
-			return []interface{}{}, fmt.Errorf("unable to cast object to map[string]interface{}")
-		}
-
-		// search for key
-		value, hasKey := o[searchKey]
-		if !hasKey {
-			return []interface{}{}, fmt.Errorf("object hasn't got key %s",searchKey)
-		}
-
-		// cast found value to string
-		valueString, ok := value.(string)
-		if !ok {
-			return []interface{}{}, fmt.Errorf("unable to cast value of element %s to string",searchKey,)
-		}
-
-		// Check if the string equals to our expected value and add it
-		if valueString == searchValue {
-			filteredSlice = append(filteredSlice, object)
-		}
-	}
-	return filteredSlice, nil
-}
-
 func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
@@ -320,10 +290,8 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	legacyVappNetworkName := d.Get("vapp_network_name").(string)
 
 	allNetworks := d.Get("networks").([]interface{})
-	//vAppNetworks := filterByKeyValue("network_type", "vapp", allNetworks)
-	//vdcNetworks := filterByKeyValue("network_type", "vdc", allNetworks)
-	//noneNetworks := filterByKeyValue("network_type", "none", allNetworks)
 
+	var vAppNets []*types.OrgVDCNetwork
 	var vdcNets []*types.OrgVDCNetwork
 	var legacyNetwork *types.OrgVDCNetwork
 	//var vAppNets []*types.VAppNetworkConfiguration
@@ -364,7 +332,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 			if !isVappNetwork {
 				return fmt.Errorf("vApp network : %s is not found", netName)
 			}
-			// TODO Add the network for processing
+			vAppNets = append(vAppNets, &types.OrgVDCNetwork{Name: netName})
 		case "org":
 			vdcNet, err := vdc.FindVDCNetwork(netName)
 			if err != nil {
@@ -388,7 +356,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	// Check if a vdc network is attached to vApp. If not - attach it. Skip types.NoneNetwork.
 	for _, vdcNet := range vdcNets {
 		if !stringInSlice(vdcNet.Name, vAppNetworkNames) && vdcNet.Name != types.NoneNetwork {
-			// TODO optimize addVdcNetwork as it does additional unnecesary calls
+			// TODO optimize addVdcNetwork as it does additional unnecessary calls
 			_, err = addVdcNetwork(vdcNet.Name, vdc, vapp, vcdClient)
 			if err != nil {
 				return fmt.Errorf("unable to assign vdc network %s to vApp %s", vdcNet.Name, vAppNetworkNames)
@@ -396,8 +364,16 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	// After attaching org vdc networks it is safe to add vApp network names to the list for being added
+	vdcNets = append(vdcNets, vAppNets...)
+
+
+	// Adds all network cards with default settings
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 		log.Printf("[TRACE] Creating VM: %s", d.Get("name").(string))
+		// TODO refactor vapp.AddVM to create NICs with proper configuration
+		// instead of default NIC parameters. Currently it depends on vm.ChangeNetworkConfig(n) in the Update()
+		// to set proper network allocations
 		task, err := vapp.AddVM(vdcNets, legacyVappNetworkName, vappTemplate, d.Get("name").(string), acceptEulas)
 		if err != nil {
 			return resource.RetryableError(fmt.Errorf("error adding VM: %#v", err))
@@ -893,11 +869,23 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 		// TODO EO remove this case block when we cleanup deprecated 'ip' and 'network_name' attributes
 	// We are using networks block and rebuilding statefile
 	case len(d.Get("networks").([]interface{})) > 0:
-		var nets []map[string]interface{}
-		//networks := d.Get("networks").([]interface{})[0]
-		//n := networks.(map[string]interface{})
-		// Loop over existing NICs in VM
+		// Determine network_type for all networks in vApp
+		vAppNetworkConfig, err := vapp.GetNetworkConfig()
+		if err != nil {
+			return fmt.Errorf("error getting vApp networks: %#v", err)
+		}
+		// If vApp network is "isolated" and has no ParentNetwork - it is a vApp network.
+		// https://code.vmware.com/apis/72/vcloud/doc/doc/types/NetworkConfigurationType.html
+		vAppNetworkTypes := make(map[string]string)
+		for _, netConfig := range vAppNetworkConfig.NetworkConfig {
+			if netConfig.Configuration.ParentNetwork == nil && netConfig.Configuration.FenceMode == "isolated" {
+				vAppNetworkTypes[netConfig.NetworkName] = "vapp"
+			} else {
+				vAppNetworkTypes[netConfig.NetworkName] = "org"
+			}
+		}
 
+		var nets []map[string]interface{}
 		// Sort NIC cards by their virtual slot numbers as the API returns then in random order
 		sort.SliceStable(vm.VM.NetworkConnectionSection.NetworkConnection, func(i, j int) bool {
 			return vm.VM.NetworkConnectionSection.NetworkConnection[i].NetworkConnectionIndex <
@@ -906,21 +894,26 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 
 		for i, vmNet := range vm.VM.NetworkConnectionSection.NetworkConnection {
 			singleNIC := make(map[string]interface{})
+			singleNIC["ip_allocation_mode"] = vmNet.IPAddressAllocationMode
 			singleNIC["ip"] = vmNet.IPAddress
 			singleNIC["mac"] = vmNet.MACAddress
-			singleNIC["ip_allocation_mode"] = vmNet.IPAddressAllocationMode
 			if vmNet.Network != types.NoneNetwork {
 				singleNIC["network_name"] = vmNet.Network
 			}
-			//vmNet.NetworkConnectionIndex
 
 			singleNIC["is_primary"] = false
 			if i == vm.VM.NetworkConnectionSection.PrimaryNetworkConnectionIndex {
 				singleNIC["is_primary"] = true
 			}
 
-			// TODO pull out network_type
-			//singleNIC["network_type"] =
+			if vmNet.Network == types.NoneNetwork {
+				singleNIC["network_type"] = types.NoneNetwork
+			} else {
+				var ok bool
+				if singleNIC["network_type"], ok = vAppNetworkTypes[vmNet.Network]; !ok {
+					return fmt.Errorf("unable to determine vApp network type for: %s", vmNet.Network)
+				}
+			}
 
 			nets = append(nets, singleNIC)
 		}
