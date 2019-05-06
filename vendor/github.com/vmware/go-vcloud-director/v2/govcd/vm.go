@@ -11,8 +11,6 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/kr/pretty"
-
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
@@ -209,9 +207,6 @@ func (vm *VM) ChangeCPUCountWithCore(virtualCpuCount int, coresPerSocket *int) (
 
 func (vm *VM) updateNicParameters(networks []map[string]interface{}, networkSection *types.NetworkConnectionSection) {
 
-	util.Logger.Printf("[DEBUG] Initial networks %#+ v\n", pretty.Formatter(networks))
-	util.Logger.Printf("[DEBUG] Initial networkconnection %#+ v\n", pretty.Formatter(networkSection.NetworkConnection))
-
 	for tfNicSlot, network := range networks {
 		for loopIndex := range networkSection.NetworkConnection {
 			// Change network config only if we have the same virtual slot number as in .tf config
@@ -252,8 +247,6 @@ func (vm *VM) updateNicParameters(networks []map[string]interface{}, networkSect
 					ipAllocationMode = network["ip_allocation_mode"].(string)
 				}
 
-				util.Logger.Printf("[DEBUG] Function ChangeNetworkConfig() for %s invoked", network["orgnetwork"])
-
 				networkSection.NetworkConnection[loopIndex].NeedsCustomization = true
 				networkSection.NetworkConnection[loopIndex].IsConnected = true
 				networkSection.NetworkConnection[loopIndex].IPAddress = ipAddress
@@ -263,7 +256,7 @@ func (vm *VM) updateNicParameters(networks []map[string]interface{}, networkSect
 				if ipAllocationMode == types.IPAllocationModeNone {
 					networkSection.NetworkConnection[loopIndex].Network = types.NoneNetwork
 				} else {
-					networkSection.NetworkConnection[loopIndex].Network = network["orgnetwork"].(string)
+					networkSection.NetworkConnection[loopIndex].Network = network["network_name"].(string)
 				}
 
 				// If we have one NIC only then it is primary by default, otherwise we check for "is_primary" key
