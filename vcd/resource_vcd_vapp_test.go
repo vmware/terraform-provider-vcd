@@ -1,3 +1,5 @@
+// +build vapp ALL functional
+
 package vcd
 
 import (
@@ -187,6 +189,10 @@ func testAccCheckVcdVAppAttributes_off(vapp *govcd.VApp) resource.TestCheckFunc 
 
 		return nil
 	}
+}
+
+func init() {
+	testingTags["vapp"] = "resource_vcd_vapp_test.go"
 }
 
 const testAccCheckVcdVApp_basic = `

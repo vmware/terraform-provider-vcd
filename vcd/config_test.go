@@ -1,3 +1,5 @@
+// +build api functional catalog vapp network org query vm vdc gateway disk ALL
+
 package vcd
 
 // This module provides initialization routines for the whole suite

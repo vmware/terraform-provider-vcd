@@ -1,3 +1,5 @@
+// +build org ALL functional
+
 package vcd
 
 import (
@@ -105,6 +107,10 @@ func testAccCheckOrgDestroy(s *terraform.State) error {
 	}
 
 	return nil
+}
+
+func init() {
+	testingTags["org"] = "resource_vcd_org_test.go"
 }
 
 const testAccCheckVcdOrg_basic = `

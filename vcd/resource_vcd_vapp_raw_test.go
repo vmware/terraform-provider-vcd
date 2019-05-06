@@ -1,3 +1,5 @@
+// +build vapp ALL functional
+
 package vcd
 
 import (
