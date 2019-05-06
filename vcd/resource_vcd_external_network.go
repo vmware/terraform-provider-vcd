@@ -2,8 +2,8 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform/helper/validation"
 	"log"
-	"net"
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -44,25 +44,25 @@ func resourceVcdExternalNetwork() *schema.Resource {
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "Gateway of the network",
-							ValidateFunc: singleIP(),
+							ValidateFunc: validation.SingleIP(),
 						},
 						"netmask": &schema.Schema{
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "Network mask",
-							ValidateFunc: singleIP(),
+							ValidateFunc: validation.SingleIP(),
 						},
 						"dns1": &schema.Schema{
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "Primary DNS server",
-							ValidateFunc: singleIP(),
+							ValidateFunc: validation.SingleIP(),
 						},
 						"dns2": &schema.Schema{
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "Secondary DNS server",
-							ValidateFunc: singleIP(),
+							ValidateFunc: validation.SingleIP(),
 						},
 						"dns_suffix": &schema.Schema{
 							Type:        schema.TypeString,
@@ -79,13 +79,13 @@ func resourceVcdExternalNetwork() *schema.Resource {
 										Type:         schema.TypeString,
 										Required:     true,
 										Description:  "Start address of the IP range",
-										ValidateFunc: singleIP(),
+										ValidateFunc: validation.SingleIP(),
 									},
 									"end": &schema.Schema{
 										Type:         schema.TypeString,
 										Required:     true,
 										Description:  "End address of the IP range",
-										ValidateFunc: singleIP(),
+										ValidateFunc: validation.SingleIP(),
 									},
 								},
 							},
@@ -114,7 +114,7 @@ func resourceVcdExternalNetwork() *schema.Resource {
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "The vSphere port group type. One of: DV_PORTGROUP (distributed virtual port group), NETWORK",
-							ValidateFunc: validatePortGroupObjectType,
+							ValidateFunc: validation.StringInSlice([]string{"DV_PORTGROUP", "NETWORK"}, false),
 						},
 					},
 				},
@@ -124,7 +124,7 @@ func resourceVcdExternalNetwork() *schema.Resource {
 				Optional:     true,
 				ForceNew:     true,
 				Description:  "Isolation type of the network. If ParentNetwork is specified, this property controls connectivity to the parent. One of: bridged (connected directly to the ParentNetwork), isolated (not connected to any other network), natRouted (connected to the ParentNetwork via a NAT service)",
-				ValidateFunc: validateFenceMode,
+				ValidateFunc: validation.StringInSlice([]string{"bridged", "isolated", "natRouted"}, false),
 			},
 			"retain_net_info_across_deployments": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -327,55 +327,8 @@ func getVcenterHref(vcdClient *govcd.VCDClient, name string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if len(virtualCenters) == 0 {
-		return "", fmt.Errorf("No vSphere server found with name '%s'", name)
+	if len(virtualCenters) == 0 || len(virtualCenters) > 1 {
+		return "", fmt.Errorf("not one: %s, vSphere server found with name '%s'", len(virtualCenters), name)
 	}
 	return virtualCenters[0].HREF, nil
-}
-
-// Remove this function when the version of Terraform is updated; it was added in 0.11.6
-// singleIP returns a SchemaValidateFunc which tests if the provided value
-// is of type string, and in valid single IP notation
-func singleIP() schema.SchemaValidateFunc {
-	return func(i interface{}, k string) (s []string, es []error) {
-		v, ok := i.(string)
-		if !ok {
-			es = append(es, fmt.Errorf("expected type of %s to be string", k))
-			return
-		}
-
-		ip := net.ParseIP(v)
-		if ip == nil {
-			es = append(es, fmt.Errorf(
-				"expected %s to contain a valid IP, got: %s", k, v))
-		}
-		return
-	}
-}
-
-func validateFenceMode(val interface{}, key string) (warns []string, errs []error) {
-	v := val.(string)
-	switch v {
-	case
-		"bridged",
-		"isolated",
-		"natRouted":
-		return
-	default:
-		errs = append(errs, fmt.Errorf("%q must be one of {bridged, isolated, natRouted}, got: %s", key, v))
-	}
-	return
-}
-
-func validatePortGroupObjectType(val interface{}, key string) (warns []string, errs []error) {
-	v := val.(string)
-	switch v {
-	case
-		"DV_PORTGROUP",
-		"NETWORK":
-		return
-	default:
-		errs = append(errs, fmt.Errorf("%q must be one of {DV_PORTGROUP, NETWORK}, got: %s", key, v))
-	}
-	return
 }
