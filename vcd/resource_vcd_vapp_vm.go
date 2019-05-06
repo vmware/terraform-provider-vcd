@@ -292,8 +292,6 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 
 	var vAppNets []*types.OrgVDCNetwork
 	var vdcNets []*types.OrgVDCNetwork
-	var legacyNetwork *types.OrgVDCNetwork
-	//var vAppNets []*types.VAppNetworkConfiguration
 
 	// Step 2 - process legacy "network_name" and "vapp_network_name"
 	// TODO 3.0 remove when "network_name" and "vapp_network_name" is deprecated
@@ -390,7 +388,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// TODO 3.0 remove when "network_name" and "vapp_network_name" is deprecated
-	if legacyNetwork != nil || legacyVappNetworkName != "" {
+	if legacyNetworkName != "" || legacyVappNetworkName != "" {
 		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 			var networksChanges []map[string]interface{}
 			if legacyVappNetworkName != "" {
@@ -399,10 +397,10 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 					"network_name": legacyVappNetworkName,
 				})
 			}
-			if legacyNetwork != nil {
+			if legacyNetworkName != "" {
 				networksChanges = append(networksChanges, map[string]interface{}{
 					"ip":           d.Get("ip").(string),
-					"network_name": legacyNetwork.Name,
+					"network_name": legacyNetworkName,
 				})
 			}
 
