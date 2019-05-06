@@ -1,3 +1,5 @@
+// +build network ALL functional
+
 package vcd
 
 import (
@@ -306,6 +308,10 @@ func testAccCheckVcdNetworkAttributes(name string, network *govcd.OrgVDCNetwork)
 
 		return nil
 	}
+}
+
+func init() {
+	testingTags["network"] = "resource_vcd_network_test.go"
 }
 
 const testAccCheckVcdNetworkIsolatedStatic = `

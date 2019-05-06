@@ -1,3 +1,5 @@
+// +build functional gateway ALL
+
 package vcd
 
 import (
@@ -116,6 +118,10 @@ func createFirewallRulesConfigs(existingRules *govcd.EdgeGateway) string {
 	configText := templateFill(testAccCheckVcdFirewallRules_add, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	return configText
+}
+
+func init() {
+	testingTags["gateway"] = "resource_firewall_rules_test.go"
 }
 
 const testAccCheckVcdFirewallRules_add = `

@@ -55,26 +55,31 @@ function short_test {
     if [ -n "$VERBOSE" ] 
     then
         echo " go test -i ${TEST} || exit 1"
-	    echo "VCD_SHORT_TEST=1 go test -v -timeout 3m ."
+	    echo "VCD_SHORT_TEST=1 go test -tags functional -v -timeout 3m ."
     fi
     if [ -z "$DRY_RUN" ]
     then
 	    go test -i ${TEST} || exit 1
-	    VCD_SHORT_TEST=1 go test -v -timeout 3m .
+	    VCD_SHORT_TEST=1 go test -tags functional -v -timeout 3m .
     fi
 }
 
 function acceptance_test {
+    tags="$1"
+    if [ -z "$tags" ]
+    then
+        tags=functional
+    fi
     if [ -n "$VERBOSE" ] 
     then
         echo "# check for config file"
-	    echo "TF_ACC=1 go test -v -timeout 60m ."
+	    echo "TF_ACC=1 go test -tags '$tags' -v -timeout 60m ."
     fi
 
     if [ -z "$DRY_RUN" ]
     then
         check_for_config_file
-	    TF_ACC=1 go test -v -timeout 60m .
+	    TF_ACC=1 go test -tags "$tags" -v -timeout 60m .
     fi
 }
 
@@ -87,13 +92,13 @@ function multiple_test {
     if [ -n "$VERBOSE" ] 
     then
         echo "# check for config file"
-	    echo "TF_ACC=1 go test -v -timeout 60m -tags 'multivm multinetwork' -run '$filter' ."
+	    echo "TF_ACC=1 go test -v -timeout 60m -tags 'api multivm multinetwork' -run '$filter' ."
     fi
 
     if [ -z "$DRY_RUN" ]
     then
         check_for_config_file
-	    TF_ACC=1 go test -v -timeout 60m -tags 'multivm multinetwork' -run "$filter" .
+	    TF_ACC=1 go test -v -timeout 60m -tags 'api multivm multinetwork' -run "$filter" .
     fi
 }
 
@@ -102,13 +107,28 @@ case $wanted in
         short_test
         ;;
     acceptance)
-        acceptance_test
+        acceptance_test functional
         ;;
     multinetwork)
         multiple_test TestAccVcdVappNetworkMulti
         ;;
     multiple)
         multiple_test
+        ;;
+    catalog)
+        acceptance_test catalog
+        ;;
+    vapp)
+        acceptance_test vapp
+        ;;
+    vm)
+        acceptance_test vm
+        ;;
+    network)
+        acceptance_test network
+        ;;
+    gateway)
+        acceptance_test gateway
         ;;
     *)
         echo "Unhandled testing method $wanted"

@@ -1,3 +1,5 @@
+// +build api functional catalog vapp network org query vm vdc gateway disk ALL
+
 package vcd
 
 import (
@@ -9,16 +11,6 @@ import (
 
 var testAccProviders map[string]terraform.ResourceProvider
 var testAccProvider *schema.Provider
-
-/*
-// Initialization moved to config_test.TestMain
-func init() {
-	testAccProvider = Provider().(*schema.Provider)
-	testAccProviders = map[string]terraform.ResourceProvider{
-		"vcd": testAccProvider,
-	}
-}
-*/
 
 func TestProvider(t *testing.T) {
 	if err := Provider().(*schema.Provider).InternalValidate(); err != nil {
@@ -54,4 +46,8 @@ func testAccPreCheck(t *testing.T) {
 	if testConfig.VCD.Vdc == "" {
 		t.Fatal("vcd.vdc must be set for acceptance tests")
 	}
+}
+
+func init() {
+	testingTags["api"] = "provider_test.go"
 }
