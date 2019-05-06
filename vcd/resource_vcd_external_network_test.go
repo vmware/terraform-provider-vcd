@@ -28,10 +28,10 @@ func TestAccVcdExternalNetworkBasic(t *testing.T) {
 		return
 	}
 
-	/*	if !usingSysAdmin() {
+	if !usingSysAdmin() {
 		t.Skip("TestAccVcdExternalNetworkBasic requires system admin privileges")
 		return
-	}*/
+	}
 
 	configText := templateFill(testAccCheckVcdExternalNetwork_basic, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
