@@ -280,9 +280,9 @@ func getExternalNetworkInput(d *schema.ResourceData, vcdClient *VCDClient) (*typ
 
 		var portGroupRecord []*types.PortGroupRecordType
 		if portGroup["type"].(string) == "NETWORK" {
-			portGroupRecord, err = govcd.QueryNetworkPortGroups(vcdClient.VCDClient, portGroup["vsphere_network"].(string))
+			portGroupRecord, err = govcd.QueryNetworkPortGroup(vcdClient.VCDClient, portGroup["vsphere_network"].(string))
 		} else {
-			portGroupRecord, err = govcd.QueryDistributedPortGroups(vcdClient.VCDClient, portGroup["vsphere_network"].(string))
+			portGroupRecord, err = govcd.QueryDistributedPortGroup(vcdClient.VCDClient, portGroup["vsphere_network"].(string))
 		}
 		if err != nil {
 			return &types.ExternalNetwork{},
