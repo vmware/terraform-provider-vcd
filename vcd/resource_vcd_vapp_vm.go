@@ -346,7 +346,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	// Step 4 - ensure all specified vdc networks are attached to vApp
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 	if err != nil {
-		fmt.Errorf("unable to retrieve vApp network config: %s", err)
+		return fmt.Errorf("unable to retrieve vApp network config: %s", err)
 	}
 	vAppNetworkNames := vAppNetworkConfig.NetworkNames()
 	// Check if a vdc network is attached to vApp. If not - attach it. Skip types.NoneNetwork.
