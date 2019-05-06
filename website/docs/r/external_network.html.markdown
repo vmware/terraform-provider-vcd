@@ -27,9 +27,9 @@ resource "vcd_external_network" "net" {
     dns2         = "192.168.0.196"
     dns_suffix   = "mybiz.biz"
 
-    ip_range {
-      start = "192.168.30.51"
-      end   = "192.168.30.62"
+    static_ip_pool {
+      start_address = "192.168.30.51"
+      end_address   = "192.168.30.62"
     }
   }
 
@@ -56,7 +56,7 @@ The following arguments are supported:
 * `name` - (Required) A unique name for the network
 * `description` - (Optional) Network friendly description
 * `ip_scope` - (Required) A list of IP scopes for the network.  See [IP Scope](#ipscope) below for details.
-* `vsphere_networks` - (Required) A list of DV_PORTGROUP or NETWORK objects that back this network. Each referenced DV_PORTGROUP or NETWORK must exist on a vCenter server registered with the system.  See [Vim Port Group](#vimportgroup) below for details.
+* `vsphere_networks` - (Required) A list of DV_PORTGROUP or NETWORK objects that back this network. Each referenced DV_PORTGROUP or NETWORK must exist on a vCenter server registered with the system.  See [vSphere Networks](#vspherenetworks) below for details.
 * `fence_mode` - (Optional) Isolation type of the network. If ParentNetwork is specified, this property controls connectivity to the parent. One of: bridged (connected directly to the ParentNetwork), isolated (not connected to any other network), natRouted (connected to the ParentNetwork via a NAT service) 
 * `retain_net_info_across_deployments` - (Optional)  Specifies whether the network resources such as IP/MAC of router will be retained across deployments. Default is false.
 * `parent_network` - (Optional) Contains reference to parent network
@@ -71,16 +71,16 @@ The following arguments are supported:
 * `dns1` - (Required) Primary DNS server
 * `dns2` - (Required) Secondary DNS server
 * `dns_suffix` (Optional)
-* `ip_range` - (Required) IP ranges used for static pool allocation in the network.  See [IP Range](#iprange) below for details.
+* `static_ip_pool` - (Required) IP ranges used for static pool allocation in the network.  See [IP Pools](#ip-pools) below for details.
 
-<a id="iprange"></a>
-## IP Range
+<a id="ip-pools"></a>
+## IP Pools
 
-* `start` - (Required) Start address of the IP range
-* `end` - (Required) End address of the IP range
+* `start_address` - (Required) Start address of the IP range
+* `end_address` - (Required) End address of the IP range
 
-<a id="vimporrtgroup"></a>
-## Vim Port Group
+<a id="vspherenetworks"></a>
+## vShere Networks
 
 * `vcenter` - (Required) The vCenter server reference
 * `vsphere_network` - (Required) Managed object reference of the object

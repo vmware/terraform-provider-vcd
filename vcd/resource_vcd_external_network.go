@@ -69,19 +69,19 @@ func resourceVcdExternalNetwork() *schema.Resource {
 							Optional:    true,
 							Description: "Dns suffix",
 						},
-						"ip_range": &schema.Schema{
+						"static_ip_pool": &schema.Schema{
 							Type:        schema.TypeList,
 							Optional:    true,
 							Description: "IP ranges used for static pool allocation in the network",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
-									"start": &schema.Schema{
+									"start_address": &schema.Schema{
 										Type:         schema.TypeString,
 										Required:     true,
 										Description:  "Start address of the IP range",
 										ValidateFunc: validation.SingleIP(),
 									},
-									"end": &schema.Schema{
+									"end_address": &schema.Schema{
 										Type:         schema.TypeString,
 										Required:     true,
 										Description:  "End address of the IP range",
@@ -232,11 +232,11 @@ func getExternalNetworkInput(d *schema.ResourceData, vcdClient *VCDClient) (*typ
 	for _, ipScopeValues := range ipScopesConfigurations {
 		ipScopeConfiguration := ipScopeValues.(map[string]interface{})
 		ipRanges := []*types.IPRange{}
-		for _, ipRangeItem := range ipScopeConfiguration["ip_range"].([]interface{}) {
+		for _, ipRangeItem := range ipScopeConfiguration["static_ip_pool"].([]interface{}) {
 			ipRange := ipRangeItem.(map[string]interface{})
 			ipRanges = append(ipRanges, &types.IPRange{
-				StartAddress: ipRange["start"].(string),
-				EndAddress:   ipRange["end"].(string),
+				StartAddress: ipRange["start_address"].(string),
+				EndAddress:   ipRange["end_address"].(string),
 			})
 		}
 
@@ -328,7 +328,7 @@ func getVcenterHref(vcdClient *govcd.VCDClient, name string) (string, error) {
 		return "", err
 	}
 	if len(virtualCenters) == 0 || len(virtualCenters) > 1 {
-		return "", fmt.Errorf("not one: %s, vSphere server found with name '%s'", len(virtualCenters), name)
+		return "", fmt.Errorf("not one: %d, vSphere server found with name '%s'", len(virtualCenters), name)
 	}
 	return virtualCenters[0].HREF, nil
 }

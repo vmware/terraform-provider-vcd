@@ -28,10 +28,10 @@ func TestAccVcdExternalNetworkBasic(t *testing.T) {
 		return
 	}
 
-	if !usingSysAdmin() {
+	/*	if !usingSysAdmin() {
 		t.Skip("TestAccVcdExternalNetworkBasic requires system admin privileges")
 		return
-	}
+	}*/
 
 	configText := templateFill(testAccCheckVcdExternalNetwork_basic, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
@@ -117,9 +117,9 @@ resource "vcd_external_network" "{{.ExternalNetworkName}}" {
     dns2         = "192.168.0.196"
     dns_suffix   = "company.biz"
 
-    ip_range {
-      start = "192.168.30.51"
-      end   = "192.168.30.62"
+    static_ip_pool {
+      start_address = "192.168.30.51"
+      end_address   = "192.168.30.62"
     }
   }
 
