@@ -1,5 +1,14 @@
 # Testing terraform-provider-vcd
 
+## Table of contents
+
+- [Running tests](#running-tests)
+- [Tests split by feature set](#Tests-split-by-feature-set)
+- [Adding new tests](#Adding-new-tests)
+- [Environment variables](#Environment-variables)
+
+## Running tests
+
 In order to test the provider, you can simply run `make test`.
 
 ```sh
@@ -25,6 +34,9 @@ template (`catalogItem`) are defined in the configuration file, new ones will be
 the test. You can choose to preserve catalog and vApp template across runs (use the `preserve` field in the
 configuration file).
 
+
+## Tests split by feature set
+
 The tests can run with several tags that define which components are tested.
 Using the Makefile, you can run one of the following:
 
@@ -37,9 +49,9 @@ make testvm
 ```
 
 For more options, you can run manually in `./vcd`
-When running `go test` without tags, we'll get a list of tags that are available.
+When running `go test` without tags, you'll get a list of tags that are available.
 
-```bash
+```
 $ go test -v .
 === RUN   TestTags
 --- FAIL: TestTags (0.00s)
@@ -74,10 +86,61 @@ FAIL
 FAIL	github.com/terraform-providers/terraform-provider-vcd/v2/vcd	0.019s
 ```
 
-When adding new features, we should create a new tag, and add it to the test file, to allow running the new test in isolation. The tag must also be added to `provider_test.go` and `config_test.go`.
-It would be useful to add the new tag to the `tagsHelp` function in `api_test.go`. Notice that this file must NOT have tags, or else the help won't appear.
+## Adding new tests
 
-We must also make sure that the "functional" tag includes the new feature (i.e. the new test has both the new feature tag and `functional`).
+All tests need to have a build tag. The tag should be the first line of the file, followed by a blank line
+
+```go
+// +build functional featurename ALL
+
+package vcd
+```
+
+Tests that integrate in the functional suite use the tag `functional`. Using that tag, we can run all functional tests
+at once.
+We define as `functional` the tests that need a live vCD to run.
+
+1. The test should always define the `ALL` tag:
+
+* ALL :       Runs all the tests
+
+2. The test should also always define either the `unit` or `functional` tag:
+
+* functional: Runs all the tests that use a live vCD (acceptance tests)
+* unit:       Runs unit tests that do not need a live vCD
+
+3. Finally, the test should always define the feature tag. For example:
+
+* catalog:    Runs catalog related tests (also `catalog_item`, `media`)
+* vapp:       Runs vapp related tests
+
+The `ALL` tag includes tests that use a different framework. At the moment, this is useful to run a global compilation test.
+Depending on which additional tests we will implement, we may change the dependency on the `ALL` tag if we detect
+clashes between frameworks.
+
+If the test file defines a new feature tag (i.e. one that has not been used before) the file should also implement an
+`init` function that sets the tag in the global tag list.
+This information is used by the main tag test in `api_test.go` to determine which tags were activated.
+
+```go
+func init() {
+	testingTags["newtag"] = "filename_test.go"
+}
+```
+
+**VERY IMPORTANT**: if we add a test that runs using a different tag (i.e. it is not included in `functional` tests), we need
+to add such test to GNUMakefile under `make test` and `make testacc`. **The general principle is that `make test` and `make testacc` run all tests**. If this can't be
+achieved by adding the new test to the `functional` tag (perhaps because we foresee framework conflicts), we need to add the
+new test as a separate command.
+For example:
+
+```
+testacc: fmtcheck
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' acceptance"
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' something_new"
+``` 
+
+## Environmant variables
 
 There are several environment variables that can affect the tests:
 
