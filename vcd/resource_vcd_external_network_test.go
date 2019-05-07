@@ -75,7 +75,7 @@ func testAccCheckVcdExternalNetworkExists(name string, externalNetwork *govcd.Ex
 		conn := testAccProvider.Meta().(*VCDClient)
 		newExternalNetwork, err := govcd.GetExternalNetwork(conn.VCDClient, rs.Primary.ID)
 		if err != nil {
-			return fmt.Errorf("vdc %s does not exist (%#v)", rs.Primary.ID, newExternalNetwork.ExternalNetwork)
+			return fmt.Errorf("external network %s does not exist (%#v)", rs.Primary.ID, newExternalNetwork.ExternalNetwork)
 		}
 
 		externalNetwork = newExternalNetwork
