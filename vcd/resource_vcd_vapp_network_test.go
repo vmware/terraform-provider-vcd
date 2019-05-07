@@ -114,7 +114,7 @@ func testAccCheckVappNetworkDestroy(s *terraform.State) error {
 
 		_, err := isVappNetworkFound(conn, rs)
 		if err != nil && !strings.Contains(err.Error(), "can't find vApp:") {
-			return fmt.Errorf("vapp %s still exist and error: %#v", itemName, err)
+			return fmt.Errorf("vapp %s still exist and error: %#v", vappNameForNetworkTest, err)
 		}
 	}
 
