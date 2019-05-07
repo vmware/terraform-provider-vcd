@@ -80,7 +80,7 @@ The following arguments are supported:
 * `end_address` - (Required) End address of the IP range
 
 <a id="vspherenetworks"></a>
-## vShere Networks
+## vSphere Networks
 
 * `vcenter` - (Required) The vCenter server reference
 * `vsphere_network` - (Required) Managed object reference of the object
