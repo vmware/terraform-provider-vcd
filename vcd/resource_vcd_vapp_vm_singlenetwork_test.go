@@ -141,7 +141,7 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 				Config: configTextNetwork,
 			},
 
-			// This last step always had a BUG and does not work for now in master branch.
+			// This last step always had a bug and does not work for now in master branch.
 			// Because we're deprecating the `ip` and `network_name` attributes there is no point in fixing it.
 
 			//resource.TestStep{
