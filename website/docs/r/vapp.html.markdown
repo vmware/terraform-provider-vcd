@@ -123,7 +123,7 @@ The following arguments are supported:
 * `cpus` - (Optional) The number of virtual CPUs to allocate to the vApp
 * `initscript` (Optional) A script to be run only on initial boot
 * `network_name` - (Optional) Name of the network this vApp should join
-* `network_href` - (Deprecated) The vCloud Director generated href of the network this vApp
+* `network_href` - (Optional; **Deprecated**) The vCloud Director generated href of the network this vApp
   should join. If empty it will use the network name and query vCloud Director to discover
   this
 * `ip` - (Optional) The IP to assign to this vApp. Must be an IP address or

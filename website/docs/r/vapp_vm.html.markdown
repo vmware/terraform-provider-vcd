@@ -116,14 +116,14 @@ The following arguments are supported:
 * `cpu_cores` - (Optional; *v2.1+*) The number of cores per socket
 * `metadata` - (Optional; *v2.2+*) Key value map of metadata to assign to this VM
 * `initscript` (Optional) A script to be run only on initial boot
-* `network_name` - (**Deprecated**) Name of the network this VM should connect to. **Conflicts** with `networks`.
-* `vapp_network_name` - (**Deprecated**; *v2.1+*) Name of the vApp network this VM should connect to. **Conflicts** with `networks`.
-* `ip` - (**Deprecated**) The IP to assign to this vApp. Must be an IP address or
+* `network_name` - (Optional; **Deprecated** by `networks`) Name of the network this VM should connect to.
+* `vapp_network_name` - (Optional; v2.1+; **Deprecated** by `networks`) Name of the vApp network this VM should connect to.
+* `ip` - (Optional; **Deprecated** by `networks`) The IP to assign to this vApp. Must be an IP address or
 one of dhcp, allocated or none. If given the address must be within the
   `static_ip_pool` set for the network. If left blank, and the network has
   `dhcp_pool` set with at least one available IP then this will be set with
-DHCP. **Conflicts** with `networks`.
-* `networks` - (Optional; *v2.2+*) List of network interfaces to attach to VM. **Conflicts** with: `networks`, `ip`, `vapp_network_name`. **Note**: all params of this parameter and itself do force recreation of VMs!
+DHCP.
+* `networks` - (Optional; *v2.2+*) List of network interfaces to attach to VM. **Deprecates**: `network_name`, `ip`, `vapp_network_name`. **Note**: all params of this parameter and itself do force recreation of VMs!
   * `network_type` (Required) Network type, one of: `none`, `vapp` or `vdc`. `none` creates a NIC with no network attached, `vapp` attaches a vApp network, while `vdc` attaches organization VDC network.
   * `network_name` (Optional) Name of the network this VM should connect to. Always required except for `network_type` `NONE`.
   * `ip` (Computed, Optional) Empty or valid IP address if `ip_allocation_mode` is `MANUAL`. IP address will be set in case of `ip_allocation_mode` is `POOL` and may be set when it is `DHCP`.
