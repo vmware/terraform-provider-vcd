@@ -68,9 +68,9 @@ The following arguments are supported:
 * `is_inherited` - (Optional) True if the IP scope is inherited from parent network. Default is false.
 * `gateway` - (Required) Gateway of the network
 * `netmask` - (Required) Network mask
-* `dns1` - (Required) Primary DNS server
-* `dns2` - (Required) Secondary DNS server
-* `dns_suffix` (Optional)
+* `dns1` - (Optional) Primary DNS server
+* `dns2` - (Optional) Secondary DNS server
+* `dns_suffix` (Optional) A FQDN for the virtual machines on this network.
 * `static_ip_pool` - (Required) IP ranges used for static pool allocation in the network.  See [IP Pools](#ip-pools) below for details.
 
 <a id="ip-pools"></a>
