@@ -17,7 +17,7 @@ import (
 
 type VM struct {
 	VM     *types.VM
-	client *Client /**/
+	client *Client
 }
 
 type VMRecord struct {
@@ -224,26 +224,26 @@ func (vm *VM) updateNicParameters(networks []map[string]interface{}, networkSect
 				}
 
 				switch {
-				// TODO 3.0 remove from here when legacy `ip` and `network_name` attributes are removed
-				case ipIsSet && ipFieldString == "dhcp": // Legacy ip="dhcp" mode
+				// TODO 3.0 remove from here when deprecated `ip` and `network_name` attributes are removed
+				case ipIsSet && ipFieldString == "dhcp": // Deprecated ip="dhcp" mode
 					ipAllocationMode = types.IPAllocationModeDHCP
-				case ipIsSet && ipFieldString == "allocated": // Legacy ip="allocated" mode
+				case ipIsSet && ipFieldString == "allocated": // Deprecated ip="allocated" mode
 					ipAllocationMode = types.IPAllocationModePool
-				case ipIsSet && ipFieldString == "none": // Legacy ip="none" mode
+				case ipIsSet && ipFieldString == "none": // Deprecated ip="none" mode
 					ipAllocationMode = types.IPAllocationModeNone
 
-				// Legacy ip="valid_ip" mode (currently it is hit by ip_allocation_mode=MANUAL as well)
+				// Deprecated ip="valid_ip" mode (currently it is hit by ip_allocation_mode=MANUAL as well)
 				case ipIsSet && net.ParseIP(ipFieldString) != nil:
 					ipAllocationMode = types.IPAllocationModeManual
 					ipAddress = ipFieldString
-				case ipIsSet && ipField != "": // Legacy ip="something_invalid" we default to DHCP. This is odd but backwards compatible.
+				case ipIsSet && ipField != "": // Deprecated ip="something_invalid" we default to DHCP. This is odd but backwards compatible.
 					ipAllocationMode = types.IPAllocationModeDHCP
-					// TODO 3.0 remove until here when legacy `ip` and `network_name` attributes are removed
+					// TODO 3.0 remove until here when deprecated `ip` and `network_name` attributes are removed
 
 				case ipIsSet && net.ParseIP(ipFieldString) != nil && (network["ip_allocation_mode"].(string) == types.IPAllocationModeManual):
 					ipAllocationMode = types.IPAllocationModeManual
 					ipAddress = ipFieldString
-				default: // New functionality. IP was not set and we're defaulting to provided ip_allocation_mode (only manual requires the IP)
+				default: // New networks functionality. IP was not set and we're defaulting to provided ip_allocation_mode (only manual requires the IP)
 					ipAllocationMode = network["ip_allocation_mode"].(string)
 				}
 
@@ -274,9 +274,10 @@ func (vm *VM) ChangeNetworkConfig(networks []map[string]interface{}) (Task, erro
 		return Task{}, fmt.Errorf("error refreshing VM before running customization: %v", err)
 	}
 
-	// The API returns unordered list of NICs. This means that networkSection.NetworkConnection[0] will not
-	// necessarily be NIC 0 if there is more than one NIC available.
 	networkSection, err := vm.GetNetworkConnectionSection()
+	if err != nil {
+		return Task{}, fmt.Errorf("could not retrieve network connection for VM: %v", err)
+	}
 
 	vm.updateNicParameters(networks, networkSection)
 

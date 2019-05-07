@@ -79,6 +79,7 @@ resource "vcd_vapp_vm" "web2" {
   },
   {
     network_type       = "vapp"
+    network_name       = "vapp-network"
     ip_allocation_mode = "POOL"
   },
   {
@@ -115,15 +116,15 @@ The following arguments are supported:
 * `cpu_cores` - (Optional; *v2.1+*) The number of cores per socket
 * `metadata` - (Optional; *v2.2+*) Key value map of metadata to assign to this VM
 * `initscript` (Optional) A script to be run only on initial boot
-* `network_name` - (**Deprecated**) Name of the network this VM should connect to. **Conflicts with** with networks.
-* `vapp_network_name` - (**Deprecated**; *v2.1+*) Name of the vApp network this VM should connect to
+* `network_name` - (**Deprecated**) Name of the network this VM should connect to. **Conflicts** with `networks`.
+* `vapp_network_name` - (**Deprecated**; *v2.1+*) Name of the vApp network this VM should connect to. **Conflicts** with `networks`.
 * `ip` - (**Deprecated**) The IP to assign to this vApp. Must be an IP address or
 one of dhcp, allocated or none. If given the address must be within the
   `static_ip_pool` set for the network. If left blank, and the network has
   `dhcp_pool` set with at least one available IP then this will be set with
-DHCP. **Conflicts with** with networks.
-* `networks` - (Optional; *v2.2+*) List of network interfaces to attach to vm. **Conflicts with**: `networks`, `ip`, `vapp_network_name`. **Note**: all params of this parameter and itself do force recreation of vms!
-  * `network_type` (Required) Network type, one of: `none`, `vapp` or `vdc`. `none` creates a NIC with no network attached. `vapp` attaches a vApp network, while `vdc` attaches organization VDC network.
+DHCP. **Conflicts with** `networks`.
+* `networks` - (Optional; *v2.2+*) List of network interfaces to attach to VM. **Conflicts with**: `networks`, `ip`, `vapp_network_name`. **Note**: all params of this parameter and itself do force recreation of VMs!
+  * `network_type` (Required) Network type, one of: `none`, `vapp` or `vdc`. `none` creates a NIC with no network attached, `vapp` attaches a vApp network, while `vdc` attaches organization VDC network.
   * `network_name` (Optional) Name of the network this VM should connect to. Always required except for `network_type` `NONE`.
   * `ip` (Computed, Optional) Empty or valid IP address if `ip_allocation_mode` is `MANUAL`. IP address will be set in case of `ip_allocation_mode` is `POOL` and may be set when it is `DHCP`.
   * `is_primary` (Optional) Set to true if network interface should be primary. First network card in the list will be primary by default.
@@ -132,7 +133,7 @@ DHCP. **Conflicts with** with networks.
     
       **`POOL`** - Static IP address is allocated automatically from defined static pool in network.
       
-      **`DHCP`** - IP address is obtained from a DHCP service. Ip field is not guaranteed to be populated. Because of this may appear after
+      **`DHCP`** - IP address is obtained from a DHCP service. Field `IP` is not guaranteed to be populated. Because of this it may appear
       after multiple `terraform refresh` operations.
       
       **`MANUAL`** - IP address is assigned manually in the `ip` field. Must be valid IP address from static pool.

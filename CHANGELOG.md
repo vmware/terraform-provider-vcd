@@ -7,7 +7,6 @@ FEATURES:
 * resource/vcd_vapp_vm: Add `networks` argument for multiple NIC support and more flexible configuration [GH-118]
 * resource/vcd_vapp_vm: Add `mac` argument to store MAC address in statefile [GH-118]
 
-
 BUG FIXES:
 
 * `vcd_vapp` - Ability to add metadata to empty vApp. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES` [GH-158]
@@ -16,9 +15,6 @@ BACKWARDS INCOMPATIBILITIES / NOTES:
 
 * `vcd_vapp` - Metadata is no longer added to first VM in vApp it will be added to vApp directly instead. [GH-158]
 * Tests files are now all tagged. Running them through Makefile works as before, but manual execution requires specific tags. Run `go test -v .` for tags list.
-
-NOTES:
-
 * `vcd_vapp_vm` - Deprecated attributes `network_name`, `network_href` and `ip` in favor of `networks` [GH-118]
 
 ## 2.1.0 (March 27, 2019)
@@ -46,8 +42,7 @@ IMPROVEMENTS:
 BUG FIXES:
 
 * resource/vcd_vapp, resource/vcd_vapp_vm add vApp status handling when environment is very fast ([#68](https://github.com/terraform-providers/terraform-provider-vcd/issues/68))
-* resource/vcd_vapp_vm add additional validation to check if vApp template is OK [[#157](https://github.com/terraform-providers/terraform-provider-vcd/issues/157)]
-* Insert Media now supports force ejecting on running VM
+* resource/vcd_vapp_vm add additional validation to check if vApp template is OK [[#157](https://github.com/terraform-providers/terraform-provider-vcd/issues/157)] 
 
 ## 2.0.0 (January 30, 2019)
 
@@ -80,7 +75,7 @@ IMPROVEMENTS:
 
 BACKWARDS INCOMPATIBILITIES / NOTES:
 
-* Deprecates resource `vcd_network` in favor of `vcd_network_routed`
+* Resource `vcd_network` deprecated in favor of a new name `vcd_network_routed`
 * Previously deprecated parameter `provider.maxRetryTimeout` removed completely in favor of `provider.max_retry_timeout`
 
 TESTS:
