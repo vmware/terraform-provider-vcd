@@ -3,16 +3,17 @@ package vcd
 import (
 	"bytes"
 	"fmt"
+	"log"
+	"net"
+	"sort"
+	"strconv"
+
 	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"log"
-	"net"
-	"sort"
-	"strconv"
 )
 
 func resourceVcdVAppVm() *schema.Resource {
@@ -122,8 +123,8 @@ func resourceVcdVAppVm() *schema.Resource {
 							ForceNew:     true,
 							Required:     true,
 							Type:         schema.TypeString,
-							ValidateFunc: validation.StringInSlice([]string{"vapp", "org", "none"}, false), // none?
-							Description:  "Type of network to use 'vapp' or 'org'. 'vapp' uses vApp level network while 'org' attaches Org VDC network.",
+							ValidateFunc: validation.StringInSlice([]string{"vapp", "org", "none"}, false),
+							Description:  "Network type to use: 'vapp', 'org' or 'none'. Use 'vapp' for vApp network, 'org' to attach Org VDC network. 'none' for empty NIC.",
 						},
 						"ip_allocation_mode": {
 							ForceNew:     true,
@@ -133,16 +134,15 @@ func resourceVcdVAppVm() *schema.Resource {
 						},
 						"network_name": {
 							ForceNew: false,
-							Optional: true, // In case of ip_allocation_mode = NONE it is not required
+							Optional: true, // In case of network_type = none it is not required
 							Type:     schema.TypeString,
 						},
 						"ip": {
-							Computed: true,
-							ForceNew: true,
-							Optional: true,
-							Type:     schema.TypeString,
-							// Must accept empty string because of looping over vars purposes
-							ValidateFunc: checkEmptyOrSingleIP(),
+							Computed:     true,
+							ForceNew:     true,
+							Optional:     true,
+							Type:         schema.TypeString,
+							ValidateFunc: checkEmptyOrSingleIP(), // Must accept empty string to ease using HCL interpolation
 						},
 						"is_primary": {
 							Default:  false,
