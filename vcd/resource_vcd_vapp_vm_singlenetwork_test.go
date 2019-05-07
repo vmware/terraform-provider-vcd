@@ -12,7 +12,7 @@ import (
 //TestAccVcdVAppVmSingleNICNetwork is meant to cover all cases for the legacy single
 // NIC configurations we have. It changes VM names for each step because a respawn is
 // needed as vCD does not return newly assigned IP if one just changed network type.
-// It does not power ons VMs because that would take more time and not give much use.
+// It does not power on VMs because that would take more time and not give much use.
 // TODO remove once deprecated attributes 'ip' and 'network_name' are removed
 func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 	var (
