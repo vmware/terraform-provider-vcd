@@ -56,10 +56,10 @@ The following arguments are supported:
 * `name` - (Required) A unique name for the network
 * `description` - (Optional) Network friendly description
 * `ip_scope` - (Required) A list of IP scopes for the network.  See [IP Scope](#ipscope) below for details.
-* `vsphere_networks` - (Required) A list of DV_PORTGROUP or NETWORK objects that back this network. Each referenced DV_PORTGROUP or NETWORK must exist on a vCenter server registered with the system.  See [vSphere Networks](#vspherenetworks) below for details.
+* `vsphere_networks` - (Required) A list of DV_PORTGROUP or NETWORK objects names that back this network. Each referenced DV_PORTGROUP or NETWORK must exist on a vCenter server registered with the system.  See [vSphere Networks](#vspherenetworks) below for details.
 * `fence_mode` - (Optional) Isolation type of the network. If ParentNetwork is specified, this property controls connectivity to the parent. One of: bridged (connected directly to the ParentNetwork), isolated (not connected to any other network), natRouted (connected to the ParentNetwork via a NAT service) 
-* `retain_net_info_across_deployments` - (Optional)  Specifies whether the network resources such as IP/MAC of router will be retained across deployments. Default is false.
-* `parent_network` - (Optional) Contains reference to parent network
+* `retain_net_info_across_deployments` - (Optional) Specifies whether the network resources such as IP/MAC of router will be retained across deployments. Default is false.
+* `parent_network` - (Optional) A name of of parent network
 
 
 <a id="ipscope"></a>
