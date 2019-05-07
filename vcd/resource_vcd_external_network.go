@@ -326,7 +326,7 @@ func GetVcenterHref(vcdClient *govcd.VCDClient, name string) (string, error) {
 		return "", err
 	}
 	if len(virtualCenters) == 0 || len(virtualCenters) > 1 {
-		return "", fmt.Errorf("not one: %d, vSphere server found with name '%s'", len(virtualCenters), name)
+		return "", fmt.Errorf("vSphere server found %d instances with name '%s'", len(virtualCenters), name)
 	}
 	return virtualCenters[0].HREF, nil
 }
