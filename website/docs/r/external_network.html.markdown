@@ -17,7 +17,7 @@ Supported in provider *v2.2+*
 ```hcl
 resource "vcd_external_network" "net" {
   name        = "my-ext-net"
-  description = "Reference for VDC direct network"
+  description = "Reference for vCD direct network"
 
   ip_scope {
     is_inherited = "false"
