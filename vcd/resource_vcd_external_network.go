@@ -225,10 +225,7 @@ func getExternalNetworkInput(d *schema.ResourceData, vcdClient *VCDClient) (*typ
 	}
 
 	ipScopesConfigurations := d.Get("ip_scope").([]interface{})
-	// This is a limitation from the vcloud package
-	/*	if len(ipScopes) != 1 {
-		return &types.ExternalNetwork{}, fmt.Errorf("only one ip_scope is allowed")
-	}*/
+
 	var ipScopes []*types.IPScope
 	for _, ipScopeValues := range ipScopesConfigurations {
 		ipScopeConfiguration := ipScopeValues.(map[string]interface{})
