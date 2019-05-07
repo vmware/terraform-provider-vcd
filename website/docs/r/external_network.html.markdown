@@ -65,7 +65,7 @@ The following arguments are supported:
 <a id="ipscope"></a>
 ## IP Scope
 
-* `is_inherited` - (Optional) True if the IP scope is inherit from parent network. Default is false.
+* `is_inherited` - (Optional) True if the IP scope is inherited from parent network. Default is false.
 * `gateway` - (Required) Gateway of the network
 * `netmask` - (Required) Network mask
 * `dns1` - (Required) Primary DNS server

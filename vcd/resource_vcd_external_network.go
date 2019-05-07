@@ -39,7 +39,7 @@ func resourceVcdExternalNetwork() *schema.Resource {
 							Type:        schema.TypeBool,
 							Optional:    true,
 							Default:     false,
-							Description: "True if the IP scope is inherit from parent network",
+							Description: "True if the IP scope is inherited from parent network",
 						},
 						"gateway": &schema.Schema{
 							Type:         schema.TypeString,
