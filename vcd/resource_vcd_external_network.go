@@ -268,7 +268,7 @@ func getExternalNetworkInput(d *schema.ResourceData, vcdClient *VCDClient) (*typ
 			VimObjectType: strings.ToUpper(portGroup["type"].(string)),
 		}
 
-		vCenterHref, err := getVcenterHref(vcdClient.VCDClient, portGroup["vcenter"].(string))
+		vCenterHref, err := GetVcenterHref(vcdClient.VCDClient, portGroup["vcenter"].(string))
 		if err != nil {
 			return &types.ExternalNetwork{}, fmt.Errorf("unable to find vCenter %s (%#v)", portGroup["vcenter"].(string), err)
 		}
@@ -320,7 +320,7 @@ func getExternalNetworkInput(d *schema.ResourceData, vcdClient *VCDClient) (*typ
 	return params, nil
 }
 
-func getVcenterHref(vcdClient *govcd.VCDClient, name string) (string, error) {
+func GetVcenterHref(vcdClient *govcd.VCDClient, name string) (string, error) {
 	virtualCenters, err := govcd.QueryVirtualCenters(vcdClient, fmt.Sprintf("(name==%s)", name))
 	if err != nil {
 		return "", err
