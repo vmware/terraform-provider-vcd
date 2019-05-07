@@ -61,7 +61,7 @@ func TestAccVcdExternalNetworkBasic(t *testing.T) {
 	})
 }
 
-func testAccCheckVcdExternalNetworkExists(name string, vdc *govcd.ExternalNetwork) resource.TestCheckFunc {
+func testAccCheckVcdExternalNetworkExists(name string, externalNetwork *govcd.ExternalNetwork) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[name]
 		if !ok {
@@ -73,11 +73,12 @@ func testAccCheckVcdExternalNetworkExists(name string, vdc *govcd.ExternalNetwor
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
-		externalNetwork, err := govcd.GetExternalNetwork(conn.VCDClient, rs.Primary.ID)
+		newExternalNetwork, err := govcd.GetExternalNetwork(conn.VCDClient, rs.Primary.ID)
 		if err != nil {
-			return fmt.Errorf("vdc %s does not exist (%#v)", rs.Primary.ID, externalNetwork.ExternalNetwork)
+			return fmt.Errorf("vdc %s does not exist (%#v)", rs.Primary.ID, newExternalNetwork.ExternalNetwork)
 		}
 
+		externalNetwork = newExternalNetwork
 		return nil
 	}
 }
