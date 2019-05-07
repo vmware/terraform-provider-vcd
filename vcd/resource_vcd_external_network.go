@@ -55,13 +55,13 @@ func resourceVcdExternalNetwork() *schema.Resource {
 						},
 						"dns1": &schema.Schema{
 							Type:         schema.TypeString,
-							Required:     true,
+							Optional:     true,
 							Description:  "Primary DNS server",
 							ValidateFunc: validation.SingleIP(),
 						},
 						"dns2": &schema.Schema{
 							Type:         schema.TypeString,
-							Required:     true,
+							Optional:     true,
 							Description:  "Secondary DNS server",
 							ValidateFunc: validation.SingleIP(),
 						},
@@ -242,11 +242,17 @@ func getExternalNetworkInput(d *schema.ResourceData, vcdClient *VCDClient) (*typ
 			IsInherited: ipScopeConfiguration["is_inherited"].(bool),
 			Gateway:     ipScopeConfiguration["gateway"].(string),
 			Netmask:     ipScopeConfiguration["netmask"].(string),
-			DNS1:        ipScopeConfiguration["dns1"].(string),
-			DNS2:        ipScopeConfiguration["dns2"].(string),
 			IPRanges: &types.IPRanges{
 				IPRange: ipRanges,
 			},
+		}
+
+		if ipScopeConfiguration["dns1"] != nil && "" != ipScopeConfiguration["dns1"].(string) {
+			ipScope.DNS1 = ipScopeConfiguration["dns1"].(string)
+		}
+
+		if ipScopeConfiguration["dns2"] != nil && "" != ipScopeConfiguration["dns2"].(string) {
+			ipScope.DNS2 = ipScopeConfiguration["dns2"].(string)
 		}
 
 		if ipScopeConfiguration["dns_suffix"] != nil && "" != ipScopeConfiguration["dns_suffix"].(string) {
