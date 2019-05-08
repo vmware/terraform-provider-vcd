@@ -91,7 +91,7 @@ The following arguments are supported:
 * `name` - (Required) A unique name for the network
 * `description` - (Optional) Network friendly description
 * `ip_scope` - (Required) A list of IP scopes for the network.  See [IP Scope](#ipscope) below for details.
-* `vsphere_network` - (Required) A list of DV_PORTGROUP or NETWORK objects names that back this network. Each referenced DV_PORTGROUP or NETWORK must exist on a vCenter server registered with the system.  See [vSphere Networks](#vspherenetworks) below for details.
+* `vsphere_network` - (Required) A list of DV_PORTGROUP or NETWORK objects names that back this network. Each referenced DV_PORTGROUP or NETWORK must exist on a vCenter server registered with the system.  See [vSphere Network](#vspherenetwork) below for details.
 * `retain_net_info_across_deployments` - (Optional) Specifies whether the network resources such as IP/MAC of router will be retained across deployments. Default is false.
 
 <a id="ipscope"></a>
@@ -102,16 +102,16 @@ The following arguments are supported:
 * `dns1` - (Optional) Primary DNS server
 * `dns2` - (Optional) Secondary DNS server
 * `dns_suffix` (Optional) A FQDN for the virtual machines on this network.
-* `static_ip_pool` - (Required) IP ranges used for static pool allocation in the network.  See [IP Pools](#ip-pools) below for details.
+* `static_ip_pool` - (Required) IP ranges used for static pool allocation in the network.  See [IP Pool](#ip-pool) below for details.
 
-<a id="ip-pools"></a>
-## IP Pools
+<a id="ip-pool"></a>
+## IP Pool
 
 * `start_address` - (Required) Start address of the IP range
 * `end_address` - (Required) End address of the IP range
 
-<a id="vspherenetworks"></a>
-## vSphere Networks
+<a id="vspherenetwork"></a>
+## vSphere Network
 
 * `name` - (Required) Port group name
 * `type` - (Required) The vSphere type of the object. One of: DV_PORTGROUP (distributed virtual port group), NETWORK (standard switch port group)
