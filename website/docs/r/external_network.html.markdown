@@ -63,6 +63,13 @@ resource "vcd_external_network" "net" {
     vsphere_network = "myNetwork"
     type            = "DV_PORTGROUP"
   }
+  
+  vsphere_networks {
+    vcenter         = "vcenter-name2"
+    vsphere_network = "myNetwork2"
+    type            = "DV_PORTGROUP"
+  }
+  
 
   retain_net_info_across_deployments = "false"
 }
