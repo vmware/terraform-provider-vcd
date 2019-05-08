@@ -78,4 +78,4 @@ The following arguments are supported:
 
 * `vcenter` - (Required) The vCenter server name
 * `vsphere_network` - (Required) Port group name
-* `type` - (Required) The vSphere type of the object. One of: DV_PORTGROUP (distributed virtual port group), NETWORK(standard switch port group)
+* `type` - (Required) The vSphere type of the object. One of: DV_PORTGROUP (distributed virtual port group), NETWORK (standard switch port group)
