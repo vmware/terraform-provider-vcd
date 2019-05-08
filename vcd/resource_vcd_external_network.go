@@ -96,7 +96,7 @@ func resourceVcdExternalNetwork() *schema.Resource {
 					},
 				},
 			},
-			"vsphere_networks": &schema.Schema{
+			"vsphere_network": &schema.Schema{
 				Type:        schema.TypeList,
 				Required:    true,
 				ForceNew:    true,
@@ -109,7 +109,7 @@ func resourceVcdExternalNetwork() *schema.Resource {
 							ForceNew:    true,
 							Description: "The vCenter server name",
 						},
-						"vsphere_network": &schema.Schema{
+						"name": &schema.Schema{
 							Type:        schema.TypeString,
 							Required:    true,
 							ForceNew:    true,
@@ -257,10 +257,9 @@ func getExternalNetworkInput(d *schema.ResourceData, vcdClient *VCDClient) (*typ
 	}
 
 	var portGroups []*types.VimObjectRef
-	for _, vsphereNetwork := range d.Get("vsphere_networks").([]interface{}) {
+	for _, vsphereNetwork := range d.Get("vsphere_network").([]interface{}) {
 		portGroup := vsphereNetwork.(map[string]interface{})
 		portGroupConfiguration := &types.VimObjectRef{
-			//MoRef:         portGroup["vsphere_network"].(string),
 			VimObjectType: strings.ToUpper(portGroup["type"].(string)),
 		}
 
@@ -274,9 +273,9 @@ func getExternalNetworkInput(d *schema.ResourceData, vcdClient *VCDClient) (*typ
 
 		var portGroupRecord []*types.PortGroupRecordType
 		if portGroup["type"].(string) == "NETWORK" {
-			portGroupRecord, err = govcd.QueryNetworkPortGroup(vcdClient.VCDClient, portGroup["vsphere_network"].(string))
+			portGroupRecord, err = govcd.QueryNetworkPortGroup(vcdClient.VCDClient, portGroup["name"].(string))
 		} else {
-			portGroupRecord, err = govcd.QueryDistributedPortGroup(vcdClient.VCDClient, portGroup["vsphere_network"].(string))
+			portGroupRecord, err = govcd.QueryDistributedPortGroup(vcdClient.VCDClient, portGroup["name"].(string))
 		}
 		if err != nil {
 			return &types.ExternalNetwork{},

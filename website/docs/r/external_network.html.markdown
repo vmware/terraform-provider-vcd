@@ -40,13 +40,13 @@ resource "vcd_external_network" "net" {
     }
   }
 
-# It's possible to define more than one IP scope
+  # It's possible to define more than one IP scope
   ip_scope {
-    gateway      = "192.168.31.49"
-    netmask      = "255.255.255.240"
-    dns1         = "192.168.1.164"
-    dns2         = "192.168.1.196"
-    dns_suffix   = "my.biz"
+    gateway    = "192.168.31.49"
+    netmask    = "255.255.255.240"
+    dns1       = "192.168.1.164"
+    dns2       = "192.168.1.196"
+    dns_suffix = "my.biz"
 
     static_ip_pool {
       start_address = "192.168.31.51"
@@ -59,19 +59,18 @@ resource "vcd_external_network" "net" {
     }
   }
 
-  vsphere_networks {
-    vcenter         = "vcenter-name"
-    vsphere_network = "myNetwork"
-    type            = "DV_PORTGROUP"
+  vsphere_network {
+    name    = "myNetwork"
+    type    = "DV_PORTGROUP"
+    vcenter = "vcenter-name"
   }
-  
-# It's possible to define more than one vSphere network  
-  vsphere_networks {
-    vcenter         = "vcenter-name2"
-    vsphere_network = "myNetwork2"
-    type            = "DV_PORTGROUP"
+
+  # It's possible to define more than one vSphere network
+  vsphere_network {
+    name    = "myNetwork2"
+    type    = "DV_PORTGROUP"    
+    vcenter = "vcenter-name2"
   }
-  
 
   retain_net_info_across_deployments = "false"
 }
@@ -92,7 +91,7 @@ The following arguments are supported:
 * `name` - (Required) A unique name for the network
 * `description` - (Optional) Network friendly description
 * `ip_scope` - (Required) A list of IP scopes for the network.  See [IP Scope](#ipscope) below for details.
-* `vsphere_networks` - (Required) A list of DV_PORTGROUP or NETWORK objects names that back this network. Each referenced DV_PORTGROUP or NETWORK must exist on a vCenter server registered with the system.  See [vSphere Networks](#vspherenetworks) below for details.
+* `vsphere_network` - (Required) A list of DV_PORTGROUP or NETWORK objects names that back this network. Each referenced DV_PORTGROUP or NETWORK must exist on a vCenter server registered with the system.  See [vSphere Networks](#vspherenetworks) below for details.
 * `retain_net_info_across_deployments` - (Optional) Specifies whether the network resources such as IP/MAC of router will be retained across deployments. Default is false.
 
 <a id="ipscope"></a>
@@ -114,6 +113,6 @@ The following arguments are supported:
 <a id="vspherenetworks"></a>
 ## vSphere Networks
 
-* `vcenter` - (Required) The vCenter server name
-* `vsphere_network` - (Required) Port group name
+* `name` - (Required) Port group name
 * `type` - (Required) The vSphere type of the object. One of: DV_PORTGROUP (distributed virtual port group), NETWORK (standard switch port group)
+* `vcenter` - (Required) The vCenter server name

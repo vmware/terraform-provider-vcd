@@ -116,10 +116,10 @@ resource "vcd_external_network" "{{.ExternalNetworkName}}" {
   name        = "{{.ExternalNetworkName}}"
   description = "Test External Network"
 
-  vsphere_networks {
-    vcenter         = "{{.Vcenter}}"
-    vsphere_network = "{{.PortGroup}}"
-    type            = "{{.Type}}"
+  vsphere_network {
+    vcenter = "{{.Vcenter}}"
+    name    = "{{.PortGroup}}"
+    type    = "{{.Type}}"
   }
 
   ip_scope {
