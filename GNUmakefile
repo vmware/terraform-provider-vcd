@@ -39,6 +39,9 @@ testgateway: fmtcheck
 testnetwork: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' network"
 
+testextnetwork: fmtcheck
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' extnetwork"
+
 vet:
 	@echo "go vet ."
 	@go vet $$(go list ./... | grep -v vendor/) ; if [ $$? -ne 0 ]; then \

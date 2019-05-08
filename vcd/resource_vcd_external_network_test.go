@@ -1,3 +1,5 @@
+// +build functional network extnetwork ALL
+
 package vcd
 
 import (

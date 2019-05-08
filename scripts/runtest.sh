@@ -130,6 +130,9 @@ case $wanted in
     gateway)
         acceptance_test gateway
         ;;
+    extnetwork)
+        acceptance_test extnetwork
+        ;;
     *)
         echo "Unhandled testing method $wanted"
         echo "Accepted methods: $accepted"
