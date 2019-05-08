@@ -76,6 +76,6 @@ The following arguments are supported:
 <a id="vspherenetworks"></a>
 ## vSphere Networks
 
-* `vcenter` - (Required) The vCenter server reference
-* `vsphere_network` - (Required) Managed object reference of the object
-* `type` - (Required) The vSphere type of the object.  One of: DV_PORTGROUP (distributed virtual portgroup), NETWORK
+* `vcenter` - (Required) The vCenter server name
+* `vsphere_network` - (Required) Port group name
+* `type` - (Required) The vSphere type of the object. One of: DV_PORTGROUP (distributed virtual port group), NETWORK(standard switch port group)
