@@ -123,7 +123,7 @@ one of dhcp, allocated or none. If given the address must be within the
   `static_ip_pool` set for the network. If left blank, and the network has
   `dhcp_pool` set with at least one available IP then this will be set with
 DHCP.
-* `networks` - (Optional; *v2.2+*) List of network interfaces to attach to VM. **Deprecates**: `network_name`, `ip`, `vapp_network_name`. **Note**: all params of this parameter and itself do force recreation of VMs!
+* `networks` - (Optional; *v2.2+*) List of network interfaces to attach to VM. **Deprecates**: `network_name`, `ip`, `vapp_network_name`. **Note**: this property and all its parameters do force recreation of VMs!
   * `network_type` (Required) Network type, one of: `none`, `vapp` or `vdc`. `none` creates a NIC with no network attached, `vapp` attaches a vApp network, while `vdc` attaches organization VDC network.
   * `network_name` (Optional) Name of the network this VM should connect to. Always required except for `network_type` `NONE`.
   * `ip` (Computed, Optional) Empty or valid IP address if `ip_allocation_mode` is `MANUAL`. IP address will be set in case of `ip_allocation_mode` is `POOL` and may be set when it is `DHCP`.

@@ -224,7 +224,7 @@ func (vm *VM) updateNicParameters(networks []map[string]interface{}, networkSect
 				}
 
 				switch {
-				// TODO 3.0 remove from here when deprecated `ip` and `network_name` attributes are removed
+				// TODO v3.0 remove from here when deprecated `ip` and `network_name` attributes are removed
 				case ipIsSet && ipFieldString == "dhcp": // Deprecated ip="dhcp" mode
 					ipAllocationMode = types.IPAllocationModeDHCP
 				case ipIsSet && ipFieldString == "allocated": // Deprecated ip="allocated" mode
@@ -238,7 +238,7 @@ func (vm *VM) updateNicParameters(networks []map[string]interface{}, networkSect
 					ipAddress = ipFieldString
 				case ipIsSet && ipField != "": // Deprecated ip="something_invalid" we default to DHCP. This is odd but backwards compatible.
 					ipAllocationMode = types.IPAllocationModeDHCP
-					// TODO 3.0 remove until here when deprecated `ip` and `network_name` attributes are removed
+					// TODO v3.0 remove until here when deprecated `ip` and `network_name` attributes are removed
 
 				case ipIsSet && net.ParseIP(ipFieldString) != nil && (network["ip_allocation_mode"].(string) == types.IPAllocationModeManual):
 					ipAllocationMode = types.IPAllocationModeManual

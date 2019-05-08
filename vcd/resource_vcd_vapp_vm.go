@@ -178,10 +178,11 @@ func resourceVcdVAppVm() *schema.Resource {
 				Type:          schema.TypeString,
 			},
 			"vapp_network_name": &schema.Schema{
-				Deprecated: "In favor of networks",
-				Type:       schema.TypeString,
-				Optional:   true,
-				ForceNew:   true,
+				ConflictsWith: []string{"networks"},
+				Deprecated:    "In favor of networks",
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      true,
 			},
 			"disk": {
 				Type: schema.TypeSet,
@@ -228,7 +229,7 @@ func checkEmptyOrSingleIP() schema.SchemaValidateFunc {
 	}
 }
 
-// TODO 3.0 remove once `ip` and `network_name` attributes are removed
+// TODO v3.0 remove once `ip` and `network_name` attributes are removed
 func suppressIfIPIsOneOf() schema.SchemaDiffSuppressFunc {
 	return func(k string, old string, new string, d *schema.ResourceData) bool {
 		switch {
@@ -294,7 +295,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	var vdcNets []*types.OrgVDCNetwork
 
 	// Step 2 - process legacy "network_name" and "vapp_network_name"
-	// TODO 3.0 remove when "network_name" and "vapp_network_name" is deprecated
+	// TODO v3.0 remove when "network_name" and "vapp_network_name" is deprecated
 	if legacyNetworkName != "" {
 		legacyNetwork, err := addVdcNetwork(d.Get("network_name").(string), vdc, vapp, vcdClient)
 		if err != nil {
@@ -311,7 +312,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 			return fmt.Errorf("vapp_network_name: %s is not found", legacyVappNetworkName)
 		}
 	}
-	// TODO 3.0 EO remove when "network_name" and "vapp_network_name" is deprecated
+	// TODO v3.0 EO remove when "network_name" and "vapp_network_name" is deprecated
 
 	// Step 3 - process new networks of all types
 	for _, network := range allNetworks {
@@ -387,7 +388,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error getting VM1 : %#v", err)
 	}
 
-	// TODO 3.0 remove when "network_name" and "vapp_network_name" is deprecated
+	// TODO v3.0 remove when "network_name" and "vapp_network_name" is deprecated
 	if legacyNetworkName != "" || legacyVappNetworkName != "" {
 		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 			var networksChanges []map[string]interface{}
@@ -411,7 +412,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 			return resource.RetryableError(task.WaitTaskCompletion())
 		})
 	}
-	// TODO 3.0 EO remove when "network_name" and "vapp_network_name" is deprecated
+	// TODO v3.0 EO remove when "network_name" and "vapp_network_name" is deprecated
 
 	if err != nil {
 		return fmt.Errorf("error changing network: %#v", err)
