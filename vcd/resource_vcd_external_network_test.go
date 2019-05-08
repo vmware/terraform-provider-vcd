@@ -17,7 +17,6 @@ func TestAccVcdExternalNetworkBasic(t *testing.T) {
 
 	var params = StringMap{
 		"ExternalNetworkName": TestAccVcdExternalNetwork,
-		"FenceMode":           "isolated",
 		"Type":                testConfig.Networking.ExternalNetworkPortGroupType,
 		"PortGroup":           testConfig.Networking.ExternalNetworkPortGroup,
 		"Vcenter":             testConfig.Networking.Vcenter,
@@ -49,10 +48,6 @@ func TestAccVcdExternalNetworkBasic(t *testing.T) {
 						"vcd_external_network."+TestAccVcdExternalNetwork, "name", TestAccVcdExternalNetwork),
 					resource.TestCheckResourceAttr(
 						"vcd_external_network."+TestAccVcdExternalNetwork, "description", "Test External Network"),
-					//resource.TestCheckResourceAttr(
-					//"vcd_external_network."+TestAccVcdExternalNetwork, "ip_scope[0].is_inherited", "false"),
-					resource.TestCheckResourceAttr(
-						"vcd_external_network."+TestAccVcdExternalNetwork, "fence_mode", "isolated"),
 					resource.TestCheckResourceAttr(
 						"vcd_external_network."+TestAccVcdExternalNetwork, "retain_net_info_across_deployments", "false"),
 				),
@@ -111,7 +106,6 @@ resource "vcd_external_network" "{{.ExternalNetworkName}}" {
   }
 
   ip_scope {
-    is_inherited = "false"
     gateway      = "192.168.30.49"
     netmask      = "255.255.255.240"
     dns1         = "192.168.0.164"
@@ -124,7 +118,6 @@ resource "vcd_external_network" "{{.ExternalNetworkName}}" {
     }
   }
 
-  fence_mode                         = "{{.FenceMode}}"
   retain_net_info_across_deployments = "false"
 }
 `

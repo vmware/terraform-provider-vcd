@@ -35,12 +35,6 @@ func resourceVcdExternalNetwork() *schema.Resource {
 				Description: "A list of IP scopes for the network",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"is_inherited": &schema.Schema{
-							Type:        schema.TypeBool,
-							Optional:    true,
-							Default:     false,
-							Description: "True if the IP scope is inherited from parent network",
-						},
 						"gateway": &schema.Schema{
 							Type:         schema.TypeString,
 							Required:     true,
@@ -120,25 +114,12 @@ func resourceVcdExternalNetwork() *schema.Resource {
 					},
 				},
 			},
-			"fence_mode": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     true,
-				Description:  "Isolation type of the network. If ParentNetwork is specified, this property controls connectivity to the parent. One of: bridged (connected directly to the ParentNetwork), isolated (not connected to any other network), natRouted (connected to the ParentNetwork via a NAT service)",
-				ValidateFunc: validation.StringInSlice([]string{"bridged", "isolated", "natRouted"}, false),
-			},
 			"retain_net_info_across_deployments": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
 				ForceNew:    true,
 				Default:     false,
 				Description: "Specifies whether the network resources such as IP/MAC of router will be retained across deployments. Default is false.",
-			},
-			"parent_network": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "Contains reference to parent network",
 			},
 		},
 	}
@@ -219,7 +200,6 @@ func getExternalNetworkInput(d *schema.ResourceData, vcdClient *VCDClient) (*typ
 		XmlnsVCloud: types.XMLNamespaceVCloud,
 		Configuration: &types.NetworkConfiguration{
 			Xmlns:                          types.XMLNamespaceVCloud,
-			FenceMode:                      d.Get("fence_mode").(string),
 			RetainNetInfoAcrossDeployments: d.Get("retain_net_info_across_deployments").(bool),
 		},
 	}
@@ -239,9 +219,8 @@ func getExternalNetworkInput(d *schema.ResourceData, vcdClient *VCDClient) (*typ
 		}
 
 		ipScope := &types.IPScope{
-			IsInherited: ipScopeConfiguration["is_inherited"].(bool),
-			Gateway:     ipScopeConfiguration["gateway"].(string),
-			Netmask:     ipScopeConfiguration["netmask"].(string),
+			Gateway: ipScopeConfiguration["gateway"].(string),
+			Netmask: ipScopeConfiguration["netmask"].(string),
 			IPRanges: &types.IPRanges{
 				IPRange: ipRanges,
 			},
@@ -304,19 +283,6 @@ func getExternalNetworkInput(d *schema.ResourceData, vcdClient *VCDClient) (*typ
 	}
 	params.VimPortGroupRefs = &types.VimObjectRefs{
 		VimObjectRef: portGroups,
-	}
-
-	if parentNetworkName, ok := d.GetOk("parent_network"); ok {
-		name := parentNetworkName.(string)
-		parentNetwork, err := govcd.GetExternalNetworkByName(vcdClient.VCDClient, name)
-		if err != nil {
-			return &types.ExternalNetwork{}, fmt.Errorf("unable to find parent network %s (%s)", name, err)
-		}
-		params.Configuration.ParentNetwork = &types.Reference{
-			HREF: parentNetwork.HREF,
-			Type: parentNetwork.Type,
-			Name: parentNetwork.Name,
-		}
 	}
 
 	if description, ok := d.GetOk("description"); ok {

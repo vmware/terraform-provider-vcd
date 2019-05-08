@@ -20,7 +20,6 @@ resource "vcd_external_network" "net" {
   description = "Reference for vCD direct network"
 
   ip_scope {
-    is_inherited = "false"
     gateway      = "192.168.30.49"
     netmask      = "255.255.255.240"
     dns1         = "192.168.0.164"
@@ -39,7 +38,6 @@ resource "vcd_external_network" "net" {
     type            = "DV_PORTGROUP"
   }
 
-  fence_mode                         = "isolated"
   retain_net_info_across_deployments = "false"
 }
 
@@ -57,15 +55,11 @@ The following arguments are supported:
 * `description` - (Optional) Network friendly description
 * `ip_scope` - (Required) A list of IP scopes for the network.  See [IP Scope](#ipscope) below for details.
 * `vsphere_networks` - (Required) A list of DV_PORTGROUP or NETWORK objects names that back this network. Each referenced DV_PORTGROUP or NETWORK must exist on a vCenter server registered with the system.  See [vSphere Networks](#vspherenetworks) below for details.
-* `fence_mode` - (Optional) Isolation type of the network. If ParentNetwork is specified, this property controls connectivity to the parent. One of: `bridged` (connected directly to the ParentNetwork), `isolated` (not connected to any other network), `natRouted` (connected to the ParentNetwork via a NAT service) 
 * `retain_net_info_across_deployments` - (Optional) Specifies whether the network resources such as IP/MAC of router will be retained across deployments. Default is false.
-* `parent_network` - (Optional) A name of parent network
-
 
 <a id="ipscope"></a>
 ## IP Scope
 
-* `is_inherited` - (Optional) True if the IP scope is inherited from parent network. Default is false.
 * `gateway` - (Required) Gateway of the network
 * `netmask` - (Required) Network mask
 * `dns1` - (Optional) Primary DNS server
