@@ -105,18 +105,21 @@ func uploadFile(client *Client, filePath string, uDetails uploadDetails) (int64,
 }
 
 // Create Request with right headers and range settings. Support multi part file upload.
+// client - client for requests
 // requestUrl - upload url
 // filePart - bytes to upload
 // offset - how much is uploaded
 // filePartSize - how much bytes will be uploaded
 // fileSizeToUpload - final file size
-func newFileUploadRequest(requestUrl string, filePart []byte, offset, filePartSize, fileSizeToUpload int64) (*http.Request, error) {
+func newFileUploadRequest(client *Client, requestUrl string, filePart []byte, offset, filePartSize, fileSizeToUpload int64) (*http.Request, error) {
 	util.Logger.Printf("[TRACE] Creating file upload request: %s, %v, %v, %v \n", requestUrl, offset, filePartSize, fileSizeToUpload)
 
-	uploadReq, err := http.NewRequest(http.MethodPut, requestUrl, bytes.NewReader(filePart))
+	parsedRequestURL, err := url.ParseRequestURI(requestUrl)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error decoding vdc response: %s", err)
 	}
+
+	uploadReq := client.NewRequestWitNotEncodedParams(nil, nil, http.MethodPut, *parsedRequestURL, bytes.NewReader(filePart))
 
 	uploadReq.ContentLength = filePartSize
 	uploadReq.Header.Set("Content-Length", strconv.FormatInt(uploadReq.ContentLength, 10))
@@ -138,7 +141,7 @@ func newFileUploadRequest(requestUrl string, filePart []byte, offset, filePartSi
 // partDataSize - how much bytes will be uploaded
 // uploadDetails - file upload settings and data
 func uploadPartFile(client *Client, part []byte, partDataSize int64, uDetails uploadDetails) error {
-	request, err := newFileUploadRequest(uDetails.uploadLink, part, uDetails.uploadedBytes, partDataSize, uDetails.fileSizeToUpload)
+	request, err := newFileUploadRequest(client, uDetails.uploadLink, part, uDetails.uploadedBytes, partDataSize, uDetails.fileSizeToUpload)
 	if err != nil {
 		return err
 	}

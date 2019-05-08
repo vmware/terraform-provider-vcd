@@ -90,6 +90,10 @@ const (
 	MimeMetaData = "application/vnd.vmware.vcloud.metadata+xml"
 	// Mime for metadata value
 	MimeMetaDataValue = "application/vnd.vmware.vcloud.metadata.value+xml"
+	// Mime for a admin network
+	MimeExtensionNetwork = "application/vnd.vmware.admin.extension.network+xml"
+	// Mime for an external network
+	MimeExternalNetwork = "application/vnd.vmware.admin.vmwexternalnet+xml"
 )
 
 const (
@@ -126,10 +130,11 @@ const (
 )
 
 const (
-	XMLNamespaceVCloud = "http://www.vmware.com/vcloud/v1.5"
-	XMLNamespaceOVF    = "http://schemas.dmtf.org/ovf/envelope/1"
-	XMLNamespaceVMW    = "http://www.vmware.com/schema/ovf"
-	XMLNamespaceXSI    = "http://www.w3.org/2001/XMLSchema-instance"
-	XMLNamespaceRASD   = "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData"
-	XMLNamespaceVSSD   = "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData"
+	XMLNamespaceVCloud    = "http://www.vmware.com/vcloud/v1.5"
+	XMLNamespaceOVF       = "http://schemas.dmtf.org/ovf/envelope/1"
+	XMLNamespaceVMW       = "http://www.vmware.com/schema/ovf"
+	XMLNamespaceXSI       = "http://www.w3.org/2001/XMLSchema-instance"
+	XMLNamespaceRASD      = "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData"
+	XMLNamespaceVSSD      = "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData"
+	XMLNamespaceExtension = "http://www.vmware.com/vcloud/extension/v1.5"
 )

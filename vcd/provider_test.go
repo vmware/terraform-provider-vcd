@@ -1,4 +1,4 @@
-// +build api functional catalog vapp network org query vm vdc gateway disk ALL
+// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk ALL
 
 package vcd
 
