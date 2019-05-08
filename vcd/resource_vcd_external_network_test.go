@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
@@ -71,6 +72,20 @@ func testAccCheckVcdExternalNetworkExists(name string, externalNetwork *govcd.Ex
 		newExternalNetwork, err := govcd.GetExternalNetwork(conn.VCDClient, rs.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("external network %s does not exist (%#v)", rs.Primary.ID, newExternalNetwork.ExternalNetwork)
+		}
+
+		// Due vCD bug this workaround to refresh until task is fully completed - as task wait isn't enough
+		// Task still exists and creates NETWORK_DELETE error, so we wait until disappears
+		for i := 0; i < 30; i++ {
+			err = newExternalNetwork.Refresh()
+			if err != nil {
+				return fmt.Errorf("external network %s refresh failed (%#v)", rs.Primary.ID, err)
+			}
+			if newExternalNetwork.ExternalNetwork.Tasks != nil && len(newExternalNetwork.ExternalNetwork.Tasks.Task) == 0 {
+				break
+			} else {
+				time.Sleep(1 * time.Second)
+			}
 		}
 
 		externalNetwork = newExternalNetwork
