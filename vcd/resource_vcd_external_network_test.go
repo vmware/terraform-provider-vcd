@@ -73,7 +73,7 @@ func testAccCheckVcdExternalNetworkExists(name string, externalNetwork *govcd.Ex
 		conn := testAccProvider.Meta().(*VCDClient)
 		newExternalNetwork, err := govcd.GetExternalNetwork(conn.VCDClient, rs.Primary.ID)
 		if err != nil {
-			return fmt.Errorf("external network %s does not exist (%#v)", rs.Primary.ID, newExternalNetwork.ExternalNetwork)
+			return fmt.Errorf("external network %s does not exist (%#v)", rs.Primary.ID, err)
 		}
 
 		// Due vCD bug this workaround to refresh until task is fully completed - as task wait isn't enough
