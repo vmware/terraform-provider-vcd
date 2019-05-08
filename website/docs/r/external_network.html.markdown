@@ -28,15 +28,33 @@ resource "vcd_external_network" "net" {
   description = "Reference for vCD external network"
 
   ip_scope {
-    gateway      = "192.168.30.49"
-    netmask      = "255.255.255.240"
-    dns1         = "192.168.0.164"
-    dns2         = "192.168.0.196"
-    dns_suffix   = "mybiz.biz"
+    gateway    = "192.168.30.49"
+    netmask    = "255.255.255.240"
+    dns1       = "192.168.0.164"
+    dns2       = "192.168.0.196"
+    dns_suffix = "mybiz.biz"
 
     static_ip_pool {
       start_address = "192.168.30.51"
       end_address   = "192.168.30.62"
+    }
+  }
+
+  ip_scope {
+    gateway      = "192.168.31.49"
+    netmask      = "255.255.255.240"
+    dns1         = "192.168.1.164"
+    dns2         = "192.168.1.196"
+    dns_suffix   = "my.biz"
+
+    static_ip_pool {
+      start_address = "192.168.31.51"
+      end_address   = "192.168.31.60"
+    }
+
+    static_ip_pool {
+      start_address = "192.168.31.31"
+      end_address   = "192.168.31.40"
     }
   }
 
@@ -51,10 +69,11 @@ resource "vcd_external_network" "net" {
 
 resource "vcd_network_direct" "net" {
   org              = "my-org"
-  vdc              = "my-vdc" 
+  vdc              = "my-vdc"
   name             = "my-net"
   external_network = "${vcd_external_network.net.name}"
 }
+
 ```
 
 ## Argument Reference
