@@ -111,6 +111,10 @@ func testAccCheckExternalNetworkDestroy(s *terraform.State) error {
 	return nil
 }
 
+func init() {
+	testingTags["extnetwork"] = "resource_vcd_external_network_test.go"
+}
+
 const testAccCheckVcdExternalNetwork_basic = `
 resource "vcd_external_network" "{{.ExternalNetworkName}}" {
   name        = "{{.ExternalNetworkName}}"
