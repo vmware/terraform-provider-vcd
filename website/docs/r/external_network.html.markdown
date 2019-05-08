@@ -9,12 +9,20 @@ description: |-
 # vcd\_external\_network
 
 Provides a vCloud Director external network resource.  This can be used to create and delete external networks.
+Requires system administrator privileges.
 
 Supported in provider *v2.2+*
 
 ## Example Usage
 
 ```hcl
+provider "vcd" {
+  user     = "${var.admin_user}"
+  password = "${var.admin_password}"
+  org      = "System"
+  url      = "https://Vcd/api"
+}
+
 resource "vcd_external_network" "net" {
   name        = "my-ext-net"
   description = "Reference for vCD external network"
@@ -33,7 +41,7 @@ resource "vcd_external_network" "net" {
   }
 
   vsphere_networks {
-    vcenter         = "vC1"
+    vcenter         = "vcenter-name"
     vsphere_network = "myNetwork"
     type            = "DV_PORTGROUP"
   }
