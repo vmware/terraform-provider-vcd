@@ -38,47 +38,55 @@ func resourceVcdExternalNetwork() *schema.Resource {
 						"gateway": &schema.Schema{
 							Type:         schema.TypeString,
 							Required:     true,
+							ForceNew:     true,
 							Description:  "Gateway of the network",
 							ValidateFunc: validation.SingleIP(),
 						},
 						"netmask": &schema.Schema{
 							Type:         schema.TypeString,
 							Required:     true,
+							ForceNew:     true,
 							Description:  "Network mask",
 							ValidateFunc: validation.SingleIP(),
 						},
 						"dns1": &schema.Schema{
 							Type:         schema.TypeString,
 							Optional:     true,
+							ForceNew:     true,
 							Description:  "Primary DNS server",
 							ValidateFunc: validation.SingleIP(),
 						},
 						"dns2": &schema.Schema{
 							Type:         schema.TypeString,
 							Optional:     true,
+							ForceNew:     true,
 							Description:  "Secondary DNS server",
 							ValidateFunc: validation.SingleIP(),
 						},
 						"dns_suffix": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
+							ForceNew:    true,
 							Description: "Dns suffix",
 						},
 						"static_ip_pool": &schema.Schema{
 							Type:        schema.TypeList,
 							Optional:    true,
+							ForceNew:    true,
 							Description: "IP ranges used for static pool allocation in the network",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"start_address": &schema.Schema{
 										Type:         schema.TypeString,
 										Required:     true,
+										ForceNew:     true,
 										Description:  "Start address of the IP range",
 										ValidateFunc: validation.SingleIP(),
 									},
 									"end_address": &schema.Schema{
 										Type:         schema.TypeString,
 										Required:     true,
+										ForceNew:     true,
 										Description:  "End address of the IP range",
 										ValidateFunc: validation.SingleIP(),
 									},
@@ -98,16 +106,19 @@ func resourceVcdExternalNetwork() *schema.Resource {
 						"vcenter": &schema.Schema{
 							Type:        schema.TypeString,
 							Required:    true,
+							ForceNew:    true,
 							Description: "The vCenter server name",
 						},
 						"vsphere_network": &schema.Schema{
 							Type:        schema.TypeString,
 							Required:    true,
+							ForceNew:    true,
 							Description: "The name of the port group",
 						},
 						"type": &schema.Schema{
 							Type:         schema.TypeString,
 							Required:     true,
+							ForceNew:     true,
 							Description:  "The vSphere port group type. One of: DV_PORTGROUP (distributed virtual port group), NETWORK",
 							ValidateFunc: validation.StringInSlice([]string{"DV_PORTGROUP", "NETWORK"}, false),
 						},
