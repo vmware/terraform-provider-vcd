@@ -2,11 +2,11 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform/helper/validation"
 	"log"
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
