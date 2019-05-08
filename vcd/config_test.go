@@ -135,10 +135,7 @@ func dirExists(filename string) bool {
 
 // Returns true if the current configuration uses a system administrator for connections
 func usingSysAdmin() bool {
-	if strings.ToLower(testConfig.Provider.SysOrg) == "system" {
-		return true
-	}
-	return false
+	return strings.ToLower(testConfig.Provider.SysOrg) == "system"
 }
 
 // Fills a template with data provided as a StringMap

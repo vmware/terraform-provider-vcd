@@ -42,6 +42,8 @@ resource "vcd_external_network" "net" {
 }
 
 resource "vcd_network_direct" "net" {
+  org              = "my-org"
+  vdc              = "my-vdc" 
   name             = "my-net"
   external_network = "${vcd_external_network.net.name}"
 }

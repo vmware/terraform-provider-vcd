@@ -276,7 +276,7 @@ func getExternalNetworkInput(d *schema.ResourceData, vcdClient *VCDClient) (*typ
 			portGroupConfiguration.MoRef = portGroupRecord[0].MoRef
 		} else {
 			return &types.ExternalNetwork{},
-				fmt.Errorf("find less or more than one port groups - %d", len(portGroupRecord))
+				fmt.Errorf("found less or more than one port groups - %d", len(portGroupRecord))
 		}
 
 		portGroups = append(portGroups, portGroupConfiguration)
