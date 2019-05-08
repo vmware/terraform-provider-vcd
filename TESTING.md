@@ -43,6 +43,7 @@ Using the Makefile, you can run one of the following:
 ```bash
 make testcatalog
 make testnetwork
+make testextnetwork
 make testgateway
 make testvapp
 make testvm
@@ -71,6 +72,7 @@ $ go test -v .
            * catalog:    Runs catalog related tests (also catalog_item, media)
            * disk:       Runs disk related tests
            * network:    Runs network related tests
+           * extnetwork: Runs external network related tests
            * gateway:    Runs edge gateway related tests
            * org:        Runs org related tests
            * vapp:       Runs vapp related tests
