@@ -1,3 +1,5 @@
+// +build functional gateway ALL
+
 package vcd
 
 import (

@@ -1,3 +1,5 @@
+// +build disk ALL functional
+
 package vcd
 
 import (
@@ -94,6 +96,10 @@ func testDiskResourcesDestroyed(s *terraform.State) error {
 		}
 	}
 	return nil
+}
+
+func init() {
+	testingTags["disk"] = "resource_vcd_independent_disk_test.go"
 }
 
 const testAccCheckVcdIndependentDiskBasic = `
