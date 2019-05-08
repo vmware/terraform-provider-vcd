@@ -7,6 +7,7 @@ package govcd
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
@@ -107,4 +108,117 @@ func getOrgHREF(vcdClient *VCDClient, orgName string) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("couldn't find org with name: %s. Please check Org name as it is case sensitive", orgName)
+}
+
+// Find a list of Virtual Centers matching the filter parameter.
+// Filter constructing guide: https://pubs.vmware.com/vcloud-api-1-5/wwhelp/wwhimpl/js/html/wwhelp.htm#href=api_prog/GUID-CDF04296-5EB5-47E1-9BEC-228837C584CE.html
+// Possible parameters are any attribute from QueryResultVirtualCenterRecordType struct
+// E.g. filter could look like: (name==vC1)
+func QueryVirtualCenters(vcdClient *VCDClient, filter string) ([]*types.QueryResultVirtualCenterRecordType, error) {
+	results, err := vcdClient.QueryWithNotEncodedParams(nil, map[string]string{
+		"type":   "virtualCenter",
+		"filter": filter,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return results.Results.VirtualCenterRecord, nil
+}
+
+// Find a Network port group by name
+func QueryNetworkPortGroup(vcdCli *VCDClient, name string) ([]*types.PortGroupRecordType, error) {
+	return QueryPortGroups(vcdCli, fmt.Sprintf("(name==%s;portgroupType==%s)", url.QueryEscape(name), "NETWORK"))
+}
+
+// Find a Distributed port group by name
+func QueryDistributedPortGroup(vcdCli *VCDClient, name string) ([]*types.PortGroupRecordType, error) {
+	return QueryPortGroups(vcdCli, fmt.Sprintf("(name==%s;portgroupType==%s)", url.QueryEscape(name), "DV_PORTGROUP"))
+}
+
+// Find a list of Port groups matching the filter parameter.
+func QueryPortGroups(vcdCli *VCDClient, filter string) ([]*types.PortGroupRecordType, error) {
+	results, err := vcdCli.QueryWithNotEncodedParams(nil, map[string]string{
+		"type":   "portgroup",
+		"filter": filter,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return results.Results.PortGroupRecord, nil
+}
+
+// GetExternalNetwork returns ExternalNetwork object if user specifies a valid external network name.
+// If no valid external network is found, it returns an empty
+// ExternalNetwork and no error. Otherwise it returns an error and an empty
+// ExternalNetwork object
+func GetExternalNetwork(vcdClient *VCDClient, networkName string) (*ExternalNetwork, error) {
+
+	if !vcdClient.Client.IsSysAdmin {
+		return &ExternalNetwork{}, fmt.Errorf("functionality requires system administrator privileges")
+	}
+
+	extNetworkHREF, err := getExternalNetworkHref(&vcdClient.Client)
+	if err != nil {
+		return &ExternalNetwork{}, err
+	}
+
+	extNetworkRefs := &types.ExternalNetworkReferences{}
+	_, err = vcdClient.Client.ExecuteRequest(extNetworkHREF, http.MethodGet,
+		types.MimeNetworkConnectionSection, "error retrieving external networks: %s", nil, extNetworkRefs)
+	if err != nil {
+		return &ExternalNetwork{}, err
+	}
+
+	externalNetwork := NewExternalNetwork(&vcdClient.Client)
+
+	for _, netRef := range extNetworkRefs.ExternalNetworkReference {
+		if netRef.Name == networkName {
+			externalNetwork.ExternalNetwork.HREF = netRef.HREF
+			err = externalNetwork.Refresh()
+			if err != nil {
+				return &ExternalNetwork{}, err
+			}
+		}
+	}
+
+	return externalNetwork, nil
+
+}
+
+// CreateExternalNetwork allows create external network and returns Task or error.
+// types.ExternalNetwork struct is general and used for various types of networks. But for external network
+// fence mode is always isolated, isInherited is false, parentNetwork is empty.
+func CreateExternalNetwork(vcdClient *VCDClient, externalNetwork *types.ExternalNetwork) (Task, error) {
+
+	if !vcdClient.Client.IsSysAdmin {
+		return Task{}, fmt.Errorf("functionality requires system administrator privileges")
+	}
+
+	err := validateExternalNetwork(externalNetwork)
+	if err != nil {
+		return Task{}, err
+	}
+
+	externalNetHREF := vcdClient.Client.VCDHREF
+	externalNetHREF.Path += "/admin/extension/externalnets"
+
+	externalNetwork.Configuration.FenceMode = "isolated"
+
+	// Return the task
+	return vcdClient.Client.ExecuteTaskRequest(externalNetHREF.String(), http.MethodPost,
+		types.MimeExternalNetwork, "error instantiating a new ExternalNetwork: %s", externalNetwork)
+}
+
+func getExtension(client *Client) (*types.Extension, error) {
+	extensions := &types.Extension{}
+
+	extensionHREF := client.VCDHREF
+	extensionHREF.Path += "/admin/extension/"
+
+	_, err := client.ExecuteRequest(extensionHREF.String(), http.MethodGet,
+		"", "error retrieving extension: %s", nil, extensions)
+
+	return extensions, err
 }

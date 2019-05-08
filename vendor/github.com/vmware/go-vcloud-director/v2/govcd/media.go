@@ -249,7 +249,7 @@ func readHeader(reader io.Reader) (bool, error) {
 
 // Verify file header info: https://www.garykessler.net/library/file_sigs.html
 func verifyHeader(buf []byte) bool {
-	// search for for CD001(43 44 30 30 31) in specific file places.
+	// search for CD001(43 44 30 30 31) in specific file places.
 	//This signature usually occurs at byte offset 32769 (0x8001),
 	//34817 (0x8801), or 36865 (0x9001).
 	return (buf[32769] == 0x43 && buf[32770] == 0x44 &&
