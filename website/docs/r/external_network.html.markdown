@@ -40,6 +40,7 @@ resource "vcd_external_network" "net" {
     }
   }
 
+# It's possible to define more than one IP scope
   ip_scope {
     gateway      = "192.168.31.49"
     netmask      = "255.255.255.240"
@@ -58,6 +59,7 @@ resource "vcd_external_network" "net" {
     }
   }
 
+# It's possible to define more than one vSphere network
   vsphere_networks {
     vcenter         = "vcenter-name"
     vsphere_network = "myNetwork"
