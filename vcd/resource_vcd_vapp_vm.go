@@ -108,12 +108,13 @@ func resourceVcdVAppVm() *schema.Resource {
 				Default:  true,
 			},
 			"network_href": &schema.Schema{
-				Type:       schema.TypeString,
-				Optional:   true,
-				Deprecated: "In favor of networks",
+				ConflictsWith: []string{"networks"},
+				Deprecated:    "In favor of networks",
+				Type:          schema.TypeString,
+				Optional:      true,
 			},
 			"networks": {
-				ConflictsWith: []string{"ip", "network_name", "vapp_network_name"},
+				ConflictsWith: []string{"ip", "network_name", "vapp_network_name", "network_href"},
 				ForceNew:      true,
 				Optional:      true,
 				Type:          schema.TypeList,
@@ -153,15 +154,6 @@ func resourceVcdVAppVm() *schema.Resource {
 							DiffSuppressFunc: falseBoolSuppress(),
 							Type:             schema.TypeBool,
 						},
-						//  Cannot be used right now because changing adapter_type would need
-						//  a bigger rework of AddVM() function in go-vcloud-director library
-						//  to allow to set adapter_type while creation of NetworkConnection.
-						//
-						//  "adapter_type": {
-						//  	Type:     schema.TypeString,
-						//  	ForceNew: true,
-						//  	Optional: true,
-						//  },
 						"mac": {
 							Computed: true,
 							Optional: true,
@@ -283,94 +275,22 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error finding vApp: %#v", err)
 	}
 
-	// Networking part
-
-	// Step 1 - gather vars
-	legacyNetworkName := d.Get("network_name").(string)
-	legacyVappNetworkName := d.Get("vapp_network_name").(string)
-
-	allNetworks := d.Get("networks").([]interface{})
-
-	var vAppNets []*types.OrgVDCNetwork
-	var vdcNets []*types.OrgVDCNetwork
-
-	// Step 2 - process legacy "network_name" and "vapp_network_name"
-	// TODO v3.0 remove when "network_name" and "vapp_network_name" is deprecated
-	if legacyNetworkName != "" {
-		legacyNetwork, err := addVdcNetwork(d.Get("network_name").(string), vdc, vapp, vcdClient)
-		if err != nil {
-			return err
-		}
-		vdcNets = append(vdcNets, legacyNetwork)
+	// Determine whether we use new 'networks' or deprecated network configuration and process inputs based on it.
+	// TODO v3.0 remove else branch once 'network_name', 'vapp_network_name', 'ip' are deprecated
+	networkConnectionSection := types.NetworkConnectionSection{}
+	if len(d.Get("networks").([]interface{})) > 0 {
+		networkConnectionSection, err = networksToConfig(d.Get("networks").([]interface{}), vdc, vapp, vcdClient)
+	} else {
+		networkConnectionSection, err = deprecatedNetworksToConfig(d.Get("network_name").(string),
+			d.Get("vapp_network_name").(string), d.Get("ip").(string), vdc, vapp, vcdClient)
 	}
-	if legacyVappNetworkName != "" {
-		isVappNetwork, err := isItVappNetwork(legacyVappNetworkName, vapp)
-		if err != nil {
-			return err
-		}
-		if !isVappNetwork {
-			return fmt.Errorf("vapp_network_name: %s is not found", legacyVappNetworkName)
-		}
-	}
-	// TODO v3.0 EO remove when "network_name" and "vapp_network_name" is deprecated
-
-	// Step 3 - process new networks of all types
-	for _, network := range allNetworks {
-		net := network.(map[string]interface{})
-		netType := net["network_type"].(string)
-		netName := net["network_name"].(string)
-
-		switch netType {
-		case "vapp":
-			isVappNetwork, err := isItVappNetwork(netName, vapp)
-			if err != nil {
-				return fmt.Errorf("unable to find vApp network %s: %s", netName, err)
-			}
-			if !isVappNetwork {
-				return fmt.Errorf("vApp network : %s is not found", netName)
-			}
-			vAppNets = append(vAppNets, &types.OrgVDCNetwork{Name: netName})
-		case "org":
-			vdcNet, err := vdc.FindVDCNetwork(netName)
-			if err != nil {
-				return fmt.Errorf("error finding org vdc network: %#v", err)
-			}
-			vdcNets = append(vdcNets, vdcNet.OrgVDCNetwork)
-		case "none":
-			// Special reference type 'none' network  does not exist anywhere, but allows to add unattached NIC.
-			// Store empty object with hardcoded type.
-			vdcNets = append(vdcNets, &types.OrgVDCNetwork{Name: types.NoneNetwork})
-		}
-
-	}
-
-	// Step 4 - ensure all specified vdc networks are attached to vApp
-	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 	if err != nil {
-		return fmt.Errorf("unable to retrieve vApp network config: %s", err)
-	}
-	vAppNetworkNames := vAppNetworkConfig.NetworkNames()
-	// Check if a vdc network is attached to vApp. If not - attach it. Skip types.NoneNetwork.
-	for _, vdcNet := range vdcNets {
-		if !stringInSlice(vdcNet.Name, vAppNetworkNames) && vdcNet.Name != types.NoneNetwork {
-			// TODO optimize addVdcNetwork as it does additional unnecessary calls
-			_, err = addVdcNetwork(vdcNet.Name, vdc, vapp, vcdClient)
-			if err != nil {
-				return fmt.Errorf("unable to assign vdc network %s to vApp %s", vdcNet.Name, vAppNetworkNames)
-			}
-		}
+		return fmt.Errorf("unable to process network configuration: %s", err)
 	}
 
-	// After attaching org vdc networks it is safe to add vApp network names to the list for being added
-	vdcNets = append(vdcNets, vAppNets...)
-
-	// Adds all network cards with default settings
 	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 		log.Printf("[TRACE] Creating VM: %s", d.Get("name").(string))
-		// TODO refactor vapp.AddVM to create NICs with proper configuration
-		// instead of default NIC parameters. Currently it depends on vm.ChangeNetworkConfig(n) in the Update()
-		// to set proper network allocations
-		task, err := vapp.AddVM(vdcNets, legacyVappNetworkName, vappTemplate, d.Get("name").(string), acceptEulas)
+		task, err := vapp.AddNewVM(d.Get("name").(string), vappTemplate, &networkConnectionSection, acceptEulas)
 		if err != nil {
 			return resource.RetryableError(fmt.Errorf("error adding VM: %#v", err))
 		}
@@ -388,35 +308,6 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error getting VM1 : %#v", err)
 	}
 
-	// TODO v3.0 remove when "network_name" and "vapp_network_name" is deprecated
-	if legacyNetworkName != "" || legacyVappNetworkName != "" {
-		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			var networksChanges []map[string]interface{}
-			if legacyVappNetworkName != "" {
-				networksChanges = append(networksChanges, map[string]interface{}{
-					"ip":           d.Get("ip").(string),
-					"network_name": legacyVappNetworkName,
-				})
-			}
-			if legacyNetworkName != "" {
-				networksChanges = append(networksChanges, map[string]interface{}{
-					"ip":           d.Get("ip").(string),
-					"network_name": legacyNetworkName,
-				})
-			}
-
-			task, err := vm.ChangeNetworkConfig(networksChanges)
-			if err != nil {
-				return resource.RetryableError(fmt.Errorf("error with Networking change: %#v", err))
-			}
-			return resource.RetryableError(task.WaitTaskCompletion())
-		})
-	}
-	// TODO v3.0 EO remove when "network_name" and "vapp_network_name" is deprecated
-
-	if err != nil {
-		return fmt.Errorf("error changing network: %#v", err)
-	}
 	// The below operation assumes VM is powered off and does not check for it because VM is being
 	// powered on in the last stage of create/update cycle
 	if d.Get("expose_hardware_virtualization").(bool) {
@@ -447,6 +338,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 
 	d.SetId(d.Get("name").(string))
 
+	// TODO do not trigger resourceVcdVAppVmUpdate from create. These must be separate actions.
 	err = resourceVcdVAppVmUpdate(d, meta)
 	if err != nil {
 		errAttachedDisk := updateStateOfAttachedDisks(d, vm, vdc)
@@ -502,15 +394,19 @@ func addVdcNetwork(networkNameToAdd string, vdc govcd.Vdc, vapp govcd.VApp, vcdC
 	return vdcNetwork, nil
 }
 
-// Checks if vapp network available for using
+// isItVappNetwork checks if it is a genuine vApp network (not only attached to vApp)
 func isItVappNetwork(vAppNetworkName string, vapp govcd.VApp) (bool, error) {
+
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 	if err != nil {
 		return false, fmt.Errorf("error getting vApp networks: %#v", err)
 	}
-
+	// If vApp network is "isolated" and has no ParentNetwork - it is a vApp network.
+	// https://code.vmware.com/apis/72/vcloud/doc/doc/types/NetworkConfigurationType.html
 	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
-		if networkConfig.NetworkName == vAppNetworkName {
+		if networkConfig.NetworkName == vAppNetworkName &&
+			networkConfig.Configuration.ParentNetwork == nil &&
+			networkConfig.Configuration.FenceMode == "isolated" {
 			log.Printf("[TRACE] vApp network found: %s", vAppNetworkName)
 			return true, nil
 		}
@@ -638,8 +534,8 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 	// However, vApp throws errors when simultaneous requests are executed.
 	// To avoid them, below block is using retryCall in multiple places as a workaround,
 	// so that the VMs are created regardless of parallelisation.
-	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("cpu_cores") || d.HasChange("networks") ||
-		d.HasChange("disk") || d.HasChange("power_on") || d.HasChange("expose_hardware_virtualization") {
+	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("cpu_cores") || d.HasChange("power_on") || d.HasChange("disk") ||
+		d.HasChange("expose_hardware_virtualization") {
 		if status != "POWERED_OFF" {
 			task, err := vm.PowerOff()
 			if err != nil {
@@ -648,6 +544,19 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 			err = task.WaitTaskCompletion()
 			if err != nil {
 				return fmt.Errorf(errorCompletingTask, err)
+			}
+		}
+
+		// detaching independent disks - only possible when VM power off
+		if d.HasChange("disk") {
+			err = attachDetachDisks(d, vm, vdc)
+			if err != nil {
+				errAttachedDisk := updateStateOfAttachedDisks(d, vm, vdc)
+				if errAttachedDisk != nil {
+					d.Set("disk", nil)
+					return fmt.Errorf("error reading attached disks : %#v and internal error : %#v", errAttachedDisk, err)
+				}
+				return fmt.Errorf("error attaching-detaching  disks when updating resource : %#v", err)
 			}
 		}
 
@@ -697,38 +606,6 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 			})
 			if err != nil {
 				return err
-			}
-		}
-
-		if d.HasChange("networks") {
-			n := []map[string]interface{}{}
-
-			nets := d.Get("networks").([]interface{})
-			for _, network := range nets {
-				n = append(n, network.(map[string]interface{}))
-			}
-			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-				task, err := vm.ChangeNetworkConfig(n)
-				if err != nil {
-					return resource.RetryableError(fmt.Errorf("error changing network: %#v", err))
-				}
-				return resource.RetryableError(task.WaitTaskCompletion())
-			})
-			if err != nil {
-				return fmt.Errorf(errorCompletingTask, err)
-			}
-		}
-
-		// detaching independent disks - only possible when VM power off
-		if d.HasChange("disk") {
-			err = attachDetachDisks(d, vm, vdc)
-			if err != nil {
-				errAttachedDisk := updateStateOfAttachedDisks(d, vm, vdc)
-				if errAttachedDisk != nil {
-					d.Set("disk", nil)
-					return fmt.Errorf("error reading attached disks : %#v and internal error : %#v", errAttachedDisk, err)
-				}
-				return fmt.Errorf("error attaching-detaching  disks when updating resource : %#v", err)
 			}
 		}
 
@@ -827,7 +704,6 @@ func attachDetachDisks(d *schema.ResourceData, vm govcd.VM, vdc govcd.Vdc) error
 }
 
 func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
-	log.Println("[TRACE] resourceVcdVAppVmRead")
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -850,71 +726,23 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 
 	d.Set("name", vm.VM.Name)
 
+	// Read either new or deprecated networks configuration based on which are used
 	switch {
-	// network_name is not set. networks is set in config
-	// TODO remove this case block when we cleanup deprecated 'ip' and 'network_name' attributes
-	case d.Get("network_name").(string) != "":
-		ip := vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddress
-		// If allocation mode is DHCP and we're not getting the IP - we set this to na (not available)
-		if vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddressAllocationMode == types.IPAllocationModeDHCP && ip == "" {
-			ip = "na"
-		}
-
-		d.Set("ip", ip)
-		d.Set("mac", vm.VM.NetworkConnectionSection.NetworkConnection[0].MACAddress)
-		// TODO EO remove this case block when we cleanup deprecated 'ip' and 'network_name' attributes
-	// We are using networks block and rebuilding statefile
-	case len(d.Get("networks").([]interface{})) > 0:
-		// Determine network_type for all networks in vApp
-		vAppNetworkConfig, err := vapp.GetNetworkConfig()
+	// TODO v3.0 remove this case block when we cleanup deprecated 'ip' and 'network_name' attributes
+	case d.Get("network_name").(string) != "" || d.Get("vapp_network_name").(string) != "":
+		ip, mac, err := deprecatedReadNetworks(d.Get("network_name").(string), d.Get("vapp_network_name").(string), vm)
 		if err != nil {
-			return fmt.Errorf("error getting vApp networks: %#v", err)
+			return fmt.Errorf("failed reading network details: %s", err)
 		}
-		// If vApp network is "isolated" and has no ParentNetwork - it is a vApp network.
-		// https://code.vmware.com/apis/72/vcloud/doc/doc/types/NetworkConfigurationType.html
-		vAppNetworkTypes := make(map[string]string)
-		for _, netConfig := range vAppNetworkConfig.NetworkConfig {
-			if netConfig.Configuration.ParentNetwork == nil && netConfig.Configuration.FenceMode == "isolated" {
-				vAppNetworkTypes[netConfig.NetworkName] = "vapp"
-			} else {
-				vAppNetworkTypes[netConfig.NetworkName] = "org"
-			}
+		d.Set("ip", ip)
+		d.Set("mac", mac)
+		// TODO v3.0 EO remove this case block when we cleanup deprecated 'ip' and 'network_name' attributes
+	case len(d.Get("networks").([]interface{})) > 0:
+		networks, err := readNetworks(vm, vapp)
+		if err != nil {
+			return fmt.Errorf("failed reading network details: %s", err)
 		}
-
-		var nets []map[string]interface{}
-		// Sort NIC cards by their virtual slot numbers as the API returns then in random order
-		sort.SliceStable(vm.VM.NetworkConnectionSection.NetworkConnection, func(i, j int) bool {
-			return vm.VM.NetworkConnectionSection.NetworkConnection[i].NetworkConnectionIndex <
-				vm.VM.NetworkConnectionSection.NetworkConnection[j].NetworkConnectionIndex
-		})
-
-		for i, vmNet := range vm.VM.NetworkConnectionSection.NetworkConnection {
-			singleNIC := make(map[string]interface{})
-			singleNIC["ip_allocation_mode"] = vmNet.IPAddressAllocationMode
-			singleNIC["ip"] = vmNet.IPAddress
-			singleNIC["mac"] = vmNet.MACAddress
-			if vmNet.Network != types.NoneNetwork {
-				singleNIC["network_name"] = vmNet.Network
-			}
-
-			singleNIC["is_primary"] = false
-			if i == vm.VM.NetworkConnectionSection.PrimaryNetworkConnectionIndex {
-				singleNIC["is_primary"] = true
-			}
-
-			if vmNet.Network == types.NoneNetwork {
-				singleNIC["network_type"] = types.NoneNetwork
-			} else {
-				var ok bool
-				if singleNIC["network_type"], ok = vAppNetworkTypes[vmNet.Network]; !ok {
-					return fmt.Errorf("unable to determine vApp network type for: %s", vmNet.Network)
-				}
-			}
-
-			nets = append(nets, singleNIC)
-		}
-
-		d.Set("networks", nets)
+		d.Set("networks", networks)
 	}
 
 	d.Set("href", vm.VM.HREF)
@@ -1068,11 +896,211 @@ func resourceVcdVmIndependentDiskHash(v interface{}) int {
 	return hashcode.String(buf.String())
 }
 
-func stringInSlice(search string, list []string) bool {
-	for _, str := range list {
-		if str == search {
-			return true
+// networksToConfig converts terraform schema for 'networks' and converts to types.NetworkConnectionSection
+// which is used for creating new VM
+func networksToConfig(networks []interface{}, vdc govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (types.NetworkConnectionSection, error) {
+	networkConnectionSection := types.NetworkConnectionSection{}
+	for index, singleNetwork := range networks {
+		n := singleNetwork.(map[string]interface{})
+		netConn := &types.NetworkConnection{}
+
+		networkName, ok := n["network_name"].(string)
+		if !ok {
+			return types.NetworkConnectionSection{}, fmt.Errorf("unable to cast network_name to string")
+		}
+
+		ipAllocationMode, ok := n["ip_allocation_mode"].(string)
+		if !ok {
+			return types.NetworkConnectionSection{}, fmt.Errorf("unable to cast ip_allocation_mode to string")
+		}
+
+		ip, ok := n["ip"].(string)
+		if !ok {
+			return types.NetworkConnectionSection{}, fmt.Errorf("unable to cast ip to string")
+		}
+
+		isPrimary, ok := n["is_primary"].(bool)
+		if !ok {
+			return types.NetworkConnectionSection{}, fmt.Errorf("unable to cast is_primary to bool")
+		}
+		if isPrimary {
+			networkConnectionSection.PrimaryNetworkConnectionIndex = index
+		}
+
+		networkType := n["network_type"].(string)
+		if networkType == "org" {
+			_, err := addVdcNetwork(networkName, vdc, vapp, vcdClient)
+			if err != nil {
+				return types.NetworkConnectionSection{}, fmt.Errorf("unable to attach org network %s: %s", networkName, err)
+			}
+		}
+
+		if networkType == "vapp" {
+			isVappNetwork, err := isItVappNetwork(networkName, vapp)
+			if err != nil {
+				return types.NetworkConnectionSection{}, fmt.Errorf("unable to find vApp network %s: %s", networkName, err)
+			}
+			if !isVappNetwork {
+				return types.NetworkConnectionSection{}, fmt.Errorf("vApp network : %s is not found", networkName)
+			}
+		}
+
+		netConn.IsConnected = true
+		netConn.IPAddressAllocationMode = ipAllocationMode
+		netConn.NetworkConnectionIndex = index
+		netConn.Network = networkName
+		if ipAllocationMode == types.IPAllocationModeNone {
+			netConn.Network = types.NoneNetwork
+		}
+
+		if net.ParseIP(ip) != nil {
+			netConn.IPAddress = ip
+		}
+		networkConnectionSection.NetworkConnection = append(networkConnectionSection.NetworkConnection, netConn)
+	}
+	return networkConnectionSection, nil
+}
+
+// deprecatedNetworksToConfig converts deprecated network configuration in fields
+// TODO v3.0 remove this function once 'network_name', 'vapp_network_name', 'ip' are deprecated
+func deprecatedNetworksToConfig(network_name, vapp_network_name, ip string, vdc govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (types.NetworkConnectionSection, error) {
+	networkConnectionSection := types.NetworkConnectionSection{}
+	if vapp_network_name != "" {
+		isVappNetwork, err := isItVappNetwork(vapp_network_name, vapp)
+		if err != nil {
+			return types.NetworkConnectionSection{}, fmt.Errorf("unable to find vApp network %s: %s", vapp_network_name, err)
+		}
+		if !isVappNetwork {
+			return types.NetworkConnectionSection{}, fmt.Errorf("vApp network : %s is not found", vapp_network_name)
 		}
 	}
-	return false
+
+	if network_name != "" {
+		// Ensure network_name is added to vdc
+		_, err := addVdcNetwork(network_name, vdc, vapp, vcdClient)
+		if err != nil {
+			return types.NetworkConnectionSection{}, fmt.Errorf("unable to attach vdc network %s: %s", network_name, err)
+		}
+	}
+
+	var ipAllocationMode string
+	var ipAddress string
+	var ipFieldString string
+
+	ipIsSet := ip != ""
+	ipFieldString = ip
+
+	switch {
+	case ipIsSet && ipFieldString == "dhcp": // Deprecated ip="dhcp" mode
+		ipAllocationMode = types.IPAllocationModeDHCP
+	case ipIsSet && ipFieldString == "allocated": // Deprecated ip="allocated" mode
+		ipAllocationMode = types.IPAllocationModePool
+	case ipIsSet && ipFieldString == "none": // Deprecated ip="none" mode
+		ipAllocationMode = types.IPAllocationModeNone
+
+	// Deprecated ip="valid_ip" mode (currently it is hit by ip_allocation_mode=MANUAL as well)
+	case ipIsSet && net.ParseIP(ipFieldString) != nil:
+		ipAllocationMode = types.IPAllocationModeManual
+		ipAddress = ipFieldString
+	case ipIsSet && ipFieldString != "": // Deprecated ip="something_invalid" we default to DHCP. This is odd but backwards compatible.
+		ipAllocationMode = types.IPAllocationModeDHCP
+	}
+
+	// Construct networkConnectionSection out of this.
+	networkConnectionSection.PrimaryNetworkConnectionIndex = 0
+	// If we have a network_name specified it will be NIC 0.
+	if network_name != "" {
+		netConn := &types.NetworkConnection{}
+		netConn.IsConnected = true
+		netConn.IPAddressAllocationMode = ipAllocationMode
+		netConn.NetworkConnectionIndex = 0
+		netConn.Network = network_name
+		netConn.IPAddress = ipAddress
+		networkConnectionSection.NetworkConnection = append(networkConnectionSection.NetworkConnection, netConn)
+	}
+
+	// If we have only 'vapp_network_name' specified it will be NIC 0. If we have 'network_name' and 'vapp_network_name'
+	// then a second NIC 1 will be added and will use the same IP parameters as the first one. It is completelly odd,
+	// but left so for backwards compatibility. Will be removed with v3.0
+	if vapp_network_name != "" {
+		netConn := &types.NetworkConnection{}
+		netConn.IsConnected = true
+		netConn.IPAddressAllocationMode = ipAllocationMode
+		netConn.NetworkConnectionIndex = len(networkConnectionSection.NetworkConnection)
+		netConn.Network = vapp_network_name
+		netConn.IPAddress = ipAddress
+		networkConnectionSection.NetworkConnection = append(networkConnectionSection.NetworkConnection, netConn)
+	}
+
+	return networkConnectionSection, nil
+}
+
+// deprecatedReadNetworks handles read for deprecated network attributes 'ip' and 'mac' and returns
+// them for saving in statefile
+// TODO v3.0 remove this function once 'network_name', 'vapp_network_name', 'ip' are deprecated
+func deprecatedReadNetworks(network_name, vapp_network_name string, vm govcd.VM) (string, string, error) {
+	if len(vm.VM.NetworkConnectionSection.NetworkConnection) == 0 {
+		return "", "", fmt.Errorf("NIC 0 not found")
+	}
+
+	ip := vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddress
+	// If allocation mode is DHCP and we're not getting the IP - we set this to na (not available)
+	if vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddressAllocationMode == types.IPAllocationModeDHCP && ip == "" {
+		ip = "na"
+	}
+	mac := vm.VM.NetworkConnectionSection.NetworkConnection[0].MACAddress
+
+	return ip, mac, nil
+}
+
+// readNetworks returns network configuration for saving into statefile
+func readNetworks(vm govcd.VM, vapp govcd.VApp) ([]map[string]interface{}, error) {
+	// Determine network_type for all networks in vApp
+	vAppNetworkConfig, err := vapp.GetNetworkConfig()
+	if err != nil {
+		return []map[string]interface{}{}, fmt.Errorf("error getting vApp networks: %#v", err)
+	}
+	// If vApp network is "isolated" and has no ParentNetwork - it is a vApp network.
+	// https://code.vmware.com/apis/72/vcloud/doc/doc/types/NetworkConfigurationType.html
+	vAppNetworkTypes := make(map[string]string)
+	for _, netConfig := range vAppNetworkConfig.NetworkConfig {
+		switch {
+		case netConfig.NetworkName == types.NoneNetwork:
+			vAppNetworkTypes[netConfig.NetworkName] = types.NoneNetwork
+		case netConfig.Configuration.ParentNetwork == nil && netConfig.Configuration.FenceMode == "isolated":
+			vAppNetworkTypes[netConfig.NetworkName] = "vapp"
+		default:
+			vAppNetworkTypes[netConfig.NetworkName] = "org"
+		}
+	}
+
+	var nets []map[string]interface{}
+	// Sort NIC cards by their virtual slot numbers as the API returns them in random order
+	sort.SliceStable(vm.VM.NetworkConnectionSection.NetworkConnection, func(i, j int) bool {
+		return vm.VM.NetworkConnectionSection.NetworkConnection[i].NetworkConnectionIndex <
+			vm.VM.NetworkConnectionSection.NetworkConnection[j].NetworkConnectionIndex
+	})
+
+	for netIndex, vmNet := range vm.VM.NetworkConnectionSection.NetworkConnection {
+		singleNIC := make(map[string]interface{})
+		singleNIC["ip_allocation_mode"] = vmNet.IPAddressAllocationMode
+		singleNIC["ip"] = vmNet.IPAddress
+		singleNIC["mac"] = vmNet.MACAddress
+		if vmNet.Network != types.NoneNetwork {
+			singleNIC["network_name"] = vmNet.Network
+		}
+
+		singleNIC["is_primary"] = false
+		if netIndex == vm.VM.NetworkConnectionSection.PrimaryNetworkConnectionIndex {
+			singleNIC["is_primary"] = true
+		}
+
+		var ok bool
+		if singleNIC["network_type"], ok = vAppNetworkTypes[vmNet.Network]; !ok {
+			return []map[string]interface{}{}, fmt.Errorf("unable to determine vApp network type for: %s", vmNet.Network)
+		}
+
+		nets = append(nets, singleNIC)
+	}
+	return nets, nil
 }
