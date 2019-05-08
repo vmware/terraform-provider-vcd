@@ -17,7 +17,7 @@ Supported in provider *v2.2+*
 ```hcl
 resource "vcd_external_network" "net" {
   name        = "my-ext-net"
-  description = "Reference for vCD direct network"
+  description = "Reference for vCD external network"
 
   ip_scope {
     gateway      = "192.168.30.49"
