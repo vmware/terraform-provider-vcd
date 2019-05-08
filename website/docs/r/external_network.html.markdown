@@ -59,13 +59,13 @@ resource "vcd_external_network" "net" {
     }
   }
 
-# It's possible to define more than one vSphere network
   vsphere_networks {
     vcenter         = "vcenter-name"
     vsphere_network = "myNetwork"
     type            = "DV_PORTGROUP"
   }
   
+# It's possible to define more than one vSphere network  
   vsphere_networks {
     vcenter         = "vcenter-name2"
     vsphere_network = "myNetwork2"
