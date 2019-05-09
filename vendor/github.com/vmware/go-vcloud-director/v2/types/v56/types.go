@@ -192,7 +192,7 @@ type SubAllocation struct {
 // Description: Represents a list of IP scopes.
 // Since: 5.1
 type IPScopes struct {
-	IPScope IPScope `xml:"IpScope"` // IP scope.
+	IPScope []*IPScope `xml:"IpScope"` // IP scope.
 }
 
 // NetworkConfiguration is the configuration applied to a network. This is an abstract base type.
@@ -202,6 +202,7 @@ type IPScopes struct {
 // Description: The configurations applied to a network. This is an abstract base type. The concrete types include those for vApp and Organization wide networks.
 // Since: 0.9
 type NetworkConfiguration struct {
+	Xmlns                          string           `xml:"xmlns,attr,omitempty"`
 	BackwardCompatibilityMode      bool             `xml:"BackwardCompatibilityMode"`
 	IPScopes                       *IPScopes        `xml:"IpScopes,omitempty"`
 	ParentNetwork                  *Reference       `xml:"ParentNetwork,omitempty"`
@@ -484,10 +485,10 @@ type Task struct {
 type CapacityWithUsage struct {
 	Units     string `xml:"Units"`
 	Allocated int64  `xml:"Allocated,omitempty"`
-	Limit     int64  `xml:"Limit,omitempty"`
+	Limit     int64  `xml:"Limit"`
 	Reserved  int64  `xml:"Reserved,omitempty"`
 	Used      int64  `xml:"Used,omitempty"`
-	Overhead  int64  `xml:"Overhead,omitempty"`
+	Overhead  int64  `xml:"Overhead,omitempty"` // not available anymore from API v30.0
 }
 
 // ComputeCapacity represents vDC compute capacity.
@@ -2016,6 +2017,8 @@ type QueryResultRecordsType struct {
 	NetworkPoolRecord               []*QueryResultNetworkPoolRecordType               `xml:"NetworkPoolRecord"`               // A record representing a network pool
 	DiskRecord                      []*DiskRecordType                                 `xml:"DiskRecord"`                      // A record representing a independent Disk.
 	AdminDiskRecord                 []*DiskRecordType                                 `xml:"AdminDiskRecord"`                 // A record representing a independent Disk.
+	VirtualCenterRecord             []*QueryResultVirtualCenterRecordType             `xml:"VirtualCenterRecord"`             // A record representing a vSphere server
+	PortGroupRecord                 []*PortGroupRecordType                            `xml:"PortgroupRecord"`                 // A record representing a port group
 }
 
 // QueryResultEdgeGatewayRecordType represents an edge gateway record as query result.
@@ -2163,6 +2166,26 @@ type QueryResultNetworkPoolRecordType struct {
 	NetworkPoolType int    `xml:"networkPoolType,attr,omitempty"`
 }
 
+// Type: QueryResultVirtualCenterRecordType
+// Namespace: http://www.vmware.com/vcloud/v1.5
+// https://vdc-repo.vmware.com/vmwb-repository/dcr-public/7a028e78-bd37-4a6a-8298-9c26c7eeb9aa/09142237-dd46-4dee-8326-e07212fb63a8/doc/doc/types/QueryResultVirtualCenterRecordType.html
+// Description: Type for a single virtualCenter query result in records format.
+// Since: 1.5
+type QueryResultVirtualCenterRecordType struct {
+	HREF          string `xml:"href,attr,omitempty"`
+	Name          string `xml:"name,attr,omitempty"`
+	IsBusy        bool   `xml:"isBusy,attr,omitempty"`
+	IsEnabled     bool   `xml:"isEnabled,attr,omitempty"`
+	IsSupported   bool   `xml:"isSupported,attr,omitempty"`
+	ListenerState string `xml:"listenerState,attr,omitempty"`
+	Status        string `xml:"stats,attr,omitempty"`
+	Url           string `xml:"url,attr,omitempty"`
+	UserName      string `xml:"userName,attr,omitempty"`
+	VcVersion     string `xml:"vcVersion,attr,omitempty"`
+	UUID          string `xml:"uuid,attr,omitempty"`
+	VsmIP         string `xml:"vsmIP,attr,omitempty"`
+}
+
 // Namespace: http://www.vmware.com/vcloud/v1.5
 // Retrieve a list of extension objects and operations.
 // Since: 1.0
@@ -2178,6 +2201,48 @@ type ExternalNetworkReference struct {
 	HREF string `xml:"href,attr"`
 	Type string `xml:"type,attr,omitempty"`
 	Name string `xml:"name,attr,omitempty"`
+}
+
+// Type: VimObjectRefType
+// Namespace: http://www.vmware.com/vcloud/extension/v1.5
+// https://vdc-repo.vmware.com/vmwb-repository/dcr-public/7a028e78-bd37-4a6a-8298-9c26c7eeb9aa/09142237-dd46-4dee-8326-e07212fb63a8/doc/doc/types/VimObjectRefsType.html
+// Description: Represents the Managed Object Reference (MoRef) and the type of a vSphere object.
+// Since: 0.9
+type VimObjectRef struct {
+	VimServerRef  *Reference `xml:"VimServerRef"`
+	MoRef         string     `xml:"MoRef"`
+	VimObjectType string     `xml:"VimObjectType"`
+}
+
+// Type: VimObjectRefsType
+// Namespace: http://www.vmware.com/vcloud/extension/v1.5
+// https://vdc-repo.vmware.com/vmwb-repository/dcr-public/7a028e78-bd37-4a6a-8298-9c26c7eeb9aa/09142237-dd46-4dee-8326-e07212fb63a8/doc/doc/types/VimObjectRefsType.html
+// Description: List of VimObjectRef elements.
+// Since: 0.9
+type VimObjectRefs struct {
+	VimObjectRef []*VimObjectRef `xml:VimObjectRef`
+}
+
+// Type: VMWExternalNetworkType
+// Namespace: http://www.vmware.com/vcloud/extension/v1.5
+// https://vdc-repo.vmware.com/vmwb-repository/dcr-public/7a028e78-bd37-4a6a-8298-9c26c7eeb9aa/09142237-dd46-4dee-8326-e07212fb63a8/doc/doc/types/VMWExternalNetworkType.html
+// Description: External network type.
+// Since: 1.0
+type ExternalNetwork struct {
+	XMLName          xml.Name              `xml:"VMWExternalNetwork"`
+	Xmlns            string                `xml:"xmlns,attr,omitempty"`
+	XmlnsVCloud      string                `xml:"xmlns:vcloud,attr,omitempty"`
+	HREF             string                `xml:"href,attr,omitempty"`
+	Type             string                `xml:"type,attr,omitempty"`
+	ID               string                `xml:"id,attr,omitempty"`
+	OperationKey     string                `xml:"operationKey,attr,omitempty"`
+	Name             string                `xml:"name,attr"`
+	Description      string                `xml:"vcloud:Description,omitempty"`
+	Configuration    *NetworkConfiguration `xml:"Configuration,omitempty"`
+	Link             []*Link               `xml:"Link,omitempty"`
+	VimPortGroupRefs *VimObjectRefs        `xml:"VimPortGroupRefs,omitempty"`
+	Tasks            *TasksInProgress      `xml:"Tasks,omitempty"`
+	VCloudExtension  *VCloudExtension      `xml:"VCloudExtension,omitempty"`
 }
 
 // Type: MediaType
@@ -2372,4 +2437,24 @@ type DiskRecordType struct {
 	IsAttached         bool    `xml:"isAttached,attr,omitempty"`
 	Description        string  `xml:"description,attr,omitempty"`
 	Link               []*Link `xml:"Link,omitempty"`
+}
+
+// Represents port group
+// Reference: vCloud API 27.0 - Port group type
+// https://code.vmware.com/apis/72/doc/doc/types/QueryResultPortgroupRecordType.html
+type PortGroupRecordType struct {
+	Xmlns         string  `xml:"xmlns,attr,omitempty"`
+	HREF          string  `xml:"href,attr,omitempty"`
+	Id            string  `xml:"id,attr,omitempty"`
+	Type          string  `xml:"type,attr,omitempty"`
+	MoRef         string  `xml:"moref,attr,omitempty"`
+	Name          string  `xml:"name,attr,omitempty"`
+	PortgroupType string  `xml:"portgroupType,attr,omitempty"`
+	Vc            string  `xml:"vc,attr,omitempty"`
+	VcName        string  `xml:"vcName,attr,omitempty"`
+	IsVCEnabled   bool    `xml:"isVCEnabled,attr,omitempty"`
+	Network       string  `xml:"network,attr,omitempty"`
+	NetworkName   string  `xml:"networkName,attr,omitempty"`
+	ScopeType     int     `xml:"scopeType,attr,omitempty"` // Scope of network using the portgroup(1=Global, 2=Organization, 3=vApp)
+	Link          []*Link `xml:"Link,omitempty"`
 }

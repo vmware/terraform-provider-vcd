@@ -76,8 +76,17 @@ vcd:
     # netmask for the internal IP (MANDATORY for edge GW VPN)
     internalNetmask: 255.255.255.0
     #
-    # An external Network name
+    # An existing external Network name
     externalNetwork: myexternalnet
+    #
+    # A port group name for creating a new external network in tests
+    externalNetworkPortGroup: ForTestingPG
+    #
+    # A port group type for creating a new external network in tests. Can be DV_PORTGROUP or NETWORK
+    externalNetworkPortGroupType: NETWORK
+    #
+    # A vSphere server name for creating an external network
+    vimServer: vc9
     #
     # Independent disk parameters for testing
     disk:

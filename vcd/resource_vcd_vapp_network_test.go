@@ -116,7 +116,7 @@ func testAccCheckVappNetworkDestroy(s *terraform.State) error {
 
 		_, err := isVappNetworkFound(conn, rs)
 		if err != nil && !strings.Contains(err.Error(), "can't find vApp:") {
-			return fmt.Errorf("vapp %s still exist and error: %#v", itemName, err)
+			return fmt.Errorf("vapp %s still exist and error: %#v", vappNameForNetworkTest, err)
 		}
 	}
 
@@ -141,7 +141,7 @@ func isVappNetworkFound(conn *VCDClient, rs *terraform.ResourceState) (bool, err
 
 	var found bool
 	for _, vappNetworkConfig := range networkConfig.NetworkConfig {
-		if vappNetworkConfig.NetworkName == newVappNetworkName && vappNetworkConfig.Configuration.IPScopes.IPScope.DNSSuffix == dnsSuffix {
+		if vappNetworkConfig.NetworkName == newVappNetworkName && vappNetworkConfig.Configuration.IPScopes.IPScope[0].DNSSuffix == dnsSuffix {
 			found = true
 		}
 	}

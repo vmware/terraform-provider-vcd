@@ -1,4 +1,4 @@
-// +build api functional catalog vapp network org query vm vdc gateway disk ALL
+// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk ALL
 
 package vcd
 
@@ -19,6 +19,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -50,12 +51,15 @@ type TestConfig struct {
 		} `json:"catalog"`
 	} `json:"vcd"`
 	Networking struct {
-		ExternalIp      string `json:"externalIp,omitempty"`
-		InternalIp      string `json:"internalIp,omitempty"`
-		EdgeGateway     string `json:"edgeGateway,omitempty"`
-		SharedSecret    string `json:"sharedSecret"`
-		ExternalNetwork string `json:"externalNetwork,omitempty"`
-		Local           struct {
+		ExternalIp                   string `json:"externalIp,omitempty"`
+		InternalIp                   string `json:"internalIp,omitempty"`
+		EdgeGateway                  string `json:"edgeGateway,omitempty"`
+		SharedSecret                 string `json:"sharedSecret"`
+		Vcenter                      string `json:"vcenter,omitempty"`
+		ExternalNetwork              string `json:"externalNetwork,omitempty"`
+		ExternalNetworkPortGroup     string `json:"externalNetworkPortGroup,omitempty"`
+		ExternalNetworkPortGroupType string `json:"externalNetworkPortGroupType,omitempty"`
+		Local                        struct {
 			LocalIp            string `json:"localIp"`
 			LocalSubnetGateway string `json:"localSubnetGw"`
 		} `json:"local"`
@@ -133,14 +137,7 @@ func dirExists(filename string) bool {
 
 // Returns true if the current configuration uses a system administrator for connections
 func usingSysAdmin() bool {
-	conn, ok := testAccProvider.Meta().(*VCDClient)
-	if !ok {
-		panic("unable to retrieve connection from provider")
-	}
-	if conn.Client.IsSysAdmin {
-		return true
-	}
-	return false
+	return strings.ToLower(testConfig.Provider.SysOrg) == "system"
 }
 
 // Fills a template with data provided as a StringMap

@@ -815,10 +815,10 @@ func (vapp *VApp) AddIsolatedNetwork(newIsolatedNetworkSettings *VappNetworkSett
 				FenceMode:        types.FenceModeIsolated,
 				GuestVlanAllowed: newIsolatedNetworkSettings.GuestVLANAllowed,
 				Features:         networkFeatures,
-				IPScopes: &types.IPScopes{IPScope: types.IPScope{IsInherited: false, Gateway: newIsolatedNetworkSettings.Gateway,
+				IPScopes: &types.IPScopes{IPScope: []*types.IPScope{&types.IPScope{IsInherited: false, Gateway: newIsolatedNetworkSettings.Gateway,
 					Netmask: newIsolatedNetworkSettings.NetMask, DNS1: newIsolatedNetworkSettings.DNS1,
 					DNS2: newIsolatedNetworkSettings.DNS2, DNSSuffix: newIsolatedNetworkSettings.DNSSuffix, IsEnabled: true,
-					IPRanges: &types.IPRanges{IPRange: newIsolatedNetworkSettings.StaticIPRanges}}},
+					IPRanges: &types.IPRanges{IPRange: newIsolatedNetworkSettings.StaticIPRanges}}}},
 			},
 			IsDeployed: false,
 		})

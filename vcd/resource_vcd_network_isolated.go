@@ -157,7 +157,7 @@ func resourceVcdNetworkIsolatedCreate(d *schema.ResourceData, meta interface{}) 
 		Configuration: &types.NetworkConfiguration{
 			FenceMode: "isolated",
 			IPScopes: &types.IPScopes{
-				IPScope: types.IPScope{
+				IPScope: []*types.IPScope{&types.IPScope{
 					IsInherited: false,
 					Gateway:     gatewayName,
 					Netmask:     d.Get("netmask").(string),
@@ -165,7 +165,7 @@ func resourceVcdNetworkIsolatedCreate(d *schema.ResourceData, meta interface{}) 
 					DNS2:        d.Get("dns2").(string),
 					DNSSuffix:   d.Get("dns_suffix").(string),
 					IPRanges:    &ipRanges,
-				},
+				}},
 			},
 			BackwardCompatibilityMode: true,
 		},

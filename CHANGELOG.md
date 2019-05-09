@@ -4,6 +4,7 @@ FEATURES:
 
 * `vcd_vapp_vm` - Ability to add metadata to a VM. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES` [GH-158]
 * `vcd_vapp_vm` - Ability to enable hardware assisted CPU virtualization for VM. It allows hypervisor nesting. [GH-219]
+* **New Resource:** external network - `vcd_external_network` - [GH-230]
 * resource/vcd_vapp_vm: Add `networks` argument for multiple NIC support and more flexible configuration [GH-233]
 * resource/vcd_vapp_vm: Add `mac` argument to store MAC address in statefile [GH-233]
 

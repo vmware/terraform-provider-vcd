@@ -230,11 +230,11 @@ func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
 	if c := vAppNetwork.Configuration; c != nil {
 		d.Set("fence_mode", c.FenceMode)
 		if c.IPScopes != nil {
-			d.Set("gateway", c.IPScopes.IPScope.Gateway)
-			d.Set("netmask", c.IPScopes.IPScope.Netmask)
-			d.Set("dns1", c.IPScopes.IPScope.DNS1)
-			d.Set("dns2", c.IPScopes.IPScope.DNS2)
-			d.Set("dnsSuffix", c.IPScopes.IPScope.DNSSuffix)
+			d.Set("gateway", c.IPScopes.IPScope[0].Gateway)
+			d.Set("netmask", c.IPScopes.IPScope[0].Netmask)
+			d.Set("dns1", c.IPScopes.IPScope[0].DNS1)
+			d.Set("dns2", c.IPScopes.IPScope[0].DNS2)
+			d.Set("dnsSuffix", c.IPScopes.IPScope[0].DNSSuffix)
 		}
 		d.Set("guest_vlan_allowed", &c.GuestVlanAllowed)
 	}
