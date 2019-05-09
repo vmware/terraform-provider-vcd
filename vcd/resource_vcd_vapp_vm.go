@@ -149,8 +149,9 @@ func resourceVcdVAppVm() *schema.Resource {
 							Default:  false,
 							ForceNew: true,
 							Optional: true,
-							// schema change to false would not do anything useful unless
-							// other adapter is set to true therefore this change is suppressed.
+							// By default if the value is ommited it will report schema change
+							// on every terraform operation. The below function
+							// suppresses such cases "" => "false" when applying.
 							DiffSuppressFunc: falseBoolSuppress(),
 							Type:             schema.TypeBool,
 						},
@@ -237,7 +238,7 @@ func suppressIfIPIsOneOf() schema.SchemaDiffSuppressFunc {
 	}
 }
 
-// falseBoolSuppress suppresses change if value is set to false
+// falseBoolSuppress suppresses change if value is set to false or is empty
 func falseBoolSuppress() schema.SchemaDiffSuppressFunc {
 	return func(k string, old string, new string, d *schema.ResourceData) bool {
 		_, isTrue := d.GetOk(k)
