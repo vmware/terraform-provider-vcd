@@ -168,8 +168,7 @@ func (vm *VM) ChangeCPUCountWithCore(virtualCpuCount int, coresPerSocket *int) (
 
 }
 
-func (vm *VM) updateNicParameters(networks []map[string]interface{}, networkSection *types.NetworkConnectionSection) {
-
+func (vm *VM) updateNicParameters(networks []map[string]interface{}, networkSection *types.NetworkConnectionSection) error {
 	for tfNicSlot, network := range networks {
 		for loopIndex := range networkSection.NetworkConnection {
 			// Change network config only if we have the same virtual slot number as in .tf config
@@ -218,7 +217,14 @@ func (vm *VM) updateNicParameters(networks []map[string]interface{}, networkSect
 				if ipAllocationMode == types.IPAllocationModeNone {
 					networkSection.NetworkConnection[loopIndex].Network = types.NoneNetwork
 				} else {
-					networkSection.NetworkConnection[loopIndex].Network = network["network_name"].(string)
+					// Network names can be stored in two forms 'name' or 'network_name'. We pick
+					if _, ok := network["name"]; ok {
+						networkSection.NetworkConnection[loopIndex].Network = network["name"].(string)
+					} else if _, ok := network["network_name"]; ok {
+						networkSection.NetworkConnection[loopIndex].Network = network["network_name"].(string)
+					} else {
+						return fmt.Errorf("could not identify network name")
+					}
 				}
 
 				// If we have one NIC only then it is primary by default, otherwise we check for "is_primary" key
@@ -228,6 +234,7 @@ func (vm *VM) updateNicParameters(networks []map[string]interface{}, networkSect
 			}
 		}
 	}
+	return nil
 }
 
 // ChangeNetworkConfig allows to update existing VM NIC configuration.f
@@ -242,7 +249,10 @@ func (vm *VM) ChangeNetworkConfig(networks []map[string]interface{}) (Task, erro
 		return Task{}, fmt.Errorf("could not retrieve network connection for VM: %v", err)
 	}
 
-	vm.updateNicParameters(networks, networkSection)
+	err = vm.updateNicParameters(networks, networkSection)
+	if err != nil {
+		return Task{}, fmt.Errorf("failed processing NIC parameters: %v", err)
+	}
 
 	networkSection.Xmlns = types.XMLNamespaceVCloud
 	networkSection.Ovf = types.XMLNamespaceOVF

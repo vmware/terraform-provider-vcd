@@ -68,8 +68,8 @@ func resourceVcdVAppVm() *schema.Resource {
 			},
 			"ip": &schema.Schema{
 				Computed:         true,
-				ConflictsWith:    []string{"networks"},
-				Deprecated:       "In favor of networks",
+				ConflictsWith:    []string{"network"},
+				Deprecated:       "In favor of network",
 				DiffSuppressFunc: suppressIfIPIsOneOf(),
 				ForceNew:         true,
 				Optional:         true,
@@ -77,7 +77,8 @@ func resourceVcdVAppVm() *schema.Resource {
 			},
 			"mac": {
 				Computed:      true,
-				ConflictsWith: []string{"networks"},
+				ConflictsWith: []string{"network"},
+				Deprecated:    "In favor of network",
 				Optional:      true,
 				Type:          schema.TypeString,
 			},
@@ -108,19 +109,19 @@ func resourceVcdVAppVm() *schema.Resource {
 				Default:  true,
 			},
 			"network_href": &schema.Schema{
-				ConflictsWith: []string{"networks"},
-				Deprecated:    "In favor of networks",
+				ConflictsWith: []string{"network"},
+				Deprecated:    "In favor of network",
 				Type:          schema.TypeString,
 				Optional:      true,
 			},
-			"networks": {
+			"network": {
 				ConflictsWith: []string{"ip", "network_name", "vapp_network_name", "network_href"},
 				ForceNew:      true,
 				Optional:      true,
 				Type:          schema.TypeList,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"network_type": {
+						"type": {
 							ForceNew:     true,
 							Required:     true,
 							Type:         schema.TypeString,
@@ -133,9 +134,9 @@ func resourceVcdVAppVm() *schema.Resource {
 							Type:         schema.TypeString,
 							ValidateFunc: validation.StringInSlice([]string{"POOL", "DHCP", "MANUAL", "NONE"}, false),
 						},
-						"network_name": {
+						"name": {
 							ForceNew: false,
-							Optional: true, // In case of network_type = none it is not required
+							Optional: true, // In case of type = none it is not required
 							Type:     schema.TypeString,
 						},
 						"ip": {
@@ -164,15 +165,15 @@ func resourceVcdVAppVm() *schema.Resource {
 				},
 			},
 			"network_name": &schema.Schema{
-				ConflictsWith: []string{"networks"},
-				Deprecated:    "In favor of networks",
+				ConflictsWith: []string{"network"},
+				Deprecated:    "In favor of network",
 				ForceNew:      true,
 				Optional:      true,
 				Type:          schema.TypeString,
 			},
 			"vapp_network_name": &schema.Schema{
-				ConflictsWith: []string{"networks"},
-				Deprecated:    "In favor of networks",
+				ConflictsWith: []string{"network"},
+				Deprecated:    "In favor of network",
 				Type:          schema.TypeString,
 				Optional:      true,
 				ForceNew:      true,
@@ -279,8 +280,8 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	// Determine whether we use new 'networks' or deprecated network configuration and process inputs based on it.
 	// TODO v3.0 remove else branch once 'network_name', 'vapp_network_name', 'ip' are deprecated
 	networkConnectionSection := types.NetworkConnectionSection{}
-	if len(d.Get("networks").([]interface{})) > 0 {
-		networkConnectionSection, err = networksToConfig(d.Get("networks").([]interface{}), vdc, vapp, vcdClient)
+	if len(d.Get("network").([]interface{})) > 0 {
+		networkConnectionSection, err = networksToConfig(d.Get("network").([]interface{}), vdc, vapp, vcdClient)
 	} else {
 		networkConnectionSection, err = deprecatedNetworksToConfig(d.Get("network_name").(string),
 			d.Get("vapp_network_name").(string), d.Get("ip").(string), vdc, vapp, vcdClient)
@@ -738,12 +739,12 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 		d.Set("ip", ip)
 		d.Set("mac", mac)
 		// TODO v3.0 EO remove this case block when we cleanup deprecated 'ip' and 'network_name' attributes
-	case len(d.Get("networks").([]interface{})) > 0:
+	case len(d.Get("network").([]interface{})) > 0:
 		networks, err := readNetworks(vm, vapp)
 		if err != nil {
 			return fmt.Errorf("failed reading network details: %s", err)
 		}
-		d.Set("networks", networks)
+		d.Set("network", networks)
 	}
 
 	d.Set("href", vm.VM.HREF)
@@ -905,7 +906,7 @@ func networksToConfig(networks []interface{}, vdc govcd.Vdc, vapp govcd.VApp, vc
 		nic := singleNetwork.(map[string]interface{})
 		netConn := &types.NetworkConnection{}
 
-		networkName := nic["network_name"].(string)
+		networkName := nic["name"].(string)
 		ipAllocationMode := nic["ip_allocation_mode"].(string)
 		ip := nic["ip"].(string)
 
@@ -914,7 +915,7 @@ func networksToConfig(networks []interface{}, vdc govcd.Vdc, vapp govcd.VApp, vc
 			networkConnectionSection.PrimaryNetworkConnectionIndex = index
 		}
 
-		networkType := nic["network_type"].(string)
+		networkType := nic["type"].(string)
 		if networkType == "org" {
 			_, err := addVdcNetwork(networkName, vdc, vapp, vcdClient)
 			if err != nil {
@@ -1042,7 +1043,7 @@ func deprecatedReadNetworks(network_name, vapp_network_name string, vm govcd.VM)
 
 // readNetworks returns network configuration for saving into statefile
 func readNetworks(vm govcd.VM, vapp govcd.VApp) ([]map[string]interface{}, error) {
-	// Determine network_type for all networks in vApp
+	// Determine type for all networks in vApp
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 	if err != nil {
 		return []map[string]interface{}{}, fmt.Errorf("error getting vApp networks: %#v", err)
@@ -1074,7 +1075,7 @@ func readNetworks(vm govcd.VM, vapp govcd.VApp) ([]map[string]interface{}, error
 		singleNIC["ip"] = vmNet.IPAddress
 		singleNIC["mac"] = vmNet.MACAddress
 		if vmNet.Network != types.NoneNetwork {
-			singleNIC["network_name"] = vmNet.Network
+			singleNIC["name"] = vmNet.Network
 		}
 
 		singleNIC["is_primary"] = false
@@ -1083,7 +1084,7 @@ func readNetworks(vm govcd.VM, vapp govcd.VApp) ([]map[string]interface{}, error
 		}
 
 		var ok bool
-		if singleNIC["network_type"], ok = vAppNetworkTypes[vmNet.Network]; !ok {
+		if singleNIC["type"], ok = vAppNetworkTypes[vmNet.Network]; !ok {
 			return []map[string]interface{}{}, fmt.Errorf("unable to determine vApp network type for: %s", vmNet.Network)
 		}
 

@@ -159,7 +159,7 @@ github.com/ulikunitz/xz
 github.com/ulikunitz/xz/internal/xlog
 github.com/ulikunitz/xz/lzma
 github.com/ulikunitz/xz/internal/hash
-# github.com/vmware/go-vcloud-director/v2 v2.2.0-beta.1 => github.com/Didainius/go-vcloud-director/v2 v2.2.0-alpha.1.0.20190509100718-fedf74dda608
+# github.com/vmware/go-vcloud-director/v2 v2.2.0-beta.1 => github.com/Didainius/go-vcloud-director/v2 v2.2.0-alpha.1.0.20190509160727-cdd8a556d51a
 github.com/vmware/go-vcloud-director/v2/govcd
 github.com/vmware/go-vcloud-director/v2/types/v56
 github.com/vmware/go-vcloud-director/v2/util
