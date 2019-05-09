@@ -67,43 +67,6 @@ func (vm *VM) Refresh() error {
 	return err
 }
 
-// AppendNetworkConnection appends a network connection from OrgVDCNetwork to VM
-func (vm *VM) AppendNetworkConnection(orgvdcnetwork *types.OrgVDCNetwork) (Task, error) {
-
-	// Get existing network connections from current VM
-	networkConnectionSection, err := vm.GetNetworkConnectionSection()
-	if err != nil {
-		fmt.Printf("error: %v\n", err)
-	}
-
-	for _, net := range networkConnectionSection.NetworkConnection {
-		// skip if network is already connected to VM
-		if net.Network == orgvdcnetwork.Name {
-			return Task{}, nil
-		}
-	}
-
-	networkConnectionSection.Ovf = types.XMLNamespaceOVF
-	networkConnectionSection.Type = types.MimeNetworkConnectionSection
-	networkConnectionSection.Xmlns = types.XMLNamespaceVCloud
-
-	// Append a new NetworkConnectionSection.NetworkConnection to existing ones
-	networkConnectionSection.NetworkConnection = append(networkConnectionSection.NetworkConnection,
-		&types.NetworkConnection{
-			Network:                 orgvdcnetwork.Name,
-			NetworkConnectionIndex:  len(networkConnectionSection.NetworkConnection),
-			IsConnected:             true,
-			IPAddressAllocationMode: "POOL",
-		},
-	)
-
-	apiEndpoint, _ := url.ParseRequestURI(vm.VM.HREF)
-	apiEndpoint.Path += "/networkConnectionSection/"
-
-	return vm.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPut,
-		types.MimeNetworkConnectionSection, "error adding VM network connection: %s", networkConnectionSection)
-}
-
 // GetNetworkConnectionSection returns current networks attached to VM
 //
 // The slice of NICs is not necessarily ordered by NIC index
@@ -213,11 +176,10 @@ func (vm *VM) updateNicParameters(networks []map[string]interface{}, networkSect
 			if tfNicSlot == networkSection.NetworkConnection[loopIndex].NetworkConnectionIndex {
 
 				// Determine what type of address is requested for the vApp
-				ipAllocationMode := types.IPAllocationModeNone
+				var ipAllocationMode string
 				ipAddress := "Any"
 
 				var ipFieldString string
-
 				ipField, ipIsSet := network["ip"]
 				if ipIsSet {
 					ipFieldString = ipField.(string)
@@ -236,7 +198,7 @@ func (vm *VM) updateNicParameters(networks []map[string]interface{}, networkSect
 				case ipIsSet && net.ParseIP(ipFieldString) != nil:
 					ipAllocationMode = types.IPAllocationModeManual
 					ipAddress = ipFieldString
-				case ipIsSet && ipField != "": // Deprecated ip="something_invalid" we default to DHCP. This is odd but backwards compatible.
+				case ipIsSet && ipFieldString != "": // Deprecated ip="something_invalid" we default to DHCP. This is odd but backwards compatible.
 					ipAllocationMode = types.IPAllocationModeDHCP
 					// TODO v3.0 remove until here when deprecated `ip` and `network_name` attributes are removed
 
@@ -268,6 +230,7 @@ func (vm *VM) updateNicParameters(networks []map[string]interface{}, networkSect
 	}
 }
 
+// ChangeNetworkConfig allows to update existing VM NIC configuration.f
 func (vm *VM) ChangeNetworkConfig(networks []map[string]interface{}) (Task, error) {
 	err := vm.Refresh()
 	if err != nil {

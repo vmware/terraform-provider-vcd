@@ -48,11 +48,12 @@ vcd:
         #
         # An optional description for the catalog item
         catalogItemDescription: myitem to create vapps
-    #
-    # Networks is a array of network names
-    # If you only specify one network some tests are skipped!
-    networks: ["mynet", "mynet2"]
-    #
+    # Existing VDC networks. At least one is needed.
+    network:
+      # First vdc network (mandatory)
+      network1: "mynet"
+      # Second vdc network. If omitted, some tests will be skipped.
+      network2: "mynet2"
     # Storage profiles used in the vDC
     # One or two can be listed
     storageProfile:

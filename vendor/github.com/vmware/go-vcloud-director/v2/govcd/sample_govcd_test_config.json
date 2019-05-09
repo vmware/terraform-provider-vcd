@@ -23,7 +23,10 @@
 			"description": "my cat for loading",
 			"catalogItemDescription": "my item to create vapps"
 		},
-		"networks": ["mynet", "mynet2"],
+		"network": {
+			"network1": "mynet",
+			"network2": "mynet2"
+		},
 		"storageProfile": {
 			"storageProfile1": "Development",
 			"storageProfile2": "*"

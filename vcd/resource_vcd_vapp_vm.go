@@ -901,33 +901,19 @@ func resourceVcdVmIndependentDiskHash(v interface{}) int {
 func networksToConfig(networks []interface{}, vdc govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (types.NetworkConnectionSection, error) {
 	networkConnectionSection := types.NetworkConnectionSection{}
 	for index, singleNetwork := range networks {
-		n := singleNetwork.(map[string]interface{})
+		nic := singleNetwork.(map[string]interface{})
 		netConn := &types.NetworkConnection{}
 
-		networkName, ok := n["network_name"].(string)
-		if !ok {
-			return types.NetworkConnectionSection{}, fmt.Errorf("unable to cast network_name to string")
-		}
+		networkName := nic["network_name"].(string)
+		ipAllocationMode := nic["ip_allocation_mode"].(string)
+		ip := nic["ip"].(string)
 
-		ipAllocationMode, ok := n["ip_allocation_mode"].(string)
-		if !ok {
-			return types.NetworkConnectionSection{}, fmt.Errorf("unable to cast ip_allocation_mode to string")
-		}
-
-		ip, ok := n["ip"].(string)
-		if !ok {
-			return types.NetworkConnectionSection{}, fmt.Errorf("unable to cast ip to string")
-		}
-
-		isPrimary, ok := n["is_primary"].(bool)
-		if !ok {
-			return types.NetworkConnectionSection{}, fmt.Errorf("unable to cast is_primary to bool")
-		}
+		isPrimary := nic["is_primary"].(bool)
 		if isPrimary {
 			networkConnectionSection.PrimaryNetworkConnectionIndex = index
 		}
 
-		networkType := n["network_type"].(string)
+		networkType := nic["network_type"].(string)
 		if networkType == "org" {
 			_, err := addVdcNetwork(networkName, vdc, vapp, vcdClient)
 			if err != nil {
@@ -964,7 +950,6 @@ func networksToConfig(networks []interface{}, vdc govcd.Vdc, vapp govcd.VApp, vc
 // deprecatedNetworksToConfig converts deprecated network configuration in fields
 // TODO v3.0 remove this function once 'network_name', 'vapp_network_name', 'ip' are deprecated
 func deprecatedNetworksToConfig(network_name, vapp_network_name, ip string, vdc govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (types.NetworkConnectionSection, error) {
-	networkConnectionSection := types.NetworkConnectionSection{}
 	if vapp_network_name != "" {
 		isVappNetwork, err := isItVappNetwork(vapp_network_name, vapp)
 		if err != nil {
@@ -983,6 +968,7 @@ func deprecatedNetworksToConfig(network_name, vapp_network_name, ip string, vdc 
 		}
 	}
 
+	networkConnectionSection := types.NetworkConnectionSection{}
 	var ipAllocationMode string
 	var ipAddress string
 	var ipFieldString string

@@ -310,6 +310,13 @@ func (vdc *Vdc) ComposeVApp(orgvdcnetworks []*types.OrgVDCNetwork, vapptemplate 
 	if vapptemplate.VAppTemplate.Children == nil || orgvdcnetworks == nil {
 		return Task{}, fmt.Errorf("can't compose a new vApp, objects passed are not valid")
 	}
+
+	primaryNetworkConnectionIndex := 0
+	if vapptemplate.VAppTemplate.Children != nil && len(vapptemplate.VAppTemplate.Children.VM) > 0 &&
+		vapptemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection != nil {
+		primaryNetworkConnectionIndex = vapptemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.PrimaryNetworkConnectionIndex
+	}
+
 	// Build request XML
 	vcomp := &types.ComposeVAppParams{
 		Ovf:         types.XMLNamespaceOVF,
@@ -333,7 +340,7 @@ func (vdc *Vdc) ComposeVApp(orgvdcnetworks []*types.OrgVDCNetwork, vapptemplate 
 			InstantiationParams: &types.InstantiationParams{
 				NetworkConnectionSection: &types.NetworkConnectionSection{
 					Info:                          "Network config for sourced item",
-					PrimaryNetworkConnectionIndex: 0,
+					PrimaryNetworkConnectionIndex: primaryNetworkConnectionIndex,
 				},
 			},
 		},
