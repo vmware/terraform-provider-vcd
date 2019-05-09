@@ -53,14 +53,14 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 	params["IP"] = "dhcp"
 	params["VMName"] = netVmNameDHCP
 	params["FuncName"] = t.Name() + "-step1"
-	configTextStep1 := templateFill(testAccCheckVcdVAppVmSingleNICNetwork, params)
+	configTextStep2 := templateFill(testAccCheckVcdVAppVmSingleNICNetwork, params)
 
 	// manual
 	netVmNameManual := netVmName1 + "manual"
 	params["VMName"] = netVmNameManual
 	params["IP"] = "11.10.0.152"
 	params["FuncName"] = t.Name() + "-step2"
-	configTextStep2 := templateFill(testAccCheckVcdVAppVmSingleNICNetwork, params)
+	configTextStep4 := templateFill(testAccCheckVcdVAppVmSingleNICNetwork, params)
 
 	// none is not used as it always had a bug
 	//params["VMNetworkName"] = "none"
@@ -70,9 +70,19 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 	//params["FuncName"] = t.Name() + "-step3"
 	//configTextStep3 := templateFill(testAccCheckVcdVAppVmSingleNICNetwork, params)
 
+	// no network
+	netVmNameNoNetwork := netVmName1 + "noNetwork"
+	params["VMName"] = netVmNameNoNetwork
+	configTextStep6 := templateFill(testAccCheckVcdVAppVmSingleNICNoNetwork, params)
+
+	// only vApp network with 'allocated'
+	netVmNamevAppNetwork := netVmName1 + "vAppNetwork"
+	params["VMName"] = netVmNamevAppNetwork
+	configTextStep8 := templateFill(testAccCheckVcdVAppVmSingleNICvAppNetwork, params)
+
 	debugPrintf("#[DEBUG] CONFIGURATION (allocated): %s\n", configTextStep0)
-	debugPrintf("#[DEBUG] CONFIGURATION (dhcp): %s\n", configTextStep1)
-	debugPrintf("#[DEBUG] CONFIGURATION (manual IP): %s\n", configTextStep2)
+	debugPrintf("#[DEBUG] CONFIGURATION (dhcp): %s\n", configTextStep2)
+	debugPrintf("#[DEBUG] CONFIGURATION (manual IP): %s\n", configTextStep4)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -101,14 +111,14 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 				Config: configTextNetworkVapp,
 			},
 			resource.TestStep{
-				Config: configTextStep1,
+				Config: configTextStep2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(netVappName, netVmNameDHCP, "vcd_vapp_vm."+netVmNameDHCP, &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmNameDHCP, "name", netVmNameDHCP),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmNameDHCP, "network_name", "singlenic-net"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmNameDHCP, "mac"),
 
-					// Unfortunatelly DHCP is not guaranteed to report IP due to VMware tools being unavailable
+					// Unfortunately DHCP is not guaranteed to report IP due to VMware tools being unavailable
 					// quickly enough or the machine not using DHCP by default. If it is not then we expect at
 					// least "na" string to be set and this allows us to validate if the field is set at all.
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmNameDHCP, "ip"),
@@ -121,13 +131,34 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 				Config: configTextNetworkVapp,
 			},
 			resource.TestStep{
-				Config: configTextStep2,
+				Config: configTextStep4,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(netVappName, netVmNameManual, "vcd_vapp_vm."+netVmNameManual, &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmNameManual, "name", netVmNameManual),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmNameManual, "network_name", "singlenic-net"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmNameManual, "mac"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmNameManual, "ip", "11.10.0.152"),
+				),
+			},
+
+			resource.TestStep{
+				Config: configTextNetworkVapp,
+			},
+			resource.TestStep{
+				Config: configTextStep6,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckVcdVAppVmExists(netVappName, netVmNameNoNetwork, "vcd_vapp_vm."+netVmNameNoNetwork, &vapp, &vm),
+				),
+			},
+
+			resource.TestStep{
+				Config: configTextNetworkVapp,
+			},
+			resource.TestStep{
+				Config: configTextStep8,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckVcdVAppVmExists(netVappName, netVmNamevAppNetwork, "vcd_vapp_vm."+netVmNamevAppNetwork, &vapp, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmNamevAppNetwork, "ip", "192.168.2.51"),
 				),
 			},
 
@@ -188,6 +219,63 @@ resource "vcd_vapp" "{{.VAppName}}" {
   name = "{{.VAppName}}"
 }
 `
+
+// Sample config without any network configuration at all
+const testAccCheckVcdVAppVmSingleNICNoNetwork = testAccCheckVcdVAppVmSingleNICNetworkVapp + `
+resource "vcd_vapp_vm" "{{.VMName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name     = "${vcd_vapp.{{.VAppName}}.name}"
+  name          = "{{.VMName}}"
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  memory        = 512
+  cpus          = 2
+  cpu_cores     = 2
+  power_on      = "false"
+}
+`
+
+// Sample config with vApp network
+const testAccCheckVcdVAppVmSingleNICvAppNetwork = testAccCheckVcdVAppVmSingleNICNetworkVapp + `
+resource "vcd_vapp_network" "vappNet" {
+	org = "{{.Org}}"
+	vdc = "{{.Vdc}}"
+  
+	name       = "vapp-net"
+	vapp_name  = "${vcd_vapp.{{.VAppName}}.name}"
+	gateway    = "192.168.2.1"
+	netmask    = "255.255.255.0"
+	dns1       = "192.168.2.1"
+	dns2       = "192.168.2.2"
+	dns_suffix = "mybiz.biz"
+  
+	static_ip_pool {
+	  start_address = "192.168.2.51"
+	  end_address   = "192.168.2.100"
+	}
+  
+	depends_on = ["vcd_vapp.{{.VAppName}}"]
+  }
+  
+  resource "vcd_vapp_vm" "{{.VMName}}" {
+	org = "{{.Org}}"
+	vdc = "{{.Vdc}}"
+  
+	vapp_name         = "${vcd_vapp.{{.VAppName}}.name}"
+	name              = "{{.VMName}}"
+	catalog_name      = "{{.Catalog}}"
+	template_name     = "{{.CatalogItem}}"
+	memory            = 512
+	cpus              = 2
+	cpu_cores         = 2
+	power_on          = "false"
+	vapp_network_name = "${vcd_vapp_network.vappNet.id}"
+	ip                = "allocated"
+  }  
+`
+
 const testAccCheckVcdVAppVmSingleNICNetwork = testAccCheckVcdVAppVmSingleNICNetworkVapp + `
 resource "vcd_vapp_vm" "{{.VMName}}" {
   org = "{{.Org}}"

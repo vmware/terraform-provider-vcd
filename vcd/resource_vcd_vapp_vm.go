@@ -149,7 +149,7 @@ func resourceVcdVAppVm() *schema.Resource {
 							Default:  false,
 							ForceNew: true,
 							Optional: true,
-							// By default if the value is ommited it will report schema change
+							// By default if the value is omitted it will report schema change
 							// on every terraform operation. The below function
 							// suppresses such cases "" => "false" when applying.
 							DiffSuppressFunc: falseBoolSuppress(),
