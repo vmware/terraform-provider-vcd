@@ -1028,15 +1028,18 @@ func deprecatedNetworksToConfig(network_name, vapp_network_name, ip string, vdc 
 // TODO v3.0 remove this function once 'network_name', 'vapp_network_name', 'ip' are deprecated
 func deprecatedReadNetworks(network_name, vapp_network_name string, vm govcd.VM) (string, string, error) {
 	if len(vm.VM.NetworkConnectionSection.NetworkConnection) == 0 {
-		return "", "", fmt.Errorf("NIC 0 not found")
+		return "", "", fmt.Errorf("0 NICs found")
 	}
 
-	ip := vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddress
+	// The API returns unordered list of NICs therefore we want to be sure and pick 'ip' and 'mac' from primary NIC.
+	primaryNicIndex := vm.VM.NetworkConnectionSection.PrimaryNetworkConnectionIndex
+
+	ip := vm.VM.NetworkConnectionSection.NetworkConnection[primaryNicIndex].IPAddress
 	// If allocation mode is DHCP and we're not getting the IP - we set this to na (not available)
-	if vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddressAllocationMode == types.IPAllocationModeDHCP && ip == "" {
+	if vm.VM.NetworkConnectionSection.NetworkConnection[primaryNicIndex].IPAddressAllocationMode == types.IPAllocationModeDHCP && ip == "" {
 		ip = "na"
 	}
-	mac := vm.VM.NetworkConnectionSection.NetworkConnection[0].MACAddress
+	mac := vm.VM.NetworkConnectionSection.NetworkConnection[primaryNicIndex].MACAddress
 
 	return ip, mac, nil
 }

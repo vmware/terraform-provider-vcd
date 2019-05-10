@@ -80,6 +80,11 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 	params["VMName"] = netVmNamevAppNetwork
 	configTextStep8 := templateFill(testAccCheckVcdVAppVmSingleNICvAppNetwork, params)
 
+	// both vApp network 'vapp_network_name' and 'network_name'  with 'allocated'
+	netVmNameBothNetworks := netVmName1 + "vAppAndVDCNet"
+	params["VMName"] = netVmNameBothNetworks
+	configTextStep10 := templateFill(testAccCheckVcdVAppVmSingleNICvAppAndVdc, params)
+
 	debugPrintf("#[DEBUG] CONFIGURATION (allocated): %s\n", configTextStep0)
 	debugPrintf("#[DEBUG] CONFIGURATION (dhcp): %s\n", configTextStep2)
 	debugPrintf("#[DEBUG] CONFIGURATION (manual IP): %s\n", configTextStep4)
@@ -130,6 +135,7 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 			resource.TestStep{
 				Config: configTextNetworkVapp,
 			},
+			// Manually specified IP address
 			resource.TestStep{
 				Config: configTextStep4,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -144,24 +150,40 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 			resource.TestStep{
 				Config: configTextNetworkVapp,
 			},
+			// Empty VM without any networks attached
 			resource.TestStep{
 				Config: configTextStep6,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(netVappName, netVmNameNoNetwork, "vcd_vapp_vm."+netVmNameNoNetwork, &vapp, &vm),
+					resource.TestCheckNoResourceAttr("vcd_vapp_vm."+netVmNameNoNetwork, "ip"),
 				),
 			},
 
 			resource.TestStep{
 				Config: configTextNetworkVapp,
 			},
+			// Try with vApp network only and check that IP is picked from the pool
 			resource.TestStep{
 				Config: configTextStep8,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(netVappName, netVmNamevAppNetwork, "vcd_vapp_vm."+netVmNamevAppNetwork, &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmNamevAppNetwork, "ip", "192.168.2.51"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmNamevAppNetwork, "mac"),
 				),
 			},
-
+			resource.TestStep{
+				Config: configTextNetworkVapp,
+			},
+			// Try with both networks specified 'network_name' and 'vapp_network_name' and expect the IP to be populated
+			// from pool for primary network interface (which is always 'network_name')
+			resource.TestStep{
+				Config: configTextStep10,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckVcdVAppVmExists(netVappName, netVmNameBothNetworks, "vcd_vapp_vm."+netVmNameBothNetworks, &vapp, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmNameBothNetworks, "ip", "11.10.0.152"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmNameBothNetworks, "mac"),
+				),
+			},
 			//// TODO remove cleanup steps once we have locks on objects
 			// This is a hack to remove VM first, then vApp to avoid breaking network
 			// removal. It mimics parallelism=1. The problem is that vApp undeploy is not
@@ -237,8 +259,8 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 }
 `
 
-// Sample config with vApp network
-const testAccCheckVcdVAppVmSingleNICvAppNetwork = testAccCheckVcdVAppVmSingleNICNetworkVapp + `
+// used in composition with other objects
+const testSnippetVappNetwork = `
 resource "vcd_vapp_network" "vappNet" {
 	org = "{{.Org}}"
 	vdc = "{{.Vdc}}"
@@ -258,8 +280,11 @@ resource "vcd_vapp_network" "vappNet" {
   
 	depends_on = ["vcd_vapp.{{.VAppName}}"]
   }
-  
-  resource "vcd_vapp_vm" "{{.VMName}}" {
+`
+
+// Sample config with only vApp network
+const testAccCheckVcdVAppVmSingleNICvAppNetwork = testAccCheckVcdVAppVmSingleNICNetworkVapp + testSnippetVappNetwork + `
+resource "vcd_vapp_vm" "{{.VMName}}" {
 	org = "{{.Org}}"
 	vdc = "{{.Vdc}}"
   
@@ -271,6 +296,26 @@ resource "vcd_vapp_network" "vappNet" {
 	cpus              = 2
 	cpu_cores         = 2
 	power_on          = "false"
+	vapp_network_name = "${vcd_vapp_network.vappNet.id}"
+	ip                = "allocated"
+  }  
+`
+
+// Both 'vapp_network_name' and 'network_name' specified
+const testAccCheckVcdVAppVmSingleNICvAppAndVdc = testAccCheckVcdVAppVmSingleNICNetworkVapp + testSnippetVappNetwork + `
+resource "vcd_vapp_vm" "{{.VMName}}" {
+	org = "{{.Org}}"
+	vdc = "{{.Vdc}}"
+  
+	vapp_name         = "${vcd_vapp.{{.VAppName}}.name}"
+	name              = "{{.VMName}}"
+	catalog_name      = "{{.Catalog}}"
+	template_name     = "{{.CatalogItem}}"
+	memory            = 512
+	cpus              = 2
+	cpu_cores         = 2
+	power_on          = "false"
+	network_name      = "${vcd_network_routed.net.name}"
 	vapp_network_name = "${vcd_vapp_network.vappNet.id}"
 	ip                = "allocated"
   }  
