@@ -44,13 +44,13 @@ resource "vcd_vapp_vm" "web1" {
     bla     = "foo"
   }
 
-  networks = [{
-    network_type       = "org"
-    network_name       = "net"
+  network {
+    type               = "org"
+    name               = "net"
     ip                 = "10.10.104.161"
     ip_allocation_mode = "MANUAL"
     is_primary         = true
-  }]
+  }
 
   depends_on = ["vcd_vapp.web"]
 }
@@ -119,9 +119,9 @@ The following arguments are supported:
 * `cpu_cores` - (Optional; *v2.1+*) The number of cores per socket
 * `metadata` - (Optional; *v2.2+*) Key value map of metadata to assign to this VM
 * `initscript` (Optional) A script to be run only on initial boot
-* `network_name` - (Optional; **Deprecated** by `networks`) Name of the network this VM should connect to.
-* `vapp_network_name` - (Optional; v2.1+; **Deprecated** by `networks`) Name of the vApp network this VM should connect to.
-* `ip` - (Optional; **Deprecated** by `networks`) The IP to assign to this vApp. Must be an IP address or
+* `network_name` - (Optional; **Deprecated** by `network`) Name of the network this VM should connect to.
+* `vapp_network_name` - (Optional; v2.1+; **Deprecated** by `network`) Name of the vApp network this VM should connect to.
+* `ip` - (Optional; **Deprecated** by `network`) The IP to assign to this vApp. Must be an IP address or
 one of dhcp, allocated or none. If given the address must be within the
   `static_ip_pool` set for the network. If left blank, and the network has
   `dhcp_pool` set with at least one available IP then this will be set with
