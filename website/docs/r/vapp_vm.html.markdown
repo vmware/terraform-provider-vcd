@@ -122,7 +122,7 @@ The following arguments are supported:
 * `network_name` - (Optional; **Deprecated** by `network`) Name of the network this VM should connect to.
 * `vapp_network_name` - (Optional; v2.1+; **Deprecated** by `network`) Name of the vApp network this VM should connect to.
 * `ip` - (Optional; **Deprecated** by `network`) The IP to assign to this vApp. Must be an IP address or
-one of dhcp, allocated, or none. If given the address must be within the
+one of `dhcp`, `allocated`, or `none`. If given the address must be within the
   `static_ip_pool` set for the network. If left blank, and the network has
   `dhcp_pool` set with at least one available IP then this will be set with
 DHCP.
