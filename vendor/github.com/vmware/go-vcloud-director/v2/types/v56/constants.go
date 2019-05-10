@@ -129,6 +129,12 @@ const (
 	IPAllocationModePool   = "POOL"
 )
 
+// NoneNetwork is a special type of network in vCD which represents a network card which is not
+// attached to any network.
+const (
+	NoneNetwork = "none"
+)
+
 const (
 	XMLNamespaceVCloud    = "http://www.vmware.com/vcloud/v1.5"
 	XMLNamespaceOVF       = "http://schemas.dmtf.org/ovf/envelope/1"

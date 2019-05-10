@@ -310,6 +310,16 @@ func (vdc *Vdc) ComposeVApp(orgvdcnetworks []*types.OrgVDCNetwork, vapptemplate 
 	if vapptemplate.VAppTemplate.Children == nil || orgvdcnetworks == nil {
 		return Task{}, fmt.Errorf("can't compose a new vApp, objects passed are not valid")
 	}
+
+	// Determine primary network connection index number. We normally depend on it being inherited from vApp template
+	// but in the case when vApp template does not have network card it would fail on the index being undefined. We
+	// set the value to 0 (first NIC instead)
+	primaryNetworkConnectionIndex := 0
+	if vapptemplate.VAppTemplate.Children != nil && len(vapptemplate.VAppTemplate.Children.VM) > 0 &&
+		vapptemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection != nil {
+		primaryNetworkConnectionIndex = vapptemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.PrimaryNetworkConnectionIndex
+	}
+
 	// Build request XML
 	vcomp := &types.ComposeVAppParams{
 		Ovf:         types.XMLNamespaceOVF,
@@ -332,10 +342,8 @@ func (vdc *Vdc) ComposeVApp(orgvdcnetworks []*types.OrgVDCNetwork, vapptemplate 
 			},
 			InstantiationParams: &types.InstantiationParams{
 				NetworkConnectionSection: &types.NetworkConnectionSection{
-					Type:                          vapptemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.Type,
-					HREF:                          vapptemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.HREF,
 					Info:                          "Network config for sourced item",
-					PrimaryNetworkConnectionIndex: vapptemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.PrimaryNetworkConnectionIndex,
+					PrimaryNetworkConnectionIndex: primaryNetworkConnectionIndex,
 				},
 			},
 		},

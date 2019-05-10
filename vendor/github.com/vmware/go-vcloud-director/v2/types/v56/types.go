@@ -251,6 +251,15 @@ type NetworkConfigSection struct {
 	NetworkConfig []VAppNetworkConfiguration `xml:"NetworkConfig,omitempty"`
 }
 
+// NetworkNames allows to extract network names
+func (n NetworkConfigSection) NetworkNames() []string {
+	var list []string
+	for _, netConfig := range n.NetworkConfig {
+		list = append(list, netConfig.NetworkName)
+	}
+	return list
+}
+
 // NetworkConnection represents a network connection in the virtual machine.
 // Type: NetworkConnectionType
 // Namespace: http://www.vmware.com/vcloud/v1.5

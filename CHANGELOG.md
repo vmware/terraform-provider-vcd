@@ -5,6 +5,8 @@ FEATURES:
 * `vcd_vapp_vm` - Ability to add metadata to a VM. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES` [GH-158]
 * `vcd_vapp_vm` - Ability to enable hardware assisted CPU virtualization for VM. It allows hypervisor nesting. [GH-219]
 * **New Resource:** external network - `vcd_external_network` - [GH-230]
+* resource/vcd_vapp_vm: Add `network` argument for multiple NIC support and more flexible configuration [GH-233]
+* resource/vcd_vapp_vm: Add `mac` argument to store MAC address in statefile [GH-233]
 
 BUG FIXES:
 
@@ -14,6 +16,7 @@ BACKWARDS INCOMPATIBILITIES / NOTES:
 
 * `vcd_vapp` - Metadata is no longer added to first VM in vApp it will be added to vApp directly instead. [GH-158]
 * Tests files are now all tagged. Running them through Makefile works as before, but manual execution requires specific tags. Run `go test -v .` for tags list.
+* `vcd_vapp_vm` - Deprecated attributes `network_name`, `network_href` and `ip` in favor of `network` [GH-118]
 
 ## 2.1.0 (March 27, 2019)
 

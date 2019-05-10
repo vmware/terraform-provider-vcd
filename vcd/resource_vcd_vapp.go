@@ -3,6 +3,7 @@ package vcd
 import (
 	"fmt"
 	"log"
+	"regexp"
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
@@ -494,6 +495,15 @@ func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
 
 	_ = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
 		task, err := vapp.Undeploy()
+		// Very often the vApp is powered off at this point and Undeploy() would wait for as long as
+		// vcdClient.MaxRetryTimeout before going to Delete phase because of the following error:
+		// "The requested operation could not be executed since vApp vApp_name is not running"
+		// So, if the error matches we just quit retrying and fast forward to vapp.Delete()
+		var reErr = regexp.MustCompile(`.*The requested operation could not be executed since vApp.*is not running.*`)
+		if err != nil && reErr.MatchString(err.Error()) {
+			return &resource.RetryError{Err: err, Retryable: false}
+		}
+
 		if err != nil {
 			return resource.RetryableError(fmt.Errorf("error undeploying: %#v", err))
 		}

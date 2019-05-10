@@ -91,22 +91,85 @@ func (vapp *VApp) Refresh() error {
 	return err
 }
 
-// Function create vm in vApp using vApp template
+// AddVM create vm in vApp using vApp template
 // orgVdcNetworks - adds org VDC networks to be available for vApp. Can be empty.
 // vappNetworkName - adds vApp network to be available for vApp. Can be empty.
 // vappTemplate - vApp Template which will be used for VM creation.
 // name - name for VM.
 // acceptAllEulas - setting allows to automatically accept or not Eulas.
+//
+// Deprecated: Use vapp.AddNewVM instead for more sophisticated network handling
 func (vapp *VApp) AddVM(orgVdcNetworks []*types.OrgVDCNetwork, vappNetworkName string, vappTemplate VAppTemplate, name string, acceptAllEulas bool) (Task, error) {
+	util.Logger.Printf("[INFO] vapp.AddVM() is deprecated in favor of vapp.AddNewVM()")
+	if vappTemplate == (VAppTemplate{}) || vappTemplate.VAppTemplate == nil {
+		return Task{}, fmt.Errorf("vApp Template can not be empty")
+	}
+
+	// primaryNetworkConnectionIndex will be inherited from template or defaulted to 0
+	// if the template does not have any NICs assigned.
+	primaryNetworkConnectionIndex := 0
+	if vappTemplate.VAppTemplate.Children != nil && len(vappTemplate.VAppTemplate.Children.VM) > 0 &&
+		vappTemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection != nil {
+		primaryNetworkConnectionIndex = vappTemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.PrimaryNetworkConnectionIndex
+	}
+
+	networkConnectionSection := types.NetworkConnectionSection{
+		Info:                          "Network config for sourced item",
+		PrimaryNetworkConnectionIndex: primaryNetworkConnectionIndex,
+	}
+
+	for index, orgVdcNetwork := range orgVdcNetworks {
+		networkConnectionSection.NetworkConnection = append(networkConnectionSection.NetworkConnection,
+			&types.NetworkConnection{
+				Network:                 orgVdcNetwork.Name,
+				NetworkConnectionIndex:  index,
+				IsConnected:             true,
+				IPAddressAllocationMode: types.IPAllocationModePool,
+			},
+		)
+	}
+
+	if vappNetworkName != "" {
+		networkConnectionSection.NetworkConnection = append(networkConnectionSection.NetworkConnection,
+			&types.NetworkConnection{
+				Network:                 vappNetworkName,
+				NetworkConnectionIndex:  len(orgVdcNetworks),
+				IsConnected:             true,
+				IPAddressAllocationMode: types.IPAllocationModePool,
+			},
+		)
+	}
+
+	return vapp.AddNewVM(name, vappTemplate, &networkConnectionSection, acceptAllEulas)
+}
+
+// AddNewVM adds VM from vApp template with custom NetworkConnectionSection
+func (vapp *VApp) AddNewVM(name string, vappTemplate VAppTemplate, network *types.NetworkConnectionSection, acceptAllEulas bool) (Task, error) {
 
 	if vappTemplate == (VAppTemplate{}) || vappTemplate.VAppTemplate == nil {
 		return Task{}, fmt.Errorf("vApp Template can not be empty")
 	}
 
+	if vappTemplate.VAppTemplate.Children == nil || len(vappTemplate.VAppTemplate.Children.VM) < 1 {
+		return Task{}, fmt.Errorf("vApp Template must have at least one child VM")
+	}
+
 	// Status 8 means The object is resolved and powered off.
 	// https://vdc-repo.vmware.com/vmwb-repository/dcr-public/94b8bd8d-74ff-4fe3-b7a4-41ae31516ed7/1b42f3b5-8b31-4279-8b3f-547f6c7c5aa8/doc/GUID-843BE3AD-5EF6-4442-B864-BCAE44A51867.html
 	if vappTemplate.VAppTemplate.Status != 8 {
-		return Task{}, fmt.Errorf("vApp Template shape is not ok")
+		return Task{}, fmt.Errorf("vApp Template shape is not ok (status: %d)", vappTemplate.VAppTemplate.Status)
+	}
+
+	// Validate network config only if it was supplied
+	if network != nil && network.NetworkConnection != nil {
+		for _, nic := range network.NetworkConnection {
+			if nic.Network == "" {
+				return Task{}, fmt.Errorf("missing mandatory attribute Network: %s", nic.Network)
+			}
+			if nic.IPAddressAllocationMode == "" {
+				return Task{}, fmt.Errorf("missing mandatory attribute IPAddressAllocationMode: %s", nic.IPAddressAllocationMode)
+			}
+		}
 	}
 
 	vcomp := &types.ReComposeVAppParams{
@@ -122,51 +185,13 @@ func (vapp *VApp) AddVM(orgVdcNetworks []*types.OrgVDCNetwork, vappNetworkName s
 				HREF: vappTemplate.VAppTemplate.Children.VM[0].HREF,
 				Name: name,
 			},
-			InstantiationParams: &types.InstantiationParams{
-				NetworkConnectionSection: &types.NetworkConnectionSection{
-					Type:                          vappTemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.Type,
-					HREF:                          vappTemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.HREF,
-					Info:                          "Network config for sourced item",
-					PrimaryNetworkConnectionIndex: vappTemplate.VAppTemplate.Children.VM[0].NetworkConnectionSection.PrimaryNetworkConnectionIndex,
-				},
-			},
+			InstantiationParams: &types.InstantiationParams{}, // network config is injected below
 		},
 		AllEULAsAccepted: acceptAllEulas,
 	}
 
-	for index, orgVdcNetwork := range orgVdcNetworks {
-		vcomp.SourcedItem.InstantiationParams.NetworkConnectionSection.NetworkConnection = append(vcomp.SourcedItem.InstantiationParams.NetworkConnectionSection.NetworkConnection,
-			&types.NetworkConnection{
-				Network:                 orgVdcNetwork.Name,
-				NetworkConnectionIndex:  index,
-				IsConnected:             true,
-				IPAddressAllocationMode: types.IPAllocationModePool,
-			},
-		)
-		vcomp.SourcedItem.NetworkAssignment = append(vcomp.SourcedItem.NetworkAssignment,
-			&types.NetworkAssignment{
-				InnerNetwork:     orgVdcNetwork.Name,
-				ContainerNetwork: orgVdcNetwork.Name,
-			},
-		)
-	}
-
-	if vappNetworkName != "" {
-		vcomp.SourcedItem.InstantiationParams.NetworkConnectionSection.NetworkConnection = append(vcomp.SourcedItem.InstantiationParams.NetworkConnectionSection.NetworkConnection,
-			&types.NetworkConnection{
-				Network:                 vappNetworkName,
-				NetworkConnectionIndex:  len(orgVdcNetworks),
-				IsConnected:             true,
-				IPAddressAllocationMode: types.IPAllocationModePool,
-			},
-		)
-		vcomp.SourcedItem.NetworkAssignment = append(vcomp.SourcedItem.NetworkAssignment,
-			&types.NetworkAssignment{
-				InnerNetwork:     vappNetworkName,
-				ContainerNetwork: vappNetworkName,
-			},
-		)
-	}
+	// Inject network config
+	vcomp.SourcedItem.InstantiationParams.NetworkConnectionSection = network
 
 	apiEndpoint, _ := url.ParseRequestURI(vapp.VApp.HREF)
 	apiEndpoint.Path += "/action/recomposeVApp"
@@ -719,7 +744,7 @@ func (vapp *VApp) GetNetworkConfig() (*types.NetworkConfigSection, error) {
 	return networkConfig, err
 }
 
-// Function adds existing VDC network to vApp
+// AddRAWNetworkConfig adds existing VDC network to vApp
 func (vapp *VApp) AddRAWNetworkConfig(orgvdcnetworks []*types.OrgVDCNetwork) (Task, error) {
 
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
