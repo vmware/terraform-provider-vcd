@@ -164,7 +164,7 @@ its parameters do force recreation of VMs!
   
   * `NONE` - No IP address will be set because VM will have a NIC without network.
 
-* `ip` (Computed, Optional) Settings depend on `ip_allocation_mode`. Field requirements for each `ip_allocation_mode` are listed below:
+* `ip` (Optional, Computed) Settings depend on `ip_allocation_mode`. Field requirements for each `ip_allocation_mode` are listed below:
 
   * `ip_allocation_mode=POOL` - **`ip`** value must be omitted or empty string "". Empty string may be useful when doing HCL
   variable interpolation. Field `ip` will be populated with an assigned IP from static pool after run.
