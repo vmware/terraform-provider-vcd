@@ -122,7 +122,7 @@ The following arguments are supported:
 * `network_name` - (Optional; **Deprecated** by `network`) Name of the network this VM should connect to.
 * `vapp_network_name` - (Optional; v2.1+; **Deprecated** by `network`) Name of the vApp network this VM should connect to.
 * `ip` - (Optional; **Deprecated** by `network`) The IP to assign to this vApp. Must be an IP address or
-one of dhcp, allocated or none. If given the address must be within the
+one of dhcp, allocated, or none. If given the address must be within the
   `static_ip_pool` set for the network. If left blank, and the network has
   `dhcp_pool` set with at least one available IP then this will be set with
 DHCP.
@@ -170,7 +170,7 @@ its parameters do force recreation of VMs!
   variable interpolation. Field `ip` will be populated with an assigned IP from static pool after run.
   
   * `ip_allocation_mode=DHCP` - **`ip`** value must be omitted or empty string "". Field `ip` is not guaranteed to be populated
-  after run due to the VM may not work properly with DHCP or may be missing VMware tools. Because of this `ip` may also appear after multiple `terraform refresh` operations when is reported back to vCD.
+  after run due to the VM lacking VMware tools or not working properly with DHCP. Because of this `ip` may also appear after multiple `terraform refresh` operations when is reported back to vCD.
 
   * `ip_allocation_mode=MANUAL` - **`ip`** value must be valid IP address from a subnet defined in `static pool` for network.
 
