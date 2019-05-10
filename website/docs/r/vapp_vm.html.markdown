@@ -151,17 +151,27 @@ its parameters do force recreation of VMs!
 
 * `type` (Required) Network type, one of: `none`, `vapp` or `vdc`. `none` creates a NIC with no network attached, `vapp` attaches a vApp network, while `vdc` attaches organization VDC network.
 * `name` (Optional) Name of the network this VM should connect to. Always required except for `type` `NONE`.
-* `ip` (Computed, Optional) Empty or valid IP address if `ip_allocation_mode` is `MANUAL`. IP address will be set in case of `ip_allocation_mode` is `POOL` and may be set when it is `DHCP`.
 * `is_primary` (Optional) Set to true if network interface should be primary. First network card in the list will be primary by default.
 * `mac` - (Computed) Mac address of network interface.
 * `ip_allocation_mode` (Required) IP address allocation mode. One of `POOL`, `DHCP`, `MANUAL`, `NONE`:  
 
   * `POOL` - Static IP address is allocated automatically from defined static pool in network.
   
-  * `DHCP` - IP address is obtained from a DHCP service. Field `IP` is not guaranteed to be populated. Because of this it may appear
+  * `DHCP` - IP address is obtained from a DHCP service. Field `ip` is not guaranteed to be populated. Because of this it may appear
   after multiple `terraform refresh` operations.
   
   * `MANUAL` - IP address is assigned manually in the `ip` field. Must be valid IP address from static pool.
   
   * `NONE` - No IP address will be set because VM will have a NIC without network.
 
+* `ip` (Computed, Optional) Settings depend on `ip_allocation_mode`. Field requirements for each `ip_allocation_mode` are listed below:
+
+  * `ip_allocation_mode=POOL` - **`ip`** value must be omitted or empty string "". Empty string may be useful when doing HCL
+  variable interpolation. Field `ip` will be populated with an assigned IP from static pool after run.
+  
+  * `ip_allocation_mode=DHCP` - **`ip`** value must be omitted or empty string "". Field `ip` is not guaranteed to be populated
+  after run due to the VM may not work properly with DHCP or may be missing VMware tools. Because of this `ip` may also appear after multiple `terraform refresh` operations when is reported back to vCD.
+
+  * `ip_allocation_mode=MANUAL` - **`ip`** value must be valid IP address from a subnet defined in `static pool` for network.
+
+  * `ip_allocation_mode=NONE` - **`ip`** field can be omitted or set to an empty string "". Empty string may be useful when doing HCL variable interpolation.
