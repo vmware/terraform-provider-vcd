@@ -217,14 +217,10 @@ func (vm *VM) updateNicParameters(networks []map[string]interface{}, networkSect
 				if ipAllocationMode == types.IPAllocationModeNone {
 					networkSection.NetworkConnection[loopIndex].Network = types.NoneNetwork
 				} else {
-					// Network names can be stored in two forms 'name' or 'network_name'. We pick
-					if _, ok := network["name"]; ok {
-						networkSection.NetworkConnection[loopIndex].Network = network["name"].(string)
-					} else if _, ok := network["network_name"]; ok {
-						networkSection.NetworkConnection[loopIndex].Network = network["network_name"].(string)
-					} else {
+					if _, ok := network["network_name"]; !ok {
 						return fmt.Errorf("could not identify network name")
 					}
+					networkSection.NetworkConnection[loopIndex].Network = network["network_name"].(string)
 				}
 
 				// If we have one NIC only then it is primary by default, otherwise we check for "is_primary" key

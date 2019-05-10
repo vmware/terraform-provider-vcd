@@ -160,12 +160,15 @@ func (vapp *VApp) AddNewVM(name string, vappTemplate VAppTemplate, network *type
 		return Task{}, fmt.Errorf("vApp Template shape is not ok (status: %d)", vappTemplate.VAppTemplate.Status)
 	}
 
-	for _, nic := range network.NetworkConnection {
-		if nic.Network == "" {
-			return Task{}, fmt.Errorf("missing mandatory attribute Network: %s", nic.Network)
-		}
-		if nic.IPAddressAllocationMode == "" {
-			return Task{}, fmt.Errorf("missing mandatory attribute IPAddressAllocationMode: %s", nic.IPAddressAllocationMode)
+	// Validate network config only if it was supplied
+	if network != nil && network.NetworkConnection != nil {
+		for _, nic := range network.NetworkConnection {
+			if nic.Network == "" {
+				return Task{}, fmt.Errorf("missing mandatory attribute Network: %s", nic.Network)
+			}
+			if nic.IPAddressAllocationMode == "" {
+				return Task{}, fmt.Errorf("missing mandatory attribute IPAddressAllocationMode: %s", nic.IPAddressAllocationMode)
+			}
 		}
 	}
 
