@@ -4,19 +4,22 @@ package vcd
 
 import (
 	"fmt"
-	"strings"
-	"testing"
-	"time"
-
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"strings"
+	"testing"
 )
 
 var TestAccVcdExternalNetwork = "TestAccVcdExternalNetworkBasic"
 var externalNetwork govcd.ExternalNetwork
 
 func TestAccVcdExternalNetworkBasic(t *testing.T) {
+
+	if !usingSysAdmin() {
+		t.Skip("TestAccVcdExternalNetworkBasic requires system admin privileges")
+		return
+	}
 
 	var params = StringMap{
 		"ExternalNetworkName": TestAccVcdExternalNetwork,
@@ -74,20 +77,6 @@ func testAccCheckVcdExternalNetworkExists(name string, externalNetwork *govcd.Ex
 		newExternalNetwork, err := govcd.GetExternalNetwork(conn.VCDClient, rs.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("external network %s does not exist (%#v)", rs.Primary.ID, err)
-		}
-
-		// Due vCD bug this workaround to refresh until task is fully completed - as task wait isn't enough
-		// Task still exists and creates NETWORK_DELETE error, so we wait until disappears
-		for i := 0; i < 30; i++ {
-			err = newExternalNetwork.Refresh()
-			if err != nil {
-				return fmt.Errorf("external network %s refresh failed (%#v)", rs.Primary.ID, err)
-			}
-			if newExternalNetwork.ExternalNetwork.Tasks != nil && len(newExternalNetwork.ExternalNetwork.Tasks.Task) == 0 {
-				break
-			} else {
-				time.Sleep(1 * time.Second)
-			}
 		}
 
 		externalNetwork = newExternalNetwork
