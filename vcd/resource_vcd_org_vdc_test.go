@@ -124,7 +124,7 @@ func testAccCheckVcdVdcExists(name string, vdc *govcd.Vdc) resource.TestCheckFun
 func testAccCheckVdcDestroy(s *terraform.State) error {
 	conn := testAccProvider.Meta().(*VCDClient)
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "vcd_vdc" && rs.Primary.Attributes["name"] != TestAccVcdVdc {
+		if rs.Type != "vcd_org_vdc" && rs.Primary.Attributes["name"] != TestAccVcdVdc {
 			continue
 		}
 
