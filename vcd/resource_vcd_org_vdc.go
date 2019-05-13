@@ -204,7 +204,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Default:     true,
 				Description: "Set to false to disallow creation of the VDC if the AllocationModel is AllocationPool or ReservationPool and the ComputeCapacity you specified is greater than what the backing Provider VDC can supply. Default is true.",
 			},
-			"vm_discovery_enabled": &schema.Schema{
+			"enable_vm_discovery": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
 				ForceNew:    true,
@@ -476,7 +476,7 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 		params.OverCommitAllowed = overCommitAllowed.(bool)
 	}
 
-	if vmDiscoveryEnabled, ok := d.GetOk("vm_discovery_enabled"); ok {
+	if vmDiscoveryEnabled, ok := d.GetOk("enable_vm_discovery"); ok {
 		params.VmDiscoveryEnabled = vmDiscoveryEnabled.(bool)
 	}
 
