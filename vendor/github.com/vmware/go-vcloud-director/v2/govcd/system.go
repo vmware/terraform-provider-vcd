@@ -207,8 +207,18 @@ func CreateExternalNetwork(vcdClient *VCDClient, externalNetwork *types.External
 	externalNetwork.Configuration.FenceMode = "isolated"
 
 	// Return the task
-	return vcdClient.Client.ExecuteTaskRequest(externalNetHREF.String(), http.MethodPost,
+	task, err := vcdClient.Client.ExecuteTaskRequest(externalNetHREF.String(), http.MethodPost,
 		types.MimeExternalNetwork, "error instantiating a new ExternalNetwork: %s", externalNetwork)
+
+	// Real task in task array
+	if err == nil {
+		if task.Task != nil && task.Task.Tasks != nil && len(task.Task.Tasks.Task) == 0 {
+			return Task{}, fmt.Errorf("create external network task wasn't found")
+		}
+		task.Task = task.Task.Tasks.Task[0]
+	}
+
+	return task, err
 }
 
 func getExtension(client *Client) (*types.Extension, error) {
@@ -221,4 +231,43 @@ func getExtension(client *Client) (*types.Extension, error) {
 		"", "error retrieving extension: %s", nil, extensions)
 
 	return extensions, err
+}
+
+// QueryProviderVdcStorageProfileByName finds a provider VDC storage profile by name
+func QueryProviderVdcStorageProfileByName(vcdCli *VCDClient, name string) ([]*types.QueryResultProviderVdcStorageProfileRecordType, error) {
+	results, err := vcdCli.QueryWithNotEncodedParams(nil, map[string]string{
+		"type":   "providerVdcStorageProfile",
+		"filter": fmt.Sprintf("(name==%s)", name),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return results.Results.ProviderVdcStorageProfileRecord, nil
+}
+
+// QueryNetworkPoolByName finds a network pool by name
+func QueryNetworkPoolByName(vcdCli *VCDClient, name string) ([]*types.QueryResultNetworkPoolRecordType, error) {
+	results, err := vcdCli.QueryWithNotEncodedParams(nil, map[string]string{
+		"type":   "networkPool",
+		"filter": fmt.Sprintf("(name==%s)", name),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return results.Results.NetworkPoolRecord, nil
+}
+
+// QueryNetworkPoolByName finds a provider VDC by name
+func QueryProviderVdcByName(vcdCli *VCDClient, name string) ([]*types.QueryResultVMWProviderVdcRecordType, error) {
+	results, err := vcdCli.QueryWithNotEncodedParams(nil, map[string]string{
+		"type":   "providerVdc",
+		"filter": fmt.Sprintf("(name==%s)", name),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return results.Results.VMWProviderVdcRecord, nil
 }

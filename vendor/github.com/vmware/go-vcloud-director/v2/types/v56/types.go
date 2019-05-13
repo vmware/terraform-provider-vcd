@@ -251,6 +251,15 @@ type NetworkConfigSection struct {
 	NetworkConfig []VAppNetworkConfiguration `xml:"NetworkConfig,omitempty"`
 }
 
+// NetworkNames allows to extract network names
+func (n NetworkConfigSection) NetworkNames() []string {
+	var list []string
+	for _, netConfig := range n.NetworkConfig {
+		list = append(list, netConfig.NetworkName)
+	}
+	return list
+}
+
 // NetworkConnection represents a network connection in the virtual machine.
 // Type: NetworkConnectionType
 // Namespace: http://www.vmware.com/vcloud/v1.5
@@ -416,26 +425,26 @@ type VdcStorageProfile struct {
 // Since: 5.1
 // https://code.vmware.com/apis/220/vcloud#/doc/doc/types/CreateVdcParamsType.html
 type VdcConfiguration struct {
-	XMLName                  xml.Name           `xml:"CreateVdcParams"`
-	Xmlns                    string             `xml:"xmlns,attr"`
-	Name                     string             `xml:"name,attr"`
-	Description              string             `xml:"Description,omitempty"`
-	AllocationModel          string             `xml:"AllocationModel"`
-	ComputeCapacity          []*ComputeCapacity `xml:"ComputeCapacity"`
-	NicQuota                 int                `xml:"NicQuota,omitempty"`
-	NetworkQuota             int                `xml:"NetworkQuota,omitempty"`
-	VmQuota                  int                `xml:"VmQuota,omitempty"`
-	IsEnabled                bool               `xml:"IsEnabled,omitempty"`
-	VdcStorageProfile        *VdcStorageProfile `xml:"VdcStorageProfile"`
-	ResourceGuaranteedMemory float64            `xml:"ResourceGuaranteedMemory,omitempty"`
-	ResourceGuaranteedCpu    float64            `xml:"ResourceGuaranteedCpu,omitempty"`
-	VCpuInMhz                int64              `xml:"VCpuInMhz,omitempty"`
-	IsThinProvision          bool               `xml:"IsThinProvision,omitempty"`
-	NetworkPoolReference     *Reference         `xml:"NetworkPoolReference,omitempty"`
-	ProviderVdcReference     *Reference         `xml:"ProviderVdcReference"`
-	UsesFastProvisioning     bool               `xml:"UsesFastProvisioning,omitempty"`
-	OverCommitAllowed        bool               `xml:"OverCommitAllowed,omitempty"`
-	VmDiscoveryEnabled       bool               `xml:"VmDiscoveryEnabled,omitempty"`
+	XMLName                  xml.Name             `xml:"CreateVdcParams"`
+	Xmlns                    string               `xml:"xmlns,attr"`
+	Name                     string               `xml:"name,attr"`
+	Description              string               `xml:"Description,omitempty"`
+	AllocationModel          string               `xml:"AllocationModel"`
+	ComputeCapacity          []*ComputeCapacity   `xml:"ComputeCapacity"`
+	NicQuota                 int                  `xml:"NicQuota,omitempty"`
+	NetworkQuota             int                  `xml:"NetworkQuota,omitempty"`
+	VmQuota                  int                  `xml:"VmQuota,omitempty"`
+	IsEnabled                bool                 `xml:"IsEnabled,omitempty"`
+	VdcStorageProfile        []*VdcStorageProfile `xml:"VdcStorageProfile"`
+	ResourceGuaranteedMemory float64              `xml:"ResourceGuaranteedMemory,omitempty"`
+	ResourceGuaranteedCpu    float64              `xml:"ResourceGuaranteedCpu,omitempty"`
+	VCpuInMhz                int64                `xml:"VCpuInMhz,omitempty"`
+	IsThinProvision          bool                 `xml:"IsThinProvision,omitempty"`
+	NetworkPoolReference     *Reference           `xml:"NetworkPoolReference,omitempty"`
+	ProviderVdcReference     *Reference           `xml:"ProviderVdcReference"`
+	UsesFastProvisioning     bool                 `xml:"UsesFastProvisioning,omitempty"`
+	OverCommitAllowed        bool                 `xml:"OverCommitAllowed,omitempty"`
+	VmDiscoveryEnabled       bool                 `xml:"VmDiscoveryEnabled,omitempty"`
 }
 
 // Task represents an asynchronous operation in vCloud Director.

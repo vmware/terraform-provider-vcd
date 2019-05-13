@@ -6,6 +6,7 @@ package govcd
 
 import (
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -66,6 +67,9 @@ func (vm *VM) Refresh() error {
 	return err
 }
 
+// GetNetworkConnectionSection returns current networks attached to VM
+//
+// The slice of NICs is not necessarily ordered by NIC index
 func (vm *VM) GetNetworkConnectionSection() (*types.NetworkConnectionSection, error) {
 
 	networkConnectionSection := &types.NetworkConnectionSection{}
@@ -164,52 +168,86 @@ func (vm *VM) ChangeCPUCountWithCore(virtualCpuCount int, coresPerSocket *int) (
 
 }
 
-func (vm *VM) ChangeNetworkConfig(networks []map[string]interface{}, ip string) (Task, error) {
+func (vm *VM) updateNicParameters(networks []map[string]interface{}, networkSection *types.NetworkConnectionSection) error {
+	for tfNicSlot, network := range networks {
+		for loopIndex := range networkSection.NetworkConnection {
+			// Change network config only if we have the same virtual slot number as in .tf config
+			if tfNicSlot == networkSection.NetworkConnection[loopIndex].NetworkConnectionIndex {
+
+				// Determine what type of address is requested for the vApp
+				var ipAllocationMode string
+				ipAddress := "Any"
+
+				var ipFieldString string
+				ipField, ipIsSet := network["ip"]
+				if ipIsSet {
+					ipFieldString = ipField.(string)
+				}
+
+				switch {
+				// TODO v3.0 remove from here when deprecated `ip` and `network_name` attributes are removed
+				case ipIsSet && ipFieldString == "dhcp": // Deprecated ip="dhcp" mode
+					ipAllocationMode = types.IPAllocationModeDHCP
+				case ipIsSet && ipFieldString == "allocated": // Deprecated ip="allocated" mode
+					ipAllocationMode = types.IPAllocationModePool
+				case ipIsSet && ipFieldString == "none": // Deprecated ip="none" mode
+					ipAllocationMode = types.IPAllocationModeNone
+
+				// Deprecated ip="valid_ip" mode (currently it is hit by ip_allocation_mode=MANUAL as well)
+				case ipIsSet && net.ParseIP(ipFieldString) != nil:
+					ipAllocationMode = types.IPAllocationModeManual
+					ipAddress = ipFieldString
+				case ipIsSet && ipFieldString != "": // Deprecated ip="something_invalid" we default to DHCP. This is odd but backwards compatible.
+					ipAllocationMode = types.IPAllocationModeDHCP
+					// TODO v3.0 remove until here when deprecated `ip` and `network_name` attributes are removed
+
+				case ipIsSet && net.ParseIP(ipFieldString) != nil && (network["ip_allocation_mode"].(string) == types.IPAllocationModeManual):
+					ipAllocationMode = types.IPAllocationModeManual
+					ipAddress = ipFieldString
+				default: // New networks functionality. IP was not set and we're defaulting to provided ip_allocation_mode (only manual requires the IP)
+					ipAllocationMode = network["ip_allocation_mode"].(string)
+				}
+
+				networkSection.NetworkConnection[loopIndex].NeedsCustomization = true
+				networkSection.NetworkConnection[loopIndex].IsConnected = true
+				networkSection.NetworkConnection[loopIndex].IPAddress = ipAddress
+				networkSection.NetworkConnection[loopIndex].IPAddressAllocationMode = ipAllocationMode
+
+				// for IPAllocationModeNone we hardcode special network name used by vcd 'none'
+				if ipAllocationMode == types.IPAllocationModeNone {
+					networkSection.NetworkConnection[loopIndex].Network = types.NoneNetwork
+				} else {
+					if _, ok := network["network_name"]; !ok {
+						return fmt.Errorf("could not identify network name")
+					}
+					networkSection.NetworkConnection[loopIndex].Network = network["network_name"].(string)
+				}
+
+				// If we have one NIC only then it is primary by default, otherwise we check for "is_primary" key
+				if (len(networks) == 1) || (network["is_primary"] != nil && network["is_primary"].(bool)) {
+					networkSection.PrimaryNetworkConnectionIndex = tfNicSlot
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// ChangeNetworkConfig allows to update existing VM NIC configuration.f
+func (vm *VM) ChangeNetworkConfig(networks []map[string]interface{}) (Task, error) {
 	err := vm.Refresh()
 	if err != nil {
 		return Task{}, fmt.Errorf("error refreshing VM before running customization: %v", err)
 	}
 
 	networkSection, err := vm.GetNetworkConnectionSection()
+	if err != nil {
+		return Task{}, fmt.Errorf("could not retrieve network connection for VM: %v", err)
+	}
 
-	// changes network config when only matches network name with provided one
-	for _, network := range networks {
-		for index, networkConnection := range networkSection.NetworkConnection {
-			if networkConnection.Network == network["orgnetwork"] { // network name are equal
-				// Determine what type of address is requested for the vApp
-				ipAllocationMode := types.IPAllocationModeNone
-				ipAddress := "Any"
-
-				// TODO: Review current behaviour of using DHCP when left blank
-				if ip == "dhcp" || network["ip"].(string) == "dhcp" {
-					ipAllocationMode = types.IPAllocationModeDHCP
-				} else if ip == "allocated" || network["ip"].(string) == "allocated" {
-					ipAllocationMode = types.IPAllocationModePool
-				} else if ip == "none" || network["ip"].(string) == "none" {
-					ipAllocationMode = types.IPAllocationModeNone
-				} else if ip != "" {
-					ipAllocationMode = types.IPAllocationModeManual
-					// TODO: Check a valid IP has been given
-					ipAddress = ip
-				} else if network["ip"].(string) != "" {
-					ipAllocationMode = types.IPAllocationModeManual
-					// TODO: Check a valid IP has been given
-					ipAddress = network["ip"].(string)
-				} else if ip == "" {
-					ipAllocationMode = types.IPAllocationModeDHCP
-				}
-
-				util.Logger.Printf("[DEBUG] Function ChangeNetworkConfig() for %s invoked", network["orgnetwork"])
-
-				networkSection.NetworkConnection[index].NeedsCustomization = true
-				networkSection.NetworkConnection[index].IPAddress = ipAddress
-				networkSection.NetworkConnection[index].IPAddressAllocationMode = ipAllocationMode
-
-				if network["is_primary"] == true {
-					networkSection.PrimaryNetworkConnectionIndex = index
-				}
-			}
-		}
+	err = vm.updateNicParameters(networks, networkSection)
+	if err != nil {
+		return Task{}, fmt.Errorf("failed processing NIC parameters: %v", err)
 	}
 
 	networkSection.Xmlns = types.XMLNamespaceVCloud

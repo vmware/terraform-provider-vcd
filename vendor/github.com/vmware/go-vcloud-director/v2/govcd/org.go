@@ -249,10 +249,10 @@ func validateVdcConfiguration(vdcDefinition *types.VdcConfiguration) error {
 	if vdcDefinition.ComputeCapacity[0].Memory.Units == "" {
 		return errors.New("VdcConfiguration missing required field: ComputeCapacity[0].Memory.Units")
 	}
-	if vdcDefinition.VdcStorageProfile == nil {
+	if vdcDefinition.VdcStorageProfile == nil || len(vdcDefinition.VdcStorageProfile) == 0 {
 		return errors.New("VdcConfiguration missing required field: VdcStorageProfile")
 	}
-	if vdcDefinition.VdcStorageProfile.Units == "" {
+	if vdcDefinition.VdcStorageProfile[0].Units == "" {
 		return errors.New("VdcConfiguration missing required field: VdcStorageProfile.Units")
 	}
 	if vdcDefinition.ProviderVdcReference == nil {
