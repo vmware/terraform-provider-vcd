@@ -3,12 +3,12 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_vdc"
 sidebar_current: "docs-vcd-resource-vdc"
 description: |-
-  Provides a vCloud Director Provider VDC resource. This can be used to create and delete an VDC.
+  Provides a vCloud Director Organization VDC resource. This can be used to create and delete a Organization VDC.
 ---
 
 # vcd\_vdc
 
-Provides a vCloud Director VDC resource. This can be used to create and delete a VDC.
+Provides a vCloud Director Organization VDC resource. This can be used to create and delete a Organization VDC.
 Requires system administrator privileges.
 
 Supported in provider *v2.2+*
@@ -71,7 +71,7 @@ resource "vcd_vdc" "my-vdc" {
 
 The following arguments are supported:
 
-* `org` - (Optional; *v2.0+*) Organization to create the VDC in, optional if defined at provider level
+* `org` - (Optional) Organization to create the VDC in, optional if defined at provider level
 * `name` - (Required) VDC name
 * `description` - (Optional) VDC friendly description
 * `allocation_model` - (Required) The allocation model used by this VDC; must be one of {AllocationVApp, AllocationPool, ReservationPool}
