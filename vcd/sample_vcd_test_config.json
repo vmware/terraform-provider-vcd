@@ -32,7 +32,7 @@
     },
     "allocationModel": "ReservationPool",
     "providerVdc": {
-      "//": "This section contains information needed for creating organization VDC",
+      "//": "Provider VDC details are needed for creating organization VDC",
       "name": "my-provider-vdc",
       "storageProfile": "my-storage-profile-name",
       "networkPool": "my-network-pool"
