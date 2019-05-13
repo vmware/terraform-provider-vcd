@@ -148,7 +148,7 @@ func testAccCheckVdcDestroy(s *terraform.State) error {
 }
 
 func init() {
-	testingTags["vdc"] = "resource_vcd_vdc_test.go"
+	testingTags["vdc"] = "resource_vcd_org_vdc_test.go"
 }
 
 const testAccCheckVcdVdc_basic = `
