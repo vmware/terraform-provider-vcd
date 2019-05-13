@@ -21,17 +21,17 @@ func TestAccVcdVdcBasic(t *testing.T) {
 	}
 
 	if testConfig.VCD.ProviderVdc.Name == "" {
-		t.Skip("Variable networking.Name must be set to run VDC tests")
+		t.Skip("Variable providerVdc.Name must be set to run VDC tests")
 		return
 	}
 
 	if testConfig.VCD.ProviderVdc.NetworkPool == "" {
-		t.Skip("Variable networking.NetworkPool must be set to run VDC tests")
+		t.Skip("Variable providerVdc.NetworkPool must be set to run VDC tests")
 		return
 	}
 
 	if testConfig.VCD.ProviderVdc.StorageProfile == "" {
-		t.Skip("Variable networking.StorageProfile must be set to run VDC tests")
+		t.Skip("Variable providerVdc.StorageProfile must be set to run VDC tests")
 		return
 	}
 
