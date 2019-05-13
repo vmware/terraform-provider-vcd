@@ -55,7 +55,6 @@ resource "vcd_vdc" "my-vdc" {
   storage_profile {
     name     = "storage-name"
     enabled  = true
-    units    = "MB"
     limit    = 10240
     default  = true    
   }
@@ -100,7 +99,6 @@ The following arguments are supported:
 
 * `name` - (Required) Name of Provider VDC storage profile.
 * `enabled` - (Optional) True if this storage profile is enabled for use in the VDC.
-* `units` - (Required) Units used to define Limit.
 * `limit` - (Required) Maximum number of Units allocated for this storage profile. A value of 0 specifies unlimited Units.
 * `default` - (Required) True if this is default storage profile for this VDC. The default storage profile is used when an object that can specify a storage profile is created with no storage profile specified.
 

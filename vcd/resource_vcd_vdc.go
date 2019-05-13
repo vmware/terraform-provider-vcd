@@ -140,11 +140,6 @@ func resourceVcdVdc() *schema.Resource {
 							Optional:    true,
 							Description: "True if this storage profile is enabled for use in the VDC.",
 						},
-						"units": {
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "Units used to define Limit.",
-						},
 						"limit": {
 							Type:        schema.TypeInt,
 							Required:    true,
@@ -408,7 +403,7 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 		}
 
 		vdcStorageProfile := &types.VdcStorageProfile{
-			Units:   storageConfiguration["units"].(string),
+			Units:   "MB", // only this value is supported
 			Limit:   int64(storageConfiguration["limit"].(int)),
 			Default: storageConfiguration["default"].(bool),
 			Enabled: storageConfiguration["enabled"].(bool),
