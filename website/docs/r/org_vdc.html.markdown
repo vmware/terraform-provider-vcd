@@ -1,7 +1,7 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_vdc"
-sidebar_current: "docs-vcd-resource-vdc"
+page_title: "vCloudDirector: vcd_org_vdc"
+sidebar_current: "docs-vcd-resource-org-vdc"
 description: |-
   Provides a vCloud Director Organization VDC resource. This can be used to create and delete a Organization VDC.
 ---
@@ -23,7 +23,7 @@ provider "vcd" {
   url      = "https://AcmeVcd/api"
 }
 
-resource "vcd_vdc" "my-vdc" {
+resource "vcd_org_vdc" "my-vdc" {
   name        = "my-vdc"
   description = "The pride of my work"
   org         = "my-org"
@@ -113,10 +113,3 @@ Capacity must be specified twice, once for `memory` and another for `cpu`.  Each
 * `reserved` - (Optional) Capacity reserved
 * `used` - (Optional) Capacity used. If the VDC AllocationModel is ReservationPool, this number represents the percentage of the reservation that is in use. For all other allocation models, it represents the percentage of the allocation that is in use.
 * `overhead` - (Optional) Number of Units allocated to system resources such as vShield Manager virtual machines and shadow virtual machines provisioned from this Provider VDC.
-
-
-## Sources
-
-* [CreateVdcParamsType](https://code.vmware.com/apis/287/vcloud#/doc/doc/types/CreateVdcParamsType.html)
-* [VDC Creation](https://code.vmware.com/apis/287/vcloud#/doc/doc/operations/POST-CreateVdcParams.html)
-* [VDC Deletion](https://code.vmware.com/apis/287/vcloud#/doc/doc/operations/DELETE-Vdc-AdminView.html)

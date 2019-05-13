@@ -66,27 +66,27 @@ func TestAccVcdVdcBasic(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVdcExists("vcd_vdc."+TestAccVcdVdc, &vdc),
+					testAccCheckVcdVdcExists("vcd_org_vdc."+TestAccVcdVdc, &vdc),
 					resource.TestCheckResourceAttr(
-						"vcd_vdc."+TestAccVcdVdc, "name", TestAccVcdVdc),
+						"vcd_org_vdc."+TestAccVcdVdc, "name", TestAccVcdVdc),
 					resource.TestCheckResourceAttr(
-						"vcd_vdc."+TestAccVcdVdc, "org", testConfig.VCD.Org),
+						"vcd_org_vdc."+TestAccVcdVdc, "org", testConfig.VCD.Org),
 					resource.TestCheckResourceAttr(
-						"vcd_vdc."+TestAccVcdVdc, "allocation_model", "ReservationPool"),
+						"vcd_org_vdc."+TestAccVcdVdc, "allocation_model", "ReservationPool"),
 					resource.TestCheckResourceAttr(
-						"vcd_vdc."+TestAccVcdVdc, "network_pool_name", testConfig.VCD.ProviderVdc.NetworkPool),
+						"vcd_org_vdc."+TestAccVcdVdc, "network_pool_name", testConfig.VCD.ProviderVdc.NetworkPool),
 					resource.TestCheckResourceAttr(
-						"vcd_vdc."+TestAccVcdVdc, "provider_vdc_name", testConfig.VCD.ProviderVdc.Name),
+						"vcd_org_vdc."+TestAccVcdVdc, "provider_vdc_name", testConfig.VCD.ProviderVdc.Name),
 					resource.TestCheckResourceAttr(
-						"vcd_vdc."+TestAccVcdVdc, "is_enabled", "true"),
+						"vcd_org_vdc."+TestAccVcdVdc, "enabled", "true"),
 					resource.TestCheckResourceAttr(
-						"vcd_vdc."+TestAccVcdVdc, "enable_thin_provisioning", "true"),
+						"vcd_org_vdc."+TestAccVcdVdc, "enable_thin_provisioning", "true"),
 					resource.TestCheckResourceAttr(
-						"vcd_vdc."+TestAccVcdVdc, "uses_fast_provisioning", "true"),
+						"vcd_org_vdc."+TestAccVcdVdc, "uses_fast_provisioning", "true"),
 					resource.TestCheckResourceAttr(
-						"vcd_vdc."+TestAccVcdVdc, "delete_force", "true"),
+						"vcd_org_vdc."+TestAccVcdVdc, "delete_force", "true"),
 					resource.TestCheckResourceAttr(
-						"vcd_vdc."+TestAccVcdVdc, "delete_recursive", "true"),
+						"vcd_org_vdc."+TestAccVcdVdc, "delete_recursive", "true"),
 				),
 			},
 		},
@@ -152,7 +152,7 @@ func init() {
 }
 
 const testAccCheckVcdVdc_basic = `
-resource "vcd_vdc" "{{.VdcName}}" {
+resource "vcd_org_vdc" "{{.VdcName}}" {
   name = "{{.VdcName}}"
   org  = "{{.OrgName}}"
 

@@ -11,7 +11,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-func resourceVcdVdc() *schema.Resource {
+func resourceVcdOrgVdc() *schema.Resource {
 	capacityWithUsage := schema.Schema{
 		Type:     schema.TypeSet,
 		Required: true,
