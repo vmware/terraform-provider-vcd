@@ -6,7 +6,7 @@ description: |-
   Provides a vCloud Director Organization VDC resource. This can be used to create and delete a Organization VDC.
 ---
 
-# vcd\_vdc
+# vcd\_org\_vdc
 
 Provides a vCloud Director Organization VDC resource. This can be used to create and delete a Organization VDC.
 Requires system administrator privileges.
