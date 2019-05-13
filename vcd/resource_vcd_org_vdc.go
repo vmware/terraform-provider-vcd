@@ -197,7 +197,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 				ForceNew:    true,
 				Description: "Boolean to request fast provisioning. Request will be honored only if the underlying datas tore supports it. Fast provisioning can reduce the time it takes to create virtual machines by using vSphere linked clones. If you disable fast provisioning, all provisioning operations will result in full clones.",
 			},
-			"over_commit_allowed": &schema.Schema{
+			"allow_over_commit": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
 				ForceNew:    true,
@@ -472,7 +472,7 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 		params.UsesFastProvisioning = usesFastProvisioning.(bool)
 	}
 
-	if overCommitAllowed, ok := d.GetOk("over_commit_allowed"); ok {
+	if overCommitAllowed, ok := d.GetOk("allow_over_commit"); ok {
 		params.OverCommitAllowed = overCommitAllowed.(bool)
 	}
 

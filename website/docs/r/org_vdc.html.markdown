@@ -88,7 +88,7 @@ The following arguments are supported:
 * `network_pool_name` - (Optional) Reference to a network pool in the Provider VDC. Required if this VDC will contain routed or isolated networks.
 * `provider_vdc_name` - (Required) A name of the Provider VDC from which this organization VDC is provisioned.
 * `enable_fast_provisioning` - (Optional) Boolean to request fast provisioning. Request will be honored only if the underlying datastore supports it. Fast provisioning can reduce the time it takes to create virtual machines by using vSphere linked clones. If you disable fast provisioning, all provisioning operations will result in full clones.
-* `over_commit_allowed` - (Optional) Set to false to disallow creation of the VDC if the AllocationModel is AllocationPool or ReservationPool and the ComputeCapacity you specified is greater than what the backing Provider VDC can supply. Defaults to true if empty or missing.
+* `allow_over_commit` - (Optional) Set to false to disallow creation of the VDC if the AllocationModel is AllocationPool or ReservationPool and the ComputeCapacity you specified is greater than what the backing Provider VDC can supply. Defaults to true if empty or missing.
 * `enable_vm_discovery` - (Optional) True if discovery of vCenter VMs is enabled for resource pools backing this VDC. If left unspecified, the actual behaviour depends on enablement at the organization level and at the system level.
 * `delete_force` - (Required) When destroying use `delete_force=True` to remove a vdc and any objects it contains, regardless of their state.
 * `delete_recursive` - (Required) When destroying use `delete_recursive=True` to remove the vdc and any objects it contains that are in a state that normally allows removal.
