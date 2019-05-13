@@ -39,7 +39,7 @@ func TestAccVcdVdcBasic(t *testing.T) {
 	var params = StringMap{
 		"VdcName":                   TestAccVcdVdc,
 		"OrgName":                   testConfig.VCD.Org,
-		"AllocationModel":           "ReservationPool",
+		"AllocationModel":           testConfig.VCD.AllocationModel,
 		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
 		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
