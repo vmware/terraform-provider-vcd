@@ -82,7 +82,7 @@ func TestAccVcdVdcBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "enable_thin_provisioning", "true"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "uses_fast_provisioning", "true"),
+						"vcd_org_vdc."+TestAccVcdVdc, "enable_fast_provisioning", "true"),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "delete_force", "true"),
 					resource.TestCheckResourceAttr(
@@ -189,7 +189,7 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
 
   enabled                  = true
   enable_thin_provisioning = true
-  uses_fast_provisioning   = true
+  enable_fast_provisioning = true
   delete_force             = true
   delete_recursive         = true
 }

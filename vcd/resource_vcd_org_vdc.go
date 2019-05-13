@@ -191,11 +191,11 @@ func resourceVcdOrgVdc() *schema.Resource {
 				ForceNew:    true,
 				Description: "A reference to the Provider VDC from which this organization VDC is provisioned.",
 			},
-			"uses_fast_provisioning": &schema.Schema{
+			"enable_fast_provisioning": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "Boolean to request fast provisioning. Request will be honored only if the underlying datastore supports it. Fast provisioning can reduce the time it takes to create virtual machines by using vSphere linked clones. If you disable fast provisioning, all provisioning operations will result in full clones.",
+				Description: "Boolean to request fast provisioning. Request will be honored only if the underlying datas tore supports it. Fast provisioning can reduce the time it takes to create virtual machines by using vSphere linked clones. If you disable fast provisioning, all provisioning operations will result in full clones.",
 			},
 			"over_commit_allowed": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -468,7 +468,7 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 		}
 	}
 
-	if usesFastProvisioning, ok := d.GetOk("uses_fast_provisioning"); ok {
+	if usesFastProvisioning, ok := d.GetOk("enable_fast_provisioning"); ok {
 		params.UsesFastProvisioning = usesFastProvisioning.(bool)
 	}
 
