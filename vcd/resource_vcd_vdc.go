@@ -35,7 +35,7 @@ func resourceVcdVdc() *schema.Resource {
 					Type:        schema.TypeInt,
 					Required:    true,
 					ForceNew:    true,
-					Description: "Capacity limit relative to the value specified for Allocation. It must not be less than that value. If it is greater than that value, it implies overprovisioning.",
+					Description: "Capacity limit relative to the value specified for Allocation. It must not be less than that value. If it is greater than that value, it implies over provisioning.",
 				},
 				"reserved": {
 					Type:        schema.TypeInt,
@@ -118,11 +118,12 @@ func resourceVcdVdc() *schema.Resource {
 				ForceNew:    true,
 				Description: "The maximum number of VMs that can be created in this VDC. Includes deployed and undeployed VMs in vApps and vApp templates. Defaults to 0, which specifies an unlimited number.",
 			},
-			"is_enabled": &schema.Schema{
+			"enabled": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "True if this VDC is enabled for use by the organization VDCs. A VDC is always enabled on creation.",
+				Default:     true,
+				Description: "True if this VDC is enabled for use by the organization VDCs. Default is true",
 			},
 			"storage_profile": &schema.Schema{
 				Type:     schema.TypeList,
@@ -154,19 +155,19 @@ func resourceVcdVdc() *schema.Resource {
 				},
 				Description: "Storage profiles supported by this VDC.",
 			},
-			"resource_guaranteed_memory": &schema.Schema{
+			"memory_guaranteed": &schema.Schema{
 				Type:        schema.TypeFloat,
 				Optional:    true,
 				ForceNew:    true,
 				Description: "Percentage of allocated memory resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. Value defaults to 1.0 if the element is empty.",
 			},
-			"resource_guaranteed_cpu": &schema.Schema{
+			"cpu_guaranteed": &schema.Schema{
 				Type:        schema.TypeFloat,
 				Optional:    true,
 				ForceNew:    true,
 				Description: "Percentage of allocated CPU resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. Value defaults to 1.0 if the element is empty.",
 			},
-			"v_cpu_in_mhz": &schema.Schema{
+			"cpu_frequency": &schema.Schema{
 				Type:        schema.TypeInt,
 				Optional:    true,
 				ForceNew:    true,
@@ -200,7 +201,8 @@ func resourceVcdVdc() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "Set to false to disallow creation of the VDC if the AllocationModel is AllocationPool or ReservationPool and the ComputeCapacity you specified is greater than what the backing Provider VDC can supply. Defaults to true if empty or missing.",
+				Default:     true,
+				Description: "Set to false to disallow creation of the VDC if the AllocationModel is AllocationPool or ReservationPool and the ComputeCapacity you specified is greater than what the backing Provider VDC can supply. Default is true.",
 			},
 			"vm_discovery_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -432,19 +434,19 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 		params.VmQuota = vmQuota.(int)
 	}
 
-	if isEnabled, ok := d.GetOk("is_enabled"); ok {
+	if isEnabled, ok := d.GetOk("enabled"); ok {
 		params.IsEnabled = isEnabled.(bool)
 	}
 
-	if resourceGuaranteedMemory, ok := d.GetOk("resource_guaranteed_memory"); ok {
+	if resourceGuaranteedMemory, ok := d.GetOk("memory_guaranteed"); ok {
 		params.ResourceGuaranteedMemory = resourceGuaranteedMemory.(float64)
 	}
 
-	if resourceGuaranteedCpu, ok := d.GetOk("resource_guaranteed_cpu"); ok {
+	if resourceGuaranteedCpu, ok := d.GetOk("cpu_guaranteed"); ok {
 		params.ResourceGuaranteedCpu = resourceGuaranteedCpu.(float64)
 	}
 
-	if vCpuInMhz, ok := d.GetOk("v_cpu_in_mhz"); ok {
+	if vCpuInMhz, ok := d.GetOk("cpu_frequency"); ok {
 		params.VCpuInMhz = int64(vCpuInMhz.(int))
 	}
 

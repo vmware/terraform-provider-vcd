@@ -187,7 +187,7 @@ resource "vcd_vdc" "{{.VdcName}}" {
     default  = true
   }
 
-  is_enabled               = true
+  enabled                  = true
   enable_thin_provisioning = true
   uses_fast_provisioning   = true
   delete_force             = true
