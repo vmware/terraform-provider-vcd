@@ -30,7 +30,6 @@
       "//name": "existingCatalogName",
       "//catalogItem": "existingOvaNameInCatalog"
     },
-    "allocationModel": "ReservationPool",
     "providerVdc": {
       "//": "Provider VDC details are needed for creating organization VDC",
       "name": "my-provider-vdc",

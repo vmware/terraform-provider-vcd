@@ -43,10 +43,9 @@ type TestConfig struct {
 		MaxRetryTimeout          int    `json:"maxRetryTimeout"`
 	} `json:"provider"`
 	VCD struct {
-		Org             string `json:"org"`
-		Vdc             string `json:"vdc"`
-		AllocationModel string `json:"allocationModel"`
-		ProviderVdc     struct {
+		Org         string `json:"org"`
+		Vdc         string `json:"vdc"`
+		ProviderVdc struct {
 			Name           string `json:"name"`
 			NetworkPool    string `json:"networkPool"`
 			StorageProfile string `json:"storageProfile"`

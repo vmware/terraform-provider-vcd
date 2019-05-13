@@ -13,37 +13,78 @@ import (
 
 var TestAccVcdVdc = "TestAccVcdVdcBasic"
 
-func TestAccVcdVdcBasic(t *testing.T) {
+func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 
-	if !usingSysAdmin() {
-		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
-		return
-	}
+	validateConfiguration(t)
 
-	if testConfig.VCD.ProviderVdc.Name == "" {
-		t.Skip("Variable providerVdc.Name must be set to run VDC tests")
-		return
-	}
+	allocationModel := "ReservationPool"
 
-	if testConfig.VCD.ProviderVdc.NetworkPool == "" {
-		t.Skip("Variable providerVdc.NetworkPool must be set to run VDC tests")
-		return
-	}
-
-	if testConfig.VCD.ProviderVdc.StorageProfile == "" {
-		t.Skip("Variable providerVdc.StorageProfile must be set to run VDC tests")
-		return
-	}
-
-	var vdc govcd.Vdc
 	var params = StringMap{
 		"VdcName":                   TestAccVcdVdc,
 		"OrgName":                   testConfig.VCD.Org,
-		"AllocationModel":           testConfig.VCD.AllocationModel,
+		"AllocationModel":           "ReservationPool",
 		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
 		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 	}
+	runOrgVdcTest(t, params, allocationModel)
+}
+
+func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
+
+	validateConfiguration(t)
+	allocationModel := "AllocationPool"
+
+	var params = StringMap{
+		"VdcName":                   TestAccVcdVdc,
+		"OrgName":                   testConfig.VCD.Org,
+		"AllocationModel":           "AllocationPool",
+		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
+		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
+		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+	}
+	runOrgVdcTest(t, params, allocationModel)
+}
+
+func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
+
+	validateConfiguration(t)
+
+	allocationModel := "AllocationVApp"
+
+	var params = StringMap{
+		"VdcName":                   TestAccVcdVdc,
+		"OrgName":                   testConfig.VCD.Org,
+		"AllocationModel":           allocationModel,
+		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
+		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
+		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+	}
+	runOrgVdcTest(t, params, allocationModel)
+}
+
+func validateConfiguration(t *testing.T) {
+	if !usingSysAdmin() {
+		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
+	}
+
+	if testConfig.VCD.ProviderVdc.Name == "" {
+		t.Skip("Variable providerVdc.Name must be set to run VDC tests")
+	}
+
+	if testConfig.VCD.ProviderVdc.NetworkPool == "" {
+		t.Skip("Variable providerVdc.NetworkPool must be set to run VDC tests")
+	}
+
+	if testConfig.VCD.ProviderVdc.StorageProfile == "" {
+		t.Skip("Variable providerVdc.StorageProfile must be set to run VDC tests")
+	}
+
+}
+
+func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
+
+	var vdc govcd.Vdc
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -72,7 +113,7 @@ func TestAccVcdVdcBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "org", testConfig.VCD.Org),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "allocation_model", "ReservationPool"),
+						"vcd_org_vdc."+TestAccVcdVdc, "allocation_model", allocationModel),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "network_pool_name", testConfig.VCD.ProviderVdc.NetworkPool),
 					resource.TestCheckResourceAttr(
