@@ -21,32 +21,38 @@ func resourceVcdVdc() *schema.Resource {
 				"units": {
 					Type:         schema.TypeString,
 					Required:     true,
+					ForceNew:     true,
 					ValidateFunc: validation.StringInSlice([]string{"MHz", "GHz", "MB", "GB"}, false),
 					Description:  "Units in which capacity is allocated. For CPU capacity, one of: {MHz, GHz}.  For memory capacity, one of: {MB, GB}.",
 				},
 				"allocated": {
 					Type:        schema.TypeInt,
 					Optional:    true,
+					ForceNew:    true,
 					Description: "Capacity that is committed to be available.",
 				},
 				"limit": {
 					Type:        schema.TypeInt,
 					Required:    true,
+					ForceNew:    true,
 					Description: "Capacity limit relative to the value specified for Allocation. It must not be less than that value. If it is greater than that value, it implies overprovisioning.",
 				},
 				"reserved": {
 					Type:        schema.TypeInt,
 					Optional:    true,
+					ForceNew:    true,
 					Description: "Capacity reserved",
 				},
 				"used": {
 					Type:        schema.TypeInt,
 					Optional:    true,
+					ForceNew:    true,
 					Description: "Capacity used. If the VDC AllocationModel is ReservationPool, this number represents the percentage of the reservation that is in use. For all other allocation models, it represents the percentage of the allocation that is in use.",
 				},
 				"overhead": {
 					Type:        schema.TypeInt,
 					Optional:    true,
+					ForceNew:    true,
 					Description: "Number of Units allocated to system resources such as vShield Manager virtual machines and shadow virtual machines provisioned from this Provider VDC.",
 				},
 			},
