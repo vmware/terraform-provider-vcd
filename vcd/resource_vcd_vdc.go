@@ -177,7 +177,7 @@ func resourceVcdVdc() *schema.Resource {
 				ForceNew:    true,
 				Description: "Specifies the clock frequency, in Megahertz, for any virtual CPU that is allocated to a VM. A VM with 2 vCPUs will consume twice as much of this value. Ignored for ReservationPool. Required when AllocationModel is AllocationVApp or AllocationPool, and may not be less than 256 MHz. Defaults to 1000 MHz if the element is empty or missing.",
 			},
-			"is_thin_provision": &schema.Schema{
+			"enable_thin_provisioning": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
 				ForceNew:    true,
@@ -453,8 +453,8 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 		params.VCpuInMhz = int64(vCpuInMhz.(int))
 	}
 
-	if isThinProvision, ok := d.GetOk("is_thin_provision"); ok {
-		params.IsThinProvision = isThinProvision.(bool)
+	if enableThinProvision, ok := d.GetOk("enable_thin_provisioning"); ok {
+		params.IsThinProvision = enableThinProvision.(bool)
 	}
 
 	if networkPoolName, ok := d.GetOk("network_pool_name"); ok {
