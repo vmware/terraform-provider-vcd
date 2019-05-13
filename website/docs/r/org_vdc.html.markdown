@@ -90,8 +90,8 @@ The following arguments are supported:
 * `enable_fast_provisioning` - (Optional) Request fast provisioning. Request will be honored only if the underlying datastore supports it. Fast provisioning can reduce the time it takes to create virtual machines by using vSphere linked clones. If you disable fast provisioning, all provisioning operations will result in full clones.
 * `allow_over_commit` - (Optional) Set to false to disallow creation of the VDC if the AllocationModel is AllocationPool or ReservationPool and the ComputeCapacity you specified is greater than what the backing Provider VDC can supply. Defaults is true.
 * `enable_vm_discovery` - (Optional) True if discovery of vCenter VMs is enabled for resource pools backing this VDC. If left unspecified, the actual behaviour depends on enablement at the organization level and at the system level.
-* `delete_force` - (Required) When destroying use `delete_force=True` to remove a vdc and any objects it contains, regardless of their state.
-* `delete_recursive` - (Required) When destroying use `delete_recursive=True` to remove the vdc and any objects it contains that are in a state that normally allows removal.
+* `delete_force` - (Required) When destroying use `delete_force=True` to remove a VDC and any objects it contains, regardless of their state.
+* `delete_recursive` - (Required) When destroying use `delete_recursive=True` to remove the VDC and any objects it contains that are in a state that normally allows removal.
 
 
 <a id="storageprofile"></a>
