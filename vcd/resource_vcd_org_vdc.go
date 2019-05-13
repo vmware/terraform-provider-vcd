@@ -16,6 +16,8 @@ func resourceVcdOrgVdc() *schema.Resource {
 		Type:     schema.TypeSet,
 		Required: true,
 		ForceNew: true,
+		MinItems: 1,
+		MaxItems: 1,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"units": {
@@ -91,6 +93,8 @@ func resourceVcdOrgVdc() *schema.Resource {
 			"compute_capacity": &schema.Schema{
 				Required: true,
 				ForceNew: true,
+				MinItems: 1,
+				MaxItems: 1,
 				Type:     schema.TypeSet,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -129,6 +133,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Type:     schema.TypeList,
 				Required: true,
 				ForceNew: true,
+				MinItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
