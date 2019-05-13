@@ -183,7 +183,6 @@ resource "vcd_vdc" "{{.VdcName}}" {
   storage_profile {
     name = "{{.ProviderVdcStorageProfile}}"
     enabled  = true
-    units    = "MB"
     limit    = 10240
     default  = true
   }
