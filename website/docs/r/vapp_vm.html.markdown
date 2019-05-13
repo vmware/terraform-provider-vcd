@@ -44,8 +44,13 @@ resource "vcd_vapp_vm" "web1" {
     bla     = "foo"
   }
 
-  network_name = "net"
-  ip           = "10.10.104.161"
+  network {
+    type               = "org"
+    name               = "net"
+    ip                 = "10.10.104.161"
+    ip_allocation_mode = "MANUAL"
+    is_primary         = true
+  }
 
   depends_on = ["vcd_vapp.web"]
 }
@@ -65,23 +70,40 @@ resource "vcd_vapp_vm" "web2" {
     my_extra_key = "My extra value"
   }
 
-  network_name = "net"
-  ip           = "10.10.104.162"
+  network {
+    type               = "org"
+    name               = "net"
+    ip                 = "10.10.104.162"
+    ip_allocation_mode = "MANUAL"
+    is_primary         = true
+  }
+
+  network {
+    type               = "vapp"
+    name               = "vapp-network"
+    ip_allocation_mode = "POOL"
+  }
+
+  network {
+    network_type       = "none"
+    ip_allocation_mode = "NONE"
+  }
 
   disk {
-    name = "logDisk1"
-    bus_number = 1
+    name        = "logDisk1"
+    bus_number  = 1
     unit_number = 0
   }
 
   disk {
-    name = "logDisk2"
-    bus_number = 1
+    name        = "logDisk2"
+    bus_number  = 1
     unit_number = 1
-  }  
+  }
 
   depends_on = ["vcd_vapp.web"]
 }
+
 ```
 
 ## Argument Reference
@@ -97,24 +119,59 @@ The following arguments are supported:
 * `cpu_cores` - (Optional; *v2.1+*) The number of cores per socket
 * `metadata` - (Optional; *v2.2+*) Key value map of metadata to assign to this VM
 * `initscript` (Optional) A script to be run only on initial boot
-* `network_name` - (Optional) Name of the network this VM should connect to
-* `vapp_network_name` - (Optional; *v2.1+*) Name of the vApp network this VM should connect to
-* `ip` - (Optional) The IP to assign to this vApp. Must be an IP address or
-  one of "dhcp", "allocated" or "none". If given the address must be within the
+* `network_name` - (Optional; **Deprecated** by `network`) Name of the network this VM should connect to.
+* `vapp_network_name` - (Optional; v2.1+; **Deprecated** by `network`) Name of the vApp network this VM should connect to.
+* `ip` - (Optional; **Deprecated** by `network`) The IP to assign to this vApp. Must be an IP address or
+one of `dhcp`, `allocated`, or `none`. If given the address must be within the
   `static_ip_pool` set for the network. If left blank, and the network has
   `dhcp_pool` set with at least one available IP then this will be set with
-  DHCP.
+DHCP.
 * `power_on` - (Optional) A boolean value stating if this vApp should be powered on. Default is `true`
 * `accept_all_eulas` - (Optional; *v2.0+*) Automatically accept EULA if OVA has it. Default is `true`
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
-* `disk` - (Optional; *v2.1+*) Independent disk attachment configuration. Details below
+* `disk` - (Optional; *v2.1+*) Independent disk attachment configuration. See [Disk](#disk) below for details.
 * `expose_hardware_virtualization` - (Optional; *v2.2+*) Boolean for exposing full CPU virtualization to the
 guest operating system so that applications that require hardware virtualization can run on virtual machines without binary
 translation or paravirtualization. Useful for hypervisor nesting provided underlying hardware supports it. Default is `false`.
+* `network` - (Optional; *v2.2+*) A block to define network interface. Multiple can be used. See [Network](#network) and 
+example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_name`. **Note**: this property and all
+its parameters do force recreation of VMs!
 
-Independent disk support the following attributes:
+<a id="disk"></a>
+## Disk
 
 * `name` - (Required) Independent disk name
 * `bus_number` - (Required) Bus number on which to place the disk controller
 * `unit_number` - (Required) Unit number (slot) on the bus specified by BusNumber.
+
+
+<a id="network"></a>
+## Network
+
+* `type` (Required) Network type, one of: `none`, `vapp` or `vdc`. `none` creates a NIC with no network attached, `vapp` attaches a vApp network, while `vdc` attaches organization VDC network.
+* `name` (Optional) Name of the network this VM should connect to. Always required except for `type` `NONE`.
+* `is_primary` (Optional) Set to true if network interface should be primary. First network card in the list will be primary by default.
+* `mac` - (Computed) Mac address of network interface.
+* `ip_allocation_mode` (Required) IP address allocation mode. One of `POOL`, `DHCP`, `MANUAL`, `NONE`:  
+
+  * `POOL` - Static IP address is allocated automatically from defined static pool in network.
+  
+  * `DHCP` - IP address is obtained from a DHCP service. Field `ip` is not guaranteed to be populated. Because of this it may appear
+  after multiple `terraform refresh` operations.
+  
+  * `MANUAL` - IP address is assigned manually in the `ip` field. Must be valid IP address from static pool.
+  
+  * `NONE` - No IP address will be set because VM will have a NIC without network.
+
+* `ip` (Optional, Computed) Settings depend on `ip_allocation_mode`. Field requirements for each `ip_allocation_mode` are listed below:
+
+  * `ip_allocation_mode=POOL` - **`ip`** value must be omitted or empty string "". Empty string may be useful when doing HCL
+  variable interpolation. Field `ip` will be populated with an assigned IP from static pool after run.
+  
+  * `ip_allocation_mode=DHCP` - **`ip`** value must be omitted or empty string "". Field `ip` is not guaranteed to be populated
+  after run due to the VM lacking VMware tools or not working properly with DHCP. Because of this `ip` may also appear after multiple `terraform refresh` operations when is reported back to vCD.
+
+  * `ip_allocation_mode=MANUAL` - **`ip`** value must be valid IP address from a subnet defined in `static pool` for network.
+
+  * `ip_allocation_mode=NONE` - **`ip`** field can be omitted or set to an empty string "". Empty string may be useful when doing HCL variable interpolation.
