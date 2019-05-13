@@ -123,7 +123,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 				Default:     true,
-				Description: "True if this VDC is enabled for use by the organization VDCs. Default is true",
+				Description: "True if this VDC is enabled for use by the organization VDCs. Default is true.",
 			},
 			"storage_profile": &schema.Schema{
 				Type:     schema.TypeList,

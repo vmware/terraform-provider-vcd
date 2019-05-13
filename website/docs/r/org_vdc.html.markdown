@@ -79,7 +79,7 @@ The following arguments are supported:
 * `nic_quota` - (Optional) Maximum number of virtual NICs allowed in this VDC. Defaults to 0, which specifies an unlimited number.
 * `network_quota` - (Optional) Maximum number of network objects that can be deployed in this VDC. Defaults to 0, which means no networks can be deployed.
 * `vm_quota` - (Optional) The maximum number of VMs that can be created in this VDC. Includes deployed and undeployed VMs in vApps and vApp templates. Defaults to 0, which specifies an unlimited number.
-* `enabled` - (Optional) True if this VDC is enabled for use by the organization VDCs. A VDC is always enabled on creation.
+* `enabled` - (Optional) True if this VDC is enabled for use by the organization VDCs. Default is true.
 * `storage_profile` - (Required) Storage profiles supported by this VDC.  See [Storage Profile](#storageprofile) below for details.
 * `memory_guaranteed` - (Optional) Percentage of allocated memory resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. Value defaults to 1.0 if the element is empty.
 * `cpu_guaranteed` - (Optional) Percentage of allocated CPU resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. Value defaults to 1.0 if the element is empty.
@@ -87,7 +87,7 @@ The following arguments are supported:
 * `enable_thin_provisioning` - (Optional) Boolean to request thin provisioning. Request will be honored only if the underlying data store supports it. Thin provisioning saves storage space by committing it on demand. This allows over-allocation of storage.
 * `network_pool_name` - (Optional) Reference to a network pool in the Provider VDC. Required if this VDC will contain routed or isolated networks.
 * `provider_vdc_name` - (Required) A name of the Provider VDC from which this organization VDC is provisioned.
-* `enable_fast_provisioning` - (Optional) Boolean to request fast provisioning. Request will be honored only if the underlying datastore supports it. Fast provisioning can reduce the time it takes to create virtual machines by using vSphere linked clones. If you disable fast provisioning, all provisioning operations will result in full clones.
+* `enable_fast_provisioning` - (Optional) Request fast provisioning. Request will be honored only if the underlying datastore supports it. Fast provisioning can reduce the time it takes to create virtual machines by using vSphere linked clones. If you disable fast provisioning, all provisioning operations will result in full clones.
 * `allow_over_commit` - (Optional) Set to false to disallow creation of the VDC if the AllocationModel is AllocationPool or ReservationPool and the ComputeCapacity you specified is greater than what the backing Provider VDC can supply. Defaults is true.
 * `enable_vm_discovery` - (Optional) True if discovery of vCenter VMs is enabled for resource pools backing this VDC. If left unspecified, the actual behaviour depends on enablement at the organization level and at the system level.
 * `delete_force` - (Required) When destroying use `delete_force=True` to remove a vdc and any objects it contains, regardless of their state.
