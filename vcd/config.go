@@ -115,6 +115,9 @@ func (cli *VCDClient) GetOrgAndVdc(orgName, vdcName string) (org govcd.Org, vdc 
 	if err != nil {
 		return govcd.Org{}, govcd.Vdc{}, fmt.Errorf("error retrieving VDC %s: %s", vdcName, err)
 	}
+	if (vdc == govcd.Vdc{}) {
+		return govcd.Org{}, govcd.Vdc{}, fmt.Errorf("error retrieving VDC %s: not found", vdcName)
+	}
 	return org, vdc, err
 }
 

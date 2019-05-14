@@ -29,6 +29,12 @@
     "//catalog": {
       "//name": "existingCatalogName",
       "//catalogItem": "existingOvaNameInCatalog"
+    },
+    "providerVdc": {
+      "//": "Provider VDC details are needed for creating organization VDC",
+      "name": "my-provider-vdc",
+      "storageProfile": "my-storage-profile-name",
+      "networkPool": "my-network-pool"
     }
   },
   "networking": {
