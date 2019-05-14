@@ -87,8 +87,8 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"AllocationVApp", "AllocationPool", "ReservationPool"}, false),
-				Description:  "The allocation model used by this VDC; must be one of {AllocationVApp, AllocationPool, ReservationPool}",
+				ValidateFunc: validation.StringInSlice([]string{"AllocationVApp", "AllocationPool", "ReservationPool", "Flex"}, false),
+				Description:  "The allocation model used by this VDC; must be one of {AllocationVApp, AllocationPool, ReservationPool, Flex}",
 			},
 			"compute_capacity": &schema.Schema{
 				Required: true,
@@ -172,7 +172,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 				ForceNew:    true,
 				Description: "Percentage of allocated CPU resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. Value defaults to 1.0 if the element is empty.",
 			},
-			"cpu_frequency": &schema.Schema{
+			"cpu_speed": &schema.Schema{
 				Type:        schema.TypeInt,
 				Optional:    true,
 				ForceNew:    true,
@@ -451,7 +451,7 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 		params.ResourceGuaranteedCpu = resourceGuaranteedCpu.(float64)
 	}
 
-	if vCpuInMhz, ok := d.GetOk("cpu_frequency"); ok {
+	if vCpuInMhz, ok := d.GetOk("cpu_speed"); ok {
 		params.VCpuInMhz = int64(vCpuInMhz.(int))
 	}
 
