@@ -251,7 +251,7 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 	orgVdcName := d.Get("name").(string)
 	orgVdc, _ := adminOrg.GetVdcByName(orgVdcName)
 	if orgVdc != (govcd.Vdc{}) {
-		return fmt.Errorf("org VDC with such name already exis: %s", orgVdcName)
+		return fmt.Errorf("org VDC with such name already exist: %s", orgVdcName)
 	}
 
 	params, err := getVcdVdcInput(d, vcdClient)
