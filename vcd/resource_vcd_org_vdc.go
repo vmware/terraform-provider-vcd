@@ -24,7 +24,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 					Type:        schema.TypeInt,
 					Optional:    true,
 					ForceNew:    true,
-					Description: "Capacity that is committed to be available. Value in MB or MHz. Used AllocationPool (Allocation pool) and ReservationPool (Reservation pool).",
+					Description: "Capacity that is committed to be available. Value in MB or MHz. Used with AllocationPool (Allocation pool) and ReservationPool (Reservation pool).",
 				},
 				"limit": {
 					Type:        schema.TypeInt,
