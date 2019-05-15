@@ -108,7 +108,7 @@ Capacity must be specified twice, once for `memory` and another for `cpu`.  Each
 
 * `units` - (Required) Units in which capacity is allocated. For CPU capacity, one of: {MHz, GHz}.  For memory capacity, one of: {MB, GB}.
 * `allocated` - (Optional) Capacity that is committed to be available.
-* `limit` - (Optional) Capacity limit relative to the value specified for Allocation. It must not be less than that value. If it is greater than that value, it implies overprovisioning.
+* `limit` - (Optional) Capacity limit relative to the value specified for Allocation. It must not be less than that value. If it is greater than that value, it implies over provisioning. A value of 0 specifies unlimited Units.
 * `reserved` - (Optional) Capacity reserved
 * `used` - (Optional) Capacity used. If the VDC AllocationModel is ReservationPool, this number represents the percentage of the reservation that is in use. For all other allocation models, it represents the percentage of the allocation that is in use.
 * `overhead` - (Optional) Number of Units allocated to system resources such as vShield Manager virtual machines and shadow virtual machines provisioned from this Provider VDC.
