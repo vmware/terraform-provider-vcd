@@ -207,8 +207,6 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
       allocated = 2048
       limit     = 2048
       reserved  = 2048
-      used      = 0
-      overhead  = 0
     }
 
     memory {
@@ -216,8 +214,6 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
       allocated = 2048
       limit     = 2048
       reserved  = 2048
-      used      = 0
-      overhead  = 0
     }
   }
 

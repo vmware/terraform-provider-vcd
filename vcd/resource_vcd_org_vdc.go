@@ -29,7 +29,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 				},
 				"allocated": {
 					Type:        schema.TypeInt,
-					Optional:    true,
+					Required:    true,
 					ForceNew:    true,
 					Description: "Capacity that is committed to be available.",
 				},
@@ -44,18 +44,6 @@ func resourceVcdOrgVdc() *schema.Resource {
 					Optional:    true,
 					ForceNew:    true,
 					Description: "Capacity reserved",
-				},
-				"used": {
-					Type:        schema.TypeInt,
-					Optional:    true,
-					ForceNew:    true,
-					Description: "Capacity used. If the VDC AllocationModel is ReservationPool, this number represents the percentage of the reservation that is in use. For all other allocation models, it represents the percentage of the allocation that is in use.",
-				},
-				"overhead": {
-					Type:        schema.TypeInt,
-					Optional:    true,
-					ForceNew:    true,
-					Description: "Number of Units allocated to system resources such as vShield Manager virtual machines and shadow virtual machines provisioned from this Provider VDC.",
 				},
 			},
 		},
@@ -347,14 +335,6 @@ func capacityWithUsage(d map[string]interface{}) *types.CapacityWithUsage {
 
 	if reserved, ok := d["reserved"]; ok {
 		capacity.Reserved = int64(reserved.(int))
-	}
-
-	if used, ok := d["used"]; ok {
-		capacity.Used = int64(used.(int))
-	}
-
-	if overhead, ok := d["overhead"]; ok {
-		capacity.Overhead = int64(overhead.(int))
 	}
 
 	return capacity
