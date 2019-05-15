@@ -75,7 +75,7 @@ The following arguments are supported:
 * `name` - (Required) VDC name
 * `description` - (Optional) VDC friendly description
 * `provider_vdc_name` - (Required) A name of the Provider VDC from which this organization VDC is provisioned.
-* `allocation_model` - (Required) The allocation model used by this VDC; must be one of {AllocationVApp, AllocationPool, ReservationPool}
+* `allocation_model` - (Required) The allocation model used by this VDC; must be one of {AllocationVApp ("Pay as you go"), AllocationPool ("Allocation pool"), ReservationPool ("Reservation pool")}
 * `compute_capacity` - (Required) The compute capacity allocated to this VDC.  See [Compute Capacity](#computecapacity) below for details.
 * `nic_quota` - (Optional) Maximum number of virtual NICs allowed in this VDC. Defaults to 0, which specifies an unlimited number.
 * `network_quota` - (Optional) Maximum number of network objects that can be deployed in this VDC. Defaults to 0, which means no networks can be deployed.
