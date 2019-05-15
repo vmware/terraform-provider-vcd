@@ -19,7 +19,7 @@ Supported in provider *v2.2+*
 provider "vcd" {
   user     = "${var.admin_user}"
   password = "${var.admin_password}"
-  vdc      = "System"
+  org      = "System"
   url      = "https://AcmeVcd/api"
 }
 
