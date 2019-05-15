@@ -85,7 +85,7 @@ resource "vcd_vapp_vm" "web2" {
   }
 
   network {
-    network_type       = "none"
+    type               = "none"
     ip_allocation_mode = "NONE"
   }
 
