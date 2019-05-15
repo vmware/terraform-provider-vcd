@@ -85,7 +85,7 @@ resource "vcd_vapp_vm" "web2" {
   }
 
   network {
-    network_type       = "none"
+    type               = "none"
     ip_allocation_mode = "NONE"
   }
 
@@ -110,6 +110,8 @@ resource "vcd_vapp_vm" "web2" {
 
 The following arguments are supported:
 
+* `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
+* `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
 * `vapp_name` - (Required) The vApp this VM should belong to.
 * `name` - (Required) A unique name for the VM
 * `catalog_name` - (Required) The catalog name in which to find the given vApp Template
@@ -128,8 +130,6 @@ one of `dhcp`, `allocated`, or `none`. If given the address must be within the
 DHCP.
 * `power_on` - (Optional) A boolean value stating if this vApp should be powered on. Default is `true`
 * `accept_all_eulas` - (Optional; *v2.0+*) Automatically accept EULA if OVA has it. Default is `true`
-* `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
-* `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
 * `disk` - (Optional; *v2.1+*) Independent disk attachment configuration. See [Disk](#disk) below for details.
 * `expose_hardware_virtualization` - (Optional; *v2.2+*) Boolean for exposing full CPU virtualization to the
 guest operating system so that applications that require hardware virtualization can run on virtual machines without binary
