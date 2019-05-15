@@ -34,14 +34,12 @@ resource "vcd_org_vdc" "my-vdc" {
 
   compute_capacity {
     cpu {
-      units     = "MHz"
       allocated = 2048
       limit     = 2048
       reserved  = 2048
     }
 
     memory {
-      units     = "MB"
       allocated = 2048
       limit     = 2048
       reserved  = 2048
@@ -102,7 +100,6 @@ The following arguments are supported:
 
 Capacity must be specified twice, once for `memory` and another for `cpu`.  Each has the same structure:
 
-* `units` - (Required) Units in which capacity is allocated. For CPU capacity, one of: {MHz, GHz}.  For memory capacity, one of: {MB, GB}.
-* `allocated` - (Required) Capacity that is committed to be available.
+* `allocated` - (Required) Capacity that is committed to be available. Value in MB or MHz.
 * `limit` - (Optional) Capacity limit relative to the value specified for Allocation. It must not be less than that value. If it is greater than that value, it implies over provisioning. A value of 0 specifies unlimited Units.
 * `reserved` - (Optional) Capacity reserved

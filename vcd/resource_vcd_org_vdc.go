@@ -20,13 +20,6 @@ func resourceVcdOrgVdc() *schema.Resource {
 		MaxItems: 1,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"units": {
-					Type:         schema.TypeString,
-					Required:     true,
-					ForceNew:     true,
-					ValidateFunc: validation.StringInSlice([]string{"MHz", "GHz", "MB", "GB"}, false),
-					Description:  "Units in which capacity is allocated. For CPU capacity, one of: {MHz, GHz}.  For memory capacity, one of: {MB, GB}.",
-				},
 				"allocated": {
 					Type:        schema.TypeInt,
 					Required:    true,
@@ -320,9 +313,9 @@ func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
 }
 
 // helper for tranforming the compute capacity section of the resource input into the VdcConfiguration structure
-func capacityWithUsage(d map[string]interface{}) *types.CapacityWithUsage {
+func capacityWithUsage(d map[string]interface{}, units string) *types.CapacityWithUsage {
 	capacity := &types.CapacityWithUsage{
-		Units: d["units"].(string),
+		Units: units,
 	}
 
 	if allocated, ok := d["allocated"]; ok {
@@ -378,8 +371,8 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 		AllocationModel: d.Get("allocation_model").(string),
 		ComputeCapacity: []*types.ComputeCapacity{
 			&types.ComputeCapacity{
-				CPU:    capacityWithUsage(cpuCapacityList[0].(map[string]interface{})),
-				Memory: capacityWithUsage(memoryCapacityList[0].(map[string]interface{})),
+				CPU:    capacityWithUsage(cpuCapacityList[0].(map[string]interface{}), "MHz"),
+				Memory: capacityWithUsage(memoryCapacityList[0].(map[string]interface{}), "MB"),
 			},
 		},
 		ProviderVdcReference: &types.Reference{
