@@ -237,7 +237,7 @@ func getExtension(client *Client) (*types.Extension, error) {
 func QueryProviderVdcStorageProfileByName(vcdCli *VCDClient, name string) ([]*types.QueryResultProviderVdcStorageProfileRecordType, error) {
 	results, err := vcdCli.QueryWithNotEncodedParams(nil, map[string]string{
 		"type":   "providerVdcStorageProfile",
-		"filter": fmt.Sprintf("(name==%s)", name),
+		"filter": fmt.Sprintf("(name==%s)", url.QueryEscape(name)),
 	})
 	if err != nil {
 		return nil, err

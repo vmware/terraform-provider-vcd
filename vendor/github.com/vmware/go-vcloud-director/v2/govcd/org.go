@@ -396,11 +396,11 @@ func (adminOrg *AdminOrg) undeployAllVApps() error {
 		}
 		vdc, err := adminOrg.getVdcByAdminHREF(adminVdcHREF)
 		if err != nil {
-			return fmt.Errorf("Error retrieving vapp with url: %s and with error %s", adminVdcHREF.Path, err)
+			return fmt.Errorf("error retrieving vapp with url: %s and with error %s", adminVdcHREF.Path, err)
 		}
 		err = vdc.undeployAllVdcVApps()
 		if err != nil {
-			return fmt.Errorf("Error deleting vapp: %s", err)
+			return fmt.Errorf("error deleting vapp: %s", err)
 		}
 	}
 	return nil
@@ -415,11 +415,11 @@ func (adminOrg *AdminOrg) removeAllVApps() error {
 		}
 		vdc, err := adminOrg.getVdcByAdminHREF(adminVdcHREF)
 		if err != nil {
-			return fmt.Errorf("Error retrieving vapp with url: %s and with error %s", adminVdcHREF.Path, err)
+			return fmt.Errorf("error retrieving vapp with url: %s and with error %s", adminVdcHREF.Path, err)
 		}
 		err = vdc.removeAllVdcVApps()
 		if err != nil {
-			return fmt.Errorf("Error deleting vapp: %s", err)
+			return fmt.Errorf("error deleting vapp: %s", err)
 		}
 	}
 	return nil
@@ -471,7 +471,7 @@ func (adminOrg *AdminOrg) removeAllOrgVDCs() error {
 		}
 		err = task.WaitTaskCompletion()
 		if err != nil {
-			return fmt.Errorf("Couldn't finish removing vdc %#v", err)
+			return fmt.Errorf("couldn't finish removing vdc %#v", err)
 		}
 
 	}

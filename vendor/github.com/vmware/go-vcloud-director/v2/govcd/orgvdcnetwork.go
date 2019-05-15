@@ -25,6 +25,8 @@ type OrgVDCNetwork struct {
 	client        *Client
 }
 
+var reErrorBusy2 = regexp.MustCompile("is busy, cannot proceed with the operation.$")
+
 // NewOrgVDCNetwork creates an org vdc network client
 func NewOrgVDCNetwork(cli *Client) *OrgVDCNetwork {
 	return &OrgVDCNetwork{
@@ -66,7 +68,7 @@ func (orgVdcNet *OrgVDCNetwork) Delete() (Task, error) {
 		req := orgVdcNet.client.NewRequest(map[string]string{}, http.MethodDelete, *apiEndpoint, nil)
 		resp, err = checkResp(orgVdcNet.client.Http.Do(req))
 		if err != nil {
-			if match, _ := regexp.MatchString("is busy, cannot proceed with the operation.$", err.Error()); match {
+			if reErrorBusy2.MatchString(err.Error()) {
 				time.Sleep(3 * time.Second)
 				continue
 			}
@@ -148,7 +150,7 @@ func (vdc *Vdc) CreateOrgVDCNetwork(networkConfig *types.OrgVDCNetwork) (Task, e
 				req.Header.Add("Content-Type", av.Type)
 				resp, err = checkResp(vdc.client.Http.Do(req))
 				if err != nil {
-					if match, _ := regexp.MatchString("is busy, cannot proceed with the operation.$", err.Error()); match {
+					if reErrorBusy2.MatchString(err.Error()) {
 						time.Sleep(3 * time.Second)
 						continue
 					}

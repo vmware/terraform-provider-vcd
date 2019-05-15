@@ -484,7 +484,7 @@ type Task struct {
 // Since: 0.9
 type CapacityWithUsage struct {
 	Units     string `xml:"Units"`
-	Allocated int64  `xml:"Allocated,omitempty"`
+	Allocated int64  `xml:"Allocated"`
 	Limit     int64  `xml:"Limit"`
 	Reserved  int64  `xml:"Reserved,omitempty"`
 	Used      int64  `xml:"Used,omitempty"`
