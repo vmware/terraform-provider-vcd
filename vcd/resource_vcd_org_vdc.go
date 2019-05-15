@@ -144,6 +144,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 						"enabled": {
 							Type:        schema.TypeBool,
 							Optional:    true,
+							Default:     true,
 							Description: "True if this storage profile is enabled for use in the VDC.",
 						},
 						"limit": {
