@@ -205,13 +205,11 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
     cpu {
       allocated = 2048
       limit     = 2048
-      reserved  = 2048
     }
 
     memory {
       allocated = 2048
       limit     = 2048
-      reserved  = 2048
     }
   }
 

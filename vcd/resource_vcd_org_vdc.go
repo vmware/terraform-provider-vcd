@@ -22,21 +22,15 @@ func resourceVcdOrgVdc() *schema.Resource {
 			Schema: map[string]*schema.Schema{
 				"allocated": {
 					Type:        schema.TypeInt,
-					Required:    true,
+					Optional:    true,
 					ForceNew:    true,
-					Description: "Capacity that is committed to be available.",
+					Description: "Capacity that is committed to be available. Value required above",
 				},
 				"limit": {
 					Type:        schema.TypeInt,
-					Required:    true,
-					ForceNew:    true,
-					Description: "Capacity limit relative to the value specified for Allocation. It must not be less than that value. If it is greater than that value, it implies over provisioning. A value of 0 specifies unlimited Units.",
-				},
-				"reserved": {
-					Type:        schema.TypeInt,
 					Optional:    true,
 					ForceNew:    true,
-					Description: "Capacity reserved",
+					Description: "Capacity limit relative to the value specified for Allocation. It must not be less than that value. If it is greater than that value, it implies over provisioning. A value of 0 specifies unlimited Units.",
 				},
 			},
 		},
@@ -324,10 +318,6 @@ func capacityWithUsage(d map[string]interface{}, units string) *types.CapacityWi
 
 	if limit, ok := d["limit"]; ok {
 		capacity.Limit = int64(limit.(int))
-	}
-
-	if reserved, ok := d["reserved"]; ok {
-		capacity.Reserved = int64(reserved.(int))
 	}
 
 	return capacity
