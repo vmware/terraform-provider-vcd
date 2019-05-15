@@ -102,4 +102,4 @@ Capacity must be specified twice, once for `memory` and another for `cpu`.  Each
 
 * `allocated` - (Required) Capacity that is committed to be available. Value in MB or MHz.
 * `limit` - (Optional) Capacity limit relative to the value specified for Allocation. It must not be less than that value. If it is greater than that value, it implies over provisioning. A value of 0 specifies unlimited Units. Value in MB or MHz.
-* `reserved` - (Optional) Capacity reserved
+* `reserved` - (Optional) Capacity reserved. Value in MB or MHz.
