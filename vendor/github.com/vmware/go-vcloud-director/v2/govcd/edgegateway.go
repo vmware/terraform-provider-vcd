@@ -23,6 +23,8 @@ type EdgeGateway struct {
 	client      *Client
 }
 
+var reErrorBusy = regexp.MustCompile(`is busy completing an operation.$`)
+
 func NewEdgeGateway(cli *Client) *EdgeGateway {
 	return &EdgeGateway{
 		EdgeGateway: new(types.EdgeGateway),
@@ -102,7 +104,7 @@ func (eGW *EdgeGateway) AddDhcpPool(network *types.OrgVDCNetwork, dhcppool []int
 
 		resp, err = checkResp(eGW.client.Http.Do(req))
 		if err != nil {
-			if match, _ := regexp.MatchString("is busy completing an operation.$", err.Error()); match {
+			if reErrorBusy.MatchString(err.Error()) {
 				time.Sleep(3 * time.Second)
 				continue
 			}
@@ -326,7 +328,7 @@ func (eGW *EdgeGateway) AddNATPortMappingWithUplink(network *types.OrgVDCNetwork
 func (eGW *EdgeGateway) CreateFirewallRules(defaultAction string, rules []*types.FirewallRule) (Task, error) {
 	err := eGW.Refresh()
 	if err != nil {
-		return Task{}, fmt.Errorf("error: %v\n", err)
+		return Task{}, fmt.Errorf("error: %v", err)
 	}
 
 	newRules := &types.EdgeGatewayServiceConfiguration{
@@ -341,7 +343,7 @@ func (eGW *EdgeGateway) CreateFirewallRules(defaultAction string, rules []*types
 
 	output, err := xml.MarshalIndent(newRules, "  ", "    ")
 	if err != nil {
-		return Task{}, fmt.Errorf("error: %v\n", err)
+		return Task{}, fmt.Errorf("error: %v", err)
 	}
 
 	var resp *http.Response
@@ -359,7 +361,7 @@ func (eGW *EdgeGateway) CreateFirewallRules(defaultAction string, rules []*types
 
 		resp, err = checkResp(eGW.client.Http.Do(req))
 		if err != nil {
-			if match, _ := regexp.MatchString("is busy completing an operation.$", err.Error()); match {
+			if reErrorBusy.MatchString(err.Error()) {
 				time.Sleep(3 * time.Second)
 				continue
 			}
@@ -467,7 +469,7 @@ func (eGW *EdgeGateway) Remove1to1Mapping(internal, external string) (Task, erro
 		// Kludgy IF to avoid deleting inbound FW rules not created by us.
 		// If matches, let's skip it and continue the loop
 		if firewallRule.Policy == "allow" &&
-			firewallRule.Protocols.Any == true &&
+			firewallRule.Protocols.Any &&
 			firewallRule.DestinationPortRange == "Any" &&
 			firewallRule.SourcePortRange == "Any" &&
 			firewallRule.SourceIP == "Any" &&
@@ -478,7 +480,7 @@ func (eGW *EdgeGateway) Remove1to1Mapping(internal, external string) (Task, erro
 		// Kludgy IF to avoid deleting outbound FW rules not created by us.
 		// If matches, let's skip it and continue the loop
 		if firewallRule.Policy == "allow" &&
-			firewallRule.Protocols.Any == true &&
+			firewallRule.Protocols.Any &&
 			firewallRule.DestinationPortRange == "Any" &&
 			firewallRule.SourcePortRange == "Any" &&
 			firewallRule.SourceIP == internal &&

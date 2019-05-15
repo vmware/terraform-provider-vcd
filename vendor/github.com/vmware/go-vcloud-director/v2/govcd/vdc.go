@@ -67,13 +67,19 @@ func (vdc *Vdc) undeployAllVdcVApps() error {
 				}
 				vapp, err := vdc.getVdcVAppbyHREF(vappHREF)
 				if err != nil {
-					return fmt.Errorf("Error retrieving vapp with url: %s and with error %s", vappHREF.Path, err)
+					return fmt.Errorf("error retrieving vapp with url: %s and with error %s", vappHREF.Path, err)
 				}
 				task, err := vapp.Undeploy()
+				if err != nil {
+					return err
+				}
 				if task == (Task{}) {
 					continue
 				}
 				err = task.WaitTaskCompletion()
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}
@@ -214,7 +220,6 @@ func (vdc *Vdc) FindStorageProfileReference(name string) (types.Reference, error
 				return types.Reference{HREF: sp.HREF, Name: sp.Name}, nil
 			}
 		}
-		return types.Reference{}, fmt.Errorf("can't find VDC Storage_profile: %s", name)
 	}
 	return types.Reference{}, fmt.Errorf("can't find any VDC Storage_profiles")
 }
@@ -293,6 +298,9 @@ func (vdc *Vdc) ComposeRawVApp(name string) error {
 
 	task, err := vdc.client.ExecuteTaskRequest(vdcHref.String(), http.MethodPost,
 		types.MimeComposeVappParams, "error instantiating a new vApp:: %s", vcomp)
+	if err != nil {
+		return fmt.Errorf("error executing task request: %#v", err)
+	}
 
 	err = task.WaitTaskCompletion()
 	if err != nil {

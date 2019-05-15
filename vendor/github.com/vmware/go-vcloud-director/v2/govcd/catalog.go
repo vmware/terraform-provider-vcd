@@ -418,7 +418,7 @@ func queryVappTemplate(client *Client, vappTemplateUrl *url.URL, newItemName str
 	for _, task := range vappTemplateParsed.Tasks.Task {
 		if "error" == task.Status && newItemName == task.Owner.Name {
 			util.Logger.Printf("[Error] %#v", task.Error)
-			return vappTemplateParsed, fmt.Errorf("Error in vcd returned error code: %d, error: %s and message: %s ", task.Error.MajorErrorCode, task.Error.MinorErrorCode, task.Error.Message)
+			return vappTemplateParsed, fmt.Errorf("error in vcd returned error code: %d, error: %s and message: %s ", task.Error.MajorErrorCode, task.Error.MinorErrorCode, task.Error.Message)
 		}
 	}
 

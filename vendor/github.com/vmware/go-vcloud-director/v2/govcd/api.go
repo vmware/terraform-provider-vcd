@@ -72,8 +72,7 @@ func (cli *Client) NewRequestWitNotEncodedParams(params map[string]string, notEn
 		payload := ""
 		if req.ContentLength > 0 {
 			// We try to convert body to a *bytes.Buffer
-			var ibody interface{}
-			ibody = body
+			var ibody interface{} = body
 			bbody, ok := ibody.(*bytes.Buffer)
 			// If the inner object is a bytes.Buffer, we get a safe copy of the data.
 			// If it is really just an io.Reader, we don't, as the copy would empty the reader

@@ -148,7 +148,7 @@ func uploadPartFile(client *Client, part []byte, partDataSize int64, uDetails up
 
 	response, err := checkResp(client.Http.Do(request))
 	if err != nil {
-		return fmt.Errorf("File upload failed. Err: %s \n", err)
+		return fmt.Errorf("file upload failed. Err: %s", err)
 	}
 	response.Body.Close()
 

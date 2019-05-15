@@ -70,7 +70,7 @@ func (vapp *VApp) getParentVDC() (Vdc, error) {
 			return *vdc, nil
 		}
 	}
-	return Vdc{}, fmt.Errorf("Could not find a parent Vdc")
+	return Vdc{}, fmt.Errorf("could not find a parent Vdc")
 }
 
 func (vapp *VApp) Refresh() error {
@@ -211,7 +211,7 @@ func (vapp *VApp) RemoveVM(vm VM) error {
 			task.Task = taskItem
 			err := task.WaitTaskCompletion()
 			if err != nil {
-				return fmt.Errorf("Error performing task: %#v", err)
+				return fmt.Errorf("error performing task: %#v", err)
 			}
 		}
 	}
@@ -643,6 +643,9 @@ func (vapp *VApp) ChangeNetworkConfig(networks []map[string]interface{}, ip stri
 	}
 
 	networksection, err := vapp.GetNetworkConnectionSection()
+	if err != nil {
+		return Task{}, err
+	}
 
 	for index, network := range networks {
 		// Determine what type of address is requested for the vApp

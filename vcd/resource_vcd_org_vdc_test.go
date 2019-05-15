@@ -203,21 +203,13 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
 
   compute_capacity {
     cpu {
-      units     = "MHz"
       allocated = 2048
       limit     = 2048
-      reserved  = 2048
-      used      = 0
-      overhead  = 0
     }
 
     memory {
-      units     = "MB"
       allocated = 2048
       limit     = 2048
-      reserved  = 2048
-      used      = 0
-      overhead  = 0
     }
   }
 

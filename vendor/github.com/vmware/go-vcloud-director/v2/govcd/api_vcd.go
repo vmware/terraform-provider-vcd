@@ -60,7 +60,7 @@ func (vcdCli *VCDClient) vcdauthorize(user, pass, org string) error {
 		missing_items = append(missing_items, "org")
 	}
 	if len(missing_items) > 0 {
-		return fmt.Errorf("Authorization is not possible because of these missing items: %v", missing_items)
+		return fmt.Errorf("authorization is not possible because of these missing items: %v", missing_items)
 	}
 	// No point in checking for errors here
 	req := vcdCli.Client.NewRequest(map[string]string{}, http.MethodPost, vcdCli.sessionHREF, nil)

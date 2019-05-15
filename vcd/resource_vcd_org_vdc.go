@@ -20,42 +20,17 @@ func resourceVcdOrgVdc() *schema.Resource {
 		MaxItems: 1,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
-				"units": {
-					Type:         schema.TypeString,
-					Required:     true,
-					ForceNew:     true,
-					ValidateFunc: validation.StringInSlice([]string{"MHz", "GHz", "MB", "GB"}, false),
-					Description:  "Units in which capacity is allocated. For CPU capacity, one of: {MHz, GHz}.  For memory capacity, one of: {MB, GB}.",
-				},
 				"allocated": {
 					Type:        schema.TypeInt,
 					Optional:    true,
 					ForceNew:    true,
-					Description: "Capacity that is committed to be available.",
+					Description: "Capacity that is committed to be available. Value in MB or MHz. Used with AllocationPool (Allocation pool) and ReservationPool (Reservation pool).",
 				},
 				"limit": {
 					Type:        schema.TypeInt,
-					Required:    true,
-					ForceNew:    true,
-					Description: "Capacity limit relative to the value specified for Allocation. It must not be less than that value. If it is greater than that value, it implies over provisioning.",
-				},
-				"reserved": {
-					Type:        schema.TypeInt,
 					Optional:    true,
 					ForceNew:    true,
-					Description: "Capacity reserved",
-				},
-				"used": {
-					Type:        schema.TypeInt,
-					Optional:    true,
-					ForceNew:    true,
-					Description: "Capacity used. If the VDC AllocationModel is ReservationPool, this number represents the percentage of the reservation that is in use. For all other allocation models, it represents the percentage of the allocation that is in use.",
-				},
-				"overhead": {
-					Type:        schema.TypeInt,
-					Optional:    true,
-					ForceNew:    true,
-					Description: "Number of Units allocated to system resources such as vShield Manager virtual machines and shadow virtual machines provisioned from this Provider VDC.",
+					Description: "Capacity limit relative to the value specified for Allocation. It must not be less than that value. If it is greater than that value, it implies over provisioning. A value of 0 specifies unlimited units. Value in MB or MHz. Used with AllocationVApp (Pay as you go).",
 				},
 			},
 		},
@@ -87,8 +62,8 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"AllocationVApp", "AllocationPool", "ReservationPool", "Flex"}, false),
-				Description:  "The allocation model used by this VDC; must be one of {AllocationVApp, AllocationPool, ReservationPool, Flex}",
+				ValidateFunc: validation.StringInSlice([]string{"AllocationVApp", "AllocationPool", "ReservationPool"}, false),
+				Description:  "The allocation model used by this VDC; must be one of {AllocationVApp, AllocationPool, ReservationPool}",
 			},
 			"compute_capacity": &schema.Schema{
 				Required: true,
@@ -144,12 +119,13 @@ func resourceVcdOrgVdc() *schema.Resource {
 						"enabled": {
 							Type:        schema.TypeBool,
 							Optional:    true,
+							Default:     true,
 							Description: "True if this storage profile is enabled for use in the VDC.",
 						},
 						"limit": {
 							Type:        schema.TypeInt,
 							Required:    true,
-							Description: "Maximum number of Units allocated for this storage profile. A value of 0 specifies unlimited Units.",
+							Description: "Maximum number of MB allocated for this storage profile. A value of 0 specifies unlimited MB.",
 						},
 						"default": {
 							Type:        schema.TypeBool,
@@ -331,9 +307,9 @@ func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
 }
 
 // helper for tranforming the compute capacity section of the resource input into the VdcConfiguration structure
-func capacityWithUsage(d map[string]interface{}) *types.CapacityWithUsage {
+func capacityWithUsage(d map[string]interface{}, units string) *types.CapacityWithUsage {
 	capacity := &types.CapacityWithUsage{
-		Units: d["units"].(string),
+		Units: units,
 	}
 
 	if allocated, ok := d["allocated"]; ok {
@@ -342,18 +318,6 @@ func capacityWithUsage(d map[string]interface{}) *types.CapacityWithUsage {
 
 	if limit, ok := d["limit"]; ok {
 		capacity.Limit = int64(limit.(int))
-	}
-
-	if reserved, ok := d["reserved"]; ok {
-		capacity.Reserved = int64(reserved.(int))
-	}
-
-	if used, ok := d["used"]; ok {
-		capacity.Used = int64(used.(int))
-	}
-
-	if overhead, ok := d["overhead"]; ok {
-		capacity.Overhead = int64(overhead.(int))
 	}
 
 	return capacity
@@ -397,8 +361,8 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 		AllocationModel: d.Get("allocation_model").(string),
 		ComputeCapacity: []*types.ComputeCapacity{
 			&types.ComputeCapacity{
-				CPU:    capacityWithUsage(cpuCapacityList[0].(map[string]interface{})),
-				Memory: capacityWithUsage(memoryCapacityList[0].(map[string]interface{})),
+				CPU:    capacityWithUsage(cpuCapacityList[0].(map[string]interface{}), "MHz"),
+				Memory: capacityWithUsage(memoryCapacityList[0].(map[string]interface{}), "MB"),
 			},
 		},
 		ProviderVdcReference: &types.Reference{
