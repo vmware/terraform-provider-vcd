@@ -149,7 +149,7 @@ its parameters do force recreation of VMs!
 <a id="network"></a>
 ## Network
 
-* `type` (Required) Network type, one of: `none`, `vapp` or `vdc`. `none` creates a NIC with no network attached, `vapp` attaches a vApp network, while `vdc` attaches organization VDC network.
+* `type` (Required) Network type, one of: `none`, `vapp` or `org`. `none` creates a NIC with no network attached, `vapp` attaches a vApp network, while `org` attaches organization VDC network.
 * `name` (Optional) Name of the network this VM should connect to. Always required except for `type` `NONE`.
 * `is_primary` (Optional) Set to true if network interface should be primary. First network card in the list will be primary by default.
 * `mac` - (Computed) Mac address of network interface.
