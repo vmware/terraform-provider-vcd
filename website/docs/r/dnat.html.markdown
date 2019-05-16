@@ -30,7 +30,6 @@ resource "vcd_dnat" "forIcmp" {
   vdc = "my-vdc" # Optional
 
   edge_gateway  = "Edge Gateway Name"
-  network_name  = "Org vDC network name"
   external_ip   = "78.101.10.20"
   port          = -1                    # "-1" == "any"
   internal_ip   = "10.10.0.5"
@@ -44,7 +43,8 @@ resource "vcd_dnat" "forIcmp" {
 The following arguments are supported:
 
 * `edge_gateway` - (Required) The name of the edge gateway on which to apply the DNAT
-* `network_name` - (Optional; *v2.2+*) The name of the organization network on which to apply the DNAT. *`network_name` will be required field in the next major version.*
+* `network_type` - (Optional; *v2.2+*) Type of the network on which to apply the NAT rule. Default: "org". *`network_type` will be a required field in the next major version.*
+* `network_name` - (Optional; *v2.2+*) The name of the network on which to apply the DNAT. *`network_name` will be a required field in the next major version.*
 * `external_ip` - (Required) One of the external IPs available on your Edge Gateway
 * `port` - (Required) The port number to map. -1 translates to "any"
 * `translated_port` - (Optional) The port number to map

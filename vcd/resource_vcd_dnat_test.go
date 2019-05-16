@@ -399,6 +399,7 @@ resource "vcd_dnat" "{{.DnatName}}" {
   org             = "{{.Org}}"
   vdc             = "{{.Vdc}}"
   network_name    = "{{.OrgVdcNetworkName}}"
+  network_type    = "org"
   edge_gateway    = "{{.EdgeGateway}}"
   external_ip     = "{{.ExternalIp}}"
   port            = 7777
