@@ -116,7 +116,7 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 	// TODO enable when external network supported
 	/*else {
-		_, _ = fmt.Fprint(GetTerraformStdout(), "WARNING: This resource will require network_name in the next major version \n")
+		_, _ = fmt.Fprint(GetTerraformStdout(), "WARNING: This resource will require network_name and network_type in the next major version \n")
 	}*/
 	if err != nil {
 		return fmt.Errorf("unable to find orgVdcnetwork: %s, err: %s", providedNetworkName.(string), err)
