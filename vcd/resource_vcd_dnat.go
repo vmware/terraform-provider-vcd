@@ -2,13 +2,13 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform/helper/validation"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"log"
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 func resourceVcdDNAT() *schema.Resource {

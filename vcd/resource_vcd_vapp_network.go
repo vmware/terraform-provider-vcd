@@ -2,11 +2,11 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"log"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 func resourceVcdVappNetwork() *schema.Resource {
