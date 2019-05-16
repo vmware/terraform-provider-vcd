@@ -43,8 +43,6 @@ resource "vcd_dnat" "forIcmp" {
 The following arguments are supported:
 
 * `edge_gateway` - (Required) The name of the edge gateway on which to apply the DNAT
-* `network_type` - (Optional; *v2.2+*) Type of the network on which to apply the NAT rule. Default: "org". *`network_type` will be a required field in the next major version.*
-* `network_name` - (Optional; *v2.2+*) The name of the network on which to apply the DNAT. *`network_name` will be a required field in the next major version.*
 * `external_ip` - (Required) One of the external IPs available on your Edge Gateway
 * `port` - (Required) The port number to map. -1 translates to "any"
 * `translated_port` - (Optional) The port number to map

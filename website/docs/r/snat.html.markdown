@@ -26,8 +26,6 @@ resource "vcd_snat" "outbound" {
 The following arguments are supported:
 
 * `edge_gateway` - (Required) The name of the edge gateway on which to apply the SNAT
-* `network_type` - (Optional; *v2.2+*) Type of the network on which to apply the NAT rule. Default: "org". *`network_type` will be a required field in the next major version.*
-* `network_name` - (Optional; *v2.2+*) The name of the network on which to apply the SNAT. *`network_name` will be a required field in the next major version.*
 * `external_ip` - (Required) One of the external IPs available on your Edge Gateway
 * `internal_ip` - (Required) The IP or IP Range of the VM(s) to map from
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
