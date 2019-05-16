@@ -40,7 +40,7 @@ func resourceVcdSNAT() *schema.Resource {
 				Optional:     true,
 				Default:      "org",
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"ext"}, false),
+				ValidateFunc: validation.StringInSlice([]string{"ext", "org"}, false),
 			},
 			"external_ip": &schema.Schema{
 				Type:     schema.TypeString,
