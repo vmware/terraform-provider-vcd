@@ -41,7 +41,7 @@ func resourceVcdDNAT() *schema.Resource {
 			"network_type": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
-				Default:      "org",
+				Default:      "ext",
 				ForceNew:     true,
 				ValidateFunc: validation.StringInSlice([]string{"ext", "org"}, false),
 			},
