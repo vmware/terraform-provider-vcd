@@ -2,10 +2,10 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
-
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 func resourceVcdSNAT() *schema.Resource {
@@ -34,6 +34,13 @@ func resourceVcdSNAT() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
+			},
+			"network_type": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "org",
+				ForceNew:     true,
+				ValidateFunc: validation.StringInSlice([]string{"org"}, false),
 			},
 			"external_ip": &schema.Schema{
 				Type:     schema.TypeString,
@@ -69,13 +76,16 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
+	// TODO add support of external network
 	var orgVdcnetwork *types.OrgVDCNetwork
 	providedNetworkName := d.Get("network_name")
 	if nil != providedNetworkName && "" != providedNetworkName.(string) {
 		orgVdcnetwork, err = getNetwork(d, vcdClient, providedNetworkName.(string))
-	} else {
-		_, _ = fmt.Fprint(GetTerraformStdout(), "WARNING: this resource will require network_name in the next major version \n")
 	}
+	// TODO enable when external network supported
+	/*else {
+		_, _ = fmt.Fprint(GetTerraformStdout(), "WARNING: this resource will require network_name in the next major version \n")
+	}*/
 	if err != nil {
 		return fmt.Errorf("unable to find orgVdcnetwork: %s, err: %s", providedNetworkName.(string), err)
 	}
@@ -131,14 +141,14 @@ func resourceVcdSNATRead(d *schema.ResourceData, meta interface{}) error {
 	providedNetworkName := d.Get("network_name")
 	if nil != providedNetworkName && providedNetworkName.(string) != "" {
 		for _, r := range e.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
-			if r.RuleType == "SNAT" && r.GatewayNatRule.OriginalIP == d.Id() {
+			if r.RuleType == "SNAT" && r.GatewayNatRule.TranslatedIP == d.Get("internal_ip").(string) && r.GatewayNatRule.Interface.Name == d.Get("network_name").(string) {
 				found = true
-				d.Set("external_ip", r.GatewayNatRule.TranslatedIP)
+				d.Set("external_ip", r.GatewayNatRule.OriginalIP)
 			}
 		}
-	} else {
+	} else { // TODO remove after network_name becomes mandatory
 		for _, r := range e.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
-			if r.RuleType == "SNAT" && r.GatewayNatRule.OriginalIP == d.Id() && r.GatewayNatRule.Interface.Name == d.Get("network_name").(string) {
+			if r.RuleType == "SNAT" && r.GatewayNatRule.OriginalIP == d.Get("internal_ip").(string) {
 				found = true
 				d.Set("external_ip", r.GatewayNatRule.TranslatedIP)
 			}

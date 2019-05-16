@@ -8,6 +8,7 @@ FEATURES:
 * **New Resource:** VDC resource `vcd_org_vdc` - [GH-234]
 * resource/vcd_vapp_vm: Add `network` argument for multiple NIC support and more flexible configuration [GH-233]
 * resource/vcd_vapp_vm: Add `mac` argument to store MAC address in state file [GH-233]
+* `vcd_dnat` and `vcd_snat` - Add `network_name` and `network_type` arguments for applying rules on organization network support [GH-244]
 
 BUG FIXES:
 

@@ -4,7 +4,6 @@ package vcd
 
 import (
 	"fmt"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -50,8 +49,8 @@ func TestAccVcdSNAT_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckVcdSNATDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config:      configText,
-				ExpectError: regexp.MustCompile(`After applying this step and refreshing, the plan was not empty:`),
+				Config: configText,
+				//ExpectError: regexp.MustCompile(`After applying this step and refreshing, the plan was not empty:`),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdSNATExists("vcd_snat."+snatName, &e),
 					resource.TestCheckResourceAttr(
@@ -167,8 +166,8 @@ func TestAccVcdSNAT_BackCompability(t *testing.T) {
 		CheckDestroy: testAccCheckVcdSNATDestroyForBackCompability,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config:      configText,
-				ExpectError: regexp.MustCompile(`After applying this step and refreshing, the plan was not empty:`),
+				Config: configText,
+				//ExpectError: regexp.MustCompile(`After applying this step and refreshing, the plan was not empty:`),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdSNATExistsForBackCompability("vcd_snat."+snatName, &e),
 					resource.TestCheckResourceAttr(
@@ -273,6 +272,7 @@ resource "vcd_snat" "{{.SnatName}}" {
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
   network_name = "{{.OrgVdcNetworkName}}"
+  network_type    = "org"
   external_ip  = "{{.ExternalIp}}"
   internal_ip  = "{{.StartIpAddress}}"
   depends_on      = ["vcd_network_routed.{{.OrgVdcNetworkName}}"]

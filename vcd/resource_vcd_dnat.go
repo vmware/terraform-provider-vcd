@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"log"
 	"strings"
@@ -36,6 +37,13 @@ func resourceVcdDNAT() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
+			},
+			"network_type": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "org",
+				ForceNew:     true,
+				ValidateFunc: validation.StringInSlice([]string{"org"}, false),
 			},
 			"external_ip": &schema.Schema{
 				Type:     schema.TypeString,
@@ -105,9 +113,11 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 	providedNetworkName := d.Get("network_name")
 	if nil != providedNetworkName && "" != providedNetworkName.(string) {
 		orgVdcnetwork, err = getNetwork(d, vcdClient, providedNetworkName.(string))
-	} else {
-		_, _ = fmt.Fprint(GetTerraformStdout(), "WARNING: This resource will require network_name in the next major version \n")
 	}
+	// TODO enable when external network supported
+	/*else {
+		_, _ = fmt.Fprint(GetTerraformStdout(), "WARNING: This resource will require network_name in the next major version \n")
+	}*/
 	if err != nil {
 		return fmt.Errorf("unable to find orgVdcnetwork: %s, err: %s", providedNetworkName.(string), err)
 	}
@@ -184,6 +194,7 @@ func resourceVcdDNATRead(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 	} else {
+		// TODO remove when major release is done
 		for _, r := range e.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
 			if r.RuleType == "DNAT" &&
 				r.GatewayNatRule.OriginalIP == d.Get("external_ip").(string) &&
