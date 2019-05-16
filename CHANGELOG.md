@@ -1,23 +1,23 @@
-## 2.2.0 (Unreleased)
+## 2.2.0 (May 16, 2019)
 
 FEATURES:
 
-* `vcd_vapp_vm` - Ability to add metadata to a VM. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES` [GH-158]
-* `vcd_vapp_vm` - Ability to enable hardware assisted CPU virtualization for VM. It allows hypervisor nesting. [GH-219]
-* **New Resource:** external network - `vcd_external_network` - [GH-230]
-* **New Resource:** VDC resource `vcd_org_vdc` - [GH-234]
-* resource/vcd_vapp_vm: Add `network` argument for multiple NIC support and more flexible configuration [GH-233]
-* resource/vcd_vapp_vm: Add `mac` argument to store MAC address in state file [GH-233]
+* `vcd_vapp_vm` - Ability to add metadata to a VM. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES` ([#158](https://github.com/terraform-providers/terraform-provider-vcd/issues/158))
+* `vcd_vapp_vm` - Ability to enable hardware assisted CPU virtualization for VM. It allows hypervisor nesting. ([#219](https://github.com/terraform-providers/terraform-provider-vcd/issues/219))
+* **New Resource:** external network - `vcd_external_network` - ([#230](https://github.com/terraform-providers/terraform-provider-vcd/issues/230))
+* **New Resource:** VDC resource `vcd_org_vdc` - ([#234](https://github.com/terraform-providers/terraform-provider-vcd/issues/234))
+* resource/vcd_vapp_vm: Add `network` argument for multiple NIC support and more flexible configuration ([#233](https://github.com/terraform-providers/terraform-provider-vcd/issues/233))
+* resource/vcd_vapp_vm: Add `mac` argument to store MAC address in state file ([#233](https://github.com/terraform-providers/terraform-provider-vcd/issues/233))
 
 BUG FIXES:
 
-* `vcd_vapp` - Ability to add metadata to empty vApp. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES` [GH-158]
+* `vcd_vapp` - Ability to add metadata to empty vApp. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES` ([#158](https://github.com/terraform-providers/terraform-provider-vcd/issues/158))
 
 BACKWARDS INCOMPATIBILITIES / NOTES:
 
-* `vcd_vapp` - Metadata is no longer added to first VM in vApp it will be added to vApp directly instead. [GH-158]
+* `vcd_vapp` - Metadata is no longer added to first VM in vApp it will be added to vApp directly instead. ([#158](https://github.com/terraform-providers/terraform-provider-vcd/issues/158))
 * Tests files are now all tagged. Running them through Makefile works as before, but manual execution requires specific tags. Run `go test -v .` for tags list.
-* `vcd_vapp_vm` - Deprecated attributes `network_name`, `vapp_network_name`, `network_href` and `ip` in favor of `network` [GH-118]
+* `vcd_vapp_vm` - Deprecated attributes `network_name`, `vapp_network_name`, `network_href` and `ip` in favor of `network` ([#118](https://github.com/terraform-providers/terraform-provider-vcd/issues/118))
 
 ## 2.1.0 (March 27, 2019)
 
