@@ -18,7 +18,7 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 	var (
 		vapp        govcd.VApp
 		vm          govcd.VM
-		netVappName string = "TestAccVcdVAppNetwork"
+		netVappName string = "TestAccVcdNetworkVApp"
 		netVmName1  string = t.Name()
 	)
 
@@ -52,14 +52,14 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 	netVmNameDHCP := netVmName1 + "dhcp"
 	params["IP"] = "dhcp"
 	params["VMName"] = netVmNameDHCP
-	params["FuncName"] = t.Name() + "-step1"
+	params["FuncName"] = t.Name() + "-step2"
 	configTextStep2 := templateFill(testAccCheckVcdVAppVmSingleNICNetwork, params)
 
 	// manual
 	netVmNameManual := netVmName1 + "manual"
 	params["VMName"] = netVmNameManual
 	params["IP"] = "11.10.0.152"
-	params["FuncName"] = t.Name() + "-step2"
+	params["FuncName"] = t.Name() + "-step4"
 	configTextStep4 := templateFill(testAccCheckVcdVAppVmSingleNICNetwork, params)
 
 	// none is not used as it always had a bug
@@ -73,16 +73,19 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 	// no network
 	netVmNameNoNetwork := netVmName1 + "noNetwork"
 	params["VMName"] = netVmNameNoNetwork
+	params["FuncName"] = t.Name() + "-step6"
 	configTextStep6 := templateFill(testAccCheckVcdVAppVmSingleNICNoNetwork, params)
 
 	// only vApp network with 'allocated'
 	netVmNamevAppNetwork := netVmName1 + "vAppNetwork"
 	params["VMName"] = netVmNamevAppNetwork
+	params["FuncName"] = t.Name() + "-step8"
 	configTextStep8 := templateFill(testAccCheckVcdVAppVmSingleNICvAppNetwork, params)
 
 	// both vApp network 'vapp_network_name' and 'network_name'  with 'allocated'
 	netVmNameBothNetworks := netVmName1 + "vAppAndVDCNet"
 	params["VMName"] = netVmNameBothNetworks
+	params["FuncName"] = t.Name() + "-step10"
 	configTextStep10 := templateFill(testAccCheckVcdVAppVmSingleNICvAppAndVdc, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION (allocated): %s\n", configTextStep0)
@@ -239,6 +242,8 @@ resource "vcd_vapp" "{{.VAppName}}" {
   vdc = "{{.Vdc}}"
 
   name = "{{.VAppName}}"
+
+  depends_on = ["vcd_network_routed.net"]
 }
 `
 
