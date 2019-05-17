@@ -6,6 +6,7 @@ package types
 
 import (
 	"encoding/xml"
+	"fmt"
 )
 
 // Maps status Attribute Values for VAppTemplate, VApp, Vm, and Media Objects
@@ -931,6 +932,21 @@ type Error struct {
 	StackTrace              string `xml:"stackTrace,attr,omitempty"`
 }
 
+// NSXError is the standard error message type used in the NSX API which is proxied by vCD.
+// It has attached method `Error() string` and implements GOs default `type error` interface.
+type NSXError struct {
+	XMLName    xml.Name `xml:"error"`
+	ErrorCode  string   `xml:"errorCode"`
+	Details    string   `xml:"details"`
+	ModuleName string   `xml:"moduleName"`
+}
+
+// Error method implements GOs default `error` interface for NSXError and formats NSX error output for human readable
+// output.
+func (nsxErr NSXError) Error() string {
+	return fmt.Sprintf("%s %s (API error: %s)", nsxErr.ModuleName, nsxErr.Details, nsxErr.ErrorCode)
+}
+
 // File represents a file to be transferred (uploaded or downloaded).
 // Type: FileType
 // Namespace: http://www.vmware.com/vcloud/v1.5
@@ -1634,27 +1650,36 @@ type LoadBalancerPool struct {
 // Description: Represents a service port in a load balancer pool.
 // Since: 5.1
 type LBPoolServicePort struct {
-	IsEnabled       bool               `xml:"IsEnabled,omitempty"`       // True if this service port is enabled.
-	Protocol        string             `xml:"Protocol"`                  // Load balancer protocol type. One of: HTTP, HTTPS, TCP.
-	Algorithm       string             `xml:"Algorithm"`                 // Load Balancer algorithm type. One of: IP_HASH, ROUND_ROBIN, URI, LEAST_CONN.
-	Port            string             `xml:"Port"`                      // Port for this service profile.
-	HealthCheckPort string             `xml:"HealthCheckPort,omitempty"` // Health check port for this profile.
-	HealthCheck     *LBPoolHealthCheck `xml:"HealthCheck,omitempty"`     // Health check list.
+	IsEnabled       bool       `xml:"IsEnabled,omitempty"`       // True if this service port is enabled.
+	Protocol        string     `xml:"Protocol"`                  // Load balancer protocol type. One of: HTTP, HTTPS, TCP.
+	Algorithm       string     `xml:"Algorithm"`                 // Load Balancer algorithm type. One of: IP_HASH, ROUND_ROBIN, URI, LEAST_CONN.
+	Port            string     `xml:"Port"`                      // Port for this service profile.
+	HealthCheckPort string     `xml:"HealthCheckPort,omitempty"` // Health check port for this profile.
+	HealthCheck     *LBMonitor `xml:"HealthCheck,omitempty"`     // Health check list.
 }
 
-// LBPoolHealthCheck represents a service port health check list.
+// LBMonitor represents a service port health check list as per "vCloud Director API for NSX Programming Guide"
 // Type: LBPoolHealthCheckType
 // Namespace: http://www.vmware.com/vcloud/v1.5
 // Description: Represents a service port health check list.
 // Since: 5.1
-type LBPoolHealthCheck struct {
-	Mode              string `xml:"Mode"`                        // Load balancer service port health check mode. One of: TCP, HTTP, SSL.
-	URI               string `xml:"Uri,omitempty"`               // Load balancer service port health check URI.
-	HealthThreshold   string `xml:"HealthThreshold,omitempty"`   // Health threshold for this service port.
-	UnhealthThreshold string `xml:"UnhealthThreshold,omitempty"` // Unhealth check port for this profile.
-	Interval          string `xml:"Interval,omitempty"`          // Interval between health checks.
-	Timeout           string `xml:"Timeout,omitempty"`           // Health check timeout.
+type LBMonitor struct {
+	XMLName    xml.Name `xml:"monitor"`
+	ID         string   `xml:"monitorId,omitempty"`
+	Type       string   `xml:"type,omitempty"`     // Load balancer service port health check mode. One of: TCP, HTTP, SSL.
+	Interval   int      `xml:"interval,omitempty"` // Interval between health checks.
+	Timeout    int      `xml:"timeout,omitempty"`  // Health check timeout.
+	MaxRetries int      `xml:"maxRetries,omitempty"`
+	Method     string   `xml:"method,omitempty"`
+	URI        string   `xml:"uri,omitempty"` // Load balancer service port health check URI.
+	Expected   string   `xml:"expected,omitempty"`
+	Name       string   `xml:"name,omitempty"`
+	Send       string   `xml:"send,omitempty"`
+	Receive    string   `xml:"receive,omitempty"`
+	Extension  string   `xml:"extension,omitempty"`
 }
+
+type LBMonitors []LBMonitor
 
 // LBPoolMember represents a member in a load balancer pool.
 // Type: LBPoolMemberType

@@ -230,6 +230,9 @@ func (client *Client) ExecuteRequestWithoutResponse(pathURL, requestType, conten
 		return fmt.Errorf(errorMessage, err)
 	}
 
+	// log response explicitly because decodeBody() was not triggered
+	util.ProcessResponseOutput(util.FuncNameCallStack(), resp, fmt.Sprintf("%s", resp.Body))
+
 	err = resp.Body.Close()
 	if err != nil {
 		return fmt.Errorf("error closing response body: %s", err)
@@ -272,7 +275,38 @@ func (client *Client) ExecuteRequest(pathURL, requestType, contentType, errorMes
 	return resp, nil
 }
 
-func executeRequest(pathURL, requestType, contentType string, payload interface{}, client *Client) (*http.Response, error) {
+// ExecuteRequestHTTPCodeOrTypedError sends the request and expects `expectedHTTPStatus`. If the returned status code
+// was not as expected - the returned error will be unmarshaled to `errParser` which imlements GOs standard `error`
+// interface.
+func (client *Client) ExecuteRequestHTTPCodeOrTypedError(expectedHTTPStatus int, pathURL, requestType, contentType, errorMessage string, payload interface{}, errParser error) (*http.Response, error) {
+	if !isMessageWithPlaceHolder(errorMessage) {
+		return &http.Response{}, fmt.Errorf("error message has to include place holder for error")
+	}
+
+	resp, err := executeRawRequest(pathURL, requestType, contentType, payload, client)
+	if err != nil {
+		return &http.Response{}, fmt.Errorf(errorMessage, err)
+	}
+	defer resp.Body.Close()
+
+	// error is parsed and returned because of unexpected response status code
+	if resp.StatusCode != expectedHTTPStatus {
+		if err = decodeBody(resp, errParser); err != nil {
+			return &http.Response{}, fmt.Errorf("error decoding http response to error: %s", err)
+		}
+		return &http.Response{}, fmt.Errorf(errorMessage, errParser.Error())
+	}
+
+	// log response explicitly because decodeBody() was not triggered
+	util.ProcessResponseOutput(util.FuncNameCallStack(), resp, fmt.Sprintf("%s", resp.Body))
+
+	return resp, nil
+}
+
+// executeRawRequest performs an HTTP request returns http response and error without using the checkResp
+// function which assumes that if there was an error, it would be returned of type types.Error which is not
+// the case for APIs which proxied by vCD.
+func executeRawRequest(pathURL, requestType, contentType string, payload interface{}, client *Client) (*http.Response, error) {
 	url, _ := url.ParseRequestURI(pathURL)
 
 	var req *http.Request
@@ -294,8 +328,12 @@ func executeRequest(pathURL, requestType, contentType string, payload interface{
 	if contentType != "" {
 		req.Header.Add("Content-Type", contentType)
 	}
+	return client.Http.Do(req)
+}
 
-	return checkResp(client.Http.Do(req))
+// executeRequest does executeRawRequest and additionally checks for errors in API response
+func executeRequest(pathURL, requestType, contentType string, payload interface{}, client *Client) (*http.Response, error) {
+	return checkResp(executeRawRequest(pathURL, requestType, contentType, payload, client))
 }
 
 func isMessageWithPlaceHolder(message string) bool {

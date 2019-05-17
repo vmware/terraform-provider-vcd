@@ -1,0 +1,94 @@
+---
+layout: "vcd"
+page_title: "vCloudDirector: vcd_lb_service_monitor"
+sidebar_current: "docs-vcd-resource-lb-service-monitor"
+description: |-
+  Provides a NSX load balancer service monitor resource.
+---
+
+# vcd\_lb\_service\_monitor
+
+Provides a vCloud Director Edge Gateway Load Balancer Service Monitor resource. A service monitor 
+defines health check parameters for a particular type of network traffic. It can be associated with
+a pool. Pool members are monitored according to the service monitor parameters. 
+
+~> **Note:** To make load balancing work one must ensure that load balancing is enabled on edge gateway. This depends 
+on NSX version to work properly. Please refer to [VMware Product Interoperability Matrices](https://www.vmware.com/resources/compatibility/sim/interop_matrix.php#interop&29=&93=) 
+to check supported vCloud director and NSX for vSphere configurations.
+
+~> **Note:** The vCloud Director API for NSX supports a subset of the operations and objects defined in the NSX vSphere 
+API Guide. The API supports NSX 6.2, 6.3, and 6.4.
+
+Supported in provider *v2.4+*
+
+## Example Usage
+
+```hcl
+provider "vcd" {
+  user     = "${var.admin_user}"
+  password = "${var.admin_password}"
+  org      = "System"
+  url      = "https://AcmeVcd/api"
+}
+
+resource "vcd_lb_service_monitor" "monitor" {
+  org                 = "my-org"
+  vdc                 = "my-org-vdc"
+  edge_gateway        = "my-edge-gw"
+
+  name                = "testing-monitor-yy"
+  interval = "5"
+  timeout = "20"
+  max_retries = "3"
+  type = "http"
+  http_method = "get"
+  extension = {
+    content-type = "application/json"
+    linespan     = ""
+  }
+}
+```
+
+## Argument Reference
+
+The following arguments are supported:
+
+* `edge_gateway` - (Required) The name of the edge gateway on which the service monitor is to be created
+* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
+* `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
+* `name` - (Required) Service Monitor name
+
+* `interval` - (Required) Interval at which a server is to be monitored using the specified Method. 
+* `timeout` - (Required) Maximum time in seconds within which a response from the server must be received 
+* `max_retries` - (Required) Number of times the specified monitoring Method must fail sequentially before the server is declared down
+* `type` - (Required) Select the way in which you want to send the health check request to the server— `HTTP`, `HTTPS`, 
+`TCP`, `ICMP`, or `UDP`. Depending on the type selected, the remaining attributes are allowed or not
+* `method` - (Optional) For types `HTTP` and `HTTPS`. Select the method to be used to detect server status
+* `url` - (Optional) For types `HTTP` and `HTTPS`. URL to be used in the server status request
+* `send` - (Optional) For types `HTTP`,  `HTTPS`, and `UDP`. The data to be sent.
+* `expected` - (Optional) For types `HTTP` and `HTTPS`. String that the monitor expects to match in the status line of 
+the HTTP or HTTPS response (for example, `HTTP/1.1`)
+* `receive` - (Optional) For types `HTTP`,  `HTTPS`, and `UDP`. The string to be matched in the response content.
+**Note**: When `expected` is not matched, the monitor does not try to match the Receive content
+* `extension` - (Required) A map of advanced monitor parameters as key=value pairs (i.e. `max-age=SECONDS`, `invert-regex`)
+**Note**: When you need a value of `key` only format just set value to empty string (i.e. `linespan = ""`)
+
+## Attribute Reference
+
+The following attributes are exported on the base level of this resource:
+
+* `id` - The ID of the load balancer service monitor
+
+## Importing
+
+An existing load balancer service monitor can be [imported][docs-import] into this resource
+via supplying the full dot separated path for load balancer service monitor. An example is below:
+
+[docs-import]: /docs/import/index.html
+
+```
+terraform import vcd_lb_service_monitor.imported my-org.my-org-vdc.my-edge-gw.existing-sm
+```
+
+The above would import the service monitor named `existing-sm` that is defined on edge gateway
+`my-edge-gw` which is configured in organization named `my-org` and vDC named `my-org-vdc`.
