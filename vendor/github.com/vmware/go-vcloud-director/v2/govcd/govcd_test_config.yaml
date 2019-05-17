@@ -1,0 +1,143 @@
+# COPY THIS FILE to govcd_test_config.yaml
+# in the same directory and change the values
+# to match your environment.
+#
+# All items in this file must exist already
+# (They will not be removed or left altered)
+# The test will create a vApp and remove it at the end
+#
+provider:
+    # vCD administrator credentials
+    # (Providing org credentials will skip some tests)
+    user: administrator
+    password: R00tas!23
+    #
+    # The vCD address, in the format https://vCD_IP/api
+    # or https://vCD_host_name/api
+    url: https://192.168.1.109/api
+    #
+    # The organization you are authenticating with
+    sysOrg: System
+vcd:
+    # Name of the organization (mandatory)
+    org: my-org
+    #
+    # The virtual data center (mandatory)
+    # The tests will create a vApp here
+    #
+    vdc: my-org-vdc
+    # Provider VDC; if omitted, some tests will be skipped
+    provider_vdc:
+      name: provider-vdc
+      storage_profile: "*"
+      network_pool: provider-vdc-VXLAN-NP
+    # An Org catalog, possibly containing at least one item
+    catalog:
+        name: my-catalog
+        #
+        # One item in the catalog. It will be used to compose test vApps
+        catalogItem: photon-os
+        #
+        # An optional description for the catalog. Its test will be skipped if omitted.
+        # If provided, it must be the current description of the catalog
+        description: my-catalog-description
+        #
+        # An optional description for the catalog item
+        catalogItemDescription: photon-os-description
+    #
+        # Existing VDC networks. At least one is needed.
+    network:
+      # First vdc network (mandatory)
+      network1: my-vdc-int-net
+      # Second vdc network. If omitted, some tests will be skipped.
+      network2: my-vdc-int-net2
+    # Storage profiles used in the vDC
+    # One or two can be listed
+    storageProfile:
+        # First storage profile (mandatory)
+        storageProfile1: "*"
+        # Second storage profile. If omitted, some tests will be skipped.
+        storageProfile2: Development
+    # An edge gateway
+    # (see https://pubs.vmware.com/vca/topic/com.vmware.vcloud.api.doc_56/GUID-18B0FB8B-385C-4B6D-982C-4B24D271C646.html)
+    edgeGateway: my-edge-gw
+    #
+    # The IP of the gateway (must exist)
+    externalIp: 192.168.1.110
+    #
+    # netmask for the external IP (MANDATORY for edge GW VPN)
+    externalNetmask: 255.255.255.0
+    #
+    # A free IP in the Org vDC network
+    internalIp: 10.10.10.11
+    #
+    # netmask for the internal IP (MANDATORY for edge GW VPN)
+    internalNetmask: 255.255.255.0
+    # A port group name for creating an external network
+    externalNetworkPortGroup: VM Network 2
+    #
+    # A port group type for creating an external network. Can be DV_PORTGROUP or NETWORK
+    externalNetworkPortGroupType: DV_PORTGROUP
+    #
+    # A vSphere server name for creating an external network
+    vimServer: vc
+    #
+    #
+    # An external Network name
+    externalNetwork: my-ext-network
+    #
+    # Independent disk parameters for testing
+    disk:
+      #
+      # Disk size (bytes) for create disk, skip disk tests if it is less than or equal to 0
+      size: 1048576
+      #
+      # Disk size (bytes) for update disk, skip some disk tests if it is less than or equal to 0
+      # The minimum size is 1048576 (1 MB). While theoretically smaller amounts are allowed,
+      # there is an issue when using < 1MB during updates
+      sizeForUpdate: 1048576
+logging:
+    # All items in this section are optional
+    # Logging is disabled by default.
+    # See ./util/LOGGING.md for more info
+    #
+    # Enables or disables logs
+    enabled: true
+    #
+    # changes the log name
+    logFileName: "go-vcloud-director.log"
+    #
+    # Defines whether we log the requests in HTTP operations
+    logHttpRequests: true
+    #
+    # Defines whether we log the responses in HTTP operations
+    logHttpResponses: true
+    #
+    # Comma-separated list of XML tags to skip from the API logs
+    skipResponseTags: SupportedVersions,VAppTemplate
+    #
+    # Comma-separated list of functions from where we log the API calls.
+    # When this is set, we only log API requests and responses if the name
+    # of the function matches any of the names in this list.
+    logFunctions: FindVAppByName,GetAdminOrgByName
+    #
+    # Shows details of cleanup operations after tests
+    verboseCleanup: true
+ova:
+  # The ova for uploading catalog item for tests.
+  # Default paths are simple ova provided by project
+  # Empty values skips the tests
+  # Absolute or relative path
+  ovaPath: ../test-resources/test_vapp_template.ova
+  #
+  # The chunked ova (vmdk inside are split) for tests
+  ovaChunkedPath: ../test-resources/template_with_custom_chunk_size.ova
+media:
+  # The iso for uploading media item for tests.
+  # Default paths are simple iso provided by project
+  # Empty values skips the tests
+  # Absolute or relative path
+  mediaPath: ../test-resources/test.iso
+  # Existing media in test system
+  mediaName: dsl
+

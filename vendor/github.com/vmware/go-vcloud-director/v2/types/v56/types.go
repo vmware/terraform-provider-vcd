@@ -1644,6 +1644,88 @@ type LBMonitor struct {
 
 type LBMonitors []LBMonitor
 
+// LoadBalancerService represents gateway load balancer service.
+// Type: LoadBalancerServiceType
+// Namespace: http://www.vmware.com/vcloud/v1.5
+// Description: Represents gateway load balancer service.
+// Since: 5.1
+// type LoadBalancerService struct {
+// 	IsEnabled     bool                       `xml:"IsEnabled"`               // Enable or disable the service using this flag
+// 	Pool          *LoadBalancerPool          `xml:"Pool,omitempty"`          // List of load balancer pools.
+// 	VirtualServer *LoadBalancerVirtualServer `xml:"VirtualServer,omitempty"` // List of load balancer virtual servers.
+// }
+
+// LoadBalancerPool represents a load balancer pool.
+// Type: LoadBalancerPoolType
+// Namespace: http://www.vmware.com/vcloud/v1.5
+// Description: Represents a load balancer pool.
+// Since: 5.1
+// type LoadBalancerPool struct {
+// 	ID           string             `xml:"Id,omitempty"`           // Load balancer pool id.
+// 	Name         string             `xml:"Name"`                   // Load balancer pool name.
+// 	Description  string             `xml:"Description,omitempty"`  // Load balancer pool description.
+// 	ServicePort  *LBPoolServicePort `xml:"ServicePort"`            // Load balancer pool service port.
+// 	Member       *LBPoolMember      `xml:"Member"`                 // Load balancer pool member.
+// 	Operational  bool               `xml:"Operational,omitempty"`  // True if the load balancer pool is operational.
+// 	ErrorDetails string             `xml:"ErrorDetails,omitempty"` // Error details for this pool.
+// }
+
+// LBPoolServicePort represents a service port in a load balancer pool.
+// Type: LBPoolServicePortType
+// Namespace: http://www.vmware.com/vcloud/v1.5
+// Description: Represents a service port in a load balancer pool.
+// Since: 5.1
+type LBPoolServicePort struct {
+	IsEnabled       bool       `xml:"IsEnabled,omitempty"`       // True if this service port is enabled.
+	Protocol        string     `xml:"Protocol"`                  // Load balancer protocol type. One of: HTTP, HTTPS, TCP.
+	Algorithm       string     `xml:"Algorithm"`                 // Load Balancer algorithm type. One of: IP_HASH, ROUND_ROBIN, URI, LEAST_CONN.
+	Port            string     `xml:"Port"`                      // Port for this service profile.
+	HealthCheckPort string     `xml:"HealthCheckPort,omitempty"` // Health check port for this profile.
+	HealthCheck     *LBMonitor `xml:"HealthCheck,omitempty"`     // Health check list.
+}
+
+// LBPool represents a load balancer server pool as per "vCloud Director API for NSX Programming Guide"
+// Type: LBPoolHealthCheckType
+// https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
+type LBPool struct {
+	XMLName             xml.Name      `xml:"pool"`
+	ID                  string        `xml:"poolId,omitempty"`
+	Name                string        `xml:"name"`
+	Description         string        `xml:"description,omitempty"`
+	Algorithm           string        `xml:"algorithm"`
+	AlgorithmParameters string        `xml:"algorithmParameters,omitempty"`
+	Transparent         bool          `xml:"transparent,omitempty"`
+	MonitorId           string        `xml:"monitorId,omitempty"`
+	Members             LBPoolMembers `xml:"member,omitempty"`
+}
+
+type LBPools []LBPool
+
+type LBPoolMember struct {
+	ID          string `xml:"memberId,omitempty"`
+	Name        string `xml:"name"`
+	IpAddress   string `xml:"ipAddress"`
+	Weight      int    `xml:"weight,omitempty"`
+	MonitorPort int    `xml:"monitorPort,omitempty"`
+	Port        int    `xml:"port"`
+	MaxConn     int    `xml:"maxConn,omitempty"`
+	MinConn     int    `xml:"minConn,omitempty"`
+	Condition   string `xml:"condition,omitempty"`
+}
+
+type LBPoolMembers []LBPoolMember
+
+// LBPoolMember represents a member in a load balancer pool.
+// Type: LBPoolMemberType
+// Namespace: http://www.vmware.com/vcloud/v1.5
+// Description: Represents a member in a load balancer pool.
+// Since: 5.1
+// type LBPoolMember struct {
+// 	IPAddress   string             `xml:"IpAddress"`             // Ip Address for load balancer member.
+// 	Weight      string             `xml:"Weight"`                // Weight of this member.
+// 	ServicePort *LBPoolServicePort `xml:"ServicePort,omitempty"` // Load balancer member service port.
+// }
+
 // LoadBalancerVirtualServer represents a load balancer virtual server.
 // Type: LoadBalancerVirtualServerType
 // Namespace: http://www.vmware.com/vcloud/v1.5

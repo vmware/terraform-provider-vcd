@@ -153,7 +153,6 @@ func resourceVcdLbServiceMonitorCreate(d *schema.ResourceData, meta interface{})
 
 func resourceVcdLbServiceMonitorRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
