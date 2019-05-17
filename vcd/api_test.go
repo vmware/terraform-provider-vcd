@@ -4,11 +4,26 @@ package vcd
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path"
+	"path/filepath"
+	"regexp"
+	"runtime"
 	"testing"
 )
 
-var testingTags = make(map[string]string)
+const (
+	testVerbose = "TEST_VERBOSE"
+)
+
+// These variables are needed by tests running under any tags
+var (
+	// Collection of defined tags in the current test run
+	testingTags = make(map[string]string)
+	// This library major version
+	currentProviderVersion string = getMajorVersion()
+)
 
 func tagsHelp(t *testing.T) {
 
@@ -21,7 +36,7 @@ At least one of the following tags should be defined:
 
    * ALL :       Runs all the tests
    * functional: Runs all the acceptance tests
-   * unit:       Runs unit tests that don't need a live vCD (currently unused, but we plan to)
+   * unit:       Runs unit tests that don't need a live vCD
 
    * catalog:    Runs catalog related tests (also catalog_item, media)
    * disk:       Runs disk related tests
@@ -34,9 +49,15 @@ At least one of the following tags should be defined:
 
 Examples:
 
-go test -tags functional -v -timeout=45m .
-go test -tags catalog -v -timeout=15m .
-go test -tags "org vdc" -v -timeout=5m .
+  go test -tags unit -v -timeout=45m .
+  go test -tags functional -v -timeout=45m .
+  go test -tags catalog -v -timeout=15m .
+  go test -tags "org vdc" -v -timeout=5m .
+
+Tagged tests can also run using make
+  make testunit
+  make testacc
+  make testcatalog
 `
 	t.Logf(helpText)
 }
@@ -56,7 +77,7 @@ func showTags() {
 		fmt.Println("# Defined tags:")
 	}
 	for k, v := range testingTags {
-		fmt.Printf("# %s (%s)", k, v)
+		fmt.Printf("# %s (%s)\n", k, v)
 	}
 }
 
@@ -68,7 +89,46 @@ func TestTags(t *testing.T) {
 		t.Fail()
 		return
 	}
-	if os.Getenv("SHOW_TAGS") != "" {
+	if os.Getenv(testVerbose) != "" {
 		showTags()
 	}
+}
+
+// Finds the current directory, through the path of this running test
+func getCurrentDir() string {
+	_, currentFilename, _, _ := runtime.Caller(0)
+	return filepath.Dir(currentFilename)
+}
+
+// Reads the version from the VERSION file in the root directory
+func getMajorVersion() string {
+
+	versionFile := path.Join(getCurrentDir(), "..", "VERSION")
+
+	// Checks whether the VERSION file exists
+	_, err := os.Stat(versionFile)
+	if os.IsNotExist(err) {
+		panic("Could not find VERSION file")
+	}
+
+	// Reads the version from the file
+	versionText, err := ioutil.ReadFile(versionFile)
+	if err != nil {
+		panic(fmt.Errorf("could not read VERSION file %s: %v", versionFile, err))
+	}
+
+	// The version is expected to be in the format v#.#.#
+	// We only need the first two numbers
+	reVersion := regexp.MustCompile(`v(\d+\.\d+)\.\d+`)
+	versionList := reVersion.FindAllStringSubmatch(string(versionText), -1)
+	if versionList == nil || len(versionList) == 0 {
+		panic("empty or non-formatted version found in VERSION file")
+	}
+	if versionList[0] == nil || len(versionList[0]) < 2 {
+		panic("unable to extract major version from VERSION file")
+	}
+	// A successful match will look like
+	// [][]string{[]string{"v2.0.0", "2.0"}}
+	// Where the first element is the full text matched, and the second one is the first captured text
+	return versionList[0][1]
 }

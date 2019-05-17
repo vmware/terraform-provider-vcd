@@ -35,6 +35,15 @@ the test. You can choose to preserve catalog and vApp template across runs (use 
 configuration file).
 
 
+Both the (short) test and the acceptance test include a run of the `unit` tests, i.e. tests that check the correctness
+of the code without need for a live vCD.
+
+You can run the unit tests directly with
+
+```sh
+make testunit
+```
+
 ## Tests split by feature set
 
 The tests can run with several tags that define which components are tested.
@@ -55,37 +64,41 @@ When running `go test` without tags, you'll get a list of tags that are availabl
 ```
 $ go test -v .
 === RUN   TestTags
---- FAIL: TestTags (0.00s)
-    api_test.go:66: # No tags were defined
-    api_test.go:41:
-        # -----------------------------------------------------
-        # Tags are required to run the tests
-        # -----------------------------------------------------
-
-        At least one of the following tags should be defined:
-
-           * ALL :       Runs all the tests (= functional + unit == all feature tests)
-
-           * functional: Runs all the acceptance tests
-           * unit:       Runs unit tests that don't need a live vCD (currently unused, but we plan to)
-
-           * catalog:    Runs catalog related tests (also catalog_item, media)
-           * disk:       Runs disk related tests
-           * network:    Runs network related tests
-           * extnetwork: Runs external network related tests
-           * gateway:    Runs edge gateway related tests
-           * org:        Runs org related tests
-           * vapp:       Runs vapp related tests
-           * vdc:        Runs vdc related tests
-           * vm:         Runs vm related tests
-
-        Examples:
-
-        go test -tags functional -v -timeout=45m .
-        go test -tags catalog -v -timeout=15m .
-        go test -tags "org vdc" -v -timeout=5m .
-FAIL
-FAIL	github.com/terraform-providers/terraform-provider-vcd/v2/vcd	0.019s
+ --- FAIL: TestTags (0.00s)
+     api_test.go:87: # No tags were defined
+     api_test.go:62:
+         # -----------------------------------------------------
+         # Tags are required to run the tests
+         # -----------------------------------------------------
+ 
+         At least one of the following tags should be defined:
+ 
+            * ALL :       Runs all the tests
+            * functional: Runs all the acceptance tests
+            * unit:       Runs unit tests that don't need a live vCD
+ 
+            * catalog:    Runs catalog related tests (also catalog_item, media)
+            * disk:       Runs disk related tests
+            * network:    Runs network related tests
+            * gateway:    Runs edge gateway related tests
+            * org:        Runs org related tests
+            * vapp:       Runs vapp related tests
+            * vdc:        Runs vdc related tests
+            * vm:         Runs vm related tests
+ 
+         Examples:
+ 
+           go test -tags unit -v -timeout=45m .
+           go test -tags functional -v -timeout=45m .
+           go test -tags catalog -v -timeout=15m .
+           go test -tags "org vdc" -v -timeout=5m .
+ 
+         Tagged tests can also run using make
+           make testunit
+           make testacc
+           make testcatalog
+ FAIL
+ FAIL	github.com/terraform-providers/terraform-provider-vcd/v2/vcd	0.017s
 ```
 
 ## Adding new tests
@@ -134,15 +147,14 @@ func init() {
 to add such test to GNUMakefile under `make test` and `make testacc`. **The general principle is that `make test` and `make testacc` run all tests**. If this can't be
 achieved by adding the new test to the `functional` tag (perhaps because we foresee framework conflicts), we need to add the
 new test as a separate command.
-For example:
+For example, the unit test run as a command before the acceptance test:
 
 ```
-testacc: fmtcheck
+testacc: testunit
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' acceptance"
-	@sh -c "'$(CURDIR)/scripts/runtest.sh' something_new"
 ``` 
 
-## Environmant variables
+## Environment variables
 
 There are several environment variables that can affect the tests:
 
@@ -157,3 +169,5 @@ When `REMOVE_ORG_VDC_FROM_TEMPLATE` is set, the terraform
 templates will be changed on-the-fly, to comment out the definitions of org and vdc. This will force the test to
 borrow org and vcd from the provider.
 * `VCD_TEST_SUITE_CLEANUP=1` will clean up testing resources that were created in previous test runs. 
+* `TEST_VERBOSE=1` enables verbose output in some tests, such as the list of used tags, or the version
+used in the documentation index.

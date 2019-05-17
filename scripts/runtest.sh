@@ -43,24 +43,37 @@ function check_for_config_file {
         echo "Using configuration file from variable \$VCD_CONFIG"
         config_file=$VCD_CONFIG
     fi
-	if [ ! -f $config_file ]
+    if [ ! -f $config_file ]
     then
-		echo "ERROR: test configuration file $config_file is missing"; \
-		exit 1
-	fi
+        echo "ERROR: test configuration file $config_file is missing"; \
+        exit 1
+    fi
 
 }
 
-function short_test {
-    if [ -n "$VERBOSE" ] 
+function unit_test {
+    if [ -n "$VERBOSE" ]
     then
         echo " go test -i ${TEST} || exit 1"
-	    echo "VCD_SHORT_TEST=1 go test -tags functional -v -timeout 3m ."
+        echo "VCD_SHORT_TEST=1 go test -tags unit -v -timeout 3m ."
     fi
     if [ -z "$DRY_RUN" ]
     then
-	    go test -i ${TEST} || exit 1
-	    VCD_SHORT_TEST=1 go test -tags functional -v -timeout 3m .
+        go test -i ${TEST} || exit 1
+        go test -tags unit -v -timeout 3m .
+    fi
+}
+
+function short_test {
+    if [ -n "$VERBOSE" ]
+    then
+        echo " go test  -i ${TEST} || exit 1"
+        echo "VCD_SHORT_TEST=1 go test -tags functional -v -timeout 3m ."
+    fi
+    if [ -z "$DRY_RUN" ]
+    then
+        go test -i ${TEST} || exit 1
+        VCD_SHORT_TEST=1 go test -tags functional -v -timeout 3m .
     fi
 }
 
@@ -70,16 +83,16 @@ function acceptance_test {
     then
         tags=functional
     fi
-    if [ -n "$VERBOSE" ] 
+    if [ -n "$VERBOSE" ]
     then
         echo "# check for config file"
-	    echo "TF_ACC=1 go test -tags '$tags' -v -timeout 60m ."
+        echo "TF_ACC=1 go test -tags '$tags' -v -timeout 60m ."
     fi
 
     if [ -z "$DRY_RUN" ]
     then
         check_for_config_file
-	    TF_ACC=1 go test -tags "$tags" -v -timeout 60m .
+        TF_ACC=1 go test -tags "$tags" -v -timeout 60m .
     fi
 }
 
@@ -89,20 +102,23 @@ function multiple_test {
     then
         filter='TestAccVcdV.pp.*Multi'
     fi
-    if [ -n "$VERBOSE" ] 
+    if [ -n "$VERBOSE" ]
     then
         echo "# check for config file"
-	    echo "TF_ACC=1 go test -v -timeout 60m -tags 'api multivm multinetwork' -run '$filter' ."
+        echo "TF_ACC=1 go test -v -timeout 60m -tags 'api multivm multinetwork' -run '$filter' ."
     fi
 
     if [ -z "$DRY_RUN" ]
     then
         check_for_config_file
-	    TF_ACC=1 go test -v -timeout 60m -tags 'api multivm multinetwork' -run "$filter" .
+        TF_ACC=1 go test -v -timeout 60m -tags 'api multivm multinetwork' -run "$filter" .
     fi
 }
 
-case $wanted in 
+case $wanted in
+    unit)
+        unit_test
+        ;;
     short)
         short_test
         ;;

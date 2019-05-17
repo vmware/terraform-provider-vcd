@@ -15,10 +15,13 @@ dist:
 install: build
 	@$(CURDIR)/scripts/install-plugin.sh
 
-test: fmtcheck
+testunit: fmtcheck
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' unit"
+
+test: testunit
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' short"
 
-testacc: fmtcheck
+testacc: testunit
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' acceptance"
 
 testmulti: fmtcheck

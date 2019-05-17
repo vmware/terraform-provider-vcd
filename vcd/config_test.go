@@ -18,7 +18,6 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
-	"runtime"
 	"strings"
 	"testing"
 
@@ -113,15 +112,16 @@ provider "vcd" {
   sysorg               = "{{.SysOrg}}"
   org                  = "{{.Org}}"
   allow_unverified_ssl = "{{.AllowInsecure}}"
+  max_retry_timeout    = {{.MaxRetryTimeout}}
   version              = "~> {{.VersionRequired}}"
+  logging              = {{.Logging}}
 }
 
 `
 )
 
 var (
-	// This library major version
-	currentProviderVersion string = getMajorVersion()
+
 	// This is a global variable shared across all tests. It contains
 	// the information from the configuration file.
 	testConfig TestConfig
@@ -177,7 +177,9 @@ func templateFill(tmpl string, data StringMap) string {
 		data["SysOrg"] = testConfig.Provider.SysOrg
 		data["Org"] = testConfig.VCD.Org
 		data["AllowInsecure"] = testConfig.Provider.AllowInsecure
+		data["MaxRetryTimeout"] = testConfig.Provider.MaxRetryTimeout
 		data["VersionRequired"] = currentProviderVersion
+		data["Logging"] = testConfig.Logging.Enabled
 	}
 
 	// Creates a template. The template gets the same name of the calling function, to generate a better
@@ -325,12 +327,6 @@ func getConfigStruct() TestConfig {
 		util.InitLogging()
 	}
 	return configStruct
-}
-
-// Finds the current directory, through the path of this running test
-func getCurrentDir() string {
-	_, currentFilename, _, _ := runtime.Caller(0)
-	return filepath.Dir(currentFilename)
 }
 
 // This function is called before any other test
@@ -582,37 +578,4 @@ func destroySuiteCatalogAndItem(config TestConfig) {
 		fmt.Printf("Catalog item deletion skipped as user defined resource is used or removed with catalog\n")
 	}
 
-}
-
-// Reads the version from the VERSION file in the root directory
-func getMajorVersion() string {
-
-	versionFile := path.Join(getCurrentDir(), "..", "VERSION")
-
-	// Checks whether the VERSION file exists
-	_, err := os.Stat(versionFile)
-	if os.IsNotExist(err) {
-		panic("Could not find VERSION file")
-	}
-
-	// Reads the version from the file
-	versionText, err := ioutil.ReadFile(versionFile)
-	if err != nil {
-		panic(fmt.Errorf("could not read VERSION file %s: %v", versionFile, err))
-	}
-
-	// The version is expected to be in the format v#.#.#
-	// We only need the first two numbers
-	reVersion := regexp.MustCompile(`v(\d+\.\d+)\.\d+`)
-	versionList := reVersion.FindAllStringSubmatch(string(versionText), -1)
-	if versionList == nil || len(versionList) == 0 {
-		panic("empty or non-formatted version found in VERSION file")
-	}
-	if versionList[0] == nil || len(versionList[0]) < 2 {
-		panic("unable to extract major version from VERSION file")
-	}
-	// A successful match will look like
-	// [][]string{[]string{"v2.0.0", "2.0"}}
-	// Where the first element is the full text matched, and the second one is the first captured text
-	return versionList[0][1]
 }
