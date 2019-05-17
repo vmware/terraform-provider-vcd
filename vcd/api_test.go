@@ -4,11 +4,23 @@ package vcd
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
+	"path"
+	"path/filepath"
+	"regexp"
+	"runtime"
 	"testing"
 )
 
-var testingTags = make(map[string]string)
+// These variables are needed by tests running under any tags
+
+var (
+	// Collection of defined tags in the current test run
+	testingTags = make(map[string]string)
+	// This library major version
+	currentProviderVersion string = getMajorVersion()
+)
 
 func tagsHelp(t *testing.T) {
 
@@ -56,7 +68,7 @@ func showTags() {
 		fmt.Println("# Defined tags:")
 	}
 	for k, v := range testingTags {
-		fmt.Printf("# %s (%s)", k, v)
+		fmt.Printf("# %s (%s)\n", k, v)
 	}
 }
 
@@ -70,5 +82,79 @@ func TestTags(t *testing.T) {
 	}
 	if os.Getenv("SHOW_TAGS") != "" {
 		showTags()
+	}
+}
+
+// Finds the current directory, through the path of this running test
+func getCurrentDir() string {
+	_, currentFilename, _, _ := runtime.Caller(0)
+	return filepath.Dir(currentFilename)
+}
+
+// Reads the version from the VERSION file in the root directory
+func getMajorVersion() string {
+
+	versionFile := path.Join(getCurrentDir(), "..", "VERSION")
+
+	// Checks whether the VERSION file exists
+	_, err := os.Stat(versionFile)
+	if os.IsNotExist(err) {
+		panic("Could not find VERSION file")
+	}
+
+	// Reads the version from the file
+	versionText, err := ioutil.ReadFile(versionFile)
+	if err != nil {
+		panic(fmt.Errorf("could not read VERSION file %s: %v", versionFile, err))
+	}
+
+	// The version is expected to be in the format v#.#.#
+	// We only need the first two numbers
+	reVersion := regexp.MustCompile(`v(\d+\.\d+)\.\d+`)
+	versionList := reVersion.FindAllStringSubmatch(string(versionText), -1)
+	if versionList == nil || len(versionList) == 0 {
+		panic("empty or non-formatted version found in VERSION file")
+	}
+	if versionList[0] == nil || len(versionList[0]) < 2 {
+		panic("unable to extract major version from VERSION file")
+	}
+	// A successful match will look like
+	// [][]string{[]string{"v2.0.0", "2.0"}}
+	// Where the first element is the full text matched, and the second one is the first captured text
+	return versionList[0][1]
+}
+
+// Checks that the provider header in index.html.markdown
+// has the version defined in the VERSION file
+func TestProviderVersion(t *testing.T) {
+	indexFile := path.Join(getCurrentDir(), "..", "website", "docs", "index.html.markdown")
+	_, err := os.Stat(indexFile)
+	if os.IsNotExist(err) {
+		fmt.Printf("%s\n", indexFile)
+		panic("Could not find index.html.markdown file")
+	}
+
+	indexText, err := ioutil.ReadFile(indexFile)
+	if err != nil {
+		panic(fmt.Errorf("could not read index file %s: %v", indexFile, err))
+	}
+
+	vcdHeader := `# VMware vCloud Director Provider`
+	expectedText := vcdHeader + ` ` + currentProviderVersion
+	reExpectedVersion := regexp.MustCompile(`(?m)^` + expectedText)
+	reFoundVersion := regexp.MustCompile(`(?m)^` + vcdHeader + ` \d+\.\d+`)
+	if reExpectedVersion.MatchString(string(indexText)) {
+		t.Logf("Found expected version <%s> in index.html.markdown", currentProviderVersion)
+	} else {
+		foundList := reFoundVersion.FindAllStringSubmatch(string(indexText), -1)
+		foundText := ""
+		if foundList != nil && len(foundList) > 0 && len(foundList[0]) > 0 {
+			foundText = foundList[0][0]
+			t.Logf("Expected text: <%s>", expectedText)
+			t.Logf("Found text   : <%s> in index.html.markdown", foundText)
+		} else {
+			t.Logf("No version found in index.html.markdown")
+		}
+		t.Fail()
 	}
 }
