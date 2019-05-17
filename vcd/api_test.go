@@ -13,8 +13,11 @@ import (
 	"testing"
 )
 
-// These variables are needed by tests running under any tags
+const (
+	testVerbose = "TEST_VERBOSE"
+)
 
+// These variables are needed by tests running under any tags
 var (
 	// Collection of defined tags in the current test run
 	testingTags = make(map[string]string)
@@ -33,7 +36,7 @@ At least one of the following tags should be defined:
 
    * ALL :       Runs all the tests
    * functional: Runs all the acceptance tests
-   * unit:       Runs unit tests that don't need a live vCD (currently unused, but we plan to)
+   * unit:       Runs unit tests that don't need a live vCD
 
    * catalog:    Runs catalog related tests (also catalog_item, media)
    * disk:       Runs disk related tests
@@ -46,9 +49,15 @@ At least one of the following tags should be defined:
 
 Examples:
 
-go test -tags functional -v -timeout=45m .
-go test -tags catalog -v -timeout=15m .
-go test -tags "org vdc" -v -timeout=5m .
+  go test -tags unit -v -timeout=45m .
+  go test -tags functional -v -timeout=45m .
+  go test -tags catalog -v -timeout=15m .
+  go test -tags "org vdc" -v -timeout=5m .
+
+Tagged tests can also run using make
+  make testunit
+  make testacc
+  make testcatalog
 `
 	t.Logf(helpText)
 }
@@ -80,7 +89,7 @@ func TestTags(t *testing.T) {
 		t.Fail()
 		return
 	}
-	if os.Getenv("SHOW_TAGS") != "" {
+	if os.Getenv(testVerbose) != "" {
 		showTags()
 	}
 }
@@ -122,39 +131,4 @@ func getMajorVersion() string {
 	// [][]string{[]string{"v2.0.0", "2.0"}}
 	// Where the first element is the full text matched, and the second one is the first captured text
 	return versionList[0][1]
-}
-
-// Checks that the provider header in index.html.markdown
-// has the version defined in the VERSION file
-func TestProviderVersion(t *testing.T) {
-	indexFile := path.Join(getCurrentDir(), "..", "website", "docs", "index.html.markdown")
-	_, err := os.Stat(indexFile)
-	if os.IsNotExist(err) {
-		fmt.Printf("%s\n", indexFile)
-		panic("Could not find index.html.markdown file")
-	}
-
-	indexText, err := ioutil.ReadFile(indexFile)
-	if err != nil {
-		panic(fmt.Errorf("could not read index file %s: %v", indexFile, err))
-	}
-
-	vcdHeader := `# VMware vCloud Director Provider`
-	expectedText := vcdHeader + ` ` + currentProviderVersion
-	reExpectedVersion := regexp.MustCompile(`(?m)^` + expectedText)
-	reFoundVersion := regexp.MustCompile(`(?m)^` + vcdHeader + ` \d+\.\d+`)
-	if reExpectedVersion.MatchString(string(indexText)) {
-		t.Logf("Found expected version <%s> in index.html.markdown", currentProviderVersion)
-	} else {
-		foundList := reFoundVersion.FindAllStringSubmatch(string(indexText), -1)
-		foundText := ""
-		if foundList != nil && len(foundList) > 0 && len(foundList[0]) > 0 {
-			foundText = foundList[0][0]
-			t.Logf("Expected text: <%s>", expectedText)
-			t.Logf("Found text   : <%s> in index.html.markdown", foundText)
-		} else {
-			t.Logf("No version found in index.html.markdown")
-		}
-		t.Fail()
-	}
 }
