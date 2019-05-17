@@ -112,7 +112,9 @@ provider "vcd" {
   sysorg               = "{{.SysOrg}}"
   org                  = "{{.Org}}"
   allow_unverified_ssl = "{{.AllowInsecure}}"
+  max_retry_timeout    = {{.MaxRetryTimeout}}
   version              = "~> {{.VersionRequired}}"
+  logging              = {{.Logging}}
 }
 
 `
@@ -175,7 +177,9 @@ func templateFill(tmpl string, data StringMap) string {
 		data["SysOrg"] = testConfig.Provider.SysOrg
 		data["Org"] = testConfig.VCD.Org
 		data["AllowInsecure"] = testConfig.Provider.AllowInsecure
+		data["MaxRetryTimeout"] = testConfig.Provider.MaxRetryTimeout
 		data["VersionRequired"] = currentProviderVersion
+		data["Logging"] = testConfig.Logging.Enabled
 	}
 
 	// Creates a template. The template gets the same name of the calling function, to generate a better
