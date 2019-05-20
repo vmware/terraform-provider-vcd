@@ -25,13 +25,14 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 		"busSubType":         "lsilogicsas",
 		"storageProfileName": "*",
 		"ResourceName":       resourceName,
+		"Tags":               "disk",
 	}
 
+	configText := templateFill(testAccCheckVcdIndependentDiskBasic, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	configText := templateFill(testAccCheckVcdIndependentDiskBasic, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 

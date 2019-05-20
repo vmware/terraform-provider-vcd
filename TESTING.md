@@ -5,6 +5,7 @@
 - [Running tests](#running-tests)
 - [Tests split by feature set](#Tests-split-by-feature-set)
 - [Adding new tests](#Adding-new-tests)
+- [Binary testing](#Binary-testing)
 - [Environment variables](#Environment-variables)
 
 ## Running tests
@@ -29,7 +30,7 @@ See the file `./vcd/sample_vcd_test_config.json` for an example of which variabl
 Each test in the suite will write a Terraform configuration file inside `./vcd/test-artifacts`, named after the
 tests. For example: `vcd.TestAccVcdNetworkDirect.tf`
 
-The test suite will try to minimize the amount of resources to create. If no catalog and vApp 
+The test suite will try to minimize the amount of resources to create. If no catalog and vApp
 template (`catalogItem`) are defined in the configuration file, new ones will be created and removed at the end of
 the test. You can choose to preserve catalog and vApp template across runs (use the `preserve` field in the
 configuration file).
@@ -70,13 +71,13 @@ $ go test -v .
          # -----------------------------------------------------
          # Tags are required to run the tests
          # -----------------------------------------------------
- 
+
          At least one of the following tags should be defined:
- 
+
             * ALL :       Runs all the tests
             * functional: Runs all the acceptance tests
             * unit:       Runs unit tests that don't need a live vCD
- 
+
             * catalog:    Runs catalog related tests (also catalog_item, media)
             * disk:       Runs disk related tests
             * network:    Runs network related tests
@@ -85,14 +86,14 @@ $ go test -v .
             * vapp:       Runs vapp related tests
             * vdc:        Runs vdc related tests
             * vm:         Runs vm related tests
- 
+
          Examples:
- 
+
            go test -tags unit -v -timeout=45m .
            go test -tags functional -v -timeout=45m .
            go test -tags catalog -v -timeout=15m .
            go test -tags "org vdc" -v -timeout=5m .
- 
+
          Tagged tests can also run using make
            make testunit
            make testacc
@@ -152,7 +153,49 @@ For example, the unit test run as a command before the acceptance test:
 ```
 testacc: testunit
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' acceptance"
-``` 
+```
+
+
+## Binary testing
+
+By *binary testing* we mean the tests that run using Terraform binary executable, as opposed to running the test through the Go framework.
+This test runs the same tasks that run in the acceptance test, but instead of running them directly, they are fed to the
+terraform tool through a shell script, and for every test we run
+
+* `terraform init`
+* `terraform plan`
+* `terraform apply -auto-approve`
+* `terraform destroy -auto-approve`
+
+The test runs from GNUMakefile, using
+
+```bash
+make test-binary
+```
+
+All the tests run unattended, stopping only if there is an error.
+
+It is possible to run the tests with manual control, by preparing them and then running the test script from the `tests-artifacts` directory:
+
+```bash
+make test-binary-prepare
+[...]
+
+cd ./vcd/test-artifacts
+./test-binary.sh help
+
+# OR
+./test-binary.sh pause verbose
+
+# OR
+./test-binary.sh pause verbose tags "catalog gateway"
+```
+
+The "pause" option will stop the test after every call to the terraform tool, waiting for user input.
+
+When the test runs unattended, it is possible to stop it gracefully by creating a file named `pause.txt` inside the
+`test-artifacts` directory. When such file exists, the test execution stops at the next `terraform` command, waiting
+for user input.
 
 ## Environment variables
 
@@ -161,13 +204,13 @@ There are several environment variables that can affect the tests:
 * `TF_ACC=1` enables the acceptance tests. It is also set when you run `make testacc`.
 * `GOVCD_DEBUG=1` enables debug output of the test suite
 * `VCD_SKIP_TEMPLATE_WRITING=1` skips the production of test templates into `./vcd/test-artifacts`
-* `ADD_PROVIDER=1` Adds the full provider definition to the snippets inside `./vcd/test-artifacts`. 
+* `ADD_PROVIDER=1` Adds the full provider definition to the snippets inside `./vcd/test-artifacts`.
    **WARNING**: the provider definition includes your vCloud Director credentials.
 * `VCD_CONFIG=FileName` sets the file name for the test configuration file.
 * `REMOVE_ORG_VDC_FROM_TEMPLATE` is a quick way of enabling an alternate testing mode:
 When `REMOVE_ORG_VDC_FROM_TEMPLATE` is set, the terraform
 templates will be changed on-the-fly, to comment out the definitions of org and vdc. This will force the test to
 borrow org and vcd from the provider.
-* `VCD_TEST_SUITE_CLEANUP=1` will clean up testing resources that were created in previous test runs. 
+* `VCD_TEST_SUITE_CLEANUP=1` will clean up testing resources that were created in previous test runs.
 * `TEST_VERBOSE=1` enables verbose output in some tests, such as the list of used tags, or the version
 used in the documentation index.

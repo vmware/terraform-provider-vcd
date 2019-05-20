@@ -19,11 +19,7 @@ func TestAccVcdOrgBasic(t *testing.T) {
 	var e govcd.Org
 	var params = StringMap{
 		"OrgName": orgNameTestAccVcdOrgBasic,
-	}
-
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
+		"Tags":    "org",
 	}
 
 	if !usingSysAdmin() {
@@ -32,6 +28,10 @@ func TestAccVcdOrgBasic(t *testing.T) {
 	}
 
 	configText := templateFill(testAccCheckVcdOrg_basic, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{

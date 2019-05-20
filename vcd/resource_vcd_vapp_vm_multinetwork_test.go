@@ -17,10 +17,6 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 		netVmName1  string = t.Name() + "VM"
 	)
 
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
 		"Vdc":         testConfig.VCD.Vdc,
@@ -29,9 +25,14 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 		"CatalogItem": testSuiteCatalogOVAItem,
 		"VAppName":    netVappName,
 		"VMName":      netVmName1,
+		"Tags":        "vapp vm",
 	}
 
 	configTextVM := templateFill(testAccCheckVcdVAppVmNetworkVM, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 	resource.Test(t, resource.TestCase{

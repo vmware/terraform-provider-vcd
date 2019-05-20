@@ -35,11 +35,6 @@ const (
 )
 
 func TestAccVcdNetworkIsolatedStatic(t *testing.T) {
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
 	var def = networkDef{
 		name:           isolatedStaticNetwork,
 		gateway:        "192.168.2.1",
@@ -53,10 +48,6 @@ func TestAccVcdNetworkIsolatedStatic(t *testing.T) {
 }
 
 func TestAccVcdNetworkIsolatedDhcp(t *testing.T) {
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 	var def = networkDef{
 		name:           isolatedDhcpNetwork,
 		gateway:        "192.168.2.1",
@@ -69,10 +60,6 @@ func TestAccVcdNetworkIsolatedDhcp(t *testing.T) {
 }
 
 func TestAccVcdNetworkIsolatedMixed(t *testing.T) {
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 	var def = networkDef{
 		name:            isolatedMixedNetwork,
 		gateway:         "192.168.2.1",
@@ -87,11 +74,6 @@ func TestAccVcdNetworkIsolatedMixed(t *testing.T) {
 }
 
 func TestAccVcdNetworkRoutedStatic(t *testing.T) {
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
 	var def = networkDef{
 		name:           routedNetworkStatic,
 		gateway:        "10.10.102.1",
@@ -104,11 +86,6 @@ func TestAccVcdNetworkRoutedStatic(t *testing.T) {
 }
 
 func TestAccVcdNetworkRoutedDhcp(t *testing.T) {
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
 	var def = networkDef{
 		name:           routedNetworkDhcp,
 		gateway:        "10.10.102.1",
@@ -121,10 +98,6 @@ func TestAccVcdNetworkRoutedDhcp(t *testing.T) {
 }
 
 func TestAccVcdNetworkRoutedMixed(t *testing.T) {
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 
 	var def = networkDef{
 		name:            routedNetworkMixed,
@@ -140,10 +113,6 @@ func TestAccVcdNetworkRoutedMixed(t *testing.T) {
 }
 
 func TestAccVcdNetworkDirect(t *testing.T) {
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 	if !usingSysAdmin() {
 		t.Skip("TestAccVcdNetworkDirect requires system admin privileges")
 		return
@@ -175,9 +144,15 @@ func runTest(def networkDef, t *testing.T) {
 		"EndIpAddress2":   def.endIpAddress2,
 		"ExternalNetwork": def.externalNetwork,
 		"FuncName":        networkName,
+		"Tags":            "network",
 	}
 	var network govcd.OrgVDCNetwork
 	configText := templateFill(def.configText, params)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	// steps for external network

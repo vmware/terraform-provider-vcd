@@ -17,10 +17,6 @@ var vappNameAllocated = "TestAccVcdVAppVappAllocated"
 func TestAccVcdVApp_PowerOff(t *testing.T) {
 	var vapp govcd.VApp
 
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 	var params = StringMap{
 		"Org":               testConfig.VCD.Org,
 		"Vdc":               testConfig.VCD.Vdc,
@@ -33,12 +29,17 @@ func TestAccVcdVApp_PowerOff(t *testing.T) {
 		"VappName":          vappName,
 		"VappNameAllocated": vappNameAllocated,
 		"FuncName":          "TestAccCheckVcdVApp_basic",
+		"Tags":              "vapp",
 	}
 	configText := templateFill(testAccCheckVcdVApp_basic, params)
 
 	params["FuncName"] = "TestAccCheckVcdVApp_powerOff"
 
 	configTextPoweroff := templateFill(testAccCheckVcdVApp_powerOff, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	debugPrintf("#[DEBUG] CONFIGURATION basic: %s\n", configText)
 	debugPrintf("#[DEBUG] CONFIGURATION poweroff: %s\n", configTextPoweroff)
 	resource.Test(t, resource.TestCase{

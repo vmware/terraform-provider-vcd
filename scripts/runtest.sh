@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+scripts_dir=$(dirname $0)
+cd $scripts_dir
+scripts_dir=$PWD
+cd -
 
 if [ ! -d ./vcd ]
 then
@@ -35,6 +39,8 @@ fi
 echo "==> Run test $wanted"
 
 cd vcd
+
+source_dir=$PWD
 
 function check_for_config_file {
     config_file=vcd_test_config.json
@@ -115,11 +121,47 @@ function multiple_test {
     fi
 }
 
+function binary_test {
+    cd $source_dir
+    if [ ! -d test-artifacts ]
+    then
+        echo "test-artifacts not found"
+        exit 1
+    fi
+    cp $scripts_dir/test-binary.sh test-artifacts/test-binary.sh
+    chmod +x test-artifacts/test-binary.sh
+    cd test-artifacts
+    if [ -f already_run.txt ]
+    then
+        rm -f already_run.txt
+    fi
+    if [ -n "$NORUN" ]
+    then
+        pwd
+        ls -l
+        exit
+    fi
+    ./test-binary.sh
+}
+
 case $wanted in
+    binary-prepare)
+        export NORUN=1
+        binary_test
+        ;;
+    binary)
+        binary_test
+        ;;
     unit)
         unit_test
         ;;
     short)
+        export VCD_SKIP_TEMPLATE_WRITING=1
+        short_test
+        ;;
+    short-provider)
+        unset VCD_SKIP_TEMPLATE_WRITING
+        export VCD_ADD_PROVIDER=1
         short_test
         ;;
     acceptance)

@@ -36,13 +36,14 @@ func TestAccVcdMediaInsertBasic(t *testing.T) {
 		"InsertMediaName":  TestAccVcdMediaInsert,
 		"NetworkName":      TestAccVcdVAppVmNetForInsert,
 		"EjectForce":       true,
+		"Tags":             "catalog",
 	}
 
+	configText := templateFill(testAccCheckVcdInsertEjectBasic, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	configText := templateFill(testAccCheckVcdInsertEjectBasic, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{

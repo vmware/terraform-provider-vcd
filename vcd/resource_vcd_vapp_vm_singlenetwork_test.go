@@ -22,10 +22,6 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 		netVmName1  string = t.Name()
 	)
 
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 	var params = StringMap{
 		"Org":           testConfig.VCD.Org,
 		"Vdc":           testConfig.VCD.Vdc,
@@ -35,6 +31,7 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 		"VMNetworkName": "singlenic-net",
 		"VAppName":      netVappName,
 		"IP":            "allocated",
+		"Tags":          "vapp vm",
 	}
 
 	params["FuncName"] = t.Name() + "-NetOnly"
@@ -44,6 +41,7 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 	configTextNetworkVapp := templateFill(testAccCheckVcdVAppVmSingleNICNetworkVapp, params)
 
 	// allocated
+	params["FuncName"] = t.Name() + "-allocated"
 	netVmNameAllocated := netVmName1 + "allocated"
 	params["VMName"] = netVmNameAllocated
 	configTextStep0 := templateFill(testAccCheckVcdVAppVmSingleNICNetwork, params)
@@ -87,6 +85,10 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 	params["VMName"] = netVmNameBothNetworks
 	params["FuncName"] = t.Name() + "-step10"
 	configTextStep10 := templateFill(testAccCheckVcdVAppVmSingleNICvAppAndVdc, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 
 	debugPrintf("#[DEBUG] CONFIGURATION (allocated): %s\n", configTextStep0)
 	debugPrintf("#[DEBUG] CONFIGURATION (dhcp): %s\n", configTextStep2)

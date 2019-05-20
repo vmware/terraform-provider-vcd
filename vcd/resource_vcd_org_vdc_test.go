@@ -26,6 +26,8 @@ func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
 		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+		"Tags":                      "vdc",
+		"FuncName":                  "TestAccVcdOrgVdcReservationPool",
 	}
 	runOrgVdcTest(t, params, allocationModel)
 }
@@ -42,6 +44,8 @@ func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
 		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+		"Tags":                      "vdc",
+		"FuncName":                  "TestAccVcdOrgVdcAllocationPool",
 	}
 	runOrgVdcTest(t, params, allocationModel)
 }
@@ -59,6 +63,8 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
 		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+		"Tags":                      "vdc",
+		"FuncName":                  "TestAccVcdOrgVdcAllocationVapp",
 	}
 	runOrgVdcTest(t, params, allocationModel)
 }
@@ -86,17 +92,16 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 
 	var vdc govcd.Vdc
 
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
 	if !usingSysAdmin() {
 		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
 		return
 	}
 
 	configText := templateFill(testAccCheckVcdVdc_basic, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{

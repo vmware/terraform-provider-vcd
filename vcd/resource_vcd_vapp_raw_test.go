@@ -14,10 +14,6 @@ import (
 func TestAccVcdVAppRaw_Basic(t *testing.T) {
 	var vapp govcd.VApp
 
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
 		"Vdc":         testConfig.VCD.Vdc,
@@ -27,8 +23,13 @@ func TestAccVcdVAppRaw_Basic(t *testing.T) {
 		"CatalogItem": testSuiteCatalogOVAItem,
 		"VappName":    "TestAccVcdVAppRawVapp",
 		"VmName":      "TestAccVcdVAppRawVm",
+		"Tags":        "vapp",
 	}
 	configText := templateFill(testAccCheckVcdVAppRaw_basic, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

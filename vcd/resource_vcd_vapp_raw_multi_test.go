@@ -17,11 +17,6 @@ import (
 func TestAccVcdVAppRawMulti(t *testing.T) {
 	var vapp govcd.VApp
 
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
 		"Vdc":         testConfig.VCD.Vdc,
@@ -33,8 +28,13 @@ func TestAccVcdVAppRawMulti(t *testing.T) {
 		"VmName1":     "TestAccVcdVAppRawVm1",
 		"VmName2":     "TestAccVcdVAppRawVm2",
 		"VmName3":     "TestAccVcdVAppRawVm3",
+		"Tags":        "multivm",
 	}
 	configText := templateFill(testAccCheckVcdVAppRawMulti, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
