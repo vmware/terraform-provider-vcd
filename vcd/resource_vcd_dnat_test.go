@@ -268,6 +268,7 @@ func TestAccVcdDNAT_ForBackCompability(t *testing.T) {
 		"EdgeGateway": testConfig.Networking.EdgeGateway,
 		"ExternalIp":  testConfig.Networking.ExternalIp,
 		"DnatName":    dnatName,
+		"Tags":        "gateway",
 	}
 
 	configText := templateFill(testAccCheckVcdDnat_ForBackCompability, params)
