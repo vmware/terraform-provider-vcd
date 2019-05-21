@@ -175,7 +175,7 @@ make test-binary
 
 All the tests run unattended, stopping only if there is an error.
 
-It is possible to run the tests with manual control, by preparing them and then running the test script from the `tests-artifacts` directory:
+It is possible to customise running of the binary tests, by preparing them and then running the test script from the `tests-artifacts` directory:
 
 ```bash
 make test-binary-prepare
@@ -193,7 +193,7 @@ cd ./vcd/test-artifacts
 
 The "pause" option will stop the test after every call to the terraform tool, waiting for user input.
 
-When the test runs unattended, it is possible to stop it gracefully by creating a file named `pause.txt` inside the
+When the test runs unattended, it is possible to stop it gracefully by creating a file named `pause` inside the
 `test-artifacts` directory. When such file exists, the test execution stops at the next `terraform` command, waiting
 for user input.
 

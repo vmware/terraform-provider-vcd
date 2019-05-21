@@ -4,7 +4,7 @@ runtime_dir=$(dirname $0)
 cd $runtime_dir
 runtime_dir=$PWD
 cd -
-pause_file=$runtime_dir/pause.txt
+pause_file=$runtime_dir/pause
 dash_line="# ---------------------------------------------------------"
 
 function get_help {
@@ -24,7 +24,7 @@ function get_help {
     echo "test-binary.sh t 'catalog gateway' c p"
     echo "test-binary.sh tags vapp dry"
     echo ""
-    echo "## During the execution, if you create a file named 'pause.txt',"
+    echo "## During the execution, if you create a file named 'pause',"
     echo "## the program will pause at the next 'terraform' command"
     exit 0
 }
