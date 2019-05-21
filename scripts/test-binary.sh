@@ -17,6 +17,8 @@ function get_help {
     echo "  d | dry                Dry-run: show commands without executing them"
     echo "  v | verbose            Gives more info"
     echo ""
+    echo "If no options are given, it runs all the tests in test-artifacts"
+    echo ""
     echo "Examples"
     echo "test-binary.sh tags 'catalog gateway' clear pause"
     echo "test-binary.sh t 'catalog gateway' c p"
@@ -162,7 +164,7 @@ do
     fi
     unset will_run
     # No tags were requested: we will run every file
-    if [ "$tags" == "" ]
+    if [ "$tags" == ""  -o "$tags" == "ALL" ]
     then
         will_run=1
     else
@@ -170,7 +172,7 @@ do
         do
             for wtag in $tags
             do
-                if [ "$utag" == "$wtag" -o "$utag" == "ALL" ]
+                if [ "$utag" == "$wtag" ]
                 then
                     echo_verbose "Using tag $utag"
                     will_run=1
