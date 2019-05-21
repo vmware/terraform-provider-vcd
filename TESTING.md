@@ -175,7 +175,7 @@ make test-binary
 
 All the tests run unattended, stopping only if there is an error.
 
-It is possible to customise running of the binary tests, by preparing them and then running the test script from the `tests-artifacts` directory:
+It is possible to customise running of the binary tests by preparing them and then running the test script from the `tests-artifacts` directory:
 
 ```bash
 make test-binary-prepare
