@@ -26,13 +26,14 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 		"OvaPath":         testConfig.Ova.OvaPath,
 		"UploadPieceSize": testConfig.Ova.UploadPieceSize,
 		"UploadProgress":  testConfig.Ova.UploadProgress,
+		"Tags":            "catalog",
 	}
 
+	configText := templateFill(testAccCheckVcdCatalogItemBasic, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	configText := templateFill(testAccCheckVcdCatalogItemBasic, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{

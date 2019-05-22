@@ -18,10 +18,6 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 	var vapp govcd.VApp
 	var vm govcd.VM
 
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 	var params = StringMap{
 		"Org":                testConfig.VCD.Org,
 		"Vdc":                testConfig.VCD.Vdc,
@@ -37,9 +33,14 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 		"busSubType":         "lsilogicsas",
 		"storageProfileName": "*",
 		"diskResourceName":   diskResourceName,
+		"Tags":               "vapp vm",
 	}
 
 	configText := templateFill(testAccCheckVcdVAppVm_basic, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{

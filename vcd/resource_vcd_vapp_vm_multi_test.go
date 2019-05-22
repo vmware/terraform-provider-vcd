@@ -26,10 +26,6 @@ func TestAccVcdVAppVmMulti(t *testing.T) {
 		vmName3           string = "TestAccVcdVAppVmVm3"
 	)
 
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 	var params = StringMap{
 		"Org":                testConfig.VCD.Org,
 		"Vdc":                testConfig.VCD.Vdc,
@@ -47,9 +43,14 @@ func TestAccVcdVAppVmMulti(t *testing.T) {
 		"busSubType":         "lsilogicsas",
 		"storageProfileName": "*",
 		"diskResourceName":   diskResourceNameM,
+		"Tags":               "multivm",
 	}
 
 	configText := templateFill(testAccCheckVcdVAppVmMulti, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

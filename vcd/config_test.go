@@ -18,8 +18,10 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
@@ -101,10 +103,17 @@ var (
 )
 
 const (
+	testArtifactsDirectory = "test-artifacts"
 	// Warning message used for all tests
 	acceptanceTestsSkipped = "Acceptance tests skipped unless env 'TF_ACC' set"
 	// This template will be added to test resource snippets on demand
 	providerTemplate = `
+# tags {{.Tags}}
+# dirname {{.DirName}}
+# comment {{.Comment}}
+# date {{.Timestamp}}
+# file {{.CallerFileName}}
+#
 provider "vcd" {
   user                 = "{{.User}}"
   password             = "{{.Password}}"
@@ -128,17 +137,10 @@ var (
 
 	// Enables the short test (used by "make test")
 	vcdShortTest bool = os.Getenv("VCD_SHORT_TEST") != ""
-)
 
-// Checks if a directory exists
-func dirExists(filename string) bool {
-	f, err := os.Stat(filename)
-	if os.IsNotExist(err) {
-		return false
-	}
-	fileMode := f.Mode()
-	return fileMode.IsDir()
-}
+	// Keeps track of test artifact names, to avoid duplicates
+	testArtifactNames = make(map[string]string)
+)
 
 // Returns true if the current configuration uses a system administrator for connections
 func usingSysAdmin() bool {
@@ -152,8 +154,11 @@ func templateFill(tmpl string, data StringMap) string {
 
 	// Gets the name of the function containing the template
 	caller := callFuncName()
+	realCaller := caller
 	// Removes the full path to the function, leaving only package + function name
 	caller = filepath.Base(caller)
+
+	_, callerFileName, _, _ := runtime.Caller(1)
 
 	// If the call comes from a function that does not have a good descriptive name,
 	// (for example when it's an auxiliary function that builds the template but does not
@@ -181,6 +186,19 @@ func templateFill(tmpl string, data StringMap) string {
 		data["VersionRequired"] = currentProviderVersion
 		data["Logging"] = testConfig.Logging.Enabled
 	}
+	if _, ok := data["Tags"]; !ok {
+		data["Tags"] = "ALL"
+	}
+	if _, ok := data["Comment"]; !ok {
+		data["Comment"] = ""
+	}
+	if _, ok := data["DirName"]; !ok {
+		data["DirName"] = ""
+	}
+	if _, ok := data["CallerFileName"]; !ok {
+		data["CallerFileName"] = callerFileName
+	}
+	data["Timestamp"] = time.Now().Format("2006-01-02 15:04")
 
 	// Creates a template. The template gets the same name of the calling function, to generate a better
 	// error message in case of failure
@@ -213,14 +231,19 @@ func templateFill(tmpl string, data StringMap) string {
 		writeStr = buf2
 	}
 	if TemplateWriting {
-		testArtifacts := "test-artifacts"
-		if !dirExists(testArtifacts) {
-			err := os.Mkdir(testArtifacts, 0755)
+		if !dirExists(testArtifactsDirectory) {
+			err := os.Mkdir(testArtifactsDirectory, 0755)
 			if err != nil {
-				panic(fmt.Errorf("error creating directory %s: %s", testArtifacts, err))
+				panic(fmt.Errorf("error creating directory %s: %s", testArtifactsDirectory, err))
 			}
 		}
-		resourceFile := path.Join(testArtifacts, caller) + ".tf"
+		resourceFile := path.Join(testArtifactsDirectory, caller) + ".tf"
+		storedFunc, alreadyWritten := testArtifactNames[resourceFile]
+		if alreadyWritten {
+			panic(fmt.Sprintf("File %s was already used from function %s", resourceFile, storedFunc))
+		}
+		testArtifactNames[resourceFile] = realCaller
+
 		file, err := os.Create(resourceFile)
 		if err != nil {
 			panic(fmt.Errorf("error creating file %s: %s", resourceFile, err))
@@ -240,6 +263,22 @@ func templateFill(tmpl string, data StringMap) string {
 	return string(writeStr)
 }
 
+func getConfigFileName() string {
+	// First, we see whether the user has indicated a custom configuration file
+	// from a non-standard location
+	config := os.Getenv("VCD_CONFIG")
+
+	// If there was no custom file, we look for the default one
+	if config == "" {
+		config = getCurrentDir() + "/vcd_test_config.json"
+	}
+	// Looks if the configuration file exists before attempting to read it
+	if fileExists(config) {
+		return config
+	}
+	return ""
+}
+
 // Reads the configuration file and returns its contents as a TestConfig structure
 // The default file is called vcd_test_config.json in the same directory where
 // the test files are.
@@ -247,20 +286,12 @@ func templateFill(tmpl string, data StringMap) string {
 // VCD_CONFIG
 // This function doesn't return an error. It panics immediately because its failure
 // will prevent the whole test suite from running
-func getConfigStruct() TestConfig {
-	// First, we see whether the user has indicated a custom configuration file
-	// from a non-standard location
-	config := os.Getenv("VCD_CONFIG")
+func getConfigStruct(config string) TestConfig {
 	var configStruct TestConfig
 
-	// If there was no custom file, we look for the default one
-	if config == "" {
-		config = getCurrentDir() + "/vcd_test_config.json"
-	}
 	// Looks if the configuration file exists before attempting to read it
-	_, err := os.Stat(config)
-	if os.IsNotExist(err) {
-		panic(fmt.Errorf("configuration file %s not found: %s", config, err))
+	if config == "" {
+		panic(fmt.Errorf("configuration file %s not found", config))
 	}
 	jsonFile, err := ioutil.ReadFile(config)
 	if err != nil {
@@ -326,6 +357,31 @@ func getConfigStruct() TestConfig {
 		}
 		util.InitLogging()
 	}
+
+	if configStruct.Ova.OvaPath != "" {
+		ovaPath, err := filepath.Abs(configStruct.Ova.OvaPath)
+		if err != nil {
+			panic("error retrieving absolute path for OVA path " + configStruct.Ova.OvaPath)
+		}
+		configStruct.Ova.OvaPath = ovaPath
+	}
+	if configStruct.Media.MediaPath != "" {
+		mediaPath, err := filepath.Abs(configStruct.Media.MediaPath)
+		if err != nil {
+			panic("error retrieving absolute path for Media path " + configStruct.Media.MediaPath)
+		}
+		configStruct.Media.MediaPath = mediaPath
+	}
+
+	// Partial duplication of actions performed in createSuiteCatalogAndItem
+	// It is needed when we run the binary tests without TEST_ACC
+	// TODO: convert the actions from createSuiteCatalogAndItem into a terraform config file
+	if configStruct.VCD.Catalog.Name != "" {
+		testSuiteCatalogName = configStruct.VCD.Catalog.Name
+	}
+	if configStruct.VCD.Catalog.CatalogItem != "" {
+		testSuiteCatalogOVAItem = configStruct.VCD.Catalog.CatalogItem
+	}
 	return configStruct
 }
 
@@ -335,8 +391,11 @@ func TestMain(m *testing.M) {
 	// or the whole suite will fail if it is not found.
 	// If VCD_SHORT_TEST is defined, it means that "make test" is called,
 	// and we won't really run any tests involving vcd connections.
+	configFile := getConfigFileName()
+	if configFile != "" {
+		testConfig = getConfigStruct(configFile)
+	}
 	if !vcdShortTest {
-		testConfig = getConfigStruct()
 
 		// Provider initialization moved here from provider_test.init
 		testAccProvider = Provider().(*schema.Provider)
@@ -384,16 +443,14 @@ func createSuiteCatalogAndItem(config TestConfig) {
 	} else if testConfig.VCD.Catalog.CatalogItem == "" {
 		fmt.Printf("Downloading OVA. File will be saved as: %s\n", ovaFilePath)
 
-		if _, err := os.Stat(ovaFilePath); err == nil {
+		if fileExists(ovaFilePath) {
 			fmt.Printf("File already exists. Skipping downloading\n")
-		} else if os.IsNotExist(err) {
+		} else {
 			err := downloadFile(ovaFilePath, testConfig.Ova.OvaDownloadUrl)
 			if err != nil {
 				panic(err)
 			}
 			fmt.Printf("OVA downloaded\n")
-		} else {
-			panic(err)
 		}
 	}
 

@@ -15,6 +15,14 @@ dist:
 install: build
 	@$(CURDIR)/scripts/install-plugin.sh
 
+test-binary-prepare: install
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider"
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' binary-prepare"
+
+test-binary: install
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider"
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' binary"
+
 testunit: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' unit"
 

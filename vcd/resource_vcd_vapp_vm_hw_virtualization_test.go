@@ -15,10 +15,6 @@ func TestAccVcdVAppVm_HardwareVirtualization(t *testing.T) {
 	var vapp govcd.VApp
 	var vm govcd.VM
 
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
 		"Vdc":         testConfig.VCD.Vdc,
@@ -28,6 +24,7 @@ func TestAccVcdVAppVm_HardwareVirtualization(t *testing.T) {
 		"CatalogItem": testSuiteCatalogOVAItem,
 		"VappName":    vappNameHwVirt,
 		"VmName":      vmNameHwVirt,
+		"Tags":        "vapp vm",
 	}
 
 	configTextStep0 := templateFill(testAccCheckVcdVAppVm_hardwareVirtualization, params)
@@ -36,6 +33,10 @@ func TestAccVcdVAppVm_HardwareVirtualization(t *testing.T) {
 	params["FuncName"] = t.Name() + "-step1"
 	configTextStep1 := templateFill(testAccCheckVcdVAppVm_hardwareVirtualization, params)
 
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextStep0)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

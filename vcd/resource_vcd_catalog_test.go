@@ -21,13 +21,14 @@ func TestAccVcdCatalogBasic(t *testing.T) {
 		"Org":         testConfig.VCD.Org,
 		"CatalogName": TestAccVcdCatalog,
 		"Description": TestAccVcdCatalogDescription,
+		"Tags":        "catalog",
 	}
 
+	configText := templateFill(testAccCheckVcdCatalogBasic, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	configText := templateFill(testAccCheckVcdCatalogBasic, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{

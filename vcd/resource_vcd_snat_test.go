@@ -15,10 +15,6 @@ var orgVdcNetworkNameForSnat = "TestAccVcdDNAT_BasicNetworkForSnat"
 var startIpAddress = "10.10.102.51"
 
 func TestAccVcdSNAT_Basic(t *testing.T) {
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 	if testConfig.Networking.ExternalIp == "" {
 		t.Skip("Variable networking.extarnalIp must be set to run SNAT tests")
 		return
@@ -38,9 +34,14 @@ func TestAccVcdSNAT_Basic(t *testing.T) {
 		"Gateway":           "10.10.102.1",
 		"StartIpAddress":    startIpAddress,
 		"EndIpAddress":      "10.10.102.100",
+		"Tags":              "gateway",
 	}
 
 	configText := templateFill(testAccCheckVcdSnat_basic, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
@@ -156,6 +157,7 @@ func TestAccVcdSNAT_BackCompability(t *testing.T) {
 		"ExternalIp":  testConfig.Networking.ExternalIp,
 		"SnatName":    snatName,
 		"LocalIp":     testConfig.Networking.InternalIp,
+		"Tags":        "gateway",
 	}
 
 	configText := templateFill(testAccCheckVcdSnat_forBackCompability, params)

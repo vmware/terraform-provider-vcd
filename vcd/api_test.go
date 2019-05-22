@@ -94,6 +94,26 @@ func TestTags(t *testing.T) {
 	}
 }
 
+// Checks if a file exists
+func fileExists(filename string) bool {
+	f, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	fileMode := f.Mode()
+	return fileMode.IsRegular()
+}
+
+// Checks if a directory exists
+func dirExists(filename string) bool {
+	f, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	fileMode := f.Mode()
+	return fileMode.IsDir()
+}
+
 // Finds the current directory, through the path of this running test
 func getCurrentDir() string {
 	_, currentFilename, _, _ := runtime.Caller(0)

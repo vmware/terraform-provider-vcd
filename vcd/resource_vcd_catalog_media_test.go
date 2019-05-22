@@ -25,13 +25,14 @@ func TestAccVcdCatalogMediaBasic(t *testing.T) {
 		"MediaPath":        testConfig.Media.MediaPath,
 		"UploadPieceSize":  testConfig.Media.UploadPieceSize,
 		"UploadProgress":   testConfig.Media.UploadProgress,
+		"Tags":             "catalog",
 	}
 
+	configText := templateFill(testAccCheckVcdCatalogMediaBasic, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	configText := templateFill(testAccCheckVcdCatalogMediaBasic, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{

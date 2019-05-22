@@ -23,10 +23,6 @@ const (
 // go test -v -timeout 0 -tags multinetwork -run TestAccVcdVappNetworkMulti .
 //
 func TestAccVcdVappNetworkMulti(t *testing.T) {
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 
 	const (
 		networkBaseIp1     = "192.168.11"
@@ -77,9 +73,14 @@ func TestAccVcdVappNetworkMulti(t *testing.T) {
 		"dhcpStartAddress3": networkBaseIp3 + startDhcpAddress,
 		"dhcpEndAddress3":   networkBaseIp3 + endDhcpAddress,
 		"dhcpEnabled":       "true",
+		"Tags":              "multinetwork",
 	}
 
 	configText := templateFill(testAccCheckVappNetworkMulti, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{

@@ -27,11 +27,7 @@ func TestAccVcdExternalNetworkBasic(t *testing.T) {
 		"Type":                testConfig.Networking.ExternalNetworkPortGroupType,
 		"PortGroup":           testConfig.Networking.ExternalNetworkPortGroup,
 		"Vcenter":             testConfig.Networking.Vcenter,
-	}
-
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
+		"Tags":                "network extnetwork",
 	}
 
 	if !usingSysAdmin() {
@@ -40,6 +36,10 @@ func TestAccVcdExternalNetworkBasic(t *testing.T) {
 	}
 
 	configText := templateFill(testAccCheckVcdExternalNetwork_basic, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{

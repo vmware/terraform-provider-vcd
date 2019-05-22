@@ -13,10 +13,6 @@ import (
 func TestAccVcdVpn_Basic(t *testing.T) {
 	var vpnName string = "TestAccVcdVpnVpn"
 
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 	// String map to fill the template
 	var params = StringMap{
 		"Org":           testConfig.VCD.Org,
@@ -31,8 +27,13 @@ func TestAccVcdVpn_Basic(t *testing.T) {
 		"LocalSubnetGW": testConfig.Networking.Local.LocalSubnetGateway,
 		"SiteName":      "TestAccVcdVpnSite",
 		"VpnName":       vpnName,
+		"Tags":          "gateway",
 	}
 	configText := templateFill(testAccCheckVcdVpn_basic, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

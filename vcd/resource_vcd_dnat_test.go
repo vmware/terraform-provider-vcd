@@ -15,10 +15,6 @@ var baseDnatName string = "TestAccVcdDNAT"
 var orgVdcNetworkName = "TestAccVcdDNAT_BasicNetwork"
 
 func TestAccVcdDNAT_Basic(t *testing.T) {
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 	if testConfig.Networking.ExternalIp == "" {
 		t.Skip("Variable networking.externalIp must be set to run DNAT tests")
 		return
@@ -36,9 +32,14 @@ func TestAccVcdDNAT_Basic(t *testing.T) {
 		"Gateway":           "10.10.102.1",
 		"StartIpAddress":    "10.10.102.51",
 		"EndIpAddress":      "10.10.102.100",
+		"Tags":              "gateway",
 	}
 
 	configText := templateFill(testAccCheckVcdDnat_basic, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -64,10 +65,6 @@ func TestAccVcdDNAT_Basic(t *testing.T) {
 }
 
 func TestAccVcdDNAT_tlate(t *testing.T) {
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 	if testConfig.Networking.ExternalIp == "" {
 		t.Skip("Variable networking.externalIp must be set to run DNAT tests")
 		return
@@ -85,9 +82,14 @@ func TestAccVcdDNAT_tlate(t *testing.T) {
 		"Gateway":           "10.10.102.1",
 		"StartIpAddress":    "10.10.102.51",
 		"EndIpAddress":      "10.10.102.100",
+		"Tags":              "gateway",
 	}
 
 	configText := templateFill(testAccCheckVcdDnat_tlate, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -253,10 +255,6 @@ resource "vcd_dnat" "{{.DnatName}}" {
 `
 
 func TestAccVcdDNAT_ForBackCompability(t *testing.T) {
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 	if testConfig.Networking.ExternalIp == "" {
 		t.Skip("Variable networking.externalIp must be set to run DNAT tests")
 		return
@@ -270,9 +268,14 @@ func TestAccVcdDNAT_ForBackCompability(t *testing.T) {
 		"EdgeGateway": testConfig.Networking.EdgeGateway,
 		"ExternalIp":  testConfig.Networking.ExternalIp,
 		"DnatName":    dnatName,
+		"Tags":        "gateway",
 	}
 
 	configText := templateFill(testAccCheckVcdDnat_ForBackCompability, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

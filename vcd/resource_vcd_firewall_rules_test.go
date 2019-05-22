@@ -14,10 +14,6 @@ import (
 var itemName string = "TestAccVcdFirewallRules_basic"
 
 func TestAccVcdFirewallRules_basic(t *testing.T) {
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 	if testConfig.Networking.ExternalIp == "" {
 		t.Skip("Variable networking.externalIp must be set to run DNAT tests")
 		return
@@ -25,6 +21,10 @@ func TestAccVcdFirewallRules_basic(t *testing.T) {
 	var existingRules, fwRules govcd.EdgeGateway
 	newConfig := createFirewallRulesConfigs(&existingRules)
 
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -46,11 +46,11 @@ func testAccCheckVcdFirewallRulesExists(n string, gateway *govcd.EdgeGateway) re
 		rs, ok := s.RootModule().Resources[n]
 
 		if !ok {
-			return fmt.Errorf("Not found: %s", n)
+			return fmt.Errorf("not found: %s", n)
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("No Record ID is set")
+			return fmt.Errorf("no record ID is set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
@@ -70,7 +70,7 @@ func testAccCheckVcdFirewallRulesAttributes(newRules, existingRules *govcd.EdgeG
 	return func(s *terraform.State) error {
 
 		if len(newRules.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.FirewallService.FirewallRule) != len(existingRules.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.FirewallService.FirewallRule)+1 {
-			return fmt.Errorf("New firewall rule not added: %d != %d",
+			return fmt.Errorf("new firewall rule not added: %d != %d",
 				len(newRules.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.FirewallService.FirewallRule),
 				len(existingRules.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.FirewallService.FirewallRule)+1)
 		}
@@ -80,40 +80,45 @@ func testAccCheckVcdFirewallRulesAttributes(newRules, existingRules *govcd.EdgeG
 }
 
 func createFirewallRulesConfigs(existingRules *govcd.EdgeGateway) string {
-	config := Config{
-		User:            testConfig.Provider.User,
-		Password:        testConfig.Provider.Password,
-		SysOrg:          testConfig.Provider.SysOrg,
-		Org:             testConfig.VCD.Org,
-		Vdc:             testConfig.VCD.Vdc,
-		Href:            testConfig.Provider.Url,
-		InsecureFlag:    testConfig.Provider.AllowInsecure,
-		MaxRetryTimeout: 140,
-	}
-
-	conn, err := config.Client()
-	if err != nil {
-		panic(err)
-	}
-
+	defaultAction := "drop"
 	edgeGatewayName := testConfig.Networking.EdgeGateway
-	if edgeGatewayName == "" {
-		panic(fmt.Errorf("could not get an Edge Gateway. Variable networking.edgeGateway is not set"))
+	if !vcdShortTest {
+		config := Config{
+			User:            testConfig.Provider.User,
+			Password:        testConfig.Provider.Password,
+			SysOrg:          testConfig.Provider.SysOrg,
+			Org:             testConfig.VCD.Org,
+			Vdc:             testConfig.VCD.Vdc,
+			Href:            testConfig.Provider.Url,
+			InsecureFlag:    testConfig.Provider.AllowInsecure,
+			MaxRetryTimeout: 140,
+		}
+
+		conn, err := config.Client()
+		if err != nil {
+			panic(err)
+		}
+
+		if edgeGatewayName == "" {
+			panic(fmt.Errorf("could not get an Edge Gateway. Variable networking.edgeGateway is not set"))
+		}
+		//edgeGateway, err := vdc.FindEdgeGateway(edgeGatewayName)
+		edgeGateway, err := conn.GetEdgeGateway(testConfig.VCD.Org, testConfig.VCD.Vdc, edgeGatewayName)
+		if err != nil {
+			panic(err)
+		}
+		*existingRules = edgeGateway
+		debugPrintf("[DEBUG] Edge gateway: %#v", edgeGateway)
+		firewallRules := *edgeGateway.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.FirewallService
+		defaultAction = firewallRules.DefaultAction
 	}
-	//edgeGateway, err := vdc.FindEdgeGateway(edgeGatewayName)
-	edgeGateway, err := conn.GetEdgeGateway(testConfig.VCD.Org, testConfig.VCD.Vdc, edgeGatewayName)
-	if err != nil {
-		panic(err)
-	}
-	*existingRules = edgeGateway
-	debugPrintf("[DEBUG] Edge gateway: %#v", edgeGateway)
-	firewallRules := *edgeGateway.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.FirewallService
 	var params = StringMap{
 		"Org":           testConfig.VCD.Org,
 		"Vdc":           testConfig.VCD.Vdc,
 		"EdgeGateway":   edgeGatewayName,
-		"DefaultAction": firewallRules.DefaultAction,
+		"DefaultAction": defaultAction,
 		"FuncName":      itemName,
+		"Tags":          "gateway",
 	}
 	configText := templateFill(testAccCheckVcdFirewallRules_add, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
