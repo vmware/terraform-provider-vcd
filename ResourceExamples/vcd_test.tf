@@ -55,15 +55,15 @@ resource "vcd_org" "test5" {
   is_enabled        = "true"
   stored_vm_quota   = 10
   deployed_vm_quota = 10
-  force             = "true"
-  recursive         = "true"
+  delete_force      = "true"
+  delete_recursive  = "true"
 }
 
 resource "vcd_org" "test4" {
-  name            = "test4"
-  full_name       = "test4"
-  is_enabled      = "true"
-  stored_vm_quota = 10
-  force           = "true"
-  recursive       = "true"
+  name             = "test4"
+  full_name        = "test4"
+  is_enabled       = "true"
+  stored_vm_quota  = 10
+  delete_force     = "true"
+  delete_recursive = "true"
 }
