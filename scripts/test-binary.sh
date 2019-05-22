@@ -14,6 +14,7 @@ function get_help {
     echo "  t | tags 'tags list'   Sets the tags to use"
     echo "  c | clear              Clears list of run files"
     echo "  p | pause              Pause after each stage"
+    echo "  n | names 'names list' List of file names to test [QUOTES NEEDED]"
     echo "  d | dry                Dry-run: show commands without executing them"
     echo "  v | verbose            Gives more info"
     echo ""
@@ -68,6 +69,16 @@ do
         tags="$opt"
         echo "tags: $tags"
         ;;
+    n|names)
+        shift
+        opt=$1
+        test_names="$opt"
+        if [ -z "$opt" ]
+        then
+            echo "option 'names' requires an argument"
+            exit 1
+        fi
+        ;;
     v|verbose)
         export VERBOSE=1
         ;;
@@ -82,15 +93,25 @@ exit_code=0
 start_time=$(date +%s)
 start_timestamp=$(date)
 
-test_names='*.tf'
+[ -z  "$test_names" ] && test_names='vcd.*.tf'
 
 function summary {
     end_time=$(date +%s)
     end_timestamp=$(date)
-    elapsed=$(($end_time-$start_time))
+    secs=$(($end_time-$start_time))
+    minutes=$((secs/60))
+    remainder_sec=$((secs-minutes*60))
+    if [[ $minutes -lt 60 ]]
+    then
+        elapsed=$(printf "%dm:%02ds" ${minutes} ${remainder_sec})
+    else
+        hours=$((minutes/60))
+        remainder_minutes=$((minutes-hours*60))
+        elapsed=$(printf "%dh:%dm:%02ds" ${hours} ${remainder_minutes} ${remainder_sec})
+    fi
     echo "# Started:   $start_timestamp"
     echo "# Ended:     $end_timestamp"
-    echo "# Elapsed:   $elapsed"
+    echo "# Elapsed:   $elapsed ($secs sec)"
     echo "# exit code: $exit_code"
     exit $exit_code
 }
@@ -143,8 +164,8 @@ fi
 
 for CF in $test_names
 do
-    is_provider=$(grep ^provider $CF)
-    is_resource=$(grep ^resource $CF)
+    is_provider=$(grep '^\s*provider' $CF)
+    is_resource=$(grep '^\s*resource' $CF)
     if [ -z "$is_resource" ]
     then
         echo_verbose "$CF not a resource"
@@ -155,6 +176,10 @@ do
         echo_verbose "$CF does not contain a provider"
         continue
     fi
+    init_options=$(grep '^# init-options' $CF | sed -e 's/# init-options //')
+    plan_options=$(grep '^# plan-options' $CF | sed -e 's/# plan-options //')
+    apply_options=$(grep '^# apply-options' $CF | sed -e 's/# apply-options //')
+    destroy_options=$(grep '^# destroy-options' $CF | sed -e 's/# destroy-options //')
     using_tags=$(grep '^# tags' $CF | sed -e 's/# tags //')
     already_run=$(grep $CF already_run.txt)
     if [ -n "$already_run" ]
@@ -200,10 +225,10 @@ do
     fi
     cd tmp
 
-    run terraform init
-    run terraform plan
-    run terraform apply -auto-approve
-    run terraform destroy -auto-approve
+    run terraform init $init_options
+    run terraform plan $plan_options
+    run terraform apply -auto-approve $apply_options
+    run terraform destroy -auto-approve $destroy_options
     cd ..
 done
 
