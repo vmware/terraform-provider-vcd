@@ -6,6 +6,7 @@
 - [Tests split by feature set](#Tests-split-by-feature-set)
 - [Adding new tests](#Adding-new-tests)
 - [Binary testing](#Binary-testing)
+- [Custom terraform scripts](#Custom-terraform-scripts)
 - [Environment variables](#Environment-variables)
 
 ## Running tests
@@ -196,6 +197,84 @@ The "pause" option will stop the test after every call to the terraform tool, wa
 When the test runs unattended, it is possible to stop it gracefully by creating a file named `pause` inside the
 `test-artifacts` directory. When such file exists, the test execution stops at the next `terraform` command, waiting
 for user input.
+
+## Custom terraform scripts
+
+The commands `make test-binary-prepare` and `make test-binary` have the side effect of compiling custom Terraform scripts located in `./vcd/test-templates`.
+These tests are similar to the ones produced by the testing framework, but unlike the standard ones, they can be edited by users. And users vcan also remove and add files to suit their purposes.
+
+The files in `test-templates` are not executable directly by `terraform`: they need to be processed (which happens during `make binary-prepare`) and their placeholders expanded to the values taken from the configuration file.
+
+A **placeholder** is a label enclosed in double braces and prefixed by a dot, such as `{{.LabelName}}`. The template processor will replace that label with the corresponding value taken from the test configuration file.
+
+This is the list of placeholders that you can use in template files:
+
+Label                        | Corresponding configuration value
+:----------------------------|:-----------------------------------------
+Org                          | testConfig.VCD.Org
+Vdc                          | testConfig.VCD.Vdc
+ProviderVdc                  | testConfig.VCD.ProviderVdc.Name
+NetworkPool                  | testConfig.VCD.ProviderVdc.NetworkPool
+StorageProfile               | testConfig.VCD.ProviderVdc.StorageProfile
+Catalog                      | testConfig.VCD.Catalog.Name
+CatalogItem                  | testConfig.VCD.Catalog.CatalogItem
+OvaPath                      | testConfig.Ova.OvaPath
+MediaPath                    | testConfig.Media.MediaPath
+MediaUploadPieceSize         | testConfig.Media.UploadPieceSize
+MediaUploadProgress          | testConfig.Media.UploadProgress
+OvaDownloadUrl               | testConfig.Ova.OvaDownloadUrl
+OvaTestFileName              | testConfig.Ova.OvaTestFileName
+OvaUploadProgress            | testConfig.Ova.UploadProgress
+OvaUploadPieceSize           | testConfig.Ova.UploadPieceSize
+OvaPreserve                  | testConfig.Ova.Preserve
+LoggingEnabled               | testConfig.Logging.Enabled
+LoggingFileName              | testConfig.Logging.LogFileName
+EdgeGateway                  | testConfig.Networking.EdgeGateway
+SharedSecret                 | testConfig.Networking.SharedSecret
+ExternalNetwork              | testConfig.Networking.ExternalNetwork
+ExternalNetworkPortGroup     | testConfig.Networking.ExternalNetworkPortGroup
+ExternalNetworkPortGroupType | testConfig.Networking.ExternalNetworkPortGroupType
+ExternalIp                   | testConfig.Networking.ExternalIp
+InternalIp                   | testConfig.Networking.InternalIp
+Vcenter                      | testConfig.Networking.Vcenter
+LocalIp                      | testConfig.Networking.Local.LocalIp
+LocalGateway                 | testConfig.Networking.Local.LocalSubnetGateway
+PeerIp                       | testConfig.Networking.Peer.PeerIp
+PeerGateway                  | testConfig.Networking.Peer.PeerSubnetGateway
+MaxRetryTimeout              | testConfig.Provider.MaxRetryTimeout
+AllowInsecure                | testConfig.Provider.AllowInsecure
+ProviderSysOrg               | testConfig.Provider.SysOrg
+ProviderUrl                  | testConfig.Provider.Url
+ProviderUser                 | testConfig.Provider.User
+ProviderPassword             | testConfig.Provider.Password
+
+The files generated from `test-templates` will end up in `test-artifacts`, and you will recognize them because their name will start by `cust.` instead of `vcd.`, and they all use the tag `custom`.
+
+Note that the template files should **not** have a `provider` section, as it is created by the template processor.
+Inside the template, you can indicate the need for specific `terraform` options, by inserting one or more comments containing `init-options`, `plan-options`, `apply-options`, or `destroy-options`. The options, if indicated, will be added to the corresponding `terraform` command. For example:
+
+```
+# apply-options -no-color
+# destroy-options -no-color
+```
+When running `terraform apply` and `terraform destroy`, the option `-no-color` will be added to the command line.
+
+To run these tests, you go inside `test-artifacts` and execute:
+
+```bash
+./test-binary.sh names "cust*.tf" [options]
+
+# or
+
+./test-binary.sh names "*.tf" tags custom [options]
+
+# or
+
+./test-binary.sh names cust.specific-file-name.tf [options]
+```
+
+The execution then proceeds as explained in [Binary testing](#Binary-testing).
+
 
 ## Environment variables
 
