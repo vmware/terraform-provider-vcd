@@ -48,7 +48,7 @@ resource "vcd_vapp_network" "terraform_vapp_net" {
   netmask    = "255.255.255.0"
   dns1       = "192.168.2.1"
   dns2       = "192.168.2.2"
-  dns_suffix = "solpan.org"
+  dns_suffix = "{{.Org}}.org"
 
   #guest_vlan_allowed = true
 
