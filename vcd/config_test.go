@@ -1,4 +1,4 @@
-// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk ALL
+// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary ALL
 
 package vcd
 
@@ -103,7 +103,12 @@ var (
 )
 
 const (
-	testArtifactsDirectory = "test-artifacts"
+	customTemplatesDirectory       = "test-templates"
+	testArtifactsDirectory         = "test-artifacts"
+	envVcdAddProvider              = "VCD_ADD_PROVIDER"
+	envVcdSkipTemplateWriting      = "VCD_SKIP_TEMPLATE_WRITING"
+	envVcdRemoveOrgVdcFromTemplate = "REMOVE_ORG_VDC_FROM_TEMPLATE"
+
 	// Warning message used for all tests
 	acceptanceTestsSkipped = "Acceptance tests skipped unless env 'TF_ACC' set"
 	// This template will be added to test resource snippets on demand
@@ -120,12 +125,12 @@ provider "vcd" {
   url                  = "{{.Url}}"
   sysorg               = "{{.SysOrg}}"
   org                  = "{{.Org}}"
+  vdc                  = "{{.Vdc}}"
   allow_unverified_ssl = "{{.AllowInsecure}}"
   max_retry_timeout    = {{.MaxRetryTimeout}}
   version              = "~> {{.VersionRequired}}"
   logging              = {{.Logging}}
 }
-
 `
 )
 
@@ -160,17 +165,24 @@ func templateFill(tmpl string, data StringMap) string {
 
 	_, callerFileName, _, _ := runtime.Caller(1)
 
+	prefix := "vcd"
+	_, ok := data["Prefix"]
+
+	if ok {
+		prefix = data["Prefix"].(string)
+	}
+
 	// If the call comes from a function that does not have a good descriptive name,
 	// (for example when it's an auxiliary function that builds the template but does not
 	// run the test) users can add the function name in the data, and it will be used instead of
 	// the caller name.
 	funcName, ok := data["FuncName"]
 	if ok {
-		caller = "vcd." + funcName.(string)
+		caller = prefix + "." + funcName.(string)
 	}
 
 	// If requested, the provider defined in testConfig will be added to test snippets.
-	if os.Getenv("VCD_ADD_PROVIDER") != "" {
+	if os.Getenv(envVcdAddProvider) != "" {
 		// the original template is prefixed with the provider template
 		tmpl = providerTemplate + tmpl
 
@@ -189,11 +201,11 @@ func templateFill(tmpl string, data StringMap) string {
 	if _, ok := data["Tags"]; !ok {
 		data["Tags"] = "ALL"
 	}
-	if _, ok := data["Comment"]; !ok {
-		data["Comment"] = ""
-	}
-	if _, ok := data["DirName"]; !ok {
-		data["DirName"] = ""
+	nullableItems := []string{"Comment", "DirName"}
+	for _, item := range nullableItems {
+		if _, ok := data[item]; !ok {
+			data[item] = ""
+		}
 	}
 	if _, ok := data["CallerFileName"]; !ok {
 		data["CallerFileName"] = callerFileName
@@ -213,7 +225,7 @@ func templateFill(tmpl string, data StringMap) string {
 	// These templates will help investigate failed tests using Terraform
 	// Writing is enabled by default. It can be skipped using an environment variable.
 	TemplateWriting := true
-	if os.Getenv("VCD_SKIP_TEMPLATE_WRITING") != "" {
+	if os.Getenv(envVcdSkipTemplateWriting) != "" {
 		TemplateWriting = false
 	}
 	var writeStr []byte = buf.Bytes()
@@ -223,7 +235,7 @@ func templateFill(tmpl string, data StringMap) string {
 	// templates will be changed on-the-fly, to comment out the
 	// definitions of org and vdc. This will force the test to
 	// borrow org and vcd from the provider.
-	if os.Getenv("REMOVE_ORG_VDC_FROM_TEMPLATE") != "" {
+	if os.Getenv(envVcdRemoveOrgVdcFromTemplate) != "" {
 		reOrg := regexp.MustCompile(`\sorg\s*=`)
 		buf2 := reOrg.ReplaceAll(buf.Bytes(), []byte("# org = "))
 		reVdc := regexp.MustCompile(`\svdc\s*=`)
