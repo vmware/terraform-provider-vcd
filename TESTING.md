@@ -200,7 +200,7 @@ for user input.
 
 ## Custom terraform scripts
 
-The commands `make test-binary-prepare` and `make test-binary` have the side effect of compiling custom Terraform scripts located in `./vcd/test-templates`.
+The commands `make test-binary-prepare` and `make test-binary` have the added benefit of compiling custom Terraform scripts located in `./vcd/test-templates`.
 These tests are similar to the ones produced by the testing framework, but unlike the standard ones, they can be edited by users. And users can also remove and add files to suit their purposes.
 
 The files in `test-templates` are not executable directly by `terraform`: they need to be processed (which happens during `make test-binary-prepare`) and their placeholders expanded to the values taken from the configuration file.
@@ -233,7 +233,7 @@ LoggingEnabled               | logging.enabled
 LoggingFileName              | logging.logFileName
 EdgeGateway                  | networking.edgeGateway
 SharedSecret                 | networking.sharedSecret
-ExternalNetwork              | Networking.externalNetwork
+ExternalNetwork              | networking.externalNetwork
 ExternalNetworkPortGroup     | networking.externalNetworkPortGroup
 ExternalNetworkPortGroupType | networking.externalNetworkPortGroupType
 ExternalIp                   | networking.externalIp
@@ -251,7 +251,7 @@ ProviderUser                 | provider.user
 ProviderPassword             | provider.password
 
 
-The files generated from `test-templates` will end up in `test-artifacts`, and you will recognize them because their name will start by `cust.` instead of `vcd.`, and they all use the tag `custom`.
+The files generated from `./vcd/test-templates` will end up in `./vcd/test-artifacts`, and you will recognize them because their name will start by `cust.` instead of `vcd.`, and they all use the tag `custom`.
 
 Note that the template files should **not** have a `provider` section, as it is created by the template processor.
 Inside the template, you can indicate the need for specific `terraform` options, by inserting one or more comments containing `init-options`, `plan-options`, `apply-options`, or `destroy-options`. The options, if indicated, will be added to the corresponding `terraform` command. For example:
