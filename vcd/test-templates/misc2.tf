@@ -4,7 +4,7 @@
 
 # Independent disk
 # v2.1.0
-resource "vcd_independent_disk" "terraform_disk" {
+resource "vcd_independent_disk" "tf_disk" {
   name         = "tf-disk"
   size         = "1024"        # MB
   bus_type     = "SCSI"
@@ -12,8 +12,8 @@ resource "vcd_independent_disk" "terraform_disk" {
 }
 
 # Org VDC network
-resource "vcd_network_routed" "terraform_network" {
-  name         = "TerraformNetwork"
+resource "vcd_network_routed" "tf_network" {
+  name         = "TfNetwork"
   edge_gateway = "{{.EdgeGateway}}"
 
   gateway = "192.168.0.1"
@@ -30,20 +30,20 @@ resource "vcd_network_routed" "terraform_network" {
 }
 
 # vApp in the routed network
-resource "vcd_vapp" "terraform_vapp" {
-  name = "TerraformVApp"
+resource "vcd_vapp" "tf_vapp" {
+  name = "TfVApp"
 
   # Try adding an Org VDC network
   # network_name = "..."
 
-  depends_on = ["vcd_network_routed.terraform_network"]
+  depends_on = ["vcd_network_routed.tf_network"]
 }
 
 # vApp network
 # v2.1.0
-resource "vcd_vapp_network" "terraform_vapp_net" {
-  name       = "TerraformVAppNet"
-  vapp_name  = "${vcd_vapp.terraform_vapp.name}"
+resource "vcd_vapp_network" "tf_vapp_net" {
+  name       = "TfVAppNet"
+  vapp_name  = "${vcd_vapp.tf_vapp.name}"
   gateway    = "192.168.2.1"
   netmask    = "255.255.255.0"
   dns1       = "192.168.2.1"
@@ -63,9 +63,9 @@ resource "vcd_vapp_network" "terraform_vapp_net" {
 }
 
 # vApp's VM connected to a network with routed connection to the outside
-resource "vcd_vapp_vm" "terraform_vm_first" {
-  vapp_name  = "${vcd_vapp.terraform_vapp.name}"
-  name          = "TerraformVMFirst"
+resource "vcd_vapp_vm" "tf_vm_1" {
+  vapp_name  = "${vcd_vapp.tf_vapp.name}"
+  name          = "TfVM1"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
   memory        = 384
@@ -74,20 +74,20 @@ resource "vcd_vapp_vm" "terraform_vm_first" {
   # Connect to routed network
   network {
     type                 = "org"
-    name                 = "${vcd_network_routed.terraform_network.name}"
+    name                 = "${vcd_network_routed.tf_network.name}"
     ip                   = "192.168.0.7"
     ip_allocation_mode   = "POOL"
   }
 
   # v2.1.0
   disk {
-    name        = "${vcd_independent_disk.terraform_disk.name}"
+    name        = "${vcd_independent_disk.tf_disk.name}"
     bus_number  = 1
     unit_number = 0
   }
 
   accept_all_eulas = "true"
-  depends_on       = ["vcd_network_routed.terraform_network", "vcd_vapp.terraform_vapp", "vcd_independent_disk.terraform_disk", "vcd_vapp_network.terraform_vapp_net"]
+  depends_on       = ["vcd_network_routed.tf_network", "vcd_vapp.tf_vapp", "vcd_independent_disk.tf_disk", "vcd_vapp_network.tf_vapp_net"]
 }
 
 resource "vcd_catalog_media" "media_for_insertion" {
@@ -101,19 +101,19 @@ resource "vcd_catalog_media" "media_for_insertion" {
 }
 
 # Attach ISO to VM
-resource "vcd_inserted_media" "terraform_inserted_iso" {
+resource "vcd_inserted_media" "tf_inserted_iso" {
   catalog    = "{{.Catalog}}"
   name       = "${vcd_catalog_media.media_for_insertion.name}"
 
-  vapp_name  = "${vcd_vapp.terraform_vapp.name}"
-  vm_name   = "TerraformVMFirst"
+  vapp_name  = "${vcd_vapp.tf_vapp.name}"
+  vm_name   = "TfVM1"
 
-  depends_on = ["vcd_vapp_vm.terraform_vm_first"]
+  depends_on = ["vcd_vapp_vm.tf_vm_1"]
 }
 
-resource "vcd_vapp_vm" "terraform_vm_second" {
-  vapp_name  = "${vcd_vapp.terraform_vapp.name}"
-  name          = "TerraformVMSecond"
+resource "vcd_vapp_vm" "tf_vm_second" {
+  vapp_name  = "${vcd_vapp.tf_vapp.name}"
+  name          = "TfVM2"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
   memory        = 384
@@ -123,7 +123,7 @@ resource "vcd_vapp_vm" "terraform_vm_second" {
 
   network {
     type                 = "vapp"
-    name                 = "${vcd_vapp_network.terraform_vapp_net.name}"
+    name                 = "${vcd_vapp_network.tf_vapp_net.name}"
     ip                   = "192.168.0.9"
     ip_allocation_mode   = "POOL"
   }
@@ -133,7 +133,7 @@ resource "vcd_vapp_vm" "terraform_vm_second" {
   cpus = "4"
   cpu_cores        = "2"
   accept_all_eulas = "true"
-  depends_on       = ["vcd_vapp.terraform_vapp", "vcd_vapp_network.terraform_vapp_net", "vcd_vapp_vm.terraform_vm_first", "vcd_vapp_network.terraform_vapp_net"]
+  depends_on       = ["vcd_vapp.tf_vapp", "vcd_vapp_network.tf_vapp_net", "vcd_vapp_vm.tf_vm_1", "vcd_vapp_network.tf_vapp_net"]
 }
 
 # SNAT rule to let the VMs' traffic out
@@ -155,7 +155,7 @@ resource "vcd_dnat" "sshVM" {
 }
 
 # Firewall rule to allow SSH on NAT port
-resource "vcd_firewall_rules" "terraform_fw_rule" {
+resource "vcd_firewall_rules" "tf_fw_rule" {
   edge_gateway   = "{{.EdgeGateway}}"
   default_action = "allow"
 

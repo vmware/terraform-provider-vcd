@@ -29,7 +29,7 @@ resource "vcd_vapp" "tf_vapp" {
 # v2.1.0
 resource "vcd_vapp_network" "tf_vapp_net" {
   name       = "TfVAppNet"
-  vapp_name  = "TfVApp"
+  vapp_name  = "${vcd_vapp.tf_vapp.name}"
   gateway    = "192.168.2.1"
   netmask    = "255.255.255.0"
   dns1       = "192.168.2.1"
@@ -49,9 +49,9 @@ resource "vcd_vapp_network" "tf_vapp_net" {
   depends_on = ["vcd_vapp.tf_vapp"]
 }
 
-resource "vcd_vapp_vm" "vm11" {
-  vapp_name     = "TfVApp"
-  name          = "TerraformVM11"
+resource "vcd_vapp_vm" "tf_vm_11" {
+  vapp_name  = "${vcd_vapp.tf_vapp.name}"
+  name          = "TfVM11"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
   memory        = 384

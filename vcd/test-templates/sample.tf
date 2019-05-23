@@ -1,3 +1,5 @@
+# This file is the same as ./ResourceExamples/vcd_test.tf
+# converted into a template to make it easy to run.
 
 resource "vcd_dnat" "web2" {
   edge_gateway    = "{{.EdgeGateway}}"
