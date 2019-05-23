@@ -201,52 +201,55 @@ for user input.
 ## Custom terraform scripts
 
 The commands `make test-binary-prepare` and `make test-binary` have the side effect of compiling custom Terraform scripts located in `./vcd/test-templates`.
-These tests are similar to the ones produced by the testing framework, but unlike the standard ones, they can be edited by users. And users vcan also remove and add files to suit their purposes.
+These tests are similar to the ones produced by the testing framework, but unlike the standard ones, they can be edited by users. And users can also remove and add files to suit their purposes.
 
-The files in `test-templates` are not executable directly by `terraform`: they need to be processed (which happens during `make binary-prepare`) and their placeholders expanded to the values taken from the configuration file.
+The files in `test-templates` are not executable directly by `terraform`: they need to be processed (which happens during `make test-binary-prepare`) and their placeholders expanded to the values taken from the configuration file.
 
-A **placeholder** is a label enclosed in double braces and prefixed by a dot, such as `{{.LabelName}}`. The template processor will replace that label with the corresponding value taken from the test configuration file.
+A **placeholder** is a label enclosed in double braces and prefixed by a dot, such as `{{.LabelName}}`.
+The template processor will replace that label with the corresponding value taken from the test configuration file.
+See `sample_vcd_test_config.json` for a description of all fields.
 
 This is the list of placeholders that you can use in template files:
 
-Label                        | Corresponding configuration value
-:----------------------------|:-----------------------------------------
-Org                          | testConfig.VCD.Org
-Vdc                          | testConfig.VCD.Vdc
-ProviderVdc                  | testConfig.VCD.ProviderVdc.Name
-NetworkPool                  | testConfig.VCD.ProviderVdc.NetworkPool
-StorageProfile               | testConfig.VCD.ProviderVdc.StorageProfile
-Catalog                      | testConfig.VCD.Catalog.Name
-CatalogItem                  | testConfig.VCD.Catalog.CatalogItem
-OvaPath                      | testConfig.Ova.OvaPath
-MediaPath                    | testConfig.Media.MediaPath
-MediaUploadPieceSize         | testConfig.Media.UploadPieceSize
-MediaUploadProgress          | testConfig.Media.UploadProgress
-OvaDownloadUrl               | testConfig.Ova.OvaDownloadUrl
-OvaTestFileName              | testConfig.Ova.OvaTestFileName
-OvaUploadProgress            | testConfig.Ova.UploadProgress
-OvaUploadPieceSize           | testConfig.Ova.UploadPieceSize
-OvaPreserve                  | testConfig.Ova.Preserve
-LoggingEnabled               | testConfig.Logging.Enabled
-LoggingFileName              | testConfig.Logging.LogFileName
-EdgeGateway                  | testConfig.Networking.EdgeGateway
-SharedSecret                 | testConfig.Networking.SharedSecret
-ExternalNetwork              | testConfig.Networking.ExternalNetwork
-ExternalNetworkPortGroup     | testConfig.Networking.ExternalNetworkPortGroup
-ExternalNetworkPortGroupType | testConfig.Networking.ExternalNetworkPortGroupType
-ExternalIp                   | testConfig.Networking.ExternalIp
-InternalIp                   | testConfig.Networking.InternalIp
-Vcenter                      | testConfig.Networking.Vcenter
-LocalIp                      | testConfig.Networking.Local.LocalIp
-LocalGateway                 | testConfig.Networking.Local.LocalSubnetGateway
-PeerIp                       | testConfig.Networking.Peer.PeerIp
-PeerGateway                  | testConfig.Networking.Peer.PeerSubnetGateway
-MaxRetryTimeout              | testConfig.Provider.MaxRetryTimeout
-AllowInsecure                | testConfig.Provider.AllowInsecure
-ProviderSysOrg               | testConfig.Provider.SysOrg
-ProviderUrl                  | testConfig.Provider.Url
-ProviderUser                 | testConfig.Provider.User
-ProviderPassword             | testConfig.Provider.Password
+Label                        | Field in `vcd_test_config.json`
+:----------------------------|:------------------------------------------
+Org                          | vcd.org
+Vdc                          | vcd.vdc
+ProviderVdc                  | vcd.providerVdc.name
+NetworkPool                  | vcd.providerVdc.networkPool
+StorageProfile               | vcd.providerVdc.storageProfile
+Catalog                      | vcd.catalog.name
+CatalogItem                  | vcd.catalog.catalogItem
+OvaPath                      | ova.OvaPath
+MediaPath                    | media.MediaPath
+MediaUploadPieceSize         | media.UploadPieceSize
+MediaUploadProgress          | media.UploadProgress
+OvaDownloadUrl               | ova.ovaDownloadUrl
+OvaTestFileName              | ova.ovaTestFileName
+OvaUploadProgress            | ova.uploadProgress
+OvaUploadPieceSize           | ova.uploadPieceSize
+OvaPreserve                  | ova.preserve
+LoggingEnabled               | logging.enabled
+LoggingFileName              | logging.logFileName
+EdgeGateway                  | networking.edgeGateway
+SharedSecret                 | networking.sharedSecret
+ExternalNetwork              | Networking.externalNetwork
+ExternalNetworkPortGroup     | networking.externalNetworkPortGroup
+ExternalNetworkPortGroupType | networking.externalNetworkPortGroupType
+ExternalIp                   | networking.externalIp
+InternalIp                   | networking.internalIp
+Vcenter                      | networking.vcenter
+LocalIp                      | networking.local.localIp
+LocalGateway                 | networking.local.localSubnetGateway
+PeerIp                       | networking.peer.peerIp
+PeerGateway                  | networking.peer.peerSubnetGateway
+MaxRetryTimeout              | provider.maxRetryTimeout
+AllowInsecure                | provider.allowInsecure
+ProviderSysOrg               | provider.sysOrg
+ProviderUrl                  | provider.url
+ProviderUser                 | provider.user
+ProviderPassword             | provider.password
+
 
 The files generated from `test-templates` will end up in `test-artifacts`, and you will recognize them because their name will start by `cust.` instead of `vcd.`, and they all use the tag `custom`.
 
