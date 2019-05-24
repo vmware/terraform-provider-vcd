@@ -17,7 +17,7 @@ then
     VERBOSE=1
 fi
 
-accepted="[short acceptance multiple]"
+accepted="[short acceptance multiple binary binary-prepare catalog gateway vapp vm network extnetwork multinetwork short-provider]"
 if [ -z "$wanted" ]
 then
     echo "Syntax: test TYPE"
@@ -74,12 +74,12 @@ function short_test {
     if [ -n "$VERBOSE" ]
     then
         echo " go test  -i ${TEST} || exit 1"
-        echo "VCD_SHORT_TEST=1 go test -tags functional -v -timeout 3m ."
+        echo "VCD_SHORT_TEST=1 go test -tags "functional $MORE_TAGS" -v -timeout 3m ."
     fi
     if [ -z "$DRY_RUN" ]
     then
         go test -i ${TEST} || exit 1
-        VCD_SHORT_TEST=1 go test -tags functional -v -timeout 3m .
+        VCD_SHORT_TEST=1 go test -tags "functional $MORE_TAGS" -v -timeout 3m .
     fi
 }
 
@@ -162,6 +162,7 @@ case $wanted in
     short-provider)
         unset VCD_SKIP_TEMPLATE_WRITING
         export VCD_ADD_PROVIDER=1
+        export MORE_TAGS=binary
         short_test
         ;;
     acceptance)

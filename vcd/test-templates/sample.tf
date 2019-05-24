@@ -1,35 +1,29 @@
-provider "vcd" {
-  user                 = "root"
-  password             = "root"
-  org                  = "System"
-  url                  = "https://api.vcd.com/api"
-  max_retry_timeout    = "60"
-  allow_unverified_ssl = "true"
-}
+# This file is the same as ./ResourceExamples/vcd_test.tf
+# converted into a template to make it easy to run.
 
 resource "vcd_dnat" "web2" {
-  edge_gateway    = "test_edge_3"
-  org             = "au"
-  vdc             = "au-vdc"
-  external_ip     = "10.x.x.x"
+  edge_gateway    = "{{.EdgeGateway}}"
+  org             = "{{.Org}}"
+  vdc             = "{{.Vdc}}"
+  external_ip     = "{{.ExternalIp}}"
   port            = 80
-  internal_ip     = "10.x.x.x"
+  internal_ip     = "{{.InternalIp}}"
   translated_port = 8080
 }
 
 resource "vcd_snat" "outbound" {
-  edge_gateway = "test_edge_3"
-  org          = "au"
-  vdc          = "au-vdc"
-  external_ip  = "10.x.x.x"
-  internal_ip  = "10.x.x.x"
+  edge_gateway = "{{.EdgeGateway}}"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  external_ip  = "{{.ExternalIp}}"
+  internal_ip  = "{{.InternalIp}}"
 }
 
 resource "vcd_network" "net" {
   name         = "my-nt"
-  org          = "au"
-  vdc          = "au-vdc"
-  edge_gateway = "test_edge_3"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
   gateway      = "10.10.1.1"
 
   dhcp_pool {
@@ -45,8 +39,8 @@ resource "vcd_network" "net" {
 
 resource "vcd_vapp" "test-tf-2" {
   name = "test-tf-2"
-  org  = "au"
-  vdc  = "au-vdc"
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
 }
 
 resource "vcd_org" "test5" {

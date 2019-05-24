@@ -6,6 +6,7 @@
 - [Tests split by feature set](#Tests-split-by-feature-set)
 - [Adding new tests](#Adding-new-tests)
 - [Binary testing](#Binary-testing)
+- [Custom terraform scripts](#Custom-terraform-scripts)
 - [Environment variables](#Environment-variables)
 
 ## Running tests
@@ -196,6 +197,87 @@ The "pause" option will stop the test after every call to the terraform tool, wa
 When the test runs unattended, it is possible to stop it gracefully by creating a file named `pause` inside the
 `test-artifacts` directory. When such file exists, the test execution stops at the next `terraform` command, waiting
 for user input.
+
+## Custom terraform scripts
+
+The commands `make test-binary-prepare` and `make test-binary` have the added benefit of compiling custom Terraform scripts located in `./vcd/test-templates`.
+These tests are similar to the ones produced by the testing framework, but unlike the standard ones, they can be edited by users. And users can also remove and add files to suit their purposes.
+
+The files in `test-templates` are not executable directly by `terraform`: they need to be processed (which happens during `make test-binary-prepare`) and their placeholders expanded to the values taken from the configuration file.
+
+A **placeholder** is a label enclosed in double braces and prefixed by a dot, such as `{{.LabelName}}`.
+The template processor will replace that label with the corresponding value taken from the test configuration file.
+See `sample_vcd_test_config.json` for a description of all fields.
+
+This is the list of placeholders that you can use in template files:
+
+Label                        | Field in `vcd_test_config.json`
+:----------------------------|:------------------------------------------
+Org                          | vcd.org
+Vdc                          | vcd.vdc
+ProviderVdc                  | vcd.providerVdc.name
+NetworkPool                  | vcd.providerVdc.networkPool
+StorageProfile               | vcd.providerVdc.storageProfile
+Catalog                      | vcd.catalog.name
+CatalogItem                  | vcd.catalog.catalogItem
+OvaPath                      | ova.OvaPath
+MediaPath                    | media.MediaPath
+MediaUploadPieceSize         | media.UploadPieceSize
+MediaUploadProgress          | media.UploadProgress
+OvaDownloadUrl               | ova.ovaDownloadUrl
+OvaTestFileName              | ova.ovaTestFileName
+OvaUploadProgress            | ova.uploadProgress
+OvaUploadPieceSize           | ova.uploadPieceSize
+OvaPreserve                  | ova.preserve
+LoggingEnabled               | logging.enabled
+LoggingFileName              | logging.logFileName
+EdgeGateway                  | networking.edgeGateway
+SharedSecret                 | networking.sharedSecret
+ExternalNetwork              | networking.externalNetwork
+ExternalNetworkPortGroup     | networking.externalNetworkPortGroup
+ExternalNetworkPortGroupType | networking.externalNetworkPortGroupType
+ExternalIp                   | networking.externalIp
+InternalIp                   | networking.internalIp
+Vcenter                      | networking.vcenter
+LocalIp                      | networking.local.localIp
+LocalGateway                 | networking.local.localSubnetGateway
+PeerIp                       | networking.peer.peerIp
+PeerGateway                  | networking.peer.peerSubnetGateway
+MaxRetryTimeout              | provider.maxRetryTimeout
+AllowInsecure                | provider.allowInsecure
+ProviderSysOrg               | provider.sysOrg
+ProviderUrl                  | provider.url
+ProviderUser                 | provider.user
+ProviderPassword             | provider.password
+
+
+The files generated from `./vcd/test-templates` will end up in `./vcd/test-artifacts`, and you will recognize them because their name will start by `cust.` instead of `vcd.`, and they all use the tag `custom`.
+
+Note that the template files should **not** have a `provider` section, as it is created by the template processor.
+Inside the template, you can indicate the need for specific `terraform` options, by inserting one or more comments containing `init-options`, `plan-options`, `apply-options`, or `destroy-options`. The options, if indicated, will be added to the corresponding `terraform` command. For example:
+
+```
+# apply-options -no-color
+# destroy-options -no-color
+```
+When running `terraform apply` and `terraform destroy`, the option `-no-color` will be added to the command line.
+
+To run these tests, you go inside `test-artifacts` and execute:
+
+```bash
+./test-binary.sh names "cust*.tf" [options]
+
+# or
+
+./test-binary.sh names "*.tf" tags custom [options]
+
+# or
+
+./test-binary.sh names cust.specific-file-name.tf [options]
+```
+
+The execution then proceeds as explained in [Binary testing](#Binary-testing).
+
 
 ## Environment variables
 
