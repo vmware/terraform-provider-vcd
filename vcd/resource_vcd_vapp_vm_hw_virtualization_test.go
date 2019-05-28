@@ -16,20 +16,21 @@ func TestAccVcdVAppVm_HardwareVirtualization(t *testing.T) {
 	var vm govcd.VM
 
 	var params = StringMap{
-		"Org":         testConfig.VCD.Org,
-		"Vdc":         testConfig.VCD.Vdc,
-		"EdgeGateway": testConfig.Networking.EdgeGateway,
-		"NetworkName": "TestAccVcdVAppVmNetHwVirt",
-		"Catalog":     testSuiteCatalogName,
-		"CatalogItem": testSuiteCatalogOVAItem,
-		"VappName":    vappNameHwVirt,
-		"VmName":      vmNameHwVirt,
-		"Tags":        "vapp vm",
+		"Org":                          testConfig.VCD.Org,
+		"Vdc":                          testConfig.VCD.Vdc,
+		"EdgeGateway":                  testConfig.Networking.EdgeGateway,
+		"NetworkName":                  "TestAccVcdVAppVmNetHwVirt",
+		"Catalog":                      testSuiteCatalogName,
+		"CatalogItem":                  testSuiteCatalogOVAItem,
+		"VappName":                     vappNameHwVirt,
+		"VmName":                       vmNameHwVirt,
+		"ExposeHardwareVirtualization": "false",
+		"Tags":                         "vapp vm",
 	}
 
 	configTextStep0 := templateFill(testAccCheckVcdVAppVm_hardwareVirtualization, params)
 
-	params["ExposeHardwareVirtualization"] = true
+	params["ExposeHardwareVirtualization"] = "true"
 	params["FuncName"] = t.Name() + "-step1"
 	configTextStep1 := templateFill(testAccCheckVcdVAppVm_hardwareVirtualization, params)
 
@@ -84,6 +85,6 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   memory                         = 384
   cpus                           = 2
   cpu_cores                      = 1
-  expose_hardware_virtualization = "{{.ExposeHardwareVirtualization}}"
+  expose_hardware_virtualization = {{.ExposeHardwareVirtualization}}
 }
 `
