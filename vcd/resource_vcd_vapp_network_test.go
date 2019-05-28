@@ -166,7 +166,7 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
   dns1               = "{{.dns1}}"
   dns2               = "{{.dns2}}"
   dns_suffix         = "{{.dnsSuffix}}"
-  guest_vlan_allowed = "{{.guestVlanAllowed}}"
+  guest_vlan_allowed = {{.guestVlanAllowed}}
 
   static_ip_pool {
     start_address = "{{.startAddress}}"
