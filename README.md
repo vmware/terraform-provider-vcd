@@ -19,7 +19,7 @@ Part of Terraform
 Requirements
 ------------
 
--	[Terraform](https://www.terraform.io/downloads.html) 0.11.13
+-	[Terraform](https://www.terraform.io/downloads.html)
 -	[Go](https://golang.org/doc/install) 1.12 (to build the provider plugin)
 
 Building The Provider (the modules way)
