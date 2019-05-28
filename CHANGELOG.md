@@ -1,4 +1,9 @@
 ## 2.3.0 (Unreleased)
+
+IMPROVEMENTS:
+
+* Switch to Terraform 0.12 SDK which is required for Terraform 0.12 support. HCL parsing behaviour may have changed as a result of changes made by the new SDK version [GH-254]
+
 ## 2.2.0 (May 16, 2019)
 
 FEATURES:
