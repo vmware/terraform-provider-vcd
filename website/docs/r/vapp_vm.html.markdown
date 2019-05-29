@@ -41,7 +41,7 @@ resource "vcd_vapp_vm" "web1" {
     role    = "web"
     env     = "staging"
     version = "v1"
-    bla     = "foo"
+    my_key  = "my value"
   }
 
   network {
@@ -67,7 +67,7 @@ resource "vcd_vapp_vm" "web2" {
     role    = "web"
     env     = "staging"
     version = "v1"
-    bla     = "foo"
+    my_key  = "my value"
   }
 
   network {
