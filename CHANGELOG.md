@@ -2,7 +2,12 @@
 
 IMPROVEMENTS:
 
-* Switch to Terraform 0.12 SDK which is required for Terraform 0.12 support. HCL (HashiCorp configuration language) parsing behaviour may have changed as a result of changes made by the new SDK version [GH-254]
+* Switch to Terraform 0.12 SDK which is required for Terraform 0.12 support. HCL (HashiCorp configuration language) 
+parsing behaviour may have changed as a result of changes made by the new SDK version [GH-254]
+
+NOTES:
+
+* Provider plugin will still work with Terraform 0.11 executable
 
 ## 2.2.0 (May 16, 2019)
 
