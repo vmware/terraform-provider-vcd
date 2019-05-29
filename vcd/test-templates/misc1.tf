@@ -84,7 +84,7 @@ resource "vcd_vapp_vm" "tf_vm_11" {
   expose_hardware_virtualization = true
 
   # v2.2.0+
-  metadata {
+  metadata = {
     role    = "test"
     env     = "staging"
     version = "v2.2.0"

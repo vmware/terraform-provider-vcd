@@ -196,8 +196,7 @@ func init() {
 	testingTags["vapp"] = "resource_vcd_vapp_test.go"
 }
 
-const testAccCheckVcdVApp_basic = `
-resource "vcd_network_routed" "{{.NetworkName}}" {
+const testAccCheckVcdVApp_basic = `resource "vcd_network_routed" "{{.NetworkName}}" {
   name         = "{{.NetworkName}}"
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
@@ -233,7 +232,8 @@ resource "vcd_vapp" "{{.VappName}}" {
   memory        = 1024
   cpus          = 1
   ip            = "10.10.102.160"
-  metadata {
+
+  metadata = {
     vapp_metadata = "vApp Metadata."
   }
 }
@@ -248,14 +248,14 @@ resource "vcd_vapp" "{{.VappNameAllocated}}" {
   memory        = 1024
   cpus          = 1
   ip            = "allocated"
-  metadata {
+
+  metadata = {
     vapp_metadata = "vApp Metadata."
   }
 }
 `
 
-const testAccCheckVcdVApp_powerOff = `
-resource "vcd_network_routed" "{{.NetworkName2}}" {
+const testAccCheckVcdVApp_powerOff = `resource "vcd_network_routed" "{{.NetworkName2}}" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
   name         = "{{.NetworkName2}}"
@@ -284,7 +284,8 @@ resource "vcd_vapp" "{{.VappName}}" {
   cpus          = 1
   ip            = "10.10.103.160"
   power_on      = false
-  metadata {
+
+  metadata = {
     vapp_metadata = "vApp Metadata."
   }
 }

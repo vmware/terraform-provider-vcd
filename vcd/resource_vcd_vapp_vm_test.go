@@ -112,16 +112,17 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   cpus          = 2
   cpu_cores     = 1
   ip            = "10.10.102.161"
-  metadata {
+
+  metadata = {
     vm_metadata = "VM Metadata."
   }
 
   disk {
-    name = "${vcd_independent_disk.{{.diskResourceName}}.name}"
-    bus_number = 1
+    name        = "${vcd_independent_disk.{{.diskResourceName}}.name}"
+    bus_number  = 1
     unit_number = 0
   }
 
-  depends_on    = ["vcd_vapp.{{.VappName}}","vcd_independent_disk.{{.diskResourceName}}", "vcd_network_routed.{{.NetworkName}}"]
+  depends_on = ["vcd_vapp.{{.VappName}}", "vcd_independent_disk.{{.diskResourceName}}", "vcd_network_routed.{{.NetworkName}}"]
 }
 `
