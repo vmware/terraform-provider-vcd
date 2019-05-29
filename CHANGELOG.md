@@ -1,9 +1,9 @@
-## 2.3.0 (Unreleased)
+## 2.3.0 (May 29, 2019)
 
 IMPROVEMENTS:
 
 * Switch to Terraform 0.12 SDK which is required for Terraform 0.12 support. HCL (HashiCorp configuration language) 
-parsing behaviour may have changed as a result of changes made by the new SDK version [GH-254]
+parsing behaviour may have changed as a result of changes made by the new SDK version ([#254](https://github.com/terraform-providers/terraform-provider-vcd/issues/254))
 
 NOTES:
 
