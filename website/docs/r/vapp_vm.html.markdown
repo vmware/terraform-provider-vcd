@@ -37,7 +37,7 @@ resource "vcd_vapp_vm" "web1" {
   cpus          = 2
   cpu_cores     = 1
 
-  metadata {
+  metadata = {
     role    = "web"
     env     = "staging"
     version = "v1"
@@ -63,11 +63,11 @@ resource "vcd_vapp_vm" "web2" {
   memory        = 2048
   cpus          = 1
 
-  metadata {
-    role         = "web"
-    env          = "staging"
-    version      = "v2"
-    my_extra_key = "My extra value"
+  metadata = {
+    role    = "web"
+    env     = "staging"
+    version = "v1"
+    bla     = "foo"
   }
 
   network {

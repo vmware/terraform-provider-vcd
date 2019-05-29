@@ -24,7 +24,7 @@ resource "vcd_network_direct" "net" {
 resource "vcd_vapp" "web" {
   name = "web"
 
-  metadata {
+  metadata = {
     CostAccount = "Marketing Department"
   }
 
@@ -79,7 +79,7 @@ resource "vcd_vapp" "web" {
   network_name = "${vcd_network.net.name}"
   ip           = "10.10.104.160"
 
-  metadata {
+  metadata = {
     role    = "web"
     env     = "staging"
     version = "v1"
@@ -103,7 +103,7 @@ resource "vcd_network_routed" "net" {
 resource "vcd_vapp" "web" {
   name = "web"
 
-  metadata {
+  metadata = {
     boss = "Why is this vApp empty?"
     john = "I don't really know. Maybe somebody did forget to clean it up."
   }
