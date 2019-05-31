@@ -1,6 +1,7 @@
 package vcd
 
 import (
+	"github.com/hashicorp/terraform/helper/mutexkv"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/vmware/go-vcloud-director/v2/util"
@@ -106,6 +107,33 @@ func Provider() terraform.ResourceProvider {
 
 		ConfigureFunc: providerConfigure,
 	}
+}
+
+// This is a global MutexKV for all resources
+var vcdMutexKV = mutexkv.NewMutexKV()
+
+func lockVapp(d *schema.ResourceData) {
+	vcdMutexKV.Lock(d.Get("vdc").(string) + d.Get("name").(string))
+}
+
+func unLockVapp(d *schema.ResourceData) {
+	vcdMutexKV.Unlock(d.Get("vdc").(string) + d.Get("name").(string))
+}
+
+func lockParentVapp(d *schema.ResourceData) {
+	vcdMutexKV.Lock(d.Get("vdc").(string) + d.Get("vapp_name").(string))
+}
+
+func unLockParentVapp(d *schema.ResourceData) {
+	vcdMutexKV.Unlock(d.Get("vdc").(string) + d.Get("vapp_name").(string))
+}
+
+func lockParentEdgeGtw(d *schema.ResourceData) {
+	vcdMutexKV.Lock(d.Get("vdc").(string) + d.Get("edge_gateway").(string))
+}
+
+func unLockParentEdgeGtw(d *schema.ResourceData) {
+	vcdMutexKV.Unlock(d.Get("vdc").(string) + d.Get("edge_gateway").(string))
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {

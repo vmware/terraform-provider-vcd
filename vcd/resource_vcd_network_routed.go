@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform/helper/hashcode"
-	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
@@ -17,7 +17,7 @@ func resourceVcdNetworkRouted() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceVcdNetworkRoutedCreate,
 		Read:   resourceVcdNetworkRead,
-		Delete: resourceVcdNetworkDelete,
+		Delete: resourceVcdNetworkDeleteLocked,
 
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
@@ -145,8 +145,9 @@ func resourceVcdNetworkRouted() *schema.Resource {
 
 func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-	vcdClient.Mutex.Lock()
-	defer vcdClient.Mutex.Unlock()
+
+	lockParentEdgeGtw(d)
+	defer unLockParentEdgeGtw(d)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
@@ -201,9 +202,7 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 		IsShared: d.Get("shared").(bool),
 	}
 
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		return resource.RetryableError(vdc.CreateOrgVDCNetworkWait(orgVDCNetwork))
-	})
+	err = vdc.CreateOrgVDCNetworkWait(orgVDCNetwork)
 	if err != nil {
 		return fmt.Errorf("error: %#v", err)
 	}
@@ -214,14 +213,12 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 	}
 
 	if dhcp, ok := d.GetOk("dhcp_pool"); ok {
-		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := edgeGateway.AddDhcpPool(network.OrgVDCNetwork, dhcp.(*schema.Set).List())
-			if err != nil {
-				return resource.RetryableError(fmt.Errorf("error adding DHCP pool: %#v", err))
-			}
+		task, err := edgeGateway.AddDhcpPool(network.OrgVDCNetwork, dhcp.(*schema.Set).List())
+		if err != nil {
+			return fmt.Errorf("error adding DHCP pool: %#v", err)
+		}
 
-			return resource.RetryableError(task.WaitTaskCompletion())
-		})
+		err = task.WaitTaskCompletion()
 		if err != nil {
 			return fmt.Errorf(errorCompletingTask, err)
 		}
@@ -263,10 +260,17 @@ func resourceVcdNetworkRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
+func resourceVcdNetworkDeleteLocked(d *schema.ResourceData, meta interface{}) error {
+	lockParentEdgeGtw(d)
+	defer unLockParentEdgeGtw(d)
+
+	return resourceVcdNetworkDelete(d, meta)
+}
+
 func resourceVcdNetworkDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-	vcdClient.Mutex.Lock()
-	defer vcdClient.Mutex.Unlock()
+
+	time.Sleep(10 * time.Second)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
@@ -279,14 +283,11 @@ func resourceVcdNetworkDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error finding network: %#v", err)
 	}
 
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := network.Delete()
-		if err != nil {
-			return resource.RetryableError(
-				fmt.Errorf("error Deleting Network: %#v", err))
-		}
-		return resource.RetryableError(task.WaitTaskCompletion())
-	})
+	task, err := network.Delete()
+	if err != nil {
+		return fmt.Errorf("error DDeleting Network: %#v", err)
+	}
+	err = task.WaitTaskCompletion()
 	if err != nil {
 		return err
 	}

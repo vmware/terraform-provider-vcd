@@ -5,7 +5,6 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
@@ -90,8 +89,9 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 	// Multiple VCD components need to run operations on the Edge Gateway, as
 	// the edge gateway will throw back an error if it is already performing an
 	// operation we must wait until we can acquire a lock on the client
-	vcdClient.Mutex.Lock()
-	defer vcdClient.Mutex.Unlock()
+	lockParentEdgeGtw(d)
+	defer unLockParentEdgeGtw(d)
+
 	portString := getPortString(d.Get("port").(int))
 	translatedPortString := portString // default
 	if d.Get("translated_port").(int) > 0 {
@@ -128,36 +128,30 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 	// 3 seconds and then try again. Continue until a non-busy error or success
 
 	if nil != providedNetworkName && providedNetworkName != "" {
-		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := edgeGateway.AddNATPortMappingWithUplink(orgVdcnetwork, "DNAT",
-				d.Get("external_ip").(string),
-				portString,
-				d.Get("internal_ip").(string),
-				translatedPortString, protocol,
-				icmpSubType)
-			if err != nil {
-				return resource.RetryableError(
-					fmt.Errorf("error setting DNAT rules: %#v", err))
-			}
+		task, err := edgeGateway.AddNATPortMappingWithUplink(orgVdcnetwork, "DNAT",
+			d.Get("external_ip").(string),
+			portString,
+			d.Get("internal_ip").(string),
+			translatedPortString, protocol,
+			icmpSubType)
+		if err != nil {
+			return fmt.Errorf("error setting DNAT rules: %#v", err)
+		}
 
-			return resource.RetryableError(task.WaitTaskCompletion())
-		})
+		err = task.WaitTaskCompletion()
 	} else {
 		// TODO remove when major release is done
-		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := edgeGateway.AddNATPortMapping("DNAT",
-				d.Get("external_ip").(string),
-				portString,
-				d.Get("internal_ip").(string),
-				translatedPortString, protocol,
-				icmpSubType)
-			if err != nil {
-				return resource.RetryableError(
-					fmt.Errorf("error setting DNAT rules: %#v", err))
-			}
+		task, err := edgeGateway.AddNATPortMapping("DNAT",
+			d.Get("external_ip").(string),
+			portString,
+			d.Get("internal_ip").(string),
+			translatedPortString, protocol,
+			icmpSubType)
+		if err != nil {
+			return fmt.Errorf("error setting DNAT rules: %#v", err)
+		}
 
-			return resource.RetryableError(task.WaitTaskCompletion())
-		})
+		err = task.WaitTaskCompletion()
 	}
 
 	if err != nil {
@@ -218,8 +212,9 @@ func resourceVcdDNATDelete(d *schema.ResourceData, meta interface{}) error {
 	// Multiple VCD components need to run operations on the Edge Gateway, as
 	// the edge gatway will throw back an error if it is already performing an
 	// operation we must wait until we can aquire a lock on the client
-	vcdClient.Mutex.Lock()
-	defer vcdClient.Mutex.Unlock()
+	lockParentEdgeGtw(d)
+	defer unLockParentEdgeGtw(d)
+
 	portString := getPortString(d.Get("port").(int))
 	translatedPortString := portString // default
 	if d.Get("translated_port").(int) > 0 {
@@ -231,19 +226,16 @@ func resourceVcdDNATDelete(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := edgeGateway.RemoveNATPortMapping("DNAT",
-			d.Get("external_ip").(string),
-			portString,
-			d.Get("internal_ip").(string),
-			translatedPortString)
-		if err != nil {
-			return resource.RetryableError(
-				fmt.Errorf("error setting DNAT rules: %#v", err))
-		}
+	task, err := edgeGateway.RemoveNATPortMapping("DNAT",
+		d.Get("external_ip").(string),
+		portString,
+		d.Get("internal_ip").(string),
+		translatedPortString)
+	if err != nil {
+		return fmt.Errorf("error setting DNAT rules: %#v", err)
+	}
 
-		return resource.RetryableError(task.WaitTaskCompletion())
-	})
+	err = task.WaitTaskCompletion()
 	if err != nil {
 		return fmt.Errorf("error completing tasks: %#v", err)
 	}

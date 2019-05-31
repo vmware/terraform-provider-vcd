@@ -2,10 +2,10 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/hashicorp/terraform/helper/resource"
 	"log"
 	"regexp"
 
-	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
@@ -107,11 +107,13 @@ func resourceVcdVApp() *schema.Resource {
 
 func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-
 	org, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
 		return fmt.Errorf("error retrieving Org and VDC: %s", err)
 	}
+
+	lockVapp(d)
+	defer unLockVapp(d)
 
 	if _, ok := d.GetOk("template_name"); ok {
 		if _, ok := d.GetOk("catalog_name"); ok {
@@ -151,18 +153,13 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 			log.Printf("storage_profile %s", storage_profile_reference)
 
 			vapp, err := vdc.FindVAppByName(d.Get("name").(string))
-
 			if err != nil {
-				err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-					task, err := vdc.ComposeVApp(nets, vapptemplate, storage_profile_reference, d.Get("name").(string), d.Get("description").(string), d.Get("accept_all_eulas").(bool))
+				task, err := vdc.ComposeVApp(nets, vapptemplate, storage_profile_reference, d.Get("name").(string), d.Get("description").(string), d.Get("accept_all_eulas").(bool))
+				if err != nil {
+					return fmt.Errorf("error creating vapp: %#v", err)
+				}
 
-					if err != nil {
-						return resource.RetryableError(fmt.Errorf("error creating vapp: %#v", err))
-					}
-
-					return resource.RetryableError(task.WaitTaskCompletion())
-				})
-
+				err = task.WaitTaskCompletion()
 				if err != nil {
 					return fmt.Errorf("error creating vapp: %#v", err)
 				}
@@ -184,31 +181,27 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 				return fmt.Errorf("error changing vmname: %#v", err)
 			}
 
-			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-				networks := []map[string]interface{}{map[string]interface{}{
-					"ip":         d.Get("ip").(string),
-					"is_primary": true,
-					"orgnetwork": d.Get("network_name").(string),
-				}}
-				task, err := vapp.ChangeNetworkConfig(networks, d.Get("ip").(string))
-				if err != nil {
-					return resource.RetryableError(fmt.Errorf("error with Networking change: %#v", err))
-				}
-				return resource.RetryableError(task.WaitTaskCompletion())
-			})
+			networks := []map[string]interface{}{map[string]interface{}{
+				"ip":         d.Get("ip").(string),
+				"is_primary": true,
+				"orgnetwork": d.Get("network_name").(string),
+			}}
+			task, err := vapp.ChangeNetworkConfig(networks, d.Get("ip").(string))
+			if err != nil {
+				return fmt.Errorf("error with Networking change: %#v", err)
+			}
+			err = task.WaitTaskCompletion()
 			if err != nil {
 				return fmt.Errorf("error changing network: %#v", err)
 			}
 
 			if ovf, ok := d.GetOk("ovf"); ok {
-				err := retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-					task, err := vapp.SetOvf(convertToStringMap(ovf.(map[string]interface{})))
+				task, err := vapp.SetOvf(convertToStringMap(ovf.(map[string]interface{})))
 
-					if err != nil {
-						return resource.RetryableError(fmt.Errorf("error set ovf: %#v", err))
-					}
-					return resource.RetryableError(task.WaitTaskCompletion())
-				})
+				if err != nil {
+					return fmt.Errorf("error set ovf: %#v", err)
+				}
+				err = task.WaitTaskCompletion()
 				if err != nil {
 					return fmt.Errorf("error completing tasks: %#v", err)
 				}
@@ -216,27 +209,24 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 
 			initscript, ok := d.GetOk("initscript")
 			if ok {
-				err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-					log.Printf("running customisation script")
-					task, err := vapp.RunCustomizationScript(d.Get("name").(string), initscript.(string))
-					if err != nil {
-						return resource.RetryableError(fmt.Errorf("error with setting init script: %#v", err))
-					}
-					return resource.RetryableError(task.WaitTaskCompletion())
-				})
+				log.Printf("running customisation script")
+				task, err := vapp.RunCustomizationScript(d.Get("name").(string), initscript.(string))
+				if err != nil {
+					fmt.Errorf("error with setting init script: %#v", err)
+				}
+				err = task.WaitTaskCompletion()
 				if err != nil {
 					return fmt.Errorf(errorCompletingTask, err)
 				}
 			}
 
 			if d.Get("power_on").(bool) {
-				err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-					task, err := vapp.PowerOn()
-					if err != nil {
-						return resource.RetryableError(fmt.Errorf("error powerOn machine: %#v", err))
-					}
-					return resource.RetryableError(task.WaitTaskCompletion())
-				})
+
+				task, err := vapp.PowerOn()
+				if err != nil {
+					return fmt.Errorf("error powerOn machine: %#v", err)
+				}
+				err = task.WaitTaskCompletion()
 
 				if err != nil {
 					return fmt.Errorf("error completing powerOn tasks: %#v", err)
@@ -245,21 +235,16 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 
 		}
 	} else {
-		err := retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			e := vdc.ComposeRawVApp(d.Get("name").(string))
 
-			if e != nil {
-				return resource.RetryableError(fmt.Errorf("Error: %#v", e))
-			}
+		e := vdc.ComposeRawVApp(d.Get("name").(string))
 
-			e = vdc.Refresh()
-			if e != nil {
-				return resource.RetryableError(fmt.Errorf("Error: %#v", e))
-			}
-			return nil
-		})
-		if err != nil {
-			return err
+		if e != nil {
+			return fmt.Errorf("Error: %#v", e)
+		}
+
+		e = vdc.Refresh()
+		if e != nil {
+			return fmt.Errorf("Error: %#v", e)
 		}
 	}
 
@@ -322,14 +307,12 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if d.HasChange("storage_profile") {
-		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := vapp.ChangeStorageProfile(d.Get("storage_profile").(string))
-			if err != nil {
-				return resource.RetryableError(fmt.Errorf("error changing storage_profile: %#v", err))
-			}
+		task, err := vapp.ChangeStorageProfile(d.Get("storage_profile").(string))
+		if err != nil {
+			return fmt.Errorf("error changing storage_profile: %#v", err)
+		}
 
-			return resource.RetryableError(task.WaitTaskCompletion())
-		})
+		err = task.WaitTaskCompletion()
 		if err != nil {
 			return err
 		}
@@ -356,28 +339,25 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		if d.HasChange("memory") {
-			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-				task, err := vapp.ChangeMemorySize(d.Get("memory").(int))
-				if err != nil {
-					return resource.RetryableError(fmt.Errorf("error changing memory size: %#v", err))
-				}
 
-				return resource.RetryableError(task.WaitTaskCompletion())
-			})
+			task, err := vapp.ChangeMemorySize(d.Get("memory").(int))
+			if err != nil {
+				return fmt.Errorf("error changing memory size: %#v", err)
+			}
+
+			err = task.WaitTaskCompletion()
 			if err != nil {
 				return err
 			}
 		}
 
 		if d.HasChange("cpus") {
-			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-				task, err := vapp.ChangeCPUCount(d.Get("cpus").(int))
-				if err != nil {
-					return resource.RetryableError(fmt.Errorf("error changing cpu count: %#v", err))
-				}
+			task, err := vapp.ChangeCPUCount(d.Get("cpus").(int))
+			if err != nil {
+				fmt.Errorf("error changing cpu count: %#v", err)
+			}
 
-				return resource.RetryableError(task.WaitTaskCompletion())
-			})
+			err = task.WaitTaskCompletion()
 			if err != nil {
 				return fmt.Errorf(errorCompletingTask, err)
 			}
@@ -395,14 +375,12 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		if ovf, ok := d.GetOk("ovf"); ok {
-			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-				task, err := vapp.SetOvf(convertToStringMap(ovf.(map[string]interface{})))
+			task, err := vapp.SetOvf(convertToStringMap(ovf.(map[string]interface{})))
 
-				if err != nil {
-					return resource.RetryableError(fmt.Errorf("Error set ovf: %#v", err))
-				}
-				return resource.RetryableError(task.WaitTaskCompletion())
-			})
+			if err != nil {
+				return fmt.Errorf("error set ovf: %#v", err)
+			}
+			err = task.WaitTaskCompletion()
 			if err != nil {
 				return fmt.Errorf(errorCompletingTask, err)
 			}
@@ -454,34 +432,34 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func getVAppIPAddress(d *schema.ResourceData, meta interface{}, vdc govcd.Vdc, org govcd.Org) (string, error) {
-	vcdClient := meta.(*VCDClient)
 	var ip string
-	err := retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		vapp, err := vdc.FindVAppByName(d.Id())
-		if err != nil {
-			return resource.RetryableError(fmt.Errorf("unable to find vapp"))
-		}
 
-		// getting the IP of the specific Vm, rather than index zero.
-		// Required as once we add more VM's, index zero doesn't guarantee the
-		// 'first' one, and tests will fail sometimes (annoying huh?)
-		vm, err := vdc.FindVMByName(vapp, d.Get("name").(string))
-		if err != nil {
-			return resource.RetryableError(fmt.Errorf("unable to find vm: %s", err))
-		}
+	vapp, err := vdc.FindVAppByName(d.Id())
+	if err != nil {
+		fmt.Errorf("unable to find vapp")
+	}
 
-		ip = vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddress
-		if ip == "" {
-			return resource.RetryableError(fmt.Errorf("timeout: VM did not acquire IP address"))
-		}
-		return nil
-	})
+	// getting the IP of the specific Vm, rather than index zero.
+	// Required as once we add more VM's, index zero doesn't guarantee the
+	// 'first' one, and tests will fail sometimes (annoying huh?)
+	vm, err := vdc.FindVMByName(vapp, d.Get("name").(string))
+	if err != nil {
+		return "", fmt.Errorf("unable to find vm: %s", err)
+	}
+
+	ip = vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddress
+	if ip == "" {
+		return "", fmt.Errorf("timeout: VM did not acquire IP address")
+	}
 
 	return ip, err
 }
 
 func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
+
+	lockVapp(d)
+	defer unLockVapp(d)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
@@ -493,32 +471,38 @@ func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error finding vapp: %s", err)
 	}
 
-	_ = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := vapp.Undeploy()
-		// Very often the vApp is powered off at this point and Undeploy() would wait for as long as
-		// vcdClient.MaxRetryTimeout before going to Delete phase because of the following error:
-		// "The requested operation could not be executed since vApp vApp_name is not running"
-		// So, if the error matches we just quit retrying and fast forward to vapp.Delete()
-		var reErr = regexp.MustCompile(`.*The requested operation could not be executed since vApp.*is not running.*`)
-		if err != nil && reErr.MatchString(err.Error()) {
-			return &resource.RetryError{Err: err, Retryable: false}
-		}
+	err = tryUndeploy(vapp)
+	if err != nil {
+		return err
+	}
 
-		if err != nil {
-			return resource.RetryableError(fmt.Errorf("error undeploying: %#v", err))
-		}
+	task, err := vapp.Delete()
+	if err != nil {
+		return fmt.Errorf("error deleting: %#v", err)
+	}
 
-		return resource.RetryableError(task.WaitTaskCompletion())
-	})
-
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := vapp.Delete()
-		if err != nil {
-			return resource.RetryableError(fmt.Errorf("error deleting: %#v", err))
-		}
-
-		return resource.RetryableError(task.WaitTaskCompletion())
-	})
+	err = task.WaitTaskCompletion()
 
 	return err
+}
+
+func tryUndeploy(vapp govcd.VApp) error {
+	task, err := vapp.Undeploy()
+	// Very often the vApp is powered off at this point and Undeploy() would wait for as long as
+	// vcdClient.MaxRetryTimeout before going to Delete phase because of the following error:
+	// "The requested operation could not be executed since vApp vApp_name is not running"
+	// So, if the error matches we just quit retrying and fast forward to vapp.Delete()
+	var reErr = regexp.MustCompile(`.*The requested operation could not be executed since vApp.*is not running.*`)
+	if err != nil && reErr.MatchString(err.Error()) {
+		// ignore - can't be undeployed
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("error undeploying VAPP: %#v", err)
+	}
+
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return fmt.Errorf("error undeploying VAPP: %#v", err)
+	}
+	return nil
 }

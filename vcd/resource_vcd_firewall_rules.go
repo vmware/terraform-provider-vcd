@@ -5,7 +5,6 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -96,8 +95,8 @@ func resourceVcdFirewallRules() *schema.Resource {
 func resourceVcdFirewallRulesCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	vcdClient.Mutex.Lock()
-	defer vcdClient.Mutex.Unlock()
+	lockParentEdgeGtw(d)
+	defer unLockParentEdgeGtw(d)
 
 	edgeGatewayName := d.Get("edge_gateway").(string)
 
@@ -106,23 +105,19 @@ func resourceVcdFirewallRulesCreate(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		err := edgeGateway.Refresh()
-		if err != nil {
-			log.Printf("[INFO] Error refreshing edge gateway: %#v", err)
-			return resource.RetryableError(
-				fmt.Errorf("error error refreshing edge gateway: %#v", err))
-		}
-		firewallRules, _ := expandFirewallRules(d, edgeGateway.EdgeGateway)
-		task, err := edgeGateway.CreateFirewallRules(d.Get("default_action").(string), firewallRules)
-		if err != nil {
-			log.Printf("[INFO] Error setting firewall rules: %s", err)
-			return resource.RetryableError(
-				fmt.Errorf("error setting firewall rules: %#v", err))
-		}
+	err = edgeGateway.Refresh()
+	if err != nil {
+		log.Printf("[INFO] Error refreshing edge gateway: %#v", err)
+		return fmt.Errorf("error error refreshing edge gateway: %#v", err)
+	}
+	firewallRules, _ := expandFirewallRules(d, edgeGateway.EdgeGateway)
+	task, err := edgeGateway.CreateFirewallRules(d.Get("default_action").(string), firewallRules)
+	if err != nil {
+		log.Printf("[INFO] Error setting firewall rules: %s", err)
+		return fmt.Errorf("error setting firewall rules: %#v", err)
+	}
 
-		return resource.RetryableError(task.WaitTaskCompletion())
-	})
+	err = task.WaitTaskCompletion()
 	if err != nil {
 		return fmt.Errorf(errorCompletingTask, err)
 	}
@@ -135,8 +130,8 @@ func resourceVcdFirewallRulesCreate(d *schema.ResourceData, meta interface{}) er
 func resourceFirewallRulesDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	vcdClient.Mutex.Lock()
-	defer vcdClient.Mutex.Unlock()
+	lockParentEdgeGtw(d)
+	defer unLockParentEdgeGtw(d)
 
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {

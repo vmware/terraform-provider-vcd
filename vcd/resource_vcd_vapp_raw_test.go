@@ -118,6 +118,7 @@ resource "vcd_vapp" "{{.VappName}}" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
   name = "{{.VappName}}"
+  depends_on   = ["vcd_network_routed.{{.NetworkName}}"]
 }
 
 resource "vcd_vapp_vm" "{{.VmName}}" {

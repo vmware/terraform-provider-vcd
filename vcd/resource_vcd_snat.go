@@ -2,7 +2,6 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
@@ -63,8 +62,8 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 	// Multiple VCD components need to run operations on the Edge Gateway, as
 	// the edge gatway will throw back an error if it is already performing an
 	// operation we must wait until we can aquire a lock on the client
-	vcdClient.Mutex.Lock()
-	defer vcdClient.Mutex.Unlock()
+	lockParentEdgeGtw(d)
+	defer unLockParentEdgeGtw(d)
 
 	// Creating a loop to offer further protection from the edge gateway erroring
 	// due to being busy eg another person is using another client so wouldn't be
@@ -91,25 +90,20 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if nil != providedNetworkName && providedNetworkName != "" {
-		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-
-			task, err := edgeGateway.AddNATRule(orgVdcnetwork, "SNAT",
-				d.Get("external_ip").(string), d.Get("internal_ip").(string))
-			if err != nil {
-				return resource.RetryableError(fmt.Errorf("error setting SNAT rules: %#v", err))
-			}
-			return resource.RetryableError(task.WaitTaskCompletion())
-		})
+		task, err := edgeGateway.AddNATRule(orgVdcnetwork, "SNAT",
+			d.Get("external_ip").(string), d.Get("internal_ip").(string))
+		if err != nil {
+			return fmt.Errorf("error setting SNAT rules: %#v", err)
+		}
+		err = task.WaitTaskCompletion()
 	} else {
 		// TODO remove when major release is done
-		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := edgeGateway.AddNATMapping("SNAT", d.Get("internal_ip").(string),
-				d.Get("external_ip").(string))
-			if err != nil {
-				return resource.RetryableError(fmt.Errorf("error setting SNAT rules: %#v", err))
-			}
-			return resource.RetryableError(task.WaitTaskCompletion())
-		})
+		task, err := edgeGateway.AddNATMapping("SNAT", d.Get("internal_ip").(string),
+			d.Get("external_ip").(string))
+		if err != nil {
+			return fmt.Errorf("error setting SNAT rules: %#v", err)
+		}
+		err = task.WaitTaskCompletion()
 		if err != nil {
 			return err
 		}
@@ -168,23 +162,21 @@ func resourceVcdSNATDelete(d *schema.ResourceData, meta interface{}) error {
 	// Multiple VCD components need to run operations on the Edge Gateway, as
 	// the edge gatway will throw back an error if it is already performing an
 	// operation we must wait until we can aquire a lock on the client
-	vcdClient.Mutex.Lock()
-	defer vcdClient.Mutex.Unlock()
+	lockParentEdgeGtw(d)
+	defer unLockParentEdgeGtw(d)
 
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		task, err := edgeGateway.RemoveNATMapping("SNAT", d.Get("internal_ip").(string),
-			d.Get("external_ip").(string),
-			"")
-		if err != nil {
-			return resource.RetryableError(fmt.Errorf("error setting SNAT rules: %#v", err))
-		}
-		return resource.RetryableError(task.WaitTaskCompletion())
-	})
+	task, err := edgeGateway.RemoveNATMapping("SNAT", d.Get("internal_ip").(string),
+		d.Get("external_ip").(string),
+		"")
+	if err != nil {
+		return fmt.Errorf("error setting SNAT rules: %#v", err)
+	}
+	err = task.WaitTaskCompletion()
 	if err != nil {
 		return err
 	}
