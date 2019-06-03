@@ -338,7 +338,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	d.SetId(d.Get("name").(string))
 
 	// TODO do not trigger resourceVcdVAppVmUpdate from create. These must be separate actions.
-	err = resourceVcdVAppVmUpdate(d, meta)
+	err = resourceVcdVAppVmUpdateExecute(d, meta)
 	if err != nil {
 		errAttachedDisk := updateStateOfAttachedDisks(d, vm, vdc)
 		if errAttachedDisk != nil {
@@ -465,6 +465,13 @@ func getVmIndependentDisks(vm govcd.VM) []string {
 }
 
 func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
+	lockParentVapp(d)
+	defer unLockParentVapp(d)
+
+	return resourceVcdVAppVmUpdateExecute(d, meta)
+}
+
+func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) error {
 
 	vcdClient := meta.(*VCDClient)
 
