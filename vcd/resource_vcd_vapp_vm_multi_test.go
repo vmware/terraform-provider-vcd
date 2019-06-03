@@ -1,4 +1,4 @@
-// +build multivm
+// +build multivm functional
 
 package vcd
 
@@ -60,20 +60,20 @@ func TestAccVcdVAppVmMulti(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVAppVmMultiExists("vcd_vapp_vm."+vmName, &vapp, &vm),
+					testAccCheckVcdVAppVmMultiExists("vcd_vapp_vm."+vmName1, &vapp, &vm, vappName2, vmName1),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_vm."+vmName, "name", vmName),
+						"vcd_vapp_vm."+vmName1, "name", vmName1),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_vm."+vmName, "ip", "10.10.102.161"),
+						"vcd_vapp_vm."+vmName1, "ip", "10.10.102.161"),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_vm."+vmName, "power_on", "true"),
+						"vcd_vapp_vm."+vmName1, "power_on", "true"),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckVcdVAppVmMultiExists(n string, vapp *govcd.VApp, vm *govcd.VM) resource.TestCheckFunc {
+func testAccCheckVcdVAppVmMultiExists(n string, vapp *govcd.VApp, vm *govcd.VM, vappName, vmName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -90,10 +90,12 @@ func testAccCheckVcdVAppVmMultiExists(n string, vapp *govcd.VApp, vm *govcd.VM) 
 			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
 
-		vapp, err := vdc.FindVAppByName(vappName2)
+		vapp, err := vdc.FindVAppByName(vappName)
+		if err != nil {
+			return err
+		}
 
 		resp, err := vdc.FindVMByName(vapp, vmName)
-
 		if err != nil {
 			return err
 		}
