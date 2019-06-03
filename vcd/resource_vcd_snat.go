@@ -65,11 +65,6 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 	lockParentEdgeGtw(d)
 	defer unLockParentEdgeGtw(d)
 
-	// Creating a loop to offer further protection from the edge gateway erroring
-	// due to being busy eg another person is using another client so wouldn't be
-	// constrained by out lock. If the edge gateway reurns with a busy error, wait
-	// 3 seconds and then try again. Continue until a non-busy error or success
-
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
@@ -96,6 +91,9 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 			return fmt.Errorf("error setting SNAT rules: %#v", err)
 		}
 		err = task.WaitTaskCompletion()
+		if err != nil {
+			return err
+		}
 	} else {
 		// TODO remove when major release is done
 		task, err := edgeGateway.AddNATMapping("SNAT", d.Get("internal_ip").(string),
@@ -107,10 +105,6 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 		if err != nil {
 			return err
 		}
-	}
-
-	if err != nil {
-		return err
 	}
 
 	if nil != providedNetworkName && "" != providedNetworkName {

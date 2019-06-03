@@ -212,7 +212,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 				log.Printf("running customisation script")
 				task, err := vapp.RunCustomizationScript(d.Get("name").(string), initscript.(string))
 				if err != nil {
-					fmt.Errorf("error with setting init script: %#v", err)
+					return fmt.Errorf("error with setting init script: %#v", err)
 				}
 				err = task.WaitTaskCompletion()
 				if err != nil {
@@ -354,7 +354,7 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		if d.HasChange("cpus") {
 			task, err := vapp.ChangeCPUCount(d.Get("cpus").(int))
 			if err != nil {
-				fmt.Errorf("error changing cpu count: %#v", err)
+				return fmt.Errorf("error changing cpu count: %#v", err)
 			}
 
 			err = task.WaitTaskCompletion()
@@ -436,7 +436,7 @@ func getVAppIPAddress(d *schema.ResourceData, meta interface{}, vdc govcd.Vdc, o
 
 	vapp, err := vdc.FindVAppByName(d.Id())
 	if err != nil {
-		fmt.Errorf("unable to find vapp")
+		return "", fmt.Errorf("unable to find vapp")
 	}
 
 	// getting the IP of the specific Vm, rather than index zero.
@@ -488,10 +488,9 @@ func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
 
 func tryUndeploy(vapp govcd.VApp) error {
 	task, err := vapp.Undeploy()
-	// Very often the vApp is powered off at this point and Undeploy() would wait for as long as
-	// vcdClient.MaxRetryTimeout before going to Delete phase because of the following error:
+	// Very often the vApp is powered off at this point and Undeploy() would fail with error:
 	// "The requested operation could not be executed since vApp vApp_name is not running"
-	// So, if the error matches we just quit retrying and fast forward to vapp.Delete()
+	// So, if the error matches we just ingore and fast forward to vapp.Delete()
 	var reErr = regexp.MustCompile(`.*The requested operation could not be executed since vApp.*is not running.*`)
 	if err != nil && reErr.MatchString(err.Error()) {
 		// ignore - can't be undeployed

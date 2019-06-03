@@ -285,7 +285,7 @@ func resourceVcdNetworkDelete(d *schema.ResourceData, meta interface{}) error {
 
 	task, err := network.Delete()
 	if err != nil {
-		return fmt.Errorf("error DDeleting Network: %#v", err)
+		return fmt.Errorf("error Deleting Network: %#v", err)
 	}
 	err = task.WaitTaskCompletion()
 	if err != nil {

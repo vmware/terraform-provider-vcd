@@ -122,11 +122,6 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("unable to find orgVdcnetwork: %s, err: %s", providedNetworkName.(string), err)
 	}
 
-	// Creating a loop to offer further protection from the edge gateway erroring
-	// due to being busy eg another person is using another client so wouldn't be
-	// constrained by out lock. If the edge gateway reurns with a busy error, wait
-	// 3 seconds and then try again. Continue until a non-busy error or success
-
 	if nil != providedNetworkName && providedNetworkName != "" {
 		task, err := edgeGateway.AddNATPortMappingWithUplink(orgVdcnetwork, "DNAT",
 			d.Get("external_ip").(string),
@@ -139,6 +134,10 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		err = task.WaitTaskCompletion()
+		if err != nil {
+			return fmt.Errorf("error completing tasks: %#v", err)
+		}
+
 	} else {
 		// TODO remove when major release is done
 		task, err := edgeGateway.AddNATPortMapping("DNAT",
@@ -152,10 +151,9 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		err = task.WaitTaskCompletion()
-	}
-
-	if err != nil {
-		return fmt.Errorf("error completing tasks: %#v", err)
+		if err != nil {
+			return fmt.Errorf("error completing tasks: %#v", err)
+		}
 	}
 
 	if nil != providedNetworkName && "" != providedNetworkName {

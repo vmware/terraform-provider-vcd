@@ -605,7 +605,7 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 
 			task, err := vm.PowerOn()
 			if err != nil {
-				fmt.Errorf("error Powering Up: %#v", err)
+				return fmt.Errorf("error Powering Up: %#v", err)
 			}
 
 			err = task.WaitTaskCompletion()
@@ -863,7 +863,7 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	return err
+	return nil
 }
 
 func resourceVcdVmIndependentDiskHash(v interface{}) int {
