@@ -2,11 +2,12 @@ package vcd
 
 import (
 	"fmt"
+	"log"
+
 	"github.com/hashicorp/terraform/helper/mutexkv"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/vmware/go-vcloud-director/v2/util"
-	"log"
 )
 
 // Provider returns a terraform.ResourceProvider.
