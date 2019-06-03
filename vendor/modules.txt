@@ -124,6 +124,7 @@ github.com/hashicorp/logutils
 # github.com/hashicorp/terraform v0.12.0
 github.com/hashicorp/terraform/plugin
 github.com/hashicorp/terraform/helper/hashcode
+github.com/hashicorp/terraform/helper/mutexkv
 github.com/hashicorp/terraform/helper/resource
 github.com/hashicorp/terraform/helper/schema
 github.com/hashicorp/terraform/helper/validation
