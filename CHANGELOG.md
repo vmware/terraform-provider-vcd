@@ -1,7 +1,7 @@
 ## 2.4.0 (Unreleased)
 IMPROVEMENTS:
 
-* Change resource handling to use locking mechanism when resource parallel handling is not supported by vDC. [#255] 
+* Change resource handling to use locking mechanism when resource parallel handling is not supported by vCD. [GH-#255] 
 
 ## 2.3.0 (May 29, 2019)
 

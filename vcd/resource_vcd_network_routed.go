@@ -3,14 +3,12 @@ package vcd
 import (
 	"bytes"
 	"fmt"
-	"log"
-	"strings"
-	"time"
-
 	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"log"
+	"strings"
 )
 
 func resourceVcdNetworkRouted() *schema.Resource {
@@ -269,8 +267,6 @@ func resourceVcdNetworkDeleteLocked(d *schema.ResourceData, meta interface{}) er
 
 func resourceVcdNetworkDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-
-	time.Sleep(10 * time.Second)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
