@@ -1,10 +1,12 @@
 package vcd
 
 import (
+	"fmt"
 	"github.com/hashicorp/terraform/helper/mutexkv"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/vmware/go-vcloud-director/v2/util"
+	"log"
 )
 
 // Provider returns a terraform.ResourceProvider.
@@ -113,27 +115,39 @@ func Provider() terraform.ResourceProvider {
 var vcdMutexKV = mutexkv.NewMutexKV()
 
 func lockVapp(d *schema.ResourceData) {
-	vcdMutexKV.Lock(d.Get("vdc").(string) + d.Get("name").(string))
+	key := fmt.Sprintf("%s|%s|%s", d.Get("vdc").(string), d.Get("org").(string), d.Get("name").(string))
+	log.Printf("[TRACE] Locked vapp with key %s.", key)
+	vcdMutexKV.Lock(key)
 }
 
 func unLockVapp(d *schema.ResourceData) {
-	vcdMutexKV.Unlock(d.Get("vdc").(string) + d.Get("name").(string))
+	key := fmt.Sprintf("%s|%s|%s", d.Get("vdc").(string), d.Get("org").(string), d.Get("name").(string))
+	log.Printf("[TRACE] Unlocked vapp with key %s.", key)
+	vcdMutexKV.Unlock(key)
 }
 
 func lockParentVapp(d *schema.ResourceData) {
-	vcdMutexKV.Lock(d.Get("vdc").(string) + d.Get("vapp_name").(string))
+	key := fmt.Sprintf("%s|%s|%s", d.Get("vdc").(string), d.Get("org").(string), d.Get("vapp_name").(string))
+	log.Printf("[TRACE] Locked parent vapp with key %s.", key)
+	vcdMutexKV.Lock(key)
 }
 
 func unLockParentVapp(d *schema.ResourceData) {
-	vcdMutexKV.Unlock(d.Get("vdc").(string) + d.Get("vapp_name").(string))
+	key := fmt.Sprintf("%s|%s|%s", d.Get("vdc").(string), d.Get("org").(string), d.Get("vapp_name").(string))
+	log.Printf("[TRACE] Unlocked parent vapp with key %s.", key)
+	vcdMutexKV.Unlock(key)
 }
 
 func lockParentEdgeGtw(d *schema.ResourceData) {
-	vcdMutexKV.Lock(d.Get("vdc").(string) + d.Get("edge_gateway").(string))
+	key := fmt.Sprintf("%s|%s|%s", d.Get("vdc").(string), d.Get("org").(string), d.Get("edge_gateway").(string))
+	log.Printf("[TRACE] Locked parent edge gtw with key %s.", key)
+	vcdMutexKV.Lock(key)
 }
 
 func unLockParentEdgeGtw(d *schema.ResourceData) {
-	vcdMutexKV.Unlock(d.Get("vdc").(string) + d.Get("edge_gateway").(string))
+	key := fmt.Sprintf("%s|%s|%s", d.Get("vdc").(string), d.Get("org").(string), d.Get("edge_gateway").(string))
+	log.Printf("[TRACE] Unlocked parent edge gtw with key %s.", key)
+	vcdMutexKV.Lock(key)
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
