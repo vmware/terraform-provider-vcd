@@ -2,7 +2,6 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform/helper/resource"
 	"log"
 	"regexp"
 
@@ -169,14 +168,17 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 				}
 			}
 
-			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-				task, err := vapp.ChangeVMName(d.Get("name").(string))
-				if err != nil {
-					return resource.RetryableError(fmt.Errorf("Error with vm name change: %#v", err))
-				}
+			err = vapp.BlockWhileStatus("UNRESOLVED", vcdClient.MaxRetryTimeout)
+			if err != nil {
+				return fmt.Errorf("error composing vApp: %s", err)
+			}
 
-				return resource.RetryableError(task.WaitTaskCompletion())
-			})
+			task, err := vapp.ChangeVMName(d.Get("name").(string))
+			if err != nil {
+				return fmt.Errorf("error with vm name change: %#v", err)
+			}
+
+			err = task.WaitTaskCompletion()
 			if err != nil {
 				return fmt.Errorf("error changing vmname: %#v", err)
 			}
@@ -186,7 +188,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 				"is_primary": true,
 				"orgnetwork": d.Get("network_name").(string),
 			}}
-			task, err := vapp.ChangeNetworkConfig(networks, d.Get("ip").(string))
+			task, err = vapp.ChangeNetworkConfig(networks, d.Get("ip").(string))
 			if err != nil {
 				return fmt.Errorf("error with Networking change: %#v", err)
 			}
