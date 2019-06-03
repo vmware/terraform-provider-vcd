@@ -148,7 +148,7 @@ func lockParentEdgeGtw(d *schema.ResourceData) {
 func unLockParentEdgeGtw(d *schema.ResourceData) {
 	key := fmt.Sprintf("%s|%s|%s", d.Get("org").(string), d.Get("vdc").(string), d.Get("edge_gateway").(string))
 	log.Printf("[TRACE] Unlocked parent edge gtw with key %s.", key)
-	vcdMutexKV.Lock(key)
+	vcdMutexKV.Unlock(key)
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
