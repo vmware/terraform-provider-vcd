@@ -13,6 +13,7 @@ import (
 
 var vappName string = "TestAccVcdVAppVapp"
 var vappNameAllocated = "TestAccVcdVAppVappAllocated"
+var vappNamePowerOff = "TestAccVcdVAppVappPowerOff"
 
 func TestAccVcdVApp_PowerOff(t *testing.T) {
 	var vapp govcd.VApp
@@ -28,7 +29,8 @@ func TestAccVcdVApp_PowerOff(t *testing.T) {
 		"CatalogItem":       testSuiteCatalogOVAItem,
 		"VappName":          vappName,
 		"VappNameAllocated": vappNameAllocated,
-		"FuncName":          "TestAccCheckVcdVApp_basic",
+		"VappNamePowerOff":  vappNamePowerOff,
+		"FuncName":          "TestAccCheckVcdVApp_PowerOff",
 		"Tags":              "vapp",
 	}
 	configText := templateFill(testAccCheckVcdVApp_basic, params)
@@ -80,16 +82,16 @@ func TestAccVcdVApp_PowerOff(t *testing.T) {
 			resource.TestStep{
 				Config: configTextPoweroff,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVAppExists("vcd_vapp."+vappName, &vapp),
+					testAccCheckVcdVAppExists("vcd_vapp."+vappNamePowerOff, &vapp),
 					testAccCheckVcdVAppAttributes_off(&vapp),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp."+vappName, "name", vappName),
+						"vcd_vapp."+vappNamePowerOff, "name", vappNamePowerOff),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp."+vappName, "ip", "10.10.103.160"),
+						"vcd_vapp."+vappNamePowerOff, "ip", "10.10.103.160"),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp."+vappName, "power_on", "false"),
+						"vcd_vapp."+vappNamePowerOff, "power_on", "false"),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp."+vappName, "metadata.vapp_metadata", "vApp Metadata."),
+						"vcd_vapp."+vappNamePowerOff, "metadata.vapp_metadata", "vApp Metadata."),
 				),
 			},
 		},
@@ -174,7 +176,7 @@ func testAccCheckVcdVAppAttributes(vapp *govcd.VApp) resource.TestCheckFunc {
 func testAccCheckVcdVAppAttributes_off(vapp *govcd.VApp) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
-		if vapp.VApp.Name != vappName {
+		if vapp.VApp.Name != vappNamePowerOff {
 			return fmt.Errorf("bad name: %s", vapp.VApp.Name)
 		}
 
@@ -273,10 +275,10 @@ const testAccCheckVcdVApp_powerOff = `resource "vcd_network_routed" "{{.NetworkN
   }
 }
 
-resource "vcd_vapp" "{{.VappName}}" {
+resource "vcd_vapp" "{{.VappNamePowerOff}}" {
   org           = "{{.Org}}"
   vdc           = "{{.Vdc}}"
-  name          = "{{.VappName}}"
+  name          = "{{.VappNamePowerOff}}"
   template_name = "{{.CatalogItem}}"
   catalog_name  = "{{.Catalog}}"
   network_name  = "${vcd_network_routed.{{.NetworkName2}}.name}"
