@@ -117,8 +117,9 @@ var vcdMutexKV = mutexkv.NewMutexKV()
 
 func lockVapp(d *schema.ResourceData) {
 	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", d.Get("org").(string), d.Get("vdc").(string), d.Get("name").(string))
-	log.Printf("[TRACE] Locked vapp with key %s.", key)
+	log.Printf("[TRACE] Acquiring lock for vapp with key %s.", key)
 	vcdMutexKV.Lock(key)
+	log.Printf("[TRACE] Locked vapp with key %s.", key)
 }
 
 func unLockVapp(d *schema.ResourceData) {
@@ -129,8 +130,9 @@ func unLockVapp(d *schema.ResourceData) {
 
 func lockParentVapp(d *schema.ResourceData) {
 	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", d.Get("org").(string), d.Get("vdc").(string), d.Get("vapp_name").(string))
-	log.Printf("[TRACE] Locked parent vapp with key %s.", key)
+	log.Printf("[TRACE] Acquiring lock for parent vapp with key %s.", key)
 	vcdMutexKV.Lock(key)
+	log.Printf("[TRACE] Locked parent vapp with key %s.", key)
 }
 
 func unLockParentVapp(d *schema.ResourceData) {
@@ -141,8 +143,9 @@ func unLockParentVapp(d *schema.ResourceData) {
 
 func lockParentEdgeGtw(d *schema.ResourceData) {
 	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", d.Get("org").(string), d.Get("vdc").(string), d.Get("edge_gateway").(string))
-	log.Printf("[TRACE] Locked parent edge gtw with key %s.", key)
+	log.Printf("[TRACE] Acquiring lock for edge gtw with key %s.", key)
 	vcdMutexKV.Lock(key)
+	log.Printf("[TRACE] Locked parent edge gtw with key %s.", key)
 }
 
 func unLockParentEdgeGtw(d *schema.ResourceData) {
