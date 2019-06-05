@@ -2,6 +2,8 @@ package vcd
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
@@ -72,43 +74,60 @@ func resourceVcdLBServerPool() *schema.Resource {
 
 			"member": {
 				Optional: true,
-				Type:     schema.TypeList,
+				ForceNew: false,
+				Type:     schema.TypeSet,
+				Set:      lbServerPoolMemberHash,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"is_enabled": &schema.Schema{
-							Type:        schema.TypeBool,
-							Required:    true,
-							Description: "Defines wether the member is used in pool",
+						//"id": {
+						//	ForceNew:    false,
+						//	Computed:    true,
+						//	Type:        schema.TypeString,
+						//	Description: "Pool member id",
+						//},
+						"condition": &schema.Schema{
+							Type:         schema.TypeString,
+							ForceNew:     false,
+							Required:     true,
+							ValidateFunc: validation.StringInSlice([]string{"enabled", "drain", "disabled"}, false),
+							Description:  "Defines member state",
 						},
 						"name": {
-							ForceNew:    true,
+							//ForceNew:    true,
 							Required:    true,
+							ForceNew:    false,
 							Type:        schema.TypeString,
 							Description: "Name of pool member",
 						},
 						"ip_address": {
 							Optional: true,
+							ForceNew: false,
 							Type:     schema.TypeString,
 						},
 						"port": {
 							Required: true,
-							Type:     schema.TypeString,
+							ForceNew: false,
+							Type:     schema.TypeInt,
 						},
 						"monitor_port": {
 							Required: true,
-							Type:     schema.TypeString,
+							ForceNew: false,
+							Type:     schema.TypeInt,
 						},
 						"weight": {
 							Required: true,
-							Type:     schema.TypeString,
+							ForceNew: false,
+							Type:     schema.TypeInt,
 						},
 						"min_connections": {
 							Optional: true,
-							Type:     schema.TypeString,
+							ForceNew: false,
+							Type:     schema.TypeInt,
 						},
 						"max_connections": {
 							Optional: true,
-							Type:     schema.TypeString,
+							ForceNew: false,
+							Type:     schema.TypeInt,
 						},
 					},
 				},
@@ -126,18 +145,18 @@ func resourceVcdLBServerPoolCreate(d *schema.ResourceData, meta interface{}) err
 
 	LBPool, err := expandLBPool(d)
 	if err != nil {
-		return fmt.Errorf("unable to expand load balancer service monitor: %s", err)
+		return fmt.Errorf("unable to expand load balancer server pool: %s", err)
 	}
 
 	//tempLock.Lock()
 	//defer tempLock.Unlock()
 
-	createdMonitor, err := edgeGateway.CreateLBServiceMonitor(LBPool)
+	createdPool, err := edgeGateway.CreateLBServerPool(LBPool)
 	if err != nil {
-		return fmt.Errorf("error creating new load balancer service monitor: %s", err)
+		return fmt.Errorf("error creating new load balancer server pool: %s", err)
 	}
 
-	d.SetId(createdMonitor.ID)
+	d.SetId(createdPool.ID)
 	return nil
 }
 
@@ -153,7 +172,7 @@ func resourceVcdLBServerPoolRead(d *schema.ResourceData, meta interface{}) error
 	readLBPool, err := edgeGateway.ReadLBServerPool(&types.LBPool{ID: d.Id()})
 	if err != nil {
 		d.SetId("")
-		return fmt.Errorf("unable to find load balancer service monitor with ID %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to find load balancer server pool with ID %s: %s", d.Id(), err)
 	}
 
 	return flattenLBPool(d, readLBPool)
@@ -171,12 +190,12 @@ func resourceVcdLBServerPoolUpdate(d *schema.ResourceData, meta interface{}) err
 
 	updateLBPoolConfig, err := expandLBPool(d)
 	if err != nil {
-		return fmt.Errorf("could not expand monitor for update: %s", err)
+		return fmt.Errorf("could not expand load balancer server pool for update: %s", err)
 	}
 
-	updatedLBPool, err := edgeGateway.UpdateLBServiceMonitor(updateLBPoolConfig)
+	updatedLBPool, err := edgeGateway.UpdateLBServerPool(updateLBPoolConfig)
 	if err != nil {
-		return fmt.Errorf("unable to update load balancer service monitor with ID %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to update load balancer server pool with ID %s: %s", d.Id(), err)
 	}
 
 	if err := flattenLBPool(d, updatedLBPool); err != nil {
@@ -195,9 +214,9 @@ func resourceVcdLBServerPoolDelete(d *schema.ResourceData, meta interface{}) err
 
 	//tempLock.Lock()
 	//defer tempLock.Unlock()
-	err = edgeGateway.DeleteLBServiceMonitor(&types.LBPool{ID: d.Id()})
+	err = edgeGateway.DeleteLBServerPool(&types.LBPool{ID: d.Id()})
 	if err != nil {
-		return fmt.Errorf("error deleting load balancer service monitor: %s", err)
+		return fmt.Errorf("error deleting load balancer server pool: %s", err)
 	}
 
 	d.SetId("")
@@ -208,39 +227,97 @@ func resourceVcdLBServerPoolImport(d *schema.ResourceData, meta interface{}) ([]
 	return []*schema.ResourceData{}, nil
 }
 
-func expandLBPool(d *schema.ResourceData) (*types.LBMonitor, error) {
-	lbMonitor := &types.LBMonitor{
-		Name:       d.Get("name").(string),
-		Interval:   d.Get("interval").(int),
-		Timeout:    d.Get("timeout").(int),
-		Type:       d.Get("type").(string), // In API this field is called "mode", while in UI "type"
-		MaxRetries: d.Get("max_retries").(int),
-		Expected:   d.Get("expected").(string),
-		Method:     d.Get("method").(string),
-		URI:        d.Get("url").(string),
-		Send:       d.Get("send").(string),
-		Receive:    d.Get("receive").(string),
-		Extension:  expandLBMonitorExtension(d),
+func expandLBPool(d *schema.ResourceData) (*types.LBPool, error) {
+	lbPool := &types.LBPool{
+		Name:        d.Get("name").(string),
+		Description: d.Get("description").(string),
+		Algorithm:   d.Get("algorithm").(string),
+		//AlgorithmParameters: d.Get("algorithm_parameters").(string),
+		MonitorId:   d.Get("monitor_id").(string),
+		Transparent: d.Get("is_transparent").(bool),
 	}
 
-	return lbMonitor, nil
+	members, err := expandLBPoolMembers(d)
+	if err != nil {
+		return nil, err
+	}
+	lbPool.Members = members
+
+	return lbPool, nil
 }
 
-func flattenLBPool(d *schema.ResourceData, lBmonitor *types.LBMonitor) error {
-	d.Set("interval", lBmonitor.Interval)
-	d.Set("timeout", lBmonitor.Timeout)
-	d.Set("max_retries", lBmonitor.MaxRetries)
-	d.Set("type", lBmonitor.Type)
-	// Optional attributes may not necessarilly
-	d.Set("method", lBmonitor.Method)
-	d.Set("url", lBmonitor.URI)
-	d.Set("send", lBmonitor.Send)
-	d.Set("receive", lBmonitor.Receive)
-	d.Set("expected", lBmonitor.Expected)
+func expandLBPoolMembers(d *schema.ResourceData) (types.LBPoolMembers, error) {
+	var lbPoolMembers types.LBPoolMembers
 
-	if err := flattenLBMonitorExtension(d, lBmonitor); err != nil {
-		return err
+	//members := d.Get("member").([]map[string]interface{})
+	members := d.Get("member").(*schema.Set).List()
+	//mm := members.([]map[string]interface{})
+	for _, memberInterface := range members {
+
+		member := memberInterface.(map[string]interface{})
+
+		var memberConfig types.LBPoolMember
+
+		memberConfig.Name = member["name"].(string)
+		memberConfig.IpAddress = member["ip_address"].(string)
+		memberConfig.Port = member["port"].(int)
+		memberConfig.MonitorPort = member["monitor_port"].(int)
+		memberConfig.Weight = member["weight"].(int)
+		memberConfig.MinConn = member["min_connections"].(int)
+		memberConfig.MaxConn = member["max_connections"].(int)
+		memberConfig.MaxConn = member["weight"].(int)
+		memberConfig.Condition = member["condition"].(string)
+
+		lbPoolMembers = append(lbPoolMembers, memberConfig)
 	}
 
+	return lbPoolMembers, nil
+}
+
+func flattenLBPool(d *schema.ResourceData, lBpool *types.LBPool) error {
+	d.Set("name", lBpool.Name)
+	d.Set("description", lBpool.Description)
+	d.Set("algorithm", lBpool.Algorithm)
+	d.Set("algorithm_parameters", lBpool.AlgorithmParameters)
+	// Optional attributes may not necessarily
+	d.Set("monitor_id", lBpool.MonitorId)
+	d.Set("is_transparent", lBpool.Transparent)
+
+	err := flattenLBPoolMembers(d, lBpool.Members)
+	if err != nil {
+		return err
+	}
 	return nil
+}
+
+func flattenLBPoolMembers(d *schema.ResourceData, lBpoolMembers types.LBPoolMembers) error {
+
+	memberSet := make([]map[string]interface{}, len(lBpoolMembers))
+	for index, member := range lBpoolMembers {
+		oneMember := make(map[string]interface{})
+
+		oneMember["condition"] = member.Condition
+		oneMember["name"] = member.Name
+		oneMember["ip_address"] = member.IpAddress
+		oneMember["port"] = member.Port
+		oneMember["monitor_port"] = member.MonitorPort
+		oneMember["weight"] = member.Weight
+		oneMember["min_connections"] = member.MinConn
+		oneMember["max_connections"] = member.MaxConn
+		oneMember["id"] = member.ID
+
+		memberSet[index] = oneMember
+	}
+
+	d.Set("member", memberSet)
+
+	return nil
+}
+
+func lbServerPoolMemberHash(v interface{}) int {
+	m := v.(map[string]interface{})
+	splitID := strings.Split(m["id"].(string), "-")
+	intId, _ := strconv.Atoi(splitID[1])
+
+	return intId
 }
