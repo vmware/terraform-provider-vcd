@@ -2,7 +2,6 @@ package vcd
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -52,7 +51,7 @@ func resourceVcdLBServerPool() *schema.Resource {
 			"algorithm": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validation.StringInSlice([]string{"ROUND-ROBIN", "IP-HASH", "LEASTCONN", "URI", "HTTPHEADER", "URL"}, false),
+				ValidateFunc: validation.StringInSlice([]string{"round-robin", "ip-hash", "leastconn", "uri", "httpheader", "url"}, false),
 				Description:  "Load balancing algorithm",
 			},
 			"algorithm_parameters": {
@@ -75,16 +74,16 @@ func resourceVcdLBServerPool() *schema.Resource {
 			"member": {
 				Optional: true,
 				ForceNew: false,
-				Type:     schema.TypeSet,
-				Set:      lbServerPoolMemberHash,
+				Type:     schema.TypeList,
+				//Set:      lbServerPoolMemberHash,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						//"id": {
-						//	ForceNew:    false,
-						//	Computed:    true,
-						//	Type:        schema.TypeString,
-						//	Description: "Pool member id",
-						//},
+						"id": {
+							ForceNew:    false,
+							Computed:    true,
+							Type:        schema.TypeString,
+							Description: "Pool member id",
+						},
 						"condition": &schema.Schema{
 							Type:         schema.TypeString,
 							ForceNew:     false,
@@ -156,6 +155,8 @@ func resourceVcdLBServerPoolCreate(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("error creating new load balancer server pool: %s", err)
 	}
 
+	// We store the values once again because response include pool member IDs
+	flattenLBPool(d, createdPool)
 	d.SetId(createdPool.ID)
 	return nil
 }
@@ -224,17 +225,40 @@ func resourceVcdLBServerPoolDelete(d *schema.ResourceData, meta interface{}) err
 }
 
 func resourceVcdLBServerPoolImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	return []*schema.ResourceData{}, nil
+	resourceURI := strings.Split(d.Id(), ".")
+	if len(resourceURI) != 4 {
+		return nil, fmt.Errorf("resource name must be specified in such way my-org.my-org-vdc.my-edge-gw.existing-server-pool")
+	}
+	orgName, vdcName, edgeName, poolName := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
+
+	vcdClient := meta.(*VCDClient)
+	edgeGateway, err := vcdClient.GetEdgeGateway(orgName, vdcName, edgeName)
+	if err != nil {
+		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
+	}
+
+	readLBPool, err := edgeGateway.ReadLBServerPool(&types.LBPool{Name: poolName})
+	if err != nil {
+		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer server pool with name %s: %s", d.Id(), err)
+	}
+
+	d.Set("org", orgName)
+	d.Set("vdc", vdcName)
+	d.Set("edge_gateway", edgeName)
+	d.Set("name", poolName)
+
+	d.SetId(readLBPool.ID)
+	return []*schema.ResourceData{d}, nil
 }
 
 func expandLBPool(d *schema.ResourceData) (*types.LBPool, error) {
 	lbPool := &types.LBPool{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		Algorithm:   d.Get("algorithm").(string),
-		//AlgorithmParameters: d.Get("algorithm_parameters").(string),
-		MonitorId:   d.Get("monitor_id").(string),
-		Transparent: d.Get("is_transparent").(bool),
+		Name:                d.Get("name").(string),
+		Description:         d.Get("description").(string),
+		Algorithm:           d.Get("algorithm").(string),
+		MonitorId:           d.Get("monitor_id").(string),
+		Transparent:         d.Get("is_transparent").(bool),
+		AlgorithmParameters: expandLBPoolAlgorithm(d),
 	}
 
 	members, err := expandLBPoolMembers(d)
@@ -249,14 +273,15 @@ func expandLBPool(d *schema.ResourceData) (*types.LBPool, error) {
 func expandLBPoolMembers(d *schema.ResourceData) (types.LBPoolMembers, error) {
 	var lbPoolMembers types.LBPoolMembers
 
-	//members := d.Get("member").([]map[string]interface{})
-	members := d.Get("member").(*schema.Set).List()
-	//mm := members.([]map[string]interface{})
+	members := d.Get("member").([]interface{})
 	for _, memberInterface := range members {
-
+		var memberConfig types.LBPoolMember
 		member := memberInterface.(map[string]interface{})
 
-		var memberConfig types.LBPoolMember
+		// If we have IDs - then we must insert them for update. Otherwise the update may get mixed
+		if member["id"].(string) != "" {
+			memberConfig.ID = member["id"].(string)
+		}
 
 		memberConfig.Name = member["name"].(string)
 		memberConfig.IpAddress = member["ip_address"].(string)
@@ -265,7 +290,7 @@ func expandLBPoolMembers(d *schema.ResourceData) (types.LBPoolMembers, error) {
 		memberConfig.Weight = member["weight"].(int)
 		memberConfig.MinConn = member["min_connections"].(int)
 		memberConfig.MaxConn = member["max_connections"].(int)
-		memberConfig.MaxConn = member["weight"].(int)
+		memberConfig.Weight = member["weight"].(int)
 		memberConfig.Condition = member["condition"].(string)
 
 		lbPoolMembers = append(lbPoolMembers, memberConfig)
@@ -274,16 +299,33 @@ func expandLBPoolMembers(d *schema.ResourceData) (types.LBPoolMembers, error) {
 	return lbPoolMembers, nil
 }
 
+func expandLBPoolAlgorithm(d *schema.ResourceData) string {
+	var extensionString string
+	extension := d.Get("algorithm_parameters").(map[string]interface{})
+	for k, v := range extension {
+		if k != "" && v != "" { // When key and value are given it must look like "content-type=STRING"
+			extensionString += k + "=" + v.(string) + "\n"
+		} else { // If only key is specified it does not need equals sign. Like "no-body" extension
+			extensionString += k + "\n"
+		}
+	}
+	return extensionString
+}
+
 func flattenLBPool(d *schema.ResourceData, lBpool *types.LBPool) error {
 	d.Set("name", lBpool.Name)
 	d.Set("description", lBpool.Description)
 	d.Set("algorithm", lBpool.Algorithm)
-	d.Set("algorithm_parameters", lBpool.AlgorithmParameters)
-	// Optional attributes may not necessarily
+	// Optional attributes may not necessarily be set
 	d.Set("monitor_id", lBpool.MonitorId)
 	d.Set("is_transparent", lBpool.Transparent)
 
-	err := flattenLBPoolMembers(d, lBpool.Members)
+	err := flattenLBPoolAlgorithm(d, lBpool)
+	if err != nil {
+		return err
+	}
+
+	err = flattenLBPoolMembers(d, lBpool.Members)
 	if err != nil {
 		return err
 	}
@@ -314,10 +356,33 @@ func flattenLBPoolMembers(d *schema.ResourceData, lBpoolMembers types.LBPoolMemb
 	return nil
 }
 
-func lbServerPoolMemberHash(v interface{}) int {
-	m := v.(map[string]interface{})
-	splitID := strings.Split(m["id"].(string), "-")
-	intId, _ := strconv.Atoi(splitID[1])
+func flattenLBPoolAlgorithm(d *schema.ResourceData, lBPool *types.LBPool) error {
+	extensionStorage := make(map[string]string)
 
-	return intId
+	if lBPool.AlgorithmParameters != "" {
+		kvList := strings.Split(lBPool.AlgorithmParameters, "\n")
+		for _, algorithmLine := range kvList {
+			// Skip empty lines
+			if algorithmLine == "" {
+				continue
+			}
+
+			// When key=algorithmLine format is present
+			if strings.Contains(algorithmLine, "=") {
+				keyValue := strings.Split(algorithmLine, "=")
+				if len(keyValue) != 2 {
+					return fmt.Errorf("unable to flatten extension field %s", algorithmLine)
+				}
+				// Populate extension data with key value
+				extensionStorage[keyValue[0]] = keyValue[1]
+				// If there was no "=" sign then it means whole line is just key. Like `no-body`, `linespan`
+			} else {
+				extensionStorage[algorithmLine] = ""
+			}
+		}
+
+	}
+
+	d.Set("algorithm_parameters", extensionStorage)
+	return nil
 }
