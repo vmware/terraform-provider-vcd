@@ -500,11 +500,12 @@ func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
+// Try to undeploy a vApp, but do not throw an error if the vApp is powered off.
+// Very often the vApp is powered off at this point and Undeploy() would fail with error:
+// "The requested operation could not be executed since vApp vApp_name is not running"
+// So, if the error matches we just ignore it and the caller may fast forward to vapp.Delete()
 func tryUndeploy(vapp govcd.VApp) error {
 	task, err := vapp.Undeploy()
-	// Very often the vApp is powered off at this point and Undeploy() would fail with error:
-	// "The requested operation could not be executed since vApp vApp_name is not running"
-	// So, if the error matches we just ingore and fast forward to vapp.Delete()
 	var reErr = regexp.MustCompile(`.*The requested operation could not be executed since vApp.*is not running.*`)
 	if err != nil && reErr.MatchString(err.Error()) {
 		// ignore - can't be undeployed
