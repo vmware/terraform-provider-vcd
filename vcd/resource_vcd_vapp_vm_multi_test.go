@@ -81,7 +81,7 @@ func testAccCheckVcdVAppVmMultiExists(n string, vapp *govcd.VApp, vm *govcd.VM, 
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("no VAPP ID is set")
+			return fmt.Errorf("no vApp ID is set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)

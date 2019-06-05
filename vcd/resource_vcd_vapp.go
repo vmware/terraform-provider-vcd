@@ -234,7 +234,6 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 					return fmt.Errorf("error completing powerOn tasks: %#v", err)
 				}
 			}
-
 		}
 	} else {
 
@@ -473,7 +472,7 @@ func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error finding vapp: %s", err)
 	}
 
-	// to avoid network destroy issues - detach networks from VAPP
+	// to avoid network destroy issues - detach networks from vApp
 	task, err := vapp.RemoveAllNetworks()
 	if err != nil {
 		return fmt.Errorf("error with Networking change: %#v", err)
@@ -495,7 +494,7 @@ func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
 
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		return fmt.Errorf("error with deleting VAPP task: %#v", err)
+		return fmt.Errorf("error with deleting vApp task: %#v", err)
 	}
 
 	return nil
@@ -511,12 +510,12 @@ func tryUndeploy(vapp govcd.VApp) error {
 		// ignore - can't be undeployed
 		return nil
 	} else if err != nil {
-		return fmt.Errorf("error undeploying VAPP: %#v", err)
+		return fmt.Errorf("error undeploying vApp: %#v", err)
 	}
 
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		return fmt.Errorf("error undeploying VAPP: %#v", err)
+		return fmt.Errorf("error undeploying vApp: %#v", err)
 	}
 	return nil
 }
