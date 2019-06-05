@@ -208,7 +208,7 @@ func resourceVcdEdgeGatewayVpnCreate(d *schema.ResourceData, meta interface{}) e
 	err = edgeGateway.Refresh()
 	if err != nil {
 		log.Printf("[INFO] Error refreshing edge gateway: %#v", err)
-		return fmt.Errorf("error error refreshing edge gateway: %#v", err)
+		return fmt.Errorf("error refreshing edge gateway: %#v", err)
 	}
 	task, err := edgeGateway.AddIpsecVPN(ipsecVPNConfig)
 	if err != nil {
@@ -251,7 +251,7 @@ func resourceVcdEdgeGatewayVpnDelete(d *schema.ResourceData, meta interface{}) e
 	err = edgeGateway.Refresh()
 	if err != nil {
 		log.Printf("[INFO] Error refreshing edge gateway: %#v", err)
-		return fmt.Errorf("error error refreshing edge gateway: %#v", err)
+		return fmt.Errorf("error refreshing edge gateway: %#v", err)
 	}
 	task, err := edgeGateway.AddIpsecVPN(ipsecVPNConfig)
 	if err != nil {

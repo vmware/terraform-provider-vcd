@@ -111,8 +111,8 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error retrieving Org and VDC: %s", err)
 	}
 
-	lockVapp(d)
-	defer unLockVapp(d)
+	lockvApp(d)
+	defer unLockvApp(d)
 
 	if _, ok := d.GetOk("template_name"); ok {
 		if _, ok := d.GetOk("catalog_name"); ok {
@@ -460,8 +460,8 @@ func getVAppIPAddress(d *schema.ResourceData, meta interface{}, vdc govcd.Vdc, o
 func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	lockVapp(d)
-	defer unLockVapp(d)
+	lockvApp(d)
+	defer unLockvApp(d)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
@@ -485,7 +485,7 @@ func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
 
 	err = task.WaitTaskCompletion()
 
-	return err
+	return nil
 }
 
 func tryUndeploy(vapp govcd.VApp) error {

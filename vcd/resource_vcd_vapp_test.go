@@ -255,6 +255,16 @@ resource "vcd_vapp" "{{.VappNameAllocated}}" {
     vapp_metadata = "vApp Metadata."
   }
 }
+
+resource "vcd_snat" "snatTest1" {
+  edge_gateway = "{{.EdgeGateway}}"
+  network_name = "{{.NetworkName}}"
+  network_type    = "org"
+  external_ip  = "10.10.102.144"
+  internal_ip  = "10.10.102.133"
+  depends_on      = ["vcd_network_routed.{{.NetworkName}}"]
+}
+
 `
 
 const testAccCheckVcdVApp_powerOff = `resource "vcd_network_routed" "{{.NetworkName2}}" {
