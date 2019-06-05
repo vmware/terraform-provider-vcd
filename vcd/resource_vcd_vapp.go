@@ -473,17 +473,30 @@ func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error finding vapp: %s", err)
 	}
 
+	// to avoid network destroy issues - detach networks from VAPP
+	task, err := vapp.RemoveAllNetworks()
+	if err != nil {
+		return fmt.Errorf("error with Networking change: %#v", err)
+	}
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return fmt.Errorf("error changing network: %#v", err)
+	}
+
 	err = tryUndeploy(vapp)
 	if err != nil {
 		return err
 	}
 
-	task, err := vapp.Delete()
+	task, err = vapp.Delete()
 	if err != nil {
 		return fmt.Errorf("error deleting: %#v", err)
 	}
 
 	err = task.WaitTaskCompletion()
+	if err != nil {
+		return fmt.Errorf("error with deleting VAPP task: %#v", err)
+	}
 
 	return nil
 }

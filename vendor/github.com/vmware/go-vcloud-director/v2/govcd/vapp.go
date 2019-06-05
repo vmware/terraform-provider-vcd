@@ -887,3 +887,8 @@ func updateNetworkConfigurations(vapp *VApp, networkConfigurations []types.VAppN
 	return vapp.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPut,
 		types.MimeNetworkConfigSection, "error updating vApp Network: %s", networkConfig)
 }
+
+// Function RemoveAllNetworks unattach all networks from VAPP
+func (vapp *VApp) RemoveAllNetworks() (Task, error) {
+	return updateNetworkConfigurations(vapp, []types.VAppNetworkConfiguration{})
+}
