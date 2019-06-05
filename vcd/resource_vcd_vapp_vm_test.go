@@ -92,6 +92,8 @@ resource "vcd_independent_disk" "{{.diskResourceName}}" {
   bus_type        = "{{.busType}}"
   bus_sub_type    = "{{.busSubType}}"
   storage_profile = "{{.storageProfileName}}"
+
+  depends_on = ["vcd_vapp_vm.{{.VmName}}"
 }
 
 resource "vcd_vapp" "{{.VappName}}" {
