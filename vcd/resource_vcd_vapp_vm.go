@@ -827,6 +827,26 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error getting vApp status: %#v", err)
 	}
 
+	// to avoid race condition for independent disks is attached or not - detach before removing vm
+	existingDisks := getVmIndependentDisks(vm)
+
+	for _, existingDiskHref := range existingDisks {
+		disk, err := vdc.FindDiskByHREF(existingDiskHref)
+		if err != nil {
+			return fmt.Errorf("did not find disk `%s`: %#v", existingDiskHref, err)
+		}
+
+		attachParams := &types.DiskAttachOrDetachParams{Disk: &types.Reference{HREF: disk.Disk.HREF}}
+		task, err := vm.DetachDisk(attachParams)
+		if err != nil {
+			return fmt.Errorf("error detaching disk `%s`: %#v", existingDiskHref, err)
+		}
+		err = task.WaitTaskCompletion()
+		if err != nil {
+			return fmt.Errorf("error waiting detaching disk task to finish`%s`: %#v", existingDiskHref, err)
+		}
+	}
+
 	log.Printf("[TRACE] vApp Status:: %s", status)
 	if status != "POWERED_OFF" {
 		log.Printf("[TRACE] Undeploying vApp: %s", vapp.VApp.Name)
