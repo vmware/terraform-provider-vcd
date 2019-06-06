@@ -1,8 +1,6 @@
 package vcd
 
 import (
-	"fmt"
-	"github.com/hashicorp/terraform/helper/mutexkv"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/vmware/go-vcloud-director/v2/util"
@@ -108,39 +106,6 @@ func Provider() terraform.ResourceProvider {
 
 		ConfigureFunc: providerConfigure,
 	}
-}
-
-// This is a global MutexKV for all resources
-var vcdMutexKV = mutexkv.NewMutexKV()
-
-func lockvApp(d *schema.ResourceData) {
-	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", d.Get("org").(string), d.Get("vdc").(string), d.Get("name").(string))
-	vcdMutexKV.Lock(key)
-}
-
-func unLockvApp(d *schema.ResourceData) {
-	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", d.Get("org").(string), d.Get("vdc").(string), d.Get("name").(string))
-	vcdMutexKV.Unlock(key)
-}
-
-func lockParentvApp(d *schema.ResourceData) {
-	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", d.Get("org").(string), d.Get("vdc").(string), d.Get("vapp_name").(string))
-	vcdMutexKV.Lock(key)
-}
-
-func unLockParentvApp(d *schema.ResourceData) {
-	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", d.Get("org").(string), d.Get("vdc").(string), d.Get("vapp_name").(string))
-	vcdMutexKV.Unlock(key)
-}
-
-func lockParentEdgeGtw(d *schema.ResourceData) {
-	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", d.Get("org").(string), d.Get("vdc").(string), d.Get("edge_gateway").(string))
-	vcdMutexKV.Lock(key)
-}
-
-func unLockParentEdgeGtw(d *schema.ResourceData) {
-	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", d.Get("org").(string), d.Get("vdc").(string), d.Get("edge_gateway").(string))
-	vcdMutexKV.Unlock(key)
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {

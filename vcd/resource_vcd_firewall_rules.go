@@ -95,8 +95,8 @@ func resourceVcdFirewallRules() *schema.Resource {
 func resourceVcdFirewallRulesCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	lockParentEdgeGtw(d)
-	defer unLockParentEdgeGtw(d)
+	vcdClient.lockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
 
 	edgeGatewayName := d.Get("edge_gateway").(string)
 
@@ -130,8 +130,8 @@ func resourceVcdFirewallRulesCreate(d *schema.ResourceData, meta interface{}) er
 func resourceFirewallRulesDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	lockParentEdgeGtw(d)
-	defer unLockParentEdgeGtw(d)
+	vcdClient.lockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
 
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {

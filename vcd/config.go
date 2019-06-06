@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/hashicorp/terraform/helper/mutexkv"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
@@ -88,6 +89,55 @@ func debugPrintf(format string, args ...interface{}) {
 	if enableDebug {
 		fmt.Printf(format, args...)
 	}
+}
+
+// This is a global MutexKV for all resources
+var vcdMutexKV = mutexkv.NewMutexKV()
+
+func (cli *VCDClient) lockvApp(d *schema.ResourceData) {
+	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), d.Get("name").(string))
+	vcdMutexKV.Lock(key)
+}
+
+func (cli *VCDClient) unLockvApp(d *schema.ResourceData) {
+	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), d.Get("name").(string))
+	vcdMutexKV.Unlock(key)
+}
+
+func (cli *VCDClient) lockParentvApp(d *schema.ResourceData) {
+	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), d.Get("vapp_name").(string))
+	vcdMutexKV.Lock(key)
+}
+
+func (cli *VCDClient) unLockParentvApp(d *schema.ResourceData) {
+	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), d.Get("vapp_name").(string))
+	vcdMutexKV.Unlock(key)
+}
+
+func (cli *VCDClient) lockParentEdgeGtw(d *schema.ResourceData) {
+	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), d.Get("edge_gateway").(string))
+	vcdMutexKV.Lock(key)
+}
+
+func (cli *VCDClient) unLockParentEdgeGtw(d *schema.ResourceData) {
+	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), d.Get("edge_gateway").(string))
+	vcdMutexKV.Unlock(key)
+}
+
+func (cli *VCDClient) getOrgName(d *schema.ResourceData) string {
+	orgName := d.Get("org").(string)
+	if orgName == "" {
+		orgName = cli.Org
+	}
+	return orgName
+}
+
+func (cli *VCDClient) getVdcName(d *schema.ResourceData) string {
+	orgName := d.Get("vdc").(string)
+	if orgName == "" {
+		orgName = cli.Vdc
+	}
+	return orgName
 }
 
 // GetOrgAndVdc finds a pair of org and vdc using the names provided

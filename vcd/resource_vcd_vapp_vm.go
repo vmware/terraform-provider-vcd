@@ -249,8 +249,8 @@ func falseBoolSuppress() schema.SchemaDiffSuppressFunc {
 func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	lockParentvApp(d)
-	defer unLockParentvApp(d)
+	vcdClient.lockParentvApp(d)
+	defer vcdClient.unLockParentvApp(d)
 
 	org, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
@@ -465,8 +465,9 @@ func getVmIndependentDisks(vm govcd.VM) []string {
 }
 
 func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
-	lockParentvApp(d)
-	defer unLockParentvApp(d)
+	vcdClient := meta.(*VCDClient)
+	vcdClient.lockParentvApp(d)
+	defer vcdClient.unLockParentvApp(d)
 
 	return resourceVcdVAppVmUpdateExecute(d, meta)
 }
@@ -802,8 +803,8 @@ func updateStateOfAttachedDisks(d *schema.ResourceData, vm govcd.VM, vdc govcd.V
 func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	lockParentvApp(d)
-	defer unLockParentvApp(d)
+	vcdClient.lockParentvApp(d)
+	defer vcdClient.unLockParentvApp(d)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {

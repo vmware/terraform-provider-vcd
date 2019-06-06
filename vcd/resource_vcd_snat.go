@@ -61,9 +61,9 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 
 	// Multiple VCD components need to run operations on the Edge Gateway, as
 	// the edge gatway will throw back an error if it is already performing an
-	// operation we must wait until we can aquire a lock on the client
-	lockParentEdgeGtw(d)
-	defer unLockParentEdgeGtw(d)
+	// operation we must wait until we can acquire a lock on the client
+	vcdClient.lockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
 
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {
@@ -156,8 +156,8 @@ func resourceVcdSNATDelete(d *schema.ResourceData, meta interface{}) error {
 	// Multiple VCD components need to run operations on the Edge Gateway, as
 	// the edge gatway will throw back an error if it is already performing an
 	// operation we must wait until we can aquire a lock on the client
-	lockParentEdgeGtw(d)
-	defer unLockParentEdgeGtw(d)
+	vcdClient.lockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
 
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {

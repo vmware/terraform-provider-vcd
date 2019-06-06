@@ -89,8 +89,8 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 	// Multiple VCD components need to run operations on the Edge Gateway, as
 	// the edge gateway will throw back an error if it is already performing an
 	// operation we must wait until we can acquire a lock on the client
-	lockParentEdgeGtw(d)
-	defer unLockParentEdgeGtw(d)
+	vcdClient.lockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
 
 	portString := getPortString(d.Get("port").(int))
 	translatedPortString := portString // default
@@ -210,8 +210,8 @@ func resourceVcdDNATDelete(d *schema.ResourceData, meta interface{}) error {
 	// Multiple VCD components need to run operations on the Edge Gateway, as
 	// the edge gatway will throw back an error if it is already performing an
 	// operation we must wait until we can aquire a lock on the client
-	lockParentEdgeGtw(d)
-	defer unLockParentEdgeGtw(d)
+	vcdClient.lockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
 
 	portString := getPortString(d.Get("port").(int))
 	translatedPortString := portString // default

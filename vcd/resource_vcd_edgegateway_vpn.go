@@ -141,8 +141,8 @@ func resourceVcdEdgeGatewayVpnCreate(d *schema.ResourceData, meta interface{}) e
 	vcdClient := meta.(*VCDClient)
 	log.Printf("[TRACE] CLIENT: %#v", vcdClient)
 
-	lockParentEdgeGtw(d)
-	defer unLockParentEdgeGtw(d)
+	vcdClient.lockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
 
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {
@@ -231,8 +231,8 @@ func resourceVcdEdgeGatewayVpnDelete(d *schema.ResourceData, meta interface{}) e
 
 	log.Printf("[TRACE] CLIENT: %#v", vcdClient)
 
-	lockParentEdgeGtw(d)
-	defer unLockParentEdgeGtw(d)
+	vcdClient.lockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
 
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {

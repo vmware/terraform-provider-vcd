@@ -144,8 +144,8 @@ func resourceVcdNetworkRouted() *schema.Resource {
 func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	lockParentEdgeGtw(d)
-	defer unLockParentEdgeGtw(d)
+	vcdClient.lockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
@@ -259,8 +259,9 @@ func resourceVcdNetworkRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceVcdNetworkDeleteLocked(d *schema.ResourceData, meta interface{}) error {
-	lockParentEdgeGtw(d)
-	defer unLockParentEdgeGtw(d)
+	vcdClient := meta.(*VCDClient)
+	vcdClient.lockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
 
 	return resourceVcdNetworkDelete(d, meta)
 }
