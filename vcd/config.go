@@ -95,32 +95,56 @@ func debugPrintf(format string, args ...interface{}) {
 var vcdMutexKV = mutexkv.NewMutexKV()
 
 func (cli *VCDClient) lockVapp(d *schema.ResourceData) {
-	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), d.Get("name").(string))
+	vappName := d.Get("name").(string)
+	if vappName == "" {
+		panic("vapp name isn't found")
+	}
+	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), vappName)
 	vcdMutexKV.Lock(key)
 }
 
 func (cli *VCDClient) unLockVapp(d *schema.ResourceData) {
-	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), d.Get("name").(string))
+	vappName := d.Get("name").(string)
+	if vappName == "" {
+		panic("vapp name isn't found")
+	}
+	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), vappName)
 	vcdMutexKV.Unlock(key)
 }
 
 func (cli *VCDClient) lockParentVapp(d *schema.ResourceData) {
-	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), d.Get("vapp_name").(string))
+	vappName := d.Get("vapp_name").(string)
+	if vappName == "" {
+		panic("vapp name isn't found")
+	}
+	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), vappName)
 	vcdMutexKV.Lock(key)
 }
 
 func (cli *VCDClient) unLockParentVapp(d *schema.ResourceData) {
-	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), d.Get("vapp_name").(string))
+	vappName := d.Get("vapp_name").(string)
+	if vappName == "" {
+		panic("vapp name isn't found")
+	}
+	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), vappName)
 	vcdMutexKV.Unlock(key)
 }
 
 func (cli *VCDClient) lockParentEdgeGtw(d *schema.ResourceData) {
-	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), d.Get("edge_gateway").(string))
+	edgeGtwName := d.Get("edge_gateway").(string)
+	if edgeGtwName == "" {
+		panic("edge gtw name isn't found")
+	}
+	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), edgeGtwName)
 	vcdMutexKV.Lock(key)
 }
 
 func (cli *VCDClient) unLockParentEdgeGtw(d *schema.ResourceData) {
-	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), d.Get("edge_gateway").(string))
+	edgeGtwName := d.Get("edge_gateway").(string)
+	if edgeGtwName == "" {
+		panic("edge gtw name isn't found")
+	}
+	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), edgeGtwName)
 	vcdMutexKV.Unlock(key)
 }
 
