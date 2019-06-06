@@ -94,22 +94,22 @@ func debugPrintf(format string, args ...interface{}) {
 // This is a global MutexKV for all resources
 var vcdMutexKV = mutexkv.NewMutexKV()
 
-func (cli *VCDClient) lockvApp(d *schema.ResourceData) {
+func (cli *VCDClient) lockVapp(d *schema.ResourceData) {
 	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), d.Get("name").(string))
 	vcdMutexKV.Lock(key)
 }
 
-func (cli *VCDClient) unLockvApp(d *schema.ResourceData) {
+func (cli *VCDClient) unLockVapp(d *schema.ResourceData) {
 	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), d.Get("name").(string))
 	vcdMutexKV.Unlock(key)
 }
 
-func (cli *VCDClient) lockParentvApp(d *schema.ResourceData) {
+func (cli *VCDClient) lockParentVapp(d *schema.ResourceData) {
 	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), d.Get("vapp_name").(string))
 	vcdMutexKV.Lock(key)
 }
 
-func (cli *VCDClient) unLockParentvApp(d *schema.ResourceData) {
+func (cli *VCDClient) unLockParentVapp(d *schema.ResourceData) {
 	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), d.Get("vapp_name").(string))
 	vcdMutexKV.Unlock(key)
 }
