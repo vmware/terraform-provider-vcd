@@ -108,6 +108,7 @@ func Provider() terraform.ResourceProvider {
 
 		DataSourcesMap: map[string]*schema.Resource{
 			"vcd_lb_service_monitor": datasourceVcdLbServiceMonitor(),
+			"vcd_lb_server_pool":     datasourceVcdLbServerPool(),
 		},
 
 		ConfigureFunc: providerConfigure,
