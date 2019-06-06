@@ -64,7 +64,7 @@ func resourceVcdLBServerPool() *schema.Resource {
 				Optional:    true,
 				Description: "Load Balancer Service Monitor ID",
 			},
-			"is_transparent": &schema.Schema{
+			"enable_transparency": &schema.Schema{
 				Type:        schema.TypeBool,
 				Default:     false,
 				Optional:    true,
@@ -257,7 +257,7 @@ func expandLBPool(d *schema.ResourceData) (*types.LBPool, error) {
 		Description:         d.Get("description").(string),
 		Algorithm:           d.Get("algorithm").(string),
 		MonitorId:           d.Get("monitor_id").(string),
-		Transparent:         d.Get("is_transparent").(bool),
+		Transparent:         d.Get("enable_transparency").(bool),
 		AlgorithmParameters: expandLBPoolAlgorithm(d),
 	}
 
@@ -318,7 +318,7 @@ func flattenLBPool(d *schema.ResourceData, lBpool *types.LBPool) error {
 	d.Set("algorithm", lBpool.Algorithm)
 	// Optional attributes may not necessarily be set
 	d.Set("monitor_id", lBpool.MonitorId)
-	d.Set("is_transparent", lBpool.Transparent)
+	d.Set("enable_transparency", lBpool.Transparent)
 
 	err := flattenLBPoolAlgorithm(d, lBpool)
 	if err != nil {
