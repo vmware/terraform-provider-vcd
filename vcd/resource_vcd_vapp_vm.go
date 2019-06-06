@@ -828,6 +828,20 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error getting vApp status: %#v", err)
 	}
 
+	log.Printf("[TRACE] vApp Status:: %s", status)
+	if status != "POWERED_OFF" {
+		log.Printf("[TRACE] Undeploying vApp: %s", vapp.VApp.Name)
+		task, err := vapp.Undeploy()
+		if err != nil {
+			return fmt.Errorf("error Undeploying: %#v", err)
+		}
+
+		err = task.WaitTaskCompletion()
+		if err != nil {
+			return fmt.Errorf("error Undeploying vApp: %#v", err)
+		}
+	}
+
 	// to avoid race condition for independent disks is attached or not - detach before removing vm
 	existingDisks := getVmIndependentDisks(vm)
 
@@ -845,20 +859,6 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 		err = task.WaitTaskCompletion()
 		if err != nil {
 			return fmt.Errorf("error waiting detaching disk task to finish`%s`: %#v", existingDiskHref, err)
-		}
-	}
-
-	log.Printf("[TRACE] vApp Status:: %s", status)
-	if status != "POWERED_OFF" {
-		log.Printf("[TRACE] Undeploying vApp: %s", vapp.VApp.Name)
-		task, err := vapp.Undeploy()
-		if err != nil {
-			return fmt.Errorf("error Undeploying: %#v", err)
-		}
-
-		err = task.WaitTaskCompletion()
-		if err != nil {
-			return fmt.Errorf("error Undeploying vApp: %#v", err)
 		}
 	}
 
