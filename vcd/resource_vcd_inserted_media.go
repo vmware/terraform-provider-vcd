@@ -67,6 +67,11 @@ func resourceVcdInsertedMedia() *schema.Resource {
 func resourceVcdMediaInsert(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[TRACE] VM media insert initiated")
 
+	vcdClient := meta.(*VCDClient)
+
+	vcdClient.lockParentVapp(d)
+	defer vcdClient.unLockParentVapp(d)
+
 	vm, org, err := getVM(d, meta)
 	if err != nil || org == (govcd.Org{}) {
 		return fmt.Errorf("error: %#v", err)
@@ -113,6 +118,12 @@ func resourceVcdVmInsertedMediaRead(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourceVcdMediaEject(d *schema.ResourceData, meta interface{}) error {
+
+	vcdClient := meta.(*VCDClient)
+
+	vcdClient.lockParentVapp(d)
+	defer vcdClient.unLockParentVapp(d)
+
 	vm, org, err := getVM(d, meta)
 	if err != nil {
 		return fmt.Errorf("error: %#v", err)
