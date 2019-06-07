@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
@@ -67,10 +66,10 @@ func ResourceVcdLbServiceMonitor() *schema.Resource {
 				Description: "Number of times the specified monitoring Method must fail sequentially before the server is declared down",
 			},
 			"type": &schema.Schema{
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: validation.StringInSlice([]string{"http", "https", "tcp", "icmp", "udp"}, false),
-				Description:  "Way in which you want to send the health check request to the server",
+				Type:     schema.TypeString,
+				Required: true,
+				// ValidateFunc: validation.StringInSlice([]string{"http", "https", "tcp", "icmp", "udp"}, false),
+				Description: "Way in which you want to send the health check request to the server",
 			},
 			"expected": &schema.Schema{
 				Type:        schema.TypeString,
@@ -78,10 +77,10 @@ func ResourceVcdLbServiceMonitor() *schema.Resource {
 				Description: "String that the monitor expects to match in the status line of the HTTP or HTTPS response (for example, HTTP/1.1)",
 			},
 			"method": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validation.StringInSlice([]string{"GET", "OPTIONS", "POST"}, false),
-				Description:  "Method to be used to detect server status",
+				Type:     schema.TypeString,
+				Optional: true,
+				// ValidateFunc: validation.StringInSlice([]string{"GET", "OPTIONS", "POST"}, false),
+				Description: "Method to be used to detect server status",
 			},
 			"url": &schema.Schema{
 				Type:        schema.TypeString,

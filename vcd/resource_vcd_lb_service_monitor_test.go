@@ -1,4 +1,4 @@
-// +build gateway lb lbsm ALL functional
+// +build gateway lb lbServiceMonitor ALL functional
 
 package vcd
 
@@ -16,8 +16,7 @@ import (
 	"github.com/hashicorp/terraform/helper/resource"
 )
 
-func TestAccVcdLbServiceMonitor_Basic(t *testing.T) {
-	//var vpnName string = t.Name()
+func TestAccVcdLbServiceMonitor(t *testing.T) {
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -32,8 +31,8 @@ func TestAccVcdLbServiceMonitor_Basic(t *testing.T) {
 		"Interval":           5,
 		"Timeout":            10,
 		"MaxRetries":         3,
-		"Method":             "POST",
-		"Tags":               "lb lbsm",
+		"Method":             "ASD",
+		"Tags":               "lb lbServiceMonitor",
 	}
 
 	configText := templateFill(testAccVcdLbServiceMonitor_Basic, params)
@@ -42,8 +41,6 @@ func TestAccVcdLbServiceMonitor_Basic(t *testing.T) {
 	params["FuncName"] = t.Name() + "-step1"
 	configTextStep1 := templateFill(testAccVcdLbServiceMonitor_Basic2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configTextStep1)
-
-
 
 	resource.Test(t, resource.TestCase{
 		Providers:    testAccProviders,
@@ -79,6 +76,13 @@ func TestAccVcdLbServiceMonitor_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_lb_service_monitor.lb-service-monitor", "type", "tcp"),
 				),
 			},
+			// Check that import works
+			resource.TestStep{
+				ResourceName:      "vcd_lb_service_monitor.service-monitor-import",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdByOrgVdcEdge(testConfig, params["ServiceMonitorName"].(string)),
+			},
 		},
 	})
 }
@@ -97,6 +101,20 @@ func testAccCheckVcdLbServiceMonitorDestroy(serviceMonitorName string) resource.
 			return fmt.Errorf("load balancer service monitor was not deleted: %s", err)
 		}
 		return nil
+	}
+}
+
+// importStateIdByOrgVdcEdge constructs an import path (ID in Terraform import terms) in the format of:
+// organization.vdc.edge-gateway-nane.import-object-name (i.e. my-org.my-vdc.my-edge-gw.objectName) from TestConfig and
+// object state.
+func importStateIdByOrgVdcEdge(vcd TestConfig, objectName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		importId := testConfig.VCD.Org + "." + testConfig.VCD.Vdc + "." + testConfig.Networking.EdgeGateway + "." + objectName
+		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || testConfig.Networking.EdgeGateway == "" || objectName == "" {
+			return "", fmt.Errorf("missing information to generate import path: %s", importId)
+		}
+
+		return importId, nil
 	}
 }
 
@@ -144,4 +162,3 @@ resource "vcd_lb_service_monitor" "lb-service-monitor" {
   max_retries = {{.MaxRetries}}
 }
 `
-
