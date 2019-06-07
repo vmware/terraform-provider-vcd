@@ -155,16 +155,16 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 			if err != nil {
 				task, err := vdc.ComposeVApp(nets, vapptemplate, storage_profile_reference, d.Get("name").(string), d.Get("description").(string), d.Get("accept_all_eulas").(bool))
 				if err != nil {
-					return fmt.Errorf("error creating vapp: %#v", err)
+					return fmt.Errorf("error creating vApp: %#v", err)
 				}
 
 				err = task.WaitTaskCompletion()
 				if err != nil {
-					return fmt.Errorf("error creating vapp: %#v", err)
+					return fmt.Errorf("error creating vApp: %#v", err)
 				}
 				vapp, err = vdc.FindVAppByName(d.Get("name").(string))
 				if err != nil {
-					return fmt.Errorf("error creating vapp: %#v", err)
+					return fmt.Errorf("error creating vApp: %#v", err)
 				}
 			}
 
@@ -175,7 +175,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 
 			task, err := vapp.ChangeVMName(d.Get("name").(string))
 			if err != nil {
-				return fmt.Errorf("error with vm name change: %#v", err)
+				return fmt.Errorf("error with VM name change: %#v", err)
 			}
 
 			err = task.WaitTaskCompletion()
@@ -190,7 +190,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 			}}
 			task, err = vapp.ChangeNetworkConfig(networks, d.Get("ip").(string))
 			if err != nil {
-				return fmt.Errorf("error with Networking change: %#v", err)
+				return fmt.Errorf("error with networking change: %#v", err)
 			}
 			err = task.WaitTaskCompletion()
 			if err != nil {
@@ -201,7 +201,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 				task, err := vapp.SetOvf(convertToStringMap(ovf.(map[string]interface{})))
 
 				if err != nil {
-					return fmt.Errorf("error set ovf: %#v", err)
+					return fmt.Errorf("error setting the ovf: %#v", err)
 				}
 				err = task.WaitTaskCompletion()
 				if err != nil {
@@ -214,7 +214,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 				log.Printf("running customisation script")
 				task, err := vapp.RunCustomizationScript(d.Get("name").(string), initscript.(string))
 				if err != nil {
-					return fmt.Errorf("error with setting init script: %#v", err)
+					return fmt.Errorf("error with init script setting: %#v", err)
 				}
 				err = task.WaitTaskCompletion()
 				if err != nil {
@@ -226,7 +226,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 
 				task, err := vapp.PowerOn()
 				if err != nil {
-					return fmt.Errorf("error powerOn machine: %#v", err)
+					return fmt.Errorf("error powering on the machine: %#v", err)
 				}
 				err = task.WaitTaskCompletion()
 
@@ -240,12 +240,12 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 		e := vdc.ComposeRawVApp(d.Get("name").(string))
 
 		if e != nil {
-			return fmt.Errorf("Error: %#v", e)
+			return fmt.Errorf("error: %#v", e)
 		}
 
 		e = vdc.Refresh()
 		if e != nil {
-			return fmt.Errorf("Error: %#v", e)
+			return fmt.Errorf("error: %#v", e)
 		}
 	}
 
@@ -379,7 +379,7 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 			task, err := vapp.SetOvf(convertToStringMap(ovf.(map[string]interface{})))
 
 			if err != nil {
-				return fmt.Errorf("error set ovf: %#v", err)
+				return fmt.Errorf("error setting the ovf: %#v", err)
 			}
 			err = task.WaitTaskCompletion()
 			if err != nil {
@@ -402,7 +402,7 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 
 	_, err = vdc.FindVAppByName(d.Id())
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find vapp. Removing from tfstate")
+		log.Printf("[DEBUG] Unable to find vApp. Removing from tfstate")
 		d.SetId("")
 		return nil
 	}
@@ -437,7 +437,7 @@ func getVAppIPAddress(d *schema.ResourceData, meta interface{}, vdc govcd.Vdc, o
 
 	vapp, err := vdc.FindVAppByName(d.Id())
 	if err != nil {
-		return "", fmt.Errorf("unable to find vapp")
+		return "", fmt.Errorf("unable to find vApp")
 	}
 
 	// getting the IP of the specific Vm, rather than index zero.
@@ -445,7 +445,7 @@ func getVAppIPAddress(d *schema.ResourceData, meta interface{}, vdc govcd.Vdc, o
 	// 'first' one, and tests will fail sometimes (annoying huh?)
 	vm, err := vdc.FindVMByName(vapp, d.Get("name").(string))
 	if err != nil {
-		return "", fmt.Errorf("unable to find vm: %s", err)
+		return "", fmt.Errorf("unable to find VM: %s", err)
 	}
 
 	ip = vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddress
@@ -475,7 +475,7 @@ func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
 	// to avoid network destroy issues - detach networks from vApp
 	task, err := vapp.RemoveAllNetworks()
 	if err != nil {
-		return fmt.Errorf("error with Networking change: %#v", err)
+		return fmt.Errorf("error with networking change: %#v", err)
 	}
 	err = task.WaitTaskCompletion()
 	if err != nil {

@@ -327,7 +327,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	if initScript, ok := d.GetOk("initscript"); ok {
 		task, err := vm.RunCustomizationScript(d.Get("name").(string), initScript.(string))
 		if err != nil {
-			return fmt.Errorf("error with setting init script: %#v", err)
+			return fmt.Errorf("error with init script setting: %#v", err)
 		}
 		err = task.WaitTaskCompletion()
 		if err != nil {

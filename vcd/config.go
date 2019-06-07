@@ -97,7 +97,7 @@ var vcdMutexKV = mutexkv.NewMutexKV()
 func (cli *VCDClient) lockVapp(d *schema.ResourceData) {
 	vappName := d.Get("name").(string)
 	if vappName == "" {
-		panic("vapp name isn't found")
+		panic("vApp name not found")
 	}
 	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), vappName)
 	vcdMutexKV.Lock(key)
@@ -106,16 +106,18 @@ func (cli *VCDClient) lockVapp(d *schema.ResourceData) {
 func (cli *VCDClient) unLockVapp(d *schema.ResourceData) {
 	vappName := d.Get("name").(string)
 	if vappName == "" {
-		panic("vapp name isn't found")
+		panic("vApp name not found")
 	}
 	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), vappName)
 	vcdMutexKV.Unlock(key)
 }
 
+// function lockParentVapp locks using vapp_name name existing in resource parameters. Parent means resource needs
+// to lock vApp it depends
 func (cli *VCDClient) lockParentVapp(d *schema.ResourceData) {
 	vappName := d.Get("vapp_name").(string)
 	if vappName == "" {
-		panic("vapp name isn't found")
+		panic("vApp name not found")
 	}
 	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), vappName)
 	vcdMutexKV.Lock(key)
@@ -124,16 +126,18 @@ func (cli *VCDClient) lockParentVapp(d *schema.ResourceData) {
 func (cli *VCDClient) unLockParentVapp(d *schema.ResourceData) {
 	vappName := d.Get("vapp_name").(string)
 	if vappName == "" {
-		panic("vapp name isn't found")
+		panic("vApp name not found")
 	}
 	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), vappName)
 	vcdMutexKV.Unlock(key)
 }
 
+// function lockParentEdgeGtw locks using edge_gateway name existing in resource parameters. Parent means resource needs
+// to lock edge gtw it depends
 func (cli *VCDClient) lockParentEdgeGtw(d *schema.ResourceData) {
 	edgeGtwName := d.Get("edge_gateway").(string)
 	if edgeGtwName == "" {
-		panic("edge gtw name isn't found")
+		panic("edge gateway not found")
 	}
 	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), edgeGtwName)
 	vcdMutexKV.Lock(key)
@@ -142,7 +146,7 @@ func (cli *VCDClient) lockParentEdgeGtw(d *schema.ResourceData) {
 func (cli *VCDClient) unLockParentEdgeGtw(d *schema.ResourceData) {
 	edgeGtwName := d.Get("edge_gateway").(string)
 	if edgeGtwName == "" {
-		panic("edge gtw name isn't found")
+		panic("edge gateway not found")
 	}
 	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), edgeGtwName)
 	vcdMutexKV.Unlock(key)
