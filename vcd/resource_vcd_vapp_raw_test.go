@@ -56,7 +56,7 @@ func testAccCheckVcdVAppRawExists(n string, vapp *govcd.VApp) resource.TestCheck
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("no VAPP ID is set")
+			return fmt.Errorf("no vApp ID is set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
@@ -118,6 +118,7 @@ resource "vcd_vapp" "{{.VappName}}" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
   name = "{{.VappName}}"
+  depends_on   = ["vcd_network_routed.{{.NetworkName}}"]
 }
 
 resource "vcd_vapp_vm" "{{.VmName}}" {

@@ -1,4 +1,4 @@
-// +build multinetwork
+// +build multinetwork functional
 
 package vcd
 
@@ -151,7 +151,7 @@ func testAccCheckVappNetworkMultiDestroy(s *terraform.State) error {
 
 		_, err := isVappNetworkMultiFound(conn, rs)
 		if err != nil && !strings.Contains(err.Error(), "can't find vApp:") {
-			return fmt.Errorf("vapp %s still exist and error: %#v", itemName, err)
+			return fmt.Errorf("vapp %s still exist and error: %#v", vappNameForNetworkMulti, err)
 		}
 	}
 
@@ -176,7 +176,7 @@ func isVappNetworkMultiFound(conn *VCDClient, rs *terraform.ResourceState) (stri
 
 	var foundNetworks int
 	for _, vappNetworkConfig := range networkConfig.NetworkConfig {
-		if vappNetworkConfig.Configuration.IPScopes.IPScope.DNSSuffix == dnsSuffix {
+		if vappNetworkConfig.Configuration.IPScopes.IPScope[0].DNSSuffix == dnsSuffix {
 			switch vappNetworkConfig.NetworkName {
 			case vappNetworkName1:
 				foundNetworks += 10

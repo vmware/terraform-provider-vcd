@@ -1,4 +1,8 @@
 ## 2.4.0 (Unreleased)
+IMPROVEMENTS:
+
+* Change resource handling to use locking mechanism when resource parallel handling is not supported by vCD. [GH-#255] 
+
 ## 2.3.0 (May 29, 2019)
 
 IMPROVEMENTS:
@@ -17,7 +21,7 @@ FEATURES:
 * `vcd_vapp_vm` - Ability to add metadata to a VM. For previous behaviour please see `BACKWARDS INCOMPATIBILITIES` ([#158](https://github.com/terraform-providers/terraform-provider-vcd/issues/158))
 * `vcd_vapp_vm` - Ability to enable hardware assisted CPU virtualization for VM. It allows hypervisor nesting. ([#219](https://github.com/terraform-providers/terraform-provider-vcd/issues/219))
 * **New Resource:** external network - `vcd_external_network` - ([#230](https://github.com/terraform-providers/terraform-provider-vcd/issues/230))
-* **New Resource:** VDC resource `vcd_org_vdc` - ([#234](https://github.com/terraform-providers/terraform-provider-vcd/issues/234))
+* **New Resource:** VDC resource `vcd_org_vdc` - ([#236](https://github.com/terraform-providers/terraform-provider-vcd/issues/236))
 * resource/vcd_vapp_vm: Add `network` argument for multiple NIC support and more flexible configuration ([#233](https://github.com/terraform-providers/terraform-provider-vcd/issues/233))
 * resource/vcd_vapp_vm: Add `mac` argument to store MAC address in state file ([#233](https://github.com/terraform-providers/terraform-provider-vcd/issues/233))
 

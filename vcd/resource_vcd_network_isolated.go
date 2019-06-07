@@ -3,7 +3,6 @@ package vcd
 import (
 	"fmt"
 
-	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -135,8 +134,6 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 
 func resourceVcdNetworkIsolatedCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-	vcdClient.Mutex.Lock()
-	defer vcdClient.Mutex.Unlock()
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
@@ -172,9 +169,7 @@ func resourceVcdNetworkIsolatedCreate(d *schema.ResourceData, meta interface{}) 
 		IsShared: d.Get("shared").(bool),
 	}
 
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		return resource.RetryableError(vdc.CreateOrgVDCNetworkWait(orgVDCNetwork))
-	})
+	err = vdc.CreateOrgVDCNetworkWait(orgVDCNetwork)
 	if err != nil {
 		return fmt.Errorf("error: %#v", err)
 	}

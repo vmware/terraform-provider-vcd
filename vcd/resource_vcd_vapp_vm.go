@@ -9,7 +9,6 @@ import (
 	"strconv"
 
 	"github.com/hashicorp/terraform/helper/hashcode"
-	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -250,6 +249,9 @@ func falseBoolSuppress() schema.SchemaDiffSuppressFunc {
 func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
+	vcdClient.lockParentVapp(d)
+	defer vcdClient.unLockParentVapp(d)
+
 	org, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
@@ -290,15 +292,12 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("unable to process network configuration: %s", err)
 	}
 
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		log.Printf("[TRACE] Creating VM: %s", d.Get("name").(string))
-		task, err := vapp.AddNewVM(d.Get("name").(string), vappTemplate, &networkConnectionSection, acceptEulas)
-		if err != nil {
-			return resource.RetryableError(fmt.Errorf("error adding VM: %#v", err))
-		}
-		return resource.RetryableError(task.WaitTaskCompletion())
-	})
-
+	log.Printf("[TRACE] Creating VM: %s", d.Get("name").(string))
+	task, err := vapp.AddNewVM(d.Get("name").(string), vappTemplate, &networkConnectionSection, acceptEulas)
+	if err != nil {
+		return fmt.Errorf("error adding VM: %#v", err)
+	}
+	err = task.WaitTaskCompletion()
 	if err != nil {
 		return fmt.Errorf(errorCompletingTask, err)
 	}
@@ -313,26 +312,24 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	// The below operation assumes VM is powered off and does not check for it because VM is being
 	// powered on in the last stage of create/update cycle
 	if d.Get("expose_hardware_virtualization").(bool) {
-		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := vm.ToggleHardwareVirtualization(true)
-			if err != nil {
-				return resource.RetryableError(fmt.Errorf("error enabling hardware assisted virtualization: %#v", err))
-			}
-			return resource.RetryableError(task.WaitTaskCompletion())
-		})
+
+		task, err := vm.ToggleHardwareVirtualization(true)
+		if err != nil {
+			return fmt.Errorf("error enabling hardware assisted virtualization: %#v", err)
+		}
+		err = task.WaitTaskCompletion()
+
 		if err != nil {
 			return fmt.Errorf(errorCompletingTask, err)
 		}
 	}
 
 	if initScript, ok := d.GetOk("initscript"); ok {
-		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := vm.RunCustomizationScript(d.Get("name").(string), initScript.(string))
-			if err != nil {
-				return resource.RetryableError(fmt.Errorf("error with setting init script: %#v", err))
-			}
-			return resource.RetryableError(task.WaitTaskCompletion())
-		})
+		task, err := vm.RunCustomizationScript(d.Get("name").(string), initScript.(string))
+		if err != nil {
+			return fmt.Errorf("error with init script setting: %#v", err)
+		}
+		err = task.WaitTaskCompletion()
 		if err != nil {
 			return fmt.Errorf(errorCompletingTask, err)
 		}
@@ -341,7 +338,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	d.SetId(d.Get("name").(string))
 
 	// TODO do not trigger resourceVcdVAppVmUpdate from create. These must be separate actions.
-	err = resourceVcdVAppVmUpdate(d, meta)
+	err = resourceVcdVAppVmUpdateExecute(d, meta)
 	if err != nil {
 		errAttachedDisk := updateStateOfAttachedDisks(d, vm, vdc)
 		if errAttachedDisk != nil {
@@ -380,14 +377,11 @@ func addVdcNetwork(networkNameToAdd string, vdc govcd.Vdc, vapp govcd.VApp, vcdC
 	}
 
 	if !isAlreadyVappNetwork {
-		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := vapp.AddRAWNetworkConfig([]*types.OrgVDCNetwork{vdcNetwork})
-			if err != nil {
-				return resource.RetryableError(fmt.Errorf("error assigning network to vApp: %#v", err))
-			}
-			return resource.RetryableError(task.WaitTaskCompletion())
-		})
-
+		task, err := vapp.AddRAWNetworkConfig([]*types.OrgVDCNetwork{vdcNetwork})
+		if err != nil {
+			return &types.OrgVDCNetwork{}, fmt.Errorf("error assigning network to vApp: %#v", err)
+		}
+		err = task.WaitTaskCompletion()
 		if err != nil {
 			return &types.OrgVDCNetwork{}, fmt.Errorf("error assigning network to vApp:: %#v", err)
 		}
@@ -471,6 +465,20 @@ func getVmIndependentDisks(vm govcd.VM) []string {
 }
 
 func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
+	vcdClient := meta.(*VCDClient)
+
+	// When there is more then one VM in a vApp Terraform will try to parallelise their creation.
+	// However, vApp throws errors when simultaneous requests are executed.
+	// To avoid them, below block is using mutex as a workaround,
+	// so that the one vApp VMs are created not in parallelisation.
+
+	vcdClient.lockParentVapp(d)
+	defer vcdClient.unLockParentVapp(d)
+
+	return resourceVcdVAppVmUpdateExecute(d, meta)
+}
+
+func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) error {
 
 	vcdClient := meta.(*VCDClient)
 
@@ -532,10 +540,6 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	// When there is more then one VM in a vApp Terraform will try to parallelise their creation.
-	// However, vApp throws errors when simultaneous requests are executed.
-	// To avoid them, below block is using retryCall in multiple places as a workaround,
-	// so that the VMs are created regardless of parallelisation.
 	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("cpu_cores") || d.HasChange("power_on") || d.HasChange("disk") ||
 		d.HasChange("expose_hardware_virtualization") {
 		if status != "POWERED_OFF" {
@@ -563,63 +567,58 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		if d.HasChange("memory") {
-			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-				task, err := vm.ChangeMemorySize(d.Get("memory").(int))
-				if err != nil {
-					return resource.RetryableError(fmt.Errorf("error changing memory size: %#v", err))
-				}
 
-				return resource.RetryableError(task.WaitTaskCompletion())
-			})
+			task, err := vm.ChangeMemorySize(d.Get("memory").(int))
+			if err != nil {
+				return fmt.Errorf("error changing memory size: %#v", err)
+			}
+
+			err = task.WaitTaskCompletion()
 			if err != nil {
 				return err
 			}
 		}
 
 		if d.HasChange("cpus") || d.HasChange("cpu_cores") {
-			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-				var task govcd.Task
-				var err error
-				if d.Get("cpu_cores") != nil {
-					coreCounts := d.Get("cpu_cores").(int)
-					task, err = vm.ChangeCPUCountWithCore(d.Get("cpus").(int), &coreCounts)
-				} else {
-					task, err = vm.ChangeCPUCount(d.Get("cpus").(int))
-				}
-				if err != nil {
-					return resource.RetryableError(fmt.Errorf("error changing cpu count: %#v", err))
-				}
+			var task govcd.Task
+			var err error
+			if d.Get("cpu_cores") != nil {
+				coreCounts := d.Get("cpu_cores").(int)
+				task, err = vm.ChangeCPUCountWithCore(d.Get("cpus").(int), &coreCounts)
+			} else {
+				task, err = vm.ChangeCPUCount(d.Get("cpus").(int))
+			}
+			if err != nil {
+				return fmt.Errorf("error changing cpu count: %#v", err)
+			}
 
-				return resource.RetryableError(task.WaitTaskCompletion())
-			})
+			err = task.WaitTaskCompletion()
 			if err != nil {
 				return fmt.Errorf(errorCompletingTask, err)
 			}
 		}
 
 		if d.HasChange("expose_hardware_virtualization") {
-			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-				task, err := vm.ToggleHardwareVirtualization(d.Get("expose_hardware_virtualization").(bool))
-				if err != nil {
-					return resource.RetryableError(fmt.Errorf("error changing hardware assisted virtualization: %#v", err))
-				}
 
-				return resource.RetryableError(task.WaitTaskCompletion())
-			})
+			task, err := vm.ToggleHardwareVirtualization(d.Get("expose_hardware_virtualization").(bool))
+			if err != nil {
+				return fmt.Errorf("error changing hardware assisted virtualization: %#v", err)
+			}
+
+			err = task.WaitTaskCompletion()
 			if err != nil {
 				return err
 			}
 		}
 
 		if d.Get("power_on").(bool) {
-			err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-				task, err := vm.PowerOn()
-				if err != nil {
-					return resource.RetryableError(fmt.Errorf("error Powering Up: %#v", err))
-				}
 
-				return resource.RetryableError(task.WaitTaskCompletion())
-			})
+			task, err := vm.PowerOn()
+			if err != nil {
+				return fmt.Errorf("error Powering Up: %#v", err)
+			}
+
+			err = task.WaitTaskCompletion()
 			if err != nil {
 				return fmt.Errorf(errorCompletingTask, err)
 			}
@@ -806,6 +805,9 @@ func updateStateOfAttachedDisks(d *schema.ResourceData, vm govcd.VM, vdc govcd.V
 func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
+	vcdClient.lockParentVapp(d)
+	defer vcdClient.unLockParentVapp(d)
+
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
@@ -831,28 +833,42 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[TRACE] vApp Status:: %s", status)
 	if status != "POWERED_OFF" {
 		log.Printf("[TRACE] Undeploying vApp: %s", vapp.VApp.Name)
-		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := vapp.Undeploy()
-			if err != nil {
-				return resource.RetryableError(fmt.Errorf("error Undeploying: %#v", err))
-			}
+		task, err := vapp.Undeploy()
+		if err != nil {
+			return fmt.Errorf("error Undeploying: %#v", err)
+		}
 
-			return resource.RetryableError(task.WaitTaskCompletion())
-		})
+		err = task.WaitTaskCompletion()
 		if err != nil {
 			return fmt.Errorf("error Undeploying vApp: %#v", err)
 		}
 	}
 
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		log.Printf("[TRACE] Removing VM: %s", vm.VM.Name)
-		err := vapp.RemoveVM(vm)
+	// to avoid race condition for independent disks is attached or not - detach before removing vm
+	existingDisks := getVmIndependentDisks(vm)
+
+	for _, existingDiskHref := range existingDisks {
+		disk, err := vdc.FindDiskByHREF(existingDiskHref)
 		if err != nil {
-			return resource.RetryableError(fmt.Errorf("error deleting: %#v", err))
+			return fmt.Errorf("did not find disk `%s`: %#v", existingDiskHref, err)
 		}
 
-		return nil
-	})
+		attachParams := &types.DiskAttachOrDetachParams{Disk: &types.Reference{HREF: disk.Disk.HREF}}
+		task, err := vm.DetachDisk(attachParams)
+		if err != nil {
+			return fmt.Errorf("error detaching disk `%s`: %#v", existingDiskHref, err)
+		}
+		err = task.WaitTaskCompletion()
+		if err != nil {
+			return fmt.Errorf("error waiting detaching disk task to finish`%s`: %#v", existingDiskHref, err)
+		}
+	}
+
+	log.Printf("[TRACE] Removing VM: %s", vm.VM.Name)
+	err = vapp.RemoveVM(vm)
+	if err != nil {
+		return fmt.Errorf("error deleting: %#v", err)
+	}
 
 	if status != "POWERED_OFF" {
 		log.Printf("[TRACE] Redeploying vApp: %s", vapp.VApp.Name)
@@ -866,20 +882,18 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		log.Printf("[TRACE] Powering on vApp: %s", vapp.VApp.Name)
-		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err = vapp.PowerOn()
-			if err != nil {
-				return resource.RetryableError(fmt.Errorf("error Powering Up vApp: %#v", err))
-			}
+		task, err = vapp.PowerOn()
+		if err != nil {
+			return fmt.Errorf("error Powering Up vApp: %#v", err)
+		}
 
-			return resource.RetryableError(task.WaitTaskCompletion())
-		})
+		err = task.WaitTaskCompletion()
 		if err != nil {
 			return fmt.Errorf("error Powering Up vApp: %#v", err)
 		}
 	}
 
-	return err
+	return nil
 }
 
 func resourceVcdVmIndependentDiskHash(v interface{}) int {
