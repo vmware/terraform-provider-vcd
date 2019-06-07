@@ -8,12 +8,6 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-//var tempLock *sync.Mutex
-//
-//func init() {
-//	tempLock = new(sync.Mutex)
-//}
-
 func ResourceVcdLbServiceMonitor() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceVcdLbServiceMonitorCreate,
@@ -108,6 +102,9 @@ func ResourceVcdLbServiceMonitor() *schema.Resource {
 
 func resourceVcdLbServiceMonitorCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
+	vcdClient.lockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
+
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
@@ -117,9 +114,6 @@ func resourceVcdLbServiceMonitorCreate(d *schema.ResourceData, meta interface{})
 	if err != nil {
 		return fmt.Errorf("unable to expand load balancer service monitor: %s", err)
 	}
-
-	//tempLock.Lock()
-	//defer tempLock.Unlock()
 
 	createdMonitor, err := edgeGateway.CreateLBServiceMonitor(lbMonitor)
 	if err != nil {
@@ -132,13 +126,14 @@ func resourceVcdLbServiceMonitorCreate(d *schema.ResourceData, meta interface{})
 
 func resourceVcdLbServiceMonitorRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
+	vcdClient.lockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
+
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	//tempLock.Lock()
-	//defer tempLock.Unlock()
 	readLBMonitor, err := edgeGateway.ReadLBServiceMonitor(&types.LBMonitor{ID: d.Id()})
 	if err != nil {
 		d.SetId("")
@@ -150,13 +145,13 @@ func resourceVcdLbServiceMonitorRead(d *schema.ResourceData, meta interface{}) e
 
 func resourceVcdLbServiceMonitorUpdate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
+	vcdClient.lockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
+
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
-
-	//tempLock.Lock()
-	//defer tempLock.Unlock()
 
 	updateLBMonitorConfig, err := expandLBMonitor(d)
 	if err != nil {
@@ -177,13 +172,14 @@ func resourceVcdLbServiceMonitorUpdate(d *schema.ResourceData, meta interface{})
 
 func resourceVcdLbServiceMonitorDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
+	vcdClient.lockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
+
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	//tempLock.Lock()
-	//defer tempLock.Unlock()
 	err = edgeGateway.DeleteLBServiceMonitor(&types.LBMonitor{ID: d.Id()})
 	if err != nil {
 		return fmt.Errorf("error deleting load balancer service monitor: %s", err)
