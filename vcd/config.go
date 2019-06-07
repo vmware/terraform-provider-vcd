@@ -112,8 +112,8 @@ func (cli *VCDClient) unLockVapp(d *schema.ResourceData) {
 	vcdMutexKV.Unlock(key)
 }
 
-// function lockParentVapp locks using vapp_name name existing in resource parameters. Parent means resource needs
-// to lock vApp it depends
+// function lockParentVapp locks using vapp_name name existing in resource parameters.
+// Parent means the resource belongs to the vApp being locked
 func (cli *VCDClient) lockParentVapp(d *schema.ResourceData) {
 	vappName := d.Get("vapp_name").(string)
 	if vappName == "" {
@@ -132,8 +132,8 @@ func (cli *VCDClient) unLockParentVapp(d *schema.ResourceData) {
 	vcdMutexKV.Unlock(key)
 }
 
-// function lockParentEdgeGtw locks using edge_gateway name existing in resource parameters. Parent means resource needs
-// to lock edge gtw it depends
+// function lockParentEdgeGtw locks using edge_gateway name existing in resource parameters.
+// Parent means the resource belongs to the edge gateway being locked
 func (cli *VCDClient) lockParentEdgeGtw(d *schema.ResourceData) {
 	edgeGtwName := d.Get("edge_gateway").(string)
 	if edgeGtwName == "" {
