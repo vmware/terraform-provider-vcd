@@ -107,7 +107,7 @@ func (eGW *EdgeGateway) UpdateLBServiceMonitor(lbMonitorConfig *types.LBMonitor)
 	}
 
 	// Result should be 204, if not we expect an error of type types.NSXError
-	_, err = eGW.client.ExecuteRequestHTTPCodeOrTypedError(http.StatusNoContent, httpPath, http.MethodPut, "application/xml", "%s", lbMonitorConfig, types.NSXError{})
+	_, err = eGW.client.ExecuteRequestHTTPCodeOrTypedError(http.StatusNoContent, httpPath, http.MethodPut, "application/xml", "%s", lbMonitorConfig, &types.NSXError{})
 	if err != nil {
 		return nil, fmt.Errorf("error while updating load balancer service monitor : %s", err)
 	}

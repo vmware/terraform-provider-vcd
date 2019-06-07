@@ -121,7 +121,6 @@ type NetworkFeatures struct {
 	DhcpService          *DhcpService          `xml:"DhcpService,omitempty"`          // Substitute for NetworkService. DHCP service settings
 	FirewallService      *FirewallService      `xml:"FirewallService,omitempty"`      // Substitute for NetworkService. Firewall service settings
 	NatService           *NatService           `xml:"NatService,omitempty"`           // Substitute for NetworkService. NAT service settings
-	LoadBalancerService  *LoadBalancerService  `xml:"LoadBalancerService,omitempty"`  // Substitute for NetworkService. Load Balancer service settings
 	StaticRoutingService *StaticRoutingService `xml:"StaticRoutingService,omitempty"` // Substitute for NetworkService. Static Routing service settings
 	// TODO: Not Implemented
 	// IpsecVpnService      IpsecVpnService      `xml:"IpsecVpnService,omitempty"`      // Substitute for NetworkService. Ipsec Vpn service settings
@@ -1591,7 +1590,6 @@ type GatewayFeatures struct {
 	NatService             *NatService             `xml:"NatService,omitempty"`             // Substitute for NetworkService. NAT service settings
 	GatewayDhcpService     *GatewayDhcpService     `xml:"GatewayDhcpService,omitempty"`     // Substitute for NetworkService. Gateway DHCP service settings
 	GatewayIpsecVpnService *GatewayIpsecVpnService `xml:"GatewayIpsecVpnService,omitempty"` // Substitute for NetworkService. Gateway Ipsec VPN service settings
-	LoadBalancerService    *LoadBalancerService    `xml:"LoadBalancerService,omitempty"`    // Substitute for NetworkService. Load Balancer service settings
 	StaticRoutingService   *StaticRoutingService   `xml:"StaticRoutingService,omitempty"`   // Substitute for NetworkService. Static Routing service settings
 }
 
@@ -1618,60 +1616,17 @@ type StaticRoute struct {
 	GatewayInterface *Reference `xml:"GatewayInterface,omitempty"` // Gateway interface to which static route is bound.
 }
 
-// LoadBalancerService represents gateway load balancer service.
-// Type: LoadBalancerServiceType
-// Namespace: http://www.vmware.com/vcloud/v1.5
-// Description: Represents gateway load balancer service.
-// Since: 5.1
-type LoadBalancerService struct {
-	IsEnabled     bool                       `xml:"IsEnabled"`               // Enable or disable the service using this flag
-	Pool          *LoadBalancerPool          `xml:"Pool,omitempty"`          // List of load balancer pools.
-	VirtualServer *LoadBalancerVirtualServer `xml:"VirtualServer,omitempty"` // List of load balancer virtual servers.
-}
-
-// LoadBalancerPool represents a load balancer pool.
-// Type: LoadBalancerPoolType
-// Namespace: http://www.vmware.com/vcloud/v1.5
-// Description: Represents a load balancer pool.
-// Since: 5.1
-type LoadBalancerPool struct {
-	ID           string             `xml:"Id,omitempty"`           // Load balancer pool id.
-	Name         string             `xml:"Name"`                   // Load balancer pool name.
-	Description  string             `xml:"Description,omitempty"`  // Load balancer pool description.
-	ServicePort  *LBPoolServicePort `xml:"ServicePort"`            // Load balancer pool service port.
-	Member       *LBPoolMember      `xml:"Member"`                 // Load balancer pool member.
-	Operational  bool               `xml:"Operational,omitempty"`  // True if the load balancer pool is operational.
-	ErrorDetails string             `xml:"ErrorDetails,omitempty"` // Error details for this pool.
-}
-
-// LBPoolServicePort represents a service port in a load balancer pool.
-// Type: LBPoolServicePortType
-// Namespace: http://www.vmware.com/vcloud/v1.5
-// Description: Represents a service port in a load balancer pool.
-// Since: 5.1
-type LBPoolServicePort struct {
-	IsEnabled       bool       `xml:"IsEnabled,omitempty"`       // True if this service port is enabled.
-	Protocol        string     `xml:"Protocol"`                  // Load balancer protocol type. One of: HTTP, HTTPS, TCP.
-	Algorithm       string     `xml:"Algorithm"`                 // Load Balancer algorithm type. One of: IP_HASH, ROUND_ROBIN, URI, LEAST_CONN.
-	Port            string     `xml:"Port"`                      // Port for this service profile.
-	HealthCheckPort string     `xml:"HealthCheckPort,omitempty"` // Health check port for this profile.
-	HealthCheck     *LBMonitor `xml:"HealthCheck,omitempty"`     // Health check list.
-}
-
-// LBMonitor represents a service port health check list as per "vCloud Director API for NSX Programming Guide"
-// Type: LBPoolHealthCheckType
-// Namespace: http://www.vmware.com/vcloud/v1.5
-// Description: Represents a service port health check list.
-// Since: 5.1
+// LBMonitor defines health check parameters for a particular type of network traffic
+// Reference: vCloud Director API for NSX Programming Guide
 type LBMonitor struct {
 	XMLName    xml.Name `xml:"monitor"`
 	ID         string   `xml:"monitorId,omitempty"`
-	Type       string   `xml:"type,omitempty"`     // Load balancer service port health check mode. One of: TCP, HTTP, SSL.
-	Interval   int      `xml:"interval,omitempty"` // Interval between health checks.
-	Timeout    int      `xml:"timeout,omitempty"`  // Health check timeout.
+	Type       string   `xml:"type"`
+	Interval   int      `xml:"interval,omitempty"`
+	Timeout    int      `xml:"timeout,omitempty"`
 	MaxRetries int      `xml:"maxRetries,omitempty"`
 	Method     string   `xml:"method,omitempty"`
-	URI        string   `xml:"uri,omitempty"` // Load balancer service port health check URI.
+	URI        string   `xml:"uri,omitempty"`
 	Expected   string   `xml:"expected,omitempty"`
 	Name       string   `xml:"name,omitempty"`
 	Send       string   `xml:"send,omitempty"`
@@ -1680,17 +1635,6 @@ type LBMonitor struct {
 }
 
 type LBMonitors []LBMonitor
-
-// LBPoolMember represents a member in a load balancer pool.
-// Type: LBPoolMemberType
-// Namespace: http://www.vmware.com/vcloud/v1.5
-// Description: Represents a member in a load balancer pool.
-// Since: 5.1
-type LBPoolMember struct {
-	IPAddress   string             `xml:"IpAddress"`             // Ip Address for load balancer member.
-	Weight      string             `xml:"Weight"`                // Weight of this member.
-	ServicePort *LBPoolServicePort `xml:"ServicePort,omitempty"` // Load balancer member service port.
-}
 
 // LoadBalancerVirtualServer represents a load balancer virtual server.
 // Type: LoadBalancerVirtualServerType
