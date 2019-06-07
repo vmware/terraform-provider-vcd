@@ -41,7 +41,7 @@ resource "vcd_lb_service_monitor" "monitor" {
   timeout = "20"
   max_retries = "3"
   type = "http"
-  http_method = "get"
+  http_method = "GET"
   extension = {
     content-type = "application/json"
     linespan     = ""
@@ -61,14 +61,14 @@ The following arguments are supported:
 * `interval` - (Required) Interval at which a server is to be monitored using the specified Method. 
 * `timeout` - (Required) Maximum time in seconds within which a response from the server must be received 
 * `max_retries` - (Required) Number of times the specified monitoring Method must fail sequentially before the server is declared down
-* `type` - (Required) Select the way in which you want to send the health check request to the server— `HTTP`, `HTTPS`, 
-`TCP`, `ICMP`, or `UDP`. Depending on the type selected, the remaining attributes are allowed or not
-* `method` - (Optional) For types `HTTP` and `HTTPS`. Select the method to be used to detect server status
-* `url` - (Optional) For types `HTTP` and `HTTPS`. URL to be used in the server status request
-* `send` - (Optional) For types `HTTP`,  `HTTPS`, and `UDP`. The data to be sent.
-* `expected` - (Optional) For types `HTTP` and `HTTPS`. String that the monitor expects to match in the status line of 
+* `type` - (Required) Select the way in which you want to send the health check request to the server — `http`, `https`, 
+`tcp`, `icmp`, or `udp`. Depending on the type selected, the remaining attributes are allowed or not
+* `method` - (Optional) For types `http` and `https`. Select http method to be used to detect server status
+* `url` - (Optional) For types `http` and `https`. URL to be used in the server status request
+* `send` - (Optional) For types `http`,  `https`, and `udp`. The data to be sent.
+* `expected` - (Optional) For types `http` and `https`. String that the monitor expects to match in the status line of 
 the HTTP or HTTPS response (for example, `HTTP/1.1`)
-* `receive` - (Optional) For types `HTTP`,  `HTTPS`, and `UDP`. The string to be matched in the response content.
+* `receive` - (Optional) For types `http`,  `https`, and `udp`. The string to be matched in the response content.
 **Note**: When `expected` is not matched, the monitor does not try to match the Receive content
 * `extension` - (Required) A map of advanced monitor parameters as key=value pairs (i.e. `max-age=SECONDS`, `invert-regex`)
 **Note**: When you need a value of `key` only format just set value to empty string (i.e. `linespan = ""`)

@@ -1,8 +1,10 @@
 # Remove the first '#' from the next two lines to enable options for terraform executable 
-# apply-options -parallelism=1
-# destroy-options -parallelism=1
+## apply-options -parallelism=1
+## destroy-options -parallelism=1
 
-# Edge gateway load balancer configuration
+# Edge gateway load balancer configuration. It will get more details, but for now is used to
+# make sure that locks work fine and it does not fail
+
 # v2.4.0+
 
 variable "service_monitor_count" {

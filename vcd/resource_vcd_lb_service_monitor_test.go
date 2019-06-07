@@ -31,7 +31,7 @@ func TestAccVcdLbServiceMonitor(t *testing.T) {
 		"Interval":           5,
 		"Timeout":            10,
 		"MaxRetries":         3,
-		"Method":             "ASD",
+		"Method":             "POST",
 		"Tags":               "lb lbServiceMonitor",
 	}
 
@@ -49,7 +49,7 @@ func TestAccVcdLbServiceMonitor(t *testing.T) {
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_lb_service_monitor.lb-service-monitor", "name", params["ServiceMonitorName"].(string)),
 					resource.TestMatchResourceAttr("vcd_lb_service_monitor.lb-service-monitor", "id", regexp.MustCompile(`^monitor-\d*$`)),
 					resource.TestCheckResourceAttr("vcd_lb_service_monitor.lb-service-monitor", "method", params["Method"].(string)),
@@ -70,7 +70,7 @@ func TestAccVcdLbServiceMonitor(t *testing.T) {
 			},
 			resource.TestStep{
 				Config: configTextStep1,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_lb_service_monitor.lb-service-monitor", "name", params["ServiceMonitorName"].(string)),
 					resource.TestMatchResourceAttr("vcd_lb_service_monitor.lb-service-monitor", "id", regexp.MustCompile(`^monitor-\d*$`)),
 					resource.TestCheckResourceAttr("vcd_lb_service_monitor.lb-service-monitor", "type", "tcp"),

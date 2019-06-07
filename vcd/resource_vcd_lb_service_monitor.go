@@ -60,10 +60,10 @@ func ResourceVcdLbServiceMonitor() *schema.Resource {
 				Description: "Number of times the specified monitoring Method must fail sequentially before the server is declared down",
 			},
 			"type": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				// ValidateFunc: validation.StringInSlice([]string{"http", "https", "tcp", "icmp", "udp"}, false),
-				Description: "Way in which you want to send the health check request to the server",
+				Type:         schema.TypeString,
+				Required:     true,
+				Description:  "Way in which you want to send the health check request to the server",
+				ValidateFunc: validateLowerCase(),
 			},
 			"expected": &schema.Schema{
 				Type:        schema.TypeString,
@@ -71,10 +71,10 @@ func ResourceVcdLbServiceMonitor() *schema.Resource {
 				Description: "String that the monitor expects to match in the status line of the HTTP or HTTPS response (for example, HTTP/1.1)",
 			},
 			"method": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				// ValidateFunc: validation.StringInSlice([]string{"GET", "OPTIONS", "POST"}, false),
-				Description: "Method to be used to detect server status",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "Method to be used to detect server status",
+				ValidateFunc: validateUpperCase(),
 			},
 			"url": &schema.Schema{
 				Type:        schema.TypeString,
@@ -97,6 +97,40 @@ func ResourceVcdLbServiceMonitor() *schema.Resource {
 				Description: "Advanced monitor parameters as key=value pairs",
 			},
 		},
+	}
+}
+
+// validateUpperCase checks that a string is upper cased
+func validateUpperCase() schema.SchemaValidateFunc {
+	return func(i interface{}, k string) (s []string, es []error) {
+		v, ok := i.(string)
+		if !ok {
+			es = append(es, fmt.Errorf("expected type of %s to be string", k))
+			return
+		}
+
+		if strings.ToUpper(v) != v {
+			es = append(es, fmt.Errorf(
+				"expected string to be upper cased, got: %s", v))
+		}
+		return
+	}
+}
+
+// validateUpperCase checks that a string is upper cased
+func validateLowerCase() schema.SchemaValidateFunc {
+	return func(i interface{}, k string) (s []string, es []error) {
+		v, ok := i.(string)
+		if !ok {
+			es = append(es, fmt.Errorf("expected type of %s to be string", k))
+			return
+		}
+
+		if strings.ToLower(v) != v {
+			es = append(es, fmt.Errorf(
+				"expected string to be lower cased, got: %s", v))
+		}
+		return
 	}
 }
 
@@ -126,8 +160,6 @@ func resourceVcdLbServiceMonitorCreate(d *schema.ResourceData, meta interface{})
 
 func resourceVcdLbServiceMonitorRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-	vcdClient.lockParentEdgeGtw(d)
-	defer vcdClient.unLockParentEdgeGtw(d)
 
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {
