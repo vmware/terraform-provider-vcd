@@ -466,6 +466,12 @@ func getVmIndependentDisks(vm govcd.VM) []string {
 
 func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
+
+	// When there is more then one VM in a vApp Terraform will try to parallelise their creation.
+	// However, vApp throws errors when simultaneous requests are executed.
+	// To avoid them, below block is using mutex as a workaround,
+	// so that the one vApp VMs are created not in parallelisation.
+
 	vcdClient.lockParentVapp(d)
 	defer vcdClient.unLockParentVapp(d)
 
@@ -534,10 +540,6 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		}
 	}
 
-	// When there is more then one VM in a vApp Terraform will try to parallelise their creation.
-	// However, vApp throws errors when simultaneous requests are executed.
-	// To avoid them, below block is using retryCall in multiple places as a workaround,
-	// so that the VMs are created regardless of parallelisation.
 	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("cpu_cores") || d.HasChange("power_on") || d.HasChange("disk") ||
 		d.HasChange("expose_hardware_virtualization") {
 		if status != "POWERED_OFF" {
