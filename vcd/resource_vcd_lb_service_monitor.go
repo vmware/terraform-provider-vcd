@@ -256,7 +256,7 @@ func expandLBMonitor(d *schema.ResourceData) (*types.LBMonitor, error) {
 		Name:       d.Get("name").(string),
 		Interval:   d.Get("interval").(int),
 		Timeout:    d.Get("timeout").(int),
-		Type:       d.Get("type").(string), // In API this field is called "mode", while in UI "type"
+		Type:       d.Get("type").(string),
 		MaxRetries: d.Get("max_retries").(int),
 		Expected:   d.Get("expected").(string),
 		Method:     d.Get("method").(string),
