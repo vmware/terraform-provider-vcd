@@ -823,16 +823,16 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error getting VM4 : %#v", err)
 	}
 
-	status, err := vapp.GetStatus()
+	status, err := vm.GetStatus()
 	if err != nil {
 		return fmt.Errorf("error getting vApp status: %#v", err)
 	}
 
-	log.Printf("[TRACE] vApp Status:: %s", status)
+	log.Printf("[TRACE] VM Status:: %s", status)
 	if status != "POWERED_OFF" {
-		log.Printf("[TRACE] Undeploying vApp: %s", vapp.VApp.Name)
+		log.Printf("[TRACE] Undeploying VM: %s", vapp.VApp.Name)
 		err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-			task, err := vapp.Undeploy()
+			task, err := vm.Undeploy()
 			if err != nil {
 				return resource.RetryableError(fmt.Errorf("error Undeploying: %#v", err))
 			}
