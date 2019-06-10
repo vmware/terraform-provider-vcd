@@ -136,8 +136,8 @@ func resourceVcdVappNetwork() *schema.Resource {
 
 func resourceVcdVappNetworkCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-	vcdClient.Mutex.Lock()
-	defer vcdClient.Mutex.Unlock()
+	vcdClient.lockParentVapp(d)
+	defer vcdClient.unLockParentVapp(d)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
@@ -249,8 +249,8 @@ func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
 
 func resourceVappNetworkDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-	vcdClient.Mutex.Lock()
-	defer vcdClient.Mutex.Unlock()
+	vcdClient.lockParentVapp(d)
+	defer vcdClient.unLockParentVapp(d)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {

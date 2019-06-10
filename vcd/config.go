@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"time"
 
+	"github.com/hashicorp/terraform/helper/mutexkv"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
@@ -88,6 +89,83 @@ func debugPrintf(format string, args ...interface{}) {
 	if enableDebug {
 		fmt.Printf(format, args...)
 	}
+}
+
+// This is a global MutexKV for all resources
+var vcdMutexKV = mutexkv.NewMutexKV()
+
+func (cli *VCDClient) lockVapp(d *schema.ResourceData) {
+	vappName := d.Get("name").(string)
+	if vappName == "" {
+		panic("vApp name not found")
+	}
+	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), vappName)
+	vcdMutexKV.Lock(key)
+}
+
+func (cli *VCDClient) unLockVapp(d *schema.ResourceData) {
+	vappName := d.Get("name").(string)
+	if vappName == "" {
+		panic("vApp name not found")
+	}
+	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), vappName)
+	vcdMutexKV.Unlock(key)
+}
+
+// function lockParentVapp locks using vapp_name name existing in resource parameters.
+// Parent means the resource belongs to the vApp being locked
+func (cli *VCDClient) lockParentVapp(d *schema.ResourceData) {
+	vappName := d.Get("vapp_name").(string)
+	if vappName == "" {
+		panic("vApp name not found")
+	}
+	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), vappName)
+	vcdMutexKV.Lock(key)
+}
+
+func (cli *VCDClient) unLockParentVapp(d *schema.ResourceData) {
+	vappName := d.Get("vapp_name").(string)
+	if vappName == "" {
+		panic("vApp name not found")
+	}
+	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), vappName)
+	vcdMutexKV.Unlock(key)
+}
+
+// function lockParentEdgeGtw locks using edge_gateway name existing in resource parameters.
+// Parent means the resource belongs to the edge gateway being locked
+func (cli *VCDClient) lockParentEdgeGtw(d *schema.ResourceData) {
+	edgeGtwName := d.Get("edge_gateway").(string)
+	if edgeGtwName == "" {
+		panic("edge gateway not found")
+	}
+	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), edgeGtwName)
+	vcdMutexKV.Lock(key)
+}
+
+func (cli *VCDClient) unLockParentEdgeGtw(d *schema.ResourceData) {
+	edgeGtwName := d.Get("edge_gateway").(string)
+	if edgeGtwName == "" {
+		panic("edge gateway not found")
+	}
+	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), edgeGtwName)
+	vcdMutexKV.Unlock(key)
+}
+
+func (cli *VCDClient) getOrgName(d *schema.ResourceData) string {
+	orgName := d.Get("org").(string)
+	if orgName == "" {
+		orgName = cli.Org
+	}
+	return orgName
+}
+
+func (cli *VCDClient) getVdcName(d *schema.ResourceData) string {
+	orgName := d.Get("vdc").(string)
+	if orgName == "" {
+		orgName = cli.Vdc
+	}
+	return orgName
 }
 
 // GetOrgAndVdc finds a pair of org and vdc using the names provided

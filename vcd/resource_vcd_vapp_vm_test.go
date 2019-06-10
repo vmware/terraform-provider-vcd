@@ -92,12 +92,14 @@ resource "vcd_independent_disk" "{{.diskResourceName}}" {
   bus_type        = "{{.busType}}"
   bus_sub_type    = "{{.busSubType}}"
   storage_profile = "{{.storageProfileName}}"
+
 }
 
 resource "vcd_vapp" "{{.VappName}}" {
   name = "{{.VappName}}"
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
+  depends_on = ["vcd_network_routed.{{.NetworkName}}"]
 }
 
 resource "vcd_vapp_vm" "{{.VmName}}" {

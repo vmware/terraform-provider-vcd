@@ -5,7 +5,6 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -142,8 +141,8 @@ func resourceVcdEdgeGatewayVpnCreate(d *schema.ResourceData, meta interface{}) e
 	vcdClient := meta.(*VCDClient)
 	log.Printf("[TRACE] CLIENT: %#v", vcdClient)
 
-	vcdClient.Mutex.Lock()
-	defer vcdClient.Mutex.Unlock()
+	vcdClient.lockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
 
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {
@@ -206,22 +205,18 @@ func resourceVcdEdgeGatewayVpnCreate(d *schema.ResourceData, meta interface{}) e
 
 	log.Printf("[INFO] ipsecVPNConfig: %#v", ipsecVPNConfig)
 
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		err := edgeGateway.Refresh()
-		if err != nil {
-			log.Printf("[INFO] Error refreshing edge gateway: %#v", err)
-			return resource.RetryableError(
-				fmt.Errorf("error error refreshing edge gateway: %#v", err))
-		}
-		task, err := edgeGateway.AddIpsecVPN(ipsecVPNConfig)
-		if err != nil {
-			log.Printf("[INFO] Error setting ipsecVPNConfig rules: %s", err)
-			return resource.RetryableError(
-				fmt.Errorf("error setting ipsecVPNConfig rules: %#v", err))
-		}
+	err = edgeGateway.Refresh()
+	if err != nil {
+		log.Printf("[INFO] Error refreshing edge gateway: %#v", err)
+		return fmt.Errorf("error refreshing edge gateway: %#v", err)
+	}
+	task, err := edgeGateway.AddIpsecVPN(ipsecVPNConfig)
+	if err != nil {
+		log.Printf("[INFO] Error setting ipsecVPNConfig rules: %s", err)
+		return fmt.Errorf("error setting ipsecVPNConfig rules: %#v", err)
+	}
 
-		return resource.RetryableError(task.WaitTaskCompletion())
-	})
+	err = task.WaitTaskCompletion()
 	if err != nil {
 		return fmt.Errorf(errorCompletingTask, err)
 	}
@@ -236,8 +231,8 @@ func resourceVcdEdgeGatewayVpnDelete(d *schema.ResourceData, meta interface{}) e
 
 	log.Printf("[TRACE] CLIENT: %#v", vcdClient)
 
-	vcdClient.Mutex.Lock()
-	defer vcdClient.Mutex.Unlock()
+	vcdClient.lockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
 
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {
@@ -253,22 +248,18 @@ func resourceVcdEdgeGatewayVpnDelete(d *schema.ResourceData, meta interface{}) e
 
 	log.Printf("[INFO] ipsecVPNConfig: %#v", ipsecVPNConfig)
 
-	err = retryCall(vcdClient.MaxRetryTimeout, func() *resource.RetryError {
-		err := edgeGateway.Refresh()
-		if err != nil {
-			log.Printf("[INFO] Error refreshing edge gateway: %#v", err)
-			return resource.RetryableError(
-				fmt.Errorf("error error refreshing edge gateway: %#v", err))
-		}
-		task, err := edgeGateway.AddIpsecVPN(ipsecVPNConfig)
-		if err != nil {
-			log.Printf("[INFO] Error setting ipsecVPNConfig rules: %s", err)
-			return resource.RetryableError(
-				fmt.Errorf("error setting ipsecVPNConfig rules: %#v", err))
-		}
+	err = edgeGateway.Refresh()
+	if err != nil {
+		log.Printf("[INFO] Error refreshing edge gateway: %#v", err)
+		return fmt.Errorf("error refreshing edge gateway: %#v", err)
+	}
+	task, err := edgeGateway.AddIpsecVPN(ipsecVPNConfig)
+	if err != nil {
+		log.Printf("[INFO] Error setting ipsecVPNConfig rules: %s", err)
+		return fmt.Errorf("error setting ipsecVPNConfig rules: %#v", err)
+	}
 
-		return resource.RetryableError(task.WaitTaskCompletion())
-	})
+	err = task.WaitTaskCompletion()
 	if err != nil {
 		return fmt.Errorf(errorCompletingTask, err)
 	}
