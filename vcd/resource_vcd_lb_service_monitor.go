@@ -195,11 +195,7 @@ func resourceVcdLbServiceMonitorUpdate(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("unable to update load balancer service monitor with ID %s: %s", d.Id(), err)
 	}
 
-	if err := flattenLBMonitor(d, updatedLBMonitor); err != nil {
-		return err
-	}
-
-	return nil
+	return flattenLBMonitor(d, updatedLBMonitor)
 }
 
 func resourceVcdLbServiceMonitorDelete(d *schema.ResourceData, meta interface{}) error {
