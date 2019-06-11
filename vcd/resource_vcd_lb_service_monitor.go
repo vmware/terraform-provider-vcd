@@ -272,6 +272,10 @@ func expandLBMonitor(d *schema.ResourceData) (*types.LBMonitor, error) {
 // expandLBMonitorExtension expands the specified map for sending via API. It appends newline to every extension as
 // per API requirement. Based on the research the underlying structure should not cause problems because duplicate keys
 // are not needed and order of the keys does not matter for API.
+// Example API call string for Extension field:
+// <extension>delay=2
+// critical=3
+// escape</extension>
 func expandLBMonitorExtension(d *schema.ResourceData) string {
 	var extensionString string
 	extension := d.Get("extension").(map[string]interface{})
