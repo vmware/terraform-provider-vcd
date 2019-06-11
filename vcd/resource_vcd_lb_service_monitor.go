@@ -8,7 +8,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-func ResourceVcdLbServiceMonitor() *schema.Resource {
+func resourceVcdLbServiceMonitor() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceVcdLbServiceMonitorCreate,
 		Read:   resourceVcdLbServiceMonitorRead,
