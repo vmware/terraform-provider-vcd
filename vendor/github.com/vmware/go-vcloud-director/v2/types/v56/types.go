@@ -1627,7 +1627,7 @@ type LBMonitor struct {
 	Timeout    int      `xml:"timeout,omitempty"`
 	MaxRetries int      `xml:"maxRetries,omitempty"`
 	Method     string   `xml:"method,omitempty"`
-	URI        string   `xml:"uri,omitempty"`
+	URL        string   `xml:"url,omitempty"`
 	Expected   string   `xml:"expected,omitempty"`
 	Name       string   `xml:"name,omitempty"`
 	Send       string   `xml:"send,omitempty"`

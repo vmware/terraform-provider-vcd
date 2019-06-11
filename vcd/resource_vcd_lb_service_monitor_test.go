@@ -54,6 +54,7 @@ func TestAccVcdLbServiceMonitor(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_lb_service_monitor.lb-service-monitor", "id", regexp.MustCompile(`^monitor-\d*$`)),
 					resource.TestCheckResourceAttr("vcd_lb_service_monitor.lb-service-monitor", "method", params["Method"].(string)),
 					resource.TestCheckResourceAttr("vcd_lb_service_monitor.lb-service-monitor", "type", "http"),
+					resource.TestCheckResourceAttr("vcd_lb_service_monitor.lb-service-monitor", "url", "health"),
 					// Data source testing - it must expose all fields which resource has
 					resource.TestCheckResourceAttr("data.vcd_lb_service_monitor.ds-lb-service-monitor", "interval", strconv.Itoa(params["Interval"].(int))),
 					resource.TestCheckResourceAttr("data.vcd_lb_service_monitor.ds-lb-service-monitor", "timeout", strconv.Itoa(params["Timeout"].(int))),
@@ -66,6 +67,7 @@ func TestAccVcdLbServiceMonitor(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_lb_service_monitor.ds-lb-service-monitor", "send", "{\"key\": \"value\"}"),
 					resource.TestCheckResourceAttr("data.vcd_lb_service_monitor.ds-lb-service-monitor", "expected", "HTTP/1.1"),
 					resource.TestCheckResourceAttr("data.vcd_lb_service_monitor.ds-lb-service-monitor", "receive", "OK"),
+					resource.TestCheckResourceAttr("data.vcd_lb_service_monitor.ds-lb-service-monitor", "url", "health"),
 				),
 			},
 			resource.TestStep{
@@ -133,6 +135,7 @@ resource "vcd_lb_service_monitor" "lb-service-monitor" {
   send        = "{\"key\": \"value\"}"
   expected    = "HTTP/1.1"
   receive     = "OK"
+  url         = "health"
 
   extension = {
     "content-type" = "application/json"

@@ -256,7 +256,7 @@ func expandLBMonitor(d *schema.ResourceData) (*types.LBMonitor, error) {
 		MaxRetries: d.Get("max_retries").(int),
 		Expected:   d.Get("expected").(string),
 		Method:     d.Get("method").(string),
-		URI:        d.Get("url").(string),
+		URL:        d.Get("url").(string),
 		Send:       d.Get("send").(string),
 		Receive:    d.Get("receive").(string),
 		Extension:  expandLBMonitorExtension(d),
@@ -292,7 +292,7 @@ func flattenLBMonitor(d *schema.ResourceData, lBmonitor *types.LBMonitor) error 
 	d.Set("type", lBmonitor.Type)
 	// Optional attributes may not necessarilly
 	d.Set("method", lBmonitor.Method)
-	d.Set("url", lBmonitor.URI)
+	d.Set("url", lBmonitor.URL)
 	d.Set("send", lBmonitor.Send)
 	d.Set("receive", lBmonitor.Receive)
 	d.Set("expected", lBmonitor.Expected)
