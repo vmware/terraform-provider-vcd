@@ -223,7 +223,7 @@ func resourceVcdLbServiceMonitorImport(d *schema.ResourceData, meta interface{})
 
 	resourceURI := strings.Split(d.Id(), ".")
 	if len(resourceURI) != 4 {
-		return nil, fmt.Errorf("resource name must be specified in such way my-org.my-org-vdc.my-edge-gw.existing-sm")
+		return nil, fmt.Errorf("resource name must be specified in such way my-org.my-org-vdc.my-edge-gw.existing-lb-service-monitor-name")
 	}
 	orgName, vdcName, edgeName, monitorName := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
 

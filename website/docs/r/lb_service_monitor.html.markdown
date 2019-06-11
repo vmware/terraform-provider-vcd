@@ -32,15 +32,15 @@ provider "vcd" {
 }
 
 resource "vcd_lb_service_monitor" "monitor" {
-  org                 = "my-org"
-  vdc                 = "my-org-vdc"
-  edge_gateway        = "my-edge-gw"
+  org          = "my-org"
+  vdc          = "my-org-vdc"
+  edge_gateway = "my-edge-gw"
 
-  name                = "testing-monitor-yy"
-  interval = "5"
-  timeout = "20"
+  name        = "testing-monitor-yy"
+  interval    = "5"
+  timeout     = "20"
   max_retries = "3"
-  type = "http"
+  type        = "http"
   http_method = "GET"
   extension = {
     content-type = "application/json"
@@ -87,8 +87,8 @@ via supplying the full dot separated path for load balancer service monitor. An 
 [docs-import]: /docs/import/index.html
 
 ```
-terraform import vcd_lb_service_monitor.imported my-org.my-org-vdc.my-edge-gw.existing-sm
+terraform import vcd_lb_service_monitor.imported my-org.my-org-vdc.my-edge-gw.existing-service-monitor-name
 ```
 
-The above would import the service monitor named `existing-sm` that is defined on edge gateway
+The above would import the service monitor named `existing-service-monitor-name` that is defined on edge gateway
 `my-edge-gw` which is configured in organization named `my-org` and vDC named `my-org-vdc`.

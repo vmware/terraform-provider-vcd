@@ -24,7 +24,7 @@ Supported in provider *v2.4+*
 ## Example Usage
 
 ```hcl
-data "vcd_lb_service_monitor" "sm-ds" {
+data "vcd_lb_service_monitor" "my-monitor" {
   org                 = "my-org"
   vdc                 = "my-org-vdc"
   edge_gateway        = "my-edge-gw"
