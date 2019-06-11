@@ -83,25 +83,26 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"vcd_network":          resourceVcdNetwork(), // DEPRECATED: replaced by vcd_network_routed
-			"vcd_network_routed":   resourceVcdNetworkRouted(),
-			"vcd_network_direct":   resourceVcdNetworkDirect(),
-			"vcd_network_isolated": resourceVcdNetworkIsolated(),
-			"vcd_vapp_network":     resourceVcdVappNetwork(),
-			"vcd_vapp":             resourceVcdVApp(),
-			"vcd_firewall_rules":   resourceVcdFirewallRules(),
-			"vcd_dnat":             resourceVcdDNAT(),
-			"vcd_snat":             resourceVcdSNAT(),
-			"vcd_edgegateway_vpn":  resourceVcdEdgeGatewayVpn(),
-			"vcd_vapp_vm":          resourceVcdVAppVm(),
-			"vcd_org":              resourceOrg(),
-			"vcd_org_vdc":          resourceVcdOrgVdc(),
-			"vcd_catalog":          resourceVcdCatalog(),
-			"vcd_catalog_item":     resourceVcdCatalogItem(),
-			"vcd_catalog_media":    resourceVcdCatalogMedia(),
-			"vcd_inserted_media":   resourceVcdInsertedMedia(),
-			"vcd_independent_disk": resourceVcdIndependentDisk(),
-			"vcd_external_network": resourceVcdExternalNetwork(),
+			"vcd_network":          resourceVcdNetwork(),         // 1.0 DEPRECATED: replaced by vcd_network_routed
+			"vcd_network_routed":   resourceVcdNetworkRouted(),   // 2.0
+			"vcd_network_direct":   resourceVcdNetworkDirect(),   // 2.0
+			"vcd_network_isolated": resourceVcdNetworkIsolated(), // 2.0
+			"vcd_vapp_network":     resourceVcdVappNetwork(),     // 2.1
+			"vcd_vapp":             resourceVcdVApp(),            // 1.0
+			"vcd_firewall_rules":   resourceVcdFirewallRules(),   // 1.0
+			"vcd_dnat":             resourceVcdDNAT(),            // 1.0
+			"vcd_snat":             resourceVcdSNAT(),            // 1.0
+			"vcd_edgegateway":      resourceVcdEdgeGateway(),     // 2.4
+			"vcd_edgegateway_vpn":  resourceVcdEdgeGatewayVpn(),  // 1.0
+			"vcd_vapp_vm":          resourceVcdVAppVm(),          // 1.0
+			"vcd_org":              resourceOrg(),                // 2.0
+			"vcd_org_vdc":          resourceVcdOrgVdc(),          // 2.2
+			"vcd_catalog":          resourceVcdCatalog(),         // 2.0
+			"vcd_catalog_item":     resourceVcdCatalogItem(),     // 2.0
+			"vcd_catalog_media":    resourceVcdCatalogMedia(),    // 2.0
+			"vcd_inserted_media":   resourceVcdInsertedMedia(),   // 2.1
+			"vcd_independent_disk": resourceVcdIndependentDisk(), // 2.1
+			"vcd_external_network": resourceVcdExternalNetwork(), // 2.2
 		},
 
 		ConfigureFunc: providerConfigure,

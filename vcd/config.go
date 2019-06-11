@@ -250,10 +250,12 @@ func (cli *VCDClient) GetEdgeGateway(orgName, vdcName, edgeGwName string) (eg go
 }
 
 // Same as GetEdgeGateway, but using data from the resource, if available
-func (cli *VCDClient) GetEdgeGatewayFromResource(d *schema.ResourceData) (eg govcd.EdgeGateway, err error) {
+// edgeGatewayFieldName is the name used in the resource. It is usually "edge_gateway"
+// for all resources that *use* an edge gateway, and when the resource is vcd_edgegateway, it is "name"
+func (cli *VCDClient) GetEdgeGatewayFromResource(d *schema.ResourceData, edgeGatewayFieldName string) (eg govcd.EdgeGateway, err error) {
 	orgName := d.Get("org").(string)
 	vdcName := d.Get("vdc").(string)
-	edgeGatewayName := d.Get("edge_gateway").(string)
+	edgeGatewayName := d.Get(edgeGatewayFieldName).(string)
 	return cli.GetEdgeGateway(orgName, vdcName, edgeGatewayName)
 
 }
