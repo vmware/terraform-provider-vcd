@@ -73,7 +73,7 @@ func resourceVcdLbServiceMonitor() *schema.Resource {
 			"method": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
-				Description:  "Method to be used to detect server status",
+				Description:  "Method to be used to detect server status. One of OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, CONNECT",
 				ValidateFunc: validateUpperCase(),
 			},
 			"url": &schema.Schema{

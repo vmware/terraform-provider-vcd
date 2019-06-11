@@ -932,7 +932,7 @@ type Error struct {
 }
 
 // NSXError is the standard error message type used in the NSX API which is proxied by vCD.
-// It has attached method `Error() string` and implements GOs default `type error` interface.
+// It has attached method `Error() string` and implements Go's default `type error` interface.
 type NSXError struct {
 	XMLName    xml.Name `xml:"error"`
 	ErrorCode  string   `xml:"errorCode"`
@@ -940,8 +940,8 @@ type NSXError struct {
 	ModuleName string   `xml:"moduleName"`
 }
 
-// Error method implements GOs default `error` interface for NSXError and formats NSX error output for human readable
-// output.
+// Error method implements Go's default `error` interface for NSXError and formats NSX error
+// output for human readable output.
 func (nsxErr NSXError) Error() string {
 	return fmt.Sprintf("%s %s (API error: %s)", nsxErr.ModuleName, nsxErr.Details, nsxErr.ErrorCode)
 }
@@ -1618,6 +1618,7 @@ type StaticRoute struct {
 
 // LBMonitor defines health check parameters for a particular type of network traffic
 // Reference: vCloud Director API for NSX Programming Guide
+// https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
 type LBMonitor struct {
 	XMLName    xml.Name `xml:"monitor"`
 	ID         string   `xml:"monitorId,omitempty"`

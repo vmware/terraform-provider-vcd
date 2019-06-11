@@ -13,8 +13,8 @@ github.com/Azure/go-autorest v10.15.4+incompatible/go.mod h1:r+4oMnoxhatjLLJ6zxS
 github.com/Azure/go-ntlmssp v0.0.0-20180810175552-4a21cbd618b4/go.mod h1:chxPXzSsl7ZWRAuOIE23GDNzjWuZquvFlgA8xmpunjU=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/ChrisTrenkamp/goxpath v0.0.0-20170922090931-c385f95c6022/go.mod h1:nuWgzSkT5PnyOd+272uUmV0dnAnAn42Mk7PiQC5VzN4=
-github.com/Didainius/go-vcloud-director/v2 v2.3.0-alpha.1.0.20190607105159-e74197f7f588 h1:Ym++dbyJJ2zyzjCHcF+V6Gbhs6O0cA/4OlEeX5Pz2N0=
-github.com/Didainius/go-vcloud-director/v2 v2.3.0-alpha.1.0.20190607105159-e74197f7f588/go.mod h1:+Hq7ryFfgZqsO6mXH29RQFnpIMSujCOMI57otHoXHhQ=
+github.com/Didainius/go-vcloud-director/v2 v2.3.0-alpha.1.0.20190611093455-d69f7a0deace h1:97gQ3jtftclUGN67CMuUXnpsDkzMDIlckjJ7WmyRN6w=
+github.com/Didainius/go-vcloud-director/v2 v2.3.0-alpha.1.0.20190611093455-d69f7a0deace/go.mod h1:+Hq7ryFfgZqsO6mXH29RQFnpIMSujCOMI57otHoXHhQ=
 github.com/Unknwon/com v0.0.0-20151008135407-28b053d5a292/go.mod h1:KYCjqMOeHpNuTOiFQU6WEcTG7poCJrUs0YgyHNtn1no=
 github.com/abdullin/seq v0.0.0-20160510034733-d5467c17e7af/go.mod h1:5Jv4cbFiHJMsVxt52+i0Ha45fjshj6wxYr1r19tB9bw=
 github.com/agext/levenshtein v1.2.1 h1:QmvMAjj2aEICytGiWzmxoE0x2KZvE0fvmqMOfy2tjT8=

@@ -276,7 +276,7 @@ func (client *Client) ExecuteRequest(pathURL, requestType, contentType, errorMes
 }
 
 // ExecuteRequestHTTPCodeOrTypedError sends the request and expects `expectedHTTPStatus`. If the returned status code
-// was not as expected - the returned error will be unmarshaled to `errParser` which imlements GOs standard `error`
+// was not as expected - the returned error will be unmarshaled to `errParser` which implements Go's standard `error`
 // interface.
 func (client *Client) ExecuteRequestHTTPCodeOrTypedError(expectedHTTPStatus int, pathURL, requestType, contentType, errorMessage string, payload interface{}, errParser error) (*http.Response, error) {
 	if !isMessageWithPlaceHolder(errorMessage) {
@@ -303,9 +303,9 @@ func (client *Client) ExecuteRequestHTTPCodeOrTypedError(expectedHTTPStatus int,
 	return resp, nil
 }
 
-// executeRawRequest performs an HTTP request returns http response and error without using the checkResp
-// function which assumes that if there was an error, it would be returned of type types.Error which is not
-// the case for APIs which proxied by vCD.
+// executeRawRequest performs an HTTP request and returns a http response + error without using the checkResp
+// function, which assumes that if there was an error, it would be of type types.Error which is not
+// the case for APIs proxied by vCD.
 func executeRawRequest(pathURL, requestType, contentType string, payload interface{}, client *Client) (*http.Response, error) {
 	url, _ := url.ParseRequestURI(pathURL)
 

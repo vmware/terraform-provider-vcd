@@ -635,9 +635,9 @@ func (eGW *EdgeGateway) RemoveIpsecVPN() (Task, error) {
 	return eGW.AddIpsecVPN(ipsecVPNConfig)
 }
 
-// getProxiedEdgeEndpoint helps to get root endpoint for Edge Gateway using the
-// NSX API Proxy and can optionally append suffix which must have it's own leading /
-func (eGW *EdgeGateway) getProxiedEdgeEndpoint(append string) (string, error) {
+// buildProxiedEdgeEndpointURL helps to get root endpoint for Edge Gateway using the
+// NSX API Proxy and can append optionalSuffix which must have its own leading /
+func (eGW *EdgeGateway) buildProxiedEdgeEndpointURL(optionalSuffix string) (string, error) {
 	apiEndpoint, err := url.ParseRequestURI(eGW.EdgeGateway.HREF)
 	if err != nil {
 		return "", fmt.Errorf("unable to process edge gateway URL: %s", err)
@@ -648,8 +648,8 @@ func (eGW *EdgeGateway) getProxiedEdgeEndpoint(append string) (string, error) {
 	}
 	hostname := apiEndpoint.Scheme + "://" + apiEndpoint.Host + "/network/edges/" + edgeID[3]
 
-	if append != "" {
-		return hostname + append, nil
+	if optionalSuffix != "" {
+		return hostname + optionalSuffix, nil
 	}
 
 	return hostname, nil

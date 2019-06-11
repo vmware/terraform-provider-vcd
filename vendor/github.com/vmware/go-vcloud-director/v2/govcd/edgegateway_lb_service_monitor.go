@@ -1,3 +1,7 @@
+/*
+ * Copyright 2019 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
+ */
+
 package govcd
 
 import (
@@ -8,19 +12,19 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-// CreateLBServiceMonitor synchronously creates a load balancer service monitor based on mandatory fields
-// and returns created object with all fields (including ID) populated or an error.
+// CreateLBServiceMonitor creates a load balancer service monitor based on mandatory fields. It is a synchronous
+// operation. It returns created object with all fields (including ID) populated or an error.
 func (eGW *EdgeGateway) CreateLBServiceMonitor(lbMonitorConfig *types.LBMonitor) (*types.LBMonitor, error) {
 	if err := validateCreateLBServiceMonitor(lbMonitorConfig); err != nil {
 		return nil, err
 	}
 
-	httpPath, err := eGW.getProxiedEdgeEndpoint("/loadbalancer/config/monitors")
+	httpPath, err := eGW.buildProxiedEdgeEndpointURL(types.LBMonitorPath)
 	if err != nil {
 		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
 	}
 	// We expect to get http.StatusCreated or if not an error of type types.NSXError
-	resp, err := eGW.client.ExecuteRequestHTTPCodeOrTypedError(http.StatusCreated, httpPath, http.MethodPost, "application/xml", "error creating load balancer service monitor: %s", lbMonitorConfig, &types.NSXError{})
+	resp, err := eGW.client.ExecuteRequestHTTPCodeOrTypedError(http.StatusCreated, httpPath, http.MethodPost, types.AnyXMLMime, "error creating load balancer service monitor: %s", lbMonitorConfig, &types.NSXError{})
 	if err != nil {
 		return nil, err
 	}
@@ -28,11 +32,13 @@ func (eGW *EdgeGateway) CreateLBServiceMonitor(lbMonitorConfig *types.LBMonitor)
 
 	// Last element in location header is the service monitor ID
 	// i.e. Location: [/network/edges/edge-3/loadbalancer/config/monitors/monitor-5]
+	// The code below extracts that ID from the last segment
 	if location == "" {
 		return nil, fmt.Errorf("unable to retrieve ID for new load balancer service monitor with name %s", lbMonitorConfig.Name)
 	}
 	splitLocation := strings.Split(location, "/")
 	lbMonitorID := splitLocation[len(splitLocation)-1]
+
 	readMonitor, err := eGW.ReadLBServiceMonitor(&types.LBMonitor{ID: lbMonitorID})
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve monitor with ID (%s) after creation: %s", readMonitor.ID, err)
@@ -48,7 +54,7 @@ func (eGW *EdgeGateway) ReadLBServiceMonitor(lbMonitorConfig *types.LBMonitor) (
 		return nil, err
 	}
 
-	httpPath, err := eGW.getProxiedEdgeEndpoint("/loadbalancer/config/monitors")
+	httpPath, err := eGW.buildProxiedEdgeEndpointURL(types.LBMonitorPath)
 	if err != nil {
 		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
 	}
@@ -59,7 +65,7 @@ func (eGW *EdgeGateway) ReadLBServiceMonitor(lbMonitorConfig *types.LBMonitor) (
 	}{}
 
 	// This query returns all service monitors as the API does not have filtering options
-	_, err = eGW.client.ExecuteRequest(httpPath, http.MethodGet, "application/xml", "unable to read Load Balancer monitor: %s", nil, lbMonitorResponse)
+	_, err = eGW.client.ExecuteRequest(httpPath, http.MethodGet, types.AnyXMLMime, "unable to read Load Balancer monitor: %s", nil, lbMonitorResponse)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +89,7 @@ func (eGW *EdgeGateway) ReadLBServiceMonitor(lbMonitorConfig *types.LBMonitor) (
 	}
 
 	return nil, fmt.Errorf("could not find load balancer service monitor (name: %s, ID: %s)",
-		lbMonitorConfig.ID, lbMonitorConfig.Name)
+		lbMonitorConfig.Name, lbMonitorConfig.ID)
 }
 
 // UpdateLBServiceMonitor
@@ -101,13 +107,13 @@ func (eGW *EdgeGateway) UpdateLBServiceMonitor(lbMonitorConfig *types.LBMonitor)
 		lbMonitorConfig.ID = readLBMonitor.ID
 	}
 
-	httpPath, err := eGW.getProxiedEdgeEndpoint("/loadbalancer/config/monitors/" + lbMonitorConfig.ID)
+	httpPath, err := eGW.buildProxiedEdgeEndpointURL(types.LBMonitorPath + lbMonitorConfig.ID)
 	if err != nil {
 		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
 	}
 
 	// Result should be 204, if not we expect an error of type types.NSXError
-	_, err = eGW.client.ExecuteRequestHTTPCodeOrTypedError(http.StatusNoContent, httpPath, http.MethodPut, "application/xml", "%s", lbMonitorConfig, &types.NSXError{})
+	_, err = eGW.client.ExecuteRequestHTTPCodeOrTypedError(http.StatusNoContent, httpPath, http.MethodPut, types.AnyXMLMime, "%s", lbMonitorConfig, &types.NSXError{})
 	if err != nil {
 		return nil, fmt.Errorf("error while updating load balancer service monitor : %s", err)
 	}
@@ -137,11 +143,11 @@ func (eGW *EdgeGateway) DeleteLBServiceMonitor(lbMonitorConfig *types.LBMonitor)
 		lbMonitorID = readLBMonitor.ID
 	}
 
-	httpPath, err := eGW.getProxiedEdgeEndpoint("/loadbalancer/config/monitors/" + lbMonitorID)
+	httpPath, err := eGW.buildProxiedEdgeEndpointURL(types.LBMonitorPath + lbMonitorID)
 	if err != nil {
 		return fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
 	}
-	return eGW.client.ExecuteRequestWithoutResponse(httpPath, http.MethodDelete, "application/xml", "unable to delete Service Monitor: %s", nil)
+	return eGW.client.ExecuteRequestWithoutResponse(httpPath, http.MethodDelete, types.AnyXMLMime, "unable to delete Service Monitor: %s", nil)
 }
 
 func validateCreateLBServiceMonitor(lbMonitorConfig *types.LBMonitor) error {
