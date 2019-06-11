@@ -62,8 +62,8 @@ func resourceVcdLbServiceMonitor() *schema.Resource {
 			"type": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				Description:  "Way in which you want to send the health check request to the server",
-				ValidateFunc: validateLowerCase(),
+				Description:  "Way in which you want to send the health check request to the server. One of HTTP, HTTPS, TCP, ICMP, or UDP",
+				ValidateFunc: validateCase("lower"),
 			},
 			"expected": &schema.Schema{
 				Type:        schema.TypeString,
@@ -73,8 +73,8 @@ func resourceVcdLbServiceMonitor() *schema.Resource {
 			"method": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
-				Description:  "Method to be used to detect server status. One of OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, CONNECT",
-				ValidateFunc: validateUpperCase(),
+				Description:  "Method to be used to detect server status. One of OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, or CONNECT",
+				ValidateFunc: validateCase("upper"),
 			},
 			"url": &schema.Schema{
 				Type:        schema.TypeString,
@@ -100,8 +100,8 @@ func resourceVcdLbServiceMonitor() *schema.Resource {
 	}
 }
 
-// validateUpperCase checks that a string is upper cased
-func validateUpperCase() schema.SchemaValidateFunc {
+// validateCase checks if a string is of caseType "upper" or "lower"
+func validateCase(caseType string) schema.SchemaValidateFunc {
 	return func(i interface{}, k string) (s []string, es []error) {
 		v, ok := i.(string)
 		if !ok {
@@ -109,26 +109,19 @@ func validateUpperCase() schema.SchemaValidateFunc {
 			return
 		}
 
-		if strings.ToUpper(v) != v {
-			es = append(es, fmt.Errorf(
-				"expected string to be upper cased, got: %s", v))
-		}
-		return
-	}
-}
-
-// validateUpperCase checks that a string is upper cased
-func validateLowerCase() schema.SchemaValidateFunc {
-	return func(i interface{}, k string) (s []string, es []error) {
-		v, ok := i.(string)
-		if !ok {
-			es = append(es, fmt.Errorf("expected type of %s to be string", k))
-			return
-		}
-
-		if strings.ToLower(v) != v {
-			es = append(es, fmt.Errorf(
-				"expected string to be lower cased, got: %s", v))
+		switch caseType {
+		case "upper":
+			if strings.ToUpper(v) != v {
+				es = append(es, fmt.Errorf(
+					"expected string to be upper cased, got: %s", v))
+			}
+		case "lower":
+			if strings.ToLower(v) != v {
+				es = append(es, fmt.Errorf(
+					"expected string to be lower cased, got: %s", v))
+			}
+		default:
+			panic("unsupported validation type for validateCase() function")
 		}
 		return
 	}
