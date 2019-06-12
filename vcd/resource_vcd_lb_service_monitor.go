@@ -211,12 +211,12 @@ func resourceVcdLbServiceMonitorDelete(d *schema.ResourceData, meta interface{})
 }
 
 // resourceVcdLbServiceMonitorImport expects dot formatted path to Load Balancer Service Monitor
-// i.e. my-org.my-org-vdc.my-edge-gw.existing-sm
+// i.e. my-org.my-org-vdc.my-edge-gw.my-lb-service-monitor
 func resourceVcdLbServiceMonitorImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 
 	resourceURI := strings.Split(d.Id(), ".")
 	if len(resourceURI) != 4 {
-		return nil, fmt.Errorf("resource name must be specified in such way my-org.my-org-vdc.my-edge-gw.existing-lb-service-monitor-name")
+		return nil, fmt.Errorf("resource name must be specified in such way my-org.my-org-vdc.my-edge-gw.my-lb-service-monitor")
 	}
 	orgName, vdcName, edgeName, monitorName := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
 

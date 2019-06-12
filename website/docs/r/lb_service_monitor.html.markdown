@@ -88,8 +88,8 @@ via supplying the full dot separated path for load balancer service monitor. An 
 [docs-import]: /docs/import/index.html
 
 ```
-terraform import vcd_lb_service_monitor.imported my-org.my-org-vdc.my-edge-gw.existing-service-monitor-name
+terraform import vcd_lb_service_monitor.imported my-org.my-org-vdc.my-edge-gw.my-lb-service-monitor
 ```
 
-The above would import the service monitor named `existing-service-monitor-name` that is defined on edge gateway
+The above would import the service monitor named `my-lb-service-monitor` that is defined on edge gateway
 `my-edge-gw` which is configured in organization named `my-org` and vDC named `my-org-vdc`.
