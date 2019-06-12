@@ -42,7 +42,7 @@ resource "vcd_lb_service_monitor" "monitor" {
   max_retries = "3"
   type        = "http"
   http_method = "GET"
-  url         = "health"
+  url         = "/health"
   extension = {
     content-type = "application/json"
     linespan     = ""
