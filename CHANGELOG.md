@@ -2,6 +2,7 @@
 IMPROVEMENTS:
 
 * Change resource handling to use locking mechanism when resource parallel handling is not supported by vCD. [GH-#255] 
+* **New Resource:** edge gateway `vcd_edgegateway` creates and deletes edge gateways - ([#262](https://github.com/terraform-providers/terraform-provider-vcd/issues/262))
 
 ## 2.3.0 (May 29, 2019)
 
