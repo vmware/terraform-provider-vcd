@@ -931,6 +931,10 @@ type Error struct {
 	StackTrace              string `xml:"stackTrace,attr,omitempty"`
 }
 
+func (err Error) Error() string {
+	return fmt.Sprintf("API Error: %d: %s", err.MajorErrorCode, err.Message)
+}
+
 // NSXError is the standard error message type used in the NSX API which is proxied by vCD.
 // It has attached method `Error() string` and implements Go's default `type error` interface.
 type NSXError struct {

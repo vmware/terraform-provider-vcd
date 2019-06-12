@@ -64,7 +64,7 @@ The following arguments are supported:
 * `max_retries` - (Required) Number of times the specified monitoring Method must fail sequentially before the server is declared down
 * `type` - (Required) Select the way in which you want to send the health check request to the server — `http`, `https`, 
 `tcp`, `icmp`, or `udp`. Depending on the type selected, the remaining attributes are allowed or not
-* `method` - (Optional) For types `http` and `https`. Select http method to be used to detect server status
+* `method` - (Optional) For types `http` and `https`. Select http method to be used to detect server status. One of OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, or CONNECT
 * `url` - (Optional) For types `http` and `https`. URL to be used in the server status request
 * `send` - (Optional) For types `http`,  `https`, and `udp`. The data to be sent.
 * `expected` - (Optional) For types `http` and `https`. String that the monitor expects to match in the status line of 

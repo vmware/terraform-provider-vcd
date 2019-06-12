@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
+	"go/types"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -16,7 +17,6 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
@@ -96,18 +96,16 @@ func (cli *Client) NewRequest(params map[string]string, method string, reqUrl ur
 	return cli.NewRequestWitNotEncodedParams(params, nil, method, reqUrl, body)
 }
 
-// ParseErr takes an error XML resp and returns a single string for use in error messages.
-func ParseErr(resp *http.Response) error {
-
-	errBody := new(types.Error)
-
+// ParseErr takes an error XML resp, error interface for unmarshaling and returns a single string for
+// use in error messages.
+func ParseErr(resp *http.Response, errType error) error {
 	// if there was an error decoding the body, just return that
-	if err := decodeBody(resp, errBody); err != nil {
+	if err := decodeBody(resp, errType); err != nil {
 		util.Logger.Printf("[ParseErr]: unhandled response <--\n%+v\n-->\n", resp)
 		return fmt.Errorf("[ParseErr]: error parsing error body for non-200 request: %s (%+v)", err, resp)
 	}
 
-	return fmt.Errorf("API Error: %d: %s", errBody.MajorErrorCode, errBody.Message)
+	return errType
 }
 
 // decodeBody is used to XML decode a response body
@@ -132,10 +130,10 @@ func decodeBody(resp *http.Response, out interface{}) error {
 // is 2XX it passes back the response, if it's a known invalid status code it
 // parses the resultant XML error and returns a descriptive error, if the
 // status code is not handled it returns a generic error with the status code.
-func checkResp(resp *http.Response, err error) (*http.Response, error) {
-	if err != nil {
-		return resp, err
-	}
+func checkResp(resp *http.Response, errType error) (*http.Response, error) {
+	// if err != nil {
+	// 	return resp, err
+	// }
 
 	switch resp.StatusCode {
 	// Valid request, return the response.
@@ -172,7 +170,7 @@ func checkResp(resp *http.Response, err error) (*http.Response, error) {
 		http.StatusInternalServerError,         // 500
 		http.StatusServiceUnavailable,          // 503
 		http.StatusGatewayTimeout:              // 504
-		return nil, ParseErr(resp)
+		return nil, ParseErr(resp, errType)
 	// Unhandled response.
 	default:
 		return nil, fmt.Errorf("unhandled API response, please report this issue, status code: %s", resp.Status)
@@ -275,38 +273,30 @@ func (client *Client) ExecuteRequest(pathURL, requestType, contentType, errorMes
 	return resp, nil
 }
 
-// ExecuteRequestHTTPCodeOrTypedError sends the request and expects `expectedHTTPStatus`. If the returned status code
-// was not as expected - the returned error will be unmarshaled to `errParser` which implements Go's standard `error`
+// ExecuteRequestWithCustomError sends the request and checks for 2xx response. If the returned status code
+// was not as expected - the returned error will be unmarshaled to `errType` which implements Go's standard `error`
 // interface.
-func (client *Client) ExecuteRequestHTTPCodeOrTypedError(expectedHTTPStatus int, pathURL, requestType, contentType, errorMessage string, payload interface{}, errParser error) (*http.Response, error) {
+func (client *Client) ExecuteRequestWithCustomError(pathURL, requestType, contentType, errorMessage string,
+	payload interface{}, errType error) (*http.Response, error) {
 	if !isMessageWithPlaceHolder(errorMessage) {
 		return &http.Response{}, fmt.Errorf("error message has to include place holder for error")
 	}
 
-	resp, err := executeRawRequest(pathURL, requestType, contentType, payload, client)
+	resp, err := executeRequestCustomErr(pathURL, requestType, contentType, payload, client, errType)
 	if err != nil {
 		return &http.Response{}, fmt.Errorf(errorMessage, err)
 	}
-	defer resp.Body.Close()
-
-	// error is parsed and returned because of unexpected response status code
-	if resp.StatusCode != expectedHTTPStatus {
-		if err = decodeBody(resp, errParser); err != nil {
-			return &http.Response{}, fmt.Errorf("error decoding http response to error: %s", err)
-		}
-		return &http.Response{}, fmt.Errorf(errorMessage, errParser.Error())
-	}
-
-	// log response explicitly because decodeBody() was not triggered
-	util.ProcessResponseOutput(util.FuncNameCallStack(), resp, fmt.Sprintf("%s", resp.Body))
 
 	return resp, nil
 }
 
-// executeRawRequest performs an HTTP request and returns a http response + error without using the checkResp
-// function, which assumes that if there was an error, it would be of type types.Error which is not
-// the case for APIs proxied by vCD.
-func executeRawRequest(pathURL, requestType, contentType string, payload interface{}, client *Client) (*http.Response, error) {
+// executeRequest does executeRequestCustomErr and checks for vCD errors in API response
+func executeRequest(pathURL, requestType, contentType string, payload interface{}, client *Client) (*http.Response, error) {
+	return executeRequestCustomErr(pathURL, requestType, contentType, payload, client, &types.Error{})
+}
+
+// executeRequestCustomErr performs request and unmarshals API error to errType if not 2xx status was returned
+func executeRequestCustomErr(pathURL, requestType, contentType string, payload interface{}, client *Client, errType error) (*http.Response, error) {
 	url, _ := url.ParseRequestURI(pathURL)
 
 	var req *http.Request
@@ -328,12 +318,13 @@ func executeRawRequest(pathURL, requestType, contentType string, payload interfa
 	if contentType != "" {
 		req.Header.Add("Content-Type", contentType)
 	}
-	return client.Http.Do(req)
-}
 
-// executeRequest does executeRawRequest and additionally checks for errors in API response
-func executeRequest(pathURL, requestType, contentType string, payload interface{}, client *Client) (*http.Response, error) {
-	return checkResp(executeRawRequest(pathURL, requestType, contentType, payload, client))
+	resp, err := client.Http.Do(req)
+	if err != nil {
+		return resp, err
+	}
+
+	return checkResp(resp, errType)
 }
 
 func isMessageWithPlaceHolder(message string) bool {

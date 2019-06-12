@@ -539,7 +539,7 @@ func (vm *VM) GetQuestion() (types.VmPendingQuestion, error) {
 	}
 
 	if http.StatusOK != resp.StatusCode {
-		return types.VmPendingQuestion{}, fmt.Errorf("error getting question: %s", ParseErr(resp))
+		return types.VmPendingQuestion{}, fmt.Errorf("error getting question: %s", ParseErr(resp, &types.Error{}))
 	}
 
 	question := &types.VmPendingQuestion{}

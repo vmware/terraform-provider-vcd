@@ -62,13 +62,13 @@ func resourceVcdLbServiceMonitor() *schema.Resource {
 			"type": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				Description:  "Way in which you want to send the health check request to the server. One of HTTP, HTTPS, TCP, ICMP, or UDP",
+				Description:  "Way in which you want to send the health check request to the server. One of http, https, tcp, icmp, or udp",
 				ValidateFunc: validateCase("lower"),
 			},
 			"expected": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "String that the monitor expects to match in the status line of the HTTP or HTTPS response (for example, HTTP/1.1)",
+				Description: "String that the monitor expects to match in the status line of the http or https response (for example, HTTP/1.1)",
 			},
 			"method": &schema.Schema{
 				Type:         schema.TypeString,

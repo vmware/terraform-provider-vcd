@@ -24,7 +24,8 @@ func (eGW *EdgeGateway) CreateLBServiceMonitor(lbMonitorConfig *types.LBMonitor)
 		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
 	}
 	// We expect to get http.StatusCreated or if not an error of type types.NSXError
-	resp, err := eGW.client.ExecuteRequestHTTPCodeOrTypedError(http.StatusCreated, httpPath, http.MethodPost, types.AnyXMLMime, "error creating load balancer service monitor: %s", lbMonitorConfig, &types.NSXError{})
+	resp, err := eGW.client.ExecuteRequestWithCustomError(httpPath, http.MethodPost, types.AnyXMLMime,
+		"error creating load balancer service monitor: %s", lbMonitorConfig, &types.NSXError{})
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +103,7 @@ func (eGW *EdgeGateway) UpdateLBServiceMonitor(lbMonitorConfig *types.LBMonitor)
 	if lbMonitorConfig.ID == "" {
 		readLBMonitor, err := eGW.ReadLBServiceMonitor(&types.LBMonitor{Name: lbMonitorConfig.Name})
 		if err != nil {
-			return nil, fmt.Errorf("unable to find load balancer monitor by name for update: %s", err)
+			return nil, err
 		}
 		lbMonitorConfig.ID = readLBMonitor.ID
 	}
@@ -113,9 +114,10 @@ func (eGW *EdgeGateway) UpdateLBServiceMonitor(lbMonitorConfig *types.LBMonitor)
 	}
 
 	// Result should be 204, if not we expect an error of type types.NSXError
-	_, err = eGW.client.ExecuteRequestHTTPCodeOrTypedError(http.StatusNoContent, httpPath, http.MethodPut, types.AnyXMLMime, "%s", lbMonitorConfig, &types.NSXError{})
+	_, err = eGW.client.ExecuteRequestWithCustomError(httpPath, http.MethodPut, types.AnyXMLMime,
+		"error while updating load balancer service monitor : %s", lbMonitorConfig, &types.NSXError{})
 	if err != nil {
-		return nil, fmt.Errorf("error while updating load balancer service monitor : %s", err)
+		return nil, err
 	}
 
 	readMonitor, err := eGW.ReadLBServiceMonitor(&types.LBMonitor{ID: lbMonitorConfig.ID})
@@ -147,7 +149,8 @@ func (eGW *EdgeGateway) DeleteLBServiceMonitor(lbMonitorConfig *types.LBMonitor)
 	if err != nil {
 		return fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
 	}
-	return eGW.client.ExecuteRequestWithoutResponse(httpPath, http.MethodDelete, types.AnyXMLMime, "unable to delete Service Monitor: %s", nil)
+	return eGW.client.ExecuteRequestWithoutResponse(httpPath, http.MethodDelete, types.AnyXMLMime,
+		"unable to delete Service Monitor: %s", nil)
 }
 
 func validateCreateLBServiceMonitor(lbMonitorConfig *types.LBMonitor) error {
@@ -176,7 +179,7 @@ func validateCreateLBServiceMonitor(lbMonitorConfig *types.LBMonitor) error {
 
 func validateReadLBServiceMonitor(lbMonitorConfig *types.LBMonitor) error {
 	if lbMonitorConfig.ID == "" && lbMonitorConfig.Name == "" {
-		return fmt.Errorf("to read load balancer at least one of `ID`, `Name` fields must be specified")
+		return fmt.Errorf("to read load balancer service monitor at least one of `ID`, `Name` fields must be specified")
 	}
 
 	return nil
