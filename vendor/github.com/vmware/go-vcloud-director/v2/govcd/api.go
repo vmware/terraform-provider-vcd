@@ -9,7 +9,7 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
-	"go/types"
+
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -17,6 +17,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
@@ -130,10 +131,16 @@ func decodeBody(resp *http.Response, out interface{}) error {
 // is 2XX it passes back the response, if it's a known invalid status code it
 // parses the resultant XML error and returns a descriptive error, if the
 // status code is not handled it returns a generic error with the status code.
-func checkResp(resp *http.Response, errType error) (*http.Response, error) {
-	// if err != nil {
-	// 	return resp, err
-	// }
+func checkResp(resp *http.Response, err error) (*http.Response, error) {
+	return checkRespWithErrType(resp, err, &types.Error{})
+}
+
+// checkRespWithErrType allows to specify custom error errType for checkResp unmarshaling
+// the error.
+func checkRespWithErrType(resp *http.Response, err, errType error) (*http.Response, error) {
+	if err != nil {
+		return resp, err
+	}
 
 	switch resp.StatusCode {
 	// Valid request, return the response.
@@ -324,7 +331,7 @@ func executeRequestCustomErr(pathURL, requestType, contentType string, payload i
 		return resp, err
 	}
 
-	return checkResp(resp, errType)
+	return checkRespWithErrType(resp, err, errType)
 }
 
 func isMessageWithPlaceHolder(message string) bool {
