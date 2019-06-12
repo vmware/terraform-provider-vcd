@@ -108,8 +108,6 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
   name                = "{{.EdgeGatewayVcd}}"
   description         = "Description"
   backing_config      = "compact"
-  delete_force        = true
-  delete_recursive    = true
   default_gateway     = "{{.ExternalNetwork}}"
 
   external_networks   = [ "{{.ExternalNetwork}}" ]
@@ -150,8 +148,6 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
   name                = "{{.EdgeGatewayVcd}}"
   description         = "Description"
   backing_config      = "compact"
-  delete_force        = true
-  delete_recursive    = true
   default_gateway     = "${vcd_external_network.{{.NewExternalNetwork}}.name}"
 
   external_networks   = [ "{{.ExternalNetwork}}", "${vcd_external_network.{{.NewExternalNetwork}}.name}" ]

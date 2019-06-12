@@ -35,18 +35,22 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 			},
-			"delete_force": &schema.Schema{
-				Type:        schema.TypeBool,
-				Required:    true,
-				ForceNew:    true,
-				Description: "TBD: no description in the API, and undefined behavior in practice",
-			},
-			"delete_recursive": &schema.Schema{
-				Type:        schema.TypeBool,
-				Required:    true,
-				ForceNew:    true,
-				Description: "TBD: no description in the API, and undefined behavior in practice",
-			},
+			/*
+					// RFC:
+				    // Waiting on a decision whether such parameters are needed
+					"delete_force": &schema.Schema{
+						Type:        schema.TypeBool,
+						Required:    true,
+						ForceNew:    true,
+						Description: "TBD: no description in the API, and undefined behavior in practice",
+					},
+					"delete_recursive": &schema.Schema{
+						Type:        schema.TypeBool,
+						Required:    true,
+						ForceNew:    true,
+						Description: "TBD: no description in the API, and undefined behavior in practice",
+					},
+			*/
 			"advanced_networking": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -181,8 +185,9 @@ func resourceVcdEdgeGatewayDelete(d *schema.ResourceData, meta interface{}) erro
 
 	vcdClient := meta.(*VCDClient)
 
-	force := d.Get("delete_force").(bool)
-	recursive := d.Get("delete_recursive").(bool)
+	// RFC: waiting for a decision on this matter
+	force := true     // d.Get("delete_force").(bool)
+	recursive := true // d.Get("delete_recursive").(bool)
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "name")
 	if err != nil {
 		d.SetId("")
