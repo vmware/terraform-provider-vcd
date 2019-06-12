@@ -300,8 +300,17 @@ func executeRequest(pathURL, requestType, contentType string, payload interface{
 
 func isMessageWithPlaceHolder(message string) bool {
 	err := fmt.Errorf(message, "test error")
-	if strings.Contains(err.Error(), "%!(EXTRA") {
-		return false
+	return !strings.Contains(err.Error(), "%!(EXTRA")
+}
+
+// combinedTaskErrorMessage is a general purpose function
+// that returns the contents of the operation error and, if found, the error
+// returned by the associated task
+func combinedTaskErrorMessage(task *types.Task, err error) string {
+	extendedError := err.Error()
+	if task.Error != nil {
+		extendedError = fmt.Sprintf("operation error: %s - task error: [%d - %s] %s",
+			err, task.Error.MajorErrorCode, task.Error.MinorErrorCode, task.Error.Message)
 	}
-	return true
+	return extendedError
 }

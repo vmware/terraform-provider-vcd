@@ -1486,6 +1486,7 @@ type InstantiateVAppTemplateParams struct {
 // Since: 5.1
 type EdgeGateway struct {
 	// Attributes
+	Xmlns        string `xml:"xmlns,attr,omitempty"`
 	HREF         string `xml:"href,attr,omitempty"`         // The URI of the entity.
 	Type         string `xml:"type,attr,omitempty"`         // The MIME type of the entity.
 	ID           string `xml:"id,attr,omitempty"`           // The entity identifier, expressed in URN format. The value of this attribute uniquely identifies the entity, persists for the life of the entity, and is never reused
@@ -1512,6 +1513,8 @@ type GatewayConfiguration struct {
 	GatewayInterfaces               *GatewayInterfaces `xml:"GatewayInterfaces"`                         // List of Gateway interfaces.
 	EdgeGatewayServiceConfiguration *GatewayFeatures   `xml:"EdgeGatewayServiceConfiguration,omitempty"` // Represents Gateway Features.
 	HaEnabled                       bool               `xml:"HaEnabled,omitempty"`                       // True if this gateway is highly available. (Requires two vShield edge VMs.)
+	AdvancedNetworkingEnabled       bool               `xml:"AdvancedNetworkingEnabled,omitempty"`       // True if the gateway uses advanced networking
+	DistributedRoutingEnabled       bool               `xml:"DistributedRoutingEnabled,omitempty"`       // True if gateway is attached to a Distributed Logical Router
 	UseDefaultRouteForDNSRelay      bool               `xml:"UseDefaultRouteForDnsRelay,omitempty"`      // True if the default gateway on the external network selected for default route should be used as the DNS relay.
 }
 
