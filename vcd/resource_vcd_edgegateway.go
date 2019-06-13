@@ -227,6 +227,6 @@ func resourceVcdEdgeGatewayDelete(d *schema.ResourceData, meta interface{}) erro
 
 	err = edgeGateway.Delete(true, true)
 
-	log.Printf("[TRACE] external edge gateway completed\n")
+	log.Printf("[TRACE] edge gateway deletion completed\n")
 	return err
 }
