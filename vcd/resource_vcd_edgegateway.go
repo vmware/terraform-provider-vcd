@@ -17,12 +17,12 @@ func resourceVcdEdgeGateway() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 				ForceNew: true,
 			},
 			"org": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 				ForceNew: true,
 			},
 			"vdc": &schema.Schema{
@@ -35,30 +35,13 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 			},
-			/*
-					// RFC:
-				    // Waiting on a decision whether such parameters are needed
-					"delete_force": &schema.Schema{
-						Type:        schema.TypeBool,
-						Required:    true,
-						ForceNew:    true,
-						Description: "TBD: no description in the API, and undefined behavior in practice",
-					},
-					"delete_recursive": &schema.Schema{
-						Type:        schema.TypeBool,
-						Required:    true,
-						ForceNew:    true,
-						Description: "TBD: no description in the API, and undefined behavior in practice",
-					},
-			*/
-			"advanced_networking": &schema.Schema{
+			"advanced": &schema.Schema{
 				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     false,
+				Required:    true,
 				ForceNew:    true,
-				Description: "True if the gateway uses advanced networking",
+				Description: "True if the gateway uses advanced networking. (Set by default in vCD 9.7+)",
 			},
-			"backing_config": &schema.Schema{
+			"gateway_configuration": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -110,17 +93,50 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		externalNetworks = append(externalNetworks, en.(string))
 	}
 
+	// Making sure the parent entities are available
+	orgName := vcdClient.getOrgName(d)
+	vdcName := vcdClient.getVdcName(d)
+
+	var missing []string
+	if orgName == "" {
+		missing = append(missing, "org")
+	}
+	if vdcName == "" {
+		missing = append(missing, "vdc")
+	}
+	if len(missing) > 0 {
+		return fmt.Errorf("missing properties. %v should be given either in the resource or at provider level", missing)
+	}
+
+	org, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
+	if err != nil {
+		return err
+	}
+	if (org == govcd.Org{}) || org.Org.HREF == "" || org.Org.ID == "" || org.Org.Name == "" {
+		return fmt.Errorf("no valid Organization named '%s' was found", orgName)
+	}
+	if (vdc == govcd.Vdc{}) || vdc.Vdc.HREF == "" || vdc.Vdc.ID == "" || vdc.Vdc.Name == "" {
+		return fmt.Errorf("no valid VDC named '%s' was found", vdcName)
+	}
+
 	var gwCreation = govcd.EdgeGatewayCreation{
 		ExternalNetworks:          externalNetworks,
 		Name:                      d.Get("name").(string),
-		OrgName:                   d.Get("org").(string),
-		VdcName:                   d.Get("vdc").(string),
+		OrgName:                   orgName,
+		VdcName:                   vdcName,
 		Description:               d.Get("description").(string),
-		BackingConfiguration:      d.Get("backing_config").(string),
-		AdvancedNetworkingEnabled: d.Get("advanced_networking").(bool),
+		BackingConfiguration:      d.Get("gateway_configuration").(string),
+		AdvancedNetworkingEnabled: d.Get("advanced").(bool),
 		DefaultGateway:            d.Get("default_gateway").(string),
 		DistributedRoutingEnabled: d.Get("distributed_routing").(bool),
 		HAEnabled:                 d.Get("ha_enabled").(bool),
+	}
+
+	// In version 9.7+ the advanced property is true by default
+	if vcdClient.APIVCDMaxVersionIs(">= 32.0") {
+		if !gwCreation.AdvancedNetworkingEnabled {
+			return fmt.Errorf("'advanced' property for vCD 9.7+ must be set to 'true'")
+		}
 	}
 
 	edge, err := govcd.CreateEdgeGateway(vcdClient.VCDClient, gwCreation)
@@ -134,9 +150,10 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 	return resourceVcdEdgeGatewayRead(d, meta)
 }
 
+// Convenience function to fill edge gateway values from resource data
 func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 
-	d.SetId(egw.EdgeGateway.HREF)
+	d.SetId(egw.EdgeGateway.ID)
 	err := d.Set("name", egw.EdgeGateway.Name)
 	if err != nil {
 		return err
@@ -145,16 +162,30 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	if err != nil {
 		return err
 	}
-	err = d.Set("backing_config", egw.EdgeGateway.Configuration.GatewayBackingConfig)
+	err = d.Set("gateway_configuration", egw.EdgeGateway.Configuration.GatewayBackingConfig)
 	if err != nil {
 		return err
 	}
 	var networks []string
 	for _, net := range egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
-		networks = append(networks, net.Network.Name)
+		if net.InterfaceType == "uplink" {
+			networks = append(networks, net.Network.Name)
+		}
+	}
+	err = d.Set("external_networks", networks)
+	if err != nil {
+		return err
 	}
 
-	err = d.Set("external_networks", networks)
+	err = d.Set("advanced", egw.EdgeGateway.Configuration.AdvancedNetworkingEnabled)
+	if err != nil {
+		return err
+	}
+	err = d.Set("ha_enabled", egw.EdgeGateway.Configuration.HaEnabled)
+	if err != nil {
+		return err
+	}
+	err = d.Set("distributed_routing", egw.EdgeGateway.Configuration.DistributedRoutingEnabled)
 	if err != nil {
 		return err
 	}
@@ -185,16 +216,16 @@ func resourceVcdEdgeGatewayDelete(d *schema.ResourceData, meta interface{}) erro
 
 	vcdClient := meta.(*VCDClient)
 
-	// RFC: waiting for a decision on this matter
-	force := true     // d.Get("delete_force").(bool)
-	recursive := true // d.Get("delete_recursive").(bool)
+	vcdClient.lockEdgeGateway(d)
+	defer vcdClient.unlockEdgeGateway(d)
+
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "name")
 	if err != nil {
 		d.SetId("")
 		return fmt.Errorf("error fetching edge gateway details %#v", err)
 	}
 
-	err = edgeGateway.Delete(force, recursive)
+	err = edgeGateway.Delete(true, true)
 
 	log.Printf("[TRACE] external edge gateway completed\n")
 	return err
