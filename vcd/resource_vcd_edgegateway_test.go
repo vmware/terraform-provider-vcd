@@ -3,23 +3,42 @@
 package vcd
 
 import (
+	"fmt"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 )
 
+var (
+	edgeGatewayNameBasic   string = "TestEdgeGatewayBasic"
+	edgeGatewayNameComplex string = "TestEdgeGatewayComplex"
+)
+
+// Since we can't set the "advanced" property to false by default,
+// as it would fail on 9.7+, we can run the test with VCD_ADVANCED_FALSE=1
+// and see what would happen on different vCD versions. It will succeed on
+// 9.1 and 9.5, and fail quickly on 9.7+
+// Note: there is another method to handle this issue, and it is by
+// checking the vCD version before running the test. However, since the provider is
+// not initialized until the test starts, this approach would require an extra
+// vCD connection.
+func getAdvancedProperty() bool {
+	return os.Getenv("VCD_ADVANCED_FALSE") == ""
+}
+
 func TestAccVcdEdgeGatewayBasic(t *testing.T) {
-	var edgeGatewayName string = "TestEdgeGatewayBasic"
 	var edgeGatewayVcdName string = "test_edge_gateway_basic"
 
 	// String map to fill the template
 	var params = StringMap{
 		"Org":             testConfig.VCD.Org,
 		"Vdc":             testConfig.VCD.Vdc,
-		"EdgeGateway":     edgeGatewayName,
+		"EdgeGateway":     edgeGatewayNameBasic,
 		"EdgeGatewayVcd":  edgeGatewayVcdName,
 		"ExternalNetwork": testConfig.Networking.ExternalNetwork,
+		"Advanced":        getAdvancedProperty(),
 		"Tags":            "gateway",
 	}
 	configText := templateFill(testAccEdgeGatewayBasic, params)
@@ -31,13 +50,13 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdEdgeGatewayDestroy,
+		CheckDestroy: testAccCheckVcdEdgeGatewayDestroyBasic,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"vcd_edgegateway."+edgeGatewayName, "default_gateway", testConfig.Networking.ExternalNetwork),
+						"vcd_edgegateway."+edgeGatewayNameBasic, "default_gateway", testConfig.Networking.ExternalNetwork),
 				),
 			},
 		},
@@ -46,7 +65,6 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 
 func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 	var (
-		edgeGatewayName       string = "TestEdgeGatewayComplex"
 		edgeGatewayVcdName    string = "test_edge_gateway_complex"
 		newExternalNetwork    string = "TestExternalNetwork"
 		newExternalNetworkVcd string = "test_external_network"
@@ -56,7 +74,7 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 	var params = StringMap{
 		"Org":                   testConfig.VCD.Org,
 		"Vdc":                   testConfig.VCD.Vdc,
-		"EdgeGateway":           edgeGatewayName,
+		"EdgeGateway":           edgeGatewayNameComplex,
 		"EdgeGatewayVcd":        edgeGatewayVcdName,
 		"ExternalNetwork":       testConfig.Networking.ExternalNetwork,
 		"Tags":                  "gateway",
@@ -64,6 +82,7 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 		"NewExternalNetworkVcd": newExternalNetworkVcd,
 		"Type":                  testConfig.Networking.ExternalNetworkPortGroupType,
 		"PortGroup":             testConfig.Networking.ExternalNetworkPortGroup,
+		"Advanced":              getAdvancedProperty(),
 		"Vcenter":               testConfig.Networking.Vcenter,
 	}
 	configText := templateFill(testAccEdgeGatewayComplex, params)
@@ -75,42 +94,65 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdEdgeGatewayDestroy,
+		CheckDestroy: testAccCheckVcdEdgeGatewayDestroyComplex,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"vcd_edgegateway."+edgeGatewayName, "default_gateway", newExternalNetworkVcd),
+						"vcd_edgegateway."+edgeGatewayNameComplex, "default_gateway", newExternalNetworkVcd),
 				),
 			},
 		},
 	})
 }
 
-func testAccCheckVcdEdgeGatewayDestroy(s *terraform.State) error {
+func testEdgeGatewayDestroy(s *terraform.State, wantedEgwName string) error {
 
 	for _, rs := range s.RootModule().Resources {
+		edgeGatewayName := rs.Primary.Attributes["name"]
 		if rs.Type != "vcd_edgegateway" {
 			continue
 		}
+		if edgeGatewayName != wantedEgwName {
+			continue
+		}
+		conn := testAccProvider.Meta().(*VCDClient)
+		orgName := rs.Primary.Attributes["org"]
+		vdcName := rs.Primary.Attributes["vdc"]
 
-		return nil
+		_, vdc, err := conn.GetOrgAndVdc(orgName, vdcName)
+		if err != nil {
+			return fmt.Errorf("error retrieving org %s and vdc %s : %s ", orgName, vdcName, err)
+		}
+
+		_, err = vdc.FindEdgeGateway(edgeGatewayNameBasic)
+		if err == nil {
+			return fmt.Errorf("edge gateway %s was not removed", edgeGatewayNameBasic)
+		}
 	}
 
 	return nil
 }
 
+func testAccCheckVcdEdgeGatewayDestroyBasic(s *terraform.State) error {
+	return testEdgeGatewayDestroy(s, edgeGatewayNameBasic)
+}
+
+func testAccCheckVcdEdgeGatewayDestroyComplex(s *terraform.State) error {
+	return testEdgeGatewayDestroy(s, edgeGatewayNameComplex)
+}
+
 const testAccEdgeGatewayBasic = `
 resource "vcd_edgegateway" "{{.EdgeGateway}}" {
-  org                 = "{{.Org}}"
-  vdc                 = "{{.Vdc}}"
-  name                = "{{.EdgeGatewayVcd}}"
-  description         = "Description"
-  backing_config      = "compact"
-  default_gateway     = "{{.ExternalNetwork}}"
-
-  external_networks   = [ "{{.ExternalNetwork}}" ]
+  org                   = "{{.Org}}"
+  vdc                   = "{{.Vdc}}"
+  name                  = "{{.EdgeGatewayVcd}}"
+  description           = "Description"
+  gateway_configuration = "compact"
+  default_gateway       = "{{.ExternalNetwork}}"
+  advanced              = {{.Advanced}}
+  external_networks     = [ "{{.ExternalNetwork}}" ]
 }
 `
 
@@ -143,13 +185,13 @@ resource "vcd_external_network" "{{.NewExternalNetwork}}" {
 }
 
 resource "vcd_edgegateway" "{{.EdgeGateway}}" {
-  org                 = "{{.Org}}"
-  vdc                 = "{{.Vdc}}"
-  name                = "{{.EdgeGatewayVcd}}"
-  description         = "Description"
-  backing_config      = "compact"
-  default_gateway     = "${vcd_external_network.{{.NewExternalNetwork}}.name}"
-
-  external_networks   = [ "{{.ExternalNetwork}}", "${vcd_external_network.{{.NewExternalNetwork}}.name}" ]
+  org                   = "{{.Org}}"
+  vdc                   = "{{.Vdc}}"
+  name                  = "{{.EdgeGatewayVcd}}"
+  description           = "Description"
+  gateway_configuration = "compact"
+  default_gateway       = "${vcd_external_network.{{.NewExternalNetwork}}.name}"
+  advanced              = {{.Advanced}}
+  external_networks     = [ "{{.ExternalNetwork}}", "${vcd_external_network.{{.NewExternalNetwork}}.name}" ]
 }
 `
