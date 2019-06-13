@@ -145,7 +145,7 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("error creating edge gateway: %#v", err)
 	}
 
-	d.SetId(d.Get("name").(string))
+	d.SetId(edge.EdgeGateway.ID)
 	log.Printf("[TRACE] edge gateway created: %#v", edge.EdgeGateway.Name)
 	return resourceVcdEdgeGatewayRead(d, meta)
 }
