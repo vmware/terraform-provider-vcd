@@ -19,6 +19,10 @@ func (eGW *EdgeGateway) CreateLBServiceMonitor(lbMonitorConfig *types.LBMonitor)
 		return nil, err
 	}
 
+	if !eGW.HasAdvancedNetworking() {
+		return nil, fmt.Errorf("edge gateway does not have advanced networking enabled")
+	}
+
 	httpPath, err := eGW.buildProxiedEdgeEndpointURL(types.LBMonitorPath)
 	if err != nil {
 		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
