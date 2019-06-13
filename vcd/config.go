@@ -112,6 +112,30 @@ func (cli *VCDClient) unLockVapp(d *schema.ResourceData) {
 	vcdMutexKV.Unlock(key)
 }
 
+// locks an edge gateway resource
+// Differs from lockParentEdgeGtw in the resource name. When EGW is the parent,
+// it's named "edge_gateway". When it's the main resource, it's found at "name"
+func (cli *VCDClient) lockEdgeGateway(d *schema.ResourceData) {
+	edgeGatewayName := d.Get("name").(string)
+	if edgeGatewayName == "" {
+		panic("edge gateway name not found")
+	}
+	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), edgeGatewayName)
+	vcdMutexKV.Lock(key)
+}
+
+// unlocks an edge gateway resource
+// Differs from unlockParentEdgeGtw in the resource name. When EGW is the parent,
+// it's named "edge_gateway". When it's the main resource, it's found at "name"
+func (cli *VCDClient) unlockEdgeGateway(d *schema.ResourceData) {
+	edgeGatewayName := d.Get("name").(string)
+	if edgeGatewayName == "" {
+		panic("edge gateway name not found")
+	}
+	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), edgeGatewayName)
+	vcdMutexKV.Unlock(key)
+}
+
 // function lockParentVapp locks using vapp_name name existing in resource parameters.
 // Parent means the resource belongs to the vApp being locked
 func (cli *VCDClient) lockParentVapp(d *schema.ResourceData) {
@@ -189,11 +213,14 @@ func (cli *VCDClient) GetOrgAndVdc(orgName, vdcName string) (org govcd.Org, vdc 
 	if err != nil {
 		return govcd.Org{}, govcd.Vdc{}, fmt.Errorf("error retrieving Org %s: %s", orgName, err)
 	}
+	if (org == govcd.Org{}) || org.Org.Name == "" || org.Org.ID == "" || org.Org.HREF == "" {
+		return govcd.Org{}, govcd.Vdc{}, fmt.Errorf("empty Org %s found ", orgName)
+	}
 	vdc, err = org.GetVdcByName(vdcName)
 	if err != nil {
 		return govcd.Org{}, govcd.Vdc{}, fmt.Errorf("error retrieving VDC %s: %s", vdcName, err)
 	}
-	if (vdc == govcd.Vdc{}) {
+	if (vdc == govcd.Vdc{}) || vdc.Vdc.ID == "" || vdc.Vdc.HREF == "" || vdc.Vdc.Name == "" {
 		return govcd.Org{}, govcd.Vdc{}, fmt.Errorf("error retrieving VDC %s: not found", vdcName)
 	}
 	return org, vdc, err
@@ -214,6 +241,9 @@ func (cli *VCDClient) GetAdminOrg(orgName string) (org govcd.AdminOrg, err error
 	org, err = govcd.GetAdminOrgByName(cli.VCDClient, orgName)
 	if err != nil {
 		return govcd.AdminOrg{}, fmt.Errorf("error retrieving Org %s: %s", orgName, err)
+	}
+	if org.AdminOrg.Name == "" || org.AdminOrg.HREF == "" || org.AdminOrg.ID == "" {
+		return govcd.AdminOrg{}, fmt.Errorf("empty org %s found", orgName)
 	}
 	return org, err
 }
@@ -246,6 +276,10 @@ func (cli *VCDClient) GetEdgeGateway(orgName, vdcName, edgeGwName string) (eg go
 	if err != nil {
 		return govcd.EdgeGateway{}, fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
+	if eg.EdgeGateway.HREF == "" || eg.EdgeGateway.Name == "" || eg.EdgeGateway.ID == "" {
+		return govcd.EdgeGateway{}, fmt.Errorf("empty edge gateway %s found", edgeGwName)
+
+	}
 	return eg, err
 }
 
@@ -257,7 +291,6 @@ func (cli *VCDClient) GetEdgeGatewayFromResource(d *schema.ResourceData, edgeGat
 	vdcName := d.Get("vdc").(string)
 	edgeGatewayName := d.Get(edgeGatewayFieldName).(string)
 	return cli.GetEdgeGateway(orgName, vdcName, edgeGatewayName)
-
 }
 
 func (c *Config) Client() (*VCDClient, error) {
