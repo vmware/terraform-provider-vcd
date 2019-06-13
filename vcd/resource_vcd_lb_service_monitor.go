@@ -137,7 +137,7 @@ func resourceVcdLbServiceMonitorCreate(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	lbMonitor, err := expandLBMonitor(d)
+	lbMonitor, err := getLBMonitorType(d)
 	if err != nil {
 		return fmt.Errorf("unable to expand load balancer service monitor: %s", err)
 	}
@@ -165,7 +165,7 @@ func resourceVcdLbServiceMonitorRead(d *schema.ResourceData, meta interface{}) e
 		return fmt.Errorf("unable to find load balancer service monitor with ID %s: %s", d.Id(), err)
 	}
 
-	return flattenLBMonitor(d, readLBMonitor)
+	return setLBMonitorData(d, readLBMonitor)
 }
 
 func resourceVcdLbServiceMonitorUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -178,7 +178,7 @@ func resourceVcdLbServiceMonitorUpdate(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	updateLBMonitorConfig, err := expandLBMonitor(d)
+	updateLBMonitorConfig, err := getLBMonitorType(d)
 	if err != nil {
 		return fmt.Errorf("could not expand monitor for update: %s", err)
 	}
@@ -188,7 +188,7 @@ func resourceVcdLbServiceMonitorUpdate(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("unable to update load balancer service monitor with ID %s: %s", d.Id(), err)
 	}
 
-	return flattenLBMonitor(d, updatedLBMonitor)
+	return setLBMonitorData(d, updatedLBMonitor)
 }
 
 func resourceVcdLbServiceMonitorDelete(d *schema.ResourceData, meta interface{}) error {
@@ -240,7 +240,7 @@ func resourceVcdLbServiceMonitorImport(d *schema.ResourceData, meta interface{})
 	return []*schema.ResourceData{d}, nil
 }
 
-func expandLBMonitor(d *schema.ResourceData) (*types.LBMonitor, error) {
+func getLBMonitorType(d *schema.ResourceData) (*types.LBMonitor, error) {
 	lbMonitor := &types.LBMonitor{
 		Name:       d.Get("name").(string),
 		Interval:   d.Get("interval").(int),
@@ -252,20 +252,20 @@ func expandLBMonitor(d *schema.ResourceData) (*types.LBMonitor, error) {
 		URL:        d.Get("url").(string),
 		Send:       d.Get("send").(string),
 		Receive:    d.Get("receive").(string),
-		Extension:  expandLBMonitorExtension(d),
+		Extension:  getLBMonitorExtensionType(d),
 	}
 
 	return lbMonitor, nil
 }
 
-// expandLBMonitorExtension expands the specified map for sending via API. It appends newline to every extension as
+// getLBMonitorExtensionType expands the specified map for sending via API. It appends newline to every extension as
 // per API requirement. Based on the research the underlying structure should not cause problems because duplicate keys
 // are not needed and order of the keys does not matter for API.
 // Example API call string for Extension field:
 // <extension>delay=2
 // critical=3
 // escape</extension>
-func expandLBMonitorExtension(d *schema.ResourceData) string {
+func getLBMonitorExtensionType(d *schema.ResourceData) string {
 	var extensionString string
 	extension := d.Get("extension").(map[string]interface{})
 	for k, v := range extension {
@@ -278,7 +278,7 @@ func expandLBMonitorExtension(d *schema.ResourceData) string {
 	return extensionString
 }
 
-func flattenLBMonitor(d *schema.ResourceData, lBmonitor *types.LBMonitor) error {
+func setLBMonitorData(d *schema.ResourceData, lBmonitor *types.LBMonitor) error {
 	d.Set("interval", lBmonitor.Interval)
 	d.Set("timeout", lBmonitor.Timeout)
 	d.Set("max_retries", lBmonitor.MaxRetries)
@@ -290,17 +290,17 @@ func flattenLBMonitor(d *schema.ResourceData, lBmonitor *types.LBMonitor) error 
 	d.Set("receive", lBmonitor.Receive)
 	d.Set("expected", lBmonitor.Expected)
 
-	if err := flattenLBMonitorExtension(d, lBmonitor); err != nil {
+	if err := setLBMonitorExtensionData(d, lBmonitor); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-// flattenLBMonitorExtension is responsive to parse response extension field from API and
+// setLBMonitorExtensionData is responsive to parse response extension field from API and
 // store it in the map. It supports flattening `key=value` or `key` notations. Each of them must be
 // separated by newline.
-func flattenLBMonitorExtension(d *schema.ResourceData, lBmonitor *types.LBMonitor) error {
+func setLBMonitorExtensionData(d *schema.ResourceData, lBmonitor *types.LBMonitor) error {
 	extensionStorage := make(map[string]string)
 
 	if lBmonitor.Extension != "" {

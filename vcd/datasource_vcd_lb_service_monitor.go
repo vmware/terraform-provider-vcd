@@ -86,5 +86,5 @@ func datasourceVcdLbServiceMonitorRead(d *schema.ResourceData, meta interface{})
 	}
 
 	d.SetId(readLBMonitor.ID)
-	return flattenLBMonitor(d, readLBMonitor)
+	return setLBMonitorData(d, readLBMonitor)
 }
