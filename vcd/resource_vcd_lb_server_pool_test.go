@@ -15,7 +15,7 @@ import (
 	"github.com/hashicorp/terraform/helper/resource"
 )
 
-func TestAccVcdLbServerPool_Basic(t *testing.T) {
+func TestAccVcdLbServerPool(t *testing.T) {
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return

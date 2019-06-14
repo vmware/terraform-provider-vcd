@@ -137,18 +137,18 @@ func resourceVcdLBServerPool() *schema.Resource {
 
 func resourceVcdLBServerPoolCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
+	vcdClient.lockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
+
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	LBPool, err := expandLBPool(d)
+	LBPool, err := getLBPoolType(d)
 	if err != nil {
 		return fmt.Errorf("unable to expand load balancer server pool: %s", err)
 	}
-
-	//tempLock.Lock()
-	//defer tempLock.Unlock()
 
 	createdPool, err := edgeGateway.CreateLBServerPool(LBPool)
 	if err != nil {
@@ -156,40 +156,41 @@ func resourceVcdLBServerPoolCreate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	// We store the values once again because response include pool member IDs
-	flattenLBPool(d, createdPool)
+	setLBPoolData(d, createdPool)
 	d.SetId(createdPool.ID)
 	return nil
 }
 
 func resourceVcdLBServerPoolRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
+	vcdClient.lockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
+
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	//tempLock.Lock()
-	//defer tempLock.Unlock()
 	readLBPool, err := edgeGateway.ReadLBServerPool(&types.LBPool{ID: d.Id()})
 	if err != nil {
 		d.SetId("")
 		return fmt.Errorf("unable to find load balancer server pool with ID %s: %s", d.Id(), err)
 	}
 
-	return flattenLBPool(d, readLBPool)
+	return setLBPoolData(d, readLBPool)
 }
 
 func resourceVcdLBServerPoolUpdate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
+	vcdClient.lockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
+
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	//tempLock.Lock()
-	//defer tempLock.Unlock()
-
-	updateLBPoolConfig, err := expandLBPool(d)
+	updateLBPoolConfig, err := getLBPoolType(d)
 	if err != nil {
 		return fmt.Errorf("could not expand load balancer server pool for update: %s", err)
 	}
@@ -199,7 +200,7 @@ func resourceVcdLBServerPoolUpdate(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("unable to update load balancer server pool with ID %s: %s", d.Id(), err)
 	}
 
-	if err := flattenLBPool(d, updatedLBPool); err != nil {
+	if err := setLBPoolData(d, updatedLBPool); err != nil {
 		return err
 	}
 
@@ -251,17 +252,17 @@ func resourceVcdLBServerPoolImport(d *schema.ResourceData, meta interface{}) ([]
 	return []*schema.ResourceData{d}, nil
 }
 
-func expandLBPool(d *schema.ResourceData) (*types.LBPool, error) {
+func getLBPoolType(d *schema.ResourceData) (*types.LBPool, error) {
 	lbPool := &types.LBPool{
 		Name:                d.Get("name").(string),
 		Description:         d.Get("description").(string),
 		Algorithm:           d.Get("algorithm").(string),
 		MonitorId:           d.Get("monitor_id").(string),
 		Transparent:         d.Get("enable_transparency").(bool),
-		AlgorithmParameters: expandLBPoolAlgorithm(d),
+		AlgorithmParameters: getLBPoolAlgorithmType(d),
 	}
 
-	members, err := expandLBPoolMembers(d)
+	members, err := getLBPoolMembersType(d)
 	if err != nil {
 		return nil, err
 	}
@@ -270,7 +271,7 @@ func expandLBPool(d *schema.ResourceData) (*types.LBPool, error) {
 	return lbPool, nil
 }
 
-func expandLBPoolMembers(d *schema.ResourceData) (types.LBPoolMembers, error) {
+func getLBPoolMembersType(d *schema.ResourceData) (types.LBPoolMembers, error) {
 	var lbPoolMembers types.LBPoolMembers
 
 	members := d.Get("member").([]interface{})
@@ -299,7 +300,7 @@ func expandLBPoolMembers(d *schema.ResourceData) (types.LBPoolMembers, error) {
 	return lbPoolMembers, nil
 }
 
-func expandLBPoolAlgorithm(d *schema.ResourceData) string {
+func getLBPoolAlgorithmType(d *schema.ResourceData) string {
 	var extensionString string
 	extension := d.Get("algorithm_parameters").(map[string]interface{})
 	for k, v := range extension {
@@ -312,7 +313,7 @@ func expandLBPoolAlgorithm(d *schema.ResourceData) string {
 	return extensionString
 }
 
-func flattenLBPool(d *schema.ResourceData, lBpool *types.LBPool) error {
+func setLBPoolData(d *schema.ResourceData, lBpool *types.LBPool) error {
 	d.Set("name", lBpool.Name)
 	d.Set("description", lBpool.Description)
 	d.Set("algorithm", lBpool.Algorithm)
@@ -320,19 +321,19 @@ func flattenLBPool(d *schema.ResourceData, lBpool *types.LBPool) error {
 	d.Set("monitor_id", lBpool.MonitorId)
 	d.Set("enable_transparency", lBpool.Transparent)
 
-	err := flattenLBPoolAlgorithm(d, lBpool)
+	err := setLBPoolAlgorithmData(d, lBpool)
 	if err != nil {
 		return err
 	}
 
-	err = flattenLBPoolMembers(d, lBpool.Members)
+	err = setLBPoolMembersData(d, lBpool.Members)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func flattenLBPoolMembers(d *schema.ResourceData, lBpoolMembers types.LBPoolMembers) error {
+func setLBPoolMembersData(d *schema.ResourceData, lBpoolMembers types.LBPoolMembers) error {
 
 	memberSet := make([]map[string]interface{}, len(lBpoolMembers))
 	for index, member := range lBpoolMembers {
@@ -356,7 +357,7 @@ func flattenLBPoolMembers(d *schema.ResourceData, lBpoolMembers types.LBPoolMemb
 	return nil
 }
 
-func flattenLBPoolAlgorithm(d *schema.ResourceData, lBPool *types.LBPool) error {
+func setLBPoolAlgorithmData(d *schema.ResourceData, lBPool *types.LBPool) error {
 	extensionStorage := make(map[string]string)
 
 	if lBPool.AlgorithmParameters != "" {

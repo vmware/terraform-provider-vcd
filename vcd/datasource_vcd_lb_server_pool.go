@@ -113,5 +113,5 @@ func datasourceVcdLbServerPoolRead(d *schema.ResourceData, meta interface{}) err
 	}
 
 	d.SetId(readLBPool.ID)
-	return flattenLBPool(d, readLBPool)
+	return setLBPoolData(d, readLBPool)
 }
