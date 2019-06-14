@@ -870,29 +870,6 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error deleting: %#v", err)
 	}
 
-	if status != "POWERED_OFF" {
-		log.Printf("[TRACE] Redeploying vApp: %s", vapp.VApp.Name)
-		task, err := vapp.Deploy()
-		if err != nil {
-			return fmt.Errorf("error Deploying vApp: %#v", err)
-		}
-		err = task.WaitTaskCompletion()
-		if err != nil {
-			return fmt.Errorf(errorCompletingTask, err)
-		}
-
-		log.Printf("[TRACE] Powering on vApp: %s", vapp.VApp.Name)
-		task, err = vapp.PowerOn()
-		if err != nil {
-			return fmt.Errorf("error Powering Up vApp: %#v", err)
-		}
-
-		err = task.WaitTaskCompletion()
-		if err != nil {
-			return fmt.Errorf("error Powering Up vApp: %#v", err)
-		}
-	}
-
 	return nil
 }
 
