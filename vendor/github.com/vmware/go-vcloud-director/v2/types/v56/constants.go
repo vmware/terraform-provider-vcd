@@ -15,6 +15,7 @@ const (
 	JSONMimeV57 = "application/json;version=5.7"
 	// AnyXMLMime511 the wildcard xml mime for version 5.11 of the API
 	AnyXMLMime511 = "application/*+xml;version=5.11"
+	AnyXMLMime    = "application/xml"
 	// Version511 the 5.11 version
 	Version511 = "5.11"
 	// Version is the default version number
@@ -143,4 +144,8 @@ const (
 	XMLNamespaceRASD      = "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_ResourceAllocationSettingData"
 	XMLNamespaceVSSD      = "http://schemas.dmtf.org/wbem/wscim/1/cim-schema/2/CIM_VirtualSystemSettingData"
 	XMLNamespaceExtension = "http://www.vmware.com/vcloud/extension/v1.5"
+)
+
+const (
+	LBMonitorPath = "/loadbalancer/config/monitors/"
 )

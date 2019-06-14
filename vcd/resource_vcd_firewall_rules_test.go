@@ -83,21 +83,7 @@ func createFirewallRulesConfigs(existingRules *govcd.EdgeGateway) string {
 	defaultAction := "drop"
 	edgeGatewayName := testConfig.Networking.EdgeGateway
 	if !vcdShortTest {
-		config := Config{
-			User:            testConfig.Provider.User,
-			Password:        testConfig.Provider.Password,
-			SysOrg:          testConfig.Provider.SysOrg,
-			Org:             testConfig.VCD.Org,
-			Vdc:             testConfig.VCD.Vdc,
-			Href:            testConfig.Provider.Url,
-			InsecureFlag:    testConfig.Provider.AllowInsecure,
-			MaxRetryTimeout: 140,
-		}
-
-		conn, err := config.Client()
-		if err != nil {
-			panic(err)
-		}
+		conn := createTemporaryVCDConnection()
 
 		if edgeGatewayName == "" {
 			panic(fmt.Errorf("could not get an Edge Gateway. Variable networking.edgeGateway is not set"))
