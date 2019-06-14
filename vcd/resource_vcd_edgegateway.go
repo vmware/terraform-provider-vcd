@@ -41,7 +41,7 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				ForceNew:    true,
 				Description: "True if the gateway uses advanced networking. (Set by default in vCD 9.7+)",
 			},
-			"gateway_configuration": &schema.Schema{
+			"configuration": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -125,7 +125,7 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		OrgName:                   orgName,
 		VdcName:                   vdcName,
 		Description:               d.Get("description").(string),
-		BackingConfiguration:      d.Get("gateway_configuration").(string),
+		BackingConfiguration:      d.Get("configuration").(string),
 		AdvancedNetworkingEnabled: d.Get("advanced").(bool),
 		DefaultGateway:            d.Get("default_gateway_network").(string),
 		DistributedRoutingEnabled: d.Get("distributed_routing").(bool),
@@ -162,7 +162,7 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	if err != nil {
 		return err
 	}
-	err = d.Set("gateway_configuration", egw.EdgeGateway.Configuration.GatewayBackingConfig)
+	err = d.Set("configuration", egw.EdgeGateway.Configuration.GatewayBackingConfig)
 	if err != nil {
 		return err
 	}

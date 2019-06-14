@@ -26,7 +26,7 @@ resource "vcd_edgegateway" "egw" {
 
   name                    = "my-egw"
   description             = "new edge gateway"
-  gateway_configuration   = "compact"
+  configuration           = "compact"
   default_gateway_network = "my-ext-net1"
   external_networks       = [ "my-ext-net1", "my-ext-net2" ]
 }
@@ -40,7 +40,7 @@ The following arguments are supported:
 * `vdc` - (Optional) The name of VDC that owns the edge gateway. Optional if defined at provider level. 
 * `name` - (Required) A unique name for the edge gateway.
 * `external_networks` - (Required) An array of external network names.
-* `gateway_configuration` - (Required) Configuration of the vShield edge VM for this gateway. One of: `compact`, `full`.
+* `configuration` - (Required) Configuration of the vShield edge VM for this gateway. One of: `compact`, `full`.
 * `default_gateway_network` - (Optional) Name of the external network to be used as default gateway. It must be included in the
   list of `external_networks`. Providing an empty string or omitting the argument will create the edge gateway without a default gateway.
 * `advanced` - (Required) True if the gateway uses advanced networking. Note that it must be set to `true` for vCD 9.7+.

@@ -149,7 +149,7 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
   vdc                     = "{{.Vdc}}"
   name                    = "{{.EdgeGatewayVcd}}"
   description             = "Description"
-  gateway_configuration   = "compact"
+  configuration           = "compact"
   default_gateway_network = "{{.ExternalNetwork}}"
   advanced                = {{.Advanced}}
   external_networks       = [ "{{.ExternalNetwork}}" ]
@@ -189,7 +189,7 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
   vdc                     = "{{.Vdc}}"
   name                    = "{{.EdgeGatewayVcd}}"
   description             = "Description"
-  gateway_configuration   = "compact"
+  configuration           = "compact"
   default_gateway_network = "${vcd_external_network.{{.NewExternalNetwork}}.name}"
   advanced                = {{.Advanced}}
   external_networks       = [ "{{.ExternalNetwork}}", "${vcd_external_network.{{.NewExternalNetwork}}.name}" ]
