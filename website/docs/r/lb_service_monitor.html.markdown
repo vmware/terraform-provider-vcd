@@ -36,13 +36,14 @@ resource "vcd_lb_service_monitor" "monitor" {
   vdc          = "my-org-vdc"
   edge_gateway = "my-edge-gw"
 
-  name        = "testing-monitor-yy"
+  name        = "http-monitor"
   interval    = "5"
   timeout     = "20"
   max_retries = "3"
   type        = "http"
-  http_method = "GET"
+  method      = "GET"
   url         = "/health"
+  send        = "{\"key\": \"value\"}"
   extension = {
     content-type = "application/json"
     linespan     = ""
@@ -59,8 +60,8 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `name` - (Required) Service Monitor name
 
-* `interval` - (Required) Interval at which a server is to be monitored using the specified Method. 
-* `timeout` - (Required) Maximum time in seconds within which a response from the server must be received 
+* `interval` - (Required) Interval in seconds at which a server is to be monitored using the specified Method.
+* `timeout` - (Required) Maximum time in seconds within which a response from the server must be received
 * `max_retries` - (Required) Number of times the specified monitoring Method must fail sequentially before the server is declared down
 * `type` - (Required) Select the way in which you want to send the health check request to the server — `http`, `https`, 
 `tcp`, `icmp`, or `udp`. Depending on the type selected, the remaining attributes are allowed or not
@@ -81,6 +82,9 @@ The following attributes are exported on the base level of this resource:
 * `id` - The ID of the load balancer service monitor
 
 ## Importing
+
+~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
+configuration. [More information.](https://www.terraform.io/docs/import/)
 
 An existing load balancer service monitor can be [imported][docs-import] into this resource
 via supplying the full dot separated path for load balancer service monitor. An example is below:

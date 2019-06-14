@@ -45,7 +45,7 @@ func resourceVcdLbServiceMonitor() *schema.Resource {
 				Type:        schema.TypeInt,
 				Default:     10,
 				Optional:    true,
-				Description: "Interval at which a server is to be monitored",
+				Description: "Interval in seconds at which a server is to be monitored",
 			},
 			"timeout": &schema.Schema{
 				Type:        schema.TypeInt,
@@ -240,6 +240,8 @@ func resourceVcdLbServiceMonitorImport(d *schema.ResourceData, meta interface{})
 	return []*schema.ResourceData{d}, nil
 }
 
+// getLBMonitorType converts schema.ResourceData to *types.LBMonitor and is useful
+// for creating API requests
 func getLBMonitorType(d *schema.ResourceData) (*types.LBMonitor, error) {
 	lbMonitor := &types.LBMonitor{
 		Name:       d.Get("name").(string),
@@ -278,6 +280,7 @@ func getLBMonitorExtensionType(d *schema.ResourceData) string {
 	return extensionString
 }
 
+// setLBMonitorData sets object state from *types.LBMonitor
 func setLBMonitorData(d *schema.ResourceData, lBmonitor *types.LBMonitor) error {
 	d.Set("interval", lBmonitor.Interval)
 	d.Set("timeout", lBmonitor.Timeout)
