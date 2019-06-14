@@ -185,10 +185,16 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	if err != nil {
 		return err
 	}
-	err = d.Set("distributed_routing", egw.EdgeGateway.Configuration.DistributedRoutingEnabled)
-	if err != nil {
-		return err
-	}
+
+	// TODO: Enable this setting after we switch to a higher API version.
+	//Based on testing the API does accept (and set) the setting, but upon GET query it omits the DistributedRouting
+	// field therefore struct field defaults to false after unmarshaling.
+	//This has already been a case for us and then it was proven that API v27.0 does not return field, while API v31.0
+	// does return the field. (Thanks, Dainius)
+	//err = d.Set("distributed_routing", egw.EdgeGateway.Configuration.DistributedRoutingEnabled)
+	//if err != nil {
+	//	return err
+	//}
 	return nil
 }
 
