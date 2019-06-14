@@ -6,6 +6,7 @@ package types
 
 import (
 	"encoding/xml"
+	"fmt"
 )
 
 // Maps status Attribute Values for VAppTemplate, VApp, Vm, and Media Objects
@@ -120,7 +121,6 @@ type NetworkFeatures struct {
 	DhcpService          *DhcpService          `xml:"DhcpService,omitempty"`          // Substitute for NetworkService. DHCP service settings
 	FirewallService      *FirewallService      `xml:"FirewallService,omitempty"`      // Substitute for NetworkService. Firewall service settings
 	NatService           *NatService           `xml:"NatService,omitempty"`           // Substitute for NetworkService. NAT service settings
-	LoadBalancerService  *LoadBalancerService  `xml:"LoadBalancerService,omitempty"`  // Substitute for NetworkService. Load Balancer service settings
 	StaticRoutingService *StaticRoutingService `xml:"StaticRoutingService,omitempty"` // Substitute for NetworkService. Static Routing service settings
 	// TODO: Not Implemented
 	// IpsecVpnService      IpsecVpnService      `xml:"IpsecVpnService,omitempty"`      // Substitute for NetworkService. Ipsec Vpn service settings
@@ -931,6 +931,25 @@ type Error struct {
 	StackTrace              string `xml:"stackTrace,attr,omitempty"`
 }
 
+func (err Error) Error() string {
+	return fmt.Sprintf("API Error: %d: %s", err.MajorErrorCode, err.Message)
+}
+
+// NSXError is the standard error message type used in the NSX API which is proxied by vCD.
+// It has attached method `Error() string` and implements Go's default `type error` interface.
+type NSXError struct {
+	XMLName    xml.Name `xml:"error"`
+	ErrorCode  string   `xml:"errorCode"`
+	Details    string   `xml:"details"`
+	ModuleName string   `xml:"moduleName"`
+}
+
+// Error method implements Go's default `error` interface for NSXError and formats NSX error
+// output for human readable output.
+func (nsxErr NSXError) Error() string {
+	return fmt.Sprintf("%s %s (API error: %s)", nsxErr.ModuleName, nsxErr.Details, nsxErr.ErrorCode)
+}
+
 // File represents a file to be transferred (uploaded or downloaded).
 // Type: FileType
 // Namespace: http://www.vmware.com/vcloud/v1.5
@@ -1486,6 +1505,7 @@ type InstantiateVAppTemplateParams struct {
 // Since: 5.1
 type EdgeGateway struct {
 	// Attributes
+	Xmlns        string `xml:"xmlns,attr,omitempty"`
 	HREF         string `xml:"href,attr,omitempty"`         // The URI of the entity.
 	Type         string `xml:"type,attr,omitempty"`         // The MIME type of the entity.
 	ID           string `xml:"id,attr,omitempty"`           // The entity identifier, expressed in URN format. The value of this attribute uniquely identifies the entity, persists for the life of the entity, and is never reused
@@ -1512,6 +1532,8 @@ type GatewayConfiguration struct {
 	GatewayInterfaces               *GatewayInterfaces `xml:"GatewayInterfaces"`                         // List of Gateway interfaces.
 	EdgeGatewayServiceConfiguration *GatewayFeatures   `xml:"EdgeGatewayServiceConfiguration,omitempty"` // Represents Gateway Features.
 	HaEnabled                       bool               `xml:"HaEnabled,omitempty"`                       // True if this gateway is highly available. (Requires two vShield edge VMs.)
+	AdvancedNetworkingEnabled       bool               `xml:"AdvancedNetworkingEnabled,omitempty"`       // True if the gateway uses advanced networking
+	DistributedRoutingEnabled       bool               `xml:"DistributedRoutingEnabled,omitempty"`       // True if gateway is attached to a Distributed Logical Router
 	UseDefaultRouteForDNSRelay      bool               `xml:"UseDefaultRouteForDnsRelay,omitempty"`      // True if the default gateway on the external network selected for default route should be used as the DNS relay.
 }
 
@@ -1575,7 +1597,6 @@ type GatewayFeatures struct {
 	NatService             *NatService             `xml:"NatService,omitempty"`             // Substitute for NetworkService. NAT service settings
 	GatewayDhcpService     *GatewayDhcpService     `xml:"GatewayDhcpService,omitempty"`     // Substitute for NetworkService. Gateway DHCP service settings
 	GatewayIpsecVpnService *GatewayIpsecVpnService `xml:"GatewayIpsecVpnService,omitempty"` // Substitute for NetworkService. Gateway Ipsec VPN service settings
-	LoadBalancerService    *LoadBalancerService    `xml:"LoadBalancerService,omitempty"`    // Substitute for NetworkService. Load Balancer service settings
 	StaticRoutingService   *StaticRoutingService   `xml:"StaticRoutingService,omitempty"`   // Substitute for NetworkService. Static Routing service settings
 }
 
@@ -1602,70 +1623,26 @@ type StaticRoute struct {
 	GatewayInterface *Reference `xml:"GatewayInterface,omitempty"` // Gateway interface to which static route is bound.
 }
 
-// LoadBalancerService represents gateway load balancer service.
-// Type: LoadBalancerServiceType
-// Namespace: http://www.vmware.com/vcloud/v1.5
-// Description: Represents gateway load balancer service.
-// Since: 5.1
-type LoadBalancerService struct {
-	IsEnabled     bool                       `xml:"IsEnabled"`               // Enable or disable the service using this flag
-	Pool          *LoadBalancerPool          `xml:"Pool,omitempty"`          // List of load balancer pools.
-	VirtualServer *LoadBalancerVirtualServer `xml:"VirtualServer,omitempty"` // List of load balancer virtual servers.
+// LBMonitor defines health check parameters for a particular type of network traffic
+// Reference: vCloud Director API for NSX Programming Guide
+// https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
+type LBMonitor struct {
+	XMLName    xml.Name `xml:"monitor"`
+	ID         string   `xml:"monitorId,omitempty"`
+	Type       string   `xml:"type"`
+	Interval   int      `xml:"interval,omitempty"`
+	Timeout    int      `xml:"timeout,omitempty"`
+	MaxRetries int      `xml:"maxRetries,omitempty"`
+	Method     string   `xml:"method,omitempty"`
+	URL        string   `xml:"url,omitempty"`
+	Expected   string   `xml:"expected,omitempty"`
+	Name       string   `xml:"name,omitempty"`
+	Send       string   `xml:"send,omitempty"`
+	Receive    string   `xml:"receive,omitempty"`
+	Extension  string   `xml:"extension,omitempty"`
 }
 
-// LoadBalancerPool represents a load balancer pool.
-// Type: LoadBalancerPoolType
-// Namespace: http://www.vmware.com/vcloud/v1.5
-// Description: Represents a load balancer pool.
-// Since: 5.1
-type LoadBalancerPool struct {
-	ID           string             `xml:"Id,omitempty"`           // Load balancer pool id.
-	Name         string             `xml:"Name"`                   // Load balancer pool name.
-	Description  string             `xml:"Description,omitempty"`  // Load balancer pool description.
-	ServicePort  *LBPoolServicePort `xml:"ServicePort"`            // Load balancer pool service port.
-	Member       *LBPoolMember      `xml:"Member"`                 // Load balancer pool member.
-	Operational  bool               `xml:"Operational,omitempty"`  // True if the load balancer pool is operational.
-	ErrorDetails string             `xml:"ErrorDetails,omitempty"` // Error details for this pool.
-}
-
-// LBPoolServicePort represents a service port in a load balancer pool.
-// Type: LBPoolServicePortType
-// Namespace: http://www.vmware.com/vcloud/v1.5
-// Description: Represents a service port in a load balancer pool.
-// Since: 5.1
-type LBPoolServicePort struct {
-	IsEnabled       bool               `xml:"IsEnabled,omitempty"`       // True if this service port is enabled.
-	Protocol        string             `xml:"Protocol"`                  // Load balancer protocol type. One of: HTTP, HTTPS, TCP.
-	Algorithm       string             `xml:"Algorithm"`                 // Load Balancer algorithm type. One of: IP_HASH, ROUND_ROBIN, URI, LEAST_CONN.
-	Port            string             `xml:"Port"`                      // Port for this service profile.
-	HealthCheckPort string             `xml:"HealthCheckPort,omitempty"` // Health check port for this profile.
-	HealthCheck     *LBPoolHealthCheck `xml:"HealthCheck,omitempty"`     // Health check list.
-}
-
-// LBPoolHealthCheck represents a service port health check list.
-// Type: LBPoolHealthCheckType
-// Namespace: http://www.vmware.com/vcloud/v1.5
-// Description: Represents a service port health check list.
-// Since: 5.1
-type LBPoolHealthCheck struct {
-	Mode              string `xml:"Mode"`                        // Load balancer service port health check mode. One of: TCP, HTTP, SSL.
-	URI               string `xml:"Uri,omitempty"`               // Load balancer service port health check URI.
-	HealthThreshold   string `xml:"HealthThreshold,omitempty"`   // Health threshold for this service port.
-	UnhealthThreshold string `xml:"UnhealthThreshold,omitempty"` // Unhealth check port for this profile.
-	Interval          string `xml:"Interval,omitempty"`          // Interval between health checks.
-	Timeout           string `xml:"Timeout,omitempty"`           // Health check timeout.
-}
-
-// LBPoolMember represents a member in a load balancer pool.
-// Type: LBPoolMemberType
-// Namespace: http://www.vmware.com/vcloud/v1.5
-// Description: Represents a member in a load balancer pool.
-// Since: 5.1
-type LBPoolMember struct {
-	IPAddress   string             `xml:"IpAddress"`             // Ip Address for load balancer member.
-	Weight      string             `xml:"Weight"`                // Weight of this member.
-	ServicePort *LBPoolServicePort `xml:"ServicePort,omitempty"` // Load balancer member service port.
-}
+type LBMonitors []LBMonitor
 
 // LoadBalancerVirtualServer represents a load balancer virtual server.
 // Type: LoadBalancerVirtualServerType

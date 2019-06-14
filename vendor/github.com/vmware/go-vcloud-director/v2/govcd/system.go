@@ -8,10 +8,26 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
+
+// Simple structure to pass Edge Gateway creation parameters.
+type EdgeGatewayCreation struct {
+	ExternalNetworks           []string // List of external networks to be linked to this gateway
+	DefaultGateway             string   // Which network should be used as default gateway (empty name = no default gateway)
+	OrgName                    string   // parent Org
+	VdcName                    string   // parent VDC
+	Name                       string   // edge gateway name
+	Description                string   // Optional description
+	BackingConfiguration       string   // Type of backing configuration (compact, full)
+	AdvancedNetworkingEnabled  bool     // enable advanced gateway
+	HAEnabled                  bool     // enable HA
+	UseDefaultRouteForDNSRelay bool     // True if the default gateway should be used as the DNS relay
+	DistributedRoutingEnabled  bool     // If advanced networking enabled, also enable distributed routing
+}
 
 // Creates an Organization based on settings, network, and org name.
 // The Organization created will have these settings specified in the
@@ -41,6 +57,216 @@ func CreateOrg(vcdClient *VCDClient, name string, fullName string, description s
 	return vcdClient.Client.ExecuteTaskRequest(orgCreateHREF.String(), http.MethodPost,
 		"application/vnd.vmware.admin.organization+xml", "error instantiating a new Org: %s", vcomp)
 
+}
+
+// Returns the UUID part of an entity ID
+// From "urn:vcloud:vdc:72fefde7-4fed-45b8-a774-79b72c870325",
+// will return "72fefde7-4fed-45b8-a774-79b72c870325"
+// From "urn:vcloud:catalog:97384890-180c-4563-b9b7-0dc50a2430b0"
+// will return "97384890-180c-4563-b9b7-0dc50a2430b0"
+func getBareEntityUuid(entityId string) (string, error) {
+	// Regular expression to match an ID:
+	//     3 strings (alphanumeric + "-") separated by a colon (:)
+	//     1 group of 8 hexadecimal digits
+	//     3 groups of 4 hexadecimal
+	//     1 group of 12 hexadecimal digits
+	reGetID := regexp.MustCompile(`^[\w-]+:[\w-]+:[\w-]+:([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$`)
+	matchList := reGetID.FindAllStringSubmatch(entityId, -1)
+
+	// matchList has the format
+	// [][]string{[]string{"TOTAL MATCHED STRING", "CAPTURED TEXT"}}
+	// such as
+	// [][]string{[]string{"urn:vcloud:catalog:97384890-180c-4563-b9b7-0dc50a2430b0", "97384890-180c-4563-b9b7-0dc50a2430b0"}}
+	if len(matchList) == 0 || len(matchList[0]) < 2 {
+		return "", fmt.Errorf("error extracting ID from '%s'", entityId)
+	}
+	return matchList[0][1], nil
+}
+
+// CreateEdgeGatewayAsync creates an edge gateway using a simplified configuration structure
+// https://code.vmware.com/apis/442/vcloud-director/doc/doc/operations/POST-CreateEdgeGateway.html
+func CreateEdgeGatewayAsync(vcdClient *VCDClient, egwc EdgeGatewayCreation) (Task, error) {
+
+	distributed := egwc.DistributedRoutingEnabled
+	if !egwc.AdvancedNetworkingEnabled {
+		distributed = false
+	}
+	// This is the main configuration structure
+	egwConfiguration := &types.EdgeGateway{
+		Xmlns:       types.XMLNamespaceVCloud,
+		Name:        egwc.Name,
+		Description: egwc.Description,
+		Configuration: &types.GatewayConfiguration{
+			UseDefaultRouteForDNSRelay: egwc.UseDefaultRouteForDNSRelay,
+			HaEnabled:                  egwc.HAEnabled,
+			GatewayBackingConfig:       egwc.BackingConfiguration,
+			AdvancedNetworkingEnabled:  egwc.AdvancedNetworkingEnabled,
+			DistributedRoutingEnabled:  distributed,
+			GatewayInterfaces: &types.GatewayInterfaces{
+				GatewayInterface: []*types.GatewayInterface{},
+			},
+			EdgeGatewayServiceConfiguration: &types.GatewayFeatures{},
+		},
+	}
+
+	if len(egwc.ExternalNetworks) == 0 {
+		return Task{}, fmt.Errorf("no external networks provided. At least one is needed")
+	}
+
+	// If the user has indicated a default gateway, we make sure that it matches
+	// a name in the list of external networks
+	if egwc.DefaultGateway != "" {
+		defaultGatewayFound := false
+		for _, name := range egwc.ExternalNetworks {
+			if egwc.DefaultGateway == name {
+				defaultGatewayFound = true
+			}
+		}
+		if !defaultGatewayFound {
+			return Task{}, fmt.Errorf("default gateway (%s) selected, but its name is not among the external networks (%v)", egwc.DefaultGateway, egwc.ExternalNetworks)
+		}
+	}
+	// Add external networks inside the configuration structure
+	for _, extNetName := range egwc.ExternalNetworks {
+		extNet, err := GetExternalNetwork(vcdClient, extNetName)
+		if err != nil {
+			return Task{}, err
+		}
+
+		// Populate the subnet participation only if default gateway was set
+		var subnetParticipation *types.SubnetParticipation
+		if egwc.DefaultGateway != "" && extNet.ExternalNetwork.Name == egwc.DefaultGateway {
+			for _, net := range extNet.ExternalNetwork.Configuration.IPScopes.IPScope {
+				if net.IsEnabled {
+					subnetParticipation = &types.SubnetParticipation{
+						Gateway: net.Gateway,
+						Netmask: net.Netmask,
+					}
+					break
+				}
+			}
+		}
+		networkConf := &types.GatewayInterface{
+			Name:          extNet.ExternalNetwork.Name,
+			DisplayName:   extNet.ExternalNetwork.Name,
+			InterfaceType: "uplink",
+			Network: &types.Reference{
+				HREF: extNet.ExternalNetwork.HREF,
+				ID:   extNet.ExternalNetwork.ID,
+				Type: "application/vnd.vmware.admin.network+xml",
+				Name: extNet.ExternalNetwork.Name,
+			},
+			UseForDefaultRoute:  egwc.DefaultGateway == extNet.ExternalNetwork.Name,
+			SubnetParticipation: subnetParticipation,
+		}
+
+		egwConfiguration.Configuration.GatewayInterfaces.GatewayInterface =
+			append(egwConfiguration.Configuration.GatewayInterfaces.GatewayInterface, networkConf)
+	}
+
+	// Once the configuration structure has been filled using the simplified data, we delegate
+	// the edge gateway creation to the main configuration function.
+	return CreateAndConfigureEdgeGatewayAsync(vcdClient, egwc.OrgName, egwc.VdcName, egwc.Name, egwConfiguration)
+}
+
+// CreateAndConfigureEdgeGatewayAsync creates an edge gateway using a full configuration structure
+func CreateAndConfigureEdgeGatewayAsync(vcdClient *VCDClient, orgName, vdcName, egwName string, egwConfiguration *types.EdgeGateway) (Task, error) {
+
+	if egwConfiguration.Name != egwName {
+		return Task{}, fmt.Errorf("name mismatch: '%s' used as parameter but '%s' in the configuration structure", egwName, egwConfiguration.Name)
+	}
+	adminOrg, err := GetAdminOrgByName(vcdClient, orgName)
+	if err != nil {
+		return Task{}, err
+	}
+	vdc, err := adminOrg.GetVdcByName(vdcName)
+	if err != nil {
+		return Task{}, err
+	}
+
+	egwCreateHREF := vcdClient.Client.VCDHREF
+
+	vdcId, err := getBareEntityUuid(vdc.Vdc.ID)
+	if err != nil {
+		return Task{}, fmt.Errorf("error retrieving ID from Vdc %s: %s", vdcName, err)
+	}
+	if vdcId == "" {
+		return Task{}, fmt.Errorf("error retrieving ID from Vdc %s - empty ID returned", vdcName)
+	}
+	egwCreateHREF.Path += fmt.Sprintf("/admin/vdc/%s/edgeGateways", vdcId)
+
+	// The first task is the creation task. It is quick, and does only create the vCD entity,
+	// but not yet deploy the underlying VM
+	creationTask, err := vcdClient.Client.ExecuteTaskRequest(egwCreateHREF.String(), http.MethodPost,
+		"application/vnd.vmware.admin.edgeGateway+xml", "error instantiating a new Edge Gateway: %s", egwConfiguration)
+
+	if err != nil {
+		return Task{}, err
+	}
+
+	err = creationTask.WaitTaskCompletion()
+
+	if err != nil {
+		return Task{}, err
+	}
+
+	// After creation, there is a build task that supervises the gateway deployment
+	for _, innerTask := range creationTask.Task.Tasks.Task {
+		if innerTask.OperationName == "networkEdgeGatewayCreate" {
+			deployTask := Task{
+				Task:   innerTask,
+				client: &vcdClient.Client,
+			}
+			return deployTask, nil
+		}
+	}
+	return Task{}, fmt.Errorf("no deployment task found for edge gateway %s - The edge gateway might have been created, but not deployed properly", egwName)
+}
+
+// Private convenience function used by CreateAndConfigureEdgeGateway and CreateEdgeGateway to
+// process the task and return the object that was created.
+// It should not be invoked directly.
+func createEdgeGateway(vcdClient *VCDClient, egwc EdgeGatewayCreation, egwConfiguration *types.EdgeGateway) (EdgeGateway, error) {
+	var task Task
+	var err error
+	if egwConfiguration != nil {
+		task, err = CreateAndConfigureEdgeGatewayAsync(vcdClient, egwc.OrgName, egwc.VdcName, egwc.Name, egwConfiguration)
+	} else {
+		task, err = CreateEdgeGatewayAsync(vcdClient, egwc)
+	}
+
+	if err != nil {
+		return EdgeGateway{}, err
+	}
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return EdgeGateway{}, fmt.Errorf("%s", combinedTaskErrorMessage(task.Task, err))
+	}
+
+	// The edge gateway is created. Now we retrieve it from the server
+	org, err := GetAdminOrgByName(vcdClient, egwc.OrgName)
+	if err != nil {
+		return EdgeGateway{}, err
+	}
+	vdc, err := org.GetVdcByName(egwc.VdcName)
+	if err != nil {
+		return EdgeGateway{}, err
+	}
+	egw, err := vdc.FindEdgeGateway(egwc.Name)
+	if err != nil {
+		return EdgeGateway{}, err
+	}
+	return egw, nil
+}
+
+// CreateAndConfigureEdgeGateway creates an edge gateway using a full configuration structure
+func CreateAndConfigureEdgeGateway(vcdClient *VCDClient, orgName, vdcName, egwName string, egwConfiguration *types.EdgeGateway) (EdgeGateway, error) {
+	return createEdgeGateway(vcdClient, EdgeGatewayCreation{OrgName: orgName, VdcName: vdcName, Name: egwName}, egwConfiguration)
+}
+
+// CreateEdgeGateway creates an edge gateway using a simplified configuration structure
+func CreateEdgeGateway(vcdClient *VCDClient, egwc EdgeGatewayCreation) (EdgeGateway, error) {
+	return createEdgeGateway(vcdClient, egwc, nil)
 }
 
 // If user specifies a valid organization name, then this returns a
@@ -149,10 +375,8 @@ func QueryPortGroups(vcdCli *VCDClient, filter string) ([]*types.PortGroupRecord
 	return results.Results.PortGroupRecord, nil
 }
 
-// GetExternalNetwork returns ExternalNetwork object if user specifies a valid external network name.
-// If no valid external network is found, it returns an empty
-// ExternalNetwork and no error. Otherwise it returns an error and an empty
-// ExternalNetwork object
+// GetExternalNetwork returns an ExternalNetwork reference if user the network name matches an existing one.
+// If no valid external network is found, it returns an empty ExternalNetwork reference and an error
 func GetExternalNetwork(vcdClient *VCDClient, networkName string) (*ExternalNetwork, error) {
 
 	if !vcdClient.Client.IsSysAdmin {
@@ -173,17 +397,22 @@ func GetExternalNetwork(vcdClient *VCDClient, networkName string) (*ExternalNetw
 
 	externalNetwork := NewExternalNetwork(&vcdClient.Client)
 
+	found := false
 	for _, netRef := range extNetworkRefs.ExternalNetworkReference {
 		if netRef.Name == networkName {
 			externalNetwork.ExternalNetwork.HREF = netRef.HREF
 			err = externalNetwork.Refresh()
+			found = true
 			if err != nil {
 				return &ExternalNetwork{}, err
 			}
 		}
 	}
 
-	return externalNetwork, nil
+	if found {
+		return externalNetwork, nil
+	}
+	return externalNetwork, fmt.Errorf("could not find external network named %s", networkName)
 
 }
 

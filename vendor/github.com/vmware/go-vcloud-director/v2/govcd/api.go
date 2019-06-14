@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
+
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -96,18 +97,16 @@ func (cli *Client) NewRequest(params map[string]string, method string, reqUrl ur
 	return cli.NewRequestWitNotEncodedParams(params, nil, method, reqUrl, body)
 }
 
-// ParseErr takes an error XML resp and returns a single string for use in error messages.
-func ParseErr(resp *http.Response) error {
-
-	errBody := new(types.Error)
-
+// ParseErr takes an error XML resp, error interface for unmarshaling and returns a single string for
+// use in error messages.
+func ParseErr(resp *http.Response, errType error) error {
 	// if there was an error decoding the body, just return that
-	if err := decodeBody(resp, errBody); err != nil {
+	if err := decodeBody(resp, errType); err != nil {
 		util.Logger.Printf("[ParseErr]: unhandled response <--\n%+v\n-->\n", resp)
 		return fmt.Errorf("[ParseErr]: error parsing error body for non-200 request: %s (%+v)", err, resp)
 	}
 
-	return fmt.Errorf("API Error: %d: %s", errBody.MajorErrorCode, errBody.Message)
+	return errType
 }
 
 // decodeBody is used to XML decode a response body
@@ -133,6 +132,12 @@ func decodeBody(resp *http.Response, out interface{}) error {
 // parses the resultant XML error and returns a descriptive error, if the
 // status code is not handled it returns a generic error with the status code.
 func checkResp(resp *http.Response, err error) (*http.Response, error) {
+	return checkRespWithErrType(resp, err, &types.Error{})
+}
+
+// checkRespWithErrType allows to specify custom error errType for checkResp unmarshaling
+// the error.
+func checkRespWithErrType(resp *http.Response, err, errType error) (*http.Response, error) {
 	if err != nil {
 		return resp, err
 	}
@@ -172,7 +177,7 @@ func checkResp(resp *http.Response, err error) (*http.Response, error) {
 		http.StatusInternalServerError,         // 500
 		http.StatusServiceUnavailable,          // 503
 		http.StatusGatewayTimeout:              // 504
-		return nil, ParseErr(resp)
+		return nil, ParseErr(resp, errType)
 	// Unhandled response.
 	default:
 		return nil, fmt.Errorf("unhandled API response, please report this issue, status code: %s", resp.Status)
@@ -230,6 +235,9 @@ func (client *Client) ExecuteRequestWithoutResponse(pathURL, requestType, conten
 		return fmt.Errorf(errorMessage, err)
 	}
 
+	// log response explicitly because decodeBody() was not triggered
+	util.ProcessResponseOutput(util.FuncNameCallStack(), resp, fmt.Sprintf("%s", resp.Body))
+
 	err = resp.Body.Close()
 	if err != nil {
 		return fmt.Errorf("error closing response body: %s", err)
@@ -272,7 +280,30 @@ func (client *Client) ExecuteRequest(pathURL, requestType, contentType, errorMes
 	return resp, nil
 }
 
+// ExecuteRequestWithCustomError sends the request and checks for 2xx response. If the returned status code
+// was not as expected - the returned error will be unmarshaled to `errType` which implements Go's standard `error`
+// interface.
+func (client *Client) ExecuteRequestWithCustomError(pathURL, requestType, contentType, errorMessage string,
+	payload interface{}, errType error) (*http.Response, error) {
+	if !isMessageWithPlaceHolder(errorMessage) {
+		return &http.Response{}, fmt.Errorf("error message has to include place holder for error")
+	}
+
+	resp, err := executeRequestCustomErr(pathURL, requestType, contentType, payload, client, errType)
+	if err != nil {
+		return &http.Response{}, fmt.Errorf(errorMessage, err)
+	}
+
+	return resp, nil
+}
+
+// executeRequest does executeRequestCustomErr and checks for vCD errors in API response
 func executeRequest(pathURL, requestType, contentType string, payload interface{}, client *Client) (*http.Response, error) {
+	return executeRequestCustomErr(pathURL, requestType, contentType, payload, client, &types.Error{})
+}
+
+// executeRequestCustomErr performs request and unmarshals API error to errType if not 2xx status was returned
+func executeRequestCustomErr(pathURL, requestType, contentType string, payload interface{}, client *Client, errType error) (*http.Response, error) {
 	url, _ := url.ParseRequestURI(pathURL)
 
 	var req *http.Request
@@ -295,13 +326,27 @@ func executeRequest(pathURL, requestType, contentType string, payload interface{
 		req.Header.Add("Content-Type", contentType)
 	}
 
-	return checkResp(client.Http.Do(req))
+	resp, err := client.Http.Do(req)
+	if err != nil {
+		return resp, err
+	}
+
+	return checkRespWithErrType(resp, err, errType)
 }
 
 func isMessageWithPlaceHolder(message string) bool {
 	err := fmt.Errorf(message, "test error")
-	if strings.Contains(err.Error(), "%!(EXTRA") {
-		return false
+	return !strings.Contains(err.Error(), "%!(EXTRA")
+}
+
+// combinedTaskErrorMessage is a general purpose function
+// that returns the contents of the operation error and, if found, the error
+// returned by the associated task
+func combinedTaskErrorMessage(task *types.Task, err error) string {
+	extendedError := err.Error()
+	if task.Error != nil {
+		extendedError = fmt.Sprintf("operation error: %s - task error: [%d - %s] %s",
+			err, task.Error.MajorErrorCode, task.Error.MinorErrorCode, task.Error.Message)
 	}
-	return true
+	return extendedError
 }
