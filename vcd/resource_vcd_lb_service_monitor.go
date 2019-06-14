@@ -19,12 +19,12 @@ func resourceVcdLbServiceMonitor() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"vdc": {
+			"org": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
-			"org": {
+			"vdc": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
@@ -216,7 +216,7 @@ func resourceVcdLbServiceMonitorImport(d *schema.ResourceData, meta interface{})
 
 	resourceURI := strings.Split(d.Id(), ".")
 	if len(resourceURI) != 4 {
-		return nil, fmt.Errorf("resource name must be specified in such way my-org.my-org-vdc.my-edge-gw.my-lb-service-monitor")
+		return nil, fmt.Errorf("resource name must be specified as org.VDC.edge-gw.lb-service-monitor")
 	}
 	orgName, vdcName, edgeName, monitorName := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
 
@@ -286,7 +286,7 @@ func setLBMonitorData(d *schema.ResourceData, lBmonitor *types.LBMonitor) error 
 	d.Set("timeout", lBmonitor.Timeout)
 	d.Set("max_retries", lBmonitor.MaxRetries)
 	d.Set("type", lBmonitor.Type)
-	// Optional attributes may not necessarilly
+	// Optional attributes may not be necessary
 	d.Set("method", lBmonitor.Method)
 	d.Set("url", lBmonitor.URL)
 	d.Set("send", lBmonitor.Send)
@@ -300,7 +300,7 @@ func setLBMonitorData(d *schema.ResourceData, lBmonitor *types.LBMonitor) error 
 	return nil
 }
 
-// setLBMonitorExtensionData is responsive to parse response extension field from API and
+// setLBMonitorExtensionData is responsible for parsing response extension field from API and
 // store it in the map. It supports flattening `key=value` or `key` notations. Each of them must be
 // separated by newline.
 func setLBMonitorExtensionData(d *schema.ResourceData, lBmonitor *types.LBMonitor) error {

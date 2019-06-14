@@ -18,10 +18,6 @@ import (
 
 func TestAccVcdLbServiceMonitor(t *testing.T) {
 
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                testConfig.VCD.Org,
@@ -41,6 +37,15 @@ func TestAccVcdLbServiceMonitor(t *testing.T) {
 	params["FuncName"] = t.Name() + "-step1"
 	configTextStep1 := templateFill(testAccVcdLbServiceMonitor_Basic2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configTextStep1)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	if !edgeGatewayIsAdvanced() {
+		t.Skip(t.Name() + "requires advanced edge gateway to work")
+	}
 
 	resource.Test(t, resource.TestCase{
 		Providers:    testAccProviders,
@@ -118,6 +123,18 @@ func importStateIdByOrgVdcEdge(vcd TestConfig, objectName string) resource.Impor
 
 		return importId, nil
 	}
+}
+
+// edgeGatewayIsAdvanced checks if edge gateway for testing is an advanced one
+func edgeGatewayIsAdvanced() bool {
+	conn := createTemporaryVCDConnection()
+
+	edgeGateway, err := conn.GetEdgeGateway(testConfig.VCD.Org, testConfig.VCD.Vdc, testConfig.Networking.EdgeGateway)
+	if err != nil {
+		panic("unable to find edge gateway")
+	}
+
+	return edgeGateway.HasAdvancedNetworking()
 }
 
 const testAccVcdLbServiceMonitor_Basic = `

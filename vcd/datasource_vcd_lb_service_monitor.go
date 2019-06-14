@@ -11,11 +11,11 @@ func datasourceVcdLbServiceMonitor() *schema.Resource {
 	return &schema.Resource{
 		Read: datasourceVcdLbServiceMonitorRead,
 		Schema: map[string]*schema.Schema{
-			"vdc": {
+			"org": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
-			"org": {
+			"vdc": {
 				Type:     schema.TypeString,
 				Optional: true,
 			},
