@@ -213,20 +213,6 @@ func TestAccVcdLbServerPool_Basic(t *testing.T) {
 	})
 }
 
-// importStateIdByOrgVdcEdge constructs an import path (ID in Terraform import terms) in the format of:
-// organization.vdc.edge-gateway-nane.import-object-name (i.e. my-org.my-vdc.my-edge-gw.objectName) from TestConfig and
-// object state.
-func importStateIdByOrgVdcEdge(vcd TestConfig, objectName string) resource.ImportStateIdFunc {
-	return func(*terraform.State) (string, error) {
-		importId := testConfig.VCD.Org + "." + testConfig.VCD.Vdc + "." + testConfig.Networking.EdgeGateway + "." + objectName
-		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || testConfig.Networking.EdgeGateway == "" || objectName == "" {
-			return "", fmt.Errorf("missing information to generate import path: %s", importId)
-		}
-
-		return importId, nil
-	}
-}
-
 func testAccCheckVcdLbServerPoolDestroy(serverPoolName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		conn := testAccProvider.Meta().(*VCDClient)
