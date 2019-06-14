@@ -63,7 +63,7 @@ func resourceVcdEdgeGateway() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
-			"default_gateway": &schema.Schema{
+			"default_gateway_network": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
 				Default:     "",
@@ -127,7 +127,7 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		Description:               d.Get("description").(string),
 		BackingConfiguration:      d.Get("gateway_configuration").(string),
 		AdvancedNetworkingEnabled: d.Get("advanced").(bool),
-		DefaultGateway:            d.Get("default_gateway").(string),
+		DefaultGateway:            d.Get("default_gateway_network").(string),
 		DistributedRoutingEnabled: d.Get("distributed_routing").(bool),
 		HAEnabled:                 d.Get("ha_enabled").(bool),
 	}

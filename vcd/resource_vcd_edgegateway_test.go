@@ -56,7 +56,7 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"vcd_edgegateway."+edgeGatewayNameBasic, "default_gateway", testConfig.Networking.ExternalNetwork),
+						"vcd_edgegateway."+edgeGatewayNameBasic, "default_gateway_network", testConfig.Networking.ExternalNetwork),
 				),
 			},
 		},
@@ -100,7 +100,7 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"vcd_edgegateway."+edgeGatewayNameComplex, "default_gateway", newExternalNetworkVcd),
+						"vcd_edgegateway."+edgeGatewayNameComplex, "default_gateway_network", newExternalNetworkVcd),
 				),
 			},
 		},
@@ -145,14 +145,14 @@ func testAccCheckVcdEdgeGatewayDestroyComplex(s *terraform.State) error {
 
 const testAccEdgeGatewayBasic = `
 resource "vcd_edgegateway" "{{.EdgeGateway}}" {
-  org                   = "{{.Org}}"
-  vdc                   = "{{.Vdc}}"
-  name                  = "{{.EdgeGatewayVcd}}"
-  description           = "Description"
-  gateway_configuration = "compact"
-  default_gateway       = "{{.ExternalNetwork}}"
-  advanced              = {{.Advanced}}
-  external_networks     = [ "{{.ExternalNetwork}}" ]
+  org                     = "{{.Org}}"
+  vdc                     = "{{.Vdc}}"
+  name                    = "{{.EdgeGatewayVcd}}"
+  description             = "Description"
+  gateway_configuration   = "compact"
+  default_gateway_network = "{{.ExternalNetwork}}"
+  advanced                = {{.Advanced}}
+  external_networks       = [ "{{.ExternalNetwork}}" ]
 }
 `
 
@@ -185,13 +185,13 @@ resource "vcd_external_network" "{{.NewExternalNetwork}}" {
 }
 
 resource "vcd_edgegateway" "{{.EdgeGateway}}" {
-  org                   = "{{.Org}}"
-  vdc                   = "{{.Vdc}}"
-  name                  = "{{.EdgeGatewayVcd}}"
-  description           = "Description"
-  gateway_configuration = "compact"
-  default_gateway       = "${vcd_external_network.{{.NewExternalNetwork}}.name}"
-  advanced              = {{.Advanced}}
-  external_networks     = [ "{{.ExternalNetwork}}", "${vcd_external_network.{{.NewExternalNetwork}}.name}" ]
+  org                     = "{{.Org}}"
+  vdc                     = "{{.Vdc}}"
+  name                    = "{{.EdgeGatewayVcd}}"
+  description             = "Description"
+  gateway_configuration   = "compact"
+  default_gateway_network = "${vcd_external_network.{{.NewExternalNetwork}}.name}"
+  advanced                = {{.Advanced}}
+  external_networks       = [ "{{.ExternalNetwork}}", "${vcd_external_network.{{.NewExternalNetwork}}.name}" ]
 }
 `
