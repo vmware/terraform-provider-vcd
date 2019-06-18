@@ -29,10 +29,14 @@ test-binary: install
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider"
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' binary"
 
-# builds the environment in a new vCD 
-env-build: install
+# builds the environment in a new vCD (run once before testacc)
+test-env-build: install
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider"
-	@sh -c "'$(CURDIR)/scripts/runtest.sh' env-build"
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' test-env-build"
+
+# destroys the environment built with 'test-env-build' (warning: can't be undone)
+test-env-destroy:
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' test-env-destroy"
 
 # runs the unit tests
 testunit: fmtcheck

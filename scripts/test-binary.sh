@@ -10,6 +10,7 @@ dash_line="# ---------------------------------------------------------"
 # env script will only run if explicitly called.
 env_script=cust.full-env.tf
 building_env=no
+destroying_env=no
 skipping_items=($env_script)
 
 function remove_item_from_skipping {
@@ -35,7 +36,8 @@ function get_help {
     echo "  c | clear              Clears list of run files"
     echo "  p | pause              Pause after each stage"
     echo "  n | names 'names list' List of file names to test [QUOTES NEEDED]"
-    echo "  n | env-build          Build the environment in a new vCD"
+    echo "  b | test-env-build     Builds the environment in a new vCD"
+    echo "  y | test-env-destroy   Destroys the environment built using 'test-env-build'"
     echo "  d | dry                Dry-run: show commands without executing them"
     echo "  v | verbose            Gives more info"
     echo ""
@@ -103,9 +105,15 @@ do
             exit 1
         fi
         ;;
-    env-build)
+    b|test-env-build)
         remove_item_from_skipping $env_script
         building_env=yes
+        test_names="$env_script" 
+        ;;
+    y|test-env-destroy)
+        remove_item_from_skipping $env_script
+        rm -f already_run.txt
+        destroying_env=yes
         test_names="$env_script" 
         ;;
     v|verbose)
@@ -220,9 +228,9 @@ do
     fi
     if [ -n "$has_missing_fields" ]
     then
-        echo_verbose "# $dash_line"
-        echo_verbose "# Missing fields in $CF"
-        echo_verbose "# $dash_line"
+        echo "# $dash_line"
+        echo "# Missing fields in $CF"
+        echo "# $dash_line"
         continue
     fi
     init_options=$(grep '^# init-options' $CF | sed -e 's/# init-options //')
@@ -266,20 +274,40 @@ do
     then
         rm -rf tmp
     fi
-    mkdir tmp
-    cp $CF tmp/config.tf
+    opsdir=tmp
+    if [ "$building_env" == "yes" -o "$destroying_env" == "yes" ]
+    then
+        opsdir=buildvcd
+    fi
+    if [ ! -d $opsdir ]
+    then
+        mkdir $opsdir
+    fi
+    cp $CF $opsdir/config.tf
     if [ -z "$DRY_RUN" ]
     then
         echo $CF >> already_run.txt
     fi
-    cd tmp
+    cd $opsdir
 
-    run terraform init $init_options
-    run terraform plan $plan_options
-    run terraform apply -auto-approve $apply_options
+    if [ "$destroying_env" == "yes" ]
+    then
+        if [ ! -f terraform.tfstate ]
+        then
+            echo "terraform.tfstate not found - aborting"
+            exit 1
+        fi
+        echo "# Skipping init/apply for 'test-env-destroy'"
+        run terraform plan $plan_options
+    else
+        run terraform init $init_options
+        run terraform plan $plan_options
+        run terraform apply -auto-approve $apply_options
+    fi
+
     if [ "$building_env" == "yes" ]
     then
-        echo "# Skipping destroy phase for 'env-build'"
+        echo "# Skipping destroy phase for 'test-env-build'"
     else
         run terraform destroy -auto-approve $destroy_options
     fi

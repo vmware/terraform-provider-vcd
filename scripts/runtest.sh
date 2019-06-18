@@ -141,17 +141,26 @@ function binary_test {
         ls -l
         exit
     fi
-    if [ -n "$ENVBUILD" ]
+    if [ -n "$VCD_ENV_BUILD" ]
     then
-        ./test-binary.sh env-build
-        exit
+        ./test-binary.sh test-env-build
+        exit $?
     fi
-    ./test-binary.sh
+    if [ -n "$VCD_ENV_DESTROY" ]
+    then
+        ./test-binary.sh test-env-destroy
+        exit $?
+    fi
+     ./test-binary.sh
 }
 
 case $wanted in
-    env-build)
-        export ENVBUILD=1
+    test-env-destroy)
+        export VCD_ENV_DESTROY=1
+        binary_test
+        ;;
+    test-env-build)
+        export VCD_ENV_BUILD=1
         binary_test
         ;;
     binary-prepare)
