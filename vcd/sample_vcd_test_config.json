@@ -106,8 +106,8 @@
     "//": "Values used to build a new environment. Build will fail if the next 5 ones are empty",
     "gateway": "10.15.21.1",
     "netmask": "255.255.224.0",
-    "externalNetworkStaticStartIp": "10.15.21.10",
-    "externalNetworkStaticEndIp": "10.15.21.11",
+    "externalNetworkStartIp": "10.15.21.10",
+    "externalNetworkEndIp": "10.15.21.11",
     "dns1": "10.15.21.101",
     "dns2": "8.8.4.4",
 

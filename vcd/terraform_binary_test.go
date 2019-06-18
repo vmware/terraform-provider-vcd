@@ -97,17 +97,17 @@ func TestCustomTemplates(t *testing.T) {
 		"Prefix":                       "cust",
 		"CallerFileName":               "",
 		// The following properties are used to create a full environment
-		"MainGateway":                  testConfig.TestEnvBuild.Gateway,
-		"MainNetmask":                  testConfig.TestEnvBuild.Netmask,
-		"MainDns1":                     testConfig.TestEnvBuild.Dns1,
-		"MainDns2":                     testConfig.TestEnvBuild.Dns2,
-		"MediaTestName":                testConfig.TestEnvBuild.MediaName,
-		"StorageProfile2":              testConfig.TestEnvBuild.StorageProfile2,
-		"ExternalNetworkStaticStartIp": testConfig.TestEnvBuild.ExternalNetworkStaticStartIp,
-		"ExternalNetworkStaticEndIp":   testConfig.TestEnvBuild.ExternalNetworkStaticEndIp,
-		"RoutedNetwork":                testConfig.TestEnvBuild.RoutedNetwork,
-		"IsolatedNetwork":              testConfig.TestEnvBuild.IsolatedNetwork,
-		"DirectNetwork":                testConfig.TestEnvBuild.DirectNetwork,
+		"MainGateway":            testConfig.TestEnvBuild.Gateway,
+		"MainNetmask":            testConfig.TestEnvBuild.Netmask,
+		"MainDns1":               testConfig.TestEnvBuild.Dns1,
+		"MainDns2":               testConfig.TestEnvBuild.Dns2,
+		"MediaTestName":          testConfig.TestEnvBuild.MediaName,
+		"StorageProfile2":        testConfig.TestEnvBuild.StorageProfile2,
+		"ExternalNetworkStartIp": testConfig.TestEnvBuild.ExternalNetworkStartIp,
+		"ExternalNetworkEndIp":   testConfig.TestEnvBuild.ExternalNetworkEndIp,
+		"RoutedNetwork":          testConfig.TestEnvBuild.RoutedNetwork,
+		"IsolatedNetwork":        testConfig.TestEnvBuild.IsolatedNetwork,
+		"DirectNetwork":          testConfig.TestEnvBuild.DirectNetwork,
 	}
 
 	for _, fileName := range binaryTestList {
@@ -176,9 +176,9 @@ func TestCustomTemplates(t *testing.T) {
 			// For example, the Ova for testing might be a tiny one, while the one for
 			// building the environment would be a beefier one, which can also run the
 			// VMware tools.
-			if testConfig.TestEnvBuild.ExternalNetworkStaticStartIp == "" {
+			if testConfig.TestEnvBuild.ExternalNetworkStartIp == "" {
 				params["ExternalNetworkStaticStartIp"] = testConfig.Networking.ExternalIp
-				if testConfig.TestEnvBuild.ExternalNetworkStaticEndIp == "" {
+				if testConfig.TestEnvBuild.ExternalNetworkEndIp == "" {
 					params["ExternalNetworkStaticEndIp"] = testConfig.Networking.ExternalIp
 				}
 			}
