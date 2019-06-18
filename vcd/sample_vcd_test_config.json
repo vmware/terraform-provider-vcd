@@ -90,6 +90,32 @@
     "uploadPieceSize": 5,
     "uploadProgress": true
   },
+  "envBuild": {
+    "//": "Values used to build a new environment. Build will fail if the next 5 ones are empty",
+    "gateway": "10.15.21.1",
+    "netmask": "255.255.224.0",
+    "externalIp1": "10.15.21.10",
+    "externalIp2": "10.15.21.11",
+    "dns1": "10.15.21.101",
+    "dns2": "8.8.4.4",
+
+    "// external network": "may be different from the one defined for testing",
+    "externalNetworkPortGroup": "network_name_from_vcenter",
+    "externalNetworkPortGroupType": "NETWORK",
+
+    "// storage profile": "leave the storage profile empty to skip its usage",
+    "storageProfile2": "Development",
+
+    "// media": "media names can be different from the ones used for testing",
+    "MediaName": "test_media",
+    "ovaPath": "/home/username/vm/photon-hw11-3.0-26156e2.ova",
+    "media_path":  "/home/username/vm/test.iso",
+
+    "// networks": "Leave the network names empty to skip their creation",
+    "routedNetwork": "routednetname",
+    "isolatedNetwork": "isolatednetname",
+    "directNetwork": "directnetname"
+  },
   "envVariables" : {
     "//" : "Environment variables that we want the test to set (or unset)",
     "GOVCD_DEBUG": "",

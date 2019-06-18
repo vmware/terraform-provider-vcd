@@ -54,6 +54,8 @@ func TestCustomTemplates(t *testing.T) {
 			binaryTestList = append(binaryTestList, fileInfo.Name())
 		}
 	}
+
+	buildEnvFile := "full-env"
 	var params = StringMap{
 		"Org":                          testConfig.VCD.Org,
 		"Vdc":                          testConfig.VCD.Vdc,
@@ -94,10 +96,25 @@ func TestCustomTemplates(t *testing.T) {
 		"Tags":                         "custom",
 		"Prefix":                       "cust",
 		"CallerFileName":               "",
+		// The following properties are used to create a full environment
+		"MainGateway":     testConfig.EnvBuild.Gateway,
+		"MainNetmask":     testConfig.EnvBuild.Netmask,
+		"MainDns1":        testConfig.EnvBuild.Dns1,
+		"MainDns2":        testConfig.EnvBuild.Dns2,
+		"MediaTestName":   testConfig.EnvBuild.MediaName,
+		"StorageProfile2": testConfig.EnvBuild.StorageProfile2,
+		"ExternalIp1":     testConfig.EnvBuild.ExternalIp1,
+		"ExternalIp2":     testConfig.EnvBuild.ExternalIp2,
+		"RoutedNetwork":   testConfig.EnvBuild.RoutedNetwork,
+		"IsolatedNetwork": testConfig.EnvBuild.IsolatedNetwork,
+		"DirectNetwork":   testConfig.EnvBuild.DirectNetwork,
 	}
+
 	for _, fileName := range binaryTestList {
 
 		baseName := strings.Replace(path.Base(fileName), ".tf", "", -1)
+
+		usingBuildFile := baseName == buildEnvFile
 
 		targetScript := path.Join(testArtifactsDirectory, params["Prefix"].(string)+"."+baseName+".tf")
 		// It the target file exists, we remove it, as we need a fresh one to be generated
@@ -129,6 +146,72 @@ func TestCustomTemplates(t *testing.T) {
 		setEnvValues()
 		params["CallerFileName"] = sourceFile
 
+		if usingBuildFile {
+			extraPieces := map[string]string{
+				"Routed":   buildEnvRoutedNetwork,
+				"Isolated": buildEnvIsolatedNetwork,
+				"Direct":   buildEnvDirectNetwork,
+			}
+			// If any of the optional network names are filled,
+			// the corresponding creation template is added
+			// to the main one
+			for key, value := range extraPieces {
+				_, ok := params[key+"Network"]
+				if ok {
+					templateText = fmt.Sprintf("%s\n%s", templateText, value)
+				}
+			}
+
+			// If a second storage profile was defined, we add the corresponding
+			// text inside the VDC definition
+			secondStorageProfileText := ""
+			secondStorageParam, ok := params["StorageProfile2"]
+			if ok && secondStorageParam != "" {
+				secondStorageProfileText = secondStorageProfile
+			}
+			reSecondStorage := regexp.MustCompile(`#_SECOND_STORAGE_PROFILE_`)
+			templateText = reSecondStorage.ReplaceAllString(templateText, secondStorageProfileText)
+
+			// For some items, we want a different value for testing and for building
+			// For example, the Ova for testing might be a tiny one, while the one for
+			// building the environment would be a beefier one, which can also run the
+			// VMware tools.
+			if testConfig.EnvBuild.ExternalIp1 == "" {
+				params["ExternalIp1"] = testConfig.Networking.ExternalIp
+				if testConfig.EnvBuild.ExternalIp2 == "" {
+					params["ExternalIp2"] = testConfig.Networking.ExternalIp
+				}
+			}
+			if testConfig.EnvBuild.MediaPath != "" {
+				params["MediaPath"] = testConfig.EnvBuild.MediaPath
+			}
+			if testConfig.EnvBuild.OvaPath != "" {
+				params["OvaPath"] = testConfig.EnvBuild.OvaPath
+			}
+			if testConfig.EnvBuild.ExternalNetworkPortGroupType != "" {
+				params["ExternalNetworkPortGroupType"] = testConfig.EnvBuild.ExternalNetworkPortGroupType
+			}
+			if testConfig.EnvBuild.ExternalNetworkPortGroup != "" {
+				params["ExternalNetworkPortGroup"] = testConfig.EnvBuild.ExternalNetworkPortGroup
+			}
+			essentialData := []string{"MainGateway", "MainNetmask", "MainDns1", "ExternalIP1", "ExternalIP2"}
+			for _, essentialItem := range essentialData {
+				_, ok := params[essentialItem]
+				if ok {
+					// By deleting the empty item, we will make sure that the
+					// filled script will contain a warning
+					if params[essentialItem] == "" {
+						delete(params, essentialItem)
+					}
+				}
+			}
+		} else {
+			params["MediaPath"] = testConfig.Media.MediaPath
+			params["OvaPath"] = testConfig.Ova.OvaPath
+			params["ExternalNetworkPortGroupType"] = testConfig.Networking.ExternalNetworkPortGroupType
+			params["ExternalNetworkPortGroup"] = testConfig.Networking.ExternalNetworkPortGroup
+		}
+
 		// We create the configuration text only for the side effect of it being
 		// written to the test-artifacts folder
 		configText := templateFill(templateText, params)
@@ -146,3 +229,52 @@ func TestCustomTemplates(t *testing.T) {
 func init() {
 	testingTags["binary"] = "terraform_binary_test.go"
 }
+
+// Optional elements used for build environment
+
+const buildEnvRoutedNetwork = `
+resource "vcd_network_routed" "{{.RoutedNetwork}}" {
+  name         = "{{.RoutedNetwork}}"
+  org          = "${vcd_org.{{.Org}}.name}"
+  vdc          = "${vcd_org_vdc.{{.Vdc}}.name}"
+  edge_gateway = "${vcd_edgegateway.{{.EdgeGateway}}.name}"
+  gateway      = "192.168.2.1"
+
+  static_ip_pool {
+    start_address = "192.168.2.2"
+    end_address   = "192.168.2.100"
+  }
+}
+`
+
+const buildEnvIsolatedNetwork = `
+resource "vcd_network_isolated" "{{.IsolatedNetwork}}" {
+  name    = "{{.IsolatedNetwork}}"
+  org     = "${vcd_org.{{.Org}}.name}"
+  vdc     = "${vcd_org_vdc.{{.Vdc}}.name}"
+  gateway = "192.168.3.1"
+
+  static_ip_pool {
+    start_address = "192.168.3.2"
+    end_address   = "192.168.3.100"
+  }
+}
+`
+
+const buildEnvDirectNetwork = `
+resource "vcd_network_direct" "{{.DirectNetwork}}" {
+  name             = "{{.DirectNetwork}}"
+  org              = "${vcd_org.{{.Org}}.name}"
+  vdc              = "${vcd_org_vdc.{{.Vdc}}.name}"
+  external_network = "{{.ExternalNetwork}}"
+}
+`
+
+const secondStorageProfile = `
+  storage_profile {
+    name    = "{{.StorageProfile2}}"
+    enabled = true
+    limit   = 0
+    default = false
+  }
+`

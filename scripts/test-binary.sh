@@ -7,6 +7,26 @@ cd -
 pause_file=$runtime_dir/pause
 dash_line="# ---------------------------------------------------------"
 
+# env script will only run if explicitly called.
+env_script=cust.full-env.tf
+building_env=no
+skipping_items=($env_script)
+
+function remove_item_from_skipping {
+    item=$1
+    new_array=()
+    count=0
+    for N in ${skipping_items[*]}
+    do
+        if [ "$N" != "$item" ]
+        then
+            new_array[$count]=$N
+            count=$((count+1))
+        fi
+    done
+    skipping_items=$new_array
+}
+
 function get_help {
     echo "Syntax: $(basename $0) [options]"
     echo "Where options are one or more of the following:"
@@ -15,6 +35,7 @@ function get_help {
     echo "  c | clear              Clears list of run files"
     echo "  p | pause              Pause after each stage"
     echo "  n | names 'names list' List of file names to test [QUOTES NEEDED]"
+    echo "  n | env-build          Build the environment in a new vCD"
     echo "  d | dry                Dry-run: show commands without executing them"
     echo "  v | verbose            Gives more info"
     echo ""
@@ -81,6 +102,11 @@ do
             echo "option 'names' requires an argument"
             exit 1
         fi
+        ;;
+    env-build)
+        remove_item_from_skipping $env_script
+        building_env=yes
+        test_names="$env_script" 
         ;;
     v|verbose)
         export VERBOSE=1
@@ -167,8 +193,21 @@ fi
 
 for CF in $test_names
 do
+    unset will_skip
+    for skip_file in ${skipping_items[*]}
+    do
+        if [  "$CF" == "$skip_file" ]
+        then
+            will_skip=1
+        fi
+    done
+    if [ -n "$will_skip" ]
+    then
+        continue
+    fi
     is_provider=$(grep '^\s*provider' $CF)
     is_resource=$(grep '^\s*resource' $CF)
+    has_missing_fields=$(grep '"\*\*\* MISSING FIELD' $CF)
     if [ -z "$is_resource" ]
     then
         echo_verbose "$CF not a resource"
@@ -177,6 +216,13 @@ do
     if [ -z "$is_provider" ]
     then
         echo_verbose "$CF does not contain a provider"
+        continue
+    fi
+    if [ -n "$has_missing_fields" ]
+    then
+        echo_verbose "# $dash_line"
+        echo_verbose "# Missing fields in $CF"
+        echo_verbose "# $dash_line"
         continue
     fi
     init_options=$(grep '^# init-options' $CF | sed -e 's/# init-options //')
@@ -231,7 +277,12 @@ do
     run terraform init $init_options
     run terraform plan $plan_options
     run terraform apply -auto-approve $apply_options
-    run terraform destroy -auto-approve $destroy_options
+    if [ "$building_env" == "yes" ]
+    then
+        echo "# Skipping destroy phase for 'env-build'"
+    else
+        run terraform destroy -auto-approve $destroy_options
+    fi
     cd ..
 done
 

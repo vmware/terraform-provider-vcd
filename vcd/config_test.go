@@ -93,6 +93,24 @@ type TestConfig struct {
 		UploadPieceSize int64  `json:"uploadPieceSize,omitempty"`
 		UploadProgress  bool   `json:"uploadProgress,omitempty"`
 	} `json:"media"`
+	// Data used to create a new environment, in addition to the regular test configuration file
+	EnvBuild struct {
+		Gateway                      string `json:"gateway"`                      // Gateway for external network
+		Netmask                      string `json:"netmask"`                      // Netmask for external network
+		ExternalIp1                  string `json:"externalIp1"`                  // Start IP for external network
+		ExternalIp2                  string `json:"externalIp2"`                  // End IP for external network
+		Dns1                         string `json:"dns1"`                         // DNS 1 for external network
+		Dns2                         string `json:"dns2"`                         // DNS 2 for external network
+		ExternalNetworkPortGroup     string `json:"externalNetworkPortGroup"`     // port group, if different from Networking.ExternalNetworkPortGroup
+		ExternalNetworkPortGroupType string `json:"externalNetworkPortGroupType"` // port group type, if different from Networking.ExternalNetworkPortGroupType
+		StorageProfile2              string `json:"storageProfile2"`              // Second storage profile for VDC
+		RoutedNetwork                string `json:"routedNetwork"`                // optional routed network name to create
+		IsolatedNetwork              string `json:"isolatedNetwork"`              // optional isolated network name to create
+		DirectNetwork                string `json:"directNetwork"`                // optional direct network name to create
+		MediaPath                    string `json:"mediaPath"`                    // Media path, if different from Media.MediaPath
+		MediaName                    string `json:"mediaName"`                    // Media name to create
+		OvaPath                      string `json:"ovaPath"`                      // Ova Path, if different from Ova.OvaPath
+	} `json:"envBuild"`
 	EnvVariables map[string]string `json:"envVariables,omitempty"`
 }
 
@@ -152,6 +170,25 @@ func usingSysAdmin() bool {
 	return strings.ToLower(testConfig.Provider.SysOrg) == "system"
 }
 
+// Gets a list of all variables mentioned in a template
+func GetVarsFromTemplate(tmpl string) []string {
+	var varList []string
+
+	// Regular expression to match a template variable
+	// Two opening braces       {{
+	// one dot                  \.
+	// non-closing-brace chars  [^}]+
+	// Two closing braces       }}
+	reTemplateVar := regexp.MustCompile(`{{\.([^{]+)}}`)
+	captureList := reTemplateVar.FindAllStringSubmatch(tmpl, -1)
+	if len(captureList) > 0 {
+		for _, capture := range captureList {
+			varList = append(varList, capture[1])
+		}
+	}
+	return varList
+}
+
 // Fills a template with data provided as a StringMap
 // Returns the text of a ready-to-use Terraform directive.
 // It also saves the filled template to a file, for further troubleshooting.
@@ -164,7 +201,18 @@ func templateFill(tmpl string, data StringMap) string {
 	caller = filepath.Base(caller)
 
 	_, callerFileName, _, _ := runtime.Caller(1)
-
+	// First, we get all variables in the pattern {{.VarName}}
+	varList := GetVarsFromTemplate(tmpl)
+	if len(varList) > 0 {
+		for _, capture := range varList {
+			// For each variable in the template text, we look whether it is
+			// in the map
+			_, ok := data[capture]
+			if !ok {
+				data[capture] = fmt.Sprintf("*** MISSING FIELD [%s] from func %s", capture, caller)
+			}
+		}
+	}
 	prefix := "vcd"
 	_, ok := data["Prefix"]
 
