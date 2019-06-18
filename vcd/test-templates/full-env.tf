@@ -17,8 +17,8 @@ resource "vcd_external_network" "{{.ExternalNetwork}}" {
     dns_suffix = "{{.Org}}.org"
 
     static_ip_pool {
-      start_address = "{{.ExternalIp1}}"
-      end_address   = "{{.ExternalIp2}}"
+      start_address = "{{.ExternalNetworkStaticStartIp}}"
+      end_address   = "{{.ExternalNetworkStaticEndIp}}"
     }
   }
   retain_net_info_across_deployments = "false"

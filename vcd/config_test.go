@@ -97,8 +97,8 @@ type TestConfig struct {
 	TestEnvBuild struct {
 		Gateway                      string `json:"gateway"`                      // Gateway for external network
 		Netmask                      string `json:"netmask"`                      // Netmask for external network
-		ExtNetworkStaticStartIp      string `json:"extNetStartIp"`                // Start IP for external network
-		ExtNetworkStaticEndIp        string `json:"extNetEndIp"`                  // End IP for external network
+		ExternalNetworkStaticStartIp string `json:"externalNetworkStaticStartIp"` // Start IP for external network
+		ExternalNetworkStaticEndIp   string `json:"externalNetworkStaticEndIp"`   // End IP for external network
 		Dns1                         string `json:"dns1"`                         // DNS 1 for external network
 		Dns2                         string `json:"dns2"`                         // DNS 2 for external network
 		ExternalNetworkPortGroup     string `json:"externalNetworkPortGroup"`     // port group, if different from Networking.ExternalNetworkPortGroup
