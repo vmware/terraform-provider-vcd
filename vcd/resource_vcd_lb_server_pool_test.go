@@ -16,10 +16,6 @@ import (
 )
 
 func TestAccVcdLbServerPool(t *testing.T) {
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                testConfig.VCD.Org,
@@ -36,11 +32,16 @@ func TestAccVcdLbServerPool(t *testing.T) {
 
 	configText := templateFill(testAccVcdLbServerPool_Basic, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
-	//
+
 	params["FuncName"] = t.Name() + "-step1"
 	params["EnableTransparency"] = true
 	configTextStep1 := templateFill(testAccVcdLbServerPool_Basic, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configTextStep1)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 
 	resource.Test(t, resource.TestCase{
 		Providers:    testAccProviders,
@@ -98,8 +99,6 @@ func TestAccVcdLbServerPool(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.3.weight", "6"),
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.3.min_connections", "0"),
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.3.max_connections", "0"),
-					//resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "type", "http"),
-					// Data source testing - it must expose all fields which resource has
 				),
 			},
 			resource.TestStep{
@@ -223,7 +222,7 @@ func testAccCheckVcdLbServerPoolDestroy(serverPoolName string) resource.TestChec
 		}
 
 		monitor, err := edgeGateway.ReadLBServerPool(&types.LBPool{Name: serverPoolName})
-		if !strings.Contains(err.Error(), "could not find load balancer pool") || monitor != nil {
+		if !strings.Contains(err.Error(), "could not find load balancer server pool") || monitor != nil {
 			return fmt.Errorf("load balancer server pool was not deleted: %s", err)
 		}
 		return nil

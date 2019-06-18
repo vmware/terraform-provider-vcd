@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
@@ -24,17 +23,19 @@ func resourceVcdLBServerPool() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
+				Description: "vCD organization in which the Service Monitor is located",
 			},
 			"org": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
+				Description: "vCD virtual datacenter in which the Service Monitor is located",
 			},
 			"edge_gateway": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Edge gateway name",
+				Description: "Edge gateway name in which the Server Pool is located",
 			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
@@ -51,8 +52,8 @@ func resourceVcdLBServerPool() *schema.Resource {
 			"algorithm": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validation.StringInSlice([]string{"round-robin", "ip-hash", "leastconn", "uri", "httpheader", "url"}, false),
-				Description:  "Load balancing algorithm",
+				Description:  "Balancing method for the service",
+				ValidateFunc: validateCase("lower"),
 			},
 			"algorithm_parameters": {
 				Type:        schema.TypeMap,
@@ -68,14 +69,13 @@ func resourceVcdLBServerPool() *schema.Resource {
 				Type:        schema.TypeBool,
 				Default:     false,
 				Optional:    true,
-				Description: "Client IP addresses are visible to the backend servers when enabled",
+				Description: "Makes client IP addresses visible to the backend servers",
 			},
 
 			"member": {
 				Optional: true,
 				ForceNew: false,
 				Type:     schema.TypeList,
-				//Set:      lbServerPoolMemberHash,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
@@ -88,11 +88,10 @@ func resourceVcdLBServerPool() *schema.Resource {
 							Type:         schema.TypeString,
 							ForceNew:     false,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice([]string{"enabled", "drain", "disabled"}, false),
-							Description:  "Defines member state",
+							ValidateFunc: validateCase("lower"),
+							Description:  "Defines member state. One of enabled, drain, disabled.",
 						},
 						"name": {
-							//ForceNew:    true,
 							Required:    true,
 							ForceNew:    false,
 							Type:        schema.TypeString,
@@ -102,31 +101,38 @@ func resourceVcdLBServerPool() *schema.Resource {
 							Optional: true,
 							ForceNew: false,
 							Type:     schema.TypeString,
+							Description: "IP address of member in server pool",
 						},
 						"port": {
 							Required: true,
 							ForceNew: false,
 							Type:     schema.TypeInt,
+							Description: "Port at which the member is to receive traffic from the load balancer",
 						},
 						"monitor_port": {
 							Required: true,
 							ForceNew: false,
 							Type:     schema.TypeInt,
+							Description: "Port at which the member is to receive health monitor requests",
 						},
 						"weight": {
 							Required: true,
 							ForceNew: false,
 							Type:     schema.TypeInt,
+							Description: "Proportion of traffic this member is to handle. Must be an integer in the range 1-256",
 						},
 						"min_connections": {
 							Optional: true,
 							ForceNew: false,
 							Type:     schema.TypeInt,
+							Description: "Minimum number of concurrent connections a member must always accept",
 						},
 						"max_connections": {
 							Optional: true,
 							ForceNew: false,
 							Type:     schema.TypeInt,
+							Description: "The maximum number of concurrent connections the member can handle. If exceeded" +
+								"requests are queued and the load balancer waits for a connection to be released",
 						},
 					},
 				},
@@ -155,16 +161,17 @@ func resourceVcdLBServerPoolCreate(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("error creating new load balancer server pool: %s", err)
 	}
 
-	// We store the values once again because response include pool member IDs
-	setLBPoolData(d, createdPool)
+	// We store the values once again because response includes pool member IDs
+	err = setLBPoolData(d, createdPool)
+	if err != nil {
+		return err
+	}
 	d.SetId(createdPool.ID)
 	return nil
 }
 
 func resourceVcdLBServerPoolRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-	vcdClient.lockParentEdgeGtw(d)
-	defer vcdClient.unLockParentEdgeGtw(d)
 
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {
@@ -200,22 +207,19 @@ func resourceVcdLBServerPoolUpdate(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("unable to update load balancer server pool with ID %s: %s", d.Id(), err)
 	}
 
-	if err := setLBPoolData(d, updatedLBPool); err != nil {
-		return err
-	}
-
-	return nil
+	return setLBPoolData(d, updatedLBPool)
 }
 
 func resourceVcdLBServerPoolDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
+	vcdClient.lockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
+
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	//tempLock.Lock()
-	//defer tempLock.Unlock()
 	err = edgeGateway.DeleteLBServerPool(&types.LBPool{ID: d.Id()})
 	if err != nil {
 		return fmt.Errorf("error deleting load balancer server pool: %s", err)
@@ -228,7 +232,7 @@ func resourceVcdLBServerPoolDelete(d *schema.ResourceData, meta interface{}) err
 func resourceVcdLBServerPoolImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ".")
 	if len(resourceURI) != 4 {
-		return nil, fmt.Errorf("resource name must be specified in such way my-org.my-org-vdc.my-edge-gw.existing-server-pool")
+		return nil, fmt.Errorf("resource name must be specified as org.VDC.edge-gw.lb-server-pool")
 	}
 	orgName, vdcName, edgeName, poolName := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
 
@@ -252,6 +256,8 @@ func resourceVcdLBServerPoolImport(d *schema.ResourceData, meta interface{}) ([]
 	return []*schema.ResourceData{d}, nil
 }
 
+// getLBPoolType converts schema.ResourceData to *types.LBPool and is useful
+// for creating API requests
 func getLBPoolType(d *schema.ResourceData) (*types.LBPool, error) {
 	lbPool := &types.LBPool{
 		Name:                d.Get("name").(string),
@@ -259,7 +265,7 @@ func getLBPoolType(d *schema.ResourceData) (*types.LBPool, error) {
 		Algorithm:           d.Get("algorithm").(string),
 		MonitorId:           d.Get("monitor_id").(string),
 		Transparent:         d.Get("enable_transparency").(bool),
-		AlgorithmParameters: getLBPoolAlgorithmType(d),
+		AlgorithmParameters: getLBPoolAlgorithmParameters(d),
 	}
 
 	members, err := getLBPoolMembersType(d)
@@ -271,6 +277,8 @@ func getLBPoolType(d *schema.ResourceData) (*types.LBPool, error) {
 	return lbPool, nil
 }
 
+// getLBPoolMembersType converts schema.ResourceData to *types.LBPoolMembers and is useful
+// for creating API requests
 func getLBPoolMembersType(d *schema.ResourceData) (types.LBPoolMembers, error) {
 	var lbPoolMembers types.LBPoolMembers
 
@@ -300,7 +308,11 @@ func getLBPoolMembersType(d *schema.ResourceData) (types.LBPoolMembers, error) {
 	return lbPoolMembers, nil
 }
 
-func getLBPoolAlgorithmType(d *schema.ResourceData) string {
+// getLBPoolAlgorithmParameters converts schema.ResourceData to a string formatted for
+// making API requests
+// Example API call string for AlgorithmType field:
+// <AlgorithmParameters>headerName=<name></AlgorithmParameters>
+func getLBPoolAlgorithmParameters(d *schema.ResourceData) string {
 	var extensionString string
 	extension := d.Get("algorithm_parameters").(map[string]interface{})
 	for k, v := range extension {
@@ -313,6 +325,7 @@ func getLBPoolAlgorithmType(d *schema.ResourceData) string {
 	return extensionString
 }
 
+// setLBPoolData sets object state from *types.LBPool
 func setLBPoolData(d *schema.ResourceData, lBpool *types.LBPool) error {
 	d.Set("name", lBpool.Name)
 	d.Set("description", lBpool.Description)
@@ -321,7 +334,7 @@ func setLBPoolData(d *schema.ResourceData, lBpool *types.LBPool) error {
 	d.Set("monitor_id", lBpool.MonitorId)
 	d.Set("enable_transparency", lBpool.Transparent)
 
-	err := setLBPoolAlgorithmData(d, lBpool)
+	err := setLBPoolAlgorithmParametersData(d, lBpool)
 	if err != nil {
 		return err
 	}
@@ -333,6 +346,7 @@ func setLBPoolData(d *schema.ResourceData, lBpool *types.LBPool) error {
 	return nil
 }
 
+// setLBPoolMembersData sets pool members state from *types.LBPoolMembers
 func setLBPoolMembersData(d *schema.ResourceData, lBpoolMembers types.LBPoolMembers) error {
 
 	memberSet := make([]map[string]interface{}, len(lBpoolMembers))
@@ -357,7 +371,8 @@ func setLBPoolMembersData(d *schema.ResourceData, lBpoolMembers types.LBPoolMemb
 	return nil
 }
 
-func setLBPoolAlgorithmData(d *schema.ResourceData, lBPool *types.LBPool) error {
+// setLBPoolAlgorithmParametersData sets algorithm parameters state from *types.LBPool
+func setLBPoolAlgorithmParametersData(d *schema.ResourceData, lBPool *types.LBPool) error {
 	extensionStorage := make(map[string]string)
 
 	if lBPool.AlgorithmParameters != "" {
