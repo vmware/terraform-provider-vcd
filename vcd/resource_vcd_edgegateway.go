@@ -46,7 +46,7 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: `Configuration of the vShield edge VM for this gateway. One of: compact, full, full4 ("Quad Large"), x-large`,
+				Description: `Configuration of the vShield edge VM for this gateway. One of: compact, full ("Large"), full4 ("Quad Large"), x-large`,
 			},
 			"ha_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
