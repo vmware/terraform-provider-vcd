@@ -12,12 +12,7 @@ Provides a vCloud Director Edge Gateway Load Balancer Server Pool data source. A
 a group of backend servers (defined as pool members), manages load balancer distribution methods, and has a service 
 monitor attached to it for health check parameters.
 
-~> **Note:** To make load balancing work one must ensure that load balancing is enabled on edge gateway. This depends 
-on NSX version to work properly. Please refer to [VMware Product Interoperability Matrices](https://www.vmware.com/resources/compatibility/sim/interop_matrix.php#interop&29=&93=) 
-to check supported vCloud director and NSX for vSphere configurations.
-
-~> **Note:** The vCloud Director API for NSX supports a subset of the operations and objects defined in the NSX vSphere 
-API Guide. The API supports NSX 6.2, 6.3, and 6.4.
+~> **Note:** See additional support notes in [server pool resource page](/docs/providers/vcd/r/lb_server_pool.html).
 
 Supported in provider *v2.4+*
 

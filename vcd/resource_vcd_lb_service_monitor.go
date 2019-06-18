@@ -20,15 +20,15 @@ func resourceVcdLbServiceMonitor() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"org": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
 				Description: "vCD organization in which the Service Monitor is located",
 			},
 			"vdc": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
 				Description: "vCD virtual datacenter in which the Service Monitor is located",
 			},
 			"edge_gateway": &schema.Schema{

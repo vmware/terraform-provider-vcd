@@ -20,15 +20,15 @@ func resourceVcdLBServerPool() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"vdc": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
 				Description: "vCD organization in which the Service Monitor is located",
 			},
 			"org": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
 				Description: "vCD virtual datacenter in which the Service Monitor is located",
 			},
 			"edge_gateway": &schema.Schema{
@@ -98,33 +98,33 @@ func resourceVcdLBServerPool() *schema.Resource {
 							Description: "Name of pool member",
 						},
 						"ip_address": {
-							Optional: true,
-							ForceNew: false,
-							Type:     schema.TypeString,
+							Optional:    true,
+							ForceNew:    false,
+							Type:        schema.TypeString,
 							Description: "IP address of member in server pool",
 						},
 						"port": {
-							Required: true,
-							ForceNew: false,
-							Type:     schema.TypeInt,
+							Required:    true,
+							ForceNew:    false,
+							Type:        schema.TypeInt,
 							Description: "Port at which the member is to receive traffic from the load balancer",
 						},
 						"monitor_port": {
-							Required: true,
-							ForceNew: false,
-							Type:     schema.TypeInt,
+							Required:    true,
+							ForceNew:    false,
+							Type:        schema.TypeInt,
 							Description: "Port at which the member is to receive health monitor requests",
 						},
 						"weight": {
-							Required: true,
-							ForceNew: false,
-							Type:     schema.TypeInt,
+							Required:    true,
+							ForceNew:    false,
+							Type:        schema.TypeInt,
 							Description: "Proportion of traffic this member is to handle. Must be an integer in the range 1-256",
 						},
 						"min_connections": {
-							Optional: true,
-							ForceNew: false,
-							Type:     schema.TypeInt,
+							Optional:    true,
+							ForceNew:    false,
+							Type:        schema.TypeInt,
 							Description: "Minimum number of concurrent connections a member must always accept",
 						},
 						"max_connections": {
@@ -162,8 +162,7 @@ func resourceVcdLBServerPoolCreate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	// We store the values once again because response includes pool member IDs
-	err = setLBPoolData(d, createdPool)
-	if err != nil {
+	if err := setLBPoolData(d, createdPool); err != nil {
 		return err
 	}
 	d.SetId(createdPool.ID)
@@ -311,18 +310,18 @@ func getLBPoolMembersType(d *schema.ResourceData) (types.LBPoolMembers, error) {
 // getLBPoolAlgorithmParameters converts schema.ResourceData to a string formatted for
 // making API requests
 // Example API call string for AlgorithmType field:
-// <AlgorithmParameters>headerName=<name></AlgorithmParameters>
+// <algorithmParameters>headerName=<name></algorithmParameters>
 func getLBPoolAlgorithmParameters(d *schema.ResourceData) string {
-	var extensionString string
+	var algorithmParameters string
 	extension := d.Get("algorithm_parameters").(map[string]interface{})
 	for k, v := range extension {
 		if k != "" && v != "" { // When key and value are given it must look like "content-type=STRING"
-			extensionString += k + "=" + v.(string) + "\n"
+			algorithmParameters += k + "=" + v.(string) + "\n"
 		} else { // If only key is specified it does not need equals sign. Like "no-body" extension
-			extensionString += k + "\n"
+			algorithmParameters += k + "\n"
 		}
 	}
-	return extensionString
+	return algorithmParameters
 }
 
 // setLBPoolData sets object state from *types.LBPool
@@ -373,7 +372,7 @@ func setLBPoolMembersData(d *schema.ResourceData, lBpoolMembers types.LBPoolMemb
 
 // setLBPoolAlgorithmParametersData sets algorithm parameters state from *types.LBPool
 func setLBPoolAlgorithmParametersData(d *schema.ResourceData, lBPool *types.LBPool) error {
-	extensionStorage := make(map[string]string)
+	algorithmParameters := make(map[string]string)
 
 	if lBPool.AlgorithmParameters != "" {
 		kvList := strings.Split(lBPool.AlgorithmParameters, "\n")
@@ -389,16 +388,16 @@ func setLBPoolAlgorithmParametersData(d *schema.ResourceData, lBPool *types.LBPo
 				if len(keyValue) != 2 {
 					return fmt.Errorf("unable to flatten extension field %s", algorithmLine)
 				}
-				// Populate extension data with key value
-				extensionStorage[keyValue[0]] = keyValue[1]
+				// Populate algorithm parameters data with key value
+				algorithmParameters[keyValue[0]] = keyValue[1]
 				// If there was no "=" sign then it means whole line is just key. Like `no-body`, `linespan`
 			} else {
-				extensionStorage[algorithmLine] = ""
+				algorithmParameters[algorithmLine] = ""
 			}
 		}
 
 	}
 
-	d.Set("algorithm_parameters", extensionStorage)
+	d.Set("algorithm_parameters", algorithmParameters)
 	return nil
 }

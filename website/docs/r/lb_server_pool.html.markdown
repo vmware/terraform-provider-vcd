@@ -32,15 +32,14 @@ provider "vcd" {
   url      = "https://AcmeVcd/api"
 }
 
-resource "vcd_lb_server_pool" "server-pool" {
+resource "vcd_lb_server_pool" "web-servers" {
   org                 = "my-org"
   vdc                 = "my-org-vdc"
   edge_gateway        = "my-edge-gw"
 
-  name                = "{{.ServerPoolName}}"
+  name                = "web-servers"
   description         = "description"
   algorithm           = "round-robin"
-  enable_transparency = "{{.EnableTransparency}}"
 
   monitor_id = "${vcd_lb_service_monitor.lb-service-monitor.id}"
 
@@ -115,14 +114,17 @@ Additionally each of members defined in blocks expose their own `id` fields as w
 
 ## Importing
 
-An existing load balancer service monitor can be [imported][docs-import] into this resource
+~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
+configuration. [More information.](https://www.terraform.io/docs/import/)
+
+An existing load balancer server pool can be [imported][docs-import] into this resource
 via supplying the full dot separated path for load balancer service monitor. An example is below:
 
 [docs-import]: /docs/import/index.html
 
 ```
-terraform import vcd_lb_server_pool.imported my-org.my-org-vdc.my-edge-gw.existing-server-pool
+terraform import vcd_lb_server_pool.imported my-org.my-org-vdc.my-edge-gw.my-lb-server-pool
 ```
 
-The above would import the server pool named `existing-server-pool` that is defined on edge gateway
+The above would import the server pool named `my-lb-server-pool` that is defined on edge gateway
 `my-edge-gw` which is configured in organization named `my-org` and vDC named `my-org-vdc`.

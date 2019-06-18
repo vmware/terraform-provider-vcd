@@ -12,22 +12,27 @@ func datasourceVcdLbServerPool() *schema.Resource {
 		Read: datasourceVcdLbServerPoolRead,
 		Schema: map[string]*schema.Schema{
 			"vdc": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "vCD organization in which the Service Monitor is located",
 			},
 			"org": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "vCD virtual datacenter in which the Service Monitor is located",
 			},
 			"edge_gateway": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Edge gateway name",
+				ForceNew:    true,
+				Description: "Edge gateway name in which the Server Pool is located",
 			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Service Monitor name",
+				Description: "Existing Server Pool name",
 			},
 
 			"description": &schema.Schema{
@@ -54,7 +59,6 @@ func datasourceVcdLbServerPool() *schema.Resource {
 			"member": {
 				Computed: true,
 				Type:     schema.TypeList,
-				//Set:      lbServerPoolMemberHash,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"id": {
@@ -109,7 +113,8 @@ func datasourceVcdLbServerPoolRead(d *schema.ResourceData, meta interface{}) err
 
 	readLBPool, err := edgeGateway.ReadLBServerPool(&types.LBPool{Name: d.Get("name").(string)})
 	if err != nil {
-		return fmt.Errorf("unable to find load balancer server poolwith Name %s: %s", d.Get("name").(string), err)
+		return fmt.Errorf("unable to find load balancer server pool with Name %s: %s",
+			d.Get("name").(string), err)
 	}
 
 	d.SetId(readLBPool.ID)

@@ -283,9 +283,6 @@ resource "vcd_lb_server_pool" "server-pool" {
     monitor_port = 4444
     weight = 6
   }
-
-  // Because of non existent locking
-  # depends_on = ["vcd_lb_service_monitor.lb-service-monitor"]
 }
 
 data "vcd_lb_server_pool" "ds-lb-server-pool" {
