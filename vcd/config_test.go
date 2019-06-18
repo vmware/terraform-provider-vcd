@@ -94,11 +94,11 @@ type TestConfig struct {
 		UploadProgress  bool   `json:"uploadProgress,omitempty"`
 	} `json:"media"`
 	// Data used to create a new environment, in addition to the regular test configuration file
-	EnvBuild struct {
+	TestEnvBuild struct {
 		Gateway                      string `json:"gateway"`                      // Gateway for external network
 		Netmask                      string `json:"netmask"`                      // Netmask for external network
-		ExternalIp1                  string `json:"externalIp1"`                  // Start IP for external network
-		ExternalIp2                  string `json:"externalIp2"`                  // End IP for external network
+		ExtNetworkStaticStartIp      string `json:"extNetStartIp"`                // Start IP for external network
+		ExtNetworkStaticEndIp        string `json:"extNetEndIp"`                  // End IP for external network
 		Dns1                         string `json:"dns1"`                         // DNS 1 for external network
 		Dns2                         string `json:"dns2"`                         // DNS 2 for external network
 		ExternalNetworkPortGroup     string `json:"externalNetworkPortGroup"`     // port group, if different from Networking.ExternalNetworkPortGroup
@@ -110,7 +110,7 @@ type TestConfig struct {
 		MediaPath                    string `json:"mediaPath"`                    // Media path, if different from Media.MediaPath
 		MediaName                    string `json:"mediaName"`                    // Media name to create
 		OvaPath                      string `json:"ovaPath"`                      // Ova Path, if different from Ova.OvaPath
-	} `json:"envBuild"`
+	} `json:"testEnvBuild"`
 	EnvVariables map[string]string `json:"envVariables,omitempty"`
 }
 

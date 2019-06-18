@@ -97,17 +97,17 @@ func TestCustomTemplates(t *testing.T) {
 		"Prefix":                       "cust",
 		"CallerFileName":               "",
 		// The following properties are used to create a full environment
-		"MainGateway":     testConfig.EnvBuild.Gateway,
-		"MainNetmask":     testConfig.EnvBuild.Netmask,
-		"MainDns1":        testConfig.EnvBuild.Dns1,
-		"MainDns2":        testConfig.EnvBuild.Dns2,
-		"MediaTestName":   testConfig.EnvBuild.MediaName,
-		"StorageProfile2": testConfig.EnvBuild.StorageProfile2,
-		"ExternalIp1":     testConfig.EnvBuild.ExternalIp1,
-		"ExternalIp2":     testConfig.EnvBuild.ExternalIp2,
-		"RoutedNetwork":   testConfig.EnvBuild.RoutedNetwork,
-		"IsolatedNetwork": testConfig.EnvBuild.IsolatedNetwork,
-		"DirectNetwork":   testConfig.EnvBuild.DirectNetwork,
+		"MainGateway":     testConfig.TestEnvBuild.Gateway,
+		"MainNetmask":     testConfig.TestEnvBuild.Netmask,
+		"MainDns1":        testConfig.TestEnvBuild.Dns1,
+		"MainDns2":        testConfig.TestEnvBuild.Dns2,
+		"MediaTestName":   testConfig.TestEnvBuild.MediaName,
+		"StorageProfile2": testConfig.TestEnvBuild.StorageProfile2,
+		"ExternalIp1":     testConfig.TestEnvBuild.ExtNetworkStaticStartIp,
+		"ExternalIp2":     testConfig.TestEnvBuild.ExtNetworkStaticEndIp,
+		"RoutedNetwork":   testConfig.TestEnvBuild.RoutedNetwork,
+		"IsolatedNetwork": testConfig.TestEnvBuild.IsolatedNetwork,
+		"DirectNetwork":   testConfig.TestEnvBuild.DirectNetwork,
 	}
 
 	for _, fileName := range binaryTestList {
@@ -176,23 +176,23 @@ func TestCustomTemplates(t *testing.T) {
 			// For example, the Ova for testing might be a tiny one, while the one for
 			// building the environment would be a beefier one, which can also run the
 			// VMware tools.
-			if testConfig.EnvBuild.ExternalIp1 == "" {
+			if testConfig.TestEnvBuild.ExtNetworkStaticStartIp == "" {
 				params["ExternalIp1"] = testConfig.Networking.ExternalIp
-				if testConfig.EnvBuild.ExternalIp2 == "" {
+				if testConfig.TestEnvBuild.ExtNetworkStaticEndIp == "" {
 					params["ExternalIp2"] = testConfig.Networking.ExternalIp
 				}
 			}
-			if testConfig.EnvBuild.MediaPath != "" {
-				params["MediaPath"] = testConfig.EnvBuild.MediaPath
+			if testConfig.TestEnvBuild.MediaPath != "" {
+				params["MediaPath"] = testConfig.TestEnvBuild.MediaPath
 			}
-			if testConfig.EnvBuild.OvaPath != "" {
-				params["OvaPath"] = testConfig.EnvBuild.OvaPath
+			if testConfig.TestEnvBuild.OvaPath != "" {
+				params["OvaPath"] = testConfig.TestEnvBuild.OvaPath
 			}
-			if testConfig.EnvBuild.ExternalNetworkPortGroupType != "" {
-				params["ExternalNetworkPortGroupType"] = testConfig.EnvBuild.ExternalNetworkPortGroupType
+			if testConfig.TestEnvBuild.ExternalNetworkPortGroupType != "" {
+				params["ExternalNetworkPortGroupType"] = testConfig.TestEnvBuild.ExternalNetworkPortGroupType
 			}
-			if testConfig.EnvBuild.ExternalNetworkPortGroup != "" {
-				params["ExternalNetworkPortGroup"] = testConfig.EnvBuild.ExternalNetworkPortGroup
+			if testConfig.TestEnvBuild.ExternalNetworkPortGroup != "" {
+				params["ExternalNetworkPortGroup"] = testConfig.TestEnvBuild.ExternalNetworkPortGroup
 			}
 			essentialData := []string{"MainGateway", "MainNetmask", "MainDns1", "ExternalIP1", "ExternalIP2"}
 			for _, essentialItem := range essentialData {
