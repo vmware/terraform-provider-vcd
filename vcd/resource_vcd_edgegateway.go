@@ -17,7 +17,7 @@ func resourceVcdEdgeGateway() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
+				Required: true,
 				ForceNew: true,
 			},
 			"org": &schema.Schema{
@@ -27,7 +27,7 @@ func resourceVcdEdgeGateway() *schema.Resource {
 			},
 			"vdc": &schema.Schema{
 				Type:     schema.TypeString,
-				Required: true,
+				Optional: true,
 				ForceNew: true,
 			},
 			"description": &schema.Schema{
@@ -37,15 +37,16 @@ func resourceVcdEdgeGateway() *schema.Resource {
 			},
 			"advanced": &schema.Schema{
 				Type:        schema.TypeBool,
-				Required:    true,
+				Optional:    true,
+				Default:     true,
 				ForceNew:    true,
-				Description: "True if the gateway uses advanced networking. (Set by default in vCD 9.7+)",
+				Description: "True if the gateway uses advanced networking. (Enabled by default)",
 			},
 			"configuration": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Configuration of the vShield edge VM for this gateway. One of: compact, full",
+				Description: `Configuration of the vShield edge VM for this gateway. One of: compact, full, full4 ("Quad Large"), x-large`,
 			},
 			"ha_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -207,7 +208,7 @@ func resourceVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}) error 
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "name")
 	if err != nil {
 		d.SetId("")
-		return fmt.Errorf("error fetching edge gateway details %#v", err)
+		return nil
 	}
 
 	err = setEdgeGatewayValues(d, edgeGateway)
