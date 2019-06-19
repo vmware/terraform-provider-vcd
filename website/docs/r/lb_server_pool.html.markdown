@@ -76,10 +76,9 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `name` - (Required) Server Pool name
 * `description` - (Optional) Server Pool description
-* `algorithm` - (Required) Server Pool load balancing method. Can be one of `ROUND-ROBIN`, `IP-HASH`, `LEASTCONN`,
-`URI`, `HTTPHEADER`, `URL`
-* `algorithm_parameters` - (Optional) Valid only when `algorithm` is `HTTPHEADER` or `URL`. The `HTTPHEADER` algorithm
-parameter has one option `headerName=<name>` while the `URL` algorithm parameter has option `urlParam=<url>`. 
+* `algorithm` - (Required) Server Pool load balancing method. Can be one of `ip-hash`, `round-robin`, `uri`, `leastconn`, `url`, or `httpheader`
+* `algorithm_parameters` - (Optional) Valid only when `algorithm` is `httpheader` or `url`. The `httpheader` algorithm
+parameter has one option `headerName=<name>` while the `url` algorithm parameter has option `urlParam=<url>`. 
 * `enable_transparency` - (Optional) When transparency is `false` (default) backend servers see the IP address of the
 traffic source as the internal IP address of the load balancer. When it is `true` the source IP address is the actual IP
 address of the client and the edge gateway must be set as the default gateway to ensure that return packets go through
