@@ -2,13 +2,121 @@
 
 ## Table of contents
 
+- [Meeting prerequisites: Building the test environment](#meeting-prerequisites--building-the-test-environment)
 - [Running tests](#running-tests)
-- [Tests split by feature set](#Tests-split-by-feature-set)
-- [Adding new tests](#Adding-new-tests)
-- [Binary testing](#Binary-testing)
-- [Custom terraform scripts](#Custom-terraform-scripts)
-- [Building the test environment](#Building-the-test-environment)
-- [Environment variables](#Environment-variables)
+- [Tests split by feature set](#tests-split-by-feature-set)
+- [Adding new tests](#adding-new-tests)
+- [Binary testing](#binary-testing)
+- [Custom terraform scripts](#custom-terraform-scripts)
+- [Environment variables](#environment-variables)
+
+## Meeting prerequisites: Building the test environment
+
+To run the tests, your vCD needs to have the following:
+
+* (1) An external network, with at least one, but preferably two allocatable IP addresses;
+* (2) An organization
+    * (3) An organization administrator user
+    * (4) A Virtual Data Center (VDC) with enough resources to build several vApps and VMs, and preferably 2 storage profiles
+        * (5) an Edge gateway with a default gateway
+    * (6) A catalog
+    * (7) A vApp template in the catalog
+
+Optionally, to run tests in [go-vcloud-director](https://github.com/vmware/go-vcloud-director), you will also need one or
+two Org VDC networks and a media item.
+
+
+This is how you can build the environment using Terraform itself.
+
+The above entities are defined in the test configuration file (see `sample_vcd_test_config.json` for the full list of
+entities to provide). Here is an excerpt of where these names come from:
+
+```
+{
+  "vcd": {
+     "org": "datacloud",                    // (2)
+     "vdc": "datacloudvdc",                 // (4)
+     "catalog": {
+       "name": "datacloudcat",              // (6)
+       "catalogItem": "photon-hw11"         // (7)
+     },
+     [...]
+   },
+   "networking": {
+     "edgeGateway": "gwdatacloud",           // (5)
+     "externalNetwork": "extnetdatacloud",   // (1)
+     [...]
+     }
+   },
+   [...]
+ }
+
+```
+
+The vCD environment builder uses the test system information to create these entities. When triggered, it will take the
+names of the entities and some of the configuration parameters from the regular test configuration file. It will then
+integrate such data with additional information that is only used for the environment build, and it's listed under the
+`testEnvBuild` section in the file:
+
+```
+{
+   [...]
+  "testEnvBuild": {
+    // Indispensable data, which is not normally used in the tests but is mandatory to create the
+    // environment
+
+    "gateway": "GATEWAY_IP",
+    "netmask": "255.255.224.0",
+    "externalNetworkStartIp": "STARTING_IP",
+    "externalNetworkEndIp": "END_IP",
+    "dns1": "DNS_IP",
+    "mediaName": "test_media",
+
+    // Optional data. If not provided, the corresponding values
+    // from the rest of the configuration file will be used
+
+    "dns2": "8.8.4.4",
+    "externalNetworkPortGroup": "VM Network",
+    "externalNetworkPortGroupType": "NETWORK",
+    "ovaPath": "/path/to/photon-hw11-3.0-26156e2.ova",
+    "media_path":  "/path/to/test.iso",
+
+    // extra data. If not provided, these resources will not be created
+    // These items can be used for go-vcloud-director testing
+
+    "storageProfile2": "Development",
+    "routedNetwork": "net_datacloud_r",
+    "isolatedNetwork": "net_datacloud_i",
+    "directNetwork": "net_datacloud_d"
+  }
+}
+```
+
+When this section is filled, the test system has all the information to create all the elements (except, for now, the
+org admin user). When you run the command `make test-binary-prepare`, among the files ready to run there will be one named
+`cust.full-env.tf`, containing all the information to populate your vCD with the test resources.
+
+There is also a command that prepares and executes the terraform script for you:
+
+```bash
+$ make test-env-build
+```
+
+Unlike other commands executed during `make binary`, this one only runs the `apply` stage of the script processing,
+producing a ready-to-use environment in a few minutes.
+If the command was successful, you are ready to run the acceptance tests:
+
+```bash
+$ make testacc
+```
+
+After it runs, this test will leave the vCD in its initial state, i.e. with the resources created by `test-env-build`.
+If you want to clean up the vCD, you can run:
+
+```bash
+$ make test-env-destroy
+```
+which will wipe out everything that was created with `make test-env-build`.
 
 ## Running tests
 
@@ -278,114 +386,6 @@ To run these tests, you go inside `test-artifacts` and execute:
 ```
 
 The execution then proceeds as explained in [Binary testing](#Binary-testing).
-
-## Building the test environment
-
-To run the tests, your vCD needs to have the following:
-
-* (1) An external network, with at least one, but preferably two allocatable IP addresses;
-* (2) An organization
-    * (3) An organization administrator user
-    * (4) A Virtual Data Center (VDC) with enough resources to build several vApps and VMs, and preferably 2 storage profiles
-        * (5) an Edge gateway with a default gateway
-    * (6) A catalog
-    * (7) A vApp template in the catalog
-
-Optionally, to run tests in [go-vcloud-director](https://github.com/vmware/go-vcloud-director), you will also need one or
-two Org VDC networks and a media item.
-
-
-This is how you can build the environment using Terraform itself.
-
-The above entities are defined in the test configuration file (see `sample_vcd_test_config.json` for the full list of
-entities to provide). Here is an excerpt of where these names come from:
-
-```
-{
-  "vcd": {
-     "org": "datacloud",                    // (2)
-     "vdc": "datacloudvdc",                 // (4)
-     "catalog": {
-       "name": "datacloudcat",              // (6)
-       "catalogItem": "photon-hw11"         // (7)
-     },
-     [...]
-   },
-   "networking": {
-     "edgeGateway": "gwdatacloud",           // (5)
-     "externalNetwork": "extnetdatacloud",   // (1)
-     [...]
-     }
-   },
-   [...]
- }
-
-```
-
-The vCD environment builder uses the test system information to create these entities. When triggered, it will take the
-names of the entities and some of the configuration parameters from the regular test configuration file. It will then
-integrate such data with additional information that is only used for the environment build, and it's listed under the
-`testEnvBuild` section in the file:
-
-```
-{
-   [...]
-  "testEnvBuild": {
-    // Indispensable data, which is not normally used in the tests but is mandatory to create the
-    // environment
-
-    "gateway": "GATEWAY_IP",
-    "netmask": "255.255.224.0",
-    "externalNetworkStartIp": "STARTING_IP",
-    "externalNetworkEndIp": "END_IP",
-    "dns1": "DNS_IP",
-    "mediaName": "test_media",
-
-    // Optional data. If not provided, the corresponding values
-    // from the rest of the configuration file will be used
-
-    "dns2": "8.8.4.4",
-    "externalNetworkPortGroup": "VM Network",
-    "externalNetworkPortGroupType": "NETWORK",
-    "ovaPath": "/path/to/photon-hw11-3.0-26156e2.ova",
-    "media_path":  "/path/to/test.iso",
-
-    // extra data. If not provided, these resources will not be created
-    // These items can be used for go-vcloud-director testing 
-
-    "storageProfile2": "Development",
-    "routedNetwork": "net_datacloud_r",
-    "isolatedNetwork": "net_datacloud_i",
-    "directNetwork": "net_datacloud_d"
-  }
-}
-```
-
-When this section is filled, the test system has all the information to create all the elements (except, for now, the
-org admin user). When you run the command `make test-binary-prepare`, among the files ready to run there will be one named
-`cust.full-env.tf`, containing all the information to populate your vCD with the test resources.
-
-There is also a command that prepares and executes the terraform script for you:
-
-```bash
-$ make test-env-build
-```
-
-Unlike other commands executed during `make binary`, this one only runs the `apply` stage of the script processing,
-producing a ready-to-use environment in a few minutes.
-If the command was successful, you are ready to run the acceptance tests:
-
-```bash
-$ make testacc
-```
-
-After it runs, this test will leave the vCD in its initial state, i.e. with the resources created by `test-env-build`.
-If you want to clean up the vCD, you can run:
-
-```bash
-$ make test-env-destroy
-```
-which will wipe out everything that was created with `make test-env-build`.
 
 
 ## Environment variables
