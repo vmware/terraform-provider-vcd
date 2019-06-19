@@ -8,7 +8,6 @@
 - [Binary testing](#Binary-testing)
 - [Custom terraform scripts](#Custom-terraform-scripts)
 - [Building the test environment](#Building-the-test-environment)
-- [Future testing enhancements](#Future-testing-enhancements)
 - [Environment variables](#Environment-variables)
 
 ## Running tests
@@ -293,12 +292,10 @@ To run the tests, your vCD needs to have the following:
     * (7) A vApp template in the catalog
 
 Optionally, to run tests in [go-vcloud-director](https://github.com/vmware/go-vcloud-director), you will also need one or
-two Org Vdc networks and a media item.
+two Org VDC networks and a media item.
 
 
-You can create all the above entities manually, or automate it using tools like Ansible or Puppet, or the [Vcloud Director
-command line utility](https://vmware.github.io/vcd-cli/). Starting with version 2.4.0 of this repository, however, you
-can also build the environment using Terraform itself. Here is how it works:
+This is how you can build the environment using Terraform itself.
 
 The above entities are defined in the test configuration file (see `sample_vcd_test_config.json` for the full list of
 entities to provide). Here is an excerpt of where these names come from:
@@ -327,8 +324,8 @@ entities to provide). Here is an excerpt of where these names come from:
 
 The vCD environment builder uses the test system information to create these entities. When triggered, it will take the
 names of the entities and some of the configuration parameters from the regular test configuration file. It will then
-integrate such data with additional information that is only used for the environment build, and it's listed under a new
-section in the file:
+integrate such data with additional information that is only used for the environment build, and it's listed under the
+`testEnvBuild` section in the file:
 
 ```
 {
@@ -344,7 +341,6 @@ section in the file:
     "dns1": "DNS_IP",
     "mediaName": "test_media",
 
-
     // Optional data. If not provided, the corresponding values
     // from the rest of the configuration file will be used
 
@@ -354,8 +350,8 @@ section in the file:
     "ovaPath": "/path/to/photon-hw11-3.0-26156e2.ova",
     "media_path":  "/path/to/test.iso",
 
-
     // extra data. If not provided, these resources will not be created
+    // These items can be used for go-vcloud-director testing 
 
     "storageProfile2": "Development",
     "routedNetwork": "net_datacloud_r",
@@ -366,7 +362,7 @@ section in the file:
 ```
 
 When this section is filled, the test system has all the information to create all the elements (except, for now, the
-org admin). When you run the command `make test-binary-prepare`, among the files ready to run there will be one named
+org admin user). When you run the command `make test-binary-prepare`, among the files ready to run there will be one named
 `cust.full-env.tf`, containing all the information to populate your vCD with the test resources.
 
 There is also a command that prepares and executes the terraform script for you:
@@ -391,18 +387,6 @@ $ make test-env-destroy
 ```
 which will wipe out everything that was created with `make test-env-build`.
 
-
-## Future testing enhancements
-
-The current state of the testing environment is not perfect, but it has reached the first goal of a self-sustaining 
-development system, i.e. it can automate the creation of the testing environment using the same software that we want to
-test: the so called [eat your own dog food](https://en.wikipedia.org/wiki/Eating_your_own_dog_food).
-
-The next goals are:
-* make the test configuration easier to understand and set up. As it is now, filling the test configuration file
-  requires a deep understanding of the software, in addition to a general knowledge of the vCD.
-* Make the test suite run faster, by using several servers at once to run the full suite in parallel chunks.
-* Make new tests easy to add, enhance, and maintain.
 
 ## Environment variables
 
