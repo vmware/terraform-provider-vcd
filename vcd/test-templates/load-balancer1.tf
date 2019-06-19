@@ -2,7 +2,8 @@
 ## apply-options -parallelism=1
 ## destroy-options -parallelism=1
 
-# Edge gateway load balancer configuration from separate components
+# Edge gateway load balancer configuration with all separate components
+# and their datasources.
 
 # v2.4.0+
 
