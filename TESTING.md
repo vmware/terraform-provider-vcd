@@ -2,7 +2,7 @@
 
 ## Table of contents
 
-- [Meeting prerequisites: Building the test environment](#meeting-prerequisites--building-the-test-environment)
+- [Meeting prerequisites: Building the test environment](#meeting-prerequisites-building-the-test-environment)
 - [Running tests](#running-tests)
 - [Tests split by feature set](#tests-split-by-feature-set)
 - [Adding new tests](#adding-new-tests)
