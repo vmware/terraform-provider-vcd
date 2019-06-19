@@ -95,12 +95,12 @@
 
     "// ": "Entities that will be created in an empty vCD use names defined above",
 
-    "// ": "org:              from vcd.org",
-    "// ": "vdc:              from vcd.vdc",
-    "// ": "catalog:          from vcd.catalog.name",
-    "// ": "catalog item:     from vcd.catalog.catalogItem",
-    "// ": "edge gateway:     from networking,edgeGateway",
-    "// ": "external network: from networking,externalNetwork",
+    "// ": "vcd.org                    -> organization name",
+    "// ": "vcd.vdc                    -> VDC name",
+    "// ": "vcd.catalog.name           -> catalog name",
+    "// ": "vcd.catalog.catalogItem    -> catalog item name",
+    "// ": "networking.edgeGateway     -> edge gateway name",
+    "// ": "networking.externalNetwork -> external network name",
 
     "//": "Values used to build a new environment. Build will fail if the next 5 ones are empty",
     "gateway": "10.15.21.1",
