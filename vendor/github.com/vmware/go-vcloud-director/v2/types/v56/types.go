@@ -367,7 +367,7 @@ type Vdc struct {
 	ID           string `xml:"id,attr,omitempty"`
 	OperationKey string `xml:"operationKey,attr,omitempty"`
 	Name         string `xml:"name,attr"`
-	Status       string `xml:"status,attr,omitempty"`
+	Status       int    `xml:"status,attr,omitempty"`
 
 	AllocationModel    string                `xml:"AllocationModel"`
 	AvailableNetworks  []*AvailableNetworks  `xml:"AvailableNetworks,omitempty"`
@@ -1643,6 +1643,38 @@ type LBMonitor struct {
 }
 
 type LBMonitors []LBMonitor
+
+// LBPool represents a load balancer server pool as per "vCloud Director API for NSX Programming Guide"
+// Type: LBPoolHealthCheckType
+// https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
+type LBPool struct {
+	XMLName             xml.Name      `xml:"pool"`
+	ID                  string        `xml:"poolId,omitempty"`
+	Name                string        `xml:"name"`
+	Description         string        `xml:"description,omitempty"`
+	Algorithm           string        `xml:"algorithm"`
+	AlgorithmParameters string        `xml:"algorithmParameters,omitempty"`
+	Transparent         bool          `xml:"transparent,omitempty"`
+	MonitorId           string        `xml:"monitorId,omitempty"`
+	Members             LBPoolMembers `xml:"member,omitempty"`
+}
+
+type LBPools []LBPool
+
+// LBPoolMember represents a single member inside LBPool
+type LBPoolMember struct {
+	ID          string `xml:"memberId,omitempty"`
+	Name        string `xml:"name"`
+	IpAddress   string `xml:"ipAddress"`
+	Weight      int    `xml:"weight,omitempty"`
+	MonitorPort int    `xml:"monitorPort,omitempty"`
+	Port        int    `xml:"port"`
+	MaxConn     int    `xml:"maxConn,omitempty"`
+	MinConn     int    `xml:"minConn,omitempty"`
+	Condition   string `xml:"condition,omitempty"`
+}
+
+type LBPoolMembers []LBPoolMember
 
 // LoadBalancerVirtualServer represents a load balancer virtual server.
 // Type: LoadBalancerVirtualServerType

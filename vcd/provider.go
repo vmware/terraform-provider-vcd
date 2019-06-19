@@ -103,10 +103,12 @@ func Provider() terraform.ResourceProvider {
 			"vcd_independent_disk":   resourceVcdIndependentDisk(),
 			"vcd_external_network":   resourceVcdExternalNetwork(),
 			"vcd_lb_service_monitor": resourceVcdLbServiceMonitor(),
+			"vcd_lb_server_pool":     resourceVcdLBServerPool(),
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
 			"vcd_lb_service_monitor": datasourceVcdLbServiceMonitor(),
+			"vcd_lb_server_pool":     datasourceVcdLbServerPool(),
 		},
 
 		ConfigureFunc: providerConfigure,
