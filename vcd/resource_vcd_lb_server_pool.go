@@ -52,13 +52,13 @@ func resourceVcdLBServerPool() *schema.Resource {
 			"algorithm": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				Description:  "Balancing method for the service",
+				Description:  "Balancing method for the service. One of ip-hash, round-robin, uri, leastconn, url, or httpheader",
 				ValidateFunc: validateCase("lower"),
 			},
 			"algorithm_parameters": {
-				Type:        schema.TypeMap,
+				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Additional options for load balancing algorithm",
+				Description: "Additional options for load balancing algorithm for http-header or url algorithms",
 			},
 			"monitor_id": &schema.Schema{
 				Type:        schema.TypeString,
@@ -264,7 +264,7 @@ func getLBPoolType(d *schema.ResourceData) (*types.LBPool, error) {
 		Algorithm:           d.Get("algorithm").(string),
 		MonitorId:           d.Get("monitor_id").(string),
 		Transparent:         d.Get("enable_transparency").(bool),
-		AlgorithmParameters: getLBPoolAlgorithmParameters(d),
+		AlgorithmParameters: d.Get("algorithm_parameters").(string),
 	}
 
 	members, err := getLBPoolMembersType(d)
@@ -307,42 +307,17 @@ func getLBPoolMembersType(d *schema.ResourceData) (types.LBPoolMembers, error) {
 	return lbPoolMembers, nil
 }
 
-// getLBPoolAlgorithmParameters converts schema.ResourceData to a string formatted for
-// making API requests
-// Example API call string for AlgorithmType field:
-// <algorithmParameters>headerName=<name></algorithmParameters>
-func getLBPoolAlgorithmParameters(d *schema.ResourceData) string {
-	var algorithmParameters string
-	extension := d.Get("algorithm_parameters").(map[string]interface{})
-	for k, v := range extension {
-		if k != "" && v != "" { // When key and value are given it must look like "content-type=STRING"
-			algorithmParameters += k + "=" + v.(string) + "\n"
-		} else { // If only key is specified it does not need equals sign. Like "no-body" extension
-			algorithmParameters += k + "\n"
-		}
-	}
-	return algorithmParameters
-}
-
 // setLBPoolData sets object state from *types.LBPool
 func setLBPoolData(d *schema.ResourceData, lBpool *types.LBPool) error {
 	d.Set("name", lBpool.Name)
 	d.Set("description", lBpool.Description)
 	d.Set("algorithm", lBpool.Algorithm)
-	// Optional attributes may not necessarily be set
+	// Optional attributes may not be necessary
 	d.Set("monitor_id", lBpool.MonitorId)
 	d.Set("enable_transparency", lBpool.Transparent)
+	d.Set("algorithm_parameters", lBpool.AlgorithmParameters)
 
-	err := setLBPoolAlgorithmParametersData(d, lBpool)
-	if err != nil {
-		return err
-	}
-
-	err = setLBPoolMembersData(d, lBpool.Members)
-	if err != nil {
-		return err
-	}
-	return nil
+	return setLBPoolMembersData(d, lBpool.Members)
 }
 
 // setLBPoolMembersData sets pool members state from *types.LBPoolMembers
@@ -367,37 +342,5 @@ func setLBPoolMembersData(d *schema.ResourceData, lBpoolMembers types.LBPoolMemb
 
 	d.Set("member", memberSet)
 
-	return nil
-}
-
-// setLBPoolAlgorithmParametersData sets algorithm parameters state from *types.LBPool
-func setLBPoolAlgorithmParametersData(d *schema.ResourceData, lBPool *types.LBPool) error {
-	algorithmParameters := make(map[string]string)
-
-	if lBPool.AlgorithmParameters != "" {
-		kvList := strings.Split(lBPool.AlgorithmParameters, "\n")
-		for _, algorithmLine := range kvList {
-			// Skip empty lines
-			if algorithmLine == "" {
-				continue
-			}
-
-			// When key=algorithmLine format is present
-			if strings.Contains(algorithmLine, "=") {
-				keyValue := strings.Split(algorithmLine, "=")
-				if len(keyValue) != 2 {
-					return fmt.Errorf("unable to flatten extension field %s", algorithmLine)
-				}
-				// Populate algorithm parameters data with key value
-				algorithmParameters[keyValue[0]] = keyValue[1]
-				// If there was no "=" sign then it means whole line is just key. Like `no-body`, `linespan`
-			} else {
-				algorithmParameters[algorithmLine] = ""
-			}
-		}
-
-	}
-
-	d.Set("algorithm_parameters", algorithmParameters)
 	return nil
 }

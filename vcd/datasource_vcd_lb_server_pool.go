@@ -44,7 +44,7 @@ func datasourceVcdLbServerPool() *schema.Resource {
 				Computed: true,
 			},
 			"algorithm_parameters": {
-				Type:     schema.TypeMap,
+				Type:     schema.TypeString,
 				Computed: true,
 			},
 			"monitor_id": &schema.Schema{
