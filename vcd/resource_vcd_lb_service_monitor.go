@@ -20,22 +20,20 @@ func resourceVcdLbServiceMonitor() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"org": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "vCD organization in which the Service Monitor is located",
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
 			},
 			"vdc": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "vCD virtual datacenter in which the Service Monitor is located",
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
 			},
 			"edge_gateway": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Edge gateway name in which the Service Monitor is located",
+				Description: "Edge gateway name",
 			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
@@ -155,6 +153,7 @@ func resourceVcdLbServiceMonitorCreate(d *schema.ResourceData, meta interface{})
 
 func resourceVcdLbServiceMonitorRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
+
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
