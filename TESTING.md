@@ -70,7 +70,6 @@ integrate such data with additional information that is only used for the enviro
     "externalNetworkStartIp": "STARTING_IP",
     "externalNetworkEndIp": "END_IP",
     "dns1": "DNS_IP",
-    "mediaName": "test_media",
 
     // Optional data. If not provided, the corresponding values
     // from the rest of the configuration file will be used
@@ -84,6 +83,7 @@ integrate such data with additional information that is only used for the enviro
     // extra data. If not provided, these resources will not be created
     // These items can be used for go-vcloud-director testing
 
+    "mediaName": "test_media",
     "storageProfile2": "Development",
     "routedNetwork": "net_datacloud_r",
     "isolatedNetwork": "net_datacloud_i",
@@ -95,6 +95,9 @@ integrate such data with additional information that is only used for the enviro
 When this section is filled, the test system has all the information to create all the elements (except, for now, the
 org admin user). When you run the command `make test-binary-prepare`, among the files ready to run there will be one named
 `cust.full-env.tf`, containing all the information to populate your vCD with the test resources.
+**IMPORTANT**: this procedure assumes that the regular part of the configuration file is filled with all the correct
+information. The list of fields given as mandatory above is not sufficient to create a working environment, if 
+information such as provider VDC or vCenter are not provided.
 
 There is also a command that prepares and executes the terraform script for you:
 

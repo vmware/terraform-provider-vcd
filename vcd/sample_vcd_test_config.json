@@ -98,10 +98,9 @@
     "// ": "org:              from vcd.org",
     "// ": "vdc:              from vcd.vdc",
     "// ": "catalog:          from vcd.catalog.name",
-    "// ": "catalogItem:      from vcd.catalog.catalogItem",
+    "// ": "catalog item:     from vcd.catalog.catalogItem",
     "// ": "edge gateway:     from networking,edgeGateway",
     "// ": "external network: from networking,externalNetwork",
-    "// ": "media item:       from testEnvBuild.mediaName (below)",
 
     "//": "Values used to build a new environment. Build will fail if the next 5 ones are empty",
     "gateway": "10.15.21.1",
@@ -118,13 +117,13 @@
     "//": "leave the storage profile empty to skip its usage",
     "storageProfile2": "Development",
 
-    "//": "media names can be different from the ones used for testing",
-    "mediaName": "test_media",
+    "//": "catalog and media paths can be different from the ones used for testing",
     "ovaPath": "/home/username/vm/photon-hw11-3.0-26156e2.ova",
     "media_path":  "/home/username/vm/test.iso",
 
-    "//": "Leave the network names empty to skip their creation",
+    "//": "Leave the network names and the media name empty to skip their creation",
     "//": "They are not needed for terraform-provider-vcd testing, but are useful for go-vcloud-director",
+    "mediaName": "test_media",
     "routedNetwork": "routed_net_name",
     "isolatedNetwork": "isolated_net_name",
     "directNetwork": "direct_net_name"

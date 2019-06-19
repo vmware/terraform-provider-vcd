@@ -172,6 +172,15 @@ func TestCustomTemplates(t *testing.T) {
 			reSecondStorage := regexp.MustCompile(`#_SECOND_STORAGE_PROFILE_`)
 			templateText = reSecondStorage.ReplaceAllString(templateText, secondStorageProfileText)
 
+			// The media item will only be created if its name was defined in the configuration file
+			mediaTestText := ""
+			mediaTestParam, ok := params["MediaTestName"]
+			if ok && mediaTestParam != "" {
+				mediaTestText = mediaTest
+			}
+			reMediaTest := regexp.MustCompile(`#_MEDIA_TEST_`)
+			templateText = reMediaTest.ReplaceAllString(templateText, mediaTestText)
+
 			// For some items, we want a different value for testing and for building
 			// For example, the Ova for testing might be a tiny one, while the one for
 			// building the environment would be a beefier one, which can also run the
@@ -194,7 +203,10 @@ func TestCustomTemplates(t *testing.T) {
 			if testConfig.TestEnvBuild.ExternalNetworkPortGroup != "" {
 				params["ExternalNetworkPortGroup"] = testConfig.TestEnvBuild.ExternalNetworkPortGroup
 			}
-			essentialData := []string{"MainGateway", "MainNetmask", "MainDns1", "ExternalIP1", "ExternalIP2"}
+			essentialData := []string{
+				"Org", "Vdc", "Catalog", "CatalogItem", "ExternalNetwork", "EdgeGateway",
+				"ProviderVdc", "NetworkPool", "StorageProfile", "Vcenter",
+				"MainGateway", "MainNetmask", "MainDns1", "ExternalNetworkStartIp", "ExternalNetworkEndIp"}
 			for _, essentialItem := range essentialData {
 				_, ok := params[essentialItem]
 				if ok {
@@ -277,4 +289,17 @@ const secondStorageProfile = `
     limit   = 0
     default = false
   }
+`
+
+const mediaTest = `
+resource "vcd_catalog_media" "{{.MediaTestName}}" {
+  org     = "${vcd_org.{{.Org}}.name}"
+  catalog = "${vcd_catalog.{{.Catalog}}.name}"
+
+  name                 = "{{.MediaTestName}}"
+  description          = "{{.MediaTestName}}"
+  media_path           = "{{.MediaPath}}"
+  upload_piece_size    = 5
+  show_upload_progress = "true"
+}
 `

@@ -104,16 +104,7 @@ resource "vcd_catalog_item" "{{.CatalogItem}}" {
   show_upload_progress = "true"
 }
 
-resource "vcd_catalog_media" "{{.MediaTestName}}" {
-  org     = "${vcd_org.{{.Org}}.name}"
-  catalog = "${vcd_catalog.{{.Catalog}}.name}"
-
-  name                 = "{{.MediaTestName}}"
-  description          = "{{.MediaTestName}}"
-  media_path           = "{{.MediaPath}}"
-  upload_piece_size    = 5
-  show_upload_progress = "true"
-}
+#_MEDIA_TEST_
 
 # Optional networks will be added only if the
 # corresponding names are set in the configuration file
