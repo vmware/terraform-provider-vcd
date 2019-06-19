@@ -143,6 +143,10 @@ function binary_test {
     fi
     if [ -n "$VCD_ENV_BUILD" ]
     then
+        if [ -d buildvcd ]
+        then
+            rm -rf buildvcd
+        fi
         ./test-binary.sh test-env-build
         exit $?
     fi
