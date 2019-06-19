@@ -7,8 +7,8 @@ FEATURES:
 
 * **New Resource:** Load Balancer Service Monitor `vcd_lb_service_monitor` - [GH-256]
 * **New Data Source:** Load Balancer Service Monitor `vcd_lb_service_monitor` - [GH-256]
-* **New Resource:** Load Balancer Server Pool `vcd_lb_server_pool` - [GH-xx]
-* **New Data Source:** Load Balancer Server Pool `vcd_lb_server_pool` - [GH-xx]
+* **New Resource:** Load Balancer Server Pool `vcd_lb_server_pool` - [GH-268]
+* **New Data Source:** Load Balancer Server Pool `vcd_lb_server_pool` - [GH-268]
 
 ## 2.3.0 (May 29, 2019)
 
