@@ -196,13 +196,20 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Type:        schema.TypeBool,
 				Required:    true,
 				ForceNew:    true,
-				Description: "When destroying use delete_force=True to remove a vdc and any objects it contains, regardless of their state.",
+				Description: "When destroying use delete_https://github.com/terraform-providers/terraform-provider-vcd/issues/238force=True to remove a vdc and any objects it contains, regardless of their state.",
 			},
 			"delete_recursive": &schema.Schema{
 				Type:        schema.TypeBool,
 				Required:    true,
 				ForceNew:    true,
 				Description: "When destroying use delete_recursive=True to remove the vdc and any objects it contains that are in a state that normally allows removal.",
+			},
+			"metadata": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				ForceNew: true, // temporary until update method implemented
+				// For now underlying go-vcloud-director repo only supports
+				// a value of type String in this map.
 			},
 		},
 	}
@@ -248,8 +255,63 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.SetId(d.Get("name").(string))
-	log.Printf("[TRACE] vdc created: %#v", task)
+	log.Printf("[TRACE] vDC created: %#v", task)
+
+	err = manageMetaData(d, meta)
+	if err != nil {
+		return fmt.Errorf("error adding meta data to vDC: %#v", err)
+	}
+
 	return resourceVcdVdcRead(d, meta)
+}
+
+func manageMetaData(d *schema.ResourceData, meta interface{}) error {
+
+	log.Printf("[TRACE] adding meta data to vDC")
+
+	vcdClient := meta.(*VCDClient)
+
+	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+	if err != nil {
+		return fmt.Errorf(errorRetrievingOrg, err)
+	}
+
+	vdc, err := adminOrg.GetVdcByName(d.Id())
+
+	if d.HasChange("metadata") {
+		oldRaw, newRaw := d.GetChange("metadata")
+		oldMetadata := oldRaw.(map[string]interface{})
+		newMetadata := newRaw.(map[string]interface{})
+		var toBeRemovedMetadata []string
+		// Check if any key in old metadata was removed in new metadata.
+		// Creates a list of keys to be removed.
+		for k := range oldMetadata {
+			if _, ok := newMetadata[k]; !ok {
+				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
+			}
+		}
+		for _, k := range toBeRemovedMetadata {
+			task, err := vdc.DeleteMetadata(k)
+			if err != nil {
+				return fmt.Errorf("error deleting metadata: %#v", err)
+			}
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				return fmt.Errorf(errorCompletingTask, err)
+			}
+		}
+		for k, v := range newMetadata {
+			task, err := vdc.AddMetadata(k, v.(string))
+			if err != nil {
+				return fmt.Errorf("error adding metadata: %#v", err)
+			}
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				return fmt.Errorf(errorCompletingTask, err)
+			}
+		}
+	}
+	return nil
 }
 
 // Fetches information about an existing vdc for a data definition
