@@ -16,7 +16,7 @@ dist:
 
 # builds and deploys the plugin
 install: build
-	@$(CURDIR)/scripts/install-plugin.sh
+	@sh -c "'$(CURDIR)/scripts/install-plugin.sh'"
 
 # makes .tf files from test templates
 test-binary-prepare: install
@@ -29,12 +29,16 @@ test-binary: install
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider"
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' binary"
 
-# builds the environment in a new vCD (run once before testacc)
-test-env-build: install
+# prepares to build the environment in a new vCD (run once before test-env-apply)
+test-env-init: install
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider"
-	@sh -c "'$(CURDIR)/scripts/runtest.sh' test-env-build"
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' test-env-init"
 
-# destroys the environment built with 'test-env-build' (warning: can't be undone)
+# build the environment in a new vCD (run once before testacc)
+test-env-apply:
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' test-env-apply"
+
+# destroys the environment built with 'test-env-apply' (warning: can't be undone)
 test-env-destroy:
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' test-env-destroy"
 
