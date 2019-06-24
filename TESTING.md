@@ -95,19 +95,19 @@ integrate such data with additional information that is only used for the enviro
 When this section is filled, the test system has all the information to create all the elements (except, for now, the
 org admin user). When you run the command `make test-binary-prepare`, among the files ready to run there will be one named
 `cust.full-env.tf`, containing all the information to populate your vCD with the test resources.
-**IMPORTANT**: this procedure assumes that the regular part of the configuration file is filled with all the correct
-information. The list of fields given as mandatory above is not sufficient to create a working environment, if 
+**IMPORTANT**: this procedure assumes that **the regular part of the configuration file is filled with all the correct
+information**. The list of fields given as mandatory above is not sufficient to create a working environment, if
 information such as provider VDC or vCenter are not provided.
 
-There is also a command that prepares and executes the terraform script for you:
+There are also a couple of commands that prepare and execute the terraform script for you:
 
 ```bash
-$ make test-env-build
+$ make test-env-init && make test-env-apply
 ```
 
-Unlike other commands executed during `make binary`, this one only runs the `apply` stage of the script processing,
+Unlike other commands executed during `make binary`, these ones only run the `init` and `apply` stage of the script processing,
 producing a ready-to-use environment in a few minutes.
-If the command was successful, you are ready to run the acceptance tests:
+If the commands were successful, you are ready to run the acceptance tests:
 
 ```bash
 $ make testacc
@@ -119,7 +119,15 @@ If you want to clean up the vCD, you can run:
 ```bash
 $ make test-env-destroy
 ```
-which will wipe out everything that was created with `make test-env-build`.
+which will wipe out everything that was created with `make test-env-apply`.
+
+The build-up tasks run inside a dedicated directory below `./vcd/test-artifacts`. The directory name is made up of the
+string `test-ebv-build` + the name or IP of the vCD. For example, for vcd *10.178.7.96*, the directory will be
+`test-env-build-10-178-7-96`. For a vCD named *example-vcd.my_company.com*, the directory will be
+`test-env-build-example-vcd-my_company-com`. This naming convention prevents overwriting the build-up files and allows
+users to retrieve the build-up configuration files and run operations manually on them, even after different vCD were
+configured.
+
 
 ## Running tests
 
