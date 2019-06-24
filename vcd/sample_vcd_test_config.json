@@ -23,23 +23,23 @@
   },
   "vcd": {
     "//": "This section contains the organization composition",
-    "org": "myorg",
-    "vdc": "myvdc",
-    "//": "Fill the values if you want reuse existing resources for testing",
-    "//catalog": {
-      "//name": "existingCatalogName",
-      "//catalogItem": "existingOvaNameInCatalog"
+    "org": "tf_org",
+    "vdc": "tf_vdc",
+    "//": "Catalog name to be created (if using testEnvBuild) or to reuse if exists already",
+    "catalog": {
+      "name": "tf_catalog",
+      "catalogItem": "tf_catalog_item"
     },
     "providerVdc": {
       "//": "Provider VDC details are needed for creating organization VDC",
-      "name": "my-provider-vdc",
-      "storageProfile": "my-storage-profile-name",
-      "networkPool": "my-network-pool"
+      "name": "Must-already-exist-provider-vdc-name",
+      "storageProfile": "Must-already-exist-storage-profile-name",
+      "networkPool": "Must-already-exist-network-pool-name"
     }
   },
   "networking": {
     "//": "Networking relates to communication, gateways, and vpn", 
-    "edgeGateway": "tfEdgeGW",
+    "edgeGateway": "tf_edge_gw",
 
     "//": "The IP of the gateway (must exist)", 
     "externalIp": "10.15.21.10",
@@ -48,8 +48,8 @@
     "internalIp": "192.168.4.30",
      "//": "define sharedSecret in the edge gateway service configuration", 
     "sharedSecret": "ipoojaibooze0aiLooso1hourae9AhfooMoo6een",
-    "//": "The name of a vCD external network",
-    "externalNetwork": "my-ext-network",
+    "//": "The name of a vCD external network (it will be created when using testEnvBuild or reused is already exists) ",
+    "externalNetwork": "tf_external_network",
     "local": {
       "//": "Local definition for a vpn", 
       "localIp": "10.15.21.11",
@@ -78,7 +78,7 @@
     "uploadPieceSize": 5,
     "uploadProgress": true,
     "//": "Link will be used to download OVA for tests",
-    "ovaDownloadUrl": "http://dl.bintray.com/vmware/photon/2.0/GA/ova/photon-custom-hw11-2.0-304b817.ova",
+    "ovaDownloadUrl": "http://dl.bintray.com/vmware/photon/3.0/GA/ova/photon-hw13_uefi-3.0-26156e2.ova",
     "//": "Name for downloaded file which will be saved in test-resources folder",
     "ovaTestFileName": "photon.ova",
     "//": "Won't destroy resources created for test suite. Will be reused next time running tests",
@@ -102,7 +102,7 @@
     "// ": "networking.edgeGateway     -> edge gateway name",
     "// ": "networking.externalNetwork -> external network name",
 
-    "//": "Values used to build a new environment. Build will fail if the next 5 ones are empty",
+    "//": "Values used to build a new external network. Build will fail if the next 5 ones are empty",
     "gateway": "10.15.21.1",
     "netmask": "255.255.224.0",
     "externalNetworkStartIp": "10.15.21.10",
@@ -110,23 +110,21 @@
     "dns1": "10.15.21.101",
     "dns2": "8.8.4.4",
 
-    "//": "external network may be different from the one defined for testing",
+    "//": "external network parameters MUST BE DIFFERENT from the one defined for testing",
     "externalNetworkPortGroup": "network_name_from_vcenter",
     "externalNetworkPortGroupType": "NETWORK",
-
-    "//": "leave the storage profile empty to skip its usage",
-    "storageProfile2": "Development",
 
     "//": "catalog and media paths can be different from the ones used for testing",
     "ovaPath": "/home/username/vm/photon-hw11-3.0-26156e2.ova",
     "media_path":  "/home/username/vm/test.iso",
 
-    "//": "Leave the network names and the media name empty to skip their creation",
+    "//": "Leave the network names, the second storage profile, and the media name empty to skip their creation",
     "//": "They are not needed for terraform-provider-vcd testing, but are useful for go-vcloud-director",
-    "mediaName": "test_media",
-    "routedNetwork": "routed_net_name",
-    "isolatedNetwork": "isolated_net_name",
-    "directNetwork": "direct_net_name"
+    "storageProfile2": "Must-already-exist-second-storage-profile-name-for-VDC-creation",
+    "mediaName": "tf_test_media_name",
+    "routedNetwork": "tf_routed_net_name",
+    "isolatedNetwork": "tf_isolated_net_name",
+    "directNetwork": "tf_direct_net_name"
   },
   "envVariables" : {
     "//" : "Environment variables that we want the test to set (or unset)",
