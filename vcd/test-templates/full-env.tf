@@ -1,7 +1,7 @@
 
 resource "vcd_external_network" "{{.ExternalNetwork}}" {
   name        = "{{.ExternalNetwork}}"
-  description = "external net datacloud "
+  description = "external network"
 
   vsphere_network {
     vcenter = "{{.Vcenter}}"
