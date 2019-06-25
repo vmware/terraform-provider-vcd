@@ -110,6 +110,23 @@ func TestCustomTemplates(t *testing.T) {
 		"DirectNetwork":          testConfig.TestEnvBuild.DirectNetwork,
 	}
 
+	// optional fields
+	if testConfig.TestEnvBuild.MediaName == "" {
+		delete(params, "MediaTestName")
+	}
+	if testConfig.TestEnvBuild.StorageProfile2 == "" {
+		delete(params, "StorageProfile2")
+	}
+	if testConfig.TestEnvBuild.RoutedNetwork == "" {
+		delete(params, "RoutedNetwork")
+	}
+	if testConfig.TestEnvBuild.IsolatedNetwork == "" {
+		delete(params, "IsolatedNetwork")
+	}
+	if testConfig.TestEnvBuild.DirectNetwork == "" {
+		delete(params, "DirectNetwork")
+	}
+
 	for _, fileName := range binaryTestList {
 
 		baseName := strings.Replace(path.Base(fileName), ".tf", "", -1)
