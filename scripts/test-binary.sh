@@ -312,7 +312,10 @@ do
     then
         mkdir $opsdir
     fi
-    cp $CF $opsdir/config.tf
+    if [ "${operations[0]}" == "init" ]
+    then
+        cp $CF $opsdir/config.tf
+    fi
     if [ -z "$DRY_RUN" ]
     then
         echo $CF >> already_run.txt
