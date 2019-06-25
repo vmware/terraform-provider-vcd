@@ -1,12 +1,14 @@
 ## 2.4.0 (Unreleased)
 IMPROVEMENTS:
 
-* Change resource handling to use locking mechanism when resource parallel handling is not supported by vCD. [GH-255] 
+* Change resource handling to use locking mechanism when resource parallel handling is not supported by vCD. [GH-#255] 
 
 FEATURES:
 
 * **New Resource:** Load Balancer Service Monitor `vcd_lb_service_monitor` - [GH-256]
 * **New Data Source:** Load Balancer Service Monitor `vcd_lb_service_monitor` - [GH-256]
+* **New Resource:** edge gateway `vcd_edgegateway` creates and deletes edge gateways - [GH-262](https://github.com/terraform-providers/terraform-provider-vcd/issues/262)
+* **New build command** `make test-env-build` can configure an empty vCD to run the test suite. See `TESTING.md` for details.
 
 ## 2.3.0 (May 29, 2019)
 

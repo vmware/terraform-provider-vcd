@@ -98,7 +98,7 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 		translatedPortString = getPortString(d.Get("translated_port").(int))
 	}
 
-	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
+	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
@@ -167,7 +167,7 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 func resourceVcdDNATRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	e, err := vcdClient.GetEdgeGatewayFromResource(d)
+	e, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
@@ -219,7 +219,7 @@ func resourceVcdDNATDelete(d *schema.ResourceData, meta interface{}) error {
 		translatedPortString = getPortString(d.Get("translated_port").(int))
 	}
 
-	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
+	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)

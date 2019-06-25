@@ -92,13 +92,13 @@ function acceptance_test {
     if [ -n "$VERBOSE" ]
     then
         echo "# check for config file"
-        echo "TF_ACC=1 go test -tags '$tags' -v -timeout 60m ."
+        echo "TF_ACC=1 go test -tags '$tags' -v -timeout 90m ."
     fi
 
     if [ -z "$DRY_RUN" ]
     then
         check_for_config_file
-        TF_ACC=1 go test -tags "$tags" -v -timeout 60m .
+        TF_ACC=1 go test -tags "$tags" -v -timeout 90m .
     fi
 }
 
@@ -111,13 +111,13 @@ function multiple_test {
     if [ -n "$VERBOSE" ]
     then
         echo "# check for config file"
-        echo "TF_ACC=1 go test -v -timeout 60m -tags 'api multivm multinetwork' -run '$filter' ."
+        echo "TF_ACC=1 go test -v -timeout 90m -tags 'api multivm multinetwork' -run '$filter' ."
     fi
 
     if [ -z "$DRY_RUN" ]
     then
         check_for_config_file
-        TF_ACC=1 go test -v -timeout 60m -tags 'api multivm multinetwork' -run "$filter" .
+        TF_ACC=1 go test -v -timeout 90m -tags 'api multivm multinetwork' -run "$filter" .
     fi
 }
 
@@ -141,15 +141,43 @@ function binary_test {
         ls -l
         exit
     fi
-    ./test-binary.sh
+    if [ -n "$VCD_ENV_INIT" ]
+    then
+        ./test-binary.sh test-env-init
+        exit $?
+    fi
+
+    if [ -n "$VCD_ENV_APPLY" ]
+    then
+       ./test-binary.sh test-env-apply
+        exit $?
+    fi
+    if [ -n "$VCD_ENV_DESTROY" ]
+    then
+        ./test-binary.sh test-env-destroy
+        exit $?
+    fi
+     ./test-binary.sh
 }
 
 case $wanted in
+    test-env-init)
+        export VCD_ENV_INIT=1
+        binary_test
+        ;;
+    test-env-apply)
+        export VCD_ENV_APPLY=1
+        binary_test
+        ;;
+    test-env-destroy)
+        export VCD_ENV_DESTROY=1
+        binary_test
+        ;;
     binary-prepare)
         export NORUN=1
         binary_test
         ;;
-    binary)
+     binary)
         binary_test
         ;;
     unit)

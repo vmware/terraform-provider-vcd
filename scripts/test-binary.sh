@@ -7,6 +7,27 @@ cd -
 pause_file=$runtime_dir/pause
 dash_line="# ---------------------------------------------------------"
 
+# env script will only run if explicitly called.
+build_script=cust.full-env.tf
+unset in_building
+operations=(init plan apply destroy)
+skipping_items=($build_script)
+
+function remove_item_from_skipping {
+    item=$1
+    new_array=()
+    count=0
+    for N in ${skipping_items[*]}
+    do
+        if [ "$N" != "$item" ]
+        then
+            new_array[$count]=$N
+            count=$((count+1))
+        fi
+    done
+    skipping_items=$new_array
+}
+
 function get_help {
     echo "Syntax: $(basename $0) [options]"
     echo "Where options are one or more of the following:"
@@ -15,6 +36,9 @@ function get_help {
     echo "  c | clear              Clears list of run files"
     echo "  p | pause              Pause after each stage"
     echo "  n | names 'names list' List of file names to test [QUOTES NEEDED]"
+    echo "  i | test-env-init      Prepares the environment in a new vCD"
+    echo "  b | test-env-apply     Builds the environment in a new vCD"
+    echo "  y | test-env-destroy   Destroys the environment built using 'test-env-apply'"
     echo "  d | dry                Dry-run: show commands without executing them"
     echo "  v | verbose            Gives more info"
     echo ""
@@ -82,6 +106,25 @@ do
             exit 1
         fi
         ;;
+    i|test-env-init)
+        remove_item_from_skipping $build_script
+        operations=(init plan)
+        in_building=yes
+        test_names="$build_script" 
+        ;;
+    b|test-env-apply)
+        remove_item_from_skipping $build_script
+        operations=(plan apply)
+        in_building=yes
+        test_names="$build_script" 
+        ;;
+    y|test-env-destroy)
+        remove_item_from_skipping $build_script
+        rm -f already_run.txt
+        operations=(plan destroy)
+        in_building=yes
+        test_names="$build_script" 
+        ;;
     v|verbose)
         export VERBOSE=1
         ;;
@@ -112,10 +155,13 @@ function summary {
         remainder_minutes=$((minutes-hours*60))
         elapsed=$(printf "%dh:%dm:%02ds" ${hours} ${remainder_minutes} ${remainder_sec})
     fi
-    echo "# Started:   $start_timestamp"
-    echo "# Ended:     $end_timestamp"
-    echo "# Elapsed:   $elapsed ($secs sec)"
-    echo "# exit code: $exit_code"
+    echo "$dash_line"
+    echo "# Operations dir: $runtime_dir/$opsdir"
+    echo "# Started:        $start_timestamp"
+    echo "# Ended:          $end_timestamp"
+    echo "# Elapsed:        $elapsed ($secs sec)"
+    echo "# exit code:      $exit_code"
+    echo "$dash_line"
     exit $exit_code
 }
 
@@ -165,10 +211,27 @@ then
     touch already_run.txt
 fi
 
+how_many=$(ls $test_names | wc -l)
+file_count=0
 for CF in $test_names
 do
+    file_count=$((file_count+1))
+    unset will_skip
+    for skip_file in ${skipping_items[*]}
+    do
+        if [  "$CF" == "$skip_file" ]
+        then
+            will_skip=1
+        fi
+    done
+    if [ -n "$will_skip" ]
+    then
+        echo "# $CF skipped ($file_count of $how_many)"
+        continue
+    fi
     is_provider=$(grep '^\s*provider' $CF)
     is_resource=$(grep '^\s*resource' $CF)
+    has_missing_fields=$(grep '"\*\*\* MISSING FIELD' $CF)
     if [ -z "$is_resource" ]
     then
         echo_verbose "$CF not a resource"
@@ -177,6 +240,13 @@ do
     if [ -z "$is_provider" ]
     then
         echo_verbose "$CF does not contain a provider"
+        continue
+    fi
+    if [ -n "$has_missing_fields" ]
+    then
+        echo "# $dash_line"
+        echo "# Missing fields in $CF"
+        echo "# $dash_line"
         continue
     fi
     init_options=$(grep '^# init-options' $CF | sed -e 's/# init-options //')
@@ -214,24 +284,66 @@ do
         continue
     fi
     echo $dash_line
-    echo "# $CF"
+    echo "# $CF ($file_count of $how_many)"
     echo $dash_line
-    if [ -d ./tmp ]
+    opsdir=tmp
+    if [ -n  "$in_building" ]
     then
-        rm -rf tmp
+        url=$(grep  "^\s\+url " $build_script | awk '{print $3}' | sed -e 's/https:..//' -e 's/.api//' | tr -d '"' | tr '.' '-')
+        # echo "URL<$url>"
+        opsdir=test-env-build-$url
     fi
-    mkdir tmp
-    cp $CF tmp/config.tf
+    if [ "${operations[0]}" == "init" ]
+    then
+        if [ -d $opsdir ]
+        then
+            rm -rf $opsdir
+        fi
+    else
+        # if it is not "init", we need to find it already
+        if [ ! -d $opsdir ]
+        then
+            echo "$PWD/$opsdir not found"
+            echo "Run ./test-binary.sh test-env-init"
+            exit 1
+        fi
+    fi
+    if [ ! -d $opsdir ]
+    then
+        mkdir $opsdir
+    fi
+    if [ "${operations[0]}" == "init" ]
+    then
+        cp $CF $opsdir/config.tf
+    fi
     if [ -z "$DRY_RUN" ]
     then
         echo $CF >> already_run.txt
     fi
-    cd tmp
+    cd $opsdir
 
-    run terraform init $init_options
-    run terraform plan $plan_options
-    run terraform apply -auto-approve $apply_options
-    run terraform destroy -auto-approve $destroy_options
+    for phase in ${operations[*]}
+    do
+        case $phase in
+            init)
+                run terraform init $init_options
+                ;;
+            plan)
+                run terraform plan $plan_options
+                ;;
+            apply)
+                run terraform apply -auto-approve $apply_options
+                ;;
+            destroy)
+                if [ ! -f terraform.tfstate ]
+                then
+                    echo "terraform.tfstate not found - aborting"
+                    exit 1
+                fi
+                run terraform destroy -auto-approve $destroy_options
+                ;;
+        esac
+    done
     cd ..
 done
 
