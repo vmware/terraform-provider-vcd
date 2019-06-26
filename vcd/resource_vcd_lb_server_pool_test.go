@@ -308,9 +308,9 @@ resource "vcd_lb_service_monitor" "test-monitor" {
 }
 
 resource "vcd_lb_server_pool" "server-pool" {
-  org                 = "my-org"
-  vdc                 = "my-org-vdc"
-  edge_gateway        = "my-edge-gw"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
 
   name = "{{.ServerPoolName}}"
   description = "description"
