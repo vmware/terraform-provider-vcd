@@ -825,15 +825,15 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error getting VM4 : %#v", err)
 	}
 
-	status, err := vapp.GetStatus()
+	status, err := vm.GetStatus()
 	if err != nil {
-		return fmt.Errorf("error getting vApp status: %#v", err)
+		return fmt.Errorf("error getting VM status: %#v", err)
 	}
 
-	log.Printf("[TRACE] vApp Status:: %s", status)
+	log.Printf("[TRACE] VM Status:: %s", status)
 	if status != "POWERED_OFF" {
-		log.Printf("[TRACE] Undeploying vApp: %s", vapp.VApp.Name)
-		task, err := vapp.Undeploy()
+		log.Printf("[TRACE] Undeploying VM: %s", vm.VM.Name)
+		task, err := vm.Undeploy()
 		if err != nil {
 			return fmt.Errorf("error Undeploying: %#v", err)
 		}
@@ -868,29 +868,6 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 	err = vapp.RemoveVM(vm)
 	if err != nil {
 		return fmt.Errorf("error deleting: %#v", err)
-	}
-
-	if status != "POWERED_OFF" {
-		log.Printf("[TRACE] Redeploying vApp: %s", vapp.VApp.Name)
-		task, err := vapp.Deploy()
-		if err != nil {
-			return fmt.Errorf("error Deploying vApp: %#v", err)
-		}
-		err = task.WaitTaskCompletion()
-		if err != nil {
-			return fmt.Errorf(errorCompletingTask, err)
-		}
-
-		log.Printf("[TRACE] Powering on vApp: %s", vapp.VApp.Name)
-		task, err = vapp.PowerOn()
-		if err != nil {
-			return fmt.Errorf("error Powering Up vApp: %#v", err)
-		}
-
-		err = task.WaitTaskCompletion()
-		if err != nil {
-			return fmt.Errorf("error Powering Up vApp: %#v", err)
-		}
 	}
 
 	return nil
