@@ -19,13 +19,13 @@ func resourceVcdLBServerPool() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"vdc": {
+			"org": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
 				Description: "vCD organization in which the Service Monitor is located",
 			},
-			"org": {
+			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
@@ -43,7 +43,6 @@ func resourceVcdLBServerPool() *schema.Resource {
 				ForceNew:    true,
 				Description: "Unique Server Pool name",
 			},
-
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -52,7 +51,7 @@ func resourceVcdLBServerPool() *schema.Resource {
 			"algorithm": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				Description:  "Balancing method for the service. One of ip-hash, round-robin, uri, leastconn, url, or httpheader",
+				Description:  "Balancing method for the service. One of 'ip-hash', 'round-robin', 'uri', 'leastconn', 'url', or 'httpheader'",
 				ValidateFunc: validateCase("lower"),
 			},
 			"algorithm_parameters": {
@@ -71,7 +70,6 @@ func resourceVcdLBServerPool() *schema.Resource {
 				Optional:    true,
 				Description: "Makes client IP addresses visible to the backend servers",
 			},
-
 			"member": {
 				Optional: true,
 				ForceNew: false,
@@ -82,7 +80,7 @@ func resourceVcdLBServerPool() *schema.Resource {
 							ForceNew:    false,
 							Computed:    true,
 							Type:        schema.TypeString,
-							Description: "Pool member id",
+							Description: "Pool member id (formatted as member-xx, where xx is a number)",
 						},
 						"condition": &schema.Schema{
 							Type:         schema.TypeString,
@@ -113,7 +111,7 @@ func resourceVcdLBServerPool() *schema.Resource {
 							Required:    true,
 							ForceNew:    false,
 							Type:        schema.TypeInt,
-							Description: "Port at which the member is to receive health monitor requests",
+							Description: "Port at which the member is to receive health monitor requests. Can be the same as port",
 						},
 						"weight": {
 							Required:    true,
@@ -131,7 +129,7 @@ func resourceVcdLBServerPool() *schema.Resource {
 							Optional: true,
 							ForceNew: false,
 							Type:     schema.TypeInt,
-							Description: "The maximum number of concurrent connections the member can handle. If exceeded" +
+							Description: "The maximum number of concurrent connections the member can handle. If exceeded " +
 								"requests are queued and the load balancer waits for a connection to be released",
 						},
 					},

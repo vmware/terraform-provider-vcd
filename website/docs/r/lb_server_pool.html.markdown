@@ -3,15 +3,14 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_lb_server_pool"
 sidebar_current: "docs-vcd-resource-lb-server-pool"
 description: |-
-  Provides a NSX load balancer server pool data source.
+  Provides a NSX load balancer server pool resource.
 ---
 
 # vcd\_lb\_server\_pool
 
-Provides a vCloud Director Edge Gateway Load Balancer Server Pool data source. A Server Pool defines
-a group of backend servers (defined as pool members), manages load balancer distribution methods, and has a service 
-monitor attached to it for health check parameters.
-
+Provides a vCloud Director Edge Gateway Load Balancer Server Pool data source. A Server Pool can have a group of backend
+servers set (defined as pool members), manages load balancer distribution methods, and may have a service monitor
+attached to it for health check parameters.
 
 ~> **Note:** To make load balancing work one must ensure that load balancing is enabled on edge gateway. This depends 
 on NSX version to work properly. Please refer to [VMware Product Interoperability Matrices](https://www.vmware.com/resources/compatibility/sim/interop_matrix.php#interop&29=&93=) 
@@ -22,7 +21,7 @@ API Guide. The API supports NSX 6.2, 6.3, and 6.4.
 
 Supported in provider *v2.4+*
 
-## Example Usage
+## Example Usage 1 (Simple Server Pool without Service Monitor)
 
 ```hcl
 provider "vcd" {
@@ -33,15 +32,56 @@ provider "vcd" {
 }
 
 resource "vcd_lb_server_pool" "web-servers" {
-  org                 = "my-org"
-  vdc                 = "my-org-vdc"
-  edge_gateway        = "my-edge-gw"
+  org          = "my-org"
+  vdc          = "my-org-vdc"
+  edge_gateway = "my-edge-gw"
 
-  name                = "web-servers"
-  description         = "description"
-  algorithm           = "round-robin"
+  name      = "web-servers"
+  algorithm = "round-robin"
 
-  monitor_id = "${vcd_lb_service_monitor.lb-service-monitor.id}"
+  member {
+    condition       = "enabled"
+    name            = "member1"
+    ip_address      = "1.1.1.1"
+    port            = 8443
+    monitor_port    = 9000
+    weight          = 1
+    min_connections = 0
+    max_connections = 100
+  }
+}
+```
+
+## Example Usage 2 (Server Pool with multiple members, algorithm parameters, and existing Service Monitor as datasource)
+
+```hcl
+provider "vcd" {
+  user     = "${var.admin_user}"
+  password = "${var.admin_password}"
+  org      = "System"
+  url      = "https://AcmeVcd/api"
+}
+
+data "vcd_lb_service_monitor" "web-monitor" {
+  org          = "my-org"
+  vdc          = "my-org-vdc"
+  edge_gateway = "my-edge-gw"
+
+  name = "existing-web-monitor-name"
+}
+
+resource "vcd_lb_server_pool" "web-servers" {
+  org          = "my-org"
+  vdc          = "my-org-vdc"
+  edge_gateway = "my-edge-gw"
+
+  name                 = "web-servers"
+  description          = "description"
+  algorithm            = "httpheader"
+  algorithm_parameters = "headerName=host"
+  enable_transparency  = "true"
+
+  monitor_id = "${data.vcd_lb_service_monitor.web-monitor.id}"
 
   member {
     condition       = "enabled"
@@ -91,7 +131,9 @@ example for usage details.
 <a id="member"></a>
 ## Member
 
-* `condition` - (Required) State of member in a pool. One of `enabled`, `disabled`, or `drain`
+* `condition` - (Required) State of member in a pool. One of `enabled`, `disabled`, or `drain`. When member condition 
+is set to `drain` it stops taking new connections and calls, while it allows its sessions on existing connections to
+continue until they naturally end. This allows to gracefully remove member node from load balancing rotation.
 * `name` - (Required) Member name
 * `ip_address` - (Required) Member IP address
 * `port` - (Required) The port at which the member is to receive traffic from the load balancer.
@@ -105,7 +147,7 @@ released.
 
 ## Attribute Reference
 
-The following attributes are exported on the base level of this resource:
+The following attributes are exported on this resource:
 
 * `id` - The ID of the load balancer server pool
 

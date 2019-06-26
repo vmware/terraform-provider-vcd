@@ -234,139 +234,139 @@ func testAccCheckVcdLbServerPoolDestroy(serverPoolName string) resource.TestChec
 
 const testAccVcdLbServerPool_Basic = `
 resource "vcd_lb_server_pool" "server-pool" {
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
-
-  name = "{{.ServerPoolName}}"
-  description = "description"
-  algorithm = "round-robin"
-  enable_transparency = "{{.EnableTransparency}}"
-
-  member {
-    condition = "enabled"
-    name = "member1"
-    ip_address = "1.1.1.1"
-    port = 8443
-    monitor_port = 9000
-    weight = 1
-    min_connections = 0
-    max_connections = 100
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
+  
+	name                = "{{.ServerPoolName}}"
+	description         = "description"
+	algorithm           = "round-robin"
+	enable_transparency = "{{.EnableTransparency}}"
+  
+	member {
+	  condition       = "enabled"
+	  name            = "member1"
+	  ip_address      = "1.1.1.1"
+	  port            = 8443
+	  monitor_port    = 9000
+	  weight          = 1
+	  min_connections = 0
+	  max_connections = 100
+	}
+  
+	member {
+	  condition       = "drain"
+	  name            = "member2"
+	  ip_address      = "2.2.2.2"
+	  port            = 7000
+	  monitor_port    = 4000
+	  weight          = 2
+	  min_connections = 6
+	  max_connections = 8
+	}
+  
+	member {
+	  condition       = "disabled"
+	  name            = "member3"
+	  ip_address      = "3.3.3.3"
+	  port            = 3333
+	  monitor_port    = 4444
+	  weight          = 6
+	  min_connections = 3
+	  max_connections = 3
+	}
+  
+	member {
+	  condition    = "disabled"
+	  name         = "member4"
+	  ip_address   = "4.4.4.4"
+	  port         = 3333
+	  monitor_port = 4444
+	  weight       = 6
+	}
   }
-
-  member {
-    condition = "drain"
-    name = "member2"
-    ip_address = "2.2.2.2"
-    port = 7000
-    monitor_port = 4000
-    weight = 2
-    min_connections = 6
-    max_connections = 8
-  }
-
-  member {
-    condition = "disabled"
-    name = "member3"
-    ip_address = "3.3.3.3"
-    port = 3333
-    monitor_port = 4444
-    weight = 6
-    min_connections = 3
-    max_connections = 3
-  }
-
-  member {
-    condition = "disabled"
-    name = "member4"
-    ip_address = "4.4.4.4"
-    port = 3333
-    monitor_port = 4444
-    weight = 6
-  }
-}
-
-data "vcd_lb_server_pool" "ds-lb-server-pool" {
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
-  name         = "${vcd_lb_server_pool.server-pool.name}"
-}
+  
+  data "vcd_lb_server_pool" "ds-lb-server-pool" {
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
+	name         = "${vcd_lb_server_pool.server-pool.name}"
+  }  
 `
 
 const testAccVcdLbServerPool_Algorithm = `
 resource "vcd_lb_service_monitor" "test-monitor" {
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
   
-  name        = "test-monitor"
-  type        = "tcp"
-  interval    = 10
-  timeout     = 15
-  max_retries = 3
-}
-
-resource "vcd_lb_server_pool" "server-pool" {
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
-
-  name = "{{.ServerPoolName}}"
-  description = "description"
-  algorithm = "httpheader"
-  algorithm_parameters = "headerName=host"
-  enable_transparency = "{{.EnableTransparency}}"
-
-  monitor_id = "${vcd_lb_service_monitor.test-monitor.id}"
-
-  member {
-    condition = "drain"
-    name = "member1"
-    ip_address = "1.1.1.1"
-    port = 8443
-    monitor_port = 9000
-    weight = 1
-    min_connections = 0
-    max_connections = 100
+	name        = "test-monitor"
+	type        = "tcp"
+	interval    = 10
+	timeout     = 15
+	max_retries = 3
   }
-
-  member {
-    condition = "drain"
-    name = "member2"
-    ip_address = "2.2.2.2"
-    port = 7000
-    monitor_port = 4444
-    weight = 2
-    min_connections = 6
-    max_connections = 8
+  
+  resource "vcd_lb_server_pool" "server-pool" {
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
+  
+	name                 = "{{.ServerPoolName}}"
+	description          = "description"
+	algorithm            = "httpheader"
+	algorithm_parameters = "headerName=host"
+	enable_transparency  = "{{.EnableTransparency}}"
+  
+	monitor_id = "${vcd_lb_service_monitor.test-monitor.id}"
+  
+	member {
+	  condition       = "drain"
+	  name            = "member1"
+	  ip_address      = "1.1.1.1"
+	  port            = 8443
+	  monitor_port    = 9000
+	  weight          = 1
+	  min_connections = 0
+	  max_connections = 100
+	}
+  
+	member {
+	  condition       = "drain"
+	  name            = "member2"
+	  ip_address      = "2.2.2.2"
+	  port            = 7000
+	  monitor_port    = 4444
+	  weight          = 2
+	  min_connections = 6
+	  max_connections = 8
+	}
+  
+	member {
+	  condition       = "enabled"
+	  name            = "member3"
+	  ip_address      = "3.3.3.3"
+	  port            = 3333
+	  monitor_port    = 4444
+	  weight          = 6
+	  min_connections = 3
+	  max_connections = 3
+	}
+  
+	member {
+	  condition    = "enabled"
+	  name         = "member44"
+	  ip_address   = "6.6.6.6"
+	  port         = 33333
+	  monitor_port = 44444
+	  weight       = 1
+	}
   }
-
-  member {
-    condition = "enabled"
-    name = "member3"
-    ip_address = "3.3.3.3"
-    port = 3333
-    monitor_port = 4444
-    weight = 6
-    min_connections = 3
-    max_connections = 3
-  }
-
-  member {
-    condition = "enabled"
-    name = "member44"
-    ip_address = "6.6.6.6"
-    port = 33333
-    monitor_port = 44444
-    weight = 1
-  }
-}
-
-data "vcd_lb_server_pool" "ds-lb-server-pool" {
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
-  name         = "${vcd_lb_server_pool.server-pool.name}"
-}
+  
+  data "vcd_lb_server_pool" "ds-lb-server-pool" {
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
+	name         = "${vcd_lb_server_pool.server-pool.name}"
+  }  
 `

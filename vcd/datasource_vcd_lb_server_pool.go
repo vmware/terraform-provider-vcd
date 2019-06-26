@@ -11,13 +11,13 @@ func datasourceVcdLbServerPool() *schema.Resource {
 	return &schema.Resource{
 		Read: datasourceVcdLbServerPoolRead,
 		Schema: map[string]*schema.Schema{
-			"vdc": {
+			"org": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
 				Description: "vCD organization in which the Service Monitor is located",
 			},
-			"org": {
+			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
@@ -32,9 +32,8 @@ func datasourceVcdLbServerPool() *schema.Resource {
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Existing Server Pool name",
+				Description: "Server Pool name for lookup",
 			},
-
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
@@ -55,7 +54,6 @@ func datasourceVcdLbServerPool() *schema.Resource {
 				Type:     schema.TypeBool,
 				Computed: true,
 			},
-
 			"member": {
 				Computed: true,
 				Type:     schema.TypeList,
