@@ -106,7 +106,7 @@ func datasourceVcdLbServerPool() *schema.Resource {
 
 func datasourceVcdLbServerPoolRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
+	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
