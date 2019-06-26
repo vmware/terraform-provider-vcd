@@ -1,5 +1,9 @@
 package govcd
 
+/*
+ * Copyright 2019 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
+ */
+
 import (
 	"fmt"
 	"net/http"
@@ -10,6 +14,7 @@ import (
 
 // CreateLBServerPool creates a load balancer server pool based on mandatory fields. It is a synchronous
 // operation. It returns created object with all fields (including ID) populated or an error.
+// Name and Algorithm fields must be populated.
 func (eGW *EdgeGateway) CreateLBServerPool(lbPoolConfig *types.LBPool) (*types.LBPool, error) {
 	if err := validateCreateLBServerPool(lbPoolConfig); err != nil {
 		return nil, err
@@ -91,6 +96,7 @@ func (eGW *EdgeGateway) ReadLBServerPool(lbPoolConfig *types.LBPool) (*types.LBP
 // UpdateLBServerPool updates types.LBPool with all fields. At least name or ID must be specified.
 // If both - Name and ID are specified it performs a lookup by ID and returns an error if the specified name and found
 // name do not match.
+// Name and Algorithm fields must be populated.
 func (eGW *EdgeGateway) UpdateLBServerPool(lbPoolConfig *types.LBPool) (*types.LBPool, error) {
 	if err := validateUpdateLBServerPool(lbPoolConfig); err != nil {
 		return nil, err
