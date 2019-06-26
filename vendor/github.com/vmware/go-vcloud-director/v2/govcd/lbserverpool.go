@@ -8,7 +8,8 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-// CreateLBServerPool
+// CreateLBServerPool creates a load balancer server pool based on mandatory fields. It is a synchronous
+// operation. It returns created object with all fields (including ID) populated or an error.
 func (eGW *EdgeGateway) CreateLBServerPool(lbPoolConfig *types.LBPool) (*types.LBPool, error) {
 	if err := validateCreateLBServerPool(lbPoolConfig); err != nil {
 		return nil, err
@@ -40,6 +41,9 @@ func (eGW *EdgeGateway) CreateLBServerPool(lbPoolConfig *types.LBPool) (*types.L
 	return readPool, nil
 }
 
+// ReadLBServerPool is able to find the types.LBPool type by Name and/or ID.
+// If both - Name and ID are specified it performs a lookup by ID and returns an error if the specified name and found
+// name do not match.
 func (eGW *EdgeGateway) ReadLBServerPool(lbPoolConfig *types.LBPool) (*types.LBPool, error) {
 	if err := validateReadLBServerPool(lbPoolConfig); err != nil {
 		return nil, err
@@ -84,6 +88,9 @@ func (eGW *EdgeGateway) ReadLBServerPool(lbPoolConfig *types.LBPool) (*types.LBP
 		lbPoolConfig.Name, lbPoolConfig.ID)
 }
 
+// UpdateLBServerPool updates types.LBPool with all fields. At least name or ID must be specified.
+// If both - Name and ID are specified it performs a lookup by ID and returns an error if the specified name and found
+// name do not match.
 func (eGW *EdgeGateway) UpdateLBServerPool(lbPoolConfig *types.LBPool) (*types.LBPool, error) {
 	if err := validateUpdateLBServerPool(lbPoolConfig); err != nil {
 		return nil, err
@@ -117,6 +124,9 @@ func (eGW *EdgeGateway) UpdateLBServerPool(lbPoolConfig *types.LBPool) (*types.L
 	return readPool, nil
 }
 
+// DeleteLBServerPool is able to delete the types.LBPool type by Name and/or ID.
+// If both - Name and ID are specified it performs a lookup by ID and returns an error if the specified name and found
+// name do not match.
 func (eGW *EdgeGateway) DeleteLBServerPool(lbPoolConfig *types.LBPool) error {
 	if err := validateDeleteLBServerPool(lbPoolConfig); err != nil {
 		return err

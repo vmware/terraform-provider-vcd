@@ -97,7 +97,9 @@ func (eGW *EdgeGateway) ReadLBServiceMonitor(lbMonitorConfig *types.LBMonitor) (
 		lbMonitorConfig.Name, lbMonitorConfig.ID)
 }
 
-// UpdateLBServiceMonitor
+// UpdateLBServiceMonitor updates types.LBMonitor with all fields. At least name or ID must be specified.
+// If both - Name and ID are specified it performs a lookup by ID and returns an error if the specified name and found
+// name do not match.
 func (eGW *EdgeGateway) UpdateLBServiceMonitor(lbMonitorConfig *types.LBMonitor) (*types.LBMonitor, error) {
 	if err := validateUpdateLBServiceMonitor(lbMonitorConfig); err != nil {
 		return nil, err
