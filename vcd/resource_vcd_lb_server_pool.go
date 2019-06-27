@@ -57,7 +57,7 @@ func resourceVcdLBServerPool() *schema.Resource {
 			"algorithm_parameters": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Additional options for load balancing algorithm for http-header or url algorithms",
+				Description: "Additional options for load balancing algorithm for httpheader or url algorithms",
 			},
 			"monitor_id": &schema.Schema{
 				Type:        schema.TypeString,
