@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_lb\_server\_pool
 
-Provides a vCloud Director Edge Gateway Load Balancer Server Pool data source. A Server Pool can have a group of backend
+Provides a vCloud Director Edge Gateway Load Balancer Server Pool resource. A Server Pool can have a group of backend
 servers set (defined as pool members), manages load balancer distribution methods, and may have a service monitor
 attached to it for health check parameters.
 
@@ -52,7 +52,7 @@ resource "vcd_lb_server_pool" "web-servers" {
 }
 ```
 
-## Example Usage 2 (Server Pool with multiple members, algorithm parameters, and existing Service Monitor as datasource)
+## Example Usage 2 (Server Pool with multiple members, algorithm parameters, and existing Service Monitor as data source)
 
 ```hcl
 provider "vcd" {

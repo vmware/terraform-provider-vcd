@@ -11,7 +11,7 @@ description: |-
 Provides a vCloud Director Edge Gateway Load Balancer Service Monitor data source. A service monitor 
 defines health check parameters for a particular type of network traffic. It can be associated with
 a pool. Pool members are monitored according to the service monitor parameters. See example usage of
-this datasource in [server pool resource page](/docs/providers/vcd/r/lb_server_pool.html).
+this data source in [server pool resource page](/docs/providers/vcd/r/lb_server_pool.html).
 
 ~> **Note:** See additional support notes in [service monitor resource page](/docs/providers/vcd/r/lb_service_monitor.html).
 
