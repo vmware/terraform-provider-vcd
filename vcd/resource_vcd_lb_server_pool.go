@@ -96,7 +96,7 @@ func resourceVcdLBServerPool() *schema.Resource {
 							Description: "Name of pool member",
 						},
 						"ip_address": {
-							Optional:    true,
+							Required:    true,
 							ForceNew:    false,
 							Type:        schema.TypeString,
 							Description: "IP address of member in server pool",
