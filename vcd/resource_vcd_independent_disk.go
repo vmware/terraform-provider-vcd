@@ -91,7 +91,7 @@ func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) 
 
 	diskCreateParams := &types.DiskCreateParams{Disk: &types.Disk{
 		Name: diskName,
-		Size: int(d.Get("size").(float64) * 1024 * 1024),
+		Size: int64(d.Get("size").(float64) * 1024 * 1024),
 	}}
 
 	var storageReference types.Reference
