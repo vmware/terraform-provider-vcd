@@ -367,7 +367,7 @@ type Vdc struct {
 	ID           string `xml:"id,attr,omitempty"`
 	OperationKey string `xml:"operationKey,attr,omitempty"`
 	Name         string `xml:"name,attr"`
-	Status       string `xml:"status,attr,omitempty"`
+	Status       int    `xml:"status,attr,omitempty"`
 
 	AllocationModel    string                `xml:"AllocationModel"`
 	AvailableNetworks  []*AvailableNetworks  `xml:"AvailableNetworks,omitempty"`
@@ -2303,7 +2303,7 @@ type Disk struct {
 	OperationKey    string           `xml:"operationKey,attr,omitempty"`
 	Name            string           `xml:"name,attr"`
 	Status          int              `xml:"status,attr,omitempty"`
-	Size            int              `xml:"size,attr"`
+	Size            int64            `xml:"size,attr"`
 	Iops            *int             `xml:"iops,attr,omitempty"`
 	BusType         string           `xml:"busType,attr,omitempty"`
 	BusSubType      string           `xml:"busSubType,attr,omitempty"`
