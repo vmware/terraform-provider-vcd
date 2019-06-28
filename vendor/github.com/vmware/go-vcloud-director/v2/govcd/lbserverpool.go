@@ -39,9 +39,10 @@ func (eGW *EdgeGateway) CreateLBServerPool(lbPoolConfig *types.LBPool) (*types.L
 	}
 	splitLocation := strings.Split(location, "/")
 	lbPoolID := splitLocation[len(splitLocation)-1]
+
 	readPool, err := eGW.ReadLBServerPool(&types.LBPool{ID: lbPoolID})
 	if err != nil {
-		return nil, fmt.Errorf("unable to retrieve lb server pool with ID (%s) after creation: %s", readPool.ID, err)
+		return nil, fmt.Errorf("unable to retrieve lb server pool with ID (%s) after creation: %s", lbPoolID, err)
 	}
 	return readPool, nil
 }
@@ -125,7 +126,7 @@ func (eGW *EdgeGateway) UpdateLBServerPool(lbPoolConfig *types.LBPool) (*types.L
 
 	readPool, err := eGW.ReadLBServerPool(&types.LBPool{ID: lbPoolConfig.ID})
 	if err != nil {
-		return nil, fmt.Errorf("unable to retrieve server pool with ID (%s) after update: %s", readPool.ID, err)
+		return nil, fmt.Errorf("unable to retrieve server pool with ID (%s) after update: %s", lbPoolConfig.ID, err)
 	}
 	return readPool, nil
 }

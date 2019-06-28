@@ -46,7 +46,7 @@ func (eGW *EdgeGateway) CreateLBServiceMonitor(lbMonitorConfig *types.LBMonitor)
 
 	readMonitor, err := eGW.ReadLBServiceMonitor(&types.LBMonitor{ID: lbMonitorID})
 	if err != nil {
-		return nil, fmt.Errorf("unable to retrieve monitor with ID (%s) after creation: %s", readMonitor.ID, err)
+		return nil, fmt.Errorf("unable to retrieve monitor with ID (%s) after creation: %s", lbMonitorID, err)
 	}
 	return readMonitor, nil
 }
@@ -128,7 +128,7 @@ func (eGW *EdgeGateway) UpdateLBServiceMonitor(lbMonitorConfig *types.LBMonitor)
 
 	readMonitor, err := eGW.ReadLBServiceMonitor(&types.LBMonitor{ID: lbMonitorConfig.ID})
 	if err != nil {
-		return nil, fmt.Errorf("unable to retrieve monitor with ID (%s) after update: %s", readMonitor.ID, err)
+		return nil, fmt.Errorf("unable to retrieve monitor with ID (%s) after update: %s", lbMonitorConfig.ID, err)
 	}
 	return readMonitor, nil
 }
