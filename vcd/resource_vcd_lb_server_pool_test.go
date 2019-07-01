@@ -239,7 +239,6 @@ resource "vcd_lb_server_pool" "server-pool" {
 	edge_gateway = "{{.EdgeGateway}}"
   
 	name                = "{{.ServerPoolName}}"
-	description         = "description"
 	algorithm           = "round-robin"
 	enable_transparency = "{{.EnableTransparency}}"
   
