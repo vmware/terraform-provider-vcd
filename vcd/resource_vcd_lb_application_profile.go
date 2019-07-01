@@ -74,7 +74,7 @@ func resourceVcdLBAppProfile() *schema.Resource {
 					"subsequent requests in the session, so that they all go to the same virtual " +
 					"server. Only applies for persistence_mechanism 'COOKIE'",
 			},
-			"mode": &schema.Schema{
+			"cookie_mode": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
 				Description: "The mode by which the cookie should be inserted. One of 'Insert', " +
@@ -196,7 +196,7 @@ func resourceVcdLBAppProfileDelete(d *schema.ResourceData, meta interface{}) err
 func resourceVcdLBAppProfileImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ".")
 	if len(resourceURI) != 4 {
-		return nil, fmt.Errorf("resource name must be specified in such way my-org.my-org-vdc.my-edge-gw.existing-server-pool")
+		return nil, fmt.Errorf("resource name must be specified in such way my-org.my-org-vdc.my-edge-gw.existing-app-profile")
 	}
 	orgName, vdcName, edgeName, poolName := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
 
@@ -222,42 +222,33 @@ func resourceVcdLBAppProfileImport(d *schema.ResourceData, meta interface{}) ([]
 
 func expandLBProfile(d *schema.ResourceData) (*types.LBAppProfile, error) {
 	LBProfile := &types.LBAppProfile{
-		Name: d.Get("name").(string),
+		Name:     d.Get("name").(string),
+		Template: d.Get("type").(string),
 		Persistence: &types.LBAppProfilePersistence{
-			Method:     d.Get("persistence").(string),
+			Method:     d.Get("persistence_mechanism").(string),
 			CookieName: d.Get("cookie_name").(string),
-			CookieMode: d.Get("mode").(string),
+			CookieMode: d.Get("cookie_mode").(string),
 		},
 		SSLPassthrough:                d.Get("enable_ssl_passthrough").(bool),
 		InsertXForwardedForHTTPHeader: d.Get("insert_x_forwarded_http_header").(bool),
 		ServerSSLEnabled:              d.Get("enable_pool_side_ssl").(bool),
+		HTTPRedirect: &types.LBAppProfileHTTPRedirect{
+			To: d.Get("http_redirect_url").(string),
+		},
 	}
-
-	// members, err := expandLBProfileMembers(d)
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// LBProfile.Members = members
 
 	return LBProfile, nil
 }
 
 func flattenLBProfile(d *schema.ResourceData, LBProfile *types.LBAppProfile) error {
 	d.Set("name", LBProfile.Name)
-	d.Set("description", LBProfile.Description)
-	d.Set("algorithm", LBProfile.Algorithm)
-	// Optional attributes may not necessarily be set
-	d.Set("monitor_id", LBProfile.MonitorId)
-	d.Set("enable_transparency", LBProfile.Transparent)
-
-	// err := flattenLBProfileAlgorithm(d, LBProfile)
-	// if err != nil {
-	// 	return err
-	// }
-
-	// err = flattenLBProfileMembers(d, LBProfile.Members)
-	// if err != nil {
-	// 	return err
-	// }
+	d.Set("type", LBProfile.Template)
+	d.Set("enable_ssl_passthrough", LBProfile.SSLPassthrough)
+	d.Set("http_redirect_url", LBProfile.HTTPRedirect.To)
+	d.Set("insert_x_forwarded_http_header", LBProfile.InsertXForwardedForHTTPHeader)
+	d.Set("persistence_mechanism", LBProfile.Persistence.Method)
+	d.Set("cookie_name", LBProfile.Persistence.CookieName)
+	d.Set("cookie_mode", LBProfile.Persistence.CookieMode)
+	d.Set("enable_pool_side_ssl", LBProfile.ServerSSLEnabled)
 	return nil
 }
