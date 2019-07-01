@@ -45,7 +45,7 @@ func resourceVcdLBAppProfile() *schema.Resource {
 			},
 			"type": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
+				Required: true,
 				Description: "Protocol type used to send requests to the server. One of 'TCP', " +
 					"'UDP', 'HTTP' org 'HTTPS'",
 			},
@@ -62,9 +62,10 @@ func resourceVcdLBAppProfile() *schema.Resource {
 					"should be redirected. Only applies for types HTTP and HTTPS",
 			},
 			"persistence_mechanism": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Persistence mechanism for the profile. One of 'COOKIE', ''",
+				Type:     schema.TypeString,
+				Optional: true,
+				Description: "Persistence mechanism for the profile. One of 'COOKIE', " +
+					"'SSL-SESSIONID', 'SOURCEIP'",
 			},
 			"cookie_name": &schema.Schema{
 				Type:     schema.TypeString,
@@ -93,13 +94,15 @@ func resourceVcdLBAppProfile() *schema.Resource {
 					" address of a client connecting to a Web server through the load balancer. " +
 					"Only applies for types HTTP and HTTPS",
 			},
+			// TODO https://github.com/terraform-providers/terraform-provider-vcd/issues/258
 			// This will not give much use without SSL certs being available
-			// "enable_pool_side_ssl": &schema.Schema{
-			// 	Type:        schema.TypeBool,
-			// 	Default:     false,
-			// 	Optional:    true,
-			// 	Description: ". Only applies for type HTTPS",
-			// },
+			"enable_pool_side_ssl": &schema.Schema{
+				Type:     schema.TypeBool,
+				Default:  false,
+				Optional: true,
+				Description: "Enabled handling of SSL certificates at load balancer layer. " +
+					"Only applies for type HTTPS",
+			},
 		},
 	}
 }
@@ -125,7 +128,10 @@ func resourceVcdLBAppProfileCreate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	// We store the values once again because response include pool member IDs
-	flattenLBProfile(d, createdPool)
+	err = flattenLBProfile(d, createdPool)
+	if err != nil {
+		return err
+	}
 	d.SetId(createdPool.ID)
 	return nil
 }
@@ -224,17 +230,25 @@ func expandLBProfile(d *schema.ResourceData) (*types.LBAppProfile, error) {
 	LBProfile := &types.LBAppProfile{
 		Name:     d.Get("name").(string),
 		Template: d.Get("type").(string),
-		Persistence: &types.LBAppProfilePersistence{
-			Method:     d.Get("persistence_mechanism").(string),
-			CookieName: d.Get("cookie_name").(string),
-			CookieMode: d.Get("cookie_mode").(string),
-		},
+		// Persistence: &types.LBAppProfilePersistence{
+		// 	Method:     d.Get("persistence_mechanism").(string),
+		// 	CookieName: d.Get("cookie_name").(string),
+		// 	CookieMode: d.Get("cookie_mode").(string),
+		// },
 		SSLPassthrough:                d.Get("enable_ssl_passthrough").(bool),
 		InsertXForwardedForHTTPHeader: d.Get("insert_x_forwarded_http_header").(bool),
 		ServerSSLEnabled:              d.Get("enable_pool_side_ssl").(bool),
 		HTTPRedirect: &types.LBAppProfileHTTPRedirect{
 			To: d.Get("http_redirect_url").(string),
 		},
+	}
+
+	if d.Get("persistence_mechanism").(string) != "" {
+		LBProfile.Persistence = &types.LBAppProfilePersistence{
+			Method:     d.Get("persistence_mechanism").(string),
+			CookieName: d.Get("cookie_name").(string),
+			CookieMode: d.Get("cookie_mode").(string),
+		}
 	}
 
 	return LBProfile, nil
@@ -244,11 +258,17 @@ func flattenLBProfile(d *schema.ResourceData, LBProfile *types.LBAppProfile) err
 	d.Set("name", LBProfile.Name)
 	d.Set("type", LBProfile.Template)
 	d.Set("enable_ssl_passthrough", LBProfile.SSLPassthrough)
-	d.Set("http_redirect_url", LBProfile.HTTPRedirect.To)
 	d.Set("insert_x_forwarded_http_header", LBProfile.InsertXForwardedForHTTPHeader)
-	d.Set("persistence_mechanism", LBProfile.Persistence.Method)
-	d.Set("cookie_name", LBProfile.Persistence.CookieName)
-	d.Set("cookie_mode", LBProfile.Persistence.CookieMode)
 	d.Set("enable_pool_side_ssl", LBProfile.ServerSSLEnabled)
+	if LBProfile.Persistence != nil {
+		d.Set("persistence_mechanism", LBProfile.Persistence.Method)
+		d.Set("cookie_name", LBProfile.Persistence.CookieName)
+		d.Set("cookie_mode", LBProfile.Persistence.CookieMode)
+	}
+
+	if LBProfile.HTTPRedirect != nil {
+		d.Set("http_redirect_url", LBProfile.HTTPRedirect.To)
+	}
+
 	return nil
 }
