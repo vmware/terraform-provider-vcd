@@ -97,6 +97,16 @@ func (eGW *EdgeGateway) ReadLBServiceMonitor(lbMonitorConfig *types.LBMonitor) (
 		lbMonitorConfig.Name, lbMonitorConfig.ID)
 }
 
+// ReadLBServiceMonitorByID wraps ReadLBServiceMonitor and needs only an ID for lookup
+func (eGW *EdgeGateway) ReadLBServiceMonitorByID(id string) (*types.LBMonitor, error) {
+	return eGW.ReadLBServiceMonitor(&types.LBMonitor{ID: id})
+}
+
+// ReadLBLBServiceMonitorByName wraps ReadLBServiceMonitor and needs only a Name for lookup
+func (eGW *EdgeGateway) ReadLBLBServiceMonitorByName(name string) (*types.LBMonitor, error) {
+	return eGW.ReadLBServiceMonitor(&types.LBMonitor{Name: name})
+}
+
 // UpdateLBServiceMonitor updates types.LBMonitor with all fields. At least name or ID must be specified.
 // If both - Name and ID are specified it performs a lookup by ID and returns an error if the specified name and found
 // name do not match.
@@ -157,6 +167,16 @@ func (eGW *EdgeGateway) DeleteLBServiceMonitor(lbMonitorConfig *types.LBMonitor)
 	}
 	return eGW.client.ExecuteRequestWithoutResponse(httpPath, http.MethodDelete, types.AnyXMLMime,
 		"unable to delete Service Monitor: %s", nil)
+}
+
+// DeleteLBServiceMonitorByID wraps DeleteLBServiceMonitor and requires only ID for deletion
+func (eGW *EdgeGateway) DeleteLBServiceMonitorByID(id string) error {
+	return eGW.DeleteLBServiceMonitor(&types.LBMonitor{ID: id})
+}
+
+// DeleteLBServiceMonitorByName wraps DeleteLBServiceMonitor and requires only Name for deletion
+func (eGW *EdgeGateway) DeleteLBServiceMonitorByName(name string) error {
+	return eGW.DeleteLBServiceMonitor(&types.LBMonitor{Name: name})
 }
 
 func validateCreateLBServiceMonitor(lbMonitorConfig *types.LBMonitor) error {

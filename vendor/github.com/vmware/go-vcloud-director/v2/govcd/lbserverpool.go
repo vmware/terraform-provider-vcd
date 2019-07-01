@@ -94,6 +94,16 @@ func (eGW *EdgeGateway) ReadLBServerPool(lbPoolConfig *types.LBPool) (*types.LBP
 		lbPoolConfig.Name, lbPoolConfig.ID)
 }
 
+// ReadLBServerPoolByName wraps ReadLBServerPool and needs only an ID for lookup
+func (eGW *EdgeGateway) ReadLBServerPoolByID(id string) (*types.LBPool, error) {
+	return eGW.ReadLBServerPool(&types.LBPool{ID: id})
+}
+
+// ReadLBServerPoolByName wraps ReadLBServerPool and needs only a Name for lookup
+func (eGW *EdgeGateway) ReadLBServerPoolByName(name string) (*types.LBPool, error) {
+	return eGW.ReadLBServerPool(&types.LBPool{Name: name})
+}
+
 // UpdateLBServerPool updates types.LBPool with all fields. At least name or ID must be specified.
 // If both - Name and ID are specified it performs a lookup by ID and returns an error if the specified name and found
 // name do not match.
@@ -155,6 +165,16 @@ func (eGW *EdgeGateway) DeleteLBServerPool(lbPoolConfig *types.LBPool) error {
 	}
 	return eGW.client.ExecuteRequestWithoutResponse(httpPath, http.MethodDelete, types.AnyXMLMime,
 		"unable to delete Server Pool: %s", nil)
+}
+
+// DeleteLBServerPoolByID wraps DeleteLBServerPool and requires only ID for deletion
+func (eGW *EdgeGateway) DeleteLBServerPoolByID(id string) error {
+	return eGW.DeleteLBServerPool(&types.LBPool{ID: id})
+}
+
+// DeleteLBServerPoolByName wraps DeleteLBServerPool and requires only Name for deletion
+func (eGW *EdgeGateway) DeleteLBServerPoolByName(name string) error {
+	return eGW.DeleteLBServerPool(&types.LBPool{Name: name})
 }
 
 func validateCreateLBServerPool(lbPoolConfig *types.LBPool) error {
