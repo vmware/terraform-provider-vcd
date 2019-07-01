@@ -62,10 +62,11 @@ func resourceVcdLBAppProfile() *schema.Resource {
 					"should be redirected. Only applies for types HTTP and HTTPS",
 			},
 			"persistence_mechanism": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Description: "Persistence mechanism for the profile. One of 'COOKIE', " +
-					"'SSL-SESSIONID', 'SOURCEIP'",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validateCase("lower"),
+				Description: "Persistence mechanism for the profile. One of 'cookie', " +
+					"'ssl-sessionid', 'sourceip'",
 			},
 			"cookie_name": &schema.Schema{
 				Type:     schema.TypeString,
@@ -73,19 +74,21 @@ func resourceVcdLBAppProfile() *schema.Resource {
 				Description: "Used to uniquely identify the session the first time a client " +
 					"accesses the site. The load balancer refers to this cookie when connecting " +
 					"subsequent requests in the session, so that they all go to the same virtual " +
-					"server. Only applies for persistence_mechanism 'COOKIE'",
+					"server. Only applies for persistence_mechanism 'cookie'",
 			},
 			"cookie_mode": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Description: "The mode by which the cookie should be inserted. One of 'Insert', " +
-					"'PREFIX', or 'APPSESSION'",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validateCase("lower"),
+				Description: "The mode by which the cookie should be inserted. One of 'insert', " +
+					"'prefix', or 'appsession'",
 			},
-			"expiration": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Length of time in seconds that persistence stays in effect",
-			},
+
+			// "expiration": &schema.Schema{
+			// 	Type:        schema.TypeInt,
+			// 	Optional:    true,
+			// 	Description: "Length of time in seconds that persistence stays in effect",
+			// },
 			"insert_x_forwarded_http_header": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -228,19 +231,17 @@ func resourceVcdLBAppProfileImport(d *schema.ResourceData, meta interface{}) ([]
 
 func expandLBProfile(d *schema.ResourceData) (*types.LBAppProfile, error) {
 	LBProfile := &types.LBAppProfile{
-		Name:     d.Get("name").(string),
-		Template: d.Get("type").(string),
-		// Persistence: &types.LBAppProfilePersistence{
-		// 	Method:     d.Get("persistence_mechanism").(string),
-		// 	CookieName: d.Get("cookie_name").(string),
-		// 	CookieMode: d.Get("cookie_mode").(string),
-		// },
+		Name:                          d.Get("name").(string),
+		Template:                      d.Get("type").(string),
 		SSLPassthrough:                d.Get("enable_ssl_passthrough").(bool),
 		InsertXForwardedForHTTPHeader: d.Get("insert_x_forwarded_http_header").(bool),
 		ServerSSLEnabled:              d.Get("enable_pool_side_ssl").(bool),
-		HTTPRedirect: &types.LBAppProfileHTTPRedirect{
+	}
+
+	if d.Get("http_redirect_url").(string) != "" {
+		LBProfile.HTTPRedirect = &types.LBAppProfileHTTPRedirect{
 			To: d.Get("http_redirect_url").(string),
-		},
+		}
 	}
 
 	if d.Get("persistence_mechanism").(string) != "" {
@@ -260,6 +261,8 @@ func flattenLBProfile(d *schema.ResourceData, LBProfile *types.LBAppProfile) err
 	d.Set("enable_ssl_passthrough", LBProfile.SSLPassthrough)
 	d.Set("insert_x_forwarded_http_header", LBProfile.InsertXForwardedForHTTPHeader)
 	d.Set("enable_pool_side_ssl", LBProfile.ServerSSLEnabled)
+	// d.Set("expiration", LBProfile.Ex)
+
 	if LBProfile.Persistence != nil {
 		d.Set("persistence_mechanism", LBProfile.Persistence.Method)
 		d.Set("cookie_name", LBProfile.Persistence.CookieName)
@@ -268,6 +271,8 @@ func flattenLBProfile(d *schema.ResourceData, LBProfile *types.LBAppProfile) err
 
 	if LBProfile.HTTPRedirect != nil {
 		d.Set("http_redirect_url", LBProfile.HTTPRedirect.To)
+	} else {
+		d.Set("http_redirect_url", "")
 	}
 
 	return nil
