@@ -240,7 +240,6 @@ resource "vcd_lb_server_pool" "server-pool" {
   
 	name                = "{{.ServerPoolName}}"
 	algorithm           = "round-robin"
-	enable_transparency = "{{.EnableTransparency}}"
   
 	member {
 	  condition       = "enabled"
