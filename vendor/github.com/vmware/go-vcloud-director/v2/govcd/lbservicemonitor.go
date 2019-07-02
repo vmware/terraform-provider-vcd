@@ -7,7 +7,6 @@ package govcd
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -33,16 +32,13 @@ func (eGW *EdgeGateway) CreateLBServiceMonitor(lbMonitorConfig *types.LBMonitor)
 	if err != nil {
 		return nil, err
 	}
-	location := resp.Header.Get("Location")
 
-	// Last element in location header is the service monitor ID
-	// i.e. Location: [/network/edges/edge-3/loadbalancer/config/monitors/monitor-5]
-	// The code below extracts that ID from the last segment
-	if location == "" {
-		return nil, fmt.Errorf("unable to retrieve ID for new load balancer service monitor with name %s", lbMonitorConfig.Name)
+	// Location header should look similarly:
+	// Location: [/network/edges/edge-3/loadbalancer/config/monitors/monitor-5]
+	lbMonitorID, err := extractNSXObjectIDfromPath(resp.Header.Get("Location"))
+	if err != nil {
+		return nil, err
 	}
-	splitLocation := strings.Split(location, "/")
-	lbMonitorID := splitLocation[len(splitLocation)-1]
 
 	readMonitor, err := eGW.ReadLBServiceMonitor(&types.LBMonitor{ID: lbMonitorID})
 	if err != nil {

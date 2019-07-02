@@ -7,7 +7,6 @@ package govcd
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -30,15 +29,13 @@ func (eGW *EdgeGateway) CreateLBServerPool(lbPoolConfig *types.LBPool) (*types.L
 	if err != nil {
 		return nil, err
 	}
-	location := resp.Header.Get("Location")
 
-	// Last element in location header is the server pool ID
-	// i.e. Location: [/network/edges/edge-3/loadbalancer/config/pools/pool-7]
-	if location == "" {
-		return nil, fmt.Errorf("unable to retrieve ID for new load balancer server pool with name %s", lbPoolConfig.Name)
+	// Location header should look similarly:
+	// Location: [/network/edges/edge-3/loadbalancer/config/pools/pool-7]
+	lbPoolID, err := extractNSXObjectIDfromPath(resp.Header.Get("Location"))
+	if err != nil {
+		return nil, err
 	}
-	splitLocation := strings.Split(location, "/")
-	lbPoolID := splitLocation[len(splitLocation)-1]
 
 	readPool, err := eGW.ReadLBServerPool(&types.LBPool{ID: lbPoolID})
 	if err != nil {

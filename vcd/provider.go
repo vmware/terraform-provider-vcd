@@ -83,34 +83,35 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"vcd_network":                resourceVcdNetwork(),          // 1.0 DEPRECATED: replaced by vcd_network_routed
-			"vcd_network_routed":         resourceVcdNetworkRouted(),    // 2.0
-			"vcd_network_direct":         resourceVcdNetworkDirect(),    // 2.0
-			"vcd_network_isolated":       resourceVcdNetworkIsolated(),  // 2.0
-			"vcd_vapp_network":           resourceVcdVappNetwork(),      // 2.1
-			"vcd_vapp":                   resourceVcdVApp(),             // 1.0
-			"vcd_firewall_rules":         resourceVcdFirewallRules(),    // 1.0
-			"vcd_dnat":                   resourceVcdDNAT(),             // 1.0
-			"vcd_snat":                   resourceVcdSNAT(),             // 1.0
-			"vcd_edgegateway":            resourceVcdEdgeGateway(),      // 2.4
-			"vcd_edgegateway_vpn":        resourceVcdEdgeGatewayVpn(),   // 1.0
-			"vcd_vapp_vm":                resourceVcdVAppVm(),           // 1.0
-			"vcd_org":                    resourceOrg(),                 // 2.0
-			"vcd_org_vdc":                resourceVcdOrgVdc(),           // 2.2
-			"vcd_catalog":                resourceVcdCatalog(),          // 2.0
-			"vcd_catalog_item":           resourceVcdCatalogItem(),      // 2.0
-			"vcd_catalog_media":          resourceVcdCatalogMedia(),     // 2.0
-			"vcd_inserted_media":         resourceVcdInsertedMedia(),    // 2.1
-			"vcd_independent_disk":       resourceVcdIndependentDisk(),  // 2.1
-			"vcd_external_network":       resourceVcdExternalNetwork(),  // 2.2
-			"vcd_lb_service_monitor":     resourceVcdLbServiceMonitor(), // 2.4
-			"vcd_lb_server_pool":         resourceVcdLBServerPool(),     // 2.4
-			"vcd_lb_application_profile": resourceVcdLBAppProfile(),     // 2.4
+			"vcd_network":            resourceVcdNetwork(),          // 1.0 DEPRECATED: replaced by vcd_network_routed
+			"vcd_network_routed":     resourceVcdNetworkRouted(),    // 2.0
+			"vcd_network_direct":     resourceVcdNetworkDirect(),    // 2.0
+			"vcd_network_isolated":   resourceVcdNetworkIsolated(),  // 2.0
+			"vcd_vapp_network":       resourceVcdVappNetwork(),      // 2.1
+			"vcd_vapp":               resourceVcdVApp(),             // 1.0
+			"vcd_firewall_rules":     resourceVcdFirewallRules(),    // 1.0
+			"vcd_dnat":               resourceVcdDNAT(),             // 1.0
+			"vcd_snat":               resourceVcdSNAT(),             // 1.0
+			"vcd_edgegateway":        resourceVcdEdgeGateway(),      // 2.4
+			"vcd_edgegateway_vpn":    resourceVcdEdgeGatewayVpn(),   // 1.0
+			"vcd_vapp_vm":            resourceVcdVAppVm(),           // 1.0
+			"vcd_org":                resourceOrg(),                 // 2.0
+			"vcd_org_vdc":            resourceVcdOrgVdc(),           // 2.2
+			"vcd_catalog":            resourceVcdCatalog(),          // 2.0
+			"vcd_catalog_item":       resourceVcdCatalogItem(),      // 2.0
+			"vcd_catalog_media":      resourceVcdCatalogMedia(),     // 2.0
+			"vcd_inserted_media":     resourceVcdInsertedMedia(),    // 2.1
+			"vcd_independent_disk":   resourceVcdIndependentDisk(),  // 2.1
+			"vcd_external_network":   resourceVcdExternalNetwork(),  // 2.2
+			"vcd_lb_service_monitor": resourceVcdLbServiceMonitor(), // 2.4
+			"vcd_lb_server_pool":     resourceVcdLBServerPool(),     // 2.4
+			"vcd_lb_app_profile":     resourceVcdLBAppProfile(),     // 2.4
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
 			"vcd_lb_service_monitor": datasourceVcdLbServiceMonitor(), // 2.4
 			"vcd_lb_server_pool":     datasourceVcdLbServerPool(),     // 2.4
+			"vcd_lb_app_profile":     datasourceVcdLBAppProfile(),     // 2.4
 		},
 
 		ConfigureFunc: providerConfigure,

@@ -315,10 +315,10 @@ type InstantiationParams struct {
 	// SnapshotSection              SnapshotSection              `xml:"SnapshotSection,omitempty"`
 }
 
-// OrgVDCNetwork represents an Org vDC network in the vCloud model.
+// OrgVDCNetwork represents an Org VDC network in the vCloud model.
 // Type: OrgVdcNetworkType
 // Namespace: http://www.vmware.com/vcloud/v1.5
-// Description: Represents an Org vDC network in the vCloud model.
+// Description: Represents an Org VDC network in the vCloud model.
 // Since: 5.1
 type OrgVDCNetwork struct {
 	XMLName       xml.Name              `xml:"OrgVdcNetwork"`
@@ -334,7 +334,7 @@ type OrgVDCNetwork struct {
 	EdgeGateway   *Reference            `xml:"EdgeGateway,omitempty"`
 	IsShared      bool                  `xml:"IsShared"`
 	Link          []Link                `xml:"Link,omitempty"`
-	ServiceConfig *GatewayFeatures      `xml:"ServiceConfig,omitempty"` // Specifies the service configuration for an isolated Org vDC networks
+	ServiceConfig *GatewayFeatures      `xml:"ServiceConfig,omitempty"` // Specifies the service configuration for an isolated Org VDC networks
 	Tasks         *TasksInProgress      `xml:"Tasks,omitempty"`
 }
 
@@ -356,10 +356,10 @@ type Capabilities struct {
 	SupportedHardwareVersions *SupportedHardwareVersions `xml:"SupportedHardwareVersions,omitempty"` // Read-only list of virtual hardware versions supported by this vDC.
 }
 
-// Vdc represents the user view of an organization vDC.
+// Vdc represents the user view of an organization VDC.
 // Type: VdcType
 // Namespace: http://www.vmware.com/vcloud/v1.5
-// Description: Represents the user view of an organization vDC.
+// Description: Represents the user view of an organization VDC.
 // Since: 0.9
 type Vdc struct {
 	HREF         string `xml:"href,attr,omitempty"`
@@ -369,32 +369,33 @@ type Vdc struct {
 	Name         string `xml:"name,attr"`
 	Status       int    `xml:"status,attr,omitempty"`
 
+	Link               LinkList              `xml:"Link,omitempty"`
+	Description        string                `xml:"Description,omitempty"`
 	AllocationModel    string                `xml:"AllocationModel"`
+	ComputeCapacity    []*ComputeCapacity    `xml:"ComputeCapacity"`
+	ResourceEntities   []*ResourceEntities   `xml:"ResourceEntities,omitempty"`
 	AvailableNetworks  []*AvailableNetworks  `xml:"AvailableNetworks,omitempty"`
 	Capabilities       []*Capabilities       `xml:"Capabilities,omitempty"`
-	ComputeCapacity    []*ComputeCapacity    `xml:"ComputeCapacity"`
-	Description        string                `xml:"Description,omitempty"`
-	IsEnabled          bool                  `xml:"IsEnabled"`
-	Link               LinkList              `xml:"Link,omitempty"`
-	NetworkQuota       int                   `xml:"NetworkQuota"`
 	NicQuota           int                   `xml:"NicQuota"`
-	ResourceEntities   []*ResourceEntities   `xml:"ResourceEntities,omitempty"`
+	NetworkQuota       int                   `xml:"NetworkQuota"`
+	VMQuota            int                   `xml:"VmQuota"`
+	IsEnabled          bool                  `xml:"IsEnabled"`
 	Tasks              *TasksInProgress      `xml:"Tasks,omitempty"`
 	UsedNetworkCount   int                   `xml:"UsedNetworkCount,omitempty"`
 	VdcStorageProfiles []*VdcStorageProfiles `xml:"VdcStorageProfiles"`
-	VMQuota            int                   `xml:"VmQuota"`
 }
 
-// AdminVdc represents the admin view of an organization vDC.
+// AdminVdc represents the admin view of an organization VDC.
 // Type: AdminVdcType
 // Namespace: http://www.vmware.com/vcloud/v1.5
-// Description: Represents the admin view of an organization vDC.
+// Description: Represents the admin view of an organization VDC.
 // Since: 0.9
 type AdminVdc struct {
+	Xmlns string `xml:"xmlns,attr"`
 	Vdc
 
-	ResourceGuaranteedMemory float64    `xml:"ResourceGuaranteedMemory,omitempty"`
-	ResourceGuaranteedCpu    float64    `xml:"ResourceGuaranteedCpu,omitempty"`
+	ResourceGuaranteedMemory *float64   `xml:"ResourceGuaranteedMemory,omitempty"`
+	ResourceGuaranteedCpu    *float64   `xml:"ResourceGuaranteedCpu,omitempty"`
 	VCpuInMhz                int64      `xml:"VCpuInMhz,omitempty"`
 	IsThinProvision          bool       `xml:"IsThinProvision,omitempty"`
 	NetworkPoolReference     *Reference `xml:"NetworkPoolReference,omitempty"`
@@ -421,7 +422,7 @@ type VdcStorageProfile struct {
 // VdcConfiguration models the payload for creating a VDC.
 // Type: CreateVdcParamsType
 // Namespace: http://www.vmware.com/vcloud/v1.5
-// Description: Parameters for creating an organization vDC
+// Description: Parameters for creating an organization VDC
 // Since: 5.1
 // https://code.vmware.com/apis/220/vcloud#/doc/doc/types/CreateVdcParamsType.html
 type VdcConfiguration struct {
@@ -491,10 +492,10 @@ type CapacityWithUsage struct {
 	Overhead  int64  `xml:"Overhead,omitempty"` // not available anymore from API v30.0
 }
 
-// ComputeCapacity represents vDC compute capacity.
+// ComputeCapacity represents VDC compute capacity.
 // Type: ComputeCapacityType
 // Namespace: http://www.vmware.com/vcloud/v1.5
-// Description: Represents vDC compute capacity.
+// Description: Represents VDC compute capacity.
 // Since: 0.9
 type ComputeCapacity struct {
 	CPU    *CapacityWithUsage `xml:"Cpu"`
@@ -1676,6 +1677,41 @@ type LBPoolMember struct {
 
 type LBPoolMembers []LBPoolMember
 
+// LBAppProfile represents a load balancer application profile as per "vCloud Director API for NSX
+// Programming Guide"
+// Type: LBPoolHealthCheckType
+// https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
+type LBAppProfile struct {
+	XMLName                       xml.Name                  `xml:"applicationProfile"`
+	ID                            string                    `xml:"applicationProfileId,omitempty"`
+	Name                          string                    `xml:"name,omitempty"`
+	SSLPassthrough                bool                      `xml:"sslPassthrough,omitempty"`
+	Template                      string                    `xml:"template,omitempty"`
+	HTTPRedirect                  *LBAppProfileHTTPRedirect `xml:"httpRedirect,omitempty"`
+	Persistence                   *LBAppProfilePersistence  `xml:"persistence,omitempty"`
+	InsertXForwardedForHTTPHeader bool                      `xml:"insertXForwardedFor,omitempty"`
+	ServerSSLEnabled              bool                      `xml:"serverSslEnabled,omitempty"`
+	// Questionable field. UI has it, but does not send it. NSX documentation has it, but it is
+	// never returned, nor shown
+	Expire int `xml:"expire,omitempty"`
+}
+
+type LBAppProfiles []LBAppProfile
+
+// LBAppProfilePersistence defines persistence profile settings in LBAppProfile
+type LBAppProfilePersistence struct {
+	XMLName    xml.Name `xml:"persistence"`
+	Method     string   `xml:"method,omitempty"`
+	CookieName string   `xml:"cookieName,omitempty"`
+	CookieMode string   `xml:"cookieMode,omitempty"`
+}
+
+// LBAppProfileHTTPRedirect defines http redirect settings in LBAppProfile
+type LBAppProfileHTTPRedirect struct {
+	XMLName xml.Name `xml:"httpRedirect"`
+	To      string   `xml:"to,omitempty"`
+}
+
 // LoadBalancerVirtualServer represents a load balancer virtual server.
 // Type: LoadBalancerVirtualServerType
 // Namespace: http://www.vmware.com/vcloud/v1.5
@@ -2013,21 +2049,22 @@ type QueryResultRecordsType struct {
 	PageSize int     `xml:"pageSize,attr,omitempty"` // Page size, as a number of records or references.
 	Total    float64 `xml:"total,attr,omitempty"`    // Total number of records or references in the container.
 	// Elements
-	Link                            []*Link                                           `xml:"Link,omitempty"`                  // A reference to an entity or operation associated with this object.
-	EdgeGatewayRecord               []*QueryResultEdgeGatewayRecordType               `xml:"EdgeGatewayRecord"`               // A record representing a EdgeGateway result.
-	VMRecord                        []*QueryResultVMRecordType                        `xml:"VMRecord"`                        // A record representing a VM result.
-	AdminVMRecord                   []*QueryResultVMRecordType                        `xml:"AdminVMRecord"`                   // A record representing a Admin VM result.
-	VAppRecord                      []*QueryResultVAppRecordType                      `xml:"VAppRecord"`                      // A record representing a VApp result.
-	OrgVdcStorageProfileRecord      []*QueryResultOrgVdcStorageProfileRecordType      `xml:"OrgVdcStorageProfileRecord"`      // A record representing storage profiles
-	MediaRecord                     []*MediaRecordType                                `xml:"MediaRecord"`                     // A record representing media
-	AdminMediaRecord                []*MediaRecordType                                `xml:"AdminMediaRecord"`                // A record representing Admin media
-	VMWProviderVdcRecord            []*QueryResultVMWProviderVdcRecordType            `xml:"VMWProviderVdcRecord"`            // A record representing a Provider VDC result.
-	ProviderVdcStorageProfileRecord []*QueryResultProviderVdcStorageProfileRecordType `xml:"ProviderVdcStorageProfileRecord"` // A record representing a Provider VDC storage profile result
-	NetworkPoolRecord               []*QueryResultNetworkPoolRecordType               `xml:"NetworkPoolRecord"`               // A record representing a network pool
-	DiskRecord                      []*DiskRecordType                                 `xml:"DiskRecord"`                      // A record representing a independent Disk.
-	AdminDiskRecord                 []*DiskRecordType                                 `xml:"AdminDiskRecord"`                 // A record representing a independent Disk.
-	VirtualCenterRecord             []*QueryResultVirtualCenterRecordType             `xml:"VirtualCenterRecord"`             // A record representing a vSphere server
-	PortGroupRecord                 []*PortGroupRecordType                            `xml:"PortgroupRecord"`                 // A record representing a port group
+	Link                            []*Link                                           `xml:"Link,omitempty"`                     // A reference to an entity or operation associated with this object.
+	EdgeGatewayRecord               []*QueryResultEdgeGatewayRecordType               `xml:"EdgeGatewayRecord"`                  // A record representing a EdgeGateway result.
+	VMRecord                        []*QueryResultVMRecordType                        `xml:"VMRecord"`                           // A record representing a VM result.
+	AdminVMRecord                   []*QueryResultVMRecordType                        `xml:"AdminVMRecord"`                      // A record representing a Admin VM result.
+	VAppRecord                      []*QueryResultVAppRecordType                      `xml:"VAppRecord"`                         // A record representing a VApp result.
+	OrgVdcStorageProfileRecord      []*QueryResultOrgVdcStorageProfileRecordType      `xml:"OrgVdcStorageProfileRecord"`         // A record representing storage profiles
+	MediaRecord                     []*MediaRecordType                                `xml:"MediaRecord"`                        // A record representing media
+	AdminMediaRecord                []*MediaRecordType                                `xml:"AdminMediaRecord"`                   // A record representing Admin media
+	VMWProviderVdcRecord            []*QueryResultVMWProviderVdcRecordType            `xml:"VMWProviderVdcRecord"`               // A record representing a Provider VDC result.
+	ProviderVdcStorageProfileRecord []*QueryResultProviderVdcStorageProfileRecordType `xml:"ProviderVdcStorageProfileRecord"`    // A record representing a Provider VDC storage profile result
+	NetworkPoolRecord               []*QueryResultNetworkPoolRecordType               `xml:"NetworkPoolRecord"`                  // A record representing a network pool
+	DiskRecord                      []*DiskRecordType                                 `xml:"DiskRecord"`                         // A record representing a independent Disk.
+	AdminDiskRecord                 []*DiskRecordType                                 `xml:"AdminDiskRecord"`                    // A record representing a independent Disk.
+	VirtualCenterRecord             []*QueryResultVirtualCenterRecordType             `xml:"VirtualCenterRecord"`                // A record representing a vSphere server
+	PortGroupRecord                 []*PortGroupRecordType                            `xml:"PortgroupRecord"`                    // A record representing a port group
+	OrgVdcNetworkRecord             []*QueryResultOrgVdcNetworkRecordType             `xml:"QueryResultOrgVdcNetworkRecordType"` // A record representing a org VDC network
 }
 
 // QueryResultEdgeGatewayRecordType represents an edge gateway record as query result.
@@ -2466,4 +2503,41 @@ type PortGroupRecordType struct {
 	NetworkName   string  `xml:"networkName,attr,omitempty"`
 	ScopeType     int     `xml:"scopeType,attr,omitempty"` // Scope of network using the portgroup(1=Global, 2=Organization, 3=vApp)
 	Link          []*Link `xml:"Link,omitempty"`
+}
+
+// Represents org VDC Network
+// Reference: vCloud API 27.0 - Org VDC Network
+// https://code.vmware.com/apis/72/doc/doc/types/QueryResultOrgVdcNetworkRecordType.html
+type QueryResultOrgVdcNetworkRecordType struct {
+	Xmlns              string  `xml:"xmlns,attr,omitempty"`
+	HREF               string  `xml:"href,attr,omitempty"`
+	Id                 string  `xml:"id,attr,omitempty"`
+	Type               string  `xml:"type,attr,omitempty"`
+	Name               string  `xml:"name,attr,omitempty"`
+	DefaultGateway     string  `xml:"defaultGateway,attr,omitempty"`
+	Netmask            string  `xml:"netmask,attr,omitempty"`
+	Dns1               string  `xml:"dns1,attr,omitempty"`
+	Dns2               string  `xml:"dns2,attr,omitempty"`
+	DnsSuffix          string  `xml:"dnsSuffix,attr,omitempty"`
+	LinkType           int     `xml:"linkType,attr,omitempty"`
+	ConnectedTo        string  `xml:"connectedTo,attr,omitempty"`
+	Vdc                string  `xml:"vdc,attr,omitempty"`
+	IsBusy             bool    `xml:"isBusy,attr,omitempty"`
+	IsShared           bool    `xml:"isShared,attr,omitempty"`
+	VdcName            string  `xml:"vdcName,attr,omitempty"`
+	IsIpScopeInherited bool    `xml:"isIpScopeInherited,attr,omitempty"`
+	Link               []*Link `xml:"Link,omitempty"`
+}
+
+// Represents org VDC Network
+// Reference: vCloud API 27.0 - Network Pool
+// https://code.vmware.com/apis/72/vcloud-director#/doc/doc/types/VMWNetworkPoolType.html
+type VMWNetworkPool struct {
+	HREF        string           `xml:"href,attr,omitempty"`
+	Id          string           `xml:"id,attr,omitempty"`
+	Type        string           `xml:"type,attr,omitempty"`
+	Name        string           `xml:"name,attr"`
+	Status      int              `xml:"status,attr,omitempty"`
+	Description string           `xml:"netmask,omitempty"`
+	Tasks       *TasksInProgress `xml:"Tasks,omitempty"`
 }

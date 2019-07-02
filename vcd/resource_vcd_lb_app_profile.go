@@ -44,10 +44,11 @@ func resourceVcdLBAppProfile() *schema.Resource {
 				Description: "Unique Application Profile name",
 			},
 			"type": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				Description: "Protocol type used to send requests to the server. One of 'TCP', " +
-					"'UDP', 'HTTP' org 'HTTPS'",
+				Type:         schema.TypeString,
+				Required:     true,
+				ValidateFunc: validateCase("lower"),
+				Description: "Protocol type used to send requests to the server. One of 'tcp', " +
+					"'udp', 'http' org 'https'",
 			},
 			"enable_ssl_passthrough": &schema.Schema{
 				Type:     schema.TypeBool,
@@ -58,8 +59,9 @@ func resourceVcdLBAppProfile() *schema.Resource {
 			"http_redirect_url": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
+				Default:  "",
 				Description: "The URL to which traffic that arrives at the destination address " +
-					"should be redirected. Only applies for types HTTP and HTTPS",
+					"should be redirected. Only applies for types 'http' and 'https'",
 			},
 			"persistence_mechanism": &schema.Schema{
 				Type:         schema.TypeString,
@@ -83,12 +85,11 @@ func resourceVcdLBAppProfile() *schema.Resource {
 				Description: "The mode by which the cookie should be inserted. One of 'insert', " +
 					"'prefix', or 'appsession'",
 			},
-
-			// "expiration": &schema.Schema{
-			// 	Type:        schema.TypeInt,
-			// 	Optional:    true,
-			// 	Description: "Length of time in seconds that persistence stays in effect",
-			// },
+			"expiration": &schema.Schema{
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Length of time in seconds that persistence stays in effect",
+			},
 			"insert_x_forwarded_http_header": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -103,8 +104,8 @@ func resourceVcdLBAppProfile() *schema.Resource {
 				Type:     schema.TypeBool,
 				Default:  false,
 				Optional: true,
-				Description: "Enabled handling of SSL certificates at load balancer layer. " +
-					"Only applies for type HTTPS",
+				Description: "Enable to define the certificate, CAs, or CRLs used to authenticate" +
+					" the load balancer from the server side",
 			},
 		},
 	}
@@ -120,18 +121,18 @@ func resourceVcdLBAppProfileCreate(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	LBProfile, err := expandLBProfile(d)
+	LBProfile, err := getLBAppProfileType(d)
 	if err != nil {
-		return fmt.Errorf("unable to expand load balancer application profile: %s", err)
+		return fmt.Errorf("unable to expand load balancer app profile: %s", err)
 	}
 
 	createdPool, err := edgeGateway.CreateLBAppProfile(LBProfile)
 	if err != nil {
-		return fmt.Errorf("error creating new load balancer application profile: %s", err)
+		return fmt.Errorf("error creating new load balancer app profile: %s", err)
 	}
 
 	// We store the values once again because response include pool member IDs
-	err = flattenLBProfile(d, createdPool)
+	err = setLBAppProfileData(d, createdPool)
 	if err != nil {
 		return err
 	}
@@ -150,10 +151,10 @@ func resourceVcdLBAppProfileRead(d *schema.ResourceData, meta interface{}) error
 	readLBProfile, err := edgeGateway.ReadLBAppProfile(&types.LBAppProfile{ID: d.Id()})
 	if err != nil {
 		d.SetId("")
-		return fmt.Errorf("unable to find load balancer application profile with ID %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to find load balancer app profile with ID %s: %s", d.Id(), err)
 	}
 
-	return flattenLBProfile(d, readLBProfile)
+	return setLBAppProfileData(d, readLBProfile)
 }
 
 func resourceVcdLBAppProfileUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -166,17 +167,17 @@ func resourceVcdLBAppProfileUpdate(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	updateLBProfileConfig, err := expandLBProfile(d)
+	updateLBProfileConfig, err := getLBAppProfileType(d)
 	if err != nil {
-		return fmt.Errorf("could not expand load balancer application profile for update: %s", err)
+		return fmt.Errorf("could not expand load balancer app profile for update: %s", err)
 	}
 
 	updatedLBProfile, err := edgeGateway.UpdateLBAppProfile(updateLBProfileConfig)
 	if err != nil {
-		return fmt.Errorf("unable to update load balancer application profile with ID %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to update load balancer app profile with ID %s: %s", d.Id(), err)
 	}
 
-	if err := flattenLBProfile(d, updatedLBProfile); err != nil {
+	if err := setLBAppProfileData(d, updatedLBProfile); err != nil {
 		return err
 	}
 
@@ -195,7 +196,7 @@ func resourceVcdLBAppProfileDelete(d *schema.ResourceData, meta interface{}) err
 
 	err = edgeGateway.DeleteLBAppProfile(&types.LBAppProfile{ID: d.Id()})
 	if err != nil {
-		return fmt.Errorf("error deleting load balancer application profile: %s", err)
+		return fmt.Errorf("error deleting load balancer app profile: %s", err)
 	}
 
 	d.SetId("")
@@ -217,7 +218,8 @@ func resourceVcdLBAppProfileImport(d *schema.ResourceData, meta interface{}) ([]
 
 	readLBProfile, err := edgeGateway.ReadLBAppProfile(&types.LBAppProfile{Name: poolName})
 	if err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer application profile with name %s: %s", d.Id(), err)
+		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer app profile with name %s: %s",
+			d.Id(), err)
 	}
 
 	d.Set("org", orgName)
@@ -229,13 +231,16 @@ func resourceVcdLBAppProfileImport(d *schema.ResourceData, meta interface{}) ([]
 	return []*schema.ResourceData{d}, nil
 }
 
-func expandLBProfile(d *schema.ResourceData) (*types.LBAppProfile, error) {
+func getLBAppProfileType(d *schema.ResourceData) (*types.LBAppProfile, error) {
 	LBProfile := &types.LBAppProfile{
 		Name:                          d.Get("name").(string),
 		Template:                      d.Get("type").(string),
 		SSLPassthrough:                d.Get("enable_ssl_passthrough").(bool),
 		InsertXForwardedForHTTPHeader: d.Get("insert_x_forwarded_http_header").(bool),
 		ServerSSLEnabled:              d.Get("enable_pool_side_ssl").(bool),
+		// Questionable field. UI has it, but does not send it. NSX documentation has it, but it is
+		// never returned, nor shown
+		Expire: d.Get("expiration").(int),
 	}
 
 	if d.Get("http_redirect_url").(string) != "" {
@@ -255,23 +260,29 @@ func expandLBProfile(d *schema.ResourceData) (*types.LBAppProfile, error) {
 	return LBProfile, nil
 }
 
-func flattenLBProfile(d *schema.ResourceData, LBProfile *types.LBAppProfile) error {
+func setLBAppProfileData(d *schema.ResourceData, LBProfile *types.LBAppProfile) error {
 	d.Set("name", LBProfile.Name)
 	d.Set("type", LBProfile.Template)
 	d.Set("enable_ssl_passthrough", LBProfile.SSLPassthrough)
 	d.Set("insert_x_forwarded_http_header", LBProfile.InsertXForwardedForHTTPHeader)
 	d.Set("enable_pool_side_ssl", LBProfile.ServerSSLEnabled)
-	// d.Set("expiration", LBProfile.Ex)
+	// Questionable field. UI has it, but does not send it. NSX documentation has it, but it is
+	// never returned, nor shown
+	d.Set("expiration", LBProfile.Expire)
 
 	if LBProfile.Persistence != nil {
 		d.Set("persistence_mechanism", LBProfile.Persistence.Method)
 		d.Set("cookie_name", LBProfile.Persistence.CookieName)
 		d.Set("cookie_mode", LBProfile.Persistence.CookieMode)
+	} else {
+		d.Set("persistence_mechanism", "")
+		d.Set("cookie_name", "")
+		d.Set("cookie_mode", "")
 	}
 
 	if LBProfile.HTTPRedirect != nil {
 		d.Set("http_redirect_url", LBProfile.HTTPRedirect.To)
-	} else {
+	} else { // We still want to make sure it is empty
 		d.Set("http_redirect_url", "")
 	}
 
