@@ -98,6 +98,8 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 	}
 
 	configText := templateFill(testAccCheckVcdVdc_basic, params)
+	params["FuncName"] = t.Name() + "-Update"
+	updateText := templateFill(testAccCheckVcdVdc_update, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -135,6 +137,22 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 						"vcd_org_vdc."+TestAccVcdVdc, "delete_recursive", "true"),
 				),
 			},
+			resource.TestStep{
+				Config: updateText,
+				Check: resource.ComposeTestCheckFunc(
+					testVcdVdcUpdated("vcd_org_vdc."+TestAccVcdVdc, &vdc),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "enabled", "false"),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "enable_thin_provisioning", "false"),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "enable_fast_provisioning", "false"),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "delete_force", "false"),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "delete_recursive", "false"),
+				),
+			},
 		},
 	})
 }
@@ -157,12 +175,44 @@ func testAccCheckVcdVdcExists(name string, vdc *govcd.Vdc) resource.TestCheckFun
 			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
 		}
 
-		newVdc, err := adminOrg.GetVdcByName(rs.Primary.ID)
+		newVdc, err := adminOrg.GetVdcByName(rs.Primary.Attributes["name"])
 		if err != nil {
-			return fmt.Errorf("vdc %s does not exist (%#v)", rs.Primary.ID, newVdc)
+			return fmt.Errorf("vdc %s does not exist (%#v)", rs.Primary.Attributes["name"], newVdc)
 		}
 
 		vdc = &newVdc
+		return nil
+	}
+}
+
+func testVcdVdcUpdated(name string, vdc *govcd.Vdc) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[name]
+		if !ok {
+			return fmt.Errorf("not found: %s", name)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("no VDC ID is set")
+		}
+
+		conn := testAccProvider.Meta().(*VCDClient)
+
+		adminOrg, err := conn.GetAdminOrg(testConfig.VCD.Org)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
+		}
+
+		updateVdc, err := adminOrg.GetVdcByName(rs.Primary.Attributes["name"])
+		if err != nil {
+			return fmt.Errorf("vdc %s does not exist (%#v)", rs.Primary.Attributes["name"], updateVdc)
+		}
+
+		if updateVdc.Vdc.IsEnabled != false {
+			return fmt.Errorf("VDC update failed - VDC still enabled")
+		}
+
+		vdc = &updateVdc
 		return nil
 	}
 }
@@ -230,5 +280,41 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   enable_fast_provisioning = true
   delete_force             = true
   delete_recursive         = true
+}
+`
+
+const testAccCheckVcdVdc_update = `
+resource "vcd_org_vdc" "{{.VdcName}}" {
+  name = "{{.VdcName}}"
+  org  = "{{.OrgName}}"
+
+  allocation_model = "{{.AllocationModel}}"
+  network_pool_name     = "{{.NetworkPool}}"
+  provider_vdc_name     = "{{.ProviderVdc}}"
+
+  compute_capacity {
+    cpu {
+      allocated = 2048
+      limit     = 2048
+    }
+
+    memory {
+      allocated = 2048
+      limit     = 2048
+    }
+  }
+
+  storage_profile {
+    name = "{{.ProviderVdcStorageProfile}}"
+    enabled  = true
+    limit    = 10240
+    default  = true
+  }
+
+  enabled                  = false
+  enable_thin_provisioning = false
+  enable_fast_provisioning = false
+  delete_force             = false
+  delete_recursive         = false
 }
 `
