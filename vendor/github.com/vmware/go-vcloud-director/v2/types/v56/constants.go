@@ -33,6 +33,8 @@ const (
 	MimeCatalogItem = "application/vnd.vmware.vcloud.catalogItem+xml"
 	// MimeVDC mime for a VDC
 	MimeVDC = "application/vnd.vmware.vcloud.vdc+xml"
+	// MimeVDC mime for a admin VDC
+	MimeAdminVDC = "application/vnd.vmware.admin.vdc+xml"
 	// MimeVAppTemplate mime for a vapp template
 	MimeVAppTemplate = "application/vnd.vmware.vcloud.vAppTemplate+xml"
 	// MimeVApp mime for a vApp
