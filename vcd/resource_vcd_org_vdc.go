@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math"
 	"strconv"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -143,16 +144,18 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Description: "Storage profiles supported by this VDC.",
 			},
 			"memory_guaranteed": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Optional:    true,
-				Description: "Percentage of allocated memory resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. When Allocation model is AllocationPool minimum value is 0.2. If the element is empty, vCD sets a value.",
+				Type:             schema.TypeString,
+				Computed:         true,
+				Optional:         true,
+				Description:      "Percentage of allocated memory resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. When Allocation model is AllocationPool minimum value is 0.2. If the element is empty, vCD sets a value.",
+				DiffSuppressFunc: floatAsStringSuppress(),
 			},
 			"cpu_guaranteed": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				Description: "Percentage of allocated CPU resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. If the element is empty, vCD sets a value",
+				Type:             schema.TypeString,
+				Optional:         true,
+				Computed:         true,
+				Description:      "Percentage of allocated CPU resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. If the element is empty, vCD sets a value",
+				DiffSuppressFunc: floatAsStringSuppress(),
 			},
 			"cpu_speed": &schema.Schema{
 				Type:        schema.TypeInt,
@@ -206,6 +209,22 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Description: "When destroying use delete_recursive=True to remove the vdc and any objects it contains that are in a state that normally allows removal.",
 			},
 		},
+	}
+}
+
+// floatAsStringSuppress suppresses change if value is similar as 0.3 and 0.30
+func floatAsStringSuppress() schema.SchemaDiffSuppressFunc {
+	return func(k string, old string, new string, d *schema.ResourceData) bool {
+		oldValue, err := strconv.ParseFloat(old, 64)
+		if err != nil {
+			return false
+		}
+		newValue, err := strconv.ParseFloat(new, 64)
+		if err != nil {
+			return false
+		}
+		return math.Abs(oldValue-newValue) < 0.001
+
 	}
 }
 
@@ -285,14 +304,14 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.Set("allocation_model", adminVdc.AdminVdc.AllocationModel)
-	d.Set("cpu_guaranteed", adminVdc.AdminVdc.ResourceGuaranteedCpu)
+	d.Set("cpu_guaranteed", strconv.FormatFloat(*adminVdc.AdminVdc.ResourceGuaranteedCpu, 'f', 2, 64))
 	d.Set("cpu_speed", adminVdc.AdminVdc.VCpuInMhz)
 	d.Set("description", adminVdc.AdminVdc.Description)
 	d.Set("enable_fast_provisioning", adminVdc.AdminVdc.UsesFastProvisioning)
 	d.Set("enable_thin_provisioning", adminVdc.AdminVdc.IsThinProvision)
 	d.Set("enable_vm_discovery", adminVdc.AdminVdc.VmDiscoveryEnabled)
 	d.Set("enabled", adminVdc.AdminVdc.IsEnabled)
-	d.Set("memory_guaranteed", adminVdc.AdminVdc.ResourceGuaranteedMemory)
+	d.Set("memory_guaranteed", strconv.FormatFloat(*adminVdc.AdminVdc.ResourceGuaranteedMemory, 'f', 2, 64))
 	d.Set("name", adminVdc.AdminVdc.Name)
 
 	networkPool, err := govcd.GetNetworkPoolByHREF(vcdClient.VCDClient, adminVdc.AdminVdc.NetworkPoolReference.HREF)
