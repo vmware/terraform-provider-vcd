@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strconv"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
@@ -285,14 +284,14 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.Set("allocation_model", adminVdc.AdminVdc.AllocationModel)
-	d.Set("cpu_guaranteed", strconv.FormatFloat(*adminVdc.AdminVdc.ResourceGuaranteedCpu, 'f', 2, 64))
+	d.Set("cpu_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedCpu)
 	d.Set("cpu_speed", adminVdc.AdminVdc.VCpuInMhz)
 	d.Set("description", adminVdc.AdminVdc.Description)
 	d.Set("enable_fast_provisioning", adminVdc.AdminVdc.UsesFastProvisioning)
 	d.Set("enable_thin_provisioning", adminVdc.AdminVdc.IsThinProvision)
 	d.Set("enable_vm_discovery", adminVdc.AdminVdc.VmDiscoveryEnabled)
 	d.Set("enabled", adminVdc.AdminVdc.IsEnabled)
-	d.Set("memory_guaranteed", strconv.FormatFloat(*adminVdc.AdminVdc.ResourceGuaranteedMemory, 'f', 2, 64))
+	d.Set("memory_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedMemory)
 	d.Set("name", adminVdc.AdminVdc.Name)
 
 	networkPool, err := govcd.GetNetworkPoolByHREF(vcdClient.VCDClient, adminVdc.AdminVdc.NetworkPoolReference.HREF)
