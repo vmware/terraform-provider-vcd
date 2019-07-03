@@ -142,6 +142,16 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 				Check: resource.ComposeTestCheckFunc(
 					testVcdVdcUpdated("vcd_org_vdc."+TestAccVcdVdc, &vdc),
 					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "name", TestAccVcdVdc),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "org", testConfig.VCD.Org),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "allocation_model", allocationModel),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "network_pool_name", testConfig.VCD.ProviderVdc.NetworkPool),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "provider_vdc_name", testConfig.VCD.ProviderVdc.Name),
+					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "enabled", "false"),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "enable_thin_provisioning", "false"),
@@ -151,6 +161,10 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 						"vcd_org_vdc."+TestAccVcdVdc, "delete_force", "false"),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "delete_recursive", "false"),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "memory_guaranteed", "0.25"),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "cpu_guaranteed", "0.55"),
 				),
 			},
 		},
@@ -311,6 +325,8 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
     default  = true
   }
 
+  cpu_guaranteed           = 0.55
+  memory_guaranteed        = 0.25
   enabled                  = false
   enable_thin_provisioning = false
   enable_fast_provisioning = false
