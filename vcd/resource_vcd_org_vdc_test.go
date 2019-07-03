@@ -28,6 +28,9 @@ func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  "TestAccVcdOrgVdcReservationPool",
+		// cause vDC ignores values
+		"MemoryGuaranteed": "1.00",
+		"CpuGuaranteed":    "1.00",
 	}
 	runOrgVdcTest(t, params, allocationModel)
 }
@@ -46,6 +49,8 @@ func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  "TestAccVcdOrgVdcAllocationPool",
+		"MemoryGuaranteed":          "0.30",
+		"CpuGuaranteed":             "0.45",
 	}
 	runOrgVdcTest(t, params, allocationModel)
 }
@@ -65,6 +70,8 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  "TestAccVcdOrgVdcAllocationVapp",
+		"MemoryGuaranteed":          "0.50",
+		"CpuGuaranteed":             "0.65",
 	}
 	runOrgVdcTest(t, params, allocationModel)
 }
@@ -162,9 +169,9 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "delete_recursive", "false"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "memory_guaranteed", "0.25"),
+						"vcd_org_vdc."+TestAccVcdVdc, "memory_guaranteed", params["MemoryGuaranteed"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "cpu_guaranteed", "0.55"),
+						"vcd_org_vdc."+TestAccVcdVdc, "cpu_guaranteed", params["CpuGuaranteed"].(string)),
 				),
 			},
 		},
@@ -325,8 +332,8 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
     default  = true
   }
 
-  cpu_guaranteed           = 0.55
-  memory_guaranteed        = 0.25
+  cpu_guaranteed           = "{{.CpuGuaranteed}}"
+  memory_guaranteed        = "{{.MemoryGuaranteed}}"
   enabled                  = false
   enable_thin_provisioning = false
   enable_fast_provisioning = false
