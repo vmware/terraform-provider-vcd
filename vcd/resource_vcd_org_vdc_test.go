@@ -28,9 +28,9 @@ func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  "TestAccVcdOrgVdcReservationPool",
-		// cause vDC ignores values
-		"MemoryGuaranteed": "1.00",
-		"CpuGuaranteed":    "1.00",
+		// cause vDC ignores empty values and use default
+		"MemoryGuaranteed": "1",
+		"CpuGuaranteed":    "1",
 	}
 	runOrgVdcTest(t, params, allocationModel)
 }
@@ -49,7 +49,7 @@ func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  "TestAccVcdOrgVdcAllocationPool",
-		"MemoryGuaranteed":          "0.30",
+		"MemoryGuaranteed":          "0.3",
 		"CpuGuaranteed":             "0.45",
 	}
 	runOrgVdcTest(t, params, allocationModel)
@@ -70,8 +70,8 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  "TestAccVcdOrgVdcAllocationVapp",
-		"MemoryGuaranteed":          "0.50",
-		"CpuGuaranteed":             "0.65",
+		"MemoryGuaranteed":          "0.5",
+		"CpuGuaranteed":             "0.6",
 	}
 	runOrgVdcTest(t, params, allocationModel)
 }

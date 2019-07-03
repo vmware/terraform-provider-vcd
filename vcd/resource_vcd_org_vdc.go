@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"math"
 	"strconv"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -144,18 +143,16 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Description: "Storage profiles supported by this VDC.",
 			},
 			"memory_guaranteed": &schema.Schema{
-				Type:             schema.TypeString,
-				Computed:         true,
-				Optional:         true,
-				Description:      "Percentage of allocated memory resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. When Allocation model is AllocationPool minimum value is 0.2. If the element is empty, vCD sets a value.",
-				DiffSuppressFunc: floatAsStringSuppress(),
+				Type:        schema.TypeFloat,
+				Computed:    true,
+				Optional:    true,
+				Description: "Percentage of allocated memory resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. When Allocation model is AllocationPool minimum value is 0.2. If the element is empty, vCD sets a value.",
 			},
 			"cpu_guaranteed": &schema.Schema{
-				Type:             schema.TypeString,
-				Optional:         true,
-				Computed:         true,
-				Description:      "Percentage of allocated CPU resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. If the element is empty, vCD sets a value",
-				DiffSuppressFunc: floatAsStringSuppress(),
+				Type:        schema.TypeFloat,
+				Optional:    true,
+				Computed:    true,
+				Description: "Percentage of allocated CPU resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. If the element is empty, vCD sets a value",
 			},
 			"cpu_speed": &schema.Schema{
 				Type:        schema.TypeInt,
@@ -209,22 +206,6 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Description: "When destroying use delete_recursive=True to remove the vdc and any objects it contains that are in a state that normally allows removal.",
 			},
 		},
-	}
-}
-
-// floatAsStringSuppress suppresses change if value is equivalent as 0.3 and 0.30
-func floatAsStringSuppress() schema.SchemaDiffSuppressFunc {
-	return func(k string, old string, new string, d *schema.ResourceData) bool {
-		oldValue, err := strconv.ParseFloat(old, 64)
-		if err != nil {
-			return false
-		}
-		newValue, err := strconv.ParseFloat(new, 64)
-		if err != nil {
-			return false
-		}
-		return math.Abs(oldValue-newValue) < 0.001
-
 	}
 }
 
@@ -472,19 +453,19 @@ func getUpdatedVdcInput(d *schema.ResourceData, vcdClient *VCDClient, vdc *govcd
 	}
 
 	if d.HasChange("memory_guaranteed") {
-		value, err := strconv.ParseFloat(d.Get("memory_guaranteed").(string), 64)
-		if err != nil {
-			return &govcd.AdminVdc{}, err
+		// only set 0 if value configured
+		if value, ok := d.GetOkExists("memory_guaranteed"); ok {
+			floatValue := value.(float64)
+			vdc.AdminVdc.ResourceGuaranteedMemory = &floatValue
 		}
-		vdc.AdminVdc.ResourceGuaranteedMemory = &value
 	}
 
 	if d.HasChange("cpu_guaranteed") {
-		value, err := strconv.ParseFloat(d.Get("cpu_guaranteed").(string), 64)
-		if err != nil {
-			return &govcd.AdminVdc{}, err
+		// only set 0 if value configured
+		if value, ok := d.GetOkExists("cpu_guaranteed"); ok {
+			floatValue := value.(float64)
+			vdc.AdminVdc.ResourceGuaranteedCpu = &floatValue
 		}
-		vdc.AdminVdc.ResourceGuaranteedCpu = &value
 	}
 
 	if d.HasChange("cpu_speed") {
@@ -617,19 +598,14 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 		params.IsEnabled = isEnabled.(bool)
 	}
 
-	if resourceGuaranteedMemory, ok := d.GetOk("memory_guaranteed"); ok {
-		value, err := strconv.ParseFloat(resourceGuaranteedMemory.(string), 64)
-		if err != nil {
-			return &types.VdcConfiguration{}, err
-		}
+	// only set 0 if value configured
+	if resourceGuaranteedMemory, ok := d.GetOkExists("memory_guaranteed"); ok {
+		value := resourceGuaranteedMemory.(float64)
 		params.ResourceGuaranteedMemory = &value
 	}
 
-	if resourceGuaranteedCpu, ok := d.GetOk("cpu_guaranteed"); ok {
-		value, err := strconv.ParseFloat(resourceGuaranteedCpu.(string), 64)
-		if err != nil {
-			return &types.VdcConfiguration{}, err
-		}
+	if resourceGuaranteedCpu, ok := d.GetOkExists("cpu_guaranteed"); ok {
+		value := resourceGuaranteedCpu.(float64)
 		params.ResourceGuaranteedCpu = &value
 	}
 
