@@ -55,11 +55,10 @@ resource "vcd_lb_service_monitor" "monitor" {
 
 The following arguments are supported:
 
-* `edge_gateway` - (Required) The name of the edge gateway on which the service monitor is to be created
-* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
+* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
+* `edge_gateway` - (Required) The name of the edge gateway on which the service monitor is to be created
 * `name` - (Required) Service Monitor name
-
 * `interval` - (Required) Interval in seconds at which a server is to be monitored using the specified Method.
 * `timeout` - (Required) Maximum time in seconds within which a response from the server must be received
 * `max_retries` - (Required) Number of times the specified monitoring Method must fail sequentially before the server is declared down

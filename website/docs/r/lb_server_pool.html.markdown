@@ -111,9 +111,9 @@ resource "vcd_lb_server_pool" "web-servers" {
 
 The following arguments are supported:
 
-* `edge_gateway` - (Required) The name of the edge gateway on which the server pool is to be created
-* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
+* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
+* `edge_gateway` - (Required) The name of the edge gateway on which the server pool is to be created
 * `name` - (Required) Server Pool name
 * `description` - (Optional) Server Pool description
 * `algorithm` - (Required) Server Pool load balancing method. Can be one of `ip-hash`, `round-robin`, `uri`, `leastconn`, `url`, or `httpheader`

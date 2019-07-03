@@ -33,9 +33,9 @@ data "vcd_lb_service_monitor" "my-monitor" {
 
 The following arguments are supported:
 
-* `edge_gateway` - (Required) The name of the edge gateway on which the service monitor is defined
-* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
+* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
+* `edge_gateway` - (Required) The name of the edge gateway on which the service monitor is defined
 * `name` - (Required) Service Monitor name for identifying the exact service monitor
 
 ## Attribute Reference

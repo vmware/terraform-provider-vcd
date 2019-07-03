@@ -32,9 +32,9 @@ data "vcd_lb_server_pool" "sp-ds" {
 
 The following arguments are supported:
 
-* `edge_gateway` - (Required) The name of the edge gateway on which the server pool is defined
-* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
+* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
+* `edge_gateway` - (Required) The name of the edge gateway on which the server pool is defined
 * `name` - (Required) Server Pool name for identifying the exact server pool
 
 ## Attribute Reference

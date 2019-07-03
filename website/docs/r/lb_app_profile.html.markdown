@@ -79,11 +79,9 @@ resource "vcd_lb_app_profile" "http" {
 
 The following arguments are supported:
 
-* `edge_gateway` - (Required) The name of the edge gateway on which the service monitor is to
-be created
+* `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
-* `org` - (Optional) The name of organization to use, optional if defined at provider level.
-Useful when connected as sysadmin working across different organisations
+* `edge_gateway` - (Required) The name of the edge gateway on which the application profile is to be created
 * `name` - (Required) Application profile name
 * `type` - (Required) Protocol type used to send requests to the server. One of `tcp`, `udp`,
 `http`, or `https`

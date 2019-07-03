@@ -35,9 +35,8 @@ data "vcd_lb_app_profile" "my-profile" {
 The following arguments are supported:
 
 * `edge_gateway` - (Required) The name of the edge gateway on which the service monitor is defined
+* `org` - (Optional) The name of organization to use, optional if defined at provider level
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
-* `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
-when connected as sysadmin working across different organisations
 * `name` - (Required) Application profile name for identifying the exact application profile
 
 ## Attribute Reference
