@@ -16,6 +16,7 @@ FEATURES:
 
 IMPROVEMENTS:
 * Fix ignoring of resource guarantee values in `vcd_org_vdc` [GH-265]
+* **Resource:** Org VDC `vcd_org_vdc` ID changed from name to vCD ID - [GH-275]
 
 ## 2.3.0 (May 29, 2019)
 
