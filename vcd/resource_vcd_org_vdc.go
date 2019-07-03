@@ -212,7 +212,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 	}
 }
 
-// floatAsStringSuppress suppresses change if value is similar as 0.3 and 0.30
+// floatAsStringSuppress suppresses change if value is equivalent as 0.3 and 0.30
 func floatAsStringSuppress() schema.SchemaDiffSuppressFunc {
 	return func(k string, old string, new string, d *schema.ResourceData) bool {
 		oldValue, err := strconv.ParseFloat(old, 64)
@@ -333,6 +333,7 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
+//resourceVcdVdcUpdate function updates resource with found configurations changes
 func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[TRACE] vdc update initiated")
 
