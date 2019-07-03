@@ -300,7 +300,7 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 	adminVdc, err := adminOrg.GetAdminVdcByName(d.Get("name").(string))
 	if err != nil || adminVdc == (govcd.AdminVdc{}) {
 		log.Printf("[DEBUG] Unable to find vdc")
-		return fmt.Errorf("unable to find vDC %#v", err)
+		return fmt.Errorf("unable to find VDC %#v", err)
 	}
 
 	d.Set("allocation_model", adminVdc.AdminVdc.AllocationModel)
@@ -352,20 +352,20 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	adminVdc, err := adminOrg.GetAdminVdcByName(vdcName)
 	if err != nil || adminVdc == (govcd.AdminVdc{}) {
-		log.Printf("[DEBUG] Unable to find vDC.")
-		return fmt.Errorf("unable to find vDC %#v", err)
+		log.Printf("[DEBUG] Unable to find VDC.")
+		return fmt.Errorf("unable to find VDC %#v", err)
 	}
 
 	changedAdminVdc, err := getUpdatedVdcInput(d, vcdClient, &adminVdc)
 	if err != nil {
-		log.Printf("[DEBUG] Error updating vDC %#v", err)
-		return fmt.Errorf("error updating vDC %#v", err)
+		log.Printf("[DEBUG] Error updating VDC %#v", err)
+		return fmt.Errorf("error updating VDC %#v", err)
 	}
 
 	_, err = changedAdminVdc.Update()
 	if err != nil {
-		log.Printf("[DEBUG] Error updating vDC %#v", err)
-		return fmt.Errorf("error updating vDC %#v", err)
+		log.Printf("[DEBUG] Error updating VDC %#v", err)
+		return fmt.Errorf("error updating VDC %#v", err)
 	}
 
 	log.Printf("[TRACE] vdc update completed: %#v", adminVdc.AdminVdc.Name)
