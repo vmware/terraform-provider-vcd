@@ -332,8 +332,8 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
     default  = true
   }
 
-  cpu_guaranteed           = "{{.CpuGuaranteed}}"
-  memory_guaranteed        = "{{.MemoryGuaranteed}}"
+  cpu_guaranteed           = {{.CpuGuaranteed}}
+  memory_guaranteed        = {{.MemoryGuaranteed}}
   enabled                  = false
   enable_thin_provisioning = false
   enable_fast_provisioning = false
