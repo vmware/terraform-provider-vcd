@@ -12,7 +12,7 @@ FEATURES:
 * **New build command** `make test-env-build` can configure an empty vCD to run the test suite. See `TESTING.md` for details.
 * **New Resource:** Load Balancer Server Pool `vcd_lb_server_pool` - [GH-268]
 * **New Data Source:** Load Balancer Server Pool `vcd_lb_server_pool` - [GH-268]
-* **Resource:** Org VDC `vcd_org_vdc` update and full state read added - [GH-273]
+* **Resource:** Org VDC `vcd_org_vdc` update and full state read added - [GH-275]
 
 IMPROVEMENTS:
 * Fix ignoring of resource guarantee values in `vcd_org_vdc` [GH-265]
