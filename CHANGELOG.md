@@ -1,22 +1,20 @@
 ## 2.4.0 (Unreleased)
-IMPROVEMENTS:
+FEATURES:
 
+* **New Resource:** `vcd_lb_service_monitor`  Load Balancer Service Monitor - [GH-256]
+* **New Data Source:** `vcd_lb_service_monitor` Load Balancer Service Monitor  - [GH-256]
+* **New Resource:** `vcd_edgegateway` creates and deletes edge gateways - [GH-262]
+* **New build command** `make test-env-build` can configure an empty vCD to run the test suite. See `TESTING.md` for details.
+* **New Resource:** `vcd_lb_server_pool` Load Balancer Server Pool - [GH-268]
+* **New Data Source:** `vcd_lb_server_pool`  Load Balancer Server Pool - [GH-268]
+* resource/vcd_org_vdc added Org VDC update and full state read - [GH-275]
+
+IMPROVEMENTS:
+* resource/vcd_org_vdc: Fix ignoring of resource guarantee values - [GH-265]
+* resource/vcd_org_vdc: Org VDC state ID changed from name to vCD ID - [GH-275]
 * Change resource handling to use locking mechanism when resource parallel handling is not supported by vCD. [GH-255] 
 * Fix issue when vApp is power cycled during member VM deletion. [GH-261]
 
-FEATURES:
-
-* **New Resource:** Load Balancer Service Monitor `vcd_lb_service_monitor` - [GH-256]
-* **New Data Source:** Load Balancer Service Monitor `vcd_lb_service_monitor` - [GH-256]
-* **New Resource:** edge gateway `vcd_edgegateway` creates and deletes edge gateways - [GH-262]
-* **New build command** `make test-env-build` can configure an empty vCD to run the test suite. See `TESTING.md` for details.
-* **New Resource:** Load Balancer Server Pool `vcd_lb_server_pool` - [GH-268]
-* **New Data Source:** Load Balancer Server Pool `vcd_lb_server_pool` - [GH-268]
-* **Resource:** Org VDC `vcd_org_vdc` update and full state read added - [GH-275]
-
-IMPROVEMENTS:
-* Fix ignoring of resource guarantee values in `vcd_org_vdc` [GH-265]
-* Org VDC `vcd_org_vdc` ID changed from name to vCD ID - [GH-275]
 
 ## 2.3.0 (May 29, 2019)
 
