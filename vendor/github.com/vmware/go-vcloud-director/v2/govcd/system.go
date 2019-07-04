@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
 // Simple structure to pass Edge Gateway creation parameters.
@@ -499,4 +500,31 @@ func QueryProviderVdcByName(vcdCli *VCDClient, name string) ([]*types.QueryResul
 	}
 
 	return results.Results.VMWProviderVdcRecord, nil
+}
+
+// GetNetworkPoolByHREF functions fetches an network pool using VDC client and network pool href
+func GetNetworkPoolByHREF(client *VCDClient, href string) (*types.VMWNetworkPool, error) {
+	util.Logger.Printf("[TRACE] Get network pool by HREF: %s\n", href)
+
+	networkPool := &types.VMWNetworkPool{}
+
+	_, err := client.Client.ExecuteRequest(href, http.MethodGet,
+		"", "error fetching network ppol: %s", nil, networkPool)
+
+	// Return the disk
+	return networkPool, err
+
+}
+
+// QueryOrgVdcNetworkByName finds a org VDC network by name which has edge gateway as reference
+func QueryOrgVdcNetworkByName(vcdCli *VCDClient, name string) ([]*types.QueryResultOrgVdcNetworkRecordType, error) {
+	results, err := vcdCli.QueryWithNotEncodedParams(nil, map[string]string{
+		"type":   "orgVdcNetwork",
+		"filter": fmt.Sprintf("(name==%s)", name),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return results.Results.OrgVdcNetworkRecord, nil
 }
