@@ -142,16 +142,20 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Description: "Storage profiles supported by this VDC.",
 			},
 			"memory_guaranteed": &schema.Schema{
-				Type:        schema.TypeFloat,
-				Computed:    true,
-				Optional:    true,
-				Description: "Percentage of allocated memory resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. When Allocation model is AllocationPool minimum value is 0.2. If the element is empty, vCD sets a value.",
+				Type:     schema.TypeFloat,
+				Computed: true,
+				Optional: true,
+				Description: "Percentage of allocated memory resources guaranteed to vApps deployed in this VDC. " +
+					"For example, if this value is 0.75, then 75% of allocated resources are guaranteed. " +
+					"Required when AllocationModel is AllocationVApp or AllocationPool. When Allocation model is AllocationPool minimum value is 0.2. If the element is empty, vCD sets a value.",
 			},
 			"cpu_guaranteed": &schema.Schema{
-				Type:        schema.TypeFloat,
-				Optional:    true,
-				Computed:    true,
-				Description: "Percentage of allocated CPU resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. If the element is empty, vCD sets a value",
+				Type:     schema.TypeFloat,
+				Optional: true,
+				Computed: true,
+				Description: "Percentage of allocated CPU resources guaranteed to vApps deployed in this VDC. " +
+					"For example, if this value is 0.75, then 75% of allocated resources are guaranteed. " +
+					"Required when AllocationModel is AllocationVApp or AllocationPool. If the element is empty, vCD sets a value",
 			},
 			"cpu_speed": &schema.Schema{
 				Type:        schema.TypeInt,
