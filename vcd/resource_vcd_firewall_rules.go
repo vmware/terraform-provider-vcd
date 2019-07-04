@@ -100,7 +100,7 @@ func resourceVcdFirewallRulesCreate(d *schema.ResourceData, meta interface{}) er
 
 	edgeGatewayName := d.Get("edge_gateway").(string)
 
-	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
+	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
@@ -133,7 +133,7 @@ func resourceFirewallRulesDelete(d *schema.ResourceData, meta interface{}) error
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
 
-	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
+	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
@@ -156,7 +156,7 @@ func resourceFirewallRulesDelete(d *schema.ResourceData, meta interface{}) error
 func resourceFirewallRulesRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
+	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}

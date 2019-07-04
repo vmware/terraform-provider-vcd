@@ -537,64 +537,6 @@ func (vapp *VApp) ChangeVMName(name string) (Task, error) {
 		types.MimeVM, "error changing VM name: %s", newName)
 }
 
-// GetMetadata() function calls private function getMetadata() with vapp.client and vapp.VApp.HREF
-// which returns a *types.Metadata struct for provided vapp input.
-func (vapp *VApp) GetMetadata() (*types.Metadata, error) {
-	return getMetadata(vapp.client, vapp.VApp.HREF)
-}
-
-func getMetadata(client *Client, requestUri string) (*types.Metadata, error) {
-	metadata := &types.Metadata{}
-
-	_, err := client.ExecuteRequest(requestUri+"/metadata/", http.MethodGet,
-		types.MimeMetaData, "error retrieving metadata: %s", nil, metadata)
-
-	return metadata, err
-}
-
-// DeleteMetadata() function calls private function deleteMetadata() with vapp.client and vapp.VApp.HREF
-// which deletes metadata depending on key provided as input from vApp.
-func (vapp *VApp) DeleteMetadata(key string) (Task, error) {
-	return deleteMetadata(vapp.client, key, vapp.VApp.HREF)
-}
-
-// Deletes metadata (type MetadataStringValue) from the vApp
-// TODO: Support all MetadataTypedValue types with this function
-func deleteMetadata(client *Client, key string, requestUri string) (Task, error) {
-	apiEndpoint, _ := url.ParseRequestURI(requestUri)
-	apiEndpoint.Path += "/metadata/" + key
-
-	// Return the task
-	return client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodDelete,
-		"", "error deleting metadata: %s", nil)
-}
-
-// AddMetadata() function calls private function addMetadata() with vapp.client and vapp.VApp.HREF
-// which adds metadata key, value pair provided as input.
-func (vapp *VApp) AddMetadata(key string, value string) (Task, error) {
-	return addMetadata(vapp.client, key, value, vapp.VApp.HREF)
-}
-
-// Adds metadata (type MetadataStringValue) to the vApp
-// TODO: Support all MetadataTypedValue types with this function
-func addMetadata(client *Client, key string, value string, requestUri string) (Task, error) {
-	newMetadata := &types.MetadataValue{
-		Xmlns: types.XMLNamespaceVCloud,
-		Xsi:   types.XMLNamespaceXSI,
-		TypedValue: &types.TypedValue{
-			XsiType: "MetadataStringValue",
-			Value:   value,
-		},
-	}
-
-	apiEndpoint, _ := url.ParseRequestURI(requestUri)
-	apiEndpoint.Path += "/metadata/" + key
-
-	// Return the task
-	return client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPut,
-		types.MimeMetaDataValue, "error adding metadata: %s", newMetadata)
-}
-
 func (vapp *VApp) SetOvf(parameters map[string]string) (Task, error) {
 	err := vapp.Refresh()
 	if err != nil {

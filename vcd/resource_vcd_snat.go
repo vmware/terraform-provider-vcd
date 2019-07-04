@@ -65,7 +65,7 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
 
-	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
+	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
@@ -119,7 +119,7 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 func resourceVcdSNATRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	e, err := vcdClient.GetEdgeGatewayFromResource(d)
+	e, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
@@ -159,7 +159,7 @@ func resourceVcdSNATDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
 
-	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
+	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}

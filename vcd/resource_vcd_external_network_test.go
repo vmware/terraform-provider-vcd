@@ -4,7 +4,6 @@ package vcd
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -93,8 +92,8 @@ func testAccCheckExternalNetworkDestroy(s *terraform.State) error {
 
 		conn := testAccProvider.Meta().(*VCDClient)
 		_, err := govcd.GetExternalNetwork(conn.VCDClient, rs.Primary.ID)
-		if err != nil && !strings.Contains(err.Error(), "not found") {
-			return fmt.Errorf("external network %s still exists or other error: %#v", rs.Primary.ID, err)
+		if err == nil {
+			return fmt.Errorf("external network %s still exists", rs.Primary.ID)
 		}
 	}
 

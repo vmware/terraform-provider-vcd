@@ -20,20 +20,22 @@ func resourceVcdLbServiceMonitor() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"org": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "vCD organization in which the Service Monitor is located",
 			},
 			"vdc": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "vCD virtual datacenter in which the Service Monitor is located",
 			},
 			"edge_gateway": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Edge gateway name",
+				Description: "Edge gateway name in which the Service Monitor is located",
 			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
@@ -132,7 +134,7 @@ func resourceVcdLbServiceMonitorCreate(d *schema.ResourceData, meta interface{})
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
 
-	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
+	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
@@ -154,7 +156,7 @@ func resourceVcdLbServiceMonitorCreate(d *schema.ResourceData, meta interface{})
 func resourceVcdLbServiceMonitorRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
+	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
@@ -173,7 +175,7 @@ func resourceVcdLbServiceMonitorUpdate(d *schema.ResourceData, meta interface{})
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
 
-	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
+	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
@@ -196,7 +198,7 @@ func resourceVcdLbServiceMonitorDelete(d *schema.ResourceData, meta interface{})
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
 
-	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d)
+	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 	if err != nil {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}

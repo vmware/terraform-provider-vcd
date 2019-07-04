@@ -315,10 +315,10 @@ type InstantiationParams struct {
 	// SnapshotSection              SnapshotSection              `xml:"SnapshotSection,omitempty"`
 }
 
-// OrgVDCNetwork represents an Org vDC network in the vCloud model.
+// OrgVDCNetwork represents an Org VDC network in the vCloud model.
 // Type: OrgVdcNetworkType
 // Namespace: http://www.vmware.com/vcloud/v1.5
-// Description: Represents an Org vDC network in the vCloud model.
+// Description: Represents an Org VDC network in the vCloud model.
 // Since: 5.1
 type OrgVDCNetwork struct {
 	XMLName       xml.Name              `xml:"OrgVdcNetwork"`
@@ -334,7 +334,7 @@ type OrgVDCNetwork struct {
 	EdgeGateway   *Reference            `xml:"EdgeGateway,omitempty"`
 	IsShared      bool                  `xml:"IsShared"`
 	Link          []Link                `xml:"Link,omitempty"`
-	ServiceConfig *GatewayFeatures      `xml:"ServiceConfig,omitempty"` // Specifies the service configuration for an isolated Org vDC networks
+	ServiceConfig *GatewayFeatures      `xml:"ServiceConfig,omitempty"` // Specifies the service configuration for an isolated Org VDC networks
 	Tasks         *TasksInProgress      `xml:"Tasks,omitempty"`
 }
 
@@ -356,10 +356,10 @@ type Capabilities struct {
 	SupportedHardwareVersions *SupportedHardwareVersions `xml:"SupportedHardwareVersions,omitempty"` // Read-only list of virtual hardware versions supported by this vDC.
 }
 
-// Vdc represents the user view of an organization vDC.
+// Vdc represents the user view of an organization VDC.
 // Type: VdcType
 // Namespace: http://www.vmware.com/vcloud/v1.5
-// Description: Represents the user view of an organization vDC.
+// Description: Represents the user view of an organization VDC.
 // Since: 0.9
 type Vdc struct {
 	HREF         string `xml:"href,attr,omitempty"`
@@ -367,34 +367,35 @@ type Vdc struct {
 	ID           string `xml:"id,attr,omitempty"`
 	OperationKey string `xml:"operationKey,attr,omitempty"`
 	Name         string `xml:"name,attr"`
-	Status       string `xml:"status,attr,omitempty"`
+	Status       int    `xml:"status,attr,omitempty"`
 
+	Link               LinkList              `xml:"Link,omitempty"`
+	Description        string                `xml:"Description,omitempty"`
 	AllocationModel    string                `xml:"AllocationModel"`
+	ComputeCapacity    []*ComputeCapacity    `xml:"ComputeCapacity"`
+	ResourceEntities   []*ResourceEntities   `xml:"ResourceEntities,omitempty"`
 	AvailableNetworks  []*AvailableNetworks  `xml:"AvailableNetworks,omitempty"`
 	Capabilities       []*Capabilities       `xml:"Capabilities,omitempty"`
-	ComputeCapacity    []*ComputeCapacity    `xml:"ComputeCapacity"`
-	Description        string                `xml:"Description,omitempty"`
-	IsEnabled          bool                  `xml:"IsEnabled"`
-	Link               LinkList              `xml:"Link,omitempty"`
-	NetworkQuota       int                   `xml:"NetworkQuota"`
 	NicQuota           int                   `xml:"NicQuota"`
-	ResourceEntities   []*ResourceEntities   `xml:"ResourceEntities,omitempty"`
+	NetworkQuota       int                   `xml:"NetworkQuota"`
+	VMQuota            int                   `xml:"VmQuota"`
+	IsEnabled          bool                  `xml:"IsEnabled"`
 	Tasks              *TasksInProgress      `xml:"Tasks,omitempty"`
 	UsedNetworkCount   int                   `xml:"UsedNetworkCount,omitempty"`
 	VdcStorageProfiles []*VdcStorageProfiles `xml:"VdcStorageProfiles"`
-	VMQuota            int                   `xml:"VmQuota"`
 }
 
-// AdminVdc represents the admin view of an organization vDC.
+// AdminVdc represents the admin view of an organization VDC.
 // Type: AdminVdcType
 // Namespace: http://www.vmware.com/vcloud/v1.5
-// Description: Represents the admin view of an organization vDC.
+// Description: Represents the admin view of an organization VDC.
 // Since: 0.9
 type AdminVdc struct {
+	Xmlns string `xml:"xmlns,attr"`
 	Vdc
 
-	ResourceGuaranteedMemory float64    `xml:"ResourceGuaranteedMemory,omitempty"`
-	ResourceGuaranteedCpu    float64    `xml:"ResourceGuaranteedCpu,omitempty"`
+	ResourceGuaranteedMemory *float64   `xml:"ResourceGuaranteedMemory,omitempty"`
+	ResourceGuaranteedCpu    *float64   `xml:"ResourceGuaranteedCpu,omitempty"`
 	VCpuInMhz                int64      `xml:"VCpuInMhz,omitempty"`
 	IsThinProvision          bool       `xml:"IsThinProvision,omitempty"`
 	NetworkPoolReference     *Reference `xml:"NetworkPoolReference,omitempty"`
@@ -421,7 +422,7 @@ type VdcStorageProfile struct {
 // VdcConfiguration models the payload for creating a VDC.
 // Type: CreateVdcParamsType
 // Namespace: http://www.vmware.com/vcloud/v1.5
-// Description: Parameters for creating an organization vDC
+// Description: Parameters for creating an organization VDC
 // Since: 5.1
 // https://code.vmware.com/apis/220/vcloud#/doc/doc/types/CreateVdcParamsType.html
 type VdcConfiguration struct {
@@ -436,8 +437,8 @@ type VdcConfiguration struct {
 	VmQuota                  int                  `xml:"VmQuota,omitempty"`
 	IsEnabled                bool                 `xml:"IsEnabled,omitempty"`
 	VdcStorageProfile        []*VdcStorageProfile `xml:"VdcStorageProfile"`
-	ResourceGuaranteedMemory float64              `xml:"ResourceGuaranteedMemory,omitempty"`
-	ResourceGuaranteedCpu    float64              `xml:"ResourceGuaranteedCpu,omitempty"`
+	ResourceGuaranteedMemory *float64             `xml:"ResourceGuaranteedMemory,omitempty"`
+	ResourceGuaranteedCpu    *float64             `xml:"ResourceGuaranteedCpu,omitempty"`
 	VCpuInMhz                int64                `xml:"VCpuInMhz,omitempty"`
 	IsThinProvision          bool                 `xml:"IsThinProvision,omitempty"`
 	NetworkPoolReference     *Reference           `xml:"NetworkPoolReference,omitempty"`
@@ -491,10 +492,10 @@ type CapacityWithUsage struct {
 	Overhead  int64  `xml:"Overhead,omitempty"` // not available anymore from API v30.0
 }
 
-// ComputeCapacity represents vDC compute capacity.
+// ComputeCapacity represents VDC compute capacity.
 // Type: ComputeCapacityType
 // Namespace: http://www.vmware.com/vcloud/v1.5
-// Description: Represents vDC compute capacity.
+// Description: Represents VDC compute capacity.
 // Since: 0.9
 type ComputeCapacity struct {
 	CPU    *CapacityWithUsage `xml:"Cpu"`
@@ -1644,6 +1645,38 @@ type LBMonitor struct {
 
 type LBMonitors []LBMonitor
 
+// LBPool represents a load balancer server pool as per "vCloud Director API for NSX Programming Guide"
+// Type: LBPoolHealthCheckType
+// https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
+type LBPool struct {
+	XMLName             xml.Name      `xml:"pool"`
+	ID                  string        `xml:"poolId,omitempty"`
+	Name                string        `xml:"name"`
+	Description         string        `xml:"description,omitempty"`
+	Algorithm           string        `xml:"algorithm"`
+	AlgorithmParameters string        `xml:"algorithmParameters,omitempty"`
+	Transparent         bool          `xml:"transparent,omitempty"`
+	MonitorId           string        `xml:"monitorId,omitempty"`
+	Members             LBPoolMembers `xml:"member,omitempty"`
+}
+
+type LBPools []LBPool
+
+// LBPoolMember represents a single member inside LBPool
+type LBPoolMember struct {
+	ID          string `xml:"memberId,omitempty"`
+	Name        string `xml:"name"`
+	IpAddress   string `xml:"ipAddress"`
+	Weight      int    `xml:"weight,omitempty"`
+	MonitorPort int    `xml:"monitorPort,omitempty"`
+	Port        int    `xml:"port"`
+	MaxConn     int    `xml:"maxConn,omitempty"`
+	MinConn     int    `xml:"minConn,omitempty"`
+	Condition   string `xml:"condition,omitempty"`
+}
+
+type LBPoolMembers []LBPoolMember
+
 // LoadBalancerVirtualServer represents a load balancer virtual server.
 // Type: LoadBalancerVirtualServerType
 // Namespace: http://www.vmware.com/vcloud/v1.5
@@ -1996,6 +2029,7 @@ type QueryResultRecordsType struct {
 	AdminDiskRecord                 []*DiskRecordType                                 `xml:"AdminDiskRecord"`                 // A record representing a independent Disk.
 	VirtualCenterRecord             []*QueryResultVirtualCenterRecordType             `xml:"VirtualCenterRecord"`             // A record representing a vSphere server
 	PortGroupRecord                 []*PortGroupRecordType                            `xml:"PortgroupRecord"`                 // A record representing a port group
+	OrgVdcNetworkRecord             []*QueryResultOrgVdcNetworkRecordType             `xml:"OrgVdcNetworkRecord"`             // A record representing a org VDC network
 }
 
 // QueryResultEdgeGatewayRecordType represents an edge gateway record as query result.
@@ -2303,7 +2337,7 @@ type Disk struct {
 	OperationKey    string           `xml:"operationKey,attr,omitempty"`
 	Name            string           `xml:"name,attr"`
 	Status          int              `xml:"status,attr,omitempty"`
-	Size            int              `xml:"size,attr"`
+	Size            int64            `xml:"size,attr"`
 	Iops            *int             `xml:"iops,attr,omitempty"`
 	BusType         string           `xml:"busType,attr,omitempty"`
 	BusSubType      string           `xml:"busSubType,attr,omitempty"`
@@ -2434,4 +2468,41 @@ type PortGroupRecordType struct {
 	NetworkName   string  `xml:"networkName,attr,omitempty"`
 	ScopeType     int     `xml:"scopeType,attr,omitempty"` // Scope of network using the portgroup(1=Global, 2=Organization, 3=vApp)
 	Link          []*Link `xml:"Link,omitempty"`
+}
+
+// Represents org VDC Network
+// Reference: vCloud API 27.0 - Org VDC Network
+// https://code.vmware.com/apis/72/doc/doc/types/QueryResultOrgVdcNetworkRecordType.html
+type QueryResultOrgVdcNetworkRecordType struct {
+	Xmlns              string  `xml:"xmlns,attr,omitempty"`
+	HREF               string  `xml:"href,attr,omitempty"`
+	Id                 string  `xml:"id,attr,omitempty"`
+	Type               string  `xml:"type,attr,omitempty"`
+	Name               string  `xml:"name,attr,omitempty"`
+	DefaultGateway     string  `xml:"defaultGateway,attr,omitempty"`
+	Netmask            string  `xml:"netmask,attr,omitempty"`
+	Dns1               string  `xml:"dns1,attr,omitempty"`
+	Dns2               string  `xml:"dns2,attr,omitempty"`
+	DnsSuffix          string  `xml:"dnsSuffix,attr,omitempty"`
+	LinkType           int     `xml:"linkType,attr,omitempty"`
+	ConnectedTo        string  `xml:"connectedTo,attr,omitempty"`
+	Vdc                string  `xml:"vdc,attr,omitempty"`
+	IsBusy             bool    `xml:"isBusy,attr,omitempty"`
+	IsShared           bool    `xml:"isShared,attr,omitempty"`
+	VdcName            string  `xml:"vdcName,attr,omitempty"`
+	IsIpScopeInherited bool    `xml:"isIpScopeInherited,attr,omitempty"`
+	Link               []*Link `xml:"Link,omitempty"`
+}
+
+// Represents org VDC Network
+// Reference: vCloud API 27.0 - Network Pool
+// https://code.vmware.com/apis/72/vcloud-director#/doc/doc/types/VMWNetworkPoolType.html
+type VMWNetworkPool struct {
+	HREF        string           `xml:"href,attr,omitempty"`
+	Id          string           `xml:"id,attr,omitempty"`
+	Type        string           `xml:"type,attr,omitempty"`
+	Name        string           `xml:"name,attr"`
+	Status      int              `xml:"status,attr,omitempty"`
+	Description string           `xml:"netmask,omitempty"`
+	Tasks       *TasksInProgress `xml:"Tasks,omitempty"`
 }
