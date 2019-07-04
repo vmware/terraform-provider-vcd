@@ -149,7 +149,7 @@ released.
 
 The following attributes are exported on this resource:
 
-* `id` - The ID of the load balancer server pool
+* `id` - The NSX ID of the load balancer server pool
 
 Additionally each of members defined in blocks expose their own `id` fields as well
 

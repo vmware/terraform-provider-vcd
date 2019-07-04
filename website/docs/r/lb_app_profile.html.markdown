@@ -14,7 +14,8 @@ configuring a profile, you associate it with a virtual server. The virtual serve
 traffic according to the values specified in the profile.
 
 ~> **Note:** This resource does not currently support attaching  Pool and Virtual
-Server certificates.
+Server certificates. The `enable_pool_side_ssl` only toggles the option, but does not setup
+certificates.
 
 ~> **Note:** To make load balancing work one must ensure that load balancing is enabled on edge
 gateway (edge gateway must be advanced).
@@ -103,13 +104,14 @@ the originating IP address of a client connecting to a Web server through the lo
 Only applies for types `http` and `https`
 * `enable_pool_side_ssl` - (Optional) Enable to define the certificate, CAs, or CRLs used to
 authenticate the load balancer from the server side. **Note:** This resource does not currently
-support attaching Pool and Virtual Server certificates. 
+support attaching Pool and Virtual Server certificates therefore this toggle only enables it. To
+make it fully work certificates must be currently attached manually.
 
 ## Attribute Reference
 
 The following attributes are exported on this resource:
 
-* `id` - The ID of the load balancer application profile
+* `id` - The NSX ID of the load balancer application profile
 
 ## Importing
 

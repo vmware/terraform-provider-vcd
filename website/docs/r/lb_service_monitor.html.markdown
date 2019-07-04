@@ -78,7 +78,7 @@ the HTTP or HTTPS response (for example, `HTTP/1.1`)
 
 The following attributes are exported on the base level of this resource:
 
-* `id` - The ID of the load balancer service monitor
+* `id` - The NSX ID of the load balancer service monitor
 
 ## Importing
 
