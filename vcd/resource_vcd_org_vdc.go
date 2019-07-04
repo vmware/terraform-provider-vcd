@@ -283,6 +283,7 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("unable to find VDC %#v", err)
 	}
 
+	//refreshing terraform state
 	d.Set("allocation_model", adminVdc.AdminVdc.AllocationModel)
 	d.Set("cpu_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedCpu)
 	d.Set("cpu_speed", adminVdc.AdminVdc.VCpuInMhz)
