@@ -59,7 +59,6 @@ func resourceVcdLBAppProfile() *schema.Resource {
 			"http_redirect_url": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  "",
 				Description: "The URL to which traffic that arrives at the destination address " +
 					"should be redirected. Only applies for types 'http' and 'https'",
 			},
@@ -148,7 +147,7 @@ func resourceVcdLBAppProfileRead(d *schema.ResourceData, meta interface{}) error
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBProfile, err := edgeGateway.ReadLBAppProfile(&types.LBAppProfile{ID: d.Id()})
+	readLBProfile, err := edgeGateway.ReadLBAppProfileByID(d.Id())
 	if err != nil {
 		d.SetId("")
 		return fmt.Errorf("unable to find load balancer app profile with ID %s: %s", d.Id(), err)
@@ -194,7 +193,7 @@ func resourceVcdLBAppProfileDelete(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	err = edgeGateway.DeleteLBAppProfile(&types.LBAppProfile{ID: d.Id()})
+	err = edgeGateway.DeleteLBAppProfileByID(d.Id())
 	if err != nil {
 		return fmt.Errorf("error deleting load balancer app profile: %s", err)
 	}
@@ -203,12 +202,18 @@ func resourceVcdLBAppProfileDelete(d *schema.ResourceData, meta interface{}) err
 	return nil
 }
 
+// resourceVcdLBAppProfileImport is responsible for importing the resource.
+// The d.Id() field as being passed from `terraform import _resource_name_ _the_id_string_ requires
+// a name based dot-formatted path to the object to lookup the object and sets the id of object.
+// `terraform import` automatically performs `refresh` operation which loads up all other fields.
+//
+// Example import path (id): org.vdc.edge-gw.existing-app-profile
 func resourceVcdLBAppProfileImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ".")
 	if len(resourceURI) != 4 {
-		return nil, fmt.Errorf("resource name must be specified in such way my-org.my-org-vdc.my-edge-gw.existing-app-profile")
+		return nil, fmt.Errorf("resource name must be specified in such way org.vdc.edge-gw.existing-app-profile")
 	}
-	orgName, vdcName, edgeName, poolName := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
+	orgName, vdcName, edgeName, appProfileName := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
 
 	vcdClient := meta.(*VCDClient)
 	edgeGateway, err := vcdClient.GetEdgeGateway(orgName, vdcName, edgeName)
@@ -216,7 +221,7 @@ func resourceVcdLBAppProfileImport(d *schema.ResourceData, meta interface{}) ([]
 		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBProfile, err := edgeGateway.ReadLBAppProfile(&types.LBAppProfile{Name: poolName})
+	readLBProfile, err := edgeGateway.ReadLBAppProfileByName(appProfileName)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer app profile with name %s: %s",
 			d.Id(), err)
@@ -225,7 +230,7 @@ func resourceVcdLBAppProfileImport(d *schema.ResourceData, meta interface{}) ([]
 	d.Set("org", orgName)
 	d.Set("vdc", vdcName)
 	d.Set("edge_gateway", edgeName)
-	d.Set("name", poolName)
+	d.Set("name", appProfileName)
 
 	d.SetId(readLBProfile.ID)
 	return []*schema.ResourceData{d}, nil

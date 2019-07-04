@@ -414,11 +414,13 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 	}
 
 	if resourceGuaranteedMemory, ok := d.GetOk("memory_guaranteed"); ok {
-		params.ResourceGuaranteedMemory = resourceGuaranteedMemory.(float64)
+		value := resourceGuaranteedMemory.(float64)
+		params.ResourceGuaranteedMemory = &value
 	}
 
 	if resourceGuaranteedCpu, ok := d.GetOk("cpu_guaranteed"); ok {
-		params.ResourceGuaranteedCpu = resourceGuaranteedCpu.(float64)
+		value := resourceGuaranteedCpu.(float64)
+		params.ResourceGuaranteedCpu = &value
 	}
 
 	if vCpuInMhz, ok := d.GetOk("cpu_speed"); ok {

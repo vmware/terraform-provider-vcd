@@ -437,8 +437,8 @@ type VdcConfiguration struct {
 	VmQuota                  int                  `xml:"VmQuota,omitempty"`
 	IsEnabled                bool                 `xml:"IsEnabled,omitempty"`
 	VdcStorageProfile        []*VdcStorageProfile `xml:"VdcStorageProfile"`
-	ResourceGuaranteedMemory float64              `xml:"ResourceGuaranteedMemory,omitempty"`
-	ResourceGuaranteedCpu    float64              `xml:"ResourceGuaranteedCpu,omitempty"`
+	ResourceGuaranteedMemory *float64             `xml:"ResourceGuaranteedMemory,omitempty"`
+	ResourceGuaranteedCpu    *float64             `xml:"ResourceGuaranteedCpu,omitempty"`
 	VCpuInMhz                int64                `xml:"VCpuInMhz,omitempty"`
 	IsThinProvision          bool                 `xml:"IsThinProvision,omitempty"`
 	NetworkPoolReference     *Reference           `xml:"NetworkPoolReference,omitempty"`
@@ -1679,7 +1679,6 @@ type LBPoolMembers []LBPoolMember
 
 // LBAppProfile represents a load balancer application profile as per "vCloud Director API for NSX
 // Programming Guide"
-// Type: LBPoolHealthCheckType
 // https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
 type LBAppProfile struct {
 	XMLName                       xml.Name                  `xml:"applicationProfile"`
@@ -2049,22 +2048,22 @@ type QueryResultRecordsType struct {
 	PageSize int     `xml:"pageSize,attr,omitempty"` // Page size, as a number of records or references.
 	Total    float64 `xml:"total,attr,omitempty"`    // Total number of records or references in the container.
 	// Elements
-	Link                            []*Link                                           `xml:"Link,omitempty"`                     // A reference to an entity or operation associated with this object.
-	EdgeGatewayRecord               []*QueryResultEdgeGatewayRecordType               `xml:"EdgeGatewayRecord"`                  // A record representing a EdgeGateway result.
-	VMRecord                        []*QueryResultVMRecordType                        `xml:"VMRecord"`                           // A record representing a VM result.
-	AdminVMRecord                   []*QueryResultVMRecordType                        `xml:"AdminVMRecord"`                      // A record representing a Admin VM result.
-	VAppRecord                      []*QueryResultVAppRecordType                      `xml:"VAppRecord"`                         // A record representing a VApp result.
-	OrgVdcStorageProfileRecord      []*QueryResultOrgVdcStorageProfileRecordType      `xml:"OrgVdcStorageProfileRecord"`         // A record representing storage profiles
-	MediaRecord                     []*MediaRecordType                                `xml:"MediaRecord"`                        // A record representing media
-	AdminMediaRecord                []*MediaRecordType                                `xml:"AdminMediaRecord"`                   // A record representing Admin media
-	VMWProviderVdcRecord            []*QueryResultVMWProviderVdcRecordType            `xml:"VMWProviderVdcRecord"`               // A record representing a Provider VDC result.
-	ProviderVdcStorageProfileRecord []*QueryResultProviderVdcStorageProfileRecordType `xml:"ProviderVdcStorageProfileRecord"`    // A record representing a Provider VDC storage profile result
-	NetworkPoolRecord               []*QueryResultNetworkPoolRecordType               `xml:"NetworkPoolRecord"`                  // A record representing a network pool
-	DiskRecord                      []*DiskRecordType                                 `xml:"DiskRecord"`                         // A record representing a independent Disk.
-	AdminDiskRecord                 []*DiskRecordType                                 `xml:"AdminDiskRecord"`                    // A record representing a independent Disk.
-	VirtualCenterRecord             []*QueryResultVirtualCenterRecordType             `xml:"VirtualCenterRecord"`                // A record representing a vSphere server
-	PortGroupRecord                 []*PortGroupRecordType                            `xml:"PortgroupRecord"`                    // A record representing a port group
-	OrgVdcNetworkRecord             []*QueryResultOrgVdcNetworkRecordType             `xml:"QueryResultOrgVdcNetworkRecordType"` // A record representing a org VDC network
+	Link                            []*Link                                           `xml:"Link,omitempty"`                  // A reference to an entity or operation associated with this object.
+	EdgeGatewayRecord               []*QueryResultEdgeGatewayRecordType               `xml:"EdgeGatewayRecord"`               // A record representing a EdgeGateway result.
+	VMRecord                        []*QueryResultVMRecordType                        `xml:"VMRecord"`                        // A record representing a VM result.
+	AdminVMRecord                   []*QueryResultVMRecordType                        `xml:"AdminVMRecord"`                   // A record representing a Admin VM result.
+	VAppRecord                      []*QueryResultVAppRecordType                      `xml:"VAppRecord"`                      // A record representing a VApp result.
+	OrgVdcStorageProfileRecord      []*QueryResultOrgVdcStorageProfileRecordType      `xml:"OrgVdcStorageProfileRecord"`      // A record representing storage profiles
+	MediaRecord                     []*MediaRecordType                                `xml:"MediaRecord"`                     // A record representing media
+	AdminMediaRecord                []*MediaRecordType                                `xml:"AdminMediaRecord"`                // A record representing Admin media
+	VMWProviderVdcRecord            []*QueryResultVMWProviderVdcRecordType            `xml:"VMWProviderVdcRecord"`            // A record representing a Provider VDC result.
+	ProviderVdcStorageProfileRecord []*QueryResultProviderVdcStorageProfileRecordType `xml:"ProviderVdcStorageProfileRecord"` // A record representing a Provider VDC storage profile result
+	NetworkPoolRecord               []*QueryResultNetworkPoolRecordType               `xml:"NetworkPoolRecord"`               // A record representing a network pool
+	DiskRecord                      []*DiskRecordType                                 `xml:"DiskRecord"`                      // A record representing a independent Disk.
+	AdminDiskRecord                 []*DiskRecordType                                 `xml:"AdminDiskRecord"`                 // A record representing a independent Disk.
+	VirtualCenterRecord             []*QueryResultVirtualCenterRecordType             `xml:"VirtualCenterRecord"`             // A record representing a vSphere server
+	PortGroupRecord                 []*PortGroupRecordType                            `xml:"PortgroupRecord"`                 // A record representing a port group
+	OrgVdcNetworkRecord             []*QueryResultOrgVdcNetworkRecordType             `xml:"OrgVdcNetworkRecord"`             // A record representing a org VDC network
 }
 
 // QueryResultEdgeGatewayRecordType represents an edge gateway record as query result.
