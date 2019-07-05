@@ -211,7 +211,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 			"metadata": {
 				Type:        schema.TypeMap,
 				Optional:    true,
-				Description: "key and value for Org VDC metadata ",
+				Description: "Key and value pairs for Org VDC metadata",
 				// For now underlying go-vcloud-director repo only supports
 				// a value of type String in this map.
 			},
@@ -277,7 +277,7 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 
 	err = manageMetaData(d, meta)
 	if err != nil {
-		return fmt.Errorf("error adding meta data to VDC: %#v", err)
+		return fmt.Errorf("error adding metadata to VDC: %#v", err)
 	}
 
 	return resourceVcdVdcRead(d, meta)
@@ -334,7 +334,7 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 	}
 	metaData, err := vdc.GetMetadata()
 	if err != nil {
-		log.Printf("[DEBUG] Unable to get VDC")
+		log.Printf("[DEBUG] Unable to get VDC metadata")
 		return fmt.Errorf("unable to get VDC metadata %#v", err)
 	}
 
@@ -390,7 +390,7 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	err = manageMetaData(d, meta)
 	if err != nil {
-		return fmt.Errorf("error updating meta data to vDC: %#v", err)
+		return fmt.Errorf("error updating metadata to VDC: %#v", err)
 	}
 
 	log.Printf("[TRACE] vdc update completed: %#v", adminVdc.AdminVdc.Name)
@@ -431,7 +431,7 @@ func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
 
 func manageMetaData(d *schema.ResourceData, meta interface{}) error {
 
-	log.Printf("[TRACE] adding/updating meta data to vDC")
+	log.Printf("[TRACE] adding/updating metadata to VDC")
 
 	vcdClient := meta.(*VCDClient)
 
@@ -460,7 +460,7 @@ func manageMetaData(d *schema.ResourceData, meta interface{}) error {
 				return fmt.Errorf("error deleting metadata: %#v", err)
 			}
 		}
-		// Add new meta data
+		// Add new metadata
 		for k, v := range newMetadata {
 			_, err := vdc.AddMetadata(k, v.(string))
 			if err != nil {
