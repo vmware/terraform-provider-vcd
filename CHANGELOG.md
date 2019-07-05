@@ -8,6 +8,7 @@ FEATURES:
 * **New Resource:** `vcd_lb_server_pool` Load Balancer Server Pool - [GH-268]
 * **New Data Source:** `vcd_lb_server_pool`  Load Balancer Server Pool - [GH-268]
 * resource/vcd_org_vdc added Org VDC update and full state read - [GH-275]
+* resource/vcd_org_vdc added Org VDC meta data support - [GH-276]
 
 IMPROVEMENTS:
 * resource/vcd_org_vdc: Fix ignoring of resource guarantee values - [GH-265]
