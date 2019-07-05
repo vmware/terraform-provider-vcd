@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_lb_app_profile"
 sidebar_current: "docs-vcd-resource-lb-app-profile"
 description: |-
-  Provides a NSX load balancer application profile resource.
+  Provides an NSX load balancer application profile resource.
 ---
 
 # vcd\_lb\_app\_profile
@@ -25,8 +25,6 @@ to check supported vCloud director and NSX for vSphere configurations.
 
 ~> **Note:** The vCloud Director API for NSX supports a subset of the operations and objects defined
 in the NSX vSphere API Guide. The API supports NSX 6.2, 6.3, and 6.4.
-
-
 
 Supported in provider *v2.4+*
 

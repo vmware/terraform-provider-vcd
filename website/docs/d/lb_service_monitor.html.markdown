@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_lb_service_monitor"
 sidebar_current: "docs-vcd-data-source-lb-service-monitor"
 description: |-
-  Provides a NSX load balancer service monitor data source.
+  Provides an NSX load balancer service monitor data source.
 ---
 
 # vcd\_lb\_service\_monitor
