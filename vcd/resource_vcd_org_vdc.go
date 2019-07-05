@@ -275,7 +275,7 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 	d.SetId(adminVdc.AdminVdc.ID)
 	log.Printf("[TRACE] vdc created: %#v", task)
 
-	err = manageMetaData(d, meta)
+	err = createOrUpdateMetaData(d, meta)
 	if err != nil {
 		return fmt.Errorf("error adding metadata to VDC: %#v", err)
 	}
@@ -338,14 +338,14 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("unable to get VDC metadata %#v", err)
 	}
 
-	d.Set("metadata", flattenMetaData(metaData.MetadataEntry))
+	d.Set("metadata", getMetaDataStruct(metaData.MetadataEntry))
 
 	log.Printf("[TRACE] vdc read completed: %#v", adminVdc.AdminVdc)
 	return nil
 }
 
 // Converts to terraform understandable structure
-func flattenMetaData(metaData []*types.MetadataEntry) map[string]interface{} {
+func getMetaDataStruct(metaData []*types.MetadataEntry) map[string]interface{} {
 	metadataMap := make(map[string]interface{}, len(metaData))
 	for _, metadataEntry := range metaData {
 		metadataMap[metadataEntry.Key] = metadataEntry.TypedValue.Value
@@ -388,7 +388,7 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error updating VDC %#v", err)
 	}
 
-	err = manageMetaData(d, meta)
+	err = createOrUpdateMetaData(d, meta)
 	if err != nil {
 		return fmt.Errorf("error updating metadata to VDC: %#v", err)
 	}
@@ -429,7 +429,7 @@ func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func manageMetaData(d *schema.ResourceData, meta interface{}) error {
+func createOrUpdateMetaData(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[TRACE] adding/updating metadata to VDC")
 
