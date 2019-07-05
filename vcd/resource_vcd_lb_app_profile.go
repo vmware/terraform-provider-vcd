@@ -84,11 +84,12 @@ func resourceVcdLBAppProfile() *schema.Resource {
 				Description: "The mode by which the cookie should be inserted. One of 'insert', " +
 					"'prefix', or 'appsession'",
 			},
-			"expiration": &schema.Schema{
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Description: "Length of time in seconds that persistence stays in effect",
-			},
+			// This option is shown in GUI, but does not work therefore leaving it out.
+			// "expiration": &schema.Schema{
+			// 	Type:        schema.TypeInt,
+			// 	Optional:    true,
+			// 	Description: "Length of time in seconds that persistence stays in effect",
+			// },
 			"insert_x_forwarded_http_header": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -246,7 +247,7 @@ func getLBAppProfileType(d *schema.ResourceData) (*types.LBAppProfile, error) {
 		ServerSSLEnabled:              d.Get("enable_pool_side_ssl").(bool),
 		// Questionable field. UI has it, but does not send it. NSX documentation has it, but it is
 		// never returned, nor shown
-		Expire: d.Get("expiration").(int),
+		// Expire: d.Get("expiration").(int),
 	}
 
 	if d.Get("http_redirect_url").(string) != "" {
@@ -274,7 +275,7 @@ func setLBAppProfileData(d *schema.ResourceData, LBProfile *types.LBAppProfile) 
 	d.Set("enable_pool_side_ssl", LBProfile.ServerSSLEnabled)
 	// Questionable field. UI has it, but does not send it. NSX documentation has it, but it is
 	// never returned, nor shown
-	d.Set("expiration", LBProfile.Expire)
+	// d.Set("expiration", LBProfile.Expire)
 
 	if LBProfile.Persistence != nil {
 		d.Set("persistence_mechanism", LBProfile.Persistence.Method)

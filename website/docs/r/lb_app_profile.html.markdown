@@ -98,7 +98,6 @@ session, so that they all go to the same virtual server. Only applies for
 `persistence_mechanism` 'cookie'
 * `cookie_mode` - (Optional) The mode by which the cookie should be inserted. One of 'insert', 
 'prefix', or 'appsession'
-* `expiration` - (Optional) Length of time in seconds that persistence stays in effect
 * `insert_x_forwarded_http_header` - (Optional) Enables 'X-Forwarded-For' header for identifying
 the originating IP address of a client connecting to a Web server through the load balancer.
 Only applies for types `http` and `https`
