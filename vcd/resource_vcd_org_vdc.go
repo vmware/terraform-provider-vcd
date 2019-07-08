@@ -275,7 +275,7 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 	d.SetId(adminVdc.AdminVdc.ID)
 	log.Printf("[TRACE] vdc created: %#v", task)
 
-	err = createOrUpdateMetaData(d, meta)
+	err = createOrUpdateMetadata(d, meta)
 	if err != nil {
 		return fmt.Errorf("error adding metadata to VDC: %#v", err)
 	}
@@ -332,22 +332,22 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[DEBUG] Unable to find VDC")
 		return fmt.Errorf("unable to find VDC %#v", err)
 	}
-	metaData, err := vdc.GetMetadata()
+	metadata, err := vdc.GetMetadata()
 	if err != nil {
 		log.Printf("[DEBUG] Unable to get VDC metadata")
 		return fmt.Errorf("unable to get VDC metadata %#v", err)
 	}
 
-	d.Set("metadata", getMetaDataStruct(metaData.MetadataEntry))
+	d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 
 	log.Printf("[TRACE] vdc read completed: %#v", adminVdc.AdminVdc)
 	return nil
 }
 
 // Converts to terraform understandable structure
-func getMetaDataStruct(metaData []*types.MetadataEntry) map[string]interface{} {
-	metadataMap := make(map[string]interface{}, len(metaData))
-	for _, metadataEntry := range metaData {
+func getMetadataStruct(metadata []*types.MetadataEntry) map[string]interface{} {
+	metadataMap := make(map[string]interface{}, len(metadata))
+	for _, metadataEntry := range metadata {
 		metadataMap[metadataEntry.Key] = metadataEntry.TypedValue.Value
 	}
 	return metadataMap
@@ -388,7 +388,7 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error updating VDC %#v", err)
 	}
 
-	err = createOrUpdateMetaData(d, meta)
+	err = createOrUpdateMetadata(d, meta)
 	if err != nil {
 		return fmt.Errorf("error updating metadata to VDC: %#v", err)
 	}
@@ -429,7 +429,7 @@ func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func createOrUpdateMetaData(d *schema.ResourceData, meta interface{}) error {
+func createOrUpdateMetadata(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[TRACE] adding/updating metadata to VDC")
 
