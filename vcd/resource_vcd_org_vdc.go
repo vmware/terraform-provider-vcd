@@ -390,7 +390,7 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	err = createOrUpdateMetadata(d, meta)
 	if err != nil {
-		return fmt.Errorf("error updating metadata to VDC: %#v", err)
+		return fmt.Errorf("error updating VDC metadata: %#v", err)
 	}
 
 	log.Printf("[TRACE] vdc update completed: %#v", adminVdc.AdminVdc.Name)
