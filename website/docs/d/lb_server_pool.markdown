@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_lb_server_pool"
 sidebar_current: "docs-vcd-data-source-lb-server-pool"
 description: |-
-  Provides an NSX load balancer server pool data source.
+  Provides an NSX edge gateway load balancer server pool data source.
 ---
 
 # vcd\_lb\_server\_pool

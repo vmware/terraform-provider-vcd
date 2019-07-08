@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_lb_app_profile"
 sidebar_current: "docs-vcd-resource-lb-app-profile"
 description: |-
-  Provides an NSX load balancer application profile resource.
+  Provides an NSX edge gateway load balancer application profile resource.
 ---
 
 # vcd\_lb\_app\_profile
