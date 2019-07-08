@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_lb_service_monitor"
 sidebar_current: "docs-vcd-resource-lb-service-monitor"
 description: |-
-  Provides a NSX load balancer service monitor resource.
+  Provides an NSX edge gateway load balancer service monitor resource.
 ---
 
 # vcd\_lb\_service\_monitor
@@ -55,11 +55,10 @@ resource "vcd_lb_service_monitor" "monitor" {
 
 The following arguments are supported:
 
-* `edge_gateway` - (Required) The name of the edge gateway on which the service monitor is to be created
-* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
+* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
+* `edge_gateway` - (Required) The name of the edge gateway on which the service monitor is to be created
 * `name` - (Required) Service Monitor name
-
 * `interval` - (Required) Interval in seconds at which a server is to be monitored using the specified Method.
 * `timeout` - (Required) Maximum time in seconds within which a response from the server must be received
 * `max_retries` - (Required) Number of times the specified monitoring Method must fail sequentially before the server is declared down
@@ -79,7 +78,7 @@ the HTTP or HTTPS response (for example, `HTTP/1.1`)
 
 The following attributes are exported on the base level of this resource:
 
-* `id` - The ID of the load balancer service monitor
+* `id` - The NSX ID of the load balancer service monitor
 
 ## Importing
 

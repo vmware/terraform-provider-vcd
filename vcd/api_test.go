@@ -46,6 +46,7 @@ At least one of the following tags should be defined:
    * vapp:       Runs vapp related tests
    * vdc:        Runs vdc related tests
    * vm:         Runs vm related tests
+   * lb:         Runs load balancer related tests
 
 Examples:
 

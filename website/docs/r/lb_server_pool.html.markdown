@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_lb_server_pool"
 sidebar_current: "docs-vcd-resource-lb-server-pool"
 description: |-
-  Provides a NSX load balancer server pool resource.
+  Provides an NSX edge gateway load balancer server pool resource.
 ---
 
 # vcd\_lb\_server\_pool
@@ -111,9 +111,9 @@ resource "vcd_lb_server_pool" "web-servers" {
 
 The following arguments are supported:
 
-* `edge_gateway` - (Required) The name of the edge gateway on which the server pool is to be created
-* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
+* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
+* `edge_gateway` - (Required) The name of the edge gateway on which the server pool is to be created
 * `name` - (Required) Server Pool name
 * `description` - (Optional) Server Pool description
 * `algorithm` - (Required) Server Pool load balancing method. Can be one of `ip-hash`, `round-robin`, `uri`, `leastconn`, `url`, or `httpheader`
@@ -149,7 +149,7 @@ released.
 
 The following attributes are exported on this resource:
 
-* `id` - The ID of the load balancer server pool
+* `id` - The NSX ID of the load balancer server pool
 
 Additionally each of members defined in blocks expose their own `id` fields as well
 

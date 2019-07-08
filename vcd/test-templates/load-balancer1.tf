@@ -7,12 +7,12 @@
 
 # v2.4.0+
 
-variable "service_monitor_count" {
+variable "component_count" {
   default = 10
 }
 
 resource "vcd_lb_service_monitor" "test" {
-  count = "${var.service_monitor_count}"
+  count = "${var.component_count}"
 
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
@@ -35,7 +35,7 @@ resource "vcd_lb_service_monitor" "test" {
 }
 
 data "vcd_lb_service_monitor" "ds-lb" {
-  count = "${var.service_monitor_count}"
+  count = "${var.component_count}"
 
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
@@ -45,7 +45,7 @@ data "vcd_lb_service_monitor" "ds-lb" {
 
 
 resource "vcd_lb_server_pool" "server-pool" {
-  count = "${var.service_monitor_count}"
+  count = "${var.component_count}"
 
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
@@ -103,10 +103,31 @@ resource "vcd_lb_server_pool" "server-pool" {
 
 
 data "vcd_lb_server_pool" "ds-pool" {
-  count = "${var.service_monitor_count}"
+  count = "${var.component_count}"
 
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
   name         = "${vcd_lb_server_pool.server-pool[count.index].name}"
+}
+
+
+resource "vcd_lb_app_profile" "test" {
+  count = "${var.component_count}"
+
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
+  
+	name           = "test-app-profile-${count.index}"
+	type           = "TCP"
+}
+
+data "vcd_lb_app_profile" "test" {
+  count = "${var.component_count}"
+  
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
+	name         = "${vcd_lb_app_profile.test[count.index].name}"
 }
