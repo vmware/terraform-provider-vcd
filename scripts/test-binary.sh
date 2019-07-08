@@ -217,6 +217,13 @@ for CF in $test_names
 do
     file_count=$((file_count+1))
     unset will_skip
+    
+    skip_request=$(grep '^\s*#\s*skip-test' $CF)
+    if [ -n "$skip_request" ]
+    then
+        will_skip=1
+    fi
+
     for skip_file in ${skipping_items[*]}
     do
         if [  "$CF" == "$skip_file" ]
