@@ -1,4 +1,5 @@
 ## 2.4.0 (Unreleased)
+
 FEATURES:
 
 * **New Resource:** `vcd_lb_service_monitor`  Load Balancer Service Monitor - [GH-256]
@@ -7,6 +8,8 @@ FEATURES:
 * **New build command** `make test-env-build` can configure an empty vCD to run the test suite. See `TESTING.md` for details.
 * **New Resource:** `vcd_lb_server_pool` Load Balancer Server Pool - [GH-268]
 * **New Data Source:** `vcd_lb_server_pool`  Load Balancer Server Pool - [GH-268]
+* **New Resource:** `vcd_lb_app_profile` Load Balancer Application profile - [GH-274]
+* **New Data Source:** `vcd_lb_app_profile` Load Balancer Application profile - [GH-274]
 * resource/vcd_org_vdc added Org VDC update and full state read - [GH-275]
 
 IMPROVEMENTS:
@@ -14,7 +17,6 @@ IMPROVEMENTS:
 * resource/vcd_org_vdc: Org VDC state ID changed from name to vCD ID - [GH-275]
 * Change resource handling to use locking mechanism when resource parallel handling is not supported by vCD. [GH-255] 
 * Fix issue when vApp is power cycled during member VM deletion. [GH-261]
-
 
 ## 2.3.0 (May 29, 2019)
 

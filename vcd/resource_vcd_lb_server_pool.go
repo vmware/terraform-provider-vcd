@@ -175,7 +175,7 @@ func resourceVcdLBServerPoolRead(d *schema.ResourceData, meta interface{}) error
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBPool, err := edgeGateway.ReadLBServerPool(&types.LBPool{ID: d.Id()})
+	readLBPool, err := edgeGateway.ReadLBServerPoolByID(d.Id())
 	if err != nil {
 		d.SetId("")
 		return fmt.Errorf("unable to find load balancer server pool with ID %s: %s", d.Id(), err)
@@ -217,7 +217,7 @@ func resourceVcdLBServerPoolDelete(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	err = edgeGateway.DeleteLBServerPool(&types.LBPool{ID: d.Id()})
+	err = edgeGateway.DeleteLBServerPoolByID(d.Id())
 	if err != nil {
 		return fmt.Errorf("error deleting load balancer server pool: %s", err)
 	}
@@ -226,10 +226,16 @@ func resourceVcdLBServerPoolDelete(d *schema.ResourceData, meta interface{}) err
 	return nil
 }
 
+// resourceVcdLBServerPoolImport is responsible for importing the resource.
+// The d.Id() field as being passed from `terraform import _resource_name_ _the_id_string_ requires
+// a name based dot-formatted path to the object to lookup the object and sets the id of object.
+// `terraform import` automatically performs `refresh` operation which loads up all other fields.
+//
+// Example import path (id): org.vdc.edge-gw.lb-server-pool
 func resourceVcdLBServerPoolImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ".")
 	if len(resourceURI) != 4 {
-		return nil, fmt.Errorf("resource name must be specified as org.VDC.edge-gw.lb-server-pool")
+		return nil, fmt.Errorf("resource name must be specified as org.vdc.edge-gw.lb-server-pool")
 	}
 	orgName, vdcName, edgeName, poolName := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
 
@@ -239,7 +245,7 @@ func resourceVcdLBServerPoolImport(d *schema.ResourceData, meta interface{}) ([]
 		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBPool, err := edgeGateway.ReadLBServerPool(&types.LBPool{Name: poolName})
+	readLBPool, err := edgeGateway.ReadLBServerPoolByName(poolName)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer server pool with name %s: %s", d.Id(), err)
 	}
