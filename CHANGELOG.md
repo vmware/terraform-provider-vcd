@@ -10,8 +10,8 @@ FEATURES:
 * **New Data Source:** `vcd_lb_server_pool`  Load Balancer Server Pool - [GH-268]
 * **New Resource:** `vcd_lb_app_profile` Load Balancer Application profile - [GH-274]
 * **New Data Source:** `vcd_lb_app_profile` Load Balancer Application profile - [GH-274]
-* **New Resource:** `vcd_lb_app_rule` Load Balancer Application rule - [GH-xxx]
-* **New Data Source:** `vcd_lb_app_rule` Load Balancer Application rule - [GH-xxx]
+* **New Resource:** `vcd_lb_app_rule` Load Balancer Application rule - [GH-278]
+* **New Data Source:** `vcd_lb_app_rule` Load Balancer Application rule - [GH-278]
 * resource/vcd_org_vdc added Org VDC update and full state read - [GH-275]
 
 IMPROVEMENTS:
