@@ -71,12 +71,11 @@ func datasourceVcdLBAppProfile() *schema.Resource {
 				Description: "The mode by which the cookie should be inserted. One of 'insert', " +
 					"'prefix', or 'appsession'",
 			},
-			// This option is shown in GUI, but does not work therefore leaving it out.
-			// "expiration": &schema.Schema{
-			// 	Type:        schema.TypeInt,
-			// 	Computed:    true,
-			// 	Description: "Length of time in seconds that persistence stays in effect",
-			// },
+			"expiration": &schema.Schema{
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Length of time in seconds that persistence stays in effect",
+			},
 			"insert_x_forwarded_http_header": &schema.Schema{
 				Type:     schema.TypeBool,
 				Computed: true,

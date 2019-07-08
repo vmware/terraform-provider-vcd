@@ -84,12 +84,11 @@ func resourceVcdLBAppProfile() *schema.Resource {
 				Description: "The mode by which the cookie should be inserted. One of 'insert', " +
 					"'prefix', or 'appsession'",
 			},
-			// This option is shown in GUI, but does not work therefore leaving it out.
-			// "expiration": &schema.Schema{
-			// 	Type:        schema.TypeInt,
-			// 	Optional:    true,
-			// 	Description: "Length of time in seconds that persistence stays in effect",
-			// },
+			"expiration": &schema.Schema{
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "Length of time in seconds that persistence stays in effect",
+			},
 			"insert_x_forwarded_http_header": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
@@ -245,9 +244,6 @@ func getLBAppProfileType(d *schema.ResourceData) (*types.LBAppProfile, error) {
 		SSLPassthrough:                d.Get("enable_ssl_passthrough").(bool),
 		InsertXForwardedForHTTPHeader: d.Get("insert_x_forwarded_http_header").(bool),
 		ServerSSLEnabled:              d.Get("enable_pool_side_ssl").(bool),
-		// Questionable field. UI has it, but does not send it. NSX documentation has it, but it is
-		// never returned, nor shown
-		// Expire: d.Get("expiration").(int),
 	}
 
 	if d.Get("http_redirect_url").(string) != "" {
@@ -261,6 +257,7 @@ func getLBAppProfileType(d *schema.ResourceData) (*types.LBAppProfile, error) {
 			Method:     d.Get("persistence_mechanism").(string),
 			CookieName: d.Get("cookie_name").(string),
 			CookieMode: d.Get("cookie_mode").(string),
+			Expire:     d.Get("expiration").(int),
 		}
 	}
 
@@ -281,10 +278,12 @@ func setLBAppProfileData(d *schema.ResourceData, LBProfile *types.LBAppProfile) 
 		d.Set("persistence_mechanism", LBProfile.Persistence.Method)
 		d.Set("cookie_name", LBProfile.Persistence.CookieName)
 		d.Set("cookie_mode", LBProfile.Persistence.CookieMode)
+		d.Set("expiration", LBProfile.Persistence.Expire)
 	} else {
 		d.Set("persistence_mechanism", "")
 		d.Set("cookie_name", "")
 		d.Set("cookie_mode", "")
+		d.Set("expiration", "")
 	}
 
 	if LBProfile.HTTPRedirect != nil {

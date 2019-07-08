@@ -596,28 +596,47 @@ type Org struct {
 	Tasks        *TasksInProgress `xml:"Tasks,omitempty"`
 }
 
+// List of the users within the organization
+type OrgUserList struct {
+	User []*Reference `xml:"UserReference,omitempty"`
+}
+
+// List of available roles in the organization
+type OrgRoleType struct {
+	RoleReference []*Reference `xml:"RoleReference,omitempty"`
+}
+
+// List of available rights in the organization
+type RightsType struct {
+	Links          LinkList     `xml:"Link,omitempty"`
+	RightReference []*Reference `xml:"RightReference,omitempty"`
+}
+
 // AdminOrg represents the admin view of a vCloud Director organization.
 // Type: AdminOrgType
 // Namespace: http://www.vmware.com/vcloud/v1.5
 // Description: Represents the admin view of a vCloud Director organization.
 // Since: 0.9
 type AdminOrg struct {
-	XMLName      xml.Name         `xml:"AdminOrg"`
-	Xmlns        string           `xml:"xmlns,attr"`
-	HREF         string           `xml:"href,attr,omitempty"`
-	Type         string           `xml:"type,attr,omitempty"`
-	ID           string           `xml:"id,attr,omitempty"`
-	OperationKey string           `xml:"operationKey,attr,omitempty"`
-	Name         string           `xml:"name,attr"`
-	Description  string           `xml:"Description,omitempty"`
-	FullName     string           `xml:"FullName"`
-	IsEnabled    bool             `xml:"IsEnabled,omitempty"`
-	Link         LinkList         `xml:"Link,omitempty"`
-	Tasks        *TasksInProgress `xml:"Tasks,omitempty"`
-	OrgSettings  *OrgSettings     `xml:"Settings,omitempty"`
-	Vdcs         *VDCList         `xml:"Vdcs,omitempty"`
-	Networks     *NetworksList    `xml:"Networks,omitempty"`
-	Catalogs     *CatalogsList    `xml:"Catalogs,omitempty"`
+	XMLName         xml.Name         `xml:"AdminOrg"`
+	Xmlns           string           `xml:"xmlns,attr"`
+	HREF            string           `xml:"href,attr,omitempty"`
+	Type            string           `xml:"type,attr,omitempty"`
+	ID              string           `xml:"id,attr,omitempty"`
+	OperationKey    string           `xml:"operationKey,attr,omitempty"`
+	Name            string           `xml:"name,attr"`
+	Description     string           `xml:"Description,omitempty"`
+	FullName        string           `xml:"FullName"`
+	IsEnabled       bool             `xml:"IsEnabled,omitempty"`
+	Link            LinkList         `xml:"Link,omitempty"`
+	Tasks           *TasksInProgress `xml:"Tasks,omitempty"`
+	Users           *OrgUserList     `xml:"Users,omitempty"`
+	Catalogs        *CatalogsList    `xml:"Catalogs,omitempty"`
+	OrgSettings     *OrgSettings     `xml:"Settings,omitempty"`
+	Vdcs            *VDCList         `xml:"Vdcs,omitempty"`
+	Networks        *NetworksList    `xml:"Networks,omitempty"`
+	RightReferences *OrgRoleType     `xml:"RightReferences,omitempty"`
+	RoleReferences  *OrgRoleType     `xml:"RoleReferences,omitempty"`
 }
 
 // OrgSettingsType represents the settings for a vCloud Director organization.
@@ -1690,9 +1709,6 @@ type LBAppProfile struct {
 	Persistence                   *LBAppProfilePersistence  `xml:"persistence,omitempty"`
 	InsertXForwardedForHTTPHeader bool                      `xml:"insertXForwardedFor,omitempty"`
 	ServerSSLEnabled              bool                      `xml:"serverSslEnabled,omitempty"`
-	// Questionable field. UI has it, but does not send it. NSX documentation has it, but it is
-	// never returned, nor shown
-	Expire int `xml:"expire,omitempty"`
 }
 
 type LBAppProfiles []LBAppProfile
@@ -1703,6 +1719,7 @@ type LBAppProfilePersistence struct {
 	Method     string   `xml:"method,omitempty"`
 	CookieName string   `xml:"cookieName,omitempty"`
 	CookieMode string   `xml:"cookieMode,omitempty"`
+	Expire     int      `xml:"expire,omitempty"`
 }
 
 // LBAppProfileHTTPRedirect defines http redirect settings in LBAppProfile
@@ -2539,4 +2556,41 @@ type VMWNetworkPool struct {
 	Status      int              `xml:"status,attr,omitempty"`
 	Description string           `xml:"netmask,omitempty"`
 	Tasks       *TasksInProgress `xml:"Tasks,omitempty"`
+}
+
+type GroupReference struct {
+	GroupReference []*Reference `xml:"GroupReference,omitempty"`
+}
+
+// Represents an org user
+// Reference: vCloud API 27.0 - UserType
+// https://code.vmware.com/apis/442/vcloud-director#/doc/doc/types/UserType.html
+// Note that the order of fields is important. If this structure needs to change,
+// the field order must be preserved.
+type User struct {
+	XMLName         xml.Name         `xml:"User"`
+	Xmlns           string           `xml:"xmlns,attr"`
+	Href            string           `xml:"href,attr"`
+	Type            string           `xml:"type,attr"`
+	ID              string           `xml:"id,attr"`
+	OperationKey    string           `xml:"operationKey,attr"`
+	Name            string           `xml:"name,attr"`
+	Links           LinkList         `xml:"Link,omitempty"`
+	Description     string           `xml:"Description,omitempty"`
+	FullName        string           `xml:"FullName,omitempty"`
+	EmailAddress    string           `xml:"EmailAddress,omitempty"`
+	Telephone       string           `xml:"Telephone,omitempty"`
+	IsEnabled       bool             `xml:"IsEnabled,omitempty"`
+	IsLocked        bool             `xml:"IsLocked,omitempty"`
+	IM              string           `xml:"IM,omitempty"`
+	NameInSource    string           `xml:"NameInSource,omitempty"`
+	IsExternal      bool             `xml:"IsExternal,omitempty"`
+	ProviderType    string           `xml:"ProviderType,omitempty"`
+	IsGroupRole     bool             `xml:"IsGroupRole,omitempty"`
+	StoredVmQuota   int              `xml:"StoredVmQuota,omitempty"`
+	DeployedVmQuota int              `xml:"DeployedVmQuota,omitempty"`
+	Role            *Reference       `xml:"Role,omitempty"`
+	GroupReferences *GroupReference  `xml:"GroupReferences,omitempty"`
+	Password        string           `xml:"Password,omitempty"`
+	Tasks           *TasksInProgress `xml:"Tasks"`
 }

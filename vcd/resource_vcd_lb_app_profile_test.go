@@ -115,7 +115,7 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "persistence_mechanism", "sourceip"),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "insert_x_forwarded_http_header", "false"),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "http_redirect_url", ""),
-					// resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "expiration", "17"),
+					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "expiration", "17"),
 
 					// Data source testing - it must expose all fields which resource has
 					resource.TestMatchResourceAttr("data.vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
@@ -124,7 +124,7 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "persistence_mechanism", "sourceip"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "insert_x_forwarded_http_header", "false"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "http_redirect_url", ""),
-					// resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "expiration", "17"),
+					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "expiration", "17"),
 				),
 			},
 
@@ -139,7 +139,7 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "enable_ssl_passthrough", "true"),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "enable_pool_side_ssl", "true"),
-					// resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "expiration", "13"),
+					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "expiration", "0"),
 
 					// Data source testing - it must expose all fields which resource has
 					resource.TestMatchResourceAttr("data.vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
@@ -148,9 +148,10 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "insert_x_forwarded_http_header", "true"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "http_redirect_url", ""),
 
+					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "persistence_mechanism", "sourceip"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "enable_ssl_passthrough", "true"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "enable_pool_side_ssl", "true"),
-					// resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "expiration", "13"),
+					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "expiration", "0"),
 				),
 			},
 			resource.TestStep{
@@ -252,7 +253,7 @@ resource "vcd_lb_app_profile" "test" {
 
   http_redirect_url     = ""
   persistence_mechanism = "sourceip"
-  # expiration = "17"
+  expiration = "17"
 }
 
 data "vcd_lb_app_profile" "test" {
@@ -272,8 +273,8 @@ resource "vcd_lb_app_profile" "test" {
   name = "{{.AppProfileName}}"
   type = "{{.Type}}"
 
-  # persistence_mechanism = "sourceip"
-  # expiration = "13"
+  persistence_mechanism = "sourceip"
+  expiration = 0
   enable_ssl_passthrough         = "true"
   enable_pool_side_ssl           = "true"
   insert_x_forwarded_http_header = "true"
