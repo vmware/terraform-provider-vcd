@@ -147,11 +147,17 @@ func resourceVcdLBAppRuleDelete(d *schema.ResourceData, meta interface{}) error 
 }
 
 // resourceVcdLBAppRuleImport is responsible for importing the resource.
-// The d.Id() field as being passed from `terraform import _resource_name_ _the_id_string_ requires
-// a name based dot-formatted path to the object to lookup the object and sets the id of object.
-// `terraform import` automatically performs `refresh` operation which loads up all other fields.
+// The following steps are happening as part of import
+// 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
+// 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
+// 3. The functions splits the dot-formatted path and tries to lookup of the object
+// 4. If the lookup succeeds it set's the ID field for `_resource_name_` resource in statefile
+// (the resource must be already defined in .tf config otherwise `terraform import` will complain)
+// 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
+// based on the known ID of object.
 //
-// Example import path (id): org.vdc.edge-gw.existing-app-rule
+// Example resource name (_resource_name_): vcd_lb_app_rule.my-test-app-rule
+// Example import path (_the_id_string_): org.vdc.edge-gw.existing-app-rule
 func resourceVcdLBAppRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ".")
 	if len(resourceURI) != 4 {
