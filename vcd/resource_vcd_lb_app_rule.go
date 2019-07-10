@@ -75,7 +75,6 @@ func resourceVcdLBAppRuleCreate(d *schema.ResourceData, meta interface{}) error 
 		return fmt.Errorf("error creating new load balancer app rule: %s", err)
 	}
 
-	// We store the values once again because response include pool member IDs
 	err = setLBAppRuleData(d, createdPool)
 	if err != nil {
 		return err
