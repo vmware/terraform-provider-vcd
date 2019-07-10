@@ -88,8 +88,8 @@ integrate such data with additional information that is only used for the enviro
     "routedNetwork": "net_datacloud_r",
     "isolatedNetwork": "net_datacloud_i",
     "directNetwork": "net_datacloud_d"
-	"orgUser": "company-admin",
-	"orgUserPassword": "secretpwd"
+    "orgUser": "company-admin",
+    "orgUserPassword": "secretpwd"
   }
 }
 ```
