@@ -285,6 +285,8 @@ func init() {
 	testingTags["user"] = "resource_vcd_org_user_test.go"
 }
 
+// This template will generate 5 different tests, one for each
+// available role
 const testAccOrgUserBasic = `
 # skip-binary-test: depends on external file
 resource "vcd_org_user" "{{.UserName}}" {
@@ -296,6 +298,10 @@ resource "vcd_org_user" "{{.UserName}}" {
 }
 `
 
+// This template will generate 10 different tests:
+// the first five will be one for each role
+// and the next five will change role, full name, description, and the quotas
+// to test the update
 const testAccOrgUserFull = `
 resource "vcd_org_user" "{{.UserName}}" {
   org               = "{{.Org}}"
