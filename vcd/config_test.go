@@ -460,11 +460,15 @@ func TestMain(m *testing.M) {
 	// If VCD_SHORT_TEST is defined, it means that "make test" is called,
 	// and we won't really run any tests involving vcd connections.
 	configFile := getConfigFileName()
-	if configFile != "" {
-		testConfig = getConfigStruct(configFile)
+	if configFile == "" {
+		fmt.Println("No configuration file found")
+		os.Exit(1)
 	}
+	testConfig = getConfigStruct(configFile)
 	if !vcdShortTest {
 
+		fmt.Printf("Connecting to %s\n", testConfig.Provider.Url)
+		fmt.Printf("as user %s@%s\n", testConfig.Provider.User, testConfig.Provider.SysOrg)
 		// Provider initialization moved here from provider_test.init
 		testAccProvider = Provider().(*schema.Provider)
 		testAccProviders = map[string]terraform.ResourceProvider{
