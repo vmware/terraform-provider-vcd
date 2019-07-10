@@ -67,12 +67,12 @@ func resourceVcdLBAppRuleCreate(d *schema.ResourceData, meta interface{}) error 
 
 	LBRule, err := getLBAppRuleType(d)
 	if err != nil {
-		return fmt.Errorf("unable to create load balancer app rule type: %s", err)
+		return fmt.Errorf("unable to create load balancer application rule type: %s", err)
 	}
 
 	createdPool, err := edgeGateway.CreateLBAppRule(LBRule)
 	if err != nil {
-		return fmt.Errorf("error creating new load balancer app rule: %s", err)
+		return fmt.Errorf("error creating new load balancer application rule: %s", err)
 	}
 
 	err = setLBAppRuleData(d, createdPool)
@@ -94,7 +94,7 @@ func resourceVcdLBAppRuleRead(d *schema.ResourceData, meta interface{}) error {
 	readLBRule, err := edgeGateway.ReadLBAppRuleByID(d.Id())
 	if err != nil {
 		d.SetId("")
-		return fmt.Errorf("unable to find load balancer app rule with ID %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to find load balancer application rule with ID %s: %s", d.Id(), err)
 	}
 
 	return setLBAppRuleData(d, readLBRule)
@@ -112,12 +112,12 @@ func resourceVcdLBAppRuleUpdate(d *schema.ResourceData, meta interface{}) error 
 
 	updateLBRuleConfig, err := getLBAppRuleType(d)
 	if err != nil {
-		return fmt.Errorf("could not create load balancer app rule type for update: %s", err)
+		return fmt.Errorf("could not create load balancer application rule type for update: %s", err)
 	}
 
 	updatedLBRule, err := edgeGateway.UpdateLBAppRule(updateLBRuleConfig)
 	if err != nil {
-		return fmt.Errorf("unable to update load balancer app rule with ID %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to update load balancer application rule with ID %s: %s", d.Id(), err)
 	}
 
 	if err := setLBAppRuleData(d, updatedLBRule); err != nil {
@@ -139,7 +139,7 @@ func resourceVcdLBAppRuleDelete(d *schema.ResourceData, meta interface{}) error 
 
 	err = edgeGateway.DeleteLBAppRuleByID(d.Id())
 	if err != nil {
-		return fmt.Errorf("error deleting load balancer app rule: %s", err)
+		return fmt.Errorf("error deleting load balancer application rule: %s", err)
 	}
 
 	d.SetId("")
@@ -167,7 +167,7 @@ func resourceVcdLBAppRuleImport(d *schema.ResourceData, meta interface{}) ([]*sc
 
 	readLBRule, err := edgeGateway.ReadLBAppRuleByName(appRuleName)
 	if err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer app rule with name %s: %s",
+		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer application rule with name %s: %s",
 			d.Id(), err)
 	}
 

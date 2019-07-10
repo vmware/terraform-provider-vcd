@@ -14,24 +14,24 @@ func datasourceVcdLBAppRule() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "vCD organization in which the App Rule is located",
+				Description: "vCD organization in which the Application Rule is located",
 			},
 			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "vCD virtual datacenter in which the App Rule is located",
+				Description: "vCD virtual datacenter in which the Application Rule is located",
 			},
 			"edge_gateway": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Edge gateway name in which the App Rule is located",
+				Description: "Edge gateway name in which the Application Rule is located",
 			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "App Rule name for lookup",
+				Description: "Application Rule name for lookup",
 			},
 			"script": &schema.Schema{
 				Computed: true,
@@ -39,7 +39,7 @@ func datasourceVcdLBAppRule() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				Description: "The script for the application rule",
+				Description: "The script for the Application Rule",
 			},
 		},
 	}
@@ -54,7 +54,7 @@ func datasourceVcdLBAppRuleRead(d *schema.ResourceData, meta interface{}) error 
 
 	readLBAppRule, err := edgeGateway.ReadLBAppRuleByName(d.Get("name").(string))
 	if err != nil {
-		return fmt.Errorf("unable to find load balancer app rule with Name %s: %s",
+		return fmt.Errorf("unable to find load balancer application rule with Name %s: %s",
 			d.Get("name").(string), err)
 	}
 
