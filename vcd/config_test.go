@@ -1,4 +1,4 @@
-// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool ALL
+// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool user ALL
 
 package vcd
 
@@ -110,6 +110,8 @@ type TestConfig struct {
 		MediaPath                    string `json:"mediaPath"`                    // Media path, if different from Media.MediaPath
 		MediaName                    string `json:"mediaName"`                    // Media name to create
 		OvaPath                      string `json:"ovaPath"`                      // Ova Path, if different from Ova.OvaPath
+		OrgUser                      string `json:"orgUser"`                      // Org User to be created within the organization
+		OrgUserPassword              string `json:"orgUserPassword"`              // Password for the Org User to be created within the organization
 	} `json:"testEnvBuild"`
 	EnvVariables map[string]string `json:"envVariables,omitempty"`
 }
@@ -148,6 +150,7 @@ provider "vcd" {
   max_retry_timeout    = {{.MaxRetryTimeout}}
   version              = "~> {{.VersionRequired}}"
   logging              = {{.Logging}}
+  logging_file         = "{{.LoggingFile}}"
 }
 `
 )
@@ -245,6 +248,11 @@ func templateFill(tmpl string, data StringMap) string {
 		data["MaxRetryTimeout"] = testConfig.Provider.MaxRetryTimeout
 		data["VersionRequired"] = currentProviderVersion
 		data["Logging"] = testConfig.Logging.Enabled
+		if testConfig.Logging.LogFileName != "" {
+			data["LoggingFile"] = testConfig.Logging.LogFileName
+		} else {
+			data["LoggingFile"] = util.ApiLogFileName
+		}
 	}
 	if _, ok := data["Tags"]; !ok {
 		data["Tags"] = "ALL"
@@ -315,7 +323,7 @@ func templateFill(tmpl string, data StringMap) string {
 		}
 		err = writer.Flush()
 		if err != nil {
-			panic(fmt.Errorf("error writing to file %s. Reported %d bytes written. %s", resourceFile, count, err))
+			panic(fmt.Errorf("error flushing file %s. %s", resourceFile, err))
 		}
 		_ = file.Close()
 	}
