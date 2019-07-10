@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/vmware/go-vcloud-director/v2/govcd"
+
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -113,7 +115,7 @@ func testAccCheckVcdLBAppRuleDestroy(appRuleName string) resource.TestCheckFunc 
 		}
 
 		monitor, err := edgeGateway.ReadLBAppRuleByName(appRuleName)
-		if !strings.Contains(err.Error(), "could not find load balancer application rule") ||
+		if !strings.Contains(err.Error(), govcd.ErrorEntityNotFound.Error()) ||
 			monitor != nil {
 			return fmt.Errorf("load balancer application rule was not deleted: %s", err)
 		}

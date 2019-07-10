@@ -32,7 +32,7 @@ func (eGW *EdgeGateway) CreateLBServerPool(lbPoolConfig *types.LBPool) (*types.L
 
 	// Location header should look similar to:
 	// Location: [/network/edges/edge-3/loadbalancer/config/pools/pool-7]
-	lbPoolID, err := extractNSXObjectIDfromPath(resp.Header.Get("Location"))
+	lbPoolID, err := extractNSXObjectIDFromPath(resp.Header.Get("Location"))
 	if err != nil {
 		return nil, err
 	}
@@ -87,8 +87,7 @@ func (eGW *EdgeGateway) ReadLBServerPool(lbPoolConfig *types.LBPool) (*types.LBP
 		}
 	}
 
-	return nil, fmt.Errorf("could not find load balancer server pool (name: %s, ID: %s)",
-		lbPoolConfig.Name, lbPoolConfig.ID)
+	return nil, ErrorEntityNotFound
 }
 
 // ReadLBServerPoolByName wraps ReadLBServerPool and needs only an ID for lookup

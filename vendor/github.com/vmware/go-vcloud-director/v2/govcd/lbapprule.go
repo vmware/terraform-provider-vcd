@@ -31,7 +31,7 @@ func (eGW *EdgeGateway) CreateLBAppRule(lbAppRuleConfig *types.LBAppRule) (*type
 
 	// Location header should look similar to:
 	// [/network/edges/edge-3/loadbalancer/config/applicationrules/applicationRule-4]
-	lbAppRuleId, err := extractNSXObjectIDfromPath(resp.Header.Get("Location"))
+	lbAppRuleId, err := extractNSXObjectIDFromPath(resp.Header.Get("Location"))
 	if err != nil {
 		return nil, err
 	}
@@ -88,8 +88,7 @@ func (eGW *EdgeGateway) ReadLBAppRule(lbAppRuleConfig *types.LBAppRule) (*types.
 		}
 	}
 
-	return nil, fmt.Errorf("could not find load balancer application rule (name: %s, ID: %s)",
-		lbAppRuleConfig.Name, lbAppRuleConfig.ID)
+	return nil, ErrorEntityNotFound
 }
 
 // ReadLBAppRuleById wraps ReadLBAppRule and needs only an ID for lookup

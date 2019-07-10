@@ -35,7 +35,7 @@ func (eGW *EdgeGateway) CreateLBServiceMonitor(lbMonitorConfig *types.LBMonitor)
 
 	// Location header should look similar to:
 	// Location: [/network/edges/edge-3/loadbalancer/config/monitors/monitor-5]
-	lbMonitorID, err := extractNSXObjectIDfromPath(resp.Header.Get("Location"))
+	lbMonitorID, err := extractNSXObjectIDFromPath(resp.Header.Get("Location"))
 	if err != nil {
 		return nil, err
 	}
@@ -89,8 +89,7 @@ func (eGW *EdgeGateway) ReadLBServiceMonitor(lbMonitorConfig *types.LBMonitor) (
 		}
 	}
 
-	return nil, fmt.Errorf("could not find load balancer service monitor (name: %s, ID: %s)",
-		lbMonitorConfig.Name, lbMonitorConfig.ID)
+	return nil, ErrorEntityNotFound
 }
 
 // ReadLBServiceMonitorByID wraps ReadLBServiceMonitor and needs only an ID for lookup
