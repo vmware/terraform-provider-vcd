@@ -63,10 +63,10 @@ func resourceVcdOrgUser() *schema.Resource {
 				Description: "The Org User's description",
 			},
 			"provider_type": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     govcd.OrgUserProviderIntegrated,
-				ForceNew:    false,
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  govcd.OrgUserProviderIntegrated,
+				ForceNew: false,
 				Description: "Identity provider type for this this user. One of: 'INTEGRATED', 'SAML', 'OAUTH'. " +
 					"When empty, the default value 'INTEGRATED' is used.",
 			},
