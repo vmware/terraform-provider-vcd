@@ -53,6 +53,15 @@ func prettyVapp(vapp types.VApp) string {
 	return ""
 }
 
+// Returns an OrgUser structure as JSON
+func prettyUser(user types.User) string {
+	byteBuf, err := json.MarshalIndent(user, " ", " ")
+	if err == nil {
+		return fmt.Sprintf("%s\n", string(byteBuf))
+	}
+	return ""
+}
+
 // Returns a VDC structure as JSON
 func prettyVdc(vdc types.Vdc) string {
 	byteBuf, err := json.MarshalIndent(vdc, " ", " ")
@@ -200,6 +209,14 @@ func ShowVdc(vdc types.Vdc) {
 
 func LogVdc(vdc types.Vdc) {
 	out("log", prettyVdc(vdc))
+}
+
+func ShowUser(user types.User) {
+	out("screen", prettyUser(user))
+}
+
+func LogUser(user types.User) {
+	out("log", prettyUser(user))
 }
 
 func ShowDisk(disk types.Disk) {

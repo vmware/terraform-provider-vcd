@@ -9,11 +9,11 @@ import (
 	"bytes"
 	"encoding/xml"
 	"fmt"
-
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"reflect"
 	"strings"
 
@@ -34,6 +34,80 @@ type Client struct {
 	// where vCloud director may take time to respond and retry mechanism is needed.
 	// This must be >0 to avoid instant timeout errors.
 	MaxRetryTimeout int
+}
+
+// General purpose error to be used whenever an entity is not found from a "GET" request
+// Allows a simpler checking of the call result
+// such as
+// if err == ErrorEntityNotFound {
+//    // do what is needed in case of not found
+// }
+var ErrorEntityNotFound = fmt.Errorf("entity not found")
+
+// Triggers for debugging functions that show requests and responses
+var debugShowRequestEnabled = os.Getenv("GOVCD_SHOW_REQ") != ""
+var debugShowResponseEnabled = os.Getenv("GOVCD_SHOW_RESP") != ""
+
+// Enables the debugging hook to show requests as they are processed.
+func enableDebugShowRequest() {
+	debugShowRequestEnabled = true
+}
+
+// Disables the debugging hook to show requests as they are processed.
+func disableDebugShowRequest() {
+	debugShowRequestEnabled = false
+	_ = os.Setenv("GOVCD_SHOW_REQ", "")
+}
+
+// Enables the debugging hook to show responses as they are processed.
+func enableDebugShowResponse() {
+	debugShowResponseEnabled = true
+}
+
+// Disables the debugging hook to show responses as they are processed.
+func disableDebugShowResponse() {
+	debugShowResponseEnabled = false
+	_ = os.Setenv("GOVCD_SHOW_RESP", "")
+}
+
+// On-the-fly debug hook. If either debugShowRequestEnabled or the environment
+// variable "GOVCD_SHOW_REQ" are enabled, this function will show the contents
+// of the request as it is being processed.
+func debugShowRequest(req *http.Request, payload string) {
+	if debugShowRequestEnabled {
+		header := "[\n"
+		for key, value := range req.Header {
+			header += fmt.Sprintf("\t%s => %s\n", key, value)
+		}
+		header += "]\n"
+		fmt.Printf("method:  %s\n", req.Method)
+		fmt.Printf("host:    %s\n", req.Host)
+		fmt.Printf("length:  %d\n", req.ContentLength)
+		fmt.Printf("URL:     %s\n", req.URL.String())
+		fmt.Printf("header:  %s\n", header)
+		fmt.Printf("payload: %s\n", payload)
+	}
+}
+
+// On-the-fly debug hook. If either debugShowResponseEnabled or the environment
+// variable "GOVCD_SHOW_RESP" are enabled, this function will show the contents
+// of the response as it is being processed.
+func debugShowResponse(resp *http.Response, body []byte) {
+	if debugShowResponseEnabled {
+		fmt.Printf("status: %d - %s \n", resp.StatusCode, resp.Status)
+		fmt.Printf("length: %d\n", resp.ContentLength)
+		fmt.Printf("header: %v\n", resp.Header)
+		fmt.Printf("body: %s\n", body)
+	}
+}
+
+// Convenience function, similar to os.IsNotExist that checks whether a given error
+// is a "Not found" error, such as
+// if isNotFound(err) {
+//    // do what is needed in case of not found
+// }
+func IsNotFound(err error) bool {
+	return err != nil && err == ErrorEntityNotFound
 }
 
 // Function allow to pass complex values params which shouldn't be encoded like for queries. e.g. /query?filter=(name=foo)
@@ -86,6 +160,8 @@ func (cli *Client) NewRequestWitNotEncodedParams(params map[string]string, notEn
 			}
 		}
 		util.ProcessRequestOutput(util.FuncNameCallStack(), method, reqUrl.String(), payload, req)
+
+		debugShowRequest(req, payload)
 	}
 	return req
 
@@ -119,6 +195,7 @@ func decodeBody(resp *http.Response, out interface{}) error {
 		return err
 	}
 
+	debugShowResponse(resp, body)
 	// Unmarshal the XML.
 	if err = xml.Unmarshal(body, &out); err != nil {
 		return err
@@ -238,6 +315,7 @@ func (client *Client) ExecuteRequestWithoutResponse(pathURL, requestType, conten
 	// log response explicitly because decodeBody() was not triggered
 	util.ProcessResponseOutput(util.FuncNameCallStack(), resp, fmt.Sprintf("%s", resp.Body))
 
+	debugShowResponse(resp, []byte("SKIPPED RESPONSE"))
 	err = resp.Body.Close()
 	if err != nil {
 		return fmt.Errorf("error closing response body: %s", err)

@@ -97,6 +97,8 @@ const (
 	MimeExtensionNetwork = "application/vnd.vmware.admin.extension.network+xml"
 	// Mime for an external network
 	MimeExternalNetwork = "application/vnd.vmware.admin.vmwexternalnet+xml"
+	// Mime of an Org User
+	MimeAdminUser = "application/vnd.vmware.admin.user+xml"
 )
 
 const (
@@ -151,4 +153,5 @@ const (
 const (
 	LBMonitorPath    = "/loadbalancer/config/monitors/"
 	LBServerPoolPath = "/loadbalancer/config/pools/"
+	LBAppProfilePath = "/loadbalancer/config/applicationprofiles/"
 )
