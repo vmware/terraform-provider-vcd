@@ -60,7 +60,7 @@ func resourceVcdOrgUser() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
-				Description: "The Org User's description",
+				Description: "The user's description",
 			},
 			"provider_type": &schema.Schema{
 				Type:     schema.TypeString,
@@ -74,25 +74,25 @@ func resourceVcdOrgUser() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
-				Description: "The Org User's full name",
+				Description: "The user's full name",
 			},
 			"email_address": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
-				Description: "The Org User's email address",
+				Description: "The user's email address",
 			},
 			"telephone": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
-				Description: "The Org User's telephone",
+				Description: "The user's telephone",
 			},
 			"instant_messaging": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
-				Description: "The Org User's telephone",
+				Description: "The user's telephone",
 			},
 			"is_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -141,6 +141,8 @@ func resourceVcdOrgUser() *schema.Resource {
 	}
 }
 
+// Converts resource data into a OrgUserConfiguration structure
+// used for both creation and update.
 func resourceToUserData(d *schema.ResourceData, meta interface{}) (*govcd.OrgUserConfiguration, *govcd.AdminOrg, error) {
 	vcdClient := meta.(*VCDClient)
 	orgName := d.Get("org").(string)
@@ -189,12 +191,11 @@ func resourceToUserData(d *schema.ResourceData, meta interface{}) (*govcd.OrgUse
 		}
 	}
 
-	if userData.Password == "" {
-		return nil, nil, fmt.Errorf(`no password provided in either "password"" or "password_file"`)
-	}
 	return &userData, &adminOrg, nil
 }
 
+// Retrieve an OrgUser and an AdminOrg from the data in the resource.
+// Used wherever we need to read the object from vCD with input provided in the resource fields
 func resourceToOrgUser(d *schema.ResourceData, meta interface{}) (*govcd.OrgUser, *govcd.AdminOrg, error) {
 
 	vcdClient := meta.(*VCDClient)
@@ -214,6 +215,8 @@ func resourceToOrgUser(d *schema.ResourceData, meta interface{}) (*govcd.OrgUser
 	return orgUser, &adminOrg, nil
 }
 
+// Fills a ResourceData container with data retrieved from an OrgUser and an AdminOrg
+// Used after retrieving the user (read, import), to fill the Terraform container appropriately
 func setOrgUserData(d *schema.ResourceData, orgUser *govcd.OrgUser, adminOrg *govcd.AdminOrg) error {
 
 	d.SetId(orgUser.User.ID)
@@ -276,11 +279,15 @@ func setOrgUserData(d *schema.ResourceData, orgUser *govcd.OrgUser, adminOrg *go
 	return nil
 }
 
+// Creates an OrgUser from data provided in the resource
 func resourceVcdOrgUserCreate(d *schema.ResourceData, meta interface{}) error {
 
 	userData, adminOrg, err := resourceToUserData(d, meta)
 	if err != nil {
 		return err
+	}
+	if userData.Password == "" {
+		return fmt.Errorf(`no password provided with either "password"" or "password_file" properties`)
 	}
 	_, err = adminOrg.CreateUserSimple(*userData)
 	if err != nil {
@@ -289,6 +296,7 @@ func resourceVcdOrgUserCreate(d *schema.ResourceData, meta interface{}) error {
 	return resourceVcdOrgUserRead(d, meta)
 }
 
+// Deletes an OrgUser
 func resourceVcdOrgUserDelete(d *schema.ResourceData, meta interface{}) error {
 
 	takeOwnership := d.Get("take_ownership").(bool)
@@ -299,6 +307,7 @@ func resourceVcdOrgUserDelete(d *schema.ResourceData, meta interface{}) error {
 	return orgUser.Delete(takeOwnership)
 }
 
+// Reads the OrgUser from vCD and fills the resource container appropriately
 func resourceVcdOrgUserRead(d *schema.ResourceData, meta interface{}) error {
 
 	orgUser, adminOrg, err := resourceToOrgUser(d, meta)
@@ -308,6 +317,7 @@ func resourceVcdOrgUserRead(d *schema.ResourceData, meta interface{}) error {
 	return setOrgUserData(d, orgUser, adminOrg)
 }
 
+// Updates an OrgUser with the data passed through the resource
 func resourceVcdOrgUserUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	orgUser, _, err := resourceToOrgUser(d, meta)
@@ -325,6 +335,8 @@ func resourceVcdOrgUserUpdate(d *schema.ResourceData, meta interface{}) error {
 	return resourceVcdOrgUserRead(d, meta)
 }
 
+// Imports an OrgUser into Terraform state
+// This function task is to get the data from vCD and fill the resource data container
 func resourceVcdOrgUserImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ".")
 	if len(resourceURI) != 2 {
