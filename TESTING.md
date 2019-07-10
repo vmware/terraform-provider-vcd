@@ -204,6 +204,7 @@ $ go test -v .
             * network:    Runs network related tests
             * gateway:    Runs edge gateway related tests
             * org:        Runs org related tests
+            * user:       Runs user related tests
             * vapp:       Runs vapp related tests
             * vdc:        Runs vdc related tests
             * vm:         Runs vm related tests
