@@ -208,6 +208,13 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Required:    true,
 				Description: "When destroying use delete_recursive=True to remove the vdc and any objects it contains that are in a state that normally allows removal.",
 			},
+			"metadata": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "Key and value pairs for Org VDC metadata",
+				// For now underlying go-vcloud-director repo only supports
+				// a value of type String in this map.
+			},
 		},
 	}
 }
@@ -267,6 +274,12 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 
 	d.SetId(adminVdc.AdminVdc.ID)
 	log.Printf("[TRACE] vdc created: %#v", task)
+
+	err = createOrUpdateMetadata(d, meta)
+	if err != nil {
+		return fmt.Errorf("error adding metadata to VDC: %#v", err)
+	}
+
 	return resourceVcdVdcRead(d, meta)
 }
 
@@ -283,7 +296,7 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 
 	adminVdc, err := adminOrg.GetAdminVdcByName(d.Get("name").(string))
 	if err != nil || adminVdc == (govcd.AdminVdc{}) {
-		log.Printf("[DEBUG] Unable to find vdc")
+		log.Printf("[DEBUG] Unable to find VDC")
 		return fmt.Errorf("unable to find VDC %#v", err)
 	}
 
@@ -314,8 +327,30 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 
 	d.Set("storage_profile", adminVdc.AdminVdc.VdcStorageProfiles)
 
+	vdc, err := adminOrg.GetVdcByName(d.Get("name").(string))
+	if err != nil || adminVdc == (govcd.AdminVdc{}) {
+		log.Printf("[DEBUG] Unable to find VDC")
+		return fmt.Errorf("unable to find VDC %#v", err)
+	}
+	metadata, err := vdc.GetMetadata()
+	if err != nil {
+		log.Printf("[DEBUG] Unable to get VDC metadata")
+		return fmt.Errorf("unable to get VDC metadata %#v", err)
+	}
+
+	d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+
 	log.Printf("[TRACE] vdc read completed: %#v", adminVdc.AdminVdc)
 	return nil
+}
+
+// Converts to terraform understandable structure
+func getMetadataStruct(metadata []*types.MetadataEntry) map[string]interface{} {
+	metadataMap := make(map[string]interface{}, len(metadata))
+	for _, metadataEntry := range metadata {
+		metadataMap[metadataEntry.Key] = metadataEntry.TypedValue.Value
+	}
+	return metadataMap
 }
 
 //resourceVcdVdcUpdate function updates resource with found configurations changes
@@ -353,6 +388,11 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error updating VDC %#v", err)
 	}
 
+	err = createOrUpdateMetadata(d, meta)
+	if err != nil {
+		return fmt.Errorf("error updating VDC metadata: %#v", err)
+	}
+
 	log.Printf("[TRACE] vdc update completed: %#v", adminVdc.AdminVdc.Name)
 	return resourceVcdVdcRead(d, meta)
 }
@@ -386,6 +426,48 @@ func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	log.Printf("[TRACE] vdc delete completed: %#v", vdc.Vdc)
+	return nil
+}
+
+func createOrUpdateMetadata(d *schema.ResourceData, meta interface{}) error {
+
+	log.Printf("[TRACE] adding/updating metadata to VDC")
+
+	vcdClient := meta.(*VCDClient)
+
+	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+	if err != nil {
+		return fmt.Errorf(errorRetrievingOrg, err)
+	}
+
+	vdc, err := adminOrg.GetVdcByName(d.Get("name").(string))
+
+	if d.HasChange("metadata") {
+		oldRaw, newRaw := d.GetChange("metadata")
+		oldMetadata := oldRaw.(map[string]interface{})
+		newMetadata := newRaw.(map[string]interface{})
+		var toBeRemovedMetadata []string
+		// Check if any key in old metadata was removed in new metadata.
+		// Creates a list of keys to be removed.
+		for k := range oldMetadata {
+			if _, ok := newMetadata[k]; !ok {
+				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
+			}
+		}
+		for _, k := range toBeRemovedMetadata {
+			_, err := vdc.DeleteMetadata(k)
+			if err != nil {
+				return fmt.Errorf("error deleting metadata: %#v", err)
+			}
+		}
+		// Add new metadata
+		for k, v := range newMetadata {
+			_, err := vdc.AddMetadata(k, v.(string))
+			if err != nil {
+				return fmt.Errorf("error adding metadata: %#v", err)
+			}
+		}
+	}
 	return nil
 }
 
