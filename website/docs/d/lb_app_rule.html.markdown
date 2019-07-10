@@ -8,8 +8,8 @@ description: |-
 
 # vcd\_lb\_app\_rule
 
-Provides a vCloud Director Edge Gateway Load Balancer Application Rule resource. An application rule
-allows to directly manipulate and manage IP application traffic with load balancer.
+Provides a vCloud Director Edge Gateway Load Balancer Application Rule data source. An application
+rule allows to directly manipulate and manage IP application traffic with load balancer.
 
 ~> **Note:** See additional support notes in [application rule resource page]
 (/docs/providers/vcd/r/lb_app_rule.html).
@@ -39,4 +39,4 @@ The following arguments are supported:
 
 ## Attribute Reference
 
-All the attributes defined in `vcd_lb_app_rule` resource are be available.
+All the attributes defined in `vcd_lb_app_rule` resource are available.
