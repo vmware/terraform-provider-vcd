@@ -32,7 +32,7 @@ resource "vcd_org_user" "test_user_vapp_author" {
   org = "datacloud"
   
   name              = "test_user_vapp_author"
-  password_file     = "org_user_pwd.txt"
+  password_file     = "pwd201907101300.txt"
   full_name         = "test user vapp author"
   description       = "Org user test_user_vapp_author"
   role              = "vApp Author"
@@ -57,7 +57,7 @@ The following arguments are supported:
   should not be changed.
 * `password_file` (Optional, but required if `password` was not given). A text file containing the password. 
   Using this property instead of `password` has the advantage that the sensitive data is not saved into Terraform state 
-  file.
+  file. The disadvantage is that a password change requires also changing the file name.
 * `provider_type` - (Optional) Identity provider type for this this user. One of: `INTEGRATED`, `SAML`, `OAUTH`. The default
    is `INTEGRATED`.
 * `role` - (Required) The role of the user. Role names can be retrieved from the organization. Both built-in roles and
