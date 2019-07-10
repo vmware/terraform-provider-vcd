@@ -206,6 +206,14 @@ func getLBAppRuleType(d *schema.ResourceData) (*types.LBAppRule, error) {
 // newline ("\n") for each line of script. To store it in Terraform's TypeList we must convert it
 // into []interface{} before calling d.Set(). API response must be split by newline ("\n") and
 // then typecast to []interface{}
+//
+// This terraform configuration
+// script = [
+// "acl en req.fhdr(accept-language),language(es;fr;en) -m str en",
+// "use_backend english if en"
+// ]
+// is rendered as such API call
+// <script>acl en req.fhdr(accept-language),language(es;fr;en) -m str en\nuse_backend english if en</script>
 func setLBAppRuleData(d *schema.ResourceData, LBRule *types.LBAppRule) error {
 
 	scriptLines := strings.Split(LBRule.Script, "\n")
