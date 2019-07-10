@@ -157,7 +157,7 @@ func resourceVcdLBAppRuleImport(d *schema.ResourceData, meta interface{}) ([]*sc
 	if len(resourceURI) != 4 {
 		return nil, fmt.Errorf("resource name must be specified in such way org.vdc.edge-gw.existing-app-rule")
 	}
-	orgName, vdcName, edgeName, appProfileName := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
+	orgName, vdcName, edgeName, appRuleName := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
 
 	vcdClient := meta.(*VCDClient)
 	edgeGateway, err := vcdClient.GetEdgeGateway(orgName, vdcName, edgeName)
@@ -165,7 +165,7 @@ func resourceVcdLBAppRuleImport(d *schema.ResourceData, meta interface{}) ([]*sc
 		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBRule, err := edgeGateway.ReadLBAppRuleByName(appProfileName)
+	readLBRule, err := edgeGateway.ReadLBAppRuleByName(appRuleName)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer app rule with name %s: %s",
 			d.Id(), err)
@@ -174,7 +174,7 @@ func resourceVcdLBAppRuleImport(d *schema.ResourceData, meta interface{}) ([]*sc
 	d.Set("org", orgName)
 	d.Set("vdc", vdcName)
 	d.Set("edge_gateway", edgeName)
-	d.Set("name", appProfileName)
+	d.Set("name", appRuleName)
 
 	d.SetId(readLBRule.ID)
 	return []*schema.ResourceData{d}, nil
