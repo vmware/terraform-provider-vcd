@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool user ALL
-=======
-// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbAppProfile lbServiceMonitor lbServerPool ALL
->>>>>>> master
+// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbAppProfile lbServiceMonitor lbServerPool user ALL
 
 package vcd
 
