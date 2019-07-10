@@ -17,7 +17,7 @@ then
     VERBOSE=1
 fi
 
-accepted="[short acceptance multiple binary binary-prepare catalog gateway vapp vm network extnetwork multinetwork short-provider]"
+accepted="[short acceptance multiple binary binary-prepare catalog gateway vapp vm network extnetwork multinetwork short-provider lb user]"
 if [ -z "$wanted" ]
 then
     echo "Syntax: test TYPE"
@@ -207,6 +207,12 @@ case $wanted in
         ;;
     vapp)
         acceptance_test vapp
+        ;;
+    user)
+        acceptance_test user
+        ;;
+    lb)
+        acceptance_test lb
         ;;
     vm)
         acceptance_test vm
