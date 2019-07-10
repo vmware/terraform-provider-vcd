@@ -35,6 +35,8 @@ resource "vcd_org" "{{.Org}}" {
   delete_recursive  = "true"
 }
 
+#_ORG_USER_
+
 resource "vcd_org_vdc" "{{.Vdc}}" {
   name = "{{.Vdc}}"
   org  = "${vcd_org.{{.Org}}.name}"

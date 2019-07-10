@@ -108,6 +108,8 @@ func TestCustomTemplates(t *testing.T) {
 		"RoutedNetwork":          testConfig.TestEnvBuild.RoutedNetwork,
 		"IsolatedNetwork":        testConfig.TestEnvBuild.IsolatedNetwork,
 		"DirectNetwork":          testConfig.TestEnvBuild.DirectNetwork,
+		"OrgUser":                testConfig.TestEnvBuild.OrgUser,
+		"OrgUserPassword":        testConfig.TestEnvBuild.OrgUserPassword,
 	}
 
 	// optional fields
@@ -125,6 +127,12 @@ func TestCustomTemplates(t *testing.T) {
 	}
 	if testConfig.TestEnvBuild.DirectNetwork == "" {
 		delete(params, "DirectNetwork")
+	}
+
+	// If either the org user or the password fields are blank, we remove both
+	if testConfig.TestEnvBuild.OrgUser == "" || testConfig.TestEnvBuild.OrgUserPassword == "" {
+		delete(params, "OrgUser")
+		delete(params, "OrgUserPassword")
 	}
 
 	for _, fileName := range binaryTestList {
@@ -198,6 +206,15 @@ func TestCustomTemplates(t *testing.T) {
 			reMediaTest := regexp.MustCompile(`#_MEDIA_TEST_`)
 			templateText = reMediaTest.ReplaceAllString(templateText, mediaTestText)
 
+			// The Org user will be created only if both user name and password were defined
+			orgUserText := ""
+			orgUserParam, ok := params["OrgUser"]
+			if ok && orgUserParam != "" {
+				orgUserText = buildEnvOrgUser
+			}
+			reOrgUserTest := regexp.MustCompile(`#_ORG_USER_`)
+			templateText = reOrgUserTest.ReplaceAllString(templateText, orgUserText)
+
 			// For some items, we want a different value for testing and for building
 			// For example, the Ova for testing might be a tiny one, while the one for
 			// building the environment would be a beefier one, which can also run the
@@ -260,6 +277,20 @@ func init() {
 }
 
 // Optional elements used for build environment
+
+const buildEnvOrgUser = `
+resource "vcd_org_user" "{{.OrgUser}}" {
+  org               = "${vcd_org.{{.Org}}.name}"
+  name              = "{{.OrgUser}}"
+  password          = "{{.OrgUserPassword}}"
+  role              = "Organization Administrator"
+  is_enabled        = true
+  take_ownership    = true
+  provider_type     = "INTEGRATED"
+  stored_vm_quota   = 50
+  deployed_vm_quota = 50
+}
+`
 
 const buildEnvRoutedNetwork = `
 resource "vcd_network_routed" "{{.RoutedNetwork}}" {
