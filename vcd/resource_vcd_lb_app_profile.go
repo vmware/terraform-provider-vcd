@@ -123,7 +123,7 @@ func resourceVcdLBAppProfileCreate(d *schema.ResourceData, meta interface{}) err
 
 	LBProfile, err := getLBAppProfileType(d)
 	if err != nil {
-		return fmt.Errorf("unable to expand load balancer app profile: %s", err)
+		return fmt.Errorf("unable to create load balancer app profile type: %s", err)
 	}
 
 	createdPool, err := edgeGateway.CreateLBAppProfile(LBProfile)
@@ -169,7 +169,7 @@ func resourceVcdLBAppProfileUpdate(d *schema.ResourceData, meta interface{}) err
 
 	updateLBProfileConfig, err := getLBAppProfileType(d)
 	if err != nil {
-		return fmt.Errorf("could not expand load balancer app profile for update: %s", err)
+		return fmt.Errorf("unable to create load balancer app profile type for update: %s", err)
 	}
 
 	updatedLBProfile, err := edgeGateway.UpdateLBAppProfile(updateLBProfileConfig)

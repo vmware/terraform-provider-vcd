@@ -151,7 +151,7 @@ func resourceVcdLBServerPoolCreate(d *schema.ResourceData, meta interface{}) err
 
 	LBPool, err := getLBPoolType(d)
 	if err != nil {
-		return fmt.Errorf("unable to expand load balancer server pool: %s", err)
+		return fmt.Errorf("unable to create load balancer server pool type: %s", err)
 	}
 
 	createdPool, err := edgeGateway.CreateLBServerPool(LBPool)
@@ -196,7 +196,7 @@ func resourceVcdLBServerPoolUpdate(d *schema.ResourceData, meta interface{}) err
 
 	updateLBPoolConfig, err := getLBPoolType(d)
 	if err != nil {
-		return fmt.Errorf("could not expand load balancer server pool for update: %s", err)
+		return fmt.Errorf("could not create load balancer server pool type for update: %s", err)
 	}
 
 	updatedLBPool, err := edgeGateway.UpdateLBServerPool(updateLBPoolConfig)

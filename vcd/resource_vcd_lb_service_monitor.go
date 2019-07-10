@@ -141,7 +141,7 @@ func resourceVcdLbServiceMonitorCreate(d *schema.ResourceData, meta interface{})
 
 	lbMonitor, err := getLBMonitorType(d)
 	if err != nil {
-		return fmt.Errorf("unable to expand load balancer service monitor: %s", err)
+		return fmt.Errorf("unable to create load balancer service monitor type: %s", err)
 	}
 
 	createdMonitor, err := edgeGateway.CreateLBServiceMonitor(lbMonitor)
@@ -182,7 +182,7 @@ func resourceVcdLbServiceMonitorUpdate(d *schema.ResourceData, meta interface{})
 
 	updateLBMonitorConfig, err := getLBMonitorType(d)
 	if err != nil {
-		return fmt.Errorf("could not expand monitor for update: %s", err)
+		return fmt.Errorf("could not create service monitor type for update: %s", err)
 	}
 
 	updatedLBMonitor, err := edgeGateway.UpdateLBServiceMonitor(updateLBMonitorConfig)

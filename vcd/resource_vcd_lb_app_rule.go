@@ -67,7 +67,7 @@ func resourceVcdLBAppRuleCreate(d *schema.ResourceData, meta interface{}) error 
 
 	LBRule, err := getLBAppRuleType(d)
 	if err != nil {
-		return fmt.Errorf("unable to expand load balancer app rule: %s", err)
+		return fmt.Errorf("unable to create load balancer app rule type: %s", err)
 	}
 
 	createdPool, err := edgeGateway.CreateLBAppRule(LBRule)
@@ -113,7 +113,7 @@ func resourceVcdLBAppRuleUpdate(d *schema.ResourceData, meta interface{}) error 
 
 	updateLBRuleConfig, err := getLBAppRuleType(d)
 	if err != nil {
-		return fmt.Errorf("could not expand load balancer app rule for update: %s", err)
+		return fmt.Errorf("could not create load balancer app rule type for update: %s", err)
 	}
 
 	updatedLBRule, err := edgeGateway.UpdateLBAppRule(updateLBRuleConfig)
