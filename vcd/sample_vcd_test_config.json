@@ -120,12 +120,12 @@
 
     "//": "Leave the network names, the second storage profile, and the media name empty to skip their creation",
     "//": "They are not needed for terraform-provider-vcd testing, but are useful for go-vcloud-director",
-    "//": "Likewise, leaving the user or password empty will skip the org user creation",
     "storageProfile2": "Must-already-exist-second-storage-profile-name-for-VDC-creation",
     "mediaName": "tf_test_media_name",
     "routedNetwork": "tf_routed_net_name",
     "isolatedNetwork": "tf_isolated_net_name",
     "directNetwork": "tf_direct_net_name",
+    "//": "Leaving the user or password empty will skip the org user creation",
     "orgUser": "tf_orgUser",
     "orgUserPassword": "user_secret"
   },
