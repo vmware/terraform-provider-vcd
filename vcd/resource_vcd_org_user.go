@@ -46,15 +46,15 @@ func resourceVcdOrgUser() *schema.Resource {
 
 				ConflictsWith: []string{"password_file"},
 				Description: "The user's password. This value is never returned on read. " +
-					"It is inspected on create and modify. " +
-					"On modify, the absence of this element indicates that the password should not be changed.",
+					`Either "password" or "password_file" must be included on creation.`,
 			},
 			"password_file": &schema.Schema{
 				Type:          schema.TypeString,
 				Optional:      true,
 				ForceNew:      false,
 				ConflictsWith: []string{"password"},
-				Description:   "Name of a file containing the user's password.",
+				Description: "Name of a file containing the user's password. " +
+					`Either "password_file" or "password" must be included on creation.`,
 			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
@@ -67,7 +67,8 @@ func resourceVcdOrgUser() *schema.Resource {
 				Optional:    true,
 				Default:     govcd.OrgUserProviderIntegrated,
 				ForceNew:    false,
-				Description: "Identity provider type for this this user. One of: 'INTEGRATED', 'SAML', 'OAUTH'",
+				Description: "Identity provider type for this this user. One of: 'INTEGRATED', 'SAML', 'OAUTH'. " +
+					"When empty, the default value 'INTEGRATED' is used.",
 			},
 			"full_name": &schema.Schema{
 				Type:        schema.TypeString,
@@ -213,7 +214,7 @@ func resourceToOrgUser(d *schema.ResourceData, meta interface{}) (*govcd.OrgUser
 	return orgUser, &adminOrg, nil
 }
 
-func setOrgUserResource(d *schema.ResourceData, orgUser *govcd.OrgUser, adminOrg *govcd.AdminOrg) error {
+func setOrgUserData(d *schema.ResourceData, orgUser *govcd.OrgUser, adminOrg *govcd.AdminOrg) error {
 
 	d.SetId(orgUser.User.ID)
 	err := d.Set("org", adminOrg.AdminOrg.Name)
@@ -304,7 +305,7 @@ func resourceVcdOrgUserRead(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return err
 	}
-	return setOrgUserResource(d, orgUser, adminOrg)
+	return setOrgUserData(d, orgUser, adminOrg)
 }
 
 func resourceVcdOrgUserUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -342,7 +343,7 @@ func resourceVcdOrgUserImport(d *schema.ResourceData, meta interface{}) ([]*sche
 		return nil, govcd.ErrorEntityNotFound
 	}
 
-	err = setOrgUserResource(d, user, &adminOrg)
+	err = setOrgUserData(d, user, &adminOrg)
 	if err != nil {
 		return nil, err
 	}

@@ -97,9 +97,8 @@ The following attributes are exported on this resource:
 ~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
 configuration. [More information.][docs-import]
 
-An existing load balancer server pool can be [imported][docs-import] into this resource
-via supplying the full dot separated path for an org user. For example, using this structure, representing an existing 
-user that was **not** created using Terraform:
+An existing user can be [imported][docs-import] into this resource via supplying the full dot separated path for an
+org user. For example, using this structure, representing an existing user that was **not** created using Terraform:
 
 ```hcl
 resource "vcd_org_user" "my-org-admin" {
@@ -162,4 +161,5 @@ The state (in `terraform.tfstate`) would look like this:
 }
 ```
 
-After that, you can expand the configuration file and either update or delete the user as needed.
+After that, you can expand the configuration file and either update or delete the user as needed. Running `terraform plan`
+at this stage will show the difference between the minimal configuration file and the user's stored properties.

@@ -23,6 +23,15 @@ type userTestData struct {
 var orgUserPasswordText = "CHANGE-ME"
 var orgUserPasswordFile = "org_user_pwd.txt"
 
+func cleanUserData(t *testing.T) {
+	// Remove the password file after tests
+	if fileExists(orgUserPasswordFile) {
+		err := os.Remove(orgUserPasswordFile)
+		if err != nil {
+			t.Logf("could not clean up password file %s: %s", orgUserPasswordFile, err)
+		}
+	}
+}
 func prepareUserData(t *testing.T) []userTestData {
 
 	if !fileExists(orgUserPasswordFile) {
@@ -125,6 +134,7 @@ func TestAccVcdOrgUserBasic(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
+	cleanUserData(t)
 }
 
 func TestAccVcdOrgUserFull(t *testing.T) {
@@ -239,6 +249,7 @@ func TestAccVcdOrgUserFull(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
+	cleanUserData(t)
 }
 
 func testAccCheckVcdUserDestroy(userName string) resource.TestCheckFunc {

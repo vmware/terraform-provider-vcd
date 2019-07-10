@@ -88,12 +88,14 @@ integrate such data with additional information that is only used for the enviro
     "routedNetwork": "net_datacloud_r",
     "isolatedNetwork": "net_datacloud_i",
     "directNetwork": "net_datacloud_d"
+	"orgUser": "company-admin",
+	"orgUserPassword": "secretpwd"
   }
 }
 ```
 
-When this section is filled, the test system has all the information to create all the elements (except, for now, the
-org admin user). When you run the command `make test-binary-prepare`, among the files ready to run there will be one named
+When this section is filled, the test system has all the information to create all the elements. When you run the
+command `make test-binary-prepare`, among the files ready to run there will be one named
 `cust.full-env.tf`, containing all the information to populate your vCD with the test resources.
 **IMPORTANT**: this procedure assumes that **the regular part of the configuration file is filled with all the correct
 information**. The list of fields given as mandatory above is not sufficient to create a working environment, if
