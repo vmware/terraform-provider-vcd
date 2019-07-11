@@ -33,13 +33,11 @@ func datasourceVcdLBAppRule() *schema.Resource {
 				Required:    true,
 				Description: "LB Application Rule name for lookup",
 			},
-			"script": &schema.Schema{
+			"script": {
 				Computed: true,
-				Type:     schema.TypeList,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-				Description: "The script for the LB Application Rule",
+				Type:     schema.TypeString,
+				Description: "The script for the LB Application Rule. Each line will be separated " +
+					"by \n characters",
 			},
 		},
 	}

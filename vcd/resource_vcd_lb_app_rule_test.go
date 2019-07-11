@@ -4,6 +4,7 @@ package vcd
 
 import (
 	"fmt"
+	"html/template"
 	"regexp"
 	"strings"
 	"testing"
@@ -15,18 +16,32 @@ import (
 )
 
 func TestAccVcdLBAppRule(t *testing.T) {
+	// The Script parameter must be sent as multiline string separated by \n characters.
+	// Terraform has a native HEREDOC format for sending raw strings (with newline characters).
+	// This variable is established for easier test comparison and is wrapped into HEREDOC syntax
+	// in the `params` map using type `template.HTML` so that template engine does not
+	// escape HEREDOC syntax <<- characters.
+	MultiLineScript := `acl vmware_page url_beg / vmware redirect location https://www.vmware.com/ ifvmware_page
+acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifother_page2
+`
+
 	// String map to fill the template
 	var params = StringMap{
-		"Org":         testConfig.VCD.Org,
-		"Vdc":         testConfig.VCD.Vdc,
-		"EdgeGateway": testConfig.Networking.EdgeGateway,
-		"AppRuleName": t.Name(),
-		"ScriptLine1": "acl vmware_page url_beg / vmware redirect location https://www.vmware.com/ ifvmware_page",
-		"ScriptLine2": "acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifother_page2",
-		"ScriptLine3": "acl en req.fhdr(accept-language),language(es;fr;en) -m str en",
-		"ScriptLine4": "use_backend english if en",
-		"Tags":        "lb lbAppRule",
-		"SkipTest":    "",
+		"Org":              testConfig.VCD.Org,
+		"Vdc":              testConfig.VCD.Vdc,
+		"EdgeGateway":      testConfig.Networking.EdgeGateway,
+		"AppRuleName":      t.Name(),
+		"SingleLineScript": "acl vmware_page url_beg / vmware redirect location https://www.vmware.com/ ifvmware_page",
+		"MultilineScript": template.HTML(`<<-EOT
+` + MultiLineScript + `EOT`),
+		"MultilineFailScript": template.HTML(`<<-EOT
+			acl vmware_page url_beg / vmware redirect location https://www.vmware.com/ ifvmware_page
+			acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifother_page2
+			acl en req.fhdr(accept-language),language(es;fr;en) -m str en
+			use_backend english if en
+		EOT`),
+		"Tags":     "lb lbAppRule",
+		"SkipTest": "",
 	}
 
 	configText := templateFill(testAccVcdLBAppRule_OneLine, params)
@@ -57,12 +72,12 @@ func TestAccVcdLBAppRule(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_lb_app_rule.test", "id", regexp.MustCompile(`^applicationRule-\d*$`)),
 					resource.TestCheckResourceAttr("vcd_lb_app_rule.test", "name", params["AppRuleName"].(string)),
-					resource.TestCheckResourceAttr("vcd_lb_app_rule.test", "script.0", params["ScriptLine1"].(string)),
+					resource.TestCheckResourceAttr("vcd_lb_app_rule.test", "script", params["SingleLineScript"].(string)),
 
 					// Data source testing - it must expose all fields which resource has
 					resource.TestMatchResourceAttr("data.vcd_lb_app_rule.test", "id", regexp.MustCompile(`^applicationRule-\d*$`)),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_rule.test", "name", params["AppRuleName"].(string)),
-					resource.TestCheckResourceAttr("data.vcd_lb_app_rule.test", "script.0", params["ScriptLine1"].(string)),
+					resource.TestCheckResourceAttr("data.vcd_lb_app_rule.test", "script", params["SingleLineScript"].(string)),
 				),
 			},
 
@@ -71,14 +86,12 @@ func TestAccVcdLBAppRule(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_lb_app_rule.test", "id", regexp.MustCompile(`^applicationRule-\d*$`)),
 					resource.TestCheckResourceAttr("vcd_lb_app_rule.test", "name", params["AppRuleName"].(string)),
-					resource.TestCheckResourceAttr("vcd_lb_app_rule.test", "script.0", params["ScriptLine1"].(string)),
-					resource.TestCheckResourceAttr("vcd_lb_app_rule.test", "script.1", params["ScriptLine2"].(string)),
+					resource.TestCheckResourceAttr("vcd_lb_app_rule.test", "script", MultiLineScript),
 
 					// Data source testing - it must expose all fields which resource has
 					resource.TestMatchResourceAttr("data.vcd_lb_app_rule.test", "id", regexp.MustCompile(`^applicationRule-\d*$`)),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_rule.test", "name", params["AppRuleName"].(string)),
-					resource.TestCheckResourceAttr("data.vcd_lb_app_rule.test", "script.0", params["ScriptLine1"].(string)),
-					resource.TestCheckResourceAttr("data.vcd_lb_app_rule.test", "script.1", params["ScriptLine2"].(string)),
+					resource.TestCheckResourceAttr("data.vcd_lb_app_rule.test", "script", MultiLineScript),
 				),
 			},
 
@@ -125,56 +138,57 @@ func testAccCheckVcdLBAppRuleDestroy(appRuleName string) resource.TestCheckFunc 
 
 const testAccVcdLBAppRule_OneLine = `
 resource "vcd_lb_app_rule" "test" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+
+  name   = "{{.AppRuleName}}"
+  script = "{{.SingleLineScript}}"
+}
   
-	name   = "{{.AppRuleName}}"
-	script = ["{{.ScriptLine1}}"]
-  }
-  
-  data "vcd_lb_app_rule" "test" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	name         = "${vcd_lb_app_rule.test.name}"
-  }  
+data "vcd_lb_app_rule" "test" {
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  name         = "${vcd_lb_app_rule.test.name}"
+}  
 `
 
 const testAccVcdLBAppRule_MultiLine = `
 resource "vcd_lb_app_rule" "test" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+
+  name   = "{{.AppRuleName}}"
+  script = {{.MultilineScript}}
+}
   
-	name   = "{{.AppRuleName}}"
-	script = ["{{.ScriptLine1}}", "{{.ScriptLine2}}"]
-  }
-  
-  data "vcd_lb_app_rule" "test" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	name         = "${vcd_lb_app_rule.test.name}"
-  }  
+data "vcd_lb_app_rule" "test" {
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  name         = "${vcd_lb_app_rule.test.name}"
+} 
 `
 
 const testAccVcdLBAppRule_FailMultiLine = `
 {{.SkipTest}}
 
 resource "vcd_lb_app_rule" "test" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-  
-	name   = "{{.AppRuleName}}"
-	script = ["{{.ScriptLine1}}", "{{.ScriptLine2}}", "{{.ScriptLine3}}", "{{.ScriptLine4}}"]
-  }
-  
-  data "vcd_lb_app_rule" "test" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	name         = "${vcd_lb_app_rule.test.name}"
-  }  
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+
+  name   = "{{.AppRuleName}}"
+  script = {{.MultilineFailScript}}
+}
+
+data "vcd_lb_app_rule" "test" {
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  name         = "${vcd_lb_app_rule.test.name}"
+}
+
 `

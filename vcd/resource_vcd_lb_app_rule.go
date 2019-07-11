@@ -43,13 +43,11 @@ func resourceVcdLBAppRule() *schema.Resource {
 				ForceNew:    true,
 				Description: "Unique LB Application Rule name",
 			},
-			"script": &schema.Schema{
+			"script": {
+				Type:     schema.TypeString,
 				Required: true,
-				Type:     schema.TypeList,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-				Description: "The script for the application rule. Each line as a separate array element",
+				Description: "The script for the application rule. Note - you may find HEREDOC " +
+					"useful to pass multiline strings",
 			},
 		},
 	}
@@ -147,10 +145,10 @@ func resourceVcdLBAppRuleDelete(d *schema.ResourceData, meta interface{}) error 
 }
 
 // resourceVcdLBAppRuleImport is responsible for importing the resource.
-// The following steps are happening as part of import
+// The following steps happen as part of import
 // 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
 // 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
-// 3. The functions splits the dot-formatted path and tries to lookup of the object
+// 3. The functions splits the dot-formatted path and tries to lookup the object
 // 4. If the lookup succeeds it set's the ID field for `_resource_name_` resource in statefile
 // (the resource must be already defined in .tf config otherwise `terraform import` will complain)
 // 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
@@ -187,47 +185,28 @@ func resourceVcdLBAppRuleImport(d *schema.ResourceData, meta interface{}) ([]*sc
 }
 
 // getLBAppRuleType converts Terraform resource data into types.LBAppRule type for API request.
-// It would be inconvenient to store whole script as a text because of the need to
-// manually insert newline separators ("\n") into the field therefore Terraform resource accepts a
-// list of strings and inserts ("\n") after each line
 func getLBAppRuleType(d *schema.ResourceData) (*types.LBAppRule, error) {
-
-	var scriptSlice []string
-	script := d.Get("script").([]interface{})
-	for _, line := range script {
-		scriptSlice = append(scriptSlice, line.(string))
-	}
-	scriptString := strings.Join(scriptSlice, "\n")
-
 	lbAppRule := &types.LBAppRule{
 		Name:   d.Get("name").(string),
-		Script: scriptString,
+		Script: d.Get("script").(string),
 	}
 
 	return lbAppRule, nil
 }
 
 // setLBAppRuleData sets name and script API fields. API output returns a single string separated by
-// newline ("\n") for each line of script. To store it in Terraform's TypeList we must convert it
-// into []interface{} before calling d.Set(). API response must be split by newline ("\n") and
-// then typecast to []interface{}
-//
+// newline ("\n") for each line of script. If a user wants to set multiline script Terraform's
+// HEREDOC syntax is helpful.
 // This terraform configuration
-// script = [
-// "acl en req.fhdr(accept-language),language(es;fr;en) -m str en",
-// "use_backend english if en"
-// ]
+// script = <<-EOT
+//   acl vmware_page url_beg / vmware redirect location https://www.vmware.com/ ifvmware_page
+//   acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifother_page2
+//   acl hello payload(0,6) -m bin 48656c6c6f0a
+//   EOT
 // is rendered as such API call
 // <script>acl en req.fhdr(accept-language),language(es;fr;en) -m str en\nuse_backend english if en</script>
 func setLBAppRuleData(d *schema.ResourceData, LBRule *types.LBAppRule) error {
-
-	scriptLines := strings.Split(LBRule.Script, "\n")
-	var scriptSlice []interface{}
-	for _, scriptLine := range scriptLines {
-		scriptSlice = append(scriptSlice, scriptLine)
-	}
-
-	d.Set("script", scriptSlice)
+	d.Set("script", LBRule.Script)
 	d.Set("name", LBRule.Name)
 	return nil
 }

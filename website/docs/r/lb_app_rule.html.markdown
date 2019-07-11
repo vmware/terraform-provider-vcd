@@ -38,9 +38,7 @@ resource "vcd_lb_app_rule" "example-one" {
   vdc          = "my-org-vdc"
 
   name = "script1"
-  script = [
-    "acl vmware_page url_beg / vmware redirect location https://www.vmware.com/ ifvmware_page",
-  ]
+  script = "acl vmware_page url_beg / vmware redirect location https://www.vmware.com/ ifvmware_page"
 }
 ```
 
@@ -59,11 +57,11 @@ resource "vcd_lb_app_rule" "example-two" {
   org          = "my-org"
   vdc          = "my-org-vdc"
   name         = "script1"
-  script = [
-    "acl vmware_page url_beg / vmware redirect location https://www.vmware.com/ ifvmware_page",
-    "acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifother_page2",
-    "acl hello payload(0,6) -m bin 48656c6c6f0a"
-  ]
+  script = <<-EOT
+    acl vmware_page url_beg / vmware redirect location https://www.vmware.com/ ifvmware_page
+    acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifother_page2
+    acl hello payload(0,6) -m bin 48656c6c6f0a
+  EOT
 }
 ```
 
@@ -75,7 +73,9 @@ The following arguments are supported:
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 * `edge_gateway` - (Required) The name of the edge gateway on which the application rule is to be created
 * `name` - (Required) Application rule name
-* `script` - (Required) A list of lines in the application rule script. **Note:** For information on
+* `script` - (Required) A multiline application rule script.
+Terraform's [HEREDOC syntax](https://www.terraform.io/docs/configuration/expressions.html#string-literals)
+may be usefull for multiline scripts. **Note:** For information on
 the application rule syntax, see more in [vCloud Director documentation]
 (https://docs.vmware.com/en/vCloud-Director/9.7/com.vmware.vcloud.tenantportal.doc/GUID-AFF9F70F-85C9-4053-BA69-F2B062F34C7F.html)
 
