@@ -43,6 +43,7 @@ func resourceVcdOrgUser() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				ForceNew:      false,
+				Sensitive:     true,
 				ConflictsWith: []string{"password_file"},
 				Description: "The user's password. This value is never returned on read. " +
 					`Either "password" or "password_file" must be included on creation.`,
