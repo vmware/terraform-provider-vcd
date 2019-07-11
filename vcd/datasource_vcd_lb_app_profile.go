@@ -14,24 +14,24 @@ func datasourceVcdLBAppProfile() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "vCD organization in which the App Profile is located",
+				Description: "vCD organization in which the LB Application Profile is located",
 			},
 			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "vCD virtual datacenter in which the App Profile is located",
+				Description: "vCD virtual datacenter in which the LB Application Profile is located",
 			},
 			"edge_gateway": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Edge gateway name in which the App Profile is located",
+				Description: "Edge gateway name in which the LB Application Profile is located",
 			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "App Profile name for lookup",
+				Description: "LB Application Profile name for lookup",
 			},
 			"type": &schema.Schema{
 				Type:     schema.TypeString,
@@ -104,7 +104,7 @@ func datasourceVcdLBAppProfileRead(d *schema.ResourceData, meta interface{}) err
 
 	readLBAppProfile, err := edgeGateway.ReadLBAppProfileByName(d.Get("name").(string))
 	if err != nil {
-		return fmt.Errorf("unable to find load balancer app profile with Name %s: %s",
+		return fmt.Errorf("unable to find load balancer application profile with Name %s: %s",
 			d.Get("name").(string), err)
 	}
 

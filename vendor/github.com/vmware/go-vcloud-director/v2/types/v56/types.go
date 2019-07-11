@@ -1728,6 +1728,18 @@ type LBAppProfileHTTPRedirect struct {
 	To      string   `xml:"to,omitempty"`
 }
 
+// LBAppRule represents a load balancer application rule as per "vCloud Director API for NSX
+// Programming Guide"
+// https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
+type LBAppRule struct {
+	XMLName xml.Name `xml:"applicationRule"`
+	ID      string   `xml:"applicationRuleId,omitempty"`
+	Name    string   `xml:"name,omitempty"`
+	Script  string   `xml:"script,omitempty"`
+}
+
+type LBAppRules []LBAppRule
+
 // LoadBalancerVirtualServer represents a load balancer virtual server.
 // Type: LoadBalancerVirtualServerType
 // Namespace: http://www.vmware.com/vcloud/v1.5

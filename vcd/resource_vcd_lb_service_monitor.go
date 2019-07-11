@@ -23,25 +23,25 @@ func resourceVcdLbServiceMonitor() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "vCD organization in which the Service Monitor is located",
+				Description: "vCD organization in which the LB Service Monitor is located",
 			},
 			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "vCD virtual datacenter in which the Service Monitor is located",
+				Description: "vCD virtual datacenter in which the LB Service Monitor is located",
 			},
 			"edge_gateway": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Edge gateway name in which the Service Monitor is located",
+				Description: "Edge gateway name in which the LB Service Monitor is located",
 			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Unique Service Monitor name",
+				Description: "Unique LB Service Monitor name",
 			},
 			"interval": &schema.Schema{
 				Type:        schema.TypeInt,
@@ -141,7 +141,7 @@ func resourceVcdLbServiceMonitorCreate(d *schema.ResourceData, meta interface{})
 
 	lbMonitor, err := getLBMonitorType(d)
 	if err != nil {
-		return fmt.Errorf("unable to expand load balancer service monitor: %s", err)
+		return fmt.Errorf("unable to create load balancer service monitor type: %s", err)
 	}
 
 	createdMonitor, err := edgeGateway.CreateLBServiceMonitor(lbMonitor)
@@ -182,7 +182,7 @@ func resourceVcdLbServiceMonitorUpdate(d *schema.ResourceData, meta interface{})
 
 	updateLBMonitorConfig, err := getLBMonitorType(d)
 	if err != nil {
-		return fmt.Errorf("could not expand monitor for update: %s", err)
+		return fmt.Errorf("could not create service monitor type for update: %s", err)
 	}
 
 	updatedLBMonitor, err := edgeGateway.UpdateLBServiceMonitor(updateLBMonitorConfig)

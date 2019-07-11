@@ -6,10 +6,12 @@ FEATURES:
 * **New Resource:** `vcd_edgegateway` creates and deletes edge gateways - [GH-262]
 * **New Resource:** `vcd_lb_server_pool` Load Balancer Server Pool - [GH-268]
 * **New Resource:** `vcd_lb_app_profile` Load Balancer Application profile - [GH-274]
+* **New Resource:** `vcd_lb_app_rule` Load Balancer Application rule - [GH-278]
 * **New Resource:** `vcd_org_user`  Organization User - [GH-279]
 * **New Data Source:** `vcd_lb_service_monitor` Load Balancer Service Monitor  - [GH-256]
 * **New Data Source:** `vcd_lb_server_pool`  Load Balancer Server Pool - [GH-268]
 * **New Data Source:** `vcd_lb_app_profile` Load Balancer Application profile - [GH-274]
+* **New Data Source:** `vcd_lb_app_rule` Load Balancer Application rule - [GH-278]
 * **New build commands** `make test-env-init` and `make test-env-apply` can configure an empty vCD to run the test suite. See `TESTING.md` for details.
 * `resource/vcd_org_vdc` added Org VDC update and full state read - [GH-275]
 * `resource/vcd_org_vdc` added Org VDC metadata support - [GH-276]

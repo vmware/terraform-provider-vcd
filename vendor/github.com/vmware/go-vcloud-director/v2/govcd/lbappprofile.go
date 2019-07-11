@@ -31,7 +31,7 @@ func (eGW *EdgeGateway) CreateLBAppProfile(lbAppProfileConfig *types.LBAppProfil
 
 	// Location header should look similar to:
 	// [/network/edges/edge-3/loadbalancer/config/applicationprofiles/applicationProfile-4]
-	lbAppProfileID, err := extractNSXObjectIDfromPath(resp.Header.Get("Location"))
+	lbAppProfileID, err := extractNSXObjectIDFromPath(resp.Header.Get("Location"))
 	if err != nil {
 		return nil, err
 	}
@@ -88,8 +88,7 @@ func (eGW *EdgeGateway) ReadLBAppProfile(lbAppProfileConfig *types.LBAppProfile)
 		}
 	}
 
-	return nil, fmt.Errorf("could not find load balancer application profile (name: %s, ID: %s)",
-		lbAppProfileConfig.Name, lbAppProfileConfig.ID)
+	return nil, ErrorEntityNotFound
 }
 
 // ReadLBAppProfileByID wraps ReadLBAppProfile and needs only an ID for lookup
