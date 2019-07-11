@@ -25,7 +25,7 @@ resource "vcd_org_user" "my-org-admin" {
   role          = "Organization Administrator"
   provider_type = "INTEGRATED"
   password      = "change-me"
-  is_enabled    = true
+  enabled       = true
 }
 
 resource "vcd_org_user" "test_user_vapp_author" {
@@ -36,7 +36,7 @@ resource "vcd_org_user" "test_user_vapp_author" {
   full_name         = "test user vapp author"
   description       = "Org user test_user_vapp_author"
   role              = "vApp Author"
-  is_enabled        = true
+  enabled           = true
   take_ownership    = true
   provider_type     = "INTEGRATED"
   stored_vm_quota   = 20
@@ -53,9 +53,10 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to which the VDC belongs. Optional if defined at provider level.
 * `name` - (Required) A unique name for the user.
 * `password` - (Optional, but required if `password_file` was not given) The user password. This value is never returned 
-  on read. It is inspected on create and modify. On modify, the absence of this element indicates that the password 
-  should not be changed.
-* `password_file` (Optional, but required if `password` was not given). A text file containing the password. 
+  on read. It is inspected on create and modify. To modify, fill with a different value. Note that if you remove the 
+  password *on update*, Terraform will indicate that a change was occurring, but the empty password will be ignored by vCD.
+* `password_file` (Optional, but required if `password` was not given). A text file containing the password. Recommended
+  usage: after changing the password, run an apply again with the password blank.
   Using this property instead of `password` has the advantage that the sensitive data is not saved into Terraform state 
   file. The disadvantage is that a password change requires also changing the file name.
 * `provider_type` - (Optional) Identity provider type for this this user. One of: `INTEGRATED`, `SAML`, `OAUTH`. The default
@@ -73,11 +74,10 @@ The following arguments are supported:
 * `telephone` - (Optional) The Org User telephone number.
 * `email_address` - (Optional) The Org User email address. Needs to be a properly formatted email address.
 * `instant_messaging` - (Optional) The Org User instant messaging.
-* `is_enabled` - (Optional) True if the user is enabled and can log in. The default is `false`.
+* `enabled` - (Optional) True if the user is enabled and can log in. The default is `true`.
 * `is_group_role` - (Optional) True if this user has a group role.. The default is `false`.
-* `is_locked` - (Optional) True if the user account has been locked due to too many invalid login attempts. A locked 
-  user account can be re-enabled by updating the user with this flag set to false. Only the system can set the value to 
-  true. 
+* `is_locked` - (Optional)aIf the user account has been locked due to too many invalid login attempts, the value will 
+  change to true (only the system can lock the user). To unlock the user re-set this flag to false. 
 * `take_ownership` - (Optional) Take ownership of user's objects on deletion.
 * `deployed_vm_quota` - (Optional) Quota of vApps that this user can deploy. A value of 0 specifies an unlimited quota.
   The default is 10.
@@ -141,7 +141,7 @@ The state (in `terraform.tfstate`) would look like this:
             "full_name": "My Org Admin",
             "id": "urn:vcloud:user:5fd69dfa-6bbe-40a6-9ee3-70448b6601ef",
             "instant_messaging": "@my_org_admin",
-            "is_enabled": true,
+            "enabled": true,
             "is_group_role": false,
             "is_locked": false,
             "name": "my-org-user",
