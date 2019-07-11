@@ -149,7 +149,7 @@ func resourceVcdLBAppRuleDelete(d *schema.ResourceData, meta interface{}) error 
 // 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
 // 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
 // 3. The functions splits the dot-formatted path and tries to lookup the object
-// 4. If the lookup succeeds it set's the ID field for `_resource_name_` resource in statefile
+// 4. If the lookup succeeds it sets the ID field for `_resource_name_` resource in statefile
 // (the resource must be already defined in .tf config otherwise `terraform import` will complain)
 // 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
 // based on the known ID of object.
@@ -194,8 +194,8 @@ func getLBAppRuleType(d *schema.ResourceData) (*types.LBAppRule, error) {
 	return lbAppRule, nil
 }
 
-// setLBAppRuleData sets name and script API fields. API output returns a single string separated by
-// newline ("\n") for each line of script. If a user wants to set multiline script Terraform's
+// setLBAppRuleData sets name and script API fields. API output returns a single string terminated
+// by newline ("\n") for each line of script. If a user wants to set multiline script Terraform's
 // HEREDOC syntax is helpful.
 // This terraform configuration
 // script = <<-EOT

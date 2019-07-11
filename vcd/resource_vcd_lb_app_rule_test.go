@@ -16,7 +16,7 @@ import (
 )
 
 func TestAccVcdLBAppRule(t *testing.T) {
-	// The Script parameter must be sent as multiline string separated by \n characters.
+	// The Script parameter must be sent as multiline string separated by newline (\n) characters.
 	// Terraform has a native HEREDOC format for sending raw strings (with newline characters).
 	// This variable is established for easier test comparison and is wrapped into HEREDOC syntax
 	// in the `params` map using type `template.HTML` so that template engine does not

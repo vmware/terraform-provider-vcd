@@ -75,7 +75,7 @@ The following arguments are supported:
 * `name` - (Required) Application rule name
 * `script` - (Required) A multiline application rule script.
 Terraform's [HEREDOC syntax](https://www.terraform.io/docs/configuration/expressions.html#string-literals)
-may be usefull for multiline scripts. **Note:** For information on
+may be useful for multiline scripts. **Note:** For information on
 the application rule syntax, see more in [vCloud Director documentation]
 (https://docs.vmware.com/en/vCloud-Director/9.7/com.vmware.vcloud.tenantportal.doc/GUID-AFF9F70F-85C9-4053-BA69-F2B062F34C7F.html)
 
@@ -94,7 +94,7 @@ An existing load balancer application rule can be [imported][docs-import] into t
 via supplying the full dot separated path for load balancer application rule. An example is
 below:
 
-[docs-import]: /docs/import/index.html
+[docs-import]: https://www.terraform.io/docs/import/
 
 ```
 terraform import vcd_lb_app_rule.imported my-org.my-org-vdc.my-edge-gw.my-lb-app-rule
