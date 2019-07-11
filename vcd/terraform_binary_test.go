@@ -284,7 +284,7 @@ resource "vcd_org_user" "{{.OrgUser}}" {
   name              = "{{.OrgUser}}"
   password          = "{{.OrgUserPassword}}"
   role              = "Organization Administrator"
-  is_enabled        = true
+  enabled           = true
   take_ownership    = true
   provider_type     = "INTEGRATED"
   stored_vm_quota   = 50

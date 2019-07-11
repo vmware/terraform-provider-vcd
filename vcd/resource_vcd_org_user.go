@@ -40,10 +40,9 @@ func resourceVcdOrgUser() *schema.Resource {
 				Description: "Role within the organization",
 			},
 			"password": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: false,
-
+				Type:          schema.TypeString,
+				Optional:      true,
+				ForceNew:      false,
 				ConflictsWith: []string{"password_file"},
 				Description: "The user's password. This value is never returned on read. " +
 					`Either "password" or "password_file" must be included on creation.`,
@@ -94,10 +93,10 @@ func resourceVcdOrgUser() *schema.Resource {
 				ForceNew:    false,
 				Description: "The user's telephone",
 			},
-			"is_enabled": &schema.Schema{
+			"enabled": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     false,
+				Default:     true,
 				ForceNew:    false,
 				Description: "True if the user is enabled and can log in.",
 			},
@@ -112,9 +111,9 @@ func resourceVcdOrgUser() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: false,
-				Description: "True if the user account has been locked due to too many invalid login attempts. " +
-					"A locked user account can be re-enabled by updating the user with this flag set to false. " +
-					"Only the system can set the value to true.",
+				Description: "If the user account has been locked due to too many invalid login attempts, the value " +
+					"will change to true (only the system can lock the user). " +
+					"To unlock the user re-set this flag to false.",
 			},
 			"take_ownership": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -169,7 +168,7 @@ func resourceToUserData(d *schema.ResourceData, meta interface{}) (*govcd.OrgUse
 	userData.EmailAddress = d.Get("email_address").(string)
 	userData.Telephone = d.Get("telephone").(string)
 	userData.ProviderType = d.Get("provider_type").(string)
-	userData.IsEnabled = d.Get("is_enabled").(bool)
+	userData.IsEnabled = d.Get("enabled").(bool)
 	userData.IsLocked = d.Get("is_locked").(bool)
 	userData.DeployedVmQuota = d.Get("deployed_vm_quota").(int)
 	userData.StoredVmQuota = d.Get("stored_vm_quota").(int)
@@ -180,6 +179,11 @@ func resourceToUserData(d *schema.ResourceData, meta interface{}) (*govcd.OrgUse
 		userData.Password = password
 	}
 	passwordFile := d.Get("password_file").(string)
+
+	if password != "" && passwordFile != "" {
+		return nil, nil, fmt.Errorf(`either "password" or "password_file" should be given, but not both`)
+	}
+
 	if passwordFile != "" {
 		passwordBytes, err := ioutil.ReadFile(passwordFile)
 		if err != nil {
@@ -256,7 +260,7 @@ func setOrgUserData(d *schema.ResourceData, orgUser *govcd.OrgUser, adminOrg *go
 	if err != nil {
 		return err
 	}
-	err = d.Set("is_enabled", orgUser.User.IsEnabled)
+	err = d.Set("enabled", orgUser.User.IsEnabled)
 	if err != nil {
 		return err
 	}
@@ -337,6 +341,9 @@ func resourceVcdOrgUserUpdate(d *schema.ResourceData, meta interface{}) error {
 
 // Imports an OrgUser into Terraform state
 // This function task is to get the data from vCD and fill the resource data container
+// Expects the d.Id() to be a path to the resource made of Org name + dot + OrgUser name
+//
+// Example import path (id): my-org.my-user-admin
 func resourceVcdOrgUserImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ".")
 	if len(resourceURI) != 2 {

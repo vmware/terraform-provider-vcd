@@ -119,7 +119,7 @@ func TestAccVcdOrgUserBasic(t *testing.T) {
 							resource.TestCheckResourceAttr(
 								"vcd_org_user."+ud.name, "provider_type", govcd.OrgUserProviderIntegrated),
 							resource.TestCheckResourceAttr(
-								"vcd_org_user."+ud.name, "is_enabled", "false"),
+								"vcd_org_user."+ud.name, "enabled", "true"),
 							resource.TestCheckResourceAttr(
 								"vcd_org_user."+ud.name, "deployed_vm_quota", "10"),
 							resource.TestCheckResourceAttr(
@@ -203,7 +203,7 @@ func TestAccVcdOrgUserFull(t *testing.T) {
 							resource.TestCheckResourceAttr(
 								resourceName, "provider_type", params["ProviderType"].(string)),
 							resource.TestCheckResourceAttr(
-								resourceName, "is_enabled", fmt.Sprintf("%v", params["IsEnabled"].(bool))),
+								resourceName, "enabled", fmt.Sprintf("%v", params["IsEnabled"].(bool))),
 							resource.TestCheckResourceAttr(
 								resourceName, "email_address", params["EmailAddress"].(string)),
 							resource.TestCheckResourceAttr(
@@ -310,7 +310,7 @@ resource "vcd_org_user" "{{.UserName}}" {
   full_name         = "{{.FullName}}"
   description       = "{{.Description}}"
   role              = "{{.RoleName}}"
-  is_enabled        = {{.IsEnabled}}
+  enabled           = {{.IsEnabled}}
   take_ownership    = true
   provider_type     = "{{.ProviderType}}"
   stored_vm_quota   = {{.StoredVmQuota}}
