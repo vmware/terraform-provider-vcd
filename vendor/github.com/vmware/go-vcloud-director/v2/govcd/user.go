@@ -35,6 +35,7 @@ type OrgUserConfiguration struct {
 	Description     string // Optional
 	EmailAddress    string // Optional
 	Telephone       string // Optional
+	IM              string // Optional
 }
 
 const (
@@ -273,6 +274,7 @@ func (adminOrg *AdminOrg) CreateUserSimple(userData OrgUserConfiguration) (*OrgU
 		FullName:        userData.FullName,
 		EmailAddress:    userData.EmailAddress,
 		Description:     userData.Description,
+		IM:              userData.IM,
 		Role:            &types.Reference{HREF: role.HREF},
 	}
 
