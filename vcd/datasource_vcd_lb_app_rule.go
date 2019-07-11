@@ -36,8 +36,8 @@ func datasourceVcdLBAppRule() *schema.Resource {
 			"script": {
 				Computed: true,
 				Type:     schema.TypeString,
-				Description: "The script for the LB Application Rule. Each line will be separated " +
-					"by newlines (\n)",
+				Description: "The script for the LB Application Rule. Each line will be " +
+					"terminated by newlines (\n)",
 			},
 		},
 	}
