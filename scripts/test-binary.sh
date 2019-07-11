@@ -216,14 +216,14 @@ file_count=0
 for CF in $test_names
 do
     file_count=$((file_count+1))
-    unset will_skip
-    
-    skip_request=$(grep '^\s*#\s*skip-test' $CF)
+    skip_request=$(grep '^\s*#\s*skip-binary-test' $CF)
     if [ -n "$skip_request" ]
     then
-        will_skip=1
+        echo "# $CF skipped ($file_count of $how_many)"
+        echo "$skip_request"
+        continue
     fi
-
+    unset will_skip
     for skip_file in ${skipping_items[*]}
     do
         if [  "$CF" == "$skip_file" ]

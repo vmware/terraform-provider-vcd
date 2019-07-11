@@ -142,6 +142,8 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 						"vcd_org_vdc."+TestAccVcdVdc, "delete_force", "true"),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "delete_recursive", "true"),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "metadata.vdc_metadata", "VDC Metadata"),
 				),
 			},
 			resource.TestStep{
@@ -172,6 +174,10 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 						"vcd_org_vdc."+TestAccVcdVdc, "memory_guaranteed", params["MemoryGuaranteed"].(string)),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "cpu_guaranteed", params["CpuGuaranteed"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "metadata.vdc_metadata", "VDC Metadata"),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "metadata.vdc_metadata2", "VDC Metadata2"),
 				),
 			},
 		},
@@ -296,6 +302,10 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
     default  = true
   }
 
+  metadata = {
+    vdc_metadata = "VDC Metadata"
+  }
+
   enabled                  = true
   enable_thin_provisioning = true
   enable_fast_provisioning = true
@@ -330,6 +340,11 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
     enabled  = true
     limit    = 10240
     default  = true
+  }
+
+  metadata = {
+    vdc_metadata = "VDC Metadata"
+    vdc_metadata2 = "VDC Metadata2"
   }
 
   cpu_guaranteed           = {{.CpuGuaranteed}}

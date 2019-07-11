@@ -97,6 +97,7 @@ func Provider() terraform.ResourceProvider {
 			"vcd_vapp_vm":            resourceVcdVAppVm(),           // 1.0
 			"vcd_org":                resourceOrg(),                 // 2.0
 			"vcd_org_vdc":            resourceVcdOrgVdc(),           // 2.2
+			"vcd_org_user":           resourceVcdOrgUser(),          // 2.4
 			"vcd_catalog":            resourceVcdCatalog(),          // 2.0
 			"vcd_catalog_item":       resourceVcdCatalogItem(),      // 2.0
 			"vcd_catalog_media":      resourceVcdCatalogMedia(),     // 2.0

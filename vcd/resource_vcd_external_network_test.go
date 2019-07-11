@@ -29,11 +29,6 @@ func TestAccVcdExternalNetworkBasic(t *testing.T) {
 		"Tags":                "network extnetwork",
 	}
 
-	if !usingSysAdmin() {
-		t.Skip("TestAccVcdExternalNetworkBasic requires system admin privileges")
-		return
-	}
-
 	configText := templateFill(testAccCheckVcdExternalNetwork_basic, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)

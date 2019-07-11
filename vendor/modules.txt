@@ -216,7 +216,7 @@ github.com/ulikunitz/xz/internal/hash
 # github.com/vmihailenco/msgpack v4.0.1+incompatible
 github.com/vmihailenco/msgpack
 github.com/vmihailenco/msgpack/codes
-# github.com/vmware/go-vcloud-director/v2 v2.3.0-alpha.8 => github.com/Didainius/go-vcloud-director/v2 v2.3.0-alpha.3.0.20190710123027-2756ed0823d2
+# github.com/vmware/go-vcloud-director/v2 v2.3.0-alpha.9 => github.com/Didainius/go-vcloud-director/v2 v2.3.0-alpha.3.0.20190710123027-2756ed0823d2
 github.com/vmware/go-vcloud-director/v2/govcd
 github.com/vmware/go-vcloud-director/v2/types/v56
 github.com/vmware/go-vcloud-director/v2/util
