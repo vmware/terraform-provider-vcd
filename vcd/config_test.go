@@ -460,7 +460,9 @@ func TestMain(m *testing.M) {
 	// If VCD_SHORT_TEST is defined, it means that "make test" is called,
 	// and we won't really run any tests involving vcd connections.
 	configFile := getConfigFileName()
-	testConfig = getConfigStruct(configFile)
+	if configFile != "" {
+		testConfig = getConfigStruct(configFile)
+	}
 	if !vcdShortTest {
 
 		if configFile == "" {
