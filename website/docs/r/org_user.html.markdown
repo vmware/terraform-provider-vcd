@@ -17,17 +17,19 @@ Supported in provider *v2.4+*
 ## Example Usage
 
 ```hcl
+# A simple user created with the minimum of properties
+# uses the "password" field
 resource "vcd_org_user" "my-org-admin" {
   org = "my-org"
 
   name          = "my-org-admin"
   description   = "a new org admin"
   role          = "Organization Administrator"
-  provider_type = "INTEGRATED"
   password      = "change-me"
-  enabled       = true
 }
 
+# Another user, created by filling all the fields
+# Uses the "password_file" field.
 resource "vcd_org_user" "test_user_vapp_author" {
   org = "datacloud"
   
@@ -84,13 +86,11 @@ The following arguments are supported:
 * `stored_vm_quota` - (Optional) Quota of vApps that this user can store. A value of 0 specifies an unlimited quota.
   The default is 10.
 
-
 ## Attribute Reference
 
 The following attributes are exported on this resource:
 
 * `id` - The ID of the Organization user
-
 
 ## Importing
 
