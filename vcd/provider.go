@@ -97,6 +97,7 @@ func Provider() terraform.ResourceProvider {
 			"vcd_vapp_vm":            resourceVcdVAppVm(),           // 1.0
 			"vcd_org":                resourceOrg(),                 // 2.0
 			"vcd_org_vdc":            resourceVcdOrgVdc(),           // 2.2
+			"vcd_org_user":           resourceVcdOrgUser(),          // 2.4
 			"vcd_catalog":            resourceVcdCatalog(),          // 2.0
 			"vcd_catalog_item":       resourceVcdCatalogItem(),      // 2.0
 			"vcd_catalog_media":      resourceVcdCatalogMedia(),     // 2.0
@@ -105,11 +106,15 @@ func Provider() terraform.ResourceProvider {
 			"vcd_external_network":   resourceVcdExternalNetwork(),  // 2.2
 			"vcd_lb_service_monitor": resourceVcdLbServiceMonitor(), // 2.4
 			"vcd_lb_server_pool":     resourceVcdLBServerPool(),     // 2.4
+			"vcd_lb_app_profile":     resourceVcdLBAppProfile(),     // 2.4
+			"vcd_lb_app_rule":        resourceVcdLBAppRule(),        // 2.4
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
 			"vcd_lb_service_monitor": datasourceVcdLbServiceMonitor(), // 2.4
 			"vcd_lb_server_pool":     datasourceVcdLbServerPool(),     // 2.4
+			"vcd_lb_app_profile":     datasourceVcdLBAppProfile(),     // 2.4
+			"vcd_lb_app_rule":        datasourceVcdLBAppRule(),        // 2.4
 		},
 
 		ConfigureFunc: providerConfigure,

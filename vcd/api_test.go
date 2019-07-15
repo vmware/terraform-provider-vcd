@@ -43,9 +43,11 @@ At least one of the following tags should be defined:
    * network:    Runs network related tests
    * gateway:    Runs edge gateway related tests
    * org:        Runs org related tests
+   * user:       Runs user related tests
    * vapp:       Runs vapp related tests
    * vdc:        Runs vdc related tests
    * vm:         Runs vm related tests
+   * lb:         Runs load balancer related tests
 
 Examples:
 

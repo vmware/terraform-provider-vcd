@@ -14,22 +14,22 @@ func datasourceVcdLbServiceMonitor() *schema.Resource {
 			"org": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "vCD organization in which the Service Monitor is located",
+				Description: "vCD organization in which the LB Service Monitor is located",
 			},
 			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "vCD virtual datacenter in which the Service Monitor is located",
+				Description: "vCD virtual datacenter in which the LB Service Monitor is located",
 			},
 			"edge_gateway": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Edge gateway name in which the Service Monitor is located",
+				Description: "Edge gateway name in which the LB Service Monitor is located",
 			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Service Monitor name",
+				Description: "LB Service Monitor name",
 			},
 			"interval": &schema.Schema{
 				Type:        schema.TypeInt,

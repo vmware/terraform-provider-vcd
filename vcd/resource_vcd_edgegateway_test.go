@@ -46,6 +46,10 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
+	if !usingSysAdmin() {
+		t.Skip("Edge gateway tests requires system admin privileges")
+		return
+	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -88,6 +92,10 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 	configText := templateFill(testAccEdgeGatewayComplex, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	if !usingSysAdmin() {
+		t.Skip("Edge gateway tests requires system admin privileges")
 		return
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)

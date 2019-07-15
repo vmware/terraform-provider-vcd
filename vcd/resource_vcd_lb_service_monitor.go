@@ -23,25 +23,25 @@ func resourceVcdLbServiceMonitor() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "vCD organization in which the Service Monitor is located",
+				Description: "vCD organization in which the LB Service Monitor is located",
 			},
 			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "vCD virtual datacenter in which the Service Monitor is located",
+				Description: "vCD virtual datacenter in which the LB Service Monitor is located",
 			},
 			"edge_gateway": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Edge gateway name in which the Service Monitor is located",
+				Description: "Edge gateway name in which the LB Service Monitor is located",
 			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Unique Service Monitor name",
+				Description: "Unique LB Service Monitor name",
 			},
 			"interval": &schema.Schema{
 				Type:        schema.TypeInt,
@@ -141,7 +141,7 @@ func resourceVcdLbServiceMonitorCreate(d *schema.ResourceData, meta interface{})
 
 	lbMonitor, err := getLBMonitorType(d)
 	if err != nil {
-		return fmt.Errorf("unable to expand load balancer service monitor: %s", err)
+		return fmt.Errorf("unable to create load balancer service monitor type: %s", err)
 	}
 
 	createdMonitor, err := edgeGateway.CreateLBServiceMonitor(lbMonitor)
@@ -161,7 +161,7 @@ func resourceVcdLbServiceMonitorRead(d *schema.ResourceData, meta interface{}) e
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBMonitor, err := edgeGateway.ReadLBServiceMonitor(&types.LBMonitor{ID: d.Id()})
+	readLBMonitor, err := edgeGateway.ReadLBServiceMonitorByID(d.Id())
 	if err != nil {
 		d.SetId("")
 		return fmt.Errorf("unable to find load balancer service monitor with ID %s: %s", d.Id(), err)
@@ -182,7 +182,7 @@ func resourceVcdLbServiceMonitorUpdate(d *schema.ResourceData, meta interface{})
 
 	updateLBMonitorConfig, err := getLBMonitorType(d)
 	if err != nil {
-		return fmt.Errorf("could not expand monitor for update: %s", err)
+		return fmt.Errorf("could not create service monitor type for update: %s", err)
 	}
 
 	updatedLBMonitor, err := edgeGateway.UpdateLBServiceMonitor(updateLBMonitorConfig)
@@ -203,7 +203,7 @@ func resourceVcdLbServiceMonitorDelete(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	err = edgeGateway.DeleteLBServiceMonitor(&types.LBMonitor{ID: d.Id()})
+	err = edgeGateway.DeleteLBServiceMonitorByID(d.Id())
 	if err != nil {
 		return fmt.Errorf("error deleting load balancer service monitor: %s", err)
 	}
@@ -212,13 +212,17 @@ func resourceVcdLbServiceMonitorDelete(d *schema.ResourceData, meta interface{})
 	return nil
 }
 
-// resourceVcdLbServiceMonitorImport expects dot formatted path to Load Balancer Service Monitor
-// i.e. my-org.my-org-vdc.my-edge-gw.my-lb-service-monitor
+// resourceVcdLbServiceMonitorImport is responsible for importing the resource.
+// The d.Id() field as being passed from `terraform import _resource_name_ _the_id_string_ requires
+// a name based dot-formatted path to the object to lookup the object and sets the id of object.
+// `terraform import` automatically performs `refresh` operation which loads up all other fields.
+//
+// Example import path (id): org.vdc.edge-gw.lb-service-monitor
 func resourceVcdLbServiceMonitorImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 
 	resourceURI := strings.Split(d.Id(), ".")
 	if len(resourceURI) != 4 {
-		return nil, fmt.Errorf("resource name must be specified as org.VDC.edge-gw.lb-service-monitor")
+		return nil, fmt.Errorf("resource name must be specified as org.vdc.edge-gw.lb-service-monitor")
 	}
 	orgName, vdcName, edgeName, monitorName := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
 
@@ -228,7 +232,7 @@ func resourceVcdLbServiceMonitorImport(d *schema.ResourceData, meta interface{})
 		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBMonitor, err := edgeGateway.ReadLBServiceMonitor(&types.LBMonitor{Name: monitorName})
+	readLBMonitor, err := edgeGateway.ReadLBServiceMonitorByName(monitorName)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer service monitor with ID %s: %s", d.Id(), err)
 	}
