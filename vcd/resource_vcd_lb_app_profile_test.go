@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/vmware/go-vcloud-director/v2/govcd"
+
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
@@ -174,7 +176,7 @@ func testAccCheckVcdLBAppProfileDestroy(appProfileName string) resource.TestChec
 		}
 
 		monitor, err := edgeGateway.ReadLBAppProfile(&types.LBAppProfile{Name: appProfileName})
-		if !strings.Contains(err.Error(), "could not find load balancer application profile") ||
+		if !strings.Contains(err.Error(), govcd.ErrorEntityNotFound.Error()) ||
 			monitor != nil {
 			return fmt.Errorf("load balancer application profile was not deleted: %s", err)
 		}

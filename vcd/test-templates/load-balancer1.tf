@@ -131,3 +131,23 @@ data "vcd_lb_app_profile" "test" {
 	edge_gateway = "{{.EdgeGateway}}"
 	name         = "${vcd_lb_app_profile.test[count.index].name}"
 }
+
+resource "vcd_lb_app_rule" "test" {
+  count = "${var.component_count}"
+
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+
+  name   = "test-app-profile-${count.index}"
+  script = ["acl hello payload(0,6) -m bin 48656c6c6f0a"]
+}
+
+data "vcd_lb_app_rule" "test" {
+  count = "${var.component_count}"
+
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  name         = "${vcd_lb_app_rule.test[count.index].name}"
+}

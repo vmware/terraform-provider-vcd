@@ -9,11 +9,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 
-	"github.com/hashicorp/terraform/terraform"
-
 	"github.com/hashicorp/terraform/helper/resource"
+	"github.com/hashicorp/terraform/terraform"
 )
 
 func TestAccVcdLbServiceMonitor(t *testing.T) {
@@ -104,7 +104,7 @@ func testAccCheckVcdLbServiceMonitorDestroy(serviceMonitorName string) resource.
 		}
 
 		monitor, err := edgeGateway.ReadLBServiceMonitor(&types.LBMonitor{Name: serviceMonitorName})
-		if !strings.Contains(err.Error(), "could not find load balancer") || monitor != nil {
+		if !strings.Contains(err.Error(), govcd.ErrorEntityNotFound.Error()) || monitor != nil {
 			return fmt.Errorf("load balancer service monitor was not deleted: %s", err)
 		}
 		return nil

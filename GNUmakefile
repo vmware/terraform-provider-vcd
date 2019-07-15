@@ -66,6 +66,14 @@ testcatalog: fmtcheck
 testvapp: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' vapp"
 
+# Runs the acceptance test for lb
+testlb: fmtcheck
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' lb"
+
+# Runs the acceptance test for user
+testuser: fmtcheck
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' user"
+
 # Runs the acceptance test for vm
 testvm: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' vm"
