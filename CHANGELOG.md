@@ -15,8 +15,8 @@ FEATURES:
 * **New build commands** `make test-env-init` and `make test-env-apply` can configure an empty vCD to run the test suite. See `TESTING.md` for details.
 * `resource/vcd_org_vdc` added Org VDC update and full state read - [GH-275]
 * `resource/vcd_org_vdc` added Org VDC metadata support - [GH-276]
-* `resource/vcd_snat` added ability to choose network name and type. [GH-] 
-* `resource/vcd_dnat` added ability to choose network name and type. [GH-]
+* `resource/vcd_snat` added ability to choose network name and type. [GH-282] 
+* `resource/vcd_dnat` added ability to choose network name and type. [GH-282]
 
 IMPROVEMENTS:
 * `resource/vcd_org_vdc`: Fix ignoring of resource guarantee values - [GH-265]
@@ -26,7 +26,7 @@ IMPROVEMENTS:
 
 BUG FIXES:
 
-* `resource/vcd_dnat and resource/vcd_snat` - delete works 100% if you use network_name and type [GH-]
+* `resource/vcd_dnat and resource/vcd_snat` - delete works 100% if you use network_name and type [GH-282]
 
 ## 2.3.0 (May 29, 2019)
 
