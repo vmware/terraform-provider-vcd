@@ -88,16 +88,13 @@ func testAccCheckVcdSNATExists(n string, gateway *govcd.EdgeGateway) resource.Te
 			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
 
-		var found bool
-		for _, v := range edgeGateway.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
-			if v.RuleType == "SNAT" && v.GatewayNatRule.Interface.Name == orgVdcNetworkNameForSnat &&
-				v.GatewayNatRule.OriginalIP == testConfig.Networking.ExternalIp &&
-				v.GatewayNatRule.TranslatedIP == startIpAddress {
-				found = true
-			}
+		natRule, err := edgeGateway.FetchNatRule(rs.Primary.ID)
+		if err != nil {
+			return err
 		}
-		if !found {
-			return fmt.Errorf("SNAT rule was not found")
+
+		if nil == natRule {
+			return fmt.Errorf("rule isn't found")
 		}
 
 		*gateway = edgeGateway

@@ -4,6 +4,7 @@ package vcd
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -14,14 +15,14 @@ import (
 var baseDnatName string = "TestAccVcdDNAT"
 var orgVdcNetworkName = "TestAccVcdDNAT_BasicNetwork"
 
-func TestAccVcdDNAT_Basic(t *testing.T) {
+func TestAccVcdDNAT_WithOrgNetw(t *testing.T) {
 	if testConfig.Networking.ExternalIp == "" {
 		t.Skip("Variable networking.externalIp must be set to run DNAT tests")
 		return
 	}
 	var e govcd.EdgeGateway
 
-	var dnatName string = baseDnatName + "_Basic"
+	var dnatName string = baseDnatName + "_WithOrgNetw"
 	var params = StringMap{
 		"Org":               testConfig.VCD.Org,
 		"Vdc":               testConfig.VCD.Vdc,
@@ -33,9 +34,10 @@ func TestAccVcdDNAT_Basic(t *testing.T) {
 		"StartIpAddress":    "10.10.102.51",
 		"EndIpAddress":      "10.10.102.100",
 		"Tags":              "gateway",
+		"Description":       "test run1",
 	}
 
-	configText := templateFill(testAccCheckVcdDnat_basic, params)
+	configText := templateFill(testAccCheckVcdDnatWithOrgNetw, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -47,45 +49,52 @@ func TestAccVcdDNAT_Basic(t *testing.T) {
 		CheckDestroy: testAccCheckVcdDNATDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: configText,
+				Config:      configText,
+				ExpectError: regexp.MustCompile(`After applying this step and refreshing, the plan was not empty:`),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdDNATExists("vcd_dnat."+dnatName, &e),
 					resource.TestCheckResourceAttr(
 						"vcd_dnat."+dnatName, "network_name", orgVdcNetworkName),
+					resource.TestCheckResourceAttr(
+						"vcd_dnat."+dnatName, "network_type", "org"),
 					resource.TestCheckResourceAttr(
 						"vcd_dnat."+dnatName, "external_ip", testConfig.Networking.ExternalIp),
 					resource.TestCheckResourceAttr(
 						"vcd_dnat."+dnatName, "port", "7777"),
 					resource.TestCheckResourceAttr(
 						"vcd_dnat."+dnatName, "internal_ip", "10.10.102.60"),
+					resource.TestCheckResourceAttr(
+						"vcd_dnat."+dnatName, "description", "test run1"),
 				),
 			},
 		},
 	})
 }
 
-func TestAccVcdDNAT_tlate(t *testing.T) {
+func TestAccVcdDNAT_WithExtNetw(t *testing.T) {
 	if testConfig.Networking.ExternalIp == "" {
 		t.Skip("Variable networking.externalIp must be set to run DNAT tests")
 		return
 	}
 	var e govcd.EdgeGateway
 
-	var dnatName string = baseDnatName + "_tlate"
+	var dnatName string = baseDnatName + "_WithExtNetw"
 	var params = StringMap{
-		"Org":               testConfig.VCD.Org,
-		"Vdc":               testConfig.VCD.Vdc,
-		"EdgeGateway":       testConfig.Networking.EdgeGateway,
-		"ExternalIp":        testConfig.Networking.ExternalIp,
-		"DnatName":          dnatName,
-		"OrgVdcNetworkName": "TestAccVcdDNAT_BasicNetwork",
-		"Gateway":           "10.10.102.1",
-		"StartIpAddress":    "10.10.102.51",
-		"EndIpAddress":      "10.10.102.100",
-		"Tags":              "gateway",
+		"Org":                 testConfig.VCD.Org,
+		"Vdc":                 testConfig.VCD.Vdc,
+		"EdgeGateway":         testConfig.Networking.EdgeGateway,
+		"ExternalIp":          testConfig.Networking.ExternalIp,
+		"DnatName":            dnatName,
+		"OrgVdcNetworkName":   "TestAccVcdDNAT_BasicNetwork",
+		"ExternalNetworkName": testConfig.Networking.ExternalNetwork,
+		"Gateway":             "10.10.102.1",
+		"StartIpAddress":      "10.10.102.51",
+		"EndIpAddress":        "10.10.102.100",
+		"Tags":                "gateway",
+		"Description":         "test run2",
 	}
 
-	configText := templateFill(testAccCheckVcdDnat_tlate, params)
+	configText := templateFill(testAccCheckVcdDnatWithExtNetw, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -97,11 +106,14 @@ func TestAccVcdDNAT_tlate(t *testing.T) {
 		CheckDestroy: testAccCheckVcdDNATDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: configText,
+				Config:      configText,
+				ExpectError: regexp.MustCompile(`After applying this step and refreshing, the plan was not empty:`),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdDNATtlateExists("vcd_dnat."+dnatName, &e),
+					testAccCheckVcdDNATExtNetwExists("vcd_dnat."+dnatName, &e),
 					resource.TestCheckResourceAttr(
-						"vcd_dnat."+dnatName, "network_name", orgVdcNetworkName),
+						"vcd_dnat."+dnatName, "network_name", testConfig.Networking.ExternalNetwork),
+					resource.TestCheckResourceAttr(
+						"vcd_dnat."+dnatName, "network_type", "ext"),
 					resource.TestCheckResourceAttr(
 						"vcd_dnat."+dnatName, "external_ip", testConfig.Networking.ExternalIp),
 					resource.TestCheckResourceAttr(
@@ -110,6 +122,8 @@ func TestAccVcdDNAT_tlate(t *testing.T) {
 						"vcd_dnat."+dnatName, "internal_ip", "10.10.102.60"),
 					resource.TestCheckResourceAttr(
 						"vcd_dnat."+dnatName, "translated_port", "77"),
+					resource.TestCheckResourceAttr(
+						"vcd_dnat."+dnatName, "description", "test run2"),
 				),
 			},
 		},
@@ -120,11 +134,11 @@ func testAccCheckVcdDNATExists(n string, gateway *govcd.EdgeGateway) resource.Te
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
-			return fmt.Errorf("Not found: %s", n)
+			return fmt.Errorf("not found: %s", n)
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("No DNAT ID is set")
+			return fmt.Errorf("DNAT ID is not set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
@@ -137,17 +151,13 @@ func testAccCheckVcdDNATExists(n string, gateway *govcd.EdgeGateway) resource.Te
 			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
-		var found bool
-		for _, v := range edgeGateway.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
-			if v.RuleType == "DNAT" &&
-				v.GatewayNatRule.OriginalIP == testConfig.Networking.ExternalIp &&
-				v.GatewayNatRule.OriginalPort == "7777" &&
-				v.GatewayNatRule.TranslatedIP == "10.10.102.60" {
-				found = true
-			}
+		natRule, err := edgeGateway.FetchNatRule(rs.Primary.ID)
+		if err != nil {
+			return err
 		}
-		if !found {
-			return fmt.Errorf("DNAT rule was not found")
+
+		if nil == natRule {
+			return fmt.Errorf("rule isn't found")
 		}
 
 		*gateway = edgeGateway
@@ -156,7 +166,7 @@ func testAccCheckVcdDNATExists(n string, gateway *govcd.EdgeGateway) resource.Te
 	}
 }
 
-func testAccCheckVcdDNATtlateExists(n string, gateway *govcd.EdgeGateway) resource.TestCheckFunc {
+func testAccCheckVcdDNATExtNetwExists(n string, gateway *govcd.EdgeGateway) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -229,31 +239,6 @@ func testAccCheckVcdDNATDestroy(s *terraform.State) error {
 	return nil
 }
 
-const testAccCheckVcdDnat_basic = `
-resource "vcd_network_routed" "{{.OrgVdcNetworkName}}" {
-  name         = "{{.OrgVdcNetworkName}}"
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
-  gateway      = "{{.Gateway}}"
-
-  dhcp_pool {
-    start_address = "{{.StartIpAddress}}"
-    end_address   = "{{.EndIpAddress}}"
-  }
-}
-resource "vcd_dnat" "{{.DnatName}}" {
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  network_name = "{{.OrgVdcNetworkName}}"
-  edge_gateway = "{{.EdgeGateway}}"
-  external_ip  = "{{.ExternalIp}}"
-  port         = 7777
-  internal_ip  = "10.10.102.60"
-  depends_on   = ["vcd_network_routed.{{.OrgVdcNetworkName}}"]
-}
-`
-
 func TestAccVcdDNAT_ForBackCompability(t *testing.T) {
 	if testConfig.Networking.ExternalIp == "" {
 		t.Skip("Variable networking.externalIp must be set to run DNAT tests")
@@ -261,7 +246,7 @@ func TestAccVcdDNAT_ForBackCompability(t *testing.T) {
 	}
 	var e govcd.EdgeGateway
 
-	var dnatName string = baseDnatName + "_tlate"
+	var dnatName string = baseDnatName + "_ForBackCompabilit"
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
 		"Vdc":         testConfig.VCD.Vdc,
@@ -373,18 +358,7 @@ func testAccCheckVcdDNATDestroyForBackCompability(s *terraform.State) error {
 	return nil
 }
 
-const testAccCheckVcdDnat_ForBackCompability = `
-resource "vcd_dnat" "{{.DnatName}}" {
-  org             = "{{.Org}}"
-  vdc             = "{{.Vdc}}"
-  edge_gateway    = "{{.EdgeGateway}}"
-  external_ip     = "{{.ExternalIp}}"
-  port            = 7777
-  internal_ip     = "10.10.102.60"
-  translated_port = 77
-}
-`
-const testAccCheckVcdDnat_tlate = `
+const testAccCheckVcdDnatWithOrgNetw = `
 resource "vcd_network_routed" "{{.OrgVdcNetworkName}}" {
   name         = "{{.OrgVdcNetworkName}}"
   org          = "{{.Org}}"
@@ -397,17 +371,42 @@ resource "vcd_network_routed" "{{.OrgVdcNetworkName}}" {
     end_address   = "{{.EndIpAddress}}"
   }
 }
+resource "vcd_dnat" "{{.DnatName}}" {
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  network_name = "{{.OrgVdcNetworkName}}"
+  network_type = "org"
+  edge_gateway = "{{.EdgeGateway}}"
+  external_ip  = "{{.ExternalIp}}"
+  port         = 7777
+  internal_ip  = "10.10.102.60"
+  description  = "{{.Description}}"
+  depends_on   = ["vcd_network_routed.{{.OrgVdcNetworkName}}"]
+}
+`
 
+const testAccCheckVcdDnat_ForBackCompability = `
 resource "vcd_dnat" "{{.DnatName}}" {
   org             = "{{.Org}}"
   vdc             = "{{.Vdc}}"
-  network_name    = "{{.OrgVdcNetworkName}}"
-  network_type    = "org"
   edge_gateway    = "{{.EdgeGateway}}"
   external_ip     = "{{.ExternalIp}}"
   port            = 7777
   internal_ip     = "10.10.102.60"
   translated_port = 77
-  depends_on      = ["vcd_network_routed.{{.OrgVdcNetworkName}}"]
+}
+`
+const testAccCheckVcdDnatWithExtNetw = `
+resource "vcd_dnat" "{{.DnatName}}" {
+  org             = "{{.Org}}"
+  vdc             = "{{.Vdc}}"
+  network_name    = "{{.ExternalNetworkName}}"
+  network_type    = "ext"
+  edge_gateway    = "{{.EdgeGateway}}"
+  external_ip     = "{{.ExternalIp}}"
+  port            = 7777
+  internal_ip     = "10.10.102.60"
+  translated_port = 77
+  description     = "{{.Description}}"
 }
 `

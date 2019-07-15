@@ -12,12 +12,19 @@ FEATURES:
 * **New Data Source:** `vcd_lb_app_profile` Load Balancer Application profile - [GH-274]
 * resource/vcd_org_vdc added Org VDC update and full state read - [GH-275]
 * resource/vcd_org_vdc added Org VDC metadata support - [GH-276]
+* resource/vcd_snat added ability to choose network name and type. [GH-] 
+* resource/vcd_dnat added ability to choose network name and type. [GH-]
 
 IMPROVEMENTS:
 * resource/vcd_org_vdc: Fix ignoring of resource guarantee values - [GH-265]
 * resource/vcd_org_vdc: Org VDC state ID changed from name to vCD ID - [GH-275]
 * Change resource handling to use locking mechanism when resource parallel handling is not supported by vCD. [GH-255] 
 * Fix issue when vApp is power cycled during member VM deletion. [GH-261]
+
+BUG FIXES:
+
+* resource/vcd_dnat and resource/vcd_snat - delete works 100% if you use network_name and type [GH-]
+
 
 ## 2.3.0 (May 29, 2019)
 
