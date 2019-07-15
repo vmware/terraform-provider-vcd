@@ -6,6 +6,7 @@ package govcd
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/xml"
 	"fmt"
 	"net/http"
@@ -37,6 +38,19 @@ func NewEdgeGateway(cli *Client) *EdgeGateway {
 		EdgeGateway: new(types.EdgeGateway),
 		client:      cli,
 	}
+}
+
+// Struct which covers NAT rule fields
+type NatRule struct {
+	natType      string
+	NetworkHref  string
+	ExternalIP   string
+	ExternalPort string
+	InternalIP   string
+	InternalPort string
+	Protocol     string
+	IcmpSubType  string
+	Description  string
 }
 
 func (eGW *EdgeGateway) AddDhcpPool(network *types.OrgVDCNetwork, dhcppool []interface{}) (Task, error) {
@@ -131,11 +145,13 @@ func (eGW *EdgeGateway) AddDhcpPool(network *types.OrgVDCNetwork, dhcppool []int
 
 }
 
+// Deprecated in favor of RemoveNATRuleAsync, RemoveNATRule
 func (eGW *EdgeGateway) RemoveNATMapping(natType, externalIP, internalIP, port string) (Task, error) {
 	return eGW.RemoveNATPortMapping(natType, externalIP, port, internalIP, port)
 }
 
-func (eGW *EdgeGateway) RemoveNATPortMapping(natType, externalIP, externalPort string, internalIP, internalPort string) (Task, error) {
+// Deprecated in favor of RemoveNATRuleAsync, RemoveNATRule
+func (eGW *EdgeGateway) RemoveNATPortMapping(natType, externalIP, externalPort, internalIP, internalPort string) (Task, error) {
 	// Find uplink interface
 	var uplink types.Reference
 	for _, gi := range eGW.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
@@ -157,8 +173,6 @@ func (eGW *EdgeGateway) RemoveNATPortMapping(natType, externalIP, externalPort s
 
 	for _, natRule := range newEdgeConfig.NatService.NatRule {
 
-		// Kludgy IF to avoid deleting DNAT rules not created by us.
-		// If matches, let's skip it and continue the loop
 		if natRule.RuleType == natType &&
 			natRule.GatewayNatRule.OriginalIP == externalIP &&
 			natRule.GatewayNatRule.OriginalPort == externalPort &&
@@ -186,6 +200,303 @@ func (eGW *EdgeGateway) RemoveNATPortMapping(natType, externalIP, externalPort s
 
 }
 
+// RemoveNATRule removes NAT rule and handles task. Return errors when issue risen.
+// Old functions RemoveNATPortMapping and RemoveNATMapping removes using rule details and expects interface is external network.
+func (eGW *EdgeGateway) RemoveNATRule(id string) error {
+	task, err := eGW.RemoveNATRuleAsync(id)
+	if err != nil {
+		return fmt.Errorf("error creating DNAT rule: %#v", err)
+	}
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return fmt.Errorf("%s", combinedTaskErrorMessage(task.Task, err))
+	}
+
+	return nil
+}
+
+// RemoveNATRuleAsync removes NAT rule and return  or error.
+// Old functions RemoveNATPortMapping and RemoveNATMapping
+// removes using rule details and expects interface is external network.
+func (eGW *EdgeGateway) RemoveNATRuleAsync(id string) (Task, error) {
+	if "" == id {
+		return Task{}, fmt.Errorf("provided id is empty")
+	}
+
+	err := eGW.Refresh()
+	if err != nil {
+		return Task{}, fmt.Errorf("error refreshing edge gateway: %#v", err)
+	}
+
+	natServiceToUpdate := eGW.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService
+	ruleIndex := -1
+	if natServiceToUpdate != nil {
+		for n, existingNatRule := range natServiceToUpdate.NatRule {
+			if existingNatRule.ID == id {
+				ruleIndex = n
+				break
+			}
+		}
+	} else {
+		return Task{}, fmt.Errorf("edge gtw doesn't have NAT rules")
+	}
+
+	if ruleIndex == -1 {
+		return Task{}, fmt.Errorf("edge gtw doesn't have rule with such Id")
+	}
+
+	natServiceToUpdate.NatRule = append(natServiceToUpdate.NatRule[:ruleIndex], natServiceToUpdate.NatRule[ruleIndex+1:]...)
+
+	newRules := &types.EdgeGatewayServiceConfiguration{
+		Xmlns:      types.XMLNamespaceVCloud,
+		NatService: natServiceToUpdate,
+	}
+
+	egwConfigureHref, _ := url.ParseRequestURI(eGW.EdgeGateway.HREF)
+	egwConfigureHref.Path += "/action/configureServices"
+
+	// Return the task
+	return eGW.client.ExecuteTaskRequest(egwConfigureHref.String(), http.MethodPost,
+		"application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml", "error reconfiguring Edge Gateway: %s", newRules)
+}
+
+// AddDNATRule creates DNAT rule and return created NAT struct or error.
+// Allows to assign specific Org VDC or external network.
+// When edge gtw is advanced vCD API uses element <tag> to map with NSX edge gtw ID. Currently existing issue,
+// that changed rule using UI resets <tag> as so mapping and as result fetched NatRule.ID won't be valid anymore.
+// Old functions AddNATPortMapping and AddNATMapping assigns rule only to first external network
+func (eGW *EdgeGateway) AddDNATRule(ruleDetails NatRule) (*types.NatRule, error) {
+	mappingId := getPseudoUuid()
+	originalDescription := ruleDetails.Description
+	ruleDetails.Description = mappingId
+
+	ruleDetails.natType = "DNAT"
+	task, err := eGW.AddNATRuleAsync(ruleDetails)
+	if err != nil {
+		return nil, fmt.Errorf("error creating DNAT rule: %#v", err)
+	}
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return nil, fmt.Errorf("%s", combinedTaskErrorMessage(task.Task, err))
+	}
+
+	var createdNatRule *types.NatRule
+
+	err = eGW.Refresh()
+	if err != nil {
+		return nil, fmt.Errorf("error refreshing edge gateway: %#v", err)
+	}
+
+	for _, natRule := range eGW.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
+		if natRule.Description == mappingId {
+			createdNatRule = natRule
+			break
+		}
+	}
+
+	if createdNatRule == nil {
+		return nil, fmt.Errorf("error creating SNAT rule, didn't matched created rule")
+	}
+
+	createdNatRule.Description = originalDescription
+
+	return eGW.UpdateNatRule(createdNatRule)
+}
+
+// AddSNATRule creates SNAT rule and returns created NAT rule or error.
+// Allows to assign specific Org VDC or external network.
+// Old function AddNATPortMapping and AddNATMapping assigns rule to only first external network
+func (eGW *EdgeGateway) AddSNATRule(networkHref, externalIP, internalIP, description string) (*types.NatRule, error) {
+
+	// As vCD API don't return rule API we fetch it manually:
+	//  * create rule with description which value is our generated Id
+	//  * find rule which has description with our generated Id
+	//  * update description with real value and return nat rule
+
+	mappingId := getPseudoUuid()
+
+	task, err := eGW.AddNATRuleAsync(NatRule{NetworkHref: networkHref, natType: "SNAT", ExternalIP: externalIP,
+		ExternalPort: "any", InternalIP: internalIP, InternalPort: "any",
+		IcmpSubType: "", Protocol: "any", Description: mappingId})
+	if err != nil {
+		return nil, fmt.Errorf("error creating SNAT rule: %#v", err)
+	}
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return nil, fmt.Errorf("%s", combinedTaskErrorMessage(task.Task, err))
+	}
+
+	var createdNatRule *types.NatRule
+
+	err = eGW.Refresh()
+	if err != nil {
+		return nil, fmt.Errorf("error refreshing edge gateway: %#v", err)
+	}
+
+	for _, natRule := range eGW.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
+		if natRule.Description == mappingId {
+			createdNatRule = natRule
+			break
+		}
+	}
+
+	if createdNatRule == nil {
+		return nil, fmt.Errorf("error creating SNAT rule, didn't matched created rule")
+	}
+
+	createdNatRule.Description = description
+
+	return eGW.UpdateNatRule(createdNatRule)
+}
+
+// Creates unique ID/UUID
+func getPseudoUuid() (uuid string) {
+
+	b := make([]byte, 16)
+	_, err := rand.Read(b)
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return
+	}
+
+	uuid = fmt.Sprintf("%X-%X-%X-%X-%X", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
+
+	return
+}
+
+// UpdateNatRule updates NAT rule and handles task. Returns updated NAT rule or error.
+func (eGW *EdgeGateway) UpdateNatRule(natRule *types.NatRule) (*types.NatRule, error) {
+	task, err := eGW.UpdateNatRuleAsync(natRule)
+	if err != nil {
+		return nil, fmt.Errorf("error updating SNAT rule: %#v", err)
+	}
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return nil, fmt.Errorf("%s", combinedTaskErrorMessage(task.Task, err))
+	}
+
+	return eGW.FetchNatRule(natRule.ID)
+}
+
+// UpdateNatRuleAsync updates NAT rule and returns task or error.
+func (eGW *EdgeGateway) UpdateNatRuleAsync(natRule *types.NatRule) (Task, error) {
+	if "" != natRule.GatewayNatRule.Protocol && !isValidProtocol(natRule.GatewayNatRule.Protocol) {
+		return Task{}, fmt.Errorf("provided protocol is not one of TCP, UDP, TCPUDP, ICMP, ANY")
+	}
+
+	if strings.ToUpper(natRule.GatewayNatRule.Protocol) == "ICMP" && !isValidIcmpSubType(natRule.GatewayNatRule.IcmpSubType) {
+		return Task{}, fmt.Errorf("provided icmp sub type is not correct")
+	}
+
+	err := eGW.Refresh()
+	if err != nil {
+		return Task{}, fmt.Errorf("error refreshing edge gateway: %#v", err)
+	}
+
+	natServiceToUpdate := eGW.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService
+
+	if natServiceToUpdate != nil {
+		for n, existingNatRule := range natServiceToUpdate.NatRule {
+			if existingNatRule.ID == natRule.ID {
+				natServiceToUpdate.NatRule[n] = natRule
+			}
+		}
+	} else {
+		return Task{}, fmt.Errorf("edge gtw doesn't have such nat rule")
+	}
+
+	newRules := &types.EdgeGatewayServiceConfiguration{
+		Xmlns:      types.XMLNamespaceVCloud,
+		NatService: natServiceToUpdate,
+	}
+
+	egwConfigureHref, _ := url.ParseRequestURI(eGW.EdgeGateway.HREF)
+	egwConfigureHref.Path += "/action/configureServices"
+
+	// Return the task
+	return eGW.client.ExecuteTaskRequest(egwConfigureHref.String(), http.MethodPost,
+		"application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml", "error reconfiguring Edge Gateway: %s", newRules)
+}
+
+// FetchNatRule returns NAT rule or error.
+func (eGW *EdgeGateway) FetchNatRule(id string) (*types.NatRule, error) {
+	err := eGW.Refresh()
+	if err != nil {
+		return nil, fmt.Errorf("error refreshing edge gateway: %#v", err)
+	}
+
+	if eGW.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService != nil {
+		for _, natRule := range eGW.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
+			if natRule.ID == id {
+				return natRule, nil
+			}
+		}
+	}
+
+	return nil, ErrorEntityNotFound
+}
+
+// AddNATRuleAsync creates NAT rule and return task or err
+// Allows to assign specific network Org VDC or external. Old function AddNATPortMapping and
+// AddNATMapping assigns rule to first external network
+func (eGW *EdgeGateway) AddNATRuleAsync(ruleDetails NatRule) (Task, error) {
+	if !isValidProtocol(ruleDetails.Protocol) {
+		return Task{}, fmt.Errorf("provided protocol is not one of TCP, UDP, TCPUDP, ICMP, ANY")
+	}
+
+	if strings.ToUpper(ruleDetails.Protocol) == "ICMP" && !isValidIcmpSubType(ruleDetails.IcmpSubType) {
+		return Task{}, fmt.Errorf("provided icmp sub type is not correct")
+	}
+
+	currentEdgeConfig := eGW.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration
+
+	// Take care of the NAT service
+	newNatService := &types.NatService{}
+
+	if currentEdgeConfig.NatService == nil {
+		newNatService.IsEnabled = true
+	} else {
+		newNatService.IsEnabled = currentEdgeConfig.NatService.IsEnabled
+		newNatService.NatType = currentEdgeConfig.NatService.NatType
+		newNatService.Policy = currentEdgeConfig.NatService.Policy
+		newNatService.ExternalIP = currentEdgeConfig.NatService.ExternalIP
+		newNatService.NatRule = currentEdgeConfig.NatService.NatRule
+	}
+
+	//construct new rule
+	natRule := &types.NatRule{
+		RuleType:    ruleDetails.natType,
+		IsEnabled:   true,
+		Description: ruleDetails.Description,
+		GatewayNatRule: &types.GatewayNatRule{
+			Interface: &types.Reference{
+				HREF: ruleDetails.NetworkHref,
+			},
+			OriginalIP:     ruleDetails.ExternalIP,
+			OriginalPort:   ruleDetails.ExternalPort,
+			TranslatedIP:   ruleDetails.InternalIP,
+			TranslatedPort: ruleDetails.InternalPort,
+			Protocol:       ruleDetails.Protocol,
+			IcmpSubType:    ruleDetails.IcmpSubType,
+		},
+	}
+
+	newNatService.NatRule = append(newNatService.NatRule, natRule)
+	currentEdgeConfig.NatService = newNatService
+	newRules := &types.EdgeGatewayServiceConfiguration{
+		Xmlns:      types.XMLNamespaceVCloud,
+		NatService: newNatService,
+	}
+
+	egwConfigureHref, _ := url.ParseRequestURI(eGW.EdgeGateway.HREF)
+	egwConfigureHref.Path += "/action/configureServices"
+
+	// Return the task
+	return eGW.client.ExecuteTaskRequest(egwConfigureHref.String(), http.MethodPost,
+		"application/vnd.vmware.admin.edgeGatewayServiceConfiguration+xml", "error reconfiguring Edge Gateway: %s", newRules)
+}
+
+// Deprecated: Use eGW.AddSNATRule() or eGW.AddDNATRule()
 func (eGW *EdgeGateway) AddNATRule(network *types.OrgVDCNetwork, natType, externalIP, internalIP string) (Task, error) {
 	return eGW.AddNATPortMappingWithUplink(network, natType, externalIP, "any", internalIP, "any", "any", "")
 }
@@ -250,6 +561,7 @@ func isValidIcmpSubType(protocol string) bool {
 	return false
 }
 
+// Deprecated: Use eGW.AddNATFirewallRule()
 func (eGW *EdgeGateway) AddNATPortMappingWithUplink(network *types.OrgVDCNetwork, natType, externalIP, externalPort, internalIP, internalPort, protocol, icmpSubType string) (Task, error) {
 	// if a network is provided take it, otherwise find first uplink on the edge gateway
 	var uplinkRef string
