@@ -138,8 +138,8 @@ func resourceVcdSNATRead(d *schema.ResourceData, meta interface{}) error {
 	if nil != networkName && networkName.(string) != "" {
 		natRule, err := edgeGateway.FetchNatRule(d.Id())
 		if err != nil {
-			return err
 			d.SetId("")
+			return err
 		}
 
 		d.Set("description", natRule.Description)
