@@ -26,7 +26,7 @@ IMPROVEMENTS:
 
 BUG FIXES:
 
-* `resource/vcd_dnat and resource/vcd_snat` - delete works 100% if you use network_name and type [GH-282]
+* `resource/vcd_dnat and resource/vcd_snat` - fix resource destroy as it would still leave nat rule in edge gateway. Fix works if network_name and network_type is used. [GH-282]
 
 ## 2.3.0 (May 29, 2019)
 
