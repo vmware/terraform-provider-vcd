@@ -95,6 +95,8 @@ func TestAccVcdDNAT_WithExtNetw(t *testing.T) {
 	}
 
 	configText := templateFill(testAccCheckVcdDnatWithExtNetw, params)
+	params["FuncName"] = t.Name() + "-Update"
+	updateText := templateFill(testAccCheckVcdDnatWithExtNetwUpdate, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -109,7 +111,7 @@ func TestAccVcdDNAT_WithExtNetw(t *testing.T) {
 				Config:      configText,
 				ExpectError: regexp.MustCompile(`After applying this step and refreshing, the plan was not empty:`),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdDNATExtNetwExists("vcd_dnat."+dnatName, &e),
+					testAccCheckVcdDNATExists("vcd_dnat."+dnatName, &e),
 					resource.TestCheckResourceAttr(
 						"vcd_dnat."+dnatName, "network_name", testConfig.Networking.ExternalNetwork),
 					resource.TestCheckResourceAttr(
@@ -122,6 +124,27 @@ func TestAccVcdDNAT_WithExtNetw(t *testing.T) {
 						"vcd_dnat."+dnatName, "internal_ip", "10.10.102.60"),
 					resource.TestCheckResourceAttr(
 						"vcd_dnat."+dnatName, "translated_port", "77"),
+					resource.TestCheckResourceAttr(
+						"vcd_dnat."+dnatName, "description", "test run2"),
+				),
+			},
+			resource.TestStep{
+				Config:      updateText,
+				ExpectError: regexp.MustCompile(`After applying this step and refreshing, the plan was not empty:`),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdDNATExists("vcd_dnat."+dnatName, &e),
+					resource.TestCheckResourceAttr(
+						"vcd_dnat."+dnatName, "network_name", testConfig.Networking.ExternalNetwork),
+					resource.TestCheckResourceAttr(
+						"vcd_dnat."+dnatName, "network_type", "ext"),
+					resource.TestCheckResourceAttr(
+						"vcd_dnat."+dnatName, "external_ip", testConfig.Networking.ExternalIp),
+					resource.TestCheckResourceAttr(
+						"vcd_dnat."+dnatName, "port", "8888"),
+					resource.TestCheckResourceAttr(
+						"vcd_dnat."+dnatName, "internal_ip", "10.10.102.80"),
+					resource.TestCheckResourceAttr(
+						"vcd_dnat."+dnatName, "translated_port", "88"),
 					resource.TestCheckResourceAttr(
 						"vcd_dnat."+dnatName, "description", "test run2"),
 				),
@@ -158,46 +181,6 @@ func testAccCheckVcdDNATExists(n string, gateway *govcd.EdgeGateway) resource.Te
 
 		if nil == natRule {
 			return fmt.Errorf("rule isn't found")
-		}
-
-		*gateway = edgeGateway
-
-		return nil
-	}
-}
-
-func testAccCheckVcdDNATExtNetwExists(n string, gateway *govcd.EdgeGateway) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("not found: %s", n)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("no DNAT ID is set")
-		}
-
-		conn := testAccProvider.Meta().(*VCDClient)
-
-		gatewayName := rs.Primary.Attributes["edge_gateway"]
-
-		edgeGateway, err := conn.GetEdgeGateway(testConfig.VCD.Org, testConfig.VCD.Vdc, gatewayName)
-		if err != nil {
-			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
-		}
-
-		var found bool
-		for _, v := range edgeGateway.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
-			if v.RuleType == "DNAT" &&
-				v.GatewayNatRule.OriginalIP == testConfig.Networking.ExternalIp &&
-				v.GatewayNatRule.OriginalPort == "7777" &&
-				v.GatewayNatRule.TranslatedIP == "10.10.102.60" &&
-				v.GatewayNatRule.TranslatedPort == "77" {
-				found = true
-			}
-		}
-		if !found {
-			return fmt.Errorf("DNAT rule was not found")
 		}
 
 		*gateway = edgeGateway
@@ -407,6 +390,20 @@ resource "vcd_dnat" "{{.DnatName}}" {
   port            = 7777
   internal_ip     = "10.10.102.60"
   translated_port = 77
+  description     = "{{.Description}}"
+}
+`
+const testAccCheckVcdDnatWithExtNetwUpdate = `
+resource "vcd_dnat" "{{.DnatName}}" {
+  org             = "{{.Org}}"
+  vdc             = "{{.Vdc}}"
+  network_name    = "{{.ExternalNetworkName}}"
+  network_type    = "ext"
+  edge_gateway    = "{{.EdgeGateway}}"
+  external_ip     = "{{.ExternalIp}}"
+  port            = 8888
+  internal_ip     = "10.10.102.80"
+  translated_port = 88
   description     = "{{.Description}}"
 }
 `
