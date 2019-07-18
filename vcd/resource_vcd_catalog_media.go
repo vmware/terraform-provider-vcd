@@ -70,7 +70,7 @@ func resourceVcdMediaCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
-	if err != nil || adminOrg == (govcd.AdminOrg{}) {
+	if err != nil {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 

@@ -152,7 +152,7 @@ func resourceToUserData(d *schema.ResourceData, meta interface{}) (*govcd.OrgUse
 	if orgName == "" {
 		return nil, nil, fmt.Errorf("missing org name")
 	}
-	adminOrg, err := govcd.GetAdminOrgByName(vcdClient.VCDClient, orgName)
+	adminOrg, err := vcdClient.VCDClient.GetAdminOrgByName(orgName)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -196,7 +196,7 @@ func resourceToUserData(d *schema.ResourceData, meta interface{}) (*govcd.OrgUse
 		}
 	}
 
-	return &userData, &adminOrg, nil
+	return &userData, adminOrg, nil
 }
 
 // Retrieve an OrgUser and an AdminOrg from the data in the resource.
@@ -212,12 +212,12 @@ func resourceToOrgUser(d *schema.ResourceData, meta interface{}) (*govcd.OrgUser
 		return nil, nil, fmt.Errorf("error retrieving org %s", d.Get("org").(string))
 	}
 	userName := d.Get("name").(string)
-	orgUser, err := adminOrg.FetchUserByName(userName, false)
+	orgUser, err := adminOrg.GetUserByName(userName, false)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return orgUser, &adminOrg, nil
+	return orgUser, adminOrg, nil
 }
 
 // Fills a ResourceData container with data retrieved from an OrgUser and an AdminOrg
@@ -353,17 +353,17 @@ func resourceVcdOrgUserImport(d *schema.ResourceData, meta interface{}) ([]*sche
 	orgName, userName := resourceURI[0], resourceURI[1]
 
 	vcdClient := meta.(*VCDClient)
-	adminOrg, err := vcdClient.GetAdminOrg(orgName)
-	if err != nil || adminOrg == (govcd.AdminOrg{}) {
+	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
+	if err != nil {
 		return nil, fmt.Errorf(errorRetrievingOrg, orgName)
 	}
 
-	user, err := adminOrg.FetchUserByName(userName, false)
+	user, err := adminOrg.GetUserByName(userName, false)
 	if err != nil {
 		return nil, govcd.ErrorEntityNotFound
 	}
 
-	err = setOrgUserData(d, user, &adminOrg)
+	err = setOrgUserData(d, user, adminOrg)
 	if err != nil {
 		return nil, err
 	}

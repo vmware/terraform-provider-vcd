@@ -113,7 +113,7 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 	if err != nil {
 		return err
 	}
-	if (org == govcd.Org{}) || org.Org.HREF == "" || org.Org.ID == "" || org.Org.Name == "" {
+	if org == nil {
 		return fmt.Errorf("no valid Organization named '%s' was found", orgName)
 	}
 	if (vdc == govcd.Vdc{}) || vdc.Vdc.HREF == "" || vdc.Vdc.ID == "" || vdc.Vdc.Name == "" {

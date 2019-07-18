@@ -82,7 +82,7 @@ func (eGW *EdgeGateway) ReadLBServiceMonitor(lbMonitorConfig *types.LBMonitor) (
 		if lbMonitorConfig.Name != "" && monitor.Name == lbMonitorConfig.Name {
 			// We found it by name. Let's verify if search ID was specified and it matches the lookup object
 			if lbMonitorConfig.ID != "" && monitor.ID != lbMonitorConfig.ID {
-				return nil, fmt.Errorf("load balancer monitor was found by name (%s), but it's ID (%s) does not match specified ID (%s)",
+				return nil, fmt.Errorf("load balancer monitor was found by name (%s), but its ID (%s) does not match specified ID (%s)",
 					monitor.Name, monitor.ID, lbMonitorConfig.ID)
 			}
 			return monitor, nil

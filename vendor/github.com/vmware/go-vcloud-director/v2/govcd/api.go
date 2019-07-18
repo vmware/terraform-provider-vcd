@@ -42,7 +42,8 @@ type Client struct {
 // if err == ErrorEntityNotFound {
 //    // do what is needed in case of not found
 // }
-var ErrorEntityNotFound = fmt.Errorf("entity not found")
+var errorEntityNotFoundMessage = "[ENF] entity not found"
+var ErrorEntityNotFound = fmt.Errorf(errorEntityNotFoundMessage)
 
 // Triggers for debugging functions that show requests and responses
 var debugShowRequestEnabled = os.Getenv("GOVCD_SHOW_REQ") != ""
@@ -108,6 +109,11 @@ func debugShowResponse(resp *http.Response, body []byte) {
 // }
 func IsNotFound(err error) bool {
 	return err != nil && err == ErrorEntityNotFound
+}
+
+// IncludesNotFound returns true if an error includes an ErrorEntityNotFound
+func IncludesNotFound(err error) bool {
+	return err != nil && strings.Contains(err.Error(), errorEntityNotFoundMessage)
 }
 
 // Function allow to pass complex values params which shouldn't be encoded like for queries. e.g. /query?filter=(name=foo)

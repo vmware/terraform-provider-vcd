@@ -80,7 +80,7 @@ func (eGW *EdgeGateway) ReadLBServerPool(lbPoolConfig *types.LBPool) (*types.LBP
 		if lbPoolConfig.Name != "" && pool.Name == lbPoolConfig.Name {
 			// We found it by name. Let's verify if search ID was specified and it matches the lookup object
 			if lbPoolConfig.ID != "" && pool.ID != lbPoolConfig.ID {
-				return nil, fmt.Errorf("load balancer server pool was found by name (%s), but it's ID (%s) does not match specified ID (%s)",
+				return nil, fmt.Errorf("load balancer server pool was found by name (%s), but its ID (%s) does not match specified ID (%s)",
 					pool.Name, pool.ID, lbPoolConfig.ID)
 			}
 			return pool, nil

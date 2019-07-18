@@ -30,7 +30,7 @@ type EdgeGatewayCreation struct {
 	DistributedRoutingEnabled  bool     // If advanced networking enabled, also enable distributed routing
 }
 
-// Creates an Organization based on settings, network, and org name.
+// Creates an Admin Organization based on settings, description, and org name.
 // The Organization created will have these settings specified in the
 // settings parameter. The settings variable is defined in types.go.
 // Method will fail unless user has an admin token.
@@ -51,6 +51,14 @@ func CreateOrg(vcdClient *VCDClient, name string, fullName string, description s
 		OrgSettings: settings,
 	}
 
+	// There is a bug in the settings of CanPublishCatalogs.
+	// If UseServerBootSequence is not set, CanPublishCatalogs is always false
+	// regardless of the value passed during creation.
+	if settings != nil {
+		if settings.OrgGeneralSettings != nil {
+			settings.OrgGeneralSettings.UseServerBootSequence = true
+		}
+	}
 	orgCreateHREF := vcdClient.Client.VCDHREF
 	orgCreateHREF.Path += "/admin/orgs"
 
@@ -69,7 +77,7 @@ func getBareEntityUuid(entityId string) (string, error) {
 	// Regular expression to match an ID:
 	//     3 strings (alphanumeric + "-") separated by a colon (:)
 	//     1 group of 8 hexadecimal digits
-	//     3 groups of 4 hexadecimal
+	//     3 groups of 4 hexadecimal digits
 	//     1 group of 12 hexadecimal digits
 	reGetID := regexp.MustCompile(`^[\w-]+:[\w-]+:[\w-]+:([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$`)
 	matchList := reGetID.FindAllStringSubmatch(entityId, -1)
@@ -80,6 +88,24 @@ func getBareEntityUuid(entityId string) (string, error) {
 	// [][]string{[]string{"urn:vcloud:catalog:97384890-180c-4563-b9b7-0dc50a2430b0", "97384890-180c-4563-b9b7-0dc50a2430b0"}}
 	if len(matchList) == 0 || len(matchList[0]) < 2 {
 		return "", fmt.Errorf("error extracting ID from '%s'", entityId)
+	}
+	return matchList[0][1], nil
+}
+
+// Returns the UUID part of an HREF
+// Similar to getBareEntityUuid, but tailored to HREF
+func getUuidFromHref(href string) (string, error) {
+	// Regular expression to match an ID:
+	//     1 string starting by 'https://' and ending with a '/',
+	//     followed by
+	//        1 group of 8 hexadecimal digits
+	//        3 groups of 4 hexadecimal digits
+	//        1 group of 12 hexadecimal digits
+	reGetID := regexp.MustCompile(`^https://.+/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$`)
+	matchList := reGetID.FindAllStringSubmatch(href, -1)
+
+	if len(matchList) == 0 || len(matchList[0]) < 2 {
+		return "", fmt.Errorf("error extracting UUID from '%s'", href)
 	}
 	return matchList[0][1], nil
 }
@@ -176,7 +202,7 @@ func CreateAndConfigureEdgeGatewayAsync(vcdClient *VCDClient, orgName, vdcName, 
 	if egwConfiguration.Name != egwName {
 		return Task{}, fmt.Errorf("name mismatch: '%s' used as parameter but '%s' in the configuration structure", egwName, egwConfiguration.Name)
 	}
-	adminOrg, err := GetAdminOrgByName(vcdClient, orgName)
+	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
 	if err != nil {
 		return Task{}, err
 	}
@@ -245,7 +271,7 @@ func createEdgeGateway(vcdClient *VCDClient, egwc EdgeGatewayCreation, egwConfig
 	}
 
 	// The edge gateway is created. Now we retrieve it from the server
-	org, err := GetAdminOrgByName(vcdClient, egwc.OrgName)
+	org, err := vcdClient.GetAdminOrgByName(egwc.OrgName)
 	if err != nil {
 		return EdgeGateway{}, err
 	}
@@ -274,6 +300,8 @@ func CreateEdgeGateway(vcdClient *VCDClient, egwc EdgeGatewayCreation) (EdgeGate
 // organization object. If no valid org is found, it returns an empty
 // org and no error. Otherwise it returns an error and an empty
 // Org object
+// DEPRECATED
+// Use vcdClient.GetOrgByName instead
 func GetOrgByName(vcdClient *VCDClient, orgName string) (Org, error) {
 	orgUrl, err := getOrgHREF(vcdClient, orgName)
 	if err != nil {
@@ -296,6 +324,8 @@ func GetOrgByName(vcdClient *VCDClient, orgName string) (Org, error) {
 // org and no error. Otherwise returns an empty AdminOrg
 // and an error.
 // API Documentation: https://code.vmware.com/apis/220/vcloud#/doc/doc/operations/GET-Organization-AdminView.html
+// DEPRECATED
+// Use vcdClient.GetAdminOrgByName instead
 func GetAdminOrgByName(vcdClient *VCDClient, orgName string) (AdminOrg, error) {
 	orgUrl, err := getOrgHREF(vcdClient, orgName)
 	if err != nil {
@@ -335,6 +365,37 @@ func getOrgHREF(vcdClient *VCDClient, orgName string) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("couldn't find org with name: %s. Please check Org name as it is case sensitive", orgName)
+}
+
+// Returns the HREF of the org from the org ID
+func getOrgHREFById(vcdClient *VCDClient, orgId string) (string, error) {
+	orgListHREF := vcdClient.Client.VCDHREF
+	orgListHREF.Path += "/org"
+
+	orgList := new(types.OrgList)
+
+	_, err := vcdClient.Client.ExecuteRequest(orgListHREF.String(), http.MethodGet,
+		"", "error retrieving org list: %s", nil, orgList)
+	if err != nil {
+		return "", err
+	}
+
+	orgUuid, err := getBareEntityUuid(orgId)
+	if err != nil {
+		return "", err
+	}
+	// Look for org UUID within OrgList
+	for _, org := range orgList.Org {
+		// ID in orgList is usually empty. We extract the UUID from HREF to make the comparison
+		uuidFromHref, err := getUuidFromHref(org.HREF)
+		if err != nil {
+			return "", err
+		}
+		if uuidFromHref == orgUuid {
+			return org.HREF, nil
+		}
+	}
+	return "", fmt.Errorf("couldn't find org with ID: %s", orgId)
 }
 
 // Find a list of Virtual Centers matching the filter parameter.
@@ -527,4 +588,174 @@ func QueryOrgVdcNetworkByName(vcdCli *VCDClient, name string) ([]*types.QueryRes
 	}
 
 	return results.Results.OrgVdcNetworkRecord, nil
+}
+
+// GetOrgByName finds an Organization by name
+// On success, returns a pointer to the Org structure and a nil error
+// On failure, returns a nil pointer and an error
+func (vcdClient *VCDClient) GetOrgByName(orgName string) (*Org, error) {
+	orgUrl, err := getOrgHREF(vcdClient, orgName)
+	if err != nil {
+		// Since this operation is a lookup from a list, we return the standard ErrorEntityNotFound
+		return nil, ErrorEntityNotFound
+	}
+	org := NewOrg(&vcdClient.Client)
+
+	_, err = vcdClient.Client.ExecuteRequest(orgUrl, http.MethodGet,
+		"", "error retrieving org list: %s", nil, org.Org)
+	if err != nil {
+		return nil, err
+	}
+
+	return org, nil
+}
+
+// GetOrgById finds an Organization by ID
+// On success, returns a pointer to the Org structure and a nil error
+// On failure, returns a nil pointer and an error
+func (vcdClient *VCDClient) GetOrgById(orgId string) (*Org, error) {
+	orgUrl, err := getOrgHREFById(vcdClient, orgId)
+	if err != nil {
+		// Since this operation is a lookup from a list, we return the standard ErrorEntityNotFound
+		return nil, ErrorEntityNotFound
+	}
+	org := NewOrg(&vcdClient.Client)
+
+	_, err = vcdClient.Client.ExecuteRequest(orgUrl, http.MethodGet,
+		"", "error retrieving org list: %s", nil, org.Org)
+	if err != nil {
+		return nil, err
+	}
+
+	return org, nil
+}
+
+// GetOrgByNameOrId finds an Organization by name or ID
+// On success, returns a pointer to the Org structure and a nil error
+// On failure, returns a nil pointer and an error
+func (vcdClient *VCDClient) GetOrgByNameOrId(identifier string) (*Org, error) {
+
+	org, err := vcdClient.GetOrgById(identifier)
+	if err != nil {
+		org, err = vcdClient.GetOrgByName(identifier)
+	}
+	return org, err
+}
+
+// GetOrg finds an Organization by name or ID (in a structure)
+// On success, returns a pointer to the Admin Org structure and a nil error
+// On failure, returns a nil pointer and an error
+func (vcdClient *VCDClient) GetOrg(orgInput *types.Org) (*Org, error) {
+
+	if err := validateGetOrg(orgInput); err != nil {
+		return nil, err
+	}
+	if orgInput.ID != "" {
+		org, err := vcdClient.GetOrgById(orgInput.ID)
+		if err == nil {
+			return org, nil
+		}
+	}
+	return vcdClient.GetOrgByName(orgInput.Name)
+}
+
+// GetAdminOrgByName finds an Admin Organization by name
+// On success, returns a pointer to the Admin Org structure and a nil error
+// On failure, returns a nil pointer and an error
+func (vcdClient *VCDClient) GetAdminOrgByName(orgName string) (*AdminOrg, error) {
+	orgUrl, err := getOrgHREF(vcdClient, orgName)
+	if err != nil {
+		return nil, ErrorEntityNotFound
+	}
+	orgHREF := vcdClient.Client.VCDHREF
+	orgHREF.Path += "/admin/org/" + strings.Split(orgUrl, "/api/org/")[1]
+
+	adminOrg := NewAdminOrg(&vcdClient.Client)
+
+	_, err = vcdClient.Client.ExecuteRequest(orgHREF.String(), http.MethodGet,
+		"", "error retrieving org: %s", nil, adminOrg.AdminOrg)
+	if err != nil {
+		return nil, err
+	}
+
+	return adminOrg, nil
+}
+
+// GetAdminOrgById finds an Admin Organization by ID
+// On success, returns a pointer to the Admin Org structure and a nil error
+// On failure, returns a nil pointer and an error
+func (vcdClient *VCDClient) GetAdminOrgById(orgId string) (*AdminOrg, error) {
+	orgUrl, err := getOrgHREFById(vcdClient, orgId)
+	if err != nil {
+		return nil, ErrorEntityNotFound
+	}
+	orgHREF := vcdClient.Client.VCDHREF
+	orgHREF.Path += "/admin/org/" + strings.Split(orgUrl, "/api/org/")[1]
+
+	adminOrg := NewAdminOrg(&vcdClient.Client)
+
+	_, err = vcdClient.Client.ExecuteRequest(orgHREF.String(), http.MethodGet,
+		"", "error retrieving org: %s", nil, adminOrg.AdminOrg)
+	if err != nil {
+		return nil, err
+	}
+
+	return adminOrg, nil
+}
+
+// GetAdminOrgByNameOrId finds an Admin Organization by name or ID
+// On success, returns a pointer to the Admin Org structure and a nil error
+// On failure, returns a nil pointer and an error
+func (vcdClient *VCDClient) GetAdminOrgByNameOrId(identifier string) (*AdminOrg, error) {
+
+	adminOrg, err := vcdClient.GetAdminOrgById(identifier)
+	if err != nil {
+		adminOrg, err = vcdClient.GetAdminOrgByName(identifier)
+	}
+	return adminOrg, err
+}
+
+// GetAdminOrg finds an Admin Organization by name or ID (in a structure)
+// On success, returns a pointer to the Admin Org structure and a nil error
+// On failure, returns a nil pointer and an error
+func (vcdClient *VCDClient) GetAdminOrg(orgInput *types.AdminOrg) (*AdminOrg, error) {
+
+	if err := validateGetAdminOrg(orgInput); err != nil {
+		return nil, err
+	}
+	if orgInput.ID != "" {
+		org, err := vcdClient.GetAdminOrgById(orgInput.ID)
+		if err == nil {
+			return org, nil
+		}
+	}
+	return vcdClient.GetAdminOrgByName(orgInput.Name)
+}
+
+// Validates an Admin Org used for GetAdminOrg, making sure
+// that at least one searching field is filled.
+func validateGetAdminOrg(org *types.AdminOrg) error {
+
+	if org == nil {
+		return fmt.Errorf("nil input for AdminOrg")
+	}
+
+	if org.Name == "" && org.ID == "" {
+		return fmt.Errorf("at least one of `ID` or `Name` must be filled in the AdminOrg structure")
+	}
+	return nil
+}
+
+// Validates an Org used for GetOrg, making sure
+// that at least one searching field is filled.
+func validateGetOrg(org *types.Org) error {
+
+	if org == nil {
+		return fmt.Errorf("nil input for Org")
+	}
+
+	if org.Name == "" && org.ID == "" {
+		return fmt.Errorf("at least one of `ID` or `Name` must be filled in the Org structure")
+	}
+	return nil
 }

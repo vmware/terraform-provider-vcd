@@ -9,9 +9,9 @@ package vcd
 import (
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -27,7 +27,9 @@ func resourceOrg() *schema.Resource {
 		Read:   resourceOrgRead,
 		Update: resourceOrgUpdate,
 		Delete: resourceOrgDelete,
-
+		Importer: &schema.ResourceImporter{
+			State: resourceVcdOrgImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
@@ -39,7 +41,6 @@ func resourceOrg() *schema.Resource {
 				Required: true,
 				ForceNew: false,
 			},
-
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -53,16 +54,18 @@ func resourceOrg() *schema.Resource {
 				Description: "True if this organization is enabled (allows login and all other operations).",
 			},
 			"deployed_vm_quota": &schema.Schema{
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Default:     -1,
-				Description: "Maximum number of virtual machines that can be deployed simultaneously by a member of this organization.",
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Default:      0,
+				ValidateFunc: validation.IntAtLeast(0),
+				Description:  "Maximum number of virtual machines that can be deployed simultaneously by a member of this organization. (0 = unlimited)",
 			},
 			"stored_vm_quota": &schema.Schema{
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Default:     -1,
-				Description: "Maximum number of virtual machines in vApps or vApp templates that can be stored in an undeployed state by a member of this organization.",
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Default:      0,
+				ValidateFunc: validation.IntAtLeast(0),
+				Description:  "Maximum number of virtual machines in vApps or vApp templates that can be stored in an undeployed state by a member of this organization. (0 = unlimited)",
 			},
 			"can_publish_catalogs": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -70,7 +73,6 @@ func resourceOrg() *schema.Resource {
 				Default:     true,
 				Description: "True if this organization is allowed to share catalogs.",
 			},
-			// "use_server_boot_sequence" was removed, as the docs definition is "This value is ignored."
 			"delay_after_power_on_seconds": &schema.Schema{
 				Type:        schema.TypeInt,
 				Optional:    true,
@@ -93,12 +95,13 @@ func resourceOrg() *schema.Resource {
 }
 
 // creates an organization based on defined resource
-// need to add vdc and network support
 func resourceOrgCreate(d *schema.ResourceData, m interface{}) error {
 	vcdClient := m.(*VCDClient)
 
-	orgName := d.Get("name").(string)
-	fullName := d.Get("full_name").(string)
+	orgName, fullName, err := getOrgNames(d)
+	if err != nil {
+		return err
+	}
 	isEnabled := d.Get("is_enabled").(bool)
 	description := d.Get("description").(string)
 
@@ -112,20 +115,28 @@ func resourceOrgCreate(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("error creating Org: %#v", err)
 	}
 
-	log.Printf("Org %s Created with id: %s", orgName, task.Task.ID[15:])
-	d.SetId(task.Task.ID[15:])
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		log.Printf("Error running Org creation task: %s", err)
+		return fmt.Errorf("error running Org creation task: %s", err)
+	}
+
+	org, err := vcdClient.GetAdminOrgByName(orgName)
+	if err != nil {
+		return fmt.Errorf("error retrieving Org %s after creation: %s", orgName, err)
+	}
+	log.Printf("Org %s created with id: %s", orgName, org.AdminOrg.ID)
+
+	d.SetId(org.AdminOrg.ID)
 	return nil
 }
 
 func getSettings(d *schema.ResourceData) *types.OrgSettings {
 	settings := &types.OrgSettings{}
 	General := &types.OrgGeneralSettings{}
-	if d.Get("deployed_vm_quota").(int) != -1 {
-		General.DeployedVMQuota = d.Get("deployed_vm_quota").(int)
-	}
-	if d.Get("stored_vm_quota").(int) != -1 {
-		General.StoredVMQuota = d.Get("stored_vm_quota").(int)
-	}
+
+	General.DeployedVMQuota = d.Get("deployed_vm_quota").(int)
+	General.StoredVMQuota = d.Get("stored_vm_quota").(int)
 
 	delay, ok := d.GetOk("delay_after_power_on_seconds")
 	if ok {
@@ -148,8 +159,8 @@ func resourceOrgDelete(d *schema.ResourceData, m interface{}) error {
 
 	//fetches org
 	log.Printf("Reading Org with id %s", d.State().ID)
-	org, err := govcd.GetAdminOrgByName(vcdClient.VCDClient, d.Get("name").(string))
-	if err != nil || org == (govcd.AdminOrg{}) {
+	org, err := vcdClient.VCDClient.GetAdminOrgByName(d.Get("name").(string))
+	if err != nil {
 		return fmt.Errorf("error fetching Org: %s", d.Get("name").(string))
 	}
 
@@ -171,51 +182,120 @@ func resourceOrgUpdate(d *schema.ResourceData, m interface{}) error {
 
 	vcdClient := m.(*VCDClient)
 
-	orgName := d.Get("name").(string)
-	oldOrgFullNameRaw, newOrgFullNameRaw := d.GetChange("full_name")
-	oldOrgFullName := oldOrgFullNameRaw.(string)
-	newOrgFullName := newOrgFullNameRaw.(string)
-
-	if !strings.EqualFold(oldOrgFullName, newOrgFullName) {
-		return fmt.Errorf("__ERROR__ Not Updating org_full_name , API NOT IMPLEMENTED !!!!")
+	orgName, fullName, err := getOrgNames(d)
+	if err != nil {
+		return err
 	}
+	log.Printf("Reading Org with id %s", d.State().ID)
 
-	log.Printf("Reading Org WIth id %s", d.State().ID)
-
-	org, err := govcd.GetAdminOrgByName(vcdClient.VCDClient, d.Get("name").(string))
-
-	if err != nil || org == (govcd.AdminOrg{}) {
-		return fmt.Errorf("error fetching Org: %s", d.Get("name").(string))
+	adminOrg, err := vcdClient.VCDClient.GetAdminOrgByName(orgName)
+	if err != nil {
+		return fmt.Errorf("error fetching Org: %s", orgName)
 	}
 
 	settings := getSettings(d)
-	org.AdminOrg.Name = orgName
-	org.AdminOrg.OrgSettings.OrgGeneralSettings = settings.OrgGeneralSettings
+	adminOrg.AdminOrg.Name = orgName
+	adminOrg.AdminOrg.FullName = fullName
+	adminOrg.AdminOrg.Description = d.Get("description").(string)
+	adminOrg.AdminOrg.IsEnabled = d.Get("is_enabled").(bool)
+	adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings = settings.OrgGeneralSettings
 
 	log.Printf("Org with id %s found", d.State().ID)
-	_, err = org.Update()
+	task, err := adminOrg.Update()
 
 	if err != nil {
-		log.Printf("Error updating Org with id %s : %#v", d.State().ID, err)
-		return fmt.Errorf("error updating Org %#v", err)
+		log.Printf("Error updating Org with id %s : %s", d.State().ID, err)
+		return fmt.Errorf("error updating Org %s", err)
+	}
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		log.Printf("Error completing update of Org with id %s : %s", d.State().ID, err)
+		return fmt.Errorf("error completing update of Org %s", err)
 	}
 
 	log.Printf("Org with id %s updated", d.State().ID)
 	return nil
 }
 
+func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
+	err := d.Set("name", adminOrg.AdminOrg.Name)
+	if err != nil {
+		return err
+	}
+	err = d.Set("full_name", adminOrg.AdminOrg.FullName)
+	if err != nil {
+		return err
+	}
+	err = d.Set("description", adminOrg.AdminOrg.Description)
+	if err != nil {
+		return err
+	}
+	err = d.Set("is_enabled", adminOrg.AdminOrg.IsEnabled)
+	if err != nil {
+		return err
+	}
+	err = d.Set("deployed_vm_quota", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.DeployedVMQuota)
+	if err != nil {
+		return err
+	}
+	err = d.Set("stored_vm_quota", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.StoredVMQuota)
+	if err != nil {
+		return err
+	}
+	err = d.Set("can_publish_catalogs", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanPublishCatalogs)
+
+	return err
+}
+
+// Retrieves an Org resource from vCD
 func resourceOrgRead(d *schema.ResourceData, m interface{}) error {
 	vcdClient := m.(*VCDClient)
 
+	identifier := d.State().ID
 	log.Printf("Reading Org with id %s", d.State().ID)
-	org, err := govcd.GetAdminOrgByName(vcdClient.VCDClient, d.Get("name").(string))
+	adminOrg, err := vcdClient.VCDClient.GetAdminOrgByNameOrId(identifier)
 
-	if err != nil || org == (govcd.AdminOrg{}) {
-		log.Printf("Org with id %s not found. Setting ID to nothing", d.State().ID)
+	if err != nil {
+		log.Printf("Org with id %s not found. Setting ID to nothing", identifier)
 		d.SetId("")
 		return nil
 	}
-	log.Printf("Org with id %s found", d.State().ID)
-	return nil
+	log.Printf("Org with id %s found", identifier)
+	d.SetId(adminOrg.AdminOrg.ID)
+	return setOrgData(d, adminOrg)
+}
 
+// Imports an Org into Terraform state
+// This function task is to get the data from vCD and fill the resource data container
+// Expects the d.Id() to be a Org name
+//
+func resourceVcdOrgImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	orgName := d.Id()
+
+	vcdClient := meta.(*VCDClient)
+	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
+	if err != nil {
+		return nil, fmt.Errorf(errorRetrievingOrg, err)
+	}
+
+	err = setOrgData(d, adminOrg)
+
+	if err != nil {
+		return []*schema.ResourceData{}, err
+	}
+	return []*schema.ResourceData{d}, nil
+}
+
+// Returns name and full_name for an organization, making sure that they are not empty
+func getOrgNames(d *schema.ResourceData) (orgName string, fullName string, err error) {
+	orgName = d.Get("name").(string)
+	fullName = d.Get("full_name").(string)
+
+	if orgName == "" {
+		return "", "", fmt.Errorf(`the value for "name" cannot be empty`)
+	}
+	if fullName == "" {
+		return "", "", fmt.Errorf(`the value for "full_name" cannot be empty`)
+	}
+	return orgName, fullName, nil
 }

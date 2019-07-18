@@ -537,8 +537,8 @@ func createSuiteCatalogAndItem(config TestConfig) {
 		panic(err)
 	}
 
-	org, err := govcd.GetOrgByName(vcdClient, config.VCD.Org)
-	if err != nil || org == (govcd.Org{}) {
+	org, err := vcdClient.GetOrgByName(config.VCD.Org)
+	if err != nil {
 		panic(err)
 	}
 
@@ -668,8 +668,8 @@ func destroySuiteCatalogAndItem(config TestConfig) {
 		panic(err)
 	}
 
-	org, err := govcd.GetOrgByName(vcdClient, config.VCD.Org)
-	if err != nil || org == (govcd.Org{}) {
+	org, err := vcdClient.GetOrgByName(config.VCD.Org)
+	if err != nil {
 		panic(err)
 	}
 
