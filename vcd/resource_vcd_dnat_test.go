@@ -174,7 +174,7 @@ func testAccCheckVcdDNATExists(n string, gateway *govcd.EdgeGateway) resource.Te
 			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
-		natRule, err := edgeGateway.FetchNatRule(rs.Primary.ID)
+		natRule, err := edgeGateway.GetNatRule(rs.Primary.ID)
 		if err != nil {
 			return err
 		}

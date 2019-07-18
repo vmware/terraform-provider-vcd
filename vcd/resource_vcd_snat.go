@@ -136,7 +136,7 @@ func resourceVcdSNATRead(d *schema.ResourceData, meta interface{}) error {
 
 	networkName := d.Get("network_name")
 	if nil != networkName && networkName.(string) != "" {
-		natRule, err := edgeGateway.FetchNatRule(d.Id())
+		natRule, err := edgeGateway.GetNatRule(d.Id())
 		if err != nil {
 			d.SetId("")
 			return err
@@ -224,7 +224,7 @@ func resourceVcdSNATUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	natRule, err := edgeGateway.FetchNatRule(d.Id())
+	natRule, err := edgeGateway.GetNatRule(d.Id())
 	if err != nil {
 		log.Printf("Error: Nat rule isn't found")
 		d.SetId("")
