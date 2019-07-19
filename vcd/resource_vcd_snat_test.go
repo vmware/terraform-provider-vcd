@@ -55,8 +55,6 @@ func TestAccVcdSNAT_Basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
-				// TODO remove with Terraform 0.12 support
-				//ExpectError: regexp.MustCompile(`After applying this step and refreshing, the plan was not empty:`),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdSNATExists("vcd_snat."+snatName, &e),
 					resource.TestCheckResourceAttr(
@@ -69,8 +67,6 @@ func TestAccVcdSNAT_Basic(t *testing.T) {
 			},
 			resource.TestStep{
 				Config: updateText,
-				// TODO remove with Terraform 0.12 support
-				//ExpectError: regexp.MustCompile(`After applying this step and refreshing, the plan was not empty:`),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdSNATExists("vcd_snat."+snatName, &e),
 					resource.TestCheckResourceAttr(
@@ -185,8 +181,6 @@ func TestAccVcdSNAT_BackCompability(t *testing.T) {
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
-				// TODO remove with Terraform 0.12 support
-				//ExpectError: regexp.MustCompile(`After applying this step and refreshing, the plan was not empty:`),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdSNATExistsForBackCompability("vcd_snat."+snatName, &e),
 					resource.TestCheckResourceAttr(
