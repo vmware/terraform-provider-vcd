@@ -42,7 +42,7 @@ func NewEdgeGateway(cli *Client) *EdgeGateway {
 
 // Struct which covers NAT rule fields
 type NatRule struct {
-	natType      string
+	NatType      string
 	NetworkHref  string
 	ExternalIP   string
 	ExternalPort string
@@ -220,7 +220,7 @@ func (eGW *EdgeGateway) RemoveNATRule(id string) error {
 // Old functions RemoveNATPortMapping and RemoveNATMapping removed using rule details
 // and expected interface to be of external network type.
 func (eGW *EdgeGateway) RemoveNATRuleAsync(id string) (Task, error) {
-	if "" == id {
+	if id == "" {
 		return Task{}, fmt.Errorf("provided id is empty")
 	}
 
@@ -279,7 +279,7 @@ func (eGW *EdgeGateway) AddDNATRule(ruleDetails NatRule) (*types.NatRule, error)
 	originalDescription := ruleDetails.Description
 	ruleDetails.Description = mappingId
 
-	ruleDetails.natType = "DNAT"
+	ruleDetails.NatType = "DNAT"
 	task, err := eGW.AddNATRuleAsync(ruleDetails)
 	if err != nil {
 		return nil, fmt.Errorf("error creating DNAT rule: %#v", err)
@@ -328,7 +328,7 @@ func (eGW *EdgeGateway) AddSNATRule(networkHref, externalIP, internalIP, descrip
 		return nil, err
 	}
 
-	task, err := eGW.AddNATRuleAsync(NatRule{NetworkHref: networkHref, natType: "SNAT", ExternalIP: externalIP,
+	task, err := eGW.AddNATRuleAsync(NatRule{NetworkHref: networkHref, NatType: "SNAT", ExternalIP: externalIP,
 		ExternalPort: "any", InternalIP: internalIP, InternalPort: "any",
 		IcmpSubType: "", Protocol: "any", Description: mappingId})
 	if err != nil {
@@ -392,7 +392,7 @@ func (eGW *EdgeGateway) UpdateNatRule(natRule *types.NatRule) (*types.NatRule, e
 
 // UpdateNatRuleAsync updates NAT rule and returns task or error.
 func (eGW *EdgeGateway) UpdateNatRuleAsync(natRule *types.NatRule) (Task, error) {
-	if "" != natRule.GatewayNatRule.Protocol && !isValidProtocol(natRule.GatewayNatRule.Protocol) {
+	if natRule.GatewayNatRule.Protocol != "" && !isValidProtocol(natRule.GatewayNatRule.Protocol) {
 		return Task{}, fmt.Errorf("provided protocol is not one of TCP, UDP, TCPUDP, ICMP, ANY")
 	}
 
@@ -477,7 +477,7 @@ func (eGW *EdgeGateway) AddNATRuleAsync(ruleDetails NatRule) (Task, error) {
 
 	//construct new rule
 	natRule := &types.NatRule{
-		RuleType:    ruleDetails.natType,
+		RuleType:    ruleDetails.NatType,
 		IsEnabled:   true,
 		Description: ruleDetails.Description,
 		GatewayNatRule: &types.GatewayNatRule{
