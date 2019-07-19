@@ -11,6 +11,9 @@ description: |-
 Provides a vCloud Director DNAT resource. This can be used to create, modify,
 and delete destination NATs to map an external IP/port to an internal IP/port.
 
+!> **Warning:** When advanced edge gateway is used and rule is updated using UI, then Id mapping will be lost 
+and terraform won't find rule anymore and remove from state.  
+
 ## Example Usage
 
 ```hcl
@@ -56,8 +59,3 @@ The following arguments are supported:
 * `network_name` - (Optional; *v2.4+*) The name of the network on which to apply the SNAT. *`network_name` will be a required field in the next major version.*
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
-
-## NOTE
-
-When advanced edge gateway is used and rule is updated using UI, then Id mapping will be lost 
-and terraform won't find rule anymore. 

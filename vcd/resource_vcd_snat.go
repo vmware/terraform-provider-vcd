@@ -138,7 +138,7 @@ func resourceVcdSNATRead(d *schema.ResourceData, meta interface{}) error {
 	if nil != networkName && networkName.(string) != "" {
 		natRule, err := edgeGateway.GetNatRule(d.Id())
 		if err != nil {
-			log.Printf(" rule %s not found: %s. Removing from state.", d.Id(), err)
+			log.Printf("rule %s (stored in <tag> in Advanced GW case) not found: %s. Removing from state.", d.Id(), err)
 			d.SetId("")
 		}
 
