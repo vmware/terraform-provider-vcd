@@ -75,7 +75,7 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 
 	var natRule *types.NatRule
 
-	if "" != networkName && "org" == networkType {
+	if networkName != "" && networkType == "org" {
 		orgVdcNetwork, err := getOrgVdcNetwork(d, vcdClient, networkName)
 		if err != nil {
 			return fmt.Errorf("unable to find orgVdcNetwork: %s, err: %s", networkName, err)
@@ -86,7 +86,7 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 		if err != nil {
 			return fmt.Errorf("error creating SNAT rule: %#v", err)
 		}
-	} else if "" != networkName && "ext" == networkType {
+	} else if networkName != "" && networkType == "ext" {
 		externalNetwork, err := govcd.GetExternalNetwork(vcdClient.VCDClient, networkName)
 		if err != nil {
 			return fmt.Errorf("unable to find external network: %s, err: %s", networkName, err)
@@ -112,7 +112,7 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	if "" != networkName {
+	if networkName != "" {
 		d.SetId(natRule.ID)
 	} else {
 		// TODO remove when major release is done
@@ -129,7 +129,7 @@ func resourceVcdSNATRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	// Terraform refresh won't work if Rule was edit in advanced edge gateway UI. vCD API uses tag elements to map edge gtw Id's
+	// Terraform refresh won't work if Rule was edit in advanced edge gateway UI. vCD API uses tag elements to map edge gtw ID's
 	// and UI will reset the tag element on update.
 
 	var found bool
@@ -138,8 +138,8 @@ func resourceVcdSNATRead(d *schema.ResourceData, meta interface{}) error {
 	if nil != networkName && networkName.(string) != "" {
 		natRule, err := edgeGateway.GetNatRule(d.Id())
 		if err != nil {
+			log.Printf(" rule %s not found: %s. Removing from state.", d.Id(), err)
 			d.SetId("")
-			return err
 		}
 
 		d.Set("description", natRule.Description)
@@ -187,7 +187,7 @@ func resourceVcdSNATDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	if "" != d.Get("network_name").(string) {
+	if d.Get("network_name").(string) != "" {
 		err = edgeGateway.RemoveNATRule(d.Id())
 		if err != nil {
 			return fmt.Errorf("error deleting SNAT rule: %#v", err)
@@ -226,9 +226,8 @@ func resourceVcdSNATUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	natRule, err := edgeGateway.GetNatRule(d.Id())
 	if err != nil {
-		log.Printf("Error: Nat rule isn't found")
+		log.Printf(" rule %s not found: %s. Removing from state.", d.Id(), err)
 		d.SetId("")
-		return err
 	}
 
 	natRule.GatewayNatRule.OriginalIP = d.Get("external_ip").(string)
