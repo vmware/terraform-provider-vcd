@@ -129,7 +129,7 @@ func resourceVcdSNATRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	// Terraform refresh won't work if Rule was edit in advanced edge gateway UI. vCD API uses tag elements to map edge gtw ID's
+	// Terraform refresh won't work if Rule was edit in advanced edge gateway UI. vCD API uses tag elements to map edge gtw IDs
 	// and UI will reset the tag element on update.
 
 	var found bool
