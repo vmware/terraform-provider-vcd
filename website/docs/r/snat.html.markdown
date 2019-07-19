@@ -11,8 +11,7 @@ description: |-
 Provides a vCloud Director SNAT resource. This can be used to create, modify,
 and delete source NATs to allow vApps to send external traffic.
 
-!> **Warning:** When advanced edge gateway is used and rule is updated using UI, then Id mapping will be lost 
-and terraform won't find rule anymore and remove from state.  
+!> **Warning:** When advanced edge gateway is used and the rule is updated using UI, then Id mapping will be lost and terraform won't find the rule anymore and remove it from state.
 
 ## Example Usage
 
