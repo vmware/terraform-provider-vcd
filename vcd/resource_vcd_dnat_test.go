@@ -22,7 +22,7 @@ func TestAccVcdDNAT_WithOrgNetw(t *testing.T) {
 	}
 	var e govcd.EdgeGateway
 
-	var dnatName string = baseDnatName + "_WithOrgNetw"
+	var dnatName = baseDnatName + "_WithOrgNetw"
 	var params = StringMap{
 		"Org":               testConfig.VCD.Org,
 		"Vdc":               testConfig.VCD.Vdc,
@@ -78,7 +78,7 @@ func TestAccVcdDNAT_WithExtNetw(t *testing.T) {
 	}
 	var e govcd.EdgeGateway
 
-	var dnatName string = baseDnatName + "_WithExtNetw"
+	var dnatName = baseDnatName + "_WithExtNetw"
 	var params = StringMap{
 		"Org":                 testConfig.VCD.Org,
 		"Vdc":                 testConfig.VCD.Vdc,

@@ -202,16 +202,19 @@ func resourceVcdDNATRead(d *schema.ResourceData, meta interface{}) error {
 		orgVdcNetwork, _ := getOrgVdcNetwork(d, vcdClient, natRule.GatewayNatRule.Interface.Name)
 		if orgVdcNetwork != nil {
 			d.Set("network_type", "org")
-		} else {
-			externalNetwork, _ := govcd.GetExternalNetwork(vcdClient.VCDClient, natRule.GatewayNatRule.Interface.Name)
-			if externalNetwork != nil && externalNetwork != (&govcd.ExternalNetwork{}) {
-				d.Set("network_type", "ext")
-			} else {
-				return fmt.Errorf("didn't find external network or org VCD network with name: %s", natRule.GatewayNatRule.Interface.Name)
-			}
+			found = true
 		}
-
-		found = true
+		externalNetwork, extNetwErr := govcd.GetExternalNetwork(vcdClient.VCDClient, natRule.GatewayNatRule.Interface.Name)
+		if extNetwErr != nil && strings.Contains(extNetwErr.Error(), "could not find external network named") {
+			d.Set("network_type", "ext")
+			found = true
+		}
+		if orgVdcNetwork != nil && extNetwErr == nil {
+			return fmt.Errorf("find external network or org VCD network with same name: %s", natRule.GatewayNatRule.Interface.Name)
+		} else if orgVdcNetwork == nil && externalNetwork == (&govcd.ExternalNetwork{}) {
+			log.Printf("didn't find external network or org VCD network with name: %s", natRule.GatewayNatRule.Interface.Name)
+			found = false
+		}
 	} else {
 		// TODO remove when major release is done
 		for _, r := range edgeGateway.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
