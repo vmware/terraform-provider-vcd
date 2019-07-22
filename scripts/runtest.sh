@@ -92,13 +92,13 @@ function acceptance_test {
     if [ -n "$VERBOSE" ]
     then
         echo "# check for config file"
-        echo "TF_ACC=1 go test -tags '$tags' -v -timeout 90m ."
+        echo "TF_ACC=1 go test -tags '$tags' -v -timeout 120m ."
     fi
 
     if [ -z "$DRY_RUN" ]
     then
         check_for_config_file
-        TF_ACC=1 go test -tags "$tags" -v -timeout 90m .
+        TF_ACC=1 go test -tags "$tags" -v -timeout 120m .
     fi
 }
 
@@ -111,13 +111,13 @@ function multiple_test {
     if [ -n "$VERBOSE" ]
     then
         echo "# check for config file"
-        echo "TF_ACC=1 go test -v -timeout 90m -tags 'api multivm multinetwork' -run '$filter' ."
+        echo "TF_ACC=1 go test -v -timeout 120m -tags 'api multivm multinetwork' -run '$filter' ."
     fi
 
     if [ -z "$DRY_RUN" ]
     then
         check_for_config_file
-        TF_ACC=1 go test -v -timeout 90m -tags 'api multivm multinetwork' -run "$filter" .
+        TF_ACC=1 go test -v -timeout 120m -tags 'api multivm multinetwork' -run "$filter" .
     fi
 }
 
