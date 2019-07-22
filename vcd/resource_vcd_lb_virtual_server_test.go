@@ -25,12 +25,12 @@ func TestAccVcdLbVirtualServer(t *testing.T) {
 		"Tags":              "lb lbVirtualServer",
 	}
 
-	configText := templateFill(testAccVcdLbVirtualServer_Basic, params)
+	configText := templateFill(testAccVcdLbVirtualServer_step0, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
 
 	params["FuncName"] = t.Name() + "-step1"
-	configText1 := templateFill(testAccVcdLbVirtualServer_Empty, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+	configText2 := templateFill(testAccVcdLbVirtualServer_step2, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -79,26 +79,28 @@ func TestAccVcdLbVirtualServer(t *testing.T) {
 			},
 			// Simple check - without app profile, rule ids or server pool
 			resource.TestStep{
-				Config: configText1,
+				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_lb_virtual_server.http", "id", regexp.MustCompile(`^virtualServer-\d*$`)),
 					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "name", params["VirtualServerName"].(string)),
 					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "ip_address", params["EdgeGatewayIp"].(string)),
 					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "protocol", "http"),
-					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "port", "8888"),
-					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "app_rule_ids.#", "0"),
-					resource.TestCheckNoResourceAttr("vcd_lb_virtual_server.http", "app_profile_id"),
-					resource.TestCheckNoResourceAttr("vcd_lb_virtual_server.http", "server_pool_id"),
+					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "port", "8889"),
+					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "app_rule_ids.#", "1"),
+					resource.TestMatchResourceAttr("vcd_lb_virtual_server.http", "app_rule_ids.0", regexp.MustCompile(`^applicationRule-\d*$`)),
+					resource.TestMatchResourceAttr("vcd_lb_virtual_server.http", "server_pool_id", regexp.MustCompile(`^pool-\d*$`)),
+					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "app_profile_id", ""),
 
 					// Data source
 					resource.TestMatchResourceAttr("data.vcd_lb_virtual_server.http", "id", regexp.MustCompile(`^virtualServer-\d*$`)),
 					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "name", params["VirtualServerName"].(string)),
 					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "ip_address", params["EdgeGatewayIp"].(string)),
 					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "protocol", "http"),
-					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "port", "8888"),
-					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "app_rule_ids.#", "0"),
-					resource.TestCheckNoResourceAttr("data.vcd_lb_virtual_server.http", "app_profile_id"),
-					resource.TestCheckNoResourceAttr("data.vcd_lb_virtual_server.http", "server_pool_id"),
+					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "port", "8889"),
+					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "app_rule_ids.#", "1"),
+					resource.TestMatchResourceAttr("data.vcd_lb_virtual_server.http", "app_rule_ids.0", regexp.MustCompile(`^applicationRule-\d*$`)),
+					resource.TestMatchResourceAttr("data.vcd_lb_virtual_server.http", "server_pool_id", regexp.MustCompile(`^pool-\d*$`)),
+					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "app_profile_id", ""),
 				),
 			},
 		},
@@ -123,7 +125,7 @@ func testAccCheckVcdLbVirtualServerDestroy(virtualServerName string) resource.Te
 	}
 }
 
-const testAccVcdLbVirtualServer_Basic = `
+const testAccVcdLbVirtualServer_step0 = testAccVcdLbVirtualServer_prereqs + `
 resource "vcd_lb_virtual_server" "http" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
@@ -145,7 +147,32 @@ data "vcd_lb_virtual_server" "http" {
   edge_gateway = "{{.EdgeGateway}}"
   name         = "${vcd_lb_virtual_server.http.name}"
 }
+`
 
+const testAccVcdLbVirtualServer_step2 = testAccVcdLbVirtualServer_prereqs + `
+resource "vcd_lb_virtual_server" "http" {
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+
+  name       = "{{.VirtualServerName}}"
+  ip_address = "{{.EdgeGatewayIp}}"
+  protocol   = "http"
+  port       = 8889
+
+  server_pool_id = "${vcd_lb_server_pool.web-servers.id}"
+  app_rule_ids   = ["${vcd_lb_app_rule.redirect.id}"]
+}
+
+data "vcd_lb_virtual_server" "http" {
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  name         = "${vcd_lb_virtual_server.http.name}"
+}
+`
+
+const testAccVcdLbVirtualServer_prereqs = `
 # Prerequisites to make a working load balancer
 resource "vcd_lb_service_monitor" "monitor" {
   org          = "{{.Org}}"
@@ -227,25 +254,5 @@ resource "vcd_lb_app_rule" "language" {
 
   name   = "language"
   script = "acl hello payload(0,6) -m bin 48656c6c6f0a"
-}
-`
-
-const testAccVcdLbVirtualServer_Empty = `
-resource "vcd_lb_virtual_server" "http" {
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
-
-  name       = "{{.VirtualServerName}}"
-  ip_address = "{{.EdgeGatewayIp}}"
-  protocol   = "http"
-  port       = 8888
-}
-
-data "vcd_lb_virtual_server" "http" {
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
-  name         = "${vcd_lb_virtual_server.http.name}"
 }
 `
