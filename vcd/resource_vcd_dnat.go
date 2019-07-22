@@ -210,7 +210,7 @@ func resourceVcdDNATRead(d *schema.ResourceData, meta interface{}) error {
 			found = true
 		}
 		if orgVdcNetwork != nil && extNetwErr == nil {
-			return fmt.Errorf("find external network or org VCD network with same name: %s", natRule.GatewayNatRule.Interface.Name)
+			return fmt.Errorf("found external network or org VCD network with same name: %s", natRule.GatewayNatRule.Interface.Name)
 		} else if orgVdcNetwork == nil && externalNetwork == (&govcd.ExternalNetwork{}) {
 			log.Printf("didn't find external network or org VCD network with name: %s", natRule.GatewayNatRule.Interface.Name)
 			found = false
