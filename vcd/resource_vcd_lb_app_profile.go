@@ -23,25 +23,25 @@ func resourceVcdLBAppProfile() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "vCD organization in which the Application Profile is located",
+				Description: "vCD organization in which the LB Application Profile is located",
 			},
 			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "vCD virtual datacenter in which the Application Profile is located",
+				Description: "vCD virtual datacenter in which the LB Application Profile is located",
 			},
 			"edge_gateway": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Edge gateway name in which the Application Profile is located",
+				Description: "Edge gateway name in which the LB Application Profile is located",
 			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Unique Application Profile name",
+				Description: "Unique LB Application Profile name",
 			},
 			"type": &schema.Schema{
 				Type:         schema.TypeString,
@@ -123,12 +123,12 @@ func resourceVcdLBAppProfileCreate(d *schema.ResourceData, meta interface{}) err
 
 	LBProfile, err := getLBAppProfileType(d)
 	if err != nil {
-		return fmt.Errorf("unable to expand load balancer app profile: %s", err)
+		return fmt.Errorf("unable to create load balancer application profile type: %s", err)
 	}
 
 	createdPool, err := edgeGateway.CreateLBAppProfile(LBProfile)
 	if err != nil {
-		return fmt.Errorf("error creating new load balancer app profile: %s", err)
+		return fmt.Errorf("error creating new load balancer application profile: %s", err)
 	}
 
 	// We store the values once again because response include pool member IDs
@@ -151,7 +151,7 @@ func resourceVcdLBAppProfileRead(d *schema.ResourceData, meta interface{}) error
 	readLBProfile, err := edgeGateway.ReadLBAppProfileByID(d.Id())
 	if err != nil {
 		d.SetId("")
-		return fmt.Errorf("unable to find load balancer app profile with ID %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to find load balancer application profile with ID %s: %s", d.Id(), err)
 	}
 
 	return setLBAppProfileData(d, readLBProfile)
@@ -169,12 +169,12 @@ func resourceVcdLBAppProfileUpdate(d *schema.ResourceData, meta interface{}) err
 
 	updateLBProfileConfig, err := getLBAppProfileType(d)
 	if err != nil {
-		return fmt.Errorf("could not expand load balancer app profile for update: %s", err)
+		return fmt.Errorf("unable to create load balancer application profile type for update: %s", err)
 	}
 
 	updatedLBProfile, err := edgeGateway.UpdateLBAppProfile(updateLBProfileConfig)
 	if err != nil {
-		return fmt.Errorf("unable to update load balancer app profile with ID %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to update load balancer application profile with ID %s: %s", d.Id(), err)
 	}
 
 	if err := setLBAppProfileData(d, updatedLBProfile); err != nil {
@@ -196,7 +196,7 @@ func resourceVcdLBAppProfileDelete(d *schema.ResourceData, meta interface{}) err
 
 	err = edgeGateway.DeleteLBAppProfileByID(d.Id())
 	if err != nil {
-		return fmt.Errorf("error deleting load balancer app profile: %s", err)
+		return fmt.Errorf("error deleting load balancer application profile: %s", err)
 	}
 
 	d.SetId("")
@@ -224,7 +224,7 @@ func resourceVcdLBAppProfileImport(d *schema.ResourceData, meta interface{}) ([]
 
 	readLBProfile, err := edgeGateway.ReadLBAppProfileByName(appProfileName)
 	if err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer app profile with name %s: %s",
+		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer application profile with name %s: %s",
 			d.Id(), err)
 	}
 

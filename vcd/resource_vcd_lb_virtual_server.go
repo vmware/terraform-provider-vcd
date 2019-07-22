@@ -127,12 +127,7 @@ func resourceVcdLBVirtualServerCreate(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf("error creating new load balancer virtual server: %s", err)
 	}
 
-	// ToDo
-	// We store the values once again because response includes pool member IDs
-	// if err := setlBVirtualServerData(d, createdVirtualServer); err != nil {
-	// 	return err
-	// }
-	d.SetId(createdVirtualServer.ID)
+	d.SetId(createdVirtualServer.Id)
 	return nil
 }
 
@@ -144,7 +139,7 @@ func resourceVcdLBVirtualServerRead(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readVirtualServer, err := edgeGateway.ReadLBVirtualServerByID(d.Id())
+	readVirtualServer, err := edgeGateway.ReadLBVirtualServerById(d.Id())
 	if err != nil {
 		d.SetId("")
 		return fmt.Errorf("unable to find load balancer virtual server with ID %s: %s", d.Id(), err)
@@ -186,7 +181,7 @@ func resourceVcdLBVirtualServerDelete(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	err = edgeGateway.DeleteLBVirtualServerByID(d.Id())
+	err = edgeGateway.DeleteLBVirtualServerById(d.Id())
 	if err != nil {
 		return fmt.Errorf("error deleting load balancer virtual server: %s", err)
 	}
@@ -231,7 +226,7 @@ func resourceVcdLBVirtualServerImport(d *schema.ResourceData, meta interface{}) 
 	d.Set("edge_gateway", edgeName)
 	d.Set("name", virtualServerName)
 
-	d.SetId(readVirtualServer.ID)
+	d.SetId(readVirtualServer.Id)
 	return []*schema.ResourceData{d}, nil
 }
 

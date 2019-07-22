@@ -10,14 +10,14 @@ import (
 	"strings"
 )
 
-// extractNSXObjectIDfromPath parses proxied NSX API response Location header and
+// extractNSXObjectIDFromPath parses proxied NSX API response Location header and
 // extracts ID for newly created object from it. The object ID is the last element in path.
 // It expects the path to have at least one "/" to be a valid path and cleans up the trailing slash
 // if there is one.
 //
 // Sample locationPath from API: /network/edges/edge-3/loadbalancer/config/monitors/monitor-5
 // Expected ID to be returned: monitor-5
-func extractNSXObjectIDfromPath(locationPath string) (string, error) {
+func extractNSXObjectIDFromPath(locationPath string) (string, error) {
 	if locationPath == "" {
 		return "", fmt.Errorf("unable to get ID from empty path")
 	}

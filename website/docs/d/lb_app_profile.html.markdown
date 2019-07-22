@@ -41,4 +41,4 @@ The following arguments are supported:
 
 ## Attribute Reference
 
-All the attributes defined in `vcd_lb_app_profile` resource are be available.
+All the attributes defined in `vcd_lb_app_profile` resource are available.

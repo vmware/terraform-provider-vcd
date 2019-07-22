@@ -107,6 +107,6 @@ func datasourceVcdLbVirtualServerRead(d *schema.ResourceData, meta interface{}) 
 			d.Get("name").(string), err)
 	}
 
-	d.SetId(readLBVirtualServer.ID)
+	d.SetId(readLBVirtualServer.Id)
 	return setlBVirtualServerData(d, readLBVirtualServer)
 }

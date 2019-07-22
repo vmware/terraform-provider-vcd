@@ -23,25 +23,25 @@ func resourceVcdLBServerPool() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "vCD organization in which the Service Monitor is located",
+				Description: "vCD organization in which the LB Server Pool is located",
 			},
 			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "vCD virtual datacenter in which the Service Monitor is located",
+				Description: "vCD virtual datacenter in which the LB Server Pool is located",
 			},
 			"edge_gateway": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Edge gateway name in which the Server Pool is located",
+				Description: "Edge gateway name in which the LB Server Pool is located",
 			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Unique Server Pool name",
+				Description: "Unique LB Server Pool name",
 			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
@@ -151,7 +151,7 @@ func resourceVcdLBServerPoolCreate(d *schema.ResourceData, meta interface{}) err
 
 	LBPool, err := getLBPoolType(d)
 	if err != nil {
-		return fmt.Errorf("unable to expand load balancer server pool: %s", err)
+		return fmt.Errorf("unable to create load balancer server pool type: %s", err)
 	}
 
 	createdPool, err := edgeGateway.CreateLBServerPool(LBPool)
@@ -196,7 +196,7 @@ func resourceVcdLBServerPoolUpdate(d *schema.ResourceData, meta interface{}) err
 
 	updateLBPoolConfig, err := getLBPoolType(d)
 	if err != nil {
-		return fmt.Errorf("could not expand load balancer server pool for update: %s", err)
+		return fmt.Errorf("could not create load balancer server pool type for update: %s", err)
 	}
 
 	updatedLBPool, err := edgeGateway.UpdateLBServerPool(updateLBPoolConfig)
