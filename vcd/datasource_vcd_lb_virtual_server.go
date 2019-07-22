@@ -35,60 +35,61 @@ func datasourceVcdLbVirtualServer() *schema.Resource {
 			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Virtual server description",
+				Optional:    true,
+				Description: "Virtual Server description",
 			},
 			"enabled": &schema.Schema{
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "",
+				Description: "Defines if the virtual server is enabled",
 			},
 			"ip_address": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "",
+				Description: "IP address that the load balancer listens on",
 			},
 			"protocol": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "",
+				Description: "Protocol that the virtual server accepts",
 			},
 			"port": &schema.Schema{
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "",
+				Description: "Port number that the load balancer listens on",
 			},
 			"enable_acceleration": &schema.Schema{
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "",
+				Description: "Enable virtual server acceleration",
 			},
 			"connection_limit": &schema.Schema{
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "",
+				Description: "Maximum concurrent connections that the virtual server can process",
 			},
 			"connection_rate_limit": &schema.Schema{
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "",
-			},
-
-			"app_rule_id": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "",
+				Description: "Maximum incoming new connection requests per second",
 			},
 			"app_profile_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "",
+				Description: "Application profile ID to be associated with the virtual server",
 			},
-			// TODO - find out if there is a fallback pool option
 			"server_pool_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "",
+				Description: "The server pool that the load balancer will use",
+			},
+			"app_rule_ids": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "List of attached application rule IDs",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 		},
 	}

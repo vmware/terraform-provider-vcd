@@ -2,8 +2,9 @@
 ## apply-options -parallelism=1
 ## destroy-options -parallelism=1
 
-# Edge gateway load balancer configuration with all separate components
-# and their datasources.
+# Edge gateway load balancer configuration with all separate components and their datasources.
+# The below `component_count` variable is used to determine how many instances
+# of each resource or data source to create.
 
 # v2.4.0+
 
@@ -120,7 +121,7 @@ resource "vcd_lb_app_profile" "test" {
 	edge_gateway = "{{.EdgeGateway}}"
   
 	name           = "test-app-profile-${count.index}"
-	type           = "TCP"
+	type           = "tcp"
 }
 
 data "vcd_lb_app_profile" "test" {
@@ -140,7 +141,7 @@ resource "vcd_lb_app_rule" "test" {
   edge_gateway = "{{.EdgeGateway}}"
 
   name   = "test-app-profile-${count.index}"
-  script = ["acl hello payload(0,6) -m bin 48656c6c6f0a"]
+  script = "acl hello payload(0,6) -m bin 48656c6c6f0a"
 }
 
 data "vcd_lb_app_rule" "test" {
@@ -150,4 +151,31 @@ data "vcd_lb_app_rule" "test" {
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
   name         = "${vcd_lb_app_rule.test[count.index].name}"
+}
+
+
+resource "vcd_lb_virtual_server" "test" {
+  count = "${var.component_count}"
+
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+
+  name       = "test-vs-${count.index}"
+  ip_address = "{{.ExternalIp}}"
+  protocol   = "http"
+  port       = 19000 + count.index # 2 virtual servers cannot listen on the same port
+
+  app_profile_id = "${vcd_lb_app_profile.test[count.index].id}"
+  server_pool_id = "${vcd_lb_server_pool.server-pool[count.index].id}"
+  app_rule_ids   = ["${vcd_lb_app_rule.test[count.index].id}"]
+}
+
+data "vcd_lb_virtual_server" "test" {
+  count = "${var.component_count}"
+
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  name         = "${vcd_lb_virtual_server.test[count.index].name}"
 }
