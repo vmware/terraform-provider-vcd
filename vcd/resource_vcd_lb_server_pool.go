@@ -164,7 +164,7 @@ func resourceVcdLBServerPoolCreate(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 	d.SetId(createdPool.ID)
-	return nil
+	return resourceVcdLBServerPoolRead(d, meta)
 }
 
 func resourceVcdLBServerPoolRead(d *schema.ResourceData, meta interface{}) error {

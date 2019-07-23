@@ -31,11 +31,12 @@ func datasourceVcdLbVirtualServer() *schema.Resource {
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
+				ForceNew:    true,
 				Description: "Virtual Server name for lookup",
 			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
-				Optional:    true,
+				Computed:    true,
 				Description: "Virtual Server description",
 			},
 			"enabled": &schema.Schema{

@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_lb\_virtual\_server
 
-Provides a vCloud Director Edge Gateway Load Balancer Virtual Server resource. Adds an edge gateway
+Provides a vCloud Director edge gateway load balancer virtual server resource. Adds an edge gateway
 internal or uplink interface as a virtual server. A virtual server has a public IP address and services all incoming client requests. 
 
 ~> **Note:** To make load balancing work one must ensure that load balancing is enabled on edge gateway (edge gateway must be advanced).
@@ -20,7 +20,7 @@ API Guide. The API supports NSX 6.2, 6.3, and 6.4.
 
 Supported in provider *v2.4+*
 
-## Example Usage (HTTP Virtual Server)
+## Example Usage (HTTP virtual server)
 
 ```hcl
 provider "vcd" {
@@ -36,7 +36,7 @@ resource "vcd_lb_virtual_server" "http" {
   edge_gateway = "my-edge-gw"
   
   name       = "http-virtual-server"
-  ip_address = "1.1.1.1" # Edge Gateway uplink interface IP
+  ip_address = "1.1.1.1" # Edge gateway uplink interface IP
   protocol   = "http"    # Must be the same as specified in application profile
   port       = 80
   
@@ -55,8 +55,8 @@ when connected as sysadmin working across different organisations
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 * `edge_gateway` - (Required) The name of the edge gateway on which the virtual server is to be
 created
-* `name` - (Required) Virtual Server name
-* `description` - (Optional) Virtual Server description
+* `name` - (Required) Virtual server name
+* `description` - (Optional) Virtual server description
 * `enabled` - (Optional) Defines if the virtual server is enabled. Default `true`
 * `enable_acceleration` - (Optional) Defines if the virtual server uses acceleration. Default
 `false`

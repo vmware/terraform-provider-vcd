@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_lb\_virtual\_server
 
-Provides a vCloud Director Edge Gateway Load Balancer Virtual Server data source. Adds an edge gateway
+Provides a vCloud Director edge gateway load balancer virtual server data source. Adds an edge gateway
 internal or uplink interface as a virtual server. A virtual server has a public IP address and services all incoming client requests. 
 
 ~> **Note:** To make load balancing work one must ensure that load balancing is enabled on edge gateway (edge gateway must be advanced).

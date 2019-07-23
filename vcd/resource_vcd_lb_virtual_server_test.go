@@ -77,7 +77,6 @@ func TestAccVcdLbVirtualServer(t *testing.T) {
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdByOrgVdcEdge(testConfig, params["VirtualServerName"].(string)),
 			},
-			// Simple check - without app profile, rule ids or server pool
 			resource.TestStep{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(

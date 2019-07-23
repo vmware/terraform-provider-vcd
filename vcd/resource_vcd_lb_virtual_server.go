@@ -121,7 +121,7 @@ func resourceVcdLBVirtualServerCreate(d *schema.ResourceData, meta interface{}) 
 
 	lBVirtualServer, err := getLBVirtualServerType(d)
 	if err != nil {
-		return fmt.Errorf("unable to expand load balancer virtual server: %s", err)
+		return fmt.Errorf("unable to make load balancer virtual server query: %s", err)
 	}
 
 	createdVirtualServer, err := edgeGateway.CreateLBVirtualServer(lBVirtualServer)
@@ -162,7 +162,7 @@ func resourceVcdLBVirtualServerUpdate(d *schema.ResourceData, meta interface{}) 
 
 	updateVirtualServerConfig, err := getLBVirtualServerType(d)
 	if err != nil {
-		return fmt.Errorf("could not expand load balancer virtual server for update: %s", err)
+		return fmt.Errorf("could not create load balancer virtual server type for update: %s", err)
 	}
 
 	updatedVirtualServer, err := edgeGateway.UpdateLBVirtualServer(updateVirtualServerConfig)
@@ -236,14 +236,12 @@ func resourceVcdLBVirtualServerImport(d *schema.ResourceData, meta interface{}) 
 // for creating API requests
 func getLBVirtualServerType(d *schema.ResourceData) (*types.LBVirtualServer, error) {
 	lbVirtualServer := &types.LBVirtualServer{
-		Name:        d.Get("name").(string),
-		Description: d.Get("description").(string),
-		Enabled:     d.Get("enabled").(bool),
-		IpAddress:   d.Get("ip_address").(string),
-		Protocol:    d.Get("protocol").(string),
-		Port:        d.Get("port").(int),
-
-		// Optional fields
+		Name:                 d.Get("name").(string),
+		Description:          d.Get("description").(string),
+		Enabled:              d.Get("enabled").(bool),
+		IpAddress:            d.Get("ip_address").(string),
+		Protocol:             d.Get("protocol").(string),
+		Port:                 d.Get("port").(int),
 		AccelerationEnabled:  d.Get("enable_acceleration").(bool),
 		ConnectionLimit:      d.Get("connection_limit").(int),
 		ConnectionRateLimit:  d.Get("connection_rate_limit").(int),
@@ -272,8 +270,6 @@ func setlBVirtualServerData(d *schema.ResourceData, lBVirtualServer *types.LBVir
 	d.Set("ip_address", lBVirtualServer.IpAddress)
 	d.Set("protocol", lBVirtualServer.Protocol)
 	d.Set("port", lBVirtualServer.Port)
-
-	// Optional fields
 	d.Set("enable_acceleration", lBVirtualServer.AccelerationEnabled)
 	d.Set("connection_limit", lBVirtualServer.ConnectionLimit)
 	d.Set("connection_rate_limit", lBVirtualServer.ConnectionRateLimit)
