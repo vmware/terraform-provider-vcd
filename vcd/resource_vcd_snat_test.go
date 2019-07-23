@@ -13,6 +13,7 @@ import (
 
 var orgVdcNetworkNameForSnat = "TestAccVcdDNAT_BasicNetworkForSnat"
 var startIpAddress = "10.10.102.51"
+var updateIpAddress = "10.10.102.52"
 
 func TestAccVcdSNAT_Basic(t *testing.T) {
 	if testConfig.Networking.ExternalIp == "" {
@@ -33,11 +34,14 @@ func TestAccVcdSNAT_Basic(t *testing.T) {
 		"OrgVdcNetworkName": orgVdcNetworkNameForSnat,
 		"Gateway":           "10.10.102.1",
 		"StartIpAddress":    startIpAddress,
+		"UpdateIpAddress":   updateIpAddress,
 		"EndIpAddress":      "10.10.102.100",
 		"Tags":              "gateway",
 	}
 
 	configText := templateFill(testAccCheckVcdSnat_basic, params)
+	params["FuncName"] = t.Name() + "-Update"
+	updateText := templateFill(testAccCheckVcdSnat_update, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -51,8 +55,6 @@ func TestAccVcdSNAT_Basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
-				// TODO remove with Terraform 0.12 support
-				//ExpectError: regexp.MustCompile(`After applying this step and refreshing, the plan was not empty:`),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdSNATExists("vcd_snat."+snatName, &e),
 					resource.TestCheckResourceAttr(
@@ -61,6 +63,18 @@ func TestAccVcdSNAT_Basic(t *testing.T) {
 						"vcd_snat."+snatName, "external_ip", testConfig.Networking.ExternalIp),
 					resource.TestCheckResourceAttr(
 						"vcd_snat."+snatName, "internal_ip", startIpAddress),
+				),
+			},
+			resource.TestStep{
+				Config: updateText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdSNATExists("vcd_snat."+snatName, &e),
+					resource.TestCheckResourceAttr(
+						"vcd_snat."+snatName, "network_name", orgVdcNetworkNameForSnat),
+					resource.TestCheckResourceAttr(
+						"vcd_snat."+snatName, "external_ip", testConfig.Networking.ExternalIp),
+					resource.TestCheckResourceAttr(
+						"vcd_snat."+snatName, "internal_ip", updateIpAddress),
 				),
 			},
 		},
@@ -88,16 +102,13 @@ func testAccCheckVcdSNATExists(n string, gateway *govcd.EdgeGateway) resource.Te
 			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
 
-		var found bool
-		for _, v := range edgeGateway.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
-			if v.RuleType == "SNAT" && v.GatewayNatRule.Interface.Name == orgVdcNetworkNameForSnat &&
-				v.GatewayNatRule.OriginalIP == testConfig.Networking.ExternalIp &&
-				v.GatewayNatRule.TranslatedIP == startIpAddress {
-				found = true
-			}
+		natRule, err := edgeGateway.GetNatRule(rs.Primary.ID)
+		if err != nil {
+			return err
 		}
-		if !found {
-			return fmt.Errorf("SNAT rule was not found")
+
+		if nil == natRule {
+			return fmt.Errorf("rule isn't found")
 		}
 
 		*gateway = edgeGateway
@@ -170,8 +181,6 @@ func TestAccVcdSNAT_BackCompability(t *testing.T) {
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
-				// TODO remove with Terraform 0.12 support
-				//ExpectError: regexp.MustCompile(`After applying this step and refreshing, the plan was not empty:`),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdSNATExistsForBackCompability("vcd_snat."+snatName, &e),
 					resource.TestCheckResourceAttr(
@@ -279,6 +288,32 @@ resource "vcd_snat" "{{.SnatName}}" {
   network_type    = "org"
   external_ip  = "{{.ExternalIp}}"
   internal_ip  = "{{.StartIpAddress}}"
+  depends_on      = ["vcd_network_routed.{{.OrgVdcNetworkName}}"]
+}
+`
+
+const testAccCheckVcdSnat_update = `
+resource "vcd_network_routed" "{{.OrgVdcNetworkName}}" {
+  name         = "{{.OrgVdcNetworkName}}"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  gateway      = "{{.Gateway}}"
+
+  static_ip_pool {
+    start_address = "{{.StartIpAddress}}"
+    end_address   = "{{.EndIpAddress}}"
+  }
+}
+
+resource "vcd_snat" "{{.SnatName}}" {
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  network_name = "{{.OrgVdcNetworkName}}"
+  network_type    = "org"
+  external_ip  = "{{.ExternalIp}}"
+  internal_ip  = "{{.UpdateIpAddress}}"
   depends_on      = ["vcd_network_routed.{{.OrgVdcNetworkName}}"]
 }
 `
