@@ -23,13 +23,6 @@ Supported in provider *v2.4+*
 ## Example Usage 1 (HTTP virtual server)
 
 ```hcl
-provider "vcd" {
-  user     = "${var.admin_user}"
-  password = "${var.admin_password}"
-  org      = "System"
-  url      = "https://AcmeVcd/api"
-}
-
 resource "vcd_lb_virtual_server" "http" {
   org          = "my-org"
   vdc          = "my-org-vdc"
