@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/types"
 )
 
 func resourceVcdEdgeGateway() *schema.Resource {
@@ -78,6 +79,32 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				ForceNew:    true,
 				Description: "If advanced networking enabled, also enable distributed routing",
 			},
+			"lb_enabled": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Enable load balancing",
+			},
+			"lb_acceleration_enabled": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Enable load balancer acceleration",
+			},
+			"lb_logging_enabled": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				ForceNew:    true,
+				Description: "Enable logging",
+			},
+			"lb_loglevel": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "warning",
+				ValidateFunc: validateCase("lower"),
+				Description:  "Loglevel. Default 'warning'",
+			},
 		},
 	}
 }
@@ -146,6 +173,20 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("error creating edge gateway: %#v", err)
 	}
 
+	// Check if load balancing is used and alter settings
+	_, ok1 := d.GetOk("lb_enabled")
+	_, ok2 := d.GetOk("lb_acceleration_enabled")
+	_, ok3 := d.GetOk("lb_logging_enabled")
+	_, ok4 := d.GetOk("lb_loglevel")
+
+	if (ok1 || ok2 || ok3 || ok4) && d.Get("advanced").(bool) {
+		return fmt.Errorf("load balancing cannot be used when advanced networking is disabled")
+	} else {
+		if err := updateLoadBalancer(d, edge); err != nil {
+			return fmt.Errorf("unable to configure load balancer: %s", err)
+		}
+	}
+
 	d.SetId(edge.EdgeGateway.ID)
 	log.Printf("[TRACE] edge gateway created: %#v", edge.EdgeGateway.Name)
 	return resourceVcdEdgeGatewayRead(d, meta)
@@ -196,6 +237,71 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	//if err != nil {
 	//	return err
 	//}
+
+	return nil
+}
+
+// setLoadBalancerData is a convenience function to handle load balancer settings on edge gateway
+func setLoadBalancerData(d *schema.ResourceData, egw govcd.EdgeGateway) error {
+	lb, err := egw.GetLoadBalancer()
+	if err != nil {
+		return err
+	}
+
+	d.Set("lb_enabled", lb.Enabled)
+	d.Set("lb_acceleration_enabled", lb.AccelerationEnabled)
+	if lb.Logging != nil {
+		d.Set("lb_logging_enabled", lb.Logging.Enable)
+		d.Set("lb_loglevel", lb.Logging.LogLevel)
+	} else {
+		d.Set("lb_logging_enabled", false)
+		d.Set("lb_loglevel", "")
+	}
+
+	return nil
+}
+
+// updateLoadBalancer updates load balancer configuration
+func updateLoadBalancer(d *schema.ResourceData, egw govcd.EdgeGateway) error {
+
+	lb, err := egw.GetLoadBalancer()
+	if err != nil {
+		return err
+	}
+
+	var lbNeedsUpdate bool
+
+	if d.HasChange("lb_enabled") {
+		lb.Enabled = d.Get("lb_enabled").(bool)
+		lbNeedsUpdate = true
+	}
+
+	if d.HasChange("lb_acceleration_enabled") {
+		lb.AccelerationEnabled = d.Get("lb_acceleration_enabled").(bool)
+		lbNeedsUpdate = true
+	}
+
+	// Initialize `LoadBalancerLogging` field if we have change and it was empty
+	if lb.Logging == nil && (d.HasChange("lb_logging_enabled") || d.HasChange("lb_loglevel")) {
+		lb.Logging = &types.LoadBalancerLogging{}
+	}
+
+	if d.HasChange("lb_logging_enabled") {
+		lb.Logging.Enable = d.Get("lb_logging_enabled").(bool)
+		lbNeedsUpdate = true
+	}
+
+	if d.HasChange("lb_loglevel") {
+		lb.Logging.LogLevel = d.Get("lb_loglevel").(string)
+		lbNeedsUpdate = true
+	}
+
+	if lbNeedsUpdate {
+		if _, err := egw.UpdateLoadBalancerGlobal(lb); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -211,10 +317,16 @@ func resourceVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}) error 
 		return nil
 	}
 
-	err = setEdgeGatewayValues(d, edgeGateway)
+	if err := setEdgeGatewayValues(d, edgeGateway); err != nil {
+		return err
+	}
+
+	if err := setLoadBalancerData(d, edgeGateway); err != nil {
+		return err
+	}
 
 	log.Printf("[TRACE] edge gateway read completed: %#v", edgeGateway.EdgeGateway)
-	return err
+	return nil
 }
 
 // Deletes a edge gateway, optionally removing all objects in it as well
