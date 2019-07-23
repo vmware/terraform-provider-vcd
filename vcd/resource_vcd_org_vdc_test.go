@@ -315,6 +315,7 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
 `
 
 const testAccCheckVcdVdc_update = `
+# skip-binary-test: only for updates
 resource "vcd_org_vdc" "{{.VdcName}}" {
   name = "{{.VdcName}}"
   org  = "{{.OrgName}}"

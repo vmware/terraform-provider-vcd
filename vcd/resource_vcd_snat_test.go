@@ -293,6 +293,7 @@ resource "vcd_snat" "{{.SnatName}}" {
 `
 
 const testAccCheckVcdSnat_update = `
+# skip-binary-test: only for updates
 resource "vcd_network_routed" "{{.OrgVdcNetworkName}}" {
   name         = "{{.OrgVdcNetworkName}}"
   org          = "{{.Org}}"
