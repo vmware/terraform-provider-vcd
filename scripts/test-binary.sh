@@ -13,6 +13,14 @@ unset in_building
 operations=(init plan apply destroy)
 skipping_items=($build_script)
 
+if [ -f skip-files.txt ]
+then
+    for f in $(cat skip-files.txt)
+    do
+        skipping_items+=($f)
+    done
+fi
+
 function remove_item_from_skipping {
     item=$1
     new_array=()

@@ -394,6 +394,7 @@ resource "vcd_dnat" "{{.DnatName}}" {
 }
 `
 const testAccCheckVcdDnatWithExtNetwUpdate = `
+# skip-binary-test: only for updates
 resource "vcd_dnat" "{{.DnatName}}" {
   org             = "{{.Org}}"
   vdc             = "{{.Vdc}}"
