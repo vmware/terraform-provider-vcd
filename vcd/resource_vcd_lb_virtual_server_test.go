@@ -42,7 +42,7 @@ func TestAccVcdLbVirtualServer(t *testing.T) {
 		PreCheck:     func() { testAccPreCheck(t) },
 		CheckDestroy: testAccCheckVcdLbVirtualServerDestroy(params["VirtualServerName"].(string)),
 		Steps: []resource.TestStep{
-			resource.TestStep{
+			resource.TestStep{ // step 0
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_lb_virtual_server.http", "id", regexp.MustCompile(`^virtualServer-\d*$`)),
@@ -71,13 +71,13 @@ func TestAccVcdLbVirtualServer(t *testing.T) {
 			},
 
 			// Check that import works
-			resource.TestStep{
+			resource.TestStep{ // step 1
 				ResourceName:      "vcd_lb_virtual_server.virtual-server-import",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdByOrgVdcEdge(testConfig, params["VirtualServerName"].(string)),
 			},
-			resource.TestStep{
+			resource.TestStep{ // step 2
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_lb_virtual_server.http", "id", regexp.MustCompile(`^virtualServer-\d*$`)),
