@@ -20,7 +20,7 @@ API Guide. The API supports NSX 6.2, 6.3, and 6.4.
 
 Supported in provider *v2.4+*
 
-## Example Usage (HTTP virtual server)
+## Example Usage 1 (HTTP virtual server)
 
 ```hcl
 provider "vcd" {
@@ -43,6 +43,117 @@ resource "vcd_lb_virtual_server" "http" {
   app_profile_id = "${vcd_lb_app_profile.http.id}"
   server_pool_id = "${vcd_lb_server_pool.web-servers.id}"
   app_rule_ids   = ["${vcd_lb_app_rule.redirect.id}", "${vcd_lb_app_rule.language.id}"]
+}
+```
+
+## Example Usage 2 (Complete load balancer setup)
+```hcl
+variable "org" {
+  default = "my-org"
+}
+
+variable "vdc" {
+  default = "my-org-vdc"
+}
+
+variable "edge_gateway" {
+  default = "my-edge-gw"
+}
+
+variable "protocol" {
+  default = "http"
+}
+
+variable "edge_gateway_ip" {
+  default = "192.168.1.110"  # IP address of edge gateway uplink interface
+}
+
+resource "vcd_lb_virtual_server" "http" {
+  org          = "${var.org}"
+  vdc          = "${var.vdc}"
+  edge_gateway = "${var.edge_gateway}"
+
+  name       = "my-virtual-server"
+  ip_address = "${var.edge_gateway_ip}"
+  protocol   = "${var.protocol}"
+  port       = 8888
+
+  app_profile_id = "${vcd_lb_app_profile.http.id}"
+  server_pool_id = "${vcd_lb_server_pool.web-servers.id}"
+  app_rule_ids   = ["${vcd_lb_app_rule.redirect.id}"]
+}
+
+resource "vcd_lb_service_monitor" "monitor" {
+  org          = "${var.org}"
+  vdc          = "${var.vdc}"
+  edge_gateway = "${var.edge_gateway}"
+
+  name        = "http-monitor"
+  interval    = "5"
+  timeout     = "20"
+  max_retries = "3"
+  type        = "${var.protocol}"
+  method      = "GET"
+  url         = "/health"
+  send        = "{\"key\": \"value\"}"
+  extension = {
+    content-type = "application/json"
+    linespan     = ""
+  }
+}
+
+resource "vcd_lb_server_pool" "web-servers" {
+  org          = "${var.org}"
+  vdc          = "${var.vdc}"
+  edge_gateway = "${var.edge_gateway}"
+
+  name                 = "web-servers"
+  description          = "description"
+  algorithm            = "httpheader"
+  algorithm_parameters = "headerName=host"
+  enable_transparency  = "true"
+
+  monitor_id = "${vcd_lb_service_monitor.monitor.id}"
+
+  member {
+    condition       = "enabled"
+    name            = "member1"
+    ip_address      = "1.1.1.1"
+    port            = 8443
+    monitor_port    = 9000
+    weight          = 1
+    min_connections = 0
+    max_connections = 100
+  }
+
+  member {
+    condition       = "drain"
+    name            = "member2"
+    ip_address      = "2.2.2.2"
+    port            = 7000
+    monitor_port    = 4000
+    weight          = 2
+    min_connections = 6
+    max_connections = 8
+  }
+}
+
+resource "vcd_lb_app_profile" "http" {
+  org          = "${var.org}"
+  vdc          = "${var.vdc}"
+  edge_gateway = "${var.edge_gateway}"
+
+  name = "http-app-profile"
+  type = "${var.protocol}"
+}
+
+resource "vcd_lb_app_rule" "redirect" {
+  org          = "${var.org}"
+  vdc          = "${var.vdc}"
+  edge_gateway = "${var.edge_gateway}"
+
+  name   = "redirect"
+  script = "acl vmware_page url_beg / vmware redirect location https://www.vmware.com/ ifvmware_page"
 }
 ```
 
