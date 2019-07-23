@@ -11,7 +11,7 @@ then
 fi
 
 wanted=$1
-timeout=90m
+timeout=120m
 if [ -n "$VCD_TIMEOUT" ]
 then
     timeout=$VCD_TIMEOUT
