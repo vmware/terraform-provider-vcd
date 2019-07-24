@@ -372,6 +372,20 @@ func (client *Client) ExecuteRequestWithCustomError(pathURL, requestType, conten
 		return &http.Response{}, fmt.Errorf(errorMessage, err)
 	}
 
+	// read from resp.Body io.Reader for debug output if it has body
+	var bodyBytes []byte
+	if resp.Body != nil {
+		bodyBytes, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return &http.Response{}, fmt.Errorf("could not read response body: %s", err)
+		}
+		// Restore the io.ReadCloser to its original state with no-op closer
+		resp.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+	}
+
+	util.ProcessResponseOutput(util.FuncNameCallStack(), resp, string(bodyBytes))
+	debugShowResponse(resp, bodyBytes)
+
 	return resp, nil
 }
 

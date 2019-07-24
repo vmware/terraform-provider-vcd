@@ -3,7 +3,7 @@
 FEATURES:
 
 * **New Resource:** `vcd_lb_service_monitor`  Load Balancer Service Monitor - [GH-256]
-* **New Resource:** `vcd_edgegateway` creates and deletes edge gateways - [GH-262]
+* **New Resource:** `vcd_edgegateway` creates and deletes edge gateways, manages general load balancing settings - [GH-262, GH-]
 * **New Resource:** `vcd_lb_server_pool` Load Balancer Server Pool - [GH-268]
 * **New Resource:** `vcd_lb_app_profile` Load Balancer Application profile - [GH-274]
 * **New Resource:** `vcd_lb_app_rule` Load Balancer Application rule - [GH-278]

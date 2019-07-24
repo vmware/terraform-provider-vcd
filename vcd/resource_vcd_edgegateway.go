@@ -109,11 +109,6 @@ func resourceVcdEdgeGateway() *schema.Resource {
 func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[TRACE] edge gateway creation initiated")
 
-	// We use partial mode here because edge gateway creation and configuration consists of two
-	// parts (API calls) - creating edge gateway and configuring load balancer. If the second part
-	// fails we still want to persist state for the first part
-	d.Partial(true)
-
 	vcdClient := meta.(*VCDClient)
 
 	rawExternalNetworks := d.Get("external_networks").([]interface{})
@@ -173,11 +168,10 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		log.Printf("[DEBUG] Error creating edge gateway: %#v", err)
 		return fmt.Errorf("error creating edge gateway: %#v", err)
 	}
-	// Edge gateway creation succeeded therefore we can flush related fields now. Edge
-	// gateway is already created even if further process fails.
-	log.Printf("[TRACE] flushing partial edge gateway creation fields")
+	// Edge gateway creation succeeded therefore we save related fields now to preserve Id.
+	// Edge gateway is already created even if further process fails
+	log.Printf("[TRACE] flushing edge gateway creation fields")
 	err = setEdgeGatewayValues(d, edge)
-	setPartialEdgeGatewayValues(d)
 	if err != nil {
 		return err
 	}
@@ -195,19 +189,8 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 			return fmt.Errorf("unable to update general load balancer settings: %s", err)
 		}
 
-		// Load balancer configuration succeeded therefore we can flush related fields now
-		log.Printf("[TRACE] flushing partial edge gateway load balancer configuration")
-		err = setLoadBalancerData(d, edge)
-		setPartialLoadBalancerData(d)
-		if err != nil {
-			return err
-		}
-
 		log.Printf("[TRACE] edge gateway load balancer configured")
 	}
-
-	// We succeeded in all steps, disabling partial mode. This causes Terraform to save all fields again.
-	d.Partial(false)
 
 	d.SetId(edge.EdgeGateway.ID)
 	log.Printf("[TRACE] edge gateway created: %#v", edge.EdgeGateway.Name)
@@ -253,6 +236,7 @@ func resourceVcdEdgeGatewayUpdate(d *schema.ResourceData, meta interface{}) erro
 		return nil
 	}
 
+	// Reconfigure general load balancer parameters if any of the fields is set
 	if d.HasChange("lb_enabled") || d.HasChange("lb_acceleration_enabled") ||
 		d.HasChange("lb_logging_enabled") || d.HasChange("lb_loglevel") {
 		err := updateLoadBalancer(d, edgeGateway)
@@ -334,18 +318,6 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	return nil
 }
 
-// setPartialEdgeGatewayValues uses `d.SetPartial()` to flush edge gateway configuration in partial mode.
-// It flushes all values which are set in `setEdgeGatewayValues`
-func setPartialEdgeGatewayValues(d *schema.ResourceData) {
-	d.SetPartial("id")
-	d.SetPartial("name")
-	d.SetPartial("description")
-	d.SetPartial("configuration")
-	d.SetPartial("external_networks")
-	d.SetPartial("advanced")
-	d.SetPartial("ha_enabled")
-}
-
 // setLoadBalancerData is a convenience function to handle load balancer settings on edge gateway
 func setLoadBalancerData(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	lb, err := egw.GetLBGeneralParams()
@@ -359,15 +331,6 @@ func setLoadBalancerData(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	d.Set("lb_loglevel", lb.Logging.LogLevel)
 
 	return nil
-}
-
-// setPartialLoadBalancerData uses `d.SetPartial()` to flush edge gateway configuration in partial mode.
-// It flushes all values which are set in `setLoadBalancerData`
-func setPartialLoadBalancerData(d *schema.ResourceData) {
-	d.SetPartial("lb_enabled")
-	d.SetPartial("lb_acceleration_enabled")
-	d.SetPartial("lb_logging_enabled")
-	d.SetPartial("lb_loglevel")
 }
 
 // updateLoadBalancer updates general load balancer configuration

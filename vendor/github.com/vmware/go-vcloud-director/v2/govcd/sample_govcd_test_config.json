@@ -19,6 +19,9 @@
 		},
 		"catalog": {
 			"name": "mycat",
+			"//": "One item in the catalog. It will be used to compose test vApps. Some tests",
+			"//": "rely on it being Photon OS. It is is not Photon OS - the tests will be skipped",
+			
 			"catalogItem": "myitem",
 			"description": "my cat for loading",
 			"catalogItemDescription": "my item to create vapps"
@@ -60,6 +63,6 @@
   },
   "media": {
     "mediaPath": "../test-resources/test.iso",
-    "mediaName": "uploadedMediaName"
+    "mediaName": "uploadedMediaName",
   }
 }

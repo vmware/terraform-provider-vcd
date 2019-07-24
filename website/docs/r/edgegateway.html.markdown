@@ -17,6 +17,9 @@ Supported in provider *v2.4+*
 You must use `System Adminstrator` account in `provider` configuration
 and then provide `org` and `vdc` arguments for edge gateway to work.
 
+~> **Note:** To enable load balancing capabilities the edge gateway must be `advanced`. Refer to
+[official vCloud Director documentation](https://docs.vmware.com/en/vCloud-Director/9.7/com.vmware.vcloud.tenantportal.doc/GUID-7E082E77-B459-4CE7-806D-2769F7CB5624.html) for more information.
+
 ## Example Usage
 
 ```hcl
@@ -60,5 +63,17 @@ The following arguments are supported:
 * `advanced` - (Optional) True if the gateway uses advanced networking. Default is `true`.
 * `ha_enabled` - (Optional) Enable high availability on this edge gateway. Default is `false`.
 * `distributed_routing` - (Optional) If advanced networking enabled, also enable distributed routing. Default is `false`.
+* `lb_enabled` - (Optional) Enable load balancing. Default is `false`.
+* `lb_acceleration_enabled` - (Optional) Enable to configure the load balancer to use the faster L4
+engine rather than L7 engine. The L4 TCP VIP is processed before the edge gateway firewall so no 
+`allow` firewall rule is required. Default is `false`. **Note:** L7 VIPs for HTTP and HTTPS are
+processed after the firewall, so when Acceleration Enabled is not selected, an edge gateway firewall
+rule must exist to allow access to the L7 VIP for those protocols. When Acceleration Enabled is
+selected and the server pool is in non-transparent mode, an SNAT rule is added, so you must ensure
+that the firewall is enabled on the edge gateway.
+* `lb_logging_enabled` - (Optional) Enables the edge gateway load balancer to collect traffic logs.
+Default is `false`.
+* `lb_loglevel` - (Optional) Choose the severity of events to be logged. One of `emergency`,
+`alert`, `critical`, `error`, `warning`, `notice`, `info`, `debug`
 
 
