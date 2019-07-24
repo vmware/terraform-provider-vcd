@@ -106,9 +106,14 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"vcd_edgegateway."+edgeGatewayNameComplex, "default_gateway_network", newExternalNetworkVcd),
+					// No load balancer fields should appear in statefile if these fields are not used
+					resource.TestCheckNoResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_enabled"),
+					resource.TestCheckNoResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_acceleration_enabled"),
+					resource.TestCheckNoResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_logging_enabled"),
+					resource.TestCheckNoResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_loglevel"),
 				),
 			},
 		},

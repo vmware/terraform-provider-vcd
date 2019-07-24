@@ -6,14 +6,14 @@ import (
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
-	"github.com/vmware/go-vcloud-director/v2/types"
 )
 
 func resourceVcdEdgeGateway() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceVcdEdgeGatewayCreate,
-		Delete: resourceVcdEdgeGatewayDelete,
 		Read:   resourceVcdEdgeGatewayRead,
+		Update: resourceVcdEdgeGatewayUpdate,
+		Delete: resourceVcdEdgeGatewayDelete,
 
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
@@ -82,28 +82,24 @@ func resourceVcdEdgeGateway() *schema.Resource {
 			"lb_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     false,
 				Description: "Enable load balancing",
 			},
 			"lb_acceleration_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     false,
 				Description: "Enable load balancer acceleration",
 			},
 			"lb_logging_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     false,
-				ForceNew:    true,
-				Description: "Enable logging",
+				Description: "Enable load balancer logging",
 			},
 			"lb_loglevel": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
-				Default:      "warning",
 				ValidateFunc: validateCase("lower"),
-				Description:  "Loglevel. Default 'warning'",
+				Description: "Log level. One of 'emergency', 'alert', 'critical', 'error', " +
+					"'warning', 'notice', 'info', 'debug'",
 			},
 		},
 	}
@@ -112,6 +108,11 @@ func resourceVcdEdgeGateway() *schema.Resource {
 // Creates a new edge gateway from a resource definition
 func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[TRACE] edge gateway creation initiated")
+
+	// We use partial mode here because edge gateway creation and configuration consists of two
+	// parts (API calls) - creating edge gateway and configuring load balancer. If the second part
+	// fails we still want to persist state for the first part
+	d.Partial(true)
 
 	vcdClient := meta.(*VCDClient)
 
@@ -172,24 +173,116 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		log.Printf("[DEBUG] Error creating edge gateway: %#v", err)
 		return fmt.Errorf("error creating edge gateway: %#v", err)
 	}
-
-	// Check if load balancing is used and alter settings
-	_, ok1 := d.GetOk("lb_enabled")
-	_, ok2 := d.GetOk("lb_acceleration_enabled")
-	_, ok3 := d.GetOk("lb_logging_enabled")
-	_, ok4 := d.GetOk("lb_loglevel")
-
-	if (ok1 || ok2 || ok3 || ok4) && d.Get("advanced").(bool) {
-		return fmt.Errorf("load balancing cannot be used when advanced networking is disabled")
-	} else {
-		if err := updateLoadBalancer(d, edge); err != nil {
-			return fmt.Errorf("unable to configure load balancer: %s", err)
-		}
+	// Edge gateway creation succeeded therefore we can flush related fields now. Edge
+	// gateway is already created even if further process fails.
+	log.Printf("[TRACE] flushing partial edge gateway creation fields")
+	err = setEdgeGatewayValues(d, edge)
+	setPartialEdgeGatewayValues(d)
+	if err != nil {
+		return err
 	}
+
+	// Only perform general load balancer configuration if settings are set
+	if isEdgeGatewayLbConfigured(d) {
+		if !d.Get("advanced").(bool) {
+			return fmt.Errorf("load balancing cannot be used when advanced networking is disabled")
+		}
+
+		log.Printf("[TRACE] edge gateway load balancer configuration started")
+
+		err := updateLoadBalancer(d, edge)
+		if err != nil {
+			return fmt.Errorf("unable to update general load balancer settings: %s", err)
+		}
+
+		// Load balancer configuration succeeded therefore we can flush related fields now
+		log.Printf("[TRACE] flushing partial edge gateway load balancer configuration")
+		err = setLoadBalancerData(d, edge)
+		setPartialLoadBalancerData(d)
+		if err != nil {
+			return err
+		}
+
+		log.Printf("[TRACE] edge gateway load balancer configured")
+	}
+
+	// We succeeded in all steps, disabling partial mode. This causes Terraform to save all fields again.
+	d.Partial(false)
 
 	d.SetId(edge.EdgeGateway.ID)
 	log.Printf("[TRACE] edge gateway created: %#v", edge.EdgeGateway.Name)
 	return resourceVcdEdgeGatewayRead(d, meta)
+}
+
+// Fetches information about an existing edge gateway for a data definition
+func resourceVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}) error {
+	log.Printf("[TRACE] edge gateway read initiated")
+
+	vcdClient := meta.(*VCDClient)
+
+	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "name")
+	if err != nil {
+		d.SetId("")
+		return nil
+	}
+
+	if err := setEdgeGatewayValues(d, edgeGateway); err != nil {
+		return err
+	}
+
+	// Only read and set the statefile if the edge gateway is advanced
+	// and general lb settings are used
+	if isEdgeGatewayLbConfigured(d) && edgeGateway.HasAdvancedNetworking() {
+		if err := setLoadBalancerData(d, edgeGateway); err != nil {
+			return err
+		}
+	}
+
+	log.Printf("[TRACE] edge gateway read completed: %#v", edgeGateway.EdgeGateway)
+	return nil
+}
+
+// resourceVcdEdgeGatewayUpdate updates an edge gateway from a resource definition
+func resourceVcdEdgeGatewayUpdate(d *schema.ResourceData, meta interface{}) error {
+	vcdClient := meta.(*VCDClient)
+	vcdClient.lockEdgeGateway(d)
+	defer vcdClient.unlockEdgeGateway(d)
+
+	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "name")
+	if err != nil {
+		return nil
+	}
+
+	if d.HasChange("lb_enabled") || d.HasChange("lb_acceleration_enabled") ||
+		d.HasChange("lb_logging_enabled") || d.HasChange("lb_loglevel") {
+		err := updateLoadBalancer(d, edgeGateway)
+		if err != nil {
+			return err
+		}
+	}
+
+	return resourceVcdEdgeGatewayRead(d, meta)
+}
+
+// Deletes a edge gateway, optionally removing all objects in it as well
+func resourceVcdEdgeGatewayDelete(d *schema.ResourceData, meta interface{}) error {
+	log.Printf("[TRACE] edge gateway delete started")
+
+	vcdClient := meta.(*VCDClient)
+
+	vcdClient.lockEdgeGateway(d)
+	defer vcdClient.unlockEdgeGateway(d)
+
+	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "name")
+	if err != nil {
+		d.SetId("")
+		return fmt.Errorf("error fetching edge gateway details %#v", err)
+	}
+
+	err = edgeGateway.Delete(true, true)
+
+	log.Printf("[TRACE] edge gateway deletion completed\n")
+	return err
 }
 
 // Convenience function to fill edge gateway values from resource data
@@ -241,111 +334,62 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	return nil
 }
 
+// setPartialEdgeGatewayValues uses `d.SetPartial()` to flush edge gateway configuration in partial mode.
+// It flushes all values which are set in `setEdgeGatewayValues`
+func setPartialEdgeGatewayValues(d *schema.ResourceData) {
+	d.SetPartial("id")
+	d.SetPartial("name")
+	d.SetPartial("description")
+	d.SetPartial("configuration")
+	d.SetPartial("external_networks")
+	d.SetPartial("advanced")
+	d.SetPartial("ha_enabled")
+}
+
 // setLoadBalancerData is a convenience function to handle load balancer settings on edge gateway
 func setLoadBalancerData(d *schema.ResourceData, egw govcd.EdgeGateway) error {
-	lb, err := egw.GetLoadBalancer()
+	lb, err := egw.GetLBGeneralParams()
 	if err != nil {
-		return err
+		return fmt.Errorf("unable to read general load balancer settings: %s", err)
 	}
 
 	d.Set("lb_enabled", lb.Enabled)
 	d.Set("lb_acceleration_enabled", lb.AccelerationEnabled)
-	if lb.Logging != nil {
-		d.Set("lb_logging_enabled", lb.Logging.Enable)
-		d.Set("lb_loglevel", lb.Logging.LogLevel)
-	} else {
-		d.Set("lb_logging_enabled", false)
-		d.Set("lb_loglevel", "")
-	}
+	d.Set("lb_logging_enabled", lb.Logging.Enable)
+	d.Set("lb_loglevel", lb.Logging.LogLevel)
 
 	return nil
 }
 
-// updateLoadBalancer updates load balancer configuration
+// setPartialLoadBalancerData uses `d.SetPartial()` to flush edge gateway configuration in partial mode.
+// It flushes all values which are set in `setLoadBalancerData`
+func setPartialLoadBalancerData(d *schema.ResourceData) {
+	d.SetPartial("lb_enabled")
+	d.SetPartial("lb_acceleration_enabled")
+	d.SetPartial("lb_logging_enabled")
+	d.SetPartial("lb_loglevel")
+}
+
+// updateLoadBalancer updates general load balancer configuration
 func updateLoadBalancer(d *schema.ResourceData, egw govcd.EdgeGateway) error {
-
-	lb, err := egw.GetLoadBalancer()
+	lbEnabled := d.Get("lb_enabled").(bool)
+	lbAccelerationEnabled := d.Get("lb_acceleration_enabled").(bool)
+	lbLoggingEnabled := d.Get("lb_logging_enabled").(bool)
+	lbLogLevel := d.Get("lb_loglevel").(string)
+	_, err := egw.UpdateLBGeneralParams(lbEnabled, lbAccelerationEnabled, lbLoggingEnabled, lbLogLevel)
 	if err != nil {
-		return err
-	}
-
-	var lbNeedsUpdate bool
-
-	if d.HasChange("lb_enabled") {
-		lb.Enabled = d.Get("lb_enabled").(bool)
-		lbNeedsUpdate = true
-	}
-
-	if d.HasChange("lb_acceleration_enabled") {
-		lb.AccelerationEnabled = d.Get("lb_acceleration_enabled").(bool)
-		lbNeedsUpdate = true
-	}
-
-	// Initialize `LoadBalancerLogging` field if we have change and it was empty
-	if lb.Logging == nil && (d.HasChange("lb_logging_enabled") || d.HasChange("lb_loglevel")) {
-		lb.Logging = &types.LoadBalancerLogging{}
-	}
-
-	if d.HasChange("lb_logging_enabled") {
-		lb.Logging.Enable = d.Get("lb_logging_enabled").(bool)
-		lbNeedsUpdate = true
-	}
-
-	if d.HasChange("lb_loglevel") {
-		lb.Logging.LogLevel = d.Get("lb_loglevel").(string)
-		lbNeedsUpdate = true
-	}
-
-	if lbNeedsUpdate {
-		if _, err := egw.UpdateLoadBalancerGlobal(lb); err != nil {
-			return err
-		}
+		return fmt.Errorf("unable to update general load balancer settings: %s", err)
 	}
 
 	return nil
 }
 
-// Fetches information about an existing edge gateway for a data definition
-func resourceVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[TRACE] edge gateway read initiated")
+// isEdgeGatewayLbConfigured checks if any of load balancer related settings are set
+func isEdgeGatewayLbConfigured(d *schema.ResourceData) bool {
+	_, existsLbEnabled := d.GetOk("lb_enabled")
+	_, existsLbAccelerationEnabled := d.GetOk("lb_acceleration_enabled")
+	_, existsLbLoggingEnabled := d.GetOk("lb_logging_enabled")
+	_, existsLbLogLevel := d.GetOk("lb_loglevel")
 
-	vcdClient := meta.(*VCDClient)
-
-	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "name")
-	if err != nil {
-		d.SetId("")
-		return nil
-	}
-
-	if err := setEdgeGatewayValues(d, edgeGateway); err != nil {
-		return err
-	}
-
-	if err := setLoadBalancerData(d, edgeGateway); err != nil {
-		return err
-	}
-
-	log.Printf("[TRACE] edge gateway read completed: %#v", edgeGateway.EdgeGateway)
-	return nil
-}
-
-// Deletes a edge gateway, optionally removing all objects in it as well
-func resourceVcdEdgeGatewayDelete(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[TRACE] edge gateway delete started")
-
-	vcdClient := meta.(*VCDClient)
-
-	vcdClient.lockEdgeGateway(d)
-	defer vcdClient.unlockEdgeGateway(d)
-
-	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "name")
-	if err != nil {
-		d.SetId("")
-		return fmt.Errorf("error fetching edge gateway details %#v", err)
-	}
-
-	err = edgeGateway.Delete(true, true)
-
-	log.Printf("[TRACE] edge gateway deletion completed\n")
-	return err
+	return existsLbEnabled || existsLbAccelerationEnabled || existsLbLoggingEnabled || existsLbLogLevel
 }
