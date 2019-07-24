@@ -8,8 +8,10 @@
 
 # v2.4.0+
 
+# This variable defines how many copies of each component to create. It can easily be increased
+# if testing time is not an issue.
 variable "component_count" {
-  default = 10
+  default = 3
 }
 
 resource "vcd_lb_service_monitor" "test" {
