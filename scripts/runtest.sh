@@ -11,6 +11,11 @@ then
 fi
 
 wanted=$1
+timeout=120m
+if [ -n "$VCD_TIMEOUT" ]
+then
+    timeout=$VCD_TIMEOUT
+fi
 
 if [ -n "$DRY_RUN" ]
 then
@@ -92,13 +97,13 @@ function acceptance_test {
     if [ -n "$VERBOSE" ]
     then
         echo "# check for config file"
-        echo "TF_ACC=1 go test -tags '$tags' -v -timeout 120m ."
+        echo "TF_ACC=1 go test -tags '$tags' -v -timeout $timeout ."
     fi
 
     if [ -z "$DRY_RUN" ]
     then
         check_for_config_file
-        TF_ACC=1 go test -tags "$tags" -v -timeout 120m .
+        TF_ACC=1 go test -tags "$tags" -v -timeout $timeout .
     fi
 }
 
@@ -111,13 +116,13 @@ function multiple_test {
     if [ -n "$VERBOSE" ]
     then
         echo "# check for config file"
-        echo "TF_ACC=1 go test -v -timeout 120m -tags 'api multivm multinetwork' -run '$filter' ."
+        echo "TF_ACC=1 go test -v -timeout $timeout -tags 'api multivm multinetwork' -run '$filter' ."
     fi
 
     if [ -z "$DRY_RUN" ]
     then
         check_for_config_file
-        TF_ACC=1 go test -v -timeout 120m -tags 'api multivm multinetwork' -run "$filter" .
+        TF_ACC=1 go test -v -timeout $timeout -tags 'api multivm multinetwork' -run "$filter" .
     fi
 }
 
