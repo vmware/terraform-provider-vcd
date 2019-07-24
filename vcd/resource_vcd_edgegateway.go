@@ -81,25 +81,29 @@ func resourceVcdEdgeGateway() *schema.Resource {
 			},
 			"lb_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
+				Default:     false,
 				Optional:    true,
-				Description: "Enable load balancing",
+				Description: "Enable load balancing. (Disabled by default)",
 			},
 			"lb_acceleration_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
+				Default:     false,
 				Optional:    true,
-				Description: "Enable load balancer acceleration",
+				Description: "Enable load balancer acceleration. (Disabled by default)",
 			},
 			"lb_logging_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
+				Default:     false,
 				Optional:    true,
-				Description: "Enable load balancer logging",
+				Description: "Enable load balancer logging. (Disabled by default)",
 			},
 			"lb_loglevel": &schema.Schema{
 				Type:         schema.TypeString,
+				Default:      "info",
 				Optional:     true,
 				ValidateFunc: validateCase("lower"),
 				Description: "Log level. One of 'emergency', 'alert', 'critical', 'error', " +
-					"'warning', 'notice', 'info', 'debug'",
+					"'warning', 'notice', 'info', 'debug'. ('info' by default)",
 			},
 		},
 	}
@@ -177,11 +181,7 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	// Only perform general load balancer configuration if settings are set
-	if isEdgeGatewayLbConfigured(d) {
-		if !d.Get("advanced").(bool) {
-			return fmt.Errorf("load balancing cannot be used when advanced networking is disabled")
-		}
-
+	if d.Get("advanced").(bool) {
 		log.Printf("[TRACE] edge gateway load balancer configuration started")
 
 		err := updateLoadBalancer(d, edge)
@@ -214,8 +214,7 @@ func resourceVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	// Only read and set the statefile if the edge gateway is advanced
-	// and general lb settings are used
-	if isEdgeGatewayLbConfigured(d) && edgeGateway.HasAdvancedNetworking() {
+	if edgeGateway.HasAdvancedNetworking() {
 		if err := setLoadBalancerData(d, edgeGateway); err != nil {
 			return err
 		}
@@ -225,7 +224,7 @@ func resourceVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}) error 
 	return nil
 }
 
-// resourceVcdEdgeGatewayUpdate updates an edge gateway from a resource definition
+// resourceVcdEdgeGatewayUpdate updates general load balancer settings only at the moment
 func resourceVcdEdgeGatewayUpdate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockEdgeGateway(d)
@@ -236,13 +235,18 @@ func resourceVcdEdgeGatewayUpdate(d *schema.ResourceData, meta interface{}) erro
 		return nil
 	}
 
-	// Reconfigure general load balancer parameters if any of the fields is set
-	if d.HasChange("lb_enabled") || d.HasChange("lb_acceleration_enabled") ||
-		d.HasChange("lb_logging_enabled") || d.HasChange("lb_loglevel") {
+	// Reconfigure general load balancer parameters if edge gateway is advanced and any of the fields
+	// have changed
+	if edgeGateway.HasAdvancedNetworking() && (d.HasChange("lb_enabled") ||
+		d.HasChange("lb_acceleration_enabled") || d.HasChange("lb_logging_enabled") ||
+		d.HasChange("lb_loglevel")) {
 		err := updateLoadBalancer(d, edgeGateway)
 		if err != nil {
 			return err
 		}
+	} else {
+		_, _ = fmt.Fprint(GetTerraformStdout(), "WARNING: only advanced edge gateway supports "+
+			"load balancing \n")
 	}
 
 	return resourceVcdEdgeGatewayRead(d, meta)
@@ -345,14 +349,4 @@ func updateLoadBalancer(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	}
 
 	return nil
-}
-
-// isEdgeGatewayLbConfigured checks if any of load balancer related settings are set
-func isEdgeGatewayLbConfigured(d *schema.ResourceData) bool {
-	_, existsLbEnabled := d.GetOk("lb_enabled")
-	_, existsLbAccelerationEnabled := d.GetOk("lb_acceleration_enabled")
-	_, existsLbLoggingEnabled := d.GetOk("lb_logging_enabled")
-	_, existsLbLogLevel := d.GetOk("lb_loglevel")
-
-	return existsLbEnabled || existsLbAccelerationEnabled || existsLbLoggingEnabled || existsLbLogLevel
 }
