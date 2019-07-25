@@ -52,12 +52,15 @@ The following arguments are supported:
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 * `edge_gateway` - (Required) The name of the edge gateway on which the service monitor is to be created
 * `name` - (Required) Service Monitor name
-* `interval` - (Required) Interval in seconds at which a server is to be monitored using the specified Method.
-* `timeout` - (Required) Maximum time in seconds within which a response from the server must be received
-* `max_retries` - (Required) Number of times the specified monitoring Method must fail sequentially before the server is declared down
+* `interval` - (Optional) Interval in seconds at which a server is to be monitored using the specified Method.
+Defaults to 10
+* `timeout` - (Optional) Maximum time in seconds within which a response from the server must be received. Defaults to 15
+* `max_retries` - (Optional) Number of times the specified monitoring Method must fail sequentially before the server is
+declared down. Defaults to 3
 * `type` - (Required) Select the way in which you want to send the health check request to the server — `http`, `https`, 
 `tcp`, `icmp`, or `udp`. Depending on the type selected, the remaining attributes are allowed or not
-* `method` - (Optional) For types `http` and `https`. Select http method to be used to detect server status. One of OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, or CONNECT
+* `method` - (Optional) For types `http` and `https`. Select http method to be used to detect server status. One of
+OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, or CONNECT
 * `url` - (Optional) For types `http` and `https`. URL to be used in the server status request
 * `send` - (Optional) For types `http`,  `https`, and `udp`. The data to be sent.
 * `expected` - (Optional) For types `http` and `https`. String that the monitor expects to match in the status line of 

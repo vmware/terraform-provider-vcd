@@ -130,7 +130,7 @@ func resourceVcdLBVirtualServerCreate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	d.SetId(createdVirtualServer.Id)
-	return nil
+	return resourceVcdLBVirtualServerRead(d, meta)
 }
 
 func resourceVcdLBVirtualServerRead(d *schema.ResourceData, meta interface{}) error {

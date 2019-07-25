@@ -78,7 +78,7 @@ func resourceVcdLBAppRuleCreate(d *schema.ResourceData, meta interface{}) error 
 		return err
 	}
 	d.SetId(createdPool.Id)
-	return nil
+	return resourceVcdLBAppRuleRead(d, meta)
 }
 
 func resourceVcdLBAppRuleRead(d *schema.ResourceData, meta interface{}) error {

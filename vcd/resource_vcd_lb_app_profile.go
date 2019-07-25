@@ -137,7 +137,7 @@ func resourceVcdLBAppProfileCreate(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 	d.SetId(createdPool.Id)
-	return nil
+	return resourceVcdLBAppProfileRead(d, meta)
 }
 
 func resourceVcdLBAppProfileRead(d *schema.ResourceData, meta interface{}) error {

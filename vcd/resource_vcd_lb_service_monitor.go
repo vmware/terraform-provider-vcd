@@ -47,19 +47,19 @@ func resourceVcdLbServiceMonitor() *schema.Resource {
 				Type:        schema.TypeInt,
 				Default:     10,
 				Optional:    true,
-				Description: "Interval in seconds at which a server is to be monitored",
+				Description: "Interval in seconds at which a server is to be monitored (defaults to 10)",
 			},
 			"timeout": &schema.Schema{
 				Type:        schema.TypeInt,
 				Default:     15,
 				Optional:    true,
-				Description: "Maximum time in seconds within which a response from the server must be received",
+				Description: "Maximum time in seconds within which a response from the server must be received  (defaults to 15)",
 			},
 			"max_retries": &schema.Schema{
 				Type:        schema.TypeInt,
 				Default:     3,
 				Optional:    true,
-				Description: "Number of times the specified monitoring Method must fail sequentially before the server is declared down",
+				Description: "Number of times the specified monitoring Method must fail sequentially before the server is declared down  (defaults to 3)",
 			},
 			"type": &schema.Schema{
 				Type:         schema.TypeString,
@@ -150,7 +150,7 @@ func resourceVcdLbServiceMonitorCreate(d *schema.ResourceData, meta interface{})
 	}
 
 	d.SetId(createdMonitor.Id)
-	return nil
+	return resourceVcdLbServiceMonitorRead(d, meta)
 }
 
 func resourceVcdLbServiceMonitorRead(d *schema.ResourceData, meta interface{}) error {
