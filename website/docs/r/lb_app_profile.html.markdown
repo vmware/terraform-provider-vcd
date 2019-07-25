@@ -120,7 +120,7 @@ An existing load balancer application profile can be [imported][docs-import] int
 via supplying the full dot separated path for load balancer application profile. An example is
 below:
 
-[docs-import]: /docs/import/index.html
+[docs-import]: https://www.terraform.io/docs/import/
 
 ```
 terraform import vcd_lb_app_profile.imported my-org.my-org-vdc.my-edge-gw.my-lb-app-profile

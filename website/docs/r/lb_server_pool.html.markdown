@@ -161,7 +161,7 @@ configuration. [More information.](https://www.terraform.io/docs/import/)
 An existing load balancer server pool can be [imported][docs-import] into this resource
 via supplying the full dot separated path for load balancer service monitor. An example is below:
 
-[docs-import]: /docs/import/index.html
+[docs-import]: https://www.terraform.io/docs/import/
 
 ```
 terraform import vcd_lb_server_pool.imported my-org.my-org-vdc.my-edge-gw.my-lb-server-pool
