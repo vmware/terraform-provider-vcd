@@ -24,13 +24,6 @@ Supported in provider *v2.4+*
 ## Example Usage 1 (Simple Server Pool without Service Monitor)
 
 ```hcl
-provider "vcd" {
-  user     = "${var.admin_user}"
-  password = "${var.admin_password}"
-  org      = "System"
-  url      = "https://AcmeVcd/api"
-}
-
 resource "vcd_lb_server_pool" "web-servers" {
   org          = "my-org"
   vdc          = "my-org-vdc"
@@ -55,13 +48,6 @@ resource "vcd_lb_server_pool" "web-servers" {
 ## Example Usage 2 (Server Pool with multiple members, algorithm parameters, and existing Service Monitor as data source)
 
 ```hcl
-provider "vcd" {
-  user     = "${var.admin_user}"
-  password = "${var.admin_password}"
-  org      = "System"
-  url      = "https://AcmeVcd/api"
-}
-
 data "vcd_lb_service_monitor" "web-monitor" {
   org          = "my-org"
   vdc          = "my-org-vdc"

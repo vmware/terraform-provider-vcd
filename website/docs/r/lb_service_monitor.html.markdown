@@ -24,13 +24,6 @@ Supported in provider *v2.4+*
 ## Example Usage
 
 ```hcl
-provider "vcd" {
-  user     = "${var.admin_user}"
-  password = "${var.admin_password}"
-  org      = "System"
-  url      = "https://AcmeVcd/api"
-}
-
 resource "vcd_lb_service_monitor" "monitor" {
   org          = "my-org"
   vdc          = "my-org-vdc"

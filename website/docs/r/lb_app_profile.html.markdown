@@ -31,13 +31,6 @@ Supported in provider *v2.4+*
 ## Example Usage 1 (TCP Application Profile)
 
 ```hcl
-provider "vcd" {
-  user     = "${var.admin_user}"
-  password = "${var.admin_password}"
-  org      = "System"
-  url      = "https://AcmeVcd/api"
-}
-
 resource "vcd_lb_app_profile" "tcp" {
   org          = "my-org"
   vdc          = "my-org-vdc"
@@ -51,13 +44,6 @@ resource "vcd_lb_app_profile" "tcp" {
 ## Example Usage 2 (HTTP Cookie based Application Profile)
 
 ```hcl
-provider "vcd" {
-  user     = "${var.admin_user}"
-  password = "${var.admin_password}"
-  org      = "System"
-  url      = "https://AcmeVcd/api"
-}
-
 resource "vcd_lb_app_profile" "http" {
   org          = "my-org"
   vdc          = "my-org-vdc"
