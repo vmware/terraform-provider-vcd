@@ -103,7 +103,7 @@ func testAccCheckVcdLbServiceMonitorDestroy(serviceMonitorName string) resource.
 			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
-		monitor, err := edgeGateway.ReadLBServiceMonitor(&types.LbMonitor{Name: serviceMonitorName})
+		monitor, err := edgeGateway.GetLbServiceMonitor(&types.LbMonitor{Name: serviceMonitorName})
 		if !strings.Contains(err.Error(), govcd.ErrorEntityNotFound.Error()) || monitor != nil {
 			return fmt.Errorf("load balancer service monitor was not deleted: %s", err)
 		}

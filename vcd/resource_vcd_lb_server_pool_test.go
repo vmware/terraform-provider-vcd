@@ -226,7 +226,7 @@ func testAccCheckVcdLbServerPoolDestroy(serverPoolName string) resource.TestChec
 			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
-		monitor, err := edgeGateway.ReadLBServerPool(&types.LbPool{Name: serverPoolName})
+		monitor, err := edgeGateway.GetLbServerPool(&types.LbPool{Name: serverPoolName})
 		if !strings.Contains(err.Error(), govcd.ErrorEntityNotFound.Error()) || monitor != nil {
 			return fmt.Errorf("load balancer server pool was not deleted: %s", err)
 		}

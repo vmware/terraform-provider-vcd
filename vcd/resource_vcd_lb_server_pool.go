@@ -154,7 +154,7 @@ func resourceVcdLBServerPoolCreate(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("unable to create load balancer server pool type: %s", err)
 	}
 
-	createdPool, err := edgeGateway.CreateLBServerPool(LBPool)
+	createdPool, err := edgeGateway.CreateLbServerPool(LBPool)
 	if err != nil {
 		return fmt.Errorf("error creating new load balancer server pool: %s", err)
 	}
@@ -175,7 +175,7 @@ func resourceVcdLBServerPoolRead(d *schema.ResourceData, meta interface{}) error
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBPool, err := edgeGateway.ReadLBServerPoolByID(d.Id())
+	readLBPool, err := edgeGateway.GetLbServerPoolById(d.Id())
 	if err != nil {
 		d.SetId("")
 		return fmt.Errorf("unable to find load balancer server pool with Id %s: %s", d.Id(), err)
@@ -199,7 +199,7 @@ func resourceVcdLBServerPoolUpdate(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("could not create load balancer server pool type for update: %s", err)
 	}
 
-	updatedLBPool, err := edgeGateway.UpdateLBServerPool(updateLBPoolConfig)
+	updatedLBPool, err := edgeGateway.UpdateLbServerPool(updateLBPoolConfig)
 	if err != nil {
 		return fmt.Errorf("unable to update load balancer server pool with Id %s: %s", d.Id(), err)
 	}
@@ -217,7 +217,7 @@ func resourceVcdLBServerPoolDelete(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	err = edgeGateway.DeleteLBServerPoolByID(d.Id())
+	err = edgeGateway.DeleteLbServerPoolById(d.Id())
 	if err != nil {
 		return fmt.Errorf("error deleting load balancer server pool: %s", err)
 	}
@@ -245,7 +245,7 @@ func resourceVcdLBServerPoolImport(d *schema.ResourceData, meta interface{}) ([]
 		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBPool, err := edgeGateway.ReadLBServerPoolByName(poolName)
+	readLBPool, err := edgeGateway.GetLbServerPoolByName(poolName)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer server pool with name %s: %s", d.Id(), err)
 	}

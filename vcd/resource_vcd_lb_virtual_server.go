@@ -124,7 +124,7 @@ func resourceVcdLBVirtualServerCreate(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf("unable to make load balancer virtual server query: %s", err)
 	}
 
-	createdVirtualServer, err := edgeGateway.CreateLBVirtualServer(lBVirtualServer)
+	createdVirtualServer, err := edgeGateway.CreateLbVirtualServer(lBVirtualServer)
 	if err != nil {
 		return fmt.Errorf("error creating new load balancer virtual server: %s", err)
 	}
@@ -141,7 +141,7 @@ func resourceVcdLBVirtualServerRead(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readVirtualServer, err := edgeGateway.ReadLBVirtualServerById(d.Id())
+	readVirtualServer, err := edgeGateway.GetLbVirtualServerById(d.Id())
 	if err != nil {
 		d.SetId("")
 		return fmt.Errorf("unable to find load balancer virtual server with Id %s: %s", d.Id(), err)
@@ -165,7 +165,7 @@ func resourceVcdLBVirtualServerUpdate(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf("could not create load balancer virtual server type for update: %s", err)
 	}
 
-	updatedVirtualServer, err := edgeGateway.UpdateLBVirtualServer(updateVirtualServerConfig)
+	updatedVirtualServer, err := edgeGateway.UpdateLbVirtualServer(updateVirtualServerConfig)
 	if err != nil {
 		return fmt.Errorf("unable to update load balancer virtual server with Id %s: %s", d.Id(), err)
 	}
@@ -183,7 +183,7 @@ func resourceVcdLBVirtualServerDelete(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	err = edgeGateway.DeleteLBVirtualServerById(d.Id())
+	err = edgeGateway.DeleteLbVirtualServerById(d.Id())
 	if err != nil {
 		return fmt.Errorf("error deleting load balancer virtual server: %s", err)
 	}
@@ -217,7 +217,7 @@ func resourceVcdLBVirtualServerImport(d *schema.ResourceData, meta interface{}) 
 		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readVirtualServer, err := edgeGateway.ReadLBVirtualServerByName(virtualServerName)
+	readVirtualServer, err := edgeGateway.GetLbVirtualServerByName(virtualServerName)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer virtual server with name %s: %s",
 			d.Id(), err)

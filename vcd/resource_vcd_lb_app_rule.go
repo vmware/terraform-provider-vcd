@@ -68,7 +68,7 @@ func resourceVcdLBAppRuleCreate(d *schema.ResourceData, meta interface{}) error 
 		return fmt.Errorf("unable to create load balancer application rule type: %s", err)
 	}
 
-	createdPool, err := edgeGateway.CreateLBAppRule(LBRule)
+	createdPool, err := edgeGateway.CreateLbAppRule(LBRule)
 	if err != nil {
 		return fmt.Errorf("error creating new load balancer application rule: %s", err)
 	}
@@ -89,7 +89,7 @@ func resourceVcdLBAppRuleRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBRule, err := edgeGateway.ReadLBAppRuleByID(d.Id())
+	readLBRule, err := edgeGateway.GetLbAppRuleById(d.Id())
 	if err != nil {
 		d.SetId("")
 		return fmt.Errorf("unable to find load balancer application rule with Id %s: %s", d.Id(), err)
@@ -113,7 +113,7 @@ func resourceVcdLBAppRuleUpdate(d *schema.ResourceData, meta interface{}) error 
 		return fmt.Errorf("could not create load balancer application rule type for update: %s", err)
 	}
 
-	updatedLBRule, err := edgeGateway.UpdateLBAppRule(updateLBRuleConfig)
+	updatedLBRule, err := edgeGateway.UpdateLbAppRule(updateLBRuleConfig)
 	if err != nil {
 		return fmt.Errorf("unable to update load balancer application rule with Id %s: %s", d.Id(), err)
 	}
@@ -135,7 +135,7 @@ func resourceVcdLBAppRuleDelete(d *schema.ResourceData, meta interface{}) error 
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	err = edgeGateway.DeleteLBAppRuleByID(d.Id())
+	err = edgeGateway.DeleteLbAppRuleById(d.Id())
 	if err != nil {
 		return fmt.Errorf("error deleting load balancer application rule: %s", err)
 	}
@@ -169,7 +169,7 @@ func resourceVcdLBAppRuleImport(d *schema.ResourceData, meta interface{}) ([]*sc
 		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBRule, err := edgeGateway.ReadLBAppRuleByName(appRuleName)
+	readLBRule, err := edgeGateway.GetLbAppRuleByName(appRuleName)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer application rule with name %s: %s",
 			d.Id(), err)

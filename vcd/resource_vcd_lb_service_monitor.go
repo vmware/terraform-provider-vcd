@@ -144,7 +144,7 @@ func resourceVcdLbServiceMonitorCreate(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("unable to create load balancer service monitor type: %s", err)
 	}
 
-	createdMonitor, err := edgeGateway.CreateLBServiceMonitor(lbMonitor)
+	createdMonitor, err := edgeGateway.CreateLbServiceMonitor(lbMonitor)
 	if err != nil {
 		return fmt.Errorf("error creating new load balancer service monitor: %s", err)
 	}
@@ -161,7 +161,7 @@ func resourceVcdLbServiceMonitorRead(d *schema.ResourceData, meta interface{}) e
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBMonitor, err := edgeGateway.ReadLBServiceMonitorByID(d.Id())
+	readLBMonitor, err := edgeGateway.GetLbServiceMonitorById(d.Id())
 	if err != nil {
 		d.SetId("")
 		return fmt.Errorf("unable to find load balancer service monitor with Id %s: %s", d.Id(), err)
@@ -185,7 +185,7 @@ func resourceVcdLbServiceMonitorUpdate(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("could not create service monitor type for update: %s", err)
 	}
 
-	updatedLBMonitor, err := edgeGateway.UpdateLBServiceMonitor(updateLBMonitorConfig)
+	updatedLBMonitor, err := edgeGateway.UpdateLbServiceMonitor(updateLBMonitorConfig)
 	if err != nil {
 		return fmt.Errorf("unable to update load balancer service monitor with Id %s: %s", d.Id(), err)
 	}
@@ -203,7 +203,7 @@ func resourceVcdLbServiceMonitorDelete(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	err = edgeGateway.DeleteLBServiceMonitorByID(d.Id())
+	err = edgeGateway.DeleteLbServiceMonitorById(d.Id())
 	if err != nil {
 		return fmt.Errorf("error deleting load balancer service monitor: %s", err)
 	}
@@ -232,7 +232,7 @@ func resourceVcdLbServiceMonitorImport(d *schema.ResourceData, meta interface{})
 		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBMonitor, err := edgeGateway.ReadLBServiceMonitorByName(monitorName)
+	readLBMonitor, err := edgeGateway.GetLbServiceMonitorByName(monitorName)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer service monitor with Id %s: %s", d.Id(), err)
 	}

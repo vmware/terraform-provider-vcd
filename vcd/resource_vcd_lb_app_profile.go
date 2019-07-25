@@ -126,7 +126,7 @@ func resourceVcdLBAppProfileCreate(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("unable to create load balancer application profile type: %s", err)
 	}
 
-	createdPool, err := edgeGateway.CreateLBAppProfile(LBProfile)
+	createdPool, err := edgeGateway.CreateLbAppProfile(LBProfile)
 	if err != nil {
 		return fmt.Errorf("error creating new load balancer application profile: %s", err)
 	}
@@ -148,7 +148,7 @@ func resourceVcdLBAppProfileRead(d *schema.ResourceData, meta interface{}) error
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBProfile, err := edgeGateway.ReadLBAppProfileByID(d.Id())
+	readLBProfile, err := edgeGateway.GetLbAppProfileById(d.Id())
 	if err != nil {
 		d.SetId("")
 		return fmt.Errorf("unable to find load balancer application profile with Id %s: %s", d.Id(), err)
@@ -172,7 +172,7 @@ func resourceVcdLBAppProfileUpdate(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("unable to create load balancer application profile type for update: %s", err)
 	}
 
-	updatedLBProfile, err := edgeGateway.UpdateLBAppProfile(updateLBProfileConfig)
+	updatedLBProfile, err := edgeGateway.UpdateLbAppProfile(updateLBProfileConfig)
 	if err != nil {
 		return fmt.Errorf("unable to update load balancer application profile with Id %s: %s", d.Id(), err)
 	}
@@ -194,7 +194,7 @@ func resourceVcdLBAppProfileDelete(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	err = edgeGateway.DeleteLBAppProfileByID(d.Id())
+	err = edgeGateway.DeleteLbAppProfileById(d.Id())
 	if err != nil {
 		return fmt.Errorf("error deleting load balancer application profile: %s", err)
 	}
@@ -222,7 +222,7 @@ func resourceVcdLBAppProfileImport(d *schema.ResourceData, meta interface{}) ([]
 		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBProfile, err := edgeGateway.ReadLBAppProfileByName(appProfileName)
+	readLBProfile, err := edgeGateway.GetLbAppProfileByName(appProfileName)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer application profile with name %s: %s",
 			d.Id(), err)

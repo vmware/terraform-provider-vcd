@@ -115,7 +115,7 @@ func testAccCheckVcdLbVirtualServerDestroy(virtualServerName string) resource.Te
 			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
-		virtualServer, err := edgeGateway.ReadLBVirtualServerByName(virtualServerName)
+		virtualServer, err := edgeGateway.GetLbVirtualServerByName(virtualServerName)
 
 		if !strings.Contains(err.Error(), govcd.ErrorEntityNotFound.Error()) || virtualServer != nil {
 			return fmt.Errorf("load balancer virtual server was not deleted: %s", err)

@@ -124,7 +124,7 @@ func datasourceVcdLbServerPoolRead(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBPool, err := edgeGateway.ReadLBServerPool(&types.LbPool{Name: d.Get("name").(string)})
+	readLBPool, err := edgeGateway.GetLbServerPool(&types.LbPool{Name: d.Get("name").(string)})
 	if err != nil {
 		return fmt.Errorf("unable to find load balancer server pool with Name %s: %s",
 			d.Get("name").(string), err)

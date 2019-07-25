@@ -127,7 +127,7 @@ func testAccCheckVcdLBAppRuleDestroy(appRuleName string) resource.TestCheckFunc 
 			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
-		monitor, err := edgeGateway.ReadLBAppRuleByName(appRuleName)
+		monitor, err := edgeGateway.GetLbAppRuleByName(appRuleName)
 		if !strings.Contains(err.Error(), govcd.ErrorEntityNotFound.Error()) ||
 			monitor != nil {
 			return fmt.Errorf("load balancer application rule was not deleted: %s", err)

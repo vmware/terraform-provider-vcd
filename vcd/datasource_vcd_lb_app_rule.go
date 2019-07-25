@@ -50,7 +50,7 @@ func datasourceVcdLBAppRuleRead(d *schema.ResourceData, meta interface{}) error 
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBAppRule, err := edgeGateway.ReadLBAppRuleByName(d.Get("name").(string))
+	readLBAppRule, err := edgeGateway.GetLbAppRuleByName(d.Get("name").(string))
 	if err != nil {
 		return fmt.Errorf("unable to find load balancer application rule with Name %s: %s",
 			d.Get("name").(string), err)
