@@ -161,7 +161,7 @@ func testAccCheckVcdDNATExists(n string, gateway *govcd.EdgeGateway) resource.Te
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("DNAT ID is not set")
+			return fmt.Errorf("DNAT Id is not set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
@@ -276,7 +276,7 @@ func testAccCheckVcdDNATExistsForBackCompability(n string, gateway *govcd.EdgeGa
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("no DNAT ID is set")
+			return fmt.Errorf("no DNAT Id is set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)

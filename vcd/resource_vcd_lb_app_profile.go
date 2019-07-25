@@ -136,7 +136,7 @@ func resourceVcdLBAppProfileCreate(d *schema.ResourceData, meta interface{}) err
 	if err != nil {
 		return err
 	}
-	d.SetId(createdPool.ID)
+	d.SetId(createdPool.Id)
 	return nil
 }
 
@@ -151,7 +151,7 @@ func resourceVcdLBAppProfileRead(d *schema.ResourceData, meta interface{}) error
 	readLBProfile, err := edgeGateway.ReadLBAppProfileByID(d.Id())
 	if err != nil {
 		d.SetId("")
-		return fmt.Errorf("unable to find load balancer application profile with ID %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to find load balancer application profile with Id %s: %s", d.Id(), err)
 	}
 
 	return setLBAppProfileData(d, readLBProfile)
@@ -174,7 +174,7 @@ func resourceVcdLBAppProfileUpdate(d *schema.ResourceData, meta interface{}) err
 
 	updatedLBProfile, err := edgeGateway.UpdateLBAppProfile(updateLBProfileConfig)
 	if err != nil {
-		return fmt.Errorf("unable to update load balancer application profile with ID %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to update load balancer application profile with Id %s: %s", d.Id(), err)
 	}
 
 	if err := setLBAppProfileData(d, updatedLBProfile); err != nil {
@@ -233,27 +233,27 @@ func resourceVcdLBAppProfileImport(d *schema.ResourceData, meta interface{}) ([]
 	d.Set("edge_gateway", edgeName)
 	d.Set("name", appProfileName)
 
-	d.SetId(readLBProfile.ID)
+	d.SetId(readLBProfile.Id)
 	return []*schema.ResourceData{d}, nil
 }
 
-func getLBAppProfileType(d *schema.ResourceData) (*types.LBAppProfile, error) {
-	LBProfile := &types.LBAppProfile{
+func getLBAppProfileType(d *schema.ResourceData) (*types.LbAppProfile, error) {
+	LBProfile := &types.LbAppProfile{
 		Name:                          d.Get("name").(string),
 		Template:                      d.Get("type").(string),
-		SSLPassthrough:                d.Get("enable_ssl_passthrough").(bool),
-		InsertXForwardedForHTTPHeader: d.Get("insert_x_forwarded_http_header").(bool),
-		ServerSSLEnabled:              d.Get("enable_pool_side_ssl").(bool),
+		SslPassthrough:                d.Get("enable_ssl_passthrough").(bool),
+		InsertXForwardedForHttpHeader: d.Get("insert_x_forwarded_http_header").(bool),
+		ServerSslEnabled:              d.Get("enable_pool_side_ssl").(bool),
 	}
 
 	if d.Get("http_redirect_url").(string) != "" {
-		LBProfile.HTTPRedirect = &types.LBAppProfileHTTPRedirect{
+		LBProfile.HttpRedirect = &types.LbAppProfileHttpRedirect{
 			To: d.Get("http_redirect_url").(string),
 		}
 	}
 
 	if d.Get("persistence_mechanism").(string) != "" {
-		LBProfile.Persistence = &types.LBAppProfilePersistence{
+		LBProfile.Persistence = &types.LbAppProfilePersistence{
 			Method:     d.Get("persistence_mechanism").(string),
 			CookieName: d.Get("cookie_name").(string),
 			CookieMode: d.Get("cookie_mode").(string),
@@ -264,12 +264,12 @@ func getLBAppProfileType(d *schema.ResourceData) (*types.LBAppProfile, error) {
 	return LBProfile, nil
 }
 
-func setLBAppProfileData(d *schema.ResourceData, LBProfile *types.LBAppProfile) error {
+func setLBAppProfileData(d *schema.ResourceData, LBProfile *types.LbAppProfile) error {
 	d.Set("name", LBProfile.Name)
 	d.Set("type", LBProfile.Template)
-	d.Set("enable_ssl_passthrough", LBProfile.SSLPassthrough)
-	d.Set("insert_x_forwarded_http_header", LBProfile.InsertXForwardedForHTTPHeader)
-	d.Set("enable_pool_side_ssl", LBProfile.ServerSSLEnabled)
+	d.Set("enable_ssl_passthrough", LBProfile.SslPassthrough)
+	d.Set("insert_x_forwarded_http_header", LBProfile.InsertXForwardedForHttpHeader)
+	d.Set("enable_pool_side_ssl", LBProfile.ServerSslEnabled)
 	// Questionable field. UI has it, but does not send it. NSX documentation has it, but it is
 	// never returned, nor shown
 	// d.Set("expiration", LBProfile.Expire)
@@ -286,8 +286,8 @@ func setLBAppProfileData(d *schema.ResourceData, LBProfile *types.LBAppProfile) 
 		d.Set("expiration", "")
 	}
 
-	if LBProfile.HTTPRedirect != nil {
-		d.Set("http_redirect_url", LBProfile.HTTPRedirect.To)
+	if LBProfile.HttpRedirect != nil {
+		d.Set("http_redirect_url", LBProfile.HttpRedirect.To)
 	} else { // We still want to make sure it is empty
 		d.Set("http_redirect_url", "")
 	}

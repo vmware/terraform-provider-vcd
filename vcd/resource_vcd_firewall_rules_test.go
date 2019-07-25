@@ -50,7 +50,7 @@ func testAccCheckVcdFirewallRulesExists(n string, gateway *govcd.EdgeGateway) re
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("no record ID is set")
+			return fmt.Errorf("no record Id is set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)

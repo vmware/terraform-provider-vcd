@@ -56,6 +56,6 @@ func datasourceVcdLBAppRuleRead(d *schema.ResourceData, meta interface{}) error 
 			d.Get("name").(string), err)
 	}
 
-	d.SetId(readLBAppRule.ID)
+	d.SetId(readLBAppRule.Id)
 	return setLBAppRuleData(d, readLBAppRule)
 }

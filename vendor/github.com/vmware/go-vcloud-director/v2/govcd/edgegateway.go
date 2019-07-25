@@ -1081,17 +1081,17 @@ func (eGW *EdgeGateway) buildProxiedEdgeEndpointURL(optionalSuffix string) (stri
 // to access global configuration options. These are 4 fields only:
 // LoadBalancer.Enabled, LoadBalancer.AccelerationEnabled, LoadBalancer.Logging.Enable,
 // LoadBalancer.Logging.LogLevel
-func (egw *EdgeGateway) GetLBGeneralParams() (*types.LBGeneralParamsWithXML, error) {
+func (egw *EdgeGateway) GetLBGeneralParams() (*types.LbGeneralParamsWithXml, error) {
 	if !egw.HasAdvancedNetworking() {
 		return nil, fmt.Errorf("only advanced edge gateway supports load balancing")
 	}
 
-	httpPath, err := egw.buildProxiedEdgeEndpointURL(types.LBConfigPath)
+	httpPath, err := egw.buildProxiedEdgeEndpointURL(types.LbConfigPath)
 	if err != nil {
 		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
 	}
 
-	loadBalancerConfig := &types.LBGeneralParamsWithXML{}
+	loadBalancerConfig := &types.LbGeneralParamsWithXml{}
 	_, err = egw.client.ExecuteRequest(httpPath, http.MethodGet, types.AnyXMLMime,
 		"unable to read load balancer configuration: %s", nil, loadBalancerConfig)
 
@@ -1107,7 +1107,7 @@ func (egw *EdgeGateway) GetLBGeneralParams() (*types.LBGeneralParamsWithXML, err
 // them to construct types.LBGeneralParamsWithXML without altering other options to prevent config
 // corruption.
 // They are represented in load balancer global configuration tab in the UI.
-func (egw *EdgeGateway) UpdateLBGeneralParams(enabled, accelerationEnabled, loggingEnabled bool, logLevel string) (*types.LBGeneralParamsWithXML, error) {
+func (egw *EdgeGateway) UpdateLBGeneralParams(enabled, accelerationEnabled, loggingEnabled bool, logLevel string) (*types.LbGeneralParamsWithXml, error) {
 	if !egw.HasAdvancedNetworking() {
 		return nil, fmt.Errorf("only advanced edge gateway supports load balancing")
 	}
@@ -1131,7 +1131,7 @@ func (egw *EdgeGateway) UpdateLBGeneralParams(enabled, accelerationEnabled, logg
 	// Modify only the global configuration settings
 	currentLb.Enabled = enabled
 	currentLb.AccelerationEnabled = accelerationEnabled
-	currentLb.Logging = &types.LoadBalancerLogging{
+	currentLb.Logging = &types.LbLogging{
 		Enable:   loggingEnabled,
 		LogLevel: logLevel,
 	}
@@ -1139,7 +1139,7 @@ func (egw *EdgeGateway) UpdateLBGeneralParams(enabled, accelerationEnabled, logg
 	currentLb.Version = ""
 
 	// Push updated configuration
-	httpPath, err := egw.buildProxiedEdgeEndpointURL(types.LBConfigPath)
+	httpPath, err := egw.buildProxiedEdgeEndpointURL(types.LbConfigPath)
 	if err != nil {
 		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
 	}

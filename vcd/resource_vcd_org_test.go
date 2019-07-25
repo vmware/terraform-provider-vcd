@@ -65,7 +65,7 @@ func testAccCheckVcdOrgExists(n string, org *govcd.Org) resource.TestCheckFunc {
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("no Org ID is set")
+			return fmt.Errorf("no Org Id is set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)

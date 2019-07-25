@@ -92,11 +92,11 @@ func datasourceVcdLbServiceMonitorRead(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBMonitor, err := edgeGateway.ReadLBServiceMonitor(&types.LBMonitor{Name: d.Get("name").(string)})
+	readLBMonitor, err := edgeGateway.ReadLBServiceMonitor(&types.LbMonitor{Name: d.Get("name").(string)})
 	if err != nil {
 		return fmt.Errorf("unable to find load balancer service monitor with Name %s: %s", d.Get("name").(string), err)
 	}
 
-	d.SetId(readLBMonitor.ID)
+	d.SetId(readLBMonitor.Id)
 	return setLBMonitorData(d, readLBMonitor)
 }

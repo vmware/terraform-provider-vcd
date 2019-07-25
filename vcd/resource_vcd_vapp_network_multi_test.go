@@ -122,7 +122,7 @@ func testAccCheckVappNetworkMultiExists(n string) resource.TestCheckFunc {
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("no vapp network ID is set")
+			return fmt.Errorf("no vapp network Id is set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)

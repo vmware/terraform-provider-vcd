@@ -175,7 +175,7 @@ func testAccCheckVcdLBAppProfileDestroy(appProfileName string) resource.TestChec
 			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
-		monitor, err := edgeGateway.ReadLBAppProfile(&types.LBAppProfile{Name: appProfileName})
+		monitor, err := edgeGateway.ReadLBAppProfile(&types.LbAppProfile{Name: appProfileName})
 		if !strings.Contains(err.Error(), govcd.ErrorEntityNotFound.Error()) ||
 			monitor != nil {
 			return fmt.Errorf("load balancer application profile was not deleted: %s", err)

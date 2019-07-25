@@ -211,7 +211,7 @@ func resourceOrgRead(d *schema.ResourceData, m interface{}) error {
 	org, err := govcd.GetAdminOrgByName(vcdClient.VCDClient, d.Get("name").(string))
 
 	if err != nil || org == (govcd.AdminOrg{}) {
-		log.Printf("Org with id %s not found. Setting ID to nothing", d.State().ID)
+		log.Printf("Org with id %s not found. Setting Id to nothing", d.State().ID)
 		d.SetId("")
 		return nil
 	}

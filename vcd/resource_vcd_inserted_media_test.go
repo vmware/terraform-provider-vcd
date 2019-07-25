@@ -70,7 +70,7 @@ func testAccCheckMediaInserted(itemName string) resource.TestCheckFunc {
 		}
 
 		if injectItemRs.Primary.ID == "" {
-			return fmt.Errorf("no media insert ID is set")
+			return fmt.Errorf("no media insert Id is set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
@@ -108,7 +108,7 @@ func testAccCheckMediaEjected(itemName string) resource.TestCheckFunc {
 		}
 
 		if injectItemRs.Primary.ID == "" {
-			return fmt.Errorf("no media insert ID is set")
+			return fmt.Errorf("no media insert Id is set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)

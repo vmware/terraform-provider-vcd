@@ -62,7 +62,7 @@ func resourceVcdLBServerPool() *schema.Resource {
 			"monitor_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Load Balancer Service Monitor ID",
+				Description: "Load Balancer Service Monitor Id",
 			},
 			"enable_transparency": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -163,7 +163,7 @@ func resourceVcdLBServerPoolCreate(d *schema.ResourceData, meta interface{}) err
 	if err := setLBPoolData(d, createdPool); err != nil {
 		return err
 	}
-	d.SetId(createdPool.ID)
+	d.SetId(createdPool.Id)
 	return resourceVcdLBServerPoolRead(d, meta)
 }
 
@@ -178,7 +178,7 @@ func resourceVcdLBServerPoolRead(d *schema.ResourceData, meta interface{}) error
 	readLBPool, err := edgeGateway.ReadLBServerPoolByID(d.Id())
 	if err != nil {
 		d.SetId("")
-		return fmt.Errorf("unable to find load balancer server pool with ID %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to find load balancer server pool with Id %s: %s", d.Id(), err)
 	}
 
 	return setLBPoolData(d, readLBPool)
@@ -201,7 +201,7 @@ func resourceVcdLBServerPoolUpdate(d *schema.ResourceData, meta interface{}) err
 
 	updatedLBPool, err := edgeGateway.UpdateLBServerPool(updateLBPoolConfig)
 	if err != nil {
-		return fmt.Errorf("unable to update load balancer server pool with ID %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to update load balancer server pool with Id %s: %s", d.Id(), err)
 	}
 
 	return setLBPoolData(d, updatedLBPool)
@@ -255,14 +255,14 @@ func resourceVcdLBServerPoolImport(d *schema.ResourceData, meta interface{}) ([]
 	d.Set("edge_gateway", edgeName)
 	d.Set("name", poolName)
 
-	d.SetId(readLBPool.ID)
+	d.SetId(readLBPool.Id)
 	return []*schema.ResourceData{d}, nil
 }
 
-// getLBPoolType converts schema.ResourceData to *types.LBPool and is useful
+// getLBPoolType converts schema.ResourceData to *types.LbPool and is useful
 // for creating API requests
-func getLBPoolType(d *schema.ResourceData) (*types.LBPool, error) {
-	lbPool := &types.LBPool{
+func getLBPoolType(d *schema.ResourceData) (*types.LbPool, error) {
+	lbPool := &types.LbPool{
 		Name:                d.Get("name").(string),
 		Description:         d.Get("description").(string),
 		Algorithm:           d.Get("algorithm").(string),
@@ -280,19 +280,19 @@ func getLBPoolType(d *schema.ResourceData) (*types.LBPool, error) {
 	return lbPool, nil
 }
 
-// getLBPoolMembersType converts schema.ResourceData to *types.LBPoolMembers and is useful
+// getLBPoolMembersType converts schema.ResourceData to *types.LbPoolMembers and is useful
 // for creating API requests
-func getLBPoolMembersType(d *schema.ResourceData) (types.LBPoolMembers, error) {
-	var lbPoolMembers types.LBPoolMembers
+func getLBPoolMembersType(d *schema.ResourceData) (types.LbPoolMembers, error) {
+	var lbPoolMembers types.LbPoolMembers
 
 	members := d.Get("member").([]interface{})
 	for _, memberInterface := range members {
-		var memberConfig types.LBPoolMember
+		var memberConfig types.LbPoolMember
 		member := memberInterface.(map[string]interface{})
 
 		// If we have IDs - then we must insert them for update. Otherwise the update may get mixed
 		if member["id"].(string) != "" {
-			memberConfig.ID = member["id"].(string)
+			memberConfig.Id = member["id"].(string)
 		}
 
 		memberConfig.Name = member["name"].(string)
@@ -311,8 +311,8 @@ func getLBPoolMembersType(d *schema.ResourceData) (types.LBPoolMembers, error) {
 	return lbPoolMembers, nil
 }
 
-// setLBPoolData sets object state from *types.LBPool
-func setLBPoolData(d *schema.ResourceData, lBpool *types.LBPool) error {
+// setLBPoolData sets object state from *types.LbPool
+func setLBPoolData(d *schema.ResourceData, lBpool *types.LbPool) error {
 	d.Set("name", lBpool.Name)
 	d.Set("description", lBpool.Description)
 	d.Set("algorithm", lBpool.Algorithm)
@@ -324,8 +324,8 @@ func setLBPoolData(d *schema.ResourceData, lBpool *types.LBPool) error {
 	return setLBPoolMembersData(d, lBpool.Members)
 }
 
-// setLBPoolMembersData sets pool members state from *types.LBPoolMembers
-func setLBPoolMembersData(d *schema.ResourceData, lBpoolMembers types.LBPoolMembers) error {
+// setLBPoolMembersData sets pool members state from *types.LbPoolMembers
+func setLBPoolMembersData(d *schema.ResourceData, lBpoolMembers types.LbPoolMembers) error {
 
 	memberSet := make([]map[string]interface{}, len(lBpoolMembers))
 	for index, member := range lBpoolMembers {
@@ -339,7 +339,7 @@ func setLBPoolMembersData(d *schema.ResourceData, lBpoolMembers types.LBPoolMemb
 		oneMember["weight"] = member.Weight
 		oneMember["min_connections"] = member.MinConn
 		oneMember["max_connections"] = member.MaxConn
-		oneMember["id"] = member.ID
+		oneMember["id"] = member.Id
 
 		memberSet[index] = oneMember
 	}

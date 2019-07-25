@@ -103,7 +103,7 @@ func testAccCheckVcdLbServiceMonitorDestroy(serviceMonitorName string) resource.
 			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
-		monitor, err := edgeGateway.ReadLBServiceMonitor(&types.LBMonitor{Name: serviceMonitorName})
+		monitor, err := edgeGateway.ReadLBServiceMonitor(&types.LbMonitor{Name: serviceMonitorName})
 		if !strings.Contains(err.Error(), govcd.ErrorEntityNotFound.Error()) || monitor != nil {
 			return fmt.Errorf("load balancer service monitor was not deleted: %s", err)
 		}
@@ -111,7 +111,7 @@ func testAccCheckVcdLbServiceMonitorDestroy(serviceMonitorName string) resource.
 	}
 }
 
-// importStateIdByOrgVdcEdge constructs an import path (ID in Terraform import terms) in the format of:
+// importStateIdByOrgVdcEdge constructs an import path (Id in Terraform import terms) in the format of:
 // organization.vdc.edge-gateway-nane.import-object-name (i.e. my-org.my-vdc.my-edge-gw.objectName) from TestConfig and
 // object state.
 func importStateIdByOrgVdcEdge(vcd TestConfig, objectName string) resource.ImportStateIdFunc {

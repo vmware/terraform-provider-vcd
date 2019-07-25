@@ -149,7 +149,7 @@ func resourceVcdLbServiceMonitorCreate(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("error creating new load balancer service monitor: %s", err)
 	}
 
-	d.SetId(createdMonitor.ID)
+	d.SetId(createdMonitor.Id)
 	return nil
 }
 
@@ -164,7 +164,7 @@ func resourceVcdLbServiceMonitorRead(d *schema.ResourceData, meta interface{}) e
 	readLBMonitor, err := edgeGateway.ReadLBServiceMonitorByID(d.Id())
 	if err != nil {
 		d.SetId("")
-		return fmt.Errorf("unable to find load balancer service monitor with ID %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to find load balancer service monitor with Id %s: %s", d.Id(), err)
 	}
 
 	return setLBMonitorData(d, readLBMonitor)
@@ -187,7 +187,7 @@ func resourceVcdLbServiceMonitorUpdate(d *schema.ResourceData, meta interface{})
 
 	updatedLBMonitor, err := edgeGateway.UpdateLBServiceMonitor(updateLBMonitorConfig)
 	if err != nil {
-		return fmt.Errorf("unable to update load balancer service monitor with ID %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to update load balancer service monitor with Id %s: %s", d.Id(), err)
 	}
 
 	return setLBMonitorData(d, updatedLBMonitor)
@@ -234,7 +234,7 @@ func resourceVcdLbServiceMonitorImport(d *schema.ResourceData, meta interface{})
 
 	readLBMonitor, err := edgeGateway.ReadLBServiceMonitorByName(monitorName)
 	if err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer service monitor with ID %s: %s", d.Id(), err)
+		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer service monitor with Id %s: %s", d.Id(), err)
 	}
 
 	d.Set("org", orgName)
@@ -242,14 +242,14 @@ func resourceVcdLbServiceMonitorImport(d *schema.ResourceData, meta interface{})
 	d.Set("edge_gateway", edgeName)
 	d.Set("name", monitorName)
 
-	d.SetId(readLBMonitor.ID)
+	d.SetId(readLBMonitor.Id)
 	return []*schema.ResourceData{d}, nil
 }
 
-// getLBMonitorType converts schema.ResourceData to *types.LBMonitor and is useful
+// getLBMonitorType converts schema.ResourceData to *types.LbMonitor and is useful
 // for creating API requests
-func getLBMonitorType(d *schema.ResourceData) (*types.LBMonitor, error) {
-	lbMonitor := &types.LBMonitor{
+func getLBMonitorType(d *schema.ResourceData) (*types.LbMonitor, error) {
+	lbMonitor := &types.LbMonitor{
 		Name:       d.Get("name").(string),
 		Interval:   d.Get("interval").(int),
 		Timeout:    d.Get("timeout").(int),
@@ -286,8 +286,8 @@ func getLBMonitorExtensionType(d *schema.ResourceData) string {
 	return extensionString
 }
 
-// setLBMonitorData sets object state from *types.LBMonitor
-func setLBMonitorData(d *schema.ResourceData, lBmonitor *types.LBMonitor) error {
+// setLBMonitorData sets object state from *types.LbMonitor
+func setLBMonitorData(d *schema.ResourceData, lBmonitor *types.LbMonitor) error {
 	d.Set("interval", lBmonitor.Interval)
 	d.Set("timeout", lBmonitor.Timeout)
 	d.Set("max_retries", lBmonitor.MaxRetries)
@@ -309,7 +309,7 @@ func setLBMonitorData(d *schema.ResourceData, lBmonitor *types.LBMonitor) error 
 // setLBMonitorExtensionData is responsible for parsing response extension field from API and
 // store it in the map. It supports flattening `key=value` or `key` notations. Each of them must be
 // separated by newline.
-func setLBMonitorExtensionData(d *schema.ResourceData, lBmonitor *types.LBMonitor) error {
+func setLBMonitorExtensionData(d *schema.ResourceData, lBmonitor *types.LbMonitor) error {
 	extensionStorage := make(map[string]string)
 
 	if lBmonitor.Extension != "" {

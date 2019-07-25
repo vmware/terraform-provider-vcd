@@ -77,7 +77,7 @@ func datasourceVcdLbVirtualServer() *schema.Resource {
 			"app_profile_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Application profile ID to be associated with the virtual server",
+				Description: "Application profile Id to be associated with the virtual server",
 			},
 			"server_pool_id": &schema.Schema{
 				Type:        schema.TypeString,

@@ -59,7 +59,7 @@ func testAccCheckDiskCreated(itemName string) resource.TestCheckFunc {
 		}
 
 		if injectItemRs.Primary.ID == "" {
-			return fmt.Errorf("no disk insert ID is set")
+			return fmt.Errorf("no disk insert Id is set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)

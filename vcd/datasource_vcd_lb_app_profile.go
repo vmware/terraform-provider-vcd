@@ -108,6 +108,6 @@ func datasourceVcdLBAppProfileRead(d *schema.ResourceData, meta interface{}) err
 			d.Get("name").(string), err)
 	}
 
-	d.SetId(readLBAppProfile.ID)
+	d.SetId(readLBAppProfile.Id)
 	return setLBAppProfileData(d, readLBAppProfile)
 }

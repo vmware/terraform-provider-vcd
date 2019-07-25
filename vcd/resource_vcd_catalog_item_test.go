@@ -81,7 +81,7 @@ func testAccCheckVcdCatalogItemExists(itemName string, catalogItem *govcd.Catalo
 		}
 
 		if catalogItemRs.Primary.ID == "" {
-			return fmt.Errorf("no catalog item ID is set")
+			return fmt.Errorf("no catalog item Id is set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)

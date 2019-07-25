@@ -52,7 +52,7 @@ func datasourceVcdLbServerPool() *schema.Resource {
 			"monitor_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Load Balancer Service Monitor ID",
+				Description: "Load Balancer Service Monitor Id",
 			},
 			"enable_transparency": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -124,12 +124,12 @@ func datasourceVcdLbServerPoolRead(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBPool, err := edgeGateway.ReadLBServerPool(&types.LBPool{Name: d.Get("name").(string)})
+	readLBPool, err := edgeGateway.ReadLBServerPool(&types.LbPool{Name: d.Get("name").(string)})
 	if err != nil {
 		return fmt.Errorf("unable to find load balancer server pool with Name %s: %s",
 			d.Get("name").(string), err)
 	}
 
-	d.SetId(readLBPool.ID)
+	d.SetId(readLBPool.Id)
 	return setLBPoolData(d, readLBPool)
 }
