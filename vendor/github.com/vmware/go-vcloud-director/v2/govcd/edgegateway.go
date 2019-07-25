@@ -1076,3 +1076,94 @@ func (eGW *EdgeGateway) buildProxiedEdgeEndpointURL(optionalSuffix string) (stri
 
 	return hostname, nil
 }
+
+// GetLBGeneralParams retrieves load balancer configuration of `&types.LoadBalancer` and can be used
+// to access global configuration options. These are 4 fields only:
+// LoadBalancer.Enabled, LoadBalancer.AccelerationEnabled, LoadBalancer.Logging.Enable,
+// LoadBalancer.Logging.LogLevel
+func (egw *EdgeGateway) GetLBGeneralParams() (*types.LBGeneralParamsWithXML, error) {
+	if !egw.HasAdvancedNetworking() {
+		return nil, fmt.Errorf("only advanced edge gateway supports load balancing")
+	}
+
+	httpPath, err := egw.buildProxiedEdgeEndpointURL(types.LBConfigPath)
+	if err != nil {
+		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
+	}
+
+	loadBalancerConfig := &types.LBGeneralParamsWithXML{}
+	_, err = egw.client.ExecuteRequest(httpPath, http.MethodGet, types.AnyXMLMime,
+		"unable to read load balancer configuration: %s", nil, loadBalancerConfig)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return loadBalancerConfig, nil
+}
+
+// UpdateLBGeneralParams allows to update global load balancer configuration.
+// It accepts four fields (Enabled, AccelerationEnabled, Logging.Enable, Logging.LogLevel) and uses
+// them to construct types.LBGeneralParamsWithXML without altering other options to prevent config
+// corruption.
+// They are represented in load balancer global configuration tab in the UI.
+func (egw *EdgeGateway) UpdateLBGeneralParams(enabled, accelerationEnabled, loggingEnabled bool, logLevel string) (*types.LBGeneralParamsWithXML, error) {
+	if !egw.HasAdvancedNetworking() {
+		return nil, fmt.Errorf("only advanced edge gateway supports load balancing")
+	}
+
+	if err := validateUpdateLBGeneralParams(logLevel); err != nil {
+		return nil, err
+	}
+	// Retrieve load balancer to work on latest configuration
+	currentLb, err := egw.GetLBGeneralParams()
+	if err != nil {
+		return nil, fmt.Errorf("unable to retrieve load balancer before update: %s", err)
+	}
+
+	// Check if change is needed. If not - return early.
+	if currentLb.Logging != nil &&
+		currentLb.Enabled == enabled && currentLb.AccelerationEnabled == accelerationEnabled &&
+		currentLb.Logging.Enable == loggingEnabled && currentLb.Logging.LogLevel == logLevel {
+		return currentLb, nil
+	}
+
+	// Modify only the global configuration settings
+	currentLb.Enabled = enabled
+	currentLb.AccelerationEnabled = accelerationEnabled
+	currentLb.Logging = &types.LoadBalancerLogging{
+		Enable:   loggingEnabled,
+		LogLevel: logLevel,
+	}
+	// Omit the version as it is updated automatically with each put
+	currentLb.Version = ""
+
+	// Push updated configuration
+	httpPath, err := egw.buildProxiedEdgeEndpointURL(types.LBConfigPath)
+	if err != nil {
+		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
+	}
+	_, err = egw.client.ExecuteRequestWithCustomError(httpPath, http.MethodPut, types.AnyXMLMime,
+		"error while updating load balancer application rule : %s", currentLb, &types.NSXError{})
+	if err != nil {
+		return nil, err
+	}
+
+	// Retrieve configuration after update
+	updatedLb, err := egw.GetLBGeneralParams()
+	if err != nil {
+		return nil, fmt.Errorf("unable to retrieve load balancer after update: %s", err)
+	}
+
+	return updatedLb, nil
+}
+
+// validateUpdateLoadBalancer validates mandatory fields for global load balancer configuration
+// settings
+func validateUpdateLBGeneralParams(logLevel string) error {
+	if logLevel == "" {
+		return fmt.Errorf("field Logging.LogLevel must be set to update load balancer")
+	}
+
+	return nil
+}

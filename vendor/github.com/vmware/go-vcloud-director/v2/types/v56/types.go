@@ -1643,6 +1643,45 @@ type StaticRoute struct {
 	GatewayInterface *Reference `xml:"GatewayInterface,omitempty"` // Gateway interface to which static route is bound.
 }
 
+// LBGeneralParamsWithXML allows to enable/disable load balancing capabilities on specific edge gateway
+// Reference: vCloud Director API for NSX Programming Guide
+// https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
+//
+// Warning. It nests all components (LBMonitor, LBPool, LBAppProfile, LBAppRule, LBVirtualServer)
+// because Edge Gateway API is done so that if this data is not sent while enabling it would wipe
+// all load balancer configurations. InnerXML type fields are used with struct tag `innerxml` to
+// prevent any manipulation of configuration and sending it verbatim
+type LBGeneralParamsWithXML struct {
+	XMLName             xml.Name             `xml:"loadBalancer"`
+	Enabled             bool                 `xml:"enabled"`
+	AccelerationEnabled bool                 `xml:"accelerationEnabled"`
+	Logging             *LoadBalancerLogging `xml:"logging"`
+
+	//
+	EnableServiceInsertion bool   `xml:"enableServiceInsertion"`
+	Version                string `xml:"version,omitempty"`
+
+	// The below fields have `innerxml` tag so that they are not processed but instead
+	// sent verbatim
+	VirtualServers []InnerXML `xml:"virtualServer,omitempty"`
+	Pools          []InnerXML `xml:"pool,omitempty"`
+	AppProfiles    []InnerXML `xml:"applicationProfile,omitempty"`
+	Monitors       []InnerXML `xml:"monitor,omitempty"`
+	AppRules       []InnerXML `xml:"applicationRule,omitempty"`
+}
+
+// LoadBalancerLogging represents logging configuration for LoadBalancer
+type LoadBalancerLogging struct {
+	Enable   bool   `xml:"enable"`
+	LogLevel string `xml:"logLevel"`
+}
+
+// InnerXML is meant to be used when unmarshaling a field into text rather than struct
+// It helps to avoid missing out any fields which may not have been specified in the struct.
+type InnerXML struct {
+	Text string `xml:",innerxml"`
+}
+
 // LBMonitor defines health check parameters for a particular type of network traffic
 // Reference: vCloud Director API for NSX Programming Guide
 // https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
