@@ -30,20 +30,24 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "-step1"
 	params["Type"] = "udp"
+	params["AppProfileName"] = t.Name() + "-step1"
 	configTextStep1 := templateFill(testAccVcdLBAppProfile_UDP, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configTextStep1)
 
 	params["FuncName"] = t.Name() + "-step2"
 	params["Type"] = "http"
+	params["AppProfileName"] = t.Name() + "-step2"
 	configTextStep2 := templateFill(testAccVcdLBAppProfile_HTTP_Cookie, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configTextStep2)
 
 	params["FuncName"] = t.Name() + "-step3"
+	params["AppProfileName"] = t.Name() + "-step3"
 	configTextStep3 := templateFill(testAccVcdLBAppProfile_HTTP_SourceIP, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configTextStep3)
 
 	params["FuncName"] = t.Name() + "-step4"
 	params["Type"] = "https"
+	params["AppProfileName"] = t.Name() + "-step4"
 	configTextStep4 := templateFill(testAccVcdLBAppProfile_HTTPS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configTextStep4)
 
@@ -61,12 +65,12 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
-					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "name", params["AppProfileName"].(string)),
+					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "name", t.Name()),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "type", "tcp"),
 
 					// Data source testing - it must expose all fields which resource has
 					resource.TestMatchResourceAttr("data.vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
-					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "name", params["AppProfileName"].(string)),
+					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "name", t.Name()),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "type", "tcp"),
 				),
 			},
@@ -74,12 +78,12 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 				Config: configTextStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
-					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "name", params["AppProfileName"].(string)),
+					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "name", t.Name()+"-step1"),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "type", "udp"),
 
 					// Data source testing - it must expose all fields which resource has
 					resource.TestMatchResourceAttr("data.vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
-					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "name", params["AppProfileName"].(string)),
+					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "name", t.Name()+"-step1"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "type", "udp"),
 				),
 			},
@@ -87,7 +91,7 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 				Config: configTextStep2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
-					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "name", params["AppProfileName"].(string)),
+					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "name", t.Name()+"-step2"),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "type", "http"),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "http_redirect_url", "/service-one"),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "persistence_mechanism", "cookie"),
@@ -97,7 +101,7 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 
 					// Data source testing - it must expose all fields which resource has
 					resource.TestMatchResourceAttr("data.vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
-					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "name", params["AppProfileName"].(string)),
+					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "name", t.Name()+"-step2"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "type", "http"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "http_redirect_url", "/service-one"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "persistence_mechanism", "cookie"),
@@ -111,7 +115,7 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 				Config: configTextStep3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
-					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "name", params["AppProfileName"].(string)),
+					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "name", t.Name()+"-step3"),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "type", "http"),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "persistence_mechanism", "sourceip"),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "insert_x_forwarded_http_header", "false"),
@@ -120,7 +124,7 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 
 					// Data source testing - it must expose all fields which resource has
 					resource.TestMatchResourceAttr("data.vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
-					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "name", params["AppProfileName"].(string)),
+					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "name", t.Name()+"-step3"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "type", "http"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "persistence_mechanism", "sourceip"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "insert_x_forwarded_http_header", "false"),
@@ -133,7 +137,7 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 				Config: configTextStep4,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
-					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "name", params["AppProfileName"].(string)),
+					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "name", t.Name()+"-step4"),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "type", "https"),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "insert_x_forwarded_http_header", "true"),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "http_redirect_url", ""),
@@ -144,7 +148,7 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 
 					// Data source testing - it must expose all fields which resource has
 					resource.TestMatchResourceAttr("data.vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
-					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "name", params["AppProfileName"].(string)),
+					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "name", t.Name()+"-step4"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "type", "https"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "insert_x_forwarded_http_header", "true"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "http_redirect_url", ""),

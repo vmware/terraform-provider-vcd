@@ -34,6 +34,7 @@ func TestAccVcdLbServerPool(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "-step1"
 	params["EnableTransparency"] = true
+	params["ServerPoolName"] = t.Name() + "-step1"
 	configTextStep1 := templateFill(testAccVcdLbServerPool_Algorithm, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configTextStep1)
 
@@ -50,7 +51,7 @@ func TestAccVcdLbServerPool(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "name", params["ServerPoolName"].(string)),
+					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "name", t.Name()),
 					resource.TestMatchResourceAttr("vcd_lb_server_pool.server-pool", "id", regexp.MustCompile(`^pool-\d*$`)),
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "algorithm", "round-robin"),
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "enable_transparency", "false"),
@@ -105,7 +106,7 @@ func TestAccVcdLbServerPool(t *testing.T) {
 				Config: configTextStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_lb_server_pool.server-pool", "id", regexp.MustCompile(`^pool-\d*$`)),
-					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "name", params["ServerPoolName"].(string)),
+					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "name", t.Name()+"-step1"),
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "algorithm", "httpheader"),
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "algorithm_parameters", "headerName=host"),
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "enable_transparency", "true"),
@@ -158,7 +159,7 @@ func TestAccVcdLbServerPool(t *testing.T) {
 
 					// Data source testing - it must expose all fields which resource has
 					resource.TestMatchResourceAttr("data.vcd_lb_server_pool.ds-lb-server-pool", "id", regexp.MustCompile(`^pool-\d*$`)),
-					resource.TestCheckResourceAttr("data.vcd_lb_server_pool.ds-lb-server-pool", "name", params["ServerPoolName"].(string)),
+					resource.TestCheckResourceAttr("data.vcd_lb_server_pool.ds-lb-server-pool", "name", t.Name()+"-step1"),
 					resource.TestCheckResourceAttr("data.vcd_lb_server_pool.ds-lb-server-pool", "algorithm", "httpheader"),
 					resource.TestCheckResourceAttr("data.vcd_lb_server_pool.ds-lb-server-pool", "algorithm_parameters", "headerName=host"),
 					resource.TestCheckResourceAttr("data.vcd_lb_server_pool.ds-lb-server-pool", "enable_transparency", "true"),

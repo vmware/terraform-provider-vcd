@@ -40,7 +40,6 @@ func resourceVcdLbServiceMonitor() *schema.Resource {
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "Unique LB Service Monitor name",
 			},
 			"interval": &schema.Schema{
@@ -181,6 +180,8 @@ func resourceVcdLbServiceMonitorUpdate(d *schema.ResourceData, meta interface{})
 	}
 
 	updateLBMonitorConfig, err := getLBMonitorType(d)
+	updateLBMonitorConfig.ID = d.Id() // We already know an ID for update and it allows to change name
+
 	if err != nil {
 		return fmt.Errorf("could not create service monitor type for update: %s", err)
 	}

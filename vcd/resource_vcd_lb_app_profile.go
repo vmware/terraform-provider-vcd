@@ -40,7 +40,6 @@ func resourceVcdLBAppProfile() *schema.Resource {
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "Unique LB Application Profile name",
 			},
 			"type": &schema.Schema{
@@ -168,6 +167,7 @@ func resourceVcdLBAppProfileUpdate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	updateLBProfileConfig, err := getLBAppProfileType(d)
+	updateLBProfileConfig.ID = d.Id() // We already know an ID for update and it allows to change name
 	if err != nil {
 		return fmt.Errorf("unable to create load balancer application profile type for update: %s", err)
 	}

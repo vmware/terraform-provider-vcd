@@ -40,7 +40,6 @@ func resourceVcdLBAppRule() *schema.Resource {
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "Unique LB Application Rule name",
 			},
 			"script": {
@@ -109,6 +108,7 @@ func resourceVcdLBAppRuleUpdate(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	updateLBRuleConfig, err := getLBAppRuleType(d)
+	updateLBRuleConfig.ID = d.Id() // We already know an ID for update and it allows to change name
 	if err != nil {
 		return fmt.Errorf("could not create load balancer application rule type for update: %s", err)
 	}

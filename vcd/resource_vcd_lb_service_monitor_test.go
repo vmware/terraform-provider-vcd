@@ -34,6 +34,7 @@ func TestAccVcdLbServiceMonitor(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
 
 	params["FuncName"] = t.Name() + "-step1"
+	params["ServiceMonitorName"] = t.Name() + "-step1"
 	configTextStep1 := templateFill(testAccVcdLbServiceMonitor_Basic2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configTextStep1)
 
@@ -54,7 +55,7 @@ func TestAccVcdLbServiceMonitor(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("vcd_lb_service_monitor.lb-service-monitor", "name", params["ServiceMonitorName"].(string)),
+					resource.TestCheckResourceAttr("vcd_lb_service_monitor.lb-service-monitor", "name", t.Name()),
 					resource.TestMatchResourceAttr("vcd_lb_service_monitor.lb-service-monitor", "id", regexp.MustCompile(`^monitor-\d*$`)),
 					resource.TestCheckResourceAttr("vcd_lb_service_monitor.lb-service-monitor", "method", params["Method"].(string)),
 					resource.TestCheckResourceAttr("vcd_lb_service_monitor.lb-service-monitor", "type", "http"),
@@ -72,12 +73,13 @@ func TestAccVcdLbServiceMonitor(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_lb_service_monitor.ds-lb-service-monitor", "expected", "HTTP/1.1"),
 					resource.TestCheckResourceAttr("data.vcd_lb_service_monitor.ds-lb-service-monitor", "receive", "OK"),
 					resource.TestCheckResourceAttr("data.vcd_lb_service_monitor.ds-lb-service-monitor", "url", "/health"),
+					resource.TestCheckResourceAttr("data.vcd_lb_service_monitor.ds-lb-service-monitor", "name", t.Name()),
 				),
 			},
 			resource.TestStep{
 				Config: configTextStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("vcd_lb_service_monitor.lb-service-monitor", "name", params["ServiceMonitorName"].(string)),
+					resource.TestCheckResourceAttr("vcd_lb_service_monitor.lb-service-monitor", "name", t.Name()+"-step1"),
 					resource.TestMatchResourceAttr("vcd_lb_service_monitor.lb-service-monitor", "id", regexp.MustCompile(`^monitor-\d*$`)),
 					resource.TestCheckResourceAttr("vcd_lb_service_monitor.lb-service-monitor", "type", "tcp"),
 				),

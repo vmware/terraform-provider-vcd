@@ -41,7 +41,6 @@ func resourceVcdLBVirtualServer() *schema.Resource {
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "Unique Virtual Server name",
 			},
 			"description": &schema.Schema{
@@ -161,6 +160,8 @@ func resourceVcdLBVirtualServerUpdate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	updateVirtualServerConfig, err := getLBVirtualServerType(d)
+	updateVirtualServerConfig.ID = d.Id() // We already know an ID for update and it allows to change name
+
 	if err != nil {
 		return fmt.Errorf("could not create load balancer virtual server type for update: %s", err)
 	}

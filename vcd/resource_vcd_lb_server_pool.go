@@ -40,7 +40,6 @@ func resourceVcdLBServerPool() *schema.Resource {
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "Unique LB Server Pool name",
 			},
 			"description": &schema.Schema{
@@ -195,6 +194,7 @@ func resourceVcdLBServerPoolUpdate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	updateLBPoolConfig, err := getLBPoolType(d)
+	updateLBPoolConfig.ID = d.Id() // We already know an ID for update and it allows to change name
 	if err != nil {
 		return fmt.Errorf("could not create load balancer server pool type for update: %s", err)
 	}
