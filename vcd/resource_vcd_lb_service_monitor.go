@@ -266,7 +266,7 @@ func getLBMonitorType(d *schema.ResourceData) (*types.LbMonitor, error) {
 	return lbMonitor, nil
 }
 
-// getLBMonitorExtensionType expands the specified map for sending via API. It appends newline to every extension as
+// getLBMonitorExtensionType prepares the specified map for sending via API. It appends newline to every extension as
 // per API requirement. Based on the research the underlying structure should not cause problems because duplicate keys
 // are not needed and order of the keys does not matter for API.
 // Example API call string for Extension field:
