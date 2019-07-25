@@ -172,7 +172,7 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		log.Printf("[DEBUG] Error creating edge gateway: %#v", err)
 		return fmt.Errorf("error creating edge gateway: %#v", err)
 	}
-	// Edge gateway creation succeeded therefore we save related fields now to preserve ID.
+	// Edge gateway creation succeeded therefore we save related fields now to preserve Id.
 	// Edge gateway is already created even if further process fails
 	log.Printf("[TRACE] flushing edge gateway creation fields")
 	err = setEdgeGatewayValues(d, edge)
