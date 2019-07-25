@@ -37,7 +37,7 @@ resource "vcd_lb_app_profile" "tcp" {
   edge_gateway = "my-edge-gw"
 
   name = "tcp-app-profile"
-  type = "TCP"
+  type = "tcp"
 }
 ```
 
@@ -50,7 +50,7 @@ resource "vcd_lb_app_profile" "http" {
   edge_gateway = "my-edge-gw"
 
   name = "http-profile"
-  type = "HTTP"
+  type = "http"
 
   http_redirect_url              = "/service-one"
   persistence_mechanism          = "cookie"
