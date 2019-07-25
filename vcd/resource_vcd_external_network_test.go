@@ -65,7 +65,7 @@ func testAccCheckVcdExternalNetworkExists(name string, externalNetwork *govcd.Ex
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("no external network Id is set")
+			return fmt.Errorf("no external network ID is set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)

@@ -89,7 +89,7 @@ func testAccCheckVcdSNATExists(n string, gateway *govcd.EdgeGateway) resource.Te
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("no SNAT Id is set")
+			return fmt.Errorf("no SNAT ID is set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
@@ -201,7 +201,7 @@ func testAccCheckVcdSNATExistsForBackCompability(n string, gateway *govcd.EdgeGa
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("no SNAT Id is set")
+			return fmt.Errorf("no SNAT ID is set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)

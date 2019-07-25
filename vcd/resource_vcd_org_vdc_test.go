@@ -192,7 +192,7 @@ func testAccCheckVcdVdcExists(name string, vdc *govcd.Vdc) resource.TestCheckFun
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("no VDC Id is set")
+			return fmt.Errorf("no VDC ID is set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
@@ -220,7 +220,7 @@ func testVcdVdcUpdated(name string, vdc *govcd.Vdc) resource.TestCheckFunc {
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("no VDC Id is set")
+			return fmt.Errorf("no VDC ID is set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)

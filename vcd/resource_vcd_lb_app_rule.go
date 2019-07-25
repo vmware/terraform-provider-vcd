@@ -77,7 +77,7 @@ func resourceVcdLBAppRuleCreate(d *schema.ResourceData, meta interface{}) error 
 	if err != nil {
 		return err
 	}
-	d.SetId(createdPool.Id)
+	d.SetId(createdPool.ID)
 	return resourceVcdLBAppRuleRead(d, meta)
 }
 
@@ -92,7 +92,7 @@ func resourceVcdLBAppRuleRead(d *schema.ResourceData, meta interface{}) error {
 	readLBRule, err := edgeGateway.GetLbAppRuleById(d.Id())
 	if err != nil {
 		d.SetId("")
-		return fmt.Errorf("unable to find load balancer application rule with Id %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to find load balancer application rule with ID %s: %s", d.Id(), err)
 	}
 
 	return setLBAppRuleData(d, readLBRule)
@@ -115,7 +115,7 @@ func resourceVcdLBAppRuleUpdate(d *schema.ResourceData, meta interface{}) error 
 
 	updatedLBRule, err := edgeGateway.UpdateLbAppRule(updateLBRuleConfig)
 	if err != nil {
-		return fmt.Errorf("unable to update load balancer application rule with Id %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to update load balancer application rule with ID %s: %s", d.Id(), err)
 	}
 
 	if err := setLBAppRuleData(d, updatedLBRule); err != nil {
@@ -149,10 +149,10 @@ func resourceVcdLBAppRuleDelete(d *schema.ResourceData, meta interface{}) error 
 // 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
 // 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
 // 3. The functions splits the dot-formatted path and tries to lookup the object
-// 4. If the lookup succeeds it sets the Id field for `_resource_name_` resource in statefile
+// 4. If the lookup succeeds it sets the ID field for `_resource_name_` resource in statefile
 // (the resource must be already defined in .tf config otherwise `terraform import` will complain)
 // 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
-// based on the known Id of object.
+// based on the known ID of object.
 //
 // Example resource name (_resource_name_): vcd_lb_app_rule.my-test-app-rule
 // Example import path (_the_id_string_): org.vdc.edge-gw.existing-app-rule
@@ -180,7 +180,7 @@ func resourceVcdLBAppRuleImport(d *schema.ResourceData, meta interface{}) ([]*sc
 	d.Set("edge_gateway", edgeName)
 	d.Set("name", appRuleName)
 
-	d.SetId(readLBRule.Id)
+	d.SetId(readLBRule.ID)
 	return []*schema.ResourceData{d}, nil
 }
 

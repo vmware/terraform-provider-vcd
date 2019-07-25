@@ -74,17 +74,17 @@ func (eGW *EdgeGateway) ReadLBVirtualServer(lbVirtualServerConfig *types.LbVirtu
 	// Search for virtual server by Id or by Name
 	for _, virtualServer := range lbVirtualServerResponse.LBVirtualServers {
 		// If Id was specified for lookup - look for the same Id
-		if lbVirtualServerConfig.Id != "" && virtualServer.Id == lbVirtualServerConfig.Id {
+		if lbVirtualServerConfig.ID != "" && virtualServer.ID == lbVirtualServerConfig.ID {
 			return virtualServer, nil
 		}
 
 		// If Name was specified for lookup - look for the same Name
 		if lbVirtualServerConfig.Name != "" && virtualServer.Name == lbVirtualServerConfig.Name {
 			// We found it by name. Let's verify if search Id was specified and it matches the lookup object
-			if lbVirtualServerConfig.Id != "" && virtualServer.Id != lbVirtualServerConfig.Id {
+			if lbVirtualServerConfig.ID != "" && virtualServer.ID != lbVirtualServerConfig.ID {
 				return nil, fmt.Errorf("load balancer virtual server was found by name (%s), "+
 					"but its Id (%s) does not match specified Id (%s)",
-					virtualServer.Name, virtualServer.Id, lbVirtualServerConfig.Id)
+					virtualServer.Name, virtualServer.ID, lbVirtualServerConfig.ID)
 			}
 			return virtualServer, nil
 		}
@@ -95,7 +95,7 @@ func (eGW *EdgeGateway) ReadLBVirtualServer(lbVirtualServerConfig *types.LbVirtu
 
 // ReadLBVirtualServerById wraps ReadLBVirtualServer and needs only an Id for lookup
 func (eGW *EdgeGateway) ReadLBVirtualServerById(id string) (*types.LbVirtualServer, error) {
-	return eGW.ReadLBVirtualServer(&types.LbVirtualServer{Id: id})
+	return eGW.ReadLBVirtualServer(&types.LbVirtualServer{ID: id})
 }
 
 // ReadLBVirtualServerByName wraps ReadLBVirtualServer and needs only a Name for lookup
@@ -113,12 +113,12 @@ func (eGW *EdgeGateway) UpdateLBVirtualServer(lbVirtualServerConfig *types.LbVir
 		return nil, err
 	}
 
-	lbVirtualServerConfig.Id, err = eGW.getLBVirtualServerIdByNameId(lbVirtualServerConfig.Name, lbVirtualServerConfig.Id)
+	lbVirtualServerConfig.ID, err = eGW.getLBVirtualServerIdByNameId(lbVirtualServerConfig.Name, lbVirtualServerConfig.ID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot update load balancer virtual server: %s", err)
 	}
 
-	httpPath, err := eGW.buildProxiedEdgeEndpointURL(types.LbVirtualServerPath + lbVirtualServerConfig.Id)
+	httpPath, err := eGW.buildProxiedEdgeEndpointURL(types.LbVirtualServerPath + lbVirtualServerConfig.ID)
 	if err != nil {
 		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
 	}
@@ -130,10 +130,10 @@ func (eGW *EdgeGateway) UpdateLBVirtualServer(lbVirtualServerConfig *types.LbVir
 		return nil, err
 	}
 
-	readVirtualServer, err := eGW.ReadLBVirtualServerById(lbVirtualServerConfig.Id)
+	readVirtualServer, err := eGW.ReadLBVirtualServerById(lbVirtualServerConfig.ID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve virtual server with Id (%s) after update: %s",
-			lbVirtualServerConfig.Id, err)
+			lbVirtualServerConfig.ID, err)
 	}
 	return readVirtualServer, nil
 }
@@ -147,12 +147,12 @@ func (eGW *EdgeGateway) DeleteLBVirtualServer(lbVirtualServerConfig *types.LbVir
 		return err
 	}
 
-	lbVirtualServerConfig.Id, err = eGW.getLBVirtualServerIdByNameId(lbVirtualServerConfig.Name, lbVirtualServerConfig.Id)
+	lbVirtualServerConfig.ID, err = eGW.getLBVirtualServerIdByNameId(lbVirtualServerConfig.Name, lbVirtualServerConfig.ID)
 	if err != nil {
 		return fmt.Errorf("cannot delete load balancer virtual server: %s", err)
 	}
 
-	httpPath, err := eGW.buildProxiedEdgeEndpointURL(types.LbVirtualServerPath + lbVirtualServerConfig.Id)
+	httpPath, err := eGW.buildProxiedEdgeEndpointURL(types.LbVirtualServerPath + lbVirtualServerConfig.ID)
 	if err != nil {
 		return fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
 	}
@@ -162,7 +162,7 @@ func (eGW *EdgeGateway) DeleteLBVirtualServer(lbVirtualServerConfig *types.LbVir
 
 // DeleteLBVirtualServerById wraps DeleteLBVirtualServer and requires only Id for deletion
 func (eGW *EdgeGateway) DeleteLBVirtualServerById(id string) error {
-	return eGW.DeleteLBVirtualServer(&types.LbVirtualServer{Id: id})
+	return eGW.DeleteLBVirtualServer(&types.LbVirtualServer{ID: id})
 }
 
 // DeleteLBVirtualServerByName wraps DeleteLBVirtualServer and requires only Name for deletion
@@ -191,7 +191,7 @@ func validateCreateLBVirtualServer(lbVirtualServerConfig *types.LbVirtualServer)
 }
 
 func validateReadLBVirtualServer(lbVirtualServerConfig *types.LbVirtualServer) error {
-	if lbVirtualServerConfig.Id == "" && lbVirtualServerConfig.Name == "" {
+	if lbVirtualServerConfig.ID == "" && lbVirtualServerConfig.Name == "" {
 		return fmt.Errorf("to read load balancer virtual server at least one of `Id`, `Name` " +
 			"fields must be specified")
 	}
@@ -226,5 +226,5 @@ func (eGW *EdgeGateway) getLBVirtualServerIdByNameId(name, id string) (string, e
 	if err != nil {
 		return "", fmt.Errorf("unable to find load balancer virtual server by name: %s", err)
 	}
-	return readLbVirtualServer.Id, nil
+	return readLbVirtualServer.ID, nil
 }

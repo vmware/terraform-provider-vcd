@@ -72,16 +72,16 @@ func (eGW *EdgeGateway) ReadLBServerPool(lbPoolConfig *types.LbPool) (*types.LbP
 	// Search for pool by ID or by Name
 	for _, pool := range lbPoolResponse.LBPools {
 		// If ID was specified for lookup - look for the same ID
-		if lbPoolConfig.Id != "" && pool.Id == lbPoolConfig.Id {
+		if lbPoolConfig.ID != "" && pool.ID == lbPoolConfig.ID {
 			return pool, nil
 		}
 
 		// If Name was specified for lookup - look for the same Name
 		if lbPoolConfig.Name != "" && pool.Name == lbPoolConfig.Name {
 			// We found it by name. Let's verify if search ID was specified and it matches the lookup object
-			if lbPoolConfig.Id != "" && pool.Id != lbPoolConfig.Id {
+			if lbPoolConfig.ID != "" && pool.ID != lbPoolConfig.ID {
 				return nil, fmt.Errorf("load balancer server pool was found by name (%s), but it's ID (%s) does not match specified ID (%s)",
-					pool.Name, pool.Id, lbPoolConfig.Id)
+					pool.Name, pool.ID, lbPoolConfig.ID)
 			}
 			return pool, nil
 		}
@@ -92,7 +92,7 @@ func (eGW *EdgeGateway) ReadLBServerPool(lbPoolConfig *types.LbPool) (*types.LbP
 
 // ReadLBServerPoolByName wraps ReadLBServerPool and needs only an ID for lookup
 func (eGW *EdgeGateway) ReadLBServerPoolByID(id string) (*types.LbPool, error) {
-	return eGW.ReadLBServerPool(&types.LbPool{Id: id})
+	return eGW.ReadLBServerPool(&types.LbPool{ID: id})
 }
 
 // ReadLBServerPoolByName wraps ReadLBServerPool and needs only a Name for lookup
@@ -110,12 +110,12 @@ func (eGW *EdgeGateway) UpdateLBServerPool(lbPoolConfig *types.LbPool) (*types.L
 		return nil, err
 	}
 
-	lbPoolConfig.Id, err = eGW.getLBServerPoolIDByNameID(lbPoolConfig.Name, lbPoolConfig.Id)
+	lbPoolConfig.ID, err = eGW.getLBServerPoolIDByNameID(lbPoolConfig.Name, lbPoolConfig.ID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot update load balancer server pool: %s", err)
 	}
 
-	httpPath, err := eGW.buildProxiedEdgeEndpointURL(types.LbServerPoolPath + lbPoolConfig.Id)
+	httpPath, err := eGW.buildProxiedEdgeEndpointURL(types.LbServerPoolPath + lbPoolConfig.ID)
 	if err != nil {
 		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
 	}
@@ -127,9 +127,9 @@ func (eGW *EdgeGateway) UpdateLBServerPool(lbPoolConfig *types.LbPool) (*types.L
 		return nil, err
 	}
 
-	readPool, err := eGW.ReadLBServerPoolByID(lbPoolConfig.Id)
+	readPool, err := eGW.ReadLBServerPoolByID(lbPoolConfig.ID)
 	if err != nil {
-		return nil, fmt.Errorf("unable to retrieve server pool with ID (%s) after update: %s", lbPoolConfig.Id, err)
+		return nil, fmt.Errorf("unable to retrieve server pool with ID (%s) after update: %s", lbPoolConfig.ID, err)
 	}
 	return readPool, nil
 }
@@ -143,12 +143,12 @@ func (eGW *EdgeGateway) DeleteLBServerPool(lbPoolConfig *types.LbPool) error {
 		return err
 	}
 
-	lbPoolConfig.Id, err = eGW.getLBServerPoolIDByNameID(lbPoolConfig.Name, lbPoolConfig.Id)
+	lbPoolConfig.ID, err = eGW.getLBServerPoolIDByNameID(lbPoolConfig.Name, lbPoolConfig.ID)
 	if err != nil {
 		return fmt.Errorf("cannot delete load balancer server pool: %s", err)
 	}
 
-	httpPath, err := eGW.buildProxiedEdgeEndpointURL(types.LbServerPoolPath + lbPoolConfig.Id)
+	httpPath, err := eGW.buildProxiedEdgeEndpointURL(types.LbServerPoolPath + lbPoolConfig.ID)
 	if err != nil {
 		return fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
 	}
@@ -158,7 +158,7 @@ func (eGW *EdgeGateway) DeleteLBServerPool(lbPoolConfig *types.LbPool) error {
 
 // DeleteLBServerPoolByID wraps DeleteLBServerPool and requires only ID for deletion
 func (eGW *EdgeGateway) DeleteLBServerPoolByID(id string) error {
-	return eGW.DeleteLBServerPool(&types.LbPool{Id: id})
+	return eGW.DeleteLBServerPool(&types.LbPool{ID: id})
 }
 
 // DeleteLBServerPoolByName wraps DeleteLBServerPool and requires only Name for deletion
@@ -185,7 +185,7 @@ func validateCreateLBServerPool(lbPoolConfig *types.LbPool) error {
 }
 
 func validateReadLBServerPool(lbPoolConfig *types.LbPool) error {
-	if lbPoolConfig.Id == "" && lbPoolConfig.Name == "" {
+	if lbPoolConfig.ID == "" && lbPoolConfig.Name == "" {
 		return fmt.Errorf("to read load balancer server pool at least one of `ID`, `Name` fields must be specified")
 	}
 
@@ -219,5 +219,5 @@ func (eGW *EdgeGateway) getLBServerPoolIDByNameID(name, id string) (string, erro
 	if err != nil {
 		return "", fmt.Errorf("unable to find load balancer server pool by name: %s", err)
 	}
-	return readlbServerPool.Id, nil
+	return readlbServerPool.ID, nil
 }

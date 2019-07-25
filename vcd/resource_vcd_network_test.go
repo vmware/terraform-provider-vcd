@@ -228,7 +228,7 @@ func testAccCheckVcdNetworkExists(n string, network *govcd.OrgVDCNetwork) resour
 		}
 
 		if rs.Primary.ID == "" {
-			return fmt.Errorf("no network Id is set")
+			return fmt.Errorf("no network ID is set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)

@@ -97,6 +97,6 @@ func datasourceVcdLbServiceMonitorRead(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("unable to find load balancer service monitor with Name %s: %s", d.Get("name").(string), err)
 	}
 
-	d.SetId(readLBMonitor.Id)
+	d.SetId(readLBMonitor.ID)
 	return setLBMonitorData(d, readLBMonitor)
 }

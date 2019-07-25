@@ -136,7 +136,7 @@ func resourceVcdLBAppProfileCreate(d *schema.ResourceData, meta interface{}) err
 	if err != nil {
 		return err
 	}
-	d.SetId(createdPool.Id)
+	d.SetId(createdPool.ID)
 	return resourceVcdLBAppProfileRead(d, meta)
 }
 
@@ -151,7 +151,7 @@ func resourceVcdLBAppProfileRead(d *schema.ResourceData, meta interface{}) error
 	readLBProfile, err := edgeGateway.GetLbAppProfileById(d.Id())
 	if err != nil {
 		d.SetId("")
-		return fmt.Errorf("unable to find load balancer application profile with Id %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to find load balancer application profile with ID %s: %s", d.Id(), err)
 	}
 
 	return setLBAppProfileData(d, readLBProfile)
@@ -174,7 +174,7 @@ func resourceVcdLBAppProfileUpdate(d *schema.ResourceData, meta interface{}) err
 
 	updatedLBProfile, err := edgeGateway.UpdateLbAppProfile(updateLBProfileConfig)
 	if err != nil {
-		return fmt.Errorf("unable to update load balancer application profile with Id %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to update load balancer application profile with ID %s: %s", d.Id(), err)
 	}
 
 	if err := setLBAppProfileData(d, updatedLBProfile); err != nil {
@@ -204,7 +204,7 @@ func resourceVcdLBAppProfileDelete(d *schema.ResourceData, meta interface{}) err
 }
 
 // resourceVcdLBAppProfileImport is responsible for importing the resource.
-// The d.Id() field as being passed from `terraform import _resource_name_ _the_id_string_ requires
+// The d.ID() field as being passed from `terraform import _resource_name_ _the_id_string_ requires
 // a name based dot-formatted path to the object to lookup the object and sets the id of object.
 // `terraform import` automatically performs `refresh` operation which loads up all other fields.
 //
@@ -233,7 +233,7 @@ func resourceVcdLBAppProfileImport(d *schema.ResourceData, meta interface{}) ([]
 	d.Set("edge_gateway", edgeName)
 	d.Set("name", appProfileName)
 
-	d.SetId(readLBProfile.Id)
+	d.SetId(readLBProfile.ID)
 	return []*schema.ResourceData{d}, nil
 }
 

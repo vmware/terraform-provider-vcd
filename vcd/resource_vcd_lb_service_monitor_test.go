@@ -111,7 +111,7 @@ func testAccCheckVcdLbServiceMonitorDestroy(serviceMonitorName string) resource.
 	}
 }
 
-// importStateIdByOrgVdcEdge constructs an import path (Id in Terraform import terms) in the format of:
+// importStateIdByOrgVdcEdge constructs an import path (ID in Terraform import terms) in the format of:
 // organization.vdc.edge-gateway-nane.import-object-name (i.e. my-org.my-vdc.my-edge-gw.objectName) from TestConfig and
 // object state.
 func importStateIdByOrgVdcEdge(vcd TestConfig, objectName string) resource.ImportStateIdFunc {

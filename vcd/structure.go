@@ -61,7 +61,7 @@ func expandFirewallRules(d *schema.ResourceData, gateway *types.EdgeGateway) ([]
 			}
 		}
 		rule := &types.FirewallRule{
-			//Id: strconv.Itoa(len(configured) - i),
+			//ID: strconv.Itoa(len(configured) - i),
 			IsEnabled:            true,
 			MatchOnTranslate:     false,
 			Description:          d.Get(prefix + ".description").(string),

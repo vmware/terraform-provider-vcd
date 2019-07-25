@@ -90,7 +90,7 @@ func resourceVcdLBVirtualServer() *schema.Resource {
 			"app_profile_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Application profile Id to be associated with the virtual server",
+				Description: "Application profile ID to be associated with the virtual server",
 			},
 			"server_pool_id": &schema.Schema{
 				Type:        schema.TypeString,
@@ -129,7 +129,7 @@ func resourceVcdLBVirtualServerCreate(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf("error creating new load balancer virtual server: %s", err)
 	}
 
-	d.SetId(createdVirtualServer.Id)
+	d.SetId(createdVirtualServer.ID)
 	return resourceVcdLBVirtualServerRead(d, meta)
 }
 
@@ -144,7 +144,7 @@ func resourceVcdLBVirtualServerRead(d *schema.ResourceData, meta interface{}) er
 	readVirtualServer, err := edgeGateway.GetLbVirtualServerById(d.Id())
 	if err != nil {
 		d.SetId("")
-		return fmt.Errorf("unable to find load balancer virtual server with Id %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to find load balancer virtual server with ID %s: %s", d.Id(), err)
 	}
 
 	return setlBVirtualServerData(d, readVirtualServer)
@@ -167,7 +167,7 @@ func resourceVcdLBVirtualServerUpdate(d *schema.ResourceData, meta interface{}) 
 
 	updatedVirtualServer, err := edgeGateway.UpdateLbVirtualServer(updateVirtualServerConfig)
 	if err != nil {
-		return fmt.Errorf("unable to update load balancer virtual server with Id %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to update load balancer virtual server with ID %s: %s", d.Id(), err)
 	}
 
 	return setlBVirtualServerData(d, updatedVirtualServer)
@@ -197,10 +197,10 @@ func resourceVcdLBVirtualServerDelete(d *schema.ResourceData, meta interface{}) 
 // 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
 // 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
 // 3. The functions splits the dot-formatted path and tries to lookup the object
-// 4. If the lookup succeeds it set's the Id field for `_resource_name_` resource in statefile
+// 4. If the lookup succeeds it set's the ID field for `_resource_name_` resource in statefile
 // (the resource must be already defined in .tf config otherwise `terraform import` will complain)
 // 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
-// based on the known Id of object.
+// based on the known ID of object.
 //
 // Example resource name (_resource_name_): vcd_lb_virtual_server.my-test-virtual-server
 // Example import path (_the_id_string_): org.vdc.edge-gw.existing-virtual-server
@@ -228,7 +228,7 @@ func resourceVcdLBVirtualServerImport(d *schema.ResourceData, meta interface{}) 
 	d.Set("edge_gateway", edgeName)
 	d.Set("name", virtualServerName)
 
-	d.SetId(readVirtualServer.Id)
+	d.SetId(readVirtualServer.ID)
 	return []*schema.ResourceData{d}, nil
 }
 

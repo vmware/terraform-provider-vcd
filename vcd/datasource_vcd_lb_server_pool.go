@@ -52,7 +52,7 @@ func datasourceVcdLbServerPool() *schema.Resource {
 			"monitor_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Load Balancer Service Monitor Id",
+				Description: "Load Balancer Service Monitor ID",
 			},
 			"enable_transparency": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -130,6 +130,6 @@ func datasourceVcdLbServerPoolRead(d *schema.ResourceData, meta interface{}) err
 			d.Get("name").(string), err)
 	}
 
-	d.SetId(readLBPool.Id)
+	d.SetId(readLBPool.ID)
 	return setLBPoolData(d, readLBPool)
 }

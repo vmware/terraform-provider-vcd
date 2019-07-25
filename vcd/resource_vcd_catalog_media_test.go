@@ -62,7 +62,7 @@ func testAccCheckVcdCatalogMediaExists(mediaName string, catalogItem *govcd.Cata
 		}
 
 		if catalogMediaRs.Primary.ID == "" {
-			return fmt.Errorf("catalog media Id is not set")
+			return fmt.Errorf("catalog media ID is not set")
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)

@@ -149,7 +149,7 @@ func resourceVcdLbServiceMonitorCreate(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("error creating new load balancer service monitor: %s", err)
 	}
 
-	d.SetId(createdMonitor.Id)
+	d.SetId(createdMonitor.ID)
 	return resourceVcdLbServiceMonitorRead(d, meta)
 }
 
@@ -164,7 +164,7 @@ func resourceVcdLbServiceMonitorRead(d *schema.ResourceData, meta interface{}) e
 	readLBMonitor, err := edgeGateway.GetLbServiceMonitorById(d.Id())
 	if err != nil {
 		d.SetId("")
-		return fmt.Errorf("unable to find load balancer service monitor with Id %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to find load balancer service monitor with ID %s: %s", d.Id(), err)
 	}
 
 	return setLBMonitorData(d, readLBMonitor)
@@ -187,7 +187,7 @@ func resourceVcdLbServiceMonitorUpdate(d *schema.ResourceData, meta interface{})
 
 	updatedLBMonitor, err := edgeGateway.UpdateLbServiceMonitor(updateLBMonitorConfig)
 	if err != nil {
-		return fmt.Errorf("unable to update load balancer service monitor with Id %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to update load balancer service monitor with ID %s: %s", d.Id(), err)
 	}
 
 	return setLBMonitorData(d, updatedLBMonitor)
@@ -213,7 +213,7 @@ func resourceVcdLbServiceMonitorDelete(d *schema.ResourceData, meta interface{})
 }
 
 // resourceVcdLbServiceMonitorImport is responsible for importing the resource.
-// The d.Id() field as being passed from `terraform import _resource_name_ _the_id_string_ requires
+// The d.ID() field as being passed from `terraform import _resource_name_ _the_id_string_ requires
 // a name based dot-formatted path to the object to lookup the object and sets the id of object.
 // `terraform import` automatically performs `refresh` operation which loads up all other fields.
 //
@@ -234,7 +234,7 @@ func resourceVcdLbServiceMonitorImport(d *schema.ResourceData, meta interface{})
 
 	readLBMonitor, err := edgeGateway.GetLbServiceMonitorByName(monitorName)
 	if err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer service monitor with Id %s: %s", d.Id(), err)
+		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer service monitor with ID %s: %s", d.Id(), err)
 	}
 
 	d.Set("org", orgName)
@@ -242,7 +242,7 @@ func resourceVcdLbServiceMonitorImport(d *schema.ResourceData, meta interface{})
 	d.Set("edge_gateway", edgeName)
 	d.Set("name", monitorName)
 
-	d.SetId(readLBMonitor.Id)
+	d.SetId(readLBMonitor.ID)
 	return []*schema.ResourceData{d}, nil
 }
 

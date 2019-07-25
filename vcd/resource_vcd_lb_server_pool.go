@@ -62,7 +62,7 @@ func resourceVcdLBServerPool() *schema.Resource {
 			"monitor_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Load Balancer Service Monitor Id",
+				Description: "Load Balancer Service Monitor ID",
 			},
 			"enable_transparency": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -163,7 +163,7 @@ func resourceVcdLBServerPoolCreate(d *schema.ResourceData, meta interface{}) err
 	if err := setLBPoolData(d, createdPool); err != nil {
 		return err
 	}
-	d.SetId(createdPool.Id)
+	d.SetId(createdPool.ID)
 	return resourceVcdLBServerPoolRead(d, meta)
 }
 
@@ -178,7 +178,7 @@ func resourceVcdLBServerPoolRead(d *schema.ResourceData, meta interface{}) error
 	readLBPool, err := edgeGateway.GetLbServerPoolById(d.Id())
 	if err != nil {
 		d.SetId("")
-		return fmt.Errorf("unable to find load balancer server pool with Id %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to find load balancer server pool with ID %s: %s", d.Id(), err)
 	}
 
 	return setLBPoolData(d, readLBPool)
@@ -201,7 +201,7 @@ func resourceVcdLBServerPoolUpdate(d *schema.ResourceData, meta interface{}) err
 
 	updatedLBPool, err := edgeGateway.UpdateLbServerPool(updateLBPoolConfig)
 	if err != nil {
-		return fmt.Errorf("unable to update load balancer server pool with Id %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to update load balancer server pool with ID %s: %s", d.Id(), err)
 	}
 
 	return setLBPoolData(d, updatedLBPool)
@@ -227,7 +227,7 @@ func resourceVcdLBServerPoolDelete(d *schema.ResourceData, meta interface{}) err
 }
 
 // resourceVcdLBServerPoolImport is responsible for importing the resource.
-// The d.Id() field as being passed from `terraform import _resource_name_ _the_id_string_ requires
+// The d.ID() field as being passed from `terraform import _resource_name_ _the_id_string_ requires
 // a name based dot-formatted path to the object to lookup the object and sets the id of object.
 // `terraform import` automatically performs `refresh` operation which loads up all other fields.
 //
@@ -255,7 +255,7 @@ func resourceVcdLBServerPoolImport(d *schema.ResourceData, meta interface{}) ([]
 	d.Set("edge_gateway", edgeName)
 	d.Set("name", poolName)
 
-	d.SetId(readLBPool.Id)
+	d.SetId(readLBPool.ID)
 	return []*schema.ResourceData{d}, nil
 }
 
@@ -292,7 +292,7 @@ func getLBPoolMembersType(d *schema.ResourceData) (types.LbPoolMembers, error) {
 
 		// If we have IDs - then we must insert them for update. Otherwise the update may get mixed
 		if member["id"].(string) != "" {
-			memberConfig.Id = member["id"].(string)
+			memberConfig.ID = member["id"].(string)
 		}
 
 		memberConfig.Name = member["name"].(string)
@@ -339,7 +339,7 @@ func setLBPoolMembersData(d *schema.ResourceData, lBpoolMembers types.LbPoolMemb
 		oneMember["weight"] = member.Weight
 		oneMember["min_connections"] = member.MinConn
 		oneMember["max_connections"] = member.MaxConn
-		oneMember["id"] = member.Id
+		oneMember["id"] = member.ID
 
 		memberSet[index] = oneMember
 	}
