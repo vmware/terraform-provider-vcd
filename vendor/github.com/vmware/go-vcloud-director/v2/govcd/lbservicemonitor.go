@@ -47,10 +47,10 @@ func (egw *EdgeGateway) CreateLbServiceMonitor(lbMonitorConfig *types.LbMonitor)
 	return readMonitor, nil
 }
 
-// GetLbServiceMonitor is able to find the types.LbMonitor type by Name and/or ID.
+// getLbServiceMonitor is able to find the types.LbMonitor type by Name and/or ID.
 // If both - Name and ID are specified it performs a lookup by ID and returns an error if the specified name and found
 // name do not match.
-func (egw *EdgeGateway) GetLbServiceMonitor(lbMonitorConfig *types.LbMonitor) (*types.LbMonitor, error) {
+func (egw *EdgeGateway) getLbServiceMonitor(lbMonitorConfig *types.LbMonitor) (*types.LbMonitor, error) {
 	if err := validateGetLbServiceMonitor(lbMonitorConfig, egw); err != nil {
 		return nil, err
 	}
@@ -92,14 +92,14 @@ func (egw *EdgeGateway) GetLbServiceMonitor(lbMonitorConfig *types.LbMonitor) (*
 	return nil, ErrorEntityNotFound
 }
 
-// GetLbServiceMonitorById wraps GetLbServiceMonitor and needs only an ID for lookup
+// GetLbServiceMonitorById wraps getLbServiceMonitor and needs only an ID for lookup
 func (egw *EdgeGateway) GetLbServiceMonitorById(id string) (*types.LbMonitor, error) {
-	return egw.GetLbServiceMonitor(&types.LbMonitor{ID: id})
+	return egw.getLbServiceMonitor(&types.LbMonitor{ID: id})
 }
 
-// GetLbServiceMonitorByName wraps GetLbServiceMonitor and needs only a Name for lookup
+// GetLbServiceMonitorByName wraps getLbServiceMonitor and needs only a Name for lookup
 func (egw *EdgeGateway) GetLbServiceMonitorByName(name string) (*types.LbMonitor, error) {
-	return egw.GetLbServiceMonitor(&types.LbMonitor{Name: name})
+	return egw.getLbServiceMonitor(&types.LbMonitor{Name: name})
 }
 
 // UpdateLbServiceMonitor updates types.LbMonitor with all fields. At least name or ID must be specified.

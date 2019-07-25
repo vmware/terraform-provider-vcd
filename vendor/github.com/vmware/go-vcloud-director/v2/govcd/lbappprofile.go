@@ -44,10 +44,10 @@ func (egw *EdgeGateway) CreateLbAppProfile(lbAppProfileConfig *types.LbAppProfil
 	return readAppProfile, nil
 }
 
-// GetLbAppProfile is able to find the types.LbAppProfile type by Name and/or ID.
+// getLbAppProfile is able to find the types.LbAppProfile type by Name and/or ID.
 // If both - Name and ID are specified it performs a lookup by ID and returns an error if the specified name and found
 // name do not match.
-func (egw *EdgeGateway) GetLbAppProfile(lbAppProfileConfig *types.LbAppProfile) (*types.LbAppProfile, error) {
+func (egw *EdgeGateway) getLbAppProfile(lbAppProfileConfig *types.LbAppProfile) (*types.LbAppProfile, error) {
 	if err := validateGetLbAppProfile(lbAppProfileConfig, egw); err != nil {
 		return nil, err
 	}
@@ -91,14 +91,14 @@ func (egw *EdgeGateway) GetLbAppProfile(lbAppProfileConfig *types.LbAppProfile) 
 	return nil, ErrorEntityNotFound
 }
 
-// GetLbAppProfileById wraps GetLbAppProfile and needs only an ID for lookup
+// GetLbAppProfileById wraps getLbAppProfile and needs only an ID for lookup
 func (egw *EdgeGateway) GetLbAppProfileById(id string) (*types.LbAppProfile, error) {
-	return egw.GetLbAppProfile(&types.LbAppProfile{ID: id})
+	return egw.getLbAppProfile(&types.LbAppProfile{ID: id})
 }
 
-// GetLbAppProfileByName wraps GetLbAppProfile and needs only a Name for lookup
+// GetLbAppProfileByName wraps getLbAppProfile and needs only a Name for lookup
 func (egw *EdgeGateway) GetLbAppProfileByName(name string) (*types.LbAppProfile, error) {
-	return egw.GetLbAppProfile(&types.LbAppProfile{Name: name})
+	return egw.getLbAppProfile(&types.LbAppProfile{Name: name})
 }
 
 // UpdateLbAppProfile updates types.LbAppProfile with all fields. At least name or ID must be specified.

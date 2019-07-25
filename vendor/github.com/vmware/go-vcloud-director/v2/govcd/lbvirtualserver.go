@@ -46,10 +46,10 @@ func (egw *EdgeGateway) CreateLbVirtualServer(lbVirtualServerConfig *types.LbVir
 	return readVirtualServer, nil
 }
 
-// GetLbVirtualServer is able to find the types.LbVirtualServer type by Name and/or ID.
+// getLbVirtualServer is able to find the types.LbVirtualServer type by Name and/or ID.
 // If both - Name and ID are specified it performs a lookup by ID and returns an error if the specified name and found
 // name do not match.
-func (egw *EdgeGateway) GetLbVirtualServer(lbVirtualServerConfig *types.LbVirtualServer) (*types.LbVirtualServer, error) {
+func (egw *EdgeGateway) getLbVirtualServer(lbVirtualServerConfig *types.LbVirtualServer) (*types.LbVirtualServer, error) {
 	if err := validateGetLbVirtualServer(lbVirtualServerConfig, egw); err != nil {
 		return nil, err
 	}
@@ -93,14 +93,14 @@ func (egw *EdgeGateway) GetLbVirtualServer(lbVirtualServerConfig *types.LbVirtua
 	return nil, ErrorEntityNotFound
 }
 
-// GetLbVirtualServerById wraps GetLbVirtualServer and needs only an ID for lookup
+// GetLbVirtualServerById wraps getLbVirtualServer and needs only an ID for lookup
 func (egw *EdgeGateway) GetLbVirtualServerById(id string) (*types.LbVirtualServer, error) {
-	return egw.GetLbVirtualServer(&types.LbVirtualServer{ID: id})
+	return egw.getLbVirtualServer(&types.LbVirtualServer{ID: id})
 }
 
-// GetLbVirtualServerByName wraps GetLbVirtualServer and needs only a Name for lookup
+// GetLbVirtualServerByName wraps getLbVirtualServer and needs only a Name for lookup
 func (egw *EdgeGateway) GetLbVirtualServerByName(name string) (*types.LbVirtualServer, error) {
-	return egw.GetLbVirtualServer(&types.LbVirtualServer{Name: name})
+	return egw.getLbVirtualServer(&types.LbVirtualServer{Name: name})
 }
 
 // UpdateLbVirtualServer updates types.LbVirtualServer with all fields. At least name or ID must be

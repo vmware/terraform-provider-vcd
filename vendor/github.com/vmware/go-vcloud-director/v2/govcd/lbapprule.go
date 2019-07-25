@@ -36,7 +36,7 @@ func (egw *EdgeGateway) CreateLbAppRule(lbAppRuleConfig *types.LbAppRule) (*type
 		return nil, err
 	}
 
-	readAppRule, err := egw.GetLbAppRule(&types.LbAppRule{ID: lbAppRuleId})
+	readAppRule, err := egw.getLbAppRule(&types.LbAppRule{ID: lbAppRuleId})
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve application rule with ID (%s) after creation: %s",
 			readAppRule.ID, err)
@@ -44,10 +44,10 @@ func (egw *EdgeGateway) CreateLbAppRule(lbAppRuleConfig *types.LbAppRule) (*type
 	return readAppRule, nil
 }
 
-// GetLbAppRule is able to find the types.LbAppRule type by Name and/or ID.
+// getLbAppRule is able to find the types.LbAppRule type by Name and/or ID.
 // If both - Name and ID are specified it performs a lookup by ID and returns an error if the specified name and found
 // name do not match.
-func (egw *EdgeGateway) GetLbAppRule(lbAppRuleConfig *types.LbAppRule) (*types.LbAppRule, error) {
+func (egw *EdgeGateway) getLbAppRule(lbAppRuleConfig *types.LbAppRule) (*types.LbAppRule, error) {
 	if err := validateGetLbAppRule(lbAppRuleConfig, egw); err != nil {
 		return nil, err
 	}
@@ -91,14 +91,14 @@ func (egw *EdgeGateway) GetLbAppRule(lbAppRuleConfig *types.LbAppRule) (*types.L
 	return nil, ErrorEntityNotFound
 }
 
-// ReadLBAppRuleById wraps GetLbAppRule and needs only an ID for lookup
+// ReadLBAppRuleById wraps getLbAppRule and needs only an ID for lookup
 func (egw *EdgeGateway) GetLbAppRuleById(id string) (*types.LbAppRule, error) {
-	return egw.GetLbAppRule(&types.LbAppRule{ID: id})
+	return egw.getLbAppRule(&types.LbAppRule{ID: id})
 }
 
-// GetLbAppRuleByName wraps GetLbAppRule and needs only a Name for lookup
+// GetLbAppRuleByName wraps getLbAppRule and needs only a Name for lookup
 func (egw *EdgeGateway) GetLbAppRuleByName(name string) (*types.LbAppRule, error) {
-	return egw.GetLbAppRule(&types.LbAppRule{Name: name})
+	return egw.getLbAppRule(&types.LbAppRule{Name: name})
 }
 
 // UpdateLbAppRule updates types.LbAppRule with all fields. At least name or ID must be specified.
@@ -127,7 +127,7 @@ func (egw *EdgeGateway) UpdateLbAppRule(lbAppRuleConfig *types.LbAppRule) (*type
 		return nil, err
 	}
 
-	readAppRule, err := egw.GetLbAppRule(&types.LbAppRule{ID: lbAppRuleConfig.ID})
+	readAppRule, err := egw.getLbAppRule(&types.LbAppRule{ID: lbAppRuleConfig.ID})
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve application rule with ID (%s) after update: %s",
 			readAppRule.ID, err)

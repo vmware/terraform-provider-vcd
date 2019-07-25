@@ -44,10 +44,10 @@ func (egw *EdgeGateway) CreateLbServerPool(lbPoolConfig *types.LbPool) (*types.L
 	return readPool, nil
 }
 
-// GetLbServerPool is able to find the types.LbPool type by Name and/or ID.
+// getLbServerPool is able to find the types.LbPool type by Name and/or ID.
 // If both - Name and ID are specified it performs a lookup by ID and returns an error if the specified name and found
 // name do not match.
-func (egw *EdgeGateway) GetLbServerPool(lbPoolConfig *types.LbPool) (*types.LbPool, error) {
+func (egw *EdgeGateway) getLbServerPool(lbPoolConfig *types.LbPool) (*types.LbPool, error) {
 	if err := validateGetLbServerPool(lbPoolConfig, egw); err != nil {
 		return nil, err
 	}
@@ -90,14 +90,14 @@ func (egw *EdgeGateway) GetLbServerPool(lbPoolConfig *types.LbPool) (*types.LbPo
 	return nil, ErrorEntityNotFound
 }
 
-// GetLbServerPoolByName wraps GetLbServerPool and needs only an ID for lookup
+// GetLbServerPoolByName wraps getLbServerPool and needs only an ID for lookup
 func (egw *EdgeGateway) GetLbServerPoolById(id string) (*types.LbPool, error) {
-	return egw.GetLbServerPool(&types.LbPool{ID: id})
+	return egw.getLbServerPool(&types.LbPool{ID: id})
 }
 
-// GetLbServerPoolByName wraps GetLbServerPool and needs only a Name for lookup
+// GetLbServerPoolByName wraps getLbServerPool and needs only a Name for lookup
 func (egw *EdgeGateway) GetLbServerPoolByName(name string) (*types.LbPool, error) {
-	return egw.GetLbServerPool(&types.LbPool{Name: name})
+	return egw.getLbServerPool(&types.LbPool{Name: name})
 }
 
 // UpdateLbServerPool updates types.LbPool with all fields. At least name or ID must be specified.
