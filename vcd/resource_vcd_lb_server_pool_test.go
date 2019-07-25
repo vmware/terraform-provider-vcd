@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
@@ -226,7 +225,7 @@ func testAccCheckVcdLbServerPoolDestroy(serverPoolName string) resource.TestChec
 			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
-		monitor, err := edgeGateway.GetLbServerPool(&types.LbPool{Name: serverPoolName})
+		monitor, err := edgeGateway.GetLbServerPoolByName(serverPoolName)
 		if !strings.Contains(err.Error(), govcd.ErrorEntityNotFound.Error()) || monitor != nil {
 			return fmt.Errorf("load balancer server pool was not deleted: %s", err)
 		}
