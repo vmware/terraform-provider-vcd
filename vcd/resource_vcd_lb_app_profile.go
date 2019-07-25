@@ -239,8 +239,10 @@ func resourceVcdLBAppProfileImport(d *schema.ResourceData, meta interface{}) ([]
 
 func getLBAppProfileType(d *schema.ResourceData) (*types.LbAppProfile, error) {
 	LBProfile := &types.LbAppProfile{
-		Name:                          d.Get("name").(string),
-		Template:                      d.Get("type").(string),
+		Name: d.Get("name").(string),
+		// Both cases can be sent, but vCD UI does not populate the field during edit
+		// properly if it is sent in lower case.
+		Template:                      strings.ToUpper(d.Get("type").(string)),
 		SslPassthrough:                d.Get("enable_ssl_passthrough").(bool),
 		InsertXForwardedForHttpHeader: d.Get("insert_x_forwarded_http_header").(bool),
 		ServerSslEnabled:              d.Get("enable_pool_side_ssl").(bool),
@@ -266,7 +268,9 @@ func getLBAppProfileType(d *schema.ResourceData) (*types.LbAppProfile, error) {
 
 func setLBAppProfileData(d *schema.ResourceData, LBProfile *types.LbAppProfile) error {
 	d.Set("name", LBProfile.Name)
-	d.Set("type", LBProfile.Template)
+	// The 'type' field is lowercased for 'd.Set()' because we want to be consistent
+	// and ask the same casing for type in all resources, but they behave differently.
+	d.Set("type", strings.ToLower(LBProfile.Template))
 	d.Set("enable_ssl_passthrough", LBProfile.SslPassthrough)
 	d.Set("insert_x_forwarded_http_header", LBProfile.InsertXForwardedForHttpHeader)
 	d.Set("enable_pool_side_ssl", LBProfile.ServerSslEnabled)
