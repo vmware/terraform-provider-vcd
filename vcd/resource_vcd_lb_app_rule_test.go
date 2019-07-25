@@ -53,7 +53,7 @@ acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifoth
 
 	params["FuncName"] = t.Name() + "-step3"
 	// This test must fail with invalid rule script so we avoid running it in `make test-binary`
-	params["SkipTest"] = "# skip-test: it will fail on purpose"
+	params["SkipTest"] = "# skip-binary-test: it will fail on purpose"
 	configText3 := templateFill(testAccVcdLBAppRule_FailMultiLine, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
 
