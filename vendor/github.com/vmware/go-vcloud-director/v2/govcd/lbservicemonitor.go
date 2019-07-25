@@ -11,23 +11,23 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-// CreateLBServiceMonitor creates a load balancer service monitor based on mandatory fields. It is a synchronous
+// CreateLbServiceMonitor creates a load balancer service monitor based on mandatory fields. It is a synchronous
 // operation. It returns created object with all fields (including ID) populated or an error.
-func (eGW *EdgeGateway) CreateLBServiceMonitor(lbMonitorConfig *types.LbMonitor) (*types.LbMonitor, error) {
-	if err := validateCreateLBServiceMonitor(lbMonitorConfig); err != nil {
+func (egw *EdgeGateway) CreateLbServiceMonitor(lbMonitorConfig *types.LbMonitor) (*types.LbMonitor, error) {
+	if err := validateCreateLbServiceMonitor(lbMonitorConfig, egw); err != nil {
 		return nil, err
 	}
 
-	if !eGW.HasAdvancedNetworking() {
+	if !egw.HasAdvancedNetworking() {
 		return nil, fmt.Errorf("edge gateway does not have advanced networking enabled")
 	}
 
-	httpPath, err := eGW.buildProxiedEdgeEndpointURL(types.LbMonitorPath)
+	httpPath, err := egw.buildProxiedEdgeEndpointURL(types.LbMonitorPath)
 	if err != nil {
 		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
 	}
 	// We expect to get http.StatusCreated or if not an error of type types.NSXError
-	resp, err := eGW.client.ExecuteRequestWithCustomError(httpPath, http.MethodPost, types.AnyXMLMime,
+	resp, err := egw.client.ExecuteRequestWithCustomError(httpPath, http.MethodPost, types.AnyXMLMime,
 		"error creating load balancer service monitor: %s", lbMonitorConfig, &types.NSXError{})
 	if err != nil {
 		return nil, err
@@ -35,27 +35,27 @@ func (eGW *EdgeGateway) CreateLBServiceMonitor(lbMonitorConfig *types.LbMonitor)
 
 	// Location header should look similar to:
 	// Location: [/network/edges/edge-3/loadbalancer/config/monitors/monitor-5]
-	lbMonitorID, err := extractNSXObjectIDFromPath(resp.Header.Get("Location"))
+	lbMonitorID, err := extractNsxObjectIdFromPath(resp.Header.Get("Location"))
 	if err != nil {
 		return nil, err
 	}
 
-	readMonitor, err := eGW.ReadLBServiceMonitorByID(lbMonitorID)
+	readMonitor, err := egw.GetLbServiceMonitorById(lbMonitorID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve monitor with ID (%s) after creation: %s", lbMonitorID, err)
 	}
 	return readMonitor, nil
 }
 
-// ReadLBServiceMonitor is able to find the types.LBMonitor type by Name and/or ID.
+// GetLbServiceMonitor is able to find the types.LbMonitor type by Name and/or ID.
 // If both - Name and ID are specified it performs a lookup by ID and returns an error if the specified name and found
 // name do not match.
-func (eGW *EdgeGateway) ReadLBServiceMonitor(lbMonitorConfig *types.LbMonitor) (*types.LbMonitor, error) {
-	if err := validateReadLBServiceMonitor(lbMonitorConfig); err != nil {
+func (egw *EdgeGateway) GetLbServiceMonitor(lbMonitorConfig *types.LbMonitor) (*types.LbMonitor, error) {
+	if err := validateGetLbServiceMonitor(lbMonitorConfig, egw); err != nil {
 		return nil, err
 	}
 
-	httpPath, err := eGW.buildProxiedEdgeEndpointURL(types.LbMonitorPath)
+	httpPath, err := egw.buildProxiedEdgeEndpointURL(types.LbMonitorPath)
 	if err != nil {
 		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
 	}
@@ -66,7 +66,7 @@ func (eGW *EdgeGateway) ReadLBServiceMonitor(lbMonitorConfig *types.LbMonitor) (
 	}{}
 
 	// This query returns all service monitors as the API does not have filtering options
-	_, err = eGW.client.ExecuteRequest(httpPath, http.MethodGet, types.AnyXMLMime, "unable to read Load Balancer monitor: %s", nil, lbMonitorResponse)
+	_, err = egw.client.ExecuteRequest(httpPath, http.MethodGet, types.AnyXMLMime, "unable to read Load Balancer monitor: %s", nil, lbMonitorResponse)
 	if err != nil {
 		return nil, err
 	}
@@ -92,82 +92,86 @@ func (eGW *EdgeGateway) ReadLBServiceMonitor(lbMonitorConfig *types.LbMonitor) (
 	return nil, ErrorEntityNotFound
 }
 
-// ReadLBServiceMonitorByID wraps ReadLBServiceMonitor and needs only an ID for lookup
-func (eGW *EdgeGateway) ReadLBServiceMonitorByID(id string) (*types.LbMonitor, error) {
-	return eGW.ReadLBServiceMonitor(&types.LbMonitor{ID: id})
+// GetLbServiceMonitorById wraps GetLbServiceMonitor and needs only an ID for lookup
+func (egw *EdgeGateway) GetLbServiceMonitorById(id string) (*types.LbMonitor, error) {
+	return egw.GetLbServiceMonitor(&types.LbMonitor{ID: id})
 }
 
-// ReadLBServiceMonitorByName wraps ReadLBServiceMonitor and needs only a Name for lookup
-func (eGW *EdgeGateway) ReadLBServiceMonitorByName(name string) (*types.LbMonitor, error) {
-	return eGW.ReadLBServiceMonitor(&types.LbMonitor{Name: name})
+// GetLbServiceMonitorByName wraps GetLbServiceMonitor and needs only a Name for lookup
+func (egw *EdgeGateway) GetLbServiceMonitorByName(name string) (*types.LbMonitor, error) {
+	return egw.GetLbServiceMonitor(&types.LbMonitor{Name: name})
 }
 
-// UpdateLBServiceMonitor updates types.LBMonitor with all fields. At least name or ID must be specified.
+// UpdateLbServiceMonitor updates types.LbMonitor with all fields. At least name or ID must be specified.
 // If both - Name and ID are specified it performs a lookup by ID and returns an error if the specified name and found
 // name do not match.
-func (eGW *EdgeGateway) UpdateLBServiceMonitor(lbMonitorConfig *types.LbMonitor) (*types.LbMonitor, error) {
-	err := validateUpdateLBServiceMonitor(lbMonitorConfig)
+func (egw *EdgeGateway) UpdateLbServiceMonitor(lbMonitorConfig *types.LbMonitor) (*types.LbMonitor, error) {
+	err := validateUpdateLbServiceMonitor(lbMonitorConfig, egw)
 	if err != nil {
 		return nil, err
 	}
 
-	lbMonitorConfig.ID, err = eGW.getLBServiceMonitorIDByNameID(lbMonitorConfig.Name, lbMonitorConfig.ID)
+	lbMonitorConfig.ID, err = egw.getLbServiceMonitorIdByNameId(lbMonitorConfig.Name, lbMonitorConfig.ID)
 	if err != nil {
 		return nil, fmt.Errorf("cannot update load balancer service monitor: %s", err)
 	}
 
-	httpPath, err := eGW.buildProxiedEdgeEndpointURL(types.LbMonitorPath + lbMonitorConfig.ID)
+	httpPath, err := egw.buildProxiedEdgeEndpointURL(types.LbMonitorPath + lbMonitorConfig.ID)
 	if err != nil {
 		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
 	}
 
 	// Result should be 204, if not we expect an error of type types.NSXError
-	_, err = eGW.client.ExecuteRequestWithCustomError(httpPath, http.MethodPut, types.AnyXMLMime,
+	_, err = egw.client.ExecuteRequestWithCustomError(httpPath, http.MethodPut, types.AnyXMLMime,
 		"error while updating load balancer service monitor : %s", lbMonitorConfig, &types.NSXError{})
 	if err != nil {
 		return nil, err
 	}
 
-	readMonitor, err := eGW.ReadLBServiceMonitorByID(lbMonitorConfig.ID)
+	readMonitor, err := egw.GetLbServiceMonitorById(lbMonitorConfig.ID)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve monitor with ID (%s) after update: %s", lbMonitorConfig.ID, err)
 	}
 	return readMonitor, nil
 }
 
-// DeleteLBServiceMonitor is able to delete the types.LBMonitor type by Name and/or ID.
+// DeleteLbServiceMonitor is able to delete the types.LbMonitor type by Name and/or ID.
 // If both - Name and ID are specified it performs a lookup by ID and returns an error if the specified name and found
 // name do not match.
-func (eGW *EdgeGateway) DeleteLBServiceMonitor(lbMonitorConfig *types.LbMonitor) error {
-	err := validateDeleteLBServiceMonitor(lbMonitorConfig)
+func (egw *EdgeGateway) DeleteLbServiceMonitor(lbMonitorConfig *types.LbMonitor) error {
+	err := validateDeleteLbServiceMonitor(lbMonitorConfig, egw)
 	if err != nil {
 		return err
 	}
 
-	lbMonitorConfig.ID, err = eGW.getLBServiceMonitorIDByNameID(lbMonitorConfig.Name, lbMonitorConfig.ID)
+	lbMonitorConfig.ID, err = egw.getLbServiceMonitorIdByNameId(lbMonitorConfig.Name, lbMonitorConfig.ID)
 	if err != nil {
 		return fmt.Errorf("cannot delete load balancer service monitor: %s", err)
 	}
 
-	httpPath, err := eGW.buildProxiedEdgeEndpointURL(types.LbMonitorPath + lbMonitorConfig.ID)
+	httpPath, err := egw.buildProxiedEdgeEndpointURL(types.LbMonitorPath + lbMonitorConfig.ID)
 	if err != nil {
 		return fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
 	}
-	return eGW.client.ExecuteRequestWithoutResponse(httpPath, http.MethodDelete, types.AnyXMLMime,
+	return egw.client.ExecuteRequestWithoutResponse(httpPath, http.MethodDelete, types.AnyXMLMime,
 		"unable to delete Service Monitor: %s", nil)
 }
 
-// DeleteLBServiceMonitorByID wraps DeleteLBServiceMonitor and requires only ID for deletion
-func (eGW *EdgeGateway) DeleteLBServiceMonitorByID(id string) error {
-	return eGW.DeleteLBServiceMonitor(&types.LbMonitor{ID: id})
+// DeleteLbServiceMonitorById wraps DeleteLbServiceMonitor and requires only ID for deletion
+func (egw *EdgeGateway) DeleteLbServiceMonitorById(id string) error {
+	return egw.DeleteLbServiceMonitor(&types.LbMonitor{ID: id})
 }
 
-// DeleteLBServiceMonitorByName wraps DeleteLBServiceMonitor and requires only Name for deletion
-func (eGW *EdgeGateway) DeleteLBServiceMonitorByName(name string) error {
-	return eGW.DeleteLBServiceMonitor(&types.LbMonitor{Name: name})
+// DeleteLbServiceMonitorByName wraps DeleteLbServiceMonitor and requires only Name for deletion
+func (egw *EdgeGateway) DeleteLbServiceMonitorByName(name string) error {
+	return egw.DeleteLbServiceMonitor(&types.LbMonitor{Name: name})
 }
 
-func validateCreateLBServiceMonitor(lbMonitorConfig *types.LbMonitor) error {
+func validateCreateLbServiceMonitor(lbMonitorConfig *types.LbMonitor, egw *EdgeGateway) error {
+	if !egw.HasAdvancedNetworking() {
+		return fmt.Errorf("only advanced edge gateways support load balancers")
+	}
+
 	if lbMonitorConfig.Name == "" {
 		return fmt.Errorf("load balancer monitor Name cannot be empty")
 	}
@@ -191,7 +195,11 @@ func validateCreateLBServiceMonitor(lbMonitorConfig *types.LbMonitor) error {
 	return nil
 }
 
-func validateReadLBServiceMonitor(lbMonitorConfig *types.LbMonitor) error {
+func validateGetLbServiceMonitor(lbMonitorConfig *types.LbMonitor, egw *EdgeGateway) error {
+	if !egw.HasAdvancedNetworking() {
+		return fmt.Errorf("only advanced edge gateways support load balancers")
+	}
+
 	if lbMonitorConfig.ID == "" && lbMonitorConfig.Name == "" {
 		return fmt.Errorf("to read load balancer service monitor at least one of `ID`, `Name` fields must be specified")
 	}
@@ -199,20 +207,20 @@ func validateReadLBServiceMonitor(lbMonitorConfig *types.LbMonitor) error {
 	return nil
 }
 
-func validateUpdateLBServiceMonitor(lbMonitorConfig *types.LbMonitor) error {
+func validateUpdateLbServiceMonitor(lbMonitorConfig *types.LbMonitor, egw *EdgeGateway) error {
 	// Update and create have the same requirements for now
-	return validateCreateLBServiceMonitor(lbMonitorConfig)
+	return validateCreateLbServiceMonitor(lbMonitorConfig, egw)
 }
 
-func validateDeleteLBServiceMonitor(lbMonitorConfig *types.LbMonitor) error {
+func validateDeleteLbServiceMonitor(lbMonitorConfig *types.LbMonitor, egw *EdgeGateway) error {
 	// Read and delete have the same requirements for now
-	return validateReadLBServiceMonitor(lbMonitorConfig)
+	return validateGetLbServiceMonitor(lbMonitorConfig, egw)
 }
 
-// getLBServiceMonitorIDByNameID checks if at least name or ID is set and returns the ID.
+// getLbServiceMonitorIdByNameId checks if at least name or ID is set and returns the ID.
 // If the ID is specified - it passes through the ID. If only name was specified
 // it will lookup the object by name and return the ID.
-func (eGW *EdgeGateway) getLBServiceMonitorIDByNameID(name, id string) (string, error) {
+func (egw *EdgeGateway) getLbServiceMonitorIdByNameId(name, id string) (string, error) {
 	if name == "" && id == "" {
 		return "", fmt.Errorf("at least Name or ID must be specific to find load balancer "+
 			"service monitor got name (%s) ID (%s)", name, id)
@@ -222,7 +230,7 @@ func (eGW *EdgeGateway) getLBServiceMonitorIDByNameID(name, id string) (string, 
 	}
 
 	// if only name was specified, ID must be found, because only ID can be used in request path
-	readlbServiceMonitor, err := eGW.ReadLBServiceMonitorByName(name)
+	readlbServiceMonitor, err := egw.GetLbServiceMonitorByName(name)
 	if err != nil {
 		return "", fmt.Errorf("unable to find load balancer service monitor by name: %s", err)
 	}

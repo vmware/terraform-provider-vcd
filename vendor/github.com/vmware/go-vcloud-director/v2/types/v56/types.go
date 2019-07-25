@@ -1643,23 +1643,24 @@ type StaticRoute struct {
 	GatewayInterface *Reference `xml:"GatewayInterface,omitempty"` // Gateway interface to which static route is bound.
 }
 
-// LBGeneralParamsWithXML allows to enable/disable load balancing capabilities on specific edge gateway
+// LbGeneralParamsWithXml allows to enable/disable load balancing capabilities on specific edge gateway
 // Reference: vCloud Director API for NSX Programming Guide
 // https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
 //
-// Warning. It nests all components (LBMonitor, LBPool, LBAppProfile, LBAppRule, LBVirtualServer)
+// Warning. It nests all components (LbMonitor, LbPool, LbAppProfile, LbAppRule, LbVirtualServer)
 // because Edge Gateway API is done so that if this data is not sent while enabling it would wipe
 // all load balancer configurations. InnerXML type fields are used with struct tag `innerxml` to
 // prevent any manipulation of configuration and sending it verbatim
-type LBGeneralParamsWithXML struct {
-	XMLName             xml.Name             `xml:"loadBalancer"`
-	Enabled             bool                 `xml:"enabled"`
-	AccelerationEnabled bool                 `xml:"accelerationEnabled"`
-	Logging             *LoadBalancerLogging `xml:"logging"`
+type LbGeneralParamsWithXml struct {
+	XMLName             xml.Name   `xml:"loadBalancer"`
+	Enabled             bool       `xml:"enabled"`
+	AccelerationEnabled bool       `xml:"accelerationEnabled"`
+	Logging             *LbLogging `xml:"logging"`
 
-	//
-	EnableServiceInsertion bool   `xml:"enableServiceInsertion"`
-	Version                string `xml:"version,omitempty"`
+	// This field is not used anywhere but needs to be passed through
+	EnableServiceInsertion bool `xml:"enableServiceInsertion"`
+	// Each configuration change has a version number
+	Version string `xml:"version,omitempty"`
 
 	// The below fields have `innerxml` tag so that they are not processed but instead
 	// sent verbatim
@@ -1670,8 +1671,8 @@ type LBGeneralParamsWithXML struct {
 	AppRules       []InnerXML `xml:"applicationRule,omitempty"`
 }
 
-// LoadBalancerLogging represents logging configuration for LoadBalancer
-type LoadBalancerLogging struct {
+// LbLogging represents logging configuration for load balancer
+type LbLogging struct {
 	Enable   bool   `xml:"enable"`
 	LogLevel string `xml:"logLevel"`
 }
@@ -1682,10 +1683,10 @@ type InnerXML struct {
 	Text string `xml:",innerxml"`
 }
 
-// LBMonitor defines health check parameters for a particular type of network traffic
+// LbMonitor defines health check parameters for a particular type of network traffic
 // Reference: vCloud Director API for NSX Programming Guide
 // https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
-type LBMonitor struct {
+type LbMonitor struct {
 	XMLName    xml.Name `xml:"monitor"`
 	ID         string   `xml:"monitorId,omitempty"`
 	Type       string   `xml:"type"`
@@ -1701,12 +1702,12 @@ type LBMonitor struct {
 	Extension  string   `xml:"extension,omitempty"`
 }
 
-type LBMonitors []LBMonitor
+type LbMonitors []LbMonitor
 
-// LBPool represents a load balancer server pool as per "vCloud Director API for NSX Programming Guide"
+// LbPool represents a load balancer server pool as per "vCloud Director API for NSX Programming Guide"
 // Type: LBPoolHealthCheckType
 // https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
-type LBPool struct {
+type LbPool struct {
 	XMLName             xml.Name      `xml:"pool"`
 	ID                  string        `xml:"poolId,omitempty"`
 	Name                string        `xml:"name"`
@@ -1715,13 +1716,13 @@ type LBPool struct {
 	AlgorithmParameters string        `xml:"algorithmParameters,omitempty"`
 	Transparent         bool          `xml:"transparent,omitempty"`
 	MonitorId           string        `xml:"monitorId,omitempty"`
-	Members             LBPoolMembers `xml:"member,omitempty"`
+	Members             LbPoolMembers `xml:"member,omitempty"`
 }
 
-type LBPools []LBPool
+type LbPools []LbPool
 
-// LBPoolMember represents a single member inside LBPool
-type LBPoolMember struct {
+// LbPoolMember represents a single member inside LbPool
+type LbPoolMember struct {
 	ID          string `xml:"memberId,omitempty"`
 	Name        string `xml:"name"`
 	IpAddress   string `xml:"ipAddress"`
@@ -1733,27 +1734,27 @@ type LBPoolMember struct {
 	Condition   string `xml:"condition,omitempty"`
 }
 
-type LBPoolMembers []LBPoolMember
+type LbPoolMembers []LbPoolMember
 
-// LBAppProfile represents a load balancer application profile as per "vCloud Director API for NSX
+// LbAppProfile represents a load balancer application profile as per "vCloud Director API for NSX
 // Programming Guide"
 // https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
-type LBAppProfile struct {
+type LbAppProfile struct {
 	XMLName                       xml.Name                  `xml:"applicationProfile"`
 	ID                            string                    `xml:"applicationProfileId,omitempty"`
 	Name                          string                    `xml:"name,omitempty"`
-	SSLPassthrough                bool                      `xml:"sslPassthrough,omitempty"`
+	SslPassthrough                bool                      `xml:"sslPassthrough,omitempty"`
 	Template                      string                    `xml:"template,omitempty"`
-	HTTPRedirect                  *LBAppProfileHTTPRedirect `xml:"httpRedirect,omitempty"`
-	Persistence                   *LBAppProfilePersistence  `xml:"persistence,omitempty"`
-	InsertXForwardedForHTTPHeader bool                      `xml:"insertXForwardedFor,omitempty"`
-	ServerSSLEnabled              bool                      `xml:"serverSslEnabled,omitempty"`
+	HttpRedirect                  *LbAppProfileHttpRedirect `xml:"httpRedirect,omitempty"`
+	Persistence                   *LbAppProfilePersistence  `xml:"persistence,omitempty"`
+	InsertXForwardedForHttpHeader bool                      `xml:"insertXForwardedFor,omitempty"`
+	ServerSslEnabled              bool                      `xml:"serverSslEnabled,omitempty"`
 }
 
-type LBAppProfiles []LBAppProfile
+type LbAppProfiles []LbAppProfile
 
-// LBAppProfilePersistence defines persistence profile settings in LBAppProfile
-type LBAppProfilePersistence struct {
+// LbAppProfilePersistence defines persistence profile settings in LbAppProfile
+type LbAppProfilePersistence struct {
 	XMLName    xml.Name `xml:"persistence"`
 	Method     string   `xml:"method,omitempty"`
 	CookieName string   `xml:"cookieName,omitempty"`
@@ -1761,30 +1762,30 @@ type LBAppProfilePersistence struct {
 	Expire     int      `xml:"expire,omitempty"`
 }
 
-// LBAppProfileHTTPRedirect defines http redirect settings in LBAppProfile
-type LBAppProfileHTTPRedirect struct {
+// LbAppProfileHttpRedirect defines http redirect settings in LbAppProfile
+type LbAppProfileHttpRedirect struct {
 	XMLName xml.Name `xml:"httpRedirect"`
 	To      string   `xml:"to,omitempty"`
 }
 
-// LBAppRule represents a load balancer application rule as per "vCloud Director API for NSX
+// LbAppRule represents a load balancer application rule as per "vCloud Director API for NSX
 // Programming Guide"
 // https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
-type LBAppRule struct {
+type LbAppRule struct {
 	XMLName xml.Name `xml:"applicationRule"`
 	ID      string   `xml:"applicationRuleId,omitempty"`
 	Name    string   `xml:"name,omitempty"`
 	Script  string   `xml:"script,omitempty"`
 }
 
-type LBAppRules []LBAppRule
+type LbAppRules []LbAppRule
 
-// LBVirtualServer represents a load balancer virtual server as per "vCloud Director API for NSX
+// LbVirtualServer represents a load balancer virtual server as per "vCloud Director API for NSX
 // Programming Guide"
 // https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
-type LBVirtualServer struct {
+type LbVirtualServer struct {
 	XMLName              xml.Name `xml:"virtualServer"`
-	Id                   string   `xml:"virtualServerId,omitempty"`
+	ID                   string   `xml:"virtualServerId,omitempty"`
 	Name                 string   `xml:"name,omitempty"`
 	Description          string   `xml:"description,omitempty"`
 	Enabled              bool     `xml:"enabled,omitempty"`
@@ -2313,7 +2314,7 @@ type VimObjectRef struct {
 // Description: List of VimObjectRef elements.
 // Since: 0.9
 type VimObjectRefs struct {
-	VimObjectRef []*VimObjectRef `xml:VimObjectRef`
+	VimObjectRef []*VimObjectRef `xml:"VimObjectRef"`
 }
 
 // Type: VMWExternalNetworkType
