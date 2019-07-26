@@ -38,7 +38,7 @@ resource "vcd_dnat" "forIcmp" {
   external_ip   = "78.101.10.20"
   port          = -1                    # "-1" == "any"
   internal_ip   = "10.10.0.5"
-  protocol      = "ICMP"
+  protocol      = "icmp"
   icmp_sub_type = "router-solicitation"
 }
 ```
