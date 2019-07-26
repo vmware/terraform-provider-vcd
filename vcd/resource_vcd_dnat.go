@@ -66,9 +66,10 @@ func resourceVcdDNAT() *schema.Resource {
 				Required: true,
 			},
 			"protocol": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "TCP", // keep back compatibility as was hardcoded previously
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "tcp", // keep back compatibility as was hardcoded previously
+				ValidateFunc: validateCase("lower"),
 			},
 			"icmp_sub_type": &schema.Schema{
 				Type:     schema.TypeString,
