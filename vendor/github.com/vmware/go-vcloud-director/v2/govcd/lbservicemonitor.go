@@ -153,8 +153,14 @@ func (egw *EdgeGateway) DeleteLbServiceMonitor(lbMonitorConfig *types.LbMonitor)
 	if err != nil {
 		return fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
 	}
-	return egw.client.ExecuteRequestWithoutResponse(httpPath, http.MethodDelete, types.AnyXMLMime,
-		"unable to delete Service Monitor: %s", nil)
+
+	_, err = egw.client.ExecuteRequestWithCustomError(httpPath, http.MethodDelete, types.AnyXMLMime,
+		"unable to delete service monitor: %s", nil, &types.NSXError{})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // DeleteLbServiceMonitorById wraps DeleteLbServiceMonitor and requires only ID for deletion
