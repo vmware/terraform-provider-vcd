@@ -25,13 +25,6 @@ Supported in provider *v2.4+*
 ## Example Usage 1 (Application rule with single line script)
 
 ```hcl
-provider "vcd" {
-  user     = "${var.admin_user}"
-  password = "${var.admin_password}"
-  org      = "System"
-  url      = "https://AcmeVcd/api"
-}
-
 resource "vcd_lb_app_rule" "example-one" {
   edge_gateway = "my-edge-gw"
   org          = "my-org"
@@ -45,13 +38,6 @@ resource "vcd_lb_app_rule" "example-one" {
 ## Example Usage 2 (Application rule with multi line script)
 
 ```hcl
-provider "vcd" {
-  user     = "${var.admin_user}"
-  password = "${var.admin_password}"
-  org      = "System"
-  url      = "https://AcmeVcd/api"
-}
-
 resource "vcd_lb_app_rule" "example-two" {
   edge_gateway = "my-edge-gw"
   org          = "my-org"

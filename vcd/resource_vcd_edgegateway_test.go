@@ -90,6 +90,10 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 		"Vcenter":               testConfig.Networking.Vcenter,
 	}
 	configText := templateFill(testAccEdgeGatewayComplex, params)
+
+	params["FuncName"] = t.Name() + "-step1"
+	configText1 := templateFill(testAccEdgeGatewayComplexWithLb, params)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -106,9 +110,26 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
-				Check: resource.ComposeTestCheckFunc(
+				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"vcd_edgegateway."+edgeGatewayNameComplex, "default_gateway_network", newExternalNetworkVcd),
+					// Expect default load balancer settings when the fields are not set
+					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_acceleration_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_logging_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_loglevel", "info"),
+				),
+			},
+			resource.TestStep{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"vcd_edgegateway."+edgeGatewayNameComplex, "default_gateway_network", newExternalNetworkVcd),
+					// All load balancer fields should appear when load balancing is used
+					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_acceleration_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_logging_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_loglevel", "critical"),
 				),
 			},
 		},
@@ -164,8 +185,7 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
 }
 `
 
-const testAccEdgeGatewayComplex = `
-
+const testAccEdgeGatewayComplexNetwork = `
 resource "vcd_external_network" "{{.NewExternalNetwork}}" {
   name        = "{{.NewExternalNetworkVcd}}"
   description = "Test External Network"
@@ -191,7 +211,9 @@ resource "vcd_external_network" "{{.NewExternalNetwork}}" {
 
   retain_net_info_across_deployments = "false"
 }
+`
 
+const testAccEdgeGatewayComplex = testAccEdgeGatewayComplexNetwork + `
 resource "vcd_edgegateway" "{{.EdgeGateway}}" {
   org                     = "{{.Org}}"
   vdc                     = "{{.Vdc}}"
@@ -201,5 +223,23 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
   default_gateway_network = "${vcd_external_network.{{.NewExternalNetwork}}.name}"
   advanced                = {{.Advanced}}
   external_networks       = [ "{{.ExternalNetwork}}", "${vcd_external_network.{{.NewExternalNetwork}}.name}" ]
+}
+`
+
+const testAccEdgeGatewayComplexWithLb = testAccEdgeGatewayComplexNetwork + `
+resource "vcd_edgegateway" "{{.EdgeGateway}}" {
+  org                     = "{{.Org}}"
+  vdc                     = "{{.Vdc}}"
+  name                    = "{{.EdgeGatewayVcd}}"
+  description             = "Description"
+  configuration           = "compact"
+  default_gateway_network = "${vcd_external_network.{{.NewExternalNetwork}}.name}"
+  advanced                = {{.Advanced}}
+  external_networks       = [ "{{.ExternalNetwork}}", "${vcd_external_network.{{.NewExternalNetwork}}.name}" ]
+
+  lb_enabled              = "true"
+  lb_acceleration_enabled = "true"
+  lb_logging_enabled      = "true"
+  lb_loglevel             = "critical"
 }
 `

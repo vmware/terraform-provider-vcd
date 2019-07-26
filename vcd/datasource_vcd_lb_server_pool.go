@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 func datasourceVcdLbServerPool() *schema.Resource {
@@ -124,7 +123,7 @@ func datasourceVcdLbServerPoolRead(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBPool, err := edgeGateway.ReadLBServerPool(&types.LBPool{Name: d.Get("name").(string)})
+	readLBPool, err := edgeGateway.GetLbServerPoolByName(d.Get("name").(string))
 	if err != nil {
 		return fmt.Errorf("unable to find load balancer server pool with Name %s: %s",
 			d.Get("name").(string), err)

@@ -40,7 +40,6 @@ func resourceVcdLBAppProfile() *schema.Resource {
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "Unique LB Application Profile name",
 			},
 			"type": &schema.Schema{
@@ -126,7 +125,7 @@ func resourceVcdLBAppProfileCreate(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("unable to create load balancer application profile type: %s", err)
 	}
 
-	createdPool, err := edgeGateway.CreateLBAppProfile(LBProfile)
+	createdPool, err := edgeGateway.CreateLbAppProfile(LBProfile)
 	if err != nil {
 		return fmt.Errorf("error creating new load balancer application profile: %s", err)
 	}
@@ -137,7 +136,7 @@ func resourceVcdLBAppProfileCreate(d *schema.ResourceData, meta interface{}) err
 		return err
 	}
 	d.SetId(createdPool.ID)
-	return nil
+	return resourceVcdLBAppProfileRead(d, meta)
 }
 
 func resourceVcdLBAppProfileRead(d *schema.ResourceData, meta interface{}) error {
@@ -148,7 +147,7 @@ func resourceVcdLBAppProfileRead(d *schema.ResourceData, meta interface{}) error
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBProfile, err := edgeGateway.ReadLBAppProfileByID(d.Id())
+	readLBProfile, err := edgeGateway.GetLbAppProfileById(d.Id())
 	if err != nil {
 		d.SetId("")
 		return fmt.Errorf("unable to find load balancer application profile with ID %s: %s", d.Id(), err)
@@ -168,11 +167,12 @@ func resourceVcdLBAppProfileUpdate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	updateLBProfileConfig, err := getLBAppProfileType(d)
+	updateLBProfileConfig.ID = d.Id() // We already know an ID for update and it allows to change name
 	if err != nil {
 		return fmt.Errorf("unable to create load balancer application profile type for update: %s", err)
 	}
 
-	updatedLBProfile, err := edgeGateway.UpdateLBAppProfile(updateLBProfileConfig)
+	updatedLBProfile, err := edgeGateway.UpdateLbAppProfile(updateLBProfileConfig)
 	if err != nil {
 		return fmt.Errorf("unable to update load balancer application profile with ID %s: %s", d.Id(), err)
 	}
@@ -194,7 +194,7 @@ func resourceVcdLBAppProfileDelete(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	err = edgeGateway.DeleteLBAppProfileByID(d.Id())
+	err = edgeGateway.DeleteLbAppProfileById(d.Id())
 	if err != nil {
 		return fmt.Errorf("error deleting load balancer application profile: %s", err)
 	}
@@ -204,7 +204,7 @@ func resourceVcdLBAppProfileDelete(d *schema.ResourceData, meta interface{}) err
 }
 
 // resourceVcdLBAppProfileImport is responsible for importing the resource.
-// The d.Id() field as being passed from `terraform import _resource_name_ _the_id_string_ requires
+// The d.ID() field as being passed from `terraform import _resource_name_ _the_id_string_ requires
 // a name based dot-formatted path to the object to lookup the object and sets the id of object.
 // `terraform import` automatically performs `refresh` operation which loads up all other fields.
 //
@@ -222,7 +222,7 @@ func resourceVcdLBAppProfileImport(d *schema.ResourceData, meta interface{}) ([]
 		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBProfile, err := edgeGateway.ReadLBAppProfileByName(appProfileName)
+	readLBProfile, err := edgeGateway.GetLbAppProfileByName(appProfileName)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer application profile with name %s: %s",
 			d.Id(), err)
@@ -237,23 +237,25 @@ func resourceVcdLBAppProfileImport(d *schema.ResourceData, meta interface{}) ([]
 	return []*schema.ResourceData{d}, nil
 }
 
-func getLBAppProfileType(d *schema.ResourceData) (*types.LBAppProfile, error) {
-	LBProfile := &types.LBAppProfile{
-		Name:                          d.Get("name").(string),
-		Template:                      d.Get("type").(string),
-		SSLPassthrough:                d.Get("enable_ssl_passthrough").(bool),
-		InsertXForwardedForHTTPHeader: d.Get("insert_x_forwarded_http_header").(bool),
-		ServerSSLEnabled:              d.Get("enable_pool_side_ssl").(bool),
+func getLBAppProfileType(d *schema.ResourceData) (*types.LbAppProfile, error) {
+	LBProfile := &types.LbAppProfile{
+		Name: d.Get("name").(string),
+		// Both cases can be sent, but vCD UI does not populate the field during edit
+		// properly if it is sent in lower case.
+		Template:                      strings.ToUpper(d.Get("type").(string)),
+		SslPassthrough:                d.Get("enable_ssl_passthrough").(bool),
+		InsertXForwardedForHttpHeader: d.Get("insert_x_forwarded_http_header").(bool),
+		ServerSslEnabled:              d.Get("enable_pool_side_ssl").(bool),
 	}
 
 	if d.Get("http_redirect_url").(string) != "" {
-		LBProfile.HTTPRedirect = &types.LBAppProfileHTTPRedirect{
+		LBProfile.HttpRedirect = &types.LbAppProfileHttpRedirect{
 			To: d.Get("http_redirect_url").(string),
 		}
 	}
 
 	if d.Get("persistence_mechanism").(string) != "" {
-		LBProfile.Persistence = &types.LBAppProfilePersistence{
+		LBProfile.Persistence = &types.LbAppProfilePersistence{
 			Method:     d.Get("persistence_mechanism").(string),
 			CookieName: d.Get("cookie_name").(string),
 			CookieMode: d.Get("cookie_mode").(string),
@@ -264,12 +266,14 @@ func getLBAppProfileType(d *schema.ResourceData) (*types.LBAppProfile, error) {
 	return LBProfile, nil
 }
 
-func setLBAppProfileData(d *schema.ResourceData, LBProfile *types.LBAppProfile) error {
+func setLBAppProfileData(d *schema.ResourceData, LBProfile *types.LbAppProfile) error {
 	d.Set("name", LBProfile.Name)
-	d.Set("type", LBProfile.Template)
-	d.Set("enable_ssl_passthrough", LBProfile.SSLPassthrough)
-	d.Set("insert_x_forwarded_http_header", LBProfile.InsertXForwardedForHTTPHeader)
-	d.Set("enable_pool_side_ssl", LBProfile.ServerSSLEnabled)
+	// The 'type' field is lowercased for 'd.Set()' because we want to be consistent
+	// and ask the same casing for type in all resources, but they behave differently.
+	d.Set("type", strings.ToLower(LBProfile.Template))
+	d.Set("enable_ssl_passthrough", LBProfile.SslPassthrough)
+	d.Set("insert_x_forwarded_http_header", LBProfile.InsertXForwardedForHttpHeader)
+	d.Set("enable_pool_side_ssl", LBProfile.ServerSslEnabled)
 	// Questionable field. UI has it, but does not send it. NSX documentation has it, but it is
 	// never returned, nor shown
 	// d.Set("expiration", LBProfile.Expire)
@@ -286,8 +290,8 @@ func setLBAppProfileData(d *schema.ResourceData, LBProfile *types.LBAppProfile) 
 		d.Set("expiration", "")
 	}
 
-	if LBProfile.HTTPRedirect != nil {
-		d.Set("http_redirect_url", LBProfile.HTTPRedirect.To)
+	if LBProfile.HttpRedirect != nil {
+		d.Set("http_redirect_url", LBProfile.HttpRedirect.To)
 	} else { // We still want to make sure it is empty
 		d.Set("http_redirect_url", "")
 	}

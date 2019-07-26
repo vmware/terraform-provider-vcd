@@ -40,7 +40,6 @@ func resourceVcdLBAppRule() *schema.Resource {
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "Unique LB Application Rule name",
 			},
 			"script": {
@@ -68,7 +67,7 @@ func resourceVcdLBAppRuleCreate(d *schema.ResourceData, meta interface{}) error 
 		return fmt.Errorf("unable to create load balancer application rule type: %s", err)
 	}
 
-	createdPool, err := edgeGateway.CreateLBAppRule(LBRule)
+	createdPool, err := edgeGateway.CreateLbAppRule(LBRule)
 	if err != nil {
 		return fmt.Errorf("error creating new load balancer application rule: %s", err)
 	}
@@ -78,7 +77,7 @@ func resourceVcdLBAppRuleCreate(d *schema.ResourceData, meta interface{}) error 
 		return err
 	}
 	d.SetId(createdPool.ID)
-	return nil
+	return resourceVcdLBAppRuleRead(d, meta)
 }
 
 func resourceVcdLBAppRuleRead(d *schema.ResourceData, meta interface{}) error {
@@ -89,7 +88,7 @@ func resourceVcdLBAppRuleRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBRule, err := edgeGateway.ReadLBAppRuleByID(d.Id())
+	readLBRule, err := edgeGateway.GetLbAppRuleById(d.Id())
 	if err != nil {
 		d.SetId("")
 		return fmt.Errorf("unable to find load balancer application rule with ID %s: %s", d.Id(), err)
@@ -109,11 +108,12 @@ func resourceVcdLBAppRuleUpdate(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	updateLBRuleConfig, err := getLBAppRuleType(d)
+	updateLBRuleConfig.ID = d.Id() // We already know an ID for update and it allows to change name
 	if err != nil {
 		return fmt.Errorf("could not create load balancer application rule type for update: %s", err)
 	}
 
-	updatedLBRule, err := edgeGateway.UpdateLBAppRule(updateLBRuleConfig)
+	updatedLBRule, err := edgeGateway.UpdateLbAppRule(updateLBRuleConfig)
 	if err != nil {
 		return fmt.Errorf("unable to update load balancer application rule with ID %s: %s", d.Id(), err)
 	}
@@ -135,7 +135,7 @@ func resourceVcdLBAppRuleDelete(d *schema.ResourceData, meta interface{}) error 
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	err = edgeGateway.DeleteLBAppRuleByID(d.Id())
+	err = edgeGateway.DeleteLbAppRuleById(d.Id())
 	if err != nil {
 		return fmt.Errorf("error deleting load balancer application rule: %s", err)
 	}
@@ -169,7 +169,7 @@ func resourceVcdLBAppRuleImport(d *schema.ResourceData, meta interface{}) ([]*sc
 		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBRule, err := edgeGateway.ReadLBAppRuleByName(appRuleName)
+	readLBRule, err := edgeGateway.GetLbAppRuleByName(appRuleName)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer application rule with name %s: %s",
 			d.Id(), err)
@@ -184,9 +184,9 @@ func resourceVcdLBAppRuleImport(d *schema.ResourceData, meta interface{}) ([]*sc
 	return []*schema.ResourceData{d}, nil
 }
 
-// getLBAppRuleType converts Terraform resource data into types.LBAppRule type for API request.
-func getLBAppRuleType(d *schema.ResourceData) (*types.LBAppRule, error) {
-	lbAppRule := &types.LBAppRule{
+// getLBAppRuleType converts Terraform resource data into types.LbAppRule type for API request.
+func getLBAppRuleType(d *schema.ResourceData) (*types.LbAppRule, error) {
+	lbAppRule := &types.LbAppRule{
 		Name:   d.Get("name").(string),
 		Script: d.Get("script").(string),
 	}
@@ -205,7 +205,7 @@ func getLBAppRuleType(d *schema.ResourceData) (*types.LBAppRule, error) {
 //   EOT
 // is rendered as such API call
 // <script>acl en req.fhdr(accept-language),language(es;fr;en) -m str en\nuse_backend english if en</script>
-func setLBAppRuleData(d *schema.ResourceData, LBRule *types.LBAppRule) error {
+func setLBAppRuleData(d *schema.ResourceData, LBRule *types.LbAppRule) error {
 	d.Set("script", LBRule.Script)
 	d.Set("name", LBRule.Name)
 	return nil
