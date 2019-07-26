@@ -30,6 +30,10 @@ BUG FIXES:
 
 * `resource/vcd_dnat and resource/vcd_snat` - fix resource destroy as it would still leave NAT rule in edge gateway. Fix works if network_name and network_type is used. [GH-282]
 
+NOTES:
+* `resource/vcd_dnat` default value for `protocol` field changed from upper case `TCP` to lower case `tcp`, which may result in a single update when running `plan` on a configuration with a state file from an older version.
+
+
 ## 2.3.0 (May 29, 2019)
 
 IMPROVEMENTS:
