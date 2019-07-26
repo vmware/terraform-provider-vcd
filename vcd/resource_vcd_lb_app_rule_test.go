@@ -48,6 +48,7 @@ acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifoth
 	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
 
 	params["FuncName"] = t.Name() + "-step1"
+	params["AppRuleName"] = t.Name() + "-step1"
 	configText1 := templateFill(testAccVcdLBAppRule_MultiLine, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
@@ -71,12 +72,12 @@ acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifoth
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_lb_app_rule.test", "id", regexp.MustCompile(`^applicationRule-\d*$`)),
-					resource.TestCheckResourceAttr("vcd_lb_app_rule.test", "name", params["AppRuleName"].(string)),
+					resource.TestCheckResourceAttr("vcd_lb_app_rule.test", "name", t.Name()),
 					resource.TestCheckResourceAttr("vcd_lb_app_rule.test", "script", params["SingleLineScript"].(string)),
 
 					// Data source testing - it must expose all fields which resource has
 					resource.TestMatchResourceAttr("data.vcd_lb_app_rule.test", "id", regexp.MustCompile(`^applicationRule-\d*$`)),
-					resource.TestCheckResourceAttr("data.vcd_lb_app_rule.test", "name", params["AppRuleName"].(string)),
+					resource.TestCheckResourceAttr("data.vcd_lb_app_rule.test", "name", t.Name()),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_rule.test", "script", params["SingleLineScript"].(string)),
 				),
 			},
@@ -85,12 +86,12 @@ acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifoth
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_lb_app_rule.test", "id", regexp.MustCompile(`^applicationRule-\d*$`)),
-					resource.TestCheckResourceAttr("vcd_lb_app_rule.test", "name", params["AppRuleName"].(string)),
+					resource.TestCheckResourceAttr("vcd_lb_app_rule.test", "name", t.Name()+"-step1"),
 					resource.TestCheckResourceAttr("vcd_lb_app_rule.test", "script", MultiLineScript),
 
 					// Data source testing - it must expose all fields which resource has
 					resource.TestMatchResourceAttr("data.vcd_lb_app_rule.test", "id", regexp.MustCompile(`^applicationRule-\d*$`)),
-					resource.TestCheckResourceAttr("data.vcd_lb_app_rule.test", "name", params["AppRuleName"].(string)),
+					resource.TestCheckResourceAttr("data.vcd_lb_app_rule.test", "name", t.Name()+"-step1"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_rule.test", "script", MultiLineScript),
 				),
 			},
@@ -127,7 +128,7 @@ func testAccCheckVcdLBAppRuleDestroy(appRuleName string) resource.TestCheckFunc 
 			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
-		monitor, err := edgeGateway.ReadLBAppRuleByName(appRuleName)
+		monitor, err := edgeGateway.GetLbAppRuleByName(appRuleName)
 		if !strings.Contains(err.Error(), govcd.ErrorEntityNotFound.Error()) ||
 			monitor != nil {
 			return fmt.Errorf("load balancer application rule was not deleted: %s", err)

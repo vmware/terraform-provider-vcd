@@ -40,7 +40,6 @@ func resourceVcdLBServerPool() *schema.Resource {
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "Unique LB Server Pool name",
 			},
 			"description": &schema.Schema{
@@ -154,7 +153,7 @@ func resourceVcdLBServerPoolCreate(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("unable to create load balancer server pool type: %s", err)
 	}
 
-	createdPool, err := edgeGateway.CreateLBServerPool(LBPool)
+	createdPool, err := edgeGateway.CreateLbServerPool(LBPool)
 	if err != nil {
 		return fmt.Errorf("error creating new load balancer server pool: %s", err)
 	}
@@ -175,7 +174,7 @@ func resourceVcdLBServerPoolRead(d *schema.ResourceData, meta interface{}) error
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBPool, err := edgeGateway.ReadLBServerPoolByID(d.Id())
+	readLBPool, err := edgeGateway.GetLbServerPoolById(d.Id())
 	if err != nil {
 		d.SetId("")
 		return fmt.Errorf("unable to find load balancer server pool with ID %s: %s", d.Id(), err)
@@ -195,11 +194,12 @@ func resourceVcdLBServerPoolUpdate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	updateLBPoolConfig, err := getLBPoolType(d)
+	updateLBPoolConfig.ID = d.Id() // We already know an ID for update and it allows to change name
 	if err != nil {
 		return fmt.Errorf("could not create load balancer server pool type for update: %s", err)
 	}
 
-	updatedLBPool, err := edgeGateway.UpdateLBServerPool(updateLBPoolConfig)
+	updatedLBPool, err := edgeGateway.UpdateLbServerPool(updateLBPoolConfig)
 	if err != nil {
 		return fmt.Errorf("unable to update load balancer server pool with ID %s: %s", d.Id(), err)
 	}
@@ -217,7 +217,7 @@ func resourceVcdLBServerPoolDelete(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	err = edgeGateway.DeleteLBServerPoolByID(d.Id())
+	err = edgeGateway.DeleteLbServerPoolById(d.Id())
 	if err != nil {
 		return fmt.Errorf("error deleting load balancer server pool: %s", err)
 	}
@@ -227,7 +227,7 @@ func resourceVcdLBServerPoolDelete(d *schema.ResourceData, meta interface{}) err
 }
 
 // resourceVcdLBServerPoolImport is responsible for importing the resource.
-// The d.Id() field as being passed from `terraform import _resource_name_ _the_id_string_ requires
+// The d.ID() field as being passed from `terraform import _resource_name_ _the_id_string_ requires
 // a name based dot-formatted path to the object to lookup the object and sets the id of object.
 // `terraform import` automatically performs `refresh` operation which loads up all other fields.
 //
@@ -245,7 +245,7 @@ func resourceVcdLBServerPoolImport(d *schema.ResourceData, meta interface{}) ([]
 		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBPool, err := edgeGateway.ReadLBServerPoolByName(poolName)
+	readLBPool, err := edgeGateway.GetLbServerPoolByName(poolName)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer server pool with name %s: %s", d.Id(), err)
 	}
@@ -259,10 +259,10 @@ func resourceVcdLBServerPoolImport(d *schema.ResourceData, meta interface{}) ([]
 	return []*schema.ResourceData{d}, nil
 }
 
-// getLBPoolType converts schema.ResourceData to *types.LBPool and is useful
+// getLBPoolType converts schema.ResourceData to *types.LbPool and is useful
 // for creating API requests
-func getLBPoolType(d *schema.ResourceData) (*types.LBPool, error) {
-	lbPool := &types.LBPool{
+func getLBPoolType(d *schema.ResourceData) (*types.LbPool, error) {
+	lbPool := &types.LbPool{
 		Name:                d.Get("name").(string),
 		Description:         d.Get("description").(string),
 		Algorithm:           d.Get("algorithm").(string),
@@ -280,14 +280,14 @@ func getLBPoolType(d *schema.ResourceData) (*types.LBPool, error) {
 	return lbPool, nil
 }
 
-// getLBPoolMembersType converts schema.ResourceData to *types.LBPoolMembers and is useful
+// getLBPoolMembersType converts schema.ResourceData to *types.LbPoolMembers and is useful
 // for creating API requests
-func getLBPoolMembersType(d *schema.ResourceData) (types.LBPoolMembers, error) {
-	var lbPoolMembers types.LBPoolMembers
+func getLBPoolMembersType(d *schema.ResourceData) (types.LbPoolMembers, error) {
+	var lbPoolMembers types.LbPoolMembers
 
 	members := d.Get("member").([]interface{})
 	for _, memberInterface := range members {
-		var memberConfig types.LBPoolMember
+		var memberConfig types.LbPoolMember
 		member := memberInterface.(map[string]interface{})
 
 		// If we have IDs - then we must insert them for update. Otherwise the update may get mixed
@@ -311,8 +311,8 @@ func getLBPoolMembersType(d *schema.ResourceData) (types.LBPoolMembers, error) {
 	return lbPoolMembers, nil
 }
 
-// setLBPoolData sets object state from *types.LBPool
-func setLBPoolData(d *schema.ResourceData, lBpool *types.LBPool) error {
+// setLBPoolData sets object state from *types.LbPool
+func setLBPoolData(d *schema.ResourceData, lBpool *types.LbPool) error {
 	d.Set("name", lBpool.Name)
 	d.Set("description", lBpool.Description)
 	d.Set("algorithm", lBpool.Algorithm)
@@ -324,8 +324,8 @@ func setLBPoolData(d *schema.ResourceData, lBpool *types.LBPool) error {
 	return setLBPoolMembersData(d, lBpool.Members)
 }
 
-// setLBPoolMembersData sets pool members state from *types.LBPoolMembers
-func setLBPoolMembersData(d *schema.ResourceData, lBpoolMembers types.LBPoolMembers) error {
+// setLBPoolMembersData sets pool members state from *types.LbPoolMembers
+func setLBPoolMembersData(d *schema.ResourceData, lBpoolMembers types.LbPoolMembers) error {
 
 	memberSet := make([]map[string]interface{}, len(lBpoolMembers))
 	for index, member := range lBpoolMembers {

@@ -31,40 +31,26 @@ Supported in provider *v2.4+*
 ## Example Usage 1 (TCP Application Profile)
 
 ```hcl
-provider "vcd" {
-  user     = "${var.admin_user}"
-  password = "${var.admin_password}"
-  org      = "System"
-  url      = "https://AcmeVcd/api"
-}
-
 resource "vcd_lb_app_profile" "tcp" {
   org          = "my-org"
   vdc          = "my-org-vdc"
   edge_gateway = "my-edge-gw"
 
   name = "tcp-app-profile"
-  type = "TCP"
+  type = "tcp"
 }
 ```
 
 ## Example Usage 2 (HTTP Cookie based Application Profile)
 
 ```hcl
-provider "vcd" {
-  user     = "${var.admin_user}"
-  password = "${var.admin_password}"
-  org      = "System"
-  url      = "https://AcmeVcd/api"
-}
-
 resource "vcd_lb_app_profile" "http" {
   org          = "my-org"
   vdc          = "my-org-vdc"
   edge_gateway = "my-edge-gw"
 
   name = "http-profile"
-  type = "HTTP"
+  type = "http"
 
   http_redirect_url              = "/service-one"
   persistence_mechanism          = "cookie"
@@ -120,7 +106,7 @@ An existing load balancer application profile can be [imported][docs-import] int
 via supplying the full dot separated path for load balancer application profile. An example is
 below:
 
-[docs-import]: /docs/import/index.html
+[docs-import]: https://www.terraform.io/docs/import/
 
 ```
 terraform import vcd_lb_app_profile.imported my-org.my-org-vdc.my-edge-gw.my-lb-app-profile

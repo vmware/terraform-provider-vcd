@@ -102,7 +102,7 @@ func datasourceVcdLBAppProfileRead(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBAppProfile, err := edgeGateway.ReadLBAppProfileByName(d.Get("name").(string))
+	readLBAppProfile, err := edgeGateway.GetLbAppProfileByName(d.Get("name").(string))
 	if err != nil {
 		return fmt.Errorf("unable to find load balancer application profile with Name %s: %s",
 			d.Get("name").(string), err)

@@ -156,6 +156,7 @@ func (vcdCli *VCDClient) apiVersionMatchesConstraint(version, versionConstraint 
 		return false, fmt.Errorf("[ERROR] unable to parse given version constraint '%s' : %s", versionConstraint, err)
 	}
 	if constraints.Check(checkVer) {
+		util.Logger.Printf("[INFO] API version %s satisfies constraints '%s'", checkVer, constraints)
 		return true, nil
 	}
 

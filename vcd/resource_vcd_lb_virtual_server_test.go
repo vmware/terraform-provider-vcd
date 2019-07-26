@@ -28,7 +28,8 @@ func TestAccVcdLbVirtualServer(t *testing.T) {
 	configText := templateFill(testAccVcdLbVirtualServer_step0, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
 
-	params["FuncName"] = t.Name() + "-step1"
+	params["FuncName"] = t.Name() + "-step2"
+	params["VirtualServerName"] = t.Name() + "-step2"
 	configText2 := templateFill(testAccVcdLbVirtualServer_step2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
@@ -46,7 +47,7 @@ func TestAccVcdLbVirtualServer(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_lb_virtual_server.http", "id", regexp.MustCompile(`^virtualServer-\d*$`)),
-					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "name", params["VirtualServerName"].(string)),
+					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "name", t.Name()),
 					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "ip_address", params["EdgeGatewayIp"].(string)),
 					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "protocol", "http"),
 					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "port", "8888"),
@@ -58,7 +59,7 @@ func TestAccVcdLbVirtualServer(t *testing.T) {
 
 					// Data source
 					resource.TestMatchResourceAttr("data.vcd_lb_virtual_server.http", "id", regexp.MustCompile(`^virtualServer-\d*$`)),
-					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "name", params["VirtualServerName"].(string)),
+					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "name", t.Name()),
 					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "ip_address", params["EdgeGatewayIp"].(string)),
 					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "protocol", "http"),
 					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "port", "8888"),
@@ -75,13 +76,13 @@ func TestAccVcdLbVirtualServer(t *testing.T) {
 				ResourceName:      "vcd_lb_virtual_server.virtual-server-import",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdByOrgVdcEdge(testConfig, params["VirtualServerName"].(string)),
+				ImportStateIdFunc: importStateIdByOrgVdcEdge(testConfig, t.Name()),
 			},
 			resource.TestStep{ // step 2
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_lb_virtual_server.http", "id", regexp.MustCompile(`^virtualServer-\d*$`)),
-					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "name", params["VirtualServerName"].(string)),
+					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "name", t.Name()+"-step2"),
 					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "ip_address", params["EdgeGatewayIp"].(string)),
 					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "protocol", "http"),
 					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "port", "8889"),
@@ -92,7 +93,7 @@ func TestAccVcdLbVirtualServer(t *testing.T) {
 
 					// Data source
 					resource.TestMatchResourceAttr("data.vcd_lb_virtual_server.http", "id", regexp.MustCompile(`^virtualServer-\d*$`)),
-					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "name", params["VirtualServerName"].(string)),
+					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "name", t.Name()+"-step2"),
 					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "ip_address", params["EdgeGatewayIp"].(string)),
 					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "protocol", "http"),
 					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "port", "8889"),
@@ -115,7 +116,7 @@ func testAccCheckVcdLbVirtualServerDestroy(virtualServerName string) resource.Te
 			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
-		virtualServer, err := edgeGateway.ReadLBVirtualServerByName(virtualServerName)
+		virtualServer, err := edgeGateway.GetLbVirtualServerByName(virtualServerName)
 
 		if !strings.Contains(err.Error(), govcd.ErrorEntityNotFound.Error()) || virtualServer != nil {
 			return fmt.Errorf("load balancer virtual server was not deleted: %s", err)

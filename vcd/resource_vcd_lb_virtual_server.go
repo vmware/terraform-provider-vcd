@@ -41,7 +41,6 @@ func resourceVcdLBVirtualServer() *schema.Resource {
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "Unique Virtual Server name",
 			},
 			"description": &schema.Schema{
@@ -124,13 +123,13 @@ func resourceVcdLBVirtualServerCreate(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf("unable to make load balancer virtual server query: %s", err)
 	}
 
-	createdVirtualServer, err := edgeGateway.CreateLBVirtualServer(lBVirtualServer)
+	createdVirtualServer, err := edgeGateway.CreateLbVirtualServer(lBVirtualServer)
 	if err != nil {
 		return fmt.Errorf("error creating new load balancer virtual server: %s", err)
 	}
 
-	d.SetId(createdVirtualServer.Id)
-	return nil
+	d.SetId(createdVirtualServer.ID)
+	return resourceVcdLBVirtualServerRead(d, meta)
 }
 
 func resourceVcdLBVirtualServerRead(d *schema.ResourceData, meta interface{}) error {
@@ -141,7 +140,7 @@ func resourceVcdLBVirtualServerRead(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readVirtualServer, err := edgeGateway.ReadLBVirtualServerById(d.Id())
+	readVirtualServer, err := edgeGateway.GetLbVirtualServerById(d.Id())
 	if err != nil {
 		d.SetId("")
 		return fmt.Errorf("unable to find load balancer virtual server with ID %s: %s", d.Id(), err)
@@ -161,11 +160,13 @@ func resourceVcdLBVirtualServerUpdate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	updateVirtualServerConfig, err := getLBVirtualServerType(d)
+	updateVirtualServerConfig.ID = d.Id() // We already know an ID for update and it allows to change name
+
 	if err != nil {
 		return fmt.Errorf("could not create load balancer virtual server type for update: %s", err)
 	}
 
-	updatedVirtualServer, err := edgeGateway.UpdateLBVirtualServer(updateVirtualServerConfig)
+	updatedVirtualServer, err := edgeGateway.UpdateLbVirtualServer(updateVirtualServerConfig)
 	if err != nil {
 		return fmt.Errorf("unable to update load balancer virtual server with ID %s: %s", d.Id(), err)
 	}
@@ -183,7 +184,7 @@ func resourceVcdLBVirtualServerDelete(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	err = edgeGateway.DeleteLBVirtualServerById(d.Id())
+	err = edgeGateway.DeleteLbVirtualServerById(d.Id())
 	if err != nil {
 		return fmt.Errorf("error deleting load balancer virtual server: %s", err)
 	}
@@ -217,7 +218,7 @@ func resourceVcdLBVirtualServerImport(d *schema.ResourceData, meta interface{}) 
 		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readVirtualServer, err := edgeGateway.ReadLBVirtualServerByName(virtualServerName)
+	readVirtualServer, err := edgeGateway.GetLbVirtualServerByName(virtualServerName)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer virtual server with name %s: %s",
 			d.Id(), err)
@@ -228,14 +229,14 @@ func resourceVcdLBVirtualServerImport(d *schema.ResourceData, meta interface{}) 
 	d.Set("edge_gateway", edgeName)
 	d.Set("name", virtualServerName)
 
-	d.SetId(readVirtualServer.Id)
+	d.SetId(readVirtualServer.ID)
 	return []*schema.ResourceData{d}, nil
 }
 
-// getLBVirtualServerType converts schema.ResourceData to *types.LBVirtualServer and is useful
+// getLBVirtualServerType converts schema.ResourceData to *types.LbVirtualServer and is useful
 // for creating API requests
-func getLBVirtualServerType(d *schema.ResourceData) (*types.LBVirtualServer, error) {
-	lbVirtualServer := &types.LBVirtualServer{
+func getLBVirtualServerType(d *schema.ResourceData) (*types.LbVirtualServer, error) {
+	lbVirtualServer := &types.LbVirtualServer{
 		Name:                 d.Get("name").(string),
 		Description:          d.Get("description").(string),
 		Enabled:              d.Get("enabled").(bool),
@@ -262,8 +263,8 @@ func getLBVirtualServerType(d *schema.ResourceData) (*types.LBVirtualServer, err
 	return lbVirtualServer, nil
 }
 
-// setlBVirtualServerData sets object state from *types.LBVirtualServer
-func setlBVirtualServerData(d *schema.ResourceData, lBVirtualServer *types.LBVirtualServer) error {
+// setlBVirtualServerData sets object state from *types.LbVirtualServer
+func setlBVirtualServerData(d *schema.ResourceData, lBVirtualServer *types.LbVirtualServer) error {
 	d.Set("name", lBVirtualServer.Name)
 	d.Set("description", lBVirtualServer.Description)
 	d.Set("enabled", lBVirtualServer.Enabled)
