@@ -32,7 +32,7 @@ The following arguments are supported:
 * `edge_gateway` - (Required) The name of the edge gateway on which to apply the SNAT
 * `external_ip` - (Required) One of the external IPs available on your Edge Gateway
 * `internal_ip` - (Required) The IP or IP Range of the VM(s) to map from
-* `network_type` - (Optional; *v2.4+*) Type of the network on which to apply the NAT rule. Possible values org or ext. *`network_type` will be a required field in the next major version.*
+* `network_type` - (Optional; *v2.4+*) Type of the network on which to apply the NAT rule. Possible values `org` or `ext`. *`network_type` will be a required field in the next major version.*
 * `network_name` - (Optional; *v2.4+*) The name of the network on which to apply the SNAT. *`network_name` will be a required field in the next major version.*
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
