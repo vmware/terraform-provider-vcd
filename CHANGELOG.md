@@ -18,7 +18,7 @@ FEATURES:
 * `resource/vcd_org_vdc` added Org VDC update and full state read - [GH-275]
 * `resource/vcd_org_vdc` added Org VDC metadata support - [GH-276]
 * `resource/vcd_snat` added ability to choose network name and type. [GH-282] 
-* `resource/vcd_dnat` added ability to choose network name and type. [GH-282] [GH-292] [GH-293]
+* `resource/vcd_dnat` added ability to choose network name and type. [GH-282, GH-292, GH-293]
 
 IMPROVEMENTS:
 * `resource/vcd_org_vdc`: Fix ignoring of resource guarantee values - [GH-265]
