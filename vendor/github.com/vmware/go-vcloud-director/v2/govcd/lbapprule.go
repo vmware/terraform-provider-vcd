@@ -154,8 +154,13 @@ func (egw *EdgeGateway) DeleteLbAppRule(lbAppRuleConfig *types.LbAppRule) error 
 		return fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
 	}
 
-	return egw.client.ExecuteRequestWithoutResponse(httpPath, http.MethodDelete, "application/xml",
-		"unable to delete application rule: %s", nil)
+	_, err = egw.client.ExecuteRequestWithCustomError(httpPath, http.MethodDelete, types.AnyXMLMime,
+		"unable to delete application rule: %s", nil, &types.NSXError{})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // DeleteLBAppRuleById wraps DeleteLbAppRule and requires only ID for deletion
