@@ -151,9 +151,10 @@ const (
 )
 
 const (
-	LBMonitorPath       = "/loadbalancer/config/monitors/"
-	LBServerPoolPath    = "/loadbalancer/config/pools/"
-	LBAppProfilePath    = "/loadbalancer/config/applicationprofiles/"
-	LBAppRulePath       = "/loadbalancer/config/applicationrules/"
-	LBVirtualServerPath = "/loadbalancer/config/virtualservers/"
+	LbConfigPath        = "/loadbalancer/config/"
+	LbMonitorPath       = "/loadbalancer/config/monitors/"
+	LbServerPoolPath    = "/loadbalancer/config/pools/"
+	LbAppProfilePath    = "/loadbalancer/config/applicationprofiles/"
+	LbAppRulePath       = "/loadbalancer/config/applicationrules/"
+	LbVirtualServerPath = "/loadbalancer/config/virtualservers/"
 )

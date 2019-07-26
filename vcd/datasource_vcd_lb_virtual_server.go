@@ -103,12 +103,12 @@ func datasourceVcdLbVirtualServerRead(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBVirtualServer, err := edgeGateway.ReadLBVirtualServerByName(d.Get("name").(string))
+	readLBVirtualServer, err := edgeGateway.GetLbVirtualServerByName(d.Get("name").(string))
 	if err != nil {
 		return fmt.Errorf("unable to find load balancer virtual server with Name %s: %s",
 			d.Get("name").(string), err)
 	}
 
-	d.SetId(readLBVirtualServer.Id)
+	d.SetId(readLBVirtualServer.ID)
 	return setlBVirtualServerData(d, readLBVirtualServer)
 }

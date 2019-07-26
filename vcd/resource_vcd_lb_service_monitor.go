@@ -40,26 +40,25 @@ func resourceVcdLbServiceMonitor() *schema.Resource {
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "Unique LB Service Monitor name",
 			},
 			"interval": &schema.Schema{
 				Type:        schema.TypeInt,
 				Default:     10,
 				Optional:    true,
-				Description: "Interval in seconds at which a server is to be monitored",
+				Description: "Interval in seconds at which a server is to be monitored (defaults to 10)",
 			},
 			"timeout": &schema.Schema{
 				Type:        schema.TypeInt,
 				Default:     15,
 				Optional:    true,
-				Description: "Maximum time in seconds within which a response from the server must be received",
+				Description: "Maximum time in seconds within which a response from the server must be received  (defaults to 15)",
 			},
 			"max_retries": &schema.Schema{
 				Type:        schema.TypeInt,
 				Default:     3,
 				Optional:    true,
-				Description: "Number of times the specified monitoring Method must fail sequentially before the server is declared down",
+				Description: "Number of times the specified monitoring Method must fail sequentially before the server is declared down  (defaults to 3)",
 			},
 			"type": &schema.Schema{
 				Type:         schema.TypeString,
@@ -144,13 +143,13 @@ func resourceVcdLbServiceMonitorCreate(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("unable to create load balancer service monitor type: %s", err)
 	}
 
-	createdMonitor, err := edgeGateway.CreateLBServiceMonitor(lbMonitor)
+	createdMonitor, err := edgeGateway.CreateLbServiceMonitor(lbMonitor)
 	if err != nil {
 		return fmt.Errorf("error creating new load balancer service monitor: %s", err)
 	}
 
 	d.SetId(createdMonitor.ID)
-	return nil
+	return resourceVcdLbServiceMonitorRead(d, meta)
 }
 
 func resourceVcdLbServiceMonitorRead(d *schema.ResourceData, meta interface{}) error {
@@ -161,7 +160,7 @@ func resourceVcdLbServiceMonitorRead(d *schema.ResourceData, meta interface{}) e
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBMonitor, err := edgeGateway.ReadLBServiceMonitorByID(d.Id())
+	readLBMonitor, err := edgeGateway.GetLbServiceMonitorById(d.Id())
 	if err != nil {
 		d.SetId("")
 		return fmt.Errorf("unable to find load balancer service monitor with ID %s: %s", d.Id(), err)
@@ -181,11 +180,13 @@ func resourceVcdLbServiceMonitorUpdate(d *schema.ResourceData, meta interface{})
 	}
 
 	updateLBMonitorConfig, err := getLBMonitorType(d)
+	updateLBMonitorConfig.ID = d.Id() // We already know an ID for update and it allows to change name
+
 	if err != nil {
 		return fmt.Errorf("could not create service monitor type for update: %s", err)
 	}
 
-	updatedLBMonitor, err := edgeGateway.UpdateLBServiceMonitor(updateLBMonitorConfig)
+	updatedLBMonitor, err := edgeGateway.UpdateLbServiceMonitor(updateLBMonitorConfig)
 	if err != nil {
 		return fmt.Errorf("unable to update load balancer service monitor with ID %s: %s", d.Id(), err)
 	}
@@ -203,7 +204,7 @@ func resourceVcdLbServiceMonitorDelete(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	err = edgeGateway.DeleteLBServiceMonitorByID(d.Id())
+	err = edgeGateway.DeleteLbServiceMonitorById(d.Id())
 	if err != nil {
 		return fmt.Errorf("error deleting load balancer service monitor: %s", err)
 	}
@@ -213,7 +214,7 @@ func resourceVcdLbServiceMonitorDelete(d *schema.ResourceData, meta interface{})
 }
 
 // resourceVcdLbServiceMonitorImport is responsible for importing the resource.
-// The d.Id() field as being passed from `terraform import _resource_name_ _the_id_string_ requires
+// The d.ID() field as being passed from `terraform import _resource_name_ _the_id_string_ requires
 // a name based dot-formatted path to the object to lookup the object and sets the id of object.
 // `terraform import` automatically performs `refresh` operation which loads up all other fields.
 //
@@ -232,7 +233,7 @@ func resourceVcdLbServiceMonitorImport(d *schema.ResourceData, meta interface{})
 		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readLBMonitor, err := edgeGateway.ReadLBServiceMonitorByName(monitorName)
+	readLBMonitor, err := edgeGateway.GetLbServiceMonitorByName(monitorName)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("unable to find load balancer service monitor with ID %s: %s", d.Id(), err)
 	}
@@ -246,10 +247,10 @@ func resourceVcdLbServiceMonitorImport(d *schema.ResourceData, meta interface{})
 	return []*schema.ResourceData{d}, nil
 }
 
-// getLBMonitorType converts schema.ResourceData to *types.LBMonitor and is useful
+// getLBMonitorType converts schema.ResourceData to *types.LbMonitor and is useful
 // for creating API requests
-func getLBMonitorType(d *schema.ResourceData) (*types.LBMonitor, error) {
-	lbMonitor := &types.LBMonitor{
+func getLBMonitorType(d *schema.ResourceData) (*types.LbMonitor, error) {
+	lbMonitor := &types.LbMonitor{
 		Name:       d.Get("name").(string),
 		Interval:   d.Get("interval").(int),
 		Timeout:    d.Get("timeout").(int),
@@ -266,7 +267,7 @@ func getLBMonitorType(d *schema.ResourceData) (*types.LBMonitor, error) {
 	return lbMonitor, nil
 }
 
-// getLBMonitorExtensionType expands the specified map for sending via API. It appends newline to every extension as
+// getLBMonitorExtensionType prepares the specified map for sending via API. It appends newline to every extension as
 // per API requirement. Based on the research the underlying structure should not cause problems because duplicate keys
 // are not needed and order of the keys does not matter for API.
 // Example API call string for Extension field:
@@ -286,8 +287,8 @@ func getLBMonitorExtensionType(d *schema.ResourceData) string {
 	return extensionString
 }
 
-// setLBMonitorData sets object state from *types.LBMonitor
-func setLBMonitorData(d *schema.ResourceData, lBmonitor *types.LBMonitor) error {
+// setLBMonitorData sets object state from *types.LbMonitor
+func setLBMonitorData(d *schema.ResourceData, lBmonitor *types.LbMonitor) error {
 	d.Set("interval", lBmonitor.Interval)
 	d.Set("timeout", lBmonitor.Timeout)
 	d.Set("max_retries", lBmonitor.MaxRetries)
@@ -309,7 +310,7 @@ func setLBMonitorData(d *schema.ResourceData, lBmonitor *types.LBMonitor) error 
 // setLBMonitorExtensionData is responsible for parsing response extension field from API and
 // store it in the map. It supports flattening `key=value` or `key` notations. Each of them must be
 // separated by newline.
-func setLBMonitorExtensionData(d *schema.ResourceData, lBmonitor *types.LBMonitor) error {
+func setLBMonitorExtensionData(d *schema.ResourceData, lBmonitor *types.LbMonitor) error {
 	extensionStorage := make(map[string]string)
 
 	if lBmonitor.Extension != "" {
