@@ -109,8 +109,8 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 	networkName := d.Get("network_name").(string)
 	networkType := d.Get("network_type").(string)
 
-	if networkName != "" && networkType == "" {
-		return fmt.Errorf("network_type is required when network_name is used")
+	if (networkName != "" && networkType == "") || (networkName == "" && networkType != "") {
+		return fmt.Errorf("network_type and network_name are used together")
 	}
 
 	var natRule *types.NatRule
