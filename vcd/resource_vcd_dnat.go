@@ -109,6 +109,10 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 	networkName := d.Get("network_name").(string)
 	networkType := d.Get("network_type").(string)
 
+	if (networkName != "" && networkType == "") || (networkName == "" && networkType != "") {
+		return fmt.Errorf("network_type and network_name are used together")
+	}
+
 	var natRule *types.NatRule
 
 	if networkName != "" && networkType == "org" {
@@ -180,11 +184,12 @@ func resourceVcdDNATRead(d *schema.ResourceData, meta interface{}) error {
 	var found bool
 
 	networkName := d.Get("network_name")
-	if nil != networkName && networkName.(string) != "" {
+	if networkName != nil && networkName.(string) != "" {
 		natRule, err := edgeGateway.GetNatRule(d.Id())
 		if err != nil {
-			log.Printf("rule %s (stored in <tag> in Advanced GW case) not found: %s. Removing from state.", d.Id(), err)
+			log.Printf("[DEBUG] rule %s (stored in <tag> in Advanced GW case) not found: %s. Removing from state.", d.Id(), err)
 			d.SetId("")
+			return nil
 		}
 
 		portInt, _ := strconv.Atoi(natRule.GatewayNatRule.OriginalPort)
@@ -204,16 +209,16 @@ func resourceVcdDNATRead(d *schema.ResourceData, meta interface{}) error {
 			d.Set("network_type", "org")
 			found = true
 		}
-		externalNetwork, extNetwErr := govcd.GetExternalNetwork(vcdClient.VCDClient, natRule.GatewayNatRule.Interface.Name)
-		if extNetwErr != nil && strings.Contains(extNetwErr.Error(), "could not find external network named") {
+		_, extNetwErr := govcd.GetExternalNetwork(vcdClient.VCDClient, natRule.GatewayNatRule.Interface.Name)
+		if extNetwErr == nil {
 			d.Set("network_type", "ext")
 			found = true
+		} else {
+			log.Printf("[DEBUG] didn't find external network with name: %s, %#v", natRule.GatewayNatRule.Interface.Name, extNetwErr)
+			found = false
 		}
 		if orgVdcNetwork != nil && extNetwErr == nil {
 			return fmt.Errorf("found external network or org VCD network with same name: %s", natRule.GatewayNatRule.Interface.Name)
-		} else if orgVdcNetwork == nil && externalNetwork == (&govcd.ExternalNetwork{}) {
-			log.Printf("didn't find external network or org VCD network with name: %s", natRule.GatewayNatRule.Interface.Name)
-			found = false
 		}
 	} else {
 		// TODO remove when major release is done
@@ -257,7 +262,7 @@ func resourceVcdDNATDelete(d *schema.ResourceData, meta interface{}) error {
 	if d.Get("network_name").(string) != "" {
 		err = edgeGateway.RemoveNATRule(d.Id())
 		if err != nil {
-			return fmt.Errorf("error deleting SNAT rule: %#v", err)
+			return fmt.Errorf("error deleting DNAT rule: %#v", err)
 		}
 	} else {
 		// this for back compatibility when network name and network type isn't provided - TODO remove with major release
@@ -295,8 +300,9 @@ func resourceVcdDNATUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	natRule, err := edgeGateway.GetNatRule(d.Id())
 	if err != nil {
-		log.Printf(" rule %s not found: %s. Removing from state.", d.Id(), err)
+		log.Printf("[DEBUG] rule %s not found: %s. Removing from state.", d.Id(), err)
 		d.SetId("")
+		return nil
 	}
 
 	natRule.GatewayNatRule.OriginalIP = d.Get("external_ip").(string)

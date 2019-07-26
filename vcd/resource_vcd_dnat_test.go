@@ -203,18 +203,9 @@ func testAccCheckVcdDNATDestroy(s *terraform.State) error {
 			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
-		var found bool
-		for _, v := range edgeGateway.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
-			if v.RuleType == "DNAT" &&
-				v.GatewayNatRule.OriginalIP == testConfig.Networking.ExternalIp &&
-				v.GatewayNatRule.OriginalPort == "7777" &&
-				v.GatewayNatRule.TranslatedIP == "10.10.102.60" &&
-				v.GatewayNatRule.TranslatedPort == "77" {
-				found = true
-			}
-		}
+		rule, err := edgeGateway.GetNatRule(rs.Primary.ID)
 
-		if found {
+		if rule != nil {
 			return fmt.Errorf("DNAT rule still exists.")
 		}
 	}
