@@ -4,7 +4,6 @@ package vcd
 
 import (
 	"fmt"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -49,8 +48,7 @@ func TestAccVcdDNAT_WithOrgNetw(t *testing.T) {
 		CheckDestroy: testAccCheckVcdDNATDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config:      configText,
-				ExpectError: regexp.MustCompile(`After applying this step and refreshing, the plan was not empty:`),
+				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdDNATExists("vcd_dnat."+dnatName, &e),
 					resource.TestCheckResourceAttr(
