@@ -11,7 +11,9 @@ description: |-
 Provides a vCloud Director DNAT resource. This can be used to create, modify,
 and delete destination NATs to map an external IP/port to an internal IP/port.
 
-!> **Warning:** When advanced edge gateway is used and the rule is updated using UI, then Id mapping will be lost and terraform won't find the rule anymore and remove it from state.  
+~> **Note:** From v2.4+ `protocol` requires lower case values. This may result in invalid configuration if upper case was used previously.
+
+!> **Warning:** When advanced edge gateway is used and the rule is updated using UI, then ID mapping will be lost and Terraform won't find the rule anymore and remove it from state.  
 
 ## Example Usage
 
@@ -38,7 +40,7 @@ resource "vcd_dnat" "forIcmp" {
   external_ip   = "78.101.10.20"
   port          = -1                    # "-1" == "any"
   internal_ip   = "10.10.0.5"
-  protocol      = "ICMP"
+  protocol      = "icmp"
   icmp_sub_type = "router-solicitation"
 }
 ```
@@ -52,9 +54,10 @@ The following arguments are supported:
 * `port` - (Required) The port number to map. -1 translates to "any"
 * `translated_port` - (Optional) The port number to map
 * `internal_ip` - (Required) The IP of the VM to map to
-* `protocol` - (Optional; *v2.0+*) The protocol type. Possible values are TCP, UDP, TCPUDP, ICMP, ANY. TCP is default to be backward compatible with previous version
+* `protocol` - (Optional; *v2.0+*) The protocol type. Possible values are `tcp`, `udp`, `tcpupd`, `icmp`, `any`. `tcp` is default to be backward compatible with previous version
 * `icmp_sub_type` - (Optional; *v2.0+*) The name of ICMP type. Possible values are   address-mask-request, destination-unreachable, echo-request, echo-reply, parameter-problem, redirect, router-advertisement, router-solicitation, source-quench, time-exceeded, timestamp-request, timestamp-reply, any
-* `network_type` - (Optional; *v2.4+*) Type of the network on which to apply the NAT rule. Possible values org or ext. *`network_type` will be a required field in the next major version.*
+* `network_type` - (Optional; *v2.4+*) Type of the network on which to apply the NAT rule. Possible values `org` or `ext`. `ext` requires system administrator privileges. *`network_type` will be a required field in the next major version.*
 * `network_name` - (Optional; *v2.4+*) The name of the network on which to apply the SNAT. *`network_name` will be a required field in the next major version.*
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
+* `description` - (Optional; *v2.4+*) - Description of item

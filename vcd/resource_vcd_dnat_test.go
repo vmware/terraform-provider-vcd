@@ -4,7 +4,6 @@ package vcd
 
 import (
 	"fmt"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -49,8 +48,7 @@ func TestAccVcdDNAT_WithOrgNetw(t *testing.T) {
 		CheckDestroy: testAccCheckVcdDNATDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config:      configText,
-				ExpectError: regexp.MustCompile(`After applying this step and refreshing, the plan was not empty:`),
+				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdDNATExists("vcd_dnat."+dnatName, &e),
 					resource.TestCheckResourceAttr(
@@ -61,6 +59,8 @@ func TestAccVcdDNAT_WithOrgNetw(t *testing.T) {
 						"vcd_dnat."+dnatName, "external_ip", testConfig.Networking.ExternalIp),
 					resource.TestCheckResourceAttr(
 						"vcd_dnat."+dnatName, "port", "7777"),
+					resource.TestCheckResourceAttr(
+						"vcd_dnat."+dnatName, "protocol", "tcp"),
 					resource.TestCheckResourceAttr(
 						"vcd_dnat."+dnatName, "internal_ip", "10.10.102.60"),
 					resource.TestCheckResourceAttr(
@@ -108,8 +108,7 @@ func TestAccVcdDNAT_WithExtNetw(t *testing.T) {
 		CheckDestroy: testAccCheckVcdDNATDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config:      configText,
-				ExpectError: regexp.MustCompile(`After applying this step and refreshing, the plan was not empty:`),
+				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdDNATExists("vcd_dnat."+dnatName, &e),
 					resource.TestCheckResourceAttr(
@@ -121,6 +120,8 @@ func TestAccVcdDNAT_WithExtNetw(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_dnat."+dnatName, "port", "7777"),
 					resource.TestCheckResourceAttr(
+						"vcd_dnat."+dnatName, "protocol", "tcp"),
+					resource.TestCheckResourceAttr(
 						"vcd_dnat."+dnatName, "internal_ip", "10.10.102.60"),
 					resource.TestCheckResourceAttr(
 						"vcd_dnat."+dnatName, "translated_port", "77"),
@@ -129,8 +130,7 @@ func TestAccVcdDNAT_WithExtNetw(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				Config:      updateText,
-				ExpectError: regexp.MustCompile(`After applying this step and refreshing, the plan was not empty:`),
+				Config: updateText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdDNATExists("vcd_dnat."+dnatName, &e),
 					resource.TestCheckResourceAttr(
@@ -141,6 +141,8 @@ func TestAccVcdDNAT_WithExtNetw(t *testing.T) {
 						"vcd_dnat."+dnatName, "external_ip", testConfig.Networking.ExternalIp),
 					resource.TestCheckResourceAttr(
 						"vcd_dnat."+dnatName, "port", "8888"),
+					resource.TestCheckResourceAttr(
+						"vcd_dnat."+dnatName, "protocol", "udp"),
 					resource.TestCheckResourceAttr(
 						"vcd_dnat."+dnatName, "internal_ip", "10.10.102.80"),
 					resource.TestCheckResourceAttr(
@@ -379,6 +381,7 @@ resource "vcd_dnat" "{{.DnatName}}" {
   edge_gateway    = "{{.EdgeGateway}}"
   external_ip     = "{{.ExternalIp}}"
   port            = 7777
+  protocol        = "tcp"
   internal_ip     = "10.10.102.60"
   translated_port = 77
   description     = "{{.Description}}"
@@ -393,6 +396,7 @@ resource "vcd_dnat" "{{.DnatName}}" {
   network_type    = "ext"
   edge_gateway    = "{{.EdgeGateway}}"
   external_ip     = "{{.ExternalIp}}"
+  protocol        = "udp"
   port            = 8888
   internal_ip     = "10.10.102.80"
   translated_port = 88
