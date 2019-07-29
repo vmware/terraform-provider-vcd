@@ -25,7 +25,7 @@ func TestAccVcdLbServerPool(t *testing.T) {
 		"Timeout":            10,
 		"MaxRetries":         3,
 		"Method":             "POST",
-		"EnableTransparency": false,
+		"EnableTransparency": true,
 		"Tags":               "lb lbServerPool",
 	}
 
@@ -33,7 +33,7 @@ func TestAccVcdLbServerPool(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
 
 	params["FuncName"] = t.Name() + "-step1"
-	params["EnableTransparency"] = true
+	params["EnableTransparency"] = false
 	params["ServerPoolName"] = t.Name() + "-step1"
 	configTextStep1 := templateFill(testAccVcdLbServerPool_Algorithm, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configTextStep1)
@@ -54,7 +54,7 @@ func TestAccVcdLbServerPool(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "name", t.Name()),
 					resource.TestMatchResourceAttr("vcd_lb_server_pool.server-pool", "id", regexp.MustCompile(`^pool-\d*$`)),
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "algorithm", "round-robin"),
-					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "enable_transparency", "false"),
+					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "enable_transparency", "true"),
 
 					// Member 1
 					resource.TestMatchResourceAttr("vcd_lb_server_pool.server-pool", "member.0.id", regexp.MustCompile(`^member-\d*$`)),
@@ -109,7 +109,7 @@ func TestAccVcdLbServerPool(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "name", t.Name()+"-step1"),
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "algorithm", "httpheader"),
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "algorithm_parameters", "headerName=host"),
-					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "enable_transparency", "true"),
+					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "enable_transparency", "false"),
 					resource.TestMatchResourceAttr("vcd_lb_server_pool.server-pool", "monitor_id", regexp.MustCompile(`^monitor-\d*$`)),
 
 					// Member 1
@@ -162,7 +162,7 @@ func TestAccVcdLbServerPool(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_lb_server_pool.ds-lb-server-pool", "name", t.Name()+"-step1"),
 					resource.TestCheckResourceAttr("data.vcd_lb_server_pool.ds-lb-server-pool", "algorithm", "httpheader"),
 					resource.TestCheckResourceAttr("data.vcd_lb_server_pool.ds-lb-server-pool", "algorithm_parameters", "headerName=host"),
-					resource.TestCheckResourceAttr("data.vcd_lb_server_pool.ds-lb-server-pool", "enable_transparency", "true"),
+					resource.TestCheckResourceAttr("data.vcd_lb_server_pool.ds-lb-server-pool", "enable_transparency", "false"),
 					resource.TestMatchResourceAttr("data.vcd_lb_server_pool.ds-lb-server-pool", "monitor_id", regexp.MustCompile(`^monitor-\d*$`)),
 
 					// Member 1
@@ -242,6 +242,7 @@ resource "vcd_lb_server_pool" "server-pool" {
   
 	name                = "{{.ServerPoolName}}"
 	algorithm           = "round-robin"
+	enable_transparency = "{{.EnableTransparency}}"
   
 	member {
 	  condition       = "enabled"

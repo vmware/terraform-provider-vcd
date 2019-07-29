@@ -2,18 +2,18 @@
 
 FEATURES:
 
-* **New Resource:** `vcd_lb_service_monitor`  Load Balancer Service Monitor - [GH-256]
+* **New Resource:** `vcd_lb_service_monitor`  Load Balancer Service Monitor - [GH-256, GH-290]
 * **New Resource:** `vcd_edgegateway` creates and deletes edge gateways, manages general load balancing settings - [GH-262, GH-288]
-* **New Resource:** `vcd_lb_server_pool` Load Balancer Server Pool - [GH-268]
-* **New Resource:** `vcd_lb_app_profile` Load Balancer Application profile - [GH-274]
-* **New Resource:** `vcd_lb_app_rule` Load Balancer Application rule - [GH-278]
-* **New Resource:** `vcd_lb_virtual_server` Load Balancer Virtual Server - [GH-284]
+* **New Resource:** `vcd_lb_server_pool` Load Balancer Server Pool - [GH-268, GH-290, GH-]
+* **New Resource:** `vcd_lb_app_profile` Load Balancer Application profile - [GH-274, GH-290, GH-]
+* **New Resource:** `vcd_lb_app_rule` Load Balancer Application rule - [GH-278, GH-290]
+* **New Resource:** `vcd_lb_virtual_server` Load Balancer Virtual Server - [GH-284, GH-290, GH-]
 * **New Resource:** `vcd_org_user`  Organization User - [GH-279]
-* **New Data Source:** `vcd_lb_service_monitor` Load Balancer Service Monitor  - [GH-256]
-* **New Data Source:** `vcd_lb_server_pool`  Load Balancer Server Pool - [GH-268]
-* **New Data Source:** `vcd_lb_app_profile` Load Balancer Application profile - [GH-274]
-* **New Data Source:** `vcd_lb_app_rule` Load Balancer Application rule - [GH-278]
-* **New Data Source:** `vcd_lb_virtual_server` Load Balancer Virtual Server - [GH-284]
+* **New Data Source:** `vcd_lb_service_monitor` Load Balancer Service Monitor  - [GH-256, GH-290]
+* **New Data Source:** `vcd_lb_server_pool`  Load Balancer Server Pool - [GH-268, GH-290, GH-]
+* **New Data Source:** `vcd_lb_app_profile` Load Balancer Application profile - [GH-274, GH-290, GH-]
+* **New Data Source:** `vcd_lb_app_rule` Load Balancer Application rule - [GH-278, GH-290]
+* **New Data Source:** `vcd_lb_virtual_server` Load Balancer Virtual Server - [GH-284, GH-290, GH-]
 * **New build commands** `make test-env-init` and `make test-env-apply` can configure an empty vCD to run the test suite. See `TESTING.md` for details.
 * `resource/vcd_org_vdc` added Org VDC update and full state read - [GH-275]
 * `resource/vcd_org_vdc` added Org VDC metadata support - [GH-276]

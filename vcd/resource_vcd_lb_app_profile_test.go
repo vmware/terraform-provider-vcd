@@ -67,11 +67,17 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "name", t.Name()),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "type", "tcp"),
+					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "enable_ssl_passthrough", "false"),
+					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "insert_x_forwarded_http_header", "false"),
+					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "enable_pool_side_ssl", "false"),
 
 					// Data source testing - it must expose all fields which resource has
 					resource.TestMatchResourceAttr("data.vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "name", t.Name()),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "type", "tcp"),
+					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "enable_ssl_passthrough", "false"),
+					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "insert_x_forwarded_http_header", "false"),
+					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "enable_pool_side_ssl", "false"),
 				),
 			},
 			resource.TestStep{ // UDP
@@ -80,11 +86,17 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "name", t.Name()+"-step1"),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "type", "udp"),
+					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "enable_ssl_passthrough", "true"),
+					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "insert_x_forwarded_http_header", "true"),
+					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "enable_pool_side_ssl", "true"),
 
 					// Data source testing - it must expose all fields which resource has
 					resource.TestMatchResourceAttr("data.vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "name", t.Name()+"-step1"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "type", "udp"),
+					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "enable_ssl_passthrough", "true"),
+					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "insert_x_forwarded_http_header", "true"),
+					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "enable_pool_side_ssl", "true"),
 				),
 			},
 			resource.TestStep{ // HTTP - Cookie
@@ -98,6 +110,8 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "cookie_name", "JSESSIONID"),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "cookie_mode", "insert"),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "insert_x_forwarded_http_header", "true"),
+					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "enable_ssl_passthrough", "false"),
+					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "enable_pool_side_ssl", "false"),
 
 					// Data source testing - it must expose all fields which resource has
 					resource.TestMatchResourceAttr("data.vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
@@ -108,6 +122,8 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "cookie_name", "JSESSIONID"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "cookie_mode", "insert"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "insert_x_forwarded_http_header", "true"),
+					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "enable_ssl_passthrough", "false"),
+					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "enable_pool_side_ssl", "false"),
 				),
 			},
 
@@ -118,18 +134,22 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "name", t.Name()+"-step3"),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "type", "http"),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "persistence_mechanism", "sourceip"),
-					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "insert_x_forwarded_http_header", "false"),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "http_redirect_url", ""),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "expiration", "17"),
+					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "insert_x_forwarded_http_header", "false"),
+					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "enable_ssl_passthrough", "false"),
+					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "enable_pool_side_ssl", "false"),
 
 					// Data source testing - it must expose all fields which resource has
 					resource.TestMatchResourceAttr("data.vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "name", t.Name()+"-step3"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "type", "http"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "persistence_mechanism", "sourceip"),
-					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "insert_x_forwarded_http_header", "false"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "http_redirect_url", ""),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "expiration", "17"),
+					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "insert_x_forwarded_http_header", "false"),
+					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "enable_ssl_passthrough", "false"),
+					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "enable_pool_side_ssl", "false"),
 				),
 			},
 
@@ -139,9 +159,8 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "name", t.Name()+"-step4"),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "type", "https"),
-					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "insert_x_forwarded_http_header", "true"),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "http_redirect_url", ""),
-
+					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "insert_x_forwarded_http_header", "true"),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "enable_ssl_passthrough", "true"),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "enable_pool_side_ssl", "true"),
 					resource.TestCheckResourceAttr("vcd_lb_app_profile.test", "expiration", "0"),
@@ -150,9 +169,8 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 					resource.TestMatchResourceAttr("data.vcd_lb_app_profile.test", "id", regexp.MustCompile(`^applicationProfile-\d*$`)),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "name", t.Name()+"-step4"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "type", "https"),
-					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "insert_x_forwarded_http_header", "true"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "http_redirect_url", ""),
-
+					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "insert_x_forwarded_http_header", "true"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "persistence_mechanism", "sourceip"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "enable_ssl_passthrough", "true"),
 					resource.TestCheckResourceAttr("data.vcd_lb_app_profile.test", "enable_pool_side_ssl", "true"),
@@ -195,6 +213,10 @@ resource "vcd_lb_app_profile" "test" {
   
 	name           = "{{.AppProfileName}}"
 	type           = "{{.Type}}"
+
+	enable_ssl_passthrough         = "false"
+	insert_x_forwarded_http_header = "false"
+	enable_pool_side_ssl           = "false"
 }
 
 data "vcd_lb_app_profile" "test" {
@@ -213,6 +235,10 @@ resource "vcd_lb_app_profile" "test" {
   
 	name           = "{{.AppProfileName}}"
 	type           = "{{.Type}}"
+
+	enable_ssl_passthrough         = "true"
+	insert_x_forwarded_http_header = "true"
+	enable_pool_side_ssl           = "true"
 }
 
 data "vcd_lb_app_profile" "test" {
