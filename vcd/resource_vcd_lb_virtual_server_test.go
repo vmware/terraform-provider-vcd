@@ -50,6 +50,8 @@ func TestAccVcdLbVirtualServer(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "name", t.Name()),
 					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "ip_address", params["EdgeGatewayIp"].(string)),
 					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "protocol", "http"),
+					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "enable_acceleration", "false"),
 					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "port", "8888"),
 					resource.TestMatchResourceAttr("vcd_lb_virtual_server.http", "app_profile_id", regexp.MustCompile(`^applicationProfile-\d*$`)),
 					resource.TestMatchResourceAttr("vcd_lb_virtual_server.http", "server_pool_id", regexp.MustCompile(`^pool-\d*$`)),
@@ -62,6 +64,8 @@ func TestAccVcdLbVirtualServer(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "name", t.Name()),
 					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "ip_address", params["EdgeGatewayIp"].(string)),
 					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "protocol", "http"),
+					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "enabled", "false"),
+					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "enable_acceleration", "false"),
 					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "port", "8888"),
 					resource.TestMatchResourceAttr("data.vcd_lb_virtual_server.http", "app_profile_id", regexp.MustCompile(`^applicationProfile-\d*$`)),
 					resource.TestMatchResourceAttr("data.vcd_lb_virtual_server.http", "server_pool_id", regexp.MustCompile(`^pool-\d*$`)),
@@ -85,6 +89,8 @@ func TestAccVcdLbVirtualServer(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "name", t.Name()+"-step2"),
 					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "ip_address", params["EdgeGatewayIp"].(string)),
 					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "protocol", "http"),
+					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "enable_acceleration", "true"),
 					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "port", "8889"),
 					resource.TestCheckResourceAttr("vcd_lb_virtual_server.http", "app_rule_ids.#", "1"),
 					resource.TestMatchResourceAttr("vcd_lb_virtual_server.http", "app_rule_ids.0", regexp.MustCompile(`^applicationRule-\d*$`)),
@@ -96,6 +102,8 @@ func TestAccVcdLbVirtualServer(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "name", t.Name()+"-step2"),
 					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "ip_address", params["EdgeGatewayIp"].(string)),
 					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "protocol", "http"),
+					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "enabled", "true"),
+					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "enable_acceleration", "true"),
 					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "port", "8889"),
 					resource.TestCheckResourceAttr("data.vcd_lb_virtual_server.http", "app_rule_ids.#", "1"),
 					resource.TestMatchResourceAttr("data.vcd_lb_virtual_server.http", "app_rule_ids.0", regexp.MustCompile(`^applicationRule-\d*$`)),
@@ -131,6 +139,9 @@ resource "vcd_lb_virtual_server" "http" {
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
 
+  enabled             = "false"
+  enable_acceleration = "false"
+
   name       = "{{.VirtualServerName}}"
   ip_address = "{{.EdgeGatewayIp}}"
   protocol   = "http"
@@ -154,6 +165,9 @@ resource "vcd_lb_virtual_server" "http" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
+
+  enabled             = "true"
+  enable_acceleration = "true"
 
   name       = "{{.VirtualServerName}}"
   ip_address = "{{.EdgeGatewayIp}}"
@@ -218,7 +232,7 @@ resource "vcd_lb_server_pool" "web-servers" {
   }
 
   member {
-    condition       = "drain"
+    condition       = "enabled"
     name            = "member2"
     ip_address      = "2.2.2.2"
     port            = 7000
