@@ -18,17 +18,22 @@ FEATURES:
 * `resource/vcd_org_vdc` added Org VDC update and full state read - [GH-275]
 * `resource/vcd_org_vdc` added Org VDC metadata support - [GH-276]
 * `resource/vcd_snat` added ability to choose network name and type. [GH-282] 
-* `resource/vcd_dnat` added ability to choose network name and type. [GH-282]
+* `resource/vcd_dnat` added ability to choose network name and type. [GH-282, GH-292, GH-293]
 
 IMPROVEMENTS:
 * `resource/vcd_org_vdc`: Fix ignoring of resource guarantee values - [GH-265]
 * `resource/vcd_org_vdc`: Org VDC state ID changed from name to vCD ID - [GH-275]
 * Change resource handling to use locking mechanism when resource parallel handling is not supported by vCD. [GH-255] 
 * Fix issue when vApp is power cycled during member VM deletion. [GH-261]
+* `resource/vcd_dnat`, `resource/vcd_snat` has got full read functionality. This means that on the next `plan/apply` it will detect if configuration has changed in vCD and propose to update it.
 
 BUG FIXES:
 
 * `resource/vcd_dnat and resource/vcd_snat` - fix resource destroy as it would still leave NAT rule in edge gateway. Fix works if network_name and network_type is used. [GH-282]
+
+NOTES:
+* `resource/vcd_dnat` `protocol` requires lower case values to be consistent with the underlying NSX API. This may result in invalid configuration if upper case was used previously!
+* `resource/vcd_dnat` default value for `protocol` field changed from upper case `TCP` to lower case `tcp`, which may result in a single update when running `plan` on a configuration with a state file from an older version.
 
 ## 2.3.0 (May 29, 2019)
 

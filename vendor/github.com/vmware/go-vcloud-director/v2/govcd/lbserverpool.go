@@ -152,8 +152,14 @@ func (egw *EdgeGateway) DeleteLbServerPool(lbPoolConfig *types.LbPool) error {
 	if err != nil {
 		return fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
 	}
-	return egw.client.ExecuteRequestWithoutResponse(httpPath, http.MethodDelete, types.AnyXMLMime,
-		"unable to delete Server Pool: %s", nil)
+
+	_, err = egw.client.ExecuteRequestWithCustomError(httpPath, http.MethodDelete, types.AnyXMLMime,
+		"unable to delete server pool: %s", nil, &types.NSXError{})
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // DeleteLbServerPoolById wraps DeleteLbServerPool and requires only ID for deletion

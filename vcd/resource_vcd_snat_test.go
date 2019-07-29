@@ -131,16 +131,9 @@ func testAccCheckVcdSNATDestroy(s *terraform.State) error {
 			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
-		var found bool
-		for _, v := range edgeGateway.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.NatService.NatRule {
-			if v.RuleType == "SNAT" && v.GatewayNatRule.Interface.Name == orgVdcNetworkNameForSnat &&
-				v.GatewayNatRule.OriginalIP == startIpAddress &&
-				v.GatewayNatRule.TranslatedIP == testConfig.Networking.ExternalIp {
-				found = true
-			}
-		}
+		rule, err := edgeGateway.GetNatRule(rs.Primary.ID)
 
-		if found {
+		if rule != nil {
 			return fmt.Errorf("SNAT rule still exists.")
 		}
 	}
