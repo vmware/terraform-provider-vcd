@@ -67,7 +67,7 @@ OPTIONS, GET, HEAD, POST, PUT, DELETE, TRACE, or CONNECT
 the HTTP or HTTPS response (for example, `HTTP/1.1`)
 * `receive` - (Optional) For types `http`,  `https`, and `udp`. The string to be matched in the response content.
 **Note**: When `expected` is not matched, the monitor does not try to match the Receive content
-* `extension` - (Required) A map of advanced monitor parameters as key=value pairs (i.e. `max-age=SECONDS`, `invert-regex`)
+* `extension` - (Optional) A map of advanced monitor parameters as key=value pairs (i.e. `max-age=SECONDS`, `invert-regex`)
 **Note**: When you need a value of `key` only format just set value to empty string (i.e. `linespan = ""`)
 
 ## Attribute Reference
