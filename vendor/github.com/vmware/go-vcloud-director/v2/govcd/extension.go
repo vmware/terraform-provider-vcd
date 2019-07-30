@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-// DEPRECATED please use GetExternalNetwork function instead
+// Deprecated: please use GetExternalNetwork function instead
 func GetExternalNetworkByName(vcdClient *VCDClient, networkName string) (*types.ExternalNetworkReference, error) {
 	extNetworkRefs := &types.ExternalNetworkReferences{}
 

@@ -1,26 +1,45 @@
-## 2.4.0 (Unreleased)
+## 2.5.0 (Unreleased)
 
 FEATURES:
 
-* **New Resource:** `vcd_lb_service_monitor`  Load Balancer Service Monitor - [GH-256]
-* **New Resource:** `vcd_edgegateway` creates and deletes edge gateways - [GH-262]
-* **New Resource:** `vcd_lb_server_pool` Load Balancer Server Pool - [GH-268]
-* **New Resource:** `vcd_lb_app_profile` Load Balancer Application profile - [GH-274]
-* **New Resource:** `vcd_lb_app_rule` Load Balancer Application rule - [GH-278]
-* **New Resource:** `vcd_org_user`  Organization User - [GH-279]
-* **New Data Source:** `vcd_lb_service_monitor` Load Balancer Service Monitor  - [GH-256]
-* **New Data Source:** `vcd_lb_server_pool`  Load Balancer Server Pool - [GH-268]
-* **New Data Source:** `vcd_lb_app_profile` Load Balancer Application profile - [GH-274]
-* **New Data Source:** `vcd_lb_app_rule` Load Balancer Application rule - [GH-278]
+* **New Data Source:** `vcd_org` Organization - ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+
+## 2.4.0 (July 29, 2019)
+
+FEATURES:
+
+* **New Resource:** `vcd_lb_service_monitor`  Load Balancer Service Monitor - ([#256](https://github.com/terraform-providers/terraform-provider-vcd/issues/256), [#290](https://github.com/terraform-providers/terraform-provider-vcd/issues/290))
+* **New Resource:** `vcd_edgegateway` creates and deletes edge gateways, manages general load balancing settings - ([#262](https://github.com/terraform-providers/terraform-provider-vcd/issues/262), [#288](https://github.com/terraform-providers/terraform-provider-vcd/issues/288))
+* **New Resource:** `vcd_lb_server_pool` Load Balancer Server Pool - ([#268](https://github.com/terraform-providers/terraform-provider-vcd/issues/268), [#290](https://github.com/terraform-providers/terraform-provider-vcd/issues/290), [#297](https://github.com/terraform-providers/terraform-provider-vcd/issues/297))
+* **New Resource:** `vcd_lb_app_profile` Load Balancer Application profile - ([#274](https://github.com/terraform-providers/terraform-provider-vcd/issues/274), [#290](https://github.com/terraform-providers/terraform-provider-vcd/issues/290), [#297](https://github.com/terraform-providers/terraform-provider-vcd/issues/297))
+* **New Resource:** `vcd_lb_app_rule` Load Balancer Application rule - ([#278](https://github.com/terraform-providers/terraform-provider-vcd/issues/278), [#290](https://github.com/terraform-providers/terraform-provider-vcd/issues/290))
+* **New Resource:** `vcd_lb_virtual_server` Load Balancer Virtual Server - ([#284](https://github.com/terraform-providers/terraform-provider-vcd/issues/284), [#290](https://github.com/terraform-providers/terraform-provider-vcd/issues/290), [#297](https://github.com/terraform-providers/terraform-provider-vcd/issues/297))
+* **New Resource:** `vcd_org_user`  Organization User - ([#279](https://github.com/terraform-providers/terraform-provider-vcd/issues/279))
+* **New Data Source:** `vcd_lb_service_monitor` Load Balancer Service Monitor  - ([#256](https://github.com/terraform-providers/terraform-provider-vcd/issues/256), [#290](https://github.com/terraform-providers/terraform-provider-vcd/issues/290))
+* **New Data Source:** `vcd_lb_server_pool`  Load Balancer Server Pool - ([#268](https://github.com/terraform-providers/terraform-provider-vcd/issues/268), [#290](https://github.com/terraform-providers/terraform-provider-vcd/issues/290), [#297](https://github.com/terraform-providers/terraform-provider-vcd/issues/297))
+* **New Data Source:** `vcd_lb_app_profile` Load Balancer Application profile - ([#274](https://github.com/terraform-providers/terraform-provider-vcd/issues/274), [#290](https://github.com/terraform-providers/terraform-provider-vcd/issues/290), [#297](https://github.com/terraform-providers/terraform-provider-vcd/issues/297))
+* **New Data Source:** `vcd_lb_app_rule` Load Balancer Application rule - ([#278](https://github.com/terraform-providers/terraform-provider-vcd/issues/278), [#290](https://github.com/terraform-providers/terraform-provider-vcd/issues/290))
+* **New Data Source:** `vcd_lb_virtual_server` Load Balancer Virtual Server - ([#284](https://github.com/terraform-providers/terraform-provider-vcd/issues/284), [#290](https://github.com/terraform-providers/terraform-provider-vcd/issues/290), [#297](https://github.com/terraform-providers/terraform-provider-vcd/issues/297))
 * **New build commands** `make test-env-init` and `make test-env-apply` can configure an empty vCD to run the test suite. See `TESTING.md` for details.
-* `resource/vcd_org_vdc` added Org VDC update and full state read - [GH-275]
-* `resource/vcd_org_vdc` added Org VDC metadata support - [GH-276]
+* `resource/vcd_org_vdc` added Org VDC update and full state read - ([#275](https://github.com/terraform-providers/terraform-provider-vcd/issues/275))
+* `resource/vcd_org_vdc` added Org VDC metadata support - ([#276](https://github.com/terraform-providers/terraform-provider-vcd/issues/276))
+* `resource/vcd_snat` added ability to choose network name and type. [[#282](https://github.com/terraform-providers/terraform-provider-vcd/issues/282)] 
+* `resource/vcd_dnat` added ability to choose network name and type. ([#282](https://github.com/terraform-providers/terraform-provider-vcd/issues/282), [#292](https://github.com/terraform-providers/terraform-provider-vcd/issues/292), [#293](https://github.com/terraform-providers/terraform-provider-vcd/issues/293))
 
 IMPROVEMENTS:
-* `resource/vcd_org_vdc`: Fix ignoring of resource guarantee values - [GH-265]
-* `resource/vcd_org_vdc`: Org VDC state ID changed from name to vCD ID - [GH-275]
-* Change resource handling to use locking mechanism when resource parallel handling is not supported by vCD. [GH-255] 
-* Fix issue when vApp is power cycled during member VM deletion. [GH-261]
+* `resource/vcd_org_vdc`: Fix ignoring of resource guarantee values - ([#265](https://github.com/terraform-providers/terraform-provider-vcd/issues/265))
+* `resource/vcd_org_vdc`: Org VDC state ID changed from name to vCD ID - ([#275](https://github.com/terraform-providers/terraform-provider-vcd/issues/275))
+* Change resource handling to use locking mechanism when resource parallel handling is not supported by vCD. [[#255](https://github.com/terraform-providers/terraform-provider-vcd/issues/255)] 
+* Fix issue when vApp is power cycled during member VM deletion. ([#261](https://github.com/terraform-providers/terraform-provider-vcd/issues/261))
+* `resource/vcd_dnat`, `resource/vcd_snat` has got full read functionality. This means that on the next `plan/apply` it will detect if configuration has changed in vCD and propose to update it.
+
+BUG FIXES:
+
+* `resource/vcd_dnat and resource/vcd_snat` - fix resource destroy as it would still leave NAT rule in edge gateway. Fix works if network_name and network_type is used. ([#282](https://github.com/terraform-providers/terraform-provider-vcd/issues/282))
+
+NOTES:
+* `resource/vcd_dnat` `protocol` requires lower case values to be consistent with the underlying NSX API. This may result in invalid configuration if upper case was used previously!
+* `resource/vcd_dnat` default value for `protocol` field changed from upper case `TCP` to lower case `tcp`, which may result in a single update when running `plan` on a configuration with a state file from an older version.
 
 ## 2.3.0 (May 29, 2019)
 

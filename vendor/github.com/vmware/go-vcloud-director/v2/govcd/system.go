@@ -300,8 +300,7 @@ func CreateEdgeGateway(vcdClient *VCDClient, egwc EdgeGatewayCreation) (EdgeGate
 // organization object. If no valid org is found, it returns an empty
 // org and no error. Otherwise it returns an error and an empty
 // Org object
-// DEPRECATED
-// Use vcdClient.GetOrgByName instead
+// Deprecated: Use vcdClient.GetOrgByName instead
 func GetOrgByName(vcdClient *VCDClient, orgName string) (Org, error) {
 	orgUrl, err := getOrgHREF(vcdClient, orgName)
 	if err != nil {
@@ -324,8 +323,7 @@ func GetOrgByName(vcdClient *VCDClient, orgName string) (Org, error) {
 // org and no error. Otherwise returns an empty AdminOrg
 // and an error.
 // API Documentation: https://code.vmware.com/apis/220/vcloud#/doc/doc/operations/GET-Organization-AdminView.html
-// DEPRECATED
-// Use vcdClient.GetAdminOrgByName instead
+// Deprecated: Use vcdClient.GetAdminOrgByName instead
 func GetAdminOrgByName(vcdClient *VCDClient, orgName string) (AdminOrg, error) {
 	orgUrl, err := getOrgHREF(vcdClient, orgName)
 	if err != nil {
@@ -642,23 +640,6 @@ func (vcdClient *VCDClient) GetOrgByNameOrId(identifier string) (*Org, error) {
 	return org, err
 }
 
-// GetOrg finds an Organization by name or ID (in a structure)
-// On success, returns a pointer to the Admin Org structure and a nil error
-// On failure, returns a nil pointer and an error
-func (vcdClient *VCDClient) GetOrg(orgInput *types.Org) (*Org, error) {
-
-	if err := validateGetOrg(orgInput); err != nil {
-		return nil, err
-	}
-	if orgInput.ID != "" {
-		org, err := vcdClient.GetOrgById(orgInput.ID)
-		if err == nil {
-			return org, nil
-		}
-	}
-	return vcdClient.GetOrgByName(orgInput.Name)
-}
-
 // GetAdminOrgByName finds an Admin Organization by name
 // On success, returns a pointer to the Admin Org structure and a nil error
 // On failure, returns a nil pointer and an error
@@ -713,49 +694,4 @@ func (vcdClient *VCDClient) GetAdminOrgByNameOrId(identifier string) (*AdminOrg,
 		adminOrg, err = vcdClient.GetAdminOrgByName(identifier)
 	}
 	return adminOrg, err
-}
-
-// GetAdminOrg finds an Admin Organization by name or ID (in a structure)
-// On success, returns a pointer to the Admin Org structure and a nil error
-// On failure, returns a nil pointer and an error
-func (vcdClient *VCDClient) GetAdminOrg(orgInput *types.AdminOrg) (*AdminOrg, error) {
-
-	if err := validateGetAdminOrg(orgInput); err != nil {
-		return nil, err
-	}
-	if orgInput.ID != "" {
-		org, err := vcdClient.GetAdminOrgById(orgInput.ID)
-		if err == nil {
-			return org, nil
-		}
-	}
-	return vcdClient.GetAdminOrgByName(orgInput.Name)
-}
-
-// Validates an Admin Org used for GetAdminOrg, making sure
-// that at least one searching field is filled.
-func validateGetAdminOrg(org *types.AdminOrg) error {
-
-	if org == nil {
-		return fmt.Errorf("nil input for AdminOrg")
-	}
-
-	if org.Name == "" && org.ID == "" {
-		return fmt.Errorf("at least one of `ID` or `Name` must be filled in the AdminOrg structure")
-	}
-	return nil
-}
-
-// Validates an Org used for GetOrg, making sure
-// that at least one searching field is filled.
-func validateGetOrg(org *types.Org) error {
-
-	if org == nil {
-		return fmt.Errorf("nil input for Org")
-	}
-
-	if org.Name == "" && org.ID == "" {
-		return fmt.Errorf("at least one of `ID` or `Name` must be filled in the Org structure")
-	}
-	return nil
 }

@@ -4,9 +4,9 @@ go 1.12
 
 require (
 	github.com/hashicorp/terraform v0.12.0
-	github.com/vmware/go-vcloud-director/v2 v2.3.0-beta.2
+	github.com/vmware/go-vcloud-director/v2 v2.4.0
 )
 
-replace github.com/vmware/go-vcloud-director/v2 => github.com/dataclouder/go-vcloud-director/v2 v2.3.0-beta-get-1
+replace github.com/vmware/go-vcloud-director/v2 => github.com/dataclouder/go-vcloud-director/v2 v2.4.0-alpha-1
 
 // replace github.com/vmware/go-vcloud-director/v2 => ../go-vcloud-director

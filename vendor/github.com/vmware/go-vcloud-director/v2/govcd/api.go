@@ -111,9 +111,11 @@ func IsNotFound(err error) bool {
 	return err != nil && err == ErrorEntityNotFound
 }
 
-// IncludesNotFound returns true if an error includes an ErrorEntityNotFound
-func IncludesNotFound(err error) bool {
-	return err != nil && strings.Contains(err.Error(), errorEntityNotFoundMessage)
+// ContainsNotFound is a convenience function, similar to os.IsNotExist that checks whether a given error
+// contains a "Not found" error. It is almost the same as `IsNotFound` but checks if an error contains substring
+// ErrorEntityNotFound
+func ContainsNotFound(err error) bool {
+	return err != nil && strings.Contains(err.Error(), ErrorEntityNotFound.Error())
 }
 
 // Function allow to pass complex values params which shouldn't be encoded like for queries. e.g. /query?filter=(name=foo)
@@ -377,6 +379,20 @@ func (client *Client) ExecuteRequestWithCustomError(pathURL, requestType, conten
 	if err != nil {
 		return &http.Response{}, fmt.Errorf(errorMessage, err)
 	}
+
+	// read from resp.Body io.Reader for debug output if it has body
+	var bodyBytes []byte
+	if resp.Body != nil {
+		bodyBytes, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return &http.Response{}, fmt.Errorf("could not read response body: %s", err)
+		}
+		// Restore the io.ReadCloser to its original state with no-op closer
+		resp.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+	}
+
+	util.ProcessResponseOutput(util.FuncNameCallStack(), resp, string(bodyBytes))
+	debugShowResponse(resp, bodyBytes)
 
 	return resp, nil
 }

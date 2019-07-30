@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
@@ -271,6 +272,24 @@ func (vdc *Vdc) FindEdgeGateway(edgegateway string) (EdgeGateway, error) {
 
 			_, err = vdc.client.ExecuteRequest(href, http.MethodGet,
 				"", "error retrieving edge gateway: %s", nil, edge.EdgeGateway)
+
+			// TODO - remove this if a solution is found or once 9.7 is deprecated
+			// vCD 9.7 has a bug and sometimes it fails to retrieve edge gateway with weird error.
+			// At this point in time the solution is to retry a few times as it does not fail to
+			// retrieve when retried.
+			//
+			// GitHUB issue - https://github.com/vmware/go-vcloud-director/issues/218
+			if err != nil {
+				util.Logger.Printf("[DEBUG] vCD 9.7 is known to sometimes respond with error on edge gateway (%s) "+
+					"retrieval. As a workaround this is done a few times before failing. Retrying: ", edgegateway)
+				for i := 1; i < 4 && err != nil; i++ {
+					time.Sleep(200 * time.Millisecond)
+					util.Logger.Printf("%d ", i)
+					_, err = vdc.client.ExecuteRequest(href, http.MethodGet,
+						"", "error retrieving edge gateway: %s", nil, edge.EdgeGateway)
+				}
+				util.Logger.Printf("\n")
+			}
 
 			return *edge, err
 
