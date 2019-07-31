@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
@@ -83,6 +84,38 @@ func (vm *VM) GetNetworkConnectionSection() (*types.NetworkConnectionSection, er
 
 	// The request was successful
 	return networkConnectionSection, err
+}
+
+// UpdateNetworkConnectionSection applies network configuration of types.NetworkConnectionSection for the VM
+// Runs synchronously, VM is ready for another operation after this function returns.
+func (vm *VM) UpdateNetworkConnectionSection(networks *types.NetworkConnectionSection) error {
+	if vm.VM.HREF == "" {
+		return fmt.Errorf("cannot refresh, Object is empty")
+	}
+
+	// Retrieve current network configuration so that we are not altering any other internal fields
+	updateNetwork, err := vm.GetNetworkConnectionSection()
+	if err != nil {
+		return fmt.Errorf("cannot read network section for update: %s", err)
+	}
+	updateNetwork.PrimaryNetworkConnectionIndex = networks.PrimaryNetworkConnectionIndex
+	updateNetwork.NetworkConnection = networks.NetworkConnection
+	updateNetwork.Ovf = types.XMLNamespaceOVF
+
+	err = vm.client.ExecuteRequestWithoutResponse(vm.VM.HREF+"/networkConnectionSection/", http.MethodPut,
+		types.MimeNetworkConnectionSection, "error updating network connection: %s", updateNetwork)
+	if err != nil {
+		return err
+	}
+
+	// Wait for the VM to be in resolved state so that this function is synchronous and VM is ready to handle next task
+	//vm.BlockWhileStatus()
+	err = vm.BlockWhileStatus("UNRESOLVED", vm.client.MaxRetryTimeout)
+	if err != nil {
+		fmt.Errorf("error waiting until VM exists UNRESOLVED state: %s", err)
+	}
+
+	return nil
 }
 
 func (cli *Client) FindVMByHREF(vmHREF string) (VM, error) {
@@ -597,4 +630,29 @@ func (vm *VM) ToggleHardwareVirtualization(isEnabled bool) (Task, error) {
 	errMessage := fmt.Sprintf("error toggling hypervisor nesting feature to %t for VM: %%s", isEnabled)
 	return vm.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPost,
 		"", errMessage, nil)
+}
+
+// BlockWhileStatus blocks until the status of VM exits unwantedStatus.
+// It sleeps 200 milliseconds between iterations and times out after timeOutAfterSeconds
+// of seconds.
+func (vm *VM) BlockWhileStatus(unwantedStatus string, timeOutAfterSeconds int) error {
+	timeoutAfter := time.After(time.Duration(timeOutAfterSeconds) * time.Second)
+	tick := time.Tick(200 * time.Millisecond)
+
+	for {
+		select {
+		case <-timeoutAfter:
+			return fmt.Errorf("timed out waiting for VM to exit state %s after %d seconds",
+				unwantedStatus, timeOutAfterSeconds)
+		case <-tick:
+			currentStatus, err := vm.GetStatus()
+
+			if err != nil {
+				return fmt.Errorf("could not get VM status %s", err)
+			}
+			if currentStatus != unwantedStatus {
+				return nil
+			}
+		}
+	}
 }

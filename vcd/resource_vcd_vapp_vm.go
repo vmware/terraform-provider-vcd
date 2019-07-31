@@ -115,20 +115,17 @@ func resourceVcdVAppVm() *schema.Resource {
 			},
 			"network": {
 				ConflictsWith: []string{"ip", "network_name", "vapp_network_name", "network_href"},
-				ForceNew:      true,
 				Optional:      true,
 				Type:          schema.TypeList,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {
-							ForceNew:     true,
 							Required:     true,
 							Type:         schema.TypeString,
 							ValidateFunc: validation.StringInSlice([]string{"vapp", "org", "none"}, false),
 							Description:  "Network type to use: 'vapp', 'org' or 'none'. Use 'vapp' for vApp network, 'org' to attach Org VDC network. 'none' for empty NIC.",
 						},
 						"ip_allocation_mode": {
-							ForceNew:     true,
 							Optional:     true,
 							Type:         schema.TypeString,
 							ValidateFunc: validation.StringInSlice([]string{"POOL", "DHCP", "MANUAL", "NONE"}, false),
@@ -140,14 +137,12 @@ func resourceVcdVAppVm() *schema.Resource {
 						},
 						"ip": {
 							Computed:     true,
-							ForceNew:     true,
 							Optional:     true,
 							Type:         schema.TypeString,
 							ValidateFunc: checkEmptyOrSingleIP(), // Must accept empty string to ease using HCL interpolation
 						},
 						"is_primary": {
 							Default:  false,
-							ForceNew: true,
 							Optional: true,
 							// By default if the value is omitted it will report schema change
 							// on every terraform operation. The below function
@@ -541,7 +536,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 	}
 
 	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("cpu_cores") || d.HasChange("power_on") || d.HasChange("disk") ||
-		d.HasChange("expose_hardware_virtualization") {
+		d.HasChange("expose_hardware_virtualization") || d.HasChange("network") {
 		if status != "POWERED_OFF" {
 			task, err := vm.PowerOff()
 			if err != nil {
@@ -621,6 +616,17 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			err = task.WaitTaskCompletion()
 			if err != nil {
 				return fmt.Errorf(errorCompletingTask, err)
+			}
+		}
+
+		if d.HasChange("network") {
+			networkConnectionSection, err := networksToConfig(d.Get("network").([]interface{}), vdc, vapp, vcdClient)
+			if err != nil {
+				return fmt.Errorf("unable to setup network configuration for update: %s", err)
+			}
+			err = vm.UpdateNetworkConnectionSection(&networkConnectionSection)
+			if err != nil {
+				return fmt.Errorf("unable to update network configuration: %s", err)
 			}
 		}
 
