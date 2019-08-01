@@ -632,12 +632,21 @@ func (vcdClient *VCDClient) GetOrgById(orgId string) (*Org, error) {
 // On success, returns a pointer to the Org structure and a nil error
 // On failure, returns a nil pointer and an error
 func (vcdClient *VCDClient) GetOrgByNameOrId(identifier string) (*Org, error) {
-
-	org, err := vcdClient.GetOrgById(identifier)
-	if err != nil {
-		org, err = vcdClient.GetOrgByName(identifier)
+	var byNameErr, byIdErr error
+	var org *Org
+	org, byIdErr = vcdClient.GetOrgById(identifier)
+	if byIdErr == nil {
+		// Found by ID
+		return org, nil
 	}
-	return org, err
+	if IsNotFound(byIdErr) {
+		// Not found by ID, try by name
+		org, byNameErr = vcdClient.GetOrgByName(identifier)
+		return org, byNameErr
+	} else {
+		// On any other error, we return it
+		return nil, byIdErr
+	}
 }
 
 // GetAdminOrgByName finds an Admin Organization by name
@@ -688,10 +697,20 @@ func (vcdClient *VCDClient) GetAdminOrgById(orgId string) (*AdminOrg, error) {
 // On success, returns a pointer to the Admin Org structure and a nil error
 // On failure, returns a nil pointer and an error
 func (vcdClient *VCDClient) GetAdminOrgByNameOrId(identifier string) (*AdminOrg, error) {
+	var byNameErr, byIdErr error
+	var adminOrg *AdminOrg
 
-	adminOrg, err := vcdClient.GetAdminOrgById(identifier)
-	if err != nil {
-		adminOrg, err = vcdClient.GetAdminOrgByName(identifier)
+	adminOrg, byIdErr = vcdClient.GetAdminOrgById(identifier)
+	if byIdErr == nil {
+		// Found by ID
+		return adminOrg, nil
 	}
-	return adminOrg, err
+	if IsNotFound(byIdErr) {
+		// Not found by ID, try by name
+		adminOrg, byNameErr = vcdClient.GetAdminOrgByName(identifier)
+		return adminOrg, byNameErr
+	} else {
+		// On any other error, we return it
+		return nil, byIdErr
+	}
 }

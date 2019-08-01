@@ -71,6 +71,30 @@ func NewUser(cli *Client, org *AdminOrg) *OrgUser {
 	}
 }
 
+// FetchUserByHref returns a user by its HREF
+// Deprecated: use GetUserByHref instead
+func (adminOrg *AdminOrg) FetchUserByHref(href string) (*OrgUser, error) {
+	return adminOrg.GetUserByHref(href)
+}
+
+// FetchUserByName returns a user by its Name
+// Deprecated: use GetUserByName instead
+func (adminOrg *AdminOrg) FetchUserByName(name string, refresh bool) (*OrgUser, error) {
+	return adminOrg.GetUserByName(name, refresh)
+}
+
+// FetchUserById returns a user by its ID
+// Deprecated: use GetUserById instead
+func (adminOrg *AdminOrg) FetchUserById(id string, refresh bool) (*OrgUser, error) {
+	return adminOrg.GetUserById(id, refresh)
+}
+
+// FetchUserById returns a user by its Name or ID
+// Deprecated: use GetUserByNameOrId instead
+func (adminOrg *AdminOrg) FetchUserByNameOrId(identifier string, refresh bool) (*OrgUser, error) {
+	return adminOrg.GetUserByNameOrId(identifier, refresh)
+}
+
 // GetUserByHref returns a user by its HREF, without need for
 // searching in the adminOrg user list
 func (adminOrg *AdminOrg) GetUserByHref(href string) (*OrgUser, error) {
@@ -137,13 +161,27 @@ func (adminOrg *AdminOrg) GetUserById(id string, refresh bool) (*OrgUser, error)
 // If it is false, it will search within the data already in memory (useful when
 // looping through the users and we know that no changes have occurred in the meantime)
 func (adminOrg *AdminOrg) GetUserByNameOrId(identifier string, refresh bool) (*OrgUser, error) {
+	var byNameErr, byIdErr error
 	// First look by ID
-	orgUser, err := adminOrg.GetUserByName(identifier, true)
-	// if it fails, look by name
-	if IsNotFound(err) {
-		orgUser, err = adminOrg.GetUserById(identifier, false)
+	orgUser, byIdErr := adminOrg.GetUserByName(identifier, true)
+	if byIdErr == nil {
+		// found by ID
+		return orgUser, nil
 	}
-	return orgUser, err
+	// If not found by ID, look by name
+	if IsNotFound(byIdErr) {
+		orgUser, byNameErr = adminOrg.GetUserById(identifier, false)
+		return orgUser, byNameErr
+	} else {
+		// On any other error, we return it
+		return nil, byIdErr
+	}
+}
+
+// GetRole finds a role within the organization
+// Deprecated: use GetRoleReference
+func (adminOrg *AdminOrg) GetRole(roleName string) (*types.Reference, error) {
+	return adminOrg.GetRoleReference(roleName)
 }
 
 // GetRoleReference finds a role within the organization
