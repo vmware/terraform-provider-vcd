@@ -9,6 +9,7 @@ package vcd
 import (
 	"fmt"
 	"log"
+	"regexp"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
@@ -149,7 +150,7 @@ func getSettings(d *schema.ResourceData) *types.OrgSettings {
 	return settings
 }
 
-//Deletes org
+// Deletes org
 func resourceOrgDelete(d *schema.ResourceData, m interface{}) error {
 
 	//DELETING
@@ -157,27 +158,40 @@ func resourceOrgDelete(d *schema.ResourceData, m interface{}) error {
 	deleteForce := d.Get("delete_force").(bool)
 	deleteRecursive := d.Get("delete_recursive").(bool)
 
-	//fetches org
-	log.Printf("Reading Org with id %s", d.State().ID)
-	org, err := vcdClient.VCDClient.GetAdminOrgByName(d.Get("name").(string))
+	orgName, _, err := getOrgNames(d)
 	if err != nil {
-		return fmt.Errorf("error fetching Org: %s", d.Get("name").(string))
-	}
-
-	log.Printf("Org with id %s found", d.State().ID)
-	//deletes organization
-	log.Printf("Deleting Org with id %s", d.State().ID)
-
-	err = org.Delete(deleteForce, deleteRecursive)
-	if err != nil {
-		log.Printf("Error Deleting Org with id %s and error : %#v", d.State().ID, err)
 		return err
 	}
-	log.Printf("Org with id %s deleted", d.State().ID)
+
+	identifier := d.Id()
+	log.Printf("Reading Org %s", identifier)
+
+	// The double attempt is a workaround when dealing with
+	// organizations created by previous versions, where the ID
+	// was not reliable
+	adminOrg, err := vcdClient.VCDClient.GetAdminOrgByNameOrId(identifier)
+	if govcd.ContainsNotFound(err) && isUuid(identifier) {
+		adminOrg, err = vcdClient.VCDClient.GetAdminOrgByNameOrId(orgName)
+	}
+
+	if err != nil {
+		return fmt.Errorf("error fetching Org %s: %s", orgName, err)
+	}
+
+	log.Printf("Org %s found", orgName)
+	//deletes organization
+	log.Printf("Deleting Org %s", orgName)
+
+	err = adminOrg.Delete(deleteForce, deleteRecursive)
+	if err != nil {
+		log.Printf("Error deleting org %s: %s", orgName, err)
+		return err
+	}
+	log.Printf("Org %s deleted", orgName)
 	return nil
 }
 
-//updated the resource
+// Update the resource
 func resourceOrgUpdate(d *schema.ResourceData, m interface{}) error {
 
 	vcdClient := m.(*VCDClient)
@@ -186,11 +200,20 @@ func resourceOrgUpdate(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return err
 	}
-	log.Printf("Reading Org with id %s", d.State().ID)
 
-	adminOrg, err := vcdClient.VCDClient.GetAdminOrgByName(orgName)
+	identifier := d.Id()
+	log.Printf("Reading Org %s", identifier)
+
+	// The double attempt is a workaround when dealing with
+	// organizations created by previous versions, where the ID
+	// was not reliable
+	adminOrg, err := vcdClient.VCDClient.GetAdminOrgByNameOrId(identifier)
+	if govcd.ContainsNotFound(err) && isUuid(identifier) {
+		adminOrg, err = vcdClient.VCDClient.GetAdminOrgByNameOrId(orgName)
+	}
+
 	if err != nil {
-		return fmt.Errorf("error fetching Org: %s", orgName)
+		return fmt.Errorf("error fetching Org %s: %s", orgName, err)
 	}
 
 	settings := getSettings(d)
@@ -200,20 +223,20 @@ func resourceOrgUpdate(d *schema.ResourceData, m interface{}) error {
 	adminOrg.AdminOrg.IsEnabled = d.Get("is_enabled").(bool)
 	adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings = settings.OrgGeneralSettings
 
-	log.Printf("Org with id %s found", d.State().ID)
+	log.Printf("Org with id %s found", orgName)
 	task, err := adminOrg.Update()
 
 	if err != nil {
-		log.Printf("Error updating Org with id %s : %s", d.State().ID, err)
+		log.Printf("Error updating Org %s : %s", orgName, err)
 		return fmt.Errorf("error updating Org %s", err)
 	}
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		log.Printf("Error completing update of Org with id %s : %s", d.State().ID, err)
+		log.Printf("Error completing update of Org %s : %s", orgName, err)
 		return fmt.Errorf("error completing update of Org %s", err)
 	}
 
-	log.Printf("Org with id %s updated", d.State().ID)
+	log.Printf("Org %s updated", orgName)
 	return nil
 }
 
@@ -251,14 +274,33 @@ func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
 func resourceOrgRead(d *schema.ResourceData, m interface{}) error {
 	vcdClient := m.(*VCDClient)
 
-	identifier := d.State().ID
-	log.Printf("Reading Org with id %s", identifier)
+	orgName, _, err := getOrgNames(d)
+	if err != nil {
+		return err
+	}
+
+	identifier := d.Id()
+	log.Printf("Reading Org %s", identifier)
 	adminOrg, err := vcdClient.VCDClient.GetAdminOrgByNameOrId(identifier)
 
+	// The double attempt is a workaround when dealing with
+	// organizations created by previous versions, where the ID
+	// was not reliable
+	if govcd.ContainsNotFound(err) && isUuid(identifier) {
+		// Identifier was created by previous version and it is not a valid ID
+		// If the Org is not found by ID, , the ID is invalid, and we have the name in the resource data,
+		// we try to access it using the name.
+		identifier = orgName
+		if identifier != "" {
+			log.Printf("Reading Org %s", identifier)
+			adminOrg, err = vcdClient.VCDClient.GetAdminOrgByNameOrId(identifier)
+		}
+	}
+
 	if err != nil {
-		log.Printf("Org with id %s not found. Setting ID to nothing", identifier)
+		log.Printf("Org %s not found. Setting ID to nothing", identifier)
 		d.SetId("")
-		return nil
+		return fmt.Errorf("org %s not found", identifier)
 	}
 	log.Printf("Org with id %s found", identifier)
 	d.SetId(adminOrg.AdminOrg.ID)
@@ -297,4 +339,10 @@ func getOrgNames(d *schema.ResourceData) (orgName string, fullName string, err e
 		return "", "", fmt.Errorf(`the value for "full_name" cannot be empty`)
 	}
 	return orgName, fullName, nil
+}
+
+// Returns true if the identifier is a bare UUID
+func isUuid(identifier string) bool {
+	reUuid := regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)
+	return reUuid.MatchString(identifier)
 }
