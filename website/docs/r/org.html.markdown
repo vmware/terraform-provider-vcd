@@ -13,6 +13,11 @@ Requires system administrator privileges.
 
 Supported in provider *v2.0+*
 
+!> **Warning:** Up to version 2.4, there were two bugs in the handling of this resource. If you have existing resources
+created in versions 2.0 to 2.4, you should re-create them using `terraform state rm` and `terraform import`
+(See *Upgrading Org resources to 2.5* below for the steps).
+
+
 ## Example Usage
 
 ```hcl
@@ -50,6 +55,8 @@ The following arguments are supported:
 
 ## Importing
 
+Supported in provider *v2.5+*
+
 ~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
 configuration. [More information.][docs-import]
 
@@ -62,7 +69,7 @@ resource "vcd_org" "my-orgadmin" {
   name             = "my-org"
   full_name        = "guessing"
   delete_recursive = "true"
-  delete_force     = "true" 
+  delete_force     = "true"
 }
 ```
 
@@ -114,6 +121,23 @@ The state (in `terraform.tfstate`) would look like this:
 
 After that, you can expand the configuration file and either update or delete the org as needed. Running `terraform plan`
 at this stage will show the difference between the minimal configuration file and the Org's stored properties.
+
+## Upgrading Org resources to 2.5
+
+If you have resources that were created with versions 2.0 to 2.5, they may not work correctly in 2.5+, due to a few bugs
+in the handling of the resource ID and the default values for VM quotas.
+
+Running a plan on such resource, terraform would want to re-deploy the resource, which is a consequence of the bug fix
+that now gives the correct ID to the resource.
+
+In this scenario, the safest approach is to remove the resource from terraform state and import it, using these steps.
+Let's assume your org `my-org` was created in 2.4.
+
+1. `terraform state list` (it will show `vcd_org.my-org`)
+2. `terraform state rm vcd_org.my-org`
+3. `terraform import vcd_org.my-org my-org`
+
+At this point, the org will have the correct information.
 
 ## Sources
 
