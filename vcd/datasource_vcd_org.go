@@ -1,6 +1,7 @@
 package vcd
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -18,42 +19,37 @@ func datasourceVcdOrg() *schema.Resource {
 			},
 			"full_name": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 				ForceNew: false,
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
-				Optional: true,
+				Computed: true,
 				ForceNew: false,
 			},
 			"is_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
-				Optional:    true,
-				ForceNew:    false,
-				Default:     true,
+				Computed:    true,
 				Description: "True if this organization is enabled (allows login and all other operations).",
 			},
 			"deployed_vm_quota": &schema.Schema{
 				Type:        schema.TypeInt,
-				Optional:    true,
-				Default:     0,
+				Computed:    true,
 				Description: "Maximum number of virtual machines that can be deployed simultaneously by a member of this organization. (0 = unlimited)",
 			},
 			"stored_vm_quota": &schema.Schema{
 				Type:        schema.TypeInt,
-				Optional:    true,
-				Default:     0,
+				Computed:    true,
 				Description: "Maximum number of virtual machines in vApps or vApp templates that can be stored in an undeployed state by a member of this organization. (0 = unlimited)",
 			},
 			"can_publish_catalogs": &schema.Schema{
 				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
+				Computed:    true,
 				Description: "True if this organization is allowed to share catalogs.",
 			},
 			"delay_after_power_on_seconds": &schema.Schema{
 				Type:        schema.TypeInt,
-				Optional:    true,
+				Computed:    true,
 				Description: "Specifies this organization's default for virtual machine boot delay after power on.",
 			},
 		},
@@ -64,13 +60,13 @@ func datasourceVcdOrgRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
 	identifier := d.Get("name").(string)
-	log.Printf("Reading Org with id %s", d.Get("name").(string))
+	log.Printf("Reading Org with id %s", identifier)
 	adminOrg, err := vcdClient.VCDClient.GetAdminOrgByNameOrId(identifier)
 
 	if err != nil {
 		log.Printf("Org with id %s not found. Setting ID to nothing", identifier)
 		d.SetId("")
-		return nil
+		return fmt.Errorf("org %s not found", identifier)
 	}
 	log.Printf("Org with id %s found", identifier)
 	d.SetId(adminOrg.AdminOrg.ID)

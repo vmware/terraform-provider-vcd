@@ -252,7 +252,7 @@ func resourceOrgRead(d *schema.ResourceData, m interface{}) error {
 	vcdClient := m.(*VCDClient)
 
 	identifier := d.State().ID
-	log.Printf("Reading Org with id %s", d.State().ID)
+	log.Printf("Reading Org with id %s", identifier)
 	adminOrg, err := vcdClient.VCDClient.GetAdminOrgByNameOrId(identifier)
 
 	if err != nil {
@@ -267,8 +267,7 @@ func resourceOrgRead(d *schema.ResourceData, m interface{}) error {
 
 // Imports an Org into Terraform state
 // This function task is to get the data from vCD and fill the resource data container
-// Expects the d.Id() to be a Org name
-//
+// Expects the d.Id() to be an Org name, which is the full path
 func resourceVcdOrgImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	orgName := d.Id()
 
