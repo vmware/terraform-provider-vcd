@@ -1714,7 +1714,7 @@ type LbPool struct {
 	Description         string        `xml:"description,omitempty"`
 	Algorithm           string        `xml:"algorithm"`
 	AlgorithmParameters string        `xml:"algorithmParameters,omitempty"`
-	Transparent         bool          `xml:"transparent,omitempty"`
+	Transparent         bool          `xml:"transparent"`
 	MonitorId           string        `xml:"monitorId,omitempty"`
 	Members             LbPoolMembers `xml:"member,omitempty"`
 }
@@ -1743,12 +1743,12 @@ type LbAppProfile struct {
 	XMLName                       xml.Name                  `xml:"applicationProfile"`
 	ID                            string                    `xml:"applicationProfileId,omitempty"`
 	Name                          string                    `xml:"name,omitempty"`
-	SslPassthrough                bool                      `xml:"sslPassthrough,omitempty"`
+	SslPassthrough                bool                      `xml:"sslPassthrough"`
 	Template                      string                    `xml:"template,omitempty"`
 	HttpRedirect                  *LbAppProfileHttpRedirect `xml:"httpRedirect,omitempty"`
 	Persistence                   *LbAppProfilePersistence  `xml:"persistence,omitempty"`
-	InsertXForwardedForHttpHeader bool                      `xml:"insertXForwardedFor,omitempty"`
-	ServerSslEnabled              bool                      `xml:"serverSslEnabled,omitempty"`
+	InsertXForwardedForHttpHeader bool                      `xml:"insertXForwardedFor"`
+	ServerSslEnabled              bool                      `xml:"serverSslEnabled"`
 }
 
 type LbAppProfiles []LbAppProfile
@@ -1788,11 +1788,11 @@ type LbVirtualServer struct {
 	ID                   string   `xml:"virtualServerId,omitempty"`
 	Name                 string   `xml:"name,omitempty"`
 	Description          string   `xml:"description,omitempty"`
-	Enabled              bool     `xml:"enabled,omitempty"`
+	Enabled              bool     `xml:"enabled"`
 	IpAddress            string   `xml:"ipAddress"`
 	Protocol             string   `xml:"protocol"`
 	Port                 int      `xml:"port"`
-	AccelerationEnabled  bool     `xml:"accelerationEnabled,omitempty"`
+	AccelerationEnabled  bool     `xml:"accelerationEnabled"`
 	ConnectionLimit      int      `xml:"connectionLimit,omitempty"`
 	ConnectionRateLimit  int      `xml:"connectionRateLimit,omitempty"`
 	ApplicationProfileId string   `xml:"applicationProfileId,omitempty"`
