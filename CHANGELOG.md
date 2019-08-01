@@ -4,6 +4,13 @@ FEATURES:
 
 * **New Data Source:** `vcd_org` Organization - ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
 
+IMPROVEMENTS:
+
+* `vcd_org` Add import capability
+
+BUG FIXES:
+* Change default value for `vcd_org.deployed_vm_quota` and `vcd_org.stored_vm_quota`. It was incorrectly set at `-1` instead of `0`.
+
 ## 2.4.0 (July 29, 2019)
 
 FEATURES:
