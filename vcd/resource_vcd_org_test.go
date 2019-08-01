@@ -137,6 +137,8 @@ func TestAccVcdOrgFull(t *testing.T) {
 		updateParams["FuncName"] = params["FuncName"].(string) + "_updated"
 		updateParams["FullName"] = params["FullName"].(string) + " updated"
 		updateParams["Description"] = params["Description"].(string) + " updated"
+		updateParams["CanPublishCatalogs"] = !params["CanPublishCatalogs"].(bool)
+		updateParams["IsEnabled"] = !params["IsEnabled"].(bool)
 
 		configTextUpdated := templateFill(testAccCheckVcdOrgFull, updateParams)
 		if vcdShortTest {
@@ -182,11 +184,11 @@ func TestAccVcdOrgFull(t *testing.T) {
 						resource.TestCheckResourceAttr(
 							resourceName, "full_name", updateParams["FullName"].(string)),
 						resource.TestCheckResourceAttr(
-							resourceName, "is_enabled", fmt.Sprintf("%v", od.enabled)),
+							resourceName, "is_enabled", fmt.Sprintf("%v", !od.enabled)),
 						resource.TestCheckResourceAttr(
 							resourceName, "description", updateParams["Description"].(string)),
 						resource.TestCheckResourceAttr(
-							resourceName, "can_publish_catalogs", fmt.Sprintf("%v", od.canPublishCatalogs)),
+							resourceName, "can_publish_catalogs", fmt.Sprintf("%v", !od.canPublishCatalogs)),
 						resource.TestCheckResourceAttr(
 							resourceName, "deployed_vm_quota", fmt.Sprintf("%d", updateParams["DeployedVmQuota"].(int))),
 						resource.TestCheckResourceAttr(
