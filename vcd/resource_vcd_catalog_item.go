@@ -143,7 +143,7 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 
 	err = createOrUpdateCatalogItemMetadata(d, meta)
 	if err != nil {
-		return fmt.Errorf("error adding catalog item metadata: %#v", err)
+		return fmt.Errorf("error adding catalog item metadata: %s", err)
 	}
 
 	return resourceVcdCatalogItemRead(d, meta)
@@ -173,7 +173,7 @@ func resourceVcdCatalogItemDelete(d *schema.ResourceData, meta interface{}) erro
 func resourceVcdCatalogItemUpdate(d *schema.ResourceData, meta interface{}) error {
 	err := createOrUpdateCatalogItemMetadata(d, meta)
 	if err != nil {
-		return fmt.Errorf("error updating catalog item metadata: %#v", err)
+		return fmt.Errorf("error updating catalog item metadata: %s", err)
 	}
 	return nil
 }
@@ -221,14 +221,14 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 		for _, k := range toBeRemovedMetadata {
 			err := vAppTemplate.DeleteMetadata(k)
 			if err != nil {
-				return fmt.Errorf("error deleting metadata: %#v", err)
+				return fmt.Errorf("error deleting metadata: %s", err)
 			}
 		}
 		// Add new metadata
 		for k, v := range newMetadata {
 			_, err := vAppTemplate.AddMetadata(k, v.(string))
 			if err != nil {
-				return fmt.Errorf("error adding metadata: %#v", err)
+				return fmt.Errorf("error adding metadata: %s", err)
 			}
 		}
 	}

@@ -138,7 +138,7 @@ func resourceVcdMediaCreate(d *schema.ResourceData, meta interface{}) error {
 
 	err = createOrUpdateMediaItemMetadata(d, meta)
 	if err != nil {
-		return fmt.Errorf("error adding media item metadata: %#v", err)
+		return fmt.Errorf("error adding media item metadata: %s", err)
 	}
 
 	return resourceVcdMediaRead(d, meta)
@@ -186,7 +186,7 @@ func resourceVcdMediaDelete(d *schema.ResourceData, meta interface{}) error {
 func resourceVcdMediaUpdate(d *schema.ResourceData, meta interface{}) error {
 	err := createOrUpdateMediaItemMetadata(d, meta)
 	if err != nil {
-		return fmt.Errorf("error updating media item metadata: %#v", err)
+		return fmt.Errorf("error updating media item metadata: %s", err)
 	}
 	return resourceVcdMediaRead(d, meta)
 }
@@ -223,14 +223,14 @@ func createOrUpdateMediaItemMetadata(d *schema.ResourceData, meta interface{}) e
 		for _, k := range toBeRemovedMetadata {
 			err := mediaItem.DeleteMetadata(k)
 			if err != nil {
-				return fmt.Errorf("error deleting metadata: %#v", err)
+				return fmt.Errorf("error deleting metadata: %s", err)
 			}
 		}
 		// Add new metadata
 		for k, v := range newMetadata {
 			_, err = mediaItem.AddMetadata(k, v.(string))
 			if err != nil {
-				return fmt.Errorf("error adding metadata: %#v", err)
+				return fmt.Errorf("error adding metadata: %s", err)
 			}
 		}
 	}
