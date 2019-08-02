@@ -1,7 +1,19 @@
 ## 2.5.0 (Unreleased)
 
+FEATURES:
+
+* **New Data Source:** `vcd_org` Organization - ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+
+IMPROVEMENTS:
+
+* `vcd_org` Add import capability
 * `resource/catalog_item` added catalog item metadata support [#28*] 
 * `resource/catalog_media` added catalog media item metadata support [#28*]
+
+BUG FIXES:
+* Change default value for `vcd_org.deployed_vm_quota` and `vcd_org.stored_vm_quota`. It was incorrectly set at `-1` instead of `0`.
+* Change Org ID from partial task ID to real Org ID during creation.
+* Wait for task completion on creation and update, where tasks were not handled at all.
 
 ## 2.4.0 (July 29, 2019)
 

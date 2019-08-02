@@ -252,6 +252,55 @@ func TestAccVcdOrgUserFull(t *testing.T) {
 	cleanUserData(t)
 }
 
+// Tests the creation of a user that copies
+// properties values from organization data source
+func TestAccVcdOrgUserWithDS(t *testing.T) {
+
+	userData := prepareUserData(t)
+
+	ud := userData[0]
+
+	var params = StringMap{
+		"Org":             testConfig.VCD.Org,
+		"UserName":        ud.name,
+		"OrgUserPassword": orgUserPasswordText,
+		"RoleName":        ud.roleName,
+		"Tags":            "user",
+		"FuncName":        "TestUser_" + ud.name + "_withDS",
+	}
+	configText := templateFill(testAccOrgUserWithOrgDatasource, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	} else {
+		fmt.Printf("%s (%s)\n", ud.name, ud.roleName)
+		debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+		resource.Test(t, resource.TestCase{
+			PreCheck:     func() { testAccPreCheck(t) },
+			Providers:    testAccProviders,
+			CheckDestroy: nil,
+			Steps: []resource.TestStep{
+				resource.TestStep{
+					Config: configText,
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(
+							"vcd_org_user."+ud.name, "name", ud.name),
+						resource.TestCheckResourceAttr(
+							"vcd_org_user."+ud.name, "role", ud.roleName),
+						resource.TestCheckResourceAttrPair(
+							"vcd_org_user."+ud.name, "deployed_vm_quota",
+							"data.vcd_org."+testConfig.VCD.Org, "deployed_vm_quota"),
+						resource.TestCheckResourceAttrPair(
+							"vcd_org_user."+ud.name, "stored_vm_quota",
+							"data.vcd_org."+testConfig.VCD.Org, "stored_vm_quota"),
+					),
+				},
+			},
+		})
+	}
+	cleanUserData(t)
+}
+
 func testAccCheckVcdUserDestroy(userName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		conn := testAccProvider.Meta().(*VCDClient)
@@ -259,7 +308,7 @@ func testAccCheckVcdUserDestroy(userName string) resource.TestCheckFunc {
 		if err != nil {
 			return err
 		}
-		user, err := adminOrg.FetchUserByName(userName, false)
+		user, err := adminOrg.GetUserByName(userName, false)
 		if err != govcd.ErrorEntityNotFound {
 			return fmt.Errorf("user %s was not destroyed", userName)
 		}
@@ -317,5 +366,21 @@ resource "vcd_org_user" "{{.UserName}}" {
   deployed_vm_quota = {{.DeployedVmQuota}}
   instant_messaging = "{{.IM}}"
   email_address     = "{{.EmailAddress}}"
+}
+`
+
+const testAccOrgUserWithOrgDatasource = `
+data "vcd_org" "{{.Org}}" {
+  name = "{{.Org}}"
+}
+
+resource "vcd_org_user" "{{.UserName}}" {
+  org               = "${data.vcd_org.{{.Org}}.name}"
+  name              = "{{.UserName}}"
+  password          = "{{.OrgUserPassword}}"
+  role              = "{{.RoleName}}"
+  deployed_vm_quota = "${data.vcd_org.{{.Org}}.deployed_vm_quota}"
+  stored_vm_quota   = "${data.vcd_org.{{.Org}}.stored_vm_quota}"
+  take_ownership    = true
 }
 `

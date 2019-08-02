@@ -195,33 +195,33 @@ func (cli *VCDClient) getVdcName(d *schema.ResourceData) string {
 // GetOrgAndVdc finds a pair of org and vdc using the names provided
 // in the args. If the names are empty, it will use the default
 // org and vdc names from the provider.
-func (cli *VCDClient) GetOrgAndVdc(orgName, vdcName string) (org govcd.Org, vdc govcd.Vdc, err error) {
+func (cli *VCDClient) GetOrgAndVdc(orgName, vdcName string) (org *govcd.Org, vdc govcd.Vdc, err error) {
 
 	if orgName == "" {
 		orgName = cli.Org
 	}
 	if orgName == "" {
-		return govcd.Org{}, govcd.Vdc{}, fmt.Errorf("empty Org name provided")
+		return nil, govcd.Vdc{}, fmt.Errorf("empty Org name provided")
 	}
 	if vdcName == "" {
 		vdcName = cli.Vdc
 	}
 	if vdcName == "" {
-		return govcd.Org{}, govcd.Vdc{}, fmt.Errorf("empty VDC name provided")
+		return nil, govcd.Vdc{}, fmt.Errorf("empty VDC name provided")
 	}
-	org, err = govcd.GetOrgByName(cli.VCDClient, orgName)
+	org, err = cli.VCDClient.GetOrgByName(orgName)
 	if err != nil {
-		return govcd.Org{}, govcd.Vdc{}, fmt.Errorf("error retrieving Org %s: %s", orgName, err)
+		return nil, govcd.Vdc{}, fmt.Errorf("error retrieving Org %s: %s", orgName, err)
 	}
-	if (org == govcd.Org{}) || org.Org.Name == "" || org.Org.ID == "" || org.Org.HREF == "" {
-		return govcd.Org{}, govcd.Vdc{}, fmt.Errorf("empty Org %s found ", orgName)
+	if org.Org.Name == "" || org.Org.HREF == "" || org.Org.ID == "" {
+		return nil, govcd.Vdc{}, fmt.Errorf("empty Org %s found ", orgName)
 	}
 	vdc, err = org.GetVdcByName(vdcName)
 	if err != nil {
-		return govcd.Org{}, govcd.Vdc{}, fmt.Errorf("error retrieving VDC %s: %s", vdcName, err)
+		return nil, govcd.Vdc{}, fmt.Errorf("error retrieving VDC %s: %s", vdcName, err)
 	}
 	if (vdc == govcd.Vdc{}) || vdc.Vdc.ID == "" || vdc.Vdc.HREF == "" || vdc.Vdc.Name == "" {
-		return govcd.Org{}, govcd.Vdc{}, fmt.Errorf("error retrieving VDC %s: not found", vdcName)
+		return nil, govcd.Vdc{}, fmt.Errorf("error retrieving VDC %s: not found", vdcName)
 	}
 	return org, vdc, err
 }
@@ -229,34 +229,34 @@ func (cli *VCDClient) GetOrgAndVdc(orgName, vdcName string) (org govcd.Org, vdc 
 // GetAdminOrg finds org using the names provided in the args.
 // If the name is empty, it will use the default
 // org name from the provider.
-func (cli *VCDClient) GetAdminOrg(orgName string) (org govcd.AdminOrg, err error) {
+func (cli *VCDClient) GetAdminOrg(orgName string) (org *govcd.AdminOrg, err error) {
 
 	if orgName == "" {
 		orgName = cli.Org
 	}
 	if orgName == "" {
-		return govcd.AdminOrg{}, fmt.Errorf("empty Org name provided")
+		return nil, fmt.Errorf("empty Org name provided")
 	}
 
-	org, err = govcd.GetAdminOrgByName(cli.VCDClient, orgName)
+	org, err = cli.VCDClient.GetAdminOrgByName(orgName)
 	if err != nil {
-		return govcd.AdminOrg{}, fmt.Errorf("error retrieving Org %s: %s", orgName, err)
+		return nil, fmt.Errorf("error retrieving Org %s: %s", orgName, err)
 	}
 	if org.AdminOrg.Name == "" || org.AdminOrg.HREF == "" || org.AdminOrg.ID == "" {
-		return govcd.AdminOrg{}, fmt.Errorf("empty org %s found", orgName)
+		return nil, fmt.Errorf("empty org %s found", orgName)
 	}
 	return org, err
 }
 
 // Same as GetOrgAndVdc, but using data from the resource, if available.
-func (cli *VCDClient) GetOrgAndVdcFromResource(d *schema.ResourceData) (org govcd.Org, vdc govcd.Vdc, err error) {
+func (cli *VCDClient) GetOrgAndVdcFromResource(d *schema.ResourceData) (org *govcd.Org, vdc govcd.Vdc, err error) {
 	orgName := d.Get("org").(string)
 	vdcName := d.Get("vdc").(string)
 	return cli.GetOrgAndVdc(orgName, vdcName)
 }
 
 // Same as GetOrgAndVdc, but using data from the resource, if available.
-func (cli *VCDClient) GetAdminOrgFromResource(d *schema.ResourceData) (org govcd.AdminOrg, err error) {
+func (cli *VCDClient) GetAdminOrgFromResource(d *schema.ResourceData) (org *govcd.AdminOrg, err error) {
 	orgName := d.Get("org").(string)
 	return cli.GetAdminOrg(orgName)
 }
