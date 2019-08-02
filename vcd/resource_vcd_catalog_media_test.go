@@ -48,6 +48,10 @@ func TestAccVcdCatalogMediaBasic(t *testing.T) {
 						"vcd_catalog_media."+TestAccVcdCatalogMedia, "name", TestAccVcdCatalogMedia),
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_media."+TestAccVcdCatalogMedia, "description", TestAccVcdCatalogMediaDescription),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_media."+TestAccVcdCatalogMedia, "metadata.mediaItem_metadata", "mediaItem Metadata"),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_media."+TestAccVcdCatalogMedia, "metadata.mediaItem_metadata2", "mediaItem Metadata2"),
 				),
 			},
 		},
@@ -129,5 +133,10 @@ const testAccCheckVcdCatalogMediaBasic = `
   media_path           = "{{.MediaPath}}"
   upload_piece_size    = {{.UploadPieceSize}}
   show_upload_progress = "{{.UploadProgress}}"
+
+  metadata = {
+    mediaItem_metadata = "mediaItem Metadata"
+    mediaItem_metadata2 = "mediaItem Metadata2"
+  }
 }
 `

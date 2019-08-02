@@ -49,6 +49,10 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 						"vcd_catalog_item."+TestAccVcdCatalogItem, "name", TestAccVcdCatalogItem),
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_item."+TestAccVcdCatalogItem, "description", TestAccVcdCatalogItemDescription),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItem, "metadata.catalogItem_metadata", "catalogItem Metadata"),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItem, "metadata.catalogItem_metadata2", "catalogItem Metadata2"),
 				),
 			},
 		},
@@ -148,5 +152,10 @@ const testAccCheckVcdCatalogItemBasic = `
   ova_path             = "{{.OvaPath}}"
   upload_piece_size    = {{.UploadPieceSize}}
   show_upload_progress = "{{.UploadProgress}}"
+
+  metadata = {
+    catalogItem_metadata = "catalogItem Metadata"
+    catalogItem_metadata2 = "catalogItem Metadata2"
+  }
 }
 `

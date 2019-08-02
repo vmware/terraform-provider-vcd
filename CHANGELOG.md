@@ -1,4 +1,8 @@
 ## 2.5.0 (Unreleased)
+
+* `resource/catalog_item` added catalog item metadata support [#28*] 
+* `resource/catalog_media` added catalog media item metadata support [#28*]
+
 ## 2.4.0 (July 29, 2019)
 
 FEATURES:

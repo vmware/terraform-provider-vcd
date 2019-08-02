@@ -60,6 +60,13 @@ func resourceVcdCatalogItem() *schema.Resource {
 				ForceNew:    false,
 				Description: "shows upload progress in stdout",
 			},
+			"metadata": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "Key and value pairs for catalog item metadata",
+				// For now underlying go-vcloud-director repo only supports
+				// a value of type String in this map.
+			},
 		},
 	}
 }
@@ -133,18 +140,97 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 	d.SetId(catalogName + ":" + itemName)
 
 	log.Printf("[TRACE] Catalog item created: %#v", itemName)
+
+	err = createOrUpdateCatalogItemMetadata(d, meta)
+	if err != nil {
+		return fmt.Errorf("error adding catalog item metadata: %#v", err)
+	}
+
 	return resourceVcdCatalogItemRead(d, meta)
 }
 
 func resourceVcdCatalogItemRead(d *schema.ResourceData, meta interface{}) error {
-	return findCatalogItem(d, meta.(*VCDClient))
+	catalogItem, err := findCatalogItem(d, meta.(*VCDClient))
+	if err != nil {
+		return err
+	}
+
+	vAppTemplate, err := catalogItem.GetVAppTemplate()
+	if err != nil {
+		return err
+	}
+
+	metadata, err := vAppTemplate.GetMetadata()
+	d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+	return err
 }
 
 func resourceVcdCatalogItemDelete(d *schema.ResourceData, meta interface{}) error {
 	return deleteCatalogItem(d, meta.(*VCDClient))
 }
 
-//update function for "show_upload_progress" and "upload_piece_size"
-func resourceVcdCatalogItemUpdate(d *schema.ResourceData, m interface{}) error {
+// currently updates only metadata
+func resourceVcdCatalogItemUpdate(d *schema.ResourceData, meta interface{}) error {
+	err := createOrUpdateCatalogItemMetadata(d, meta)
+	if err != nil {
+		return fmt.Errorf("error updating catalog item metadata: %#v", err)
+	}
+	return nil
+}
+
+func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{}) error {
+
+	log.Printf("[TRACE] adding/updating metadata for catalog item")
+
+	vcdClient := meta.(*VCDClient)
+
+	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+	if err != nil {
+		return fmt.Errorf(errorRetrievingOrg, err)
+	}
+
+	catalog, err := adminOrg.FindCatalog(d.Get("catalog").(string))
+	if err != nil || catalog == (govcd.Catalog{}) {
+		log.Printf("[DEBUG] Unable to find catalog: %s", err)
+		return nil
+	}
+
+	catalogItem, err := catalog.FindCatalogItem(d.Get("name").(string))
+	if err != nil || catalogItem == (govcd.CatalogItem{}) {
+		log.Printf("[DEBUG] Unable to find catalog item: %s", err)
+		return nil
+	}
+
+	vAppTemplate, err := catalogItem.GetVAppTemplate()
+	if err != nil {
+		return err
+	}
+
+	if d.HasChange("metadata") {
+		oldRaw, newRaw := d.GetChange("metadata")
+		oldMetadata := oldRaw.(map[string]interface{})
+		newMetadata := newRaw.(map[string]interface{})
+		var toBeRemovedMetadata []string
+		// Check if any key in old metadata was removed in new metadata.
+		// Creates a list of keys to be removed.
+		for k := range oldMetadata {
+			if _, ok := newMetadata[k]; !ok {
+				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
+			}
+		}
+		for _, k := range toBeRemovedMetadata {
+			err := vAppTemplate.DeleteMetadata(k)
+			if err != nil {
+				return fmt.Errorf("error deleting metadata: %#v", err)
+			}
+		}
+		// Add new metadata
+		for k, v := range newMetadata {
+			_, err := vAppTemplate.AddMetadata(k, v.(string))
+			if err != nil {
+				return fmt.Errorf("error adding metadata: %#v", err)
+			}
+		}
+	}
 	return nil
 }
