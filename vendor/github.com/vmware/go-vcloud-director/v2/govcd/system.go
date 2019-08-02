@@ -548,7 +548,7 @@ func QueryNetworkPoolByName(vcdCli *VCDClient, name string) ([]*types.QueryResul
 	return results.Results.NetworkPoolRecord, nil
 }
 
-// QueryNetworkPoolByName finds a provider VDC by name
+// QueryProviderVdcByName finds a provider VDC by name
 func QueryProviderVdcByName(vcdCli *VCDClient, name string) ([]*types.QueryResultVMWProviderVdcRecordType, error) {
 	results, err := vcdCli.QueryWithNotEncodedParams(nil, map[string]string{
 		"type":   "providerVdc",
@@ -559,6 +559,42 @@ func QueryProviderVdcByName(vcdCli *VCDClient, name string) ([]*types.QueryResul
 	}
 
 	return results.Results.VMWProviderVdcRecord, nil
+}
+
+// QueryProviderVdcs gets the list of available provider VDCs
+func (vcdClient *VCDClient) QueryProviderVdcs() ([]*types.QueryResultVMWProviderVdcRecordType, error) {
+	results, err := vcdClient.QueryWithNotEncodedParams(nil, map[string]string{
+		"type": "providerVdc",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return results.Results.VMWProviderVdcRecord, nil
+}
+
+// QueryNetworkPools gets the list of network pools
+func (vcdClient *VCDClient) QueryNetworkPools() ([]*types.QueryResultNetworkPoolRecordType, error) {
+	results, err := vcdClient.QueryWithNotEncodedParams(nil, map[string]string{
+		"type": "networkPool",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return results.Results.NetworkPoolRecord, nil
+}
+
+// QueryProviderVdcStorageProfiles gets the list of provider VDC storage profiles
+func (vcdClient *VCDClient) QueryProviderVdcStorageProfiles() ([]*types.QueryResultProviderVdcStorageProfileRecordType, error) {
+	results, err := vcdClient.QueryWithNotEncodedParams(nil, map[string]string{
+		"type": "providerVdcStorageProfile",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return results.Results.ProviderVdcStorageProfileRecord, nil
 }
 
 // GetNetworkPoolByHREF functions fetches an network pool using VDC client and network pool href

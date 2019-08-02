@@ -466,6 +466,15 @@ func (adminOrg *AdminOrg) Update() (Task, error) {
 		OrgSettings: adminOrg.AdminOrg.OrgSettings,
 	}
 
+	/**/
+	// Same workaround used in Org creation, where OrgGeneralSettings properties
+	// are not set unless UseServerBootSequence is also set
+	if vcomp.OrgSettings.OrgGeneralSettings != nil {
+		vcomp.OrgSettings.OrgGeneralSettings.UseServerBootSequence = true
+	}
+
+	/**/
+
 	// Return the task
 	return adminOrg.client.ExecuteTaskRequest(adminOrg.AdminOrg.HREF, http.MethodPut,
 		"application/vnd.vmware.admin.organization+xml", "error updating Org: %s", vcomp)
