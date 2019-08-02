@@ -307,9 +307,13 @@ func resourceOrgRead(d *schema.ResourceData, m interface{}) error {
 	return setOrgData(d, adminOrg)
 }
 
-// Imports an Org into Terraform state
-// This function task is to get the data from vCD and fill the resource data container
-// Expects the d.Id() to be an Org name, which is the full path
+// resourceVcdOrgImport is responsible for importing the resource.
+// The d.ID() field as being passed from `terraform import _resource_name_ _the_id_string_ requires
+// a name based dot-formatted path to the object to lookup the object and sets the id of object.
+// `terraform import` automatically performs `refresh` operation which loads up all other fields.
+// For this resource, the import path is just the org name.
+//
+// Example import path (id): orgName
 func resourceVcdOrgImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	orgName := d.Id()
 
