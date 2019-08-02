@@ -26,7 +26,7 @@ resource "vcd_catalog_media" "myNewMedia" {
   show_upload_progress = true
   
   metadata = {
-    license   = "public"    
+    license = "public"    
     version = "v1"
   }  
 
