@@ -13,10 +13,6 @@ Requires system administrator privileges.
 
 Supported in provider *v2.0+*
 
-!> **Warning:** If you have existing vcd_org resources in state file created with versions earlier than 2.5, you may
-need to re-create them by following *Upgrading Org resources to 2.5* section below.
-
-
 ## Example Usage
 
 ```hcl
@@ -117,26 +113,8 @@ The state (in `terraform.tfstate`) would look like this:
   ]
 }
 ```
-
 After that, you can expand the configuration file and either update or delete the org as needed. Running `terraform plan`
 at this stage will show the difference between the minimal configuration file and the Org's stored properties.
-
-## Upgrading Org resources to 2.5
-
-If you have resources that were created with earlier versions, in rare cases they may not work correctly in 2.5+, due to
-a few bugs in the handling of the resource ID and the default values for VM quotas.
-
-Running a plan on such resource, terraform would want to re-deploy the resource, which is a consequence of the bug fix
-that now gives the correct ID to the resource.
-
-In this scenario, the safest approach is to remove the resource from terraform state and import it, using these steps.
-Let's assume your org `my-org` was created in 2.4.
-
-1. `terraform state list` (it will show `vcd_org.my-org`)
-2. `terraform state rm vcd_org.my-org`
-3. `terraform import vcd_org.my-org my-org`
-
-At this point, the org will have the correct information.
 
 ## Sources
 
