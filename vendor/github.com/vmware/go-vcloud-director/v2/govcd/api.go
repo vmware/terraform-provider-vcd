@@ -42,7 +42,8 @@ type Client struct {
 // if err == ErrorEntityNotFound {
 //    // do what is needed in case of not found
 // }
-var ErrorEntityNotFound = fmt.Errorf("entity not found")
+var errorEntityNotFoundMessage = "[ENF] entity not found"
+var ErrorEntityNotFound = fmt.Errorf(errorEntityNotFoundMessage)
 
 // Triggers for debugging functions that show requests and responses
 var debugShowRequestEnabled = os.Getenv("GOVCD_SHOW_REQ") != ""
