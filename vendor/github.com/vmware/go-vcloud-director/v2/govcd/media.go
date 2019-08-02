@@ -21,13 +21,13 @@ import (
 
 type MediaItem struct {
 	MediaItem *types.MediaRecordType
-	client    *Client
+	vdc       *Vdc
 }
 
-func NewMediaItem(cli *Client) *MediaItem {
+func NewMediaItem(vdc *Vdc) *MediaItem {
 	return &MediaItem{
 		MediaItem: new(types.MediaRecordType),
-		client:    cli,
+		vdc:       vdc,
 	}
 }
 
@@ -313,7 +313,7 @@ func (mediaItem *MediaItem) Delete() (Task, error) {
 	util.Logger.Printf("[TRACE] Deleting media item: %#v", mediaItem.MediaItem.Name)
 
 	// Return the task
-	return mediaItem.client.ExecuteTaskRequest(mediaItem.MediaItem.HREF, http.MethodDelete,
+	return mediaItem.vdc.client.ExecuteTaskRequest(mediaItem.MediaItem.HREF, http.MethodDelete,
 		"", "error deleting Media item: %s", nil)
 }
 
@@ -336,4 +336,21 @@ func FindMediaAsCatalogItem(org *Org, catalogName, mediaName string) (CatalogIte
 		return CatalogItem{}, fmt.Errorf("media not found or error %#v", err)
 	}
 	return media, nil
+}
+
+// Refresh refreshes the media item information by href
+func (mediaItem *MediaItem) Refresh() error {
+
+	if mediaItem.MediaItem == nil {
+		return fmt.Errorf("cannot refresh, Object is empty")
+	}
+
+	if mediaItem.MediaItem.Name == "nil" {
+		return fmt.Errorf("cannot refresh, Name is empty")
+	}
+
+	latestMediaItem, err := mediaItem.vdc.FindMediaImage(mediaItem.MediaItem.Name)
+	*mediaItem = latestMediaItem
+
+	return err
 }

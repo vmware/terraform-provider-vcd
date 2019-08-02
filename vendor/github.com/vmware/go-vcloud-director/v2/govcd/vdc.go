@@ -562,7 +562,7 @@ func (vdc *Vdc) FindMediaImage(mediaName string) (MediaItem, error) {
 		return MediaItem{}, err
 	}
 
-	newMediaItem := NewMediaItem(vdc.client)
+	newMediaItem := NewMediaItem(vdc)
 
 	if len(mediaResults) == 1 {
 		newMediaItem.MediaItem = mediaResults[0]

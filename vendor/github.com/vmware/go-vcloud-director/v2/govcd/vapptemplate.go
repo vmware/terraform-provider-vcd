@@ -49,3 +49,23 @@ func (vdc *Vdc) InstantiateVAppTemplate(template *types.InstantiateVAppTemplateP
 	}
 	return nil
 }
+
+// Refresh refreshes the vApp template item information by href
+func (vAppTemplate *VAppTemplate) Refresh() error {
+
+	if vAppTemplate.VAppTemplate == nil {
+		return fmt.Errorf("cannot refresh, Object is empty")
+	}
+
+	url := vAppTemplate.VAppTemplate.HREF
+	if url == "nil" {
+		return fmt.Errorf("cannot refresh, HREF is empty")
+	}
+
+	vAppTemplate.VAppTemplate = &types.VAppTemplate{}
+
+	_, err := vAppTemplate.client.ExecuteRequest(url, http.MethodGet,
+		"", "error retrieving vApp template item: %s", nil, vAppTemplate.VAppTemplate)
+
+	return err
+}
