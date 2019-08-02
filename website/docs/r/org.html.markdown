@@ -14,8 +14,7 @@ Requires system administrator privileges.
 Supported in provider *v2.0+*
 
 !> **Warning:** Up to version 2.4, there were two bugs in the handling of this resource. If you have existing resources
-created in versions 2.0 to 2.4, you should re-create them using `terraform state rm` and `terraform import`
-(See *Upgrading Org resources to 2.5* below for the steps).
+created in versions 2.0 to 2.4, you should re-create them by following *Upgrading Org resources to 2.5* below.
 
 
 ## Example Usage
@@ -60,7 +59,7 @@ Supported in provider *v2.5+*
 ~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
 configuration. [More information.][docs-import]
 
-An existing Org can be [imported][docs-import] into this resource via supplying the path for an Org.Since the Org is
+An existing Org can be [imported][docs-import] into this resource via supplying the path for an Org. Since the Org is
 at the top of the vCD hierarchy, the path corresponds to the Org name.
 For example, using this structure, representing an existing Org that was **not** created using Terraform:
 
@@ -73,7 +72,7 @@ resource "vcd_org" "my-orgadmin" {
 }
 ```
 
-You can import such user into terraform state using this command
+You can import such organization into terraform state using this command
 
 ```
 terraform import vcd_org.my-org my-org
@@ -124,7 +123,7 @@ at this stage will show the difference between the minimal configuration file an
 
 ## Upgrading Org resources to 2.5
 
-If you have resources that were created with versions 2.0 to 2.5, they may not work correctly in 2.5+, due to a few bugs
+If you have resources that were created with earlier versions, they may not work correctly in 2.5+, due to a few bugs
 in the handling of the resource ID and the default values for VM quotas.
 
 Running a plan on such resource, terraform would want to re-deploy the resource, which is a consequence of the bug fix
