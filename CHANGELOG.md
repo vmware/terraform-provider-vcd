@@ -7,6 +7,8 @@ FEATURES:
 IMPROVEMENTS:
 
 * `vcd_org` Add import capability
+* `resource/catalog_item` added catalog item metadata support [#28*] 
+* `resource/catalog_media` added catalog media item metadata support [#28*]
 
 BUG FIXES:
 * Change default value for `vcd_org.deployed_vm_quota` and `vcd_org.stored_vm_quota`. It was incorrectly set at `-1` instead of `0`.

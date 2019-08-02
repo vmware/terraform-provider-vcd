@@ -244,6 +244,7 @@ func templateFill(tmpl string, data StringMap) string {
 		data["Url"] = testConfig.Provider.Url
 		data["SysOrg"] = testConfig.Provider.SysOrg
 		data["Org"] = testConfig.VCD.Org
+		data["Vdc"] = testConfig.VCD.Vdc
 		data["AllowInsecure"] = testConfig.Provider.AllowInsecure
 		data["MaxRetryTimeout"] = testConfig.Provider.MaxRetryTimeout
 		data["VersionRequired"] = currentProviderVersion
