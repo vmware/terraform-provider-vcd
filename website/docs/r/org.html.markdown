@@ -13,8 +13,8 @@ Requires system administrator privileges.
 
 Supported in provider *v2.0+*
 
-!> **Warning:** Up to version 2.4, there were two bugs in the handling of this resource. If you have existing resources
-created in versions 2.0 to 2.4, you should re-create them by following *Upgrading Org resources to 2.5* below.
+!> **Warning:** If you have existing vcd_org resources in state file created with versions earlier than 2.5, you may
+need to re-create them by following *Upgrading Org resources to 2.5* section below.
 
 
 ## Example Usage
@@ -123,8 +123,8 @@ at this stage will show the difference between the minimal configuration file an
 
 ## Upgrading Org resources to 2.5
 
-If you have resources that were created with earlier versions, they may not work correctly in 2.5+, due to a few bugs
-in the handling of the resource ID and the default values for VM quotas.
+If you have resources that were created with earlier versions, in rare cases they may not work correctly in 2.5+, due to
+a few bugs in the handling of the resource ID and the default values for VM quotas.
 
 Running a plan on such resource, terraform would want to re-deploy the resource, which is a consequence of the bug fix
 that now gives the correct ID to the resource.
