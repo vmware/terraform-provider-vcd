@@ -44,4 +44,4 @@ The following arguments are supported:
 * `media_path` - (Required) - Absolute or relative path to file to upload
 * `upload_piece_size` - (Optional) - size in MB for splitting upload size. It can possibly impact upload performance. Default 1MB.
 * `show_upload_progress` - (Optional) - Default false. Allows to see upload progress
-* `metadata` - (Optional; *v2.5+*) Key value map of metadata to assign to this VDC
+* `metadata` - (Optional; *v2.5+*) Key value map of metadata to assign
