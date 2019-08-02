@@ -201,6 +201,8 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 		return nil
 	}
 
+	// We have to add metadata to template to see in UI
+	// catalog item is another abstraction and has own metadata which we don't see in UI
 	vAppTemplate, err := catalogItem.GetVAppTemplate()
 	if err != nil {
 		return err
