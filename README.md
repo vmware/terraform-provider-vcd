@@ -24,6 +24,9 @@ Requirements
 
 Building The Provider (the modules way)
 --------------------------------------
+**Note.** You *only* need to build the provider plugin if you want to *develop* it. Refer to [documentation](https://www.terraform.io/docs/providers/vcd/) for using it. Terraform will
+automatically download officially released binary of this provider plugin on the first run of
+`terraform init` command.
 
 Starting with version 2.1 provider started using [Go modules](https://github.com/golang/go/wiki/Modules)
 This means that it is no longer necessary to be in GOPATH.
