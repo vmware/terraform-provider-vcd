@@ -197,6 +197,35 @@ func resourceVcdVAppVm() *schema.Resource {
 				Default:     false,
 				Description: "Expose hardware-assisted CPU virtualization to guest OS.",
 			},
+
+			"force_customization": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Expose hardware-assisted CPU virtualization to guest OS.",
+			},
+
+			"customization": &schema.Schema{
+				Optional: true,
+				MinItems: 1,
+				MaxItems: 1,
+				Type:     schema.TypeList,
+				Description: "Guest customization block",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"force": {
+							Type:             schema.TypeBool,
+							Optional: true,
+							Default:  false,
+							// This settings is used as a 'flag' and it does not matter what is set in the
+							// state. If it is 'true' - then it means that 'update' procedure must set the
+							// VM for customization at next boot and reboot it.
+							DiffSuppressFunc: suppressFalse(),
+						},
+
+					},
+				},
+			},
 		},
 	}
 }
@@ -238,6 +267,13 @@ func falseBoolSuppress() schema.SchemaDiffSuppressFunc {
 	return func(k string, old string, new string, d *schema.ResourceData) bool {
 		_, isTrue := d.GetOk(k)
 		return !isTrue
+	}
+}
+
+// suppressNewFalse always suppresses when new value is false
+func suppressFalse() schema.SchemaDiffSuppressFunc {
+	return func(k string, old string, new string, d *schema.ResourceData) bool {
+		return new == "false"
 	}
 }
 
@@ -631,6 +667,15 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		}
 
 	}
+
+	customization := d.Get("customization")
+	custom := customization.([]map[string]interface{})
+	cust := custom[0]
+	cu, ok := cust["force"]
+	if ok && cu.(bool){
+		fmt.Println("customization was forced")
+	}
+
 
 	return resourceVcdVAppVmRead(d, meta)
 }
