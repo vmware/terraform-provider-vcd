@@ -135,8 +135,8 @@ DHCP.
 guest operating system so that applications that require hardware virtualization can run on virtual machines without binary
 translation or paravirtualization. Useful for hypervisor nesting provided underlying hardware supports it. Default is `false`.
 * `network` - (Optional; *v2.2+*) A block to define network interface. Multiple can be used. See [Network](#network) and 
-example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_name`. **Note**: this property and all
-its parameters do force recreation of VMs!
+example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_name`.
+* `customization` - (Optional; *v2.5+*) A block to define for guest customization options. See [Customization](#customization)
 
 <a id="disk"></a>
 ## Disk
@@ -175,3 +175,10 @@ its parameters do force recreation of VMs!
   * `ip_allocation_mode=MANUAL` - **`ip`** value must be valid IP address from a subnet defined in `static pool` for network.
 
   * `ip_allocation_mode=NONE` - **`ip`** field can be omitted or set to an empty string "". Empty string may be useful when doing HCL variable interpolation.
+
+<a id="customization"></a>
+## Customization
+
+* `force` (Optional) This field works as a flag and triggers force customization when `true` during an update 
+(`terraform apply`) every time. It never complains about a change in statefile. It can be used when guest customization
+is needed after a NIC change and then set back to `false`. **Note** this setting will cause a VM reboot

@@ -102,17 +102,14 @@ func (vm *VM) UpdateNetworkConnectionSection(networks *types.NetworkConnectionSe
 	updateNetwork.NetworkConnection = networks.NetworkConnection
 	updateNetwork.Ovf = types.XMLNamespaceOVF
 
-	err = vm.client.ExecuteRequestWithoutResponse(vm.VM.HREF+"/networkConnectionSection/", http.MethodPut,
+	task, err := vm.client.ExecuteTaskRequest(vm.VM.HREF+"/networkConnectionSection/", http.MethodPut,
 		types.MimeNetworkConnectionSection, "error updating network connection: %s", updateNetwork)
 	if err != nil {
 		return err
 	}
-
-	// Wait for the VM to be in resolved state so that this function is synchronous and VM is ready to handle next task
-	//vm.BlockWhileStatus()
-	err = vm.BlockWhileStatus("UNRESOLVED", vm.client.MaxRetryTimeout)
+	err = task.WaitTaskCompletion()
 	if err != nil {
-		fmt.Errorf("error waiting until VM exists UNRESOLVED state: %s", err)
+		return fmt.Errorf("error waiting for task completion after network update for vm %s: %s", vm.VM.Name, err)
 	}
 
 	return nil
@@ -138,6 +135,15 @@ func (vm *VM) PowerOn() (Task, error) {
 	return vm.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPost,
 		"", "error powering on VM: %s", nil)
 
+}
+
+// CustomizeAtNextPowerOn forces VM customization on next power on
+func (vm *VM) CustomizeAtNextPowerOn() error {
+	apiEndpoint, _ := url.ParseRequestURI(vm.VM.HREF)
+	apiEndpoint.Path += "/action/customizeAtNextPowerOn"
+
+	return vm.client.ExecuteRequestWithoutResponse(apiEndpoint.String(), http.MethodPost, "",
+		"error setting forced VM customization for next power on: %s", nil)
 }
 
 func (vm *VM) PowerOff() (Task, error) {
@@ -333,6 +339,76 @@ func (vm *VM) ChangeMemorySize(size int) (Task, error) {
 
 func (vm *VM) RunCustomizationScript(computername, script string) (Task, error) {
 	return vm.Customize(computername, script, false)
+}
+
+// GetGuestCustomizationSection retrieves
+func (vm *VM) GetGuestCustomizationSection() (*types.GuestCustomizationSection, error) {
+	guestCustomizationSection := &types.GuestCustomizationSection{}
+
+	if vm.VM.HREF == "" {
+		return nil, fmt.Errorf("cannot load guest customization, VM HREF is empty")
+	}
+
+	_, err := vm.client.ExecuteRequest(vm.VM.HREF+"/guestCustomizationSection/", http.MethodGet,
+		types.MimeGuestCustomizationSection, "error retrieving guest customization: %s", nil, guestCustomizationSection)
+
+	return guestCustomizationSection, err
+}
+
+func (vm *VM) GetGuestCustomizationStatus() (*types.GuestCustomizationStatusSection, error) {
+	guestCustomizationStatus := &types.GuestCustomizationStatusSection{}
+
+	if vm.VM.HREF == "" {
+		return nil, fmt.Errorf("cannot load guest customization, VM HREF is empty")
+	}
+
+	_, err := vm.client.ExecuteRequest(vm.VM.HREF+"/guestcustomizationstatus", http.MethodGet,
+		types.MimeGuestCustomizationStatus, "error retrieving guest customization status: %s", nil, guestCustomizationStatus)
+
+	// The request was successful
+	return guestCustomizationStatus, err
+}
+
+//func (vm *VM) UpdateGuestCustomizationSection(*types.GuestCustomizationSection) (*types.GuestCustomizationSection, error) {
+//	guestCustomizationSection := &types.GuestCustomizationSection{}
+//
+//	if vm.VM.HREF == "" {
+//		return nil, fmt.Errorf("cannot load guest customization, VM HREF is empty")
+//	}
+//
+//	_, err := vm.client.ExecuteRequest(vm.VM.HREF+"/guestCustomizationSection/", http.MethodGet,
+//		types.MimeGuestCustomizationSection, "error retrieving guest customization: %s", nil, guestCustomizationSection)
+//
+//	// The request was successful
+//	return guestCustomizationSection, err
+//}
+
+
+// BlockWhileGuestCustomizationStatus blocks until the customization status of VM exits unwantedStatus.
+// It sleeps 200 milliseconds between iterations and times out after timeOutAfterSeconds
+// of seconds.
+func (vm *VM) BlockWhileGuestCustomizationStatus(unwantedStatus string, timeOutAfterSeconds int) error {
+	timeoutAfter := time.After(time.Duration(timeOutAfterSeconds) * time.Second)
+	//tick := time.Tick(200 * time.Millisecond)
+	tick := time.Tick(1 * time.Second)
+
+	for {
+		select {
+		case <-timeoutAfter:
+			return fmt.Errorf("timed out waiting for VM guest customization status to exit state %s after %d seconds",
+				unwantedStatus, timeOutAfterSeconds)
+		case <-tick:
+			currentStatus, err := vm.GetGuestCustomizationStatus()
+			if err != nil {
+				return fmt.Errorf("could not get VM customization status %s", err)
+			}
+			fmt.Println("current status: ", currentStatus.GuestCustStatus)
+			if currentStatus.GuestCustStatus != unwantedStatus {
+				fmt.Println("exiting because of status: ", currentStatus.GuestCustStatus)
+				return nil
+			}
+		}
+	}
 }
 
 func (vm *VM) Customize(computername, script string, changeSid bool) (Task, error) {
@@ -630,29 +706,4 @@ func (vm *VM) ToggleHardwareVirtualization(isEnabled bool) (Task, error) {
 	errMessage := fmt.Sprintf("error toggling hypervisor nesting feature to %t for VM: %%s", isEnabled)
 	return vm.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPost,
 		"", errMessage, nil)
-}
-
-// BlockWhileStatus blocks until the status of VM exits unwantedStatus.
-// It sleeps 200 milliseconds between iterations and times out after timeOutAfterSeconds
-// of seconds.
-func (vm *VM) BlockWhileStatus(unwantedStatus string, timeOutAfterSeconds int) error {
-	timeoutAfter := time.After(time.Duration(timeOutAfterSeconds) * time.Second)
-	tick := time.Tick(200 * time.Millisecond)
-
-	for {
-		select {
-		case <-timeoutAfter:
-			return fmt.Errorf("timed out waiting for VM to exit state %s after %d seconds",
-				unwantedStatus, timeOutAfterSeconds)
-		case <-tick:
-			currentStatus, err := vm.GetStatus()
-
-			if err != nil {
-				return fmt.Errorf("could not get VM status %s", err)
-			}
-			if currentStatus != unwantedStatus {
-				return nil
-			}
-		}
-	}
 }

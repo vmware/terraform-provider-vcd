@@ -198,23 +198,23 @@ func resourceVcdVAppVm() *schema.Resource {
 				Description: "Expose hardware-assisted CPU virtualization to guest OS.",
 			},
 
-			"force_customization": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     false,
-				Description: "Expose hardware-assisted CPU virtualization to guest OS.",
-			},
+			//"force_customization": &schema.Schema{
+			//	Type:        schema.TypeBool,
+			//	Optional:    true,
+			//	Default:     false,
+			//	Description: "Expose hardware-assisted CPU virtualization to guest OS.",
+			//},
 
 			"customization": &schema.Schema{
-				Optional: true,
-				MinItems: 1,
-				MaxItems: 1,
-				Type:     schema.TypeList,
+				Optional:    true,
+				MinItems:    1,
+				MaxItems:    1,
+				Type:        schema.TypeList,
 				Description: "Guest customization block",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"force": {
-							Type:             schema.TypeBool,
+							Type:     schema.TypeBool,
 							Optional: true,
 							Default:  false,
 							// This settings is used as a 'flag' and it does not matter what is set in the
@@ -222,7 +222,6 @@ func resourceVcdVAppVm() *schema.Resource {
 							// VM for customization at next boot and reboot it.
 							DiffSuppressFunc: suppressFalse(),
 						},
-
 					},
 				},
 			},
@@ -531,9 +530,9 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf("error getting VM2: %#v", err)
 	}
 
-	status, err := vm.GetStatus()
+	vmStatusBeforeUpdate, err := vm.GetStatus()
 	if err != nil {
-		return fmt.Errorf("error getting VM status: %#v", err)
+		return fmt.Errorf("error getting VM status before update: %#v", err)
 	}
 
 	// VM does not have to be in POWERED_OFF state for metadata operations
@@ -573,7 +572,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 
 	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("cpu_cores") || d.HasChange("power_on") || d.HasChange("disk") ||
 		d.HasChange("expose_hardware_virtualization") || d.HasChange("network") {
-		if status != "POWERED_OFF" {
+		if vmStatusBeforeUpdate != "POWERED_OFF" {
 			task, err := vm.PowerOff()
 			if err != nil {
 				return fmt.Errorf("error Powering Off: %#v", err)
@@ -642,19 +641,6 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			}
 		}
 
-		if d.Get("power_on").(bool) {
-
-			task, err := vm.PowerOn()
-			if err != nil {
-				return fmt.Errorf("error Powering Up: %#v", err)
-			}
-
-			err = task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf(errorCompletingTask, err)
-			}
-		}
-
 		if d.HasChange("network") {
 			networkConnectionSection, err := networksToConfig(d.Get("network").([]interface{}), vdc, vapp, vcdClient)
 			if err != nil {
@@ -669,13 +655,58 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 	}
 
 	customization := d.Get("customization")
-	custom := customization.([]map[string]interface{})
-	cust := custom[0]
-	cu, ok := cust["force"]
-	if ok && cu.(bool){
-		fmt.Println("customization was forced")
+	customizationSlice := customization.([]interface{})
+	if len(customizationSlice) > 0 {
+		cust := customizationSlice[0]
+		fc := cust.(map[string]interface{})
+		forceCustomization, ok := fc["force"]
+		if ok && forceCustomization.(bool) {
+			log.Printf("[DEBUG] Customization was forced for VM %s", vm.VM.Name)
+			vmStatusBeforeForceCustomization, err := vm.GetStatus()
+			if err != nil {
+				return fmt.Errorf("error getting VM status before forcing customization: %s", err)
+			}
+
+			if vmStatusBeforeForceCustomization != "POWERED_OFF" {
+				log.Printf("[DEBUG] Customization was forced for VM %s, state was %s. Powering off",
+					vm.VM.Name, vmStatusBeforeForceCustomization)
+				task, err := vm.PowerOff()
+				if err != nil {
+					return fmt.Errorf("error powering off: %#v", err)
+				}
+				err = task.WaitTaskCompletion()
+				if err != nil {
+					return fmt.Errorf(errorCompletingTask, err)
+				}
+			}
+			err = vm.CustomizeAtNextPowerOn()
+			if err != nil {
+				return fmt.Errorf("unable to set VM for customization on next boot")
+			}
+		}
 	}
 
+	// If the VM was powered off during update but it has to be powered of
+	if d.Get("power_on").(bool) {
+
+		vmStatus, err := vm.GetStatus()
+		if err != nil {
+			return fmt.Errorf("error getting VM status before ensuring it is powered on: %s", err)
+		}
+
+		if vmStatus != "POWERED_ON" {
+			log.Printf("[TRACE] Powering on VM %s after update. Previous state %s", vm.VM.Name, vmStatus)
+			task, err := vm.PowerOn()
+			if err != nil {
+				return fmt.Errorf("error powering on: %s", err)
+			}
+
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				return fmt.Errorf(errorCompletingTask, err)
+			}
+		}
+	}
 
 	return resourceVcdVAppVmRead(d, meta)
 }

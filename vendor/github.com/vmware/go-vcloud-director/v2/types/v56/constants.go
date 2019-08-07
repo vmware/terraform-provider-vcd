@@ -73,6 +73,8 @@ const (
 	MimeRasdItem = "application/vnd.vmware.vcloud.rasdItem+xml"
 	// Mime for guest customization section
 	MimeGuestCustomizationSection = "application/vnd.vmware.vcloud.guestCustomizationSection+xml"
+	// Mime for guest customization status
+	MimeGuestCustomizationStatus = "application/vnd.vmware.vcloud.guestcustomizationstatussection"
 	// Mime for network config section
 	MimeNetworkConfigSection = "application/vnd.vmware.vcloud.networkconfigsection+xml"
 	// Mime for recompose vApp params
