@@ -178,7 +178,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 	})
 }
 
-const testAccCheckVcdVAppVmNetworkShared =`
+const testAccCheckVcdVAppVmNetworkShared = `
 resource "vcd_vapp" "{{.VAppName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
@@ -337,6 +337,10 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     ip                 = "11.10.0.170"
     ip_allocation_mode = "MANUAL"
     is_primary         = false
+  }
+
+  customization {
+	force = true
   }
 }
 `
