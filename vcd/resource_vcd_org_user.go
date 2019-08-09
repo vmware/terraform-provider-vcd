@@ -368,5 +368,6 @@ func resourceVcdOrgUserImport(d *schema.ResourceData, meta interface{}) ([]*sche
 		return nil, err
 	}
 
+	d.SetId(user.User.ID)
 	return []*schema.ResourceData{d}, nil
 }

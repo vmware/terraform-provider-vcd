@@ -94,17 +94,17 @@ func testAccCheckVcdCatalogMediaExists(mediaName string, catalogItem *govcd.Cata
 			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
 		}
 
-		catalog, err := adminOrg.FindCatalog(testSuiteCatalogName)
+		catalog, err := adminOrg.GetCatalogByName(testSuiteCatalogName, false)
 		if err != nil {
-			return fmt.Errorf("catalog %s does not exist (%#v)", testSuiteCatalogName, catalog.Catalog)
+			return fmt.Errorf("catalog %s does not exist (%s)", testSuiteCatalogName, err)
 		}
 
-		newCatalogItem, err := catalog.FindCatalogItem(catalogMediaRs.Primary.Attributes["name"])
+		newCatalogItem, err := catalog.GetCatalogItemByName(catalogMediaRs.Primary.Attributes["name"], false)
 		if err != nil {
 			return fmt.Errorf("catalog media %s does not exist (%#v)", catalogMediaRs.Primary.ID, catalogItem.CatalogItem)
 		}
 
-		catalogItem = &newCatalogItem
+		catalogItem = newCatalogItem
 		return nil
 	}
 }
@@ -121,21 +121,17 @@ func testAccCheckCatalogMediaDestroy(s *terraform.State) error {
 			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
 		}
 
-		catalog, err := adminOrg.FindCatalog(testSuiteCatalogName)
+		catalog, err := adminOrg.GetCatalogByName(testSuiteCatalogName, false)
 		if err != nil {
 			return fmt.Errorf("catalog query %s ended with error: %#v", rs.Primary.ID, err)
 		}
 
 		mediaName := rs.Primary.Attributes["name"]
-		catalogItem, err := catalog.FindCatalogItem(mediaName)
+		catalogItem, err := catalog.GetCatalogItemByName(mediaName, false)
 
-		if catalogItem != (govcd.CatalogItem{}) {
+		if catalogItem != nil || err == nil {
 			return fmt.Errorf("catalog media %s still exists", mediaName)
 		}
-		if err != nil {
-			return fmt.Errorf("catalog media %s still exists or other error: %#v", mediaName, err)
-		}
-
 	}
 
 	return nil

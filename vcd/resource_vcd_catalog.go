@@ -3,6 +3,7 @@ package vcd
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -14,7 +15,9 @@ func resourceVcdCatalog() *schema.Resource {
 		Delete: resourceVcdCatalogDelete,
 		Read:   resourceVcdCatalogRead,
 		Update: resourceVcdCatalogUpdate,
-
+		Importer: &schema.ResourceImporter{
+			State: resourceVcdCatalogImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
@@ -66,7 +69,7 @@ func resourceVcdCatalogCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error creating Catalog: %#v", err)
 	}
 
-	d.SetId(d.Get("name").(string))
+	d.SetId(catalog.AdminCatalog.ID)
 	log.Printf("[TRACE] Catalog created: %#v", catalog)
 	return resourceVcdCatalogRead(d, meta)
 }
@@ -81,13 +84,14 @@ func resourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	catalog, err := adminOrg.FindCatalog(d.Id())
-	if err != nil || catalog == (govcd.Catalog{}) {
+	catalog, err := adminOrg.GetCatalogByNameOrId(d.Id(), false)
+	if err != nil || catalog == nil {
 		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
 		d.SetId("")
-		return nil
+		return fmt.Errorf("error retrieving catalog %s : %s", d.Id(), err)
 	}
 
+	d.SetId(catalog.Catalog.ID)
 	log.Printf("[TRACE] Catalog read completed: %#v", catalog.Catalog)
 	return nil
 }
@@ -107,7 +111,7 @@ func resourceVcdCatalogDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	adminCatalog, err := adminOrg.FindAdminCatalog(d.Id())
+	adminCatalog, err := adminOrg.GetAdminCatalogByNameOrId(d.Id(), false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
 		d.SetId("")
@@ -122,4 +126,46 @@ func resourceVcdCatalogDelete(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[TRACE] Catalog delete completed: %#v", adminCatalog.AdminCatalog)
 	return nil
+}
+
+// Imports a Catalog into Terraform state
+// This function task is to get the data from vCD and fill the resource data container
+// Expects the d.ID() to be a path to the resource made of Org name + dot + Catalog name
+//
+// Example import path (id): org_name.catalog_name
+func resourceVcdCatalogImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	resourceURI := strings.Split(d.Id(), ".")
+	if len(resourceURI) != 2 {
+		return nil, fmt.Errorf("resource name must be specified as org.catalog")
+	}
+	orgName, catalogName := resourceURI[0], resourceURI[1]
+
+	vcdClient := meta.(*VCDClient)
+	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
+	if err != nil {
+		return nil, fmt.Errorf(errorRetrievingOrg, orgName)
+	}
+
+	catalog, err := adminOrg.GetCatalogByName(catalogName, false)
+	if err != nil {
+		return nil, govcd.ErrorEntityNotFound
+	}
+
+	err = d.Set("org", orgName)
+	if err != nil {
+		return nil, err
+	}
+
+	err = d.Set("name", catalogName)
+	if err != nil {
+		return nil, err
+	}
+
+	err = d.Set("description", catalog.Catalog.Description)
+	if err != nil {
+		return nil, err
+	}
+	d.SetId(catalog.Catalog.ID)
+
+	return []*schema.ResourceData{d}, nil
 }

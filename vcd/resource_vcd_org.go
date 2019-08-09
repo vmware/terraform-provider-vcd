@@ -328,6 +328,8 @@ func resourceVcdOrgImport(d *schema.ResourceData, meta interface{}) ([]*schema.R
 	if err != nil {
 		return []*schema.ResourceData{}, err
 	}
+
+	d.SetId(adminOrg.AdminOrg.ID)
 	return []*schema.ResourceData{d}, nil
 }
 

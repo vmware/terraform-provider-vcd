@@ -202,12 +202,12 @@ func testAccCheckVcdVdcExists(name string, vdc *govcd.Vdc) resource.TestCheckFun
 			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
 		}
 
-		newVdc, err := adminOrg.GetVdcByName(rs.Primary.Attributes["name"])
+		newVdc, err := adminOrg.GetVDCByName(rs.Primary.Attributes["name"], false)
 		if err != nil {
-			return fmt.Errorf("vdc %s does not exist (%#v)", rs.Primary.Attributes["name"], newVdc)
+			return fmt.Errorf("vdc %s does not exist (%s)", rs.Primary.Attributes["name"], err)
 		}
 
-		vdc = &newVdc
+		vdc = newVdc
 		return nil
 	}
 }
@@ -230,16 +230,16 @@ func testVcdVdcUpdated(name string, vdc *govcd.Vdc) resource.TestCheckFunc {
 			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
 		}
 
-		updateVdc, err := adminOrg.GetVdcByName(rs.Primary.Attributes["name"])
+		updateVdc, err := adminOrg.GetVDCByName(rs.Primary.Attributes["name"], false)
 		if err != nil {
-			return fmt.Errorf("vdc %s does not exist (%#v)", rs.Primary.Attributes["name"], updateVdc)
+			return fmt.Errorf("vdc %s does not exist (%s)", rs.Primary.Attributes["name"], err)
 		}
 
 		if updateVdc.Vdc.IsEnabled != false {
 			return fmt.Errorf("VDC update failed - VDC still enabled")
 		}
 
-		vdc = &updateVdc
+		vdc = updateVdc
 		return nil
 	}
 }
@@ -256,15 +256,11 @@ func testAccCheckVdcDestroy(s *terraform.State) error {
 			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
 		}
 
-		vdc, err := adminOrg.GetVdcByName(rs.Primary.ID)
+		vdc, err := adminOrg.GetVDCByName(rs.Primary.ID, false)
 
-		if vdc != (govcd.Vdc{}) {
+		if vdc != nil || err == nil {
 			return fmt.Errorf("vdc %s still exists", rs.Primary.ID)
 		}
-		if err != nil {
-			return fmt.Errorf("vdc %s still exists or other error: %#v", rs.Primary.ID, err)
-		}
-
 	}
 
 	return nil

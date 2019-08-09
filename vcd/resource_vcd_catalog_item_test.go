@@ -9,7 +9,6 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
 var TestAccVcdCatalogItem = "TestAccVcdCatalogItemBasic"
@@ -17,7 +16,6 @@ var TestAccVcdCatalogItemDescription = "TestAccVcdCatalogItemBasicDescription"
 
 func TestAccVcdCatalogItemBasic(t *testing.T) {
 
-	var catalogItem govcd.CatalogItem
 	var params = StringMap{
 		"Org":             testConfig.VCD.Org,
 		"Catalog":         testSuiteCatalogName,
@@ -38,6 +36,7 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
+	resourceCatalogItem := "vcd_catalog_item." + TestAccVcdCatalogItem
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { preRunChecks(t) },
 		Providers:    testAccProviders,
@@ -46,21 +45,21 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdCatalogItemExists("vcd_catalog_item."+TestAccVcdCatalogItem, &catalogItem),
+					testAccCheckVcdCatalogItemExists("vcd_catalog_item."+TestAccVcdCatalogItem),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdCatalogItem, "name", TestAccVcdCatalogItem),
+						resourceCatalogItem, "name", TestAccVcdCatalogItem),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdCatalogItem, "description", TestAccVcdCatalogItemDescription),
+						resourceCatalogItem, "description", TestAccVcdCatalogItemDescription),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdCatalogItem, "metadata.catalogItem_metadata", "catalogItem Metadata"),
+						resourceCatalogItem, "metadata.catalogItem_metadata", "catalogItem Metadata"),
 					resource.TestCheckResourceAttr(
-						"vcd_catalog_item."+TestAccVcdCatalogItem, "metadata.catalogItem_metadata2", "catalogItem Metadata2"),
+						resourceCatalogItem, "metadata.catalogItem_metadata2", "catalogItem Metadata2"),
 				),
 			},
 			resource.TestStep{
 				Config: updateConfigText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdCatalogItemExists("vcd_catalog_item."+TestAccVcdCatalogItem, &catalogItem),
+					testAccCheckVcdCatalogItemExists("vcd_catalog_item."+TestAccVcdCatalogItem),
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_item."+TestAccVcdCatalogItem, "name", TestAccVcdCatalogItem),
 					resource.TestCheckResourceAttr(
@@ -95,7 +94,7 @@ func checkOvaPath(t *testing.T) {
 	}
 }
 
-func testAccCheckVcdCatalogItemExists(itemName string, catalogItem *govcd.CatalogItem) resource.TestCheckFunc {
+func testAccCheckVcdCatalogItemExists(itemName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		catalogItemRs, ok := s.RootModule().Resources[itemName]
 		if !ok {
@@ -113,17 +112,16 @@ func testAccCheckVcdCatalogItemExists(itemName string, catalogItem *govcd.Catalo
 			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
 		}
 
-		catalog, err := org.FindCatalog(testSuiteCatalogName)
+		catalog, err := org.GetCatalogByName(testSuiteCatalogName, false)
 		if err != nil {
-			return fmt.Errorf("catalog %s does not exist (%#v)", testSuiteCatalogName, catalog.Catalog)
+			return fmt.Errorf("catalog %s does not exist: %s", testSuiteCatalogName, err)
 		}
 
-		newCatalogItem, err := catalog.FindCatalogItem(catalogItemRs.Primary.Attributes["name"])
-		if err != nil {
-			return fmt.Errorf("catalog item %s does not exist (%#v)", catalogItemRs.Primary.ID, catalogItem.CatalogItem)
+		newCatalogItem, err := catalog.GetCatalogItemByName(catalogItemRs.Primary.Attributes["name"], false)
+		if err != nil || newCatalogItem == nil {
+			return fmt.Errorf("catalog item %s does not exist (%s)", catalogItemRs.Primary.ID, err)
 		}
 
-		catalogItem = &newCatalogItem
 		return nil
 	}
 }
@@ -140,21 +138,17 @@ func testAccCheckCatalogItemDestroy(s *terraform.State) error {
 			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
 		}
 
-		catalog, err := org.FindCatalog(testSuiteCatalogName)
+		catalog, err := org.GetCatalogByName(testSuiteCatalogName, false)
 		if err != nil {
-			return fmt.Errorf("catalog query %s ended with error: %#v", rs.Primary.ID, err)
+			return fmt.Errorf("catalog query %s ended with error: %s", rs.Primary.ID, err)
 		}
 
 		itemName := rs.Primary.Attributes["name"]
-		catalogItem, err := catalog.FindCatalogItem(itemName)
+		catalogItem, err := catalog.GetCatalogItemByName(itemName, false)
 
-		if catalogItem != (govcd.CatalogItem{}) {
+		if catalogItem != nil || err == nil {
 			return fmt.Errorf("catalog item %s still exists", itemName)
 		}
-		if err != nil {
-			return fmt.Errorf("catalog item %s still exists or other error: %#v", itemName, err)
-		}
-
 	}
 
 	return nil

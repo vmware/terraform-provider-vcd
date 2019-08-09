@@ -46,8 +46,26 @@ func TestAccVcdCatalogBasic(t *testing.T) {
 						"vcd_catalog."+TestAccVcdCatalog, "description", TestAccVcdCatalogDescription),
 				),
 			},
+			resource.TestStep{
+				ResourceName:      "vcd_catalog." + TestAccVcdCatalog + "-import",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdByCatalog(TestAccVcdCatalog),
+				// These fields can't be retrieved from catalog data
+				ImportStateVerifyIgnore: []string{"delete_force", "delete_recursive"},
+			},
 		},
 	})
+}
+
+func importStateIdByCatalog(objectName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		importId := testConfig.VCD.Org + "." + objectName
+		if testConfig.VCD.Org == "" || objectName == "" {
+			return "", fmt.Errorf("missing information to generate import path: %s", importId)
+		}
+		return importId, nil
+	}
 }
 
 func testAccCheckVcdCatalogExists(name string, catalog *govcd.Catalog) resource.TestCheckFunc {
@@ -68,12 +86,12 @@ func testAccCheckVcdCatalogExists(name string, catalog *govcd.Catalog) resource.
 			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
 		}
 
-		newCatalog, err := adminOrg.FindCatalog(rs.Primary.ID)
+		newCatalog, err := adminOrg.GetCatalogByNameOrId(rs.Primary.ID, false)
 		if err != nil {
-			return fmt.Errorf("catalog %s does not exist (%#v)", rs.Primary.ID, newCatalog)
+			return fmt.Errorf("catalog %s does not exist (%s)", rs.Primary.ID, err)
 		}
 
-		catalog = &newCatalog
+		catalog = newCatalog
 		return nil
 	}
 }
@@ -90,13 +108,10 @@ func testAccCheckCatalogDestroy(s *terraform.State) error {
 			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
 		}
 
-		catalog, err := adminOrg.FindCatalog(rs.Primary.ID)
+		catalog, err := adminOrg.GetCatalogByName(rs.Primary.ID, false)
 
-		if catalog != (govcd.Catalog{}) {
+		if catalog != nil || err == nil {
 			return fmt.Errorf("catalog %s still exists", rs.Primary.ID)
-		}
-		if err != nil {
-			return fmt.Errorf("catalog %s still exists or other error: %#v", rs.Primary.ID, err)
 		}
 
 	}

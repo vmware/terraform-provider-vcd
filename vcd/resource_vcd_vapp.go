@@ -117,43 +117,43 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 	if _, ok := d.GetOk("template_name"); ok {
 		if _, ok := d.GetOk("catalog_name"); ok {
 
-			catalog, err := org.FindCatalog(d.Get("catalog_name").(string))
-			if err != nil || catalog == (govcd.Catalog{}) {
+			catalog, err := org.GetCatalogByName(d.Get("catalog_name").(string), false)
+			if err != nil || catalog == nil {
 				return fmt.Errorf("error finding catalog: %#v", err)
 			}
 
-			catalogitem, err := catalog.FindCatalogItem(d.Get("template_name").(string))
+			catalogitem, err := catalog.GetCatalogItemByName(d.Get("template_name").(string), false)
 			if err != nil {
 				return fmt.Errorf("error finding catalog item: %#v", err)
 			}
 
-			vapptemplate, err := catalogitem.GetVAppTemplate()
+			vappTemplate, err := catalogitem.GetVAppTemplate()
 			if err != nil {
 				return fmt.Errorf("error finding VAppTemplate: %#v", err)
 			}
 
-			log.Printf("[DEBUG] VAppTemplate: %#v", vapptemplate)
+			log.Printf("[DEBUG] VAppTemplate: %#v", vappTemplate)
 			net, err := vdc.FindVDCNetwork(d.Get("network_name").(string))
 			if err != nil {
-				return fmt.Errorf("error finding OrgVCD Network: %#v", err)
+				return fmt.Errorf("error finding OrgVCD Network: %s", err)
 			}
 			nets := []*types.OrgVDCNetwork{net.OrgVDCNetwork}
 
-			storage_profile_reference := types.Reference{}
+			storageProfileReference := types.Reference{}
 
 			// Override default_storage_profile if we find the given storage profile
 			if d.Get("storage_profile").(string) != "" {
-				storage_profile_reference, err = vdc.FindStorageProfileReference(d.Get("storage_profile").(string))
+				storageProfileReference, err = vdc.FindStorageProfileReference(d.Get("storage_profile").(string))
 				if err != nil {
 					return fmt.Errorf("error finding storage profile %s", d.Get("storage_profile").(string))
 				}
 			}
 
-			log.Printf("storage_profile %s", storage_profile_reference)
+			log.Printf("storage_profile %s", storageProfileReference)
 
 			vapp, err := vdc.FindVAppByName(d.Get("name").(string))
 			if err != nil {
-				task, err := vdc.ComposeVApp(nets, vapptemplate, storage_profile_reference, d.Get("name").(string), d.Get("description").(string), d.Get("accept_all_eulas").(bool))
+				task, err := vdc.ComposeVApp(nets, vappTemplate, storageProfileReference, d.Get("name").(string), d.Get("description").(string), d.Get("accept_all_eulas").(bool))
 				if err != nil {
 					return fmt.Errorf("error creating vApp: %#v", err)
 				}
@@ -416,7 +416,7 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 
 		if newIp != "allocated" {
 			log.Printf("[DEBUG] IP is assigned. Lets get it (%s)", d.Get("ip"))
-			ip, err = getVAppIPAddress(d, meta, vdc, *org)
+			ip, err = getVAppIPAddress(d, meta, *vdc, *org)
 			if err != nil {
 				return err
 			}
