@@ -338,10 +338,6 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     ip_allocation_mode = "MANUAL"
     is_primary         = false
   }
-
-  customization {
-	force = true
-  }
 }
 `
 

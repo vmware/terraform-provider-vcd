@@ -197,14 +197,6 @@ func resourceVcdVAppVm() *schema.Resource {
 				Default:     false,
 				Description: "Expose hardware-assisted CPU virtualization to guest OS.",
 			},
-
-			//"force_customization": &schema.Schema{
-			//	Type:        schema.TypeBool,
-			//	Optional:    true,
-			//	Default:     false,
-			//	Description: "Expose hardware-assisted CPU virtualization to guest OS.",
-			//},
-
 			"customization": &schema.Schema{
 				Optional:    true,
 				MinItems:    1,
@@ -570,8 +562,11 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		}
 	}
 
+	// Check if the user request for forced reconfiguration of VM
+	customizationNeeded :=isForcedConfiguration(d.Get("customization"))
+
 	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("cpu_cores") || d.HasChange("power_on") || d.HasChange("disk") ||
-		d.HasChange("expose_hardware_virtualization") || d.HasChange("network") {
+		d.HasChange("expose_hardware_virtualization") || d.HasChange("network") || customizationNeeded {
 		if vmStatusBeforeUpdate != "POWERED_OFF" {
 			task, err := vm.PowerOff()
 			if err != nil {
@@ -654,53 +649,27 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 
 	}
 
-	customization := d.Get("customization")
-	customizationSlice := customization.([]interface{})
-	if len(customizationSlice) > 0 {
-		cust := customizationSlice[0]
-		fc := cust.(map[string]interface{})
-		forceCustomization, ok := fc["force"]
-		if ok && forceCustomization.(bool) {
-			log.Printf("[DEBUG] Customization was forced for VM %s", vm.VM.Name)
-			vmStatusBeforeForceCustomization, err := vm.GetStatus()
-			if err != nil {
-				return fmt.Errorf("error getting VM status before forcing customization: %s", err)
-			}
-
-			if vmStatusBeforeForceCustomization != "POWERED_OFF" {
-				log.Printf("[DEBUG] Customization was forced for VM %s, state was %s. Powering off",
-					vm.VM.Name, vmStatusBeforeForceCustomization)
-				task, err := vm.PowerOff()
-				if err != nil {
-					return fmt.Errorf("error powering off: %#v", err)
-				}
-				err = task.WaitTaskCompletion()
-				if err != nil {
-					return fmt.Errorf(errorCompletingTask, err)
-				}
-			}
-			err = vm.CustomizeAtNextPowerOn()
-			if err != nil {
-				return fmt.Errorf("unable to set VM for customization on next boot")
-			}
-		}
-	}
-
-	// If the VM was powered off during update but it has to be powered of
+	// If the VM was powered off during update but it has to be powered off
 	if d.Get("power_on").(bool) {
-
 		vmStatus, err := vm.GetStatus()
 		if err != nil {
 			return fmt.Errorf("error getting VM status before ensuring it is powered on: %s", err)
 		}
 
-		if vmStatus != "POWERED_ON" {
-			log.Printf("[TRACE] Powering on VM %s after update. Previous state %s", vm.VM.Name, vmStatus)
+		log.Printf("[TRACE] Powering on VM %s after update. Previous state %s", vm.VM.Name, vmStatus)
+
+		if vmStatus != "POWERED_ON" && customizationNeeded {
+			err = vm.PowerOnAndForceCustomization()
+			if err != nil {
+				return fmt.Errorf("failed powering on with customization: %s", err)
+			}
+		}
+
+		if vmStatus != "POWERED_ON" && !customizationNeeded  {
 			task, err := vm.PowerOn()
 			if err != nil {
 				return fmt.Errorf("error powering on: %s", err)
 			}
-
 			err = task.WaitTaskCompletion()
 			if err != nil {
 				return fmt.Errorf(errorCompletingTask, err)
@@ -1167,4 +1136,25 @@ func readNetworks(vm govcd.VM, vapp govcd.VApp) ([]map[string]interface{}, error
 		nets = append(nets, singleNIC)
 	}
 	return nets, nil
+}
+
+// isForcedConfiguration checks "customization" block in resource and checks if the value of field "force"
+// is set to "true". It returns false if the value is not set or is set to false
+func isForcedConfiguration(customizationBlock interface{}) bool {
+	customizationSlice := customizationBlock.([]interface{})
+
+	if len(customizationSlice) != 1 {
+		return false
+	}
+
+	cust := customizationSlice[0]
+	fc := cust.(map[string]interface{})
+	forceCust, ok := fc["force"]
+	forceCustBool := forceCust.(bool)
+
+	if  !ok || !forceCustBool {
+		return false
+	}
+
+	return true
 }
