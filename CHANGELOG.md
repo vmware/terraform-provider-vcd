@@ -9,6 +9,8 @@ IMPROVEMENTS:
 * `vcd_org` Add import capability
 * `resource/catalog_item` added catalog item metadata support [#28*] 
 * `resource/catalog_media` added catalog media item metadata support [#28*]
+* `vcd_vapp_vm` supports update for `network` block [#310]
+* `vcd_vapp_vm` allows to force guest customization [#310]
 
 BUG FIXES:
 * Change default value for `vcd_org.deployed_vm_quota` and `vcd_org.stored_vm_quota`. It was incorrectly set at `-1` instead of `0`.
