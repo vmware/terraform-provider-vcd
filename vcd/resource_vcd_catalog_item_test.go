@@ -30,6 +30,8 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 	}
 
 	configText := templateFill(testAccCheckVcdCatalogItemBasic, params)
+	params["FuncName"] = t.Name() + "-Update"
+	updateConfigText := templateFill(testAccCheckVcdCatalogItemUpdate, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -49,6 +51,26 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 						"vcd_catalog_item."+TestAccVcdCatalogItem, "name", TestAccVcdCatalogItem),
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_item."+TestAccVcdCatalogItem, "description", TestAccVcdCatalogItemDescription),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItem, "metadata.catalogItem_metadata", "catalogItem Metadata"),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItem, "metadata.catalogItem_metadata2", "catalogItem Metadata2"),
+				),
+			},
+			resource.TestStep{
+				Config: updateConfigText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdCatalogItemExists("vcd_catalog_item."+TestAccVcdCatalogItem, &catalogItem),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItem, "name", TestAccVcdCatalogItem),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItem, "description", TestAccVcdCatalogItemDescription),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItem, "metadata.catalogItem_metadata", "catalogItem Metadata v2"),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItem, "metadata.catalogItem_metadata2", "catalogItem Metadata2 v2"),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_item."+TestAccVcdCatalogItem, "metadata.catalogItem_metadata3", "catalogItem Metadata3"),
 				),
 			},
 		},
@@ -148,5 +170,29 @@ const testAccCheckVcdCatalogItemBasic = `
   ova_path             = "{{.OvaPath}}"
   upload_piece_size    = {{.UploadPieceSize}}
   show_upload_progress = "{{.UploadProgress}}"
+
+  metadata = {
+    catalogItem_metadata = "catalogItem Metadata"
+    catalogItem_metadata2 = "catalogItem Metadata2"
+  }
+}
+`
+
+const testAccCheckVcdCatalogItemUpdate = `
+  resource "vcd_catalog_item" "{{.CatalogItemName}}" {
+  org     = "{{.Org}}"
+  catalog = "{{.Catalog}}"
+
+  name                 = "{{.CatalogItemName}}"
+  description          = "{{.Description}}"
+  ova_path             = "{{.OvaPath}}"
+  upload_piece_size    = {{.UploadPieceSize}}
+  show_upload_progress = "{{.UploadProgress}}"
+
+  metadata = {
+    catalogItem_metadata = "catalogItem Metadata v2"
+    catalogItem_metadata2 = "catalogItem Metadata2 v2"
+    catalogItem_metadata3 = "catalogItem Metadata3"
+  }
 }
 `

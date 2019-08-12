@@ -60,6 +60,13 @@ func resourceVcdCatalogMedia() *schema.Resource {
 				ForceNew:    false,
 				Description: "shows upload progress in stdout",
 			},
+			"metadata": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "Key and value pairs for catalog item metadata",
+				// For now underlying go-vcloud-director repo only supports
+				// a value of type String in this map.
+			},
 		},
 	}
 }
@@ -70,7 +77,7 @@ func resourceVcdMediaCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
-	if err != nil || adminOrg == (govcd.AdminOrg{}) {
+	if err != nil {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
@@ -128,6 +135,12 @@ func resourceVcdMediaCreate(d *schema.ResourceData, meta interface{}) error {
 	d.SetId(catalogName + ":" + mediaName)
 
 	log.Printf("[TRACE] Catalog media created: %#v", mediaName)
+
+	err = createOrUpdateMediaItemMetadata(d, meta)
+	if err != nil {
+		return fmt.Errorf("error adding media item metadata: %s", err)
+	}
+
 	return resourceVcdMediaRead(d, meta)
 }
 
@@ -142,14 +155,84 @@ func GetTerraformStdout() *os.File {
 }
 
 func resourceVcdMediaRead(d *schema.ResourceData, meta interface{}) error {
-	return findCatalogItem(d, meta.(*VCDClient))
+	vcdClient := meta.(*VCDClient)
+
+	_, vdc, err := vcdClient.GetOrgAndVdc("", "")
+	if err != nil {
+		return fmt.Errorf(errorRetrievingOrg, err)
+	}
+
+	mediaItem, err := vdc.FindMediaImage(d.Get("name").(string))
+	if err != nil || mediaItem == (govcd.MediaItem{}) {
+		log.Printf("[DEBUG] Unable to find media item: %s", err)
+		return err
+	}
+
+	metadata, err := mediaItem.GetMetadata()
+	if err != nil {
+		log.Printf("[DEBUG] Unable to find media item metadata: %s", err)
+		return err
+	}
+
+	d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+	return err
 }
 
 func resourceVcdMediaDelete(d *schema.ResourceData, meta interface{}) error {
 	return deleteCatalogItem(d, meta.(*VCDClient))
 }
 
-//update function for "show_upload_progress" and "upload_piece_size"
-func resourceVcdMediaUpdate(d *schema.ResourceData, m interface{}) error {
+// currently updates only metadata
+func resourceVcdMediaUpdate(d *schema.ResourceData, meta interface{}) error {
+	err := createOrUpdateMediaItemMetadata(d, meta)
+	if err != nil {
+		return fmt.Errorf("error updating media item metadata: %s", err)
+	}
+	return resourceVcdMediaRead(d, meta)
+}
+
+func createOrUpdateMediaItemMetadata(d *schema.ResourceData, meta interface{}) error {
+
+	log.Printf("[TRACE] adding/updating metadata for media item")
+
+	vcdClient := meta.(*VCDClient)
+
+	_, vdc, err := vcdClient.GetOrgAndVdc("", "")
+	if err != nil {
+		return fmt.Errorf(errorRetrievingOrg, err)
+	}
+
+	mediaItem, err := vdc.FindMediaImage(d.Get("name").(string))
+	if err != nil || mediaItem == (govcd.MediaItem{}) {
+		log.Printf("[DEBUG] Unable to find media item: %s", err)
+		return fmt.Errorf("unable to find media item: %s", err)
+	}
+
+	if d.HasChange("metadata") {
+		oldRaw, newRaw := d.GetChange("metadata")
+		oldMetadata := oldRaw.(map[string]interface{})
+		newMetadata := newRaw.(map[string]interface{})
+		var toBeRemovedMetadata []string
+		// Check if any key in old metadata was removed in new metadata.
+		// Creates a list of keys to be removed.
+		for k := range oldMetadata {
+			if _, ok := newMetadata[k]; !ok {
+				toBeRemovedMetadata = append(toBeRemovedMetadata, k)
+			}
+		}
+		for _, k := range toBeRemovedMetadata {
+			err := mediaItem.DeleteMetadata(k)
+			if err != nil {
+				return fmt.Errorf("error deleting metadata: %s", err)
+			}
+		}
+		// Add new metadata
+		for k, v := range newMetadata {
+			_, err = mediaItem.AddMetadata(k, v.(string))
+			if err != nil {
+				return fmt.Errorf("error adding metadata: %s", err)
+			}
+		}
+	}
 	return nil
 }

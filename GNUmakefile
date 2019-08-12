@@ -58,6 +58,10 @@ testacc: testunit
 testmulti: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' multiple"
 
+# Runs the acceptance test for org
+testorg: fmtcheck
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' org"
+
 # Runs the acceptance test for catalog
 testcatalog: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' catalog"

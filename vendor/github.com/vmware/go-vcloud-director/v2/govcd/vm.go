@@ -137,13 +137,33 @@ func (vm *VM) PowerOn() (Task, error) {
 
 }
 
-// CustomizeAtNextPowerOn forces VM customization on next power on
-func (vm *VM) CustomizeAtNextPowerOn() error {
+// PowerOnAndForceCustomization is a synchronous function which is equivalent to the functionality
+// one has in UI. It triggers customization which may be useful in some cases (like altering NICs)
+//
+// The VM _must_ be Undeployed for this action to actually work.
+func (vm *VM) PowerOnAndForceCustomization() error {
 	apiEndpoint, _ := url.ParseRequestURI(vm.VM.HREF)
-	apiEndpoint.Path += "/action/customizeAtNextPowerOn"
+	apiEndpoint.Path += "/action/deploy"
 
-	return vm.client.ExecuteRequestWithoutResponse(apiEndpoint.String(), http.MethodPost, "",
-		"error setting forced VM customization for next power on: %s", nil)
+	powerOnAndCustomize := &types.DeployVAppParams{
+		Xmlns:              types.XMLNamespaceVCloud,
+		PowerOn:            true,
+		ForceCustomization: true,
+	}
+
+	task, err := vm.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPost,
+		"", "error powering on VM with customization: %s", powerOnAndCustomize)
+
+	if err != nil {
+		return err
+	}
+
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return fmt.Errorf("error waiting for task completion after power on with customization %s: %s", vm.VM.Name, err)
+	}
+
+	return nil
 }
 
 func (vm *VM) PowerOff() (Task, error) {
@@ -341,70 +361,37 @@ func (vm *VM) RunCustomizationScript(computername, script string) (Task, error) 
 	return vm.Customize(computername, script, false)
 }
 
-// GetGuestCustomizationSection retrieves
-func (vm *VM) GetGuestCustomizationSection() (*types.GuestCustomizationSection, error) {
-	guestCustomizationSection := &types.GuestCustomizationSection{}
-
-	if vm.VM.HREF == "" {
-		return nil, fmt.Errorf("cannot load guest customization, VM HREF is empty")
-	}
-
-	_, err := vm.client.ExecuteRequest(vm.VM.HREF+"/guestCustomizationSection/", http.MethodGet,
-		types.MimeGuestCustomizationSection, "error retrieving guest customization: %s", nil, guestCustomizationSection)
-
-	return guestCustomizationSection, err
-}
-
-func (vm *VM) GetGuestCustomizationStatus() (*types.GuestCustomizationStatusSection, error) {
+func (vm *VM) GetGuestCustomizationStatus() (string, error) {
 	guestCustomizationStatus := &types.GuestCustomizationStatusSection{}
 
 	if vm.VM.HREF == "" {
-		return nil, fmt.Errorf("cannot load guest customization, VM HREF is empty")
+		return "", fmt.Errorf("cannot load guest customization, VM HREF is empty")
 	}
 
 	_, err := vm.client.ExecuteRequest(vm.VM.HREF+"/guestcustomizationstatus", http.MethodGet,
 		types.MimeGuestCustomizationStatus, "error retrieving guest customization status: %s", nil, guestCustomizationStatus)
 
 	// The request was successful
-	return guestCustomizationStatus, err
+	return guestCustomizationStatus.GuestCustStatus, err
 }
 
-//func (vm *VM) UpdateGuestCustomizationSection(*types.GuestCustomizationSection) (*types.GuestCustomizationSection, error) {
-//	guestCustomizationSection := &types.GuestCustomizationSection{}
-//
-//	if vm.VM.HREF == "" {
-//		return nil, fmt.Errorf("cannot load guest customization, VM HREF is empty")
-//	}
-//
-//	_, err := vm.client.ExecuteRequest(vm.VM.HREF+"/guestCustomizationSection/", http.MethodGet,
-//		types.MimeGuestCustomizationSection, "error retrieving guest customization: %s", nil, guestCustomizationSection)
-//
-//	// The request was successful
-//	return guestCustomizationSection, err
-//}
-
-
 // BlockWhileGuestCustomizationStatus blocks until the customization status of VM exits unwantedStatus.
-// It sleeps 200 milliseconds between iterations and times out after timeOutAfterSeconds
-// of seconds.
+// It sleeps 3 seconds between iterations and times out after timeOutAfterSeconds of seconds.
 func (vm *VM) BlockWhileGuestCustomizationStatus(unwantedStatus string, timeOutAfterSeconds int) error {
 	timeoutAfter := time.After(time.Duration(timeOutAfterSeconds) * time.Second)
-	//tick := time.Tick(200 * time.Millisecond)
-	tick := time.Tick(1 * time.Second)
+	tick := time.NewTicker(3 * time.Second)
 
 	for {
 		select {
 		case <-timeoutAfter:
 			return fmt.Errorf("timed out waiting for VM guest customization status to exit state %s after %d seconds",
 				unwantedStatus, timeOutAfterSeconds)
-		case <-tick:
+		case <-tick.C:
 			currentStatus, err := vm.GetGuestCustomizationStatus()
 			if err != nil {
 				return fmt.Errorf("could not get VM customization status %s", err)
 			}
-			fmt.Println("current status: ", currentStatus.GuestCustStatus)
-			if currentStatus.GuestCustStatus != unwantedStatus {
-				fmt.Println("exiting because of status: ", currentStatus.GuestCustStatus)
+			if currentStatus != unwantedStatus {
 				return nil
 			}
 		}
@@ -439,6 +426,7 @@ func (vm *VM) Customize(computername, script string, changeSid bool) (Task, erro
 		types.MimeGuestCustomizationSection, "error customizing VM: %s", vu)
 }
 
+// Undeploy triggers a VM undeploy and power off action. "Power off" action in UI behaves this way.
 func (vm *VM) Undeploy() (Task, error) {
 
 	vu := &types.UndeployVAppParams{

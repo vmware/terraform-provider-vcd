@@ -416,7 +416,7 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 
 		if newIp != "allocated" {
 			log.Printf("[DEBUG] IP is assigned. Lets get it (%s)", d.Get("ip"))
-			ip, err = getVAppIPAddress(d, meta, vdc, org)
+			ip, err = getVAppIPAddress(d, meta, vdc, *org)
 			if err != nil {
 				return err
 			}

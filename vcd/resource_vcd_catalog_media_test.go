@@ -29,6 +29,8 @@ func TestAccVcdCatalogMediaBasic(t *testing.T) {
 	}
 
 	configText := templateFill(testAccCheckVcdCatalogMediaBasic, params)
+	params["FuncName"] = t.Name() + "-Update"
+	updateConfigText := templateFill(testAccCheckVcdCatalogMediaUpdate, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -48,6 +50,26 @@ func TestAccVcdCatalogMediaBasic(t *testing.T) {
 						"vcd_catalog_media."+TestAccVcdCatalogMedia, "name", TestAccVcdCatalogMedia),
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_media."+TestAccVcdCatalogMedia, "description", TestAccVcdCatalogMediaDescription),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_media."+TestAccVcdCatalogMedia, "metadata.mediaItem_metadata", "mediaItem Metadata"),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_media."+TestAccVcdCatalogMedia, "metadata.mediaItem_metadata2", "mediaItem Metadata2"),
+				),
+			},
+			resource.TestStep{
+				Config: updateConfigText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdCatalogMediaExists("vcd_catalog_media."+TestAccVcdCatalogMedia, &catalogItem),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_media."+TestAccVcdCatalogMedia, "name", TestAccVcdCatalogMedia),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_media."+TestAccVcdCatalogMedia, "description", TestAccVcdCatalogMediaDescription),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_media."+TestAccVcdCatalogMedia, "metadata.mediaItem_metadata", "mediaItem Metadata v2"),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_media."+TestAccVcdCatalogMedia, "metadata.mediaItem_metadata2", "mediaItem Metadata2 v2"),
+					resource.TestCheckResourceAttr(
+						"vcd_catalog_media."+TestAccVcdCatalogMedia, "metadata.mediaItem_metadata3", "mediaItem Metadata3"),
 				),
 			},
 		},
@@ -129,5 +151,29 @@ const testAccCheckVcdCatalogMediaBasic = `
   media_path           = "{{.MediaPath}}"
   upload_piece_size    = {{.UploadPieceSize}}
   show_upload_progress = "{{.UploadProgress}}"
+
+  metadata = {
+    mediaItem_metadata = "mediaItem Metadata"
+    mediaItem_metadata2 = "mediaItem Metadata2"
+  }
+}
+`
+
+const testAccCheckVcdCatalogMediaUpdate = `
+  resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
+  org     = "{{.Org}}"
+  catalog = "{{.Catalog}}"
+
+  name                 = "{{.CatalogMediaName}}"
+  description          = "{{.Description}}"
+  media_path           = "{{.MediaPath}}"
+  upload_piece_size    = {{.UploadPieceSize}}
+  show_upload_progress = "{{.UploadProgress}}"
+
+  metadata = {
+    mediaItem_metadata = "mediaItem Metadata v2"
+    mediaItem_metadata2 = "mediaItem Metadata2 v2"
+    mediaItem_metadata3 = "mediaItem Metadata3"
+  }
 }
 `
