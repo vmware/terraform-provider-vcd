@@ -71,7 +71,6 @@ func TestAccVcdVAppVmCustomization(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "name", netVmName1),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "network.#", "2"),
 
-
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.#", "1"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.force", "true"),
 				),
@@ -138,7 +137,6 @@ func testAccCheckVcdVMCustomization(node string, customizationPending bool) reso
 			return fmt.Errorf("customizationStatus should not be in pending state for vm %s", vm.VM.Name)
 		}
 
-
 		// Customization status of "GC_PENDING" is expected now and it is an error if something else is set
 		if customizationPending && customizationStatus != "GC_PENDING" {
 			return fmt.Errorf("customizationStatus should be 'GC_PENDING'instead of '%s' for vm %s",
@@ -148,7 +146,7 @@ func testAccCheckVcdVMCustomization(node string, customizationPending bool) reso
 		if customizationPending && customizationStatus == "GC_PENDING" {
 			err = vm.BlockWhileGuestCustomizationStatus("GC_PENDING", 300)
 			if err != nil {
-				return fmt.Errorf("timed out waiting for VM %s to leave 'GC_PENDING' state: %s", vm.VM.Name, err )
+				return fmt.Errorf("timed out waiting for VM %s to leave 'GC_PENDING' state: %s", vm.VM.Name, err)
 			}
 		}
 

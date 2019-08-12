@@ -563,7 +563,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 	}
 
 	// Check if the user request for forced reconfiguration of VM
-	customizationNeeded :=isForcedConfiguration(d.Get("customization"))
+	customizationNeeded := isForcedConfiguration(d.Get("customization"))
 
 	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("cpu_cores") || d.HasChange("power_on") || d.HasChange("disk") ||
 		d.HasChange("expose_hardware_virtualization") || d.HasChange("network") || customizationNeeded {
@@ -676,7 +676,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			}
 		}
 
-		if vmStatus != "POWERED_ON" && !customizationNeeded  {
+		if vmStatus != "POWERED_ON" && !customizationNeeded {
 			task, err := vm.PowerOn()
 			if err != nil {
 				return fmt.Errorf("error powering on: %s", err)
@@ -1163,7 +1163,7 @@ func isForcedConfiguration(customizationBlock interface{}) bool {
 	forceCust, ok := fc["force"]
 	forceCustBool := forceCust.(bool)
 
-	if  !ok || !forceCustBool {
+	if !ok || !forceCustBool {
 		return false
 	}
 
