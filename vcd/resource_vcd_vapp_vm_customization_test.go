@@ -10,6 +10,11 @@ import (
 	"testing"
 )
 
+// TestAccVcdVAppVmCustomization tests that setting attribute customizaton.force to `true` triggers VM customization
+// and waits until it is completed.
+// It is important to wait until the operation is completed to test what VM was properly handled before triggering
+// power on and force customization. (VM must be un-deployed for customization to work, otherwise it would stay in
+// "GC_PENDING" state for long time)
 func TestAccVcdVAppVmCustomization(t *testing.T) {
 	var (
 		vapp        govcd.VApp
@@ -57,7 +62,7 @@ func TestAccVcdVAppVmCustomization(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.#", "0"),
 				),
 			},
-			// Step 1 - Set change network configuration and
+			// Step 1 - Change network configuration and force customization
 			resource.TestStep{
 				Config: configTextVMUpdateStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -112,11 +117,10 @@ func testAccCheckVcdVMCustomization(node string, customizationPending bool) reso
 			return err
 		}
 
-		// Wait until the VM exits from its original GC_PENDING state after provisioning if it is not expected
-		// that VM is in that state. This takes some time until the VM boots starts guest tools and
-		// reports success.
+		// When force customization was not explicitly triggered - wait until the VM exits from its original GC_PENDING
+		// state after provisioning. This takes some time until the VM boots starts guest tools and reports success.
 		if !customizationPending {
-			// Not using maxRetryTimeout here because it would force for maxRetryTimeout to be quite long
+			// Not using maxRetryTimeout for timeout here because it would force for maxRetryTimeout to be quite long
 			// time by default as it takes some time (around 150s during testing) for Photon OS to boot
 			// first time and get rid of "GC_PENDING" state
 			err = vm.BlockWhileGuestCustomizationStatus("GC_PENDING", 300)
@@ -124,21 +128,28 @@ func testAccCheckVcdVMCustomization(node string, customizationPending bool) reso
 				return err
 			}
 		}
-
 		customizationStatus, err := vm.GetGuestCustomizationStatus()
 		if err != nil {
 			return fmt.Errorf("unable to get VM customization status: %s", err)
 		}
-
 		// At the stage where "GC_PENDING" should not be set. The state should be something else or this
 		// is an error
 		if !customizationPending && customizationStatus == "GC_PENDING" {
 			return fmt.Errorf("customizationStatus should not be in pending state for vm %s", vm.VM.Name)
 		}
 
+
 		// Customization status of "GC_PENDING" is expected now and it is an error if something else is set
 		if customizationPending && customizationStatus != "GC_PENDING" {
-			return fmt.Errorf("customizationStatus should not be in pending state for vm %s", vm.VM.Name)
+			return fmt.Errorf("customizationStatus should be 'GC_PENDING'instead of '%s' for vm %s",
+				vm.VM.Name, customizationStatus)
+		}
+
+		if customizationPending && customizationStatus == "GC_PENDING" {
+			err = vm.BlockWhileGuestCustomizationStatus("GC_PENDING", 300)
+			if err != nil {
+				return fmt.Errorf("timed out waiting for VM %s to leave 'GC_PENDING' state: %s", vm.VM.Name, err )
+			}
 		}
 
 		return nil

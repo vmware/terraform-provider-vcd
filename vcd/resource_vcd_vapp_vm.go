@@ -659,6 +659,17 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		log.Printf("[TRACE] Powering on VM %s after update. Previous state %s", vm.VM.Name, vmStatus)
 
 		if vmStatus != "POWERED_ON" && customizationNeeded {
+
+			// The VM must be un-deployed for customization to actually work. The option "Power off" in GUI
+			// actually does un-deploy as well.
+			task, err := vm.Undeploy()
+			if err != nil {
+				return fmt.Errorf("error triggering undeploy for VM %s: %s", vm.VM.Name, err)
+			}
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				return fmt.Errorf("error waiting for undeploy task for VM %s: %s", vm.VM.Name, err)
+			}
 			err = vm.PowerOnAndForceCustomization()
 			if err != nil {
 				return fmt.Errorf("failed powering on with customization: %s", err)
