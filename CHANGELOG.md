@@ -13,6 +13,8 @@ IMPROVEMENTS:
 * `resource/vcd_catalog_item` Add import capability
 * `resource/catalog_item` added catalog item metadata support [#28*] 
 * `resource/catalog_media` added catalog media item metadata support [#28*]
+* `resource/vcd_catalog`: Catalog state ID changed from catalog name to vCD ID 
+* `resource/vcd_catalog_item`: CatalogItem state ID changed from colon separated list of catalog name and item name to vCD ID 
 
 BUG FIXES:
 * Change default value for `vcd_org.deployed_vm_quota` and `vcd_org.stored_vm_quota`. It was incorrectly set at `-1` instead of `0`.
