@@ -267,7 +267,7 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	adminVdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
-	if err != nil || adminVdc == nil {
+	if err != nil {
 		log.Printf("[DEBUG] Unable to find vdc.")
 		return fmt.Errorf("unable to find vdc.. %#v", err)
 	}
@@ -295,7 +295,7 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	adminVdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
-	if err != nil || adminVdc == nil {
+	if err != nil {
 		log.Printf("[DEBUG] Unable to find VDC")
 		return fmt.Errorf("unable to find VDC %#v", err)
 	}
@@ -328,7 +328,7 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("storage_profile", adminVdc.AdminVdc.VdcStorageProfiles)
 
 	vdc, err := adminOrg.GetVDCByName(d.Get("name").(string), false)
-	if err != nil || adminVdc == nil {
+	if err != nil {
 		log.Printf("[DEBUG] Unable to find VDC")
 		return fmt.Errorf("unable to find VDC %#v", err)
 	}
@@ -371,7 +371,7 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	adminVdc, err := adminOrg.GetAdminVDCByName(vdcName, false)
-	if err != nil || adminVdc == nil {
+	if err != nil {
 		log.Printf("[DEBUG] Unable to find VDC.")
 		return fmt.Errorf("unable to find VDC %s", err)
 	}
@@ -414,7 +414,7 @@ func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	vdc, err := adminOrg.GetVDCByName(vdcName, false)
-	if err != nil || vdc == nil {
+	if err != nil {
 		log.Printf("[DEBUG] Unable to find vdc. Removing from tfstate")
 		d.SetId("")
 		return nil
@@ -427,7 +427,7 @@ func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	vdc, err = adminOrg.GetVDCByName(vdcName, true)
-	if err == nil || vdc != nil {
+	if err == nil {
 		return fmt.Errorf("vdc %s still found after deletion", vdcName)
 	}
 	log.Printf("[TRACE] vdc delete completed: %s", vdcName)

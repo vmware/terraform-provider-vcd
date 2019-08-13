@@ -118,7 +118,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 		if _, ok := d.GetOk("catalog_name"); ok {
 
 			catalog, err := org.GetCatalogByName(d.Get("catalog_name").(string), false)
-			if err != nil || catalog == nil {
+			if err != nil {
 				return fmt.Errorf("error finding catalog: %#v", err)
 			}
 

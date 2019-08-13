@@ -18,16 +18,14 @@ func deleteCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) error {
 	}
 
 	catalog, err := adminOrg.GetCatalogByName(d.Get("catalog").(string), false)
-	if err != nil || catalog == nil {
+	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
-		d.SetId("")
 		return fmt.Errorf("unable to find catalog")
 	}
 
 	catalogItem, err := catalog.GetCatalogItemByName(d.Get("name").(string), false)
-	if err != nil || catalogItem == nil {
+	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog item. Removing from tfstate")
-		d.SetId("")
 		return fmt.Errorf("unable to find catalog item")
 	}
 
@@ -38,7 +36,7 @@ func deleteCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) error {
 	}
 
 	catalogItem, err = catalog.GetCatalogItemByName(d.Get("name").(string), true)
-	if catalogItem != nil || err == nil {
+	if catalogItem != nil {
 		return fmt.Errorf("catalog item %s still found after deletion", d.Get("name").(string))
 	}
 	log.Printf("[TRACE] Catalog item delete completed: %s", d.Get("name").(string))
@@ -56,16 +54,15 @@ func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.Catal
 	}
 
 	catalog, err := adminOrg.GetCatalogByName(d.Get("catalog").(string), false)
-	if err != nil || catalog == nil {
+	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
 		d.SetId("")
-		return nil, fmt.Errorf("unable to find catalog")
+		return nil, fmt.Errorf("unable to find catalog: %s", err)
 	}
 
 	catalogItem, err := catalog.GetCatalogItemByName(d.Get("name").(string), false)
-	if err != nil || catalogItem == nil {
+	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog item. Removing from tfstate")
-		d.SetId("")
 		return nil, fmt.Errorf("unable to find catalog item: %s", err)
 	}
 

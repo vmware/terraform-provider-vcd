@@ -127,9 +127,9 @@ func testAccCheckCatalogMediaDestroy(s *terraform.State) error {
 		}
 
 		mediaName := rs.Primary.Attributes["name"]
-		catalogItem, err := catalog.GetCatalogItemByName(mediaName, false)
+		_, err = catalog.GetCatalogItemByName(mediaName, false)
 
-		if catalogItem != nil || err == nil {
+		if err == nil {
 			return fmt.Errorf("catalog media %s still exists", mediaName)
 		}
 	}

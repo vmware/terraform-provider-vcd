@@ -258,12 +258,12 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	catalog, err := org.GetCatalogByName(d.Get("catalog_name").(string), false)
-	if err != nil || catalog == nil {
+	if err != nil {
 		return fmt.Errorf("error finding catalog: %s", d.Get("catalog_name").(string))
 	}
 
 	catalogItem, err := catalog.GetCatalogItemByName(d.Get("template_name").(string), false)
-	if err != nil || catalogItem == nil {
+	if err != nil {
 		return fmt.Errorf("error finding catalog item: %#v", err)
 	}
 

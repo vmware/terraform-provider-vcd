@@ -83,7 +83,7 @@ func resourceVcdMediaCreate(d *schema.ResourceData, meta interface{}) error {
 
 	catalogName := d.Get("catalog").(string)
 	catalog, err := adminOrg.GetCatalogByName(catalogName, false)
-	if err != nil || catalog == nil {
+	if err != nil {
 		log.Printf("Error finding Catalog: %#v", err)
 		return fmt.Errorf("error finding Catalog: %#v", err)
 	}

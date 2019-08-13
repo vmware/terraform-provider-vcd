@@ -117,8 +117,8 @@ func testAccCheckVcdCatalogItemExists(itemName string) resource.TestCheckFunc {
 			return fmt.Errorf("catalog %s does not exist: %s", testSuiteCatalogName, err)
 		}
 
-		newCatalogItem, err := catalog.GetCatalogItemByName(catalogItemRs.Primary.Attributes["name"], false)
-		if err != nil || newCatalogItem == nil {
+		_, err = catalog.GetCatalogItemByName(catalogItemRs.Primary.Attributes["name"], false)
+		if err != nil {
 			return fmt.Errorf("catalog item %s does not exist (%s)", catalogItemRs.Primary.ID, err)
 		}
 
@@ -144,9 +144,9 @@ func testAccCheckCatalogItemDestroy(s *terraform.State) error {
 		}
 
 		itemName := rs.Primary.Attributes["name"]
-		catalogItem, err := catalog.GetCatalogItemByName(itemName, false)
+		_, err = catalog.GetCatalogItemByName(itemName, false)
 
-		if catalogItem != nil || err == nil {
+		if err == nil {
 			return fmt.Errorf("catalog item %s still exists", itemName)
 		}
 	}

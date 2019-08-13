@@ -65,7 +65,7 @@ func resourceVcdCatalogCreate(d *schema.ResourceData, meta interface{}) error {
 
 	catalog, err := adminOrg.CreateCatalog(d.Get("name").(string), d.Get("description").(string))
 	if err != nil {
-		log.Printf("Error creating Catalog: %#v", err)
+		log.Printf("[TRACE] Error creating Catalog: %#v", err)
 		return fmt.Errorf("error creating Catalog: %#v", err)
 	}
 
@@ -85,7 +85,7 @@ func resourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	catalog, err := adminOrg.GetCatalogByNameOrId(d.Id(), false)
-	if err != nil || catalog == nil {
+	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
 		d.SetId("")
 		return fmt.Errorf("error retrieving catalog %s : %s", d.Id(), err)
@@ -151,20 +151,9 @@ func resourceVcdCatalogImport(d *schema.ResourceData, meta interface{}) ([]*sche
 		return nil, govcd.ErrorEntityNotFound
 	}
 
-	err = d.Set("org", orgName)
-	if err != nil {
-		return nil, err
-	}
-
-	err = d.Set("name", catalogName)
-	if err != nil {
-		return nil, err
-	}
-
-	err = d.Set("description", catalog.Catalog.Description)
-	if err != nil {
-		return nil, err
-	}
+	_ = d.Set("org", orgName)
+	_ = d.Set("name", catalogName)
+	_ = d.Set("description", catalog.Catalog.Description)
 	d.SetId(catalog.Catalog.ID)
 
 	return []*schema.ResourceData{d}, nil

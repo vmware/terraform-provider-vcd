@@ -546,8 +546,8 @@ func createSuiteCatalogAndItem(config TestConfig) {
 	var catalog govcd.Catalog
 
 	catalogPreserved := true
-	oldCatalog, err := org.GetCatalogByName(testSuiteCatalogName, false)
-	if err != nil || oldCatalog == nil {
+	_, err = org.GetCatalogByName(testSuiteCatalogName, false)
+	if err != nil {
 		catalogPreserved = false
 	}
 
@@ -563,7 +563,7 @@ func createSuiteCatalogAndItem(config TestConfig) {
 		fmt.Printf("Skipping catalog creation - found preconfigured one: %s \n", testConfig.VCD.Catalog.Name)
 
 		existingCatalog, err := org.GetCatalogByName(testConfig.VCD.Catalog.Name, false)
-		if err != nil || existingCatalog == nil {
+		if err != nil {
 			fmt.Printf("Preconfigured catalog wasn't found \n")
 			panic(err)
 		}
@@ -576,8 +576,8 @@ func createSuiteCatalogAndItem(config TestConfig) {
 	}
 
 	catalogItemPreserved := true
-	catalogItem, err := catalog.GetCatalogItemByName(testSuiteCatalogOVAItem, false)
-	if err != nil || catalogItem == nil {
+	_, err = catalog.GetCatalogItemByName(testSuiteCatalogOVAItem, false)
+	if err != nil {
 		catalogItemPreserved = false
 	}
 
@@ -676,7 +676,7 @@ func destroySuiteCatalogAndItem(config TestConfig) {
 	}
 
 	catalog, err := org.GetCatalogByName(testSuiteCatalogName, false)
-	if err != nil || catalog == nil {
+	if err != nil {
 		fmt.Printf("catalog already removed %#v", err)
 		return
 	}
@@ -697,7 +697,7 @@ func destroySuiteCatalogAndItem(config TestConfig) {
 
 	if testConfig.VCD.Catalog.CatalogItem == "" && !isCatalogDeleted {
 		catalogItem, err := catalog.GetCatalogItemByName(testSuiteCatalogOVAItem, false)
-		if err != nil || catalogItem == nil {
+		if err != nil {
 			fmt.Printf("error finding catalog item %#v", err)
 			return
 		}

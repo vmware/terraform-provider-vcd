@@ -241,33 +241,15 @@ func resourceOrgUpdate(d *schema.ResourceData, m interface{}) error {
 }
 
 func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
-	err := d.Set("name", adminOrg.AdminOrg.Name)
-	if err != nil {
-		return err
-	}
-	err = d.Set("full_name", adminOrg.AdminOrg.FullName)
-	if err != nil {
-		return err
-	}
-	err = d.Set("description", adminOrg.AdminOrg.Description)
-	if err != nil {
-		return err
-	}
-	err = d.Set("is_enabled", adminOrg.AdminOrg.IsEnabled)
-	if err != nil {
-		return err
-	}
-	err = d.Set("deployed_vm_quota", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.DeployedVMQuota)
-	if err != nil {
-		return err
-	}
-	err = d.Set("stored_vm_quota", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.StoredVMQuota)
-	if err != nil {
-		return err
-	}
-	err = d.Set("can_publish_catalogs", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanPublishCatalogs)
+	_ = d.Set("name", adminOrg.AdminOrg.Name)
+	_ = d.Set("full_name", adminOrg.AdminOrg.FullName)
+	_ = d.Set("description", adminOrg.AdminOrg.Description)
+	_ = d.Set("is_enabled", adminOrg.AdminOrg.IsEnabled)
+	_ = d.Set("deployed_vm_quota", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.DeployedVMQuota)
+	_ = d.Set("stored_vm_quota", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.StoredVMQuota)
+	_ = d.Set("can_publish_catalogs", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanPublishCatalogs)
 
-	return err
+	return nil
 }
 
 // Retrieves an Org resource from vCD
