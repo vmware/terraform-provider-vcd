@@ -13,19 +13,17 @@ func datasourceVcdCatalog() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Required: true,
 			},
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 			},
 
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
+				Computed: true,
 			},
 		},
 	}
@@ -53,7 +51,6 @@ func datasourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error retrieving catalog %s", identifier)
 	}
 
-	d.SetId(catalog.Catalog.ID)
 	_ = d.Set("description", catalog.Catalog.Description)
 	_ = d.Set("name", catalog.Catalog.Name)
 	d.SetId(catalog.Catalog.ID)

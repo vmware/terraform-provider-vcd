@@ -86,8 +86,8 @@ func catalogItemDestroyed(catalog, itemName string) resource.TestCheckFunc {
 		if err != nil {
 			return err
 		}
-		item, err := cat.GetCatalogItemByName(itemName, false)
-		if err == nil || item != nil {
+		_, err = cat.GetCatalogItemByName(itemName, false)
+		if err == nil {
 			return fmt.Errorf("catalog item %s not deleted", itemName)
 		}
 		return nil
