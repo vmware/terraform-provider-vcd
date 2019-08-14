@@ -155,7 +155,7 @@ func CreateEdgeGatewayAsync(vcdClient *VCDClient, egwc EdgeGatewayCreation) (Tas
 	}
 	// Add external networks inside the configuration structure
 	for _, extNetName := range egwc.ExternalNetworks {
-		extNet, err := GetExternalNetwork(vcdClient, extNetName)
+		extNet, err := vcdClient.GetExternalNetworkByName(extNetName)
 		if err != nil {
 			return Task{}, err
 		}
@@ -206,7 +206,7 @@ func CreateAndConfigureEdgeGatewayAsync(vcdClient *VCDClient, orgName, vdcName, 
 	if err != nil {
 		return Task{}, err
 	}
-	vdc, err := adminOrg.GetVdcByName(vdcName)
+	vdc, err := adminOrg.GetVDCByName(vdcName, false)
 	if err != nil {
 		return Task{}, err
 	}
@@ -275,7 +275,7 @@ func createEdgeGateway(vcdClient *VCDClient, egwc EdgeGatewayCreation, egwConfig
 	if err != nil {
 		return EdgeGateway{}, err
 	}
-	vdc, err := org.GetVdcByName(egwc.VdcName)
+	vdc, err := org.GetVDCByName(egwc.VdcName, false)
 	if err != nil {
 		return EdgeGateway{}, err
 	}
@@ -437,6 +437,7 @@ func QueryPortGroups(vcdCli *VCDClient, filter string) ([]*types.PortGroupRecord
 
 // GetExternalNetwork returns an ExternalNetwork reference if user the network name matches an existing one.
 // If no valid external network is found, it returns an empty ExternalNetwork reference and an error
+// Deprecated: use vcdClient.GetExternalNetworkByName instead
 func GetExternalNetwork(vcdClient *VCDClient, networkName string) (*ExternalNetwork, error) {
 
 	if !vcdClient.Client.IsSysAdmin {
@@ -474,6 +475,94 @@ func GetExternalNetwork(vcdClient *VCDClient, networkName string) (*ExternalNetw
 	}
 	return externalNetwork, fmt.Errorf("could not find external network named %s", networkName)
 
+}
+
+// GetExternalNetworks returns a list of available external networks
+func (vcdClient *VCDClient) GetExternalNetworks() (*types.ExternalNetworkReferences, error) {
+
+	if !vcdClient.Client.IsSysAdmin {
+		return nil, fmt.Errorf("functionality requires system administrator privileges")
+	}
+
+	extNetworkHREF, err := getExternalNetworkHref(&vcdClient.Client)
+	if err != nil {
+		return nil, err
+	}
+
+	extNetworkRefs := &types.ExternalNetworkReferences{}
+	_, err = vcdClient.Client.ExecuteRequest(extNetworkHREF, http.MethodGet,
+		types.MimeNetworkConnectionSection, "error retrieving external networks: %s", nil, extNetworkRefs)
+	if err != nil {
+		return nil, err
+	}
+
+	return extNetworkRefs, nil
+}
+
+// GetExternalNetworkByName returns an ExternalNetwork reference if the network name matches an existing one.
+// If no valid external network is found, it returns an empty ExternalNetwork reference and an error
+func (vcdClient *VCDClient) GetExternalNetworkByName(networkName string) (*ExternalNetwork, error) {
+
+	extNetworkRefs, err := vcdClient.GetExternalNetworks()
+
+	if err != nil {
+		return nil, err
+	}
+
+	externalNetwork := NewExternalNetwork(&vcdClient.Client)
+
+	for _, netRef := range extNetworkRefs.ExternalNetworkReference {
+		if netRef.Name == networkName {
+			externalNetwork.ExternalNetwork.HREF = netRef.HREF
+			err = externalNetwork.Refresh()
+			if err != nil {
+				return nil, err
+			}
+			return externalNetwork, nil
+		}
+	}
+
+	return nil, ErrorEntityNotFound
+}
+
+// GetExternalNetworkById returns an ExternalNetwork reference if the network ID matches an existing one.
+// If no valid external network is found, it returns an empty ExternalNetwork reference and an error
+func (vcdClient *VCDClient) GetExternalNetworkById(id string) (*ExternalNetwork, error) {
+
+	extNetworkRefs, err := vcdClient.GetExternalNetworks()
+
+	if err != nil {
+		return nil, err
+	}
+
+	externalNetwork := NewExternalNetwork(&vcdClient.Client)
+
+	for _, netRef := range extNetworkRefs.ExternalNetworkReference {
+		// ExternalNetworkReference items don't have ID
+		// We compare using the UUID from HREF
+		if equalIds(id, "", netRef.HREF) {
+			externalNetwork.ExternalNetwork.HREF = netRef.HREF
+			err = externalNetwork.Refresh()
+			if err != nil {
+				return nil, err
+			}
+			return externalNetwork, nil
+		}
+	}
+
+	return nil, ErrorEntityNotFound
+}
+
+// GetExternalNetworkByNameOrId returns an ExternalNetwork reference if either the network name or ID matches an existing one.
+// If no valid external network is found, it returns an empty ExternalNetwork reference and an error
+func (vcdClient *VCDClient) GetExternalNetworkByNameOrId(identifier string) (*ExternalNetwork, error) {
+	getByName := func(name string, refresh bool) (interface{}, error) { return vcdClient.GetExternalNetworkByName(name) }
+	getById := func(id string, refresh bool) (interface{}, error) { return vcdClient.GetExternalNetworkById(id) }
+	entity, err := getEntityByNameOrId(getByName, getById, identifier, false)
+	if entity == nil {
+		return nil, err
+	}
+	return entity.(*ExternalNetwork), err
 }
 
 // CreateExternalNetwork allows create external network and returns Task or error.
@@ -604,7 +693,7 @@ func GetNetworkPoolByHREF(client *VCDClient, href string) (*types.VMWNetworkPool
 	networkPool := &types.VMWNetworkPool{}
 
 	_, err := client.Client.ExecuteRequest(href, http.MethodGet,
-		"", "error fetching network ppol: %s", nil, networkPool)
+		"", "error fetching network pool: %s", nil, networkPool)
 
 	// Return the disk
 	return networkPool, err
@@ -668,21 +757,13 @@ func (vcdClient *VCDClient) GetOrgById(orgId string) (*Org, error) {
 // On success, returns a pointer to the Org structure and a nil error
 // On failure, returns a nil pointer and an error
 func (vcdClient *VCDClient) GetOrgByNameOrId(identifier string) (*Org, error) {
-	var byNameErr, byIdErr error
-	var org *Org
-	org, byIdErr = vcdClient.GetOrgById(identifier)
-	if byIdErr == nil {
-		// Found by ID
-		return org, nil
+	getByName := func(name string, refresh bool) (interface{}, error) { return vcdClient.GetOrgByName(name) }
+	getById := func(id string, refresh bool) (interface{}, error) { return vcdClient.GetOrgById(id) }
+	entity, err := getEntityByNameOrId(getByName, getById, identifier, false)
+	if entity == nil {
+		return nil, err
 	}
-	if IsNotFound(byIdErr) {
-		// Not found by ID, try by name
-		org, byNameErr = vcdClient.GetOrgByName(identifier)
-		return org, byNameErr
-	} else {
-		// On any other error, we return it
-		return nil, byIdErr
-	}
+	return entity.(*Org), err
 }
 
 // GetAdminOrgByName finds an Admin Organization by name
@@ -733,20 +814,11 @@ func (vcdClient *VCDClient) GetAdminOrgById(orgId string) (*AdminOrg, error) {
 // On success, returns a pointer to the Admin Org structure and a nil error
 // On failure, returns a nil pointer and an error
 func (vcdClient *VCDClient) GetAdminOrgByNameOrId(identifier string) (*AdminOrg, error) {
-	var byNameErr, byIdErr error
-	var adminOrg *AdminOrg
-
-	adminOrg, byIdErr = vcdClient.GetAdminOrgById(identifier)
-	if byIdErr == nil {
-		// Found by ID
-		return adminOrg, nil
+	getByName := func(name string, refresh bool) (interface{}, error) { return vcdClient.GetAdminOrgByName(name) }
+	getById := func(id string, refresh bool) (interface{}, error) { return vcdClient.GetAdminOrgById(id) }
+	entity, err := getEntityByNameOrId(getByName, getById, identifier, false)
+	if entity == nil {
+		return nil, err
 	}
-	if IsNotFound(byIdErr) {
-		// Not found by ID, try by name
-		adminOrg, byNameErr = vcdClient.GetAdminOrgByName(identifier)
-		return adminOrg, byNameErr
-	} else {
-		// On any other error, we return it
-		return nil, byIdErr
-	}
+	return entity.(*AdminOrg), err
 }

@@ -30,19 +30,6 @@ func NewVdc(cli *Client) *Vdc {
 	}
 }
 
-type AdminVdc struct {
-	AdminVdc *types.AdminVdc
-	client   *Client
-	VApp     *types.VApp
-}
-
-func NewAdminVdc(cli *Client) *AdminVdc {
-	return &AdminVdc{
-		AdminVdc: new(types.AdminVdc),
-		client:   cli,
-	}
-}
-
 // Gets a vapp with a specific url vappHREF
 func (vdc *Vdc) getVdcVAppbyHREF(vappHREF *url.URL) (*VApp, error) {
 	vapp := NewVApp(vdc.client)
