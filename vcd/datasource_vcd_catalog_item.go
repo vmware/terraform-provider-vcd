@@ -9,11 +9,12 @@ func datasourceVcdCatalogItem() *schema.Resource {
 			"org": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Description: "Org to which the catalog belongs",
 			},
 			"catalog": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "catalog name where upload the OVA file",
+				Description: "catalog containing the item",
 			},
 			"name": &schema.Schema{
 				Type:     schema.TypeString,

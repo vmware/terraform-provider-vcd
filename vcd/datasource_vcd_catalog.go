@@ -14,10 +14,12 @@ func datasourceVcdCatalog() *schema.Resource {
 			"org": {
 				Type:     schema.TypeString,
 				Required: true,
+				Description: "Org to which the catalog belongs",
 			},
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
+				Description: "Name of the catalog",
 			},
 
 			"description": &schema.Schema{
