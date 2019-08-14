@@ -49,6 +49,15 @@ func (vm *VM) GetStatus() (string, error) {
 	return types.VAppStatuses[vm.VM.Status], nil
 }
 
+// IsDeployed checks if the VM is deployed or not
+func (vm *VM) IsDeployed() (bool, error) {
+	err := vm.Refresh()
+	if err != nil {
+		return false, fmt.Errorf("error refreshing VM: %v", err)
+	}
+	return vm.VM.Deployed, nil
+}
+
 func (vm *VM) Refresh() error {
 
 	if vm.VM.HREF == "" {
@@ -76,7 +85,7 @@ func (vm *VM) GetNetworkConnectionSection() (*types.NetworkConnectionSection, er
 	networkConnectionSection := &types.NetworkConnectionSection{}
 
 	if vm.VM.HREF == "" {
-		return networkConnectionSection, fmt.Errorf("cannot refresh, Object is empty")
+		return networkConnectionSection, fmt.Errorf("cannot retrieve network when VM HREF is unset")
 	}
 
 	_, err := vm.client.ExecuteRequest(vm.VM.HREF+"/networkConnectionSection/", http.MethodGet,
@@ -90,7 +99,7 @@ func (vm *VM) GetNetworkConnectionSection() (*types.NetworkConnectionSection, er
 // Runs synchronously, VM is ready for another operation after this function returns.
 func (vm *VM) UpdateNetworkConnectionSection(networks *types.NetworkConnectionSection) error {
 	if vm.VM.HREF == "" {
-		return fmt.Errorf("cannot refresh, Object is empty")
+		return fmt.Errorf("cannot update network connection when VM HREF is unset")
 	}
 
 	// Retrieve current network configuration so that we are not altering any other internal fields
@@ -140,8 +149,19 @@ func (vm *VM) PowerOn() (Task, error) {
 // PowerOnAndForceCustomization is a synchronous function which is equivalent to the functionality
 // one has in UI. It triggers customization which may be useful in some cases (like altering NICs)
 //
-// The VM _must_ be Undeployed for this action to actually work.
+// The VM _must_ be un-deployed for this action to actually work.
 func (vm *VM) PowerOnAndForceCustomization() error {
+	// PowerOnAndForceCustomization only works if the VM was previously un-deployed
+	vmIsDeployed, err := vm.IsDeployed()
+	if err != nil {
+		return fmt.Errorf("unable to check if VM %s is un-deployed forcing customization: %s",
+			vm.VM.Name, err)
+	}
+
+	if vmIsDeployed {
+		return fmt.Errorf("VM %s must be undeployed before forcing customization", vm.VM.Name)
+	}
+
 	apiEndpoint, _ := url.ParseRequestURI(vm.VM.HREF)
 	apiEndpoint.Path += "/action/deploy"
 
@@ -361,11 +381,13 @@ func (vm *VM) RunCustomizationScript(computername, script string) (Task, error) 
 	return vm.Customize(computername, script, false)
 }
 
+// GetGuestCustomizationStatus retrieves guest customization status.
+// It can be one of "GC_PENDING", "REBOOT_PENDING", "GC_FAILED", "POST_GC_PENDING", "GC_COMPLETE"
 func (vm *VM) GetGuestCustomizationStatus() (string, error) {
 	guestCustomizationStatus := &types.GuestCustomizationStatusSection{}
 
 	if vm.VM.HREF == "" {
-		return "", fmt.Errorf("cannot load guest customization, VM HREF is empty")
+		return "", fmt.Errorf("cannot retrieve guest customization, VM HREF is empty")
 	}
 
 	_, err := vm.client.ExecuteRequest(vm.VM.HREF+"/guestcustomizationstatus", http.MethodGet,
@@ -377,7 +399,13 @@ func (vm *VM) GetGuestCustomizationStatus() (string, error) {
 
 // BlockWhileGuestCustomizationStatus blocks until the customization status of VM exits unwantedStatus.
 // It sleeps 3 seconds between iterations and times out after timeOutAfterSeconds of seconds.
+//
+// timeOutAfterSeconds must be more than 4 and less than 2 hours (60s*120)
 func (vm *VM) BlockWhileGuestCustomizationStatus(unwantedStatus string, timeOutAfterSeconds int) error {
+	if timeOutAfterSeconds < 5 || timeOutAfterSeconds > 60*120 {
+		return fmt.Errorf("timeOutAfterSeconds must be in range 4<X<7200")
+	}
+
 	timeoutAfter := time.After(time.Duration(timeOutAfterSeconds) * time.Second)
 	tick := time.NewTicker(3 * time.Second)
 
