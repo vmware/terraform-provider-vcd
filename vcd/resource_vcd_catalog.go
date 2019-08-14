@@ -120,7 +120,7 @@ func resourceVcdCatalogDelete(d *schema.ResourceData, meta interface{}) error {
 
 	err = adminCatalog.Delete(d.Get("delete_force").(bool), d.Get("delete_recursive").(bool))
 	if err != nil {
-		log.Printf("Error removing catalog %#v", err)
+		log.Printf("[DEBUG] Error removing catalog %#v", err)
 		return fmt.Errorf("error removing catalog %#v", err)
 	}
 

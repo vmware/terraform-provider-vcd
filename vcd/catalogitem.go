@@ -31,7 +31,7 @@ func deleteCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) error {
 
 	err = catalogItem.Delete()
 	if err != nil {
-		log.Printf("Error removing catalog item %s", err)
+		log.Printf("[DEBUG] Error removing catalog item %s", err)
 		return fmt.Errorf("error removing catalog item %s", err)
 	}
 
@@ -75,7 +75,7 @@ func getError(task govcd.UploadTask) error {
 	if task.GetUploadError() != nil {
 		err := task.CancelTask()
 		if err != nil {
-			log.Printf("error cancelling media upload task: %#v", err)
+			log.Printf("[DEBUG] error cancelling media upload task: %#v", err)
 		}
 		return fmt.Errorf("error uploading media: %#v", task.GetUploadError())
 	}

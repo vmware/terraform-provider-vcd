@@ -87,7 +87,7 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 	catalogName := d.Get("catalog").(string)
 	catalog, err := adminOrg.GetCatalogByName(catalogName, false)
 	if err != nil {
-		log.Printf("Error finding Catalog: %#v", err)
+		log.Printf("[DEBUG] Error finding Catalog: %#v", err)
 		return fmt.Errorf("error finding Catalog: %#v", err)
 	}
 
@@ -95,7 +95,7 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 	itemName := d.Get("name").(string)
 	task, err := catalog.UploadOvf(d.Get("ova_path").(string), itemName, d.Get("description").(string), int64(uploadPieceSize)*1024*1024) // Convert from megabytes to bytes
 	if err != nil {
-		log.Printf("Error uploading new catalog item: %#v", err)
+		log.Printf("[DEBUG] Error uploading new catalog item: %#v", err)
 		return fmt.Errorf("error uploading new catalog item: %#v", err)
 	}
 
@@ -144,7 +144,6 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 	if err != nil {
 		return fmt.Errorf("error retrieving catalog item %s: %s", itemName, err)
 	}
-	// d.SetId(catalogName + ":" + itemName)
 	d.SetId(item.CatalogItem.ID)
 
 	log.Printf("[TRACE] Catalog item created: %#v", itemName)
@@ -169,7 +168,10 @@ func resourceVcdCatalogItemRead(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	metadata, err := vAppTemplate.GetMetadata()
-	d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+	if err != nil {
+		return err
+	}
+	_ = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 	return err
 }
 

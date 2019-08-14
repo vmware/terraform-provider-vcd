@@ -108,17 +108,17 @@ func resourceOrgCreate(d *schema.ResourceData, m interface{}) error {
 
 	settings := getSettings(d)
 
-	log.Printf("Creating Org: %s", orgName)
+	log.Printf("[TRACE] Creating Org: %s", orgName)
 	task, err := govcd.CreateOrg(vcdClient.VCDClient, orgName, fullName, description, settings, isEnabled)
 
 	if err != nil {
-		log.Printf("Error creating Org: %#v", err)
+		log.Printf("[DEBUG] Error creating Org: %#v", err)
 		return fmt.Errorf("error creating Org: %#v", err)
 	}
 
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		log.Printf("Error running Org creation task: %s", err)
+		log.Printf("[DEBUG] Error running Org creation task: %s", err)
 		return fmt.Errorf("error running Org creation task: %s", err)
 	}
 
@@ -126,7 +126,7 @@ func resourceOrgCreate(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		return fmt.Errorf("error retrieving Org %s after creation: %s", orgName, err)
 	}
-	log.Printf("Org %s created with id: %s", orgName, org.AdminOrg.ID)
+	log.Printf("[TRACE] Org %s created with id: %s", orgName, org.AdminOrg.ID)
 
 	d.SetId(org.AdminOrg.ID)
 	return nil
@@ -164,7 +164,7 @@ func resourceOrgDelete(d *schema.ResourceData, m interface{}) error {
 	}
 
 	identifier := d.Id()
-	log.Printf("Reading Org %s", identifier)
+	log.Printf("[TRACE] Reading Org %s", identifier)
 
 	// The double attempt is a workaround when dealing with
 	// organizations created by previous versions, where the ID
@@ -178,16 +178,16 @@ func resourceOrgDelete(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("error fetching Org %s: %s", orgName, err)
 	}
 
-	log.Printf("Org %s found", orgName)
+	log.Printf("[TRACE] Org %s found", orgName)
 	//deletes organization
-	log.Printf("Deleting Org %s", orgName)
+	log.Printf("[TRACE] Deleting Org %s", orgName)
 
 	err = adminOrg.Delete(deleteForce, deleteRecursive)
 	if err != nil {
-		log.Printf("Error deleting org %s: %s", orgName, err)
+		log.Printf("[DEBUG] Error deleting org %s: %s", orgName, err)
 		return err
 	}
-	log.Printf("Org %s deleted", orgName)
+	log.Printf("[TRACE] Org %s deleted", orgName)
 	return nil
 }
 
@@ -202,7 +202,7 @@ func resourceOrgUpdate(d *schema.ResourceData, m interface{}) error {
 	}
 
 	identifier := d.Id()
-	log.Printf("Reading Org %s", identifier)
+	log.Printf("[TRACE] Reading Org %s", identifier)
 
 	// The double attempt is a workaround when dealing with
 	// organizations created by previous versions, where the ID
@@ -223,20 +223,20 @@ func resourceOrgUpdate(d *schema.ResourceData, m interface{}) error {
 	adminOrg.AdminOrg.IsEnabled = d.Get("is_enabled").(bool)
 	adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings = settings.OrgGeneralSettings
 
-	log.Printf("Org with id %s found", orgName)
+	log.Printf("[TRACE] Org with id %s found", orgName)
 	task, err := adminOrg.Update()
 
 	if err != nil {
-		log.Printf("Error updating Org %s : %s", orgName, err)
+		log.Printf("[DEBUG] Error updating Org %s : %s", orgName, err)
 		return fmt.Errorf("error updating Org %s", err)
 	}
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		log.Printf("Error completing update of Org %s : %s", orgName, err)
+		log.Printf("[DEBUG] Error completing update of Org %s : %s", orgName, err)
 		return fmt.Errorf("error completing update of Org %s", err)
 	}
 
-	log.Printf("Org %s updated", orgName)
+	log.Printf("[TRACE] Org %s updated", orgName)
 	return nil
 }
 
@@ -262,7 +262,7 @@ func resourceOrgRead(d *schema.ResourceData, m interface{}) error {
 	}
 
 	identifier := d.Id()
-	log.Printf("Reading Org %s", identifier)
+	log.Printf("[TRACE] Reading Org %s", identifier)
 	adminOrg, err := vcdClient.VCDClient.GetAdminOrgByNameOrId(identifier)
 
 	// The double attempt is a workaround when dealing with
@@ -274,17 +274,17 @@ func resourceOrgRead(d *schema.ResourceData, m interface{}) error {
 		// we try to access it using the name.
 		identifier = orgName
 		if identifier != "" {
-			log.Printf("Reading Org %s", identifier)
+			log.Printf("[TRACE] Reading Org %s", identifier)
 			adminOrg, err = vcdClient.VCDClient.GetAdminOrgByNameOrId(identifier)
 		}
 	}
 
 	if err != nil {
-		log.Printf("Org %s not found. Setting ID to nothing", identifier)
+		log.Printf("[DEBUG] Org %s not found. Setting ID to nothing", identifier)
 		d.SetId("")
 		return fmt.Errorf("org %s not found", identifier)
 	}
-	log.Printf("Org with id %s found", identifier)
+	log.Printf("[TRACE] Org with id %s found", identifier)
 	d.SetId(adminOrg.AdminOrg.ID)
 	return setOrgData(d, adminOrg)
 }
