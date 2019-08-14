@@ -3,8 +3,8 @@
 FEATURES:
 
 * **New Data Source:** `vcd_org` Organization - ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
-* **New Data Source:** `vcd_catalog` Catalog - ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
-* **New Data Source:** `vcd_catalog_item` CatalogItem - ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+* **New Data Source:** `vcd_catalog` Catalog - ([#218])
+* **New Data Source:** `vcd_catalog_item` CatalogItem - ([#218])
 
 IMPROVEMENTS:
 
