@@ -244,6 +244,7 @@ func templateFill(tmpl string, data StringMap) string {
 		data["Url"] = testConfig.Provider.Url
 		data["SysOrg"] = testConfig.Provider.SysOrg
 		data["Org"] = testConfig.VCD.Org
+		data["Vdc"] = testConfig.VCD.Vdc
 		data["AllowInsecure"] = testConfig.Provider.AllowInsecure
 		data["MaxRetryTimeout"] = testConfig.Provider.MaxRetryTimeout
 		data["VersionRequired"] = currentProviderVersion
@@ -537,8 +538,8 @@ func createSuiteCatalogAndItem(config TestConfig) {
 		panic(err)
 	}
 
-	org, err := govcd.GetOrgByName(vcdClient, config.VCD.Org)
-	if err != nil || org == (govcd.Org{}) {
+	org, err := vcdClient.GetOrgByName(config.VCD.Org)
+	if err != nil {
 		panic(err)
 	}
 
@@ -668,8 +669,8 @@ func destroySuiteCatalogAndItem(config TestConfig) {
 		panic(err)
 	}
 
-	org, err := govcd.GetOrgByName(vcdClient, config.VCD.Org)
-	if err != nil || org == (govcd.Org{}) {
+	org, err := vcdClient.GetOrgByName(config.VCD.Org)
+	if err != nil {
 		panic(err)
 	}
 

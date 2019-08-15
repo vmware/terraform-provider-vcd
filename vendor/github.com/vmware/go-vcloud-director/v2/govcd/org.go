@@ -417,7 +417,7 @@ func (adminOrg *AdminOrg) Delete(force bool, recursive bool) error {
 	// Disable org
 	err := adminOrg.Disable()
 	if err != nil {
-		return fmt.Errorf("error disabling Org %s: %s", adminOrg.AdminOrg.ID, err)
+		return fmt.Errorf("error disabling Org %s: %s", adminOrg.AdminOrg.Name, err)
 	}
 	// Get admin HREF
 	orgHREF, err := url.ParseRequestURI(adminOrg.AdminOrg.HREF)
@@ -428,11 +428,16 @@ func (adminOrg *AdminOrg) Delete(force bool, recursive bool) error {
 		"force":     strconv.FormatBool(force),
 		"recursive": strconv.FormatBool(recursive),
 	}, http.MethodDelete, *orgHREF, nil)
-	_, err = checkResp(adminOrg.client.Http.Do(req))
+	resp, err := checkResp(adminOrg.client.Http.Do(req))
 	if err != nil {
 		return fmt.Errorf("error deleting Org %s: %s", adminOrg.AdminOrg.ID, err)
 	}
-	return nil
+
+	task := NewTask(adminOrg.client)
+	if err = decodeBody(resp, task.Task); err != nil {
+		return fmt.Errorf("error decoding task response: %s", err)
+	}
+	return task.WaitTaskCompletion()
 }
 
 // Disables the org. Returns an error if the call to vCD fails.
@@ -457,8 +462,18 @@ func (adminOrg *AdminOrg) Update() (Task, error) {
 		Name:        adminOrg.AdminOrg.Name,
 		IsEnabled:   adminOrg.AdminOrg.IsEnabled,
 		FullName:    adminOrg.AdminOrg.FullName,
+		Description: adminOrg.AdminOrg.Description,
 		OrgSettings: adminOrg.AdminOrg.OrgSettings,
 	}
+
+	/**/
+	// Same workaround used in Org creation, where OrgGeneralSettings properties
+	// are not set unless UseServerBootSequence is also set
+	if vcomp.OrgSettings.OrgGeneralSettings != nil {
+		vcomp.OrgSettings.OrgGeneralSettings.UseServerBootSequence = true
+	}
+
+	/**/
 
 	// Return the task
 	return adminOrg.client.ExecuteTaskRequest(adminOrg.AdminOrg.HREF, http.MethodPut,

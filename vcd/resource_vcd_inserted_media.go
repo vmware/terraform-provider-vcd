@@ -73,11 +73,11 @@ func resourceVcdMediaInsert(d *schema.ResourceData, meta interface{}) error {
 	defer vcdClient.unLockParentVapp(d)
 
 	vm, org, err := getVM(d, meta)
-	if err != nil || org == (govcd.Org{}) {
+	if err != nil || org == nil {
 		return fmt.Errorf("error: %#v", err)
 	}
 
-	task, err := vm.HandleInsertMedia(&org, d.Get("catalog").(string), d.Get("name").(string))
+	task, err := vm.HandleInsertMedia(org, d.Get("catalog").(string), d.Get("name").(string))
 	if err != nil {
 		return fmt.Errorf("error: %#v", err)
 	}
@@ -129,7 +129,7 @@ func resourceVcdMediaEject(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error: %#v", err)
 	}
 
-	task, err := vm.HandleEjectMedia(&org, d.Get("catalog").(string), d.Get("name").(string))
+	task, err := vm.HandleEjectMedia(org, d.Get("catalog").(string), d.Get("name").(string))
 	if err != nil {
 		return fmt.Errorf("error: %#v", err)
 	}
@@ -142,25 +142,25 @@ func resourceVcdMediaEject(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func getVM(d *schema.ResourceData, meta interface{}) (govcd.VM, govcd.Org, error) {
+func getVM(d *schema.ResourceData, meta interface{}) (govcd.VM, *govcd.Org, error) {
 	vcdClient := meta.(*VCDClient)
 
 	org, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
-	if err != nil || org == (govcd.Org{}) || vdc == (govcd.Vdc{}) {
-		return govcd.VM{}, govcd.Org{}, fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	if err != nil || org == nil || vdc == (govcd.Vdc{}) {
+		return govcd.VM{}, nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	vmRecord, err := vdc.QueryVM(d.Get("vapp_name").(string), d.Get("vm_name").(string))
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find VM. Removing from tfstate")
 		d.SetId("")
-		return govcd.VM{}, govcd.Org{}, fmt.Errorf("unable to find VM. Removing from tfstate. Err: #%v", err)
+		return govcd.VM{}, nil, fmt.Errorf("unable to find VM. Removing from tfstate. Err: #%v", err)
 	}
 
 	vm, err := vcdClient.Client.FindVMByHREF(vmRecord.VM.HREF)
 	if err != nil || vm == (govcd.VM{}) {
 		log.Printf("[DEBUG] Unable to get VM data")
-		return govcd.VM{}, govcd.Org{}, fmt.Errorf("error getting VM data: %s", err)
+		return govcd.VM{}, nil, fmt.Errorf("error getting VM data: %s", err)
 	}
 	return vm, org, nil
 }

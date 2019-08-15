@@ -210,6 +210,9 @@ case $wanted in
     catalog)
         acceptance_test catalog
         ;;
+    org)
+        acceptance_test org
+        ;;
     vapp)
         acceptance_test vapp
         ;;
