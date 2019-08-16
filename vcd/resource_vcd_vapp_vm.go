@@ -562,11 +562,8 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		}
 	}
 
-	// Check if the user request for forced reconfiguration of VM
-	customizationNeeded := isForcedConfiguration(d.Get("customization"))
-
 	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("cpu_cores") || d.HasChange("power_on") || d.HasChange("disk") ||
-		d.HasChange("expose_hardware_virtualization") || d.HasChange("network") || customizationNeeded {
+		d.HasChange("expose_hardware_virtualization") || d.HasChange("network") {
 		if vmStatusBeforeUpdate != "POWERED_OFF" {
 			task, err := vm.PowerOff()
 			if err != nil {
@@ -651,32 +648,16 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 
 	// If the VM was powered off during update but it has to be powered off
 	if d.Get("power_on").(bool) {
+		// Check if the user requested for forced customization of VM
+		customizationNeeded := isForcedConfiguration(d.Get("customization"))
 		vmStatus, err := vm.GetStatus()
 		if err != nil {
 			return fmt.Errorf("error getting VM status before ensuring it is powered on: %s", err)
 		}
+		log.Printf("[DEBUG] Powering on VM %s after update. Previous state %s", vm.VM.Name, vmStatus)
 
-		log.Printf("[TRACE] Powering on VM %s after update. Previous state %s", vm.VM.Name, vmStatus)
-
-		if vmStatus != "POWERED_ON" && customizationNeeded {
-
-			// The VM must be un-deployed for customization to actually work. The option "Power off" in GUI
-			// actually does un-deploy as well.
-			task, err := vm.Undeploy()
-			if err != nil {
-				return fmt.Errorf("error triggering undeploy for VM %s: %s", vm.VM.Name, err)
-			}
-			err = task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf("error waiting for undeploy task for VM %s: %s", vm.VM.Name, err)
-			}
-			err = vm.PowerOnAndForceCustomization()
-			if err != nil {
-				return fmt.Errorf("failed powering on with customization: %s", err)
-			}
-		}
-
-		if vmStatus != "POWERED_ON" && !customizationNeeded {
+		// Simply power on if customization is not requested
+		if !customizationNeeded && vmStatus != "POWERED_ON" {
 			task, err := vm.PowerOn()
 			if err != nil {
 				return fmt.Errorf("error powering on: %s", err)
@@ -684,6 +665,47 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			err = task.WaitTaskCompletion()
 			if err != nil {
 				return fmt.Errorf(errorCompletingTask, err)
+			}
+		}
+
+		// When customization is requested VM must be un-deployed before starting it
+		if customizationNeeded {
+			log.Printf("[TRACE] forced customization for VM %s was requested. Current state %s",
+				vm.VM.Name, vmStatus)
+
+			// Check if VM is deployed
+			isDeployed, err := vm.IsDeployed()
+			if err != nil {
+				return fmt.Errorf("unable to check if VM is deployed: %s", err)
+			}
+
+			log.Printf("[TRACE] VM %s deployment state: %t", vm.VM.Name, isDeployed)
+
+			if vmStatus == "POWERED_OFF" {
+				t, _ := vm.PowerOn()
+				_ = t.WaitTaskCompletion()
+			}
+
+			vmStatus, _ = vm.GetStatus()
+
+			// if isDeployed {
+			if vmStatus != "POWERED_OFF" {
+				log.Printf("[TRACE] VM %s is in state %s. Un-deploying", vm.VM.Name, vmStatus)
+				task, err := vm.Undeploy()
+				if err != nil {
+					return fmt.Errorf("error triggering undeploy for VM %s: %s", vm.VM.Name, err)
+				}
+				err = task.WaitTaskCompletion()
+				if err != nil {
+					return fmt.Errorf("error waiting for undeploy task for VM %s: %s", vm.VM.Name, err)
+				}
+			}
+			// }
+
+			log.Printf("[TRACE] Powering on VM %s with forced customization", vm.VM.Name)
+			err = vm.PowerOnAndForceCustomization()
+			if err != nil {
+				return fmt.Errorf("failed powering on with customization: %s", err)
 			}
 		}
 	}
@@ -892,7 +914,7 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error getting VM status: %#v", err)
 	}
 
-	log.Printf("[TRACE] VM Status:: %s", status)
+	log.Printf("[TRACE] VM Status: %s", status)
 	if status != "POWERED_OFF" {
 		log.Printf("[TRACE] Undeploying VM: %s", vm.VM.Name)
 		task, err := vm.Undeploy()
@@ -927,6 +949,16 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	log.Printf("[TRACE] Removing VM: %s", vm.VM.Name)
+
+	// status, err = vm.GetStatus()
+	// if err != nil {
+	// 	return fmt.Errorf("error getting VM status: %#v", err)
+	// }
+	// log.Printf("[TRACE] VM Status before removal: %s", status)
+
+	// t, _ := vm.PowerOff()
+	// _ = t.WaitTaskCompletion()
+
 	err = vapp.RemoveVM(vm)
 	if err != nil {
 		return fmt.Errorf("error deleting: %#v", err)
