@@ -4,10 +4,11 @@ package vcd
 
 import (
 	"fmt"
+	"testing"
+
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
-	"testing"
 )
 
 // TestAccVcdVAppVmCustomization tests that setting attribute customizaton.force to `true` triggers VM customization
@@ -122,7 +123,7 @@ func testAccCheckVcdVMCustomization(node string, customizationPending bool) reso
 			// Not using maxRetryTimeout for timeout here because it would force for maxRetryTimeout to be quite long
 			// time by default as it takes some time (around 150s during testing) for Photon OS to boot
 			// first time and get rid of "GC_PENDING" state
-			err = vm.BlockWhileGuestCustomizationStatus("GC_PENDING", 300)
+			err = vm.BlockWhileGuestCustomizationStatus("GC_PENDING", minIfLess(300, conn.Client.MaxRetryTimeout))
 			if err != nil {
 				return err
 			}
@@ -144,7 +145,7 @@ func testAccCheckVcdVMCustomization(node string, customizationPending bool) reso
 		}
 
 		if customizationPending && customizationStatus == "GC_PENDING" {
-			err = vm.BlockWhileGuestCustomizationStatus("GC_PENDING", 300)
+			err = vm.BlockWhileGuestCustomizationStatus("GC_PENDING", minIfLess(300, conn.Client.MaxRetryTimeout))
 			if err != nil {
 				return fmt.Errorf("timed out waiting for VM %s to leave 'GC_PENDING' state: %s", vm.VM.Name, err)
 			}
