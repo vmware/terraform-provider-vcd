@@ -101,6 +101,11 @@ resource "vcd_vapp_vm" "web2" {
     unit_number = 1
   }
 
+  properties = {
+    "guest.hostname" = "my-hostname"
+    "guest.other"    = "another-setting"
+  }
+
   depends_on = ["vcd_vapp.web"]
 }
 
@@ -137,6 +142,7 @@ translation or paravirtualization. Useful for hypervisor nesting provided underl
 * `network` - (Optional; *v2.2+*) A block to define network interface. Multiple can be used. See [Network](#network) and 
 example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_name`. **Note**: this property and all
 its parameters do force recreation of VMs!
+* `properties` - (Optional; *v2.5+*) Key value map of guest properties
 
 <a id="disk"></a>
 ## Disk

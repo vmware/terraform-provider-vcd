@@ -202,6 +202,12 @@ func resourceVcdVAppVm() *schema.Resource {
 				Default:     false,
 				Description: "Expose hardware-assisted CPU virtualization to guest OS.",
 			},
+			"properties": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Key/value settings for guest properties",
+			},
 		},
 	}
 }
@@ -332,6 +338,29 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		err = task.WaitTaskCompletion()
 		if err != nil {
 			return fmt.Errorf(errorCompletingTask, err)
+		}
+	}
+
+	if guestProperties, ok := d.GetOk("properties"); ok {
+		guestProp := convertToStringMap(guestProperties.(map[string]interface{}))
+
+		vmProperties := &types.ProductSectionList{
+			ProductSection: &types.ProductSection{
+				Info:     "Custom properties",
+				Property: []*types.Property{},
+			},
+		}
+
+		for key, value := range guestProp {
+			log.Printf("[TRACE] Adding guest property: key=%s, value=%s", key, value)
+			oneProp := &types.Property{Type: "string", Key: key, Value: &types.Value{Value: value}}
+			vmProperties.ProductSection.Property = append(vmProperties.ProductSection.Property, oneProp)
+		}
+
+		log.Printf("[TRACE] Setting VM guest properties")
+		_, err = vm.SetGuestProperties(vmProperties)
+		if err != nil {
+			return fmt.Errorf("error setting guest properties: %s", err)
 		}
 	}
 
