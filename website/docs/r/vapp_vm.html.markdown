@@ -109,6 +109,59 @@ resource "vcd_vapp_vm" "web2" {
 
 ## Example Usage with forced customization
 
+Step 1 - setup VM
+```
+resource "vcd_vapp_vm" "web2" {
+  vapp_name     = "${vcd_vapp.web.name}"
+  name          = "web2"
+  catalog_name  = "Boxes"
+  template_name = "lampstack-1.10.1-ubuntu-10.04"
+  memory        = 2048
+  cpus          = 1
+
+  network {
+    type               = "org"
+    name               = "net"
+    ip                 = "10.10.104.162"
+    ip_allocation_mode = "MANUAL"
+    is_primary         = true
+  }
+
+}
+```
+
+Step 2 - change network configuration and force customization
+```
+resource "vcd_vapp_vm" "web2" {
+  vapp_name     = "${vcd_vapp.web.name}"
+  name          = "web2"
+  catalog_name  = "Boxes"
+  template_name = "lampstack-1.10.1-ubuntu-10.04"
+  memory        = 2048
+  cpus          = 1
+
+  network {
+    type               = "org"
+    name               = "net"
+    ip                 = "10.10.104.162"
+    ip_allocation_mode = "MANUAL"
+    is_primary         = true
+  }
+
+  network {
+    type               = "org"
+    name               = "net"
+    ip                 = "10.10.108.162"
+    ip_allocation_mode = "MANUAL"
+  }
+
+  customization {
+    force = true
+  }
+
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
