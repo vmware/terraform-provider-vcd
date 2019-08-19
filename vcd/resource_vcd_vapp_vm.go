@@ -527,6 +527,9 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf("error getting VM status before update: %#v", err)
 	}
 
+	// Check if the user requested for forced customization of VM
+	customizationNeeded := isForcedConfiguration(d.Get("customization"))
+
 	// VM does not have to be in POWERED_OFF state for metadata operations
 	if d.HasChange("metadata") {
 		oldRaw, newRaw := d.GetChange("metadata")
@@ -564,7 +567,15 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 
 	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("cpu_cores") || d.HasChange("power_on") || d.HasChange("disk") ||
 		d.HasChange("expose_hardware_virtualization") || d.HasChange("network") {
-		if vmStatusBeforeUpdate != "POWERED_OFF" {
+
+		log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t), power_on(%t), disk(%t), expose_hardware_virtualization(%t), network(%t)",
+			vm.VM.Name, d.HasChange("memory"), d.HasChange("cpus"), d.HasChange("cpu_cores"), d.HasChange("power_on"), d.HasChange("disk"),
+			d.HasChange("expose_hardware_virtualization"), d.HasChange("network"))
+
+		// If customization is not requested then a simple shutdown is enough
+		if vmStatusBeforeUpdate != "POWERED_OFF" && !customizationNeeded {
+			log.Printf("[DEBUG] Powering off VM %s for offline update. Previous state %s",
+				vm.VM.Name, vmStatusBeforeUpdate)
 			task, err := vm.PowerOff()
 			if err != nil {
 				return fmt.Errorf("error Powering Off: %#v", err)
@@ -572,6 +583,20 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			err = task.WaitTaskCompletion()
 			if err != nil {
 				return fmt.Errorf(errorCompletingTask, err)
+			}
+		}
+
+		// If customization was requested then a shutdown with undeploy is needed
+		if vmStatusBeforeUpdate != "POWERED_OFF" && customizationNeeded {
+			log.Printf("[DEBUG] Un-deploying VM %s for offline update. Previous state %s",
+				vm.VM.Name, vmStatusBeforeUpdate)
+			task, err := vm.Undeploy()
+			if err != nil {
+				return fmt.Errorf("error triggering undeploy for VM %s: %s", vm.VM.Name, err)
+			}
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				return fmt.Errorf("error waiting for undeploy task for VM %s: %s", vm.VM.Name, err)
 			}
 		}
 
@@ -648,8 +673,6 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 
 	// If the VM was powered off during update but it has to be powered off
 	if d.Get("power_on").(bool) {
-		// Check if the user requested for forced customization of VM
-		customizationNeeded := isForcedConfiguration(d.Get("customization"))
 		vmStatus, err := vm.GetStatus()
 		if err != nil {
 			return fmt.Errorf("error getting VM status before ensuring it is powered on: %s", err)
@@ -673,22 +696,6 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			log.Printf("[TRACE] forced customization for VM %s was requested. Current state %s",
 				vm.VM.Name, vmStatus)
 
-			// Check if VM is deployed
-			isDeployed, err := vm.IsDeployed()
-			if err != nil {
-				return fmt.Errorf("unable to check if VM is deployed: %s", err)
-			}
-
-			log.Printf("[TRACE] VM %s deployment state: %t", vm.VM.Name, isDeployed)
-
-			if vmStatus == "POWERED_OFF" {
-				t, _ := vm.PowerOn()
-				_ = t.WaitTaskCompletion()
-			}
-
-			vmStatus, _ = vm.GetStatus()
-
-			// if isDeployed {
 			if vmStatus != "POWERED_OFF" {
 				log.Printf("[TRACE] VM %s is in state %s. Un-deploying", vm.VM.Name, vmStatus)
 				task, err := vm.Undeploy()
@@ -700,7 +707,6 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 					return fmt.Errorf("error waiting for undeploy task for VM %s: %s", vm.VM.Name, err)
 				}
 			}
-			// }
 
 			log.Printf("[TRACE] Powering on VM %s with forced customization", vm.VM.Name)
 			err = vm.PowerOnAndForceCustomization()

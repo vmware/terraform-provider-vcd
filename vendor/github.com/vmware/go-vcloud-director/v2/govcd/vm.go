@@ -467,7 +467,7 @@ func (vm *VM) Undeploy() (Task, error) {
 
 	// Return the task
 	return vm.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPost,
-		types.MimeUndeployVappParams, "error undeploy vApp: %s", vu)
+		types.MimeUndeployVappParams, "error undeploy VM: %s", vu)
 }
 
 // Attach or detach an independent disk

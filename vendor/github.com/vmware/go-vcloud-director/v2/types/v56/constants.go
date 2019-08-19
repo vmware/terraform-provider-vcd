@@ -161,7 +161,7 @@ const (
 	LbVirtualServerPath = "/loadbalancer/config/virtualservers/"
 )
 
-// Guest customization statues. These are all known possible statuses
+// Guest customization statuses. These are all known possible statuses
 const (
 	GuestCustStatusPending       = "GC_PENDING"
 	GuestCustStatusPostPending   = "POST_GC_PENDING"

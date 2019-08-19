@@ -40,6 +40,9 @@ func TestAccVcdVAppVmCustomization(t *testing.T) {
 	params["FuncName"] = t.Name() + "-step1"
 	configTextVMUpdateStep1 := templateFill(testAccCheckVcdVAppVmCustomizationStep1, params)
 
+	params["FuncName"] = t.Name() + "-step2"
+	configTextVMUpdateStep2 := templateFill(testAccCheckVcdVAppVmCustomizationStep2, params)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -63,7 +66,7 @@ func TestAccVcdVAppVmCustomization(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.#", "0"),
 				),
 			},
-			// Step 1 - Change network configuration and force customization
+			// Step 1 - Update - change network configuration and force customization
 			resource.TestStep{
 				Config: configTextVMUpdateStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -74,6 +77,18 @@ func TestAccVcdVAppVmCustomization(t *testing.T) {
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.#", "1"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.force", "true"),
+				),
+			},
+			// Step 2 - Create new VM and force customization initially
+			resource.TestStep{
+				Config: configTextVMUpdateStep2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm2", &vapp, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm2", "name", netVmName1),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm2", "network.#", "1"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm2", "customization.#", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm2", "customization.0.force", "true"),
 				),
 			},
 		},
@@ -225,6 +240,31 @@ resource "vcd_vapp_vm" "test-vm" {
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
+  }
+
+  customization {
+    force = true
+  }
+}
+`
+
+const testAccCheckVcdVAppVmCustomizationStep2 = testAccCheckVcdVAppVmCustomizationShared + `
+resource "vcd_vapp_vm" "test-vm2" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name     = "${vcd_vapp.test-vapp.name}"
+  name          = "{{.VMName}}"
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  memory        = 512
+  cpus          = 2
+  cpu_cores     = 1
+
+  network {
+    type               = "vapp"
+    name               = "${vcd_vapp_network.vappNet.name}"
+    ip_allocation_mode = "POOL"
   }
 
   customization {
