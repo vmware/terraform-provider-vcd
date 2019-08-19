@@ -23,11 +23,17 @@ data "vcd_catalog_item" "my-first-item" {
 }
 
 resource "vcd_catalog_item" "my-second-item" {
+  # Using the data source, two properties from another catalog items are
+  # used in this resource.
+  # You can read it as "use the org from catalog item `my-first-item`"
+  # and "use the catalog from catalog item `my-first-item`"
   org     = "${data.vcd_catalog_item.my-first-item.org}"
   catalog = "${data.vcd_catalog_item.my-first-item.catalog}"
 
   name                 = "my-second-item"
-  description          = "Belongs to ${data.vcd_catalog_item.my-first-item.name}"
+  # The description uses the data source to create a dynamic text
+  # The description will become "Belongs to my-cat"
+  description          = "Belongs to ${data.vcd_catalog_item.my-first-item.catalog}"
   ova_path             = "/path/to/test_vapp_template.ova"
   upload_piece_size    = 5
   show_upload_progress = "true"
