@@ -249,7 +249,7 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 
 // Imports a CatalogItem into Terraform state
 // This function task is to get the data from vCD and fill the resource data container
-// Expects the d.ID() to be a path to the resource made of Org name + dot + Catalog name
+// Expects the d.ID() to be a path to the resource made of org_name.catalog_name.catalog_item_name
 //
 // Example import path (id): org_name.catalog_name.catalog_item_name
 func resourceVcdCatalogItemImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
