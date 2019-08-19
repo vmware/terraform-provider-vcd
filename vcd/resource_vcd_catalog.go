@@ -91,6 +91,7 @@ func resourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error retrieving catalog %s : %s", d.Id(), err)
 	}
 
+	_ = d.Set("description", catalog.Catalog.Description)
 	d.SetId(catalog.Catalog.ID)
 	log.Printf("[TRACE] Catalog read completed: %#v", catalog.Catalog)
 	return nil

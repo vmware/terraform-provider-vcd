@@ -171,6 +171,7 @@ func resourceVcdCatalogItemRead(d *schema.ResourceData, meta interface{}) error 
 	if err != nil {
 		return err
 	}
+	_ = d.Set("description", catalogItem.CatalogItem.Description)
 	_ = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 	return err
 }
