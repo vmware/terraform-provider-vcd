@@ -182,4 +182,4 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
 * `force` (Optional) This field works as a flag and triggers force customization when `true` during an update 
 (`terraform apply`) every time. It never complains about a change in statefile. It can be used when guest customization
 is needed after a NIC change and then set back to `false`. **Note** this setting will cause a VM reboot and will not
-work when `power_on` field is set to `false`.
+have effect when `power_on` field is set to `false`.
