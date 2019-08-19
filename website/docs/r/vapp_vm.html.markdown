@@ -106,6 +106,9 @@ resource "vcd_vapp_vm" "web2" {
 
 ```
 
+
+## Example Usage with forced customization
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -179,7 +182,8 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
 <a id="customization"></a>
 ## Customization
 
-* `force` (Optional) This field works as a flag and triggers force customization when `true` during an update 
-(`terraform apply`) every time. It never complains about a change in statefile. It can be used when guest customization
-is needed after a NIC change and then set back to `false`. **Note** this setting will cause a VM reboot and will not
-have effect when `power_on` field is set to `false`.
+* `force` (Optional) **Warning.** `true` value will cause the VM to reboot on every `apply` operation.
+This field works as a flag and triggers force customization when `true` during an update 
+(`terraform apply`) every time. It never complains about a change in statefile. Can be used when guest customization
+is needed after VM configuration (e.g. NIC change, customization options change, etc.) and then set back to `false`.
+**Note.** It will not have effect when `power_on` field is set to `false`.
