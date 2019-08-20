@@ -1160,6 +1160,8 @@ func getProductSectionListType(d *schema.ResourceData) (*types.ProductSectionLis
 func setProductSectionListData(d *schema.ResourceData, properties *types.ProductSectionList) error {
 	data := make(map[string]string)
 
+	// if properties object does not have actual properties - set state to empty
+	log.Printf("[TRACE] Setting empty properties into statefile because no properties were specified")
 	if properties == nil || properties.ProductSection == nil || len(properties.ProductSection.Property) == 0 {
 		return d.Set("properties", make(map[string]string))
 	}
