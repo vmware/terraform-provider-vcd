@@ -17,27 +17,29 @@ func deleteCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) error {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	catalog, err := adminOrg.FindCatalog(d.Get("catalog").(string))
-	if err != nil || catalog == (govcd.Catalog{}) {
+	catalog, err := adminOrg.GetCatalogByName(d.Get("catalog").(string), false)
+	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
-		d.SetId("")
-		return nil
+		return fmt.Errorf("unable to find catalog")
 	}
 
-	catalogItem, err := catalog.FindCatalogItem(d.Get("name").(string))
-	if err != nil || catalogItem == (govcd.CatalogItem{}) {
+	catalogItem, err := catalog.GetCatalogItemByName(d.Get("name").(string), false)
+	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog item. Removing from tfstate")
-		d.SetId("")
-		return nil
+		return fmt.Errorf("unable to find catalog item")
 	}
 
 	err = catalogItem.Delete()
 	if err != nil {
-		log.Printf("Error removing catalog item %#v", err)
-		return fmt.Errorf("error removing catalog item %#v", err)
+		log.Printf("[DEBUG] Error removing catalog item %s", err)
+		return fmt.Errorf("error removing catalog item %s", err)
 	}
 
-	log.Printf("[TRACE] Catalog item delete completed: %#v", catalogItem.CatalogItem)
+	catalogItem, err = catalog.GetCatalogItemByName(d.Get("name").(string), true)
+	if catalogItem != nil {
+		return fmt.Errorf("catalog item %s still found after deletion", d.Get("name").(string))
+	}
+	log.Printf("[TRACE] Catalog item delete completed: %s", d.Get("name").(string))
 
 	return nil
 }
@@ -51,29 +53,29 @@ func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.Catal
 		return nil, fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	catalog, err := adminOrg.FindCatalog(d.Get("catalog").(string))
-	if err != nil || catalog == (govcd.Catalog{}) {
+	catalog, err := adminOrg.GetCatalogByName(d.Get("catalog").(string), false)
+	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
 		d.SetId("")
-		return nil, nil
+		return nil, fmt.Errorf("unable to find catalog: %s", err)
 	}
 
-	catalogItem, err := catalog.FindCatalogItem(d.Get("name").(string))
-	if err != nil || catalogItem == (govcd.CatalogItem{}) {
+	catalogItem, err := catalog.GetCatalogItemByName(d.Get("name").(string), false)
+	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog item. Removing from tfstate")
-		d.SetId("")
-		return nil, nil
+		return nil, fmt.Errorf("unable to find catalog item: %s", err)
 	}
 
+	d.SetId(catalogItem.CatalogItem.ID)
 	log.Printf("[TRACE] Catalog item read completed: %#v", catalogItem.CatalogItem)
-	return &catalogItem, nil
+	return catalogItem, nil
 }
 
 func getError(task govcd.UploadTask) error {
 	if task.GetUploadError() != nil {
 		err := task.CancelTask()
 		if err != nil {
-			log.Printf("error cancelling media upload task: %#v", err)
+			log.Printf("[DEBUG] error cancelling media upload task: %#v", err)
 		}
 		return fmt.Errorf("error uploading media: %#v", task.GetUploadError())
 	}

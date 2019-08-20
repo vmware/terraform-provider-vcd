@@ -2,11 +2,18 @@
 
 FEATURES:
 
-* **New Data Source:** `vcd_org` Organization - ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+* **New Data Source:** `vcd_org` Organization - ([#218])
+* **New Data Source:** `vcd_catalog` Catalog - ([#218])
+* **New Data Source:** `vcd_catalog_item` CatalogItem - ([#218])
 
 IMPROVEMENTS:
 
-* `vcd_org` Add import capability
+* `resource/vcd_org` Add import capability
+* `resource/vcd_catalog` Add import capability
+* `resource/vcd_catalog_item` Add import capability
+* `resource/catalog_item` added catalog item metadata support [#285] 
+* `resource/vcd_catalog`: Catalog state ID changed from catalog name to vCD ID 
+* `resource/vcd_catalog_item`: CatalogItem state ID changed from colon separated list of catalog name and item name to vCD ID 
 * `resource/catalog_item` added catalog item metadata support [#298] 
 * `resource/catalog_media` added catalog media item metadata support [#298]
 * Upgrade Terraform SDK dependency to 0.12.6 [#302]

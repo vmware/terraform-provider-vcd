@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -17,7 +18,9 @@ func resourceVcdCatalogItem() *schema.Resource {
 		Delete: resourceVcdCatalogItemDelete,
 		Read:   resourceVcdCatalogItemRead,
 		Update: resourceVcdCatalogItemUpdate,
-
+		Importer: &schema.ResourceImporter{
+			State: resourceVcdCatalogItemImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
@@ -82,9 +85,9 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	catalogName := d.Get("catalog").(string)
-	catalog, err := adminOrg.FindCatalog(catalogName)
-	if err != nil || catalog == (govcd.Catalog{}) {
-		log.Printf("Error finding Catalog: %#v", err)
+	catalog, err := adminOrg.GetCatalogByName(catalogName, false)
+	if err != nil {
+		log.Printf("[DEBUG] Error finding Catalog: %#v", err)
 		return fmt.Errorf("error finding Catalog: %#v", err)
 	}
 
@@ -92,7 +95,7 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 	itemName := d.Get("name").(string)
 	task, err := catalog.UploadOvf(d.Get("ova_path").(string), itemName, d.Get("description").(string), int64(uploadPieceSize)*1024*1024) // Convert from megabytes to bytes
 	if err != nil {
-		log.Printf("Error uploading new catalog item: %#v", err)
+		log.Printf("[DEBUG] Error uploading new catalog item: %#v", err)
 		return fmt.Errorf("error uploading new catalog item: %#v", err)
 	}
 
@@ -137,7 +140,11 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("error waiting for task to complete: %+v", err)
 	}
 
-	d.SetId(catalogName + ":" + itemName)
+	item, err := catalog.GetCatalogItemByName(itemName, true)
+	if err != nil {
+		return fmt.Errorf("error retrieving catalog item %s: %s", itemName, err)
+	}
+	d.SetId(item.CatalogItem.ID)
 
 	log.Printf("[TRACE] Catalog item created: %#v", itemName)
 
@@ -161,7 +168,11 @@ func resourceVcdCatalogItemRead(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	metadata, err := vAppTemplate.GetMetadata()
-	d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+	if err != nil {
+		return err
+	}
+	_ = d.Set("description", catalogItem.CatalogItem.Description)
+	_ = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 	return err
 }
 
@@ -189,14 +200,14 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	catalog, err := adminOrg.FindCatalog(d.Get("catalog").(string))
-	if err != nil || catalog == (govcd.Catalog{}) {
+	catalog, err := adminOrg.GetCatalogByName(d.Get("catalog").(string), false)
+	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog: %s", err)
 		return nil
 	}
 
-	catalogItem, err := catalog.FindCatalogItem(d.Get("name").(string))
-	if err != nil || catalogItem == (govcd.CatalogItem{}) {
+	catalogItem, err := catalog.GetCatalogItemByName(d.Get("name").(string), false)
+	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog item: %s", err)
 		return nil
 	}
@@ -235,4 +246,51 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 		}
 	}
 	return nil
+}
+
+// Imports a CatalogItem into Terraform state
+// This function task is to get the data from vCD and fill the resource data container
+// Expects the d.ID() to be a path to the resource made of org_name.catalog_name.catalog_item_name
+//
+// Example import path (id): org_name.catalog_name.catalog_item_name
+func resourceVcdCatalogItemImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	resourceURI := strings.Split(d.Id(), ".")
+	if len(resourceURI) != 3 {
+		return nil, fmt.Errorf("resource name must be specified as org.catalog.catalog_item")
+	}
+	orgName, catalogName, catalogItemName := resourceURI[0], resourceURI[1], resourceURI[2]
+
+	if orgName == "" {
+		return nil, fmt.Errorf("import: empty org name provided")
+	}
+	if catalogName == "" {
+		return nil, fmt.Errorf("import: empty catalog name provided")
+	}
+	if catalogItemName == "" {
+		return nil, fmt.Errorf("import: empty catalog item name provided")
+	}
+
+	vcdClient := meta.(*VCDClient)
+	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
+	if err != nil {
+		return nil, fmt.Errorf(errorRetrievingOrg, orgName)
+	}
+
+	catalog, err := adminOrg.GetCatalogByName(catalogName, false)
+	if err != nil {
+		return nil, govcd.ErrorEntityNotFound
+	}
+
+	catalogItem, err := catalog.GetCatalogItemByName(catalogItemName, false)
+	if err != nil {
+		return nil, govcd.ErrorEntityNotFound
+	}
+
+	_ = d.Set("org", orgName)
+	_ = d.Set("catalog", catalogName)
+	_ = d.Set("name", catalogItemName)
+	_ = d.Set("description", catalogItem.CatalogItem.Description)
+	d.SetId(catalogItem.CatalogItem.ID)
+
+	return []*schema.ResourceData{d}, nil
 }
