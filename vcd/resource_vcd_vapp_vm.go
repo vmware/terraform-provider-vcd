@@ -353,7 +353,13 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 
 		for key, value := range guestProp {
 			log.Printf("[TRACE] Adding guest property: key=%s, value=%s", key, value)
-			oneProp := &types.Property{Type: "string", Key: key, Value: &types.Value{Value: value}}
+			oneProp := &types.Property{
+				UserConfigurable: true,
+				Type:             "string",
+				Key:              key,
+				Label:            key,
+				DefaultValue:     value,
+			}
 			vmProperties.ProductSection.Property = append(vmProperties.ProductSection.Property, oneProp)
 		}
 
