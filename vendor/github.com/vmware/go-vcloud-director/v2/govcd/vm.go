@@ -598,3 +598,18 @@ func (vm *VM) ToggleHardwareVirtualization(isEnabled bool) (Task, error) {
 	return vm.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPost,
 		"", errMessage, nil)
 }
+
+// SetGuestProperties sets guest properties for a VM
+func (vm *VM) SetGuestProperties(properties *types.ProductSectionList) (*types.ProductSectionList, error) {
+	err := setGuestProperties(vm.client, vm.VM.HREF, properties)
+	if err != nil {
+		return nil, fmt.Errorf("unable to set VM guest properties: %s", err)
+	}
+
+	return vm.GetGuestProperties()
+}
+
+// GetGuestProperties retrieves guest properties for a VM
+func (vm *VM) GetGuestProperties() (*types.ProductSectionList, error) {
+	return getGuestProperties(vm.client, vm.VM.HREF)
+}

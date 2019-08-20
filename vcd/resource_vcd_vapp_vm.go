@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/davecgh/go-spew/spew"
+
 	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
@@ -205,7 +207,6 @@ func resourceVcdVAppVm() *schema.Resource {
 			"properties": {
 				Type:        schema.TypeMap,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Key/value settings for guest properties",
 			},
 		},
@@ -341,26 +342,10 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	if guestProperties, ok := d.GetOk("properties"); ok {
-		guestProp := convertToStringMap(guestProperties.(map[string]interface{}))
-
-		vmProperties := &types.ProductSectionList{
-			ProductSection: &types.ProductSection{
-				Info:     "Custom properties",
-				Property: []*types.Property{},
-			},
-		}
-
-		for key, value := range guestProp {
-			log.Printf("[TRACE] Adding guest property: key=%s, value=%s", key, value)
-			oneProp := &types.Property{
-				UserConfigurable: true,
-				Type:             "string",
-				Key:              key,
-				Label:            key,
-				DefaultValue:     value,
-			}
-			vmProperties.ProductSection.Property = append(vmProperties.ProductSection.Property, oneProp)
+	if _, ok := d.GetOk("properties"); ok {
+		vmProperties, err := getProductSectionListType(d)
+		if err != nil {
+			return fmt.Errorf("unable to convert guest properties to data structure")
 		}
 
 		log.Printf("[TRACE] Setting VM guest properties")
@@ -538,6 +523,19 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 	status, err := vm.GetStatus()
 	if err != nil {
 		return fmt.Errorf("error getting VM status: %#v", err)
+	}
+
+	if d.HasChange("properties") {
+		vmProperties, err := getProductSectionListType(d)
+		if err != nil {
+			return fmt.Errorf("unable to convert guest properties to data structure")
+		}
+
+		log.Printf("[TRACE] Updating VM guest properties")
+		_, err = vm.SetGuestProperties(vmProperties)
+		if err != nil {
+			return fmt.Errorf("error setting guest properties: %s", err)
+		}
 	}
 
 	// VM does not have to be in POWERED_OFF state for metadata operations
@@ -783,6 +781,17 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 
 	d.Set("href", vm.VM.HREF)
 	d.Set("expose_hardware_virtualization", vm.VM.NestedHypervisorEnabled)
+
+	// update guest properties
+	guestProperties, err := vm.GetGuestProperties()
+	if err != nil {
+		return fmt.Errorf("unable to read guest properties: %s", err)
+	}
+
+	err = setProductSectionListData(d, guestProperties)
+	if err != nil {
+		return fmt.Errorf("unable to set guest properties in state: %s", err)
+	}
 
 	err = updateStateOfAttachedDisks(d, vm, vdc)
 	if err != nil {
@@ -1120,4 +1129,51 @@ func readNetworks(vm govcd.VM, vapp govcd.VApp) ([]map[string]interface{}, error
 		nets = append(nets, singleNIC)
 	}
 	return nets, nil
+}
+
+// getProductSectionListType returns a struct for setting guest properties
+func getProductSectionListType(d *schema.ResourceData) (*types.ProductSectionList, error) {
+	guestProperties := d.Get("properties")
+	guestProp := convertToStringMap(guestProperties.(map[string]interface{}))
+	vmProperties := &types.ProductSectionList{
+		ProductSection: &types.ProductSection{
+			Info:     "Custom properties",
+			Property: []*types.Property{},
+		},
+	}
+	for key, value := range guestProp {
+		log.Printf("[TRACE] Adding guest property: key=%s, value=%s", key, value)
+		oneProp := &types.Property{
+			UserConfigurable: true,
+			Type:             "string",
+			Key:              key,
+			Label:            key,
+			Value:            &types.Value{Value: value},
+		}
+		vmProperties.ProductSection.Property = append(vmProperties.ProductSection.Property, oneProp)
+	}
+
+	return vmProperties, nil
+}
+
+// setProductSectionListData sets guest properties into state
+func setProductSectionListData(d *schema.ResourceData, properties *types.ProductSectionList) error {
+	data := make(map[string]string)
+
+	if properties == nil || properties.ProductSection == nil || len(properties.ProductSection.Property) == 0 {
+		return d.Set("properties", make(map[string]string))
+	}
+
+	log.Printf("[TRACE] %s", spew.Sdump(properties))
+	for _, prop := range properties.ProductSection.Property {
+		// if a value was set - use it
+		if prop.Value != nil {
+			data[prop.Key] = prop.Value.Value
+		} else { // fallback to default value for field
+			data[prop.Key] = prop.DefaultValue
+		}
+	}
+
+	log.Printf("[TRACE] Setting properties into statefile")
+	return d.Set("properties", data)
 }

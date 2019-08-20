@@ -537,6 +537,9 @@ func (vapp *VApp) ChangeVMName(name string) (Task, error) {
 		types.MimeVM, "error changing VM name: %s", newName)
 }
 
+// SetOvf sets guest properties for the first child VM in vApp
+//
+// Deprecated: Use vm.SetGuestProperties()
 func (vapp *VApp) SetOvf(parameters map[string]string) (Task, error) {
 	err := vapp.Refresh()
 	if err != nil {
@@ -833,4 +836,19 @@ func updateNetworkConfigurations(vapp *VApp, networkConfigurations []types.VAppN
 // Function RemoveAllNetworks unattach all networks from VAPP
 func (vapp *VApp) RemoveAllNetworks() (Task, error) {
 	return updateNetworkConfigurations(vapp, []types.VAppNetworkConfiguration{})
+}
+
+// SetGuestProperties sets guest properties for a vApp
+func (vapp *VApp) SetGuestProperties(properties *types.ProductSectionList) (*types.ProductSectionList, error) {
+	err := setGuestProperties(vapp.client, vapp.VApp.HREF, properties)
+	if err != nil {
+		return nil, fmt.Errorf("unable to set vApp guest properties: %s", err)
+	}
+
+	return vapp.GetGuestProperties()
+}
+
+// GetGuestProperties retrieves guest properties for a vApp
+func (vapp *VApp) GetGuestProperties() (*types.ProductSectionList, error) {
+	return getGuestProperties(vapp.client, vapp.VApp.HREF)
 }

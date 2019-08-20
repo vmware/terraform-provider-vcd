@@ -1,6 +1,7 @@
 package vcd
 
 import (
+	"time"
 	"fmt"
 	"log"
 	"regexp"
@@ -99,6 +100,11 @@ func resourceVcdVApp() *schema.Resource {
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  true,
+			},
+			"properties": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "Key/value settings for guest properties",
 			},
 		},
 	}
@@ -249,6 +255,26 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	if _, ok := d.GetOk("properties"); ok {
+		// TODO - this is just for testing. Real issue must be solved
+		time.Sleep(10 * time.Second)
+		vapp, err := vdc.FindVAppByName(d.Get("name").(string))
+		if err != nil {
+			return fmt.Errorf("unable to find vApp by name %s: %s", d.Get("name").(string), err)
+		}
+
+		vappProperties, err := getProductSectionListType(d)
+		if err != nil {
+			return fmt.Errorf("unable to convert guest properties to data structure")
+		}
+
+		log.Printf("[TRACE] Setting vApp guest properties")
+		_, err = vapp.SetGuestProperties(vappProperties)
+		if err != nil {
+			return fmt.Errorf("error setting guest properties: %s", err)
+		}
+	}
+
 	d.SetId(d.Get("name").(string))
 
 	return resourceVcdVAppUpdate(d, meta)
@@ -271,6 +297,19 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	status, err := vapp.GetStatus()
 	if err != nil {
 		return fmt.Errorf("error getting VApp status: %#v", err)
+	}
+
+	if d.HasChange("properties") {
+		vappProperties, err := getProductSectionListType(d)
+		if err != nil {
+			return fmt.Errorf("unable to convert guest properties to data structure")
+		}
+
+		log.Printf("[TRACE] Updating vApp guest properties")
+		_, err = vapp.SetGuestProperties(vappProperties)
+		if err != nil {
+			return fmt.Errorf("error setting guest properties: %s", err)
+		}
 	}
 
 	if d.HasChange("metadata") {
@@ -400,7 +439,7 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	_, err = vdc.FindVAppByName(d.Id())
+	vapp, err := vdc.FindVAppByName(d.Id())
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find vApp. Removing from tfstate")
 		d.SetId("")
@@ -427,6 +466,17 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 		d.Set("ip", ip)
 	} else {
 		d.Set("ip", "allocated")
+	}
+
+	// update guest properties
+	guestProperties, err := vapp.GetGuestProperties()
+	if err != nil {
+		return fmt.Errorf("unable to read guest properties: %s", err)
+	}
+
+	err = setProductSectionListData(d, guestProperties)
+	if err != nil {
+		return fmt.Errorf("unable to set guest properties in state: %s", err)
 	}
 
 	return nil

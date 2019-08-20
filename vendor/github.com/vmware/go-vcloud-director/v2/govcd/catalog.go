@@ -28,20 +28,6 @@ const (
 	defaultPieceSize int64 = 1024 * 1024
 )
 
-type CatalogOperations interface {
-	FindCatalogItem(catalogItem string) (CatalogItem, error)
-}
-
-// AdminCatalog is a admin view of a vCloud Director Catalog
-// To be able to get an AdminCatalog representation, users must have
-// admin credentials to the System org. AdminCatalog is used
-// for creating, updating, and deleting a Catalog.
-// Definition: https://code.vmware.com/apis/220/vcloud#/doc/doc/types/AdminCatalogType.html
-type AdminCatalog struct {
-	AdminCatalog *types.AdminCatalog
-	client       *Client
-}
-
 type Catalog struct {
 	Catalog *types.Catalog
 	client  *Client
@@ -51,13 +37,6 @@ func NewCatalog(client *Client) *Catalog {
 	return &Catalog{
 		Catalog: new(types.Catalog),
 		client:  client,
-	}
-}
-
-func NewAdminCatalog(client *Client) *AdminCatalog {
-	return &AdminCatalog{
-		AdminCatalog: new(types.AdminCatalog),
-		client:       client,
 	}
 }
 
@@ -89,36 +68,6 @@ func (catalog *Catalog) Delete(force, recursive bool) error {
 	return nil
 }
 
-// Deletes the Catalog, returning an error if the vCD call fails.
-// Link to API call: https://code.vmware.com/apis/220/vcloud#/doc/doc/operations/DELETE-Catalog.html
-func (adminCatalog *AdminCatalog) Delete(force, recursive bool) error {
-	catalog := NewCatalog(adminCatalog.client)
-	catalog.Catalog = &adminCatalog.AdminCatalog.Catalog
-	return catalog.Delete(force, recursive)
-}
-
-//   Updates the Catalog definition from current Catalog struct contents.
-//   Any differences that may be legally applied will be updated.
-//   Returns an error if the call to vCD fails. Update automatically performs
-//   a refresh with the admin catalog it gets back from the rest api
-//   Link to API call: https://code.vmware.com/apis/220/vcloud#/doc/doc/operations/PUT-Catalog.html
-func (adminCatalog *AdminCatalog) Update() error {
-	reqCatalog := &types.Catalog{
-		Name:        adminCatalog.AdminCatalog.Catalog.Name,
-		Description: adminCatalog.AdminCatalog.Description,
-	}
-	vcomp := &types.AdminCatalog{
-		Xmlns:       types.XMLNamespaceVCloud,
-		Catalog:     *reqCatalog,
-		IsPublished: adminCatalog.AdminCatalog.IsPublished,
-	}
-	catalog := &types.AdminCatalog{}
-	_, err := adminCatalog.client.ExecuteRequest(adminCatalog.AdminCatalog.HREF, http.MethodPut,
-		"application/vnd.vmware.admin.catalog+xml", "error updating catalog: %s", vcomp, catalog)
-	adminCatalog.AdminCatalog = catalog
-	return err
-}
-
 // Envelope is a ovf description root element. File contains information for vmdk files.
 // Namespace: http://schemas.dmtf.org/ovf/envelope/1
 // Description: Envelope is a ovf description root element. File contains information for vmdk files..
@@ -135,6 +84,7 @@ type Envelope struct {
 // then the function returns a CatalogItem. If the item does not
 // exist, then it returns an empty CatalogItem. If the call fails
 // at any point, it returns an error.
+// Deprecated: use GetCatalogItemByName instead
 func (cat *Catalog) FindCatalogItem(catalogItemName string) (CatalogItem, error) {
 	for _, catalogItems := range cat.Catalog.CatalogItems {
 		for _, catalogItem := range catalogItems.CatalogItem {
@@ -150,16 +100,6 @@ func (cat *Catalog) FindCatalogItem(catalogItemName string) (CatalogItem, error)
 	}
 
 	return CatalogItem{}, nil
-}
-
-// Uploads an ova file to a catalog. This method only uploads bits to vCD spool area.
-// Returns errors if any occur during upload from vCD or upload process. On upload fail client may need to
-// remove vCD catalog item which waits for files to be uploaded. Files from ova are extracted to system
-// temp folder "govcd+random number" and left for inspection on error.
-func (adminCatalog *AdminCatalog) UploadOvf(ovaFileName, itemName, description string, uploadPieceSize int64) (UploadTask, error) {
-	catalog := NewCatalog(adminCatalog.client)
-	catalog.Catalog = &adminCatalog.AdminCatalog.Catalog
-	return catalog.UploadOvf(ovaFileName, itemName, description, uploadPieceSize)
 }
 
 // Uploads an ova file to a catalog. This method only uploads bits to vCD spool area.
@@ -415,7 +355,7 @@ func queryVappTemplate(client *Client, vappTemplateUrl *url.URL, newItemName str
 	}
 
 	for _, task := range vappTemplateParsed.Tasks.Task {
-		if "error" == task.Status && newItemName == task.Owner.Name {
+		if task.Status == "error" && newItemName == task.Owner.Name {
 			util.Logger.Printf("[Error] %#v", task.Error)
 			return vappTemplateParsed, fmt.Errorf("error in vcd returned error code: %d, error: %s and message: %s ", task.Error.MajorErrorCode, task.Error.MinorErrorCode, task.Error.Message)
 		}
@@ -717,4 +657,90 @@ func (cat *Catalog) UploadMediaImage(mediaName, mediaDescription, filePath strin
 	}
 
 	return executeUpload(cat.client, createdMedia, mediaFilePath, mediaName, fileSize, uploadPieceSize)
+}
+
+// Refresh gets a fresh copy of the catalog from vCD
+func (cat *Catalog) Refresh() error {
+	if cat == nil || *cat == (Catalog{}) || cat.Catalog.HREF == "" {
+		return fmt.Errorf("cannot refresh, Object is empty or HREF is empty")
+	}
+
+	refreshedCatalog := &types.Catalog{}
+
+	_, err := cat.client.ExecuteRequest(cat.Catalog.HREF, http.MethodGet,
+		"", "error refreshing VDC: %s", nil, refreshedCatalog)
+	if err != nil {
+		return err
+	}
+	cat.Catalog = refreshedCatalog
+
+	return nil
+}
+
+// GetCatalogItemByHref finds a CatalogItem by HREF
+// On success, returns a pointer to the CatalogItem structure and a nil error
+// On failure, returns a nil pointer and an error
+func (cat *Catalog) GetCatalogItemByHref(catalogItemHref string) (*CatalogItem, error) {
+
+	catItem := NewCatalogItem(cat.client)
+
+	_, err := cat.client.ExecuteRequest(catalogItemHref, http.MethodGet,
+		"", "error retrieving catalog: %s", nil, catItem.CatalogItem)
+	if err != nil {
+		return nil, err
+	}
+	return catItem, nil
+}
+
+// GetCatalogItemByName finds a CatalogItem by Name
+// On success, returns a pointer to the CatalogItem structure and a nil error
+// On failure, returns a nil pointer and an error
+func (cat *Catalog) GetCatalogItemByName(catalogItemName string, refresh bool) (*CatalogItem, error) {
+	if refresh {
+		err := cat.Refresh()
+		if err != nil {
+			return nil, err
+		}
+	}
+	for _, catalogItems := range cat.Catalog.CatalogItems {
+		for _, catalogItem := range catalogItems.CatalogItem {
+			if catalogItem.Name == catalogItemName && catalogItem.Type == "application/vnd.vmware.vcloud.catalogItem+xml" {
+				return cat.GetCatalogItemByHref(catalogItem.HREF)
+			}
+		}
+	}
+	return nil, ErrorEntityNotFound
+}
+
+// GetCatalogItemById finds a Catalog Item by ID
+// On success, returns a pointer to the CatalogItem structure and a nil error
+// On failure, returns a nil pointer and an error
+func (cat *Catalog) GetCatalogItemById(catalogItemId string, refresh bool) (*CatalogItem, error) {
+	if refresh {
+		err := cat.Refresh()
+		if err != nil {
+			return nil, err
+		}
+	}
+	for _, catalogItems := range cat.Catalog.CatalogItems {
+		for _, catalogItem := range catalogItems.CatalogItem {
+			if equalIds(catalogItemId, catalogItem.ID, catalogItem.HREF) && catalogItem.Type == "application/vnd.vmware.vcloud.catalogItem+xml" {
+				return cat.GetCatalogItemByHref(catalogItem.HREF)
+			}
+		}
+	}
+	return nil, ErrorEntityNotFound
+}
+
+// GetCatalogItemByNameOrId finds a Catalog Item by Name or ID
+// On success, returns a pointer to the CatalogItem structure and a nil error
+// On failure, returns a nil pointer and an error
+func (cat *Catalog) GetCatalogItemByNameOrId(identifier string, refresh bool) (*CatalogItem, error) {
+	getByName := func(name string, refresh bool) (interface{}, error) { return cat.GetCatalogItemByName(name, refresh) }
+	getById := func(id string, refresh bool) (interface{}, error) { return cat.GetCatalogItemById(id, refresh) }
+	entity, err := getEntityByNameOrId(getByName, getById, identifier, refresh)
+	if entity == nil {
+		return nil, err
+	}
+	return entity.(*CatalogItem), err
 }

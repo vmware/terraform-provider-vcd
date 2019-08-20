@@ -13,7 +13,7 @@ func init() {
 	testingTags["vm"] = "resource_vcd_vapp_vm_properties_test.go"
 }
 
-func TestAccVcdVAppVm_Properties(t *testing.T) {
+func TestAccVcdVAppVmProperties(t *testing.T) {
 	var vapp govcd.VApp
 	var vm govcd.VM
 
@@ -29,6 +29,13 @@ func TestAccVcdVAppVm_Properties(t *testing.T) {
 	}
 
 	configText := templateFill(testAccCheckVcdVAppVm_properties, params)
+
+	params["FuncName"] = t.Name() + "-step1"
+	configText1 := templateFill(testAccCheckVcdVAppVm_propertiesUpdate, params)
+
+	params["FuncName"] = t.Name() + "-step2"
+	configText2 := templateFill(testAccCheckVcdVAppVm_propertiesRemove, params)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -47,6 +54,24 @@ func TestAccVcdVAppVm_Properties(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "name", vmName),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, `properties.guest.hostname`, "test-host"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, `properties.guest.another.subkey`, "another-value"),
+				),
+			},
+			resource.TestStep{
+				Config: configText1,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdVAppVmExists(vappName2, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "name", vmName),
+					resource.TestCheckNoResourceAttr("vcd_vapp_vm."+vmName, `properties.guest.hostname`),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, `properties.guest.another.subkey`, "new-value"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, `properties.guest.third.subkey`, "third-value"),
+				),
+			},
+			resource.TestStep{
+				Config: configText2,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdVAppVmExists(vappName2, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "name", vmName),
+					resource.TestCheckNoResourceAttr("vcd_vapp_vm."+vmName, `properties`),
 				),
 			},
 		},
@@ -75,5 +100,50 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
 	"guest.hostname"       = "test-host"
 	"guest.another.subkey" = "another-value"
   }
+}
+`
+
+const testAccCheckVcdVAppVm_propertiesUpdate = `
+resource "vcd_vapp" "{{.VappName}}" {
+  name = "{{.VappName}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+}
+
+resource "vcd_vapp_vm" "{{.VmName}}" {
+  org           = "{{.Org}}"
+  vdc           = "{{.Vdc}}"
+  vapp_name     = "${vcd_vapp.{{.VappName}}.name}"
+  name          = "{{.VmName}}"
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  memory        = 512
+  cpus          = 2
+  cpu_cores     = 1
+
+  properties = {
+	"guest.another.subkey" = "new-value"
+	"guest.third.subkey"   = "third-value"
+  }
+}
+`
+
+const testAccCheckVcdVAppVm_propertiesRemove = `
+resource "vcd_vapp" "{{.VappName}}" {
+  name = "{{.VappName}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+}
+
+resource "vcd_vapp_vm" "{{.VmName}}" {
+  org           = "{{.Org}}"
+  vdc           = "{{.Vdc}}"
+  vapp_name     = "${vcd_vapp.{{.VappName}}.name}"
+  name          = "{{.VmName}}"
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  memory        = 512
+  cpus          = 2
+  cpu_cores     = 1
 }
 `
