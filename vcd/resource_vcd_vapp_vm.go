@@ -528,7 +528,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 	}
 
 	// Check if the user requested for forced customization of VM
-	customizationNeeded := isForcedConfiguration(d.Get("customization"))
+	customizationNeeded := isForcedCustomization(d.Get("customization"))
 
 	// VM does not have to be in POWERED_OFF state for metadata operations
 	if d.HasChange("metadata") {
@@ -1178,9 +1178,9 @@ func readNetworks(vm govcd.VM, vapp govcd.VApp) ([]map[string]interface{}, error
 	return nets, nil
 }
 
-// isForcedConfiguration checks "customization" block in resource and checks if the value of field "force"
+// isForcedCustomization checks "customization" block in resource and checks if the value of field "force"
 // is set to "true". It returns false if the value is not set or is set to false
-func isForcedConfiguration(customizationBlock interface{}) bool {
+func isForcedCustomization(customizationBlock interface{}) bool {
 	customizationSlice := customizationBlock.([]interface{})
 
 	if len(customizationSlice) != 1 {
