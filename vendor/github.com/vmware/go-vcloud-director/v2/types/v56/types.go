@@ -322,7 +322,7 @@ type InstantiationParams struct {
 // Since: 5.1
 type OrgVDCNetwork struct {
 	XMLName       xml.Name              `xml:"OrgVdcNetwork"`
-	Xmlns         string                `xml:"xmlns,attr,imitempty"`
+	Xmlns         string                `xml:"xmlns,attr,omitempty"`
 	HREF          string                `xml:"href,attr,omitempty"`
 	Type          string                `xml:"type,attr,omitempty"`
 	ID            string                `xml:"id,attr,omitempty"`
@@ -2333,18 +2333,17 @@ type VimObjectRefs struct {
 // Since: 1.0
 type ExternalNetwork struct {
 	XMLName          xml.Name              `xml:"VMWExternalNetwork"`
-	Xmlns            string                `xml:"xmlns,attr,omitempty"`
-	XmlnsVCloud      string                `xml:"xmlns:vcloud,attr,omitempty"`
 	HREF             string                `xml:"href,attr,omitempty"`
 	Type             string                `xml:"type,attr,omitempty"`
 	ID               string                `xml:"id,attr,omitempty"`
 	OperationKey     string                `xml:"operationKey,attr,omitempty"`
 	Name             string                `xml:"name,attr"`
-	Description      string                `xml:"vcloud:Description,omitempty"`
-	Configuration    *NetworkConfiguration `xml:"Configuration,omitempty"`
 	Link             []*Link               `xml:"Link,omitempty"`
-	VimPortGroupRefs *VimObjectRefs        `xml:"VimPortGroupRefs,omitempty"`
+	Description      string                `xml:"Description,omitempty"`
 	Tasks            *TasksInProgress      `xml:"Tasks,omitempty"`
+	Configuration    *NetworkConfiguration `xml:"Configuration,omitempty"`
+	VimPortGroupRef  *VimObjectRef         `xml:"VimPortGroupRef,omitempty"`
+	VimPortGroupRefs *VimObjectRefs        `xml:"VimPortGroupRefs,omitempty"`
 	VCloudExtension  *VCloudExtension      `xml:"VCloudExtension,omitempty"`
 }
 

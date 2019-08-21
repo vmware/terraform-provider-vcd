@@ -8,7 +8,6 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
 var TestAccVcdVdc = "TestAccVcdVdcBasic"
@@ -97,8 +96,6 @@ func validateConfiguration(t *testing.T) {
 
 func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 
-	var vdc govcd.Vdc
-
 	if !usingSysAdmin() {
 		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
 		return
@@ -121,7 +118,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVdcExists("vcd_org_vdc."+TestAccVcdVdc, &vdc),
+					testAccCheckVcdVdcExists("vcd_org_vdc."+TestAccVcdVdc),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "name", TestAccVcdVdc),
 					resource.TestCheckResourceAttr(
@@ -149,7 +146,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 			resource.TestStep{
 				Config: updateText,
 				Check: resource.ComposeTestCheckFunc(
-					testVcdVdcUpdated("vcd_org_vdc."+TestAccVcdVdc, &vdc),
+					testVcdVdcUpdated("vcd_org_vdc."+TestAccVcdVdc),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "name", TestAccVcdVdc),
 					resource.TestCheckResourceAttr(
@@ -184,7 +181,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 	})
 }
 
-func testAccCheckVcdVdcExists(name string, vdc *govcd.Vdc) resource.TestCheckFunc {
+func testAccCheckVcdVdcExists(name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[name]
 		if !ok {
@@ -202,17 +199,16 @@ func testAccCheckVcdVdcExists(name string, vdc *govcd.Vdc) resource.TestCheckFun
 			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
 		}
 
-		newVdc, err := adminOrg.GetVdcByName(rs.Primary.Attributes["name"])
+		_, err = adminOrg.GetVDCByName(rs.Primary.Attributes["name"], false)
 		if err != nil {
-			return fmt.Errorf("vdc %s does not exist (%#v)", rs.Primary.Attributes["name"], newVdc)
+			return fmt.Errorf("vdc %s does not exist (%s)", rs.Primary.Attributes["name"], err)
 		}
 
-		vdc = &newVdc
 		return nil
 	}
 }
 
-func testVcdVdcUpdated(name string, vdc *govcd.Vdc) resource.TestCheckFunc {
+func testVcdVdcUpdated(name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[name]
 		if !ok {
@@ -230,16 +226,14 @@ func testVcdVdcUpdated(name string, vdc *govcd.Vdc) resource.TestCheckFunc {
 			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
 		}
 
-		updateVdc, err := adminOrg.GetVdcByName(rs.Primary.Attributes["name"])
+		updateVdc, err := adminOrg.GetVDCByName(rs.Primary.Attributes["name"], false)
 		if err != nil {
-			return fmt.Errorf("vdc %s does not exist (%#v)", rs.Primary.Attributes["name"], updateVdc)
+			return fmt.Errorf("vdc %s does not exist (%s)", rs.Primary.Attributes["name"], err)
 		}
 
 		if updateVdc.Vdc.IsEnabled != false {
 			return fmt.Errorf("VDC update failed - VDC still enabled")
 		}
-
-		vdc = &updateVdc
 		return nil
 	}
 }
@@ -256,15 +250,11 @@ func testAccCheckVdcDestroy(s *terraform.State) error {
 			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
 		}
 
-		vdc, err := adminOrg.GetVdcByName(rs.Primary.ID)
+		_, err = adminOrg.GetVDCByName(rs.Primary.ID, false)
 
-		if vdc != (govcd.Vdc{}) {
+		if err == nil {
 			return fmt.Errorf("vdc %s still exists", rs.Primary.ID)
 		}
-		if err != nil {
-			return fmt.Errorf("vdc %s still exists or other error: %#v", rs.Primary.ID, err)
-		}
-
 	}
 
 	return nil

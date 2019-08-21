@@ -69,7 +69,7 @@ func testAccCheckVcdExternalNetworkExists(name string, externalNetwork *govcd.Ex
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
-		newExternalNetwork, err := govcd.GetExternalNetwork(conn.VCDClient, rs.Primary.ID)
+		newExternalNetwork, err := conn.GetExternalNetworkByNameOrId(rs.Primary.ID)
 		if err != nil {
 			return fmt.Errorf("external network %s does not exist (%#v)", rs.Primary.ID, err)
 		}
@@ -86,7 +86,7 @@ func testAccCheckExternalNetworkDestroy(s *terraform.State) error {
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
-		_, err := govcd.GetExternalNetwork(conn.VCDClient, rs.Primary.ID)
+		_, err := conn.GetExternalNetworkByNameOrId(rs.Primary.ID)
 		if err == nil {
 			return fmt.Errorf("external network %s still exists", rs.Primary.ID)
 		}

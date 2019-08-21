@@ -279,13 +279,13 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	catalog, err := org.FindCatalog(d.Get("catalog_name").(string))
-	if err != nil || catalog == (govcd.Catalog{}) {
-		return fmt.Errorf("error finding catalog: %s", d.Get("catalog_name").(string))
+	catalog, err := org.GetCatalogByName(d.Get("catalog_name").(string), false)
+	if err != nil {
+		return fmt.Errorf("error finding catalog %s: %s", d.Get("catalog_name").(string), err)
 	}
 
-	catalogItem, err := catalog.FindCatalogItem(d.Get("template_name").(string))
-	if err != nil || catalogItem == (govcd.CatalogItem{}) {
+	catalogItem, err := catalog.GetCatalogItemByName(d.Get("template_name").(string), false)
+	if err != nil {
 		return fmt.Errorf("error finding catalog item: %#v", err)
 	}
 
@@ -305,10 +305,10 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	// TODO v3.0 remove else branch once 'network_name', 'vapp_network_name', 'ip' are deprecated
 	networkConnectionSection := types.NetworkConnectionSection{}
 	if len(d.Get("network").([]interface{})) > 0 {
-		networkConnectionSection, err = networksToConfig(d.Get("network").([]interface{}), vdc, vapp, vcdClient)
+		networkConnectionSection, err = networksToConfig(d.Get("network").([]interface{}), *vdc, vapp, vcdClient)
 	} else {
 		networkConnectionSection, err = deprecatedNetworksToConfig(d.Get("network_name").(string),
-			d.Get("vapp_network_name").(string), d.Get("ip").(string), vdc, vapp, vcdClient)
+			d.Get("vapp_network_name").(string), d.Get("ip").(string), *vdc, vapp, vcdClient)
 	}
 	if err != nil {
 		return fmt.Errorf("unable to process network configuration: %s", err)
@@ -362,7 +362,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	// TODO do not trigger resourceVcdVAppVmUpdate from create. These must be separate actions.
 	err = resourceVcdVAppVmUpdateExecute(d, meta)
 	if err != nil {
-		errAttachedDisk := updateStateOfAttachedDisks(d, vm, vdc)
+		errAttachedDisk := updateStateOfAttachedDisks(d, vm, *vdc)
 		if errAttachedDisk != nil {
 			d.Set("disk", nil)
 			return fmt.Errorf("error reading attached disks : %#v and internal error : %#v", errAttachedDisk, err)
@@ -602,9 +602,9 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 
 		// detaching independent disks - only possible when VM power off
 		if d.HasChange("disk") {
-			err = attachDetachDisks(d, vm, vdc)
+			err = attachDetachDisks(d, vm, *vdc)
 			if err != nil {
-				errAttachedDisk := updateStateOfAttachedDisks(d, vm, vdc)
+				errAttachedDisk := updateStateOfAttachedDisks(d, vm, *vdc)
 				if errAttachedDisk != nil {
 					d.Set("disk", nil)
 					return fmt.Errorf("error reading attached disks : %#v and internal error : %#v", errAttachedDisk, err)
@@ -839,7 +839,7 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("href", vm.VM.HREF)
 	d.Set("expose_hardware_virtualization", vm.VM.NestedHypervisorEnabled)
 
-	err = updateStateOfAttachedDisks(d, vm, vdc)
+	err = updateStateOfAttachedDisks(d, vm, *vdc)
 	if err != nil {
 		d.Set("disk", nil)
 		return fmt.Errorf("error reading attached disks : %#v", err)
