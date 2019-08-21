@@ -107,10 +107,11 @@ resource "vcd_vapp_vm" "web2" {
 ```
 
 
-## Example Usage with forced customization
+## Example forced customization workflow
 
-Step 1 - setup VM
-```
+Step 1 - Setup VM:
+
+```hcl
 resource "vcd_vapp_vm" "web2" {
   vapp_name     = "${vcd_vapp.web.name}"
   name          = "web2"
@@ -124,41 +125,43 @@ resource "vcd_vapp_vm" "web2" {
     name               = "net"
     ip                 = "10.10.104.162"
     ip_allocation_mode = "MANUAL"
-    is_primary         = true
   }
-
 }
 ```
 
-Step 2 - change network configuration and force customization
-```
+Step 2 - Change VM configuration and force customization (VM will be rebooted during
+`terraform apply`):
+
+```hcl
 resource "vcd_vapp_vm" "web2" {
-  vapp_name     = "${vcd_vapp.web.name}"
-  name          = "web2"
-  catalog_name  = "Boxes"
-  template_name = "lampstack-1.10.1-ubuntu-10.04"
-  memory        = 2048
-  cpus          = 1
-
+...
   network {
     type               = "org"
     name               = "net"
-    ip                 = "10.10.104.162"
-    ip_allocation_mode = "MANUAL"
-    is_primary         = true
-  }
-
-  network {
-    type               = "org"
-    name               = "net"
-    ip                 = "10.10.108.162"
-    ip_allocation_mode = "MANUAL"
+    ip_allocation_mode = "DHCP"
   }
 
   customization {
     force = true
   }
+}
+```
 
+Step 3 - Once customization is done, set the force customization flag to false (or remove it) to
+prevent forcing customization on every `terraform apply` command:
+
+```hcl
+resource "vcd_vapp_vm" "web2" {
+...
+  network {
+    type               = "org"
+    name               = "net"
+    ip_allocation_mode = "DHCP"
+  }
+
+  customization {
+    force = false
+  }
 }
 ```
 
@@ -239,4 +242,4 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
 This field works as a flag and triggers force customization when `true` during an update 
 (`terraform apply`) every time. It never complains about a change in statefile. Can be used when guest customization
 is needed after VM configuration (e.g. NIC change, customization options change, etc.) and then set back to `false`.
-**Note.** It will not have effect when `power_on` field is set to `false`.
+**Note.** It will not have effect when `power_on` field is set to `false`. See [example workflow above](#example-forced-customization-workflow).
