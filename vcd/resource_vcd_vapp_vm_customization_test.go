@@ -11,12 +11,12 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
-// TestAccVcdVAppVmCustomization tests that setting attribute customizaton.force to `true` triggers VM customization
-// and waits until it is completed.
+// TestAccVcdVAppVmUpdateCustomization tests that setting attribute customizaton.force to `true`
+// during update triggers VM customization and waits until it is completed.
 // It is important to wait until the operation is completed to test what VM was properly handled before triggering
 // power on and force customization. (VM must be un-deployed for customization to work, otherwise it would stay in
 // "GC_PENDING" state for long time)
-func TestAccVcdVAppVmCustomization(t *testing.T) {
+func TestAccVcdVAppVmUpdateCustomization(t *testing.T) {
 	var (
 		vapp        govcd.VApp
 		vm          govcd.VM
@@ -35,21 +35,17 @@ func TestAccVcdVAppVmCustomization(t *testing.T) {
 		"Tags":        "vapp vm",
 	}
 
-	configTextVM := templateFill(testAccCheckVcdVAppVmCustomization, params)
+	configTextVM := templateFill(testAccCheckVcdVAppVmUpdateCustomization, params)
 
 	params["FuncName"] = t.Name() + "-step1"
-	configTextVMUpdateStep1 := templateFill(testAccCheckVcdVAppVmCustomizationStep1, params)
-
-	params["FuncName"] = t.Name() + "-step2"
-	configTextVMUpdateStep2 := templateFill(testAccCheckVcdVAppVmCustomizationStep2, params)
-
+	configTextVMUpdateStep1 := templateFill(testAccCheckVcdVAppVmUpdateCustomizationStep1, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckVcdVAppVmDestroy(netVappName),
@@ -79,7 +75,47 @@ func TestAccVcdVAppVmCustomization(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.force", "true"),
 				),
 			},
-			// Step 2 - Create new VM and force customization initially
+		},
+	})
+}
+
+// TestAccVcdVAppVmCreateCustomization tests that setting attribute customizaton.force to `true`
+// during create triggers VM customization and waits until it is completed.
+// It is important to wait until the operation is completed to test what VM was properly handled before triggering
+// power on and force customization. (VM must be un-deployed for customization to work, otherwise it would stay in
+// "GC_PENDING" state for long time)
+func TestAccVcdVAppVmCreateCustomization(t *testing.T) {
+	var (
+		vapp        govcd.VApp
+		vm          govcd.VM
+		netVappName string = t.Name()
+		netVmName1  string = t.Name() + "VM"
+	)
+
+	var params = StringMap{
+		"Org":         testConfig.VCD.Org,
+		"Vdc":         testConfig.VCD.Vdc,
+		"EdgeGateway": testConfig.Networking.EdgeGateway,
+		"Catalog":     testSuiteCatalogName,
+		"CatalogItem": testSuiteCatalogOVAItem,
+		"VAppName":    netVappName,
+		"VMName":      netVmName1,
+		"Tags":        "vapp vm",
+	}
+
+	configTextVMUpdateStep2 := templateFill(testAccCheckVcdVAppVmCreateCustomization, params)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVcdVAppVmDestroy(netVappName),
+		Steps: []resource.TestStep{
+			// Step 0 - Create new VM and force customization initially
 			resource.TestStep{
 				Config: configTextVMUpdateStep2,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -197,7 +233,7 @@ resource "vcd_vapp_network" "vappNet" {
 }
 `
 
-const testAccCheckVcdVAppVmCustomization = testAccCheckVcdVAppVmCustomizationShared + `
+const testAccCheckVcdVAppVmUpdateCustomization = testAccCheckVcdVAppVmCustomizationShared + `
 resource "vcd_vapp_vm" "test-vm" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
@@ -218,7 +254,7 @@ resource "vcd_vapp_vm" "test-vm" {
 }
 `
 
-const testAccCheckVcdVAppVmCustomizationStep1 = testAccCheckVcdVAppVmCustomizationShared + `
+const testAccCheckVcdVAppVmUpdateCustomizationStep1 = testAccCheckVcdVAppVmCustomizationShared + `
 resource "vcd_vapp_vm" "test-vm" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
@@ -248,7 +284,7 @@ resource "vcd_vapp_vm" "test-vm" {
 }
 `
 
-const testAccCheckVcdVAppVmCustomizationStep2 = testAccCheckVcdVAppVmCustomizationShared + `
+const testAccCheckVcdVAppVmCreateCustomization = testAccCheckVcdVAppVmCustomizationShared + `
 resource "vcd_vapp_vm" "test-vm2" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
