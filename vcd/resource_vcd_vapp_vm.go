@@ -305,10 +305,10 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	// TODO v3.0 remove else branch once 'network_name', 'vapp_network_name', 'ip' are deprecated
 	networkConnectionSection := types.NetworkConnectionSection{}
 	if len(d.Get("network").([]interface{})) > 0 {
-		networkConnectionSection, err = networksToConfig(d.Get("network").([]interface{}), *vdc, vapp, vcdClient)
+		networkConnectionSection, err = networksToConfig(d.Get("network").([]interface{}), vdc, vapp, vcdClient)
 	} else {
 		networkConnectionSection, err = deprecatedNetworksToConfig(d.Get("network_name").(string),
-			d.Get("vapp_network_name").(string), d.Get("ip").(string), *vdc, vapp, vcdClient)
+			d.Get("vapp_network_name").(string), d.Get("ip").(string), vdc, vapp, vcdClient)
 	}
 	if err != nil {
 		return fmt.Errorf("unable to process network configuration: %s", err)
@@ -362,7 +362,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	// TODO do not trigger resourceVcdVAppVmUpdate from create. These must be separate actions.
 	err = resourceVcdVAppVmUpdateExecute(d, meta)
 	if err != nil {
-		errAttachedDisk := updateStateOfAttachedDisks(d, vm, *vdc)
+		errAttachedDisk := updateStateOfAttachedDisks(d, vm, vdc)
 		if errAttachedDisk != nil {
 			d.Set("disk", nil)
 			return fmt.Errorf("error reading attached disks : %#v and internal error : %#v", errAttachedDisk, err)
@@ -374,7 +374,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 
 // Adds existing org VDC network to VM network configuration
 // Returns configured OrgVDCNetwork for Vm, networkName, error if any occur
-func addVdcNetwork(networkNameToAdd string, vdc govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (*types.OrgVDCNetwork, error) {
+func addVdcNetwork(networkNameToAdd string, vdc *govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (*types.OrgVDCNetwork, error) {
 	if networkNameToAdd == "" {
 		return &types.OrgVDCNetwork{}, fmt.Errorf("'network_name' must be valid when adding VM to raw vApp")
 	}
@@ -602,9 +602,9 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 
 		// detaching independent disks - only possible when VM power off
 		if d.HasChange("disk") {
-			err = attachDetachDisks(d, vm, *vdc)
+			err = attachDetachDisks(d, vm, vdc)
 			if err != nil {
-				errAttachedDisk := updateStateOfAttachedDisks(d, vm, *vdc)
+				errAttachedDisk := updateStateOfAttachedDisks(d, vm, vdc)
 				if errAttachedDisk != nil {
 					d.Set("disk", nil)
 					return fmt.Errorf("error reading attached disks : %#v and internal error : %#v", errAttachedDisk, err)
@@ -720,7 +720,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 }
 
 // updates attached disks to latest state. Removed not needed and add new ones
-func attachDetachDisks(d *schema.ResourceData, vm govcd.VM, vdc govcd.Vdc) error {
+func attachDetachDisks(d *schema.ResourceData, vm govcd.VM, vdc *govcd.Vdc) error {
 	oldValues, newValues := d.GetChange("disk")
 
 	attachDisks := newValues.(*schema.Set).Difference(oldValues.(*schema.Set))
@@ -839,7 +839,7 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("href", vm.VM.HREF)
 	d.Set("expose_hardware_virtualization", vm.VM.NestedHypervisorEnabled)
 
-	err = updateStateOfAttachedDisks(d, vm, *vdc)
+	err = updateStateOfAttachedDisks(d, vm, vdc)
 	if err != nil {
 		d.Set("disk", nil)
 		return fmt.Errorf("error reading attached disks : %#v", err)
@@ -848,7 +848,7 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func updateStateOfAttachedDisks(d *schema.ResourceData, vm govcd.VM, vdc govcd.Vdc) error {
+func updateStateOfAttachedDisks(d *schema.ResourceData, vm govcd.VM, vdc *govcd.Vdc) error {
 	// Check VM independent disks state
 	diskProperties, err := expandDisksProperties(d.Get("disk"))
 	if err != nil {
@@ -982,7 +982,7 @@ func resourceVcdVmIndependentDiskHash(v interface{}) int {
 
 // networksToConfig converts terraform schema for 'networks' and converts to types.NetworkConnectionSection
 // which is used for creating new VM
-func networksToConfig(networks []interface{}, vdc govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (types.NetworkConnectionSection, error) {
+func networksToConfig(networks []interface{}, vdc *govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (types.NetworkConnectionSection, error) {
 	networkConnectionSection := types.NetworkConnectionSection{}
 	for index, singleNetwork := range networks {
 		nic := singleNetwork.(map[string]interface{})
@@ -1033,7 +1033,7 @@ func networksToConfig(networks []interface{}, vdc govcd.Vdc, vapp govcd.VApp, vc
 
 // deprecatedNetworksToConfig converts deprecated network configuration in fields
 // TODO v3.0 remove this function once 'network_name', 'vapp_network_name', 'ip' are deprecated
-func deprecatedNetworksToConfig(network_name, vapp_network_name, ip string, vdc govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (types.NetworkConnectionSection, error) {
+func deprecatedNetworksToConfig(network_name, vapp_network_name, ip string, vdc *govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (types.NetworkConnectionSection, error) {
 	if vapp_network_name != "" {
 		isVappNetwork, err := isItVappNetwork(vapp_network_name, vapp)
 		if err != nil {
