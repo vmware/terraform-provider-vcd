@@ -1,10 +1,10 @@
 package vcd
 
 import (
-	"time"
 	"fmt"
 	"log"
 	"regexp"
+	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
