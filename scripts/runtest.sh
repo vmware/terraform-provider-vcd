@@ -90,25 +90,6 @@ function short_test {
 
 function acceptance_test {
     tags="$1"
-    if [ -z "$tags" ]
-    then
-        tags=functional
-    fi
-    if [ -n "$VERBOSE" ]
-    then
-        echo "# check for config file"
-        echo "TF_ACC=1 go test -tags '$tags' -v -timeout $timeout ."
-    fi
-
-    if [ -z "$DRY_RUN" ]
-    then
-        check_for_config_file
-        TF_ACC=1 go test -tags "$tags" -v -timeout $timeout .
-    fi
-}
-
-function sequential_acceptance_test {
-    tags="$1"
     parallel="$2"
     if [ -z "$tags" ]
     then
@@ -123,7 +104,7 @@ function sequential_acceptance_test {
     if [ -z "$DRY_RUN" ]
     then
         check_for_config_file
-        TF_ACC=1 go test -parallel 1 -tags "$tags" -v -timeout $timeout .
+        TF_ACC=1 go test -tags "$tags" $parallel -v -timeout $timeout .
     fi
 }
 
@@ -222,7 +203,7 @@ case $wanted in
         acceptance_test functional
         ;;
     sequential-acceptance)
-        sequential_acceptance_test functional
+        acceptance_test functional "--parallel=1"
         ;;
     multinetwork)
         multiple_test TestAccVcdVappNetworkMulti
