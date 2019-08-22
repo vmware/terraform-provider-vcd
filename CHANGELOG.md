@@ -22,7 +22,7 @@ BUG FIXES:
 * Change default value for `vcd_org.deployed_vm_quota` and `vcd_org.stored_vm_quota`. It was incorrectly set at `-1` instead of `0`.
 * Change Org ID from partial task ID to real Org ID during creation.
 * Wait for task completion on creation and update, where tasks were not handled at all.
-* `resource/vcd_firewall_rules` force recreation of the resource when attributes of the sub-element rule are changed (fixes a situation when it was impossible to update a rule).
+* `resource/vcd_firewall_rules` force recreation of the resource when attributes of the sub-element rule are changed (fixes a situation when it tried to update a rule).
 
 ## 2.4.0 (July 29, 2019)
 
