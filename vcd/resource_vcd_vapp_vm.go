@@ -206,6 +206,8 @@ func resourceVcdVAppVm() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"force": {
+							ValidateFunc: noopValueWarningValidator(true,
+								"Using 'true' value for field 'vcd_vapp_vm.customization.force' will reboot VM on every 'terraform apply' operation"),
 							Type:     schema.TypeBool,
 							Optional: true,
 							Default:  false,
@@ -218,6 +220,18 @@ func resourceVcdVAppVm() *schema.Resource {
 				},
 			},
 		},
+	}
+}
+
+// noopValueWarningValidator is a no-op validator which only emits warning string when fieldValue
+// is set to the specified one
+func noopValueWarningValidator(fieldValue interface{}, warningText string) schema.SchemaValidateFunc {
+	return func(i interface{}, k string) (warnings []string, errors []error) {
+		if fieldValue == i {
+			warnings = append(warnings, fmt.Sprintf("%s\n\n", warningText))
+		}
+
+		return
 	}
 }
 
