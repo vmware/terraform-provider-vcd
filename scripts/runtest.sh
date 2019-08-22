@@ -22,7 +22,7 @@ then
     VERBOSE=1
 fi
 
-accepted="[short acceptance multiple binary binary-prepare catalog gateway vapp vm network extnetwork multinetwork short-provider lb user]"
+accepted="[short acceptance sequential-acceptance multiple binary binary-prepare catalog gateway vapp vm network extnetwork multinetwork short-provider lb user]"
 if [ -z "$wanted" ]
 then
     echo "Syntax: test TYPE"
@@ -104,6 +104,26 @@ function acceptance_test {
     then
         check_for_config_file
         TF_ACC=1 go test -tags "$tags" -v -timeout $timeout .
+    fi
+}
+
+function sequential_acceptance_test {
+    tags="$1"
+    parallel="$2"
+    if [ -z "$tags" ]
+    then
+        tags=functional
+    fi
+    if [ -n "$VERBOSE" ]
+    then
+        echo "# check for config file"
+        echo "TF_ACC=1 go test -tags '$tags' -v -timeout $timeout ."
+    fi
+
+    if [ -z "$DRY_RUN" ]
+    then
+        check_for_config_file
+        TF_ACC=1 go test -parallel 1 -tags "$tags" -v -timeout $timeout .
     fi
 }
 
@@ -200,6 +220,9 @@ case $wanted in
         ;;
     acceptance)
         acceptance_test functional
+        ;;
+    sequential-acceptance)
+        sequential_acceptance_test functional
         ;;
     multinetwork)
         multiple_test TestAccVcdVappNetworkMulti
