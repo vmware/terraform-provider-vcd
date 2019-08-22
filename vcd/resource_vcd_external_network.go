@@ -206,9 +206,7 @@ func resourceVcdExternalNetworkDelete(d *schema.ResourceData, meta interface{}) 
 // any cast operations or default values should be done here so that the create method is simple
 func getExternalNetworkInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.ExternalNetwork, error) {
 	params := &types.ExternalNetwork{
-		Name:        d.Get("name").(string),
-		Xmlns:       types.XMLNamespaceExtension,
-		XmlnsVCloud: types.XMLNamespaceVCloud,
+		Name: d.Get("name").(string),
 		Configuration: &types.NetworkConfiguration{
 			Xmlns:                          types.XMLNamespaceVCloud,
 			RetainNetInfoAcrossDeployments: d.Get("retain_net_info_across_deployments").(bool),

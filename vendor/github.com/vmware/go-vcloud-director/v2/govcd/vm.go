@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
@@ -48,6 +49,15 @@ func (vm *VM) GetStatus() (string, error) {
 	return types.VAppStatuses[vm.VM.Status], nil
 }
 
+// IsDeployed checks if the VM is deployed or not
+func (vm *VM) IsDeployed() (bool, error) {
+	err := vm.Refresh()
+	if err != nil {
+		return false, fmt.Errorf("error refreshing VM: %v", err)
+	}
+	return vm.VM.Deployed, nil
+}
+
 func (vm *VM) Refresh() error {
 
 	if vm.VM.HREF == "" {
@@ -75,7 +85,7 @@ func (vm *VM) GetNetworkConnectionSection() (*types.NetworkConnectionSection, er
 	networkConnectionSection := &types.NetworkConnectionSection{}
 
 	if vm.VM.HREF == "" {
-		return networkConnectionSection, fmt.Errorf("cannot refresh, Object is empty")
+		return networkConnectionSection, fmt.Errorf("cannot retrieve network when VM HREF is unset")
 	}
 
 	_, err := vm.client.ExecuteRequest(vm.VM.HREF+"/networkConnectionSection/", http.MethodGet,
@@ -83,6 +93,35 @@ func (vm *VM) GetNetworkConnectionSection() (*types.NetworkConnectionSection, er
 
 	// The request was successful
 	return networkConnectionSection, err
+}
+
+// UpdateNetworkConnectionSection applies network configuration of types.NetworkConnectionSection for the VM
+// Runs synchronously, VM is ready for another operation after this function returns.
+func (vm *VM) UpdateNetworkConnectionSection(networks *types.NetworkConnectionSection) error {
+	if vm.VM.HREF == "" {
+		return fmt.Errorf("cannot update network connection when VM HREF is unset")
+	}
+
+	// Retrieve current network configuration so that we are not altering any other internal fields
+	updateNetwork, err := vm.GetNetworkConnectionSection()
+	if err != nil {
+		return fmt.Errorf("cannot read network section for update: %s", err)
+	}
+	updateNetwork.PrimaryNetworkConnectionIndex = networks.PrimaryNetworkConnectionIndex
+	updateNetwork.NetworkConnection = networks.NetworkConnection
+	updateNetwork.Ovf = types.XMLNamespaceOVF
+
+	task, err := vm.client.ExecuteTaskRequest(vm.VM.HREF+"/networkConnectionSection/", http.MethodPut,
+		types.MimeNetworkConnectionSection, "error updating network connection: %s", updateNetwork)
+	if err != nil {
+		return err
+	}
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return fmt.Errorf("error waiting for task completion after network update for vm %s: %s", vm.VM.Name, err)
+	}
+
+	return nil
 }
 
 func (cli *Client) FindVMByHREF(vmHREF string) (VM, error) {
@@ -105,6 +144,46 @@ func (vm *VM) PowerOn() (Task, error) {
 	return vm.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPost,
 		"", "error powering on VM: %s", nil)
 
+}
+
+// PowerOnAndForceCustomization is a synchronous function which is equivalent to the functionality
+// one has in UI. It triggers customization which may be useful in some cases (like altering NICs)
+//
+// The VM _must_ be un-deployed for this action to actually work.
+func (vm *VM) PowerOnAndForceCustomization() error {
+	// PowerOnAndForceCustomization only works if the VM was previously un-deployed
+	vmIsDeployed, err := vm.IsDeployed()
+	if err != nil {
+		return fmt.Errorf("unable to check if VM %s is un-deployed forcing customization: %s",
+			vm.VM.Name, err)
+	}
+
+	if vmIsDeployed {
+		return fmt.Errorf("VM %s must be undeployed before forcing customization", vm.VM.Name)
+	}
+
+	apiEndpoint, _ := url.ParseRequestURI(vm.VM.HREF)
+	apiEndpoint.Path += "/action/deploy"
+
+	powerOnAndCustomize := &types.DeployVAppParams{
+		Xmlns:              types.XMLNamespaceVCloud,
+		PowerOn:            true,
+		ForceCustomization: true,
+	}
+
+	task, err := vm.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPost,
+		"", "error powering on VM with customization: %s", powerOnAndCustomize)
+
+	if err != nil {
+		return err
+	}
+
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return fmt.Errorf("error waiting for task completion after power on with customization %s: %s", vm.VM.Name, err)
+	}
+
+	return nil
 }
 
 func (vm *VM) PowerOff() (Task, error) {
@@ -302,6 +381,51 @@ func (vm *VM) RunCustomizationScript(computername, script string) (Task, error) 
 	return vm.Customize(computername, script, false)
 }
 
+// GetGuestCustomizationStatus retrieves guest customization status.
+// It can be one of "GC_PENDING", "REBOOT_PENDING", "GC_FAILED", "POST_GC_PENDING", "GC_COMPLETE"
+func (vm *VM) GetGuestCustomizationStatus() (string, error) {
+	guestCustomizationStatus := &types.GuestCustomizationStatusSection{}
+
+	if vm.VM.HREF == "" {
+		return "", fmt.Errorf("cannot retrieve guest customization, VM HREF is empty")
+	}
+
+	_, err := vm.client.ExecuteRequest(vm.VM.HREF+"/guestcustomizationstatus", http.MethodGet,
+		types.MimeGuestCustomizationStatus, "error retrieving guest customization status: %s", nil, guestCustomizationStatus)
+
+	// The request was successful
+	return guestCustomizationStatus.GuestCustStatus, err
+}
+
+// BlockWhileGuestCustomizationStatus blocks until the customization status of VM exits unwantedStatus.
+// It sleeps 3 seconds between iterations and times out after timeOutAfterSeconds of seconds.
+//
+// timeOutAfterSeconds must be more than 4 and less than 2 hours (60s*120)
+func (vm *VM) BlockWhileGuestCustomizationStatus(unwantedStatus string, timeOutAfterSeconds int) error {
+	if timeOutAfterSeconds < 5 || timeOutAfterSeconds > 60*120 {
+		return fmt.Errorf("timeOutAfterSeconds must be in range 4<X<7200")
+	}
+
+	timeoutAfter := time.After(time.Duration(timeOutAfterSeconds) * time.Second)
+	tick := time.NewTicker(3 * time.Second)
+
+	for {
+		select {
+		case <-timeoutAfter:
+			return fmt.Errorf("timed out waiting for VM guest customization status to exit state %s after %d seconds",
+				unwantedStatus, timeOutAfterSeconds)
+		case <-tick.C:
+			currentStatus, err := vm.GetGuestCustomizationStatus()
+			if err != nil {
+				return fmt.Errorf("could not get VM customization status %s", err)
+			}
+			if currentStatus != unwantedStatus {
+				return nil
+			}
+		}
+	}
+}
+
 func (vm *VM) Customize(computername, script string, changeSid bool) (Task, error) {
 	err := vm.Refresh()
 	if err != nil {
@@ -330,6 +454,7 @@ func (vm *VM) Customize(computername, script string, changeSid bool) (Task, erro
 		types.MimeGuestCustomizationSection, "error customizing VM: %s", vu)
 }
 
+// Undeploy triggers a VM undeploy and power off action. "Power off" action in UI behaves this way.
 func (vm *VM) Undeploy() (Task, error) {
 
 	vu := &types.UndeployVAppParams{
@@ -342,7 +467,7 @@ func (vm *VM) Undeploy() (Task, error) {
 
 	// Return the task
 	return vm.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPost,
-		types.MimeUndeployVappParams, "error undeploy vApp: %s", vu)
+		types.MimeUndeployVappParams, "error undeploy VM: %s", vu)
 }
 
 // Attach or detach an independent disk

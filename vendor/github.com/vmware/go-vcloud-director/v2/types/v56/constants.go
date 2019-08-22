@@ -73,6 +73,8 @@ const (
 	MimeRasdItem = "application/vnd.vmware.vcloud.rasdItem+xml"
 	// Mime for guest customization section
 	MimeGuestCustomizationSection = "application/vnd.vmware.vcloud.guestCustomizationSection+xml"
+	// Mime for guest customization status
+	MimeGuestCustomizationStatus = "application/vnd.vmware.vcloud.guestcustomizationstatussection"
 	// Mime for network config section
 	MimeNetworkConfigSection = "application/vnd.vmware.vcloud.networkconfigsection+xml"
 	// Mime for recompose vApp params
@@ -157,4 +159,13 @@ const (
 	LbAppProfilePath    = "/loadbalancer/config/applicationprofiles/"
 	LbAppRulePath       = "/loadbalancer/config/applicationrules/"
 	LbVirtualServerPath = "/loadbalancer/config/virtualservers/"
+)
+
+// Guest customization statuses. These are all known possible statuses
+const (
+	GuestCustStatusPending       = "GC_PENDING"
+	GuestCustStatusPostPending   = "POST_GC_PENDING"
+	GuestCustStatusComplete      = "GC_COMPLETE"
+	GuestCustStatusFailed        = "GC_FAILED"
+	GuestCustStatusRebootPending = "REBOOT_PENDING"
 )

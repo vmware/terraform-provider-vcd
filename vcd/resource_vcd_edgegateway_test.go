@@ -51,7 +51,7 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 		return
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckVcdEdgeGatewayDestroyBasic,

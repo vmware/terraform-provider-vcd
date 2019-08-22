@@ -28,7 +28,17 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 		"Tags":        "vapp vm",
 	}
 
-	configTextVM := templateFill(testAccCheckVcdVAppVmNetworkVM, params)
+	configTextVM := templateFill(testAccCheckVcdVAppVmNetworkVm, params)
+
+	params["FuncName"] = t.Name() + "-step1"
+	configTextVMUpdateStep1 := templateFill(testAccCheckVcdVAppVmNetworkVmStep1, params)
+
+	params["FuncName"] = t.Name() + "-step2"
+	configTextVMUpdateStep2 := templateFill(testAccCheckVcdVAppVmNetworkVmStep2, params)
+
+	params["FuncName"] = t.Name() + "-step3"
+	configTextVMUpdateStep3 := templateFill(testAccCheckVcdVAppVmNetworkVmStep3, params)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -40,6 +50,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckVcdVAppVmDestroy(netVappName),
 		Steps: []resource.TestStep{
+			// Step 0 - Create with variations of all possible NICs
 			resource.TestStep{
 				Config: configTextVM,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -96,11 +107,78 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.6.mac"),
 				),
 			},
+			// Step 1 - update
+			resource.TestStep{
+				Config: configTextVMUpdateStep1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm."+netVmName1, &vapp, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "name", netVmName1),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.name", "multinic-net"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.type", "org"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.is_primary", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip", "11.10.0.152"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.0.mac"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.name", "multinic-net"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.type", "org"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.is_primary", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.ip_allocation_mode", "DHCP"),
+					//resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.1.ip"), // We cannot guarantee DHCP
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.1.mac"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.name", "multinic-net"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.type", "org"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.is_primary", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.ip_allocation_mode", "MANUAL"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.ip", "11.10.0.170"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.2.mac"),
+				),
+			},
+			// Step 2 - update (remove all NICs)
+			resource.TestStep{
+				Config: configTextVMUpdateStep2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm."+netVmName1, &vapp, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "name", netVmName1),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.#", "0"),
+				),
+			},
+			// Step 3 - Add one nic of each type
+			resource.TestStep{
+				Config: configTextVMUpdateStep3,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm."+netVmName1, &vapp, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "name", netVmName1),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.name", ""),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.type", "none"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.is_primary", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip_allocation_mode", "NONE"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip", ""),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.0.mac"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.name", "vapp-net"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.type", "vapp"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.is_primary", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.ip", "192.168.2.51"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.1.mac"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.name", "multinic-net"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.type", "org"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.is_primary", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.ip", "11.10.0.152"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.2.mac"),
+				),
+			},
 		},
 	})
 }
 
-const testAccCheckVcdVAppVmNetworkVM = `
+const testAccCheckVcdVAppVmNetworkShared = `
 resource "vcd_vapp" "{{.VAppName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
@@ -161,7 +239,9 @@ resource "vcd_network_routed" "net2" {
     end_address   = "12.10.0.254"
   }
 }
+`
 
+const testAccCheckVcdVAppVmNetworkVm = testAccCheckVcdVAppVmNetworkShared + `
 resource "vcd_vapp_vm" "{{.VMName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
@@ -218,6 +298,94 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   network {
     type               = "vapp"
     name               = "${vcd_vapp_network.vappNet.name}"
+    ip_allocation_mode = "POOL"
+  }
+}
+`
+
+const testAccCheckVcdVAppVmNetworkVmStep1 = testAccCheckVcdVAppVmNetworkShared + `
+# skip-binary-test: only for updates
+resource "vcd_vapp_vm" "{{.VMName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name     = "${vcd_vapp.{{.VAppName}}.name}"
+  name          = "{{.VMName}}"
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  memory        = 512
+  cpus          = 2
+  cpu_cores     = 1
+
+  network {
+    type               = "org"
+    name               = "${vcd_network_routed.net.name}"
+    ip_allocation_mode = "POOL"
+    is_primary         = false
+  }
+
+  network {
+    type               = "org"
+    name               = "${vcd_network_routed.net.name}"
+    ip_allocation_mode = "DHCP"
+    is_primary         = true
+  }
+
+  network {
+    type               = "org"
+    name               = "${vcd_network_routed.net.name}"
+    ip                 = "11.10.0.170"
+    ip_allocation_mode = "MANUAL"
+    is_primary         = false
+  }
+}
+`
+
+const testAccCheckVcdVAppVmNetworkVmStep2 = testAccCheckVcdVAppVmNetworkShared + `
+# skip-binary-test: only for updates
+resource "vcd_vapp_vm" "{{.VMName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name     = "${vcd_vapp.{{.VAppName}}.name}"
+  name          = "{{.VMName}}"
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  memory        = 512
+  cpus          = 2
+  cpu_cores     = 1
+}
+`
+
+const testAccCheckVcdVAppVmNetworkVmStep3 = testAccCheckVcdVAppVmNetworkShared + `
+# skip-binary-test: only for updates
+resource "vcd_vapp_vm" "{{.VMName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name     = "${vcd_vapp.{{.VAppName}}.name}"
+  name          = "{{.VMName}}"
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  memory        = 512
+  cpus          = 2
+  cpu_cores     = 1
+
+  network {
+    type               = "none"
+    ip_allocation_mode = "NONE"
+  }
+
+  network {
+    type               = "vapp"
+    name               = "${vcd_vapp_network.vappNet.name}"
+    ip_allocation_mode = "POOL"
+    is_primary         = true
+  }
+
+  network {
+    type               = "org"
+    name               = "${vcd_network_routed.net.name}"
     ip_allocation_mode = "POOL"
   }
 }

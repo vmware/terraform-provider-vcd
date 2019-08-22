@@ -395,14 +395,14 @@ func (vapp *VApp) GetStatus() (string, error) {
 // of seconds.
 func (vapp *VApp) BlockWhileStatus(unwantedStatus string, timeOutAfterSeconds int) error {
 	timeoutAfter := time.After(time.Duration(timeOutAfterSeconds) * time.Second)
-	tick := time.Tick(200 * time.Millisecond)
+	tick := time.NewTicker(200 * time.Millisecond)
 
 	for {
 		select {
 		case <-timeoutAfter:
 			return fmt.Errorf("timed out waiting for vApp to exit state %s after %d seconds",
 				unwantedStatus, timeOutAfterSeconds)
-		case <-tick:
+		case <-tick.C:
 			currentStatus, err := vapp.GetStatus()
 
 			if err != nil {
