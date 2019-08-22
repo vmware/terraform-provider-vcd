@@ -45,3 +45,31 @@ The following arguments are supported:
 * `upload_piece_size` - (Optional) - Size in MB for splitting upload size. It can possibly impact upload performance. Default 1MB.
 * `show_upload_progress` - (Optional) - Default false. Allows to see upload progress
 * `metadata` - (Optional; *v2.5+*) Key value map of metadata to assign
+
+## Importing
+
+~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
+configuration. [More information.][docs-import]
+
+An existing catalog item can be [imported][docs-import] into this resource via supplying the full dot separated path for a
+catalog item. For example, using this structure, representing an existing catalog item that was **not** created using Terraform:
+
+```hcl
+resource "vcd_catalog_item" "my-item" {
+  org         = "my-org"
+  catalog     = "my-catalog"
+  name        = "my-item"
+  ova_path    = "guess"
+}
+```
+
+You can import such catalog item into terraform state using this command
+
+```
+terraform import vcd_catalog_item.my-item my-org.my-catalog.my-item
+```
+
+[docs-import]:https://www.terraform.io/docs/import/
+
+After that, you can expand the configuration file and either update or delete the catalog item as needed. Running `terraform plan`
+at this stage will show the difference between the minimal configuration file and the item's stored properties.

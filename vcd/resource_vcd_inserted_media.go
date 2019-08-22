@@ -146,7 +146,7 @@ func getVM(d *schema.ResourceData, meta interface{}) (govcd.VM, *govcd.Org, erro
 	vcdClient := meta.(*VCDClient)
 
 	org, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
-	if err != nil || org == nil || vdc == (govcd.Vdc{}) {
+	if err != nil || org == nil || vdc == nil {
 		return govcd.VM{}, nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 

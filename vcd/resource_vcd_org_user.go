@@ -223,64 +223,21 @@ func resourceToOrgUser(d *schema.ResourceData, meta interface{}) (*govcd.OrgUser
 // Fills a ResourceData container with data retrieved from an OrgUser and an AdminOrg
 // Used after retrieving the user (read, import), to fill the Terraform container appropriately
 func setOrgUserData(d *schema.ResourceData, orgUser *govcd.OrgUser, adminOrg *govcd.AdminOrg) error {
-
 	d.SetId(orgUser.User.ID)
-	err := d.Set("org", adminOrg.AdminOrg.Name)
-	if err != nil {
-		return err
-	}
-	err = d.Set("name", orgUser.User.Name)
-	if err != nil {
-		return err
-	}
-	err = d.Set("provider_type", orgUser.User.ProviderType)
-	if err != nil {
-		return err
-	}
-	err = d.Set("is_group_role", orgUser.User.IsGroupRole)
-	if err != nil {
-		return err
-	}
-	err = d.Set("description", orgUser.User.Description)
-	if err != nil {
-		return err
-	}
-	err = d.Set("full_name", orgUser.User.FullName)
-	if err != nil {
-		return err
-	}
-	err = d.Set("email_address", orgUser.User.EmailAddress)
-	if err != nil {
-		return err
-	}
-	err = d.Set("telephone", orgUser.User.Telephone)
-	if err != nil {
-		return err
-	}
-	err = d.Set("instant_messaging", orgUser.User.IM)
-	if err != nil {
-		return err
-	}
-	err = d.Set("enabled", orgUser.User.IsEnabled)
-	if err != nil {
-		return err
-	}
-	err = d.Set("is_locked", orgUser.User.IsLocked)
-	if err != nil {
-		return err
-	}
-	err = d.Set("deployed_vm_quota", orgUser.User.DeployedVmQuota)
-	if err != nil {
-		return err
-	}
-	err = d.Set("stored_vm_quota", orgUser.User.StoredVmQuota)
-	if err != nil {
-		return err
-	}
-	err = d.Set("role", orgUser.User.Role.Name)
-	if err != nil {
-		return err
-	}
+	_ = d.Set("org", adminOrg.AdminOrg.Name)
+	_ = d.Set("name", orgUser.User.Name)
+	_ = d.Set("provider_type", orgUser.User.ProviderType)
+	_ = d.Set("is_group_role", orgUser.User.IsGroupRole)
+	_ = d.Set("description", orgUser.User.Description)
+	_ = d.Set("full_name", orgUser.User.FullName)
+	_ = d.Set("email_address", orgUser.User.EmailAddress)
+	_ = d.Set("telephone", orgUser.User.Telephone)
+	_ = d.Set("instant_messaging", orgUser.User.IM)
+	_ = d.Set("enabled", orgUser.User.IsEnabled)
+	_ = d.Set("is_locked", orgUser.User.IsLocked)
+	_ = d.Set("deployed_vm_quota", orgUser.User.DeployedVmQuota)
+	_ = d.Set("stored_vm_quota", orgUser.User.StoredVmQuota)
+	_ = d.Set("role", orgUser.User.Role.Name)
 	return nil
 }
 
@@ -368,5 +325,6 @@ func resourceVcdOrgUserImport(d *schema.ResourceData, meta interface{}) ([]*sche
 		return nil, err
 	}
 
+	d.SetId(user.User.ID)
 	return []*schema.ResourceData{d}, nil
 }
