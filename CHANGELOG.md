@@ -2,19 +2,29 @@
 
 FEATURES:
 
-* **New Data Source:** `vcd_org` Organization - ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+* **New Data Source:** `vcd_org` Organization - ([#218])
+* **New Data Source:** `vcd_catalog` Catalog - ([#218])
+* **New Data Source:** `vcd_catalog_item` CatalogItem - ([#218])
 
 IMPROVEMENTS:
 
-* `vcd_org` Add import capability
+* `resource/vcd_org` Add import capability
+* `resource/vcd_catalog` Add import capability
+* `resource/vcd_catalog_item` Add import capability
+* `resource/catalog_item` added catalog item metadata support [#285] 
+* `resource/vcd_catalog`: Catalog state ID changed from catalog name to vCD ID 
+* `resource/vcd_catalog_item`: CatalogItem state ID changed from colon separated list of catalog name and item name to vCD ID 
 * `resource/catalog_item` added catalog item metadata support [#298] 
 * `resource/catalog_media` added catalog media item metadata support [#298]
+* `resource/vcd_vapp_vm` supports update for `network` block [#310]
+* `resource/vcd_vapp_vm` allows to force guest customization [#310]
 * Upgrade Terraform SDK dependency to 0.12.6 [#302]
 
 BUG FIXES:
 * Change default value for `vcd_org.deployed_vm_quota` and `vcd_org.stored_vm_quota`. It was incorrectly set at `-1` instead of `0`.
 * Change Org ID from partial task ID to real Org ID during creation.
 * Wait for task completion on creation and update, where tasks were not handled at all.
+* `resource/vcd_firewall_rules` force recreation of the resource when attributes of the sub-element `rule` are changed (fixes a situation when it tried to update a rule).
 
 ## 2.4.0 (July 29, 2019)
 

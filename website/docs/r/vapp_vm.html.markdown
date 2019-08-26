@@ -44,6 +44,11 @@ resource "vcd_vapp_vm" "web1" {
     my_key  = "my value"
   }
 
+  properties = {
+    "guest.hostname"   = "my-host"
+    "another.var.name" = "var-value"
+  }
+
   network {
     type               = "org"
     name               = "net"
@@ -140,8 +145,8 @@ DHCP.
 guest operating system so that applications that require hardware virtualization can run on virtual machines without binary
 translation or paravirtualization. Useful for hypervisor nesting provided underlying hardware supports it. Default is `false`.
 * `network` - (Optional; *v2.2+*) A block to define network interface. Multiple can be used. See [Network](#network) and 
-example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_name`. **Note**: this property and all
-its parameters do force recreation of VMs!
+example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_name`.
+* `customization` - (Optional; *v2.5+*) A block to define for guest customization options. See [Customization](#customization)
 * `properties` - (Optional; *v2.5+*) Key value map of guest properties
 
 <a id="disk"></a>
@@ -181,3 +186,70 @@ its parameters do force recreation of VMs!
   * `ip_allocation_mode=MANUAL` - **`ip`** value must be valid IP address from a subnet defined in `static pool` for network.
 
   * `ip_allocation_mode=NONE` - **`ip`** field can be omitted or set to an empty string "". Empty string may be useful when doing HCL variable interpolation.
+
+<a id="customization"></a>
+## Customization
+
+* `force` (Optional) **Warning.** `true` value will cause the VM to reboot on every `apply` operation.
+This field works as a flag and triggers force customization when `true` during an update 
+(`terraform apply`) every time. It never complains about a change in statefile. Can be used when guest customization
+is needed after VM configuration (e.g. NIC change, customization options change, etc.) and then set back to `false`.
+**Note.** It will not have effect when `power_on` field is set to `false`. See [example workflow below](#example-forced-customization-workflow).
+
+## Example forced customization workflow
+
+Step 1 - Setup VM:
+
+```hcl
+resource "vcd_vapp_vm" "web2" {
+  vapp_name     = "${vcd_vapp.web.name}"
+  name          = "web2"
+  catalog_name  = "Boxes"
+  template_name = "lampstack-1.10.1-ubuntu-10.04"
+  memory        = 2048
+  cpus          = 1
+
+  network {
+    type               = "org"
+    name               = "net"
+    ip                 = "10.10.104.162"
+    ip_allocation_mode = "MANUAL"
+  }
+}
+```
+
+Step 2 - Change VM configuration and force customization (VM will be rebooted during
+`terraform apply`):
+
+```hcl
+resource "vcd_vapp_vm" "web2" {
+...
+  network {
+    type               = "org"
+    name               = "net"
+    ip_allocation_mode = "DHCP"
+  }
+
+  customization {
+    force = true
+  }
+}
+```
+
+Step 3 - Once customization is done, set the force customization flag to false (or remove it) to
+prevent forcing customization on every `terraform apply` command:
+
+```hcl
+resource "vcd_vapp_vm" "web2" {
+...
+  network {
+    type               = "org"
+    name               = "net"
+    ip_allocation_mode = "DHCP"
+  }
+
+  customization {
+    force = false
+  }
+}
+```

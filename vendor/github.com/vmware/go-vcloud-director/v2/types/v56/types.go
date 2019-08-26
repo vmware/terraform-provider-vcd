@@ -322,7 +322,7 @@ type InstantiationParams struct {
 // Since: 5.1
 type OrgVDCNetwork struct {
 	XMLName       xml.Name              `xml:"OrgVdcNetwork"`
-	Xmlns         string                `xml:"xmlns,attr,imitempty"`
+	Xmlns         string                `xml:"xmlns,attr,omitempty"`
 	HREF          string                `xml:"href,attr,omitempty"`
 	Type          string                `xml:"type,attr,omitempty"`
 	ID            string                `xml:"id,attr,omitempty"`
@@ -1455,6 +1455,15 @@ type DeployVAppParams struct {
 	ForceCustomization     bool `xml:"forceCustomization,attr,omitempty"`     // Used to specify whether to force customization on deployment, if not set default value is false
 }
 
+// GuestCustomizationStatusSection holds information about guest customization status
+// https://vdc-repo.vmware.com/vmwb-repository/dcr-public/76f491b4-679c-4e1e-8428-f813d668297a/a2555a1b-22f1-4cca-b481-2a98ab874022/doc/doc/operations/GET-GuestCustStatus.html
+type GuestCustomizationStatusSection struct {
+	XMLName xml.Name `xml:"GuestCustomizationStatusSection"`
+	Xmlns   string   `xml:"xmlns,attr"`
+
+	GuestCustStatus string `xml:"GuestCustStatus"`
+}
+
 // GuestCustomizationSection represents guest customization settings
 // Type: GuestCustomizationSectionType
 // Namespace: http://www.vmware.com/vcloud/v1.5
@@ -2324,18 +2333,17 @@ type VimObjectRefs struct {
 // Since: 1.0
 type ExternalNetwork struct {
 	XMLName          xml.Name              `xml:"VMWExternalNetwork"`
-	Xmlns            string                `xml:"xmlns,attr,omitempty"`
-	XmlnsVCloud      string                `xml:"xmlns:vcloud,attr,omitempty"`
 	HREF             string                `xml:"href,attr,omitempty"`
 	Type             string                `xml:"type,attr,omitempty"`
 	ID               string                `xml:"id,attr,omitempty"`
 	OperationKey     string                `xml:"operationKey,attr,omitempty"`
 	Name             string                `xml:"name,attr"`
-	Description      string                `xml:"vcloud:Description,omitempty"`
-	Configuration    *NetworkConfiguration `xml:"Configuration,omitempty"`
 	Link             []*Link               `xml:"Link,omitempty"`
-	VimPortGroupRefs *VimObjectRefs        `xml:"VimPortGroupRefs,omitempty"`
+	Description      string                `xml:"Description,omitempty"`
 	Tasks            *TasksInProgress      `xml:"Tasks,omitempty"`
+	Configuration    *NetworkConfiguration `xml:"Configuration,omitempty"`
+	VimPortGroupRef  *VimObjectRef         `xml:"VimPortGroupRef,omitempty"`
+	VimPortGroupRefs *VimObjectRefs        `xml:"VimPortGroupRefs,omitempty"`
 	VCloudExtension  *VCloudExtension      `xml:"VCloudExtension,omitempty"`
 }
 

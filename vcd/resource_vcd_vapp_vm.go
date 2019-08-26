@@ -117,20 +117,17 @@ func resourceVcdVAppVm() *schema.Resource {
 			},
 			"network": {
 				ConflictsWith: []string{"ip", "network_name", "vapp_network_name", "network_href"},
-				ForceNew:      true,
 				Optional:      true,
 				Type:          schema.TypeList,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {
-							ForceNew:     true,
 							Required:     true,
 							Type:         schema.TypeString,
 							ValidateFunc: validation.StringInSlice([]string{"vapp", "org", "none"}, false),
 							Description:  "Network type to use: 'vapp', 'org' or 'none'. Use 'vapp' for vApp network, 'org' to attach Org VDC network. 'none' for empty NIC.",
 						},
 						"ip_allocation_mode": {
-							ForceNew:     true,
 							Optional:     true,
 							Type:         schema.TypeString,
 							ValidateFunc: validation.StringInSlice([]string{"POOL", "DHCP", "MANUAL", "NONE"}, false),
@@ -142,14 +139,12 @@ func resourceVcdVAppVm() *schema.Resource {
 						},
 						"ip": {
 							Computed:     true,
-							ForceNew:     true,
 							Optional:     true,
 							Type:         schema.TypeString,
 							ValidateFunc: checkEmptyOrSingleIP(), // Must accept empty string to ease using HCL interpolation
 						},
 						"is_primary": {
 							Default:  false,
-							ForceNew: true,
 							Optional: true,
 							// By default if the value is omitted it will report schema change
 							// on every terraform operation. The below function
@@ -209,7 +204,41 @@ func resourceVcdVAppVm() *schema.Resource {
 				Optional:    true,
 				Description: "Key/value settings for guest properties",
 			},
+			"customization": &schema.Schema{
+				Optional:    true,
+				MinItems:    1,
+				MaxItems:    1,
+				Type:        schema.TypeList,
+				Description: "Guest customization block",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"force": {
+							ValidateFunc: noopValueWarningValidator(true,
+								"Using 'true' value for field 'vcd_vapp_vm.customization.force' will reboot VM on every 'terraform apply' operation"),
+							Type:     schema.TypeBool,
+							Optional: true,
+							Default:  false,
+							// This settings is used as a 'flag' and it does not matter what is set in the
+							// state. If it is 'true' - then it means that 'update' procedure must set the
+							// VM for customization at next boot and reboot it.
+							DiffSuppressFunc: suppressFalse(),
+						},
+					},
+				},
+			},
 		},
+	}
+}
+
+// noopValueWarningValidator is a no-op validator which only emits warning string when fieldValue
+// is set to the specified one
+func noopValueWarningValidator(fieldValue interface{}, warningText string) schema.SchemaValidateFunc {
+	return func(i interface{}, k string) (warnings []string, errors []error) {
+		if fieldValue == i {
+			warnings = append(warnings, fmt.Sprintf("%s\n\n", warningText))
+		}
+
+		return
 	}
 }
 
@@ -253,6 +282,13 @@ func falseBoolSuppress() schema.SchemaDiffSuppressFunc {
 	}
 }
 
+// suppressNewFalse always suppresses when new value is false
+func suppressFalse() schema.SchemaDiffSuppressFunc {
+	return func(k string, old string, new string, d *schema.ResourceData) bool {
+		return new == "false"
+	}
+}
+
 func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
@@ -264,13 +300,13 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	catalog, err := org.FindCatalog(d.Get("catalog_name").(string))
-	if err != nil || catalog == (govcd.Catalog{}) {
-		return fmt.Errorf("error finding catalog: %s", d.Get("catalog_name").(string))
+	catalog, err := org.GetCatalogByName(d.Get("catalog_name").(string), false)
+	if err != nil {
+		return fmt.Errorf("error finding catalog %s: %s", d.Get("catalog_name").(string), err)
 	}
 
-	catalogItem, err := catalog.FindCatalogItem(d.Get("template_name").(string))
-	if err != nil || catalogItem == (govcd.CatalogItem{}) {
+	catalogItem, err := catalog.GetCatalogItemByName(d.Get("template_name").(string), false)
+	if err != nil {
 		return fmt.Errorf("error finding catalog item: %#v", err)
 	}
 
@@ -372,7 +408,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 
 // Adds existing org VDC network to VM network configuration
 // Returns configured OrgVDCNetwork for Vm, networkName, error if any occur
-func addVdcNetwork(networkNameToAdd string, vdc govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (*types.OrgVDCNetwork, error) {
+func addVdcNetwork(networkNameToAdd string, vdc *govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (*types.OrgVDCNetwork, error) {
 	if networkNameToAdd == "" {
 		return &types.OrgVDCNetwork{}, fmt.Errorf("'network_name' must be valid when adding VM to raw vApp")
 	}
@@ -520,9 +556,9 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf("error getting VM2: %#v", err)
 	}
 
-	status, err := vm.GetStatus()
+	vmStatusBeforeUpdate, err := vm.GetStatus()
 	if err != nil {
-		return fmt.Errorf("error getting VM status: %#v", err)
+		return fmt.Errorf("error getting VM status before update: %#v", err)
 	}
 
 	if d.HasChange("properties") {
@@ -537,6 +573,8 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			return fmt.Errorf("error setting guest properties: %s", err)
 		}
 	}
+	// Check if the user requested for forced customization of VM
+	customizationNeeded := isForcedCustomization(d.Get("customization"))
 
 	// VM does not have to be in POWERED_OFF state for metadata operations
 	if d.HasChange("metadata") {
@@ -574,8 +612,16 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 	}
 
 	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("cpu_cores") || d.HasChange("power_on") || d.HasChange("disk") ||
-		d.HasChange("expose_hardware_virtualization") {
-		if status != "POWERED_OFF" {
+		d.HasChange("expose_hardware_virtualization") || d.HasChange("network") {
+
+		log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t), power_on(%t), disk(%t), expose_hardware_virtualization(%t), network(%t)",
+			vm.VM.Name, d.HasChange("memory"), d.HasChange("cpus"), d.HasChange("cpu_cores"), d.HasChange("power_on"), d.HasChange("disk"),
+			d.HasChange("expose_hardware_virtualization"), d.HasChange("network"))
+
+		// If customization is not requested then a simple shutdown is enough
+		if vmStatusBeforeUpdate != "POWERED_OFF" && !customizationNeeded {
+			log.Printf("[DEBUG] Powering off VM %s for offline update. Previous state %s",
+				vm.VM.Name, vmStatusBeforeUpdate)
 			task, err := vm.PowerOff()
 			if err != nil {
 				return fmt.Errorf("error Powering Off: %#v", err)
@@ -583,6 +629,20 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			err = task.WaitTaskCompletion()
 			if err != nil {
 				return fmt.Errorf(errorCompletingTask, err)
+			}
+		}
+
+		// If customization was requested then a shutdown with undeploy is needed
+		if vmStatusBeforeUpdate != "POWERED_OFF" && customizationNeeded {
+			log.Printf("[DEBUG] Un-deploying VM %s for offline update. Previous state %s",
+				vm.VM.Name, vmStatusBeforeUpdate)
+			task, err := vm.Undeploy()
+			if err != nil {
+				return fmt.Errorf("error triggering undeploy for VM %s: %s", vm.VM.Name, err)
+			}
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				return fmt.Errorf("error waiting for undeploy task for VM %s: %s", vm.VM.Name, err)
 			}
 		}
 
@@ -644,26 +704,69 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			}
 		}
 
-		if d.Get("power_on").(bool) {
+		if d.HasChange("network") {
+			networkConnectionSection, err := networksToConfig(d.Get("network").([]interface{}), vdc, vapp, vcdClient)
+			if err != nil {
+				return fmt.Errorf("unable to setup network configuration for update: %s", err)
+			}
+			err = vm.UpdateNetworkConnectionSection(&networkConnectionSection)
+			if err != nil {
+				return fmt.Errorf("unable to update network configuration: %s", err)
+			}
+		}
 
+	}
+
+	// If the VM was powered off during update but it has to be powered off
+	if d.Get("power_on").(bool) {
+		vmStatus, err := vm.GetStatus()
+		if err != nil {
+			return fmt.Errorf("error getting VM status before ensuring it is powered on: %s", err)
+		}
+		log.Printf("[DEBUG] Powering on VM %s after update. Previous state %s", vm.VM.Name, vmStatus)
+
+		// Simply power on if customization is not requested
+		if !customizationNeeded && vmStatus != "POWERED_ON" {
 			task, err := vm.PowerOn()
 			if err != nil {
-				return fmt.Errorf("error Powering Up: %#v", err)
+				return fmt.Errorf("error powering on: %s", err)
 			}
-
 			err = task.WaitTaskCompletion()
 			if err != nil {
 				return fmt.Errorf(errorCompletingTask, err)
 			}
 		}
 
+		// When customization is requested VM must be un-deployed before starting it
+		if customizationNeeded {
+			log.Printf("[TRACE] forced customization for VM %s was requested. Current state %s",
+				vm.VM.Name, vmStatus)
+
+			if vmStatus != "POWERED_OFF" {
+				log.Printf("[TRACE] VM %s is in state %s. Un-deploying", vm.VM.Name, vmStatus)
+				task, err := vm.Undeploy()
+				if err != nil {
+					return fmt.Errorf("error triggering undeploy for VM %s: %s", vm.VM.Name, err)
+				}
+				err = task.WaitTaskCompletion()
+				if err != nil {
+					return fmt.Errorf("error waiting for undeploy task for VM %s: %s", vm.VM.Name, err)
+				}
+			}
+
+			log.Printf("[TRACE] Powering on VM %s with forced customization", vm.VM.Name)
+			err = vm.PowerOnAndForceCustomization()
+			if err != nil {
+				return fmt.Errorf("failed powering on with customization: %s", err)
+			}
+		}
 	}
 
 	return resourceVcdVAppVmRead(d, meta)
 }
 
 // updates attached disks to latest state. Removed not needed and add new ones
-func attachDetachDisks(d *schema.ResourceData, vm govcd.VM, vdc govcd.Vdc) error {
+func attachDetachDisks(d *schema.ResourceData, vm govcd.VM, vdc *govcd.Vdc) error {
 	oldValues, newValues := d.GetChange("disk")
 
 	attachDisks := newValues.(*schema.Set).Difference(oldValues.(*schema.Set))
@@ -802,7 +905,7 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func updateStateOfAttachedDisks(d *schema.ResourceData, vm govcd.VM, vdc govcd.Vdc) error {
+func updateStateOfAttachedDisks(d *schema.ResourceData, vm govcd.VM, vdc *govcd.Vdc) error {
 	// Check VM independent disks state
 	diskProperties, err := expandDisksProperties(d.Get("disk"))
 	if err != nil {
@@ -874,7 +977,7 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error getting VM status: %#v", err)
 	}
 
-	log.Printf("[TRACE] VM Status:: %s", status)
+	log.Printf("[TRACE] VM Status: %s", status)
 	if status != "POWERED_OFF" {
 		log.Printf("[TRACE] Undeploying VM: %s", vm.VM.Name)
 		task, err := vm.Undeploy()
@@ -909,6 +1012,7 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	log.Printf("[TRACE] Removing VM: %s", vm.VM.Name)
+
 	err = vapp.RemoveVM(vm)
 	if err != nil {
 		return fmt.Errorf("error deleting: %#v", err)
@@ -935,7 +1039,7 @@ func resourceVcdVmIndependentDiskHash(v interface{}) int {
 
 // networksToConfig converts terraform schema for 'networks' and converts to types.NetworkConnectionSection
 // which is used for creating new VM
-func networksToConfig(networks []interface{}, vdc govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (types.NetworkConnectionSection, error) {
+func networksToConfig(networks []interface{}, vdc *govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (types.NetworkConnectionSection, error) {
 	networkConnectionSection := types.NetworkConnectionSection{}
 	for index, singleNetwork := range networks {
 		nic := singleNetwork.(map[string]interface{})
@@ -986,7 +1090,7 @@ func networksToConfig(networks []interface{}, vdc govcd.Vdc, vapp govcd.VApp, vc
 
 // deprecatedNetworksToConfig converts deprecated network configuration in fields
 // TODO v3.0 remove this function once 'network_name', 'vapp_network_name', 'ip' are deprecated
-func deprecatedNetworksToConfig(network_name, vapp_network_name, ip string, vdc govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (types.NetworkConnectionSection, error) {
+func deprecatedNetworksToConfig(network_name, vapp_network_name, ip string, vdc *govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (types.NetworkConnectionSection, error) {
 	if vapp_network_name != "" {
 		isVappNetwork, err := isItVappNetwork(vapp_network_name, vapp)
 		if err != nil {
@@ -1131,6 +1235,27 @@ func readNetworks(vm govcd.VM, vapp govcd.VApp) ([]map[string]interface{}, error
 	return nets, nil
 }
 
+// isForcedCustomization checks "customization" block in resource and checks if the value of field "force"
+// is set to "true". It returns false if the value is not set or is set to false
+func isForcedCustomization(customizationBlock interface{}) bool {
+	customizationSlice := customizationBlock.([]interface{})
+
+	if len(customizationSlice) != 1 {
+		return false
+	}
+
+	cust := customizationSlice[0]
+	fc := cust.(map[string]interface{})
+	forceCust, ok := fc["force"]
+	forceCustBool := forceCust.(bool)
+
+	if !ok || !forceCustBool {
+		return false
+	}
+
+	return true
+}
+
 // getProductSectionListType returns a struct for setting guest properties
 func getProductSectionListType(d *schema.ResourceData) (*types.ProductSectionList, error) {
 	guestProperties := d.Get("properties")
@@ -1142,7 +1267,7 @@ func getProductSectionListType(d *schema.ResourceData) (*types.ProductSectionLis
 		},
 	}
 	for key, value := range guestProp {
-		log.Printf("[TRACE] Adding guest property: key=%s, value=%s", key, value)
+		log.Printf("[TRACE] Adding guest property: key=%s, value=%s to object", key, value)
 		oneProp := &types.Property{
 			UserConfigurable: true,
 			Type:             "string",
@@ -1166,7 +1291,6 @@ func setProductSectionListData(d *schema.ResourceData, properties *types.Product
 		return d.Set("properties", make(map[string]string))
 	}
 
-	log.Printf("[TRACE] %s", spew.Sdump(properties))
 	for _, prop := range properties.ProductSection.Property {
 		// if a value was set - use it
 		if prop.Value != nil {

@@ -1,0 +1,150 @@
+{
+  "VcdIp": "192.168.1.109",
+  "Info": "Persistent list of entities to be destroyed.  If this file is found when starting the tests, its entities will be  processed for removal before any other operation.",
+  "EntityList": [
+   {
+    "Name": "TestCreateDisk|https://192.168.1.109/api/disk/78c1a80b-fb79-499b-8ba3-cc9675d7dacf",
+    "EntityType": "disk",
+    "Parent": "",
+    "CreatedBy": "TestVCD.Test_CreateDisk"
+   },
+   {
+    "Name": "TestAttachedVMDisk|https://192.168.1.109/api/disk/8aa8696f-ce5d-4528-ad31-67f2ccab3382",
+    "EntityType": "disk",
+    "Parent": "",
+    "CreatedBy": "TestVCD.Test_AttachedVMDisk"
+   },
+   {
+    "Name": "TestSetUpSuite",
+    "EntityType": "vapp",
+    "Parent": "",
+    "CreatedBy": "createTestVapp"
+   },
+   {
+    "Name": "key",
+    "EntityType": "vdcMetaData",
+    "Parent": "my-org|my-org-vdc",
+    "CreatedBy": "TestVCD.Test_AddMetadataForVdc"
+   },
+   {
+    "Name": "TestAddMediaMetaData",
+    "EntityType": "mediaImage",
+    "Parent": "my-org|my-org-vdc",
+    "CreatedBy": "Test_AddMetadataOnMediaItem"
+   },
+   {
+    "Name": "TestCreateCatalog",
+    "EntityType": "catalog",
+    "Parent": "my-org",
+    "CreatedBy": "Test_CreateCatalog"
+   },
+   {
+    "Name": "TestAnswerVmQuestion",
+    "EntityType": "mediaImage",
+    "Parent": "my-org|my-org-vdc",
+    "CreatedBy": "Test_AnswerVmQuestion"
+   },
+   {
+    "Name": "TestCatalogUploadMedia5",
+    "EntityType": "mediaImage",
+    "Parent": "my-org|my-org-vdc",
+    "CreatedBy": "Test_UploadCatalogMediaImage"
+   },
+   {
+    "Name": "TestCatalogUploadMedia",
+    "EntityType": "mediaImage",
+    "Parent": "my-org|my-org-vdc",
+    "CreatedBy": "Test_UploadCatalogMediaImage"
+   },
+   {
+    "Name": "TestCatalogUploadMedia3",
+    "EntityType": "mediaImage",
+    "Parent": "my-org|my-org-vdc",
+    "CreatedBy": "Test_UploadCatalogMediaImage"
+   },
+   {
+    "Name": "TestCatalogUploadMedia4",
+    "EntityType": "mediaImage",
+    "Parent": "my-org|my-org-vdc",
+    "CreatedBy": "Test_UploadCatalogMediaImage"
+   },
+   {
+    "Name": "TestCatalogUploadMedia2",
+    "EntityType": "mediaImage",
+    "Parent": "my-org|my-org-vdc",
+    "CreatedBy": "Test_UploadCatalogMediaImage"
+   },
+   {
+    "Name": "TestComposeVapp",
+    "EntityType": "vapp",
+    "Parent": "",
+    "CreatedBy": "Test_ComposeVApp"
+   },
+   {
+    "Name": "CreateDeleteEdgeGateway_compact",
+    "EntityType": "edgegateway",
+    "Parent": "my-org|my-org-vdc",
+    "CreatedBy": "Test_CreateDeleteEdgeGateway"
+   },
+   {
+    "Name": "CreateDeleteEdgeGateway_full",
+    "EntityType": "edgegateway",
+    "Parent": "my-org|my-org-vdc",
+    "CreatedBy": "Test_CreateDeleteEdgeGateway"
+   },
+   {
+    "Name": "TestCreateExternalNetwork",
+    "EntityType": "externalNetwork",
+    "Parent": "",
+    "CreatedBy": "Test_CreateExternalNetwork"
+   },
+   {
+    "Name": "TestCreateOrg_org1",
+    "EntityType": "org",
+    "Parent": "",
+    "CreatedBy": "TestCreateOrg"
+   },
+   {
+    "Name": "TestCreateOrg_org2",
+    "EntityType": "org",
+    "Parent": "",
+    "CreatedBy": "TestCreateOrg"
+   },
+   {
+    "Name": "TestCreateOrg_org3",
+    "EntityType": "org",
+    "Parent": "",
+    "CreatedBy": "TestCreateOrg"
+   },
+   {
+    "Name": "TestCreateOrg_org4",
+    "EntityType": "org",
+    "Parent": "",
+    "CreatedBy": "TestCreateOrg"
+   },
+   {
+    "Name": "TestCreateOrg_org5",
+    "EntityType": "org",
+    "Parent": "",
+    "CreatedBy": "TestCreateOrg"
+   },
+   {
+    "Name": "TestCreateOrgVdcNetworkDirect",
+    "EntityType": "network",
+    "Parent": "my-org|my-org-vdc",
+    "CreatedBy": "Test_CreateOrgVdcNetworkDirect"
+   },
+   {
+    "Name": "TestCreateOrgVdcNetworkEGW",
+    "EntityType": "network",
+    "Parent": "my-org|my-org-vdc",
+    "CreatedBy": "Test_CreateOrgVdcNetworkEGW"
+   },
+   {
+    "Name": "TestCreateOrgVdcNetworkIso",
+    "EntityType": "network",
+    "Parent": "my-org|my-org-vdc",
+    "CreatedBy": "Test_CreateOrgVdcNetworkIso"
+   }
+  ]
+ }

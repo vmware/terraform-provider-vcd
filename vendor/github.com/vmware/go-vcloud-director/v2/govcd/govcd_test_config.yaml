@@ -9,89 +9,82 @@
 provider:
     # vCD administrator credentials
     # (Providing org credentials will skip some tests)
-    user: someuser
-    password: somepassword
+    user: administrator
+    password: R00tas!23
     #
     # The vCD address, in the format https://vCD_IP/api
     # or https://vCD_host_name/api
-    url: https://11.111.1.111/api
+    url: https://192.168.1.109/api
     #
     # The organization you are authenticating with
     sysOrg: System
-    # (Optional) MaxRetryTimeout specifies a time limit (in seconds) for retrying requests made by the SDK
-    # where vCloud director may take time to respond and retry mechanism is needed.
-    # This must be >0 to avoid instant timeout errors. If omitted - default value is set.
-    # maxRetryTimeout: 60
-    #
-    # (Optional) httpTimeout specifies a time limit (in seconds) for waiting http response.
-    # If omitted - default value is set.
-    # httpTimeout: 600
 vcd:
     # Name of the organization (mandatory)
-    org: myorg
+    org: my-org
     #
     # The virtual data center (mandatory)
     # The tests will create a vApp here
     #
-    vdc: myvdc
+    vdc: my-org-vdc
     # Provider VDC; if omitted, some tests will be skipped
     provider_vdc:
-      name: myprovidervdc
-      storage_profile: mystorageprofile
-      network_pool: mynetworkpool
+      name: provider-vdc
+      storage_profile: "*"
+      network_pool: provider-vdc-VXLAN-NP
     # An Org catalog, possibly containing at least one item
     catalog:
-        name: mycat
-        # One item in the catalog. It will be used to compose test vApps. Some tests rely on it
-        # being Photon OS. If it is not Photon OS - some tests will be skipped
-        catalogItem: myitem
+        name: my-catalog
+        #
+        # One item in the catalog. It will be used to compose test vApps
+        catalogItem: photon-os
         #
         # An optional description for the catalog. Its test will be skipped if omitted.
         # If provided, it must be the current description of the catalog
-        description: mycat for loading
+        description: my-catalog-description
         #
         # An optional description for the catalog item
-        catalogItemDescription: myitem to create vapps
-    # Existing VDC networks. At least one is needed.
+        catalogItemDescription: photon-os-description
+    #
+        # Existing VDC networks. At least one is needed.
     network:
       # First vdc network (mandatory)
-      network1: "mynet"
+      network1: my-vdc-int-net
       # Second vdc network. If omitted, some tests will be skipped.
-      network2: "mynet2"
+      network2: my-vdc-int-net2
     # Storage profiles used in the vDC
     # One or two can be listed
     storageProfile:
         # First storage profile (mandatory)
-        storageProfile1: Development
+        storageProfile1: "*"
         # Second storage profile. If omitted, some tests will be skipped.
-        storageProfile2: "*"
+        storageProfile2: Development
     # An edge gateway
     # (see https://pubs.vmware.com/vca/topic/com.vmware.vcloud.api.doc_56/GUID-18B0FB8B-385C-4B6D-982C-4B24D271C646.html)
-    edgeGateway: myedgegw
+    edgeGateway: my-edge-gw
     #
     # The IP of the gateway (must exist)
-    externalIp: 10.150.10.10
+    externalIp: 192.168.1.110
     #
     # netmask for the external IP (MANDATORY for edge GW VPN)
-    externalNetmask: 255.255.224.0
+    externalNetmask: 255.255.255.0
     #
     # A free IP in the Org vDC network
-    internalIp: 192.168.1.10
+    internalIp: 10.10.10.11
     #
     # netmask for the internal IP (MANDATORY for edge GW VPN)
     internalNetmask: 255.255.255.0
+    # A port group name for creating an external network
+    externalNetworkPortGroup: VM Network 2
     #
-    # An existing external Network name
-    externalNetwork: myexternalnet
-    #
-    # A port group name for creating a new external network in tests
-    externalNetworkPortGroup: ForTestingPG
-    #
-    # A port group type for creating a new external network in tests. Can be DV_PORTGROUP or NETWORK
-    externalNetworkPortGroupType: NETWORK
+    # A port group type for creating an external network. Can be DV_PORTGROUP or NETWORK
+    externalNetworkPortGroupType: DV_PORTGROUP
     #
     # A vSphere server name for creating an external network
-    vimServer: vc9
+    vimServer: vc
+    #
+    #
+    # An external Network name
+    externalNetwork: my-ext-network
     #
     # Independent disk parameters for testing
     disk:
@@ -146,4 +139,7 @@ media:
   # Absolute or relative path
   mediaPath: ../test-resources/test.iso
   # Existing media in test system
-  mediaName: uploadedMediaName
+  mediaName: dsl
+  # photonOsOvaPath: photon-hw11-3.0-26156e2.ova
+  photonOsOvaPath: photon-os-test
+  # photonOsOvaPath: /Users/dserplis/Downloads/photon-hw11-3.0-26156e2.ova

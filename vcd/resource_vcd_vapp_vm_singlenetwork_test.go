@@ -94,7 +94,7 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION (dhcp): %s\n", configTextStep2)
 	debugPrintf("#[DEBUG] CONFIGURATION (manual IP): %s\n", configTextStep4)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(

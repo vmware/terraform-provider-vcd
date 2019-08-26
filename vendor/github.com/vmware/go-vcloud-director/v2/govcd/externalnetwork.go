@@ -55,9 +55,6 @@ func validateExternalNetwork(externalNetwork *types.ExternalNetwork) error {
 	if externalNetwork.Name == "" {
 		return errors.New("external Network missing required field: Name")
 	}
-	if externalNetwork.Xmlns == "" {
-		return errors.New("external Network missing required field: Xmlns")
-	}
 	return nil
 }
 

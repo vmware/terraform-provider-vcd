@@ -5,6 +5,7 @@
 package govcd
 
 import (
+	"encoding/xml"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -568,15 +569,90 @@ func (vcdClient *VCDClient) GetExternalNetworkByNameOrId(identifier string) (*Ex
 // CreateExternalNetwork allows create external network and returns Task or error.
 // types.ExternalNetwork struct is general and used for various types of networks. But for external network
 // fence mode is always isolated, isInherited is false, parentNetwork is empty.
-func CreateExternalNetwork(vcdClient *VCDClient, externalNetwork *types.ExternalNetwork) (Task, error) {
+func CreateExternalNetwork(vcdClient *VCDClient, externalNetworkData *types.ExternalNetwork) (Task, error) {
 
 	if !vcdClient.Client.IsSysAdmin {
 		return Task{}, fmt.Errorf("functionality requires system administrator privileges")
 	}
 
-	err := validateExternalNetwork(externalNetwork)
+	err := validateExternalNetwork(externalNetworkData)
 	if err != nil {
 		return Task{}, err
+	}
+
+	// Type: VimObjectRefType
+	// Namespace: http://www.vmware.com/vcloud/extension/v1.5
+	// https://vdc-repo.vmware.com/vmwb-repository/dcr-public/7a028e78-bd37-4a6a-8298-9c26c7eeb9aa/09142237-dd46-4dee-8326-e07212fb63a8/doc/doc/types/VimObjectRefsType.html
+	// Description: Represents the Managed Object Reference (MoRef) and the type of a vSphere object.
+	// Since: 0.9
+	type vimObjectRefCreate struct {
+		VimServerRef  *types.Reference `xml:"vmext:VimServerRef"`
+		MoRef         string           `xml:"vmext:MoRef"`
+		VimObjectType string           `xml:"vmext:VimObjectType"`
+	}
+
+	// Type: VimObjectRefsType
+	// Namespace: http://www.vmware.com/vcloud/extension/v1.5
+	// https://vdc-repo.vmware.com/vmwb-repository/dcr-public/7a028e78-bd37-4a6a-8298-9c26c7eeb9aa/09142237-dd46-4dee-8326-e07212fb63a8/doc/doc/types/VimObjectRefsType.html
+	// Description: List of VimObjectRef elements.
+	// Since: 0.9
+	type vimObjectRefsCreate struct {
+		VimObjectRef []*vimObjectRefCreate `xml:"vmext:VimObjectRef"`
+	}
+
+	// Type: VMWExternalNetworkType
+	// Namespace: http://www.vmware.com/vcloud/extension/v1.5
+	// https://vdc-repo.vmware.com/vmwb-repository/dcr-public/7a028e78-bd37-4a6a-8298-9c26c7eeb9aa/09142237-dd46-4dee-8326-e07212fb63a8/doc/doc/types/VMWExternalNetworkType.html
+	// Description: External network type.
+	// Since: 1.0
+	type externalNetworkCreate struct {
+		XMLName          xml.Name                    `xml:"vmext:VMWExternalNetwork"`
+		XmlnsVmext       string                      `xml:"xmlns:vmext,attr,omitempty"`
+		XmlnsVcloud      string                      `xml:"xmlns:vcloud,attr,omitempty"`
+		HREF             string                      `xml:"href,attr,omitempty"`
+		Type             string                      `xml:"type,attr,omitempty"`
+		ID               string                      `xml:"id,attr,omitempty"`
+		OperationKey     string                      `xml:"operationKey,attr,omitempty"`
+		Name             string                      `xml:"name,attr"`
+		Link             []*types.Link               `xml:"Link,omitempty"`
+		Description      string                      `xml:"vcloud:Description,omitempty"`
+		Tasks            *types.TasksInProgress      `xml:"Tasks,omitempty"`
+		Configuration    *types.NetworkConfiguration `xml:"vcloud:Configuration,omitempty"`
+		VimPortGroupRef  *vimObjectRefCreate         `xml:"VimPortGroupRef,omitempty"`
+		VimPortGroupRefs *vimObjectRefsCreate        `xml:"vmext:VimPortGroupRefs,omitempty"`
+		VCloudExtension  *types.VCloudExtension      `xml:"VCloudExtension,omitempty"`
+	}
+
+	// Specific struct is used as two different name spaces needed for vCD API and return struct has diff name spaces
+	externalNetwork := &externalNetworkCreate{}
+	externalNetwork.HREF = externalNetworkData.HREF
+	externalNetwork.Description = externalNetworkData.Description
+	externalNetwork.Name = externalNetworkData.Name
+	externalNetwork.Type = externalNetworkData.Type
+	externalNetwork.ID = externalNetworkData.ID
+	externalNetwork.OperationKey = externalNetworkData.OperationKey
+	externalNetwork.Link = externalNetworkData.Link
+	externalNetwork.Configuration = externalNetworkData.Configuration
+	externalNetwork.VCloudExtension = externalNetworkData.VCloudExtension
+	externalNetwork.XmlnsVmext = types.XMLNamespaceExtension
+	externalNetwork.XmlnsVcloud = types.XMLNamespaceVCloud
+	externalNetwork.Type = types.MimeExternalNetwork
+	if externalNetworkData.VimPortGroupRefs != nil {
+		externalNetwork.VimPortGroupRefs = &vimObjectRefsCreate{}
+		for _, vimObjRef := range externalNetworkData.VimPortGroupRefs.VimObjectRef {
+			externalNetwork.VimPortGroupRefs.VimObjectRef = append(externalNetwork.VimPortGroupRefs.VimObjectRef, &vimObjectRefCreate{
+				VimServerRef:  vimObjRef.VimServerRef,
+				MoRef:         vimObjRef.MoRef,
+				VimObjectType: vimObjRef.VimObjectType,
+			})
+		}
+	}
+	if externalNetworkData.VimPortGroupRef != nil {
+		externalNetwork.VimPortGroupRef = &vimObjectRefCreate{
+			VimServerRef:  externalNetworkData.VimPortGroupRef.VimServerRef,
+			MoRef:         externalNetworkData.VimPortGroupRef.MoRef,
+			VimObjectType: externalNetworkData.VimPortGroupRef.VimObjectType,
+		}
 	}
 
 	externalNetHREF := vcdClient.Client.VCDHREF

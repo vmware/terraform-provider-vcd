@@ -71,3 +71,14 @@ func createTemporaryVCDConnection() *VCDClient {
 	}
 	return conn
 }
+
+// minIfLess returns:
+// `min` if `value` is less than min
+// `value` if `value` > `min`
+func minIfLess(min, value int) int {
+	if value < min {
+		return min
+	}
+
+	return value
+}

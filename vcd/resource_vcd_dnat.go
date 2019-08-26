@@ -135,7 +135,7 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 			return fmt.Errorf("functionality requires system administrator privileges")
 		}
 
-		externalNetwork, err := govcd.GetExternalNetwork(vcdClient.VCDClient, networkName)
+		externalNetwork, err := vcdClient.GetExternalNetworkByNameOrId(networkName)
 		if err != nil {
 			return fmt.Errorf("unable to find external network: %s, err: %s", networkName, err)
 		}
@@ -216,11 +216,11 @@ func resourceVcdDNATRead(d *schema.ResourceData, meta interface{}) error {
 			log.Printf("[DEBUG] didn't find org VDC network with name: %s, %#v", natRule.GatewayNatRule.Interface.Name, err)
 		}
 
-		_, extNetwErr := govcd.GetExternalNetwork(vcdClient.VCDClient, natRule.GatewayNatRule.Interface.Name)
+		_, extNetwErr := vcdClient.GetExternalNetworkByNameOrId(natRule.GatewayNatRule.Interface.Name)
 		if extNetwErr == nil {
 			d.Set("network_type", "ext")
 		} else {
-			log.Printf("[DEBUG] didn't find external network with name: %s, %#v", natRule.GatewayNatRule.Interface.Name, extNetwErr)
+			log.Printf("[DEBUG] didn't find external network with name: %s, %s", natRule.GatewayNatRule.Interface.Name, extNetwErr)
 		}
 
 		if orgVdcNetwork != nil && extNetwErr == nil {
@@ -335,8 +335,8 @@ func resourceVcdDNATUpdate(d *schema.ResourceData, meta interface{}) error {
 		natRule.GatewayNatRule.Interface.HREF = orgVdcNetwork.HREF
 
 	} else if d.Get("network_type").(string) == "ext" {
-		externalNetwork, _ := govcd.GetExternalNetwork(vcdClient.VCDClient, d.Get("network_name").(string))
-		if externalNetwork == nil || externalNetwork == (&govcd.ExternalNetwork{}) || err != nil {
+		externalNetwork, err := vcdClient.GetExternalNetworkByName(d.Get("network_name").(string))
+		if err != nil {
 			return fmt.Errorf("unable to find external network: %s, err: %s", networkName, err)
 		}
 		natRule.GatewayNatRule.Interface.Name = externalNetwork.ExternalNetwork.Name

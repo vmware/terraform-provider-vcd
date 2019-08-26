@@ -170,10 +170,10 @@ func resourceVcdExternalNetworkRead(d *schema.ResourceData, meta interface{}) er
 
 	vcdClient := meta.(*VCDClient)
 
-	externalNetwork, err := govcd.GetExternalNetwork(vcdClient.VCDClient, d.Id())
+	externalNetwork, err := vcdClient.GetExternalNetworkByNameOrId(d.Id())
 	if err != nil {
 		d.SetId("")
-		return fmt.Errorf("error fetching external network details %#v", err)
+		return fmt.Errorf("error fetching external network details %s", err)
 	}
 
 	log.Printf("[TRACE] external network read completed: %#v", externalNetwork.ExternalNetwork)
@@ -186,10 +186,10 @@ func resourceVcdExternalNetworkDelete(d *schema.ResourceData, meta interface{}) 
 
 	vcdClient := meta.(*VCDClient)
 
-	externalNetwork, err := govcd.GetExternalNetwork(vcdClient.VCDClient, d.Id())
+	externalNetwork, err := vcdClient.GetExternalNetworkByNameOrId(d.Id())
 	if err != nil {
-		log.Printf("[DEBUG] Error fetching external network details %#v", err)
-		return fmt.Errorf("error fetching external network details %#v", err)
+		log.Printf("[DEBUG] Error fetching external network details %s", err)
+		return fmt.Errorf("error fetching external network details %s", err)
 	}
 
 	err = externalNetwork.DeleteWait()
@@ -206,9 +206,7 @@ func resourceVcdExternalNetworkDelete(d *schema.ResourceData, meta interface{}) 
 // any cast operations or default values should be done here so that the create method is simple
 func getExternalNetworkInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.ExternalNetwork, error) {
 	params := &types.ExternalNetwork{
-		Name:        d.Get("name").(string),
-		Xmlns:       types.XMLNamespaceExtension,
-		XmlnsVCloud: types.XMLNamespaceVCloud,
+		Name: d.Get("name").(string),
 		Configuration: &types.NetworkConfiguration{
 			Xmlns:                          types.XMLNamespaceVCloud,
 			RetainNetInfoAcrossDeployments: d.Get("retain_net_info_across_deployments").(bool),
