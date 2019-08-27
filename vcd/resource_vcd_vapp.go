@@ -269,7 +269,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		log.Printf("[TRACE] Setting vApp guest properties")
-		_, err = vapp.SetGuestProperties(vappProperties)
+		_, err = vapp.SetProductSectionList(vappProperties)
 		if err != nil {
 			return fmt.Errorf("error setting guest properties: %s", err)
 		}
@@ -306,7 +306,7 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		log.Printf("[TRACE] Updating vApp guest properties")
-		_, err = vapp.SetGuestProperties(vappProperties)
+		_, err = vapp.SetProductSectionList(vappProperties)
 		if err != nil {
 			return fmt.Errorf("error setting guest properties: %s", err)
 		}
@@ -469,7 +469,7 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// update guest properties
-	guestProperties, err := vapp.GetGuestProperties()
+	guestProperties, err := vapp.GetProductSectionList()
 	if err != nil {
 		return fmt.Errorf("unable to read guest properties: %s", err)
 	}

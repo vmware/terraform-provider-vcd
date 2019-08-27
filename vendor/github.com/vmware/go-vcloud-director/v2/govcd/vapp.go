@@ -539,7 +539,7 @@ func (vapp *VApp) ChangeVMName(name string) (Task, error) {
 
 // SetOvf sets guest properties for the first child VM in vApp
 //
-// Deprecated: Use vm.SetGuestProperties()
+// Deprecated: Use vm.SetProductSectionList()
 func (vapp *VApp) SetOvf(parameters map[string]string) (Task, error) {
 	err := vapp.Refresh()
 	if err != nil {
@@ -838,17 +838,23 @@ func (vapp *VApp) RemoveAllNetworks() (Task, error) {
 	return updateNetworkConfigurations(vapp, []types.VAppNetworkConfiguration{})
 }
 
-// SetGuestProperties sets guest properties for a vApp
-func (vapp *VApp) SetGuestProperties(properties *types.ProductSectionList) (*types.ProductSectionList, error) {
-	err := setGuestProperties(vapp.client, vapp.VApp.HREF, properties)
+// SetProductSectionList sets product section for a vApp. It allows to change vApp guest properties.
+//
+// The slice of properties "ProductSectionList.ProductSection.Property" is not necessarily ordered
+// or returned as set before
+func (vapp *VApp) SetProductSectionList(productSection *types.ProductSectionList) (*types.ProductSectionList, error) {
+	err := setProductSectionList(vapp.client, vapp.VApp.HREF, productSection)
 	if err != nil {
-		return nil, fmt.Errorf("unable to set vApp guest properties: %s", err)
+		return nil, fmt.Errorf("unable to set vApp product section: %s", err)
 	}
 
-	return vapp.GetGuestProperties()
+	return vapp.GetProductSectionList()
 }
 
-// GetGuestProperties retrieves guest properties for a vApp
-func (vapp *VApp) GetGuestProperties() (*types.ProductSectionList, error) {
-	return getGuestProperties(vapp.client, vapp.VApp.HREF)
+// GetProductSectionList retrieves product section for a vApp. It allows to read vApp guest properties.
+//
+// The slice of properties "ProductSectionList.ProductSection.Property" is not necessarily ordered
+// or returned as set before
+func (vapp *VApp) GetProductSectionList() (*types.ProductSectionList, error) {
+	return getProductSectionList(vapp.client, vapp.VApp.HREF)
 }

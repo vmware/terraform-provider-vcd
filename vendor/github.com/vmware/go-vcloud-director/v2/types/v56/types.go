@@ -7,6 +7,7 @@ package types
 import (
 	"encoding/xml"
 	"fmt"
+	"sort"
 )
 
 // Maps status Attribute Values for VAppTemplate, VApp, Vm, and Media Objects
@@ -1170,6 +1171,15 @@ type ProductSectionList struct {
 	Ovf            string          `xml:"xmlns:ovf,attr,omitempty"`
 	Xmlns          string          `xml:"xmlns,attr"`
 	ProductSection *ProductSection `xml:"http://schemas.dmtf.org/ovf/envelope/1 ProductSection,omitempty"`
+}
+
+// SortByPropertyKeyName allows to sort ProductSectionList property slice by key name as the API is
+// does not always return an ordered slice
+func (p *ProductSectionList) SortByPropertyKeyName() {
+	sort.SliceStable(p.ProductSection.Property, func(i, j int) bool {
+		return p.ProductSection.Property[i].Key < p.ProductSection.Property[j].Key
+	})
+	return
 }
 
 type ProductSection struct {

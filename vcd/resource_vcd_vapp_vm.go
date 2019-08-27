@@ -383,7 +383,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		log.Printf("[TRACE] Setting VM guest properties")
-		_, err = vm.SetGuestProperties(vmProperties)
+		_, err = vm.SetProductSectionList(vmProperties)
 		if err != nil {
 			return fmt.Errorf("error setting guest properties: %s", err)
 		}
@@ -566,7 +566,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		}
 
 		log.Printf("[TRACE] Updating VM guest properties")
-		_, err = vm.SetGuestProperties(vmProperties)
+		_, err = vm.SetProductSectionList(vmProperties)
 		if err != nil {
 			return fmt.Errorf("error setting guest properties: %s", err)
 		}
@@ -884,7 +884,7 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("expose_hardware_virtualization", vm.VM.NestedHypervisorEnabled)
 
 	// update guest properties
-	guestProperties, err := vm.GetGuestProperties()
+	guestProperties, err := vm.GetProductSectionList()
 	if err != nil {
 		return fmt.Errorf("unable to read guest properties: %s", err)
 	}
