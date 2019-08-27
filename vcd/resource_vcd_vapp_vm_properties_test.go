@@ -52,8 +52,8 @@ func TestAccVcdVAppVmProperties(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppVmExists(vappName2, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "name", vmName),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, `properties.guest.hostname`, "test-host"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, `properties.guest.another.subkey`, "another-value"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, `guest_properties.guest.hostname`, "test-host"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, `guest_properties.guest.another.subkey`, "another-value"),
 				),
 			},
 			resource.TestStep{
@@ -61,9 +61,9 @@ func TestAccVcdVAppVmProperties(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppVmExists(vappName2, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "name", vmName),
-					resource.TestCheckNoResourceAttr("vcd_vapp_vm."+vmName, `properties.guest.hostname`),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, `properties.guest.another.subkey`, "new-value"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, `properties.guest.third.subkey`, "third-value"),
+					resource.TestCheckNoResourceAttr("vcd_vapp_vm."+vmName, `guest_properties.guest.hostname`),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, `guest_properties.guest.another.subkey`, "new-value"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, `guest_properties.guest.third.subkey`, "third-value"),
 				),
 			},
 			resource.TestStep{
@@ -71,7 +71,7 @@ func TestAccVcdVAppVmProperties(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppVmExists(vappName2, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "name", vmName),
-					resource.TestCheckNoResourceAttr("vcd_vapp_vm."+vmName, `properties`),
+					resource.TestCheckNoResourceAttr("vcd_vapp_vm."+vmName, `guest_properties`),
 				),
 			},
 		},
@@ -96,7 +96,7 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   cpus          = 2
   cpu_cores     = 1
 
-  properties = {
+  guest_properties = {
 	"guest.hostname"       = "test-host"
 	"guest.another.subkey" = "another-value"
   }
@@ -121,7 +121,7 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   cpus          = 2
   cpu_cores     = 1
 
-  properties = {
+  guest_properties = {
 	"guest.another.subkey" = "new-value"
 	"guest.third.subkey"   = "third-value"
   }

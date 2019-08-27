@@ -50,8 +50,8 @@ func TestAccVcdVAppProperties(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppExists("vcd_vapp."+t.Name(), &vapp),
 					resource.TestCheckResourceAttr("vcd_vapp."+t.Name(), "name", t.Name()),
-					resource.TestCheckResourceAttr("vcd_vapp."+t.Name(), `properties.guest.hostname`, "test-host"),
-					resource.TestCheckResourceAttr("vcd_vapp."+t.Name(), `properties.guest.another.subkey`, "another-value"),
+					resource.TestCheckResourceAttr("vcd_vapp."+t.Name(), `guest_properties.guest.hostname`, "test-host"),
+					resource.TestCheckResourceAttr("vcd_vapp."+t.Name(), `guest_properties.guest.another.subkey`, "another-value"),
 				),
 			},
 			resource.TestStep{
@@ -59,9 +59,9 @@ func TestAccVcdVAppProperties(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppExists("vcd_vapp."+t.Name(), &vapp),
 					resource.TestCheckResourceAttr("vcd_vapp."+t.Name(), "name", t.Name()),
-					resource.TestCheckNoResourceAttr("vcd_vapp."+t.Name(), `properties.guest.hostname`),
-					resource.TestCheckResourceAttr("vcd_vapp."+t.Name(), `properties.guest.another.subkey`, "new-value"),
-					resource.TestCheckResourceAttr("vcd_vapp."+t.Name(), `properties.guest.third.subkey`, "third-value"),
+					resource.TestCheckNoResourceAttr("vcd_vapp."+t.Name(), `guest_properties.guest.hostname`),
+					resource.TestCheckResourceAttr("vcd_vapp."+t.Name(), `guest_properties.guest.another.subkey`, "new-value"),
+					resource.TestCheckResourceAttr("vcd_vapp."+t.Name(), `guest_properties.guest.third.subkey`, "third-value"),
 				),
 			},
 			resource.TestStep{
@@ -69,7 +69,7 @@ func TestAccVcdVAppProperties(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppExists("vcd_vapp."+t.Name(), &vapp),
 					resource.TestCheckResourceAttr("vcd_vapp."+t.Name(), "name", t.Name()),
-					resource.TestCheckNoResourceAttr("vcd_vapp."+t.Name(), `properties`),
+					resource.TestCheckNoResourceAttr("vcd_vapp."+t.Name(), `guest_properties`),
 				),
 			},
 		},
@@ -82,7 +82,7 @@ resource "vcd_vapp" "{{.VappName}}" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
 
-  properties = {
+  guest_properties = {
 	"guest.hostname"       = "test-host"
 	"guest.another.subkey" = "another-value"
   }
@@ -95,7 +95,7 @@ resource "vcd_vapp" "{{.VappName}}" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
 
-  properties = {
+  guest_properties = {
 	"guest.another.subkey" = "new-value"
 	"guest.third.subkey"   = "third-value"
   }

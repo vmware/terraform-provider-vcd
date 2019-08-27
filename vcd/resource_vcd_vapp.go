@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"regexp"
-	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -255,12 +254,17 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	if _, ok := d.GetOk("properties"); ok {
-		// TODO - this is just for testing. Real issue must be solved
-		time.Sleep(10 * time.Second)
+	if _, ok := d.GetOk("guest_properties"); ok {
 		vapp, err := vdc.FindVAppByName(d.Get("name").(string))
 		if err != nil {
 			return fmt.Errorf("unable to find vApp by name %s: %s", d.Get("name").(string), err)
+		}
+
+		// Even though vApp has a task and waits for its completion it happens that it is not ready
+		// for operation just after provisioning therefore we wait for it to exit UNRESOLVED state
+		err = vapp.BlockWhileStatus("UNRESOLVED", vcdClient.MaxRetryTimeout)
+		if err != nil {
+			return fmt.Errorf("timed out waiting for vApp to exit UNRESOLVED state: %s", err)
 		}
 
 		vappProperties, err := getProductSectionListType(d)
@@ -299,7 +303,7 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error getting VApp status: %#v", err)
 	}
 
-	if d.HasChange("properties") {
+	if d.HasChange("guest_properties") {
 		vappProperties, err := getProductSectionListType(d)
 		if err != nil {
 			return fmt.Errorf("unable to convert guest properties to data structure")

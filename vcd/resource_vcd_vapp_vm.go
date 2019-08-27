@@ -376,7 +376,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	if _, ok := d.GetOk("properties"); ok {
+	if _, ok := d.GetOk("guest_properties"); ok {
 		vmProperties, err := getProductSectionListType(d)
 		if err != nil {
 			return fmt.Errorf("unable to convert guest properties to data structure")
@@ -559,7 +559,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf("error getting VM status before update: %#v", err)
 	}
 
-	if d.HasChange("properties") {
+	if d.HasChange("guest_properties") {
 		vmProperties, err := getProductSectionListType(d)
 		if err != nil {
 			return fmt.Errorf("unable to convert guest properties to data structure")
