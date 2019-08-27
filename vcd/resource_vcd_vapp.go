@@ -267,13 +267,13 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 			return fmt.Errorf("timed out waiting for vApp to exit UNRESOLVED state: %s", err)
 		}
 
-		vappProperties, err := getProductSectionListType(d)
+		guestProperties, err := getProductSectionListType(d)
 		if err != nil {
 			return fmt.Errorf("unable to convert guest properties to data structure")
 		}
 
 		log.Printf("[TRACE] Setting vApp guest properties")
-		_, err = vapp.SetProductSectionList(vappProperties)
+		_, err = vapp.SetProductSectionList(guestProperties)
 		if err != nil {
 			return fmt.Errorf("error setting guest properties: %s", err)
 		}
