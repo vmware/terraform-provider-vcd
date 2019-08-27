@@ -197,7 +197,7 @@ func resourceVcdVAppVm() *schema.Resource {
 				Default:     false,
 				Description: "Expose hardware-assisted CPU virtualization to guest OS.",
 			},
-			"properties": {
+			"guest_properties": {
 				Type:        schema.TypeMap,
 				Optional:    true,
 				Description: "Key/value settings for guest properties",
@@ -1256,7 +1256,7 @@ func isForcedCustomization(customizationBlock interface{}) bool {
 
 // getProductSectionListType returns a struct for setting guest properties
 func getProductSectionListType(d *schema.ResourceData) (*types.ProductSectionList, error) {
-	guestProperties := d.Get("properties")
+	guestProperties := d.Get("guest_properties")
 	guestProp := convertToStringMap(guestProperties.(map[string]interface{}))
 	vmProperties := &types.ProductSectionList{
 		ProductSection: &types.ProductSection{
@@ -1286,7 +1286,7 @@ func setProductSectionListData(d *schema.ResourceData, properties *types.Product
 	// if properties object does not have actual properties - set state to empty
 	log.Printf("[TRACE] Setting empty properties into statefile because no properties were specified")
 	if properties == nil || properties.ProductSection == nil || len(properties.ProductSection.Property) == 0 {
-		return d.Set("properties", make(map[string]string))
+		return d.Set("guest_properties", make(map[string]string))
 	}
 
 	for _, prop := range properties.ProductSection.Property {
@@ -1299,5 +1299,5 @@ func setProductSectionListData(d *schema.ResourceData, properties *types.Product
 	}
 
 	log.Printf("[TRACE] Setting properties into statefile")
-	return d.Set("properties", data)
+	return d.Set("guest_properties", data)
 }

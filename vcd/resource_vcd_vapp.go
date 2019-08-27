@@ -101,7 +101,7 @@ func resourceVcdVApp() *schema.Resource {
 				Optional: true,
 				Default:  true,
 			},
-			"properties": {
+			"guest_properties": {
 				Type:        schema.TypeMap,
 				Optional:    true,
 				Description: "Key/value settings for guest properties",
