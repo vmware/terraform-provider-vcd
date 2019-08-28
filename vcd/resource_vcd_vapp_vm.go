@@ -377,7 +377,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if _, ok := d.GetOk("guest_properties"); ok {
-		vmProperties, err := getProductSectionListType(d)
+		vmProperties, err := getGuestProperties(d)
 		if err != nil {
 			return fmt.Errorf("unable to convert guest properties to data structure")
 		}
@@ -560,7 +560,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 	}
 
 	if d.HasChange("guest_properties") {
-		vmProperties, err := getProductSectionListType(d)
+		vmProperties, err := getGuestProperties(d)
 		if err != nil {
 			return fmt.Errorf("unable to convert guest properties to data structure")
 		}
@@ -889,7 +889,7 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("unable to read guest properties: %s", err)
 	}
 
-	err = setProductSectionListData(d, guestProperties)
+	err = setGuestProperties(d, guestProperties)
 	if err != nil {
 		return fmt.Errorf("unable to set guest properties in state: %s", err)
 	}
@@ -1254,8 +1254,8 @@ func isForcedCustomization(customizationBlock interface{}) bool {
 	return true
 }
 
-// getProductSectionListType returns a struct for setting guest properties
-func getProductSectionListType(d *schema.ResourceData) (*types.ProductSectionList, error) {
+// getGuestProperties returns a struct for setting guest properties
+func getGuestProperties(d *schema.ResourceData) (*types.ProductSectionList, error) {
 	guestProperties := d.Get("guest_properties")
 	guestProp := convertToStringMap(guestProperties.(map[string]interface{}))
 	vmProperties := &types.ProductSectionList{
@@ -1279,8 +1279,8 @@ func getProductSectionListType(d *schema.ResourceData) (*types.ProductSectionLis
 	return vmProperties, nil
 }
 
-// setProductSectionListData sets guest properties into state
-func setProductSectionListData(d *schema.ResourceData, properties *types.ProductSectionList) error {
+// setGuestProperties sets guest properties into state
+func setGuestProperties(d *schema.ResourceData, properties *types.ProductSectionList) error {
 	data := make(map[string]string)
 
 	// if properties object does not have actual properties - set state to empty

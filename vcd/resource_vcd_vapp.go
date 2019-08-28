@@ -267,7 +267,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 			return fmt.Errorf("timed out waiting for vApp to exit UNRESOLVED state: %s", err)
 		}
 
-		guestProperties, err := getProductSectionListType(d)
+		guestProperties, err := getGuestProperties(d)
 		if err != nil {
 			return fmt.Errorf("unable to convert guest properties to data structure")
 		}
@@ -304,7 +304,7 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if d.HasChange("guest_properties") {
-		vappProperties, err := getProductSectionListType(d)
+		vappProperties, err := getGuestProperties(d)
 		if err != nil {
 			return fmt.Errorf("unable to convert guest properties to data structure")
 		}
@@ -478,7 +478,7 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("unable to read guest properties: %s", err)
 	}
 
-	err = setProductSectionListData(d, guestProperties)
+	err = setGuestProperties(d, guestProperties)
 	if err != nil {
 		return fmt.Errorf("unable to set guest properties in state: %s", err)
 	}
