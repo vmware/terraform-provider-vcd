@@ -1293,8 +1293,6 @@ func setGuestProperties(d *schema.ResourceData, properties *types.ProductSection
 		// if a value was set - use it
 		if prop.Value != nil {
 			data[prop.Key] = prop.Value.Value
-		} else { // fallback to default value for field
-			data[prop.Key] = prop.DefaultValue
 		}
 	}
 
