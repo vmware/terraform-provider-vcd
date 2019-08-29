@@ -704,7 +704,7 @@ func QueryProviderVdcStorageProfileByName(vcdCli *VCDClient, name string) ([]*ty
 func QueryNetworkPoolByName(vcdCli *VCDClient, name string) ([]*types.QueryResultNetworkPoolRecordType, error) {
 	results, err := vcdCli.QueryWithNotEncodedParams(nil, map[string]string{
 		"type":   "networkPool",
-		"filter": fmt.Sprintf("(name==%s)", name),
+		"filter": fmt.Sprintf("(name==%s)", url.QueryEscape(name)),
 	})
 	if err != nil {
 		return nil, err
@@ -717,7 +717,7 @@ func QueryNetworkPoolByName(vcdCli *VCDClient, name string) ([]*types.QueryResul
 func QueryProviderVdcByName(vcdCli *VCDClient, name string) ([]*types.QueryResultVMWProviderVdcRecordType, error) {
 	results, err := vcdCli.QueryWithNotEncodedParams(nil, map[string]string{
 		"type":   "providerVdc",
-		"filter": fmt.Sprintf("(name==%s)", name),
+		"filter": fmt.Sprintf("(name==%s)", url.QueryEscape(name)),
 	})
 	if err != nil {
 		return nil, err
@@ -780,7 +780,7 @@ func GetNetworkPoolByHREF(client *VCDClient, href string) (*types.VMWNetworkPool
 func QueryOrgVdcNetworkByName(vcdCli *VCDClient, name string) ([]*types.QueryResultOrgVdcNetworkRecordType, error) {
 	results, err := vcdCli.QueryWithNotEncodedParams(nil, map[string]string{
 		"type":   "orgVdcNetwork",
-		"filter": fmt.Sprintf("(name==%s)", name),
+		"filter": fmt.Sprintf("(name==%s)", url.QueryEscape(name)),
 	})
 	if err != nil {
 		return nil, err

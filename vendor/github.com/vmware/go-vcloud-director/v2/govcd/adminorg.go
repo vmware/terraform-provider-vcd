@@ -6,6 +6,7 @@ package govcd
 
 import (
 	"fmt"
+	"github.com/vmware/go-vcloud-director/v2/util"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -300,9 +301,13 @@ func (adminOrg *AdminOrg) getVdcByAdminHREF(adminVdcUrl *url.URL) (*Vdc, error) 
 func (adminOrg *AdminOrg) removeAllOrgVDCs() error {
 	for _, vdcs := range adminOrg.AdminOrg.Vdcs.Vdcs {
 
-		// Get admin Vdc HREF
 		adminVdcUrl := adminOrg.client.VCDHREF
-		adminVdcUrl.Path += "/admin/vdc/" + strings.Split(vdcs.HREF, "/api/vdc/")[1] + "/action/disable"
+		splitVdcId := strings.Split(vdcs.HREF, "/api/vdc/")
+		if len(splitVdcId) == 1 {
+			adminVdcUrl.Path += "/admin/vdc/" + strings.Split(vdcs.HREF, "/api/admin/vdc/")[1] + "/action/disable"
+		} else {
+			adminVdcUrl.Path += "/admin/vdc/" + splitVdcId[1] + "/action/disable"
+		}
 
 		req := adminOrg.client.NewRequest(map[string]string{}, http.MethodPost, adminVdcUrl, nil)
 		_, err := checkResp(adminOrg.client.Http.Do(req))
@@ -360,23 +365,58 @@ func (adminOrg *AdminOrg) removeAllOrgNetworks() error {
 	return nil
 }
 
-// Forced removal of all organization catalogs
+// removeCatalogs force removal of all organization catalogs
 func (adminOrg *AdminOrg) removeCatalogs() error {
-	for _, catalogs := range adminOrg.AdminOrg.Catalogs.Catalog {
-		// Get Catalog HREF
-		catalogHREF := adminOrg.client.VCDHREF
-		catalogHREF.Path += "/admin/catalog/" + strings.Split(catalogs.HREF, "/api/admin/catalog/")[1] //gets id
-		req := adminOrg.client.NewRequest(map[string]string{
-			"force":     "true",
-			"recursive": "true",
-		}, http.MethodDelete, catalogHREF, nil)
-		_, err := checkResp(adminOrg.client.Http.Do(req))
+	for _, catalog := range adminOrg.AdminOrg.Catalogs.Catalog {
+		isCatalogFromSameOrg, err := isCatalogFromSameOrg(adminOrg, catalog.Name)
 		if err != nil {
-			return fmt.Errorf("error deleting catalog: %s, %s", err, catalogHREF.Path)
+			return fmt.Errorf("error deleting catalog: %s", err)
+		}
+		if isCatalogFromSameOrg {
+			// Get Catalog HREF
+			catalogHREF := adminOrg.client.VCDHREF
+			catalogHREF.Path += "/admin/catalog/" + strings.Split(catalog.HREF, "/api/admin/catalog/")[1] //gets id
+			req := adminOrg.client.NewRequest(map[string]string{
+				"force":     "true",
+				"recursive": "true",
+			}, http.MethodDelete, catalogHREF, nil)
+			_, err := checkResp(adminOrg.client.Http.Do(req))
+			if err != nil {
+				return fmt.Errorf("error deleting catalog: %s, %s", err, catalogHREF.Path)
+			}
 		}
 	}
 	return nil
 
+}
+
+// isCatalogFromSameOrg checks if catalog is in same Org. Shared catalogs from other Org are showed as normal one
+// in some API responses.
+func isCatalogFromSameOrg(adminOrg *AdminOrg, catalogName string) (bool, error) {
+	foundCatalogs, err := adminOrg.FindAdminCatalogRecords(catalogName)
+	if err != nil {
+		return false, err
+	}
+
+	if len(foundCatalogs) == 1 {
+		return true, nil
+	}
+	return false, nil
+}
+
+// FindAdminCatalogRecords uses catalog name to return AdminCatalogRecord information.
+func (adminOrg *AdminOrg) FindAdminCatalogRecords(name string) ([]*types.AdminCatalogRecord, error) {
+	util.Logger.Printf("[DEBUG] FindAdminCatalogRecords with name: %s and org name: %s", name, adminOrg.AdminOrg.Name)
+	results, err := adminOrg.client.QueryWithNotEncodedParams(nil, map[string]string{
+		"type":   "adminCatalog",
+		"filter": fmt.Sprintf("(name==%s;orgName==%s)", url.QueryEscape(name), url.QueryEscape(adminOrg.AdminOrg.Name)),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	util.Logger.Printf("[DEBUG] FindAdminCatalogRecords returned with : %#v and error: %s", results.Results.AdminCatalogRecord, err)
+	return results.Results.AdminCatalogRecord, nil
 }
 
 // Given a valid catalog name, FindAdminCatalog returns an AdminCatalog object.

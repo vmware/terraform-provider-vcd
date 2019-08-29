@@ -7,6 +7,7 @@ package types
 import (
 	"encoding/xml"
 	"fmt"
+	"sort"
 )
 
 // Maps status Attribute Values for VAppTemplate, VApp, Vm, and Media Objects
@@ -1172,6 +1173,15 @@ type ProductSectionList struct {
 	ProductSection *ProductSection `xml:"http://schemas.dmtf.org/ovf/envelope/1 ProductSection,omitempty"`
 }
 
+// SortByPropertyKeyName allows to sort ProductSectionList property slice by key name as the API is
+// does not always return an ordered slice
+func (p *ProductSectionList) SortByPropertyKeyName() {
+	sort.SliceStable(p.ProductSection.Property, func(i, j int) bool {
+		return p.ProductSection.Property[i].Key < p.ProductSection.Property[j].Key
+	})
+	return
+}
+
 type ProductSection struct {
 	Info     string      `xml:"Info,omitempty"`
 	Property []*Property `xml:"http://schemas.dmtf.org/ovf/envelope/1 Property,omitempty"`
@@ -2122,6 +2132,7 @@ type QueryResultRecordsType struct {
 	VirtualCenterRecord             []*QueryResultVirtualCenterRecordType             `xml:"VirtualCenterRecord"`             // A record representing a vSphere server
 	PortGroupRecord                 []*PortGroupRecordType                            `xml:"PortgroupRecord"`                 // A record representing a port group
 	OrgVdcNetworkRecord             []*QueryResultOrgVdcNetworkRecordType             `xml:"OrgVdcNetworkRecord"`             // A record representing a org VDC network
+	AdminCatalogRecord              []*AdminCatalogRecord                             `xml:"AdminCatalogRecord"`              // A record representing a catalog
 }
 
 // QueryResultEdgeGatewayRecordType represents an edge gateway record as query result.
@@ -2633,4 +2644,31 @@ type User struct {
 	GroupReferences *GroupReference  `xml:"GroupReferences,omitempty"`
 	Password        string           `xml:"Password,omitempty"`
 	Tasks           *TasksInProgress `xml:"Tasks"`
+}
+
+// Type: AdminCatalogRecord
+// Namespace: http://www.vmware.com/vcloud/v1.5
+// https://code.vmware.com/apis/287/vcloud#/doc/doc/types/QueryResultCatalogRecordType.html
+// Issue that description partly matches with what is returned
+// Description: Represents Catalog record
+// Since: 1.5
+type AdminCatalogRecord struct {
+	HREF                    string    `xml:"href,attr,omitempty"`
+	ID                      string    `xml:"id,attr,omitempty"`
+	Type                    string    `xml:"type,attr,omitempty"`
+	Name                    string    `xml:"name,attr,omitempty"`
+	Description             string    `xml:"description,attr,omitempty"`
+	IsPublished             bool      `xml:"isPublished,attr,omitempty"`
+	IsShared                bool      `xml:"isShared,attr,omitempty"`
+	CreationDate            string    `xml:"creationDate,attr,omitempty"`
+	OrgName                 string    `xml:"orgName,attr,omitempty"`
+	OwnerName               string    `xml:"ownerName,attr,omitempty"`
+	NumberOfVAppTemplates   int64     `xml:"numberOfVAppTemplates,attr,omitempty"`
+	NumberOfMedia           int64     `xml:"numberOfMedia,attr,omitempty"`
+	Owner                   string    `xml:"owner,attr,omitempty"`
+	PublishSubscriptionType string    `xml:"publishSubscriptionType,attr,omitempty"`
+	Version                 int64     `xml:"version,attr,omitempty"`
+	Status                  string    `xml:"status,attr,omitempty"`
+	Link                    *Link     `xml:"Link,omitempty"`
+	Vdc                     *Metadata `xml:"Metadata,omitempty"`
 }

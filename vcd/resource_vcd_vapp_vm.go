@@ -197,6 +197,11 @@ func resourceVcdVAppVm() *schema.Resource {
 				Default:     false,
 				Description: "Expose hardware-assisted CPU virtualization to guest OS.",
 			},
+			"guest_properties": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "Key/value settings for guest properties",
+			},
 			"customization": &schema.Schema{
 				Optional:    true,
 				MinItems:    1,
@@ -371,6 +376,19 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	if _, ok := d.GetOk("guest_properties"); ok {
+		vmProperties, err := getGuestProperties(d)
+		if err != nil {
+			return fmt.Errorf("unable to convert guest properties to data structure")
+		}
+
+		log.Printf("[TRACE] Setting VM guest properties")
+		_, err = vm.SetProductSectionList(vmProperties)
+		if err != nil {
+			return fmt.Errorf("error setting guest properties: %s", err)
+		}
+	}
+
 	d.SetId(d.Get("name").(string))
 
 	// TODO do not trigger resourceVcdVAppVmUpdate from create. These must be separate actions.
@@ -541,6 +559,18 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf("error getting VM status before update: %#v", err)
 	}
 
+	if d.HasChange("guest_properties") {
+		vmProperties, err := getGuestProperties(d)
+		if err != nil {
+			return fmt.Errorf("unable to convert guest properties to data structure")
+		}
+
+		log.Printf("[TRACE] Updating VM guest properties")
+		_, err = vm.SetProductSectionList(vmProperties)
+		if err != nil {
+			return fmt.Errorf("error setting guest properties: %s", err)
+		}
+	}
 	// Check if the user requested for forced customization of VM
 	customizationNeeded := isForcedCustomization(d.Get("customization"))
 
@@ -852,6 +882,17 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 
 	d.Set("href", vm.VM.HREF)
 	d.Set("expose_hardware_virtualization", vm.VM.NestedHypervisorEnabled)
+
+	// update guest properties
+	guestProperties, err := vm.GetProductSectionList()
+	if err != nil {
+		return fmt.Errorf("unable to read guest properties: %s", err)
+	}
+
+	err = setGuestProperties(d, guestProperties)
+	if err != nil {
+		return fmt.Errorf("unable to set guest properties in state: %s", err)
+	}
 
 	err = updateStateOfAttachedDisks(d, vm, vdc)
 	if err != nil {
@@ -1211,4 +1252,50 @@ func isForcedCustomization(customizationBlock interface{}) bool {
 	}
 
 	return true
+}
+
+// getGuestProperties returns a struct for setting guest properties
+func getGuestProperties(d *schema.ResourceData) (*types.ProductSectionList, error) {
+	guestProperties := d.Get("guest_properties")
+	guestProp := convertToStringMap(guestProperties.(map[string]interface{}))
+	vmProperties := &types.ProductSectionList{
+		ProductSection: &types.ProductSection{
+			Info:     "Custom properties",
+			Property: []*types.Property{},
+		},
+	}
+	for key, value := range guestProp {
+		log.Printf("[TRACE] Adding guest property: key=%s, value=%s to object", key, value)
+		oneProp := &types.Property{
+			UserConfigurable: true,
+			Type:             "string",
+			Key:              key,
+			Label:            key,
+			Value:            &types.Value{Value: value},
+		}
+		vmProperties.ProductSection.Property = append(vmProperties.ProductSection.Property, oneProp)
+	}
+
+	return vmProperties, nil
+}
+
+// setGuestProperties sets guest properties into state
+func setGuestProperties(d *schema.ResourceData, properties *types.ProductSectionList) error {
+	data := make(map[string]string)
+
+	// if properties object does not have actual properties - set state to empty
+	log.Printf("[TRACE] Setting empty properties into statefile because no properties were specified")
+	if properties == nil || properties.ProductSection == nil || len(properties.ProductSection.Property) == 0 {
+		return d.Set("guest_properties", make(map[string]string))
+	}
+
+	for _, prop := range properties.ProductSection.Property {
+		// if a value was set - use it
+		if prop.Value != nil {
+			data[prop.Key] = prop.Value.Value
+		}
+	}
+
+	log.Printf("[TRACE] Setting properties into statefile")
+	return d.Set("guest_properties", data)
 }

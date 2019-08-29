@@ -31,13 +31,6 @@ func (vcdCli *VCDClient) Query(params map[string]string) (Results, error) {
 	return getResult(&vcdCli.Client, req)
 }
 
-func (vcdCli *VCDClient) QueryWithNotEncodedParams(params map[string]string, notEncodedParams map[string]string) (Results, error) {
-	req := vcdCli.Client.NewRequestWitNotEncodedParams(params, notEncodedParams, http.MethodGet, vcdCli.QueryHREF, nil)
-	req.Header.Add("Accept", "vnd.vmware.vcloud.org+xml;version="+vcdCli.Client.APIVersion)
-
-	return getResult(&vcdCli.Client, req)
-}
-
 func (vdc *Vdc) Query(params map[string]string) (Results, error) {
 	queryUrl := vdc.client.VCDHREF
 	queryUrl.Path += "/query"
@@ -47,13 +40,23 @@ func (vdc *Vdc) Query(params map[string]string) (Results, error) {
 	return getResult(vdc.client, req)
 }
 
-func (vdc *Vdc) QueryWithNotEncodedParams(params map[string]string, notEncodedParams map[string]string) (Results, error) {
-	queryUrl := vdc.client.VCDHREF
-	queryUrl.Path += "/query"
-	req := vdc.client.NewRequestWitNotEncodedParams(params, notEncodedParams, http.MethodGet, queryUrl, nil)
-	req.Header.Add("Accept", "vnd.vmware.vcloud.org+xml;version="+vdc.client.APIVersion)
+// QueryWithNotEncodedParams uses Query API to search for requested data
+func (client *Client) QueryWithNotEncodedParams(params map[string]string, notEncodedParams map[string]string) (Results, error) {
+	queryUlr := client.VCDHREF
+	queryUlr.Path += "/query"
 
-	return getResult(vdc.client, req)
+	req := client.NewRequestWitNotEncodedParams(params, notEncodedParams, http.MethodGet, queryUlr, nil)
+	req.Header.Add("Accept", "vnd.vmware.vcloud.org+xml;version="+client.APIVersion)
+
+	return getResult(client, req)
+}
+
+func (vcdCli *VCDClient) QueryWithNotEncodedParams(params map[string]string, notEncodedParams map[string]string) (Results, error) {
+	return vcdCli.Client.QueryWithNotEncodedParams(params, notEncodedParams)
+}
+
+func (vdc *Vdc) QueryWithNotEncodedParams(params map[string]string, notEncodedParams map[string]string) (Results, error) {
+	return vdc.client.QueryWithNotEncodedParams(params, notEncodedParams)
 }
 
 func getResult(client *Client, request *http.Request) (Results, error) {
