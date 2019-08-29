@@ -67,6 +67,8 @@ const (
 	MimeMediaInsertOrEjectParams = "application/vnd.vmware.vcloud.mediaInsertOrEjectParams+xml"
 	// Mime for catalog
 	MimeAdminCatalog = "application/vnd.vmware.admin.catalog+xml"
+	// Mime for virtual hardware section
+	MimeVirtualHardwareSection = "application/vnd.vmware.vcloud.virtualHardwareSection+xml"
 	// Mime for networkConnectionSection
 	MimeNetworkConnectionSection = "application/vnd.vmware.vcloud.networkConnectionSection+xml"
 	// Mime for Item
