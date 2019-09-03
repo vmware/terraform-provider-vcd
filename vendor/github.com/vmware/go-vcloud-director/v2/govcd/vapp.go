@@ -395,14 +395,14 @@ func (vapp *VApp) GetStatus() (string, error) {
 // of seconds.
 func (vapp *VApp) BlockWhileStatus(unwantedStatus string, timeOutAfterSeconds int) error {
 	timeoutAfter := time.After(time.Duration(timeOutAfterSeconds) * time.Second)
-	tick := time.Tick(200 * time.Millisecond)
+	tick := time.NewTicker(200 * time.Millisecond)
 
 	for {
 		select {
 		case <-timeoutAfter:
 			return fmt.Errorf("timed out waiting for vApp to exit state %s after %d seconds",
 				unwantedStatus, timeOutAfterSeconds)
-		case <-tick:
+		case <-tick.C:
 			currentStatus, err := vapp.GetStatus()
 
 			if err != nil {
@@ -537,6 +537,9 @@ func (vapp *VApp) ChangeVMName(name string) (Task, error) {
 		types.MimeVM, "error changing VM name: %s", newName)
 }
 
+// SetOvf sets guest properties for the first child VM in vApp
+//
+// Deprecated: Use vm.SetProductSectionList()
 func (vapp *VApp) SetOvf(parameters map[string]string) (Task, error) {
 	err := vapp.Refresh()
 	if err != nil {
@@ -830,7 +833,28 @@ func updateNetworkConfigurations(vapp *VApp, networkConfigurations []types.VAppN
 		types.MimeNetworkConfigSection, "error updating vApp Network: %s", networkConfig)
 }
 
-// Function RemoveAllNetworks unattach all networks from VAPP
+// RemoveAllNetworks detaches all networks from vApp
 func (vapp *VApp) RemoveAllNetworks() (Task, error) {
 	return updateNetworkConfigurations(vapp, []types.VAppNetworkConfiguration{})
+}
+
+// SetProductSectionList sets product section for a vApp. It allows to change vApp guest properties.
+//
+// The slice of properties "ProductSectionList.ProductSection.Property" is not necessarily ordered
+// or returned as set before
+func (vapp *VApp) SetProductSectionList(productSection *types.ProductSectionList) (*types.ProductSectionList, error) {
+	err := setProductSectionList(vapp.client, vapp.VApp.HREF, productSection)
+	if err != nil {
+		return nil, fmt.Errorf("unable to set vApp product section: %s", err)
+	}
+
+	return vapp.GetProductSectionList()
+}
+
+// GetProductSectionList retrieves product section for a vApp. It allows to read vApp guest properties.
+//
+// The slice of properties "ProductSectionList.ProductSection.Property" is not necessarily ordered
+// or returned as set before
+func (vapp *VApp) GetProductSectionList() (*types.ProductSectionList, error) {
+	return getProductSectionList(vapp.client, vapp.VApp.HREF)
 }

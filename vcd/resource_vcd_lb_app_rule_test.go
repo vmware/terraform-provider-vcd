@@ -63,7 +63,7 @@ acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifoth
 		return
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		Providers:    testAccProviders,
 		PreCheck:     func() { testAccPreCheck(t) },
 		CheckDestroy: testAccCheckVcdLBAppRuleDestroy(params["AppRuleName"].(string)),

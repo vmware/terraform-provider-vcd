@@ -47,7 +47,7 @@ func TestAccVcdLbServiceMonitor(t *testing.T) {
 		t.Skip(t.Name() + "requires advanced edge gateway to work")
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		Providers:    testAccProviders,
 		PreCheck:     func() { testAccPreCheck(t) },
 		CheckDestroy: testAccCheckVcdLbServiceMonitorDestroy(params["ServiceMonitorName"].(string)),

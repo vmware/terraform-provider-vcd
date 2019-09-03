@@ -42,6 +42,11 @@ resource "vcd_vapp_vm" "web1" {
   network_name = "net"
   ip           = "10.10.104.161"
 
+  guest_properties = {
+    "vapp.property1"   = "value1"
+    "vapp.property2"   = "value2"
+  }
+
   depends_on = ["vcd_vapp.web"]
 }
 
@@ -137,3 +142,6 @@ The following arguments are supported:
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
 * `accept_all_eulas` - (Optional; *v2.0+*) Automatically accept EULA if OVA has it. Default is `true`
+* `guest_properties` - (Optional; *v2.5+*) Key value map of vApp guest properties **Note** `ovf` attribute
+sets guest properties on the first VM using a legacy ability of this resource to spawn 1 VM. Please
+use resources `vcd_vapp_vm` to provision VMs.

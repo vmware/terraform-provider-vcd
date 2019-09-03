@@ -6,6 +6,7 @@
 - [Running tests](#running-tests)
 - [Tests split by feature set](#tests-split-by-feature-set)
 - [Adding new tests](#adding-new-tests)
+  - [Parallelism considerations](#parallelism-considerations)
 - [Binary testing](#binary-testing)
 - [Custom terraform scripts](#custom-terraform-scripts)
 - [Environment variables](#environment-variables)
@@ -279,6 +280,17 @@ testacc: testunit
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' acceptance"
 ```
 
+### Parallelism considerations
+
+When writing Terraform acceptance tests there are two ways to define tests. Either using
+`resource.Test` or `resource.ParallelTest`. The former runs tests sequentially one by one while the
+later runs all the tests (which are defined to be run in parallel) instantiated this way in
+parallel. This is useful because it can speed up total test execution time. However one must be sure
+that the tests defined for parallel run are not clashing with each other.
+
+By default `make testacc` runs acceptance tests with parallelism enabled (for the tests which are
+defined with `resource.ParallelTest`). If there is a need to troubleshoot or simply force the tests
+to run sequentially - `make seqtestacc` can be used to achieve it.
 
 ## Binary testing
 
