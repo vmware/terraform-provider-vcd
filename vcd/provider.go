@@ -109,7 +109,7 @@ func Provider() terraform.ResourceProvider {
 			"vcd_lb_app_profile":     resourceVcdLBAppProfile(),     // 2.4
 			"vcd_lb_app_rule":        resourceVcdLBAppRule(),        // 2.4
 			"vcd_lb_virtual_server":  resourceVcdLBVirtualServer(),  // 2.4
-			"vcd_nsxv_nat":           resourceVcdNsxvNat(),          // 2.5
+			"vcd_nsxv_dnat":          resourceVcdNsxvDnat(),         // 2.5
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -121,6 +121,7 @@ func Provider() terraform.ResourceProvider {
 			"vcd_lb_app_profile":     datasourceVcdLBAppProfile(),     // 2.4
 			"vcd_lb_app_rule":        datasourceVcdLBAppRule(),        // 2.4
 			"vcd_lb_virtual_server":  datasourceVcdLbVirtualServer(),  // 2.4
+			"vcd_nsxv_dnat":          datasourceVcdNsxvDnat(),         // 2.5
 		},
 
 		ConfigureFunc: providerConfigure,
