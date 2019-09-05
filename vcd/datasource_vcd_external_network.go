@@ -45,7 +45,7 @@ func datasourceVcdExternalNetwork() *schema.Resource {
 						"dns_suffix": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Dns suffix",
+							Description: "DNS suffix",
 						},
 						"static_ip_pool": &schema.Schema{
 							Type:        schema.TypeList,

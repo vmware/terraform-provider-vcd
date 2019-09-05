@@ -70,7 +70,7 @@ func resourceVcdExternalNetwork() *schema.Resource {
 							Type:        schema.TypeString,
 							Optional:    true,
 							ForceNew:    true,
-							Description: "Dns suffix",
+							Description: "DNS suffix",
 						},
 						"static_ip_pool": &schema.Schema{
 							Type:        schema.TypeList,
