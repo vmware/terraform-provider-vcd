@@ -5,12 +5,14 @@ FEATURES:
 * **New Data Source:** `vcd_org` Organization - ([#218])
 * **New Data Source:** `vcd_catalog` Catalog - ([#218])
 * **New Data Source:** `vcd_catalog_item` CatalogItem - ([#218])
+* **New Data Source:** `vcd_external_network` External Network - ([#218])
 
 IMPROVEMENTS:
 
 * `resource/vcd_org` Add import capability
 * `resource/vcd_catalog` Add import capability
 * `resource/vcd_catalog_item` Add import capability
+* `resource/vcd_external_network` Add import capability
 * `resource/catalog_item` added catalog item metadata support [#285] 
 * `resource/vcd_catalog`: Catalog state ID changed from catalog name to vCD ID 
 * `resource/vcd_catalog_item`: CatalogItem state ID changed from colon separated list of catalog name and item name to vCD ID 

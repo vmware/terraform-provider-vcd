@@ -34,6 +34,9 @@ type VCDClient struct {
 	InsecureFlag    bool
 }
 
+// Type used to simplify reading resource definitions
+type StringMap map[string]interface{}
+
 const (
 	// Most common error messages in the library
 

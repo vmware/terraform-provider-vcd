@@ -3,6 +3,7 @@ package vcd
 import (
 	"fmt"
 	"log"
+	"net/url"
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -16,7 +17,9 @@ func resourceVcdExternalNetwork() *schema.Resource {
 		Create: resourceVcdExternalNetworkCreate,
 		Delete: resourceVcdExternalNetworkDelete,
 		Read:   resourceVcdExternalNetworkRead,
-
+		Importer: &schema.ResourceImporter{
+			State: resourceVcdExternalNetworkImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
@@ -164,23 +167,50 @@ func resourceVcdExternalNetworkCreate(d *schema.ResourceData, meta interface{}) 
 	return resourceVcdExternalNetworkRead(d, meta)
 }
 
-// Fetches information about an existing external network for a data definition
+func setExternalNetworkData(d *schema.ResourceData, extNetRes StringMap) error {
+	_ = d.Set("name", extNetRes["name"])
+	_ = d.Set("description", extNetRes["description"])
+	_ = d.Set("retain_net_info_across_deployments", extNetRes["retain_net_info_across_deployments"])
+
+	err := d.Set("ip_scope", extNetRes["ip_scope"])
+	if err != nil {
+		return err
+	}
+
+	err = d.Set("vsphere_network", extNetRes["vsphere_network"])
+	if err != nil {
+		return err
+	}
+
+	log.Printf("[TRACE] external network read completed: %#v", extNetRes)
+	return nil
+}
+
+// Fetches information about an existing external network
 func resourceVcdExternalNetworkRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[TRACE] external network read initiated")
 
 	vcdClient := meta.(*VCDClient)
 
-	externalNetwork, err := vcdClient.GetExternalNetworkByNameOrId(d.Id())
-	if err != nil {
-		d.SetId("")
-		return fmt.Errorf("error fetching external network details %s", err)
+	identifier := d.Id()
+	if identifier == "" {
+		identifier = d.Get("name").(string)
 	}
+	extNeRes, ID, err := getExternalNetworkResource(vcdClient.VCDClient, identifier)
 
-	log.Printf("[TRACE] external network read completed: %#v", externalNetwork.ExternalNetwork)
+	if err != nil {
+		return fmt.Errorf("error fetching external network (%s) details %s", identifier, err)
+	}
+	err = setExternalNetworkData(d, extNeRes)
+	if err != nil {
+		return err
+	}
+	d.SetId(ID)
+
 	return nil
 }
 
-// Deletes a external network, optionally removing all objects in it as well
+// Deletes an external network, optionally removing all objects in it as well
 func resourceVcdExternalNetworkDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[TRACE] external network delete started")
 
@@ -195,7 +225,7 @@ func resourceVcdExternalNetworkDelete(d *schema.ResourceData, meta interface{}) 
 	err = externalNetwork.DeleteWait()
 	if err != nil {
 		log.Printf("[DEBUG] Error removing external network %#v", err)
-		return fmt.Errorf("error removing external network %#v", err)
+		return fmt.Errorf("error removing external network %s", err)
 	}
 
 	log.Printf("[TRACE] external network delete completed: %#v", externalNetwork)
@@ -206,9 +236,7 @@ func resourceVcdExternalNetworkDelete(d *schema.ResourceData, meta interface{}) 
 // any cast operations or default values should be done here so that the create method is simple
 func getExternalNetworkInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.ExternalNetwork, error) {
 	params := &types.ExternalNetwork{
-		Name:        d.Get("name").(string),
-		Xmlns:       types.XMLNamespaceExtension,
-		XmlnsVCloud: types.XMLNamespaceVCloud,
+		Name: d.Get("name").(string),
 		Configuration: &types.NetworkConfiguration{
 			Xmlns:                          types.XMLNamespaceVCloud,
 			RetainNetInfoAcrossDeployments: d.Get("retain_net_info_across_deployments").(bool),
@@ -237,15 +265,15 @@ func getExternalNetworkInput(d *schema.ResourceData, vcdClient *VCDClient) (*typ
 			},
 		}
 
-		if ipScopeConfiguration["dns1"] != nil && "" != ipScopeConfiguration["dns1"].(string) {
+		if ipScopeConfiguration["dns1"] != nil && ipScopeConfiguration["dns1"].(string) != "" {
 			ipScope.DNS1 = ipScopeConfiguration["dns1"].(string)
 		}
 
-		if ipScopeConfiguration["dns2"] != nil && "" != ipScopeConfiguration["dns2"].(string) {
+		if ipScopeConfiguration["dns2"] != nil && ipScopeConfiguration["dns2"].(string) != "" {
 			ipScope.DNS2 = ipScopeConfiguration["dns2"].(string)
 		}
 
-		if ipScopeConfiguration["dns_suffix"] != nil && "" != ipScopeConfiguration["dns_suffix"].(string) {
+		if ipScopeConfiguration["dns_suffix"] != nil && ipScopeConfiguration["dns_suffix"].(string) != "" {
 			ipScope.DNSSuffix = ipScopeConfiguration["dns_suffix"].(string)
 		}
 
@@ -311,4 +339,111 @@ func GetVcenterHref(vcdClient *govcd.VCDClient, name string) (string, error) {
 		return "", fmt.Errorf("vSphere server found %d instances with name '%s' while expected one", len(virtualCenters), name)
 	}
 	return virtualCenters[0].HREF, nil
+}
+
+// Retrieves an external network and returns an interface map corresponding to the resource
+// Input: vcdClient , external network Identifier (either name or ID)
+// output: StringMap (representing the resource), external network ID, error
+func getExternalNetworkResource(vcdClient *govcd.VCDClient, extNetIdentifier string) (StringMap, string, error) {
+	var extNetRes = make(StringMap)
+
+	externalNetwork, err := vcdClient.GetExternalNetworkByNameOrId(extNetIdentifier)
+	if err != nil {
+		return nil, "", fmt.Errorf("error fetching external network details %s", err)
+	}
+
+	// Although the resource allows an array of vCenters,
+	// the current implementation of external network only records one.
+	vcenterHref := ""
+
+	if externalNetwork.ExternalNetwork.VimPortGroupRef != nil && externalNetwork.ExternalNetwork.VimPortGroupRef.VimServerRef != nil {
+		vcenterHref = externalNetwork.ExternalNetwork.VimPortGroupRef.VimServerRef.HREF
+	} else {
+		return nil, "", fmt.Errorf("error retrieving VC HREF : %s", err)
+	}
+	virtualCenters, err := govcd.QueryVirtualCenters(vcdClient, fmt.Sprintf("(href==%s)", vcenterHref))
+	if err != nil {
+		return nil, "", err
+	}
+	if len(virtualCenters) == 0 {
+		return nil, "", fmt.Errorf("no virtual centers found with HREF %s", vcenterHref)
+	}
+
+	var ipScopes []StringMap
+	for _, ips := range externalNetwork.ExternalNetwork.Configuration.IPScopes.IPScope {
+		ipScope := StringMap{
+			"gateway":    ips.Gateway,
+			"dns1":       ips.DNS1,
+			"dns2":       ips.DNS2,
+			"dns_suffix": ips.DNSSuffix,
+			"netmask":    ips.Netmask,
+		}
+		var stIpPool []StringMap
+		for _, ipr := range ips.IPRanges.IPRange {
+			ipRange := StringMap{
+				"start_address": ipr.StartAddress,
+				"end_address":   ipr.EndAddress,
+			}
+			stIpPool = append(stIpPool, ipRange)
+		}
+		ipScope["static_ip_pool"] = stIpPool
+		ipScopes = append(ipScopes, ipScope)
+	}
+
+	portGroupMoRef := externalNetwork.ExternalNetwork.VimPortGroupRef.MoRef
+
+	portGroups, err := govcd.QueryPortGroups(vcdClient,
+		fmt.Sprintf("(moref==%s;portgroupType==%s)",
+			url.QueryEscape(portGroupMoRef),
+			url.QueryEscape(externalNetwork.ExternalNetwork.VimPortGroupRef.VimObjectType)))
+	if err != nil {
+		return StringMap{}, "", fmt.Errorf("error retrieving port group %s: %s", portGroupMoRef, err)
+	}
+
+	portGroupName := ""
+	for _, pg := range portGroups {
+		if portGroupName != "" {
+			return StringMap{}, "", fmt.Errorf("more than one portgroup found for moref %s", portGroupMoRef)
+		}
+		portGroupName = pg.Name
+	}
+
+	extNetRes["vsphere_network"] = []StringMap{
+		StringMap{
+			"name":    portGroupName,
+			"vcenter": virtualCenters[0].Name,
+			"type":    externalNetwork.ExternalNetwork.VimPortGroupRef.VimObjectType,
+		},
+	}
+
+	extNetRes["ip_scope"] = ipScopes
+	extNetRes["name"] = externalNetwork.ExternalNetwork.Name
+	extNetRes["description"] = externalNetwork.ExternalNetwork.Description
+	extNetRes["retain_net_info_across_deployments"] = externalNetwork.ExternalNetwork.Configuration.RetainNetInfoAcrossDeployments
+
+	return extNetRes, externalNetwork.ExternalNetwork.ID, nil
+}
+
+// resourceVcdExternalNetworkImport is responsible for importing the resource.
+// The d.ID() field as being passed from `terraform import _resource_name_ _the_id_string_ requires
+// a name based dot-formatted path to the object to lookup the object and sets the id of object.
+// `terraform import` automatically performs `refresh` operation which loads up all other fields.
+// For this resource, the import path is just the external network name.
+//
+// Example import path (id): externalNetworkName
+// Example import command:   terraform import vcd_external_network.externalNetworkName externalNetworkName
+func resourceVcdExternalNetworkImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+
+	vcdClient := meta.(*VCDClient)
+	extNetRes, ID, err := getExternalNetworkResource(vcdClient.VCDClient, d.Id())
+	if err != nil {
+		return nil, fmt.Errorf("error fetching external network details %s", err)
+	}
+
+	err = setExternalNetworkData(d, extNetRes)
+	if err != nil {
+		return nil, err
+	}
+	d.SetId(ID)
+	return []*schema.ResourceData{d}, nil
 }
