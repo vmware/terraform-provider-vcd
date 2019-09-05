@@ -22,6 +22,10 @@ provider:
     # where vCloud director may take time to respond and retry mechanism is needed.
     # This must be >0 to avoid instant timeout errors. If omitted - default value is set.
     # maxRetryTimeout: 60
+    #
+    # (Optional) httpTimeout specifies a time limit (in seconds) for waiting http response.
+    # If omitted - default value is set.
+    # httpTimeout: 600
 vcd:
     # Name of the organization (mandatory)
     org: myorg

@@ -7,7 +7,8 @@
 		"sysOrg": "System",
 		"//": "(Optional) In some cases the vCloud Director SDK must wait. It can be",
 		"//": "customized using the below var. If it is not set SDK assumes a default value.",
-		"maxRetryTimeout": 60
+		"maxRetryTimeout": 60,
+    "httpTimeout" : 600
 	},
 	"vcd": {
 		"org": "myorg",
@@ -21,7 +22,6 @@
 			"name": "mycat",
 			"//": "One item in the catalog. It will be used to compose test vApps. Some tests",
 			"//": "rely on it being Photon OS. It is is not Photon OS - the tests will be skipped",
-			
 			"catalogItem": "myitem",
 			"description": "my cat for loading",
 			"catalogItemDescription": "my item to create vapps"
