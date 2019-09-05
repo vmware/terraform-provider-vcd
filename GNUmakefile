@@ -54,6 +54,10 @@ test: testunit
 testacc: testunit
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' acceptance"
 
+# Runs full acceptance test sequentially (using "-parallel 1" flag for go test)
+seqtestacc: testunit
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' sequential-acceptance"
+
 # Runs the acceptance test with tag 'multiple'
 testmulti: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' multiple"
@@ -141,5 +145,5 @@ ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
 endif
 	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
 
-.PHONY: build test testacc vet fmt fmtcheck errcheck vendor-check test-compile website website-test
+.PHONY: build test seqtestacc testacc vet fmt fmtcheck errcheck vendor-check test-compile website website-test
 
