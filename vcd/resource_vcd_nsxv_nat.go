@@ -189,6 +189,19 @@ func resourceVcdNsxvNatCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
+	natRule, err := getNatRuleType(d)
+	if err != nil {
+		return fmt.Errorf("unable to make NAT rule query: %s", err)
+	}
+
+	createdNatRule, err := edgeGateway.CreateNsxvNatRule(natRule)
+	if err != nil {
+		return fmt.Errorf("error creating new NAT rule: %s", err)
+	}
+
+	d.SetId(createdNatRule.ID)
+	return resourceVcdNsxvNatRead(d, meta)
+
 	return nil
 }
 
@@ -202,7 +215,13 @@ func resourceVcdNsxvNatRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	return nil
+	readNatRule, err := edgeGateway.GetNsxvNatRuleById(d.Id())
+	if err != nil {
+		d.SetId("")
+		return fmt.Errorf("unable to find NAT rule with ID %s: %s", d.Id(), err)
+	}
+
+	return setNatRuleData(d, readNatRule)
 }
 
 func resourceVcdNsxvNatUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -215,7 +234,19 @@ func resourceVcdNsxvNatUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	return nil
+	updateNatRule, err := getNatRuleType(d)
+	updateNatRule.ID = d.Id()
+
+	if err != nil {
+		return fmt.Errorf("could not create NAT rule type for update: %s", err)
+	}
+
+	updatedNatRule, err := edgeGateway.UpdateNsxvNatRule(updateNatRule)
+	if err != nil {
+		return fmt.Errorf("unable to update NAT rule with ID %s: %s", d.Id(), err)
+	}
+
+	return setNatRuleData(d, updatedNatRule)
 }
 
 func resourceVcdNsxvNatDelete(d *schema.ResourceData, meta interface{}) error {
@@ -228,6 +259,12 @@ func resourceVcdNsxvNatDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
+	err = edgeGateway.DeleteNsxvNatRuleById(d.Id())
+	if err != nil {
+		return fmt.Errorf("error deleting NAT rule: %s", err)
+	}
+
+	d.SetId("")
 	return nil
 }
 
@@ -243,4 +280,12 @@ func resourceVcdNsxvNatImport(d *schema.ResourceData, meta interface{}) ([]*sche
 	// }
 
 	return nil, nil
+}
+
+func getNatRuleType(d *schema.ResourceData) (*types.EdgeNatRule, error) {
+
+}
+
+func setNatRuleData(d *schema.ResourceData, lBVirtualServer *types.EdgeNatRule) error {
+
 }
