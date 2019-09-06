@@ -139,7 +139,7 @@ func resourceVcdExternalNetwork() *schema.Resource {
 	}
 }
 
-// Creates a new external network from a resource definition
+// resourceVcdExternalNetworkCreate creates a new external network from a resource definition
 func resourceVcdExternalNetworkCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[TRACE] external network creation initiated")
 
@@ -186,7 +186,7 @@ func setExternalNetworkData(d *schema.ResourceData, extNetRes StringMap) error {
 	return nil
 }
 
-// Fetches information about an existing external network
+// resourceVcdExternalNetworkRead fetches information about an existing external network
 func resourceVcdExternalNetworkRead(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[TRACE] external network read initiated")
 
@@ -210,7 +210,7 @@ func resourceVcdExternalNetworkRead(d *schema.ResourceData, meta interface{}) er
 	return nil
 }
 
-// Deletes an external network, optionally removing all objects in it as well
+// resourceVcdExternalNetworkDelete deletes an external network, optionally removing all objects in it as well
 func resourceVcdExternalNetworkDelete(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[TRACE] external network delete started")
 
@@ -232,7 +232,7 @@ func resourceVcdExternalNetworkDelete(d *schema.ResourceData, meta interface{}) 
 	return nil
 }
 
-// helper for transforming the resource input into the ExternalNetwork structure
+// getExternalNetworkInput is an helper for transforming the resource input into the ExternalNetwork structure
 // any cast operations or default values should be done here so that the create method is simple
 func getExternalNetworkInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.ExternalNetwork, error) {
 	params := &types.ExternalNetwork{
@@ -341,7 +341,7 @@ func GetVcenterHref(vcdClient *govcd.VCDClient, name string) (string, error) {
 	return virtualCenters[0].HREF, nil
 }
 
-// Retrieves an external network and returns an interface map corresponding to the resource
+// getExternalNetworkResource retrieves an external network and returns an interface map corresponding to the resource
 // Input: vcdClient , external network Identifier (either name or ID)
 // output: StringMap (representing the resource), external network ID, error
 func getExternalNetworkResource(vcdClient *govcd.VCDClient, extNetIdentifier string) (StringMap, string, error) {
