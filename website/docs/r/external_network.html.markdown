@@ -50,12 +50,12 @@ resource "vcd_external_network" "net" {
 
     static_ip_pool {
       start_address = "192.168.31.51"
-      end_address   = "192.168.31.60"
+      end_address   = "192.168.31.55"
     }
 
     static_ip_pool {
-      start_address = "192.168.31.31"
-      end_address   = "192.168.31.40"
+      start_address = "192.168.31.57"
+      end_address   = "192.168.31.59"
     }
   }
 
