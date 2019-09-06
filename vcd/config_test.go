@@ -543,18 +543,18 @@ func createSuiteCatalogAndItem(config TestConfig) {
 		panic(err)
 	}
 
-	var catalog govcd.Catalog
+	var catalog *govcd.Catalog
 
 	catalogPreserved := true
-	_, err = org.GetCatalogByName(testSuiteCatalogName, false)
+	catalog, err = org.GetCatalogByName(testSuiteCatalogName, false)
 	if err != nil {
 		catalogPreserved = false
 	}
 
 	if testConfig.VCD.Catalog.Name == "" && !catalogPreserved {
 		fmt.Printf("Creating catalog for test suite...\n")
-		catalog, err = org.CreateCatalog(testSuiteCatalogName, "Test suite purpose")
-		if err != nil || catalog == (govcd.Catalog{}) {
+		*catalog, err = org.CreateCatalog(testSuiteCatalogName, "Test suite purpose")
+		if err != nil || *catalog == (govcd.Catalog{}) {
 			panic(err)
 		}
 		fmt.Printf("Catalog created successfully\n")
@@ -568,7 +568,7 @@ func createSuiteCatalogAndItem(config TestConfig) {
 			panic(err)
 		}
 
-		catalog = *existingCatalog
+		catalog = existingCatalog
 		fmt.Printf("Catalog found successfully\n")
 		testSuiteCatalogName = testConfig.VCD.Catalog.Name
 	} else {

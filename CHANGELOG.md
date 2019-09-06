@@ -5,6 +5,7 @@ FEATURES:
 * **New Data Source:** `vcd_org` Organization - ([#218])
 * **New Data Source:** `vcd_catalog` Catalog - ([#218])
 * **New Data Source:** `vcd_catalog_item` CatalogItem - ([#218])
+* **New Data Source:** `vcd_org_vdc` Organization VDC - ([#323])
 
 IMPROVEMENTS:
 
@@ -21,12 +22,14 @@ IMPROVEMENTS:
 * `resource/vcd_vapp` supports guest properties [#319]
 * `resource/vcd_vapp_vm` supports guest properties [#319]
 * Upgrade Terraform SDK dependency to 0.12.6 [#302]
+* `vcd_org_vdc` Add import capability - ([#323])
 
 BUG FIXES:
 * Change default value for `vcd_org.deployed_vm_quota` and `vcd_org.stored_vm_quota`. It was incorrectly set at `-1` instead of `0`.
 * Change Org ID from partial task ID to real Org ID during creation.
 * Wait for task completion on creation and update, where tasks were not handled at all.
 * `resource/vcd_firewall_rules` force recreation of the resource when attributes of the sub-element `rule` are changed (fixes a situation when it tried to update a rule).
+* `vcd_org_vdc` read fixed to refresh compute capacity and storage profiles
 
 ## 2.4.0 (July 29, 2019)
 

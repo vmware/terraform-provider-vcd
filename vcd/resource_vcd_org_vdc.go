@@ -1,9 +1,13 @@
 package vcd
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/terraform/helper/hashcode"
 	"log"
+	"net/http"
+	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
@@ -52,7 +56,9 @@ func resourceVcdOrgVdc() *schema.Resource {
 		Delete: resourceVcdVdcDelete,
 		Read:   resourceVcdVdcRead,
 		Update: resourceVcdVdcUpdate,
-
+		Importer: &schema.ResourceImporter{
+			State: resourceVcdOrgVdcImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:        schema.TypeString,
@@ -269,7 +275,7 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 	adminVdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find vdc.")
-		return fmt.Errorf("unable to find vdc.. %#v", err)
+		return fmt.Errorf("unable to find VDC.. %#v", err)
 	}
 
 	d.SetId(adminVdc.AdminVdc.ID)
@@ -297,10 +303,15 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 	adminVdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find VDC")
-		return fmt.Errorf("unable to find VDC %#v", err)
+		return fmt.Errorf("unable to find VDC2 %s", err)
 	}
 
-	//refreshing terraform state
+	return setOrgVdcData(d, vcdClient, adminOrg, adminVdc)
+}
+
+// setOrgVdcData sets object state from *govcd.AdminVdc
+func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.AdminOrg, adminVdc *govcd.AdminVdc) error {
+
 	d.Set("allocation_model", adminVdc.AdminVdc.AllocationModel)
 	d.Set("cpu_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedCpu)
 	d.Set("cpu_speed", adminVdc.AdminVdc.VCpuInMhz)
@@ -323,14 +334,24 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("provider_vdc_name", adminVdc.AdminVdc.ProviderVdcReference.Name)
 	d.Set("vm_quota", adminVdc.AdminVdc.Vdc.VMQuota)
 
-	d.Set("compute_capacity", adminVdc.AdminVdc.ComputeCapacity)
+	if err := d.Set("compute_capacity", getComputeCapacities(adminVdc.AdminVdc.ComputeCapacity)); err != nil {
+		return fmt.Errorf("error setting compute_capacity: %s", err)
+	}
 
-	d.Set("storage_profile", adminVdc.AdminVdc.VdcStorageProfiles)
+	// TODO VdcStorageProfiles is array?
+	storageProfileStateData, err := getComputeStorageProfiles(vcdClient, adminVdc.AdminVdc.VdcStorageProfiles[0])
+	if err != nil {
+		return fmt.Errorf("error preparing storage profile data: %s", err)
+	}
+
+	if err := d.Set("storage_profile", storageProfileStateData); err != nil {
+		return fmt.Errorf("error setting compute_capacity: %s", err)
+	}
 
 	vdc, err := adminOrg.GetVDCByName(d.Get("name").(string), false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find VDC")
-		return fmt.Errorf("unable to find VDC %#v", err)
+		return fmt.Errorf("unable to find VDC3 %s", err)
 	}
 	metadata, err := vdc.GetMetadata()
 	if err != nil {
@@ -342,6 +363,105 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[TRACE] vdc read completed: %#v", adminVdc.AdminVdc)
 	return nil
+}
+
+func GetStorageProfile(vcdClient *VCDClient, url string) (*types.VdcStorageProfile, error) {
+
+	vdcStorageProfile := &types.VdcStorageProfile{}
+
+	_, err := vcdClient.Client.ExecuteRequest(url, http.MethodGet,
+		"", "error retrieving storage profile: %s", nil, vdcStorageProfile)
+	if err != nil {
+		return &types.VdcStorageProfile{}, err
+	}
+
+	return vdcStorageProfile, nil
+}
+
+// getComputeStorageProfiles constructs specific struct to be saved in Terraform state file.
+// Expected E.g.
+func getComputeStorageProfiles(vcdClient *VCDClient, profile *types.VdcStorageProfiles) ([]map[string]interface{}, error) {
+	root := make([]map[string]interface{}, 0)
+
+	for _, vdcStorageProfile := range profile.VdcStorageProfile {
+		vdcStorageProfileDetails, err := GetStorageProfile(vcdClient, vdcStorageProfile.HREF)
+		if err != nil {
+			return nil, err
+		}
+		storageProfileData := make(map[string]interface{})
+		storageProfileData["limit"] = vdcStorageProfileDetails.Limit
+		storageProfileData["default"] = vdcStorageProfileDetails.Default
+		storageProfileData["enabled"] = vdcStorageProfileDetails.Enabled
+		storageProfileData["name"] = vdcStorageProfile.Name //TODO
+		root = append(root, storageProfileData)
+	}
+
+	return root, nil
+}
+
+// hashMapStringForCapacityElements calculates hash code for adding elements to schema.Set
+func hashMapStringForCapacityElements(v interface{}) int {
+	var buf bytes.Buffer
+	m := v.(map[string]interface{})
+	buf.WriteString(fmt.Sprintf("%d", m["allocated"].(int64)))
+	buf.WriteString(fmt.Sprintf("%d", m["limit"].(int64)))
+	buf.WriteString(fmt.Sprintf("%d", m["overhead"].(int64)))
+	buf.WriteString(fmt.Sprintf("%d", m["reserved"].(int64)))
+	buf.WriteString(fmt.Sprintf("%d", m["used"].(int64)))
+	return hashcode.String(buf.String())
+}
+
+// hashMapStringForCapacityElements calculates hash code for adding elements to schema.Set
+func hashMapStringForCapacity(v interface{}) int {
+	var buf bytes.Buffer
+	m := v.(map[string]interface{})
+	buf.WriteString(fmt.Sprintf("%v", m["cpu"].(*schema.Set)))
+	buf.WriteString(fmt.Sprintf("%v", m["memory"].(*schema.Set)))
+	return hashcode.String(buf.String())
+}
+
+// getComputeCapacities constructs specific struct to be saved in Terraform state file.
+// Expected E.g. *Set(map[string]interface {}{"2185903189": map[string]interface {} {"cpu":*Set(map[string]interface {} {"1148193616":map[string]interface {}
+// {"allocated":0, "limit":3110, "overhead":0, "reserved":0, "used":0}}), "memory":* Set(map[string]interface {} {"1328470546":map[string]interface {}
+// {"allocated":0, "limit":4000, "overhead":0, "reserved":0, "used":0}})}})
+func getComputeCapacities(capacities []*types.ComputeCapacity) *schema.Set {
+
+	rootInternalArray := make([]interface{}, 0)
+
+	for _, capacity := range capacities {
+		rootInternal := map[string]interface{}{}
+
+		cpuValueMap := map[string]interface{}{}
+		memoryValueMap := map[string]interface{}{}
+		cpuValueMap["limit"] = capacity.CPU.Limit
+		cpuValueMap["allocated"] = capacity.CPU.Allocated
+		cpuValueMap["reserved"] = capacity.CPU.Reserved
+		cpuValueMap["used"] = capacity.CPU.Used
+		cpuValueMap["overhead"] = capacity.CPU.Overhead
+
+		memoryValueMap["limit"] = capacity.Memory.Limit
+		memoryValueMap["allocated"] = capacity.Memory.Allocated
+		memoryValueMap["reserved"] = capacity.Memory.Reserved
+		memoryValueMap["used"] = capacity.Memory.Used
+		memoryValueMap["overhead"] = capacity.Memory.Overhead
+
+		memoryCapacityArray := make([]interface{}, 0)
+		memoryCapacityArray = append(memoryCapacityArray, memoryValueMap)
+		cpuCapacityArray := make([]interface{}, 0)
+		cpuCapacityArray = append(cpuCapacityArray, cpuValueMap)
+
+		cpu := *schema.NewSet(hashMapStringForCapacityElements, cpuCapacityArray)
+		memory := *schema.NewSet(hashMapStringForCapacityElements, memoryCapacityArray)
+
+		rootInternal["cpu"] = &cpu
+		rootInternal["memory"] = &memory
+
+		rootInternalArray = append(rootInternalArray, rootInternal)
+	}
+
+	root := *schema.NewSet(hashMapStringForCapacity, rootInternalArray)
+
+	return &root
 }
 
 // Converts to terraform understandable structure
@@ -373,7 +493,7 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 	adminVdc, err := adminOrg.GetAdminVDCByName(vdcName, false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find VDC.")
-		return fmt.Errorf("unable to find VDC %s", err)
+		return fmt.Errorf("unable to find VDC4 %s", err)
 	}
 
 	changedAdminVdc, err := getUpdatedVdcInput(d, vcdClient, adminVdc)
@@ -756,4 +876,44 @@ func getStorageProfileHREF(vcdClient *VCDClient, name string) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("no provider VDC storage profile found with name %s", name)
+}
+
+// resourceVcdOrgVdcImport is responsible for importing the resource.
+// The following steps happen as part of import
+// 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
+// 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
+// 3. The functions splits the dot-formatted path and tries to lookup the object
+// 4. If the lookup succeeds it set's the ID field for `_resource_name_` resource in state file
+// (the resource must be already defined in .tf config otherwise `terraform import` will complain)
+// 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
+// based on the known ID of object.
+//
+// Example resource name (_resource_name_): vcd_org_vdc.my_existing_vdc
+// Example import path (_the_id_string_): org.my_existing_vdc
+func resourceVcdOrgVdcImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	resourceURI := strings.Split(d.Id(), ".")
+	if len(resourceURI) != 2 {
+		return nil, fmt.Errorf("resource name must be specified as org.vdc.my_existing_vdc")
+	}
+	orgName, vdcName := resourceURI[0], resourceURI[1]
+
+	vcdClient := meta.(*VCDClient)
+
+	adminOrg, err := vcdClient.GetAdminOrg(orgName)
+	if err != nil {
+		return nil, fmt.Errorf(errorRetrievingOrg, err)
+	}
+
+	adminVdc, err := adminOrg.GetAdminVDCByName(vdcName, false)
+	if err != nil {
+		log.Printf("[DEBUG] Unable to find VDC")
+		return nil, fmt.Errorf("unable to find VDC5 %s", err)
+	}
+
+	d.Set("org", orgName)
+	d.Set("name", vdcName)
+
+	d.SetId(adminVdc.AdminVdc.ID)
+
+	return []*schema.ResourceData{d}, nil
 }

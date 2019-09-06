@@ -24,6 +24,7 @@ func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 		"AllocationModel":           "ReservationPool",
 		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
 		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
+		"Allocated":                 "2048",
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  "TestAccVcdOrgVdcReservationPool",
@@ -45,6 +46,7 @@ func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 		"AllocationModel":           "AllocationPool",
 		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
 		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
+		"Allocated":                 "2048",
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  "TestAccVcdOrgVdcAllocationPool",
@@ -66,6 +68,7 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 		"AllocationModel":           allocationModel,
 		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
 		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
+		"Allocated":                 "0",
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  "TestAccVcdOrgVdcAllocationVapp",
@@ -141,6 +144,8 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 						"vcd_org_vdc."+TestAccVcdVdc, "delete_recursive", "true"),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "metadata.vdc_metadata", "VDC Metadata"),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.name", testConfig.VCD.ProviderVdc.StorageProfile),
 				),
 			},
 			resource.TestStep{
@@ -175,6 +180,10 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 						"vcd_org_vdc."+TestAccVcdVdc, "metadata.vdc_metadata", "VDC Metadata"),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "metadata.vdc_metadata2", "VDC Metadata2"),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "metadata.vdc_metadata2", "VDC Metadata2"),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.name", testConfig.VCD.ProviderVdc.StorageProfile),
 				),
 			},
 		},
@@ -275,12 +284,12 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
 
   compute_capacity {
     cpu {
-      allocated = 2048
+      allocated = "{{.Allocated}}"
       limit     = 2048
     }
 
     memory {
-      allocated = 2048
+      allocated = "{{.Allocated}}"
       limit     = 2048
     }
   }
@@ -316,12 +325,12 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
 
   compute_capacity {
     cpu {
-      allocated = 2048
+      allocated = "{{.Allocated}}"
       limit     = 2048
     }
 
     memory {
-      allocated = 2048
+      allocated = "{{.Allocated}}"
       limit     = 2048
     }
   }
