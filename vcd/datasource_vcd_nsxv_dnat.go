@@ -95,6 +95,16 @@ func datasourceVcdNsxvDnat() *schema.Resource {
 				Computed:    true,
 				Description: "Translated port",
 			},
+			"dnat_match_source_address": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Source address to match in DNAT rules",
+			},
+			"dnat_match_source_port": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Source port to match in DNAT rules",
+			},
 		},
 	}
 }

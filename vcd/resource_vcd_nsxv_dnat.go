@@ -12,12 +12,12 @@ import (
 
 func resourceVcdNsxvDnat() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdNsxvNatCreate,
-		Read:   resourceVcdNsxvNatRead,
-		Update: resourceVcdNsxvNatUpdate,
-		Delete: resourceVcdNsxvNatDelete,
+		Create: resourceVcdNsxvDnatCreate,
+		Read:   resourceVcdNsxvDnatRead,
+		Update: resourceVcdNsxvDnatUpdate,
+		Delete: resourceVcdNsxvDnatDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdNsxvNatImport,
+			State: resourceVcdNsxvDnatImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -39,24 +39,19 @@ func resourceVcdNsxvDnat() *schema.Resource {
 				ForceNew:    true,
 				Description: "Edge gateway name in which NAT Rule is located",
 			},
-			// "name": &schema.Schema{
-			// 	Type:        schema.TypeString,
-			// 	Required:    true,
-			// 	Description: "Nat rule name",
-			// },
 			"rule_type": &schema.Schema{ // read only field
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,
 				Computed:    true,
-				Description: "Read only. Possible values 'user', 'internal_high'.",
+				Description: "Read only. Possible values 'user', 'internal_high'",
 			},
 			"rule_tag": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
 				Computed:    true,
-				Description: "Optional. Allows to set rule custom rule ID.",
+				Description: "Optional. Allows to set rule custom rule ID",
 			},
 			"enabled": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -93,12 +88,12 @@ func resourceVcdNsxvDnat() *schema.Resource {
 					"the destination address for DNAT rules.",
 			},
 			"protocol": &schema.Schema{
-				Type:         schema.TypeString,
-				Optional:     true,
-				ForceNew:     false,
-				Default:      "any",
-				ValidateFunc: validation.StringInSlice([]string{"tcp", "udp", "icmp", "any"}, false),
-				Description:  "Protocol. One of 'tcp', 'udp', 'icmp', 'any'",
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         false,
+				DiffSuppressFunc: suppressWordToEmptyString("any"),
+				ValidateFunc:     validation.StringInSlice([]string{"tcp", "udp", "icmp", "any"}, false),
+				Description:      "Protocol. One of 'tcp', 'udp', 'icmp', 'any'",
 			},
 			"icmp_type": &schema.Schema{
 				Type:        schema.TypeString,
@@ -107,11 +102,11 @@ func resourceVcdNsxvDnat() *schema.Resource {
 				Description: "ICMP type. Only supported when protocol is ICMP",
 			},
 			"original_port": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Default:     "any",
-				Description: "Original port. This is the source portfor SNAT rules, and the destinationport for DNAT rules.",
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         true,
+				DiffSuppressFunc: suppressWordToEmptyString("any"),
+				Description:      "Original port. This is the destination port for DNAT rules",
 			},
 			"translated_address": &schema.Schema{
 				Type:        schema.TypeString,
@@ -120,31 +115,43 @@ func resourceVcdNsxvDnat() *schema.Resource {
 				Description: "Translated address or address range",
 			},
 			"translated_port": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Default:     "any",
-				Description: "Translated port",
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         true,
+				DiffSuppressFunc: suppressWordToEmptyString("any"),
+				Description:      "Translated port",
 			},
-
 			// DNAT related undocumented
-			// "dnat_match_source_address": &schema.Schema{
-			// 	Type:        schema.TypeString,
-			// 	Required:    true,
-			// 	ForceNew:    true,
-			// 	Description: "Source address to match in DNATrules.",
-			// },
-			// "dnat_match_source_port": &schema.Schema{
-			// 	Type:        schema.TypeString,
-			// 	Required:    true,
-			// 	ForceNew:    true,
-			// 	Description: "Source port in DNAT rules",
-			// },
+			"dnat_match_source_address": &schema.Schema{
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         false,
+				DiffSuppressFunc: suppressWordToEmptyString("any"),
+				Description:      "Source address to match in DNAT rules",
+			},
+			"dnat_match_source_port": &schema.Schema{
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         true,
+				DiffSuppressFunc: suppressWordToEmptyString("any"),
+				Description:      "Source port to match in DNAT rules",
+			},
 		},
 	}
 }
 
-func resourceVcdNsxvNatCreate(d *schema.ResourceData, meta interface{}) error {
+// suppressWordToEmptyString is a DiffSuppressFunc which ignore the change from word to empty string "".
+// This is useful when API returns some default value but it is not set (and not sent via API) in config.
+func suppressWordToEmptyString(word string) schema.SchemaDiffSuppressFunc {
+	return func(k string, old string, new string, d *schema.ResourceData) bool {
+		if old == word && new == "" {
+			return true
+		}
+		return false
+	}
+}
+
+func resourceVcdNsxvDnatCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
@@ -154,10 +161,7 @@ func resourceVcdNsxvNatCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	natRule, err := getNatRuleType(d)
-	if err != nil {
-		return fmt.Errorf("unable to make NAT rule query: %s", err)
-	}
+	natRule := getNatRuleType(d)
 
 	natRule.Action = "dnat"
 
@@ -167,10 +171,10 @@ func resourceVcdNsxvNatCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.SetId(createdNatRule.ID)
-	return resourceVcdNsxvNatRead(d, meta)
+	return resourceVcdNsxvDnatRead(d, meta)
 }
 
-func resourceVcdNsxvNatRead(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdNsxvDnatRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
@@ -187,7 +191,7 @@ func resourceVcdNsxvNatRead(d *schema.ResourceData, meta interface{}) error {
 	return setNatRuleData(d, readNatRule)
 }
 
-func resourceVcdNsxvNatUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdNsxvDnatUpdate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
@@ -197,11 +201,8 @@ func resourceVcdNsxvNatUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	updateNatRule, err := getNatRuleType(d)
+	updateNatRule := getNatRuleType(d)
 	updateNatRule.ID = d.Id()
-	if err != nil {
-		return fmt.Errorf("could not create NAT rule type for update: %s", err)
-	}
 
 	updateNatRule.Action = "dnat"
 
@@ -213,7 +214,7 @@ func resourceVcdNsxvNatUpdate(d *schema.ResourceData, meta interface{}) error {
 	return setNatRuleData(d, updatedNatRule)
 }
 
-func resourceVcdNsxvNatDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdNsxvDnatDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
@@ -232,7 +233,7 @@ func resourceVcdNsxvNatDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceVcdNsxvNatImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdNsxvDnatImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ".")
 	if len(resourceURI) != 4 {
 		return nil, fmt.Errorf("resource name must be specified in such way org.vdc.edge-gw.rule-id")
@@ -259,22 +260,24 @@ func resourceVcdNsxvNatImport(d *schema.ResourceData, meta interface{}) ([]*sche
 	return []*schema.ResourceData{d}, nil
 }
 
-func getNatRuleType(d *schema.ResourceData) (*types.EdgeNatRule, error) {
+func getNatRuleType(d *schema.ResourceData) *types.EdgeNatRule {
 	natRule := &types.EdgeNatRule{
-		RuleTag:           d.Get("rule_tag").(string),
-		Enabled:           d.Get("enabled").(bool),
-		LoggingEnabled:    d.Get("logging_enabled").(bool),
-		Description:       d.Get("description").(string),
-		Vnic:              d.Get("vnic").(string),
-		OriginalAddress:   d.Get("original_address").(string),
-		Protocol:          d.Get("protocol").(string),
-		IcmpType:          d.Get("icmp_type").(string),
-		OriginalPort:      d.Get("original_port").(string),
-		TranslatedAddress: d.Get("translated_address").(string),
-		TranslatedPort:    d.Get("translated_port").(string),
+		RuleTag:                d.Get("rule_tag").(string),
+		Enabled:                d.Get("enabled").(bool),
+		LoggingEnabled:         d.Get("logging_enabled").(bool),
+		Description:            d.Get("description").(string),
+		Vnic:                   d.Get("vnic").(string),
+		OriginalAddress:        d.Get("original_address").(string),
+		Protocol:               d.Get("protocol").(string),
+		IcmpType:               d.Get("icmp_type").(string),
+		OriginalPort:           d.Get("original_port").(string),
+		TranslatedAddress:      d.Get("translated_address").(string),
+		TranslatedPort:         d.Get("translated_port").(string),
+		DnatMatchSourceAddress: d.Get("dnat_match_source_address").(string),
+		DnatMatchSourcePort:    d.Get("dnat_match_source_port").(string),
 	}
 
-	return natRule, nil
+	return natRule
 }
 
 func setNatRuleData(d *schema.ResourceData, natRule *types.EdgeNatRule) error {
@@ -336,6 +339,16 @@ func setNatRuleData(d *schema.ResourceData, natRule *types.EdgeNatRule) error {
 	err = d.Set("rule_type", natRule.RuleType)
 	if err != nil {
 		return fmt.Errorf("unable to set 'rule_type'")
+	}
+
+	err = d.Set("dnat_match_source_port", natRule.DnatMatchSourcePort)
+	if err != nil {
+		return fmt.Errorf("unable to set 'dnat_match_source_port'")
+	}
+
+	err = d.Set("dnat_match_source_address", natRule.DnatMatchSourceAddress)
+	if err != nil {
+		return fmt.Errorf("unable to set 'dnat_match_source_address'")
 	}
 
 	return nil

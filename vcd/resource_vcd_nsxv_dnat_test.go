@@ -45,6 +45,8 @@ func TestAccVcdEdgeNat(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_dnat.test", "id", regexp.MustCompile(`\d*`)),
+					// When rule_tag is not specified - we expect it to be the same as ID
+					resource.TestCheckResourceAttrPair("vcd_nsxv_dnat.test", "rule_tag", "vcd_nsxv_dnat.test", "id"),
 					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "vnic", "0"),
 					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "description", ""),
 					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "protocol", "any"),
