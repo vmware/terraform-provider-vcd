@@ -274,7 +274,7 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 	adminVdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find vdc.")
-		return fmt.Errorf("unable to find VDC.. %#v", err)
+		return fmt.Errorf("unable to find VDC. %#v", err)
 	}
 
 	d.SetId(adminVdc.AdminVdc.ID)
@@ -302,7 +302,7 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 	adminVdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find VDC")
-		return fmt.Errorf("unable to find VDC2 %s", err)
+		return fmt.Errorf("unable to find VDC %s", err)
 	}
 
 	return setOrgVdcData(d, vcdClient, adminOrg, adminVdc)
@@ -349,7 +349,7 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 	vdc, err := adminOrg.GetVDCByName(d.Get("name").(string), false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find VDC")
-		return fmt.Errorf("unable to find VDC3 %s", err)
+		return fmt.Errorf("unable to find VDC %s", err)
 	}
 	metadata, err := vdc.GetMetadata()
 	if err != nil {
@@ -478,7 +478,7 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 	adminVdc, err := adminOrg.GetAdminVDCByName(vdcName, false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find VDC.")
-		return fmt.Errorf("unable to find VDC4 %s", err)
+		return fmt.Errorf("unable to find VDC %s", err)
 	}
 
 	changedAdminVdc, err := getUpdatedVdcInput(d, vcdClient, adminVdc)
@@ -892,7 +892,7 @@ func resourceVcdOrgVdcImport(d *schema.ResourceData, meta interface{}) ([]*schem
 	adminVdc, err := adminOrg.GetAdminVDCByName(vdcName, false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find VDC")
-		return nil, fmt.Errorf("unable to find VDC5 %s", err)
+		return nil, fmt.Errorf("unable to find VDC %s", err)
 	}
 
 	d.Set("org", orgName)

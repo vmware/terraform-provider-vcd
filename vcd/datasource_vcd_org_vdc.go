@@ -209,7 +209,7 @@ func datasourceVcdOrgVdcRead(d *schema.ResourceData, meta interface{}) error {
 	adminVdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find VDC")
-		return fmt.Errorf("unable to find VDC6 %s", err)
+		return fmt.Errorf("unable to find VDC %s", err)
 	}
 
 	d.SetId(adminVdc.AdminVdc.ID)
