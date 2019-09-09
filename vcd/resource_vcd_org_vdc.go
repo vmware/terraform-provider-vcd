@@ -365,15 +365,15 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 
 // getComputeStorageProfiles constructs specific struct to be saved in Terraform state file.
 // Expected E.g.
-func getComputeStorageProfiles(vcdClient *VCDClient, profile *types.VdcStorageProfiles) ([]map[string]interface{}, error) {
-	root := make([]map[string]interface{}, 0)
+func getComputeStorageProfiles(vcdClient *VCDClient, profile *types.VdcStorageProfiles) ([]StringMap, error) {
+	root := make([]StringMap, 0)
 
 	for _, vdcStorageProfile := range profile.VdcStorageProfile {
 		vdcStorageProfileDetails, err := govcd.GetStorageProfileByHref(vcdClient.VCDClient, vdcStorageProfile.HREF)
 		if err != nil {
 			return nil, err
 		}
-		storageProfileData := make(map[string]interface{})
+		storageProfileData := make(StringMap)
 		storageProfileData["limit"] = vdcStorageProfileDetails.Limit
 		storageProfileData["default"] = vdcStorageProfileDetails.Default
 		storageProfileData["enabled"] = vdcStorageProfileDetails.Enabled
@@ -387,7 +387,7 @@ func getComputeStorageProfiles(vcdClient *VCDClient, profile *types.VdcStoragePr
 // hashMapStringForCapacityElements calculates hash code for adding elements to schema.Set
 func hashMapStringForCapacityElements(v interface{}) int {
 	var buf bytes.Buffer
-	m := v.(map[string]interface{})
+	m := v.(StringMap)
 	buf.WriteString(fmt.Sprintf("%d", m["allocated"].(int64)))
 	buf.WriteString(fmt.Sprintf("%d", m["limit"].(int64)))
 	buf.WriteString(fmt.Sprintf("%d", m["overhead"].(int64)))
@@ -399,7 +399,7 @@ func hashMapStringForCapacityElements(v interface{}) int {
 // hashMapStringForCapacityElements calculates hash code for adding elements to schema.Set
 func hashMapStringForCapacity(v interface{}) int {
 	var buf bytes.Buffer
-	m := v.(map[string]interface{})
+	m := v.(StringMap)
 	buf.WriteString(fmt.Sprintf("%v", m["cpu"].(*schema.Set)))
 	buf.WriteString(fmt.Sprintf("%v", m["memory"].(*schema.Set)))
 	return hashcode.String(buf.String())
@@ -414,16 +414,16 @@ func getComputeCapacities(capacities []*types.ComputeCapacity) *schema.Set {
 	rootInternalArray := make([]interface{}, 0)
 
 	for _, capacity := range capacities {
-		rootInternal := map[string]interface{}{}
+		rootInternal := StringMap{}
 
-		cpuValueMap := map[string]interface{}{}
-		memoryValueMap := map[string]interface{}{}
+		cpuValueMap := StringMap{}
 		cpuValueMap["limit"] = capacity.CPU.Limit
 		cpuValueMap["allocated"] = capacity.CPU.Allocated
 		cpuValueMap["reserved"] = capacity.CPU.Reserved
 		cpuValueMap["used"] = capacity.CPU.Used
 		cpuValueMap["overhead"] = capacity.CPU.Overhead
 
+		memoryValueMap := StringMap{}
 		memoryValueMap["limit"] = capacity.Memory.Limit
 		memoryValueMap["allocated"] = capacity.Memory.Allocated
 		memoryValueMap["reserved"] = capacity.Memory.Reserved
@@ -450,8 +450,8 @@ func getComputeCapacities(capacities []*types.ComputeCapacity) *schema.Set {
 }
 
 // Converts to terraform understandable structure
-func getMetadataStruct(metadata []*types.MetadataEntry) map[string]interface{} {
-	metadataMap := make(map[string]interface{}, len(metadata))
+func getMetadataStruct(metadata []*types.MetadataEntry) StringMap {
+	metadataMap := make(StringMap, len(metadata))
 	for _, metadataEntry := range metadata {
 		metadataMap[metadataEntry.Key] = metadataEntry.TypedValue.Value
 	}
@@ -585,7 +585,7 @@ func createOrUpdateMetadata(d *schema.ResourceData, meta interface{}) error {
 }
 
 // helper for transforming the compute capacity section of the resource input into the VdcConfiguration structure
-func capacityWithUsage(d map[string]interface{}, units string) *types.CapacityWithUsage {
+func capacityWithUsage(d StringMap, units string) *types.CapacityWithUsage {
 	capacity := &types.CapacityWithUsage{
 		Units: units,
 	}
