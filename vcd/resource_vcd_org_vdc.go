@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform/helper/hashcode"
 	"log"
-	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -338,7 +337,7 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 		return fmt.Errorf("error setting compute_capacity: %s", err)
 	}
 
-	storageProfileStateData, err := getComputeStorageProfiles(vcdClient, adminVdc.AdminVdc.VdcStorageProfiles[0])
+	storageProfileStateData, err := getComputeStorageProfiles(vcdClient, adminVdc.AdminVdc.VdcStorageProfiles)
 	if err != nil {
 		return fmt.Errorf("error preparing storage profile data: %s", err)
 	}
@@ -370,7 +369,7 @@ func getComputeStorageProfiles(vcdClient *VCDClient, profile *types.VdcStoragePr
 	root := make([]map[string]interface{}, 0)
 
 	for _, vdcStorageProfile := range profile.VdcStorageProfile {
-		vdcStorageProfileDetails, err := GetStorageProfile(vcdClient, vdcStorageProfile.HREF)
+		vdcStorageProfileDetails, err := govcd.GetStorageProfileByHref(vcdClient.VCDClient, vdcStorageProfile.HREF)
 		if err != nil {
 			return nil, err
 		}
@@ -378,7 +377,7 @@ func getComputeStorageProfiles(vcdClient *VCDClient, profile *types.VdcStoragePr
 		storageProfileData["limit"] = vdcStorageProfileDetails.Limit
 		storageProfileData["default"] = vdcStorageProfileDetails.Default
 		storageProfileData["enabled"] = vdcStorageProfileDetails.Enabled
-		storageProfileData["name"] = vdcStorageProfile.Name //TODO
+		storageProfileData["name"] = vdcStorageProfileDetails.ProviderVdcStorageProfile.Name
 		root = append(root, storageProfileData)
 	}
 
