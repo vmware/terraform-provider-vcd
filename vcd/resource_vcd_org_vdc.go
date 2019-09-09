@@ -338,7 +338,6 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 		return fmt.Errorf("error setting compute_capacity: %s", err)
 	}
 
-	// TODO VdcStorageProfiles is array?
 	storageProfileStateData, err := getComputeStorageProfiles(vcdClient, adminVdc.AdminVdc.VdcStorageProfiles[0])
 	if err != nil {
 		return fmt.Errorf("error preparing storage profile data: %s", err)
@@ -363,19 +362,6 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 
 	log.Printf("[TRACE] vdc read completed: %#v", adminVdc.AdminVdc)
 	return nil
-}
-
-func GetStorageProfile(vcdClient *VCDClient, url string) (*types.VdcStorageProfile, error) {
-
-	vdcStorageProfile := &types.VdcStorageProfile{}
-
-	_, err := vcdClient.Client.ExecuteRequest(url, http.MethodGet,
-		"", "error retrieving storage profile: %s", nil, vdcStorageProfile)
-	if err != nil {
-		return &types.VdcStorageProfile{}, err
-	}
-
-	return vdcStorageProfile, nil
 }
 
 // getComputeStorageProfiles constructs specific struct to be saved in Terraform state file.
