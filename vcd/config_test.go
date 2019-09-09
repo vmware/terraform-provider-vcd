@@ -29,8 +29,6 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
-type StringMap map[string]interface{}
-
 // Structure to get info from a config json file that the user specifies
 type TestConfig struct {
 	Provider struct {
