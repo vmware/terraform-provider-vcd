@@ -21,11 +21,25 @@ func TestAccVcdExternalNetworkBasic(t *testing.T) {
 		return
 	}
 
+	startAddress := "192.168.30.51"
+	endAddress := "192.168.30.62"
+	description := "Test External Network"
+	gateway := "192.168.30.49"
+	netmask := "255.255.255.240"
+	dns1 := "192.168.0.164"
+	dns2 := "192.168.0.196"
 	var params = StringMap{
 		"ExternalNetworkName": TestAccVcdExternalNetwork,
 		"Type":                testConfig.Networking.ExternalNetworkPortGroupType,
 		"PortGroup":           testConfig.Networking.ExternalNetworkPortGroup,
 		"Vcenter":             testConfig.Networking.Vcenter,
+		"StartAddress":        startAddress,
+		"EndAddress":          endAddress,
+		"Description":         description,
+		"Gateway":             gateway,
+		"Netmask":             netmask,
+		"Dns1":                dns1,
+		"Dns2":                dns2,
 		"Tags":                "network extnetwork",
 	}
 
@@ -36,6 +50,7 @@ func TestAccVcdExternalNetworkBasic(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
+	resourceName := "vcd_external_network." + TestAccVcdExternalNetwork
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -46,15 +61,45 @@ func TestAccVcdExternalNetworkBasic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdExternalNetworkExists("vcd_external_network."+TestAccVcdExternalNetwork, &externalNetwork),
 					resource.TestCheckResourceAttr(
-						"vcd_external_network."+TestAccVcdExternalNetwork, "name", TestAccVcdExternalNetwork),
+						resourceName, "name", TestAccVcdExternalNetwork),
 					resource.TestCheckResourceAttr(
-						"vcd_external_network."+TestAccVcdExternalNetwork, "description", "Test External Network"),
+						resourceName, "vsphere_network.0.vcenter", testConfig.Networking.Vcenter),
 					resource.TestCheckResourceAttr(
-						"vcd_external_network."+TestAccVcdExternalNetwork, "retain_net_info_across_deployments", "false"),
+						resourceName, "vsphere_network.0.name", testConfig.Networking.ExternalNetworkPortGroup),
+					resource.TestCheckResourceAttr(
+						resourceName, "vsphere_network.0.type", testConfig.Networking.ExternalNetworkPortGroupType),
+					resource.TestCheckResourceAttr(
+						resourceName, "ip_scope.0.gateway", gateway),
+					resource.TestCheckResourceAttr(
+						resourceName, "ip_scope.0.netmask", netmask),
+					resource.TestCheckResourceAttr(
+						resourceName, "ip_scope.0.dns1", dns1),
+					resource.TestCheckResourceAttr(
+						resourceName, "ip_scope.0.dns2", dns2),
+					resource.TestCheckResourceAttr(
+						resourceName, "ip_scope.0.static_ip_pool.0.start_address", startAddress),
+					resource.TestCheckResourceAttr(
+						resourceName, "ip_scope.0.static_ip_pool.0.end_address", endAddress),
+					resource.TestCheckResourceAttr(
+						resourceName, "description", description),
+					resource.TestCheckResourceAttr(
+						resourceName, "retain_net_info_across_deployments", "false"),
 				),
+			},
+			resource.TestStep{
+				ResourceName:      resourceName + "-import",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdByExternalNetwork(TestAccVcdExternalNetwork),
 			},
 		},
 	})
+}
+
+func importStateIdByExternalNetwork(objectName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		return objectName, nil
+	}
 }
 
 func testAccCheckVcdExternalNetworkExists(name string, externalNetwork *govcd.ExternalNetwork) resource.TestCheckFunc {
@@ -102,7 +147,7 @@ func init() {
 const testAccCheckVcdExternalNetwork_basic = `
 resource "vcd_external_network" "{{.ExternalNetworkName}}" {
   name        = "{{.ExternalNetworkName}}"
-  description = "Test External Network"
+  description = "{{.Description}}"
 
   vsphere_network {
     vcenter = "{{.Vcenter}}"
@@ -111,15 +156,15 @@ resource "vcd_external_network" "{{.ExternalNetworkName}}" {
   }
 
   ip_scope {
-    gateway      = "192.168.30.49"
-    netmask      = "255.255.255.240"
-    dns1         = "192.168.0.164"
-    dns2         = "192.168.0.196"
+    gateway      = "{{.Gateway}}"
+    netmask      = "{{.Netmask}}"
+    dns1         = "{{.Dns1}}"
+    dns2         = "{{.Dns2}}"
     dns_suffix   = "company.biz"
 
     static_ip_pool {
-      start_address = "192.168.30.51"
-      end_address   = "192.168.30.62"
+      start_address = "{{.StartAddress}}"
+      end_address   = "{{.EndAddress}}"
     }
   }
 
