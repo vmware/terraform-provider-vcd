@@ -21,6 +21,7 @@ func TestAccVcdEdgeNat(t *testing.T) {
 		"EdgeGateway": testConfig.Networking.EdgeGateway,
 		"ExternalIp":  testConfig.Networking.ExternalIp,
 		"InternalIp":  testConfig.Networking.InternalIp,
+		"NetworkName": testConfig.Networking.ExternalNetwork,
 		"Tags":        "egatewaydge nat",
 	}
 
@@ -47,7 +48,7 @@ func TestAccVcdEdgeNat(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxv_dnat.test", "id", regexp.MustCompile(`\d*`)),
 					// When rule_tag is not specified - we expect it to be the same as ID
 					resource.TestCheckResourceAttrPair("vcd_nsxv_dnat.test", "rule_tag", "vcd_nsxv_dnat.test", "id"),
-					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "vnic", "0"),
+					// resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "vnic", "0"),
 					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "description", ""),
 					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "protocol", "any"),
 					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "original_port", "any"),
@@ -63,7 +64,7 @@ func TestAccVcdEdgeNat(t *testing.T) {
 					resource.TestCheckResourceAttrPair("vcd_nsxv_dnat.test", "enabled", "data.vcd_nsxv_dnat.data-test", "enabled"),
 					resource.TestCheckResourceAttrPair("vcd_nsxv_dnat.test", "logging_enabled", "data.vcd_nsxv_dnat.data-test", "logging_enabled"),
 					resource.TestCheckResourceAttrPair("vcd_nsxv_dnat.test", "description", "data.vcd_nsxv_dnat.data-test", "description"),
-					resource.TestCheckResourceAttrPair("vcd_nsxv_dnat.test", "vnic", "data.vcd_nsxv_dnat.data-test", "vnic"),
+					// resource.TestCheckResourceAttrPair("vcd_nsxv_dnat.test", "vnic", "data.vcd_nsxv_dnat.data-test", "vnic"),
 					resource.TestCheckResourceAttrPair("vcd_nsxv_dnat.test", "original_address", "data.vcd_nsxv_dnat.data-test", "original_address"),
 					resource.TestCheckResourceAttrPair("vcd_nsxv_dnat.test", "protocol", "data.vcd_nsxv_dnat.data-test", "protocol"),
 					resource.TestCheckResourceAttrPair("vcd_nsxv_dnat.test", "icmp_type", "data.vcd_nsxv_dnat.data-test", "icmp_type"),
@@ -76,7 +77,7 @@ func TestAccVcdEdgeNat(t *testing.T) {
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_dnat.test", "id", regexp.MustCompile(`\d*`)),
-					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "vnic", "0"),
+					// resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "vnic", "0"),p
 					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "protocol", "any"),
 					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "original_port", "any"),
 					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "translated_port", "any"),
@@ -150,6 +151,9 @@ resource "vcd_nsxv_dnat" "test" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
+  
+  network_type = "ext"
+  network_name = "{{.NetworkName}}"
 
   original_address   = "{{.ExternalIp}}"
   translated_address = "{{.InternalIp}}"
@@ -168,6 +172,9 @@ resource "vcd_nsxv_dnat" "test" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
+
+  network_type = "ext"
+  network_name = "{{.NetworkName}}"
 
   original_address   = "{{.ExternalIp}}"
   translated_address = "1.1.1.1"

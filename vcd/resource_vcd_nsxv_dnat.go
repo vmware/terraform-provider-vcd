@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
 
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
@@ -38,6 +39,18 @@ func resourceVcdNsxvDnat() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "Edge gateway name in which NAT Rule is located",
+			},
+
+			"network_name": &schema.Schema{
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Edge gateway name in which NAT Rule is located",
+			},
+			"network_type": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "org",
+				ValidateFunc: validation.StringInSlice([]string{"ext", "org"}, false),
 			},
 			"rule_type": &schema.Schema{ // read only field
 				Type:        schema.TypeString,
@@ -73,13 +86,13 @@ func resourceVcdNsxvDnat() *schema.Resource {
 				ForceNew:    false,
 				Description: "NAT rule description",
 			},
-			"vnic": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    false,
-				Computed:    true,
-				Description: "Interface on which the translation is applied.",
-			},
+			// "vnic": &schema.Schema{
+			// 	Type:        schema.TypeString,
+			// 	Optional:    true,
+			// 	ForceNew:    false,
+			// 	Computed:    true,
+			// 	Description: "Interface on which the translation is applied.",
+			// },
 			"original_address": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
@@ -161,7 +174,10 @@ func resourceVcdNsxvDnatCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	natRule := getNatRuleType(d)
+	natRule, err := getNatRuleType(d, edgeGateway)
+	if err != nil {
+		return fmt.Errorf("unable to make stucture for API call: %s", err)
+	}
 
 	natRule.Action = "dnat"
 
@@ -201,7 +217,10 @@ func resourceVcdNsxvDnatUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	updateNatRule := getNatRuleType(d)
+	updateNatRule, err := getNatRuleType(d, edgeGateway)
+	if err != nil {
+		return fmt.Errorf("unable to make stucture for API call: %s", err)
+	}
 	updateNatRule.ID = d.Id()
 
 	updateNatRule.Action = "dnat"
@@ -260,13 +279,30 @@ func resourceVcdNsxvDnatImport(d *schema.ResourceData, meta interface{}) ([]*sch
 	return []*schema.ResourceData{d}, nil
 }
 
-func getNatRuleType(d *schema.ResourceData) *types.EdgeNatRule {
+func getNatRuleType(d *schema.ResourceData, edgeGateway govcd.EdgeGateway) (*types.EdgeNatRule, error) {
+	networkName := d.Get("network_name").(string)
+	networkType := d.Get("network_type").(string)
+
+	var edgeGatewayNetworkType string
+	switch networkType {
+	case "ext":
+		edgeGatewayNetworkType = "uplink"
+	case "org":
+		edgeGatewayNetworkType = "internal"
+	}
+
+	vnic, err := edgeGateway.GetVnicIndexFromNetworkNameType(networkName, edgeGatewayNetworkType)
+	if err != nil {
+		return nil, fmt.Errorf("unable to identify vNic for network '%s' of type '%s': %s",
+			networkName, networkType, err)
+	}
+
 	natRule := &types.EdgeNatRule{
 		RuleTag:                d.Get("rule_tag").(string),
 		Enabled:                d.Get("enabled").(bool),
 		LoggingEnabled:         d.Get("logging_enabled").(bool),
 		Description:            d.Get("description").(string),
-		Vnic:                   d.Get("vnic").(string),
+		Vnic:                   vnic,
 		OriginalAddress:        d.Get("original_address").(string),
 		Protocol:               d.Get("protocol").(string),
 		IcmpType:               d.Get("icmp_type").(string),
@@ -277,7 +313,7 @@ func getNatRuleType(d *schema.ResourceData) *types.EdgeNatRule {
 		DnatMatchSourcePort:    d.Get("dnat_match_source_port").(string),
 	}
 
-	return natRule
+	return natRule, nil
 }
 
 func setNatRuleData(d *schema.ResourceData, natRule *types.EdgeNatRule) error {
@@ -301,10 +337,10 @@ func setNatRuleData(d *schema.ResourceData, natRule *types.EdgeNatRule) error {
 		return fmt.Errorf("unable to set 'description'")
 	}
 
-	err = d.Set("vnic", natRule.Vnic)
-	if err != nil {
-		return fmt.Errorf("unable to set 'vnic'")
-	}
+	// err = d.Set("vnic", natRule.Vnic)
+	// if err != nil {
+	// 	return fmt.Errorf("unable to set 'vnic'")
+	// }
 
 	err = d.Set("original_address", natRule.OriginalAddress)
 	if err != nil {

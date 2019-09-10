@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -38,6 +39,18 @@ func resourceVcdNsxvSnat() *schema.Resource {
 				ForceNew:    true,
 				Description: "Edge gateway name in which NAT Rule is located",
 			},
+
+			"network_name": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+			},
+			"network_type": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "ext",
+				ValidateFunc: validation.StringInSlice([]string{"ext", "org"}, false),
+			},
+
 			"rule_type": &schema.Schema{ // read only field
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -221,12 +234,13 @@ func resourceVcdNsxvSnatImport(d *schema.ResourceData, meta interface{}) ([]*sch
 }
 
 func getSnatRuleType(d *schema.ResourceData) *types.EdgeNatRule {
+	vnic := d.Get("vnic").(int)
 	natRule := &types.EdgeNatRule{
 		RuleTag:                     d.Get("rule_tag").(string),
 		Enabled:                     d.Get("enabled").(bool),
 		LoggingEnabled:              d.Get("logging_enabled").(bool),
 		Description:                 d.Get("description").(string),
-		Vnic:                        d.Get("vnic").(string),
+		Vnic:                        &vnic,
 		OriginalAddress:             d.Get("original_address").(string),
 		TranslatedAddress:           d.Get("translated_address").(string),
 		SnatMatchDestinationAddress: d.Get("snat_match_destination_address").(string),

@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
-func datasourceVcdNsxvDnat() *schema.Resource {
+func datasourceVcdNsxvSnat() *schema.Resource {
 	return &schema.Resource{
 		Read: datasourceVcdNsxvDnatRead,
 		Schema: map[string]*schema.Schema{
@@ -109,7 +109,7 @@ func datasourceVcdNsxvDnat() *schema.Resource {
 	}
 }
 
-func datasourceVcdNsxvDnatRead(d *schema.ResourceData, meta interface{}) error {
+func datasourceVcdNsxvSnatRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 	if err != nil {
