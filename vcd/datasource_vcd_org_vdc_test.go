@@ -5,7 +5,6 @@ package vcd
 import (
 	"fmt"
 	"github.com/hashicorp/terraform/terraform"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -14,21 +13,13 @@ import (
 func TestAccVcdVdcDatasource(t *testing.T) {
 	validateConfiguration(t)
 
-	allocationModel := "ReservationPool"
 	vdcName := TestAccVcdVdc + "ForDataSourceTest"
 
 	var params = StringMap{
-		"VdcName":                   vdcName,
-		"OrgName":                   testConfig.VCD.Org,
-		"AllocationModel":           allocationModel,
-		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
-		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
-		"Tags":                      "vdc",
-		"FuncName":                  "TestAccVcdOrgVdcReservationPool",
-		// cause vDC ignores empty values and use default
-		"MemoryGuaranteed": "1",
-		"CpuGuaranteed":    "1",
+		"ExistingVdcName": testConfig.VCD.Vdc,
+		"VdcName":         vdcName,
+		"OrgName":         testConfig.VCD.Org,
+		"FuncName":        "TestAccVcdVdcDatasource",
 	}
 
 	if !usingSysAdmin() {
@@ -41,7 +32,6 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 		return
 	}
 
-	params["FuncName"] = t.Name() + "-Datasource"
 	configText := templateFill(testAccCheckVcdVdcDatasource_basic, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
@@ -53,12 +43,9 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 		CheckDestroy: testAccCheckVdcDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config:      configText,
-				ExpectError: regexp.MustCompile(`After applying this step and refreshing, the plan was not empty`),
+				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVdcExists("vcd_org_vdc."+vdcName),
-					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "name", "vcd_org_vdc."+vdcName, "name"),
-					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "root_resource_id", "vcd_org_vdc."+vdcName, "root_resource_id"),
 					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "org", "vcd_org_vdc."+vdcName, "org"),
 					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "allocation_model", "vcd_org_vdc."+vdcName, "allocation_model"),
 					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "network_pool_name", "vcd_org_vdc."+vdcName, "network_pool_name"),
@@ -67,17 +54,9 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "enable_thin_provisioning", "vcd_org_vdc."+vdcName, "enable_thin_provisioning"),
 					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "storage_profile.0.enabled", "vcd_org_vdc."+vdcName, "storage_profile.0.enabled"),
 					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "storage_profile.0.default", "vcd_org_vdc."+vdcName, "storage_profile.0.default"),
-					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "metadata.vdc_metadata", "vcd_org_vdc."+vdcName, "metadata.vdc_metadata"),
+					resource.TestCheckResourceAttr("vcd_org_vdc."+vdcName, "metadata.vdc_metadata", "VDC Metadata"),
 					resource.ComposeTestCheckFunc(testAccDataSourceVcdOrgVdc("data."+datasourceVdc, vdcName)),
 				),
-			},
-			resource.TestStep{
-				ResourceName:      "vcd_org_vdc." + vdcName,
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdByVdc(vdcName),
-				// These fields can't be retrieved
-				ImportStateVerifyIgnore: []string{"delete_force", "delete_recursive"},
 			},
 		},
 	})
@@ -141,59 +120,47 @@ func testAccDataSourceVcdOrgVdc(name, vdcName string) resource.TestCheckFunc {
 	}
 }
 
-func importStateIdByVdc(objectName string) resource.ImportStateIdFunc {
-	return func(*terraform.State) (string, error) {
-		importId := testConfig.VCD.Org + "." + objectName
-		if testConfig.VCD.Org == "" || objectName == "" {
-			return "", fmt.Errorf("missing information to generate import path: %s", importId)
-		}
-		return importId, nil
-	}
+const testAccCheckVcdVdcDatasource_basic = `
+data "vcd_org_vdc" "asDatasource" {
+  org  = "{{.OrgName}}"
+  name = "{{.ExistingVdcName}}"
 }
 
-const testAccCheckVcdVdcDatasource_basic = `
 resource "vcd_org_vdc" "{{.VdcName}}" {
   name = "{{.VdcName}}"
   org  = "{{.OrgName}}"
 
-  allocation_model = "{{.AllocationModel}}"
-  network_pool_name     = "{{.NetworkPool}}"
-  provider_vdc_name     = "{{.ProviderVdc}}"
+  allocation_model  = "${data.vcd_org_vdc.asDatasource.allocation_model}"
+  network_pool_name = "${data.vcd_org_vdc.asDatasource.network_pool_name}"
+  provider_vdc_name = "${data.vcd_org_vdc.asDatasource.provider_vdc_name}"
 
   compute_capacity {
     cpu {
-      allocated = 2048
-      limit     = 2048
+     allocated = "${tolist(tolist(data.vcd_org_vdc.asDatasource.compute_capacity)[0].cpu)[0].allocated}"
+     limit     = "${tolist(tolist(data.vcd_org_vdc.asDatasource.compute_capacity)[0].cpu)[0].limit}"
     }
 
     memory {
-      allocated = 2048
-      limit     = 2048
+     allocated = "${tolist(tolist(data.vcd_org_vdc.asDatasource.compute_capacity)[0].memory)[0].allocated}"
+     limit     = "${tolist(tolist(data.vcd_org_vdc.asDatasource.compute_capacity)[0].memory)[0].limit}"
     }
   }
 
   storage_profile {
-    name = "{{.ProviderVdcStorageProfile}}"
-    enabled  = true
-    limit    = 10240
-    default  = true
+    name    = "${data.vcd_org_vdc.asDatasource.storage_profile[0].name}"
+    enabled = "${data.vcd_org_vdc.asDatasource.storage_profile[0].enabled}"
+    limit   = "${data.vcd_org_vdc.asDatasource.storage_profile[0].limit}"
+    default = "${data.vcd_org_vdc.asDatasource.storage_profile[0].default}"
   }
 
   metadata = {
     vdc_metadata = "VDC Metadata"
   }
 
-  enabled                  = true
-  enable_thin_provisioning = true
-  enable_fast_provisioning = true
+  enabled                  = "${data.vcd_org_vdc.asDatasource.enabled}"
+  enable_thin_provisioning = "${data.vcd_org_vdc.asDatasource.enable_thin_provisioning}"
+  enable_fast_provisioning = "${data.vcd_org_vdc.asDatasource.enable_fast_provisioning}"
   delete_force             = true
   delete_recursive         = true
 }
-
-data "vcd_org_vdc" "asDatasource"{
-  name = "{{.VdcName}}"
-  org  = "{{.OrgName}}"
-  depends_on      = ["vcd_org_vdc.{{.VdcName}}"]
-}
-
 `
