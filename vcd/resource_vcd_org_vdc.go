@@ -20,6 +20,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 		Required: true,
 		MinItems: 1,
 		MaxItems: 1,
+		Set:      hashMapStringForCapacityElements,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"allocated": {
@@ -92,6 +93,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 					},
 				},
 				Description: "The compute capacity allocated to this VDC.",
+				Set:         hashMapStringForCapacity,
 			},
 			"nic_quota": &schema.Schema{
 				Type:        schema.TypeInt,
@@ -365,15 +367,15 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 
 // getComputeStorageProfiles constructs specific struct to be saved in Terraform state file.
 // Expected E.g.
-func getComputeStorageProfiles(vcdClient *VCDClient, profile *types.VdcStorageProfiles) ([]StringMap, error) {
-	root := make([]StringMap, 0)
+func getComputeStorageProfiles(vcdClient *VCDClient, profile *types.VdcStorageProfiles) ([]map[string]interface{}, error) {
+	root := make([]map[string]interface{}, 0)
 
 	for _, vdcStorageProfile := range profile.VdcStorageProfile {
 		vdcStorageProfileDetails, err := govcd.GetStorageProfileByHref(vcdClient.VCDClient, vdcStorageProfile.HREF)
 		if err != nil {
 			return nil, err
 		}
-		storageProfileData := make(StringMap)
+		storageProfileData := make(map[string]interface{})
 		storageProfileData["limit"] = vdcStorageProfileDetails.Limit
 		storageProfileData["default"] = vdcStorageProfileDetails.Default
 		storageProfileData["enabled"] = vdcStorageProfileDetails.Enabled
@@ -387,19 +389,20 @@ func getComputeStorageProfiles(vcdClient *VCDClient, profile *types.VdcStoragePr
 // hashMapStringForCapacityElements calculates hash code for adding elements to schema.Set
 func hashMapStringForCapacityElements(v interface{}) int {
 	var buf bytes.Buffer
-	m := v.(StringMap)
-	buf.WriteString(fmt.Sprintf("%d", m["allocated"].(int64)))
-	buf.WriteString(fmt.Sprintf("%d", m["limit"].(int64)))
-	buf.WriteString(fmt.Sprintf("%d", m["overhead"].(int64)))
-	buf.WriteString(fmt.Sprintf("%d", m["reserved"].(int64)))
-	buf.WriteString(fmt.Sprintf("%d", m["used"].(int64)))
+	m := v.(map[string]interface{})
+	buf.WriteString(fmt.Sprintf("%d", m["allocated"]))
+	buf.WriteString(fmt.Sprintf("%d", m["limit"]))
+	buf.WriteString(fmt.Sprintf("%d", m["overhead"]))
+	buf.WriteString(fmt.Sprintf("%d", m["reserved"]))
+	buf.WriteString(fmt.Sprintf("%d", m["used"]))
+
 	return hashcode.String(buf.String())
 }
 
 // hashMapStringForCapacityElements calculates hash code for adding elements to schema.Set
 func hashMapStringForCapacity(v interface{}) int {
 	var buf bytes.Buffer
-	m := v.(StringMap)
+	m := v.(map[string]interface{})
 	buf.WriteString(fmt.Sprintf("%v", m["cpu"].(*schema.Set)))
 	buf.WriteString(fmt.Sprintf("%v", m["memory"].(*schema.Set)))
 	return hashcode.String(buf.String())
@@ -414,16 +417,16 @@ func getComputeCapacities(capacities []*types.ComputeCapacity) *schema.Set {
 	rootInternalArray := make([]interface{}, 0)
 
 	for _, capacity := range capacities {
-		rootInternal := StringMap{}
+		rootInternal := map[string]interface{}{}
 
-		cpuValueMap := StringMap{}
+		cpuValueMap := map[string]interface{}{}
 		cpuValueMap["limit"] = capacity.CPU.Limit
 		cpuValueMap["allocated"] = capacity.CPU.Allocated
 		cpuValueMap["reserved"] = capacity.CPU.Reserved
 		cpuValueMap["used"] = capacity.CPU.Used
 		cpuValueMap["overhead"] = capacity.CPU.Overhead
 
-		memoryValueMap := StringMap{}
+		memoryValueMap := map[string]interface{}{}
 		memoryValueMap["limit"] = capacity.Memory.Limit
 		memoryValueMap["allocated"] = capacity.Memory.Allocated
 		memoryValueMap["reserved"] = capacity.Memory.Reserved
@@ -585,7 +588,7 @@ func createOrUpdateMetadata(d *schema.ResourceData, meta interface{}) error {
 }
 
 // helper for transforming the compute capacity section of the resource input into the VdcConfiguration structure
-func capacityWithUsage(d StringMap, units string) *types.CapacityWithUsage {
+func capacityWithUsage(d map[string]interface{}, units string) *types.CapacityWithUsage {
 	capacity := &types.CapacityWithUsage{
 		Units: units,
 	}
