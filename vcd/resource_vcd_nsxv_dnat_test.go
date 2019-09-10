@@ -12,7 +12,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
-func TestAccVcdEdgeNat(t *testing.T) {
+func TestAccVcdEdgeDnat(t *testing.T) {
 
 	// String map to fill the template
 	var params = StringMap{

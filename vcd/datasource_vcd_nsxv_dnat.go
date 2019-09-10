@@ -28,10 +28,18 @@ func datasourceVcdNsxvDnat() *schema.Resource {
 				ForceNew:    true,
 				Description: "Edge gateway name in which the NAT rule is located",
 			},
+			"network_name": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"network_type": &schema.Schema{
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 			"rule_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "LB Application Rule name for lookup",
+				Description: "NAT rule ID for lookup",
 			},
 
 			"rule_type": &schema.Schema{ // read only field
@@ -123,5 +131,5 @@ func datasourceVcdNsxvDnatRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.SetId(readNatRule.ID)
-	return setNatRuleData(d, readNatRule)
+	return setNatRuleData(d, readNatRule, edgeGateway)
 }
