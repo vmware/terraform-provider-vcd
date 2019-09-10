@@ -1,8 +1,6 @@
 package vcd
 
 import (
-	"fmt"
-
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
 
@@ -12,9 +10,9 @@ import (
 
 func resourceVcdNsxvDnat() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdNsxvDnatCreate,
-		Read:   resourceVcdNsxvDnatRead,
-		Update: resourceVcdNsxvDnatUpdate,
+		Create: natRuleCreator("dnat", setDnatRuleData, getDnatRuleType),
+		Read:   natRuleReader("id", "dnat", setDnatRuleData),
+		Update: natRuleUpdater("dnat", setDnatRuleData, getDnatRuleType),
 		Delete: natRuleDeleter("dnat"),
 		Importer: &schema.ResourceImporter{
 			State: natRuleImporter("dnat"),
@@ -84,13 +82,6 @@ func resourceVcdNsxvDnat() *schema.Resource {
 				ForceNew:    false,
 				Description: "NAT rule description",
 			},
-			// "vnic": &schema.Schema{
-			// 	Type:        schema.TypeString,
-			// 	Optional:    true,
-			// 	ForceNew:    false,
-			// 	Computed:    true,
-			// 	Description: "Interface on which the translation is applied.",
-			// },
 			"original_address": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
@@ -151,75 +142,6 @@ func resourceVcdNsxvDnat() *schema.Resource {
 	}
 }
 
-func resourceVcdNsxvDnatCreate(d *schema.ResourceData, meta interface{}) error {
-	vcdClient := meta.(*VCDClient)
-	vcdClient.lockParentEdgeGtw(d)
-	defer vcdClient.unLockParentEdgeGtw(d)
-
-	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
-	if err != nil {
-		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
-	}
-
-	natRule, err := getDnatRuleType(d, edgeGateway)
-	if err != nil {
-		return fmt.Errorf("unable to make structure for API call: %s", err)
-	}
-
-	natRule.Action = "dnat"
-
-	createdNatRule, err := edgeGateway.CreateNsxvNatRule(natRule)
-	if err != nil {
-		return fmt.Errorf("error creating new NAT rule: %s", err)
-	}
-
-	d.SetId(createdNatRule.ID)
-	return resourceVcdNsxvDnatRead(d, meta)
-}
-
-func resourceVcdNsxvDnatRead(d *schema.ResourceData, meta interface{}) error {
-	vcdClient := meta.(*VCDClient)
-
-	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
-	if err != nil {
-		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
-	}
-
-	readNatRule, err := edgeGateway.GetNsxvNatRuleById(d.Id())
-	if err != nil {
-		d.SetId("")
-		return fmt.Errorf("unable to find NAT rule with ID %s: %s", d.Id(), err)
-	}
-
-	return setDnatRuleData(d, readNatRule, edgeGateway)
-}
-
-func resourceVcdNsxvDnatUpdate(d *schema.ResourceData, meta interface{}) error {
-	vcdClient := meta.(*VCDClient)
-	vcdClient.lockParentEdgeGtw(d)
-	defer vcdClient.unLockParentEdgeGtw(d)
-
-	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
-	if err != nil {
-		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
-	}
-
-	updateNatRule, err := getDnatRuleType(d, edgeGateway)
-	if err != nil {
-		return fmt.Errorf("unable to make structure for API call: %s", err)
-	}
-	updateNatRule.ID = d.Id()
-
-	updateNatRule.Action = "dnat"
-
-	updatedNatRule, err := edgeGateway.UpdateNsxvNatRule(updateNatRule)
-	if err != nil {
-		return fmt.Errorf("unable to update NAT rule with ID %s: %s", d.Id(), err)
-	}
-
-	return setDnatRuleData(d, updatedNatRule, edgeGateway)
-}
-
 func getDnatRuleType(d *schema.ResourceData, edgeGateway govcd.EdgeGateway) (*types.EdgeNatRule, error) {
 	networkName := d.Get("network_name").(string)
 	networkType := d.Get("network_type").(string)
@@ -271,47 +193,4 @@ func setDnatRuleData(d *schema.ResourceData, natRule *types.EdgeNatRule, edgeGat
 	_ = d.Set("dnat_match_source_address", natRule.DnatMatchSourceAddress)
 
 	return nil
-}
-
-func getvNicIndexFromNetworkNameType(networkName, networkType string, edgeGateway govcd.EdgeGateway) (*int, error) {
-	var edgeGatewayNetworkType string
-	switch networkType {
-	case "ext":
-		edgeGatewayNetworkType = types.EdgeGatewayVnicTypeUplink
-	case "org":
-		edgeGatewayNetworkType = types.EdgeGatewayVnicTypeInternal
-	}
-
-	vnicIndex, err := edgeGateway.GetVnicIndexFromNetworkNameType(networkName, edgeGatewayNetworkType)
-	// if `org` network of type `types.EdgeGatewayVnicTypeInternal` network was not found - try to
-	// look for it in subinterface `types.EdgeGatewayVnicTypeSubinterface`
-	if networkType == "org" && govcd.IsNotFound(err) {
-		vnicIndex, err = edgeGateway.GetVnicIndexFromNetworkNameType(networkName, types.EdgeGatewayVnicTypeSubinterface)
-	}
-
-	if err != nil {
-		return nil, fmt.Errorf("unable to identify vNic for network '%s' of type '%s': %s",
-			networkName, networkType, err)
-	}
-
-	return vnicIndex, nil
-}
-
-func getNetworkNameTypeFromVnicIndex(index int, edgeGateway govcd.EdgeGateway) (string, string, error) {
-	networkName, networkType, err := edgeGateway.GetNetworkNameTypeFromVnicIndex(index)
-	if err != nil {
-		return "", "", fmt.Errorf("unable to determine network name and type: %s", err)
-	}
-
-	var resourceNetworkType string
-	switch networkType {
-	case "uplink":
-		resourceNetworkType = "ext"
-	case "internal":
-		resourceNetworkType = "org"
-	case "subinterface":
-		resourceNetworkType = "org"
-	}
-
-	return networkName, resourceNetworkType, nil
 }

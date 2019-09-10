@@ -1,14 +1,12 @@
 package vcd
 
 import (
-	"fmt"
-
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
 func datasourceVcdNsxvDnat() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceVcdNsxvDnatRead,
+		Read: natRuleReader("rule_id", "dnat", setDnatRuleData),
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:        schema.TypeString,
@@ -41,7 +39,6 @@ func datasourceVcdNsxvDnat() *schema.Resource {
 				Required:    true,
 				Description: "NAT rule ID for lookup",
 			},
-
 			"rule_type": &schema.Schema{ // read only field
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -115,21 +112,4 @@ func datasourceVcdNsxvDnat() *schema.Resource {
 			},
 		},
 	}
-}
-
-func datasourceVcdNsxvDnatRead(d *schema.ResourceData, meta interface{}) error {
-	vcdClient := meta.(*VCDClient)
-	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
-	if err != nil {
-		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
-	}
-
-	readNatRule, err := edgeGateway.GetNsxvNatRuleById(d.Get("rule_id").(string))
-	if err != nil {
-		d.SetId("")
-		return fmt.Errorf("unable to find NAT rule with ID %s: %s", d.Id(), err)
-	}
-
-	d.SetId(readNatRule.ID)
-	return setSnatRuleData(d, readNatRule, edgeGateway)
 }

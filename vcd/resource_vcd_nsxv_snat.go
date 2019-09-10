@@ -1,8 +1,6 @@
 package vcd
 
 import (
-	"fmt"
-
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
 
@@ -12,9 +10,9 @@ import (
 
 func resourceVcdNsxvSnat() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdNsxvSnatCreate,
-		Read:   resourceVcdNsxvSnatRead,
-		Update: resourceVcdNsxvSnatUpdate,
+		Create: natRuleCreator("snat", setSnatRuleData, getSnatRuleType),
+		Read:   natRuleReader("id", "snat", setSnatRuleData),
+		Update: natRuleUpdater("snat", setSnatRuleData, getSnatRuleType),
 		Delete: natRuleDeleter("snat"),
 		Importer: &schema.ResourceImporter{
 			State: natRuleImporter("snat"),
@@ -121,75 +119,6 @@ func resourceVcdNsxvSnat() *schema.Resource {
 			},
 		},
 	}
-}
-
-func resourceVcdNsxvSnatCreate(d *schema.ResourceData, meta interface{}) error {
-	vcdClient := meta.(*VCDClient)
-	vcdClient.lockParentEdgeGtw(d)
-	defer vcdClient.unLockParentEdgeGtw(d)
-
-	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
-	if err != nil {
-		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
-	}
-
-	natRule, err := getSnatRuleType(d, edgeGateway)
-	if err != nil {
-		return fmt.Errorf("unable to make structure for API call: %s", err)
-	}
-
-	natRule.Action = "snat"
-
-	createdNatRule, err := edgeGateway.CreateNsxvNatRule(natRule)
-	if err != nil {
-		return fmt.Errorf("error creating new NAT rule: %s", err)
-	}
-
-	d.SetId(createdNatRule.ID)
-	return resourceVcdNsxvSnatRead(d, meta)
-}
-
-func resourceVcdNsxvSnatRead(d *schema.ResourceData, meta interface{}) error {
-	vcdClient := meta.(*VCDClient)
-
-	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
-	if err != nil {
-		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
-	}
-
-	readNatRule, err := edgeGateway.GetNsxvNatRuleById(d.Id())
-	if err != nil {
-		d.SetId("")
-		return fmt.Errorf("unable to find NAT rule with ID %s: %s", d.Id(), err)
-	}
-
-	return setSnatRuleData(d, readNatRule, edgeGateway)
-}
-
-func resourceVcdNsxvSnatUpdate(d *schema.ResourceData, meta interface{}) error {
-	vcdClient := meta.(*VCDClient)
-	vcdClient.lockParentEdgeGtw(d)
-	defer vcdClient.unLockParentEdgeGtw(d)
-
-	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
-	if err != nil {
-		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
-	}
-
-	updateNatRule, err := getSnatRuleType(d, edgeGateway)
-	if err != nil {
-		return fmt.Errorf("unable to make structure for API call: %s", err)
-	}
-	updateNatRule.ID = d.Id()
-
-	updateNatRule.Action = "snat"
-
-	updatedNatRule, err := edgeGateway.UpdateNsxvNatRule(updateNatRule)
-	if err != nil {
-		return fmt.Errorf("unable to update NAT rule with ID %s: %s", d.Id(), err)
-	}
-
-	return setSnatRuleData(d, updatedNatRule, edgeGateway)
 }
 
 func getSnatRuleType(d *schema.ResourceData, edgeGateway govcd.EdgeGateway) (*types.EdgeNatRule, error) {

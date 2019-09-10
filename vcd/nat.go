@@ -5,10 +5,20 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
+// natRuleTypeGetter sets a type for getDnatRuleType and getSnatRuleType so that both can be accepted
+// as function parameters
+type natRuleTypeGetter func(d *schema.ResourceData, edgeGateway govcd.EdgeGateway) (*types.EdgeNatRule, error)
+
+// natRuleDataSetter sets a type for setDatRuleData and setSnatRuleData so that both can be accepted
+// as function parameters
+type natRuleDataSetter func(d *schema.ResourceData, natRule *types.EdgeNatRule, edgeGateway govcd.EdgeGateway) error
+
 // natRuleImporter works as a shared structure for both dnat and snat rule resource
-func natRuleImporter(natType string) func(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func natRuleImporter(natType string) schema.StateFunc {
 	return func(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 		resourceURI := strings.Split(d.Id(), ".")
 		if len(resourceURI) != 4 {
@@ -29,7 +39,8 @@ func natRuleImporter(natType string) func(d *schema.ResourceData, meta interface
 		}
 
 		if readNatRule.Action != natType {
-			return []*schema.ResourceData{}, fmt.Errorf("NAT rule with id %s is of type %s. Expected type %s. Please use correct resource",
+			return []*schema.ResourceData{}, fmt.Errorf("NAT rule with id %s is of type %s. "+
+				"Expected type %s. Please use correct resource",
 				readNatRule.ID, readNatRule.Action, natType)
 		}
 
@@ -43,7 +54,7 @@ func natRuleImporter(natType string) func(d *schema.ResourceData, meta interface
 }
 
 // natRuleDeleter
-func natRuleDeleter(natType string) func(d *schema.ResourceData, meta interface{}) error {
+func natRuleDeleter(natType string) schema.DeleteFunc {
 	return func(d *schema.ResourceData, meta interface{}) error {
 		vcdClient := meta.(*VCDClient)
 		vcdClient.lockParentEdgeGtw(d)
@@ -62,4 +73,134 @@ func natRuleDeleter(natType string) func(d *schema.ResourceData, meta interface{
 		d.SetId("")
 		return nil
 	}
+}
+
+func natRuleCreator(natType string, setData natRuleDataSetter, getType natRuleTypeGetter) schema.CreateFunc {
+	return func(d *schema.ResourceData, meta interface{}) error {
+		vcdClient := meta.(*VCDClient)
+		vcdClient.lockParentEdgeGtw(d)
+		defer vcdClient.unLockParentEdgeGtw(d)
+
+		edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
+		if err != nil {
+			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
+		}
+
+		natRule, err := getType(d, edgeGateway)
+		if err != nil {
+			return fmt.Errorf("unable to make structure for API call: %s", err)
+		}
+
+		natRule.Action = natType
+
+		createdNatRule, err := edgeGateway.CreateNsxvNatRule(natRule)
+		if err != nil {
+			return fmt.Errorf("error creating new NAT rule: %s", err)
+		}
+
+		d.SetId(createdNatRule.ID)
+		return natRuleReader("id", natType, setData)(d, meta)
+	}
+}
+
+func natRuleUpdater(natType string, setData natRuleDataSetter, getType natRuleTypeGetter) schema.UpdateFunc {
+	return func(d *schema.ResourceData, meta interface{}) error {
+		vcdClient := meta.(*VCDClient)
+		vcdClient.lockParentEdgeGtw(d)
+		defer vcdClient.unLockParentEdgeGtw(d)
+
+		edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
+		if err != nil {
+			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
+		}
+
+		updateNatRule, err := getType(d, edgeGateway)
+		if err != nil {
+			return fmt.Errorf("unable to make structure for API call: %s", err)
+		}
+		updateNatRule.ID = d.Id()
+
+		updateNatRule.Action = natType
+
+		updatedNatRule, err := edgeGateway.UpdateNsxvNatRule(updateNatRule)
+		if err != nil {
+			return fmt.Errorf("unable to update NAT rule with ID %s: %s", d.Id(), err)
+		}
+
+		err = setData(d, updatedNatRule, edgeGateway)
+		if err != nil {
+			return fmt.Errorf("error setting data: %s", err)
+		}
+
+		return natRuleReader("id", natType, setData)(d, meta)
+	}
+}
+
+func natRuleReader(idField, natType string, setData natRuleDataSetter) schema.ReadFunc {
+	return func(d *schema.ResourceData, meta interface{}) error {
+		vcdClient := meta.(*VCDClient)
+
+		edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
+		if err != nil {
+			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
+		}
+
+		var idValue string
+		if idField == "id" {
+			idValue = d.Id()
+		} else {
+			idValue = d.Get(idField).(string)
+		}
+
+		readNatRule, err := edgeGateway.GetNsxvNatRuleById(idValue)
+		if err != nil {
+			d.SetId("")
+			return fmt.Errorf("unable to find NAT (%s) rule with ID '%s': %s", natType, idValue, err)
+		}
+		d.SetId(readNatRule.ID)
+		return setData(d, readNatRule, edgeGateway)
+	}
+}
+
+func getvNicIndexFromNetworkNameType(networkName, networkType string, edgeGateway govcd.EdgeGateway) (*int, error) {
+	var edgeGatewayNetworkType string
+	switch networkType {
+	case "ext":
+		edgeGatewayNetworkType = types.EdgeGatewayVnicTypeUplink
+	case "org":
+		edgeGatewayNetworkType = types.EdgeGatewayVnicTypeInternal
+	}
+
+	vnicIndex, err := edgeGateway.GetVnicIndexFromNetworkNameType(networkName, edgeGatewayNetworkType)
+	// if `org` network of type `types.EdgeGatewayVnicTypeInternal` network was not found - try to
+	// look for it in subinterface `types.EdgeGatewayVnicTypeSubinterface`
+	if networkType == "org" && govcd.IsNotFound(err) {
+		vnicIndex, err = edgeGateway.GetVnicIndexFromNetworkNameType(networkName, types.EdgeGatewayVnicTypeSubinterface)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to identify vNic for network '%s' of type '%s': %s",
+			networkName, networkType, err)
+	}
+
+	return vnicIndex, nil
+}
+
+func getNetworkNameTypeFromVnicIndex(index int, edgeGateway govcd.EdgeGateway) (string, string, error) {
+	networkName, networkType, err := edgeGateway.GetNetworkNameTypeFromVnicIndex(index)
+	if err != nil {
+		return "", "", fmt.Errorf("unable to determine network name and type: %s", err)
+	}
+
+	var resourceNetworkType string
+	switch networkType {
+	case "uplink":
+		resourceNetworkType = "ext"
+	case "internal":
+		resourceNetworkType = "org"
+	case "subinterface":
+		resourceNetworkType = "org"
+	}
+
+	return networkName, resourceNetworkType, nil
 }
