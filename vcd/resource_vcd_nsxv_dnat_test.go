@@ -178,5 +178,7 @@ resource "vcd_nsxv_dnat" "test" {
 
   original_address   = "{{.ExternalIp}}"
   translated_address = "1.1.1.1"
+
+  description = '\"'
 }
 `

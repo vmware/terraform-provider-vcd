@@ -82,13 +82,6 @@ func resourceVcdNsxvSnat() *schema.Resource {
 				ForceNew:    false,
 				Description: "NAT rule description",
 			},
-			"vnic": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    false,
-				Computed:    true,
-				Description: "Interface on which the translation is applied.",
-			},
 			"original_address": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,

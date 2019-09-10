@@ -98,10 +98,11 @@ func resourceVcdNsxvDnat() *schema.Resource {
 				Description:      "Protocol. One of 'tcp', 'udp', 'icmp', 'any'",
 			},
 			"icmp_type": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    false,
-				Description: "ICMP type. Only supported when protocol is ICMP",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     false,
+				ValidateFunc: validateCase("lower"),
+				Description:  "ICMP type. Only supported when protocol is ICMP",
 			},
 			"original_port": &schema.Schema{
 				Type:             schema.TypeString,
