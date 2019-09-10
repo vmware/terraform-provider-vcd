@@ -2,11 +2,11 @@ package vcd
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
 
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
@@ -15,9 +15,9 @@ func resourceVcdNsxvSnat() *schema.Resource {
 		Create: resourceVcdNsxvSnatCreate,
 		Read:   resourceVcdNsxvSnatRead,
 		Update: resourceVcdNsxvSnatUpdate,
-		Delete: resourceVcdNsxvSnatDelete,
+		Delete: natRuleDeleter("snat"),
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdNsxvSnatImport,
+			State: natRuleImporter("snat"),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -39,18 +39,17 @@ func resourceVcdNsxvSnat() *schema.Resource {
 				ForceNew:    true,
 				Description: "Edge gateway name in which NAT Rule is located",
 			},
-
 			"network_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Edge gateway name in which NAT Rule is located",
 			},
 			"network_type": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
-				Default:      "ext",
+				Default:      "org",
 				ValidateFunc: validation.StringInSlice([]string{"ext", "org"}, false),
 			},
-
 			"rule_type": &schema.Schema{ // read only field
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -134,7 +133,10 @@ func resourceVcdNsxvSnatCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	natRule := getSnatRuleType(d)
+	natRule, err := getSnatRuleType(d, edgeGateway)
+	if err != nil {
+		return fmt.Errorf("unable to make structure for API call: %s", err)
+	}
 
 	natRule.Action = "snat"
 
@@ -161,7 +163,7 @@ func resourceVcdNsxvSnatRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("unable to find NAT rule with ID %s: %s", d.Id(), err)
 	}
 
-	return setSnatRuleData(d, readNatRule)
+	return setSnatRuleData(d, readNatRule, edgeGateway)
 }
 
 func resourceVcdNsxvSnatUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -174,7 +176,10 @@ func resourceVcdNsxvSnatUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	updateNatRule := getSnatRuleType(d)
+	updateNatRule, err := getSnatRuleType(d, edgeGateway)
+	if err != nil {
+		return fmt.Errorf("unable to make structure for API call: %s", err)
+	}
 	updateNatRule.ID = d.Id()
 
 	updateNatRule.Action = "snat"
@@ -184,122 +189,51 @@ func resourceVcdNsxvSnatUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("unable to update NAT rule with ID %s: %s", d.Id(), err)
 	}
 
-	return setSnatRuleData(d, updatedNatRule)
+	return setSnatRuleData(d, updatedNatRule, edgeGateway)
 }
 
-func resourceVcdNsxvSnatDelete(d *schema.ResourceData, meta interface{}) error {
-	vcdClient := meta.(*VCDClient)
-	vcdClient.lockParentEdgeGtw(d)
-	defer vcdClient.unLockParentEdgeGtw(d)
+func getSnatRuleType(d *schema.ResourceData, edgeGateway govcd.EdgeGateway) (*types.EdgeNatRule, error) {
+	networkName := d.Get("network_name").(string)
+	networkType := d.Get("network_type").(string)
 
-	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
+	vnicIndex, err := getvNicIndexFromNetworkNameType(networkName, networkType, edgeGateway)
 	if err != nil {
-		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
+		return nil, err
 	}
 
-	err = edgeGateway.DeleteNsxvNatRuleById(d.Id())
-	if err != nil {
-		return fmt.Errorf("error deleting NAT rule: %s", err)
-	}
-
-	d.SetId("")
-	return nil
-}
-
-func resourceVcdNsxvSnatImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	resourceURI := strings.Split(d.Id(), ".")
-	if len(resourceURI) != 4 {
-		return nil, fmt.Errorf("resource name must be specified in such way org.vdc.edge-gw.rule-id")
-	}
-	orgName, vdcName, edgeName, natRuleId := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
-
-	vcdClient := meta.(*VCDClient)
-	edgeGateway, err := vcdClient.GetEdgeGateway(orgName, vdcName, edgeName)
-	if err != nil {
-		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
-	}
-
-	readNatRule, err := edgeGateway.GetNsxvNatRuleById(natRuleId)
-	if err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("unable to find NAT rule with id %s: %s",
-			d.Id(), err)
-	}
-
-	d.Set("org", orgName)
-	d.Set("vdc", vdcName)
-	d.Set("edge_gateway", edgeName)
-
-	d.SetId(readNatRule.ID)
-	return []*schema.ResourceData{d}, nil
-}
-
-func getSnatRuleType(d *schema.ResourceData) *types.EdgeNatRule {
-	vnic := d.Get("vnic").(int)
 	natRule := &types.EdgeNatRule{
 		RuleTag:                     d.Get("rule_tag").(string),
 		Enabled:                     d.Get("enabled").(bool),
 		LoggingEnabled:              d.Get("logging_enabled").(bool),
 		Description:                 d.Get("description").(string),
-		Vnic:                        &vnic,
+		Vnic:                        vnicIndex,
 		OriginalAddress:             d.Get("original_address").(string),
 		TranslatedAddress:           d.Get("translated_address").(string),
 		SnatMatchDestinationAddress: d.Get("snat_match_destination_address").(string),
 		SnatMatchDestinationPort:    d.Get("snat_match_destination_port").(string),
 	}
 
-	return natRule
+	return natRule, nil
 }
 
-func setSnatRuleData(d *schema.ResourceData, natRule *types.EdgeNatRule) error {
-	err := d.Set("rule_tag", natRule.RuleTag)
+func setSnatRuleData(d *schema.ResourceData, natRule *types.EdgeNatRule, edgeGateway govcd.EdgeGateway) error {
+	networkName, resourceNetworkType, err := getNetworkNameTypeFromVnicIndex(*natRule.Vnic, edgeGateway)
 	if err != nil {
-		return fmt.Errorf("unable to set 'rule_tag'")
+		return err
 	}
 
-	err = d.Set("enabled", natRule.Enabled)
-	if err != nil {
-		return fmt.Errorf("unable to set 'enabled'")
-	}
-
-	err = d.Set("logging_enabled", natRule.LoggingEnabled)
-	if err != nil {
-		return fmt.Errorf("unable to set 'logging_enabled'")
-	}
-
-	err = d.Set("description", natRule.Description)
-	if err != nil {
-		return fmt.Errorf("unable to set 'description'")
-	}
-
-	err = d.Set("vnic", natRule.Vnic)
-	if err != nil {
-		return fmt.Errorf("unable to set 'vnic'")
-	}
-
-	err = d.Set("original_address", natRule.OriginalAddress)
-	if err != nil {
-		return fmt.Errorf("unable to set 'original_address'")
-	}
-
-	err = d.Set("translated_address", natRule.TranslatedAddress)
-	if err != nil {
-		return fmt.Errorf("unable to set 'translated_address'")
-	}
-
-	err = d.Set("rule_type", natRule.RuleType)
-	if err != nil {
-		return fmt.Errorf("unable to set 'rule_type'")
-	}
-
-	err = d.Set("snat_match_destination_port", natRule.SnatMatchDestinationPort)
-	if err != nil {
-		return fmt.Errorf("unable to set 'snat_match_destination_port'")
-	}
-
-	err = d.Set("snat_match_destination_address", natRule.SnatMatchDestinationAddress)
-	if err != nil {
-		return fmt.Errorf("unable to set 'snat_match_destination_address'")
-	}
+	_ = d.Set("network_type", resourceNetworkType)
+	_ = d.Set("network_name", networkName)
+	_ = d.Set("rule_tag", natRule.RuleTag)
+	_ = d.Set("enabled", natRule.Enabled)
+	_ = d.Set("logging_enabled", natRule.LoggingEnabled)
+	_ = d.Set("description", natRule.Description)
+	_ = d.Set("vnic", natRule.Vnic)
+	_ = d.Set("original_address", natRule.OriginalAddress)
+	_ = d.Set("translated_address", natRule.TranslatedAddress)
+	_ = d.Set("rule_type", natRule.RuleType)
+	_ = d.Set("snat_match_destination_port", natRule.SnatMatchDestinationPort)
+	_ = d.Set("snat_match_destination_address", natRule.SnatMatchDestinationAddress)
 
 	return nil
 }

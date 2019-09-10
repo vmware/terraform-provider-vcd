@@ -59,51 +59,27 @@ func datasourceVcdNsxvSnat() *schema.Resource {
 				Computed:    true,
 				Description: "NAT rule description",
 			},
-			"vnic": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Interface on which the translation is applied.",
-			},
 			"original_address": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
 				Description: "Original address or address range. This is the " +
-					"the destination address for DNAT rules.",
-			},
-			"protocol": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Protocol. One of 'tcp', 'udp', 'icmp', 'any'",
-			},
-			"icmp_type": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "ICMP type. Only supported when protocol is ICMP",
-			},
-			"original_port": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Original port. This is the source portfor SNAT rules, and the destinationport for DNAT rules.",
+					"the source address for SNAT rules",
 			},
 			"translated_address": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Translated address or address range",
 			},
-			"translated_port": &schema.Schema{
+			// SNAT related undocumented
+			"snat_match_destination_address": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Translated port",
+				Description: "Destination address to match in SNAT rules",
 			},
-			"dnat_match_source_address": &schema.Schema{
+			"snat_match_destination_port": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Source address to match in DNAT rules",
-			},
-			"dnat_match_source_port": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Source port to match in DNAT rules",
+				Description: "Destination port to match in SNAT rules",
 			},
 		},
 	}
@@ -123,5 +99,5 @@ func datasourceVcdNsxvSnatRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.SetId(readNatRule.ID)
-	return setNatRuleData(d, readNatRule, edgeGateway)
+	return setSnatRuleData(d, readNatRule, edgeGateway)
 }

@@ -28,9 +28,9 @@ func TestAccVcdEdgeDnat(t *testing.T) {
 	configText := templateFill(testAccVcdEdgeNatRule, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
 
-	params["FuncName"] = t.Name() + "-step2"
+	params["FuncName"] = t.Name() + "-step1"
 	configText2 := templateFill(testAccVcdEdgeNatRule2, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText2)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)

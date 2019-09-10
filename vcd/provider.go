@@ -123,7 +123,7 @@ func Provider() terraform.ResourceProvider {
 			"vcd_lb_app_rule":        datasourceVcdLBAppRule(),        // 2.4
 			"vcd_lb_virtual_server":  datasourceVcdLbVirtualServer(),  // 2.4
 			"vcd_nsxv_dnat":          datasourceVcdNsxvDnat(),         // 2.5
-			// "vcd_nsxv_snat":          datasourceVcdNsxvSnat(),         // 2.5
+			"vcd_nsxv_snat":          datasourceVcdNsxvSnat(),         // 2.5
 		},
 
 		ConfigureFunc: providerConfigure,

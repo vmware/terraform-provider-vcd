@@ -131,5 +131,5 @@ func datasourceVcdNsxvDnatRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.SetId(readNatRule.ID)
-	return setNatRuleData(d, readNatRule, edgeGateway)
+	return setSnatRuleData(d, readNatRule, edgeGateway)
 }
