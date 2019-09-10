@@ -4,10 +4,8 @@ go 1.12
 
 require (
 	github.com/hashicorp/terraform v0.12.6
-	github.com/vmware/go-vcloud-director/v2 v2.4.0-alpha.6
+	github.com/vmware/go-vcloud-director/v2 v2.4.0-alpha.7
 )
 
 // Temporary workaround for git.apache.org outage
 replace git.apache.org/thrift.git => github.com/apache/thrift v0.0.0-20180902110319-2566ecd5d999
-
-replace github.com/vmware/go-vcloud-director/v2 => github.com/vbauzysvmware/go-vcloud-director/v2 v2.0.0-20190909085019-a4faa0b2c572

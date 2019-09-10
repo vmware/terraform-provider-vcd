@@ -280,11 +280,11 @@ func createEdgeGateway(vcdClient *VCDClient, egwc EdgeGatewayCreation, egwConfig
 	if err != nil {
 		return EdgeGateway{}, err
 	}
-	egw, err := vdc.FindEdgeGateway(egwc.Name)
+	egw, err := vdc.GetEdgeGatewayByName(egwc.Name, false)
 	if err != nil {
 		return EdgeGateway{}, err
 	}
-	return egw, nil
+	return *egw, nil
 }
 
 // CreateAndConfigureEdgeGateway creates an edge gateway using a full configuration structure
@@ -685,6 +685,20 @@ func getExtension(client *Client) (*types.Extension, error) {
 		"", "error retrieving extension: %s", nil, extensions)
 
 	return extensions, err
+}
+
+// GetStorageProfileByHref fetches storage profile using provided HREF.
+func GetStorageProfileByHref(vcdClient *VCDClient, url string) (*types.VdcStorageProfile, error) {
+
+	vdcStorageProfile := &types.VdcStorageProfile{}
+
+	_, err := vcdClient.Client.ExecuteRequest(url, http.MethodGet,
+		"", "error retrieving storage profile: %s", nil, vdcStorageProfile)
+	if err != nil {
+		return nil, err
+	}
+
+	return vdcStorageProfile, nil
 }
 
 // QueryProviderVdcStorageProfileByName finds a provider VDC storage profile by name

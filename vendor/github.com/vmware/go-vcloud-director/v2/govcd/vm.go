@@ -589,7 +589,7 @@ func (vm *VM) HandleEjectMediaAndAnswer(org *Org, catalogName, mediaName string,
 		if err != nil {
 			return nil, fmt.Errorf("error: %s", err)
 		}
-		if isMediaInjected(vm.VM.VirtualHardwareSection.Item) == false {
+		if !isMediaInjected(vm.VM.VirtualHardwareSection.Item) {
 			return vm, nil
 		}
 		time.Sleep(200 * time.Millisecond)
