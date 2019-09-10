@@ -36,6 +36,11 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 		return
 	}
 
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
 	params["FuncName"] = t.Name() + "-Datasource"
 	configText := templateFill(testAccCheckVcdVdcDatasource_basic, params)
 
