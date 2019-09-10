@@ -102,7 +102,6 @@ func resourceVcdNsxvSnat() *schema.Resource {
 				ForceNew:    false,
 				Description: "Translated address or address range",
 			},
-			// SNAT related undocumented
 			"snat_match_destination_address": &schema.Schema{
 				Type:             schema.TypeString,
 				Optional:         true,
@@ -121,6 +120,8 @@ func resourceVcdNsxvSnat() *schema.Resource {
 	}
 }
 
+// getSnatRuleType is responsible for getting types.EdgeNatRule for SNAT rule from Terraform
+// configuration
 func getSnatRuleType(d *schema.ResourceData, edgeGateway govcd.EdgeGateway) (*types.EdgeNatRule, error) {
 	networkName := d.Get("network_name").(string)
 	networkType := d.Get("network_type").(string)
@@ -145,6 +146,7 @@ func getSnatRuleType(d *schema.ResourceData, edgeGateway govcd.EdgeGateway) (*ty
 	return natRule, nil
 }
 
+// setSnatRuleData is responsible for setting SNAT rule data into the statefile
 func setSnatRuleData(d *schema.ResourceData, natRule *types.EdgeNatRule, edgeGateway govcd.EdgeGateway) error {
 	networkName, resourceNetworkType, err := getNetworkNameTypeFromVnicIndex(*natRule.Vnic, edgeGateway)
 	if err != nil {

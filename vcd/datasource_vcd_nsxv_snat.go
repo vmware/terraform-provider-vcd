@@ -67,7 +67,6 @@ func datasourceVcdNsxvSnat() *schema.Resource {
 				Computed:    true,
 				Description: "Translated address or address range",
 			},
-			// SNAT related undocumented
 			"snat_match_destination_address": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,

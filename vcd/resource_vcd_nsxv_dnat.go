@@ -142,6 +142,8 @@ func resourceVcdNsxvDnat() *schema.Resource {
 	}
 }
 
+// getDnatRuleType is responsible for getting types.EdgeNatRule for DNAT rule from Terraform
+// configuration
 func getDnatRuleType(d *schema.ResourceData, edgeGateway govcd.EdgeGateway) (*types.EdgeNatRule, error) {
 	networkName := d.Get("network_name").(string)
 	networkType := d.Get("network_type").(string)
@@ -170,6 +172,7 @@ func getDnatRuleType(d *schema.ResourceData, edgeGateway govcd.EdgeGateway) (*ty
 	return natRule, nil
 }
 
+// setDnatRuleData is responsible for setting DNAT rule data into the statefile
 func setDnatRuleData(d *schema.ResourceData, natRule *types.EdgeNatRule, edgeGateway govcd.EdgeGateway) error {
 	networkName, resourceNetworkType, err := getNetworkNameTypeFromVnicIndex(*natRule.Vnic, edgeGateway)
 	if err != nil {
