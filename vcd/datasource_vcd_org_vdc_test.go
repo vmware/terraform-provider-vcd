@@ -36,7 +36,7 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
-	datasourceVdc := "vcd_org_vdc.asDatasource"
+	datasourceVdc := "vcd_org_vdc.exixtingVdc"
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { preRunChecks(t) },
 		Providers:    testAccProviders,
@@ -121,7 +121,7 @@ func testAccDataSourceVcdOrgVdc(name, vdcName string) resource.TestCheckFunc {
 }
 
 const testAccCheckVcdVdcDatasource_basic = `
-data "vcd_org_vdc" "asDatasource" {
+data "vcd_org_vdc" "exixtingVdc" {
   org  = "{{.OrgName}}"
   name = "{{.ExistingVdcName}}"
 }
@@ -130,36 +130,36 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   name = "{{.VdcName}}"
   org  = "{{.OrgName}}"
 
-  allocation_model  = "${data.vcd_org_vdc.asDatasource.allocation_model}"
-  network_pool_name = "${data.vcd_org_vdc.asDatasource.network_pool_name}"
-  provider_vdc_name = "${data.vcd_org_vdc.asDatasource.provider_vdc_name}"
+  allocation_model  = "${data.vcd_org_vdc.exixtingVdc.allocation_model}"
+  network_pool_name = "${data.vcd_org_vdc.exixtingVdc.network_pool_name}"
+  provider_vdc_name = "${data.vcd_org_vdc.exixtingVdc.provider_vdc_name}"
 
   compute_capacity {
     cpu {
-     allocated = "${tolist(tolist(data.vcd_org_vdc.asDatasource.compute_capacity)[0].cpu)[0].allocated}"
-     limit     = "${tolist(tolist(data.vcd_org_vdc.asDatasource.compute_capacity)[0].cpu)[0].limit}"
+     allocated = "${tolist(tolist(data.vcd_org_vdc.exixtingVdc.compute_capacity)[0].cpu)[0].allocated}"
+     limit     = "${tolist(tolist(data.vcd_org_vdc.exixtingVdc.compute_capacity)[0].cpu)[0].limit}"
     }
 
     memory {
-     allocated = "${tolist(tolist(data.vcd_org_vdc.asDatasource.compute_capacity)[0].memory)[0].allocated}"
-     limit     = "${tolist(tolist(data.vcd_org_vdc.asDatasource.compute_capacity)[0].memory)[0].limit}"
+     allocated = "${tolist(tolist(data.vcd_org_vdc.exixtingVdc.compute_capacity)[0].memory)[0].allocated}"
+     limit     = "${tolist(tolist(data.vcd_org_vdc.exixtingVdc.compute_capacity)[0].memory)[0].limit}"
     }
   }
 
   storage_profile {
-    name    = "${data.vcd_org_vdc.asDatasource.storage_profile[0].name}"
-    enabled = "${data.vcd_org_vdc.asDatasource.storage_profile[0].enabled}"
-    limit   = "${data.vcd_org_vdc.asDatasource.storage_profile[0].limit}"
-    default = "${data.vcd_org_vdc.asDatasource.storage_profile[0].default}"
+    name    = "${data.vcd_org_vdc.exixtingVdc.storage_profile[0].name}"
+    enabled = "${data.vcd_org_vdc.exixtingVdc.storage_profile[0].enabled}"
+    limit   = "${data.vcd_org_vdc.exixtingVdc.storage_profile[0].limit}"
+    default = "${data.vcd_org_vdc.exixtingVdc.storage_profile[0].default}"
   }
 
   metadata = {
     vdc_metadata = "VDC Metadata"
   }
 
-  enabled                  = "${data.vcd_org_vdc.asDatasource.enabled}"
-  enable_thin_provisioning = "${data.vcd_org_vdc.asDatasource.enable_thin_provisioning}"
-  enable_fast_provisioning = "${data.vcd_org_vdc.asDatasource.enable_fast_provisioning}"
+  enabled                  = "${data.vcd_org_vdc.exixtingVdc.enabled}"
+  enable_thin_provisioning = "${data.vcd_org_vdc.exixtingVdc.enable_thin_provisioning}"
+  enable_fast_provisioning = "${data.vcd_org_vdc.exixtingVdc.enable_fast_provisioning}"
   delete_force             = true
   delete_recursive         = true
 }
