@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
-	"regexp"
 	"strconv"
 	"testing"
 
@@ -47,8 +46,6 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
-				// Dont' handle very well Sets or computed fields
-				ExpectError: regexp.MustCompile(`After applying this step, the plan was not empty`),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVdcExists("vcd_org_vdc."+vdcName),
 					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "org", "vcd_org_vdc."+vdcName, "org"),
