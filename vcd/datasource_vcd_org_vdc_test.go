@@ -52,6 +52,17 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 				ExpectError: regexp.MustCompile(`After applying this step and refreshing, the plan was not empty`),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVdcExists("vcd_org_vdc."+vdcName),
+					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "name", "vcd_org_vdc."+vdcName, "name"),
+					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "root_resource_id", "vcd_org_vdc."+vdcName, "root_resource_id"),
+					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "org", "vcd_org_vdc."+vdcName, "org"),
+					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "allocation_model", "vcd_org_vdc."+vdcName, "allocation_model"),
+					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "network_pool_name", "vcd_org_vdc."+vdcName, "network_pool_name"),
+					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "provider_vdc_name", "vcd_org_vdc."+vdcName, "provider_vdc_name"),
+					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "enabled", "vcd_org_vdc."+vdcName, "enabled"),
+					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "enable_thin_provisioning", "vcd_org_vdc."+vdcName, "enable_thin_provisioning"),
+					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "storage_profile.0.enabled", "vcd_org_vdc."+vdcName, "storage_profile.0.enabled"),
+					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "storage_profile.0.default", "vcd_org_vdc."+vdcName, "storage_profile.0.default"),
+					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "metadata.vdc_metadata", "vcd_org_vdc."+vdcName, "metadata.vdc_metadata"),
 					resource.ComposeTestCheckFunc(testAccDataSourceVcdOrgVdc("data."+datasourceVdc, vdcName)),
 				),
 			},
@@ -80,42 +91,6 @@ func testAccDataSourceVcdOrgVdc(name, vdcName string) resource.TestCheckFunc {
 		}
 
 		attr := resources.Primary.Attributes
-
-		if attr["name"] != vdcResource.Primary.Attributes["name"] {
-			return fmt.Errorf("name is %s; want %s", attr["name"], vdcResource.Primary.Attributes["name"])
-		}
-
-		if attr["root_resource_id"] != vdcResource.Primary.Attributes["root_resource_id"] {
-			return fmt.Errorf("root_resource_id is %s; want %s", attr["root_resource_id"], vdcResource.Primary.Attributes["root_resource_id"])
-		}
-
-		if attr["org"] != vdcResource.Primary.Attributes["org"] {
-			return fmt.Errorf("org is %s; want %s", attr["org"], vdcResource.Primary.Attributes["org"])
-		}
-
-		if attr["allocation_model"] != vdcResource.Primary.Attributes["allocation_model"] {
-			return fmt.Errorf("allocation_model is %s; want %s", attr["allocation_model"], vdcResource.Primary.Attributes["allocation_model"])
-		}
-
-		if attr["network_pool_name"] != vdcResource.Primary.Attributes["network_pool_name"] {
-			return fmt.Errorf("network_pool_name is %s; want %s", attr["network_pool_name"], vdcResource.Primary.Attributes["network_pool_name"])
-		}
-
-		if attr["provider_vdc_name"] != vdcResource.Primary.Attributes["provider_vdc_name"] {
-			return fmt.Errorf("provider_vdc_name is %s; want %s", attr["provider_vdc_name"], vdcResource.Primary.Attributes["provider_vdc_name"])
-		}
-
-		if attr["enabled"] != vdcResource.Primary.Attributes["enabled"] {
-			return fmt.Errorf("enabled is %s; want %s", attr["enabled"], vdcResource.Primary.Attributes["enabled"])
-		}
-
-		if attr["enable_thin_provisioning"] != vdcResource.Primary.Attributes["enable_thin_provisioning"] {
-			return fmt.Errorf("enable_thin_provisioning is %s; want %s", attr["enable_thin_provisioning"], vdcResource.Primary.Attributes["enable_thin_provisioning"])
-		}
-
-		if attr["enable_fast_provisioning"] != vdcResource.Primary.Attributes["enable_fast_provisioning"] {
-			return fmt.Errorf("enable_fast_provisioning is %s; want %s", attr["enable_fast_provisioning"], vdcResource.Primary.Attributes["enable_fast_provisioning"])
-		}
 
 		if attr["compute_capacity.0.cpu.0.allocated"] == vdcResource.Primary.Attributes["compute_capacity.0.cpu.0.allocated"] {
 			return fmt.Errorf("compute_capacity.0.cpu.0.allocated is %#v; want %#v", attr["compute_capacity.0.cpu.0.allocated"], vdcResource.Primary.Attributes["compute_capacity.0.cpu.0.allocated"])
@@ -155,26 +130,6 @@ func testAccDataSourceVcdOrgVdc(name, vdcName string) resource.TestCheckFunc {
 
 		if attr["compute_capacity.0.memory.0.used"] == vdcResource.Primary.Attributes["compute_capacity.0.memory.0.used"] {
 			return fmt.Errorf("compute_capacity.0.memory.0.used is %#v; want %#v", attr["compute_capacity.0.memory.0.used"], vdcResource.Primary.Attributes["compute_capacity.0.memory.0.used"])
-		}
-
-		if attr["storage_profile.0.name"] != vdcResource.Primary.Attributes["storage_profile.0.name"] {
-			return fmt.Errorf("storage_profile.0.name is %s; want %s", attr["storage_profile.0.name"], vdcResource.Primary.Attributes["storage_profile.0.name"])
-		}
-
-		if attr["storage_profile.0.limit"] != vdcResource.Primary.Attributes["storage_profile.0.limit"] {
-			return fmt.Errorf("storage_profile.0.limit is %s; want %s", attr["storage_profile.0.limit"], vdcResource.Primary.Attributes["storage_profile.0.limit"])
-		}
-
-		if attr["storage_profile.0.enabled"] != vdcResource.Primary.Attributes["storage_profile.0.enabled"] {
-			return fmt.Errorf("storage_profile.0.enabled is %s; want %s", attr["storage_profile.0.enabled"], vdcResource.Primary.Attributes["storage_profile.0.enabled"])
-		}
-
-		if attr["storage_profile.0.default"] != vdcResource.Primary.Attributes["storage_profile.0.default"] {
-			return fmt.Errorf("storage_profile.0.default is %s; want %s", attr["storage_profile.0.default"], vdcResource.Primary.Attributes["storage_profile.0.default"])
-		}
-
-		if attr["metadata.vdc_metadata"] != vdcResource.Primary.Attributes["metadata.vdc_metadata"] {
-			return fmt.Errorf("metadata.vdc_metadata is %s; want %s", attr["metadata.vdc_metadata"], vdcResource.Primary.Attributes["metadata.vdc_metadata"])
 		}
 
 		return nil
