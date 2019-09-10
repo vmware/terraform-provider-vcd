@@ -48,7 +48,6 @@ func datasourceVcdOrgVdc() *schema.Resource {
 			"org": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Organization to create the VDC in",
 			},
 			"name": &schema.Schema{
@@ -177,17 +176,6 @@ func datasourceVcdOrgVdc() *schema.Resource {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True if discovery of vCenter VMs is enabled for resource pools backing this VDC. If left unspecified, the actual behaviour depends on enablement at the organization level and at the system level.",
-			},
-
-			"delete_force": &schema.Schema{
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Description: "When destroying use delete_force=True to remove a vdc and any objects it contains, regardless of their state.",
-			},
-			"delete_recursive": &schema.Schema{
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Description: "When destroying use delete_recursive=True to remove the vdc and any objects it contains that are in a state that normally allows removal.",
 			},
 			"metadata": {
 				Type:        schema.TypeMap,

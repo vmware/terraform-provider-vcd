@@ -255,26 +255,26 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 
 	task, err := adminOrg.CreateVdc(params)
 	if err != nil {
-		log.Printf("[DEBUG] Error creating vdc: %#v", err)
-		return fmt.Errorf("error creating vdc: %#v", err)
+		log.Printf("[DEBUG] Error creating vdc: %s", err)
+		return fmt.Errorf("error creating vdc: %s", err)
 	}
 
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		log.Printf("[DEBUG] Error waiting for vdc to finish: %#v", err)
-		return fmt.Errorf("error waiting for vdc to finish: %#v", err)
+		log.Printf("[DEBUG] Error waiting for vdc to finish: %s", err)
+		return fmt.Errorf("error waiting for vdc to finish: %s", err)
 	}
 
 	err = adminOrg.Refresh()
 	if err != nil {
 		log.Printf("[DEBUG] Unable to refresh org.")
-		return fmt.Errorf("unable to refresh org. %#v", err)
+		return fmt.Errorf("unable to refresh org. %s", err)
 	}
 
 	adminVdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find vdc.")
-		return fmt.Errorf("unable to find VDC. %#v", err)
+		return fmt.Errorf("unable to find VDC. %s", err)
 	}
 
 	d.SetId(adminVdc.AdminVdc.ID)
@@ -282,7 +282,7 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 
 	err = createOrUpdateMetadata(d, meta)
 	if err != nil {
-		return fmt.Errorf("error adding metadata to VDC: %#v", err)
+		return fmt.Errorf("error adding metadata to VDC: %s", err)
 	}
 
 	return resourceVcdVdcRead(d, meta)
@@ -324,7 +324,7 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 
 	networkPool, err := govcd.GetNetworkPoolByHREF(vcdClient.VCDClient, adminVdc.AdminVdc.NetworkPoolReference.HREF)
 	if err != nil {
-		return fmt.Errorf("error retrieving network pool: %#v", err)
+		return fmt.Errorf("error retrieving network pool: %s", err)
 	}
 
 	d.Set("network_pool_name", networkPool.Name)
@@ -354,7 +354,7 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 	metadata, err := vdc.GetMetadata()
 	if err != nil {
 		log.Printf("[DEBUG] Unable to get VDC metadata")
-		return fmt.Errorf("unable to get VDC metadata %#v", err)
+		return fmt.Errorf("unable to get VDC metadata %s", err)
 	}
 
 	d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
@@ -527,8 +527,8 @@ func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
 
 	err = vdc.DeleteWait(d.Get("delete_force").(bool), d.Get("delete_recursive").(bool))
 	if err != nil {
-		log.Printf("[DEBUG] Error removing vdc %#v", err)
-		return fmt.Errorf("error removing vdc %#v", err)
+		log.Printf("[DEBUG] Error removing vdc %s", err)
+		return fmt.Errorf("error removing vdc %s", err)
 	}
 
 	vdc, err = adminOrg.GetVDCByName(vdcName, true)
@@ -570,14 +570,14 @@ func createOrUpdateMetadata(d *schema.ResourceData, meta interface{}) error {
 		for _, k := range toBeRemovedMetadata {
 			_, err := vdc.DeleteMetadata(k)
 			if err != nil {
-				return fmt.Errorf("error deleting metadata: %#v", err)
+				return fmt.Errorf("error deleting metadata: %s", err)
 			}
 		}
 		// Add new metadata
 		for k, v := range newMetadata {
 			_, err := vdc.AddMetadata(k, v.(string))
 			if err != nil {
-				return fmt.Errorf("error adding metadata: %#v", err)
+				return fmt.Errorf("error adding metadata: %s", err)
 			}
 		}
 	}
