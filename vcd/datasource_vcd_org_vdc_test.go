@@ -4,9 +4,8 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
-	"strconv"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -64,15 +63,6 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 	})
 }
 
-func convertIntWithErrIgnore(value string) int {
-	if n, err := strconv.Atoi(value); err == nil {
-		return n
-	} else {
-		fmt.Println(value, "is not an integer.")
-	}
-	return -1
-}
-
 func testAccDataSourceVcdOrgVdc(name, vdcName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		resources, ok := s.RootModule().Resources[name]
@@ -87,66 +77,109 @@ func testAccDataSourceVcdOrgVdc(name, vdcName string) resource.TestCheckFunc {
 
 		attr := resources.Primary.Attributes
 
-		internalMapOfCpuValues := map[string]interface{}{"allocated": convertIntWithErrIgnore(attr["compute_capacity.0.cpu.0.allocated"]), "limit": convertIntWithErrIgnore(attr["compute_capacity.0.cpu.0.limit"]),
-			"overhead": convertIntWithErrIgnore(attr["compute_capacity.0.cpu.0.overhead"]), "reserved": convertIntWithErrIgnore(attr["compute_capacity.0.cpu.0.reserved"]), "used": convertIntWithErrIgnore(attr["compute_capacity.0.cpu.0.used"])}
-		cpuHashInternalValue := hashMapStringForCapacityElements(internalMapOfCpuValues)
-
-		internalMapOfMemoryValues := map[string]interface{}{"allocated": convertIntWithErrIgnore(attr["compute_capacity.0.memory.0.allocated"]), "limit": convertIntWithErrIgnore(attr["compute_capacity.0.memory.0.limit"]),
-			"overhead": convertIntWithErrIgnore(attr["compute_capacity.0.memory.0.overhead"]), "reserved": convertIntWithErrIgnore(attr["compute_capacity.0.memory.0.reserved"]), "used": convertIntWithErrIgnore(attr["compute_capacity.0.memory.0.used"])}
-		memoryHashInternalValue := hashMapStringForCapacityElements(internalMapOfMemoryValues)
-
-		memoryCapacityArray := make([]interface{}, 0)
-		memoryCapacityArray = append(memoryCapacityArray, internalMapOfMemoryValues)
-		cpuCapacityArray := make([]interface{}, 0)
-		cpuCapacityArray = append(cpuCapacityArray, internalMapOfCpuValues)
-
-		cpu := *schema.NewSet(hashMapStringForCapacityElements, cpuCapacityArray)
-		memory := *schema.NewSet(hashMapStringForCapacityElements, memoryCapacityArray)
-
-		mainHashValue := hashMapStringForCapacity(map[string]interface{}{"cpu": &cpu, "memory": &memory})
-
-		if attr["compute_capacity.0.cpu.0.allocated"] != vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%d.cpu.%d.allocated", mainHashValue, cpuHashInternalValue)] {
-			return fmt.Errorf("compute_capacity.0.cpu.0.allocated is %#v; want %#v", attr["compute_capacity.0.cpu.0.allocated"], vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%d.cpu.%d.allocated", mainHashValue, cpuHashInternalValue)])
+		mainHashValue, cpuHashInternalValue, memoryHashInternalValue, err := getHashValues(vdcResource.Primary.Attributes)
+		if err != nil {
+			return err
+		}
+		if attr["compute_capacity.0.cpu.0.allocated"] != vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%s.cpu.%s.allocated", mainHashValue, cpuHashInternalValue)] {
+			return fmt.Errorf("compute_capacity.0.cpu.0.allocated is %#v; want %#v", attr["compute_capacity.0.cpu.0.allocated"], vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%s.cpu.%s.allocated", mainHashValue, cpuHashInternalValue)])
 		}
 
-		if attr["compute_capacity.0.cpu.0.limit"] != vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%d.cpu.%d.limit", mainHashValue, cpuHashInternalValue)] {
-			return fmt.Errorf("compute_capacity.0.cpu.0.limit is %#v; want %#v", attr["compute_capacity.0.cpu.0.limit"], vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%d.cpu.%d.limit", mainHashValue, cpuHashInternalValue)])
+		if attr["compute_capacity.0.cpu.0.limit"] != vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%s.cpu.%s.limit", mainHashValue, cpuHashInternalValue)] {
+			return fmt.Errorf("compute_capacity.0.cpu.0.limit is %#v; want %#v", attr["compute_capacity.0.cpu.0.limit"], vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%s.cpu.%s.limit", mainHashValue, cpuHashInternalValue)])
 		}
 
-		if attr["compute_capacity.0.cpu.0.overhead"] != vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%d.cpu.%d.overhead", mainHashValue, cpuHashInternalValue)] {
-			return fmt.Errorf("compute_capacity.0.cpu.0.overhead is %#v; want %#v", attr["compute_capacity.0.cpu.0.overhead"], vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%d.cpu.%d.overhead", mainHashValue, cpuHashInternalValue)])
+		if attr["compute_capacity.0.cpu.0.overhead"] != vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%s.cpu.%s.overhead", mainHashValue, cpuHashInternalValue)] {
+			return fmt.Errorf("compute_capacity.0.cpu.0.overhead is %#v; want %#v", attr["compute_capacity.0.cpu.0.overhead"], vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%s.cpu.%s.overhead", mainHashValue, cpuHashInternalValue)])
 		}
 
-		if attr["compute_capacity.0.cpu.0.reserved"] != vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%d.cpu.%d.reserved", mainHashValue, cpuHashInternalValue)] {
-			return fmt.Errorf("compute_capacity.0.cpu.0.reserved is %#v; want %#v", attr["compute_capacity.0.cpu.0.reserved"], vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%d.cpu.%d.reserved", mainHashValue, cpuHashInternalValue)])
+		if attr["compute_capacity.0.cpu.0.reserved"] != vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%s.cpu.%s.reserved", mainHashValue, cpuHashInternalValue)] {
+			return fmt.Errorf("compute_capacity.0.cpu.0.reserved is %#v; want %#v", attr["compute_capacity.0.cpu.0.reserved"], vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%s.cpu.%s.reserved", mainHashValue, cpuHashInternalValue)])
 		}
 
-		if attr["compute_capacity.0.cpu.0.used"] != vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%d.cpu.%d.used", mainHashValue, cpuHashInternalValue)] {
-			return fmt.Errorf("compute_capacity.0.cpu.0.used is %#v; want %#v", attr["compute_capacity.0.cpu.0.used"], vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%d.cpu.%d.used", mainHashValue, cpuHashInternalValue)])
+		if attr["compute_capacity.0.cpu.0.used"] != vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%s.cpu.%s.used", mainHashValue, cpuHashInternalValue)] {
+			return fmt.Errorf("compute_capacity.0.cpu.0.used is %#v; want %#v", attr["compute_capacity.0.cpu.0.used"], vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%s.cpu.%s.used", mainHashValue, cpuHashInternalValue)])
 		}
 
-		if attr["compute_capacity.0.memory.0.allocated"] != vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%d.memory.%d.allocated", mainHashValue, memoryHashInternalValue)] {
-			return fmt.Errorf("compute_capacity.0.memory.0.allocated is %#v; want %#v", attr["compute_capacity.0.memory.0.allocated"], vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%d.memory.%d.allocated", mainHashValue, memoryHashInternalValue)])
+		if attr["compute_capacity.0.memory.0.allocated"] != vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%s.memory.%s.allocated", mainHashValue, memoryHashInternalValue)] {
+			return fmt.Errorf("compute_capacity.0.memory.0.allocated is %#v; want %#v", attr["compute_capacity.0.memory.0.allocated"], vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%s.memory.%s.allocated", mainHashValue, memoryHashInternalValue)])
 		}
 
-		if attr["compute_capacity.0.memory.0.limit"] != vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%d.memory.%d.limit", mainHashValue, memoryHashInternalValue)] {
-			return fmt.Errorf("compute_capacity.0.memory.0.limit is %#v; want %#v", attr["compute_capacity.0.memory.0.limit"], vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%d.memory.%d.limit", mainHashValue, memoryHashInternalValue)])
+		if attr["compute_capacity.0.memory.0.limit"] != vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%s.memory.%s.limit", mainHashValue, memoryHashInternalValue)] {
+			return fmt.Errorf("compute_capacity.0.memory.0.limit is %#v; want %#v", attr["compute_capacity.0.memory.0.limit"], vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%s.memory.%s.limit", mainHashValue, memoryHashInternalValue)])
 		}
 
-		if attr["compute_capacity.0.memory.0.overhead"] != vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%d.memory.%d.overhead", mainHashValue, memoryHashInternalValue)] {
-			return fmt.Errorf("compute_capacity.0.memory.0.overhead is %#v; want %#v", attr["compute_capacity.0.memory.0.overhead"], vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%d.memory.%d.overhead", mainHashValue, memoryHashInternalValue)])
+		if attr["compute_capacity.0.memory.0.overhead"] != vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%s.memory.%s.overhead", mainHashValue, memoryHashInternalValue)] {
+			return fmt.Errorf("compute_capacity.0.memory.0.overhead is %#v; want %#v", attr["compute_capacity.0.memory.0.overhead"], vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%s.memory.%s.overhead", mainHashValue, memoryHashInternalValue)])
 		}
 
-		if attr["compute_capacity.0.memory.0.reserved"] != vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%d.memory.%d.reserved", mainHashValue, memoryHashInternalValue)] {
-			return fmt.Errorf("compute_capacity.0.memory.0.reserved is %#v; want %#v", attr["compute_capacity.0.memory.0.reserved"], vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%d.memory.%d.reserved", mainHashValue, memoryHashInternalValue)])
+		if attr["compute_capacity.0.memory.0.reserved"] != vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%s.memory.%s.reserved", mainHashValue, memoryHashInternalValue)] {
+			return fmt.Errorf("compute_capacity.0.memory.0.reserved is %#v; want %#v", attr["compute_capacity.0.memory.0.reserved"], vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%s.memory.%s.reserved", mainHashValue, memoryHashInternalValue)])
 		}
 
-		if attr["compute_capacity.0.memory.0.used"] != vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%d.memory.%d.used", mainHashValue, memoryHashInternalValue)] {
-			return fmt.Errorf("compute_capacity.0.memory.0.used is %#v; want %#v", attr["compute_capacity.0.memory.0.used"], vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%d.memory.%d.used", mainHashValue, memoryHashInternalValue)])
+		if attr["compute_capacity.0.memory.0.used"] != vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%s.memory.%s.used", mainHashValue, memoryHashInternalValue)] {
+			return fmt.Errorf("compute_capacity.0.memory.0.used is %#v; want %#v", attr["compute_capacity.0.memory.0.used"], vdcResource.Primary.Attributes[fmt.Sprintf("compute_capacity.%s.memory.%s.used", mainHashValue, memoryHashInternalValue)])
 		}
 
 		return nil
 	}
+}
+
+// Returns the hash part of key
+// From "compute_capacity.315866465.cpu.798465156.limit",
+// From "compute_capacity.315866465.memory.508945747.limit",
+// will return "315866465", "798465156", "508945747"
+func getHashValues(stateFileMap map[string]string) (string, string, string, error) {
+
+	var cpuKey string
+	var memoryKey string
+	for k, _ := range stateFileMap {
+		matched, err := regexp.MatchString(`compute_capacity+\.(\d+)\.cpu+\.(\d+)\.\w+`, k)
+		if err != nil {
+			return "", "", "", fmt.Errorf("error extracting hashes err %s", err)
+		}
+		if matched {
+			cpuKey = k
+		}
+		matched, err = regexp.MatchString(`compute_capacity+\.(\d+)\.memory+\.(\d+)\.\w+`, k)
+		if err != nil {
+			return "", "", "", fmt.Errorf("error extracting hashes err %s", err)
+		}
+		if matched {
+			memoryKey = k
+		}
+	}
+
+	firstValue, secondValue, err := getHashesFromKey(cpuKey)
+	if err != nil {
+		return "", "", "", fmt.Errorf("error extracting hashes from '%s', err %s", cpuKey, err)
+	}
+
+	_, thirdValue, err := getHashesFromKey(memoryKey)
+	if err != nil {
+		return "", "", "", fmt.Errorf("error extracting hashes from '%s', err %s", memoryKey, err)
+	}
+
+	return firstValue, secondValue, thirdValue, nil
+}
+
+// Returns the hash part of key
+// From "compute_capacity.315866465.memory.508945747.limit",
+// will return "315866465", "508945747"
+func getHashesFromKey(key string) (string, string, error) {
+
+	// Regular expression to match key: compute_capacity.315866465.memory.508945747.limit
+	reGetID := regexp.MustCompile(`\w+\.(\d+)\.\w+\.(\d+)\.\w+`)
+	matchList := reGetID.FindAllStringSubmatch(key, -1)
+
+	// matchList has the format
+	// [][]string{[]string{"TOTAL MATCHED STRING", "CAPTURED STRING", "CAPTURED STRING"}}
+	// such as
+	// [][]string{[]string{"compute_capacity.315866465.memory.508945747.limit", "315866465", "508945747"}}
+	if len(matchList) == 0 || len(matchList[0]) < 2 {
+		return "", "", fmt.Errorf("error extracting ID from '%s'", key)
+	}
+	return matchList[0][1], matchList[0][2], nil
 }
 
 const testAccCheckVcdVdcDatasource_basic = `

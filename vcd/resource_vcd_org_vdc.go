@@ -1,10 +1,8 @@
 package vcd
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/terraform/helper/hashcode"
 	"log"
 	"strings"
 
@@ -15,42 +13,6 @@ import (
 )
 
 func resourceVcdOrgVdc() *schema.Resource {
-	capacityWithUsage := schema.Schema{
-		Type:     schema.TypeSet,
-		Required: true,
-		MinItems: 1,
-		MaxItems: 1,
-		Set:      hashMapStringForCapacityElements,
-		Elem: &schema.Resource{
-			Schema: map[string]*schema.Schema{
-				"allocated": {
-					Type:        schema.TypeInt,
-					Optional:    true,
-					Computed:    true,
-					Description: "Capacity that is committed to be available. Value in MB or MHz. Used with AllocationPool (Allocation pool) and ReservationPool (Reservation pool).",
-				},
-				"limit": {
-					Type:        schema.TypeInt,
-					Optional:    true,
-					Computed:    true,
-					Description: "Capacity limit relative to the value specified for Allocation. It must not be less than that value. If it is greater than that value, it implies over provisioning. A value of 0 specifies unlimited units. Value in MB or MHz. Used with AllocationVApp (Pay as you go).",
-				},
-				"reserved": {
-					Type:     schema.TypeInt,
-					Computed: true,
-				},
-				"used": {
-					Type:     schema.TypeInt,
-					Computed: true,
-				},
-				"overhead": {
-					Type:     schema.TypeInt,
-					Computed: true,
-				},
-			},
-		},
-	}
-
 	return &schema.Resource{
 		Create: resourceVcdVdcCreate,
 		Delete: resourceVcdVdcDelete,
@@ -82,18 +44,13 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Description:  "The allocation model used by this VDC; must be one of {AllocationVApp, AllocationPool, ReservationPool}",
 			},
 			"compute_capacity": &schema.Schema{
-				Required: true,
-				MinItems: 1,
-				MaxItems: 1,
-				Type:     schema.TypeSet,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"cpu":    &capacityWithUsage,
-						"memory": &capacityWithUsage,
-					},
-				},
+				Required:    true,
+				MinItems:    1,
+				MaxItems:    1,
+				Type:        schema.TypeSet,
+				Elem:        computeCapacityResource(),
 				Description: "The compute capacity allocated to this VDC.",
-				Set:         hashMapStringForCapacity,
+				//Set:         hashMapStringForCapacity,
 			},
 			"nic_quota": &schema.Schema{
 				Type:        schema.TypeInt,
@@ -222,6 +179,62 @@ func resourceVcdOrgVdc() *schema.Resource {
 				// For now underlying go-vcloud-director repo only supports
 				// a value of type String in this map.
 			},
+		},
+	}
+}
+
+// capacityResource return schema for capacity
+func capacitySchema() *schema.Schema {
+	return &schema.Schema{
+		Type:     schema.TypeSet,
+		Required: true,
+		MinItems: 1,
+		MaxItems: 1,
+		//Set:      hashMapStringForCapacityElements,
+		Elem: capacityResource(),
+	}
+}
+
+// capacityResource return schema for capacity resource
+// We need to pull schema out so we can use it to make a set hash func
+func capacityResource() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"allocated": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Computed:    true,
+				Description: "Capacity that is committed to be available. Value in MB or MHz. Used with AllocationPool (Allocation pool) and ReservationPool (Reservation pool).",
+			},
+			"limit": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Computed:    true,
+				Description: "Capacity limit relative to the value specified for Allocation. It must not be less than that value. If it is greater than that value, it implies over provisioning. A value of 0 specifies unlimited units. Value in MB or MHz. Used with AllocationVApp (Pay as you go).",
+			},
+			"reserved": {
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
+			"used": {
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
+			"overhead": {
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
+		},
+	}
+}
+
+// computeCapacityResource return schema for compute capacity
+// We need to pull schema out so we can use it to make a set hash func
+func computeCapacityResource() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"cpu":    capacitySchema(),
+			"memory": capacitySchema(),
 		},
 	}
 }
@@ -386,28 +399,6 @@ func getComputeStorageProfiles(vcdClient *VCDClient, profile *types.VdcStoragePr
 	return root, nil
 }
 
-// hashMapStringForCapacityElements calculates hash code for adding elements to schema.Set
-func hashMapStringForCapacityElements(v interface{}) int {
-	var buf bytes.Buffer
-	m := v.(map[string]interface{})
-	buf.WriteString(fmt.Sprintf("%d", m["allocated"]))
-	buf.WriteString(fmt.Sprintf("%d", m["limit"]))
-	buf.WriteString(fmt.Sprintf("%d", m["overhead"]))
-	buf.WriteString(fmt.Sprintf("%d", m["reserved"]))
-	buf.WriteString(fmt.Sprintf("%d", m["used"]))
-
-	return hashcode.String(buf.String())
-}
-
-// hashMapStringForCapacityElements calculates hash code for adding elements to schema.Set
-func hashMapStringForCapacity(v interface{}) int {
-	var buf bytes.Buffer
-	m := v.(map[string]interface{})
-	buf.WriteString(fmt.Sprintf("%v", m["cpu"].(*schema.Set)))
-	buf.WriteString(fmt.Sprintf("%v", m["memory"].(*schema.Set)))
-	return hashcode.String(buf.String())
-}
-
 // getComputeCapacities constructs specific struct to be saved in Terraform state file.
 // Expected E.g. *Set(map[string]interface {}{"2185903189": map[string]interface {} {"cpu":*Set(map[string]interface {} {"1148193616":map[string]interface {}
 // {"allocated":0, "limit":3110, "overhead":0, "reserved":0, "used":0}}), "memory":* Set(map[string]interface {} {"1328470546":map[string]interface {}
@@ -420,26 +411,26 @@ func getComputeCapacities(capacities []*types.ComputeCapacity) *schema.Set {
 		rootInternal := map[string]interface{}{}
 
 		cpuValueMap := map[string]interface{}{}
-		cpuValueMap["limit"] = capacity.CPU.Limit
-		cpuValueMap["allocated"] = capacity.CPU.Allocated
-		cpuValueMap["reserved"] = capacity.CPU.Reserved
-		cpuValueMap["used"] = capacity.CPU.Used
-		cpuValueMap["overhead"] = capacity.CPU.Overhead
+		cpuValueMap["limit"] = int(capacity.CPU.Limit)
+		cpuValueMap["allocated"] = int(capacity.CPU.Allocated)
+		cpuValueMap["reserved"] = int(capacity.CPU.Reserved)
+		cpuValueMap["used"] = int(capacity.CPU.Used)
+		cpuValueMap["overhead"] = int(capacity.CPU.Overhead)
 
 		memoryValueMap := map[string]interface{}{}
-		memoryValueMap["limit"] = capacity.Memory.Limit
-		memoryValueMap["allocated"] = capacity.Memory.Allocated
-		memoryValueMap["reserved"] = capacity.Memory.Reserved
-		memoryValueMap["used"] = capacity.Memory.Used
-		memoryValueMap["overhead"] = capacity.Memory.Overhead
+		memoryValueMap["limit"] = int(capacity.Memory.Limit)
+		memoryValueMap["allocated"] = int(capacity.Memory.Allocated)
+		memoryValueMap["reserved"] = int(capacity.Memory.Reserved)
+		memoryValueMap["used"] = int(capacity.Memory.Used)
+		memoryValueMap["overhead"] = int(capacity.Memory.Overhead)
 
 		memoryCapacityArray := make([]interface{}, 0)
 		memoryCapacityArray = append(memoryCapacityArray, memoryValueMap)
 		cpuCapacityArray := make([]interface{}, 0)
 		cpuCapacityArray = append(cpuCapacityArray, cpuValueMap)
 
-		cpu := *schema.NewSet(hashMapStringForCapacityElements, cpuCapacityArray)
-		memory := *schema.NewSet(hashMapStringForCapacityElements, memoryCapacityArray)
+		cpu := *schema.NewSet(schema.HashResource(capacityResource()), cpuCapacityArray)
+		memory := *schema.NewSet(schema.HashResource(capacityResource()), memoryCapacityArray)
 
 		rootInternal["cpu"] = &cpu
 		rootInternal["memory"] = &memory
@@ -447,7 +438,7 @@ func getComputeCapacities(capacities []*types.ComputeCapacity) *schema.Set {
 		rootInternalArray = append(rootInternalArray, rootInternal)
 	}
 
-	root := *schema.NewSet(hashMapStringForCapacity, rootInternalArray)
+	root := *schema.NewSet(schema.HashResource(computeCapacityResource()), rootInternalArray)
 
 	return &root
 }
