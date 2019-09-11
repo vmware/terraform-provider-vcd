@@ -94,8 +94,8 @@ func resourceVcdNsxvDnat() *schema.Resource {
 				Optional:         true,
 				ForceNew:         false,
 				DiffSuppressFunc: suppressWordToEmptyString("any"),
-				ValidateFunc:     validation.StringInSlice([]string{"tcp", "udp", "icmp", "any"}, false),
-				Description:      "Protocol. One of 'tcp', 'udp', 'icmp', 'any'",
+				ValidateFunc:     validateCase("lower"),
+				Description:      "Protocol. Such as 'tcp', 'udp', 'icmp', 'any'",
 			},
 			"icmp_type": &schema.Schema{
 				Type:         schema.TypeString,
