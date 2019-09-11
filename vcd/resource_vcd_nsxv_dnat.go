@@ -48,7 +48,7 @@ func resourceVcdNsxvDnat() *schema.Resource {
 				Default:      "org",
 				ValidateFunc: validation.StringInSlice([]string{"ext", "org"}, false),
 			},
-			"rule_type": &schema.Schema{ // read only field
+			"rule_type": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    false,

@@ -31,7 +31,7 @@ func datasourceVcdNsxvSnat() *schema.Resource {
 				Required:    true,
 				Description: "LB Application Rule name for lookup",
 			},
-			"rule_type": &schema.Schema{ // read only field
+			"rule_type": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Read only. Possible values 'user', 'internal_high'.",

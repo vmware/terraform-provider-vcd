@@ -39,15 +39,15 @@ func datasourceVcdNsxvDnat() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"rule_type": &schema.Schema{ // read only field
+			"rule_type": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Read only. Possible values 'user', 'internal_high'.",
+				Description: "Read only. Possible values 'user', 'internal_high'",
 			},
 			"rule_tag": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Optional. Allows to set rule custom rule ID.",
+				Description: "Optional. Allows to set rule custom rule ID",
 			},
 			"enabled": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -63,11 +63,6 @@ func datasourceVcdNsxvDnat() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "NAT rule description",
-			},
-			"vnic": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Interface on which the translation is applied.",
 			},
 			"original_address": &schema.Schema{
 				Type:     schema.TypeString,
@@ -88,7 +83,7 @@ func datasourceVcdNsxvDnat() *schema.Resource {
 			"original_port": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Original port. This is the source portfor SNAT rules, and the destinationport for DNAT rules.",
+				Description: "Original port. This is the destinationport for DNAT rules",
 			},
 			"translated_address": &schema.Schema{
 				Type:        schema.TypeString,
