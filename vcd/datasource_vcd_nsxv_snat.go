@@ -44,12 +44,12 @@ func datasourceVcdNsxvSnat() *schema.Resource {
 			"enabled": &schema.Schema{
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Wether the rule should be enabled. Default 'true'",
+				Description: "Whether the rule should be enabled. Default 'true'",
 			},
 			"logging_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Wether logging should be enabled for this rule. Default 'false'",
+				Description: "Whether logging should be enabled for this rule. Default 'false'",
 			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
@@ -66,16 +66,6 @@ func datasourceVcdNsxvSnat() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Translated address or address range",
-			},
-			"snat_match_destination_address": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Destination address to match in SNAT rules",
-			},
-			"snat_match_destination_port": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Destination port to match in SNAT rules",
 			},
 		},
 	}

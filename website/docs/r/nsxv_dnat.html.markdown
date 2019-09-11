@@ -44,11 +44,11 @@ resource "vcd_nsxv_dnat" "forIcmp" {
   original_address   = "78.101.10.20-78.101.10.30"
   translated_address = "10.10.0.5"
   protocol           = "icmp"
-  icmp_sub_type      = "router-advertisement"
+  icmp_type          = "router-advertisement"
 }
 ```
 
-## Example Usage 3 (All settings)
+## Example Usage 3 (More settings)
 
 ```hcl
 resource "vcd_nsxv_dnat" "forIcmp" {
@@ -70,8 +70,6 @@ resource "vcd_nsxv_dnat" "forIcmp" {
   translated_port    = 8443
   protocol           = "tcp"
 
-  dnat_match_source_address = "192.168.1.1/24"
-  dnat_match_source_port    = "1-65535"
 }
 ```
 
@@ -112,8 +110,6 @@ protocols, select Any.
 `source-quench`, `time-exceeded`, `timestamp-request`, `timestamp-reply`. Default `any`
 * `rule_tag` - (Optional) This can be used to specifyuser-controlled ruleId. If not specified,
 NSX Manager will generate rule ID. Must be between 65537-131072.
-* `dnat_match_source_address` - (Optional) Source address to match in DNAT rule.
-* `dnat_match_source_port` - (Optional) Source port to match in DNAT rule.
 
 ## Attribute Reference
 

@@ -182,11 +182,11 @@ func getvNicIndexFromNetworkNameType(networkName, networkType string, edgeGatewa
 		edgeGatewayNetworkType = types.EdgeGatewayVnicTypeInternal
 	}
 
-	vnicIndex, err := edgeGateway.GetVnicIndexFromNetworkNameType(networkName, edgeGatewayNetworkType)
+	vnicIndex, err := edgeGateway.GetVnicIndexByNetworkNameAndType(networkName, edgeGatewayNetworkType)
 	// if `org` network of type `types.EdgeGatewayVnicTypeInternal` network was not found - try to
 	// look for it in subinterface `types.EdgeGatewayVnicTypeSubinterface`
 	if networkType == "org" && govcd.IsNotFound(err) {
-		vnicIndex, err = edgeGateway.GetVnicIndexFromNetworkNameType(networkName, types.EdgeGatewayVnicTypeSubinterface)
+		vnicIndex, err = edgeGateway.GetVnicIndexByNetworkNameAndType(networkName, types.EdgeGatewayVnicTypeSubinterface)
 	}
 
 	if err != nil {
@@ -200,7 +200,7 @@ func getvNicIndexFromNetworkNameType(networkName, networkType string, edgeGatewa
 // getNetworkNameTypeFromVnicIndex is a reverse function to getvNicIndexFromNetworkNameType and
 // helps to find edge gateway attached network_name and network_type by vNic index number
 func getNetworkNameTypeFromVnicIndex(index int, edgeGateway govcd.EdgeGateway) (string, string, error) {
-	networkName, networkType, err := edgeGateway.GetNetworkNameTypeFromVnicIndex(index)
+	networkName, networkType, err := edgeGateway.GetNetworkNameAndTypeByVnicIndex(index)
 	if err != nil {
 		return "", "", fmt.Errorf("unable to determine network name and type: %s", err)
 	}

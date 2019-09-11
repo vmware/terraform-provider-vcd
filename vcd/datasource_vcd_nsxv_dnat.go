@@ -52,12 +52,12 @@ func datasourceVcdNsxvDnat() *schema.Resource {
 			"enabled": &schema.Schema{
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Wether the rule should be enabled. Default 'true'",
+				Description: "Whether the rule should be enabled. Default 'true'",
 			},
 			"logging_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Wether logging should be enabled for this rule. Default 'false'",
+				Description: "Whether logging should be enabled for this rule. Default 'false'",
 			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
@@ -99,16 +99,6 @@ func datasourceVcdNsxvDnat() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Translated port",
-			},
-			"dnat_match_source_address": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Source address to match in DNAT rules",
-			},
-			"dnat_match_source_port": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "Source port to match in DNAT rules",
 			},
 		},
 	}

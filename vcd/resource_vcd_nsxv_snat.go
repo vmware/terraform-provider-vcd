@@ -67,14 +67,14 @@ func resourceVcdNsxvSnat() *schema.Resource {
 				Optional:    true,
 				ForceNew:    false,
 				Default:     true,
-				Description: "Wether the rule should be enabled. Default 'true'",
+				Description: "Whether the rule should be enabled. Default 'true'",
 			},
 			"logging_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
 				ForceNew:    false,
 				Default:     false,
-				Description: "Wether logging should be enabled for this rule. Default 'false'",
+				Description: "Whether logging should be enabled for this rule. Default 'false'",
 			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
@@ -95,20 +95,6 @@ func resourceVcdNsxvSnat() *schema.Resource {
 				ForceNew:    false,
 				Description: "Translated address or address range",
 			},
-			"snat_match_destination_address": &schema.Schema{
-				Type:             schema.TypeString,
-				Optional:         true,
-				ForceNew:         false,
-				DiffSuppressFunc: suppressWordToEmptyString("any"),
-				Description:      "Source address to match in DNAT rules",
-			},
-			"snat_match_destination_port": &schema.Schema{
-				Type:             schema.TypeString,
-				Optional:         true,
-				ForceNew:         true,
-				DiffSuppressFunc: suppressWordToEmptyString("any"),
-				Description:      "Source port to match in DNAT rules",
-			},
 		},
 	}
 }
@@ -125,15 +111,13 @@ func getSnatRuleType(d *schema.ResourceData, edgeGateway govcd.EdgeGateway) (*ty
 	}
 
 	natRule := &types.EdgeNatRule{
-		RuleTag:                     d.Get("rule_tag").(string),
-		Enabled:                     d.Get("enabled").(bool),
-		LoggingEnabled:              d.Get("logging_enabled").(bool),
-		Description:                 d.Get("description").(string),
-		Vnic:                        vnicIndex,
-		OriginalAddress:             d.Get("original_address").(string),
-		TranslatedAddress:           d.Get("translated_address").(string),
-		SnatMatchDestinationAddress: d.Get("snat_match_destination_address").(string),
-		SnatMatchDestinationPort:    d.Get("snat_match_destination_port").(string),
+		RuleTag:           d.Get("rule_tag").(string),
+		Enabled:           d.Get("enabled").(bool),
+		LoggingEnabled:    d.Get("logging_enabled").(bool),
+		Description:       d.Get("description").(string),
+		Vnic:              vnicIndex,
+		OriginalAddress:   d.Get("original_address").(string),
+		TranslatedAddress: d.Get("translated_address").(string),
 	}
 
 	return natRule, nil
@@ -156,8 +140,6 @@ func setSnatRuleData(d *schema.ResourceData, natRule *types.EdgeNatRule, edgeGat
 	_ = d.Set("original_address", natRule.OriginalAddress)
 	_ = d.Set("translated_address", natRule.TranslatedAddress)
 	_ = d.Set("rule_type", natRule.RuleType)
-	_ = d.Set("snat_match_destination_port", natRule.SnatMatchDestinationPort)
-	_ = d.Set("snat_match_destination_address", natRule.SnatMatchDestinationAddress)
 
 	return nil
 }

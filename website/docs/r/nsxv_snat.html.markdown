@@ -18,18 +18,6 @@ use the [`vcd_snat`](/docs/providers/vcd/r/snat.html) resource.
 ## Example Usage
 
 ```hcl
-resource "vcd_snat" "outbound" {
-  edge_gateway = "Edge Gateway Name"
-  network_name = "my-org-vdc-network"
-  network_type = "org"
-  external_ip  = "78.101.10.20"
-  internal_ip  = "10.10.0.0/24"
-}
-```
-
-## Example Usage 1 (Minimal input)
-
-```hcl
 resource "vcd_nsxv_snat" "web" {
   org = "my-org" # Optional
   vdc = "my-vdc" # Optional
@@ -38,32 +26,11 @@ resource "vcd_nsxv_snat" "web" {
   network_type = "org"
   network_name = "my-org-network"
 
-  original_address   = "10.10.10.15"
+  original_address   = "10.10.10.15/24"
   translated_address = "78.101.10.20"
 }
 ```
 
-## Example Usage 2 (With destination port matching)
-
-```hcl
-resource "vcd_nsxv_snat" "forIcmp" {
-  org = "my-org" # Optional
-  vdc = "my-vdc" # Optional
-  
-  edge_gateway  = "Edge Gateway Name"
-  network_name = "my-external-network"
-  network_type = "ext"
-
-  enabled = false
-  logging_enabled = true
-  description = "My snat rule"
-
-  original_address   = "10.10.10.15"
-  translated_address = "78.101.10.20"
-
-  snat_match_destination_port    = "80,443"
-}
-```
 
 ## Argument Reference
 
@@ -88,8 +55,6 @@ traffic to the external network.
 IP address of the gateway for which you are configuring the SNAT rule. Specifies the IP address to
 which source addresses (the virtual machines) on outbound packets are translated to when they send
 traffic to the external network. 
-* `snat_match_destination_address` - (Optional) Destination address to match in SNAT rule
-* `snat_match_destination_port` - (Optional)  Destination address to match in SNAT rule
 
 ## Attribute Reference
 
