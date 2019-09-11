@@ -27,51 +27,26 @@ resource "vcd_snat" "outbound" {
 }
 ```
 
-## Argument Reference
-
-The following arguments are supported:
-
-
-
-
 ## Example Usage 1 (Minimal input)
 
 ```hcl
-resource "vcd_dnat" "web" {
+resource "vcd_nsxv_snat" "web" {
   org = "my-org" # Optional
   vdc = "my-vdc" # Optional
 
   edge_gateway = "Edge Gateway Name"
-  network_type = "ext"
-  network_name = "my-external-network"
+  network_type = "org"
+  network_name = "my-org-network"
 
-  original_address   = "1.1.1.1"
-  translated_address = "10.10.10.15"
+  original_address   = "10.10.10.15"
+  translated_address = "78.101.10.20"
 }
 ```
 
-## Example Usage 2 (ICMP)
+## Example Usage 2 (With destination port matching)
 
 ```hcl
-resource "vcd_dnat" "forIcmp" {
-  org = "my-org" # Optional
-  vdc = "my-vdc" # Optional
-  
-  edge_gateway  = "Edge Gateway Name"
-  network_name = "my-external-network"
-  network_type = "ext"
-
-  original_address   = "78.101.10.20-78.101.10.30"
-  translated_address = "10.10.0.5"
-  protocol           = "icmp"
-  icmp_sub_type      = "router-advertisement"
-}
-```
-
-## Example Usage 3 (All settings)
-
-```hcl
-resource "vcd_dnat" "forIcmp" {
+resource "vcd_nsxv_snat" "forIcmp" {
   org = "my-org" # Optional
   vdc = "my-vdc" # Optional
   
@@ -81,36 +56,31 @@ resource "vcd_dnat" "forIcmp" {
 
   enabled = false
   logging_enabled = true
-  description = "My wonderful dnat rule"
+  description = "My snat rule"
 
-  original_address   = "78.101.10.20"
-  original_port      = 443
+  original_address   = "10.10.10.15"
+  translated_address = "78.101.10.20"
 
-  translated_address = "10.10.0.5"
-  translated_port    = 8443
-  protocol           = "tcp"
-
-  dnat_match_source_address = "192.168.1.1/24"
-  dnat_match_source_port    = "1-65535"
+  snat_match_destination_port    = "80,443"
 }
 ```
-
 
 ## Argument Reference
 
 The following arguments are supported:
 
-* `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations.
+* `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful
+when connected as sysadmin working across different organisations.
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
-* `edge_gateway` - (Required) The name of the edge gateway on which to apply the DNAT rule.
-* `network_type` - (Optional) Type of the network on which to apply the DNAT rule. Possible values
+* `edge_gateway` - (Required) The name of the edge gateway on which to apply the SNAT rule.
+* `network_type` - (Optional) Type of the network on which to apply the SNAT rule. Possible values
 `org` or `ext`. Default is `org`.
-* `network_name` - (Required) The name of the network on which to apply the DNAT rule.
+* `network_name` - (Required) The name of the network on which to apply the SNAT rule.
 * `enabled` - (Optional) Defines if the rule is enabaled. Default `true`.
 * `logging_enabled` - (Optional) Defines if the logging for this rule is enabaled. Default `false`.
 * `description` - (Optional) Free text description.
-* `rule_tag` - (Optional) This can be used to specifyuser-controlled ruleId. If notspecified,
-NSX Manager will generate ruleId. Must be between 65537-131072.
+* `rule_tag` - (Optional) This can be used to specifyuser-controlled ruleId. If not specified,
+NSX Manager will generate rule ID. Must be between 65537-131072.
 * `original_address` - (Required) IP address, range or subnet. These addresses are the IP addresses
 of one or more virtual machines for which you are configuring the SNAT rule so that they can send
 traffic to the external network. 
@@ -126,3 +96,20 @@ traffic to the external network.
 The following additional attributes are exported:
 
 * `rule_type` - Possible values - `user`, `internal_high`.
+
+## Importing
+
+~> **Note:** The current implementation of Terraform import can only import resources into the state.
+It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
+
+An existing dnat rule can be [imported][docs-import] into this resource
+via supplying the full dot separated path for SNAT rule. An example is below:
+
+[docs-import]: https://www.terraform.io/docs/import/
+
+```
+terraform import vcd_nsxv_dnat.imported my-org.my-org-vdc.my-edge-gw.my-snat-rule-id
+```
+
+The above would import the application rule named `my-snat-rule-id` that is defined on edge
+gateway `my-edge-gw` which is configured in organization named `my-org` and vDC named `my-org-vdc`.

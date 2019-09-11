@@ -26,6 +26,11 @@ func datasourceVcdNsxvDnat() *schema.Resource {
 				ForceNew:    true,
 				Description: "Edge gateway name in which the NAT rule is located",
 			},
+			"rule_id": &schema.Schema{
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "NAT rule ID for lookup",
+			},
 			"network_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
@@ -33,11 +38,6 @@ func datasourceVcdNsxvDnat() *schema.Resource {
 			"network_type": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
-			},
-			"rule_id": &schema.Schema{
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "NAT rule ID for lookup",
 			},
 			"rule_type": &schema.Schema{ // read only field
 				Type:        schema.TypeString,
