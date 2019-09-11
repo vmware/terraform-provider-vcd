@@ -102,6 +102,12 @@ func natRuleReader(idField, natType string, setData natRuleDataSetter) schema.Re
 			d.SetId("")
 			return fmt.Errorf("unable to find NAT (%s) rule with ID '%s': %s", natType, idValue, err)
 		}
+
+		if strings.ToLower(readNatRule.Action) != natType {
+			return fmt.Errorf("NAT rule with id (%s) is of type %s, but expected type %s",
+				readNatRule.ID, readNatRule.Action, natType)
+		}
+
 		d.SetId(readNatRule.ID)
 		return setData(d, readNatRule, edgeGateway)
 	}
@@ -150,7 +156,7 @@ func natRuleImporter(natType string) schema.StateFunc {
 				d.Id(), err)
 		}
 
-		if readNatRule.Action != natType {
+		if strings.ToLower(readNatRule.Action) != natType {
 			return []*schema.ResourceData{}, fmt.Errorf("NAT rule with id %s is of type %s. "+
 				"Expected type %s. Please use correct resource",
 				readNatRule.ID, readNatRule.Action, natType)
