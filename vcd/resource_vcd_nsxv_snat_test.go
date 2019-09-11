@@ -26,7 +26,7 @@ func TestAccVcdEdgeSnat(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
 
 	params["FuncName"] = t.Name() + "-step1"
-	configText2 := templateFill(testAccVcdEdgeSnatRule2, params)
+	configText2 := templateFill(testAccVcdEdgeSnatRuleUpdate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText2)
 
 	if vcdShortTest {
@@ -45,11 +45,12 @@ func TestAccVcdEdgeSnat(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxv_snat.test", "id", regexp.MustCompile(`\d*`)),
 					// When rule_tag is not specified - we expect it to be the same as ID
 					resource.TestCheckResourceAttrPair("vcd_nsxv_snat.test", "rule_tag", "vcd_nsxv_snat.test", "id"),
-					// resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "vnic", "1"),
 					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "description", ""),
 					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "original_address", testConfig.Networking.InternalIp),
 					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "translated_address", testConfig.Networking.ExternalIp),
 					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "rule_type", "user"),
+					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "logging_enabled", "false"),
 
 					// Data source testing - it must expose all fields which resource has
 					resource.TestCheckResourceAttrPair("vcd_nsxv_snat.test", "id", "data.vcd_nsxv_snat.data-test", "id"),
@@ -69,6 +70,9 @@ func TestAccVcdEdgeSnat(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "original_address", "1.1.1.1"),
 					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "translated_address", testConfig.Networking.InternalIp),
 					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "rule_type", "user"),
+					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "logging_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "description", "test suite snat rule"),
 				),
 			},
 			resource.TestStep{ // Step 2 - resource import
@@ -102,11 +106,16 @@ data "vcd_nsxv_snat" "data-test" {
 }
 `
 
-const testAccVcdEdgeSnatRule2 = `
+const testAccVcdEdgeSnatRuleUpdate = `
 resource "vcd_nsxv_snat" "test" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
+
+  description = "test suite snat rule"
+
+  enabled         = false
+  logging_enabled = true
 
   network_type = "org"
   network_name = "{{.NetworkName}}"

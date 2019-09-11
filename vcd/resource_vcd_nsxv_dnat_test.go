@@ -25,12 +25,16 @@ func TestAccVcdEdgeDnat(t *testing.T) {
 		"Tags":        "egatewaydge nat",
 	}
 
-	configText := templateFill(testAccVcdEdgeNatRule, params)
+	configText := templateFill(testAccVcdEdgeDnatRule, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
 
 	params["FuncName"] = t.Name() + "-step1"
-	configText2 := templateFill(testAccVcdEdgeNatRule2, params)
+	configText2 := templateFill(testAccVcdEdgeDnatRuleUpdate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText2)
+
+	params["FuncName"] = t.Name() + "-step3"
+	configText3 := templateFill(testAccVcdEdgeDnatRuleIcmp, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -40,7 +44,7 @@ func TestAccVcdEdgeDnat(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		Providers:    testAccProviders,
 		PreCheck:     func() { testAccPreCheck(t) },
-		CheckDestroy: testAccCheckVcdNatRuleDestroy("vcd_nsxv_dnat.test"),
+		CheckDestroy: testAccCheckVcdNatRuleDestroy("vcd_nsxv_dnat.test2"),
 		Steps: []resource.TestStep{
 			resource.TestStep{ // Step 0 - minimal configuration and data source
 				Config: configText,
@@ -77,13 +81,15 @@ func TestAccVcdEdgeDnat(t *testing.T) {
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_dnat.test", "id", regexp.MustCompile(`\d*`)),
-					// resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "vnic", "0"),p
-					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "protocol", "any"),
-					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "original_port", "any"),
-					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "translated_port", "any"),
+					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "protocol", "tcp"),
+					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "original_port", "443"),
+					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "translated_port", "8443"),
 					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "original_address", testConfig.Networking.ExternalIp),
 					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "translated_address", "1.1.1.1"),
 					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "rule_type", "user"),
+					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "description", "sending quote \""),
+					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "logging_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test", "enabled", "false"),
 				),
 			},
 			resource.TestStep{ // Step 2 - resource import
@@ -91,6 +97,22 @@ func TestAccVcdEdgeDnat(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdByOrgVdcEdgeUnknownId("vcd_nsxv_dnat.test"),
+			},
+			resource.TestStep{ // Step 3 - Another resource with different settings
+				Config: configText3,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxv_dnat.test2", "id", regexp.MustCompile(`\d*`)),
+					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test2", "rule_tag", "70000"),
+					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test2", "protocol", "icmp"),
+					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test2", "icmp_type", "router-advertisement"),
+					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test2", "original_port", "any"),
+					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test2", "translated_port", "any"),
+					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test2", "original_address", testConfig.Networking.ExternalIp),
+					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test2", "translated_address", "1.1.1.1"),
+					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test2", "rule_type", "user"),
+					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test2", "logging_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxv_dnat.test2", "enabled", "true"),
+				),
 			},
 		},
 	})
@@ -146,7 +168,7 @@ func testAccCheckVcdNatRuleDestroy(resource string) resource.TestCheckFunc {
 	}
 }
 
-const testAccVcdEdgeNatRule = `
+const testAccVcdEdgeDnatRule = `
 resource "vcd_nsxv_dnat" "test" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
@@ -167,7 +189,7 @@ data "vcd_nsxv_dnat" "data-test" {
 }
 `
 
-const testAccVcdEdgeNatRule2 = `
+const testAccVcdEdgeDnatRuleUpdate = `
 resource "vcd_nsxv_dnat" "test" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
@@ -176,9 +198,37 @@ resource "vcd_nsxv_dnat" "test" {
   network_type = "ext"
   network_name = "{{.NetworkName}}"
 
+  enabled         = false
+  logging_enabled = true
+
   original_address   = "{{.ExternalIp}}"
   translated_address = "1.1.1.1"
 
+  protocol        = "tcp"
+  original_port   = 443
+  translated_port = 8443
+
   description = "sending quote \""
+}
+`
+
+const testAccVcdEdgeDnatRuleIcmp = `
+resource "vcd_nsxv_dnat" "test2" {
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+
+  network_type = "ext"
+  network_name = "{{.NetworkName}}"
+
+  rule_tag = "70000"
+
+  logging_enabled = true
+
+  protocol  = "icmp"
+  icmp_type = "router-advertisement"
+
+  original_address   = "{{.ExternalIp}}"
+  translated_address = "1.1.1.1"
 }
 `
