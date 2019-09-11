@@ -25,7 +25,6 @@ matrix:
       script:
         - make test
         - make vet
-        - make vendor-check
         - make website-test
     - go: "1.13.x"
       env: GOFLAGS=-mod=vendor GO111MODULE=on
