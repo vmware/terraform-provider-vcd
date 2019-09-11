@@ -370,20 +370,20 @@ type Vdc struct {
 	Name         string `xml:"name,attr"`
 	Status       int    `xml:"status,attr,omitempty"`
 
-	Link               LinkList              `xml:"Link,omitempty"`
-	Description        string                `xml:"Description,omitempty"`
-	AllocationModel    string                `xml:"AllocationModel"`
-	ComputeCapacity    []*ComputeCapacity    `xml:"ComputeCapacity"`
-	ResourceEntities   []*ResourceEntities   `xml:"ResourceEntities,omitempty"`
-	AvailableNetworks  []*AvailableNetworks  `xml:"AvailableNetworks,omitempty"`
-	Capabilities       []*Capabilities       `xml:"Capabilities,omitempty"`
-	NicQuota           int                   `xml:"NicQuota"`
-	NetworkQuota       int                   `xml:"NetworkQuota"`
-	VMQuota            int                   `xml:"VmQuota"`
-	IsEnabled          bool                  `xml:"IsEnabled"`
-	Tasks              *TasksInProgress      `xml:"Tasks,omitempty"`
-	UsedNetworkCount   int                   `xml:"UsedNetworkCount,omitempty"`
-	VdcStorageProfiles []*VdcStorageProfiles `xml:"VdcStorageProfiles"`
+	Link               LinkList             `xml:"Link,omitempty"`
+	Description        string               `xml:"Description,omitempty"`
+	AllocationModel    string               `xml:"AllocationModel"`
+	ComputeCapacity    []*ComputeCapacity   `xml:"ComputeCapacity"`
+	ResourceEntities   []*ResourceEntities  `xml:"ResourceEntities,omitempty"`
+	AvailableNetworks  []*AvailableNetworks `xml:"AvailableNetworks,omitempty"`
+	Capabilities       []*Capabilities      `xml:"Capabilities,omitempty"`
+	NicQuota           int                  `xml:"NicQuota"`
+	NetworkQuota       int                  `xml:"NetworkQuota"`
+	VMQuota            int                  `xml:"VmQuota"`
+	IsEnabled          bool                 `xml:"IsEnabled"`
+	Tasks              *TasksInProgress     `xml:"Tasks,omitempty"`
+	UsedNetworkCount   int                  `xml:"UsedNetworkCount,omitempty"`
+	VdcStorageProfiles *VdcStorageProfiles  `xml:"VdcStorageProfiles"`
 }
 
 // AdminVdc represents the admin view of an organization VDC.
@@ -1179,7 +1179,6 @@ func (p *ProductSectionList) SortByPropertyKeyName() {
 	sort.SliceStable(p.ProductSection.Property, func(i, j int) bool {
 		return p.ProductSection.Property[i].Key < p.ProductSection.Property[j].Key
 	})
-	return
 }
 
 type ProductSection struct {
@@ -1817,6 +1816,27 @@ type LbVirtualServer struct {
 	ApplicationProfileId string   `xml:"applicationProfileId,omitempty"`
 	DefaultPoolId        string   `xml:"defaultPoolId,omitempty"`
 	ApplicationRuleIds   []string `xml:"applicationRuleId,omitempty"`
+}
+
+// EdgeNatRule contains shared structure for SNAT and DNAT rule configuration using
+// NSX-V proxied edge gateway endpoint
+// // https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
+type EdgeNatRule struct {
+	XMLName           xml.Name `xml:"natRule"`
+	ID                string   `xml:"ruleId,omitempty"`
+	RuleType          string   `xml:"ruleType,omitempty"`
+	RuleTag           string   `xml:"ruleTag,omitempty"`
+	Action            string   `xml:"action,omitempty"`
+	Vnic              *int     `xml:"vnic,omitempty"`
+	OriginalAddress   string   `xml:"originalAddress,omitempty"`
+	TranslatedAddress string   `xml:"translatedAddress,omitempty"`
+	LoggingEnabled    bool     `xml:"loggingEnabled"`
+	Enabled           bool     `xml:"enabled"`
+	Description       string   `xml:"description,omitempty"`
+	Protocol          string   `xml:"protocol,omitempty"`
+	OriginalPort      string   `xml:"originalPort,omitempty"`
+	TranslatedPort    string   `xml:"translatedPort,omitempty"`
+	IcmpType          string   `xml:"icmpType,omitempty"`
 }
 
 // VendorTemplate is information about a vendor service template. This is optional.
@@ -2671,4 +2691,53 @@ type AdminCatalogRecord struct {
 	Status                  string    `xml:"status,attr,omitempty"`
 	Link                    *Link     `xml:"Link,omitempty"`
 	Vdc                     *Metadata `xml:"Metadata,omitempty"`
+}
+
+// EdgeGatewayVnics is a data structure holding information of vNic configuration in NSX-V edge
+// gateway
+type EdgeGatewayVnics struct {
+	XMLName xml.Name `xml:"vnics"`
+	Vnic    []struct {
+		Label         string `xml:"label"`
+		Name          string `xml:"name"`
+		AddressGroups struct {
+			AddressGroup struct {
+				PrimaryAddress     string `xml:"primaryAddress"`
+				SecondaryAddresses struct {
+					IpAddress []string `xml:"ipAddress"`
+				} `xml:"secondaryAddresses"`
+				SubnetMask         string `xml:"subnetMask"`
+				SubnetPrefixLength string `xml:"subnetPrefixLength"`
+			} `xml:"addressGroup"`
+		} `xml:"addressGroups"`
+		Mtu                 string `xml:"mtu"`
+		Type                string `xml:"type"`
+		IsConnected         string `xml:"isConnected"`
+		Index               *int   `xml:"index"`
+		PortgroupId         string `xml:"portgroupId"`
+		PortgroupName       string `xml:"portgroupName"`
+		EnableProxyArp      string `xml:"enableProxyArp"`
+		EnableSendRedirects string `xml:"enableSendRedirects"`
+		SubInterfaces       struct {
+			SubInterface []struct {
+				IsConnected         string `xml:"isConnected"`
+				Label               string `xml:"label"`
+				Name                string `xml:"name"`
+				Index               *int   `xml:"index"`
+				TunnelId            string `xml:"tunnelId"`
+				LogicalSwitchId     string `xml:"logicalSwitchId"`
+				LogicalSwitchName   string `xml:"logicalSwitchName"`
+				EnableSendRedirects string `xml:"enableSendRedirects"`
+				Mtu                 string `xml:"mtu"`
+				AddressGroups       struct {
+					AddressGroup struct {
+						Text               string `xml:",chardata"`
+						PrimaryAddress     string `xml:"primaryAddress"`
+						SubnetMask         string `xml:"subnetMask"`
+						SubnetPrefixLength string `xml:"subnetPrefixLength"`
+					} `xml:"addressGroup"`
+				} `xml:"addressGroups"`
+			} `xml:"subInterface"`
+		} `xml:"subInterfaces"`
+	} `xml:"vnic"`
 }

@@ -125,7 +125,7 @@ func sanitizedName(filename string) string {
 		filename = filename[2:]
 	}
 	filename = strings.TrimLeft(filename, "\\/.")
-	filename = strings.TrimLeft(filename, "../")
+	filename = strings.TrimLeft(filename, "./")
 	filename = strings.Replace(filename, "../../", "../", -1)
 	return strings.Replace(filename, "..\\", "", -1)
 }
