@@ -50,12 +50,12 @@ resource "vcd_external_network" "net" {
 
     static_ip_pool {
       start_address = "192.168.31.51"
-      end_address   = "192.168.31.60"
+      end_address   = "192.168.31.55"
     }
 
     static_ip_pool {
-      start_address = "192.168.31.31"
-      end_address   = "192.168.31.40"
+      start_address = "192.168.31.57"
+      end_address   = "192.168.31.59"
     }
   }
 
@@ -116,3 +116,34 @@ The following arguments are supported:
 * `name` - (Required) Port group name
 * `type` - (Required) The vSphere type of the object. One of: DV_PORTGROUP (distributed virtual port group), NETWORK (standard switch port group)
 * `vcenter` - (Required) The vCenter server name
+
+## Importing
+
+Supported in provider *v2.5+*
+
+~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
+configuration. [More information.][docs-import]
+
+An existing external network can be [imported][docs-import] into this resource via supplying the path for an external network. Since the external network is
+at the top of the vCD hierarchy, the path corresponds to the external network name.
+For example, using this structure, representing an existing external network that was **not** created using Terraform:
+
+```hcl
+resource "vcd_external_network" "tf-external-network" {
+  name             = "my-ext-net"
+}
+```
+
+You can import such external network into terraform state using this command
+
+```
+terraform import vcd_external_network.tf-external-network my-ext-net
+```
+
+[docs-import]:https://www.terraform.io/docs/import/
+
+
+While the above structure is the minimum needed to get an import, it is not sufficient to run `terraform plan`,
+as it lacks several mandatory fields. To use the imported resource, you will need to add the missing properties
+using the data in `terraform.tfstate` as a reference. If the resource does not need modifications, consider using
+an [external network data source](/docs/providers/vcd/d/external_network.html) instead. 
