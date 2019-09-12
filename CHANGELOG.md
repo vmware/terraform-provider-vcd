@@ -25,7 +25,7 @@ IMPROVEMENTS:
 * `resource/vcd_vapp_vm` allows to force guest customization [#310]
 * `resource/vcd_vapp` supports guest properties [#319]
 * `resource/vcd_vapp_vm` supports guest properties [#319]
-* Upgrade Terraform SDK dependency to 0.12.6 [#302]
+* Upgrade Terraform SDK dependency to 0.12.8 [#320]
 
 BUG FIXES:
 * Change default value for `vcd_org.deployed_vm_quota` and `vcd_org.stored_vm_quota`. It was incorrectly set at `-1` instead of `0`.
