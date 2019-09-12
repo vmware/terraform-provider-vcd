@@ -88,6 +88,8 @@ func testAccDataSourceVcdOrgVdc(name, vdcName string) resource.TestCheckFunc {
 			return true
 		}
 
+		// Resource uses Set types and to access them in state file when key is `flatten` you have to know hash keys. In this resource we use default hash generation and in
+		// test it is quite difficult to recreate real hash, so we regex them from map and use them to access values.
 		mainHashValue, cpuHashInternalValue, err := getHashValuesFromKey(vdcResource.Primary.Attributes, "compute_capacity", "cpu")
 		if err != nil {
 			return err
