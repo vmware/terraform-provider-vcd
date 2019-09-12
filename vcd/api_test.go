@@ -159,7 +159,7 @@ func getMajorVersion() string {
 // Given "parent.1234.child.5678.something", it will return "1234" and "5678"
 // for Example: compute_capacity.315866465.memory.508945747.limit
 //              (returns 315866465 and 508945747)
-// Warning this function works fine when there is only on key with paren
+// Warning this function works fine when there is only one key with parent
 func getHashValuesFromKey(stateFileMap map[string]string, parentKey, childKey string) (string, string, error) {
 
 	var searchPattern = regexp.MustCompile(parentKey + `\.(\d+)\.` + childKey + `\.(\d+)\.\w+`)
