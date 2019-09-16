@@ -3,13 +3,14 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_nsxv_dnat"
 sidebar_current: "docs-vcd-resource-nsxv-dnat"
 description: |-
-  Provides a vCloud Director DNAT resource. This can be used to create, modify, and delete destination NATs to map external IPs to a VM.
+  Provides a vCloud Director DNAT resource using proxied NSX-V API. This can be used to create,
+  modify, and delete destination NATs to map an external IP/port to an internal IP/port.
 ---
 
 # vcd\_nsxv\_dnat
 
-Provides a vCloud Director DNAT resource. This can be used to create, modify,
-and delete destination NATs to map an external IP/port to an internal IP/port.
+Provides a vCloud Director DNAT resource using proxied NSX-V API. This can be used to create,
+modify, and delete destination NATs to map an external IP/port to an internal IP/port.
 
 ~> **Note:** This resource requires advanced edge gateway. For non-advanced edge gateways please
 use the [`vcd_dnat`](/docs/providers/vcd/r/dnat.html) resource.

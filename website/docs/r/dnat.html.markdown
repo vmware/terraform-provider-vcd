@@ -12,16 +12,12 @@ Provides a vCloud Director DNAT resource. This can be used to create, modify,
 and delete destination NATs to map an external IP/port to an internal IP/port.
 
 ~> **Note:** Please use [`vcd_nsxv_dnat`](/docs/providers/vcd/r/nsxv_dnat.html) resource if you work
-with advanced edge gateways only. Due to being compatible with non-advanced and advanced edge
-gateways this resource lacks NAT features.
+with advanced edge gateways. This resource may corrupt UI edited NAT rules if used with advanced
+edge gateways.
 
 ~> **Note:** From v2.4+ `protocol` requires lower case values. This may result in invalid configuration if upper case was used previously.
 
 !> **Warning:** When advanced edge gateway is used and the rule is updated using UI, then ID mapping will be lost and Terraform won't find the rule anymore and remove it from state.  
-
-
-This resource requires advanced edge gateway. For non-advanced edge gateways please
-use the [`vcd_snat` resource](/docs/providers/vcd/r/snat.html).
 
 ## Example Usage
 

@@ -12,8 +12,8 @@ Provides a vCloud Director SNAT resource. This can be used to create, modify,
 and delete source NATs to allow vApps to send external traffic.
 
 ~> **Note:** Please use [`vcd_nsxv_snat`](/docs/providers/vcd/r/nsxv_snat.html) resource if you work
-with advanced edge gateways only. Due to being compatible with non-advanced and advanced edge
-gateways this resource lacks NAT features.
+with advanced edge gateways. This resource may corrupt UI edited NAT rules if used with advanced
+edge gateways.
 
 !> **Warning:** When advanced edge gateway is used and the rule is updated using UI, then ID mapping will be lost and Terraform won't find the rule anymore and remove it from state.
 
