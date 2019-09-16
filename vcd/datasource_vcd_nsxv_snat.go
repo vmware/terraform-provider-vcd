@@ -29,7 +29,7 @@ func datasourceVcdNsxvSnat() *schema.Resource {
 			"rule_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "LB Application Rule name for lookup",
+				Description: "NAT rule ID for lookup",
 			},
 			"rule_type": &schema.Schema{
 				Type:        schema.TypeString,

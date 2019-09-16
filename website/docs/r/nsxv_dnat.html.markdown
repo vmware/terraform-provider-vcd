@@ -61,7 +61,7 @@ resource "vcd_nsxv_dnat" "forIcmp" {
 
   enabled = false
   logging_enabled = true
-  description = "My dnat rule"
+  description = "My DNAT rule"
 
   original_address   = "78.101.10.20"
   original_port      = 443
@@ -69,7 +69,6 @@ resource "vcd_nsxv_dnat" "forIcmp" {
   translated_address = "10.10.0.5"
   translated_port    = 8443
   protocol           = "tcp"
-
 }
 ```
 
