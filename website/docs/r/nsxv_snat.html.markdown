@@ -40,8 +40,8 @@ The following arguments are supported:
 when connected as sysadmin working across different organisations.
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
 * `edge_gateway` - (Required) The name of the edge gateway on which to apply the SNAT rule.
-* `network_type` - (Optional) Type of the network on which to apply the SNAT rule. Possible values
-`org` or `ext`. Default is `org`.
+* `network_type` - (Required) Type of the network on which to apply the DNAT rule. Possible values
+`org` or `ext`.
 * `network_name` - (Required) The name of the network on which to apply the SNAT rule.
 * `enabled` - (Optional) Defines if the rule is enabaled. Default `true`.
 * `logging_enabled` - (Optional) Defines if the logging for this rule is enabaled. Default `false`.

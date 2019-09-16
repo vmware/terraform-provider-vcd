@@ -17,7 +17,6 @@ func TestAccVcdEdgeSnat(t *testing.T) {
 		"Vdc":         testConfig.VCD.Vdc,
 		"EdgeGateway": testConfig.Networking.EdgeGateway,
 		"ExternalIp":  testConfig.Networking.ExternalIp,
-		"InternalIp":  testConfig.Networking.InternalIp,
 		"NetworkName": "my-vdc-int-net",
 		"Tags":        "egatewaydge nat",
 	}
@@ -46,11 +45,13 @@ func TestAccVcdEdgeSnat(t *testing.T) {
 					// When rule_tag is not specified - we expect it to be the same as ID
 					resource.TestCheckResourceAttrPair("vcd_nsxv_snat.test", "rule_tag", "vcd_nsxv_snat.test", "id"),
 					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "description", ""),
-					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "original_address", testConfig.Networking.InternalIp),
+					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "original_address", "4.4.4.160"),
 					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "translated_address", testConfig.Networking.ExternalIp),
 					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "rule_type", "user"),
 					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "logging_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "network_name", "test-org-for-snat"),
+					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "network_type", "org"),
 
 					// Data source testing - it must expose all fields which resource has
 					resource.TestCheckResourceAttrPair("vcd_nsxv_snat.test", "id", "data.vcd_nsxv_snat.data-test", "id"),
@@ -61,6 +62,8 @@ func TestAccVcdEdgeSnat(t *testing.T) {
 					resource.TestCheckResourceAttrPair("vcd_nsxv_snat.test", "description", "data.vcd_nsxv_snat.data-test", "description"),
 					resource.TestCheckResourceAttrPair("vcd_nsxv_snat.test", "original_address", "data.vcd_nsxv_snat.data-test", "original_address"),
 					resource.TestCheckResourceAttrPair("vcd_nsxv_snat.test", "translated_address", "data.vcd_nsxv_snat.data-test", "translated_address"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_snat.test", "network_name", "data.vcd_nsxv_snat.data-test", "network_name"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_snat.test", "network_type", "data.vcd_nsxv_snat.data-test", "network_type"),
 				),
 			},
 			resource.TestStep{ // Step 1 - update
@@ -68,33 +71,51 @@ func TestAccVcdEdgeSnat(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_snat.test", "id", regexp.MustCompile(`\d*`)),
 					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "original_address", "1.1.1.1"),
-					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "translated_address", testConfig.Networking.InternalIp),
+					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "translated_address", "4.4.4.170"),
 					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "rule_type", "user"),
 					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "logging_enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "description", "test suite snat rule"),
+					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "network_name", "test-org-for-snat"),
+					resource.TestCheckResourceAttr("vcd_nsxv_snat.test", "network_type", "org"),
 				),
 			},
 			resource.TestStep{ // Step 2 - resource import
 				ResourceName:      "vcd_nsxv_snat.imported",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdByOrgVdcEdgeUnknownId("vcd_nsxv_snat.test"),
+				ImportStateIdFunc: importStateIdByResourceName("vcd_nsxv_snat.test"),
 			},
 		},
 	})
 }
 
-const testAccVcdEdgeSnatRule = `
+const testAccNetForNat = `
+resource "vcd_network_routed" "net" {
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+
+  name         = "test-org-for-snat"
+  gateway      = "4.4.4.1"
+
+  static_ip_pool {
+    start_address = "4.4.4.152"
+    end_address   = "4.4.4.254"
+  }
+}
+`
+
+const testAccVcdEdgeSnatRule = testAccNetForNat + `
 resource "vcd_nsxv_snat" "test" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
 
   network_type = "org"
-  network_name = "{{.NetworkName}}"
+  network_name = "${vcd_network_routed.net.name}"
 
-  original_address   = "{{.InternalIp}}"
+  original_address   = "4.4.4.160"
   translated_address = "{{.ExternalIp}}"
 }
 
@@ -106,7 +127,7 @@ data "vcd_nsxv_snat" "data-test" {
 }
 `
 
-const testAccVcdEdgeSnatRuleUpdate = `
+const testAccVcdEdgeSnatRuleUpdate = testAccNetForNat + `
 resource "vcd_nsxv_snat" "test" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
@@ -118,9 +139,9 @@ resource "vcd_nsxv_snat" "test" {
   logging_enabled = true
 
   network_type = "org"
-  network_name = "{{.NetworkName}}"
+  network_name = "${vcd_network_routed.net.name}"
 
   original_address   = "1.1.1.1"
-  translated_address = "{{.InternalIp}}"
+  translated_address = "4.4.4.170"
 }
 `

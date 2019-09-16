@@ -80,12 +80,14 @@ The following arguments are supported:
 when connected as sysadmin working across different organisations.
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
 * `edge_gateway` - (Required) The name of the edge gateway on which to apply the DNAT rule.
-* `network_type` - (Optional) Type of the network on which to apply the DNAT rule. Possible values
-`org` or `ext`. Default is `org`.
+* `network_type` - (Required) Type of the network on which to apply the DNAT rule. Possible values
+`org` or `ext`.
 * `network_name` - (Required) The name of the network on which to apply the DNAT rule.
 * `enabled` - (Optional) Defines if the rule is enabaled. Default `true`.
 * `logging_enabled` - (Optional) Defines if the logging for this rule is enabaled. Default `false`.
 * `description` - (Optional) Free text description.
+* `rule_tag` - (Optional) This can be used to specifyuser-controlled rule tag. If not specified,
+it will report rule ID after creation. Must be between 65537-131072.
 * `original_address` - (Required) IP address, range or subnet. This address must be the public IP
 address of the edge gateway for which you are configuring the DNAT rule. In the packet being
 inspected, this IP address or range would be those that appear as the destination IP address of the
@@ -107,8 +109,7 @@ protocols, select Any.
 `address-mask-request`, `address-mask-reply`, `destination-unreachable`, `echo-request`,
 `echo-reply`, `parameter-problem`, `redirect`, `router-advertisement`, `router-solicitation`,
 `source-quench`, `time-exceeded`, `timestamp-request`, `timestamp-reply`. Default `any`
-* `rule_tag` - (Optional) This can be used to specifyuser-controlled ruleId. If not specified,
-NSX Manager will generate rule ID. Must be between 65537-131072.
+
 
 ## Attribute Reference
 

@@ -40,13 +40,13 @@ func resourceVcdNsxvSnat() *schema.Resource {
 			"network_name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Edge gateway name in which NAT Rule is located",
+				Description: "Org or external network name",
 			},
 			"network_type": &schema.Schema{
 				Type:         schema.TypeString,
-				Optional:     true,
-				Default:      "org",
+				Required:     true,
 				ValidateFunc: validation.StringInSlice([]string{"ext", "org"}, false),
+				Description:  "Network type. One of 'ext', 'org'",
 			},
 			"rule_type": &schema.Schema{
 				Type:        schema.TypeString,
@@ -60,7 +60,7 @@ func resourceVcdNsxvSnat() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 				Computed:    true,
-				Description: "Optional. Allows to set rule custom rule ID",
+				Description: "Optional. Allows to set custom rule tag",
 			},
 			"enabled": &schema.Schema{
 				Type:        schema.TypeBool,

@@ -32,32 +32,34 @@ func datasourceVcdNsxvDnat() *schema.Resource {
 				Description: "NAT rule ID for lookup",
 			},
 			"network_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Org or external network name",
 			},
 			"network_type": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Network type. One of 'ext', 'org'",
 			},
 			"rule_type": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Read only. Possible values 'user', 'internal_high'",
+				Description: "Possible values 'user', 'internal_high'",
 			},
 			"rule_tag": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Optional. Allows to set rule custom rule ID",
+				Description: "Custom rule tag. Contains rule ID if tag was not set",
 			},
 			"enabled": &schema.Schema{
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Whether the rule should be enabled. Default 'true'",
+				Description: "Defines if the rule is enabled",
 			},
 			"logging_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Whether logging should be enabled for this rule. Default 'false'",
+				Description: "Defines if logging is enabled for the rule",
 			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
