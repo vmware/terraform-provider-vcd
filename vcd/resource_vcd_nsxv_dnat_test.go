@@ -115,7 +115,7 @@ func TestAccVcdEdgeDnat(t *testing.T) {
 				ResourceName:      "vcd_nsxv_dnat.imported",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdByOrgVdcEdgeUnknownId("vcd_nsxv_dnat.test"),
+				ImportStateIdFunc: importStateIdByResourceName("vcd_nsxv_dnat.test"),
 			},
 			resource.TestStep{ // Step 4 - Another resource with different settings
 				Config: configText4,
@@ -137,10 +137,10 @@ func TestAccVcdEdgeDnat(t *testing.T) {
 	})
 }
 
-// importStateIdByOrgVdcEdgeUnknownId constructs an import path (ID in Terraform import terms) in the format of:
-// organization.vdc.edge-gateway-nane.import-object-id (i.e. my-org.my-vdc.my-edge-gw.objectId)
-// It uses terraform.State to find existing object's ID inside state by
-func importStateIdByOrgVdcEdgeUnknownId(resource string) resource.ImportStateIdFunc {
+// importStateIdByResourceName constructs an import path (ID in Terraform import terms) in the format of:
+// organization.vdc.edge-gateway-name.import-object-id (i.e. my-org.my-vdc.my-edge-gw.objectId)
+// It uses terraform.State to find existing object's ID by 'resource.resource-name'
+func importStateIdByResourceName(resource string) resource.ImportStateIdFunc {
 	return func(s *terraform.State) (string, error) {
 		rs, ok := s.RootModule().Resources[resource]
 		if !ok {
