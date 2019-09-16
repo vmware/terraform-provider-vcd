@@ -10,7 +10,8 @@ description: |-
 # vcd\_nsxv\_snat
 
 Provides a vCloud Director SNAT resource using proxied NSX-V API. This can be used to create,
-modify, and delete source NATs to allow vApps to send external traffic.
+modify, and delete source NATs to allow vApps to send external traffic. Replaces
+[`vcd_snat`](/docs/providers/vcd/r/snat.html) resource.
 
 ~> **Note:** This resource requires advanced edge gateway. For non-advanced edge gateways please
 use the [`vcd_snat`](/docs/providers/vcd/r/snat.html) resource.
