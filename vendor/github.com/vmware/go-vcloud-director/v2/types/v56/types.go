@@ -322,21 +322,22 @@ type InstantiationParams struct {
 // Description: Represents an Org VDC network in the vCloud model.
 // Since: 5.1
 type OrgVDCNetwork struct {
-	XMLName       xml.Name              `xml:"OrgVdcNetwork"`
-	Xmlns         string                `xml:"xmlns,attr,omitempty"`
-	HREF          string                `xml:"href,attr,omitempty"`
-	Type          string                `xml:"type,attr,omitempty"`
-	ID            string                `xml:"id,attr,omitempty"`
-	OperationKey  string                `xml:"operationKey,attr,omitempty"`
-	Name          string                `xml:"name,attr"`
-	Status        string                `xml:"status,attr,omitempty"`
-	Configuration *NetworkConfiguration `xml:"Configuration,omitempty"`
-	Description   string                `xml:"Description,omitempty"`
-	EdgeGateway   *Reference            `xml:"EdgeGateway,omitempty"`
-	IsShared      bool                  `xml:"IsShared"`
-	Link          []Link                `xml:"Link,omitempty"`
-	ServiceConfig *GatewayFeatures      `xml:"ServiceConfig,omitempty"` // Specifies the service configuration for an isolated Org VDC networks
-	Tasks         *TasksInProgress      `xml:"Tasks,omitempty"`
+	XMLName         xml.Name              `xml:"OrgVdcNetwork"`
+	Xmlns           string                `xml:"xmlns,attr,omitempty"`
+	HREF            string                `xml:"href,attr,omitempty"`
+	Type            string                `xml:"type,attr,omitempty"`
+	ID              string                `xml:"id,attr,omitempty"`
+	OperationKey    string                `xml:"operationKey,attr,omitempty"`
+	Name            string                `xml:"name,attr"`
+	Status          string                `xml:"status,attr,omitempty"`
+	Configuration   *NetworkConfiguration `xml:"Configuration,omitempty"`
+	Description     string                `xml:"Description,omitempty"`
+	EdgeGateway     *Reference            `xml:"EdgeGateway,omitempty"`
+	ServiceConfig   *GatewayFeatures      `xml:"ServiceConfig,omitempty"` // Specifies the service configuration for an isolated Org VDC networks
+	IsShared        bool                  `xml:"IsShared"`
+	VimPortGroupRef []*VimObjectRef       `xml:"VimPortGroupRef,omitempty"` // Needed to set up DHCP inside ServiceConfig
+	Link            []Link                `xml:"Link,omitempty"`
+	Tasks           *TasksInProgress      `xml:"Tasks,omitempty"`
 }
 
 // SupportedHardwareVersions contains a list of VMware virtual hardware versions supported in this vDC.
@@ -370,20 +371,20 @@ type Vdc struct {
 	Name         string `xml:"name,attr"`
 	Status       int    `xml:"status,attr,omitempty"`
 
-	Link               LinkList              `xml:"Link,omitempty"`
-	Description        string                `xml:"Description,omitempty"`
-	AllocationModel    string                `xml:"AllocationModel"`
-	ComputeCapacity    []*ComputeCapacity    `xml:"ComputeCapacity"`
-	ResourceEntities   []*ResourceEntities   `xml:"ResourceEntities,omitempty"`
-	AvailableNetworks  []*AvailableNetworks  `xml:"AvailableNetworks,omitempty"`
-	Capabilities       []*Capabilities       `xml:"Capabilities,omitempty"`
-	NicQuota           int                   `xml:"NicQuota"`
-	NetworkQuota       int                   `xml:"NetworkQuota"`
-	VMQuota            int                   `xml:"VmQuota"`
-	IsEnabled          bool                  `xml:"IsEnabled"`
-	Tasks              *TasksInProgress      `xml:"Tasks,omitempty"`
-	UsedNetworkCount   int                   `xml:"UsedNetworkCount,omitempty"`
-	VdcStorageProfiles []*VdcStorageProfiles `xml:"VdcStorageProfiles"`
+	Link               LinkList             `xml:"Link,omitempty"`
+	Description        string               `xml:"Description,omitempty"`
+	AllocationModel    string               `xml:"AllocationModel"`
+	ComputeCapacity    []*ComputeCapacity   `xml:"ComputeCapacity"`
+	ResourceEntities   []*ResourceEntities  `xml:"ResourceEntities,omitempty"`
+	AvailableNetworks  []*AvailableNetworks `xml:"AvailableNetworks,omitempty"`
+	Capabilities       []*Capabilities      `xml:"Capabilities,omitempty"`
+	NicQuota           int                  `xml:"NicQuota"`
+	NetworkQuota       int                  `xml:"NetworkQuota"`
+	VMQuota            int                  `xml:"VmQuota"`
+	IsEnabled          bool                 `xml:"IsEnabled"`
+	Tasks              *TasksInProgress     `xml:"Tasks,omitempty"`
+	UsedNetworkCount   int                  `xml:"UsedNetworkCount,omitempty"`
+	VdcStorageProfiles *VdcStorageProfiles  `xml:"VdcStorageProfiles"`
 }
 
 // AdminVdc represents the admin view of an organization VDC.
@@ -1179,7 +1180,6 @@ func (p *ProductSectionList) SortByPropertyKeyName() {
 	sort.SliceStable(p.ProductSection.Property, func(i, j int) bool {
 		return p.ProductSection.Property[i].Key < p.ProductSection.Property[j].Key
 	})
-	return
 }
 
 type ProductSection struct {
