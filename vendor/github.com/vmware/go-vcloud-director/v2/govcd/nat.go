@@ -8,7 +8,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -56,9 +55,7 @@ func (egw *EdgeGateway) CreateNsxvNatRule(natRuleConfig *types.EdgeNatRule) (*ty
 		return nil, err
 	}
 
-	time.Sleep(5 * time.Second)
-
-	readNatRule, err := egw.getNsxvNatRule(&types.EdgeNatRule{ID: natRuleId})
+	readNatRule, err := egw.GetNsxvNatRuleById(natRuleId)
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve NAT rule with ID (%s) after creation: %s",
 			natRuleId, err)
@@ -94,8 +91,11 @@ func (egw *EdgeGateway) UpdateNsxvNatRule(natRuleConfig *types.EdgeNatRule) (*ty
 	return readNatRule, nil
 }
 
-func (egw *EdgeGateway) getNsxvNatRule(natRuleConfig *types.EdgeNatRule) (*types.EdgeNatRule, error) {
-	if err := validateGetNsxvNatRule(natRuleConfig, egw); err != nil {
+// GetNsxvNatRuleById retrieves types.EdgeNatRule by NAT rule ID as shown in the UI using proxied
+// NSX-V API.
+// It returns and error `ErrorEntityNotFound` if the NAT rule is now found.
+func (egw *EdgeGateway) GetNsxvNatRuleById(id string) (*types.EdgeNatRule, error) {
+	if err := validateGetNsxvNatRule(id, egw); err != nil {
 		return nil, err
 	}
 
@@ -114,7 +114,7 @@ func (egw *EdgeGateway) getNsxvNatRule(natRuleConfig *types.EdgeNatRule) (*types
 	}
 
 	for _, rule := range natRuleResponse.NatRules.EdgeNatRules {
-		if rule.ID != "" && rule.ID == natRuleConfig.ID {
+		if rule.ID != "" && rule.ID == id {
 			return rule, nil
 		}
 	}
@@ -122,26 +122,22 @@ func (egw *EdgeGateway) getNsxvNatRule(natRuleConfig *types.EdgeNatRule) (*types
 	return nil, ErrorEntityNotFound
 }
 
-// GetNsxvNatRuleById retrieves types.EdgeNatRule by NAT rule ID as shown in the UI using proxied
+// DeleteNsxvNatRuleById deletes types.EdgeNatRule by NAT rule ID as shown in the UI using proxied
 // NSX-V API.
 // It returns and error `ErrorEntityNotFound` if the NAT rule is now found.
-func (egw *EdgeGateway) GetNsxvNatRuleById(id string) (*types.EdgeNatRule, error) {
-	return egw.getNsxvNatRule(&types.EdgeNatRule{ID: id})
-}
-
-func (egw *EdgeGateway) deleteNsxvNatRule(natRuleConfig *types.EdgeNatRule) error {
-	err := validateDeleteNsxvNatRule(natRuleConfig, egw)
+func (egw *EdgeGateway) DeleteNsxvNatRuleById(id string) error {
+	err := validateDeleteNsxvNatRule(id, egw)
 	if err != nil {
 		return err
 	}
 
-	httpPath, err := egw.buildProxiedEdgeEndpointURL(types.EdgeCreateNatPath + "/" + natRuleConfig.ID)
+	httpPath, err := egw.buildProxiedEdgeEndpointURL(types.EdgeCreateNatPath + "/" + id)
 	if err != nil {
 		return fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
 	}
 
 	// check if the rule exists and pass back the error at it may be 'ErrorEntityNotFound'
-	_, err = egw.GetNsxvNatRuleById(natRuleConfig.ID)
+	_, err = egw.GetNsxvNatRuleById(id)
 	if err != nil {
 		return err
 	}
@@ -153,13 +149,6 @@ func (egw *EdgeGateway) deleteNsxvNatRule(natRuleConfig *types.EdgeNatRule) erro
 	}
 
 	return nil
-}
-
-// DeleteNsxvNatRuleById deletes types.EdgeNatRule by NAT rule ID as shown in the UI using proxied
-// NSX-V API.
-// It returns and error `ErrorEntityNotFound` if the NAT rule is now found.
-func (egw *EdgeGateway) DeleteNsxvNatRuleById(id string) error {
-	return egw.deleteNsxvNatRule(&types.EdgeNatRule{ID: id})
 }
 
 func validateCreateNsxvNatRule(natRuleConfig *types.EdgeNatRule, egw *EdgeGateway) error {
@@ -186,18 +175,18 @@ func validateUpdateNsxvNatRule(natRuleConfig *types.EdgeNatRule, egw *EdgeGatewa
 	return validateCreateNsxvNatRule(natRuleConfig, egw)
 }
 
-func validateGetNsxvNatRule(natRuleConfig *types.EdgeNatRule, egw *EdgeGateway) error {
+func validateGetNsxvNatRule(id string, egw *EdgeGateway) error {
 	if !egw.HasAdvancedNetworking() {
 		return fmt.Errorf("only advanced edge gateways support NAT rules")
 	}
 
-	if natRuleConfig.ID == "" {
+	if id == "" {
 		return fmt.Errorf("unable to retrieve NAT rule without ID")
 	}
 
 	return nil
 }
 
-func validateDeleteNsxvNatRule(natRuleConfig *types.EdgeNatRule, egw *EdgeGateway) error {
-	return validateGetNsxvNatRule(natRuleConfig, egw)
+func validateDeleteNsxvNatRule(id string, egw *EdgeGateway) error {
+	return validateGetNsxvNatRule(id, egw)
 }

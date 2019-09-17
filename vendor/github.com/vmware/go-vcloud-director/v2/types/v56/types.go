@@ -1826,10 +1826,10 @@ type EdgeNatRule struct {
 	ID                string   `xml:"ruleId,omitempty"`
 	RuleType          string   `xml:"ruleType,omitempty"`
 	RuleTag           string   `xml:"ruleTag,omitempty"`
-	Action            string   `xml:"action,omitempty"`
+	Action            string   `xml:"action"`
 	Vnic              *int     `xml:"vnic,omitempty"`
-	OriginalAddress   string   `xml:"originalAddress,omitempty"`
-	TranslatedAddress string   `xml:"translatedAddress,omitempty"`
+	OriginalAddress   string   `xml:"originalAddress"`
+	TranslatedAddress string   `xml:"translatedAddress"`
 	LoggingEnabled    bool     `xml:"loggingEnabled"`
 	Enabled           bool     `xml:"enabled"`
 	Description       string   `xml:"description,omitempty"`
@@ -2702,42 +2702,41 @@ type EdgeGatewayVnics struct {
 		Name          string `xml:"name"`
 		AddressGroups struct {
 			AddressGroup struct {
-				PrimaryAddress     string `xml:"primaryAddress"`
+				PrimaryAddress     string `xml:"primaryAddress,omitempty"`
 				SecondaryAddresses struct {
-					IpAddress []string `xml:"ipAddress"`
-				} `xml:"secondaryAddresses"`
-				SubnetMask         string `xml:"subnetMask"`
-				SubnetPrefixLength string `xml:"subnetPrefixLength"`
-			} `xml:"addressGroup"`
-		} `xml:"addressGroups"`
-		Mtu                 string `xml:"mtu"`
-		Type                string `xml:"type"`
-		IsConnected         string `xml:"isConnected"`
+					IpAddress []string `xml:"ipAddress,omitempty"`
+				} `xml:"secondaryAddresses,omitempty"`
+				SubnetMask         string `xml:"subnetMask,omitempty"`
+				SubnetPrefixLength string `xml:"subnetPrefixLength,omitempty"`
+			} `xml:"addressGroup,omitempty"`
+		} `xml:"addressGroups,omitempty"`
+		Mtu                 string `xml:"mtu,omitempty"`
+		Type                string `xml:"type,omitempty"`
+		IsConnected         string `xml:"isConnected,omitempty"`
 		Index               *int   `xml:"index"`
-		PortgroupId         string `xml:"portgroupId"`
-		PortgroupName       string `xml:"portgroupName"`
-		EnableProxyArp      string `xml:"enableProxyArp"`
-		EnableSendRedirects string `xml:"enableSendRedirects"`
+		PortgroupId         string `xml:"portgroupId,omitempty"`
+		PortgroupName       string `xml:"portgroupName,omitempty"`
+		EnableProxyArp      string `xml:"enableProxyArp,omitempty"`
+		EnableSendRedirects string `xml:"enableSendRedirects,omitempty"`
 		SubInterfaces       struct {
 			SubInterface []struct {
-				IsConnected         string `xml:"isConnected"`
-				Label               string `xml:"label"`
-				Name                string `xml:"name"`
-				Index               *int   `xml:"index"`
-				TunnelId            string `xml:"tunnelId"`
-				LogicalSwitchId     string `xml:"logicalSwitchId"`
-				LogicalSwitchName   string `xml:"logicalSwitchName"`
-				EnableSendRedirects string `xml:"enableSendRedirects"`
-				Mtu                 string `xml:"mtu"`
+				IsConnected         string `xml:"isConnected,omitempty"`
+				Label               string `xml:"label,omitempty"`
+				Name                string `xml:"name,omitempty"`
+				Index               *int   `xml:"index,omitempty"`
+				TunnelId            string `xml:"tunnelId,omitempty"`
+				LogicalSwitchId     string `xml:"logicalSwitchId,omitempty"`
+				LogicalSwitchName   string `xml:"logicalSwitchName,omitempty"`
+				EnableSendRedirects string `xml:"enableSendRedirects,omitempty"`
+				Mtu                 string `xml:"mtu,omitempty"`
 				AddressGroups       struct {
 					AddressGroup struct {
-						Text               string `xml:",chardata"`
-						PrimaryAddress     string `xml:"primaryAddress"`
-						SubnetMask         string `xml:"subnetMask"`
-						SubnetPrefixLength string `xml:"subnetPrefixLength"`
-					} `xml:"addressGroup"`
-				} `xml:"addressGroups"`
-			} `xml:"subInterface"`
-		} `xml:"subInterfaces"`
-	} `xml:"vnic"`
+						PrimaryAddress     string `xml:"primaryAddress,omitempty"`
+						SubnetMask         string `xml:"subnetMask,omitempty"`
+						SubnetPrefixLength string `xml:"subnetPrefixLength,omitempty"`
+					} `xml:"addressGroup,omitempty"`
+				} `xml:"addressGroups,omitempty"`
+			} `xml:"subInterface,omitempty"`
+		} `xml:"subInterfaces,omitempty"`
+	} `xml:"vnic,omitempty"`
 }
