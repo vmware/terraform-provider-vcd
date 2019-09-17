@@ -102,7 +102,10 @@ func resourceVcdNsxvDnat() *schema.Resource {
 				Optional:     true,
 				ForceNew:     false,
 				ValidateFunc: validateCase("lower"),
-				Description:  "ICMP type. Only supported when protocol is ICMP",
+				Description: "ICMP type. Only supported when protocol is ICMP. One of `any`, " +
+					"`address-mask-request`, `address-mask-reply`, `destination-unreachable`, `echo-request`, " +
+					"`echo-reply`, `parameter-problem`, `redirect`, `router-advertisement`, `router-solicitation`, " +
+					"`source-quench`, `time-exceeded`, `timestamp-request`, `timestamp-reply`. Default `any`",
 			},
 			"original_port": &schema.Schema{
 				Type:             schema.TypeString,

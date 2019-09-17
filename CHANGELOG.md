@@ -1,8 +1,8 @@
 ## 2.5.0 (Unreleased)
 
 FEATURES:
-* **New Resource:** `vcd_nsxv_dnat` DNAT for advanced edge gateways using proxied NSX API - [#328]
-* **New Resource:** `vcd_nsxv_snat`  SNAT for advanced edge gateways using proxied NSX API - [#328]
+* **New Resource:** `vcd_nsxv_dnat` DNAT for advanced edge gateways using proxied NSX-V API - [#328]
+* **New Resource:** `vcd_nsxv_snat`  SNAT for advanced edge gateways using proxied NSX-V API - [#328]
 * **New Data Source:** `vcd_org` Organization - ([#218])
 * **New Data Source:** `vcd_catalog` Catalog - ([#218])
 * **New Data Source:** `vcd_catalog_item` CatalogItem - ([#218])

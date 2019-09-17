@@ -81,6 +81,9 @@ func natRuleUpdater(natType string, setData natRuleDataSetter, getType natRuleTy
 }
 
 // natRuleReader returns a schema.ReadFunc for both SNAT and DNAT rules
+// ifField: specifies field name which holds NAT rule ID for lookup. In data sources it is rule_id
+// while in resources it is simply ID
+// natType: 'snat' or 'dnat'
 func natRuleReader(idField, natType string, setData natRuleDataSetter) schema.ReadFunc {
 	return func(d *schema.ResourceData, meta interface{}) error {
 		vcdClient := meta.(*VCDClient)
@@ -90,6 +93,8 @@ func natRuleReader(idField, natType string, setData natRuleDataSetter) schema.Re
 			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
+		// if default ID field 'id' is used, then rely on Terraform's d.Id(). Otherwise use the
+		// string value
 		var idValue string
 		if idField == "id" {
 			idValue = d.Id()
