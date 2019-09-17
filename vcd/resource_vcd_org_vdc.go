@@ -13,6 +13,41 @@ import (
 )
 
 func resourceVcdOrgVdc() *schema.Resource {
+	capacityWithUsage := schema.Schema{
+		Type:     schema.TypeList,
+		Required: true,
+		MinItems: 1,
+		MaxItems: 1,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"allocated": {
+					Type:        schema.TypeInt,
+					Optional:    true,
+					Computed:    true,
+					Description: "Capacity that is committed to be available. Value in MB or MHz. Used with AllocationPool (Allocation pool) and ReservationPool (Reservation pool).",
+				},
+				"limit": {
+					Type:        schema.TypeInt,
+					Optional:    true,
+					Computed:    true,
+					Description: "Capacity limit relative to the value specified for Allocation. It must not be less than that value. If it is greater than that value, it implies over provisioning. A value of 0 specifies unlimited units. Value in MB or MHz. Used with AllocationVApp (Pay as you go).",
+				},
+				"reserved": {
+					Type:     schema.TypeInt,
+					Computed: true,
+				},
+				"used": {
+					Type:     schema.TypeInt,
+					Computed: true,
+				},
+				"overhead": {
+					Type:     schema.TypeInt,
+					Computed: true,
+				},
+			},
+		},
+	}
+
 	return &schema.Resource{
 		Create: resourceVcdVdcCreate,
 		Delete: resourceVcdVdcDelete,
@@ -44,11 +79,16 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Description:  "The allocation model used by this VDC; must be one of {AllocationVApp, AllocationPool, ReservationPool}",
 			},
 			"compute_capacity": &schema.Schema{
-				Required:    true,
-				MinItems:    1,
-				MaxItems:    1,
-				Type:        schema.TypeSet,
-				Elem:        computeCapacityResource(),
+				Required: true,
+				MinItems: 1,
+				MaxItems: 1,
+				Type:     schema.TypeList,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"cpu":    &capacityWithUsage,
+						"memory": &capacityWithUsage,
+					},
+				},
 				Description: "The compute capacity allocated to this VDC.",
 				//Set:         hashMapStringForCapacity,
 			},
@@ -179,62 +219,6 @@ func resourceVcdOrgVdc() *schema.Resource {
 				// For now underlying go-vcloud-director repo only supports
 				// a value of type String in this map.
 			},
-		},
-	}
-}
-
-// capacityResource return schema for capacity
-func capacitySchema() *schema.Schema {
-	return &schema.Schema{
-		Type:     schema.TypeSet,
-		Required: true,
-		MinItems: 1,
-		MaxItems: 1,
-		//Set:      hashMapStringForCapacityElements,
-		Elem: capacityResource(),
-	}
-}
-
-// capacityResource return schema for capacity resource
-// We need to pull schema out so we can use it to make a set hash func
-func capacityResource() *schema.Resource {
-	return &schema.Resource{
-		Schema: map[string]*schema.Schema{
-			"allocated": {
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Computed:    true,
-				Description: "Capacity that is committed to be available. Value in MB or MHz. Used with AllocationPool (Allocation pool) and ReservationPool (Reservation pool).",
-			},
-			"limit": {
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Computed:    true,
-				Description: "Capacity limit relative to the value specified for Allocation. It must not be less than that value. If it is greater than that value, it implies over provisioning. A value of 0 specifies unlimited units. Value in MB or MHz. Used with AllocationVApp (Pay as you go).",
-			},
-			"reserved": {
-				Type:     schema.TypeInt,
-				Computed: true,
-			},
-			"used": {
-				Type:     schema.TypeInt,
-				Computed: true,
-			},
-			"overhead": {
-				Type:     schema.TypeInt,
-				Computed: true,
-			},
-		},
-	}
-}
-
-// computeCapacityResource return schema for compute capacity
-// We need to pull schema out so we can use it to make a set hash func
-func computeCapacityResource() *schema.Resource {
-	return &schema.Resource{
-		Schema: map[string]*schema.Schema{
-			"cpu":    capacitySchema(),
-			"memory": capacitySchema(),
 		},
 	}
 }
@@ -400,16 +384,16 @@ func getComputeStorageProfiles(vcdClient *VCDClient, profile *types.VdcStoragePr
 }
 
 // getComputeCapacities constructs specific struct to be saved in Terraform state file.
-// Expected E.g. *Set(map[string]interface {}{"2185903189": map[string]interface {} {"cpu":*Set(map[string]interface {} {"1148193616":map[string]interface {}
-// {"allocated":0, "limit":3110, "overhead":0, "reserved":0, "used":0}}), "memory":* Set(map[string]interface {} {"1328470546":map[string]interface {}
-// {"allocated":0, "limit":4000, "overhead":0, "reserved":0, "used":0}})}})
-func getComputeCapacities(capacities []*types.ComputeCapacity) *schema.Set {
-
-	rootInternalArray := make([]interface{}, 0)
+// Expected E.g. &[]map[string]interface {}
+// {map[string]interface {}{"cpu":(*[]map[string]interface {})
+// ({"allocated":8000, "limit":8000, "overhead":0, "reserved":4000, "used":0}),
+// "memory":(*[]map[string]interface {})
+// ({"allocated":7168, "limit":7168, "overhead":0, "reserved":3584, "used":0})},
+func getComputeCapacities(capacities []*types.ComputeCapacity) *[]map[string]interface{} {
+	rootInternal := map[string]interface{}{}
+	var root []map[string]interface{}
 
 	for _, capacity := range capacities {
-		rootInternal := map[string]interface{}{}
-
 		cpuValueMap := map[string]interface{}{}
 		cpuValueMap["limit"] = int(capacity.CPU.Limit)
 		cpuValueMap["allocated"] = int(capacity.CPU.Allocated)
@@ -424,21 +408,16 @@ func getComputeCapacities(capacities []*types.ComputeCapacity) *schema.Set {
 		memoryValueMap["used"] = int(capacity.Memory.Used)
 		memoryValueMap["overhead"] = int(capacity.Memory.Overhead)
 
-		memoryCapacityArray := make([]interface{}, 0)
+		var memoryCapacityArray []map[string]interface{}
 		memoryCapacityArray = append(memoryCapacityArray, memoryValueMap)
-		cpuCapacityArray := make([]interface{}, 0)
+		var cpuCapacityArray []map[string]interface{}
 		cpuCapacityArray = append(cpuCapacityArray, cpuValueMap)
 
-		cpu := *schema.NewSet(schema.HashResource(capacityResource()), cpuCapacityArray)
-		memory := *schema.NewSet(schema.HashResource(capacityResource()), memoryCapacityArray)
+		rootInternal["cpu"] = &cpuCapacityArray
+		rootInternal["memory"] = &memoryCapacityArray
 
-		rootInternal["cpu"] = &cpu
-		rootInternal["memory"] = &memory
-
-		rootInternalArray = append(rootInternalArray, rootInternal)
+		root = append(root, rootInternal)
 	}
-
-	root := *schema.NewSet(schema.HashResource(computeCapacityResource()), rootInternalArray)
 
 	return &root
 }
@@ -704,7 +683,7 @@ func getUpdatedVdcInput(d *schema.ResourceData, vcdClient *VCDClient, vdc *govcd
 // helper for transforming the resource input into the VdcConfiguration structure
 // any cast operations or default values should be done here so that the create method is simple
 func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcConfiguration, error) {
-	computeCapacityList := d.Get("compute_capacity").(*schema.Set).List()
+	computeCapacityList := d.Get("compute_capacity").([]interface{})
 	if len(computeCapacityList) == 0 {
 		return &types.VdcConfiguration{}, errors.New("no compute_capacity field")
 	}
@@ -715,11 +694,11 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 		return &types.VdcConfiguration{}, errors.New("no storage_profile field")
 	}
 
-	cpuCapacityList := computeCapacity["cpu"].(*schema.Set).List()
+	cpuCapacityList := computeCapacity["cpu"].([]interface{})
 	if len(cpuCapacityList) == 0 {
 		return &types.VdcConfiguration{}, errors.New("no cpu field in compute_capacity")
 	}
-	memoryCapacityList := computeCapacity["memory"].(*schema.Set).List()
+	memoryCapacityList := computeCapacity["memory"].([]interface{})
 	if len(memoryCapacityList) == 0 {
 		return &types.VdcConfiguration{}, errors.New("no memory field in compute_capacity")
 	}

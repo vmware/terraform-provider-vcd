@@ -24,8 +24,9 @@ func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 		"AllocationModel":           "ReservationPool",
 		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
 		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
-		"Allocated":                 "2048",
-		"Reserved":                  "2048",
+		"Allocated":                 "1024",
+		"Reserved":                  "1024",
+		"Limit":                     "1024",
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  "TestAccVcdOrgVdcReservationPool",
@@ -49,6 +50,7 @@ func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
 		"Allocated":                 "2048",
 		"Reserved":                  "1024",
+		"Limit":                     "2048",
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  "TestAccVcdOrgVdcAllocationPool",
@@ -72,6 +74,7 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
 		"Allocated":                 "0",
 		"Reserved":                  "0",
+		"Limit":                     "2048",
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  "TestAccVcdOrgVdcAllocationVapp",
@@ -149,7 +152,32 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 						"vcd_org_vdc."+TestAccVcdVdc, "metadata.vdc_metadata", "VDC Metadata"),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.name", testConfig.VCD.ProviderVdc.StorageProfile),
-					resource.ComposeTestCheckFunc(testAccSourceVcdOrgVdc(TestAccVcdVdc, params["Allocated"].(string), params["Reserved"].(string))),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.enabled", "true"),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.limit", "10240"),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.default", "true"),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.allocated", params["Allocated"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.limit", params["Limit"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.overhead", "0"),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.reserved", params["Reserved"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.used", "0"),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.allocated", params["Allocated"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.limit", params["Limit"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.overhead", "0"),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.reserved", params["Reserved"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.used", "0"),
 				),
 			},
 			resource.TestStep{
@@ -188,7 +216,32 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 						"vcd_org_vdc."+TestAccVcdVdc, "metadata.vdc_metadata2", "VDC Metadata2"),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.name", testConfig.VCD.ProviderVdc.StorageProfile),
-					resource.ComposeTestCheckFunc(testAccSourceVcdOrgVdc(TestAccVcdVdc, params["Allocated"].(string), params["Reserved"].(string))),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.enabled", "true"),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.limit", "10240"),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.default", "true"),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.allocated", params["Allocated"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.limit", params["Limit"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.overhead", "0"),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.reserved", params["Reserved"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.used", "0"),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.allocated", params["Allocated"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.limit", params["Limit"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.overhead", "0"),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.reserved", params["Reserved"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.used", "0"),
 				),
 			},
 			resource.TestStep{
@@ -210,65 +263,6 @@ func importStateIdByVdc(objectName string) resource.ImportStateIdFunc {
 			return "", fmt.Errorf("missing information to generate import path: %s", importId)
 		}
 		return importId, nil
-	}
-}
-
-func testAccSourceVcdOrgVdc(vdcName, allocatedValue, reserveValue string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		vdcResource, ok := s.RootModule().Resources["vcd_org_vdc."+vdcName]
-		if !ok {
-			return fmt.Errorf("can't find vcd_org_vdc.%s in state", vdcName)
-		}
-
-		checkDeepValues := func(expected, parent, parentHash, child, childHash, label string, result *string) bool {
-
-			value := vdcResource.Primary.Attributes[fmt.Sprintf("%s.%s.%s.%s.%s", parent, parentHash, child, childHash, label)]
-
-			if expected != value {
-				*result = fmt.Sprintf("%s.%s.%s.%s.%s is %v; want %v", parent, parentHash, child, childHash, label, value, expected)
-				return false
-			}
-			return true
-		}
-
-		// Resource uses Set types and to access them in state file when key is `flatten` you have to know hash keys. In this resource we use default hash generation and in
-		// test it is quite difficult to recreate real hash, so we regex them from map and use them to access values.
-		mainHashValue, cpuHashInternalValue, err := getHashValuesFromKey(vdcResource.Primary.Attributes, "compute_capacity", "cpu")
-		if err != nil {
-			return err
-		}
-		_, memoryHashInternalValue, err := getHashValuesFromKey(vdcResource.Primary.Attributes, "compute_capacity", "memory")
-		if err != nil {
-			return err
-		}
-
-		type testInfo struct {
-			child         string
-			childHash     string
-			label         string
-			expectedValue string
-		}
-		var errorMsg string
-
-		var testData = []testInfo{
-			{"cpu", cpuHashInternalValue, "allocated", allocatedValue},
-			{"cpu", cpuHashInternalValue, "limit", "2048"},
-			{"cpu", cpuHashInternalValue, "overhead", "0"},
-			{"cpu", cpuHashInternalValue, "reserved", reserveValue},
-			{"cpu", cpuHashInternalValue, "used", "0"},
-			{"memory", memoryHashInternalValue, "allocated", allocatedValue},
-			{"memory", memoryHashInternalValue, "limit", "2048"},
-			{"memory", memoryHashInternalValue, "overhead", "0"},
-			{"memory", memoryHashInternalValue, "reserved", reserveValue},
-			{"memory", memoryHashInternalValue, "used", "0"},
-		}
-		for _, td := range testData {
-			if !checkDeepValues(td.expectedValue, "compute_capacity", mainHashValue, td.child, td.childHash, td.label, &errorMsg) {
-				return fmt.Errorf("%s", errorMsg)
-			}
-		}
-
-		return nil
 	}
 }
 
@@ -367,12 +361,12 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   compute_capacity {
     cpu {
       allocated = "{{.Allocated}}"
-      limit     = 2048
+      limit     = "{{.Limit}}"
     }
 
     memory {
       allocated = "{{.Allocated}}"
-      limit     = 2048
+      limit     = "{{.Limit}}"
     }
   }
 
@@ -408,12 +402,12 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   compute_capacity {
     cpu {
       allocated = "{{.Allocated}}"
-      limit     = 2048
+      limit     = "{{.Limit}}"
     }
 
     memory {
       allocated = "{{.Allocated}}"
-      limit     = 2048
+      limit     = "{{.Limit}}"
     }
   }
 

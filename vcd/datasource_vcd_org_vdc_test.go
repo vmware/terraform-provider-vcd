@@ -3,8 +3,6 @@
 package vcd
 
 import (
-	"fmt"
-	"github.com/hashicorp/terraform/terraform"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -55,78 +53,20 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "storage_profile.0.enabled", "vcd_org_vdc."+vdcName, "storage_profile.0.enabled"),
 					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "storage_profile.0.default", "vcd_org_vdc."+vdcName, "storage_profile.0.default"),
 					resource.TestCheckResourceAttr("vcd_org_vdc."+vdcName, "metadata.vdc_metadata", "VDC Metadata"),
-					resource.ComposeTestCheckFunc(testAccDataSourceVcdOrgVdc("data."+datasourceVdc, vdcName)),
+					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "compute_capacity.0.cpu.0.allocated", "vcd_org_vdc."+vdcName, "compute_capacity.0.cpu.0.allocated"),
+					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "compute_capacity.0.cpu.0.limit", "vcd_org_vdc."+vdcName, "compute_capacity.0.cpu.0.limit"),
+					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "compute_capacity.0.cpu.0.overhead", "vcd_org_vdc."+vdcName, "compute_capacity.0.cpu.0.overhead"),
+					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "compute_capacity.0.cpu.0.reserved", "vcd_org_vdc."+vdcName, "compute_capacity.0.cpu.0.reserved"),
+					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "compute_capacity.0.cpu.0.used", "vcd_org_vdc."+vdcName, "compute_capacity.0.cpu.0.used"),
+					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "compute_capacity.0.memory.0.allocated", "vcd_org_vdc."+vdcName, "compute_capacity.0.memory.0.allocated"),
+					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "compute_capacity.0.memory.0.limit", "vcd_org_vdc."+vdcName, "compute_capacity.0.memory.0.limit"),
+					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "compute_capacity.0.memory.0.overhead", "vcd_org_vdc."+vdcName, "compute_capacity.0.memory.0.overhead"),
+					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "compute_capacity.0.memory.0.reserved", "vcd_org_vdc."+vdcName, "compute_capacity.0.memory.0.reserved"),
+					resource.TestCheckResourceAttrPair("data."+datasourceVdc, "compute_capacity.0.memory.0.used", "vcd_org_vdc."+vdcName, "compute_capacity.0.memory.0.used"),
 				),
 			},
 		},
 	})
-}
-
-func testAccDataSourceVcdOrgVdc(name, vdcName string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		resources, ok := s.RootModule().Resources[name]
-		if !ok {
-			return fmt.Errorf("root module has no resource called %s", name)
-		}
-
-		vdcResource, ok := s.RootModule().Resources["vcd_org_vdc."+vdcName]
-		if !ok {
-			return fmt.Errorf("can't find vcd_org_vdc.%s in state", vdcName)
-		}
-
-		attr := resources.Primary.Attributes
-
-		checkDeepValues := func(key, parent, parentHash, child, childHash, label string, result *string) bool {
-
-			expected := attr[key]
-			value := vdcResource.Primary.Attributes[fmt.Sprintf("%s.%s.%s.%s.%s", parent, parentHash, child, childHash, label)]
-
-			if expected != value {
-				*result = fmt.Sprintf("%s.0.%s.0.%s is %v; want %v", parent, child, label, attr[key], expected)
-				return false
-			}
-			return true
-		}
-
-		// Resource uses Set types and to access them in state file when key is `flatten` you have to know hash keys. In this resource we use default hash generation and in
-		// test it is quite difficult to recreate real hash, so we regex them from map and use them to access values.
-		mainHashValue, cpuHashInternalValue, err := getHashValuesFromKey(vdcResource.Primary.Attributes, "compute_capacity", "cpu")
-		if err != nil {
-			return err
-		}
-		_, memoryHashInternalValue, err := getHashValuesFromKey(vdcResource.Primary.Attributes, "compute_capacity", "memory")
-		if err != nil {
-			return err
-		}
-
-		type testInfo struct {
-			child     string
-			childHash string
-			label     string
-		}
-		var errorMsg string
-
-		var testData = []testInfo{
-			{"cpu", cpuHashInternalValue, "allocated"},
-			{"cpu", cpuHashInternalValue, "limit"},
-			{"cpu", cpuHashInternalValue, "overhead"},
-			{"cpu", cpuHashInternalValue, "reserved"},
-			{"cpu", cpuHashInternalValue, "used"},
-			{"memory", memoryHashInternalValue, "allocated"},
-			{"memory", memoryHashInternalValue, "limit"},
-			{"memory", memoryHashInternalValue, "overhead"},
-			{"memory", memoryHashInternalValue, "reserved"},
-			{"memory", memoryHashInternalValue, "used"},
-		}
-		for _, td := range testData {
-			key := fmt.Sprintf("compute_capacity.0.%s.0.%s", td.child, td.label)
-			if !checkDeepValues(key, "compute_capacity", mainHashValue, td.child, td.childHash, td.label, &errorMsg) {
-				return fmt.Errorf("%s", errorMsg)
-			}
-		}
-
-		return nil
-	}
 }
 
 const testAccCheckVcdVdcDatasource_basic = `
@@ -145,13 +85,13 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
 
   compute_capacity {
     cpu {
-     allocated = "${tolist(tolist(data.vcd_org_vdc.existingVdc.compute_capacity)[0].cpu)[0].allocated}"
-     limit     = "${tolist(tolist(data.vcd_org_vdc.existingVdc.compute_capacity)[0].cpu)[0].limit}"
+     allocated = "${data.vcd_org_vdc.existingVdc.compute_capacity[0].cpu[0].allocated}"
+     limit     = "${data.vcd_org_vdc.existingVdc.compute_capacity[0].cpu[0].limit}"
     }
 
     memory {
-     allocated = "${tolist(tolist(data.vcd_org_vdc.existingVdc.compute_capacity)[0].memory)[0].allocated}"
-     limit     = "${tolist(tolist(data.vcd_org_vdc.existingVdc.compute_capacity)[0].memory)[0].limit}"
+     allocated = "${data.vcd_org_vdc.existingVdc.compute_capacity[0].memory[0].allocated}"
+     limit     = "${data.vcd_org_vdc.existingVdc.compute_capacity[0].memory[0].limit}"
     }
   }
 

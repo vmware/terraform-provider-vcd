@@ -9,7 +9,7 @@ import (
 
 func datasourceVcdOrgVdc() *schema.Resource {
 	capacityWithUsage := schema.Schema{
-		Type:     schema.TypeSet,
+		Type:     schema.TypeList,
 		Computed: true,
 		MinItems: 1,
 		MaxItems: 1,
@@ -67,7 +67,7 @@ func datasourceVcdOrgVdc() *schema.Resource {
 				Computed: true,
 				MinItems: 1,
 				MaxItems: 1,
-				Type:     schema.TypeSet,
+				Type:     schema.TypeList,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"cpu":    &capacityWithUsage,
