@@ -68,9 +68,9 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 					resource.TestCheckResourceAttrPair(
 						"data."+datasourceVdc, "compute_capacity.0.cpu.0.limit", "vcd_org_vdc."+vdcName, "compute_capacity.0.cpu.0.limit"),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.reserved", regexp.MustCompile(`^\d*$`)),
+						"data."+datasourceVdc, "compute_capacity.0.cpu.0.reserved", regexp.MustCompile(`^\d*$`)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.used", regexp.MustCompile(`^\d*$`)),
+						"data."+datasourceVdc, "compute_capacity.0.cpu.0.used", regexp.MustCompile(`^\d*$`)),
 					resource.TestCheckResourceAttrPair(
 						"data."+datasourceVdc, "compute_capacity.0.cpu.0.used", "vcd_org_vdc."+vdcName, "compute_capacity.0.cpu.0.used"),
 					resource.TestCheckResourceAttrPair(
@@ -80,9 +80,9 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 					resource.TestCheckResourceAttrPair(
 						"data."+datasourceVdc, "compute_capacity.0.memory.0.overhead", "vcd_org_vdc."+vdcName, "compute_capacity.0.memory.0.overhead"),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d*$`)),
+						"data."+datasourceVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d*$`)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.used", regexp.MustCompile(`^\d*$`))),
+						"data."+datasourceVdc, "compute_capacity.0.memory.0.used", regexp.MustCompile(`^\d*$`))),
 			},
 		},
 	})
