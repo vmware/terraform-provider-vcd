@@ -10,12 +10,12 @@ import (
 
 func resourceVcdNsxvSnat() *schema.Resource {
 	return &schema.Resource{
-		Create: natRuleCreator("snat", setSnatRuleData, getSnatRuleType),
-		Read:   natRuleReader("id", "snat", setSnatRuleData),
-		Update: natRuleUpdater("snat", setSnatRuleData, getSnatRuleType),
-		Delete: natRuleDeleter("snat"),
+		Create: natRuleCreate("snat", setSnatRuleData, getSnatRule),
+		Read:   natRuleRead("id", "snat", setSnatRuleData),
+		Update: natRuleUpdate("snat", setSnatRuleData, getSnatRule),
+		Delete: natRuleDelete("snat"),
 		Importer: &schema.ResourceImporter{
-			State: natRuleImporter("snat"),
+			State: natRuleImport("snat"),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -99,9 +99,9 @@ func resourceVcdNsxvSnat() *schema.Resource {
 	}
 }
 
-// getSnatRuleType is responsible for getting types.EdgeNatRule for SNAT rule from Terraform
+// getSnatRule is responsible for getting types.EdgeNatRule for SNAT rule from Terraform
 // configuration
-func getSnatRuleType(d *schema.ResourceData, edgeGateway govcd.EdgeGateway) (*types.EdgeNatRule, error) {
+func getSnatRule(d *schema.ResourceData, edgeGateway govcd.EdgeGateway) (*types.EdgeNatRule, error) {
 	networkName := d.Get("network_name").(string)
 	networkType := d.Get("network_type").(string)
 

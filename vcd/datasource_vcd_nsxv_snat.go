@@ -6,7 +6,7 @@ import (
 
 func datasourceVcdNsxvSnat() *schema.Resource {
 	return &schema.Resource{
-		Read: natRuleReader("rule_id", "snat", setSnatRuleData),
+		Read: natRuleRead("rule_id", "snat", setSnatRuleData),
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:        schema.TypeString,

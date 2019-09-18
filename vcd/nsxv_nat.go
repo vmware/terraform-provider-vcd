@@ -17,8 +17,8 @@ type natRuleTypeGetter func(d *schema.ResourceData, edgeGateway govcd.EdgeGatewa
 // as function parameters
 type natRuleDataSetter func(d *schema.ResourceData, natRule *types.EdgeNatRule, edgeGateway govcd.EdgeGateway) error
 
-// natRuleCreator returns a schema.CreateFunc for both SNAT and DNAT rules
-func natRuleCreator(natType string, setData natRuleDataSetter, getNatRule natRuleTypeGetter) schema.CreateFunc {
+// natRuleCreate returns a schema.CreateFunc for both SNAT and DNAT rules
+func natRuleCreate(natType string, setData natRuleDataSetter, getNatRule natRuleTypeGetter) schema.CreateFunc {
 	return func(d *schema.ResourceData, meta interface{}) error {
 		vcdClient := meta.(*VCDClient)
 		vcdClient.lockParentEdgeGtw(d)
@@ -42,12 +42,12 @@ func natRuleCreator(natType string, setData natRuleDataSetter, getNatRule natRul
 		}
 
 		d.SetId(createdNatRule.ID)
-		return natRuleReader("id", natType, setData)(d, meta)
+		return natRuleRead("id", natType, setData)(d, meta)
 	}
 }
 
-// natRuleUpdater returns a schema.UpdateFunc for both SNAT and DNAT rules
-func natRuleUpdater(natType string, setData natRuleDataSetter, getNatRule natRuleTypeGetter) schema.UpdateFunc {
+// natRuleUpdate returns a schema.UpdateFunc for both SNAT and DNAT rules
+func natRuleUpdate(natType string, setData natRuleDataSetter, getNatRule natRuleTypeGetter) schema.UpdateFunc {
 	return func(d *schema.ResourceData, meta interface{}) error {
 		vcdClient := meta.(*VCDClient)
 		vcdClient.lockParentEdgeGtw(d)
@@ -76,15 +76,15 @@ func natRuleUpdater(natType string, setData natRuleDataSetter, getNatRule natRul
 			return fmt.Errorf("error setting data: %s", err)
 		}
 
-		return natRuleReader("id", natType, setData)(d, meta)
+		return natRuleRead("id", natType, setData)(d, meta)
 	}
 }
 
-// natRuleReader returns a schema.ReadFunc for both SNAT and DNAT rules
+// natRuleRead returns a schema.ReadFunc for both SNAT and DNAT rules
 // ifField: specifies field name which holds NAT rule ID for lookup. In data sources it is rule_id
 // while in resources it is simply ID
 // natType: 'snat' or 'dnat'
-func natRuleReader(idField, natType string, setData natRuleDataSetter) schema.ReadFunc {
+func natRuleRead(idField, natType string, setData natRuleDataSetter) schema.ReadFunc {
 	return func(d *schema.ResourceData, meta interface{}) error {
 		vcdClient := meta.(*VCDClient)
 
@@ -118,8 +118,8 @@ func natRuleReader(idField, natType string, setData natRuleDataSetter) schema.Re
 	}
 }
 
-// natRuleDeleter returns a schema.DeleteFunc for both SNAT and DNAT rules
-func natRuleDeleter(natType string) schema.DeleteFunc {
+// natRuleDelete returns a schema.DeleteFunc for both SNAT and DNAT rules
+func natRuleDelete(natType string) schema.DeleteFunc {
 	return func(d *schema.ResourceData, meta interface{}) error {
 		vcdClient := meta.(*VCDClient)
 		vcdClient.lockParentEdgeGtw(d)
@@ -141,7 +141,7 @@ func natRuleDeleter(natType string) schema.DeleteFunc {
 }
 
 // natRuleImporter returns a schema.StateFunc for both SNAT and DNAT rules
-func natRuleImporter(natType string) schema.StateFunc {
+func natRuleImport(natType string) schema.StateFunc {
 	return func(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 		resourceURI := strings.Split(d.Id(), ".")
 		if len(resourceURI) != 4 {
