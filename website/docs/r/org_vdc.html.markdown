@@ -108,6 +108,8 @@ Capacity must be specified twice, once for `memory` and another for `cpu`.  Each
 
 ## Importing
 
+Supported in provider *v2.5+*
+
 ~> **Note:** The current implementation of Terraform import can only import resources into the state.
 It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
 
