@@ -3,14 +3,14 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_nsxv_snat"
 sidebar_current: "docs-vcd-data-source-nsxv-snat"
 description: |-
-  Provides a vCloud Director SNAT data source using proxied NSX-V API. This can be used to read
+  Provides a vCloud Director SNAT data source for advanced edge gateways (NSX-V). This can be used to read
   existing rule by ID and use its attributes in other resources.
 ---
 
 # vcd\_nsxv\_snat
 
-Provides a vCloud Director SNAT data source using proxied NSX-V API. This can be used to read
-existing rule by ID and use its attributes in other resources.
+Provides a vCloud Director SNAT data source for advanced edge gateways (NSX-V). This can be used to
+read existing rule by ID and use its attributes in other resources.
 
 ~> **Note:** This data source requires advanced edge gateway. For non-advanced edge gateways please
 use the [`vcd_snat`](/docs/providers/vcd/r/snat.html) resource.
