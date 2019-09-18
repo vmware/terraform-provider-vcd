@@ -90,7 +90,6 @@ func resourceVcdOrgVdc() *schema.Resource {
 					},
 				},
 				Description: "The compute capacity allocated to this VDC.",
-				//Set:         hashMapStringForCapacity,
 			},
 			"nic_quota": &schema.Schema{
 				Type:        schema.TypeInt,
@@ -310,27 +309,27 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 // setOrgVdcData sets object state from *govcd.AdminVdc
 func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.AdminOrg, adminVdc *govcd.AdminVdc) error {
 
-	d.Set("allocation_model", adminVdc.AdminVdc.AllocationModel)
-	d.Set("cpu_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedCpu)
-	d.Set("cpu_speed", adminVdc.AdminVdc.VCpuInMhz)
-	d.Set("description", adminVdc.AdminVdc.Description)
-	d.Set("enable_fast_provisioning", adminVdc.AdminVdc.UsesFastProvisioning)
-	d.Set("enable_thin_provisioning", adminVdc.AdminVdc.IsThinProvision)
-	d.Set("enable_vm_discovery", adminVdc.AdminVdc.VmDiscoveryEnabled)
-	d.Set("enabled", adminVdc.AdminVdc.IsEnabled)
-	d.Set("memory_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedMemory)
-	d.Set("name", adminVdc.AdminVdc.Name)
+	_ = d.Set("allocation_model", adminVdc.AdminVdc.AllocationModel)
+	_ = d.Set("cpu_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedCpu)
+	_ = d.Set("cpu_speed", adminVdc.AdminVdc.VCpuInMhz)
+	_ = d.Set("description", adminVdc.AdminVdc.Description)
+	_ = d.Set("enable_fast_provisioning", adminVdc.AdminVdc.UsesFastProvisioning)
+	_ = d.Set("enable_thin_provisioning", adminVdc.AdminVdc.IsThinProvision)
+	_ = d.Set("enable_vm_discovery", adminVdc.AdminVdc.VmDiscoveryEnabled)
+	_ = d.Set("enabled", adminVdc.AdminVdc.IsEnabled)
+	_ = d.Set("memory_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedMemory)
+	_ = d.Set("name", adminVdc.AdminVdc.Name)
 
 	networkPool, err := govcd.GetNetworkPoolByHREF(vcdClient.VCDClient, adminVdc.AdminVdc.NetworkPoolReference.HREF)
 	if err != nil {
 		return fmt.Errorf("error retrieving network pool: %s", err)
 	}
 
-	d.Set("network_pool_name", networkPool.Name)
-	d.Set("network_quota", adminVdc.AdminVdc.NetworkQuota)
-	d.Set("nic_quota", adminVdc.AdminVdc.Vdc.NicQuota)
-	d.Set("provider_vdc_name", adminVdc.AdminVdc.ProviderVdcReference.Name)
-	d.Set("vm_quota", adminVdc.AdminVdc.Vdc.VMQuota)
+	_ = d.Set("network_pool_name", networkPool.Name)
+	_ = d.Set("network_quota", adminVdc.AdminVdc.NetworkQuota)
+	_ = d.Set("nic_quota", adminVdc.AdminVdc.Vdc.NicQuota)
+	_ = d.Set("provider_vdc_name", adminVdc.AdminVdc.ProviderVdcReference.Name)
+	_ = d.Set("vm_quota", adminVdc.AdminVdc.Vdc.VMQuota)
 
 	if err := d.Set("compute_capacity", getComputeCapacities(adminVdc.AdminVdc.ComputeCapacity)); err != nil {
 		return fmt.Errorf("error setting compute_capacity: %s", err)
@@ -356,8 +355,9 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 		return fmt.Errorf("unable to get VDC metadata %s", err)
 	}
 
-	d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
-
+	if err := d.Set("metadata", getMetadataStruct(metadata.MetadataEntry)); err != nil {
+		return fmt.Errorf("error setting metadata: %s", err)
+	}
 	log.Printf("[TRACE] vdc read completed: %#v", adminVdc.AdminVdc)
 	return nil
 }
@@ -868,8 +868,8 @@ func resourceVcdOrgVdcImport(d *schema.ResourceData, meta interface{}) ([]*schem
 		return nil, fmt.Errorf("unable to find VDC %s", err)
 	}
 
-	d.Set("org", orgName)
-	d.Set("name", vdcName)
+	_ = d.Set("org", orgName)
+	_ = d.Set("name", vdcName)
 
 	d.SetId(adminVdc.AdminVdc.ID)
 

@@ -3,12 +3,12 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_org_vdc"
 sidebar_current: "docs-vcd-data-source-org-vdc"
 description: |-
-  Provides a organization VDC data source.
+  Provides an organization VDC data source.
 ---
 
 # vcd\_org\_vcd
 
-Provides a vCloud Director Organization VDC data source. A Organization VDC can be used to reference a VCD and use its 
+Provides a vCloud Director Organization VDC data source. An Organization VDC can be used to reference a VCD and use its 
 data within other resources or data sources.
 
 Supported in provider *v2.5+*

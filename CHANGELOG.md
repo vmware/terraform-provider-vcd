@@ -25,6 +25,7 @@ IMPROVEMENTS:
 * `resource/vcd_vapp_vm` supports guest properties [#319]
 * Upgrade Terraform SDK dependency to 0.12.6 [#302]
 * `vcd_org_vdc` Add import capability - [#324]
+* `vcd_org_vdc` Add full read capability - [#324]
 * Upgrade Terraform SDK dependency to 0.12.8 [#320]
 
 BUG FIXES:
