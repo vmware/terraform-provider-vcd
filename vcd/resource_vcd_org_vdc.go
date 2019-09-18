@@ -851,7 +851,7 @@ func getStorageProfileHREF(vcdClient *VCDClient, name string) (string, error) {
 func resourceVcdOrgVdcImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ".")
 	if len(resourceURI) != 2 {
-		return nil, fmt.Errorf("resource name must be specified as org.vdc.my_existing_vdc")
+		return nil, fmt.Errorf("resource name must be specified as org.my_existing_vdc")
 	}
 	orgName, vdcName := resourceURI[0], resourceURI[1]
 

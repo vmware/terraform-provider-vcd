@@ -116,7 +116,7 @@ via supplying the full dot separated path to VDC. An example is
 below:
 
 ```
-terraform import vcd_org_vdc.my-vdc
+terraform import vcd_org_vdc.my-vdc my-org.my-vdc
 ```
 
 [docs-import]:https://www.terraform.io/docs/import/
