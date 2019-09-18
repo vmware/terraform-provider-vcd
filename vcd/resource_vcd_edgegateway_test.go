@@ -63,8 +63,25 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 						"vcd_edgegateway."+edgeGatewayNameBasic, "default_gateway_network", testConfig.Networking.ExternalNetwork),
 				),
 			},
+			resource.TestStep{
+				ResourceName:      "vcd_edgegateway." + edgeGatewayNameBasic + "-import",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdByEdgeGateway(testConfig, edgeGatewayVcdName),
+			},
 		},
 	})
+}
+
+func importStateIdByEdgeGateway(vcd TestConfig, objectName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		importId := testConfig.VCD.Org + "." + testConfig.VCD.Vdc + "." + objectName
+		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || objectName == "" {
+			return "", fmt.Errorf("missing information to generate import path: %s", importId)
+		}
+
+		return importId, nil
+	}
 }
 
 func TestAccVcdEdgeGatewayComplex(t *testing.T) {
@@ -132,6 +149,12 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_loglevel", "critical"),
 				),
 			},
+			resource.TestStep{
+				ResourceName:      "vcd_edgegateway." + edgeGatewayNameComplex + "-import",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdByEdgeGateway(testConfig, edgeGatewayVcdName),
+			},
 		},
 	})
 }
@@ -155,9 +178,9 @@ func testEdgeGatewayDestroy(s *terraform.State, wantedEgwName string) error {
 			return fmt.Errorf("error retrieving org %s and vdc %s : %s ", orgName, vdcName, err)
 		}
 
-		_, err = vdc.FindEdgeGateway(edgeGatewayNameBasic)
+		_, err = vdc.GetEdgeGatewayByName(wantedEgwName, true)
 		if err == nil {
-			return fmt.Errorf("edge gateway %s was not removed", edgeGatewayNameBasic)
+			return fmt.Errorf("edge gateway %s was not removed", wantedEgwName)
 		}
 	}
 

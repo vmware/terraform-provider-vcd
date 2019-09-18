@@ -3,6 +3,7 @@ package vcd
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -14,6 +15,9 @@ func resourceVcdEdgeGateway() *schema.Resource {
 		Read:   resourceVcdEdgeGatewayRead,
 		Update: resourceVcdEdgeGatewayUpdate,
 		Delete: resourceVcdEdgeGatewayDelete,
+		Importer: &schema.ResourceImporter{
+			State: resourceVcdEdgeGatewayImport,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
@@ -203,22 +207,37 @@ func resourceVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}) error 
 
 	vcdClient := meta.(*VCDClient)
 
-	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "name")
-	if err != nil {
-		d.SetId("")
-		return nil
+	identifier := d.Id()
+	if identifier == "" {
+		identifier = d.Get("name").(string)
+	}
+	if identifier == "" {
+		return fmt.Errorf("[edgegateway read] no identifier provided")
 	}
 
-	if err := setEdgeGatewayValues(d, edgeGateway); err != nil {
+	orgName := d.Get("org").(string)
+	vdcName := d.Get("vdc").(string)
+	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
+	if err != nil {
+		return fmt.Errorf("[edgegateway read] error retrieving org and vdc: %s", err)
+	}
+	edgeGateway, err := vdc.GetEdgeGatewayByNameOrId(identifier, false)
+	if err != nil {
+		return fmt.Errorf("[edgegateway read] error retrieving edge gateway %s: %s", identifier, err)
+	}
+
+	if err := setEdgeGatewayValues(d, *edgeGateway); err != nil {
 		return err
 	}
 
 	// Only read and set the statefile if the edge gateway is advanced
 	if edgeGateway.HasAdvancedNetworking() {
-		if err := setLoadBalancerData(d, edgeGateway); err != nil {
+		if err := setLoadBalancerData(d, *edgeGateway); err != nil {
 			return err
 		}
 	}
+
+	d.SetId(edgeGateway.EdgeGateway.ID)
 
 	log.Printf("[TRACE] edge gateway read completed: %#v", edgeGateway.EdgeGateway)
 	return nil
@@ -240,7 +259,7 @@ func resourceVcdEdgeGatewayUpdate(d *schema.ResourceData, meta interface{}) erro
 	if edgeGateway.HasAdvancedNetworking() && (d.HasChange("lb_enabled") ||
 		d.HasChange("lb_acceleration_enabled") || d.HasChange("lb_logging_enabled") ||
 		d.HasChange("lb_loglevel")) {
-		err := updateLoadBalancer(d, edgeGateway)
+		err := updateLoadBalancer(d, *edgeGateway)
 		if err != nil {
 			return err
 		}
@@ -263,7 +282,6 @@ func resourceVcdEdgeGatewayDelete(d *schema.ResourceData, meta interface{}) erro
 
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "name")
 	if err != nil {
-		d.SetId("")
 		return fmt.Errorf("error fetching edge gateway details %#v", err)
 	}
 
@@ -289,10 +307,12 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	if err != nil {
 		return err
 	}
+	var gateways = make(map[string]string)
 	var networks []string
 	for _, net := range egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
 		if net.InterfaceType == "uplink" {
 			networks = append(networks, net.Network.Name)
+			gateways[net.SubnetParticipation.Gateway] = net.Network.Name
 		}
 	}
 	err = d.Set("external_networks", networks)
@@ -300,15 +320,16 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 		return err
 	}
 
-	err = d.Set("advanced", egw.EdgeGateway.Configuration.AdvancedNetworkingEnabled)
-	if err != nil {
-		return err
-	}
-	err = d.Set("ha_enabled", egw.EdgeGateway.Configuration.HaEnabled)
-	if err != nil {
-		return err
-	}
+	_ = d.Set("advanced", egw.EdgeGateway.Configuration.AdvancedNetworkingEnabled)
+	_ = d.Set("ha_enabled", egw.EdgeGateway.Configuration.HaEnabled)
+	_ = d.Set("distributed_routing", egw.EdgeGateway.Configuration.DistributedRoutingEnabled)
 
+	for _, gw := range egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
+		defaultGwNet, ok := gateways[gw.SubnetParticipation.Gateway]
+		if ok {
+			_ = d.Set("default_gateway_network", defaultGwNet)
+		}
+	}
 	// TODO: Enable this setting after we switch to a higher API version.
 	//Based on testing the API does accept (and set) the setting, but upon GET query it omits the DistributedRouting
 	// field therefore struct field defaults to false after unmarshaling.
@@ -319,6 +340,11 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	//	return err
 	//}
 
+	err = setLoadBalancerData(d, egw)
+	if err != nil {
+		return err
+	}
+	d.SetId(egw.EdgeGateway.ID)
 	return nil
 }
 
@@ -349,4 +375,35 @@ func updateLoadBalancer(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	}
 
 	return nil
+}
+
+// resourceVcdEdgeGatewayImport is responsible for importing the resource.
+// The following steps happen as part of import
+// 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
+// 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
+// 3. The functions splits the dot-formatted path and tries to lookup the object
+// 4. If the lookup succeeds it sets the ID field for `_resource_name_` resource in statefile
+// (the resource must be already defined in .tf config otherwise `terraform import` will complain)
+// 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
+// based on the known ID of object.
+//
+// Example resource name (_resource_name_): vcd_edgegateway.my-edge-gateway
+// Example import path (_the_id_string_): org.vdc.my-edge-gw
+func resourceVcdEdgeGatewayImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	resourceURI := strings.Split(d.Id(), ".")
+	if len(resourceURI) != 3 {
+		return nil, fmt.Errorf("resource name must be specified as org.vdc.edge-gw")
+	}
+	orgName, vdcName, edgeName := resourceURI[0], resourceURI[1], resourceURI[2]
+
+	vcdClient := meta.(*VCDClient)
+	edgeGateway, err := vcdClient.GetEdgeGateway(orgName, vdcName, edgeName)
+	if err != nil {
+		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
+	}
+
+	_ = d.Set("org", orgName)
+	_ = d.Set("vdc", vdcName)
+	d.SetId(edgeGateway.EdgeGateway.ID)
+	return []*schema.ResourceData{d}, nil
 }
