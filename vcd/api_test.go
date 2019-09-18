@@ -154,21 +154,3 @@ func getMajorVersion() string {
 	// Where the first element is the full text matched, and the second one is the first captured text
 	return versionList[0][1]
 }
-
-// getHashValuesFromKey returns the hash values of a TypeSet Key
-// Given "parent.1234.child.5678.something", it will return "1234" and "5678"
-// for Example: compute_capacity.315866465.memory.508945747.limit
-//              (returns 315866465 and 508945747)
-// Warning this function works fine when there is only one key with parent
-func getHashValuesFromKey(stateFileMap map[string]string, parentKey, childKey string) (string, string, error) {
-
-	var searchPattern = regexp.MustCompile(parentKey + `\.(\d+)\.` + childKey + `\.(\d+)\.\w+`)
-	for k, _ := range stateFileMap {
-		foundList := searchPattern.FindAllStringSubmatch(k, -1)
-		if len(foundList) > 0 && len(foundList[0]) > 0 {
-			return foundList[0][1], foundList[0][2], nil
-		}
-	}
-
-	return "", "", fmt.Errorf("error extracting hashes from '%s', err %s", parentKey, childKey)
-}
