@@ -47,7 +47,7 @@ when connected as sysadmin working across different organisations.
 * `enabled` - (Optional) Defines if the rule is enabaled. Default `true`.
 * `logging_enabled` - (Optional) Defines if the logging for this rule is enabaled. Default `false`.
 * `description` - (Optional) Free text description.
-* `rule_tag` - (Optional) This can be used to specifyuser-controlled rule tag. If not specified,
+* `rule_tag` - (Optional) This can be used to specify user-controlled rule tag. If not specified,
 it will report rule ID after creation. Must be between 65537-131072.
 * `original_address` - (Required) IP address, range or subnet. These addresses are the IP addresses
 of one or more virtual machines for which you are configuring the SNAT rule so that they can send
