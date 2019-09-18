@@ -28,10 +28,11 @@ func resourceVcdOrgUser() *schema.Resource {
 				Description:  "User's name. Only lowercase letters allowed. Cannot be changed after creation",
 			},
 			"org": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "Organization this user belongs to",
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Description: "The name of organization to use, optional if defined at provider " +
+					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"role": {
 				Type:        schema.TypeString,

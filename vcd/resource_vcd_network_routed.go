@@ -3,12 +3,13 @@ package vcd
 import (
 	"bytes"
 	"fmt"
+	"log"
+	"strings"
+
 	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"log"
-	"strings"
 )
 
 func resourceVcdNetworkRouted() *schema.Resource {
@@ -27,11 +28,14 @@ func resourceVcdNetworkRouted() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
+				Description: "The name of organization to use, optional if defined at provider " +
+					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"vdc": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "The name of VDC to use, optional if defined at provider level",
 			},
 
 			"edge_gateway": &schema.Schema{

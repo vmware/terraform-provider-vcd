@@ -11,14 +11,15 @@ func datasourceVcdLbServiceMonitor() *schema.Resource {
 		Read: datasourceVcdLbServiceMonitorRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "vCD organization in which the LB Service Monitor is located",
+				Type:     schema.TypeString,
+				Optional: true,
+				Description: "The name of organization to use, optional if defined at provider " +
+					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "vCD virtual datacenter in which the LB Service Monitor is located",
+				Description: "The name of VDC to use, optional if defined at provider level",
 			},
 			"edge_gateway": &schema.Schema{
 				Type:        schema.TypeString,

@@ -55,10 +55,11 @@ func resourceVcdOrgVdc() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"org": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "Organization to create the VDC in",
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Description: "The name of organization to use, optional if defined at provider " +
+					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
