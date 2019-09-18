@@ -4,6 +4,7 @@ package vcd
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -164,20 +165,20 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.limit", params["Limit"].(string)),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.overhead", "0"),
-					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.reserved", params["Reserved"].(string)),
-					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.used", "0"),
+					resource.TestMatchResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.reserved", regexp.MustCompile(`^\d*$`)),
+					resource.TestMatchResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.used", regexp.MustCompile(`^\d*$`)),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.allocated", params["Allocated"].(string)),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.limit", params["Limit"].(string)),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.overhead", "0"),
-					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.reserved", params["Reserved"].(string)),
-					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.used", "0"),
+					resource.TestMatchResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d*$`)),
+					resource.TestMatchResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.used", regexp.MustCompile(`^\d*$`)),
 				),
 			},
 			resource.TestStep{
@@ -228,20 +229,20 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.limit", params["Limit"].(string)),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.overhead", "0"),
-					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.reserved", params["Reserved"].(string)),
-					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.used", "0"),
+					resource.TestMatchResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.reserved", regexp.MustCompile(`^\d*$`)),
+					resource.TestMatchResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.used", regexp.MustCompile(`^\d*$`)),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.allocated", params["Allocated"].(string)),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.limit", params["Limit"].(string)),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.overhead", "0"),
-					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.reserved", params["Reserved"].(string)),
-					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.used", "0"),
+					resource.TestMatchResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d*$`)),
+					resource.TestMatchResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.used", regexp.MustCompile(`^\d*$`)),
 				),
 			},
 			resource.TestStep{
