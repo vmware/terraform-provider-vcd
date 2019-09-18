@@ -105,3 +105,22 @@ Capacity must be specified twice, once for `memory` and another for `cpu`.  Each
 
 * `allocated` - (Optional) Capacity that is committed to be available. Value in MB or MHz. Used with AllocationPool ("Allocation pool") and ReservationPool ("Reservation pool").
 * `limit` - (Optional) Capacity limit relative to the value specified for Allocation. It must not be less than that value. If it is greater than that value, it implies over provisioning. A value of 0 specifies unlimited units. Value in MB or MHz. Used with AllocationVApp ("Pay as you go").
+
+## Importing
+
+~> **Note:** The current implementation of Terraform import can only import resources into the state.
+It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
+
+An existing an organization VDC can be [imported][docs-import] into this resource
+via supplying the full dot separated path to VDC. An example is
+below:
+
+```
+terraform import vcd_org_vdc.my-vdc
+```
+
+[docs-import]:https://www.terraform.io/docs/import/
+
+After that, you can expand the configuration file and either update or delete the VDC as needed. Running `terraform plan`
+at this stage will show the difference between the minimal configuration file and the VDC's stored properties.
+
