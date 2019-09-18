@@ -18,7 +18,7 @@ type natRuleTypeGetter func(d *schema.ResourceData, edgeGateway govcd.EdgeGatewa
 type natRuleDataSetter func(d *schema.ResourceData, natRule *types.EdgeNatRule, edgeGateway govcd.EdgeGateway) error
 
 // natRuleCreator returns a schema.CreateFunc for both SNAT and DNAT rules
-func natRuleCreator(natType string, setData natRuleDataSetter, getType natRuleTypeGetter) schema.CreateFunc {
+func natRuleCreator(natType string, setData natRuleDataSetter, getNatRule natRuleTypeGetter) schema.CreateFunc {
 	return func(d *schema.ResourceData, meta interface{}) error {
 		vcdClient := meta.(*VCDClient)
 		vcdClient.lockParentEdgeGtw(d)
@@ -29,7 +29,7 @@ func natRuleCreator(natType string, setData natRuleDataSetter, getType natRuleTy
 			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
-		natRule, err := getType(d, edgeGateway)
+		natRule, err := getNatRule(d, edgeGateway)
 		if err != nil {
 			return fmt.Errorf("unable to make structure for API call: %s", err)
 		}
@@ -47,7 +47,7 @@ func natRuleCreator(natType string, setData natRuleDataSetter, getType natRuleTy
 }
 
 // natRuleUpdater returns a schema.UpdateFunc for both SNAT and DNAT rules
-func natRuleUpdater(natType string, setData natRuleDataSetter, getType natRuleTypeGetter) schema.UpdateFunc {
+func natRuleUpdater(natType string, setData natRuleDataSetter, getNatRule natRuleTypeGetter) schema.UpdateFunc {
 	return func(d *schema.ResourceData, meta interface{}) error {
 		vcdClient := meta.(*VCDClient)
 		vcdClient.lockParentEdgeGtw(d)
@@ -58,7 +58,7 @@ func natRuleUpdater(natType string, setData natRuleDataSetter, getType natRuleTy
 			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
-		updateNatRule, err := getType(d, edgeGateway)
+		updateNatRule, err := getNatRule(d, edgeGateway)
 		if err != nil {
 			return fmt.Errorf("unable to make structure for API call: %s", err)
 		}
