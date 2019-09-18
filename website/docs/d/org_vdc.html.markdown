@@ -20,6 +20,11 @@ data "vcd_org_vdc" "my-org-vdc" {
   org     = "my-org"
   name    = "my-vdc"
 }
+
+output "provider_vdc" {
+ value   = data.vcd_org_vdc.my-org-vdc.provider_vdc_name
+}
+
 ```
 
 ## Argument Reference
