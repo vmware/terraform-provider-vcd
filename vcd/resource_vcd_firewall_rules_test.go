@@ -60,7 +60,7 @@ func testAccCheckVcdFirewallRulesExists(n string, gateway *govcd.EdgeGateway) re
 			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
-		*gateway = edgeGateway
+		*gateway = *edgeGateway
 
 		return nil
 	}
@@ -81,6 +81,8 @@ func testAccCheckVcdFirewallRulesAttributes(newRules, existingRules *govcd.EdgeG
 
 func createFirewallRulesConfigs(existingRules *govcd.EdgeGateway) string {
 	defaultAction := "drop"
+	var edgeGateway *govcd.EdgeGateway
+	var err error
 	edgeGatewayName := testConfig.Networking.EdgeGateway
 	if !vcdShortTest {
 		conn := createTemporaryVCDConnection()
@@ -89,13 +91,13 @@ func createFirewallRulesConfigs(existingRules *govcd.EdgeGateway) string {
 			panic(fmt.Errorf("could not get an Edge Gateway. Variable networking.edgeGateway is not set"))
 		}
 		//edgeGateway, err := vdc.FindEdgeGateway(edgeGatewayName)
-		edgeGateway, err := conn.GetEdgeGateway(testConfig.VCD.Org, testConfig.VCD.Vdc, edgeGatewayName)
+		edgeGateway, err = conn.GetEdgeGateway(testConfig.VCD.Org, testConfig.VCD.Vdc, edgeGatewayName)
 		if err != nil {
 			panic(err)
 		}
-		*existingRules = edgeGateway
+		*existingRules = *edgeGateway
 		debugPrintf("[DEBUG] Edge gateway: %#v", edgeGateway)
-		firewallRules := *edgeGateway.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.FirewallService
+		firewallRules := edgeGateway.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration.FirewallService
 		defaultAction = firewallRules.DefaultAction
 	}
 	var params = StringMap{

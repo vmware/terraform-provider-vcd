@@ -411,11 +411,11 @@ func addVdcNetwork(networkNameToAdd string, vdc *govcd.Vdc, vapp govcd.VApp, vcd
 		return &types.OrgVDCNetwork{}, fmt.Errorf("'network_name' must be valid when adding VM to raw vApp")
 	}
 
-	net, err := vdc.FindVDCNetwork(networkNameToAdd)
+	network, err := vdc.GetOrgVdcNetworkByName(networkNameToAdd, false)
 	if err != nil {
 		return &types.OrgVDCNetwork{}, fmt.Errorf("network %s wasn't found as VDC network", networkNameToAdd)
 	}
-	vdcNetwork := net.OrgVDCNetwork
+	vdcNetwork := network.OrgVDCNetwork
 
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 	if err != nil {
