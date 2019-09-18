@@ -79,3 +79,34 @@ Default is `false`.
 `alert`, `critical`, `error`, `warning`, `notice`, `info`, `debug`
 
 
+## Importing
+
+Supported in provider *v2.5+*
+
+~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
+configuration. [More information.][docs-import]
+
+An existing edge gateway can be [imported][docs-import] into this resource via supplying its path. 
+The path for this resource is made of orgName.vdcName.edgeName. 
+For example, using this structure, representing an edge gateway that was **not** created using Terraform:
+
+```hcl
+resource "vcd_edgegateway" "tf-edgegateway" {
+  name              = "my-edge-gw"
+  org               = "my-org"
+  vdc               = "my-vdc"
+  configuration     = "COMPUTE"
+  external_networks = ["COMPUTE"]
+}
+```
+
+You can import such edge gateway into terraform state using this command
+
+```
+terraform import vcd_edgegateway.tf-edgegateway my-org.my-vdc.my-edge-gw
+```
+
+[docs-import]:https://www.terraform.io/docs/import/
+
+After importing, if you run `terraform plan` you will see the rest of the values and modify the script accordingly for 
+further operations.
