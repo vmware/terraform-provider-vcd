@@ -370,20 +370,20 @@ type Vdc struct {
 	Name         string `xml:"name,attr"`
 	Status       int    `xml:"status,attr,omitempty"`
 
-	Link               LinkList              `xml:"Link,omitempty"`
-	Description        string                `xml:"Description,omitempty"`
-	AllocationModel    string                `xml:"AllocationModel"`
-	ComputeCapacity    []*ComputeCapacity    `xml:"ComputeCapacity"`
-	ResourceEntities   []*ResourceEntities   `xml:"ResourceEntities,omitempty"`
-	AvailableNetworks  []*AvailableNetworks  `xml:"AvailableNetworks,omitempty"`
-	Capabilities       []*Capabilities       `xml:"Capabilities,omitempty"`
-	NicQuota           int                   `xml:"NicQuota"`
-	NetworkQuota       int                   `xml:"NetworkQuota"`
-	VMQuota            int                   `xml:"VmQuota"`
-	IsEnabled          bool                  `xml:"IsEnabled"`
-	Tasks              *TasksInProgress      `xml:"Tasks,omitempty"`
-	UsedNetworkCount   int                   `xml:"UsedNetworkCount,omitempty"`
-	VdcStorageProfiles []*VdcStorageProfiles `xml:"VdcStorageProfiles"`
+	Link               LinkList             `xml:"Link,omitempty"`
+	Description        string               `xml:"Description,omitempty"`
+	AllocationModel    string               `xml:"AllocationModel"`
+	ComputeCapacity    []*ComputeCapacity   `xml:"ComputeCapacity"`
+	ResourceEntities   []*ResourceEntities  `xml:"ResourceEntities,omitempty"`
+	AvailableNetworks  []*AvailableNetworks `xml:"AvailableNetworks,omitempty"`
+	Capabilities       []*Capabilities      `xml:"Capabilities,omitempty"`
+	NicQuota           int                  `xml:"NicQuota"`
+	NetworkQuota       int                  `xml:"NetworkQuota"`
+	VMQuota            int                  `xml:"VmQuota"`
+	IsEnabled          bool                 `xml:"IsEnabled"`
+	Tasks              *TasksInProgress     `xml:"Tasks,omitempty"`
+	UsedNetworkCount   int                  `xml:"UsedNetworkCount,omitempty"`
+	VdcStorageProfiles *VdcStorageProfiles  `xml:"VdcStorageProfiles"`
 }
 
 // AdminVdc represents the admin view of an organization VDC.
@@ -1179,7 +1179,6 @@ func (p *ProductSectionList) SortByPropertyKeyName() {
 	sort.SliceStable(p.ProductSection.Property, func(i, j int) bool {
 		return p.ProductSection.Property[i].Key < p.ProductSection.Property[j].Key
 	})
-	return
 }
 
 type ProductSection struct {
