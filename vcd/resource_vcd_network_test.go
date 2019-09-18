@@ -164,7 +164,7 @@ func runTest(def networkDef, t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdNetworkExists(def.resourceName+"."+networkName, &network),
+					testAccCheckVcdNetworkExists(networkName, &network),
 					testAccCheckVcdNetworkAttributes(networkName, &network),
 					resource.TestCheckResourceAttr(
 						def.resourceName+"."+networkName, "name", networkName),
@@ -178,12 +178,16 @@ func runTest(def networkDef, t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdNetworkExists(def.resourceName+"."+networkName, &network),
+					testAccCheckVcdNetworkExists(networkName, &network),
 					testAccCheckVcdNetworkAttributes(networkName, &network),
 					resource.TestCheckResourceAttr(
 						def.resourceName+"."+networkName, "name", networkName),
 					resource.TestCheckResourceAttr(
 						def.resourceName+"."+networkName, "static_ip_pool.#", "1"),
+					resource.TestCheckResourceAttr(
+						def.resourceName+"."+networkName, "static_ip_pool.0.start_address", def.startIpAddress),
+					resource.TestCheckResourceAttr(
+						def.resourceName+"."+networkName, "static_ip_pool.0.end_address", def.endIpAddress),
 					resource.TestCheckResourceAttr(
 						def.resourceName+"."+networkName, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
@@ -196,12 +200,16 @@ func runTest(def networkDef, t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdNetworkExists(def.resourceName+"."+networkName, &network),
+					testAccCheckVcdNetworkExists(networkName, &network),
 					testAccCheckVcdNetworkAttributes(networkName, &network),
 					resource.TestCheckResourceAttr(
 						def.resourceName+"."+networkName, "name", networkName),
 					resource.TestCheckResourceAttr(
 						def.resourceName+"."+networkName, "dhcp_pool.#", "1"),
+					resource.TestCheckResourceAttr(
+						def.resourceName+"."+networkName, "dhcp_pool.0.start_address", def.startIpAddress),
+					resource.TestCheckResourceAttr(
+						def.resourceName+"."+networkName, "dhcp_pool.0.end_address", def.endIpAddress),
 					resource.TestCheckResourceAttr(
 						def.resourceName+"."+networkName, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
@@ -212,24 +220,32 @@ func runTest(def networkDef, t *testing.T) {
 
 	}
 
+	steps = append(steps, resource.TestStep{
+		ResourceName:      def.resourceName + "." + networkName + "-import",
+		ImportState:       true,
+		ImportStateVerify: true,
+		ImportStateIdFunc: importStateIdByNetwork(testConfig, networkName),
+	})
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: func(s *terraform.State) error { return testAccCheckVcdNetworkDestroy(s, def.resourceName) },
+		CheckDestroy: func(s *terraform.State) error { return testAccCheckVcdNetworkDestroy(s, def.resourceName, networkName) },
 		Steps:        steps,
 	})
 }
 
-func testAccCheckVcdNetworkExists(n string, network *govcd.OrgVDCNetwork) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("not found: %s", n)
+func importStateIdByNetwork(vcd TestConfig, objectName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || objectName == "" {
+			return "", fmt.Errorf("missing information to generate import path")
 		}
+		return testConfig.VCD.Org + "." + testConfig.VCD.Vdc + "." + objectName, nil
+	}
+}
 
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("no network ID is set")
-		}
+func testAccCheckVcdNetworkExists(name string, network *govcd.OrgVDCNetwork) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
 
 		conn := testAccProvider.Meta().(*VCDClient)
 
@@ -238,37 +254,28 @@ func testAccCheckVcdNetworkExists(n string, network *govcd.OrgVDCNetwork) resour
 			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
 
-		resp, err := vdc.FindVDCNetwork(rs.Primary.ID)
+		orgVDCNetwork, err := vdc.GetOrgVdcNetworkByName(name, false)
 		if err != nil {
-			return fmt.Errorf("network %s does not exist (%#v)", rs.Primary.ID, resp)
+			return fmt.Errorf("network %s does not exist ", name)
 		}
 
-		*network = resp
+		*network = *orgVDCNetwork
 
 		return nil
 	}
 }
 
-func testAccCheckVcdNetworkDestroy(s *terraform.State, networkType string) error {
+func testAccCheckVcdNetworkDestroy(s *terraform.State, networkType string, networkName string) error {
 	conn := testAccProvider.Meta().(*VCDClient)
 
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != networkType {
-			continue
-		}
+	_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+	if err != nil {
+		return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
+	}
 
-		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
-		if err != nil {
-			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
-		}
-
-		_, err = vdc.FindVDCNetwork(rs.Primary.ID)
-
-		if err == nil {
-			return fmt.Errorf("network %s still exists", rs.Primary.ID)
-		}
-
-		return nil
+	_, err = vdc.GetOrgVdcNetworkByNameOrId(networkName, false)
+	if err == nil {
+		return fmt.Errorf("network %s still exists", networkName)
 	}
 
 	return nil
