@@ -6,6 +6,10 @@ FEATURES:
 * **New Data Source:** `vcd_catalog` Catalog - ([#218])
 * **New Data Source:** `vcd_catalog_item` CatalogItem - ([#218])
 * **New Data Source:** `vcd_external_network` External Network - ([#218])
+* **New Data Source:** `vcd_edgegateway` Edge Gateway - ([#218])
+* **New Data Source:** `vcd_network_routed` Routed Network - ([#218])
+* **New Data Source:** `vcd_network_isolated` Isolated Network - ([#218])
+* **New Data Source:** `vcd_network_direct` Direct Network - ([#218])
 
 IMPROVEMENTS:
 
@@ -13,6 +17,10 @@ IMPROVEMENTS:
 * `resource/vcd_catalog` Add import capability
 * `resource/vcd_catalog_item` Add import capability
 * `resource/vcd_external_network` Add import capability
+* `resource/vcd_edgegateway` Add import capability
+* `resource/vcd_network_routed` Add import capability
+* `resource/vcd_network_isolated` Add import capability
+* `resource/vcd_network_direct` Add import capability
 * `resource/catalog_item` added catalog item metadata support [#285] 
 * `resource/vcd_catalog`: Catalog state ID changed from catalog name to vCD ID 
 * `resource/vcd_catalog_item`: CatalogItem state ID changed from colon separated list of catalog name and item name to vCD ID 
@@ -22,6 +30,7 @@ IMPROVEMENTS:
 * `resource/vcd_vapp_vm` allows to force guest customization [#310]
 * `resource/vcd_vapp` supports guest properties [#319]
 * `resource/vcd_vapp_vm` supports guest properties [#319]
+* `resource/vcd_network_direct` Add computed properties [#330]
 * Upgrade Terraform SDK dependency to 0.12.6 [#302]
 
 BUG FIXES:
@@ -29,6 +38,8 @@ BUG FIXES:
 * Change Org ID from partial task ID to real Org ID during creation.
 * Wait for task completion on creation and update, where tasks were not handled at all.
 * `resource/vcd_firewall_rules` force recreation of the resource when attributes of the sub-element `rule` are changed (fixes a situation when it tried to update a rule).
+* `resource/vcd_network_isolated` Fix definition of DHCP, which was created automatically with leftovers from static IP pool even when not requested.
+* Change SetId from name to ID for all network resources.
 
 ## 2.4.0 (July 29, 2019)
 
