@@ -93,6 +93,7 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "-step1"
 	configText1 := templateFill(testAccEdgeGatewayComplexWithLb, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText1)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)

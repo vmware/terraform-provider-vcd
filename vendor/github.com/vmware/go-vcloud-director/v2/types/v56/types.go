@@ -322,21 +322,22 @@ type InstantiationParams struct {
 // Description: Represents an Org VDC network in the vCloud model.
 // Since: 5.1
 type OrgVDCNetwork struct {
-	XMLName       xml.Name              `xml:"OrgVdcNetwork"`
-	Xmlns         string                `xml:"xmlns,attr,omitempty"`
-	HREF          string                `xml:"href,attr,omitempty"`
-	Type          string                `xml:"type,attr,omitempty"`
-	ID            string                `xml:"id,attr,omitempty"`
-	OperationKey  string                `xml:"operationKey,attr,omitempty"`
-	Name          string                `xml:"name,attr"`
-	Status        string                `xml:"status,attr,omitempty"`
-	Configuration *NetworkConfiguration `xml:"Configuration,omitempty"`
-	Description   string                `xml:"Description,omitempty"`
-	EdgeGateway   *Reference            `xml:"EdgeGateway,omitempty"`
-	IsShared      bool                  `xml:"IsShared"`
-	Link          []Link                `xml:"Link,omitempty"`
-	ServiceConfig *GatewayFeatures      `xml:"ServiceConfig,omitempty"` // Specifies the service configuration for an isolated Org VDC networks
-	Tasks         *TasksInProgress      `xml:"Tasks,omitempty"`
+	XMLName         xml.Name              `xml:"OrgVdcNetwork"`
+	Xmlns           string                `xml:"xmlns,attr,omitempty"`
+	HREF            string                `xml:"href,attr,omitempty"`
+	Type            string                `xml:"type,attr,omitempty"`
+	ID              string                `xml:"id,attr,omitempty"`
+	OperationKey    string                `xml:"operationKey,attr,omitempty"`
+	Name            string                `xml:"name,attr"`
+	Status          string                `xml:"status,attr,omitempty"`
+	Configuration   *NetworkConfiguration `xml:"Configuration,omitempty"`
+	Description     string                `xml:"Description,omitempty"`
+	EdgeGateway     *Reference            `xml:"EdgeGateway,omitempty"`
+	ServiceConfig   *GatewayFeatures      `xml:"ServiceConfig,omitempty"` // Specifies the service configuration for an isolated Org VDC networks
+	IsShared        bool                  `xml:"IsShared"`
+	VimPortGroupRef []*VimObjectRef       `xml:"VimPortGroupRef,omitempty"` // Needed to set up DHCP inside ServiceConfig
+	Link            []Link                `xml:"Link,omitempty"`
+	Tasks           *TasksInProgress      `xml:"Tasks,omitempty"`
 }
 
 // SupportedHardwareVersions contains a list of VMware virtual hardware versions supported in this vDC.
@@ -1818,6 +1819,27 @@ type LbVirtualServer struct {
 	ApplicationRuleIds   []string `xml:"applicationRuleId,omitempty"`
 }
 
+// EdgeNatRule contains shared structure for SNAT and DNAT rule configuration using
+// NSX-V proxied edge gateway endpoint
+// // https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
+type EdgeNatRule struct {
+	XMLName           xml.Name `xml:"natRule"`
+	ID                string   `xml:"ruleId,omitempty"`
+	RuleType          string   `xml:"ruleType,omitempty"`
+	RuleTag           string   `xml:"ruleTag,omitempty"`
+	Action            string   `xml:"action"`
+	Vnic              *int     `xml:"vnic,omitempty"`
+	OriginalAddress   string   `xml:"originalAddress"`
+	TranslatedAddress string   `xml:"translatedAddress"`
+	LoggingEnabled    bool     `xml:"loggingEnabled"`
+	Enabled           bool     `xml:"enabled"`
+	Description       string   `xml:"description,omitempty"`
+	Protocol          string   `xml:"protocol,omitempty"`
+	OriginalPort      string   `xml:"originalPort,omitempty"`
+	TranslatedPort    string   `xml:"translatedPort,omitempty"`
+	IcmpType          string   `xml:"icmpType,omitempty"`
+}
+
 // VendorTemplate is information about a vendor service template. This is optional.
 // Type: VendorTemplateType
 // Namespace: http://www.vmware.com/vcloud/v1.5
@@ -2670,4 +2692,52 @@ type AdminCatalogRecord struct {
 	Status                  string    `xml:"status,attr,omitempty"`
 	Link                    *Link     `xml:"Link,omitempty"`
 	Vdc                     *Metadata `xml:"Metadata,omitempty"`
+}
+
+// EdgeGatewayVnics is a data structure holding information of vNic configuration in NSX-V edge
+// gateway
+type EdgeGatewayVnics struct {
+	XMLName xml.Name `xml:"vnics"`
+	Vnic    []struct {
+		Label         string `xml:"label"`
+		Name          string `xml:"name"`
+		AddressGroups struct {
+			AddressGroup struct {
+				PrimaryAddress     string `xml:"primaryAddress,omitempty"`
+				SecondaryAddresses struct {
+					IpAddress []string `xml:"ipAddress,omitempty"`
+				} `xml:"secondaryAddresses,omitempty"`
+				SubnetMask         string `xml:"subnetMask,omitempty"`
+				SubnetPrefixLength string `xml:"subnetPrefixLength,omitempty"`
+			} `xml:"addressGroup,omitempty"`
+		} `xml:"addressGroups,omitempty"`
+		Mtu                 string `xml:"mtu,omitempty"`
+		Type                string `xml:"type,omitempty"`
+		IsConnected         string `xml:"isConnected,omitempty"`
+		Index               *int   `xml:"index"`
+		PortgroupId         string `xml:"portgroupId,omitempty"`
+		PortgroupName       string `xml:"portgroupName,omitempty"`
+		EnableProxyArp      string `xml:"enableProxyArp,omitempty"`
+		EnableSendRedirects string `xml:"enableSendRedirects,omitempty"`
+		SubInterfaces       struct {
+			SubInterface []struct {
+				IsConnected         string `xml:"isConnected,omitempty"`
+				Label               string `xml:"label,omitempty"`
+				Name                string `xml:"name,omitempty"`
+				Index               *int   `xml:"index,omitempty"`
+				TunnelId            string `xml:"tunnelId,omitempty"`
+				LogicalSwitchId     string `xml:"logicalSwitchId,omitempty"`
+				LogicalSwitchName   string `xml:"logicalSwitchName,omitempty"`
+				EnableSendRedirects string `xml:"enableSendRedirects,omitempty"`
+				Mtu                 string `xml:"mtu,omitempty"`
+				AddressGroups       struct {
+					AddressGroup struct {
+						PrimaryAddress     string `xml:"primaryAddress,omitempty"`
+						SubnetMask         string `xml:"subnetMask,omitempty"`
+						SubnetPrefixLength string `xml:"subnetPrefixLength,omitempty"`
+					} `xml:"addressGroup,omitempty"`
+				} `xml:"addressGroups,omitempty"`
+			} `xml:"subInterface,omitempty"`
+		} `xml:"subInterfaces,omitempty"`
+	} `xml:"vnic,omitempty"`
 }
