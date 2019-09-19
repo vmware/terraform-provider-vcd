@@ -156,7 +156,6 @@ func resourceVcdNetworkIsolatedCreate(d *schema.ResourceData, meta interface{}) 
 	if len(dhcpPool) > 0 {
 		for _, pool := range dhcpPool {
 
-			//fmt.Printf("%#v\n",pool)
 			poolMap := pool.(map[string]interface{})
 
 			var poolService types.DhcpPoolService

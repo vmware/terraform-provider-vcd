@@ -90,7 +90,6 @@ func createFirewallRulesConfigs(existingRules *govcd.EdgeGateway) string {
 		if edgeGatewayName == "" {
 			panic(fmt.Errorf("could not get an Edge Gateway. Variable networking.edgeGateway is not set"))
 		}
-		//edgeGateway, err := vdc.FindEdgeGateway(edgeGatewayName)
 		edgeGateway, err = conn.GetEdgeGateway(testConfig.VCD.Org, testConfig.VCD.Vdc, edgeGatewayName)
 		if err != nil {
 			panic(err)
