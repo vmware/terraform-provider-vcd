@@ -32,12 +32,15 @@ func resourceVcdFirewallRules() *schema.Resource {
 				Required: false,
 				Optional: true,
 				ForceNew: true,
+				Description: "The name of organization to use, optional if defined at provider " +
+					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"vdc": {
-				Type:     schema.TypeString,
-				Required: false,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    false,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "The name of VDC to use, optional if defined at provider level",
 			},
 			"rule": &schema.Schema{
 				Type:     schema.TypeList,

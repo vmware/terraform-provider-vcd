@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
@@ -13,7 +14,7 @@ import (
 
 func resourceVcdOrgVdc() *schema.Resource {
 	capacityWithUsage := schema.Schema{
-		Type:     schema.TypeSet,
+		Type:     schema.TypeList,
 		Required: true,
 		MinItems: 1,
 		MaxItems: 1,
@@ -52,13 +53,16 @@ func resourceVcdOrgVdc() *schema.Resource {
 		Delete: resourceVcdVdcDelete,
 		Read:   resourceVcdVdcRead,
 		Update: resourceVcdVdcUpdate,
-
+		Importer: &schema.ResourceImporter{
+			State: resourceVcdOrgVdcImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"org": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "Organization to create the VDC in",
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Description: "The name of organization to use, optional if defined at provider " +
+					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
@@ -79,7 +83,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Required: true,
 				MinItems: 1,
 				MaxItems: 1,
-				Type:     schema.TypeSet,
+				Type:     schema.TypeList,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"cpu":    &capacityWithUsage,
@@ -250,26 +254,26 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 
 	task, err := adminOrg.CreateVdc(params)
 	if err != nil {
-		log.Printf("[DEBUG] Error creating vdc: %#v", err)
-		return fmt.Errorf("error creating vdc: %#v", err)
+		log.Printf("[DEBUG] Error creating vdc: %s", err)
+		return fmt.Errorf("error creating vdc: %s", err)
 	}
 
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		log.Printf("[DEBUG] Error waiting for vdc to finish: %#v", err)
-		return fmt.Errorf("error waiting for vdc to finish: %#v", err)
+		log.Printf("[DEBUG] Error waiting for vdc to finish: %s", err)
+		return fmt.Errorf("error waiting for vdc to finish: %s", err)
 	}
 
 	err = adminOrg.Refresh()
 	if err != nil {
 		log.Printf("[DEBUG] Unable to refresh org.")
-		return fmt.Errorf("unable to refresh org. %#v", err)
+		return fmt.Errorf("unable to refresh org. %s", err)
 	}
 
 	adminVdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find vdc.")
-		return fmt.Errorf("unable to find vdc.. %#v", err)
+		return fmt.Errorf("unable to find VDC. %s", err)
 	}
 
 	d.SetId(adminVdc.AdminVdc.ID)
@@ -277,7 +281,7 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 
 	err = createOrUpdateMetadata(d, meta)
 	if err != nil {
-		return fmt.Errorf("error adding metadata to VDC: %#v", err)
+		return fmt.Errorf("error adding metadata to VDC: %s", err)
 	}
 
 	return resourceVcdVdcRead(d, meta)
@@ -297,56 +301,131 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 	adminVdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find VDC")
-		return fmt.Errorf("unable to find VDC %#v", err)
+		return fmt.Errorf("unable to find VDC %s", err)
 	}
 
-	//refreshing terraform state
-	d.Set("allocation_model", adminVdc.AdminVdc.AllocationModel)
-	d.Set("cpu_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedCpu)
-	d.Set("cpu_speed", adminVdc.AdminVdc.VCpuInMhz)
-	d.Set("description", adminVdc.AdminVdc.Description)
-	d.Set("enable_fast_provisioning", adminVdc.AdminVdc.UsesFastProvisioning)
-	d.Set("enable_thin_provisioning", adminVdc.AdminVdc.IsThinProvision)
-	d.Set("enable_vm_discovery", adminVdc.AdminVdc.VmDiscoveryEnabled)
-	d.Set("enabled", adminVdc.AdminVdc.IsEnabled)
-	d.Set("memory_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedMemory)
-	d.Set("name", adminVdc.AdminVdc.Name)
+	return setOrgVdcData(d, vcdClient, adminOrg, adminVdc)
+}
+
+// setOrgVdcData sets object state from *govcd.AdminVdc
+func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.AdminOrg, adminVdc *govcd.AdminVdc) error {
+
+	_ = d.Set("allocation_model", adminVdc.AdminVdc.AllocationModel)
+	_ = d.Set("cpu_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedCpu)
+	_ = d.Set("cpu_speed", adminVdc.AdminVdc.VCpuInMhz)
+	_ = d.Set("description", adminVdc.AdminVdc.Description)
+	_ = d.Set("enable_fast_provisioning", adminVdc.AdminVdc.UsesFastProvisioning)
+	_ = d.Set("enable_thin_provisioning", adminVdc.AdminVdc.IsThinProvision)
+	_ = d.Set("enable_vm_discovery", adminVdc.AdminVdc.VmDiscoveryEnabled)
+	_ = d.Set("enabled", adminVdc.AdminVdc.IsEnabled)
+	_ = d.Set("memory_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedMemory)
+	_ = d.Set("name", adminVdc.AdminVdc.Name)
 
 	networkPool, err := govcd.GetNetworkPoolByHREF(vcdClient.VCDClient, adminVdc.AdminVdc.NetworkPoolReference.HREF)
 	if err != nil {
-		return fmt.Errorf("error retrieving network pool: %#v", err)
+		return fmt.Errorf("error retrieving network pool: %s", err)
 	}
 
-	d.Set("network_pool_name", networkPool.Name)
-	d.Set("network_quota", adminVdc.AdminVdc.NetworkQuota)
-	d.Set("nic_quota", adminVdc.AdminVdc.Vdc.NicQuota)
-	d.Set("provider_vdc_name", adminVdc.AdminVdc.ProviderVdcReference.Name)
-	d.Set("vm_quota", adminVdc.AdminVdc.Vdc.VMQuota)
+	_ = d.Set("network_pool_name", networkPool.Name)
+	_ = d.Set("network_quota", adminVdc.AdminVdc.NetworkQuota)
+	_ = d.Set("nic_quota", adminVdc.AdminVdc.Vdc.NicQuota)
+	_ = d.Set("provider_vdc_name", adminVdc.AdminVdc.ProviderVdcReference.Name)
+	_ = d.Set("vm_quota", adminVdc.AdminVdc.Vdc.VMQuota)
 
-	d.Set("compute_capacity", adminVdc.AdminVdc.ComputeCapacity)
+	if err := d.Set("compute_capacity", getComputeCapacities(adminVdc.AdminVdc.ComputeCapacity)); err != nil {
+		return fmt.Errorf("error setting compute_capacity: %s", err)
+	}
 
-	d.Set("storage_profile", adminVdc.AdminVdc.VdcStorageProfiles)
+	storageProfileStateData, err := getComputeStorageProfiles(vcdClient, adminVdc.AdminVdc.VdcStorageProfiles)
+	if err != nil {
+		return fmt.Errorf("error preparing storage profile data: %s", err)
+	}
+
+	if err := d.Set("storage_profile", storageProfileStateData); err != nil {
+		return fmt.Errorf("error setting compute_capacity: %s", err)
+	}
 
 	vdc, err := adminOrg.GetVDCByName(d.Get("name").(string), false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find VDC")
-		return fmt.Errorf("unable to find VDC %#v", err)
+		return fmt.Errorf("unable to find VDC %s", err)
 	}
 	metadata, err := vdc.GetMetadata()
 	if err != nil {
 		log.Printf("[DEBUG] Unable to get VDC metadata")
-		return fmt.Errorf("unable to get VDC metadata %#v", err)
+		return fmt.Errorf("unable to get VDC metadata %s", err)
 	}
 
-	d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
-
+	if err := d.Set("metadata", getMetadataStruct(metadata.MetadataEntry)); err != nil {
+		return fmt.Errorf("error setting metadata: %s", err)
+	}
 	log.Printf("[TRACE] vdc read completed: %#v", adminVdc.AdminVdc)
 	return nil
 }
 
+// getComputeStorageProfiles constructs specific struct to be saved in Terraform state file.
+// Expected E.g.
+func getComputeStorageProfiles(vcdClient *VCDClient, profile *types.VdcStorageProfiles) ([]map[string]interface{}, error) {
+	root := make([]map[string]interface{}, 0)
+
+	for _, vdcStorageProfile := range profile.VdcStorageProfile {
+		vdcStorageProfileDetails, err := govcd.GetStorageProfileByHref(vcdClient.VCDClient, vdcStorageProfile.HREF)
+		if err != nil {
+			return nil, err
+		}
+		storageProfileData := make(map[string]interface{})
+		storageProfileData["limit"] = vdcStorageProfileDetails.Limit
+		storageProfileData["default"] = vdcStorageProfileDetails.Default
+		storageProfileData["enabled"] = vdcStorageProfileDetails.Enabled
+		storageProfileData["name"] = vdcStorageProfileDetails.ProviderVdcStorageProfile.Name
+		root = append(root, storageProfileData)
+	}
+
+	return root, nil
+}
+
+// getComputeCapacities constructs specific struct to be saved in Terraform state file.
+// Expected E.g. &[]map[string]interface {}
+// {map[string]interface {}{"cpu":(*[]map[string]interface {})
+// ({"allocated":8000, "limit":8000, "overhead":0, "reserved":4000, "used":0}),
+// "memory":(*[]map[string]interface {})
+// ({"allocated":7168, "limit":7168, "overhead":0, "reserved":3584, "used":0})},
+func getComputeCapacities(capacities []*types.ComputeCapacity) *[]map[string]interface{} {
+	rootInternal := map[string]interface{}{}
+	var root []map[string]interface{}
+
+	for _, capacity := range capacities {
+		cpuValueMap := map[string]interface{}{}
+		cpuValueMap["limit"] = int(capacity.CPU.Limit)
+		cpuValueMap["allocated"] = int(capacity.CPU.Allocated)
+		cpuValueMap["reserved"] = int(capacity.CPU.Reserved)
+		cpuValueMap["used"] = int(capacity.CPU.Used)
+		cpuValueMap["overhead"] = int(capacity.CPU.Overhead)
+
+		memoryValueMap := map[string]interface{}{}
+		memoryValueMap["limit"] = int(capacity.Memory.Limit)
+		memoryValueMap["allocated"] = int(capacity.Memory.Allocated)
+		memoryValueMap["reserved"] = int(capacity.Memory.Reserved)
+		memoryValueMap["used"] = int(capacity.Memory.Used)
+		memoryValueMap["overhead"] = int(capacity.Memory.Overhead)
+
+		var memoryCapacityArray []map[string]interface{}
+		memoryCapacityArray = append(memoryCapacityArray, memoryValueMap)
+		var cpuCapacityArray []map[string]interface{}
+		cpuCapacityArray = append(cpuCapacityArray, cpuValueMap)
+
+		rootInternal["cpu"] = &cpuCapacityArray
+		rootInternal["memory"] = &memoryCapacityArray
+
+		root = append(root, rootInternal)
+	}
+
+	return &root
+}
+
 // Converts to terraform understandable structure
-func getMetadataStruct(metadata []*types.MetadataEntry) map[string]interface{} {
-	metadataMap := make(map[string]interface{}, len(metadata))
+func getMetadataStruct(metadata []*types.MetadataEntry) StringMap {
+	metadataMap := make(StringMap, len(metadata))
 	for _, metadataEntry := range metadata {
 		metadataMap[metadataEntry.Key] = metadataEntry.TypedValue.Value
 	}
@@ -422,8 +501,8 @@ func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
 
 	err = vdc.DeleteWait(d.Get("delete_force").(bool), d.Get("delete_recursive").(bool))
 	if err != nil {
-		log.Printf("[DEBUG] Error removing vdc %#v", err)
-		return fmt.Errorf("error removing vdc %#v", err)
+		log.Printf("[DEBUG] Error removing vdc %s", err)
+		return fmt.Errorf("error removing vdc %s", err)
 	}
 
 	vdc, err = adminOrg.GetVDCByName(vdcName, true)
@@ -465,14 +544,14 @@ func createOrUpdateMetadata(d *schema.ResourceData, meta interface{}) error {
 		for _, k := range toBeRemovedMetadata {
 			_, err := vdc.DeleteMetadata(k)
 			if err != nil {
-				return fmt.Errorf("error deleting metadata: %#v", err)
+				return fmt.Errorf("error deleting metadata: %s", err)
 			}
 		}
 		// Add new metadata
 		for k, v := range newMetadata {
 			_, err := vdc.AddMetadata(k, v.(string))
 			if err != nil {
-				return fmt.Errorf("error adding metadata: %#v", err)
+				return fmt.Errorf("error adding metadata: %s", err)
 			}
 		}
 	}
@@ -605,7 +684,7 @@ func getUpdatedVdcInput(d *schema.ResourceData, vcdClient *VCDClient, vdc *govcd
 // helper for transforming the resource input into the VdcConfiguration structure
 // any cast operations or default values should be done here so that the create method is simple
 func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcConfiguration, error) {
-	computeCapacityList := d.Get("compute_capacity").(*schema.Set).List()
+	computeCapacityList := d.Get("compute_capacity").([]interface{})
 	if len(computeCapacityList) == 0 {
 		return &types.VdcConfiguration{}, errors.New("no compute_capacity field")
 	}
@@ -616,11 +695,11 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 		return &types.VdcConfiguration{}, errors.New("no storage_profile field")
 	}
 
-	cpuCapacityList := computeCapacity["cpu"].(*schema.Set).List()
+	cpuCapacityList := computeCapacity["cpu"].([]interface{})
 	if len(cpuCapacityList) == 0 {
 		return &types.VdcConfiguration{}, errors.New("no cpu field in compute_capacity")
 	}
-	memoryCapacityList := computeCapacity["memory"].(*schema.Set).List()
+	memoryCapacityList := computeCapacity["memory"].([]interface{})
 	if len(memoryCapacityList) == 0 {
 		return &types.VdcConfiguration{}, errors.New("no memory field in compute_capacity")
 	}
@@ -756,4 +835,44 @@ func getStorageProfileHREF(vcdClient *VCDClient, name string) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("no provider VDC storage profile found with name %s", name)
+}
+
+// resourceVcdOrgVdcImport is responsible for importing the resource.
+// The following steps happen as part of import
+// 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
+// 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
+// 3. The functions splits the dot-formatted path and tries to lookup the object
+// 4. If the lookup succeeds it set's the ID field for `_resource_name_` resource in state file
+// (the resource must be already defined in .tf config otherwise `terraform import` will complain)
+// 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
+// based on the known ID of object.
+//
+// Example resource name (_resource_name_): vcd_org_vdc.my_existing_vdc
+// Example import path (_the_id_string_): org.my_existing_vdc
+func resourceVcdOrgVdcImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	resourceURI := strings.Split(d.Id(), ".")
+	if len(resourceURI) != 2 {
+		return nil, fmt.Errorf("resource name must be specified as org.my_existing_vdc")
+	}
+	orgName, vdcName := resourceURI[0], resourceURI[1]
+
+	vcdClient := meta.(*VCDClient)
+
+	adminOrg, err := vcdClient.GetAdminOrg(orgName)
+	if err != nil {
+		return nil, fmt.Errorf(errorRetrievingOrg, err)
+	}
+
+	adminVdc, err := adminOrg.GetAdminVDCByName(vdcName, false)
+	if err != nil {
+		log.Printf("[DEBUG] Unable to find VDC")
+		return nil, fmt.Errorf("unable to find VDC %s", err)
+	}
+
+	_ = d.Set("org", orgName)
+	_ = d.Set("name", vdcName)
+
+	d.SetId(adminVdc.AdminVdc.ID)
+
+	return []*schema.ResourceData{d}, nil
 }

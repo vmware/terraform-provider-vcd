@@ -29,11 +29,14 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
+				Description: "The name of organization to use, optional if defined at provider " +
+					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"vdc": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "The name of VDC to use, optional if defined at provider level",
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,

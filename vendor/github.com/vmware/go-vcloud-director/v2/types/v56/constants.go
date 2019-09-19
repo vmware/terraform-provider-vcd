@@ -163,6 +163,13 @@ const (
 	LbVirtualServerPath = "/loadbalancer/config/virtualservers/"
 )
 
+// Edge gateway API endpoints
+const (
+	EdgeNatPath       = "/nat/config"
+	EdgeCreateNatPath = "/nat/config/rules"
+	EdgeVnicConfig    = "/vnics"
+)
+
 // Guest customization statuses. These are all known possible statuses
 const (
 	GuestCustStatusPending       = "GC_PENDING"
@@ -170,4 +177,12 @@ const (
 	GuestCustStatusComplete      = "GC_COMPLETE"
 	GuestCustStatusFailed        = "GC_FAILED"
 	GuestCustStatusRebootPending = "REBOOT_PENDING"
+)
+
+// Edge gateway vNic types
+const (
+	EdgeGatewayVnicTypeUplink       = "uplink"
+	EdgeGatewayVnicTypeInternal     = "internal"
+	EdgeGatewayVnicTypeTrunk        = "trunk"
+	EdgeGatewayVnicTypeSubinterface = "subinterface"
 )

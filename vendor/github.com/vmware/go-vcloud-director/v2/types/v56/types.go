@@ -1819,6 +1819,27 @@ type LbVirtualServer struct {
 	ApplicationRuleIds   []string `xml:"applicationRuleId,omitempty"`
 }
 
+// EdgeNatRule contains shared structure for SNAT and DNAT rule configuration using
+// NSX-V proxied edge gateway endpoint
+// // https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
+type EdgeNatRule struct {
+	XMLName           xml.Name `xml:"natRule"`
+	ID                string   `xml:"ruleId,omitempty"`
+	RuleType          string   `xml:"ruleType,omitempty"`
+	RuleTag           string   `xml:"ruleTag,omitempty"`
+	Action            string   `xml:"action"`
+	Vnic              *int     `xml:"vnic,omitempty"`
+	OriginalAddress   string   `xml:"originalAddress"`
+	TranslatedAddress string   `xml:"translatedAddress"`
+	LoggingEnabled    bool     `xml:"loggingEnabled"`
+	Enabled           bool     `xml:"enabled"`
+	Description       string   `xml:"description,omitempty"`
+	Protocol          string   `xml:"protocol,omitempty"`
+	OriginalPort      string   `xml:"originalPort,omitempty"`
+	TranslatedPort    string   `xml:"translatedPort,omitempty"`
+	IcmpType          string   `xml:"icmpType,omitempty"`
+}
+
 // VendorTemplate is information about a vendor service template. This is optional.
 // Type: VendorTemplateType
 // Namespace: http://www.vmware.com/vcloud/v1.5
@@ -2671,4 +2692,52 @@ type AdminCatalogRecord struct {
 	Status                  string    `xml:"status,attr,omitempty"`
 	Link                    *Link     `xml:"Link,omitempty"`
 	Vdc                     *Metadata `xml:"Metadata,omitempty"`
+}
+
+// EdgeGatewayVnics is a data structure holding information of vNic configuration in NSX-V edge
+// gateway
+type EdgeGatewayVnics struct {
+	XMLName xml.Name `xml:"vnics"`
+	Vnic    []struct {
+		Label         string `xml:"label"`
+		Name          string `xml:"name"`
+		AddressGroups struct {
+			AddressGroup struct {
+				PrimaryAddress     string `xml:"primaryAddress,omitempty"`
+				SecondaryAddresses struct {
+					IpAddress []string `xml:"ipAddress,omitempty"`
+				} `xml:"secondaryAddresses,omitempty"`
+				SubnetMask         string `xml:"subnetMask,omitempty"`
+				SubnetPrefixLength string `xml:"subnetPrefixLength,omitempty"`
+			} `xml:"addressGroup,omitempty"`
+		} `xml:"addressGroups,omitempty"`
+		Mtu                 string `xml:"mtu,omitempty"`
+		Type                string `xml:"type,omitempty"`
+		IsConnected         string `xml:"isConnected,omitempty"`
+		Index               *int   `xml:"index"`
+		PortgroupId         string `xml:"portgroupId,omitempty"`
+		PortgroupName       string `xml:"portgroupName,omitempty"`
+		EnableProxyArp      string `xml:"enableProxyArp,omitempty"`
+		EnableSendRedirects string `xml:"enableSendRedirects,omitempty"`
+		SubInterfaces       struct {
+			SubInterface []struct {
+				IsConnected         string `xml:"isConnected,omitempty"`
+				Label               string `xml:"label,omitempty"`
+				Name                string `xml:"name,omitempty"`
+				Index               *int   `xml:"index,omitempty"`
+				TunnelId            string `xml:"tunnelId,omitempty"`
+				LogicalSwitchId     string `xml:"logicalSwitchId,omitempty"`
+				LogicalSwitchName   string `xml:"logicalSwitchName,omitempty"`
+				EnableSendRedirects string `xml:"enableSendRedirects,omitempty"`
+				Mtu                 string `xml:"mtu,omitempty"`
+				AddressGroups       struct {
+					AddressGroup struct {
+						PrimaryAddress     string `xml:"primaryAddress,omitempty"`
+						SubnetMask         string `xml:"subnetMask,omitempty"`
+						SubnetPrefixLength string `xml:"subnetPrefixLength,omitempty"`
+					} `xml:"addressGroup,omitempty"`
+				} `xml:"addressGroups,omitempty"`
+			} `xml:"subInterface,omitempty"`
+		} `xml:"subInterfaces,omitempty"`
+	} `xml:"vnic,omitempty"`
 }
