@@ -86,5 +86,5 @@ below:
 terraform import vcd_lb_app_rule.imported my-org.my-org-vdc.my-edge-gw.my-lb-app-rule
 ```
 
-The above would import the application rule named `my-lb-app-my-lb-app-rule` that is defined on edge
+The above would import the application rule named `my-lb-app-rule` that is defined on edge
 gateway `my-edge-gw` which is configured in organization named `my-org` and vDC named `my-org-vdc`.

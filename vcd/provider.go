@@ -109,10 +109,13 @@ func Provider() terraform.ResourceProvider {
 			"vcd_lb_app_profile":     resourceVcdLBAppProfile(),     // 2.4
 			"vcd_lb_app_rule":        resourceVcdLBAppRule(),        // 2.4
 			"vcd_lb_virtual_server":  resourceVcdLBVirtualServer(),  // 2.4
+			"vcd_nsxv_dnat":          resourceVcdNsxvDnat(),         // 2.5
+			"vcd_nsxv_snat":          resourceVcdNsxvSnat(),         // 2.5
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
 			"vcd_org":                datasourceVcdOrg(),              // 2.5
+			"vcd_org_vdc":            datasourceVcdOrgVdc(),           // 2.5
 			"vcd_catalog":            datasourceVcdCatalog(),          // 2.5
 			"vcd_catalog_item":       datasourceVcdCatalogItem(),      // 2.5
 			"vcd_external_network":   datasourceVcdExternalNetwork(),  // 2.5
@@ -121,6 +124,8 @@ func Provider() terraform.ResourceProvider {
 			"vcd_lb_app_profile":     datasourceVcdLBAppProfile(),     // 2.4
 			"vcd_lb_app_rule":        datasourceVcdLBAppRule(),        // 2.4
 			"vcd_lb_virtual_server":  datasourceVcdLbVirtualServer(),  // 2.4
+			"vcd_nsxv_dnat":          datasourceVcdNsxvDnat(),         // 2.5
+			"vcd_nsxv_snat":          datasourceVcdNsxvSnat(),         // 2.5
 		},
 
 		ConfigureFunc: providerConfigure,

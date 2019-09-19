@@ -7,9 +7,10 @@ func datasourceVcdCatalogItem() *schema.Resource {
 		Read: resourceVcdCatalogItemRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Org to which the catalog belongs",
+				Type:     schema.TypeString,
+				Optional: true,
+				Description: "The name of organization to use, optional if defined at provider " +
+					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"catalog": &schema.Schema{
 				Type:        schema.TypeString,

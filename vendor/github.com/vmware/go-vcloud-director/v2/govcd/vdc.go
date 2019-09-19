@@ -172,6 +172,7 @@ func (vdc *Vdc) DeleteWait(force bool, recursive bool) error {
 	return nil
 }
 
+// Deprecated: use GetOrgVdcNetworkByName
 func (vdc *Vdc) FindVDCNetwork(network string) (OrgVDCNetwork, error) {
 
 	err := vdc.Refresh()
@@ -196,17 +197,80 @@ func (vdc *Vdc) FindVDCNetwork(network string) (OrgVDCNetwork, error) {
 	return OrgVDCNetwork{}, fmt.Errorf("can't find VDC Network: %s", network)
 }
 
+// GetOrgVdcNetworkByHref returns an Org VDC Network reference if the network HREF matches an existing one.
+// If no valid external network is found, it returns an nil Network reference and an error
+func (vdc *Vdc) GetOrgVdcNetworkByHref(href string) (*OrgVDCNetwork, error) {
+
+	orgNet := NewOrgVDCNetwork(vdc.client)
+
+	_, err := vdc.client.ExecuteRequest(href, http.MethodGet,
+		"", "error retrieving org vdc network: %s", nil, orgNet.OrgVDCNetwork)
+
+	// The request was successful
+	return orgNet, err
+}
+
+// GetOrgVdcNetworkByName returns an Org VDC Network reference if the network name matches an existing one.
+// If no valid external network is found, it returns an nil Network reference and an error
+func (vdc *Vdc) GetOrgVdcNetworkByName(name string, refresh bool) (*OrgVDCNetwork, error) {
+	if refresh {
+		err := vdc.Refresh()
+		if err != nil {
+			return nil, fmt.Errorf("error refreshing vdc: %s", err)
+		}
+	}
+	for _, an := range vdc.Vdc.AvailableNetworks {
+		for _, reference := range an.Network {
+			if reference.Name == name {
+				return vdc.GetOrgVdcNetworkByHref(reference.HREF)
+			}
+		}
+	}
+
+	return nil, ErrorEntityNotFound
+}
+
+// GetOrgVdcNetworkById returns an Org VDC Network reference if the network ID matches an existing one.
+// If no valid external network is found, it returns an nil Network reference and an error
+func (vdc *Vdc) GetOrgVdcNetworkById(id string, refresh bool) (*OrgVDCNetwork, error) {
+	if refresh {
+		err := vdc.Refresh()
+		if err != nil {
+			return nil, fmt.Errorf("error refreshing vdc: %s", err)
+		}
+	}
+	for _, an := range vdc.Vdc.AvailableNetworks {
+		for _, reference := range an.Network {
+			if reference.ID == id {
+				return vdc.GetOrgVdcNetworkByHref(reference.HREF)
+			}
+		}
+	}
+
+	return nil, ErrorEntityNotFound
+}
+
+// GetOrgVdcNetworkByNameOrId returns a VDC Network reference if either the network name or ID matches an existing one.
+// If no valid external network is found, it returns an empty ExternalNetwork reference and an error
+func (vdc *Vdc) GetOrgVdcNetworkByNameOrId(identifier string, refresh bool) (*OrgVDCNetwork, error) {
+	getByName := func(name string, refresh bool) (interface{}, error) { return vdc.GetOrgVdcNetworkByName(name, refresh) }
+	getById := func(id string, refresh bool) (interface{}, error) { return vdc.GetOrgVdcNetworkById(id, refresh) }
+	entity, err := getEntityByNameOrId(getByName, getById, identifier, false)
+	if entity == nil {
+		return nil, err
+	}
+	return entity.(*OrgVDCNetwork), err
+}
+
 func (vdc *Vdc) FindStorageProfileReference(name string) (types.Reference, error) {
 
 	err := vdc.Refresh()
 	if err != nil {
 		return types.Reference{}, fmt.Errorf("error refreshing vdc: %s", err)
 	}
-	for _, sps := range vdc.Vdc.VdcStorageProfiles {
-		for _, sp := range sps.VdcStorageProfile {
-			if sp.Name == name {
-				return types.Reference{HREF: sp.HREF, Name: sp.Name}, nil
-			}
+	for _, sp := range vdc.Vdc.VdcStorageProfiles.VdcStorageProfile {
+		if sp.Name == name {
+			return types.Reference{HREF: sp.HREF, Name: sp.Name}, nil
 		}
 	}
 	return types.Reference{}, fmt.Errorf("can't find any VDC Storage_profiles")
@@ -226,6 +290,7 @@ func (vdc *Vdc) GetDefaultStorageProfileReference(storageprofiles *types.QueryRe
 	return types.Reference{}, fmt.Errorf("can't find Default VDC Storage_profile")
 }
 
+// Deprecated: use GetEdgeGatewayByName
 func (vdc *Vdc) FindEdgeGateway(edgegateway string) (EdgeGateway, error) {
 
 	err := vdc.Refresh()
@@ -238,7 +303,7 @@ func (vdc *Vdc) FindEdgeGateway(edgegateway string) (EdgeGateway, error) {
 			query := new(types.QueryResultEdgeGatewayRecordsType)
 
 			_, err := vdc.client.ExecuteRequest(av.HREF, http.MethodGet,
-				"", "error quering edge gateways: %s", nil, query)
+				"", "error querying edge gateways: %s", nil, query)
 			if err != nil {
 				return EdgeGateway{}, err
 			}
@@ -284,6 +349,117 @@ func (vdc *Vdc) FindEdgeGateway(edgegateway string) (EdgeGateway, error) {
 	}
 	return EdgeGateway{}, fmt.Errorf("can't find Edge Gateway")
 
+}
+
+// getEdgeGatewayByHref retrieves an edge gateway from VDC
+// by querying directly its HREF.
+// The name passed as parameter is only used for error reporting
+func (vdc *Vdc) getEdgeGatewayByHref(name, href string) (*EdgeGateway, error) {
+	if href == "" {
+		return nil, fmt.Errorf("empty HREF for edge gateway '%s'", name)
+	}
+
+	edge := NewEdgeGateway(vdc.client)
+
+	_, err := vdc.client.ExecuteRequest(href, http.MethodGet,
+		"", "error retrieving edge gateway: %s", nil, edge.EdgeGateway)
+
+	// TODO - remove this if a solution is found or once 9.7 is deprecated
+	// vCD 9.7 has a bug and sometimes it fails to retrieve edge gateway with weird error.
+	// At this point in time the solution is to retry a few times as it does not fail to
+	// retrieve when retried.
+	//
+	// GitHUB issue - https://github.com/vmware/go-vcloud-director/issues/218
+	if err != nil {
+		util.Logger.Printf("[DEBUG] vCD 9.7 is known to sometimes respond with error on edge gateway (%s) "+
+			"retrieval. As a workaround this is done a few times before failing. Retrying: ", name)
+		for i := 1; i < 4 && err != nil; i++ {
+			time.Sleep(200 * time.Millisecond)
+			util.Logger.Printf("%d ", i)
+			_, err = vdc.client.ExecuteRequest(href, http.MethodGet,
+				"", "error retrieving edge gateway: %s", nil, edge.EdgeGateway)
+		}
+		util.Logger.Printf("\n")
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	return edge, nil
+}
+
+// getEdgeGatewayRecordsType retrieves a list of edge gateways from VDC
+func (vdc *Vdc) getEdgeGatewayRecordsType(refresh bool) (*types.QueryResultEdgeGatewayRecordsType, error) {
+
+	if refresh {
+		err := vdc.Refresh()
+		if err != nil {
+			return nil, fmt.Errorf("error refreshing vdc: %s", err)
+		}
+	}
+	for _, av := range vdc.Vdc.Link {
+		if av.Rel == "edgeGateways" && av.Type == "application/vnd.vmware.vcloud.query.records+xml" {
+
+			edgeGatewayRecordsType := new(types.QueryResultEdgeGatewayRecordsType)
+
+			_, err := vdc.client.ExecuteRequest(av.HREF, http.MethodGet,
+				"", "error querying edge gateways: %s", nil, edgeGatewayRecordsType)
+			if err != nil {
+				return nil, err
+			}
+			return edgeGatewayRecordsType, nil
+		}
+	}
+	return nil, fmt.Errorf("no edge gateway query link found in VDC %s", vdc.Vdc.Name)
+}
+
+// GetEdgeGatewayByName search the VDC list of edge gateways for a given name.
+// If the name matches, it returns a pointer to an edge gateway object.
+// On failure, it returns a nil object and an error
+func (vdc *Vdc) GetEdgeGatewayByName(name string, refresh bool) (*EdgeGateway, error) {
+	edgeGatewayRecord, err := vdc.getEdgeGatewayRecordsType(refresh)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving edge gateways list: %s", err)
+	}
+
+	for _, edge := range edgeGatewayRecord.EdgeGatewayRecord {
+		if edge.Name == name {
+			return vdc.getEdgeGatewayByHref(edge.Name, edge.HREF)
+		}
+	}
+
+	return nil, ErrorEntityNotFound
+}
+
+// GetEdgeGatewayById search VDC list of edge gateways for a given ID.
+// If the id matches, it returns a pointer to an edge gateway object.
+// On failure, it returns a nil object and an error
+func (vdc *Vdc) GetEdgeGatewayById(id string, refresh bool) (*EdgeGateway, error) {
+	edgeGatewayRecord, err := vdc.getEdgeGatewayRecordsType(refresh)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving edge gateways list: %s", err)
+	}
+
+	for _, edge := range edgeGatewayRecord.EdgeGatewayRecord {
+		if equalIds(id, "", edge.HREF) {
+			return vdc.getEdgeGatewayByHref(edge.Name, edge.HREF)
+		}
+	}
+
+	return nil, ErrorEntityNotFound
+}
+
+// GetEdgeGatewayByNameOrId search the VDC list of edge gateways for a given name or ID.
+// If the name or the ID match, it returns a pointer to an edge gateway object.
+// On failure, it returns a nil object and an error
+func (vdc *Vdc) GetEdgeGatewayByNameOrId(identifier string, refresh bool) (*EdgeGateway, error) {
+	getByName := func(name string, refresh bool) (interface{}, error) { return vdc.GetEdgeGatewayByName(name, refresh) }
+	getById := func(id string, refresh bool) (interface{}, error) { return vdc.GetEdgeGatewayById(id, refresh) }
+	entity, err := getEntityByNameOrId(getByName, getById, identifier, false)
+	if entity == nil {
+		return nil, err
+	}
+	return entity.(*EdgeGateway), err
 }
 
 func (vdc *Vdc) ComposeRawVApp(name string) error {

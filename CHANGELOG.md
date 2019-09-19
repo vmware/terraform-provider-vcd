@@ -1,11 +1,15 @@
 ## 2.5.0 (Unreleased)
 
 FEATURES:
-
+* **New Resource:** `vcd_nsxv_dnat` DNAT for advanced edge gateways using proxied NSX-V API - [#328]
+* **New Resource:** `vcd_nsxv_snat`  SNAT for advanced edge gateways using proxied NSX-V API - [#328]
 * **New Data Source:** `vcd_org` Organization - ([#218])
 * **New Data Source:** `vcd_catalog` Catalog - ([#218])
 * **New Data Source:** `vcd_catalog_item` CatalogItem - ([#218])
+* **New Data Source:** `vcd_org_vdc` Organization VDC - ([#324])
 * **New Data Source:** `vcd_external_network` External Network - ([#218])
+* **New Data Source:** `vcd_nsxv_dnat` DNAT for advanced edge gateways using proxied NSX-V API - [#328]
+* **New Data Source:** `vcd_nsxv_snat` SNAT for advanced edge gateways using proxied NSX-V API - [#328]
 
 IMPROVEMENTS:
 
@@ -22,6 +26,9 @@ IMPROVEMENTS:
 * `resource/vcd_vapp_vm` allows to force guest customization [#310]
 * `resource/vcd_vapp` supports guest properties [#319]
 * `resource/vcd_vapp_vm` supports guest properties [#319]
+* Upgrade Terraform SDK dependency to 0.12.6 [#302]
+* `vcd_org_vdc` Add import capability - [#324]
+* `vcd_org_vdc` Add full read capability - [#324]
 * Upgrade Terraform SDK dependency to 0.12.8 [#320]
 
 BUG FIXES:
