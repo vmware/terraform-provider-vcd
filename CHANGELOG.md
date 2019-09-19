@@ -45,7 +45,7 @@ BUG FIXES:
 * Wait for task completion on creation and update, where tasks were not handled at all.
 * `resource/vcd_firewall_rules` force recreation of the resource when attributes of the sub-element `rule` are changed (fixes a situation when it tried to update a rule).
 * `resource/vcd_network_isolated` Fix definition of DHCP, which was created automatically with leftovers from static IP pool even when not requested.
-* Change SetId from name to ID for all network resources.
+* Change to use resource ID for .id attribute instead of name for all networks
 
 ## 2.4.0 (July 29, 2019)
 
