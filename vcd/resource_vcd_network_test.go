@@ -227,6 +227,7 @@ func runTest(def networkDef, t *testing.T) {
 		ImportStateIdFunc: importStateIdByNetwork(testConfig, networkName),
 	})
 
+	// Don't convert this test to parallel, as it will cause IP ranges conflicts
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,

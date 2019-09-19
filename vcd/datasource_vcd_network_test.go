@@ -142,7 +142,7 @@ func TestAccVcdNetworkDirectDS(t *testing.T) {
 	configText := templateFill(template, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:  func() { preRunChecks(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
@@ -198,7 +198,7 @@ func TestAccVcdNetworkRoutedDS(t *testing.T) {
 	configText := templateFill(template, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:  func() { preRunChecks(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
@@ -254,7 +254,7 @@ func TestAccVcdNetworkIsolatedDS(t *testing.T) {
 	configText := templateFill(template, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:  func() { preRunChecks(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
