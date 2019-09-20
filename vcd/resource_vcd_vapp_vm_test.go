@@ -27,6 +27,7 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 		"CatalogItem":        testSuiteCatalogOVAItem,
 		"VappName":           vappName2,
 		"VmName":             vmName,
+		"ComputerName":       vmName + "-unique",
 		"diskName":           diskName,
 		"size":               "5",
 		"busType":            "SCSI",
@@ -54,6 +55,8 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 					testAccCheckVcdVAppVmExists(vappName2, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_vm."+vmName, "name", vmName),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp_vm."+vmName, "computer_name", vmName+"-unique"),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_vm."+vmName, "ip", "10.10.102.161"),
 					resource.TestCheckResourceAttr(
@@ -108,6 +111,7 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   vapp_name     = "${vcd_vapp.{{.VappName}}.name}"
   network_name  = "${vcd_network_routed.{{.NetworkName}}.name}"
   name          = "{{.VmName}}"
+  computer_name = "{{.ComputerName}}"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
   memory        = 1024
