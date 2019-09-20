@@ -124,6 +124,7 @@ The following arguments are supported:
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
 * `vapp_name` - (Required) The vApp this VM should belong to.
 * `name` - (Required) A unique name for the VM
+* `computer_name` - (Optional; *v2.5+*) A unique name 
 * `catalog_name` - (Required) The catalog name in which to find the given vApp Template
 * `template_name` - (Required) The name of the vApp Template to use
 * `memory` - (Optional) The amount of RAM (in MB) to allocate to the VM
