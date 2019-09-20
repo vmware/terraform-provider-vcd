@@ -30,6 +30,14 @@ func noopValueWarningValidator(fieldValue interface{}, warningText string) schem
 	}
 }
 
+// anyValueWarningValidator is a validator which only emits always warning string
+func anyValueWarningValidator(fieldValue interface{}, warningText string) schema.SchemaValidateFunc {
+	return func(i interface{}, k string) (warnings []string, errors []error) {
+		warnings = append(warnings, fmt.Sprintf("%s\n\n", warningText))
+		return
+	}
+}
+
 func checkEmptyOrSingleIP() schema.SchemaValidateFunc {
 	return func(i interface{}, k string) (s []string, es []error) {
 		v, ok := i.(string)

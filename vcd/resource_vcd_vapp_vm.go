@@ -33,6 +33,10 @@ func resourceVcdVAppVm() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+			"computer_name": &schema.Schema{
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 			"org": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -88,6 +92,8 @@ func resourceVcdVAppVm() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
+				ValidateFunc: anyValueWarningValidator(true,
+					"With next version `name` as computer name won't be set together with `initscript`. Please use `computer_name`."),
 			},
 			"metadata": {
 				Type:     schema.TypeMap,
@@ -309,10 +315,27 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	// for back compatibility we allow to set computer name from `name` if computer_name isn't provided
+	var computerName string
+	if cName, ok := d.GetOk("computer_name"); ok {
+		computerName = cName.(string)
+	} else {
+		computerName = d.Get("name").(string)
+	}
+
 	if initScript, ok := d.GetOk("initscript"); ok {
-		task, err := vm.RunCustomizationScript(d.Get("name").(string), initScript.(string))
+		task, err := vm.RunCustomizationScript(computerName, initScript.(string))
 		if err != nil {
 			return fmt.Errorf("error with init script setting: %#v", err)
+		}
+		err = task.WaitTaskCompletion()
+		if err != nil {
+			return fmt.Errorf(errorCompletingTask, err)
+		}
+	} else {
+		task, err := vm.Customize(computerName, "", false)
+		if err != nil {
+			return fmt.Errorf("error with applying computer name: %#v", err)
 		}
 		err = task.WaitTaskCompletion()
 		if err != nil {
@@ -554,11 +577,11 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 	}
 
 	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("cpu_cores") || d.HasChange("power_on") || d.HasChange("disk") ||
-		d.HasChange("expose_hardware_virtualization") || d.HasChange("network") {
+		d.HasChange("expose_hardware_virtualization") || d.HasChange("network") || d.HasChange("computer_name") {
 
-		log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t), power_on(%t), disk(%t), expose_hardware_virtualization(%t), network(%t)",
+		log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t), power_on(%t), disk(%t), expose_hardware_virtualization(%t), network(%t), computer_name(%t)",
 			vm.VM.Name, d.HasChange("memory"), d.HasChange("cpus"), d.HasChange("cpu_cores"), d.HasChange("power_on"), d.HasChange("disk"),
-			d.HasChange("expose_hardware_virtualization"), d.HasChange("network"))
+			d.HasChange("expose_hardware_virtualization"), d.HasChange("network"), d.HasChange("computer_name"))
 
 		// If customization is not requested then a simple shutdown is enough
 		if vmStatusBeforeUpdate != "POWERED_OFF" && !customizationNeeded {
@@ -654,6 +677,18 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			err = vm.UpdateNetworkConnectionSection(&networkConnectionSection)
 			if err != nil {
 				return fmt.Errorf("unable to update network configuration: %s", err)
+			}
+		}
+
+		// we pass init script, to not override with empty one
+		if d.HasChange("computer_name") {
+			task, err := vm.Customize(d.Get("computer_name").(string), d.Get("initscript").(string), false)
+			if err != nil {
+				return fmt.Errorf("error with udpating computer name: %#v", err)
+			}
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				return fmt.Errorf(errorCompletingTask, err)
 			}
 		}
 
@@ -803,7 +838,7 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error getting VM : %#v", err)
 	}
 
-	d.Set("name", vm.VM.Name)
+	_ = d.Set("name", vm.VM.Name)
 
 	// Read either new or deprecated networks configuration based on which are used
 	switch {
