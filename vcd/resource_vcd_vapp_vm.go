@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"net/http"
 	"sort"
 	"strconv"
 
@@ -34,8 +35,9 @@ func resourceVcdVAppVm() *schema.Resource {
 				ForceNew: true,
 			},
 			"computer_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Computer name to assign to this virtual machine",
 			},
 			"org": {
 				Type:     schema.TypeString,
@@ -879,7 +881,30 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error reading attached disks : %#v", err)
 	}
 
+	guestCustomizationSection, err := getGuestCustimization(&vcdClient.Client, vm.VM.HREF)
+	if err != nil {
+		return fmt.Errorf("error reading guest custimization : %#v", err)
+	}
+	d.Set("computer_name", guestCustomizationSection.ComputerName)
+
 	return nil
+}
+
+// getProductSectionList is a shared function for both vApp and VM
+func getGuestCustimization(client *govcd.Client, href string) (*types.GuestCustomizationSection, error) {
+	if href == "" {
+		return nil, fmt.Errorf("href cannot be empty to guest custimization section")
+	}
+	guestCustomizationSection := &types.GuestCustomizationSection{}
+
+	_, err := client.ExecuteRequest(href+"/guestCustomizationSection", http.MethodGet,
+		types.MimeProductSection, "error retrieving product section : %s", nil, guestCustomizationSection)
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to retrieve guest custimization section: %s", err)
+	}
+
+	return guestCustomizationSection, nil
 }
 
 func updateStateOfAttachedDisks(d *schema.ResourceData, vm govcd.VM, vdc *govcd.Vdc) error {
