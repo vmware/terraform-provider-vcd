@@ -30,7 +30,7 @@ IMPROVEMENTS:
 * `vcd_org_vdc` Add import capability - [#324]
 * `vcd_org_vdc` Add full read capability - [#324]
 * Upgrade Terraform SDK dependency to 0.12.8 [#320]
-* `resource/vcd_vapp_vm` as new field `computer_name` [#334]
+* `resource/vcd_vapp_vm` has new field `computer_name` [#334]
 
 BUG FIXES:
 * Change default value for `vcd_org.deployed_vm_quota` and `vcd_org.stored_vm_quota`. It was incorrectly set at `-1` instead of `0`.
