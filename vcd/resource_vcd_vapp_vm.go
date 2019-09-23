@@ -94,8 +94,6 @@ func resourceVcdVAppVm() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-				ValidateFunc: anyValueWarningValidator(true,
-					"With next version `name` as computer name won't be set together with `initscript`. Please use `computer_name`."),
 			},
 			"metadata": {
 				Type:     schema.TypeMap,
@@ -326,6 +324,10 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if initScript, ok := d.GetOk("initscript"); ok {
+		if _, ok := d.GetOk("computer_name"); !ok {
+			_, _ = fmt.Fprint(getTerraformStdout(), "WARNING of DEPRECATED behavior: when `initscript` is set,"+
+				" VM `name` is used as a computer name - this behavior will be removed in future versions, hence please use the new `computer_name` field instead\n")
+		}
 		task, err := vm.RunCustomizationScript(computerName, initScript.(string))
 		if err != nil {
 			return fmt.Errorf("error with init script setting: %#v", err)
