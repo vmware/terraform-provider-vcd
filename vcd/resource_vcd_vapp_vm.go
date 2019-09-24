@@ -36,6 +36,7 @@ func resourceVcdVAppVm() *schema.Resource {
 			},
 			"computer_name": &schema.Schema{
 				Type:        schema.TypeString,
+				Optional:    true,
 				Computed:    true,
 				Description: "Computer name to assign to this virtual machine",
 			},
