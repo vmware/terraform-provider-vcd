@@ -1,10 +1,8 @@
 package vcd
 
 import (
-	"flag"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 	"time"
 
@@ -101,13 +99,7 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("error uploading new catalog item: %#v", err)
 	}
 
-	var terraformStdout *os.File
-	// Needed to avoid errors when uintptr(4) is used
-	if v := flag.Lookup("test.v"); v == nil || v.Value.String() != "true" {
-		terraformStdout = os.NewFile(uintptr(4), "stdout")
-	} else {
-		terraformStdout = os.Stdout
-	}
+	terraformStdout := getTerraformStdout()
 
 	if d.Get("show_upload_progress").(bool) {
 		for {

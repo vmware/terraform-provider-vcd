@@ -858,3 +858,89 @@ func (vapp *VApp) SetProductSectionList(productSection *types.ProductSectionList
 func (vapp *VApp) GetProductSectionList() (*types.ProductSectionList, error) {
 	return getProductSectionList(vapp.client, vapp.VApp.HREF)
 }
+
+// GetVMByHref returns a VM reference by running a vCD API call
+// If no valid VM is found, it returns a nil VM reference and an error
+// Note that the pointer receiver here is a Client instead of a VApp, because
+// there are cases where we know the VM HREF but not which VApp it belongs to.
+func (client *Client) GetVMByHref(vmHref string) (*VM, error) {
+
+	newVm := NewVM(client)
+
+	_, err := client.ExecuteRequest(vmHref, http.MethodGet,
+		"", "error retrieving vm: %s", nil, newVm.VM)
+
+	if err != nil {
+
+		return nil, err
+	}
+
+	return newVm, nil
+}
+
+// GetVMByName returns a VM reference if the VM name matches an existing one.
+// If no valid VM is found, it returns a nil VM reference and an error
+func (vapp *VApp) GetVMByName(vmName string, refresh bool) (*VM, error) {
+	if refresh {
+		err := vapp.Refresh()
+		if err != nil {
+			return nil, fmt.Errorf("error refreshing vapp: %s", err)
+		}
+	}
+
+	//vApp Might Not Have Any VMs
+	if vapp.VApp.Children == nil {
+		return nil, ErrorEntityNotFound
+	}
+
+	util.Logger.Printf("[TRACE] Looking for VM: %s", vmName)
+	for _, child := range vapp.VApp.Children.VM {
+
+		util.Logger.Printf("[TRACE] Looking at: %s", child.Name)
+		if child.Name == vmName {
+			return vapp.client.GetVMByHref(child.HREF)
+		}
+
+	}
+	util.Logger.Printf("[TRACE] Couldn't find VM: %s", vmName)
+	return nil, ErrorEntityNotFound
+}
+
+// GetVMById returns a VM reference if the VM ID matches an existing one.
+// If no valid VM is found, it returns a nil VM reference and an error
+func (vapp *VApp) GetVMById(id string, refresh bool) (*VM, error) {
+	if refresh {
+		err := vapp.Refresh()
+		if err != nil {
+			return nil, fmt.Errorf("error refreshing vapp: %s", err)
+		}
+	}
+
+	//vApp Might Not Have Any VMs
+	if vapp.VApp.Children == nil {
+		return nil, ErrorEntityNotFound
+	}
+
+	util.Logger.Printf("[TRACE] Looking for VM: %s", id)
+	for _, child := range vapp.VApp.Children.VM {
+
+		util.Logger.Printf("[TRACE] Looking at: %s", child.Name)
+		if equalIds(id, child.ID, child.HREF) {
+			return vapp.client.GetVMByHref(child.HREF)
+		}
+	}
+	util.Logger.Printf("[TRACE] Couldn't find VM: %s", id)
+	return nil, ErrorEntityNotFound
+}
+
+// GetVMByNameOrId returns a VM reference if either the VM name or ID matches an existing one.
+// If no valid VM is found, it returns a nil VM reference and an error
+func (vapp *VApp) GetVMByNameOrId(identifier string, refresh bool) (*VM, error) {
+	getByName := func(name string, refresh bool) (interface{}, error) { return vapp.GetVMByName(name, refresh) }
+	getById := func(id string, refresh bool) (interface{}, error) { return vapp.GetVMById(id, refresh) }
+	entity, err := getEntityByNameOrId(getByName, getById, identifier, false)
+	if entity == nil {
+		return nil, err
+	}
+	return entity.(*VM), err
+}
