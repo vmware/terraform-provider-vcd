@@ -76,3 +76,12 @@ func suppressFalse() schema.SchemaDiffSuppressFunc {
 		return new == "false"
 	}
 }
+
+// suppressAlways suppresses the processing of the property unconditionally
+// Used when we want to remove a property that should not have been
+// added in the first place, but we want to keep compatibility
+func suppressAlways() schema.SchemaDiffSuppressFunc {
+	return func(k string, old string, new string, d *schema.ResourceData) bool {
+		return true
+	}
+}
