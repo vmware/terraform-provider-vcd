@@ -29,19 +29,19 @@ output "gateway" {
   value = data.vcd_network_routed.net.gateway
 }
 output "dhcp_start_address" {
-  value = data.vcd_network_isolated.net.dhcp_pool.0.start_address
+  value = tolist(data.vcd_network_routed.net.dhcp_pool)[0].start_address
 }
 
 output "dhcp_end_address" {
-  value = data.vcd_network_isolated.net.dhcp_pool.0.end_address
+  value = tolist(data.vcd_network_routed.net.dhcp_pool)[0].end_address
 }
 
 output "static_ip_start_address" {
-  value = data.vcd_network_isolated.net.static_ip_pool.0.start_address
+  value = tolist(data.vcd_network_routed.net.static_ip_pool)[0].start_address
 }
 
 output "static_ip_end_address" {
-  value = data.vcd_network_isolated.net.static_ip_pool.0.end_address
+  value = tolist(data.vcd_network_routed.net.static_ip_pool)[0].end_address
 }
 ```
 

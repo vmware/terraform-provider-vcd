@@ -29,6 +29,10 @@ output "external_network" {
   value = data.vcd_network_direct.net.external_network
 }
 
+data "vcd_external_network" "external_network1" {
+  name = "${data.vcd_network_direct.net.external_network}"
+}
+
 # From the second data source we extract the basic networking info
 output "gateway" {
   value = data.vcd_external_network.external_network1.ip_scope.0.gateway

@@ -50,8 +50,8 @@ The following arguments are supported:
 * `dns1` - (Optional) First DNS server to use. Defaults to `8.8.8.8`
 * `dns2` - (Optional) Second DNS server to use. Defaults to `8.8.4.4`
 * `dns_suffix` - (Optional) A FQDN for the virtual machines on this network
-* `shared` - (Optional) Defines if this network is shared between multiple vDCs
-  in the vOrg.  Defaults to `false`.
+* `shared` - (Optional) Defines if this network is shared between multiple VDCs
+  in the Org.  Defaults to `false`.
 * `dhcp_pool` - (Optional) A range of IPs to issue to virtual machines that don't
   have a static IP; see [IP Pools](#ip-pools) below for details.
 * `static_ip_pool` - (Optional) A range of IPs permitted to be used as static IPs for
