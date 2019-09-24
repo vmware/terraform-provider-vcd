@@ -152,7 +152,7 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	} else {
 		// TODO remove when major release is done
-		_, _ = fmt.Fprint(GetTerraformStdout(), "WARNING: This resource will require network_name and network_type in the next major version \n")
+		_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: This resource will require network_name and network_type in the next major version \n")
 		task, err := edgeGateway.AddNATPortMapping("DNAT",
 			d.Get("external_ip").(string),
 			portString,
