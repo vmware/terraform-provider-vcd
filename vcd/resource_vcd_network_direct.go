@@ -19,9 +19,10 @@ func resourceVcdNetworkDirect() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "A unique name for this network",
 			},
 			"org": {
 				Type:     schema.TypeString,
@@ -36,45 +37,50 @@ func resourceVcdNetworkDirect() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-
 			"external_network": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "The name of the external network",
 			},
 			"external_network_gateway": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Gateway of the external network",
 			},
 			"external_network_netmask": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Net mask of the external network",
 			},
 			"external_network_dns1": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Main DNS of the external network",
 			},
 			"external_network_dns2": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Secondary DNS of the external network",
 			},
 			"external_network_dns_suffix": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "DNS suffix of the external network",
 			},
-
 			"href": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				ForceNew:    true,
+				Description: "Network Hypertext Reference",
 			},
-
 			"shared": &schema.Schema{
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
-				ForceNew: true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				ForceNew:    true,
+				Description: "Defines if this network is shared between multiple VDCs in the Org",
 			},
 		},
 	}
@@ -139,7 +145,7 @@ func resourceVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}) erro
 	network, err := vdc.GetOrgVdcNetworkByNameOrId(identifier, false)
 	if err != nil {
 		log.Printf("[DEBUG] Network %s no longer exists. Removing from tfstate", identifier)
-		return fmt.Errorf("[network direct read] network %s not found ", network.OrgVDCNetwork.Name)
+		return fmt.Errorf("[network direct read] network %s not found: %s", identifier, err)
 	}
 
 	_ = d.Set("name", network.OrgVDCNetwork.Name)
