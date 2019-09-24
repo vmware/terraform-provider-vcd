@@ -1,10 +1,8 @@
 package vcd
 
 import (
-	"flag"
 	"fmt"
 	"log"
-	"os"
 	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -98,7 +96,7 @@ func resourceVcdMediaCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error uploading new catalog media: %#v", err)
 	}
 
-	terraformStdout := GetTerraformStdout()
+	terraformStdout := getTerraformStdout()
 
 	if d.Get("show_upload_progress").(bool) {
 		for {
@@ -144,16 +142,6 @@ func resourceVcdMediaCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	return resourceVcdMediaRead(d, meta)
-}
-
-func GetTerraformStdout() *os.File {
-	var terraformStdout *os.File
-	if v := flag.Lookup("test.v"); v == nil || v.Value.String() != "true" {
-		terraformStdout = os.NewFile(uintptr(4), "stdout")
-	} else {
-		terraformStdout = os.Stdout
-	}
-	return terraformStdout
 }
 
 func resourceVcdMediaRead(d *schema.ResourceData, meta interface{}) error {

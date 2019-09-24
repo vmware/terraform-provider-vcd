@@ -248,7 +248,7 @@ func resourceVcdEdgeGatewayUpdate(d *schema.ResourceData, meta interface{}) erro
 			return err
 		}
 	} else {
-		_, _ = fmt.Fprint(GetTerraformStdout(), "WARNING: only advanced edge gateway supports "+
+		_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: only advanced edge gateway supports "+
 			"load balancing \n")
 	}
 
