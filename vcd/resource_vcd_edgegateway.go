@@ -395,7 +395,7 @@ func updateLoadBalancer(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 func resourceVcdEdgeGatewayImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ".")
 	if len(resourceURI) != 3 {
-		return nil, fmt.Errorf("resource name must be specified as org.vdc.edge-gw")
+		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-name.edge-gw-name")
 	}
 	orgName, vdcName, edgeName := resourceURI[0], resourceURI[1], resourceURI[2]
 

@@ -188,12 +188,12 @@ func resourceVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}) erro
 // 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
 // based on the known ID of object.
 //
-// Example resource name (_resource_name_): vcd_network_isolated.my-network
+// Example resource name (_resource_name_): vcd_network_direct.my-network
 // Example import path (_the_id_string_): org.vdc.my-network
 func resourceVcdNetworkDirectImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ".")
 	if len(resourceURI) != 3 {
-		return nil, fmt.Errorf("[network direct import] resource name must be specified as org.vdc.network")
+		return nil, fmt.Errorf("[network direct import] resource name must be specified as org-name.vdc-name.network-name")
 	}
 	orgName, vdcName, networkName := resourceURI[0], resourceURI[1], resourceURI[2]
 

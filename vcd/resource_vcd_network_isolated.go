@@ -335,7 +335,7 @@ func getDhcpPool(network *govcd.OrgVDCNetwork) []map[string]interface{} {
 func resourceVcdNetworkIsolatedImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ".")
 	if len(resourceURI) != 3 {
-		return nil, fmt.Errorf("[network import] resource name must be specified as org.vdc.network")
+		return nil, fmt.Errorf("[network isolated import] resource name must be specified as org-name.vdc-name.network-name")
 	}
 	orgName, vdcName, networkName := resourceURI[0], resourceURI[1], resourceURI[2]
 
