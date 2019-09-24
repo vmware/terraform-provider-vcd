@@ -80,11 +80,12 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				Description: "External network to be used as default gateway. Its name must be included in 'external_networks'. An empty value will skip the default gateway",
 			},
 			"distributed_routing": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     false,
-				ForceNew:    true,
-				Description: "If advanced networking enabled, also enable distributed routing",
+				Type:             schema.TypeBool,
+				Optional:         true,
+				Default:          false,
+				ForceNew:         true,
+				Description:      "If advanced networking enabled, also enable distributed routing",
+				DiffSuppressFunc: suppressFalse(),
 			},
 			"lb_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -325,7 +326,6 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 
 	_ = d.Set("advanced", egw.EdgeGateway.Configuration.AdvancedNetworkingEnabled)
 	_ = d.Set("ha_enabled", egw.EdgeGateway.Configuration.HaEnabled)
-	_ = d.Set("distributed_routing", egw.EdgeGateway.Configuration.DistributedRoutingEnabled)
 
 	for _, gw := range egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
 		defaultGwNet, ok := gateways[gw.SubnetParticipation.Gateway]
