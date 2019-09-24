@@ -25,6 +25,9 @@ IMPROVEMENTS:
 * `resource/vcd_network_routed` Add import capability
 * `resource/vcd_network_isolated` Add import capability
 * `resource/vcd_network_direct` Add import capability
+* `resource/vcd_network_direct`: Direct network state ID changed from network name to vCD ID 
+* `resource/vcd_network_isolated`: Isolated network state ID changed from network name to vCD ID 
+* `resource/vcd_network_routed`: Routed network state ID changed from network name to vCD ID 
 * `resource/catalog_item` added catalog item metadata support [#285] 
 * `resource/vcd_catalog`: Catalog state ID changed from catalog name to vCD ID 
 * `resource/vcd_catalog_item`: CatalogItem state ID changed from colon separated list of catalog name and item name to vCD ID 
@@ -46,7 +49,6 @@ BUG FIXES:
 * Wait for task completion on creation and update, where tasks were not handled at all.
 * `resource/vcd_firewall_rules` force recreation of the resource when attributes of the sub-element `rule` are changed (fixes a situation when it tried to update a rule).
 * `resource/vcd_network_isolated` Fix definition of DHCP, which was created automatically with leftovers from static IP pool even when not requested.
-* Change to use resource ID for .id attribute instead of name for all networks
 
 ## 2.4.0 (July 29, 2019)
 
