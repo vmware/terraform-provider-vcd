@@ -20,13 +20,13 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "A unique name for this network",
 			},
 			"org": {
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
 				ForceNew: true,
 				Description: "The name of organization to use, optional if defined at provider " +
@@ -34,103 +34,118 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 			},
 			"vdc": {
 				Type:        schema.TypeString,
-				Required:    false,
 				Optional:    true,
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
 			"netmask": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				Default:  "255.255.255.0",
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Default:     "255.255.255.0",
+				Description: "The netmask for the new network",
 			},
 			"gateway": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: false,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "The gateway for this network",
 			},
 
 			"dns1": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				Default:  "8.8.8.8",
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Default:     "8.8.8.8",
+				Description: "First DNS server to use",
 			},
 
 			"dns2": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				Default:  "8.8.4.4",
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Default:     "8.8.4.4",
+				Description: "Second DNS server to use",
 			},
 
 			"dns_suffix": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "A FQDN for the virtual machines on this network",
 			},
 
 			"href": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Network Hyper Reference",
 			},
 
 			"shared": &schema.Schema{
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
-				ForceNew: true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				ForceNew:    true,
+				Description: "Defines if this network is shared between multiple VDCs in the Org",
 			},
 
 			"dhcp_pool": &schema.Schema{
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeSet,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "A range of IPs to issue to virtual machines that don't have a static IP",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"start_address": &schema.Schema{
-							Type:     schema.TypeString,
-							Required: true,
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The first address in the IP Range",
 						},
 
 						"end_address": &schema.Schema{
-							Type:     schema.TypeString,
-							Required: true,
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The final address in the IP Range",
 						},
 
 						"default_lease_time": &schema.Schema{
-							Type:     schema.TypeInt,
-							Default:  3600,
-							Optional: true,
+							Type:        schema.TypeInt,
+							Default:     3600,
+							Optional:    true,
+							Description: "The default DHCP lease time to use",
 						},
 
 						"max_lease_time": &schema.Schema{
-							Type:     schema.TypeInt,
-							Default:  7200,
-							Optional: true,
+							Type:        schema.TypeInt,
+							Default:     7200,
+							Optional:    true,
+							Description: "The maximum DHCP lease time to use",
 						},
 					},
 				},
+				Set: resourceVcdNetworkIPAddressHash,
 			},
 			"static_ip_pool": &schema.Schema{
-				Type:     schema.TypeList,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeSet,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "A range of IPs permitted to be used as static IPs for virtual machines",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"start_address": &schema.Schema{
-							Type:     schema.TypeString,
-							Required: true,
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The first address in the IP Range",
 						},
 
 						"end_address": &schema.Schema{
-							Type:     schema.TypeString,
-							Required: true,
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The final address in the IP Range",
 						},
 					},
 				},
+				Set: resourceVcdNetworkIPAddressHash,
 			},
 		},
 	}
@@ -147,9 +162,9 @@ func resourceVcdNetworkIsolatedCreate(d *schema.ResourceData, meta interface{}) 
 	gatewayName := d.Get("gateway").(string)
 	networkName := d.Get("name").(string)
 
-	ipRanges := expandIPRange(d.Get("static_ip_pool").([]interface{}))
+	ipRanges := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
 
-	dhcpPool := d.Get("dhcp_pool").([]interface{})
+	dhcpPool := d.Get("dhcp_pool").(*schema.Set).List()
 
 	var dhcpPoolService []*types.DhcpPoolService
 
@@ -207,7 +222,7 @@ func resourceVcdNetworkIsolatedCreate(d *schema.ResourceData, meta interface{}) 
 
 	err = vdc.CreateOrgVDCNetworkWait(orgVDCNetwork)
 	if err != nil {
-		return fmt.Errorf("error: %#v", err)
+		return fmt.Errorf("error: %s", err)
 	}
 
 	network, err := vdc.GetOrgVdcNetworkByName(networkName, true)
@@ -224,7 +239,7 @@ func resourceVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}) er
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return fmt.Errorf("[network isolated read] "+errorRetrievingOrgAndVdc, err)
 	}
 
 	identifier := d.Id()
@@ -235,7 +250,7 @@ func resourceVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}) er
 	network, err := vdc.GetOrgVdcNetworkByNameOrId(identifier, false)
 	if err != nil {
 		log.Printf("[DEBUG] Network %s no longer exists. Removing from tfstate", identifier)
-		return fmt.Errorf("[network isolated read] error looking for %s %s", identifier, err)
+		return fmt.Errorf("[network isolated read] error looking for %s: %s", identifier, err)
 	}
 
 	_ = d.Set("name", network.OrgVDCNetwork.Name)
@@ -254,16 +269,28 @@ func resourceVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}) er
 
 	staticIpPool := getStaticIpPool(network)
 	if len(staticIpPool) > 0 {
-		err := d.Set("static_ip_pool", staticIpPool)
+		newSet := &schema.Set{
+			F: resourceVcdNetworkIPAddressHash,
+		}
+		for _, element := range staticIpPool {
+			newSet.Add(element)
+		}
+		err := d.Set("static_ip_pool", newSet.List())
 		if err != nil {
-			return fmt.Errorf("[network isolated read] %s", err)
+			return fmt.Errorf("[network isolated read] static_ip set %s", err)
 		}
 	}
 	dhcpPool := getDhcpPool(network)
 	if len(dhcpPool) > 0 {
-		err := d.Set("dhcp_pool", dhcpPool)
+		newSet := &schema.Set{
+			F: resourceVcdNetworkIPAddressHash,
+		}
+		for _, element := range dhcpPool {
+			newSet.Add(element)
+		}
+		err := d.Set("dhcp_pool", newSet.List())
 		if err != nil {
-			return fmt.Errorf("[network isolated read] %s", err)
+			return fmt.Errorf("[network isolated read] dhcp set %s", err)
 		}
 	}
 
@@ -271,8 +298,8 @@ func resourceVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}) er
 	return nil
 }
 
-func getDhcpPool(network *govcd.OrgVDCNetwork) []StringMap {
-	var dhcpPool []StringMap
+func getDhcpPool(network *govcd.OrgVDCNetwork) []map[string]interface{} {
+	var dhcpPool []map[string]interface{}
 	if network.OrgVDCNetwork.ServiceConfig == nil ||
 		network.OrgVDCNetwork.ServiceConfig.GatewayDhcpService == nil ||
 		len(network.OrgVDCNetwork.ServiceConfig.GatewayDhcpService.Pool) == 0 {
@@ -280,7 +307,7 @@ func getDhcpPool(network *govcd.OrgVDCNetwork) []StringMap {
 	}
 	for _, service := range network.OrgVDCNetwork.ServiceConfig.GatewayDhcpService.Pool {
 		if service.IsEnabled {
-			dhcp := StringMap{
+			dhcp := map[string]interface{}{
 				"start_address":      service.LowIPAddress,
 				"end_address":        service.HighIPAddress,
 				"default_lease_time": service.DefaultLeaseTime,
@@ -320,7 +347,7 @@ func resourceVcdNetworkIsolatedImport(d *schema.ResourceData, meta interface{}) 
 
 	network, err := vdc.GetOrgVdcNetworkByName(networkName, false)
 	if err != nil {
-		return nil, fmt.Errorf("[network import] error retrieving network %s: %s", networkName, err)
+		return nil, fmt.Errorf("[network import] error retrieving Org VDC network %s: %s", networkName, err)
 	}
 
 	_ = d.Set("org", orgName)
