@@ -140,6 +140,7 @@ func (vm *VM) UpdateNetworkConnectionSection(networks *types.NetworkConnectionSe
 	return nil
 }
 
+// Deprecated: use client.GetVMByHref instead
 func (cli *Client) FindVMByHREF(vmHREF string) (VM, error) {
 
 	newVm := NewVM(cli)
@@ -797,4 +798,45 @@ func (vm *VM) SetProductSectionList(productSection *types.ProductSectionList) (*
 // or returned as set before
 func (vm *VM) GetProductSectionList() (*types.ProductSectionList, error) {
 	return getProductSectionList(vm.client, vm.VM.HREF)
+}
+
+// GetGuestCustomizationSection retrieves guest customization section for a VM. It allows to read VM guest customization properties.
+func (vm *VM) GetGuestCustomizationSection() (*types.GuestCustomizationSection, error) {
+	if vm == nil || vm.VM.HREF == "" {
+		return nil, fmt.Errorf("vm or href cannot be empty to get  guest customization section")
+	}
+	guestCustomizationSection := &types.GuestCustomizationSection{}
+
+	_, err := vm.client.ExecuteRequest(vm.VM.HREF+"/guestCustomizationSection", http.MethodGet,
+		types.MimeGuestCustomizationSection, "error retrieving guest customization section : %s", nil, guestCustomizationSection)
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to retrieve guest customization section: %s", err)
+	}
+
+	return guestCustomizationSection, nil
+}
+
+// SetGuestCustomizationSection sets guest customization section for a VM. It allows to change VM guest customization properties.
+func (vm *VM) SetGuestCustomizationSection(guestCustomizationSection *types.GuestCustomizationSection) (*types.GuestCustomizationSection, error) {
+	if vm == nil || vm.VM.HREF == "" {
+		return nil, fmt.Errorf("vm or href cannot be empty to get  guest customization section")
+	}
+
+	guestCustomizationSection.Xmlns = types.XMLNamespaceVCloud
+	guestCustomizationSection.Ovf = types.XMLNamespaceOVF
+
+	task, err := vm.client.ExecuteTaskRequest(vm.VM.HREF+"/guestCustomizationSection", http.MethodPut,
+		types.MimeGuestCustomizationSection, "error setting product section: %s", guestCustomizationSection)
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to set guest customization section: %s", err)
+	}
+
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return nil, fmt.Errorf("task for setting guest customization section failed: %s", err)
+	}
+
+	return vm.GetGuestCustomizationSection()
 }

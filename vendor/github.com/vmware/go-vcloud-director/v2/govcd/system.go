@@ -501,7 +501,7 @@ func (vcdClient *VCDClient) GetExternalNetworks() (*types.ExternalNetworkReferen
 }
 
 // GetExternalNetworkByName returns an ExternalNetwork reference if the network name matches an existing one.
-// If no valid external network is found, it returns an empty ExternalNetwork reference and an error
+// If no valid external network is found, it returns a nil ExternalNetwork reference and an error
 func (vcdClient *VCDClient) GetExternalNetworkByName(networkName string) (*ExternalNetwork, error) {
 
 	extNetworkRefs, err := vcdClient.GetExternalNetworks()
@@ -527,7 +527,7 @@ func (vcdClient *VCDClient) GetExternalNetworkByName(networkName string) (*Exter
 }
 
 // GetExternalNetworkById returns an ExternalNetwork reference if the network ID matches an existing one.
-// If no valid external network is found, it returns an empty ExternalNetwork reference and an error
+// If no valid external network is found, it returns a nil ExternalNetwork reference and an error
 func (vcdClient *VCDClient) GetExternalNetworkById(id string) (*ExternalNetwork, error) {
 
 	extNetworkRefs, err := vcdClient.GetExternalNetworks()
@@ -555,7 +555,7 @@ func (vcdClient *VCDClient) GetExternalNetworkById(id string) (*ExternalNetwork,
 }
 
 // GetExternalNetworkByNameOrId returns an ExternalNetwork reference if either the network name or ID matches an existing one.
-// If no valid external network is found, it returns an empty ExternalNetwork reference and an error
+// If no valid external network is found, it returns a nil ExternalNetwork reference and an error
 func (vcdClient *VCDClient) GetExternalNetworkByNameOrId(identifier string) (*ExternalNetwork, error) {
 	getByName := func(name string, refresh bool) (interface{}, error) { return vcdClient.GetExternalNetworkByName(name) }
 	getById := func(id string, refresh bool) (interface{}, error) { return vcdClient.GetExternalNetworkById(id) }
