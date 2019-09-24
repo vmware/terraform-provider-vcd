@@ -53,6 +53,7 @@ func getAvailableNetworks() error {
 	if networksSearched {
 		return nil
 	}
+	// Get the data from configuration file. This client is still inactive at this point
 	vcdClient, err := getTestVCDFromJson(testConfig)
 	if err != nil {
 		return fmt.Errorf("error getting client configuration: %s", err)
@@ -143,7 +144,7 @@ func TestAccVcdNetworkDirectDS(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:  func() { preRunChecks(t) },
+		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			resource.TestStep{
@@ -199,7 +200,7 @@ func TestAccVcdNetworkRoutedDS(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:  func() { preRunChecks(t) },
+		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			resource.TestStep{
@@ -237,7 +238,7 @@ func TestAccVcdNetworkIsolatedDS(t *testing.T) {
 	}
 
 	networkType := "vcd_network_isolated"
-	data, ok := availableNetworks[networkType]
+	existingNetwork, ok := availableNetworks[networkType]
 	if !ok {
 		t.Skip("no isolated network found ")
 		return
@@ -247,7 +248,7 @@ func TestAccVcdNetworkIsolatedDS(t *testing.T) {
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
 		"VDC":         testConfig.VCD.Vdc,
-		"NetworkName": data.network.Name,
+		"NetworkName": existingNetwork.network.Name,
 		"FuncName":    "TestNetworkIsolatedDS",
 		"Tags":        "network",
 	}
@@ -255,7 +256,7 @@ func TestAccVcdNetworkIsolatedDS(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:  func() { preRunChecks(t) },
+		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			resource.TestStep{
@@ -264,10 +265,10 @@ func TestAccVcdNetworkIsolatedDS(t *testing.T) {
 
 					resource.TestCheckOutput("network_org", testConfig.VCD.Org),
 					resource.TestCheckOutput("network_vdc", testConfig.VCD.Vdc),
-					resource.TestCheckOutput("network_name", data.network.Name),
-					resource.TestCheckOutput("network_gateway", data.network.Configuration.IPScopes.IPScope[0].Gateway),
-					resource.TestCheckOutput("network_netmask", data.network.Configuration.IPScopes.IPScope[0].Netmask),
-					resource.TestCheckOutput("network_start_address", data.network.Configuration.IPScopes.IPScope[0].IPRanges.IPRange[0].StartAddress),
+					resource.TestCheckOutput("network_name", existingNetwork.network.Name),
+					resource.TestCheckOutput("network_gateway", existingNetwork.network.Configuration.IPScopes.IPScope[0].Gateway),
+					resource.TestCheckOutput("network_netmask", existingNetwork.network.Configuration.IPScopes.IPScope[0].Netmask),
+					resource.TestCheckOutput("network_start_address", existingNetwork.network.Configuration.IPScopes.IPScope[0].IPRanges.IPRange[0].StartAddress),
 				),
 			},
 		},
@@ -279,7 +280,6 @@ data "vcd_network_direct" "{{.NetworkName}}" {
   name             = "{{.NetworkName}}"
   org              = "{{.Org}}"
   vdc              = "{{.VDC}}"
-  external_network = "{{.ExternalNetwork}}"
 }
 
 output "network_name" {
@@ -310,7 +310,6 @@ data "vcd_network_routed" "{{.NetworkName}}" {
   name         = "{{.NetworkName}}"
   org          = "{{.Org}}"
   vdc          = "{{.VDC}}"
-  edge_gateway = "${data.vcd_edgegateway.{{.EdgeGateway}}.name}"
 }
 
 output "default_gateway" {
@@ -362,6 +361,6 @@ output "network_netmask" {
 }
 
 output "network_start_address" {
-  value  = data.vcd_network_isolated.{{.NetworkName}}.static_ip_pool.0.start_address
+  value  = tolist(data.vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[0].start_address
 }
 `
