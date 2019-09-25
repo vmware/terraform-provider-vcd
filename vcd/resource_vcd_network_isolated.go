@@ -262,7 +262,7 @@ func resourceVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}) er
 			_ = d.Set("netmask", c.IPScopes.IPScope[0].Netmask)
 			_ = d.Set("dns1", c.IPScopes.IPScope[0].DNS1)
 			_ = d.Set("dns2", c.IPScopes.IPScope[0].DNS2)
-			_ = d.Set("dnd_suffix", c.IPScopes.IPScope[0].DNSSuffix)
+			_ = d.Set("dns_suffix", c.IPScopes.IPScope[0].DNSSuffix)
 		}
 	}
 	_ = d.Set("shared", network.OrgVDCNetwork.IsShared)
