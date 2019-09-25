@@ -235,6 +235,10 @@ func resourceVcdNetworkIsolatedCreate(d *schema.ResourceData, meta interface{}) 
 }
 
 func resourceVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}) error {
+	return genericVcdNetworkIsolatedRead(d, meta, "resource")
+}
+
+func genericVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}, origin string) error {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -249,7 +253,11 @@ func resourceVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}) er
 	}
 	network, err := vdc.GetOrgVdcNetworkByNameOrId(identifier, false)
 	if err != nil {
-		log.Printf("[DEBUG] Network %s no longer exists. Removing from tfstate", identifier)
+		if origin == "resource" {
+			log.Printf("[DEBUG] Network %s no longer exists. Removing from tfstate", identifier)
+			d.SetId("")
+			return nil
+		}
 		return fmt.Errorf("[network isolated read] error looking for %s: %s", identifier, err)
 	}
 

@@ -207,6 +207,10 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 
 // Fetches information about an existing edge gateway for a data definition
 func resourceVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}) error {
+	return genericVcdEdgeGatewayRead(d, meta, "resource")
+}
+
+func genericVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}, origin string) error {
 	log.Printf("[TRACE] edge gateway read initiated")
 
 	vcdClient := meta.(*VCDClient)
@@ -227,6 +231,11 @@ func resourceVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}) error 
 	}
 	edgeGateway, err := vdc.GetEdgeGatewayByNameOrId(identifier, false)
 	if err != nil {
+		if origin == "resource" {
+			log.Printf("[edgegateway read] edge gateway %s not found. Removing from state file: %s", identifier, err)
+			d.SetId("")
+			return nil
+		}
 		return fmt.Errorf("[edgegateway read] error retrieving edge gateway %s: %s", identifier, err)
 	}
 

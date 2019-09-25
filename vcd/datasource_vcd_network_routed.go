@@ -4,7 +4,7 @@ import "github.com/hashicorp/terraform/helper/schema"
 
 func datasourceVcdNetworkRouted() *schema.Resource {
 	return &schema.Resource{
-		Read: resourceVcdNetworkRoutedRead,
+		Read: datasourceVcdNetworkRoutedRead,
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
@@ -127,4 +127,8 @@ func datasourceVcdNetworkRouted() *schema.Resource {
 			},
 		},
 	}
+}
+
+func datasourceVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}) error {
+	return genericVcdNetworkRoutedRead(d, meta, "datasource")
 }

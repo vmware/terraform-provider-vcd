@@ -244,6 +244,10 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourceVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}) error {
+	return genericVcdNetworkRoutedRead(d, meta, "resource")
+}
+
+func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origin string) error {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -257,7 +261,11 @@ func resourceVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}) erro
 	}
 	network, err := vdc.GetOrgVdcNetworkByNameOrId(identifier, false)
 	if err != nil {
-		log.Printf("[DEBUG] Network %s no longer exists. Removing from tfstate", identifier)
+		if origin == "resource" {
+			log.Printf("[DEBUG] Network %s no longer exists. Removing from tfstate", identifier)
+			d.SetId("")
+			return nil
+		}
 		return fmt.Errorf("[network routed read] error retrieving Org VDC network %s: %s", identifier, err)
 	}
 	edgeGatewayName := d.Get("edge_gateway").(string)

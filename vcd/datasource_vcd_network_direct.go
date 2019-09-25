@@ -4,7 +4,7 @@ import "github.com/hashicorp/terraform/helper/schema"
 
 func datasourceVcdNetworkDirect() *schema.Resource {
 	return &schema.Resource{
-		Read: resourceVcdNetworkDirectRead,
+		Read: datasourceVcdNetworkDirectRead,
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
@@ -64,4 +64,8 @@ func datasourceVcdNetworkDirect() *schema.Resource {
 			},
 		},
 	}
+}
+
+func datasourceVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}) error {
+	return genericVcdNetworkDirectRead(d, meta, "datasource")
 }

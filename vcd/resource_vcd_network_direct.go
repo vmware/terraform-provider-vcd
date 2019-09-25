@@ -130,6 +130,10 @@ func resourceVcdNetworkDirectCreate(d *schema.ResourceData, meta interface{}) er
 }
 
 func resourceVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}) error {
+	return genericVcdNetworkDirectRead(d, meta, "resource")
+}
+
+func genericVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}, origin string) error {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -144,7 +148,11 @@ func resourceVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}) erro
 	}
 	network, err := vdc.GetOrgVdcNetworkByNameOrId(identifier, false)
 	if err != nil {
-		log.Printf("[DEBUG] Network %s no longer exists. Removing from tfstate", identifier)
+		if origin == "resource" {
+			log.Printf("[DEBUG] Network %s no longer exists. Removing from tfstate", identifier)
+			d.SetId("")
+			return nil
+		}
 		return fmt.Errorf("[network direct read] network %s not found: %s", identifier, err)
 	}
 

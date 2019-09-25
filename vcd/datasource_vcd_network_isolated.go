@@ -4,7 +4,7 @@ import "github.com/hashicorp/terraform/helper/schema"
 
 func datasourceVcdNetworkIsolated() *schema.Resource {
 	return &schema.Resource{
-		Read: resourceVcdNetworkIsolatedRead,
+		Read: datasourceVcdNetworkIsolatedRead,
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
@@ -109,4 +109,8 @@ func datasourceVcdNetworkIsolated() *schema.Resource {
 			},
 		},
 	}
+}
+
+func datasourceVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}) error {
+	return genericVcdNetworkIsolatedRead(d, meta, "datasource")
 }

@@ -4,7 +4,7 @@ import "github.com/hashicorp/terraform/helper/schema"
 
 func datasourceVcdEdgeGateway() *schema.Resource {
 	return &schema.Resource{
-		Read: resourceVcdEdgeGatewayRead,
+		Read: datasourceVcdEdgeGatewayRead,
 
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
@@ -79,4 +79,8 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 			},
 		},
 	}
+}
+
+func datasourceVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}) error {
+	return genericVcdEdgeGatewayRead(d, meta, "datasource")
 }
