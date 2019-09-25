@@ -17,14 +17,14 @@ FEATURES:
 
 IMPROVEMENTS:
 
-* `resource/vcd_org` Add import capability
-* `resource/vcd_catalog` Add import capability
-* `resource/vcd_catalog_item` Add import capability
-* `resource/vcd_external_network` Add import capability
-* `resource/vcd_edgegateway` Add import capability
-* `resource/vcd_network_routed` Add import capability
-* `resource/vcd_network_isolated` Add import capability
-* `resource/vcd_network_direct` Add import capability
+* `resource/vcd_org` Add import capability and full read support [#218]
+* `resource/vcd_catalog` Add import capability and full read support [#218]
+* `resource/vcd_catalog_item` Add import capability and full read support [#218]
+* `resource/vcd_external_network` Add import capability and full read support [#218]
+* `resource/vcd_edgegateway` Add import capability and full read support [#218]
+* `resource/vcd_network_routed` Add import capability and full read support [#218]
+* `resource/vcd_network_isolated` Add import capability and full read support [#218]
+* `resource/vcd_network_direct` Add import capability and full read support [#218]
 * `resource/vcd_network_direct`: Direct network state ID changed from network name to vCD ID 
 * `resource/vcd_network_isolated`: Isolated network state ID changed from network name to vCD ID 
 * `resource/vcd_network_routed`: Routed network state ID changed from network name to vCD ID 
@@ -38,8 +38,7 @@ IMPROVEMENTS:
 * `resource/vcd_vapp` supports guest properties [#319]
 * `resource/vcd_vapp_vm` supports guest properties [#319]
 * `resource/vcd_network_direct` Add computed properties (external network gateway, netmask, DNS, and DNS suffix) [#330]
-* `vcd_org_vdc` Add import capability - [#324]
-* `vcd_org_vdc` Add full read capability - [#324]
+* `vcd_org_vdc` Add import capability and full read support [#218]
 * Upgrade Terraform SDK dependency to 0.12.8 [#320]
 * `resource/vcd_vapp_vm` has new field `computer_name` [#334]
 
