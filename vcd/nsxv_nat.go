@@ -29,7 +29,7 @@ func natRuleCreate(natType string, setData natRuleDataSetter, getNatRule natRule
 			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
-		natRule, err := getNatRule(d, edgeGateway)
+		natRule, err := getNatRule(d, *edgeGateway)
 		if err != nil {
 			return fmt.Errorf("unable to make structure for API call: %s", err)
 		}
@@ -58,7 +58,7 @@ func natRuleUpdate(natType string, setData natRuleDataSetter, getNatRule natRule
 			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
-		updateNatRule, err := getNatRule(d, edgeGateway)
+		updateNatRule, err := getNatRule(d, *edgeGateway)
 		if err != nil {
 			return fmt.Errorf("unable to make structure for API call: %s", err)
 		}
@@ -71,7 +71,7 @@ func natRuleUpdate(natType string, setData natRuleDataSetter, getNatRule natRule
 			return fmt.Errorf("unable to update NAT rule with ID %s: %s", d.Id(), err)
 		}
 
-		err = setData(d, updatedNatRule, edgeGateway)
+		err = setData(d, updatedNatRule, *edgeGateway)
 		if err != nil {
 			return fmt.Errorf("error setting data: %s", err)
 		}
@@ -114,7 +114,7 @@ func natRuleRead(idField, natType string, setData natRuleDataSetter) schema.Read
 		}
 
 		d.SetId(readNatRule.ID)
-		return setData(d, readNatRule, edgeGateway)
+		return setData(d, readNatRule, *edgeGateway)
 	}
 }
 

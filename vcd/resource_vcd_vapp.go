@@ -141,7 +141,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 			}
 
 			log.Printf("[DEBUG] VAppTemplate: %#v", vappTemplate)
-			net, err := vdc.FindVDCNetwork(d.Get("network_name").(string))
+			net, err := vdc.GetOrgVdcNetworkByName(d.Get("network_name").(string), false)
 			if err != nil {
 				return fmt.Errorf("error finding OrgVCD Network: %s", err)
 			}

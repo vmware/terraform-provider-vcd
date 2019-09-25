@@ -156,8 +156,8 @@ func testAccResourcesDestroyed(s *terraform.State) error {
 			return fmt.Errorf("vapp %s still exist and error: %#v", itemName, err)
 		}
 
-		_, err = vdc.FindVDCNetwork(TestAccVcdVAppVmNetForInsert)
-		if err != nil && !strings.Contains(err.Error(), "can't find VDC Network:") {
+		_, err = vdc.GetOrgVdcNetworkByName(TestAccVcdVAppVmNetForInsert, false)
+		if err == nil {
 			return fmt.Errorf("network %s still exist and error: %#v", itemName, err)
 		}
 	}
