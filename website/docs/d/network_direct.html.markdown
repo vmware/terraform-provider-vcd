@@ -37,12 +37,27 @@ data "vcd_external_network" "external_network1" {
 output "gateway" {
   value = data.vcd_external_network.external_network1.ip_scope.0.gateway
 }
+# equivalent to
+output "external_network_gateway" {
+  value = data.vcd_network_direct.net.external_network_gateway
+}
+
 output "netmask" {
   value = data.vcd_external_network.external_network1.ip_scope.0.netmask
 }
+# equivalent to
+output "external_network_netmask" {
+  value = data.vcd_network_direct.net.external_network_netmask
+}
+
 output "DNS" {
   value = data.vcd_external_network.external_network1.ip_scope.0.dns1
 }
+# equivalent to
+output "external_network_dns" {
+  value = data.vcd_network_direct.net.external_network_dns1
+}
+
 output "external_ip" {
   value = data.vcd_external_network.external_network1.ip_scope.0.static_ip_pool.0.start_address
 }
