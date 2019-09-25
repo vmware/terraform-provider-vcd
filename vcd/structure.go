@@ -121,3 +121,20 @@ func convertToStringMap(param map[string]interface{}) map[string]string {
 	}
 	return temp
 }
+
+func convertToSliceOfStrings(param []interface{}) []string {
+	result := make([]string, len(param))
+	for index, value := range param {
+		result[index] = fmt.Sprint(value)
+	}
+
+	return result
+}
+
+func convertToTypeSet(param []string) []interface{} {
+	slice := make([]interface{}, len(param))
+	for index, value := range param {
+		slice[index] = value
+	}
+	return slice
+}
