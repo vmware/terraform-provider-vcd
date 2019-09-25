@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_network\_isolated
 
-Provides a vCloud Director Org VDC isolated Network. This can be used to reference
+Provides a vCloud Director Org VDC isolated Network data source. This can be used to reference
 internal networks for vApps to connect. This network is not attached to external networks or routers.
 
 Supported in provider *v2.5+*

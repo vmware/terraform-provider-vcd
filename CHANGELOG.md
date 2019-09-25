@@ -37,7 +37,7 @@ IMPROVEMENTS:
 * `resource/vcd_vapp_vm` allows to force guest customization [#310]
 * `resource/vcd_vapp` supports guest properties [#319]
 * `resource/vcd_vapp_vm` supports guest properties [#319]
-* `resource/vcd_network_direct` Add computed properties [#330]
+* `resource/vcd_network_direct` Add computed properties (external network gateway, netmask, DNS, and DNS suffix) [#330]
 * `vcd_org_vdc` Add import capability - [#324]
 * `vcd_org_vdc` Add full read capability - [#324]
 * Upgrade Terraform SDK dependency to 0.12.8 [#320]

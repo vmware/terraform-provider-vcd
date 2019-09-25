@@ -6,9 +6,9 @@ description: |-
   Provides an edge gateway data source.
 ---
 
-# edge gateway
+# vcd\_edgegateway
 
-Provides a vCloud Director edge gateway directly connected to one or more external networks. This can be used to reference
+Provides a vCloud Director edge gateway data source, directly connected to one or more external networks. This can be used to reference
 edge gateways for Org VDC networks to connect.
 
 Supported in provider *v2.5+*

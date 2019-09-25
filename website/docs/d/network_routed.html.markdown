@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_network\_routed
 
-Provides a vCloud Director Org VDC routed Network. This can be used to reference internal networks for vApps to connect.
+Provides a vCloud Director Org VDC routed Network data source. This can be used to reference internal networks for vApps to connect.
 
 Supported in provider *v2.5+*
 
