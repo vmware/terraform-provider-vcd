@@ -91,7 +91,7 @@ func testAccCheckVappNetworkExists(n string) resource.TestCheckFunc {
 
 		conn := testAccProvider.Meta().(*VCDClient)
 
-		found, err := isVappNetworkFound(conn, rs)
+		found, err := isVappNetworkFound(conn, rs, "exist")
 		if err != nil {
 			return err
 		}
@@ -113,7 +113,7 @@ func testAccCheckVappNetworkDestroy(s *terraform.State) error {
 			continue
 		}
 
-		_, err := isVappNetworkFound(conn, rs)
+		_, err := isVappNetworkFound(conn, rs, "destroy")
 		if err == nil {
 			return fmt.Errorf("vapp %s still exists", vappNameForNetworkTest)
 		}
@@ -122,7 +122,7 @@ func testAccCheckVappNetworkDestroy(s *terraform.State) error {
 	return nil
 }
 
-func isVappNetworkFound(conn *VCDClient, rs *terraform.ResourceState) (bool, error) {
+func isVappNetworkFound(conn *VCDClient, rs *terraform.ResourceState, origin string) (bool, error) {
 	_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
 	if err != nil {
 		return false, fmt.Errorf(errorRetrievingOrgAndVdc, err)
@@ -133,6 +133,10 @@ func isVappNetworkFound(conn *VCDClient, rs *terraform.ResourceState) (bool, err
 		return false, fmt.Errorf("error retrieving vApp: %s, %#v", rs.Primary.ID, err)
 	}
 
+	// Avoid looking for network when the purpose is only finding whether the vApp exists
+	if origin == "destroy" {
+		return true, nil
+	}
 	networkConfig, err := vapp.GetNetworkConfig()
 	if err != nil {
 		return false, fmt.Errorf("error retrieving network config from vApp: %#v", err)
