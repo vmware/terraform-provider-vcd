@@ -62,21 +62,20 @@ resource "vcd_nsxv_firewall_rule" "rule1" {
   edge_gateway = "{{.EdgeGateway}}"
   name = "rule 40000"
   rule_tag = "40000"
+  action = "accept"
   
   source {
-	  exclude = false
-	  network_ids = ["vse"]
+	  ips = ["any"]
 
   }
 
   destination {
 	  
-	  ips = ["any"]
+	  ips = ["192.168.1.110"]
   }
 
   service {
-	  protocol = "tcp"
-	  port     = "60"
+	  protocol = "icmp"
   }
   depends_on = ["vcd_nsxv_firewall_rule.rule2"]
 
@@ -86,22 +85,22 @@ resource "vcd_nsxv_firewall_rule" "rule2" {
 	org          = "{{.Org}}"
 	vdc          = "{{.Vdc}}"
 	edge_gateway = "{{.EdgeGateway}}"
-	name = "rule 50000"
-	rule_tag = "50000"
+	name = "rule 30000"
+	rule_tag = "30000"
+	action = "deny"
 
 	source {
-		exclude = false
-		ips = ["192.168.1.1/24"]
+		ips = ["any"]
+  
 	}
   
 	destination {
 		
-		ips = ["any"]
+		ips = ["192.168.1.110"]
 	}
   
 	service {
-		protocol = "tcp"
-		port     = "60"
+		protocol = "icmp"
 	}
   }
 
