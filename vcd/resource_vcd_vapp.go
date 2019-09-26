@@ -159,7 +159,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 
 			log.Printf("storage_profile %s", storageProfileReference)
 
-			vapp, err := vdc.FindVAppByName(d.Get("name").(string))
+			vapp, err := vdc.GetVAppByName(d.Get("name").(string), false)
 			if err != nil {
 				task, err := vdc.ComposeVApp(nets, vappTemplate, storageProfileReference, d.Get("name").(string), d.Get("description").(string), d.Get("accept_all_eulas").(bool))
 				if err != nil {
@@ -170,7 +170,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 				if err != nil {
 					return fmt.Errorf("error creating vApp: %#v", err)
 				}
-				vapp, err = vdc.FindVAppByName(d.Get("name").(string))
+				vapp, err = vdc.GetVAppByName(d.Get("name").(string), true)
 				if err != nil {
 					return fmt.Errorf("error creating vApp: %#v", err)
 				}
@@ -258,7 +258,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if _, ok := d.GetOk("guest_properties"); ok {
-		vapp, err := vdc.FindVAppByName(d.Get("name").(string))
+		vapp, err := vdc.GetVAppByName(d.Get("name").(string), true)
 		if err != nil {
 			return fmt.Errorf("unable to find vApp by name %s: %s", d.Get("name").(string), err)
 		}
@@ -295,7 +295,7 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	vapp, err := vdc.FindVAppByName(d.Id())
+	vapp, err := vdc.GetVAppByNameOrId(d.Id(), false)
 
 	if err != nil {
 		return fmt.Errorf("error finding VApp: %#v", err)
@@ -446,7 +446,7 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	vapp, err := vdc.FindVAppByName(d.Id())
+	vapp, err := vdc.GetVAppByNameOrId(d.Id(), false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find vApp. Removing from tfstate")
 		d.SetId("")
@@ -492,7 +492,7 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 func getVAppIPAddress(d *schema.ResourceData, meta interface{}, vdc govcd.Vdc, org govcd.Org) (string, error) {
 	var ip string
 
-	vapp, err := vdc.FindVAppByName(d.Id())
+	vapp, err := vdc.GetVAppByNameOrId(d.Id(), true)
 	if err != nil {
 		return "", fmt.Errorf("unable to find vApp")
 	}
@@ -500,7 +500,7 @@ func getVAppIPAddress(d *schema.ResourceData, meta interface{}, vdc govcd.Vdc, o
 	// getting the IP of the specific Vm, rather than index zero.
 	// Required as once we add more VM's, index zero doesn't guarantee the
 	// 'first' one, and tests will fail sometimes (annoying huh?)
-	vm, err := vdc.FindVMByName(vapp, d.Get("name").(string))
+	vm, err := vapp.GetVMByName(d.Get("name").(string), false)
 	if err != nil {
 		return "", fmt.Errorf("unable to find VM: %s", err)
 	}
@@ -524,7 +524,7 @@ func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	vapp, err := vdc.FindVAppByName(d.Id())
+	vapp, err := vdc.GetVAppByNameOrId(d.Id(), false)
 	if err != nil {
 		return fmt.Errorf("error finding vapp: %s", err)
 	}
@@ -539,7 +539,7 @@ func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error changing network: %#v", err)
 	}
 
-	err = tryUndeploy(vapp)
+	err = tryUndeploy(*vapp)
 	if err != nil {
 		return err
 	}

@@ -116,12 +116,12 @@ func testAccCheckVcdVAppExists(n string, vapp *govcd.VApp) resource.TestCheckFun
 			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
 
-		resp, err := vdc.FindVAppByName(rs.Primary.ID)
+		newVapp, err := vdc.GetVAppByNameOrId(rs.Primary.ID, false)
 		if err != nil {
 			return err
 		}
 
-		*vapp = resp
+		*vapp = *newVapp
 
 		return nil
 	}
@@ -140,7 +140,7 @@ func testAccCheckVcdVAppDestroy(s *terraform.State) error {
 			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
 
-		_, err = vdc.FindVAppByName(rs.Primary.ID)
+		_, err = vdc.GetVAppByNameOrId(rs.Primary.ID, false)
 
 		if err == nil {
 			return fmt.Errorf("VPCs still exist")

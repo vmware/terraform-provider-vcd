@@ -4,7 +4,6 @@ package vcd
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -150,8 +149,8 @@ func testAccCheckVappNetworkMultiDestroy(s *terraform.State) error {
 		}
 
 		_, err := isVappNetworkMultiFound(conn, rs)
-		if err != nil && !strings.Contains(err.Error(), "can't find vApp:") {
-			return fmt.Errorf("vapp %s still exist and error: %#v", vappNameForNetworkMulti, err)
+		if err == nil {
+			return fmt.Errorf("vapp %s still exists", vappNameForNetworkMulti)
 		}
 	}
 
@@ -164,7 +163,7 @@ func isVappNetworkMultiFound(conn *VCDClient, rs *terraform.ResourceState) (stri
 		return "uninstalled", fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	vapp, err := vdc.FindVAppByName(vappNameForNetworkMulti)
+	vapp, err := vdc.GetVAppByName(vappNameForNetworkMulti, false)
 	if err != nil {
 		return "uninstalled", fmt.Errorf("error retrieving vApp: %s, %#v", rs.Primary.ID, err)
 	}
