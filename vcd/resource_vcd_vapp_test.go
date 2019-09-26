@@ -121,7 +121,6 @@ func testAccCheckVcdVAppExists(n string, vapp *govcd.VApp) resource.TestCheckFun
 			return err
 		}
 
-		govcd.ShowVapp(*newVapp.VApp)
 		*vapp = *newVapp
 
 		return nil
