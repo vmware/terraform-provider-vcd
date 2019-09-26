@@ -8,7 +8,6 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
 // To execute this test, run
@@ -16,8 +15,6 @@ import (
 // Extends TestAccVcdVappVM with multiple VMs
 func TestAccVcdVAppVmMulti(t *testing.T) {
 	var (
-		vapp              govcd.VApp
-		vm                govcd.VM
 		diskResourceNameM string = "TestAccVcdVAppVmMulti"
 		vappName2         string = "TestAccVcdVAppVmVappM"
 		diskName          string = "TestAccVcdIndependentDiskMulti"
@@ -60,7 +57,7 @@ func TestAccVcdVAppVmMulti(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVAppVmMultiExists("vcd_vapp_vm."+vmName1, &vapp, &vm, vappName2, vmName1),
+					testAccCheckVcdVAppVmMultiExists("vcd_vapp_vm."+vmName1, vappName2, vmName1),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_vm."+vmName1, "name", vmName1),
 					resource.TestCheckResourceAttr(
@@ -73,7 +70,7 @@ func TestAccVcdVAppVmMulti(t *testing.T) {
 	})
 }
 
-func testAccCheckVcdVAppVmMultiExists(n string, vapp *govcd.VApp, vm *govcd.VM, vappName, vmName string) resource.TestCheckFunc {
+func testAccCheckVcdVAppVmMultiExists(n string, vappName, vmName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -95,12 +92,10 @@ func testAccCheckVcdVAppVmMultiExists(n string, vapp *govcd.VApp, vm *govcd.VM, 
 			return err
 		}
 
-		newVm, err := vapp.GetVMByName(vmName, false)
+		_, err = vapp.GetVMByName(vmName, false)
 		if err != nil {
 			return err
 		}
-
-		*vm = *newVm
 
 		return nil
 	}
