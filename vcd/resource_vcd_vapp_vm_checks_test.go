@@ -27,18 +27,18 @@ func testAccCheckVcdVAppVmExists(vappName, vmName, node string, vapp *govcd.VApp
 			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
 
-		vapp, err := vdc.FindVAppByName(vappName)
+		vapp, err := vdc.GetVAppByName(vappName, false)
 		if err != nil {
 			return err
 		}
 
-		resp, err := vdc.FindVMByName(vapp, vmName)
+		newVm, err := vapp.GetVMByName(vmName, false)
 
 		if err != nil {
 			return err
 		}
 
-		*vm = resp
+		*vm = *newVm
 
 		return nil
 	}
@@ -57,7 +57,7 @@ func testAccCheckVcdVAppVmDestroy(vappName string) resource.TestCheckFunc {
 				return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 			}
 
-			_, err = vdc.FindVAppByName(vappName)
+			_, err = vdc.GetVAppByName(vappName, false)
 
 			if err == nil {
 				return fmt.Errorf("VPCs still exist")
