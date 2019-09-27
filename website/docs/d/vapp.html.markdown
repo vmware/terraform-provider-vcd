@@ -50,10 +50,8 @@ The following arguments are supported:
 ## Attribute reference
 
 * `href` - The vApp Hyper Reference
-* `metadata` -  Key value map of metadata to assign to this vApp. Key and value can be any string. (Since *v2.2+* metadata is added directly to vApp instead of first VM in vApp)
+* `metadata` -  Key value map of metadata to assign to this vApp. Key and value can be any string. 
 * `power_on` -  A boolean value stating if this vApp should be powered on. Default is `true`
-* `guest_properties` -  Key value map of vApp guest properties **Note** `ovf` attribute
-sets guest properties on the first VM using a legacy ability of this resource to spawn 1 VM. Please
-use resources `vcd_vapp_vm` to provision VMs.
+* `guest_properties` -  Key value map of vApp guest properties.
 * `status` -  The vApp status as a numeric code
 * `status_text` -  The vApp status as text.
