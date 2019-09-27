@@ -153,6 +153,11 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 func resourceVcdCatalogItemRead(d *schema.ResourceData, meta interface{}) error {
 	catalogItem, err := findCatalogItem(d, meta.(*VCDClient))
 	if err != nil {
+		log.Printf("[DEBUG] Unable to find media item: %s", err)
+		return err
+	}
+	if catalogItem == nil {
+		log.Printf("[DEBUG] Unable to find media item: %s. Removing from tfstate", err)
 		return err
 	}
 
@@ -166,7 +171,8 @@ func resourceVcdCatalogItemRead(d *schema.ResourceData, meta interface{}) error 
 		return err
 	}
 	_ = d.Set("description", catalogItem.CatalogItem.Description)
-	_ = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+
 	return err
 }
 
@@ -187,23 +193,10 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 
 	log.Printf("[TRACE] adding/updating metadata for catalog item")
 
-	vcdClient := meta.(*VCDClient)
-
-	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+	catalogItem, err := findCatalogItem(d, meta.(*VCDClient))
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
-	}
-
-	catalog, err := adminOrg.GetCatalogByName(d.Get("catalog").(string), false)
-	if err != nil {
-		log.Printf("[DEBUG] Unable to find catalog: %s", err)
-		return nil
-	}
-
-	catalogItem, err := catalog.GetCatalogItemByName(d.Get("name").(string), false)
-	if err != nil {
-		log.Printf("[DEBUG] Unable to find catalog item: %s", err)
-		return nil
+		log.Printf("[DEBUG] Unable to find media item: %s", err)
+		return err
 	}
 
 	// We have to add metadata to template to see in UI
@@ -284,7 +277,12 @@ func resourceVcdCatalogItemImport(d *schema.ResourceData, meta interface{}) ([]*
 	_ = d.Set("catalog", catalogName)
 	_ = d.Set("name", catalogItemName)
 	_ = d.Set("description", catalogItem.CatalogItem.Description)
-	d.SetId(catalogItem.CatalogItem.ID)
+	entityId, err := govcd.GetBareEntityUuid(catalogItem.CatalogItem.ID)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse catalog item id: %s", err)
+	}
+
+	d.SetId(entityId)
 
 	return []*schema.ResourceData{d}, nil
 }

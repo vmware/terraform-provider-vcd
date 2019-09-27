@@ -4,6 +4,7 @@ package vcd
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -54,6 +55,13 @@ func TestAccVcdCatalogMediaBasic(t *testing.T) {
 						"vcd_catalog_media."+TestAccVcdCatalogMedia, "metadata.mediaItem_metadata", "mediaItem Metadata"),
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_media."+TestAccVcdCatalogMedia, "metadata.mediaItem_metadata2", "mediaItem Metadata2"),
+					resource.TestCheckOutput("is_iso", "true"),
+					resource.TestMatchOutput("owner_name", regexp.MustCompile(`^\w*$`)),
+					resource.TestCheckOutput("is_published", "false"),
+					resource.TestMatchOutput("creation_date", regexp.MustCompile(`^(2019|2020)-`)),
+					resource.TestCheckOutput("status", "RESOLVED"),
+					resource.TestMatchOutput("size", regexp.MustCompile(`^\d*$`)),
+					resource.TestMatchOutput("storage_profile_name", regexp.MustCompile(`(.|\s)*\S(.|\s)*`)),
 				),
 			},
 			resource.TestStep{
@@ -153,7 +161,35 @@ const testAccCheckVcdCatalogMediaBasic = `
     mediaItem_metadata2 = "mediaItem Metadata2"
   }
 }
-`
+
+output "creation_date" {
+  value = vcd_catalog_media.{{.CatalogMediaName}}.creation_date
+  depends_on = [vcd_catalog_media.{{.CatalogMediaName}}]
+}
+output "is_iso" {
+  value = vcd_catalog_media.{{.CatalogMediaName}}.is_iso
+  depends_on = [vcd_catalog_media.{{.CatalogMediaName}}]
+}
+output "owner_name" {
+  value = vcd_catalog_media.{{.CatalogMediaName}}.owner_name
+  depends_on = [vcd_catalog_media.{{.CatalogMediaName}}]
+}
+output "is_published" {
+  value = vcd_catalog_media.{{.CatalogMediaName}}.is_published
+  depends_on = [vcd_catalog_media.{{.CatalogMediaName}}]
+}
+output "size" {
+  value = vcd_catalog_media.{{.CatalogMediaName}}.size
+  depends_on = [vcd_catalog_media.{{.CatalogMediaName}}]
+}
+output "status" {
+  value = vcd_catalog_media.{{.CatalogMediaName}}.status
+  depends_on = [vcd_catalog_media.{{.CatalogMediaName}}]
+}
+output "storage_profile_name" {
+  value = vcd_catalog_media.{{.CatalogMediaName}}.storage_profile_name
+  depends_on = [vcd_catalog_media.{{.CatalogMediaName}}]
+}`
 
 const testAccCheckVcdCatalogMediaUpdate = `
   resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {

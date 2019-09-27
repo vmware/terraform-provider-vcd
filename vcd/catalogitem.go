@@ -3,6 +3,7 @@ package vcd
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -55,18 +56,30 @@ func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.Catal
 
 	catalog, err := adminOrg.GetCatalogByName(d.Get("catalog").(string), false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
-		d.SetId("")
+		log.Printf("[DEBUG] Unable to find catalog.")
 		return nil, fmt.Errorf("unable to find catalog: %s", err)
 	}
 
-	catalogItem, err := catalog.GetCatalogItemByName(d.Get("name").(string), false)
-	if err != nil {
-		log.Printf("[DEBUG] Unable to find catalog item. Removing from tfstate")
-		return nil, fmt.Errorf("unable to find catalog item: %s", err)
+	identifier := d.Id()
+
+	// check if identifier still is in deprecated style `catalogName:mediaName`
+	if identifier == "" || strings.Contains(identifier, ":") {
+		identifier = d.Get("name").(string)
 	}
 
-	d.SetId(catalogItem.CatalogItem.ID)
+	catalogItem, err := catalog.GetCatalogItemByNameOrId(identifier, false)
+	if err != nil {
+		log.Printf("[DEBUG] Unable to find catalog item. Removing from tfstate")
+		d.SetId("")
+		return nil, nil
+	}
+
+	entityId, err := govcd.GetBareEntityUuid(catalogItem.CatalogItem.ID)
+	if err != nil {
+		return nil, fmt.Errorf("unable to parse catalog item id: %s", err)
+	}
+
+	d.SetId(entityId)
 	log.Printf("[TRACE] Catalog item read completed: %#v", catalogItem.CatalogItem)
 	return catalogItem, nil
 }
