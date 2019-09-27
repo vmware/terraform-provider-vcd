@@ -31,6 +31,7 @@ IMPROVEMENTS:
 * `resource/vcd_network_isolated`: Isolated network state ID changed from network name to vCD ID 
 * `resource/vcd_network_routed`: Routed network state ID changed from network name to vCD ID 
 * `resource/vcd_vapp`: vApp state ID changed from vApp name to vCD ID
+* `resource/vcd_vapp`: Add properties `status` and `status_text`
 * `resource/catalog_item` added catalog item metadata support [#285] 
 * `resource/vcd_catalog`: Catalog state ID changed from catalog name to vCD ID 
 * `resource/vcd_catalog_item`: CatalogItem state ID changed from colon separated list of catalog name and item name to vCD ID 
