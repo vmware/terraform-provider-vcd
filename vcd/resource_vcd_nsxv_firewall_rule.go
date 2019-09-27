@@ -377,7 +377,7 @@ func resourceVcdNsxvFirewallImport(d *schema.ResourceData, meta interface{}) ([]
 }
 
 // setFirewallRuleData is the main function used for setting Terraform schema
-func setFirewallRuleData(d *schema.ResourceData, rule *types.EdgeFirewallRule, edge govcd.EdgeGateway) error {
+func setFirewallRuleData(d *schema.ResourceData, rule *types.EdgeFirewallRule, edge *govcd.EdgeGateway) error {
 	_ = d.Set("name", rule.Name)
 	_ = d.Set("description", rule.Description)
 	_ = d.Set("enabled", rule.Enabled)
@@ -413,7 +413,7 @@ func setFirewallRuleData(d *schema.ResourceData, rule *types.EdgeFirewallRule, e
 
 // getFirewallRule is the main function  used for creating *types.EdgeFirewallRule structure from
 // Terraform schema configuration
-func getFirewallRule(d *schema.ResourceData, edge govcd.EdgeGateway) (*types.EdgeFirewallRule, error) {
+func getFirewallRule(d *schema.ResourceData, edge *govcd.EdgeGateway) (*types.EdgeFirewallRule, error) {
 	service := d.Get("service").([]interface{})
 	if len(service) != 1 {
 		return nil, fmt.Errorf("no service specified")
@@ -453,7 +453,7 @@ func getFirewallRule(d *schema.ResourceData, edge govcd.EdgeGateway) (*types.Edg
 
 // getEndpointData formats the nested set structure suitable for d.Set() for
 // 'source' and 'destination' blocks in firewall rule
-func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge govcd.EdgeGateway) ([]interface{}, error) {
+func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGateway) ([]interface{}, error) {
 	// Different object types are in the same grouping object tag <groupingObjectId>
 	// They can be distinguished by 3rd element in ID
 	var (
@@ -546,7 +546,7 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge govcd.EdgeGateway
 
 // getFirewallRuleEndpoint processes Terraform schema and converts it to *types.EdgeFirewallEndpoint
 // which is useful for 'source' or 'destination' blocks
-func getFirewallRuleEndpoint(endpoint []interface{}, edge govcd.EdgeGateway) (*types.EdgeFirewallEndpoint, error) {
+func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway) (*types.EdgeFirewallEndpoint, error) {
 	if len(endpoint) != 1 {
 		return nil, fmt.Errorf("no source specified")
 	}
@@ -592,7 +592,7 @@ func getFirewallRuleEndpoint(endpoint []interface{}, edge govcd.EdgeGateway) (*t
 }
 
 // groupIdStringsToNetworkNames iterates over
-func groupIdStringsToNetworkNames(groupIdStrings []string, edge govcd.EdgeGateway) ([]string, error) {
+func groupIdStringsToNetworkNames(groupIdStrings []string, edge *govcd.EdgeGateway) ([]string, error) {
 	vnicGroupIdStrings := make([]string, len(groupIdStrings))
 	for index, value := range groupIdStrings {
 		// A list of accepted parameters as strings (not real network names). No need to look them
@@ -624,7 +624,7 @@ func groupIdStringsToNetworkNames(groupIdStrings []string, edge govcd.EdgeGatewa
 
 // groupNetworkNamesToIdStrings iterates over network names and returns vNic ID name list
 // (suitable for firewall creation)
-func groupNetworkNamesToIdStrings(groupNetworkNames []string, edge govcd.EdgeGateway) ([]string, error) {
+func groupNetworkNamesToIdStrings(groupNetworkNames []string, edge *govcd.EdgeGateway) ([]string, error) {
 	idStrings := make([]string, len(groupNetworkNames))
 	for index, networkName := range groupNetworkNames {
 		// A list of accepted parameters as strings (not real network names). No need to look them
