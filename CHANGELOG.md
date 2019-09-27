@@ -30,6 +30,7 @@ IMPROVEMENTS:
 * `resource/vcd_network_direct`: Direct network state ID changed from network name to vCD ID 
 * `resource/vcd_network_isolated`: Isolated network state ID changed from network name to vCD ID 
 * `resource/vcd_network_routed`: Routed network state ID changed from network name to vCD ID 
+* `resource/vcd_vapp`: vApp state ID changed from vApp name to vCD ID
 * `resource/catalog_item` added catalog item metadata support [#285] 
 * `resource/vcd_catalog`: Catalog state ID changed from catalog name to vCD ID 
 * `resource/vcd_catalog_item`: CatalogItem state ID changed from colon separated list of catalog name and item name to vCD ID 
@@ -50,6 +51,20 @@ BUG FIXES:
 * Wait for task completion on creation and update, where tasks were not handled at all.
 * `resource/vcd_firewall_rules` force recreation of the resource when attributes of the sub-element `rule` are changed (fixes a situation when it tried to update a rule).
 * `resource/vcd_network_isolated` Fix definition of DHCP, which was created automatically with leftovers from static IP pool even when not requested.
+
+DEPRECATIONS
+* The ability of deploying a VM implicitly within a vApp is deprecated. Users are encouraged to set an empty vApp and add explicit VM blocks.
+  For this reason, the following fields in `vcd_vapp` are deprecated:
+  * `template_name`
+  * `catalog_name`
+  * `network_name`
+  * `ip`
+  * `cpus`
+  * `memory`
+  * `network_name`
+  * `initscript`
+  * `ovf`
+  * `accept_all_eulas`
 
 ## 2.4.0 (July 29, 2019)
 
