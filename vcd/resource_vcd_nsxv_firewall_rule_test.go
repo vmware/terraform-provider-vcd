@@ -74,7 +74,7 @@ func TestAccVcdNsxvEdgeFirewall(t *testing.T) {
 					// sleepTester(),
 				),
 			},
-			resource.TestStep{ // Step 3 - only virtual machines
+			resource.TestStep{ // Step 3 - only org networks
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.rule4", "id", regexp.MustCompile(`\d*`)),
@@ -161,6 +161,27 @@ resource "vcd_nsxv_firewall_rule" "rule3" {
 `
 
 const testAccVcdEdgeFirewallRule4 = `
+resource "vcd_nsxv_firewall_rule" "rule4" {
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
+	action = "deny"
+
+	source {
+		org_network_ids = ["vse"]
+	}
+  
+	destination {
+		ip_addresses = ["any"]
+	}
+	service {
+		protocol = "tcp"
+		port     = "443"
+	}
+  }
+`
+
+const testAccVcdEdgeFirewallRuleX = `
 resource "vcd_network_routed" "{{.RouteNetworkName}}" {
   name         = "{{.RouteNetworkName}}"
   org          = "{{.Org}}"

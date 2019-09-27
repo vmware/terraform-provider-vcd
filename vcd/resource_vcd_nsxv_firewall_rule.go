@@ -123,7 +123,7 @@ func resourceVcdNsxvFirewall() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"virtual_machines_ids": {
+						"virtual_machine_ids": {
 							Optional:    true,
 							Type:        schema.TypeSet,
 							Description: "Set of VM IDs",
@@ -188,7 +188,7 @@ func resourceVcdNsxvFirewall() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"virtual_machines_ids": {
+						"virtual_machine_ids": {
 							Optional:    true,
 							Type:        schema.TypeSet,
 							Description: "Set of VM IDs",
@@ -464,25 +464,34 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge govcd.EdgeGateway
 	)
 
 	for _, groupingObject := range endpoint.GroupingObjectId {
-		switch strings.Split(groupingObject, ":")[2] {
+		idSplit := strings.Split(groupingObject, ":")
+		idLen := len(idSplit)
+		subIdSplit := ""
+		if idLen == 2 {
+			subSplit := strings.Split(idSplit[1], "-")
+			if len(subSplit) == 2 {
+				subIdSplit = subSplit[0]
+			}
+		}
+		switch {
 		// Handle org vdc networks
 		// Sample ID: urn:vcloud:network:95bffe8e-7e67-452d-abf2-535ac298db2b
-		case "network":
+		case idLen == 4 && idSplit[2] == "network":
 			endpointNetworks = append(endpointNetworks, groupingObject)
 
 		// Handle virtual machines
 		// Sample ID: urn:vcloud:vm:c0c5a316-fb2d-4f33-a814-3e0fba714c74
-		case "vm":
+		case idLen == 4 && idSplit[2] == "vm":
 			endpointVMs = append(endpointVMs, groupingObject)
 
 		// Handle ipsets
 		// Sample ID: f9daf2da-b4f9-4921-a2f4-d77a943a381c:ipset-2
-		case "ipset":
+		case idLen == 2 && subIdSplit == "ipset":
 			endpointIpSets = append(endpointIpSets, groupingObject)
 
 		// Handle security groups
-		// Sample ID:
-		case "security-group":
+		// Sample ID: f9daf2da-b4f9-4921-a2f4-d77a943a381c:securitygroup-11
+		case idLen == 2 && subIdSplit == "securitygroup":
 			endpointSecurityGroups = append(endpointSecurityGroups, groupingObject)
 
 		// Log the group ID if it was not one of above
@@ -491,19 +500,19 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge govcd.EdgeGateway
 		}
 	}
 
-	// Convert org vdc networks to set
+	// Convert org vdc network IDs to set
 	endpointNetworksSlice := convertToTypeSet(endpointNetworks)
 	endpointNetworksSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointNetworksSlice)
 
-	// Convert virtual machines to set
+	// Convert virtual machine IDs to set
 	endpointVmSlice := convertToTypeSet(endpointVMs)
 	endpointVmSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointVmSlice)
 
-	// Convert ipsets to set
+	// Convert ipset IDs to set
 	endpointIpSetSlice := convertToTypeSet(endpointIpSets)
 	endpointIpSetSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointIpSetSlice)
 
-	// Convert security groups to set
+	// Convert security group IDs to set
 	endpointSecurityGroupSlice := convertToTypeSet(endpointSecurityGroups)
 	endpointSecurityGroupSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointSecurityGroupSlice)
 
@@ -511,7 +520,7 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge govcd.EdgeGateway
 	endpointIpsSlice := convertToTypeSet(endpoint.IpAddress)
 	endpointIpsSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointIpsSlice)
 
-	// Convert `gateway_interfaces` to set
+	// Convert `gateway_interfaces` vNic IDs to network names as the UI does it so
 	vnicGroupIdStrings, err := groupIdStringsToNetworkNames(endpoint.VnicGroupId, edge)
 	if err != nil {
 		return nil, err
@@ -542,7 +551,6 @@ func getFirewallRuleEndpoint(endpoint []interface{}, edge govcd.EdgeGateway) (*t
 		return nil, fmt.Errorf("no source specified")
 	}
 
-	// Create empty endpoint structure for populating
 	result := &types.EdgeFirewallEndpoint{}
 
 	// Extract 'exclude' field from structure
@@ -565,7 +573,7 @@ func getFirewallRuleEndpoint(endpoint []interface{}, edge govcd.EdgeGateway) (*t
 	// 'types.EdgeFirewallEndpoint.GroupingObjectId' holds IDs for VMs, org networks, ipsets and Security groups
 
 	// Extract VM IDs from set and add them to endpoint structure
-	endpointVmStrings := convertSchemaSetToSliceOfStrings(endpointMap["virtual_machines_ids"].(*schema.Set))
+	endpointVmStrings := convertSchemaSetToSliceOfStrings(endpointMap["virtual_machine_ids"].(*schema.Set))
 	result.GroupingObjectId = append(result.GroupingObjectId, endpointVmStrings...)
 
 	// Extract org network IDs from set and add them to endpoint structure
