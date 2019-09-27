@@ -688,14 +688,14 @@ func tryUndeploy(vapp govcd.VApp) error {
 func resourceVcdVappImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ".")
 	if len(resourceURI) != 3 {
-		return nil, fmt.Errorf("[network direct import] resource name must be specified as org-name.vdc-name.vapp-name")
+		return nil, fmt.Errorf("[vapp import] resource name must be specified as org-name.vdc-name.vapp-name")
 	}
 	orgName, vdcName, vappName := resourceURI[0], resourceURI[1], resourceURI[2]
 
 	vcdClient := meta.(*VCDClient)
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if err != nil {
-		return nil, fmt.Errorf("[network direct import] unable to find VDC %s: %s ", vdcName, err)
+		return nil, fmt.Errorf("[vapp import] unable to find VDC %s: %s ", vdcName, err)
 	}
 
 	vapp, err := vdc.GetVAppByName(vappName, false)
