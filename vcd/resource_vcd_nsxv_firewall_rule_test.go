@@ -3,6 +3,7 @@
 package vcd
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
 	"time"
@@ -75,10 +76,10 @@ func TestAccVcdNsxvEdgeFirewall(t *testing.T) {
 				),
 			},
 			resource.TestStep{ // Step 3 - only org networks
-				Config: configText2,
+				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.rule4", "id", regexp.MustCompile(`\d*`)),
-					// sleepTester(),
+					sleepTester(),
 				),
 			},
 		},
@@ -87,6 +88,7 @@ func TestAccVcdNsxvEdgeFirewall(t *testing.T) {
 
 func sleepTester() resource.TestCheckFunc {
 	return func(s *terraform.State) error {
+		fmt.Println("sleeping")
 		time.Sleep(1 * time.Minute)
 		return nil
 	}
@@ -161,6 +163,21 @@ resource "vcd_nsxv_firewall_rule" "rule3" {
 `
 
 const testAccVcdEdgeFirewallRule4 = `
+resource "vcd_network_routed" "test-routed" {
+  count        = 2
+  name         = "firewall-test-${count.index}"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  gateway      = "10.201.${count.index}.1"
+  netmask      = "255.255.255.0"
+
+  static_ip_pool {
+    start_address = "10.201.${count.index}.10"
+    end_address   = "10.201.${count.index}.20"
+  }
+}
+
 resource "vcd_nsxv_firewall_rule" "rule4" {
 	org          = "{{.Org}}"
 	vdc          = "{{.Vdc}}"
@@ -168,11 +185,11 @@ resource "vcd_nsxv_firewall_rule" "rule4" {
 	action = "deny"
 
 	source {
-		org_network_ids = ["vse"]
+		org_networks = ["${vcd_network_routed.test-routed[0].name}"]
 	}
   
 	destination {
-		ip_addresses = ["any"]
+		org_networks = ["${vcd_network_routed.test-routed[1].name}"]
 	}
 	service {
 		protocol = "tcp"

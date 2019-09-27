@@ -131,10 +131,10 @@ func resourceVcdNsxvFirewall() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"org_network_ids": {
+						"org_networks": {
 							Optional:    true,
 							Type:        schema.TypeSet,
-							Description: "Set of org network IDs",
+							Description: "Set of org network names",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -196,10 +196,10 @@ func resourceVcdNsxvFirewall() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"org_network_ids": {
+						"org_networks": {
 							Optional:    true,
 							Type:        schema.TypeSet,
-							Description: "Set of org network IDs",
+							Description: "Set of org network names",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -260,7 +260,12 @@ func resourceVcdNsxvFirewallCreate(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	firewallRule, err := getFirewallRule(d, edgeGateway)
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	if err != nil {
+		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	}
+
+	firewallRule, err := getFirewallRule(d, edgeGateway, vdc)
 	if err != nil {
 		return fmt.Errorf("unable to make firewall rule query: %s", err)
 	}
@@ -285,7 +290,12 @@ func resourceVcdNsxvFirewallUpdate(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	updateFirewallRule, err := getFirewallRule(d, edgeGateway)
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	if err != nil {
+		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	}
+
+	updateFirewallRule, err := getFirewallRule(d, edgeGateway, vdc)
 	updateFirewallRule.ID = d.Id() // We already know an ID for update and it allows to change name
 
 	if err != nil {
@@ -309,13 +319,18 @@ func resourceVcdNsxvFirewallRead(d *schema.ResourceData, meta interface{}) error
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	if err != nil {
+		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	}
+
 	readFirewallRule, err := edgeGateway.GetNsxvFirewallById(d.Id())
 	if err != nil {
 		d.SetId("")
 		return fmt.Errorf("unable to find firewall rule with ID %s: %s", d.Id(), err)
 	}
 
-	return setFirewallRuleData(d, readFirewallRule, edgeGateway)
+	return setFirewallRuleData(d, readFirewallRule, edgeGateway, vdc)
 }
 
 func resourceVcdNsxvFirewallDelete(d *schema.ResourceData, meta interface{}) error {
@@ -377,7 +392,7 @@ func resourceVcdNsxvFirewallImport(d *schema.ResourceData, meta interface{}) ([]
 }
 
 // setFirewallRuleData is the main function used for setting Terraform schema
-func setFirewallRuleData(d *schema.ResourceData, rule *types.EdgeFirewallRule, edge *govcd.EdgeGateway) error {
+func setFirewallRuleData(d *schema.ResourceData, rule *types.EdgeFirewallRule, edge *govcd.EdgeGateway, vdc *govcd.Vdc) error {
 	_ = d.Set("name", rule.Name)
 	_ = d.Set("description", rule.Description)
 	_ = d.Set("enabled", rule.Enabled)
@@ -387,7 +402,7 @@ func setFirewallRuleData(d *schema.ResourceData, rule *types.EdgeFirewallRule, e
 	_ = d.Set("rule_type", rule.RuleTag)
 
 	// Process and set "source" block
-	source, err := getEndpointData(rule.Source, edge)
+	source, err := getEndpointData(rule.Source, edge, vdc)
 	if err != nil {
 		return fmt.Errorf("could not prepare data for setting 'source' block: %s", err)
 	}
@@ -397,7 +412,7 @@ func setFirewallRuleData(d *schema.ResourceData, rule *types.EdgeFirewallRule, e
 	}
 
 	// Process and set "destination" block
-	destination, err := getEndpointData(rule.Destination, edge)
+	destination, err := getEndpointData(rule.Destination, edge, vdc)
 	if err != nil {
 		return fmt.Errorf("could not prepare data for setting 'destination' block: %s", err)
 	}
@@ -413,19 +428,19 @@ func setFirewallRuleData(d *schema.ResourceData, rule *types.EdgeFirewallRule, e
 
 // getFirewallRule is the main function  used for creating *types.EdgeFirewallRule structure from
 // Terraform schema configuration
-func getFirewallRule(d *schema.ResourceData, edge *govcd.EdgeGateway) (*types.EdgeFirewallRule, error) {
+func getFirewallRule(d *schema.ResourceData, edge *govcd.EdgeGateway, vdc *govcd.Vdc) (*types.EdgeFirewallRule, error) {
 	service := d.Get("service").([]interface{})
 	if len(service) != 1 {
 		return nil, fmt.Errorf("no service specified")
 	}
 	serviceMap := convertToStringMap(service[0].(map[string]interface{}))
 
-	sourceEndpoint, err := getFirewallRuleEndpoint(d.Get("source").([]interface{}), edge)
+	sourceEndpoint, err := getFirewallRuleEndpoint(d.Get("source").([]interface{}), edge, vdc)
 	if err != nil {
 		return nil, fmt.Errorf("could not convert 'source' block to API request: %s", err)
 	}
 
-	destinationEndpoint, err := getFirewallRuleEndpoint(d.Get("destination").([]interface{}), edge)
+	destinationEndpoint, err := getFirewallRuleEndpoint(d.Get("destination").([]interface{}), edge, vdc)
 	if err != nil {
 		return nil, fmt.Errorf("could not convert 'destination' block to API request: %s", err)
 	}
@@ -453,7 +468,7 @@ func getFirewallRule(d *schema.ResourceData, edge *govcd.EdgeGateway) (*types.Ed
 
 // getEndpointData formats the nested set structure suitable for d.Set() for
 // 'source' and 'destination' blocks in firewall rule
-func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGateway) ([]interface{}, error) {
+func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGateway, vdc *govcd.Vdc) ([]interface{}, error) {
 	// Different object types are in the same grouping object tag <groupingObjectId>
 	// They can be distinguished by 3rd element in ID
 	var (
@@ -500,8 +515,12 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 		}
 	}
 
-	// Convert org vdc network IDs to set
-	endpointNetworksSlice := convertToTypeSet(endpointNetworks)
+	// Convert org vdc network IDs to org network names, then make a set of these network names
+	endpointNetworkNames, err := orgNetworksIdsToNames(endpointNetworks, vdc)
+	if err != nil {
+		return nil, fmt.Errorf("could not convert org network names to IDs: %s", err)
+	}
+	endpointNetworksSlice := convertToTypeSet(endpointNetworkNames)
 	endpointNetworksSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointNetworksSlice)
 
 	// Convert virtual machine IDs to set
@@ -521,7 +540,7 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 	endpointIpsSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointIpsSlice)
 
 	// Convert `gateway_interfaces` vNic IDs to network names as the UI does it so
-	vnicGroupIdStrings, err := groupIdStringsToNetworkNames(endpoint.VnicGroupId, edge)
+	vnicGroupIdStrings, err := edgeVnicIdStringsToNetworkNames(endpoint.VnicGroupId, edge)
 	if err != nil {
 		return nil, err
 	}
@@ -534,7 +553,7 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 	endpointMap["exclude"] = endpoint.Exclude
 	endpointMap["ip_addresses"] = endpointIpsSet
 	endpointMap["gateway_interfaces"] = endpointGatewayInterfaceSet
-	endpointMap["org_network_ids"] = endpointNetworksSet
+	endpointMap["org_networks"] = endpointNetworksSet
 	endpointMap["virtual_machine_ids"] = endpointVmSet
 	endpointMap["security_group_ids"] = endpointSecurityGroupSet
 	endpointMap["ipset_ids"] = endpointIpSetSet
@@ -546,7 +565,7 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 
 // getFirewallRuleEndpoint processes Terraform schema and converts it to *types.EdgeFirewallEndpoint
 // which is useful for 'source' or 'destination' blocks
-func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway) (*types.EdgeFirewallEndpoint, error) {
+func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway, vdc *govcd.Vdc) (*types.EdgeFirewallEndpoint, error) {
 	if len(endpoint) != 1 {
 		return nil, fmt.Errorf("no source specified")
 	}
@@ -564,7 +583,7 @@ func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway) (*
 
 	// Extract 'gateway_interfaces' names, convert them to vNic indexes and add to the structure
 	endpointEdgeInterfaceIdStrings := convertSchemaSetToSliceOfStrings(endpointMap["gateway_interfaces"].(*schema.Set))
-	endpointEdgeInterfaceVnicList, err := groupNetworkNamesToIdStrings(endpointEdgeInterfaceIdStrings, edge)
+	endpointEdgeInterfaceVnicList, err := edgeInterfaceNamesToIdStrings(endpointEdgeInterfaceIdStrings, edge)
 	if err != nil {
 		return nil, fmt.Errorf("could not lookup vNic indexes for networks: %s", err)
 	}
@@ -576,9 +595,13 @@ func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway) (*
 	endpointVmStrings := convertSchemaSetToSliceOfStrings(endpointMap["virtual_machine_ids"].(*schema.Set))
 	result.GroupingObjectId = append(result.GroupingObjectId, endpointVmStrings...)
 
-	// Extract org network IDs from set and add them to endpoint structure
-	endpointOrgNetworkStrings := convertSchemaSetToSliceOfStrings(endpointMap["org_network_ids"].(*schema.Set))
-	result.GroupingObjectId = append(result.GroupingObjectId, endpointOrgNetworkStrings...)
+	// Extract org network names from set, lookup their IDs and add them to endpoint structure
+	endpointOrgNetworkNameStrings := convertSchemaSetToSliceOfStrings(endpointMap["org_networks"].(*schema.Set))
+	endpointOrgNetworkIdStrings, err := orgNetworkNamesToIds(endpointOrgNetworkNameStrings, vdc)
+	if err != nil {
+		return nil, fmt.Errorf("could not lookup network IDs for networks: %s", err)
+	}
+	result.GroupingObjectId = append(result.GroupingObjectId, endpointOrgNetworkIdStrings...)
 
 	// Extract ipset IDs from set and add them to endpoint structure
 	endpointIpSetStrings := convertSchemaSetToSliceOfStrings(endpointMap["ipset_ids"].(*schema.Set))
@@ -591,8 +614,11 @@ func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway) (*
 	return result, nil
 }
 
-// groupIdStringsToNetworkNames iterates over
-func groupIdStringsToNetworkNames(groupIdStrings []string, edge *govcd.EdgeGateway) ([]string, error) {
+// edgeVnicIdStringsToNetworkNames iterates over vnic IDs in format `vnic-10`, `vnic-x` and converts
+// them to network names.
+// It passes through 3 network types "internal", "external", "vse" as they are because the API
+// accepts such notation.
+func edgeVnicIdStringsToNetworkNames(groupIdStrings []string, edge *govcd.EdgeGateway) ([]string, error) {
 	vnicGroupIdStrings := make([]string, len(groupIdStrings))
 	for index, value := range groupIdStrings {
 		// A list of accepted parameters as strings (not real network names). No need to look them
@@ -622,43 +648,56 @@ func groupIdStringsToNetworkNames(groupIdStrings []string, edge *govcd.EdgeGatew
 	return vnicGroupIdStrings, nil
 }
 
-// groupNetworkNamesToIdStrings iterates over network names and returns vNic ID name list
-// (suitable for firewall creation)
-func groupNetworkNamesToIdStrings(groupNetworkNames []string, edge *govcd.EdgeGateway) ([]string, error) {
+// edgeInterfaceNamesToIdStrings iterates over network names and returns vNic ID name list
+// Format: vnic-10, vnic-3, etc. (suitable for firewall creation)
+func edgeInterfaceNamesToIdStrings(groupNetworkNames []string, edge *govcd.EdgeGateway) ([]string, error) {
 	idStrings := make([]string, len(groupNetworkNames))
 	for index, networkName := range groupNetworkNames {
 		// A list of accepted parameters as strings (not real network names). No need to look them
-		// up. Passing these names as they are directly to statefile
+		// up. Passing these names as they are directly to statefile because the API accepts them.
 		if stringInSlice(networkName, []string{"internal", "external", "vse"}) {
 			idStrings[index] = networkName
 			continue
 		}
 
-		// TODO improve GetVnicIndexByNetworkNameAndType and ensure that only one network with the
-		// the same name can be defined in edge gateway
-		vNicIndex, err := edge.GetVnicIndexByNetworkNameAndType(networkName, "subinterface")
-		if govcd.IsNotFound(err) {
-			vNicIndex, err = edge.GetVnicIndexByNetworkNameAndType(networkName, "internal")
-			if govcd.IsNotFound(err) {
-				vNicIndex, err = edge.GetVnicIndexByNetworkNameAndType(networkName, "uplink")
-				if govcd.IsNotFound(err) {
-					vNicIndex, err = edge.GetVnicIndexByNetworkNameAndType(networkName, "trunk")
-					if govcd.IsNotFound(err) {
-						return nil, fmt.Errorf("unable to find network %s interface on edge gateway", networkName)
-					}
-				}
-			}
-		}
-
+		vNicIndex, networkType, err := edge.GetAnyVnicIndexByNetworkName(networkName)
 		if err != nil {
 			return nil, fmt.Errorf("error searching for network %s: %s", networkName, err)
 		}
-
 		// we found the network - add it to the list
+		log.Printf("[DEBUG] found vNic index %d for network %s (type %s)", vNicIndex, networkName, networkType)
 		idStrings[index] = "vnic-" + strconv.Itoa(*vNicIndex)
 	}
-
 	return idStrings, nil
+}
+
+// orgNetworkNamesToIds looks up org network ids by their  names.
+// Returned ID format: urn:vcloud:network:95bffe8e-7e67-452d-abf2-535ac298db2b
+func orgNetworkNamesToIds(networkNames []string, vdc *govcd.Vdc) ([]string, error) {
+	orgNetworkIds := make([]string, len(networkNames))
+	for index, networkName := range networkNames {
+		orgVdcNetwork, err := vdc.GetOrgVdcNetworkByName(networkName, false)
+		if err != nil {
+			return nil, fmt.Errorf("could not find org network with name %s: %s", networkName, err)
+		}
+		orgNetworkIds[index] = orgVdcNetwork.OrgVDCNetwork.ID
+
+	}
+	return orgNetworkIds, nil
+}
+
+// orgNetworksIdsToNames looks up network name by ID
+func orgNetworksIdsToNames(networkIds []string, vdc *govcd.Vdc) ([]string, error) {
+	orgNetworkNames := make([]string, len(networkIds))
+	for index, networkId := range networkIds {
+		orgVdcNetwork, err := vdc.GetOrgVdcNetworkById(networkId, false)
+		if err != nil {
+			return nil, fmt.Errorf("could not find org network with name %s: %s", networkId, err)
+		}
+		orgNetworkNames[index] = orgVdcNetwork.OrgVDCNetwork.Name
+
+	}
+	return orgNetworkNames, nil
 }
 
 // stringInSlice checks if a string exists in slice of strings
