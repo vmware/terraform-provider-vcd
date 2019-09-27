@@ -54,7 +54,8 @@ BUG FIXES:
 * `resource/vcd_network_isolated` Fix definition of DHCP, which was created automatically with leftovers from static IP pool even when not requested.
 
 DEPRECATIONS
-* The ability of deploying a VM implicitly within a vApp is deprecated. Users are encouraged to set an empty vApp and add explicit VM blocks.
+* The ability of deploying a VM implicitly within a vApp is deprecated. Users are encouraged to set an empty vApp and
+add explicit VM resources `vcd_vapp_vm`.
   For this reason, the following fields in `vcd_vapp` are deprecated:
   * `template_name`
   * `catalog_name`
