@@ -11,7 +11,7 @@ func datasourceVcdVApp() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "A unique name for the vApp",
+				Description: "A name for the vApp, unique within the VDC",
 			},
 			"org": {
 				Type:     schema.TypeString,

@@ -11,7 +11,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-const implicitVmInVappDeprecation = "Creation of vApp and an implicit single VM in the same structure is deprecated"
+const implicitVmInVappDeprecation = "Creation of vApp and an implicit single VM in the same structure is deprecated."
 const vAppUnknownStatus = "-unknown-status-"
 
 func resourceVcdVApp() *schema.Resource {
@@ -29,7 +29,7 @@ func resourceVcdVApp() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "A unique name for the vApp",
+				Description: "A name for the vApp, unique withing the VDC",
 			},
 			"org": {
 				Type:     schema.TypeString,
@@ -50,45 +50,52 @@ func resourceVcdVApp() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 				Description: "The name of the vApp Template to use",
-				Deprecated:  implicitVmInVappDeprecation,
+				Deprecated: implicitVmInVappDeprecation +
+					" Use vcd_vapp_vm.template_name instead",
 			},
 			"catalog_name": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "The catalog name in which to find the given vApp Template",
-				Deprecated:  implicitVmInVappDeprecation,
+				Deprecated: implicitVmInVappDeprecation +
+					" Use vcd_vapp_vm.catalog_name instead",
 			},
 			"network_name": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
 				Description: "Name of the network this vApp should join",
-				Deprecated:  implicitVmInVappDeprecation,
+				Deprecated: implicitVmInVappDeprecation +
+					" Use vcd_vapp_vm.network instead",
 			},
 			"memory": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "The amount of RAM (in MB) to allocate to the vApp",
-				Deprecated:  implicitVmInVappDeprecation,
+				Deprecated: implicitVmInVappDeprecation +
+					" Use vcd_vapp_vm.memory instead",
 			},
 			"cpus": {
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Description: "The number of virtual CPUs to allocate to the vApp",
-				Deprecated:  implicitVmInVappDeprecation,
+				Deprecated: implicitVmInVappDeprecation +
+					" Use vcd_vapp_vm.cpus instead",
 			},
 			"ip": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
 				Description: "The IP to assign to this vApp",
-				Deprecated:  implicitVmInVappDeprecation,
+				Deprecated: implicitVmInVappDeprecation +
+					" Use vcd_vapp_vm.network instead",
 			},
 			"storage_profile": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Storage profile to be used by the vApp",
-				Deprecated:  implicitVmInVappDeprecation,
+				// TODO: deprecate when vcd_vapp_vm can handle this parameter
+				// See https://github.com/vmware/go-vcloud-director/issues/246 for details.
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -100,7 +107,8 @@ func resourceVcdVApp() *schema.Resource {
 				Optional:    true,
 				ForceNew:    true,
 				Description: "A script to be run only on initial boot",
-				Deprecated:  implicitVmInVappDeprecation,
+				Deprecated: implicitVmInVappDeprecation +
+					" Use vcd_vapp_vm.initscript instead",
 			},
 			"metadata": {
 				Type:     schema.TypeMap,
@@ -113,11 +121,13 @@ func resourceVcdVApp() *schema.Resource {
 				Type:        schema.TypeMap,
 				Optional:    true,
 				Description: "Key value map of ovf parameters to assign to VM product section",
-				Deprecated:  implicitVmInVappDeprecation,
+				Deprecated: implicitVmInVappDeprecation +
+					" Use vcd_vapp_vm.guest_properties instead",
 			},
 			"href": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "vApp Hyper Reference",
 			},
 			"power_on": {
 				Type:        schema.TypeBool,
@@ -130,7 +140,8 @@ func resourceVcdVApp() *schema.Resource {
 				Optional:    true,
 				Default:     true,
 				Description: "Automatically accept EULA if OVA has it",
-				Deprecated:  implicitVmInVappDeprecation,
+				Deprecated: implicitVmInVappDeprecation +
+					" Use vcd_vapp_vm.accept_all_eulas instead",
 			},
 			"guest_properties": {
 				Type:        schema.TypeMap,
@@ -663,8 +674,8 @@ func tryUndeploy(vapp govcd.VApp) error {
 // 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
 // based on the known ID of object.
 //
-// Example resource name (_resource_name_): vcd_vapp.my-vapp
-// Example import path (_the_id_string_): org.vdc.my-vapp
+// Example resource name (_resource_name_): vcd_vapp.vapp_name
+// Example import path (_the_id_string_): org-name.vdc-name.vapp-name
 func resourceVcdVappImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ".")
 	if len(resourceURI) != 3 {
