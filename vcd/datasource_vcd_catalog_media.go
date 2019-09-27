@@ -47,14 +47,14 @@ func datasourceVcdCatalogMedia() *schema.Resource {
 				Description: "Owner name",
 			},
 			"is_published": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
-				Description: " 	True if this media file is in a published catalog",
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "True if this media file is in a published catalog",
 			},
 			"creation_date": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Creation date ",
+				Description: "Creation date",
 			},
 			"size": &schema.Schema{
 				Type:        schema.TypeString,
@@ -64,12 +64,12 @@ func datasourceVcdCatalogMedia() *schema.Resource {
 			"status": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Media status ",
+				Description: "Media status",
 			},
 			"storage_profile_name": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Storage profile name ",
+				Description: "Storage profile name",
 			},
 		},
 	}
