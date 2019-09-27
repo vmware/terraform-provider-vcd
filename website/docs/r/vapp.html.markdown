@@ -68,7 +68,7 @@ resource "vcd_vapp_vm" "web2" {
 ## Example of vApp with single VM
 
 **Not recommended in v2.0+** : in the earlier version of the provider it was possible to define a vApp with a single VM in one resource, but it is not recommended as of *v2.0+* provider. Please define vApp and VM in separate resources instead.
-**Deprecated in 2.5**: The implicit inclusion of one VM in a vApp will be removed in the next major version.
+The implicit inclusion of one VM in a vApp is **Deprecated in 2.5**
 
 ```hcl
 resource "vcd_network_routed" "net" {
@@ -145,8 +145,8 @@ The following arguments are supported:
 sets guest properties on the first VM using a legacy ability of this resource to spawn 1 VM. Please
 use resources `vcd_vapp_vm` to provision VMs.
 * `href` - (Computed) The vApp Hyper Reference
-* `status` - (Computed) The vApp status as a numeric code
-* `status_text` - (Computed) The vApp status as text.
+* `status` - (Computed; *v2.5+*) The vApp status as a numeric code
+* `status_text` - (Computed; *v2.5+*) The vApp status as text.
 
 ## Importing
 
