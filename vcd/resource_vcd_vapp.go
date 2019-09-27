@@ -122,7 +122,7 @@ func resourceVcdVApp() *schema.Resource {
 				Optional:    true,
 				Description: "Key value map of ovf parameters to assign to VM product section",
 				Deprecated: implicitVmInVappDeprecation +
-					" Use vcd_vapp_vm.guest_properties instead",
+					" Use guest_properties in this resource or vcd_vapp_vm.guest_properties instead",
 			},
 			"href": {
 				Type:        schema.TypeString,
@@ -146,7 +146,7 @@ func resourceVcdVApp() *schema.Resource {
 			"guest_properties": {
 				Type:        schema.TypeMap,
 				Optional:    true,
-				Description: "Key/value settings for guest properties",
+				Description: "Key/value settings for guest properties. Will be picked up by new VMs when created.",
 			},
 			"status": {
 				Type:        schema.TypeInt,
@@ -551,6 +551,15 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string)
 	if err != nil {
 		return fmt.Errorf("unable to set guest properties in state: %s", err)
 	}
+
+	// Power status is not easy to define.
+	// It should be set when status == 4, but even when we request it the status
+	// change may not happen until late. Returning the power status at an early
+	// stage may mislead both users and terraform, with the result of having
+	// unnecessary update requests.
+	// We have two fields that produce better information:
+	// * status (numeric status code, such as "4")
+	// * status_text (status as a string, such as "POWERED_ON")
 	// _ = d.Set("power_on", vapp.VApp.Status == 4)
 	_ = d.Set("href", vapp.VApp.HREF)
 	_ = d.Set("description", vapp.VApp.Description)

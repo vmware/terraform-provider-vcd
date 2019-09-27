@@ -10,46 +10,42 @@ func datasourceVcdVApp() *schema.Resource {
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "A name for the vApp, unique within the VDC",
 			},
 			"org": {
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
-				ForceNew: true,
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
 			"description": {
 				Type:        schema.TypeString,
-				Optional:    true,
+				Computed:    true,
 				Description: "Optional description of the vApp",
 			},
 			"metadata": {
 				Type:        schema.TypeMap,
-				Optional:    true,
+				Computed:    true,
 				Description: "Key value map of metadata to assign to this vApp. Key and value can be any string.",
 			},
 			"href": {
-				Type:     schema.TypeString,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "vApp Hyper Reference",
 			},
 			"power_on": {
 				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
+				Computed:    true,
 				Description: "A boolean value stating if this vApp should be powered on",
 			},
 			"guest_properties": {
 				Type:        schema.TypeMap,
-				Optional:    true,
+				Computed:    true,
 				Description: "Key/value settings for guest properties",
 			},
 			"status": {
