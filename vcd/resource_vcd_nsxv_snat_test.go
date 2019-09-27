@@ -18,7 +18,7 @@ func TestAccVcdEdgeSnat(t *testing.T) {
 		"EdgeGateway": testConfig.Networking.EdgeGateway,
 		"ExternalIp":  testConfig.Networking.ExternalIp,
 		"NetworkName": "my-vdc-int-net",
-		"Tags":        "egatewaydge nat",
+		"Tags":        "gateway nat",
 	}
 
 	configText := templateFill(testAccVcdEdgeSnatRule, params)

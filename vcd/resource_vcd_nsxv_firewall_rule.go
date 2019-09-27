@@ -2,10 +2,9 @@ package vcd
 
 import (
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
-
-	"github.com/davecgh/go-spew/spew"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
@@ -62,6 +61,12 @@ func resourceVcdNsxvFirewall() *schema.Resource {
 				Computed:    true,
 				Description: "Optional. Allows to set custom rule tag",
 			},
+			"insert_above_rule_id": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Optional. Allows to insert the firewall rule above some other rule",
+			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -100,20 +105,52 @@ func resourceVcdNsxvFirewall() *schema.Resource {
 							Type:     schema.TypeBool,
 							Default:  false,
 							Description: "Rule is applied to traffic coming from all sources " +
-								"except for the source you excluded. Default false",
+								"except for the excluded source. Default 'false'",
 						},
-						"ips": {
+						"ip_addresses": {
 							Optional:    true,
 							Type:        schema.TypeSet,
-							Description: "IP address, CIDR, an IP range, or the keyword any",
+							Description: "IP address, CIDR, an IP range, or the keyword 'any'",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
 						},
-						"network_ids": {
+						"gateway_interfaces": {
 							Optional:    true,
 							Type:        schema.TypeSet,
-							Description: "string",
+							Description: "'vse', 'internal', 'external' or network name",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"virtual_machines_ids": {
+							Optional:    true,
+							Type:        schema.TypeSet,
+							Description: "Set of VM IDs",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"org_network_ids": {
+							Optional:    true,
+							Type:        schema.TypeSet,
+							Description: "Set of org network IDs",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"ipset_ids": {
+							Optional:    true,
+							Type:        schema.TypeSet,
+							Description: "Set of org network IDs",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"security_group_ids": {
+							Optional:    true,
+							Type:        schema.TypeSet,
+							Description: "Set of org network IDs",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -121,7 +158,6 @@ func resourceVcdNsxvFirewall() *schema.Resource {
 					},
 				},
 			},
-
 			"destination": {
 				MinItems: 1,
 				MaxItems: 1,
@@ -133,21 +169,53 @@ func resourceVcdNsxvFirewall() *schema.Resource {
 							Optional: true,
 							Type:     schema.TypeBool,
 							Default:  false,
-							Description: "Rule is applied to traffic coming from all sources " +
-								"except for the source you excluded. Default false",
+							Description: "Rule is applied to traffic going to any destinations " +
+								"except for the excluded destination. Default 'false'",
 						},
-						"ips": {
+						"ip_addresses": {
 							Optional:    true,
 							Type:        schema.TypeSet,
-							Description: "IP address, CIDR, an IP range, or the keyword any",
+							Description: "IP address, CIDR, an IP range, or the keyword 'any'",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
 						},
-						"network_ids": {
+						"gateway_interfaces": {
 							Optional:    true,
 							Type:        schema.TypeSet,
-							Description: "string",
+							Description: "'vse', 'internal', 'external' or network name",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"virtual_machines_ids": {
+							Optional:    true,
+							Type:        schema.TypeSet,
+							Description: "Set of VM IDs",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"org_network_ids": {
+							Optional:    true,
+							Type:        schema.TypeSet,
+							Description: "Set of org network IDs",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"ipset_ids": {
+							Optional:    true,
+							Type:        schema.TypeSet,
+							Description: "Set of org network IDs",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"security_group_ids": {
+							Optional:    true,
+							Type:        schema.TypeSet,
+							Description: "Set of org network IDs",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -155,7 +223,6 @@ func resourceVcdNsxvFirewall() *schema.Resource {
 					},
 				},
 			},
-
 			"service": {
 				Required: true,
 				MinItems: 1,
@@ -309,6 +376,7 @@ func resourceVcdNsxvFirewallImport(d *schema.ResourceData, meta interface{}) ([]
 	return []*schema.ResourceData{d}, nil
 }
 
+// setFirewallRuleData is the main function used for setting Terraform schema
 func setFirewallRuleData(d *schema.ResourceData, rule *types.EdgeFirewallRule, edge govcd.EdgeGateway) error {
 	_ = d.Set("name", rule.Name)
 	_ = d.Set("description", rule.Description)
@@ -318,65 +386,49 @@ func setFirewallRuleData(d *schema.ResourceData, rule *types.EdgeFirewallRule, e
 	_ = d.Set("rule_tag", rule.RuleTag)
 	_ = d.Set("rule_type", rule.RuleTag)
 
-	sourceIpsSlice := convertToTypeSet(rule.Source.IpAddress)
-	sourceIpsSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), sourceIpsSlice)
-
-	vnicGroupIdStrings, err := groupIdStringsToNetworkNames(rule.Source.VnicGroupId, edge)
+	// Process and set "source" block
+	source, err := getEndpointData(rule.Source, edge)
 	if err != nil {
-		return err
+		return fmt.Errorf("could not prepare data for setting 'source' block: %s", err)
+	}
+	err = d.Set("source", source)
+	if err != nil {
+		return fmt.Errorf("could not set 'source' block: %s", err)
 	}
 
-	sourceNetworksSlice := convertToTypeSet(vnicGroupIdStrings)
-	sourceNetworksSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), sourceNetworksSlice)
+	// Process and set "destination" block
+	destination, err := getEndpointData(rule.Destination, edge)
+	if err != nil {
+		return fmt.Errorf("could not prepare data for setting 'destination' block: %s", err)
+	}
+	err = d.Set("destination", destination)
+	if err != nil {
+		return fmt.Errorf("could not set 'destination' block: %s", err)
+	}
 
-	source := make([]interface{}, 1)
-	sourceMap := make(map[string]interface{})
-	sourceMap["exclude"] = rule.Source.Exclude
-	sourceMap["ips"] = sourceIpsSet
-	sourceMap["network_ids"] = sourceNetworksSet
-
-	source[0] = sourceMap
-	fmt.Println("===to schema===")
-	spew.Dump(source)
-	_ = d.Set("source", source)
+	// Process and set "service" blocks
 
 	return nil
 }
 
+// getFirewallRule is the main function  used for creating *types.EdgeFirewallRule structure from
+// Terraform schema configuration
 func getFirewallRule(d *schema.ResourceData, edge govcd.EdgeGateway) (*types.EdgeFirewallRule, error) {
-	fmt.Println("===from schema===")
-	spew.Dump(d.Get("source"))
 	service := d.Get("service").([]interface{})
 	if len(service) != 1 {
 		return nil, fmt.Errorf("no service specified")
 	}
 	serviceMap := convertToStringMap(service[0].(map[string]interface{}))
 
-	source := d.Get("source").([]interface{})
-	if len(source) != 1 {
-		return nil, fmt.Errorf("no source specified")
+	sourceEndpoint, err := getFirewallRuleEndpoint(d.Get("source").([]interface{}), edge)
+	if err != nil {
+		return nil, fmt.Errorf("could not convert 'source' block to API request: %s", err)
 	}
-	sourceMap := source[0].(map[string]interface{})
-	sourceExclude := sourceMap["exclude"].(bool)
-	sourceIps := sourceMap["ips"].(*schema.Set)
-	sourceNetIds := sourceMap["network_ids"].(*schema.Set)
-	sourceIpList := sourceIps.List()
-	sourceNetIdList := sourceNetIds.List()
-	sourceIpStrings := convertToSliceOfStrings(sourceIpList)
-	sourceNetIdStrings := convertToSliceOfStrings(sourceNetIdList)
 
-	destination := d.Get("destination").([]interface{})
-	if len(destination) != 1 {
-		return nil, fmt.Errorf("no destination specified")
+	destinationEndpoint, err := getFirewallRuleEndpoint(d.Get("destination").([]interface{}), edge)
+	if err != nil {
+		return nil, fmt.Errorf("could not convert 'destination' block to API request: %s", err)
 	}
-	destinationMap := destination[0].(map[string]interface{})
-	destinationExclude := destinationMap["exclude"].(bool)
-	destinationIps := destinationMap["ips"].(*schema.Set)
-	destinationNetIds := destinationMap["network_ids"].(*schema.Set)
-	destinationIpList := destinationIps.List()
-	destinationNetIdList := destinationNetIds.List()
-	destinationIpStrings := convertToSliceOfStrings(destinationIpList)
-	destinationNetIdStrings := convertToSliceOfStrings(destinationNetIdList)
 
 	firewallRule := &types.EdgeFirewallRule{
 		Name:           d.Get("name").(string),
@@ -392,28 +444,143 @@ func getFirewallRule(d *schema.ResourceData, edge govcd.EdgeGateway) (*types.Edg
 				SourcePort: serviceMap["source_port"],
 			},
 		},
-		Source: types.EdgeFirewallObject{
-			Exclude:     sourceExclude,
-			IpAddress:   sourceIpStrings,
-			VnicGroupId: sourceNetIdStrings,
-		},
-		Destination: types.EdgeFirewallObject{
-			Exclude:     destinationExclude,
-			IpAddress:   destinationIpStrings,
-			VnicGroupId: destinationNetIdStrings,
-		},
+		Source:      *sourceEndpoint,
+		Destination: *destinationEndpoint,
 	}
 
 	return firewallRule, nil
 }
 
-func stringInSlice(str string, list []string) bool {
-	for _, v := range list {
-		if v == str {
-			return true
+// getEndpointData formats the nested set structure suitable for d.Set() for
+// 'source' and 'destination' blocks in firewall rule
+func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge govcd.EdgeGateway) ([]interface{}, error) {
+	// Different object types are in the same grouping object tag <groupingObjectId>
+	// They can be distinguished by 3rd element in ID
+	var (
+		endpointNetworks       []string
+		endpointVMs            []string
+		endpointIpSets         []string
+		endpointSecurityGroups []string
+	)
+
+	for _, groupingObject := range endpoint.GroupingObjectId {
+		switch strings.Split(groupingObject, ":")[2] {
+		// Handle org vdc networks
+		// Sample ID: urn:vcloud:network:95bffe8e-7e67-452d-abf2-535ac298db2b
+		case "network":
+			endpointNetworks = append(endpointNetworks, groupingObject)
+
+		// Handle virtual machines
+		// Sample ID: urn:vcloud:vm:c0c5a316-fb2d-4f33-a814-3e0fba714c74
+		case "vm":
+			endpointVMs = append(endpointVMs, groupingObject)
+
+		// Handle ipsets
+		// Sample ID: f9daf2da-b4f9-4921-a2f4-d77a943a381c:ipset-2
+		case "ipset":
+			endpointIpSets = append(endpointIpSets, groupingObject)
+
+		// Handle security groups
+		// Sample ID:
+		case "security-group":
+			endpointSecurityGroups = append(endpointSecurityGroups, groupingObject)
+
+		// Log the group ID if it was not one of above
+		default:
+			log.Printf("[WARN] Unrecognized grouping object ID: %s", groupingObject)
 		}
 	}
-	return false
+
+	// Convert org vdc networks to set
+	endpointNetworksSlice := convertToTypeSet(endpointNetworks)
+	endpointNetworksSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointNetworksSlice)
+
+	// Convert virtual machines to set
+	endpointVmSlice := convertToTypeSet(endpointVMs)
+	endpointVmSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointVmSlice)
+
+	// Convert ipsets to set
+	endpointIpSetSlice := convertToTypeSet(endpointIpSets)
+	endpointIpSetSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointIpSetSlice)
+
+	// Convert security groups to set
+	endpointSecurityGroupSlice := convertToTypeSet(endpointSecurityGroups)
+	endpointSecurityGroupSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointSecurityGroupSlice)
+
+	// Convert `ip_addresses` to set
+	endpointIpsSlice := convertToTypeSet(endpoint.IpAddress)
+	endpointIpsSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointIpsSlice)
+
+	// Convert `gateway_interfaces` to set
+	vnicGroupIdStrings, err := groupIdStringsToNetworkNames(endpoint.VnicGroupId, edge)
+	if err != nil {
+		return nil, err
+	}
+	endpointGatewayInterfaceSlice := convertToTypeSet(vnicGroupIdStrings)
+	endpointGatewayInterfaceSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointGatewayInterfaceSlice)
+
+	// Insert all sets into single element block ready to be ('source' or 'destination')
+	endpointSlice := make([]interface{}, 1)
+	endpointMap := make(map[string]interface{})
+	endpointMap["exclude"] = endpoint.Exclude
+	endpointMap["ip_addresses"] = endpointIpsSet
+	endpointMap["gateway_interfaces"] = endpointGatewayInterfaceSet
+	endpointMap["org_network_ids"] = endpointNetworksSet
+	endpointMap["virtual_machine_ids"] = endpointVmSet
+	endpointMap["security_group_ids"] = endpointSecurityGroupSet
+	endpointMap["ipset_ids"] = endpointIpSetSet
+
+	endpointSlice[0] = endpointMap
+
+	return endpointSlice, nil
+}
+
+// getFirewallRuleEndpoint processes Terraform schema and converts it to *types.EdgeFirewallEndpoint
+// which is useful for 'source' or 'destination' blocks
+func getFirewallRuleEndpoint(endpoint []interface{}, edge govcd.EdgeGateway) (*types.EdgeFirewallEndpoint, error) {
+	if len(endpoint) != 1 {
+		return nil, fmt.Errorf("no source specified")
+	}
+
+	// Create empty endpoint structure for populating
+	result := &types.EdgeFirewallEndpoint{}
+
+	// Extract 'exclude' field from structure
+	endpointMap := endpoint[0].(map[string]interface{})
+	endpointExclude := endpointMap["exclude"].(bool)
+	result.Exclude = endpointExclude
+
+	// Extract ips and add them to endpoint structure
+	endpointIpStrings := convertSchemaSetToSliceOfStrings(endpointMap["ip_addresses"].(*schema.Set))
+	result.IpAddress = endpointIpStrings
+
+	// Extract 'gateway_interfaces' names, convert them to vNic indexes and add to the structure
+	endpointEdgeInterfaceIdStrings := convertSchemaSetToSliceOfStrings(endpointMap["gateway_interfaces"].(*schema.Set))
+	endpointEdgeInterfaceVnicList, err := groupNetworkNamesToIdStrings(endpointEdgeInterfaceIdStrings, edge)
+	if err != nil {
+		return nil, fmt.Errorf("could not lookup vNic indexes for networks: %s", err)
+	}
+	result.VnicGroupId = endpointEdgeInterfaceVnicList
+
+	// 'types.EdgeFirewallEndpoint.GroupingObjectId' holds IDs for VMs, org networks, ipsets and Security groups
+
+	// Extract VM IDs from set and add them to endpoint structure
+	endpointVmStrings := convertSchemaSetToSliceOfStrings(endpointMap["virtual_machines_ids"].(*schema.Set))
+	result.GroupingObjectId = append(result.GroupingObjectId, endpointVmStrings...)
+
+	// Extract org network IDs from set and add them to endpoint structure
+	endpointOrgNetworkStrings := convertSchemaSetToSliceOfStrings(endpointMap["org_network_ids"].(*schema.Set))
+	result.GroupingObjectId = append(result.GroupingObjectId, endpointOrgNetworkStrings...)
+
+	// Extract ipset IDs from set and add them to endpoint structure
+	endpointIpSetStrings := convertSchemaSetToSliceOfStrings(endpointMap["ipset_ids"].(*schema.Set))
+	result.GroupingObjectId = append(result.GroupingObjectId, endpointIpSetStrings...)
+
+	// Extract security group IDs from set and add them to endpoint structure
+	endpointSecurityGroupStrings := convertSchemaSetToSliceOfStrings(endpointMap["security_group_ids"].(*schema.Set))
+	result.GroupingObjectId = append(result.GroupingObjectId, endpointSecurityGroupStrings...)
+
+	return result, nil
 }
 
 // groupIdStringsToNetworkNames iterates over
@@ -445,4 +612,53 @@ func groupIdStringsToNetworkNames(groupIdStrings []string, edge govcd.EdgeGatewa
 		vnicGroupIdStrings[index] = networkName
 	}
 	return vnicGroupIdStrings, nil
+}
+
+// groupNetworkNamesToIdStrings iterates over network names and returns vNic ID name list
+// (suitable for firewall creation)
+func groupNetworkNamesToIdStrings(groupNetworkNames []string, edge govcd.EdgeGateway) ([]string, error) {
+	idStrings := make([]string, len(groupNetworkNames))
+	for index, networkName := range groupNetworkNames {
+		// A list of accepted parameters as strings (not real network names). No need to look them
+		// up. Passing these names as they are directly to statefile
+		if stringInSlice(networkName, []string{"internal", "external", "vse"}) {
+			idStrings[index] = networkName
+			continue
+		}
+
+		// TODO improve GetVnicIndexByNetworkNameAndType and ensure that only one network with the
+		// the same name can be defined in edge gateway
+		vNicIndex, err := edge.GetVnicIndexByNetworkNameAndType(networkName, "subinterface")
+		if govcd.IsNotFound(err) {
+			vNicIndex, err = edge.GetVnicIndexByNetworkNameAndType(networkName, "internal")
+			if govcd.IsNotFound(err) {
+				vNicIndex, err = edge.GetVnicIndexByNetworkNameAndType(networkName, "uplink")
+				if govcd.IsNotFound(err) {
+					vNicIndex, err = edge.GetVnicIndexByNetworkNameAndType(networkName, "trunk")
+					if govcd.IsNotFound(err) {
+						return nil, fmt.Errorf("unable to find network %s interface on edge gateway", networkName)
+					}
+				}
+			}
+		}
+
+		if err != nil {
+			return nil, fmt.Errorf("error searching for network %s: %s", networkName, err)
+		}
+
+		// we found the network - add it to the list
+		idStrings[index] = "vnic-" + strconv.Itoa(*vNicIndex)
+	}
+
+	return idStrings, nil
+}
+
+// stringInSlice checks if a string exists in slice of strings
+func stringInSlice(str string, list []string) bool {
+	for _, v := range list {
+		if v == str {
+			return true
+		}
+	}
+	return false
 }
