@@ -23,6 +23,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -709,4 +710,31 @@ func destroySuiteCatalogAndItem(config TestConfig) {
 		fmt.Printf("Catalog item deletion skipped as user defined resource is used or removed with catalog\n")
 	}
 
+}
+
+// Used by resources at the top of the hierarchy (such as Org, ExternalNetwork)
+func importStateIdTopHierarchy(objectName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		return objectName, nil
+	}
+}
+
+// Used by all entities that depend on Org (such as Catalog, OrgUser)
+func importStateIdOrgObject(vcd TestConfig, objectName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		if testConfig.VCD.Org == "" || objectName == "" {
+			return "", fmt.Errorf("missing information to generate import path")
+		}
+		return testConfig.VCD.Org + "." + objectName, nil
+	}
+}
+
+// Used by all entities that depend on Org + VDC (such as Vapp, networks, edge gateway)
+func importStateIdOrgVdcObject(vcd TestConfig, objectName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || objectName == "" {
+			return "", fmt.Errorf("missing information to generate import path")
+		}
+		return testConfig.VCD.Org + "." + testConfig.VCD.Vdc + "." + objectName, nil
+	}
 }

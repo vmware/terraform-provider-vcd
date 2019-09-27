@@ -12,6 +12,7 @@ FEATURES:
 * **New Data Source:** `vcd_network_routed` Routed Network - ([#218])
 * **New Data Source:** `vcd_network_isolated` Isolated Network - ([#218])
 * **New Data Source:** `vcd_network_direct` Direct Network - ([#218])
+* **New Data Source:** `vcd_vapp` vApp - ([#218])
 * **New Data Source:** `vcd_nsxv_dnat` DNAT for advanced edge gateways using proxied NSX-V API - [#328]
 * **New Data Source:** `vcd_nsxv_snat` SNAT for advanced edge gateways using proxied NSX-V API - [#328]
 
@@ -25,6 +26,7 @@ IMPROVEMENTS:
 * `resource/vcd_network_routed` Add import capability and full read support [#218]
 * `resource/vcd_network_isolated` Add import capability and full read support [#218]
 * `resource/vcd_network_direct` Add import capability and full read support [#218]
+* `resource/vcd_vapp` Add import capability and full read support [#218]
 * `resource/vcd_network_direct`: Direct network state ID changed from network name to vCD ID 
 * `resource/vcd_network_isolated`: Isolated network state ID changed from network name to vCD ID 
 * `resource/vcd_network_routed`: Routed network state ID changed from network name to vCD ID 

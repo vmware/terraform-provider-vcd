@@ -333,7 +333,7 @@ func runTest(def networkDef, t *testing.T) {
 		ResourceName:      def.resourceName + "." + networkName + "-import",
 		ImportState:       true,
 		ImportStateVerify: true,
-		ImportStateIdFunc: importStateIdByNetwork(testConfig, networkName),
+		ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, networkName),
 	})
 
 	// Don't convert this test to parallel, as it will cause IP ranges conflicts
@@ -343,15 +343,6 @@ func runTest(def networkDef, t *testing.T) {
 		CheckDestroy: func(s *terraform.State) error { return testAccCheckVcdNetworkDestroy(s, def.resourceName, networkName) },
 		Steps:        steps,
 	})
-}
-
-func importStateIdByNetwork(vcd TestConfig, objectName string) resource.ImportStateIdFunc {
-	return func(*terraform.State) (string, error) {
-		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || objectName == "" {
-			return "", fmt.Errorf("missing information to generate import path")
-		}
-		return testConfig.VCD.Org + "." + testConfig.VCD.Vdc + "." + objectName, nil
-	}
 }
 
 func testAccCheckVcdNetworkExists(name string, network *govcd.OrgVDCNetwork) resource.TestCheckFunc {
