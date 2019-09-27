@@ -101,7 +101,7 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 			return fmt.Errorf("error creating SNAT rule: %#v", err)
 		}
 	} else {
-		_, _ = fmt.Fprint(GetTerraformStdout(), "WARNING: this resource will require network_name and network_type in the next major version \n")
+		_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: this resource will require network_name and network_type in the next major version \n")
 		// TODO remove when major release is done
 		// this for back compatibility  when network name and network type isn't provided - this assign rule only for first external network
 		task, err := edgeGateway.AddNATMapping("SNAT", d.Get("internal_ip").(string),

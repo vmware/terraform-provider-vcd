@@ -1,8 +1,10 @@
 package vcd
 
 import (
+	"flag"
 	"fmt"
 	"net"
+	"os"
 
 	"github.com/hashicorp/terraform/helper/schema"
 )
@@ -26,6 +28,14 @@ func noopValueWarningValidator(fieldValue interface{}, warningText string) schem
 			warnings = append(warnings, fmt.Sprintf("%s\n\n", warningText))
 		}
 
+		return
+	}
+}
+
+// anyValueWarningValidator is a validator which only emits always warning string
+func anyValueWarningValidator(fieldValue interface{}, warningText string) schema.SchemaValidateFunc {
+	return func(i interface{}, k string) (warnings []string, errors []error) {
+		warnings = append(warnings, fmt.Sprintf("%s\n\n", warningText))
 		return
 	}
 }
@@ -74,5 +84,24 @@ func falseBoolSuppress() schema.SchemaDiffSuppressFunc {
 func suppressFalse() schema.SchemaDiffSuppressFunc {
 	return func(k string, old string, new string, d *schema.ResourceData) bool {
 		return new == "false"
+	}
+}
+
+// getTerraformStdout returns std out to write message in terraform output
+func getTerraformStdout() *os.File {
+	// Needed to avoid errors when uintptr(4) is used
+	if v := flag.Lookup("test.v"); v == nil || v.Value.String() != "true" {
+		return os.NewFile(uintptr(4), "stdout")
+	} else {
+		return os.Stdout
+	}
+}
+
+// suppressAlways suppresses the processing of the property unconditionally
+// Used when we want to remove a property that should not have been
+// added in the first place, but we want to keep compatibility
+func suppressAlways() schema.SchemaDiffSuppressFunc {
+	return func(k string, old string, new string, d *schema.ResourceData) bool {
+		return true
 	}
 }

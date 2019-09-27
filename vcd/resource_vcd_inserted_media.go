@@ -145,25 +145,25 @@ func resourceVcdMediaEject(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func getVM(d *schema.ResourceData, meta interface{}) (govcd.VM, *govcd.Org, error) {
+func getVM(d *schema.ResourceData, meta interface{}) (*govcd.VM, *govcd.Org, error) {
 	vcdClient := meta.(*VCDClient)
 
 	org, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil || org == nil || vdc == nil {
-		return govcd.VM{}, nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return nil, nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	vmRecord, err := vdc.QueryVM(d.Get("vapp_name").(string), d.Get("vm_name").(string))
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find VM. Removing from tfstate")
 		d.SetId("")
-		return govcd.VM{}, nil, fmt.Errorf("unable to find VM. Removing from tfstate. Err: #%v", err)
+		return nil, nil, fmt.Errorf("unable to find VM. Removing from tfstate. Err: #%v", err)
 	}
 
-	vm, err := vcdClient.Client.FindVMByHREF(vmRecord.VM.HREF)
-	if err != nil || vm == (govcd.VM{}) {
+	vm, err := vcdClient.Client.GetVMByHref(vmRecord.VM.HREF)
+	if err != nil {
 		log.Printf("[DEBUG] Unable to get VM data")
-		return govcd.VM{}, nil, fmt.Errorf("error getting VM data: %s", err)
+		return nil, nil, fmt.Errorf("error getting VM data: %s", err)
 	}
 	return vm, org, nil
 }

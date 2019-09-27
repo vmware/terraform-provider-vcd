@@ -147,7 +147,7 @@ func resourceVcdVappNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	vapp, err := vdc.FindVAppByName(d.Get("vapp_name").(string))
+	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
 	if err != nil {
 		return fmt.Errorf("error finding vApp. %#v", err)
 	}
@@ -205,7 +205,7 @@ func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	vapp, err := vdc.FindVAppByName(d.Get("vapp_name").(string))
+	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
 	if err != nil {
 		return fmt.Errorf("error finding Vapp: %#v", err)
 	}
@@ -260,7 +260,7 @@ func resourceVappNetworkDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	vapp, err := vdc.FindVAppByName(d.Get("vapp_name").(string))
+	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
 	if err != nil {
 		return fmt.Errorf("error finding vApp: %#v", err)
 	}

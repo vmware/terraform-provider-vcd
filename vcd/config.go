@@ -265,35 +265,41 @@ func (cli *VCDClient) GetAdminOrgFromResource(d *schema.ResourceData) (org *govc
 }
 
 // Gets an edge gateway when you don't need org or vdc for other purposes
-func (cli *VCDClient) GetEdgeGateway(orgName, vdcName, edgeGwName string) (eg govcd.EdgeGateway, err error) {
+func (cli *VCDClient) GetEdgeGateway(orgName, vdcName, edgeGwName string) (eg *govcd.EdgeGateway, err error) {
 
 	if edgeGwName == "" {
-		return govcd.EdgeGateway{}, fmt.Errorf("empty Edge Gateway name provided")
+		return nil, fmt.Errorf("empty Edge Gateway name provided")
 	}
 	_, vdc, err := cli.GetOrgAndVdc(orgName, vdcName)
 	if err != nil {
-		return govcd.EdgeGateway{}, fmt.Errorf("error retrieving org and vdc: %s", err)
+		return nil, fmt.Errorf("error retrieving org and vdc: %s", err)
 	}
-	eg, err = vdc.FindEdgeGateway(edgeGwName)
+	eg, err = vdc.GetEdgeGatewayByName(edgeGwName, true)
 
 	if err != nil {
-		return govcd.EdgeGateway{}, fmt.Errorf(errorUnableToFindEdgeGateway, err)
+		if os.Getenv("GOVCD_DEBUG") != "" {
+			return nil, fmt.Errorf(fmt.Sprintf("(%s) [%s] ", edgeGwName, callFuncName())+errorUnableToFindEdgeGateway, err)
+		}
+		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
-	if eg.EdgeGateway.HREF == "" || eg.EdgeGateway.Name == "" || eg.EdgeGateway.ID == "" {
-		return govcd.EdgeGateway{}, fmt.Errorf("empty edge gateway %s found", edgeGwName)
-
-	}
-	return eg, err
+	return eg, nil
 }
 
 // Same as GetEdgeGateway, but using data from the resource, if available
 // edgeGatewayFieldName is the name used in the resource. It is usually "edge_gateway"
 // for all resources that *use* an edge gateway, and when the resource is vcd_edgegateway, it is "name"
-func (cli *VCDClient) GetEdgeGatewayFromResource(d *schema.ResourceData, edgeGatewayFieldName string) (eg govcd.EdgeGateway, err error) {
+func (cli *VCDClient) GetEdgeGatewayFromResource(d *schema.ResourceData, edgeGatewayFieldName string) (eg *govcd.EdgeGateway, err error) {
 	orgName := d.Get("org").(string)
 	vdcName := d.Get("vdc").(string)
 	edgeGatewayName := d.Get(edgeGatewayFieldName).(string)
-	return cli.GetEdgeGateway(orgName, vdcName, edgeGatewayName)
+	egw, err := cli.GetEdgeGateway(orgName, vdcName, edgeGatewayName)
+	if err != nil {
+		if os.Getenv("GOVCD_DEBUG") != "" {
+			return nil, fmt.Errorf("(%s) [%s] : %s", edgeGatewayName, callFuncName(), err)
+		}
+		return nil, err
+	}
+	return egw, nil
 }
 
 func (c *Config) Client() (*VCDClient, error) {

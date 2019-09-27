@@ -26,12 +26,12 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 		return
 	}
 
+	configText := templateFill(testAccCheckVcdVdcDatasource_basic, params)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-
-	configText := templateFill(testAccCheckVcdVdcDatasource_basic, params)
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
