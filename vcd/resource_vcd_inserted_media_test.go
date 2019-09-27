@@ -4,7 +4,6 @@ package vcd
 
 import (
 	"fmt"
-	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -80,12 +79,12 @@ func testAccCheckMediaInserted(itemName string) resource.TestCheckFunc {
 			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
 
-		vapp, err := vdc.FindVAppByName(vappNameForInsert)
+		vapp, err := vdc.GetVAppByName(vappNameForInsert, false)
 		if err != nil {
 			return err
 		}
 
-		vm, err := vdc.FindVMByName(vapp, vmNameForInsert)
+		vm, err := vapp.GetVMByName(vmNameForInsert, false)
 
 		if err != nil {
 			return err
@@ -118,12 +117,12 @@ func testAccCheckMediaEjected(itemName string) resource.TestCheckFunc {
 			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
 
-		vapp, err := vdc.FindVAppByName(vappNameForInsert)
+		vapp, err := vdc.GetVAppByName(vappNameForInsert, false)
 		if err != nil {
 			return err
 		}
 
-		vm, err := vdc.FindVMByName(vapp, vmNameForInsert)
+		vm, err := vapp.GetVMByName(vmNameForInsert, false)
 
 		if err != nil {
 			return err
@@ -151,13 +150,13 @@ func testAccResourcesDestroyed(s *terraform.State) error {
 			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
 
-		_, err = vdc.FindVAppByName(vappNameForInsert)
-		if err != nil && !strings.Contains(err.Error(), "can't find vApp:") {
-			return fmt.Errorf("vapp %s still exist and error: %#v", itemName, err)
+		_, err = vdc.GetVAppByName(vappNameForInsert, false)
+		if err == nil {
+			return fmt.Errorf("vapp %s still exist", itemName)
 		}
 
-		_, err = vdc.FindVDCNetwork(TestAccVcdVAppVmNetForInsert)
-		if err != nil && !strings.Contains(err.Error(), "can't find VDC Network:") {
+		_, err = vdc.GetOrgVdcNetworkByName(TestAccVcdVAppVmNetForInsert, false)
+		if err == nil {
 			return fmt.Errorf("network %s still exist and error: %#v", itemName, err)
 		}
 	}

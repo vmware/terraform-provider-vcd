@@ -15,13 +15,6 @@ func TestAccVcdDatasourceOrg(t *testing.T) {
 		t.Skip("TestAccVcdDatasourceOrg requires system admin privileges")
 		return
 	}
-	type testOrgData struct {
-		name               string
-		enabled            bool
-		canPublishCatalogs bool
-		deployedVmQuota    int
-		storedVmQuota      int
-	}
 
 	orgName1 := testConfig.VCD.Org
 	orgName2 := orgName1 + "-clone"

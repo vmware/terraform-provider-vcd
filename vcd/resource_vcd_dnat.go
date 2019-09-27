@@ -363,7 +363,7 @@ func getOrgVdcNetwork(d *schema.ResourceData, vcdClient *VCDClient, networkname 
 		return nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	network, err := vdc.FindVDCNetwork(networkname)
+	network, err := vdc.GetOrgVdcNetworkByName(networkname, false)
 	if err != nil {
 		log.Printf("[DEBUG] Network doesn't exist: " + networkname)
 		return nil, err

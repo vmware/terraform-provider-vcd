@@ -111,7 +111,7 @@ func testAccCheckVcdSNATExists(n string, gateway *govcd.EdgeGateway) resource.Te
 			return fmt.Errorf("rule isn't found")
 		}
 
-		*gateway = edgeGateway
+		gateway = edgeGateway
 
 		return nil
 	}
@@ -220,7 +220,7 @@ func testAccCheckVcdSNATExistsForBackCompability(n string, gateway *govcd.EdgeGa
 			return fmt.Errorf("SNAT rule was not found")
 		}
 
-		*gateway = edgeGateway
+		gateway = edgeGateway
 
 		return nil
 	}

@@ -185,7 +185,7 @@ func testAccCheckVcdDNATExists(n string, gateway *govcd.EdgeGateway) resource.Te
 			return fmt.Errorf("rule isn't found")
 		}
 
-		*gateway = edgeGateway
+		gateway = edgeGateway
 
 		return nil
 	}
@@ -295,7 +295,7 @@ func testAccCheckVcdDNATExistsForBackCompability(n string, gateway *govcd.EdgeGa
 			return fmt.Errorf("DNAT rule was not found")
 		}
 
-		*gateway = edgeGateway
+		gateway = edgeGateway
 
 		return nil
 	}

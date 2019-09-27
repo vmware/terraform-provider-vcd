@@ -157,12 +157,12 @@ func testAccCheckVcdVMCustomization(node string, customizationPending bool) reso
 			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
 
-		vapp, err := vdc.FindVAppByName(rs.Primary.Attributes["vapp_name"])
+		vapp, err := vdc.GetVAppByName(rs.Primary.Attributes["vapp_name"], false)
 		if err != nil {
 			return err
 		}
 
-		vm, err := vdc.FindVMByName(vapp, rs.Primary.Attributes["name"])
+		vm, err := vapp.GetVMByName(rs.Primary.Attributes["name"], false)
 
 		if err != nil {
 			return err

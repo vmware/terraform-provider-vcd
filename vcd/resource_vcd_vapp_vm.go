@@ -265,7 +265,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 
 	acceptEulas := d.Get("accept_all_eulas").(bool)
 
-	vapp, err := vdc.FindVAppByName(d.Get("vapp_name").(string))
+	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
 	if err != nil {
 		return fmt.Errorf("error finding vApp: %#v", err)
 	}
@@ -274,10 +274,10 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	// TODO v3.0 remove else branch once 'network_name', 'vapp_network_name', 'ip' are deprecated
 	networkConnectionSection := types.NetworkConnectionSection{}
 	if len(d.Get("network").([]interface{})) > 0 {
-		networkConnectionSection, err = networksToConfig(d.Get("network").([]interface{}), vdc, vapp, vcdClient)
+		networkConnectionSection, err = networksToConfig(d.Get("network").([]interface{}), vdc, *vapp, vcdClient)
 	} else {
 		networkConnectionSection, err = deprecatedNetworksToConfig(d.Get("network_name").(string),
-			d.Get("vapp_network_name").(string), d.Get("ip").(string), vdc, vapp, vcdClient)
+			d.Get("vapp_network_name").(string), d.Get("ip").(string), vdc, *vapp, vcdClient)
 	}
 	if err != nil {
 		return fmt.Errorf("unable to process network configuration: %s", err)
@@ -293,7 +293,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorCompletingTask, err)
 	}
 
-	vm, err := vdc.FindVMByName(vapp, d.Get("name").(string))
+	vm, err := vapp.GetVMByName(d.Get("name").(string), true)
 
 	if err != nil {
 		d.SetId("")
@@ -365,7 +365,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	// TODO do not trigger resourceVcdVAppVmUpdate from create. These must be separate actions.
 	err = resourceVcdVAppVmUpdateExecute(d, meta)
 	if err != nil {
-		errAttachedDisk := updateStateOfAttachedDisks(d, vm, vdc)
+		errAttachedDisk := updateStateOfAttachedDisks(d, *vm, vdc)
 		if errAttachedDisk != nil {
 			d.Set("disk", nil)
 			return fmt.Errorf("error reading attached disks : %#v and internal error : %#v", errAttachedDisk, err)
@@ -382,11 +382,11 @@ func addVdcNetwork(networkNameToAdd string, vdc *govcd.Vdc, vapp govcd.VApp, vcd
 		return &types.OrgVDCNetwork{}, fmt.Errorf("'network_name' must be valid when adding VM to raw vApp")
 	}
 
-	net, err := vdc.FindVDCNetwork(networkNameToAdd)
+	network, err := vdc.GetOrgVdcNetworkByName(networkNameToAdd, false)
 	if err != nil {
 		return &types.OrgVDCNetwork{}, fmt.Errorf("network %s wasn't found as VDC network", networkNameToAdd)
 	}
-	vdcNetwork := net.OrgVDCNetwork
+	vdcNetwork := network.OrgVDCNetwork
 
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 	if err != nil {
@@ -512,13 +512,13 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	vapp, err := vdc.FindVAppByName(d.Get("vapp_name").(string))
+	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
 
 	if err != nil {
 		return fmt.Errorf("error finding vApp: %s", err)
 	}
 
-	vm, err := vdc.FindVMByName(vapp, d.Get("name").(string))
+	vm, err := vapp.GetVMByName(d.Get("name").(string), false)
 
 	if err != nil {
 		d.SetId("")
@@ -617,9 +617,9 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 
 		// detaching independent disks - only possible when VM power off
 		if d.HasChange("disk") {
-			err = attachDetachDisks(d, vm, vdc)
+			err = attachDetachDisks(d, *vm, vdc)
 			if err != nil {
-				errAttachedDisk := updateStateOfAttachedDisks(d, vm, vdc)
+				errAttachedDisk := updateStateOfAttachedDisks(d, *vm, vdc)
 				if errAttachedDisk != nil {
 					d.Set("disk", nil)
 					return fmt.Errorf("error reading attached disks : %#v and internal error : %#v", errAttachedDisk, err)
@@ -674,7 +674,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		}
 
 		if d.HasChange("network") {
-			networkConnectionSection, err := networksToConfig(d.Get("network").([]interface{}), vdc, vapp, vcdClient)
+			networkConnectionSection, err := networksToConfig(d.Get("network").([]interface{}), vdc, *vapp, vcdClient)
 			if err != nil {
 				return fmt.Errorf("unable to setup network configuration for update: %s", err)
 			}
@@ -829,13 +829,13 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	vapp, err := vdc.FindVAppByName(d.Get("vapp_name").(string))
+	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
 
 	if err != nil {
 		return fmt.Errorf("error finding vApp: %s", err)
 	}
 
-	vm, err := vdc.FindVMByName(vapp, d.Get("name").(string))
+	vm, err := vapp.GetVMByName(d.Get("name").(string), false)
 
 	if err != nil {
 		d.SetId("")
@@ -848,7 +848,7 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 	switch {
 	// TODO v3.0 remove this case block when we cleanup deprecated 'ip' and 'network_name' attributes
 	case d.Get("network_name").(string) != "" || d.Get("vapp_network_name").(string) != "":
-		ip, mac, err := deprecatedReadNetworks(d.Get("network_name").(string), d.Get("vapp_network_name").(string), vm)
+		ip, mac, err := deprecatedReadNetworks(d.Get("network_name").(string), d.Get("vapp_network_name").(string), *vm)
 		if err != nil {
 			return fmt.Errorf("failed reading network details: %s", err)
 		}
@@ -856,7 +856,7 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 		d.Set("mac", mac)
 		// TODO v3.0 EO remove this case block when we cleanup deprecated 'ip' and 'network_name' attributes
 	case len(d.Get("network").([]interface{})) > 0:
-		networks, err := readNetworks(vm, vapp)
+		networks, err := readNetworks(*vm, *vapp)
 		if err != nil {
 			return fmt.Errorf("failed reading network details: %s", err)
 		}
@@ -877,7 +877,7 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("unable to set guest properties in state: %s", err)
 	}
 
-	err = updateStateOfAttachedDisks(d, vm, vdc)
+	err = updateStateOfAttachedDisks(d, *vm, vdc)
 	if err != nil {
 		d.Set("disk", nil)
 		return fmt.Errorf("error reading attached disks : %#v", err)
@@ -947,13 +947,13 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	vapp, err := vdc.FindVAppByName(d.Get("vapp_name").(string))
+	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
 
 	if err != nil {
 		return fmt.Errorf("error finding vApp: %s", err)
 	}
 
-	vm, err := vdc.FindVMByName(vapp, d.Get("name").(string))
+	vm, err := vapp.GetVMByName(d.Get("name").(string), false)
 
 	if err != nil {
 		return fmt.Errorf("error getting VM4 : %#v", err)
@@ -979,7 +979,7 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// to avoid race condition for independent disks is attached or not - detach before removing vm
-	existingDisks := getVmIndependentDisks(vm)
+	existingDisks := getVmIndependentDisks(*vm)
 
 	for _, existingDiskHref := range existingDisks {
 		disk, err := vdc.FindDiskByHREF(existingDiskHref)
@@ -1000,7 +1000,7 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[TRACE] Removing VM: %s", vm.VM.Name)
 
-	err = vapp.RemoveVM(vm)
+	err = vapp.RemoveVM(*vm)
 	if err != nil {
 		return fmt.Errorf("error deleting: %#v", err)
 	}

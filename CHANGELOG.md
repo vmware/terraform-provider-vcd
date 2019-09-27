@@ -8,15 +8,26 @@ FEATURES:
 * **New Data Source:** `vcd_catalog_item` CatalogItem - ([#218])
 * **New Data Source:** `vcd_org_vdc` Organization VDC - ([#324])
 * **New Data Source:** `vcd_external_network` External Network - ([#218])
+* **New Data Source:** `vcd_edgegateway` Edge Gateway - ([#218])
+* **New Data Source:** `vcd_network_routed` Routed Network - ([#218])
+* **New Data Source:** `vcd_network_isolated` Isolated Network - ([#218])
+* **New Data Source:** `vcd_network_direct` Direct Network - ([#218])
 * **New Data Source:** `vcd_nsxv_dnat` DNAT for advanced edge gateways using proxied NSX-V API - [#328]
 * **New Data Source:** `vcd_nsxv_snat` SNAT for advanced edge gateways using proxied NSX-V API - [#328]
 
 IMPROVEMENTS:
 
-* `resource/vcd_org` Add import capability
-* `resource/vcd_catalog` Add import capability
-* `resource/vcd_catalog_item` Add import capability
-* `resource/vcd_external_network` Add import capability
+* `resource/vcd_org` Add import capability and full read support [#218]
+* `resource/vcd_catalog` Add import capability and full read support [#218]
+* `resource/vcd_catalog_item` Add import capability and full read support [#218]
+* `resource/vcd_external_network` Add import capability and full read support [#218]
+* `resource/vcd_edgegateway` Add import capability and full read support [#218]
+* `resource/vcd_network_routed` Add import capability and full read support [#218]
+* `resource/vcd_network_isolated` Add import capability and full read support [#218]
+* `resource/vcd_network_direct` Add import capability and full read support [#218]
+* `resource/vcd_network_direct`: Direct network state ID changed from network name to vCD ID 
+* `resource/vcd_network_isolated`: Isolated network state ID changed from network name to vCD ID 
+* `resource/vcd_network_routed`: Routed network state ID changed from network name to vCD ID 
 * `resource/catalog_item` added catalog item metadata support [#285] 
 * `resource/vcd_catalog`: Catalog state ID changed from catalog name to vCD ID 
 * `resource/vcd_catalog_item`: CatalogItem state ID changed from colon separated list of catalog name and item name to vCD ID 
@@ -26,9 +37,8 @@ IMPROVEMENTS:
 * `resource/vcd_vapp_vm` allows to force guest customization [#310]
 * `resource/vcd_vapp` supports guest properties [#319]
 * `resource/vcd_vapp_vm` supports guest properties [#319]
-* Upgrade Terraform SDK dependency to 0.12.6 [#302]
-* `vcd_org_vdc` Add import capability - [#324]
-* `vcd_org_vdc` Add full read capability - [#324]
+* `resource/vcd_network_direct` Add computed properties (external network gateway, netmask, DNS, and DNS suffix) [#330]
+* `vcd_org_vdc` Add import capability and full read support [#218]
 * Upgrade Terraform SDK dependency to 0.12.8 [#320]
 * `resource/vcd_vapp_vm` has new field `computer_name` [#334]
 
@@ -37,6 +47,7 @@ BUG FIXES:
 * Change Org ID from partial task ID to real Org ID during creation.
 * Wait for task completion on creation and update, where tasks were not handled at all.
 * `resource/vcd_firewall_rules` force recreation of the resource when attributes of the sub-element `rule` are changed (fixes a situation when it tried to update a rule).
+* `resource/vcd_network_isolated` Fix definition of DHCP, which was created automatically with leftovers from static IP pool even when not requested.
 
 ## 2.4.0 (July 29, 2019)
 
