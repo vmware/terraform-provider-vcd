@@ -30,20 +30,32 @@ func TestAccVcdNsxvEdgeFirewall(t *testing.T) {
 		"Tags":             "gateway firewall",
 	}
 
-	configText := templateFill(testAccVcdEdgeFirewallRule1, params)
+	configText := templateFill(testAccVcdEdgeFirewallRule0, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
 
 	params["FuncName"] = t.Name() + "-step1"
-	configText1 := templateFill(testAccVcdEdgeFirewallRule2, params)
+	configText1 := templateFill(testAccVcdEdgeFirewallRule1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	params["FuncName"] = t.Name() + "-step2"
-	configText2 := templateFill(testAccVcdEdgeFirewallRule3, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText2)
+	configText2 := templateFill(testAccVcdEdgeFirewallRule2, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
 	params["FuncName"] = t.Name() + "-step3"
-	configText3 := templateFill(testAccVcdEdgeFirewallRule4, params)
+	configText3 := templateFill(testAccVcdEdgeFirewallRule3, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
+
+	params["FuncName"] = t.Name() + "-step4"
+	configText4 := templateFill(testAccVcdEdgeFirewallRule4, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4)
+
+	params["FuncName"] = t.Name() + "-step5"
+	configText5 := templateFill(testAccVcdEdgeFirewallRule5, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 5: %s", configText5)
+
+	params["FuncName"] = t.Name() + "-step7"
+	configText7 := templateFill(testAccVcdEdgeFirewallRule6, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 6: %s", configText7)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -58,28 +70,65 @@ func TestAccVcdNsxvEdgeFirewall(t *testing.T) {
 			resource.TestStep{ // Step 0 - configuration only with ip_addresses
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.rule1", "id", regexp.MustCompile(`\d*`)),
+					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.rule0", "id", regexp.MustCompile(`\d*`)),
+					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.rule0-2", "id", regexp.MustCompile(`\d*`)),
+					// These two rules should go one after another because an explicit depends_on case is used
+					// and above_rule_id field is not used
+					firewallRuleOrderTest("vcd_nsxv_firewall_rule.rule0", "vcd_nsxv_firewall_rule.rule0-2"),
+					// sleepTester(),
 				),
 			},
 			resource.TestStep{ // Step 1 - configuration only with gateway_interfaces (internal, external)
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.rule2", "id", regexp.MustCompile(`\d*`)),
+					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.rule1", "id", regexp.MustCompile(`\d*`)),
 					// sleepTester(),
 				),
 			},
 			resource.TestStep{ // Step 2 - configuration only with gateway_interfaces (lookup)
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.rule3", "id", regexp.MustCompile(`\d*`)),
+					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.rule2", "id", regexp.MustCompile(`\d*`)),
 					// sleepTester(),
 				),
 			},
 			resource.TestStep{ // Step 3 - only org networks
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.rule3", "id", regexp.MustCompile(`\d*`)),
+					// sleepTester(),
+				),
+			},
+			resource.TestStep{ // Step 4
+				Config: configText4,
+				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.rule4", "id", regexp.MustCompile(`\d*`)),
-					sleepTester(),
+					// sleepTester(),
+				),
+			},
+			resource.TestStep{ // Step 5 -
+				Config: configText5,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.rule5", "id", regexp.MustCompile(`\d*`)),
+					// sleepTester(),
+				),
+			},
+			resource.TestStep{ // Step 6 - resource import
+				ResourceName:      "vcd_nsxv_firewall_rule.imported",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdByResourceName("vcd_nsxv_firewall_rule.rule5"),
+			},
+			resource.TestStep{ // Step 7 - two rules - one above another
+				Config: configText7,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.rule6", "id", regexp.MustCompile(`\d*`)),
+					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.rule6-6", "id", regexp.MustCompile(`\d*`)),
+					// vcd_nsxv_firewall_rule.rule6-6 should be above vcd_nsxv_firewall_rule.rule6
+					// although it has depends_on = ["vcd_nsxv_firewall_rule.rule6"] which puts its
+					// provisioning on later stage, but it uses the explicit positioning field
+					// "above_rule_id =  vcd_nsxv_firewall_rule.rule6.id"
+					firewallRuleOrderTest("vcd_nsxv_firewall_rule.rule6-6", "vcd_nsxv_firewall_rule.rule6"),
 				),
 			},
 		},
@@ -94,8 +143,56 @@ func sleepTester() resource.TestCheckFunc {
 	}
 }
 
-const testAccVcdEdgeFirewallRule1 = `
-resource "vcd_nsxv_firewall_rule" "rule1" {
+// firewallRuleOrderTest function accepts firewall rule HCL address (in format 'vcd_nsxv_firewall_rule.rule-name')
+// and checks that its order is as specified (firstRule goes above secondRule)
+func firewallRuleOrderTest(firstRule, secondRule string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		conn := testAccProvider.Meta().(*VCDClient)
+		edgeGateway, err := conn.GetEdgeGateway(testConfig.VCD.Org, testConfig.VCD.Vdc, testConfig.Networking.EdgeGateway)
+		if err != nil {
+			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
+		}
+
+		rule1, ok := s.RootModule().Resources[firstRule]
+		if !ok {
+			return fmt.Errorf("not found resource: %s", firstRule)
+		}
+
+		rule2, ok := s.RootModule().Resources[secondRule]
+		if !ok {
+			return fmt.Errorf("not found resource: %s", secondRule)
+		}
+
+		rule1Id := rule1.Primary.ID
+		rule2Id := rule2.Primary.ID
+
+		allFirewallRules, err := edgeGateway.GetAllNsxvFirewallRules()
+		if err != nil {
+			return fmt.Errorf("could not get all firewall rules: %s", err)
+		}
+
+		// This loop checks that at first rule1Id is found and then rule2Id is found in the ordered
+		// list of firewall rules
+		var foundSecondRule, foundFirstRule bool
+		for _, rule := range allFirewallRules {
+			if rule.ID == rule1Id {
+				foundFirstRule = true
+			}
+			if foundFirstRule && rule.ID == rule2Id {
+				foundSecondRule = true
+			}
+		}
+
+		if !foundSecondRule || !foundFirstRule {
+			return fmt.Errorf("incorrect rule order. %s is above %s. Should be reverse.", firstRule, secondRule)
+		}
+
+		return nil
+	}
+}
+
+const testAccVcdEdgeFirewallRule0 = `
+resource "vcd_nsxv_firewall_rule" "rule0" {
 	org          = "{{.Org}}"
 	vdc          = "{{.Vdc}}"
 	edge_gateway = "{{.EdgeGateway}}"
@@ -111,15 +208,35 @@ resource "vcd_nsxv_firewall_rule" "rule1" {
 		ip_addresses = ["192.168.1.110"]
 	}
   
-	service {
-		protocol = "icmp"
-	}
-  }
+	#service {
+	#	protocol = "any"
+	#}
+}
 
+resource "vcd_nsxv_firewall_rule" "rule0-2" {
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
+	name = "rule 123123"
+	action = "deny"
+
+	source {
+		ip_addresses = ["4.4.4.4"]
+	}
+  
+	destination {
+		ip_addresses = ["5.5.5.5"]
+	}
+  
+	service {
+		protocol = "any"
+	}
+	depends_on = ["vcd_nsxv_firewall_rule.rule0"]
+}
 `
 
-const testAccVcdEdgeFirewallRule2 = `
-resource "vcd_nsxv_firewall_rule" "rule2" {
+const testAccVcdEdgeFirewallRule1 = `
+resource "vcd_nsxv_firewall_rule" "rule1" {
 	org          = "{{.Org}}"
 	vdc          = "{{.Vdc}}"
 	edge_gateway = "{{.EdgeGateway}}"
@@ -140,8 +257,8 @@ resource "vcd_nsxv_firewall_rule" "rule2" {
   }
 `
 
-const testAccVcdEdgeFirewallRule3 = `
-resource "vcd_nsxv_firewall_rule" "rule3" {
+const testAccVcdEdgeFirewallRule2 = `
+resource "vcd_nsxv_firewall_rule" "rule2" {
 	org          = "{{.Org}}"
 	vdc          = "{{.Vdc}}"
 	edge_gateway = "{{.EdgeGateway}}"
@@ -156,29 +273,15 @@ resource "vcd_nsxv_firewall_rule" "rule3" {
 		gateway_interfaces = ["{{.NetworkName}}"]
 	}
 	service {
-		protocol = "tcp"
-		port     = "443"
+		protocol    = "tcp"
+		port        = "443-543"
+		source_port = "2000-4000"
 	}
   }
 `
 
-const testAccVcdEdgeFirewallRule4 = `
-resource "vcd_network_routed" "test-routed" {
-  count        = 2
-  name         = "firewall-test-${count.index}"
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
-  gateway      = "10.201.${count.index}.1"
-  netmask      = "255.255.255.0"
-
-  static_ip_pool {
-    start_address = "10.201.${count.index}.10"
-    end_address   = "10.201.${count.index}.20"
-  }
-}
-
-resource "vcd_nsxv_firewall_rule" "rule4" {
+const testAccVcdEdgeFirewallRule3 = `
+resource "vcd_nsxv_firewall_rule" "rule3" {
 	org          = "{{.Org}}"
 	vdc          = "{{.Vdc}}"
 	edge_gateway = "{{.EdgeGateway}}"
@@ -195,7 +298,138 @@ resource "vcd_nsxv_firewall_rule" "rule4" {
 		protocol = "tcp"
 		port     = "443"
 	}
+}
+resource "vcd_network_routed" "test-routed" {
+  count        = 2
+  name         = "firewall-test-${count.index}"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  gateway      = "10.201.${count.index}.1"
+  netmask      = "255.255.255.0"
+
+  static_ip_pool {
+    start_address = "10.201.${count.index}.10"
+    end_address   = "10.201.${count.index}.20"
   }
+}
+`
+
+const testAccVcdEdgeFirewallRule4 = `
+resource "vcd_nsxv_firewall_rule" "rule4" {
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
+	name = "rule 30000"
+	action = "deny"
+
+	source {
+		gateway_interfaces = ["internal"]
+	}
+  
+	destination {
+		gateway_interfaces = ["external"]
+	}
+
+	service {
+		protocol = "tcp"
+		port     = "443"
+	}
+	
+	service {
+		protocol = "tcp"
+		port     = "8443"
+		source_port = "20000-40000"
+	}
+
+	service {
+		protocol = "udp"
+		port     = "10000"
+	}
+
+	service {
+		protocol    = "udp"
+		port        = "10000"
+		source_port = "20000"
+	}
+
+	service {
+		protocol = "icmp"
+	}
+  }
+`
+
+const testAccVcdEdgeFirewallRule5 = `
+resource "vcd_nsxv_firewall_rule" "rule5" {
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
+	name = "rule 30000"
+	action = "deny"
+
+	source {
+		gateway_interfaces = ["internal"]
+	}
+  
+	destination {
+		gateway_interfaces = ["external"]
+	}
+
+	service {
+		protocol = "tcp"
+	}
+
+	service {
+		protocol = "udp"
+	}
+
+  }
+`
+
+const testAccVcdEdgeFirewallRule6 = `
+resource "vcd_nsxv_firewall_rule" "rule6" {
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
+	name = "below-rule"
+	action = "accept"
+
+	source {
+		ip_addresses = ["10.10.10.0/24", "11.10.10.0/24"]
+	}
+  
+	destination {
+		ip_addresses = ["20.10.10.0/24", "21.10.10.0/24"]
+	}
+
+	service {
+		protocol = "any"
+	}
+}
+
+resource "vcd_nsxv_firewall_rule" "rule6-6" {
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
+	name = "above-rule"
+	action = "accept"
+	above_rule_id = "${vcd_nsxv_firewall_rule.rule6.id}"
+
+
+	source {
+		ip_addresses = ["10.10.10.0/24", "11.10.10.0/24"]
+	}
+  
+	destination {
+		ip_addresses = ["20.10.10.0/24", "21.10.10.0/24"]
+	}
+
+	service {
+		protocol = "any"
+	}
+
+	depends_on = ["vcd_nsxv_firewall_rule.rule6"]
+}
 `
 
 const testAccVcdEdgeFirewallRuleX = `

@@ -1,11 +1,13 @@
 package vcd
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"strconv"
 	"strings"
 
+	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -47,6 +49,12 @@ func resourceVcdNsxvFirewall() *schema.Resource {
 				Optional:    true,
 				Description: "Firewall rule name",
 			},
+			"above_rule_id": &schema.Schema{
+				Type:        schema.TypeString,
+				ForceNew:    true,
+				Optional:    true,
+				Description: "This firewall rule will be inserted above the referred one",
+			},
 			"rule_type": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -60,12 +68,6 @@ func resourceVcdNsxvFirewall() *schema.Resource {
 				ForceNew:    true,
 				Computed:    true,
 				Description: "Optional. Allows to set custom rule tag",
-			},
-			"insert_above_rule_id": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "Optional. Allows to insert the firewall rule above some other rule",
 			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
@@ -224,23 +226,27 @@ func resourceVcdNsxvFirewall() *schema.Resource {
 				},
 			},
 			"service": {
-				Required: true,
-				MinItems: 1,
-				MaxItems: 1,
-				Type:     schema.TypeList,
+				Optional: true,
+				// TODO discuss with team and uncomment if we don't want such behavior:
+				// If no 'service' block is defined - it automatically specifies "any"
+				// MinItems: 1,
+				Type: schema.TypeSet,
+				Set:  resourceVcdNsxvFirewallRuleServiceHash,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"protocol": {
-							Optional: true,
+							Required: true,
 							Type:     schema.TypeString,
 						},
 						"port": {
-							Optional: true,
-							Type:     schema.TypeString,
+							Optional:     true,
+							Type:         schema.TypeString,
+							ValidateFunc: validateCase("lower"),
 						},
 						"source_port": {
-							Optional: true,
-							Type:     schema.TypeString,
+							Optional:     true,
+							Type:         schema.TypeString,
+							ValidateFunc: validateCase("lower"),
 						},
 					},
 				},
@@ -270,7 +276,13 @@ func resourceVcdNsxvFirewallCreate(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("unable to make firewall rule query: %s", err)
 	}
 
-	createdFirewallRule, err := edgeGateway.CreateNsxvFirewall(firewallRule)
+	// Check if above_rule_id is set
+	// aboveRuleId := ""
+	// if id, ok := d.GetOk("above_rule_id"); ok {
+	// 	aboveRuleId = id.(string)
+	// }
+
+	createdFirewallRule, err := edgeGateway.CreateNsxvFirewall(firewallRule, d.Get("above_rule_id").(string))
 	if err != nil {
 		return fmt.Errorf("error creating new firewall rule: %s", err)
 	}
@@ -399,7 +411,7 @@ func setFirewallRuleData(d *schema.ResourceData, rule *types.EdgeFirewallRule, e
 	_ = d.Set("logging_enabled", rule.LoggingEnabled)
 	_ = d.Set("action", rule.Action)
 	_ = d.Set("rule_tag", rule.RuleTag)
-	_ = d.Set("rule_type", rule.RuleTag)
+	_ = d.Set("rule_type", rule.RuleType)
 
 	// Process and set "source" block
 	source, err := getEndpointData(rule.Source, edge, vdc)
@@ -421,20 +433,44 @@ func setFirewallRuleData(d *schema.ResourceData, rule *types.EdgeFirewallRule, e
 		return fmt.Errorf("could not set 'destination' block: %s", err)
 	}
 
+	serviceSet, err := getServiceData(rule.Application, edge, vdc)
+	// log.Printf("[DEBUG] found vNic index %d for network %s (type %s)", vNicIndex, networkName, networkType)
+	// spew.Dump(serviceSet)
+	if err != nil {
+		return fmt.Errorf("could not prepare data for setting 'service' blocks: %s", err)
+	}
+
+	err = d.Set("service", serviceSet)
+	if err != nil {
+		return fmt.Errorf("could not set 'service' blocks: %s", err)
+	}
+
 	// Process and set "service" blocks
 
 	return nil
 }
 
+// getFirewallServices extracts service definition from terraform schema and returns it
+func getFirewallServices(serviceSet *schema.Set) ([]types.EdgeFirewallApplicationService, error) {
+	serviceSlice := serviceSet.List()
+	services := make([]types.EdgeFirewallApplicationService, len(serviceSlice))
+	if len(services) > 0 {
+		for index, service := range serviceSlice {
+			serviceMap := convertToStringMap(service.(map[string]interface{}))
+			oneService := types.EdgeFirewallApplicationService{
+				Protocol:   serviceMap["protocol"],
+				Port:       serviceMap["port"],
+				SourcePort: serviceMap["source_port"],
+			}
+			services[index] = oneService
+		}
+	}
+	return services, nil
+}
+
 // getFirewallRule is the main function  used for creating *types.EdgeFirewallRule structure from
 // Terraform schema configuration
 func getFirewallRule(d *schema.ResourceData, edge *govcd.EdgeGateway, vdc *govcd.Vdc) (*types.EdgeFirewallRule, error) {
-	service := d.Get("service").([]interface{})
-	if len(service) != 1 {
-		return nil, fmt.Errorf("no service specified")
-	}
-	serviceMap := convertToStringMap(service[0].(map[string]interface{}))
-
 	sourceEndpoint, err := getFirewallRuleEndpoint(d.Get("source").([]interface{}), edge, vdc)
 	if err != nil {
 		return nil, fmt.Errorf("could not convert 'source' block to API request: %s", err)
@@ -445,6 +481,11 @@ func getFirewallRule(d *schema.ResourceData, edge *govcd.EdgeGateway, vdc *govcd
 		return nil, fmt.Errorf("could not convert 'destination' block to API request: %s", err)
 	}
 
+	services, err := getFirewallServices(d.Get("service").(*schema.Set))
+	if err != nil {
+		return nil, fmt.Errorf("could not convert services blocks for API request: %s ", err)
+	}
+
 	firewallRule := &types.EdgeFirewallRule{
 		Name:           d.Get("name").(string),
 		Enabled:        d.Get("enabled").(bool),
@@ -453,11 +494,7 @@ func getFirewallRule(d *schema.ResourceData, edge *govcd.EdgeGateway, vdc *govcd
 		Description:    d.Get("description").(string),
 		RuleTag:        d.Get("rule_tag").(string),
 		Application: types.EdgeFirewallApplication{
-			Service: types.EdgeFirewallApplicationService{
-				Protocol:   serviceMap["protocol"],
-				Port:       serviceMap["port"],
-				SourcePort: serviceMap["source_port"],
-			},
+			Services: services,
 		},
 		Source:      *sourceEndpoint,
 		Destination: *destinationEndpoint,
@@ -466,7 +503,7 @@ func getFirewallRule(d *schema.ResourceData, edge *govcd.EdgeGateway, vdc *govcd
 	return firewallRule, nil
 }
 
-// getEndpointData formats the nested set structure suitable for d.Set() for
+// getEndpointData formats nested set structure suitable for d.Set() for
 // 'source' and 'destination' blocks in firewall rule
 func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGateway, vdc *govcd.Vdc) ([]interface{}, error) {
 	// Different object types are in the same grouping object tag <groupingObjectId>
@@ -478,7 +515,7 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 		endpointSecurityGroups []string
 	)
 
-	for _, groupingObject := range endpoint.GroupingObjectId {
+	for _, groupingObject := range endpoint.GroupingObjectIds {
 		idSplit := strings.Split(groupingObject, ":")
 		idLen := len(idSplit)
 		subIdSplit := ""
@@ -536,11 +573,11 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 	endpointSecurityGroupSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointSecurityGroupSlice)
 
 	// Convert `ip_addresses` to set
-	endpointIpsSlice := convertToTypeSet(endpoint.IpAddress)
+	endpointIpsSlice := convertToTypeSet(endpoint.IpAddresses)
 	endpointIpsSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointIpsSlice)
 
 	// Convert `gateway_interfaces` vNic IDs to network names as the UI does it so
-	vnicGroupIdStrings, err := edgeVnicIdStringsToNetworkNames(endpoint.VnicGroupId, edge)
+	vnicGroupIdStrings, err := edgeVnicIdStringsToNetworkNames(endpoint.VnicGroupIds, edge)
 	if err != nil {
 		return nil, err
 	}
@@ -563,6 +600,24 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 	return endpointSlice, nil
 }
 
+// getServiceData formats nested set structure suitable for d.Set() for services blocks
+func getServiceData(firewallApplication types.EdgeFirewallApplication, edge *govcd.EdgeGateway, vdc *govcd.Vdc) (*schema.Set, error) {
+	serviceSlice := make([]interface{}, len(firewallApplication.Services))
+
+	for index, service := range firewallApplication.Services {
+		serviceMap := make(map[string]interface{})
+		serviceMap["protocol"] = service.Protocol
+		serviceMap["port"] = service.Port
+		serviceMap["source_port"] = service.SourcePort
+
+		serviceSlice[index] = serviceMap
+	}
+
+	serviceSet := schema.NewSet(resourceVcdNsxvFirewallRuleServiceHash, serviceSlice)
+
+	return serviceSet, nil
+}
+
 // getFirewallRuleEndpoint processes Terraform schema and converts it to *types.EdgeFirewallEndpoint
 // which is useful for 'source' or 'destination' blocks
 func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway, vdc *govcd.Vdc) (*types.EdgeFirewallEndpoint, error) {
@@ -579,7 +634,7 @@ func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway, vd
 
 	// Extract ips and add them to endpoint structure
 	endpointIpStrings := convertSchemaSetToSliceOfStrings(endpointMap["ip_addresses"].(*schema.Set))
-	result.IpAddress = endpointIpStrings
+	result.IpAddresses = endpointIpStrings
 
 	// Extract 'gateway_interfaces' names, convert them to vNic indexes and add to the structure
 	endpointEdgeInterfaceIdStrings := convertSchemaSetToSliceOfStrings(endpointMap["gateway_interfaces"].(*schema.Set))
@@ -587,13 +642,13 @@ func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway, vd
 	if err != nil {
 		return nil, fmt.Errorf("could not lookup vNic indexes for networks: %s", err)
 	}
-	result.VnicGroupId = endpointEdgeInterfaceVnicList
+	result.VnicGroupIds = endpointEdgeInterfaceVnicList
 
 	// 'types.EdgeFirewallEndpoint.GroupingObjectId' holds IDs for VMs, org networks, ipsets and Security groups
 
 	// Extract VM IDs from set and add them to endpoint structure
 	endpointVmStrings := convertSchemaSetToSliceOfStrings(endpointMap["virtual_machine_ids"].(*schema.Set))
-	result.GroupingObjectId = append(result.GroupingObjectId, endpointVmStrings...)
+	result.GroupingObjectIds = append(result.GroupingObjectIds, endpointVmStrings...)
 
 	// Extract org network names from set, lookup their IDs and add them to endpoint structure
 	endpointOrgNetworkNameStrings := convertSchemaSetToSliceOfStrings(endpointMap["org_networks"].(*schema.Set))
@@ -601,15 +656,15 @@ func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway, vd
 	if err != nil {
 		return nil, fmt.Errorf("could not lookup network IDs for networks: %s", err)
 	}
-	result.GroupingObjectId = append(result.GroupingObjectId, endpointOrgNetworkIdStrings...)
+	result.GroupingObjectIds = append(result.GroupingObjectIds, endpointOrgNetworkIdStrings...)
 
 	// Extract ipset IDs from set and add them to endpoint structure
 	endpointIpSetStrings := convertSchemaSetToSliceOfStrings(endpointMap["ipset_ids"].(*schema.Set))
-	result.GroupingObjectId = append(result.GroupingObjectId, endpointIpSetStrings...)
+	result.GroupingObjectIds = append(result.GroupingObjectIds, endpointIpSetStrings...)
 
 	// Extract security group IDs from set and add them to endpoint structure
 	endpointSecurityGroupStrings := convertSchemaSetToSliceOfStrings(endpointMap["security_group_ids"].(*schema.Set))
-	result.GroupingObjectId = append(result.GroupingObjectId, endpointSecurityGroupStrings...)
+	result.GroupingObjectIds = append(result.GroupingObjectIds, endpointSecurityGroupStrings...)
 
 	return result, nil
 }
@@ -708,4 +763,31 @@ func stringInSlice(str string, list []string) bool {
 		}
 	}
 	return false
+}
+
+// resourceVcdNsxvFirewallRuleServiceHash generates a hash for service TypeSet. Its main purpose is to
+// avoid hash changes when port or source_port ar left empty or set as 'any'. Having empty port and
+// source_port is the same as having "any".
+// protocol, port, source_port
+func resourceVcdNsxvFirewallRuleServiceHash(v interface{}) int {
+	var buf bytes.Buffer
+	m := v.(map[string]interface{})
+
+	protocol := strings.ToLower(m["protocol"].(string))
+	port := strings.ToLower(m["port"].(string))
+	sourcePort := strings.ToLower(m["source_port"].(string))
+
+	if port == "" {
+		port = "any"
+	}
+
+	if sourcePort == "" {
+		sourcePort = "any"
+	}
+
+	buf.WriteString(fmt.Sprintf("%s-", protocol))
+	buf.WriteString(fmt.Sprintf("%s-", port))
+	buf.WriteString(fmt.Sprintf("%s-", sourcePort))
+
+	return hashcode.String(buf.String())
 }
