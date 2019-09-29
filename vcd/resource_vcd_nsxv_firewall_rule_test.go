@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
 func TestAccVcdNsxvEdgeFirewall(t *testing.T) {
@@ -53,9 +54,11 @@ func TestAccVcdNsxvEdgeFirewall(t *testing.T) {
 	configText5 := templateFill(testAccVcdEdgeFirewallRule5, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 5: %s", configText5)
 
+	// -step6 is "import"
+
 	params["FuncName"] = t.Name() + "-step7"
 	configText7 := templateFill(testAccVcdEdgeFirewallRule6, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 6: %s", configText7)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 7: %s", configText7)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -63,9 +66,9 @@ func TestAccVcdNsxvEdgeFirewall(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		Providers: testAccProviders,
-		PreCheck:  func() { testAccPreCheck(t) },
-		// CheckDestroy: testAccCheckVcdNatRuleDestroy("vcd_nsxv_dnat.test2"),
+		Providers:    testAccProviders,
+		PreCheck:     func() { testAccPreCheck(t) },
+		CheckDestroy: testAccCheckVcdFirewallRuleDestroy("vcd_nsxv_firewall_rule.rule6"),
 		Steps: []resource.TestStep{
 			resource.TestStep{ // Step 0 - configuration only with ip_addresses
 				Config: configText,
@@ -187,6 +190,33 @@ func firewallRuleOrderTest(firstRule, secondRule string) resource.TestCheckFunc 
 			return fmt.Errorf("incorrect rule order. %s is above %s. Should be reverse.", firstRule, secondRule)
 		}
 
+		return nil
+	}
+}
+
+func testAccCheckVcdFirewallRuleDestroy(resource string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resource]
+		if !ok {
+			return fmt.Errorf("not found resource: %s", resource)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("no ID is set for %s resource", resource)
+		}
+
+		conn := testAccProvider.Meta().(*VCDClient)
+
+		edgeGateway, err := conn.GetEdgeGateway(testConfig.VCD.Org, testConfig.VCD.Vdc, testConfig.Networking.EdgeGateway)
+		if err != nil {
+			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
+		}
+
+		rule, err := edgeGateway.GetNsxvFirewallById(rs.Primary.ID)
+
+		if !govcd.IsNotFound(err) || rule != nil {
+			return fmt.Errorf("firewall rule (ID: %s) was not deleted: %s", rs.Primary.ID, err)
+		}
 		return nil
 	}
 }
