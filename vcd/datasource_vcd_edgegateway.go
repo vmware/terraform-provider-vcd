@@ -77,6 +77,21 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 				Description: "Log level. One of 'emergency', 'alert', 'critical', 'error', " +
 					"'warning', 'notice', 'info', 'debug'. ('info' by default)",
 			},
+			"fw_enabled": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Enable firewall. Default 'true'",
+			},
+			"fw_default_rule_logging_enabled": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Enable logging for default rule. Default 'false'",
+			},
+			"fw_default_rule_action": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "'accept' or 'deny'. Default 'deny'",
+			},
 		},
 	}
 }

@@ -77,7 +77,11 @@ that the firewall is enabled on the edge gateway.
 Default is `false`.
 * `lb_loglevel` - (Optional) Choose the severity of events to be logged. One of `emergency`,
 `alert`, `critical`, `error`, `warning`, `notice`, `info`, `debug`
-
+* `fw_enabled` (Optional) Enable firewall. Default `true`.
+* `fw_default_rule_logging_enabled` (Optional) Enable default firewall rule (last in the processing 
+order) logging. Default `false`.
+* `fw_default_rule_action` (Optional) Default firewall rule (last in the processing order) action.
+One of `accept` or `deny`. Default `deny`.
 
 ## Importing
 

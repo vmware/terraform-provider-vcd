@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
@@ -113,6 +114,25 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				Description: "Log level. One of 'emergency', 'alert', 'critical', 'error', " +
 					"'warning', 'notice', 'info', 'debug'. ('info' by default)",
 			},
+			"fw_enabled": &schema.Schema{
+				Type:        schema.TypeBool,
+				Default:     true,
+				Optional:    true,
+				Description: "Enable firewall. Default 'true'",
+			},
+			"fw_default_rule_logging_enabled": &schema.Schema{
+				Type:        schema.TypeBool,
+				Default:     false,
+				Optional:    true,
+				Description: "Enable logging for default rule. Default 'false'",
+			},
+			"fw_default_rule_action": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "deny",
+				Description:  "'accept' or 'deny'. Default 'deny'",
+				ValidateFunc: validation.StringInSlice([]string{"accept", "deny"}, false),
+			},
 		},
 	}
 }
@@ -188,7 +208,7 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 
-	// Only perform general load balancer configuration if settings are set
+	// Only perform load balancer and firewall configuration if settings are set
 	if d.Get("advanced").(bool) {
 		log.Printf("[TRACE] edge gateway load balancer configuration started")
 
@@ -198,8 +218,20 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		}
 
 		log.Printf("[TRACE] edge gateway load balancer configured")
+
+		log.Printf("[TRACE] edge gateway firewall configuration started")
+
+		err = updateFirewall(d, edge)
+		if err != nil {
+			return fmt.Errorf("unable to update firewall settings: %s", err)
+		}
+
+		log.Printf("[TRACE] edge gateway firewall configured")
+
 	}
 
+	// TODO double validate if we need to use partial state here
+	// https://www.terraform.io/docs/extend/writing-custom-providers.html#error-handling-amp-partial-state
 	d.SetId(edge.EdgeGateway.ID)
 	log.Printf("[TRACE] edge gateway created: %#v", edge.EdgeGateway.Name)
 	return resourceVcdEdgeGatewayRead(d, meta)
@@ -248,6 +280,10 @@ func genericVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}, origin 
 		if err := setLoadBalancerData(d, *edgeGateway); err != nil {
 			return err
 		}
+
+		if err := setFirewallData(d, *edgeGateway); err != nil {
+			return err
+		}
 	}
 
 	d.SetId(edgeGateway.EdgeGateway.ID)
@@ -267,18 +303,24 @@ func resourceVcdEdgeGatewayUpdate(d *schema.ResourceData, meta interface{}) erro
 		return nil
 	}
 
-	// Reconfigure general load balancer parameters if edge gateway is advanced and any of the fields
-	// have changed
-	if edgeGateway.HasAdvancedNetworking() && (d.HasChange("lb_enabled") ||
-		d.HasChange("lb_acceleration_enabled") || d.HasChange("lb_logging_enabled") ||
-		d.HasChange("lb_loglevel")) {
-		err := updateLoadBalancer(d, *edgeGateway)
-		if err != nil {
-			return err
+	// If edge gateway is advanced - check if the
+	if edgeGateway.HasAdvancedNetworking() {
+		if d.HasChange("lb_enabled") ||
+			d.HasChange("lb_acceleration_enabled") || d.HasChange("lb_logging_enabled") ||
+			d.HasChange("lb_loglevel") {
+			err := updateLoadBalancer(d, *edgeGateway)
+			if err != nil {
+				return err
+			}
 		}
-	} else {
-		_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: only advanced edge gateway supports "+
-			"load balancing \n")
+
+		if d.HasChange("fw_enabled") ||
+			d.HasChange("fw_default_rule_logging_enabled") || d.HasChange("fw_default_rule_action") {
+			err := updateFirewall(d, *edgeGateway)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return resourceVcdEdgeGatewayRead(d, meta)
@@ -378,6 +420,20 @@ func setLoadBalancerData(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	return nil
 }
 
+// setFirewallData is a convenience function to handle firewall settings on edge gateway
+func setFirewallData(d *schema.ResourceData, egw govcd.EdgeGateway) error {
+	fw, err := egw.GetFwGeneralParams()
+	if err != nil {
+		return fmt.Errorf("unable to read firewall settings: %s", err)
+	}
+
+	d.Set("fw_enabled", fw.Enabled)
+	d.Set("fw_default_rule_logging_enabled", fw.DefaultPolicy.LoggingEnabled)
+	d.Set("fw_default_rule_action", fw.DefaultPolicy.Action)
+
+	return nil
+}
+
 // updateLoadBalancer updates general load balancer configuration
 func updateLoadBalancer(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	lbEnabled := d.Get("lb_enabled").(bool)
@@ -387,6 +443,19 @@ func updateLoadBalancer(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	_, err := egw.UpdateLBGeneralParams(lbEnabled, lbAccelerationEnabled, lbLoggingEnabled, lbLogLevel)
 	if err != nil {
 		return fmt.Errorf("unable to update general load balancer settings: %s", err)
+	}
+
+	return nil
+}
+
+// updateFirewall updates general firewall configuration
+func updateFirewall(d *schema.ResourceData, egw govcd.EdgeGateway) error {
+	lbEnabled := d.Get("fw_enabled").(bool)
+	lbDefaultRuleLogging := d.Get("fw_default_rule_logging_enabled").(bool)
+	lbDefaultRuleAction := d.Get("fw_default_rule_action").(string)
+	_, err := egw.UpdateFwGeneralParams(lbEnabled, lbDefaultRuleLogging, lbDefaultRuleAction)
+	if err != nil {
+		return fmt.Errorf("unable to update firewall settings: %s", err)
 	}
 
 	return nil

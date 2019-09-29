@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"text/tabwriter"
+
 	"github.com/hashicorp/terraform/helper/hashcode"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
@@ -68,11 +70,6 @@ func resourceVcdNsxvFirewall() *schema.Resource {
 				ForceNew:    true,
 				Computed:    true,
 				Description: "Optional. Allows to set custom rule tag",
-			},
-			"description": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Firewall rule description",
 			},
 			"action": &schema.Schema{
 				Type:         schema.TypeString,
@@ -227,11 +224,9 @@ func resourceVcdNsxvFirewall() *schema.Resource {
 			},
 			"service": {
 				Optional: true,
-				// TODO discuss with team and uncomment if we don't want such behavior:
-				// If no 'service' block is defined - it automatically specifies "any"
-				// MinItems: 1,
-				Type: schema.TypeSet,
-				Set:  resourceVcdNsxvFirewallRuleServiceHash,
+				MinItems: 1,
+				Type:     schema.TypeSet,
+				Set:      resourceVcdNsxvFirewallRuleServiceHash,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"protocol": {
@@ -367,21 +362,38 @@ func resourceVcdNsxvFirewallDelete(d *schema.ResourceData, meta interface{}) err
 // resourceVcdNsxvFirewallImport  is responsible for importing the resource.
 // The following steps happen as part of import
 // 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
-// 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
-// 3. The functions splits the dot-formatted path and tries to lookup the object
-// 4. If the lookup succeeds it set's the ID field for `_resource_name_` resource in statefile
-// (the resource must be already defined in .tf config otherwise `terraform import` will complain)
-// 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
-// based on the known ID of object.
+// 2a. If the `_the_id_string_` contains a dot formatted path to resource as in the example below
+// it will try to import it. If it is found - the ID is set
+// 2b. If the `_the_id_string_` starts with `list@` and contains path to edge gateway similar to
+// `list@org.vdc.edge-gw` then the function lists all firewall rules and their IDs in that edge
+// gateway.
+// 2c. If the `_the_id_string_` does not match format described neither in '2a' nor in '2b' a
+// usage error message is printed
 //
 // Example resource name (_resource_name_): vcd_lb_nsxv_firewall_rule.my-test-fw-rule
 // Example import path (_the_id_string_): org.vdc.edge-gw.existing-firewall-rule-id
 func resourceVcdNsxvFirewallImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	var commandOrgName, orgName, vdcName, edgeName, firewallRuleId string
+	var listRules, importRule bool
+
 	resourceURI := strings.Split(d.Id(), ".")
-	if len(resourceURI) != 4 {
-		return nil, fmt.Errorf("resource name must be specified as org.vdc.edge-gw.firewall-rule-id")
+	switch len(resourceURI) {
+	case 3:
+		commandOrgName, vdcName, edgeName = resourceURI[0], resourceURI[1], resourceURI[2]
+		commandOrgNameSplit := strings.Split(commandOrgName, "@")
+		if len(commandOrgNameSplit) != 2 {
+			return nil, fmt.Errorf("resource name must be specified as " +
+				"'org.vdc.edge-gw.firewall-rule-id' or 'list@org.vdc.edge-gw' to get a list of rules")
+		}
+		orgName = commandOrgNameSplit[1]
+		listRules = true
+	case 4:
+		orgName, vdcName, edgeName, firewallRuleId = resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
+		importRule = true
+	default:
+		return nil, fmt.Errorf("resource name must be specified as " +
+			"'org.vdc.edge-gw.firewall-rule-id' or 'list@org.vdc.edge-gw' to get a list of rules")
 	}
-	orgName, vdcName, edgeName, firewallRuleId := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
 
 	vcdClient := meta.(*VCDClient)
 	edgeGateway, err := vcdClient.GetEdgeGateway(orgName, vdcName, edgeName)
@@ -389,24 +401,50 @@ func resourceVcdNsxvFirewallImport(d *schema.ResourceData, meta interface{}) ([]
 		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	readFirewallRule, err := edgeGateway.GetNsxvFirewallById(firewallRuleId)
-	if err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("unable to find firewall rule with id %s: %s",
-			d.Id(), err)
+	// If the user requested to print rules, try to fetch all of them and print in a user friendly
+	// table with both UI and real firewall IDs
+	if listRules {
+		_, _ = fmt.Fprintln(getTerraformStdout(), "Retrieving all firewall rules")
+		allRules, err := edgeGateway.GetAllNsxvFirewallRules()
+		if err != nil {
+			return nil, fmt.Errorf("unable to retrieve all firewal rules: %s", err)
+		}
+
+		writer := tabwriter.NewWriter(getTerraformStdout(), 0, 8, 1, '\t', tabwriter.AlignRight)
+
+		fmt.Fprintln(writer, "UI ID\tID\tName\tAction\tType")
+		fmt.Fprintln(writer, "-----\t--\t----\t------\t----")
+		for index, rule := range allRules {
+			fmt.Fprintf(writer, "%d\t%s\t%s\t%s\t%s\n", (index + 1), rule.ID, rule.Name, rule.Action, rule.RuleType)
+		}
+		writer.Flush()
+
+		return nil, fmt.Errorf("Resource was not imported! Please use the above ID to format the command as: \n" +
+			"terraform import vcd_nsxv_firewall.resource-name org.vdc.edge-gw.firewall-rule-id")
 	}
 
-	d.Set("org", orgName)
-	d.Set("vdc", vdcName)
-	d.Set("edge_gateway", edgeName)
+	// Proceed with import
+	if importRule {
+		readFirewallRule, err := edgeGateway.GetNsxvFirewallById(firewallRuleId)
+		if err != nil {
+			return []*schema.ResourceData{}, fmt.Errorf("unable to find firewall rule with id %s: %s",
+				d.Id(), err)
+		}
 
-	d.SetId(readFirewallRule.ID)
-	return []*schema.ResourceData{d}, nil
+		d.Set("org", orgName)
+		d.Set("vdc", vdcName)
+		d.Set("edge_gateway", edgeName)
+
+		d.SetId(readFirewallRule.ID)
+		return []*schema.ResourceData{d}, nil
+	}
+
+	return nil, nil
 }
 
 // setFirewallRuleData is the main function used for setting Terraform schema
 func setFirewallRuleData(d *schema.ResourceData, rule *types.EdgeFirewallRule, edge *govcd.EdgeGateway, vdc *govcd.Vdc) error {
 	_ = d.Set("name", rule.Name)
-	_ = d.Set("description", rule.Description)
 	_ = d.Set("enabled", rule.Enabled)
 	_ = d.Set("logging_enabled", rule.LoggingEnabled)
 	_ = d.Set("action", rule.Action)
@@ -491,7 +529,6 @@ func getFirewallRule(d *schema.ResourceData, edge *govcd.EdgeGateway, vdc *govcd
 		Enabled:        d.Get("enabled").(bool),
 		LoggingEnabled: d.Get("logging_enabled").(bool),
 		Action:         d.Get("action").(string),
-		Description:    d.Get("description").(string),
 		RuleTag:        d.Get("rule_tag").(string),
 		Application: types.EdgeFirewallApplication{
 			Services: services,

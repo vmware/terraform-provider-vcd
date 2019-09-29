@@ -111,7 +111,7 @@ func Provider() terraform.ResourceProvider {
 			"vcd_lb_virtual_server":  resourceVcdLBVirtualServer(),  // 2.4
 			"vcd_nsxv_dnat":          resourceVcdNsxvDnat(),         // 2.5
 			"vcd_nsxv_snat":          resourceVcdNsxvSnat(),         // 2.5
-			"vcd_nsxv_firewall_rule": resourceVcdNsxvFirewall(),     // 2.5
+			"vcd_nsxv_firewall":      resourceVcdNsxvFirewall(),     // 2.5
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
