@@ -18,61 +18,7 @@ use the [`vcd_firewall_rules`](/docs/providers/vcd/r/firewall_rules.html) resour
 
 ## Example Usage 1 (Minimal input)
 
-```hcl
-resource "vcd_nsxv_dnat" "web" {
-  org = "my-org" # Optional
-  vdc = "my-vdc" # Optional
 
-  edge_gateway = "Edge Gateway Name"
-  network_type = "ext"
-  network_name = "my-external-network"
-
-  original_address   = "1.1.1.1"
-  translated_address = "10.10.10.15"
-}
-```
-
-## Example Usage 2 (ICMP)
-
-```hcl
-resource "vcd_nsxv_dnat" "forIcmp" {
-  org = "my-org" # Optional
-  vdc = "my-vdc" # Optional
-  
-  edge_gateway = "Edge Gateway Name"
-  network_name = "my-external-network"
-  network_type = "ext"
-
-  original_address   = "78.101.10.20-78.101.10.30"
-  translated_address = "10.10.0.5"
-  protocol           = "icmp"
-  icmp_type          = "router-advertisement"
-}
-```
-
-## Example Usage 3 (More settings)
-
-```hcl
-resource "vcd_nsxv_dnat" "forIcmp" {
-  org = "my-org" # Optional
-  vdc = "my-vdc" # Optional
-  
-  edge_gateway = "Edge Gateway Name"
-  network_name = "my-external-network"
-  network_type = "ext"
-
-  enabled = false
-  logging_enabled = true
-  description = "My DNAT rule"
-
-  original_address   = "78.101.10.20"
-  original_port      = 443
-
-  translated_address = "10.10.0.5"
-  translated_port    = 8443
-  protocol           = "tcp"
-}
-```
 
 ## Argument Reference
 
