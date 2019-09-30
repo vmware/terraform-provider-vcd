@@ -368,13 +368,14 @@ func resourceVcdNsxvFirewallImport(d *schema.ResourceData, meta interface{}) ([]
 	var listRules, importRule bool
 
 	resourceURI := strings.Split(d.Id(), ".")
+	helpError := fmt.Errorf("resource name must be specified as " +
+		"'org.vdc.edge-gw.firewall-rule-id' or 'list@org.vdc.edge-gw' to get a list of rules")
 	switch len(resourceURI) {
 	case 3:
 		commandOrgName, vdcName, edgeName = resourceURI[0], resourceURI[1], resourceURI[2]
 		commandOrgNameSplit := strings.Split(commandOrgName, "@")
 		if len(commandOrgNameSplit) != 2 {
-			return nil, fmt.Errorf("resource name must be specified as " +
-				"'org.vdc.edge-gw.firewall-rule-id' or 'list@org.vdc.edge-gw' to get a list of rules")
+			return nil, helpError
 		}
 		orgName = commandOrgNameSplit[1]
 		listRules = true
@@ -382,8 +383,7 @@ func resourceVcdNsxvFirewallImport(d *schema.ResourceData, meta interface{}) ([]
 		orgName, vdcName, edgeName, firewallRuleId = resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
 		importRule = true
 	default:
-		return nil, fmt.Errorf("resource name must be specified as " +
-			"'org.vdc.edge-gw.firewall-rule-id' or 'list@org.vdc.edge-gw' to get a list of rules")
+		return nil, helpError
 	}
 
 	vcdClient := meta.(*VCDClient)
@@ -410,7 +410,7 @@ func resourceVcdNsxvFirewallImport(d *schema.ResourceData, meta interface{}) ([]
 		}
 		writer.Flush()
 
-		return nil, fmt.Errorf("Resource was not imported! Please use the above ID to format the command as: \n" +
+		return nil, fmt.Errorf("resource was not imported! Please use the above ID to format the command as: \n" +
 			"terraform import vcd_nsxv_firewall.resource-name org.vdc.edge-gw.firewall-rule-id")
 	}
 
@@ -477,24 +477,6 @@ func setFirewallRuleData(d *schema.ResourceData, rule *types.EdgeFirewallRule, e
 	// Process and set "service" blocks
 
 	return nil
-}
-
-// getFirewallServices extracts service definition from terraform schema and returns it
-func getFirewallServices(serviceSet *schema.Set) ([]types.EdgeFirewallApplicationService, error) {
-	serviceSlice := serviceSet.List()
-	services := make([]types.EdgeFirewallApplicationService, len(serviceSlice))
-	if len(services) > 0 {
-		for index, service := range serviceSlice {
-			serviceMap := convertToStringMap(service.(map[string]interface{}))
-			oneService := types.EdgeFirewallApplicationService{
-				Protocol:   serviceMap["protocol"],
-				Port:       serviceMap["port"],
-				SourcePort: serviceMap["source_port"],
-			}
-			services[index] = oneService
-		}
-	}
-	return services, nil
 }
 
 // getFirewallRule is the main function  used for creating *types.EdgeFirewallRule structure from
@@ -695,6 +677,24 @@ func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway, vd
 	result.GroupingObjectIds = append(result.GroupingObjectIds, endpointSecurityGroupStrings...)
 
 	return result, nil
+}
+
+// getFirewallServices extracts service definition from terraform schema and returns it
+func getFirewallServices(serviceSet *schema.Set) ([]types.EdgeFirewallApplicationService, error) {
+	serviceSlice := serviceSet.List()
+	services := make([]types.EdgeFirewallApplicationService, len(serviceSlice))
+	if len(services) > 0 {
+		for index, service := range serviceSlice {
+			serviceMap := convertToStringMap(service.(map[string]interface{}))
+			oneService := types.EdgeFirewallApplicationService{
+				Protocol:   serviceMap["protocol"],
+				Port:       serviceMap["port"],
+				SourcePort: serviceMap["source_port"],
+			}
+			services[index] = oneService
+		}
+	}
+	return services, nil
 }
 
 // edgeVnicIdStringsToNetworkNames iterates over vnic IDs in format `vnic-10`, `vnic-x` and converts
