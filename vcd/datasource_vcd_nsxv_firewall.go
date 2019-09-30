@@ -107,6 +107,8 @@ func datasourceVcdNsxvFirewall() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
+						// TODO - ipsets and security groups need further investigation and at least
+						// "Get" capability in govcd
 						// "ipsets": {
 						// 	Type:        schema.TypeSet,
 						// 	Computed:    true,
@@ -171,6 +173,8 @@ func datasourceVcdNsxvFirewall() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
+						// TODO - ipsets and security groups need further investigation and at least
+						// "Get" capability in govcd
 						// "ipsets": {
 						// 	Optional:    true,
 						// 	Type:        schema.TypeSet,
