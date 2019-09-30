@@ -138,22 +138,22 @@ func resourceVcdNsxvFirewall() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"ipset_ids": {
-							Optional:    true,
-							Type:        schema.TypeSet,
-							Description: "Set of org network IDs",
-							Elem: &schema.Schema{
-								Type: schema.TypeString,
-							},
-						},
-						"security_group_ids": {
-							Optional:    true,
-							Type:        schema.TypeSet,
-							Description: "Set of org network IDs",
-							Elem: &schema.Schema{
-								Type: schema.TypeString,
-							},
-						},
+						// "ipsets": {
+						// 	Optional:    true,
+						// 	Type:        schema.TypeSet,
+						// 	Description: "Set of IP set names",
+						// 	Elem: &schema.Schema{
+						// 		Type: schema.TypeString,
+						// 	},
+						// },
+						// "security_groups": {
+						// 	Optional:    true,
+						// 	Type:        schema.TypeSet,
+						// 	Description: "Set of security group names",
+						// 	Elem: &schema.Schema{
+						// 		Type: schema.TypeString,
+						// 	},
+						// },
 					},
 				},
 			},
@@ -203,27 +203,27 @@ func resourceVcdNsxvFirewall() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"ipset_ids": {
-							Optional:    true,
-							Type:        schema.TypeSet,
-							Description: "Set of org network IDs",
-							Elem: &schema.Schema{
-								Type: schema.TypeString,
-							},
-						},
-						"security_group_ids": {
-							Optional:    true,
-							Type:        schema.TypeSet,
-							Description: "Set of org network IDs",
-							Elem: &schema.Schema{
-								Type: schema.TypeString,
-							},
-						},
+						// "ipsets": {
+						// 	Optional:    true,
+						// 	Type:        schema.TypeSet,
+						// 	Description: "Set of IP set names",
+						// 	Elem: &schema.Schema{
+						// 		Type: schema.TypeString,
+						// 	},
+						// },
+						// "security_groups": {
+						// 	Optional:    true,
+						// 	Type:        schema.TypeSet,
+						// 	Description: "Set of security group names",
+						// 	Elem: &schema.Schema{
+						// 		Type: schema.TypeString,
+						// 	},
+						// },
 					},
 				},
 			},
 			"service": {
-				Optional: true,
+				Required: true,
 				MinItems: 1,
 				Type:     schema.TypeSet,
 				Set:      resourceVcdNsxvFirewallRuleServiceHash,
@@ -235,11 +235,13 @@ func resourceVcdNsxvFirewall() *schema.Resource {
 						},
 						"port": {
 							Optional:     true,
+							Computed:     true,
 							Type:         schema.TypeString,
 							ValidateFunc: validateCase("lower"),
 						},
 						"source_port": {
 							Optional:     true,
+							Computed:     true,
 							Type:         schema.TypeString,
 							ValidateFunc: validateCase("lower"),
 						},
@@ -462,9 +464,8 @@ func setFirewallRuleData(d *schema.ResourceData, rule *types.EdgeFirewallRule, e
 		return fmt.Errorf("could not set 'destination' block: %s", err)
 	}
 
+	// Process and set "service" blocks
 	serviceSet, err := getServiceData(rule.Application, edge, vdc)
-	// log.Printf("[DEBUG] found vNic index %d for network %s (type %s)", vNicIndex, networkName, networkType)
-	// spew.Dump(serviceSet)
 	if err != nil {
 		return fmt.Errorf("could not prepare data for setting 'service' blocks: %s", err)
 	}
@@ -473,8 +474,6 @@ func setFirewallRuleData(d *schema.ResourceData, rule *types.EdgeFirewallRule, e
 	if err != nil {
 		return fmt.Errorf("could not set 'service' blocks: %s", err)
 	}
-
-	// Process and set "service" blocks
 
 	return nil
 }
@@ -574,14 +573,6 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 	endpointVmSlice := convertToTypeSet(endpointVMs)
 	endpointVmSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointVmSlice)
 
-	// Convert ipset IDs to set
-	endpointIpSetSlice := convertToTypeSet(endpointIpSets)
-	endpointIpSetSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointIpSetSlice)
-
-	// Convert security group IDs to set
-	endpointSecurityGroupSlice := convertToTypeSet(endpointSecurityGroups)
-	endpointSecurityGroupSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointSecurityGroupSlice)
-
 	// Convert `ip_addresses` to set
 	endpointIpsSlice := convertToTypeSet(endpoint.IpAddresses)
 	endpointIpsSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointIpsSlice)
@@ -594,6 +585,14 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 	endpointGatewayInterfaceSlice := convertToTypeSet(vnicGroupIdStrings)
 	endpointGatewayInterfaceSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointGatewayInterfaceSlice)
 
+	// Convert ipset IDs to set
+	// endpointIpSetSlice := convertToTypeSet(endpointIpSets)
+	// endpointIpSetSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointIpSetSlice)
+
+	// Convert security group IDs to set
+	// endpointSecurityGroupSlice := convertToTypeSet(endpointSecurityGroups)
+	// endpointSecurityGroupSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointSecurityGroupSlice)
+
 	// Insert all sets into single element block ready to be ('source' or 'destination')
 	endpointSlice := make([]interface{}, 1)
 	endpointMap := make(map[string]interface{})
@@ -602,8 +601,8 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 	endpointMap["gateway_interfaces"] = endpointGatewayInterfaceSet
 	endpointMap["org_networks"] = endpointNetworksSet
 	endpointMap["virtual_machine_ids"] = endpointVmSet
-	endpointMap["security_group_ids"] = endpointSecurityGroupSet
-	endpointMap["ipset_ids"] = endpointIpSetSet
+	// endpointMap["security_groups"] = endpointSecurityGroupSet
+	// endpointMap["ipsets"] = endpointIpSetSet
 
 	endpointSlice[0] = endpointMap
 
@@ -669,12 +668,12 @@ func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway, vd
 	result.GroupingObjectIds = append(result.GroupingObjectIds, endpointOrgNetworkIdStrings...)
 
 	// Extract ipset IDs from set and add them to endpoint structure
-	endpointIpSetStrings := convertSchemaSetToSliceOfStrings(endpointMap["ipset_ids"].(*schema.Set))
-	result.GroupingObjectIds = append(result.GroupingObjectIds, endpointIpSetStrings...)
+	// endpointIpSetStrings := convertSchemaSetToSliceOfStrings(endpointMap["ipsets"].(*schema.Set))
+	// result.GroupingObjectIds = append(result.GroupingObjectIds, endpointIpSetStrings...)
 
 	// Extract security group IDs from set and add them to endpoint structure
-	endpointSecurityGroupStrings := convertSchemaSetToSliceOfStrings(endpointMap["security_group_ids"].(*schema.Set))
-	result.GroupingObjectIds = append(result.GroupingObjectIds, endpointSecurityGroupStrings...)
+	// endpointSecurityGroupStrings := convertSchemaSetToSliceOfStrings(endpointMap["security_groups"].(*schema.Set))
+	// result.GroupingObjectIds = append(result.GroupingObjectIds, endpointSecurityGroupStrings...)
 
 	return result, nil
 }

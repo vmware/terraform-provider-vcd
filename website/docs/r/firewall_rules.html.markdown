@@ -11,7 +11,7 @@ description: |-
 Provides a vCloud Director Firewall resource. This can be used to create,
 modify, and delete firewall settings and rules.
 
-~> **Note:** Please use the improved [`vcd_nsxv_firewall`](/docs/providers/vcd/r/nsxv_dnat.html) resource with advanced edge gateways.
+~> **Note:** Please use the improved [`vcd_nsxv_firewall`](/docs/providers/vcd/r/nsxv_firewall.html) resource with advanced edge gateways.
 
 ## Example Usage
 
