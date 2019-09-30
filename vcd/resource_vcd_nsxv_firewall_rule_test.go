@@ -4,11 +4,10 @@ package vcd
 
 import (
 	"fmt"
+	"os"
+	"reflect"
 	"regexp"
 	"testing"
-	"time"
-
-	"github.com/davecgh/go-spew/spew"
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
@@ -93,7 +92,7 @@ func TestAccVcdNsxvEdgeFirewall(t *testing.T) {
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall.rule0", "destination.0.org_networks"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall.rule0", "destination.0.ipsets"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall.rule0", "destination.0.security_groups"),
-					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall.rule0", "destination.0.ip_addresses.234"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall.rule0", "destination.0.ip_addresses"),
 					// Test object counts
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall.rule0", "source.0.ip_addresses.#", "1"),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall.rule0", "destination.0.ip_addresses.#", "1"),
@@ -140,6 +139,9 @@ func TestAccVcdNsxvEdgeFirewall(t *testing.T) {
 					// These two rules should go one after another because an explicit depends_on case is used
 					// for "vcd_nsxv_firewall.rule0-2" and above_rule_id field is not used
 					checkfirewallRuleOrder("vcd_nsxv_firewall.rule0", "vcd_nsxv_firewall.rule0-2"),
+
+					// Check that data source has all the fields and their values the same as resource
+					resourceFieldsEqual("vcd_nsxv_firewall.rule0", "data.vcd_nsxv_firewall.rule0", []string{"rule_id"}),
 				),
 			},
 			resource.TestStep{ // Step 1 - configuration only with gateway_interfaces (internal, external)
@@ -290,6 +292,34 @@ func TestAccVcdNsxvEdgeFirewall(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall.rule4", "service.1865210680.protocol", "icmp"),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall.rule4", "service.1865210680.port", ""),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall.rule4", "service.1865210680.source_port", ""),
+
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall.rule4", "id", "data.vcd_nsxv_firewall.rule4", "id"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall.rule4", "id", "data.vcd_nsxv_firewall.rule4", "rule_id"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall.rule4", "name", "data.vcd_nsxv_firewall.rule4", "name"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall.rule4", "rule_tag", "data.vcd_nsxv_firewall.rule4", "rule_tag"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall.rule4", "action", "data.vcd_nsxv_firewall.rule4", "action"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall.rule4", "enabled", "data.vcd_nsxv_firewall.rule4", "enabled"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall.rule4", "logging_enabled", "data.vcd_nsxv_firewall.rule4", "logging_enabled"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall.rule4", "source.0.exclude", "data.vcd_nsxv_firewall.rule4", "source.0.exclude"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall.rule4", "source.0.gateway_interfaces", "data.vcd_nsxv_firewall.rule4", "source.0.gateway_interfaces"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall.rule4", "source.0.virtual_machine_ids", "data.vcd_nsxv_firewall.rule4", "source.0.virtual_machine_ids"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall.rule4", "source.0.org_networks", "data.vcd_nsxv_firewall.rule4", "source.0.org_networks"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall.rule4", "source.0.ipsets", "data.vcd_nsxv_firewall.rule4", "source.0.ipsets"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall.rule4", "source.0.security_groups", "data.vcd_nsxv_firewall.rule4", "source.0.security_groups"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall.rule4", "destination.0.exclude", "data.vcd_nsxv_firewall.rule4", "destination.0.exclude"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall.rule4", "destination.0.gateway_interfaces", "data.vcd_nsxv_firewall.rule4", "destination.0.gateway_interfaces"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall.rule4", "destination.0.virtual_machine_ids", "data.vcd_nsxv_firewall.rule4", "destination.0.virtual_machine_ids"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall.rule4", "destination.0.org_networks", "data.vcd_nsxv_firewall.rule4", "destination.0.org_networks"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall.rule4", "destination.0.ipsets", "data.vcd_nsxv_firewall.rule4", "destination.0.ipsets"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall.rule4", "destination.0.security_groups", "data.vcd_nsxv_firewall.rule4", "destination.0.security_groups"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall.rule4", "destination.0.ip_addresses", "data.vcd_nsxv_firewall.rule4", "destination.0.ip_addresses"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall.rule4", "source.0.ip_addresses.#", "data.vcd_nsxv_firewall.rule4", "source.0.ip_addresses.#"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall.rule4", "destination.0.ip_addresses.#", "data.vcd_nsxv_firewall.rule4", "destination.0.ip_addresses.#"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall.rule4", "service.#", "data.vcd_nsxv_firewall.rule4", "service.#"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall.rule4", "service", "data.vcd_nsxv_firewall.rule4", "service"),
+
+					// Check that data source has all the fields and their values the same as resource
+					resourceFieldsEqual("vcd_nsxv_firewall.rule4", "data.vcd_nsxv_firewall.rule4", []string{"rule_id"}),
 				),
 			},
 			resource.TestStep{ // Step 5 -
@@ -419,17 +449,36 @@ func TestAccVcdNsxvEdgeFirewall(t *testing.T) {
 	})
 }
 
-func sleepTester() resource.TestCheckFunc {
+// resourceFieldsEqual checks if secondObject has all the fields and their values set as the
+// firstObject except `[]excludeFields`. This is very useful to check if data sources have all
+// the same values as resources
+func resourceFieldsEqual(firstObject, secondObject string, excludeFields []string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		fmt.Println("sleeping")
-		time.Sleep(1 * time.Minute)
-		return nil
-	}
-}
+		resource1, ok := s.RootModule().Resources[firstObject]
+		if !ok {
+			return fmt.Errorf("unable to find %s", firstObject)
+		}
 
-func stateDumper() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		spew.Dump(s)
+		resource2, ok := s.RootModule().Resources[secondObject]
+		if !ok {
+			return fmt.Errorf("unable to find %s", secondObject)
+		}
+
+		for fieldName := range resource1.Primary.Attributes {
+			// Do not validate the fields marked for exclusion
+			if stringInSlice(fieldName, excludeFields) {
+				continue
+			}
+
+			if os.Getenv(testVerbose) != "" {
+				fmt.Printf("field %s %s (value %s) and %s (value %s))\n", fieldName, firstObject,
+					resource1.Primary.Attributes[fieldName], secondObject, resource2.Primary.Attributes[fieldName])
+			}
+			if !reflect.DeepEqual(resource1.Primary.Attributes[fieldName], resource2.Primary.Attributes[fieldName]) {
+				return fmt.Errorf("field %s differs in resources %s (value %s) and %s (value %s)",
+					fieldName, firstObject, resource1.Primary.Attributes[fieldName], secondObject, resource2.Primary.Attributes[fieldName])
+			}
+		}
 		return nil
 	}
 }
@@ -550,6 +599,14 @@ resource "vcd_nsxv_firewall" "rule0-2" {
 		protocol = "any"
 	}
 	depends_on = ["vcd_nsxv_firewall.rule0"]
+}
+
+data "vcd_nsxv_firewall" "rule0" {
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
+
+	rule_id      = "${vcd_nsxv_firewall.rule0.id}"
 }
 `
 
@@ -678,6 +735,14 @@ resource "vcd_nsxv_firewall" "rule4" {
 		protocol = "icmp"
 	}
   }
+
+data "vcd_nsxv_firewall" "rule4" {
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
+
+	rule_id      = "${vcd_nsxv_firewall.rule4.id}"
+}
 `
 
 const testAccVcdEdgeFirewallRule5 = `

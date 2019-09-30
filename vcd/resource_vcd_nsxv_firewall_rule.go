@@ -324,13 +324,33 @@ func resourceVcdNsxvFirewallRead(d *schema.ResourceData, meta interface{}) error
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	readFirewallRule, err := edgeGateway.GetNsxvFirewallById(d.Id())
+	// Detect if this is data source or resource field and pick correct ID field
+	var isDatasource bool
+	id := d.Id()
+	if id == "" {
+		if ruleId, ok := d.GetOk("rule_id"); ok {
+			id = ruleId.(string)
+			isDatasource = true
+		}
+
+	}
+
+	readFirewallRule, err := edgeGateway.GetNsxvFirewallById(id)
 	if err != nil {
 		d.SetId("")
 		return fmt.Errorf("unable to find firewall rule with ID %s: %s", d.Id(), err)
 	}
 
-	return setFirewallRuleData(d, readFirewallRule, edgeGateway, vdc)
+	err = setFirewallRuleData(d, readFirewallRule, edgeGateway, vdc)
+	if err != nil {
+		return err
+	}
+
+	if isDatasource {
+		d.SetId(readFirewallRule.ID)
+	}
+
+	return nil
 }
 
 func resourceVcdNsxvFirewallDelete(d *schema.ResourceData, meta interface{}) error {
