@@ -208,7 +208,7 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 
-	// Only perform load balancer and firewall configuration if settings are set
+	// Only perform load balancer and firewall configuration if gateway is advanced
 	if d.Get("advanced").(bool) {
 		log.Printf("[TRACE] edge gateway load balancer configuration started")
 
@@ -303,7 +303,7 @@ func resourceVcdEdgeGatewayUpdate(d *schema.ResourceData, meta interface{}) erro
 		return nil
 	}
 
-	// If edge gateway is advanced - check if the
+	// If edge gateway is advanced - check if load balancer or firewall needs adjustments
 	if edgeGateway.HasAdvancedNetworking() {
 		if d.HasChange("lb_enabled") ||
 			d.HasChange("lb_acceleration_enabled") || d.HasChange("lb_logging_enabled") ||

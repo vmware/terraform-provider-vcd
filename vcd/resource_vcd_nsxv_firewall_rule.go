@@ -250,7 +250,6 @@ func resourceVcdNsxvFirewall() *schema.Resource {
 	}
 }
 
-// resourceVcdNsxvFirewallCreate
 func resourceVcdNsxvFirewallCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentEdgeGtw(d)
@@ -271,12 +270,6 @@ func resourceVcdNsxvFirewallCreate(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("unable to make firewall rule query: %s", err)
 	}
 
-	// Check if above_rule_id is set
-	// aboveRuleId := ""
-	// if id, ok := d.GetOk("above_rule_id"); ok {
-	// 	aboveRuleId = id.(string)
-	// }
-
 	createdFirewallRule, err := edgeGateway.CreateNsxvFirewall(firewallRule, d.Get("above_rule_id").(string))
 	if err != nil {
 		return fmt.Errorf("error creating new firewall rule: %s", err)
@@ -286,7 +279,6 @@ func resourceVcdNsxvFirewallCreate(d *schema.ResourceData, meta interface{}) err
 	return resourceVcdNsxvFirewallRead(d, meta)
 }
 
-// resourceVcdNsxvFirewallUpdate
 func resourceVcdNsxvFirewallUpdate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentEdgeGtw(d)
@@ -317,7 +309,6 @@ func resourceVcdNsxvFirewallUpdate(d *schema.ResourceData, meta interface{}) err
 	return resourceVcdNsxvFirewallRead(d, meta)
 }
 
-// resourceVcdNsxvFirewallRead
 func resourceVcdNsxvFirewallRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
