@@ -34,7 +34,8 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations.
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
 * `edge_gateway` - (Required) The name of the edge gateway on which to apply the DNAT rule.
-* `rule_id` - (Required) ID of firewall rule as shown in the UI.
+* `rule_id` - (Required) ID of firewall rule. See more information about firewall rule ID in
+`vcd_nsxv_firewall` [import section](/docs/providers/vcd/r/nsxv_firewall.html#listing-real-firewall-rule-ids).
 
 ## Attribute Reference
 

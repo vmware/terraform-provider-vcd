@@ -1144,7 +1144,7 @@ func (egw *EdgeGateway) UpdateLBGeneralParams(enabled, accelerationEnabled, logg
 		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
 	}
 	_, err = egw.client.ExecuteRequestWithCustomError(httpPath, http.MethodPut, types.AnyXMLMime,
-		"error while updating load balancer application rule : %s", currentLb, &types.NSXError{})
+		"error while updating load balancer config: %s", currentLb, &types.NSXError{})
 	if err != nil {
 		return nil, err
 	}
@@ -1152,10 +1152,89 @@ func (egw *EdgeGateway) UpdateLBGeneralParams(enabled, accelerationEnabled, logg
 	// Retrieve configuration after update
 	updatedLb, err := egw.GetLBGeneralParams()
 	if err != nil {
-		return nil, fmt.Errorf("unable to retrieve load balancer after update: %s", err)
+		return nil, fmt.Errorf("unable to retrieve load balancer config after update: %s", err)
 	}
 
 	return updatedLb, nil
+}
+
+// GetFwGeneralParams retrieves firewall configuration and can be used
+// to alter master configuration options. These are 3 fields only:
+// FwGeneralParamsWithXml.Enabled, FwGeneralParamsWithXml.DefaultPolicy.LoggingEnabled and
+// FwGeneralParamsWithXml.DefaultPolicy.Action
+func (egw *EdgeGateway) GetFwGeneralParams() (*types.FwGeneralParamsWithXml, error) {
+	if !egw.HasAdvancedNetworking() {
+		return nil, fmt.Errorf("only advanced edge gateway support firewall configuration")
+	}
+
+	httpPath, err := egw.buildProxiedEdgeEndpointURL(types.EdgeFirewallPath)
+	if err != nil {
+		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
+	}
+
+	firewallConfig := &types.FwGeneralParamsWithXml{}
+	_, err = egw.client.ExecuteRequest(httpPath, http.MethodGet, types.AnyXMLMime,
+		"unable to read firewall configuration: %s", nil, firewallConfig)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return firewallConfig, nil
+}
+
+// UpdateFwGeneralParams allows to update firewall configuration.
+// It accepts three fields (Enabled, DefaultLoggingEnabled, DefaultAction) and uses
+// them to construct types.FwGeneralParamsWithXml without altering other options to prevent config
+// corruption.
+// They are represented in firewall configuration page in the UI.
+func (egw *EdgeGateway) UpdateFwGeneralParams(enabled, defaultLoggingEnabled bool, defaultAction string) (*types.FwGeneralParamsWithXml, error) {
+	if !egw.HasAdvancedNetworking() {
+		return nil, fmt.Errorf("only advanced edge gateway supports load balancing")
+	}
+
+	if defaultAction != "accept" && defaultAction != "deny" {
+		return nil, fmt.Errorf("default action must be either 'accept' or 'deny'")
+	}
+
+	// Retrieve firewall latest configuration
+	currentFw, err := egw.GetFwGeneralParams()
+	if err != nil {
+		return nil, fmt.Errorf("unable to retrieve firewall config before update: %s", err)
+	}
+
+	// Check if change is needed. If not - return early.
+	if currentFw.Enabled == enabled && currentFw.DefaultPolicy.LoggingEnabled == defaultLoggingEnabled &&
+		currentFw.DefaultPolicy.Action == defaultAction {
+		return currentFw, nil
+	}
+
+	// Modify only the global configuration settings
+	currentFw.Enabled = enabled
+	currentFw.DefaultPolicy.LoggingEnabled = defaultLoggingEnabled
+	currentFw.DefaultPolicy.Action = defaultAction
+
+	// Omit the version as it is updated automatically with each put
+	currentFw.Version = ""
+
+	// Push updated configuration
+	httpPath, err := egw.buildProxiedEdgeEndpointURL(types.EdgeFirewallPath)
+	if err != nil {
+		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
+	}
+	_, err = egw.client.ExecuteRequestWithCustomError(httpPath, http.MethodPut, types.AnyXMLMime,
+		"error while updating firewall configuration : %s", currentFw, &types.NSXError{})
+	if err != nil {
+		return nil, err
+	}
+
+	// Retrieve configuration after update
+	updatedFw, err := egw.GetFwGeneralParams()
+	if err != nil {
+		return nil, fmt.Errorf("unable to retrieve firewall after update: %s", err)
+	}
+
+	return updatedFw, nil
 }
 
 // validateUpdateLoadBalancer validates mandatory fields for global load balancer configuration
@@ -1199,7 +1278,40 @@ func (egw *EdgeGateway) GetVnicIndexByNetworkNameAndType(networkName, networkTyp
 	if err != nil {
 		return nil, fmt.Errorf("cannot retrieve vNic configuration: %s", err)
 	}
-	return GetVnicIndexByNetworkNameAndType(networkName, networkType, vnics)
+	return getVnicIndexByNetworkNameAndType(networkName, networkType, vnics)
+}
+
+// GetAnyVnicIndexByNetworkName returns *int of vNic index and network type by network name
+// networkName cannot be empty
+// networkType will be one of: 'internal', 'uplink', 'trunk', 'subinterface'
+//
+// Warning: this function assumes that there are no duplicate network names attached. If it is so
+// this function will return the first network
+func (egw *EdgeGateway) GetAnyVnicIndexByNetworkName(networkName string) (*int, string, error) {
+	vnics, err := egw.getVnics()
+	if err != nil {
+		return nil, "", fmt.Errorf("cannot retrieve vNic configuration: %s", err)
+	}
+
+	var foundVnicIndex *int
+	var foundVnicType string
+
+	possibleNicTypes := []string{types.EdgeGatewayVnicTypeUplink, types.EdgeGatewayVnicTypeInternal,
+		types.EdgeGatewayVnicTypeTrunk, types.EdgeGatewayVnicTypeSubinterface}
+
+	for _, nicType := range possibleNicTypes {
+		vNicIndex, err := getVnicIndexByNetworkNameAndType(networkName, nicType, vnics)
+		if err == nil { // nil error means we have found nic
+			foundVnicIndex = vNicIndex
+			foundVnicType = nicType
+			break
+		}
+	}
+
+	if foundVnicIndex == nil && foundVnicType == "" {
+		return nil, "", ErrorEntityNotFound
+	}
+	return foundVnicIndex, foundVnicType, nil
 }
 
 // GetNetworkNameAndTypeByVnicIndex returns network name and network type for given vNic index
@@ -1209,11 +1321,11 @@ func (egw *EdgeGateway) GetNetworkNameAndTypeByVnicIndex(vNicIndex int) (string,
 	if err != nil {
 		return "", "", fmt.Errorf("cannot retrieve vNic configuration: %s", err)
 	}
-	return GetNetworkNameAndTypeByVnicIndex(vNicIndex, vnics)
+	return getNetworkNameAndTypeByVnicIndex(vNicIndex, vnics)
 }
 
-// GetVnicIndexByNetworkNameAndType is wrapped and used by public function GetVnicIndexByNetworkNameAndType
-func GetVnicIndexByNetworkNameAndType(networkName, networkType string, vnics *types.EdgeGatewayVnics) (*int, error) {
+// getVnicIndexByNetworkNameAndType is wrapped and used by public function GetVnicIndexByNetworkNameAndType
+func getVnicIndexByNetworkNameAndType(networkName, networkType string, vnics *types.EdgeGatewayVnics) (*int, error) {
 	if networkName == "" {
 		return nil, fmt.Errorf("network name cannot be empty")
 	}
@@ -1257,8 +1369,8 @@ func GetVnicIndexByNetworkNameAndType(networkName, networkType string, vnics *ty
 	return foundIndex, nil
 }
 
-// GetNetworkNameAndTypeByVnicIndex is wrapped and used by public function GetNetworkNameAndTypeByVnicIndex
-func GetNetworkNameAndTypeByVnicIndex(vNicIndex int, vnics *types.EdgeGatewayVnics) (string, string, error) {
+// getNetworkNameAndTypeByVnicIndex looks up network type and name in list of edge gateway interfaces
+func getNetworkNameAndTypeByVnicIndex(vNicIndex int, vnics *types.EdgeGatewayVnics) (string, string, error) {
 	if vNicIndex < 0 {
 		return "", "", fmt.Errorf("vNic index cannot be negative")
 	}

@@ -1662,6 +1662,33 @@ type StaticRoute struct {
 	GatewayInterface *Reference `xml:"GatewayInterface,omitempty"` // Gateway interface to which static route is bound.
 }
 
+// FwGeneralParamsWithXml allows to enable/disable firewall on a specific edge gateway
+// Reference: vCloud Director API for NSX Programming Guide
+// https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
+//
+// Warning. It nests all firewall rules because Edge Gateway API is done so that if this data is not
+// sent while enabling it would wipe all firewall rules. InnerXML type field is used with struct tag
+//`innerxml` to prevent any manipulation of configuration and sending it verbatim
+type FwGeneralParamsWithXml struct {
+	XMLName       xml.Name        `xml:"firewall"`
+	Enabled       bool            `xml:"enabled"`
+	DefaultPolicy FwDefaultPolicy `xml:"defaultPolicy"`
+
+	// Each configuration change has a version number
+	Version string `xml:"version,omitempty"`
+
+	// The below field has `innerxml` tag so that it is not processed but instead
+	// sent verbatim
+	FirewallRules InnerXML `xml:"firewallRules,omitempty"`
+	GlobalConfig  InnerXML `xml:"globalConfig,omitempty"`
+}
+
+// FwDefaultPolicy represent default rule
+type FwDefaultPolicy struct {
+	LoggingEnabled bool   `xml:"loggingEnabled"`
+	Action         string `xml:"action"`
+}
+
 // LbGeneralParamsWithXml allows to enable/disable load balancing capabilities on specific edge gateway
 // Reference: vCloud Director API for NSX Programming Guide
 // https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
@@ -1821,7 +1848,7 @@ type LbVirtualServer struct {
 
 // EdgeNatRule contains shared structure for SNAT and DNAT rule configuration using
 // NSX-V proxied edge gateway endpoint
-// // https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
+// https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
 type EdgeNatRule struct {
 	XMLName           xml.Name `xml:"natRule"`
 	ID                string   `xml:"ruleId,omitempty"`
@@ -1838,6 +1865,45 @@ type EdgeNatRule struct {
 	OriginalPort      string   `xml:"originalPort,omitempty"`
 	TranslatedPort    string   `xml:"translatedPort,omitempty"`
 	IcmpType          string   `xml:"icmpType,omitempty"`
+}
+
+// EdgeFirewall holds data for creating firewall rule using proxied NSX-V API
+// https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
+type EdgeFirewallRule struct {
+	XMLName         xml.Name                `xml:"firewallRule" `
+	ID              string                  `xml:"id,omitempty"`
+	Name            string                  `xml:"name,omitempty"`
+	RuleType        string                  `xml:"ruleType,omitempty"`
+	RuleTag         string                  `xml:"ruleTag,omitempty"`
+	Source          EdgeFirewallEndpoint    `xml:"source" `
+	Destination     EdgeFirewallEndpoint    `xml:"destination"`
+	Application     EdgeFirewallApplication `xml:"application"`
+	MatchTranslated *bool                   `xml:"matchTranslated,omitempty"`
+	Direction       string                  `xml:"direction,omitempty"`
+	Action          string                  `xml:"action,omitempty"`
+	Enabled         bool                    `xml:"enabled"`
+	LoggingEnabled  bool                    `xml:"loggingEnabled"`
+}
+
+// EdgeFirewallEndpoint can contains slices of objects for source or destination in EdgeFirewall
+type EdgeFirewallEndpoint struct {
+	Exclude           bool     `xml:"exclude"`
+	VnicGroupIds      []string `xml:"vnicGroupId,omitempty"`
+	GroupingObjectIds []string `xml:"groupingObjectId,omitempty"`
+	IpAddresses       []string `xml:"ipAddress,omitempty"`
+}
+
+// EdgeFirewallApplication Wraps []EdgeFirewallApplicationService for multiple protocol/port specification
+type EdgeFirewallApplication struct {
+	ID       string                           `xml:"applicationId,omitempty"`
+	Services []EdgeFirewallApplicationService `xml:"service,omitempty"`
+}
+
+// EdgeFirewallApplicationService defines port/protocol details for one service in EdgeFirewallRule
+type EdgeFirewallApplicationService struct {
+	Protocol   string `xml:"protocol,omitempty"`
+	Port       string `xml:"port,omitempty"`
+	SourcePort string `xml:"sourcePort,omitempty"`
 }
 
 // VendorTemplate is information about a vendor service template. This is optional.

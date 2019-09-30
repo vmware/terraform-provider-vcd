@@ -18,6 +18,127 @@ use the [`vcd_firewall_rules`](/docs/providers/vcd/r/firewall_rules.html) resour
 
 ## Example Usage 1 (Minimal input)
 
+```hcl
+resource "vcd_nsxv_firewall" "my-rule-1" {
+  org          = "my-org"
+  vdc          = "my-vdc"
+  edge_gateway = "my-edge-gateway"
+
+  source {
+    ip_addresses = ["any"]
+  }
+
+  destination {
+    ip_addresses = ["192.168.1.110"]
+  }
+
+  service {
+    protocol = "any"
+  }
+}
+```
+
+
+## Example Usage 2 (Multiple services)
+
+```hcl
+resource "vcd_nsxv_firewall" "my-rule-1" {
+  org          = "my-org"
+  vdc          = "my-vdc"
+  edge_gateway = "my-edge-gateway"
+
+  source {
+    ip_addresses       = ["any"]
+    gateway_interfaces = ["internal"]
+  }
+
+  destination {
+    ip_addresses = ["192.168.1.110"]
+  }
+
+  service {
+    protocol = "icmp"
+  }
+
+  service {
+    protocol = "tcp"
+    port     = "443"
+  }
+}
+```
+
+## Example Usage 3 (Use exclusion in source)
+
+```hcl
+resource "vcd_nsxv_firewall" "my-rule-1" {
+  org          = "my-org"
+  vdc          = "my-vdc"
+  edge_gateway = "my-edge-gateway"
+
+  source {
+    exclude            = true
+    gateway_interfaces = ["internal"]
+  }
+
+  destination {
+    ip_addresses = ["any"]
+  }
+
+  service {
+    protocol = "icmp"
+  }
+}
+```
+
+## Example Usage 4 (Deny rule using exclusion and priority set)
+
+```hcl
+resource "vcd_nsxv_firewall" "my-rule-1" {
+  org          = "my-org"
+  vdc          = "my-vdc"
+  edge_gateway = "my-edge-gateway"
+
+  logging_enabled = "true"
+  action          = "deny"
+
+  source {
+    ip_addresses = ["30.10.10.0/24", "31.10.10.0/24"]
+    org_networks = ["org-net-1", "org-net-2"]
+  }
+
+  destination {
+    ip_addresses = ["any"]
+  }
+
+  service {
+    protocol = "icmp"
+  }
+}
+
+resource "vcd_nsxv_firewall" "my-rule-2" {
+  org          = "my-org"
+  vdc          = "my-vdc"
+  edge_gateway = "my-edge-gateway"
+
+  # This attribute allows to ensure rule is inserted above the referred one
+  # in rule processing engine
+  above_rule_id = "${vcd_nsxv_firewall.my-rule-1.id}"
+  name          = "my-friendly-name"
+
+  source {
+    ip_addresses = ["30.10.10.0/24", "31.10.10.0/24"]
+    org_networks = ["org-net-1", "org-net-2"]
+  }
+
+  destination {
+    ip_addresses = ["any"]
+  }
+
+  service {
+    protocol = "icmp"
+  }
+}
+```
 
 
 ## Argument Reference
@@ -54,7 +175,7 @@ traffic on all sources except for the locations you excluded. When the toggle ex
 selected, the rule applies to traffic you specified. Default `false`
 * `ip_addresses` - (Optional) A set of IP addresses, CIDRs or ranges. A keyword `any` is also
 accepted as a parameter.
-* `gateway_interfaces` - (Optional) A set of with either three keywords `vse` (UI names it as `any`), `internal`, `external` or an org network name.
+* `gateway_interfaces` - (Optional) A set of with either three keywords `vse` (UI names it as `any`), `internal`, `external` or an org network name. It automatically looks up vNic in the backend.
 * `virtual_machine_ids` - (Optional) A set of `.id` fields of `vcd_vapp_vm` resources.
 * `org_networks` - (Optional) A set of org network names.
 

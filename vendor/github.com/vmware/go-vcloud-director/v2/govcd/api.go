@@ -371,11 +371,19 @@ func (client *Client) ExecuteRequest(pathURL, requestType, contentType, errorMes
 // interface.
 func (client *Client) ExecuteRequestWithCustomError(pathURL, requestType, contentType, errorMessage string,
 	payload interface{}, errType error) (*http.Response, error) {
+	return client.ExecuteParamRequestWithCustomError(pathURL, map[string]string{}, requestType, contentType,
+		errorMessage, payload, errType)
+}
+
+// ExecuteParamRequestWithCustomError behaves exactly like ExecuteRequestWithCustomError but accepts
+// query parameter specification
+func (client *Client) ExecuteParamRequestWithCustomError(pathURL string, params map[string]string,
+	requestType, contentType, errorMessage string, payload interface{}, errType error) (*http.Response, error) {
 	if !isMessageWithPlaceHolder(errorMessage) {
 		return &http.Response{}, fmt.Errorf("error message has to include place holder for error")
 	}
 
-	resp, err := executeRequestCustomErr(pathURL, requestType, contentType, payload, client, errType)
+	resp, err := executeRequestCustomErr(pathURL, params, requestType, contentType, payload, client, errType)
 	if err != nil {
 		return &http.Response{}, fmt.Errorf(errorMessage, err)
 	}
@@ -399,11 +407,11 @@ func (client *Client) ExecuteRequestWithCustomError(pathURL, requestType, conten
 
 // executeRequest does executeRequestCustomErr and checks for vCD errors in API response
 func executeRequest(pathURL, requestType, contentType string, payload interface{}, client *Client) (*http.Response, error) {
-	return executeRequestCustomErr(pathURL, requestType, contentType, payload, client, &types.Error{})
+	return executeRequestCustomErr(pathURL, map[string]string{}, requestType, contentType, payload, client, &types.Error{})
 }
 
 // executeRequestCustomErr performs request and unmarshals API error to errType if not 2xx status was returned
-func executeRequestCustomErr(pathURL, requestType, contentType string, payload interface{}, client *Client, errType error) (*http.Response, error) {
+func executeRequestCustomErr(pathURL string, params map[string]string, requestType, contentType string, payload interface{}, client *Client, errType error) (*http.Response, error) {
 	url, _ := url.ParseRequestURI(pathURL)
 
 	var req *http.Request
@@ -416,10 +424,10 @@ func executeRequestCustomErr(pathURL, requestType, contentType string, payload i
 		}
 		body := bytes.NewBufferString(xml.Header + string(marshaledXml))
 
-		req = client.NewRequest(map[string]string{}, requestType, *url, body)
+		req = client.NewRequest(params, requestType, *url, body)
 
 	default:
-		req = client.NewRequest(map[string]string{}, requestType, *url, nil)
+		req = client.NewRequest(params, requestType, *url, nil)
 	}
 
 	if contentType != "" {

@@ -305,17 +305,16 @@ func resourceVcdEdgeGatewayUpdate(d *schema.ResourceData, meta interface{}) erro
 
 	// If edge gateway is advanced - check if load balancer or firewall needs adjustments
 	if edgeGateway.HasAdvancedNetworking() {
-		if d.HasChange("lb_enabled") ||
-			d.HasChange("lb_acceleration_enabled") || d.HasChange("lb_logging_enabled") ||
-			d.HasChange("lb_loglevel") {
+		if d.HasChange("lb_enabled") || d.HasChange("lb_acceleration_enabled") ||
+			d.HasChange("lb_logging_enabled") || d.HasChange("lb_loglevel") {
 			err := updateLoadBalancer(d, *edgeGateway)
 			if err != nil {
 				return err
 			}
 		}
 
-		if d.HasChange("fw_enabled") ||
-			d.HasChange("fw_default_rule_logging_enabled") || d.HasChange("fw_default_rule_action") {
+		if d.HasChange("fw_enabled") || d.HasChange("fw_default_rule_logging_enabled") ||
+			d.HasChange("fw_default_rule_action") {
 			err := updateFirewall(d, *edgeGateway)
 			if err != nil {
 				return err
