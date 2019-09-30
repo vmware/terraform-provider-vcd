@@ -138,6 +138,8 @@ func resourceVcdNsxvFirewall() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
+						// TODO - ipsets and security groups need further investigation and at least
+						// "Get" capability in govcd
 						// "ipsets": {
 						// 	Optional:    true,
 						// 	Type:        schema.TypeSet,
@@ -203,6 +205,8 @@ func resourceVcdNsxvFirewall() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
+						// TODO - ipsets and security groups need further investigation and at least
+						// "Get" capability in govcd
 						// "ipsets": {
 						// 	Optional:    true,
 						// 	Type:        schema.TypeSet,
@@ -605,6 +609,8 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 	endpointGatewayInterfaceSlice := convertToTypeSet(vnicGroupIdStrings)
 	endpointGatewayInterfaceSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointGatewayInterfaceSlice)
 
+	// TODO - ipsets and security groups need further investigation and at least
+	// "Get" capability in govcd
 	// Convert ipset IDs to set
 	// endpointIpSetSlice := convertToTypeSet(endpointIpSets)
 	// endpointIpSetSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointIpSetSlice)
@@ -621,6 +627,8 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 	endpointMap["gateway_interfaces"] = endpointGatewayInterfaceSet
 	endpointMap["org_networks"] = endpointNetworksSet
 	endpointMap["virtual_machine_ids"] = endpointVmSet
+	// TODO - ipsets and security groups need further investigation and at least
+	// "Get" capability in govcd
 	// endpointMap["security_groups"] = endpointSecurityGroupSet
 	// endpointMap["ipsets"] = endpointIpSetSet
 
@@ -687,6 +695,8 @@ func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway, vd
 	}
 	result.GroupingObjectIds = append(result.GroupingObjectIds, endpointOrgNetworkIdStrings...)
 
+	// TODO - ipsets and security groups need further investigation and at least
+	// "Get" capability in govcd
 	// Extract ipset IDs from set and add them to endpoint structure
 	// endpointIpSetStrings := convertSchemaSetToSliceOfStrings(endpointMap["ipsets"].(*schema.Set))
 	// result.GroupingObjectIds = append(result.GroupingObjectIds, endpointIpSetStrings...)
