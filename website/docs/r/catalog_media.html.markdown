@@ -66,7 +66,7 @@ Supported in provider *v2.5+*
 configuration. [More information.][docs-import]
 
 An existing media item can be [imported][docs-import] into this resource via supplying its path.
-The path for this resource is made of orgName.catalogName.mediaName.
+The path for this resource is made of org-name.catalog-name.media-name.
 For example, using this structure, representing a media item that was **not** created using Terraform:
 
 ```hcl
