@@ -62,7 +62,8 @@ func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.Catal
 
 	identifier := d.Id()
 
-	// check if identifier still is in deprecated style `catalogName:mediaName`
+	// Check if identifier is still in deprecated style `catalogName:mediaName`
+	// Required for backwards compatibility as identifier has been changed to vCD ID in 2.5.0
 	if identifier == "" || strings.Contains(identifier, ":") {
 		identifier = d.Get("name").(string)
 	}
