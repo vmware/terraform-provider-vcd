@@ -22,11 +22,11 @@ data "vcd_catalog_media" "existing-media" {
   name    = "my-media"
 }
 
-output "gateway" {
+output "media_size" {
   value = data.vcd_catalog_media.size
 }
 
-output "dns1" {
+output "type_is_iso" {
   value = data.vcd_catalog_media.is_iso
 }
 
