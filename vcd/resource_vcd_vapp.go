@@ -552,6 +552,12 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string)
 		return fmt.Errorf("unable to set guest properties in state: %s", err)
 	}
 
+	statusText, err := vapp.GetStatus()
+	if err != nil {
+		statusText = vAppUnknownStatus
+	}
+	_ = d.Set("status", vapp.VApp.Status)
+	_ = d.Set("status_text", statusText)
 	// Power status is not easy to define.
 	// It should be set when status == 4, but even when we request it the status
 	// change may not happen until late. Returning the power status at an early
@@ -561,14 +567,9 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string)
 	// * status (numeric status code, such as "4")
 	// * status_text (status as a string, such as "POWERED_ON")
 	// _ = d.Set("power_on", vapp.VApp.Status == 4)
+
 	_ = d.Set("href", vapp.VApp.HREF)
 	_ = d.Set("description", vapp.VApp.Description)
-	statusText, err := vapp.GetStatus()
-	if err != nil {
-		statusText = vAppUnknownStatus
-	}
-	_ = d.Set("status", vapp.VApp.Status)
-	_ = d.Set("status_text", statusText)
 	metadata, err := vapp.GetMetadata()
 	if err != nil {
 		return fmt.Errorf("[vapp read] error retrieving metadata: %s", err)
