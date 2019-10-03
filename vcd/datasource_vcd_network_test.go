@@ -115,7 +115,6 @@ func TestAccVcdNetworkDirectDS(t *testing.T) {
 
 	err := getAvailableNetworks()
 	if err != nil {
-		fmt.Printf("%s\n", err)
 		t.Skip("error getting available networks")
 		return
 	}

@@ -387,7 +387,16 @@ func (vapp *VApp) GetStatus() (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("error refreshing vApp: %v", err)
 	}
-	return types.VAppStatuses[vapp.VApp.Status], nil
+	// Trying to make this function future-proof:
+	// If a new status is added to a future vCD API and the status map in types.go
+	// is not updated, we may get a panic.
+	// Using the ", ok" construct we take control of the data lookup and are able to fail
+	// gracefully.
+	statusText, ok := types.VAppStatuses[vapp.VApp.Status]
+	if ok {
+		return statusText, nil
+	}
+	return "", fmt.Errorf("status %d does not have a description in types.VappStatuses", vapp.VApp.Status)
 }
 
 // BlockWhileStatus blocks until the status of vApp exits unwantedStatus.

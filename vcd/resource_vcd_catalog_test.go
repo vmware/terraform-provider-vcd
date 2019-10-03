@@ -48,22 +48,12 @@ func TestAccVcdCatalogBasic(t *testing.T) {
 				ResourceName:      "vcd_catalog." + TestAccVcdCatalog + "-import",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdByCatalog(TestAccVcdCatalog),
+				ImportStateIdFunc: importStateIdOrgObject(testConfig, TestAccVcdCatalog),
 				// These fields can't be retrieved from catalog data
 				ImportStateVerifyIgnore: []string{"delete_force", "delete_recursive"},
 			},
 		},
 	})
-}
-
-func importStateIdByCatalog(objectName string) resource.ImportStateIdFunc {
-	return func(*terraform.State) (string, error) {
-		importId := testConfig.VCD.Org + "." + objectName
-		if testConfig.VCD.Org == "" || objectName == "" {
-			return "", fmt.Errorf("missing information to generate import path: %s", importId)
-		}
-		return importId, nil
-	}
 }
 
 func testAccCheckVcdCatalogExists(name string) resource.TestCheckFunc {
