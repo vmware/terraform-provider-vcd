@@ -70,6 +70,10 @@ func resourceVcdVAppVm() *schema.Resource {
 				Type:     schema.TypeInt,
 				Optional: true,
 			},
+			"root_disk": &schema.Schema{
+				Type:     schema.TypeInt,
+				Optional: true,
+			},
 			"cpu_cores": &schema.Schema{
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -581,7 +585,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 	}
 
 	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("cpu_cores") || d.HasChange("power_on") || d.HasChange("disk") ||
-		d.HasChange("expose_hardware_virtualization") || d.HasChange("network") || d.HasChange("computer_name") {
+		d.HasChange("expose_hardware_virtualization") || d.HasChange("network") || d.HasChange("computer_name") || d.HasChange("root_disk") {
 
 		log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t), power_on(%t), disk(%t), expose_hardware_virtualization(%t), network(%t), computer_name(%t)",
 			vm.VM.Name, d.HasChange("memory"), d.HasChange("cpus"), d.HasChange("cpu_cores"), d.HasChange("power_on"), d.HasChange("disk"),
@@ -612,6 +616,17 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			err = task.WaitTaskCompletion()
 			if err != nil {
 				return fmt.Errorf("error waiting for undeploy task for VM %s: %s", vm.VM.Name, err)
+			}
+		}
+
+		if d.HasChange("root_disk") {
+			task, err := vm.ChangeDiskSize(0, d.Get("root_disk").(int))
+			if err != nil {
+				return fmt.Errorf("error changing root disk size: %s: %s", vm.VM.Name, err)
+			}
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				return fmt.Errorf("error waiting for disk size task for VM %s: %s", vm.VM.Name, err)
 			}
 		}
 
