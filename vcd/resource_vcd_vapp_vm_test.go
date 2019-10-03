@@ -63,6 +63,8 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 						"vcd_vapp_vm."+vmName, "power_on", "true"),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_vm."+vmName, "metadata.vm_metadata", "VM Metadata."),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp_vm."+vmName, "root_disk", "16385"),
 				),
 			},
 		},
@@ -118,6 +120,7 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   cpus          = 2
   cpu_cores     = 1
   ip            = "10.10.102.161"
+  root_disk     = 16385
 
   metadata = {
     vm_metadata = "VM Metadata."

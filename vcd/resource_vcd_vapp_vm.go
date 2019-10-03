@@ -619,17 +619,6 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			}
 		}
 
-		if d.HasChange("root_disk") {
-			task, err := vm.ChangeDiskSize(0, d.Get("root_disk").(int))
-			if err != nil {
-				return fmt.Errorf("error changing root disk size: %s: %s", vm.VM.Name, err)
-			}
-			err = task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf("error waiting for disk size task for VM %s: %s", vm.VM.Name, err)
-			}
-		}
-
 		// detaching independent disks - only possible when VM power off
 		if d.HasChange("disk") {
 			err = attachDetachDisks(d, *vm, vdc)
@@ -640,6 +629,18 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 					return fmt.Errorf("error reading attached disks : %#v and internal error : %#v", errAttachedDisk, err)
 				}
 				return fmt.Errorf("error attaching-detaching  disks when updating resource : %#v", err)
+			}
+		}
+
+		if d.HasChange("root_disk") {
+			vm.Refresh()
+			task, err := vm.ChangeDiskSize(0, 0, d.Get("root_disk").(int))
+			if err != nil {
+				return fmt.Errorf("error changing root disk size: %s: %s", vm.VM.Name, err)
+			}
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				return fmt.Errorf("error waiting for disk size task for VM %s: %s", vm.VM.Name, err)
 			}
 		}
 
@@ -890,6 +891,11 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 	err = setGuestProperties(d, guestProperties)
 	if err != nil {
 		return fmt.Errorf("unable to set guest properties in state: %s", err)
+	}
+
+	rootDisk := vm.GetDiskHardwareItem(0, 0)
+	if rootDisk != nil {
+		d.Set("root_disk", rootDisk.HostResource[0].Capacity)
 	}
 
 	err = updateStateOfAttachedDisks(d, *vm, vdc)

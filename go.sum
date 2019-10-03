@@ -60,6 +60,10 @@ github.com/bmatcuk/doublestar v1.1.5/go.mod h1:wiQtGV+rzVYxB7WIlirSN++5HPtPlXEo9
 github.com/boltdb/bolt v1.3.1/go.mod h1:clJnj/oiGkjum5o1McbSZDSLxVThjynRyGBgiAx27Ps=
 github.com/bradfitz/go-smtpd v0.0.0-20170404230938-deb6d6237625/go.mod h1:HYsPBTaaSFSlLx/70C2HPIMNZpVV8+vt/A+FMnYP11g=
 github.com/bsm/go-vlq v0.0.0-20150828105119-ec6e8d4f5f4e/go.mod h1:N+BjUcTjSxc2mtRGSCPsat1kze3CUtvJN3/jTXlp29k=
+github.com/cheald/go-vcloud-director/v2 v2.0.0-20191003203017-f9098d234b18 h1:N4LmNdeasxmjkwkdJ7nq4mPjEahtWEt5u9oNQgt2U0I=
+github.com/cheald/go-vcloud-director/v2 v2.0.0-20191003203017-f9098d234b18/go.mod h1:VqfkCixIzRmj4EzF2yFJKB+aKDW6GkXlLbFh5xZ+qqs=
+github.com/cheald/go-vcloud-director/v2 v2.0.0-20191004085034-4b17e65ce311 h1:eorqPrkM1UI/ooOLoKIUzeIo4ERWDxIZh78GETmOghI=
+github.com/cheald/go-vcloud-director/v2 v2.0.0-20191004085034-4b17e65ce311/go.mod h1:VqfkCixIzRmj4EzF2yFJKB+aKDW6GkXlLbFh5xZ+qqs=
 github.com/cheggaaa/pb v1.0.27/go.mod h1:pQciLPpbU0oxA0h+VJYYLxO+XeDQb5pZijXscXHm81s=
 github.com/chzyer/logex v1.1.10/go.mod h1:+Ywpsq7O8HXn0nuIou7OrIPyXbp3wmkHB+jjWRnGsAI=
 github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e/go.mod h1:nSuG5e5PlCu98SY8svDHJxuZscDgtXS6KTTbou5AhLI=
