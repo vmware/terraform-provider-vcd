@@ -108,6 +108,10 @@ output "href" {
   value = data.vcd_vapp.{{.VappName}}.href
 }
 
+output "status" {
+  value = data.vcd_vapp.{{.VappName}}.status
+}
+
 output "status_text" {
   value = data.vcd_vapp.{{.VappName}}.status_text
 }
