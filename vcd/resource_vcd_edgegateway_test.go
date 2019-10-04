@@ -67,21 +67,10 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 				ResourceName:      "vcd_edgegateway." + edgeGatewayNameBasic + "-import",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdByEdgeGateway(testConfig, edgeGatewayVcdName),
+				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, edgeGatewayVcdName),
 			},
 		},
 	})
-}
-
-func importStateIdByEdgeGateway(vcd TestConfig, objectName string) resource.ImportStateIdFunc {
-	return func(*terraform.State) (string, error) {
-		importId := testConfig.VCD.Org + "." + testConfig.VCD.Vdc + "." + objectName
-		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || objectName == "" {
-			return "", fmt.Errorf("missing information to generate import path: %s", importId)
-		}
-
-		return importId, nil
-	}
 }
 
 func TestAccVcdEdgeGatewayComplex(t *testing.T) {
@@ -154,7 +143,7 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 				ResourceName:      "vcd_edgegateway." + edgeGatewayNameComplex + "-import",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdByEdgeGateway(testConfig, edgeGatewayVcdName),
+				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, edgeGatewayVcdName),
 			},
 		},
 	})

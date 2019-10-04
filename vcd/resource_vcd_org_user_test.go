@@ -237,7 +237,7 @@ func TestAccVcdOrgUserFull(t *testing.T) {
 						ResourceName:      resourceName + "-import",
 						ImportState:       true,
 						ImportStateVerify: true,
-						ImportStateIdFunc: importStateIdByOrgUser(testConfig, ud.name),
+						ImportStateIdFunc: importStateIdOrgObject(testConfig, ud.name),
 						// These fields can't be retrieved from user data
 						ImportStateVerifyIgnore: []string{"take_ownership", "password", "password_file"},
 					},
@@ -316,17 +316,6 @@ func testAccCheckVcdUserDestroy(userName string) resource.TestCheckFunc {
 			return fmt.Errorf("user %s was found in %s ", userName, adminOrg.AdminOrg.Name)
 		}
 		return nil
-	}
-}
-
-func importStateIdByOrgUser(vcd TestConfig, objectName string) resource.ImportStateIdFunc {
-	return func(*terraform.State) (string, error) {
-		importId := testConfig.VCD.Org + "." + objectName
-		if testConfig.VCD.Org == "" || objectName == "" {
-			return "", fmt.Errorf("missing information to generate import path: %s", importId)
-		}
-
-		return importId, nil
 	}
 }
 

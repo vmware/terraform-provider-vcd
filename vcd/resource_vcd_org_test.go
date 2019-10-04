@@ -199,7 +199,7 @@ func TestAccVcdOrgFull(t *testing.T) {
 					ResourceName:      resourceName + "-import",
 					ImportState:       true,
 					ImportStateVerify: true,
-					ImportStateIdFunc: importStateIdByOrg(od.name),
+					ImportStateIdFunc: importStateIdTopHierarchy(od.name),
 					// These fields can't be retrieved from user data
 					ImportStateVerifyIgnore: []string{"delete_force", "delete_recursive"},
 				},
@@ -210,12 +210,6 @@ func TestAccVcdOrgFull(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 
-	}
-}
-
-func importStateIdByOrg(objectName string) resource.ImportStateIdFunc {
-	return func(*terraform.State) (string, error) {
-		return objectName, nil
 	}
 }
 
