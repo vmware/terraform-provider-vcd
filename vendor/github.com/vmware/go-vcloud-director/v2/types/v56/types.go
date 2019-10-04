@@ -1413,6 +1413,25 @@ type VirtualHardwareHostResource struct {
 	//OsType            string `xml:"osType,attr,omitempty"`
 }
 
+/*
+VirtualHardwareHostResourceForWrite is an AWFUL hack, but I can't figure out how to get it to work cleanly otherwise.
+The HostResource belongs to the rasd namespace, but all its attributes belong to the vcloud namespace.
+If we specify the vcloud namespace in VirtualHardwareHostResource, it doesn't parse correctly, as
+VCD sends those with an aliased namespace, not literally "vcloud".
+Someone with a better understanding of Go's struct-to-XML marshalling and how it interacts with mixed namespaces between
+the element and attributes might be able to untangle this and unify VirtualHardwareHostResource with VirtualHardwareHostResourceForWrite.
+*/
+type VirtualHardwareHostResourceForWrite struct {
+	BusType           int    `xml:"vcloud:busType,attr,omitempty"`
+	BusSubType        string `xml:"vcloud:busSubType,attr,omitempty"`
+	Capacity          int    `xml:"vcloud:capacity,attr,omitempty"`
+	StorageProfile    string `xml:"vcloud:storageProfileHref,attr,omitempty"`
+	OverrideVmDefault bool   `xml:"vcloud:storageProfileOverrideVmDefault,attr,omitempty"`
+	Disk              string `xml:"vcloud:disk,attr,omitempty"`
+	//Iops              int    `xml:"iops,attr,omitempty"`
+	//OsType            string `xml:"osType,attr,omitempty"`
+}
+
 // SnapshotSection from VM struct
 type SnapshotSection struct {
 	// Extends OVF Section_Type
@@ -1432,23 +1451,48 @@ type SnapshotItem struct {
 
 // OVFItem is a horrible kludge to process OVF, needs to be fixed with proper types.
 type OVFItem struct {
-	XMLName         xml.Name `xml:"vcloud:Item"`
-	XmlnsRasd       string   `xml:"xmlns:rasd,attr"`
-	XmlnsVCloud     string   `xml:"xmlns:vcloud,attr"`
-	XmlnsXsi        string   `xml:"xmlns:xsi,attr"`
-	XmlnsVmw        string   `xml:"xmlns:vmw,attr,omitempty"`
-	VCloudHREF      string   `xml:"vcloud:href,attr"`
-	VCloudType      string   `xml:"vcloud:type,attr"`
-	AllocationUnits string   `xml:"rasd:AllocationUnits"`
-	Description     string   `xml:"rasd:Description"`
-	ElementName     string   `xml:"rasd:ElementName"`
-	InstanceID      int      `xml:"rasd:InstanceID"`
-	Reservation     int      `xml:"rasd:Reservation"`
-	ResourceType    int      `xml:"rasd:ResourceType"`
-	VirtualQuantity int      `xml:"rasd:VirtualQuantity"`
-	Weight          int      `xml:"rasd:Weight"`
-	CoresPerSocket  *int     `xml:"vmw:CoresPerSocket,omitempty"`
-	Link            *Link    `xml:"vcloud:Link"`
+	XMLName     xml.Name `xml:"vcloud:Item"`
+	XmlnsRasd   string   `xml:"xmlns:rasd,attr"`
+	XmlnsVCloud string   `xml:"xmlns:vcloud,attr"`
+	XmlnsXsi    string   `xml:"xmlns:xsi,attr"`
+	XmlnsVmw    string   `xml:"xmlns:vmw,attr,omitempty"`
+
+	VCloudHREF string `xml:"vcloud:href,attr"`
+	VCloudType string `xml:"vcloud:type,attr"`
+
+	Address              string                               `xml:"rasd:Address,omitempty"`
+	AddressOnParent      *int                                 `xml:"rasd:AddressOnParent,omitempty"`
+	AllocationUnits      string                               `xml:"rasd:AllocationUnits"`
+	Description          string                               `xml:"rasd:Description"`
+	ElementName          string                               `xml:"rasd:ElementName"`
+	HostResource         *VirtualHardwareHostResourceForWrite `xml:"rasd:HostResource,omitempty"`
+	InstanceID           int                                  `xml:"rasd:InstanceID"`
+	Parent               *int                                 `xml:"rasd:Parent,omitempty"`
+	Reservation          int                                  `xml:"rasd:Reservation"`
+	ResourceSubType      string                               `xml:"rasd:ResourceSubType,omitempty"`
+	ResourceType         int                                  `xml:"rasd:ResourceType"`
+	VirtualQuantity      int                                  `xml:"rasd:VirtualQuantity"`
+	VirtualQuantityUnits int                                  `xml:"rasd:VirtualQuantityUnits"`
+	Weight               int                                  `xml:"rasd:Weight"`
+
+	CoresPerSocket *int  `xml:"vmw:CoresPerSocket,omitempty"`
+	Link           *Link `xml:"vcloud:Link"`
+}
+
+// Used to write a list of RASD (ResourceAllocationSettingData) items, generally for modifying disks attached to a VM
+// https://pubs.vmware.com/vcd-56/index.jsp?topic=%2Fcom.vmware.vcloud.api.doc_56%2FGUID-E1BA999D-87FA-4E2C-B638-24A211AB8160.html
+// https://www.vmware.com/support/vcd/doc/rest-api-doc-1.5-html/types/RasdItemsListType.html
+type RasdItemsList struct {
+	XMLName     xml.Name `xml:"RasdItemsList"`
+	Xmlns       string   `xml:"xmlns,attr"`
+	XmlnsVCloud string   `xml:"xmlns:vcloud,attr"`
+	XmlnsRasd   string   `xml:"xmlns:rasd,attr"`
+	XmlnsXsi    string   `xml:"xmlns:xsi,attr"`
+	XmlnsVmw    string   `xml:"xmlns:vmw,attr,omitempty"`
+	Type        string   `xml:"type,attr"`
+	HREF        string   `xml:"href,attr"`
+	Link        *Link    `xml:"vcloud:Link"`
+	Items       []*OVFItem
 }
 
 // DeployVAppParams are the parameters to a deploy vApp request

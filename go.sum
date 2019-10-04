@@ -60,8 +60,6 @@ github.com/bmatcuk/doublestar v1.1.5/go.mod h1:wiQtGV+rzVYxB7WIlirSN++5HPtPlXEo9
 github.com/boltdb/bolt v1.3.1/go.mod h1:clJnj/oiGkjum5o1McbSZDSLxVThjynRyGBgiAx27Ps=
 github.com/bradfitz/go-smtpd v0.0.0-20170404230938-deb6d6237625/go.mod h1:HYsPBTaaSFSlLx/70C2HPIMNZpVV8+vt/A+FMnYP11g=
 github.com/bsm/go-vlq v0.0.0-20150828105119-ec6e8d4f5f4e/go.mod h1:N+BjUcTjSxc2mtRGSCPsat1kze3CUtvJN3/jTXlp29k=
-github.com/cheald/go-vcloud-director/v2 v2.0.0-20191003203017-f9098d234b18 h1:N4LmNdeasxmjkwkdJ7nq4mPjEahtWEt5u9oNQgt2U0I=
-github.com/cheald/go-vcloud-director/v2 v2.0.0-20191003203017-f9098d234b18/go.mod h1:VqfkCixIzRmj4EzF2yFJKB+aKDW6GkXlLbFh5xZ+qqs=
 github.com/cheald/go-vcloud-director/v2 v2.0.0-20191004085034-4b17e65ce311 h1:eorqPrkM1UI/ooOLoKIUzeIo4ERWDxIZh78GETmOghI=
 github.com/cheald/go-vcloud-director/v2 v2.0.0-20191004085034-4b17e65ce311/go.mod h1:VqfkCixIzRmj4EzF2yFJKB+aKDW6GkXlLbFh5xZ+qqs=
 github.com/cheggaaa/pb v1.0.27/go.mod h1:pQciLPpbU0oxA0h+VJYYLxO+XeDQb5pZijXscXHm81s=
@@ -353,8 +351,6 @@ github.com/ulikunitz/xz v0.5.5/go.mod h1:2bypXElzHzzJZwzH67Y6wb67pO62Rzfn7BSiF4A
 github.com/vmihailenco/msgpack v3.3.3+incompatible/go.mod h1:fy3FlTQTDXWkZ7Bh6AcGMlsjHatGryHQYUTf1ShIgkk=
 github.com/vmihailenco/msgpack v4.0.1+incompatible h1:RMF1enSPeKTlXrXdOcqjFUElywVZjjC6pqse21bKbEU=
 github.com/vmihailenco/msgpack v4.0.1+incompatible/go.mod h1:fy3FlTQTDXWkZ7Bh6AcGMlsjHatGryHQYUTf1ShIgkk=
-github.com/vmware/go-vcloud-director/v2 v2.4.0-alpha.10 h1:95ff9asGp1lW5t/cWZKmz4sly8pMOIbIYikyM/ciHbM=
-github.com/vmware/go-vcloud-director/v2 v2.4.0-alpha.10/go.mod h1:VqfkCixIzRmj4EzF2yFJKB+aKDW6GkXlLbFh5xZ+qqs=
 github.com/xanzy/ssh-agent v0.2.1/go.mod h1:mLlQY/MoOhWBj+gOGMQkOeiEvkx+8pJSI+0Bx9h2kr4=
 github.com/xiang90/probing v0.0.0-20160813154853-07dd2e8dfe18/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/xlab/treeprint v0.0.0-20161029104018-1d6e34225557/go.mod h1:ce1O1j6UtZfjr22oyGxGLbauSBp2YVXpARAosm7dHBg=

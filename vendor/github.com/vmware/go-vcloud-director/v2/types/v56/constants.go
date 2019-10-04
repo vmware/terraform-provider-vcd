@@ -73,6 +73,8 @@ const (
 	MimeNetworkConnectionSection = "application/vnd.vmware.vcloud.networkConnectionSection+xml"
 	// Mime for Item
 	MimeRasdItem = "application/vnd.vmware.vcloud.rasdItem+xml"
+	// Mime for Item list
+	MimeRasdItemList = "application/vnd.vmware.vcloud.rasdItemsList+xml"
 	// Mime for guest customization section
 	MimeGuestCustomizationSection = "application/vnd.vmware.vcloud.guestCustomizationSection+xml"
 	// Mime for guest customization status

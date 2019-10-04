@@ -394,6 +394,100 @@ func (vm *VM) ChangeMemorySize(size int) (Task, error) {
 		types.MimeRasdItem, "error changing memory size: %s", newMem)
 }
 
+// GetDiskHardwareItem finds the VirtualHardwareItem for a disk by bus (Address belonging to the Parent item) and unit (AddressOnParent)
+func (vm *VM) GetDiskHardwareItem(busID, unitID int) *types.VirtualHardwareItem {
+	for _, virtualHardwareItem := range vm.VM.VirtualHardwareSection.Item {
+		if virtualHardwareItem.ResourceType == types.ResourceTypeDisk && virtualHardwareItem.AddressOnParent == unitID {
+			for _, possibleParent := range vm.VM.VirtualHardwareSection.Item {
+				// Address is a string because it can be empty; if it's not empty, perform an int comparison
+				if possibleParent.InstanceID == virtualHardwareItem.Parent && possibleParent.Address != "" {
+					parentAddress, err := strconv.Atoi(possibleParent.Address)
+					if err == nil && parentAddress == busID {
+						return virtualHardwareItem
+					}
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// ChangeDiskSize alters the Capacity (in megabytes) of a non-independent disk attached to the VM. Disk sizes may only be increased.
+func (vm *VM) ChangeDiskSize(bus, unit int, sizeInMegabytes int) (Task, error) {
+	err := vm.Refresh()
+	if err != nil {
+		return Task{}, fmt.Errorf("error refreshing VM before running customization: %s", err)
+	}
+
+	rasdItems := &types.RasdItemsList{
+		Type:        types.MimeRasdItemList,
+		HREF:        vm.VM.HREF + "/virtualHardwareSection/disks",
+		Xmlns:       types.XMLNamespaceVCloud,
+		XmlnsVCloud: types.XMLNamespaceVCloud,
+		XmlnsRasd:   types.XMLNamespaceRASD,
+		XmlnsXsi:    types.XMLNamespaceXSI,
+		Items:       make([]*types.OVFItem, 0),
+		Link: &types.Link{
+			HREF: vm.VM.HREF + "/virtualHardwareSection/disks",
+			Rel:  "edit",
+			Type: types.MimeRasdItemList,
+		},
+	}
+
+	disk := vm.GetDiskHardwareItem(bus, unit)
+	if disk == nil {
+		return Task{}, fmt.Errorf("error refreshing VM before running customization: couldn't find disk at bus %d unit %d", bus, unit)
+	}
+
+	for _, item := range vm.VM.VirtualHardwareSection.Item {
+		newOvfItem := &types.OVFItem{
+			XmlnsRasd:       types.XMLNamespaceRASD,
+			XmlnsVCloud:     types.XMLNamespaceVCloud,
+			XmlnsXsi:        types.XMLNamespaceXSI,
+			XmlnsVmw:        types.XMLNamespaceVMW,
+			Address:         item.Address,
+			AddressOnParent: &item.AddressOnParent,
+			AllocationUnits: item.AllocationUnits,
+			Description:     item.Description,
+			ElementName:     item.ElementName,
+			InstanceID:      item.InstanceID,
+			Parent:          &item.Parent,
+			ResourceSubType: item.ResourceSubType,
+			ResourceType:    item.ResourceType,
+			Reservation:     item.Reservation,
+			VirtualQuantity: item.VirtualQuantity,
+			Weight:          item.Weight,
+		}
+
+		if item.Link != nil && len(item.Link) > 0 {
+			newOvfItem.Link = item.Link[0]
+		}
+
+		if item.HostResource != nil && len(item.HostResource) > 0 {
+			resource := item.HostResource[0]
+			newOvfItem.HostResource = &types.VirtualHardwareHostResourceForWrite{
+				BusType:           resource.BusType,
+				BusSubType:        resource.BusSubType,
+				Capacity:          resource.Capacity,
+				StorageProfile:    resource.StorageProfile,
+				OverrideVmDefault: resource.OverrideVmDefault,
+				Disk:              resource.Disk,
+			}
+		}
+
+		if newOvfItem.HostResource != nil && newOvfItem.InstanceID == disk.InstanceID {
+			newOvfItem.HostResource.Capacity = sizeInMegabytes
+		}
+		rasdItems.Items = append(rasdItems.Items, newOvfItem)
+	}
+	apiEndpoint, _ := url.ParseRequestURI(vm.VM.HREF)
+	apiEndpoint.Path += "/virtualHardwareSection/disks"
+
+	// Return the task
+	return vm.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPut,
+		types.MimeRasdItemList, "error changing disk size: %s", rasdItems)
+}
+
 func (vm *VM) RunCustomizationScript(computername, script string) (Task, error) {
 	return vm.Customize(computername, script, false)
 }
@@ -739,7 +833,7 @@ func (vm *VM) GetQuestion() (types.VmPendingQuestion, error) {
 func (vm *VM) AnswerQuestion(questionId string, choiceId int) error {
 
 	//validate input
-	if "" == questionId {
+	if questionId == "" {
 		return fmt.Errorf("questionId can not be empty")
 	}
 
