@@ -12,6 +12,7 @@ FEATURES:
 * **New Data Source:** `vcd_network_routed` Routed Network - ([#218])
 * **New Data Source:** `vcd_network_isolated` Isolated Network - ([#218])
 * **New Data Source:** `vcd_network_direct` Direct Network - ([#218])
+* **New Data Source:** `vcd_vapp` vApp - ([#218])
 * **New Data Source:** `vcd_nsxv_dnat` DNAT for advanced edge gateways using proxied NSX-V API - [#328]
 * **New Data Source:** `vcd_nsxv_snat` SNAT for advanced edge gateways using proxied NSX-V API - [#328]
 * **New Data Source:** `vcd_catalog_media` Media item - [#340]
@@ -26,9 +27,12 @@ IMPROVEMENTS:
 * `resource/vcd_network_routed` Add import capability and full read support [#218]
 * `resource/vcd_network_isolated` Add import capability and full read support [#218]
 * `resource/vcd_network_direct` Add import capability and full read support [#218]
+* `resource/vcd_vapp` Add import capability and full read support [#218]
 * `resource/vcd_network_direct`: Direct network state ID changed from network name to vCD ID 
 * `resource/vcd_network_isolated`: Isolated network state ID changed from network name to vCD ID 
 * `resource/vcd_network_routed`: Routed network state ID changed from network name to vCD ID 
+* `resource/vcd_vapp`: vApp state ID changed from vApp name to vCD ID
+* `resource/vcd_vapp`: Add properties `status` and `status_text`
 * `resource/catalog_item` added catalog item metadata support [#285] 
 * `resource/vcd_catalog`: Catalog state ID changed from catalog name to vCD ID 
 * `resource/vcd_catalog_item`: CatalogItem state ID changed from colon separated list of catalog name and item name to vCD ID 
@@ -51,6 +55,22 @@ BUG FIXES:
 * Wait for task completion on creation and update, where tasks were not handled at all.
 * `resource/vcd_firewall_rules` force recreation of the resource when attributes of the sub-element `rule` are changed (fixes a situation when it tried to update a rule).
 * `resource/vcd_network_isolated` Fix definition of DHCP, which was created automatically with leftovers from static IP pool even when not requested.
+* `resource/vcd_network_routed` Fix retrieval with early vCD versions [#344]
+
+DEPRECATIONS
+* The ability of deploying a VM implicitly within a vApp is deprecated. Users are encouraged to set an empty vApp and
+add explicit VM resources `vcd_vapp_vm`.
+  For this reason, the following fields in `vcd_vapp` are deprecated:
+  * `template_name`
+  * `catalog_name`
+  * `network_name`
+  * `ip`
+  * `cpus`
+  * `memory`
+  * `network_name`
+  * `initscript`
+  * `ovf`
+  * `accept_all_eulas`
 
 ## 2.4.0 (July 29, 2019)
 

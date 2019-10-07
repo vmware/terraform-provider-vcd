@@ -116,6 +116,9 @@ func resourceVcdVAppVm() *schema.Resource {
 				Optional: true,
 				Default:  true,
 			},
+			// TODO: Add a property "storage_profile", which is currently not handled by vapp.AddVM
+			// Then deprecate "storage_profile" in vcd_vapp resource
+			// See https://github.com/vmware/go-vcloud-director/issues/246
 			"network_href": &schema.Schema{
 				ConflictsWith: []string{"network"},
 				Deprecated:    "In favor of network",
