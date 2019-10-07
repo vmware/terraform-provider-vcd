@@ -154,7 +154,7 @@ func createMedia(client *Client, link, mediaName, mediaDescription string, fileS
 
 	if mediaForUpload.Tasks != nil {
 		for _, task := range mediaForUpload.Tasks.Task {
-			if "error" == task.Status && mediaName == mediaForUpload.Name {
+			if task.Status == "error" && mediaName == mediaForUpload.Name {
 				util.Logger.Printf("[Error] issue with creating media %#v", task.Error)
 				return nil, fmt.Errorf("error in vcd returned error code: %d, error: %s and message: %s ", task.Error.MajorErrorCode, task.Error.MinorErrorCode, task.Error.Message)
 			}
@@ -210,7 +210,7 @@ func queryMedia(client *Client, mediaUrl string, newItemName string) (*types.Med
 	}
 
 	for _, task := range mediaParsed.Tasks.Task {
-		if "error" == task.Status && newItemName == task.Owner.Name {
+		if task.Status == "error" && newItemName == task.Owner.Name {
 			util.Logger.Printf("[Error] %#v", task.Error)
 			return mediaParsed, fmt.Errorf("error in vcd returned error code: %d, error: %s and message: %s ", task.Error.MajorErrorCode, task.Error.MinorErrorCode, task.Error.Message)
 		}

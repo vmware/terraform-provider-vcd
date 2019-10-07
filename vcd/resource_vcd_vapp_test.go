@@ -4,6 +4,7 @@ package vcd
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -62,6 +63,8 @@ func TestAccVcdVApp_PowerOff(t *testing.T) {
 						"vcd_vapp."+vappName, "power_on", "true"),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp."+vappName, "metadata.vapp_metadata", "vApp Metadata."),
+					resource.TestMatchResourceAttr("vcd_vapp."+vappName, "href",
+						regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}`)),
 				),
 			},
 
@@ -93,6 +96,15 @@ func TestAccVcdVApp_PowerOff(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_vapp."+vappNamePowerOff, "metadata.vapp_metadata", "vApp Metadata."),
 				),
+			},
+			resource.TestStep{
+				ResourceName:      "vcd_vapp." + vappNamePowerOff + "-import",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, vappNamePowerOff),
+				// These fields can't be retrieved from user data
+				ImportStateVerifyIgnore: []string{"template_name", "catalog_name", "ovf", "network_name",
+					"memory", "cpus", "ip", "storage_profile", "initscript", "accept_all_eulas", "power_on"},
 			},
 		},
 	})

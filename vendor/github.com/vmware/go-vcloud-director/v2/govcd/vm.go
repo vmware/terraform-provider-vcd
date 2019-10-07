@@ -739,7 +739,7 @@ func (vm *VM) GetQuestion() (types.VmPendingQuestion, error) {
 func (vm *VM) AnswerQuestion(questionId string, choiceId int) error {
 
 	//validate input
-	if "" == questionId {
+	if questionId == "" {
 		return fmt.Errorf("questionId can not be empty")
 	}
 

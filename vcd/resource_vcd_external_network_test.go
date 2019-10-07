@@ -90,16 +90,10 @@ func TestAccVcdExternalNetworkBasic(t *testing.T) {
 				ResourceName:      resourceName + "-import",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdByExternalNetwork(TestAccVcdExternalNetwork),
+				ImportStateIdFunc: importStateIdTopHierarchy(TestAccVcdExternalNetwork),
 			},
 		},
 	})
-}
-
-func importStateIdByExternalNetwork(objectName string) resource.ImportStateIdFunc {
-	return func(*terraform.State) (string, error) {
-		return objectName, nil
-	}
 }
 
 func testAccCheckVcdExternalNetworkExists(name string, externalNetwork *govcd.ExternalNetwork) resource.TestCheckFunc {
