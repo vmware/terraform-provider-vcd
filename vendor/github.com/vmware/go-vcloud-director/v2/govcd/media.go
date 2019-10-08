@@ -19,11 +19,13 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
+// Deprecated: use MediaRecord
 type MediaItem struct {
 	MediaItem *types.MediaRecordType
 	vdc       *Vdc
 }
 
+// Deprecated: use NewMediaRecord
 func NewMediaItem(vdc *Vdc) *MediaItem {
 	return &MediaItem{
 		MediaItem: new(types.MediaRecordType),
@@ -31,9 +33,34 @@ func NewMediaItem(vdc *Vdc) *MediaItem {
 	}
 }
 
+type Media struct {
+	Media  *types.Media
+	client *Client
+}
+
+func NewMedia(cli *Client) *Media {
+	return &Media{
+		Media:  new(types.Media),
+		client: cli,
+	}
+}
+
+type MediaRecord struct {
+	MediaRecord *types.MediaRecordType
+	client      *Client
+}
+
+func NewMediaRecord(cli *Client) *MediaRecord {
+	return &MediaRecord{
+		MediaRecord: new(types.MediaRecordType),
+		client:      cli,
+	}
+}
+
 // Uploads an ISO file as media. This method only uploads bits to vCD spool area.
 // Returns errors if any occur during upload from vCD or upload process. On upload fail client may need to
 // remove vCD catalog item which waits for files to be uploaded.
+// Recommend to use catalog.UploadMediaImage which let's expect in which catalog file will be placed
 func (vdc *Vdc) UploadMediaImage(mediaName, mediaDescription, filePath string, uploadPieceSize int64) (UploadTask, error) {
 	util.Logger.Printf("[TRACE] UploadImage: %s, image name: %v \n", mediaName, mediaDescription)
 
@@ -154,7 +181,7 @@ func createMedia(client *Client, link, mediaName, mediaDescription string, fileS
 
 	if mediaForUpload.Tasks != nil {
 		for _, task := range mediaForUpload.Tasks.Task {
-			if task.Status == "error" && mediaName == mediaForUpload.Name {
+			if "error" == task.Status && mediaName == mediaForUpload.Name {
 				util.Logger.Printf("[Error] issue with creating media %#v", task.Error)
 				return nil, fmt.Errorf("error in vcd returned error code: %d, error: %s and message: %s ", task.Error.MajorErrorCode, task.Error.MinorErrorCode, task.Error.Message)
 			}
@@ -210,7 +237,7 @@ func queryMedia(client *Client, mediaUrl string, newItemName string) (*types.Med
 	}
 
 	for _, task := range mediaParsed.Tasks.Task {
-		if task.Status == "error" && newItemName == task.Owner.Name {
+		if "error" == task.Status && newItemName == task.Owner.Name {
 			util.Logger.Printf("[Error] %#v", task.Error)
 			return mediaParsed, fmt.Errorf("error in vcd returned error code: %d, error: %s and message: %s ", task.Error.MajorErrorCode, task.Error.MinorErrorCode, task.Error.Message)
 		}
@@ -289,7 +316,8 @@ func queryMediaItemsWithFilter(vdc *Vdc, filter string) ([]*types.MediaRecordTyp
 	return mediaResults, nil
 }
 
-// Looks for an Org Vdc network and, if found, will delete it.
+// Looks for media and, if found, will delete it.
+// Deprecated: Use catalog.RemoveMediaIfExist
 func RemoveMediaImageIfExists(vdc Vdc, mediaName string) error {
 	mediaItem, err := vdc.FindMediaImage(mediaName)
 	if err == nil && mediaItem != (MediaItem{}) {
@@ -302,13 +330,32 @@ func RemoveMediaImageIfExists(vdc Vdc, mediaName string) error {
 			return fmt.Errorf("error deleting media [task] %s", mediaName)
 		}
 	} else {
-		util.Logger.Printf("[TRACE] Media not foun or error: %v - %#v \n", err, mediaItem)
+		util.Logger.Printf("[TRACE] Media not found or error: %v - %#v \n", err, mediaItem)
+	}
+	return nil
+}
+
+// Looks for media and, if found, will delete it.
+func (adminCatalog *AdminCatalog) RemoveMediaIfExists(mediaName string) error {
+	mediaItem, err := adminCatalog.GetMediaByName(mediaName, true)
+	if err == nil {
+		task, err := mediaItem.Delete()
+		if err != nil {
+			return fmt.Errorf("error deleting media [phase 1] %s", mediaName)
+		}
+		err = task.WaitTaskCompletion()
+		if err != nil {
+			return fmt.Errorf("error deleting media [task] %s", mediaName)
+		}
+	} else {
+		util.Logger.Printf("[TRACE] Media not found or error: %v - %#v \n", err, mediaItem)
 	}
 	return nil
 }
 
 // Deletes the Media Item, returning an error if the vCD call fails.
 // Link to API call: https://code.vmware.com/apis/220/vcloud#/doc/doc/operations/DELETE-Media.html
+// Deprecated: Use MediaRecord.Delete
 func (mediaItem *MediaItem) Delete() (Task, error) {
 	util.Logger.Printf("[TRACE] Deleting media item: %#v", mediaItem.MediaItem.Name)
 
@@ -317,7 +364,18 @@ func (mediaItem *MediaItem) Delete() (Task, error) {
 		"", "error deleting Media item: %s", nil)
 }
 
+// Deletes the Media Item, returning an error if the vCD call fails.
+// Link to API call: https://code.vmware.com/apis/220/vcloud#/doc/doc/operations/DELETE-Media.html
+func (media *Media) Delete() (Task, error) {
+	util.Logger.Printf("[TRACE] Deleting media item: %#v", media.Media.Name)
+
+	// Return the task
+	return media.client.ExecuteTaskRequest(media.Media.HREF, http.MethodDelete,
+		"", "error deleting Media item: %s", nil)
+}
+
 // Finds media in catalog and returns catalog item
+// Deprecated: Use catalog.GetMediaByName()
 func FindMediaAsCatalogItem(org *Org, catalogName, mediaName string) (CatalogItem, error) {
 	if catalogName == "" {
 		return CatalogItem{}, errors.New("catalog name is empty")
@@ -339,6 +397,7 @@ func FindMediaAsCatalogItem(org *Org, catalogName, mediaName string) (CatalogIte
 }
 
 // Refresh refreshes the media item information by href
+// Deprecated: Use MediaRecord.Refresh
 func (mediaItem *MediaItem) Refresh() error {
 
 	if mediaItem.MediaItem == nil {
@@ -353,4 +412,221 @@ func (mediaItem *MediaItem) Refresh() error {
 	*mediaItem = latestMediaItem
 
 	return err
+}
+
+// Refresh refreshes the media information by href
+func (media *Media) Refresh() error {
+
+	if media.Media == nil {
+		return fmt.Errorf("cannot refresh, Object is empty")
+	}
+
+	url := media.Media.HREF
+
+	// Empty struct before a new unmarshal, otherwise we end up with duplicate
+	// elements in slices.
+	media.Media = &types.Media{}
+
+	_, err := media.client.ExecuteRequest(url, http.MethodGet,
+		"", "error retrieving media: %s", nil, media.Media)
+
+	return err
+}
+
+// GetMediaByHref finds a Media by HREF
+// On success, returns a pointer to the Media structure and a nil error
+// On failure, returns a nil pointer and an error
+func (cat *Catalog) GetMediaByHref(mediaItemHref string) (*Media, error) {
+
+	media := NewMedia(cat.client)
+
+	_, err := cat.client.ExecuteRequest(mediaItemHref, http.MethodGet,
+		"", "error retrieving media: %s", nil, media.Media)
+	if err != nil {
+		return nil, err
+	}
+	return media, nil
+}
+
+// GetMediaByName finds a Media by Name
+// On success, returns a pointer to the Media structure and a nil error
+// On failure, returns a nil pointer and an error
+func (cat *Catalog) GetMediaByName(mediaName string, refresh bool) (*Media, error) {
+	if refresh {
+		err := cat.Refresh()
+		if err != nil {
+			return nil, err
+		}
+	}
+	for _, catalogItems := range cat.Catalog.CatalogItems {
+		for _, catalogItem := range catalogItems.CatalogItem {
+			if catalogItem.Name == mediaName && catalogItem.Type == "application/vnd.vmware.vcloud.catalogItem+xml" {
+				catalogItemElement, err := cat.GetCatalogItemByHref(catalogItem.HREF)
+				if err != nil {
+					return nil, err
+				}
+				return cat.GetMediaByHref(catalogItemElement.CatalogItem.Entity.HREF)
+			}
+		}
+	}
+	return nil, ErrorEntityNotFound
+}
+
+// GetMediaById finds a Media by ID
+// On success, returns a pointer to the Media structure and a nil error
+// On failure, returns a nil pointer and an error
+func (cat *Catalog) GetMediaById(mediaId string, refresh bool) (*Media, error) {
+	if refresh {
+		err := cat.Refresh()
+		if err != nil {
+			return nil, err
+		}
+	}
+	mediaHREF := cat.client.VCDHREF
+
+	mediaBareId, err := getBareEntityUuid(mediaId)
+	if err != nil {
+		util.Logger.Printf("[Error] parsing bareID from mediaId %s: %s", mediaId, err)
+		return nil, ErrorEntityNotFound
+	}
+	if mediaBareId == "" {
+		util.Logger.Printf("[Error] parsing bareID from mediaId %s - empty bareID returned", mediaId)
+		return nil, ErrorEntityNotFound
+	}
+	mediaHREF.Path += fmt.Sprintf("/media/%s", mediaBareId)
+	return cat.GetMediaByHref(mediaHREF.String())
+}
+
+// GetMediaByNameOrId finds a Media by Name or ID
+// On success, returns a pointer to the Media structure and a nil error
+// On failure, returns a nil pointer and an error
+func (cat *Catalog) GetMediaByNameOrId(identifier string, refresh bool) (*Media, error) {
+	getByName := func(name string, refresh bool) (interface{}, error) { return cat.GetMediaByName(name, refresh) }
+	getById := func(id string, refresh bool) (interface{}, error) { return cat.GetMediaById(id, refresh) }
+	entity, err := getEntityByNameOrId(getByName, getById, identifier, refresh)
+	if entity == nil {
+		return nil, err
+	}
+	return entity.(*Media), err
+}
+
+// GetMediaByHref finds a Media by HREF
+// On success, returns a pointer to the Media structure and a nil error
+// On failure, returns a nil pointer and an error
+func (adminCatalog *AdminCatalog) GetMediaByHref(mediaItemHref string) (*Media, error) {
+	catalog := NewCatalog(adminCatalog.client)
+	catalog.Catalog = &adminCatalog.AdminCatalog.Catalog
+	return catalog.GetMediaByHref(mediaItemHref)
+}
+
+// GetMediaByName finds a Media by Name
+// On success, returns a pointer to the Media structure and a nil error
+// On failure, returns a nil pointer and an error
+func (adminCatalog *AdminCatalog) GetMediaByName(mediaName string, refresh bool) (*Media, error) {
+	catalog := NewCatalog(adminCatalog.client)
+	catalog.Catalog = &adminCatalog.AdminCatalog.Catalog
+	return catalog.GetMediaByName(mediaName, refresh)
+}
+
+// GetMediaById finds a Media by ID
+// On success, returns a pointer to the Media structure and a nil error
+// On failure, returns a nil pointer and an error
+func (adminCatalog *AdminCatalog) GetMediaById(mediaId string, refresh bool) (*Media, error) {
+	catalog := NewCatalog(adminCatalog.client)
+	catalog.Catalog = &adminCatalog.AdminCatalog.Catalog
+	return catalog.GetMediaById(mediaId, refresh)
+}
+
+// GetMediaByNameOrId finds a Media by Name or ID
+// On success, returns a pointer to the Media structure and a nil error
+// On failure, returns a nil pointer and an error
+func (adminCatalog *AdminCatalog) GetMediaByNameOrId(identifier string, refresh bool) (*Media, error) {
+	catalog := NewCatalog(adminCatalog.client)
+	catalog.Catalog = &adminCatalog.AdminCatalog.Catalog
+	return catalog.GetMediaByNameOrId(identifier, refresh)
+}
+
+// QueryMedia returns media image found in system using `name` and `catalog name` as query.
+func (catalog *Catalog) QueryMedia(mediaName string) (*MediaRecord, error) {
+	util.Logger.Printf("[TRACE] Querying medias by name and catalog\n")
+
+	if catalog == nil || catalog.Catalog == nil || catalog.Catalog.Name == "" {
+		return nil, errors.New("catalog is empty")
+	}
+	if mediaName == "" {
+		return nil, errors.New("media name is empty")
+	}
+
+	typeMedia := "media"
+	if catalog.client.IsSysAdmin {
+		typeMedia = "adminMedia"
+	}
+
+	results, err := catalog.client.QueryWithNotEncodedParams(nil, map[string]string{"type": typeMedia,
+		"filter": fmt.Sprintf("(name==%s;catalogName==%s)",
+			url.QueryEscape(mediaName),
+			url.QueryEscape(catalog.Catalog.Name))})
+	if err != nil {
+		return nil, fmt.Errorf("error querying medias %#v", err)
+	}
+	newMediaRecord := NewMediaRecord(catalog.client)
+
+	mediaResults := results.Results.MediaRecord
+	if catalog.client.IsSysAdmin {
+		mediaResults = results.Results.AdminMediaRecord
+	}
+	if len(mediaResults) == 1 {
+		newMediaRecord.MediaRecord = mediaResults[0]
+	}
+
+	if len(mediaResults) == 0 {
+		return nil, ErrorEntityNotFound
+	}
+	// this shouldn't happen, but we will check anyways
+	if len(mediaResults) > 1 {
+		return nil, fmt.Errorf("found more than one result %#v with catalog name %s and media name %s ", mediaResults, catalog.Catalog.Name, mediaName)
+	}
+
+	util.Logger.Printf("[TRACE] Found media record by name: %#v \n", mediaResults[0])
+	return newMediaRecord, nil
+}
+
+// QueryMedia returns media image found in system using `name` and `catalog name` as query.
+func (adminCatalog *AdminCatalog) QueryMedia(mediaName string) (*MediaRecord, error) {
+	catalog := NewCatalog(adminCatalog.client)
+	catalog.Catalog = &adminCatalog.AdminCatalog.Catalog
+	return catalog.QueryMedia(mediaName)
+}
+
+// Refresh refreshes the media information by href
+func (mediaRecord *MediaRecord) Refresh() error {
+
+	if mediaRecord.MediaRecord == nil {
+		return fmt.Errorf("cannot refresh, Object is empty")
+	}
+
+	if mediaRecord.MediaRecord.Name == "" {
+		return fmt.Errorf("cannot refresh, Name is empty")
+	}
+
+	url := mediaRecord.MediaRecord.HREF
+
+	// Empty struct before a new unmarshal, otherwise we end up with duplicate
+	// elements in slices.
+	mediaRecord.MediaRecord = &types.MediaRecordType{}
+
+	_, err := mediaRecord.client.ExecuteRequest(url, http.MethodGet,
+		"", "error retrieving media: %s", nil, mediaRecord.MediaRecord)
+
+	return err
+}
+
+// Deletes the Media Item, returning an error if the vCD call fails.
+// Link to API call: https://code.vmware.com/apis/220/vcloud#/doc/doc/operations/DELETE-Media.html
+func (mediaRecord *MediaRecord) Delete() (Task, error) {
+	util.Logger.Printf("[TRACE] Deleting media item: %#v", mediaRecord.MediaRecord.Name)
+
+	// Return the task
+	return mediaRecord.client.ExecuteTaskRequest(mediaRecord.MediaRecord.HREF, http.MethodDelete,
+		"", "error deleting Media item: %s", nil)
 }

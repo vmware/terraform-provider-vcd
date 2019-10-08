@@ -241,9 +241,7 @@ func (vdc *Vdc) GetOrgVdcNetworkById(id string, refresh bool) (*OrgVDCNetwork, e
 	}
 	for _, an := range vdc.Vdc.AvailableNetworks {
 		for _, reference := range an.Network {
-			// Some versions of vCD do not return an ID in the network reference
-			// We use equalIds to overcome this issue
-			if equalIds(id, reference.ID, reference.HREF) {
+			if reference.ID == id {
 				return vdc.GetOrgVdcNetworkByHref(reference.HREF)
 			}
 		}
@@ -722,10 +720,14 @@ func (vdc *Vdc) FindVAppByID(vappid string) (VApp, error) {
 
 }
 
+// FindMediaImage returns media image found in system using `name` as query.
+// Can find a few of them if media with same name exist in different catalogs.
+// Deprecated: Use catalog.GetMediaByName()
 func (vdc *Vdc) FindMediaImage(mediaName string) (MediaItem, error) {
 	util.Logger.Printf("[TRACE] Querying medias by name\n")
 
-	mediaResults, err := queryMediaItemsWithFilter(vdc, "name=="+url.QueryEscape(mediaName))
+	mediaResults, err := queryMediaItemsWithFilter(vdc,
+		fmt.Sprintf("(name==%s)", url.QueryEscape(mediaName)))
 	if err != nil {
 		return MediaItem{}, err
 	}
@@ -744,7 +746,7 @@ func (vdc *Vdc) FindMediaImage(mediaName string) (MediaItem, error) {
 		return MediaItem{}, errors.New("found more than result")
 	}
 
-	util.Logger.Printf("[TRACE] Found media record by name: %#v \n", mediaResults)
+	util.Logger.Printf("[TRACE] Found media record by name: %#v \n", mediaResults[0])
 	return *newMediaItem, nil
 }
 

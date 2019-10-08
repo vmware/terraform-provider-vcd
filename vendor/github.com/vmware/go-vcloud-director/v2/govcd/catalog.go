@@ -685,7 +685,7 @@ func (cat *Catalog) GetCatalogItemByHref(catalogItemHref string) (*CatalogItem, 
 	catItem := NewCatalogItem(cat.client)
 
 	_, err := cat.client.ExecuteRequest(catalogItemHref, http.MethodGet,
-		"", "error retrieving catalog: %s", nil, catItem.CatalogItem)
+		"", "error retrieving catalog item: %s", nil, catItem.CatalogItem)
 	if err != nil {
 		return nil, err
 	}

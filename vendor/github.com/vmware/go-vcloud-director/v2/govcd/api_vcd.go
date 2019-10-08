@@ -77,7 +77,7 @@ func (vcdCli *VCDClient) vcdauthorize(user, pass, org string) error {
 	vcdCli.Client.VCDToken = resp.Header.Get("x-vcloud-authorization")
 	vcdCli.Client.VCDAuthHeader = "x-vcloud-authorization"
 	vcdCli.Client.IsSysAdmin = false
-	if strings.ToLower(org) == "system" {
+	if "system" == strings.ToLower(org) {
 		vcdCli.Client.IsSysAdmin = true
 	}
 	// Get query href
