@@ -125,12 +125,12 @@ func testAccCheckVcdCatalogMediaExists(mediaName string, media *govcd.Media) res
 			return fmt.Errorf("catalog %s does not exist (%s)", testSuiteCatalogName, err)
 		}
 
-		newMedia, err := catalog.GetMediaByName(catalogMediaRs.Primary.Attributes["name"], false)
+		foundMedia, err := catalog.GetMediaByName(catalogMediaRs.Primary.Attributes["name"], false)
 		if err != nil {
-			return fmt.Errorf("catalog media %s does not exist (%#v)", catalogMediaRs.Primary.ID, newMedia.Media)
+			return fmt.Errorf("catalog media %s does not exist (%#v)", catalogMediaRs.Primary.ID, foundMedia.Media)
 		}
 
-		media = newMedia
+		media = foundMedia
 		return nil
 	}
 }
