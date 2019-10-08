@@ -17,7 +17,7 @@ var TestAccVcdCatalogMediaDescription = "TestAccVcdCatalogMediaBasicDescription"
 
 func TestAccVcdCatalogMediaBasic(t *testing.T) {
 
-	var catalogItem govcd.CatalogItem
+	var media govcd.Media
 	var params = StringMap{
 		"Org":              testConfig.VCD.Org,
 		"Catalog":          testSuiteCatalogName,
@@ -46,7 +46,7 @@ func TestAccVcdCatalogMediaBasic(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdCatalogMediaExists("vcd_catalog_media."+TestAccVcdCatalogMedia, &catalogItem),
+					testAccCheckVcdCatalogMediaExists("vcd_catalog_media."+TestAccVcdCatalogMedia, &media),
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_media."+TestAccVcdCatalogMedia, "name", TestAccVcdCatalogMedia),
 					resource.TestCheckResourceAttr(
@@ -55,19 +55,17 @@ func TestAccVcdCatalogMediaBasic(t *testing.T) {
 						"vcd_catalog_media."+TestAccVcdCatalogMedia, "metadata.mediaItem_metadata", "mediaItem Metadata"),
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_media."+TestAccVcdCatalogMedia, "metadata.mediaItem_metadata2", "mediaItem Metadata2"),
-					resource.TestCheckOutput("is_iso", "true"),
 					resource.TestMatchOutput("owner_name", regexp.MustCompile(`^\w*$`)),
-					resource.TestCheckOutput("is_published", "false"),
 					resource.TestMatchOutput("creation_date", regexp.MustCompile(`^(2019|2020)-`)),
 					resource.TestCheckOutput("status", "RESOLVED"),
-					resource.TestMatchOutput("size", regexp.MustCompile(`^\d*$`)),
 					resource.TestMatchOutput("storage_profile_name", regexp.MustCompile(`(.|\s)*\S(.|\s)*`)),
+					testCheckMediaNonStringOutputs(),
 				),
 			},
 			resource.TestStep{
 				Config: updateConfigText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdCatalogMediaExists("vcd_catalog_media."+TestAccVcdCatalogMedia, &catalogItem),
+					testAccCheckVcdCatalogMediaExists("vcd_catalog_media."+TestAccVcdCatalogMedia, &media),
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_media."+TestAccVcdCatalogMedia, "name", TestAccVcdCatalogMedia),
 					resource.TestCheckResourceAttr(
@@ -84,7 +82,27 @@ func TestAccVcdCatalogMediaBasic(t *testing.T) {
 	})
 }
 
-func testAccCheckVcdCatalogMediaExists(mediaName string, catalogItem *govcd.CatalogItem) resource.TestCheckFunc {
+func testCheckMediaNonStringOutputs() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		outputs := s.RootModule().Outputs
+
+		if outputs["is_iso"].Value != true {
+			return fmt.Errorf("is_iso value didn't match")
+		}
+
+		if outputs["is_published"].Value != false {
+			return fmt.Errorf("is_published value didn't match")
+		}
+
+		if regexp.MustCompile(`^\d+$`).MatchString(fmt.Sprintf("%s", outputs["size"].Value)) {
+			return fmt.Errorf("size value isn't int")
+		}
+
+		return nil
+	}
+}
+
+func testAccCheckVcdCatalogMediaExists(mediaName string, media *govcd.Media) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		catalogMediaRs, ok := s.RootModule().Resources[mediaName]
 		if !ok {
@@ -107,12 +125,12 @@ func testAccCheckVcdCatalogMediaExists(mediaName string, catalogItem *govcd.Cata
 			return fmt.Errorf("catalog %s does not exist (%s)", testSuiteCatalogName, err)
 		}
 
-		newCatalogItem, err := catalog.GetCatalogItemByName(catalogMediaRs.Primary.Attributes["name"], false)
+		newMedia, err := catalog.GetMediaByName(catalogMediaRs.Primary.Attributes["name"], false)
 		if err != nil {
-			return fmt.Errorf("catalog media %s does not exist (%#v)", catalogMediaRs.Primary.ID, catalogItem.CatalogItem)
+			return fmt.Errorf("catalog media %s does not exist (%#v)", catalogMediaRs.Primary.ID, newMedia.Media)
 		}
 
-		catalogItem = newCatalogItem
+		media = newMedia
 		return nil
 	}
 }
@@ -135,7 +153,7 @@ func testAccCheckCatalogMediaDestroy(s *terraform.State) error {
 		}
 
 		mediaName := rs.Primary.Attributes["name"]
-		_, err = catalog.GetCatalogItemByName(mediaName, false)
+		_, err = catalog.GetMediaByName(mediaName, false)
 
 		if err == nil {
 			return fmt.Errorf("catalog media %s still exists", mediaName)

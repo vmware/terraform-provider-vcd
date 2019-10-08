@@ -37,7 +37,7 @@ func datasourceVcdCatalogMedia() *schema.Resource {
 				// a value of type String in this map.
 			},
 			"is_iso": &schema.Schema{
-				Type:        schema.TypeString,
+				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True if this media file is ISO",
 			},
@@ -47,7 +47,7 @@ func datasourceVcdCatalogMedia() *schema.Resource {
 				Description: "Owner name",
 			},
 			"is_published": &schema.Schema{
-				Type:        schema.TypeString,
+				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True if this media file is in a published catalog",
 			},
@@ -57,7 +57,7 @@ func datasourceVcdCatalogMedia() *schema.Resource {
 				Description: "Creation date",
 			},
 			"size": &schema.Schema{
-				Type:        schema.TypeString,
+				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Media storage in Bytes",
 			},

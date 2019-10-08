@@ -3,7 +3,6 @@ package vcd
 import (
 	"fmt"
 	"log"
-	"strconv"
 	"strings"
 	"time"
 
@@ -73,7 +72,7 @@ func resourceVcdCatalogMedia() *schema.Resource {
 				// a value of type String in this map.
 			},
 			"is_iso": &schema.Schema{
-				Type:        schema.TypeString,
+				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True if this media file is ISO",
 			},
@@ -83,7 +82,7 @@ func resourceVcdCatalogMedia() *schema.Resource {
 				Description: "Owner name",
 			},
 			"is_published": &schema.Schema{
-				Type:        schema.TypeString,
+				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True if this media file is in a published catalog",
 			},
@@ -93,7 +92,7 @@ func resourceVcdCatalogMedia() *schema.Resource {
 				Description: "Creation date",
 			},
 			"size": &schema.Schema{
-				Type:        schema.TypeString,
+				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Media storage in Bytes",
 			},
@@ -186,38 +185,42 @@ func resourceVcdMediaCreate(d *schema.ResourceData, meta interface{}) error {
 func resourceVcdMediaRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	_, vdc, err := vcdClient.GetOrgAndVdc("", "")
+	org, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	catalogItem, err := findCatalogItem(d, meta.(*VCDClient))
+	catalog, err := org.GetCatalogByName(d.Get("catalog").(string), false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find media item: %s", err)
-		return err
-	}
-	if catalogItem == nil {
-		log.Printf("[DEBUG] Unable to find media item: %s. Removing from tfstate", err)
-		return nil
+		log.Printf("[DEBUG] Unable to find catalog.")
+		return fmt.Errorf("unable to find catalog: %s", err)
 	}
 
-	mediaItem, err := vdc.QueryMediaImage(catalogItem.CatalogItem.Name, d.Get("catalog").(string))
+	media, err := catalog.GetMediaByName(d.Get("name").(string), false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find media item: %s", err)
+		log.Printf("[DEBUG] Unable to find media: %s", err)
 		return err
 	}
 
-	_ = d.Set("name", catalogItem.CatalogItem.Name)
-	_ = d.Set("description", catalogItem.CatalogItem.Description)
-	_ = d.Set("is_iso", strconv.FormatBool(mediaItem.MediaItem.IsIso))
-	_ = d.Set("owner_name", mediaItem.MediaItem.OwnerName)
-	_ = d.Set("is_published", strconv.FormatBool(mediaItem.MediaItem.IsPublished))
-	_ = d.Set("creation_date", mediaItem.MediaItem.CreationDate)
-	_ = d.Set("size", strconv.FormatInt(mediaItem.MediaItem.StorageB, 10))
-	_ = d.Set("status", mediaItem.MediaItem.Status)
-	_ = d.Set("storage_profile_name", mediaItem.MediaItem.StorageProfileName)
+	d.SetId(media.Media.ID)
 
-	metadata, err := mediaItem.GetMetadata()
+	mediaRecord, err := catalog.QueryMedia(d.Get("name").(string))
+	if err != nil {
+		log.Printf("[DEBUG] Unable to query media: %s", err)
+		return err
+	}
+
+	_ = d.Set("name", media.Media.Name)
+	_ = d.Set("description", media.Media.Description)
+	_ = d.Set("is_iso", mediaRecord.MediaRecord.IsIso)
+	_ = d.Set("owner_name", mediaRecord.MediaRecord.OwnerName)
+	_ = d.Set("is_published", mediaRecord.MediaRecord.IsPublished)
+	_ = d.Set("creation_date", mediaRecord.MediaRecord.CreationDate)
+	_ = d.Set("size", mediaRecord.MediaRecord.StorageB)
+	_ = d.Set("status", mediaRecord.MediaRecord.Status)
+	_ = d.Set("storage_profile_name", mediaRecord.MediaRecord.StorageProfileName)
+
+	metadata, err := media.GetMetadata()
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find media item metadata: %s", err)
 		return err
@@ -247,12 +250,18 @@ func createOrUpdateMediaItemMetadata(d *schema.ResourceData, meta interface{}) e
 
 	vcdClient := meta.(*VCDClient)
 
-	_, vdc, err := vcdClient.GetOrgAndVdc("", "")
+	org, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	mediaItem, err := vdc.QueryMediaImage(d.Get("name").(string), d.Get("catalog").(string))
+	catalog, err := org.GetCatalogByName(d.Get("catalog").(string), false)
+	if err != nil {
+		log.Printf("[DEBUG] Unable to find catalog.")
+		return fmt.Errorf("unable to find catalog: %s", err)
+	}
+
+	media, err := catalog.GetMediaByName(d.Get("name").(string), false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find media item: %s", err)
 		return fmt.Errorf("unable to find media item: %s", err)
@@ -271,14 +280,14 @@ func createOrUpdateMediaItemMetadata(d *schema.ResourceData, meta interface{}) e
 			}
 		}
 		for _, k := range toBeRemovedMetadata {
-			err := mediaItem.DeleteMetadata(k)
+			err := media.DeleteMetadata(k)
 			if err != nil {
 				return fmt.Errorf("error deleting metadata: %s", err)
 			}
 		}
 		// Add new metadata
 		for k, v := range newMetadata {
-			_, err = mediaItem.AddMetadata(k, v.(string))
+			_, err = media.AddMetadata(k, v.(string))
 			if err != nil {
 				return fmt.Errorf("error adding metadata: %s", err)
 			}
@@ -336,12 +345,7 @@ func resourceVcdCatalogMediaImport(d *schema.ResourceData, meta interface{}) ([]
 	_ = d.Set("catalog", catalogName)
 	_ = d.Set("name", catalogItemName)
 	_ = d.Set("description", catalogItem.CatalogItem.Description)
-	entityId, err := govcd.GetBareEntityUuid(catalogItem.CatalogItem.ID)
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse catalog item id: %s", err)
-	}
-
-	d.SetId(entityId)
+	d.SetId(catalogItem.CatalogItem.ID)
 
 	return []*schema.ResourceData{d}, nil
 }

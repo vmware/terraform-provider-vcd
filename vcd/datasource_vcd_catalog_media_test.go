@@ -21,7 +21,7 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 	var TestAccVcdDataSourceMedia = "TestAccVcdCatalogMediaBasic"
 	var TestAccVcdDataSourceMediaDescription = "TestAccVcdCatalogMediaBasicDescription"
 
-	var catalogItem govcd.CatalogItem
+	var media govcd.Media
 
 	var params = StringMap{
 		"Org":              testConfig.VCD.Org,
@@ -53,14 +53,12 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 				Config:             configText,
 				ExpectNonEmptyPlan: true,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdCatalogMediaExists("vcd_catalog_media."+TestAccVcdDataSourceMedia, &catalogItem),
-					resource.TestMatchOutput("media_size", regexp.MustCompile(`^\d*$`)),
-					resource.TestCheckOutput("is_iso", "true"),
+					testAccCheckVcdCatalogMediaExists("vcd_catalog_media."+TestAccVcdDataSourceMedia, &media),
 					resource.TestMatchOutput("owner_name", regexp.MustCompile(`^\w*$`)),
-					resource.TestCheckOutput("is_published", "false"),
 					resource.TestMatchOutput("creation_date", regexp.MustCompile(`^(2019|2020)-`)),
 					resource.TestCheckOutput("status", "RESOLVED"),
 					resource.TestMatchOutput("storage_profile_name", regexp.MustCompile(`(.|\s)*\S(.|\s)*`)),
+					testCheckMediaNonStringOutputs(),
 				),
 			},
 			resource.TestStep{
@@ -86,7 +84,7 @@ func catalogMediaDestroyed(catalog, mediaName string) resource.TestCheckFunc {
 		if err != nil {
 			return err
 		}
-		_, err = cat.GetCatalogItemByName(mediaName, false)
+		_, err = cat.GetMediaByName(mediaName, false)
 		if err == nil {
 			return fmt.Errorf("catalog media %s not deleted", mediaName)
 		}
@@ -128,7 +126,7 @@ data "vcd_catalog_media" "{{.NewCatalogMedia}}" {
   depends_on = ["vcd_catalog_media.{{.CatalogMediaName}}"]
 }
 
-output "media_size" {
+output "size" {
   value = data.vcd_catalog_media.{{.NewCatalogMedia}}.size
   depends_on = ["data.vcd_catalog_media.{{.NewCatalogMedia}}"]
 }

@@ -75,12 +75,7 @@ func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.Catal
 		return nil, nil
 	}
 
-	entityId, err := govcd.GetBareEntityUuid(catalogItem.CatalogItem.ID)
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse catalog item id: %s", err)
-	}
-
-	d.SetId(entityId)
+	d.SetId(catalogItem.CatalogItem.ID)
 	log.Printf("[TRACE] Catalog item read completed: %#v", catalogItem.CatalogItem)
 	return catalogItem, nil
 }

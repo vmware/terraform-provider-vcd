@@ -277,12 +277,7 @@ func resourceVcdCatalogItemImport(d *schema.ResourceData, meta interface{}) ([]*
 	_ = d.Set("catalog", catalogName)
 	_ = d.Set("name", catalogItemName)
 	_ = d.Set("description", catalogItem.CatalogItem.Description)
-	entityId, err := govcd.GetBareEntityUuid(catalogItem.CatalogItem.ID)
-	if err != nil {
-		return nil, fmt.Errorf("unable to parse catalog item id: %s", err)
-	}
-
-	d.SetId(entityId)
+	d.SetId(catalogItem.CatalogItem.ID)
 
 	return []*schema.ResourceData{d}, nil
 }
