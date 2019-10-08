@@ -43,4 +43,4 @@ The following arguments are supported:
 
 ## Attribute reference
 
-All attributes defined in [isolated network resource](/docs/providers/vcd/r/catalog-media.html#attribute-reference) are supported.
+All attributes defined in [isolated network resource](/docs/providers/vcd/r/catalog_media.html#attribute-reference) are supported.
