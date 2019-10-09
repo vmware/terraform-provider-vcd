@@ -342,7 +342,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	} else if newComputerName, ok := d.GetOk("computer_name"); ok {
 		customizationSection, err := vm.GetGuestCustomizationSection()
 		if err != nil {
-			return fmt.Errorf("error get customization section before applygin computer name: %#v", err)
+			return fmt.Errorf("error get customization section before applying computer name: %#v", err)
 		}
 		customizationSection.ComputerName = newComputerName.(string)
 		_, err = vm.SetGuestCustomizationSection(customizationSection)
@@ -692,7 +692,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		if d.HasChange("computer_name") {
 			customizationSection, err := vm.GetGuestCustomizationSection()
 			if err != nil {
-				return fmt.Errorf("error get customization section before applygin computer name: %#v", err)
+				return fmt.Errorf("error get customization section before applying computer name: %#v", err)
 			}
 			customizationSection.ComputerName = d.Get("computer_name").(string)
 			_, err = vm.SetGuestCustomizationSection(customizationSection)
