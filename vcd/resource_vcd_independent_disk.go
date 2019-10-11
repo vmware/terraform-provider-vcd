@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/vmware/go-vcloud-director/v2/util"
 	"log"
 	"strings"
 
@@ -15,12 +16,15 @@ func resourceVcdIndependentDisk() *schema.Resource {
 		Create: resourceVcdIndependentDiskCreate,
 		Read:   resourceVcdIndependentDiskRead,
 		Delete: resourceVcdIndependentDiskDelete,
-
+		Importer: &schema.ResourceImporter{
+			State: resourceVcdIndependentDiskImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"org": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:       schema.TypeString,
+				Optional:   true,
+				ForceNew:   true,
+				Deprecated: "Not needed anymore for this resource",
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
@@ -35,16 +39,32 @@ func resourceVcdIndependentDisk() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+			"description": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "independent disk description",
+			},
 			"storage_profile": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
 			},
 			"size": {
-				Type:        schema.TypeFloat,
-				Required:    true,
-				ForceNew:    true,
-				Description: "size in MB",
+				Type:          schema.TypeFloat,
+				Optional:      true,
+				ForceNew:      true,
+				ConflictsWith: []string{"size_in_bytes"},
+				Deprecated:    "In favor of size_in_bytes",
+				Description:   "size in MB",
+			},
+			"size_in_bytes": {
+				Type:          schema.TypeInt,
+				Optional:      true,
+				Computed:      true,
+				ForceNew:      true,
+				ConflictsWith: []string{"size"},
+				Description:   "size in bytes",
 			},
 			"bus_type": &schema.Schema{
 				Type:         schema.TypeString,
@@ -58,6 +78,26 @@ func resourceVcdIndependentDisk() *schema.Resource {
 				ForceNew:     true,
 				ValidateFunc: validateBusSubType,
 			},
+			"iops": &schema.Schema{
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "IOPS request for the created disk",
+			},
+			"owner_name": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The owner name of the disk",
+			},
+			"datastore_name": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Datastore name",
+			},
+			"is_attached": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if the disk is already attached",
+			},
 		},
 	}
 }
@@ -66,6 +106,11 @@ var busTypes = map[string]string{
 	"IDE":  "5",
 	"SCSI": "6",
 	"SATA": "20",
+}
+var busTypesFromValues = map[string]string{
+	"5":  "IDE",
+	"6":  "SCSI",
+	"20": "SATA",
 }
 
 var busSubTypes = map[string]string{
@@ -77,8 +122,24 @@ var busSubTypes = map[string]string{
 	"ahci":        "vmware.sata.ahci",
 }
 
+var busSubTypesFromValues = map[string]string{
+	"IDE":              "ide",
+	"buslogic":         "buslogic",
+	"lsilogic":         "lsilogic",
+	"lsilogicsas":      "lsilogicsas",
+	"VirtualSCSI":      "virtualscsi",
+	"vmware.sata.ahci": "ahci",
+}
+
 func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
+
+	size, sizeProvided := d.GetOk("size")
+	sizeInBytes, sizeInBytesProvided := d.GetOk("size_in_bytes")
+
+	if !sizeProvided && !sizeInBytesProvided {
+		return fmt.Errorf("size in bytes isn't provided")
+	}
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
@@ -92,10 +153,19 @@ func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf("disk with such name already exist : %s", diskName)
 	}
 
-	diskCreateParams := &types.DiskCreateParams{Disk: &types.Disk{
-		Name: diskName,
-		Size: int64(d.Get("size").(float64) * 1024 * 1024),
-	}}
+	var diskCreateParams *types.DiskCreateParams
+	if sizeProvided {
+		diskCreateParams = &types.DiskCreateParams{Disk: &types.Disk{
+			Name: diskName,
+			Size: int64(size.(float64) * 1024 * 1024),
+		}}
+	}
+	if sizeInBytesProvided {
+		diskCreateParams = &types.DiskCreateParams{Disk: &types.Disk{
+			Name: diskName,
+			Size: int64(sizeInBytes.(int)),
+		}}
+	}
 
 	var storageReference types.Reference
 	storageProfileValue := d.Get("storage_profile").(string)
@@ -118,6 +188,8 @@ func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) 
 		diskCreateParams.Disk.BusSubType = busSubTypes[strings.ToLower(busSubTypeValue)]
 	}
 
+	diskCreateParams.Disk.Description = d.Get("description").(string)
+
 	task, err := vdc.CreateDisk(diskCreateParams)
 	if err != nil {
 		return fmt.Errorf("error creating independent disk: %s", err)
@@ -128,7 +200,17 @@ func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf("error waiting to finish creation of independent disk: %s", err)
 	}
 
-	d.SetId(diskName)
+	disk, err := vdc.GetDiskByNameOrId(d.Get("name").(string), true)
+	if govcd.IsNotFound(err) {
+		log.Printf("unable to find disk with ID %s: %s. Removing from state", d.Id(), err)
+		d.SetId("")
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("unable to find disk with ID %s: %s", d.Id(), err)
+	}
+
+	d.SetId(disk.Disk.Id)
 
 	return resourceVcdIndependentDiskRead(d, meta)
 }
@@ -136,16 +218,44 @@ func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) 
 func resourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	util.Logger.Printf("$$$$$$$$1 %#v", d.Get("name").(string))
+	_, vdc, err := vcdClient.GetOrgAndVdc("", d.Get("vdc").(string))
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	_, err = vdc.QueryDisk(d.Get("name").(string))
-	if err != nil {
-		d.SetId("")
-		return fmt.Errorf("error finding disk or no such disk found: %#v", err)
+	identifier := d.Id()
+
+	if identifier == "" {
+		identifier = d.Get("name").(string)
 	}
+
+	disk, err := vdc.GetDiskByNameOrId(identifier, true)
+	if govcd.IsNotFound(err) {
+		log.Printf("unable to find disk with ID %s: %s. Removing from state", identifier, err)
+		d.SetId("")
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("unable to find disk with ID %s: %s", identifier, err)
+	}
+
+	diskRecord, err := vdc.QueryDisk(disk.Disk.Name)
+	if err != nil {
+		return fmt.Errorf("unable to query disk with ID %s: %s", identifier, err)
+	}
+
+	d.SetId(disk.Disk.Id)
+	_ = d.Set("name", disk.Disk.Name)
+	_ = d.Set("description", disk.Disk.Description)
+	_ = d.Set("storage_profile", disk.Disk.StorageProfile.Name)
+	_ = d.Set("size_in_bytes", disk.Disk.Size) // can't update cause we calculate in MB and we can't match float
+	_ = d.Set("bus_type", busTypesFromValues[disk.Disk.BusType])
+	_ = d.Set("bus_sub_type", busSubTypesFromValues[disk.Disk.BusSubType])
+	_ = d.Set("iops", disk.Disk.Iops)
+	_ = d.Set("owner_name", disk.Disk.Owner.User.Name)
+	_ = d.Set("datastore_name", diskRecord.Disk.DataStoreName)
+	_ = d.Set("is_attached", diskRecord.Disk.IsAttached)
 
 	log.Printf("[TRACE] Disk read completed.")
 	return nil
@@ -169,7 +279,7 @@ func resourceVcdIndependentDiskDelete(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf("can not remove disk as it is attached to vm")
 	}
 
-	disk, err := vdc.FindDiskByHREF(diskRecord.Disk.HREF)
+	disk, err := vdc.GetDiskByHref(diskRecord.Disk.HREF)
 	if err != nil {
 		d.SetId("")
 		return fmt.Errorf("error getting disk : %#v", err)
@@ -206,4 +316,39 @@ func validateBusSubType(v interface{}, k string) (warnings []string, errors []er
 			"%q (%q) value isn't valid", k, value))
 	}
 	return
+}
+
+// resourceVcdIndependentDiskImport is responsible for importing the resource.
+// The following steps happen as part of import
+// 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
+// 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
+// 3. The functions splits the dot-formatted path and tries to lookup the object
+// 4. If the lookup succeeds it sets the ID field for `_resource_name_` resource in statefile
+// (the resource must be already defined in .tf config otherwise `terraform import` will complain)
+// 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
+// based on the known ID of object.
+//
+// Example resource name (_resource_name_): vcd_independent_disk.my-disk
+// Example import path (_the_id_string_): vdc-name.my-independent-disk-name
+func resourceVcdIndependentDiskImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	resourceURI := strings.Split(d.Id(), ".")
+	if len(resourceURI) != 2 {
+		return nil, fmt.Errorf("[independent disk import] resource name must be specified as vdc-name.my-independent-disk-name")
+	}
+	vdcName, diskName := resourceURI[0], resourceURI[1]
+
+	vcdClient := meta.(*VCDClient)
+	_, vdc, err := vcdClient.GetOrgAndVdc("", vdcName)
+	if err != nil {
+		return nil, fmt.Errorf("[independent disk import] unable to find VDC %s: %s ", vdcName, err)
+	}
+
+	disk, err := vdc.GetDiskByName(diskName, false)
+	if err != nil {
+		return []*schema.ResourceData{}, fmt.Errorf("unable to find independent disk with name %s: %s",
+			d.Id(), err)
+	}
+
+	d.SetId(disk.Disk.Id)
+	return []*schema.ResourceData{d}, nil
 }
