@@ -4,18 +4,18 @@ package vcd
 
 import (
 	"fmt"
-	"strings"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
 var resourceName = "TestAccVcdIndependentDiskBasic_1"
 var name = "TestAccVcdIndependentDiskBasic"
 
 func TestAccVcdIndependentDiskBasic(t *testing.T) {
+
 	var params = StringMap{
 		"Org":                testConfig.VCD.Org,
 		"Vdc":                testConfig.VCD.Vdc,
@@ -44,14 +44,21 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDiskCreated("vcd_independent_disk." + resourceName),
+					testAccCheckDiskCreated("vcd_independent_disk."+resourceName, name),
 				),
+			},
+			resource.TestStep{
+				ResourceName:            "vcd_independent_disk." + resourceName + "-import",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdByDisk(name),
+				ImportStateVerifyIgnore: []string{"org", "vdc", "size"},
 			},
 		},
 	})
 }
 
-func testAccCheckDiskCreated(itemName string) resource.TestCheckFunc {
+func testAccCheckDiskCreated(itemName, diskName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		injectItemRs, ok := s.RootModule().Resources[itemName]
 		if !ok {
@@ -69,8 +76,8 @@ func testAccCheckDiskCreated(itemName string) resource.TestCheckFunc {
 			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
 
-		disk, _ := vdc.QueryDisk(name)
-		if disk == (govcd.DiskRecord{}) {
+		_, err = vdc.GetDiskByName(diskName, true)
+		if err != nil {
 			return fmt.Errorf("independent disk %s isn't exist and error: %#v", itemName, err)
 		}
 
@@ -91,12 +98,23 @@ func testDiskResourcesDestroyed(s *terraform.State) error {
 			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
 
-		_, err = vdc.QueryDisk(name)
-		if err != nil && !strings.Contains(err.Error(), "found results") {
+		_, err = vdc.GetDiskByName(name, true)
+		if !govcd.IsNotFound(err) {
 			return fmt.Errorf("independent disk %s still exist and error: %#v", itemName, err)
 		}
+
 	}
 	return nil
+}
+
+func importStateIdByDisk(objectName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		importId := testConfig.VCD.Vdc + "." + objectName
+		if testConfig.VCD.Vdc == "" || objectName == "" {
+			return "", fmt.Errorf("missing information to generate import path: %s", importId)
+		}
+		return importId, nil
+	}
 }
 
 func init() {
