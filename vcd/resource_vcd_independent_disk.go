@@ -249,7 +249,7 @@ func resourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) er
 	_ = d.Set("name", disk.Disk.Name)
 	_ = d.Set("description", disk.Disk.Description)
 	_ = d.Set("storage_profile", disk.Disk.StorageProfile.Name)
-	_ = d.Set("size_in_bytes", disk.Disk.Size) // can't update cause we calculate in MB and we can't match float
+	_ = d.Set("size_in_bytes", disk.Disk.Size)
 	_ = d.Set("bus_type", busTypesFromValues[disk.Disk.BusType])
 	_ = d.Set("bus_sub_type", busSubTypesFromValues[disk.Disk.BusSubType])
 	_ = d.Set("iops", disk.Disk.Iops)
