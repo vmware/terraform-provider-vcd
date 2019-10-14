@@ -77,7 +77,7 @@ resource "vcd_catalog_media" "tf-mymedia" {
 }
 ```
 
-You can import such isolated network into terraform state using this command
+You can import such catalog media into terraform state using this command
 
 ```
 terraform import vcd_catalog_media.tf-mymedia my-org.my-catalog-name.my-media-name
