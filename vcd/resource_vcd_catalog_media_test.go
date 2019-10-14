@@ -56,7 +56,7 @@ func TestAccVcdCatalogMediaBasic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_media."+TestAccVcdCatalogMedia, "metadata.mediaItem_metadata2", "mediaItem Metadata2"),
 					resource.TestMatchOutput("owner_name", regexp.MustCompile(`^\w*$`)),
-					resource.TestMatchOutput("creation_date", regexp.MustCompile(`^^\d{4}-\d{2}-\d{2}-`)),
+					resource.TestMatchOutput("creation_date", regexp.MustCompile(`^^\d{4}-\d{2}-\d{2}.*`)),
 					resource.TestCheckOutput("status", "RESOLVED"),
 					resource.TestMatchOutput("storage_profile_name", regexp.MustCompile(`(.|\s)*\S(.|\s)*`)),
 					testCheckMediaNonStringOutputs(),
