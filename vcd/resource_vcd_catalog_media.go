@@ -313,7 +313,7 @@ func resourceVcdCatalogMediaImport(d *schema.ResourceData, meta interface{}) ([]
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("resource name must be specified as org.catalog.my-media-name")
 	}
-	orgName, catalogName, catalogItemName := resourceURI[0], resourceURI[1], resourceURI[2]
+	orgName, catalogName, mediaName := resourceURI[0], resourceURI[1], resourceURI[2]
 
 	if orgName == "" {
 		return nil, fmt.Errorf("import: empty org name provided")
@@ -321,7 +321,7 @@ func resourceVcdCatalogMediaImport(d *schema.ResourceData, meta interface{}) ([]
 	if catalogName == "" {
 		return nil, fmt.Errorf("import: empty catalog name provided")
 	}
-	if catalogItemName == "" {
+	if mediaName == "" {
 		return nil, fmt.Errorf("import: empty media item name provided")
 	}
 
@@ -336,16 +336,16 @@ func resourceVcdCatalogMediaImport(d *schema.ResourceData, meta interface{}) ([]
 		return nil, govcd.ErrorEntityNotFound
 	}
 
-	catalogItem, err := catalog.GetCatalogItemByName(catalogItemName, false)
+	media, err := catalog.GetMediaByName(mediaName, false)
 	if err != nil {
 		return nil, govcd.ErrorEntityNotFound
 	}
 
 	_ = d.Set("org", orgName)
 	_ = d.Set("catalog", catalogName)
-	_ = d.Set("name", catalogItemName)
-	_ = d.Set("description", catalogItem.CatalogItem.Description)
-	d.SetId(catalogItem.CatalogItem.ID)
+	_ = d.Set("name", mediaName)
+	_ = d.Set("description", media.Media.Description)
+	d.SetId(media.Media.ID)
 
 	return []*schema.ResourceData{d}, nil
 }
