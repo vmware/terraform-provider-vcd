@@ -218,7 +218,6 @@ func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) 
 func resourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	util.Logger.Printf("$$$$$$$$1 %#v", d.Get("name").(string))
 	_, vdc, err := vcdClient.GetOrgAndVdc("", d.Get("vdc").(string))
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
