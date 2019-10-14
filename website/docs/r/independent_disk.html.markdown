@@ -15,8 +15,7 @@ Supported in provider *v2.1+*
 ## Example Usage
 
 ```
-resource "vcd_independent_disk" "myNewIndependentDisk" {
-  org             = "my-org"
+resource "vcd_independent_disk" "myNewIndependentDisk" {  
   vdc             = "my-vcd"
   
   name            = "logDisk"
@@ -45,10 +44,49 @@ resource "vcd_vapp_vm" "web2" {
 
 The following arguments are supported:
 
-* `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
+* `org` - (Optional; **Deprecated**) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 * `name` - (Required) Disk name
-* `size` - (Required) - Size of disk in MB
+* `size` - (Optional; **Deprecated**) - Size of disk in MB
+* `size_in_bytes` - (Optional; *v2.5+*) size in bytes
 * `bus_type` - (Optional) - Disk bus type. Values can be: IDE, SCSI, SATA 
 * `bus_sub_type` - (Optional) - Disk bus subtype. Values can be: "IDE" for IDE. buslogic, lsilogic, lsilogicsas, VirtualSCSI for SCSI and ahci for SATA
 * `storage_profile` - (Optional) - The name of storage profile where disk will be created
+
+## Attribute reference
+
+Supported in provider *v2.5+*
+
+* `iops` - (Computed) IOPS request for the created disk
+* `owner_name` - (Computed) the owner name of the disk
+* `datastore_name` - (Computed) data store name
+* `is_attached` - (Computed) true if the disk is already attached
+
+## Importing
+
+Supported in provider *v2.5+*
+
+~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
+configuration. [More information.][docs-import]
+
+An existing independent disk can be [imported][docs-import] into this resource via supplying its path.
+The path for this resource is made of vdc-name.disk-name
+For example, using this structure, representing a independent disk that was **not** created using Terraform:
+
+```hcl
+resource "vcd_independent_disk" "tf-myDisk" {
+  vdc     = "my-vdc"
+  name    = "my-disk"
+}
+```
+
+You can import such independent disk into terraform state using this command
+
+```
+terraform import vcd_independent_disk.tf-myDisk vdc-name.my-disk-name
+```
+
+[docs-import]:https://www.terraform.io/docs/import/
+
+After importing, if you run `terraform plan` you will see the rest of the values and modify the script accordingly for
+further operations.
