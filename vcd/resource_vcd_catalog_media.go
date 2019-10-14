@@ -196,7 +196,18 @@ func resourceVcdMediaRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("unable to find catalog: %s", err)
 	}
 
-	media, err := catalog.GetMediaByName(d.Get("name").(string), false)
+	identifier := d.Id()
+
+	if identifier == "" {
+		identifier = d.Get("name").(string)
+	}
+
+	media, err := catalog.GetMediaByNameOrId(identifier, false)
+	if govcd.IsNotFound(err) {
+		log.Printf("unable to find media with ID %s: %s. Removing from state", identifier, err)
+		d.SetId("")
+		return nil
+	}
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find media: %s", err)
 		return err
