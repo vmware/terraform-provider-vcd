@@ -5,6 +5,7 @@ package vcd
 import (
 	"fmt"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -20,14 +21,20 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 		"Org":                testConfig.VCD.Org,
 		"Vdc":                testConfig.VCD.Vdc,
 		"name":               name,
+		"secondName":         name + "second",
 		"size":               "5000",
+		"sizeInBytes":        "5242880000",
 		"busType":            "SCSI",
 		"busSubType":         "lsilogicsas",
 		"storageProfileName": "*",
 		"ResourceName":       resourceName,
+		"secondResourceName": resourceName + "second",
 		"Tags":               "disk",
 	}
 
+	params["FuncName"] = t.Name() + "-Compatibility"
+	configTextForCompatibility := templateFill(testAccCheckVcdIndependentDiskForCompatibility, params)
+	params["FuncName"] = t.Name()
 	configText := templateFill(testAccCheckVcdIndependentDiskBasic, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -42,16 +49,32 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 		CheckDestroy: testDiskResourcesDestroyed,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: configText,
+				Config: configTextForCompatibility,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDiskCreated("vcd_independent_disk."+resourceName, name),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "size_in_bytes", "5242880000"),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "owner_name", regexp.MustCompile(`^\w*$`)),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "datastore_name", regexp.MustCompile(`^\w*$`)),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "iops", regexp.MustCompile(`^\d+$`)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "is_attached", "false"),
 				),
 			},
 			resource.TestStep{
-				ResourceName:            "vcd_independent_disk." + resourceName + "-import",
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckDiskCreated("vcd_independent_disk."+resourceName+"second", name+"second"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName+"second", "size_in_bytes", "5242880000"),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName+"second", "owner_name", regexp.MustCompile(`^\w*$`)),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName+"second", "datastore_name", regexp.MustCompile(`^\w*$`)),
+					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName+"second", "iops", regexp.MustCompile(`^\d+$`)),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName+"second", "is_attached", "false"),
+				),
+			},
+			resource.TestStep{
+				ResourceName:            "vcd_independent_disk." + resourceName + "second" + "-import",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateIdFunc:       importStateIdByDisk(name),
+				ImportStateIdFunc:       importStateIdByDisk(name + "second"),
 				ImportStateVerifyIgnore: []string{"org", "vdc", "size"},
 			},
 		},
@@ -121,12 +144,23 @@ func init() {
 	testingTags["disk"] = "resource_vcd_independent_disk_test.go"
 }
 
-const testAccCheckVcdIndependentDiskBasic = `
+const testAccCheckVcdIndependentDiskForCompatibility = `
 resource "vcd_independent_disk" "{{.ResourceName}}" {
   org             = "{{.Org}}"
   vdc             = "{{.Vdc}}"
   name            = "{{.name}}"
   size            = "{{.size}}"
+  bus_type        = "{{.busType}}"
+  bus_sub_type    = "{{.busSubType}}"
+  storage_profile = "{{.storageProfileName}}"
+}
+`
+const testAccCheckVcdIndependentDiskBasic = `
+resource "vcd_independent_disk" "{{.secondResourceName}}" {
+  org             = "{{.Org}}"
+  vdc             = "{{.Vdc}}"
+  name            = "{{.secondName}}"
+  size_in_bytes   = "{{.sizeInBytes}}"
   bus_type        = "{{.busType}}"
   bus_sub_type    = "{{.busSubType}}"
   storage_profile = "{{.storageProfileName}}"
