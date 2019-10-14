@@ -227,13 +227,20 @@ func (disk *Disk) Delete() (Task, error) {
 func (disk *Disk) Refresh() error {
 	util.Logger.Printf("[TRACE] Disk refresh, HREF: %s\n", disk.Disk.HREF)
 
-	fetchedDisk, err := FindDiskByHREF(disk.client, disk.Disk.HREF)
+	if *disk == (Disk{}) {
+		return fmt.Errorf("cannot refresh, Object is empty")
+	}
+
+	unmarshalledDisk := &types.Disk{}
+
+	_, err := disk.client.ExecuteRequest(disk.Disk.HREF, http.MethodGet,
+		"", "error refreshing independent disk: %s", nil, unmarshalledDisk)
 	if err != nil {
 		return err
 	}
+	disk.Disk = unmarshalledDisk
 
-	disk.Disk = fetchedDisk.Disk
-
+	// The request was successful
 	return nil
 }
 
@@ -287,6 +294,7 @@ func (disk *Disk) AttachedVM() (*types.Reference, error) {
 }
 
 // Find an independent disk by disk href in VDC
+// Deprecated: Use VDC.GetDiskByHref()
 func (vdc *Vdc) FindDiskByHREF(href string) (*Disk, error) {
 	util.Logger.Printf("[TRACE] VDC find disk By HREF: %s\n", href)
 
@@ -294,6 +302,7 @@ func (vdc *Vdc) FindDiskByHREF(href string) (*Disk, error) {
 }
 
 // Find an independent disk by VDC client and disk href
+// Deprecated: Use VDC.GetDiskByHref()
 func FindDiskByHREF(client *Client, href string) (*Disk, error) {
 	util.Logger.Printf("[TRACE] Find disk By HREF: %s\n", href)
 
@@ -338,4 +347,80 @@ func (vdc *Vdc) QueryDisk(diskName string) (DiskRecord, error) {
 	}
 
 	return *newDisk, nil
+}
+
+// GetDiskByHref finds a Disk by HREF
+// On success, returns a pointer to the Disk structure and a nil error
+// On failure, returns a nil pointer and an error
+func (vdc *Vdc) GetDiskByHref(diskHref string) (*Disk, error) {
+	util.Logger.Printf("[TRACE] Get Disk By Href: %s\n", diskHref)
+	Disk := NewDisk(vdc.client)
+
+	_, err := vdc.client.ExecuteRequest(diskHref, http.MethodGet,
+		"", "error retrieving Disk: %s", nil, Disk.Disk)
+	if err != nil {
+		return nil, err
+	}
+	return Disk, nil
+}
+
+// GetDiskByName finds a Disk by Name
+// On success, returns a pointer to the Disk structure and a nil error
+// On failure, returns a nil pointer and an error
+func (vdc *Vdc) GetDiskByName(diskName string, refresh bool) (*Disk, error) {
+	util.Logger.Printf("[TRACE] Get Disk By Name: %s\n", diskName)
+	if refresh {
+		err := vdc.Refresh()
+		if err != nil {
+			return nil, err
+		}
+	}
+	for _, resourceEntities := range vdc.Vdc.ResourceEntities {
+		for _, resourceEntity := range resourceEntities.ResourceEntity {
+			if resourceEntity.Name == diskName && resourceEntity.Type == "application/vnd.vmware.vcloud.disk+xml" {
+				return vdc.GetDiskByHref(resourceEntity.HREF)
+			}
+		}
+	}
+	return nil, ErrorEntityNotFound
+}
+
+// GetDiskById finds a Disk by ID
+// On success, returns a pointer to the Disk structure and a nil error
+// On failure, returns a nil pointer and an error
+func (vdc *Vdc) GetDiskById(diskId string, refresh bool) (*Disk, error) {
+	util.Logger.Printf("[TRACE] Get Disk By Id: %s\n", diskId)
+	if refresh {
+		err := vdc.Refresh()
+		if err != nil {
+			return nil, err
+		}
+	}
+	diskHREF := vdc.client.VCDHREF
+
+	DiskBareId, err := getBareEntityUuid(diskId)
+	if err != nil {
+		util.Logger.Printf("[Error] parsing bareID from diskId %s: %s", diskId, err)
+		return nil, ErrorEntityNotFound
+	}
+	if DiskBareId == "" {
+		util.Logger.Printf("[Error] parsing bareID from diskId %s - empty bareID returned", diskId)
+		return nil, ErrorEntityNotFound
+	}
+	diskHREF.Path += fmt.Sprintf("/disk/%s", DiskBareId)
+	return vdc.GetDiskByHref(diskHREF.String())
+}
+
+// GetDiskByNameOrId finds a Disk by Name or ID
+// On success, returns a pointer to the Disk structure and a nil error
+// On failure, returns a nil pointer and an error
+func (vdc *Vdc) GetDiskByNameOrId(identifier string, refresh bool) (*Disk, error) {
+	util.Logger.Printf("[TRACE] Get Disk By Name or Id: %s\n", identifier)
+	getByName := func(name string, refresh bool) (interface{}, error) { return vdc.GetDiskByName(name, refresh) }
+	getById := func(id string, refresh bool) (interface{}, error) { return vdc.GetDiskById(id, refresh) }
+	entity, err := getEntityByNameOrId(getByName, getById, identifier, refresh)
+	if entity == nil {
+		return nil, err
+	}
+	return entity.(*Disk), err
 }

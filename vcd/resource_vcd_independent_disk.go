@@ -2,7 +2,6 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/vmware/go-vcloud-director/v2/util"
 	"log"
 	"strings"
 
