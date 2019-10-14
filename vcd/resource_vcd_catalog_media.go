@@ -178,7 +178,6 @@ func resourceVcdMediaCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error adding media item metadata: %s", err)
 	}
 
-	//sets Id in findCatalogItem func - there isn't ID with media type
 	return resourceVcdMediaRead(d, meta)
 }
 

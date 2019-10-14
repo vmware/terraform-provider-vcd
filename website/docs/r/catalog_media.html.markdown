@@ -72,7 +72,7 @@ For example, using this structure, representing a media item that was **not** cr
 ```hcl
 resource "vcd_catalog_media" "tf-mymedia" {
   org     = "my-org"
-  catalog = "my-vdc"
+  catalog = "my-catalog"
   name    = "my-media"
 }
 ```
@@ -80,7 +80,7 @@ resource "vcd_catalog_media" "tf-mymedia" {
 You can import such catalog media into terraform state using this command
 
 ```
-terraform import vcd_catalog_media.tf-mymedia my-org.my-catalog-name.my-media-name
+terraform import vcd_catalog_media.tf-mymedia my-org.my-catalog.my-media
 ```
 
 [docs-import]:https://www.terraform.io/docs/import/

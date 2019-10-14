@@ -55,7 +55,7 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdCatalogMediaExists("vcd_catalog_media."+TestAccVcdDataSourceMedia, &media),
 					resource.TestMatchOutput("owner_name", regexp.MustCompile(`^\w*$`)),
-					resource.TestMatchOutput("creation_date", regexp.MustCompile(`^(2019|2020)-`)),
+					resource.TestMatchOutput("creation_date", regexp.MustCompile(`^^\d{4}-\d{2}-\d{2}-`)),
 					resource.TestCheckOutput("status", "RESOLVED"),
 					resource.TestMatchOutput("storage_profile_name", regexp.MustCompile(`(.|\s)*\S(.|\s)*`)),
 					testCheckMediaNonStringOutputs(),
@@ -65,7 +65,7 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 				ResourceName:      "vcd_catalog_media." + TestAccVcdDataSourceMedia + "-import",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdByCatalogMedia(TestAccVcdDataSourceMedia),
+				ImportStateIdFunc: importStateIdByCatalogItem(TestAccVcdDataSourceMedia),
 				// These fields can't be retrieved from catalog media data
 				ImportStateVerifyIgnore: []string{"media_path", "upload_piece_size", "show_upload_progress"},
 			},
@@ -89,16 +89,6 @@ func catalogMediaDestroyed(catalog, mediaName string) resource.TestCheckFunc {
 			return fmt.Errorf("catalog media %s not deleted", mediaName)
 		}
 		return nil
-	}
-}
-
-func importStateIdByCatalogMedia(objectName string) resource.ImportStateIdFunc {
-	return func(*terraform.State) (string, error) {
-		importId := testConfig.VCD.Org + "." + testSuiteCatalogName + "." + objectName
-		if testConfig.VCD.Org == "" || testSuiteCatalogName == "" || objectName == "" {
-			return "", fmt.Errorf("missing information to generate import path: %s", importId)
-		}
-		return importId, nil
 	}
 }
 
