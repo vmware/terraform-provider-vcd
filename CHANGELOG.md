@@ -72,7 +72,7 @@ add explicit VM resources `vcd_vapp_vm`.
   * `initscript`
   * `ovf`
   * `accept_all_eulas`
-* `vcd_independent_disk` deprecate fields `org` and `size`
+* `vcd_independent_disk` deprecate field `size`
 
 ## 2.4.0 (July 29, 2019)
 

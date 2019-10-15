@@ -44,7 +44,7 @@ resource "vcd_vapp_vm" "web2" {
 
 The following arguments are supported:
 
-* `org` - (Optional; **Deprecated**) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
+* `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 * `name` - (Required) Disk name
 * `size` - (Optional; **Deprecated**) - Size of disk in MB
@@ -59,7 +59,7 @@ Supported in provider *v2.5+*
 
 * `iops` - (Computed) IOPS request for the created disk
 * `owner_name` - (Computed) the owner name of the disk
-* `datastore_name` - (Computed) data store name
+* `datastore_name` - (Computed) data store name. Readable only for system user.
 * `is_attached` - (Computed) true if the disk is already attached
 
 ## Importing

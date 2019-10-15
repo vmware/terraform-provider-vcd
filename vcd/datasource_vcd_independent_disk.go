@@ -8,6 +8,12 @@ func datasourceVcIndependentDisk() *schema.Resource {
 	return &schema.Resource{
 		Read: resourceVcdIndependentDiskRead,
 		Schema: map[string]*schema.Schema{
+			"org": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Description: "The name of organization to use, optional if defined at provider " +
+					"level. Useful when connected as sysadmin working across different organizations",
+			},
 			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,

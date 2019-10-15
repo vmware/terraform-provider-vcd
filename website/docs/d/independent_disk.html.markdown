@@ -17,6 +17,7 @@ Supported in provider *v2.5+*
 
 ```hcl
 data "vcd_independent_disk" "existing-disk" {
+  org     = "my-org"
   vdc     = "my-vdc"
   name    = "my-disk"
 }
@@ -32,6 +33,7 @@ output "type_is_attached" {
 
 The following arguments are supported:
 
+* `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 * `name` - (Required) Disk name
 

@@ -20,10 +20,9 @@ func resourceVcdIndependentDisk() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"org": {
-				Type:       schema.TypeString,
-				Optional:   true,
-				ForceNew:   true,
-				Deprecated: "Not needed anymore for this resource",
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
@@ -327,16 +326,16 @@ func validateBusSubType(v interface{}, k string) (warnings []string, errors []er
 // based on the known ID of object.
 //
 // Example resource name (_resource_name_): vcd_independent_disk.my-disk
-// Example import path (_the_id_string_): vdc-name.my-independent-disk-name
+// Example import path (_the_id_string_): ogr-name.vdc-name.my-independent-disk-name
 func resourceVcdIndependentDiskImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ".")
-	if len(resourceURI) != 2 {
-		return nil, fmt.Errorf("[independent disk import] resource name must be specified as vdc-name.my-independent-disk-name")
+	if len(resourceURI) != 3 {
+		return nil, fmt.Errorf("[independent disk import] resource name must be specified as org-name.vdc-name.my-independent-disk-name")
 	}
-	vdcName, diskName := resourceURI[0], resourceURI[1]
+	orgName, vdcName, diskName := resourceURI[0], resourceURI[1], resourceURI[2]
 
 	vcdClient := meta.(*VCDClient)
-	_, vdc, err := vcdClient.GetOrgAndVdc("", vdcName)
+	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if err != nil {
 		return nil, fmt.Errorf("[independent disk import] unable to find VDC %s: %s ", vdcName, err)
 	}

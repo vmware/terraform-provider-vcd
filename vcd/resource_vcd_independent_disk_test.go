@@ -132,8 +132,8 @@ func testDiskResourcesDestroyed(s *terraform.State) error {
 
 func importStateIdByDisk(objectName string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
-		importId := testConfig.VCD.Vdc + "." + objectName
-		if testConfig.VCD.Vdc == "" || objectName == "" {
+		importId := testConfig.VCD.Org + "." + testConfig.VCD.Vdc + "." + objectName
+		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || objectName == "" {
 			return "", fmt.Errorf("missing information to generate import path: %s", importId)
 		}
 		return importId, nil
