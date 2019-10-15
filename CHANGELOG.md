@@ -44,7 +44,7 @@ IMPROVEMENTS:
 * `resource/vcd_network_direct` Add computed properties (external network gateway, netmask, DNS, and DNS suffix) [#330]
 * `vcd_org_vdc` Add import capability and full read support [#218]
 * Upgrade Terraform SDK dependency to 0.12.8 [#320]
-* `resource/vcd_vapp_vm` has new field `computer_name` [#334]
+* `resource/vcd_vapp_vm` has new field `computer_name` [#334] [#347]
 
 BUG FIXES:
 * Change default value for `vcd_org.deployed_vm_quota` and `vcd_org.stored_vm_quota`. It was incorrectly set at `-1` instead of `0`.
