@@ -198,14 +198,15 @@ func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf("error waiting to finish creation of independent disk: %s", err)
 	}
 
-	disk, err := vdc.GetDiskByNameOrId(d.Get("name").(string), true)
+	diskHref := task.Task.Owner.HREF
+	disk, err := vdc.GetDiskByHref(diskHref)
 	if govcd.IsNotFound(err) {
-		log.Printf("unable to find disk with ID %s: %s. Removing from state", d.Id(), err)
+		log.Printf("unable to find disk with href %s: %s. Removing from state", diskHref, err)
 		d.SetId("")
 		return nil
 	}
 	if err != nil {
-		return fmt.Errorf("unable to find disk with ID %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to find disk with href %s: %s", diskHref, err)
 	}
 
 	d.SetId(disk.Disk.Id)
@@ -222,19 +223,32 @@ func resourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) er
 	}
 
 	identifier := d.Id()
-
-	if identifier == "" {
+	var disk *govcd.Disk
+	if identifier != "" {
+		disk, err = vdc.GetDiskById(identifier, true)
+		if govcd.IsNotFound(err) {
+			log.Printf("unable to find disk with ID %s: %s. Removing from state", identifier, err)
+			d.SetId("")
+			return nil
+		}
+		if err != nil {
+			return fmt.Errorf("unable to find disk with ID %s: %s", identifier, err)
+		}
+	} else {
 		identifier = d.Get("name").(string)
-	}
-
-	disk, err := vdc.GetDiskByNameOrId(identifier, true)
-	if govcd.IsNotFound(err) {
-		log.Printf("unable to find disk with ID %s: %s. Removing from state", identifier, err)
-		d.SetId("")
-		return nil
-	}
-	if err != nil {
-		return fmt.Errorf("unable to find disk with ID %s: %s", identifier, err)
+		disks, err := vdc.GetDisksByName(identifier, true)
+		if govcd.IsNotFound(err) {
+			log.Printf("unable to find disk with ID %s: %s. Removing from state", identifier, err)
+			d.SetId("")
+			return nil
+		}
+		if err != nil {
+			return fmt.Errorf("unable to find disk with ID %s: %s", identifier, err)
+		}
+		if len(*disks) > 1 {
+			return fmt.Errorf("found more than one disk with ID %s: %s", identifier, err)
+		}
+		disk = &(*disks)[0]
 	}
 
 	diskRecord, err := vdc.QueryDisk(disk.Disk.Name)
@@ -340,12 +354,16 @@ func resourceVcdIndependentDiskImport(d *schema.ResourceData, meta interface{}) 
 		return nil, fmt.Errorf("[independent disk import] unable to find VDC %s: %s ", vdcName, err)
 	}
 
-	disk, err := vdc.GetDiskByName(diskName, false)
+	disks, err := vdc.GetDisksByName(diskName, false)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("unable to find independent disk with name %s: %s",
 			d.Id(), err)
 	}
+	if len(*disks) > 1 {
+		return []*schema.ResourceData{}, fmt.Errorf("found more than one independent disk with name %s: %s",
+			d.Id(), err)
+	}
 
-	d.SetId(disk.Disk.Id)
+	d.SetId((*disks)[0].Disk.Id)
 	return []*schema.ResourceData{d}, nil
 }

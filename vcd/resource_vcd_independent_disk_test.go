@@ -99,7 +99,7 @@ func testAccCheckDiskCreated(itemName, diskName string) resource.TestCheckFunc {
 			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
 
-		_, err = vdc.GetDiskByName(diskName, true)
+		_, err = vdc.GetDisksByName(diskName, true)
 		if err != nil {
 			return fmt.Errorf("independent disk %s isn't exist and error: %#v", itemName, err)
 		}
@@ -121,7 +121,7 @@ func testDiskResourcesDestroyed(s *terraform.State) error {
 			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
 
-		_, err = vdc.GetDiskByName(name, true)
+		_, err = vdc.GetDisksByName(name, true)
 		if !govcd.IsNotFound(err) {
 			return fmt.Errorf("independent disk %s still exist and error: %#v", itemName, err)
 		}
