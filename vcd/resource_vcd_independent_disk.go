@@ -326,7 +326,7 @@ func validateBusSubType(v interface{}, k string) (warnings []string, errors []er
 // based on the known ID of object.
 //
 // Example resource name (_resource_name_): vcd_independent_disk.my-disk
-// Example import path (_the_id_string_): ogr-name.vdc-name.my-independent-disk-name
+// Example import path (_the_id_string_): org-name.vdc-name.my-independent-disk-name
 func resourceVcdIndependentDiskImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ".")
 	if len(resourceURI) != 3 {
