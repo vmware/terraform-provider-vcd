@@ -47,20 +47,20 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 * `name` - (Required) Disk name
-* `size` - (Optional; **Deprecated**) - Size of disk in MB
-* `size_in_bytes` - (Optional; *v2.5+*) size in bytes
-* `bus_type` - (Optional) - Disk bus type. Values can be: IDE, SCSI, SATA 
-* `bus_sub_type` - (Optional) - Disk bus subtype. Values can be: "IDE" for IDE. buslogic, lsilogic, lsilogicsas, VirtualSCSI for SCSI and ahci for SATA
-* `storage_profile` - (Optional) - The name of storage profile where disk will be created
+* `size` - (Optional; **Deprecated**) Size of disk in MB
+* `size_in_bytes` - (Optional; *v2.5+*) Size in bytes
+* `bus_type` - (Optional) Disk bus type. Values can be: IDE, SCSI, SATA 
+* `bus_sub_type` - (Optional) Disk bus subtype. Values can be: "IDE" for IDE. buslogic, lsilogic, lsilogicsas, VirtualSCSI for SCSI and ahci for SATA
+* `storage_profile` - (Optional) The name of storage profile where disk will be created
 
 ## Attribute reference
 
 Supported in provider *v2.5+*
 
 * `iops` - (Computed) IOPS request for the created disk
-* `owner_name` - (Computed) the owner name of the disk
-* `datastore_name` - (Computed) data store name. Readable only for system user.
-* `is_attached` - (Computed) true if the disk is already attached
+* `owner_name` - (Computed) The owner name of the disk
+* `datastore_name` - (Computed) Data store name. Readable only for system user.
+* `is_attached` - (Computed) True if the disk is already attached
 
 ## Importing
 

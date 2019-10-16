@@ -136,7 +136,7 @@ func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) 
 	sizeInBytes, sizeInBytesProvided := d.GetOk("size_in_bytes")
 
 	if !sizeProvided && !sizeInBytesProvided {
-		return fmt.Errorf("size in bytes isn't provided")
+		return fmt.Errorf("size_in_bytes isn't provided")
 	}
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)

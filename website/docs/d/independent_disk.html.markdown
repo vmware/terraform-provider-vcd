@@ -21,7 +21,7 @@ data "vcd_independent_disk" "existing-disk" {
   vdc     = "my-vdc"
   name    = "my-disk"
 }
-output "diks-size" {
+output "disk-size" {
   value = data.vcd_independent_disk.size_in_bytes
 }
 output "type_is_attached" {
