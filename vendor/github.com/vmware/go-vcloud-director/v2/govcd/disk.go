@@ -364,11 +364,12 @@ func (vdc *Vdc) GetDiskByHref(diskHref string) (*Disk, error) {
 	return Disk, nil
 }
 
-// GetDiskByName finds a Disk by Name
-// On success, returns a pointer to the Disk structure and a nil error
+// GetDisksByName finds a Disks by Name
+// On success, returns a pointer to the Disk array and a nil error
 // On failure, returns a nil pointer and an error
-func (vdc *Vdc) GetDiskByName(diskName string, refresh bool) (*Disk, error) {
+func (vdc *Vdc) GetDisksByName(diskName string, refresh bool) (*[]Disk, error) {
 	util.Logger.Printf("[TRACE] Get Disk By Name: %s\n", diskName)
+	var diskArray []Disk
 	if refresh {
 		err := vdc.Refresh()
 		if err != nil {
@@ -378,11 +379,18 @@ func (vdc *Vdc) GetDiskByName(diskName string, refresh bool) (*Disk, error) {
 	for _, resourceEntities := range vdc.Vdc.ResourceEntities {
 		for _, resourceEntity := range resourceEntities.ResourceEntity {
 			if resourceEntity.Name == diskName && resourceEntity.Type == "application/vnd.vmware.vcloud.disk+xml" {
-				return vdc.GetDiskByHref(resourceEntity.HREF)
+				disk, err := vdc.GetDiskByHref(resourceEntity.HREF)
+				if err != nil {
+					return nil, err
+				}
+				diskArray = append(diskArray, *disk)
 			}
 		}
 	}
-	return nil, ErrorEntityNotFound
+	if len(diskArray) == 0 {
+		return nil, ErrorEntityNotFound
+	}
+	return &diskArray, nil
 }
 
 // GetDiskById finds a Disk by ID
@@ -409,18 +417,4 @@ func (vdc *Vdc) GetDiskById(diskId string, refresh bool) (*Disk, error) {
 	}
 	diskHREF.Path += fmt.Sprintf("/disk/%s", DiskBareId)
 	return vdc.GetDiskByHref(diskHREF.String())
-}
-
-// GetDiskByNameOrId finds a Disk by Name or ID
-// On success, returns a pointer to the Disk structure and a nil error
-// On failure, returns a nil pointer and an error
-func (vdc *Vdc) GetDiskByNameOrId(identifier string, refresh bool) (*Disk, error) {
-	util.Logger.Printf("[TRACE] Get Disk By Name or Id: %s\n", identifier)
-	getByName := func(name string, refresh bool) (interface{}, error) { return vdc.GetDiskByName(name, refresh) }
-	getById := func(id string, refresh bool) (interface{}, error) { return vdc.GetDiskById(id, refresh) }
-	entity, err := getEntityByNameOrId(getByName, getById, identifier, refresh)
-	if entity == nil {
-		return nil, err
-	}
-	return entity.(*Disk), err
 }
