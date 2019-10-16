@@ -54,10 +54,10 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 				ExpectNonEmptyPlan: true,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdCatalogMediaExists("vcd_catalog_media."+TestAccVcdDataSourceMedia, &media),
-					resource.TestMatchOutput("owner_name", regexp.MustCompile(`^\w*$`)),
+					resource.TestMatchOutput("owner_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchOutput("creation_date", regexp.MustCompile(`^^\d{4}-\d{2}-\d{2}.*`)),
 					resource.TestCheckOutput("status", "RESOLVED"),
-					resource.TestMatchOutput("storage_profile_name", regexp.MustCompile(`(.|\s)*\S(.|\s)*`)),
+					resource.TestMatchOutput("storage_profile_name", regexp.MustCompile(`^\S+`)),
 					testCheckMediaNonStringOutputs(),
 				),
 			},
