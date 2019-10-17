@@ -50,22 +50,26 @@ var debugShowRequestEnabled = os.Getenv("GOVCD_SHOW_REQ") != ""
 var debugShowResponseEnabled = os.Getenv("GOVCD_SHOW_RESP") != ""
 
 // Enables the debugging hook to show requests as they are processed.
+//lint:ignore U1000 this function is used on request for debugging purposes
 func enableDebugShowRequest() {
 	debugShowRequestEnabled = true
 }
 
 // Disables the debugging hook to show requests as they are processed.
+//lint:ignore U1000 this function is used on request for debugging purposes
 func disableDebugShowRequest() {
 	debugShowRequestEnabled = false
 	_ = os.Setenv("GOVCD_SHOW_REQ", "")
 }
 
 // Enables the debugging hook to show responses as they are processed.
+//lint:ignore U1000 this function is used on request for debugging purposes
 func enableDebugShowResponse() {
 	debugShowResponseEnabled = true
 }
 
 // Disables the debugging hook to show responses as they are processed.
+//lint:ignore U1000 this function is used on request for debugging purposes
 func disableDebugShowResponse() {
 	debugShowResponseEnabled = false
 	_ = os.Setenv("GOVCD_SHOW_RESP", "")

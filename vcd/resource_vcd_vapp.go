@@ -4,11 +4,15 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
+
+const implicitVmInVappDeprecation = "Creation of vApp and an implicit single VM in the same structure is deprecated."
+const vAppUnknownStatus = "-unknown-status-"
 
 func resourceVcdVApp() *schema.Resource {
 	return &schema.Resource{
@@ -16,12 +20,16 @@ func resourceVcdVApp() *schema.Resource {
 		Update: resourceVcdVAppUpdate,
 		Read:   resourceVcdVAppRead,
 		Delete: resourceVcdVAppDelete,
+		Importer: &schema.ResourceImporter{
+			State: resourceVcdVappImport,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "A name for the vApp, unique withing the VDC",
 			},
 			"org": {
 				Type:     schema.TypeString,
@@ -33,80 +41,122 @@ func resourceVcdVApp() *schema.Resource {
 			},
 			"vdc": {
 				Type:        schema.TypeString,
-				Required:    false,
 				Optional:    true,
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
 			"template_name": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "The name of the vApp Template to use",
+				Deprecated: implicitVmInVappDeprecation +
+					" Use vcd_vapp_vm.template_name instead",
 			},
 			"catalog_name": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "The catalog name in which to find the given vApp Template",
+				Deprecated: implicitVmInVappDeprecation +
+					" Use vcd_vapp_vm.catalog_name instead",
 			},
 			"network_name": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Name of the network this vApp should join",
+				Deprecated: implicitVmInVappDeprecation +
+					" Use vcd_vapp_vm.network instead",
 			},
 			"memory": {
-				Type:     schema.TypeInt,
-				Optional: true,
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "The amount of RAM (in MB) to allocate to the vApp",
+				Deprecated: implicitVmInVappDeprecation +
+					" Use vcd_vapp_vm.memory instead",
 			},
 			"cpus": {
-				Type:     schema.TypeInt,
-				Optional: true,
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "The number of virtual CPUs to allocate to the vApp",
+				Deprecated: implicitVmInVappDeprecation +
+					" Use vcd_vapp_vm.cpus instead",
 			},
 			"ip": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "The IP to assign to this vApp",
+				Deprecated: implicitVmInVappDeprecation +
+					" Use vcd_vapp_vm.network instead",
 			},
 			"storage_profile": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Storage profile to be used by the vApp",
+				// TODO: deprecate when vcd_vapp_vm can handle this parameter
+				// See https://github.com/vmware/go-vcloud-director/issues/246 for details.
 			},
 			"description": {
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Optional description of the vApp",
 			},
 			"initscript": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "A script to be run only on initial boot",
+				Deprecated: implicitVmInVappDeprecation +
+					" Use vcd_vapp_vm.initscript instead",
 			},
 			"metadata": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				// For now underlying go-vcloud-director repo only supports
 				// a value of type String in this map.
+				Description: "Key value map of metadata to assign to this vApp. Key and value can be any string.",
 			},
 			"ovf": {
-				Type:     schema.TypeMap,
-				Optional: true,
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Description: "Key value map of ovf parameters to assign to VM product section",
+				Deprecated: implicitVmInVappDeprecation +
+					" Use guest_properties in this resource or vcd_vapp_vm.guest_properties instead",
 			},
 			"href": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "vApp Hyper Reference",
 			},
 			"power_on": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "A boolean value stating if this vApp should be powered on",
 			},
 			"accept_all_eulas": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Automatically accept EULA if OVA has it",
+				Deprecated: implicitVmInVappDeprecation +
+					" Use vcd_vapp_vm.accept_all_eulas instead",
 			},
 			"guest_properties": {
 				Type:        schema.TypeMap,
 				Optional:    true,
-				Description: "Key/value settings for guest properties",
+				Description: "Key/value settings for guest properties. Will be picked up by new VMs when created.",
+			},
+			"status": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Shows the status code of the vApp",
+			},
+			"status_text": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Shows the status of the vApp",
 			},
 		},
 	}
@@ -119,6 +169,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error retrieving Org and VDC: %s", err)
 	}
 
+	vappName := d.Get("name").(string)
 	vcdClient.lockVapp(d)
 	defer vcdClient.unLockVapp(d)
 
@@ -159,9 +210,9 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 
 			log.Printf("storage_profile %s", storageProfileReference)
 
-			vapp, err := vdc.GetVAppByName(d.Get("name").(string), false)
+			vapp, err := vdc.GetVAppByName(vappName, false)
 			if err != nil {
-				task, err := vdc.ComposeVApp(nets, vappTemplate, storageProfileReference, d.Get("name").(string), d.Get("description").(string), d.Get("accept_all_eulas").(bool))
+				task, err := vdc.ComposeVApp(nets, vappTemplate, storageProfileReference, vappName, d.Get("description").(string), d.Get("accept_all_eulas").(bool))
 				if err != nil {
 					return fmt.Errorf("error creating vApp: %#v", err)
 				}
@@ -170,7 +221,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 				if err != nil {
 					return fmt.Errorf("error creating vApp: %#v", err)
 				}
-				vapp, err = vdc.GetVAppByName(d.Get("name").(string), true)
+				vapp, err = vdc.GetVAppByName(vappName, true)
 				if err != nil {
 					return fmt.Errorf("error creating vApp: %#v", err)
 				}
@@ -181,7 +232,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 				return fmt.Errorf("error composing vApp: %s", err)
 			}
 
-			task, err := vapp.ChangeVMName(d.Get("name").(string))
+			task, err := vapp.ChangeVMName(vappName)
 			if err != nil {
 				return fmt.Errorf("error with VM name change: %#v", err)
 			}
@@ -257,11 +308,12 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	vapp, err := vdc.GetVAppByName(vappName, true)
+	if err != nil {
+		return fmt.Errorf("unable to find vApp by name %s: %s", vappName, err)
+	}
+
 	if _, ok := d.GetOk("guest_properties"); ok {
-		vapp, err := vdc.GetVAppByName(d.Get("name").(string), true)
-		if err != nil {
-			return fmt.Errorf("unable to find vApp by name %s: %s", d.Get("name").(string), err)
-		}
 
 		// Even though vApp has a task and waits for its completion it happens that it is not ready
 		// for operation just after provisioning therefore we wait for it to exit UNRESOLVED state
@@ -282,7 +334,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	d.SetId(d.Get("name").(string))
+	d.SetId(vapp.VApp.ID)
 
 	return resourceVcdVAppUpdate(d, meta)
 }
@@ -439,18 +491,32 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
+	return genericVcdVAppRead(d, meta, "resource")
+}
+
+func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string) error {
 	vcdClient := meta.(*VCDClient)
 
 	org, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
+	identifier := d.Id()
 
-	vapp, err := vdc.GetVAppByNameOrId(d.Id(), false)
+	if identifier == "" {
+		identifier = d.Get("name").(string)
+	}
+	if identifier == "" {
+		return fmt.Errorf("[vapp read] no identifier provided")
+	}
+	vapp, err := vdc.GetVAppByNameOrId(identifier, false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find vApp. Removing from tfstate")
-		d.SetId("")
-		return nil
+		if origin == "resource" {
+			log.Printf("[DEBUG] Unable to find vApp. Removing from tfstate")
+			d.SetId("")
+			return nil
+		}
+		return fmt.Errorf("[vapp read] error retrieving vApp %s: %s", identifier, err)
 	}
 
 	if _, ok := d.GetOk("ip"); ok {
@@ -470,9 +536,9 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 			log.Printf("[DEBUG] IP is 'allocated'")
 		}
 
-		d.Set("ip", ip)
+		_ = d.Set("ip", ip)
 	} else {
-		d.Set("ip", "allocated")
+		_ = d.Set("ip", "allocated")
 	}
 
 	// update guest properties
@@ -485,6 +551,36 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf("unable to set guest properties in state: %s", err)
 	}
+
+	statusText, err := vapp.GetStatus()
+	if err != nil {
+		statusText = vAppUnknownStatus
+	}
+	_ = d.Set("status", vapp.VApp.Status)
+	_ = d.Set("status_text", statusText)
+	// Power status is not easy to define.
+	// It should be set when status == 4, but even when we request it the status
+	// change may not happen until late. Returning the power status at an early
+	// stage may mislead both users and terraform, with the result of having
+	// unnecessary update requests.
+	// We have two fields that produce better information:
+	// * status (numeric status code, such as "4")
+	// * status_text (status as a string, such as "POWERED_ON")
+	// _ = d.Set("power_on", vapp.VApp.Status == 4)
+
+	_ = d.Set("href", vapp.VApp.HREF)
+	_ = d.Set("description", vapp.VApp.Description)
+	metadata, err := vapp.GetMetadata()
+	if err != nil {
+		return fmt.Errorf("[vapp read] error retrieving metadata: %s", err)
+	}
+	metadataStruct := getMetadataStruct(metadata.MetadataEntry)
+	err = d.Set("metadata", metadataStruct)
+	if err != nil {
+		return fmt.Errorf("[vapp read] error setting metadata: %s", err)
+	}
+
+	d.SetId(vapp.VApp.ID)
 
 	return nil
 }
@@ -576,4 +672,40 @@ func tryUndeploy(vapp govcd.VApp) error {
 		return fmt.Errorf("error undeploying vApp: %#v", err)
 	}
 	return nil
+}
+
+// resourceVcdVappImport is responsible for importing the resource.
+// The following steps happen as part of import
+// 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
+// 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
+// 3. The functions splits the dot-formatted path and tries to lookup the object
+// 4. If the lookup succeeds it sets the ID field for `_resource_name_` resource in statefile
+// (the resource must be already defined in .tf config otherwise `terraform import` will complain)
+// 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
+// based on the known ID of object.
+//
+// Example resource name (_resource_name_): vcd_vapp.vapp_name
+// Example import path (_the_id_string_): org-name.vdc-name.vapp-name
+func resourceVcdVappImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	resourceURI := strings.Split(d.Id(), ".")
+	if len(resourceURI) != 3 {
+		return nil, fmt.Errorf("[vapp import] resource name must be specified as org-name.vdc-name.vapp-name")
+	}
+	orgName, vdcName, vappName := resourceURI[0], resourceURI[1], resourceURI[2]
+
+	vcdClient := meta.(*VCDClient)
+	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
+	if err != nil {
+		return nil, fmt.Errorf("[vapp import] unable to find VDC %s: %s ", vdcName, err)
+	}
+
+	vapp, err := vdc.GetVAppByName(vappName, false)
+	if err != nil {
+		return nil, fmt.Errorf("[vapp import] error retrieving vapp %s: %s", vappName, err)
+	}
+	_ = d.Set("name", vappName)
+	_ = d.Set("org", orgName)
+	_ = d.Set("vdc", vdcName)
+	d.SetId(vapp.VApp.ID)
+	return []*schema.ResourceData{d}, nil
 }

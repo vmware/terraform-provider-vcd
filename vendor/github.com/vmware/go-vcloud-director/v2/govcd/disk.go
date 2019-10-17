@@ -310,7 +310,7 @@ func FindDiskByHREF(client *Client, href string) (*Disk, error) {
 // Find independent disk using disk name. Returns VMRecord query return type
 func (vdc *Vdc) QueryDisk(diskName string) (DiskRecord, error) {
 
-	if "" == diskName {
+	if diskName == "" {
 		return DiskRecord{}, fmt.Errorf("disk name can not be empty")
 	}
 
