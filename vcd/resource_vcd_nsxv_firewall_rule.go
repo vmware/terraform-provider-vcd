@@ -382,18 +382,27 @@ func resourceVcdNsxvFirewallRuleDelete(d *schema.ResourceData, meta interface{})
 // 2b. If the `_the_id_string_` starts with `list@` and contains path to edge gateway similar to
 // `list@org.vdc.edge-gw` then the function lists all firewall rules and their IDs in that edge
 // gateway.
-// 2c. If the `_the_id_string_` does not match format described neither in '2a' nor in '2b' a
+// 2c. If the `_the_id_string_` contains a dot formatted path with the 4th element starting with
+// substring 'ui-id:3' and number after color - the import function will try to lookup real ID and
+// import the rule
+// 2d. If the `_the_id_string_` does not match format described neither in '2a', '2b', '2c' a
 // usage error message is printed
 //
-// Example resource name (_resource_name_): vcd_lb_nsxv_firewall_rule.my-test-fw-rule
+// Example resource name (_resource_name_): vcd_nsxv_firewall_rule.my-test-fw-rule
 // Example import path (_the_id_string_): org.vdc.edge-gw.existing-firewall-rule-id
+// Example import by UI ID path (_the_id_string_): org.vdc.edge-gw.ui-id:2
+// Example list path (_the_id_string_): list@org.vdc.edge-gw
 func resourceVcdNsxvFirewallRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	var commandOrgName, orgName, vdcName, edgeName, firewallRuleId string
 	var listRules, importRule bool
 
 	resourceURI := strings.Split(d.Id(), ".")
-	helpError := fmt.Errorf("resource name must be specified as " +
-		"'org.vdc.edge-gw.firewall-rule-id' or 'list@org.vdc.edge-gw' to get a list of rules")
+	helpError := fmt.Errorf(`resource id must be specified in one of these formats:
+'org.vdc.edge-gw.real-firewall-rule-id' to import by rule id
+'org.vdc.edge-gw.ui-no:X' where X is the firewall rule number shown in UI
+'list@org.vdc.edge-gw' to get a list of rules with their respective UI numbers and real IDs`)
+
+	log.Printf("[DEBUG] importing vcd_nsxv_firewall_rule resource with provided id %s", d.Id())
 	switch len(resourceURI) {
 	case 3:
 		commandOrgName, vdcName, edgeName = resourceURI[0], resourceURI[1], resourceURI[2]
@@ -427,19 +436,46 @@ func resourceVcdNsxvFirewallRuleImport(d *schema.ResourceData, meta interface{})
 
 		writer := tabwriter.NewWriter(getTerraformStdout(), 0, 8, 1, '\t', tabwriter.AlignRight)
 
-		fmt.Fprintln(writer, "UI ID\tID\tName\tAction\tType")
+		fmt.Fprintln(writer, "UI No\tID\tName\tAction\tType")
 		fmt.Fprintln(writer, "-----\t--\t----\t------\t----")
 		for index, rule := range allRules {
 			fmt.Fprintf(writer, "%d\t%s\t%s\t%s\t%s\n", (index + 1), rule.ID, rule.Name, rule.Action, rule.RuleType)
 		}
 		writer.Flush()
 
-		return nil, fmt.Errorf("resource was not imported! Please use the above ID to format the command as: \n" +
-			"terraform import vcd_nsxv_firewall.resource-name org.vdc.edge-gw.firewall-rule-id")
+		return nil, fmt.Errorf("resource was not imported! %s", helpError.Error())
 	}
 
 	// Proceed with import
 	if importRule {
+		// If user requested to import by UI Number - real ID must be looked up
+		// Specified import path as 'org.vdc.edge-gw.ui-no:3' to import rule number 3 in UI
+		if strings.Contains(firewallRuleId, "ui-no") {
+			allRules, err := edgeGateway.GetAllNsxvFirewallRules()
+			if err != nil {
+				return nil, fmt.Errorf("unable to retrieve all firewal rules: %s", err)
+			}
+
+			splitUiId := strings.Split(firewallRuleId, ":")
+			if len(splitUiId) != 2 {
+				return nil, fmt.Errorf("could not parse firewall rule UI number %s", firewallRuleId)
+			}
+
+			splitUiIdInt, err := strconv.Atoi(splitUiId[1])
+			if err != nil {
+				return nil, fmt.Errorf("could not convert firewall rule number %s to integer", splitUiId[1])
+			}
+
+			// Rule index cannot be bigger than all rules and less than one
+			if splitUiIdInt > len(allRules) || splitUiIdInt < 1 {
+				return nil, fmt.Errorf("rule number %d does not exist", splitUiIdInt)
+			}
+
+			// Lookup real firewall rule id and use it for lookup
+			firewallRuleId = allRules[splitUiIdInt-1].ID
+
+		}
+
 		readFirewallRule, err := edgeGateway.GetNsxvFirewallRuleById(firewallRuleId)
 		if err != nil {
 			return []*schema.ResourceData{}, fmt.Errorf("unable to find firewall rule with id %s: %s",

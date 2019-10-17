@@ -57,8 +57,8 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 	// -step6 is "import"
 
 	params["FuncName"] = t.Name() + "-step7"
-	configText7 := templateFill(testAccVcdEdgeFirewallRule6, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 7: %s", configText7)
+	configText8 := templateFill(testAccVcdEdgeFirewallRule8, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 8: %s", configText8)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -359,14 +359,20 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule5", "service.176422394.source_port", "any"),
 				),
 			},
-			resource.TestStep{ // Step 6 - resource import
+			resource.TestStep{ // Step 6 - resource import by real ID
 				ResourceName:      "vcd_nsxv_firewall_rule.imported",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdByResourceName("vcd_nsxv_firewall_rule.rule5"),
 			},
-			resource.TestStep{ // Step 7 - two rules - one above another
-				Config: configText7,
+			resource.TestStep{ // Step 7 - resource import by UI Number
+				ResourceName:      "vcd_nsxv_firewall_rule.imported",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateFirewallUiNumberByResourceName("vcd_nsxv_firewall_rule.rule5"),
+			},
+			resource.TestStep{ // Step 8 - two rules - one above another
+				Config: configText8,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.rule6", "id", regexp.MustCompile(`\d*`)),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule6", "name", "below-rule"),
@@ -478,6 +484,57 @@ func resourceFieldsEqual(firstObject, secondObject string, excludeFields []strin
 			}
 		}
 		return nil
+	}
+}
+
+// importStateFirewallUiNumberByResourceName constructs an import path (ID in Terraform import terms) in the format of:
+// organization.vdc.edge-gateway-name.ui-no:X
+// It uses terraform.State to find existing object's UI ID by 'resource.resource-name'
+func importStateFirewallUiNumberByResourceName(resource string) resource.ImportStateIdFunc {
+	return func(s *terraform.State) (string, error) {
+		rs, ok := s.RootModule().Resources[resource]
+		if !ok {
+			return "", fmt.Errorf("not found resource: %s", resource)
+		}
+
+		if rs.Primary.ID == "" {
+			return "", fmt.Errorf("no ID is set for %s resource", resource)
+		}
+
+		// Find UI Number by having only real ID in the system
+		conn := testAccProvider.Meta().(*VCDClient)
+		edgeGateway, err := conn.GetEdgeGateway(testConfig.VCD.Org, testConfig.VCD.Vdc, testConfig.Networking.EdgeGateway)
+		if err != nil {
+			return "", fmt.Errorf(errorUnableToFindEdgeGateway, err)
+		}
+
+		allRules, err := edgeGateway.GetAllNsxvFirewallRules()
+		if err != nil {
+			return "", fmt.Errorf("could not get all firewall rules: %s", err)
+		}
+
+		// realFirewallRuleIndex is used to store firewall rule number
+		var realFirewallRuleIndex int
+		var found bool
+		for ruleIndex, rule := range allRules {
+			// if the rule with reald ID is found
+			if rule.ID == rs.Primary.ID {
+				realFirewallRuleIndex = ruleIndex + 1
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			return "", fmt.Errorf("could not find firewall rule by ID %s", rs.Primary.ID)
+		}
+
+		importId := fmt.Sprintf("%s.%s.%s.ui-no:%d", testConfig.VCD.Org, testConfig.VCD.Vdc, testConfig.Networking.EdgeGateway, realFirewallRuleIndex)
+		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || testConfig.Networking.EdgeGateway == "" {
+			return "", fmt.Errorf("missing information to generate import path: %s", importId)
+		}
+
+		return importId, nil
 	}
 }
 
@@ -774,7 +831,7 @@ resource "vcd_nsxv_firewall_rule" "rule5" {
   }
 `
 
-const testAccVcdEdgeFirewallRule6 = `
+const testAccVcdEdgeFirewallRule8 = `
 resource "vcd_nsxv_firewall_rule" "rule6" {
 	org          = "{{.Org}}"
 	vdc          = "{{.Vdc}}"
