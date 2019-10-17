@@ -22,6 +22,9 @@ user and tests from dealing with hashed IDs and is easier to work with in genera
 
 TypeSet with more than one element blocks AND where vCD API returns them without a field to order on
 
+*Note*. The schema definition may optionally use a `Set` function of type `SchemaSetFunc`. It may be
+used when a default hashing function (which calcluates hash based on all fields) is not suitable.
+
 ## Testing
 
 Every feature in the provider must include testing. See

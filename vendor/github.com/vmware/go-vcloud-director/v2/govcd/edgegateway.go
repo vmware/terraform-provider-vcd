@@ -1158,11 +1158,11 @@ func (egw *EdgeGateway) UpdateLBGeneralParams(enabled, accelerationEnabled, logg
 	return updatedLb, nil
 }
 
-// GetFwGeneralParams retrieves firewall configuration and can be used
+// GetFwGeneralConfig retrieves firewall configuration and can be used
 // to alter master configuration options. These are 3 fields only:
 // FwGeneralParamsWithXml.Enabled, FwGeneralParamsWithXml.DefaultPolicy.LoggingEnabled and
 // FwGeneralParamsWithXml.DefaultPolicy.Action
-func (egw *EdgeGateway) GetFwGeneralParams() (*types.FwGeneralParamsWithXml, error) {
+func (egw *EdgeGateway) GetFwGeneralConfig() (*types.FwGeneralParamsWithXml, error) {
 	if !egw.HasAdvancedNetworking() {
 		return nil, fmt.Errorf("only advanced edge gateway support firewall configuration")
 	}
@@ -1183,12 +1183,12 @@ func (egw *EdgeGateway) GetFwGeneralParams() (*types.FwGeneralParamsWithXml, err
 	return firewallConfig, nil
 }
 
-// UpdateFwGeneralParams allows to update firewall configuration.
+// UpdateFwGeneralConfig allows to update firewall configuration.
 // It accepts three fields (Enabled, DefaultLoggingEnabled, DefaultAction) and uses
 // them to construct types.FwGeneralParamsWithXml without altering other options to prevent config
 // corruption.
 // They are represented in firewall configuration page in the UI.
-func (egw *EdgeGateway) UpdateFwGeneralParams(enabled, defaultLoggingEnabled bool, defaultAction string) (*types.FwGeneralParamsWithXml, error) {
+func (egw *EdgeGateway) UpdateFwGeneralConfig(enabled, defaultLoggingEnabled bool, defaultAction string) (*types.FwGeneralParamsWithXml, error) {
 	if !egw.HasAdvancedNetworking() {
 		return nil, fmt.Errorf("only advanced edge gateway supports load balancing")
 	}
@@ -1198,7 +1198,7 @@ func (egw *EdgeGateway) UpdateFwGeneralParams(enabled, defaultLoggingEnabled boo
 	}
 
 	// Retrieve firewall latest configuration
-	currentFw, err := egw.GetFwGeneralParams()
+	currentFw, err := egw.GetFwGeneralConfig()
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve firewall config before update: %s", err)
 	}
@@ -1229,7 +1229,7 @@ func (egw *EdgeGateway) UpdateFwGeneralParams(enabled, defaultLoggingEnabled boo
 	}
 
 	// Retrieve configuration after update
-	updatedFw, err := egw.GetFwGeneralParams()
+	updatedFw, err := egw.GetFwGeneralConfig()
 	if err != nil {
 		return nil, fmt.Errorf("unable to retrieve firewall after update: %s", err)
 	}
@@ -1281,7 +1281,8 @@ func (egw *EdgeGateway) GetVnicIndexByNetworkNameAndType(networkName, networkTyp
 	return getVnicIndexByNetworkNameAndType(networkName, networkType, vnics)
 }
 
-// GetAnyVnicIndexByNetworkName returns *int of vNic index and network type by network name
+// GetAnyVnicIndexByNetworkName parses XML structure of vNic mapping to networks in edge gateway XML
+// and returns *int of vNic index and network type by network name
 // networkName cannot be empty
 // networkType will be one of: 'internal', 'uplink', 'trunk', 'subinterface'
 //

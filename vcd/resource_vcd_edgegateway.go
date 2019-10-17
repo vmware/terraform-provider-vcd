@@ -421,7 +421,7 @@ func setLoadBalancerData(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 
 // setFirewallData is a convenience function to handle firewall settings on edge gateway
 func setFirewallData(d *schema.ResourceData, egw govcd.EdgeGateway) error {
-	fw, err := egw.GetFwGeneralParams()
+	fw, err := egw.GetFwGeneralConfig()
 	if err != nil {
 		return fmt.Errorf("unable to read firewall settings: %s", err)
 	}
@@ -449,10 +449,10 @@ func updateLoadBalancer(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 
 // updateFirewall updates general firewall configuration
 func updateFirewall(d *schema.ResourceData, egw govcd.EdgeGateway) error {
-	lbEnabled := d.Get("fw_enabled").(bool)
-	lbDefaultRuleLogging := d.Get("fw_default_rule_logging_enabled").(bool)
-	lbDefaultRuleAction := d.Get("fw_default_rule_action").(string)
-	_, err := egw.UpdateFwGeneralParams(lbEnabled, lbDefaultRuleLogging, lbDefaultRuleAction)
+	fwEnabled := d.Get("fw_enabled").(bool)
+	fwDefaultRuleLogging := d.Get("fw_default_rule_logging_enabled").(bool)
+	fwDefaultRuleAction := d.Get("fw_default_rule_action").(string)
+	_, err := egw.UpdateFwGeneralConfig(fwEnabled, fwDefaultRuleLogging, fwDefaultRuleAction)
 	if err != nil {
 		return fmt.Errorf("unable to update firewall settings: %s", err)
 	}

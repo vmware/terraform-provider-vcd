@@ -13,8 +13,8 @@ github.com/Azure/go-autorest v10.15.4+incompatible/go.mod h1:r+4oMnoxhatjLLJ6zxS
 github.com/Azure/go-ntlmssp v0.0.0-20180810175552-4a21cbd618b4/go.mod h1:chxPXzSsl7ZWRAuOIE23GDNzjWuZquvFlgA8xmpunjU=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/ChrisTrenkamp/goxpath v0.0.0-20170922090931-c385f95c6022/go.mod h1:nuWgzSkT5PnyOd+272uUmV0dnAnAn42Mk7PiQC5VzN4=
-github.com/Didainius/go-vcloud-director/v2 v2.4.0-alpha-2.0.20190930093433-8e9b0560a763 h1:UEea0QIGgwvXGZCBNWLXaZevmWx4fd7PddLuPhJx1WE=
-github.com/Didainius/go-vcloud-director/v2 v2.4.0-alpha-2.0.20190930093433-8e9b0560a763/go.mod h1:VqfkCixIzRmj4EzF2yFJKB+aKDW6GkXlLbFh5xZ+qqs=
+github.com/Didainius/go-vcloud-director/v2 v2.4.0-alpha-2.0.20191017103530-adfb3b17e47c h1:qyBHfxxjvi+FSOF0xNPX90GCiBn20Z0GQmUU6ldTarI=
+github.com/Didainius/go-vcloud-director/v2 v2.4.0-alpha-2.0.20191017103530-adfb3b17e47c/go.mod h1:VqfkCixIzRmj4EzF2yFJKB+aKDW6GkXlLbFh5xZ+qqs=
 github.com/Shopify/sarama v1.19.0/go.mod h1:FVkBWblsNy7DGZRfXLU0O9RCGt5g3g3yEuWXgklEdEo=
 github.com/Shopify/toxiproxy v2.1.4+incompatible/go.mod h1:OXgGpZ6Cli1/URJOF1DMxUHB2q5Ap20/P/eIdh4G0pI=
 github.com/Unknwon/com v0.0.0-20151008135407-28b053d5a292/go.mod h1:KYCjqMOeHpNuTOiFQU6WEcTG7poCJrUs0YgyHNtn1no=

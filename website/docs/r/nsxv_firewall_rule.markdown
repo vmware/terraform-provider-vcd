@@ -1,25 +1,25 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_nsxv_firewall"
-sidebar_current: "docs-vcd-resource-nsxv-firewall"
+page_title: "vCloudDirector: vcd_nsxv_firewall_rule"
+sidebar_current: "docs-vcd-resource-nsxv-firewall-rule"
 description: |-
-  Provides a vCloud Director firewall resource for advanced edge gateways (NSX-V). This can be used
-  to create, modify, and delete firewall rules.
+  Provides a vCloud Director firewall rule resource for advanced edge gateways (NSX-V). This can be
+  used to create, modify, and delete firewall rules.
 ---
 
-# vcd\_nsxv\_firewall
+# vcd\_nsxv\_firewall\_rule
 
-Provides a vCloud Director firewall resource for advanced edge gateways (NSX-V). This can be used to
-create, modify, and delete firewall rules. Replaces
+Provides a vCloud Director firewall rule resource for advanced edge gateways (NSX-V). This can be
+used to create, modify, and delete firewall rules. Replaces
 [`vcd_firewall_rules`](/docs/providers/vcd/r/firewall_rules.html) resource.
 
-~> **Note:** This resource requires advanced edge gateway. For non-advanced edge gateways please
+~> **Note:** This resource requires advanced edge gateway (NSX-V). For non-advanced edge gateways please
 use the [`vcd_firewall_rules`](/docs/providers/vcd/r/firewall_rules.html) resource.
 
 ## Example Usage 1 (Minimal input)
 
 ```hcl
-resource "vcd_nsxv_firewall" "my-rule-1" {
+resource "vcd_nsxv_firewall_rule" "my-rule-1" {
   org          = "my-org"
   vdc          = "my-vdc"
   edge_gateway = "my-edge-gateway"
@@ -42,7 +42,7 @@ resource "vcd_nsxv_firewall" "my-rule-1" {
 ## Example Usage 2 (Multiple services)
 
 ```hcl
-resource "vcd_nsxv_firewall" "my-rule-1" {
+resource "vcd_nsxv_firewall_rule" "my-rule-1" {
   org          = "my-org"
   vdc          = "my-vdc"
   edge_gateway = "my-edge-gateway"
@@ -70,7 +70,7 @@ resource "vcd_nsxv_firewall" "my-rule-1" {
 ## Example Usage 3 (Use exclusion in source)
 
 ```hcl
-resource "vcd_nsxv_firewall" "my-rule-1" {
+resource "vcd_nsxv_firewall_rule" "my-rule-1" {
   org          = "my-org"
   vdc          = "my-vdc"
   edge_gateway = "my-edge-gateway"
@@ -93,7 +93,7 @@ resource "vcd_nsxv_firewall" "my-rule-1" {
 ## Example Usage 4 (Deny rule using exclusion and priority set)
 
 ```hcl
-resource "vcd_nsxv_firewall" "my-rule-1" {
+resource "vcd_nsxv_firewall_rule" "my-rule-1" {
   org          = "my-org"
   vdc          = "my-vdc"
   edge_gateway = "my-edge-gateway"
@@ -115,14 +115,14 @@ resource "vcd_nsxv_firewall" "my-rule-1" {
   }
 }
 
-resource "vcd_nsxv_firewall" "my-rule-2" {
+resource "vcd_nsxv_firewall_rule" "my-rule-2" {
   org          = "my-org"
   vdc          = "my-vdc"
   edge_gateway = "my-edge-gateway"
 
   # This attribute allows to ensure rule is inserted above the referred one
   # in rule processing engine
-  above_rule_id = "${vcd_nsxv_firewall.my-rule-1.id}"
+  above_rule_id = "${vcd_nsxv_firewall_rule.my-rule-1.id}"
   name          = "my-friendly-name"
 
   source {
@@ -206,7 +206,7 @@ via supplying the full dot separated path for firewall rule. An example is below
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_nsxv_firewall.imported my-org.my-org-vdc.my-edge-gw.my-firewall-rule-id
+terraform import vcd_nsxv_firewall_rule.imported my-org.my-org-vdc.my-edge-gw.my-firewall-rule-id
 ```
 
 The above would import the application rule named `my-firewall-rule-id` that is defined on edge
@@ -220,12 +220,12 @@ IDs.
 ### Listing real firewall rule IDs
 
 To list the real IDs there is a
-special command **`terraform import vcd_nsxv_firewall.imported list@my-org.my-org-vdc.my-edge-gw`**
+special command **`terraform import vcd_nsxv_firewall_rule.imported list@my-org.my-org-vdc.my-edge-gw`**
 where `my-org` is the organization used, `my-org-vdc` is vDC name and `my-edge-gw` is edge gateway
 name. The output for this command should look similar to below one:
 
 ```shell
-$ terraform import vcd_nsxv_firewall.import list@my-org.my-org-vdc.my-edge-gw
+$ terraform import vcd_nsxv_firewall_rule.import list@my-org.my-org-vdc.my-edge-gw
 vcd_nsxv_firewall.import: Importing from ID "list@my-org.my-org-vdc.my-edge-gw"...
 Retrieving all firewall rules
 UI ID   ID      Name                                    Action  Type

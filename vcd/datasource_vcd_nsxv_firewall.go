@@ -4,9 +4,9 @@ import (
 	"github.com/hashicorp/terraform/helper/schema"
 )
 
-func datasourceVcdNsxvFirewall() *schema.Resource {
+func datasourceVcdNsxvFirewallRule() *schema.Resource {
 	return &schema.Resource{
-		Read: resourceVcdNsxvFirewallRead,
+		Read: resourceVcdNsxvFirewallRuleRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,

@@ -16,14 +16,14 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-func resourceVcdNsxvFirewall() *schema.Resource {
+func resourceVcdNsxvFirewallRule() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdNsxvFirewallCreate,
-		Read:   resourceVcdNsxvFirewallRead,
-		Update: resourceVcdNsxvFirewallUpdate,
-		Delete: resourceVcdNsxvFirewallDelete,
+		Create: resourceVcdNsxvFirewallRuleCreate,
+		Read:   resourceVcdNsxvFirewallRuleRead,
+		Update: resourceVcdNsxvFirewallRuleUpdate,
+		Delete: resourceVcdNsxvFirewallRuleDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdNsxvFirewallImport,
+			State: resourceVcdNsxvFirewallRuleImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -81,14 +81,12 @@ func resourceVcdNsxvFirewall() *schema.Resource {
 			"enabled": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
-				ForceNew:    false,
 				Default:     true,
 				Description: "Whether the rule should be enabled. Default 'true'",
 			},
 			"logging_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
-				ForceNew:    false,
 				Default:     false,
 				Description: "Whether logging should be enabled for this rule. Default 'false'",
 			},
@@ -256,7 +254,7 @@ func resourceVcdNsxvFirewall() *schema.Resource {
 	}
 }
 
-func resourceVcdNsxvFirewallCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdNsxvFirewallRuleCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
@@ -276,16 +274,16 @@ func resourceVcdNsxvFirewallCreate(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("unable to make firewall rule query: %s", err)
 	}
 
-	createdFirewallRule, err := edgeGateway.CreateNsxvFirewall(firewallRule, d.Get("above_rule_id").(string))
+	createdFirewallRule, err := edgeGateway.CreateNsxvFirewallRule(firewallRule, d.Get("above_rule_id").(string))
 	if err != nil {
 		return fmt.Errorf("error creating new firewall rule: %s", err)
 	}
 
 	d.SetId(createdFirewallRule.ID)
-	return resourceVcdNsxvFirewallRead(d, meta)
+	return resourceVcdNsxvFirewallRuleRead(d, meta)
 }
 
-func resourceVcdNsxvFirewallUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdNsxvFirewallRuleUpdate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
@@ -307,15 +305,15 @@ func resourceVcdNsxvFirewallUpdate(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("could not create firewall rule type for update: %s", err)
 	}
 
-	_, err = edgeGateway.UpdateNsxvFirewall(updateFirewallRule)
+	_, err = edgeGateway.UpdateNsxvFirewallRule(updateFirewallRule)
 	if err != nil {
 		return fmt.Errorf("unable to update firewall rule with ID %s: %s", d.Id(), err)
 	}
 
-	return resourceVcdNsxvFirewallRead(d, meta)
+	return resourceVcdNsxvFirewallRuleRead(d, meta)
 }
 
-func resourceVcdNsxvFirewallRead(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdNsxvFirewallRuleRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
@@ -339,7 +337,7 @@ func resourceVcdNsxvFirewallRead(d *schema.ResourceData, meta interface{}) error
 
 	}
 
-	readFirewallRule, err := edgeGateway.GetNsxvFirewallById(id)
+	readFirewallRule, err := edgeGateway.GetNsxvFirewallRuleById(id)
 	if err != nil {
 		d.SetId("")
 		return fmt.Errorf("unable to find firewall rule with ID %s: %s", d.Id(), err)
@@ -357,7 +355,7 @@ func resourceVcdNsxvFirewallRead(d *schema.ResourceData, meta interface{}) error
 	return nil
 }
 
-func resourceVcdNsxvFirewallDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdNsxvFirewallRuleDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
@@ -367,7 +365,7 @@ func resourceVcdNsxvFirewallDelete(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	err = edgeGateway.DeleteNsxvFirewallById(d.Id())
+	err = edgeGateway.DeleteNsxvFirewallRuleById(d.Id())
 	if err != nil {
 		return fmt.Errorf("error deleting firewall rule with id %s: %s", d.Id(), err)
 	}
@@ -376,7 +374,7 @@ func resourceVcdNsxvFirewallDelete(d *schema.ResourceData, meta interface{}) err
 	return nil
 }
 
-// resourceVcdNsxvFirewallImport  is responsible for importing the resource.
+// resourceVcdNsxvFirewallRuleImport  is responsible for importing the resource.
 // The following steps happen as part of import
 // 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
 // 2a. If the `_the_id_string_` contains a dot formatted path to resource as in the example below
@@ -389,7 +387,7 @@ func resourceVcdNsxvFirewallDelete(d *schema.ResourceData, meta interface{}) err
 //
 // Example resource name (_resource_name_): vcd_lb_nsxv_firewall_rule.my-test-fw-rule
 // Example import path (_the_id_string_): org.vdc.edge-gw.existing-firewall-rule-id
-func resourceVcdNsxvFirewallImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdNsxvFirewallRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	var commandOrgName, orgName, vdcName, edgeName, firewallRuleId string
 	var listRules, importRule bool
 
@@ -442,7 +440,7 @@ func resourceVcdNsxvFirewallImport(d *schema.ResourceData, meta interface{}) ([]
 
 	// Proceed with import
 	if importRule {
-		readFirewallRule, err := edgeGateway.GetNsxvFirewallById(firewallRuleId)
+		readFirewallRule, err := edgeGateway.GetNsxvFirewallRuleById(firewallRuleId)
 		if err != nil {
 			return []*schema.ResourceData{}, fmt.Errorf("unable to find firewall rule with id %s: %s",
 				d.Id(), err)
