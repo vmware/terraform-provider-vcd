@@ -221,13 +221,13 @@ The above would import the application rule named `my-firewall-rule-id` that is 
 gateway `my-edge-gw` which is configured in organization named `my-org` and vDC named `my-org-vdc`.
 
 
-### Import by firewall rule number as show in the UI (No. field)
+### Import by firewall rule number as show in the UI ("No." field)
 
 ```
 terraform import vcd_nsxv_firewall_rule.imported my-org.my-org-vdc.my-edge-gw.ui-no:3
 ```
 
-**Pay attention** to the specific format of firewall rule number `ui-no:3`. The `ui-no` flags that
+**Pay attention** to the specific format of firewall rule number `ui-no:3`. The `ui-no:` flags that
 import must be performed by UI number of firewall rule rather than real ID.
 
 ### Listing real firewall rule IDs and their numbers

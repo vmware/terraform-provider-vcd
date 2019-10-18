@@ -383,14 +383,14 @@ func resourceVcdNsxvFirewallRuleDelete(d *schema.ResourceData, meta interface{})
 // `list@org.vdc.edge-gw` then the function lists all firewall rules and their IDs in that edge
 // gateway.
 // 2c. If the `_the_id_string_` contains a dot formatted path with the 4th element starting with
-// substring 'ui-id:3' and number after color - the import function will try to lookup real ID and
-// import the rule
+// substring 'ui-no:' and number after colon - the import function will try to lookup a real ID by
+// the given UI ID and import the rule
 // 2d. If the `_the_id_string_` does not match format described neither in '2a', '2b', '2c' a
 // usage error message is printed
 //
 // Example resource name (_resource_name_): vcd_nsxv_firewall_rule.my-test-fw-rule
-// Example import path (_the_id_string_): org.vdc.edge-gw.existing-firewall-rule-id
-// Example import by UI ID path (_the_id_string_): org.vdc.edge-gw.ui-id:2
+// Example import path (_the_id_string_): org.vdc.edge-gw.132730
+// Example import by UI ID path (_the_id_string_): org.vdc.edge-gw.ui-no:2
 // Example list path (_the_id_string_): list@org.vdc.edge-gw
 func resourceVcdNsxvFirewallRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	var commandOrgName, orgName, vdcName, edgeName, firewallRuleId string
