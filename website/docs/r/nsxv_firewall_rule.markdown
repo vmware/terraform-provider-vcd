@@ -222,7 +222,7 @@ gateway `my-edge-gw-name` which is configured in organization named `my-org-name
 `my-org-vdc-name`.
 
 
-### Import by firewall rule number as show in the UI ("No." field)
+### Import by firewall rule number as shown in the UI ("No." field)
 
 ```
 terraform import vcd_nsxv_firewall_rule.imported my-org-name.my-org-vdc-name.my-edge-gw-name.ui-no:3
