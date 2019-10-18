@@ -60,7 +60,6 @@ func resourceVcdNsxvFirewallRule() *schema.Resource {
 			"rule_type": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    false,
 				Computed:    true,
 				Description: "Read only. Possible values 'user', 'internal_high'",
 			},
@@ -398,9 +397,9 @@ func resourceVcdNsxvFirewallRuleImport(d *schema.ResourceData, meta interface{})
 
 	resourceURI := strings.Split(d.Id(), ".")
 	helpError := fmt.Errorf(`resource id must be specified in one of these formats:
-'org.vdc.edge-gw.real-firewall-rule-id' to import by rule id
-'org.vdc.edge-gw.ui-no:X' where X is the firewall rule number shown in UI
-'list@org.vdc.edge-gw' to get a list of rules with their respective UI numbers and real IDs`)
+'org-name.vdc-name.edge-gw-name.real-firewall-rule-id' to import by rule id
+'org-name.vdc-name.edge-gw-name.ui-no:X' where X is the firewall rule number shown in UI
+'list@org-name.vdc-name.edge-gw-name' to get a list of rules with their respective UI numbers and real IDs`)
 
 	log.Printf("[DEBUG] importing vcd_nsxv_firewall_rule resource with provided id %s", d.Id())
 	switch len(resourceURI) {

@@ -214,17 +214,18 @@ import.
 ### Import by real firewall rule ID
 
 ```
-terraform import vcd_nsxv_firewall_rule.imported my-org.my-org-vdc.my-edge-gw.my-firewall-rule-id
+terraform import vcd_nsxv_firewall_rule.imported my-org-name.my-org-vdc-name.my-edge-gw-name.my-firewall-rule-id
 ```
 
 The above would import the application rule named `my-firewall-rule-id` that is defined on edge
-gateway `my-edge-gw` which is configured in organization named `my-org` and vDC named `my-org-vdc`.
+gateway `my-edge-gw-name` which is configured in organization named `my-org-name` and vDC named
+`my-org-vdc-name`.
 
 
 ### Import by firewall rule number as show in the UI ("No." field)
 
 ```
-terraform import vcd_nsxv_firewall_rule.imported my-org.my-org-vdc.my-edge-gw.ui-no:3
+terraform import vcd_nsxv_firewall_rule.imported my-org-name.my-org-vdc-name.my-edge-gw-name.ui-no:3
 ```
 
 **Pay attention** to the specific format of firewall rule number `ui-no:3`. The `ui-no:` flags that
@@ -233,13 +234,13 @@ import must be performed by UI number of firewall rule rather than real ID.
 ### Listing real firewall rule IDs and their numbers
 
 If you want to list the real IDs and firewall rule numbers there is a
-special command **`terraform import vcd_nsxv_firewall_rule.imported list@my-org.my-org-vdc.my-edge-gw`**
-where `my-org` is the organization used, `my-org-vdc` is vDC name and `my-edge-gw` is edge gateway
-name. The output for this command should look similar to below one:
+special command **`terraform import vcd_nsxv_firewall_rule.imported list@my-org-name.my-org-vdc-name.my-edge-gw-name`**
+where `my-org-name` is the organization used, `my-org-vdc-name` is vDC name and `my-edge-gw-name`
+is edge gateway name. The output for this command should look similar to below one:
 
 ```shell
-$ terraform import vcd_nsxv_firewall_rule.import list@my-org.my-org-vdc.my-edge-gw
-vcd_nsxv_firewall_rule.import: Importing from ID "list@my-org.my-org-vdc.my-edge-gw"...
+$ terraform import vcd_nsxv_firewall_rule.import list@my-org-name.my-org-vdc-name.my-edge-gw-name
+vcd_nsxv_firewall_rule.import: Importing from ID "list@my-org-name.my-org-vdc-name.my-edge-gw-name"...
 Retrieving all firewall rules
 UI No   ID      Name                                    Action  Type
 -----   --      ----                                    ------  ----
@@ -249,14 +250,14 @@ UI No   ID      Name                                    Action  Type
 4       132588  default rule for ingress traffic        deny    default_policy
 
 Error: Resource was not imported! Please use the above ID to format the command as:
-terraform import vcd_nsxv_firewall_rule.resource-name org.vdc.edge-gw.firewall-rule-id
+terraform import vcd_nsxv_firewall_rule.resource-name org-name.vdc-name.edge-gw-name.firewall-rule-id
 ```
 
 Now to import rule with UI ID 2 (real ID 132730) one could supply this command:
 
 ```shell
-$ terraform import vcd_nsxv_firewall_rule.import my-org.my-org-vdc.my-edge-gw.132730
-vcd_nsxv_firewall_rule.import: Importing from ID "my-org.my-org-vdc.my-edge-gw.132730"...
+$ terraform import vcd_nsxv_firewall_rule.import my-org-name.my-org-vdc-name.my-edge-gw-name.132730
+vcd_nsxv_firewall_rule.import: Importing from ID "my-org-name.my-org-vdc-name.my-edge-gw-name.132730"...
 vcd_nsxv_firewall_rule.import: Import prepared!
   Prepared vcd_nsxv_firewall_rule for import
 vcd_nsxv_firewall_rule.import: Refreshing state... [id=132730]
