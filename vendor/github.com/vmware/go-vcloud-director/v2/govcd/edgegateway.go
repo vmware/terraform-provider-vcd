@@ -1160,9 +1160,9 @@ func (egw *EdgeGateway) UpdateLBGeneralParams(enabled, accelerationEnabled, logg
 
 // GetFirewallConfig retrieves firewall configuration and can be used
 // to alter master configuration options. These are 3 fields only:
-// FwGeneralParamsWithXml.Enabled, FwGeneralParamsWithXml.DefaultPolicy.LoggingEnabled and
-// FwGeneralParamsWithXml.DefaultPolicy.Action
-func (egw *EdgeGateway) GetFirewallConfig() (*types.FwGeneralParamsWithXml, error) {
+// FirewallConfigWithXml.Enabled, FirewallConfigWithXml.DefaultPolicy.LoggingEnabled and
+// FirewallConfigWithXml.DefaultPolicy.Action
+func (egw *EdgeGateway) GetFirewallConfig() (*types.FirewallConfigWithXml, error) {
 	if !egw.HasAdvancedNetworking() {
 		return nil, fmt.Errorf("only advanced edge gateway support firewall configuration")
 	}
@@ -1172,7 +1172,7 @@ func (egw *EdgeGateway) GetFirewallConfig() (*types.FwGeneralParamsWithXml, erro
 		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
 	}
 
-	firewallConfig := &types.FwGeneralParamsWithXml{}
+	firewallConfig := &types.FirewallConfigWithXml{}
 	_, err = egw.client.ExecuteRequest(httpPath, http.MethodGet, types.AnyXMLMime,
 		"unable to read firewall configuration: %s", nil, firewallConfig)
 
@@ -1185,10 +1185,10 @@ func (egw *EdgeGateway) GetFirewallConfig() (*types.FwGeneralParamsWithXml, erro
 
 // UpdateFirewallConfig allows to update firewall configuration.
 // It accepts three fields (Enabled, DefaultLoggingEnabled, DefaultAction) and uses
-// them to construct types.FwGeneralParamsWithXml without altering other options to prevent config
+// them to construct types.FirewallConfigWithXml without altering other options to prevent config
 // corruption.
 // They are represented in firewall configuration page in the UI.
-func (egw *EdgeGateway) UpdateFirewallConfig(enabled, defaultLoggingEnabled bool, defaultAction string) (*types.FwGeneralParamsWithXml, error) {
+func (egw *EdgeGateway) UpdateFirewallConfig(enabled, defaultLoggingEnabled bool, defaultAction string) (*types.FirewallConfigWithXml, error) {
 	if !egw.HasAdvancedNetworking() {
 		return nil, fmt.Errorf("only advanced edge gateway supports load balancing")
 	}

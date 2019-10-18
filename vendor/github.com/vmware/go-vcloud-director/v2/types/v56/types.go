@@ -1662,14 +1662,14 @@ type StaticRoute struct {
 	GatewayInterface *Reference `xml:"GatewayInterface,omitempty"` // Gateway interface to which static route is bound.
 }
 
-// FwGeneralParamsWithXml allows to enable/disable firewall on a specific edge gateway
+// FirewallConfigWithXml allows to enable/disable firewall on a specific edge gateway
 // Reference: vCloud Director API for NSX Programming Guide
 // https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
 //
 // Warning. It nests all firewall rules because Edge Gateway API is done so that if this data is not
 // sent while enabling it would wipe all firewall rules. InnerXML type field is used with struct tag
 //`innerxml` to prevent any manipulation of configuration and sending it verbatim
-type FwGeneralParamsWithXml struct {
+type FirewallConfigWithXml struct {
 	XMLName       xml.Name        `xml:"firewall"`
 	Enabled       bool            `xml:"enabled"`
 	DefaultPolicy FwDefaultPolicy `xml:"defaultPolicy"`
