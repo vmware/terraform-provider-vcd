@@ -1670,9 +1670,9 @@ type StaticRoute struct {
 // sent while enabling it would wipe all firewall rules. InnerXML type field is used with struct tag
 //`innerxml` to prevent any manipulation of configuration and sending it verbatim
 type FirewallConfigWithXml struct {
-	XMLName       xml.Name        `xml:"firewall"`
-	Enabled       bool            `xml:"enabled"`
-	DefaultPolicy FwDefaultPolicy `xml:"defaultPolicy"`
+	XMLName       xml.Name              `xml:"firewall"`
+	Enabled       bool                  `xml:"enabled"`
+	DefaultPolicy FirewallDefaultPolicy `xml:"defaultPolicy"`
 
 	// Each configuration change has a version number
 	Version string `xml:"version,omitempty"`
@@ -1683,8 +1683,8 @@ type FirewallConfigWithXml struct {
 	GlobalConfig  InnerXML `xml:"globalConfig,omitempty"`
 }
 
-// FwDefaultPolicy represent default rule
-type FwDefaultPolicy struct {
+// FirewallDefaultPolicy represent default rule
+type FirewallDefaultPolicy struct {
 	LoggingEnabled bool   `xml:"loggingEnabled"`
 	Action         string `xml:"action"`
 }
