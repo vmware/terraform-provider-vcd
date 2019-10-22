@@ -17,9 +17,9 @@ Supported in provider *v2.5+*
 
 ```hcl
 data "vcd_edgegateway" "mygw" {
-    name = "mygw"
-    org  = "myorg"
-    vdc  = "myvdc"
+  name = "mygw"
+  org  = "myorg"
+  vdc  = "myvdc"
 }
 
 # Get the index of our network from the external_networks list of the data source
