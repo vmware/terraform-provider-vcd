@@ -4,7 +4,6 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"regexp"
 	"testing"
 
@@ -20,8 +19,6 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 	var TestCatalogMediaDS = "TestCatalogMediaDS"
 	var TestAccVcdDataSourceMedia = "TestAccVcdCatalogMediaBasic"
 	var TestAccVcdDataSourceMediaDescription = "TestAccVcdCatalogMediaBasicDescription"
-
-	var media govcd.Media
 
 	var params = StringMap{
 		"Org":              testConfig.VCD.Org,
