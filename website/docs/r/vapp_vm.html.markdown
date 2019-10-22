@@ -122,8 +122,8 @@ The following arguments are supported:
 
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
-* `vapp_name` - (Required) The vApp this VM should belong to.
-* `name` - (Required) A unique name for the VM
+* `vapp_name` - (Required) The vApp this VM belongs to.
+* `name` - (Required) A name for the VM, unique within the vApp 
 * `computer_name` - (Optional; *v2.5+*) Computer name to assign to this virtual machine. 
 * `catalog_name` - (Required) The catalog name in which to find the given vApp Template
 * `template_name` - (Required) The name of the vApp Template to use
@@ -139,7 +139,7 @@ one of `dhcp`, `allocated`, or `none`. If given the address must be within the
   `static_ip_pool` set for the network. If left blank, and the network has
   `dhcp_pool` set with at least one available IP then this will be set with
 DHCP.
-* `power_on` - (Optional) A boolean value stating if this vApp should be powered on. Default is `true`
+* `power_on` - (Optional) A boolean value stating if this VM should be powered on. Default is `true`
 * `accept_all_eulas` - (Optional; *v2.0+*) Automatically accept EULA if OVA has it. Default is `true`
 * `disk` - (Optional; *v2.1+*) Independent disk attachment configuration. See [Disk](#disk) below for details.
 * `expose_hardware_virtualization` - (Optional; *v2.2+*) Boolean for exposing full CPU virtualization to the

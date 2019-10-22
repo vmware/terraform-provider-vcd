@@ -94,8 +94,8 @@ func resourceVcdVApp() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Storage profile to be used by the vApp",
-				// TODO: deprecate when vcd_vapp_vm can handle this parameter
-				// See https://github.com/vmware/go-vcloud-director/issues/246 for details.
+				Deprecated: implicitVmInVappDeprecation +
+					"use vcd_vapp_vm.storage_profile instead",
 			},
 			"description": {
 				Type:        schema.TypeString,

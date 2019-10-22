@@ -126,7 +126,6 @@ The following arguments are supported:
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
 * `power_on` - (Optional) A boolean value stating if this vApp should be powered on. Default is `true`
-* `storage_profile` - (Optional) Storage profile to override the default one.
 * `metadata` - (Optional) Key value map of metadata to assign to this vApp. Key and value can be any string. (Since *v2.2+* metadata is added directly to vApp instead of first VM in vApp)
 * `guest_properties` - (Optional; *v2.5+*) Key value map of vApp guest properties
 
@@ -143,6 +142,7 @@ to deploy one or more VMs within the vApp.
 * `catalog_name` - (Optional; **Deprecated**) The catalog name in which to find the given vApp Template
 * `template_name` - (Optional; **Deprecated**) The name of the vApp Template to use
 * `memory` - (Optional; **Deprecated**) The amount of RAM (in MB) to allocate to the vApp
+* `storage_profile` - (Optional; **Deprecated**) Storage profile to override the default one.
 * `cpus` - (Optional; **Deprecated**) The number of virtual CPUs to allocate to the vApp
 * `initscript` (Optional; **Deprecated**) A script to be run only on initial boot
 * `network_name` - (Optional; **Deprecated**) Name of the network this vApp should join. Use the `network` block in `vcd_vapp_vm` instead.

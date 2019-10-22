@@ -124,6 +124,7 @@ func Provider() terraform.ResourceProvider {
 			"vcd_network_direct":     datasourceVcdNetworkDirect(),    // 2.5
 			"vcd_network_isolated":   datasourceVcdNetworkIsolated(),  // 2.5
 			"vcd_vapp":               datasourceVcdVApp(),             // 2.5
+			"vcd_vapp_vm":            datasourceVcdVAppVm(),           // 2.5
 			"vcd_lb_service_monitor": datasourceVcdLbServiceMonitor(), // 2.4
 			"vcd_lb_server_pool":     datasourceVcdLbServerPool(),     // 2.4
 			"vcd_lb_app_profile":     datasourceVcdLBAppProfile(),     // 2.4

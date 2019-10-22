@@ -65,6 +65,15 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 						"vcd_vapp_vm."+vmName, "metadata.vm_metadata", "VM Metadata."),
 				),
 			},
+			resource.TestStep{
+				ResourceName:      "vcd_vapp_vm." + vmName + "-import",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdVappObject(testConfig, vappName2, vmName),
+				// These fields can't be retrieved from user data
+				ImportStateVerifyIgnore: []string{"template_name", "catalog_name", "network_name",
+					"initscript", "accept_all_eulas", "power_on", "computer_name"},
+			},
 		},
 	})
 }
