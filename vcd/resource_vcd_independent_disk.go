@@ -243,10 +243,10 @@ func resourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) er
 			return nil
 		}
 		if err != nil {
-			return fmt.Errorf("unable to find disk with ID %s: %s", identifier, err)
+			return fmt.Errorf("unable to find disk with name %s: %s", identifier, err)
 		}
 		if len(*disks) > 1 {
-			return fmt.Errorf("found more than one disk with ID %s: %s", identifier, err)
+			return fmt.Errorf("found more than one disk with name %s: %s", identifier, err)
 		}
 		disk = &(*disks)[0]
 	}
