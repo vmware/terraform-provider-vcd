@@ -21,20 +21,21 @@ data "vcd_edgegateway" "mygw" {
     org  = "myorg"
     vdc  = "myvdc"
 }
+
+# Get the index of our network from the external_networks list of the data source
 locals {
     network_index = index(data.vcd_edgegateway.mygw.external_networks, "My External Network Name")
 }
+
+# Use the index to find the corresponding element from external_networks_ip, external_networks_netmask, external_networks_gateway.
 output "ip_address" {
   value = element(data.vcd_edgegateway.mygw.external_networks_ip, local.network_index)
-  depends_on = [data.vcd_edgegateway.mygw]
 }
 output "netmask" {
   value = element(data.vcd_edgegateway.mygw.external_networks_netmask, local.network_index)
-  depends_on = [data.vcd_edgegateway.mygw]
 }
 output "gateway" {
   value = element(data.vcd_edgegateway.mygw.external_networks_gateway, local.network_index)
-  depends_on = [data.vcd_edgegateway.mygw]
 }
 ```
 
