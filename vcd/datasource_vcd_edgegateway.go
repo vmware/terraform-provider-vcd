@@ -46,6 +46,30 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"external_networks_ip": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "A list of IP addresses for each external network interface.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"external_networks_netmask": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "A list of netmasks for each external network interface.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"external_networks_gateway": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "A list of gateways for each external network interface.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"default_gateway_network": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
