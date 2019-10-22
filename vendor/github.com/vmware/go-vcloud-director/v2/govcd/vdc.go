@@ -241,7 +241,9 @@ func (vdc *Vdc) GetOrgVdcNetworkById(id string, refresh bool) (*OrgVDCNetwork, e
 	}
 	for _, an := range vdc.Vdc.AvailableNetworks {
 		for _, reference := range an.Network {
-			if reference.ID == id {
+			// Some versions of vCD do not return an ID in the network reference
+			// We use equalIds to overcome this issue
+			if equalIds(id, reference.ID, reference.HREF) {
 				return vdc.GetOrgVdcNetworkByHref(reference.HREF)
 			}
 		}
@@ -726,7 +728,7 @@ func (vdc *Vdc) FindVAppByID(vappid string) (VApp, error) {
 func (vdc *Vdc) FindMediaImage(mediaName string) (MediaItem, error) {
 	util.Logger.Printf("[TRACE] Querying medias by name\n")
 
-	mediaResults, err := queryMediaItemsWithFilter(vdc,
+	mediaResults, err := queryMediaWithFilter(vdc,
 		fmt.Sprintf("(name==%s)", url.QueryEscape(mediaName)))
 	if err != nil {
 		return MediaItem{}, err

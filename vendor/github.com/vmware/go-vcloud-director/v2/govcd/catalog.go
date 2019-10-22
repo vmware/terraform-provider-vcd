@@ -646,12 +646,12 @@ func (cat *Catalog) UploadMediaImage(mediaName, mediaDescription, filePath strin
 		return UploadTask{}, err
 	}
 
-	mediaItem, err := createMedia(cat.client, catalogItemUploadURL.String(), mediaName, mediaDescription, fileSize)
+	media, err := createMedia(cat.client, catalogItemUploadURL.String(), mediaName, mediaDescription, fileSize)
 	if err != nil {
 		return UploadTask{}, fmt.Errorf("[ERROR] Issue creating media: %#v", err)
 	}
 
-	createdMedia, err := queryMedia(cat.client, mediaItem.Entity.HREF, mediaName)
+	createdMedia, err := queryMedia(cat.client, media.Entity.HREF, mediaName)
 	if err != nil {
 		return UploadTask{}, err
 	}
