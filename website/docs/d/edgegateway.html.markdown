@@ -13,37 +13,28 @@ edge gateways for Org VDC networks to connect.
 
 Supported in provider *v2.5+*
 
-## Example Usage
+## Example Usages
 
 ```hcl
 data "vcd_edgegateway" "mygw" {
-  name = "mygw"
-  org  = "myorg"
-  vdc  = "myvdc"
+    name = "mygw"
+    org  = "myorg"
+    vdc  = "myvdc"
 }
-
-output "external_network" {
-  value = data.vcd_edgegateway.mygw.default_gateway_network
+locals {
+    network_index = index(data.vcd_edgegateway.mygw.external_networks, "My External Network Name")
 }
-
-# Get the name of the default gateway from the data source
-# and use it to establish a second data source
-data "vcd_external_network" "external_network1" {
-  name = "${data.vcd_edgegateway.mygw.default_gateway_network}"
-}
-
-# From the second data source we extract the basic networking info
-output "gateway" {
-  value = data.vcd_external_network.external_network1.ip_scope.0.gateway
+output "ip_address" {
+  value = element(data.vcd_edgegateway.mygw.external_networks_ip, local.network_index)
+  depends_on = [data.vcd_edgegateway.mygw]
 }
 output "netmask" {
-  value = data.vcd_external_network.external_network1.ip_scope.0.netmask
+  value = element(data.vcd_edgegateway.mygw.external_networks_netmask, local.network_index)
+  depends_on = [data.vcd_edgegateway.mygw]
 }
-output "DNS" {
-  value = data.vcd_external_network.external_network1.ip_scope.0.dns1
-}
-output "external_ip" {
-  value = data.vcd_external_network.external_network1.ip_scope.0.static_ip_pool.0.start_address
+output "gateway" {
+  value = element(data.vcd_edgegateway.mygw.external_networks_gateway, local.network_index)
+  depends_on = [data.vcd_edgegateway.mygw]
 }
 ```
 
