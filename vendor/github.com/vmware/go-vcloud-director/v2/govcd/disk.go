@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
@@ -227,13 +228,20 @@ func (disk *Disk) Delete() (Task, error) {
 func (disk *Disk) Refresh() error {
 	util.Logger.Printf("[TRACE] Disk refresh, HREF: %s\n", disk.Disk.HREF)
 
-	fetchedDisk, err := FindDiskByHREF(disk.client, disk.Disk.HREF)
+	if disk.Disk == nil || disk.Disk.HREF == "" {
+		return fmt.Errorf("cannot refresh, Object is empty")
+	}
+
+	unmarshalledDisk := &types.Disk{}
+
+	_, err := disk.client.ExecuteRequest(disk.Disk.HREF, http.MethodGet,
+		"", "error refreshing independent disk: %s", nil, unmarshalledDisk)
 	if err != nil {
 		return err
 	}
+	disk.Disk = unmarshalledDisk
 
-	disk.Disk = fetchedDisk.Disk
-
+	// The request was successful
 	return nil
 }
 
@@ -287,6 +295,7 @@ func (disk *Disk) AttachedVM() (*types.Reference, error) {
 }
 
 // Find an independent disk by disk href in VDC
+// Deprecated: Use VDC.GetDiskByHref()
 func (vdc *Vdc) FindDiskByHREF(href string) (*Disk, error) {
 	util.Logger.Printf("[TRACE] VDC find disk By HREF: %s\n", href)
 
@@ -294,6 +303,7 @@ func (vdc *Vdc) FindDiskByHREF(href string) (*Disk, error) {
 }
 
 // Find an independent disk by VDC client and disk href
+// Deprecated: Use VDC.GetDiskByHref()
 func FindDiskByHREF(client *Client, href string) (*Disk, error) {
 	util.Logger.Printf("[TRACE] Find disk By HREF: %s\n", href)
 
@@ -338,4 +348,72 @@ func (vdc *Vdc) QueryDisk(diskName string) (DiskRecord, error) {
 	}
 
 	return *newDisk, nil
+}
+
+// GetDiskByHref finds a Disk by HREF
+// On success, returns a pointer to the Disk structure and a nil error
+// On failure, returns a nil pointer and an error
+func (vdc *Vdc) GetDiskByHref(diskHref string) (*Disk, error) {
+	util.Logger.Printf("[TRACE] Get Disk By Href: %s\n", diskHref)
+	Disk := NewDisk(vdc.client)
+
+	_, err := vdc.client.ExecuteRequest(diskHref, http.MethodGet,
+		"", "error retrieving Disk: %#v", nil, Disk.Disk)
+	if err != nil && strings.Contains(err.Error(), "MajorErrorCode:403") {
+		return nil, ErrorEntityNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return Disk, nil
+}
+
+// GetDisksByName finds one or more Disks by Name
+// On success, returns a pointer to the Disk list and a nil error
+// On failure, returns a nil pointer and an error
+func (vdc *Vdc) GetDisksByName(diskName string, refresh bool) (*[]Disk, error) {
+	util.Logger.Printf("[TRACE] Get Disk By Name: %s\n", diskName)
+	var diskList []Disk
+	if refresh {
+		err := vdc.Refresh()
+		if err != nil {
+			return nil, err
+		}
+	}
+	for _, resourceEntities := range vdc.Vdc.ResourceEntities {
+		for _, resourceEntity := range resourceEntities.ResourceEntity {
+			if resourceEntity.Name == diskName && resourceEntity.Type == "application/vnd.vmware.vcloud.disk+xml" {
+				disk, err := vdc.GetDiskByHref(resourceEntity.HREF)
+				if err != nil {
+					return nil, err
+				}
+				diskList = append(diskList, *disk)
+			}
+		}
+	}
+	if len(diskList) == 0 {
+		return nil, ErrorEntityNotFound
+	}
+	return &diskList, nil
+}
+
+// GetDiskById finds a Disk by ID
+// On success, returns a pointer to the Disk structure and a nil error
+// On failure, returns a nil pointer and an error
+func (vdc *Vdc) GetDiskById(diskId string, refresh bool) (*Disk, error) {
+	util.Logger.Printf("[TRACE] Get Disk By Id: %s\n", diskId)
+	if refresh {
+		err := vdc.Refresh()
+		if err != nil {
+			return nil, err
+		}
+	}
+	for _, resourceEntities := range vdc.Vdc.ResourceEntities {
+		for _, resourceEntity := range resourceEntities.ResourceEntity {
+			if equalIds(diskId, resourceEntity.ID, resourceEntity.HREF) && resourceEntity.Type == "application/vnd.vmware.vcloud.disk+xml" {
+				return vdc.GetDiskByHref(resourceEntity.HREF)
+			}
+		}
+	}
+	return nil, ErrorEntityNotFound
 }

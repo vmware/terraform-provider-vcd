@@ -556,17 +556,22 @@ func (vm *VM) DetachDisk(diskParams *types.DiskAttachOrDetachParams) (Task, erro
 // Helper function which finds media and calls InsertMedia
 func (vm *VM) HandleInsertMedia(org *Org, catalogName, mediaName string) (Task, error) {
 
-	media, err := FindMediaAsCatalogItem(org, catalogName, mediaName)
-	if err != nil || media == (CatalogItem{}) {
+	catalog, err := org.GetCatalogByName(catalogName, false)
+	if err != nil {
+		return Task{}, err
+	}
+
+	media, err := catalog.GetMediaByName(mediaName, false)
+	if err != nil {
 		return Task{}, err
 	}
 
 	return vm.InsertMedia(&types.MediaInsertOrEjectParams{
 		Media: &types.Reference{
-			HREF: media.CatalogItem.Entity.HREF,
-			Name: media.CatalogItem.Entity.Name,
-			ID:   media.CatalogItem.Entity.ID,
-			Type: media.CatalogItem.Entity.Type,
+			HREF: media.Media.HREF,
+			Name: media.Media.Name,
+			ID:   media.Media.ID,
+			Type: media.Media.Type,
 		},
 	})
 }
@@ -585,7 +590,7 @@ func (vm *VM) HandleEjectMediaAndAnswer(org *Org, catalogName, mediaName string,
 		return nil, fmt.Errorf("error: %s", err)
 	}
 
-	for i := 0; i < 3; i++ {
+	for i := 0; i < 10; i++ {
 		err = vm.Refresh()
 		if err != nil {
 			return nil, fmt.Errorf("error: %s", err)
@@ -611,14 +616,19 @@ func isMediaInjected(items []*types.VirtualHardwareItem) bool {
 
 // Helper function which finds media and calls EjectMedia
 func (vm *VM) HandleEjectMedia(org *Org, catalogName, mediaName string) (EjectTask, error) {
-	media, err := FindMediaAsCatalogItem(org, catalogName, mediaName)
-	if err != nil || media == (CatalogItem{}) {
+	catalog, err := org.GetCatalogByName(catalogName, false)
+	if err != nil {
+		return EjectTask{}, err
+	}
+
+	media, err := catalog.GetMediaByName(mediaName, false)
+	if err != nil {
 		return EjectTask{}, err
 	}
 
 	task, err := vm.EjectMedia(&types.MediaInsertOrEjectParams{
 		Media: &types.Reference{
-			HREF: media.CatalogItem.Entity.HREF,
+			HREF: media.Media.HREF,
 		},
 	})
 
