@@ -16,22 +16,26 @@ import (
 func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 	resourceName := "TestAccVcdDataSourceIndependentDisk_1"
 	datasourceName := "TestAccVcdDataSourceIndependentDisk_Data"
+	datasourceNameWithId := "TestAccVcdDataSourceIndependentDiskWithId_Data"
 	diskName := "TestAccVcdDataSourceIndependentDisk"
 
 	var params = StringMap{
-		"Vdc":                testConfig.VCD.Vdc,
-		"name":               diskName,
-		"description":        diskName + "description",
-		"size":               "5242880",
-		"busType":            "SCSI",
-		"busSubType":         "lsilogicsas",
-		"storageProfileName": "*",
-		"ResourceName":       resourceName,
-		"Tags":               "disk",
-		"dataSourceName":     datasourceName,
+		"Vdc":                  testConfig.VCD.Vdc,
+		"name":                 diskName,
+		"description":          diskName + "description",
+		"size":                 "5242880",
+		"busType":              "SCSI",
+		"busSubType":           "lsilogicsas",
+		"storageProfileName":   "*",
+		"ResourceName":         resourceName,
+		"Tags":                 "disk",
+		"dataSourceName":       datasourceName,
+		"datasourceNameWithId": datasourceNameWithId,
 	}
 
 	configText := templateFill(testAccCheckVcdDataSourceIndependentDisk, params)
+	params["FuncName"] = t.Name() + "-withId"
+	configTextWithId := templateFill(testAccCheckVcdDataSourceIndependentDiskWithId, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -54,6 +58,22 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "bus_type", "SCSI"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "bus_sub_type", "lsilogicsas"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "storage_profile", "*"),
+					resource.TestMatchOutput("owner_name", regexp.MustCompile(`^\S+`)),
+					resource.TestMatchOutput("datastore_name", regexp.MustCompile(`^\S+`)),
+					testCheckDiskNonStringOutputs(),
+				),
+			},
+			resource.TestStep{
+				Config:             configTextWithId,
+				ExpectNonEmptyPlan: true,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckDiskCreated("vcd_independent_disk."+resourceName, diskName+"WithId"),
+					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "name", diskName+"WithId"),
+					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "description", diskName+"description"),
+					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "size_in_bytes", "5242880"),
+					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "bus_type", "SCSI"),
+					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "bus_sub_type", "lsilogicsas"),
+					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "storage_profile", "*"),
 					resource.TestMatchOutput("owner_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchOutput("datastore_name", regexp.MustCompile(`^\S+`)),
 					testCheckDiskNonStringOutputs(),
@@ -110,5 +130,39 @@ output "datastore_name" {
 output "is_attached" {
   value = data.vcd_independent_disk.{{.dataSourceName}}.is_attached
   depends_on = [data.vcd_independent_disk.{{.dataSourceName}}]
+}
+`
+
+const testAccCheckVcdDataSourceIndependentDiskWithId = `
+resource "vcd_independent_disk" "{{.ResourceName}}" {
+  vdc             = "{{.Vdc}}"
+  name            = "{{.name}}WithId"
+  description     = "{{.description}}"
+  size_in_bytes   = "{{.size}}"
+  bus_type        = "{{.busType}}"
+  bus_sub_type    = "{{.busSubType}}"
+  storage_profile = "{{.storageProfileName}}"
+}
+
+data "vcd_independent_disk" "{{.datasourceNameWithId}}" {
+  id         = vcd_independent_disk.{{.ResourceName}}.id
+  depends_on = ["vcd_independent_disk.{{.ResourceName}}"]
+}
+
+output "iops" {
+  value      = data.vcd_independent_disk.{{.datasourceNameWithId}}.iops
+  depends_on = ["data.vcd_independent_disk.{{.datasourceNameWithId}}"]
+}
+output "owner_name" {
+  value      = data.vcd_independent_disk.{{.datasourceNameWithId}}.owner_name
+  depends_on = [data.vcd_independent_disk.{{.datasourceNameWithId}}]
+}
+output "datastore_name" {
+  value      = data.vcd_independent_disk.{{.datasourceNameWithId}}.datastore_name
+  depends_on = [data.vcd_independent_disk.{{.datasourceNameWithId}}]
+}
+output "is_attached" {
+  value      = data.vcd_independent_disk.{{.datasourceNameWithId}}.is_attached
+  depends_on = [data.vcd_independent_disk.{{.datasourceNameWithId}}]
 }
 `

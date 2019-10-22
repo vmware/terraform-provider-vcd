@@ -70,7 +70,7 @@ Supported in provider *v2.5+*
 configuration. [More information.][docs-import]
 
 An existing independent disk can be [imported][docs-import] into this resource via supplying its path.
-The path for this resource is made of vdc-name.disk-name
+The path for this resource is made of org-name.vdc-name.disk-id
 For example, using this structure, representing a independent disk that was **not** created using Terraform:
 
 ```hcl
@@ -83,10 +83,36 @@ resource "vcd_independent_disk" "tf-myDisk" {
 You can import such independent disk into terraform state using this command
 
 ```
-terraform import vcd_independent_disk.tf-myDisk vdc-name.my-disk-name
+terraform import vcd_independent_disk.tf-myDisk org-name.vdc-name.my-disk-id
 ```
 
 [docs-import]:https://www.terraform.io/docs/import/
 
 After importing, if you run `terraform plan` you will see the rest of the values and modify the script accordingly for
 further operations.
+
+### Listing independent disk IDs
+
+If you want to list IDs there is a special command **`terraform import vcd_independent_disk.imported list@org-name.vdc-name.my-independent-disk-name`**
+where `org-name` is the organization used, `vdc-name` is vDC name and `my-independent-disk-name`
+is independent disk name. The output for this command should look similar to below one:
+
+```shell
+$ terraform import vcd_independent_disk.imported list@org-name.vdc-name.my-independent-disk-name
+vcd_independent_disk.Disk_import: Importing from ID "list@org-name.vdc-name.my-independent-disk-name"...
+Retrieving all disks by name
+No	ID							                        Name	    Description	Size
+    --	--					                        		----	------		----
+1	urn:vcloud:disk:1bbc273d-7701-4f06-97be-428b46b0805e	diskV2	anras		78946548
+2	urn:vcloud:disk:6e1c996f-48b8-4e78-8111-a6407188d8b6	diskV2		    	5557452
+
+Error: resource was not imported! resource id must be specified in one of these formats:
+'org-name.vdc-name.my-independent-disk-id' to import by rule id
+'list@org-name.vdc-name.my-independent-disk-name' to get a list of disks with their IDs
+```
+
+Now to import disk with ID urn:vcloud:disk:1bbc273d-7701-4f06-97be-428b46b0805e one could supply this command:
+
+```shell
+$ terraform import vcd_independent_disk.imported list@org-name.vdc-name.urn:vcloud:disk:1bbc273d-7701-4f06-97be-428b46b0805e
+```

@@ -74,7 +74,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 				ResourceName:            "vcd_independent_disk." + resourceName + "second" + "-import",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateIdFunc:       importStateIdByDisk(name + "second"),
+				ImportStateIdFunc:       importStateIdByDisk("vcd_independent_disk." + resourceName + "second"),
 				ImportStateVerifyIgnore: []string{"org", "vdc", "size"},
 			},
 		},
@@ -130,10 +130,19 @@ func testDiskResourcesDestroyed(s *terraform.State) error {
 	return nil
 }
 
-func importStateIdByDisk(objectName string) resource.ImportStateIdFunc {
-	return func(*terraform.State) (string, error) {
-		importId := testConfig.VCD.Org + "." + testConfig.VCD.Vdc + "." + objectName
-		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || objectName == "" {
+func importStateIdByDisk(resource string) resource.ImportStateIdFunc {
+	return func(s *terraform.State) (string, error) {
+		rs, ok := s.RootModule().Resources[resource]
+		if !ok {
+			return "", fmt.Errorf("not found resource: %s", resource)
+		}
+
+		if rs.Primary.ID == "" {
+			return "", fmt.Errorf("no ID is set for %s resource", resource)
+		}
+
+		importId := testConfig.VCD.Org + "." + testConfig.VCD.Vdc + "." + rs.Primary.ID
+		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || rs.Primary.ID == "" {
 			return "", fmt.Errorf("missing information to generate import path: %s", importId)
 		}
 		return importId, nil

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -217,7 +218,7 @@ func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) 
 func resourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	_, vdc, err := vcdClient.GetOrgAndVdc("", d.Get("vdc").(string))
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
@@ -251,11 +252,27 @@ func resourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) er
 		disk = &(*disks)[0]
 	}
 
-	diskRecord, err := vdc.QueryDisk(disk.Disk.Name)
+	diskRecords, err := vdc.QueryDisks(disk.Disk.Name)
 	if err != nil {
 		return fmt.Errorf("unable to query disk with ID %s: %s", identifier, err)
 	}
 
+	var diskRecord *types.DiskRecordType
+	for _, entity := range *diskRecords {
+		if entity.HREF == disk.Disk.HREF {
+			diskRecord = entity
+		}
+	}
+
+	setMainData(d, disk)
+	_ = d.Set("datastore_name", diskRecord.DataStoreName)
+	_ = d.Set("is_attached", diskRecord.IsAttached)
+
+	log.Printf("[TRACE] Disk read completed.")
+	return nil
+}
+
+func setMainData(d *schema.ResourceData, disk *govcd.Disk) {
 	d.SetId(disk.Disk.Id)
 	_ = d.Set("name", disk.Disk.Name)
 	_ = d.Set("description", disk.Disk.Description)
@@ -265,11 +282,6 @@ func resourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) er
 	_ = d.Set("bus_sub_type", busSubTypesFromValues[disk.Disk.BusSubType])
 	_ = d.Set("iops", disk.Disk.Iops)
 	_ = d.Set("owner_name", disk.Disk.Owner.User.Name)
-	_ = d.Set("datastore_name", diskRecord.Disk.DataStoreName)
-	_ = d.Set("is_attached", diskRecord.Disk.IsAttached)
-
-	log.Printf("[TRACE] Disk read completed.")
-	return nil
 }
 
 func resourceVcdIndependentDiskDelete(d *schema.ResourceData, meta interface{}) error {
@@ -329,10 +341,17 @@ func validateBusSubType(v interface{}, k string) (warnings []string, errors []er
 	return
 }
 
+var helpError = fmt.Errorf(`resource id must be specified in one of these formats:
+'org-name.vdc-name.my-independent-disk-id' to import by rule id
+'list@org-name.vdc-name.my-independent-disk-name' to get a list of disks with their IDs`)
+
 // resourceVcdIndependentDiskImport is responsible for importing the resource.
 // The following steps happen as part of import
 // 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
-// 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
+// 2a. If the `_the_id_string_` contains a dot formatted path to resource as in the example below
+// it will try to import it. If it is found - the ID is set
+// 2b. If the `_the_id_string_` starts with `list@` and contains path to disk name similar to
+// `list@org-name.vdc-name.my-independent-disk-name` then the function lists all independent disks and their IDs in that vdc
 // 3. The functions splits the dot-formatted path and tries to lookup the object
 // 4. If the lookup succeeds it sets the ID field for `_resource_name_` resource in statefile
 // (the resource must be already defined in .tf config otherwise `terraform import` will complain)
@@ -340,13 +359,54 @@ func validateBusSubType(v interface{}, k string) (warnings []string, errors []er
 // based on the known ID of object.
 //
 // Example resource name (_resource_name_): vcd_independent_disk.my-disk
-// Example import path (_the_id_string_): org-name.vdc-name.my-independent-disk-name
+// Example import path (_the_id_string_): org-name.vdc-name.my-independent-disk-id
+// Example list path (_the_id_string_): list@org-name.vdc-name.my-independent-disk-name
 func resourceVcdIndependentDiskImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	var commandOrgName, orgName, vdcName, diskName, diskId string
+
 	resourceURI := strings.Split(d.Id(), ".")
+
+	log.Printf("[DEBUG] importing vcd_independent_disk resource with provided id %s", d.Id())
+
 	if len(resourceURI) != 3 {
-		return nil, fmt.Errorf("[independent disk import] resource name must be specified as org-name.vdc-name.my-independent-disk-name")
+		return nil, helpError
 	}
-	orgName, vdcName, diskName := resourceURI[0], resourceURI[1], resourceURI[2]
+
+	if strings.Contains(d.Id(), "list@") {
+		commandOrgName, vdcName, diskName = resourceURI[0], resourceURI[1], resourceURI[2]
+		commandOrgNameSplit := strings.Split(commandOrgName, "@")
+		if len(commandOrgNameSplit) != 2 {
+			return nil, helpError
+		}
+		orgName = commandOrgNameSplit[1]
+		return listDisksForImport(meta, orgName, vdcName, diskName)
+	} else {
+		orgName, vdcName, diskId = resourceURI[0], resourceURI[1], resourceURI[2]
+		return getDiskForImport(d, meta, orgName, vdcName, diskId)
+	}
+
+	return nil, fmt.Errorf("resource was not imported! %s", helpError.Error())
+}
+
+func getDiskForImport(d *schema.ResourceData, meta interface{}, orgName, vdcName, diskId string) ([]*schema.ResourceData, error) {
+	vcdClient := meta.(*VCDClient)
+	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
+	if err != nil {
+		return nil, fmt.Errorf("[independent disk import] unable to find VDC %s: %s ", vdcName, err)
+	}
+
+	disk, err := vdc.GetDiskById(diskId, false)
+	if err != nil {
+		return []*schema.ResourceData{}, fmt.Errorf("unable to find independent disk with id %s: %s",
+			d.Id(), err)
+	}
+
+	d.SetId(disk.Disk.Id)
+	d.Set("name", disk.Disk.Name)
+	return []*schema.ResourceData{d}, nil
+}
+
+func listDisksForImport(meta interface{}, orgName, vdcName, diskName string) ([]*schema.ResourceData, error) {
 
 	vcdClient := meta.(*VCDClient)
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
@@ -354,16 +414,20 @@ func resourceVcdIndependentDiskImport(d *schema.ResourceData, meta interface{}) 
 		return nil, fmt.Errorf("[independent disk import] unable to find VDC %s: %s ", vdcName, err)
 	}
 
+	_, _ = fmt.Fprintln(getTerraformStdout(), "Retrieving all disks by name")
 	disks, err := vdc.GetDisksByName(diskName, false)
 	if err != nil {
-		return []*schema.ResourceData{}, fmt.Errorf("unable to find independent disk with name %s: %s",
-			d.Id(), err)
-	}
-	if len(*disks) > 1 {
-		return []*schema.ResourceData{}, fmt.Errorf("found more than one independent disk with name %s: %s",
-			d.Id(), err)
+		return nil, fmt.Errorf("unable to retrieve disks by name: %s", err)
 	}
 
-	d.SetId((*disks)[0].Disk.Id)
-	return []*schema.ResourceData{d}, nil
+	writer := tabwriter.NewWriter(getTerraformStdout(), 0, 8, 1, '\t', tabwriter.AlignRight)
+
+	fmt.Fprintln(writer, "No\tID\tName\tDescription\tSize")
+	fmt.Fprintln(writer, "--\t--\t----\t------\t----")
+	for index, disk := range *disks {
+		fmt.Fprintf(writer, "%d\t%s\t%s\t%s\t%d\n", (index + 1), disk.Disk.Id, disk.Disk.Name, disk.Disk.Description, disk.Disk.Size)
+	}
+	writer.Flush()
+
+	return nil, fmt.Errorf("resource was not imported! %s", helpError.Error())
 }

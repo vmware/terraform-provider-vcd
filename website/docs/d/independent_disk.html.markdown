@@ -19,6 +19,7 @@ Supported in provider *v2.5+*
 data "vcd_independent_disk" "existing-disk" {
   org     = "my-org"
   vdc     = "my-vdc"
+  id      = "urn:vcloud:disk:1bbc273d-7701-4f06-97be-428b46b0805e"
   name    = "my-disk"
 }
 output "disk-size" {
@@ -35,7 +36,8 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
-* `name` - (Required) Disk name
+* `id` - (Option) Disk id or name is required. If both provided - Id is used.
+* `name` - (Optional) Disk name
 
 ## Attribute reference
 

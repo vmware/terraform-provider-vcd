@@ -350,6 +350,31 @@ func (vdc *Vdc) QueryDisk(diskName string) (DiskRecord, error) {
 	return *newDisk, nil
 }
 
+// Find independent disks using disk name. Returns list of VMRecord query type
+func (vdc *Vdc) QueryDisks(diskName string) (*[]*types.DiskRecordType, error) {
+
+	if diskName == "" {
+		return nil, fmt.Errorf("disk name can not be empty")
+	}
+
+	typeMedia := "disk"
+	if vdc.client.IsSysAdmin {
+		typeMedia = "adminDisk"
+	}
+
+	results, err := vdc.QueryWithNotEncodedParams(nil, map[string]string{"type": typeMedia, "filter": "name==" + url.QueryEscape(diskName)})
+	if err != nil {
+		return nil, fmt.Errorf("error querying disk %#v", err)
+	}
+
+	diskResults := results.Results.DiskRecord
+	if vdc.client.IsSysAdmin {
+		diskResults = results.Results.AdminDiskRecord
+	}
+
+	return &diskResults, nil
+}
+
 // GetDiskByHref finds a Disk by HREF
 // On success, returns a pointer to the Disk structure and a nil error
 // On failure, returns a nil pointer and an error
