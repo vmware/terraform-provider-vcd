@@ -47,7 +47,7 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 * `name` - (Required) Disk name
-* `size` - (Optional; **Deprecated**) Size of disk in MB
+* `size` - (Optional; **Deprecated**) Size of disk in MB. On read this values isn't updated.
 * `size_in_bytes` - (Optional; *v2.5+*) Size in bytes
 * `bus_type` - (Optional) Disk bus type. Values can be: IDE, SCSI, SATA 
 * `bus_sub_type` - (Optional) Disk bus subtype. Values can be: "IDE" for IDE. buslogic, lsilogic, lsilogicsas, VirtualSCSI for SCSI and ahci for SATA
