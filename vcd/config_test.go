@@ -725,7 +725,9 @@ func importStateIdOrgObject(vcd TestConfig, objectName string) resource.ImportSt
 		if testConfig.VCD.Org == "" || objectName == "" {
 			return "", fmt.Errorf("missing information to generate import path")
 		}
-		return testConfig.VCD.Org + "." + objectName, nil
+		return testConfig.VCD.Org +
+			ImportSeparationToken +
+			objectName, nil
 	}
 }
 
@@ -735,6 +737,56 @@ func importStateIdOrgVdcObject(vcd TestConfig, objectName string) resource.Impor
 		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || objectName == "" {
 			return "", fmt.Errorf("missing information to generate import path")
 		}
-		return testConfig.VCD.Org + "." + testConfig.VCD.Vdc + "." + objectName, nil
+		return testConfig.VCD.Org +
+			ImportSeparationToken +
+			testConfig.VCD.Vdc +
+			ImportSeparationToken +
+			objectName, nil
+	}
+}
+
+// Used by all entities that depend on Org + Catalog (such as catalog item, media item)
+func importStateIdOrgCatalogObject(vcd TestConfig, objectName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		if testConfig.VCD.Org == "" || testConfig.VCD.Catalog.Name == "" || objectName == "" {
+			return "", fmt.Errorf("missing information to generate import path")
+		}
+		return testConfig.VCD.Org +
+			ImportSeparationToken +
+			testConfig.VCD.Catalog.Name +
+			ImportSeparationToken +
+			objectName, nil
+	}
+}
+
+// Used by all entities that depend on Org + VDC + vApp (such as VM, vapp networks)
+func importStateIdVappObject(vcd TestConfig, vappName, objectName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || vappName == "" || objectName == "" {
+			return "", fmt.Errorf("missing information to generate import path")
+		}
+		return testConfig.VCD.Org +
+			ImportSeparationToken +
+			testConfig.VCD.Vdc +
+			ImportSeparationToken +
+			vappName +
+			ImportSeparationToken +
+			objectName, nil
+	}
+}
+
+// Used by all entities that depend on Org + VDC + edge gateway (such as FW, LB, NAT)
+func importStateIdEdgeGatewayObject(vcd TestConfig, edgeGatewayName, objectName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || edgeGatewayName == "" || objectName == "" {
+			return "", fmt.Errorf("missing information to generate import path")
+		}
+		return testConfig.VCD.Org +
+			ImportSeparationToken +
+			testConfig.VCD.Vdc +
+			ImportSeparationToken +
+			edgeGatewayName +
+			ImportSeparationToken +
+			objectName, nil
 	}
 }

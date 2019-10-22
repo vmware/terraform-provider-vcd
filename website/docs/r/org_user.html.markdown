@@ -114,6 +114,8 @@ You can import such user into terraform state using this command
 terraform import vcd_org_user.my-org-admin my-org.my-org-admin
 ```
 
+NOTE: the default separator (.) can be changed using Provider.import_separation_token or variable VCD_IMPORT_SEPARATOR
+
 [docs-import]:https://www.terraform.io/docs/import/
 
 The state (in `terraform.tfstate`) would look like this:

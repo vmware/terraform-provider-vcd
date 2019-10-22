@@ -133,5 +133,7 @@ via supplying the full dot separated path for DNAT rule. An example is below:
 terraform import vcd_nsxv_dnat.imported my-org.my-org-vdc.my-edge-gw.my-dnat-rule-id
 ```
 
+NOTE: the default separator (.) can be changed using Provider.import_separation_token or variable VCD_IMPORT_SEPARATOR
+
 The above would import the application rule named `my-dnat-rule-id` that is defined on edge
 gateway `my-edge-gw` which is configured in organization named `my-org` and vDC named `my-org-vdc`.

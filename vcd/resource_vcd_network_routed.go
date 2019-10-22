@@ -482,8 +482,9 @@ func findEdgeGatewayConnection(client *VCDClient, vdc *govcd.Vdc, network *govcd
 //
 // Example resource name (_resource_name_): vcd_network_routed.my-network
 // Example import path (_the_id_string_): org.vdc.my-network
+// Note: the separator can be changed using Provider.import_separation_token or variable VCD_IMPORT_SEPARATOR
 func resourceVcdNetworkRoutedImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	resourceURI := strings.Split(d.Id(), ".")
+	resourceURI := strings.Split(d.Id(), ImportSeparationToken)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("[network routed import] resource name must be specified as org-name.vdc-name.network-name")
 	}

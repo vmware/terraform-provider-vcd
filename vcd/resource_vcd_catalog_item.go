@@ -247,8 +247,9 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 // Expects the d.ID() to be a path to the resource made of org_name.catalog_name.catalog_item_name
 //
 // Example import path (id): org_name.catalog_name.catalog_item_name
+// Note: the separator can be changed using Provider.import_separation_token or variable VCD_IMPORT_SEPARATOR
 func resourceVcdCatalogItemImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	resourceURI := strings.Split(d.Id(), ".")
+	resourceURI := strings.Split(d.Id(), ImportSeparationToken)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("resource name must be specified as org.catalog.catalog_item")
 	}
