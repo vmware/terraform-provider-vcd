@@ -32,11 +32,6 @@ func datasourceVcIndependentDisk() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"size": {
-				Type:        schema.TypeFloat,
-				Computed:    true,
-				Description: "size in MB",
-			},
 			"size_in_bytes": {
 				Type:        schema.TypeInt,
 				Computed:    true,
