@@ -72,6 +72,30 @@ func resourceVcdEdgeGateway() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"external_networks_ip": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:	 true,
+				Description: "A list of IP addresses for each external network interface.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"external_networks_netmask": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:	 true,
+				Description: "A list of netmasks for each external network interface.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"external_networks_gateway": &schema.Schema{
+				Type:        schema.TypeList,
+				Computed:	 true,
+				Description: "A list of gateways for each external network interface.",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"default_gateway_network": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -322,13 +346,31 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	}
 	var gateways = make(map[string]string)
 	var networks []string
+	var networks_ips []string
+	var networks_netmasks []string
+	var networks_gateways []string
 	for _, net := range egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
 		if net.InterfaceType == "uplink" {
 			networks = append(networks, net.Network.Name)
+			networks_ips = append(networks_ips, net.SubnetParticipation.IPAddress)
+			networks_netmasks = append(networks_netmasks, net.SubnetParticipation.Netmask)
+			networks_gateways = append(networks_gateways, net.SubnetParticipation.Gateway)
 			gateways[net.SubnetParticipation.Gateway] = net.Network.Name
 		}
 	}
 	err = d.Set("external_networks", networks)
+	if err != nil {
+		return err
+	}
+	err = d.Set("external_networks_ip", networks_ips)
+	if err != nil {
+		return err
+	}
+	err = d.Set("external_networks_netmask", networks_netmasks)
+	if err != nil {
+		return err
+	}
+	err = d.Set("external_networks_gateway", networks_gateways)
 	if err != nil {
 		return err
 	}
