@@ -13,7 +13,7 @@ edge gateways for Org VDC networks to connect.
 
 Supported in provider *v2.5+*
 
-## Example Usages
+## Example Usage
 
 ```hcl
 data "vcd_edgegateway" "mygw" {
