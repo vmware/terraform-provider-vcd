@@ -9,7 +9,6 @@ import (
 
 	"github.com/hashicorp/terraform/helper/resource"
 	"github.com/hashicorp/terraform/terraform"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
 var TestAccVcdCatalogMedia = "TestAccVcdCatalogMediaBasic"
@@ -17,7 +16,6 @@ var TestAccVcdCatalogMediaDescription = "TestAccVcdCatalogMediaBasicDescription"
 
 func TestAccVcdCatalogMediaBasic(t *testing.T) {
 
-	var media govcd.Media
 	var params = StringMap{
 		"Org":              testConfig.VCD.Org,
 		"Catalog":          testSuiteCatalogName,
@@ -46,7 +44,7 @@ func TestAccVcdCatalogMediaBasic(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdCatalogMediaExists("vcd_catalog_media."+TestAccVcdCatalogMedia, &media),
+					testAccCheckVcdCatalogMediaExists("vcd_catalog_media."+TestAccVcdCatalogMedia),
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_media."+TestAccVcdCatalogMedia, "name", TestAccVcdCatalogMedia),
 					resource.TestCheckResourceAttr(
@@ -65,7 +63,7 @@ func TestAccVcdCatalogMediaBasic(t *testing.T) {
 			resource.TestStep{
 				Config: updateConfigText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdCatalogMediaExists("vcd_catalog_media."+TestAccVcdCatalogMedia, &media),
+					testAccCheckVcdCatalogMediaExists("vcd_catalog_media."+TestAccVcdCatalogMedia),
 					resource.TestCheckResourceAttr(
 						"vcd_catalog_media."+TestAccVcdCatalogMedia, "name", TestAccVcdCatalogMedia),
 					resource.TestCheckResourceAttr(
@@ -102,7 +100,7 @@ func testCheckMediaNonStringOutputs() resource.TestCheckFunc {
 	}
 }
 
-func testAccCheckVcdCatalogMediaExists(mediaName string, media *govcd.Media) resource.TestCheckFunc {
+func testAccCheckVcdCatalogMediaExists(mediaName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		catalogMediaRs, ok := s.RootModule().Resources[mediaName]
 		if !ok {
@@ -130,7 +128,6 @@ func testAccCheckVcdCatalogMediaExists(mediaName string, media *govcd.Media) res
 			return fmt.Errorf("catalog media %s does not exist (%#v)", catalogMediaRs.Primary.ID, foundMedia.Media)
 		}
 
-		media = foundMedia
 		return nil
 	}
 }
