@@ -203,7 +203,9 @@ It does not generate configuration. [More information.](https://www.terraform.io
 
 An existing firewall rule can be [imported][docs-import] into this resource
 via supplying the full dot separated path for firewall rule. There are a few ways as per examples
-below:
+below.
+
+NOTE: The default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 
 [docs-import]: https://www.terraform.io/docs/import/
 
@@ -211,7 +213,6 @@ below:
 rules have IDs with larger integer numbers like `132730`. See below for possible options to use
 import.
 
-NOTE: The default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 
 ### Import by real firewall rule ID
 
