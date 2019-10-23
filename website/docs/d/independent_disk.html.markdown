@@ -36,8 +36,8 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
-* `id` - (Option) Disk id or name is required. If both provided - Id is used.
-* `name` - (Optional) Disk name
+* `id` - (Optional) Disk id or name is required. If both provided - Id is used. Id can be found used import function [Listing independent disk IDs](/docs/providers/vcd/r/independent_disk.html#listing-independent-disk-ids) 
+* `name` - (Optional) Disk name.  **Warning** please use `id` as there is possibility to have a few independent disks with same name. As result datasource will fail.
 
 ## Attribute reference
 
