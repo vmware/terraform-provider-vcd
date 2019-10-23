@@ -23,6 +23,7 @@ The following vCloud Director versions are supported by this provider:
 * 9.1
 * 9.5
 * 9.7
+* 10.0
 
 ## Example Usage
 

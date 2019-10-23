@@ -18,6 +18,7 @@ FEATURES:
 
 IMPROVEMENTS:
 
+* Add support for vCD 10.0 (API 33)
 * `resource/vcd_org` Add import capability and full read support [#218]
 * `resource/vcd_catalog` Add import capability and full read support [#218]
 * `resource/vcd_catalog_item` Add import capability and full read support [#218]
@@ -45,7 +46,7 @@ IMPROVEMENTS:
 * `vcd_org_vdc` Add import capability and full read support [#218]
 * Upgrade Terraform SDK dependency to 0.12.8 [#320]
 * `resource/vcd_vapp_vm` has new field `computer_name` [#334]
-* Import functions can now use custom separators instead of "." [#343]
+* Import functions can now use a custom separator instead of "." [#343]
 
 BUG FIXES:
 * Change default value for `vcd_org.deployed_vm_quota` and `vcd_org.stored_vm_quota`. It was incorrectly set at `-1` instead of `0`.
