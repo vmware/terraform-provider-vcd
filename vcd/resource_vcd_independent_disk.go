@@ -384,8 +384,6 @@ func resourceVcdIndependentDiskImport(d *schema.ResourceData, meta interface{}) 
 		orgName, vdcName, diskId = resourceURI[0], resourceURI[1], resourceURI[2]
 		return getDiskForImport(d, meta, orgName, vdcName, diskId)
 	}
-
-	return nil, fmt.Errorf("resource was not imported! %s", helpError.Error())
 }
 
 func getDiskForImport(d *schema.ResourceData, meta interface{}, orgName, vdcName, diskId string) ([]*schema.ResourceData, error) {
