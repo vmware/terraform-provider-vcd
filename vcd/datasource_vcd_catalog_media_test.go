@@ -62,7 +62,7 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 				ResourceName:      "vcd_catalog_media." + TestAccVcdDataSourceMedia + "-import",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdByCatalogItem(TestAccVcdDataSourceMedia),
+				ImportStateIdFunc: importStateIdOrgCatalogObject(testConfig, TestAccVcdDataSourceMedia),
 				// These fields can't be retrieved from catalog media data
 				ImportStateVerifyIgnore: []string{"media_path", "upload_piece_size", "show_upload_progress"},
 			},
