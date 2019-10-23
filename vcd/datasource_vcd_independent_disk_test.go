@@ -48,8 +48,7 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 		CheckDestroy: testDiskResourcesDestroyed,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config:             configText,
-				ExpectNonEmptyPlan: true,
+				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDiskCreated("vcd_independent_disk."+resourceName, diskName),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "name", diskName),
@@ -64,8 +63,7 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				Config:             configTextWithId,
-				ExpectNonEmptyPlan: true,
+				Config: configTextWithId,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDiskCreated("vcd_independent_disk."+resourceName, diskName+"WithId"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "name", diskName+"WithId"),
@@ -111,8 +109,7 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
 }
 
 data "vcd_independent_disk" "{{.dataSourceName}}" {
-  name    = "{{.name}}"
-  depends_on = ["vcd_independent_disk.{{.ResourceName}}"]
+  name    = "${vcd_independent_disk.{{.ResourceName}}.name}" 
 }
 
 output "iops" {
@@ -145,8 +142,7 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
 }
 
 data "vcd_independent_disk" "{{.datasourceNameWithId}}" {
-  id         = vcd_independent_disk.{{.ResourceName}}.id
-  depends_on = ["vcd_independent_disk.{{.ResourceName}}"]
+  id         = "${vcd_independent_disk.{{.ResourceName}}.id}"
 }
 
 output "iops" {
