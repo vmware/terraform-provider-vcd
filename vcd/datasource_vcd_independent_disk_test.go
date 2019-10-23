@@ -50,7 +50,7 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDiskCreated("vcd_independent_disk."+resourceName, diskName),
+					testAccCheckDiskCreated("vcd_independent_disk."+resourceName),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "name", diskName),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "description", diskName+"description"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "size_in_bytes", "5242880"),
@@ -65,7 +65,7 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 			resource.TestStep{
 				Config: configTextWithId,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDiskCreated("vcd_independent_disk."+resourceName, diskName+"WithId"),
+					testAccCheckDiskCreated("vcd_independent_disk."+resourceName),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "name", diskName+"WithId"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "description", diskName+"description"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "size_in_bytes", "5242880"),

@@ -51,7 +51,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 			resource.TestStep{
 				Config: configTextForCompatibility,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDiskCreated("vcd_independent_disk."+resourceName, name),
+					testAccCheckDiskCreated("vcd_independent_disk."+resourceName),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "size_in_bytes", "5242880000"),
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "owner_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "datastore_name", regexp.MustCompile(`^\S+`)),
@@ -62,7 +62,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDiskCreated("vcd_independent_disk."+resourceName+"second", name+"second"),
+					testAccCheckDiskCreated("vcd_independent_disk."+resourceName+"second"),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName+"second", "size_in_bytes", "5242880000"),
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName+"second", "owner_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName+"second", "datastore_name", regexp.MustCompile(`^\S+`)),
@@ -81,7 +81,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 	})
 }
 
-func testAccCheckDiskCreated(itemName, diskName string) resource.TestCheckFunc {
+func testAccCheckDiskCreated(itemName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		injectItemRs, ok := s.RootModule().Resources[itemName]
 		if !ok {
@@ -99,7 +99,7 @@ func testAccCheckDiskCreated(itemName, diskName string) resource.TestCheckFunc {
 			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
 		}
 
-		_, err = vdc.GetDisksByName(diskName, true)
+		_, err = vdc.GetDiskById(injectItemRs.Primary.ID, true)
 		if err != nil {
 			return fmt.Errorf("independent disk %s isn't exist and error: %#v", itemName, err)
 		}

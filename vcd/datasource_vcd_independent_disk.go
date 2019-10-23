@@ -108,7 +108,7 @@ func dataSourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) 
 		identifier = nameValue
 		disks, err := vdc.GetDisksByName(identifier, true)
 		if govcd.IsNotFound(err) {
-			log.Printf("unable to find disk with ID %s: %s. Removing from state", identifier, err)
+			log.Printf("unable to find disk with name %s: %s. Removing from state", identifier, err)
 			d.SetId("")
 			return nil
 		}
@@ -127,7 +127,7 @@ func dataSourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) 
 
 	diskRecords, err := vdc.QueryDisks(disk.Disk.Name)
 	if err != nil {
-		return fmt.Errorf("unable to query disk with ID %s: %s", identifier, err)
+		return fmt.Errorf("unable to query disk with name %s: %s", identifier, err)
 	}
 
 	var diskRecord *types.DiskRecordType
@@ -135,6 +135,10 @@ func dataSourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) 
 		if entity.HREF == disk.Disk.HREF {
 			diskRecord = entity
 		}
+	}
+
+	if diskRecord == nil {
+		return fmt.Errorf("unable to find quried disk with name %s: and href: %s, %s", identifier, disk.Disk.HREF, err)
 	}
 
 	setMainData(d, disk)

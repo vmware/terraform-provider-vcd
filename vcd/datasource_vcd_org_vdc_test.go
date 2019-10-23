@@ -68,21 +68,21 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 					resource.TestCheckResourceAttrPair(
 						"data."+datasourceVdc, "compute_capacity.0.cpu.0.limit", "vcd_org_vdc."+vdcName, "compute_capacity.0.cpu.0.limit"),
 					resource.TestMatchResourceAttr(
-						"data."+datasourceVdc, "compute_capacity.0.cpu.0.overhead", regexp.MustCompile(`^\d*$`)),
+						"data."+datasourceVdc, "compute_capacity.0.cpu.0.overhead", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
-						"data."+datasourceVdc, "compute_capacity.0.cpu.0.reserved", regexp.MustCompile(`^\d*$`)),
+						"data."+datasourceVdc, "compute_capacity.0.cpu.0.reserved", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
-						"data."+datasourceVdc, "compute_capacity.0.cpu.0.used", regexp.MustCompile(`^\d*$`)),
+						"data."+datasourceVdc, "compute_capacity.0.cpu.0.used", regexp.MustCompile(`^\d+$`)),
 					resource.TestCheckResourceAttrPair(
 						"data."+datasourceVdc, "compute_capacity.0.memory.0.allocated", "vcd_org_vdc."+vdcName, "compute_capacity.0.memory.0.allocated"),
 					resource.TestCheckResourceAttrPair(
 						"data."+datasourceVdc, "compute_capacity.0.memory.0.limit", "vcd_org_vdc."+vdcName, "compute_capacity.0.memory.0.limit"),
 					resource.TestMatchResourceAttr(
-						"data."+datasourceVdc, "compute_capacity.0.memory.0.overhead", regexp.MustCompile(`^\d*$`)),
+						"data."+datasourceVdc, "compute_capacity.0.memory.0.overhead", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
-						"data."+datasourceVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d*$`)),
+						"data."+datasourceVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
-						"data."+datasourceVdc, "compute_capacity.0.memory.0.used", regexp.MustCompile(`^\d*$`))),
+						"data."+datasourceVdc, "compute_capacity.0.memory.0.used", regexp.MustCompile(`^\d+$`))),
 			},
 		},
 	})

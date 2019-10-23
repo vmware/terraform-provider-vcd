@@ -201,11 +201,6 @@ func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) 
 
 	diskHref := task.Task.Owner.HREF
 	disk, err := vdc.GetDiskByHref(diskHref)
-	if govcd.IsNotFound(err) {
-		log.Printf("unable to find disk with href %s: %s. Removing from state", diskHref, err)
-		d.SetId("")
-		return nil
-	}
 	if err != nil {
 		return fmt.Errorf("unable to find disk with href %s: %s", diskHref, err)
 	}
@@ -239,7 +234,7 @@ func resourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) er
 		identifier = d.Get("name").(string)
 		disks, err := vdc.GetDisksByName(identifier, true)
 		if govcd.IsNotFound(err) {
-			log.Printf("unable to find disk with ID %s: %s. Removing from state", identifier, err)
+			log.Printf("unable to find disk with name %s: %s. Removing from state", identifier, err)
 			d.SetId("")
 			return nil
 		}
@@ -254,7 +249,7 @@ func resourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) er
 
 	diskRecords, err := vdc.QueryDisks(disk.Disk.Name)
 	if err != nil {
-		return fmt.Errorf("unable to query disk with ID %s: %s", identifier, err)
+		return fmt.Errorf("unable to query disk with name %s: %s", identifier, err)
 	}
 
 	var diskRecord *types.DiskRecordType
@@ -262,6 +257,10 @@ func resourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) er
 		if entity.HREF == disk.Disk.HREF {
 			diskRecord = entity
 		}
+	}
+
+	if diskRecord == nil {
+		return fmt.Errorf("unable to find quried disk with name %s: and href: %s, %s", identifier, disk.Disk.HREF, err)
 	}
 
 	setMainData(d, disk)
@@ -341,7 +340,7 @@ func validateBusSubType(v interface{}, k string) (warnings []string, errors []er
 	return
 }
 
-var helpError = fmt.Errorf(`resource id must be specified in one of these formats:
+var helpDiskError = fmt.Errorf(`resource id must be specified in one of these formats:
 'org-name.vdc-name.my-independent-disk-id' to import by rule id
 'list@org-name.vdc-name.my-independent-disk-name' to get a list of disks with their IDs`)
 
@@ -369,14 +368,14 @@ func resourceVcdIndependentDiskImport(d *schema.ResourceData, meta interface{}) 
 	log.Printf("[DEBUG] importing vcd_independent_disk resource with provided id %s", d.Id())
 
 	if len(resourceURI) != 3 {
-		return nil, helpError
+		return nil, helpDiskError
 	}
 
 	if strings.Contains(d.Id(), "list@") {
 		commandOrgName, vdcName, diskName = resourceURI[0], resourceURI[1], resourceURI[2]
 		commandOrgNameSplit := strings.Split(commandOrgName, "@")
 		if len(commandOrgNameSplit) != 2 {
-			return nil, helpError
+			return nil, helpDiskError
 		}
 		orgName = commandOrgNameSplit[1]
 		return listDisksForImport(meta, orgName, vdcName, diskName)
@@ -427,5 +426,5 @@ func listDisksForImport(meta interface{}, orgName, vdcName, diskName string) ([]
 	}
 	writer.Flush()
 
-	return nil, fmt.Errorf("resource was not imported! %s", helpError.Error())
+	return nil, fmt.Errorf("resource was not imported! %s", helpDiskError)
 }
