@@ -11,7 +11,7 @@ import (
 
 func datasourceVcIndependentDisk() *schema.Resource {
 	return &schema.Resource{
-		Read: dataResourceVcdIndependentDiskRead,
+		Read: dataSourceVcdIndependentDiskRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
@@ -78,7 +78,7 @@ func datasourceVcIndependentDisk() *schema.Resource {
 	}
 }
 
-func dataResourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) error {
+func dataSourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdc("", d.Get("vdc").(string))
@@ -90,7 +90,7 @@ func dataResourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}
 	nameValue := d.Get("name").(string)
 
 	if idValue == "" && nameValue == "" {
-		return errors.New("`id` or `name` is empty")
+		return errors.New("`id` and `name` are empty. At least one is needed")
 	}
 
 	identifier := idValue
