@@ -396,10 +396,18 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	//	return err
 	//}
 
-	err = setLoadBalancerData(d, egw)
-	if err != nil {
-		return err
+	if egw.HasAdvancedNetworking() {
+		err = setLoadBalancerData(d, egw)
+		if err != nil {
+			return err
+		}
+
+		err = setFirewallData(d, egw)
+		if err != nil {
+			return err
+		}
 	}
+
 	d.SetId(egw.EdgeGateway.ID)
 	return nil
 }
@@ -411,10 +419,10 @@ func setLoadBalancerData(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 		return fmt.Errorf("unable to read general load balancer settings: %s", err)
 	}
 
-	d.Set("lb_enabled", lb.Enabled)
-	d.Set("lb_acceleration_enabled", lb.AccelerationEnabled)
-	d.Set("lb_logging_enabled", lb.Logging.Enable)
-	d.Set("lb_loglevel", lb.Logging.LogLevel)
+	_ = d.Set("lb_enabled", lb.Enabled)
+	_ = d.Set("lb_acceleration_enabled", lb.AccelerationEnabled)
+	_ = d.Set("lb_logging_enabled", lb.Logging.Enable)
+	_ = d.Set("lb_loglevel", lb.Logging.LogLevel)
 
 	return nil
 }
