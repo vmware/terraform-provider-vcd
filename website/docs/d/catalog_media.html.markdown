@@ -23,11 +23,11 @@ data "vcd_catalog_media" "existing-media" {
 }
 
 output "media_size" {
-  value = data.vcd_catalog_media.size
+  value = data.vcd_catalog_media.existing-media.size
 }
 
 output "type_is_iso" {
-  value = data.vcd_catalog_media.is_iso
+  value = data.vcd_catalog_media.existing-media.is_iso
 }
 
 

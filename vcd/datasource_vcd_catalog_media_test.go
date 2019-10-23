@@ -47,8 +47,7 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 		CheckDestroy: catalogMediaDestroyed(testConfig.VCD.Catalog.Name, TestCatalogMediaDS),
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config:             configText,
-				ExpectNonEmptyPlan: true,
+				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdCatalogMediaExists("vcd_catalog_media."+TestAccVcdDataSourceMedia),
 					resource.TestMatchOutput("owner_name", regexp.MustCompile(`^\S+`)),
@@ -101,8 +100,7 @@ resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
 data "vcd_catalog_media" "{{.NewCatalogMedia}}" {
   org     = "{{.Org}}"
   catalog = "{{.Catalog}}"
-  name    = "{{.CatalogMediaName}}"
-  depends_on = ["vcd_catalog_media.{{.CatalogMediaName}}"]
+  name    = "${vcd_catalog_media.{{.CatalogMediaName}}.name}"
 }
 
 output "size" {
