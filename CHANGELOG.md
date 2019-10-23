@@ -19,7 +19,6 @@ FEATURES:
 IMPROVEMENTS:
 
 * Add support for vCD 10.0
-* Drop support for vCD 8.20
 * `resource/vcd_org` Add import capability and full read support [#218]
 * `resource/vcd_catalog` Add import capability and full read support [#218]
 * `resource/vcd_catalog_item` Add import capability and full read support [#218]
@@ -71,6 +70,9 @@ add explicit VM resources `vcd_vapp_vm`.
   * `initscript`
   * `ovf`
   * `accept_all_eulas`
+
+NOTES:
+* Drop support for vCD 8.20
 
 ## 2.4.0 (July 29, 2019)
 
