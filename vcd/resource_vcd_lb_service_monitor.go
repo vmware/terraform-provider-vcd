@@ -220,9 +220,10 @@ func resourceVcdLbServiceMonitorDelete(d *schema.ResourceData, meta interface{})
 // `terraform import` automatically performs `refresh` operation which loads up all other fields.
 //
 // Example import path (id): org.vdc.edge-gw.lb-service-monitor
+// Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func resourceVcdLbServiceMonitorImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 
-	resourceURI := strings.Split(d.Id(), ".")
+	resourceURI := strings.Split(d.Id(), ImportSeparationToken)
 	if len(resourceURI) != 4 {
 		return nil, fmt.Errorf("resource name must be specified as org.vdc.edge-gw.lb-service-monitor")
 	}

@@ -44,6 +44,8 @@ IMPROVEMENTS:
 * `resource/vcd_network_direct` Add computed properties (external network gateway, netmask, DNS, and DNS suffix) [#330]
 * `vcd_org_vdc` Add import capability and full read support [#218]
 * Upgrade Terraform SDK dependency to 0.12.8 [#320]
+* `resource/vcd_vapp_vm` has new field `computer_name` [#334]
+* Import functions can now use custom separators instead of "." [#343]
 * `resource/vcd_vapp_vm` has new field `computer_name` [#334] [#347]
 
 BUG FIXES:
