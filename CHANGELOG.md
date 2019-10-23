@@ -46,6 +46,7 @@ IMPROVEMENTS:
 * `vcd_org_vdc` Add import capability and full read support [#218]
 * Upgrade Terraform SDK dependency to 0.12.8 [#320]
 * `resource/vcd_vapp_vm` has new field `computer_name` [#334]
+* Import functions can now use custom separators instead of "." [#343]
 * `resource/vcd_independent_disk` Add computed properties (`iops`, `owner_name`, `datastore_name`, `is_attached`, `size_in_bytes`) and full read support [#349]
 * `resource/vcd_independent_disk` Disk state ID changed from name of disk to vCD ID [#349]
 * `resource/vcd_independent_disk` Add new field size_in_bytes [#349]
@@ -72,7 +73,6 @@ add explicit VM resources `vcd_vapp_vm`.
   * `initscript`
   * `ovf`
   * `accept_all_eulas`
-* `resource/vcd_independent_disk` deprecate field `size`
 
 ## 2.4.0 (July 29, 2019)
 
