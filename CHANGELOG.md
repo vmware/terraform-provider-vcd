@@ -18,7 +18,7 @@ FEATURES:
 
 IMPROVEMENTS:
 
-* Add support for vCD 10.0 (API 33)
+* Add support for vCD 10.0
 * `resource/vcd_org` Add import capability and full read support [#218]
 * `resource/vcd_catalog` Add import capability and full read support [#218]
 * `resource/vcd_catalog_item` Add import capability and full read support [#218]
