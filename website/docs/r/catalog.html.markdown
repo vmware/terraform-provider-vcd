@@ -58,7 +58,7 @@ You can import such catalog into terraform state using this command
 terraform import vcd_catalog.my-catalog my-org.my-catalog
 ```
 
-NOTE: the default separator (.) can be changed using Provider.import_separation_token or variable VCD_IMPORT_SEPARATOR
+NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 
 [docs-import]:https://www.terraform.io/docs/import/
 

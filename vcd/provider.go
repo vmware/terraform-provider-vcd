@@ -82,7 +82,7 @@ func Provider() terraform.ResourceProvider {
 				DefaultFunc: schema.EnvDefaultFunc("VCD_API_LOGGING_FILE", "go-vcloud-director.log"),
 				Description: "Defines the full name of the logging file for API calls (requires 'logging')",
 			},
-			"import_separation_token": &schema.Schema{
+			"import_separator": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_IMPORT_SEPARATOR", "."),
@@ -182,7 +182,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	if separator != "" {
 		ImportSeparationToken = separator
 	} else {
-		ImportSeparationToken = d.Get("import_separation_token").(string)
+		ImportSeparationToken = d.Get("import_separator").(string)
 	}
 
 	return config.Client()

@@ -157,7 +157,7 @@ func resourceVcdLBAppRuleDelete(d *schema.ResourceData, meta interface{}) error 
 //
 // Example resource name (_resource_name_): vcd_lb_app_rule.my-test-app-rule
 // Example import path (_the_id_string_): org.vdc.edge-gw.existing-app-rule
-// Note: the separator can be changed using Provider.import_separation_token or variable VCD_IMPORT_SEPARATOR
+// Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func resourceVcdLBAppRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparationToken)
 	if len(resourceURI) != 4 {

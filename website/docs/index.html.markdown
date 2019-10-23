@@ -164,7 +164,7 @@ The following arguments are used to configure the VMware vCloud Director Provide
 * `logging_file` - (Optional; *v2.0+*) The name of the log file (when `logging` is enabled). By default is 
   `go-vcloud-director` and it can also be changed using the `VCD_API_LOGGING_FILE` environment variable.
   
-* `import_separation_token` - (Optional; *v2.5+*) The string to be used as separator with `terraform import`. By default
+* `import_separator` - (Optional; *v2.5+*) The string to be used as separator with `terraform import`. By default
   it is a dot (`.`).
 
 ## Connection Cache (*2.0+*)

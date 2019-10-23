@@ -136,7 +136,7 @@ func resourceVcdCatalogDelete(d *schema.ResourceData, meta interface{}) error {
 // Expects the d.ID() to be a path to the resource made of org_name.catalog_name
 //
 // Example import path (id): org_name.catalog_name
-// Note: the separator can be changed using Provider.import_separation_token or variable VCD_IMPORT_SEPARATOR
+// Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func resourceVcdCatalogImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparationToken)
 	if len(resourceURI) != 2 {

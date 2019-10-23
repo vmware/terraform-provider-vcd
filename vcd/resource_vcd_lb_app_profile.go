@@ -210,7 +210,7 @@ func resourceVcdLBAppProfileDelete(d *schema.ResourceData, meta interface{}) err
 // `terraform import` automatically performs `refresh` operation which loads up all other fields.
 //
 // Example import path (id): org.vdc.edge-gw.existing-app-profile
-// Note: the separator can be changed using Provider.import_separation_token or variable VCD_IMPORT_SEPARATOR
+// Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func resourceVcdLBAppProfileImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparationToken)
 	if len(resourceURI) != 4 {

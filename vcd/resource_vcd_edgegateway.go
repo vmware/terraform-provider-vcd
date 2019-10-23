@@ -404,7 +404,7 @@ func updateLoadBalancer(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 //
 // Example resource name (_resource_name_): vcd_edgegateway.my-edge-gateway
 // Example import path (_the_id_string_): org.vdc.my-edge-gw
-// Note: the separator can be changed using Provider.import_separation_token or variable VCD_IMPORT_SEPARATOR
+// Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func resourceVcdEdgeGatewayImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparationToken)
 	if len(resourceURI) != 3 {

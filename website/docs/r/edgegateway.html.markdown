@@ -105,7 +105,7 @@ You can import such edge gateway into terraform state using this command
 ```
 terraform import vcd_edgegateway.tf-edgegateway my-org.my-vdc.my-edge-gw
 ```
-// Note: the separator can be changed using Provider.import_separation_token or variable VCD_IMPORT_SEPARATOR
+// Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 
 [docs-import]:https://www.terraform.io/docs/import/
 
