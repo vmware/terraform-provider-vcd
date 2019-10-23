@@ -381,27 +381,28 @@ func resourceVcdNsxvFirewallRuleDelete(d *schema.ResourceData, meta interface{})
 // 2b. If the `_the_id_string_` starts with `list@` and contains path to edge gateway similar to
 // `list@org.vdc.edge-gw` then the function lists all firewall rules and their IDs in that edge
 // gateway.
-// 2c. If the `_the_id_string_` contains a dot formatted path with the 4th element starting with
-// substring 'ui-no:' and number after colon - the import function will try to lookup a real ID by
+// 2c. If the `_the_id_string_` contains a dot formatted path with the 4th element being
+// 'ui-no' and 5th element - number - the import function will try to lookup a real ID by
 // the given UI ID and import the rule
 // 2d. If the `_the_id_string_` does not match format described neither in '2a', '2b', '2c' a
 // usage error message is printed
 //
 // Example resource name (_resource_name_): vcd_nsxv_firewall_rule.my-test-fw-rule
 // Example import path (_the_id_string_): org.vdc.edge-gw.132730
-// Example import by UI ID path (_the_id_string_): org.vdc.edge-gw.ui-no:2
+// Example import by UI ID path (_the_id_string_): org.vdc.edge-gw.ui-no.2
 // Example list path (_the_id_string_): list@org.vdc.edge-gw
 func resourceVcdNsxvFirewallRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	var commandOrgName, orgName, vdcName, edgeName, firewallRuleId string
+	var commandOrgName, orgName, vdcName, edgeName, firewallRuleId, uiId string
 	var listRules, importRule bool
 
 	resourceURI := strings.Split(d.Id(), ".")
 	helpError := fmt.Errorf(`resource id must be specified in one of these formats:
 'org-name.vdc-name.edge-gw-name.real-firewall-rule-id' to import by rule id
-'org-name.vdc-name.edge-gw-name.ui-no:X' where X is the firewall rule number shown in UI
+'org-name.vdc-name.edge-gw-name.ui-no.X' where X is the firewall rule number shown in UI
 'list@org-name.vdc-name.edge-gw-name' to get a list of rules with their respective UI numbers and real IDs`)
 
 	log.Printf("[DEBUG] importing vcd_nsxv_firewall_rule resource with provided id %s", d.Id())
+
 	switch len(resourceURI) {
 	case 3:
 		commandOrgName, vdcName, edgeName = resourceURI[0], resourceURI[1], resourceURI[2]
@@ -413,6 +414,12 @@ func resourceVcdNsxvFirewallRuleImport(d *schema.ResourceData, meta interface{})
 		listRules = true
 	case 4:
 		orgName, vdcName, edgeName, firewallRuleId = resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
+		importRule = true
+	case 5:
+		if resourceURI[3] != "ui-no" {
+			return nil, helpError
+		}
+		orgName, vdcName, edgeName, uiId = resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[4]
 		importRule = true
 	default:
 		return nil, helpError
@@ -448,36 +455,31 @@ func resourceVcdNsxvFirewallRuleImport(d *schema.ResourceData, meta interface{})
 	// Proceed with import
 	if importRule {
 		// If user requested to import by UI Number - real ID must be looked up
-		// Specified import path as 'org.vdc.edge-gw.ui-no:3' to import rule number 3 in UI
-		if strings.Contains(firewallRuleId, "ui-no") {
+		// Specified import path as 'org.vdc.edge-gw.ui-no.3' to import rule number 3 in UI
+		if uiId != "" {
 			allRules, err := edgeGateway.GetAllNsxvFirewallRules()
 			if err != nil {
 				return nil, fmt.Errorf("unable to retrieve all firewal rules: %s", err)
 			}
 
-			splitUiId := strings.Split(firewallRuleId, ":")
-			if len(splitUiId) != 2 {
-				return nil, fmt.Errorf("could not parse firewall rule UI number %s", firewallRuleId)
-			}
-
-			splitUiIdInt, err := strconv.Atoi(splitUiId[1])
+			uiIdInt, err := strconv.Atoi(uiId)
 			if err != nil {
-				return nil, fmt.Errorf("could not convert firewall rule number %s to integer", splitUiId[1])
+				return nil, fmt.Errorf("could not convert firewall rule number %s to integer", uiId)
 			}
 
 			// Rule index cannot be bigger than all rules and less than one
-			if splitUiIdInt > len(allRules) || splitUiIdInt < 1 {
-				return nil, fmt.Errorf("rule number %d does not exist", splitUiIdInt)
+			if uiIdInt > len(allRules) || uiIdInt < 1 {
+				return nil, fmt.Errorf("rule number %d does not exist", uiIdInt)
 			}
 
 			// Lookup real firewall rule id and use it for lookup
-			firewallRuleId = allRules[splitUiIdInt-1].ID
+			firewallRuleId = allRules[uiIdInt-1].ID
 
 		}
 
 		readFirewallRule, err := edgeGateway.GetNsxvFirewallRuleById(firewallRuleId)
 		if err != nil {
-			return []*schema.ResourceData{}, fmt.Errorf("unable to find firewall rule with id %s: %s",
+			return nil, fmt.Errorf("unable to find firewall rule with id %s: %s",
 				d.Id(), err)
 		}
 

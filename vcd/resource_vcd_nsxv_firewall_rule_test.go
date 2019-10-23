@@ -54,9 +54,10 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 	configText5 := templateFill(testAccVcdEdgeFirewallRule5, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 5: %s", configText5)
 
-	// -step6 is "import"
+	// -step6 is "import" by real ID
+	// -step7 is "import" by UI ID
 
-	params["FuncName"] = t.Name() + "-step7"
+	params["FuncName"] = t.Name() + "-step8"
 	configText8 := templateFill(testAccVcdEdgeFirewallRule8, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 8: %s", configText8)
 
@@ -513,13 +514,13 @@ func importStateFirewallUiNumberByResourceName(resource string) resource.ImportS
 			return "", fmt.Errorf("could not get all firewall rules: %s", err)
 		}
 
-		// realFirewallRuleIndex is used to store firewall rule number
-		var realFirewallRuleIndex int
+		// firewallRuleIndex is used to store firewall rule number in UI
+		var firewallRuleIndex int
 		var found bool
 		for ruleIndex, rule := range allRules {
 			// if the rule with reald ID is found
 			if rule.ID == rs.Primary.ID {
-				realFirewallRuleIndex = ruleIndex + 1
+				firewallRuleIndex = ruleIndex + 1
 				found = true
 				break
 			}
@@ -529,7 +530,7 @@ func importStateFirewallUiNumberByResourceName(resource string) resource.ImportS
 			return "", fmt.Errorf("could not find firewall rule by ID %s", rs.Primary.ID)
 		}
 
-		importId := fmt.Sprintf("%s.%s.%s.ui-no:%d", testConfig.VCD.Org, testConfig.VCD.Vdc, testConfig.Networking.EdgeGateway, realFirewallRuleIndex)
+		importId := fmt.Sprintf("%s.%s.%s.ui-no.%d", testConfig.VCD.Org, testConfig.VCD.Vdc, testConfig.Networking.EdgeGateway, firewallRuleIndex)
 		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || testConfig.Networking.EdgeGateway == "" {
 			return "", fmt.Errorf("missing information to generate import path: %s", importId)
 		}
