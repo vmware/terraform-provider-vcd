@@ -22,7 +22,7 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 
 	var params = StringMap{
 		"Org":              testConfig.VCD.Org,
-		"Catalog":          testSuiteCatalogName,
+		"Catalog":          testConfig.VCD.Catalog.Name,
 		"NewCatalogMedia":  TestCatalogMediaDS,
 		"OvaPath":          testConfig.Ova.OvaPath,
 		"UploadPieceSize":  testConfig.Ova.UploadPieceSize,
@@ -44,7 +44,7 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { preRunChecks(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: catalogMediaDestroyed(testSuiteCatalogName, TestCatalogMediaDS),
+		CheckDestroy: catalogMediaDestroyed(testConfig.VCD.Catalog.Name, TestCatalogMediaDS),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config:             configText,
@@ -57,14 +57,6 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 					resource.TestMatchOutput("storage_profile_name", regexp.MustCompile(`^\S+`)),
 					testCheckMediaNonStringOutputs(),
 				),
-			},
-			resource.TestStep{
-				ResourceName:      "vcd_catalog_media." + TestAccVcdDataSourceMedia + "-import",
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgCatalogObject(testConfig, TestAccVcdDataSourceMedia),
-				// These fields can't be retrieved from catalog media data
-				ImportStateVerifyIgnore: []string{"media_path", "upload_piece_size", "show_upload_progress"},
 			},
 		},
 	})

@@ -18,7 +18,7 @@ func TestAccVcdCatalogMediaBasic(t *testing.T) {
 
 	var params = StringMap{
 		"Org":              testConfig.VCD.Org,
-		"Catalog":          testSuiteCatalogName,
+		"Catalog":          testConfig.VCD.Catalog.Name,
 		"CatalogMediaName": TestAccVcdCatalogMedia,
 		"Description":      TestAccVcdCatalogMediaDescription,
 		"MediaPath":        testConfig.Media.MediaPath,
@@ -76,6 +76,14 @@ func TestAccVcdCatalogMediaBasic(t *testing.T) {
 						"vcd_catalog_media."+TestAccVcdCatalogMedia, "metadata.mediaItem_metadata3", "mediaItem Metadata3"),
 				),
 			},
+			resource.TestStep{
+				ResourceName:      "vcd_catalog_media." + TestAccVcdCatalogMedia + "-import",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdOrgCatalogObject(testConfig, TestAccVcdCatalogMedia),
+				// These fields can't be retrieved from catalog media data
+				ImportStateVerifyIgnore: []string{"media_path", "upload_piece_size", "show_upload_progress"},
+			},
 		},
 	})
 }
@@ -118,9 +126,9 @@ func testAccCheckVcdCatalogMediaExists(mediaName string) resource.TestCheckFunc 
 			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
 		}
 
-		catalog, err := adminOrg.GetCatalogByName(testSuiteCatalogName, false)
+		catalog, err := adminOrg.GetCatalogByName(testConfig.VCD.Catalog.Name, false)
 		if err != nil {
-			return fmt.Errorf("catalog %s does not exist (%s)", testSuiteCatalogName, err)
+			return fmt.Errorf("catalog %s does not exist (%s)", testConfig.VCD.Catalog.Name, err)
 		}
 
 		foundMedia, err := catalog.GetMediaByName(catalogMediaRs.Primary.Attributes["name"], false)
@@ -144,7 +152,7 @@ func testAccCheckCatalogMediaDestroy(s *terraform.State) error {
 			return fmt.Errorf(errorRetrievingOrg, testConfig.VCD.Org+" and error: "+err.Error())
 		}
 
-		catalog, err := adminOrg.GetCatalogByName(testSuiteCatalogName, false)
+		catalog, err := adminOrg.GetCatalogByName(testConfig.VCD.Catalog.Name, false)
 		if err != nil {
 			return fmt.Errorf("catalog query %s ended with error: %#v", rs.Primary.ID, err)
 		}
