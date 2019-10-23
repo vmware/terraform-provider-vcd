@@ -23,10 +23,10 @@ data "vcd_independent_disk" "existing-disk" {
   name    = "my-disk"
 }
 output "disk-size" {
-  value = data.vcd_independent_disk.size_in_bytes
+  value = data.vcd_independent_disk.existing-disk.size_in_bytes
 }
 output "type_is_attached" {
-  value = data.vcd_independent_disk.is_attached
+  value = data.vcd_independent_disk.existing-disk.is_attached
 }
 ```
 
