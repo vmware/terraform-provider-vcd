@@ -426,9 +426,9 @@ func setFirewallData(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 		return fmt.Errorf("unable to read firewall settings: %s", err)
 	}
 
-	d.Set("fw_enabled", fw.Enabled)
-	d.Set("fw_default_rule_logging_enabled", fw.DefaultPolicy.LoggingEnabled)
-	d.Set("fw_default_rule_action", fw.DefaultPolicy.Action)
+	_ = d.Set("fw_enabled", fw.Enabled)
+	_ = d.Set("fw_default_rule_logging_enabled", fw.DefaultPolicy.LoggingEnabled)
+	_ = d.Set("fw_default_rule_action", fw.DefaultPolicy.Action)
 
 	return nil
 }

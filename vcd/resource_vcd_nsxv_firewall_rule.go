@@ -483,9 +483,9 @@ func resourceVcdNsxvFirewallRuleImport(d *schema.ResourceData, meta interface{})
 				d.Id(), err)
 		}
 
-		d.Set("org", orgName)
-		d.Set("vdc", vdcName)
-		d.Set("edge_gateway", edgeName)
+		_ = d.Set("org", orgName)
+		_ = d.Set("vdc", vdcName)
+		_ = d.Set("edge_gateway", edgeName)
 
 		d.SetId(readFirewallRule.ID)
 		return []*schema.ResourceData{d}, nil
