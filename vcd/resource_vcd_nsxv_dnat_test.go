@@ -176,7 +176,10 @@ func importStateIdByResourceName(resource string) resource.ImportStateIdFunc {
 			return "", fmt.Errorf("no ID is set for %s resource", resource)
 		}
 
-		importId := testConfig.VCD.Org + "." + testConfig.VCD.Vdc + "." + testConfig.Networking.EdgeGateway + "." + rs.Primary.ID
+		importId := testConfig.VCD.Org +
+			ImportSeparationToken + testConfig.VCD.Vdc +
+			ImportSeparationToken + testConfig.Networking.EdgeGateway +
+			ImportSeparationToken + rs.Primary.ID
 		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || testConfig.Networking.EdgeGateway == "" || rs.Primary.ID == "" {
 			return "", fmt.Errorf("missing information to generate import path: %s", importId)
 		}
