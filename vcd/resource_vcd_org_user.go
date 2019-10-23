@@ -303,8 +303,9 @@ func resourceVcdOrgUserUpdate(d *schema.ResourceData, meta interface{}) error {
 // Expects the d.ID() to be a path to the resource made of Org name + dot + OrgUser name
 //
 // Example import path (id): my-org.my-user-admin
+// Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func resourceVcdOrgUserImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	resourceURI := strings.Split(d.Id(), ".")
+	resourceURI := strings.Split(d.Id(), ImportSeparationToken)
 	if len(resourceURI) != 2 {
 		return nil, fmt.Errorf("resource name must be specified as org.org_user")
 	}

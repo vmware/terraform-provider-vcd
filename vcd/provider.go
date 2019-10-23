@@ -1,6 +1,8 @@
 package vcd
 
 import (
+	"os"
+
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/vmware/go-vcloud-director/v2/util"
@@ -79,6 +81,12 @@ func Provider() terraform.ResourceProvider {
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_API_LOGGING_FILE", "go-vcloud-director.log"),
 				Description: "Defines the full name of the logging file for API calls (requires 'logging')",
+			},
+			"import_separator": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("VCD_IMPORT_SEPARATOR", "."),
+				Description: "Defines the import separation string to be used with 'terraform import'",
 			},
 		},
 
@@ -169,6 +177,13 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 			util.ApiLogFileName = loggingFile
 			util.InitLogging()
 		}
+	}
+
+	separator := os.Getenv("VCD_IMPORT_SEPARATOR")
+	if separator != "" {
+		ImportSeparationToken = separator
+	} else {
+		ImportSeparationToken = d.Get("import_separator").(string)
 	}
 
 	return config.Client()
