@@ -687,7 +687,7 @@ func tryUndeploy(vapp govcd.VApp) error {
 // Example resource name (_resource_name_): vcd_vapp.vapp_name
 // Example import path (_the_id_string_): org-name.vdc-name.vapp-name
 func resourceVcdVappImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	resourceURI := strings.Split(d.Id(), ImportSeparationToken)
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("[vapp import] resource name must be specified as org-name.vdc-name.vapp-name")
 	}
