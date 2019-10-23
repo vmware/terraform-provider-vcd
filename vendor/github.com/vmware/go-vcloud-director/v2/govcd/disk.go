@@ -317,7 +317,7 @@ func FindDiskByHREF(client *Client, href string) (*Disk, error) {
 
 }
 
-// Find independent disk using disk name. Returns VMRecord query return type
+// QueryDisk find independent disk using disk name. Returns DiskRecord type
 func (vdc *Vdc) QueryDisk(diskName string) (DiskRecord, error) {
 
 	if diskName == "" {
@@ -331,7 +331,7 @@ func (vdc *Vdc) QueryDisk(diskName string) (DiskRecord, error) {
 
 	results, err := vdc.QueryWithNotEncodedParams(nil, map[string]string{"type": typeMedia, "filter": "name==" + url.QueryEscape(diskName)})
 	if err != nil {
-		return DiskRecord{}, fmt.Errorf("error querying disk %#v", err)
+		return DiskRecord{}, fmt.Errorf("error querying disk %s", err)
 	}
 
 	diskResults := results.Results.DiskRecord
@@ -350,11 +350,11 @@ func (vdc *Vdc) QueryDisk(diskName string) (DiskRecord, error) {
 	return *newDisk, nil
 }
 
-// Find independent disks using disk name. Returns list of VMRecord query type
+// QueryDisks find independent disks using disk name. Returns list of DiskRecordType
 func (vdc *Vdc) QueryDisks(diskName string) (*[]*types.DiskRecordType, error) {
 
 	if diskName == "" {
-		return nil, fmt.Errorf("disk name can not be empty")
+		return nil, fmt.Errorf("disk name can't be empty")
 	}
 
 	typeMedia := "disk"
@@ -364,7 +364,7 @@ func (vdc *Vdc) QueryDisks(diskName string) (*[]*types.DiskRecordType, error) {
 
 	results, err := vdc.QueryWithNotEncodedParams(nil, map[string]string{"type": typeMedia, "filter": "name==" + url.QueryEscape(diskName)})
 	if err != nil {
-		return nil, fmt.Errorf("error querying disk %#v", err)
+		return nil, fmt.Errorf("error querying disks %s", err)
 	}
 
 	diskResults := results.Results.DiskRecord
