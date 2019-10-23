@@ -101,10 +101,10 @@ is independent disk name. The output for this command should look similar to bel
 $ terraform import vcd_independent_disk.imported list@org-name.vdc-name.my-independent-disk-name
 vcd_independent_disk.Disk_import: Importing from ID "list@org-name.vdc-name.my-independent-disk-name"...
 Retrieving all disks by name
-No	ID							                        Name	    Description	Size
-    --	--					                        		----	------		----
-1	urn:vcloud:disk:1bbc273d-7701-4f06-97be-428b46b0805e	diskV2	anras		78946548
-2	urn:vcloud:disk:6e1c996f-48b8-4e78-8111-a6407188d8b6	diskV2		    	5557452
+No  ID                                                      Name    Description Size
+--  --                                                      ----    ------      ----
+1  urn:vcloud:disk:1bbc273d-7701-4f06-97be-428b46b0805e     diskV2  loging      78946548
+2  urn:vcloud:disk:6e1c996f-48b8-4e78-8111-a6407188d8b6     diskV2              5557452
 
 Error: resource was not imported! resource id must be specified in one of these formats:
 'org-name.vdc-name.my-independent-disk-id' to import by rule id
