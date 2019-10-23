@@ -100,7 +100,7 @@ acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifoth
 				ResourceName:      "vcd_lb_app_rule.imported",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdByOrgVdcEdge(testConfig, params["AppRuleName"].(string)),
+				ImportStateIdFunc: importStateIdEdgeGatewayObject(testConfig, testConfig.Networking.EdgeGateway, params["AppRuleName"].(string)),
 			},
 
 			resource.TestStep{ // Multi Line Script with invalid rule

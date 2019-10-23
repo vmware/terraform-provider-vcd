@@ -211,6 +211,8 @@ below:
 rules have IDs with larger integer numbers like `132730`. See below for possible options to use
 import.
 
+NOTE: The default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
+
 ### Import by real firewall rule ID
 
 ```
