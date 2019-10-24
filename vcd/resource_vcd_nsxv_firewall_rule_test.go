@@ -654,6 +654,7 @@ resource "vcd_nsxv_firewall_rule" "rule0-2" {
 	service {
 		protocol = "any"
 	}
+	# Dependency helps to ensure provisioning order (which becomes rule processing order)
 	depends_on = ["vcd_nsxv_firewall_rule.rule0"]
 }
 

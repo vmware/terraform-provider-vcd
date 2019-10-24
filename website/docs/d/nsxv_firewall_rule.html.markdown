@@ -23,7 +23,7 @@ data "vcd_nsxv_firewall_rule" "my-rule" {
   vdc                 = "my-org-vdc"
   edge_gateway        = "my-edge-gw"
 
-  rule_id = "133048"
+  rule_id = "133048"  # real firewall rule ID, not the UI number
 }
 ```
 
@@ -34,8 +34,8 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations.
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
 * `edge_gateway` - (Required) The name of the edge gateway on which to apply the DNAT rule.
-* `rule_id` - (Required) ID of firewall rule. See more information about firewall rule ID in
-`vcd_nsxv_firewall_rule` [import section](/docs/providers/vcd/r/nsxv_firewall_rule.html#listing-real-firewall-rule-ids).
+* `rule_id` - (Required) ID of firewall rule (not UI number). See more information about firewall
+rule ID in `vcd_nsxv_firewall_rule` [import section](/docs/providers/vcd/r/nsxv_firewall_rule.html#listing-real-firewall-rule-ids).
 
 ## Attribute Reference
 
