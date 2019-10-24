@@ -908,7 +908,7 @@ func updateStateOfAttachedDisks(d *schema.ResourceData, vm govcd.VM, vdc *govcd.
 	transformed := schema.NewSet(resourceVcdVmIndependentDiskHash, []interface{}{})
 
 	for _, existingDiskHref := range existingDisks {
-		disk, err := vdc.FindDiskByHREF(existingDiskHref)
+		disk, err := vdc.GetDiskByHref(existingDiskHref)
 		if err != nil {
 			return fmt.Errorf("did not find disk `%s`: %#v", existingDiskHref, err)
 		}
@@ -987,7 +987,7 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 	existingDisks := getVmIndependentDisks(*vm)
 
 	for _, existingDiskHref := range existingDisks {
-		disk, err := vdc.FindDiskByHREF(existingDiskHref)
+		disk, err := vdc.GetDiskByHref(existingDiskHref)
 		if err != nil {
 			return fmt.Errorf("did not find disk `%s`: %#v", existingDiskHref, err)
 		}

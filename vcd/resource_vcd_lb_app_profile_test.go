@@ -181,7 +181,7 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 				ResourceName:      "vcd_lb_app_profile.imported",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdByOrgVdcEdge(testConfig, params["AppProfileName"].(string)),
+				ImportStateIdFunc: importStateIdEdgeGatewayObject(testConfig, testConfig.Networking.EdgeGateway, params["AppProfileName"].(string)),
 			},
 		},
 	})
