@@ -122,7 +122,7 @@ func ContainsNotFound(err error) bool {
 	return err != nil && strings.Contains(err.Error(), ErrorEntityNotFound.Error())
 }
 
-// Function allow to pass complex values params which shouldn't be encoded like for queries. e.g. /query?filter=(name=foo)
+// Function allow to pass complex values params which shouldn't be encoded like for queries. e.g. /query?filter=name=foo
 func (cli *Client) NewRequestWitNotEncodedParams(params map[string]string, notEncodedParams map[string]string, method string, reqUrl url.URL, body io.Reader) *http.Request {
 	reqValues := url.Values{}
 

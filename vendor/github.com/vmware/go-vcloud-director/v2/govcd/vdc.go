@@ -664,7 +664,7 @@ func (vdc *Vdc) QueryVM(vappName, vmName string) (VMRecord, error) {
 	}
 
 	results, err := vdc.QueryWithNotEncodedParams(nil, map[string]string{"type": typeMedia,
-		"filter": "(name==" + url.QueryEscape(vmName) + ";containerName==" + url.QueryEscape(vappName) + ")"})
+		"filter": "name==" + url.QueryEscape(vmName) + ";containerName==" + url.QueryEscape(vappName)})
 	if err != nil {
 		return VMRecord{}, fmt.Errorf("error querying vm %#v", err)
 	}
@@ -729,7 +729,7 @@ func (vdc *Vdc) FindMediaImage(mediaName string) (MediaItem, error) {
 	util.Logger.Printf("[TRACE] Querying medias by name\n")
 
 	mediaResults, err := queryMediaWithFilter(vdc,
-		fmt.Sprintf("(name==%s)", url.QueryEscape(mediaName)))
+		fmt.Sprintf("name==%s", url.QueryEscape(mediaName)))
 	if err != nil {
 		return MediaItem{}, err
 	}
