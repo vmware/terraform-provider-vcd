@@ -19,8 +19,8 @@ func TestAccVcdCatalogAndItemDatasource(t *testing.T) {
 
 	var params = StringMap{
 		"Org":             testConfig.VCD.Org,
-		"Catalog":         testConfig.VCD.Catalog.Name,
-		"CatalogItem":     testConfig.VCD.Catalog.CatalogItem,
+		"Catalog":         testSuiteCatalogName,
+		"CatalogItem":     testSuiteCatalogOVAItem,
 		"NewCatalogItem":  TestCatalogItemDS,
 		"OvaPath":         testConfig.Ova.OvaPath,
 		"UploadPieceSize": testConfig.Ova.UploadPieceSize,
@@ -35,13 +35,13 @@ func TestAccVcdCatalogAndItemDatasource(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
-	datasourceCatalog := "data.vcd_catalog." + testConfig.VCD.Catalog.Name
-	datasourceCatalogItem := "data.vcd_catalog_item." + testConfig.VCD.Catalog.CatalogItem
+	datasourceCatalog := "data.vcd_catalog." + testSuiteCatalogName
+	datasourceCatalogItem := "data.vcd_catalog_item." + testSuiteCatalogOVAItem
 	resourceCatalogItem := "vcd_catalog_item." + TestCatalogItemDS
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { preRunChecks(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: catalogItemDestroyed(testConfig.VCD.Catalog.Name, TestCatalogItemDS),
+		CheckDestroy: catalogItemDestroyed(testSuiteCatalogName, TestCatalogItemDS),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,

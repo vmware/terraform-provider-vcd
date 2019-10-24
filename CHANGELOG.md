@@ -16,6 +16,7 @@ FEATURES:
 * **New Data Source:** `vcd_nsxv_dnat` DNAT for advanced edge gateways using proxied NSX-V API - [#328]
 * **New Data Source:** `vcd_nsxv_snat` SNAT for advanced edge gateways using proxied NSX-V API - [#328]
 * **New Data Source:** `vcd_independent_disk` Independent disk - [#349]
+* **New Data Source:** `vcd_catalog_media` Media item - [#340]
 
 IMPROVEMENTS:
 
@@ -49,6 +50,8 @@ IMPROVEMENTS:
 * Import functions can now use custom separators instead of "." [#343]
 * `resource/vcd_independent_disk` Add computed properties (`iops`, `owner_name`, `datastore_name`, `is_attached`) and full read support [#349]
 * `resource/vcd_independent_disk` Disk state ID changed from name of disk to vCD ID [#349]
+* `resource/vcd_catalog_media` Add computed properties (`is_iso`, `owner_name`, `is_published`, `creation_date`, `size`, `status`, `storage_profile_name`) and full read support [#340]
+* `resource/vcd_catalog_media` MediaItem state ID changed from colon separated list of catalog name and media name to vCD ID [#340]
 
 BUG FIXES:
 * Change default value for `vcd_org.deployed_vm_quota` and `vcd_org.stored_vm_quota`. It was incorrectly set at `-1` instead of `0`.
