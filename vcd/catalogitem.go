@@ -3,6 +3,7 @@ package vcd
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -55,15 +56,23 @@ func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.Catal
 
 	catalog, err := adminOrg.GetCatalogByName(d.Get("catalog").(string), false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
-		d.SetId("")
+		log.Printf("[DEBUG] Unable to find catalog.")
 		return nil, fmt.Errorf("unable to find catalog: %s", err)
 	}
 
-	catalogItem, err := catalog.GetCatalogItemByName(d.Get("name").(string), false)
+	identifier := d.Id()
+
+	// Check if identifier is still in deprecated style `catalogName:mediaName`
+	// Required for backwards compatibility as identifier has been changed to vCD ID in 2.5.0
+	if identifier == "" || strings.Count(identifier, ":") <= 1 {
+		identifier = d.Get("name").(string)
+	}
+
+	catalogItem, err := catalog.GetCatalogItemByNameOrId(identifier, false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog item. Removing from tfstate")
-		return nil, fmt.Errorf("unable to find catalog item: %s", err)
+		d.SetId("")
+		return nil, nil
 	}
 
 	d.SetId(catalogItem.CatalogItem.ID)
