@@ -125,6 +125,7 @@ func Provider() terraform.ResourceProvider {
 			"vcd_org":                datasourceVcdOrg(),              // 2.5
 			"vcd_org_vdc":            datasourceVcdOrgVdc(),           // 2.5
 			"vcd_catalog":            datasourceVcdCatalog(),          // 2.5
+			"vcd_catalog_media":      datasourceVcdCatalogMedia(),     // 2.5
 			"vcd_catalog_item":       datasourceVcdCatalogItem(),      // 2.5
 			"vcd_edgegateway":        datasourceVcdEdgeGateway(),      // 2.5
 			"vcd_external_network":   datasourceVcdExternalNetwork(),  // 2.5
