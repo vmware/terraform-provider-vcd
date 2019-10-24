@@ -36,7 +36,8 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 	configTextForCompatibility := templateFill(testAccCheckVcdIndependentDiskForCompatibility, params)
 	/*	params["FuncName"] = t.Name()
 		configText := templateFill(testAccCheckVcdIndependentDiskBasic, params)
-	*/if vcdShortTest {
+	*/
+	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
