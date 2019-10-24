@@ -129,6 +129,7 @@ func Provider() terraform.ResourceProvider {
 			"vcd_catalog_item":       datasourceVcdCatalogItem(),      // 2.5
 			"vcd_edgegateway":        datasourceVcdEdgeGateway(),      // 2.5
 			"vcd_external_network":   datasourceVcdExternalNetwork(),  // 2.5
+			"vcd_independent_disk":   datasourceVcIndependentDisk(),   // 2.5
 			"vcd_network_routed":     datasourceVcdNetworkRouted(),    // 2.5
 			"vcd_network_direct":     datasourceVcdNetworkDirect(),    // 2.5
 			"vcd_network_isolated":   datasourceVcdNetworkIsolated(),  // 2.5
