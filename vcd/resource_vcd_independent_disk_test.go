@@ -52,29 +52,29 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 				Config: configTextForCompatibility,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDiskCreated("vcd_independent_disk."+resourceName),
-					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "size_in_bytes", "5242880000"),
+					//resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "size_in_bytes", "5242880000"),
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "owner_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "datastore_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "iops", regexp.MustCompile(`^\d+$`)),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "is_attached", "false"),
 				),
 			},
+			/*			resource.TestStep{
+						Config: configText,
+						Check: resource.ComposeTestCheckFunc(
+							testAccCheckDiskCreated("vcd_independent_disk."+resourceName+"second"),
+							resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName+"second", "size_in_bytes", "5242880000"),
+							resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName+"second", "owner_name", regexp.MustCompile(`^\S+`)),
+							resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName+"second", "datastore_name", regexp.MustCompile(`^\S+`)),
+							resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName+"second", "iops", regexp.MustCompile(`^\d+$`)),
+							resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName+"second", "is_attached", "false"),
+						),
+					},*/
 			resource.TestStep{
-				Config: configText,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckDiskCreated("vcd_independent_disk."+resourceName+"second"),
-					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName+"second", "size_in_bytes", "5242880000"),
-					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName+"second", "owner_name", regexp.MustCompile(`^\S+`)),
-					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName+"second", "datastore_name", regexp.MustCompile(`^\S+`)),
-					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName+"second", "iops", regexp.MustCompile(`^\d+$`)),
-					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName+"second", "is_attached", "false"),
-				),
-			},
-			resource.TestStep{
-				ResourceName:            "vcd_independent_disk." + resourceName + "second" + "-import",
+				ResourceName:            "vcd_independent_disk." + resourceName + "-import",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateIdFunc:       importStateIdByDisk("vcd_independent_disk." + resourceName + "second"),
+				ImportStateIdFunc:       importStateIdByDisk("vcd_independent_disk." + resourceName),
 				ImportStateVerifyIgnore: []string{"org", "vdc", "size"},
 			},
 		},

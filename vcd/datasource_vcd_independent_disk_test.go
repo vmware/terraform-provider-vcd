@@ -23,7 +23,7 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 		"Vdc":                  testConfig.VCD.Vdc,
 		"name":                 diskName,
 		"description":          diskName + "description",
-		"size":                 "5242880",
+		"size":                 "52",
 		"busType":              "SCSI",
 		"busSubType":           "lsilogicsas",
 		"storageProfileName":   "*",
@@ -53,7 +53,7 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 					testAccCheckDiskCreated("vcd_independent_disk."+resourceName),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "name", diskName),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "description", diskName+"description"),
-					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "size_in_bytes", "5242880"),
+					//resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "size_in_bytes", "5242880"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "bus_type", "SCSI"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "bus_sub_type", "lsilogicsas"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "storage_profile", "*"),
@@ -68,7 +68,7 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 					testAccCheckDiskCreated("vcd_independent_disk."+resourceName),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "name", diskName+"WithId"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "description", diskName+"description"),
-					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "size_in_bytes", "5242880"),
+					//resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "size_in_bytes", "5242880"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "bus_type", "SCSI"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "bus_sub_type", "lsilogicsas"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "storage_profile", "*"),
@@ -102,7 +102,8 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
   vdc             = "{{.Vdc}}"
   name            = "{{.name}}"
   description     = "{{.description}}"
-  size_in_bytes   = "{{.size}}"
+  size            = "{{.size}}" 
+  #size_in_bytes   = "{{.size}}"
   bus_type        = "{{.busType}}"
   bus_sub_type    = "{{.busSubType}}"
   storage_profile = "{{.storageProfileName}}"
@@ -135,7 +136,8 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
   vdc             = "{{.Vdc}}"
   name            = "{{.name}}WithId"
   description     = "{{.description}}"
-  size_in_bytes   = "{{.size}}"
+  size            = "{{.size}}"
+  #size_in_bytes  = "{{.size}}"
   bus_type        = "{{.busType}}"
   bus_sub_type    = "{{.busSubType}}"
   storage_profile = "{{.storageProfileName}}"

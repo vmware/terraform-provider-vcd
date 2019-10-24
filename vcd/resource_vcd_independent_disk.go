@@ -50,21 +50,23 @@ func resourceVcdIndependentDisk() *schema.Resource {
 				ForceNew: true,
 			},
 			"size": {
-				Type:          schema.TypeFloat,
-				Optional:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"size_in_bytes"},
-				Deprecated:    "In favor of size_in_bytes",
-				Description:   "size in MB",
+				Type:     schema.TypeFloat,
+				Required: true,
+				ForceNew: true,
+				// we enable this when when we solve https://github.com/terraform-providers/terraform-provider-vcd/issues/355
+				//ConflictsWith: []string{"size_in_bytes"},
+				//Deprecated:    "In favor of size_in_bytes",
+				Description: "size in MB",
 			},
-			"size_in_bytes": {
-				Type:          schema.TypeInt,
-				Optional:      true,
-				Computed:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"size"},
-				Description:   "size in bytes",
-			},
+			// we enable this when when we solve https://github.com/terraform-providers/terraform-provider-vcd/issues/355
+			/*			"size_in_bytes": {
+						Type:          schema.TypeInt,
+						Optional:      true,
+						Computed:      true,
+						ForceNew:      true,
+						ConflictsWith: []string{"size"},
+						Description:   "size in bytes",
+					},*/
 			"bus_type": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -136,9 +138,10 @@ func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) 
 	size, sizeProvided := d.GetOk("size")
 	sizeInBytes, sizeInBytesProvided := d.GetOk("size_in_bytes")
 
-	if !sizeProvided && !sizeInBytesProvided {
+	// we enable this when when we solve https://github.com/terraform-providers/terraform-provider-vcd/issues/355
+	/*	if !sizeProvided && !sizeInBytesProvided {
 		return fmt.Errorf("size_in_bytes isn't provided")
-	}
+	}*/
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
@@ -276,7 +279,8 @@ func setMainData(d *schema.ResourceData, disk *govcd.Disk) {
 	_ = d.Set("name", disk.Disk.Name)
 	_ = d.Set("description", disk.Disk.Description)
 	_ = d.Set("storage_profile", disk.Disk.StorageProfile.Name)
-	_ = d.Set("size_in_bytes", disk.Disk.Size)
+	// we enable this when when we solve https://github.com/terraform-providers/terraform-provider-vcd/issues/355
+	//_ = d.Set("size_in_bytes", disk.Disk.Size)
 	_ = d.Set("bus_type", busTypesFromValues[disk.Disk.BusType])
 	_ = d.Set("bus_sub_type", busSubTypesFromValues[disk.Disk.BusSubType])
 	_ = d.Set("iops", disk.Disk.Iops)
