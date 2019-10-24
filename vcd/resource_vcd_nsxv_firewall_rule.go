@@ -395,7 +395,7 @@ func resourceVcdNsxvFirewallRuleImport(d *schema.ResourceData, meta interface{})
 	var commandOrgName, orgName, vdcName, edgeName, firewallRuleId, uiId string
 	var listRules, importRule bool
 
-	resourceURI := strings.Split(d.Id(), ImportSeparationToken)
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	helpError := fmt.Errorf(`resource id must be specified in one of these formats:
 'org-name.vdc-name.edge-gw-name.real-firewall-rule-id' to import by rule id
 'org-name.vdc-name.edge-gw-name.ui-no.X' where X is the firewall rule number shown in UI
