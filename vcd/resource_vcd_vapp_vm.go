@@ -340,13 +340,14 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 			return fmt.Errorf(errorCompletingTask, err)
 		}
 	} else if newComputerName, ok := d.GetOk("computer_name"); ok {
-		task, err := vm.Customize(newComputerName.(string), "", false)
+		customizationSection, err := vm.GetGuestCustomizationSection()
+		if err != nil {
+			return fmt.Errorf("error get customization section before applying computer name: %s", err)
+		}
+		customizationSection.ComputerName = newComputerName.(string)
+		_, err = vm.SetGuestCustomizationSection(customizationSection)
 		if err != nil {
 			return fmt.Errorf("error with applying computer name: %s", err)
-		}
-		err = task.WaitTaskCompletion()
-		if err != nil {
-			return fmt.Errorf(errorCompletingTask, err)
 		}
 	}
 
@@ -667,7 +668,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 
 			task, err := vm.ToggleHardwareVirtualization(d.Get("expose_hardware_virtualization").(bool))
 			if err != nil {
-				return fmt.Errorf("error changing hardware assisted virtualization: %#v", err)
+				return fmt.Errorf("error changing hardware assisted virtualization: %s", err)
 			}
 
 			err = task.WaitTaskCompletion()
@@ -689,13 +690,14 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 
 		// we pass init script, to not override with empty one
 		if d.HasChange("computer_name") {
-			task, err := vm.Customize(d.Get("computer_name").(string), d.Get("initscript").(string), false)
+			customizationSection, err := vm.GetGuestCustomizationSection()
 			if err != nil {
-				return fmt.Errorf("error with udpating computer name: %#v", err)
+				return fmt.Errorf("error get customization section before applying computer name: %s", err)
 			}
-			err = task.WaitTaskCompletion()
+			customizationSection.ComputerName = d.Get("computer_name").(string)
+			_, err = vm.SetGuestCustomizationSection(customizationSection)
 			if err != nil {
-				return fmt.Errorf(errorCompletingTask, err)
+				return fmt.Errorf("error with applying computer name: %s", err)
 			}
 		}
 
@@ -883,12 +885,12 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 	err = updateStateOfAttachedDisks(d, *vm, vdc)
 	if err != nil {
 		d.Set("disk", nil)
-		return fmt.Errorf("error reading attached disks : %#v", err)
+		return fmt.Errorf("error reading attached disks : %s", err)
 	}
 
 	guestCustomizationSection, err := vm.GetGuestCustomizationSection()
 	if err != nil {
-		return fmt.Errorf("error reading guest custimization : %#v", err)
+		return fmt.Errorf("error reading guest customization : %s", err)
 	}
 	d.Set("computer_name", guestCustomizationSection.ComputerName)
 
