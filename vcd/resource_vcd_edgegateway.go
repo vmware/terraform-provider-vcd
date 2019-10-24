@@ -229,7 +229,10 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		log.Printf("[TRACE] edge gateway firewall configured")
 
 		// update load balancer and firewall configuration in statefile
-		setEdgeGatewayComponentValues(d, edge)
+		err = setEdgeGatewayComponentValues(d, edge)
+		if err != nil {
+			return err
+		}
 	}
 
 	// TODO double validate if we need to use partial state here
