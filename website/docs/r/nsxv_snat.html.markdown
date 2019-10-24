@@ -16,6 +16,9 @@ can be used to create, modify, and delete source NATs to allow vApps to send ext
 ~> **Note:** This resource requires advanced edge gateway. For non-advanced edge gateways please
 use the [`vcd_snat`](/docs/providers/vcd/r/snat.html) resource.
 
+!> **Warning:** Do not use older [`vcd_snat`](/docs/providers/vcd/r/snat.html) resource with this one
+because it will change IDs and this resource will not be able to lookup rules.
+
 ## Example Usage
 
 ```hcl
