@@ -200,7 +200,7 @@ func genericVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}, origi
 // Example import path (_the_id_string_): org.vdc.my-network
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func resourceVcdNetworkDirectImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	resourceURI := strings.Split(d.Id(), ImportSeparationToken)
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("[network direct import] resource name must be specified as org-name.vdc-name.network-name")
 	}

@@ -20,6 +20,7 @@ FEATURES:
 
 IMPROVEMENTS:
 
+* Add support for vCD 10.0
 * `resource/vcd_org` Add import capability and full read support [#218]
 * `resource/vcd_catalog` Add import capability and full read support [#218]
 * `resource/vcd_catalog_item` Add import capability and full read support [#218]
@@ -50,6 +51,7 @@ IMPROVEMENTS:
 * Import functions can now use custom separators instead of "." [#343]
 * `resource/vcd_independent_disk` Add computed properties (`iops`, `owner_name`, `datastore_name`, `is_attached`) and read support for all fields except the `size` [#349]
 * `resource/vcd_independent_disk` Disk state ID changed from name of disk to vCD ID [#349]
+* Import functions can now use a custom separator instead of "." [#343]
 * `resource/vcd_catalog_media` Add computed properties (`is_iso`, `owner_name`, `is_published`, `creation_date`, `size`, `status`, `storage_profile_name`) and full read support [#340]
 * `resource/vcd_catalog_media` MediaItem state ID changed from colon separated list of catalog name and media name to vCD ID [#340]
 
@@ -75,6 +77,9 @@ add explicit VM resources `vcd_vapp_vm`.
   * `initscript`
   * `ovf`
   * `accept_all_eulas`
+
+NOTES:
+* Drop support for vCD 8.20
 
 ## 2.4.0 (July 29, 2019)
 
