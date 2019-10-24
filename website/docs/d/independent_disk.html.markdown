@@ -22,8 +22,8 @@ data "vcd_independent_disk" "existing-disk" {
   id      = "urn:vcloud:disk:1bbc273d-7701-4f06-97be-428b46b0805e"
   name    = "my-disk"
 }
-output "disk-size" {
-  value = data.vcd_independent_disk.existing-disk.size_in_bytes
+output "disk-iops" {
+  value = data.vcd_independent_disk.existing-disk.iops
 }
 output "type_is_attached" {
   value = data.vcd_independent_disk.existing-disk.is_attached

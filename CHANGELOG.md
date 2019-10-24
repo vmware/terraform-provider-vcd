@@ -47,9 +47,8 @@ IMPROVEMENTS:
 * Upgrade Terraform SDK dependency to 0.12.8 [#320]
 * `resource/vcd_vapp_vm` has new field `computer_name` [#334]
 * Import functions can now use custom separators instead of "." [#343]
-* `resource/vcd_independent_disk` Add computed properties (`iops`, `owner_name`, `datastore_name`, `is_attached`, `size_in_bytes`) and full read support [#349]
+* `resource/vcd_independent_disk` Add computed properties (`iops`, `owner_name`, `datastore_name`, `is_attached`) and full read support [#349]
 * `resource/vcd_independent_disk` Disk state ID changed from name of disk to vCD ID [#349]
-* `resource/vcd_independent_disk` Add new field size_in_bytes [#349]
 
 BUG FIXES:
 * Change default value for `vcd_org.deployed_vm_quota` and `vcd_org.stored_vm_quota`. It was incorrectly set at `-1` instead of `0`.
