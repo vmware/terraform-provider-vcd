@@ -223,7 +223,7 @@ func resourceVcdLbServiceMonitorDelete(d *schema.ResourceData, meta interface{})
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func resourceVcdLbServiceMonitorImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 
-	resourceURI := strings.Split(d.Id(), ImportSeparationToken)
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 4 {
 		return nil, fmt.Errorf("resource name must be specified as org.vdc.edge-gw.lb-service-monitor")
 	}

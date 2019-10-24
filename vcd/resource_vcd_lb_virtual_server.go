@@ -208,7 +208,7 @@ func resourceVcdLBVirtualServerDelete(d *schema.ResourceData, meta interface{}) 
 // Example import path (_the_id_string_): org.vdc.edge-gw.existing-virtual-server
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func resourceVcdLBVirtualServerImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	resourceURI := strings.Split(d.Id(), ImportSeparationToken)
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 4 {
 		return nil, fmt.Errorf("resource name must be specified as org.vdc.edge-gw.lb-virtual-server")
 	}
