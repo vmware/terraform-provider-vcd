@@ -263,7 +263,7 @@ func resourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) er
 	}
 
 	if diskRecord == nil {
-		return fmt.Errorf("unable to find quried disk with name %s: and href: %s, %s", identifier, disk.Disk.HREF, err)
+		return fmt.Errorf("unable to find queried disk with name %s: and href: %s, %s", identifier, disk.Disk.HREF, err)
 	}
 
 	setMainData(d, disk)
