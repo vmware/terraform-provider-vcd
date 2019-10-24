@@ -885,12 +885,12 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 	err = updateStateOfAttachedDisks(d, *vm, vdc)
 	if err != nil {
 		d.Set("disk", nil)
-		return fmt.Errorf("error reading attached disks : %#v", err)
+		return fmt.Errorf("error reading attached disks : %s", err)
 	}
 
 	guestCustomizationSection, err := vm.GetGuestCustomizationSection()
 	if err != nil {
-		return fmt.Errorf("error reading guest customization : %#v", err)
+		return fmt.Errorf("error reading guest customization : %s", err)
 	}
 	d.Set("computer_name", guestCustomizationSection.ComputerName)
 
