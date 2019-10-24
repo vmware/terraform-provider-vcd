@@ -154,20 +154,19 @@ const (
 	XMLNamespaceExtension = "http://www.vmware.com/vcloud/extension/v1.5"
 )
 
+// NSX-V Edge gateway API endpoints
 const (
-	LbConfigPath        = "/loadbalancer/config/"
-	LbMonitorPath       = "/loadbalancer/config/monitors/"
-	LbServerPoolPath    = "/loadbalancer/config/pools/"
-	LbAppProfilePath    = "/loadbalancer/config/applicationprofiles/"
-	LbAppRulePath       = "/loadbalancer/config/applicationrules/"
-	LbVirtualServerPath = "/loadbalancer/config/virtualservers/"
-)
-
-// Edge gateway API endpoints
-const (
-	EdgeNatPath       = "/nat/config"
-	EdgeCreateNatPath = "/nat/config/rules"
-	EdgeVnicConfig    = "/vnics"
+	EdgeNatPath            = "/nat/config"
+	EdgeCreateNatPath      = "/nat/config/rules"
+	EdgeFirewallPath       = "/firewall/config"
+	EdgeCreateFirewallPath = "/firewall/config/rules"
+	EdgeVnicConfig         = "/vnics"
+	LbConfigPath           = "/loadbalancer/config/"
+	LbMonitorPath          = "/loadbalancer/config/monitors/"
+	LbServerPoolPath       = "/loadbalancer/config/pools/"
+	LbAppProfilePath       = "/loadbalancer/config/applicationprofiles/"
+	LbAppRulePath          = "/loadbalancer/config/applicationrules/"
+	LbVirtualServerPath    = "/loadbalancer/config/virtualservers/"
 )
 
 // Guest customization statuses. These are all known possible statuses
@@ -185,4 +184,5 @@ const (
 	EdgeGatewayVnicTypeInternal     = "internal"
 	EdgeGatewayVnicTypeTrunk        = "trunk"
 	EdgeGatewayVnicTypeSubinterface = "subinterface"
+	EdgeGatewayVnicTypeAny          = "any"
 )

@@ -18,11 +18,11 @@ Use the navigation to the left to read about the available resources.
 
 The following vCloud Director versions are supported by this provider:
 
-* 8.20
 * 9.0
 * 9.1
 * 9.5
 * 9.7
+* 10.0
 
 ## Example Usage
 
