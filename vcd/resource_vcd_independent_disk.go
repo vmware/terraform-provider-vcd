@@ -136,7 +136,7 @@ func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) 
 	vcdClient := meta.(*VCDClient)
 
 	size, sizeProvided := d.GetOk("size")
-	sizeInBytes, sizeInBytesProvided := d.GetOk("size_in_bytes")
+	//sizeInBytes, sizeInBytesProvided := d.GetOk("size_in_bytes")
 
 	// we enable this when when we solve https://github.com/terraform-providers/terraform-provider-vcd/issues/355
 	/*	if !sizeProvided && !sizeInBytesProvided {
@@ -162,12 +162,12 @@ func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) 
 			Size: int64(size.(float64) * 1024 * 1024),
 		}}
 	}
-	if sizeInBytesProvided {
+	/*	if sizeInBytesProvided {
 		diskCreateParams = &types.DiskCreateParams{Disk: &types.Disk{
 			Name: diskName,
 			Size: int64(sizeInBytes.(int)),
 		}}
-	}
+	}*/
 
 	var storageReference types.Reference
 	storageProfileValue := d.Get("storage_profile").(string)
