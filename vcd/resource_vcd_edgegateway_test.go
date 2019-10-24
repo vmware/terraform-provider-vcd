@@ -105,6 +105,10 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 	configText2 := templateFill(testAccEdgeGatewayComplexWithFw, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText2)
 
+	params["FuncName"] = t.Name() + "-step4"
+	configText4 := templateFill(testAccEdgeGatewayComplexEnableFwLbOnCreate, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText4)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -153,11 +157,20 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "fw_default_rule_action", "accept"),
 				),
 			},
-			resource.TestStep{
+			resource.TestStep{ // step3
 				ResourceName:      "vcd_edgegateway." + edgeGatewayNameComplex + "-import",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, edgeGatewayVcdName),
+			},
+			resource.TestStep{
+				Config: configText4,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"vcd_edgegateway.EdgeWithFwAndLb", "default_gateway_network", newExternalNetworkVcd),
+					resource.TestCheckResourceAttr("vcd_edgegateway.EdgeWithFwAndLb", "fw_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.EdgeWithFwAndLb", "lb_enabled", "true"),
+				),
 			},
 		},
 	})
@@ -285,5 +298,21 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
   fw_enabled                      = "true"
   fw_default_rule_logging_enabled = "true"
   fw_default_rule_action          = "accept"
+}
+`
+
+const testAccEdgeGatewayComplexEnableFwLbOnCreate = testAccEdgeGatewayComplexNetwork + `
+resource "vcd_edgegateway" "EdgeWithFwAndLb" {
+  org                     = "{{.Org}}"
+  vdc                     = "{{.Vdc}}"
+  name                    = "{{.EdgeGatewayVcd}}-fwlb"
+  description             = "Description"
+  configuration           = "compact"
+  default_gateway_network = "${vcd_external_network.{{.NewExternalNetwork}}.name}"
+  advanced                = {{.Advanced}}
+  external_networks       = [ "{{.ExternalNetwork}}", "${vcd_external_network.{{.NewExternalNetwork}}.name}" ]
+
+  fw_enabled = "true"
+  lb_enabled = "true"
 }
 `

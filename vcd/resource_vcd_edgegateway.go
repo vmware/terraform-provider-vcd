@@ -228,6 +228,8 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 
 		log.Printf("[TRACE] edge gateway firewall configured")
 
+		// update load balancer and firewall configuration in statefile
+		setEdgeGatewayComponentValues(d, edge)
 	}
 
 	// TODO double validate if we need to use partial state here
@@ -398,8 +400,15 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	//	return err
 	//}
 
+	d.SetId(egw.EdgeGateway.ID)
+	return nil
+}
+
+// setEdgeGatewayComponentValues sets component values to the statefile which are created with
+// additional API calls
+func setEdgeGatewayComponentValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	if egw.HasAdvancedNetworking() {
-		err = setLoadBalancerData(d, egw)
+		err := setLoadBalancerData(d, egw)
 		if err != nil {
 			return err
 		}
@@ -409,8 +418,6 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 			return err
 		}
 	}
-
-	d.SetId(egw.EdgeGateway.ID)
 	return nil
 }
 
