@@ -379,6 +379,8 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 
 	for _, gw := range egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
 		if gw.SubnetParticipation == nil || gw.SubnetParticipation.Gateway == "" {
+			log.Printf("[DEBUG] [setEdgeGatewayValues] gateway %s is missing SubnetParticipation elements: %+#v",
+				egw.EdgeGateway.Name, gw)
 			return fmt.Errorf("[setEdgeGatewayValues] gateway %s is missing SubnetParticipation elements", egw.EdgeGateway.Name)
 		}
 		defaultGwNet, ok := gateways[gw.SubnetParticipation.Gateway]
