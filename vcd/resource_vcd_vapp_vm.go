@@ -342,12 +342,12 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	} else if newComputerName, ok := d.GetOk("computer_name"); ok {
 		customizationSection, err := vm.GetGuestCustomizationSection()
 		if err != nil {
-			return fmt.Errorf("error get customization section before applying computer name: %#v", err)
+			return fmt.Errorf("error get customization section before applying computer name: %s", err)
 		}
 		customizationSection.ComputerName = newComputerName.(string)
 		_, err = vm.SetGuestCustomizationSection(customizationSection)
 		if err != nil {
-			return fmt.Errorf("error with applying computer name: %#v", err)
+			return fmt.Errorf("error with applying computer name: %s", err)
 		}
 	}
 
@@ -668,7 +668,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 
 			task, err := vm.ToggleHardwareVirtualization(d.Get("expose_hardware_virtualization").(bool))
 			if err != nil {
-				return fmt.Errorf("error changing hardware assisted virtualization: %#v", err)
+				return fmt.Errorf("error changing hardware assisted virtualization: %s", err)
 			}
 
 			err = task.WaitTaskCompletion()
@@ -692,12 +692,12 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		if d.HasChange("computer_name") {
 			customizationSection, err := vm.GetGuestCustomizationSection()
 			if err != nil {
-				return fmt.Errorf("error get customization section before applying computer name: %#v", err)
+				return fmt.Errorf("error get customization section before applying computer name: %s", err)
 			}
 			customizationSection.ComputerName = d.Get("computer_name").(string)
 			_, err = vm.SetGuestCustomizationSection(customizationSection)
 			if err != nil {
-				return fmt.Errorf("error with applying computer name: %#v", err)
+				return fmt.Errorf("error with applying computer name: %s", err)
 			}
 		}
 
