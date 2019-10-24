@@ -367,7 +367,7 @@ var helpDiskError = fmt.Errorf(`resource id must be specified in one of these fo
 func resourceVcdIndependentDiskImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	var commandOrgName, orgName, vdcName, diskName, diskId string
 
-	resourceURI := strings.Split(d.Id(), ImportSeparationToken)
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
 
 	log.Printf("[DEBUG] importing vcd_independent_disk resource with provided id %s", d.Id())
 
