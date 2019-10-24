@@ -34,14 +34,14 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "-Compatibility"
 	configTextForCompatibility := templateFill(testAccCheckVcdIndependentDiskForCompatibility, params)
-	params["FuncName"] = t.Name()
-	configText := templateFill(testAccCheckVcdIndependentDiskBasic, params)
-	if vcdShortTest {
+	/*	params["FuncName"] = t.Name()
+		configText := templateFill(testAccCheckVcdIndependentDiskBasic, params)
+	*/if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configTextForCompatibility)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -164,7 +164,8 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
   storage_profile = "{{.storageProfileName}}"
 }
 `
-const testAccCheckVcdIndependentDiskBasic = `
+
+/*const testAccCheckVcdIndependentDiskBasic = `
 resource "vcd_independent_disk" "{{.secondResourceName}}" {
   org             = "{{.Org}}"
   vdc             = "{{.Vdc}}"
@@ -175,3 +176,4 @@ resource "vcd_independent_disk" "{{.secondResourceName}}" {
   storage_profile = "{{.storageProfileName}}"
 }
 `
+*/
