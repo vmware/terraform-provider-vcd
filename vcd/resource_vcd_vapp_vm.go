@@ -342,7 +342,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	} else if newComputerName, ok := d.GetOk("computer_name"); ok {
 		task, err := vm.Customize(newComputerName.(string), "", false)
 		if err != nil {
-			return fmt.Errorf("error with applying computer name: %#v", err)
+			return fmt.Errorf("error with applying computer name: %s", err)
 		}
 		err = task.WaitTaskCompletion()
 		if err != nil {
