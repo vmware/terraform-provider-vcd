@@ -726,7 +726,7 @@ func importStateIdOrgObject(vcd TestConfig, objectName string) resource.ImportSt
 			return "", fmt.Errorf("missing information to generate import path")
 		}
 		return testConfig.VCD.Org +
-			ImportSeparationToken +
+			ImportSeparator +
 			objectName, nil
 	}
 }
@@ -738,9 +738,9 @@ func importStateIdOrgVdcObject(vcd TestConfig, objectName string) resource.Impor
 			return "", fmt.Errorf("missing information to generate import path")
 		}
 		return testConfig.VCD.Org +
-			ImportSeparationToken +
+			ImportSeparator +
 			testConfig.VCD.Vdc +
-			ImportSeparationToken +
+			ImportSeparator +
 			objectName, nil
 	}
 }
@@ -752,9 +752,9 @@ func importStateIdOrgCatalogObject(vcd TestConfig, objectName string) resource.I
 			return "", fmt.Errorf("missing information to generate import path")
 		}
 		return testConfig.VCD.Org +
-			ImportSeparationToken +
+			ImportSeparator +
 			testConfig.VCD.Catalog.Name +
-			ImportSeparationToken +
+			ImportSeparator +
 			objectName, nil
 	}
 }
@@ -766,11 +766,11 @@ func importStateIdVappObject(vcd TestConfig, vappName, objectName string) resour
 			return "", fmt.Errorf("missing information to generate import path")
 		}
 		return testConfig.VCD.Org +
-			ImportSeparationToken +
+			ImportSeparator +
 			testConfig.VCD.Vdc +
-			ImportSeparationToken +
+			ImportSeparator +
 			vappName +
-			ImportSeparationToken +
+			ImportSeparator +
 			objectName, nil
 	}
 }
@@ -782,11 +782,11 @@ func importStateIdEdgeGatewayObject(vcd TestConfig, edgeGatewayName, objectName 
 			return "", fmt.Errorf("missing information to generate import path")
 		}
 		return testConfig.VCD.Org +
-			ImportSeparationToken +
+			ImportSeparator +
 			testConfig.VCD.Vdc +
-			ImportSeparationToken +
+			ImportSeparator +
 			edgeGatewayName +
-			ImportSeparationToken +
+			ImportSeparator +
 			objectName, nil
 	}
 }

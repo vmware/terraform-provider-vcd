@@ -181,9 +181,9 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 
 	separator := os.Getenv("VCD_IMPORT_SEPARATOR")
 	if separator != "" {
-		ImportSeparationToken = separator
+		ImportSeparator = separator
 	} else {
-		ImportSeparationToken = d.Get("import_separator").(string)
+		ImportSeparator = d.Get("import_separator").(string)
 	}
 
 	return config.Client()
