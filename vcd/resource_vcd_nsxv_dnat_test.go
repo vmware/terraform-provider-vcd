@@ -22,7 +22,7 @@ func TestAccVcdEdgeDnat(t *testing.T) {
 		"ExternalIp":  testConfig.Networking.ExternalIp,
 		"InternalIp":  testConfig.Networking.InternalIp,
 		"NetworkName": testConfig.Networking.ExternalNetwork,
-		"Tags":        "egatewaydge nat",
+		"Tags":        "gateway nat",
 	}
 
 	configText := templateFill(testAccVcdEdgeDnatRule, params)

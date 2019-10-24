@@ -101,6 +101,10 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 	configText1 := templateFill(testAccEdgeGatewayComplexWithLb, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText1)
 
+	params["FuncName"] = t.Name() + "-step2"
+	configText2 := templateFill(testAccEdgeGatewayComplexWithFw, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText2)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -137,6 +141,16 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_acceleration_enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_logging_enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_loglevel", "critical"),
+				),
+			},
+			resource.TestStep{
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"vcd_edgegateway."+edgeGatewayNameComplex, "default_gateway_network", newExternalNetworkVcd),
+					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "fw_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "fw_default_rule_logging_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "fw_default_rule_action", "accept"),
 				),
 			},
 			resource.TestStep{
@@ -254,5 +268,22 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
   lb_acceleration_enabled = "true"
   lb_logging_enabled      = "true"
   lb_loglevel             = "critical"
+}
+`
+
+const testAccEdgeGatewayComplexWithFw = testAccEdgeGatewayComplexNetwork + `
+resource "vcd_edgegateway" "{{.EdgeGateway}}" {
+  org                     = "{{.Org}}"
+  vdc                     = "{{.Vdc}}"
+  name                    = "{{.EdgeGatewayVcd}}"
+  description             = "Description"
+  configuration           = "compact"
+  default_gateway_network = "${vcd_external_network.{{.NewExternalNetwork}}.name}"
+  advanced                = {{.Advanced}}
+  external_networks       = [ "{{.ExternalNetwork}}", "${vcd_external_network.{{.NewExternalNetwork}}.name}" ]
+
+  fw_enabled                      = "true"
+  fw_default_rule_logging_enabled = "true"
+  fw_default_rule_action          = "accept"
 }
 `

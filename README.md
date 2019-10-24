@@ -95,6 +95,8 @@ directive which can allow you to redirect import path to your own version of `go
      replace github.com/vmware/go-vcloud-director/v2 v2.1.0-alpha.2 => ../go-vcloud-director
   ```
 
+See **CODING_GUIDELINES.md** for more advice on how to write code for this project.
+
 Using the provider
 ----------------------
 
