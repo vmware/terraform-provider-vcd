@@ -165,11 +165,14 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 			},
 			resource.TestStep{
 				Config: configText4,
+				// Taint the resource to force recreation of edge gateway because this step
+				// attempts to test creation problems.
+				Taint: []string{"vcd_edgegateway." + edgeGatewayNameComplex},
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"vcd_edgegateway.EdgeWithFwAndLb", "default_gateway_network", newExternalNetworkVcd),
-					resource.TestCheckResourceAttr("vcd_edgegateway.EdgeWithFwAndLb", "fw_enabled", "true"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.EdgeWithFwAndLb", "lb_enabled", "true"),
+						"vcd_edgegateway."+edgeGatewayNameComplex, "default_gateway_network", newExternalNetworkVcd),
+					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "fw_enabled", "true"),
 				),
 			},
 		},
@@ -302,10 +305,10 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
 `
 
 const testAccEdgeGatewayComplexEnableFwLbOnCreate = testAccEdgeGatewayComplexNetwork + `
-resource "vcd_edgegateway" "EdgeWithFwAndLb" {
+resource "vcd_edgegateway" "{{.EdgeGateway}}" {
   org                     = "{{.Org}}"
   vdc                     = "{{.Vdc}}"
-  name                    = "{{.EdgeGatewayVcd}}-fwlb"
+  name                    = "{{.EdgeGatewayVcd}}"
   description             = "Description"
   configuration           = "compact"
   default_gateway_network = "${vcd_external_network.{{.NewExternalNetwork}}.name}"
