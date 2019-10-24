@@ -434,20 +434,22 @@ func resourceVcdNsxvFirewallRuleImport(d *schema.ResourceData, meta interface{})
 	// If the user requested to print rules, try to fetch all of them and print in a user friendly
 	// table with both UI and real firewall IDs
 	if listRules {
-		_, _ = fmt.Fprintln(getTerraformStdout(), "Retrieving all firewall rules")
+		stdout := getTerraformStdout() // share the same stdout for multiple print statements
+		_, _ = fmt.Fprintln(stdout, "Retrieving all firewall rules")
 		allRules, err := edgeGateway.GetAllNsxvFirewallRules()
 		if err != nil {
 			return nil, fmt.Errorf("unable to retrieve all firewal rules: %s", err)
 		}
 
-		writer := tabwriter.NewWriter(getTerraformStdout(), 0, 8, 1, '\t', tabwriter.AlignRight)
-
+		tableWriter := new(bytes.Buffer)
+		writer := tabwriter.NewWriter(tableWriter, 0, 8, 1, '\t', tabwriter.AlignRight)
 		fmt.Fprintln(writer, "UI No\tID\tName\tAction\tType")
 		fmt.Fprintln(writer, "-----\t--\t----\t------\t----")
 		for index, rule := range allRules {
 			fmt.Fprintf(writer, "%d\t%s\t%s\t%s\t%s\n", (index + 1), rule.ID, rule.Name, rule.Action, rule.RuleType)
 		}
 		writer.Flush()
+		_, _ = fmt.Fprintln(stdout, tableWriter.String())
 
 		return nil, fmt.Errorf("resource was not imported! %s", helpError.Error())
 	}
