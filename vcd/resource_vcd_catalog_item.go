@@ -153,6 +153,11 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 func resourceVcdCatalogItemRead(d *schema.ResourceData, meta interface{}) error {
 	catalogItem, err := findCatalogItem(d, meta.(*VCDClient))
 	if err != nil {
+		log.Printf("[DEBUG] Unable to find media item: %s", err)
+		return err
+	}
+	if catalogItem == nil {
+		log.Printf("[DEBUG] Unable to find media item: %s. Removing from tfstate", err)
 		return err
 	}
 
@@ -167,6 +172,7 @@ func resourceVcdCatalogItemRead(d *schema.ResourceData, meta interface{}) error 
 	}
 	_ = d.Set("description", catalogItem.CatalogItem.Description)
 	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+
 	return err
 }
 
@@ -187,23 +193,10 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 
 	log.Printf("[TRACE] adding/updating metadata for catalog item")
 
-	vcdClient := meta.(*VCDClient)
-
-	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+	catalogItem, err := findCatalogItem(d, meta.(*VCDClient))
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
-	}
-
-	catalog, err := adminOrg.GetCatalogByName(d.Get("catalog").(string), false)
-	if err != nil {
-		log.Printf("[DEBUG] Unable to find catalog: %s", err)
-		return nil
-	}
-
-	catalogItem, err := catalog.GetCatalogItemByName(d.Get("name").(string), false)
-	if err != nil {
-		log.Printf("[DEBUG] Unable to find catalog item: %s", err)
-		return nil
+		log.Printf("[DEBUG] Unable to find media item: %s", err)
+		return err
 	}
 
 	// We have to add metadata to template to see in UI
@@ -249,7 +242,7 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 // Example import path (id): org_name.catalog_name.catalog_item_name
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func resourceVcdCatalogItemImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	resourceURI := strings.Split(d.Id(), ImportSeparationToken)
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("resource name must be specified as org.catalog.catalog_item")
 	}

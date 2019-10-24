@@ -17,9 +17,11 @@ FEATURES:
 * **New Data Source:** `vcd_nsxv_dnat` DNAT for advanced edge gateways using proxied NSX-V API - [#328]
 * **New Data Source:** `vcd_nsxv_snat` SNAT for advanced edge gateways using proxied NSX-V API - [#328]
 * **New Data Source:** `vcd_nsxv_firewall_rule` firewall for advanced edge gateways using proxied NSX-V API - [#341]
+* **New Data Source:** `vcd_catalog_media` Media item - [#340]
 
 IMPROVEMENTS:
 
+* Add support for vCD 10.0
 * `resource/vcd_org` Add import capability and full read support [#218]
 * `resource/vcd_catalog` Add import capability and full read support [#218]
 * `resource/vcd_catalog_item` Add import capability and full read support [#218]
@@ -47,7 +49,9 @@ IMPROVEMENTS:
 * `vcd_org_vdc` Add import capability and full read support [#218]
 * Upgrade Terraform SDK dependency to 0.12.8 [#320]
 * `resource/vcd_vapp_vm` has new field `computer_name` [#334]
-* Import functions can now use custom separators instead of "." [#343]
+* Import functions can now use a custom separator instead of "." [#343]
+* `resource/vcd_catalog_media` Add computed properties (`is_iso`, `owner_name`, `is_published`, `creation_date`, `size`, `status`, `storage_profile_name`) and full read support [#340]
+* `resource/vcd_catalog_media` MediaItem state ID changed from colon separated list of catalog name and media name to vCD ID [#340]
 
 BUG FIXES:
 * Change default value for `vcd_org.deployed_vm_quota` and `vcd_org.stored_vm_quota`. It was incorrectly set at `-1` instead of `0`.
@@ -71,6 +75,9 @@ add explicit VM resources `vcd_vapp_vm`.
   * `initscript`
   * `ovf`
   * `accept_all_eulas`
+
+NOTES:
+* Drop support for vCD 8.20
 
 ## 2.4.0 (July 29, 2019)
 

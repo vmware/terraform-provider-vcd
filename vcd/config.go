@@ -78,9 +78,13 @@ var (
 	// Invalidates the cache after a given time (connection tokens usually expire after 20 to 30 minutes)
 	maxConnectionValidity time.Duration = 20 * time.Minute
 
-	enableDebug           bool = os.Getenv("GOVCD_DEBUG") != ""
-	enableTrace           bool = os.Getenv("GOVCD_TRACE") != ""
-	ImportSeparationToken      = "."
+	enableDebug bool = os.Getenv("GOVCD_DEBUG") != ""
+	enableTrace bool = os.Getenv("GOVCD_TRACE") != ""
+
+	// Separation string used for import operations
+	// Can be changed usin either "import_separator" property in Provider
+	// or environment variable "VCD_IMPORT_SEPARATOR"
+	ImportSeparator = "."
 )
 
 // Displays conditional messages
@@ -365,6 +369,6 @@ func callFuncName() string {
 func init() {
 	separator := os.Getenv("VCD_IMPORT_SEPARATOR")
 	if separator != "" {
-		ImportSeparationToken = separator
+		ImportSeparator = separator
 	}
 }

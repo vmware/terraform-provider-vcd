@@ -177,9 +177,9 @@ func importStateIdByResourceName(resource string) resource.ImportStateIdFunc {
 		}
 
 		importId := testConfig.VCD.Org +
-			ImportSeparationToken + testConfig.VCD.Vdc +
-			ImportSeparationToken + testConfig.Networking.EdgeGateway +
-			ImportSeparationToken + rs.Primary.ID
+			ImportSeparator + testConfig.VCD.Vdc +
+			ImportSeparator + testConfig.Networking.EdgeGateway +
+			ImportSeparator + rs.Primary.ID
 		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || testConfig.Networking.EdgeGateway == "" || rs.Primary.ID == "" {
 			return "", fmt.Errorf("missing information to generate import path: %s", importId)
 		}

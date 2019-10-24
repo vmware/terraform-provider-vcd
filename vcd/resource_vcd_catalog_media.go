@@ -3,6 +3,7 @@ package vcd
 import (
 	"fmt"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -15,6 +16,9 @@ func resourceVcdCatalogMedia() *schema.Resource {
 		Delete: resourceVcdMediaDelete,
 		Read:   resourceVcdMediaRead,
 		Update: resourceVcdMediaUpdate,
+		Importer: &schema.ResourceImporter{
+			State: resourceVcdCatalogMediaImport,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"org": {
@@ -66,6 +70,41 @@ func resourceVcdCatalogMedia() *schema.Resource {
 				Description: "Key and value pairs for catalog item metadata",
 				// For now underlying go-vcloud-director repo only supports
 				// a value of type String in this map.
+			},
+			"is_iso": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if this media file is ISO",
+			},
+			"owner_name": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Owner name",
+			},
+			"is_published": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if this media file is in a published catalog",
+			},
+			"creation_date": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Creation date",
+			},
+			"size": &schema.Schema{
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: "Media storage in Bytes",
+			},
+			"status": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Media status",
+			},
+			"storage_profile_name": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Storage profile name",
 			},
 		},
 	}
@@ -132,8 +171,6 @@ func resourceVcdMediaCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error waiting for task to complete: %+v", err)
 	}
 
-	d.SetId(catalogName + ":" + mediaName)
-
 	log.Printf("[TRACE] Catalog media created: %#v", mediaName)
 
 	err = createOrUpdateMediaItemMetadata(d, meta)
@@ -147,24 +184,60 @@ func resourceVcdMediaCreate(d *schema.ResourceData, meta interface{}) error {
 func resourceVcdMediaRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	_, vdc, err := vcdClient.GetOrgAndVdc("", "")
+	org, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	mediaItem, err := vdc.FindMediaImage(d.Get("name").(string))
-	if err != nil || mediaItem == (govcd.MediaItem{}) {
-		log.Printf("[DEBUG] Unable to find media item: %s", err)
+	catalog, err := org.GetCatalogByName(d.Get("catalog").(string), false)
+	if err != nil {
+		log.Printf("[DEBUG] Unable to find catalog.")
+		return fmt.Errorf("unable to find catalog: %s", err)
+	}
+
+	identifier := d.Id()
+
+	if identifier == "" {
+		identifier = d.Get("name").(string)
+	}
+
+	media, err := catalog.GetMediaByNameOrId(identifier, false)
+	if govcd.IsNotFound(err) {
+		log.Printf("unable to find media with ID %s: %s. Removing from state", identifier, err)
+		d.SetId("")
+		return nil
+	}
+	if err != nil {
+		log.Printf("[DEBUG] Unable to find media: %s", err)
 		return err
 	}
 
-	metadata, err := mediaItem.GetMetadata()
+	d.SetId(media.Media.ID)
+
+	mediaRecord, err := catalog.QueryMedia(d.Get("name").(string))
+	if err != nil {
+		log.Printf("[DEBUG] Unable to query media: %s", err)
+		return err
+	}
+
+	_ = d.Set("name", media.Media.Name)
+	_ = d.Set("description", media.Media.Description)
+	_ = d.Set("is_iso", mediaRecord.MediaRecord.IsIso)
+	_ = d.Set("owner_name", mediaRecord.MediaRecord.OwnerName)
+	_ = d.Set("is_published", mediaRecord.MediaRecord.IsPublished)
+	_ = d.Set("creation_date", mediaRecord.MediaRecord.CreationDate)
+	_ = d.Set("size", mediaRecord.MediaRecord.StorageB)
+	_ = d.Set("status", mediaRecord.MediaRecord.Status)
+	_ = d.Set("storage_profile_name", mediaRecord.MediaRecord.StorageProfileName)
+
+	metadata, err := media.GetMetadata()
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find media item metadata: %s", err)
 		return err
 	}
 
-	d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+
 	return err
 }
 
@@ -187,13 +260,19 @@ func createOrUpdateMediaItemMetadata(d *schema.ResourceData, meta interface{}) e
 
 	vcdClient := meta.(*VCDClient)
 
-	_, vdc, err := vcdClient.GetOrgAndVdc("", "")
+	org, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	mediaItem, err := vdc.FindMediaImage(d.Get("name").(string))
-	if err != nil || mediaItem == (govcd.MediaItem{}) {
+	catalog, err := org.GetCatalogByName(d.Get("catalog").(string), false)
+	if err != nil {
+		log.Printf("[DEBUG] Unable to find catalog.")
+		return fmt.Errorf("unable to find catalog: %s", err)
+	}
+
+	media, err := catalog.GetMediaByName(d.Get("name").(string), false)
+	if err != nil {
 		log.Printf("[DEBUG] Unable to find media item: %s", err)
 		return fmt.Errorf("unable to find media item: %s", err)
 	}
@@ -211,18 +290,72 @@ func createOrUpdateMediaItemMetadata(d *schema.ResourceData, meta interface{}) e
 			}
 		}
 		for _, k := range toBeRemovedMetadata {
-			err := mediaItem.DeleteMetadata(k)
+			err := media.DeleteMetadata(k)
 			if err != nil {
 				return fmt.Errorf("error deleting metadata: %s", err)
 			}
 		}
 		// Add new metadata
 		for k, v := range newMetadata {
-			_, err = mediaItem.AddMetadata(k, v.(string))
+			_, err = media.AddMetadata(k, v.(string))
 			if err != nil {
 				return fmt.Errorf("error adding metadata: %s", err)
 			}
 		}
 	}
 	return nil
+}
+
+// resourceVcdCatalogMediaImport is responsible for importing the resource.
+// The following steps happen as part of import
+// 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
+// 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
+// 3. The functions splits the dot-formatted path and tries to lookup the object
+// 4. If the lookup succeeds it sets the ID field for `_resource_name_` resource in statefile
+// (the resource must be already defined in .tf config otherwise `terraform import` will complain)
+// 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
+// based on the known ID of object.
+//
+// Example resource name (_resource_name_): vcd_catalog_media.my-media
+// Example import path (_the_id_string_): org.catalog.my-media-name
+func resourceVcdCatalogMediaImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+	if len(resourceURI) != 3 {
+		return nil, fmt.Errorf("resource name must be specified as org.catalog.my-media-name")
+	}
+	orgName, catalogName, mediaName := resourceURI[0], resourceURI[1], resourceURI[2]
+
+	if orgName == "" {
+		return nil, fmt.Errorf("import: empty org name provided")
+	}
+	if catalogName == "" {
+		return nil, fmt.Errorf("import: empty catalog name provided")
+	}
+	if mediaName == "" {
+		return nil, fmt.Errorf("import: empty media item name provided")
+	}
+
+	vcdClient := meta.(*VCDClient)
+	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
+	if err != nil {
+		return nil, fmt.Errorf(errorRetrievingOrg, orgName)
+	}
+
+	catalog, err := adminOrg.GetCatalogByName(catalogName, false)
+	if err != nil {
+		return nil, govcd.ErrorEntityNotFound
+	}
+
+	media, err := catalog.GetMediaByName(mediaName, false)
+	if err != nil {
+		return nil, govcd.ErrorEntityNotFound
+	}
+
+	_ = d.Set("org", orgName)
+	_ = d.Set("catalog", catalogName)
+	_ = d.Set("name", mediaName)
+	_ = d.Set("description", media.Media.Description)
+	d.SetId(media.Media.ID)
+
+	return []*schema.ResourceData{d}, nil
 }
