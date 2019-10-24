@@ -342,7 +342,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	} else if newComputerName, ok := d.GetOk("computer_name"); ok {
 		task, err := vm.Customize(newComputerName.(string), "", false)
 		if err != nil {
-			return fmt.Errorf("error with applying computer name: %#v", err)
+			return fmt.Errorf("error with applying computer name: %s", err)
 		}
 		err = task.WaitTaskCompletion()
 		if err != nil {
@@ -906,7 +906,7 @@ func updateStateOfAttachedDisks(d *schema.ResourceData, vm govcd.VM, vdc *govcd.
 	transformed := schema.NewSet(resourceVcdVmIndependentDiskHash, []interface{}{})
 
 	for _, existingDiskHref := range existingDisks {
-		disk, err := vdc.FindDiskByHREF(existingDiskHref)
+		disk, err := vdc.GetDiskByHref(existingDiskHref)
 		if err != nil {
 			return fmt.Errorf("did not find disk `%s`: %#v", existingDiskHref, err)
 		}
@@ -985,7 +985,7 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 	existingDisks := getVmIndependentDisks(*vm)
 
 	for _, existingDiskHref := range existingDisks {
-		disk, err := vdc.FindDiskByHREF(existingDiskHref)
+		disk, err := vdc.GetDiskByHref(existingDiskHref)
 		if err != nil {
 			return fmt.Errorf("did not find disk `%s`: %#v", existingDiskHref, err)
 		}
