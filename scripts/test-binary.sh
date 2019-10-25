@@ -10,7 +10,7 @@ dash_line="# ---------------------------------------------------------"
 # env script will only run if explicitly called.
 build_script=cust.full-env.tf
 unset in_building
-operations=(init plan apply destroy)
+operations=(init plan apply plancheck destroy)
 skipping_items=($build_script)
 
 if [ -f skip-files.txt ]
@@ -267,6 +267,7 @@ do
     init_options=$(grep '^# init-options' $CF | sed -e 's/# init-options //')
     plan_options=$(grep '^# plan-options' $CF | sed -e 's/# plan-options //')
     apply_options=$(grep '^# apply-options' $CF | sed -e 's/# apply-options //')
+    plancheck_options=$(grep '^# plancheck-options' $CF | sed -e 's/# plancheck-options //')
     destroy_options=$(grep '^# destroy-options' $CF | sed -e 's/# destroy-options //')
     using_tags=$(grep '^# tags' $CF | sed -e 's/# tags //')
     already_run=$(grep $CF already_run.txt)
@@ -348,6 +349,12 @@ do
                 ;;
             apply)
                 run terraform apply -auto-approve $apply_options
+                ;;
+            plancheck)
+                # -detailed-exitcode will return exit code 2 when the plan was not empty
+                # and this allows to validate if reads work properly and there is no immediate
+                # plan change right after apply succeeded
+                run terraform plan -detailed-exitcode $plan_options
                 ;;
             destroy)
                 if [ ! -f terraform.tfstate ]
