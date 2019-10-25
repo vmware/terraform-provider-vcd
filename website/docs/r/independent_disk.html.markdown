@@ -48,8 +48,8 @@ The following arguments are supported:
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 * `name` - (Required) Disk name
 * `size` - (Required) Size of disk in MB. On read this values isn't refreshed.
-* `bus_type` - (Optional) Disk bus type. Values can be: IDE, SCSI, SATA 
-* `bus_sub_type` - (Optional) Disk bus subtype. Values can be: "IDE" for IDE. buslogic, lsilogic, lsilogicsas, VirtualSCSI for SCSI and ahci for SATA
+* `bus_type` - (Optional) Disk bus type. Values can be: `IDE`, `SCSI`, `SATA` 
+* `bus_sub_type` - (Optional) Disk bus subtype. Values can be: `buslogic`, `lsilogic`, `lsilogicsas`, `VirtualSCSI` for `SCSI` and `ahci` for `SATA`
 * `storage_profile` - (Optional) The name of storage profile where disk will be created
 
 ## Attribute reference
