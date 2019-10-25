@@ -14,6 +14,10 @@ modify, and delete firewall settings and rules.
 ~> **Note:** Please use the improved [`vcd_nsxv_firewall_rule`](/docs/providers/vcd/r/nsxv_firewall_rule.html)
 resource with advanced edge gateways (NSX-V).
 
+~> **Note:** Using this resource automatically enables default firewall rule logging. This may cause
+[`vcd_edgegateway`](/docs/providers/vcd/r/edgegateway.html) resource to report changes for field
+ `fw_default_rule_logging_enabled` during `plan`/`apply` phases.
+
 ## Example Usage
 
 ```hcl
