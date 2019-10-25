@@ -47,6 +47,7 @@ func resourceVcdIndependentDisk() *schema.Resource {
 			"storage_profile": {
 				Type:     schema.TypeString,
 				Optional: true,
+				Computed: true,
 				ForceNew: true,
 			},
 			"size": {
@@ -124,11 +125,11 @@ var busSubTypes = map[string]string{
 }
 
 var busSubTypesFromValues = map[string]string{
-	"IDE":              "ide",
+	"ide":              "IDE",
 	"buslogic":         "buslogic",
 	"lsilogic":         "lsilogic",
 	"lsilogicsas":      "lsilogicsas",
-	"VirtualSCSI":      "virtualscsi",
+	"VirtualSCSI":      "VirtualSCSI",
 	"vmware.sata.ahci": "ahci",
 }
 
