@@ -351,10 +351,17 @@ do
                 run terraform apply -auto-approve $apply_options
                 ;;
             plancheck)
-                # -detailed-exitcode will return exit code 2 when the plan was not empty
-                # and this allows to validate if reads work properly and there is no immediate
-                # plan change right after apply succeeded
-                run terraform plan -detailed-exitcode $plan_options
+                # Skip plan check if a `.tf` example contains line "# skip-plan-check"
+                skip_plancheck=$(grep '^\s*#\s*skip-plan-check' "../$CF")
+                if [ -n "$skip_plancheck" ]
+                then
+                    echo "# $CF plan check skipped"
+                else
+                    # -detailed-exitcode will return exit code 2 when the plan was not empty
+                    # and this allows to validate if reads work properly and there is no immediate
+                    # plan change right after apply succeeded
+                    run terraform plan -detailed-exitcode $plancheck_options 
+                fi
                 ;;
             destroy)
                 if [ ! -f terraform.tfstate ]

@@ -65,7 +65,8 @@ BUG FIXES:
 * Wait for task completion on creation and update, where tasks were not handled at all.
 * `resource/vcd_firewall_rules` force recreation of the resource when attributes of the sub-element `rule` are changed (fixes a situation when it tried to update a rule).
 * `resource/vcd_network_isolated` Fix definition of DHCP, which was created automatically with leftovers from static IP pool even when not requested.
-* `resource/vcd_network_routed` Fix retrieval with early vCD versions [GH-344]
+* `resource/vcd_network_routed` Fix retrieval with early vCD versions. [GH-344]
+* `resource/vcd_edgegateway_vpn` Required replacement every time for `shared_secret` field.  [GH-361]
 
 DEPRECATIONS
 * The ability of deploying a VM implicitly within a vApp is deprecated. Users are encouraged to set an empty vApp and
