@@ -3,7 +3,6 @@
 package vcd
 
 import (
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform/helper/resource"
@@ -42,11 +41,6 @@ func TestAccVcdVpn_Basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
-				// We expect this error to happen, because Terraform will consider that the resource
-				// needs to be generated again. It's a known problem that often happens with security fields
-				// such as "sharedSecret" in our resource, and there is no general purpose solution.
-				// In this case, we accept that this error might show up, and take it as a clean run.
-				ExpectError: regexp.MustCompile(`After applying this step, the plan was not empty`),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"vcd_edgegateway_vpn."+vpnName, "encryption_protocol", "AES256"),
