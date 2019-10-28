@@ -88,8 +88,6 @@ func resourceVcdOrgUser() *schema.Resource {
 				Optional:    true,
 				ForceNew:    false,
 				Description: "The user's telephone",
-				// Re-enable when go-vcloud-director creation supports telephone
-				DiffSuppressFunc: suppressAlways(),
 			},
 			"instant_messaging": &schema.Schema{
 				Type:        schema.TypeString,
