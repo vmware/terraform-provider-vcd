@@ -143,7 +143,7 @@ func natRuleDelete(natType string) schema.DeleteFunc {
 // natRuleImporter returns a schema.StateFunc for both SNAT and DNAT rules
 func natRuleImport(natType string) schema.StateFunc {
 	return func(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-		resourceURI := strings.Split(d.Id(), ".")
+		resourceURI := strings.Split(d.Id(), ImportSeparator)
 		if len(resourceURI) != 4 {
 			return nil, fmt.Errorf("resource name must be specified in such way org.vdc.edge-gw.rule-id")
 		}

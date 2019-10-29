@@ -1,6 +1,8 @@
 package vcd
 
 import (
+	"os"
+
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/vmware/go-vcloud-director/v2/util"
@@ -80,6 +82,12 @@ func Provider() terraform.ResourceProvider {
 				DefaultFunc: schema.EnvDefaultFunc("VCD_API_LOGGING_FILE", "go-vcloud-director.log"),
 				Description: "Defines the full name of the logging file for API calls (requires 'logging')",
 			},
+			"import_separator": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("VCD_IMPORT_SEPARATOR", "."),
+				Description: "Defines the import separation string to be used with 'terraform import'",
+			},
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
@@ -111,15 +119,18 @@ func Provider() terraform.ResourceProvider {
 			"vcd_lb_virtual_server":  resourceVcdLBVirtualServer(),  // 2.4
 			"vcd_nsxv_dnat":          resourceVcdNsxvDnat(),         // 2.5
 			"vcd_nsxv_snat":          resourceVcdNsxvSnat(),         // 2.5
+			"vcd_nsxv_firewall_rule": resourceVcdNsxvFirewallRule(), // 2.5
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
 			"vcd_org":                datasourceVcdOrg(),              // 2.5
 			"vcd_org_vdc":            datasourceVcdOrgVdc(),           // 2.5
 			"vcd_catalog":            datasourceVcdCatalog(),          // 2.5
+			"vcd_catalog_media":      datasourceVcdCatalogMedia(),     // 2.5
 			"vcd_catalog_item":       datasourceVcdCatalogItem(),      // 2.5
 			"vcd_edgegateway":        datasourceVcdEdgeGateway(),      // 2.5
 			"vcd_external_network":   datasourceVcdExternalNetwork(),  // 2.5
+			"vcd_independent_disk":   datasourceVcIndependentDisk(),   // 2.5
 			"vcd_network_routed":     datasourceVcdNetworkRouted(),    // 2.5
 			"vcd_network_direct":     datasourceVcdNetworkDirect(),    // 2.5
 			"vcd_network_isolated":   datasourceVcdNetworkIsolated(),  // 2.5
@@ -132,6 +143,7 @@ func Provider() terraform.ResourceProvider {
 			"vcd_lb_virtual_server":  datasourceVcdLbVirtualServer(),  // 2.4
 			"vcd_nsxv_dnat":          datasourceVcdNsxvDnat(),         // 2.5
 			"vcd_nsxv_snat":          datasourceVcdNsxvSnat(),         // 2.5
+			"vcd_nsxv_firewall_rule": datasourceVcdNsxvFirewallRule(), // 2.5
 		},
 
 		ConfigureFunc: providerConfigure,
@@ -169,6 +181,13 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 			util.ApiLogFileName = loggingFile
 			util.InitLogging()
 		}
+	}
+
+	separator := os.Getenv("VCD_IMPORT_SEPARATOR")
+	if separator != "" {
+		ImportSeparator = separator
+	} else {
+		ImportSeparator = d.Get("import_separator").(string)
 	}
 
 	return config.Client()

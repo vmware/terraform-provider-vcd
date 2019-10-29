@@ -16,6 +16,9 @@ modify, and delete destination NATs to map an external IP/port to an internal IP
 ~> **Note:** This resource requires advanced edge gateway. For non-advanced edge gateways please
 use the [`vcd_dnat`](/docs/providers/vcd/r/dnat.html) resource.
 
+!> **Warning:** Do not use older [`vcd_dnat`](/docs/providers/vcd/r/dnat.html) resource with this one
+because it will change IDs and this resource will not be able to lookup rules.
+
 ## Example Usage 1 (Minimal input)
 
 ```hcl
@@ -132,6 +135,8 @@ via supplying the full dot separated path for DNAT rule. An example is below:
 ```
 terraform import vcd_nsxv_dnat.imported my-org.my-org-vdc.my-edge-gw.my-dnat-rule-id
 ```
+
+NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 
 The above would import the application rule named `my-dnat-rule-id` that is defined on edge
 gateway `my-edge-gw` which is configured in organization named `my-org` and vDC named `my-org-vdc`.

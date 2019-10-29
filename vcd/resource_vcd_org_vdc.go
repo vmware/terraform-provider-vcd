@@ -849,8 +849,9 @@ func getStorageProfileHREF(vcdClient *VCDClient, name string) (string, error) {
 //
 // Example resource name (_resource_name_): vcd_org_vdc.my_existing_vdc
 // Example import path (_the_id_string_): org.my_existing_vdc
+// Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func resourceVcdOrgVdcImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	resourceURI := strings.Split(d.Id(), ".")
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 2 {
 		return nil, fmt.Errorf("resource name must be specified as org.my_existing_vdc")
 	}

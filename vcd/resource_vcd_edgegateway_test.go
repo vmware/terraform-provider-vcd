@@ -101,6 +101,14 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 	configText1 := templateFill(testAccEdgeGatewayComplexWithLb, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText1)
 
+	params["FuncName"] = t.Name() + "-step2"
+	configText2 := templateFill(testAccEdgeGatewayComplexWithFw, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText2)
+
+	params["FuncName"] = t.Name() + "-step4"
+	configText4 := templateFill(testAccEdgeGatewayComplexEnableFwLbOnCreate, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText4)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -140,10 +148,32 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 				),
 			},
 			resource.TestStep{
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"vcd_edgegateway."+edgeGatewayNameComplex, "default_gateway_network", newExternalNetworkVcd),
+					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "fw_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "fw_default_rule_logging_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "fw_default_rule_action", "accept"),
+				),
+			},
+			resource.TestStep{ // step3
 				ResourceName:      "vcd_edgegateway." + edgeGatewayNameComplex + "-import",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, edgeGatewayVcdName),
+			},
+			resource.TestStep{
+				Config: configText4,
+				// Taint the resource to force recreation of edge gateway because this step
+				// attempts to test creation problems.
+				Taint: []string{"vcd_edgegateway." + edgeGatewayNameComplex},
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"vcd_edgegateway."+edgeGatewayNameComplex, "default_gateway_network", newExternalNetworkVcd),
+					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "fw_enabled", "true"),
+				),
 			},
 		},
 	})
@@ -254,5 +284,38 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
   lb_acceleration_enabled = "true"
   lb_logging_enabled      = "true"
   lb_loglevel             = "critical"
+}
+`
+
+const testAccEdgeGatewayComplexWithFw = testAccEdgeGatewayComplexNetwork + `
+resource "vcd_edgegateway" "{{.EdgeGateway}}" {
+  org                     = "{{.Org}}"
+  vdc                     = "{{.Vdc}}"
+  name                    = "{{.EdgeGatewayVcd}}"
+  description             = "Description"
+  configuration           = "compact"
+  default_gateway_network = "${vcd_external_network.{{.NewExternalNetwork}}.name}"
+  advanced                = {{.Advanced}}
+  external_networks       = [ "{{.ExternalNetwork}}", "${vcd_external_network.{{.NewExternalNetwork}}.name}" ]
+
+  fw_enabled                      = "true"
+  fw_default_rule_logging_enabled = "true"
+  fw_default_rule_action          = "accept"
+}
+`
+
+const testAccEdgeGatewayComplexEnableFwLbOnCreate = testAccEdgeGatewayComplexNetwork + `
+resource "vcd_edgegateway" "{{.EdgeGateway}}" {
+  org                     = "{{.Org}}"
+  vdc                     = "{{.Vdc}}"
+  name                    = "{{.EdgeGatewayVcd}}"
+  description             = "Description"
+  configuration           = "compact"
+  default_gateway_network = "${vcd_external_network.{{.NewExternalNetwork}}.name}"
+  advanced                = {{.Advanced}}
+  external_networks       = [ "{{.ExternalNetwork}}", "${vcd_external_network.{{.NewExternalNetwork}}.name}" ]
+
+  fw_enabled = "true"
+  lb_enabled = "true"
 }
 `

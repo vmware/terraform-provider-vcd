@@ -77,7 +77,12 @@ that the firewall is enabled on the edge gateway.
 Default is `false`.
 * `lb_loglevel` - (Optional) Choose the severity of events to be logged. One of `emergency`,
 `alert`, `critical`, `error`, `warning`, `notice`, `info`, `debug`
-
+* `fw_enabled` (Optional) Enable firewall. Default `true`. **Note:** Disabling Firewall will also
+disable NAT and other NAT dependent features like Load Balancer.
+* `fw_default_rule_logging_enabled` (Optional) Enable default firewall rule (last in the processing 
+order) logging. Default `false`.
+* `fw_default_rule_action` (Optional) Default firewall rule (last in the processing order) action.
+One of `accept` or `deny`. Default `deny`.
 
 ## Importing
 
@@ -105,6 +110,7 @@ You can import such edge gateway into terraform state using this command
 ```
 terraform import vcd_edgegateway.tf-edgegateway my-org.my-vdc.my-edge-gw
 ```
+// Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 
 [docs-import]:https://www.terraform.io/docs/import/
 

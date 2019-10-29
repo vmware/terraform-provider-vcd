@@ -233,8 +233,9 @@ func resourceVcdLBServerPoolDelete(d *schema.ResourceData, meta interface{}) err
 // `terraform import` automatically performs `refresh` operation which loads up all other fields.
 //
 // Example import path (id): org.vdc.edge-gw.lb-server-pool
+// Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func resourceVcdLBServerPoolImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	resourceURI := strings.Split(d.Id(), ".")
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 4 {
 		return nil, fmt.Errorf("resource name must be specified as org.vdc.edge-gw.lb-server-pool")
 	}

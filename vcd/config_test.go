@@ -726,7 +726,7 @@ func importStateIdOrgObject(vcd TestConfig, objectName string) resource.ImportSt
 			return "", fmt.Errorf("missing information to generate import path")
 		}
 		return testConfig.VCD.Org +
-			ImportSeparationToken +
+			ImportSeparator +
 			objectName, nil
 	}
 }
@@ -738,9 +738,23 @@ func importStateIdOrgVdcObject(vcd TestConfig, objectName string) resource.Impor
 			return "", fmt.Errorf("missing information to generate import path")
 		}
 		return testConfig.VCD.Org +
-			ImportSeparationToken +
+			ImportSeparator +
 			testConfig.VCD.Vdc +
-			ImportSeparationToken +
+			ImportSeparator +
+			objectName, nil
+	}
+}
+
+// Used by all entities that depend on Org + Catalog (such as catalog item, media item)
+func importStateIdOrgCatalogObject(vcd TestConfig, objectName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		if testConfig.VCD.Org == "" || testConfig.VCD.Catalog.Name == "" || objectName == "" {
+			return "", fmt.Errorf("missing information to generate import path")
+		}
+		return testConfig.VCD.Org +
+			ImportSeparator +
+			testConfig.VCD.Catalog.Name +
+			ImportSeparator +
 			objectName, nil
 	}
 }
@@ -752,11 +766,27 @@ func importStateIdVappObject(vcd TestConfig, vappName, objectName string) resour
 			return "", fmt.Errorf("missing information to generate import path")
 		}
 		return testConfig.VCD.Org +
-			ImportSeparationToken +
+			ImportSeparator +
 			testConfig.VCD.Vdc +
-			ImportSeparationToken +
+			ImportSeparator +
 			vappName +
-			ImportSeparationToken +
+			ImportSeparator +
+			objectName, nil
+	}
+}
+
+// Used by all entities that depend on Org + VDC + edge gateway (such as FW, LB, NAT)
+func importStateIdEdgeGatewayObject(vcd TestConfig, edgeGatewayName, objectName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || edgeGatewayName == "" || objectName == "" {
+			return "", fmt.Errorf("missing information to generate import path")
+		}
+		return testConfig.VCD.Org +
+			ImportSeparator +
+			testConfig.VCD.Vdc +
+			ImportSeparator +
+			edgeGatewayName +
+			ImportSeparator +
 			objectName, nil
 	}
 }

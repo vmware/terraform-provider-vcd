@@ -16,6 +16,9 @@ can be used to create, modify, and delete source NATs to allow vApps to send ext
 ~> **Note:** This resource requires advanced edge gateway. For non-advanced edge gateways please
 use the [`vcd_snat`](/docs/providers/vcd/r/snat.html) resource.
 
+!> **Warning:** Do not use older [`vcd_snat`](/docs/providers/vcd/r/snat.html) resource with this one
+because it will change IDs and this resource will not be able to lookup rules.
+
 ## Example Usage
 
 ```hcl
@@ -76,6 +79,8 @@ via supplying the full dot separated path for SNAT rule. An example is below:
 ```
 terraform import vcd_nsxv_dnat.imported my-org.my-org-vdc.my-edge-gw.my-snat-rule-id
 ```
+
+NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 
 The above would import the application rule named `my-snat-rule-id` that is defined on edge
 gateway `my-edge-gw` which is configured in organization named `my-org` and vDC named `my-org-vdc`.

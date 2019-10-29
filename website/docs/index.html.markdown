@@ -18,11 +18,11 @@ Use the navigation to the left to read about the available resources.
 
 The following vCloud Director versions are supported by this provider:
 
-* 8.20
 * 9.0
 * 9.1
 * 9.5
 * 9.7
+* 10.0
 
 ## Example Usage
 
@@ -163,6 +163,9 @@ The following arguments are used to configure the VMware vCloud Director Provide
 
 * `logging_file` - (Optional; *v2.0+*) The name of the log file (when `logging` is enabled). By default is 
   `go-vcloud-director` and it can also be changed using the `VCD_API_LOGGING_FILE` environment variable.
+  
+* `import_separator` - (Optional; *v2.5+*) The string to be used as separator with `terraform import`. By default
+  it is a dot (`.`).
 
 ## Connection Cache (*2.0+*)
 

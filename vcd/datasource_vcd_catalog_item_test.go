@@ -19,8 +19,8 @@ func TestAccVcdCatalogAndItemDatasource(t *testing.T) {
 
 	var params = StringMap{
 		"Org":             testConfig.VCD.Org,
-		"Catalog":         testConfig.VCD.Catalog.Name,
-		"CatalogItem":     testConfig.VCD.Catalog.CatalogItem,
+		"Catalog":         testSuiteCatalogName,
+		"CatalogItem":     testSuiteCatalogOVAItem,
 		"NewCatalogItem":  TestCatalogItemDS,
 		"OvaPath":         testConfig.Ova.OvaPath,
 		"UploadPieceSize": testConfig.Ova.UploadPieceSize,
@@ -35,13 +35,13 @@ func TestAccVcdCatalogAndItemDatasource(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
-	datasourceCatalog := "data.vcd_catalog." + testConfig.VCD.Catalog.Name
-	datasourceCatalogItem := "data.vcd_catalog_item." + testConfig.VCD.Catalog.CatalogItem
+	datasourceCatalog := "data.vcd_catalog." + testSuiteCatalogName
+	datasourceCatalogItem := "data.vcd_catalog_item." + testSuiteCatalogOVAItem
 	resourceCatalogItem := "vcd_catalog_item." + TestCatalogItemDS
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { preRunChecks(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: catalogItemDestroyed(testConfig.VCD.Catalog.Name, TestCatalogItemDS),
+		CheckDestroy: catalogItemDestroyed(testSuiteCatalogName, TestCatalogItemDS),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -67,7 +67,7 @@ func TestAccVcdCatalogAndItemDatasource(t *testing.T) {
 				ResourceName:      "vcd_catalog_item." + TestCatalogItemDS + "-import",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdByCatalogItem(TestCatalogItemDS),
+				ImportStateIdFunc: importStateIdOrgCatalogObject(testConfig, TestCatalogItemDS),
 				// These fields can't be retrieved from catalog item data
 				ImportStateVerifyIgnore: []string{"ova_path", "upload_piece_size", "show_upload_progress"},
 			},
@@ -91,16 +91,6 @@ func catalogItemDestroyed(catalog, itemName string) resource.TestCheckFunc {
 			return fmt.Errorf("catalog item %s not deleted", itemName)
 		}
 		return nil
-	}
-}
-
-func importStateIdByCatalogItem(objectName string) resource.ImportStateIdFunc {
-	return func(*terraform.State) (string, error) {
-		importId := testConfig.VCD.Org + "." + testConfig.VCD.Catalog.Name + "." + objectName
-		if testConfig.VCD.Org == "" || testConfig.VCD.Catalog.Name == "" || objectName == "" {
-			return "", fmt.Errorf("missing information to generate import path: %s", importId)
-		}
-		return importId, nil
 	}
 }
 

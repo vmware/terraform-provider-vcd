@@ -151,14 +151,14 @@ func resourceToUserData(d *schema.ResourceData, meta interface{}) (*govcd.OrgUse
 		orgName = vcdClient.Org
 	}
 	if orgName == "" {
-		return nil, nil, fmt.Errorf("missing org name")
+		return nil, nil, fmt.Errorf("[resourceToUserData] missing org name")
 	}
 	adminOrg, err := vcdClient.VCDClient.GetAdminOrgByName(orgName)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("[resourceToUserData] %s", err)
 	}
 	if adminOrg.AdminOrg == nil || adminOrg.AdminOrg.HREF == "" {
-		return nil, nil, fmt.Errorf("error retrieving org %s", orgName)
+		return nil, nil, fmt.Errorf("[resourceToUserData] error retrieving org %s", orgName)
 	}
 
 	var userData govcd.OrgUserConfiguration
@@ -207,15 +207,15 @@ func resourceToOrgUser(d *schema.ResourceData, meta interface{}) (*govcd.OrgUser
 	vcdClient := meta.(*VCDClient)
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("[resourceToOrgUser] error retrieving org: %s", err)
 	}
 	if adminOrg.AdminOrg == nil || adminOrg.AdminOrg.HREF == "" {
-		return nil, nil, fmt.Errorf("error retrieving org %s", d.Get("org").(string))
+		return nil, nil, fmt.Errorf("[resourceToOrgUser ] error retrieving org %s", d.Get("org").(string))
 	}
 	userName := d.Get("name").(string)
 	orgUser, err := adminOrg.GetUserByName(userName, false)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, fmt.Errorf("[resourceToOrgUser] error retrieving user %s: %s", userName, err)
 	}
 
 	return orgUser, adminOrg, nil
@@ -225,7 +225,6 @@ func resourceToOrgUser(d *schema.ResourceData, meta interface{}) (*govcd.OrgUser
 // Used after retrieving the user (read, import), to fill the Terraform container appropriately
 func setOrgUserData(d *schema.ResourceData, orgUser *govcd.OrgUser, adminOrg *govcd.AdminOrg) error {
 	d.SetId(orgUser.User.ID)
-	_ = d.Set("org", adminOrg.AdminOrg.Name)
 	_ = d.Set("name", orgUser.User.Name)
 	_ = d.Set("provider_type", orgUser.User.ProviderType)
 	_ = d.Set("is_group_role", orgUser.User.IsGroupRole)
@@ -265,7 +264,7 @@ func resourceVcdOrgUserDelete(d *schema.ResourceData, meta interface{}) error {
 	takeOwnership := d.Get("take_ownership").(bool)
 	orgUser, _, err := resourceToOrgUser(d, meta)
 	if err != nil {
-		return err
+		return fmt.Errorf("[user delete] %s", err)
 	}
 	return orgUser.Delete(takeOwnership)
 }
@@ -275,7 +274,7 @@ func resourceVcdOrgUserRead(d *schema.ResourceData, meta interface{}) error {
 
 	orgUser, adminOrg, err := resourceToOrgUser(d, meta)
 	if err != nil {
-		return err
+		return fmt.Errorf("[user read] error filling data %s", err)
 	}
 	return setOrgUserData(d, orgUser, adminOrg)
 }
@@ -303,8 +302,9 @@ func resourceVcdOrgUserUpdate(d *schema.ResourceData, meta interface{}) error {
 // Expects the d.ID() to be a path to the resource made of Org name + dot + OrgUser name
 //
 // Example import path (id): my-org.my-user-admin
+// Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func resourceVcdOrgUserImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	resourceURI := strings.Split(d.Id(), ".")
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 2 {
 		return nil, fmt.Errorf("resource name must be specified as org.org_user")
 	}
@@ -318,9 +318,10 @@ func resourceVcdOrgUserImport(d *schema.ResourceData, meta interface{}) ([]*sche
 
 	user, err := adminOrg.GetUserByName(userName, false)
 	if err != nil {
-		return nil, govcd.ErrorEntityNotFound
+		return nil, fmt.Errorf("[user import] error retrieving user %s: %s", userName, err)
 	}
 
+	_ = d.Set("org", orgName)
 	err = setOrgUserData(d, user, adminOrg)
 	if err != nil {
 		return nil, err

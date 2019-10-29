@@ -304,6 +304,7 @@ func (adminOrg *AdminOrg) CreateUserSimple(userData OrgUserConfiguration) (*OrgU
 		FullName:        userData.FullName,
 		EmailAddress:    userData.EmailAddress,
 		Description:     userData.Description,
+		Telephone:       userData.Telephone,
 		IM:              userData.IM,
 		Role:            &types.Reference{HREF: role.HREF},
 	}

@@ -75,7 +75,6 @@ resource "vcd_vapp_vm" "tf_vm_1" {
   network {
     type                 = "org"
     name                 = "${vcd_network_routed.tf_network.name}"
-    ip                   = "192.168.0.7"
     ip_allocation_mode   = "POOL"
   }
 
@@ -124,7 +123,6 @@ resource "vcd_vapp_vm" "tf_vm_second" {
   network {
     type                 = "vapp"
     name                 = "${vcd_vapp_network.tf_vapp_net.name}"
-    ip                   = "192.168.0.9"
     ip_allocation_mode   = "POOL"
   }
 

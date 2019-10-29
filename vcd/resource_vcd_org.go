@@ -248,6 +248,7 @@ func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
 	_ = d.Set("deployed_vm_quota", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.DeployedVMQuota)
 	_ = d.Set("stored_vm_quota", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.StoredVMQuota)
 	_ = d.Set("can_publish_catalogs", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanPublishCatalogs)
+	_ = d.Set("delay_after_power_on_seconds", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.DelayAfterPowerOnSeconds)
 
 	return nil
 }
@@ -282,7 +283,7 @@ func resourceOrgRead(d *schema.ResourceData, m interface{}) error {
 	if err != nil {
 		log.Printf("[DEBUG] Org %s not found. Setting ID to nothing", identifier)
 		d.SetId("")
-		return fmt.Errorf("org %s not found", identifier)
+		return nil
 	}
 	log.Printf("[TRACE] Org with id %s found", identifier)
 	d.SetId(adminOrg.AdminOrg.ID)

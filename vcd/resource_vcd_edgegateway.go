@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
@@ -113,6 +114,25 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				Description: "Log level. One of 'emergency', 'alert', 'critical', 'error', " +
 					"'warning', 'notice', 'info', 'debug'. ('info' by default)",
 			},
+			"fw_enabled": &schema.Schema{
+				Type:        schema.TypeBool,
+				Default:     true,
+				Optional:    true,
+				Description: "Enable firewall. Default 'true'",
+			},
+			"fw_default_rule_logging_enabled": &schema.Schema{
+				Type:        schema.TypeBool,
+				Default:     false,
+				Optional:    true,
+				Description: "Enable logging for default rule. Default 'false'",
+			},
+			"fw_default_rule_action": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "deny",
+				Description:  "'accept' or 'deny'. Default 'deny'",
+				ValidateFunc: validation.StringInSlice([]string{"accept", "deny"}, false),
+			},
 		},
 	}
 }
@@ -188,7 +208,7 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 
-	// Only perform general load balancer configuration if settings are set
+	// Only perform load balancer and firewall configuration if gateway is advanced
 	if d.Get("advanced").(bool) {
 		log.Printf("[TRACE] edge gateway load balancer configuration started")
 
@@ -198,8 +218,25 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		}
 
 		log.Printf("[TRACE] edge gateway load balancer configured")
+
+		log.Printf("[TRACE] edge gateway firewall configuration started")
+
+		err = updateFirewall(d, edge)
+		if err != nil {
+			return fmt.Errorf("unable to update firewall settings: %s", err)
+		}
+
+		log.Printf("[TRACE] edge gateway firewall configured")
+
+		// update load balancer and firewall configuration in statefile
+		err = setEdgeGatewayComponentValues(d, edge)
+		if err != nil {
+			return err
+		}
 	}
 
+	// TODO double validate if we need to use partial state here
+	// https://www.terraform.io/docs/extend/writing-custom-providers.html#error-handling-amp-partial-state
 	d.SetId(edge.EdgeGateway.ID)
 	log.Printf("[TRACE] edge gateway created: %#v", edge.EdgeGateway.Name)
 	return resourceVcdEdgeGatewayRead(d, meta)
@@ -248,6 +285,10 @@ func genericVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}, origin 
 		if err := setLoadBalancerData(d, *edgeGateway); err != nil {
 			return err
 		}
+
+		if err := setFirewallData(d, *edgeGateway); err != nil {
+			return err
+		}
 	}
 
 	d.SetId(edgeGateway.EdgeGateway.ID)
@@ -267,18 +308,23 @@ func resourceVcdEdgeGatewayUpdate(d *schema.ResourceData, meta interface{}) erro
 		return nil
 	}
 
-	// Reconfigure general load balancer parameters if edge gateway is advanced and any of the fields
-	// have changed
-	if edgeGateway.HasAdvancedNetworking() && (d.HasChange("lb_enabled") ||
-		d.HasChange("lb_acceleration_enabled") || d.HasChange("lb_logging_enabled") ||
-		d.HasChange("lb_loglevel")) {
-		err := updateLoadBalancer(d, *edgeGateway)
-		if err != nil {
-			return err
+	// If edge gateway is advanced - check if load balancer or firewall needs adjustments
+	if edgeGateway.HasAdvancedNetworking() {
+		if d.HasChange("lb_enabled") || d.HasChange("lb_acceleration_enabled") ||
+			d.HasChange("lb_logging_enabled") || d.HasChange("lb_loglevel") {
+			err := updateLoadBalancer(d, *edgeGateway)
+			if err != nil {
+				return err
+			}
 		}
-	} else {
-		_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: only advanced edge gateway supports "+
-			"load balancing \n")
+
+		if d.HasChange("fw_enabled") || d.HasChange("fw_default_rule_logging_enabled") ||
+			d.HasChange("fw_default_rule_action") {
+			err := updateFirewall(d, *edgeGateway)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	return resourceVcdEdgeGatewayRead(d, meta)
@@ -338,6 +384,8 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 
 	for _, gw := range egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
 		if gw.SubnetParticipation == nil || gw.SubnetParticipation.Gateway == "" {
+			log.Printf("[DEBUG] [setEdgeGatewayValues] gateway %s is missing SubnetParticipation elements: %+#v",
+				egw.EdgeGateway.Name, gw)
 			return fmt.Errorf("[setEdgeGatewayValues] gateway %s is missing SubnetParticipation elements", egw.EdgeGateway.Name)
 		}
 		defaultGwNet, ok := gateways[gw.SubnetParticipation.Gateway]
@@ -355,11 +403,24 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	//	return err
 	//}
 
-	err = setLoadBalancerData(d, egw)
-	if err != nil {
-		return err
-	}
 	d.SetId(egw.EdgeGateway.ID)
+	return nil
+}
+
+// setEdgeGatewayComponentValues sets component values to the statefile which are created with
+// additional API calls
+func setEdgeGatewayComponentValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
+	if egw.HasAdvancedNetworking() {
+		err := setLoadBalancerData(d, egw)
+		if err != nil {
+			return err
+		}
+
+		err = setFirewallData(d, egw)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -370,10 +431,24 @@ func setLoadBalancerData(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 		return fmt.Errorf("unable to read general load balancer settings: %s", err)
 	}
 
-	d.Set("lb_enabled", lb.Enabled)
-	d.Set("lb_acceleration_enabled", lb.AccelerationEnabled)
-	d.Set("lb_logging_enabled", lb.Logging.Enable)
-	d.Set("lb_loglevel", lb.Logging.LogLevel)
+	_ = d.Set("lb_enabled", lb.Enabled)
+	_ = d.Set("lb_acceleration_enabled", lb.AccelerationEnabled)
+	_ = d.Set("lb_logging_enabled", lb.Logging.Enable)
+	_ = d.Set("lb_loglevel", lb.Logging.LogLevel)
+
+	return nil
+}
+
+// setFirewallData is a convenience function to handle firewall settings on edge gateway
+func setFirewallData(d *schema.ResourceData, egw govcd.EdgeGateway) error {
+	fw, err := egw.GetFirewallConfig()
+	if err != nil {
+		return fmt.Errorf("unable to read firewall settings: %s", err)
+	}
+
+	_ = d.Set("fw_enabled", fw.Enabled)
+	_ = d.Set("fw_default_rule_logging_enabled", fw.DefaultPolicy.LoggingEnabled)
+	_ = d.Set("fw_default_rule_action", fw.DefaultPolicy.Action)
 
 	return nil
 }
@@ -392,6 +467,19 @@ func updateLoadBalancer(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	return nil
 }
 
+// updateFirewall updates general firewall configuration
+func updateFirewall(d *schema.ResourceData, egw govcd.EdgeGateway) error {
+	fwEnabled := d.Get("fw_enabled").(bool)
+	fwDefaultRuleLogging := d.Get("fw_default_rule_logging_enabled").(bool)
+	fwDefaultRuleAction := d.Get("fw_default_rule_action").(string)
+	_, err := egw.UpdateFirewallConfig(fwEnabled, fwDefaultRuleLogging, fwDefaultRuleAction)
+	if err != nil {
+		return fmt.Errorf("unable to update firewall settings: %s", err)
+	}
+
+	return nil
+}
+
 // resourceVcdEdgeGatewayImport is responsible for importing the resource.
 // The following steps happen as part of import
 // 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
@@ -404,8 +492,9 @@ func updateLoadBalancer(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 //
 // Example resource name (_resource_name_): vcd_edgegateway.my-edge-gateway
 // Example import path (_the_id_string_): org.vdc.my-edge-gw
+// Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func resourceVcdEdgeGatewayImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	resourceURI := strings.Split(d.Id(), ".")
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-name.edge-gw-name")
 	}

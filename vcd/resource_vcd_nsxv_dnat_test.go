@@ -22,7 +22,7 @@ func TestAccVcdEdgeDnat(t *testing.T) {
 		"ExternalIp":  testConfig.Networking.ExternalIp,
 		"InternalIp":  testConfig.Networking.InternalIp,
 		"NetworkName": testConfig.Networking.ExternalNetwork,
-		"Tags":        "egatewaydge nat",
+		"Tags":        "gateway nat",
 	}
 
 	configText := templateFill(testAccVcdEdgeDnatRule, params)
@@ -176,7 +176,10 @@ func importStateIdByResourceName(resource string) resource.ImportStateIdFunc {
 			return "", fmt.Errorf("no ID is set for %s resource", resource)
 		}
 
-		importId := testConfig.VCD.Org + "." + testConfig.VCD.Vdc + "." + testConfig.Networking.EdgeGateway + "." + rs.Primary.ID
+		importId := testConfig.VCD.Org +
+			ImportSeparator + testConfig.VCD.Vdc +
+			ImportSeparator + testConfig.Networking.EdgeGateway +
+			ImportSeparator + rs.Primary.ID
 		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || testConfig.Networking.EdgeGateway == "" || rs.Primary.ID == "" {
 			return "", fmt.Errorf("missing information to generate import path: %s", importId)
 		}
