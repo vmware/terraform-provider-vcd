@@ -108,7 +108,7 @@ There are also a couple of commands that prepare and execute the terraform scrip
 $ make test-env-init && make test-env-apply
 ```
 
-Unlike other commands executed during `make binary`, these ones only run the `init` and `apply` stage of the script processing,
+Unlike other commands executed during `make test-binary`, these ones only run the `init` and `apply` stage of the script processing,
 producing a ready-to-use environment in a few minutes.
 If the commands were successful, you are ready to run the acceptance tests:
 
@@ -301,6 +301,7 @@ terraform tool through a shell script, and for every test we run
 * `terraform init`
 * `terraform plan`
 * `terraform apply -auto-approve`
+* `terraform plan -detailed-exitcode` (for ensuring that `plan` is empty right after `apply`)
 * `terraform destroy -auto-approve`
 
 The test runs from GNUMakefile, using
