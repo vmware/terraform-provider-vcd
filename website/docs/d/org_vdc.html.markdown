@@ -36,6 +36,8 @@ The following arguments are supported:
 
 ## Attribute Reference
 
+~> **Note:** Only part of fields are read if user is Organization administrator. With System Admin user all fields are populated.
+
 * `description` - VDC friendly description
 * `provider_vdc_name` -A name of the Provider VDC from which this organization VDC is provisioned.
 * `allocation_model` - The allocation model used by this VDC; must be one of {AllocationVApp ("Pay as you go"), AllocationPool ("Allocation pool"), ReservationPool ("Reservation pool")}

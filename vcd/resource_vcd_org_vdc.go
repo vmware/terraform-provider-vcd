@@ -311,38 +311,48 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.AdminOrg, adminVdc *govcd.AdminVdc) error {
 
 	_ = d.Set("allocation_model", adminVdc.AdminVdc.AllocationModel)
-	_ = d.Set("cpu_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedCpu)
+	if adminVdc.AdminVdc.ResourceGuaranteedCpu != nil {
+		_ = d.Set("cpu_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedCpu)
+	}
 	_ = d.Set("cpu_speed", adminVdc.AdminVdc.VCpuInMhz)
 	_ = d.Set("description", adminVdc.AdminVdc.Description)
 	_ = d.Set("enable_fast_provisioning", adminVdc.AdminVdc.UsesFastProvisioning)
 	_ = d.Set("enable_thin_provisioning", adminVdc.AdminVdc.IsThinProvision)
 	_ = d.Set("enable_vm_discovery", adminVdc.AdminVdc.VmDiscoveryEnabled)
 	_ = d.Set("enabled", adminVdc.AdminVdc.IsEnabled)
-	_ = d.Set("memory_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedMemory)
+	if adminVdc.AdminVdc.ResourceGuaranteedMemory != nil {
+		_ = d.Set("memory_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedMemory)
+	}
 	_ = d.Set("name", adminVdc.AdminVdc.Name)
 
-	networkPool, err := govcd.GetNetworkPoolByHREF(vcdClient.VCDClient, adminVdc.AdminVdc.NetworkPoolReference.HREF)
-	if err != nil {
-		return fmt.Errorf("error retrieving network pool: %s", err)
+	if adminVdc.AdminVdc.NetworkPoolReference != nil {
+		networkPool, err := govcd.GetNetworkPoolByHREF(vcdClient.VCDClient, adminVdc.AdminVdc.NetworkPoolReference.HREF)
+		if err != nil {
+			return fmt.Errorf("error retrieving network pool: %s", err)
+		}
+		_ = d.Set("network_pool_name", networkPool.Name)
 	}
-
-	_ = d.Set("network_pool_name", networkPool.Name)
 	_ = d.Set("network_quota", adminVdc.AdminVdc.NetworkQuota)
 	_ = d.Set("nic_quota", adminVdc.AdminVdc.Vdc.NicQuota)
-	_ = d.Set("provider_vdc_name", adminVdc.AdminVdc.ProviderVdcReference.Name)
+	if adminVdc.AdminVdc.ProviderVdcReference != nil {
+		_ = d.Set("provider_vdc_name", adminVdc.AdminVdc.ProviderVdcReference.Name)
+	}
 	_ = d.Set("vm_quota", adminVdc.AdminVdc.Vdc.VMQuota)
 
 	if err := d.Set("compute_capacity", getComputeCapacities(adminVdc.AdminVdc.ComputeCapacity)); err != nil {
 		return fmt.Errorf("error setting compute_capacity: %s", err)
 	}
 
-	storageProfileStateData, err := getComputeStorageProfiles(vcdClient, adminVdc.AdminVdc.VdcStorageProfiles)
-	if err != nil {
-		return fmt.Errorf("error preparing storage profile data: %s", err)
-	}
+	if adminVdc.AdminVdc.VdcStorageProfiles != nil {
 
-	if err := d.Set("storage_profile", storageProfileStateData); err != nil {
-		return fmt.Errorf("error setting compute_capacity: %s", err)
+		storageProfileStateData, err := getComputeStorageProfiles(vcdClient, adminVdc.AdminVdc.VdcStorageProfiles)
+		if err != nil {
+			return fmt.Errorf("error preparing storage profile data: %s", err)
+		}
+
+		if err := d.Set("storage_profile", storageProfileStateData); err != nil {
+			return fmt.Errorf("error setting compute_capacity: %s", err)
+		}
 	}
 
 	vdc, err := adminOrg.GetVDCByName(d.Get("name").(string), false)
@@ -377,7 +387,9 @@ func getComputeStorageProfiles(vcdClient *VCDClient, profile *types.VdcStoragePr
 		storageProfileData["limit"] = vdcStorageProfileDetails.Limit
 		storageProfileData["default"] = vdcStorageProfileDetails.Default
 		storageProfileData["enabled"] = vdcStorageProfileDetails.Enabled
-		storageProfileData["name"] = vdcStorageProfileDetails.ProviderVdcStorageProfile.Name
+		if vdcStorageProfileDetails.ProviderVdcStorageProfile != nil {
+			storageProfileData["name"] = vdcStorageProfileDetails.ProviderVdcStorageProfile.Name
+		}
 		root = append(root, storageProfileData)
 	}
 
