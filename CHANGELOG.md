@@ -1,4 +1,7 @@
 ## 2.6.0 (Unreleased)
+BUG FIXES:
+* Fix `vcd_org_vdc` datasource read. When user was Organization administrator datasource failed.
+
 ## 2.5.0 (October 28, 2019)
 
 FEATURES:
