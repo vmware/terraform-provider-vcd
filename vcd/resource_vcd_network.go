@@ -1,7 +1,7 @@
 package vcd
 
 import (
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 // DEPRECATED: use vcd_network_routed instead
