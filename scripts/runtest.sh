@@ -183,6 +183,10 @@ case $wanted in
         export NORUN=1
         binary_test
         ;;
+     orguser-binary)
+        export VCD_TEST_ORG_USER=1
+        binary_test
+        ;;
      binary)
         binary_test
         ;;
@@ -199,6 +203,9 @@ case $wanted in
         export MORE_TAGS=binary
         short_test
         ;;
+    orguser-acceptance)
+        export VCD_TEST_ORG_USER=1
+        acceptance_test functional
     acceptance)
         acceptance_test functional
         ;;
