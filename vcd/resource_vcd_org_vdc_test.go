@@ -14,7 +14,9 @@ import (
 var TestAccVcdVdc = "TestAccVcdVdcBasic"
 
 func TestAccVcdOrgVdcReservationPool(t *testing.T) {
-
+	if !usingSysAdmin() {
+		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
+	}
 	validateConfiguration(t)
 
 	allocationModel := "ReservationPool"
@@ -39,7 +41,9 @@ func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 }
 
 func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
-
+	if !usingSysAdmin() {
+		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
+	}
 	validateConfiguration(t)
 	allocationModel := "AllocationPool"
 
@@ -62,7 +66,9 @@ func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 }
 
 func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
-
+	if !usingSysAdmin() {
+		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
+	}
 	validateConfiguration(t)
 
 	allocationModel := "AllocationVApp"
@@ -86,10 +92,6 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 }
 
 func validateConfiguration(t *testing.T) {
-	if !usingSysAdmin() {
-		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
-	}
-
 	if testConfig.VCD.ProviderVdc.Name == "" {
 		t.Skip("Variable providerVdc.Name must be set to run VDC tests")
 	}
