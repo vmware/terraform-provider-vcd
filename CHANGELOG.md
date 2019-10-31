@@ -1,4 +1,10 @@
 ## 2.6.0 (Unreleased)
+
+IMPROVEMENTS:
+
+* Switch to Terraform terraform-plugin-sdk v1.0.0 as per recent [HashiCorp
+  recommendation](https://www.terraform.io/docs/extend/plugin-sdk.html) - [GH-382]
+
 ## 2.5.0 (October 28, 2019)
 
 FEATURES:
