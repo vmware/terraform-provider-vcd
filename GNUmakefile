@@ -25,7 +25,7 @@ test-binary-prepare: install
 
 # runs test using Terraform binary as Org user
 orguser-test-binary: install
-	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider"
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' orguser-short-provider"
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' binary"
 
 # runs test using Terraform binary as system administrator
