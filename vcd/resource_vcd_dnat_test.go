@@ -72,6 +72,9 @@ func TestAccVcdDNAT_WithOrgNetw(t *testing.T) {
 }
 
 func TestAccVcdDNAT_WithExtNetw(t *testing.T) {
+	if !usingSysAdmin() {
+		t.Skip("TestAccVcdDNAT_WithExtNetw requires system admin privileges")
+	}
 	if testConfig.Networking.ExternalIp == "" {
 		t.Skip("Variable networking.externalIp must be set to run DNAT tests")
 		return
