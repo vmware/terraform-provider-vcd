@@ -432,3 +432,6 @@ borrow org and vcd from the provider.
 * `VCD_TEST_SUITE_CLEANUP=1` will clean up testing resources that were created in previous test runs.
 * `TEST_VERBOSE=1` enables verbose output in some tests, such as the list of used tags, or the version
 used in the documentation index.
+* `VCD_TEST_ORG_USER=1` will enable tests with Org User, using the credentials from the configuration file
+  (`testEnvBuild.OrgUser` and `testEnvBuild.OrgUserPassword`)
+  
