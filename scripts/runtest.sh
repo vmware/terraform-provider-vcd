@@ -24,7 +24,7 @@ fi
 
 accepted_commands=(short acceptance sequential-acceptance multiple binary 
     binary-prepare catalog gateway vapp vm network extnetwork multinetwork 
-    short-provider lb user orguser-acceptance orguser-short-provider)
+    short-provider lb user acceptance-orguser short-provider-orguser)
 
 accepted="[${accepted_commands[*]}]"
 
@@ -208,7 +208,7 @@ case $wanted in
         export VCD_SKIP_TEMPLATE_WRITING=1
         short_test
         ;;
-    orguser-short-provider)
+    short-provider-orguser)
         unset VCD_SKIP_TEMPLATE_WRITING
         export VCD_TEST_ORG_USER=1
         export VCD_ADD_PROVIDER=1
@@ -221,7 +221,7 @@ case $wanted in
         export MORE_TAGS=binary
         short_test
         ;;
-    orguser-acceptance)
+    acceptance-orguser)
         export VCD_TEST_ORG_USER=1
         acceptance_test functional
         ;;
