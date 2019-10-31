@@ -22,7 +22,12 @@ then
     VERBOSE=1
 fi
 
-accepted="[short acceptance sequential-acceptance multiple binary binary-prepare catalog gateway vapp vm network extnetwork multinetwork short-provider lb user]"
+accepted_commands=(short acceptance sequential-acceptance multiple binary 
+    binary-prepare catalog gateway vapp vm network extnetwork multinetwork 
+    short-provider lb user acceptance-orguser short-provider-orguser)
+
+accepted="[${accepted_commands[*]}]"
+
 if [ -z "$wanted" ]
 then
     echo "Syntax: test TYPE"
@@ -76,6 +81,12 @@ function unit_test {
 }
 
 function short_test {
+    # If we are creating binary test files, we remove the old ones,
+    # to avoid leftovers from previous runs to affect the current test
+    if [ -n "$VCD_ADD_PROVIDER" -a -n "$MORE_TAGS" -a -d ./test-artifacts ]
+    then
+        rm -f ./test-artifacts/*.tf
+    fi
     if [ -n "$VERBOSE" ]
     then
         echo " go test  -i ${TEST} || exit 1"
@@ -85,6 +96,10 @@ function short_test {
     then
         go test -i ${TEST} || exit 1
         VCD_SHORT_TEST=1 go test -tags "functional $MORE_TAGS" -v -timeout 3m .
+    fi
+    if [ -n "$VCD_TEST_ORG_USER" ]
+    then
+        rm -f test-artifacts/cust.*.tf
     fi
 }
 
@@ -193,11 +208,22 @@ case $wanted in
         export VCD_SKIP_TEMPLATE_WRITING=1
         short_test
         ;;
-    short-provider)
+    short-provider-orguser)
+        unset VCD_SKIP_TEMPLATE_WRITING
+        export VCD_TEST_ORG_USER=1
+        export VCD_ADD_PROVIDER=1
+        export MORE_TAGS=binary
+        short_test
+        ;;
+     short-provider)
         unset VCD_SKIP_TEMPLATE_WRITING
         export VCD_ADD_PROVIDER=1
         export MORE_TAGS=binary
         short_test
+        ;;
+    acceptance-orguser)
+        export VCD_TEST_ORG_USER=1
+        acceptance_test functional
         ;;
     acceptance)
         acceptance_test functional
