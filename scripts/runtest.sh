@@ -206,6 +206,7 @@ case $wanted in
     orguser-acceptance)
         export VCD_TEST_ORG_USER=1
         acceptance_test functional
+        ;;
     acceptance)
         acceptance_test functional
         ;;
