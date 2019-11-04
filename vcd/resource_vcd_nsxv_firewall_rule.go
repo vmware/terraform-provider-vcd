@@ -231,9 +231,10 @@ func resourceVcdNsxvFirewallRule() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"protocol": {
-							Required:     true,
-							Type:         schema.TypeString,
-							ValidateFunc: validation.StringInSlice([]string{"any", "icmp", "tcp", "udp"}, true),
+							Required:         true,
+							Type:             schema.TypeString,
+							ValidateFunc:     validation.StringInSlice([]string{"any", "icmp", "tcp", "udp"}, true),
+							DiffSuppressFunc: suppressCase,
 						},
 						"port": {
 							Optional:     true,

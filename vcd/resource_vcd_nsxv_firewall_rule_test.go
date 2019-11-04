@@ -706,7 +706,7 @@ resource "vcd_nsxv_firewall_rule" "rule2" {
 	}
 
 	service {
-		protocol    = "tcp"
+		protocol    = "TCP"
 		port        = "443-543"
 		source_port = "2000-4000"
 	}
@@ -783,7 +783,7 @@ resource "vcd_nsxv_firewall_rule" "rule4" {
 	}
 
 	service {
-		protocol = "udp"
+		protocol = "UDP"
 		port     = "10000"
 	}
 
@@ -794,7 +794,7 @@ resource "vcd_nsxv_firewall_rule" "rule4" {
 	}
 
 	service {
-		protocol = "icmp"
+		protocol = "ICMP"
 	}
   }
 
@@ -872,7 +872,7 @@ resource "vcd_nsxv_firewall_rule" "rule6-6" {
 	}
 
 	service {
-		protocol = "any"
+		protocol = "ANY"
 	}
 
 	depends_on = ["vcd_nsxv_firewall_rule.rule6"]

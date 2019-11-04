@@ -4,6 +4,7 @@ import (
 	"flag"
 	"net"
 	"os"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
@@ -67,4 +68,12 @@ func suppressAlways() schema.SchemaDiffSuppressFunc {
 	return func(k string, old string, new string, d *schema.ResourceData) bool {
 		return true
 	}
+}
+
+// suppressCase is a schema.SchemaDiffSuppressFunc which ignore case changes
+func suppressCase(k, old, new string, d *schema.ResourceData) bool {
+	if strings.ToLower(old) == strings.ToLower(new) {
+		return true
+	}
+	return false
 }
