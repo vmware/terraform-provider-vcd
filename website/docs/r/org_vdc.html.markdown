@@ -71,7 +71,7 @@ The following arguments are supported:
 * `org` - (Optional) Organization to create the VDC in, optional if defined at provider level
 * `name` - (Required) VDC name
 * `description` - (Optional) VDC friendly description
-* `provider_vdc_name` - (Required, System Admin) A name of the Provider VDC from which this organization VDC is provisioned.
+* `provider_vdc_name` - (Required, System Admin) name of the Provider VDC from which this organization VDC is provisioned.
 * `allocation_model` - (Required) The allocation model used by this VDC; must be one of {AllocationVApp ("Pay as you go"), AllocationPool ("Allocation pool"), ReservationPool ("Reservation pool")}
 * `compute_capacity` - (Required, System Admin) The compute capacity allocated to this VDC.  See [Compute Capacity](#computecapacity) below for details.
 * `nic_quota` - (Optional) Maximum number of virtual NICs allowed in this VDC. Defaults to 0, which specifies an unlimited number.
@@ -81,10 +81,10 @@ The following arguments are supported:
 * `storage_profile` - (Required, System Admin) Storage profiles supported by this VDC.  See [Storage Profile](#storageprofile) below for details.
 * `memory_guaranteed` - (Optional, System Admin) Percentage of allocated memory resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. When Allocation model is AllocationPool minimum value is 0.2. If left empty, vCD sets a value.
 * `cpu_guaranteed` - (Optional, System Admin) Percentage of allocated CPU resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. If left empty, vCD sets a value.
-* `cpu_speed` - (Optional) Specifies the clock frequency, in Megahertz, for any virtual CPU that is allocated to a VM. A VM with 2 vCPUs will consume twice as much of this value. Ignored for ReservationPool. Required when AllocationModel is AllocationVApp or AllocationPool, and may not be less than 256 MHz. Defaults to 1000 MHz if value isn't provided.
+* `cpu_speed` - (Optional, System Admin) Specifies the clock frequency, in Megahertz, for any virtual CPU that is allocated to a VM. A VM with 2 vCPUs will consume twice as much of this value. Ignored for ReservationPool. Required when AllocationModel is AllocationVApp or AllocationPool, and may not be less than 256 MHz. Defaults to 1000 MHz if value isn't provided.
 * `metadata` - (Optional; *v2.4+*) Key value map of metadata to assign to this VDC
-* `enable_thin_provisioning` - (Optional) Boolean to request thin provisioning. Request will be honored only if the underlying data store supports it. Thin provisioning saves storage space by committing it on demand. This allows over-allocation of storage.
-* `enable_fast_provisioning` - (Optional) Request fast provisioning. Request will be honored only if the underlying datastore supports it. Fast provisioning can reduce the time it takes to create virtual machines by using vSphere linked clones. If you disable fast provisioning, all provisioning operations will result in full clones.
+* `enable_thin_provisioning` - (Optional, System Admin) Boolean to request thin provisioning. Request will be honored only if the underlying data store supports it. Thin provisioning saves storage space by committing it on demand. This allows over-allocation of storage.
+* `enable_fast_provisioning` - (Optional, System Admin) Request fast provisioning. Request will be honored only if the underlying datastore supports it. Fast provisioning can reduce the time it takes to create virtual machines by using vSphere linked clones. If you disable fast provisioning, all provisioning operations will result in full clones.
 * `network_pool_name` - (Optional, System Admin) Reference to a network pool in the Provider VDC. Required if this VDC will contain routed or isolated networks.
 * `allow_over_commit` - (Optional) Set to false to disallow creation of the VDC if the AllocationModel is AllocationPool or ReservationPool and the ComputeCapacity you specified is greater than what the backing Provider VDC can supply. Default is true.
 * `enable_vm_discovery` - (Optional) If true, discovery of vCenter VMs is enabled for resource pools backing this VDC. If false, discovery is disabled. If left unspecified, the actual behaviour depends on enablement at the organization level and at the system level.
