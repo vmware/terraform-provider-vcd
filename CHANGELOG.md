@@ -1,4 +1,10 @@
 ## 2.6.0 (Unreleased)
+
+IMPROVEMENTS:
+
+* Switch to Terraform terraform-plugin-sdk v1.0.0 as per recent [HashiCorp
+  recommendation](https://www.terraform.io/docs/extend/plugin-sdk.html) - [GH-382]
+
 BUG FIXES:
 * Fix `vcd_org_vdc` datasource read. When user was Organization administrator datasource failed.
 
