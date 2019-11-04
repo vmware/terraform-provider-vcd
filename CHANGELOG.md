@@ -5,16 +5,16 @@ IMPROVEMENTS:
 * Switch to Terraform terraform-plugin-sdk v1.0.0 as per recent [HashiCorp
   recommendation](https://www.terraform.io/docs/extend/plugin-sdk.html) - [GH-382]
 * `resource/vcd_nsxv_dnat` and `resource/vcd_nsxv_dnat` more precise error message when network is
-  not found - [GH-XX]
+  not found - [GH-384]
 * `resource/vcd_nsxv_dnat` and `resource/vcd_nsxv_dnat` `rule_tag` must be int to avoid vCD internal
-  exception passthrough - [GH-XX]
-* `resource/vcd_nsxv_dnat` put correct name for example in website - [GH-XX]
+  exception passthrough - [GH-384]
+* `resource/vcd_nsxv_dnat` put correct name for example in website - [GH-384]
 * `resource/vcd_nsxv_dnat` and `resource/vcd_nsxv_dnat` avoid rule replacement because of changed
-  `rule_tag` when rule is altered via UI - [GH-XX]
+  `rule_tag` when rule is altered via UI - [GH-384]
 * `resource/vcd_nsxv_firewall_rule` add explicit protocol validation to avoid odd NSX-V API error -
-  [GH-XX]
+  [GH-384]
 * `resource/vcd_nsxv_firewall_rule` `rule_tag` must be int to avoid vCD internal exception
-  passthrough - [GH-XX]
+  passthrough - [GH-384]
 
 
 ## 2.5.0 (October 28, 2019)
