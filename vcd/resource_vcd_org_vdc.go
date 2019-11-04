@@ -314,10 +314,16 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 	if adminVdc.AdminVdc.ResourceGuaranteedCpu != nil {
 		_ = d.Set("cpu_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedCpu)
 	}
-	_ = d.Set("cpu_speed", adminVdc.AdminVdc.VCpuInMhz)
+	if adminVdc.AdminVdc.VCpuInMhz != nil {
+		_ = d.Set("cpu_speed", int(*adminVdc.AdminVdc.VCpuInMhz))
+	}
 	_ = d.Set("description", adminVdc.AdminVdc.Description)
-	_ = d.Set("enable_fast_provisioning", adminVdc.AdminVdc.UsesFastProvisioning)
-	_ = d.Set("enable_thin_provisioning", adminVdc.AdminVdc.IsThinProvision)
+	if adminVdc.AdminVdc.UsesFastProvisioning != nil {
+		_ = d.Set("enable_fast_provisioning", *adminVdc.AdminVdc.UsesFastProvisioning)
+	}
+	if adminVdc.AdminVdc.IsThinProvision != nil {
+		_ = d.Set("enable_thin_provisioning", *adminVdc.AdminVdc.IsThinProvision)
+	}
 	_ = d.Set("enable_vm_discovery", adminVdc.AdminVdc.VmDiscoveryEnabled)
 	_ = d.Set("enabled", adminVdc.AdminVdc.IsEnabled)
 	if adminVdc.AdminVdc.ResourceGuaranteedMemory != nil {
@@ -654,11 +660,13 @@ func getUpdatedVdcInput(d *schema.ResourceData, vcdClient *VCDClient, vdc *govcd
 	}
 
 	if d.HasChange("cpu_speed") {
-		vdc.AdminVdc.VCpuInMhz = int64(d.Get("cpu_speed").(int))
+		cpuSpeed := int64(d.Get("cpu_speed").(int))
+		vdc.AdminVdc.VCpuInMhz = &cpuSpeed
 	}
 
 	if d.HasChange("enable_thin_provisioning") {
-		vdc.AdminVdc.IsThinProvision = d.Get("enable_thin_provisioning").(bool)
+		thinProvisioned := d.Get("enable_thin_provisioning").(bool)
+		vdc.AdminVdc.IsThinProvision = &thinProvisioned
 	}
 
 	if d.HasChange("network_pool_name") {
@@ -676,7 +684,8 @@ func getUpdatedVdcInput(d *schema.ResourceData, vcdClient *VCDClient, vdc *govcd
 	}
 
 	if d.HasChange("enable_fast_provisioning") {
-		vdc.AdminVdc.UsesFastProvisioning = d.Get("enable_fast_provisioning").(bool)
+		fastProvisioned := d.Get("enable_fast_provisioning").(bool)
+		vdc.AdminVdc.UsesFastProvisioning = &fastProvisioned
 	}
 
 	if d.HasChange("allow_over_commit") {
