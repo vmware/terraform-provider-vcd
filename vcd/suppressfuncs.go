@@ -6,7 +6,7 @@ import (
 	"net"
 	"os"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 // suppressWordToEmptyString is a DiffSuppressFunc which ignore the change from word to empty string "".
