@@ -159,8 +159,8 @@ func getDnatRule(d *schema.ResourceData, edgeGateway govcd.EdgeGateway) (*types.
 		TranslatedPort:    d.Get("translated_port").(string),
 	}
 
-	if value, ok := d.Get("rule_tag").(int); ok {
-		natRule.RuleTag = strconv.Itoa(value)
+	if ruleTag, ok := d.GetOk("rule_tag"); ok {
+		natRule.RuleTag = strconv.Itoa(ruleTag.(int))
 	}
 
 	return natRule, nil
