@@ -205,7 +205,7 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 					// Test hash values. The hardcoded hash values ensures that hashing function is not altered
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule2", "source.0.gateway_interfaces.2418442387", "vse"),
 					resource.TestCheckOutput("destination_gateway_interface", testConfig.Networking.ExternalNetwork),
-					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule2", "service.1333861436.protocol", "tcp"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule2", "service.1333861436.protocol", "TCP"),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule2", "service.1333861436.port", "443-543"),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule2", "service.1333861436.source_port", "2000-4000"),
 				),
@@ -280,7 +280,7 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule4", "service.2135266082.port", "8443"),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule4", "service.2135266082.source_port", "20000-40000"),
 					// Service 3
-					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule4", "service.3674967142.protocol", "udp"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule4", "service.3674967142.protocol", "UDP"),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule4", "service.3674967142.port", "10000"),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule4", "service.3674967142.source_port", "any"),
 					// Service 4
@@ -288,7 +288,7 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule4", "service.4080176191.port", "10000"),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule4", "service.4080176191.source_port", "20000"),
 					// Service 5
-					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule4", "service.1865210680.protocol", "icmp"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule4", "service.1865210680.protocol", "ICMP"),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule4", "service.1865210680.port", ""),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule4", "service.1865210680.source_port", ""),
 
@@ -439,7 +439,7 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule6-6", "source.0.ip_addresses.1323029765", "31.10.10.0/24"),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule6-6", "destination.0.ip_addresses.4135626304", "40.10.10.0/24"),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule6-6", "destination.0.ip_addresses.722894789", "41.10.10.0/24"),
-					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule6-6", "service.455563319.protocol", "any"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule6-6", "service.455563319.protocol", "ANY"),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule6-6", "service.455563319.port", "any"),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule6-6", "service.455563319.source_port", "any"),
 
