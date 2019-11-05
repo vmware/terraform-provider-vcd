@@ -78,11 +78,6 @@ var (
 	// Invalidates the cache after a given time (connection tokens usually expire after 20 to 30 minutes)
 	maxConnectionValidity time.Duration = 20 * time.Minute
 
-<<<<<<< HEAD
-	enableDebug           bool = os.Getenv("GOVCD_DEBUG") != ""
-	enableTrace           bool = os.Getenv("GOVCD_TRACE") != ""
-	ImportSeparationToken      = "."
-=======
 	enableDebug bool = os.Getenv("GOVCD_DEBUG") != ""
 	enableTrace bool = os.Getenv("GOVCD_TRACE") != ""
 
@@ -90,7 +85,6 @@ var (
 	// Can be changed usin either "import_separator" property in Provider
 	// or environment variable "VCD_IMPORT_SEPARATOR"
 	ImportSeparator = "."
->>>>>>> master
 )
 
 // Displays conditional messages

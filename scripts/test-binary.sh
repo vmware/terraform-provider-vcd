@@ -244,12 +244,13 @@ do
         echo "# $CF skipped ($file_count of $how_many)"
         continue
     fi
-    is_provider=$(grep '^\s*provider' $CF)
-    is_resource=$(grep '^\s*resource' $CF)
+    is_provider=$(grep '^\s*provider\>' $CF)
+    is_resource=$(grep '^\s*resource\>' $CF)
+    is_data_source=$(grep '^\s*data\>' $CF)
     has_missing_fields=$(grep '"\*\*\* MISSING FIELD' $CF)
-    if [ -z "$is_resource" ]
+    if [ -z "$is_resource" -a -z "$is_data_source" ]
     then
-        echo_verbose "$CF not a resource"
+        echo_verbose "$CF not a resource or data source"
         continue
     fi
     if [ -z "$is_provider" ]

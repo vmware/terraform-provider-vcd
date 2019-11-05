@@ -1,63 +1,72 @@
-## 2.5.0 (Unreleased)
+## 2.6.0 (Unreleased)
+* **New Data Source:** `vcd_vapp_vm` VM - ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+
+BUG FIXES:
+
+* Removed `power_on` property from data source `vcd_vapp`, as it is a directive used during vApp build.
+  Its state is never updated and the fields `status` and `status_text` already provide the necessary information.
+  ([#379](https://github.com/terraform-providers/terraform-provider-vcd/issues/379))
+
+## 2.5.0 (October 28, 2019)
 
 FEATURES:
-* **New Resource:** `vcd_nsxv_dnat` DNAT for advanced edge gateways using proxied NSX-V API - [GH-328]
-* **New Resource:** `vcd_nsxv_snat`  SNAT for advanced edge gateways using proxied NSX-V API - [GH-328]
-* **New Resource:** `vcd_nsxv_firewall_rule`  firewall for advanced edge gateways using proxied NSX-V API - [GH-341, GH-358]
-* **New Data Source:** `vcd_org` Organization - [GH-218]
-* **New Data Source:** `vcd_catalog` Catalog - [GH-218]
-* **New Data Source:** `vcd_catalog_item` CatalogItem - [GH-218]
-* **New Data Source:** `vcd_org_vdc` Organization VDC - [GH-324]
-* **New Data Source:** `vcd_external_network` External Network - [GH-218]
-* **New Data Source:** `vcd_edgegateway` Edge Gateway - [GH-218]
-* **New Data Source:** `vcd_network_routed` Routed Network - [GH-218]
-* **New Data Source:** `vcd_network_isolated` Isolated Network - [GH-218]
-* **New Data Source:** `vcd_network_direct` Direct Network - [GH-218]
-* **New Data Source:** `vcd_vapp` vApp - [GH-218]
-* **New Data Source:** `vcd_nsxv_dnat` DNAT for advanced edge gateways using proxied NSX-V API - [GH-328]
-* **New Data Source:** `vcd_nsxv_snat` SNAT for advanced edge gateways using proxied NSX-V API - [GH-328]
-* **New Data Source:** `vcd_nsxv_firewall_rule` firewall for advanced edge gateways using proxied NSX-V API - [GH-341]
-* **New Data Source:** `vcd_independent_disk` Independent disk - [GH-349]
-* **New Data Source:** `vcd_catalog_media` Media item - [GH-340]
+* **New Resource:** `vcd_nsxv_dnat` DNAT for advanced edge gateways using proxied NSX-V API - ([#328](https://github.com/terraform-providers/terraform-provider-vcd/issues/328))
+* **New Resource:** `vcd_nsxv_snat`  SNAT for advanced edge gateways using proxied NSX-V API - ([#328](https://github.com/terraform-providers/terraform-provider-vcd/issues/328))
+* **New Resource:** `vcd_nsxv_firewall_rule`  firewall for advanced edge gateways using proxied NSX-V API - ([#341](https://github.com/terraform-providers/terraform-provider-vcd/issues/341), [#358](https://github.com/terraform-providers/terraform-provider-vcd/issues/358))
+* **New Data Source:** `vcd_org` Organization - ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+* **New Data Source:** `vcd_catalog` Catalog - ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+* **New Data Source:** `vcd_catalog_item` CatalogItem - ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+* **New Data Source:** `vcd_org_vdc` Organization VDC - ([#324](https://github.com/terraform-providers/terraform-provider-vcd/issues/324))
+* **New Data Source:** `vcd_external_network` External Network - ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+* **New Data Source:** `vcd_edgegateway` Edge Gateway - ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+* **New Data Source:** `vcd_network_routed` Routed Network - ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+* **New Data Source:** `vcd_network_isolated` Isolated Network - ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+* **New Data Source:** `vcd_network_direct` Direct Network - ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+* **New Data Source:** `vcd_vapp` vApp - ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+* **New Data Source:** `vcd_nsxv_dnat` DNAT for advanced edge gateways using proxied NSX-V API - ([#328](https://github.com/terraform-providers/terraform-provider-vcd/issues/328))
+* **New Data Source:** `vcd_nsxv_snat` SNAT for advanced edge gateways using proxied NSX-V API - ([#328](https://github.com/terraform-providers/terraform-provider-vcd/issues/328))
+* **New Data Source:** `vcd_nsxv_firewall_rule` firewall for advanced edge gateways using proxied NSX-V API - ([#341](https://github.com/terraform-providers/terraform-provider-vcd/issues/341))
+* **New Data Source:** `vcd_independent_disk` Independent disk - ([#349](https://github.com/terraform-providers/terraform-provider-vcd/issues/349))
+* **New Data Source:** `vcd_catalog_media` Media item - ([#340](https://github.com/terraform-providers/terraform-provider-vcd/issues/340))
 
 IMPROVEMENTS:
 
 * Add support for vCD 10.0
-* `resource/vcd_org` Add import capability and full read support [GH-218]
-* `resource/vcd_catalog` Add import capability and full read support [GH-218]
-* `resource/vcd_catalog_item` Add import capability and full read support [GH-218]
-* `resource/vcd_external_network` Add import capability and full read support [GH-218]
-* `resource/vcd_edgegateway` Add import capability and full read support [GH-218]
-* `resource/vcd_network_routed` Add import capability and full read support [GH-218]
-* `resource/vcd_network_isolated` Add import capability and full read support [GH-218]
-* `resource/vcd_network_direct` Add import capability and full read support [GH-218]
-* `resource/vcd_vapp` Add import capability and full read support [GH-218]
+* `resource/vcd_org` Add import capability and full read support ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+* `resource/vcd_catalog` Add import capability and full read support ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+* `resource/vcd_catalog_item` Add import capability and full read support ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+* `resource/vcd_external_network` Add import capability and full read support ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+* `resource/vcd_edgegateway` Add import capability and full read support ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+* `resource/vcd_network_routed` Add import capability and full read support ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+* `resource/vcd_network_isolated` Add import capability and full read support ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+* `resource/vcd_network_direct` Add import capability and full read support ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+* `resource/vcd_vapp` Add import capability and full read support ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
 * `resource/vcd_network_direct`: Direct network state ID changed from network name to vCD ID 
 * `resource/vcd_network_isolated`: Isolated network state ID changed from network name to vCD ID 
 * `resource/vcd_network_routed`: Routed network state ID changed from network name to vCD ID 
 * `resource/vcd_vapp`: vApp state ID changed from vApp name to vCD ID
 * `resource/vcd_vapp`: Add properties `status` and `status_text`
-* `resource/catalog_item` added catalog item metadata support [GH-285] 
+* `resource/catalog_item` added catalog item metadata support [[#285](https://github.com/terraform-providers/terraform-provider-vcd/issues/285)] 
 * `resource/vcd_catalog`: Catalog state ID changed from catalog name to vCD ID 
 * `resource/vcd_catalog_item`: CatalogItem state ID changed from colon separated list of catalog name and item name to vCD ID 
-* `resource/catalog_item` added catalog item metadata support [GH-298] 
-* `resource/catalog_media` added catalog media item metadata support [GH-298]
-* `resource/vcd_vapp_vm` supports update for `network` block [GH-310]
-* `resource/vcd_vapp_vm` allows to force guest customization [GH-310]
-* `resource/vcd_vapp` supports guest properties [GH-319]
-* `resource/vcd_vapp_vm` supports guest properties [GH-319]
-* `resource/vcd_network_direct` Add computed properties (external network gateway, netmask, DNS, and DNS suffix) [GH-330]
-* `vcd_org_vdc` Add import capability and full read support [GH-218]
-* Upgrade Terraform SDK dependency to 0.12.8 [GH-320]
-* `resource/vcd_vapp_vm` has new field `computer_name` [GH-334]
-* Import functions can now use custom separators instead of "." [GH-343]
-* `resource/vcd_independent_disk` Add computed properties (`iops`, `owner_name`, `datastore_name`, `is_attached`) and read support for all fields except the `size` [GH-349]
-* `resource/vcd_independent_disk` Disk state ID changed from name of disk to vCD ID [GH-349]
-* Import functions can now use a custom separator instead of "." [GH-343]
-* `resource/vcd_catalog_media` Add computed properties (`is_iso`, `owner_name`, `is_published`, `creation_date`, `size`, `status`, `storage_profile_name`) and full read support [GH-340]
-* `resource/vcd_catalog_media` MediaItem state ID changed from colon separated list of catalog name and media name to vCD ID [GH-340]
-* Import functions can now use custom separators instead of "." [GH-343]
-* `resource/vcd_vapp_vm` has new field `computer_name` [GH-334, GH-347]
+* `resource/catalog_item` added catalog item metadata support [[#298](https://github.com/terraform-providers/terraform-provider-vcd/issues/298)] 
+* `resource/catalog_media` added catalog media item metadata support ([#298](https://github.com/terraform-providers/terraform-provider-vcd/issues/298))
+* `resource/vcd_vapp_vm` supports update for `network` block ([#310](https://github.com/terraform-providers/terraform-provider-vcd/issues/310))
+* `resource/vcd_vapp_vm` allows to force guest customization ([#310](https://github.com/terraform-providers/terraform-provider-vcd/issues/310))
+* `resource/vcd_vapp` supports guest properties ([#319](https://github.com/terraform-providers/terraform-provider-vcd/issues/319))
+* `resource/vcd_vapp_vm` supports guest properties ([#319](https://github.com/terraform-providers/terraform-provider-vcd/issues/319))
+* `resource/vcd_network_direct` Add computed properties (external network gateway, netmask, DNS, and DNS suffix) ([#330](https://github.com/terraform-providers/terraform-provider-vcd/issues/330))
+* `vcd_org_vdc` Add import capability and full read support ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+* Upgrade Terraform SDK dependency to 0.12.8 ([#320](https://github.com/terraform-providers/terraform-provider-vcd/issues/320))
+* `resource/vcd_vapp_vm` has new field `computer_name` ([#334](https://github.com/terraform-providers/terraform-provider-vcd/issues/334))
+* Import functions can now use custom separators instead of "." ([#343](https://github.com/terraform-providers/terraform-provider-vcd/issues/343))
+* `resource/vcd_independent_disk` Add computed properties (`iops`, `owner_name`, `datastore_name`, `is_attached`) and read support for all fields except the `size` ([#349](https://github.com/terraform-providers/terraform-provider-vcd/issues/349))
+* `resource/vcd_independent_disk` Disk state ID changed from name of disk to vCD ID ([#349](https://github.com/terraform-providers/terraform-provider-vcd/issues/349))
+* Import functions can now use a custom separator instead of "." ([#343](https://github.com/terraform-providers/terraform-provider-vcd/issues/343))
+* `resource/vcd_catalog_media` Add computed properties (`is_iso`, `owner_name`, `is_published`, `creation_date`, `size`, `status`, `storage_profile_name`) and full read support ([#340](https://github.com/terraform-providers/terraform-provider-vcd/issues/340))
+* `resource/vcd_catalog_media` MediaItem state ID changed from colon separated list of catalog name and media name to vCD ID ([#340](https://github.com/terraform-providers/terraform-provider-vcd/issues/340))
+* Import functions can now use custom separators instead of "." ([#343](https://github.com/terraform-providers/terraform-provider-vcd/issues/343))
+* `resource/vcd_vapp_vm` has new field `computer_name` ([#334](https://github.com/terraform-providers/terraform-provider-vcd/issues/334), [#347](https://github.com/terraform-providers/terraform-provider-vcd/issues/347))
 
 BUG FIXES:
 * Change default value for `vcd_org.deployed_vm_quota` and `vcd_org.stored_vm_quota`. It was incorrectly set at `-1` instead of `0`.
@@ -65,8 +74,8 @@ BUG FIXES:
 * Wait for task completion on creation and update, where tasks were not handled at all.
 * `resource/vcd_firewall_rules` force recreation of the resource when attributes of the sub-element `rule` are changed (fixes a situation when it tried to update a rule).
 * `resource/vcd_network_isolated` Fix definition of DHCP, which was created automatically with leftovers from static IP pool even when not requested.
-* `resource/vcd_network_routed` Fix retrieval with early vCD versions. [GH-344]
-* `resource/vcd_edgegateway_vpn` Required replacement every time for `shared_secret` field.  [GH-361]
+* `resource/vcd_network_routed` Fix retrieval with early vCD versions. ([#344](https://github.com/terraform-providers/terraform-provider-vcd/issues/344))
+* `resource/vcd_edgegateway_vpn` Required replacement every time for `shared_secret` field.  ([#361](https://github.com/terraform-providers/terraform-provider-vcd/issues/361))
 
 DEPRECATIONS
 * The ability of deploying a VM implicitly within a vApp is deprecated. Users are encouraged to set an empty vApp and

@@ -30,6 +30,12 @@ func datasourceVcdVAppVm() *schema.Resource {
 				Optional:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
+			"description": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The VM description",
+				// Currently, this field has the description of the OVA used to create the VM
+			},
 			"memory": &schema.Schema{
 				Type:        schema.TypeInt,
 				Computed:    true,
@@ -46,10 +52,8 @@ func datasourceVcdVAppVm() *schema.Resource {
 				Description: "The number of cores per socket",
 			},
 			"metadata": {
-				Type:     schema.TypeMap,
-				Computed: true,
-				// For now underlying go-vcloud-director repo only supports
-				// a value of type String in this map.
+				Type:        schema.TypeMap,
+				Computed:    true,
 				Description: "Key value map of metadata to assign to this VM",
 			},
 			"href": &schema.Schema{
@@ -108,11 +112,6 @@ func datasourceVcdVAppVm() *schema.Resource {
 						Type:        schema.TypeString,
 						Computed:    true,
 						Description: "Independent disk name",
-					},
-					"id": {
-						Type:        schema.TypeString,
-						Computed:    true,
-						Description: "Independent disk ID (to use when disk has duplicated name)",
 					},
 				}},
 				Computed: true,

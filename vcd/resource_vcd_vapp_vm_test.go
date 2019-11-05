@@ -58,7 +58,7 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_vm."+vmName, "computer_name", vmName+"-unique"),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_vm."+vmName, "ip", "10.10.102.161"),
+						"vcd_vapp_vm."+vmName, "network.0.ip", "10.10.102.161"),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_vm."+vmName, "power_on", "true"),
 					resource.TestCheckResourceAttr(
@@ -118,7 +118,6 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   org           = "{{.Org}}"
   vdc           = "{{.Vdc}}"
   vapp_name     = "${vcd_vapp.{{.VappName}}.name}"
-  network_name  = "${vcd_network_routed.{{.NetworkName}}.name}"
   name          = "{{.VmName}}"
   computer_name = "{{.ComputerName}}"
   catalog_name  = "{{.Catalog}}"
@@ -126,10 +125,16 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   memory        = 1024
   cpus          = 2
   cpu_cores     = 1
-  ip            = "10.10.102.161"
 
   metadata = {
     vm_metadata = "VM Metadata."
+  }
+
+  network {
+    name               = "${vcd_network_routed.{{.NetworkName}}.name}"
+    ip                 = "10.10.102.161"
+    type               = "org"
+    ip_allocation_mode = "MANUAL"
   }
 
   disk {
@@ -137,7 +142,5 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
     bus_number  = 1
     unit_number = 0
   }
-
-  depends_on = ["vcd_vapp.{{.VappName}}", "vcd_independent_disk.{{.diskResourceName}}", "vcd_network_routed.{{.NetworkName}}"]
 }
 `
