@@ -4,16 +4,19 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 )
 
 // Test independent disk data resource
 // Using a disk data source we reference a disk data source
 func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
+	if !usingSysAdmin() {
+		t.Skip("TestAccVcdDataSourceIndependentDisk requires system admin privileges")
+	}
 	resourceName := "TestAccVcdDataSourceIndependentDisk_1"
 	datasourceName := "TestAccVcdDataSourceIndependentDisk_Data"
 	datasourceNameWithId := "TestAccVcdDataSourceIndependentDiskWithId_Data"

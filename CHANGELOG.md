@@ -7,6 +7,11 @@ BUG FIXES:
   Its state is never updated and the fields `status` and `status_text` already provide the necessary information.
   ([#379](https://github.com/terraform-providers/terraform-provider-vcd/issues/379))
 
+IMPROVEMENTS:
+
+* Switch to Terraform terraform-plugin-sdk v1.0.0 as per recent [HashiCorp
+  recommendation](https://www.terraform.io/docs/extend/plugin-sdk.html) - [GH-382]
+
 ## 2.5.0 (October 28, 2019)
 
 FEATURES:

@@ -23,8 +23,12 @@ test-binary-prepare: install
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider"
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' binary-prepare"
 
+# runs test using Terraform binary as Org user
+test-binary-orguser: install
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider-orguser"
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' binary"
 
-# runs test using Terraform binary
+# runs test using Terraform binary as system administrator
 test-binary: install
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider"
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' binary"
@@ -50,7 +54,11 @@ testunit: fmtcheck
 test: testunit
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' short"
 
-# Runs the full acceptance test
+# Runs the full acceptance test as Org user
+testacc-orguser: testunit
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' acceptance-orguser"
+
+# Runs the full acceptance test as system administrator
 testacc: testunit
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' acceptance"
 

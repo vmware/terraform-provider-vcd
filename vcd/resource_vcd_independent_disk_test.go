@@ -8,14 +8,17 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
 var resourceName = "TestAccVcdIndependentDiskBasic_1"
 var name = "TestAccVcdIndependentDiskBasic"
 
 func TestAccVcdIndependentDiskBasic(t *testing.T) {
+	if !usingSysAdmin() {
+		t.Skip("TestAccVcdIndependentDiskBasic requires system admin privileges")
+	}
 
 	var params = StringMap{
 		"Org":                testConfig.VCD.Org,
