@@ -27,7 +27,7 @@ func NewVAppTemplate(cli *Client) *VAppTemplate {
 func (vdc *Vdc) InstantiateVAppTemplate(template *types.InstantiateVAppTemplateParams) error {
 	vdcHref, err := url.ParseRequestURI(vdc.Vdc.HREF)
 	if err != nil {
-		return fmt.Errorf("error getting vdc href: %v", err)
+		return fmt.Errorf("error getting vdc href: %s", err)
 	}
 	vdcHref.Path += "/action/instantiateVAppTemplate"
 
@@ -44,7 +44,7 @@ func (vdc *Vdc) InstantiateVAppTemplate(template *types.InstantiateVAppTemplateP
 		task.Task = taskItem
 		err = task.WaitTaskCompletion()
 		if err != nil {
-			return fmt.Errorf("error performing task: %#v", err)
+			return fmt.Errorf("error performing task: %s", err)
 		}
 	}
 	return nil

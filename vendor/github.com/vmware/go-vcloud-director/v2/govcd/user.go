@@ -344,7 +344,7 @@ func (user *OrgUser) Delete(takeOwnership bool) error {
 
 	userHREF, err := url.ParseRequestURI(user.User.Href)
 	if err != nil {
-		return fmt.Errorf("error getting HREF for user %s : %v", user.User.Name, err)
+		return fmt.Errorf("error getting HREF for user %s : %s", user.User.Name, err)
 	}
 	util.Logger.Printf("[TRACE] Url for deleting user : %#v and name: %s", userHREF, user.User.Name)
 
@@ -411,7 +411,7 @@ func (user *OrgUser) Update() error {
 
 	userHREF, err := url.ParseRequestURI(user.User.Href)
 	if err != nil {
-		return fmt.Errorf("error getting HREF for user %s : %v", user.User.Name, err)
+		return fmt.Errorf("error getting HREF for user %s : %s", user.User.Name, err)
 	}
 	util.Logger.Printf("[TRACE] Url for updating user : %#v and name: %s", userHREF, user.User.Name)
 
@@ -501,7 +501,7 @@ func (user *OrgUser) TakeOwnership() error {
 
 	userHREF, err := url.ParseRequestURI(user.User.Href + "/action/takeOwnership")
 	if err != nil {
-		return fmt.Errorf("error getting HREF for user %s : %v", user.User.Name, err)
+		return fmt.Errorf("error getting HREF for user %s : %s", user.User.Name, err)
 	}
 	util.Logger.Printf("[TRACE] Url for taking ownership from user : %#v and name: %s", userHREF, user.User.Name)
 
