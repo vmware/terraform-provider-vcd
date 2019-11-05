@@ -6,7 +6,7 @@ IMPROVEMENTS:
   recommendation](https://www.terraform.io/docs/extend/plugin-sdk.html) - [GH-382]
 
 BUG FIXES:
-* Fix `vcd_org_vdc` datasource read. When user was Organization administrator datasource failed.
+* Fix `vcd_org_vdc` datasource read. When user was Organization administrator datasource failed. These fields provider_vdc_name, storage_profile, memory_guaranteed, cpu_guaranteed, cpu_speed, enable_thin_provisioning, enable_fast_provisioning, network_pool_name won't be read for org admin.
 
 ## 2.5.0 (October 28, 2019)
 
