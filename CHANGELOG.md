@@ -8,7 +8,7 @@ IMPROVEMENTS:
   not found - [GH-384]
 * `resource/vcd_nsxv_dnat` and `resource/vcd_nsxv_dnat` `rule_tag` must be int to avoid vCD internal
   exception passthrough - [GH-384]
-* `resource/vcd_nsxv_dnat` put correct name for example in website - [GH-384]
+* `resource/vcd_nsxv_dnat` put correct name in doc example - [GH-384]
 * `resource/vcd_nsxv_dnat` and `resource/vcd_nsxv_dnat` avoid rule replacement because of changed
   `rule_tag` when rule is altered via UI - [GH-384]
 * `resource/vcd_nsxv_firewall_rule` add explicit protocol validation to avoid odd NSX-V API error -
