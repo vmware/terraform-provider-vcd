@@ -939,7 +939,6 @@ func genericVcdVAppVmRead(d *schema.ResourceData, meta interface{}, origin strin
 		_ = d.Set("mac", mac)
 		// TODO v3.0 EO remove this case block when we cleanup deprecated 'ip' and 'network_name' attributes
 	default:
-		//case len(d.Get("network").([]interface{})) > 0:
 		networks, err := readNetworks(*vm, *vapp)
 		if err != nil {
 			return fmt.Errorf("[ VM read] failed reading network details: %s", err)
@@ -1002,7 +1001,7 @@ func genericVcdVAppVmRead(d *schema.ResourceData, meta interface{}, origin strin
 
 	guestCustomizationSection, err := vm.GetGuestCustomizationSection()
 	if err != nil {
-		return fmt.Errorf("[VM read] error reading guest custimization : %s", err)
+		return fmt.Errorf("[VM read] error reading guest customization : %s", err)
 	}
 	_ = d.Set("computer_name", guestCustomizationSection.ComputerName)
 

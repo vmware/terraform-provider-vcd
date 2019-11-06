@@ -2,13 +2,13 @@
 
 FEATURES:
 
-* **New Data Source:** `vcd_vapp_vm` VM - ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+* **New Data Source:** `vcd_vapp_vm` VM - [GH-218]
 
 BUG FIXES:
 
 * Removed `power_on` property from data source `vcd_vapp`, as it is a directive used during vApp build.
   Its state is never updated and the fields `status` and `status_text` already provide the necessary information.
-  ([#379](https://github.com/terraform-providers/terraform-provider-vcd/issues/379))
+  [GH-379]
 
 IMPROVEMENTS:
 
@@ -16,11 +16,11 @@ IMPROVEMENTS:
   recommendation](https://www.terraform.io/docs/extend/plugin-sdk.html) - [GH-382]
 * `resource/vcd_vapp_vm`: VM state ID changed from VM name to vCD ID
 * `resource/vcd_vapp_vm`: Add properties `description` and `storage_profile`
-* `resource/vcd_vapp_vm` Add import capability and full read support ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+* `resource/vcd_vapp_vm` Add import capability and full read support [GH-218]
 
 DEPRECATIONS:
 
-* Deprecated property `storage_profile` in resource `vcd_vapp`, as the corresponding field is noe enabled in `vcd_vapp_vm`
+* Deprecated property `storage_profile` in resource `vcd_vapp`, as the corresponding field is now enabled in `vcd_vapp_vm`
 
 BUG FIXES:
 * Fix `vcd_org_vdc` datasource read. When user was Organization administrator datasource failed. Fields provider_vdc_name, storage_profile, memory_guaranteed, cpu_guaranteed, cpu_speed, enable_thin_provisioning, enable_fast_provisioning, network_pool_name won't have values for org admin.
