@@ -86,5 +86,6 @@ The following arguments are supported:
 * `guest_properties` -  Key value map of guest properties
 * `description`  -  The VM description. Note: description is read only. Currently, this field has
   the description of the OVA used to create the VM
+* `expose_hardware_virtualization` -  Expose hardware-assisted CPU virtualization to guest OS
 
 See [VM resource](/docs/providers/vcd/r/vapp_vm.html#attribute-reference) for more info about VM attributes.

@@ -122,6 +122,11 @@ func datasourceVcdVAppVm() *schema.Resource {
 				Computed: true,
 				Set:      resourceVcdVmIndependentDiskHash,
 			},
+			"expose_hardware_virtualization": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Expose hardware-assisted CPU virtualization to guest OS.",
+			},
 			"guest_properties": {
 				Type:        schema.TypeMap,
 				Computed:    true,
