@@ -132,6 +132,7 @@ The following arguments are supported:
 * `cpu_cores` - (Optional; *v2.1+*) The number of cores per socket
 * `metadata` - (Optional; *v2.2+*) Key value map of metadata to assign to this VM
 * `initscript` (Optional) A script to be run only on initial boot
+* `storage_profile` (Optional; *v2.6+*) Storage profile to override the default one
 * `network_name` - (Optional; **Deprecated** by `network`) Name of the network this VM should connect to.
 * `vapp_network_name` - (Optional; v2.1+; **Deprecated** by `network`) Name of the vApp network this VM should connect to.
 * `ip` - (Optional; **Deprecated** by `network`) The IP to assign to this vApp. Must be an IP address or
