@@ -491,7 +491,6 @@ func isItVappNetwork(vAppNetworkName string, vapp govcd.VApp) (bool, error) {
 
 type diskParams struct {
 	name       string
-	id         string
 	busNumber  *int
 	unitNumber *int
 }
