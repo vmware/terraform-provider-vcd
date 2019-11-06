@@ -22,6 +22,9 @@ DEPRECATIONS:
 
 * Deprecated property `storage_profile` in resource `vcd_vapp`, as the corresponding field is noe enabled in `vcd_vapp_vm`
 
+BUG FIXES:
+* Fix `vcd_org_vdc` datasource read. When user was Organization administrator datasource failed. Fields provider_vdc_name, storage_profile, memory_guaranteed, cpu_guaranteed, cpu_speed, enable_thin_provisioning, enable_fast_provisioning, network_pool_name won't have values for org admin.
+
 ## 2.5.0 (October 28, 2019)
 
 FEATURES:
