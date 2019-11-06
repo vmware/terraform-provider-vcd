@@ -21,21 +21,30 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 		"FuncName":        vdcName,
 	}
 
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
 	var configText string
 	datasourceVdc := "vcd_org_vdc.existingVdc"
 	if !usingSysAdmin() {
 		params["FuncName"] = t.Name() + "-orgAdmin"
 		configText = templateFill(testAccCheckVcdVdcDatasource_orgAdmin, params)
+
 		debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+		if vcdShortTest {
+			t.Skip(acceptanceTestsSkipped)
+			return
+		}
+
 		validateDataSource(t, configText, datasourceVdc)
 	} else {
 		configText = templateFill(testAccCheckVcdVdcDatasource_basic, params)
+
 		debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+		if vcdShortTest {
+			t.Skip(acceptanceTestsSkipped)
+			return
+		}
+
 		validateResourceAndDataSource(t, configText, datasourceVdc)
 	}
 
