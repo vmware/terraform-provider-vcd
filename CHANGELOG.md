@@ -15,6 +15,7 @@ IMPROVEMENTS:
 * Switch to Terraform terraform-plugin-sdk v1.0.0 as per recent [HashiCorp
   recommendation](https://www.terraform.io/docs/extend/plugin-sdk.html) - [GH-382]
 * `resource/vcd_vapp_vm`: VM state ID changed from VM name to vCD ID
+* `resource/vcd_vapp_vm`: Add properties `description` and `storage_profile`
 * `resource/vcd_vapp_vm` Add import capability and full read support ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
 
 DEPRECATIONS:
