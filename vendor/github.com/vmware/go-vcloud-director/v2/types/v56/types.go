@@ -398,11 +398,11 @@ type AdminVdc struct {
 
 	ResourceGuaranteedMemory *float64   `xml:"ResourceGuaranteedMemory,omitempty"`
 	ResourceGuaranteedCpu    *float64   `xml:"ResourceGuaranteedCpu,omitempty"`
-	VCpuInMhz                int64      `xml:"VCpuInMhz,omitempty"`
-	IsThinProvision          bool       `xml:"IsThinProvision,omitempty"`
+	VCpuInMhz                *int64     `xml:"VCpuInMhz,omitempty"`
+	IsThinProvision          *bool      `xml:"IsThinProvision,omitempty"`
 	NetworkPoolReference     *Reference `xml:"NetworkPoolReference,omitempty"`
 	ProviderVdcReference     *Reference `xml:"ProviderVdcReference"`
-	UsesFastProvisioning     bool       `xml:"UsesFastProvisioning,omitempty"`
+	UsesFastProvisioning     *bool      `xml:"UsesFastProvisioning,omitempty"`
 	OverCommitAllowed        bool       `xml:"OverCommitAllowed,omitempty"`
 	VmDiscoveryEnabled       bool       `xml:"VmDiscoveryEnabled,omitempty"`
 }

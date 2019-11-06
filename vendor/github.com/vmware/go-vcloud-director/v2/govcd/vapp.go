@@ -145,11 +145,11 @@ func (vapp *VApp) AddVM(orgVdcNetworks []*types.OrgVDCNetwork, vappNetworkName s
 
 // AddNewVM adds VM from vApp template with custom NetworkConnectionSection
 func (vapp *VApp) AddNewVM(name string, vappTemplate VAppTemplate, network *types.NetworkConnectionSection, acceptAllEulas bool) (Task, error) {
-	return vapp.AddNewVMWithStorage(name, vappTemplate, network, nil, acceptAllEulas)
+	return vapp.AddNewVMWithStorageProfile(name, vappTemplate, network, nil, acceptAllEulas)
 }
 
-// AddNewVMWithStorage adds VM from vApp template with custom NetworkConnectionSection and optional storage profile
-func (vapp *VApp) AddNewVMWithStorage(name string, vappTemplate VAppTemplate,
+// AddNewVMWithStorageProfile adds VM from vApp template with custom NetworkConnectionSection and optional storage profile
+func (vapp *VApp) AddNewVMWithStorageProfile(name string, vappTemplate VAppTemplate,
 	network *types.NetworkConnectionSection,
 	storageProfileRef *types.Reference, acceptAllEulas bool) (Task, error) {
 
