@@ -149,6 +149,8 @@ translation or paravirtualization. Useful for hypervisor nesting provided underl
 example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_name`.
 * `customization` - (Optional; *v2.5+*) A block to define for guest customization options. See [Customization](#customization)
 * `guest_properties` - (Optional; *v2.5+*) Key value map of guest properties
+* `description`  - (Computed; *v2.6+*) The VM description. Note: description is read only. Currently, this field has
+  the description of the OVA used to create the VM
 
 <a id="disk"></a>
 ## Disk
@@ -224,7 +226,7 @@ Step 2 - Change VM configuration and force customization (VM will be rebooted du
 
 ```hcl
 resource "vcd_vapp_vm" "web2" {
-...
+//...
   network {
     type               = "org"
     name               = "net"
@@ -242,7 +244,7 @@ prevent forcing customization on every `terraform apply` command:
 
 ```hcl
 resource "vcd_vapp_vm" "web2" {
-...
+//...
   network {
     type               = "org"
     name               = "net"
@@ -254,3 +256,37 @@ resource "vcd_vapp_vm" "web2" {
   }
 }
 ```
+
+## Importing
+
+Supported in provider *v2.6+*
+
+~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
+configuration. [More information.][docs-import]
+
+An existing VM can be [imported][docs-import] into this resource via supplying its path.
+The path for this resource is made of org-name.vdc-name.vapp-name.vm-name
+For example, using this structure, representing a VM that was **not** created using Terraform:
+
+```hcl
+resource "vcd_vapp_vm" "tf-vm" {
+  name              = "my-vm"
+  org               = "my-org"
+  vdc               = "my-vdc"
+  vapp_name         = "my-vapp"
+}
+```
+
+You can import such vapp into terraform state using this command
+
+```
+terraform import vcd_vapp_vm.tf-vm my-org.my-vdc.my-vapp.my-vm
+```
+
+NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
+
+[docs-import]:https://www.terraform.io/docs/import/
+
+After importing, the data for this VM will be in the state file (`terraform.tfstate`). If you want to use this
+resource for further operations, you will need to integrate it with data from the state file, and with some data that
+is used to create the VM, such as `catalog_name`, `template_name`.

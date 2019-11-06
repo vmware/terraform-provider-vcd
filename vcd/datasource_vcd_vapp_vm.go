@@ -30,6 +30,11 @@ func datasourceVcdVAppVm() *schema.Resource {
 				Optional:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
+			"computer_name": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Computer name assigned to this virtual machine",
+			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -64,7 +69,7 @@ func datasourceVcdVAppVm() *schema.Resource {
 			"storage_profile": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Storage profile to override the default one",
+				Description: "Storage profile used with the VM",
 			},
 			"network": {
 				Computed:    true,

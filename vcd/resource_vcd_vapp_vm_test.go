@@ -11,12 +11,12 @@ import (
 
 var vappName2 string = "TestAccVcdVAppVmVapp"
 var vmName string = "TestAccVcdVAppVmVm"
-var diskResourceName = "TestAccVcdVAppVm_Basic_1"
-var diskName = "TestAccVcdIndependentDiskBasic"
 
 func TestAccVcdVAppVm_Basic(t *testing.T) {
 	var vapp govcd.VApp
 	var vm govcd.VM
+	var diskResourceName = "TestAccVcdVAppVm_Basic_1"
+	var diskName = "TestAccVcdIndependentDiskBasic"
 
 	var params = StringMap{
 		"Org":                testConfig.VCD.Org,
@@ -63,6 +63,7 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 						"vcd_vapp_vm."+vmName, "power_on", "true"),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_vm."+vmName, "metadata.vm_metadata", "VM Metadata."),
+					resource.TestCheckOutput("disk", diskName),
 				),
 			},
 			resource.TestStep{
@@ -73,6 +74,76 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 				// These fields can't be retrieved from user data
 				ImportStateVerifyIgnore: []string{"template_name", "catalog_name", "network_name",
 					"initscript", "accept_all_eulas", "power_on", "computer_name"},
+			},
+		},
+	})
+}
+
+func TestAccVcdVAppVm_Clone(t *testing.T) {
+	var vapp govcd.VApp
+	var vm govcd.VM
+
+	var params = StringMap{
+		"Org":                testConfig.VCD.Org,
+		"Vdc":                testConfig.VCD.Vdc,
+		"EdgeGateway":        testConfig.Networking.EdgeGateway,
+		"NetworkName":        "TestAccVcdVAppVmNet",
+		"Catalog":            testSuiteCatalogName,
+		"CatalogItem":        testSuiteCatalogOVAItem,
+		"VappName":           vappName2,
+		"VmName":             vmName,
+		"VmName2":            vmName + "-clone",
+		"ComputerName":       vmName + "-unique",
+		"size":               "5",
+		"busType":            "SCSI",
+		"busSubType":         "lsilogicsas",
+		"storageProfileName": "*",
+		"IP":                 "10.10.102.161",
+		"IP2":                "10.10.102.162",
+		"Tags":               "vapp vm",
+	}
+
+	configText := templateFill(testAccCheckVcdVAppVm_clone, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	vm1 := "vcd_vapp_vm." + vmName
+	vm2 := "vcd_vapp_vm." + vmName + "-clone"
+
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVcdVAppVmDestroy(vappName2),
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdVAppVmExists(vappName2, vmName, "vcd_vapp_vm."+vmName, &vapp, &vm),
+					resource.TestCheckResourceAttr(
+						vm1, "name", vmName),
+					resource.TestCheckResourceAttr(
+						vm1, "computer_name", params["ComputerName"].(string)),
+					resource.TestCheckResourceAttr(
+						vm1, "network.0.ip", params["IP"].(string)),
+					resource.TestCheckResourceAttr(
+						vm1, "power_on", "true"),
+					resource.TestCheckResourceAttr(
+						vm1, "metadata.vm_metadata", "VM Metadata."),
+					resource.TestCheckResourceAttr(
+						vm2, "network.0.ip", params["IP2"].(string)),
+					resource.TestCheckResourceAttrPair(
+						vm1, "vapp_name", vm2, "vapp_name"),
+					resource.TestCheckResourceAttrPair(
+						vm1, "metadata", vm2, "metadata"),
+					resource.TestCheckResourceAttrPair(
+						vm1, "network.0.name", vm2, "network.0.name"),
+					resource.TestCheckResourceAttrPair(
+						vm1, "network.0.type", vm2, "network.0.type"),
+					resource.TestCheckResourceAttrPair(
+						vm1, "network.0.ip_allocation_mode", vm2, "network.0.ip_allocation_mode"),
+				),
 			},
 		},
 	})
@@ -104,7 +175,6 @@ resource "vcd_independent_disk" "{{.diskResourceName}}" {
   bus_type        = "{{.busType}}"
   bus_sub_type    = "{{.busSubType}}"
   storage_profile = "{{.storageProfileName}}"
-
 }
 
 resource "vcd_vapp" "{{.VappName}}" {
@@ -143,4 +213,79 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
     unit_number = 0
   }
 }
+
+output "disk" {
+  value = tolist(vcd_vapp_vm.{{.VmName}}.disk)[0].name
+}
+`
+
+const testAccCheckVcdVAppVm_clone = `
+resource "vcd_network_routed" "{{.NetworkName}}" {
+  name         = "{{.NetworkName}}"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  gateway      = "10.10.102.1"
+
+  static_ip_pool {
+    start_address = "10.10.102.2"
+    end_address   = "10.10.102.254"
+  }
+}
+
+
+resource "vcd_vapp" "{{.VappName}}" {
+  name = "{{.VappName}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+  depends_on = ["vcd_network_routed.{{.NetworkName}}"]
+}
+
+resource "vcd_vapp_vm" "{{.VmName}}" {
+  org           = "{{.Org}}"
+  vdc           = "{{.Vdc}}"
+  vapp_name     = "${vcd_vapp.{{.VappName}}.name}"
+  name          = "{{.VmName}}"
+  computer_name = "{{.ComputerName}}"
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  memory        = 1024
+  cpus          = 2
+  cpu_cores     = 1
+
+  metadata = {
+    vm_metadata = "VM Metadata."
+  }
+
+  network {
+    name               = "${vcd_network_routed.{{.NetworkName}}.name}"
+    ip                 = "{{.IP}}"
+    type               = "org"
+    ip_allocation_mode = "MANUAL"
+  }
+}
+
+resource "vcd_vapp_vm" "{{.VmName2}}" {
+  org           = "{{.Org}}"
+  vdc           = "{{.Vdc}}"
+  vapp_name     = "${vcd_vapp_vm.{{.VmName}}.vapp_name}"
+  name          = "{{.VmName2}}"
+  computer_name = "${vcd_vapp_vm.{{.VmName}}.computer_name}"
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  memory        = 1024
+  cpus          = 2
+  cpu_cores     = 1
+
+  metadata = "${vcd_vapp_vm.{{.VmName}}.metadata}"
+
+  network {
+    name               = "${vcd_vapp_vm.{{.VmName}}.network.0.name}"
+    ip                 = "{{.IP2}}"
+    type               = "${vcd_vapp_vm.{{.VmName}}.network.0.type}"
+    ip_allocation_mode = "${vcd_vapp_vm.{{.VmName}}.network.0.ip_allocation_mode}"
+  }
+}
+
+
 `

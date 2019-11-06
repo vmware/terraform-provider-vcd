@@ -1,4 +1,7 @@
 ## 2.6.0 (Unreleased)
+
+FEATURES:
+
 * **New Data Source:** `vcd_vapp_vm` VM - ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
 
 BUG FIXES:
@@ -11,10 +14,17 @@ IMPROVEMENTS:
 
 * Switch to Terraform terraform-plugin-sdk v1.0.0 as per recent [HashiCorp
   recommendation](https://www.terraform.io/docs/extend/plugin-sdk.html) - [GH-382]
+* `resource/vcd_vapp_vm`: VM state ID changed from VM name to vCD ID
+* `resource/vcd_vapp_vm` Add import capability and full read support ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+
+DEPRECATIONS:
+
+* Deprecated property `storage_profile` in resource `vcd_vapp`, as the corresponding field is noe enabled in `vcd_vapp_vm`
 
 ## 2.5.0 (October 28, 2019)
 
 FEATURES:
+
 * **New Resource:** `vcd_nsxv_dnat` DNAT for advanced edge gateways using proxied NSX-V API - ([#328](https://github.com/terraform-providers/terraform-provider-vcd/issues/328))
 * **New Resource:** `vcd_nsxv_snat`  SNAT for advanced edge gateways using proxied NSX-V API - ([#328](https://github.com/terraform-providers/terraform-provider-vcd/issues/328))
 * **New Resource:** `vcd_nsxv_firewall_rule`  firewall for advanced edge gateways using proxied NSX-V API - ([#341](https://github.com/terraform-providers/terraform-provider-vcd/issues/341), [#358](https://github.com/terraform-providers/terraform-provider-vcd/issues/358))
@@ -74,6 +84,7 @@ IMPROVEMENTS:
 * `resource/vcd_vapp_vm` has new field `computer_name` ([#334](https://github.com/terraform-providers/terraform-provider-vcd/issues/334), [#347](https://github.com/terraform-providers/terraform-provider-vcd/issues/347))
 
 BUG FIXES:
+
 * Change default value for `vcd_org.deployed_vm_quota` and `vcd_org.stored_vm_quota`. It was incorrectly set at `-1` instead of `0`.
 * Change Org ID from partial task ID to real Org ID during creation.
 * Wait for task completion on creation and update, where tasks were not handled at all.
@@ -83,6 +94,7 @@ BUG FIXES:
 * `resource/vcd_edgegateway_vpn` Required replacement every time for `shared_secret` field.  ([#361](https://github.com/terraform-providers/terraform-provider-vcd/issues/361))
 
 DEPRECATIONS
+
 * The ability of deploying a VM implicitly within a vApp is deprecated. Users are encouraged to set an empty vApp and
 add explicit VM resources `vcd_vapp_vm`.
   For this reason, the following fields in `vcd_vapp` are deprecated:
@@ -123,6 +135,7 @@ FEATURES:
 * `resource/vcd_dnat` added ability to choose network name and type. ([#282](https://github.com/terraform-providers/terraform-provider-vcd/issues/282), [#292](https://github.com/terraform-providers/terraform-provider-vcd/issues/292), [#293](https://github.com/terraform-providers/terraform-provider-vcd/issues/293))
 
 IMPROVEMENTS:
+
 * `resource/vcd_org_vdc`: Fix ignoring of resource guarantee values - ([#265](https://github.com/terraform-providers/terraform-provider-vcd/issues/265))
 * `resource/vcd_org_vdc`: Org VDC state ID changed from name to vCD ID - ([#275](https://github.com/terraform-providers/terraform-provider-vcd/issues/275))
 * Change resource handling to use locking mechanism when resource parallel handling is not supported by vCD. [[#255](https://github.com/terraform-providers/terraform-provider-vcd/issues/255)] 
@@ -134,6 +147,7 @@ BUG FIXES:
 * `resource/vcd_dnat and resource/vcd_snat` - fix resource destroy as it would still leave NAT rule in edge gateway. Fix works if network_name and network_type is used. ([#282](https://github.com/terraform-providers/terraform-provider-vcd/issues/282))
 
 NOTES:
+
 * `resource/vcd_dnat` `protocol` requires lower case values to be consistent with the underlying NSX API. This may result in invalid configuration if upper case was used previously!
 * `resource/vcd_dnat` default value for `protocol` field changed from upper case `TCP` to lower case `tcp`, which may result in a single update when running `plan` on a configuration with a state file from an older version.
 
@@ -243,7 +257,6 @@ FEATURES:
 * `vcd_vapp` - Add support for defining shared vcd_networks ([#46](https://github.com/terraform-providers/terraform-provider-vcd/pull/46))
 * `vcd_vapp` - Added options to configure dhcp lease times ([#47](https://github.com/terraform-providers/terraform-provider-vcd/pull/47))
 
-
 ## 1.0.0 (August 17, 2017)
 
 IMPROVEMENTS:
@@ -263,7 +276,6 @@ IMPROVEMENTS:
 * `vcd_vapp` - Fixes issue with allocated IP address affecting tf plan ([#17](https://github.com/terraform-providers/terraform-provider-vcd/issues/17) & [#29](https://github.com/terraform-providers/terraform-provider-vcd/issues/29))
 * `vcd_vapp_vm` - Setting the computer name regardless of init script ([#31](https://github.com/terraform-providers/terraform-provider-vcd/issues/31))
 * `vcd_firewall_rules` - corrected typo in docs ([#35](https://github.com/terraform-providers/terraform-provider-vcd/issues/35))
-
 
 ## 0.1.2 (August 03, 2017)
 

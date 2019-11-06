@@ -642,11 +642,13 @@ func getUpdatedVdcInput(d *schema.ResourceData, vcdClient *VCDClient, vdc *govcd
 	}
 
 	if d.HasChange("cpu_speed") {
-		vdc.AdminVdc.VCpuInMhz = int64(d.Get("cpu_speed").(int))
+		vCpuInMhz := int64(d.Get("cpu_speed").(int))
+		vdc.AdminVdc.VCpuInMhz = &vCpuInMhz
 	}
 
 	if d.HasChange("enable_thin_provisioning") {
-		vdc.AdminVdc.IsThinProvision = d.Get("enable_thin_provisioning").(bool)
+		isThinProvision := d.Get("enable_thin_provisioning").(bool)
+		vdc.AdminVdc.IsThinProvision = &isThinProvision
 	}
 
 	if d.HasChange("network_pool_name") {
@@ -664,7 +666,8 @@ func getUpdatedVdcInput(d *schema.ResourceData, vcdClient *VCDClient, vdc *govcd
 	}
 
 	if d.HasChange("enable_fast_provisioning") {
-		vdc.AdminVdc.UsesFastProvisioning = d.Get("enable_fast_provisioning").(bool)
+		usesFastProvisioning := d.Get("enable_fast_provisioning").(bool)
+		vdc.AdminVdc.UsesFastProvisioning = &usesFastProvisioning
 	}
 
 	if d.HasChange("allow_over_commit") {

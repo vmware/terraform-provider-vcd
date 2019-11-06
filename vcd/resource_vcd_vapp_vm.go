@@ -335,7 +335,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	} else {
 		storageProfilePtr = nil
 	}
-	task, err := vapp.AddNewVMWithStorage(d.Get("name").(string), vappTemplate, &networkConnectionSection, storageProfilePtr, acceptEulas)
+	task, err := vapp.AddNewVMWithStorageProfile(d.Get("name").(string), vappTemplate, &networkConnectionSection, storageProfilePtr, acceptEulas)
 	if err != nil {
 		return fmt.Errorf("[VM creation] error adding VM: %s", err)
 	}

@@ -164,8 +164,8 @@ Supported in provider *v2.5+*
 configuration. [More information.][docs-import]
 
 An existing vApp can be [imported][docs-import] into this resource via supplying its path.
-The path for this resource is made of org-name.vdc-name.vapp-name.
-For example, using this structure, representing a vapp that was **not** created using Terraform:
+The path for this resource is made of org-name.vdc-name.vapp-name
+For example, using this structure, representing a vApp that was **not** created using Terraform:
 
 ```hcl
 resource "vcd_vapp" "tf-vapp" {

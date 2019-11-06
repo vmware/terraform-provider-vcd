@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
@@ -52,7 +52,6 @@ func TestAccVcdVappVmDS(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-
 					resource.TestCheckOutput("name", vm.VM.Name),
 					resource.TestCheckOutput("storage_profile", vm.VM.StorageProfile.Name),
 					resource.TestCheckOutput("description", vm.VM.Description),
@@ -85,5 +84,4 @@ output "storage_profile" {
 output "href" {
   value = data.vcd_vapp_vm.{{.VmName}}.href
 }
-
 `
