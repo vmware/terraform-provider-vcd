@@ -78,9 +78,10 @@ func resourceVcdVAppVm() *schema.Resource {
 				// Currently, this field has the description of the OVA used to create the VM
 			},
 			"memory": &schema.Schema{
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Description: "The amount of RAM (in MB) to allocate to the VM",
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Description:  "The amount of RAM (in MB) to allocate to the VM",
+				ValidateFunc: validateMultipleOf4(),
 			},
 			"cpus": &schema.Schema{
 				Type:        schema.TypeInt,
@@ -274,6 +275,23 @@ func resourceVcdVAppVm() *schema.Resource {
 				},
 			},
 		},
+	}
+}
+
+func validateMultipleOf4() schema.SchemaValidateFunc {
+	return func(i interface{}, k string) (s []string, es []error) {
+		value, ok := i.(int)
+		if !ok {
+			es = append(es, fmt.Errorf("expected type of %s to be int", k))
+			return
+		}
+
+		if value%4 != 0 {
+			es = append(es, fmt.Errorf("expected %s to be multiple of 4, got %d", k, value))
+			return
+		}
+
+		return
 	}
 }
 
@@ -571,16 +589,24 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf("error finding vApp: %s", err)
 	}
 
-	vm, err := vapp.GetVMByName(d.Get("name").(string), false)
+	identifier := d.Id()
+	if identifier == "" {
+		identifier = d.Get("name").(string)
+	}
+	if identifier == "" {
+		return fmt.Errorf("[VM update] neither name or ID was set")
+	}
+
+	vm, err := vapp.GetVMByNameOrId(identifier, false)
 
 	if err != nil {
 		d.SetId("")
-		return fmt.Errorf("error getting VM2: %s", err)
+		return fmt.Errorf("[VM update] error getting VM %s: %s", identifier, err)
 	}
 
 	vmStatusBeforeUpdate, err := vm.GetStatus()
 	if err != nil {
-		return fmt.Errorf("error getting VM status before update: %s", err)
+		return fmt.Errorf("[VM update] error getting VM (%s) status before update: %s", identifier, err)
 	}
 
 	if d.HasChange("guest_properties") {
@@ -1049,10 +1075,17 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error finding vApp: %s", err)
 	}
 
-	vm, err := vapp.GetVMByName(d.Get("name").(string), false)
+	identifier := d.Id()
+	if identifier == "" {
+		identifier = d.Get("name").(string)
+	}
+	if identifier == "" {
+		return fmt.Errorf("[VM delete] neither ID or name provided")
+	}
+	vm, err := vapp.GetVMByNameOrId(identifier, false)
 
 	if err != nil {
-		return fmt.Errorf("error getting VM4 : %s", err)
+		return fmt.Errorf("[VM delete] error getting VM %s : %s", identifier, err)
 	}
 
 	status, err := vm.GetStatus()
