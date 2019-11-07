@@ -173,9 +173,10 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Description: "Boolean to request thin provisioning. Request will be honored only if the underlying datastore supports it. Thin provisioning saves storage space by committing it on demand. This allows over-allocation of storage.",
 			},
 			"network_pool_name": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "The name of a network pool in the Provider VDC. Required if this VDC will contain routed or isolated networks.",
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: suppressEmptyString(),
+				Description:      "The name of a network pool in the Provider VDC. Required if this VDC will contain routed or isolated networks.",
 			},
 			"provider_vdc_name": &schema.Schema{
 				Type:        schema.TypeString,
@@ -321,12 +322,14 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 	_ = d.Set("memory_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedMemory)
 	_ = d.Set("name", adminVdc.AdminVdc.Name)
 
-	networkPool, err := govcd.GetNetworkPoolByHREF(vcdClient.VCDClient, adminVdc.AdminVdc.NetworkPoolReference.HREF)
-	if err != nil {
-		return fmt.Errorf("error retrieving network pool: %s", err)
+	// in vCD version 10 with NXT - network pool reference isn't returned with AdminVdc
+	if adminVdc.AdminVdc.NetworkPoolReference != nil {
+		networkPool, err := govcd.GetNetworkPoolByHREF(vcdClient.VCDClient, adminVdc.AdminVdc.NetworkPoolReference.HREF)
+		if err != nil {
+			return fmt.Errorf("error retrieving network pool: %s", err)
+		}
+		_ = d.Set("network_pool_name", networkPool.Name)
 	}
-
-	_ = d.Set("network_pool_name", networkPool.Name)
 	_ = d.Set("network_quota", adminVdc.AdminVdc.NetworkQuota)
 	_ = d.Set("nic_quota", adminVdc.AdminVdc.Vdc.NicQuota)
 	_ = d.Set("provider_vdc_name", adminVdc.AdminVdc.ProviderVdcReference.Name)

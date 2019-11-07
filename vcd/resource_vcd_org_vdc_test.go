@@ -120,13 +120,30 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
+	usedNetworkPool := testConfig.VCD.ProviderVdc.NetworkPool
+	expectNonEmptyPlan := false
+	// in vCD version 10 with NXT - network pool reference isn't returned with AdminVdc
+	vcdClient, err := getTestVCDFromJson(testConfig)
+	if err != nil {
+		t.Error(fmt.Errorf("error getting client configuration: %s", err))
+	}
+	err = vcdClient.Authenticate(testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.SysOrg)
+	if err != nil {
+		t.Error(fmt.Errorf("authentication error: %s", err))
+	}
+	if vcdClient.APIVCDMaxVersionIs(">= 33.0") {
+		usedNetworkPool = ""
+		expectNonEmptyPlan = true
+	}
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckVdcDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: configText,
+				Config:             configText,
+				ExpectNonEmptyPlan: expectNonEmptyPlan,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVdcExists("vcd_org_vdc."+TestAccVcdVdc),
 					resource.TestCheckResourceAttr(
@@ -136,7 +153,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "allocation_model", allocationModel),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "network_pool_name", testConfig.VCD.ProviderVdc.NetworkPool),
+						"vcd_org_vdc."+TestAccVcdVdc, "network_pool_name", usedNetworkPool),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "provider_vdc_name", testConfig.VCD.ProviderVdc.Name),
 					resource.TestCheckResourceAttr(
@@ -182,7 +199,8 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 				),
 			},
 			resource.TestStep{
-				Config: updateText,
+				Config:             updateText,
+				ExpectNonEmptyPlan: expectNonEmptyPlan,
 				Check: resource.ComposeTestCheckFunc(
 					testVcdVdcUpdated("vcd_org_vdc."+TestAccVcdVdc),
 					resource.TestCheckResourceAttr(
@@ -192,7 +210,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "allocation_model", allocationModel),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "network_pool_name", testConfig.VCD.ProviderVdc.NetworkPool),
+						"vcd_org_vdc."+TestAccVcdVdc, "network_pool_name", usedNetworkPool),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "provider_vdc_name", testConfig.VCD.ProviderVdc.Name),
 					resource.TestCheckResourceAttr(

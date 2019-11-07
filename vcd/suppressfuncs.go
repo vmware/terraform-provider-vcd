@@ -20,6 +20,17 @@ func suppressWordToEmptyString(word string) schema.SchemaDiffSuppressFunc {
 	}
 }
 
+// suppressEmptyString is a DiffSuppressFunc which ignore the change from any value to empty string "".
+// This is useful when API returns empty value.
+func suppressEmptyString() schema.SchemaDiffSuppressFunc {
+	return func(k string, old string, new string, d *schema.ResourceData) bool {
+		if new == "" {
+			return true
+		}
+		return false
+	}
+}
+
 // noopValueWarningValidator is a no-op validator which only emits warning string when fieldValue
 // is set to the specified one
 func noopValueWarningValidator(fieldValue interface{}, warningText string) schema.SchemaValidateFunc {
