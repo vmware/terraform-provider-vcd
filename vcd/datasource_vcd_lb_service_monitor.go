@@ -3,7 +3,7 @@ package vcd
 import (
 	"fmt"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func datasourceVcdLbServiceMonitor() *schema.Resource {

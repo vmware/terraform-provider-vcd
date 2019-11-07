@@ -3,8 +3,8 @@ package vcd
 import (
 	"os"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
@@ -119,6 +119,7 @@ func Provider() terraform.ResourceProvider {
 			"vcd_lb_virtual_server":  resourceVcdLBVirtualServer(),  // 2.4
 			"vcd_nsxv_dnat":          resourceVcdNsxvDnat(),         // 2.5
 			"vcd_nsxv_snat":          resourceVcdNsxvSnat(),         // 2.5
+			"vcd_nsxv_firewall_rule": resourceVcdNsxvFirewallRule(), // 2.5
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
@@ -129,6 +130,7 @@ func Provider() terraform.ResourceProvider {
 			"vcd_catalog_item":       datasourceVcdCatalogItem(),      // 2.5
 			"vcd_edgegateway":        datasourceVcdEdgeGateway(),      // 2.5
 			"vcd_external_network":   datasourceVcdExternalNetwork(),  // 2.5
+			"vcd_independent_disk":   datasourceVcIndependentDisk(),   // 2.5
 			"vcd_network_routed":     datasourceVcdNetworkRouted(),    // 2.5
 			"vcd_network_direct":     datasourceVcdNetworkDirect(),    // 2.5
 			"vcd_network_isolated":   datasourceVcdNetworkIsolated(),  // 2.5
@@ -140,6 +142,7 @@ func Provider() terraform.ResourceProvider {
 			"vcd_lb_virtual_server":  datasourceVcdLbVirtualServer(),  // 2.4
 			"vcd_nsxv_dnat":          datasourceVcdNsxvDnat(),         // 2.5
 			"vcd_nsxv_snat":          datasourceVcdNsxvSnat(),         // 2.5
+			"vcd_nsxv_firewall_rule": datasourceVcdNsxvFirewallRule(), // 2.5
 		},
 
 		ConfigureFunc: providerConfigure,

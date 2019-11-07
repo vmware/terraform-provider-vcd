@@ -16,6 +16,9 @@ modify, and delete destination NATs to map an external IP/port to an internal IP
 ~> **Note:** This resource requires advanced edge gateway. For non-advanced edge gateways please
 use the [`vcd_dnat`](/docs/providers/vcd/r/dnat.html) resource.
 
+!> **Warning:** Do not use older [`vcd_dnat`](/docs/providers/vcd/r/dnat.html) resource with this one
+because it will change IDs and this resource will not be able to lookup rules.
+
 ## Example Usage 1 (Minimal input)
 
 ```hcl
@@ -53,7 +56,7 @@ resource "vcd_nsxv_dnat" "forIcmp" {
 ## Example Usage 3 (More settings)
 
 ```hcl
-resource "vcd_nsxv_dnat" "forIcmp" {
+resource "vcd_nsxv_dnat" "dnat-tcp" {
   org = "my-org" # Optional
   vdc = "my-vdc" # Optional
   

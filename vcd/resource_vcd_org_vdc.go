@@ -6,8 +6,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -312,17 +312,28 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd.AdminOrg, adminVdc *govcd.AdminVdc) error {
 
 	_ = d.Set("allocation_model", adminVdc.AdminVdc.AllocationModel)
-	_ = d.Set("cpu_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedCpu)
-	_ = d.Set("cpu_speed", adminVdc.AdminVdc.VCpuInMhz)
+	if adminVdc.AdminVdc.ResourceGuaranteedCpu != nil {
+		_ = d.Set("cpu_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedCpu)
+	}
+	if adminVdc.AdminVdc.VCpuInMhz != nil {
+		_ = d.Set("cpu_speed", int(*adminVdc.AdminVdc.VCpuInMhz))
+	}
 	_ = d.Set("description", adminVdc.AdminVdc.Description)
-	_ = d.Set("enable_fast_provisioning", adminVdc.AdminVdc.UsesFastProvisioning)
-	_ = d.Set("enable_thin_provisioning", adminVdc.AdminVdc.IsThinProvision)
+	if adminVdc.AdminVdc.UsesFastProvisioning != nil {
+		_ = d.Set("enable_fast_provisioning", *adminVdc.AdminVdc.UsesFastProvisioning)
+	}
+	if adminVdc.AdminVdc.IsThinProvision != nil {
+		_ = d.Set("enable_thin_provisioning", *adminVdc.AdminVdc.IsThinProvision)
+	}
 	_ = d.Set("enable_vm_discovery", adminVdc.AdminVdc.VmDiscoveryEnabled)
 	_ = d.Set("enabled", adminVdc.AdminVdc.IsEnabled)
-	_ = d.Set("memory_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedMemory)
+	if adminVdc.AdminVdc.ResourceGuaranteedMemory != nil {
+		_ = d.Set("memory_guaranteed", *adminVdc.AdminVdc.ResourceGuaranteedMemory)
+	}
 	_ = d.Set("name", adminVdc.AdminVdc.Name)
 
 	// in vCD version 10 with NXT - network pool reference isn't returned with AdminVdc
+	// Or user is Org Admin
 	if adminVdc.AdminVdc.NetworkPoolReference != nil {
 		networkPool, err := govcd.GetNetworkPoolByHREF(vcdClient.VCDClient, adminVdc.AdminVdc.NetworkPoolReference.HREF)
 		if err != nil {
@@ -330,22 +341,28 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 		}
 		_ = d.Set("network_pool_name", networkPool.Name)
 	}
+
 	_ = d.Set("network_quota", adminVdc.AdminVdc.NetworkQuota)
 	_ = d.Set("nic_quota", adminVdc.AdminVdc.Vdc.NicQuota)
-	_ = d.Set("provider_vdc_name", adminVdc.AdminVdc.ProviderVdcReference.Name)
+	if adminVdc.AdminVdc.ProviderVdcReference != nil {
+		_ = d.Set("provider_vdc_name", adminVdc.AdminVdc.ProviderVdcReference.Name)
+	}
 	_ = d.Set("vm_quota", adminVdc.AdminVdc.Vdc.VMQuota)
 
 	if err := d.Set("compute_capacity", getComputeCapacities(adminVdc.AdminVdc.ComputeCapacity)); err != nil {
 		return fmt.Errorf("error setting compute_capacity: %s", err)
 	}
 
-	storageProfileStateData, err := getComputeStorageProfiles(vcdClient, adminVdc.AdminVdc.VdcStorageProfiles)
-	if err != nil {
-		return fmt.Errorf("error preparing storage profile data: %s", err)
-	}
+	if adminVdc.AdminVdc.VdcStorageProfiles != nil {
 
-	if err := d.Set("storage_profile", storageProfileStateData); err != nil {
-		return fmt.Errorf("error setting compute_capacity: %s", err)
+		storageProfileStateData, err := getComputeStorageProfiles(vcdClient, adminVdc.AdminVdc.VdcStorageProfiles)
+		if err != nil {
+			return fmt.Errorf("error preparing storage profile data: %s", err)
+		}
+
+		if err := d.Set("storage_profile", storageProfileStateData); err != nil {
+			return fmt.Errorf("error setting compute_capacity: %s", err)
+		}
 	}
 
 	vdc, err := adminOrg.GetVDCByName(d.Get("name").(string), false)
@@ -645,11 +662,13 @@ func getUpdatedVdcInput(d *schema.ResourceData, vcdClient *VCDClient, vdc *govcd
 	}
 
 	if d.HasChange("cpu_speed") {
-		vdc.AdminVdc.VCpuInMhz = int64(d.Get("cpu_speed").(int))
+		cpuSpeed := int64(d.Get("cpu_speed").(int))
+		vdc.AdminVdc.VCpuInMhz = &cpuSpeed
 	}
 
 	if d.HasChange("enable_thin_provisioning") {
-		vdc.AdminVdc.IsThinProvision = d.Get("enable_thin_provisioning").(bool)
+		thinProvisioned := d.Get("enable_thin_provisioning").(bool)
+		vdc.AdminVdc.IsThinProvision = &thinProvisioned
 	}
 
 	if d.HasChange("network_pool_name") {
@@ -667,7 +686,8 @@ func getUpdatedVdcInput(d *schema.ResourceData, vcdClient *VCDClient, vdc *govcd
 	}
 
 	if d.HasChange("enable_fast_provisioning") {
-		vdc.AdminVdc.UsesFastProvisioning = d.Get("enable_fast_provisioning").(bool)
+		fastProvisioned := d.Get("enable_fast_provisioning").(bool)
+		vdc.AdminVdc.UsesFastProvisioning = &fastProvisioned
 	}
 
 	if d.HasChange("allow_over_commit") {

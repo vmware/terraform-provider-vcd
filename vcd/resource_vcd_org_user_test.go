@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
@@ -161,6 +161,7 @@ func TestAccVcdOrgUserFull(t *testing.T) {
 			"EmailAddress":    ud.name + "@test.company.org",
 			"IsEnabled":       true,
 			"IM":              "@" + ud.name,
+			"Telephone":       "999 888-7777",
 			"Tags":            "user",
 			"FuncName":        "TestUser_" + ud.name + "_full",
 		}
@@ -212,6 +213,8 @@ func TestAccVcdOrgUserFull(t *testing.T) {
 								resourceName, "description", params["Description"].(string)),
 							resource.TestCheckResourceAttr(
 								resourceName, "instant_messaging", params["IM"].(string)),
+							resource.TestCheckResourceAttr(
+								resourceName, "telephone", params["Telephone"].(string)),
 							resource.TestCheckResourceAttr(
 								resourceName, "deployed_vm_quota", fmt.Sprintf("%d", params["DeployedVmQuota"].(int))),
 							resource.TestCheckResourceAttr(
@@ -354,6 +357,7 @@ resource "vcd_org_user" "{{.UserName}}" {
   stored_vm_quota   = {{.StoredVmQuota}}
   deployed_vm_quota = {{.DeployedVmQuota}}
   instant_messaging = "{{.IM}}"
+  telephone         = "{{.Telephone}}"
   email_address     = "{{.EmailAddress}}"
 }
 `

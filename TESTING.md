@@ -108,7 +108,7 @@ There are also a couple of commands that prepare and execute the terraform scrip
 $ make test-env-init && make test-env-apply
 ```
 
-Unlike other commands executed during `make binary`, these ones only run the `init` and `apply` stage of the script processing,
+Unlike other commands executed during `make test-binary`, these ones only run the `init` and `apply` stage of the script processing,
 producing a ready-to-use environment in a few minutes.
 If the commands were successful, you are ready to run the acceptance tests:
 
@@ -301,6 +301,7 @@ terraform tool through a shell script, and for every test we run
 * `terraform init`
 * `terraform plan`
 * `terraform apply -auto-approve`
+* `terraform plan -detailed-exitcode` (for ensuring that `plan` is empty right after `apply`)
 * `terraform destroy -auto-approve`
 
 The test runs from GNUMakefile, using
@@ -431,3 +432,6 @@ borrow org and vcd from the provider.
 * `VCD_TEST_SUITE_CLEANUP=1` will clean up testing resources that were created in previous test runs.
 * `TEST_VERBOSE=1` enables verbose output in some tests, such as the list of used tags, or the version
 used in the documentation index.
+* `VCD_TEST_ORG_USER=1` will enable tests with Org User, using the credentials from the configuration file
+  (`testEnvBuild.OrgUser` and `testEnvBuild.OrgUserPassword`)
+  

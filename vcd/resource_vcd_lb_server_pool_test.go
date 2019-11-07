@@ -10,8 +10,8 @@ import (
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
 func TestAccVcdLbServerPool(t *testing.T) {
@@ -211,7 +211,7 @@ func TestAccVcdLbServerPool(t *testing.T) {
 				ResourceName:      "vcd_lb_server_pool.server-pool-import",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdByOrgVdcEdge(testConfig, params["ServerPoolName"].(string)),
+				ImportStateIdFunc: importStateIdEdgeGatewayObject(testConfig, testConfig.Networking.EdgeGateway, params["ServerPoolName"].(string)),
 			},
 		},
 	})

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
@@ -99,33 +99,6 @@ func resourceVcdLbServiceMonitor() *schema.Resource {
 				Description: "Advanced monitor parameters as key=value pairs",
 			},
 		},
-	}
-}
-
-// validateCase checks if a string is of caseType "upper" or "lower"
-func validateCase(caseType string) schema.SchemaValidateFunc {
-	return func(i interface{}, k string) (s []string, es []error) {
-		v, ok := i.(string)
-		if !ok {
-			es = append(es, fmt.Errorf("expected type of %s to be string", k))
-			return
-		}
-
-		switch caseType {
-		case "upper":
-			if strings.ToUpper(v) != v {
-				es = append(es, fmt.Errorf(
-					"expected string to be upper cased, got: %s", v))
-			}
-		case "lower":
-			if strings.ToLower(v) != v {
-				es = append(es, fmt.Errorf(
-					"expected string to be lower cased, got: %s", v))
-			}
-		default:
-			panic("unsupported validation type for validateCase() function")
-		}
-		return
 	}
 }
 

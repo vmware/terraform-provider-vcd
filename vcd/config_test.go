@@ -23,9 +23,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
@@ -397,6 +397,18 @@ func getConfigStruct(config string) TestConfig {
 	}
 	if configStruct.Provider.SysOrg == "" {
 		configStruct.Provider.SysOrg = configStruct.VCD.Org
+	}
+
+	if os.Getenv("VCD_TEST_ORG_USER") != "" {
+		user := configStruct.TestEnvBuild.OrgUser
+		password := configStruct.TestEnvBuild.OrgUserPassword
+		if user == "" || password == "" {
+			panic("VCD_TEST_ORG_USER was enabled, but org user credentials were not found in the configuration file")
+		}
+		configStruct.Provider.User = user
+		configStruct.Provider.Password = password
+		configStruct.Provider.SysOrg = configStruct.VCD.Org
+		fmt.Println("VCD_TEST_USER was enabled. Using Org User credentials from configuration file")
 	}
 	_ = os.Setenv("VCD_USER", configStruct.Provider.User)
 	_ = os.Setenv("VCD_PASSWORD", configStruct.Provider.Password)

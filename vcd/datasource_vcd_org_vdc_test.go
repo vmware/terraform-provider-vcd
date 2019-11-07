@@ -6,36 +6,51 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 )
+
+var vdcName = "TestAccVcdVdcDatasource"
 
 func TestAccVcdVdcDatasource(t *testing.T) {
 	validateConfiguration(t)
-
-	vdcName := TestAccVcdVdc + "ForDataSourceTest"
 
 	var params = StringMap{
 		"ExistingVdcName": testConfig.VCD.Vdc,
 		"VdcName":         vdcName,
 		"OrgName":         testConfig.VCD.Org,
-		"FuncName":        "TestAccVcdVdcDatasource",
+		"FuncName":        vdcName,
 	}
 
-	if !usingSysAdmin() {
-		t.Skip("TestAccVcdVdcDatasource requires system admin privileges")
-		return
-	}
-
-	configText := templateFill(testAccCheckVcdVdcDatasource_basic, params)
-
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
-
+	var configText string
 	datasourceVdc := "vcd_org_vdc.existingVdc"
+	if !usingSysAdmin() {
+		params["FuncName"] = t.Name() + "-orgAdmin"
+		configText = templateFill(testAccCheckVcdVdcDatasource_orgAdmin, params)
+
+		debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+		if vcdShortTest {
+			t.Skip(acceptanceTestsSkipped)
+			return
+		}
+
+		validateDataSource(t, configText, datasourceVdc)
+	} else {
+		configText = templateFill(testAccCheckVcdVdcDatasource_basic, params)
+
+		debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+		if vcdShortTest {
+			t.Skip(acceptanceTestsSkipped)
+			return
+		}
+
+		validateResourceAndDataSource(t, configText, datasourceVdc)
+	}
+
+}
+
+func validateResourceAndDataSource(t *testing.T, configText string, datasourceVdc string) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { preRunChecks(t) },
 		Providers:    testAccProviders,
@@ -67,22 +82,55 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 						"data."+datasourceVdc, "compute_capacity.0.cpu.0.allocated", "vcd_org_vdc."+vdcName, "compute_capacity.0.cpu.0.allocated"),
 					resource.TestCheckResourceAttrPair(
 						"data."+datasourceVdc, "compute_capacity.0.cpu.0.limit", "vcd_org_vdc."+vdcName, "compute_capacity.0.cpu.0.limit"),
-					resource.TestCheckResourceAttrPair(
-						"data."+datasourceVdc, "compute_capacity.0.cpu.0.overhead", "vcd_org_vdc."+vdcName, "compute_capacity.0.cpu.0.overhead"),
 					resource.TestMatchResourceAttr(
-						"data."+datasourceVdc, "compute_capacity.0.cpu.0.reserved", regexp.MustCompile(`^\d*$`)),
+						"data."+datasourceVdc, "compute_capacity.0.cpu.0.overhead", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
-						"data."+datasourceVdc, "compute_capacity.0.cpu.0.used", regexp.MustCompile(`^\d*$`)),
+						"data."+datasourceVdc, "compute_capacity.0.cpu.0.reserved", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchResourceAttr(
+						"data."+datasourceVdc, "compute_capacity.0.cpu.0.used", regexp.MustCompile(`^\d+$`)),
 					resource.TestCheckResourceAttrPair(
 						"data."+datasourceVdc, "compute_capacity.0.memory.0.allocated", "vcd_org_vdc."+vdcName, "compute_capacity.0.memory.0.allocated"),
 					resource.TestCheckResourceAttrPair(
 						"data."+datasourceVdc, "compute_capacity.0.memory.0.limit", "vcd_org_vdc."+vdcName, "compute_capacity.0.memory.0.limit"),
-					resource.TestCheckResourceAttrPair(
-						"data."+datasourceVdc, "compute_capacity.0.memory.0.overhead", "vcd_org_vdc."+vdcName, "compute_capacity.0.memory.0.overhead"),
 					resource.TestMatchResourceAttr(
-						"data."+datasourceVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d*$`)),
+						"data."+datasourceVdc, "compute_capacity.0.memory.0.overhead", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
-						"data."+datasourceVdc, "compute_capacity.0.memory.0.used", regexp.MustCompile(`^\d*$`))),
+						"data."+datasourceVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchResourceAttr(
+						"data."+datasourceVdc, "compute_capacity.0.memory.0.used", regexp.MustCompile(`^\d+$`))),
+			},
+		},
+	})
+}
+
+func validateDataSource(t *testing.T, configText string, datasourceVdc string) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { preRunChecks(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVdcDestroy,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("data."+datasourceVdc, "name", testConfig.VCD.Vdc),
+					resource.TestMatchResourceAttr("data."+datasourceVdc, "allocation_model", regexp.MustCompile(`^\S+$`)),
+					resource.TestMatchResourceAttr("data."+datasourceVdc, "enabled", regexp.MustCompile(`^\S+$`)),
+					resource.TestMatchResourceAttr("data."+datasourceVdc, "storage_profile.0.enabled", regexp.MustCompile(`^\S+$`)),
+					resource.TestMatchResourceAttr("data."+datasourceVdc, "storage_profile.0.default", regexp.MustCompile(`^\S+$`)),
+					resource.TestMatchResourceAttr("data."+datasourceVdc, "nic_quota", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchResourceAttr("data."+datasourceVdc, "network_quota", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchResourceAttr("data."+datasourceVdc, "vm_quota", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchResourceAttr("data."+datasourceVdc, "enable_vm_discovery", regexp.MustCompile(`^\S+$`)),
+					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.cpu.0.allocated", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.cpu.0.limit", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.cpu.0.overhead", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.cpu.0.allocated", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.cpu.0.reserved", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.allocated", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.limit", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.overhead", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.allocated", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d+$`))),
 			},
 		},
 	})
@@ -130,5 +178,12 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   enable_fast_provisioning = "${data.vcd_org_vdc.existingVdc.enable_fast_provisioning}"
   delete_force             = true
   delete_recursive         = true
+}
+`
+
+const testAccCheckVcdVdcDatasource_orgAdmin = `
+data "vcd_org_vdc" "existingVdc" {
+  org  = "{{.OrgName}}"
+  name = "{{.ExistingVdcName}}"
 }
 `

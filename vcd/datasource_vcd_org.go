@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func datasourceVcdOrg() *schema.Resource {
@@ -13,19 +13,16 @@ func datasourceVcdOrg() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"name": {
 				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
+				Required:    true,
 				Description: "Organization name for lookup",
 			},
 			"full_name": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
-				ForceNew: false,
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,
-				ForceNew: false,
 			},
 			"is_enabled": &schema.Schema{
 				Type:        schema.TypeBool,

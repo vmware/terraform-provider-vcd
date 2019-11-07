@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 )
 
 func TestAccVcdEdgeSnat(t *testing.T) {
@@ -18,7 +18,7 @@ func TestAccVcdEdgeSnat(t *testing.T) {
 		"EdgeGateway": testConfig.Networking.EdgeGateway,
 		"ExternalIp":  testConfig.Networking.ExternalIp,
 		"NetworkName": "my-vdc-int-net",
-		"Tags":        "egatewaydge nat",
+		"Tags":        "gateway nat",
 	}
 
 	configText := templateFill(testAccVcdEdgeSnatRule, params)

@@ -1,7 +1,7 @@
 package vcd
 
 import (
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
 func datasourceVcdNsxvSnat() *schema.Resource {
@@ -48,7 +48,7 @@ func datasourceVcdNsxvSnat() *schema.Resource {
 				Description: "Possible values 'user', 'internal_high'.",
 			},
 			"rule_tag": &schema.Schema{
-				Type:        schema.TypeString,
+				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Custom rule tag. Contains rule ID if tag was not set",
 			},

@@ -7,14 +7,16 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
 var TestAccVcdVdc = "TestAccVcdVdcBasic"
 
 func TestAccVcdOrgVdcReservationPool(t *testing.T) {
-
+	if !usingSysAdmin() {
+		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
+	}
 	validateConfiguration(t)
 
 	allocationModel := "ReservationPool"
@@ -39,7 +41,9 @@ func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 }
 
 func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
-
+	if !usingSysAdmin() {
+		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
+	}
 	validateConfiguration(t)
 	allocationModel := "AllocationPool"
 
@@ -62,7 +66,9 @@ func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 }
 
 func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
-
+	if !usingSysAdmin() {
+		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
+	}
 	validateConfiguration(t)
 
 	allocationModel := "AllocationVApp"
@@ -86,10 +92,6 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 }
 
 func validateConfiguration(t *testing.T) {
-	if !usingSysAdmin() {
-		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
-	}
-
 	if testConfig.VCD.ProviderVdc.Name == "" {
 		t.Skip("Variable providerVdc.Name must be set to run VDC tests")
 	}
@@ -181,21 +183,21 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.limit", params["Limit"].(string)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.overhead", regexp.MustCompile(`^\d*$`)),
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.overhead", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.reserved", regexp.MustCompile(`^\d*$`)),
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.reserved", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.used", regexp.MustCompile(`^\d*$`)),
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.used", regexp.MustCompile(`^\d+$`)),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.allocated", params["Allocated"].(string)),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.limit", params["Limit"].(string)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.overhead", regexp.MustCompile(`^\d*$`)),
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.overhead", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d*$`)),
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.used", regexp.MustCompile(`^\d*$`)),
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.used", regexp.MustCompile(`^\d+$`)),
 				),
 			},
 			resource.TestStep{
@@ -246,21 +248,21 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.limit", params["Limit"].(string)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.overhead", regexp.MustCompile(`^\d*$`)),
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.overhead", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.reserved", regexp.MustCompile(`^\d*$`)),
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.reserved", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.used", regexp.MustCompile(`^\d*$`)),
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.used", regexp.MustCompile(`^\d+$`)),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.allocated", params["Allocated"].(string)),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.limit", params["Limit"].(string)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.overhead", regexp.MustCompile(`^\d*$`)),
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.overhead", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d*$`)),
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.used", regexp.MustCompile(`^\d*$`)),
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.used", regexp.MustCompile(`^\d+$`)),
 				),
 			},
 			resource.TestStep{

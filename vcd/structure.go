@@ -6,8 +6,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
@@ -120,4 +120,25 @@ func convertToStringMap(param map[string]interface{}) map[string]string {
 		temp[k] = v.(string)
 	}
 	return temp
+}
+
+// convertSchemaSetToSliceOfStrings accepts Terraform's *schema.Set object and converts it to slice
+// of strings.
+// This is useful for extracting values from a set of strings
+func convertSchemaSetToSliceOfStrings(param *schema.Set) []string {
+	paramList := param.List()
+	result := make([]string, len(paramList))
+	for index, value := range paramList {
+		result[index] = fmt.Sprint(value)
+	}
+
+	return result
+}
+
+func convertToTypeSet(param []string) []interface{} {
+	slice := make([]interface{}, len(param))
+	for index, value := range param {
+		slice[index] = value
+	}
+	return slice
 }

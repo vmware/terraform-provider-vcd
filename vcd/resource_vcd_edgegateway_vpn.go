@@ -5,7 +5,7 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/hashicorp/terraform/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
@@ -84,9 +84,10 @@ func resourceVcdEdgeGatewayVpn() *schema.Resource {
 			},
 
 			"shared_secret": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:      schema.TypeString,
+				Required:  true,
+				ForceNew:  true,
+				Sensitive: true,
 			},
 
 			"local_subnets": &schema.Schema{
@@ -301,10 +302,8 @@ func resourceVcdEdgeGatewayVpnRead(d *schema.ResourceData, meta interface{}) err
 		_ = d.Set("mtu", tunnel.Mtu)
 		_ = d.Set("peer_ip_address", tunnel.PeerIPAddress)
 		_ = d.Set("peer_id", tunnel.PeerID)
-		_ = d.Set("shared_secret", tunnel.SharedSecret)
 		convertAndSet("local_subnets", tunnel.LocalSubnet, d)
 		convertAndSet("peer_subnets", tunnel.PeerSubnet, d)
-
 	} else {
 		return fmt.Errorf("multiple tunnels not currently supported")
 	}

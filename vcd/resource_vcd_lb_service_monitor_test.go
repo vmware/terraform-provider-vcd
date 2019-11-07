@@ -11,8 +11,8 @@ import (
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
 func TestAccVcdLbServiceMonitor(t *testing.T) {
@@ -89,7 +89,7 @@ func TestAccVcdLbServiceMonitor(t *testing.T) {
 				ResourceName:      "vcd_lb_service_monitor.service-monitor-import",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdByOrgVdcEdge(testConfig, params["ServiceMonitorName"].(string)),
+				ImportStateIdFunc: importStateIdEdgeGatewayObject(testConfig, testConfig.Networking.EdgeGateway, params["ServiceMonitorName"].(string)),
 			},
 		},
 	})
@@ -109,20 +109,6 @@ func testAccCheckVcdLbServiceMonitorDestroy(serviceMonitorName string) resource.
 			return fmt.Errorf("load balancer service monitor was not deleted: %s", err)
 		}
 		return nil
-	}
-}
-
-// importStateIdByOrgVdcEdge constructs an import path (ID in Terraform import terms) in the format of:
-// organization.vdc.edge-gateway-nane.import-object-name (i.e. my-org.my-vdc.my-edge-gw.objectName) from TestConfig and
-// object state.
-func importStateIdByOrgVdcEdge(vcd TestConfig, objectName string) resource.ImportStateIdFunc {
-	return func(*terraform.State) (string, error) {
-		importId := testConfig.VCD.Org + "." + testConfig.VCD.Vdc + "." + testConfig.Networking.EdgeGateway + "." + objectName
-		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || testConfig.Networking.EdgeGateway == "" || objectName == "" {
-			return "", fmt.Errorf("missing information to generate import path: %s", importId)
-		}
-
-		return importId, nil
 	}
 }
 

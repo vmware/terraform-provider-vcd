@@ -11,8 +11,8 @@ import (
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
 func TestAccVcdLBAppRule(t *testing.T) {
@@ -100,7 +100,7 @@ acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifoth
 				ResourceName:      "vcd_lb_app_rule.imported",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdByOrgVdcEdge(testConfig, params["AppRuleName"].(string)),
+				ImportStateIdFunc: importStateIdEdgeGatewayObject(testConfig, testConfig.Networking.EdgeGateway, params["AppRuleName"].(string)),
 			},
 
 			resource.TestStep{ // Multi Line Script with invalid rule

@@ -10,8 +10,8 @@ import (
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
-	"github.com/hashicorp/terraform/helper/resource"
-	"github.com/hashicorp/terraform/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
 func TestAccVcdLbVirtualServer(t *testing.T) {
@@ -80,7 +80,7 @@ func TestAccVcdLbVirtualServer(t *testing.T) {
 				ResourceName:      "vcd_lb_virtual_server.virtual-server-import",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdByOrgVdcEdge(testConfig, t.Name()),
+				ImportStateIdFunc: importStateIdEdgeGatewayObject(testConfig, testConfig.Networking.EdgeGateway, t.Name()),
 			},
 			resource.TestStep{ // step 2
 				Config: configText2,
