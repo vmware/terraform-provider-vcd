@@ -327,24 +327,6 @@ func resourceVcdIndependentDiskDelete(d *schema.ResourceData, meta interface{}) 
 	return nil
 }
 
-func validateBusType(v interface{}, k string) (warnings []string, errors []error) {
-	value := v.(string)
-	if "" == busTypes[strings.ToUpper(value)] {
-		errors = append(errors, fmt.Errorf(
-			"%q (%q) value isn't valid", k, value))
-	}
-	return
-}
-
-func validateBusSubType(v interface{}, k string) (warnings []string, errors []error) {
-	value := v.(string)
-	if "" == busSubTypes[strings.ToLower(value)] {
-		errors = append(errors, fmt.Errorf(
-			"%q (%q) value isn't valid", k, value))
-	}
-	return
-}
-
 var helpDiskError = fmt.Errorf(`resource id must be specified in one of these formats:
 'org-name.vdc-name.my-independent-disk-id' to import by rule id
 'list@org-name.vdc-name.my-independent-disk-name' to get a list of disks with their IDs`)

@@ -4,12 +4,6 @@ FEATURES:
 
 * **New Data Source:** `vcd_vapp_vm` VM - [GH-218]
 
-BUG FIXES:
-
-* Removed `power_on` property from data source `vcd_vapp`, as it is a directive used during vApp build.
-  Its state is never updated and the fields `status` and `status_text` already provide the necessary information.
-  [GH-379]
-
 IMPROVEMENTS:
 
 * Switch to Terraform terraform-plugin-sdk v1.0.0 as per recent [HashiCorp
@@ -18,12 +12,28 @@ IMPROVEMENTS:
 * `resource/vcd_vapp_vm` Add properties `description` and `storage_profile`
 * `resource/vcd_vapp_vm` Add import capability and full read support [GH-218]
 
+* `resource/vcd_nsxv_dnat` and `resource/vcd_nsxv_dnat` more precise error message when network is
+  not found - [GH-384]
+* `resource/vcd_nsxv_dnat` and `resource/vcd_nsxv_dnat` `rule_tag` must be int to avoid vCD internal
+  exception passthrough - [GH-384]
+* `resource/vcd_nsxv_dnat` put correct name in doc example - [GH-384]
+* `resource/vcd_nsxv_dnat` and `resource/vcd_nsxv_dnat` avoid rule replacement because of changed
+  `rule_tag` when rule is altered via UI - [GH-384]
+* `resource/vcd_nsxv_firewall_rule` add explicit protocol validation to avoid odd NSX-V API error -
+  [GH-384]
+* `resource/vcd_nsxv_firewall_rule` `rule_tag` must be int to avoid vCD internal exception
+  passthrough - [GH-384]
+
+BUG FIXES:
+
+* Fix `vcd_org_vdc` datasource read. When user was Organization administrator datasource failed. Fields provider_vdc_name, storage_profile, memory_guaranteed, cpu_guaranteed, cpu_speed, enable_thin_provisioning, enable_fast_provisioning, network_pool_name won't have values for org admin.
+* Removed `power_on` property from data source `vcd_vapp`, as it is a directive used during vApp build.
+  Its state is never updated and the fields `status` and `status_text` already provide the necessary information.
+  [GH-379]
+
 DEPRECATIONS:
 
 * Deprecated property `storage_profile` in resource `vcd_vapp`, as the corresponding field is now enabled in `vcd_vapp_vm`
-
-BUG FIXES:
-* Fix `vcd_org_vdc` datasource read. When user was Organization administrator datasource failed. Fields provider_vdc_name, storage_profile, memory_guaranteed, cpu_guaranteed, cpu_speed, enable_thin_provisioning, enable_fast_provisioning, network_pool_name won't have values for org admin.
 
 ## 2.5.0 (October 28, 2019)
 

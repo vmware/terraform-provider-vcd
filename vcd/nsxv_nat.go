@@ -195,8 +195,8 @@ func getvNicIndexFromNetworkNameType(networkName, networkType string, edgeGatewa
 	}
 
 	if err != nil {
-		return nil, fmt.Errorf("unable to identify vNic for network '%s' of type '%s': %s",
-			networkName, networkType, err)
+		return nil, fmt.Errorf("can't find network '%s' of type '%s' attached to edge gateway "+
+			"therefore unable to identify vNic: %s", networkName, networkType, err)
 	}
 
 	return vnicIndex, nil
