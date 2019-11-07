@@ -1,6 +1,9 @@
 package vcd
 
 import (
+	"fmt"
+	"strconv"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 
@@ -57,7 +60,7 @@ func resourceVcdNsxvDnat() *schema.Resource {
 				Description: "Read only. Possible values 'user', 'internal_high'",
 			},
 			"rule_tag": &schema.Schema{
-				Type:        schema.TypeString,
+				Type:        schema.TypeInt,
 				Optional:    true,
 				ForceNew:    true,
 				Computed:    true,
@@ -144,7 +147,6 @@ func getDnatRule(d *schema.ResourceData, edgeGateway govcd.EdgeGateway) (*types.
 	}
 
 	natRule := &types.EdgeNatRule{
-		RuleTag:           d.Get("rule_tag").(string),
 		Enabled:           d.Get("enabled").(bool),
 		LoggingEnabled:    d.Get("logging_enabled").(bool),
 		Description:       d.Get("description").(string),
@@ -157,6 +159,10 @@ func getDnatRule(d *schema.ResourceData, edgeGateway govcd.EdgeGateway) (*types.
 		TranslatedPort:    d.Get("translated_port").(string),
 	}
 
+	if ruleTag, ok := d.GetOk("rule_tag"); ok {
+		natRule.RuleTag = strconv.Itoa(ruleTag.(int))
+	}
+
 	return natRule, nil
 }
 
@@ -167,9 +173,16 @@ func setDnatRuleData(d *schema.ResourceData, natRule *types.EdgeNatRule, edgeGat
 		return err
 	}
 
+	if natRule.RuleTag != "" {
+		value, err := strconv.Atoi(natRule.RuleTag)
+		if err != nil {
+			return fmt.Errorf("could not convert ruletag (%s) from string to int: %s", natRule.RuleTag, err)
+		}
+		_ = d.Set("rule_tag", value)
+	}
+
 	_ = d.Set("network_type", resourceNetworkType)
 	_ = d.Set("network_name", networkName)
-	_ = d.Set("rule_tag", natRule.RuleTag)
 	_ = d.Set("enabled", natRule.Enabled)
 	_ = d.Set("logging_enabled", natRule.LoggingEnabled)
 	_ = d.Set("description", natRule.Description)

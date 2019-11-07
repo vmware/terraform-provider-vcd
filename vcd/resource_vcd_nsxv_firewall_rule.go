@@ -64,7 +64,7 @@ func resourceVcdNsxvFirewallRule() *schema.Resource {
 				Description: "Read only. Possible values 'user', 'internal_high'",
 			},
 			"rule_tag": &schema.Schema{
-				Type:        schema.TypeString,
+				Type:        schema.TypeInt,
 				Optional:    true,
 				ForceNew:    true,
 				Computed:    true,
@@ -231,8 +231,10 @@ func resourceVcdNsxvFirewallRule() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"protocol": {
-							Required: true,
-							Type:     schema.TypeString,
+							Required:         true,
+							Type:             schema.TypeString,
+							ValidateFunc:     validation.StringInSlice([]string{"any", "icmp", "tcp", "udp"}, true),
+							DiffSuppressFunc: suppressCase,
 						},
 						"port": {
 							Optional:     true,
@@ -502,8 +504,15 @@ func setFirewallRuleData(d *schema.ResourceData, rule *types.EdgeFirewallRule, e
 	_ = d.Set("enabled", rule.Enabled)
 	_ = d.Set("logging_enabled", rule.LoggingEnabled)
 	_ = d.Set("action", rule.Action)
-	_ = d.Set("rule_tag", rule.RuleTag)
 	_ = d.Set("rule_type", rule.RuleType)
+
+	if rule.RuleTag != "" {
+		value, err := strconv.Atoi(rule.RuleTag)
+		if err != nil {
+			return fmt.Errorf("could not convert ruletag (%s) from string to int: %s", rule.RuleTag, err)
+		}
+		_ = d.Set("rule_tag", value)
+	}
 
 	// Process and set "source" block
 	source, err := getEndpointData(rule.Source, edge, vdc)
@@ -562,12 +571,15 @@ func getFirewallRule(d *schema.ResourceData, edge *govcd.EdgeGateway, vdc *govcd
 		Enabled:        d.Get("enabled").(bool),
 		LoggingEnabled: d.Get("logging_enabled").(bool),
 		Action:         d.Get("action").(string),
-		RuleTag:        d.Get("rule_tag").(string),
 		Application: types.EdgeFirewallApplication{
 			Services: services,
 		},
 		Source:      *sourceEndpoint,
 		Destination: *destinationEndpoint,
+	}
+
+	if ruleTag, ok := d.GetOk("rule_tag"); ok {
+		firewallRule.RuleTag = strconv.Itoa(ruleTag.(int))
 	}
 
 	return firewallRule, nil
