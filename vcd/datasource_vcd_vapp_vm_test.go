@@ -1,4 +1,4 @@
-// +build vapp ALL functional
+// +build vm ALL functional
 
 package vcd
 
@@ -10,7 +10,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
-// TestAccVcdVappDS tests a vApp data source if a vApp is found in the VDC
+// TestAccVcdVappDS tests a VM data source if a vApp + VM is found in the VDC
 func TestAccVcdVappVmDS(t *testing.T) {
 	// This test requires access to the vCD before filling templates
 	// Thus it won't run in the short test
@@ -32,6 +32,10 @@ func TestAccVcdVappVmDS(t *testing.T) {
 			t.Skip(fmt.Sprintf("error retrieving VM %s", vapp.VApp.Children.VM[0].Name))
 			return
 		}
+	}
+	if vm == nil {
+		t.Skip(fmt.Sprintf("No VM available in vApp %s", vapp.VApp.Name))
+		return
 	}
 
 	var params = StringMap{

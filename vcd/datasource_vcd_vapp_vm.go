@@ -6,7 +6,7 @@ import (
 
 func datasourceVcdVAppVm() *schema.Resource {
 	return &schema.Resource{
-		Read: resourceVcdVAppVmRead,
+		Read: datasourceVcdVAppVmRead,
 
 		Schema: map[string]*schema.Schema{
 			"vapp_name": &schema.Schema{
@@ -134,4 +134,8 @@ func datasourceVcdVAppVm() *schema.Resource {
 			},
 		},
 	}
+}
+
+func datasourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
+	return genericVcdVAppVmRead(d, meta, "datasource")
 }
