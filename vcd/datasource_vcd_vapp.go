@@ -38,11 +38,6 @@ func datasourceVcdVApp() *schema.Resource {
 				Computed:    true,
 				Description: "vApp Hyper Reference",
 			},
-			"power_on": {
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Description: "A boolean value stating if this vApp should be powered on",
-			},
 			"guest_properties": {
 				Type:        schema.TypeMap,
 				Computed:    true,

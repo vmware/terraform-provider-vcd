@@ -51,7 +51,6 @@ The following arguments are supported:
 
 * `href` - The vApp Hyper Reference
 * `metadata` -  Key value map of metadata to assign to this vApp. Key and value can be any string. 
-* `power_on` -  A boolean value stating if this vApp should be powered on. Default is `true`
 * `guest_properties` -  Key value map of vApp guest properties.
 * `status` -  The vApp status as a numeric code
 * `status_text` -  The vApp status as text.

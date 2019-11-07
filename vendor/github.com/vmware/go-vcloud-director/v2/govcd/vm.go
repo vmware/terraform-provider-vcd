@@ -44,7 +44,7 @@ func NewVMRecord(cli *Client) *VMRecord {
 func (vm *VM) GetStatus() (string, error) {
 	err := vm.Refresh()
 	if err != nil {
-		return "", fmt.Errorf("error refreshing VM: %v", err)
+		return "", fmt.Errorf("error refreshing VM: %s", err)
 	}
 	return types.VAppStatuses[vm.VM.Status], nil
 }
@@ -53,7 +53,7 @@ func (vm *VM) GetStatus() (string, error) {
 func (vm *VM) IsDeployed() (bool, error) {
 	err := vm.Refresh()
 	if err != nil {
-		return false, fmt.Errorf("error refreshing VM: %v", err)
+		return false, fmt.Errorf("error refreshing VM: %s", err)
 	}
 	return vm.VM.Deployed, nil
 }
@@ -229,7 +229,7 @@ func (vm *VM) ChangeCPUCountWithCore(virtualCpuCount int, coresPerSocket *int) (
 
 	err := vm.Refresh()
 	if err != nil {
-		return Task{}, fmt.Errorf("error refreshing VM before running customization: %v", err)
+		return Task{}, fmt.Errorf("error refreshing VM before running customization: %s", err)
 	}
 
 	newCpu := &types.OVFItem{
@@ -333,17 +333,17 @@ func (vm *VM) updateNicParameters(networks []map[string]interface{}, networkSect
 func (vm *VM) ChangeNetworkConfig(networks []map[string]interface{}) (Task, error) {
 	err := vm.Refresh()
 	if err != nil {
-		return Task{}, fmt.Errorf("error refreshing VM before running customization: %v", err)
+		return Task{}, fmt.Errorf("error refreshing VM before running customization: %s", err)
 	}
 
 	networkSection, err := vm.GetNetworkConnectionSection()
 	if err != nil {
-		return Task{}, fmt.Errorf("could not retrieve network connection for VM: %v", err)
+		return Task{}, fmt.Errorf("could not retrieve network connection for VM: %s", err)
 	}
 
 	err = vm.updateNicParameters(networks, networkSection)
 	if err != nil {
-		return Task{}, fmt.Errorf("failed processing NIC parameters: %v", err)
+		return Task{}, fmt.Errorf("failed processing NIC parameters: %s", err)
 	}
 
 	networkSection.Xmlns = types.XMLNamespaceVCloud
@@ -362,7 +362,7 @@ func (vm *VM) ChangeMemorySize(size int) (Task, error) {
 
 	err := vm.Refresh()
 	if err != nil {
-		return Task{}, fmt.Errorf("error refreshing VM before running customization: %v", err)
+		return Task{}, fmt.Errorf("error refreshing VM before running customization: %s", err)
 	}
 
 	newMem := &types.OVFItem{
@@ -446,7 +446,7 @@ func (vm *VM) BlockWhileGuestCustomizationStatus(unwantedStatus string, timeOutA
 func (vm *VM) Customize(computername, script string, changeSid bool) (Task, error) {
 	err := vm.Refresh()
 	if err != nil {
-		return Task{}, fmt.Errorf("error refreshing VM before running customization: %v", err)
+		return Task{}, fmt.Errorf("error refreshing VM before running customization: %s", err)
 	}
 
 	vu := &types.GuestCustomizationSection{

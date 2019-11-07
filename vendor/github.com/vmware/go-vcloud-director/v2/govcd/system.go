@@ -305,7 +305,7 @@ func CreateEdgeGateway(vcdClient *VCDClient, egwc EdgeGatewayCreation) (EdgeGate
 func GetOrgByName(vcdClient *VCDClient, orgName string) (Org, error) {
 	orgUrl, err := getOrgHREF(vcdClient, orgName)
 	if err != nil {
-		return Org{}, fmt.Errorf("organization '%s' fetch failed: %#v", orgName, err)
+		return Org{}, fmt.Errorf("organization '%s' fetch failed: %s", orgName, err)
 	}
 	org := NewOrg(&vcdClient.Client)
 

@@ -7,6 +7,7 @@ import (
 	"net"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -21,17 +22,22 @@ func resourceVcdVAppVm() *schema.Resource {
 		Update: resourceVcdVAppVmUpdate,
 		Read:   resourceVcdVAppVmRead,
 		Delete: resourceVcdVAppVmDelete,
+		Importer: &schema.ResourceImporter{
+			State: resourceVcdVappVmImport,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"vapp_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "The vApp this VM belongs to",
 			},
 			"name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "A name for the VM, unique within the vApp",
 			},
 			"computer_name": &schema.Schema{
 				Type:        schema.TypeString,
@@ -53,26 +59,40 @@ func resourceVcdVAppVm() *schema.Resource {
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
 			"template_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "The name of the vApp Template to use",
 			},
 			"catalog_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "The catalog name in which to find the given vApp Template",
+			},
+			"description": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The VM description",
+				// Note: description is read only, as we lack the needed fields to set it at creation.
+				// Currently, this field has the description of the OVA used to create the VM
 			},
 			"memory": &schema.Schema{
-				Type:     schema.TypeInt,
-				Optional: true,
+				Type:         schema.TypeInt,
+				Optional:     true,
+				Description:  "The amount of RAM (in MB) to allocate to the VM",
+				ValidateFunc: validateMultipleOf4(),
 			},
 			"cpus": &schema.Schema{
-				Type:     schema.TypeInt,
-				Optional: true,
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: "The number of virtual CPUs to allocate to the VM",
 			},
 			"cpu_cores": &schema.Schema{
-				Type:     schema.TypeInt,
-				Optional: true,
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Default:     1,
+				Description: "The number of cores per socket",
 			},
 			"ip": &schema.Schema{
 				Computed:         true,
@@ -91,34 +111,42 @@ func resourceVcdVAppVm() *schema.Resource {
 				Type:          schema.TypeString,
 			},
 			"initscript": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Script to run on initial boot or with customization.force=true set",
 			},
 			"metadata": {
 				Type:     schema.TypeMap,
 				Optional: true,
 				// For now underlying go-vcloud-director repo only supports
 				// a value of type String in this map.
+				Description: "Key value map of metadata to assign to this VM",
 			},
 			"href": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				Computed: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "VM Hyper Reference",
 			},
 			"accept_all_eulas": &schema.Schema{
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Automatically accept EULA if OVA has it",
 			},
 			"power_on": &schema.Schema{
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "A boolean value stating if this VM should be powered on",
 			},
-			// TODO: Add a property "storage_profile", which is currently not handled by vapp.AddVM
-			// Then deprecate "storage_profile" in vcd_vapp resource
-			// See https://github.com/vmware/go-vcloud-director/issues/246
+			"storage_profile": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Storage profile to override the default one",
+			},
 			"network_href": &schema.Schema{
 				ConflictsWith: []string{"network"},
 				Deprecated:    "In favor of network",
@@ -129,6 +157,7 @@ func resourceVcdVAppVm() *schema.Resource {
 				ConflictsWith: []string{"ip", "network_name", "vapp_network_name", "network_href"},
 				Optional:      true,
 				Type:          schema.TypeList,
+				Description:   " A block to define network interface. Multiple can be used.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {
@@ -141,17 +170,20 @@ func resourceVcdVAppVm() *schema.Resource {
 							Optional:     true,
 							Type:         schema.TypeString,
 							ValidateFunc: validation.StringInSlice([]string{"POOL", "DHCP", "MANUAL", "NONE"}, false),
+							Description:  "IP address allocation mode. One of POOL, DHCP, MANUAL, NONE",
 						},
 						"name": {
-							ForceNew: false,
-							Optional: true, // In case of type = none it is not required
-							Type:     schema.TypeString,
+							ForceNew:    false,
+							Optional:    true, // In case of type = none it is not required
+							Type:        schema.TypeString,
+							Description: "Name of the network this VM should connect to. Always required except for `type` `NONE`",
 						},
 						"ip": {
 							Computed:     true,
 							Optional:     true,
 							Type:         schema.TypeString,
 							ValidateFunc: checkEmptyOrSingleIP(), // Must accept empty string to ease using HCL interpolation
+							Description:  "IP of the VM. Settings depend on `ip_allocation_mode`. Omitted or empty for DHCP, POOL, NONE. Required for MANUAL",
 						},
 						"is_primary": {
 							Default:  false,
@@ -161,11 +193,13 @@ func resourceVcdVAppVm() *schema.Resource {
 							// suppresses such cases "" => "false" when applying.
 							DiffSuppressFunc: falseBoolSuppress(),
 							Type:             schema.TypeBool,
+							Description:      "Set to true if network interface should be primary. First network card in the list will be primary by default",
 						},
 						"mac": {
-							Computed: true,
-							Optional: true,
-							Type:     schema.TypeString,
+							Computed:    true,
+							Optional:    true,
+							Type:        schema.TypeString,
+							Description: "Mac address of network interface",
 						},
 					},
 				},
@@ -188,16 +222,19 @@ func resourceVcdVAppVm() *schema.Resource {
 				Type: schema.TypeSet,
 				Elem: &schema.Resource{Schema: map[string]*schema.Schema{
 					"name": {
-						Type:     schema.TypeString,
-						Required: true,
+						Type:        schema.TypeString,
+						Required:    true,
+						Description: "Independent disk name",
 					},
 					"bus_number": {
-						Type:     schema.TypeString,
-						Required: true,
+						Type:        schema.TypeString,
+						Required:    true,
+						Description: "Bus number on which to place the disk controller",
 					},
 					"unit_number": {
-						Type:     schema.TypeString,
-						Required: true,
+						Type:        schema.TypeString,
+						Required:    true,
+						Description: "Unit number (slot) on the bus specified by BusNumber",
 					},
 				}},
 				Optional: true,
@@ -232,6 +269,7 @@ func resourceVcdVAppVm() *schema.Resource {
 							// state. If it is 'true' - then it means that 'update' procedure must set the
 							// VM for customization at next boot and reboot it.
 							DiffSuppressFunc: suppressFalse(),
+							Description:      "'true' value will cause the VM to reboot on every 'apply' operation",
 						},
 					},
 				},
@@ -258,19 +296,19 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 
 	catalogItem, err := catalog.GetCatalogItemByName(d.Get("template_name").(string), false)
 	if err != nil {
-		return fmt.Errorf("error finding catalog item: %#v", err)
+		return fmt.Errorf("error finding catalog item: %s", err)
 	}
 
 	vappTemplate, err := catalogItem.GetVAppTemplate()
 	if err != nil {
-		return fmt.Errorf("error finding VAppTemplate: %#v", err)
+		return fmt.Errorf("error finding VAppTemplate: %s", err)
 	}
 
 	acceptEulas := d.Get("accept_all_eulas").(bool)
 
 	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
 	if err != nil {
-		return fmt.Errorf("error finding vApp: %#v", err)
+		return fmt.Errorf("error finding vApp: %s", err)
 	}
 
 	// Determine whether we use new 'networks' or deprecated network configuration and process inputs based on it.
@@ -287,20 +325,32 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	log.Printf("[TRACE] Creating VM: %s", d.Get("name").(string))
-	task, err := vapp.AddNewVM(d.Get("name").(string), vappTemplate, &networkConnectionSection, acceptEulas)
+	var storageProfile types.Reference
+	storageProfilePtr := &storageProfile
+	storageProfileName := d.Get("storage_profile").(string)
+	if storageProfileName != "" {
+		storageProfile, err = vdc.FindStorageProfileReference(storageProfileName)
+		if err != nil {
+			return fmt.Errorf("[vm creation] error retrieving storage profile %s : %s", storageProfileName, err)
+		}
+	} else {
+		storageProfilePtr = nil
+	}
+	task, err := vapp.AddNewVMWithStorageProfile(d.Get("name").(string), vappTemplate, &networkConnectionSection, storageProfilePtr, acceptEulas)
 	if err != nil {
-		return fmt.Errorf("error adding VM: %#v", err)
+		return fmt.Errorf("[VM creation] error adding VM: %s", err)
 	}
 	err = task.WaitTaskCompletion()
 	if err != nil {
 		return fmt.Errorf(errorCompletingTask, err)
 	}
 
-	vm, err := vapp.GetVMByName(d.Get("name").(string), true)
+	vmName := d.Get("name").(string)
+	vm, err := vapp.GetVMByName(vmName, true)
 
 	if err != nil {
 		d.SetId("")
-		return fmt.Errorf("error getting VM1 : %#v", err)
+		return fmt.Errorf("[VM creation] error getting VM %s : %s", vmName, err)
 	}
 
 	// The below operation assumes VM is powered off and does not check for it because VM is being
@@ -309,7 +359,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 
 		task, err := vm.ToggleHardwareVirtualization(true)
 		if err != nil {
-			return fmt.Errorf("error enabling hardware assisted virtualization: %#v", err)
+			return fmt.Errorf("error enabling hardware assisted virtualization: %s", err)
 		}
 		err = task.WaitTaskCompletion()
 
@@ -333,7 +383,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 		task, err := vm.RunCustomizationScript(computerName, initScript.(string))
 		if err != nil {
-			return fmt.Errorf("error with init script setting: %#v", err)
+			return fmt.Errorf("error with init script setting: %s", err)
 		}
 		err = task.WaitTaskCompletion()
 		if err != nil {
@@ -364,7 +414,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	d.SetId(d.Get("name").(string))
+	d.SetId(vm.VM.ID)
 
 	// TODO do not trigger resourceVcdVAppVmUpdate from create. These must be separate actions.
 	err = resourceVcdVAppVmUpdateExecute(d, meta)
@@ -372,7 +422,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		errAttachedDisk := updateStateOfAttachedDisks(d, *vm, vdc)
 		if errAttachedDisk != nil {
 			d.Set("disk", nil)
-			return fmt.Errorf("error reading attached disks : %#v and internal error : %#v", errAttachedDisk, err)
+			return fmt.Errorf("error reading attached disks : %s and internal error : %s", errAttachedDisk, err)
 		}
 		return err
 	}
@@ -408,11 +458,11 @@ func addVdcNetwork(networkNameToAdd string, vdc *govcd.Vdc, vapp govcd.VApp, vcd
 	if !isAlreadyVappNetwork {
 		task, err := vapp.AddRAWNetworkConfig([]*types.OrgVDCNetwork{vdcNetwork})
 		if err != nil {
-			return &types.OrgVDCNetwork{}, fmt.Errorf("error assigning network to vApp: %#v", err)
+			return &types.OrgVDCNetwork{}, fmt.Errorf("error assigning network to vApp: %s", err)
 		}
 		err = task.WaitTaskCompletion()
 		if err != nil {
-			return &types.OrgVDCNetwork{}, fmt.Errorf("error assigning network to vApp:: %#v", err)
+			return &types.OrgVDCNetwork{}, fmt.Errorf("error assigning network to vApp:: %s", err)
 		}
 	}
 
@@ -424,7 +474,7 @@ func isItVappNetwork(vAppNetworkName string, vapp govcd.VApp) (bool, error) {
 
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 	if err != nil {
-		return false, fmt.Errorf("error getting vApp networks: %#v", err)
+		return false, fmt.Errorf("error getting vApp networks: %s", err)
 	}
 	// If vApp network is "isolated" and has no ParentNetwork - it is a vApp network.
 	// https://code.vmware.com/apis/72/vcloud/doc/doc/types/NetworkConfigurationType.html
@@ -437,7 +487,7 @@ func isItVappNetwork(vAppNetworkName string, vapp govcd.VApp) (bool, error) {
 		}
 	}
 
-	return false, fmt.Errorf("configured vApp network isn't found: %#v", err)
+	return false, fmt.Errorf("configured vApp network isn't found: %s", err)
 }
 
 type diskParams struct {
@@ -462,7 +512,7 @@ func expandDisksProperties(v interface{}) ([]diskParams, error) {
 		if busNumber != "" {
 			convertedBusNumber, err := strconv.Atoi(busNumber)
 			if err != nil {
-				return nil, fmt.Errorf("value `%s` bus_number is not number. err: %#v", busNumber, err)
+				return nil, fmt.Errorf("value `%s` bus_number is not number. err: %s", busNumber, err)
 			}
 			addParams.busNumber = &convertedBusNumber
 		}
@@ -471,7 +521,7 @@ func expandDisksProperties(v interface{}) ([]diskParams, error) {
 		if unitNumber != "" {
 			convertedUnitNumber, err := strconv.Atoi(unitNumber)
 			if err != nil {
-				return nil, fmt.Errorf("value `%s` unit_number is not number. err: %#v", unitNumber, err)
+				return nil, fmt.Errorf("value `%s` unit_number is not number. err: %s", unitNumber, err)
 			}
 			addParams.unitNumber = &convertedUnitNumber
 		}
@@ -486,7 +536,7 @@ func getVmIndependentDisks(vm govcd.VM) []string {
 	var disks []string
 	for _, item := range vm.VM.VirtualHardwareSection.Item {
 		// disk resource type is 17
-		if item.ResourceType == 17 && "" != item.HostResource[0].Disk {
+		if item.ResourceType == 17 && item.HostResource[0].Disk != "" {
 			disks = append(disks, item.HostResource[0].Disk)
 		}
 	}
@@ -522,16 +572,24 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf("error finding vApp: %s", err)
 	}
 
-	vm, err := vapp.GetVMByName(d.Get("name").(string), false)
+	identifier := d.Id()
+	if identifier == "" {
+		identifier = d.Get("name").(string)
+	}
+	if identifier == "" {
+		return fmt.Errorf("[VM update] neither name or ID was set")
+	}
+
+	vm, err := vapp.GetVMByNameOrId(identifier, false)
 
 	if err != nil {
 		d.SetId("")
-		return fmt.Errorf("error getting VM2: %#v", err)
+		return fmt.Errorf("[VM update] error getting VM %s: %s", identifier, err)
 	}
 
 	vmStatusBeforeUpdate, err := vm.GetStatus()
 	if err != nil {
-		return fmt.Errorf("error getting VM status before update: %#v", err)
+		return fmt.Errorf("[VM update] error getting VM (%s) status before update: %s", identifier, err)
 	}
 
 	if d.HasChange("guest_properties") {
@@ -565,7 +623,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		for _, k := range toBeRemovedMetadata {
 			task, err := vm.DeleteMetadata(k)
 			if err != nil {
-				return fmt.Errorf("error deleting metadata: %#v", err)
+				return fmt.Errorf("error deleting metadata: %s", err)
 			}
 			err = task.WaitTaskCompletion()
 			if err != nil {
@@ -575,7 +633,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		for k, v := range newMetadata {
 			task, err := vm.AddMetadata(k, v.(string))
 			if err != nil {
-				return fmt.Errorf("error adding metadata: %#v", err)
+				return fmt.Errorf("error adding metadata: %s", err)
 			}
 			err = task.WaitTaskCompletion()
 			if err != nil {
@@ -597,7 +655,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 				vm.VM.Name, vmStatusBeforeUpdate)
 			task, err := vm.PowerOff()
 			if err != nil {
-				return fmt.Errorf("error Powering Off: %#v", err)
+				return fmt.Errorf("error Powering Off: %s", err)
 			}
 			err = task.WaitTaskCompletion()
 			if err != nil {
@@ -626,9 +684,9 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 				errAttachedDisk := updateStateOfAttachedDisks(d, *vm, vdc)
 				if errAttachedDisk != nil {
 					d.Set("disk", nil)
-					return fmt.Errorf("error reading attached disks : %#v and internal error : %#v", errAttachedDisk, err)
+					return fmt.Errorf("error reading attached disks : %s and internal error : %s", errAttachedDisk, err)
 				}
-				return fmt.Errorf("error attaching-detaching  disks when updating resource : %#v", err)
+				return fmt.Errorf("error attaching-detaching  disks when updating resource : %s", err)
 			}
 		}
 
@@ -636,7 +694,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 
 			task, err := vm.ChangeMemorySize(d.Get("memory").(int))
 			if err != nil {
-				return fmt.Errorf("error changing memory size: %#v", err)
+				return fmt.Errorf("error changing memory size: %s", err)
 			}
 
 			err = task.WaitTaskCompletion()
@@ -655,7 +713,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 				task, err = vm.ChangeCPUCount(d.Get("cpus").(int))
 			}
 			if err != nil {
-				return fmt.Errorf("error changing cpu count: %#v", err)
+				return fmt.Errorf("error changing cpu count: %s", err)
 			}
 
 			err = task.WaitTaskCompletion()
@@ -766,7 +824,7 @@ func attachDetachDisks(d *schema.ResourceData, vm govcd.VM, vdc *govcd.Vdc) erro
 	for _, diskData := range removeDiskProperties {
 		disk, err := vdc.QueryDisk(diskData.name)
 		if err != nil {
-			return fmt.Errorf("did not find disk `%s`: %#v", diskData.name, err)
+			return fmt.Errorf("did not find disk `%s`: %s", diskData.name, err)
 		}
 
 		attachParams := &types.DiskAttachOrDetachParams{Disk: &types.Reference{HREF: disk.Disk.HREF}}
@@ -779,11 +837,11 @@ func attachDetachDisks(d *schema.ResourceData, vm govcd.VM, vdc *govcd.Vdc) erro
 
 		task, err := vm.DetachDisk(attachParams)
 		if err != nil {
-			return fmt.Errorf("error detaching disk `%s` to vm %#v", diskData.name, err)
+			return fmt.Errorf("error detaching disk `%s` to vm %s", diskData.name, err)
 		}
 		err = task.WaitTaskCompletion()
 		if err != nil {
-			return fmt.Errorf("error waiting for task to complete detaching disk `%s` to vm %#v", diskData.name, err)
+			return fmt.Errorf("error waiting for task to complete detaching disk `%s` to vm %s", diskData.name, err)
 		}
 	}
 
@@ -803,7 +861,7 @@ func attachDetachDisks(d *schema.ResourceData, vm govcd.VM, vdc *govcd.Vdc) erro
 	for _, diskData := range newDiskProperties {
 		disk, err := vdc.QueryDisk(diskData.name)
 		if err != nil {
-			return fmt.Errorf("did not find disk `%s`: %#v", diskData.name, err)
+			return fmt.Errorf("did not find disk `%s`: %s", diskData.name, err)
 		}
 
 		attachParams := &types.DiskAttachOrDetachParams{Disk: &types.Reference{HREF: disk.Disk.HREF}}
@@ -816,93 +874,150 @@ func attachDetachDisks(d *schema.ResourceData, vm govcd.VM, vdc *govcd.Vdc) erro
 
 		task, err := vm.AttachDisk(attachParams)
 		if err != nil {
-			return fmt.Errorf("error attaching disk `%s` to vm %#v", diskData.name, err)
+			return fmt.Errorf("error attaching disk `%s` to vm %s", diskData.name, err)
 		}
 		err = task.WaitTaskCompletion()
 		if err != nil {
-			return fmt.Errorf("error waiting for task to complete attaching disk `%s` to vm %#v", diskData.name, err)
+			return fmt.Errorf("error waiting for task to complete attaching disk `%s` to vm %s", diskData.name, err)
 		}
 	}
 	return nil
 }
 
 func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
+	return genericVcdVAppVmRead(d, meta, "resource")
+}
+
+func genericVcdVAppVmRead(d *schema.ResourceData, meta interface{}, origin string) error {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return fmt.Errorf("[VM read ]"+errorRetrievingOrgAndVdc, err)
 	}
 
-	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
+	vappName := d.Get("vapp_name").(string)
+	vapp, err := vdc.GetVAppByName(vappName, false)
 
 	if err != nil {
-		return fmt.Errorf("error finding vApp: %s", err)
+		return fmt.Errorf("[VM read] error finding vApp: %s", err)
 	}
 
-	vm, err := vapp.GetVMByName(d.Get("name").(string), false)
+	identifier := d.Id()
+	if identifier == "" {
+		identifier = d.Get("name").(string)
+	}
+	if identifier == "" {
+		return fmt.Errorf("[VM read] neither name or ID were set for this VM")
+	}
+	vm, err := vapp.GetVMByNameOrId(identifier, false)
 
 	if err != nil {
-		d.SetId("")
-		return fmt.Errorf("error getting VM : %#v", err)
+		if origin == "resource" {
+			log.Printf("[DEBUG] Unable to find VM. Removing from tfstate")
+			d.SetId("")
+			return nil
+		}
+		return fmt.Errorf("[VM read] error getting VM : %s", err)
 	}
 
+	// org, vdc, and vapp_name are already implicitly set
 	_ = d.Set("name", vm.VM.Name)
+	_ = d.Set("description", vm.VM.Description)
+	d.SetId(vm.VM.ID)
 
+	var networkName string
+	var vappNetworkName string
+	networkNameRaw, ok := d.GetOk("network_name")
+	if ok {
+		networkName = networkNameRaw.(string)
+	}
+	vappNetworkNameRaw, ok := d.GetOk("vapp_network_name")
+	if ok {
+		vappNetworkName = vappNetworkNameRaw.(string)
+	}
 	// Read either new or deprecated networks configuration based on which are used
 	switch {
 	// TODO v3.0 remove this case block when we cleanup deprecated 'ip' and 'network_name' attributes
-	case d.Get("network_name").(string) != "" || d.Get("vapp_network_name").(string) != "":
-		ip, mac, err := deprecatedReadNetworks(d.Get("network_name").(string), d.Get("vapp_network_name").(string), *vm)
+	case networkName != "" || vappNetworkName != "":
+		ip, mac, err := deprecatedReadNetworks(networkName, vappNetworkName, *vm)
 		if err != nil {
-			return fmt.Errorf("failed reading network details: %s", err)
+			return fmt.Errorf("[ VM read] failed reading network details: %s", err)
 		}
-		d.Set("ip", ip)
-		d.Set("mac", mac)
+		_ = d.Set("ip", ip)
+		_ = d.Set("mac", mac)
 		// TODO v3.0 EO remove this case block when we cleanup deprecated 'ip' and 'network_name' attributes
-	case len(d.Get("network").([]interface{})) > 0:
+	default:
 		networks, err := readNetworks(*vm, *vapp)
 		if err != nil {
-			return fmt.Errorf("failed reading network details: %s", err)
+			return fmt.Errorf("[ VM read] failed reading network details: %s", err)
 		}
-		d.Set("network", networks)
+
+		err = d.Set("network", networks)
+		if err != nil {
+			return err
+		}
 	}
 
-	d.Set("href", vm.VM.HREF)
-	d.Set("expose_hardware_virtualization", vm.VM.NestedHypervisorEnabled)
+	_ = d.Set("href", vm.VM.HREF)
+	_ = d.Set("expose_hardware_virtualization", vm.VM.NestedHypervisorEnabled)
+
+	cpus := 0
+	coresPerSocket := 0
+	memory := 0
+	for _, item := range vm.VM.VirtualHardwareSection.Item {
+		if item.ResourceType == 3 {
+			cpus += item.VirtualQuantity
+			coresPerSocket = item.CoresPerSocket
+		}
+		if item.ResourceType == 4 {
+			memory = item.VirtualQuantity
+		}
+	}
+	_ = d.Set("memory", memory)
+	_ = d.Set("cpus", cpus)
+	_ = d.Set("cpu_cores", coresPerSocket)
+
+	metadata, err := vm.GetMetadata()
+	if err != nil {
+		return fmt.Errorf("[vm read] get metadata: %s", err)
+	}
+	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
+	if err != nil {
+		return fmt.Errorf("[VM read] set metadata: %s", err)
+	}
+
+	if vm.VM.StorageProfile != nil {
+		_ = d.Set("storage_profile", vm.VM.StorageProfile.Name)
+	}
 
 	// update guest properties
 	guestProperties, err := vm.GetProductSectionList()
 	if err != nil {
-		return fmt.Errorf("unable to read guest properties: %s", err)
+		return fmt.Errorf("[VM read] unable to read guest properties: %s", err)
 	}
 
 	err = setGuestProperties(d, guestProperties)
 	if err != nil {
-		return fmt.Errorf("unable to set guest properties in state: %s", err)
+		return fmt.Errorf("[VM read] unable to set guest properties in state: %s", err)
 	}
 
 	err = updateStateOfAttachedDisks(d, *vm, vdc)
 	if err != nil {
 		d.Set("disk", nil)
-		return fmt.Errorf("error reading attached disks : %s", err)
+		return fmt.Errorf("[VM read] error updating attached disks : %s", err)
 	}
 
 	guestCustomizationSection, err := vm.GetGuestCustomizationSection()
 	if err != nil {
-		return fmt.Errorf("error reading guest customization : %s", err)
+		return fmt.Errorf("[VM read] error reading guest customization : %s", err)
 	}
-	d.Set("computer_name", guestCustomizationSection.ComputerName)
+	_ = d.Set("computer_name", guestCustomizationSection.ComputerName)
 
 	return nil
 }
 
 func updateStateOfAttachedDisks(d *schema.ResourceData, vm govcd.VM, vdc *govcd.Vdc) error {
-	// Check VM independent disks state
-	diskProperties, err := expandDisksProperties(d.Get("disk"))
-	if err != nil {
-		return err
-	}
 
 	existingDisks := getVmIndependentDisks(vm)
 	transformed := schema.NewSet(resourceVcdVmIndependentDiskHash, []interface{}{})
@@ -910,35 +1025,20 @@ func updateStateOfAttachedDisks(d *schema.ResourceData, vm govcd.VM, vdc *govcd.
 	for _, existingDiskHref := range existingDisks {
 		disk, err := vdc.GetDiskByHref(existingDiskHref)
 		if err != nil {
-			return fmt.Errorf("did not find disk `%s`: %#v", existingDiskHref, err)
+			return fmt.Errorf("did not find disk `%s`: %s", existingDiskHref, err)
 		}
 
-		// where isn't way to find bus_number and unit_number, so need copied from old values to not lose them
-		var oldValues diskParams
-		for _, oldDiskData := range diskProperties {
-			if oldDiskData.name == disk.Disk.Name {
-				oldValues = diskParams{name: oldDiskData.name, busNumber: oldDiskData.busNumber, unitNumber: oldDiskData.unitNumber}
-			}
-		}
+		// There is no need to try to recover bus_number and unit_number, as those are only used
+		// when installing the disk.
 
 		newValues := map[string]interface{}{
 			"name": disk.Disk.Name,
 		}
 
-		if (diskParams{}) != oldValues {
-			if nil != oldValues.busNumber {
-				newValues["bus_number"] = strconv.Itoa(*oldValues.busNumber)
-			}
-			if nil != oldValues.unitNumber {
-				newValues["unit_number"] = strconv.Itoa(*oldValues.unitNumber)
-			}
-		}
-
 		transformed.Add(newValues)
 	}
 
-	d.Set("disk", transformed)
-	return nil
+	return d.Set("disk", transformed)
 }
 
 func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
@@ -958,15 +1058,22 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error finding vApp: %s", err)
 	}
 
-	vm, err := vapp.GetVMByName(d.Get("name").(string), false)
+	identifier := d.Id()
+	if identifier == "" {
+		identifier = d.Get("name").(string)
+	}
+	if identifier == "" {
+		return fmt.Errorf("[VM delete] neither ID or name provided")
+	}
+	vm, err := vapp.GetVMByNameOrId(identifier, false)
 
 	if err != nil {
-		return fmt.Errorf("error getting VM4 : %#v", err)
+		return fmt.Errorf("[VM delete] error getting VM %s : %s", identifier, err)
 	}
 
 	status, err := vm.GetStatus()
 	if err != nil {
-		return fmt.Errorf("error getting VM status: %#v", err)
+		return fmt.Errorf("error getting VM status: %s", err)
 	}
 
 	log.Printf("[TRACE] VM Status: %s", status)
@@ -974,12 +1081,12 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[TRACE] Undeploying VM: %s", vm.VM.Name)
 		task, err := vm.Undeploy()
 		if err != nil {
-			return fmt.Errorf("error Undeploying: %#v", err)
+			return fmt.Errorf("error Undeploying: %s", err)
 		}
 
 		err = task.WaitTaskCompletion()
 		if err != nil {
-			return fmt.Errorf("error Undeploying vApp: %#v", err)
+			return fmt.Errorf("error Undeploying vApp: %s", err)
 		}
 	}
 
@@ -989,17 +1096,17 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 	for _, existingDiskHref := range existingDisks {
 		disk, err := vdc.GetDiskByHref(existingDiskHref)
 		if err != nil {
-			return fmt.Errorf("did not find disk `%s`: %#v", existingDiskHref, err)
+			return fmt.Errorf("did not find disk `%s`: %s", existingDiskHref, err)
 		}
 
 		attachParams := &types.DiskAttachOrDetachParams{Disk: &types.Reference{HREF: disk.Disk.HREF}}
 		task, err := vm.DetachDisk(attachParams)
 		if err != nil {
-			return fmt.Errorf("error detaching disk `%s`: %#v", existingDiskHref, err)
+			return fmt.Errorf("error detaching disk `%s`: %s", existingDiskHref, err)
 		}
 		err = task.WaitTaskCompletion()
 		if err != nil {
-			return fmt.Errorf("error waiting detaching disk task to finish`%s`: %#v", existingDiskHref, err)
+			return fmt.Errorf("error waiting detaching disk task to finish`%s`: %s", existingDiskHref, err)
 		}
 	}
 
@@ -1007,7 +1114,7 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 
 	err = vapp.RemoveVM(*vm)
 	if err != nil {
-		return fmt.Errorf("error deleting: %#v", err)
+		return fmt.Errorf("error deleting: %s", err)
 	}
 
 	return nil
@@ -1018,14 +1125,9 @@ func resourceVcdVmIndependentDiskHash(v interface{}) int {
 	m := v.(map[string]interface{})
 	buf.WriteString(fmt.Sprintf("%s-",
 		m["name"].(string)))
-	if nil != m["bus_number"] {
-		buf.WriteString(fmt.Sprintf("%s-",
-			m["bus_number"].(string)))
-	}
-	if nil != m["unit_number"] {
-		buf.WriteString(fmt.Sprintf("%s-",
-			m["unit_number"].(string)))
-	}
+	// We use the name and no other identifier to calculate the hash
+	// With the VM resource, we assume that disks have a unique name.
+	// In the event that this is not true, we return an error
 	return hashcode.String(buf.String())
 }
 
@@ -1180,7 +1282,7 @@ func readNetworks(vm govcd.VM, vapp govcd.VApp) ([]map[string]interface{}, error
 	// Determine type for all networks in vApp
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 	if err != nil {
-		return []map[string]interface{}{}, fmt.Errorf("error getting vApp networks: %#v", err)
+		return []map[string]interface{}{}, fmt.Errorf("error getting vApp networks: %s", err)
 	}
 	// If vApp network is "isolated" and has no ParentNetwork - it is a vApp network.
 	// https://code.vmware.com/apis/72/vcloud/doc/doc/types/NetworkConfigurationType.html
@@ -1292,4 +1394,45 @@ func setGuestProperties(d *schema.ResourceData, properties *types.ProductSection
 
 	log.Printf("[TRACE] Setting properties into statefile")
 	return d.Set("guest_properties", data)
+}
+
+// resourceVcdVappVmImport is responsible for importing the resource.
+// The following steps happen as part of import
+// 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
+// 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
+// 3. The functions splits the dot-formatted path and tries to lookup the object
+// 4. If the lookup succeeds it sets the ID field for `_resource_name_` resource in statefile
+// (the resource must be already defined in .tf config otherwise `terraform import` will complain)
+// 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
+// based on the known ID of object.
+//
+// Example resource name (_resource_name_): vcd_vapp_vm.VM_name
+// Example import path (_the_id_string_): org-name.vdc-name.vapp-name.vm-name
+func resourceVcdVappVmImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+	if len(resourceURI) != 4 {
+		return nil, fmt.Errorf("[VM import] resource name must be specified as org-name.vdc-name.vapp-name.vm-name")
+	}
+	orgName, vdcName, vappName, vmName := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
+
+	vcdClient := meta.(*VCDClient)
+	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
+	if err != nil {
+		return nil, fmt.Errorf("[VM import] unable to find VDC %s: %s ", vdcName, err)
+	}
+
+	vapp, err := vdc.GetVAppByName(vappName, false)
+	if err != nil {
+		return nil, fmt.Errorf("[VM import] error retrieving vapp %s: %s", vappName, err)
+	}
+	vm, err := vapp.GetVMByName(vmName, false)
+	if err != nil {
+		return nil, fmt.Errorf("[VM import] error retrieving VM %s: %s", vmName, err)
+	}
+	_ = d.Set("name", vmName)
+	_ = d.Set("org", orgName)
+	_ = d.Set("vdc", vdcName)
+	_ = d.Set("vapp_name", vappName)
+	d.SetId(vm.VM.ID)
+	return []*schema.ResourceData{d}, nil
 }
