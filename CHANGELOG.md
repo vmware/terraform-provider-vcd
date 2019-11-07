@@ -4,6 +4,18 @@ IMPROVEMENTS:
 
 * Switch to Terraform terraform-plugin-sdk v1.0.0 as per recent [HashiCorp
   recommendation](https://www.terraform.io/docs/extend/plugin-sdk.html) - [GH-382]
+* `resource/vcd_nsxv_dnat` and `resource/vcd_nsxv_dnat` more precise error message when network is
+  not found - [GH-384]
+* `resource/vcd_nsxv_dnat` and `resource/vcd_nsxv_dnat` `rule_tag` must be int to avoid vCD internal
+  exception passthrough - [GH-384]
+* `resource/vcd_nsxv_dnat` put correct name in doc example - [GH-384]
+* `resource/vcd_nsxv_dnat` and `resource/vcd_nsxv_dnat` avoid rule replacement because of changed
+  `rule_tag` when rule is altered via UI - [GH-384]
+* `resource/vcd_nsxv_firewall_rule` add explicit protocol validation to avoid odd NSX-V API error -
+  [GH-384]
+* `resource/vcd_nsxv_firewall_rule` `rule_tag` must be int to avoid vCD internal exception
+  passthrough - [GH-384]
+
 
 BUG FIXES:
 * Fix `vcd_org_vdc` datasource read. When user was Organization administrator datasource failed. Fields provider_vdc_name, storage_profile, memory_guaranteed, cpu_guaranteed, cpu_speed, enable_thin_provisioning, enable_fast_provisioning, network_pool_name won't have values for org admin.

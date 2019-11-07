@@ -56,7 +56,7 @@ resource "vcd_nsxv_dnat" "forIcmp" {
 ## Example Usage 3 (More settings)
 
 ```hcl
-resource "vcd_nsxv_dnat" "forIcmp" {
+resource "vcd_nsxv_dnat" "dnat-tcp" {
   org = "my-org" # Optional
   vdc = "my-vdc" # Optional
   

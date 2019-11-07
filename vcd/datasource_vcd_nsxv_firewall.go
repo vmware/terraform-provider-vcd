@@ -43,7 +43,7 @@ func datasourceVcdNsxvFirewallRule() *schema.Resource {
 				Description: "Read only. Possible values 'user', 'internal_high'",
 			},
 			"rule_tag": &schema.Schema{
-				Type:        schema.TypeString,
+				Type:        schema.TypeInt,
 				Computed:    true,
 				Description: "Optional. Allows to set custom rule tag",
 			},
