@@ -163,12 +163,12 @@ func (vAppTemplate *VAppTemplate) AddMetadata(key string, value string) (*VAppTe
 	}
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		return nil, fmt.Errorf("error completing add metadata for vApp template task: %#v", err)
+		return nil, fmt.Errorf("error completing add metadata for vApp template task: %s", err)
 	}
 
 	err = vAppTemplate.Refresh()
 	if err != nil {
-		return nil, fmt.Errorf("error refreshing vApp template: %#v", err)
+		return nil, fmt.Errorf("error refreshing vApp template: %s", err)
 	}
 
 	return vAppTemplate, nil
@@ -188,7 +188,7 @@ func (vAppTemplate *VAppTemplate) DeleteMetadata(key string) error {
 	}
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		return fmt.Errorf("error completing delete metadata for vApp template task: %#v", err)
+		return fmt.Errorf("error completing delete metadata for vApp template task: %s", err)
 	}
 
 	return nil

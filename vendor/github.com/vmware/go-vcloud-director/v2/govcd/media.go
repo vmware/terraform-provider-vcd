@@ -81,12 +81,12 @@ func (vdc *Vdc) UploadMediaImage(mediaName, mediaDescription, filePath string, u
 
 	isISOGood, err := verifyIso(mediaFilePath)
 	if err != nil || !isISOGood {
-		return UploadTask{}, fmt.Errorf("[ERROR] File %s isn't correct iso file: %#v", mediaFilePath, err)
+		return UploadTask{}, fmt.Errorf("[ERROR] File %s isn't correct iso file: %s", mediaFilePath, err)
 	}
 
 	mediaList, err := getExistingMedia(vdc)
 	if err != nil {
-		return UploadTask{}, fmt.Errorf("[ERROR] Checking existing media files failed: %#v", err)
+		return UploadTask{}, fmt.Errorf("[ERROR] Checking existing media files failed: %s", err)
 	}
 
 	for _, media := range mediaList {
@@ -103,7 +103,7 @@ func (vdc *Vdc) UploadMediaImage(mediaName, mediaDescription, filePath string, u
 
 	media, err := createMedia(vdc.client, vdc.Vdc.HREF+"/media", mediaName, mediaDescription, fileSize)
 	if err != nil {
-		return UploadTask{}, fmt.Errorf("[ERROR] Issue creating media: %#v", err)
+		return UploadTask{}, fmt.Errorf("[ERROR] Issue creating media: %s", err)
 	}
 
 	return executeUpload(vdc.client, media, mediaFilePath, mediaName, fileSize, uploadPieceSize)
@@ -112,7 +112,7 @@ func (vdc *Vdc) UploadMediaImage(mediaName, mediaDescription, filePath string, u
 func executeUpload(client *Client, media *types.Media, mediaFilePath, mediaName string, fileSize, uploadPieceSize int64) (UploadTask, error) {
 	uploadLink, err := getUploadLink(media.Files)
 	if err != nil {
-		return UploadTask{}, fmt.Errorf("[ERROR] Issue getting upload link: %#v", err)
+		return UploadTask{}, fmt.Errorf("[ERROR] Issue getting upload link: %s", err)
 	}
 
 	callBack, uploadProgress := getCallBackFunction()
@@ -156,7 +156,7 @@ func executeUpload(client *Client, media *types.Media, mediaFilePath, mediaName 
 func createMedia(client *Client, link, mediaName, mediaDescription string, fileSize int64) (*types.Media, error) {
 	uploadUrl, err := url.ParseRequestURI(link)
 	if err != nil {
-		return nil, fmt.Errorf("error getting vdc href: %v", err)
+		return nil, fmt.Errorf("error getting vdc href: %s", err)
 	}
 
 	reqBody := bytes.NewBufferString(
@@ -217,7 +217,7 @@ func removeImageOnError(client *Client, media *types.Media, itemName string) {
 				task.Task = taskItem
 				err = task.CancelTask()
 				if err != nil {
-					util.Logger.Printf("[ERROR] Error canceling task for media upload %#v", err)
+					util.Logger.Printf("[ERROR] Error canceling task for media upload %s", err)
 				}
 			}
 		}
@@ -307,7 +307,7 @@ func queryMediaWithFilter(vdc *Vdc, filter string) ([]*types.MediaRecordType, er
 
 	results, err := vdc.QueryWithNotEncodedParams(nil, map[string]string{"type": typeMedia, "filter": filter})
 	if err != nil {
-		return nil, fmt.Errorf("error querying medias %#v", err)
+		return nil, fmt.Errorf("error querying medias %s", err)
 	}
 
 	mediaResults := results.Results.MediaRecord
@@ -331,7 +331,7 @@ func RemoveMediaImageIfExists(vdc Vdc, mediaName string) error {
 			return fmt.Errorf("error deleting media [task] %s", mediaName)
 		}
 	} else {
-		util.Logger.Printf("[TRACE] Media not found or error: %v - %#v \n", err, mediaItem)
+		util.Logger.Printf("[TRACE] Media not found or error: %s - %#v \n", err, mediaItem)
 	}
 	return nil
 }
@@ -349,7 +349,7 @@ func (adminCatalog *AdminCatalog) RemoveMediaIfExists(mediaName string) error {
 			return fmt.Errorf("error deleting media [task] %s", mediaName)
 		}
 	} else {
-		util.Logger.Printf("[TRACE] Media not found or error: %v - %#v \n", err, media)
+		util.Logger.Printf("[TRACE] Media not found or error: %s - %#v \n", err, media)
 	}
 	return nil
 }
@@ -387,12 +387,12 @@ func FindMediaAsCatalogItem(org *Org, catalogName, mediaName string) (CatalogIte
 
 	catalog, err := org.FindCatalog(catalogName)
 	if err != nil || catalog == (Catalog{}) {
-		return CatalogItem{}, fmt.Errorf("catalog not found or error %#v", err)
+		return CatalogItem{}, fmt.Errorf("catalog not found or error %s", err)
 	}
 
 	media, err := catalog.FindCatalogItem(mediaName)
 	if err != nil || media == (CatalogItem{}) {
-		return CatalogItem{}, fmt.Errorf("media not found or error %#v", err)
+		return CatalogItem{}, fmt.Errorf("media not found or error %s", err)
 	}
 	return media, nil
 }
@@ -488,7 +488,7 @@ func (catalog *Catalog) GetMediaById(mediaId string) (*Media, error) {
 	results, err := catalog.client.QueryWithNotEncodedParams(nil, map[string]string{"type": typeMedia,
 		"filter": fmt.Sprintf("catalogName==%s", url.QueryEscape(catalog.Catalog.Name))})
 	if err != nil {
-		return nil, fmt.Errorf("error querying medias %#v", err)
+		return nil, fmt.Errorf("error querying medias %s", err)
 	}
 
 	mediaResults := results.Results.MediaRecord
@@ -573,7 +573,7 @@ func (catalog *Catalog) QueryMedia(mediaName string) (*MediaRecord, error) {
 			url.QueryEscape(mediaName),
 			url.QueryEscape(catalog.Catalog.Name))})
 	if err != nil {
-		return nil, fmt.Errorf("error querying medias %#v", err)
+		return nil, fmt.Errorf("error querying medias %s", err)
 	}
 	newMediaRecord := NewMediaRecord(catalog.client)
 

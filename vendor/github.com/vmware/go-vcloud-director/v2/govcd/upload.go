@@ -57,14 +57,14 @@ func uploadFile(client *Client, filePath string, uDetails uploadDetails) (int64,
 
 	file, err := os.Open(filePath)
 	if err != nil {
-		util.Logger.Printf("[ERROR] during upload process - file open issue : %s, error %#v ", filePath, err)
+		util.Logger.Printf("[ERROR] during upload process - file open issue : %s, error %s ", filePath, err)
 		*uDetails.uploadError = err
 		return 0, err
 	}
 
 	fileInfo, err := file.Stat()
 	if err != nil {
-		util.Logger.Printf("[ERROR] during upload process - file issue : %s, error %#v ", filePath, err)
+		util.Logger.Printf("[ERROR] during upload process - file issue : %s, error %s ", filePath, err)
 		*uDetails.uploadError = err
 		return 0, err
 	}
@@ -81,7 +81,7 @@ func uploadFile(client *Client, filePath string, uDetails uploadDetails) (int64,
 		uDetails.uploadedBytes += int64(count)
 		uDetails.uploadedBytesForCallback += int64(count)
 		if err != nil {
-			util.Logger.Printf("[ERROR] during upload process: %s, error %#v ", filePath, err)
+			util.Logger.Printf("[ERROR] during upload process: %s, error %s ", filePath, err)
 			*uDetails.uploadError = err
 			return 0, err
 		}
@@ -91,12 +91,12 @@ func uploadFile(client *Client, filePath string, uDetails uploadDetails) (int64,
 	if err == io.ErrUnexpectedEOF {
 		err = uploadPartFile(client, part[:count], int64(count), uDetails)
 		if err != nil {
-			util.Logger.Printf("[ERROR] during upload process: %s, error %#v ", filePath, err)
+			util.Logger.Printf("[ERROR] during upload process: %s, error %s ", filePath, err)
 			*uDetails.uploadError = err
 			return 0, err
 		}
 	} else {
-		util.Logger.Printf("Error Uploading: %s, error %#v ", filePath, err)
+		util.Logger.Printf("Error Uploading: %s, error %s ", filePath, err)
 		*uDetails.uploadError = err
 		return 0, err
 	}

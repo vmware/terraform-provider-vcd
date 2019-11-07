@@ -145,6 +145,13 @@ func (vapp *VApp) AddVM(orgVdcNetworks []*types.OrgVDCNetwork, vappNetworkName s
 
 // AddNewVM adds VM from vApp template with custom NetworkConnectionSection
 func (vapp *VApp) AddNewVM(name string, vappTemplate VAppTemplate, network *types.NetworkConnectionSection, acceptAllEulas bool) (Task, error) {
+	return vapp.AddNewVMWithStorageProfile(name, vappTemplate, network, nil, acceptAllEulas)
+}
+
+// AddNewVMWithStorageProfile adds VM from vApp template with custom NetworkConnectionSection and optional storage profile
+func (vapp *VApp) AddNewVMWithStorageProfile(name string, vappTemplate VAppTemplate,
+	network *types.NetworkConnectionSection,
+	storageProfileRef *types.Reference, acceptAllEulas bool) (Task, error) {
 
 	if vappTemplate == (VAppTemplate{}) || vappTemplate.VAppTemplate == nil {
 		return Task{}, fmt.Errorf("vApp Template can not be empty")
@@ -172,7 +179,7 @@ func (vapp *VApp) AddNewVM(name string, vappTemplate VAppTemplate, network *type
 		}
 	}
 
-	vcomp := &types.ReComposeVAppParams{
+	vAppComposition := &types.ReComposeVAppParams{
 		Ovf:         types.XMLNamespaceOVF,
 		Xsi:         types.XMLNamespaceXSI,
 		Xmlns:       types.XMLNamespaceVCloud,
@@ -190,18 +197,27 @@ func (vapp *VApp) AddNewVM(name string, vappTemplate VAppTemplate, network *type
 		AllEULAsAccepted: acceptAllEulas,
 	}
 
+	// Add storage profile
+	if storageProfileRef != nil && storageProfileRef.HREF != "" {
+		vAppComposition.SourcedItem.StorageProfile = storageProfileRef
+	}
+
 	// Inject network config
-	vcomp.SourcedItem.InstantiationParams.NetworkConnectionSection = network
+	vAppComposition.SourcedItem.InstantiationParams.NetworkConnectionSection = network
 
 	apiEndpoint, _ := url.ParseRequestURI(vapp.VApp.HREF)
 	apiEndpoint.Path += "/action/recomposeVApp"
 
 	// Return the task
 	return vapp.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPost,
-		types.MimeRecomposeVappParams, "error instantiating a new VM: %s", vcomp)
+		types.MimeRecomposeVappParams, "error instantiating a new VM: %s", vAppComposition)
 
 }
 
+// ========================= issue#252 ==================================
+// TODO: To be refactored, handling networks better. See issue#252 for details
+// https://github.com/vmware/go-vcloud-director/issues/252
+// ======================================================================
 func (vapp *VApp) RemoveVM(vm VM) error {
 
 	vapp.Refresh()
@@ -211,7 +227,7 @@ func (vapp *VApp) RemoveVM(vm VM) error {
 			task.Task = taskItem
 			err := task.WaitTaskCompletion()
 			if err != nil {
-				return fmt.Errorf("error performing task: %#v", err)
+				return fmt.Errorf("error performing task: %s", err)
 			}
 		}
 	}
@@ -236,7 +252,7 @@ func (vapp *VApp) RemoveVM(vm VM) error {
 
 	err = deleteTask.WaitTaskCompletion()
 	if err != nil {
-		return fmt.Errorf("error performing removing VM task: %#v", err)
+		return fmt.Errorf("error performing removing VM task: %s", err)
 	}
 
 	return nil
@@ -352,7 +368,7 @@ func (vapp *VApp) RunCustomizationScript(computername, script string) (Task, err
 func (vapp *VApp) Customize(computername, script string, changeSid bool) (Task, error) {
 	err := vapp.Refresh()
 	if err != nil {
-		return Task{}, fmt.Errorf("error refreshing vApp before running customization: %v", err)
+		return Task{}, fmt.Errorf("error refreshing vApp before running customization: %s", err)
 	}
 
 	// Check if VApp Children is populated
@@ -385,7 +401,7 @@ func (vapp *VApp) Customize(computername, script string, changeSid bool) (Task, 
 func (vapp *VApp) GetStatus() (string, error) {
 	err := vapp.Refresh()
 	if err != nil {
-		return "", fmt.Errorf("error refreshing vApp: %v", err)
+		return "", fmt.Errorf("error refreshing vApp: %s", err)
 	}
 	// Trying to make this function future-proof:
 	// If a new status is added to a future vCD API and the status map in types.go
@@ -456,7 +472,7 @@ func (vapp *VApp) ChangeCPUCountWithCore(virtualCpuCount int, coresPerSocket *in
 
 	err := vapp.Refresh()
 	if err != nil {
-		return Task{}, fmt.Errorf("error refreshing vApp before running customization: %v", err)
+		return Task{}, fmt.Errorf("error refreshing vApp before running customization: %s", err)
 	}
 
 	// Check if VApp Children is populated
@@ -498,7 +514,7 @@ func (vapp *VApp) ChangeCPUCountWithCore(virtualCpuCount int, coresPerSocket *in
 func (vapp *VApp) ChangeStorageProfile(name string) (Task, error) {
 	err := vapp.Refresh()
 	if err != nil {
-		return Task{}, fmt.Errorf("error refreshing vApp before running customization: %v", err)
+		return Task{}, fmt.Errorf("error refreshing vApp before running customization: %s", err)
 	}
 
 	if vapp.VApp.Children == nil || len(vapp.VApp.Children.VM) == 0 {
@@ -529,7 +545,7 @@ func (vapp *VApp) ChangeStorageProfile(name string) (Task, error) {
 func (vapp *VApp) ChangeVMName(name string) (Task, error) {
 	err := vapp.Refresh()
 	if err != nil {
-		return Task{}, fmt.Errorf("error refreshing vApp before running customization: %v", err)
+		return Task{}, fmt.Errorf("error refreshing vApp before running customization: %s", err)
 	}
 
 	if vapp.VApp.Children == nil {
@@ -552,7 +568,7 @@ func (vapp *VApp) ChangeVMName(name string) (Task, error) {
 func (vapp *VApp) SetOvf(parameters map[string]string) (Task, error) {
 	err := vapp.Refresh()
 	if err != nil {
-		return Task{}, fmt.Errorf("error refreshing vApp before running customization: %v", err)
+		return Task{}, fmt.Errorf("error refreshing vApp before running customization: %s", err)
 	}
 
 	if vapp.VApp.Children == nil {
@@ -589,7 +605,7 @@ func (vapp *VApp) SetOvf(parameters map[string]string) (Task, error) {
 func (vapp *VApp) ChangeNetworkConfig(networks []map[string]interface{}, ip string) (Task, error) {
 	err := vapp.Refresh()
 	if err != nil {
-		return Task{}, fmt.Errorf("error refreshing VM before running customization: %v", err)
+		return Task{}, fmt.Errorf("error refreshing VM before running customization: %s", err)
 	}
 
 	if vapp.VApp.Children == nil {
@@ -649,7 +665,7 @@ func (vapp *VApp) ChangeMemorySize(size int) (Task, error) {
 
 	err := vapp.Refresh()
 	if err != nil {
-		return Task{}, fmt.Errorf("error refreshing vApp before running customization: %v", err)
+		return Task{}, fmt.Errorf("error refreshing vApp before running customization: %s", err)
 	}
 
 	// Check if VApp Children is populated
@@ -706,7 +722,7 @@ func (vapp *VApp) AddRAWNetworkConfig(orgvdcnetworks []*types.OrgVDCNetwork) (Ta
 
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 	if err != nil {
-		return Task{}, fmt.Errorf("error getting vApp networks: %#v", err)
+		return Task{}, fmt.Errorf("error getting vApp networks: %s", err)
 	}
 	networkConfigurations := vAppNetworkConfig.NetworkConfig
 
