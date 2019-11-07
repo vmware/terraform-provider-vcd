@@ -114,7 +114,7 @@ func resourceVcdVAppVm() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "A script to be run only on initial boot",
+				Description: "Script to run on initial boot or with customization.force=true set",
 			},
 			"metadata": {
 				Type:     schema.TypeMap,
