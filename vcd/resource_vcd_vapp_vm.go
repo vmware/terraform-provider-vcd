@@ -278,23 +278,6 @@ func resourceVcdVAppVm() *schema.Resource {
 	}
 }
 
-func validateMultipleOf4() schema.SchemaValidateFunc {
-	return func(i interface{}, k string) (s []string, es []error) {
-		value, ok := i.(int)
-		if !ok {
-			es = append(es, fmt.Errorf("expected type of %s to be int", k))
-			return
-		}
-
-		if value%4 != 0 {
-			es = append(es, fmt.Errorf("expected %s to be multiple of 4, got %d", k, value))
-			return
-		}
-
-		return
-	}
-}
-
 func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
