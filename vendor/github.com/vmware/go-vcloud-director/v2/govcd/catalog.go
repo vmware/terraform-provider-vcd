@@ -131,22 +131,22 @@ func (cat *Catalog) UploadOvf(ovaFileName, itemName, description string, uploadP
 
 	filesAbsPaths, tmpDir, err := util.Unpack(ovaFileName)
 	if err != nil {
-		return UploadTask{}, fmt.Errorf("%v. Unpacked files for checking are accessible in: "+tmpDir, err)
+		return UploadTask{}, fmt.Errorf("%s. Unpacked files for checking are accessible in: "+tmpDir, err)
 	}
 
 	ovfFilePath, err := getOvfPath(filesAbsPaths)
 	if err != nil {
-		return UploadTask{}, fmt.Errorf("%v. Unpacked files for checking are accessible in: "+tmpDir, err)
+		return UploadTask{}, fmt.Errorf("%s. Unpacked files for checking are accessible in: "+tmpDir, err)
 	}
 
 	ovfFileDesc, err := getOvf(ovfFilePath)
 	if err != nil {
-		return UploadTask{}, fmt.Errorf("%v. Unpacked files for checking are accessible in: "+tmpDir, err)
+		return UploadTask{}, fmt.Errorf("%s. Unpacked files for checking are accessible in: "+tmpDir, err)
 	}
 
 	err = validateOvaContent(filesAbsPaths, &ovfFileDesc, tmpDir)
 	if err != nil {
-		return UploadTask{}, fmt.Errorf("%v. Unpacked files for checking are accessible in: "+tmpDir, err)
+		return UploadTask{}, fmt.Errorf("%s. Unpacked files for checking are accessible in: "+tmpDir, err)
 	}
 
 	catalogItemUploadURL, err := findCatalogItemUploadLink(cat, "application/vnd.vmware.vcloud.uploadVAppTemplateParams+xml")
@@ -590,7 +590,7 @@ func removeCatalogItemOnError(client *Client, vappTemplateLink *url.URL, itemNam
 			time.Sleep(time.Second * 5)
 			vAppTemplate, err = queryVappTemplate(client, vappTemplateLink, itemName)
 			if err != nil {
-				util.Logger.Printf("[Error] Error deleting Catalog item %v: %s", vappTemplateLink, err)
+				util.Logger.Printf("[Error] Error deleting Catalog item %s: %s", vappTemplateLink, err)
 			}
 			if len(vAppTemplate.Tasks.Task) > 0 {
 				util.Logger.Printf("[TRACE] Task found. Will try to cancel.\n")

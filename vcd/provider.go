@@ -1,6 +1,7 @@
 package vcd
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -135,6 +136,7 @@ func Provider() terraform.ResourceProvider {
 			"vcd_network_direct":     datasourceVcdNetworkDirect(),    // 2.5
 			"vcd_network_isolated":   datasourceVcdNetworkIsolated(),  // 2.5
 			"vcd_vapp":               datasourceVcdVApp(),             // 2.5
+			"vcd_vapp_vm":            datasourceVcdVAppVm(),           // 2.6
 			"vcd_lb_service_monitor": datasourceVcdLbServiceMonitor(), // 2.4
 			"vcd_lb_server_pool":     datasourceVcdLbServerPool(),     // 2.4
 			"vcd_lb_app_profile":     datasourceVcdLBAppProfile(),     // 2.4
@@ -157,6 +159,9 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	connectOrg := d.Get("sysorg").(string)
 	if connectOrg == "" {
 		connectOrg = d.Get("org").(string)
+	}
+	if connectOrg == "" {
+		return nil, fmt.Errorf(`[provider configure] Both "org" and "sysorg" properties are empty`)
 	}
 	config := Config{
 		User:            d.Get("user").(string),

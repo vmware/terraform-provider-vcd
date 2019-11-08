@@ -126,7 +126,7 @@ func (vdc *Vdc) CreateOrgVDCNetworkWait(networkConfig *types.OrgVDCNetwork) erro
 	err = task.WaitTaskCompletion()
 	// err = task.WaitInspectTaskCompletion(InspectTask, 10)
 	if err != nil {
-		return fmt.Errorf("error performing task: %#v", err)
+		return fmt.Errorf("error performing task: %s", err)
 	}
 	return nil
 }

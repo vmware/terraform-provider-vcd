@@ -123,7 +123,7 @@ func (adminOrg *AdminOrg) CreateVdcWait(vdcDefinition *types.VdcConfiguration) e
 	}
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		return fmt.Errorf("couldn't finish creating vdc %#v", err)
+		return fmt.Errorf("couldn't finish creating vdc %s", err)
 	}
 	return nil
 }
@@ -135,27 +135,27 @@ func (adminOrg *AdminOrg) Delete(force bool, recursive bool) error {
 		//undeploys vapps
 		err := adminOrg.undeployAllVApps()
 		if err != nil {
-			return fmt.Errorf("error could not undeploy: %#v", err)
+			return fmt.Errorf("error could not undeploy: %s", err)
 		}
 		//removes vapps
 		err = adminOrg.removeAllVApps()
 		if err != nil {
-			return fmt.Errorf("error could not remove vapp: %#v", err)
+			return fmt.Errorf("error could not remove vapp: %s", err)
 		}
 		//removes catalogs
 		err = adminOrg.removeCatalogs()
 		if err != nil {
-			return fmt.Errorf("error could not remove all catalogs: %#v", err)
+			return fmt.Errorf("error could not remove all catalogs: %s", err)
 		}
 		//removes networks
 		err = adminOrg.removeAllOrgNetworks()
 		if err != nil {
-			return fmt.Errorf("error could not remove all networks: %#v", err)
+			return fmt.Errorf("error could not remove all networks: %s", err)
 		}
 		//removes org vdcs
 		err = adminOrg.removeAllOrgVDCs()
 		if err != nil {
-			return fmt.Errorf("error could not remove all vdcs: %#v", err)
+			return fmt.Errorf("error could not remove all vdcs: %s", err)
 		}
 	}
 	// Disable org
@@ -166,7 +166,7 @@ func (adminOrg *AdminOrg) Delete(force bool, recursive bool) error {
 	// Get admin HREF
 	orgHREF, err := url.ParseRequestURI(adminOrg.AdminOrg.HREF)
 	if err != nil {
-		return fmt.Errorf("error getting AdminOrg HREF %s : %v", adminOrg.AdminOrg.HREF, err)
+		return fmt.Errorf("error getting AdminOrg HREF %s : %s", adminOrg.AdminOrg.HREF, err)
 	}
 	req := adminOrg.client.NewRequest(map[string]string{
 		"force":     strconv.FormatBool(force),
@@ -189,7 +189,7 @@ func (adminOrg *AdminOrg) Delete(force bool, recursive bool) error {
 func (adminOrg *AdminOrg) Disable() error {
 	orgHREF, err := url.ParseRequestURI(adminOrg.AdminOrg.HREF)
 	if err != nil {
-		return fmt.Errorf("error getting AdminOrg HREF %s : %v", adminOrg.AdminOrg.HREF, err)
+		return fmt.Errorf("error getting AdminOrg HREF %s : %s", adminOrg.AdminOrg.HREF, err)
 	}
 	orgHREF.Path += "/action/disable"
 
@@ -333,7 +333,7 @@ func (adminOrg *AdminOrg) removeAllOrgVDCs() error {
 		}
 		err = task.WaitTaskCompletion()
 		if err != nil {
-			return fmt.Errorf("couldn't finish removing vdc %#v", err)
+			return fmt.Errorf("couldn't finish removing vdc %s", err)
 		}
 
 	}
@@ -359,7 +359,7 @@ func (adminOrg *AdminOrg) removeAllOrgNetworks() error {
 		}
 		err = task.WaitTaskCompletion()
 		if err != nil {
-			return fmt.Errorf("couldn't finish removing network %#v", err)
+			return fmt.Errorf("couldn't finish removing network %s", err)
 		}
 	}
 	return nil
