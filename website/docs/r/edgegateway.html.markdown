@@ -84,6 +84,12 @@ order) logging. Default `false`.
 * `fw_default_rule_action` (Optional) Default firewall rule (last in the processing order) action.
 One of `accept` or `deny`. Default `deny`.
 
+## Attribute Reference
+
+The following attributes are exported on this resource:
+
+* `default_network_ip` - IP address of edge gateway used for default network
+
 ## Importing
 
 Supported in provider *v2.5+*
