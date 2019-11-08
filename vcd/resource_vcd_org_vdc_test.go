@@ -138,7 +138,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "allocation_model", allocationModel),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "network_pool_name", usedNetworkPool),
+						"vcd_org_vdc."+TestAccVcdVdc, "network_pool_name", testConfig.VCD.ProviderVdc.NetworkPool),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "provider_vdc_name", testConfig.VCD.ProviderVdc.Name),
 					resource.TestCheckResourceAttr(
@@ -194,7 +194,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "allocation_model", allocationModel),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "network_pool_name", usedNetworkPool),
+						"vcd_org_vdc."+TestAccVcdVdc, "network_pool_name", testConfig.VCD.ProviderVdc.NetworkPool),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "provider_vdc_name", testConfig.VCD.ProviderVdc.Name),
 					resource.TestCheckResourceAttr(

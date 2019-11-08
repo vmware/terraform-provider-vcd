@@ -20,17 +20,6 @@ func suppressWordToEmptyString(word string) schema.SchemaDiffSuppressFunc {
 	}
 }
 
-// suppressEmptyString is a DiffSuppressFunc which ignore the change from any value to empty string "".
-// This is useful when API returns empty value.
-func suppressEmptyString() schema.SchemaDiffSuppressFunc {
-	return func(k string, old string, new string, d *schema.ResourceData) bool {
-		if new == "" {
-			return true
-		}
-		return false
-	}
-}
-
 // TODO v3.0 remove once `ip` and `network_name` attributes are removed
 func suppressIfIPIsOneOf() schema.SchemaDiffSuppressFunc {
 	return func(k string, old string, new string, d *schema.ResourceData) bool {
