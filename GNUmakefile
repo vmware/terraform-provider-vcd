@@ -46,6 +46,10 @@ test-env-apply:
 test-env-destroy:
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' test-env-destroy"
 
+# runs staticcheck
+static: fmtcheck
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' static"
+
 # runs the unit tests
 testunit: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' unit"
@@ -124,9 +128,6 @@ fmt:
 fmtcheck:
 	@sh -c "'$(CURDIR)/scripts/gofmtcheck.sh'"
 
-errcheck:
-	@sh -c "'$(CURDIR)/scripts/errcheck.sh'"
-
 # runs the vendor directory check
 vendor-check:
 	go mod tidy
@@ -153,5 +154,5 @@ ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
 endif
 	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
 
-.PHONY: build test seqtestacc testacc vet fmt fmtcheck errcheck vendor-check test-compile website website-test
+.PHONY: build test seqtestacc testacc vet static fmt fmtcheck vendor-check test-compile website website-test
 

@@ -23,6 +23,7 @@ IMPROVEMENTS:
   [GH-384]
 * `resource/vcd_nsxv_firewall_rule` `rule_tag` must be int to avoid vCD internal exception
   passthrough - [GH-384]
+* Fix code warnings from `staticcheck` and add command `make static` to Travis tests.
 
 BUG FIXES:
 

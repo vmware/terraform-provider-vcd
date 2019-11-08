@@ -22,7 +22,7 @@ then
     VERBOSE=1
 fi
 
-accepted_commands=(short acceptance sequential-acceptance multiple binary 
+accepted_commands=(static short acceptance sequential-acceptance multiple binary 
     binary-prepare catalog gateway vapp vm network extnetwork multinetwork 
     short-provider lb user acceptance-orguser short-provider-orguser)
 
@@ -181,7 +181,43 @@ function binary_test {
      ./test-binary.sh
 }
 
+function exists_in_path {
+    what=$1
+    for dir in $(echo $PATH | tr ':' ' ')
+    do
+        wanted=$dir/$what
+        if [ -x $wanted ]
+        then
+            echo $wanted
+            return
+        fi
+    done
+}
+
+function check_static {
+    static_check=$(exists_in_path staticcheck)
+
+    if [ -n "$static_check" ]
+    then
+        echo "## Found $static_check"
+        echo -n "## "
+        staticcheck -version
+        echo -n "## Checking "
+        pwd
+        staticcheck -tags functional .
+        exit_code=$?
+        if [ "$exit_code" != "0" ]
+        then
+            exit $exit_code
+        fi
+    else
+        echo "*** staticcheck executable not found - Check skipped"
+    fi
+}
 case $wanted in
+    static)
+        check_static
+        ;;
     test-env-init)
         export VCD_ENV_INIT=1
         binary_test
