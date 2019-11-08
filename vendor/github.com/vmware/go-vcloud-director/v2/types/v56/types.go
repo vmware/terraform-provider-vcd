@@ -1591,15 +1591,15 @@ type GatewayInterfaces struct {
 // Description: Gateway Interface configuration.
 // Since: 5.1
 type GatewayInterface struct {
-	Name                string               `xml:"Name,omitempty"`                // Internally generated name for the Gateway Interface.
-	DisplayName         string               `xml:"DisplayName,omitempty"`         // Gateway Interface display name.
-	Network             *Reference           `xml:"Network"`                       // A reference to the network connected to the gateway interface.
-	InterfaceType       string               `xml:"InterfaceType"`                 // The type of interface: One of: Uplink, Internal
-	SubnetParticipation *SubnetParticipation `xml:"SubnetParticipation,omitempty"` // IP allocation per subnet.
-	ApplyRateLimit      bool                 `xml:"ApplyRateLimit,omitempty"`      // True if rate limiting is applied on this interface.
-	InRateLimit         float64              `xml:"InRateLimit,omitempty"`         // Incoming rate limit expressed as Gbps.
-	OutRateLimit        float64              `xml:"OutRateLimit,omitempty"`        // Outgoing rate limit expressed as Gbps.
-	UseForDefaultRoute  bool                 `xml:"UseForDefaultRoute,omitempty"`  // True if this network is default route for the gateway.
+	Name                string                 `xml:"Name,omitempty"`                // Internally generated name for the Gateway Interface.
+	DisplayName         string                 `xml:"DisplayName,omitempty"`         // Gateway Interface display name.
+	Network             *Reference             `xml:"Network"`                       // A reference to the network connected to the gateway interface.
+	InterfaceType       string                 `xml:"InterfaceType"`                 // The type of interface: One of: Uplink, Internal
+	SubnetParticipation []*SubnetParticipation `xml:"SubnetParticipation,omitempty"` // Slice of subnets for IP allocations.
+	ApplyRateLimit      bool                   `xml:"ApplyRateLimit,omitempty"`      // True if rate limiting is applied on this interface.
+	InRateLimit         float64                `xml:"InRateLimit,omitempty"`         // Incoming rate limit expressed as Gbps.
+	OutRateLimit        float64                `xml:"OutRateLimit,omitempty"`        // Outgoing rate limit expressed as Gbps.
+	UseForDefaultRoute  bool                   `xml:"UseForDefaultRoute,omitempty"`  // True if this network is default route for the gateway.
 }
 
 // SubnetParticipation allows to chose which subnets a gateway can be a part of
@@ -1608,10 +1608,11 @@ type GatewayInterface struct {
 // Description: Allows to chose which subnets a gateway can be part of
 // Since: 5.1
 type SubnetParticipation struct {
-	Gateway   string    `xml:"Gateway"`             // Gateway for subnet
-	IPAddress string    `xml:"IpAddress,omitempty"` // Ip Address to be assigned. Keep empty or omit element for auto assignment
-	IPRanges  *IPRanges `xml:"IpRanges,omitempty"`  // Range of IP addresses available for external interfaces.
-	Netmask   string    `xml:"Netmask"`             // Netmask for the subnet
+	Gateway            string    `xml:"Gateway"`                      // Gateway for subnet
+	IPAddress          string    `xml:"IpAddress,omitempty"`          // Ip Address to be assigned. Keep empty or omit element for auto assignment
+	IPRanges           *IPRanges `xml:"IpRanges,omitempty"`           // Range of IP addresses available for external interfaces.
+	Netmask            string    `xml:"Netmask"`                      // Netmask for the subnet
+	UseForDefaultRoute bool      `xml:"UseForDefaultRoute,omitempty"` // True if this network is default route for the gateway.
 }
 
 type EdgeGatewayServiceConfiguration struct {
