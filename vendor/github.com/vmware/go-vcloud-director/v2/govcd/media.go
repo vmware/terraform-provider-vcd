@@ -569,7 +569,7 @@ func (catalog *Catalog) QueryMedia(mediaName string) (*MediaRecord, error) {
 	}
 
 	results, err := catalog.client.QueryWithNotEncodedParams(nil, map[string]string{"type": typeMedia,
-		"filter": fmt.Sprintf("(name==%s;catalogName==%s)",
+		"filter": fmt.Sprintf("name==%s;catalogName==%s",
 			url.QueryEscape(mediaName),
 			url.QueryEscape(catalog.Catalog.Name))})
 	if err != nil {

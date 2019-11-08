@@ -573,7 +573,7 @@ func isValidIcmpSubType(protocol string) bool {
 	return false
 }
 
-// Deprecated: Use eGW.AddNATFirewallRule()
+// Deprecated: Use eGW.AddDNATRule() or eGW.CreateNsxvNatRule() for NSX-V
 func (egw *EdgeGateway) AddNATPortMappingWithUplink(network *types.OrgVDCNetwork, natType, externalIP, externalPort, internalIP, internalPort, protocol, icmpSubType string) (Task, error) {
 	// if a network is provided take it, otherwise find first uplink on the edge gateway
 	var uplinkRef string
