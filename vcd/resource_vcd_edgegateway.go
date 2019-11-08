@@ -376,8 +376,7 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	for _, net := range egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
 		if net.InterfaceType == "uplink" {
 			networks = append(networks, net.Network.Name)
-			// TODO - evaluate if it should better gather all gateways
-			// gateways[net.SubnetParticipation[0].Gateway] = net.Network.Name
+
 			for _, subnet := range net.SubnetParticipation {
 				gateways[subnet.Gateway] = net.Network.Name
 			}
@@ -393,8 +392,11 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 
 	for _, gw := range egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
 		if len(gw.SubnetParticipation) < 1 {
-			log.Printf("[DEBUG] [setEdgeGatewayValues] gateway %s is missing SubnetParticipation elements: %+#v", egw.EdgeGateway.Name, gw)
-			return fmt.Errorf("[setEdgeGatewayValues] gateway %s is missing SubnetParticipation elements", egw.EdgeGateway.Name)
+			log.Printf("[DEBUG] [setEdgeGatewayValues] gateway %s is missing SubnetParticipation elements: %+#v",
+				egw.EdgeGateway.Name, gw)
+
+			return fmt.Errorf("[setEdgeGatewayValues] gateway %s is missing SubnetParticipation elements",
+				egw.EdgeGateway.Name)
 		}
 
 		for _, subnet := range gw.SubnetParticipation {
@@ -408,7 +410,6 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 				_ = d.Set("default_network_ip", subnet.IPAddress)
 			}
 		}
-
 	}
 	// TODO: Enable this setting after we switch to a higher API version.
 	//Based on testing the API does accept (and set) the setting, but upon GET query it omits the DistributedRouting
