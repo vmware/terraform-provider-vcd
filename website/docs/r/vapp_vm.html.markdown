@@ -122,8 +122,8 @@ The following arguments are supported:
 
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
-* `vapp_name` - (Required) The vApp this VM should belong to.
-* `name` - (Required) A unique name for the VM
+* `vapp_name` - (Required) The vApp this VM belongs to.
+* `name` - (Required) A name for the VM, unique within the vApp 
 * `computer_name` - (Optional; *v2.5+*) Computer name to assign to this virtual machine. 
 * `catalog_name` - (Required) The catalog name in which to find the given vApp Template
 * `template_name` - (Required) The name of the vApp Template to use
@@ -131,7 +131,8 @@ The following arguments are supported:
 * `cpus` - (Optional) The number of virtual CPUs to allocate to the VM. Socket count is a result of: virtual logical processors/cores per socket
 * `cpu_cores` - (Optional; *v2.1+*) The number of cores per socket
 * `metadata` - (Optional; *v2.2+*) Key value map of metadata to assign to this VM
-* `initscript` (Optional) A script to be run only on initial boot
+* `initscript` (Optional) Script to run on initial boot or with customization.force=true set
+* `storage_profile` (Optional; *v2.6+*) Storage profile to override the default one
 * `network_name` - (Optional; **Deprecated** by `network`) Name of the network this VM should connect to.
 * `vapp_network_name` - (Optional; v2.1+; **Deprecated** by `network`) Name of the vApp network this VM should connect to.
 * `ip` - (Optional; **Deprecated** by `network`) The IP to assign to this vApp. Must be an IP address or
@@ -139,7 +140,7 @@ one of `dhcp`, `allocated`, or `none`. If given the address must be within the
   `static_ip_pool` set for the network. If left blank, and the network has
   `dhcp_pool` set with at least one available IP then this will be set with
 DHCP.
-* `power_on` - (Optional) A boolean value stating if this vApp should be powered on. Default is `true`
+* `power_on` - (Optional) A boolean value stating if this VM should be powered on. Default is `true`
 * `accept_all_eulas` - (Optional; *v2.0+*) Automatically accept EULA if OVA has it. Default is `true`
 * `disk` - (Optional; *v2.1+*) Independent disk attachment configuration. See [Disk](#disk) below for details.
 * `expose_hardware_virtualization` - (Optional; *v2.2+*) Boolean for exposing full CPU virtualization to the
@@ -149,6 +150,8 @@ translation or paravirtualization. Useful for hypervisor nesting provided underl
 example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_name`.
 * `customization` - (Optional; *v2.5+*) A block to define for guest customization options. See [Customization](#customization)
 * `guest_properties` - (Optional; *v2.5+*) Key value map of guest properties
+* `description`  - (Computed; *v2.6+*) The VM description. Note: description is read only. Currently, this field has
+  the description of the OVA used to create the VM
 
 <a id="disk"></a>
 ## Disk
@@ -224,7 +227,7 @@ Step 2 - Change VM configuration and force customization (VM will be rebooted du
 
 ```hcl
 resource "vcd_vapp_vm" "web2" {
-...
+//...
   network {
     type               = "org"
     name               = "net"
@@ -242,7 +245,7 @@ prevent forcing customization on every `terraform apply` command:
 
 ```hcl
 resource "vcd_vapp_vm" "web2" {
-...
+//...
   network {
     type               = "org"
     name               = "net"
@@ -254,3 +257,37 @@ resource "vcd_vapp_vm" "web2" {
   }
 }
 ```
+
+## Importing
+
+Supported in provider *v2.6+*
+
+~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
+configuration. [More information.][docs-import]
+
+An existing VM can be [imported][docs-import] into this resource via supplying its path.
+The path for this resource is made of org-name.vdc-name.vapp-name.vm-name
+For example, using this structure, representing a VM that was **not** created using Terraform:
+
+```hcl
+resource "vcd_vapp_vm" "tf-vm" {
+  name              = "my-vm"
+  org               = "my-org"
+  vdc               = "my-vdc"
+  vapp_name         = "my-vapp"
+}
+```
+
+You can import such vapp into terraform state using this command
+
+```
+terraform import vcd_vapp_vm.tf-vm my-org.my-vdc.my-vapp.my-vm
+```
+
+NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
+
+[docs-import]:https://www.terraform.io/docs/import/
+
+After importing, the data for this VM will be in the state file (`terraform.tfstate`). If you want to use this
+resource for further operations, you will need to integrate it with data from the state file, and with some data that
+is used to create the VM, such as `catalog_name`, `template_name`.
