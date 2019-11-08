@@ -220,11 +220,11 @@ func matchFirewallRule(d *schema.ResourceData, prefix string, rules []*types.Fir
 			d.Get(prefix+".policy").(string) == m.Policy &&
 			strings.ToLower(d.Get(prefix+".protocol").(string)) == getProtocol(*m.Protocols) &&
 			strings.ToLower(d.Get(prefix+".destination_port").(string)) == getPortString(m.Port) &&
-			strings.ToLower(d.Get(prefix+".destination_ip").(string)) == strings.ToLower(m.DestinationIP) &&
+			strings.EqualFold(d.Get(prefix+".destination_ip").(string), m.DestinationIP) &&
 			strings.ToLower(d.Get(prefix+".source_port").(string)) == getPortString(m.SourcePort) &&
-			strings.ToLower(d.Get(prefix+".source_ip").(string)) == strings.ToLower(m.SourceIP) {
+			strings.EqualFold(d.Get(prefix+".source_ip").(string), m.SourceIP) {
 			return m.ID, nil
 		}
 	}
-	return "", fmt.Errorf("Unable to find rule")
+	return "", fmt.Errorf("unable to find rule")
 }

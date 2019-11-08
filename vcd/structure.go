@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -108,10 +106,6 @@ func getPortString(port int) string {
 	}
 	portstring := strconv.Itoa(port)
 	return portstring
-}
-
-func retryCall(seconds int, f resource.RetryFunc) error {
-	return resource.Retry(time.Duration(seconds)*time.Second, f)
 }
 
 func convertToStringMap(param map[string]interface{}) map[string]string {

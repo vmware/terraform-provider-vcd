@@ -591,22 +591,24 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 	// Different object types are in the same grouping object tag <groupingObjectId>
 	// They can be distinguished by 3rd element in ID
 	var (
-		endpointNetworks       []string
-		endpointVMs            []string
-		endpointIpSets         []string
-		endpointSecurityGroups []string
+		endpointNetworks []string
+		endpointVMs      []string
+		// TODO uncomment when IP sets and Security groups are supported
+		// endpointIpSets         []string
+		// endpointSecurityGroups []string
 	)
 
 	for _, groupingObject := range endpoint.GroupingObjectIds {
 		idSplit := strings.Split(groupingObject, ":")
 		idLen := len(idSplit)
-		subIdSplit := ""
-		if idLen == 2 {
-			subSplit := strings.Split(idSplit[1], "-")
-			if len(subSplit) == 2 {
-				subIdSplit = subSplit[0]
-			}
-		}
+		// TODO uncomment when IP sets and Security groups are supported
+		// subIdSplit := ""
+		// if idLen == 2 {
+		// 	subSplit := strings.Split(idSplit[1], "-")
+		// 	if len(subSplit) == 2 {
+		// 		subIdSplit = subSplit[0]
+		// 	}
+		// }
 		switch {
 		// Handle org vdc networks
 		// Sample ID: urn:vcloud:network:95bffe8e-7e67-452d-abf2-535ac298db2b
@@ -618,15 +620,16 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 		case idLen == 4 && idSplit[2] == "vm":
 			endpointVMs = append(endpointVMs, groupingObject)
 
+		// TODO uncomment when IP sets and Security groups are supported
 		// Handle ipsets
 		// Sample ID: f9daf2da-b4f9-4921-a2f4-d77a943a381c:ipset-2
-		case idLen == 2 && subIdSplit == "ipset":
-			endpointIpSets = append(endpointIpSets, groupingObject)
+		// case idLen == 2 && subIdSplit == "ipset":
+		// 	endpointIpSets = append(endpointIpSets, groupingObject)
 
 		// Handle security groups
 		// Sample ID: f9daf2da-b4f9-4921-a2f4-d77a943a381c:securitygroup-11
-		case idLen == 2 && subIdSplit == "securitygroup":
-			endpointSecurityGroups = append(endpointSecurityGroups, groupingObject)
+		// case idLen == 2 && subIdSplit == "securitygroup":
+		// 	endpointSecurityGroups = append(endpointSecurityGroups, groupingObject)
 
 		// Log the group ID if it was not one of above
 		default:

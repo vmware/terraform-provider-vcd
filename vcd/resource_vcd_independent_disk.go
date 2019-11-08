@@ -327,7 +327,7 @@ func resourceVcdIndependentDiskDelete(d *schema.ResourceData, meta interface{}) 
 	return nil
 }
 
-var helpDiskError = fmt.Errorf(`resource id must be specified in one of these formats:
+var errHelpDiskImport = fmt.Errorf(`resource id must be specified in one of these formats:
 'org-name.vdc-name.my-independent-disk-id' to import by rule id
 'list@org-name.vdc-name.my-independent-disk-name' to get a list of disks with their IDs`)
 
@@ -355,14 +355,14 @@ func resourceVcdIndependentDiskImport(d *schema.ResourceData, meta interface{}) 
 	log.Printf("[DEBUG] importing vcd_independent_disk resource with provided id %s", d.Id())
 
 	if len(resourceURI) != 3 {
-		return nil, helpDiskError
+		return nil, errHelpDiskImport
 	}
 
 	if strings.Contains(d.Id(), "list@") {
 		commandOrgName, vdcName, diskName = resourceURI[0], resourceURI[1], resourceURI[2]
 		commandOrgNameSplit := strings.Split(commandOrgName, "@")
 		if len(commandOrgNameSplit) != 2 {
-			return nil, helpDiskError
+			return nil, errHelpDiskImport
 		}
 		orgName = commandOrgNameSplit[1]
 		return listDisksForImport(meta, orgName, vdcName, diskName)
@@ -413,5 +413,5 @@ func listDisksForImport(meta interface{}, orgName, vdcName, diskName string) ([]
 	}
 	writer.Flush()
 
-	return nil, fmt.Errorf("resource was not imported! %s", helpDiskError)
+	return nil, fmt.Errorf("resource was not imported! %s", errHelpDiskImport)
 }
