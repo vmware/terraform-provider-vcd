@@ -124,7 +124,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 
 	usedNetworkPool := testConfig.VCD.ProviderVdc.NetworkPool
 	expectNonEmptyPlan := false
-	// in vCD version 10 with NXT - network pool reference isn't returned with AdminVdc
+	// in vCD version 10 with NSX-T - network pool reference isn't returned with AdminVdc
 	vcdClient, err := getTestVCDFromJson(testConfig)
 	if err != nil {
 		t.Error(fmt.Errorf("error getting client configuration: %s", err))

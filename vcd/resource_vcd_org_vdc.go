@@ -332,7 +332,7 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 	}
 	_ = d.Set("name", adminVdc.AdminVdc.Name)
 
-	// in vCD version 10 with NXT - network pool reference isn't returned with AdminVdc
+	// in vCD version 10 with NSX-T - network pool reference isn't returned with AdminVdc
 	// Or user is Org Admin
 	if adminVdc.AdminVdc.NetworkPoolReference != nil {
 		networkPool, err := govcd.GetNetworkPoolByHREF(vcdClient.VCDClient, adminVdc.AdminVdc.NetworkPoolReference.HREF)
