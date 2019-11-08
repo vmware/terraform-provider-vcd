@@ -80,6 +80,11 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				ForceNew:    true,
 				Description: "External network to be used as default gateway. Its name must be included in 'external_networks'. An empty value will skip the default gateway",
 			},
+			"default_network_ip": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "IP address of edge gateway interface which is used as default.",
+			},
 			"distributed_routing": &schema.Schema{
 				Type:             schema.TypeBool,
 				Optional:         true,
@@ -371,7 +376,11 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	for _, net := range egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
 		if net.InterfaceType == "uplink" {
 			networks = append(networks, net.Network.Name)
-			gateways[net.SubnetParticipation.Gateway] = net.Network.Name
+			// TODO - evaluate if it should better gather all gateways
+			// gateways[net.SubnetParticipation[0].Gateway] = net.Network.Name
+			for _, subnet := range net.SubnetParticipation {
+				gateways[subnet.Gateway] = net.Network.Name
+			}
 		}
 	}
 	err = d.Set("external_networks", networks)
@@ -383,15 +392,23 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	_ = d.Set("ha_enabled", egw.EdgeGateway.Configuration.HaEnabled)
 
 	for _, gw := range egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
-		if gw.SubnetParticipation == nil || gw.SubnetParticipation.Gateway == "" {
-			log.Printf("[DEBUG] [setEdgeGatewayValues] gateway %s is missing SubnetParticipation elements: %+#v",
-				egw.EdgeGateway.Name, gw)
+		if len(gw.SubnetParticipation) < 1 {
+			log.Printf("[DEBUG] [setEdgeGatewayValues] gateway %s is missing SubnetParticipation elements: %+#v", egw.EdgeGateway.Name, gw)
 			return fmt.Errorf("[setEdgeGatewayValues] gateway %s is missing SubnetParticipation elements", egw.EdgeGateway.Name)
 		}
-		defaultGwNet, ok := gateways[gw.SubnetParticipation.Gateway]
-		if ok {
-			_ = d.Set("default_gateway_network", defaultGwNet)
+
+		for _, subnet := range gw.SubnetParticipation {
+			defaultGwNet, ok := gateways[subnet.Gateway]
+			if ok { // found default gateway network - set it
+				_ = d.Set("default_gateway_network", defaultGwNet)
+			}
+
+			// Check if this subnet is used as default gateway and set the IP
+			if subnet.UseForDefaultRoute {
+				_ = d.Set("default_network_ip", subnet.IPAddress)
+			}
 		}
+
 	}
 	// TODO: Enable this setting after we switch to a higher API version.
 	//Based on testing the API does accept (and set) the setting, but upon GET query it omits the DistributedRouting
