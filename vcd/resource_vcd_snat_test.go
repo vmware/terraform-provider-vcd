@@ -131,9 +131,9 @@ func testAccCheckVcdSNATDestroy(s *terraform.State) error {
 			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
-		rule, err := edgeGateway.GetNatRule(rs.Primary.ID)
+		_, err = edgeGateway.GetNatRule(rs.Primary.ID)
 
-		if rule != nil {
+		if err == nil {
 			return fmt.Errorf("SNAT rule still exists.")
 		}
 	}
@@ -251,7 +251,7 @@ func testAccCheckVcdSNATDestroyForBackCompability(s *terraform.State) error {
 		}
 
 		if found {
-			return fmt.Errorf("SNAT rule still exists.")
+			return fmt.Errorf("SNAT rule still exists")
 		}
 	}
 

@@ -208,10 +208,10 @@ func testAccCheckVcdDNATDestroy(s *terraform.State) error {
 			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 		}
 
-		rule, err := edgeGateway.GetNatRule(rs.Primary.ID)
+		_, err = edgeGateway.GetNatRule(rs.Primary.ID)
 
-		if rule != nil {
-			return fmt.Errorf("DNAT rule still exists.")
+		if err == nil {
+			return fmt.Errorf("DNAT rule still exists")
 		}
 	}
 
