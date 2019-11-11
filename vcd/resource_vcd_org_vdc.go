@@ -338,6 +338,7 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 		}
 		_ = d.Set("network_pool_name", networkPool.Name)
 	}
+
 	_ = d.Set("network_quota", adminVdc.AdminVdc.NetworkQuota)
 	_ = d.Set("nic_quota", adminVdc.AdminVdc.Vdc.NicQuota)
 	if adminVdc.AdminVdc.ProviderVdcReference != nil {
