@@ -24,7 +24,7 @@ IMPROVEMENTS:
 * `resource/vcd_nsxv_firewall_rule` `rule_tag` must be int to avoid vCD internal exception
   passthrough - [GH-384]
 * `resource/vcd_edge_gateway` and `datasource/vcd_edge_gateway` add `default_network_ip` field to
-  export default edge gateway IP address - [GH-XXX]
+  export default edge gateway IP address - [GH-389]
 
 BUG FIXES:
 
