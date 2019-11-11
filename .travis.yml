@@ -7,7 +7,6 @@ language: go
 branches:
   only:
   - master
-  - vmware-stash-while-master-pr-open
 
 matrix:
   fast_finish: true
@@ -19,11 +18,13 @@ matrix:
       script:
         - make test
         - make vet
+        - make static
         - make website-test
     - go: "1.13.x"
       env: GO111MODULE=on
       script:
         - make test
         - make vet
+        - make static
         - make vendor-check
         - make website-test

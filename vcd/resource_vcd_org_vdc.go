@@ -524,7 +524,7 @@ func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error removing vdc %s", err)
 	}
 
-	vdc, err = adminOrg.GetVDCByName(vdcName, true)
+	_, err = adminOrg.GetVDCByName(vdcName, true)
 	if err == nil {
 		return fmt.Errorf("vdc %s still found after deletion", vdcName)
 	}

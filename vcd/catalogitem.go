@@ -24,10 +24,11 @@ func deleteCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) error {
 		return fmt.Errorf("unable to find catalog")
 	}
 
-	catalogItem, err := catalog.GetCatalogItemByName(d.Get("name").(string), false)
+	catalogItemName := d.Get("name").(string)
+	catalogItem, err := catalog.GetCatalogItemByName(catalogItemName, false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog item. Removing from tfstate")
-		return fmt.Errorf("unable to find catalog item")
+		return fmt.Errorf("unable to find catalog item %s", catalogItemName)
 	}
 
 	err = catalogItem.Delete()
@@ -36,11 +37,11 @@ func deleteCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) error {
 		return fmt.Errorf("error removing catalog item %s", err)
 	}
 
-	catalogItem, err = catalog.GetCatalogItemByName(d.Get("name").(string), true)
-	if catalogItem != nil {
-		return fmt.Errorf("catalog item %s still found after deletion", d.Get("name").(string))
+	_, err = catalog.GetCatalogItemByName(catalogItemName, true)
+	if err == nil {
+		return fmt.Errorf("catalog item %s still found after deletion", catalogItemName)
 	}
-	log.Printf("[TRACE] Catalog item delete completed: %s", d.Get("name").(string))
+	log.Printf("[TRACE] Catalog item delete completed: %s", catalogItemName)
 
 	return nil
 }

@@ -21,6 +21,7 @@ func noopValueWarningValidator(fieldValue interface{}, warningText string) schem
 }
 
 // anyValueWarningValidator is a validator which only emits always warning string
+//lint:ignore U1000 For future use
 func anyValueWarningValidator(warningText string) schema.SchemaValidateFunc {
 	return func(i interface{}, k string) (warnings []string, errors []error) {
 		warnings = append(warnings, fmt.Sprintf("%s\n\n", warningText))

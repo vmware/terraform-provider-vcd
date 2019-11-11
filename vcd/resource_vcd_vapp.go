@@ -257,6 +257,7 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 			}
 
 			if ovf, ok := d.GetOk("ovf"); ok {
+				//lint:ignore SA1019 Property "ovf" is deprecated. Preserving until removal
 				task, err := vapp.SetOvf(convertToStringMap(ovf.(map[string]interface{})))
 
 				if err != nil {
@@ -474,6 +475,7 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 
 		if ovf, ok := d.GetOk("ovf"); ok {
+			//lint:ignore SA1019 Property "ovf" is deprecated. Preserving until removal
 			task, err := vapp.SetOvf(convertToStringMap(ovf.(map[string]interface{})))
 
 			if err != nil {

@@ -64,14 +64,6 @@ Tagged tests can also run using make
 	t.Logf(helpText)
 }
 
-// Tells indirectly if a tag has been set
-// For every tag there is an `init` function that
-// fills an item in `testingTags`
-func isTagSet(tagName string) bool {
-	_, ok := testingTags[tagName]
-	return ok
-}
-
 // For troubleshooting:
 // Shows which tags were set, and in which file.
 func showTags() {
@@ -143,7 +135,7 @@ func getMajorVersion() string {
 	// We only need the first two numbers
 	reVersion := regexp.MustCompile(`v(\d+\.\d+)\.\d+`)
 	versionList := reVersion.FindAllStringSubmatch(string(versionText), -1)
-	if versionList == nil || len(versionList) == 0 {
+	if len(versionList) == 0 {
 		panic("empty or non-formatted version found in VERSION file")
 	}
 	if versionList[0] == nil || len(versionList[0]) < 2 {
