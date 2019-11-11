@@ -15,9 +15,9 @@ import (
 var (
 	edgeGatewayNameBasic   string = "TestEdgeGatewayBasic"
 	edgeGatewayNameComplex string = "TestEdgeGatewayComplex"
-
-	regexString = `^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])$`
-	ipV4Regex   = regexp.MustCompile(regexString)
+	// ipV4Regex matches any IP like format x.x.x.x and can be used to check if a returned value
+	// resembles an IP address
+	ipV4Regex = regexp.MustCompile(`^(?:\d+\.){3}\d+$`)
 )
 
 // Since we can't set the "advanced" property to false by default,
