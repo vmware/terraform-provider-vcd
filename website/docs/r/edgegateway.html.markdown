@@ -88,7 +88,7 @@ One of `accept` or `deny`. Default `deny`.
 
 The following attributes are exported on this resource:
 
-* `default_network_ip` - IP address of edge gateway used for default network
+* `default_network_ip` (*v2.6+*) - IP address of edge gateway used for default network
 
 ## Importing
 
