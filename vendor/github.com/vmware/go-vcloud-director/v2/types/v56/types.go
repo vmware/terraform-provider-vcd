@@ -695,10 +695,10 @@ type VAppLeaseSettings struct {
 	Type string   `xml:"type,attr,omitempty"` // The MIME type of the entity.
 	Link LinkList `xml:"Link,omitempty"`      // A reference to an entity or operation associated with this object.
 
-	DeleteOnStorageLeaseExpiration   bool `xml:"DeleteOnStorageLeaseExpiration,allowempty"`
-	DeploymentLeaseSeconds           int  `xml:"DeploymentLeaseSeconds,allowempty"`
-	StorageLeaseSeconds              int  `xml:"StorageLeaseSeconds,allowempty"`
-	PowerOffOnRuntimeLeaseExpiration bool `xml:"PowerOffOnRuntimeLeaseExpiration,allowempty"`
+	DeleteOnStorageLeaseExpiration   bool `xml:"DeleteOnStorageLeaseExpiration,omitempty"`
+	DeploymentLeaseSeconds           int  `xml:"DeploymentLeaseSeconds,omitempty"`
+	StorageLeaseSeconds              int  `xml:"StorageLeaseSeconds,omitempty"`
+	PowerOffOnRuntimeLeaseExpiration bool `xml:"PowerOffOnRuntimeLeaseExpiration,omitempty"`
 }
 
 type OrgFederationSettings struct {
@@ -706,7 +706,7 @@ type OrgFederationSettings struct {
 	Type string   `xml:"type,attr,omitempty"` // The MIME type of the entity.
 	Link LinkList `xml:"Link,omitempty"`      // A reference to an entity or operation associated with this object.
 
-	Enabled bool `xml:"Enabled,allowempty"`
+	Enabled bool `xml:"Enabled,omitempty"`
 }
 
 // OrgLdapSettingsType represents the ldap settings for a vCloud Director organization.
