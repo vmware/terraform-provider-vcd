@@ -37,7 +37,7 @@ func TestProviderVersion(t *testing.T) {
 	} else {
 		foundList := reFoundVersion.FindAllStringSubmatch(string(indexText), -1)
 		foundText := ""
-		if foundList != nil && len(foundList) > 0 && len(foundList[0]) > 0 {
+		if len(foundList) > 0 && len(foundList[0]) > 0 {
 			foundText = foundList[0][0]
 			t.Logf("Expected text: <%s>", expectedText)
 			t.Logf("Found text   : <%s> in index.html.markdown", foundText)

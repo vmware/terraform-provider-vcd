@@ -237,7 +237,7 @@ function check_static {
         $static_check -version
         echo -n "## Checking "
         pwd
-        $static_check -tags functional .
+        $static_check -tags ALL .
         exit_code=$?
         if [ "$exit_code" != "0" ]
         then
