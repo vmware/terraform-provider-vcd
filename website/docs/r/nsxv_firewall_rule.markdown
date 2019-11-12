@@ -35,7 +35,7 @@ resource "vcd_nsxv_firewall_rule" "my-rule-1" {
   }
 
   destination {
-    ip_addresses = ["${data.vcd_edgegateway.mygw.default_network_ip}"]
+    ip_addresses = ["${data.vcd_edgegateway.mygw.default_external_network_ip}"]
   }
 
   service {

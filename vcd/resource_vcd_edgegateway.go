@@ -80,7 +80,7 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				ForceNew:    true,
 				Description: "External network to be used as default gateway. Its name must be included in 'external_networks'. An empty value will skip the default gateway",
 			},
-			"default_network_ip": &schema.Schema{
+			"default_external_network_ip": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "IP address of edge gateway interface which is used as default.",
@@ -407,7 +407,7 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 
 			// Check if this subnet is used as default gateway and set the IP
 			if subnet.UseForDefaultRoute {
-				_ = d.Set("default_network_ip", subnet.IPAddress)
+				_ = d.Set("default_external_network_ip", subnet.IPAddress)
 			}
 		}
 	}

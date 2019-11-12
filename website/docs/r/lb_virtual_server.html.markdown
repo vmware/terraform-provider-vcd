@@ -69,7 +69,7 @@ resource "vcd_lb_virtual_server" "http" {
   edge_gateway = "${var.edge_gateway}"
 
   name       = "my-virtual-server"
-  ip_address = "${data.vcd_edgegateway.mygw.default_network_ip}"
+  ip_address = "${data.vcd_edgegateway.mygw.default_external_network_ip}"
   protocol   = "${var.protocol}"
   port       = 8888
 
