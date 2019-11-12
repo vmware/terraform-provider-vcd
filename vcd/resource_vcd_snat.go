@@ -104,6 +104,7 @@ func resourceVcdSNATCreate(d *schema.ResourceData, meta interface{}) error {
 		_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: this resource will require network_name and network_type in the next major version \n")
 		// TODO remove when major release is done
 		// this for back compatibility  when network name and network type isn't provided - this assign rule only for first external network
+		//lint:ignore SA1019 Preserving back compatibility until removal
 		task, err := edgeGateway.AddNATMapping("SNAT", d.Get("internal_ip").(string),
 			d.Get("external_ip").(string))
 		if err != nil {
@@ -198,6 +199,7 @@ func resourceVcdSNATDelete(d *schema.ResourceData, meta interface{}) error {
 		}
 	} else {
 		// this for back compatibility when network name and network type isn't provided - TODO remove with major release
+		//lint:ignore SA1019 Preserving back compatibility until removal
 		task, err := edgeGateway.RemoveNATMapping("SNAT", d.Get("internal_ip").(string),
 			d.Get("external_ip").(string),
 			"")
@@ -218,9 +220,9 @@ func resourceVcdSNATUpdate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
 	// Update supports only when network name and network type provided
-	networkName := d.Get("network_name")
-	if nil == networkName || networkName.(string) == "" {
-		return fmt.Errorf("update works only when network_name and network_type is provided and rule created using them \n")
+	networkName, ok := d.GetOk("network_name")
+	if !ok || networkName == "" {
+		return fmt.Errorf("update works only when network_name and network_type is provided and rule created using them")
 	}
 
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")

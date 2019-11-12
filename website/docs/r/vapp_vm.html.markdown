@@ -128,8 +128,8 @@ The following arguments are supported:
 * `catalog_name` - (Required) The catalog name in which to find the given vApp Template
 * `template_name` - (Required) The name of the vApp Template to use
 * `memory` - (Optional) The amount of RAM (in MB) to allocate to the VM
-* `cpus` - (Optional) The number of virtual CPUs to allocate to the VM. Socket count is a result of: virtual logical processors/cores per socket
-* `cpu_cores` - (Optional; *v2.1+*) The number of cores per socket
+* `cpus` - (Optional) The number of virtual CPUs to allocate to the VM. Socket count is a result of: virtual logical processors/cores per socket. The default is 1
+* `cpu_cores` - (Optional; *v2.1+*) The number of cores per socket. The default is 1
 * `metadata` - (Optional; *v2.2+*) Key value map of metadata to assign to this VM
 * `initscript` (Optional) Script to run on initial boot or with customization.force=true set
 * `storage_profile` (Optional; *v2.6+*) Storage profile to override the default one

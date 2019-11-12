@@ -81,7 +81,7 @@ func Unpack(tarFile string) ([]string, string, error) {
 					return filePaths, dst, err
 				}
 			} else {
-				return filePaths, dst, errors.New("File %s is a symlink, but no link information was provided\n")
+				return filePaths, dst, errors.New("file %s is a symlink, but no link information was provided")
 			}
 
 			// if it's a newFile create it

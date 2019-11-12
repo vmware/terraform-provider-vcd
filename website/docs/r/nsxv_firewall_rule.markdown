@@ -16,9 +16,15 @@ used to create, modify, and delete firewall rules. Replaces
 ~> **Note:** This resource requires advanced edge gateway (NSX-V). For non-advanced edge gateways please
 use the [`vcd_firewall_rules`](/docs/providers/vcd/r/firewall_rules.html) resource.
 
-## Example Usage 1 (Minimal input)
+## Example Usage 1 (Minimal input with dynamic edge gateway IP)
 
 ```hcl
+data "vcd_edgegateway" "mygw" {
+  org          = "my-org"
+  vdc          = "my-vdc"
+  name         = "my-edge-gateway-name"
+}
+
 resource "vcd_nsxv_firewall_rule" "my-rule-1" {
   org          = "my-org"
   vdc          = "my-vdc"
@@ -29,7 +35,7 @@ resource "vcd_nsxv_firewall_rule" "my-rule-1" {
   }
 
   destination {
-    ip_addresses = ["192.168.1.110"]
+    ip_addresses = ["${data.vcd_edgegateway.mygw.default_external_network_ip}"]
   }
 
   service {

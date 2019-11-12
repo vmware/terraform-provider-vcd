@@ -23,6 +23,9 @@ IMPROVEMENTS:
   [GH-384]
 * `resource/vcd_nsxv_firewall_rule` `rule_tag` must be int to avoid vCD internal exception
   passthrough - [GH-384]
+* Fix code warnings from `staticcheck` and add command `make static` to Travis tests
+* `resource/vcd_edge_gateway` and `datasource/vcd_edge_gateway` add `default_external_network_ip`
+  field to export default edge gateway IP address - [GH-389]
 
 BUG FIXES:
 

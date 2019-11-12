@@ -86,6 +86,7 @@ func resourceVcdVAppVm() *schema.Resource {
 			"cpus": &schema.Schema{
 				Type:        schema.TypeInt,
 				Optional:    true,
+				Default:     1,
 				Description: "The number of virtual CPUs to allocate to the VM",
 			},
 			"cpu_cores": &schema.Schema{

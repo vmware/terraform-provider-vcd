@@ -1041,11 +1041,16 @@ func (egw *EdgeGateway) HasDefaultGateway() bool {
 	if egw.EdgeGateway.Configuration != nil &&
 		egw.EdgeGateway.Configuration.GatewayInterfaces != nil {
 		for _, gw := range egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
-			if gw.UseForDefaultRoute &&
-				gw.SubnetParticipation != nil &&
-				gw.SubnetParticipation.Gateway != "" &&
-				gw.SubnetParticipation.Netmask != "" {
-				return true
+			// Check if the interface is used for default route
+			if gw.UseForDefaultRoute {
+				// Look for a specific subnet which is used as a default route
+				for _, subnetParticipation := range gw.SubnetParticipation {
+					if subnetParticipation.UseForDefaultRoute &&
+						subnetParticipation.Gateway != "" &&
+						subnetParticipation.Netmask != "" {
+						return true
+					}
+				}
 			}
 		}
 	}
