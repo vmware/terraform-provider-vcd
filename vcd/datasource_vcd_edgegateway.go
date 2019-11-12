@@ -51,6 +51,11 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 				Computed:    true,
 				Description: "External network to be used as default gateway. Its name must be included in 'external_networks'. An empty value will skip the default gateway",
 			},
+			"default_external_network_ip": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "IP address of edge gateway interface which is used as default.",
+			},
 			"distributed_routing": &schema.Schema{
 				Type:        schema.TypeBool,
 				Computed:    true,

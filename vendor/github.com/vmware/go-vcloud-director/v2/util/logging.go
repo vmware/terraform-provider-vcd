@@ -87,9 +87,6 @@ var (
 	// Flag indicating that a log file is open
 	// logOpen bool = false
 
-	// The log file handle
-	apiLog *os.File
-
 	// Text lines used for logging of http requests and responses
 	lineLength int    = 80
 	dashLine   string = strings.Repeat("-", lineLength)

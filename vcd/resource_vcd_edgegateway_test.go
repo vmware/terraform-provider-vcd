@@ -5,6 +5,7 @@ package vcd
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -14,6 +15,9 @@ import (
 var (
 	edgeGatewayNameBasic   string = "TestEdgeGatewayBasic"
 	edgeGatewayNameComplex string = "TestEdgeGatewayComplex"
+	// ipV4Regex matches any IP like format x.x.x.x and can be used to check if a returned value
+	// resembles an IP address
+	ipV4Regex = regexp.MustCompile(`^(?:\d+\.){3}\d+$`)
 )
 
 // Since we can't set the "advanced" property to false by default,
@@ -61,6 +65,7 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"vcd_edgegateway."+edgeGatewayNameBasic, "default_gateway_network", testConfig.Networking.ExternalNetwork),
+					resource.TestMatchResourceAttr("vcd_edgegateway."+edgeGatewayNameBasic, "default_external_network_ip", ipV4Regex),
 				),
 			},
 			resource.TestStep{
@@ -133,6 +138,9 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_acceleration_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_logging_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_loglevel", "info"),
+					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "default_external_network_ip", "192.168.30.51"),
+
+					resourceFieldsEqual("vcd_edgegateway."+edgeGatewayNameComplex, "data.vcd_edgegateway.edge", []string{}),
 				),
 			},
 			resource.TestStep{
@@ -145,6 +153,7 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_acceleration_enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_logging_enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_loglevel", "critical"),
+					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "default_external_network_ip", "192.168.30.51"),
 				),
 			},
 			resource.TestStep{
@@ -155,6 +164,7 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "fw_enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "fw_default_rule_logging_enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "fw_default_rule_action", "accept"),
+					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "default_external_network_ip", "192.168.30.51"),
 				),
 			},
 			resource.TestStep{ // step3
@@ -173,6 +183,7 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 						"vcd_edgegateway."+edgeGatewayNameComplex, "default_gateway_network", newExternalNetworkVcd),
 					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "fw_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "default_external_network_ip", "192.168.30.51"),
 				),
 			},
 		},
@@ -266,6 +277,13 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
   default_gateway_network = "${vcd_external_network.{{.NewExternalNetwork}}.name}"
   advanced                = {{.Advanced}}
   external_networks       = [ "{{.ExternalNetwork}}", "${vcd_external_network.{{.NewExternalNetwork}}.name}" ]
+}
+
+data "vcd_edgegateway" "edge" {
+  org                     = "{{.Org}}"
+  vdc                     = "{{.Vdc}}"
+
+  name = "${vcd_edgegateway.{{.EdgeGateway}}.name}"
 }
 `
 

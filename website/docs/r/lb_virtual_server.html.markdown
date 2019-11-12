@@ -57,8 +57,10 @@ variable "protocol" {
   default = "http"
 }
 
-variable "edge_gateway_ip" {
-  default = "192.168.1.110"  # IP address of edge gateway uplink interface
+data "vcd_edgegateway" "mygw" {
+  org          = "${var.org}"
+  vdc          = "${var.vdc}"
+  name         = "${var.edge_gateway.my-edge-gw}"
 }
 
 resource "vcd_lb_virtual_server" "http" {
@@ -67,7 +69,7 @@ resource "vcd_lb_virtual_server" "http" {
   edge_gateway = "${var.edge_gateway}"
 
   name       = "my-virtual-server"
-  ip_address = "${var.edge_gateway_ip}"
+  ip_address = "${data.vcd_edgegateway.mygw.default_external_network_ip}"
   protocol   = "${var.protocol}"
   port       = 8888
 
