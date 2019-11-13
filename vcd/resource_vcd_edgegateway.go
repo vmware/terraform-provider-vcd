@@ -138,6 +138,65 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				Description:  "'accept' or 'deny'. Default 'deny'",
 				ValidateFunc: validation.StringInSlice([]string{"accept", "deny"}, false),
 			},
+
+			"fips_mode_enabled": &schema.Schema{
+				Type:        schema.TypeBool,
+				Default:     false,
+				Optional:    true,
+				Description: "Enable FIPS mode. FIPS mode turns on the cipher suites that comply with FIPS (Disabled by default)",
+			},
+			"external_network": {
+				ConflictsWith: []string{"external_networks", "default_gateway_network"},
+				Required:      true,
+				MinItems:      1,
+				Type:          schema.TypeSet,
+				// Set:           resourceVcdNsxvFirewallRuleServiceHash,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Required: true,
+							Type:     schema.TypeString,
+						},
+						"gateway": {
+							Optional: true,
+							Computed: true,
+							Type:     schema.TypeString,
+						},
+						"netmask": {
+							Optional: true,
+							Computed: true,
+							Type:     schema.TypeString,
+						},
+						"ip_address": {
+							Optional: true,
+							Computed: true,
+							Type:     schema.TypeString,
+						},
+						"use_for_default_gateway": {
+							Optional: true,
+							Computed: true,
+							Type:     schema.TypeString,
+						},
+						"suballocation_pool": {
+							Optional: true,
+							Type:     schema.TypeSet,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"start_address": {
+										Required: true,
+										Type:     schema.TypeString,
+									},
+									"end_address": {
+										Optional: true,
+										Computed: true,
+										Type:     schema.TypeString,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }
