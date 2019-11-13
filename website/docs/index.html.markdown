@@ -111,6 +111,61 @@ resource "vcd_network_routed" "net2" {
 }
 ```
 
+## Connecting with authorization token
+
+You can connect using an authorization token instead of username and password.
+
+```hcl
+provider "vcd" {
+  user                 = ""
+  password             = ""
+  token                = "${var.token}"
+  sysorg               = "System"
+  org                  = "${var.vcd_org}"                  # Default for resources
+  vdc                  = "${var.vcd_vdc}"                  # Default for resources
+  url                  = "${var.vcd_url}"
+  max_retry_timeout    = "${var.vcd_max_retry_timeout}"
+  allow_unverified_ssl = "${var.vcd_allow_unverified_ssl}"
+}
+
+# Create a new network in the default organization and VDC
+resource "vcd_network_routed" "net1" {
+  # ...
+}
+```
+When using a token, the fields `user` and `password` will be ignored, but they need to be in the script.
+
+To obtain a token you can use this sample shell script:
+
+```shell script
+#!/bin/bash
+user=$1
+password=$2
+org=$3
+IP=$4
+
+if [ -z "$IP" ]
+then
+    echo "Syntax $0 user password organization IP_address"
+    exit 1
+fi
+
+auth=$(echo -n "$user@$org:$password" | base64)
+
+curl -I -k --header "Accept: application/*;version=27.0" \
+    --header "Authorization: Basic $auth" \
+    --request POST https://$IP/api/sessions
+```
+
+If successful, the output of this command will include a line like the following
+```
+x-vcloud-authorization: 08a321735de84f1d9ec80c3b3e18fa8b
+```
+The string after `x-vcloud-authorization:` is the token.
+
+The token will grant the same abilities as the account used to run the above script. Using a token produced
+by an org admin to run a task that requires a system administrator will fail.
+
 ## Argument Reference
 
 The following arguments are used to configure the VMware vCloud Director Provider:
@@ -122,6 +177,10 @@ The following arguments are used to configure the VMware vCloud Director Provide
 * `password` - (Required) This is the password for vCloud Director API operations. Can
   also be specified with the `VCD_PASSWORD` environment variable.
   
+* `token` - (Optional; *v2.6+*) This is the authorization token that can be used
+   instead of username and password. When this is set, username and password will not
+    be used and may be left empty, or may contain other remarks.
+    
 * `org` - (Required) This is the vCloud Director Org on which to run API
   operations. Can also be specified with the `VCD_ORG` environment
   variable.  

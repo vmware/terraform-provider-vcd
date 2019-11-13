@@ -26,6 +26,8 @@ IMPROVEMENTS:
 * Fix code warnings from `staticcheck` and add command `make static` to Travis tests
 * `resource/vcd_edge_gateway` and `datasource/vcd_edge_gateway` add `default_external_network_ip`
   field to export default edge gateway IP address - [GH-389]
+* The `vcd` provider now has the ability of connecting through an authorization token - [GH-280]
+* Add command `make token` to create an authorization token from testing credentials
 
 BUG FIXES:
 

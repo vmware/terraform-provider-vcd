@@ -25,10 +25,10 @@ func TestProvider_impl(t *testing.T) {
 // When this function is called, the initialization in config_test.go has already happened.
 // Therefore, we can safely require that testConfig fields have been filled.
 func testAccPreCheck(t *testing.T) {
-	if testConfig.Provider.User == "" {
+	if testConfig.Provider.User == "" && testConfig.Provider.Token == "" {
 		t.Fatal("provider.user must be set for acceptance tests")
 	}
-	if testConfig.Provider.Password == "" {
+	if testConfig.Provider.Password == "" && testConfig.Provider.Token == "" {
 		t.Fatal("provider.password must be set for acceptance tests")
 	}
 	if testConfig.Provider.SysOrg == "" {
@@ -58,6 +58,7 @@ func createTemporaryVCDConnection() *VCDClient {
 	config := Config{
 		User:            testConfig.Provider.User,
 		Password:        testConfig.Provider.Password,
+		Token:           testConfig.Provider.Token,
 		SysOrg:          testConfig.Provider.SysOrg,
 		Org:             testConfig.VCD.Org,
 		Vdc:             testConfig.VCD.Vdc,

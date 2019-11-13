@@ -46,6 +46,10 @@ test-env-apply:
 test-env-destroy:
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' test-env-destroy"
 
+# Retrieves the authorization token
+token:
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' token"
+
 # runs staticcheck
 static: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' static"
