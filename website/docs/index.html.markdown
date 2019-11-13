@@ -178,8 +178,8 @@ The following arguments are used to configure the VMware vCloud Director Provide
   also be specified with the `VCD_PASSWORD` environment variable.
   
 * `token` - (Optional; *v2.6+*) This is the authorization token that can be used
-   instead of username and password. When this is set, username and password will not
-    be used and may be left empty, or may contain other remarks.
+   instead of username and password. When this is set, username and password will
+    be ignored, but should be left in configuration either empty or with any custom values.
     
 * `org` - (Required) This is the vCloud Director Org on which to run API
   operations. Can also be specified with the `VCD_ORG` environment
