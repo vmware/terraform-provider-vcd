@@ -146,13 +146,13 @@ IP=$4
 
 if [ -z "$IP" ]
 then
-    echo "Syntax $0 user password organization IP_address"
+    echo "Syntax $0 user password organization hostname_or_IP_address"
     exit 1
 fi
 
 auth=$(echo -n "$user@$org:$password" | base64)
 
-curl -I -k --header "Accept: application/*;version=27.0" \
+curl -I -k --header "Accept: application/*;version=29.0" \
     --header "Authorization: Basic $auth" \
     --request POST https://$IP/api/sessions
 ```
@@ -180,6 +180,7 @@ The following arguments are used to configure the VMware vCloud Director Provide
 * `token` - (Optional; *v2.6+*) This is the authorization token that can be used
    instead of username and password. When this is set, username and password will
     be ignored, but should be left in configuration either empty or with any custom values.
+    A token can be specified with the `VCD_TOKEN` environment variable.
     
 * `org` - (Required) This is the vCloud Director Org on which to run API
   operations. Can also be specified with the `VCD_ORG` environment
