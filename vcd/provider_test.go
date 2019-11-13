@@ -26,10 +26,10 @@ func TestProvider_impl(t *testing.T) {
 // Therefore, we can safely require that testConfig fields have been filled.
 func testAccPreCheck(t *testing.T) {
 	if testConfig.Provider.User == "" && testConfig.Provider.Token == "" {
-		t.Fatal("provider.user must be set for acceptance tests")
+		t.Fatal("provider.user or provider.token must be set for acceptance tests")
 	}
 	if testConfig.Provider.Password == "" && testConfig.Provider.Token == "" {
-		t.Fatal("provider.password must be set for acceptance tests")
+		t.Fatal("provider.password or provider.token must be set for acceptance tests")
 	}
 	if testConfig.Provider.SysOrg == "" {
 		t.Fatal("provider.sysOrg must be set for acceptance tests")
