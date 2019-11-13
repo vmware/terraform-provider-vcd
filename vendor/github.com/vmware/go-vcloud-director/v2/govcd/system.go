@@ -818,7 +818,7 @@ func (vcdClient *VCDClient) GetOrgByName(orgName string) (*Org, error) {
 	org := NewOrg(&vcdClient.Client)
 
 	_, err = vcdClient.Client.ExecuteRequest(orgUrl, http.MethodGet,
-		"", "error retrieving org list: %s", nil, org.Org)
+		"", "error retrieving org: %s", nil, org.Org)
 	if err != nil {
 		return nil, err
 	}

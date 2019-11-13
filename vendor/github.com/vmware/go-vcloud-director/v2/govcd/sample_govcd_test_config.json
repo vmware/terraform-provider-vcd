@@ -3,6 +3,8 @@
 	"provider": {
 		"user": "someuser",
 		"password": "somepassword",
+    "//": "If token is provided, username and password are ignored",
+    "token": "an_auth_token",
 		"url": "https://11.111.1.111/api",
 		"sysOrg": "System",
 		"//": "(Optional) In some cases the vCloud Director SDK must wait. It can be",
