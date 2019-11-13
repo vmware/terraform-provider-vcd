@@ -233,7 +233,7 @@ function make_token {
 
   echo "# Connecting to $url"
   curl --silent --head --insecure \
-    --header "Accept: application/*;version=27.0" \
+    --header "Accept: application/*;version=29.0" \
     --header "Authorization: Basic $auth" \
     --request POST $url/sessions | grep -i authorization
 }

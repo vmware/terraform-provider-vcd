@@ -9,13 +9,13 @@ IP=$4
 
 if [ -z "$IP" ]
 then
-    echo "Syntax $0 user password organization IP_address"
+    echo "Syntax $0 user password organization hostname_or_IP_address"
     exit 1
 fi
 
 auth=$(echo -n "$user@$org:$password" |base64)
 
-curl -I -k --header "Accept: application/*;version=27.0" \
+curl -I -k --header "Accept: application/*;version=29.0" \
     --header "Authorization: Basic $auth" \
     --request POST https://$IP/api/sessions
 
