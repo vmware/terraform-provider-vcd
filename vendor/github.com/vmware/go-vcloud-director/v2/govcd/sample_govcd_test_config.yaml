@@ -11,6 +11,8 @@ provider:
     # (Providing org credentials will skip some tests)
     user: someuser
     password: somepassword
+    # If token is provided, username and password are ignored
+    token: an_auth_token
     #
     # The vCD address, in the format https://vCD_IP/api
     # or https://vCD_host_name/api

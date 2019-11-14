@@ -434,4 +434,5 @@ borrow org and vcd from the provider.
 used in the documentation index.
 * `VCD_TEST_ORG_USER=1` will enable tests with Org User, using the credentials from the configuration file
   (`testEnvBuild.OrgUser` and `testEnvBuild.OrgUserPassword`)
-  
+* `VCD_TOKEN` : specifies the authentication token to use instead of username/password
+   (Use `./scripts/get_token.sh` to retrieve one)

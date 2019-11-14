@@ -28,6 +28,13 @@ func Provider() terraform.ResourceProvider {
 				Description: "The user password for VCD API operations.",
 			},
 
+			"token": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("VCD_TOKEN", nil),
+				Description: "The token used instead of username/password for VCD API operations.",
+			},
+
 			"sysorg": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -166,6 +173,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	config := Config{
 		User:            d.Get("user").(string),
 		Password:        d.Get("password").(string),
+		Token:           d.Get("token").(string),
 		SysOrg:          connectOrg,            // Connection org
 		Org:             d.Get("org").(string), // Default org for operations
 		Vdc:             d.Get("vdc").(string), // Default vdc

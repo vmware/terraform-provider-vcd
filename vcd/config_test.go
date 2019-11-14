@@ -35,6 +35,7 @@ type TestConfig struct {
 	Provider struct {
 		User                     string `json:"user"`
 		Password                 string `json:"password"`
+		Token                    string `json:"token,omitempty"`
 		Url                      string `json:"url"`
 		SysOrg                   string `json:"sysOrg"`
 		AllowInsecure            bool   `json:"allowInsecure"`
@@ -141,6 +142,7 @@ const (
 provider "vcd" {
   user                 = "{{.User}}"
   password             = "{{.Password}}"
+  token                = "{{.Token}}"
   url                  = "{{.Url}}"
   sysorg               = "{{.SysOrg}}"
   org                  = "{{.Org}}"
@@ -240,6 +242,7 @@ func templateFill(tmpl string, data StringMap) string {
 		// provider data
 		data["User"] = testConfig.Provider.User
 		data["Password"] = testConfig.Provider.Password
+		data["Token"] = testConfig.Provider.Token
 		data["Url"] = testConfig.Provider.Url
 		data["SysOrg"] = testConfig.Provider.SysOrg
 		data["Org"] = testConfig.VCD.Org
@@ -410,8 +413,12 @@ func getConfigStruct(config string) TestConfig {
 		configStruct.Provider.SysOrg = configStruct.VCD.Org
 		fmt.Println("VCD_TEST_USER was enabled. Using Org User credentials from configuration file")
 	}
+	if configStruct.Provider.Token != "" && configStruct.Provider.Password == "" {
+		configStruct.Provider.Password = "TOKEN"
+	}
 	_ = os.Setenv("VCD_USER", configStruct.Provider.User)
 	_ = os.Setenv("VCD_PASSWORD", configStruct.Provider.Password)
+	_ = os.Setenv("VCD_TOKEN", configStruct.Provider.Token)
 	_ = os.Setenv("VCD_URL", configStruct.Provider.Url)
 	_ = os.Setenv("VCD_SYS_ORG", configStruct.Provider.SysOrg)
 	_ = os.Setenv("VCD_ORG", configStruct.VCD.Org)
@@ -482,7 +489,11 @@ func TestMain(m *testing.M) {
 			os.Exit(1)
 		}
 		fmt.Printf("Connecting to %s\n", testConfig.Provider.Url)
-		fmt.Printf("as user %s@%s\n", testConfig.Provider.User, testConfig.Provider.SysOrg)
+		authentication := "password"
+		if testConfig.Provider.Token != "" {
+			authentication = "token"
+		}
+		fmt.Printf("as user %s@%s (using %s)\n", testConfig.Provider.User, testConfig.Provider.SysOrg, authentication)
 		// Provider initialization moved here from provider_test.init
 		testAccProvider = Provider().(*schema.Provider)
 		testAccProviders = map[string]terraform.ResourceProvider{
@@ -544,7 +555,7 @@ func createSuiteCatalogAndItem(config TestConfig) {
 	if vcdClient == nil || err != nil {
 		panic(err)
 	}
-	err = vcdClient.Authenticate(config.Provider.User, config.Provider.Password, config.Provider.SysOrg)
+	err = ProviderAuthenticate(vcdClient, config.Provider.User, config.Provider.Password, config.Provider.Token, config.Provider.SysOrg)
 	if err != nil {
 		panic(err)
 	}
@@ -676,7 +687,7 @@ func destroySuiteCatalogAndItem(config TestConfig) {
 		panic(err)
 	}
 
-	err = vcdClient.Authenticate(config.Provider.User, config.Provider.Password, config.Provider.SysOrg)
+	err = ProviderAuthenticate(vcdClient, config.Provider.User, config.Provider.Password, config.Provider.Token, config.Provider.SysOrg)
 	if err != nil {
 		panic(err)
 	}

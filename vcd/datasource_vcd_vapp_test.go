@@ -17,7 +17,7 @@ func getAvailableVapp() (*govcd.VApp, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error getting client configuration: %s", err)
 	}
-	err = vcdClient.Authenticate(testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.SysOrg)
+	err = ProviderAuthenticate(vcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg)
 	if err != nil {
 		return nil, fmt.Errorf("authentication error: %s", err)
 	}
