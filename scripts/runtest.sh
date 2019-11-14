@@ -22,7 +22,7 @@ then
     VERBOSE=1
 fi
 
-accepted_commands=(static short acceptance sequential-acceptance multiple binary 
+accepted_commands=(static token short acceptance sequential-acceptance multiple binary
     binary-prepare catalog gateway vapp vm network extnetwork multinetwork 
     short-provider lb user acceptance-orguser short-provider-orguser)
 
@@ -194,6 +194,58 @@ function exists_in_path {
     done
 }
 
+function make_token {
+  for required in jq curl base64
+  do
+    found=$(exists_in_path $required)
+    if [ -z "$found" ]
+    then
+      echo "Program $required not found - Can't retrieve token"
+      exit 1
+    fi
+  done
+  check_for_config_file
+  echo "# Using credentials from $config_file"
+  user=$(jq -r '.provider.user' $config_file)
+  password=$(jq -r '.provider.password' $config_file)
+  url=$(jq -r '.provider.url' $config_file)
+  sysorg=$(jq -r '.provider.sysOrg' $config_file)
+  org=$(jq -r '.provider.org' $config_file)
+
+  if [ -z "$sysorg" -o "$sysorg" == "null" ]
+  then
+    if [ -z "$org" -o "$org" == "null" ]
+    then
+      echo "missing sysorg (and org) from configuration file. Can't retrieve token"
+      exit 1
+    fi
+    sysorg=$org
+  fi
+
+  if [ -z "$user" -o "$user" == "null" ]
+  then
+    echo "missing user from configuration file. Can't retrieve token"
+    exit 1
+  fi
+  if [ -z "$password" -o "$password" == "null" ]
+  then
+    echo "missing password from configuration file. Can't retrieve token"
+    exit 1
+  fi
+  if [ -z "$url" -o "$url" == "null" ]
+  then
+    echo "missing url from configuration file. Can't retrieve token"
+    exit 1
+  fi
+  auth=$(echo -n "$user@$sysorg:$password" |base64)
+
+  echo "# Connecting to $url ($sysorg)"
+  curl --silent --head --insecure \
+    --header "Accept: application/*;version=29.0" \
+    --header "Authorization: Basic $auth" \
+    --request POST $url/sessions | grep -i authorization
+}
+
 function check_static {
     static_check=$(exists_in_path staticcheck)
     if [  -z "$staticcheck" -a -n "$TRAVIS" ]
@@ -250,6 +302,9 @@ function check_static {
 case $wanted in
     static)
         check_static
+        ;;
+    token)
+        make_token
         ;;
     test-env-init)
         export VCD_ENV_INIT=1

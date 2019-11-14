@@ -36,6 +36,9 @@ type Client struct {
 	MaxRetryTimeout int
 }
 
+// The header key used by default to set the authorization token.
+const AuthorizationHeader = "X-Vcloud-Authorization"
+
 // General purpose error to be used whenever an entity is not found from a "GET" request
 // Allows a simpler checking of the call result
 // such as

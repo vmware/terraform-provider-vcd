@@ -5,6 +5,7 @@
     "//"  : "This section contains credentials related to the vCD connection of Sys or Org user",
     "user": "root",
     "password": "somePassword",
+    "token": "Access token to be used instead of username/password",
     "url": "https://10.13.21.20/api",
     "//": "Use 'System' if you are Sys admin and Org name if you tenant",
     "sysOrg": "System",
