@@ -129,18 +129,21 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				Description: "Enable high availability on this edge gateway",
 			},
 			"external_networks": &schema.Schema{
-				Type:        schema.TypeList,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "A list of external networks to be used by the edge gateway",
+				ConflictsWith: []string{"external_network"},
+				Type:          schema.TypeList,
+				Optional:      true,
+				ForceNew:      true,
+				Description:   "A list of external networks to be used by the edge gateway",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
 			},
 			"default_gateway_network": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     "",
+				ConflictsWith: []string{"external_network"},
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				// Default:       "",
 				ForceNew:    true,
 				Description: "External network to be used as default gateway. Its name must be included in 'external_networks'. An empty value will skip the default gateway",
 			},
@@ -252,12 +255,6 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 
 	vcdClient := meta.(*VCDClient)
 
-	rawExternalNetworks := d.Get("external_networks").([]interface{})
-	var externalNetworks []string
-	for _, en := range rawExternalNetworks {
-		externalNetworks = append(externalNetworks, en.(string))
-	}
-
 	// Making sure the parent entities are available
 	orgName := vcdClient.getOrgName(d)
 	vdcName := vcdClient.getVdcName(d)
@@ -284,19 +281,6 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("no valid VDC named '%s' was found", vdcName)
 	}
 
-	// var gwCreation = govcd.EdgeGatewayCreation{
-	// 	ExternalNetworks:          externalNetworks,
-	// 	Name:                      d.Get("name").(string),
-	// 	OrgName:                   orgName,
-	// 	VdcName:                   vdcName,
-	// 	Description:               d.Get("description").(string),
-	// 	BackingConfiguration:      d.Get("configuration").(string),
-	// 	AdvancedNetworkingEnabled: d.Get("advanced").(bool),
-	// 	DefaultGateway:            d.Get("default_gateway_network").(string),
-	// 	DistributedRoutingEnabled: d.Get("distributed_routing").(bool),
-	// 	HAEnabled:                 d.Get("ha_enabled").(bool),
-	// }
-
 	// In version 9.7+ the advanced property is true by default
 	if vcdClient.APIVCDMaxVersionIs(">= 32.0") {
 		if !d.Get("advanced").(bool) {
@@ -304,10 +288,25 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		}
 	}
 
-	// Extract external networks
-	gwInterfaces, err := getGatewayInterfaces(vcdClient, d.Get("external_network").(*schema.Set))
-	if err != nil {
-		return fmt.Errorf("could not process 'external_network' blocks: %s", err)
+	var gwInterfaces []*types.GatewayInterface
+
+	simpleExtNetworksSlice, simpleExtNetsExist := d.GetOk("external_networks")
+	simpleExtDefaultGwNet := d.Get("default_gateway_network")
+	if simpleExtNetsExist {
+		log.Printf("[TRACE] creating edge gateway using simple 'external_networks' and 'default_gateway_network' fields")
+		// Get gateway interfaces from simple structure
+		oldExtNetworksSliceString := convertToStringSlice(simpleExtNetworksSlice.([]interface{}))
+		gwInterfaces, err = getGatewayExternalNetworks(vcdClient, oldExtNetworksSliceString, simpleExtDefaultGwNet.(string))
+		if err != nil {
+			return fmt.Errorf("could not process 'external_networks' and 'default_gateway_network': %s", err)
+		}
+	} else {
+		log.Printf("[TRACE] creating edge gateway using advanced 'external_network' blocks")
+		// Get gateway interfaces from complex structure
+		gwInterfaces, err = getGatewayInterfaces(vcdClient, d.Get("external_network").(*schema.Set))
+		if err != nil {
+			return fmt.Errorf("could not process 'external_network' block(s): %s", err)
+		}
 	}
 
 	egwName := d.Get("name").(string)
@@ -329,16 +328,15 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		},
 	}
 
-	// edge, err := govcd.CreateEdgeGateway(vcdClient.VCDClient, gwCreation)
 	edge, err := govcd.CreateAndConfigureEdgeGateway(vcdClient.VCDClient, orgName, vdcName, egwName, egwConfiguration)
 	if err != nil {
-		log.Printf("[DEBUG] Error creating edge gateway: %#v", err)
-		return fmt.Errorf("error creating edge gateway: %#v", err)
+		log.Printf("[DEBUG] Error creating edge gateway: %s", err)
+		return fmt.Errorf("error creating edge gateway: %s", err)
 	}
 	// Edge gateway creation succeeded therefore we save related fields now to preserve Id.
 	// Edge gateway is already created even if further process fails
 	log.Printf("[TRACE] flushing edge gateway creation fields")
-	err = setEdgeGatewayValues(d, edge)
+	err = setEdgeGatewayValues(d, edge, "resource")
 	if err != nil {
 		return err
 	}
@@ -411,18 +409,8 @@ func genericVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}, origin 
 		return fmt.Errorf("[edgegateway read] error retrieving edge gateway %s: %s", identifier, err)
 	}
 
-	if err := setEdgeGatewayValues(d, *edgeGateway); err != nil {
+	if err := setEdgeGatewayValues(d, *edgeGateway, origin); err != nil {
 		return err
-	}
-
-	externalNetworkData, err := getExternalNetworkData(edgeGateway.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface)
-	if err != nil {
-		return fmt.Errorf("[edgegateway read] could not process network interface data: %s", err)
-	}
-
-	err = d.Set("external_network", externalNetworkData)
-	if err != nil {
-		return fmt.Errorf("[edgegateway read] could not set external_network block: %s", err)
 	}
 
 	// Only read and set the statefile if the edge gateway is advanced
@@ -493,6 +481,50 @@ func resourceVcdEdgeGatewayDelete(d *schema.ResourceData, meta interface{}) erro
 
 	log.Printf("[TRACE] edge gateway deletion completed\n")
 	return err
+}
+
+// getGatewayExternalNetworks aims to add compatibility layer to go-vcloud-director
+// CreateEdgeGateway function which is a wrapper around CreateAndConfigureEdgeGateway. The layer
+// resides here so that code can work together getGatewayInterfaces
+func getGatewayExternalNetworks(vcdClient *VCDClient, externalNetworks []string, defaultGatewayNetwork string) ([]*types.GatewayInterface, error) {
+	gatewayInterfaces := make([]*types.GatewayInterface, len(externalNetworks))
+	// Add external networks inside the configuration structure
+	for extNetworkIndex, extNetName := range externalNetworks {
+		extNet, err := vcdClient.GetExternalNetworkByName(extNetName)
+		if err != nil {
+			return nil, err
+		}
+
+		// Populate the subnet participation only if default gateway was set
+		var subnetParticipation *types.SubnetParticipation
+		if defaultGatewayNetwork != "" && extNet.ExternalNetwork.Name == defaultGatewayNetwork {
+			for _, net := range extNet.ExternalNetwork.Configuration.IPScopes.IPScope {
+				if net.IsEnabled {
+					subnetParticipation = &types.SubnetParticipation{
+						Gateway: net.Gateway,
+						Netmask: net.Netmask,
+					}
+					break
+				}
+			}
+		}
+		networkConf := &types.GatewayInterface{
+			Name:          extNet.ExternalNetwork.Name,
+			DisplayName:   extNet.ExternalNetwork.Name,
+			InterfaceType: "uplink",
+			Network: &types.Reference{
+				HREF: extNet.ExternalNetwork.HREF,
+				ID:   extNet.ExternalNetwork.ID,
+				Type: "application/vnd.vmware.admin.network+xml",
+				Name: extNet.ExternalNetwork.Name,
+			},
+			UseForDefaultRoute:  defaultGatewayNetwork == extNet.ExternalNetwork.Name,
+			SubnetParticipation: []*types.SubnetParticipation{subnetParticipation},
+		}
+
+		gatewayInterfaces[extNetworkIndex] = networkConf
+	}
+	return gatewayInterfaces, nil
 }
 
 // getExternalNetworks extracts processes `external_network` blocks with more advanced settings
@@ -588,7 +620,7 @@ func getExternalNetworkData(gatewayInterfaces []*types.GatewayInterface) (*schem
 }
 
 // Convenience function to fill edge gateway values from resource data
-func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
+func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway, origin string) error {
 
 	d.SetId(egw.EdgeGateway.ID)
 	err := d.Set("name", egw.EdgeGateway.Name)
@@ -603,21 +635,43 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	if err != nil {
 		return err
 	}
-	var gateways = make(map[string]string)
-	// var networks []string
-	// for _, net := range egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
-	// 	if net.InterfaceType == "uplink" {
-	// 		networks = append(networks, net.Network.Name)
 
-	// 		for _, subnet := range net.SubnetParticipation {
-	// 			gateways[subnet.Gateway] = net.Network.Name
-	// 		}
-	// 	}
-	// }
-	// err = d.Set("external_networks", networks)
-	// if err != nil {
-	// 	return err
-	// }
+	_, externalNetworksSet := d.GetOk("external_networks")
+	// When `external_networks` field was not used - we set a more rich `external_network` block
+	// which allows to set multiple used subnets, manual IP addresses for IPs assigned to edge
+	// gateway and which subnet should be used as the default one for edge gateway
+	if !externalNetworksSet {
+		externalNetworkData, err := getExternalNetworkData(egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface)
+		if err != nil {
+			return fmt.Errorf("[edgegateway read] could not process network interface data: %s", err)
+		}
+
+		err = d.Set("external_network", externalNetworkData)
+		if err != nil {
+			return fmt.Errorf("[edgegateway read] could not set external_network block: %s", err)
+		}
+
+	}
+
+	// only if `external_networks` field was used or it is a data source we set the older
+	// fields "external_networks"
+	if externalNetworksSet || origin == "datasource" {
+		var gateways = make(map[string]string)
+		var networks []string
+		for _, net := range egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
+			if net.InterfaceType == "uplink" {
+				networks = append(networks, net.Network.Name)
+
+				for _, subnet := range net.SubnetParticipation {
+					gateways[subnet.Gateway] = net.Network.Name
+				}
+			}
+		}
+		err = d.Set("external_networks", networks)
+		if err != nil {
+			return err
+		}
+	}
 
 	_ = d.Set("advanced", egw.EdgeGateway.Configuration.AdvancedNetworkingEnabled)
 	_ = d.Set("ha_enabled", egw.EdgeGateway.Configuration.HaEnabled)
@@ -632,13 +686,9 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 		}
 
 		for _, subnet := range gw.SubnetParticipation {
-			defaultGwNet, ok := gateways[subnet.Gateway]
-			if ok { // found default gateway network - set it
-				_ = d.Set("default_gateway_network", defaultGwNet)
-			}
-
-			// Check if this subnet is used as default gateway and set the IP
+			// Check if this subnet is used as default gateway and set IP and `default_gateway_network` value
 			if subnet.UseForDefaultRoute {
+				_ = d.Set("default_gateway_network", gw.Network.Name)
 				_ = d.Set("default_external_network_ip", subnet.IPAddress)
 			}
 		}

@@ -97,6 +97,21 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 				Computed:    true,
 				Description: "'accept' or 'deny'. Default 'deny'",
 			},
+			"fips_mode_enabled": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Enable FIPS mode. FIPS mode turns on the cipher suites that comply with FIPS. (False by default)",
+			},
+			"use_default_route_for_dns_relay": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "If true, default gateway will be used for the edge gateways' default routing and DNS forwarding.(False by default)",
+			},
+			"external_network": {
+				Type:     schema.TypeSet,
+				Computed: true,
+				Elem:     externalNetworkResource,
+			},
 		},
 	}
 }

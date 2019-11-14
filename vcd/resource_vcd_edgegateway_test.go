@@ -71,10 +71,11 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				ResourceName:      "vcd_edgegateway." + edgeGatewayNameBasic + "-import",
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, edgeGatewayVcdName),
+				ResourceName:            "vcd_edgegateway." + edgeGatewayNameBasic + "-import",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdOrgVdcObject(testConfig, edgeGatewayVcdName),
+				ImportStateVerifyIgnore: []string{"external_network", "external_networks"},
 			},
 		},
 	})
@@ -142,7 +143,7 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_loglevel", "info"),
 					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "default_external_network_ip", "192.168.30.51"),
 
-					resourceFieldsEqual("vcd_edgegateway."+edgeGatewayNameComplex, "data.vcd_edgegateway.edge", []string{}),
+					resourceFieldsEqual("vcd_edgegateway."+edgeGatewayNameComplex, "data.vcd_edgegateway.edge", []string{"external_network"}),
 				),
 			},
 			resource.TestStep{
@@ -270,8 +271,8 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"vcd_edgegateway.egw", "name", "my-egw"),
-					stateDumper(),
-					sleepTester(),
+					// stateDumper(),
+					// sleepTester(),
 				),
 			},
 		},
