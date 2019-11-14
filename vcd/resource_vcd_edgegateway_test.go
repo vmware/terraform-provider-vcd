@@ -7,7 +7,9 @@ import (
 	"os"
 	"regexp"
 	"testing"
+	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
@@ -225,6 +227,109 @@ func testAccCheckVcdEdgeGatewayDestroyBasic(s *terraform.State) error {
 func testAccCheckVcdEdgeGatewayDestroyComplex(s *terraform.State) error {
 	return testEdgeGatewayDestroy(s, edgeGatewayNameComplex)
 }
+
+func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
+	var (
+		edgeGatewayVcdName    string = "test_edge_gateway_networks"
+		newExternalNetwork    string = "TestExternalNetwork"
+		newExternalNetworkVcd string = "test_external_network"
+	)
+
+	// String map to fill the template
+	var params = StringMap{
+		"Org":                   testConfig.VCD.Org,
+		"Vdc":                   testConfig.VCD.Vdc,
+		"EdgeGateway":           edgeGatewayNameComplex,
+		"EdgeGatewayVcd":        edgeGatewayVcdName,
+		"ExternalNetwork":       testConfig.Networking.ExternalNetwork,
+		"Tags":                  "gateway",
+		"NewExternalNetwork":    newExternalNetwork,
+		"NewExternalNetworkVcd": newExternalNetworkVcd,
+		"Type":                  testConfig.Networking.ExternalNetworkPortGroupType,
+		"PortGroup":             testConfig.Networking.ExternalNetworkPortGroup,
+		"Advanced":              getAdvancedProperty(),
+		"Vcenter":               testConfig.Networking.Vcenter,
+	}
+	configText := templateFill(testAccEdgeGatewayNetworks, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	if !usingSysAdmin() {
+		t.Skip("Edge gateway tests requires system admin privileges")
+		return
+	}
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: stateDumper(),
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: configText,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"vcd_edgegateway.egw", "name", "my-egw"),
+					stateDumper(),
+					sleepTester(),
+				),
+			},
+		},
+	})
+}
+
+func stateDumper() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		spew.Dump(s)
+		return nil
+	}
+}
+
+func sleepTester() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		fmt.Println("sleeping")
+		time.Sleep(1 * time.Minute)
+		return nil
+	}
+}
+
+const testAccEdgeGatewayNetworks = `
+resource "vcd_edgegateway" "egw" {
+  
+	name                    = "my-egw"
+	description             = "new edge gateway"
+	configuration           = "compact"
+	# default_gateway_network = "my-ext-net1"
+	# external_networks       = [ "my-ext-net1", "my-ext-net2" ]
+	advanced                = true
+  
+	fips_mode_enabled = false
+	use_default_route_for_dns_relay = true
+  
+	external_network {
+	  name = "my-ext-net"
+	  enable_rate_limit = true
+	  incoming_rate_limit = 100
+	  outgoing_rate_limit = 100
+  
+	  subnet {
+		ip_address = "192.168.30.52"
+		gateway = "192.168.30.49"
+		netmask = "255.255.255.240"
+		use_for_default_route = true
+	  }
+  
+	  # subnet {
+	  #   ip_address = "192.168.31.52"
+	  #   gateway = "192.168.31.49"
+	  #   netmask = "255.255.255.240"
+	  #   use_for_default_route = true
+	  # }
+	  
+	}
+  
+  }
+`
 
 const testAccEdgeGatewayBasic = `
 resource "vcd_edgegateway" "{{.EdgeGateway}}" {
