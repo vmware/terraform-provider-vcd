@@ -35,6 +35,7 @@ BUG FIXES:
 * Removed `power_on` property from data source `vcd_vapp`, as it is a directive used during vApp build.
   Its state is never updated and the fields `status` and `status_text` already provide the necessary information.
   [GH-379]
+* Fix `vcd_independent_disk` reapply issue, which was seen when optional `bus_sub_type` and `bus_type` wasn't used - [GH-394]
 
 DEPRECATIONS:
 
