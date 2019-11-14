@@ -134,6 +134,7 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				Optional:      true,
 				ForceNew:      true,
 				Description:   "A list of external networks to be used by the edge gateway",
+				Deprecated:    "Please use the more advanced 'external_network' block(s)",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -673,6 +674,8 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway, origin 
 		}
 	}
 
+	_ = d.Set("use_default_route_for_dns_relay", egw.EdgeGateway.Configuration.UseDefaultRouteForDNSRelay)
+	_ = d.Set("fips_mode_enabled", egw.EdgeGateway.Configuration.FipsModeEnabled)
 	_ = d.Set("advanced", egw.EdgeGateway.Configuration.AdvancedNetworkingEnabled)
 	_ = d.Set("ha_enabled", egw.EdgeGateway.Configuration.HaEnabled)
 
@@ -811,40 +814,3 @@ func resourceVcdEdgeGatewayImport(d *schema.ResourceData, meta interface{}) ([]*
 	d.SetId(edgeGateway.EdgeGateway.ID)
 	return []*schema.ResourceData{d}, nil
 }
-
-// takeBoolPointer accepts a boolean and returns a pointer to this value.
-func takeBoolPointer(value bool) *bool {
-	return &value
-}
-
-// resourceVcdEdgeGatewayExternalNetworkSubnetHash only takes into account gateway and netmask
-// because these are the indicators of external network subnet. Other fields as ip_address and
-// use_for_default_route are changeable
-// func resourceVcdEdgeGatewayExternalNetworkSubnetHash(v interface{}) int {
-// 	var buf bytes.Buffer
-// 	m := v.(map[string]interface{})
-// 	buf.WriteString(fmt.Sprintf("%s-%s",
-// 		m["gateway"].(string), m["netmask"].(string)))
-// 	return hashcode.String(buf.String())
-// }
-
-// 		"ip_address": {
-// 	Optional:    true,
-// 	Computed:    true,
-// 	Type:        schema.TypeString,
-// 	Description: "IP address on the edge gateway - will be auto-assigned if not defined",
-// },
-// "gateway": {
-// 	Required: true,
-// 	Type:     schema.TypeString,
-// },
-// "netmask": {
-// 	Required: true,
-// 	Type:     schema.TypeString,
-// },
-// "use_for_default_route": {
-// 	Optional:    true,
-// 	Default:     false,
-// 	Type:        schema.TypeBool,
-// 	Description: "Defines if this subnet should be used as default gateway for edge",
-// },

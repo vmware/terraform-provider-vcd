@@ -143,7 +143,7 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_loglevel", "info"),
 					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "default_external_network_ip", "192.168.30.51"),
 
-					resourceFieldsEqual("vcd_edgegateway."+edgeGatewayNameComplex, "data.vcd_edgegateway.edge", []string{"external_network"}),
+					resourceFieldsEqual("vcd_edgegateway."+edgeGatewayNameComplex, "data.vcd_edgegateway.edge", []string{"external_network.#"}),
 				),
 			},
 			resource.TestStep{
@@ -175,6 +175,9 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, edgeGatewayVcdName),
+				// import only imports values in 'external_network' block, while this test uses
+				// older 'external_networks therefore we need to skip validation of these fields
+				ImportStateVerifyIgnore: []string{"external_networks", "external_network"},
 			},
 			resource.TestStep{
 				Config: configText4,
@@ -262,9 +265,9 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: stateDumper(),
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		// CheckDestroy: stateDumper(),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,

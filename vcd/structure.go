@@ -144,3 +144,8 @@ func convertToTypeSet(param []string) []interface{} {
 	}
 	return slice
 }
+
+// takeBoolPointer accepts a boolean and returns a pointer to this value.
+func takeBoolPointer(value bool) *bool {
+	return &value
+}
