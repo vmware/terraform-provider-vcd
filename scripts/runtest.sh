@@ -195,24 +195,32 @@ function exists_in_path {
 }
 
 function make_token {
-  jq=$(exists_in_path jq)
-  if [ -z "$jq" ]
-  then
-    echo "program jq not found"
-    exit 1
-  fi
-  curl=$(exists_in_path curl)
-  if [ -z "$curl" ]
-  then
-    echo "program curl not found"
-    exit 1
-  fi
+  for required in jq curl base64
+  do
+    found=$(exists_in_path $required)
+    if [ -z "$found" ]
+    then
+      echo "Program $required not found - Can't retrieve token"
+      exit 1
+    fi
+  done
   check_for_config_file
   echo "# Using credentials from $config_file"
   user=$(jq -r '.provider.user' $config_file)
   password=$(jq -r '.provider.password' $config_file)
   url=$(jq -r '.provider.url' $config_file)
-  org=$(jq -r '.provider.sysOrg' $config_file)
+  sysorg=$(jq -r '.provider.sysOrg' $config_file)
+  org=$(jq -r '.provider.org' $config_file)
+
+  if [ -z "$sysorg" -o "$sysorg" == "null" ]
+  then
+    if [ -z "$org" -o "$org" == "null" ]
+    then
+      echo "missing sysorg (and org) from configuration file. Can't retrieve token"
+      exit 1
+    fi
+    sysorg=$org
+  fi
 
   if [ -z "$user" -o "$user" == "null" ]
   then
@@ -224,14 +232,14 @@ function make_token {
     echo "missing password from configuration file. Can't retrieve token"
     exit 1
   fi
-  if [ -z "$org" -o "$org" == "null" ]
+  if [ -z "$url" -o "$url" == "null" ]
   then
-    echo "missing org from configuration file. Can't retrieve token"
+    echo "missing url from configuration file. Can't retrieve token"
     exit 1
   fi
-  auth=$(echo -n "$user@$org:$password" |base64)
+  auth=$(echo -n "$user@$sysorg:$password" |base64)
 
-  echo "# Connecting to $url"
+  echo "# Connecting to $url ($sysorg)"
   curl --silent --head --insecure \
     --header "Accept: application/*;version=29.0" \
     --header "Authorization: Basic $auth" \
