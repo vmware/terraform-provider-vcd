@@ -272,8 +272,7 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(
-						"vcd_edgegateway.egw", "name", "my-egw"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "name", "edge-with-complex-networks"),
 					// stateDumper(),
 					// sleepTester(),
 				),
@@ -297,21 +296,21 @@ func sleepTester() resource.TestCheckFunc {
 	}
 }
 
-const testAccEdgeGatewayNetworks = `
+const testAccEdgeGatewayNetworks = testAccEdgeGatewayComplexNetwork + `
 resource "vcd_edgegateway" "egw" {
-  
-	name                    = "my-egw"
+	org                     = "{{.Org}}"
+	vdc                     = "{{.Vdc}}"
+
+	name                    = "edge-with-complex-networks"
 	description             = "new edge gateway"
 	configuration           = "compact"
-	# default_gateway_network = "my-ext-net1"
-	# external_networks       = [ "my-ext-net1", "my-ext-net2" ]
 	advanced                = true
   
 	fips_mode_enabled = false
 	use_default_route_for_dns_relay = true
   
 	external_network {
-	  name = "my-ext-net"
+	  name = "${vcd_external_network.{{.NewExternalNetwork}}.name}"
 	  enable_rate_limit = true
 	  incoming_rate_limit = 100
 	  outgoing_rate_limit = 100
@@ -320,15 +319,14 @@ resource "vcd_edgegateway" "egw" {
 		ip_address = "192.168.30.52"
 		gateway = "192.168.30.49"
 		netmask = "255.255.255.240"
-		use_for_default_route = true
 	  }
   
-	  # subnet {
-	  #   ip_address = "192.168.31.52"
-	  #   gateway = "192.168.31.49"
-	  #   netmask = "255.255.255.240"
-	  #   use_for_default_route = true
-	  # }
+	  subnet {
+	    ip_address = "192.168.40.154"
+	    gateway = "192.168.40.149"
+	    netmask = "255.255.255.0"
+	    use_for_default_route = true
+	  }
 	  
 	}
   
@@ -348,6 +346,9 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
 }
 `
 
+// TODO external network has a bug that it uses a TypeList for `ip_scope` field. If the below two
+// networks are put in reverse order, then vCD API orders them and a replacement is suggested.
+// GitHUB issue - https://github.com/terraform-providers/terraform-provider-vcd/issues/371
 const testAccEdgeGatewayComplexNetwork = `
 resource "vcd_external_network" "{{.NewExternalNetwork}}" {
   name        = "{{.NewExternalNetworkVcd}}"
@@ -357,6 +358,19 @@ resource "vcd_external_network" "{{.NewExternalNetwork}}" {
     vcenter = "{{.Vcenter}}"
     name    = "{{.PortGroup}}"
     type    = "{{.Type}}"
+  }
+
+  ip_scope {
+    gateway      = "192.168.40.149"
+    netmask      = "255.255.255.0"
+    dns1         = "192.168.0.164"
+    dns2         = "192.168.0.196"
+    dns_suffix   = "company.biz"
+
+    static_ip_pool {
+      start_address = "192.168.40.151"
+      end_address   = "192.168.40.162"
+    }
   }
 
   ip_scope {
