@@ -12,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 // VCDClientOption defines signature for customizing VCDClient using
@@ -48,19 +50,20 @@ func (vcdCli *VCDClient) vcdloginurl() error {
 	return nil
 }
 
-func (vcdCli *VCDClient) vcdauthorize(user, pass, org string) error {
-	var missing_items []string
+// vcdAuthorize authorizes the client and returns a http response
+func (vcdCli *VCDClient) vcdAuthorize(user, pass, org string) (*http.Response, error) {
+	var missingItems []string
 	if user == "" {
-		missing_items = append(missing_items, "user")
+		missingItems = append(missingItems, "user")
 	}
 	if pass == "" {
-		missing_items = append(missing_items, "password")
+		missingItems = append(missingItems, "password")
 	}
 	if org == "" {
-		missing_items = append(missing_items, "org")
+		missingItems = append(missingItems, "org")
 	}
-	if len(missing_items) > 0 {
-		return fmt.Errorf("authorization is not possible because of these missing items: %v", missing_items)
+	if len(missingItems) > 0 {
+		return nil, fmt.Errorf("authorization is not possible because of these missing items: %v", missingItems)
 	}
 	// No point in checking for errors here
 	req := vcdCli.Client.NewRequest(map[string]string{}, http.MethodPost, vcdCli.sessionHREF, nil)
@@ -70,20 +73,17 @@ func (vcdCli *VCDClient) vcdauthorize(user, pass, org string) error {
 	req.Header.Add("Accept", "application/*+xml;version="+vcdCli.Client.APIVersion)
 	resp, err := checkResp(vcdCli.Client.Http.Do(req))
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
-	// Store the authentication header
-	vcdCli.Client.VCDToken = resp.Header.Get("x-vcloud-authorization")
-	vcdCli.Client.VCDAuthHeader = "x-vcloud-authorization"
-	vcdCli.Client.IsSysAdmin = false
-	if strings.ToLower(org) == "system" {
-		vcdCli.Client.IsSysAdmin = true
-	}
+	// Store the authorization header
+	vcdCli.Client.VCDToken = resp.Header.Get(AuthorizationHeader)
+	vcdCli.Client.VCDAuthHeader = AuthorizationHeader
+	vcdCli.Client.IsSysAdmin = strings.EqualFold(org, "system")
 	// Get query href
 	vcdCli.QueryHREF = vcdCli.Client.VCDHREF
 	vcdCli.QueryHREF.Path += "/query"
-	return nil
+	return resp, nil
 }
 
 // NewVCDClient initializes VMware vCloud Director client with reasonable defaults.
@@ -122,16 +122,60 @@ func NewVCDClient(vcdEndpoint url.URL, insecure bool, options ...VCDClientOption
 
 // Authenticate is an helper function that performs a login in vCloud Director.
 func (vcdCli *VCDClient) Authenticate(username, password, org string) error {
+	_, err := vcdCli.GetAuthResponse(username, password, org)
+	return err
+}
 
+// GetAuthResponse performs authentication and returns the full HTTP response
+// The purpose of this function is to preserve information that is useful
+// for token-based authentication
+func (vcdCli *VCDClient) GetAuthResponse(username, password, org string) (*http.Response, error) {
 	// LoginUrl
+	err := vcdCli.vcdloginurl()
+	if err != nil {
+		return nil, fmt.Errorf("error finding LoginUrl: %s", err)
+	}
+	// Authorize
+	resp, err := vcdCli.vcdAuthorize(username, password, org)
+	if err != nil {
+		return nil, fmt.Errorf("error authorizing: %s", err)
+	}
+	return resp, nil
+}
+
+// SetToken will set the authorization token in the client, without using other credentials
+// Up to version 29, token authorization uses the the header key x-vcloud-authorization
+// In version 30+ it also uses X-Vmware-Vcloud-Access-Token:TOKEN coupled with
+// X-Vmware-Vcloud-Token-Type:"bearer"
+// TODO: when enabling version 30+ for SDK, add ability of using bearer token
+func (vcdCli *VCDClient) SetToken(org, authHeader, token string) error {
+	vcdCli.Client.VCDAuthHeader = authHeader
+	vcdCli.Client.VCDToken = token
+
 	err := vcdCli.vcdloginurl()
 	if err != nil {
 		return fmt.Errorf("error finding LoginUrl: %s", err)
 	}
-	// Authorize
-	err = vcdCli.vcdauthorize(username, password, org)
+
+	vcdCli.Client.IsSysAdmin = strings.EqualFold(org, "system")
+	// Get query href
+	vcdCli.QueryHREF = vcdCli.Client.VCDHREF
+	vcdCli.QueryHREF.Path += "/query"
+
+	// The client is now ready to connect using the token, but has not communicated with the vCD yet.
+	// To make sure that it is working, we run a request for the org list.
+	// This list should work always: when run as system administrator, it retrieves all organizations.
+	// When run as org user, it only returns the organization the user is authorized to.
+	// In both cases, we discard the list, as we only use it to certify that the token works.
+	orgListHREF := vcdCli.Client.VCDHREF
+	orgListHREF.Path += "/org"
+
+	orgList := new(types.OrgList)
+
+	_, err = vcdCli.Client.ExecuteRequest(orgListHREF.String(), http.MethodGet,
+		"", "error connecting to vCD using token: %s", nil, orgList)
 	if err != nil {
-		return fmt.Errorf("error authorizing: %s", err)
+		return err
 	}
 	return nil
 }

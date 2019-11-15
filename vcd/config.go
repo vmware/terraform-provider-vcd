@@ -17,6 +17,7 @@ import (
 type Config struct {
 	User            string
 	Password        string
+	Token           string // Token used instead of user and password
 	SysOrg          string // Org used for authentication
 	Org             string // Default Org used for API operations
 	Vdc             string // Default (optional) VDC for API operations
@@ -29,7 +30,7 @@ type VCDClient struct {
 	*govcd.VCDClient
 	SysOrg          string
 	Org             string // name of default Org
-	Vdc             string // name of default Vdc
+	Vdc             string // name of default VDC
 	MaxRetryTimeout int
 	InsecureFlag    bool
 }
@@ -307,10 +308,24 @@ func (cli *VCDClient) GetEdgeGatewayFromResource(d *schema.ResourceData, edgeGat
 	return egw, nil
 }
 
+func ProviderAuthenticate(client *govcd.VCDClient, user, password, token, org string) error {
+	var err error
+	if token != "" {
+		err = client.SetToken(org, govcd.AuthorizationHeader, token)
+		if err != nil {
+			err = fmt.Errorf("error during token-based authentication: %s", err)
+		}
+	} else {
+		err = client.Authenticate(user, password, org)
+	}
+	return err
+}
+
 func (c *Config) Client() (*VCDClient, error) {
 
 	rawData := c.User + "#" +
 		c.Password + "#" +
+		c.Token + "#" +
 		c.SysOrg + "#" +
 		c.Href
 	checksum := fmt.Sprintf("%x", sha1.Sum([]byte(rawData)))
@@ -334,7 +349,7 @@ func (c *Config) Client() (*VCDClient, error) {
 		return nil, fmt.Errorf("something went wrong while retrieving URL: %s", err)
 	}
 
-	vcdclient := &VCDClient{
+	vcdClient := &VCDClient{
 		VCDClient: govcd.NewVCDClient(*authUrl, c.InsecureFlag,
 			govcd.WithMaxRetryTimeout(c.MaxRetryTimeout)),
 		SysOrg:          c.SysOrg,
@@ -342,13 +357,14 @@ func (c *Config) Client() (*VCDClient, error) {
 		Vdc:             c.Vdc,
 		MaxRetryTimeout: c.MaxRetryTimeout,
 		InsecureFlag:    c.InsecureFlag}
-	err = vcdclient.Authenticate(c.User, c.Password, c.SysOrg)
+
+	err = ProviderAuthenticate(vcdClient.VCDClient, c.User, c.Password, c.Token, c.SysOrg)
 	if err != nil {
 		return nil, fmt.Errorf("something went wrong during authentication: %s", err)
 	}
-	cachedVCDClients[checksum] = cachedConnection{initTime: time.Now(), connection: vcdclient}
+	cachedVCDClients[checksum] = cachedConnection{initTime: time.Now(), connection: vcdClient}
 
-	return vcdclient, nil
+	return vcdClient, nil
 }
 
 // Returns the name of the function that called the

@@ -26,6 +26,8 @@ IMPROVEMENTS:
 * Fix code warnings from `staticcheck` and add command `make static` to Travis tests
 * `resource/vcd_edge_gateway` and `datasource/vcd_edge_gateway` add `default_external_network_ip`
   field to export default edge gateway IP address - [GH-389]
+* Add `token` to the `vcd` provider for the ability of connecting with an authorization token - [GH-280]
+* Add command `make token` to create an authorization token from testing credentials
 
 BUG FIXES:
 
@@ -33,6 +35,7 @@ BUG FIXES:
 * Removed `power_on` property from data source `vcd_vapp`, as it is a directive used during vApp build.
   Its state is never updated and the fields `status` and `status_text` already provide the necessary information.
   [GH-379]
+* Fix `vcd_independent_disk` reapply issue, which was seen when optional `bus_sub_type` and `bus_type` wasn't used - [GH-394]
 
 DEPRECATIONS:
 

@@ -72,12 +72,14 @@ func resourceVcdIndependentDisk() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
+				Computed:     true,
 				ValidateFunc: validateBusType,
 			},
 			"bus_sub_type": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
+				Computed:     true,
 				ValidateFunc: validateBusSubType,
 			},
 			"iops": &schema.Schema{
