@@ -11,6 +11,19 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
+var subAllocationPool = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"start_address": {
+			Required: true,
+			Type:     schema.TypeString,
+		},
+		"end_address": {
+			Required: true,
+			Type:     schema.TypeString,
+		},
+	},
+}
+
 var subnetResource = &schema.Resource{
 	Schema: map[string]*schema.Schema{
 		"ip_address": {
@@ -18,6 +31,8 @@ var subnetResource = &schema.Resource{
 			Computed:    true,
 			Type:        schema.TypeString,
 			Description: "IP address on the edge gateway - will be auto-assigned if not defined",
+			// DiffSuppressFunc: suppressWhenNewValue("auto"),
+			// DiffSuppressFunc: suppressWordToEmptyString("auto"),
 		},
 		"gateway": {
 			Required: true,
@@ -32,6 +47,12 @@ var subnetResource = &schema.Resource{
 			Default:     false,
 			Type:        schema.TypeBool,
 			Description: "Defines if this subnet should be used as default gateway for edge",
+		},
+		"suballocate_pool": {
+			Optional:    true,
+			Type:        schema.TypeSet,
+			Description: "string",
+			Elem:        subAllocationPool,
 		},
 	},
 }
@@ -217,32 +238,11 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				Computed:    true,
 				Description: "If true, default gateway will be used for the edge gateways' default routing and DNS forwarding.(False by default)",
 			},
-			// "suballocation_pool": {
-			// 	Optional:    true,
-			// 	Type:        schema.TypeSet,
-			// 	Description: "string",
-			// 	Elem: &schema.Resource{
-			// 		Schema: map[string]*schema.Schema{
-			// 			"start_address": {
-			// 				Required: true,
-			// 				Type:     schema.TypeString,
-			// 			},
-			// 			"end_address": {
-			// 				Optional: true,
-			// 				Computed: true,
-			// 				Type:     schema.TypeString,
-			// 			},
-			// 		},
-			// 	},
-			// },
 			"external_network": {
 				ConflictsWith: []string{"external_networks", "default_gateway_network"},
 				Optional:      true,
-				// ForceNew:      true,
-				// MinItems:      1,
-				Type: schema.TypeSet,
-				// Set:           resourceVcdNsxvFirewallRuleServiceHash,
-				Elem: externalNetworkResource,
+				Type:          schema.TypeSet,
+				Elem:          externalNetworkResource,
 			},
 		},
 	}
@@ -550,15 +550,36 @@ func getGatewayInterfaces(vcdClient *VCDClient, externalInterfaceSet *schema.Set
 				for subnetIndex, subnet := range subnetList {
 					subnetMap := subnet.(map[string]interface{})
 					subnetParticipationSlice[subnetIndex] = &types.SubnetParticipation{
-						IPAddress:          subnetMap["ip_address"].(string),
 						Gateway:            subnetMap["gateway"].(string),
 						Netmask:            subnetMap["netmask"].(string),
 						UseForDefaultRoute: subnetMap["use_for_default_route"].(bool),
 					}
-
+					// If ip_address was set to "auto" we don't send it
+					// if subnetMap["ip_address"].(string) != "auto" {
+					subnetParticipationSlice[subnetIndex].IPAddress = subnetMap["ip_address"].(string)
+					// }
 					if subnetMap["use_for_default_route"].(bool) {
 						isInterfaceUsedForDefaultRoute = true
 					}
+
+					// Check if there are any suballocated pool definitions
+					suballocatePoolSet := subnetMap["suballocate_pool"].(*schema.Set)
+					suballocatePoolList := suballocatePoolSet.List()
+					if len(suballocatePoolList) > 0 {
+						// Allocate nested IP ranges slice
+						subnetParticipationSlice[subnetIndex].IPRanges = &types.IPRanges{}
+						subnetParticipationSlice[subnetIndex].IPRanges.IPRange = make([]*types.IPRange, len(suballocatePoolList))
+						for suballocatePoolIndex, suballocatePool := range suballocatePoolList {
+							suballocatePoolMap := convertToStringMap(suballocatePool.(map[string]interface{}))
+							singleRange := &types.IPRange{
+								StartAddress: suballocatePoolMap["start_address"],
+								EndAddress:   suballocatePoolMap["end_address"],
+							}
+							// Add single IP range into list
+							subnetParticipationSlice[subnetIndex].IPRanges.IPRange[suballocatePoolIndex] = singleRange
+						}
+					}
+
 				}
 			}
 
@@ -587,6 +608,8 @@ func getGatewayInterfaces(vcdClient *VCDClient, externalInterfaceSet *schema.Set
 	return gatewayInterfaceSlice, nil
 }
 
+// getExternalNetworkData traverses API structure with 3 nested loops to unpack such hierarchy to
+// `external_network` block(s). external_network -> subnet -> suballocate_pool
 func getExternalNetworkData(gatewayInterfaces []*types.GatewayInterface) (*schema.Set, error) {
 	externalNetworkSlice := make([]interface{}, len(gatewayInterfaces))
 	if len(gatewayInterfaces) > 0 {
@@ -604,6 +627,20 @@ func getExternalNetworkData(gatewayInterfaces []*types.GatewayInterface) (*schem
 				extNetworkSubnetMap["gateway"] = extNetsubnet.Gateway
 				extNetworkSubnetMap["netmask"] = extNetsubnet.Netmask
 				extNetworkSubnetMap["use_for_default_route"] = extNetsubnet.UseForDefaultRoute
+
+				// Check for suballocated ip pools and set them if there are any
+				if extNetsubnet.IPRanges != nil && len(extNetsubnet.IPRanges.IPRange) > 0 {
+					externalNetworkSubnetRangeSlice := make([]interface{}, len(extNetsubnet.IPRanges.IPRange))
+					for ipRangeIndex, ipRange := range extNetsubnet.IPRanges.IPRange {
+						extNetworkSubnetRangeMap := make(map[string]interface{})
+						extNetworkSubnetRangeMap["start_address"] = ipRange.StartAddress
+						extNetworkSubnetRangeMap["end_address"] = ipRange.EndAddress
+
+						externalNetworkSubnetRangeSlice[ipRangeIndex] = extNetworkSubnetRangeMap
+					}
+					// Hash externalNetworkSubnetRangeSlice and add it to parent object "subnet"
+					extNetworkSubnetMap["suballocate_pool"] = schema.NewSet(schema.HashResource(subAllocationPool), externalNetworkSubnetRangeSlice)
+				}
 
 				// Make a set and add it to externalNetworkSubnetSlice
 				externalNetworkSubnetSlice[extNetsubnetIndex] = extNetworkSubnetMap
