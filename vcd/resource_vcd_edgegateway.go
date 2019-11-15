@@ -321,7 +321,7 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 			HaEnabled:                  d.Get("ha_enabled").(bool),
 			GatewayBackingConfig:       d.Get("configuration").(string),
 			AdvancedNetworkingEnabled:  d.Get("advanced").(bool),
-			DistributedRoutingEnabled:  d.Get("distributed_routing").(bool),
+			DistributedRoutingEnabled:  takeBoolPointer(d.Get("distributed_routing").(bool)),
 			GatewayInterfaces: &types.GatewayInterfaces{
 				GatewayInterface: gwInterfaces,
 			},
