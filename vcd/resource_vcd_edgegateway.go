@@ -64,11 +64,9 @@ var externalNetworkResource = &schema.Resource{
 		},
 		"subnet": {
 			Required: true,
-			// ForceNew: true,
 			Type:     schema.TypeSet,
 			MinItems: 1,
 			Elem:     subnetResource,
-			// Set:      resourceVcdEdgeGatewayExternalNetworkSubnetHash,
 		},
 	},
 }
@@ -297,7 +295,7 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		log.Printf("[TRACE] creating edge gateway using simple 'external_networks' and 'default_gateway_network' fields")
 		// Get gateway interfaces from simple structure
 		oldExtNetworksSliceString := convertToStringSlice(simpleExtNetworksSlice.([]interface{}))
-		gwInterfaces, err = getGatewayExternalNetworks(vcdClient, oldExtNetworksSliceString, simpleExtDefaultGwNet.(string))
+		gwInterfaces, err = getSimpleGatewayInterfaces(vcdClient, oldExtNetworksSliceString, simpleExtDefaultGwNet.(string))
 		if err != nil {
 			return fmt.Errorf("could not process 'external_networks' and 'default_gateway_network': %s", err)
 		}
@@ -484,10 +482,10 @@ func resourceVcdEdgeGatewayDelete(d *schema.ResourceData, meta interface{}) erro
 	return err
 }
 
-// getGatewayExternalNetworks aims to add compatibility layer to go-vcloud-director
+// getSimpleGatewayInterfaces aims to add compatibility layer to go-vcloud-director
 // CreateEdgeGateway function which is a wrapper around CreateAndConfigureEdgeGateway. The layer
 // resides here so that code can work together getGatewayInterfaces
-func getGatewayExternalNetworks(vcdClient *VCDClient, externalNetworks []string, defaultGatewayNetwork string) ([]*types.GatewayInterface, error) {
+func getSimpleGatewayInterfaces(vcdClient *VCDClient, externalNetworks []string, defaultGatewayNetwork string) ([]*types.GatewayInterface, error) {
 	gatewayInterfaces := make([]*types.GatewayInterface, len(externalNetworks))
 	// Add external networks inside the configuration structure
 	for extNetworkIndex, extNetName := range externalNetworks {
@@ -528,7 +526,7 @@ func getGatewayExternalNetworks(vcdClient *VCDClient, externalNetworks []string,
 	return gatewayInterfaces, nil
 }
 
-// getExternalNetworks extracts processes `external_network` blocks with more advanced settings
+// getGatewayInterfaces extracts processes `external_network` blocks with more advanced settings
 func getGatewayInterfaces(vcdClient *VCDClient, externalInterfaceSet *schema.Set) ([]*types.GatewayInterface, error) {
 	var gatewayInterfaceSlice []*types.GatewayInterface
 
