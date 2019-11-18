@@ -211,6 +211,7 @@ type NetworkConfiguration struct {
 	RetainNetInfoAcrossDeployments bool             `xml:"RetainNetInfoAcrossDeployments,omitempty"`
 	Features                       *NetworkFeatures `xml:"Features,omitempty"`
 	GuestVlanAllowed               *bool            `xml:"GuestVlanAllowed,omitempty"`
+	DistributedInterface           *bool            `xml:"DistributedInterface,omitempty"`
 	// TODO: Not Implemented
 	// RouterInfo                     RouterInfo           `xml:"RouterInfo,omitempty"`
 	// SyslogServerSettings           SyslogServerSettings `xml:"SyslogServerSettings,omitempty"`
@@ -1134,6 +1135,7 @@ type VMGeneralParams struct {
 	Name               string `xml:"Name,omitempty"`               // Name of VM
 	Description        string `xml:"Description,omitempty"`        // VM description
 	NeedsCustomization bool   `xml:"NeedsCustomization,omitempty"` // True if this VM needs guest customization
+	RegenerateBiosUuid bool   `xml:"RegenerateBiosUuid,omitempty"` // True if BIOS UUID of the virtual machine should be regenerated so that it is unique, and not the same as the source virtual machine's BIOS UUID.
 }
 
 // VApp represents a vApp
@@ -1572,7 +1574,7 @@ type GatewayConfiguration struct {
 	EdgeGatewayServiceConfiguration *GatewayFeatures   `xml:"EdgeGatewayServiceConfiguration,omitempty"` // Represents Gateway Features.
 	HaEnabled                       bool               `xml:"HaEnabled,omitempty"`                       // True if this gateway is highly available. (Requires two vShield edge VMs.)
 	AdvancedNetworkingEnabled       bool               `xml:"AdvancedNetworkingEnabled,omitempty"`       // True if the gateway uses advanced networking
-	DistributedRoutingEnabled       bool               `xml:"DistributedRoutingEnabled,omitempty"`       // True if gateway is attached to a Distributed Logical Router
+	DistributedRoutingEnabled       *bool              `xml:"DistributedRoutingEnabled,omitempty"`       // True if gateway is attached to a Distributed Logical Router
 	UseDefaultRouteForDNSRelay      bool               `xml:"UseDefaultRouteForDnsRelay,omitempty"`      // True if the default gateway on the external network selected for default route should be used as the DNS relay.
 }
 
@@ -2240,31 +2242,40 @@ type QueryResultEdgeGatewayRecordType struct {
 // QueryResultVMRecordType represents a VM record as query result.
 type QueryResultVMRecordType struct {
 	// Attributes
-	HREF                    string `xml:"href,attr,omitempty"`       // The URI of the entity.
-	Name                    string `xml:"name,attr,omitempty"`       // VM name.
-	Deployed                bool   `xml:"isDeployed,attr,omitempty"` // True if the virtual machine is deployed.
-	Status                  string `xml:"status,attr,omitempty"`
-	Busy                    bool   `xml:"isBusy,attr,omitempty"`
-	Deleted                 bool   `xml:"isDeleted,attr,omitempty"`
-	MaintenanceMode         bool   `xml:"isInMaintenanceMode,attr,omitempty"`
-	Published               bool   `xml:"isPublished,attr,omitempty"`
-	VAppTemplate            bool   `xml:"isVAppTemplate,attr,omitempty"`
-	VdcEnabled              bool   `xml:"isVdcEnabled,attr,omitempty"`
-	VdcHREF                 string `xml:"vdc,attr,omitempty"`
-	VAppParentHREF          string `xml:"container,attr,omitempty"`
-	VAppParentName          string `xml:"containerName,attr,omitempty"`
-	HardwareVersion         int    `xml:"hardwareVersion,attr,omitempty"`
-	HighestSupportedVersion int    `xml:"pvdcHighestSupportedHardwareVersion,attr,omitempty"`
-	VmToolsVersion          string `xml:"vmToolsVersion,attr,omitempty"`
-	GuestOS                 string `xml:"guestOs,attr,omitempty"`
-	MemoryMB                int    `xml:"memoryMB,attr,omitempty"`
-	Cpus                    int    `xml:"numberOfCpus,attr,omitempty"`
-	StorageProfileName      string `xml:"storageProfileName,attr,omitempty"`
-	NetworkName             string `xml:"networkName,attr,omitempty"`
-	TaskHREF                string `xml:"task,attr,omitempty"`
-	TaskStatusName          string `xml:"taskStatusName,attr,omitempty"`
-	TaskDetails             string `xml:"taskDetails,attr,omitempty"`
-	TaskStatus              string `xml:"TaskStatus,attr,omitempty"`
+	HREF                 string    `xml:"href,attr,omitempty"` // The URI of the entity.
+	ID                   string    `xml:"id,attr,omitempty"`
+	Name                 string    `xml:"name,attr,omitempty"`          // VM name.
+	Type                 string    `xml:"type,attr,omitempty"`          // Contains the type of the resource.
+	ContainerName        string    `xml:"containerName,attr,omitempty"` // The name of the vApp or vApp template that contains this VM.
+	ContainerID          string    `xml:"container,attr,omitempty"`     // The ID of the vApp or vApp template that contains this VM.
+	OwnerName            string    `xml:"ownerName,attr,omitempty"`
+	Owner                string    `xml:"owner,attr,omitempty"`
+	VdcHREF              string    `xml:"vdc,attr,omitempty"`
+	VAppTemplate         bool      `xml:"isVAppTemplate,attr,omitempty"`
+	Deleted              bool      `xml:"isDeleted,attr,omitempty"`
+	GuestOS              string    `xml:"guestOs,attr,omitempty"`
+	Cpus                 int       `xml:"numberOfCpus,attr,omitempty"`
+	MemoryMB             int       `xml:"memoryMB,attr,omitempty"`
+	Status               string    `xml:"status,attr,omitempty"`
+	NetworkName          string    `xml:"networkName,attr,omitempty"`
+	NetworkHref          string    `xml:"network,attr,omitempty"`
+	IpAddress            string    `xml:"ipAddress,attr,omitempty"` // If configured, the IP Address of the VM on the primary network, otherwise empty.
+	Busy                 bool      `xml:"isBusy,attr,omitempty"`
+	Deployed             bool      `xml:"isDeployed,attr,omitempty"` // True if the virtual machine is deployed.
+	Published            bool      `xml:"isPublished,attr,omitempty"`
+	CatalogName          string    `xml:"catalogName,attr,omitempty"`
+	HardwareVersion      int       `xml:"hardwareVersion,attr,omitempty"`
+	VmToolsStatus        string    `xml:"vmToolsStatus,attr,omitempty"`
+	MaintenanceMode      bool      `xml:"isInMaintenanceMode,attr,omitempty"`
+	AutoNature           bool      `xml:"isAutoNature,attr,omitempty"` //  	True if the parent vApp is a managed vApp
+	StorageProfileName   string    `xml:"storageProfileName,attr,omitempty"`
+	GcStatus             string    `xml:"gcStatus,attr,omitempty"` // GC status of this VM.
+	AutoUndeployDate     string    `xml:"autoUndeployDate,attr,omitempty"`
+	AutoDeleteDate       string    `xml:"autoDeleteDate,attr,omitempty"`
+	AutoUndeployNotified bool      `xml:"isAutoUndeployNotified,attr,omitempty"`
+	AutoDeleteNotified   bool      `xml:"isAutoDeleteNotified,attr,omitempty"`
+	Link                 []*Link   `xml:"Link,omitempty"`
+	MetaData             *Metadata `xml:"Metadata,omitempty"`
 }
 
 // QueryResultVAppRecordType represents a VM record as query result.
