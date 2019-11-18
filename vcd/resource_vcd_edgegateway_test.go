@@ -273,7 +273,7 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "name", "edge-with-complex-networks"),
-					stateDumper(),
+					// stateDumper(),
 					// sleepTester(),
 				),
 			},
@@ -316,30 +316,29 @@ resource "vcd_edgegateway" "egw" {
 	  outgoing_rate_limit = 100
   
 	  subnet {
-		#ip_address = "192.168.30.51"
+		ip_address = "192.168.30.51"
 		gateway = "192.168.30.49"
 		netmask = "255.255.255.240"
 
-		#suballocate_pool {
-		#	start_address = "192.168.30.53"
-		#	end_address   = "192.168.30.55"
-		#}
-#
-		#suballocate_pool {
-		#	start_address = "192.168.30.58"
-		#	end_address   = "192.168.30.60"
-		#}
+		suballocate_pool {
+			start_address = "192.168.30.53"
+			end_address   = "192.168.30.55"
+		}
+
+		suballocate_pool {
+			start_address = "192.168.30.58"
+			end_address   = "192.168.30.60"
+		}
 	  }
   
-	  #subnet {
-	  #  ip_address = "192.168.40.154"
-	  #  gateway = "192.168.40.149"
-	  #  netmask = "255.255.255.0"
-	  #  use_for_default_route = true
-	  #}
+	  subnet {
+	  # ip_address IP address is skipped here on purpose
+	    gateway = "192.168.40.149"
+	    netmask = "255.255.255.0"
+	    use_for_default_route = true
+	  }
 	  
 	}
-  
   }
 `
 
@@ -370,19 +369,6 @@ resource "vcd_external_network" "{{.NewExternalNetwork}}" {
     type    = "{{.Type}}"
   }
 
-  # ip_scope {
-  #   gateway      = "192.168.40.149"
-  #   netmask      = "255.255.255.0"
-  #   dns1         = "192.168.0.164"
-  #   dns2         = "192.168.0.196"
-  #   dns_suffix   = "company.biz"
-# 
-  #   static_ip_pool {
-  #     start_address = "192.168.40.151"
-  #     end_address   = "192.168.40.162"
-  #   }
-  # }
-
   ip_scope {
     gateway      = "192.168.30.49"
     netmask      = "255.255.255.240"
@@ -394,6 +380,19 @@ resource "vcd_external_network" "{{.NewExternalNetwork}}" {
       start_address = "192.168.30.51"
       end_address   = "192.168.30.62"
     }
+  }
+  
+  ip_scope {
+	gateway      = "192.168.40.149"
+	netmask      = "255.255.255.0"
+	dns1         = "192.168.0.164"
+	dns2         = "192.168.0.196"
+	dns_suffix   = "company.biz"
+
+	static_ip_pool {
+	  start_address = "192.168.40.151"
+	  end_address   = "192.168.40.162"
+	}
   }
 
   retain_net_info_across_deployments = "false"

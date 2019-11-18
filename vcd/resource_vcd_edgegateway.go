@@ -28,11 +28,8 @@ var subnetResource = &schema.Resource{
 	Schema: map[string]*schema.Schema{
 		"ip_address": {
 			Optional:    true,
-			Computed:    true,
 			Type:        schema.TypeString,
 			Description: "IP address on the edge gateway - will be auto-assigned if not defined",
-			// DiffSuppressFunc: suppressWhenNewValue("auto"),
-			// DiffSuppressFunc: suppressWordToEmptyString("auto"),
 		},
 		"gateway": {
 			Required: true,
@@ -65,9 +62,8 @@ var externalNetworkResource = &schema.Resource{
 			Description: "External network name",
 		},
 		"enable_rate_limit": {
-			Optional: true,
-			Computed: true,
-			// Default:     false,
+			Optional:    true,
+			Computed:    true,
 			Type:        schema.TypeBool,
 			Description: "Enable rate limitting",
 		},
@@ -84,7 +80,8 @@ var externalNetworkResource = &schema.Resource{
 			Description: "Outgoing rate limit (Mbps)",
 		},
 		"subnet": {
-			Required: true,
+			Optional: true,
+			Computed: true,
 			Type:     schema.TypeSet,
 			MinItems: 1,
 			Elem:     subnetResource,
@@ -172,6 +169,14 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				Computed:    true,
 				Description: "IP address of edge gateway interface which is used as default.",
 			},
+			"external_network_ips": {
+				Computed:    true,
+				Type:        schema.TypeList,
+				Description: "Read only list of IP addresses set on edge gateway",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"distributed_routing": &schema.Schema{
 				Type:             schema.TypeBool,
 				Optional:         true,
@@ -225,7 +230,6 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				Description:  "'accept' or 'deny'. Default 'deny'",
 				ValidateFunc: validation.StringInSlice([]string{"accept", "deny"}, false),
 			},
-
 			"fips_mode_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -241,6 +245,7 @@ func resourceVcdEdgeGateway() *schema.Resource {
 			"external_network": {
 				ConflictsWith: []string{"external_networks", "default_gateway_network"},
 				Optional:      true,
+				Computed:      true,
 				Type:          schema.TypeSet,
 				Elem:          externalNetworkResource,
 			},
@@ -302,7 +307,7 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 	} else {
 		log.Printf("[TRACE] creating edge gateway using advanced 'external_network' blocks")
 		// Get gateway interfaces from complex structure
-		gwInterfaces, err = getGatewayInterfaces(vcdClient, d.Get("external_network").(*schema.Set))
+		gwInterfaces, err = getGatewayInterfacesType(vcdClient, d.Get("external_network").(*schema.Set))
 		if err != nil {
 			return fmt.Errorf("could not process 'external_network' block(s): %s", err)
 		}
@@ -335,7 +340,7 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 	// Edge gateway creation succeeded therefore we save related fields now to preserve Id.
 	// Edge gateway is already created even if further process fails
 	log.Printf("[TRACE] flushing edge gateway creation fields")
-	err = setEdgeGatewayValues(d, edge, "resource")
+	err = setEdgeGatewayValues(vcdClient, d, edge, "resource")
 	if err != nil {
 		return err
 	}
@@ -408,7 +413,7 @@ func genericVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}, origin 
 		return fmt.Errorf("[edgegateway read] error retrieving edge gateway %s: %s", identifier, err)
 	}
 
-	if err := setEdgeGatewayValues(d, *edgeGateway, origin); err != nil {
+	if err := setEdgeGatewayValues(vcdClient, d, *edgeGateway, origin); err != nil {
 		return err
 	}
 
@@ -526,8 +531,9 @@ func getSimpleGatewayInterfaces(vcdClient *VCDClient, externalNetworks []string,
 	return gatewayInterfaces, nil
 }
 
-// getGatewayInterfaces extracts processes `external_network` blocks with more advanced settings
-func getGatewayInterfaces(vcdClient *VCDClient, externalInterfaceSet *schema.Set) ([]*types.GatewayInterface, error) {
+// getGatewayInterfacesType extracts `external_network` blocks with more advanced settings into
+// []*types.GatewayInterface
+func getGatewayInterfacesType(vcdClient *VCDClient, externalInterfaceSet *schema.Set) ([]*types.GatewayInterface, error) {
 	var gatewayInterfaceSlice []*types.GatewayInterface
 
 	extInterfaceList := externalInterfaceSet.List()
@@ -543,43 +549,46 @@ func getGatewayInterfaces(vcdClient *VCDClient, externalInterfaceSet *schema.Set
 			}
 			var isInterfaceUsedForDefaultRoute bool
 
-			subnetSet := extInterfaceMap["subnet"].(*schema.Set)
-			subnetList := subnetSet.List()
-			subnetParticipationSlice := make([]*types.SubnetParticipation, len(subnetList))
-			if len(subnetList) > 0 {
-				for subnetIndex, subnet := range subnetList {
-					subnetMap := subnet.(map[string]interface{})
-					subnetParticipationSlice[subnetIndex] = &types.SubnetParticipation{
-						Gateway:            subnetMap["gateway"].(string),
-						Netmask:            subnetMap["netmask"].(string),
-						UseForDefaultRoute: subnetMap["use_for_default_route"].(bool),
-					}
-					// If ip_address was set to "auto" we don't send it
-					// if subnetMap["ip_address"].(string) != "auto" {
-					subnetParticipationSlice[subnetIndex].IPAddress = subnetMap["ip_address"].(string)
-					// }
-					if subnetMap["use_for_default_route"].(bool) {
-						isInterfaceUsedForDefaultRoute = true
-					}
+			var subnetParticipationSlice []*types.SubnetParticipation
+			subnetSchema, ok := extInterfaceMap["subnet"]
+			if ok {
+				subnetSet := subnetSchema.(*schema.Set)
+				subnetList := subnetSet.List()
+				subnetParticipationSlice = make([]*types.SubnetParticipation, len(subnetList))
+				if len(subnetList) > 0 {
+					for subnetIndex, subnet := range subnetList {
+						subnetMap := subnet.(map[string]interface{})
+						subnetParticipationSlice[subnetIndex] = &types.SubnetParticipation{
+							Gateway:            subnetMap["gateway"].(string),
+							Netmask:            subnetMap["netmask"].(string),
+							UseForDefaultRoute: subnetMap["use_for_default_route"].(bool),
+						}
+						subnetParticipationSlice[subnetIndex].IPAddress = subnetMap["ip_address"].(string)
+						if subnetMap["use_for_default_route"].(bool) {
+							isInterfaceUsedForDefaultRoute = true
+						}
 
-					// Check if there are any suballocated pool definitions
-					suballocatePoolSet := subnetMap["suballocate_pool"].(*schema.Set)
-					suballocatePoolList := suballocatePoolSet.List()
-					if len(suballocatePoolList) > 0 {
-						// Allocate nested IP ranges slice
-						subnetParticipationSlice[subnetIndex].IPRanges = &types.IPRanges{}
-						subnetParticipationSlice[subnetIndex].IPRanges.IPRange = make([]*types.IPRange, len(suballocatePoolList))
-						for suballocatePoolIndex, suballocatePool := range suballocatePoolList {
-							suballocatePoolMap := convertToStringMap(suballocatePool.(map[string]interface{}))
-							singleRange := &types.IPRange{
-								StartAddress: suballocatePoolMap["start_address"],
-								EndAddress:   suballocatePoolMap["end_address"],
+						// Check if there are any suballocated pool definitions
+						subnetSchema, ok := subnetMap["suballocate_pool"]
+						if ok {
+							suballocatePoolSet := subnetSchema.(*schema.Set)
+							suballocatePoolList := suballocatePoolSet.List()
+							if len(suballocatePoolList) > 0 {
+								// Allocate nested IP ranges slice
+								subnetParticipationSlice[subnetIndex].IPRanges = &types.IPRanges{}
+								subnetParticipationSlice[subnetIndex].IPRanges.IPRange = make([]*types.IPRange, len(suballocatePoolList))
+								for suballocatePoolIndex, suballocatePool := range suballocatePoolList {
+									suballocatePoolMap := convertToStringMap(suballocatePool.(map[string]interface{}))
+									singleRange := &types.IPRange{
+										StartAddress: suballocatePoolMap["start_address"],
+										EndAddress:   suballocatePoolMap["end_address"],
+									}
+									// Add single IP range into list
+									subnetParticipationSlice[subnetIndex].IPRanges.IPRange[suballocatePoolIndex] = singleRange
+								}
 							}
-							// Add single IP range into list
-							subnetParticipationSlice[subnetIndex].IPRanges.IPRange[suballocatePoolIndex] = singleRange
 						}
 					}
-
 				}
 			}
 
@@ -610,7 +619,8 @@ func getGatewayInterfaces(vcdClient *VCDClient, externalInterfaceSet *schema.Set
 
 // getExternalNetworkData traverses API structure with 3 nested loops to unpack such hierarchy to
 // `external_network` block(s). external_network -> subnet -> suballocate_pool
-func getExternalNetworkData(gatewayInterfaces []*types.GatewayInterface) (*schema.Set, error) {
+func getExternalNetworkData(vcdClient *VCDClient, d *schema.ResourceData, gatewayInterfaces []*types.GatewayInterface) (*schema.Set, error) {
+
 	externalNetworkSlice := make([]interface{}, len(gatewayInterfaces))
 	if len(gatewayInterfaces) > 0 {
 		for extNetworkIndex, extNetwork := range gatewayInterfaces {
@@ -623,10 +633,22 @@ func getExternalNetworkData(gatewayInterfaces []*types.GatewayInterface) (*schem
 			externalNetworkSubnetSlice := make([]interface{}, len(extNetwork.SubnetParticipation))
 			for extNetsubnetIndex, extNetsubnet := range extNetwork.SubnetParticipation {
 				extNetworkSubnetMap := make(map[string]interface{})
-				extNetworkSubnetMap["ip_address"] = extNetsubnet.IPAddress
 				extNetworkSubnetMap["gateway"] = extNetsubnet.Gateway
 				extNetworkSubnetMap["netmask"] = extNetsubnet.Netmask
 				extNetworkSubnetMap["use_for_default_route"] = extNetsubnet.UseForDefaultRoute
+
+				// IP address is tricky. It os only possible to set the IP address during read if it
+				// was actually a used field in .tf configuration. If it was not used, it cannot be
+				// set because Terraform will recommend to rebuild whole block every time, because
+				// `computed` field causes the hash function for TypeSet to be recomputed ("known
+				// after apply") every time.
+				wasIpSet, err := wasIpAddressSet(vcdClient, d, extNetwork.Network.Name, extNetsubnet.Gateway, extNetsubnet.Netmask)
+				if err != nil {
+					return nil, fmt.Errorf("could not check if IP address was set in configuration: %s", err)
+				}
+				if wasIpSet {
+					extNetworkSubnetMap["ip_address"] = extNetsubnet.IPAddress
+				}
 
 				// Check for suballocated ip pools and set them if there are any
 				if extNetsubnet.IPRanges != nil && len(extNetsubnet.IPRanges.IPRange) > 0 {
@@ -655,8 +677,31 @@ func getExternalNetworkData(gatewayInterfaces []*types.GatewayInterface) (*schem
 	return externalNetworkSet, nil
 }
 
+// wasIpAddressSet checks if specific `SubnetParticipation` element had IP address field populated
+// in .tf configuration
+func wasIpAddressSet(vcdClient *VCDClient, d *schema.ResourceData, extNetworkName, extNetworkGateway, extNetworkNetmask string) (bool, error) {
+	// Cache currently set configuration
+	gwInterfaces, err := getGatewayInterfacesType(vcdClient, d.Get("external_network").(*schema.Set))
+	if err != nil {
+		return false, fmt.Errorf("could not read current state configuration: %s", err)
+	}
+
+	for _, k := range gwInterfaces {
+		if k.Network.Name == extNetworkName {
+			for _, kk := range k.SubnetParticipation {
+				if kk.Gateway == extNetworkGateway && kk.Netmask == extNetworkNetmask {
+					if kk.IPAddress != "" {
+						return true, nil
+					}
+				}
+			}
+		}
+	}
+	return false, nil
+}
+
 // Convenience function to fill edge gateway values from resource data
-func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway, origin string) error {
+func setEdgeGatewayValues(vcdClient *VCDClient, d *schema.ResourceData, egw govcd.EdgeGateway, origin string) error {
 
 	d.SetId(egw.EdgeGateway.ID)
 	err := d.Set("name", egw.EdgeGateway.Name)
@@ -672,12 +717,12 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway, origin 
 		return err
 	}
 
-	_, externalNetworksSet := d.GetOk("external_networks")
+	_, simpleExternalNetworksSet := d.GetOk("external_networks")
 	// When `external_networks` field was not used - we set a more rich `external_network` block
 	// which allows to set multiple used subnets, manual IP addresses for IPs assigned to edge
 	// gateway and which subnet should be used as the default one for edge gateway
-	if !externalNetworksSet {
-		externalNetworkData, err := getExternalNetworkData(egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface)
+	if !simpleExternalNetworksSet {
+		externalNetworkData, err := getExternalNetworkData(vcdClient, d, egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface)
 		if err != nil {
 			return fmt.Errorf("[edgegateway read] could not process network interface data: %s", err)
 		}
@@ -691,7 +736,7 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway, origin 
 
 	// only if `external_networks` field was used or it is a data source we set the older
 	// fields "external_networks"
-	if externalNetworksSet || origin == "datasource" {
+	if simpleExternalNetworksSet || origin == "datasource" {
 		var gateways = make(map[string]string)
 		var networks []string
 		for _, net := range egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
@@ -706,6 +751,21 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway, origin 
 		err = d.Set("external_networks", networks)
 		if err != nil {
 			return err
+		}
+	}
+
+	// Populate list of external_network_ip_addresses
+	for _, net := range egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
+		var externalNets []interface{}
+		if net.InterfaceType == "uplink" {
+			for _, subnet := range net.SubnetParticipation {
+				externalNets = append(externalNets, subnet.IPAddress)
+			}
+		}
+
+		err = d.Set("external_network_ips", externalNets)
+		if err != nil {
+			return fmt.Errorf("could not set external_network_ip_addresses field: %s", err)
 		}
 	}
 

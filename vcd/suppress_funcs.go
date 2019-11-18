@@ -74,12 +74,3 @@ func suppressAlways() schema.SchemaDiffSuppressFunc {
 func suppressCase(k, old, new string, d *schema.ResourceData) bool {
 	return strings.EqualFold(old, new)
 }
-
-func suppressWhenNewValue(value string) schema.SchemaDiffSuppressFunc {
-	return func(k string, old string, new string, d *schema.ResourceData) bool {
-		if new == value {
-			return true
-		}
-		return false
-	}
-}
