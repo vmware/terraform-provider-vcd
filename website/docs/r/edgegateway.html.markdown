@@ -22,6 +22,60 @@ balancing settings will be **ignored** when it is not. Refer to [official vCloud
 (https://docs.vmware.com/en/vCloud-Director/9.7/com.vmware.vcloud.tenantportal.doc/GUID-7E082E77-B459-4CE7-806D-2769F7CB5624.html) 
 for more information.
 
+## Example usage (multiple external network subnets and IP pool sub-allocation)
+
+```hcl
+resource "vcd_edgegateway" "egw" {
+  org = "my-org"
+  vdc = "my-vdc"
+
+  name          = "edge-with-complex-networks"
+  description   = "new edge gateway"
+  configuration = "compact"
+  advanced      = true
+
+
+  external_network {
+    name = "${vcd_external_network.my-external-network.name}"
+
+    subnet {
+      ip_address = "192.168.30.51"
+      gateway    = "192.168.30.49"
+      netmask    = "255.255.255.240"
+
+      suballocate_pool {
+        start_address = "192.168.30.53"
+        end_address   = "192.168.30.55"
+      }
+
+      suballocate_pool {
+        start_address = "192.168.30.58"
+        end_address   = "192.168.30.60"
+      }
+    }
+
+    subnet {
+      # ip_address is skipped here on purpose to get dynamic IP assgined. Because this
+      # subnet is used for default route, this IP address can then be accessed using
+      # `default_external_network_ip` attribute.
+      use_for_default_route = true
+      gateway               = "192.168.40.149"
+      netmask               = "255.255.255.0"
+    }
+  }
+
+  external_network {
+    name = "my-other-external-network"
+
+    subnet {
+      gateway    = "1.1.1.1"
+      netmask    = "255.255.255.248"
+    }
+  }
+}
+```
+
+
 ## Example Usage
 
 ```hcl
@@ -58,13 +112,23 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to which the VDC belongs. Optional if defined at provider level.
 * `vdc` - (Optional) The name of VDC that owns the edge gateway. Optional if defined at provider level. 
 * `name` - (Required) A unique name for the edge gateway.
-* `external_networks` - (Required) An array of external network names.
+* `external_networks` - (Optional) An array of external network names. This supports simple external
+  networks with one subnet only. 
+* `external_network` - (Optional, *v2.6+*) One or more blocks defining external networks, their
+  subnets, IP addresses and  IP pool suballocation attached to edge gateway interfaces. Details are
+  in [external network](#external-network) block below.
 * `configuration` - (Required) Configuration of the vShield edge VM for this gateway. One of: `compact`, `full` ("Large"), `x-large`, `full4` ("Quad Large").
 * `default_gateway_network` - (Optional) Name of the external network to be used as default gateway. It must be included in the
   list of `external_networks`. Providing an empty string or omitting the argument will create the edge gateway without a default gateway.
 * `advanced` - (Optional) True if the gateway uses advanced networking. Default is `true`.
 * `ha_enabled` - (Optional) Enable high availability on this edge gateway. Default is `false`.
 * `distributed_routing` - (Optional) If advanced networking enabled, also enable distributed routing. Default is `false`.
+* `fips_mode_enabled` - (Optional) When FIPS mode is enabled, any secure communication to or from
+  the NSX Edge uses cryptographic algorithms or protocols that are allowed by United States Federal
+  Information Processing Standards (FIPS). FIPS mode turns on the cipher suites that comply with
+  FIPS. Default is `false`.
+* `use_default_route_for_dns_relay` - (Optional) When default route is set, it will be used for
+  gateways' default routing and DNS forwarding. Default is `false`.
 * `lb_enabled` - (Optional) Enable load balancing. Default is `false`.
 * `lb_acceleration_enabled` - (Optional) Enable to configure the load balancer to use the faster L4
 engine rather than L7 engine. The L4 TCP VIP is processed before the edge gateway firewall so no 
@@ -84,11 +148,44 @@ order) logging. Default `false`.
 * `fw_default_rule_action` (Optional) Default firewall rule (last in the processing order) action.
 One of `accept` or `deny`. Default `deny`.
 
+<a id="external-network"></a>
+## External network
+
+* `name` (Required) - Name of existing external network
+* `enable_rate_limit` (Optional) - `True` if rate limitting should be applied on this interface.
+  Default is `false`.
+* `incoming_rate_limit` (Optional) - Incoming rate limit in Mbps.
+* `outgoing_rate_limit` (Optional) - Outgoing rate limit in Mbps.
+* `subnet` (Required) - One or more blocks of [external network subnet](#external-network-subnet).
+
+
+<a id="external-network-subnet"></a>
+## External network subnet 
+
+* `gateway` (Required) - Gateway for a subnet in external network
+* `netmask` (Required) - Netmask of a subnet in external network
+* `ip_address` (Optional) - IP address to assign to edge gateway interface (will be auto-assigned if
+  unspecified)
+* `use_for_default_route` (Optional) - Should this network be used as default gateway on edge
+  gateway. Default is `false`. 
+* `suballocate_pool` (Optional) - One or more blocks of [ip
+  ranges](#external-network-subnet-suballocate) in the subnet to be sub-allocated 
+
+<a id="external-network-subnet"></a>
+## External network subnet sub-allocation
+
+* `start_address` (Required) - Start IP address of a range
+* `end_address` (Required) - End IP address of a range
+
+
 ## Attribute Reference
 
 The following attributes are exported on this resource:
 
 * `default_external_network_ip` (*v2.6+*) - IP address of edge gateway used for default network
+* `external_network_ips` (*v2.6+*) - A list of IP addresses assigned to edge gateway interfaces
+  connected to external networks.
+
 
 ## Importing
 

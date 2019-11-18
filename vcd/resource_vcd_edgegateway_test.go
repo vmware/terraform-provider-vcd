@@ -7,9 +7,7 @@ import (
 	"os"
 	"regexp"
 	"testing"
-	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
@@ -255,10 +253,15 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 		"Vcenter":               testConfig.Networking.Vcenter,
 	}
 	configText := templateFill(testAccEdgeGatewayNetworks, params)
+
+	// params["FuncName"] = t.Name() + "-step2"
+	// configText2 := templateFill(testAccEdgeGatewayNetworks2, params)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
+
 	if !usingSysAdmin() {
 		t.Skip("Edge gateway tests requires system admin privileges")
 		return
@@ -273,28 +276,52 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "name", "edge-with-complex-networks"),
-					// stateDumper(),
-					// sleepTester(),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "advanced", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "description", "new edge gateway"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "configuration", "compact"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "advanced", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "fips_mode_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "use_default_route_for_dns_relay", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "default_gateway_network", newExternalNetworkVcd),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "default_external_network_ip", "192.168.30.51"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.#", "2"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.enable_rate_limit", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.incoming_rate_limit", "100"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.name", "test_external_network"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.outgoing_rate_limit", "100"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.subnet.#", "1"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.subnet.3598571839.gateway", "192.168.30.49"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.subnet.3598571839.ip_address", "192.168.30.51"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.subnet.3598571839.netmask", "255.255.255.240"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.subnet.3598571839.use_for_default_route", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.subnet.3598571839.suballocate_pool.#", "2"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.subnet.3598571839.suballocate_pool.3548736268.end_address", "192.168.30.55"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.subnet.3598571839.suballocate_pool.3548736268.start_address", "192.168.30.53"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.subnet.3598571839.suballocate_pool.4005225628.end_address", "192.168.30.60"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.subnet.3598571839.suballocate_pool.4005225628.start_address", "192.168.30.58"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network_ips.#", "2"),
+					resource.TestMatchResourceAttr("vcd_edgegateway.egw", "external_network_ips.0", ipV4Regex),
+					resource.TestMatchResourceAttr("vcd_edgegateway.egw", "external_network_ips.1", ipV4Regex),
 				),
 			},
 		},
 	})
 }
 
-func stateDumper() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		spew.Dump(s)
-		return nil
-	}
-}
+// func stateDumper() resource.TestCheckFunc {
+// 	return func(s *terraform.State) error {
+// 		spew.Dump(s)
+// 		return nil
+// 	}
+// }
 
-func sleepTester() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		fmt.Println("sleeping")
-		time.Sleep(1 * time.Minute)
-		return nil
-	}
-}
+// func sleepTester() resource.TestCheckFunc {
+// 	return func(s *terraform.State) error {
+// 		fmt.Println("sleeping")
+// 		time.Sleep(1 * time.Minute)
+// 		return nil
+// 	}
+// }
 
 const testAccEdgeGatewayNetworks = testAccEdgeGatewayComplexNetwork + `
 resource "vcd_edgegateway" "egw" {
@@ -307,7 +334,7 @@ resource "vcd_edgegateway" "egw" {
 	advanced                = true
   
 	fips_mode_enabled = false
-	use_default_route_for_dns_relay = false
+	use_default_route_for_dns_relay = true
   
 	external_network {
 	  name = "${vcd_external_network.{{.NewExternalNetwork}}.name}"
@@ -319,6 +346,7 @@ resource "vcd_edgegateway" "egw" {
 		ip_address = "192.168.30.51"
 		gateway = "192.168.30.49"
 		netmask = "255.255.255.240"
+		use_for_default_route = true
 
 		suballocate_pool {
 			start_address = "192.168.30.53"
@@ -330,17 +358,75 @@ resource "vcd_edgegateway" "egw" {
 			end_address   = "192.168.30.60"
 		}
 	  }
-  
-	  subnet {
-	  # ip_address IP address is skipped here on purpose
-	    gateway = "192.168.40.149"
-	    netmask = "255.255.255.0"
-	    use_for_default_route = true
-	  }
-	  
+	}
+
+	# Attach to existing external network
+	external_network {
+	  name = "${data.vcd_external_network.ds-network.name}"
+
+		subnet {
+			# ip_address is skipped here on purpose to get dynamic IP
+			use_for_default_route = false
+			gateway = "${data.vcd_external_network.ds-network.ip_scope[0].gateway}"
+			netmask = "${data.vcd_external_network.ds-network.ip_scope[0].netmask}"
 	}
   }
+}
+
+# Use data source of existing external network to get needed gateway and netmask
+# for subnet participation details
+data "vcd_external_network" "ds-network" {
+	name = "{{.ExternalNetwork}}"
+}
+
 `
+
+// const testAccEdgeGatewayNetworks2 = testAccEdgeGatewayComplexNetwork + `
+// resource "vcd_edgegateway" "egw" {
+// 	org                     = "{{.Org}}"
+// 	vdc                     = "{{.Vdc}}"
+
+// 	name                    = "edge-with-complex-networks"
+// 	description             = "new edge gateway"
+// 	configuration           = "compact"
+// 	advanced                = true
+
+// 	external_network {
+// 	  name = "${vcd_external_network.{{.NewExternalNetwork}}.name}"
+
+// 	  subnet {
+// 		ip_address = "192.168.30.51"
+// 		gateway = "192.168.30.49"
+// 		netmask = "255.255.255.240"
+
+// 		suballocate_pool {
+// 			start_address = "192.168.30.53"
+// 			end_address   = "192.168.30.55"
+// 		}
+
+// 		suballocate_pool {
+// 			start_address = "192.168.30.58"
+// 			end_address   = "192.168.30.60"
+// 		}
+// 	  }
+
+// 	  subnet {
+// 	  # ip_address is skipped here on purpose to get dynamic IP
+// 	    gateway = "192.168.40.149"
+// 	    netmask = "255.255.255.0"
+// 	    use_for_default_route = true
+// 	  }
+
+// 	}
+//   }
+
+// data "vcd_edgegateway" "data-egw" {
+//   org = "{{.Org}}"
+//   vdc = "{{.Vdc}}"
+
+//   name = "${vcd_edgegateway.egw.name}"
+// }
+// `
 
 const testAccEdgeGatewayBasic = `
 resource "vcd_edgegateway" "{{.EdgeGateway}}" {
@@ -382,18 +468,18 @@ resource "vcd_external_network" "{{.NewExternalNetwork}}" {
     }
   }
   
-  ip_scope {
-	gateway      = "192.168.40.149"
-	netmask      = "255.255.255.0"
-	dns1         = "192.168.0.164"
-	dns2         = "192.168.0.196"
-	dns_suffix   = "company.biz"
+#  ip_scope {
+# 	gateway      = "192.168.40.149"
+# 	netmask      = "255.255.255.0"
+# 	dns1         = "192.168.0.164"
+# 	dns2         = "192.168.0.196"
+# 	dns_suffix   = "company.biz"
 
-	static_ip_pool {
-	  start_address = "192.168.40.151"
-	  end_address   = "192.168.40.162"
-	}
-  }
+# 	static_ip_pool {
+# 	  start_address = "192.168.40.151"
+# 	  end_address   = "192.168.40.162"
+# 	}
+#   }
 
   retain_net_info_across_deployments = "false"
 }

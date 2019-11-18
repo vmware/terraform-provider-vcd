@@ -16,39 +16,48 @@ var subAllocationPool = &schema.Resource{
 		"start_address": {
 			Required: true,
 			Type:     schema.TypeString,
+			ForceNew: true,
 		},
 		"end_address": {
 			Required: true,
 			Type:     schema.TypeString,
+			ForceNew: true,
 		},
 	},
 }
 
 var subnetResource = &schema.Resource{
 	Schema: map[string]*schema.Schema{
+		"gateway": {
+			Required:    true,
+			ForceNew:    true,
+			Description: "Gateway address for a subnet",
+			Type:        schema.TypeString,
+		},
+		"netmask": {
+			Required:    true,
+			ForceNew:    true,
+			Description: "Netmask address for a subnet",
+			Type:        schema.TypeString,
+		},
 		"ip_address": {
 			Optional:    true,
 			Type:        schema.TypeString,
+			ForceNew:    true,
 			Description: "IP address on the edge gateway - will be auto-assigned if not defined",
-		},
-		"gateway": {
-			Required: true,
-			Type:     schema.TypeString,
-		},
-		"netmask": {
-			Required: true,
-			Type:     schema.TypeString,
 		},
 		"use_for_default_route": {
 			Optional:    true,
 			Default:     false,
+			ForceNew:    true,
 			Type:        schema.TypeBool,
 			Description: "Defines if this subnet should be used as default gateway for edge",
 		},
 		"suballocate_pool": {
 			Optional:    true,
 			Type:        schema.TypeSet,
-			Description: "string",
+			ForceNew:    true,
+			Description: "Define zero or more blocks to sub-allocate pools on the edge gateway",
 			Elem:        subAllocationPool,
 		},
 	},
@@ -58,30 +67,35 @@ var externalNetworkResource = &schema.Resource{
 	Schema: map[string]*schema.Schema{
 		"name": {
 			Required:    true,
+			ForceNew:    true,
 			Type:        schema.TypeString,
 			Description: "External network name",
 		},
 		"enable_rate_limit": {
 			Optional:    true,
 			Computed:    true,
+			ForceNew:    true,
 			Type:        schema.TypeBool,
 			Description: "Enable rate limitting",
 		},
 		"incoming_rate_limit": {
 			Optional:    true,
 			Computed:    true,
+			ForceNew:    true,
 			Type:        schema.TypeFloat,
 			Description: "Incoming rate limit (Mbps)",
 		},
 		"outgoing_rate_limit": {
 			Optional:    true,
 			Computed:    true,
+			ForceNew:    true,
 			Type:        schema.TypeFloat,
 			Description: "Outgoing rate limit (Mbps)",
 		},
 		"subnet": {
 			Optional: true,
 			Computed: true,
+			ForceNew: true,
 			Type:     schema.TypeSet,
 			MinItems: 1,
 			Elem:     subnetResource,
@@ -172,7 +186,7 @@ func resourceVcdEdgeGateway() *schema.Resource {
 			"external_network_ips": {
 				Computed:    true,
 				Type:        schema.TypeList,
-				Description: "Read only list of IP addresses set on edge gateway",
+				Description: "List of IP addresses set on edge gateway external network interfaces",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -244,6 +258,8 @@ func resourceVcdEdgeGateway() *schema.Resource {
 			},
 			"external_network": {
 				ConflictsWith: []string{"external_networks", "default_gateway_network"},
+				Description:   "One or more blocks with external network information to be attached to this gateway's interface",
+				ForceNew:      true,
 				Optional:      true,
 				Computed:      true,
 				Type:          schema.TypeSet,
@@ -385,7 +401,7 @@ func resourceVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}) error 
 }
 
 func genericVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}, origin string) error {
-	log.Printf("[TRACE] edge gateway read initiated")
+	log.Printf("[TRACE] edge gateway read initiated from origin %s", origin)
 
 	vcdClient := meta.(*VCDClient)
 
@@ -702,7 +718,7 @@ func wasIpAddressSet(vcdClient *VCDClient, d *schema.ResourceData, extNetworkNam
 
 // Convenience function to fill edge gateway values from resource data
 func setEdgeGatewayValues(vcdClient *VCDClient, d *schema.ResourceData, egw govcd.EdgeGateway, origin string) error {
-
+	log.Printf("[TRACE] edge gateway read - setting values")
 	d.SetId(egw.EdgeGateway.ID)
 	err := d.Set("name", egw.EdgeGateway.Name)
 	if err != nil {
@@ -755,18 +771,19 @@ func setEdgeGatewayValues(vcdClient *VCDClient, d *schema.ResourceData, egw govc
 	}
 
 	// Populate list of external_network_ip_addresses
+	log.Printf("[TRACE] creating edge gateway using simple 'external_networks' and 'default_gateway_network' fields")
+	var externalNets []interface{}
 	for _, net := range egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
-		var externalNets []interface{}
 		if net.InterfaceType == "uplink" {
 			for _, subnet := range net.SubnetParticipation {
 				externalNets = append(externalNets, subnet.IPAddress)
 			}
 		}
 
-		err = d.Set("external_network_ips", externalNets)
-		if err != nil {
-			return fmt.Errorf("could not set external_network_ip_addresses field: %s", err)
-		}
+	}
+	err = d.Set("external_network_ips", externalNets)
+	if err != nil {
+		return fmt.Errorf("could not set external_network_ip_addresses field: %s", err)
 	}
 
 	_ = d.Set("use_default_route_for_dns_relay", egw.EdgeGateway.Configuration.UseDefaultRouteForDNSRelay)

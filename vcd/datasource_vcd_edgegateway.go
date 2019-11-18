@@ -56,6 +56,14 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 				Computed:    true,
 				Description: "IP address of edge gateway interface which is used as default.",
 			},
+			"external_network_ips": {
+				Computed:    true,
+				Type:        schema.TypeList,
+				Description: "List of IP addresses set on edge gateway external network interfaces",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"distributed_routing": &schema.Schema{
 				Type:        schema.TypeBool,
 				Computed:    true,
@@ -108,9 +116,10 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 				Description: "If true, default gateway will be used for the edge gateways' default routing and DNS forwarding.(False by default)",
 			},
 			"external_network": {
-				Type:     schema.TypeSet,
-				Computed: true,
-				Elem:     externalNetworkResource,
+				Type:        schema.TypeSet,
+				Description: "One or more blocks with external network information to be attached to this gateway's interface",
+				Computed:    true,
+				Elem:        externalNetworkResource,
 			},
 		},
 	}
