@@ -8,6 +8,7 @@ import (
 	"regexp"
 	"testing"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
@@ -302,18 +303,50 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network_ips.#", "2"),
 					resource.TestMatchResourceAttr("vcd_edgegateway.egw", "external_network_ips.0", ipV4Regex),
 					resource.TestMatchResourceAttr("vcd_edgegateway.egw", "external_network_ips.1", ipV4Regex),
+
+					// TODO after https://github.com/hashicorp/terraform-plugin-sdk/pull/197
+					// Data source checks. There is a bug in Terraform where a data source cannot
+					// have two computed TypeSet variables because they get overwriten
+					// https://github.com/hashicorp/terraform-plugin-sdk/pull/197 The test below is
+					// left such, that it triggers an error as soon as the bug is fixed. (probably
+					// when we pull in newer SDK)
+					resource.TestCheckResourceAttr("data.vcd_edgegateway.egw", "external_network.#", "1"),
+
+					// Working data source tests
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "name", "data.vcd_edgegateway.egw", "name"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "external_network_ips.#", "data.vcd_edgegateway.egw", "external_network_ips.#"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "external_network_ips.0", "data.vcd_edgegateway.egw", "external_network_ips.0"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "external_network_ips.1", "data.vcd_edgegateway.egw", "external_network_ips.1"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "fips_mode_enabled", "data.vcd_edgegateway.egw", "fips_mode_enabled"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "fips_mode_enabled", "data.vcd_edgegateway.egw", "fips_mode_enabled"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "advanced", "data.vcd_edgegateway.egw", "advanced"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "configuration", "data.vcd_edgegateway.egw", "configuration"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "default_external_network_ip", "data.vcd_edgegateway.egw", "default_external_network_ip"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "default_external_network_ip", "data.vcd_edgegateway.egw", "default_external_network_ip"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "default_gateway_network", "data.vcd_edgegateway.egw", "default_gateway_network"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "description", "data.vcd_edgegateway.egw", "description"),
+					resource.TestCheckResourceAttr("data.vcd_edgegateway.egw", "external_networks.#", "2"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "fw_default_rule_action", "data.vcd_edgegateway.egw", "fw_default_rule_action"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "fw_default_rule_logging_enabled", "data.vcd_edgegateway.egw", "fw_default_rule_logging_enabled"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "fw_enabled", "data.vcd_edgegateway.egw", "fw_enabled"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "ha_enabled", "data.vcd_edgegateway.egw", "ha_enabled"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "lb_acceleration_enabled", "data.vcd_edgegateway.egw", "lb_acceleration_enabled"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "lb_enabled", "data.vcd_edgegateway.egw", "lb_enabled"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "lb_logging_enabled", "data.vcd_edgegateway.egw", "lb_logging_enabled"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "lb_loglevel", "data.vcd_edgegateway.egw", "lb_loglevel"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "use_default_route_for_dns_relay", "data.vcd_edgegateway.egw", "use_default_route_for_dns_relay"),
 				),
 			},
 		},
 	})
 }
 
-// func stateDumper() resource.TestCheckFunc {
-// 	return func(s *terraform.State) error {
-// 		spew.Dump(s)
-// 		return nil
-// 	}
-// }
+func stateDumper() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		spew.Dump(s)
+		return nil
+	}
+}
 
 // func sleepTester() resource.TestCheckFunc {
 // 	return func(s *terraform.State) error {
@@ -373,12 +406,18 @@ resource "vcd_edgegateway" "egw" {
   }
 }
 
+data "vcd_edgegateway" "egw" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+	
+  name = vcd_edgegateway.egw.name
+}
+
 # Use data source of existing external network to get needed gateway and netmask
 # for subnet participation details
 data "vcd_external_network" "ds-network" {
 	name = "{{.ExternalNetwork}}"
 }
-
 `
 
 // const testAccEdgeGatewayNetworks2 = testAccEdgeGatewayComplexNetwork + `

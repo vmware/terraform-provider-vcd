@@ -736,8 +736,9 @@ func setEdgeGatewayValues(vcdClient *VCDClient, d *schema.ResourceData, egw govc
 	_, simpleExternalNetworksSet := d.GetOk("external_networks")
 	// When `external_networks` field was not used - we set a more rich `external_network` block
 	// which allows to set multiple used subnets, manual IP addresses for IPs assigned to edge
-	// gateway and which subnet should be used as the default one for edge gateway
-	if !simpleExternalNetworksSet {
+	// gateway and which subnet should be used as the default one for edge gateway. Data source
+	// always gets it populated.
+	if !simpleExternalNetworksSet || origin == "datasource" {
 		externalNetworkData, err := getExternalNetworkData(vcdClient, d, egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface)
 		if err != nil {
 			return fmt.Errorf("[edgegateway read] could not process network interface data: %s", err)

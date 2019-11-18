@@ -119,7 +119,75 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 				Type:        schema.TypeSet,
 				Description: "One or more blocks with external network information to be attached to this gateway's interface",
 				Computed:    true,
-				Elem:        externalNetworkResource,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Computed:    true,
+							Type:        schema.TypeString,
+							Description: "External network name",
+						},
+						"enable_rate_limit": {
+							Computed:    true,
+							Type:        schema.TypeBool,
+							Description: "Enable rate limitting",
+						},
+						"incoming_rate_limit": {
+							Computed:    true,
+							Type:        schema.TypeFloat,
+							Description: "Incoming rate limit (Mbps)",
+						},
+						"outgoing_rate_limit": {
+							Computed:    true,
+							Type:        schema.TypeFloat,
+							Description: "Outgoing rate limit (Mbps)",
+						},
+						"subnet": {
+							Computed: true,
+							Type:     schema.TypeSet,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"gateway": {
+										Computed:    true,
+										Description: "Gateway address for a subnet",
+										Type:        schema.TypeString,
+									},
+									"netmask": {
+										Computed:    true,
+										Description: "Netmask address for a subnet",
+										Type:        schema.TypeString,
+									},
+									"ip_address": {
+										Computed:    true,
+										Type:        schema.TypeString,
+										Description: "IP address on the edge gateway - will be auto-assigned if not defined",
+									},
+									"use_for_default_route": {
+										Computed:    true,
+										Type:        schema.TypeBool,
+										Description: "Defines if this subnet should be used as default gateway for edge",
+									},
+									"suballocate_pool": {
+										Type:        schema.TypeSet,
+										Computed:    true,
+										Description: "Define zero or more blocks to sub-allocate pools on the edge gateway",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"start_address": {
+													Computed: true,
+													Type:     schema.TypeString,
+												},
+												"end_address": {
+													Computed: true,
+													Type:     schema.TypeString,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}
