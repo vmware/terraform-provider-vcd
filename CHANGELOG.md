@@ -25,10 +25,17 @@ IMPROVEMENTS:
   passthrough - [GH-384]
 * Fix code warnings from `staticcheck` and add command `make static` to Travis tests
 * `resource/vcd_edge_gateway` and `datasource/vcd_edge_gateway` add `default_external_network_ip`
-  field to export default edge gateway IP address - [GH-389]
+  and `external_network_ips` fields to export default edge gateway IP address and other external
+  network IPs used on gateway interfaces - [GH-389, GH-XX]
 * Add `token` to the `vcd` provider for the ability of connecting with an authorization token - [GH-280]
 * Add command `make token` to create an authorization token from testing credentials
 * Increment vCD API version used from 27.0 to 29.0 [GH-396]
+* `resource/vcd_edgegateway` supports fields `fips_mode_enabled`, `use_default_route_for_dns_relay`
+  - [GH-XX]
+* `resource/vcd_edgegateway` adds new `external_network` block supports for advanced configurations
+  of external networks including multiple subnets, IP pool sub-allocation and rate limits  - [GH-XX]
+* `resource/vcd_edgegateway` enables read support for field `distributed_routing` after switch to
+  vCD API v29.0 - [GH-XX]
 
 BUG FIXES:
 
@@ -41,6 +48,8 @@ BUG FIXES:
 DEPRECATIONS:
 
 * Deprecated property `storage_profile` in resource `vcd_vapp`, as the corresponding field is now enabled in `vcd_vapp_vm`
+* `resource/vcd_edgegateway` deprecates fields `external_networks` and `default_gateway_network` in
+  favor of new `external_network` block(s) - [GH-XX] 
 
 ## 2.5.0 (October 28, 2019)
 
@@ -103,6 +112,7 @@ IMPROVEMENTS:
 * `resource/vcd_catalog_media` MediaItem state ID changed from colon separated list of catalog name and media name to vCD ID ([#340](https://github.com/terraform-providers/terraform-provider-vcd/issues/340))
 * Import functions can now use custom separators instead of "." ([#343](https://github.com/terraform-providers/terraform-provider-vcd/issues/343))
 * `resource/vcd_vapp_vm` has new field `computer_name` ([#334](https://github.com/terraform-providers/terraform-provider-vcd/issues/334), [#347](https://github.com/terraform-providers/terraform-provider-vcd/issues/347))
+
 
 BUG FIXES:
 

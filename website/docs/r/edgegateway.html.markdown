@@ -68,6 +68,8 @@ resource "vcd_edgegateway" "egw" {
     name = "my-other-external-network"
 
     subnet {
+      # IP address will be auto-assigned. It can then be found in the list of `external_network_ips`
+      # attribute
       gateway    = "1.1.1.1"
       netmask    = "255.255.255.248"
     }
@@ -112,13 +114,13 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to which the VDC belongs. Optional if defined at provider level.
 * `vdc` - (Optional) The name of VDC that owns the edge gateway. Optional if defined at provider level. 
 * `name` - (Required) A unique name for the edge gateway.
-* `external_networks` - (Optional) An array of external network names. This supports simple external
-  networks with one subnet only. 
+* `external_networks` - (Deprecated, Optional) An array of external network names. This supports
+  simple external networks with one subnet only. 
 * `external_network` - (Optional, *v2.6+*) One or more blocks defining external networks, their
   subnets, IP addresses and  IP pool suballocation attached to edge gateway interfaces. Details are
   in [external network](#external-network) block below.
 * `configuration` - (Required) Configuration of the vShield edge VM for this gateway. One of: `compact`, `full` ("Large"), `x-large`, `full4` ("Quad Large").
-* `default_gateway_network` - (Optional) Name of the external network to be used as default gateway. It must be included in the
+* `default_gateway_network` - (Deprecated, Optional) Name of the external network to be used as default gateway. It must be included in the
   list of `external_networks`. Providing an empty string or omitting the argument will create the edge gateway without a default gateway.
 * `advanced` - (Optional) True if the gateway uses advanced networking. Default is `true`.
 * `ha_enabled` - (Optional) Enable high availability on this edge gateway. Default is `false`.
@@ -126,7 +128,7 @@ The following arguments are supported:
 * `fips_mode_enabled` - (Optional) When FIPS mode is enabled, any secure communication to or from
   the NSX Edge uses cryptographic algorithms or protocols that are allowed by United States Federal
   Information Processing Standards (FIPS). FIPS mode turns on the cipher suites that comply with
-  FIPS. Default is `false`.
+  FIPS. Default is `false`. **Note:** to use FIPS mode it must be enabled in vCD system settings. 
 * `use_default_route_for_dns_relay` - (Optional) When default route is set, it will be used for
   gateways' default routing and DNS forwarding. Default is `false`.
 * `lb_enabled` - (Optional) Enable load balancing. Default is `false`.

@@ -174,9 +174,9 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 				Computed:      true,
-				// Default:       "",
-				ForceNew:    true,
-				Description: "External network to be used as default gateway. Its name must be included in 'external_networks'. An empty value will skip the default gateway",
+				ForceNew:      true,
+				Deprecated:    "Please use the more advanced 'external_network' block(s)",
+				Description:   "External network to be used as default gateway. Its name must be included in 'external_networks'. An empty value will skip the default gateway",
 			},
 			"default_external_network_ip": &schema.Schema{
 				Type:        schema.TypeString,
@@ -503,6 +503,38 @@ func resourceVcdEdgeGatewayDelete(d *schema.ResourceData, meta interface{}) erro
 	return err
 }
 
+// resourceVcdEdgeGatewayImport is responsible for importing the resource.
+// The following steps happen as part of import
+// 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
+// 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
+// 3. The functions splits the dot-formatted path and tries to lookup the object
+// 4. If the lookup succeeds it sets the ID field for `_resource_name_` resource in statefile
+// (the resource must be already defined in .tf config otherwise `terraform import` will complain)
+// 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
+// based on the known ID of object.
+//
+// Example resource name (_resource_name_): vcd_edgegateway.my-edge-gateway
+// Example import path (_the_id_string_): org.vdc.my-edge-gw
+// Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
+func resourceVcdEdgeGatewayImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+	if len(resourceURI) != 3 {
+		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-name.edge-gw-name")
+	}
+	orgName, vdcName, edgeName := resourceURI[0], resourceURI[1], resourceURI[2]
+
+	vcdClient := meta.(*VCDClient)
+	edgeGateway, err := vcdClient.GetEdgeGateway(orgName, vdcName, edgeName)
+	if err != nil {
+		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
+	}
+
+	_ = d.Set("org", orgName)
+	_ = d.Set("vdc", vdcName)
+	d.SetId(edgeGateway.EdgeGateway.ID)
+	return []*schema.ResourceData{d}, nil
+}
+
 // getSimpleGatewayInterfaces aims to add compatibility layer to go-vcloud-director
 // CreateEdgeGateway function which is a wrapper around CreateAndConfigureEdgeGateway. The layer
 // resides here so that code can work together getGatewayInterfaces
@@ -549,6 +581,40 @@ func getSimpleGatewayInterfaces(vcdClient *VCDClient, externalNetworks []string,
 
 // getGatewayInterfacesType extracts `external_network` blocks with more advanced settings into
 // []*types.GatewayInterface
+// This is a pretty complicated function with 3 level nesting as it is implied by API structure.
+// This structure is documented below.
+//
+// <GatewayInterface>						<---- maps directly to `external_network` block
+// 	<Name>test_external_network</Name>
+// 	<DisplayName>test_external_network</DisplayName>
+// 	<Network href="...." id="urn:vcloud:network:144bafa4-7cbe-44de-a647-e6e045b7b8c5" type="application/vnd.vmware.admin.network+xml" name="test_external_network"></Network>
+// 	<InterfaceType>uplink</InterfaceType>
+// 	<SubnetParticipation>					<----- maps to nested `subnet` block(s) inside `external_network`
+// 		<Gateway>192.168.30.49</Gateway>
+// 		<Netmask>255.255.255.240</Netmask>
+// 		<IpAddress>192.168.30.51</IpAddress>
+// 		<IpRanges>							<----- maps to `suballocate_pool` block(s) inside `subnet`
+// 			<IpRange>
+// 				<StartAddress>192.168.30.53</StartAddress>
+// 				<EndAddress>192.168.30.55</EndAddress>
+// 			</IpRange>
+// 			<IpRange>
+// 				<StartAddress>192.168.30.58</StartAddress>
+// 				<EndAddress>192.168.30.60</EndAddress>
+// 			</IpRange>
+// 		</IpRanges>
+// 		<UseForDefaultRoute>true</UseForDefaultRoute>
+// 	</SubnetParticipation>
+// 	<SubnetParticipation>				    <---- simple `subnet` block without suballocated pools and automatic IP assignment
+// 		<Gateway>292.168.30.49</Gateway>
+// 		<Netmask>255.255.255.240</Netmask>
+// 		<UseForDefaultRoute>true</UseForDefaultRoute>
+// 	</SubnetParticipation>
+// 	<ApplyRateLimit>true</ApplyRateLimit>
+// 	<InRateLimit>100</InRateLimit>
+// 	<OutRateLimit>100</OutRateLimit>
+// 	<UseForDefaultRoute>true</UseForDefaultRoute>
+// </GatewayInterface>
 func getGatewayInterfacesType(vcdClient *VCDClient, externalInterfaceSet *schema.Set) ([]*types.GatewayInterface, error) {
 	var gatewayInterfaceSlice []*types.GatewayInterface
 
@@ -634,12 +700,33 @@ func getGatewayInterfacesType(vcdClient *VCDClient, externalInterfaceSet *schema
 }
 
 // getExternalNetworkData traverses API structure with 3 nested loops to unpack such hierarchy to
-// `external_network` block(s). external_network -> subnet -> suballocate_pool
+// `external_network` block(s). external_network -> subnet -> suballocate_pool It must only convert
+// to such structure only `uplink` interfaces. One uplink exception in the case of distributed
+// routing support (DLR) is an `uplink` network `DLR_to_EDGE_%s` which is a transit interface
 func getExternalNetworkData(vcdClient *VCDClient, d *schema.ResourceData, gatewayInterfaces []*types.GatewayInterface) (*schema.Set, error) {
+	edgeGatewayName := d.Get("name").(string)
+	isDistributedRouter := d.Get("distributed_routing").(bool)
 
-	externalNetworkSlice := make([]interface{}, len(gatewayInterfaces))
+	var externalNetworkSlice []interface{}
 	if len(gatewayInterfaces) > 0 {
-		for extNetworkIndex, extNetwork := range gatewayInterfaces {
+		for _, extNetwork := range gatewayInterfaces {
+			// Only when InterfaceType == "uplink" this interface (vNic) is connected to external
+			// network
+			if extNetwork.InterfaceType != "uplink" {
+				log.Printf("[TRACE] edge gateway - skipping read of network %s because it is not of type 'uplink' (%s)",
+					extNetwork.Network.Name, extNetwork.InterfaceType)
+				continue
+			}
+			// One of gateway interfaces can be named `DLR_to_EDGE_%s` where %s=edge_gateway_name
+			// (e.g. `DLR_to_EDGE_edge-with-complex-networks`). This interface (vNic) is added as
+			// transit interface when distributed routing is enabled. It is not being defined by
+			// user and we do not need to read/set it into `external_network` block.
+			if isDistributedRouter && extNetwork.Network.Name == fmt.Sprintf("DLR_to_EDGE_%s", edgeGatewayName) {
+				log.Printf("[TRACE] edge gateway - skipping read of uplink interface network %s because it is a DLR interface",
+					extNetwork.Network.Name)
+				continue
+			}
+
 			extNetworkMap := make(map[string]interface{})
 			extNetworkMap["name"] = extNetwork.Network.Name
 			extNetworkMap["enable_rate_limit"] = extNetwork.ApplyRateLimit
@@ -653,7 +740,7 @@ func getExternalNetworkData(vcdClient *VCDClient, d *schema.ResourceData, gatewa
 				extNetworkSubnetMap["netmask"] = extNetsubnet.Netmask
 				extNetworkSubnetMap["use_for_default_route"] = extNetsubnet.UseForDefaultRoute
 
-				// IP address is tricky. It os only possible to set the IP address during read if it
+				// IP address is tricky. It is only possible to set the IP address during read if it
 				// was actually a used field in .tf configuration. If it was not used, it cannot be
 				// set because Terraform will recommend to rebuild whole block every time, because
 				// `computed` field causes the hash function for TypeSet to be recomputed ("known
@@ -685,7 +772,7 @@ func getExternalNetworkData(vcdClient *VCDClient, d *schema.ResourceData, gatewa
 			}
 
 			extNetworkMap["subnet"] = schema.NewSet(schema.HashResource(subnetResource), externalNetworkSubnetSlice)
-			externalNetworkSlice[extNetworkIndex] = extNetworkMap
+			externalNetworkSlice = append(externalNetworkSlice, extNetworkMap)
 		}
 	}
 	externalNetworkSet := schema.NewSet(schema.HashResource(externalNetworkResource), externalNetworkSlice)
@@ -814,10 +901,10 @@ func setEdgeGatewayValues(vcdClient *VCDClient, d *schema.ResourceData, egw govc
 	// field therefore struct field defaults to false after unmarshaling.
 	//This has already been a case for us and then it was proven that API v27.0 does not return field, while API v31.0
 	// does return the field. (Thanks, Dainius)
-	//err = d.Set("distributed_routing", egw.EdgeGateway.Configuration.DistributedRoutingEnabled)
-	//if err != nil {
-	//	return err
-	//}
+	err = d.Set("distributed_routing", egw.EdgeGateway.Configuration.DistributedRoutingEnabled)
+	if err != nil {
+		return err
+	}
 
 	d.SetId(egw.EdgeGateway.ID)
 	return nil
@@ -894,36 +981,4 @@ func updateFirewall(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	}
 
 	return nil
-}
-
-// resourceVcdEdgeGatewayImport is responsible for importing the resource.
-// The following steps happen as part of import
-// 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
-// 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
-// 3. The functions splits the dot-formatted path and tries to lookup the object
-// 4. If the lookup succeeds it sets the ID field for `_resource_name_` resource in statefile
-// (the resource must be already defined in .tf config otherwise `terraform import` will complain)
-// 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
-// based on the known ID of object.
-//
-// Example resource name (_resource_name_): vcd_edgegateway.my-edge-gateway
-// Example import path (_the_id_string_): org.vdc.my-edge-gw
-// Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func resourceVcdEdgeGatewayImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	resourceURI := strings.Split(d.Id(), ImportSeparator)
-	if len(resourceURI) != 3 {
-		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-name.edge-gw-name")
-	}
-	orgName, vdcName, edgeName := resourceURI[0], resourceURI[1], resourceURI[2]
-
-	vcdClient := meta.(*VCDClient)
-	edgeGateway, err := vcdClient.GetEdgeGateway(orgName, vdcName, edgeName)
-	if err != nil {
-		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
-	}
-
-	_ = d.Set("org", orgName)
-	_ = d.Set("vdc", vdcName)
-	d.SetId(edgeGateway.EdgeGateway.ID)
-	return []*schema.ResourceData{d}, nil
 }
