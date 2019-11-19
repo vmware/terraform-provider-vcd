@@ -152,7 +152,7 @@ data "vcd_lb_service_monitor" "ds-lb-service-monitor" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
-  name         = "${vcd_lb_service_monitor.lb-service-monitor.name}"
+  name         = vcd_lb_service_monitor.lb-service-monitor.name
 }
 `
 

@@ -274,16 +274,16 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
   name                    = "{{.EdgeGatewayVcd}}"
   description             = "Description"
   configuration           = "compact"
-  default_gateway_network = "${vcd_external_network.{{.NewExternalNetwork}}.name}"
+  default_gateway_network = vcd_external_network.{{.NewExternalNetwork}}.name
   advanced                = {{.Advanced}}
-  external_networks       = [ "{{.ExternalNetwork}}", "${vcd_external_network.{{.NewExternalNetwork}}.name}" ]
+  external_networks       = [ "{{.ExternalNetwork}}", vcd_external_network.{{.NewExternalNetwork}}.name ]
 }
 
 data "vcd_edgegateway" "edge" {
   org                     = "{{.Org}}"
   vdc                     = "{{.Vdc}}"
 
-  name = "${vcd_edgegateway.{{.EdgeGateway}}.name}"
+  name = vcd_edgegateway.{{.EdgeGateway}}.name
 }
 `
 
@@ -294,9 +294,9 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
   name                    = "{{.EdgeGatewayVcd}}"
   description             = "Description"
   configuration           = "compact"
-  default_gateway_network = "${vcd_external_network.{{.NewExternalNetwork}}.name}"
+  default_gateway_network = vcd_external_network.{{.NewExternalNetwork}}.name
   advanced                = {{.Advanced}}
-  external_networks       = [ "{{.ExternalNetwork}}", "${vcd_external_network.{{.NewExternalNetwork}}.name}" ]
+  external_networks       = [ "{{.ExternalNetwork}}", vcd_external_network.{{.NewExternalNetwork}}.name ]
 
   lb_enabled              = "true"
   lb_acceleration_enabled = "true"
@@ -312,9 +312,9 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
   name                    = "{{.EdgeGatewayVcd}}"
   description             = "Description"
   configuration           = "compact"
-  default_gateway_network = "${vcd_external_network.{{.NewExternalNetwork}}.name}"
+  default_gateway_network = vcd_external_network.{{.NewExternalNetwork}}.name
   advanced                = {{.Advanced}}
-  external_networks       = [ "{{.ExternalNetwork}}", "${vcd_external_network.{{.NewExternalNetwork}}.name}" ]
+  external_networks       = [ "{{.ExternalNetwork}}", vcd_external_network.{{.NewExternalNetwork}}.name ]
 
   fw_enabled                      = "true"
   fw_default_rule_logging_enabled = "true"
@@ -329,9 +329,9 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
   name                    = "{{.EdgeGatewayVcd}}"
   description             = "Description"
   configuration           = "compact"
-  default_gateway_network = "${vcd_external_network.{{.NewExternalNetwork}}.name}"
+  default_gateway_network = vcd_external_network.{{.NewExternalNetwork}}.name
   advanced                = {{.Advanced}}
-  external_networks       = [ "{{.ExternalNetwork}}", "${vcd_external_network.{{.NewExternalNetwork}}.name}" ]
+  external_networks       = [ "{{.ExternalNetwork}}", vcd_external_network.{{.NewExternalNetwork}}.name ]
 
   fw_enabled = "true"
   lb_enabled = "true"

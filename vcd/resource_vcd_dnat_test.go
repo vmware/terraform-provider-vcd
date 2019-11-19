@@ -383,10 +383,10 @@ data "vcd_external_network" "{{.ExternalNetworkName}}" {
 resource "vcd_dnat" "{{.DnatName}}" {
   org             = "{{.Org}}"
   vdc             = "{{.Vdc}}"
-  network_name    = "${data.vcd_external_network.{{.ExternalNetworkName}}.name}"
+  network_name    = data.vcd_external_network.{{.ExternalNetworkName}}.name
   network_type    = "ext"
   edge_gateway    = "{{.EdgeGateway}}"
-  external_ip     = "${data.vcd_external_network.{{.ExternalNetworkName}}.ip_scope[0].static_ip_pool[0].start_address}"
+  external_ip     = data.vcd_external_network.{{.ExternalNetworkName}}.ip_scope[0].static_ip_pool[0].start_address
   port            = 7777
   protocol        = "tcp"
   internal_ip     = "10.10.102.60"

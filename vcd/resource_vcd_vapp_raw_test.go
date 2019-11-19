@@ -124,14 +124,14 @@ resource "vcd_vapp" "{{.VappName}}" {
 resource "vcd_vapp_vm" "{{.VmName}}" {
   org           = "{{.Org}}"
   vdc           = "{{.Vdc}}"
-  vapp_name     = "${vcd_vapp.{{.VappName}}.name}"
+  vapp_name     = vcd_vapp.{{.VappName}}.name
   name          = "{{.VmName}}"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
   memory        = 1024
   cpus          = 1
 
-  network_name = "${vcd_network_routed.{{.NetworkName}}.name}"
+  network_name = vcd_network_routed.{{.NetworkName}}.name
   ip           = "10.10.102.161"
   depends_on   = ["vcd_vapp.{{.VappName}}"]
 }

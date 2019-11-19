@@ -412,11 +412,9 @@ resource "vcd_network_isolated" "{{.NetworkName}}" {
 
 output "start_static_address1" {
   value = tolist(vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[0].start_address
-  depends_on = [vcd_network_isolated.{{.NetworkName}}]
 }
 output "end_static_address1" {
   value = tolist(vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[0].end_address
-  depends_on = [vcd_network_isolated.{{.NetworkName}}]
 }
 `
 
@@ -439,19 +437,15 @@ resource "vcd_network_isolated" "{{.NetworkName}}" {
 
 output "start_static_address2" {
   value = tolist(vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[0].start_address
-  depends_on = [vcd_network_isolated.{{.NetworkName}}]
 }
 output "end_static_address2" {
   value = tolist(vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[0].end_address
-  depends_on = [vcd_network_isolated.{{.NetworkName}}]
 }
 output "start_static_address1" {
   value = tolist(vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[1].start_address
-  depends_on = [vcd_network_isolated.{{.NetworkName}}]
 }
 output "end_static_address1" {
   value = tolist(vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[1].end_address
-  depends_on = [vcd_network_isolated.{{.NetworkName}}]
 }
 `
 
@@ -469,11 +463,9 @@ resource "vcd_network_isolated" "{{.NetworkName}}" {
 }
 output "start_dhcp_address" {
   value = tolist(vcd_network_isolated.{{.NetworkName}}.dhcp_pool)[0].start_address
-  depends_on = [vcd_network_isolated.{{.NetworkName}}]
 }
 output "end_dhcp_address" {
   value = tolist(vcd_network_isolated.{{.NetworkName}}.dhcp_pool)[0].end_address
-  depends_on = [vcd_network_isolated.{{.NetworkName}}]
 }
 `
 
@@ -496,19 +488,15 @@ resource "vcd_network_isolated" "{{.NetworkName}}" {
 
 output "start_dhcp_address" {
   value = tolist(vcd_network_isolated.{{.NetworkName}}.dhcp_pool)[0].start_address
-  depends_on = [vcd_network_isolated.{{.NetworkName}}]
 }
 output "end_dhcp_address" {
   value = tolist(vcd_network_isolated.{{.NetworkName}}.dhcp_pool)[0].end_address
-  depends_on = [vcd_network_isolated.{{.NetworkName}}]
 }
 output "start_static_address1" {
   value = tolist(vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[0].start_address
-  depends_on = [vcd_network_isolated.{{.NetworkName}}]
 }
 output "end_static_address1" {
   value = tolist(vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[0].end_address
-  depends_on = [vcd_network_isolated.{{.NetworkName}}]
 }
 `
 
@@ -535,27 +523,21 @@ resource "vcd_network_isolated" "{{.NetworkName}}" {
 
 output "start_dhcp_address" {
   value = tolist(vcd_network_isolated.{{.NetworkName}}.dhcp_pool)[0].start_address
-  depends_on = [vcd_network_isolated.{{.NetworkName}}]
 }
 output "end_dhcp_address" {
   value = tolist(vcd_network_isolated.{{.NetworkName}}.dhcp_pool)[0].end_address
-  depends_on = [vcd_network_isolated.{{.NetworkName}}]
 }
 output "start_static_address2" {
   value = tolist(vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[0].start_address
-  depends_on = [vcd_network_isolated.{{.NetworkName}}]
 }
 output "end_static_address2" {
   value = tolist(vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[0].end_address
-  depends_on = [vcd_network_isolated.{{.NetworkName}}]
 }
 output "start_static_address1" {
   value = tolist(vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[1].start_address
-  depends_on = [vcd_network_isolated.{{.NetworkName}}]
 }
 output "end_static_address1" {
   value = tolist(vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[1].end_address
-  depends_on = [vcd_network_isolated.{{.NetworkName}}]
 }
 `
 
@@ -583,11 +565,9 @@ resource "vcd_network_routed" "{{.NetworkName}}" {
 }
 output "end_static_address1" {
   value = tolist(vcd_network_routed.{{.NetworkName}}.static_ip_pool)[0].end_address
-  depends_on = [vcd_network_routed.{{.NetworkName}}]
 }
 output "start_static_address1" {
   value = tolist(vcd_network_routed.{{.NetworkName}}.static_ip_pool)[0].start_address
-  depends_on = [vcd_network_routed.{{.NetworkName}}]
 }`
 
 const testAccCheckVcdNetworkRoutedStatic2 = `
@@ -609,19 +589,15 @@ resource "vcd_network_routed" "{{.NetworkName}}" {
 }
 output "start_static_address2" {
   value = tolist(vcd_network_routed.{{.NetworkName}}.static_ip_pool)[0].start_address
-  depends_on = [vcd_network_routed.{{.NetworkName}}]
 }
 output "end_static_address2" {
   value = tolist(vcd_network_routed.{{.NetworkName}}.static_ip_pool)[0].end_address
-  depends_on = [vcd_network_routed.{{.NetworkName}}]
 }
 output "start_static_address1" {
   value = tolist(vcd_network_routed.{{.NetworkName}}.static_ip_pool)[1].start_address
-  depends_on = [vcd_network_routed.{{.NetworkName}}]
 }
 output "end_static_address1" {
   value = tolist(vcd_network_routed.{{.NetworkName}}.static_ip_pool)[1].end_address
-  depends_on = [vcd_network_routed.{{.NetworkName}}]
 }
 `
 
@@ -640,11 +616,9 @@ resource "vcd_network_routed" "{{.NetworkName}}" {
 }
 output "start_dhcp_address" {
   value = tolist(vcd_network_routed.{{.NetworkName}}.dhcp_pool)[0].start_address
-  depends_on = [vcd_network_routed.{{.NetworkName}}]
 }
 output "end_dhcp_address" {
   value = tolist(vcd_network_routed.{{.NetworkName}}.dhcp_pool)[0].end_address
-  depends_on = [vcd_network_routed.{{.NetworkName}}]
 }
 `
 
@@ -668,17 +642,13 @@ resource "vcd_network_routed" "{{.NetworkName}}" {
 }
 output "start_dhcp_address" {
   value = tolist(vcd_network_routed.{{.NetworkName}}.dhcp_pool)[0].start_address
-  depends_on = [vcd_network_routed.{{.NetworkName}}]
 }
 output "end_dhcp_address" {
   value = tolist(vcd_network_routed.{{.NetworkName}}.dhcp_pool)[0].end_address
-  depends_on = [vcd_network_routed.{{.NetworkName}}]
 }
 output "end_static_address1" {
   value = tolist(vcd_network_routed.{{.NetworkName}}.static_ip_pool)[0].end_address
-  depends_on = [vcd_network_routed.{{.NetworkName}}]
 }
 output "start_static_address1" {
   value = tolist(vcd_network_routed.{{.NetworkName}}.static_ip_pool)[0].start_address
-  depends_on = [vcd_network_routed.{{.NetworkName}}]
 }`
