@@ -622,13 +622,13 @@ resource "vcd_edgegateway" "egw" {
 
 	# Attach to existing external network
 	external_network {
-	  name = "${data.vcd_external_network.ds-network.name}"
+	  name = data.vcd_external_network.ds-network.name
 
 		subnet {
 			# ip_address is skipped here on purpose to get dynamic IP
 			use_for_default_route = false
-			gateway = "${data.vcd_external_network.ds-network.ip_scope[0].gateway}"
-			netmask = "${data.vcd_external_network.ds-network.ip_scope[0].netmask}"
+			gateway = data.vcd_external_network.ds-network.ip_scope[0].gateway
+			netmask = data.vcd_external_network.ds-network.ip_scope[0].netmask
 	}
   }
 }
