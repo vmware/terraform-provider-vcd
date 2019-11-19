@@ -8,7 +8,6 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
@@ -59,7 +58,7 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdEdgeGatewayDestroyBasic,
+		CheckDestroy: testAccCheckVcdEdgeGatewayDestroy(edgeGatewayNameBasic),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -128,7 +127,7 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdEdgeGatewayDestroyComplex,
+		CheckDestroy: testAccCheckVcdEdgeGatewayDestroy(edgeGatewayNameComplex),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -195,40 +194,34 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 	})
 }
 
-func testEdgeGatewayDestroy(s *terraform.State, wantedEgwName string) error {
+func testAccCheckVcdEdgeGatewayDestroy(edgeName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
 
-	for _, rs := range s.RootModule().Resources {
-		edgeGatewayName := rs.Primary.Attributes["name"]
-		if rs.Type != "vcd_edgegateway" {
-			continue
-		}
-		if edgeGatewayName != wantedEgwName {
-			continue
-		}
-		conn := testAccProvider.Meta().(*VCDClient)
-		orgName := rs.Primary.Attributes["org"]
-		vdcName := rs.Primary.Attributes["vdc"]
+		for _, rs := range s.RootModule().Resources {
+			edgeGatewayName := rs.Primary.Attributes["name"]
+			if rs.Type != "vcd_edgegateway" {
+				continue
+			}
+			if edgeGatewayName != edgeName {
+				continue
+			}
+			conn := testAccProvider.Meta().(*VCDClient)
+			orgName := rs.Primary.Attributes["org"]
+			vdcName := rs.Primary.Attributes["vdc"]
 
-		_, vdc, err := conn.GetOrgAndVdc(orgName, vdcName)
-		if err != nil {
-			return fmt.Errorf("error retrieving org %s and vdc %s : %s ", orgName, vdcName, err)
+			_, vdc, err := conn.GetOrgAndVdc(orgName, vdcName)
+			if err != nil {
+				return fmt.Errorf("error retrieving org %s and vdc %s : %s ", orgName, vdcName, err)
+			}
+
+			_, err = vdc.GetEdgeGatewayByName(edgeName, true)
+			if err == nil {
+				return fmt.Errorf("edge gateway %s was not removed", edgeName)
+			}
 		}
 
-		_, err = vdc.GetEdgeGatewayByName(wantedEgwName, true)
-		if err == nil {
-			return fmt.Errorf("edge gateway %s was not removed", wantedEgwName)
-		}
+		return nil
 	}
-
-	return nil
-}
-
-func testAccCheckVcdEdgeGatewayDestroyBasic(s *terraform.State) error {
-	return testEdgeGatewayDestroy(s, edgeGatewayNameBasic)
-}
-
-func testAccCheckVcdEdgeGatewayDestroyComplex(s *terraform.State) error {
-	return testEdgeGatewayDestroy(s, edgeGatewayNameComplex)
 }
 
 func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
@@ -269,9 +262,9 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		// CheckDestroy: stateDumper(),
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVcdEdgeGatewayDestroy("edge-with-complex-networks"),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -423,9 +416,12 @@ func TestAccVcdEdgeGatewayParallelCreation(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: stateDumper(),
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckVcdEdgeGatewayDestroy("parallel-0"),
+			testAccCheckVcdEdgeGatewayDestroy("parallel-1"),
+		),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -437,21 +433,6 @@ func TestAccVcdEdgeGatewayParallelCreation(t *testing.T) {
 		},
 	})
 }
-
-func stateDumper() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		spew.Dump(s)
-		return nil
-	}
-}
-
-// func sleepTester() resource.TestCheckFunc {
-// 	return func(s *terraform.State) error {
-// 		fmt.Println("sleeping")
-// 		time.Sleep(1 * time.Minute)
-// 		return nil
-// 	}
-// }
 
 const testAccEdgeGatewayBasic = `
 resource "vcd_edgegateway" "{{.EdgeGateway}}" {
