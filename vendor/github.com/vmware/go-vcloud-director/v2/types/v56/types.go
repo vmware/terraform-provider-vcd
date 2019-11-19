@@ -1623,7 +1623,8 @@ type GatewayInterface struct {
 	UseForDefaultRoute  bool                   `xml:"UseForDefaultRoute,omitempty"`  // True if this network is default route for the gateway.
 }
 
-// SortByGateway allows to sort SubnetParticipation property slice by gateway
+// SortBySubnetParticipationGateway allows to sort SubnetParticipation property slice by gateway
+// address
 func (g *GatewayInterface) SortBySubnetParticipationGateway() {
 	sort.SliceStable(g.SubnetParticipation, func(i, j int) bool {
 		return g.SubnetParticipation[i].Gateway < g.SubnetParticipation[j].Gateway
