@@ -335,11 +335,11 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		Name:        egwName,
 		Description: d.Get("description").(string),
 		Configuration: &types.GatewayConfiguration{
-			UseDefaultRouteForDNSRelay: d.Get("use_default_route_for_dns_relay").(bool),
+			UseDefaultRouteForDNSRelay: takeBoolPointer(d.Get("use_default_route_for_dns_relay").(bool)),
 			FipsModeEnabled:            takeBoolPointer(d.Get("fips_mode_enabled").(bool)),
-			HaEnabled:                  d.Get("ha_enabled").(bool),
+			HaEnabled:                  takeBoolPointer(d.Get("ha_enabled").(bool)),
 			GatewayBackingConfig:       d.Get("configuration").(string),
-			AdvancedNetworkingEnabled:  d.Get("advanced").(bool),
+			AdvancedNetworkingEnabled:  takeBoolPointer(d.Get("advanced").(bool)),
 			DistributedRoutingEnabled:  takeBoolPointer(d.Get("distributed_routing").(bool)),
 			GatewayInterfaces: &types.GatewayInterfaces{
 				GatewayInterface: gwInterfaces,

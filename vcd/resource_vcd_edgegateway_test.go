@@ -304,12 +304,12 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_edgegateway.egw", "external_network_ips.0", ipV4Regex),
 					resource.TestMatchResourceAttr("vcd_edgegateway.egw", "external_network_ips.1", ipV4Regex),
 
-					// TODO after https://github.com/hashicorp/terraform-plugin-sdk/pull/197
+					// TODO after
+					// https://github.com/terraform-providers/terraform-provider-aws/issues/7198
 					// Data source checks. There is a bug in Terraform where a data source cannot
-					// have two computed TypeSet variables because they get overwriten
-					// https://github.com/hashicorp/terraform-plugin-sdk/pull/197 The test below is
-					// left such, that it triggers an error as soon as the bug is fixed. (probably
-					// when we pull in newer SDK)
+					// have two computed TypeSet variables because they get overwriten The test
+					// below is left such, that it triggers an error as soon as the bug is fixed.
+					// (probably when we pull in newer SDK)
 					resource.TestCheckResourceAttr("data.vcd_edgegateway.egw", "external_network.#", "1"),
 
 					// Working data source tests

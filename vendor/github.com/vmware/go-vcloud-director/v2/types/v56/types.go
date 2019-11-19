@@ -1567,15 +1567,34 @@ type EdgeGateway struct {
 // Since: 5.1
 type GatewayConfiguration struct {
 	Xmlns string `xml:"xmlns,attr,omitempty"`
-	// Elements
-	BackwardCompatibilityMode       bool               `xml:"BackwardCompatibilityMode,omitempty"`       // Compatibility mode. Default is false. If set to true, will allow users to write firewall rules in the old 1.5 format. The new format does not require to use direction in firewall rules. Also, for firewall rules to allow NAT traffic the filter is applied on the original IP addresses. Once set to true cannot be reverted back to false.
-	GatewayBackingConfig            string             `xml:"GatewayBackingConfig"`                      // Configuration of the vShield edge VM for this gateway. One of: compact, full.
-	GatewayInterfaces               *GatewayInterfaces `xml:"GatewayInterfaces"`                         // List of Gateway interfaces.
-	EdgeGatewayServiceConfiguration *GatewayFeatures   `xml:"EdgeGatewayServiceConfiguration,omitempty"` // Represents Gateway Features.
-	HaEnabled                       bool               `xml:"HaEnabled,omitempty"`                       // True if this gateway is highly available. (Requires two vShield edge VMs.)
-	AdvancedNetworkingEnabled       bool               `xml:"AdvancedNetworkingEnabled,omitempty"`       // True if the gateway uses advanced networking
-	DistributedRoutingEnabled       *bool              `xml:"DistributedRoutingEnabled,omitempty"`       // True if gateway is attached to a Distributed Logical Router
-	UseDefaultRouteForDNSRelay      bool               `xml:"UseDefaultRouteForDnsRelay,omitempty"`      // True if the default gateway on the external network selected for default route should be used as the DNS relay.
+	// BackwardCompatibilityMode. Default is false. If set to true, will allow users to write firewall
+	// rules in the old 1.5 format. The new format does not require to use direction in firewall
+	// rules. Also, for firewall rules to allow NAT traffic the filter is applied on the original IP
+	// addresses. Once set to true cannot be reverted back to false.
+	BackwardCompatibilityMode bool `xml:"BackwardCompatibilityMode,omitempty"`
+	// GatewayBackingConfig defines configuration of the vShield edge VM for this gateway. One of:
+	// compact, full.
+	GatewayBackingConfig string `xml:"GatewayBackingConfig"`
+	// GatewayInterfaces holds configuration for
+	GatewayInterfaces *GatewayInterfaces `xml:"GatewayInterfaces"`
+	// EdgeGatewayServiceConfiguration represents Gateway Features.
+	EdgeGatewayServiceConfiguration *GatewayFeatures `xml:"EdgeGatewayServiceConfiguration,omitempty"`
+	// True if this gateway is highly available. (Requires two vShield edge VMs.)
+	HaEnabled *bool `xml:"HaEnabled,omitempty"`
+	// UseDefaultRouteForDNSRelay defines if the default gateway on the external network selected
+	// for default route should be used as the DNS relay.
+	UseDefaultRouteForDNSRelay *bool `xml:"UseDefaultRouteForDnsRelay,omitempty"`
+	// AdvancedNetworkingEnabled allows to use NSX capabilities such dynamic routing (BGP, OSPF),
+	// zero trust networking (DLR), enchanced VPN support (IPsec VPN, SSL VPN-Plus).
+	AdvancedNetworkingEnabled *bool `xml:"AdvancedNetworkingEnabled,omitempty"`
+	// DistributedRoutingEnabled enables distributed routing on the gateway to allow creation of
+	// many more organization VDC networks. Traffic in those networks is optimized for VM-to-VM
+	// communication.
+	DistributedRoutingEnabled *bool `xml:"DistributedRoutingEnabled,omitempty"`
+	// FipsModeEnabled allows any secure communication to or from the NSX Edge uses cryptographic
+	// algorithms or protocols that are allowed by United States Federal Information Processing
+	// Standards (FIPS). FIPS mode turns on the cipher suites that comply with FIPS.
+	FipsModeEnabled *bool `xml:"FipsModeEnabled,omitempty"`
 }
 
 // GatewayInterfaces is a list of Gateway Interfaces.
@@ -1604,16 +1623,26 @@ type GatewayInterface struct {
 	UseForDefaultRoute  bool                   `xml:"UseForDefaultRoute,omitempty"`  // True if this network is default route for the gateway.
 }
 
+// SortByGateway allows to sort SubnetParticipation property slice by gateway
+func (g *GatewayInterface) SortBySubnetParticipationGateway() {
+	sort.SliceStable(g.SubnetParticipation, func(i, j int) bool {
+		return g.SubnetParticipation[i].Gateway < g.SubnetParticipation[j].Gateway
+	})
+}
+
 // SubnetParticipation allows to chose which subnets a gateway can be a part of
 // Type: SubnetParticipationType
 // Namespace: http://www.vmware.com/vcloud/v1.5
 // Description: Allows to chose which subnets a gateway can be part of
 // Since: 5.1
+//
+// Note. Field order is important and should not be changed as API returns errors if IPRanges come
+// before Gateway and Netmask
 type SubnetParticipation struct {
 	Gateway            string    `xml:"Gateway"`                      // Gateway for subnet
+	Netmask            string    `xml:"Netmask"`                      // Netmask for the subnet.
 	IPAddress          string    `xml:"IpAddress,omitempty"`          // Ip Address to be assigned. Keep empty or omit element for auto assignment
 	IPRanges           *IPRanges `xml:"IpRanges,omitempty"`           // Range of IP addresses available for external interfaces.
-	Netmask            string    `xml:"Netmask"`                      // Netmask for the subnet
 	UseForDefaultRoute bool      `xml:"UseForDefaultRoute,omitempty"` // True if this network is default route for the gateway.
 }
 

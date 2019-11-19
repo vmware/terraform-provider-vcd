@@ -1059,7 +1059,9 @@ func (egw *EdgeGateway) HasDefaultGateway() bool {
 
 // HasAdvancedNetworking returns true if the edge gateway has advanced network configuration enabled
 func (egw *EdgeGateway) HasAdvancedNetworking() bool {
-	return egw.EdgeGateway.Configuration != nil && egw.EdgeGateway.Configuration.AdvancedNetworkingEnabled
+	return egw.EdgeGateway.Configuration != nil &&
+		egw.EdgeGateway.Configuration.AdvancedNetworkingEnabled != nil &&
+		*egw.EdgeGateway.Configuration.AdvancedNetworkingEnabled
 }
 
 // buildProxiedEdgeEndpointURL helps to get root endpoint for Edge Gateway using the
