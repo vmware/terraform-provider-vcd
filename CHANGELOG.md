@@ -29,6 +29,7 @@ IMPROVEMENTS:
   field to export default edge gateway IP address - [GH-389]
 * Add `token` to the `vcd` provider for the ability of connecting with an authorization token - [GH-280]
 * Add command `make token` to create an authorization token from testing credentials
+* Clean up interpolation-only expressions from tests (as allowed in terraform v0.12.11+)
 
 BUG FIXES:
 
