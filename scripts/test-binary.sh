@@ -6,6 +6,7 @@ runtime_dir=$PWD
 cd -
 pause_file=$runtime_dir/pause
 dash_line="# ---------------------------------------------------------"
+export upgrading=""
 
 # env script will only run if explicitly called.
 build_script=cust.full-env.tf
@@ -20,6 +21,98 @@ then
         skipping_items+=($f)
     done
 fi
+
+
+# 'restore_environment' removes the effects of 'make_environment'
+function restore_environment {
+    if [ -n "$real_home" ]
+    then
+        export HOME=$real_home
+        unset real_home
+        # removes previous version plugin from testing environment
+        if [ -f $previous_version_plugin ]
+        then
+            rm -f $previous_version_plugin
+        fi
+
+        # Copies current version plugin to the testing environment
+        # The plugin is guaranteed to be there, as its existence
+        # was checked in 'make_environment'
+        cp $HOME/.terraform.d/plugins/terraform-provider-vcd_$to_version .
+        hash -r
+        terraform init
+    fi
+}
+
+
+# 'make_environment' creates a sandboxed environment where terraform uses
+# a specific plugin for it nexts operation
+function make_environment {
+    if [ ! -d fake_home ]
+    then
+        mkdir -p fake_home/.terraform.d/plugins
+    fi
+
+    # Checks that both plugins exist
+    origin_old_plugin=$HOME/.terraform.d/plugins/terraform-provider-vcd_$from_version
+    origin_new_plugin=$HOME/.terraform.d/plugins/terraform-provider-vcd_$to_version
+    if [ ! -f $origin_old_plugin ]
+    then
+        echo " $origin_old_plugin not found - test interrupted"
+    fi
+    if [ ! -f $origin_new_plugin ]
+    then
+        echo " $origin_new_plugin not found - test interrupted"
+    fi
+
+    # Masks the real HOME, to prevent terraform executable from
+    # picking up plugins from there
+    export real_home=$HOME
+    export HOME=$PWD/fake_home
+    hash -r
+
+    previous_version_plugin=$PWD/terraform-provider-vcd_$from_version
+    latest_plugin=$PWD/terraform-provider-vcd_$to_version
+    destination=$PWD/fake_home/.terraform.d/plugins/terraform-provider-vcd_$from_version
+
+    # Adds the previous version plugin to the test environment in both the current path and the
+    # directory where terraform puts downloaded plugins. We want to give terraform a plugin to 
+    # use and avoid unnecessary downloads.
+    if [ ! -f $destination ]
+    then
+        cp $origin_old_plugin $destination
+    fi
+    if [ ! -f $previous_version_plugin ]
+    then
+        cp $origin_old_plugin $previous_version_plugin
+    fi
+
+    # Removes the latest version plugin if found, as we're running this operation with the old one.
+    if [ -f $latest_plugin ]
+    then
+        rm -f $latest_plugin
+    fi
+
+    # This is an extra 'terraform init', needed for the tool to pick up the plugin we want tol run with
+    terraform init
+    terraform version
+}
+
+# 'custom_terraform' allows running terraform with a sandboxed environment
+# that exposes the previous version plugin
+function custom_terraform {
+    if [ -n "$upgrading" ]
+    then
+        terraform=$(which terraform)
+        make_environment $from_version
+        $terraform $*
+        exit_code=$?
+        restore_environment
+    else
+        terraform version
+        terraform $*
+    fi
+}
 
 function remove_item_from_skipping {
     item=$1
@@ -47,6 +140,7 @@ function get_help {
     echo "  i | test-env-init      Prepares the environment in a new vCD"
     echo "  b | test-env-apply     Builds the environment in a new vCD"
     echo "  y | test-env-destroy   Destroys the environment built using 'test-env-apply'"
+    echo "  u | upgrade 'From To'  Test upgrade - 'From' is the old version and 'To' is the new one"
     echo "  d | dry                Dry-run: show commands without executing them"
     echo "  v | verbose            Gives more info"
     echo ""
@@ -56,6 +150,7 @@ function get_help {
     echo "test-binary.sh tags 'catalog gateway' clear pause"
     echo "test-binary.sh t 'catalog gateway' c p"
     echo "test-binary.sh tags vapp dry"
+    echo "test-binary.sh tags vm upgrade v2.5.0 v2.6.0"
     echo ""
     echo "test-binary.sh names 'cust*.tf'"
     echo "test-binary.sh names cust.demo.tf pause"
@@ -103,6 +198,18 @@ do
         fi
         tags="$opt"
         echo "tags: $tags"
+        ;;
+    u|upgrade)
+        shift
+        from_version=$1
+        shift
+        to_version=$1
+        upgrading=1
+        if [ -z "$to_version" ]
+        then
+            echo "option 'upgrade' requires two arguments (such as 'v2.5.0' 'v2.6.0')"
+            exit 1
+        fi
         ;;
     n|names)
         shift
@@ -343,16 +450,20 @@ do
     do
         case $phase in
             init)
-                run terraform init $init_options
+                # 'custom_terraform' can process both regular and upgrade operations
+                run custom_terraform init $init_options
                 ;;
             plan)
-                run terraform plan $plan_options
+                # 'custom_terraform' can process both regular and upgrade operations
+                run custom_terraform plan $plan_options
                 ;;
             apply)
-                run terraform apply -auto-approve $apply_options
+                # 'custom_terraform' can process both regular and upgrade operations
+                run custom_terraform apply -auto-approve $apply_options
                 ;;
             plancheck)
                 # Skip plan check if a `.tf` example contains line "# skip-plan-check"
+                # During upgrades, 'plancheck' runs with the latest plugin
                 skip_plancheck=$(grep '^\s*#\s*skip-plan-check' "../$CF")
                 if [ -n "$skip_plancheck" ]
                 then
@@ -361,15 +472,18 @@ do
                     # -detailed-exitcode will return exit code 2 when the plan was not empty
                     # and this allows to validate if reads work properly and there is no immediate
                     # plan change right after apply succeeded
+                    [ -n "$upgrading" ] && run terraform version
                     run terraform plan -detailed-exitcode $plancheck_options 
                 fi
                 ;;
             destroy)
+                # During upgrades, 'destroy' runs with the latest plugin
                 if [ ! -f terraform.tfstate ]
                 then
                     echo "terraform.tfstate not found - aborting"
                     exit 1
                 fi
+                [ -n "$upgrading" ] && run terraform version
                 run terraform destroy -auto-approve $destroy_options
                 ;;
         esac
