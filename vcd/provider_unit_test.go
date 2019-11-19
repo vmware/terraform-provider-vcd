@@ -80,7 +80,7 @@ func TestProviderUpgradeVersion(t *testing.T) {
 	result := currentVersion.Compare(previousVersion)
 	// result < 0 means current version is lower than previous version
 	// result == 0 means current version is the same as previous version
-	// result == 0 means current version is higher than previous version
+	// result == 1 means current version is higher than previous version
 	if result < 0 {
 		t.Logf("current version (%s) is lower than previous version (%s)", currentVersionText, previousVersionText)
 		t.Fail()
