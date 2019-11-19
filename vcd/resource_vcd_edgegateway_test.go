@@ -255,8 +255,8 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 	}
 	configText := templateFill(testAccEdgeGatewayNetworks, params)
 
-	// params["FuncName"] = t.Name() + "-step2"
-	// configText2 := templateFill(testAccEdgeGatewayNetworks2, params)
+	params["FuncName"] = t.Name() + "-step2"
+	configText1 := templateFill(testAccEdgeGatewayNetworks2, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -287,20 +287,20 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "default_gateway_network", newExternalNetworkVcd),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "default_external_network_ip", "192.168.30.51"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.#", "2"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.enable_rate_limit", "true"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.incoming_rate_limit", "100"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.name", "test_external_network"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.outgoing_rate_limit", "100"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.subnet.#", "1"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.subnet.3598571839.gateway", "192.168.30.49"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.subnet.3598571839.ip_address", "192.168.30.51"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.subnet.3598571839.netmask", "255.255.255.240"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.subnet.3598571839.use_for_default_route", "true"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.subnet.3598571839.suballocate_pool.#", "2"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.subnet.3598571839.suballocate_pool.3548736268.end_address", "192.168.30.55"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.subnet.3598571839.suballocate_pool.3548736268.start_address", "192.168.30.53"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.subnet.3598571839.suballocate_pool.4005225628.end_address", "192.168.30.60"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.2798412847.subnet.3598571839.suballocate_pool.4005225628.start_address", "192.168.30.58"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.enable_rate_limit", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.incoming_rate_limit", "77.77"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.name", "test_external_network"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.outgoing_rate_limit", "88.88234"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.#", "1"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.gateway", "192.168.30.49"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.ip_address", "192.168.30.51"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.netmask", "255.255.255.240"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.use_for_default_route", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.suballocate_pool.#", "2"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.suballocate_pool.3548736268.end_address", "192.168.30.55"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.suballocate_pool.3548736268.start_address", "192.168.30.53"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.suballocate_pool.4005225628.end_address", "192.168.30.60"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.suballocate_pool.4005225628.start_address", "192.168.30.58"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network_ips.#", "2"),
 					resource.TestMatchResourceAttr("vcd_edgegateway.egw", "external_network_ips.0", ipV4Regex),
 					resource.TestMatchResourceAttr("vcd_edgegateway.egw", "external_network_ips.1", ipV4Regex),
@@ -338,6 +338,47 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "lb_loglevel", "data.vcd_edgegateway.egw", "lb_loglevel"),
 					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "use_default_route_for_dns_relay", "data.vcd_edgegateway.egw", "use_default_route_for_dns_relay"),
 				),
+			},
+			resource.TestStep{
+				Taint:  []string{"vcd_edgegateway.egw"},
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "name", "simple-edge-with-complex-networks"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "configuration", "compact"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "advanced", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "distributed_routing", "false"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "fips_mode_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "ha_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "description", ""),
+
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.#", "1"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.844799132.enable_rate_limit", "false"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.844799132.incoming_rate_limit", "0"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.844799132.name", "test_external_network"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.844799132.outgoing_rate_limit", "0"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.844799132.subnet.#", "1"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.844799132.subnet.4035629902.gateway", "192.168.30.49"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.844799132.subnet.4035629902.ip_address", ""),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.844799132.subnet.4035629902.netmask", "255.255.255.240"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.844799132.subnet.4035629902.use_for_default_route", "true"),
+
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network_ips.#", "1"),
+					resource.TestMatchResourceAttr("vcd_edgegateway.egw", "external_network_ips.0", ipV4Regex),
+
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "fw_default_rule_action", "deny"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "fw_default_rule_logging_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "fw_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "lb_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "lb_acceleration_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "lb_logging_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "lb_loglevel", "info"),
+				),
+			},
+			resource.TestStep{ // step2 - import
+				ResourceName:      "vcd_edgegateway.egw",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, "simple-edge-with-complex-networks"),
 			},
 		},
 	})
@@ -411,92 +452,6 @@ func stateDumper() resource.TestCheckFunc {
 // 		return nil
 // 	}
 // }
-
-const testAccEdgeGatewayNetworks = testAccEdgeGatewayComplexNetwork + `
-resource "vcd_edgegateway" "egw" {
-	org                     = "{{.Org}}"
-	vdc                     = "{{.Vdc}}"
-
-	name                    = "edge-with-complex-networks"
-	description             = "new edge gateway"
-	configuration           = "compact"
-	advanced                = true
-  
-	fips_mode_enabled               = false
-	use_default_route_for_dns_relay = true
-	distributed_routing             = true
-  
-	external_network {
-	  name = "${vcd_external_network.{{.NewExternalNetwork}}.name}"
-	  enable_rate_limit = true
-	  incoming_rate_limit = 100
-	  outgoing_rate_limit = 100
-  
-	  subnet {
-		ip_address = "192.168.30.51"
-		gateway = "192.168.30.49"
-		netmask = "255.255.255.240"
-		use_for_default_route = true
-
-		suballocate_pool {
-			start_address = "192.168.30.53"
-			end_address   = "192.168.30.55"
-		}
-
-		suballocate_pool {
-			start_address = "192.168.30.58"
-			end_address   = "192.168.30.60"
-		}
-	  }
-	}
-
-	# Attach to existing external network
-	external_network {
-	  name = "${data.vcd_external_network.ds-network.name}"
-
-		subnet {
-			# ip_address is skipped here on purpose to get dynamic IP
-			use_for_default_route = false
-			gateway = "${data.vcd_external_network.ds-network.ip_scope[0].gateway}"
-			netmask = "${data.vcd_external_network.ds-network.ip_scope[0].netmask}"
-	}
-  }
-}
-
-data "vcd_edgegateway" "egw" {
-  org = "{{.Org}}"
-  vdc = "{{.Vdc}}"
-	
-  name = vcd_edgegateway.egw.name
-}
-
-# Use data source of existing external network to get needed gateway and netmask
-# for subnet participation details
-data "vcd_external_network" "ds-network" {
-	name = "{{.ExternalNetwork}}"
-}
-`
-
-const testAccEdgeGatewayParallel = testAccEdgeGatewayComplexNetwork + `
-resource "vcd_edgegateway" "egw" {
-	count = 2
-
-	org                     = "{{.Org}}"
-	vdc                     = "{{.Vdc}}"
-
-	name                    = "parallel-${count.index}"
-	configuration           = "compact"
-	advanced                = true
-
-	external_network {
-	  name = "${vcd_external_network.{{.NewExternalNetwork}}.name}"
-	  subnet {
-		gateway = "192.168.30.49"
-		netmask = "255.255.255.240"
-	  }
-	}
-}
-`
 
 const testAccEdgeGatewayBasic = `
 resource "vcd_edgegateway" "{{.EdgeGateway}}" {
@@ -624,5 +579,111 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
 
   fw_enabled = "true"
   lb_enabled = "true"
+}
+`
+
+const testAccEdgeGatewayNetworks = testAccEdgeGatewayComplexNetwork + `
+resource "vcd_edgegateway" "egw" {
+	org                     = "{{.Org}}"
+	vdc                     = "{{.Vdc}}"
+
+	name                    = "edge-with-complex-networks"
+	description             = "new edge gateway"
+	configuration           = "compact"
+	advanced                = true
+  
+	fips_mode_enabled               = false
+	use_default_route_for_dns_relay = true
+	distributed_routing             = true
+  
+	external_network {
+	  name = vcd_external_network.{{.NewExternalNetwork}}.name
+	  enable_rate_limit = true
+	  incoming_rate_limit = 77.77
+	  outgoing_rate_limit = 88.88234
+  
+	  subnet {
+		ip_address = "192.168.30.51"
+		gateway = "192.168.30.49"
+		netmask = "255.255.255.240"
+		use_for_default_route = true
+
+		suballocate_pool {
+			start_address = "192.168.30.53"
+			end_address   = "192.168.30.55"
+		}
+
+		suballocate_pool {
+			start_address = "192.168.30.58"
+			end_address   = "192.168.30.60"
+		}
+	  }
+	}
+
+	# Attach to existing external network
+	external_network {
+	  name = "${data.vcd_external_network.ds-network.name}"
+
+		subnet {
+			# ip_address is skipped here on purpose to get dynamic IP
+			use_for_default_route = false
+			gateway = "${data.vcd_external_network.ds-network.ip_scope[0].gateway}"
+			netmask = "${data.vcd_external_network.ds-network.ip_scope[0].netmask}"
+	}
+  }
+}
+
+data "vcd_edgegateway" "egw" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+	
+  name = vcd_edgegateway.egw.name
+}
+
+# Use data source of existing external network to get needed gateway and netmask
+# for subnet participation details
+data "vcd_external_network" "ds-network" {
+	name = "{{.ExternalNetwork}}"
+}
+`
+
+const testAccEdgeGatewayNetworks2 = testAccEdgeGatewayComplexNetwork + `
+resource "vcd_edgegateway" "egw" {
+	org                     = "{{.Org}}"
+	vdc                     = "{{.Vdc}}"
+
+	name                    = "simple-edge-with-complex-networks"
+	configuration           = "compact"
+	advanced                = true
+
+	external_network {
+	  name = vcd_external_network.{{.NewExternalNetwork}}.name
+	  subnet {
+		gateway = "192.168.30.49"
+		netmask = "255.255.255.240"
+		use_for_default_route = true
+	  }
+	}
+}
+`
+
+const testAccEdgeGatewayParallel = testAccEdgeGatewayComplexNetwork + `
+resource "vcd_edgegateway" "egw" {
+	count = 2
+
+	org                     = "{{.Org}}"
+	vdc                     = "{{.Vdc}}"
+
+	name                    = "parallel-${count.index}"
+	configuration           = "compact"
+	advanced                = true
+
+	external_network {
+	  name = "${vcd_external_network.{{.NewExternalNetwork}}.name}"
+	  subnet {
+		gateway = "192.168.30.49"
+		netmask = "255.255.255.240"
+	  }
+	}
 }
 `
