@@ -3,6 +3,7 @@
 FEATURES:
 
 * **New Data Source:** `vcd_vapp_vm` VM - [GH-218]
+* **New build command:** `make test-upgrade` to run an upgrade test from the previous released version
 
 IMPROVEMENTS:
 
