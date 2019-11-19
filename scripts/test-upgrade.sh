@@ -107,6 +107,12 @@ else
     git checkout $previous_version
     check_exit_code "error checking out previous version ($previous_version)"
 
+    # Remove leftover .tf scripts to avoid running newer ones with the old plugins
+    if [ -d vcd/test-artifacts ]
+    then
+        rm -f vcd/test-artifacts/*.tf
+    fi
+
     # Creates the plugin and the test scripts with the older release
     make test-binary-prepare
     check_exit_code "error preparing binary tests"
