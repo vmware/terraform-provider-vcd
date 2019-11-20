@@ -331,6 +331,16 @@ file_count=0
 for CF in $test_names
 do
     file_count=$((file_count+1))
+    if [ -n "$upgrading" -a -f skip-upgrade-tests.txt ]
+    then
+        skip_upgrade_request=$(grep "$from_version" skip-upgrade-tests.txt | grep $CF)
+        if [ -n "$skip_upgrade_request" ]
+        then
+            echo "# $CF skipped ($file_count of $how_many)"
+            echo "$skip_upgrade_request"
+            continue
+        fi
+    fi
     skip_request=$(grep '^\s*#\s*skip-binary-test' $CF)
     if [ -n "$skip_request" ]
     then

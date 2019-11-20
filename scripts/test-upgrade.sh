@@ -128,6 +128,7 @@ fi
 
 # We need the latest 'test-binary.sh' to run the upgrade tests
 cp $runtime_dir/test-binary.sh vcd/test-artifacts/
+cp $runtime_dir/skip-upgrade-tests.txt vcd/test-artifacts/
 cd vcd/test-artifacts
 
 # Finally, we run the upgrade test itself
