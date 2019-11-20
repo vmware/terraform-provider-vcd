@@ -39,6 +39,7 @@ BUG FIXES:
   Its state is never updated and the fields `status` and `status_text` already provide the necessary information.
   [GH-379]
 * Fix `vcd_independent_disk` reapply issue, which was seen when optional `bus_sub_type` and `bus_type` wasn't used - [GH-394]
+* Fix `vcd_vapp_network` apply issue, where the property `guest_vlan_allowed` was applied only to the last of multiple networks.
 
 DEPRECATIONS:
 
