@@ -274,7 +274,7 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "description", "new edge gateway"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "configuration", "compact"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "advanced", "true"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "distributed_routing", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "distributed_routing", "false"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "fips_mode_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "use_default_route_for_dns_relay", "true"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "default_gateway_network", newExternalNetworkVcd),
@@ -575,7 +575,7 @@ resource "vcd_edgegateway" "egw" {
   
 	fips_mode_enabled               = false
 	use_default_route_for_dns_relay = true
-	distributed_routing             = true
+	distributed_routing             = false
   
 	external_network {
 	  name = vcd_external_network.{{.NewExternalNetwork}}.name
