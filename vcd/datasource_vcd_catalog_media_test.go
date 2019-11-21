@@ -100,35 +100,28 @@ resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
 data "vcd_catalog_media" "{{.NewCatalogMedia}}" {
   org     = "{{.Org}}"
   catalog = "{{.Catalog}}"
-  name    = "${vcd_catalog_media.{{.CatalogMediaName}}.name}"
+  name    = vcd_catalog_media.{{.CatalogMediaName}}.name
 }
 
 output "size" {
   value = data.vcd_catalog_media.{{.NewCatalogMedia}}.size
-  depends_on = ["data.vcd_catalog_media.{{.NewCatalogMedia}}"]
 }
 output "creation_date" {
   value = data.vcd_catalog_media.{{.NewCatalogMedia}}.creation_date
-  depends_on = [data.vcd_catalog_media.{{.NewCatalogMedia}}]
 }
 output "is_iso" {
   value = data.vcd_catalog_media.{{.NewCatalogMedia}}.is_iso
-  depends_on = [data.vcd_catalog_media.{{.NewCatalogMedia}}]
 }
 output "owner_name" {
   value = data.vcd_catalog_media.{{.NewCatalogMedia}}.owner_name
-  depends_on = [data.vcd_catalog_media.{{.NewCatalogMedia}}]
 }
 output "is_published" {
   value = data.vcd_catalog_media.{{.NewCatalogMedia}}.is_published
-  depends_on = [data.vcd_catalog_media.{{.NewCatalogMedia}}]
 }
 output "status" {
   value = data.vcd_catalog_media.{{.NewCatalogMedia}}.status
-  depends_on = [data.vcd_catalog_media.{{.NewCatalogMedia}}]
 }
 output "storage_profile_name" {
   value = data.vcd_catalog_media.{{.NewCatalogMedia}}.storage_profile_name
-  depends_on = [data.vcd_catalog_media.{{.NewCatalogMedia}}]
 }
 `

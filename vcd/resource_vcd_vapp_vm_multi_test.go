@@ -159,8 +159,8 @@ resource "vcd_vapp" "{{.VappName}}" {
 resource "vcd_vapp_vm" "{{.VmName1}}" {
   org           = "{{.Org}}"
   vdc           = "{{.Vdc}}"
-  vapp_name     = "${vcd_vapp.{{.VappName}}.name}"
-  network_name  = "${vcd_network_routed.{{.NetworkName}}.name}"
+  vapp_name     = vcd_vapp.{{.VappName}}.name
+  network_name  = vcd_network_routed.{{.NetworkName}}.name
   name          = "{{.VmName1}}"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
@@ -170,7 +170,7 @@ resource "vcd_vapp_vm" "{{.VmName1}}" {
   ip            = "10.10.102.161"
 
   disk {
-    name = "${vcd_independent_disk.{{.diskResourceName}}.name}"
+    name = vcd_independent_disk.{{.diskResourceName}}.name
     bus_number = 1
     unit_number = 0
   }
@@ -181,8 +181,8 @@ resource "vcd_vapp_vm" "{{.VmName1}}" {
 resource "vcd_vapp_vm" "{{.VmName2}}" {
   org           = "{{.Org}}"
   vdc           = "{{.Vdc}}"
-  vapp_name     = "${vcd_vapp.{{.VappName}}.name}"
-  network_name  = "${vcd_network_routed.{{.NetworkName}}.name}"
+  vapp_name     = vcd_vapp.{{.VappName}}.name
+  network_name  = vcd_network_routed.{{.NetworkName}}.name
   name          = "{{.VmName2}}"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
@@ -197,8 +197,8 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
 resource "vcd_vapp_vm" "{{.VmName3}}" {
   org           = "{{.Org}}"
   vdc           = "{{.Vdc}}"
-  vapp_name     = "${vcd_vapp.{{.VappName}}.name}"
-  network_name  = "${vcd_network_routed.{{.NetworkName}}.name}"
+  vapp_name     = vcd_vapp.{{.VappName}}.name
+  network_name  = vcd_network_routed.{{.NetworkName}}.name
   name          = "{{.VmName3}}"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"

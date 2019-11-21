@@ -187,11 +187,11 @@ resource "vcd_vapp" "{{.VappName}}" {
 resource "vcd_vapp_vm" "{{.VmName}}" {
   org           = "{{.Org}}"
   vdc           = "{{.Vdc}}"
-  vapp_name     = "${vcd_vapp.{{.VappName}}.name}"
+  vapp_name     = vcd_vapp.{{.VappName}}.name
   name          = "{{.VmName}}"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
-  network_name  = "${vcd_network_routed.{{.NetworkName}}.name}"
+  network_name  = vcd_network_routed.{{.NetworkName}}.name
   memory        = 1024
   cpus          = 1
   ip            = "10.10.102.161"
@@ -216,8 +216,8 @@ resource "vcd_inserted_media" "{{.InsertMediaName}}" {
   catalog = "{{.Catalog}}"
   name    = "{{.CatalogMediaName}}"
 
-  vapp_name  = "${vcd_vapp.{{.VappName}}.name}"
-  vm_name    = "${vcd_vapp_vm.{{.VmName}}.name}"
+  vapp_name  = vcd_vapp.{{.VappName}}.name
+  vm_name    = vcd_vapp_vm.{{.VmName}}.name
   depends_on = ["vcd_vapp_vm.{{.VmName}}", "vcd_catalog_media.{{.CatalogMediaName}}"]
 
   eject_force = "{{.EjectForce}}"

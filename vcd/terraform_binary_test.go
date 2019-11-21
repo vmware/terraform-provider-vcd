@@ -280,7 +280,7 @@ func init() {
 
 const buildEnvOrgUser = `
 resource "vcd_org_user" "{{.OrgUser}}" {
-  org               = "${vcd_org.{{.Org}}.name}"
+  org               = vcd_org.{{.Org}}.name
   name              = "{{.OrgUser}}"
   password          = "{{.OrgUserPassword}}"
   role              = "Organization Administrator"
@@ -295,9 +295,9 @@ resource "vcd_org_user" "{{.OrgUser}}" {
 const buildEnvRoutedNetwork = `
 resource "vcd_network_routed" "{{.RoutedNetwork}}" {
   name         = "{{.RoutedNetwork}}"
-  org          = "${vcd_org.{{.Org}}.name}"
-  vdc          = "${vcd_org_vdc.{{.Vdc}}.name}"
-  edge_gateway = "${vcd_edgegateway.{{.EdgeGateway}}.name}"
+  org          = vcd_org.{{.Org}}.name
+  vdc          = vcd_org_vdc.{{.Vdc}}.name
+  edge_gateway = vcd_edgegateway.{{.EdgeGateway}}.name
   gateway      = "192.168.2.1"
 
   static_ip_pool {
@@ -310,8 +310,8 @@ resource "vcd_network_routed" "{{.RoutedNetwork}}" {
 const buildEnvIsolatedNetwork = `
 resource "vcd_network_isolated" "{{.IsolatedNetwork}}" {
   name    = "{{.IsolatedNetwork}}"
-  org     = "${vcd_org.{{.Org}}.name}"
-  vdc     = "${vcd_org_vdc.{{.Vdc}}.name}"
+  org     = vcd_org.{{.Org}}.name
+  vdc     = vcd_org_vdc.{{.Vdc}}.name
   gateway = "192.168.3.1"
 
   static_ip_pool {
@@ -324,8 +324,8 @@ resource "vcd_network_isolated" "{{.IsolatedNetwork}}" {
 const buildEnvDirectNetwork = `
 resource "vcd_network_direct" "{{.DirectNetwork}}" {
   name             = "{{.DirectNetwork}}"
-  org              = "${vcd_org.{{.Org}}.name}"
-  vdc              = "${vcd_org_vdc.{{.Vdc}}.name}"
+  org              = vcd_org.{{.Org}}.name
+  vdc              = vcd_org_vdc.{{.Vdc}}.name
   external_network = "{{.ExternalNetwork}}"
 }
 `
@@ -341,8 +341,8 @@ const secondStorageProfile = `
 
 const mediaTest = `
 resource "vcd_catalog_media" "{{.MediaTestName}}" {
-  org     = "${vcd_org.{{.Org}}.name}"
-  catalog = "${vcd_catalog.{{.Catalog}}.name}"
+  org     = vcd_org.{{.Org}}.name
+  catalog = vcd_catalog.{{.Catalog}}.name
 
   name                 = "{{.MediaTestName}}"
   description          = "{{.MediaTestName}}"

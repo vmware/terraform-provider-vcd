@@ -1,0 +1,7 @@
+# This file contains a list of tests that should be skipped from the upgrade tests
+#
+# The format is:
+# FileName  version-from-which-we-upgrade "reason"
+#
+vcd.TestAccVcdVappNetworkMulti.tf v2.5.0 "Bug in guest_vlan_allowed apply for multiple networks"
+

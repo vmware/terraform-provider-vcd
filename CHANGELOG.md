@@ -3,6 +3,7 @@
 FEATURES:
 
 * **New Data Source:** `vcd_vapp_vm` VM - [GH-218]
+* **New build command:** `make test-upgrade` to run an upgrade test from the previous released version
 
 IMPROVEMENTS:
 
@@ -29,6 +30,7 @@ IMPROVEMENTS:
   network IPs used on gateway interfaces - [GH-389, GH-401]
 * Add `token` to the `vcd` provider for the ability of connecting with an authorization token - [GH-280]
 * Add command `make token` to create an authorization token from testing credentials
+* Clean up interpolation-only expressions from tests (as allowed in terraform v0.12.11+)
 * Increment vCD API version used from 27.0 to 29.0 [GH-396]
 * `resource/vcd_edgegateway` supports fields `fips_mode_enabled`, `use_default_route_for_dns_relay`
   - [GH-401]
@@ -44,6 +46,7 @@ BUG FIXES:
   Its state is never updated and the fields `status` and `status_text` already provide the necessary information.
   [GH-379]
 * Fix `vcd_independent_disk` reapply issue, which was seen when optional `bus_sub_type` and `bus_type` wasn't used - [GH-394]
+* Fix `vcd_vapp_network` apply issue, where the property `guest_vlan_allowed` was applied only to the last of multiple networks.
 
 DEPRECATIONS:
 

@@ -113,24 +113,20 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
 }
 
 data "vcd_independent_disk" "{{.dataSourceName}}" {
-  name    = "${vcd_independent_disk.{{.ResourceName}}.name}" 
+  name    = vcd_independent_disk.{{.ResourceName}}.name
 }
 
 output "iops" {
   value = data.vcd_independent_disk.{{.dataSourceName}}.iops
-  depends_on = ["data.vcd_independent_disk.{{.dataSourceName}}"]
 }
 output "owner_name" {
   value = data.vcd_independent_disk.{{.dataSourceName}}.owner_name
-  depends_on = [data.vcd_independent_disk.{{.dataSourceName}}]
 }
 output "datastore_name" {
   value = data.vcd_independent_disk.{{.dataSourceName}}.datastore_name
-  depends_on = [data.vcd_independent_disk.{{.dataSourceName}}]
 }
 output "is_attached" {
   value = data.vcd_independent_disk.{{.dataSourceName}}.is_attached
-  depends_on = [data.vcd_independent_disk.{{.dataSourceName}}]
 }
 `
 
@@ -147,23 +143,19 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
 }
 
 data "vcd_independent_disk" "{{.datasourceNameWithId}}" {
-  id         = "${vcd_independent_disk.{{.ResourceName}}.id}"
+  id         = vcd_independent_disk.{{.ResourceName}}.id
 }
 
 output "iops" {
   value      = data.vcd_independent_disk.{{.datasourceNameWithId}}.iops
-  depends_on = ["data.vcd_independent_disk.{{.datasourceNameWithId}}"]
 }
 output "owner_name" {
   value      = data.vcd_independent_disk.{{.datasourceNameWithId}}.owner_name
-  depends_on = [data.vcd_independent_disk.{{.datasourceNameWithId}}]
 }
 output "datastore_name" {
   value      = data.vcd_independent_disk.{{.datasourceNameWithId}}.datastore_name
-  depends_on = [data.vcd_independent_disk.{{.datasourceNameWithId}}]
 }
 output "is_attached" {
   value      = data.vcd_independent_disk.{{.datasourceNameWithId}}.is_attached
-  depends_on = [data.vcd_independent_disk.{{.datasourceNameWithId}}]
 }
 `

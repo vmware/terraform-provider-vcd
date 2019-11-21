@@ -73,12 +73,12 @@ data "vcd_org" "{{.OrgName1}}" {
 
 resource "vcd_org" "{{.OrgName2}}" {
   name                         = "{{.OrgName2}}"
-  full_name                    = "${data.vcd_org.{{.OrgName1}}.full_name}"
-  can_publish_catalogs         = "${data.vcd_org.{{.OrgName1}}.can_publish_catalogs}"
-  deployed_vm_quota            = "${data.vcd_org.{{.OrgName1}}.deployed_vm_quota}"
-  stored_vm_quota              = "${data.vcd_org.{{.OrgName1}}.stored_vm_quota}"
-  is_enabled                   = "${data.vcd_org.{{.OrgName1}}.is_enabled}"
-  delay_after_power_on_seconds = "${data.vcd_org.{{.OrgName1}}.delay_after_power_on_seconds}"
+  full_name                    = data.vcd_org.{{.OrgName1}}.full_name
+  can_publish_catalogs         = data.vcd_org.{{.OrgName1}}.can_publish_catalogs
+  deployed_vm_quota            = data.vcd_org.{{.OrgName1}}.deployed_vm_quota
+  stored_vm_quota              = data.vcd_org.{{.OrgName1}}.stored_vm_quota
+  is_enabled                   = data.vcd_org.{{.OrgName1}}.is_enabled
+  delay_after_power_on_seconds = data.vcd_org.{{.OrgName1}}.delay_after_power_on_seconds
   delete_force                 = "true"
   delete_recursive             = "true"
 }
