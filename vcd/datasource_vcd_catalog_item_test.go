@@ -102,16 +102,16 @@ data "vcd_catalog" "{{.Catalog}}" {
 
 data "vcd_catalog_item" "{{.CatalogItem}}" {
   org     = "{{.Org}}"
-  catalog = "${data.vcd_catalog.{{.Catalog}}.name}"
+  catalog = data.vcd_catalog.{{.Catalog}}.name
   name    = "{{.CatalogItem}}"
 }
 
 resource "vcd_catalog_item" "{{.NewCatalogItem}}" {
   org     = "{{.Org}}"
-  catalog = "${data.vcd_catalog.{{.Catalog}}.name}"
+  catalog = data.vcd_catalog.{{.Catalog}}.name
 
   name                 = "{{.NewCatalogItem}}"
-  description          = "${data.vcd_catalog_item.{{.CatalogItem}}.id}"
+  description          = data.vcd_catalog_item.{{.CatalogItem}}.id
   ova_path             = "{{.OvaPath}}"
   upload_piece_size    = {{.UploadPieceSize}}
   show_upload_progress = "{{.UploadProgress}}"

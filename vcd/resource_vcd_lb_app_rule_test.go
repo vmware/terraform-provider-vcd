@@ -151,7 +151,7 @@ data "vcd_lb_app_rule" "test" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
-  name         = "${vcd_lb_app_rule.test.name}"
+  name         = vcd_lb_app_rule.test.name
 }  
 `
 
@@ -169,7 +169,7 @@ data "vcd_lb_app_rule" "test" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
-  name         = "${vcd_lb_app_rule.test.name}"
+  name         = vcd_lb_app_rule.test.name
 } 
 `
 
@@ -189,7 +189,7 @@ data "vcd_lb_app_rule" "test" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
-  name         = "${vcd_lb_app_rule.test.name}"
+  name         = vcd_lb_app_rule.test.name
 }
 
 `

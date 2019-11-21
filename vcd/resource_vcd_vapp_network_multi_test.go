@@ -229,7 +229,7 @@ resource "vcd_vapp_network" "{{.resourceName1}}" {
     enabled            = "{{.dhcpEnabled}}"
   }
 
-  depends_on = ["vcd_vapp.{{.vappName}}"]
+  depends_on = [vcd_vapp.{{.vappName}}]
 }
 
 resource "vcd_vapp_network" "{{.resourceName2}}" {
@@ -257,7 +257,7 @@ resource "vcd_vapp_network" "{{.resourceName2}}" {
     enabled            = "{{.dhcpEnabled}}"
   }
 
-  depends_on = ["vcd_vapp.{{.vappName}}"]
+  depends_on = [vcd_vapp.{{.vappName}}]
 }
 
 resource "vcd_vapp_network" "{{.resourceName3}}" {
@@ -285,6 +285,6 @@ resource "vcd_vapp_network" "{{.resourceName3}}" {
     enabled            = "{{.dhcpEnabled}}"
   }
 
-  depends_on = ["vcd_vapp.{{.vappName}}"]
+  depends_on = [vcd_vapp.{{.vappName}}]
 }
 `

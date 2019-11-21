@@ -232,7 +232,7 @@ data "vcd_nsxv_dnat" "data-test" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
-  rule_id      = "${vcd_nsxv_dnat.test.id}"
+  rule_id      = vcd_nsxv_dnat.test.id
 }
 `
 
@@ -294,7 +294,7 @@ resource "vcd_nsxv_dnat" "test" {
   edge_gateway = "{{.EdgeGateway}}"
 
   network_type = "org"
-  network_name = "${vcd_network_routed.net.name}"
+  network_name = vcd_network_routed.net.name
 
   original_address   = "10.10.0.180"
   translated_address = "1.1.1.1"

@@ -187,7 +187,7 @@ resource "vcd_vapp" "{{.VappName}}" {
 resource "vcd_vapp_vm" "{{.VmName}}" {
   org           = "{{.Org}}"
   vdc           = "{{.Vdc}}"
-  vapp_name     = "${vcd_vapp.{{.VappName}}.name}"
+  vapp_name     = vcd_vapp.{{.VappName}}.name
   name          = "{{.VmName}}"
   computer_name = "{{.ComputerName}}"
   catalog_name  = "{{.Catalog}}"
@@ -201,14 +201,14 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   }
 
   network {
-    name               = "${vcd_network_routed.{{.NetworkName}}.name}"
+    name               = vcd_network_routed.{{.NetworkName}}.name
     ip                 = "10.10.102.161"
     type               = "org"
     ip_allocation_mode = "MANUAL"
   }
 
   disk {
-    name        = "${vcd_independent_disk.{{.diskResourceName}}.name}"
+    name        = vcd_independent_disk.{{.diskResourceName}}.name
     bus_number  = 1
     unit_number = 0
   }
@@ -244,7 +244,7 @@ resource "vcd_vapp" "{{.VappName}}" {
 resource "vcd_vapp_vm" "{{.VmName}}" {
   org           = "{{.Org}}"
   vdc           = "{{.Vdc}}"
-  vapp_name     = "${vcd_vapp.{{.VappName}}.name}"
+  vapp_name     = vcd_vapp.{{.VappName}}.name
   name          = "{{.VmName}}"
   computer_name = "{{.ComputerName}}"
   catalog_name  = "{{.Catalog}}"
@@ -258,7 +258,7 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   }
 
   network {
-    name               = "${vcd_network_routed.{{.NetworkName}}.name}"
+    name               = vcd_network_routed.{{.NetworkName}}.name
     ip                 = "{{.IP}}"
     type               = "org"
     ip_allocation_mode = "MANUAL"
@@ -268,22 +268,22 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
 resource "vcd_vapp_vm" "{{.VmName2}}" {
   org           = "{{.Org}}"
   vdc           = "{{.Vdc}}"
-  vapp_name     = "${vcd_vapp_vm.{{.VmName}}.vapp_name}"
+  vapp_name     = vcd_vapp_vm.{{.VmName}}.vapp_name
   name          = "{{.VmName2}}"
-  computer_name = "${vcd_vapp_vm.{{.VmName}}.computer_name}"
+  computer_name = vcd_vapp_vm.{{.VmName}}.computer_name
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
   memory        = 1024
   cpus          = 2
   cpu_cores     = 1
 
-  metadata = "${vcd_vapp_vm.{{.VmName}}.metadata}"
+  metadata = vcd_vapp_vm.{{.VmName}}.metadata
 
   network {
-    name               = "${vcd_vapp_vm.{{.VmName}}.network.0.name}"
+    name               = vcd_vapp_vm.{{.VmName}}.network.0.name
     ip                 = "{{.IP2}}"
-    type               = "${vcd_vapp_vm.{{.VmName}}.network.0.type}"
-    ip_allocation_mode = "${vcd_vapp_vm.{{.VmName}}.network.0.ip_allocation_mode}"
+    type               = vcd_vapp_vm.{{.VmName}}.network.0.type
+    ip_allocation_mode = vcd_vapp_vm.{{.VmName}}.network.0.ip_allocation_mode
   }
 }
 

@@ -255,7 +255,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
-  vapp_name     = "${vcd_vapp.{{.VAppName}}.name}"
+  vapp_name     = vcd_vapp.{{.VAppName}}.name
   name          = "{{.VMName}}"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
@@ -273,7 +273,7 @@ resource "vcd_vapp_network" "vappNet" {
 	vdc = "{{.Vdc}}"
   
 	name       = "vapp-net"
-	vapp_name  = "${vcd_vapp.{{.VAppName}}.name}"
+	vapp_name  = vcd_vapp.{{.VAppName}}.name
 	gateway    = "192.168.2.1"
 	netmask    = "255.255.255.0"
 	dns1       = "192.168.2.1"
@@ -295,7 +295,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 	org = "{{.Org}}"
 	vdc = "{{.Vdc}}"
   
-	vapp_name         = "${vcd_vapp.{{.VAppName}}.name}"
+	vapp_name         = vcd_vapp.{{.VAppName}}.name
 	name              = "{{.VMName}}"
 	catalog_name      = "{{.Catalog}}"
 	template_name     = "{{.CatalogItem}}"
@@ -303,7 +303,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 	cpus              = 2
 	cpu_cores         = 2
 	power_on          = "false"
-	vapp_network_name = "${vcd_vapp_network.vappNet.id}"
+	vapp_network_name = vcd_vapp_network.vappNet.id
 	ip                = "allocated"
   }  
 `
@@ -314,7 +314,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 	org = "{{.Org}}"
 	vdc = "{{.Vdc}}"
   
-	vapp_name         = "${vcd_vapp.{{.VAppName}}.name}"
+	vapp_name         = vcd_vapp.{{.VAppName}}.name
 	name              = "{{.VMName}}"
 	catalog_name      = "{{.Catalog}}"
 	template_name     = "{{.CatalogItem}}"
@@ -322,8 +322,8 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 	cpus              = 2
 	cpu_cores         = 2
 	power_on          = "false"
-	network_name      = "${vcd_network_routed.net.name}"
-	vapp_network_name = "${vcd_vapp_network.vappNet.id}"
+	network_name      = vcd_network_routed.net.name
+	vapp_network_name = vcd_vapp_network.vappNet.id
 	ip                = "allocated"
   }  
 `
@@ -333,7 +333,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
-  vapp_name     = "${vcd_vapp.{{.VAppName}}.name}"
+  vapp_name     = vcd_vapp.{{.VAppName}}.name
   name          = "{{.VMName}}"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
@@ -342,6 +342,6 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   cpu_cores     = 2
   power_on      = "false"
   ip            = "{{.IP}}"
-  network_name  = "${vcd_network_routed.net.name}"
+  network_name  = vcd_network_routed.net.name
 }
 `

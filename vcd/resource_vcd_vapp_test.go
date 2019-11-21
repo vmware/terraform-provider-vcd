@@ -242,7 +242,7 @@ resource "vcd_vapp" "{{.VappName}}" {
   name          = "{{.VappName}}"
   template_name = "{{.CatalogItem}}"
   catalog_name  = "{{.Catalog}}"
-  network_name  = "${vcd_network_routed.{{.NetworkName}}.name}"
+  network_name  = vcd_network_routed.{{.NetworkName}}.name
   memory        = 1024
   cpus          = 1
   ip            = "10.10.102.160"
@@ -258,7 +258,7 @@ resource "vcd_vapp" "{{.VappNameAllocated}}" {
   name          = "{{.VappNameAllocated}}"
   template_name = "{{.CatalogItem}}"
   catalog_name  = "{{.Catalog}}"
-  network_name  = "${vcd_network_routed.{{.NetworkName3}}.name}"
+  network_name  = vcd_network_routed.{{.NetworkName3}}.name
   memory        = 1024
   cpus          = 1
   ip            = "allocated"
@@ -293,7 +293,7 @@ resource "vcd_vapp" "{{.VappNamePowerOff}}" {
   name          = "{{.VappNamePowerOff}}"
   template_name = "{{.CatalogItem}}"
   catalog_name  = "{{.Catalog}}"
-  network_name  = "${vcd_network_routed.{{.NetworkName2}}.name}"
+  network_name  = vcd_network_routed.{{.NetworkName2}}.name
   memory        = 1024
   cpus          = 1
   ip            = "10.10.103.160"

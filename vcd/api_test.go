@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strings"
 	"testing"
 )
 
@@ -116,19 +117,15 @@ func getCurrentDir() string {
 
 // Reads the version from the VERSION file in the root directory
 func getMajorVersion() string {
+	return getMajorVersionFromFile("VERSION")
+}
 
-	versionFile := path.Join(getCurrentDir(), "..", "VERSION")
+// Reads the version from a given file in the root directory
+func getMajorVersionFromFile(fileName string) string {
 
-	// Checks whether the VERSION file exists
-	_, err := os.Stat(versionFile)
-	if os.IsNotExist(err) {
-		panic("Could not find VERSION file")
-	}
-
-	// Reads the version from the file
-	versionText, err := ioutil.ReadFile(versionFile)
+	versionText, err := getVersionFromFile(fileName)
 	if err != nil {
-		panic(fmt.Errorf("could not read VERSION file %s: %v", versionFile, err))
+		panic(fmt.Sprintf("error retrieving version from %s: %s", fileName, err))
 	}
 
 	// The version is expected to be in the format v#.#.#
@@ -136,13 +133,33 @@ func getMajorVersion() string {
 	reVersion := regexp.MustCompile(`v(\d+\.\d+)\.\d+`)
 	versionList := reVersion.FindAllStringSubmatch(string(versionText), -1)
 	if len(versionList) == 0 {
-		panic("empty or non-formatted version found in VERSION file")
+		panic(fmt.Sprintf("empty or non-formatted version found in file %s", fileName))
 	}
 	if versionList[0] == nil || len(versionList[0]) < 2 {
-		panic("unable to extract major version from VERSION file")
+		panic(fmt.Sprintf("unable to extract major version from file %s", fileName))
 	}
 	// A successful match will look like
 	// [][]string{[]string{"v2.0.0", "2.0"}}
 	// Where the first element is the full text matched, and the second one is the first captured text
 	return versionList[0][1]
+}
+
+// Reads the version from a given file in the root directory
+func getVersionFromFile(fileName string) (string, error) {
+
+	versionFile := path.Join(getCurrentDir(), "..", fileName)
+
+	// Checks whether the wanted file exists
+	_, err := os.Stat(versionFile)
+	if os.IsNotExist(err) {
+		return "", fmt.Errorf("could not find file %s: %v", versionFile, err)
+	}
+
+	// Reads the version from the file
+	versionText, err := ioutil.ReadFile(versionFile)
+	if err != nil {
+		return "", fmt.Errorf("could not read file %s: %v", versionFile, err)
+	}
+
+	return strings.TrimSpace(string(versionText)), nil
 }
