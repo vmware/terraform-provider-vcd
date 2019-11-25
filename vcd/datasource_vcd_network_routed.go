@@ -1,6 +1,8 @@
 package vcd
 
-import "github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+import (
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+)
 
 func datasourceVcdNetworkRouted() *schema.Resource {
 	return &schema.Resource{
@@ -27,6 +29,18 @@ func datasourceVcdNetworkRouted() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "The name of the edge gateway",
+			},
+
+			"description": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Optional description for the network",
+			},
+
+			"interface": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Which interface to use (one of `internal`, `subinterface`, `distributed`)",
 			},
 
 			"netmask": &schema.Schema{

@@ -18,6 +18,22 @@ func suppressWordToEmptyString(word string) schema.SchemaDiffSuppressFunc {
 		}
 		return false
 	}
+
+}
+
+// suppressNetworkUpgradedInterface is used to silence the changes in
+// property "interface" in routed networks.
+// In the old the version, the "internal" interface was implicit,
+// while in the new one it is one of several.
+// This function only considers the "internal" value, as the other interface types
+// were not possible in the previous version
+func suppressNetworkUpgradedInterface() schema.SchemaDiffSuppressFunc {
+	return func(k string, old string, new string, d *schema.ResourceData) bool {
+		if old == "" && new == "internal" {
+			return true
+		}
+		return false
+	}
 }
 
 // TODO v3.0 remove once `ip` and `network_name` attributes are removed

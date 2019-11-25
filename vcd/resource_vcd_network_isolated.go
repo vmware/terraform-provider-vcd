@@ -38,6 +38,12 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
+			"description": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Optional description for the network",
+			},
 			"netmask": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -161,8 +167,18 @@ func resourceVcdNetworkIsolatedCreate(d *schema.ResourceData, meta interface{}) 
 
 	gatewayName := d.Get("gateway").(string)
 	networkName := d.Get("name").(string)
+	netMask := d.Get("netmask").(string)
+	dns1 := d.Get("dns1").(string)
+	dns2 := d.Get("dns2").(string)
+	err = validateIps(gatewayName, netMask, dns1, dns2)
+	if err != nil {
+		return err
+	}
 
-	ipRanges := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
+	ipRanges, err := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
+	if err != nil {
+		return err
+	}
 
 	dhcpPool := d.Get("dhcp_pool").(*schema.Set).List()
 
@@ -185,17 +201,18 @@ func resourceVcdNetworkIsolatedCreate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	orgVDCNetwork := &types.OrgVDCNetwork{
-		Xmlns: "http://www.vmware.com/vcloud/v1.5",
-		Name:  networkName,
+		Xmlns:       "http://www.vmware.com/vcloud/v1.5",
+		Name:        networkName,
+		Description: d.Get("description").(string),
 		Configuration: &types.NetworkConfiguration{
 			FenceMode: "isolated",
 			IPScopes: &types.IPScopes{
 				IPScope: []*types.IPScope{&types.IPScope{
 					IsInherited: false,
 					Gateway:     gatewayName,
-					Netmask:     d.Get("netmask").(string),
-					DNS1:        d.Get("dns1").(string),
-					DNS2:        d.Get("dns2").(string),
+					Netmask:     netMask,
+					DNS1:        dns1,
+					DNS2:        dns2,
 					DNSSuffix:   d.Get("dns_suffix").(string),
 					IPRanges:    &ipRanges,
 				}},
@@ -301,6 +318,7 @@ func genericVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}, ori
 			return fmt.Errorf("[network isolated read] dhcp set %s", err)
 		}
 	}
+	d.Set("description", network.OrgVDCNetwork.Description)
 
 	d.SetId(network.OrgVDCNetwork.ID)
 	return nil

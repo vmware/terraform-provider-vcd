@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -48,6 +49,23 @@ func resourceVcdNetworkRouted() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "The name of the edge gateway",
+			},
+
+			"description": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Optional description for the network",
+			},
+
+			"interface": &schema.Schema{
+				Type:             schema.TypeString,
+				Optional:         true,
+				Default:          "internal",
+				ForceNew:         true,
+				Description:      "Which interface to use (one of `internal`, `subinterface`, `distributed`)",
+				ValidateFunc:     validation.StringInSlice([]string{"internal", "subinterface", "distributed"}, true),
+				DiffSuppressFunc: suppressNetworkUpgradedInterface(),
 			},
 
 			"netmask": &schema.Schema{
@@ -187,12 +205,23 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 
 	gatewayName := d.Get("gateway").(string)
 	networkName := d.Get("name").(string)
+	netMask := d.Get("netmask").(string)
+	dns1 := d.Get("dns1").(string)
+	dns2 := d.Get("dns2").(string)
+	err = validateIps(gatewayName, netMask, dns1, dns2)
+	if err != nil {
+		return err
+	}
 
-	ipRanges := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
+	ipRanges, err := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
+	if err != nil {
+		return err
+	}
 
 	orgVDCNetwork := &types.OrgVDCNetwork{
-		Xmlns: "http://www.vmware.com/vcloud/v1.5",
-		Name:  networkName,
+		Xmlns:       "http://www.vmware.com/vcloud/v1.5",
+		Name:        networkName,
+		Description: d.Get("description").(string),
 
 		EdgeGateway: &types.Reference{
 			HREF: edgeGateway.EdgeGateway.HREF,
@@ -203,9 +232,9 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 				IPScope: []*types.IPScope{&types.IPScope{
 					IsInherited: false,
 					Gateway:     gatewayName,
-					Netmask:     d.Get("netmask").(string),
-					DNS1:        d.Get("dns1").(string),
-					DNS2:        d.Get("dns2").(string),
+					Netmask:     netMask,
+					DNS1:        dns1,
+					DNS2:        dns2,
 					DNSSuffix:   d.Get("dns_suffix").(string),
 					IPRanges:    &ipRanges,
 				}},
@@ -213,6 +242,27 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 			BackwardCompatibilityMode: true,
 		},
 		IsShared: d.Get("shared").(bool),
+	}
+	distributedAllowed := false
+	if edgeGateway.EdgeGateway.Configuration.DistributedRoutingEnabled != nil {
+		if *edgeGateway.EdgeGateway.Configuration.DistributedRoutingEnabled {
+			distributedAllowed = true
+		}
+	}
+	networkInterface := d.Get("interface").(string)
+	trueValue := true
+	switch strings.ToLower(networkInterface) {
+	case "internal":
+		// default: no configuration is needed
+		orgVDCNetwork.Configuration.SubInterface = nil
+	case "subinterface":
+		orgVDCNetwork.Configuration.SubInterface = &trueValue
+	case "distributed":
+		if distributedAllowed {
+			orgVDCNetwork.Configuration.DistributedInterface = &trueValue
+		} else {
+			return fmt.Errorf("interface 'distributed' requested, but edge gateway '%s' not enabled", edgeGateway.EdgeGateway.Name)
+		}
 	}
 
 	err = vdc.CreateOrgVDCNetworkWait(orgVDCNetwork)
@@ -235,7 +285,6 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 		if err != nil {
 			return fmt.Errorf(errorCompletingTask, err)
 		}
-
 	}
 
 	d.SetId(network.OrgVDCNetwork.ID)
@@ -325,6 +374,19 @@ func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origi
 			return fmt.Errorf("[network routed read] static_ip set: %s", err)
 		}
 	}
+
+	if network.OrgVDCNetwork.Configuration.SubInterface == nil {
+		d.Set("interface", "internal")
+	} else {
+		if *network.OrgVDCNetwork.Configuration.SubInterface {
+			d.Set("interface", "subinterface")
+		} else {
+			if *network.OrgVDCNetwork.Configuration.DistributedInterface {
+				d.Set("interface", "distributed")
+			}
+		}
+	}
+	d.Set("description", network.OrgVDCNetwork.Description)
 
 	d.SetId(network.OrgVDCNetwork.ID)
 	return nil

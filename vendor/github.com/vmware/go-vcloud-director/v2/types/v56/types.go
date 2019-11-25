@@ -211,6 +211,7 @@ type NetworkConfiguration struct {
 	RetainNetInfoAcrossDeployments bool             `xml:"RetainNetInfoAcrossDeployments,omitempty"`
 	Features                       *NetworkFeatures `xml:"Features,omitempty"`
 	GuestVlanAllowed               *bool            `xml:"GuestVlanAllowed,omitempty"`
+	SubInterface                   *bool            `xml:"SubInterface,omitempty"`
 	DistributedInterface           *bool            `xml:"DistributedInterface,omitempty"`
 	// TODO: Not Implemented
 	// RouterInfo                     RouterInfo           `xml:"RouterInfo,omitempty"`
@@ -331,8 +332,8 @@ type OrgVDCNetwork struct {
 	OperationKey    string                `xml:"operationKey,attr,omitempty"`
 	Name            string                `xml:"name,attr"`
 	Status          string                `xml:"status,attr,omitempty"`
-	Configuration   *NetworkConfiguration `xml:"Configuration,omitempty"`
 	Description     string                `xml:"Description,omitempty"`
+	Configuration   *NetworkConfiguration `xml:"Configuration,omitempty"`
 	EdgeGateway     *Reference            `xml:"EdgeGateway,omitempty"`
 	ServiceConfig   *GatewayFeatures      `xml:"ServiceConfig,omitempty"` // Specifies the service configuration for an isolated Org VDC networks
 	IsShared        bool                  `xml:"IsShared"`

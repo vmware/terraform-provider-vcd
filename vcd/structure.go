@@ -2,6 +2,8 @@ package vcd
 
 import (
 	"fmt"
+	"net"
+	"net/url"
 	"strconv"
 	"strings"
 
@@ -9,15 +11,53 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-func expandIPRange(configured []interface{}) types.IPRanges {
+// isValidIp checks if a given string is a valid IP address
+func isValidIp(value string) bool {
+	ip := net.ParseIP(value)
+	_, err := url.ParseRequestURI("https://" + value)
+	return ip != nil && err == nil
+}
+
+// validateIps will check if IP fields used for networking are valid IPs
+func validateIps(gateway, netmask, dns1, dns2 string) error {
+	var invalid []string
+	var errorMessage = "%s '%s' is not a valid IP"
+	if !isValidIp(gateway) {
+		invalid = append(invalid, fmt.Sprintf(errorMessage, "gateway", gateway))
+	}
+	if !isValidIp(netmask) {
+		invalid = append(invalid, fmt.Sprintf(errorMessage, "netmask", netmask))
+	}
+	if dns1 != "" && !isValidIp(dns1) {
+		invalid = append(invalid, fmt.Sprintf(errorMessage, "dns1", dns1))
+	}
+	if dns2 != "" && !isValidIp(dns2) {
+		invalid = append(invalid, fmt.Sprintf(errorMessage, "dns2", dns2))
+	}
+	if len(invalid) > 0 {
+		return fmt.Errorf("errors validating IPs %v", invalid)
+	}
+	return nil
+}
+
+func expandIPRange(configured []interface{}) (types.IPRanges, error) {
 	ipRange := make([]*types.IPRange, 0, len(configured))
 
 	for _, ipRaw := range configured {
 		data := ipRaw.(map[string]interface{})
 
+		startAddress := data["start_address"].(string)
+		endAddress := data["end_address"].(string)
+		if startAddress != "" && !isValidIp(startAddress) {
+			return types.IPRanges{}, fmt.Errorf("start address '%s' has invalid format", startAddress)
+		}
+		if endAddress != "" && !isValidIp(endAddress) {
+			return types.IPRanges{}, fmt.Errorf("end address '%s' has invalid format", endAddress)
+		}
+
 		ip := types.IPRange{
-			StartAddress: data["start_address"].(string),
-			EndAddress:   data["end_address"].(string),
+			StartAddress: startAddress,
+			EndAddress:   endAddress,
 		}
 
 		ipRange = append(ipRange, &ip)
@@ -27,7 +67,7 @@ func expandIPRange(configured []interface{}) types.IPRanges {
 		IPRange: ipRange,
 	}
 
-	return ipRanges
+	return ipRanges, nil
 }
 
 func expandFirewallRules(d *schema.ResourceData, gateway *types.EdgeGateway) ([]*types.FirewallRule, error) {

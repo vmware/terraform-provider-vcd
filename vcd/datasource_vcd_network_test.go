@@ -153,6 +153,7 @@ func TestAccVcdNetworkDirectDS(t *testing.T) {
 					resource.TestCheckOutput("network_org", testConfig.VCD.Org),
 					resource.TestCheckOutput("network_vdc", testConfig.VCD.Vdc),
 					resource.TestCheckOutput("network_name", data.network.Name),
+					resource.TestCheckOutput("network_description", data.network.Description),
 					resource.TestCheckOutput("external_network", data.parent),
 				),
 			},
@@ -209,6 +210,7 @@ func TestAccVcdNetworkRoutedDS(t *testing.T) {
 					resource.TestCheckOutput("network_org", testConfig.VCD.Org),
 					resource.TestCheckOutput("network_vdc", testConfig.VCD.Vdc),
 					resource.TestCheckOutput("network_name", data.network.Name),
+					resource.TestCheckOutput("network_description", data.network.Description),
 					resource.TestCheckOutput("network_edge", data.parent),
 					resource.TestCheckOutput("default_gateway", testConfig.Networking.ExternalNetwork),
 				),
@@ -265,6 +267,7 @@ func TestAccVcdNetworkIsolatedDS(t *testing.T) {
 					resource.TestCheckOutput("network_org", testConfig.VCD.Org),
 					resource.TestCheckOutput("network_vdc", testConfig.VCD.Vdc),
 					resource.TestCheckOutput("network_name", existingNetwork.network.Name),
+					resource.TestCheckOutput("network_description", existingNetwork.network.Description),
 					resource.TestCheckOutput("network_gateway", existingNetwork.network.Configuration.IPScopes.IPScope[0].Gateway),
 					resource.TestCheckOutput("network_netmask", existingNetwork.network.Configuration.IPScopes.IPScope[0].Netmask),
 					resource.TestCheckOutput("network_start_address", existingNetwork.network.Configuration.IPScopes.IPScope[0].IPRanges.IPRange[0].StartAddress),
@@ -283,6 +286,10 @@ data "vcd_network_direct" "{{.NetworkName}}" {
 
 output "network_name" {
   value = data.vcd_network_direct.{{.NetworkName}}.name
+}
+
+output "network_description" {
+  value = data.vcd_network_direct.{{.NetworkName}}.description
 }
 
 output "network_org" {
@@ -319,6 +326,10 @@ output "network_name" {
   value = data.vcd_network_routed.{{.NetworkName}}.name
 }
 
+output "network_description" {
+  value = data.vcd_network_routed.{{.NetworkName}}.description
+}
+
 output "network_org" {
   value = data.vcd_network_routed.{{.NetworkName}}.org
 }
@@ -341,6 +352,10 @@ data "vcd_network_isolated" "{{.NetworkName}}" {
 
 output "network_name" {
   value = data.vcd_network_isolated.{{.NetworkName}}.name
+}
+
+output "network_description" {
+  value = data.vcd_network_isolated.{{.NetworkName}}.description
 }
 
 output "network_org" {
