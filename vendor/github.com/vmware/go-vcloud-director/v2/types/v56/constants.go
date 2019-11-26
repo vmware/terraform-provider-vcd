@@ -169,6 +169,11 @@ const (
 	LbVirtualServerPath    = "/loadbalancer/config/virtualservers/"
 )
 
+// NSX-V proxied services API endpoints
+const (
+	NsxvIpSetServicePath = "/ipset"
+)
+
 // Guest customization statuses. These are all known possible statuses
 const (
 	GuestCustStatusPending       = "GC_PENDING"

@@ -54,25 +54,13 @@ func (egw *EdgeGateway) getLbVirtualServer(lbVirtualServerConfig *types.LbVirtua
 		return nil, err
 	}
 
-	httpPath, err := egw.buildProxiedEdgeEndpointURL(types.LbVirtualServerPath)
-	if err != nil {
-		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
-	}
-
-	// Anonymous struct to unwrap "virtual server response"
-	lbVirtualServerResponse := &struct {
-		LBVirtualServers []*types.LbVirtualServer `xml:"virtualServer"`
-	}{}
-
-	// This query returns all virtual servers as the API does not have filtering options
-	_, err = egw.client.ExecuteRequest(httpPath, http.MethodGet, types.AnyXMLMime,
-		"unable to read load balancer virtual server: %s", nil, lbVirtualServerResponse)
+	vs, err := egw.GetLbVirtualServers()
 	if err != nil {
 		return nil, err
 	}
 
 	// Search for virtual server by ID or by Name
-	for _, virtualServer := range lbVirtualServerResponse.LBVirtualServers {
+	for _, virtualServer := range vs {
 		// If ID was specified for lookup - look for the same ID
 		if lbVirtualServerConfig.ID != "" && virtualServer.ID == lbVirtualServerConfig.ID {
 			return virtualServer, nil
@@ -93,12 +81,34 @@ func (egw *EdgeGateway) getLbVirtualServer(lbVirtualServerConfig *types.LbVirtua
 	return nil, ErrorEntityNotFound
 }
 
-// GetLbVirtualServerById wraps getLbVirtualServer and needs only an ID for lookup
+// GetLbVirtualServers is getting all virtual servers without filtering anything
+func (egw *EdgeGateway) GetLbVirtualServers() ([]*types.LbVirtualServer, error) {
+	httpPath, err := egw.buildProxiedEdgeEndpointURL(types.LbVirtualServerPath)
+	if err != nil {
+		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
+	}
+
+	// Anonymous struct to unwrap "virtual server response"
+	lbVirtualServerResponse := &struct {
+		LBVirtualServers []*types.LbVirtualServer `xml:"virtualServer"`
+	}{}
+
+	// This query returns all virtual servers as the API does not have filtering options
+	_, err = egw.client.ExecuteRequest(httpPath, http.MethodGet, types.AnyXMLMime,
+		"unable to read load balancer virtual server: %s", nil, lbVirtualServerResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return lbVirtualServerResponse.LBVirtualServers, nil
+}
+
+// GetLbVirtualServerById wraps getLbVirtualServers and needs only an ID for lookup
 func (egw *EdgeGateway) GetLbVirtualServerById(id string) (*types.LbVirtualServer, error) {
 	return egw.getLbVirtualServer(&types.LbVirtualServer{ID: id})
 }
 
-// GetLbVirtualServerByName wraps getLbVirtualServer and needs only a Name for lookup
+// GetLbVirtualServerByName wraps getLbVirtualServers and needs only a Name for lookup
 func (egw *EdgeGateway) GetLbVirtualServerByName(name string) (*types.LbVirtualServer, error) {
 	return egw.getLbVirtualServer(&types.LbVirtualServer{Name: name})
 }
