@@ -38,6 +38,14 @@ func detectNetwork(vcdClient *VCDClient, vdc *govcd.Vdc, network *govcd.OrgVDCNe
 		return "vcd_network_direct", parentNetwork.Name
 	}
 	edgeGatewayName, err := findEdgeGatewayConnection(vcdClient, vdc, network)
+	// There is a potential false positive returning from findEdgeGatewayConnection:
+	// When a non-routed network has the same name as the edge gateway,
+	// this function will return as if it had found an edge gateway.
+	// This fact won't affect regular operations, as this function is called
+	// from functions that assume a routed network. The only place where
+	// it could cause a problem is in the data source tests (this file), where this function
+	// is used to find the network type. If we avoid calling both the edge gateway and the
+	// isolated network "foo", all will be well.
 	if err == nil {
 		return "vcd_network_routed", edgeGatewayName
 	}

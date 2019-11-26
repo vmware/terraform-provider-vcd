@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -506,26 +507,42 @@ func resourceVcdNetworkIPAddressHash(v interface{}) int {
 // On success, returns the name of the edge gateway
 func findEdgeGatewayConnection(client *VCDClient, vdc *govcd.Vdc, network *govcd.OrgVDCNetwork) (string, error) {
 
+	// Find the list of networks with the wanted name
+	result, err := client.QueryWithNotEncodedParams(nil, map[string]string{
+		"type":   "orgVdcNetwork",
+		"filter": fmt.Sprintf("name==%s;vdc==%s", url.QueryEscape(network.OrgVDCNetwork.Name), url.QueryEscape(vdc.Vdc.ID)),
+	})
+	if err != nil {
+		return "", fmt.Errorf("[findEdgeGatewayConnection] error returning the list of networks for VDC: %s", err)
+	}
+	netList := result.Results.OrgVdcNetworkRecord
+
+	// Find the list of edge gateways
+	edgeGatewayResult := new(types.QueryResultEdgeGatewayRecordsType)
 	for _, av := range vdc.Vdc.Link {
 		if av.Rel == "edgeGateways" && av.Type == "application/vnd.vmware.vcloud.query.records+xml" {
 
-			edgeGatewayRecordsType := new(types.QueryResultEdgeGatewayRecordsType)
-
 			_, err := client.Client.ExecuteRequest(av.HREF, http.MethodGet,
-				"", "error querying edge gateways: %s", nil, edgeGatewayRecordsType)
+				"", "error querying edge gateways: %s", nil, edgeGatewayResult)
 			if err != nil {
 				return "", err
 			}
-			for _, eg := range edgeGatewayRecordsType.EdgeGatewayRecord {
-				edgeGateway, err := vdc.GetEdgeGatewayByName(eg.Name, false)
-				if err != nil {
-					return "", err
-				}
-				for _, gi := range edgeGateway.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
-					if gi.Network.Name == network.OrgVDCNetwork.Name {
-						return edgeGateway.EdgeGateway.Name, nil
-					}
-				}
+		}
+	}
+
+	var isAnEdgeGateway = func(gwName string) bool {
+		for _, gw := range edgeGatewayResult.EdgeGatewayRecord {
+			if gw.Name == gwName {
+				return true
+			}
+		}
+		return false
+	}
+
+	for _, net := range netList {
+		if net.Name == network.OrgVDCNetwork.Name {
+			if net.ConnectedTo != "" && isAnEdgeGateway(net.ConnectedTo) {
+				return net.ConnectedTo, nil
 			}
 		}
 	}

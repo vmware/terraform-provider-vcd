@@ -4,6 +4,7 @@ package vcd
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"testing"
 
@@ -28,20 +29,27 @@ type networkDef struct {
 }
 
 const (
-	isolatedStaticNetwork1  string = "TestAccVcdNetworkIsoStatic1"
-	isolatedStaticNetwork2  string = "TestAccVcdNetworkIsoStatic2"
-	isolatedDhcpNetwork     string = "TestAccVcdNetworkIsoDhcp"
-	isolatedMixedNetwork1   string = "TestAccVcdNetworkIsoMixed1"
-	isolatedMixedNetwork2   string = "TestAccVcdNetworkIsoMixed2"
-	routedStaticNetwork1    string = "TestAccVcdNetworkRoutedStatic1"
-	routedStaticNetwork2    string = "TestAccVcdNetworkRoutedStatic2"
-	routedDhcpNetwork       string = "TestAccVcdNetworkRoutedDhcp"
-	routedMixedNetwork      string = "TestAccVcdNetworkRoutedMixed"
-	routedStaticNetworkSub2 string = "TestAccVcdNetworkRoutedStaticSub2"
-	routedDhcpNetworkSub    string = "TestAccVcdNetworkRoutedDhcpSub"
-	routedMixedNetworkSub   string = "TestAccVcdNetworkRoutedMixedSub"
-	directNetwork           string = "TestAccVcdNetworkDirect"
+	isolatedStaticNetwork1   string = "TestAccVcdNetworkIsoStatic1"
+	isolatedStaticNetwork2   string = "TestAccVcdNetworkIsoStatic2"
+	isolatedDhcpNetwork      string = "TestAccVcdNetworkIsoDhcp"
+	isolatedMixedNetwork1    string = "TestAccVcdNetworkIsoMixed1"
+	isolatedMixedNetwork2    string = "TestAccVcdNetworkIsoMixed2"
+	routedStaticNetwork1     string = "TestAccVcdNetworkRoutedStatic1"
+	routedStaticNetwork2     string = "TestAccVcdNetworkRoutedStatic2"
+	routedDhcpNetwork        string = "TestAccVcdNetworkRoutedDhcp"
+	routedMixedNetwork       string = "TestAccVcdNetworkRoutedMixed"
+	routedStaticNetworkSub2  string = "TestAccVcdNetworkRoutedStaticSub2"
+	routedStaticNetworkDist  string = "TestAccVcdNetworkRoutedStaticDist"
+	routedStaticNetworkDist2 string = "TestAccVcdNetworkRoutedStaticDist2"
+	routedDhcpNetworkSub     string = "TestAccVcdNetworkRoutedDhcpSub"
+	routedMixedNetworkSub    string = "TestAccVcdNetworkRoutedMixedSub"
+	directNetwork            string = "TestAccVcdNetworkDirect"
 )
+
+// Distributed networks require an edge gateway with distributed routing enabled,
+// which in turn requires a NSX controller. To run the distributed test, users
+// need to set the environment variable VCD_TEST_DISTRIBUTED_NETWORK
+var testDistributedNetworks = os.Getenv("VCD_TEST_DISTRIBUTED_NETWORK") != ""
 
 func TestAccVcdNetworkIsolatedStatic1(t *testing.T) {
 	var def = networkDef{
@@ -156,6 +164,42 @@ func TestAccVcdNetworkRoutedStaticSub2(t *testing.T) {
 	runTest(def, t)
 }
 
+func TestAccVcdNetworkRoutedStaticDist(t *testing.T) {
+	if !testDistributedNetworks {
+		t.Skip("Distributed test skipped: not enabled")
+	}
+	var def = networkDef{
+		name:                  routedStaticNetworkDist,
+		gateway:               "10.10.103.1",
+		startStaticIpAddress1: "10.10.103.2",
+		endStaticIpAddress1:   "10.10.103.50",
+		startStaticIpAddress2: "10.10.103.52",
+		endStaticIpAddress2:   "10.10.103.100",
+		configText:            testAccCheckVcdNetworkRoutedStatic2,
+		resourceName:          "vcd_network_routed",
+		interfaceName:         "distributed",
+	}
+	runTest(def, t)
+}
+
+func TestAccVcdNetworkRoutedStaticDist2(t *testing.T) {
+	if !testDistributedNetworks {
+		t.Skip("Distributed test skipped: not enabled")
+	}
+	var def = networkDef{
+		name:                  routedStaticNetworkDist2,
+		gateway:               "10.10.102.1",
+		startStaticIpAddress1: "10.10.102.2",
+		endStaticIpAddress1:   "10.10.102.50",
+		startStaticIpAddress2: "10.10.102.52",
+		endStaticIpAddress2:   "10.10.102.100",
+		configText:            testAccCheckVcdNetworkRoutedStatic2,
+		resourceName:          "vcd_network_routed",
+		interfaceName:         "distributed",
+	}
+	runTest(def, t)
+}
+
 func TestAccVcdNetworkRoutedDhcp(t *testing.T) {
 	var def = networkDef{
 		name:               routedDhcpNetwork,
@@ -183,7 +227,6 @@ func TestAccVcdNetworkRoutedDhcpSub(t *testing.T) {
 }
 
 func TestAccVcdNetworkRoutedMixed(t *testing.T) {
-
 	var def = networkDef{
 		name:                  routedMixedNetwork,
 		gateway:               "10.10.102.1",
@@ -199,7 +242,6 @@ func TestAccVcdNetworkRoutedMixed(t *testing.T) {
 }
 
 func TestAccVcdNetworkRoutedMixedSub(t *testing.T) {
-
 	var def = networkDef{
 		name:                  routedMixedNetworkSub,
 		gateway:               "10.10.102.1",
@@ -307,7 +349,7 @@ func runTest(def networkDef, t *testing.T) {
 				),
 			},
 		}
-	case isolatedStaticNetwork2, routedStaticNetwork2, routedStaticNetworkSub2:
+	case isolatedStaticNetwork2, routedStaticNetwork2, routedStaticNetworkSub2, routedStaticNetworkDist, routedStaticNetworkDist2:
 		steps = []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
