@@ -32,10 +32,10 @@ IMPROVEMENTS:
 * Add command `make token` to create an authorization token from testing credentials
 * Clean up interpolation-only expressions from tests (as allowed in terraform v0.12.11+)
 * Increment vCD API version used from 27.0 to 29.0 [GH-396]
-* `resource/vcd_edgegateway` supports fields `fips_mode_enabled`, `use_default_route_for_dns_relay`
+* `resource/vcd_edgegateway` new fields `fips_mode_enabled`, `use_default_route_for_dns_relay`
   - [GH-401]
-* `resource/vcd_edgegateway` adds new `external_network` block supports for advanced configurations
-  of external networks including multiple subnets, IP pool sub-allocation and rate limits  - [GH-401]
+* `resource/vcd_edgegateway`  new `external_network` block for advanced configurations of external
+  networks including multiple subnets, IP pool sub-allocation and rate limits - [GH-401]
 * `resource/vcd_edgegateway` enables read support for field `distributed_routing` after switch to
   vCD API v29.0 - [GH-401]
 
