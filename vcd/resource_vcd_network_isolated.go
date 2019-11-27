@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -45,33 +46,37 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 				Description: "Optional description for the network",
 			},
 			"netmask": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Default:     "255.255.255.0",
-				Description: "The netmask for the new network",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Default:      "255.255.255.0",
+				Description:  "The netmask for the new network",
+				ValidateFunc: validation.SingleIP(),
 			},
 			"gateway": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "The gateway for this network",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Description:  "The gateway for this network",
+				ValidateFunc: validation.SingleIP(),
 			},
 
 			"dns1": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Default:     "8.8.8.8",
-				Description: "First DNS server to use",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Default:      "8.8.8.8",
+				Description:  "First DNS server to use",
+				ValidateFunc: validation.SingleIP(),
 			},
 
 			"dns2": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Default:     "8.8.4.4",
-				Description: "Second DNS server to use",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Default:      "8.8.4.4",
+				Description:  "Second DNS server to use",
+				ValidateFunc: validation.SingleIP(),
 			},
 
 			"dns_suffix": &schema.Schema{
@@ -103,15 +108,17 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"start_address": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "The first address in the IP Range",
+							Type:         schema.TypeString,
+							Required:     true,
+							Description:  "The first address in the IP Range",
+							ValidateFunc: validation.SingleIP(),
 						},
 
 						"end_address": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "The final address in the IP Range",
+							Type:         schema.TypeString,
+							Required:     true,
+							Description:  "The final address in the IP Range",
+							ValidateFunc: validation.SingleIP(),
 						},
 
 						"default_lease_time": &schema.Schema{
@@ -139,15 +146,17 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"start_address": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "The first address in the IP Range",
+							Type:         schema.TypeString,
+							Required:     true,
+							Description:  "The first address in the IP Range",
+							ValidateFunc: validation.SingleIP(),
 						},
 
 						"end_address": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "The final address in the IP Range",
+							Type:         schema.TypeString,
+							Required:     true,
+							Description:  "The final address in the IP Range",
+							ValidateFunc: validation.SingleIP(),
 						},
 					},
 				},
@@ -170,10 +179,6 @@ func resourceVcdNetworkIsolatedCreate(d *schema.ResourceData, meta interface{}) 
 	netMask := d.Get("netmask").(string)
 	dns1 := d.Get("dns1").(string)
 	dns2 := d.Get("dns2").(string)
-	err = validateIps(gatewayName, netMask, dns1, dns2)
-	if err != nil {
-		return err
-	}
 
 	ipRanges, err := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
 	if err != nil {
