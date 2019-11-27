@@ -193,3 +193,60 @@ func (vdc *Vdc) CreateOrgVDCNetwork(networkConfig *types.OrgVDCNetwork) (Task, e
 	}
 	return Task{}, fmt.Errorf("network creation failed: no operational link found")
 }
+
+// FindEdgeGatewayNameByNetwork searches the VDC for a connection between an edge gateway and a given network.
+// On success, returns the name of the edge gateway
+//
+// CAVEAT: this function should only be called on routed networks.
+// There is a slim chance that this function returns a misleading result when BOTH the following
+// conditions are met:
+// (a) we query an isolated or direct network instead of a routed one
+// AND
+// (b) the network has the same name of an existing edge gateway
+// In normal operations (like retrieving the edge gateway name for a routed network data source) this will work
+// as expected.
+// If this function is used to detect the network type (i.e. if it is connected to an edge gateway it's routed)
+// it may fail its purpose if the above mentioned circumstance apply.
+func (vdc *Vdc) FindEdgeGatewayNameByNetwork(networkName string) (string, error) {
+
+	// Find the list of networks with the wanted name
+	result, err := vdc.client.QueryWithNotEncodedParams(nil, map[string]string{
+		"type":   "orgVdcNetwork",
+		"filter": fmt.Sprintf("name==%s;vdc==%s", url.QueryEscape(networkName), url.QueryEscape(vdc.Vdc.ID)),
+	})
+	if err != nil {
+		return "", fmt.Errorf("[findEdgeGatewayConnection] error returning the list of networks for VDC: %s", err)
+	}
+	netList := result.Results.OrgVdcNetworkRecord
+
+	// Find the list of edge gateways
+	edgeGatewayResult := new(types.QueryResultEdgeGatewayRecordsType)
+	for _, av := range vdc.Vdc.Link {
+		if av.Rel == "edgeGateways" && av.Type == "application/vnd.vmware.vcloud.query.records+xml" {
+
+			_, err := vdc.client.ExecuteRequest(av.HREF, http.MethodGet,
+				"", "error querying edge gateways: %s", nil, edgeGatewayResult)
+			if err != nil {
+				return "", err
+			}
+		}
+	}
+
+	var isAnEdgeGateway = func(gwName string) bool {
+		for _, gw := range edgeGatewayResult.EdgeGatewayRecord {
+			if gw.Name == gwName {
+				return true
+			}
+		}
+		return false
+	}
+
+	for _, net := range netList {
+		if net.Name == networkName {
+			if net.ConnectedTo != "" && isAnEdgeGateway(net.ConnectedTo) {
+				return net.ConnectedTo, nil
+			}
+		}
+	}
+	return "", fmt.Errorf("no edge gateway connection found")
+}

@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"log"
-	"net/http"
-	"net/url"
 	"regexp"
 	"strings"
 
@@ -326,7 +324,7 @@ func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origi
 
 	// When this function is called from the data source
 	if edgeGatewayName == "" {
-		edgeGatewayName, err = findEdgeGatewayConnection(vcdClient, vdc, network)
+		edgeGatewayName, err = vdc.FindEdgeGatewayNameByNetwork(network.OrgVDCNetwork.Name)
 		if err != nil {
 			return fmt.Errorf("[network_routed read] no edge gateway connection found for network %s: %s", network.OrgVDCNetwork.Name, err)
 		}
@@ -507,52 +505,6 @@ func resourceVcdNetworkIPAddressHash(v interface{}) int {
 	return hashcode.String(buf.String())
 }
 
-// findEdgeGatewayConnection scans the VDC for a connection between an edge gateway and a given network.
-// On success, returns the name of the edge gateway
-func findEdgeGatewayConnection(client *VCDClient, vdc *govcd.Vdc, network *govcd.OrgVDCNetwork) (string, error) {
-
-	// Find the list of networks with the wanted name
-	result, err := client.QueryWithNotEncodedParams(nil, map[string]string{
-		"type":   "orgVdcNetwork",
-		"filter": fmt.Sprintf("name==%s;vdc==%s", url.QueryEscape(network.OrgVDCNetwork.Name), url.QueryEscape(vdc.Vdc.ID)),
-	})
-	if err != nil {
-		return "", fmt.Errorf("[findEdgeGatewayConnection] error returning the list of networks for VDC: %s", err)
-	}
-	netList := result.Results.OrgVdcNetworkRecord
-
-	// Find the list of edge gateways
-	edgeGatewayResult := new(types.QueryResultEdgeGatewayRecordsType)
-	for _, av := range vdc.Vdc.Link {
-		if av.Rel == "edgeGateways" && av.Type == "application/vnd.vmware.vcloud.query.records+xml" {
-
-			_, err := client.Client.ExecuteRequest(av.HREF, http.MethodGet,
-				"", "error querying edge gateways: %s", nil, edgeGatewayResult)
-			if err != nil {
-				return "", err
-			}
-		}
-	}
-
-	var isAnEdgeGateway = func(gwName string) bool {
-		for _, gw := range edgeGatewayResult.EdgeGatewayRecord {
-			if gw.Name == gwName {
-				return true
-			}
-		}
-		return false
-	}
-
-	for _, net := range netList {
-		if net.Name == network.OrgVDCNetwork.Name {
-			if net.ConnectedTo != "" && isAnEdgeGateway(net.ConnectedTo) {
-				return net.ConnectedTo, nil
-			}
-		}
-	}
-	return "", fmt.Errorf("no edge gateway connection found")
-}
-
 // resourceVcdNetworkRoutedImport is responsible for importing the resource.
 // The following steps happen as part of import
 // 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
@@ -584,7 +536,7 @@ func resourceVcdNetworkRoutedImport(d *schema.ResourceData, meta interface{}) ([
 		return nil, fmt.Errorf("[network_routed import] error retrieving network %s: %s", networkName, err)
 	}
 
-	edgeGatewayName, err := findEdgeGatewayConnection(vcdClient, vdc, network)
+	edgeGatewayName, err := vdc.FindEdgeGatewayNameByNetwork(networkName)
 	if err != nil {
 		return nil, fmt.Errorf("[network_routed import] no edge gateway connection found for network %s: %s", network.OrgVDCNetwork.Name, err)
 	}
