@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
@@ -28,29 +27,6 @@ var networkTemplates = map[string]string{
 	"vcd_network_routed":   datasourceTestNetworkRouted,
 	"vcd_network_isolated": datasourceTestNetworkIsolated,
 	"vcd_network_direct":   datasourceTestNetworkDirect,
-}
-
-// detectNetwork returns the network type by looking at its structure
-func detectNetwork(vcdClient *VCDClient, vdc *govcd.Vdc, network *govcd.OrgVDCNetwork) (netType string, netParent string) {
-
-	parentNetwork := network.OrgVDCNetwork.Configuration.ParentNetwork
-	if parentNetwork != nil {
-		return "vcd_network_direct", parentNetwork.Name
-	}
-	edgeGatewayName, err := vdc.FindEdgeGatewayNameByNetwork(network.OrgVDCNetwork.Name)
-	// There is a potential false positive returning from FindEdgeGatewayNameByNetwork in this context:
-	// When a non-routed network has the same name as the edge gateway,
-	// this function will return as if it had found an edge gateway.
-	// This fact won't affect regular operations, as this function is called
-	// from functions that assume a routed network. The only place where
-	// it could cause a problem is in the data source tests (this file), where this function
-	// is used to find the network type. If we avoid calling both the edge gateway and the
-	// isolated network "foo", all will be well.
-	if err == nil {
-		return "vcd_network_routed", edgeGatewayName
-	}
-
-	return "vcd_network_isolated", ""
 }
 
 // getAvailableNetworks collects available networks to use in data source tests
@@ -78,33 +54,44 @@ func getAvailableNetworks() error {
 	if err != nil {
 		return fmt.Errorf("vdc not found : %s", err)
 	}
+	networkList, err := vdc.GetNetworkList()
+	if err != nil {
+		return fmt.Errorf("error getting network list for VDC %s: %s", vdc.Vdc.Name, err)
+	}
 
-	for _, net1 := range vdc.Vdc.AvailableNetworks {
-		for _, net2 := range net1.Network {
-			network, err := vdc.GetOrgVdcNetworkByName(net2.Name, false)
-			if err == nil {
-				client := VCDClient{
-					VCDClient:       vcdClient,
-					SysOrg:          testConfig.Provider.SysOrg,
-					Org:             testConfig.VCD.Org,
-					Vdc:             testConfig.VCD.Vdc,
-					MaxRetryTimeout: testConfig.Provider.MaxRetryTimeout,
-					InsecureFlag:    true,
+	for _, net := range networkList {
+
+		network, err := vdc.GetOrgVdcNetworkByName(net.Name, false)
+		if err != nil {
+			return fmt.Errorf("error getting network %s: %s", net.Name, err)
+		}
+		networkType := ""
+		parent := ""
+		switch net.LinkType {
+		case 0:
+			networkType = "vcd_network_direct"
+			parentNetwork := network.OrgVDCNetwork.Configuration.ParentNetwork
+			if parentNetwork != nil {
+				parent = parentNetwork.Name
+			}
+		case 1:
+			networkType = "vcd_network_routed"
+			parent = net.ConnectedTo
+		case 2:
+			networkType = "vcd_network_isolated"
+		}
+
+		_, ok := availableNetworks[networkType]
+		if !ok {
+			if networkType == "vcd_network_isolated" {
+				// Make sure the IPScope structure is reachable for isolated networks
+				if network.OrgVDCNetwork.Configuration != nil &&
+					network.OrgVDCNetwork.Configuration.IPScopes != nil &&
+					len(network.OrgVDCNetwork.Configuration.IPScopes.IPScope) > 0 {
+					availableNetworks[networkType] = networkRec{network.OrgVDCNetwork, parent}
 				}
-				networkType, parent := detectNetwork(&client, vdc, network)
-				_, ok := availableNetworks[networkType]
-				if !ok {
-					if networkType == "vcd_network_isolated" {
-						// Make sure the IPScope structure is reachable for isolated networks
-						if network.OrgVDCNetwork.Configuration != nil &&
-							network.OrgVDCNetwork.Configuration.IPScopes != nil &&
-							len(network.OrgVDCNetwork.Configuration.IPScopes.IPScope) > 0 {
-							availableNetworks[networkType] = networkRec{network.OrgVDCNetwork, parent}
-						}
-					} else {
-						availableNetworks[networkType] = networkRec{network.OrgVDCNetwork, parent}
-					}
-				}
+			} else {
+				availableNetworks[networkType] = networkRec{network.OrgVDCNetwork, parent}
 			}
 		}
 	}

@@ -2691,7 +2691,7 @@ type QueryResultOrgVdcNetworkRecordType struct {
 	Dns1               string  `xml:"dns1,attr,omitempty"`
 	Dns2               string  `xml:"dns2,attr,omitempty"`
 	DnsSuffix          string  `xml:"dnsSuffix,attr,omitempty"`
-	LinkType           int     `xml:"linkType,attr,omitempty"`
+	LinkType           int     `xml:"linkType,attr,omitempty"` // 0 = direct, 1 = routed, 2 = isolated
 	ConnectedTo        string  `xml:"connectedTo,attr,omitempty"`
 	Vdc                string  `xml:"vdc,attr,omitempty"`
 	IsBusy             bool    `xml:"isBusy,attr,omitempty"`
