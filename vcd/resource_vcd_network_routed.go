@@ -59,7 +59,7 @@ func resourceVcdNetworkRouted() *schema.Resource {
 				Description: "Optional description for the network",
 			},
 
-			"interface": &schema.Schema{
+			"interface_type": &schema.Schema{
 				Type:             schema.TypeString,
 				Optional:         true,
 				Default:          "internal",
@@ -250,7 +250,7 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 			distributedAllowed = true
 		}
 	}
-	networkInterface := d.Get("interface").(string)
+	networkInterface := d.Get("interface_type").(string)
 	trueValue := true
 	switch strings.ToLower(networkInterface) {
 	case "internal":
@@ -377,13 +377,13 @@ func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origi
 	}
 
 	if network.OrgVDCNetwork.Configuration.SubInterface == nil {
-		d.Set("interface", "internal")
+		d.Set("interface_type", "internal")
 	} else {
 		if *network.OrgVDCNetwork.Configuration.SubInterface {
-			d.Set("interface", "subinterface")
+			d.Set("interface_type", "subinterface")
 		} else {
 			if *network.OrgVDCNetwork.Configuration.DistributedInterface {
-				d.Set("interface", "distributed")
+				d.Set("interface_type", "distributed")
 			}
 		}
 	}

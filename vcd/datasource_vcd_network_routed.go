@@ -37,7 +37,7 @@ func datasourceVcdNetworkRouted() *schema.Resource {
 				Description: "Optional description for the network",
 			},
 
-			"interface": &schema.Schema{
+			"interface_type": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Which interface to use (one of `internal`, `subinterface`, `distributed`)",

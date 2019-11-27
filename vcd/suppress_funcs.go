@@ -22,7 +22,7 @@ func suppressWordToEmptyString(word string) schema.SchemaDiffSuppressFunc {
 }
 
 // suppressNetworkUpgradedInterface is used to silence the changes in
-// property "interface" in routed networks.
+// property "interface_type" in routed networks.
 // In the old the version, the "internal" interface was implicit,
 // while in the new one it is one of several.
 // This function only considers the "internal" value, as the other interface types

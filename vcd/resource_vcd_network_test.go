@@ -292,7 +292,7 @@ func runTest(def networkDef, t *testing.T) {
 		"EndDhcpIpAddress":      def.endDhcpIpAddress,
 		"ExternalNetwork":       def.externalNetwork,
 		"FuncName":              networkName,
-		"Interface":             def.interfaceName,
+		"InterfaceType":         def.interfaceName,
 		"Tags":                  "network",
 	}
 	var network govcd.OrgVDCNetwork
@@ -690,13 +690,13 @@ output "start_static_address1" {
 
 const testAccCheckVcdNetworkRoutedStatic2 = `
 resource "vcd_network_routed" "{{.NetworkName}}" {
-  name         = "{{.NetworkName}}"
-  description  = "{{.Description}}"
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
-  gateway      = "{{.Gateway}}"
-  interface    = "{{.Interface}}"
+  name           = "{{.NetworkName}}"
+  description    = "{{.Description}}"
+  org            = "{{.Org}}"
+  vdc            = "{{.Vdc}}"
+  edge_gateway   = "{{.EdgeGateway}}"
+  gateway        = "{{.Gateway}}"
+  interface_type = "{{.InterfaceType}}"
 
   static_ip_pool {
     start_address = "{{.StartStaticIpAddress1}}"
@@ -723,13 +723,13 @@ output "end_static_address1" {
 
 const testAccCheckVcdNetworkRoutedDhcp = `
 resource "vcd_network_routed" "{{.NetworkName}}" {
-  name         = "{{.NetworkName}}"
-  description  = "{{.Description}}"
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
-  gateway      = "{{.Gateway}}"
-  interface    = "{{.Interface}}"
+  name           = "{{.NetworkName}}"
+  description    = "{{.Description}}"
+  org            = "{{.Org}}"
+  vdc            = "{{.Vdc}}"
+  edge_gateway   = "{{.EdgeGateway}}"
+  gateway        = "{{.Gateway}}"
+  interface_type = "{{.InterfaceType}}"
 
   dhcp_pool {
     start_address = "{{.StartDhcpIpAddress}}"
@@ -746,13 +746,13 @@ output "end_dhcp_address" {
 
 const testAccCheckVcdNetworkRoutedMixed = `
 resource "vcd_network_routed" "{{.NetworkName}}" {
-  name         = "{{.NetworkName}}"
-  description  = "{{.Description}}"
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
-  gateway      = "{{.Gateway}}"
-  interface    = "{{.Interface}}"
+  name           = "{{.NetworkName}}"
+  description    = "{{.Description}}"
+  org            = "{{.Org}}"
+  vdc            = "{{.Vdc}}"
+  edge_gateway   = "{{.EdgeGateway}}"
+  gateway        = "{{.Gateway}}"
+  interface_type = "{{.InterfaceType}}"
 
   static_ip_pool {
     start_address = "{{.StartStaticIpAddress1}}"

@@ -31,7 +31,7 @@ IMPROVEMENTS:
 * Add command `make token` to create an authorization token from testing credentials
 * Clean up interpolation-only expressions from tests (as allowed in terraform v0.12.11+)
 * Increment vCD API version used from 27.0 to 29.0 [GH-396]
-* `resource/vcd_network_routed` Add properties `description` and `interface` [GH-321] [GH-342] [GH-374]
+* `resource/vcd_network_routed` Add properties `description` and `interface_type` [GH-321] [GH-342] [GH-374]
 * `resource/vcd_network_isolated` Add property `description` [GH-373]
 * `resource/vcd_network_direct` Add property `description`
 * `resource/vcd_network_routed` Add check for valid IPs [GH-374]

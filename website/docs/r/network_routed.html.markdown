@@ -45,7 +45,7 @@ The following arguments are supported:
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
 * `name` - (Required) A unique name for the network
 * `description` - (Optional *v2.6+*) An optional description of the network
-* `interface` - (Optional *v2.6+*) An interface for the network. One of `internal` (default), `subinterface`, 
+* `interface_type` - (Optional *v2.6+*) An interface for the network. One of `internal` (default), `subinterface`, 
   `distributed` (requires the edge gateway to support distributed networks)
 * `edge_gateway` - (Required) The name of the edge gateway
 * `netmask` - (Optional) The netmask for the new network. Defaults to `255.255.255.0`
