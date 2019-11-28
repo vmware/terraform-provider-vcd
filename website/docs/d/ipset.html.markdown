@@ -34,4 +34,4 @@ The following arguments are supported:
 
 ## Attribute Reference
 
-All the attributes defined in `vcd_ipset` resource are available.
+All the attributes defined in [`vcd_ipset`](/docs/providers/vcd/r/ipset.html) resource are available.
