@@ -12,21 +12,18 @@ func datasourceVcdIpSet() *schema.Resource {
 			"org": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "IP set name",
-				ForceNew:    true,
 			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
