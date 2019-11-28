@@ -79,7 +79,7 @@ func resourceVcdIpSetCreate(d *schema.ResourceData, meta interface{}) error {
 
 	createdIpSet, err := vdc.CreateNsxvIpSet(ipSet)
 	if err != nil {
-		return fmt.Errorf("error creating new firewall rule: %s", err)
+		return fmt.Errorf("error creating new IP set: %s", err)
 	}
 
 	log.Printf("[DEBUG] IP set with name %s created. Id: %s", createdIpSet.Name, createdIpSet.ID)
