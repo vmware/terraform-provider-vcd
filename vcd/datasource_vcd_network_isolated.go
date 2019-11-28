@@ -22,6 +22,11 @@ func datasourceVcdNetworkIsolated() *schema.Resource {
 				Optional:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
+			"description": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Optional description for the network",
+			},
 			"netmask": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,

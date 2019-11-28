@@ -211,7 +211,13 @@ type NetworkConfiguration struct {
 	RetainNetInfoAcrossDeployments bool             `xml:"RetainNetInfoAcrossDeployments,omitempty"`
 	Features                       *NetworkFeatures `xml:"Features,omitempty"`
 	GuestVlanAllowed               *bool            `xml:"GuestVlanAllowed,omitempty"`
-	DistributedInterface           *bool            `xml:"DistributedInterface,omitempty"`
+
+	// SubInterface and DistributedInterface are mutually exclusive
+	// When they are both nil, it means the "internal" interface (the default) will be used.
+	// When one of them is set, the corresponding interface will be used.
+	// They cannot be both set (we'll get an API error if we do).
+	SubInterface         *bool `xml:"SubInterface,omitempty"`
+	DistributedInterface *bool `xml:"DistributedInterface,omitempty"`
 	// TODO: Not Implemented
 	// RouterInfo                     RouterInfo           `xml:"RouterInfo,omitempty"`
 	// SyslogServerSettings           SyslogServerSettings `xml:"SyslogServerSettings,omitempty"`
@@ -331,8 +337,8 @@ type OrgVDCNetwork struct {
 	OperationKey    string                `xml:"operationKey,attr,omitempty"`
 	Name            string                `xml:"name,attr"`
 	Status          string                `xml:"status,attr,omitempty"`
-	Configuration   *NetworkConfiguration `xml:"Configuration,omitempty"`
 	Description     string                `xml:"Description,omitempty"`
+	Configuration   *NetworkConfiguration `xml:"Configuration,omitempty"`
 	EdgeGateway     *Reference            `xml:"EdgeGateway,omitempty"`
 	ServiceConfig   *GatewayFeatures      `xml:"ServiceConfig,omitempty"` // Specifies the service configuration for an isolated Org VDC networks
 	IsShared        bool                  `xml:"IsShared"`
@@ -2685,7 +2691,7 @@ type QueryResultOrgVdcNetworkRecordType struct {
 	Dns1               string  `xml:"dns1,attr,omitempty"`
 	Dns2               string  `xml:"dns2,attr,omitempty"`
 	DnsSuffix          string  `xml:"dnsSuffix,attr,omitempty"`
-	LinkType           int     `xml:"linkType,attr,omitempty"`
+	LinkType           int     `xml:"linkType,attr,omitempty"` // 0 = direct, 1 = routed, 2 = isolated
 	ConnectedTo        string  `xml:"connectedTo,attr,omitempty"`
 	Vdc                string  `xml:"vdc,attr,omitempty"`
 	IsBusy             bool    `xml:"isBusy,attr,omitempty"`

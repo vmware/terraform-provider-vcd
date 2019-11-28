@@ -37,6 +37,12 @@ func resourceVcdNetworkDirect() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
+			"description": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Optional description for the network",
+			},
 			"external_network": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
@@ -102,8 +108,9 @@ func resourceVcdNetworkDirectCreate(d *schema.ResourceData, meta interface{}) er
 	}
 
 	orgVDCNetwork := &types.OrgVDCNetwork{
-		Xmlns: "http://www.vmware.com/vcloud/v1.5",
-		Name:  networkName,
+		Xmlns:       "http://www.vmware.com/vcloud/v1.5",
+		Name:        networkName,
+		Description: d.Get("description").(string),
 		Configuration: &types.NetworkConfiguration{
 			ParentNetwork: &types.Reference{
 				HREF: externalNetwork.ExternalNetwork.HREF,
@@ -180,6 +187,7 @@ func genericVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}, origi
 	_ = d.Set("external_network_dns1", externalNetwork.ExternalNetwork.Configuration.IPScopes.IPScope[0].DNS1)
 	_ = d.Set("external_network_dns2", externalNetwork.ExternalNetwork.Configuration.IPScopes.IPScope[0].DNS2)
 	_ = d.Set("external_network_dns_suffix", externalNetwork.ExternalNetwork.Configuration.IPScopes.IPScope[0].DNSSuffix)
+	_ = d.Set("description", network.OrgVDCNetwork.Description)
 
 	d.SetId(network.OrgVDCNetwork.ID)
 
