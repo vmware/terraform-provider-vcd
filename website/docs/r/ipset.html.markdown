@@ -46,7 +46,7 @@ The following arguments are supported:
 * `name` - (Required) Unique IP set name.
 * `description` - (Optional) An optional description for IP set.
 * `ip_addresses` - (Required) A set of IP addresses, CIDRs and ranges as strings.
-* `is_inheritance_allowed` (Optional) Toggle to enable inheritance to allow visibility at underlying scopes. (Default `true`)
+* `is_inheritance_allowed` (Optional) Toggle to enable inheritance to allow visibility at underlying scopes. Default `true`
 
 ## Attribute Reference
 
@@ -59,9 +59,8 @@ The following attributes are exported on this resource:
 ~> **Note:** The current implementation of Terraform import can only import resources into the state.
 It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
 
-An existing load balancer application rule can be [imported][docs-import] into this resource
-via supplying the full dot separated path for load balancer application rule. An example is
-below:
+An existing IP set can be [imported][docs-import] into this resource via supplying the full dot
+separated path IP set. An example is below:
 
 [docs-import]: https://www.terraform.io/docs/import/
 
