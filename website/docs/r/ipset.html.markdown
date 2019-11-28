@@ -21,10 +21,19 @@ resource "vcd_ipset" "test-ipset" {
   org          = "my-org"
   vdc          = "my-org-vdc"
 
-  name                   = "TestAccVcdIpSet-changed2"
+  name                   = "ipset-one"
   is_inheritance_allowed = false
   description            = "test-ip-set-changed-description"
   ip_addresses           = ["1.1.1.1/24","10.10.10.100-10.10.10.110"]
+}
+```
+
+## Example Usage 2 (minimal example)
+
+```hcl
+resource "vcd_ipset" "test-ipset" {
+  name                   = "ipset-two"
+  ip_addresses           = ["192.168.1.1"]
 }
 ```
 
