@@ -58,12 +58,13 @@ func resourceVcdNetworkRouted() *schema.Resource {
 			},
 
 			"interface_type": &schema.Schema{
-				Type:             schema.TypeString,
-				Optional:         true,
-				Default:          "internal",
-				ForceNew:         true,
-				Description:      "Which interface to use (one of `internal`, `subinterface`, `distributed`)",
-				ValidateFunc:     validation.StringInSlice([]string{"internal", "subinterface", "distributed"}, true),
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "internal",
+				ForceNew:     true,
+				Description:  "Which interface to use (one of `internal`, `subinterface`, `distributed`)",
+				ValidateFunc: validation.StringInSlice([]string{"internal", "subinterface", "distributed"}, true),
+				// Diff suppress function used to ease upgradin from versions where the interface was implicit
 				DiffSuppressFunc: suppressNetworkUpgradedInterface(),
 			},
 
