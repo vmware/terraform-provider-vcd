@@ -264,7 +264,7 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 		if distributedAllowed {
 			orgVDCNetwork.Configuration.DistributedInterface = &trueValue
 		} else {
-			return fmt.Errorf("interface 'distributed' requested, but edge gateway '%s' not enabled", edgeGateway.EdgeGateway.Name)
+			return fmt.Errorf("interface 'distributed' requested, but distributed routing is not enabled in edge gateway '%s'", edgeGateway.EdgeGateway.Name)
 		}
 	}
 
