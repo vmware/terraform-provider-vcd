@@ -152,7 +152,10 @@ func resourceVcdVappNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("error finding vApp. %#v", err)
 	}
 
-	staticIpRanges := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
+	staticIpRanges, err := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
+	if err != nil {
+		return err
+	}
 
 	vappNetworkSettings := &govcd.VappNetworkSettings{
 		Name:           d.Get("name").(string),

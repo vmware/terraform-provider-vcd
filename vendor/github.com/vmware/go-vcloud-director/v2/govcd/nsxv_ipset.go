@@ -13,6 +13,8 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
+// CreateNsxvIpSet creates an IP set from *types.EdgeIpSet. IP set defines a group of IP addresses
+// that you can add as the source or destination in a firewall rule or in DHCP relay configuration.
 func (vdc *Vdc) CreateNsxvIpSet(ipSetConfig *types.EdgeIpSet) (*types.EdgeIpSet, error) {
 	if err := validateCreateNsxvIpSet(ipSetConfig); err != nil {
 		return nil, err
@@ -46,8 +48,8 @@ func (vdc *Vdc) CreateNsxvIpSet(ipSetConfig *types.EdgeIpSet) (*types.EdgeIpSet,
 	return createdIpSet, nil
 }
 
-// UpdateNsxvIpSet updates all fields ipSetConfig therefore all of them must be set. ID is mandatory
-// to perform update.
+// UpdateNsxvIpSet sends all fields of ipSetConfig. Omiting a value may reset it. ID is mandatory to
+// perform update.
 // Because the API always requires a Revision to be sent - the update fetches latest revision number
 // automatically and embeds into the update structure.
 func (vdc *Vdc) UpdateNsxvIpSet(ipSetConfig *types.EdgeIpSet) (*types.EdgeIpSet, error) {
