@@ -96,7 +96,7 @@ func resourceVcdNetworkDirectCreate(d *schema.ResourceData, meta interface{}) er
 	vcdClient := meta.(*VCDClient)
 
 	if !vcdClient.Client.IsSysAdmin {
-		return fmt.Errorf("creation of a vcd_network_routed requires system administrator privileges")
+		return fmt.Errorf("creation of a vcd_network_direct requires system administrator privileges")
 	}
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
