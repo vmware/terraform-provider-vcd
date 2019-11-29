@@ -1,0 +1,194 @@
+// +build nsxv gateway ALL functional
+
+package vcd
+
+import (
+	"fmt"
+	"regexp"
+	"testing"
+
+	"github.com/vmware/go-vcloud-director/v2/govcd"
+
+	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+)
+
+func TestAccVcdIpSet(t *testing.T) {
+
+	// String map to fill the template
+	var params = StringMap{
+		"Org":       testConfig.VCD.Org,
+		"Vdc":       testConfig.VCD.Vdc,
+		"IpSetName": t.Name(),
+		"Tags":      "nsxv",
+	}
+
+	configText := templateFill(testAccVcdIpSet, params)
+
+	params["FuncName"] = t.Name() + "-step1"
+	params["IpSetName"] = t.Name() + "-changed"
+	configText1 := templateFill(testAccVcdIpSetUpdate, params)
+
+	params["FuncName"] = t.Name() + "-step2"
+	params["IpSetName"] = t.Name() + "-changed2"
+	configText2 := templateFill(testAccVcdIpSetUpdate2, params)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		Providers:    testAccProviders,
+		PreCheck:     func() { testAccPreCheck(t) },
+		CheckDestroy: testAccCheckVcdIpSetDestroy("vcd_ipset.test-ipset", params["IpSetName"].(string)),
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: configText,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_ipset.test-ipset", "id", regexp.MustCompile(`.*ipset-\d*$`)),
+					resource.TestCheckResourceAttr("vcd_ipset.test-ipset", "name", t.Name()),
+					resource.TestCheckResourceAttr("vcd_ipset.test-ipset", "description", "test-ip-set-description"),
+					resource.TestCheckResourceAttr("vcd_ipset.test-ipset", "is_inheritance_allowed", "true"),
+					resource.TestCheckResourceAttr("vcd_ipset.test-ipset", "ip_addresses.#", "2"),
+					resource.TestCheckResourceAttr("vcd_ipset.test-ipset", "ip_addresses.2555711295", "192.168.1.1"),
+					resource.TestCheckResourceAttr("vcd_ipset.test-ipset", "ip_addresses.2329977041", "192.168.2.1"),
+
+					// Validate that datasource has all the same fields
+					resourceFieldsEqual("vcd_ipset.test-ipset", "data.vcd_ipset.test-ipset", []string{}),
+				),
+			},
+			resource.TestStep{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_ipset.test-ipset", "id", regexp.MustCompile(`.*ipset-\d*$`)),
+					resource.TestCheckResourceAttr("vcd_ipset.test-ipset", "name", t.Name()+"-changed"),
+					resource.TestCheckResourceAttr("vcd_ipset.test-ipset", "is_inheritance_allowed", "true"),
+					resource.TestCheckResourceAttr("vcd_ipset.test-ipset", "description", "test-ip-set-changed-description"),
+					resource.TestCheckResourceAttr("vcd_ipset.test-ipset", "ip_addresses.#", "2"),
+					resource.TestCheckResourceAttr("vcd_ipset.test-ipset", "ip_addresses.1441693733", "10.10.10.1"),
+					resource.TestCheckResourceAttr("vcd_ipset.test-ipset", "ip_addresses.2766637002", "11.11.11.1"),
+
+					// Validate that datasource has all the same fields
+					resourceFieldsEqual("vcd_ipset.test-ipset", "data.vcd_ipset.test-ipset", []string{}),
+				),
+			},
+			resource.TestStep{
+				ResourceName:      "vcd_ipset.imported",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, "TestAccVcdIpSet-changed"),
+			},
+			resource.TestStep{
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_ipset.test-ipset", "id", regexp.MustCompile(`.*ipset-\d*$`)),
+					resource.TestCheckResourceAttr("vcd_ipset.test-ipset", "name", t.Name()+"-changed2"),
+					resource.TestCheckResourceAttr("vcd_ipset.test-ipset", "is_inheritance_allowed", "false"),
+					resource.TestCheckResourceAttr("vcd_ipset.test-ipset", "description", "test-ip-set-changed-description"),
+					resource.TestCheckResourceAttr("vcd_ipset.test-ipset", "ip_addresses.#", "2"),
+					resource.TestCheckResourceAttr("vcd_ipset.test-ipset", "ip_addresses.2083356021", "1.1.1.1/24"),
+					resource.TestCheckResourceAttr("vcd_ipset.test-ipset", "ip_addresses.3684382799", "10.10.10.100-10.10.10.110"),
+					// Validate that datasource has all the same fields
+					resourceFieldsEqual("vcd_ipset.test-ipset", "data.vcd_ipset.test-ipset", []string{}),
+				),
+			},
+			resource.TestStep{
+				Config: configText2,
+				Taint:  []string{"vcd_ipset.test-ipset"}, // Force provisioning from scratch instead of update
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_ipset.test-ipset", "id", regexp.MustCompile(`.*ipset-\d*$`)),
+					resource.TestCheckResourceAttr("vcd_ipset.test-ipset", "name", t.Name()+"-changed2"),
+					resource.TestCheckResourceAttr("vcd_ipset.test-ipset", "is_inheritance_allowed", "false"),
+					resource.TestCheckResourceAttr("vcd_ipset.test-ipset", "description", "test-ip-set-changed-description"),
+					resource.TestCheckResourceAttr("vcd_ipset.test-ipset", "ip_addresses.#", "2"),
+					resource.TestCheckResourceAttr("vcd_ipset.test-ipset", "ip_addresses.2083356021", "1.1.1.1/24"),
+					resource.TestCheckResourceAttr("vcd_ipset.test-ipset", "ip_addresses.3684382799", "10.10.10.100-10.10.10.110"),
+					// Validate that datasource has all the same fields
+					resourceFieldsEqual("vcd_ipset.test-ipset", "data.vcd_ipset.test-ipset", []string{}),
+				),
+			},
+		},
+	})
+}
+
+func testAccCheckVcdIpSetDestroy(resource, ipSetName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		conn := testAccProvider.Meta().(*VCDClient)
+
+		rs, ok := s.RootModule().Resources[resource]
+		if !ok {
+			return fmt.Errorf("not found resource: %s", resource)
+		}
+
+		orgName := rs.Primary.Attributes["org"]
+		vdcName := rs.Primary.Attributes["vdc"]
+
+		_, vdc, err := conn.GetOrgAndVdc(orgName, vdcName)
+		if err != nil {
+			return fmt.Errorf("error retrieving org %s and vdc %s : %s ", orgName, vdcName, err)
+		}
+
+		ipSet, err := vdc.GetNsxvIpSetByNameOrId(ipSetName)
+
+		if !govcd.IsNotFound(err) || ipSet != nil {
+			return fmt.Errorf("IP set (ID: %s) was not deleted: %s", rs.Primary.ID, err)
+		}
+		return nil
+	}
+}
+
+const testAccVcdIpSet = `
+resource "vcd_ipset" "test-ipset" {
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+
+  name         = "{{.IpSetName}}"
+  description  = "test-ip-set-description"
+  ip_addresses = ["192.168.1.1","192.168.2.1"]
+}
+
+data "vcd_ipset" "test-ipset" {
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+  
+	name         = vcd_ipset.test-ipset.name
+}
+`
+
+const testAccVcdIpSetUpdate = `
+resource "vcd_ipset" "test-ipset" {
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+
+  name         = "{{.IpSetName}}"
+  description  = "test-ip-set-changed-description"
+  ip_addresses = ["10.10.10.1","11.11.11.1"]
+}
+
+data "vcd_ipset" "test-ipset" {
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+  
+	name         = vcd_ipset.test-ipset.name
+}
+`
+
+const testAccVcdIpSetUpdate2 = `
+resource "vcd_ipset" "test-ipset" {
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+
+  name                   = "{{.IpSetName}}"
+  is_inheritance_allowed = false
+  description            = "test-ip-set-changed-description"
+  ip_addresses           = ["1.1.1.1/24","10.10.10.100-10.10.10.110"]
+}
+
+data "vcd_ipset" "test-ipset" {
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+  
+	name         = vcd_ipset.test-ipset.name
+}
+`

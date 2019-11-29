@@ -820,3 +820,20 @@ func (vdc *Vdc) GetVAppByNameOrId(identifier string, refresh bool) (*VApp, error
 	}
 	return entity.(*VApp), err
 }
+
+// buildNsxvNetworkServiceEndpointURL uses vDC HREF as a base to derive NSX-V based "network
+// services" endpoint (eg: https://_hostname_or_ip_/network/services + optionalSuffix)
+func (vdc *Vdc) buildNsxvNetworkServiceEndpointURL(optionalSuffix string) (string, error) {
+	apiEndpoint, err := url.ParseRequestURI(vdc.Vdc.HREF)
+	if err != nil {
+		return "", fmt.Errorf("unable to process vDC URL: %s", err)
+	}
+
+	hostname := apiEndpoint.Scheme + "://" + apiEndpoint.Host + "/network/services"
+
+	if optionalSuffix != "" {
+		return hostname + optionalSuffix, nil
+	}
+
+	return hostname, nil
+}

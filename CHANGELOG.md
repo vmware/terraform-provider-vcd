@@ -2,13 +2,15 @@
 
 FEATURES:
 
+* **New Resource:** `vcd_ipset` IP set - [GH-406]
 * **New Data Source:** `vcd_vapp_vm` VM - [GH-218]
+* **New Data Source:** `vcd_ipset` IP set - [GH-406]
 * **New build command:** `make test-upgrade` to run an upgrade test from the previous released version
 
 IMPROVEMENTS:
 
-* Switch to Terraform terraform-plugin-sdk v1.0.0 as per recent [HashiCorp
-  recommendation](https://www.terraform.io/docs/extend/plugin-sdk.html) - [GH-382]
+* Switch to Terraform terraform-plugin-sdk v1.3.0 as per recent [HashiCorp
+  recommendation](https://www.terraform.io/docs/extend/plugin-sdk.html) - [GH-382, GH-406]
 * `resource/vcd_vapp_vm` VM state ID changed from VM name to vCD ID
 * `resource/vcd_vapp_vm` Add properties `description` and `storage_profile`
 * `resource/vcd_vapp_vm` Add import capability and full read support [GH-218]
