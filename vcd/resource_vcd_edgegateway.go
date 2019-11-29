@@ -622,7 +622,7 @@ func getGatewayInterfacesType(vcdClient *VCDClient, externalInterfaceSet *schema
 	extInterfaceList := externalInterfaceSet.List()
 	if len(extInterfaceList) > 0 {
 		gatewayInterfaceSlice = make([]*types.GatewayInterface, len(extInterfaceList))
-
+		// Loop over interface definitions one by one and add them to list of interfaces
 		for extInterfaceIndex, extInterface := range extInterfaceList {
 			extInterfaceMap := extInterface.(map[string]interface{})
 			externalNetworkName := extInterfaceMap["name"].(string)
@@ -631,79 +631,117 @@ func getGatewayInterfacesType(vcdClient *VCDClient, externalInterfaceSet *schema
 				return nil, fmt.Errorf("could not look up external network %s by name: %s", externalNetworkName, err)
 			}
 			var isInterfaceUsedForDefaultRoute bool
-
 			var subnetParticipationSlice []*types.SubnetParticipation
-			subnetSchema, ok := extInterfaceMap["subnet"]
-			if ok {
-				subnetSet := subnetSchema.(*schema.Set)
-				subnetList := subnetSet.List()
-				subnetParticipationSlice = make([]*types.SubnetParticipation, len(subnetList))
-				if len(subnetList) > 0 {
-					for subnetIndex, subnet := range subnetList {
-						subnetMap := subnet.(map[string]interface{})
-						subnetParticipationSlice[subnetIndex] = &types.SubnetParticipation{
-							Gateway:            subnetMap["gateway"].(string),
-							Netmask:            subnetMap["netmask"].(string),
-							UseForDefaultRoute: subnetMap["use_for_default_route"].(bool),
-						}
-						subnetParticipationSlice[subnetIndex].IPAddress = subnetMap["ip_address"].(string)
-						if subnetMap["use_for_default_route"].(bool) {
-							isInterfaceUsedForDefaultRoute = true
-						}
 
-						// Check if there are any suballocated pool definitions
-						subnetSchema, ok := subnetMap["suballocate_pool"]
-						if ok {
-							suballocatePoolSet := subnetSchema.(*schema.Set)
-							suballocatePoolList := suballocatePoolSet.List()
-							if len(suballocatePoolList) > 0 {
-								// Allocate nested IP ranges slice
-								subnetParticipationSlice[subnetIndex].IPRanges = &types.IPRanges{}
-								subnetParticipationSlice[subnetIndex].IPRanges.IPRange = make([]*types.IPRange, len(suballocatePoolList))
-								for suballocatePoolIndex, suballocatePool := range suballocatePoolList {
-									suballocatePoolMap := convertToStringMap(suballocatePool.(map[string]interface{}))
-									singleRange := &types.IPRange{
-										StartAddress: suballocatePoolMap["start_address"],
-										EndAddress:   suballocatePoolMap["end_address"],
-									}
-									// Add single IP range into list
-									subnetParticipationSlice[subnetIndex].IPRanges.IPRange[suballocatePoolIndex] = singleRange
-								}
-							}
-						}
-					}
-				}
+			// Create subnet participation definitions for a particular edge gateway
+			subnetSchema := extInterfaceMap["subnet"]
+			subnetParticipationSlice, isInterfaceUsedForDefaultRoute, err = getGatewayInterfaceSubnetParticipationType(subnetSchema.(*schema.Set))
+			if err != nil {
+				return nil, fmt.Errorf("unable to create subnet participation definition: %s", err)
 			}
 
-			// Create interface and add it to gatewayInterfaceSlice
-			gatewayInterface := &types.GatewayInterface{
-				Name:          externalNetwork.ExternalNetwork.Name,
-				DisplayName:   externalNetwork.ExternalNetwork.Name,
-				InterfaceType: "uplink",
-				Network: &types.Reference{
-					HREF: externalNetwork.ExternalNetwork.HREF,
-					ID:   externalNetwork.ExternalNetwork.ID,
-					Type: "application/vnd.vmware.admin.network+xml",
-					Name: externalNetwork.ExternalNetwork.Name,
-				},
-				UseForDefaultRoute:  isInterfaceUsedForDefaultRoute,
-				ApplyRateLimit:      extInterfaceMap["enable_rate_limit"].(bool),
-				InRateLimit:         extInterfaceMap["incoming_rate_limit"].(float64),
-				OutRateLimit:        extInterfaceMap["outgoing_rate_limit"].(float64),
-				SubnetParticipation: subnetParticipationSlice,
+			// Try to create a network interface and add it to the slice of gateway interfaces
+			gwInterface, err := getGatewayInterfaceType(externalNetwork, extInterfaceMap, isInterfaceUsedForDefaultRoute, subnetParticipationSlice)
+			if err != nil {
+				return nil, fmt.Errorf("unable to create edge gateway interface definition: %s", err)
 			}
-			// Add populated network interface to the slice
-			gatewayInterfaceSlice[extInterfaceIndex] = gatewayInterface
+			gatewayInterfaceSlice[extInterfaceIndex] = gwInterface
 		}
 	}
 
 	return gatewayInterfaceSlice, nil
 }
 
-// getExternalNetworkData traverses API structure with 3 nested loops to unpack such hierarchy to
-// `external_network` block(s). external_network -> subnet -> suballocate_pool It must only convert
-// to such structure only `uplink` interfaces. One uplink exception in the case of distributed
-// routing support (DLR) is an `uplink` network `DLR_to_EDGE_%s` which is a transit interface
+// getGatewayInterfaceType gets all interface properties and returns a definition for single
+// *types.GatewayInterface
+func getGatewayInterfaceType(externalNetwork *govcd.ExternalNetwork, extInterfaceMap map[string]interface{}, usedForDefaultRoute bool, subnetParticipationSlice []*types.SubnetParticipation) (*types.GatewayInterface, error) {
+	singleGatewayInterface := &types.GatewayInterface{
+		Name:          externalNetwork.ExternalNetwork.Name,
+		DisplayName:   externalNetwork.ExternalNetwork.Name,
+		InterfaceType: "uplink",
+		Network: &types.Reference{
+			HREF: externalNetwork.ExternalNetwork.HREF,
+			ID:   externalNetwork.ExternalNetwork.ID,
+			Type: "application/vnd.vmware.admin.network+xml",
+			Name: externalNetwork.ExternalNetwork.Name,
+		},
+		UseForDefaultRoute:  usedForDefaultRoute,
+		ApplyRateLimit:      extInterfaceMap["enable_rate_limit"].(bool),
+		InRateLimit:         extInterfaceMap["incoming_rate_limit"].(float64),
+		OutRateLimit:        extInterfaceMap["outgoing_rate_limit"].(float64),
+		SubnetParticipation: subnetParticipationSlice,
+	}
+
+	return singleGatewayInterface, nil
+}
+
+// getGatewayInterfaceSubnetParticipationType creates []*types.SubnetParticipation for a particular
+func getGatewayInterfaceSubnetParticipationType(subnetSet *schema.Set) ([]*types.SubnetParticipation, bool, error) {
+	var isInterfaceUsedForDefaultRoute bool
+	subnetList := subnetSet.List()
+	subnetParticipationSlice := make([]*types.SubnetParticipation, len(subnetList))
+
+	for subnetIndex, subnet := range subnetList {
+		subnetMap := subnet.(map[string]interface{})
+		subnetParticipationSlice[subnetIndex] = &types.SubnetParticipation{
+			Gateway:            subnetMap["gateway"].(string),
+			Netmask:            subnetMap["netmask"].(string),
+			UseForDefaultRoute: subnetMap["use_for_default_route"].(bool),
+		}
+		subnetParticipationSlice[subnetIndex].IPAddress = subnetMap["ip_address"].(string)
+		if subnetMap["use_for_default_route"].(bool) {
+			isInterfaceUsedForDefaultRoute = true
+		}
+
+		// Check if there are any optional suballocated pool definitions (defined as IP ranges) and
+		// parse them
+		if subnetSchema, ok := subnetMap["suballocate_pool"]; ok {
+			ranges, err := getGatewayInterfaceIpRangeType(subnetSchema.(*schema.Set))
+			if err != nil {
+				return nil, false, fmt.Errorf("unable to prepare sub-allocation pools :%s", err)
+			}
+			// if there are any ranges returned - add them to subnet
+			if len(ranges) > 0 {
+				subnetParticipationSlice[subnetIndex].IPRanges = &types.IPRanges{}
+				subnetParticipationSlice[subnetIndex].IPRanges.IPRange = ranges
+			}
+
+		}
+	}
+	return subnetParticipationSlice, isInterfaceUsedForDefaultRoute, nil
+}
+
+// getGatewayInterfaceIpRangeType creates []*types.IPRange with IP address ranges which are shown as
+// IP pool sub-allocations in UI
+func getGatewayInterfaceIpRangeType(suballocatePoolSet *schema.Set) ([]*types.IPRange, error) {
+	var ipRange []*types.IPRange
+
+	suballocatePoolList := suballocatePoolSet.List()
+	if len(suballocatePoolList) > 0 {
+		// Allocate nested IP ranges slice size
+		ipRange = make([]*types.IPRange, len(suballocatePoolList))
+
+		for suballocatePoolIndex, suballocatePool := range suballocatePoolList {
+			suballocatePoolMap := convertToStringMap(suballocatePool.(map[string]interface{}))
+			singleRange := &types.IPRange{
+				StartAddress: suballocatePoolMap["start_address"],
+				EndAddress:   suballocatePoolMap["end_address"],
+			}
+			// Add single IP range into list
+			ipRange[suballocatePoolIndex] = singleRange
+		}
+	}
+
+	return ipRange, nil
+}
+
+// getExternalNetworkData traverses API structure over edge gateway interfaces to unpack such
+// hierarchy to `external_network` block(s).
+// external_network -> subnet(func getExternalNetworkSubnetTypeSet) ->
+// suballocate_pool (func getExternalNetworkIPRangeSubAllocatePoolTypeSet)
+// It must only convert to such structure only
+// `uplink` interfaces. One uplink exception in the case of distributed routing support (DLR) is an
+// `uplink` network `DLR_to_EDGE_%s` which is a transit interface
 func getExternalNetworkData(vcdClient *VCDClient, d *schema.ResourceData, gatewayInterfaces []*types.GatewayInterface) (*schema.Set, error) {
 	edgeGatewayName := d.Get("name").(string)
 	isDistributedRouter := d.Get("distributed_routing").(bool)
@@ -720,8 +758,8 @@ func getExternalNetworkData(vcdClient *VCDClient, d *schema.ResourceData, gatewa
 			}
 			// One of gateway interfaces can be named `DLR_to_EDGE_%s` where %s=edge_gateway_name
 			// (e.g. `DLR_to_EDGE_edge-with-complex-networks`). This interface (vNic) is added as
-			// transit interface when distributed routing is enabled. It is not being defined by
-			// user and we do not need to read/set it into `external_network` block.
+			// transit interface when distributed logical routing (DLR) is enabled. It is not being
+			// defined by user and we do not need to read/set it into `external_network` block.
 			if isDistributedRouter && extNetwork.Network.Name == fmt.Sprintf("DLR_to_EDGE_%s", edgeGatewayName) {
 				log.Printf("[TRACE] edge gateway - skipping read of uplink interface network %s because it is a DLR interface",
 					extNetwork.Network.Name)
@@ -734,46 +772,15 @@ func getExternalNetworkData(vcdClient *VCDClient, d *schema.ResourceData, gatewa
 			extNetworkMap["incoming_rate_limit"] = extNetwork.InRateLimit
 			extNetworkMap["outgoing_rate_limit"] = extNetwork.OutRateLimit
 
-			externalNetworkSubnetSlice := make([]interface{}, len(extNetwork.SubnetParticipation))
-			for extNetsubnetIndex, extNetsubnet := range extNetwork.SubnetParticipation {
-				extNetworkSubnetMap := make(map[string]interface{})
-				extNetworkSubnetMap["gateway"] = extNetsubnet.Gateway
-				extNetworkSubnetMap["netmask"] = extNetsubnet.Netmask
-				extNetworkSubnetMap["use_for_default_route"] = extNetsubnet.UseForDefaultRoute
-
-				// IP address is tricky. It is only possible to set the IP address during read if it
-				// was actually a used field in .tf configuration. If it was not used, it cannot be
-				// set because Terraform will recommend to rebuild whole block every time, because
-				// `computed` field causes the hash function for TypeSet to be recomputed ("known
-				// after apply") every time.
-				wasIpSet, err := wasIpAddressSet(vcdClient, d, extNetwork.Network.Name, extNetsubnet.Gateway, extNetsubnet.Netmask)
+			if len(extNetwork.SubnetParticipation) > 0 {
+				subnet, err := getExternalNetworkSubnetTypeSet(extNetwork.SubnetParticipation, vcdClient, d, extNetwork.Network.Name)
 				if err != nil {
-					return nil, fmt.Errorf("could not check if IP address was set in configuration: %s", err)
+					return nil, fmt.Errorf("unable to create subnet structure for storing in statefile: %s", err)
 				}
-				if wasIpSet {
-					extNetworkSubnetMap["ip_address"] = extNetsubnet.IPAddress
-				}
+				extNetworkMap["subnet"] = subnet
 
-				// Check for suballocated ip pools and set them if there are any
-				if extNetsubnet.IPRanges != nil && len(extNetsubnet.IPRanges.IPRange) > 0 {
-					externalNetworkSubnetRangeSlice := make([]interface{}, len(extNetsubnet.IPRanges.IPRange))
-					for ipRangeIndex, ipRange := range extNetsubnet.IPRanges.IPRange {
-						extNetworkSubnetRangeMap := make(map[string]interface{})
-						extNetworkSubnetRangeMap["start_address"] = ipRange.StartAddress
-						extNetworkSubnetRangeMap["end_address"] = ipRange.EndAddress
-
-						externalNetworkSubnetRangeSlice[ipRangeIndex] = extNetworkSubnetRangeMap
-					}
-					// Hash externalNetworkSubnetRangeSlice and add it to parent object "subnet"
-					extNetworkSubnetMap["suballocate_pool"] = schema.NewSet(schema.HashResource(subAllocationPool), externalNetworkSubnetRangeSlice)
-				}
-
-				// Make a set and add it to externalNetworkSubnetSlice
-				externalNetworkSubnetSlice[extNetsubnetIndex] = extNetworkSubnetMap
+				externalNetworkSlice = append(externalNetworkSlice, extNetworkMap)
 			}
-
-			extNetworkMap["subnet"] = schema.NewSet(schema.HashResource(subnetResource), externalNetworkSubnetSlice)
-			externalNetworkSlice = append(externalNetworkSlice, extNetworkMap)
 		}
 	}
 	externalNetworkSet := schema.NewSet(schema.HashResource(externalNetworkResource), externalNetworkSlice)
@@ -781,8 +788,60 @@ func getExternalNetworkData(vcdClient *VCDClient, d *schema.ResourceData, gatewa
 	return externalNetworkSet, nil
 }
 
+// getExternalNetworkSubnetTypeSet creates a Hashicorp TypeSet holding all subnets defined for
+// external network (including sub-allocated pools)
+func getExternalNetworkSubnetTypeSet(subnetParticipation []*types.SubnetParticipation, vcdClient *VCDClient, d *schema.ResourceData, extNetworkName string) (*schema.Set, error) {
+	externalNetworkSubnetSlice := make([]interface{}, len(subnetParticipation))
+	for extNetsubnetIndex, extNetsubnet := range subnetParticipation {
+		extNetworkSubnetMap := make(map[string]interface{})
+		extNetworkSubnetMap["gateway"] = extNetsubnet.Gateway
+		extNetworkSubnetMap["netmask"] = extNetsubnet.Netmask
+		extNetworkSubnetMap["use_for_default_route"] = extNetsubnet.UseForDefaultRoute
+
+		// IP address is tricky. It is only possible to set the IP address during read if it
+		// was actually a used field in .tf configuration. If it was not used, it cannot be
+		// set because Terraform will recommend to rebuild whole block every time, because
+		// `computed` field causes the hash function for TypeSet to be recomputed ("known
+		// after apply") every time.
+		wasIpSet, err := wasIpAddressSet(vcdClient, d, extNetworkName, extNetsubnet.Gateway, extNetsubnet.Netmask)
+		if err != nil {
+			return nil, fmt.Errorf("could not check if IP address was set in configuration: %s", err)
+		}
+		if wasIpSet {
+			extNetworkSubnetMap["ip_address"] = extNetsubnet.IPAddress
+		}
+
+		// Check for suballocated ip pools and set them if there are any
+		if extNetsubnet.IPRanges != nil && len(extNetsubnet.IPRanges.IPRange) > 0 {
+			// Hash externalNetworkSubnetRangeSlice and add it to parent object "subnet"
+			extNetworkSubnetMap["suballocate_pool"] = getExternalNetworkIPRangeSubAllocatePoolTypeSet(extNetsubnet.IPRanges.IPRange)
+		}
+
+		// Make a set and add it to externalNetworkSubnetSlice
+		externalNetworkSubnetSlice[extNetsubnetIndex] = extNetworkSubnetMap
+	}
+
+	return schema.NewSet(schema.HashResource(subnetResource), externalNetworkSubnetSlice), nil
+}
+
+// getExternalNetworkIPRangeSubAllocatePoolTypeSet creates a Hashicorp TypeSet holding all IP ranges of sub-allocated pools
+func getExternalNetworkIPRangeSubAllocatePoolTypeSet(ipRanges []*types.IPRange) *schema.Set {
+	externalNetworkSubnetRangeSlice := make([]interface{}, len(ipRanges))
+	for ipRangeIndex, ipRange := range ipRanges {
+		extNetworkSubnetRangeMap := make(map[string]interface{})
+		extNetworkSubnetRangeMap["start_address"] = ipRange.StartAddress
+		extNetworkSubnetRangeMap["end_address"] = ipRange.EndAddress
+
+		externalNetworkSubnetRangeSlice[ipRangeIndex] = extNetworkSubnetRangeMap
+	}
+	// Hash and return IP ranges of sub-allocated pools
+	return schema.NewSet(schema.HashResource(subAllocationPool), externalNetworkSubnetRangeSlice)
+}
+
 // wasIpAddressSet checks if specific `SubnetParticipation` element had IP address field populated
-// in .tf configuration
+// in .tf configuration. It is needed to decide whether a computed IP address field should be set,
+// because TypeSet is very sensitive to injecting any new data (ends up with new hash and shows
+// replacement of whole object)
 func wasIpAddressSet(vcdClient *VCDClient, d *schema.ResourceData, extNetworkName, extNetworkGateway, extNetworkNetmask string) (bool, error) {
 	// Cache currently set configuration
 	gwInterfaces, err := getGatewayInterfacesType(vcdClient, d.Get("external_network").(*schema.Set))
@@ -897,11 +956,7 @@ func setEdgeGatewayValues(vcdClient *VCDClient, d *schema.ResourceData, egw govc
 			}
 		}
 	}
-	// TODO: Enable this setting after we switch to a higher API version.
-	//Based on testing the API does accept (and set) the setting, but upon GET query it omits the DistributedRouting
-	// field therefore struct field defaults to false after unmarshaling.
-	//This has already been a case for us and then it was proven that API v27.0 does not return field, while API v31.0
-	// does return the field. (Thanks, Dainius)
+
 	err = d.Set("distributed_routing", egw.EdgeGateway.Configuration.DistributedRoutingEnabled)
 	if err != nil {
 		return err
