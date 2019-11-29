@@ -70,10 +70,7 @@ func getAvailableNetworks() error {
 		switch net.LinkType {
 		case 0:
 			networkType = "vcd_network_direct"
-			parentNetwork := network.OrgVDCNetwork.Configuration.ParentNetwork
-			if parentNetwork != nil {
-				parent = parentNetwork.Name
-			}
+			parent = net.ConnectedTo
 		case 1:
 			networkType = "vcd_network_routed"
 			parent = net.ConnectedTo
