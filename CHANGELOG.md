@@ -38,7 +38,6 @@ IMPROVEMENTS:
 * `resource/vcd_network_direct` Add property `description`
 * `resource/vcd_network_routed` Add check for valid IPs [GH-374]
 * `resource/vcd_network_isolated` Add check for valid IPs [GH-373]
-* `resource/vcd_network_direct` Org User can now read this resource (previously it was only Sys Admin) - this change makes it possible to get the details of External Network as Org User
 
 BUG FIXES:
 
@@ -48,6 +47,7 @@ BUG FIXES:
   [GH-379]
 * Fix `vcd_independent_disk` reapply issue, which was seen when optional `bus_sub_type` and `bus_type` wasn't used - [GH-394]
 * Fix `vcd_vapp_network` apply issue, where the property `guest_vlan_allowed` was applied only to the last of multiple networks.
+* `datasource/vcd_network_direct` is now readable by Org User (previously it was only by Sys Admin), as this change made it possible to get the details of External Network as Org User [GH-408]
 
 DEPRECATIONS:
 
