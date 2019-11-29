@@ -22,7 +22,46 @@ balancing settings will be **ignored** when it is not. Refer to [official vCloud
 (https://docs.vmware.com/en/vCloud-Director/9.7/com.vmware.vcloud.tenantportal.doc/GUID-7E082E77-B459-4CE7-806D-2769F7CB5624.html) 
 for more information.
 
-## Example usage (multiple external network subnets and IP pool sub-allocation)
+## Example Usage
+
+```hcl
+resource "vcd_edgegateway" "egw" {
+  org = "my-org"
+  vdc = "my-vdc"
+
+  name                    = "my-egw"
+  description             = "new edge gateway"
+  configuration           = "compact"
+  advanced                = true
+  
+  external_network {
+    name = "my-ext-net1"
+
+    subnet {
+      ip_address            = "192.168.30.51"
+      gateway               = "192.168.30.49"
+      netmask               = "255.255.255.240"
+      use_for_default_route = true
+    }
+  }
+}
+
+resource "vcd_network_routed" "rnet1" {
+  name         = "rnet1"
+  org          = "my-org"
+  vdc          = "my-vdc"
+  edge_gateway = vcd_edgegateway.egw.name
+  gateway      = "192.168.2.1"
+
+  static_ip_pool {
+    start_address = "192.168.2.2"
+    end_address   = "192.168.2.100"
+  }
+}
+```
+
+
+## Example Usage (multiple External Networks, Subnets and IP pool sub-allocation)
 
 ```hcl
 resource "vcd_edgegateway" "egw" {
@@ -36,7 +75,7 @@ resource "vcd_edgegateway" "egw" {
 
 
   external_network {
-    name = "${vcd_external_network.my-external-network.name}"
+    name = "my-main-external-network"
 
     subnet {
       ip_address = "192.168.30.51"
@@ -55,7 +94,7 @@ resource "vcd_edgegateway" "egw" {
     }
 
     subnet {
-      # ip_address is skipped here on purpose to get dynamic IP assgined. Because this
+      # ip_address is skipped here on purpose to get dynamic IP assigned. Because this
       # subnet is used for default route, this IP address can then be accessed using
       # `default_external_network_ip` attribute.
       use_for_default_route = true
@@ -77,36 +116,6 @@ resource "vcd_edgegateway" "egw" {
 }
 ```
 
-
-## Example Usage
-
-```hcl
-resource "vcd_edgegateway" "egw" {
-  org = "my-org"
-  vdc = "my-vdc"
-
-  name                    = "my-egw"
-  description             = "new edge gateway"
-  configuration           = "compact"
-  default_gateway_network = "my-ext-net1"
-  external_networks       = [ "my-ext-net1", "my-ext-net2" ]
-  advanced                = true
-}
-
-resource "vcd_network_routed" "rnet1" {
-  name         = "rnet1"
-  org          = "my-org"
-  vdc          = "my-vdc"
-  edge_gateway = "${vcd_edgegateway.egw.name}"
-  gateway      = "192.168.2.1"
-
-  static_ip_pool {
-    start_address = "192.168.2.2"
-    end_address   = "192.168.2.100"
-  }
-}
-```
-
 ## Argument Reference
 
 The following arguments are supported:
@@ -115,13 +124,17 @@ The following arguments are supported:
 * `vdc` - (Optional) The name of VDC that owns the edge gateway. Optional if defined at provider level. 
 * `name` - (Required) A unique name for the edge gateway.
 * `external_networks` - (Deprecated, Optional) An array of external network names. This supports
-  simple external networks with one subnet only. 
+  simple external networks with one subnet only. **Please use** the [external
+  network](#external-network) block structure to define external networks.
 * `external_network` - (Optional, *v2.6+*) One or more blocks defining external networks, their
   subnets, IP addresses and  IP pool suballocation attached to edge gateway interfaces. Details are
   in [external network](#external-network) block below.
 * `configuration` - (Required) Configuration of the vShield edge VM for this gateway. One of: `compact`, `full` ("Large"), `x-large`, `full4` ("Quad Large").
-* `default_gateway_network` - (Deprecated, Optional) Name of the external network to be used as default gateway. It must be included in the
-  list of `external_networks`. Providing an empty string or omitting the argument will create the edge gateway without a default gateway.
+* `default_gateway_network` - (Deprecated, Optional) Name of the external network to be used as
+  default gateway. It must be included in the list of `external_networks`. Providing an empty string
+  or omitting the argument will create the edge gateway without a default gateway. **Please use**
+  the  [external network](#external-network) block structure and `use_for_default_route` to specify
+  a subnet should be used as default route.
 * `advanced` - (Optional) True if the gateway uses advanced networking. Default is `true`.
 * `ha_enabled` - (Optional) Enable high availability on this edge gateway. Default is `false`.
 * `distributed_routing` - (Optional) If advanced networking enabled, also enable distributed routing. Default is `false`.
@@ -151,18 +164,18 @@ order) logging. Default `false`.
 One of `accept` or `deny`. Default `deny`.
 
 <a id="external-network"></a>
-## External network
+## External Network
 
 * `name` (Required) - Name of existing external network
 * `enable_rate_limit` (Optional) - `True` if rate limitting should be applied on this interface.
   Default is `false`.
 * `incoming_rate_limit` (Optional) - Incoming rate limit in Mbps.
 * `outgoing_rate_limit` (Optional) - Outgoing rate limit in Mbps.
-* `subnet` (Required) - One or more blocks of [external network subnet](#external-network-subnet).
+* `subnet` (Required) - One or more blocks of [External Network Subnet](#external-network-subnet).
 
 
 <a id="external-network-subnet"></a>
-## External network subnet 
+## External Network Subnet 
 
 * `gateway` (Required) - Gateway for a subnet in external network
 * `netmask` (Required) - Netmask of a subnet in external network
@@ -174,7 +187,7 @@ One of `accept` or `deny`. Default `deny`.
   ranges](#external-network-subnet-suballocate) in the subnet to be sub-allocated 
 
 <a id="external-network-subnet"></a>
-## External network subnet sub-allocation
+## External Network Subnet Sub-Allocation
 
 * `start_address` (Required) - Start IP address of a range
 * `end_address` (Required) - End IP address of a range
