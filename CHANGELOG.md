@@ -48,6 +48,7 @@ BUG FIXES:
   [GH-379]
 * Fix `vcd_independent_disk` reapply issue, which was seen when optional `bus_sub_type` and `bus_type` wasn't used - [GH-394]
 * Fix `vcd_vapp_network` apply issue, where the property `guest_vlan_allowed` was applied only to the last of multiple networks.
+* Fix `vcd_network_direct` data reading from Org Users. Such users can now read the data from existing direct networks.
 
 DEPRECATIONS:
 
