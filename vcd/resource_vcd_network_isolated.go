@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -38,34 +39,44 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"netmask": &schema.Schema{
+			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Default:     "255.255.255.0",
-				Description: "The netmask for the new network",
+				Description: "Optional description for the network",
+			},
+			"netmask": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Default:      "255.255.255.0",
+				Description:  "The netmask for the new network",
+				ValidateFunc: validation.SingleIP(),
 			},
 			"gateway": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "The gateway for this network",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Description:  "The gateway for this network",
+				ValidateFunc: validation.SingleIP(),
 			},
 
 			"dns1": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Default:     "8.8.8.8",
-				Description: "First DNS server to use",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Default:      "8.8.8.8",
+				Description:  "First DNS server to use",
+				ValidateFunc: validation.SingleIP(),
 			},
 
 			"dns2": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Default:     "8.8.4.4",
-				Description: "Second DNS server to use",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Default:      "8.8.4.4",
+				Description:  "Second DNS server to use",
+				ValidateFunc: validation.SingleIP(),
 			},
 
 			"dns_suffix": &schema.Schema{
@@ -97,15 +108,17 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"start_address": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "The first address in the IP Range",
+							Type:         schema.TypeString,
+							Required:     true,
+							Description:  "The first address in the IP Range",
+							ValidateFunc: validation.SingleIP(),
 						},
 
 						"end_address": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "The final address in the IP Range",
+							Type:         schema.TypeString,
+							Required:     true,
+							Description:  "The final address in the IP Range",
+							ValidateFunc: validation.SingleIP(),
 						},
 
 						"default_lease_time": &schema.Schema{
@@ -133,15 +146,17 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"start_address": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "The first address in the IP Range",
+							Type:         schema.TypeString,
+							Required:     true,
+							Description:  "The first address in the IP Range",
+							ValidateFunc: validation.SingleIP(),
 						},
 
 						"end_address": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "The final address in the IP Range",
+							Type:         schema.TypeString,
+							Required:     true,
+							Description:  "The final address in the IP Range",
+							ValidateFunc: validation.SingleIP(),
 						},
 					},
 				},
@@ -161,8 +176,14 @@ func resourceVcdNetworkIsolatedCreate(d *schema.ResourceData, meta interface{}) 
 
 	gatewayName := d.Get("gateway").(string)
 	networkName := d.Get("name").(string)
+	netMask := d.Get("netmask").(string)
+	dns1 := d.Get("dns1").(string)
+	dns2 := d.Get("dns2").(string)
 
-	ipRanges := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
+	ipRanges, err := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
+	if err != nil {
+		return err
+	}
 
 	dhcpPool := d.Get("dhcp_pool").(*schema.Set).List()
 
@@ -185,17 +206,18 @@ func resourceVcdNetworkIsolatedCreate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	orgVDCNetwork := &types.OrgVDCNetwork{
-		Xmlns: "http://www.vmware.com/vcloud/v1.5",
-		Name:  networkName,
+		Xmlns:       "http://www.vmware.com/vcloud/v1.5",
+		Name:        networkName,
+		Description: d.Get("description").(string),
 		Configuration: &types.NetworkConfiguration{
 			FenceMode: "isolated",
 			IPScopes: &types.IPScopes{
 				IPScope: []*types.IPScope{&types.IPScope{
 					IsInherited: false,
 					Gateway:     gatewayName,
-					Netmask:     d.Get("netmask").(string),
-					DNS1:        d.Get("dns1").(string),
-					DNS2:        d.Get("dns2").(string),
+					Netmask:     netMask,
+					DNS1:        dns1,
+					DNS2:        dns2,
 					DNSSuffix:   d.Get("dns_suffix").(string),
 					IPRanges:    &ipRanges,
 				}},
@@ -301,6 +323,7 @@ func genericVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}, ori
 			return fmt.Errorf("[network isolated read] dhcp set %s", err)
 		}
 	}
+	d.Set("description", network.OrgVDCNetwork.Description)
 
 	d.SetId(network.OrgVDCNetwork.ID)
 	return nil

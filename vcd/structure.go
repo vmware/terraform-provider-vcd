@@ -9,15 +9,17 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-func expandIPRange(configured []interface{}) types.IPRanges {
+func expandIPRange(configured []interface{}) (types.IPRanges, error) {
 	ipRange := make([]*types.IPRange, 0, len(configured))
 
 	for _, ipRaw := range configured {
 		data := ipRaw.(map[string]interface{})
 
+		startAddress := data["start_address"].(string)
+		endAddress := data["end_address"].(string)
 		ip := types.IPRange{
-			StartAddress: data["start_address"].(string),
-			EndAddress:   data["end_address"].(string),
+			StartAddress: startAddress,
+			EndAddress:   endAddress,
 		}
 
 		ipRange = append(ipRange, &ip)
@@ -27,7 +29,7 @@ func expandIPRange(configured []interface{}) types.IPRanges {
 		IPRange: ipRange,
 	}
 
-	return ipRanges
+	return ipRanges, nil
 }
 
 func expandFirewallRules(d *schema.ResourceData, gateway *types.EdgeGateway) ([]*types.FirewallRule, error) {

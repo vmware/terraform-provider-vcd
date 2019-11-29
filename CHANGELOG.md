@@ -2,13 +2,15 @@
 
 FEATURES:
 
+* **New Resource:** `vcd_ipset` IP set - [GH-406]
 * **New Data Source:** `vcd_vapp_vm` VM - [GH-218]
+* **New Data Source:** `vcd_ipset` IP set - [GH-406]
 * **New build command:** `make test-upgrade` to run an upgrade test from the previous released version
 
 IMPROVEMENTS:
 
 * Switch to Terraform terraform-plugin-sdk v1.3.0 as per recent [HashiCorp
-  recommendation](https://www.terraform.io/docs/extend/plugin-sdk.html) - [GH-382, GH-401]
+  recommendation](https://www.terraform.io/docs/extend/plugin-sdk.html) - [GH-382, GH-406]
 * `resource/vcd_vapp_vm` VM state ID changed from VM name to vCD ID
 * `resource/vcd_vapp_vm` Add properties `description` and `storage_profile`
 * `resource/vcd_vapp_vm` Add import capability and full read support [GH-218]
@@ -32,6 +34,11 @@ IMPROVEMENTS:
 * Add command `make token` to create an authorization token from testing credentials
 * Clean up interpolation-only expressions from tests (as allowed in terraform v0.12.11+)
 * Increment vCD API version used from 27.0 to 29.0 [GH-396]
+* `resource/vcd_network_routed` Add properties `description` and `interface_type` [GH-321,GH-342,GH-374]
+* `resource/vcd_network_isolated` Add property `description` [GH-373]
+* `resource/vcd_network_direct` Add property `description`
+* `resource/vcd_network_routed` Add check for valid IPs [GH-374]
+* `resource/vcd_network_isolated` Add check for valid IPs [GH-373]
 * `resource/vcd_edgegateway` new fields `fips_mode_enabled`, `use_default_route_for_dns_relay`
   - [GH-401]
 * `resource/vcd_edgegateway`  new `external_network` block for advanced configurations of external
