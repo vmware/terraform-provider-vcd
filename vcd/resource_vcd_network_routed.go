@@ -4,12 +4,12 @@ import (
 	"bytes"
 	"fmt"
 	"log"
-	"net/http"
 	"regexp"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -50,35 +50,57 @@ func resourceVcdNetworkRouted() *schema.Resource {
 				Description: "The name of the edge gateway",
 			},
 
-			"netmask": &schema.Schema{
+			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Default:     "255.255.255.0",
-				Description: "The netmask for the new network",
+				Description: "Optional description for the network",
+			},
+
+			"interface_type": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "internal",
+				ForceNew:     true,
+				Description:  "Which interface to use (one of `internal`, `subinterface`, `distributed`)",
+				ValidateFunc: validation.StringInSlice([]string{"internal", "subinterface", "distributed"}, true),
+				// Diff suppress function used to ease upgrade operations from versions where the interface was implicit
+				DiffSuppressFunc: suppressNetworkUpgradedInterface(),
+			},
+
+			"netmask": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Default:      "255.255.255.0",
+				Description:  "The netmask for the new network",
+				ValidateFunc: validation.SingleIP(),
 			},
 
 			"gateway": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "The gateway of this network",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Description:  "The gateway of this network",
+				ValidateFunc: validation.SingleIP(),
 			},
 
 			"dns1": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Default:     "8.8.8.8",
-				Description: "First DNS server to use",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Default:      "8.8.8.8",
+				Description:  "First DNS server to use",
+				ValidateFunc: validation.SingleIP(),
 			},
 
 			"dns2": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Default:     "8.8.4.4",
-				Description: "Second DNS server to use",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				Default:      "8.8.4.4",
+				Description:  "Second DNS server to use",
+				ValidateFunc: validation.SingleIP(),
 			},
 
 			"dns_suffix": &schema.Schema{
@@ -112,15 +134,17 @@ func resourceVcdNetworkRouted() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"start_address": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "The first address in the IP Range",
+							Type:         schema.TypeString,
+							Required:     true,
+							Description:  "The first address in the IP Range",
+							ValidateFunc: validation.SingleIP(),
 						},
 
 						"end_address": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "The final address in the IP Range",
+							Type:         schema.TypeString,
+							Required:     true,
+							Description:  "The final address in the IP Range",
+							ValidateFunc: validation.SingleIP(),
 						},
 
 						"default_lease_time": &schema.Schema{
@@ -150,15 +174,17 @@ func resourceVcdNetworkRouted() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"start_address": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "The first address in the IP Range",
+							Type:         schema.TypeString,
+							Required:     true,
+							Description:  "The first address in the IP Range",
+							ValidateFunc: validation.SingleIP(),
 						},
 
 						"end_address": &schema.Schema{
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: "The final address in the IP Range",
+							Type:         schema.TypeString,
+							Required:     true,
+							Description:  "The final address in the IP Range",
+							ValidateFunc: validation.SingleIP(),
 						},
 					},
 				},
@@ -187,12 +213,19 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 
 	gatewayName := d.Get("gateway").(string)
 	networkName := d.Get("name").(string)
+	netMask := d.Get("netmask").(string)
+	dns1 := d.Get("dns1").(string)
+	dns2 := d.Get("dns2").(string)
 
-	ipRanges := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
+	ipRanges, err := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
+	if err != nil {
+		return err
+	}
 
 	orgVDCNetwork := &types.OrgVDCNetwork{
-		Xmlns: "http://www.vmware.com/vcloud/v1.5",
-		Name:  networkName,
+		Xmlns:       "http://www.vmware.com/vcloud/v1.5",
+		Name:        networkName,
+		Description: d.Get("description").(string),
 
 		EdgeGateway: &types.Reference{
 			HREF: edgeGateway.EdgeGateway.HREF,
@@ -203,9 +236,9 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 				IPScope: []*types.IPScope{&types.IPScope{
 					IsInherited: false,
 					Gateway:     gatewayName,
-					Netmask:     d.Get("netmask").(string),
-					DNS1:        d.Get("dns1").(string),
-					DNS2:        d.Get("dns2").(string),
+					Netmask:     netMask,
+					DNS1:        dns1,
+					DNS2:        dns2,
 					DNSSuffix:   d.Get("dns_suffix").(string),
 					IPRanges:    &ipRanges,
 				}},
@@ -213,6 +246,27 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 			BackwardCompatibilityMode: true,
 		},
 		IsShared: d.Get("shared").(bool),
+	}
+	distributedAllowed := false
+	if edgeGateway.EdgeGateway.Configuration.DistributedRoutingEnabled != nil {
+		if *edgeGateway.EdgeGateway.Configuration.DistributedRoutingEnabled {
+			distributedAllowed = true
+		}
+	}
+	networkInterface := d.Get("interface_type").(string)
+	trueValue := true
+	switch strings.ToLower(networkInterface) {
+	case "internal":
+		// default: no configuration is needed
+		orgVDCNetwork.Configuration.SubInterface = nil
+	case "subinterface":
+		orgVDCNetwork.Configuration.SubInterface = &trueValue
+	case "distributed":
+		if distributedAllowed {
+			orgVDCNetwork.Configuration.DistributedInterface = &trueValue
+		} else {
+			return fmt.Errorf("interface 'distributed' requested, but distributed routing is not enabled in edge gateway '%s'", edgeGateway.EdgeGateway.Name)
+		}
 	}
 
 	err = vdc.CreateOrgVDCNetworkWait(orgVDCNetwork)
@@ -235,7 +289,6 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 		if err != nil {
 			return fmt.Errorf(errorCompletingTask, err)
 		}
-
 	}
 
 	d.SetId(network.OrgVDCNetwork.ID)
@@ -272,7 +325,7 @@ func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origi
 
 	// When this function is called from the data source
 	if edgeGatewayName == "" {
-		edgeGatewayName, err = findEdgeGatewayConnection(vcdClient, vdc, network)
+		edgeGatewayName, err = vdc.FindEdgeGatewayNameByNetwork(network.OrgVDCNetwork.Name)
 		if err != nil {
 			return fmt.Errorf("[network_routed read] no edge gateway connection found for network %s: %s", network.OrgVDCNetwork.Name, err)
 		}
@@ -325,6 +378,19 @@ func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origi
 			return fmt.Errorf("[network routed read] static_ip set: %s", err)
 		}
 	}
+
+	if network.OrgVDCNetwork.Configuration.SubInterface == nil {
+		d.Set("interface_type", "internal")
+	} else {
+		if *network.OrgVDCNetwork.Configuration.SubInterface {
+			d.Set("interface_type", "subinterface")
+		} else {
+			if *network.OrgVDCNetwork.Configuration.DistributedInterface {
+				d.Set("interface_type", "distributed")
+			}
+		}
+	}
+	d.Set("description", network.OrgVDCNetwork.Description)
 
 	d.SetId(network.OrgVDCNetwork.ID)
 	return nil
@@ -440,36 +506,6 @@ func resourceVcdNetworkIPAddressHash(v interface{}) int {
 	return hashcode.String(buf.String())
 }
 
-// findEdgeGatewayConnection scans the VDC for a connection between an edge gateway and a given network.
-// On success, returns the name of the edge gateway
-func findEdgeGatewayConnection(client *VCDClient, vdc *govcd.Vdc, network *govcd.OrgVDCNetwork) (string, error) {
-
-	for _, av := range vdc.Vdc.Link {
-		if av.Rel == "edgeGateways" && av.Type == "application/vnd.vmware.vcloud.query.records+xml" {
-
-			edgeGatewayRecordsType := new(types.QueryResultEdgeGatewayRecordsType)
-
-			_, err := client.Client.ExecuteRequest(av.HREF, http.MethodGet,
-				"", "error querying edge gateways: %s", nil, edgeGatewayRecordsType)
-			if err != nil {
-				return "", err
-			}
-			for _, eg := range edgeGatewayRecordsType.EdgeGatewayRecord {
-				edgeGateway, err := vdc.GetEdgeGatewayByName(eg.Name, false)
-				if err != nil {
-					return "", err
-				}
-				for _, gi := range edgeGateway.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
-					if gi.Network.Name == network.OrgVDCNetwork.Name {
-						return edgeGateway.EdgeGateway.Name, nil
-					}
-				}
-			}
-		}
-	}
-	return "", fmt.Errorf("no edge gateway connection found")
-}
-
 // resourceVcdNetworkRoutedImport is responsible for importing the resource.
 // The following steps happen as part of import
 // 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
@@ -501,7 +537,7 @@ func resourceVcdNetworkRoutedImport(d *schema.ResourceData, meta interface{}) ([
 		return nil, fmt.Errorf("[network_routed import] error retrieving network %s: %s", networkName, err)
 	}
 
-	edgeGatewayName, err := findEdgeGatewayConnection(vcdClient, vdc, network)
+	edgeGatewayName, err := vdc.FindEdgeGatewayNameByNetwork(networkName)
 	if err != nil {
 		return nil, fmt.Errorf("[network_routed import] no edge gateway connection found for network %s: %s", network.OrgVDCNetwork.Name, err)
 	}

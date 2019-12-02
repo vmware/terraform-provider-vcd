@@ -663,7 +663,7 @@ data "vcd_nsxv_firewall_rule" "rule0" {
 	vdc          = "{{.Vdc}}"
 	edge_gateway = "{{.EdgeGateway}}"
 
-	rule_id      = "${vcd_nsxv_firewall_rule.rule0.id}"
+	rule_id      = vcd_nsxv_firewall_rule.rule0.id
 }
 `
 
@@ -727,12 +727,12 @@ resource "vcd_nsxv_firewall_rule" "rule3" {
 	logging_enabled = "true"
 
 	source {
-		org_networks = ["${vcd_network_routed.test-routed[0].name}"]
+		org_networks = [vcd_network_routed.test-routed[0].name]
 	}
   
 	destination {
 		exclude      = "true"
-		org_networks = ["${vcd_network_routed.test-routed[1].name}"]
+		org_networks = [vcd_network_routed.test-routed[1].name]
 	}
 	service {
 		protocol = "tcp"
@@ -803,7 +803,7 @@ data "vcd_nsxv_firewall_rule" "rule4" {
 	vdc          = "{{.Vdc}}"
 	edge_gateway = "{{.EdgeGateway}}"
 
-	rule_id      = "${vcd_nsxv_firewall_rule.rule4.id}"
+	rule_id      = vcd_nsxv_firewall_rule.rule4.id
 }
 `
 
@@ -860,7 +860,7 @@ resource "vcd_nsxv_firewall_rule" "rule6-6" {
 	edge_gateway = "{{.EdgeGateway}}"
 	name = "above-rule"
 	action = "accept"
-	above_rule_id = "${vcd_nsxv_firewall_rule.rule6.id}"
+	above_rule_id = vcd_nsxv_firewall_rule.rule6.id
 
 
 	source {

@@ -78,7 +78,7 @@ resource "vcd_vapp" "{{.VappName}}" {
 resource "vcd_vapp_vm" "{{.VmName}}" {
   org                            = "{{.Org}}"
   vdc                            = "{{.Vdc}}"
-  vapp_name                      = "${vcd_vapp.{{.VappName}}.name}"
+  vapp_name                      = vcd_vapp.{{.VappName}}.name
   name                           = "{{.VmName}}"
   catalog_name                   = "{{.Catalog}}"
   template_name                  = "{{.CatalogItem}}"

@@ -2,12 +2,15 @@
 
 FEATURES:
 
+* **New Resource:** `vcd_ipset` IP set - [GH-406]
 * **New Data Source:** `vcd_vapp_vm` VM - [GH-218]
+* **New Data Source:** `vcd_ipset` IP set - [GH-406]
+* **New build command:** `make test-upgrade` to run an upgrade test from the previous released version
 
 IMPROVEMENTS:
 
-* Switch to Terraform terraform-plugin-sdk v1.0.0 as per recent [HashiCorp
-  recommendation](https://www.terraform.io/docs/extend/plugin-sdk.html) - [GH-382]
+* Switch to Terraform terraform-plugin-sdk v1.3.0 as per recent [HashiCorp
+  recommendation](https://www.terraform.io/docs/extend/plugin-sdk.html) - [GH-382, GH-406]
 * `resource/vcd_vapp_vm` VM state ID changed from VM name to vCD ID
 * `resource/vcd_vapp_vm` Add properties `description` and `storage_profile`
 * `resource/vcd_vapp_vm` Add import capability and full read support [GH-218]
@@ -28,6 +31,13 @@ IMPROVEMENTS:
   field to export default edge gateway IP address - [GH-389]
 * Add `token` to the `vcd` provider for the ability of connecting with an authorization token - [GH-280]
 * Add command `make token` to create an authorization token from testing credentials
+* Clean up interpolation-only expressions from tests (as allowed in terraform v0.12.11+)
+* Increment vCD API version used from 27.0 to 29.0 [GH-396]
+* `resource/vcd_network_routed` Add properties `description` and `interface_type` [GH-321,GH-342,GH-374]
+* `resource/vcd_network_isolated` Add property `description` [GH-373]
+* `resource/vcd_network_direct` Add property `description`
+* `resource/vcd_network_routed` Add check for valid IPs [GH-374]
+* `resource/vcd_network_isolated` Add check for valid IPs [GH-373]
 
 BUG FIXES:
 
@@ -35,6 +45,9 @@ BUG FIXES:
 * Removed `power_on` property from data source `vcd_vapp`, as it is a directive used during vApp build.
   Its state is never updated and the fields `status` and `status_text` already provide the necessary information.
   [GH-379]
+* Fix `vcd_independent_disk` reapply issue, which was seen when optional `bus_sub_type` and `bus_type` wasn't used - [GH-394]
+* Fix `vcd_vapp_network` apply issue, where the property `guest_vlan_allowed` was applied only to the last of multiple networks.
+* `datasource/vcd_network_direct` is now readable by Org User (previously it was only by Sys Admin), as this change made it possible to get the details of External Network as Org User [GH-408]
 
 DEPRECATIONS:
 

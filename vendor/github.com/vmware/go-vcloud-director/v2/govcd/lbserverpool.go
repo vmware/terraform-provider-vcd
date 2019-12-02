@@ -52,25 +52,13 @@ func (egw *EdgeGateway) getLbServerPool(lbPoolConfig *types.LbPool) (*types.LbPo
 		return nil, err
 	}
 
-	httpPath, err := egw.buildProxiedEdgeEndpointURL(types.LbServerPoolPath)
-	if err != nil {
-		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
-	}
-
-	// Anonymous struct to unwrap "server pool response"
-	lbPoolResponse := &struct {
-		LBPools []*types.LbPool `xml:"pool"`
-	}{}
-
-	// This query returns all server pools as the API does not have filtering options
-	_, err = egw.client.ExecuteRequest(httpPath, http.MethodGet, types.AnyXMLMime,
-		"unable to read load lalancer server pool: %s", nil, lbPoolResponse)
+	pools, err := egw.GetLbServerPools()
 	if err != nil {
 		return nil, err
 	}
 
 	// Search for pool by ID or by Name
-	for _, pool := range lbPoolResponse.LBPools {
+	for _, pool := range pools {
 		// If ID was specified for lookup - look for the same ID
 		if lbPoolConfig.ID != "" && pool.ID == lbPoolConfig.ID {
 			return pool, nil
@@ -88,6 +76,28 @@ func (egw *EdgeGateway) getLbServerPool(lbPoolConfig *types.LbPool) (*types.LbPo
 	}
 
 	return nil, ErrorEntityNotFound
+}
+
+// GetLbServerPools return all created server pools without filtering.
+func (egw *EdgeGateway) GetLbServerPools() ([]*types.LbPool, error) {
+	httpPath, err := egw.buildProxiedEdgeEndpointURL(types.LbServerPoolPath)
+	if err != nil {
+		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
+	}
+
+	// Anonymous struct to unwrap "server pool response"
+	lbPoolResponse := &struct {
+		LBPools []*types.LbPool `xml:"pool"`
+	}{}
+
+	// This query returns all server pools as the API does not have filtering options
+	_, err = egw.client.ExecuteRequest(httpPath, http.MethodGet, types.AnyXMLMime,
+		"unable to read load lalancer server pool: %s", nil, lbPoolResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return lbPoolResponse.LBPools, nil
 }
 
 // GetLbServerPoolByName wraps getLbServerPool and needs only an ID for lookup

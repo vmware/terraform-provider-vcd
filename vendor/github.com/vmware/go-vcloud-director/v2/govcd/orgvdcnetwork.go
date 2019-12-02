@@ -193,3 +193,44 @@ func (vdc *Vdc) CreateOrgVDCNetwork(networkConfig *types.OrgVDCNetwork) (Task, e
 	}
 	return Task{}, fmt.Errorf("network creation failed: no operational link found")
 }
+
+// GetNetworkList returns a list of networks for the VDC
+func (vdc *Vdc) GetNetworkList() ([]*types.QueryResultOrgVdcNetworkRecordType, error) {
+	// Find the list of networks with the wanted name
+	result, err := vdc.client.QueryWithNotEncodedParams(nil, map[string]string{
+		"type":   "orgVdcNetwork",
+		"filter": fmt.Sprintf("vdc==%s", url.QueryEscape(vdc.Vdc.ID)),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("[findEdgeGatewayConnection] error returning the list of networks for VDC: %s", err)
+	}
+	return result.Results.OrgVdcNetworkRecord, nil
+}
+
+// FindEdgeGatewayNameByNetwork searches the VDC for a connection between an edge gateway and a given network.
+// On success, returns the name of the edge gateway
+func (vdc *Vdc) FindEdgeGatewayNameByNetwork(networkName string) (string, error) {
+
+	// Find the list of networks with the wanted name
+	result, err := vdc.client.QueryWithNotEncodedParams(nil, map[string]string{
+		"type":   "orgVdcNetwork",
+		"filter": fmt.Sprintf("name==%s;vdc==%s", url.QueryEscape(networkName), url.QueryEscape(vdc.Vdc.ID)),
+	})
+	if err != nil {
+		return "", fmt.Errorf("[findEdgeGatewayConnection] error returning the list of networks for VDC: %s", err)
+	}
+	netList := result.Results.OrgVdcNetworkRecord
+
+	for _, net := range netList {
+		if net.Name == networkName {
+			// linkType is not well documented, but empiric tests show that:
+			// 0 = direct
+			// 1 = routed
+			// 2 = isolated
+			if net.ConnectedTo != "" && net.LinkType == 1 { // We only want routed networks
+				return net.ConnectedTo, nil
+			}
+		}
+	}
+	return "", fmt.Errorf("no edge gateway connection found")
+}

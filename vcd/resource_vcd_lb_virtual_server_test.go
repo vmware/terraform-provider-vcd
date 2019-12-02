@@ -147,16 +147,16 @@ resource "vcd_lb_virtual_server" "http" {
   protocol   = "http"
   port       = 8888
 
-  app_profile_id = "${vcd_lb_app_profile.http.id}"
-  server_pool_id = "${vcd_lb_server_pool.web-servers.id}"
-  app_rule_ids   = ["${vcd_lb_app_rule.redirect.id}", "${vcd_lb_app_rule.language.id}"]
+  app_profile_id = vcd_lb_app_profile.http.id
+  server_pool_id = vcd_lb_server_pool.web-servers.id
+  app_rule_ids   = [vcd_lb_app_rule.redirect.id, vcd_lb_app_rule.language.id]
 }
 
 data "vcd_lb_virtual_server" "http" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
-  name         = "${vcd_lb_virtual_server.http.name}"
+  name         = vcd_lb_virtual_server.http.name
 }
 `
 
@@ -174,15 +174,15 @@ resource "vcd_lb_virtual_server" "http" {
   protocol   = "http"
   port       = 8889
 
-  server_pool_id = "${vcd_lb_server_pool.web-servers.id}"
-  app_rule_ids   = ["${vcd_lb_app_rule.redirect.id}"]
+  server_pool_id = vcd_lb_server_pool.web-servers.id
+  app_rule_ids   = [vcd_lb_app_rule.redirect.id]
 }
 
 data "vcd_lb_virtual_server" "http" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
-  name         = "${vcd_lb_virtual_server.http.name}"
+  name         = vcd_lb_virtual_server.http.name
 }
 `
 
@@ -218,7 +218,7 @@ resource "vcd_lb_server_pool" "web-servers" {
   algorithm_parameters = "headerName=host"
   enable_transparency  = "true"
 
-  monitor_id = "${vcd_lb_service_monitor.monitor.id}"
+  monitor_id = vcd_lb_service_monitor.monitor.id
 
   member {
     condition       = "enabled"

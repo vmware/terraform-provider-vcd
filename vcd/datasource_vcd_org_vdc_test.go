@@ -146,36 +146,36 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   name = "{{.VdcName}}"
   org  = "{{.OrgName}}"
 
-  allocation_model  = "${data.vcd_org_vdc.existingVdc.allocation_model}"
-  network_pool_name = "${data.vcd_org_vdc.existingVdc.network_pool_name}"
-  provider_vdc_name = "${data.vcd_org_vdc.existingVdc.provider_vdc_name}"
+  allocation_model  = data.vcd_org_vdc.existingVdc.allocation_model
+  network_pool_name = data.vcd_org_vdc.existingVdc.network_pool_name
+  provider_vdc_name = data.vcd_org_vdc.existingVdc.provider_vdc_name
 
   compute_capacity {
     cpu {
-     allocated = "${data.vcd_org_vdc.existingVdc.compute_capacity[0].cpu[0].allocated}"
-     limit     = "${data.vcd_org_vdc.existingVdc.compute_capacity[0].cpu[0].limit}"
+     allocated = data.vcd_org_vdc.existingVdc.compute_capacity[0].cpu[0].allocated
+     limit     = data.vcd_org_vdc.existingVdc.compute_capacity[0].cpu[0].limit
     }
 
     memory {
-     allocated = "${data.vcd_org_vdc.existingVdc.compute_capacity[0].memory[0].allocated}"
-     limit     = "${data.vcd_org_vdc.existingVdc.compute_capacity[0].memory[0].limit}"
+     allocated = data.vcd_org_vdc.existingVdc.compute_capacity[0].memory[0].allocated
+     limit     = data.vcd_org_vdc.existingVdc.compute_capacity[0].memory[0].limit
     }
   }
 
   storage_profile {
-    name    = "${data.vcd_org_vdc.existingVdc.storage_profile[0].name}"
-    enabled = "${data.vcd_org_vdc.existingVdc.storage_profile[0].enabled}"
-    limit   = "${data.vcd_org_vdc.existingVdc.storage_profile[0].limit}"
-    default = "${data.vcd_org_vdc.existingVdc.storage_profile[0].default}"
+    name    = data.vcd_org_vdc.existingVdc.storage_profile[0].name
+    enabled = data.vcd_org_vdc.existingVdc.storage_profile[0].enabled
+    limit   = data.vcd_org_vdc.existingVdc.storage_profile[0].limit
+    default = data.vcd_org_vdc.existingVdc.storage_profile[0].default
   }
 
   metadata = {
     vdc_metadata = "VDC Metadata"
   }
 
-  enabled                  = "${data.vcd_org_vdc.existingVdc.enabled}"
-  enable_thin_provisioning = "${data.vcd_org_vdc.existingVdc.enable_thin_provisioning}"
-  enable_fast_provisioning = "${data.vcd_org_vdc.existingVdc.enable_fast_provisioning}"
+  enabled                  = data.vcd_org_vdc.existingVdc.enabled
+  enable_thin_provisioning = data.vcd_org_vdc.existingVdc.enable_thin_provisioning
+  enable_fast_provisioning = data.vcd_org_vdc.existingVdc.enable_fast_provisioning
   delete_force             = true
   delete_recursive         = true
 }

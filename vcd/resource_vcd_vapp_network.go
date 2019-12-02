@@ -152,7 +152,10 @@ func resourceVcdVappNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("error finding vApp. %#v", err)
 	}
 
-	staticIpRanges := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
+	staticIpRanges, err := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
+	if err != nil {
+		return err
+	}
 
 	vappNetworkSettings := &govcd.VappNetworkSettings{
 		Name:           d.Get("name").(string),
@@ -243,7 +246,10 @@ func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
 		// API does not return GuestVlanAllowed if API client version is 27.0 (default at the moment) therefore we rely
 		// on updating statefile only if the field was returned. In API v31.0 - the field is returned.
 		if c.GuestVlanAllowed != nil {
-			d.Set("guest_vlan_allowed", &c.GuestVlanAllowed)
+			err = d.Set("guest_vlan_allowed", *c.GuestVlanAllowed)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
