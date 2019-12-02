@@ -8,6 +8,7 @@
 - [Adding new tests](#adding-new-tests)
   - [Parallelism considerations](#parallelism-considerations)
 - [Binary testing](#binary-testing)
+- [Upgrade testing](#upgrade-testing)
 - [Custom terraform scripts](#custom-terraform-scripts)
 - [Environment variables](#environment-variables)
 
@@ -334,6 +335,24 @@ When the test runs unattended, it is possible to stop it gracefully by creating 
 `test-artifacts` directory. When such file exists, the test execution stops at the next `terraform` command, waiting
 for user input.
 
+## Upgrade testing
+
+We can test that resources updated in the current release don't break the behavior of the same resources that were
+created with a previous version of the provider.
+
+The command `make test-upgrade` will do the following:
+
+1. Fetch the tags from master
+2. Check out the previous version (using the tag corresponding to the version stored in the file `PREVIOUS_VERSION`)
+3. Run `make test-binary-prepare` using the previous version
+4. Back to the current version, build the latest plugin
+5. Run the binary tests, with the following behavior for each script:
+   5a. Run `terraform init`, `terraform plan`, and `terraform apply` using the previous version plugin
+   5b. Run `terraform plan -detailed-exitcode` and `terraform destroy` using the current version plugin
+
+This test ensures that the resources created with the previous version don't have unexpected changes when a plan is
+performed with the next version.
+
 ## Custom terraform scripts
 
 The commands `make test-binary-prepare` and `make test-binary` have the added benefit of compiling custom Terraform scripts located in `./vcd/test-templates`.
@@ -434,5 +453,7 @@ borrow org and vcd from the provider.
 used in the documentation index.
 * `VCD_TEST_ORG_USER=1` will enable tests with Org User, using the credentials from the configuration file
   (`testEnvBuild.OrgUser` and `testEnvBuild.OrgUserPassword`)
-* `VCD_TOKEN` : specifies the authentication token to use instead of username/password
+* `VCD_TOKEN=string` : specifies the authentication token to use instead of username/password
    (Use `./scripts/get_token.sh` to retrieve one)
+* `VCD_TEST_DISTRIBUTED_NETWORK=1` runs testing of distributed networks (requires the edge gateway to have distributed
+  routing enabled)

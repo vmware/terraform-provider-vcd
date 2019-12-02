@@ -219,7 +219,7 @@ resource "vcd_vapp_network" "vappNet" {
   vdc = "{{.Vdc}}"
 
   name       = "vapp-net"
-  vapp_name  = "${vcd_vapp.test-vapp.name}"
+  vapp_name  = vcd_vapp.test-vapp.name
   gateway    = "192.168.2.1"
   netmask    = "255.255.255.0"
   dns1       = "192.168.2.1"
@@ -238,7 +238,7 @@ resource "vcd_vapp_vm" "test-vm" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
-  vapp_name     = "${vcd_vapp.test-vapp.name}"
+  vapp_name     = vcd_vapp.test-vapp.name
   name          = "{{.VMName}}"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
@@ -248,7 +248,7 @@ resource "vcd_vapp_vm" "test-vm" {
 
   network {
     type               = "vapp"
-    name               = "${vcd_vapp_network.vappNet.name}"
+    name               = vcd_vapp_network.vappNet.name
     ip_allocation_mode = "POOL"
   }
 }
@@ -259,7 +259,7 @@ resource "vcd_vapp_vm" "test-vm" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
-  vapp_name     = "${vcd_vapp.test-vapp.name}"
+  vapp_name     = vcd_vapp.test-vapp.name
   name          = "{{.VMName}}"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
@@ -269,7 +269,7 @@ resource "vcd_vapp_vm" "test-vm" {
 
   network {
     type               = "vapp"
-    name               = "${vcd_vapp_network.vappNet.name}"
+    name               = vcd_vapp_network.vappNet.name
     ip_allocation_mode = "POOL"
   }
 
@@ -289,7 +289,7 @@ resource "vcd_vapp_vm" "test-vm2" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
-  vapp_name     = "${vcd_vapp.test-vapp.name}"
+  vapp_name     = vcd_vapp.test-vapp.name
   name          = "{{.VMName}}"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
@@ -299,7 +299,7 @@ resource "vcd_vapp_vm" "test-vm2" {
 
   network {
     type               = "vapp"
-    name               = "${vcd_vapp_network.vappNet.name}"
+    name               = vcd_vapp_network.vappNet.name
     ip_allocation_mode = "POOL"
   }
 

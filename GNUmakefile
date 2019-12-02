@@ -28,6 +28,10 @@ test-binary-orguser: install
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider-orguser"
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' binary"
 
+# runs upgrade test using Terraform binary
+test-upgrade:
+	@sh -c "'$(CURDIR)/scripts/test-upgrade.sh'"
+
 # runs test using Terraform binary as system administrator
 test-binary: install
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider"

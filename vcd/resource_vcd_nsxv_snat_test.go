@@ -113,7 +113,7 @@ resource "vcd_nsxv_snat" "test" {
   edge_gateway = "{{.EdgeGateway}}"
 
   network_type = "org"
-  network_name = "${vcd_network_routed.net.name}"
+  network_name = vcd_network_routed.net.name
 
   original_address   = "4.4.4.160"
   translated_address = "{{.ExternalIp}}"
@@ -123,7 +123,7 @@ data "vcd_nsxv_snat" "data-test" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
-  rule_id      = "${vcd_nsxv_snat.test.id}"
+  rule_id      = vcd_nsxv_snat.test.id
 }
 `
 
@@ -139,7 +139,7 @@ resource "vcd_nsxv_snat" "test" {
   logging_enabled = true
 
   network_type = "org"
-  network_name = "${vcd_network_routed.net.name}"
+  network_name = vcd_network_routed.net.name
 
   original_address   = "1.1.1.1"
   translated_address = "4.4.4.170"

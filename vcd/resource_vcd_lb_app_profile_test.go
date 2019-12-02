@@ -223,7 +223,7 @@ data "vcd_lb_app_profile" "test" {
 	org          = "{{.Org}}"
 	vdc          = "{{.Vdc}}"
 	edge_gateway = "{{.EdgeGateway}}"
-	name         = "${vcd_lb_app_profile.test.name}"
+	name         = vcd_lb_app_profile.test.name
 }
 `
 
@@ -245,7 +245,7 @@ data "vcd_lb_app_profile" "test" {
 	org          = "{{.Org}}"
 	vdc          = "{{.Vdc}}"
 	edge_gateway = "{{.EdgeGateway}}"
-	name         = "${vcd_lb_app_profile.test.name}"
+	name         = vcd_lb_app_profile.test.name
 }
 `
 
@@ -269,7 +269,7 @@ data "vcd_lb_app_profile" "test" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
-  name         = "${vcd_lb_app_profile.test.name}"
+  name         = vcd_lb_app_profile.test.name
 }  
 `
 
@@ -291,7 +291,7 @@ data "vcd_lb_app_profile" "test" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
-  name         = "${vcd_lb_app_profile.test.name}"
+  name         = vcd_lb_app_profile.test.name
 }
 `
 
@@ -315,6 +315,6 @@ data "vcd_lb_app_profile" "test" {
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
-  name         = "${vcd_lb_app_profile.test.name}"
+  name         = vcd_lb_app_profile.test.name
 }
 `

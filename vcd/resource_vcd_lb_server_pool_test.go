@@ -291,7 +291,7 @@ resource "vcd_lb_server_pool" "server-pool" {
 	org          = "{{.Org}}"
 	vdc          = "{{.Vdc}}"
 	edge_gateway = "{{.EdgeGateway}}"
-	name         = "${vcd_lb_server_pool.server-pool.name}"
+	name         = vcd_lb_server_pool.server-pool.name
   }  
 `
 
@@ -319,7 +319,7 @@ resource "vcd_lb_service_monitor" "test-monitor" {
 	algorithm_parameters = "headerName=host"
 	enable_transparency  = "{{.EnableTransparency}}"
   
-	monitor_id = "${vcd_lb_service_monitor.test-monitor.id}"
+	monitor_id = vcd_lb_service_monitor.test-monitor.id
   
 	member {
 	  condition       = "drain"
@@ -368,6 +368,6 @@ resource "vcd_lb_service_monitor" "test-monitor" {
 	org          = "{{.Org}}"
 	vdc          = "{{.Vdc}}"
 	edge_gateway = "{{.EdgeGateway}}"
-	name         = "${vcd_lb_server_pool.server-pool.name}"
+	name         = vcd_lb_server_pool.server-pool.name
   }  
 `

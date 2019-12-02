@@ -39,7 +39,7 @@ resource "vcd_org" "{{.Org}}" {
 
 resource "vcd_org_vdc" "{{.Vdc}}" {
   name = "{{.Vdc}}"
-  org  = "${vcd_org.{{.Org}}.name}"
+  org  = vcd_org.{{.Org}}.name
 
   allocation_model  = "AllocationVApp"
   provider_vdc_name = "{{.ProviderVdc}}"
@@ -74,19 +74,19 @@ resource "vcd_org_vdc" "{{.Vdc}}" {
 
 
 resource "vcd_edgegateway" "{{.EdgeGateway}}" {
-  org                     = "${vcd_org.{{.Org}}.name}"
-  vdc                     = "${vcd_org_vdc.{{.Vdc}}.name}"
+  org                     = vcd_org.{{.Org}}.name
+  vdc                     = vcd_org_vdc.{{.Vdc}}.name
   name                    = "{{.EdgeGateway}}"
   description             = "{{.Org}} edge gateway"
   configuration           = "compact"
-  default_gateway_network = "${vcd_external_network.{{.ExternalNetwork}}.name}"
+  default_gateway_network = vcd_external_network.{{.ExternalNetwork}}.name
   advanced                = true
 
-  external_networks = ["${vcd_external_network.{{.ExternalNetwork}}.name}"]
+  external_networks = [vcd_external_network.{{.ExternalNetwork}}.name]
 }
 
 resource "vcd_catalog" "{{.Catalog}}" {
-  org         = "${vcd_org.{{.Org}}.name}"
+  org         = vcd_org.{{.Org}}.name
   name        = "{{.Catalog}}"
   description = "{{.Org}} catalog"
 
@@ -96,8 +96,8 @@ resource "vcd_catalog" "{{.Catalog}}" {
 }
 
 resource "vcd_catalog_item" "{{.CatalogItem}}" {
-  org     = "${vcd_org.{{.Org}}.name}"
-  catalog = "${vcd_catalog.{{.Catalog}}.name}"
+  org     = vcd_org.{{.Org}}.name
+  catalog = vcd_catalog.{{.Catalog}}.name
 
   name                 = "{{.CatalogItem}}"
   description          = "{{.CatalogItem}}"

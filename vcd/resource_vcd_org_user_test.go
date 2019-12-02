@@ -368,12 +368,12 @@ data "vcd_org" "{{.Org}}" {
 }
 
 resource "vcd_org_user" "{{.UserName}}" {
-  org               = "${data.vcd_org.{{.Org}}.name}"
+  org               = data.vcd_org.{{.Org}}.name
   name              = "{{.UserName}}"
   password          = "{{.OrgUserPassword}}"
   role              = "{{.RoleName}}"
-  deployed_vm_quota = "${data.vcd_org.{{.Org}}.deployed_vm_quota}"
-  stored_vm_quota   = "${data.vcd_org.{{.Org}}.stored_vm_quota}"
+  deployed_vm_quota = data.vcd_org.{{.Org}}.deployed_vm_quota
+  stored_vm_quota   = data.vcd_org.{{.Org}}.stored_vm_quota
   take_ownership    = true
 }
 `

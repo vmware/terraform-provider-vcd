@@ -37,6 +37,12 @@ func resourceVcdNetworkDirect() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
+			"description": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "Optional description for the network",
+			},
 			"external_network": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
@@ -89,6 +95,9 @@ func resourceVcdNetworkDirect() *schema.Resource {
 func resourceVcdNetworkDirectCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
+	if !vcdClient.Client.IsSysAdmin {
+		return fmt.Errorf("creation of a vcd_network_direct requires system administrator privileges")
+	}
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
@@ -102,8 +111,9 @@ func resourceVcdNetworkDirectCreate(d *schema.ResourceData, meta interface{}) er
 	}
 
 	orgVDCNetwork := &types.OrgVDCNetwork{
-		Xmlns: "http://www.vmware.com/vcloud/v1.5",
-		Name:  networkName,
+		Xmlns:       "http://www.vmware.com/vcloud/v1.5",
+		Name:        networkName,
+		Description: d.Get("description").(string),
 		Configuration: &types.NetworkConfiguration{
 			ParentNetwork: &types.Reference{
 				HREF: externalNetwork.ExternalNetwork.HREF,
@@ -160,26 +170,29 @@ func genericVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}, origi
 	_ = d.Set("href", network.OrgVDCNetwork.HREF)
 	_ = d.Set("shared", network.OrgVDCNetwork.IsShared)
 
-	parentNetwork := network.OrgVDCNetwork.Configuration.ParentNetwork
-	if parentNetwork == nil {
-		return fmt.Errorf("[network direct read] no parent network found for %s", network.OrgVDCNetwork.Name)
-	}
-	_ = d.Set("external_network", parentNetwork.Name)
-
-	externalNetwork, err := vcdClient.GetExternalNetworkByName(parentNetwork.Name)
+	// Getting external network data through network list, as a direct call to external network
+	// structure requires system admin privileges.
+	// Org Users can't create a direct network, but should be able to see the connection info.
+	networkList, err := vdc.GetNetworkList()
 	if err != nil {
-		return fmt.Errorf("[network direct read] error fetching external network %s ", parentNetwork.Name)
+		return fmt.Errorf("error retrieving network list for VDC %s : %s", vdc.Vdc.Name, err)
 	}
+	var currentNetwork *types.QueryResultOrgVdcNetworkRecordType
+	for _, net := range networkList {
+		if net.Name == network.OrgVDCNetwork.Name {
+			currentNetwork = net
+		}
+	}
+	if currentNetwork == nil {
+		return fmt.Errorf("error retrieving network %s from network list", network.OrgVDCNetwork.Name)
+	}
+	_ = d.Set("external_network", currentNetwork.ConnectedTo)
+	_ = d.Set("external_network_netmask", currentNetwork.Netmask)
+	_ = d.Set("external_network_dns1", currentNetwork.Dns1)
+	_ = d.Set("external_network_dns2", currentNetwork.Dns2)
+	_ = d.Set("external_network_dns_suffix", currentNetwork.DnsSuffix)
 
-	enConf := externalNetwork.ExternalNetwork.Configuration
-	if enConf == nil || enConf.IPScopes == nil || len(enConf.IPScopes.IPScope) == 0 {
-		return fmt.Errorf("[network direct read] error retrieving details from external network %s", externalNetwork.ExternalNetwork.Name)
-	}
-	_ = d.Set("external_network_gateway", externalNetwork.ExternalNetwork.Configuration.IPScopes.IPScope[0].Gateway)
-	_ = d.Set("external_network_netmask", externalNetwork.ExternalNetwork.Configuration.IPScopes.IPScope[0].Netmask)
-	_ = d.Set("external_network_dns1", externalNetwork.ExternalNetwork.Configuration.IPScopes.IPScope[0].DNS1)
-	_ = d.Set("external_network_dns2", externalNetwork.ExternalNetwork.Configuration.IPScopes.IPScope[0].DNS2)
-	_ = d.Set("external_network_dns_suffix", externalNetwork.ExternalNetwork.Configuration.IPScopes.IPScope[0].DNSSuffix)
+	_ = d.Set("description", network.OrgVDCNetwork.Description)
 
 	d.SetId(network.OrgVDCNetwork.ID)
 

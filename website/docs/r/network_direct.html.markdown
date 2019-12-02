@@ -37,6 +37,7 @@ The following arguments are supported:
   connected as sysadmin working across different organisations
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
 * `name` - (Required) A unique name for the network
+* `description` - (Optional *v2.6+*) An optional description of the network
 * `external_network` - (Required) The name of the external network.
 * `shared` - (Optional) Defines if this network is shared between multiple VDCs
   in the Org.  Defaults to `false`.
