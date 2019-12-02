@@ -38,6 +38,7 @@ IMPROVEMENTS:
 * `resource/vcd_network_direct` Add property `description`
 * `resource/vcd_network_routed` Add check for valid IPs [GH-374]
 * `resource/vcd_network_isolated` Add check for valid IPs [GH-373]
+* `resource/vcd_nsxv_firewall_rule` Add support for IP sets [GH-411]
 
 BUG FIXES:
 
