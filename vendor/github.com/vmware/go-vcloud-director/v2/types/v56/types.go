@@ -211,6 +211,7 @@ type NetworkConfiguration struct {
 	RetainNetInfoAcrossDeployments bool             `xml:"RetainNetInfoAcrossDeployments,omitempty"`
 	Features                       *NetworkFeatures `xml:"Features,omitempty"`
 	GuestVlanAllowed               *bool            `xml:"GuestVlanAllowed,omitempty"`
+	DistributedInterface           *bool            `xml:"DistributedInterface,omitempty"`
 	// TODO: Not Implemented
 	// RouterInfo                     RouterInfo           `xml:"RouterInfo,omitempty"`
 	// SyslogServerSettings           SyslogServerSettings `xml:"SyslogServerSettings,omitempty"`
@@ -1134,6 +1135,7 @@ type VMGeneralParams struct {
 	Name               string `xml:"Name,omitempty"`               // Name of VM
 	Description        string `xml:"Description,omitempty"`        // VM description
 	NeedsCustomization bool   `xml:"NeedsCustomization,omitempty"` // True if this VM needs guest customization
+	RegenerateBiosUuid bool   `xml:"RegenerateBiosUuid,omitempty"` // True if BIOS UUID of the virtual machine should be regenerated so that it is unique, and not the same as the source virtual machine's BIOS UUID.
 }
 
 // VApp represents a vApp
@@ -1350,9 +1352,104 @@ type VM struct {
 	// TODO: OVF Sections to be implemented
 	// Environment OVF_Environment `xml:"Environment,omitempty"
 
+	VmSpecSection *VmSpecSection `xml:"VmSpecSection,omitempty"`
+
 	VMCapabilities *VMCapabilities `xml:"VmCapabilities,omitempty"` // Allows you to specify certain capabilities of this virtual machine.
 	StorageProfile *Reference      `xml:"StorageProfile,omitempty"` // A reference to a storage profile to be used for this object. The specified storage profile must exist in the organization vDC that contains the object. If not specified, the default storage profile for the vDC is used.
 	ProductSection *ProductSection `xml:"ProductSection,omitempty"`
+}
+
+// VM represents a virtual machine only with Disk setting update part
+type VMDiskChange struct {
+	// Attributes
+	XMLName xml.Name `xml:"Vm"`
+	Ovf     string   `xml:"xmlns:ovf,attr,omitempty"`
+	Xsi     string   `xml:"xmlns:xsi,attr,omitempty"`
+	Xmlns   string   `xml:"xmlns,attr,omitempty"`
+
+	HREF string `xml:"href,attr,omitempty"`
+	Type string `xml:"type,attr,omitempty"`
+	Name string `xml:"name,attr"`
+	ID   string `xml:"id,attr,omitempty"`
+
+	VmSpecSection *VmSpecSection `xml:"VmSpecSection,omitempty"`
+}
+
+// VmSpecSection from VM struct
+type VmSpecSection struct {
+	Modified          *bool             `xml:"Modified,attr,omitempty"`
+	Info              string            `xml:"ovf:Info"`
+	OsType            string            `xml:"OsType,omitempty"`            // The type of the OS. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
+	NumCpus           *int              `xml:"NumCpus,omitempty"`           // Number of CPUs. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
+	NumCoresPerSocket *int              `xml:"NumCoresPerSocket,omitempty"` // Number of cores among which to distribute CPUs in this virtual machine.. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
+	CpuResourceMhz    *CpuResourceMhz   `xml:"CpuResourceMhz,omitempty"`    // CPU compute resources. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
+	MemoryResourceMb  *MemoryResourceMb `xml:"MemoryResourceMb"`            // Memory compute resources. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
+	MediaSection      *MediaSection     `xml:"MediaSection,omitempty"`      // The media devices of this VM.
+	DiskSection       *DiskSection      `xml:"DiskSection,omitempty"`       // virtual disks of this VM.
+	HardwareVersion   *HardwareVersion  `xml:"HardwareVersion"`             // vSphere name of Virtual Hardware Version of this VM. Example: vmx-13 This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
+	VmToolsVersion    string            `xml:"VmToolsVersion,omitempty"`    //	VMware tools version of this VM.
+	VirtualCpuType    string            `xml:"VirtualCpuType,omitempty"`    // The capabilities settings for this VM. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
+	TimeSyncWithHost  *bool             `xml:"TimeSyncWithHost,omitempty"`  // Synchronize the VM's time with the host.
+}
+
+// DiskSection from VM/VmSpecSection struct
+type DiskSection struct {
+	DiskSettings []*DiskSettings `xml:"DiskSettings"`
+}
+
+// DiskSettings from VM/VmSpecSection/DiskSection struct
+type DiskSettings struct {
+	DiskId              string     `xml:"DiskId,omitempty"`              // Specifies a unique identifier for this disk in the scope of the corresponding VM. This element is optional when creating a VM, but if it is provided it should be unique. This element is mandatory when updating an existing disk.
+	SizeMb              int64      `xml:"SizeMb"`                        // The size of the disk in MB.
+	UnitNumber          int        `xml:"UnitNumber"`                    // The device number on the SCSI or IDE controller of the disk.
+	BusNumber           int        `xml:"BusNumber"`                     //	The number of the SCSI or IDE controller itself.
+	AdapterType         string     `xml:"AdapterType"`                   // The type of disk controller, e.g. IDE vs SCSI and if SCSI bus-logic vs LSI logic.
+	ThinProvisioned     *bool      `xml:"ThinProvisioned,omitempty"`     // Specifies whether the disk storage is pre-allocated or allocated on demand.
+	StorageProfile      *Reference `xml:"StorageProfile,omitempty"`      // Specifies reference to a storage profile to be associated with the disk.
+	OverrideVmDefault   bool       `xml:"overrideVmDefault"`             // Specifies that the disk storage profile overrides the VM's default storage profile.
+	Iops                *int64     `xml:"iops,omitempty"`                // Specifies the IOPS for the disk.
+	VirtualQuantity     *int64     `xml:"VirtualQuantity,omitempty"`     // The actual size of the disk.
+	VirtualQuantityUnit string     `xml:"VirtualQuantityUnit,omitempty"` // The units in which VirtualQuantity is measured.
+}
+
+// MediaSection from VM/VmSpecSection struct
+type MediaSection struct {
+	MediaSettings []*MediaSettings `xml:"MediaSettings"`
+}
+
+// MediaSettings from VM/VmSpecSection/MediaSection struct
+type MediaSettings struct {
+	DeviceId    string     `xml:"DeviceId,omitempty"`    // Describes the media device whose media mount is being specified here. This deviceId must match the RASD.InstanceID attribute in the VirtualHardwareSection of the vApp's OVF description.
+	MediaType   string     `xml:"MediaType,omitempty"`   // Specified the type of media that is mounted onto the device.
+	MediaState  string     `xml:"MediaState,omitempty"`  // Specifies the state of the media device.
+	MediaImage  *Reference `xml:"MediaImage,omitempty"`  // The media image that is mounted onto the device. This property can be 'null' which represents that no media is mounted on the device.
+	UnitNumber  int        `xml:"UnitNumber"`            // Specified the type of media that is mounted onto the device.
+	BusNumber   int        `xml:"BusNumber"`             //	The bus number of the media device controller.
+	AdapterType string     `xml:"AdapterType,omitempty"` // The type of controller, e.g. IDE vs SCSI and if SCSI bus-logic vs LSI logic
+}
+
+// CpuResourceMhz from VM/VmSpecSection struct
+type CpuResourceMhz struct {
+	Configured  int64  `xml:"Configured`             // The amount of resource configured on the virtual machine.
+	Limit       *int64 `xml:"Limit,omitempty"`       // The limit for how much of this resource can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited.
+	Reservation *int64 `xml:"Reservation,omitempty"` // The amount of reservation of this resource on the underlying virtualization infrastructure.
+	SharesLevel string `xml:"SharesLevel,omitempty"` //	Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload.
+	Shares      *int   `xml:"Shares,omitempty"`      // Custom priority for the resource. This is a read-only, unless the share level is CUSTOM.
+}
+
+// MemoryResourceMb from VM/VmSpecSection struct
+type MemoryResourceMb struct {
+	Configured  int64  `xml:"Configured`             // The amount of resource configured on the virtual machine.
+	Limit       *int64 `xml:"Limit,omitempty"`       // The limit for how much of this resource can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited.
+	Reservation *int64 `xml:"Reservation,omitempty"` // The amount of reservation of this resource on the underlying virtualization infrastructure.
+	SharesLevel string `xml:"SharesLevel,omitempty"` //	Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload.
+	Shares      *int   `xml:"Shares,omitempty"`      // Custom priority for the resource. This is a read-only, unless the share level is CUSTOM.
+}
+
+type HardwareVersion struct {
+	HREF  string `xml:"href,attr"`
+	Type  string `xml:"type,attr,omitempty"`
+	Value string `xml:",chardata"`
 }
 
 // ovf:VirtualHardwareSection from VM struct
@@ -1365,6 +1462,18 @@ type VirtualHardwareSection struct {
 	HREF string                 `xml:"href,attr,omitempty"`
 	Type string                 `xml:"type,attr,omitempty"`
 	Item []*VirtualHardwareItem `xml:"Item,omitempty"`
+}
+
+// RasdItemsList from VirtualHardware
+type RasdItemsList struct {
+	// Extends OVF Section_Type
+	XMLName   xml.Name `xml:"RasdItemsList"`
+	Xmlns     string   `xml:"xmlns,attr,omitempty"`
+	RasdXmlns string   `xml:"xmlns:rasd,attr,omitempty"`
+
+	HREF  string                 `xml:"href,attr,omitempty"`
+	Type  string                 `xml:"type,attr,omitempty"`
+	Items []*VirtualHardwareItem `xml:"Item,omitempty"`
 }
 
 // Each ovf:Item parsed from the ovf:VirtualHardwareSection
@@ -1572,7 +1681,7 @@ type GatewayConfiguration struct {
 	EdgeGatewayServiceConfiguration *GatewayFeatures   `xml:"EdgeGatewayServiceConfiguration,omitempty"` // Represents Gateway Features.
 	HaEnabled                       bool               `xml:"HaEnabled,omitempty"`                       // True if this gateway is highly available. (Requires two vShield edge VMs.)
 	AdvancedNetworkingEnabled       bool               `xml:"AdvancedNetworkingEnabled,omitempty"`       // True if the gateway uses advanced networking
-	DistributedRoutingEnabled       bool               `xml:"DistributedRoutingEnabled,omitempty"`       // True if gateway is attached to a Distributed Logical Router
+	DistributedRoutingEnabled       *bool              `xml:"DistributedRoutingEnabled,omitempty"`       // True if gateway is attached to a Distributed Logical Router
 	UseDefaultRouteForDNSRelay      bool               `xml:"UseDefaultRouteForDnsRelay,omitempty"`      // True if the default gateway on the external network selected for default route should be used as the DNS relay.
 }
 
@@ -2240,31 +2349,40 @@ type QueryResultEdgeGatewayRecordType struct {
 // QueryResultVMRecordType represents a VM record as query result.
 type QueryResultVMRecordType struct {
 	// Attributes
-	HREF                    string `xml:"href,attr,omitempty"`       // The URI of the entity.
-	Name                    string `xml:"name,attr,omitempty"`       // VM name.
-	Deployed                bool   `xml:"isDeployed,attr,omitempty"` // True if the virtual machine is deployed.
-	Status                  string `xml:"status,attr,omitempty"`
-	Busy                    bool   `xml:"isBusy,attr,omitempty"`
-	Deleted                 bool   `xml:"isDeleted,attr,omitempty"`
-	MaintenanceMode         bool   `xml:"isInMaintenanceMode,attr,omitempty"`
-	Published               bool   `xml:"isPublished,attr,omitempty"`
-	VAppTemplate            bool   `xml:"isVAppTemplate,attr,omitempty"`
-	VdcEnabled              bool   `xml:"isVdcEnabled,attr,omitempty"`
-	VdcHREF                 string `xml:"vdc,attr,omitempty"`
-	VAppParentHREF          string `xml:"container,attr,omitempty"`
-	VAppParentName          string `xml:"containerName,attr,omitempty"`
-	HardwareVersion         int    `xml:"hardwareVersion,attr,omitempty"`
-	HighestSupportedVersion int    `xml:"pvdcHighestSupportedHardwareVersion,attr,omitempty"`
-	VmToolsVersion          string `xml:"vmToolsVersion,attr,omitempty"`
-	GuestOS                 string `xml:"guestOs,attr,omitempty"`
-	MemoryMB                int    `xml:"memoryMB,attr,omitempty"`
-	Cpus                    int    `xml:"numberOfCpus,attr,omitempty"`
-	StorageProfileName      string `xml:"storageProfileName,attr,omitempty"`
-	NetworkName             string `xml:"networkName,attr,omitempty"`
-	TaskHREF                string `xml:"task,attr,omitempty"`
-	TaskStatusName          string `xml:"taskStatusName,attr,omitempty"`
-	TaskDetails             string `xml:"taskDetails,attr,omitempty"`
-	TaskStatus              string `xml:"TaskStatus,attr,omitempty"`
+	HREF                 string    `xml:"href,attr,omitempty"` // The URI of the entity.
+	ID                   string    `xml:"id,attr,omitempty"`
+	Name                 string    `xml:"name,attr,omitempty"`          // VM name.
+	Type                 string    `xml:"type,attr,omitempty"`          // Contains the type of the resource.
+	ContainerName        string    `xml:"containerName,attr,omitempty"` // The name of the vApp or vApp template that contains this VM.
+	ContainerID          string    `xml:"container,attr,omitempty"`     // The ID of the vApp or vApp template that contains this VM.
+	OwnerName            string    `xml:"ownerName,attr,omitempty"`
+	Owner                string    `xml:"owner,attr,omitempty"`
+	VdcHREF              string    `xml:"vdc,attr,omitempty"`
+	VAppTemplate         bool      `xml:"isVAppTemplate,attr,omitempty"`
+	Deleted              bool      `xml:"isDeleted,attr,omitempty"`
+	GuestOS              string    `xml:"guestOs,attr,omitempty"`
+	Cpus                 int       `xml:"numberOfCpus,attr,omitempty"`
+	MemoryMB             int       `xml:"memoryMB,attr,omitempty"`
+	Status               string    `xml:"status,attr,omitempty"`
+	NetworkName          string    `xml:"networkName,attr,omitempty"`
+	NetworkHref          string    `xml:"network,attr,omitempty"`
+	IpAddress            string    `xml:"ipAddress,attr,omitempty"` // If configured, the IP Address of the VM on the primary network, otherwise empty.
+	Busy                 bool      `xml:"isBusy,attr,omitempty"`
+	Deployed             bool      `xml:"isDeployed,attr,omitempty"` // True if the virtual machine is deployed.
+	Published            bool      `xml:"isPublished,attr,omitempty"`
+	CatalogName          string    `xml:"catalogName,attr,omitempty"`
+	HardwareVersion      int       `xml:"hardwareVersion,attr,omitempty"`
+	VmToolsStatus        string    `xml:"vmToolsStatus,attr,omitempty"`
+	MaintenanceMode      bool      `xml:"isInMaintenanceMode,attr,omitempty"`
+	AutoNature           bool      `xml:"isAutoNature,attr,omitempty"` //  	True if the parent vApp is a managed vApp
+	StorageProfileName   string    `xml:"storageProfileName,attr,omitempty"`
+	GcStatus             string    `xml:"gcStatus,attr,omitempty"` // GC status of this VM.
+	AutoUndeployDate     string    `xml:"autoUndeployDate,attr,omitempty"`
+	AutoDeleteDate       string    `xml:"autoDeleteDate,attr,omitempty"`
+	AutoUndeployNotified bool      `xml:"isAutoUndeployNotified,attr,omitempty"`
+	AutoDeleteNotified   bool      `xml:"isAutoDeleteNotified,attr,omitempty"`
+	Link                 []*Link   `xml:"Link,omitempty"`
+	MetaData             *Metadata `xml:"Metadata,omitempty"`
 }
 
 // QueryResultVAppRecordType represents a VM record as query result.

@@ -1,0 +1,401 @@
+// /*****************************************************************
+// * terraform-provider-vcloud-director
+// * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
+// * SPDX-License-Identifier: BSD-2-Clause
+// ******************************************************************/
+
+package vcd
+
+import (
+	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"log"
+	"strings"
+	"text/tabwriter"
+)
+
+func resourceVmInternalDisk() *schema.Resource {
+	return &schema.Resource{
+		Create: resourceVmInternalDiskCreate,
+		Read:   resourceVmInternalDiskRead,
+		Update: resourceVmInternalDiskUpdate,
+		Delete: resourceVmInternalDiskDelete,
+		Importer: &schema.ResourceImporter{
+			State: resourceVcdVmInternalDiskImport,
+		},
+		Schema: map[string]*schema.Schema{
+			"org": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Description: "The name of organization to use, optional if defined at provider " +
+					"level. Useful when connected as sysadmin working across different organizations",
+			},
+			"vdc": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "The name of VDC to use, optional if defined at provider level",
+			},
+			"vapp_name": &schema.Schema{
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Storage profile to override the VM default one",
+			},
+			"vm_name": &schema.Schema{
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Storage profile to override the VM default one",
+			},
+			"allow_power_off_on": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "Specifies whether the disk storage is pre-allocated or allocated on demand.",
+			},
+			"bus_type": {
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringInSlice([]string{"ide", "parallel", "sas", "paravirtual", "sata"}, true),
+				Description:  "The type of disk controller. Possible values: ide, parallel( LSI Logic Parallel SCSI), sas(LSI Logic SAS (SCSI)), paravirtual(Paravirtual (SCSI)), sata",
+			},
+			"size_in_mb": {
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "The size of the disk in MB.",
+			},
+			"bus_number": {
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "The number of the SCSI or IDE controller itself.",
+			},
+			"unit_number": {
+				Type:        schema.TypeInt,
+				Required:    true,
+				Description: "The device number on the SCSI or IDE controller of the disk.",
+			},
+			"thin_provisioned": {
+				Type: schema.TypeBool,
+
+				Optional:    true,
+				Default:     true,
+				Description: "Specifies whether the disk storage is pre-allocated or allocated on demand. Default - true.",
+			},
+			"iops": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Computed:    true,
+				Description: "Specifies the IOPS for the disk.",
+			},
+			"storage_profile": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "Storage profile to override the VM default one",
+			},
+		},
+	}
+}
+
+var internalDiskBusTypes = map[string]string{
+	"ide":         "1",
+	"parallel":    "3",
+	"sas":         "4",
+	"paravirtual": "5",
+	"sata":        "6",
+}
+var internalDiskBusTypesFromValues = map[string]string{
+	"1": "ide",
+	"3": "parallel",
+	"4": "sas",
+	"5": "paravirtual",
+	"6": "sata",
+}
+
+// creates an internal disk for VM
+func resourceVmInternalDiskCreate(d *schema.ResourceData, meta interface{}) error {
+	vcdClient := meta.(*VCDClient)
+
+	vcdClient.lockParentVm(d)
+	defer vcdClient.unLockParentVm(d)
+
+	vm, vdc, err := getVm(vcdClient, d)
+	if err != nil {
+		return err
+	}
+
+	var storageProfilePrt *types.Reference
+	var overrideVmDefault bool
+
+	if storageProfileName, ok := d.GetOk("storage_profile"); ok {
+		storageProfile, err := vdc.FindStorageProfileReference(storageProfileName.(string))
+		if err != nil {
+			return fmt.Errorf("[vm creation] error retrieving storage profile %s : %s", storageProfileName, err)
+		}
+		storageProfilePrt = &storageProfile
+		overrideVmDefault = true
+	} else {
+		storageProfilePrt = vm.VM.StorageProfile
+		overrideVmDefault = false
+	}
+
+	iops := int64(d.Get("iops").(int))
+	isThinProvisioned := d.Get("thin_provisioned").(bool)
+
+	diskSetting := &types.DiskSettings{
+		SizeMb:              int64(d.Get("size_in_mb").(int)),
+		UnitNumber:          d.Get("unit_number").(int),
+		BusNumber:           d.Get("bus_number").(int),
+		AdapterType:         internalDiskBusTypes[d.Get("bus_type").(string)],
+		ThinProvisioned:     &isThinProvisioned,
+		StorageProfile:      storageProfilePrt,
+		Iops:                &iops,
+		VirtualQuantityUnit: "byte",
+		OverrideVmDefault:   overrideVmDefault,
+	}
+
+	diskId, err := vm.AddDisk(diskSetting)
+	if err != nil {
+		return err
+		fmt.Errorf("error updating VM disks: %s", err)
+	}
+
+	d.SetId(diskId)
+	return resourceVmInternalDiskRead(d, meta)
+}
+
+// Deletes disk from VM
+func resourceVmInternalDiskDelete(d *schema.ResourceData, m interface{}) error {
+	vcdClient := m.(*VCDClient)
+
+	vcdClient.lockParentVm(d)
+	defer vcdClient.unLockParentVm(d)
+
+	vm, _, err := getVm(vcdClient, d)
+	if err != nil {
+		return err
+	}
+
+	err = vm.DeleteDisk(d.Id())
+	if err != nil {
+		return fmt.Errorf("[Error] failed to delete internal disk: %s", err)
+	}
+
+	log.Printf("[TRACE] VM internal disk %s deleted", d.Id())
+	d.SetId("")
+	return nil
+}
+
+func getVm(vcdClient *VCDClient, d *schema.ResourceData) (*govcd.VM, *govcd.Vdc, error) {
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	if err != nil {
+		return nil, nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	}
+	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
+	if err != nil {
+		return nil, nil, fmt.Errorf("[Error] failed to get vApp: %s", err)
+	}
+	vm, err := vapp.GetVMByName(d.Get("vm_name").(string), false)
+	if err != nil {
+		return nil, nil, fmt.Errorf("[Error] failed to get VM: %s", err)
+	}
+	return vm, vdc, err
+}
+
+// Update the resource
+func resourceVmInternalDiskUpdate(d *schema.ResourceData, meta interface{}) error {
+	log.Printf("[TRACE] Update Internal Disk with ID: %s started.", d.Id())
+	vcdClient := meta.(*VCDClient)
+
+	vcdClient.lockParentVm(d)
+	defer vcdClient.unLockParentVm(d)
+
+	vm, vdc, err := getVm(vcdClient, d)
+	if err != nil {
+		return err
+	}
+
+	diskSettingsToUpdate, err := vm.GetDisk(d.Id())
+	if err != nil {
+		return err
+	}
+	log.Printf("[TRACE] Internal Disk with id %s found", d.Id())
+	iops := int64(d.Get("iops").(int))
+	isThinProvisioned := d.Get("thin_provisioned").(bool)
+	diskSettingsToUpdate.Iops = &iops
+	diskSettingsToUpdate.ThinProvisioned = &isThinProvisioned
+	diskSettingsToUpdate.UnitNumber = d.Get("unit_number").(int)
+	diskSettingsToUpdate.BusNumber = d.Get("bus_number").(int)
+	diskSettingsToUpdate.AdapterType = internalDiskBusTypes[d.Get("bus_type").(string)]
+	diskSettingsToUpdate.SizeMb = int64(d.Get("size_in_mb").(int))
+
+	var storageProfilePrt *types.Reference
+	var overrideVmDefault bool
+
+	storageProfileName := d.Get("storage_profile").(string)
+	if storageProfileName != "" {
+		storageProfile, err := vdc.FindStorageProfileReference(storageProfileName)
+		if err != nil {
+			return fmt.Errorf("[Error] error retrieving storage profile %s : %s", storageProfileName, err)
+		}
+		storageProfilePrt = &storageProfile
+		overrideVmDefault = true
+	} else {
+		storageProfilePrt = vm.VM.StorageProfile
+		overrideVmDefault = false
+	}
+
+	diskSettingsToUpdate.StorageProfile = storageProfilePrt
+	diskSettingsToUpdate.OverrideVmDefault = overrideVmDefault
+
+	_, err = vm.UpdateDisks(vm.VM.VmSpecSection)
+	if err != nil {
+		return err
+	}
+
+	log.Printf("[TRACE] Inernal Disk %s updated", d.Id())
+	return nil
+}
+
+// Retrieves an Org resource from vCD
+func resourceVmInternalDiskRead(d *schema.ResourceData, m interface{}) error {
+	vcdClient := m.(*VCDClient)
+
+	vm, _, err := getVm(vcdClient, d)
+	if err != nil {
+		return err
+	}
+
+	diskSettings, err := vm.GetDisk(d.Id())
+	if err == govcd.ErrorEntityNotFound {
+		log.Printf("[DEBUG] Unable to find disk with Id: %s. Removing from tfstate", d.Id())
+		d.SetId("")
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+
+	_ = d.Set("bus_type", internalDiskBusTypesFromValues[strings.ToLower(diskSettings.AdapterType)])
+	_ = d.Set("size_in_mb", diskSettings.SizeMb)
+	_ = d.Set("bus_number", diskSettings.BusNumber)
+	_ = d.Set("unit_number", diskSettings.UnitNumber)
+	_ = d.Set("thin_provisioned", diskSettings.ThinProvisioned)
+	_ = d.Set("iops", diskSettings.Iops)
+	_ = d.Set("storage_profile", diskSettings.StorageProfile.Name)
+
+	return nil
+}
+
+var errHelpInternalDiskImport = fmt.Errorf(`resource id must be specified in one of these formats:
+'org-name.vdc-name.vapp-name.vm-name.my-internal-disk-id' to import by rule id
+'list@org-name.vdc-name.vapp-name.vm-name' to get a list of internal disks with their IDs`)
+
+// resourceVcdIndependentDiskImport is responsible for importing the resource.
+// The following steps happen as part of import
+// 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
+// 2a. If the `_the_id_string_` contains a dot formatted path to resource as in the example below
+// it will try to import it. If it is found - the ID is set
+// 2b. If the `_the_id_string_` starts with `list@` and contains path to VM name similar to
+// `list@org-name.vdc-name.vapp-name.vm-name` then the function lists all internal disks and their IDs in that VM
+// 3. The functions splits the dot-formatted path and tries to lookup the object
+// 4. If the lookup succeeds it sets the ID field for `_resource_name_` resource in statefile
+// (the resource must be already defined in .tf config otherwise `terraform import` will complain)
+// 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
+// based on the known ID of object.
+//
+// Example resource name (_resource_name_): vcd_vm_internal_disk.my-disk
+// Example import path (_the_id_string_): org-name.vdc-name.vapp-name.vm-name.my-internal-disk-id
+// Example list path (_the_id_string_): list@org-name.vdc-name.vapp-name.vm-name
+func resourceVcdVmInternalDiskImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	var commandOrgName, orgName, vdcName, vappName, vmName, diskId string
+
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+
+	log.Printf("[DEBUG] importing vcd_vm_internal_disk resource with provided id %s", d.Id())
+
+	if len(resourceURI) != 4 && len(resourceURI) != 5 {
+		return nil, errHelpInternalDiskImport
+	}
+
+	if strings.Contains(d.Id(), "list@") {
+		commandOrgName, vdcName, vappName, vmName = resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
+		commandOrgNameSplit := strings.Split(commandOrgName, "@")
+		if len(commandOrgNameSplit) != 2 {
+			return nil, errHelpDiskImport
+		}
+		orgName = commandOrgNameSplit[1]
+		return listInternalDisksForImport(meta, orgName, vdcName, vappName, vmName)
+	} else {
+		orgName, vdcName, vappName, vmName, diskId = resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3], resourceURI[4]
+		return getInternalDiskForImport(d, meta, orgName, vdcName, vappName, vmName, diskId)
+	}
+}
+
+func listInternalDisksForImport(meta interface{}, orgName, vdcName, vappName, vmName string) ([]*schema.ResourceData, error) {
+
+	vcdClient := meta.(*VCDClient)
+	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
+	if err != nil {
+		return nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	}
+	vapp, err := vdc.GetVAppByName(vappName, false)
+	if err != nil {
+		return nil, fmt.Errorf("[Error] failed to get vApp: %s", err)
+	}
+	vm, err := vapp.GetVMByName(vmName, false)
+	if err != nil {
+		return nil, fmt.Errorf("[Error] failed to get VM: %s", err)
+	}
+
+	_, _ = fmt.Fprintln(getTerraformStdout(), "Retrieving all disks by name")
+	if vm.VM.VmSpecSection.DiskSection == nil || vm.VM.VmSpecSection.DiskSection.DiskSettings == nil ||
+		len(vm.VM.VmSpecSection.DiskSection.DiskSettings) == 0 {
+		return nil, fmt.Errorf("no internal disks found on VM: %s", vmName)
+	}
+
+	writer := tabwriter.NewWriter(getTerraformStdout(), 0, 8, 1, '\t', tabwriter.AlignRight)
+
+	fmt.Fprintln(writer, "No\tID\tBusType\tBusNumber\tUnitNumber\tSize\tStoragePofile\tIops\tThinProvisioned")
+	fmt.Fprintln(writer, "--\t--\t-------\t---------\t----------\t----\t-------------\t----\t---------------")
+	for index, disk := range vm.VM.VmSpecSection.DiskSection.DiskSettings {
+		fmt.Fprintf(writer, "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%d\t%t\n", (index + 1), disk.DiskId, internalDiskBusTypesFromValues[disk.AdapterType], disk.BusNumber, disk.UnitNumber, disk.SizeMb,
+			disk.StorageProfile.Name, *disk.Iops, *disk.ThinProvisioned)
+	}
+	writer.Flush()
+
+	return nil, fmt.Errorf("resource was not imported! %s", errHelpInternalDiskImport)
+}
+
+func getInternalDiskForImport(d *schema.ResourceData, meta interface{}, orgName, vdcName, vappName, vmName, diskId string) ([]*schema.ResourceData, error) {
+	vcdClient := meta.(*VCDClient)
+	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
+	if err != nil {
+		return nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	}
+	vapp, err := vdc.GetVAppByName(vappName, false)
+	if err != nil {
+		return nil, fmt.Errorf("[Error] failed to get vApp: %s", err)
+	}
+	vm, err := vapp.GetVMByName(vmName, false)
+	if err != nil {
+		return nil, fmt.Errorf("[Error] failed to get VM: %s", err)
+	}
+
+	disk, err := vm.GetDisk(diskId)
+	if err != nil {
+		return []*schema.ResourceData{}, fmt.Errorf("unable to find internal disk with id %s: %s",
+			d.Id(), err)
+	}
+
+	d.SetId(disk.DiskId)
+	d.Set("vapp_name", vappName)
+	d.Set("vm_name", vmName)
+	return []*schema.ResourceData{d}, nil
+}

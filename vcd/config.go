@@ -165,6 +165,34 @@ func (cli *VCDClient) unLockParentVapp(d *schema.ResourceData) {
 	vcdMutexKV.Unlock(key)
 }
 
+// function lockParentVm locks using vapp_name and vm_name names existing in resource parameters.
+// Parent means the resource belongs to the VM being locked
+func (cli *VCDClient) lockParentVm(d *schema.ResourceData) {
+	vappName := d.Get("vapp_name").(string)
+	if vappName == "" {
+		panic("vApp name not found")
+	}
+	vmName := d.Get("vm_name").(string)
+	if vmName == "" {
+		panic("vmName name not found")
+	}
+	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s|vm:%s", cli.getOrgName(d), cli.getVdcName(d), vappName, vmName)
+	vcdMutexKV.Lock(key)
+}
+
+func (cli *VCDClient) unLockParentVm(d *schema.ResourceData) {
+	vappName := d.Get("vapp_name").(string)
+	if vappName == "" {
+		panic("vApp name not found")
+	}
+	vmName := d.Get("vm_name").(string)
+	if vmName == "" {
+		panic("vmName name not found")
+	}
+	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s|vm:%s", cli.getOrgName(d), cli.getVdcName(d), vappName, vmName)
+	vcdMutexKV.Unlock(key)
+}
+
 // function lockParentEdgeGtw locks using edge_gateway name existing in resource parameters.
 // Parent means the resource belongs to the edge gateway being locked
 func (cli *VCDClient) lockParentEdgeGtw(d *schema.ResourceData) {

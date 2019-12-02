@@ -128,6 +128,7 @@ func Provider() terraform.ResourceProvider {
 			"vcd_nsxv_dnat":          resourceVcdNsxvDnat(),         // 2.5
 			"vcd_nsxv_snat":          resourceVcdNsxvSnat(),         // 2.5
 			"vcd_nsxv_firewall_rule": resourceVcdNsxvFirewallRule(), // 2.5
+			"vcd_vm_internal_disk":   resourceVmInternalDisk(),      // 2.6
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{

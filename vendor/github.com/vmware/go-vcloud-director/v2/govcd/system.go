@@ -132,7 +132,7 @@ func CreateEdgeGatewayAsync(vcdClient *VCDClient, egwc EdgeGatewayCreation) (Tas
 			HaEnabled:                  egwc.HAEnabled,
 			GatewayBackingConfig:       egwc.BackingConfiguration,
 			AdvancedNetworkingEnabled:  egwc.AdvancedNetworkingEnabled,
-			DistributedRoutingEnabled:  distributed,
+			DistributedRoutingEnabled:  &distributed,
 			GatewayInterfaces: &types.GatewayInterfaces{
 				GatewayInterface: []*types.GatewayInterface{},
 			},
