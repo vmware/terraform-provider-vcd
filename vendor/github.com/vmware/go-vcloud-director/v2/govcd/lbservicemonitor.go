@@ -55,13 +55,24 @@ func (egw *EdgeGateway) getLbServiceMonitor(lbMonitorConfig *types.LbMonitor) (*
 		return nil, err
 	}
 
-	serviceMonitors, err := egw.GetLbServiceMonitors()
+	httpPath, err := egw.buildProxiedEdgeEndpointURL(types.LbMonitorPath)
+	if err != nil {
+		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
+	}
+
+	// Anonymous struct to unwrap "monitor response"
+	lbMonitorResponse := &struct {
+		LBMonitors []*types.LbMonitor `xml:"monitor"`
+	}{}
+
+	// This query returns all service monitors as the API does not have filtering options
+	_, err = egw.client.ExecuteRequest(httpPath, http.MethodGet, types.AnyXMLMime, "unable to read Load Balancer monitor: %s", nil, lbMonitorResponse)
 	if err != nil {
 		return nil, err
 	}
 
 	// Search for monitor by ID or by Name
-	for _, monitor := range serviceMonitors {
+	for _, monitor := range lbMonitorResponse.LBMonitors {
 		// If ID was specified for lookup - look for the same ID
 		if lbMonitorConfig.ID != "" && monitor.ID == lbMonitorConfig.ID {
 			return monitor, nil
@@ -79,27 +90,6 @@ func (egw *EdgeGateway) getLbServiceMonitor(lbMonitorConfig *types.LbMonitor) (*
 	}
 
 	return nil, ErrorEntityNotFound
-}
-
-// GetLbServiceMonitors return all service monitors without filtering
-func (egw *EdgeGateway) GetLbServiceMonitors() ([]*types.LbMonitor, error) {
-	httpPath, err := egw.buildProxiedEdgeEndpointURL(types.LbMonitorPath)
-	if err != nil {
-		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
-	}
-
-	// Anonymous struct to unwrap "monitor response"
-	lbMonitorResponse := &struct {
-		LBMonitors []*types.LbMonitor `xml:"monitor"`
-	}{}
-
-	// This query returns all service monitors as the API does not have filtering options
-	_, err = egw.client.ExecuteRequest(httpPath, http.MethodGet, types.AnyXMLMime, "unable to read Load Balancer monitor: %s", nil, lbMonitorResponse)
-	if err != nil {
-		return nil, err
-	}
-
-	return lbMonitorResponse.LBMonitors, nil
 }
 
 // GetLbServiceMonitorById wraps getLbServiceMonitor and needs only an ID for lookup

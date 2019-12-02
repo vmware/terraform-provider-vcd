@@ -2,8 +2,6 @@
  * Copyright 2019 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
  */
 
-// Package types/v56 provider all types which are used by govcd package in order to perform API
-// requests and parse responses
 package types
 
 import (
@@ -213,13 +211,7 @@ type NetworkConfiguration struct {
 	RetainNetInfoAcrossDeployments bool             `xml:"RetainNetInfoAcrossDeployments,omitempty"`
 	Features                       *NetworkFeatures `xml:"Features,omitempty"`
 	GuestVlanAllowed               *bool            `xml:"GuestVlanAllowed,omitempty"`
-
-	// SubInterface and DistributedInterface are mutually exclusive
-	// When they are both nil, it means the "internal" interface (the default) will be used.
-	// When one of them is set, the corresponding interface will be used.
-	// They cannot be both set (we'll get an API error if we do).
-	SubInterface         *bool `xml:"SubInterface,omitempty"`
-	DistributedInterface *bool `xml:"DistributedInterface,omitempty"`
+	DistributedInterface           *bool            `xml:"DistributedInterface,omitempty"`
 	// TODO: Not Implemented
 	// RouterInfo                     RouterInfo           `xml:"RouterInfo,omitempty"`
 	// SyslogServerSettings           SyslogServerSettings `xml:"SyslogServerSettings,omitempty"`
@@ -339,8 +331,8 @@ type OrgVDCNetwork struct {
 	OperationKey    string                `xml:"operationKey,attr,omitempty"`
 	Name            string                `xml:"name,attr"`
 	Status          string                `xml:"status,attr,omitempty"`
-	Description     string                `xml:"Description,omitempty"`
 	Configuration   *NetworkConfiguration `xml:"Configuration,omitempty"`
+	Description     string                `xml:"Description,omitempty"`
 	EdgeGateway     *Reference            `xml:"EdgeGateway,omitempty"`
 	ServiceConfig   *GatewayFeatures      `xml:"ServiceConfig,omitempty"` // Specifies the service configuration for an isolated Org VDC networks
 	IsShared        bool                  `xml:"IsShared"`
@@ -1682,35 +1674,15 @@ type EdgeGateway struct {
 // Since: 5.1
 type GatewayConfiguration struct {
 	Xmlns string `xml:"xmlns,attr,omitempty"`
-	// BackwardCompatibilityMode. Default is false. If set to true, will allow users to write firewall
-	// rules in the old 1.5 format. The new format does not require to use direction in firewall
-	// rules. Also, for firewall rules to allow NAT traffic the filter is applied on the original IP
-	// addresses. Once set to true cannot be reverted back to false.
-	BackwardCompatibilityMode bool `xml:"BackwardCompatibilityMode,omitempty"`
-	// GatewayBackingConfig defines configuration of the vShield edge VM for this gateway. One of:
-	// compact, full.
-	GatewayBackingConfig string `xml:"GatewayBackingConfig"`
-	// GatewayInterfaces holds configuration for edge gateway interfaces, ip allocations, traffic
-	// rate limits and ip sub-allocations
-	GatewayInterfaces *GatewayInterfaces `xml:"GatewayInterfaces"`
-	// EdgeGatewayServiceConfiguration represents Gateway Features.
-	EdgeGatewayServiceConfiguration *GatewayFeatures `xml:"EdgeGatewayServiceConfiguration,omitempty"`
-	// True if this gateway is highly available. (Requires two vShield edge VMs.)
-	HaEnabled *bool `xml:"HaEnabled,omitempty"`
-	// UseDefaultRouteForDNSRelay defines if the default gateway on the external network selected
-	// for default route should be used as the DNS relay.
-	UseDefaultRouteForDNSRelay *bool `xml:"UseDefaultRouteForDnsRelay,omitempty"`
-	// AdvancedNetworkingEnabled allows to use NSX capabilities such dynamic routing (BGP, OSPF),
-	// zero trust networking (DLR), enchanced VPN support (IPsec VPN, SSL VPN-Plus).
-	AdvancedNetworkingEnabled *bool `xml:"AdvancedNetworkingEnabled,omitempty"`
-	// DistributedRoutingEnabled enables distributed routing on the gateway to allow creation of
-	// many more organization VDC networks. Traffic in those networks is optimized for VM-to-VM
-	// communication.
-	DistributedRoutingEnabled *bool `xml:"DistributedRoutingEnabled,omitempty"`
-	// FipsModeEnabled allows any secure communication to or from the NSX Edge uses cryptographic
-	// algorithms or protocols that are allowed by United States Federal Information Processing
-	// Standards (FIPS). FIPS mode turns on the cipher suites that comply with FIPS.
-	FipsModeEnabled *bool `xml:"FipsModeEnabled,omitempty"`
+	// Elements
+	BackwardCompatibilityMode       bool               `xml:"BackwardCompatibilityMode,omitempty"`       // Compatibility mode. Default is false. If set to true, will allow users to write firewall rules in the old 1.5 format. The new format does not require to use direction in firewall rules. Also, for firewall rules to allow NAT traffic the filter is applied on the original IP addresses. Once set to true cannot be reverted back to false.
+	GatewayBackingConfig            string             `xml:"GatewayBackingConfig"`                      // Configuration of the vShield edge VM for this gateway. One of: compact, full.
+	GatewayInterfaces               *GatewayInterfaces `xml:"GatewayInterfaces"`                         // List of Gateway interfaces.
+	EdgeGatewayServiceConfiguration *GatewayFeatures   `xml:"EdgeGatewayServiceConfiguration,omitempty"` // Represents Gateway Features.
+	HaEnabled                       bool               `xml:"HaEnabled,omitempty"`                       // True if this gateway is highly available. (Requires two vShield edge VMs.)
+	AdvancedNetworkingEnabled       bool               `xml:"AdvancedNetworkingEnabled,omitempty"`       // True if the gateway uses advanced networking
+	DistributedRoutingEnabled       *bool              `xml:"DistributedRoutingEnabled,omitempty"`       // True if gateway is attached to a Distributed Logical Router
+	UseDefaultRouteForDNSRelay      bool               `xml:"UseDefaultRouteForDnsRelay,omitempty"`      // True if the default gateway on the external network selected for default route should be used as the DNS relay.
 }
 
 // GatewayInterfaces is a list of Gateway Interfaces.
@@ -1739,27 +1711,16 @@ type GatewayInterface struct {
 	UseForDefaultRoute  bool                   `xml:"UseForDefaultRoute,omitempty"`  // True if this network is default route for the gateway.
 }
 
-// SortBySubnetParticipationGateway allows to sort SubnetParticipation property slice by gateway
-// address
-func (g *GatewayInterface) SortBySubnetParticipationGateway() {
-	sort.SliceStable(g.SubnetParticipation, func(i, j int) bool {
-		return g.SubnetParticipation[i].Gateway < g.SubnetParticipation[j].Gateway
-	})
-}
-
 // SubnetParticipation allows to chose which subnets a gateway can be a part of
 // Type: SubnetParticipationType
 // Namespace: http://www.vmware.com/vcloud/v1.5
 // Description: Allows to chose which subnets a gateway can be part of
 // Since: 5.1
-//
-// Note. Field order is important and should not be changed as API returns errors if IPRanges come
-// before Gateway and Netmask
 type SubnetParticipation struct {
 	Gateway            string    `xml:"Gateway"`                      // Gateway for subnet
-	Netmask            string    `xml:"Netmask"`                      // Netmask for the subnet.
 	IPAddress          string    `xml:"IpAddress,omitempty"`          // Ip Address to be assigned. Keep empty or omit element for auto assignment
 	IPRanges           *IPRanges `xml:"IpRanges,omitempty"`           // Range of IP addresses available for external interfaces.
+	Netmask            string    `xml:"Netmask"`                      // Netmask for the subnet
 	UseForDefaultRoute bool      `xml:"UseForDefaultRoute,omitempty"` // True if this network is default route for the gateway.
 }
 
@@ -1809,6 +1770,250 @@ type StaticRoute struct {
 	NextHopIP        string     `xml:"NextHopIp"`                  // IP Address of Next Hop router/gateway.
 	Interface        string     `xml:"Interface,omitempty"`        // Interface to use for static routing. Internal and External are the supported values.
 	GatewayInterface *Reference `xml:"GatewayInterface,omitempty"` // Gateway interface to which static route is bound.
+}
+
+// FirewallConfigWithXml allows to enable/disable firewall on a specific edge gateway
+// Reference: vCloud Director API for NSX Programming Guide
+// https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
+//
+// Warning. It nests all firewall rules because Edge Gateway API is done so that if this data is not
+// sent while enabling it would wipe all firewall rules. InnerXML type field is used with struct tag
+//`innerxml` to prevent any manipulation of configuration and sending it verbatim
+type FirewallConfigWithXml struct {
+	XMLName       xml.Name              `xml:"firewall"`
+	Enabled       bool                  `xml:"enabled"`
+	DefaultPolicy FirewallDefaultPolicy `xml:"defaultPolicy"`
+
+	// Each configuration change has a version number
+	Version string `xml:"version,omitempty"`
+
+	// The below field has `innerxml` tag so that it is not processed but instead
+	// sent verbatim
+	FirewallRules InnerXML `xml:"firewallRules,omitempty"`
+	GlobalConfig  InnerXML `xml:"globalConfig,omitempty"`
+}
+
+// FirewallDefaultPolicy represent default rule
+type FirewallDefaultPolicy struct {
+	LoggingEnabled bool   `xml:"loggingEnabled"`
+	Action         string `xml:"action"`
+}
+
+// LbGeneralParamsWithXml allows to enable/disable load balancing capabilities on specific edge gateway
+// Reference: vCloud Director API for NSX Programming Guide
+// https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
+//
+// Warning. It nests all components (LbMonitor, LbPool, LbAppProfile, LbAppRule, LbVirtualServer)
+// because Edge Gateway API is done so that if this data is not sent while enabling it would wipe
+// all load balancer configurations. InnerXML type fields are used with struct tag `innerxml` to
+// prevent any manipulation of configuration and sending it verbatim
+type LbGeneralParamsWithXml struct {
+	XMLName             xml.Name   `xml:"loadBalancer"`
+	Enabled             bool       `xml:"enabled"`
+	AccelerationEnabled bool       `xml:"accelerationEnabled"`
+	Logging             *LbLogging `xml:"logging"`
+
+	// This field is not used anywhere but needs to be passed through
+	EnableServiceInsertion bool `xml:"enableServiceInsertion"`
+	// Each configuration change has a version number
+	Version string `xml:"version,omitempty"`
+
+	// The below fields have `innerxml` tag so that they are not processed but instead
+	// sent verbatim
+	VirtualServers []InnerXML `xml:"virtualServer,omitempty"`
+	Pools          []InnerXML `xml:"pool,omitempty"`
+	AppProfiles    []InnerXML `xml:"applicationProfile,omitempty"`
+	Monitors       []InnerXML `xml:"monitor,omitempty"`
+	AppRules       []InnerXML `xml:"applicationRule,omitempty"`
+}
+
+// LbLogging represents logging configuration for load balancer
+type LbLogging struct {
+	Enable   bool   `xml:"enable"`
+	LogLevel string `xml:"logLevel"`
+}
+
+// InnerXML is meant to be used when unmarshaling a field into text rather than struct
+// It helps to avoid missing out any fields which may not have been specified in the struct.
+type InnerXML struct {
+	Text string `xml:",innerxml"`
+}
+
+// LbMonitor defines health check parameters for a particular type of network traffic
+// Reference: vCloud Director API for NSX Programming Guide
+// https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
+type LbMonitor struct {
+	XMLName    xml.Name `xml:"monitor"`
+	ID         string   `xml:"monitorId,omitempty"`
+	Type       string   `xml:"type"`
+	Interval   int      `xml:"interval,omitempty"`
+	Timeout    int      `xml:"timeout,omitempty"`
+	MaxRetries int      `xml:"maxRetries,omitempty"`
+	Method     string   `xml:"method,omitempty"`
+	URL        string   `xml:"url,omitempty"`
+	Expected   string   `xml:"expected,omitempty"`
+	Name       string   `xml:"name,omitempty"`
+	Send       string   `xml:"send,omitempty"`
+	Receive    string   `xml:"receive,omitempty"`
+	Extension  string   `xml:"extension,omitempty"`
+}
+
+type LbMonitors []LbMonitor
+
+// LbPool represents a load balancer server pool as per "vCloud Director API for NSX Programming Guide"
+// Type: LBPoolHealthCheckType
+// https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
+type LbPool struct {
+	XMLName             xml.Name      `xml:"pool"`
+	ID                  string        `xml:"poolId,omitempty"`
+	Name                string        `xml:"name"`
+	Description         string        `xml:"description,omitempty"`
+	Algorithm           string        `xml:"algorithm"`
+	AlgorithmParameters string        `xml:"algorithmParameters,omitempty"`
+	Transparent         bool          `xml:"transparent"`
+	MonitorId           string        `xml:"monitorId,omitempty"`
+	Members             LbPoolMembers `xml:"member,omitempty"`
+}
+
+type LbPools []LbPool
+
+// LbPoolMember represents a single member inside LbPool
+type LbPoolMember struct {
+	ID          string `xml:"memberId,omitempty"`
+	Name        string `xml:"name"`
+	IpAddress   string `xml:"ipAddress"`
+	Weight      int    `xml:"weight,omitempty"`
+	MonitorPort int    `xml:"monitorPort,omitempty"`
+	Port        int    `xml:"port"`
+	MaxConn     int    `xml:"maxConn,omitempty"`
+	MinConn     int    `xml:"minConn,omitempty"`
+	Condition   string `xml:"condition,omitempty"`
+}
+
+type LbPoolMembers []LbPoolMember
+
+// LbAppProfile represents a load balancer application profile as per "vCloud Director API for NSX
+// Programming Guide"
+// https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
+type LbAppProfile struct {
+	XMLName                       xml.Name                  `xml:"applicationProfile"`
+	ID                            string                    `xml:"applicationProfileId,omitempty"`
+	Name                          string                    `xml:"name,omitempty"`
+	SslPassthrough                bool                      `xml:"sslPassthrough"`
+	Template                      string                    `xml:"template,omitempty"`
+	HttpRedirect                  *LbAppProfileHttpRedirect `xml:"httpRedirect,omitempty"`
+	Persistence                   *LbAppProfilePersistence  `xml:"persistence,omitempty"`
+	InsertXForwardedForHttpHeader bool                      `xml:"insertXForwardedFor"`
+	ServerSslEnabled              bool                      `xml:"serverSslEnabled"`
+}
+
+type LbAppProfiles []LbAppProfile
+
+// LbAppProfilePersistence defines persistence profile settings in LbAppProfile
+type LbAppProfilePersistence struct {
+	XMLName    xml.Name `xml:"persistence"`
+	Method     string   `xml:"method,omitempty"`
+	CookieName string   `xml:"cookieName,omitempty"`
+	CookieMode string   `xml:"cookieMode,omitempty"`
+	Expire     int      `xml:"expire,omitempty"`
+}
+
+// LbAppProfileHttpRedirect defines http redirect settings in LbAppProfile
+type LbAppProfileHttpRedirect struct {
+	XMLName xml.Name `xml:"httpRedirect"`
+	To      string   `xml:"to,omitempty"`
+}
+
+// LbAppRule represents a load balancer application rule as per "vCloud Director API for NSX
+// Programming Guide"
+// https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
+type LbAppRule struct {
+	XMLName xml.Name `xml:"applicationRule"`
+	ID      string   `xml:"applicationRuleId,omitempty"`
+	Name    string   `xml:"name,omitempty"`
+	Script  string   `xml:"script,omitempty"`
+}
+
+type LbAppRules []LbAppRule
+
+// LbVirtualServer represents a load balancer virtual server as per "vCloud Director API for NSX
+// Programming Guide"
+// https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
+type LbVirtualServer struct {
+	XMLName              xml.Name `xml:"virtualServer"`
+	ID                   string   `xml:"virtualServerId,omitempty"`
+	Name                 string   `xml:"name,omitempty"`
+	Description          string   `xml:"description,omitempty"`
+	Enabled              bool     `xml:"enabled"`
+	IpAddress            string   `xml:"ipAddress"`
+	Protocol             string   `xml:"protocol"`
+	Port                 int      `xml:"port"`
+	AccelerationEnabled  bool     `xml:"accelerationEnabled"`
+	ConnectionLimit      int      `xml:"connectionLimit,omitempty"`
+	ConnectionRateLimit  int      `xml:"connectionRateLimit,omitempty"`
+	ApplicationProfileId string   `xml:"applicationProfileId,omitempty"`
+	DefaultPoolId        string   `xml:"defaultPoolId,omitempty"`
+	ApplicationRuleIds   []string `xml:"applicationRuleId,omitempty"`
+}
+
+// EdgeNatRule contains shared structure for SNAT and DNAT rule configuration using
+// NSX-V proxied edge gateway endpoint
+// https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
+type EdgeNatRule struct {
+	XMLName           xml.Name `xml:"natRule"`
+	ID                string   `xml:"ruleId,omitempty"`
+	RuleType          string   `xml:"ruleType,omitempty"`
+	RuleTag           string   `xml:"ruleTag,omitempty"`
+	Action            string   `xml:"action"`
+	Vnic              *int     `xml:"vnic,omitempty"`
+	OriginalAddress   string   `xml:"originalAddress"`
+	TranslatedAddress string   `xml:"translatedAddress"`
+	LoggingEnabled    bool     `xml:"loggingEnabled"`
+	Enabled           bool     `xml:"enabled"`
+	Description       string   `xml:"description,omitempty"`
+	Protocol          string   `xml:"protocol,omitempty"`
+	OriginalPort      string   `xml:"originalPort,omitempty"`
+	TranslatedPort    string   `xml:"translatedPort,omitempty"`
+	IcmpType          string   `xml:"icmpType,omitempty"`
+}
+
+// EdgeFirewall holds data for creating firewall rule using proxied NSX-V API
+// https://code.vmware.com/docs/6900/vcloud-director-api-for-nsx-programming-guide
+type EdgeFirewallRule struct {
+	XMLName         xml.Name                `xml:"firewallRule" `
+	ID              string                  `xml:"id,omitempty"`
+	Name            string                  `xml:"name,omitempty"`
+	RuleType        string                  `xml:"ruleType,omitempty"`
+	RuleTag         string                  `xml:"ruleTag,omitempty"`
+	Source          EdgeFirewallEndpoint    `xml:"source" `
+	Destination     EdgeFirewallEndpoint    `xml:"destination"`
+	Application     EdgeFirewallApplication `xml:"application"`
+	MatchTranslated *bool                   `xml:"matchTranslated,omitempty"`
+	Direction       string                  `xml:"direction,omitempty"`
+	Action          string                  `xml:"action,omitempty"`
+	Enabled         bool                    `xml:"enabled"`
+	LoggingEnabled  bool                    `xml:"loggingEnabled"`
+}
+
+// EdgeFirewallEndpoint can contains slices of objects for source or destination in EdgeFirewall
+type EdgeFirewallEndpoint struct {
+	Exclude           bool     `xml:"exclude"`
+	VnicGroupIds      []string `xml:"vnicGroupId,omitempty"`
+	GroupingObjectIds []string `xml:"groupingObjectId,omitempty"`
+	IpAddresses       []string `xml:"ipAddress,omitempty"`
+}
+
+// EdgeFirewallApplication Wraps []EdgeFirewallApplicationService for multiple protocol/port specification
+type EdgeFirewallApplication struct {
+	ID       string                           `xml:"applicationId,omitempty"`
+	Services []EdgeFirewallApplicationService `xml:"service,omitempty"`
+}
+
+// EdgeFirewallApplicationService defines port/protocol details for one service in EdgeFirewallRule
+type EdgeFirewallApplicationService struct {
+	Protocol   string `xml:"protocol,omitempty"`
+	Port       string `xml:"port,omitempty"`
+	SourcePort string `xml:"sourcePort,omitempty"`
 }
 
 // VendorTemplate is information about a vendor service template. This is optional.
@@ -2587,7 +2792,7 @@ type QueryResultOrgVdcNetworkRecordType struct {
 	Dns1               string  `xml:"dns1,attr,omitempty"`
 	Dns2               string  `xml:"dns2,attr,omitempty"`
 	DnsSuffix          string  `xml:"dnsSuffix,attr,omitempty"`
-	LinkType           int     `xml:"linkType,attr,omitempty"` // 0 = direct, 1 = routed, 2 = isolated
+	LinkType           int     `xml:"linkType,attr,omitempty"`
 	ConnectedTo        string  `xml:"connectedTo,attr,omitempty"`
 	Vdc                string  `xml:"vdc,attr,omitempty"`
 	IsBusy             bool    `xml:"isBusy,attr,omitempty"`

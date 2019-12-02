@@ -52,34 +52,6 @@ func (egw *EdgeGateway) getLbServerPool(lbPoolConfig *types.LbPool) (*types.LbPo
 		return nil, err
 	}
 
-	pools, err := egw.GetLbServerPools()
-	if err != nil {
-		return nil, err
-	}
-
-	// Search for pool by ID or by Name
-	for _, pool := range pools {
-		// If ID was specified for lookup - look for the same ID
-		if lbPoolConfig.ID != "" && pool.ID == lbPoolConfig.ID {
-			return pool, nil
-		}
-
-		// If Name was specified for lookup - look for the same Name
-		if lbPoolConfig.Name != "" && pool.Name == lbPoolConfig.Name {
-			// We found it by name. Let's verify if search ID was specified and it matches the lookup object
-			if lbPoolConfig.ID != "" && pool.ID != lbPoolConfig.ID {
-				return nil, fmt.Errorf("load balancer server pool was found by name (%s), but its ID (%s) does not match specified ID (%s)",
-					pool.Name, pool.ID, lbPoolConfig.ID)
-			}
-			return pool, nil
-		}
-	}
-
-	return nil, ErrorEntityNotFound
-}
-
-// GetLbServerPools return all created server pools without filtering.
-func (egw *EdgeGateway) GetLbServerPools() ([]*types.LbPool, error) {
 	httpPath, err := egw.buildProxiedEdgeEndpointURL(types.LbServerPoolPath)
 	if err != nil {
 		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
@@ -97,7 +69,25 @@ func (egw *EdgeGateway) GetLbServerPools() ([]*types.LbPool, error) {
 		return nil, err
 	}
 
-	return lbPoolResponse.LBPools, nil
+	// Search for pool by ID or by Name
+	for _, pool := range lbPoolResponse.LBPools {
+		// If ID was specified for lookup - look for the same ID
+		if lbPoolConfig.ID != "" && pool.ID == lbPoolConfig.ID {
+			return pool, nil
+		}
+
+		// If Name was specified for lookup - look for the same Name
+		if lbPoolConfig.Name != "" && pool.Name == lbPoolConfig.Name {
+			// We found it by name. Let's verify if search ID was specified and it matches the lookup object
+			if lbPoolConfig.ID != "" && pool.ID != lbPoolConfig.ID {
+				return nil, fmt.Errorf("load balancer server pool was found by name (%s), but its ID (%s) does not match specified ID (%s)",
+					pool.Name, pool.ID, lbPoolConfig.ID)
+			}
+			return pool, nil
+		}
+	}
+
+	return nil, ErrorEntityNotFound
 }
 
 // GetLbServerPoolByName wraps getLbServerPool and needs only an ID for lookup
