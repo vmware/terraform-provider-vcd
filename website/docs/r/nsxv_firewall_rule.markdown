@@ -31,7 +31,7 @@ resource "vcd_nsxv_firewall_rule" "my-rule-1" {
   edge_gateway = "my-edge-gateway"
 
   source {
-    ip_addresses = ["any"]
+    ipsets = [vcd_ipset.test-ipset2.name]
   }
 
   destination {
@@ -185,6 +185,7 @@ accepted as a parameter.
 * `gateway_interfaces` - (Optional) A set of with either three keywords `vse` (UI names it as `any`), `internal`, `external` or an org network name. It automatically looks up vNic in the backend.
 * `virtual_machine_ids` - (Optional) A set of `.id` fields of `vcd_vapp_vm` resources.
 * `org_networks` - (Optional) A set of org network names.
+* `ipsets` - (Optional) A set of IP set names.
 
 
 <a id="service"></a>
