@@ -996,11 +996,11 @@ resource "vcd_nsxv_firewall_rule" "ip_sets" {
 	action = "accept"
 
 	source {
-		ip_sets = [vcd_ipset.aceeptance-ipset-1.name]
+		ip_sets = [vcd_nsxv_ip_set.aceeptance-ipset-1.name]
 	}
   
 	destination {
-		ip_sets = [vcd_ipset.aceeptance-ipset-2.name]
+		ip_sets = [vcd_nsxv_ip_set.aceeptance-ipset-2.name]
 	}
 
 	service {
@@ -1008,12 +1008,12 @@ resource "vcd_nsxv_firewall_rule" "ip_sets" {
 	}
 }
 
-resource "vcd_ipset" "aceeptance-ipset-1" {
+resource "vcd_nsxv_ip_set" "aceeptance-ipset-1" {
 	name = "acceptance test IPset 1"
 	ip_addresses = ["222.222.222.1/24"]
 }
 
-resource "vcd_ipset" "aceeptance-ipset-2" {
+resource "vcd_nsxv_ip_set" "aceeptance-ipset-2" {
 	name = "acceptance test IPset 2"
 	ip_addresses = ["11.11.11.1-11.11.11.100", "12.12.12.1"]
 }
@@ -1028,11 +1028,11 @@ resource "vcd_nsxv_firewall_rule" "ip_sets" {
 	action = "accept"
 
 	source {
-		ip_sets = [vcd_ipset.aceeptance-ipset-2.name]
+		ip_sets = [vcd_nsxv_ip_set.aceeptance-ipset-2.name]
 	}
   
 	destination {
-		ip_sets = [vcd_ipset.aceeptance-ipset-1.name]
+		ip_sets = [vcd_nsxv_ip_set.aceeptance-ipset-1.name]
 	}
 
 	service {
@@ -1040,12 +1040,12 @@ resource "vcd_nsxv_firewall_rule" "ip_sets" {
 	}
 }
 
-resource "vcd_ipset" "aceeptance-ipset-1" {
+resource "vcd_nsxv_ip_set" "aceeptance-ipset-1" {
 	name = "acceptance test IPset 1"
 	ip_addresses = ["222.222.222.1/24"]
 }
 
-resource "vcd_ipset" "aceeptance-ipset-2" {
+resource "vcd_nsxv_ip_set" "aceeptance-ipset-2" {
 	name = "acceptance test IPset 2"
 	ip_addresses = ["11.11.11.1-11.11.11.100", "12.12.12.1"]
 }
