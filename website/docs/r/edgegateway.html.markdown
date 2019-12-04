@@ -134,7 +134,7 @@ The following arguments are supported:
   default gateway. It must be included in the list of `external_networks`. Providing an empty string
   or omitting the argument will create the edge gateway without a default gateway. **Please use**
   the  [external network](#external-network) block structure and `use_for_default_route` to specify
-  a subnet should be used as default route.
+  a subnet which should be used as a default route.
 * `advanced` - (Optional) True if the gateway uses advanced networking. Default is `true`.
 * `ha_enabled` - (Optional) Enable high availability on this edge gateway. Default is `false`.
 * `distributed_routing` - (Optional) If advanced networking enabled, also enable distributed routing. Default is `false`.
