@@ -52,11 +52,11 @@ func resourceVmInternalDisk() *schema.Resource {
 				ForceNew:    true,
 				Description: "Storage profile to override the VM default one",
 			},
-			"allow_power_off_on": {
+			"allow_vm_reboot": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				Description: "Specifies whether VM off/on allowed adding or changing internal disk.",
+				Description: "Specifies whether reboot allowed for adding or changing internal disk.",
 			},
 			"bus_type": {
 				Type:         schema.TypeString,
@@ -160,14 +160,68 @@ func resourceVmInternalDiskCreate(d *schema.ResourceData, meta interface{}) erro
 		OverrideVmDefault:   overrideVmDefault,
 	}
 
-	diskId, err := vm.AddDisk(diskSetting)
+	err = powerOffIfNeeded(d, vm)
 	if err != nil {
 		return err
-		fmt.Errorf("error updating VM disks: %s", err)
+	}
+
+	diskId, err := vm.AddDisk(diskSetting)
+	if err != nil {
+		return fmt.Errorf("error updating VM disks: %s", err)
 	}
 
 	d.SetId(diskId)
+
+	err = powerOnIfNeeded(d, vm)
+	if err != nil {
+		return err
+	}
+
 	return resourceVmInternalDiskRead(d, meta)
+}
+
+func powerOnIfNeeded(d *schema.ResourceData, vm *govcd.VM) error {
+	vmStatus, err := vm.GetStatus()
+	if err != nil {
+		return fmt.Errorf("error getting VM status before ensuring it is powered on: %s", err)
+	}
+
+	if (vmStatus != "POWERED_ON" && d.Get("bus_type").(string) == "ide" && d.Get("allow_vm_reboot").(bool) == true) ||
+		(vmStatus != "POWERED_ON" && d.Get("allow_vm_reboot").(bool) == true && (d.HasChange("bus_number") || d.HasChange("unit_number"))) {
+		log.Printf("[DEBUG] Powering on VM %s after adding internal disk.", vm.VM.Name)
+
+		task, err := vm.PowerOn()
+		if err != nil {
+			return fmt.Errorf("error powering on VM for adding/updating internal disk: %s", err)
+		}
+		err = task.WaitTaskCompletion()
+		if err != nil {
+			return fmt.Errorf(errorCompletingTask, err)
+		}
+	}
+	return nil
+}
+
+func powerOffIfNeeded(d *schema.ResourceData, vm *govcd.VM) error {
+	vmStatus, err := vm.GetStatus()
+	if err != nil {
+		return fmt.Errorf("error getting VM status before ensuring it is powered on: %s", err)
+	}
+
+	if (vmStatus != "POWERED_OFF" && d.Get("bus_type").(string) == "ide" && d.Get("allow_vm_reboot").(bool) == true) ||
+		(vmStatus != "POWERED_OFF" && d.Get("allow_vm_reboot").(bool) == true && (d.HasChange("bus_number") || d.HasChange("unit_number"))) {
+		log.Printf("[DEBUG] Powering off VM %s for adding/updating internal disk.", vm.VM.Name)
+
+		task, err := vm.PowerOff()
+		if err != nil {
+			return fmt.Errorf("error powering off VM for adding internal disk: %s", err)
+		}
+		err = task.WaitTaskCompletion()
+		if err != nil {
+			return fmt.Errorf(errorCompletingTask, err)
+		}
+	}
+	return nil
 }
 
 // Deletes disk from VM
@@ -182,9 +236,19 @@ func resourceVmInternalDiskDelete(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
+	err = powerOffIfNeeded(d, vm)
+	if err != nil {
+		return err
+	}
+
 	err = vm.DeleteDisk(d.Id())
 	if err != nil {
 		return fmt.Errorf("[Error] failed to delete internal disk: %s", err)
+	}
+
+	err = powerOnIfNeeded(d, vm)
+	if err != nil {
+		return err
 	}
 
 	log.Printf("[TRACE] VM internal disk %s deleted", d.Id())
@@ -254,7 +318,17 @@ func resourceVmInternalDiskUpdate(d *schema.ResourceData, meta interface{}) erro
 	diskSettingsToUpdate.StorageProfile = storageProfilePrt
 	diskSettingsToUpdate.OverrideVmDefault = overrideVmDefault
 
+	err = powerOffIfNeeded(d, vm)
+	if err != nil {
+		return err
+	}
+
 	_, err = vm.UpdateDisks(vm.VM.VmSpecSection)
+	if err != nil {
+		return err
+	}
+
+	err = powerOnIfNeeded(d, vm)
 	if err != nil {
 		return err
 	}
