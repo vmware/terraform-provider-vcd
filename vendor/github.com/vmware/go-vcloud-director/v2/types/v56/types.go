@@ -1439,8 +1439,8 @@ type MediaSettings struct {
 // CpuResourceMhz from VM/VmSpecSection struct
 type CpuResourceMhz struct {
 	Configured  int64  `xml:"Configured`             // The amount of resource configured on the virtual machine.
-	Limit       *int64 `xml:"Limit,omitempty"`       // The limit for how much of this resource can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited.
 	Reservation *int64 `xml:"Reservation,omitempty"` // The amount of reservation of this resource on the underlying virtualization infrastructure.
+	Limit       *int64 `xml:"Limit,omitempty"`       // The limit for how much of this resource can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited.
 	SharesLevel string `xml:"SharesLevel,omitempty"` //	Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload.
 	Shares      *int   `xml:"Shares,omitempty"`      // Custom priority for the resource. This is a read-only, unless the share level is CUSTOM.
 }
@@ -1448,8 +1448,8 @@ type CpuResourceMhz struct {
 // MemoryResourceMb from VM/VmSpecSection struct
 type MemoryResourceMb struct {
 	Configured  int64  `xml:"Configured`             // The amount of resource configured on the virtual machine.
-	Limit       *int64 `xml:"Limit,omitempty"`       // The limit for how much of this resource can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited.
 	Reservation *int64 `xml:"Reservation,omitempty"` // The amount of reservation of this resource on the underlying virtualization infrastructure.
+	Limit       *int64 `xml:"Limit,omitempty"`       // The limit for how much of this resource can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited.
 	SharesLevel string `xml:"SharesLevel,omitempty"` //	Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload.
 	Shares      *int   `xml:"Shares,omitempty"`      // Custom priority for the resource. This is a read-only, unless the share level is CUSTOM.
 }

@@ -1233,7 +1233,7 @@ func updateTemplateInternalDisks(d *schema.ResourceData, meta interface{}, vm go
 		}
 
 		if diskCreatedByTemplate == nil {
-			return fmt.Errorf("[vm creation] disk with bus type %d, bust number %d and unit number %d not found",
+			return fmt.Errorf("[vm creation] disk with bus type %s, bust number %d and unit number %d not found",
 				internalDiskProvidedConfig["bus_type"].(string), internalDiskProvidedConfig["bus_number"].(int), internalDiskProvidedConfig["unit_number"].(int))
 		}
 

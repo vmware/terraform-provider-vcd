@@ -55,8 +55,8 @@ func resourceVmInternalDisk() *schema.Resource {
 			"allow_power_off_on": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Computed:    true,
-				Description: "Specifies whether the disk storage is pre-allocated or allocated on demand.",
+				Default:     false,
+				Description: "Specifies whether VM off/on allowed adding or changing internal disk.",
 			},
 			"bus_type": {
 				Type:         schema.TypeString,
@@ -263,7 +263,7 @@ func resourceVmInternalDiskUpdate(d *schema.ResourceData, meta interface{}) erro
 	return nil
 }
 
-// Retrieves an Org resource from vCD
+// Retrieves internal disk from VM and updates terraform state
 func resourceVmInternalDiskRead(d *schema.ResourceData, m interface{}) error {
 	vcdClient := m.(*VCDClient)
 
