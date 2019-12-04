@@ -2,9 +2,9 @@
 
 FEATURES:
 
-* **New Resource:** `vcd_ipset` IP set - [GH-406]
+* **New Resource:** `vcd_nsxv_ip_set` IP set - [GH-406,GH-411]
 * **New Data Source:** `vcd_vapp_vm` VM - [GH-218]
-* **New Data Source:** `vcd_ipset` IP set - [GH-406]
+* **New Data Source:** `vcd_nsxv_ip_set` IP set - [GH-406,GH-411]
 * **New build command:** `make test-upgrade` to run an upgrade test from the previous released version
 
 IMPROVEMENTS:
@@ -28,7 +28,8 @@ IMPROVEMENTS:
   passthrough - [GH-384]
 * Fix code warnings from `staticcheck` and add command `make static` to Travis tests
 * `resource/vcd_edge_gateway` and `datasource/vcd_edge_gateway` add `default_external_network_ip`
-  field to export default edge gateway IP address - [GH-389]
+  and `external_network_ips` fields to export default edge gateway IP address and other external
+  network IPs used on gateway interfaces - [GH-389, GH-401]
 * Add `token` to the `vcd` provider for the ability of connecting with an authorization token - [GH-280]
 * Add command `make token` to create an authorization token from testing credentials
 * Clean up interpolation-only expressions from tests (as allowed in terraform v0.12.11+)
@@ -39,6 +40,12 @@ IMPROVEMENTS:
 * `resource/vcd_network_routed` Add check for valid IPs [GH-374]
 * `resource/vcd_network_isolated` Add check for valid IPs [GH-373]
 * `resource/vcd_nsxv_firewall_rule` Add support for IP sets [GH-411]
+* `resource/vcd_edgegateway` new fields `fips_mode_enabled`, `use_default_route_for_dns_relay`
+  - [GH-401]
+* `resource/vcd_edgegateway`  new `external_network` block for advanced configurations of external
+  networks including multiple subnets, IP pool sub-allocation and rate limits - [GH-401]
+* `resource/vcd_edgegateway` enables read support for field `distributed_routing` after switch to
+  vCD API v29.0 - [GH-401]
 
 BUG FIXES:
 
@@ -53,6 +60,8 @@ BUG FIXES:
 DEPRECATIONS:
 
 * Deprecated property `storage_profile` in resource `vcd_vapp`, as the corresponding field is now enabled in `vcd_vapp_vm`
+* `resource/vcd_edgegateway` deprecates fields `external_networks` and `default_gateway_network` in
+  favor of new `external_network` block(s) - [GH-401] 
 
 ## 2.5.0 (October 28, 2019)
 
@@ -115,6 +124,7 @@ IMPROVEMENTS:
 * `resource/vcd_catalog_media` MediaItem state ID changed from colon separated list of catalog name and media name to vCD ID ([#340](https://github.com/terraform-providers/terraform-provider-vcd/issues/340))
 * Import functions can now use custom separators instead of "." ([#343](https://github.com/terraform-providers/terraform-provider-vcd/issues/343))
 * `resource/vcd_vapp_vm` has new field `computer_name` ([#334](https://github.com/terraform-providers/terraform-provider-vcd/issues/334), [#347](https://github.com/terraform-providers/terraform-provider-vcd/issues/347))
+
 
 BUG FIXES:
 

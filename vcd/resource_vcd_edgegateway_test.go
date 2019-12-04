@@ -58,7 +58,7 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdEdgeGatewayDestroyBasic,
+		CheckDestroy: testAccCheckVcdEdgeGatewayDestroy(edgeGatewayNameBasic),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -69,10 +69,11 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				ResourceName:      "vcd_edgegateway." + edgeGatewayNameBasic + "-import",
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, edgeGatewayVcdName),
+				ResourceName:            "vcd_edgegateway." + edgeGatewayNameBasic + "-import",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdOrgVdcObject(testConfig, edgeGatewayVcdName),
+				ImportStateVerifyIgnore: []string{"external_network", "external_networks"},
 			},
 		},
 	})
@@ -126,7 +127,7 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdEdgeGatewayDestroyComplex,
+		CheckDestroy: testAccCheckVcdEdgeGatewayDestroy(edgeGatewayNameComplex),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -140,7 +141,7 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "lb_loglevel", "info"),
 					resource.TestCheckResourceAttr("vcd_edgegateway."+edgeGatewayNameComplex, "default_external_network_ip", "192.168.30.51"),
 
-					resourceFieldsEqual("vcd_edgegateway."+edgeGatewayNameComplex, "data.vcd_edgegateway.edge", []string{}),
+					resourceFieldsEqual("vcd_edgegateway."+edgeGatewayNameComplex, "data.vcd_edgegateway.edge", []string{"external_network.#"}),
 				),
 			},
 			resource.TestStep{
@@ -172,6 +173,9 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, edgeGatewayVcdName),
+				// import only imports values in 'external_network' block, while this test uses
+				// older 'external_networks therefore we need to skip validation of these fields
+				ImportStateVerifyIgnore: []string{"external_networks", "external_network"},
 			},
 			resource.TestStep{
 				Config: configText4,
@@ -190,40 +194,244 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 	})
 }
 
-func testEdgeGatewayDestroy(s *terraform.State, wantedEgwName string) error {
+func testAccCheckVcdEdgeGatewayDestroy(edgeName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
 
-	for _, rs := range s.RootModule().Resources {
-		edgeGatewayName := rs.Primary.Attributes["name"]
-		if rs.Type != "vcd_edgegateway" {
-			continue
-		}
-		if edgeGatewayName != wantedEgwName {
-			continue
-		}
-		conn := testAccProvider.Meta().(*VCDClient)
-		orgName := rs.Primary.Attributes["org"]
-		vdcName := rs.Primary.Attributes["vdc"]
+		for _, rs := range s.RootModule().Resources {
+			edgeGatewayName := rs.Primary.Attributes["name"]
+			if rs.Type != "vcd_edgegateway" {
+				continue
+			}
+			if edgeGatewayName != edgeName {
+				continue
+			}
+			conn := testAccProvider.Meta().(*VCDClient)
+			orgName := rs.Primary.Attributes["org"]
+			vdcName := rs.Primary.Attributes["vdc"]
 
-		_, vdc, err := conn.GetOrgAndVdc(orgName, vdcName)
-		if err != nil {
-			return fmt.Errorf("error retrieving org %s and vdc %s : %s ", orgName, vdcName, err)
+			_, vdc, err := conn.GetOrgAndVdc(orgName, vdcName)
+			if err != nil {
+				return fmt.Errorf("error retrieving org %s and vdc %s : %s ", orgName, vdcName, err)
+			}
+
+			_, err = vdc.GetEdgeGatewayByName(edgeName, true)
+			if err == nil {
+				return fmt.Errorf("edge gateway %s was not removed", edgeName)
+			}
 		}
 
-		_, err = vdc.GetEdgeGatewayByName(wantedEgwName, true)
-		if err == nil {
-			return fmt.Errorf("edge gateway %s was not removed", wantedEgwName)
-		}
+		return nil
+	}
+}
+
+func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
+	var (
+		edgeGatewayVcdName    string = "test_edge_gateway_networks"
+		newExternalNetwork    string = "TestExternalNetwork"
+		newExternalNetworkVcd string = "test_external_network"
+	)
+
+	// String map to fill the template
+	var params = StringMap{
+		"Org":                   testConfig.VCD.Org,
+		"Vdc":                   testConfig.VCD.Vdc,
+		"EdgeGateway":           edgeGatewayNameComplex,
+		"EdgeGatewayVcd":        edgeGatewayVcdName,
+		"ExternalNetwork":       testConfig.Networking.ExternalNetwork,
+		"Tags":                  "gateway",
+		"NewExternalNetwork":    newExternalNetwork,
+		"NewExternalNetworkVcd": newExternalNetworkVcd,
+		"Type":                  testConfig.Networking.ExternalNetworkPortGroupType,
+		"PortGroup":             testConfig.Networking.ExternalNetworkPortGroup,
+		"Advanced":              getAdvancedProperty(),
+		"Vcenter":               testConfig.Networking.Vcenter,
+	}
+	configText := templateFill(testAccEdgeGatewayNetworks, params)
+
+	params["FuncName"] = t.Name() + "-step2"
+	configText1 := templateFill(testAccEdgeGatewayNetworks2, params)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
 	}
 
-	return nil
+	if !usingSysAdmin() {
+		t.Skip("Edge gateway tests requires system admin privileges")
+		return
+	}
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVcdEdgeGatewayDestroy("edge-with-complex-networks"),
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: configText,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "name", "edge-with-complex-networks"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "advanced", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "description", "new edge gateway"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "configuration", "compact"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "advanced", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "distributed_routing", "false"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "fips_mode_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "use_default_route_for_dns_relay", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "default_gateway_network", newExternalNetworkVcd),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "default_external_network_ip", "192.168.30.51"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.#", "2"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.enable_rate_limit", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.incoming_rate_limit", "77.77"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.name", "test_external_network"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.outgoing_rate_limit", "88.88234"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.#", "1"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.gateway", "192.168.30.49"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.ip_address", "192.168.30.51"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.netmask", "255.255.255.240"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.use_for_default_route", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.suballocate_pool.#", "2"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.suballocate_pool.3548736268.end_address", "192.168.30.55"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.suballocate_pool.3548736268.start_address", "192.168.30.53"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.suballocate_pool.4005225628.end_address", "192.168.30.60"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.suballocate_pool.4005225628.start_address", "192.168.30.58"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network_ips.#", "2"),
+					resource.TestMatchResourceAttr("vcd_edgegateway.egw", "external_network_ips.0", ipV4Regex),
+					resource.TestMatchResourceAttr("vcd_edgegateway.egw", "external_network_ips.1", ipV4Regex),
+
+					// TODO after
+					// https://github.com/terraform-providers/terraform-provider-aws/issues/7198
+					// Data source checks. There is a bug in Terraform where a data source cannot
+					// have two computed TypeSet variables because they get overwriten The test
+					// below is left such, that it triggers an error as soon as the bug is fixed.
+					// (probably when we pull in newer SDK)
+					resource.TestCheckResourceAttr("data.vcd_edgegateway.egw", "external_network.#", "1"),
+
+					// Working data source tests
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "name", "data.vcd_edgegateway.egw", "name"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "external_network_ips.#", "data.vcd_edgegateway.egw", "external_network_ips.#"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "external_network_ips.0", "data.vcd_edgegateway.egw", "external_network_ips.0"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "external_network_ips.1", "data.vcd_edgegateway.egw", "external_network_ips.1"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "fips_mode_enabled", "data.vcd_edgegateway.egw", "fips_mode_enabled"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "use_default_route_for_dns_relay", "data.vcd_edgegateway.egw", "use_default_route_for_dns_relay"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "advanced", "data.vcd_edgegateway.egw", "advanced"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "distributed_routing", "data.vcd_edgegateway.egw", "distributed_routing"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "configuration", "data.vcd_edgegateway.egw", "configuration"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "default_external_network_ip", "data.vcd_edgegateway.egw", "default_external_network_ip"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "default_external_network_ip", "data.vcd_edgegateway.egw", "default_external_network_ip"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "default_gateway_network", "data.vcd_edgegateway.egw", "default_gateway_network"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "description", "data.vcd_edgegateway.egw", "description"),
+					resource.TestCheckResourceAttr("data.vcd_edgegateway.egw", "external_networks.#", "2"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "fw_default_rule_action", "data.vcd_edgegateway.egw", "fw_default_rule_action"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "fw_default_rule_logging_enabled", "data.vcd_edgegateway.egw", "fw_default_rule_logging_enabled"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "fw_enabled", "data.vcd_edgegateway.egw", "fw_enabled"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "ha_enabled", "data.vcd_edgegateway.egw", "ha_enabled"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "lb_acceleration_enabled", "data.vcd_edgegateway.egw", "lb_acceleration_enabled"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "lb_enabled", "data.vcd_edgegateway.egw", "lb_enabled"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "lb_logging_enabled", "data.vcd_edgegateway.egw", "lb_logging_enabled"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "lb_loglevel", "data.vcd_edgegateway.egw", "lb_loglevel"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "use_default_route_for_dns_relay", "data.vcd_edgegateway.egw", "use_default_route_for_dns_relay"),
+				),
+			},
+			resource.TestStep{
+				Taint:  []string{"vcd_edgegateway.egw"},
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "name", "simple-edge-with-complex-networks"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "configuration", "compact"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "advanced", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "distributed_routing", "false"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "fips_mode_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "ha_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "description", ""),
+
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.#", "1"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.844799132.enable_rate_limit", "false"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.844799132.incoming_rate_limit", "0"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.844799132.name", "test_external_network"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.844799132.outgoing_rate_limit", "0"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.844799132.subnet.#", "1"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.844799132.subnet.4035629902.gateway", "192.168.30.49"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.844799132.subnet.4035629902.ip_address", ""),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.844799132.subnet.4035629902.netmask", "255.255.255.240"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.844799132.subnet.4035629902.use_for_default_route", "true"),
+
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network_ips.#", "1"),
+					resource.TestMatchResourceAttr("vcd_edgegateway.egw", "external_network_ips.0", ipV4Regex),
+
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "fw_default_rule_action", "deny"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "fw_default_rule_logging_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "fw_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "lb_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "lb_acceleration_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "lb_logging_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "lb_loglevel", "info"),
+				),
+			},
+			resource.TestStep{ // step2 - import
+				ResourceName:      "vcd_edgegateway.egw",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, "simple-edge-with-complex-networks"),
+			},
+		},
+	})
 }
 
-func testAccCheckVcdEdgeGatewayDestroyBasic(s *terraform.State) error {
-	return testEdgeGatewayDestroy(s, edgeGatewayNameBasic)
-}
+// TestAccVcdEdgeGatewayParallelCreation attaches multiple edge gateways to the same external
+// network as it was reported that edge gateways step on each other while trying to attach to the
+// same external network. If this test ever fails then it means locks have to be used on external
+// networks.
+func TestAccVcdEdgeGatewayParallelCreation(t *testing.T) {
+	var (
+		edgeGatewayVcdName    string = "test_edge_gateway_networks"
+		newExternalNetwork    string = "TestExternalNetwork"
+		newExternalNetworkVcd string = "test_external_network"
+	)
 
-func testAccCheckVcdEdgeGatewayDestroyComplex(s *terraform.State) error {
-	return testEdgeGatewayDestroy(s, edgeGatewayNameComplex)
+	// String map to fill the template
+	var params = StringMap{
+		"Org":                   testConfig.VCD.Org,
+		"Vdc":                   testConfig.VCD.Vdc,
+		"EdgeGateway":           edgeGatewayNameComplex,
+		"EdgeGatewayVcd":        edgeGatewayVcdName,
+		"ExternalNetwork":       testConfig.Networking.ExternalNetwork,
+		"Tags":                  "gateway",
+		"NewExternalNetwork":    newExternalNetwork,
+		"NewExternalNetworkVcd": newExternalNetworkVcd,
+		"Type":                  testConfig.Networking.ExternalNetworkPortGroupType,
+		"PortGroup":             testConfig.Networking.ExternalNetworkPortGroup,
+		"Advanced":              getAdvancedProperty(),
+		"Vcenter":               testConfig.Networking.Vcenter,
+	}
+	configText := templateFill(testAccEdgeGatewayParallel, params)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	if !usingSysAdmin() {
+		t.Skip("Edge gateway tests requires system admin privileges")
+		return
+	}
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
+			testAccCheckVcdEdgeGatewayDestroy("parallel-0"),
+			testAccCheckVcdEdgeGatewayDestroy("parallel-1"),
+		),
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: configText,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw.0", "name", "parallel-0"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw.1", "name", "parallel-1"),
+				),
+			},
+		},
+	})
 }
 
 const testAccEdgeGatewayBasic = `
@@ -239,6 +447,10 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
 }
 `
 
+// TODO external network has a bug that it uses a TypeList for `ip_scope` field. If the below two
+// network has second ip_scope defined - then vCD API orders them differently and a replacement is
+// suggested.
+// GitHUB issue - https://github.com/terraform-providers/terraform-provider-vcd/issues/371
 const testAccEdgeGatewayComplexNetwork = `
 resource "vcd_external_network" "{{.NewExternalNetwork}}" {
   name        = "{{.NewExternalNetworkVcd}}"
@@ -262,6 +474,19 @@ resource "vcd_external_network" "{{.NewExternalNetwork}}" {
       end_address   = "192.168.30.62"
     }
   }
+  
+#  ip_scope {
+# 	gateway      = "192.168.40.149"
+# 	netmask      = "255.255.255.0"
+# 	dns1         = "192.168.0.164"
+# 	dns2         = "192.168.0.196"
+# 	dns_suffix   = "company.biz"
+
+# 	static_ip_pool {
+# 	  start_address = "192.168.40.151"
+# 	  end_address   = "192.168.40.162"
+# 	}
+#   }
 
   retain_net_info_across_deployments = "false"
 }
@@ -335,5 +560,111 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
 
   fw_enabled = "true"
   lb_enabled = "true"
+}
+`
+
+const testAccEdgeGatewayNetworks = testAccEdgeGatewayComplexNetwork + `
+resource "vcd_edgegateway" "egw" {
+	org                     = "{{.Org}}"
+	vdc                     = "{{.Vdc}}"
+
+	name                    = "edge-with-complex-networks"
+	description             = "new edge gateway"
+	configuration           = "compact"
+	advanced                = true
+  
+	fips_mode_enabled               = false
+	use_default_route_for_dns_relay = true
+	distributed_routing             = false
+  
+	external_network {
+	  name = vcd_external_network.{{.NewExternalNetwork}}.name
+	  enable_rate_limit = true
+	  incoming_rate_limit = 77.77
+	  outgoing_rate_limit = 88.88234
+  
+	  subnet {
+		ip_address = "192.168.30.51"
+		gateway = "192.168.30.49"
+		netmask = "255.255.255.240"
+		use_for_default_route = true
+
+		suballocate_pool {
+			start_address = "192.168.30.53"
+			end_address   = "192.168.30.55"
+		}
+
+		suballocate_pool {
+			start_address = "192.168.30.58"
+			end_address   = "192.168.30.60"
+		}
+	  }
+	}
+
+	# Attach to existing external network
+	external_network {
+	  name = data.vcd_external_network.ds-network.name
+
+		subnet {
+			# ip_address is skipped here on purpose to get dynamic IP
+			use_for_default_route = false
+			gateway = data.vcd_external_network.ds-network.ip_scope[0].gateway
+			netmask = data.vcd_external_network.ds-network.ip_scope[0].netmask
+	}
+  }
+}
+
+data "vcd_edgegateway" "egw" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+	
+  name = vcd_edgegateway.egw.name
+}
+
+# Use data source of existing external network to get needed gateway and netmask
+# for subnet participation details
+data "vcd_external_network" "ds-network" {
+	name = "{{.ExternalNetwork}}"
+}
+`
+
+const testAccEdgeGatewayNetworks2 = testAccEdgeGatewayComplexNetwork + `
+resource "vcd_edgegateway" "egw" {
+	org                     = "{{.Org}}"
+	vdc                     = "{{.Vdc}}"
+
+	name                    = "simple-edge-with-complex-networks"
+	configuration           = "compact"
+	advanced                = true
+
+	external_network {
+	  name = vcd_external_network.{{.NewExternalNetwork}}.name
+	  subnet {
+		gateway = "192.168.30.49"
+		netmask = "255.255.255.240"
+		use_for_default_route = true
+	  }
+	}
+}
+`
+
+const testAccEdgeGatewayParallel = testAccEdgeGatewayComplexNetwork + `
+resource "vcd_edgegateway" "egw" {
+	count = 2
+
+	org                     = "{{.Org}}"
+	vdc                     = "{{.Vdc}}"
+
+	name                    = "parallel-${count.index}"
+	configuration           = "compact"
+	advanced                = true
+
+	external_network {
+	  name = vcd_external_network.{{.NewExternalNetwork}}.name
+	  subnet {
+		gateway = "192.168.30.49"
+		netmask = "255.255.255.240"
+	  }
+	}
 }
 `

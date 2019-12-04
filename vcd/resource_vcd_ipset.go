@@ -257,7 +257,3 @@ func setIpSetData(d *schema.ResourceData, ipSet *types.EdgeIpSet, vdc *govcd.Vdc
 
 	return nil
 }
-
-func takeBoolPointer(value bool) *bool {
-	return &value
-}
