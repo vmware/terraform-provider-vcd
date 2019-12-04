@@ -107,7 +107,7 @@ func datasourceVcdNsxvFirewallRule() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"ipsets": {
+						"ip_sets": {
 							Type:        schema.TypeSet,
 							Computed:    true,
 							Description: "Set of IP set names",
@@ -172,8 +172,8 @@ func datasourceVcdNsxvFirewallRule() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"ipsets": {
-							Optional:    true,
+						"ip_sets": {
+							Computed:    true,
 							Type:        schema.TypeSet,
 							Description: "Set of IP set names",
 							Elem: &schema.Schema{

@@ -135,7 +135,7 @@ func resourceVcdNsxvFirewallRule() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"ipsets": {
+						"ip_sets": {
 							Optional:    true,
 							Type:        schema.TypeSet,
 							Description: "Set of IP set names",
@@ -201,7 +201,7 @@ func resourceVcdNsxvFirewallRule() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"ipsets": {
+						"ip_sets": {
 							Optional:    true,
 							Type:        schema.TypeSet,
 							Description: "Set of IP set names",
@@ -680,7 +680,7 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 	endpointMap["gateway_interfaces"] = endpointGatewayInterfaceSet
 	endpointMap["org_networks"] = endpointNetworksSet
 	endpointMap["virtual_machine_ids"] = endpointVmSet
-	endpointMap["ipsets"] = endpointIpSetSet
+	endpointMap["ip_sets"] = endpointIpSetSet
 	// TODO - uncomment when security groups are supported
 	// endpointMap["security_groups"] = endpointSecurityGroupSet
 
@@ -748,7 +748,7 @@ func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway, vd
 	result.GroupingObjectIds = append(result.GroupingObjectIds, endpointOrgNetworkIdStrings...)
 
 	// Extract ipset IDs from set and add them to endpoint structure
-	endpointIpSetNameStrings := convertSchemaSetToSliceOfStrings(endpointMap["ipsets"].(*schema.Set))
+	endpointIpSetNameStrings := convertSchemaSetToSliceOfStrings(endpointMap["ip_sets"].(*schema.Set))
 	endpointIpSetIdStrings, err := ipSetNamesToIds(endpointIpSetNameStrings, vdc)
 	if err != nil {
 		return nil, fmt.Errorf("could not lookup IP set names by their IDs : %s", err)

@@ -63,11 +63,11 @@ resource "vcd_nsxv_firewall_rule" "ipsets" {
 	action = "accept"
 
 	source {
-		ipsets = [vcd_ipset.test-ipset.name]
+		ip_sets = [vcd_ipset.test-ipset.name]
 	}
   
 	destination {
-		ipsets = [vcd_ipset.test-ipset2.name]
+		ip_sets = [vcd_ipset.test-ipset2.name]
 	}
 
 	service {
