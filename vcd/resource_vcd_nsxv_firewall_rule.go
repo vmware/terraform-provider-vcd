@@ -599,7 +599,6 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 	for _, groupingObject := range endpoint.GroupingObjectIds {
 		idSplit := strings.Split(groupingObject, ":")
 		idLen := len(idSplit)
-		// TODO uncomment when IP sets and Security groups are supported
 		subIdSplit := ""
 		if idLen == 2 {
 			subSplit := strings.Split(idSplit[1], "-")
@@ -865,58 +864,6 @@ func orgNetworksIdsToNames(networkIds []string, vdc *govcd.Vdc) ([]string, error
 
 	}
 	return orgNetworkNames, nil
-}
-
-// ipSetIdsToNames looks up IP sets by IDs and returns list of their names
-func ipSetIdsToNames(ipSetIds []string, vdc *govcd.Vdc) ([]string, error) {
-	ipSetNames := make([]string, len(ipSetIds))
-
-	allIpSets, err := vdc.GetAllNsxvIpSets()
-	if err != nil {
-		return nil, fmt.Errorf("unable to fetch all IP sets in vDC %s: %s", vdc.Vdc.Name, err)
-	}
-
-	for index, ipSetId := range ipSetIds {
-		var ipSetFound bool
-		for _, ipSet := range allIpSets {
-			if ipSet.ID == ipSetId {
-				ipSetNames[index] = ipSet.Name
-				ipSetFound = true
-			}
-		}
-		// If ID was not found - fail early
-		if !ipSetFound {
-			return nil, fmt.Errorf("could not find IP set with ID %s", ipSetId)
-		}
-	}
-
-	return ipSetNames, nil
-}
-
-// ipSetNamesToIds looks up IP set names by their IDs
-func ipSetNamesToIds(ipSetNames []string, vdc *govcd.Vdc) ([]string, error) {
-	ipSetIds := make([]string, len(ipSetNames))
-
-	allIpSets, err := vdc.GetAllNsxvIpSets()
-	if err != nil {
-		return nil, fmt.Errorf("unable to fetch all IP sets in vDC %s: %s", vdc.Vdc.Name, err)
-	}
-
-	for index, ipSetName := range ipSetNames {
-		var ipSetFound bool
-		for _, ipSet := range allIpSets {
-			if ipSet.Name == ipSetName {
-				ipSetIds[index] = ipSet.ID
-				ipSetFound = true
-			}
-		}
-		// If ID was not found - fail early
-		if !ipSetFound {
-			return nil, fmt.Errorf("could not find IP set with Name %s", ipSetName)
-		}
-	}
-
-	return ipSetIds, nil
 }
 
 // stringInSlice checks if a string exists in slice of strings

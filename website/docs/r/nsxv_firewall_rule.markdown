@@ -185,7 +185,7 @@ accepted as a parameter.
 * `gateway_interfaces` - (Optional) A set of with either three keywords `vse` (UI names it as `any`), `internal`, `external` or an org network name. It automatically looks up vNic in the backend.
 * `virtual_machine_ids` - (Optional) A set of `.id` fields of `vcd_vapp_vm` resources.
 * `org_networks` - (Optional) A set of org network names.
-* `ip_sets` - (Optional) A set of existing IP set names. (Either created manually or configured using `vcd_nsxv_ip_set` resource)
+* `ip_sets` - (Optional) A set of existing IP set names (either created manually or configured using `vcd_nsxv_ip_set` resource)
 
 
 <a id="service"></a>
