@@ -856,18 +856,19 @@ func (vm *VM) SetGuestCustomizationSection(guestCustomizationSection *types.Gues
 // Returns new disk ID and error.
 // Runs synchronously, VM is ready for another operation after this function returns.
 func (vm *VM) AddInternalDisk(diskData *types.DiskSettings) (string, error) {
-	if vm.VM.HREF == "" {
-		return "", fmt.Errorf("cannot add internal disks - VM HREF is unset")
+	err := vm.Refresh()
+	if err != nil {
+		return "", fmt.Errorf("error refreshing VM: %s", err)
 	}
 
-	err := vm.validateInternalDiskInput(diskData)
+	err = vm.validateInternalDiskInput(diskData)
 	if err != nil {
 		return "", err
 	}
 
-	diskSettings := vm.VM.VmSpecSection.DiskSection.DiskSettings
-	if diskSettings == nil {
-		diskSettings = []*types.DiskSettings{}
+	var diskSettings []*types.DiskSettings
+	if vm.VM.VmSpecSection != nil && vm.VM.VmSpecSection.DiskSection != nil && vm.VM.VmSpecSection.DiskSection.DiskSettings != nil {
+		diskSettings = vm.VM.VmSpecSection.DiskSection.DiskSettings
 	}
 
 	diskSettings = append(diskSettings, diskData)
@@ -911,31 +912,34 @@ func (vm *VM) validateInternalDiskInput(diskData *types.DiskSettings) error {
 		return fmt.Errorf("disk settings iops has to be 0 or higher")
 	}
 
-	if diskData.ThinProvisioned != nil {
+	if diskData.ThinProvisioned == nil {
 		return fmt.Errorf("disk settings missing required field: thin provisioned")
 	}
 
-	if diskData.StorageProfile != nil {
+	if diskData.StorageProfile == nil {
 		return fmt.Errorf("disk settings missing required field: storage profile")
 	}
 
 	return nil
 }
 
-// GetInternalDisk returns a valid *types.DiskSettings if it exists.
+// GetInternalDiskId returns a valid *types.DiskSettings if it exists.
 // If it doesn't, returns nil and ErrorEntityNotFound or other err.
-func (vm *VM) GetInternalDisk(diskId string) (*types.DiskSettings, error) {
-	if vm.VM.HREF == "" {
-		return nil, fmt.Errorf("cannot get internal disk - VM HREF is unset")
+func (vm *VM) GetInternalDiskId(diskId string, refresh bool) (*types.DiskSettings, error) {
+	if refresh {
+		err := vm.Refresh()
+		if err != nil {
+			return nil, fmt.Errorf("error refreshing VM: %s", err)
+		}
 	}
 
 	if diskId == "" {
-		return nil, fmt.Errorf("cannot get internal disk - provided diskId is empty")
+		return nil, fmt.Errorf("cannot get internal disk - provided disk Id is empty")
 	}
 
 	if vm.VM.VmSpecSection.DiskSection == nil || vm.VM.VmSpecSection.DiskSection.DiskSettings == nil ||
 		len(vm.VM.VmSpecSection.DiskSection.DiskSettings) == 0 {
-		return nil, fmt.Errorf("cannot get internal disk - VM don't have internal disks")
+		return nil, fmt.Errorf("cannot get internal disk - VM doesn't have internal disks")
 	}
 
 	for _, diskSetting := range vm.VM.VmSpecSection.DiskSection.DiskSettings {
@@ -947,11 +951,12 @@ func (vm *VM) GetInternalDisk(diskId string) (*types.DiskSettings, error) {
 	return nil, ErrorEntityNotFound
 }
 
-// DeleteInternalDisk delete disk using provided disk ID.
+// DeleteInternalDiskById delete disk using provided disk ID.
 // Runs synchronously, VM is ready for another operation after this function returns.
-func (vm *VM) DeleteInternalDisk(diskId string) error {
-	if vm.VM.HREF == "" {
-		return fmt.Errorf("cannot delete internal disks - VM HREF is unset")
+func (vm *VM) DeleteInternalDiskById(diskId string) error {
+	err := vm.Refresh()
+	if err != nil {
+		return fmt.Errorf("error refreshing VM: %s", err)
 	}
 
 	diskSettings := vm.VM.VmSpecSection.DiskSection.DiskSettings
@@ -967,7 +972,7 @@ func (vm *VM) DeleteInternalDisk(diskId string) error {
 	}
 
 	if diskPlacement == -1 {
-		return fmt.Errorf("cannot find VM internal disk with Id: %s", diskId)
+		return ErrorEntityNotFound
 	}
 
 	// remove disk in slice
@@ -976,14 +981,9 @@ func (vm *VM) DeleteInternalDisk(diskId string) error {
 	vmSpecSection := vm.VM.VmSpecSection
 	vmSpecSection.DiskSection.DiskSettings = diskSettings
 
-	_, err := vm.UpdateInternalDisks(vmSpecSection)
+	_, err = vm.UpdateInternalDisks(vmSpecSection)
 	if err != nil {
-		return err
-	}
-
-	err = vm.Refresh()
-	if err != nil {
-		return fmt.Errorf("error refresing vm %s: %s", vm.VM.Name, err)
+		return fmt.Errorf("error deleting VM %s internal disk %s: %s", vm.VM.Name, diskId, err)
 	}
 
 	return nil
@@ -1004,11 +1004,11 @@ func (vm *VM) UpdateInternalDisks(disksSettingToUpdate *types.VmSpecSection) (*t
 	}
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		return nil, fmt.Errorf("error waiting for task completion after internal disks update for vm %s: %s", vm.VM.Name, err)
+		return nil, fmt.Errorf("error waiting for task completion after internal disks update for VM %s: %s", vm.VM.Name, err)
 	}
 	err = vm.Refresh()
 	if err != nil {
-		return nil, fmt.Errorf("error refresing vm %s: %s", vm.VM.Name, err)
+		return nil, fmt.Errorf("error refreshing VM %s: %s", vm.VM.Name, err)
 	}
 	return vm.VM.VmSpecSection, nil
 }
