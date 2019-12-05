@@ -296,7 +296,7 @@ func resourceVcdVAppVm() *schema.Resource {
 			"internal_disk": {
 				Type:        schema.TypeList,
 				Computed:    true,
-				Description: " A block will show internal disk details",
+				Description: "A block will show internal disk details",
 				Elem: &schema.Resource{Schema: map[string]*schema.Schema{
 					"disk_id": {
 						Type:        schema.TypeString,

@@ -44,13 +44,13 @@ func resourceVmInternalDisk() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Storage profile to override the VM default one",
+				Description: "The vApp this VM internal disk belongs to",
 			},
 			"vm_name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Storage profile to override the VM default one",
+				Description: "VM in vApp in which internal disk created",
 			},
 			"allow_vm_reboot": {
 				Type:        schema.TypeBool,

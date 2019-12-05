@@ -114,6 +114,28 @@ resource "vcd_vapp_vm" "web2" {
   depends_on = ["vcd_vapp.web"]
 }
 
+resource "vcd_vapp_vm" "internalDiskOverride" {
+  vapp_name     = "${vcd_vapp.web.name}"
+  name          = "internalDiskOverride"
+  catalog_name  = "Boxes"
+  template_name = "lampstack-1.10.1-ubuntu-10.04"
+  memory        = 2048
+  cpus          = 2
+  cpu_cores     = 1
+
+  override_template_disk {
+    bus_type         = "paravirtual"
+    size_in_mb       = "22384"
+    bus_number       = 0
+    unit_number      = 0
+    iops             = 0
+    thin_provisioned = true
+    storage_profile  = "*"
+  }
+
+  depends_on = ["vcd_vapp.web"]
+}
+
 ```
 
 ## Argument Reference
@@ -152,6 +174,7 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
 * `guest_properties` - (Optional; *v2.5+*) Key value map of guest properties
 * `description`  - (Computed; *v2.6+*) The VM description. Note: description is read only. Currently, this field has
   the description of the OVA used to create the VM
+* `override_template_disk` - (Optional; *v2.6+*) Allows to update internal disk in template before first VM boot. Disk are matched by `bus_type`, `bus_number` and `unit_number`. See [Override template Disk](#override_template_disk) below for details.
 
 <a id="disk"></a>
 ## Disk
@@ -190,6 +213,18 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
   * `ip_allocation_mode=MANUAL` - **`ip`** value must be valid IP address from a subnet defined in `static pool` for network.
 
   * `ip_allocation_mode=NONE` - **`ip`** field can be omitted or set to an empty string "". Empty string may be useful when doing HCL variable interpolation.
+
+<a id="override_template_disk"></a>
+## Override template disk
+
+* `bus_type` (Required) The type of disk controller. Possible values: `ide`, `parallel`( LSI Logic Parallel SCSI), `sas`(LSI Logic SAS (SCSI)), `paravirtual`(Paravirtual (SCSI)), `sata`. 
+* `size_in_mb` (Required) The size of the disk in MB. 
+* `bus_number` (Required) The number of the SCSI or IDE controller itself.
+* `unit_number` (Required) The device number on the SCSI or IDE controller of the disk.
+* `thin_provisioned` (Optional) Specifies whether the disk storage is pre-allocated or allocated on demand.
+* `iops` (Optional) Specifies the IOPS for the disk. Default - 0.
+* `storage_profile` (Optional) Storage profile which overrides the VM default one.
+
 
 <a id="customization"></a>
 ## Customization
@@ -257,6 +292,25 @@ resource "vcd_vapp_vm" "web2" {
   }
 }
 ```
+
+## Attribute Reference
+
+The following additional attributes are exported:
+
+* `internal_disk` - (*v2.6+*) A block provides internal disk of VM details. See [Internal Disk](#internalDisk) below for details.
+
+<a id="internalDisk"></a>
+## Internal disk
+
+* `disk_id` (*v2.6+*) Specifies a unique identifier for this disk in the scope of the corresponding VM.
+* `bus_type` (*v2.6+*) The type of disk controller. Possible values: `ide`, `parallel`( LSI Logic Parallel SCSI), `sas`(LSI Logic SAS (SCSI)), `paravirtual`(Paravirtual (SCSI)), `sata`. 
+* `size_in_mb` (*v2.6+*) The size of the disk in MB. 
+* `bus_number` (*v2.6+*) The number of the SCSI or IDE controller itself.
+* `unit_number` (*v2.6+*) The device number on the SCSI or IDE controller of the disk.
+* `thin_provisioned` (*v2.6+*) Specifies whether the disk storage is pre-allocated or allocated on demand.
+* `iops` (*v2.6+*) Specifies the IOPS for the disk. Default - 0.
+* `storage_profile` (*v2.6+*) Storage profile which overrides the VM default one.
+
 
 ## Importing
 
