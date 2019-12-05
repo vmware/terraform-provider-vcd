@@ -1255,7 +1255,7 @@ func updateTemplateInternalDisks(d *schema.ResourceData, meta interface{}, vm go
 
 	vmSpecSection := vm.VM.VmSpecSection
 	vmSpecSection.DiskSection.DiskSettings = diskSettings
-	_, err = vm.UpdateDisks(vmSpecSection)
+	_, err = vm.UpdateInternalDisks(vmSpecSection)
 	if err != nil {
 		return fmt.Errorf("error updating VM disks: %s", err)
 	}

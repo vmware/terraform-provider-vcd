@@ -1472,18 +1472,6 @@ type VirtualHardwareSection struct {
 	Item []*VirtualHardwareItem `xml:"Item,omitempty"`
 }
 
-// RasdItemsList from VirtualHardware
-type RasdItemsList struct {
-	// Extends OVF Section_Type
-	XMLName   xml.Name `xml:"RasdItemsList"`
-	Xmlns     string   `xml:"xmlns,attr,omitempty"`
-	RasdXmlns string   `xml:"xmlns:rasd,attr,omitempty"`
-
-	HREF  string                 `xml:"href,attr,omitempty"`
-	Type  string                 `xml:"type,attr,omitempty"`
-	Items []*VirtualHardwareItem `xml:"Item,omitempty"`
-}
-
 // Each ovf:Item parsed from the ovf:VirtualHardwareSection
 type VirtualHardwareItem struct {
 	XMLName             xml.Name                       `xml:"Item"`

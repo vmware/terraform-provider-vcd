@@ -852,12 +852,18 @@ func (vm *VM) SetGuestCustomizationSection(guestCustomizationSection *types.Gues
 	return vm.GetGuestCustomizationSection()
 }
 
-func (vm *VM) AddDisk(diskData *types.DiskSettings) (string, error) {
+// AddInternalDisk creates disk type *types.DiskSettings to the VM.
+// Returns new disk ID and error.
+// Runs synchronously, VM is ready for another operation after this function returns.
+func (vm *VM) AddInternalDisk(diskData *types.DiskSettings) (string, error) {
 	if vm.VM.HREF == "" {
 		return "", fmt.Errorf("cannot add internal disks - VM HREF is unset")
 	}
 
-	//TODO add validation
+	err := vm.validateInternalDiskInput(diskData)
+	if err != nil {
+		return "", err
+	}
 
 	diskSettings := vm.VM.VmSpecSection.DiskSection.DiskSettings
 	if diskSettings == nil {
@@ -868,7 +874,7 @@ func (vm *VM) AddDisk(diskData *types.DiskSettings) (string, error) {
 	vmSpecSection := vm.VM.VmSpecSection
 	vmSpecSection.DiskSection.DiskSettings = diskSettings
 
-	vmSpecSection, err := vm.UpdateDisks(vmSpecSection)
+	vmSpecSection, err = vm.UpdateInternalDisks(vmSpecSection)
 	if err != nil {
 		return "", err
 	}
@@ -881,10 +887,44 @@ func (vm *VM) AddDisk(diskData *types.DiskSettings) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("created disk wasn't in list VM internal disks")
+	return "", fmt.Errorf("created disk wasn't in list of returned VM internal disks")
 }
 
-func (vm *VM) GetDisk(diskId string) (*types.DiskSettings, error) {
+func (vm *VM) validateInternalDiskInput(diskData *types.DiskSettings) error {
+	if diskData.AdapterType == "" {
+		return fmt.Errorf("disk settings missing required field: adapter type")
+	}
+
+	if diskData.BusNumber < 0 {
+		return fmt.Errorf("disk settings bus number has to be 0 or higher")
+	}
+
+	if diskData.UnitNumber < 0 {
+		return fmt.Errorf("disk settings unit number has to be 0 or higher")
+	}
+
+	if diskData.SizeMb < int64(0) {
+		return fmt.Errorf("disk settings size MB has to be 0 or higher")
+	}
+
+	if diskData.Iops != nil && *diskData.Iops < int64(0) {
+		return fmt.Errorf("disk settings iops has to be 0 or higher")
+	}
+
+	if diskData.ThinProvisioned != nil {
+		return fmt.Errorf("disk settings missing required field: thin provisioned")
+	}
+
+	if diskData.StorageProfile != nil {
+		return fmt.Errorf("disk settings missing required field: storage profile")
+	}
+
+	return nil
+}
+
+// GetInternalDisk returns a valid *types.DiskSettings if it exists.
+// If it doesn't, returns nil and ErrorEntityNotFound or other err.
+func (vm *VM) GetInternalDisk(diskId string) (*types.DiskSettings, error) {
 	if vm.VM.HREF == "" {
 		return nil, fmt.Errorf("cannot get internal disk - VM HREF is unset")
 	}
@@ -907,7 +947,9 @@ func (vm *VM) GetDisk(diskId string) (*types.DiskSettings, error) {
 	return nil, ErrorEntityNotFound
 }
 
-func (vm *VM) DeleteDisk(diskId string) error {
+// DeleteInternalDisk delete disk using provided disk ID.
+// Runs synchronously, VM is ready for another operation after this function returns.
+func (vm *VM) DeleteInternalDisk(diskId string) error {
 	if vm.VM.HREF == "" {
 		return fmt.Errorf("cannot delete internal disks - VM HREF is unset")
 	}
@@ -934,7 +976,7 @@ func (vm *VM) DeleteDisk(diskId string) error {
 	vmSpecSection := vm.VM.VmSpecSection
 	vmSpecSection.DiskSection.DiskSettings = diskSettings
 
-	vmSpecSection, err := vm.UpdateDisks(vmSpecSection)
+	_, err := vm.UpdateInternalDisks(vmSpecSection)
 	if err != nil {
 		return err
 	}
@@ -947,16 +989,16 @@ func (vm *VM) DeleteDisk(diskId string) error {
 	return nil
 }
 
-// UpdateDisks applies disks configuration for the VM.
+// UpdateInternalDisks applies disks configuration for the VM.
 // types.VmSpecSection requires consist of all disk entities which exist and not updated,
 // as also new ones or changed ones. Returns new disk ID and error.
 // Runs synchronously, VM is ready for another operation after this function returns.
-func (vm *VM) UpdateDisks(disksSettingToUpdate *types.VmSpecSection) (*types.VmSpecSection, error) {
+func (vm *VM) UpdateInternalDisks(disksSettingToUpdate *types.VmSpecSection) (*types.VmSpecSection, error) {
 	if vm.VM.HREF == "" {
 		return nil, fmt.Errorf("cannot update internal disks - VM HREF is unset")
 	}
 
-	task, err := vm.UpdateDisksAsync(disksSettingToUpdate)
+	task, err := vm.UpdateInternalDisksAsync(disksSettingToUpdate)
 	if err != nil {
 		return nil, err
 	}
@@ -971,10 +1013,10 @@ func (vm *VM) UpdateDisks(disksSettingToUpdate *types.VmSpecSection) (*types.VmS
 	return vm.VM.VmSpecSection, nil
 }
 
-// UpdateDisks applies disks configuration and return task or err
+// UpdateInternalDisksAsync applies disks configuration and return task or err
 // types.VmSpecSection requires consist of all disk entities which exist and not updated,
 // as also new ones or changed ones.
-func (vm *VM) UpdateDisksAsync(disksSettingToUpdate *types.VmSpecSection) (Task, error) {
+func (vm *VM) UpdateInternalDisksAsync(disksSettingToUpdate *types.VmSpecSection) (Task, error) {
 	if vm.VM.HREF == "" {
 		return Task{}, fmt.Errorf("cannot update disks, VM HREF is unset")
 	}
