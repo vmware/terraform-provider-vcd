@@ -531,7 +531,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// TODO do not trigger resourceVcdVAppVmUpdate from create. These must be separate actions.
-	err = resourceVcdVAppVmUpdateExecute(d, meta, true)
+	err = resourceVcdVAppVmUpdateExecute(d, meta)
 	if err != nil {
 		errAttachedDisk := updateStateOfAttachedDisks(d, *vm, vdc)
 		if errAttachedDisk != nil {
