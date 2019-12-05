@@ -129,6 +129,7 @@ func Provider() terraform.ResourceProvider {
 			"vcd_nsxv_snat":          resourceVcdNsxvSnat(),         // 2.5
 			"vcd_nsxv_firewall_rule": resourceVcdNsxvFirewallRule(), // 2.5
 			"vcd_ipset":              resourceVcdIpSet(),            // 2.6
+			"vcd_nsxv_dhcp_relay":    resourceVcdNsxvDhcpRelay(),    // 2.6
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
