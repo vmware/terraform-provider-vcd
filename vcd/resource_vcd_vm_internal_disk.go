@@ -186,8 +186,8 @@ func powerOnIfNeeded(d *schema.ResourceData, vm *govcd.VM) error {
 		return fmt.Errorf("error getting VM status before ensuring it is powered on: %s", err)
 	}
 
-	if (vmStatus != "POWERED_ON" && d.Get("bus_type").(string) == "ide" && d.Get("allow_vm_reboot").(bool) == true) ||
-		(vmStatus != "POWERED_ON" && d.Get("allow_vm_reboot").(bool) == true && (d.HasChange("bus_number") || d.HasChange("unit_number"))) {
+	if (vmStatus != "POWERED_ON" && d.Get("bus_type").(string) == "ide" && d.Get("allow_vm_reboot").(bool)) ||
+		(vmStatus != "POWERED_ON" && d.Get("allow_vm_reboot").(bool) && (d.HasChange("bus_number") || d.HasChange("unit_number"))) {
 		log.Printf("[DEBUG] Powering on VM %s after adding internal disk.", vm.VM.Name)
 
 		task, err := vm.PowerOn()
@@ -208,8 +208,8 @@ func powerOffIfNeeded(d *schema.ResourceData, vm *govcd.VM) error {
 		return fmt.Errorf("error getting VM status before ensuring it is powered on: %s", err)
 	}
 
-	if (vmStatus != "POWERED_OFF" && d.Get("bus_type").(string) == "ide" && d.Get("allow_vm_reboot").(bool) == true) ||
-		(vmStatus != "POWERED_OFF" && d.Get("allow_vm_reboot").(bool) == true && (d.HasChange("bus_number") || d.HasChange("unit_number"))) {
+	if (vmStatus != "POWERED_OFF" && d.Get("bus_type").(string) == "ide" && d.Get("allow_vm_reboot").(bool)) ||
+		(vmStatus != "POWERED_OFF" && d.Get("allow_vm_reboot").(bool) && (d.HasChange("bus_number") || d.HasChange("unit_number"))) {
 		log.Printf("[DEBUG] Powering off VM %s for adding/updating internal disk.", vm.VM.Name)
 
 		task, err := vm.PowerOff()
