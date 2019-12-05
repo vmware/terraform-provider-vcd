@@ -669,10 +669,10 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient.lockParentVapp(d)
 	defer vcdClient.unLockParentVapp(d)
 
-	return resourceVcdVAppVmUpdateExecute(d, meta, false)
+	return resourceVcdVAppVmUpdateExecute(d, meta)
 }
 
-func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, isCallAfterCreation bool) error {
+func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) error {
 
 	vcdClient := meta.(*VCDClient)
 
@@ -756,14 +756,6 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, is
 			}
 		}
 	}
-
-	/*	if isCallAfterCreation == false && d.HasChange("internal_disk") {
-		err = updateInternalDisks(d, meta, *vm)
-		if err != nil {
-			d.Set("internal_disk", nil)
-			return fmt.Errorf("error updating itneranl disks : %s", err)
-		}
-	}*/
 
 	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("cpu_cores") || d.HasChange("power_on") || d.HasChange("disk") ||
 		d.HasChange("expose_hardware_virtualization") || d.HasChange("network") || d.HasChange("computer_name") {
