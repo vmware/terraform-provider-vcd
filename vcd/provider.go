@@ -132,6 +132,7 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
+			"vcd_info":               datasourceVcdInfo(),             // 2.7
 			"vcd_org":                datasourceVcdOrg(),              // 2.5
 			"vcd_org_vdc":            datasourceVcdOrgVdc(),           // 2.5
 			"vcd_catalog":            datasourceVcdCatalog(),          // 2.5
