@@ -217,13 +217,13 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
 <a id="override_template_disk"></a>
 ## Override template disk
 
-* `bus_type` (Required) The type of disk controller. Possible values: `ide`, `parallel`( LSI Logic Parallel SCSI), `sas`(LSI Logic SAS (SCSI)), `paravirtual`(Paravirtual (SCSI)), `sata`. 
-* `size_in_mb` (Required) The size of the disk in MB. 
-* `bus_number` (Required) The number of the SCSI or IDE controller itself.
-* `unit_number` (Required) The device number on the SCSI or IDE controller of the disk.
-* `thin_provisioned` (Optional) Specifies whether the disk storage is pre-allocated or allocated on demand.
-* `iops` (Optional) Specifies the IOPS for the disk. Default - 0.
-* `storage_profile` (Optional) Storage profile which overrides the VM default one.
+* `bus_type` - (Required) The type of disk controller. Possible values: `ide`, `parallel`( LSI Logic Parallel SCSI), `sas`(LSI Logic SAS (SCSI)), `paravirtual`(Paravirtual (SCSI)), `sata`. 
+* `size_in_mb` - (Required) The size of the disk in MB. 
+* `bus_number` - (Required) The number of the SCSI or IDE controller itself.
+* `unit_number` - (Required) The device number on the SCSI or IDE controller of the disk.
+* `thin_provisioned` - (Optional) Specifies whether the disk storage is pre-allocated or allocated on demand.
+* `iops` - (Optional) Specifies the IOPS for the disk. Default - 0.
+* `storage_profile` - (Optional) Storage profile which overrides the VM default one.
 
 
 <a id="customization"></a>
@@ -302,14 +302,14 @@ The following additional attributes are exported:
 <a id="internalDisk"></a>
 ## Internal disk
 
-* `disk_id` (*v2.6+*) Specifies a unique identifier for this disk in the scope of the corresponding VM.
-* `bus_type` (*v2.6+*) The type of disk controller. Possible values: `ide`, `parallel`( LSI Logic Parallel SCSI), `sas`(LSI Logic SAS (SCSI)), `paravirtual`(Paravirtual (SCSI)), `sata`. 
-* `size_in_mb` (*v2.6+*) The size of the disk in MB. 
-* `bus_number` (*v2.6+*) The number of the SCSI or IDE controller itself.
-* `unit_number` (*v2.6+*) The device number on the SCSI or IDE controller of the disk.
-* `thin_provisioned` (*v2.6+*) Specifies whether the disk storage is pre-allocated or allocated on demand.
-* `iops` (*v2.6+*) Specifies the IOPS for the disk. Default - 0.
-* `storage_profile` (*v2.6+*) Storage profile which overrides the VM default one.
+* `disk_id` - (*v2.6+*) Specifies a unique identifier for this disk in the scope of the corresponding VM.
+* `bus_type` - (*v2.6+*) The type of disk controller. Possible values: `ide`, `parallel`( LSI Logic Parallel SCSI), `sas`(LSI Logic SAS (SCSI)), `paravirtual`(Paravirtual (SCSI)), `sata`. 
+* `size_in_mb` - (*v2.6+*) The size of the disk in MB. 
+* `bus_number` - (*v2.6+*) The number of the SCSI or IDE controller itself.
+* `unit_number` - (*v2.6+*) The device number on the SCSI or IDE controller of the disk.
+* `thin_provisioned` - (*v2.6+*) Specifies whether the disk storage is pre-allocated or allocated on demand.
+* `iops` - (*v2.6+*) Specifies the IOPS for the disk. Default - 0.
+* `storage_profile` - (*v2.6+*) Storage profile which overrides the VM default one.
 
 
 ## Importing
