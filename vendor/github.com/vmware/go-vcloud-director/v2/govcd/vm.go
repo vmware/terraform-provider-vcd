@@ -923,9 +923,9 @@ func (vm *VM) validateInternalDiskInput(diskData *types.DiskSettings) error {
 	return nil
 }
 
-// GetInternalDiskId returns a valid *types.DiskSettings if it exists.
+// GetInternalDiskById returns a valid *types.DiskSettings if it exists.
 // If it doesn't, returns nil and ErrorEntityNotFound or other err.
-func (vm *VM) GetInternalDiskId(diskId string, refresh bool) (*types.DiskSettings, error) {
+func (vm *VM) GetInternalDiskById(diskId string, refresh bool) (*types.DiskSettings, error) {
 	if refresh {
 		err := vm.Refresh()
 		if err != nil {

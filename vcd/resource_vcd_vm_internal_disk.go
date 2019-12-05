@@ -241,7 +241,7 @@ func resourceVmInternalDiskDelete(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	err = vm.DeleteInternalDisk(d.Id())
+	err = vm.DeleteInternalDiskById(d.Id())
 	if err != nil {
 		return fmt.Errorf("[Error] failed to delete internal disk: %s", err)
 	}
@@ -285,7 +285,7 @@ func resourceVmInternalDiskUpdate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 
-	diskSettingsToUpdate, err := vm.GetInternalDisk(d.Id())
+	diskSettingsToUpdate, err := vm.GetInternalDiskById(d.Id(), false)
 	if err != nil {
 		return err
 	}
@@ -346,7 +346,7 @@ func resourceVmInternalDiskRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	diskSettings, err := vm.GetInternalDisk(d.Id())
+	diskSettings, err := vm.GetInternalDiskById(d.Id(), false)
 	if err == govcd.ErrorEntityNotFound {
 		log.Printf("[DEBUG] Unable to find disk with Id: %s. Removing from tfstate", d.Id())
 		d.SetId("")
@@ -462,7 +462,7 @@ func getInternalDiskForImport(d *schema.ResourceData, meta interface{}, orgName,
 		return nil, fmt.Errorf("[Error] failed to get VM: %s", err)
 	}
 
-	disk, err := vm.GetInternalDisk(diskId)
+	disk, err := vm.GetInternalDiskById(diskId, false)
 	if err != nil {
 		return []*schema.ResourceData{}, fmt.Errorf("unable to find internal disk with id %s: %s",
 			d.Id(), err)
