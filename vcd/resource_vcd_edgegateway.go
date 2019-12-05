@@ -244,11 +244,12 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				ValidateFunc: validation.StringInSlice([]string{"accept", "deny"}, false),
 			},
 			"fips_mode_enabled": &schema.Schema{
-				Type:        schema.TypeBool,
-				ForceNew:    true,
-				Optional:    true,
-				Default:     false,
-				Description: "Enable FIPS mode. FIPS mode turns on the cipher suites that comply with FIPS. (False by default)",
+				Type:     schema.TypeBool,
+				ForceNew: true,
+				Optional: true,
+				// Not setting default here because vCD 9.0 does not support FIPS mode and there
+				// must be a clear indicator to distinguish when the field was not set by user
+				Description: "Enable FIPS mode. Only for vCD 9.1+. FIPS mode turns on the cipher suites that comply with FIPS. (False by default)",
 			},
 			"use_default_route_for_dns_relay": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -337,7 +338,6 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		Description: d.Get("description").(string),
 		Configuration: &types.GatewayConfiguration{
 			UseDefaultRouteForDNSRelay: takeBoolPointer(d.Get("use_default_route_for_dns_relay").(bool)),
-			FipsModeEnabled:            takeBoolPointer(d.Get("fips_mode_enabled").(bool)),
 			HaEnabled:                  takeBoolPointer(d.Get("ha_enabled").(bool)),
 			GatewayBackingConfig:       d.Get("configuration").(string),
 			AdvancedNetworkingEnabled:  takeBoolPointer(d.Get("advanced").(bool)),
@@ -347,6 +347,18 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 			},
 			EdgeGatewayServiceConfiguration: &types.GatewayFeatures{},
 		},
+	}
+
+	// vCD 9.0 does not support FIPS Mode and fails if XML tag <FipsModeEnabled> is sent therefore
+	// field value must be sent only if user specified its value
+	if fipsModeEnabled, ok := d.GetOkExists("fips_mode_enabled"); ok {
+		if vcdClient.APIVCDMaxVersionIs("<= 29.0") { // vCD 9.0 or less
+			_, _ = fmt.Fprint(getTerraformStdout(), "WARNING! FIPS mode is only supported starting"+
+				" with vCD 9.1. Please do not set this field when using with vCD 9.0\n")
+		}
+		fipsModeEnabledBool := fipsModeEnabled.(bool)
+		log.Printf("[TRACE] edge gateway creation. FIPS mode was set with value %t", fipsModeEnabledBool)
+		egwConfiguration.Configuration.FipsModeEnabled = takeBoolPointer(fipsModeEnabledBool)
 	}
 
 	edge, err := govcd.CreateAndConfigureEdgeGateway(vcdClient.VCDClient, orgName, vdcName, egwName, egwConfiguration)
@@ -935,7 +947,11 @@ func setEdgeGatewayValues(vcdClient *VCDClient, d *schema.ResourceData, egw govc
 	}
 
 	_ = d.Set("use_default_route_for_dns_relay", egw.EdgeGateway.Configuration.UseDefaultRouteForDNSRelay)
-	_ = d.Set("fips_mode_enabled", egw.EdgeGateway.Configuration.FipsModeEnabled)
+	// vCD API v29.0 does not return this field (probably because it started to work only in version
+	// which was introduced with vCD 9.1 (API v30.0))
+	if egw.EdgeGateway.Configuration.FipsModeEnabled != nil {
+		_ = d.Set("fips_mode_enabled", egw.EdgeGateway.Configuration.FipsModeEnabled)
+	}
 	_ = d.Set("advanced", egw.EdgeGateway.Configuration.AdvancedNetworkingEnabled)
 	_ = d.Set("ha_enabled", egw.EdgeGateway.Configuration.HaEnabled)
 

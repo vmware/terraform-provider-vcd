@@ -137,11 +137,13 @@ The following arguments are supported:
   a subnet which should be used as a default route.
 * `advanced` - (Optional) True if the gateway uses advanced networking. Default is `true`.
 * `ha_enabled` - (Optional) Enable high availability on this edge gateway. Default is `false`.
-* `distributed_routing` - (Optional) If advanced networking enabled, also enable distributed routing. Default is `false`.
+* `distributed_routing` - (Optional) If advanced networking enabled, also enable distributed
+  routing. Default is `false`.
 * `fips_mode_enabled` - (Optional) When FIPS mode is enabled, any secure communication to or from
   the NSX Edge uses cryptographic algorithms or protocols that are allowed by United States Federal
   Information Processing Standards (FIPS). FIPS mode turns on the cipher suites that comply with
-  FIPS. Default is `false`. **Note:** to use FIPS mode it must be enabled in vCD system settings. 
+  FIPS. Default is `false`. **Note:** to use FIPS mode it must be enabled in vCD system settings and
+  is only supported starting with vCD version 9.1. This field __must not__ be set for vCD 9.0.
 * `use_default_route_for_dns_relay` - (Optional) When default route is set, it will be used for
   gateways' default routing and DNS forwarding. Default is `false`.
 * `lb_enabled` - (Optional) Enable load balancing. Default is `false`.
