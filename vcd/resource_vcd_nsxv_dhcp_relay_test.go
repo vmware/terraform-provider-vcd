@@ -3,10 +3,13 @@
 package vcd
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
 func TestAccVcdNsxvDhcpRelay(t *testing.T) {
@@ -41,10 +44,25 @@ func TestAccVcdNsxvDhcpRelay(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_dhcp_relay.relay_config", "id", regexp.MustCompile(`^.*:dhcpRelaySettings`)),
+					// sleepTester(),
 				),
+			},
+			resource.TestStep{
+				ResourceName:      "vcd_nsxv_dhcp_relay.imported",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     testConfig.VCD.Org + "." + testConfig.VCD.Vdc + "." + testConfig.Networking.EdgeGateway,
 			},
 		},
 	})
+}
+
+func sleepTester() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		fmt.Println("sleeping")
+		time.Sleep(1 * time.Minute)
+		return nil
+	}
 }
 
 const testAccVcdNsxvDhcpRelay = `
@@ -56,7 +74,8 @@ resource "vcd_nsxv_dhcp_relay" "relay_config" {
     ip_addresses = ["1.1.1.1", "2.2.2.2"]
     domain_names = ["servergroups.domainname.com", "other.domain.com"]
     ip_sets      = ["myset1", "myset2"]
-    relay_agent {
+	
+	relay_agent {
         org_network        = "my-vdc-int-net"
         # gateway_ip_address  = "10.10.10.5"  # optional
     }
