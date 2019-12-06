@@ -18,8 +18,7 @@ func TestAccVcdNsxvDhcpRelay(t *testing.T) {
 		"Org":         testConfig.VCD.Org,
 		"Vdc":         testConfig.VCD.Vdc,
 		"EdgeGateway": testConfig.Networking.EdgeGateway,
-		// "OrgNetwork": testConfig.Networking.,
-		"Tags": "gateway",
+		"Tags":        "gateway",
 	}
 
 	configText := templateFill(testAccVcdNsxvDhcpRelay, params)
