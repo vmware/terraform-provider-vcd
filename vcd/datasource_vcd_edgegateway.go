@@ -42,6 +42,7 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 				Type:        schema.TypeList,
 				Computed:    true,
 				Description: "A list of external networks to be used by the edge gateway",
+				Deprecated:  "Please use the more advanced 'external_network' block(s)",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -49,12 +50,21 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 			"default_gateway_network": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
+				Deprecated:  "Please use the more advanced 'external_network' block(s)",
 				Description: "External network to be used as default gateway. Its name must be included in 'external_networks'. An empty value will skip the default gateway",
 			},
 			"default_external_network_ip": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "IP address of edge gateway interface which is used as default.",
+			},
+			"external_network_ips": {
+				Computed:    true,
+				Type:        schema.TypeList,
+				Description: "List of IP addresses set on edge gateway external network interfaces",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 			"distributed_routing": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -96,6 +106,90 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "'accept' or 'deny'. Default 'deny'",
+			},
+			"fips_mode_enabled": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Enable FIPS mode. FIPS mode turns on the cipher suites that comply with FIPS. (False by default)",
+			},
+			"use_default_route_for_dns_relay": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "If true, default gateway will be used for the edge gateways' default routing and DNS forwarding.(False by default)",
+			},
+			"external_network": {
+				Type:        schema.TypeSet,
+				Description: "One or more blocks with external network information to be attached to this gateway's interface",
+				Computed:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name": {
+							Computed:    true,
+							Type:        schema.TypeString,
+							Description: "External network name",
+						},
+						"enable_rate_limit": {
+							Computed:    true,
+							Type:        schema.TypeBool,
+							Description: "Enable rate limitting",
+						},
+						"incoming_rate_limit": {
+							Computed:    true,
+							Type:        schema.TypeFloat,
+							Description: "Incoming rate limit (Mbps)",
+						},
+						"outgoing_rate_limit": {
+							Computed:    true,
+							Type:        schema.TypeFloat,
+							Description: "Outgoing rate limit (Mbps)",
+						},
+						"subnet": {
+							Computed: true,
+							Type:     schema.TypeSet,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"gateway": {
+										Computed:    true,
+										Description: "Gateway address for a subnet",
+										Type:        schema.TypeString,
+									},
+									"netmask": {
+										Computed:    true,
+										Description: "Netmask address for a subnet",
+										Type:        schema.TypeString,
+									},
+									"ip_address": {
+										Computed:    true,
+										Type:        schema.TypeString,
+										Description: "IP address on the edge gateway - will be auto-assigned if not defined",
+									},
+									"use_for_default_route": {
+										Computed:    true,
+										Type:        schema.TypeBool,
+										Description: "Defines if this subnet should be used as default gateway for edge",
+									},
+									"suballocate_pool": {
+										Type:        schema.TypeSet,
+										Computed:    true,
+										Description: "Define zero or more blocks to sub-allocate pools on the edge gateway",
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"start_address": {
+													Computed: true,
+													Type:     schema.TypeString,
+												},
+												"end_address": {
+													Computed: true,
+													Type:     schema.TypeString,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}
