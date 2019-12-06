@@ -284,3 +284,47 @@ type EdgeIpSet struct {
 
 // EdgeIpSets is a slice of pointers to EdgeIpSet
 type EdgeIpSets []*EdgeIpSet
+
+// EdgeDhcpRelay - Dynamic Host Configuration Protocol (DHCP) relay enables you to leverage your
+// existing DHCP infrastructure from within NSX without any interruption to the IP address
+// management in your environment. DHCP messages are relayed from virtual machine(s) to the
+// designated DHCP server(s) in the physical world. This enables IP addresses within NSX to continue
+// to be in sync with IP addresses in other environments.
+type EdgeDhcpRelay struct {
+	XMLName xml.Name `xml:"relay"`
+	// RelayServer specifies external relay server(s) to which DHCP messages are to be relayed to.
+	// The relay server can be an IP set, IP address block, domain, or a combination of all of
+	// these. Messages are relayed to each listed DHCP server.
+	RelayServer *EdgeDhcpRelayServer `xml:"relayServer"`
+	// EdgeDhcRelayAgents  specifies a list of edge gateway interfaces (vNics) from which DHCP
+	// messages are to be relayed to the external DHCP relay server(s) with optional gateway
+	// interface addresses.
+	RelayAgents *EdgeDhcpRelayAgents `xml:"relayAgents"`
+}
+
+type EdgeDhcpRelayServer struct {
+	// GroupingObjectIds is a general concept in NSX which allows to pass in many types of objects
+	// (like VM IDs, IP set IDs, org networks, security groups) howether in this case it accepts
+	// only IP sets which have IDs specified as 'f9daf2da-b4f9-4921-a2f4-d77a943a381c:ipset-2' where
+	// first part is vDC ID and the second part is unique IP set ID
+	GroupingObjectId []string `xml:"groupingObjectId,omitempty"`
+	// IpAddresses holds a list of IP addresses for DHCP servers
+	IpAddress []string `xml:"ipAddress,omitempty"`
+	// Fqdn holds a list of FQDNs (fully qualified domain names)
+	Fqdns []string `xml:"fqdn,omitempty"`
+}
+
+// EdgeDhcpRelayAgent specifies which edge gateway interface (vNic) from which DHCP messages are to
+// be relayed to the external DHCP relay server(s) with an optional gateway interface address.
+type EdgeDhcpRelayAgent struct {
+	// VnicIndex must specify vNic adapter index on the edge gateway
+	VnicIndex *int `xml:"vnicIndex"`
+	// GatewayInterfaceAddress holds a gateway interface address. Optional, defaults to the vNic
+	// primary address.
+	GatewayInterfaceAddress string `xml:"giAddress,omitempty"`
+}
+
+// EdgeDhcpRelayAgents holds a slice of EdgeDhcpRelayAgent
+type EdgeDhcpRelayAgents struct {
+	Agents []EdgeDhcpRelayAgent `xml:"relayAgent"`
+}

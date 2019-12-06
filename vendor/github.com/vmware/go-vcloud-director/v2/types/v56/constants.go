@@ -161,6 +161,7 @@ const (
 	EdgeFirewallPath       = "/firewall/config"
 	EdgeCreateFirewallPath = "/firewall/config/rules"
 	EdgeVnicConfig         = "/vnics"
+	EdgeDhcpRelayPath      = "/dhcp/config/relay"
 	LbConfigPath           = "/loadbalancer/config/"
 	LbMonitorPath          = "/loadbalancer/config/monitors/"
 	LbServerPoolPath       = "/loadbalancer/config/pools/"
