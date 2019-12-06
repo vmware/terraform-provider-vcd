@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -223,7 +224,7 @@ func getDhcpRelayType(d *schema.ResourceData, edge *govcd.EdgeGateway, vdc *govc
 		listOfDomainNames = convertSchemaSetToSliceOfStrings(domainNames.(*schema.Set))
 	}
 
-	if ipSetNames, ok := d.GetOk("ipsets"); ok {
+	if ipSetNames, ok := d.GetOk("ip_sets"); ok {
 		listOfIpSetNames = convertSchemaSetToSliceOfStrings(ipSetNames.(*schema.Set))
 		listOfIpSetIds, err = ipSetNamesToIds(listOfIpSetNames, vdc)
 		if err != nil {
@@ -302,7 +303,7 @@ func getDhcpRelayData(d *schema.ResourceData, edgeRelay *types.EdgeDhcpRelay, vd
 	if err != nil {
 		return fmt.Errorf("could not save domain_names to schema: %s", err)
 	}
-
+	spew.Dump(relayServer.GroupingObjectId)
 	ipSetNames, err := ipSetIdsToNames(relayServer.GroupingObjectId, vdc)
 	if err != nil {
 		return fmt.Errorf("could not find names for all IP set IDs: %s", err)

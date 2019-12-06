@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
@@ -65,6 +66,13 @@ func sleepTester() resource.TestCheckFunc {
 	}
 }
 
+func stateDumper() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		spew.Dump(s)
+		return nil
+	}
+}
+
 const testAccVcdNsxvDhcpRelay = `
 resource "vcd_nsxv_dhcp_relay" "relay_config" {
 	org          = "{{.Org}}"
@@ -73,12 +81,23 @@ resource "vcd_nsxv_dhcp_relay" "relay_config" {
 	
     ip_addresses = ["1.1.1.1", "2.2.2.2"]
     domain_names = ["servergroups.domainname.com", "other.domain.com"]
-    ip_sets      = ["myset1", "myset2"]
+    ip_sets      = [vcd_nsxv_ip_set.myset1.name, vcd_nsxv_ip_set.myset2.name]
 	
 	relay_agent {
         org_network        = "my-vdc-int-net"
         # gateway_ip_address  = "10.10.10.5"  # optional
     }
-
 }
+
+resource "vcd_nsxv_ip_set" "myset1" {
+  name                   = "test-set1"
+  ip_addresses           = ["192.168.1.1"]
+}
+
+resource "vcd_nsxv_ip_set" "myset2" {
+	name                   = "test-set2"
+	ip_addresses           = ["192.168.1.1"]
+  }
+  
+
 `
