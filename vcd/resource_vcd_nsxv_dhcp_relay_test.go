@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
-	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
@@ -129,21 +127,6 @@ func testAccCheckVcdDhcpRelaySettingsEmpty() resource.TestCheckFunc {
 	}
 }
 
-func sleepTester() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		fmt.Println("sleeping")
-		time.Sleep(1 * time.Minute)
-		return nil
-	}
-}
-
-func stateDumper() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		spew.Dump(s)
-		return nil
-	}
-}
-
 const testAccRoutedNet = `
 variable "network_types" {
 	type        = list(string)
@@ -159,7 +142,7 @@ resource "vcd_network_routed" "test-routed" {
 	gateway        = "10.201.${count.index}.1"
 	netmask        = "255.255.255.0"
 	interface_type = var.network_types[count.index]
-	
+
 	static_ip_pool {
 	  start_address = "10.201.${count.index}.10"
 	  end_address   = "10.201.${count.index}.20"
