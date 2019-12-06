@@ -73,12 +73,6 @@ func TestAccVcdNsxvDhcpRelay(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				ResourceName:      "vcd_nsxv_dhcp_relay.imported",
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateId:     testConfig.VCD.Org + "." + testConfig.VCD.Vdc + "." + testConfig.Networking.EdgeGateway,
-			},
-			resource.TestStep{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxv_dhcp_relay.relay_config", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*:dhcpRelay$`)),
@@ -92,12 +86,13 @@ func TestAccVcdNsxvDhcpRelay(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxv_dhcp_relay.relay_config", "relay_agent.#", "1"),
 					resource.TestCheckResourceAttr("vcd_nsxv_dhcp_relay.relay_config", "relay_agent.3348209499.org_network", "dhcp-relay-0"),
 					resource.TestCheckResourceAttr("vcd_nsxv_dhcp_relay.relay_config", "relay_agent.3348209499.gateway_ip_address", "10.201.0.1"),
-
-					// Validate that data source has all fields except the hashed IP set because it is turned into slice in data source
-					// and only one due to outstanding problem in Terraform plugin SDK - https://github.com/hashicorp/terraform-plugin-sdk/pull/197
-					resourceFieldsEqual("vcd_nsxv_dhcp_relay.relay_config", "data.vcd_nsxv_dhcp_relay.relay",
-						[]string{"relay_agent.3348209499.gateway_ip_address", "relay_agent.3348209499.org_network", "relay_agent.#"}),
 				),
+			},
+			resource.TestStep{
+				ResourceName:      "vcd_nsxv_dhcp_relay.imported",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     testConfig.VCD.Org + "." + testConfig.VCD.Vdc + "." + testConfig.Networking.EdgeGateway,
 			},
 		},
 	})
@@ -198,12 +193,6 @@ resource "vcd_nsxv_dhcp_relay" "relay_config" {
 	relay_agent {
         org_network = vcd_network_routed.test-routed[0].name
 	}
-}
-
-data "vcd_nsxv_dhcp_relay" "relay" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = vcd_nsxv_dhcp_relay.relay_config.edge_gateway
 }
 
 resource "vcd_ipset" "myset1" {
