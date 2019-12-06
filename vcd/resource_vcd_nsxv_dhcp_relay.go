@@ -2,13 +2,26 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
+
+var relayAgentResource = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"org_network": {
+			Required: true,
+			Type:     schema.TypeString,
+		},
+		"gateway_ip_address": {
+			Optional: true,
+			Computed: true,
+			Type:     schema.TypeString,
+		},
+	},
+}
 
 func resourceVcdNsxvDhcpRelay() *schema.Resource {
 	return &schema.Resource{
@@ -68,19 +81,7 @@ func resourceVcdNsxvDhcpRelay() *schema.Resource {
 				Required: true,
 				MinItems: 1,
 				Type:     schema.TypeSet,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"org_network": {
-							Required: true,
-							Type:     schema.TypeString,
-						},
-						"gateway_ip_address": {
-							Optional: true,
-							Computed: true,
-							Type:     schema.TypeString,
-						},
-					},
-				},
+				Elem:     relayAgentResource,
 			},
 		},
 	}
@@ -122,7 +123,7 @@ func resourceVcdNsxvDhcpRelayCreate(d *schema.ResourceData, meta interface{}) er
 
 	d.SetId(fakeId)
 
-	return nil
+	return resourceVcdNsxvDhcpRelayRead(d, meta)
 }
 
 // resourceVcdNsxvDhcpRelayUpdate is in fact exactly the same as create because there is no object,
@@ -131,11 +132,9 @@ func resourceVcdNsxvDhcpRelayUpdate(d *schema.ResourceData, meta interface{}) er
 	return resourceVcdNsxvDhcpRelayCreate(d, meta)
 }
 
-// resourceVcdNsxvDhcpRelayRead
+// resourceVcdNsxvDhcpRelayRead reads DHCP relay configuration and persists to statefile
 func resourceVcdNsxvDhcpRelayRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-	vcdClient.lockParentEdgeGtw(d)
-	defer vcdClient.unLockParentEdgeGtw(d)
 
 	edgeGateway, err := vcdClient.GetEdgeGatewayFromResource(d, "edge_gateway")
 	if err != nil {
@@ -152,7 +151,19 @@ func resourceVcdNsxvDhcpRelayRead(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("could not read DHCP relay settings: %s", err)
 	}
 
-	getDhcpRelayData(d, dhcpRelaySettings, vdc)
+	err = getDhcpRelayData(d, dhcpRelaySettings, edgeGateway, vdc)
+	if err != nil {
+		return fmt.Errorf("could not read DHCP relay settings: %s", err)
+	}
+
+	// This is not a real object but a settings property on Edge gateway - creating a fake composite
+	// ID
+	fakeId, err := getDhclRelaySettingsId(edgeGateway)
+	if err != nil {
+		return fmt.Errorf("could not construct DHCP relay settings ID: %s", err)
+	}
+
+	d.SetId(fakeId)
 
 	return nil
 }
@@ -177,7 +188,8 @@ func resourceVcdNsxvDhcpRelayDelete(d *schema.ResourceData, meta interface{}) er
 }
 
 // resourceVcdNsxvDhcpRelayImport imports DHCP relay configuration. Because DHCP relay is just a
-// settings on edge gateway and not a separate object - the ID actually does not represent any object
+// settings on edge gateway and not a separate object - the ID actually does not represent any
+// object
 func resourceVcdNsxvDhcpRelayImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
@@ -284,11 +296,10 @@ func getDhcpRelayAgentsType(relayAgentsSet *schema.Set, edge *govcd.EdgeGateway)
 	return relayAgentsStruct, nil
 }
 
-func getDhcpRelayData(d *schema.ResourceData, edgeRelay *types.EdgeDhcpRelay, vdc *govcd.Vdc) error {
+func getDhcpRelayData(d *schema.ResourceData, edgeRelay *types.EdgeDhcpRelay, edge *govcd.EdgeGateway, vdc *govcd.Vdc) error {
 
 	// DHCP relay server settings
 	relayServer := edgeRelay.RelayServer
-	// relayServer.
 
 	relayServerIpAddresses := convertToTypeSet(relayServer.IpAddress)
 	relayServerIpAddressesSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), relayServerIpAddresses)
@@ -303,7 +314,6 @@ func getDhcpRelayData(d *schema.ResourceData, edgeRelay *types.EdgeDhcpRelay, vd
 	if err != nil {
 		return fmt.Errorf("could not save domain_names to schema: %s", err)
 	}
-	spew.Dump(relayServer.GroupingObjectId)
 	ipSetNames, err := ipSetIdsToNames(relayServer.GroupingObjectId, vdc)
 	if err != nil {
 		return fmt.Errorf("could not find names for all IP set IDs: %s", err)
@@ -316,22 +326,53 @@ func getDhcpRelayData(d *schema.ResourceData, edgeRelay *types.EdgeDhcpRelay, vd
 		return fmt.Errorf("could not save ip_sets to schema: %s", err)
 	}
 
+	// DHCP relay agent settings
+	relayAgents := edgeRelay.RelayAgents
+
+	relayAgentSlice := make([]interface{}, len(relayAgents.Agents))
+
+	for index, agent := range relayAgents.Agents {
+		relayAgentMap := make(map[string]interface{})
+		if agent.VnicIndex == nil {
+			return fmt.Errorf("DHCP relay agent configuration does not have vNic specified: %s", err)
+		}
+		// Lookup org network name by edge gateway vNic index
+		orgNetworkName, _, err := edge.GetNetworkNameAndTypeByVnicIndex(*agent.VnicIndex)
+		if err != nil {
+			return fmt.Errorf("could not find network name for edge gateway vNic %d: %s ", agent.VnicIndex, err)
+		}
+
+		relayAgentMap["org_network"] = orgNetworkName
+		relayAgentMap["gateway_ip_address"] = agent.GatewayInterfaceAddress
+
+		relayAgentSlice[index] = relayAgentMap
+	}
+
+	relayAgentSet := schema.NewSet(schema.HashResource(relayAgentResource), relayAgentSlice)
+	err = d.Set("relay_agent", relayAgentSet)
+	if err != nil {
+		return fmt.Errorf("could not save relay_agent to schema: %s", err)
+	}
+
 	return nil
 }
 
 // getDhclRelaySettingsId constructs a fake DHCP relay configuration ID which is needed for
-// Terraform The ID is in format "edgeGateway.ID:dhcpRelaySettings". Edge Gateway ID is left here
-// just in case we ever want to refer this object somewhere.
+// Terraform. The ID is in format "edgeGateway.ID:dhcpRelaySettings"
+// (eg.: "urn:vcloud:gateway:77ccbdcd-ac04-4111-bf08-8ac294a3185b:dhcpRelay"). Edge Gateway ID is
+// left here just in case we ever want to refer this object somewhere but still be able to
+// distinguish it from the real edge gateway resource.
 func getDhclRelaySettingsId(edge *govcd.EdgeGateway) (string, error) {
 	if edge.EdgeGateway.ID == "" {
 		return "", fmt.Errorf("edge gateway does not have ID populated")
 	}
 
-	id := edge.EdgeGateway.ID + ":dhcpRelaySettings"
+	id := edge.EdgeGateway.ID + ":dhcpRelay"
 	return id, nil
 }
 
-// BELOW THIS LINE To be removed when other PR is merged
+// NOT WORTH REVIEWING BELOW THIS LINE - will be removed once
+// https://github.com/terraform-providers/terraform-provider-vcd/pull/411 is merged
 func ipSetNamesToIds(ipSetNames []string, vdc *govcd.Vdc) ([]string, error) {
 	ipSetIds := make([]string, len(ipSetNames))
 
