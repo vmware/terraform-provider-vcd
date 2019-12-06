@@ -165,7 +165,7 @@ func (cli *VCDClient) unLockParentVapp(d *schema.ResourceData) {
 	vcdMutexKV.Unlock(key)
 }
 
-// function lockParentVm locks using vapp_name and vm_name names existing in resource parameters.
+// lockParentVm locks using vapp_name and vm_name names existing in resource parameters.
 // Parent means the resource belongs to the VM being locked
 func (cli *VCDClient) lockParentVm(d *schema.ResourceData) {
 	vappName := d.Get("vapp_name").(string)

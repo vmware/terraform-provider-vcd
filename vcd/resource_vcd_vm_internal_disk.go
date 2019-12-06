@@ -1,9 +1,3 @@
-// /*****************************************************************
-// * terraform-provider-vcloud-director
-// * Copyright (c) 2017 VMware, Inc. All Rights Reserved.
-// * SPDX-License-Identifier: BSD-2-Clause
-// ******************************************************************/
-
 package vcd
 
 import (
@@ -118,7 +112,7 @@ var internalDiskBusTypesFromValues = map[string]string{
 	"6": "sata",
 }
 
-// creates an internal disk for VM
+// resourceVmInternalDiskCreate creates an internal disk for VM
 func resourceVmInternalDiskCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
@@ -224,7 +218,7 @@ func powerOffIfNeeded(d *schema.ResourceData, vm *govcd.VM) error {
 	return nil
 }
 
-// Deletes disk from VM
+// resourceVmInternalDiskDelete deletes disk from VM
 func resourceVmInternalDiskDelete(d *schema.ResourceData, m interface{}) error {
 	vcdClient := m.(*VCDClient)
 
