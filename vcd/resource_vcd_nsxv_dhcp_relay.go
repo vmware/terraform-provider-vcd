@@ -118,7 +118,7 @@ func resourceVcdNsxvDhcpRelayCreate(d *schema.ResourceData, meta interface{}) er
 
 	// This is not a real object but a settings property on Edge gateway - creating a fake composite
 	// ID
-	fakeId, err := getDhclRelaySettingsId(edgeGateway)
+	fakeId, err := getDhcpRelaySettingsId(edgeGateway)
 	if err != nil {
 		return fmt.Errorf("could not construct DHCP relay settings ID: %s", err)
 	}
@@ -165,7 +165,7 @@ func resourceVcdNsxvDhcpRelayRead(d *schema.ResourceData, meta interface{}) erro
 
 	// This is not a real object but a settings property on Edge gateway - creating a fake composite
 	// ID
-	fakeId, err := getDhclRelaySettingsId(edgeGateway)
+	fakeId, err := getDhcpRelaySettingsId(edgeGateway)
 	if err != nil {
 		return fmt.Errorf("could not construct DHCP relay settings ID: %s", err)
 	}
@@ -210,7 +210,7 @@ func resourceVcdNsxvDhcpRelayImport(d *schema.ResourceData, meta interface{}) ([
 		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	fakeId, err := getDhclRelaySettingsId(edgeGateway)
+	fakeId, err := getDhcpRelaySettingsId(edgeGateway)
 	if err != nil {
 		return nil, fmt.Errorf("could not construct DHCP relay settings ID: %s", err)
 	}
@@ -367,12 +367,12 @@ func setDhcpRelayAgentData(d *schema.ResourceData, edgeRelay *types.EdgeDhcpRela
 	return nil
 }
 
-// getDhclRelaySettingsId constructs a fake DHCP relay configuration ID which is needed for
+// getDhcpRelaySettingsId constructs a fake DHCP relay configuration ID which is needed for
 // Terraform. The ID is in format "edgeGateway.ID:dhcpRelay"
 // (eg.: "urn:vcloud:gateway:77ccbdcd-ac04-4111-bf08-8ac294a3185b:dhcpRelay"). Edge Gateway ID is
 // left here just in case we ever want to refer this object somewhere but still be able to
 // distinguish it from the real edge gateway resource.
-func getDhclRelaySettingsId(edge *govcd.EdgeGateway) (string, error) {
+func getDhcpRelaySettingsId(edge *govcd.EdgeGateway) (string, error) {
 	if edge.EdgeGateway.ID == "" {
 		return "", fmt.Errorf("edge gateway does not have ID populated")
 	}

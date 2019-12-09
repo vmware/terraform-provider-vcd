@@ -13,7 +13,10 @@ provided by NSX in vCloud Director environment allows to leverage existing DHCP 
 within vCloud Director environment without any interruption to the IP address management in existing
 DHCP infrastructure. DHCP messages are relayed from virtual machines to the designated DHCP servers
 in your physical DHCP infrastructure, which allows IP addresses controlled by the NSX software to
-continue to be in synch with IP addresses in the rest of your DHCP-controlled environments. 
+continue to be in sync with IP addresses in the rest of your DHCP-controlled environments. 
+
+~> **Note:** This resource is a "singleton". Because DHCP relay settings are just edge gateway
+properties - only one resource per Edge Gateway is useful.
 
 Supported in provider *v2.6+*
 
@@ -43,7 +46,7 @@ resource "vcd_nsxv_dhcp_relay" "relay_config" {
 
   ip_addresses = ["1.1.1.1", "2.2.2.2"]
   domain_names = ["servergroups.domainname.com", "other.domain.com"]
-  ip_sets      = [vcd_ipset.myset1.name, vcd_ipset.myset2.name]
+  ip_sets      = [vcd_nsxv_ip_set.myset1.name, vcd_nsxv_ip_set.myset2.name]
 
   relay_agent {
     org_network = "my-routed-network-1"
@@ -53,6 +56,22 @@ resource "vcd_nsxv_dhcp_relay" "relay_config" {
     org_network        = vcd_network_routed.db-network.name
     gateway_ip_address = "10.201.1.1"
   }
+}
+
+resource "vcd_nsxv_ip_set" "myset1" {
+  org          = "my-org"
+  vdc          = "my-org-vdc"
+
+  name                   = "ipset-one"
+  ip_addresses           = ["10.10.10.1/24"]
+}
+
+resource "vcd_nsxv_ip_set" "myset2" {
+  org          = "my-org"
+  vdc          = "my-org-vdc"
+
+  name                   = "ipset-two"
+  ip_addresses           = ["20.20.20.1/24"]
 }
 ```
 

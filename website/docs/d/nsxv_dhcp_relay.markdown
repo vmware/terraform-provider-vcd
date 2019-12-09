@@ -13,7 +13,7 @@ capability provided by NSX in vCloud Director environment allows to leverage exi
 infrastructure from within vCloud Director environment without any interruption to the IP address
 management in existing DHCP infrastructure. DHCP messages are relayed from virtual machines to the
 designated DHCP servers in your physical DHCP infrastructure, which allows IP addresses controlled
-by the NSX software to continue to be in synch with IP addresses in the rest of your DHCP-controlled
+by the NSX software to continue to be in sync with IP addresses in the rest of your DHCP-controlled
 environments. 
 
 Supported in provider *v2.6+*

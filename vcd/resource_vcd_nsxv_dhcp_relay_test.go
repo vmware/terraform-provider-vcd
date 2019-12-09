@@ -123,84 +123,84 @@ func testAccCheckVcdDhcpRelaySettingsEmpty() resource.TestCheckFunc {
 
 const testAccRoutedNet = `
 variable "network_types" {
-	type        = list(string)
-	default     = ["internal", "subinterface"]
+  type    = list(string)
+  default = ["internal", "subinterface"]
 }
 
 resource "vcd_network_routed" "test-routed" {
-	count          = 2
-	name           = "dhcp-relay-${count.index}"
-	org            = "{{.Org}}"
-	vdc            = "{{.Vdc}}"
-	edge_gateway   = "{{.EdgeGateway}}"
-	gateway        = "10.201.${count.index}.1"
-	netmask        = "255.255.255.0"
-	interface_type = var.network_types[count.index]
+  count          = 2
+  name           = "dhcp-relay-${count.index}"
+  org            = "{{.Org}}"
+  vdc            = "{{.Vdc}}"
+  edge_gateway   = "{{.EdgeGateway}}"
+  gateway        = "10.201.${count.index}.1"
+  netmask        = "255.255.255.0"
+  interface_type = var.network_types[count.index]
 
-	static_ip_pool {
-	  start_address = "10.201.${count.index}.10"
-	  end_address   = "10.201.${count.index}.20"
-	}
+  static_ip_pool {
+    start_address = "10.201.${count.index}.10"
+    end_address   = "10.201.${count.index}.20"
+  }
 }
 `
 
 const testAccVcdNsxvDhcpRelay = testAccRoutedNet + `
 resource "vcd_nsxv_dhcp_relay" "relay_config" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	
-    ip_addresses = ["1.1.1.1", "2.2.2.2"]
-    domain_names = ["servergroups.domainname.com", "other.domain.com"]
-    ip_sets      = [vcd_ipset.myset1.name, vcd_ipset.myset2.name]
-	
-	relay_agent {
-        org_network = vcd_network_routed.test-routed[0].name
-	}
-	
-	relay_agent {
-		org_network        = vcd_network_routed.test-routed[1].name
-		gateway_ip_address = "10.201.1.1"
-    }
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+
+  ip_addresses = ["1.1.1.1", "2.2.2.2"]
+  domain_names = ["servergroups.domainname.com", "other.domain.com"]
+  ip_sets      = [vcd_ipset.myset1.name, vcd_ipset.myset2.name]
+
+  relay_agent {
+    org_network = vcd_network_routed.test-routed[0].name
+  }
+
+  relay_agent {
+    org_network        = vcd_network_routed.test-routed[1].name
+    gateway_ip_address = "10.201.1.1"
+  }
 }
 
 data "vcd_nsxv_dhcp_relay" "relay" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = vcd_nsxv_dhcp_relay.relay_config.edge_gateway
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = vcd_nsxv_dhcp_relay.relay_config.edge_gateway
 }
 
 resource "vcd_ipset" "myset1" {
-	name                   = "test-set1"
-	ip_addresses           = ["192.168.1.1"]
+  name         = "test-set1"
+  ip_addresses = ["192.168.1.1"]
 }
 
 resource "vcd_ipset" "myset2" {
-	name                   = "test-set2"
-	ip_addresses           = ["192.168.1.1"]
+  name         = "test-set2"
+  ip_addresses = ["192.168.1.1"]
 }
 `
 
 const testAccVcdNsxvDhcpRelayUpdate = testAccRoutedNet + `
 resource "vcd_nsxv_dhcp_relay" "relay_config" {
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	
-    ip_sets      = [vcd_ipset.myset1.name, vcd_ipset.myset2.name]
-	
-	relay_agent {
-        org_network = vcd_network_routed.test-routed[0].name
-	}
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+
+  ip_sets = [vcd_ipset.myset1.name, vcd_ipset.myset2.name]
+
+  relay_agent {
+    org_network = vcd_network_routed.test-routed[0].name
+  }
 }
 
 resource "vcd_ipset" "myset1" {
-	name                   = "test-set1"
-	ip_addresses           = ["192.168.1.1"]
+  name         = "test-set1"
+  ip_addresses = ["192.168.1.1"]
 }
 
 resource "vcd_ipset" "myset2" {
-	name                   = "test-set2"
-	ip_addresses           = ["192.168.1.1"]
+  name         = "test-set2"
+  ip_addresses = ["192.168.1.1"]
 }
 `
