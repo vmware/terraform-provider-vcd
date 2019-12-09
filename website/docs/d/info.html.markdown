@@ -164,6 +164,7 @@ The following arguments are supported:
     * `id`: Only the resource ID
     * `href`: Only the resource HREF
     * `name_id`: Both the resource name and ID separated by `name_id_separator`
+    * `hierarchy`: All the ancestor names (if any) followed by the resource name, separated by `name_id_separator`
     * `import`: A terraform client command to import the resource
 * `name_id_separator` (Optional) A string separating name and ID in the list. Default is "  " (two spaces)
 * `parent` (Optional) The resource parent, such as "vapp" or "catalog", when needed. If not provided, all available

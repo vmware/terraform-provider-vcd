@@ -58,11 +58,12 @@ func datasourceVcdInfo() *schema.Resource {
 				Default:     "name",
 				Description: "How the list should be built",
 				ValidateFunc: validation.StringInSlice([]string{
-					"name",    // The list will contain only the entity name
-					"id",      // The list will contain only the entity ID
-					"href",    // The list will contain only the entity HREF
-					"import",  // The list will contain the terraform import command
-					"name_id", // The list will contain name + ID for each item
+					"name",      // The list will contain only the entity name
+					"id",        // The list will contain only the entity ID
+					"href",      // The list will contain only the entity HREF
+					"import",    // The list will contain the terraform import command
+					"name_id",   // The list will contain name + ID for each item
+					"hierarchy", // The list will contain parent names + resource name for each item
 				}, true),
 			},
 			"name_id_separator": &schema.Schema{
@@ -91,7 +92,7 @@ func orgList(d *schema.ResourceData, meta interface{}) (list []string, err error
 			return []string{}, err
 		}
 		switch listMode {
-		case "name":
+		case "name", "hierarchy":
 			list = append(list, org.Name)
 		case "id":
 			list = append(list, adminOrg.AdminOrg.ID)
@@ -124,7 +125,7 @@ func externalNetworkList(d *schema.ResourceData, meta interface{}) (list []strin
 			return []string{}, err
 		}
 		switch listMode {
-		case "name":
+		case "name", "hierarchy":
 			list = append(list, en.Name)
 		case "id":
 			list = append(list, externalNetwork.ExternalNetwork.ID)
@@ -161,6 +162,8 @@ func catalogList(d *schema.ResourceData, meta interface{}) (list []string, err e
 			list = append(list, catalog.Catalog.ID)
 		case "name_id":
 			list = append(list, catRef.Name+nameIdSeparator+catalog.Catalog.ID)
+		case "hierarchy":
+			list = append(list, org.AdminOrg.Name+nameIdSeparator+catRef.Name)
 		case "href":
 			list = append(list, catRef.HREF)
 		case "import":
@@ -189,6 +192,8 @@ func vdcList(d *schema.ResourceData, meta interface{}) (list []string, err error
 			list = append(list, vdc.ID)
 		case "name_id":
 			list = append(list, vdc.Name+nameIdSeparator+vdc.ID)
+		case "hierarchy":
+			list = append(list, org.AdminOrg.Name+nameIdSeparator+vdc.Name)
 		case "href":
 			list = append(list, vdc.HREF)
 		case "import":
@@ -242,6 +247,10 @@ func networkList(d *schema.ResourceData, meta interface{}) (list []string, err e
 			list = append(list, network.OrgVDCNetwork.ID)
 		case "name_id":
 			list = append(list, network.OrgVDCNetwork.Name+nameIdSeparator+network.OrgVDCNetwork.ID)
+		case "hierarchy":
+			list = append(list, org.Org.Name+nameIdSeparator+vdc.Vdc.Name+nameIdSeparator+network.OrgVDCNetwork.Name)
+		case "tree":
+			list = append(list, network.OrgVDCNetwork.Name+nameIdSeparator+network.OrgVDCNetwork.ID)
 		case "href":
 			list = append(list, network.OrgVDCNetwork.HREF)
 		case "import":
@@ -255,13 +264,6 @@ func networkList(d *schema.ResourceData, meta interface{}) (list []string, err e
 		}
 	}
 
-	for _, resourceEntities := range vdc.Vdc.ResourceEntities {
-		for _, resourceReference := range resourceEntities.ResourceEntity {
-			if resourceReference.Type == "application/vnd.vmware.vcloud.vApp+xml" {
-
-			}
-		}
-	}
 	return list, nil
 }
 
@@ -284,6 +286,8 @@ func vappList(d *schema.ResourceData, meta interface{}) (list []string, err erro
 					list = append(list, resourceReference.ID)
 				case "name_id":
 					list = append(list, resourceReference.Name+nameIdSeparator+resourceReference.ID)
+				case "hierarchy":
+					list = append(list, org.Org.Name+nameIdSeparator+vdc.Vdc.Name+nameIdSeparator+resourceReference.Name)
 				case "href":
 					list = append(list, resourceReference.HREF)
 				case "import":
@@ -323,6 +327,8 @@ func vappVmList(d *schema.ResourceData, meta interface{}) (list []string, err er
 							list = append(list, vm.ID)
 						case "name_id":
 							list = append(list, vm.Name+nameIdSeparator+vm.ID)
+						case "hierarchy":
+							list = append(list, org.Org.Name+nameIdSeparator+vdc.Vdc.Name+nameIdSeparator+resourceReference.Name+nameIdSeparator+vm.Name)
 						case "href":
 							list = append(list, vm.HREF)
 						case "import":
