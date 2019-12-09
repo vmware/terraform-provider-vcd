@@ -353,8 +353,8 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 	// field value must be sent only if user specified its value
 	if fipsModeEnabled, ok := d.GetOkExists("fips_mode_enabled"); ok {
 		if vcdClient.APIVCDMaxVersionIs("<= 29.0") { // vCD 9.0 or less
-			_, _ = fmt.Fprint(getTerraformStdout(), "WARNING! FIPS mode is only supported starting"+
-				" with vCD 9.1. Please do not set this field when using with vCD 9.0\n")
+			return fmt.Errorf("ERROR! FIPS mode is only supported starting" +
+				" with vCD 9.1. Please do not set this field when using with vCD 9.0")
 		}
 		fipsModeEnabledBool := fipsModeEnabled.(bool)
 		log.Printf("[TRACE] edge gateway creation. FIPS mode was set with value %t", fipsModeEnabledBool)
