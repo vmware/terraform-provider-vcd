@@ -118,12 +118,12 @@ func resourceVcdNsxvDhcpRelayCreate(d *schema.ResourceData, meta interface{}) er
 
 	// This is not a real object but a settings property on Edge gateway - creating a fake composite
 	// ID
-	fakeId, err := getDhcpRelaySettingsId(edgeGateway)
+	compositeId, err := getDhcpRelaySettingsId(edgeGateway)
 	if err != nil {
 		return fmt.Errorf("could not construct DHCP relay settings ID: %s", err)
 	}
 
-	d.SetId(fakeId)
+	d.SetId(compositeId)
 
 	return resourceVcdNsxvDhcpRelayRead(d, meta)
 }
@@ -200,7 +200,7 @@ func resourceVcdNsxvDhcpRelayDelete(d *schema.ResourceData, meta interface{}) er
 func resourceVcdNsxvDhcpRelayImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
-		return nil, fmt.Errorf("resource name must be specified in such way org.vdc.edge-gw")
+		return nil, fmt.Errorf("resource name must be specified in such way org-name.vdc-name.edge-gw-name")
 	}
 	orgName, vdcName, edgeName := resourceURI[0], resourceURI[1], resourceURI[2]
 
@@ -277,27 +277,25 @@ func getDhcpRelayType(d *schema.ResourceData, edge *govcd.EdgeGateway, vdc *govc
 func getDhcpRelayAgentsType(relayAgentsSet *schema.Set, edge *govcd.EdgeGateway) ([]types.EdgeDhcpRelayAgent, error) {
 	relayAgentsSlice := relayAgentsSet.List()
 	relayAgentsStruct := make([]types.EdgeDhcpRelayAgent, len(relayAgentsSlice))
-	if len(relayAgentsSlice) > 0 {
-		for index, relayAgent := range relayAgentsSlice {
-			relayAgentMap := convertToStringMap(relayAgent.(map[string]interface{}))
+	for index, relayAgent := range relayAgentsSlice {
+		relayAgentMap := convertToStringMap(relayAgent.(map[string]interface{}))
 
-			// Lookup vNic index by network name
-			orgNetworkName := relayAgentMap["org_network"]
-			vNicIndex, _, err := edge.GetAnyVnicIndexByNetworkName(orgNetworkName)
-			if err != nil {
-				return nil, fmt.Errorf("could not lookup edge gateway interface (vNic) index by network name for network %s: %s", orgNetworkName, err)
-			}
-
-			oneRelayAgent := types.EdgeDhcpRelayAgent{
-				VnicIndex: vNicIndex,
-			}
-
-			if gatewayIp, isSet := relayAgentMap["gateway_ip_address"]; isSet {
-				oneRelayAgent.GatewayInterfaceAddress = gatewayIp
-			}
-
-			relayAgentsStruct[index] = oneRelayAgent
+		// Lookup vNic index by network name
+		orgNetworkName := relayAgentMap["org_network"]
+		vNicIndex, _, err := edge.GetAnyVnicIndexByNetworkName(orgNetworkName)
+		if err != nil {
+			return nil, fmt.Errorf("could not lookup edge gateway interface (vNic) index by network name for network %s: %s", orgNetworkName, err)
 		}
+
+		oneRelayAgent := types.EdgeDhcpRelayAgent{
+			VnicIndex: vNicIndex,
+		}
+
+		if gatewayIp, isSet := relayAgentMap["gateway_ip_address"]; isSet {
+			oneRelayAgent.GatewayInterfaceAddress = gatewayIp
+		}
+
+		relayAgentsStruct[index] = oneRelayAgent
 	}
 
 	return relayAgentsStruct, nil
