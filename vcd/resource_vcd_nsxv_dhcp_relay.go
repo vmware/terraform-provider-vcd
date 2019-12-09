@@ -101,12 +101,7 @@ func resourceVcdNsxvDhcpRelayCreate(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
-	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
-	}
-
-	dhcpRelayConfig, err := getDhcpRelayType(d, edgeGateway, vdc)
+	dhcpRelayConfig, err := getDhcpRelayType(d, edgeGateway, vcdClient)
 	if err != nil {
 		return fmt.Errorf("could not process DHCP relay settings: %s", err)
 	}
@@ -165,12 +160,12 @@ func resourceVcdNsxvDhcpRelayRead(d *schema.ResourceData, meta interface{}) erro
 
 	// This is not a real object but a settings property on Edge gateway - creating a fake composite
 	// ID
-	fakeId, err := getDhcpRelaySettingsId(edgeGateway)
+	compositeId, err := getDhcpRelaySettingsId(edgeGateway)
 	if err != nil {
 		return fmt.Errorf("could not construct DHCP relay settings ID: %s", err)
 	}
 
-	d.SetId(fakeId)
+	d.SetId(compositeId)
 
 	return nil
 }
@@ -210,7 +205,7 @@ func resourceVcdNsxvDhcpRelayImport(d *schema.ResourceData, meta interface{}) ([
 		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
 
-	fakeId, err := getDhcpRelaySettingsId(edgeGateway)
+	compositeId, err := getDhcpRelaySettingsId(edgeGateway)
 	if err != nil {
 		return nil, fmt.Errorf("could not construct DHCP relay settings ID: %s", err)
 	}
@@ -218,12 +213,17 @@ func resourceVcdNsxvDhcpRelayImport(d *schema.ResourceData, meta interface{}) ([
 	d.Set("org", orgName)
 	d.Set("vdc", vdcName)
 	d.Set("edge_gateway", edgeName)
-	d.SetId(fakeId)
+	d.SetId(compositeId)
 	return []*schema.ResourceData{d}, nil
 }
 
 // getDhcpRelayType converts resource schema to *types.EdgeDhcpRelay
-func getDhcpRelayType(d *schema.ResourceData, edge *govcd.EdgeGateway, vdc *govcd.Vdc) (*types.EdgeDhcpRelay, error) {
+func getDhcpRelayType(d *schema.ResourceData, edge *govcd.EdgeGateway, vcdClient *VCDClient) (*types.EdgeDhcpRelay, error) {
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	if err != nil {
+		return nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	}
+
 	dhcpRelayConfig := &types.EdgeDhcpRelay{}
 
 	// Relay server part
@@ -232,7 +232,6 @@ func getDhcpRelayType(d *schema.ResourceData, edge *govcd.EdgeGateway, vdc *govc
 		listOfDomainNames []string
 		listOfIpSetNames  []string
 		listOfIpSetIds    []string
-		err               error
 	)
 
 	if ipAddresses, ok := d.GetOk("ip_addresses"); ok {
