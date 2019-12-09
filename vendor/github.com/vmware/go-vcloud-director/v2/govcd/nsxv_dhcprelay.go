@@ -58,8 +58,8 @@ func (egw *EdgeGateway) GetDhcpRelay() (*types.EdgeDhcpRelay, error) {
 	return response, nil
 }
 
-// ResetDhcpRelay resets all fields to empty which is equivalent of what edge gateway has upon
-// creation.
+// ResetDhcpRelay removes all configuration by sending a DELETE request for DHCP relay configuration
+// endpoint
 func (egw *EdgeGateway) ResetDhcpRelay() error {
 	if !egw.HasAdvancedNetworking() {
 		return fmt.Errorf("only advanced edge gateways support DHCP relay")
@@ -73,9 +73,5 @@ func (egw *EdgeGateway) ResetDhcpRelay() error {
 	// Send a DELETE request to DHCP relay configuration endpoint
 	_, err = egw.client.ExecuteRequestWithCustomError(httpPath, http.MethodDelete, types.AnyXMLMime,
 		"unable to reset edge gateway DHCP relay configuration: %s", nil, &types.NSXError{})
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
