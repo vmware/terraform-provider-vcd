@@ -56,7 +56,7 @@ func datasourceVcdNsxvDhcpRelay() *schema.Resource {
 				Type:     schema.TypeSet,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"org_network": {
+						"network_name": {
 							Computed:    true,
 							Type:        schema.TypeString,
 							Description: "Org network which is to be used for relaying DHCP message to specified servers",
