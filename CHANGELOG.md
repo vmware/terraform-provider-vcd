@@ -2,7 +2,9 @@
 
 FEATURES:
 
+* **New Resource:** `vcd_nsxv_dhcp_relay` Edge gateway DHCP relay configuration - [GH-416]
 * **New Resource:** `vcd_nsxv_ip_set` IP set - [GH-406,GH-411]
+* **New Data Source:** `vcd_nsxv_dhcp_relay` Edge gateway DHCP relay configuration - [GH-416]
 * **New Data Source:** `vcd_vapp_vm` VM - [GH-218]
 * **New Data Source:** `vcd_nsxv_ip_set` IP set - [GH-406,GH-411]
 * **New build command:** `make test-upgrade` to run an upgrade test from the previous released version
