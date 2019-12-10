@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
-	"time"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
@@ -97,21 +95,6 @@ func TestAccVcdNsxvDhcpRelay(t *testing.T) {
 			},
 		},
 	})
-}
-
-func sleepTester() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		fmt.Println("sleeping")
-		time.Sleep(1 * time.Minute)
-		return nil
-	}
-}
-
-func stateDumper() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		spew.Dump(s)
-		return nil
-	}
 }
 
 // testAccCheckVcdDhcpRelaySettingsEmpty reads DHCP relay configuration and ensure it has no
