@@ -31,7 +31,7 @@ resource "vcd_nsxv_dhcp_relay" "relay_config" {
   ip_addresses = ["1.1.1.1"]
 
   relay_agent {
-    org_network = vcd_network_routed.test-routed[0].name
+    network_name = vcd_network_routed.test-routed[0].name
   }
 }
 ```
@@ -49,11 +49,11 @@ resource "vcd_nsxv_dhcp_relay" "relay_config" {
   ip_sets      = [vcd_nsxv_ip_set.myset1.name, vcd_nsxv_ip_set.myset2.name]
 
   relay_agent {
-    org_network = "my-routed-network-1"
+    network_name = "my-routed-network-1"
   }
 
   relay_agent {
-    org_network        = vcd_network_routed.db-network.name
+    network_name        = vcd_network_routed.db-network.name
     gateway_ip_address = "10.201.1.1"
   }
 }
@@ -93,7 +93,7 @@ The following arguments are supported:
 <a id="relay-agent"></a>
 ## Relay Agent
 
-* `org_network` - (Required) An existing Org network name from which DHCP messages are to be relayed.
+* `network_name` - (Required) An existing Org network name from which DHCP messages are to be relayed.
 * `gateway_ip_address` - (Optional) IP address on edge gateway to be used for relaying messages.
   Primary address of edge gateway interface will be picked if not specified. 
 

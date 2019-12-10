@@ -11,7 +11,7 @@ import (
 
 var relayAgentResource = &schema.Resource{
 	Schema: map[string]*schema.Schema{
-		"org_network": {
+		"network_name": {
 			Required:    true,
 			Type:        schema.TypeString,
 			Description: "Org network which is to be used for relaying DHCP message to specified servers",
@@ -280,7 +280,7 @@ func getDhcpRelayAgentsType(relayAgentsSet *schema.Set, edge *govcd.EdgeGateway)
 		relayAgentMap := convertToStringMap(relayAgent.(map[string]interface{}))
 
 		// Lookup vNic index by network name
-		orgNetworkName := relayAgentMap["org_network"]
+		orgNetworkName := relayAgentMap["network_name"]
 		vNicIndex, _, err := edge.GetAnyVnicIndexByNetworkName(orgNetworkName)
 		if err != nil {
 			return nil, fmt.Errorf("could not lookup edge gateway interface (vNic) index by network name for network %s: %s", orgNetworkName, err)
@@ -349,7 +349,7 @@ func setDhcpRelayAgentData(d *schema.ResourceData, edgeRelay *types.EdgeDhcpRela
 			return fmt.Errorf("could not find network name for edge gateway vNic %d: %s ", agent.VnicIndex, err)
 		}
 
-		relayAgentMap["org_network"] = orgNetworkName
+		relayAgentMap["network_name"] = orgNetworkName
 		relayAgentMap["gateway_ip_address"] = agent.GatewayInterfaceAddress
 
 		relayAgentSlice[index] = relayAgentMap
