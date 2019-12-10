@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
+	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
@@ -59,16 +61,15 @@ func TestAccVcdNsxvDhcpRelay(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxv_dhcp_relay.relay_config", "ip_sets.908008747", "test-set2"),
 
 					resource.TestCheckResourceAttr("vcd_nsxv_dhcp_relay.relay_config", "relay_agent.#", "2"),
-					resource.TestCheckResourceAttr("vcd_nsxv_dhcp_relay.relay_config", "relay_agent.3348209499.org_network", "dhcp-relay-0"),
-					resource.TestCheckResourceAttr("vcd_nsxv_dhcp_relay.relay_config", "relay_agent.3348209499.gateway_ip_address", "10.201.0.1"),
-					resource.TestCheckResourceAttr("vcd_nsxv_dhcp_relay.relay_config", "relay_agent.3180164926.org_network", "dhcp-relay-1"),
-					resource.TestCheckResourceAttr("vcd_nsxv_dhcp_relay.relay_config", "relay_agent.3180164926.gateway_ip_address", "10.201.1.1"),
-
+					resource.TestCheckResourceAttr("vcd_nsxv_dhcp_relay.relay_config", "relay_agent.3772586107.org_network", "dhcp-relay-0"),
+					resource.TestCheckResourceAttr("vcd_nsxv_dhcp_relay.relay_config", "relay_agent.3772586107.gateway_ip_address", "210.201.0.1"),
+					resource.TestCheckResourceAttr("vcd_nsxv_dhcp_relay.relay_config", "relay_agent.2596401182.org_network", "dhcp-relay-1"),
+					resource.TestCheckResourceAttr("vcd_nsxv_dhcp_relay.relay_config", "relay_agent.2596401182.gateway_ip_address", "210.201.1.1"),
 					// Validate that data source has all fields except the hashed IP set because it is turned into slice in data source
 					// and only one due to outstanding problem in Terraform plugin SDK - https://github.com/hashicorp/terraform-plugin-sdk/pull/197
 					resourceFieldsEqual("vcd_nsxv_dhcp_relay.relay_config", "data.vcd_nsxv_dhcp_relay.relay",
-						[]string{"relay_agent.3348209499.gateway_ip_address", "relay_agent.3348209499.org_network", "relay_agent.#",
-							"relay_agent.3180164926.org_network", "relay_agent.3180164926.gateway_ip_address"}),
+						[]string{"relay_agent.3772586107.gateway_ip_address", "relay_agent.3772586107.org_network", "relay_agent.#",
+							"relay_agent.2596401182.org_network", "relay_agent.2596401182.gateway_ip_address"}),
 				),
 			},
 			resource.TestStep{
@@ -83,8 +84,9 @@ func TestAccVcdNsxvDhcpRelay(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxv_dhcp_relay.relay_config", "ip_sets.908008747", "test-set2"),
 
 					resource.TestCheckResourceAttr("vcd_nsxv_dhcp_relay.relay_config", "relay_agent.#", "1"),
-					resource.TestCheckResourceAttr("vcd_nsxv_dhcp_relay.relay_config", "relay_agent.3348209499.org_network", "dhcp-relay-0"),
-					resource.TestCheckResourceAttr("vcd_nsxv_dhcp_relay.relay_config", "relay_agent.3348209499.gateway_ip_address", "10.201.0.1"),
+					resource.TestCheckResourceAttr("vcd_nsxv_dhcp_relay.relay_config", "relay_agent.3772586107.org_network", "dhcp-relay-0"),
+					resource.TestCheckResourceAttr("vcd_nsxv_dhcp_relay.relay_config", "relay_agent.3772586107.gateway_ip_address", "210.201.0.1"),
+					// stateDumper(),
 				),
 			},
 			resource.TestStep{
@@ -95,6 +97,21 @@ func TestAccVcdNsxvDhcpRelay(t *testing.T) {
 			},
 		},
 	})
+}
+
+func sleepTester() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		fmt.Println("sleeping")
+		time.Sleep(1 * time.Minute)
+		return nil
+	}
+}
+
+func stateDumper() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		spew.Dump(s)
+		return nil
+	}
 }
 
 // testAccCheckVcdDhcpRelaySettingsEmpty reads DHCP relay configuration and ensure it has no
@@ -133,13 +150,13 @@ resource "vcd_network_routed" "test-routed" {
   org            = "{{.Org}}"
   vdc            = "{{.Vdc}}"
   edge_gateway   = "{{.EdgeGateway}}"
-  gateway        = "10.201.${count.index}.1"
+  gateway        = "210.201.${count.index}.1"
   netmask        = "255.255.255.0"
   interface_type = var.network_types[count.index]
 
   static_ip_pool {
-    start_address = "10.201.${count.index}.10"
-    end_address   = "10.201.${count.index}.20"
+    start_address = "210.201.${count.index}.10"
+    end_address   = "210.201.${count.index}.20"
   }
 }
 `
@@ -152,7 +169,7 @@ resource "vcd_nsxv_dhcp_relay" "relay_config" {
 
   ip_addresses = ["1.1.1.1", "2.2.2.2"]
   domain_names = ["servergroups.domainname.com", "other.domain.com"]
-  ip_sets      = [vcd_ipset.myset1.name, vcd_ipset.myset2.name]
+  ip_sets      = [vcd_nsxv_ip_set.myset1.name, vcd_nsxv_ip_set.myset2.name]
 
   relay_agent {
     org_network = vcd_network_routed.test-routed[0].name
@@ -160,7 +177,7 @@ resource "vcd_nsxv_dhcp_relay" "relay_config" {
 
   relay_agent {
     org_network        = vcd_network_routed.test-routed[1].name
-    gateway_ip_address = "10.201.1.1"
+    gateway_ip_address = "210.201.1.1"
   }
 }
 
@@ -170,12 +187,12 @@ data "vcd_nsxv_dhcp_relay" "relay" {
   edge_gateway = vcd_nsxv_dhcp_relay.relay_config.edge_gateway
 }
 
-resource "vcd_ipset" "myset1" {
+resource "vcd_nsxv_ip_set" "myset1" {
   name         = "test-set1"
   ip_addresses = ["192.168.1.1"]
 }
 
-resource "vcd_ipset" "myset2" {
+resource "vcd_nsxv_ip_set" "myset2" {
   name         = "test-set2"
   ip_addresses = ["192.168.1.1"]
 }
@@ -187,19 +204,19 @@ resource "vcd_nsxv_dhcp_relay" "relay_config" {
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
 
-  ip_sets = [vcd_ipset.myset1.name, vcd_ipset.myset2.name]
+  ip_sets = [vcd_nsxv_ip_set.myset1.name, vcd_nsxv_ip_set.myset2.name]
 
   relay_agent {
     org_network = vcd_network_routed.test-routed[0].name
   }
 }
 
-resource "vcd_ipset" "myset1" {
+resource "vcd_nsxv_ip_set" "myset1" {
   name         = "test-set1"
   ip_addresses = ["192.168.1.1"]
 }
 
-resource "vcd_ipset" "myset2" {
+resource "vcd_nsxv_ip_set" "myset2" {
   name         = "test-set2"
   ip_addresses = ["192.168.1.1"]
 }
