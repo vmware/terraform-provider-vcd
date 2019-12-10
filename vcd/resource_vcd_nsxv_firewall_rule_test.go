@@ -66,7 +66,7 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 		return
 	}
 
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		Providers:    testAccProviders,
 		PreCheck:     func() { testAccPreCheck(t) },
 		CheckDestroy: testAccCheckVcdFirewallRuleDestroy("vcd_nsxv_firewall_rule.rule6"),
@@ -84,13 +84,13 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0", "source.0.gateway_interfaces"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0", "source.0.virtual_machine_ids"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0", "source.0.org_networks"),
-					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0", "source.0.ipsets"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0", "source.0.ip_sets"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0", "source.0.security_groups"),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule0", "destination.0.exclude", "false"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0", "destination.0.gateway_interfaces"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0", "destination.0.virtual_machine_ids"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0", "destination.0.org_networks"),
-					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0", "destination.0.ipsets"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0", "destination.0.ip_sets"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0", "destination.0.security_groups"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0", "destination.0.ip_addresses"),
 					// Test object counts
@@ -115,13 +115,13 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0-2", "source.0.gateway_interfaces"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0-2", "source.0.virtual_machine_ids"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0-2", "source.0.org_networks"),
-					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0-2", "source.0.ipsets"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0-2", "source.0.ip_sets"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0-2", "source.0.security_groups"),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule0-2", "destination.0.exclude", "false"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0-2", "destination.0.gateway_interfaces"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0-2", "destination.0.virtual_machine_ids"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0-2", "destination.0.org_networks"),
-					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0-2", "destination.0.ipsets"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0-2", "destination.0.ip_sets"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule0-2", "destination.0.security_groups"),
 
 					// Test object counts
@@ -156,13 +156,13 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule1", "source.0.ip_addresses"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule1", "source.0.virtual_machine_ids"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule1", "source.0.org_networks"),
-					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule1", "source.0.ipsets"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule1", "source.0.ip_sets"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule1", "source.0.security_groups"),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule1", "destination.0.exclude", "false"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule1", "destination.0.ip_addresses"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule1", "destination.0.virtual_machine_ids"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule1", "destination.0.org_networks"),
-					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule1", "destination.0.ipsets"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule1", "destination.0.ip_sets"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule1", "destination.0.security_groups"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule1", "destination.0.ip_addresses"),
 					// Test object counts
@@ -189,13 +189,13 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule2", "source.0.ip_addresses"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule2", "source.0.virtual_machine_ids"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule2", "source.0.org_networks"),
-					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule2", "source.0.ipsets"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule2", "source.0.ip_sets"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule2", "source.0.security_groups"),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule2", "destination.0.exclude", "false"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule2", "destination.0.ip_addresses"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule2", "destination.0.virtual_machine_ids"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule2", "destination.0.org_networks"),
-					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule2", "destination.0.ipsets"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule2", "destination.0.ip_sets"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule2", "destination.0.security_groups"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule2", "destination.0.ip_addresses"),
 					// Test object counts
@@ -222,13 +222,13 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule3", "source.0.ip_addresses"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule3", "source.0.virtual_machine_ids"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule3", "source.0.gateway_interfaces"),
-					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule3", "source.0.ipsets"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule3", "source.0.ip_sets"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule3", "source.0.security_groups"),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule3", "destination.0.exclude", "true"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule3", "destination.0.ip_addresses"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule3", "destination.0.virtual_machine_ids"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule3", "destination.0.gateway_interfaces"),
-					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule3", "destination.0.ipsets"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule3", "destination.0.ip_sets"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule3", "destination.0.security_groups"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule3", "destination.0.ip_addresses"),
 					// Test object counts
@@ -255,13 +255,13 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule4", "source.0.ip_addresses"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule4", "source.0.virtual_machine_ids"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule4", "source.0.org_networks"),
-					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule4", "source.0.ipsets"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule4", "source.0.ip_sets"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule4", "source.0.security_groups"),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule4", "destination.0.exclude", "false"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule4", "destination.0.ip_addresses"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule4", "destination.0.virtual_machine_ids"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule4", "destination.0.org_networks"),
-					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule4", "destination.0.ipsets"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule4", "destination.0.ip_sets"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule4", "destination.0.security_groups"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule4", "destination.0.ip_addresses"),
 					// Test object counts
@@ -303,13 +303,13 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall_rule.rule4", "source.0.gateway_interfaces", "data.vcd_nsxv_firewall_rule.rule4", "source.0.gateway_interfaces"),
 					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall_rule.rule4", "source.0.virtual_machine_ids", "data.vcd_nsxv_firewall_rule.rule4", "source.0.virtual_machine_ids"),
 					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall_rule.rule4", "source.0.org_networks", "data.vcd_nsxv_firewall_rule.rule4", "source.0.org_networks"),
-					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall_rule.rule4", "source.0.ipsets", "data.vcd_nsxv_firewall_rule.rule4", "source.0.ipsets"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall_rule.rule4", "source.0.ip_sets", "data.vcd_nsxv_firewall_rule.rule4", "source.0.ip_sets"),
 					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall_rule.rule4", "source.0.security_groups", "data.vcd_nsxv_firewall_rule.rule4", "source.0.security_groups"),
 					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall_rule.rule4", "destination.0.exclude", "data.vcd_nsxv_firewall_rule.rule4", "destination.0.exclude"),
 					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall_rule.rule4", "destination.0.gateway_interfaces", "data.vcd_nsxv_firewall_rule.rule4", "destination.0.gateway_interfaces"),
 					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall_rule.rule4", "destination.0.virtual_machine_ids", "data.vcd_nsxv_firewall_rule.rule4", "destination.0.virtual_machine_ids"),
 					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall_rule.rule4", "destination.0.org_networks", "data.vcd_nsxv_firewall_rule.rule4", "destination.0.org_networks"),
-					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall_rule.rule4", "destination.0.ipsets", "data.vcd_nsxv_firewall_rule.rule4", "destination.0.ipsets"),
+					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall_rule.rule4", "destination.0.ip_sets", "data.vcd_nsxv_firewall_rule.rule4", "destination.0.ip_sets"),
 					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall_rule.rule4", "destination.0.security_groups", "data.vcd_nsxv_firewall_rule.rule4", "destination.0.security_groups"),
 					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall_rule.rule4", "destination.0.ip_addresses", "data.vcd_nsxv_firewall_rule.rule4", "destination.0.ip_addresses"),
 					resource.TestCheckResourceAttrPair("vcd_nsxv_firewall_rule.rule4", "source.0.ip_addresses.#", "data.vcd_nsxv_firewall_rule.rule4", "source.0.ip_addresses.#"),
@@ -333,13 +333,13 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule5", "source.0.ip_addresses"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule5", "source.0.virtual_machine_ids"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule5", "source.0.org_networks"),
-					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule5", "source.0.ipsets"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule5", "source.0.ip_sets"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule5", "source.0.security_groups"),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule5", "destination.0.exclude", "false"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule5", "destination.0.ip_addresses"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule5", "destination.0.virtual_machine_ids"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule5", "destination.0.org_networks"),
-					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule5", "destination.0.ipsets"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule5", "destination.0.ip_sets"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule5", "destination.0.security_groups"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule5", "destination.0.ip_addresses"),
 					// Test object counts
@@ -386,13 +386,13 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule6", "source.0.gateway_interfaces"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule6", "source.0.virtual_machine_ids"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule6", "source.0.org_networks"),
-					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule6", "source.0.ipsets"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule6", "source.0.ip_sets"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule6", "source.0.security_groups"),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule6", "destination.0.exclude", "false"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule6", "destination.0.gateway_interfaces"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule6", "destination.0.virtual_machine_ids"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule6", "destination.0.org_networks"),
-					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule6", "destination.0.ipsets"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule6", "destination.0.ip_sets"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule6", "destination.0.security_groups"),
 
 					// Test object counts
@@ -420,13 +420,13 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule6-6", "source.0.gateway_interfaces"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule6-6", "source.0.virtual_machine_ids"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule6-6", "source.0.org_networks"),
-					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule6-6", "source.0.ipsets"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule6-6", "source.0.ip_sets"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule6-6", "source.0.security_groups"),
 					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.rule6-6", "destination.0.exclude", "false"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule6-6", "destination.0.gateway_interfaces"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule6-6", "destination.0.virtual_machine_ids"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule6-6", "destination.0.org_networks"),
-					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule6-6", "destination.0.ipsets"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule6-6", "destination.0.ip_sets"),
 					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.rule6-6", "destination.0.security_groups"),
 
 					// Test object counts
@@ -876,5 +876,371 @@ resource "vcd_nsxv_firewall_rule" "rule6-6" {
 	}
 
 	depends_on = ["vcd_nsxv_firewall_rule.rule6"]
+}
+`
+
+func TestAccVcdNsxvEdgeFirewallRuleIpSets(t *testing.T) {
+	// String map to fill the template
+	var params = StringMap{
+		"Org":              testConfig.VCD.Org,
+		"Vdc":              testConfig.VCD.Vdc,
+		"EdgeGateway":      testConfig.Networking.EdgeGateway,
+		"ExternalIp":       testConfig.Networking.ExternalIp,
+		"InternalIp":       testConfig.Networking.InternalIp,
+		"NetworkName":      testConfig.Networking.ExternalNetwork,
+		"RouteNetworkName": "TestAccVcdVAppVmNet",
+		"Catalog":          testSuiteCatalogName,
+		"CatalogItem":      testSuiteCatalogOVAItem,
+		"VappName":         vappName2,
+		"VmName":           vmName,
+		"Tags":             "gateway firewall",
+	}
+
+	configText := templateFill(testAccVcdEdgeFirewallRuleIpSets, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
+
+	params["FuncName"] = t.Name() + "-step1"
+	configText1 := templateFill(testAccVcdEdgeFirewallRuleIpSetsUpdate, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		Providers:    testAccProviders,
+		PreCheck:     func() { testAccPreCheck(t) },
+		CheckDestroy: testAccCheckVcdFirewallRuleDestroy("vcd_nsxv_firewall_rule.ip_sets"),
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: configText,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "id", regexp.MustCompile(`\d*`)),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "name", "rule-with-ip_sets"),
+					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "rule_tag", regexp.MustCompile(`\d*`)),
+
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "action", "accept"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "logging_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "source.0.exclude", "false"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "source.0.gateway_interfaces"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "source.0.virtual_machine_ids"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "source.0.org_networks"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "source.0.ip_addresses"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "source.0.security_groups"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "destination.0.exclude", "false"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "destination.0.gateway_interfaces"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "destination.0.virtual_machine_ids"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "destination.0.org_networks"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "destination.0.ip_addresses"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "destination.0.security_groups"),
+
+					// Test object counts
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "source.0.ip_sets.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "source.0.ip_sets.1692753458", "acceptance test IPset 1"),
+
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "destination.0.ip_sets.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "destination.0.ip_sets.1338510833", "acceptance test IPset 2"),
+
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "service.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "service.455563319.port", "any"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "service.455563319.protocol", "any"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "service.455563319.source_port", "any"),
+				),
+			},
+			resource.TestStep{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "id", regexp.MustCompile(`\d*`)),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "name", "updated-rule-with-ip_sets"),
+					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "rule_tag", regexp.MustCompile(`\d*`)),
+
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "action", "accept"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "logging_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "source.0.exclude", "false"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "source.0.gateway_interfaces"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "source.0.virtual_machine_ids"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "source.0.org_networks"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "source.0.ip_addresses"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "source.0.security_groups"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "destination.0.exclude", "false"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "destination.0.gateway_interfaces"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "destination.0.virtual_machine_ids"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "destination.0.org_networks"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "destination.0.ip_addresses"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "destination.0.security_groups"),
+
+					// Test object counts
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "destination.0.ip_sets.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "destination.0.ip_sets.1692753458", "acceptance test IPset 1"),
+
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "source.0.ip_sets.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "source.0.ip_sets.1338510833", "acceptance test IPset 2"),
+
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "service.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.ip_sets", "service.1865210680.protocol", "icmp"),
+				),
+			},
+		},
+	})
+}
+
+const testAccVcdEdgeFirewallRuleIpSets = `
+resource "vcd_nsxv_firewall_rule" "ip_sets" {
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
+	name = "rule-with-ip_sets"
+	action = "accept"
+
+	source {
+		ip_sets = [vcd_nsxv_ip_set.aceeptance-ipset-1.name]
+	}
+  
+	destination {
+		ip_sets = [vcd_nsxv_ip_set.aceeptance-ipset-2.name]
+	}
+
+	service {
+		protocol = "any"
+	}
+}
+
+resource "vcd_nsxv_ip_set" "aceeptance-ipset-1" {
+	name = "acceptance test IPset 1"
+	ip_addresses = ["222.222.222.1/24"]
+}
+
+resource "vcd_nsxv_ip_set" "aceeptance-ipset-2" {
+	name = "acceptance test IPset 2"
+	ip_addresses = ["11.11.11.1-11.11.11.100", "12.12.12.1"]
+}
+`
+
+const testAccVcdEdgeFirewallRuleIpSetsUpdate = `
+resource "vcd_nsxv_firewall_rule" "ip_sets" {
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
+	name = "updated-rule-with-ip_sets"
+	action = "accept"
+
+	source {
+		ip_sets = [vcd_nsxv_ip_set.aceeptance-ipset-2.name]
+	}
+  
+	destination {
+		ip_sets = [vcd_nsxv_ip_set.aceeptance-ipset-1.name]
+	}
+
+	service {
+		protocol = "icmp"
+	}
+}
+
+resource "vcd_nsxv_ip_set" "aceeptance-ipset-1" {
+	name = "acceptance test IPset 1"
+	ip_addresses = ["222.222.222.1/24"]
+}
+
+resource "vcd_nsxv_ip_set" "aceeptance-ipset-2" {
+	name = "acceptance test IPset 2"
+	ip_addresses = ["11.11.11.1-11.11.11.100", "12.12.12.1"]
+}
+`
+
+func TestAccVcdNsxvEdgeFirewallRuleVms(t *testing.T) {
+	// String map to fill the template
+	var params = StringMap{
+		"Org":              testConfig.VCD.Org,
+		"Vdc":              testConfig.VCD.Vdc,
+		"EdgeGateway":      testConfig.Networking.EdgeGateway,
+		"ExternalIp":       testConfig.Networking.ExternalIp,
+		"InternalIp":       testConfig.Networking.InternalIp,
+		"NetworkName":      testConfig.Networking.ExternalNetwork,
+		"RouteNetworkName": "TestAccVcdVAppVmNet",
+		"Catalog":          testSuiteCatalogName,
+		"CatalogItem":      testSuiteCatalogOVAItem,
+		"VappName":         vappName2,
+		"VmName":           vmName,
+		"Tags":             "gateway firewall",
+	}
+
+	configText := templateFill(testAccVcdEdgeFirewallRuleVms, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 0: %s", configText)
+
+	params["FuncName"] = t.Name() + "-step1"
+	configText1 := templateFill(testAccVcdEdgeFirewallRuleVmsUpdate, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		Providers:    testAccProviders,
+		PreCheck:     func() { testAccPreCheck(t) },
+		CheckDestroy: testAccCheckVcdFirewallRuleDestroy("vcd_nsxv_firewall_rule.vms"),
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: configText,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.vms", "id", regexp.MustCompile(`\d*`)),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "name", "rule-with-ip_sets"),
+					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.vms", "rule_tag", regexp.MustCompile(`\d*`)),
+
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "action", "accept"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "logging_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "source.0.exclude", "false"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.vms", "source.0.gateway_interfaces"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.vms", "source.0.ip_sets"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.vms", "source.0.org_networks"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.vms", "source.0.ip_addresses"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.vms", "source.0.security_groups"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "destination.0.exclude", "false"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.vms", "destination.0.gateway_interfaces"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.vms", "destination.0.virtual_machine_ids"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.vms", "destination.0.org_networks"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.vms", "destination.0.ip_sets"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.vms", "destination.0.security_groups"),
+
+					// Test object counts
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "source.0.virtual_machine_ids.#", "1"),
+
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "destination.0.ip_addresses.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "destination.0.ip_addresses.2942403275", "any"),
+
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "service.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "service.455563319.port", "any"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "service.455563319.protocol", "any"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "service.455563319.source_port", "any"),
+				),
+			},
+
+			resource.TestStep{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.vms", "id", regexp.MustCompile(`\d*`)),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "name", "rule-with-ip_sets"),
+					resource.TestMatchResourceAttr("vcd_nsxv_firewall_rule.vms", "rule_tag", regexp.MustCompile(`\d*`)),
+
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "action", "accept"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "logging_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "source.0.exclude", "false"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.vms", "source.0.gateway_interfaces"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.vms", "source.0.ip_sets"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.vms", "source.0.org_networks"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.vms", "source.0.virtual_machine_ids"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.vms", "source.0.security_groups"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "destination.0.exclude", "false"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.vms", "destination.0.gateway_interfaces"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.vms", "destination.0.ip_addresses"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.vms", "destination.0.org_networks"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.vms", "destination.0.ip_sets"),
+					resource.TestCheckNoResourceAttr("vcd_nsxv_firewall_rule.vms", "destination.0.security_groups"),
+
+					// Test object counts
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "destination.0.virtual_machine_ids.#", "1"),
+
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "source.0.ip_addresses.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "source.0.ip_addresses.2942403275", "any"),
+
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "service.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "service.455563319.port", "any"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "service.455563319.protocol", "any"),
+					resource.TestCheckResourceAttr("vcd_nsxv_firewall_rule.vms", "service.455563319.source_port", "any"),
+				),
+			},
+		},
+	})
+}
+
+const testAccVcdEdgeFirewallRuleVmsPrereqs = `
+
+resource "vcd_network_routed" "net" {
+	org = "{{.Org}}"
+	vdc = "{{.Vdc}}"
+  
+	name         = "fw-routed-net"
+	edge_gateway = "{{.EdgeGateway}}"
+	gateway      = "47.10.0.1"
+
+	static_ip_pool {
+	  start_address = "47.10.0.152"
+	  end_address   = "47.10.0.254"
+	}
+}
+resource "vcd_vapp" "fw-test" {
+  name = "fw-test"
+
+  depends_on = [vcd_network_routed.net]
+}
+
+resource "vcd_vapp_vm" "fw-vm" {
+  org           = "{{.Org}}"
+  vdc           = "{{.Vdc}}"
+  vapp_name     = vcd_vapp.fw-test.name
+  name          = "fw-test"
+  computer_name = "fw-test"
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  memory        = 1024
+  cpus          = 2
+  cpu_cores     = 1
+
+  network {
+    name               = vcd_network_routed.net.name
+    type               = "org"
+    ip_allocation_mode = "POOL"
+  }
+}
+`
+
+const testAccVcdEdgeFirewallRuleVms = testAccVcdEdgeFirewallRuleVmsPrereqs + `
+resource "vcd_nsxv_firewall_rule" "vms" {
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
+	name = "rule-with-ip_sets"
+	action = "accept"
+
+	source {
+		virtual_machine_ids = [vcd_vapp_vm.fw-vm.id]
+	}
+  
+	destination {
+		ip_addresses = ["any"]
+	}
+
+	service {
+		protocol = "any"
+	}
+}
+`
+
+const testAccVcdEdgeFirewallRuleVmsUpdate = testAccVcdEdgeFirewallRuleVmsPrereqs + `
+resource "vcd_nsxv_firewall_rule" "vms" {
+	org          = "{{.Org}}"
+	vdc          = "{{.Vdc}}"
+	edge_gateway = "{{.EdgeGateway}}"
+	name = "rule-with-ip_sets"
+	action = "accept"
+
+	source {
+		ip_addresses = ["any"]
+	}
+  
+	destination {
+		virtual_machine_ids = [vcd_vapp_vm.fw-vm.id]
+	}
+
+	service {
+		protocol = "any"
+	}
 }
 `
