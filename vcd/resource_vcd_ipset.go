@@ -290,7 +290,7 @@ func ipSetIdsToNames(ipSetIds []string, vdc *govcd.Vdc) ([]string, error) {
 }
 
 // ipSetNamesToIds looks up IP set names by their IDs
-func ipSetNamesToIds(ipSetNames []string, vdc *govcd.Vdc) ([]string, error) {
+func ipSetNamesToIds(ipSetNames []string, vdc *govcd.Vdc, isShortFormat bool) ([]string, error) {
 	ipSetIds := make([]string, len(ipSetNames))
 
 	// When no names are passed - there is no need to lookup IP sets
@@ -312,7 +312,11 @@ func ipSetNamesToIds(ipSetNames []string, vdc *govcd.Vdc) ([]string, error) {
 		var ipSetFound bool
 		for _, ipSet := range allIpSets {
 			if ipSet.Name == ipSetName {
-				ipSetIds[index] = ipSet.ID
+				if isShortFormat {
+					ipSetIds[index] = strings.Split(ipSet.ID, ":")[1]
+				} else {
+					ipSetIds[index] = ipSet.ID
+				}
 				ipSetFound = true
 			}
 		}

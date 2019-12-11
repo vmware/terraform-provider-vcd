@@ -754,7 +754,7 @@ func getGatewayInterfaceIpRangeType(suballocatePoolSet *schema.Set) ([]*types.IP
 // It must only convert to such structure only
 // `uplink` interfaces. One uplink exception in the case of distributed routing support (DLR) is an
 // `uplink` network `DLR_to_EDGE_%s` which is a transit interface
-func getExternalNetworkData(vcdClient *VCDClient, d *schema.ResourceData, gatewayInterfaces []*types.GatewayInterface) (*schema.Set, error) {
+func getExternalNetworkData(vcdClient *VCDClient, d *schema.ResourceData, gatewayInterfaces []*types.GatewayInterface, origin string) (*schema.Set, error) {
 	edgeGatewayName := d.Get("name").(string)
 	isDistributedRouter := d.Get("distributed_routing").(bool)
 
@@ -780,9 +780,32 @@ func getExternalNetworkData(vcdClient *VCDClient, d *schema.ResourceData, gatewa
 
 			extNetworkMap := make(map[string]interface{})
 			extNetworkMap["name"] = extNetwork.Network.Name
-			extNetworkMap["enable_rate_limit"] = extNetwork.ApplyRateLimit
-			extNetworkMap["incoming_rate_limit"] = extNetwork.InRateLimit
-			extNetworkMap["outgoing_rate_limit"] = extNetwork.OutRateLimit
+
+			// TODO remove when vCD 9.0 is no longer supported. Leave only "else" block.
+			// vCD 9.0 does not return interface rate limits. Flash UI has it, but there is no
+			// documented endpoint to get interface rate limits. It always returns "false" for
+			// "enable_rate_limit" and nothing for "incoming_rate_limit" and "outgoing_rate_limit"
+			// therefore when:
+			// * vCD is 9.0 or less and this is a "read" operation for a resource (not datasource) -
+			// we check what the user has set in the config and passing through the same value.
+			// Note. If it wasn't "TypeSet" with more values - it would be possible to simply omit
+			// setting the field.
+			if vcdClient.APIVCDMaxVersionIs("<= 29") && origin == "resource" {
+				log.Printf("[TRACE] edge gateway - skipping read of external networks on vCD 9.0 "+
+					"because for network %s it does not return these values", extNetwork.Network.Name)
+				stateGatewayInterfaces, _ := getGatewayInterfacesType(vcdClient, d.Get("external_network").(*schema.Set))
+				for _, stateInterface := range stateGatewayInterfaces {
+					if stateInterface.Network.Name == extNetwork.Network.Name {
+						extNetworkMap["enable_rate_limit"] = stateInterface.ApplyRateLimit
+						extNetworkMap["incoming_rate_limit"] = stateInterface.InRateLimit
+						extNetworkMap["outgoing_rate_limit"] = stateInterface.OutRateLimit
+					}
+				}
+			} else {
+				extNetworkMap["enable_rate_limit"] = extNetwork.ApplyRateLimit
+				extNetworkMap["incoming_rate_limit"] = extNetwork.InRateLimit
+				extNetworkMap["outgoing_rate_limit"] = extNetwork.OutRateLimit
+			}
 
 			if len(extNetwork.SubnetParticipation) > 0 {
 				subnet, err := getExternalNetworkSubnetTypeSet(extNetwork.SubnetParticipation, vcdClient, d, extNetwork.Network.Name)
@@ -898,7 +921,7 @@ func setEdgeGatewayValues(vcdClient *VCDClient, d *schema.ResourceData, egw govc
 	// gateway and which subnet should be used as the default one for edge gateway. Data source
 	// always gets it populated.
 	if !simpleExternalNetworksSet || origin == "datasource" {
-		externalNetworkData, err := getExternalNetworkData(vcdClient, d, egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface)
+		externalNetworkData, err := getExternalNetworkData(vcdClient, d, egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface, origin)
 		if err != nil {
 			return fmt.Errorf("[edgegateway read] could not process network interface data: %s", err)
 		}

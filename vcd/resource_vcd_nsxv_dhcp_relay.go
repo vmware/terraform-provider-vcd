@@ -244,7 +244,7 @@ func getDhcpRelayType(d *schema.ResourceData, edge *govcd.EdgeGateway, vcdClient
 
 	if ipSetNames, ok := d.GetOk("ip_sets"); ok {
 		listOfIpSetNames = convertSchemaSetToSliceOfStrings(ipSetNames.(*schema.Set))
-		listOfIpSetIds, err = ipSetNamesToIds(listOfIpSetNames, vdc)
+		listOfIpSetIds, err = ipSetNamesToIds(listOfIpSetNames, vdc, false)
 		if err != nil {
 			return nil, fmt.Errorf("could not lookup supplied IP set IDs by their names: %s", err)
 		}

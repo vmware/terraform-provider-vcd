@@ -268,7 +268,7 @@ func resourceVcdNsxvFirewallRuleCreate(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	firewallRule, err := getFirewallRule(d, edgeGateway, vdc)
+	firewallRule, err := getFirewallRule(d, edgeGateway, vdc, false)
 	if err != nil {
 		return fmt.Errorf("unable to make firewall rule query: %s", err)
 	}
@@ -297,7 +297,16 @@ func resourceVcdNsxvFirewallRuleUpdate(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	updateFirewallRule, err := getFirewallRule(d, edgeGateway, vdc)
+	// TODO remove this code when vCD 9.0 is not supported anymore. vCD 9.0 asks for short formatted
+	// IP set IDs (ipset-454 insted of a0c3c92a-a180-48fb-96ec-91c610c7c254:ipset-460) for update
+	// operations only. Otherwise update operation fails with exception.
+	var shortIds bool
+	if vcdClient.APIVCDMaxVersionIs("<= 29") {
+		log.Println("[DEBUG] vcd_nsxv_firewall_rule update - using short IDs for update operations because vCD is <= 9.0 ")
+		shortIds = true
+	}
+
+	updateFirewallRule, err := getFirewallRule(d, edgeGateway, vdc, shortIds)
 	updateFirewallRule.ID = d.Id() // We already know an ID for update and it allows to change name
 
 	if err != nil {
@@ -548,13 +557,13 @@ func setFirewallRuleData(d *schema.ResourceData, rule *types.EdgeFirewallRule, e
 
 // getFirewallRule is the main function  used for creating *types.EdgeFirewallRule structure from
 // Terraform schema configuration
-func getFirewallRule(d *schema.ResourceData, edge *govcd.EdgeGateway, vdc *govcd.Vdc) (*types.EdgeFirewallRule, error) {
-	sourceEndpoint, err := getFirewallRuleEndpoint(d.Get("source").([]interface{}), edge, vdc)
+func getFirewallRule(d *schema.ResourceData, edge *govcd.EdgeGateway, vdc *govcd.Vdc, shortIpSetIds bool) (*types.EdgeFirewallRule, error) {
+	sourceEndpoint, err := getFirewallRuleEndpoint(d.Get("source").([]interface{}), edge, vdc, shortIpSetIds)
 	if err != nil {
 		return nil, fmt.Errorf("could not convert 'source' block to API request: %s", err)
 	}
 
-	destinationEndpoint, err := getFirewallRuleEndpoint(d.Get("destination").([]interface{}), edge, vdc)
+	destinationEndpoint, err := getFirewallRuleEndpoint(d.Get("destination").([]interface{}), edge, vdc, shortIpSetIds)
 	if err != nil {
 		return nil, fmt.Errorf("could not convert 'destination' block to API request: %s", err)
 	}
@@ -708,7 +717,7 @@ func getServiceData(firewallApplication types.EdgeFirewallApplication, edge *gov
 
 // getFirewallRuleEndpoint processes Terraform schema and converts it to *types.EdgeFirewallEndpoint
 // which is useful for 'source' or 'destination' blocks
-func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway, vdc *govcd.Vdc) (*types.EdgeFirewallEndpoint, error) {
+func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway, vdc *govcd.Vdc, shortIpSetIds bool) (*types.EdgeFirewallEndpoint, error) {
 	if len(endpoint) != 1 {
 		return nil, fmt.Errorf("no source specified")
 	}
@@ -748,7 +757,7 @@ func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway, vd
 
 	// Extract ipset IDs from set and add them to endpoint structure
 	endpointIpSetNameStrings := convertSchemaSetToSliceOfStrings(endpointMap["ip_sets"].(*schema.Set))
-	endpointIpSetIdStrings, err := ipSetNamesToIds(endpointIpSetNameStrings, vdc)
+	endpointIpSetIdStrings, err := ipSetNamesToIds(endpointIpSetNameStrings, vdc, shortIpSetIds)
 	if err != nil {
 		return nil, fmt.Errorf("could not lookup IP set names by their IDs : %s", err)
 	}
