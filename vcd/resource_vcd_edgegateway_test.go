@@ -417,7 +417,7 @@ func TestAccVcdEdgeGatewayRateLimits(t *testing.T) {
 
 	if !isPgDistributed {
 		t.Skipf("Skipping test because specified portgroup is from standard vSwitch and " +
-			"does not support rate limitting")
+			"does not support rate limiting")
 	}
 
 	var (
