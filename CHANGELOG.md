@@ -2,9 +2,11 @@
 
 FEATURES:
 
-* **New Resource:** `vcd_ipset` IP set - [GH-406]
+* **New Resource:** `vcd_nsxv_dhcp_relay` Edge gateway DHCP relay configuration - [GH-416]
+* **New Resource:** `vcd_nsxv_ip_set` IP set - [GH-406,GH-411]
+* **New Data Source:** `vcd_nsxv_dhcp_relay` Edge gateway DHCP relay configuration - [GH-416]
 * **New Data Source:** `vcd_vapp_vm` VM - [GH-218]
-* **New Data Source:** `vcd_ipset` IP set - [GH-406]
+* **New Data Source:** `vcd_nsxv_ip_set` IP set - [GH-406,GH-411]
 * **New build command:** `make test-upgrade` to run an upgrade test from the previous released version
 
 IMPROVEMENTS:
@@ -39,8 +41,9 @@ IMPROVEMENTS:
 * `resource/vcd_network_direct` Add property `description`
 * `resource/vcd_network_routed` Add check for valid IPs [GH-374]
 * `resource/vcd_network_isolated` Add check for valid IPs [GH-373]
+* `resource/vcd_nsxv_firewall_rule` Add support for IP sets [GH-411]
 * `resource/vcd_edgegateway` new fields `fips_mode_enabled`, `use_default_route_for_dns_relay`
-  - [GH-401]
+  - [GH-401,GH-414]
 * `resource/vcd_edgegateway`  new `external_network` block for advanced configurations of external
   networks including multiple subnets, IP pool sub-allocation and rate limits - [GH-401]
 * `resource/vcd_edgegateway` enables read support for field `distributed_routing` after switch to

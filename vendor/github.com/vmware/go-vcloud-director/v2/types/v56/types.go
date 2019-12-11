@@ -1877,6 +1877,7 @@ type FirewallService struct {
 type NatService struct {
 	Xmlns string `xml:"xmlns,attr,omitempty"`
 	// Elements
+
 	IsEnabled  bool       `xml:"IsEnabled"`            // Enable or disable the service using this flag
 	NatType    string     `xml:"NatType,omitempty"`    // One of: ipTranslation (use IP translation), portForwarding (use port forwarding)
 	Policy     string     `xml:"Policy,omitempty"`     // One of: allowTraffic (Allow all traffic), allowTrafficIn (Allow inbound traffic only)
@@ -2565,52 +2566,4 @@ type AdminCatalogRecord struct {
 	Status                  string    `xml:"status,attr,omitempty"`
 	Link                    *Link     `xml:"Link,omitempty"`
 	Vdc                     *Metadata `xml:"Metadata,omitempty"`
-}
-
-// EdgeGatewayVnics is a data structure holding information of vNic configuration in NSX-V edge
-// gateway
-type EdgeGatewayVnics struct {
-	XMLName xml.Name `xml:"vnics"`
-	Vnic    []struct {
-		Label         string `xml:"label"`
-		Name          string `xml:"name"`
-		AddressGroups struct {
-			AddressGroup struct {
-				PrimaryAddress     string `xml:"primaryAddress,omitempty"`
-				SecondaryAddresses struct {
-					IpAddress []string `xml:"ipAddress,omitempty"`
-				} `xml:"secondaryAddresses,omitempty"`
-				SubnetMask         string `xml:"subnetMask,omitempty"`
-				SubnetPrefixLength string `xml:"subnetPrefixLength,omitempty"`
-			} `xml:"addressGroup,omitempty"`
-		} `xml:"addressGroups,omitempty"`
-		Mtu                 string `xml:"mtu,omitempty"`
-		Type                string `xml:"type,omitempty"`
-		IsConnected         string `xml:"isConnected,omitempty"`
-		Index               *int   `xml:"index"`
-		PortgroupId         string `xml:"portgroupId,omitempty"`
-		PortgroupName       string `xml:"portgroupName,omitempty"`
-		EnableProxyArp      string `xml:"enableProxyArp,omitempty"`
-		EnableSendRedirects string `xml:"enableSendRedirects,omitempty"`
-		SubInterfaces       struct {
-			SubInterface []struct {
-				IsConnected         string `xml:"isConnected,omitempty"`
-				Label               string `xml:"label,omitempty"`
-				Name                string `xml:"name,omitempty"`
-				Index               *int   `xml:"index,omitempty"`
-				TunnelId            string `xml:"tunnelId,omitempty"`
-				LogicalSwitchId     string `xml:"logicalSwitchId,omitempty"`
-				LogicalSwitchName   string `xml:"logicalSwitchName,omitempty"`
-				EnableSendRedirects string `xml:"enableSendRedirects,omitempty"`
-				Mtu                 string `xml:"mtu,omitempty"`
-				AddressGroups       struct {
-					AddressGroup struct {
-						PrimaryAddress     string `xml:"primaryAddress,omitempty"`
-						SubnetMask         string `xml:"subnetMask,omitempty"`
-						SubnetPrefixLength string `xml:"subnetPrefixLength,omitempty"`
-					} `xml:"addressGroup,omitempty"`
-				} `xml:"addressGroups,omitempty"`
-			} `xml:"subInterface,omitempty"`
-		} `xml:"subInterfaces,omitempty"`
-	} `xml:"vnic,omitempty"`
 }
