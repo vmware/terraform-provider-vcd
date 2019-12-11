@@ -175,6 +175,8 @@ One of `accept` or `deny`. Default `deny`.
 * `outgoing_rate_limit` (Optional) - Outgoing rate limit in Mbps.
 * `subnet` (Required) - One or more blocks of [External Network Subnet](#external-network-subnet).
 
+~> **Note:** Rate limitting works only with external networks backed by distributed portgroups.
+
 
 <a id="external-network-subnet"></a>
 ## External Network Subnet 

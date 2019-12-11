@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
 var (
@@ -280,20 +281,20 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "default_gateway_network", newExternalNetworkVcd),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "default_external_network_ip", "192.168.30.51"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.#", "2"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.enable_rate_limit", "true"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.incoming_rate_limit", "77.77"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.name", "test_external_network"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.outgoing_rate_limit", "88.88234"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.#", "1"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.gateway", "192.168.30.49"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.ip_address", "192.168.30.51"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.netmask", "255.255.255.240"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.use_for_default_route", "true"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.suballocate_pool.#", "2"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.suballocate_pool.3548736268.end_address", "192.168.30.55"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.suballocate_pool.3548736268.start_address", "192.168.30.53"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.suballocate_pool.4005225628.end_address", "192.168.30.60"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1130156969.subnet.3598571839.suballocate_pool.4005225628.start_address", "192.168.30.58"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1168596825.enable_rate_limit", "false"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1168596825.incoming_rate_limit", "0"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1168596825.name", "test_external_network"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1168596825.outgoing_rate_limit", "0"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1168596825.subnet.#", "1"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1168596825.subnet.3598571839.gateway", "192.168.30.49"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1168596825.subnet.3598571839.ip_address", "192.168.30.51"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1168596825.subnet.3598571839.netmask", "255.255.255.240"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1168596825.subnet.3598571839.use_for_default_route", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1168596825.subnet.3598571839.suballocate_pool.#", "2"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1168596825.subnet.3598571839.suballocate_pool.3548736268.end_address", "192.168.30.55"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1168596825.subnet.3598571839.suballocate_pool.3548736268.start_address", "192.168.30.53"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1168596825.subnet.3598571839.suballocate_pool.4005225628.end_address", "192.168.30.60"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1168596825.subnet.3598571839.suballocate_pool.4005225628.start_address", "192.168.30.58"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network_ips.#", "2"),
 					resource.TestMatchResourceAttr("vcd_edgegateway.egw", "external_network_ips.0", ipV4Regex),
 					resource.TestMatchResourceAttr("vcd_edgegateway.egw", "external_network_ips.1", ipV4Regex),
@@ -377,6 +378,161 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 	})
 }
 
+// isPortGroupDistributed  checks if portgroup is defined in Distributed or Standard vSwitch
+func isPortGroupDistributed(portGroupName string) (bool, error) {
+	if portGroupName == "" {
+		return false, nil
+	}
+
+	// Get the data from configuration file. This client is still inactive at this point
+	vcdClient, err := getTestVCDFromJson(testConfig)
+	if err != nil {
+		return false, fmt.Errorf("error getting client configuration: %s", err)
+	}
+	err = ProviderAuthenticate(vcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg)
+	if err != nil {
+		return false, fmt.Errorf("authentication error: %s", err)
+	}
+
+	portGroupRecord, err := govcd.QueryDistributedPortGroup(vcdClient, portGroupName)
+	if err != nil {
+		return false, fmt.Errorf("got error while querying portgroup type: %s", err)
+	}
+	if len(portGroupRecord) == 1 {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+// TestAccVcdEdgeGatewayRateLimits focues on testing how the `external_network` block handles
+// network interface limits. It escapes quickly when the ExternalNetworkPortGroup of external
+// network is of type "NETWORK" (standard switch portgroup) and only proceeds when it is of type
+// "DV_PORTGROUP" (Backed by distributed switch). Only "DV_PORTGROUP" support rate limitting.
+func TestAccVcdEdgeGatewayRateLimits(t *testing.T) {
+	isPgDistributed, err := isPortGroupDistributed(testConfig.Networking.ExternalNetworkPortGroup)
+	if err != nil {
+		t.Skipf("Skipping test because port group type could not be validated: %s", err.Error())
+	}
+
+	if !isPgDistributed {
+		t.Skipf("Skipping test because specified portgroup is from standard vSwitch and " +
+			"does not support rate limitting")
+	}
+
+	var (
+		edgeGatewayVcdName    string = "test_edge_gateway_networks"
+		newExternalNetwork    string = "TestExternalNetwork"
+		newExternalNetworkVcd string = "test_external_network"
+	)
+
+	// String map to fill the template
+	var params = StringMap{
+		"Org":                   testConfig.VCD.Org,
+		"Vdc":                   testConfig.VCD.Vdc,
+		"EdgeGateway":           edgeGatewayNameComplex,
+		"EdgeGatewayVcd":        edgeGatewayVcdName,
+		"ExternalNetwork":       testConfig.Networking.ExternalNetwork,
+		"Tags":                  "gateway",
+		"NewExternalNetwork":    newExternalNetwork,
+		"NewExternalNetworkVcd": newExternalNetworkVcd,
+		"Advanced":              getAdvancedProperty(),
+		"Vcenter":               testConfig.Networking.Vcenter,
+		"EnableRateLimit":       "true",
+		"IncomingRateLimit":     "88.888",
+		"OutgoingRateLimit":     "55.335",
+		"Type":                  testConfig.Networking.ExternalNetworkPortGroupType,
+		"PortGroup":             testConfig.Networking.ExternalNetworkPortGroup,
+	}
+	configText := templateFill(testAccEdgeGatewayRateLimits, params)
+
+	params["EnableRateLimit"] = "false"
+	params["IncomingRateLimit"] = "0"
+	params["OutgoingRateLimit"] = "0"
+	params["FuncName"] = t.Name() + "-step1"
+	configText1 := templateFill(testAccEdgeGatewayRateLimits, params)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	if !usingSysAdmin() {
+		t.Skip("Edge gateway tests requires system admin privileges")
+		return
+	}
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVcdEdgeGatewayDestroy("edge-with-complex-networks"),
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: configText,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "name", "edge-with-rate-limits"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1841915917.name", "test_external_network"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1841915917.enable_rate_limit", "true"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1841915917.incoming_rate_limit", "88.888"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1841915917.outgoing_rate_limit", "55.335"),
+				),
+			},
+			resource.TestStep{
+				Taint:  []string{"vcd_edgegateway.egw"},
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "name", "edge-with-rate-limits"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.763048197.name", "test_external_network"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.763048197.enable_rate_limit", "false"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.763048197.incoming_rate_limit", "0"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.763048197.outgoing_rate_limit", "0"),
+				),
+			},
+			resource.TestStep{ // step2 - import
+				ResourceName:      "vcd_edgegateway.egw",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, "edge-with-rate-limits"),
+			},
+		},
+	})
+}
+
+const testAccEdgeGatewayRateLimits = testAccEdgeGatewayComplexNetwork + `
+resource "vcd_edgegateway" "egw" {
+	org                     = "{{.Org}}"
+	vdc                     = "{{.Vdc}}"
+
+	name                    = "edge-with-rate-limits"
+	configuration           = "compact"
+	advanced                = true
+  
+
+	external_network {
+	  name = vcd_external_network.{{.NewExternalNetwork}}.name
+	  enable_rate_limit   = {{.EnableRateLimit}}
+	  incoming_rate_limit = {{.IncomingRateLimit}}
+	  outgoing_rate_limit = {{.OutgoingRateLimit}}
+  
+	  subnet {
+		gateway = "192.168.30.49"
+		netmask = "255.255.255.240"
+		use_for_default_route = true
+
+		suballocate_pool {
+			start_address = "192.168.30.53"
+			end_address   = "192.168.30.55"
+		}
+
+		suballocate_pool {
+			start_address = "192.168.30.58"
+			end_address   = "192.168.30.60"
+		}
+	  }
+	}
+}
+`
+
 // TestAccVcdEdgeGatewayParallelCreation attaches multiple edge gateways to the same external
 // network as it was reported that edge gateways step on each other while trying to attach to the
 // same external network. If this test ever fails then it means locks have to be used on external
@@ -450,7 +606,7 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
 // TODO external network has a bug that it uses a TypeList for `ip_scope` field. If the below two
 // network has second ip_scope defined - then vCD API orders them differently and a replacement is
 // suggested.
-// GitHUB issue - https://github.com/terraform-providers/terraform-provider-vcd/issues/371
+// GitHUB issue - https://github.com/terraform-providers/terraform-provider-vcd/issues/395
 const testAccEdgeGatewayComplexNetwork = `
 resource "vcd_external_network" "{{.NewExternalNetwork}}" {
   name        = "{{.NewExternalNetworkVcd}}"
@@ -581,9 +737,6 @@ resource "vcd_edgegateway" "egw" {
   
 	external_network {
 	  name = vcd_external_network.{{.NewExternalNetwork}}.name
-	  enable_rate_limit = true
-	  incoming_rate_limit = 77.77
-	  outgoing_rate_limit = 88.88234
   
 	  subnet {
 		ip_address = "192.168.30.51"
