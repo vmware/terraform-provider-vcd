@@ -45,7 +45,7 @@ IMPROVEMENTS:
 * `resource/vcd_edgegateway` new fields `fips_mode_enabled`, `use_default_route_for_dns_relay`
   - [GH-401,GH-414]
 * `resource/vcd_edgegateway`  new `external_network` block for advanced configurations of external
-  networks including multiple subnets, IP pool sub-allocation and rate limits - [GH-401]
+  networks including multiple subnets, IP pool sub-allocation and rate limits - [GH-401,GH-418]
 * `resource/vcd_edgegateway` enables read support for field `distributed_routing` after switch to
   vCD API v29.0 - [GH-401]
 
