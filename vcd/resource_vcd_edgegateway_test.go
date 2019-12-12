@@ -302,7 +302,7 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 					// TODO after
 					// https://github.com/terraform-providers/terraform-provider-aws/issues/7198
 					// Data source checks. There is a bug in Terraform where a data source cannot
-					// have two computed TypeSet variables because they get overwriten The test
+					// have two computed TypeSet variables because they get overwritten The test
 					// below is left such, that it triggers an error as soon as the bug is fixed.
 					// (probably when we pull in newer SDK)
 					resource.TestCheckResourceAttr("data.vcd_edgegateway.egw", "external_network.#", "1"),
@@ -405,14 +405,14 @@ func isPortGroupDistributed(portGroupName string) (bool, error) {
 	return false, nil
 }
 
-// TestAccVcdEdgeGatewayRateLimits focues on testing how the `external_network` block handles
+// TestAccVcdEdgeGatewayRateLimits focuses on testing how the `external_network` block handles
 // network interface limits. It escapes quickly when the ExternalNetworkPortGroup of external
 // network is of type "NETWORK" (standard switch portgroup) and only proceeds when it is of type
-// "DV_PORTGROUP" (Backed by distributed switch). Only "DV_PORTGROUP" support rate limitting.
+// "DV_PORTGROUP" (Backed by distributed switch). Only "DV_PORTGROUP" support rate limiting.
 func TestAccVcdEdgeGatewayRateLimits(t *testing.T) {
 	isPgDistributed, err := isPortGroupDistributed(testConfig.Networking.ExternalNetworkPortGroup)
 	if err != nil {
-		t.Skipf("Skipping test because port group type could not be validated: %s", err.Error())
+		t.Skipf("Skipping test because port group type could not be validated")
 	}
 
 	if !isPgDistributed {
