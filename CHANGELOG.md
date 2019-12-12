@@ -48,6 +48,8 @@ IMPROVEMENTS:
   networks including multiple subnets, IP pool sub-allocation and rate limits - [GH-401,GH-418]
 * `resource/vcd_edgegateway` enables read support for field `distributed_routing` after switch to
   vCD API v29.0 - [GH-401]
+* `vcd_nsxv_firewall_rule` - improve internal lookup mechanism for `gateway_interfaces` field in
+  source and/or destination [GH-419]
 
 BUG FIXES:
 
