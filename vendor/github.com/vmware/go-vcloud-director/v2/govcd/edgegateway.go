@@ -1348,8 +1348,10 @@ func getVnicIndexByNetworkNameAndType(networkName, networkType string, vnics *ty
 	foundCount := 0
 
 	for _, vnic := range vnics.EdgeInterface {
-		// Look for matching portgroup name and network type
-		if vnic.Name == networkName && vnic.Type == networkType {
+		// Look for matching portgroup name and network type. If the PortgroupName is no empty -
+		// check that it contains network name as well.
+		if vnic.Name == networkName && vnic.Type == networkType &&
+			(vnic.PortgroupName == networkName || vnic.PortgroupName == "") {
 			foundIndex = vnic.Index
 			foundCount++
 		}
