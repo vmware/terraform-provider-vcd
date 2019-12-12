@@ -26,8 +26,6 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 		"RouteNetworkName": "TestAccVcdVAppVmNet",
 		"Catalog":          testSuiteCatalogName,
 		"CatalogItem":      testSuiteCatalogOVAItem,
-		"VappName":         vappName2,
-		"VmName":           vmName,
 		"Tags":             "gateway firewall",
 	}
 
@@ -891,8 +889,6 @@ func TestAccVcdNsxvEdgeFirewallRuleIpSets(t *testing.T) {
 		"RouteNetworkName": "TestAccVcdVAppVmNet",
 		"Catalog":          testSuiteCatalogName,
 		"CatalogItem":      testSuiteCatalogOVAItem,
-		"VappName":         vappName2,
-		"VmName":           vmName,
 		"Tags":             "gateway firewall",
 	}
 
@@ -1077,8 +1073,6 @@ func TestAccVcdNsxvEdgeFirewallRuleVms(t *testing.T) {
 		"RouteNetworkName": "TestAccVcdVAppVmNet",
 		"Catalog":          testSuiteCatalogName,
 		"CatalogItem":      testSuiteCatalogOVAItem,
-		"VappName":         vappName2,
-		"VmName":           vmName,
 		"Tags":             "gateway firewall",
 	}
 
