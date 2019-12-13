@@ -169,7 +169,7 @@ One of `accept` or `deny`. Default `deny`.
 ## External Network
 
 * `name` (Required) - Name of existing external network
-* `enable_rate_limit` (Optional) - `True` if rate limitting should be applied on this interface.
+* `enable_rate_limit` (Optional) - `True` if rate limiting should be applied on this interface.
   Default is `false`.
 * `incoming_rate_limit` (Optional) - Incoming rate limit in Mbps.
 * `outgoing_rate_limit` (Optional) - Outgoing rate limit in Mbps.

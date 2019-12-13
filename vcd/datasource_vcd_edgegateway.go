@@ -131,7 +131,7 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 						"enable_rate_limit": {
 							Computed:    true,
 							Type:        schema.TypeBool,
-							Description: "Enable rate limitting",
+							Description: "Enable rate limiting",
 						},
 						"incoming_rate_limit": {
 							Computed:    true,

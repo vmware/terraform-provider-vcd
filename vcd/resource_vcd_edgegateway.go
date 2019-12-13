@@ -76,7 +76,7 @@ var externalNetworkResource = &schema.Resource{
 			Default:     false,
 			ForceNew:    true,
 			Type:        schema.TypeBool,
-			Description: "Enable rate limitting",
+			Description: "Enable rate limiting",
 		},
 		"incoming_rate_limit": {
 			Optional:    true,
