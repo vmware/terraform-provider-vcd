@@ -67,7 +67,7 @@ func TestAccVcdVappVmDS(t *testing.T) {
 }
 
 const datasourceTestVappVm = `
-data "vcd_vapp_vm" "{{.VmName}}" {
+data "vcd_vapp_vm" "vm-ds" {
   name             = "{{.VmName}}"
   org              = "{{.Org}}"
   vdc              = "{{.VDC}}"
@@ -75,17 +75,17 @@ data "vcd_vapp_vm" "{{.VmName}}" {
 }
 
 output "name" {
-  value = data.vcd_vapp_vm.{{.VmName}}.name
+  value = data.vcd_vapp_vm.vm-ds.name
 }
 
 output "description" {
-  value = data.vcd_vapp_vm.{{.VmName}}.description
+  value = data.vcd_vapp_vm.vm-ds.description
 }
 output "storage_profile" {
-  value = data.vcd_vapp_vm.{{.VmName}}.storage_profile
+  value = data.vcd_vapp_vm.vm-ds.storage_profile
 }
 
 output "href" {
-  value = data.vcd_vapp_vm.{{.VmName}}.href
+  value = data.vcd_vapp_vm.vm-ds.href
 }
 `

@@ -118,6 +118,14 @@ func convertToStringMap(param map[string]interface{}) map[string]string {
 	return temp
 }
 
+func convertToStringSlice(sliceOfInterfaces []interface{}) []string {
+	var result []string
+	for _, en := range sliceOfInterfaces {
+		result = append(result, en.(string))
+	}
+	return result
+}
+
 // convertSchemaSetToSliceOfStrings accepts Terraform's *schema.Set object and converts it to slice
 // of strings.
 // This is useful for extracting values from a set of strings
@@ -137,4 +145,9 @@ func convertToTypeSet(param []string) []interface{} {
 		slice[index] = value
 	}
 	return slice
+}
+
+// takeBoolPointer accepts a boolean and returns a pointer to this value.
+func takeBoolPointer(value bool) *bool {
+	return &value
 }

@@ -1,57 +1,72 @@
-## 2.6.0 (Unreleased)
+## 2.7.0 (Unreleased)
+## 2.6.0 (December 13, 2019)
 
 FEATURES:
 
-* **New Resource:** `vcd_ipset` IP set - [GH-406]
-* **New Data Source:** `vcd_vapp_vm` VM - [GH-218]
-* **New Data Source:** `vcd_ipset` IP set - [GH-406]
+* **New Resource:** `vcd_nsxv_dhcp_relay` Edge gateway DHCP relay configuration - ([#416](https://github.com/terraform-providers/terraform-provider-vcd/issues/416))
+* **New Resource:** `vcd_nsxv_ip_set` IP set - ([#406](https://github.com/terraform-providers/terraform-provider-vcd/issues/406),[#411](https://github.com/terraform-providers/terraform-provider-vcd/issues/411))
+* **New Data Source:** `vcd_nsxv_dhcp_relay` Edge gateway DHCP relay configuration - ([#416](https://github.com/terraform-providers/terraform-provider-vcd/issues/416))
+* **New Data Source:** `vcd_vapp_vm` VM - ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
+* **New Data Source:** `vcd_nsxv_ip_set` IP set - ([#406](https://github.com/terraform-providers/terraform-provider-vcd/issues/406),[#411](https://github.com/terraform-providers/terraform-provider-vcd/issues/411))
 * **New build command:** `make test-upgrade` to run an upgrade test from the previous released version
 
 IMPROVEMENTS:
 
 * Switch to Terraform terraform-plugin-sdk v1.3.0 as per recent [HashiCorp
-  recommendation](https://www.terraform.io/docs/extend/plugin-sdk.html) - [GH-382, GH-406]
+  recommendation](https://www.terraform.io/docs/extend/plugin-sdk.html) - ([#382](https://github.com/terraform-providers/terraform-provider-vcd/issues/382), [#406](https://github.com/terraform-providers/terraform-provider-vcd/issues/406))
 * `resource/vcd_vapp_vm` VM state ID changed from VM name to vCD ID
 * `resource/vcd_vapp_vm` Add properties `description` and `storage_profile`
-* `resource/vcd_vapp_vm` Add import capability and full read support [GH-218]
+* `resource/vcd_vapp_vm` Add import capability and full read support ([#218](https://github.com/terraform-providers/terraform-provider-vcd/issues/218))
 
 * `resource/vcd_nsxv_dnat` and `resource/vcd_nsxv_dnat` more precise error message when network is
-  not found - [GH-384]
+  not found - ([#384](https://github.com/terraform-providers/terraform-provider-vcd/issues/384))
 * `resource/vcd_nsxv_dnat` and `resource/vcd_nsxv_dnat` `rule_tag` must be int to avoid vCD internal
-  exception passthrough - [GH-384]
-* `resource/vcd_nsxv_dnat` put correct name in doc example - [GH-384]
+  exception passthrough - ([#384](https://github.com/terraform-providers/terraform-provider-vcd/issues/384))
+* `resource/vcd_nsxv_dnat` put correct name in doc example - ([#384](https://github.com/terraform-providers/terraform-provider-vcd/issues/384))
 * `resource/vcd_nsxv_dnat` and `resource/vcd_nsxv_dnat` avoid rule replacement because of changed
-  `rule_tag` when rule is altered via UI - [GH-384]
+  `rule_tag` when rule is altered via UI - ([#384](https://github.com/terraform-providers/terraform-provider-vcd/issues/384))
 * `resource/vcd_nsxv_firewall_rule` add explicit protocol validation to avoid odd NSX-V API error -
-  [GH-384]
+  ([#384](https://github.com/terraform-providers/terraform-provider-vcd/issues/384))
 * `resource/vcd_nsxv_firewall_rule` `rule_tag` must be int to avoid vCD internal exception
-  passthrough - [GH-384]
+  passthrough - ([#384](https://github.com/terraform-providers/terraform-provider-vcd/issues/384))
 * Fix code warnings from `staticcheck` and add command `make static` to Travis tests
 * `resource/vcd_edge_gateway` and `datasource/vcd_edge_gateway` add `default_external_network_ip`
-  field to export default edge gateway IP address - [GH-389]
-* Add `token` to the `vcd` provider for the ability of connecting with an authorization token - [GH-280]
+  and `external_network_ips` fields to export default edge gateway IP address and other external
+  network IPs used on gateway interfaces - ([#389](https://github.com/terraform-providers/terraform-provider-vcd/issues/389), [#401](https://github.com/terraform-providers/terraform-provider-vcd/issues/401))
+* Add `token` to the `vcd` provider for the ability of connecting with an authorization token - ([#280](https://github.com/terraform-providers/terraform-provider-vcd/issues/280))
 * Add command `make token` to create an authorization token from testing credentials
 * Clean up interpolation-only expressions from tests (as allowed in terraform v0.12.11+)
-* Increment vCD API version used from 27.0 to 29.0 [GH-396]
-* `resource/vcd_network_routed` Add properties `description` and `interface_type` [GH-321,GH-342,GH-374]
-* `resource/vcd_network_isolated` Add property `description` [GH-373]
+* Increment vCD API version used from 27.0 to 29.0 ([#396](https://github.com/terraform-providers/terraform-provider-vcd/issues/396))
+* `resource/vcd_network_routed` Add properties `description` and `interface_type` ([#321](https://github.com/terraform-providers/terraform-provider-vcd/issues/321),[#342](https://github.com/terraform-providers/terraform-provider-vcd/issues/342),[#374](https://github.com/terraform-providers/terraform-provider-vcd/issues/374))
+* `resource/vcd_network_isolated` Add property `description` ([#373](https://github.com/terraform-providers/terraform-provider-vcd/issues/373))
 * `resource/vcd_network_direct` Add property `description`
-* `resource/vcd_network_routed` Add check for valid IPs [GH-374]
-* `resource/vcd_network_isolated` Add check for valid IPs [GH-373]
-
+* `resource/vcd_network_routed` Add check for valid IPs ([#374](https://github.com/terraform-providers/terraform-provider-vcd/issues/374))
+* `resource/vcd_network_isolated` Add check for valid IPs ([#373](https://github.com/terraform-providers/terraform-provider-vcd/issues/373))
+* `resource/vcd_nsxv_firewall_rule` Add support for IP sets ([#411](https://github.com/terraform-providers/terraform-provider-vcd/issues/411))
+* `resource/vcd_edgegateway` new fields `fips_mode_enabled`, `use_default_route_for_dns_relay`
+  - ([#401](https://github.com/terraform-providers/terraform-provider-vcd/issues/401),[#414](https://github.com/terraform-providers/terraform-provider-vcd/issues/414))
+* `resource/vcd_edgegateway`  new `external_network` block for advanced configurations of external
+  networks including multiple subnets, IP pool sub-allocation and rate limits - ([#401](https://github.com/terraform-providers/terraform-provider-vcd/issues/401),[#418](https://github.com/terraform-providers/terraform-provider-vcd/issues/418))
+* `resource/vcd_edgegateway` enables read support for field `distributed_routing` after switch to
+  vCD API v29.0 - ([#401](https://github.com/terraform-providers/terraform-provider-vcd/issues/401))
+* `vcd_nsxv_firewall_rule` - improve internal lookup mechanism for `gateway_interfaces` field in
+  source and/or destination ([#419](https://github.com/terraform-providers/terraform-provider-vcd/issues/419))
 
 BUG FIXES:
 
 * Fix `vcd_org_vdc` datasource read. When user was Organization administrator datasource failed. Fields provider_vdc_name, storage_profile, memory_guaranteed, cpu_guaranteed, cpu_speed, enable_thin_provisioning, enable_fast_provisioning, network_pool_name won't have values for org admin.
 * Removed `power_on` property from data source `vcd_vapp`, as it is a directive used during vApp build.
   Its state is never updated and the fields `status` and `status_text` already provide the necessary information.
-  [GH-379]
-* Fix `vcd_independent_disk` reapply issue, which was seen when optional `bus_sub_type` and `bus_type` wasn't used - [GH-394]
+  ([#379](https://github.com/terraform-providers/terraform-provider-vcd/issues/379))
+* Fix `vcd_independent_disk` reapply issue, which was seen when optional `bus_sub_type` and `bus_type` wasn't used - ([#394](https://github.com/terraform-providers/terraform-provider-vcd/issues/394))
 * Fix `vcd_vapp_network` apply issue, where the property `guest_vlan_allowed` was applied only to the last of multiple networks.
+* `datasource/vcd_network_direct` is now readable by Org User (previously it was only by Sys Admin), as this change made it possible to get the details of External Network as Org User ([#408](https://github.com/terraform-providers/terraform-provider-vcd/issues/408))
 
 DEPRECATIONS:
 
 * Deprecated property `storage_profile` in resource `vcd_vapp`, as the corresponding field is now enabled in `vcd_vapp_vm`
+* `resource/vcd_edgegateway` deprecates fields `external_networks` and `default_gateway_network` in
+  favor of new `external_network` block(s) - [[#401](https://github.com/terraform-providers/terraform-provider-vcd/issues/401)] 
 
 ## 2.5.0 (October 28, 2019)
 
@@ -114,6 +129,7 @@ IMPROVEMENTS:
 * `resource/vcd_catalog_media` MediaItem state ID changed from colon separated list of catalog name and media name to vCD ID ([#340](https://github.com/terraform-providers/terraform-provider-vcd/issues/340))
 * Import functions can now use custom separators instead of "." ([#343](https://github.com/terraform-providers/terraform-provider-vcd/issues/343))
 * `resource/vcd_vapp_vm` has new field `computer_name` ([#334](https://github.com/terraform-providers/terraform-provider-vcd/issues/334), [#347](https://github.com/terraform-providers/terraform-provider-vcd/issues/347))
+
 
 BUG FIXES:
 

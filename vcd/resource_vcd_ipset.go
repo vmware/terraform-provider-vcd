@@ -258,6 +258,73 @@ func setIpSetData(d *schema.ResourceData, ipSet *types.EdgeIpSet, vdc *govcd.Vdc
 	return nil
 }
 
-func takeBoolPointer(value bool) *bool {
-	return &value
+// ipSetIdsToNames looks up IP sets by IDs and returns list of their names
+func ipSetIdsToNames(ipSetIds []string, vdc *govcd.Vdc) ([]string, error) {
+	ipSetNames := make([]string, len(ipSetIds))
+
+	allIpSets, err := vdc.GetAllNsxvIpSets()
+	// If no IP sets are found - return empty list of names
+	if govcd.IsNotFound(err) {
+		return ipSetIds, nil
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to fetch all IP sets in vDC %s: %s", vdc.Vdc.Name, err)
+	}
+
+	for index, ipSetId := range ipSetIds {
+		var ipSetFound bool
+		for _, ipSet := range allIpSets {
+			if ipSet.ID == ipSetId {
+				ipSetNames[index] = ipSet.Name
+				ipSetFound = true
+			}
+		}
+		// If ID was not found - fail early
+		if !ipSetFound {
+			return nil, fmt.Errorf("could not find IP set with ID %s", ipSetId)
+		}
+	}
+
+	return ipSetNames, nil
+}
+
+// ipSetNamesToIds looks up IP set names by their IDs
+func ipSetNamesToIds(ipSetNames []string, vdc *govcd.Vdc, isShortFormat bool) ([]string, error) {
+	ipSetIds := make([]string, len(ipSetNames))
+
+	// When no names are passed - there is no need to lookup IP sets
+	if len(ipSetNames) == 0 {
+		return ipSetIds, nil
+	}
+
+	allIpSets, err := vdc.GetAllNsxvIpSets()
+	// If no IP sets are found in vCD - return empty list of IDs
+	if govcd.IsNotFound(err) {
+		return ipSetIds, nil
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to fetch all IP sets in vDC %s: %s", vdc.Vdc.Name, err)
+	}
+
+	for index, ipSetName := range ipSetNames {
+		var ipSetFound bool
+		for _, ipSet := range allIpSets {
+			if ipSet.Name == ipSetName {
+				if isShortFormat {
+					ipSetIds[index] = strings.Split(ipSet.ID, ":")[1]
+				} else {
+					ipSetIds[index] = ipSet.ID
+				}
+				ipSetFound = true
+			}
+		}
+		// If ID was not found - fail early
+		if !ipSetFound {
+			return nil, fmt.Errorf("could not find IP set with Name %s", ipSetName)
+		}
+	}
+
+	return ipSetIds, nil
 }
