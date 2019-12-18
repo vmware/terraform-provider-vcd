@@ -67,19 +67,19 @@ func resourceVmInternalDisk() *schema.Resource {
 			"bus_number": {
 				Type:        schema.TypeInt,
 				Required:    true,
+				ForceNew:    true,
 				Description: "The number of the SCSI or IDE controller itself.",
 			},
 			"unit_number": {
 				Type:        schema.TypeInt,
 				Required:    true,
+				ForceNew:    true,
 				Description: "The device number on the SCSI or IDE controller of the disk.",
 			},
 			"thin_provisioned": {
-				Type: schema.TypeBool,
-
-				Optional:    true,
-				Default:     true,
-				Description: "Specifies whether the disk storage is pre-allocated or allocated on demand. Default - true.",
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "Specifies whether the disk storage is pre-allocated or allocated on demand.",
 			},
 			"iops": {
 				Type:        schema.TypeInt,
@@ -140,7 +140,8 @@ func resourceVmInternalDiskCreate(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	iops := int64(d.Get("iops").(int))
-	isThinProvisioned := d.Get("thin_provisioned").(bool)
+	// value is required but not treated.
+	isThinProvisioned := true
 
 	diskSetting := &types.DiskSettings{
 		SizeMb:              int64(d.Get("size_in_mb").(int)),
@@ -180,8 +181,7 @@ func powerOnIfNeeded(d *schema.ResourceData, vm *govcd.VM) error {
 		return fmt.Errorf("error getting VM status before ensuring it is powered on: %s", err)
 	}
 
-	if (vmStatus != "POWERED_ON" && d.Get("bus_type").(string) == "ide" && d.Get("allow_vm_reboot").(bool)) ||
-		(vmStatus != "POWERED_ON" && d.Get("allow_vm_reboot").(bool) && (d.HasChange("bus_number") || d.HasChange("unit_number"))) {
+	if vmStatus != "POWERED_ON" && d.Get("bus_type").(string) == "ide" && d.Get("allow_vm_reboot").(bool) {
 		log.Printf("[DEBUG] Powering on VM %s after adding internal disk.", vm.VM.Name)
 
 		task, err := vm.PowerOn()
@@ -202,8 +202,7 @@ func powerOffIfNeeded(d *schema.ResourceData, vm *govcd.VM) error {
 		return fmt.Errorf("error getting VM status before ensuring it is powered on: %s", err)
 	}
 
-	if (vmStatus != "POWERED_OFF" && d.Get("bus_type").(string) == "ide" && d.Get("allow_vm_reboot").(bool)) ||
-		(vmStatus != "POWERED_OFF" && d.Get("allow_vm_reboot").(bool) && (d.HasChange("bus_number") || d.HasChange("unit_number"))) {
+	if vmStatus != "POWERED_OFF" && d.Get("bus_type").(string) == "ide" && d.Get("allow_vm_reboot").(bool) {
 		log.Printf("[DEBUG] Powering off VM %s for adding/updating internal disk.", vm.VM.Name)
 
 		task, err := vm.PowerOff()
@@ -279,18 +278,22 @@ func resourceVmInternalDiskUpdate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 
+	// has refresh inside
+	err = powerOffIfNeeded(d, vm)
+	if err != nil {
+		return err
+	}
+
 	diskSettingsToUpdate, err := vm.GetInternalDiskById(d.Id(), false)
 	if err != nil {
 		return err
 	}
 	log.Printf("[TRACE] Internal Disk with id %s found", d.Id())
 	iops := int64(d.Get("iops").(int))
-	isThinProvisioned := d.Get("thin_provisioned").(bool)
 	diskSettingsToUpdate.Iops = &iops
-	diskSettingsToUpdate.ThinProvisioned = &isThinProvisioned
-	diskSettingsToUpdate.UnitNumber = d.Get("unit_number").(int)
-	diskSettingsToUpdate.BusNumber = d.Get("bus_number").(int)
-	diskSettingsToUpdate.AdapterType = internalDiskBusTypes[d.Get("bus_type").(string)]
+	//diskSettingsToUpdate.UnitNumber = d.Get("unit_number").(int)
+	//diskSettingsToUpdate.BusNumber = d.Get("bus_number").(int)
+	//diskSettingsToUpdate.AdapterType = internalDiskBusTypes[d.Get("bus_type").(string)]
 	diskSettingsToUpdate.SizeMb = int64(d.Get("size_in_mb").(int))
 
 	var storageProfilePrt *types.Reference
@@ -312,11 +315,6 @@ func resourceVmInternalDiskUpdate(d *schema.ResourceData, meta interface{}) erro
 	diskSettingsToUpdate.StorageProfile = storageProfilePrt
 	diskSettingsToUpdate.OverrideVmDefault = overrideVmDefault
 
-	err = powerOffIfNeeded(d, vm)
-	if err != nil {
-		return err
-	}
-
 	_, err = vm.UpdateInternalDisks(vm.VM.VmSpecSection)
 	if err != nil {
 		return err
@@ -328,7 +326,7 @@ func resourceVmInternalDiskUpdate(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	log.Printf("[TRACE] Inernal Disk %s updated", d.Id())
-	return nil
+	return resourceVmInternalDiskRead(d, meta)
 }
 
 // Retrieves internal disk from VM and updates terraform state
@@ -340,7 +338,7 @@ func resourceVmInternalDiskRead(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	diskSettings, err := vm.GetInternalDiskById(d.Id(), false)
+	diskSettings, err := vm.GetInternalDiskById(d.Id(), true)
 	if err == govcd.ErrorEntityNotFound {
 		log.Printf("[DEBUG] Unable to find disk with Id: %s. Removing from tfstate", d.Id())
 		d.SetId("")
@@ -354,7 +352,7 @@ func resourceVmInternalDiskRead(d *schema.ResourceData, m interface{}) error {
 	_ = d.Set("size_in_mb", diskSettings.SizeMb)
 	_ = d.Set("bus_number", diskSettings.BusNumber)
 	_ = d.Set("unit_number", diskSettings.UnitNumber)
-	_ = d.Set("thin_provisioned", diskSettings.ThinProvisioned)
+	_ = d.Set("thin_provisioned", *diskSettings.ThinProvisioned)
 	_ = d.Set("iops", diskSettings.Iops)
 	_ = d.Set("storage_profile", diskSettings.StorageProfile.Name)
 
