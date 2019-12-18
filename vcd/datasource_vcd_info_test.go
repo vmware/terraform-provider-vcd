@@ -1,3 +1,5 @@
+// +build ALL functional
+
 package vcd
 
 import (
@@ -6,11 +8,6 @@ import (
 )
 
 func TestAccVcdDatasourceInfo(t *testing.T) {
-
-	if !usingSysAdmin() {
-		t.Skip("TestAccVcdDatasourceInfo requires system admin privileges")
-		return
-	}
 
 	configText := templateFill(testAccCheckVcdDatasourceInfo, StringMap{})
 

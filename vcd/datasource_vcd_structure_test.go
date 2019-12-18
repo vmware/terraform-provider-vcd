@@ -1,3 +1,5 @@
+// +build ALL functional
+
 package vcd
 
 import (

@@ -71,12 +71,12 @@ function unit_test {
     if [ -n "$VERBOSE" ]
     then
         echo " go test -i ${TEST} || exit 1"
-        echo "VCD_SHORT_TEST=1 go test -tags unit -v -timeout 3m ."
+        echo "VCD_SHORT_TEST=1 go test -tags unit -v -timeout 3m"
     fi
     if [ -z "$DRY_RUN" ]
     then
         go test -i ${TEST} || exit 1
-        go test -tags unit -v -timeout 3m .
+        go test -tags unit -v -timeout 3m
     fi
 }
 
@@ -90,12 +90,12 @@ function short_test {
     if [ -n "$VERBOSE" ]
     then
         echo " go test  -i ${TEST} || exit 1"
-        echo "VCD_SHORT_TEST=1 go test -tags "functional $MORE_TAGS" -v -timeout 3m ."
+        echo "VCD_SHORT_TEST=1 go test -tags "functional $MORE_TAGS" -v -timeout 3m "
     fi
     if [ -z "$DRY_RUN" ]
     then
         go test -i ${TEST} || exit 1
-        VCD_SHORT_TEST=1 go test -tags "functional $MORE_TAGS" -v -timeout 3m .
+        VCD_SHORT_TEST=1 go test -tags "functional $MORE_TAGS" -v -timeout 3m 
     fi
     if [ -n "$VCD_TEST_ORG_USER" ]
     then
