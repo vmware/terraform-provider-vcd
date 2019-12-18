@@ -12,9 +12,9 @@ The VMware vCloud Director provider is used to interact with the resources suppo
 
 Use the navigation to the left to read about the available resources.
 
-~> **NOTE:** The VMware vCloud Director Provider went through a refresh at the beginning of 2019 and some semantic
-changes were made compared to the previously available initial version. Please check docs for *v2.x+* labels and
-your existing `.tf` configuration files carefully when shifting to this new version.
+~> **NOTE:** The VMware vCloud Director Provider documentation pages include *v2.x+* labels in resource and/or field
+descriptions. These labels are designed to show at which provider version a certain feature was introduced.
+When upgrading the provider please check for such labels for the resources you are using.
 
 ## Supported vCD Versions
 
