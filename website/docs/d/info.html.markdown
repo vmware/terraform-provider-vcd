@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_info"
 sidebar_current: "docs-vcd-datasource-info"
 description: |-
-  Provides information about vCD data sources
+  Provides information about vCD resources
 ---
 
 # vcd\_info
@@ -12,7 +12,29 @@ Provides a vCloud Director generic data source. It provides a list of existing r
 
 Supported in provider *v2.7+*
 
-## Example Usage #1
+## Example Usage 1
+
+```hcl
+data "vcd_info" "list_of_orgs" {
+  name          = "list_of_orgs"
+  resource_type = "org"
+  list_mode     = "name"
+}
+
+// Shows the list of organizations
+output "org_list" {
+  value = data.vcd_info.list_of_orgs.list
+}
+/* 
+output:
+  "org_list" = [
+    "System",
+    "my-org",
+  ]
+*/
+```
+
+## Example Usage 2
 
 ```hcl
 data "vcd_info" "list_of_orgs" {
@@ -34,7 +56,7 @@ output:
 */
 ```
 
-## Example Usage #2
+## Example Usage 3
 ```hcl
 data "vcd_info" "list_of_nets" {
   name          = "list_of_nets"
@@ -57,7 +79,31 @@ list_networks_import = [
 */
 ```
 
-## Example Usage #3
+## Example Usage 4
+```hcl
+data "vcd_info" "list_network_hierarchy" {
+  name          = "list_of_nets"
+  resource_type = "network" // Finds all networks, regardless of their type
+  list_mode     = "hierarchy"
+}
+
+// Shows the list of all networks with their parent entities
+output "net_network_hierarchy" {
+  value = data.vcd_info.list_network_hierarchy.list
+}
+
+/*
+output: 
+list_networks_hierarchy = [
+  "datacloud  vdc-datacloud  net-datacloud-r",
+  "datacloud  vdc-datacloud  net-datacloud-i",
+  "datacloud  vdc-datacloud  net-datacloud-r2",
+  "datacloud  vdc-datacloud  net-datacloud-d",
+]
+*/
+```
+
+## Example Usage 5
 ```hcl
 data "vcd_info" "list_of_nets" {
   name          = "list_of_nets"
@@ -127,7 +173,7 @@ full_networks = {
 */
 ```
 
-## Example Usage #4
+## Example Usage 6
 
 ```hcl
 data "vcd_info" "list_of_resources" {
@@ -138,16 +184,6 @@ data "vcd_info" "list_of_resources" {
 // Shows the list of resource types for VCD provider
 output "resource_list" {
   value = data.vcd_info.list_of_resources.list
-}
-
-data "vcd_info" "list_of_data_sources" {
-  name          = "list_of_data_sources"
-  resource_type = "data_sources"
-}
-
-// Shows the list of data sources types for VCD provider
-output "data_source_list" {
-  value = data.vcd_info.list_of_data_sources.list
 }
 ```
 
