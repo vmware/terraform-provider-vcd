@@ -141,6 +141,14 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "allow_vm_reboot", "true"),
 				),
 			},
+			resource.TestStep{
+				ResourceName:      "vcd_vm_internal_disk." + TestAccVcdVdc + "-import",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdVmObject(testConfig, vapp.VApp.Name, vm.VM.Name, "3001"),
+				// These fields can't be retrieved
+				ImportStateVerifyIgnore: []string{"org", "vdc", "allow_vm_reboot", "thin_provisioned"},
+			},
 			/*resource.TestStep{
 				Config: configText_update2,
 				Check: resource.ComposeTestCheckFunc(resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "size_in_mb", diskSize),
