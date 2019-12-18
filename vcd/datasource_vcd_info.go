@@ -471,7 +471,7 @@ func getDataSourceList() (list []string, err error) {
 
 func getResourcesList() (list []string, err error) {
 	resources := VcdResourcesMap
-	for name, _ := range resources {
+	for name := range resources {
 		list = append(list, name)
 	}
 	return
@@ -494,6 +494,8 @@ func datasourceVcdInfoRead(d *schema.ResourceData, meta interface{}) error {
 		list, err = vdcList(d, meta)
 	case "catalog", "catalogs":
 		list, err = catalogList(d, meta)
+	case "catalog_item", "catalog_items", "catalogitem", "catalogitems":
+		list, err = catalogItemList(d, meta)
 	case "vapp", "vapps":
 		list, err = vappList(d, meta)
 	case "vapp_vm", "vapp_vms":

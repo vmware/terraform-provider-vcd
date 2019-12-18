@@ -102,11 +102,6 @@ func datasourceVcdStructureRead(d *schema.ResourceData, meta interface{}) error 
 
 	attr := resource.CoreConfigSchema().Attributes
 	block := resource.CoreConfigSchema().BlockTypes
-	type Block struct {
-		name        string
-		nestingMode string
-		attributes  []map[string]interface{}
-	}
 	var data []map[string]interface{}
 	var blockData []map[string]interface{}
 	for name, a := range attr {
