@@ -76,7 +76,7 @@ var externalNetworkResource = &schema.Resource{
 			Default:     false,
 			ForceNew:    true,
 			Type:        schema.TypeBool,
-			Description: "Enable rate limitting",
+			Description: "Enable rate limiting",
 		},
 		"incoming_rate_limit": {
 			Optional:    true,
@@ -244,11 +244,12 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				ValidateFunc: validation.StringInSlice([]string{"accept", "deny"}, false),
 			},
 			"fips_mode_enabled": &schema.Schema{
-				Type:        schema.TypeBool,
-				ForceNew:    true,
-				Optional:    true,
-				Default:     false,
-				Description: "Enable FIPS mode. FIPS mode turns on the cipher suites that comply with FIPS. (False by default)",
+				Type:     schema.TypeBool,
+				ForceNew: true,
+				Optional: true,
+				// Not setting default here because vCD 9.0 does not support FIPS mode and there
+				// must be a clear indicator to distinguish when the field was not set by user
+				Description: "Enable FIPS mode. Only for vCD 9.1+. FIPS mode turns on the cipher suites that comply with FIPS. (False by default)",
 			},
 			"use_default_route_for_dns_relay": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -337,7 +338,6 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		Description: d.Get("description").(string),
 		Configuration: &types.GatewayConfiguration{
 			UseDefaultRouteForDNSRelay: takeBoolPointer(d.Get("use_default_route_for_dns_relay").(bool)),
-			FipsModeEnabled:            takeBoolPointer(d.Get("fips_mode_enabled").(bool)),
 			HaEnabled:                  takeBoolPointer(d.Get("ha_enabled").(bool)),
 			GatewayBackingConfig:       d.Get("configuration").(string),
 			AdvancedNetworkingEnabled:  takeBoolPointer(d.Get("advanced").(bool)),
@@ -347,6 +347,18 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 			},
 			EdgeGatewayServiceConfiguration: &types.GatewayFeatures{},
 		},
+	}
+
+	// vCD 9.0 does not support FIPS Mode and fails if XML tag <FipsModeEnabled> is sent therefore
+	// field value must be sent only if user specified its value
+	if fipsModeEnabled, ok := d.GetOkExists("fips_mode_enabled"); ok {
+		if vcdClient.APIVCDMaxVersionIs("<= 29.0") { // vCD 9.0 or less
+			return fmt.Errorf("ERROR! FIPS mode is only supported starting" +
+				" with vCD 9.1. Please do not set this field when using with vCD 9.0")
+		}
+		fipsModeEnabledBool := fipsModeEnabled.(bool)
+		log.Printf("[TRACE] edge gateway creation. FIPS mode was set with value %t", fipsModeEnabledBool)
+		egwConfiguration.Configuration.FipsModeEnabled = takeBoolPointer(fipsModeEnabledBool)
 	}
 
 	edge, err := govcd.CreateAndConfigureEdgeGateway(vcdClient.VCDClient, orgName, vdcName, egwName, egwConfiguration)
@@ -742,7 +754,7 @@ func getGatewayInterfaceIpRangeType(suballocatePoolSet *schema.Set) ([]*types.IP
 // It must only convert to such structure only
 // `uplink` interfaces. One uplink exception in the case of distributed routing support (DLR) is an
 // `uplink` network `DLR_to_EDGE_%s` which is a transit interface
-func getExternalNetworkData(vcdClient *VCDClient, d *schema.ResourceData, gatewayInterfaces []*types.GatewayInterface) (*schema.Set, error) {
+func getExternalNetworkData(vcdClient *VCDClient, d *schema.ResourceData, gatewayInterfaces []*types.GatewayInterface, origin string) (*schema.Set, error) {
 	edgeGatewayName := d.Get("name").(string)
 	isDistributedRouter := d.Get("distributed_routing").(bool)
 
@@ -768,9 +780,32 @@ func getExternalNetworkData(vcdClient *VCDClient, d *schema.ResourceData, gatewa
 
 			extNetworkMap := make(map[string]interface{})
 			extNetworkMap["name"] = extNetwork.Network.Name
-			extNetworkMap["enable_rate_limit"] = extNetwork.ApplyRateLimit
-			extNetworkMap["incoming_rate_limit"] = extNetwork.InRateLimit
-			extNetworkMap["outgoing_rate_limit"] = extNetwork.OutRateLimit
+
+			// TODO remove when vCD 9.0 is no longer supported. Leave only "else" block.
+			// vCD 9.0 does not return interface rate limits. Flash UI has it, but there is no
+			// documented endpoint to get interface rate limits. It always returns "false" for
+			// "enable_rate_limit" and nothing for "incoming_rate_limit" and "outgoing_rate_limit"
+			// therefore when:
+			// * vCD is 9.0 or less and this is a "read" operation for a resource (not datasource) -
+			// we check what the user has set in the config and passing through the same value.
+			// Note. If it wasn't "TypeSet" with more values - it would be possible to simply omit
+			// setting the field.
+			if vcdClient.APIVCDMaxVersionIs("<= 29") && origin == "resource" {
+				log.Printf("[TRACE] edge gateway - skipping read of external networks on vCD 9.0 "+
+					"because for network %s it does not return these values", extNetwork.Network.Name)
+				stateGatewayInterfaces, _ := getGatewayInterfacesType(vcdClient, d.Get("external_network").(*schema.Set))
+				for _, stateInterface := range stateGatewayInterfaces {
+					if stateInterface.Network.Name == extNetwork.Network.Name {
+						extNetworkMap["enable_rate_limit"] = stateInterface.ApplyRateLimit
+						extNetworkMap["incoming_rate_limit"] = stateInterface.InRateLimit
+						extNetworkMap["outgoing_rate_limit"] = stateInterface.OutRateLimit
+					}
+				}
+			} else {
+				extNetworkMap["enable_rate_limit"] = extNetwork.ApplyRateLimit
+				extNetworkMap["incoming_rate_limit"] = extNetwork.InRateLimit
+				extNetworkMap["outgoing_rate_limit"] = extNetwork.OutRateLimit
+			}
 
 			if len(extNetwork.SubnetParticipation) > 0 {
 				subnet, err := getExternalNetworkSubnetTypeSet(extNetwork.SubnetParticipation, vcdClient, d, extNetwork.Network.Name)
@@ -886,7 +921,7 @@ func setEdgeGatewayValues(vcdClient *VCDClient, d *schema.ResourceData, egw govc
 	// gateway and which subnet should be used as the default one for edge gateway. Data source
 	// always gets it populated.
 	if !simpleExternalNetworksSet || origin == "datasource" {
-		externalNetworkData, err := getExternalNetworkData(vcdClient, d, egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface)
+		externalNetworkData, err := getExternalNetworkData(vcdClient, d, egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface, origin)
 		if err != nil {
 			return fmt.Errorf("[edgegateway read] could not process network interface data: %s", err)
 		}
@@ -935,7 +970,11 @@ func setEdgeGatewayValues(vcdClient *VCDClient, d *schema.ResourceData, egw govc
 	}
 
 	_ = d.Set("use_default_route_for_dns_relay", egw.EdgeGateway.Configuration.UseDefaultRouteForDNSRelay)
-	_ = d.Set("fips_mode_enabled", egw.EdgeGateway.Configuration.FipsModeEnabled)
+	// vCD API v29.0 does not return this field (probably because it started to work only in version
+	// which was introduced with vCD 9.1 (API v30.0))
+	if egw.EdgeGateway.Configuration.FipsModeEnabled != nil {
+		_ = d.Set("fips_mode_enabled", egw.EdgeGateway.Configuration.FipsModeEnabled)
+	}
 	_ = d.Set("advanced", egw.EdgeGateway.Configuration.AdvancedNetworkingEnabled)
 	_ = d.Set("ha_enabled", egw.EdgeGateway.Configuration.HaEnabled)
 

@@ -411,7 +411,7 @@ func getConfigStruct(config string) TestConfig {
 		configStruct.Provider.User = user
 		configStruct.Provider.Password = password
 		configStruct.Provider.SysOrg = configStruct.VCD.Org
-		fmt.Println("VCD_TEST_USER was enabled. Using Org User credentials from configuration file")
+		fmt.Println("VCD_TEST_ORG_USER was enabled. Using Org User credentials from configuration file")
 	}
 	if configStruct.Provider.Token != "" && configStruct.Provider.Password == "" {
 		configStruct.Provider.Password = "TOKEN"
