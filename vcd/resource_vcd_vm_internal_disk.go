@@ -112,6 +112,8 @@ var internalDiskBusTypesFromValues = map[string]string{
 	"6": "sata",
 }
 
+var vmStatusBefore string
+
 // resourceVmInternalDiskCreate creates an internal disk for VM
 func resourceVmInternalDiskCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
@@ -181,7 +183,7 @@ func powerOnIfNeeded(d *schema.ResourceData, vm *govcd.VM) error {
 		return fmt.Errorf("error getting VM status before ensuring it is powered on: %s", err)
 	}
 
-	if vmStatus != "POWERED_ON" && d.Get("bus_type").(string) == "ide" && d.Get("allow_vm_reboot").(bool) {
+	if vmStatusBefore == "POWERED_ON" && vmStatus != "POWERED_ON" && d.Get("bus_type").(string) == "ide" && d.Get("allow_vm_reboot").(bool) {
 		log.Printf("[DEBUG] Powering on VM %s after adding internal disk.", vm.VM.Name)
 
 		task, err := vm.PowerOn()
@@ -199,8 +201,9 @@ func powerOnIfNeeded(d *schema.ResourceData, vm *govcd.VM) error {
 func powerOffIfNeeded(d *schema.ResourceData, vm *govcd.VM) error {
 	vmStatus, err := vm.GetStatus()
 	if err != nil {
-		return fmt.Errorf("error getting VM status before ensuring it is powered on: %s", err)
+		return fmt.Errorf("error getting VM status before ensuring it is powered off: %s", err)
 	}
+	vmStatusBefore = vmStatus
 
 	if vmStatus != "POWERED_OFF" && d.Get("bus_type").(string) == "ide" && d.Get("allow_vm_reboot").(bool) {
 		log.Printf("[DEBUG] Powering off VM %s for adding/updating internal disk.", vm.VM.Name)
@@ -234,7 +237,7 @@ func resourceVmInternalDiskDelete(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	err = vm.DeleteInternalDiskById(d.Id())
+	err = vm.DeleteInternalDisk(d.Id())
 	if err != nil {
 		return fmt.Errorf("[Error] failed to delete internal disk: %s", err)
 	}

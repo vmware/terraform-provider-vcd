@@ -194,7 +194,7 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	// In version 9.7+ the advanced property is true by default
-	if vcdClient.APIVCDMaxVersionIs(">= 32.0") {
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 32.0") {
 		if !gwCreation.AdvancedNetworkingEnabled {
 			return fmt.Errorf("'advanced' property for vCD 9.7+ must be set to 'true'")
 		}

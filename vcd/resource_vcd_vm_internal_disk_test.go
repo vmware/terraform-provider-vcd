@@ -46,6 +46,14 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 		return
 	}
 
+	// for test to run correctly VM has to be power on
+	task, err := vm.PowerOn()
+	if err != nil {
+		t.Skip(fmt.Sprintf("Error powering up vm %s", err))
+		return
+	}
+	_ = task.WaitTaskCompletion()
+
 	storageProfile := testConfig.VCD.ProviderVdc.StorageProfile
 	if *adminVdc.UsesFastProvisioning {
 		// to avoid `Cannot use multiple storage profiles in a fast-provisioned VDC` we need to reuse VM storage profile
