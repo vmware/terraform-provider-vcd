@@ -284,3 +284,125 @@ type EdgeIpSet struct {
 
 // EdgeIpSets is a slice of pointers to EdgeIpSet
 type EdgeIpSets []*EdgeIpSet
+
+// EdgeGatewayVnics is a data structure holding information of vNic configuration in NSX-V edge
+// gateway using "/network/edges/edge_id/vnics" endpoint
+type EdgeGatewayVnics struct {
+	XMLName xml.Name `xml:"vnics"`
+	Vnic    []struct {
+		Label         string `xml:"label"`
+		Name          string `xml:"name"`
+		AddressGroups struct {
+			AddressGroup struct {
+				PrimaryAddress     string `xml:"primaryAddress,omitempty"`
+				SecondaryAddresses struct {
+					IpAddress []string `xml:"ipAddress,omitempty"`
+				} `xml:"secondaryAddresses,omitempty"`
+				SubnetMask         string `xml:"subnetMask,omitempty"`
+				SubnetPrefixLength string `xml:"subnetPrefixLength,omitempty"`
+			} `xml:"addressGroup,omitempty"`
+		} `xml:"addressGroups,omitempty"`
+		Mtu                 string `xml:"mtu,omitempty"`
+		Type                string `xml:"type,omitempty"`
+		IsConnected         string `xml:"isConnected,omitempty"`
+		Index               *int   `xml:"index"`
+		PortgroupId         string `xml:"portgroupId,omitempty"`
+		PortgroupName       string `xml:"portgroupName,omitempty"`
+		EnableProxyArp      string `xml:"enableProxyArp,omitempty"`
+		EnableSendRedirects string `xml:"enableSendRedirects,omitempty"`
+		SubInterfaces       struct {
+			SubInterface []struct {
+				IsConnected         string `xml:"isConnected,omitempty"`
+				Label               string `xml:"label,omitempty"`
+				Name                string `xml:"name,omitempty"`
+				Index               *int   `xml:"index,omitempty"`
+				TunnelId            string `xml:"tunnelId,omitempty"`
+				LogicalSwitchId     string `xml:"logicalSwitchId,omitempty"`
+				LogicalSwitchName   string `xml:"logicalSwitchName,omitempty"`
+				EnableSendRedirects string `xml:"enableSendRedirects,omitempty"`
+				Mtu                 string `xml:"mtu,omitempty"`
+				AddressGroups       struct {
+					AddressGroup struct {
+						PrimaryAddress     string `xml:"primaryAddress,omitempty"`
+						SubnetMask         string `xml:"subnetMask,omitempty"`
+						SubnetPrefixLength string `xml:"subnetPrefixLength,omitempty"`
+					} `xml:"addressGroup,omitempty"`
+				} `xml:"addressGroups,omitempty"`
+			} `xml:"subInterface,omitempty"`
+		} `xml:"subInterfaces,omitempty"`
+	} `xml:"vnic,omitempty"`
+}
+
+// EdgeGatewayInterfaces is a data structure holding information of vNic configuration in NSX-V edge
+// gateway using "/network/edges/edge_id/vdcNetworks" endpoint
+type EdgeGatewayInterfaces struct {
+	XMLName       xml.Name `xml:"edgeInterfaces"`
+	EdgeInterface []struct {
+		Name             string `xml:"name"`
+		Type             string `xml:"type"`
+		Index            *int   `xml:"index"`
+		NetworkReference struct {
+			ID   string `xml:"id"`
+			Name string `xml:"name"`
+			Type string `xml:"type"`
+		} `xml:"networkReference"`
+		AddressGroups struct {
+			AddressGroup struct {
+				PrimaryAddress     string `xml:"primaryAddress"`
+				SubnetMask         string `xml:"subnetMask"`
+				SubnetPrefixLength string `xml:"subnetPrefixLength"`
+				SecondaryAddresses struct {
+					IpAddress []string `xml:"ipAddress"`
+				} `xml:"secondaryAddresses"`
+			} `xml:"addressGroup"`
+		} `xml:"addressGroups"`
+		PortgroupId   string `xml:"portgroupId"`
+		PortgroupName string `xml:"portgroupName"`
+		IsConnected   string `xml:"isConnected"`
+		TunnelId      string `xml:"tunnelId"`
+	} `xml:"edgeInterface"`
+}
+
+// EdgeDhcpRelay - Dynamic Host Configuration Protocol (DHCP) relay enables you to leverage your
+// existing DHCP infrastructure from within NSX without any interruption to the IP address
+// management in your environment. DHCP messages are relayed from virtual machine(s) to the
+// designated DHCP server(s) in the physical world. This enables IP addresses within NSX to continue
+// to be in sync with IP addresses in other environments.
+type EdgeDhcpRelay struct {
+	XMLName xml.Name `xml:"relay"`
+	// RelayServer specifies external relay server(s) to which DHCP messages are to be relayed to.
+	// The relay server can be an IP set, IP address block, domain, or a combination of all of
+	// these. Messages are relayed to each listed DHCP server.
+	RelayServer *EdgeDhcpRelayServer `xml:"relayServer"`
+	// EdgeDhcRelayAgents  specifies a list of edge gateway interfaces (vNics) from which DHCP
+	// messages are to be relayed to the external DHCP relay server(s) with optional gateway
+	// interface addresses.
+	RelayAgents *EdgeDhcpRelayAgents `xml:"relayAgents"`
+}
+
+type EdgeDhcpRelayServer struct {
+	// GroupingObjectIds is a general concept in NSX which allows to pass in many types of objects
+	// (like VM IDs, IP set IDs, org networks, security groups) howether in this case it accepts
+	// only IP sets which have IDs specified as 'f9daf2da-b4f9-4921-a2f4-d77a943a381c:ipset-2' where
+	// first part is vDC ID and the second part is unique IP set ID
+	GroupingObjectId []string `xml:"groupingObjectId,omitempty"`
+	// IpAddresses holds a list of IP addresses for DHCP servers
+	IpAddress []string `xml:"ipAddress,omitempty"`
+	// Fqdn holds a list of FQDNs (fully qualified domain names)
+	Fqdns []string `xml:"fqdn,omitempty"`
+}
+
+// EdgeDhcpRelayAgent specifies which edge gateway interface (vNic) from which DHCP messages are to
+// be relayed to the external DHCP relay server(s) with an optional gateway interface address.
+type EdgeDhcpRelayAgent struct {
+	// VnicIndex must specify vNic adapter index on the edge gateway
+	VnicIndex *int `xml:"vnicIndex"`
+	// GatewayInterfaceAddress holds a gateway interface address. Optional, defaults to the vNic
+	// primary address.
+	GatewayInterfaceAddress string `xml:"giAddress,omitempty"`
+}
+
+// EdgeDhcpRelayAgents holds a slice of EdgeDhcpRelayAgent
+type EdgeDhcpRelayAgents struct {
+	Agents []EdgeDhcpRelayAgent `xml:"relayAgent"`
+}

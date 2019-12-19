@@ -1369,7 +1369,6 @@ type VM struct {
 
 // VMDiskChange represents a virtual machine only with Disk setting update part
 type VMDiskChange struct {
-	// Attributes
 	XMLName xml.Name `xml:"Vm"`
 	Ovf     string   `xml:"xmlns:ovf,attr,omitempty"`
 	Xsi     string   `xml:"xmlns:xsi,attr,omitempty"`
@@ -1380,7 +1379,7 @@ type VMDiskChange struct {
 	Name string `xml:"name,attr"`           // VM name
 	ID   string `xml:"id,attr,omitempty"`   // VM ID. The entity identifier, expressed in URN format. The value of this attribute uniquely identifies the entity, persists for the life of the entity, and is never reused.
 
-	VmSpecSection *VmSpecSection `xml:"VmSpecSection,omitempty"` // Container for the specification of this virtual machine. This is an alternate to using ovf:VirtualHardwareSection + ovf:OperatingSystemSection
+	VmSpecSection *VmSpecSection `xml:"VmSpecSection,omitempty"` // Container for the specification of this virtual machine. This is an alternative to using ovf:VirtualHardwareSection + ovf:OperatingSystemSection
 }
 
 // VmSpecSection from VM struct
@@ -1389,12 +1388,12 @@ type VmSpecSection struct {
 	Info              string            `xml:"ovf:Info"`
 	OsType            string            `xml:"OsType,omitempty"`            // The type of the OS. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
 	NumCpus           *int              `xml:"NumCpus,omitempty"`           // Number of CPUs. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
-	NumCoresPerSocket *int              `xml:"NumCoresPerSocket,omitempty"` // Number of cores among which to distribute CPUs in this virtual machine.. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
+	NumCoresPerSocket *int              `xml:"NumCoresPerSocket,omitempty"` // Number of cores among which to distribute CPUs in this virtual machine. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
 	CpuResourceMhz    *CpuResourceMhz   `xml:"CpuResourceMhz,omitempty"`    // CPU compute resources. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
 	MemoryResourceMb  *MemoryResourceMb `xml:"MemoryResourceMb"`            // Memory compute resources. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
 	MediaSection      *MediaSection     `xml:"MediaSection,omitempty"`      // The media devices of this VM.
 	DiskSection       *DiskSection      `xml:"DiskSection,omitempty"`       // virtual disks of this VM.
-	HardwareVersion   *HardwareVersion  `xml:"HardwareVersion"`             // vSphere name of Virtual Hardware Version of this VM. Example: vmx-13 This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
+	HardwareVersion   *HardwareVersion  `xml:"HardwareVersion"`             // vSphere name of Virtual Hardware Version of this VM. Example: vmx-13 - This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
 	VmToolsVersion    string            `xml:"VmToolsVersion,omitempty"`    //	VMware tools version of this VM.
 	VirtualCpuType    string            `xml:"VirtualCpuType,omitempty"`    // The capabilities settings for this VM. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
 	TimeSyncWithHost  *bool             `xml:"TimeSyncWithHost,omitempty"`  // Synchronize the VM's time with the host.
@@ -1442,7 +1441,7 @@ type CpuResourceMhz struct {
 	Reservation *int64 `xml:"Reservation,omitempty"` // The amount of reservation of this resource on the underlying virtualization infrastructure.
 	Limit       *int64 `xml:"Limit,omitempty"`       // The limit for how much of this resource can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited.
 	SharesLevel string `xml:"SharesLevel,omitempty"` //	Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload.
-	Shares      *int   `xml:"Shares,omitempty"`      // Custom priority for the resource. This is a read-only, unless the share level is CUSTOM.
+	Shares      *int   `xml:"Shares,omitempty"`      // Custom priority for the resource. This field is read-only, unless the shares level is CUSTOM.
 }
 
 // MemoryResourceMb from VM/VmSpecSection struct
@@ -1973,6 +1972,7 @@ type FirewallService struct {
 type NatService struct {
 	Xmlns string `xml:"xmlns,attr,omitempty"`
 	// Elements
+
 	IsEnabled  bool       `xml:"IsEnabled"`            // Enable or disable the service using this flag
 	NatType    string     `xml:"NatType,omitempty"`    // One of: ipTranslation (use IP translation), portForwarding (use port forwarding)
 	Policy     string     `xml:"Policy,omitempty"`     // One of: allowTraffic (Allow all traffic), allowTrafficIn (Allow inbound traffic only)
@@ -2661,52 +2661,4 @@ type AdminCatalogRecord struct {
 	Status                  string    `xml:"status,attr,omitempty"`
 	Link                    *Link     `xml:"Link,omitempty"`
 	Vdc                     *Metadata `xml:"Metadata,omitempty"`
-}
-
-// EdgeGatewayVnics is a data structure holding information of vNic configuration in NSX-V edge
-// gateway
-type EdgeGatewayVnics struct {
-	XMLName xml.Name `xml:"vnics"`
-	Vnic    []struct {
-		Label         string `xml:"label"`
-		Name          string `xml:"name"`
-		AddressGroups struct {
-			AddressGroup struct {
-				PrimaryAddress     string `xml:"primaryAddress,omitempty"`
-				SecondaryAddresses struct {
-					IpAddress []string `xml:"ipAddress,omitempty"`
-				} `xml:"secondaryAddresses,omitempty"`
-				SubnetMask         string `xml:"subnetMask,omitempty"`
-				SubnetPrefixLength string `xml:"subnetPrefixLength,omitempty"`
-			} `xml:"addressGroup,omitempty"`
-		} `xml:"addressGroups,omitempty"`
-		Mtu                 string `xml:"mtu,omitempty"`
-		Type                string `xml:"type,omitempty"`
-		IsConnected         string `xml:"isConnected,omitempty"`
-		Index               *int   `xml:"index"`
-		PortgroupId         string `xml:"portgroupId,omitempty"`
-		PortgroupName       string `xml:"portgroupName,omitempty"`
-		EnableProxyArp      string `xml:"enableProxyArp,omitempty"`
-		EnableSendRedirects string `xml:"enableSendRedirects,omitempty"`
-		SubInterfaces       struct {
-			SubInterface []struct {
-				IsConnected         string `xml:"isConnected,omitempty"`
-				Label               string `xml:"label,omitempty"`
-				Name                string `xml:"name,omitempty"`
-				Index               *int   `xml:"index,omitempty"`
-				TunnelId            string `xml:"tunnelId,omitempty"`
-				LogicalSwitchId     string `xml:"logicalSwitchId,omitempty"`
-				LogicalSwitchName   string `xml:"logicalSwitchName,omitempty"`
-				EnableSendRedirects string `xml:"enableSendRedirects,omitempty"`
-				Mtu                 string `xml:"mtu,omitempty"`
-				AddressGroups       struct {
-					AddressGroup struct {
-						PrimaryAddress     string `xml:"primaryAddress,omitempty"`
-						SubnetMask         string `xml:"subnetMask,omitempty"`
-						SubnetPrefixLength string `xml:"subnetPrefixLength,omitempty"`
-					} `xml:"addressGroup,omitempty"`
-				} `xml:"addressGroups,omitempty"`
-			} `xml:"subInterface,omitempty"`
-		} `xml:"subInterfaces,omitempty"`
-	} `xml:"vnic,omitempty"`
 }

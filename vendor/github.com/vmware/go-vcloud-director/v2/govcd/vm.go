@@ -71,8 +71,8 @@ func (vm *VM) Refresh() error {
 	// elements in slices.
 	vm.VM = &types.VM{}
 
-	_, err := vm.client.ExecuteRequest(refreshUrl, http.MethodGet,
-		"", "error refreshing VM: %s", nil, vm.VM)
+	_, err := vm.client.ExecuteRequestWithApiVersion(refreshUrl, http.MethodGet,
+		"", "error refreshing VM: %s", nil, vm.VM, vm.client.GetDefaultAPIVersionOrLaterThan32())
 
 	// The request was successful
 	return err
@@ -861,7 +861,7 @@ func (vm *VM) AddInternalDisk(diskData *types.DiskSettings) (string, error) {
 		return "", fmt.Errorf("error refreshing VM: %s", err)
 	}
 
-	err = vm.validateInternalDiskInput(diskData)
+	err = vm.validateInternalDiskInput(diskData, vm.VM.Name, vm.VM.ID)
 	if err != nil {
 		return "", err
 	}
@@ -891,50 +891,50 @@ func (vm *VM) AddInternalDisk(diskData *types.DiskSettings) (string, error) {
 	return "", fmt.Errorf("created disk wasn't in list of returned VM internal disks")
 }
 
-func (vm *VM) validateInternalDiskInput(diskData *types.DiskSettings) error {
+func (vm *VM) validateInternalDiskInput(diskData *types.DiskSettings, vmName, vmId string) error {
 	if diskData.AdapterType == "" {
-		return fmt.Errorf("disk settings missing required field: adapter type")
+		return fmt.Errorf("[VM %s Id %s] disk settings missing required field: adapter type", vmName, vmId)
 	}
 
 	if diskData.BusNumber < 0 {
-		return fmt.Errorf("disk settings bus number has to be 0 or higher")
+		return fmt.Errorf("[VM %s Id %s] disk settings bus number has to be 0 or higher", vmName, vmId)
 	}
 
 	if diskData.UnitNumber < 0 {
-		return fmt.Errorf("disk settings unit number has to be 0 or higher")
+		return fmt.Errorf("[VM %s Id %s] disk settings unit number has to be 0 or higher", vmName, vmId)
 	}
 
 	if diskData.SizeMb < int64(0) {
-		return fmt.Errorf("disk settings size MB has to be 0 or higher")
+		return fmt.Errorf("[VM %s Id %s] disk settings size MB has to be 0 or higher", vmName, vmId)
 	}
 
 	if diskData.Iops != nil && *diskData.Iops < int64(0) {
-		return fmt.Errorf("disk settings iops has to be 0 or higher")
+		return fmt.Errorf("[VM %s Id %s] disk settings iops has to be 0 or higher", vmName, vmId)
 	}
 
 	if diskData.ThinProvisioned == nil {
-		return fmt.Errorf("disk settings missing required field: thin provisioned")
+		return fmt.Errorf("[VM %s Id %s] disk settings missing required field: thin provisioned", vmName, vmId)
 	}
 
 	if diskData.StorageProfile == nil {
-		return fmt.Errorf("disk settings missing required field: storage profile")
+		return fmt.Errorf("[VM %s Id %s]disk settings missing required field: storage profile", vmName, vmId)
 	}
 
 	return nil
 }
 
-// GetInternalDiskById returns a valid *types.DiskSettings if it exists.
+// GetInternalDiskById returns a *types.DiskSettings if one exists.
 // If it doesn't, returns nil and ErrorEntityNotFound or other err.
 func (vm *VM) GetInternalDiskById(diskId string, refresh bool) (*types.DiskSettings, error) {
+	if diskId == "" {
+		return nil, fmt.Errorf("cannot get internal disk - provided disk Id is empty")
+	}
+
 	if refresh {
 		err := vm.Refresh()
 		if err != nil {
 			return nil, fmt.Errorf("error refreshing VM: %s", err)
 		}
-	}
-
-	if diskId == "" {
-		return nil, fmt.Errorf("cannot get internal disk - provided disk Id is empty")
 	}
 
 	if vm.VM.VmSpecSection.DiskSection == nil || vm.VM.VmSpecSection.DiskSection.DiskSettings == nil ||
@@ -951,9 +951,9 @@ func (vm *VM) GetInternalDiskById(diskId string, refresh bool) (*types.DiskSetti
 	return nil, ErrorEntityNotFound
 }
 
-// DeleteInternalDiskById delete disk using provided disk ID.
+// DeleteInternalDisk delete disk using provided disk ID.
 // Runs synchronously, VM is ready for another operation after this function returns.
-func (vm *VM) DeleteInternalDiskById(diskId string) error {
+func (vm *VM) DeleteInternalDisk(diskId string) error {
 	err := vm.Refresh()
 	if err != nil {
 		return fmt.Errorf("error refreshing VM: %s", err)
@@ -975,7 +975,7 @@ func (vm *VM) DeleteInternalDiskById(diskId string) error {
 		return ErrorEntityNotFound
 	}
 
-	// remove disk in slice
+	// remove disk from slice
 	diskSettings = append(diskSettings[:diskPlacement], diskSettings[diskPlacement+1:]...)
 
 	vmSpecSection := vm.VM.VmSpecSection
@@ -990,8 +990,9 @@ func (vm *VM) DeleteInternalDiskById(diskId string) error {
 }
 
 // UpdateInternalDisks applies disks configuration for the VM.
-// types.VmSpecSection requires consist of all disk entities which exist and not updated,
-// as also new ones or changed ones. Returns new disk ID and error.
+// types.VmSpecSection has to have all internal disk state. Disks which don't match provided ones in types.VmSpecSection
+// will be deleted. Matched internal disk will be updated. New internal disk description found
+// in types.VmSpecSection will be created. Returns updated types.VmSpecSection and error.
 // Runs synchronously, VM is ready for another operation after this function returns.
 func (vm *VM) UpdateInternalDisks(disksSettingToUpdate *types.VmSpecSection) (*types.VmSpecSection, error) {
 	if vm.VM.HREF == "" {
@@ -1013,9 +1014,11 @@ func (vm *VM) UpdateInternalDisks(disksSettingToUpdate *types.VmSpecSection) (*t
 	return vm.VM.VmSpecSection, nil
 }
 
-// UpdateInternalDisksAsync applies disks configuration and return task or err
-// types.VmSpecSection requires consist of all disk entities which exist and not updated,
-// as also new ones or changed ones.
+// UpdateInternalDisksAsync applies disks configuration for the VM.
+// types.VmSpecSection has to have all internal disk state. Disks which don't match provided ones in types.VmSpecSection
+// will be deleted. Matched internal disk will be updated. New internal disk description found
+// in types.VmSpecSection will be created.
+// Returns Task and error.
 func (vm *VM) UpdateInternalDisksAsync(disksSettingToUpdate *types.VmSpecSection) (Task, error) {
 	if vm.VM.HREF == "" {
 		return Task{}, fmt.Errorf("cannot update disks, VM HREF is unset")
@@ -1025,12 +1028,13 @@ func (vm *VM) UpdateInternalDisksAsync(disksSettingToUpdate *types.VmSpecSection
 	vmSpecSectionModified := true
 	disksSettingToUpdate.Modified = &vmSpecSectionModified
 
-	return vm.client.ExecuteTaskRequest(vm.VM.HREF+"/action/reconfigureVm", http.MethodPost,
+	return vm.client.ExecuteTaskRequestWithApiVersion(vm.VM.HREF+"/action/reconfigureVm", http.MethodPost,
 		types.MimeVM, "error updating VM disks: %s", &types.VMDiskChange{
 			XMLName:       xml.Name{},
 			Xmlns:         types.XMLNamespaceVCloud,
 			Ovf:           types.XMLNamespaceOVF,
 			Name:          vm.VM.Name,
 			VmSpecSection: disksSettingToUpdate,
-		})
+		}, vm.client.GetDefaultAPIVersionOrLaterThan32())
+
 }
