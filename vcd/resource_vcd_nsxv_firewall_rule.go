@@ -135,16 +135,15 @@ func resourceVcdNsxvFirewallRule() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						// TODO - ipsets and security groups need further investigation and at least
-						// "Get" capability in govcd
-						// "ipsets": {
-						// 	Optional:    true,
-						// 	Type:        schema.TypeSet,
-						// 	Description: "Set of IP set names",
-						// 	Elem: &schema.Schema{
-						// 		Type: schema.TypeString,
-						// 	},
-						// },
+						"ip_sets": {
+							Optional:    true,
+							Type:        schema.TypeSet,
+							Description: "Set of IP set names",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						// TODO - uncomment once security groups are supported
 						// "security_groups": {
 						// 	Optional:    true,
 						// 	Type:        schema.TypeSet,
@@ -202,16 +201,15 @@ func resourceVcdNsxvFirewallRule() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						// TODO - ipsets and security groups need further investigation and at least
-						// "Get" capability in govcd
-						// "ipsets": {
-						// 	Optional:    true,
-						// 	Type:        schema.TypeSet,
-						// 	Description: "Set of IP set names",
-						// 	Elem: &schema.Schema{
-						// 		Type: schema.TypeString,
-						// 	},
-						// },
+						"ip_sets": {
+							Optional:    true,
+							Type:        schema.TypeSet,
+							Description: "Set of IP set names",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						// TODO - uncomment once security groups are supported
 						// "security_groups": {
 						// 	Optional:    true,
 						// 	Type:        schema.TypeSet,
@@ -270,7 +268,7 @@ func resourceVcdNsxvFirewallRuleCreate(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	firewallRule, err := getFirewallRule(d, edgeGateway, vdc)
+	firewallRule, err := getFirewallRule(d, edgeGateway, vdc, false)
 	if err != nil {
 		return fmt.Errorf("unable to make firewall rule query: %s", err)
 	}
@@ -299,7 +297,16 @@ func resourceVcdNsxvFirewallRuleUpdate(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	updateFirewallRule, err := getFirewallRule(d, edgeGateway, vdc)
+	// TODO remove this code when vCD 9.0 is not supported anymore. vCD 9.0 asks for short formatted
+	// IP set IDs (ipset-454 insted of a0c3c92a-a180-48fb-96ec-91c610c7c254:ipset-460) for update
+	// operations only. Otherwise update operation fails with exception.
+	var shortIds bool
+	if vcdClient.Client.APIVCDMaxVersionIs("<= 29") {
+		log.Println("[DEBUG] vcd_nsxv_firewall_rule update - using short IDs for update operations because vCD is <= 9.0 ")
+		shortIds = true
+	}
+
+	updateFirewallRule, err := getFirewallRule(d, edgeGateway, vdc, shortIds)
 	updateFirewallRule.ID = d.Id() // We already know an ID for update and it allows to change name
 
 	if err != nil {
@@ -550,13 +557,13 @@ func setFirewallRuleData(d *schema.ResourceData, rule *types.EdgeFirewallRule, e
 
 // getFirewallRule is the main function  used for creating *types.EdgeFirewallRule structure from
 // Terraform schema configuration
-func getFirewallRule(d *schema.ResourceData, edge *govcd.EdgeGateway, vdc *govcd.Vdc) (*types.EdgeFirewallRule, error) {
-	sourceEndpoint, err := getFirewallRuleEndpoint(d.Get("source").([]interface{}), edge, vdc)
+func getFirewallRule(d *schema.ResourceData, edge *govcd.EdgeGateway, vdc *govcd.Vdc, shortIpSetIds bool) (*types.EdgeFirewallRule, error) {
+	sourceEndpoint, err := getFirewallRuleEndpoint(d.Get("source").([]interface{}), edge, vdc, shortIpSetIds)
 	if err != nil {
 		return nil, fmt.Errorf("could not convert 'source' block to API request: %s", err)
 	}
 
-	destinationEndpoint, err := getFirewallRuleEndpoint(d.Get("destination").([]interface{}), edge, vdc)
+	destinationEndpoint, err := getFirewallRuleEndpoint(d.Get("destination").([]interface{}), edge, vdc, shortIpSetIds)
 	if err != nil {
 		return nil, fmt.Errorf("could not convert 'destination' block to API request: %s", err)
 	}
@@ -593,22 +600,21 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 	var (
 		endpointNetworks []string
 		endpointVMs      []string
-		// TODO uncomment when IP sets and Security groups are supported
-		// endpointIpSets         []string
+		endpointIpSets   []string
+		// TODO uncomment when Security groups are supported
 		// endpointSecurityGroups []string
 	)
 
 	for _, groupingObject := range endpoint.GroupingObjectIds {
 		idSplit := strings.Split(groupingObject, ":")
 		idLen := len(idSplit)
-		// TODO uncomment when IP sets and Security groups are supported
-		// subIdSplit := ""
-		// if idLen == 2 {
-		// 	subSplit := strings.Split(idSplit[1], "-")
-		// 	if len(subSplit) == 2 {
-		// 		subIdSplit = subSplit[0]
-		// 	}
-		// }
+		subIdSplit := ""
+		if idLen == 2 {
+			subSplit := strings.Split(idSplit[1], "-")
+			if len(subSplit) == 2 {
+				subIdSplit = subSplit[0]
+			}
+		}
 		switch {
 		// Handle org vdc networks
 		// Sample ID: urn:vcloud:network:95bffe8e-7e67-452d-abf2-535ac298db2b
@@ -620,12 +626,12 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 		case idLen == 4 && idSplit[2] == "vm":
 			endpointVMs = append(endpointVMs, groupingObject)
 
-		// TODO uncomment when IP sets and Security groups are supported
 		// Handle ipsets
 		// Sample ID: f9daf2da-b4f9-4921-a2f4-d77a943a381c:ipset-2
-		// case idLen == 2 && subIdSplit == "ipset":
-		// 	endpointIpSets = append(endpointIpSets, groupingObject)
+		case idLen == 2 && subIdSplit == "ipset":
+			endpointIpSets = append(endpointIpSets, groupingObject)
 
+		// TODO uncomment when Security groups are supported
 		// Handle security groups
 		// Sample ID: f9daf2da-b4f9-4921-a2f4-d77a943a381c:securitygroup-11
 		// case idLen == 2 && subIdSplit == "securitygroup":
@@ -640,7 +646,7 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 	// Convert org vdc network IDs to org network names, then make a set of these network names
 	endpointNetworkNames, err := orgNetworksIdsToNames(endpointNetworks, vdc)
 	if err != nil {
-		return nil, fmt.Errorf("could not convert org network names to IDs: %s", err)
+		return nil, fmt.Errorf("could not convert org network IDs to names: %s", err)
 	}
 	endpointNetworksSlice := convertToTypeSet(endpointNetworkNames)
 	endpointNetworksSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointNetworksSlice)
@@ -661,12 +667,15 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 	endpointGatewayInterfaceSlice := convertToTypeSet(vnicGroupIdStrings)
 	endpointGatewayInterfaceSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointGatewayInterfaceSlice)
 
-	// TODO - ipsets and security groups need further investigation and at least
-	// "Get" capability in govcd
-	// Convert ipset IDs to set
-	// endpointIpSetSlice := convertToTypeSet(endpointIpSets)
-	// endpointIpSetSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointIpSetSlice)
+	// Convert ipset IDs to set of names and create a TypeSet of it
+	endpointIpSetNames, err := ipSetIdsToNames(endpointIpSets, vdc)
+	if err != nil {
+		return nil, fmt.Errorf("could not IP set IDs to names: %s", err)
+	}
+	endpointIpSetSlice := convertToTypeSet(endpointIpSetNames)
+	endpointIpSetSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointIpSetSlice)
 
+	// TODO uncomment when Security groups are supported
 	// Convert security group IDs to set
 	// endpointSecurityGroupSlice := convertToTypeSet(endpointSecurityGroups)
 	// endpointSecurityGroupSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointSecurityGroupSlice)
@@ -679,10 +688,9 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 	endpointMap["gateway_interfaces"] = endpointGatewayInterfaceSet
 	endpointMap["org_networks"] = endpointNetworksSet
 	endpointMap["virtual_machine_ids"] = endpointVmSet
-	// TODO - ipsets and security groups need further investigation and at least
-	// "Get" capability in govcd
+	endpointMap["ip_sets"] = endpointIpSetSet
+	// TODO - uncomment when security groups are supported
 	// endpointMap["security_groups"] = endpointSecurityGroupSet
-	// endpointMap["ipsets"] = endpointIpSetSet
 
 	endpointSlice[0] = endpointMap
 
@@ -709,7 +717,7 @@ func getServiceData(firewallApplication types.EdgeFirewallApplication, edge *gov
 
 // getFirewallRuleEndpoint processes Terraform schema and converts it to *types.EdgeFirewallEndpoint
 // which is useful for 'source' or 'destination' blocks
-func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway, vdc *govcd.Vdc) (*types.EdgeFirewallEndpoint, error) {
+func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway, vdc *govcd.Vdc, shortIpSetIds bool) (*types.EdgeFirewallEndpoint, error) {
 	if len(endpoint) != 1 {
 		return nil, fmt.Errorf("no source specified")
 	}
@@ -736,8 +744,8 @@ func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway, vd
 	// 'types.EdgeFirewallEndpoint.GroupingObjectId' holds IDs for VMs, org networks, ipsets and Security groups
 
 	// Extract VM IDs from set and add them to endpoint structure
-	endpointVmStrings := convertSchemaSetToSliceOfStrings(endpointMap["virtual_machine_ids"].(*schema.Set))
-	result.GroupingObjectIds = append(result.GroupingObjectIds, endpointVmStrings...)
+	endpointVmIdStrings := convertSchemaSetToSliceOfStrings(endpointMap["virtual_machine_ids"].(*schema.Set))
+	result.GroupingObjectIds = append(result.GroupingObjectIds, endpointVmIdStrings...)
 
 	// Extract org network names from set, lookup their IDs and add them to endpoint structure
 	endpointOrgNetworkNameStrings := convertSchemaSetToSliceOfStrings(endpointMap["org_networks"].(*schema.Set))
@@ -747,12 +755,15 @@ func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway, vd
 	}
 	result.GroupingObjectIds = append(result.GroupingObjectIds, endpointOrgNetworkIdStrings...)
 
-	// TODO - ipsets and security groups need further investigation and at least
-	// "Get" capability in govcd
 	// Extract ipset IDs from set and add them to endpoint structure
-	// endpointIpSetStrings := convertSchemaSetToSliceOfStrings(endpointMap["ipsets"].(*schema.Set))
-	// result.GroupingObjectIds = append(result.GroupingObjectIds, endpointIpSetStrings...)
+	endpointIpSetNameStrings := convertSchemaSetToSliceOfStrings(endpointMap["ip_sets"].(*schema.Set))
+	endpointIpSetIdStrings, err := ipSetNamesToIds(endpointIpSetNameStrings, vdc, shortIpSetIds)
+	if err != nil {
+		return nil, fmt.Errorf("could not lookup IP set names by their IDs : %s", err)
+	}
+	result.GroupingObjectIds = append(result.GroupingObjectIds, endpointIpSetIdStrings...)
 
+	// TODO - uncomment once security groups are supported
 	// Extract security group IDs from set and add them to endpoint structure
 	// endpointSecurityGroupStrings := convertSchemaSetToSliceOfStrings(endpointMap["security_groups"].(*schema.Set))
 	// result.GroupingObjectIds = append(result.GroupingObjectIds, endpointSecurityGroupStrings...)
@@ -856,7 +867,7 @@ func orgNetworksIdsToNames(networkIds []string, vdc *govcd.Vdc) ([]string, error
 	for index, networkId := range networkIds {
 		orgVdcNetwork, err := vdc.GetOrgVdcNetworkById(networkId, false)
 		if err != nil {
-			return nil, fmt.Errorf("could not find org network with name %s: %s", networkId, err)
+			return nil, fmt.Errorf("could not find org network with ID %s: %s", networkId, err)
 		}
 		orgNetworkNames[index] = orgVdcNetwork.OrgVDCNetwork.Name
 

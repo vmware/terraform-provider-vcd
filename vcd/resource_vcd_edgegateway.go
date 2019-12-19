@@ -8,9 +8,103 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
+var subAllocationPool = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"start_address": {
+			Required: true,
+			Type:     schema.TypeString,
+			ForceNew: true,
+		},
+		"end_address": {
+			Required: true,
+			Type:     schema.TypeString,
+			ForceNew: true,
+		},
+	},
+}
+
+var subnetResource = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"gateway": {
+			Required:    true,
+			ForceNew:    true,
+			Description: "Gateway address for a subnet",
+			Type:        schema.TypeString,
+		},
+		"netmask": {
+			Required:    true,
+			ForceNew:    true,
+			Description: "Netmask address for a subnet",
+			Type:        schema.TypeString,
+		},
+		"ip_address": {
+			Optional:    true,
+			Type:        schema.TypeString,
+			ForceNew:    true,
+			Description: "IP address on the edge gateway - will be auto-assigned if not defined",
+		},
+		"use_for_default_route": {
+			Optional:    true,
+			Default:     false,
+			ForceNew:    true,
+			Type:        schema.TypeBool,
+			Description: "Defines if this subnet should be used as default gateway for edge",
+		},
+		"suballocate_pool": {
+			Optional:    true,
+			Type:        schema.TypeSet,
+			ForceNew:    true,
+			Description: "Define zero or more blocks to sub-allocate pools on the edge gateway",
+			Elem:        subAllocationPool,
+		},
+	},
+}
+
+var externalNetworkResource = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"name": {
+			Required:    true,
+			ForceNew:    true,
+			Type:        schema.TypeString,
+			Description: "External network name",
+		},
+		"enable_rate_limit": {
+			Optional:    true,
+			Default:     false,
+			ForceNew:    true,
+			Type:        schema.TypeBool,
+			Description: "Enable rate limiting",
+		},
+		"incoming_rate_limit": {
+			Optional:    true,
+			Default:     0,
+			ForceNew:    true,
+			Type:        schema.TypeFloat,
+			Description: "Incoming rate limit (Mbps)",
+		},
+		"outgoing_rate_limit": {
+			Optional:    true,
+			Default:     0,
+			ForceNew:    true,
+			Type:        schema.TypeFloat,
+			Description: "Outgoing rate limit (Mbps)",
+		},
+		"subnet": {
+			Optional: true,
+			Computed: true,
+			ForceNew: true,
+			Type:     schema.TypeSet,
+			MinItems: 1,
+			Elem:     subnetResource,
+		},
+	},
+}
+
 func resourceVcdEdgeGateway() *schema.Resource {
+
 	return &schema.Resource{
 		Create: resourceVcdEdgeGatewayCreate,
 		Read:   resourceVcdEdgeGatewayRead,
@@ -65,33 +159,44 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				Description: "Enable high availability on this edge gateway",
 			},
 			"external_networks": &schema.Schema{
-				Type:        schema.TypeList,
-				Required:    true,
-				ForceNew:    true,
-				Description: "A list of external networks to be used by the edge gateway",
+				ConflictsWith: []string{"external_network"},
+				Type:          schema.TypeList,
+				Optional:      true,
+				ForceNew:      true,
+				Description:   "A list of external networks to be used by the edge gateway",
+				Deprecated:    "Please use the more advanced 'external_network' block(s)",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
 			},
 			"default_gateway_network": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     "",
-				ForceNew:    true,
-				Description: "External network to be used as default gateway. Its name must be included in 'external_networks'. An empty value will skip the default gateway",
+				ConflictsWith: []string{"external_network"},
+				Type:          schema.TypeString,
+				Optional:      true,
+				Computed:      true,
+				ForceNew:      true,
+				Deprecated:    "Please use the more advanced 'external_network' block(s)",
+				Description:   "External network to be used as default gateway. Its name must be included in 'external_networks'. An empty value will skip the default gateway",
 			},
 			"default_external_network_ip": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "IP address of edge gateway interface which is used as default.",
 			},
+			"external_network_ips": {
+				Computed:    true,
+				Type:        schema.TypeList,
+				Description: "List of IP addresses set on edge gateway external network interfaces",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"distributed_routing": &schema.Schema{
-				Type:             schema.TypeBool,
-				Optional:         true,
-				Default:          false,
-				ForceNew:         true,
-				Description:      "If advanced networking enabled, also enable distributed routing",
-				DiffSuppressFunc: suppressFalse(),
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				ForceNew:    true,
+				Description: "If advanced networking enabled, also enable distributed routing",
 			},
 			"lb_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -138,6 +243,30 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				Description:  "'accept' or 'deny'. Default 'deny'",
 				ValidateFunc: validation.StringInSlice([]string{"accept", "deny"}, false),
 			},
+			"fips_mode_enabled": &schema.Schema{
+				Type:     schema.TypeBool,
+				ForceNew: true,
+				Optional: true,
+				// Not setting default here because vCD 9.0 does not support FIPS mode and there
+				// must be a clear indicator to distinguish when the field was not set by user
+				Description: "Enable FIPS mode. Only for vCD 9.1+. FIPS mode turns on the cipher suites that comply with FIPS. (False by default)",
+			},
+			"use_default_route_for_dns_relay": &schema.Schema{
+				Type:        schema.TypeBool,
+				ForceNew:    true,
+				Optional:    true,
+				Computed:    true,
+				Description: "If true, default gateway will be used for the edge gateways' default routing and DNS forwarding.(False by default)",
+			},
+			"external_network": {
+				ConflictsWith: []string{"external_networks", "default_gateway_network"},
+				Description:   "One or more blocks with external network information to be attached to this gateway's interface",
+				ForceNew:      true,
+				Optional:      true,
+				Computed:      true,
+				Type:          schema.TypeSet,
+				Elem:          externalNetworkResource,
+			},
 		},
 	}
 }
@@ -147,12 +276,6 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 	log.Printf("[TRACE] edge gateway creation initiated")
 
 	vcdClient := meta.(*VCDClient)
-
-	rawExternalNetworks := d.Get("external_networks").([]interface{})
-	var externalNetworks []string
-	for _, en := range rawExternalNetworks {
-		externalNetworks = append(externalNetworks, en.(string))
-	}
 
 	// Making sure the parent entities are available
 	orgName := vcdClient.getOrgName(d)
@@ -180,35 +303,73 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("no valid VDC named '%s' was found", vdcName)
 	}
 
-	var gwCreation = govcd.EdgeGatewayCreation{
-		ExternalNetworks:          externalNetworks,
-		Name:                      d.Get("name").(string),
-		OrgName:                   orgName,
-		VdcName:                   vdcName,
-		Description:               d.Get("description").(string),
-		BackingConfiguration:      d.Get("configuration").(string),
-		AdvancedNetworkingEnabled: d.Get("advanced").(bool),
-		DefaultGateway:            d.Get("default_gateway_network").(string),
-		DistributedRoutingEnabled: d.Get("distributed_routing").(bool),
-		HAEnabled:                 d.Get("ha_enabled").(bool),
-	}
-
 	// In version 9.7+ the advanced property is true by default
 	if vcdClient.Client.APIVCDMaxVersionIs(">= 32.0") {
-		if !gwCreation.AdvancedNetworkingEnabled {
+		if !d.Get("advanced").(bool) {
 			return fmt.Errorf("'advanced' property for vCD 9.7+ must be set to 'true'")
 		}
 	}
 
-	edge, err := govcd.CreateEdgeGateway(vcdClient.VCDClient, gwCreation)
+	var gwInterfaces []*types.GatewayInterface
+
+	simpleExtNetworksSlice, simpleExtNetsExist := d.GetOk("external_networks")
+	simpleExtDefaultGwNet := d.Get("default_gateway_network")
+	if simpleExtNetsExist {
+		log.Printf("[TRACE] creating edge gateway using simple 'external_networks' and 'default_gateway_network' fields")
+		// Get gateway interfaces from simple structure
+		oldExtNetworksSliceString := convertToStringSlice(simpleExtNetworksSlice.([]interface{}))
+		gwInterfaces, err = getSimpleGatewayInterfaces(vcdClient, oldExtNetworksSliceString, simpleExtDefaultGwNet.(string))
+		if err != nil {
+			return fmt.Errorf("could not process 'external_networks' and 'default_gateway_network': %s", err)
+		}
+	} else {
+		log.Printf("[TRACE] creating edge gateway using advanced 'external_network' blocks")
+		// Get gateway interfaces from complex structure
+		gwInterfaces, err = getGatewayInterfacesType(vcdClient, d.Get("external_network").(*schema.Set))
+		if err != nil {
+			return fmt.Errorf("could not process 'external_network' block(s): %s", err)
+		}
+	}
+
+	egwName := d.Get("name").(string)
+	egwConfiguration := &types.EdgeGateway{
+		Xmlns:       types.XMLNamespaceVCloud,
+		Name:        egwName,
+		Description: d.Get("description").(string),
+		Configuration: &types.GatewayConfiguration{
+			UseDefaultRouteForDNSRelay: takeBoolPointer(d.Get("use_default_route_for_dns_relay").(bool)),
+			HaEnabled:                  takeBoolPointer(d.Get("ha_enabled").(bool)),
+			GatewayBackingConfig:       d.Get("configuration").(string),
+			AdvancedNetworkingEnabled:  takeBoolPointer(d.Get("advanced").(bool)),
+			DistributedRoutingEnabled:  takeBoolPointer(d.Get("distributed_routing").(bool)),
+			GatewayInterfaces: &types.GatewayInterfaces{
+				GatewayInterface: gwInterfaces,
+			},
+			EdgeGatewayServiceConfiguration: &types.GatewayFeatures{},
+		},
+	}
+
+	// vCD 9.0 does not support FIPS Mode and fails if XML tag <FipsModeEnabled> is sent therefore
+	// field value must be sent only if user specified its value
+	if fipsModeEnabled, ok := d.GetOkExists("fips_mode_enabled"); ok {
+		if vcdClient.Client.APIVCDMaxVersionIs("<= 29.0") { // vCD 9.0 or less
+			return fmt.Errorf("ERROR! FIPS mode is only supported starting" +
+				" with vCD 9.1. Please do not set this field when using with vCD 9.0")
+		}
+		fipsModeEnabledBool := fipsModeEnabled.(bool)
+		log.Printf("[TRACE] edge gateway creation. FIPS mode was set with value %t", fipsModeEnabledBool)
+		egwConfiguration.Configuration.FipsModeEnabled = takeBoolPointer(fipsModeEnabledBool)
+	}
+
+	edge, err := govcd.CreateAndConfigureEdgeGateway(vcdClient.VCDClient, orgName, vdcName, egwName, egwConfiguration)
 	if err != nil {
-		log.Printf("[DEBUG] Error creating edge gateway: %#v", err)
-		return fmt.Errorf("error creating edge gateway: %#v", err)
+		log.Printf("[DEBUG] Error creating edge gateway: %s", err)
+		return fmt.Errorf("error creating edge gateway: %s", err)
 	}
 	// Edge gateway creation succeeded therefore we save related fields now to preserve Id.
 	// Edge gateway is already created even if further process fails
 	log.Printf("[TRACE] flushing edge gateway creation fields")
-	err = setEdgeGatewayValues(d, edge)
+	err = setEdgeGatewayValues(vcdClient, d, edge, "resource")
 	if err != nil {
 		return err
 	}
@@ -253,7 +414,7 @@ func resourceVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}) error 
 }
 
 func genericVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}, origin string) error {
-	log.Printf("[TRACE] edge gateway read initiated")
+	log.Printf("[TRACE] edge gateway read initiated from origin %s", origin)
 
 	vcdClient := meta.(*VCDClient)
 
@@ -281,7 +442,7 @@ func genericVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}, origin 
 		return fmt.Errorf("[edgegateway read] error retrieving edge gateway %s: %s", identifier, err)
 	}
 
-	if err := setEdgeGatewayValues(d, *edgeGateway); err != nil {
+	if err := setEdgeGatewayValues(vcdClient, d, *edgeGateway, origin); err != nil {
 		return err
 	}
 
@@ -355,9 +516,391 @@ func resourceVcdEdgeGatewayDelete(d *schema.ResourceData, meta interface{}) erro
 	return err
 }
 
-// Convenience function to fill edge gateway values from resource data
-func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
+// resourceVcdEdgeGatewayImport is responsible for importing the resource.
+// The following steps happen as part of import
+// 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
+// 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
+// 3. The functions splits the dot-formatted path and tries to lookup the object
+// 4. If the lookup succeeds it sets the ID field for `_resource_name_` resource in statefile
+// (the resource must be already defined in .tf config otherwise `terraform import` will complain)
+// 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
+// based on the known ID of object.
+//
+// Example resource name (_resource_name_): vcd_edgegateway.my-edge-gateway
+// Example import path (_the_id_string_): org.vdc.my-edge-gw
+// Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
+func resourceVcdEdgeGatewayImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+	if len(resourceURI) != 3 {
+		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-name.edge-gw-name")
+	}
+	orgName, vdcName, edgeName := resourceURI[0], resourceURI[1], resourceURI[2]
 
+	vcdClient := meta.(*VCDClient)
+	edgeGateway, err := vcdClient.GetEdgeGateway(orgName, vdcName, edgeName)
+	if err != nil {
+		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
+	}
+
+	_ = d.Set("org", orgName)
+	_ = d.Set("vdc", vdcName)
+	d.SetId(edgeGateway.EdgeGateway.ID)
+	return []*schema.ResourceData{d}, nil
+}
+
+// getSimpleGatewayInterfaces aims to add compatibility layer to go-vcloud-director
+// CreateEdgeGateway function which is a wrapper around CreateAndConfigureEdgeGateway. The layer
+// resides here so that code can work together getGatewayInterfaces
+func getSimpleGatewayInterfaces(vcdClient *VCDClient, externalNetworks []string, defaultGatewayNetwork string) ([]*types.GatewayInterface, error) {
+	gatewayInterfaces := make([]*types.GatewayInterface, len(externalNetworks))
+	// Add external networks inside the configuration structure
+	for extNetworkIndex, extNetName := range externalNetworks {
+		extNet, err := vcdClient.GetExternalNetworkByName(extNetName)
+		if err != nil {
+			return nil, err
+		}
+
+		// Populate the subnet participation only if default gateway was set
+		var subnetParticipation *types.SubnetParticipation
+		if defaultGatewayNetwork != "" && extNet.ExternalNetwork.Name == defaultGatewayNetwork {
+			for _, net := range extNet.ExternalNetwork.Configuration.IPScopes.IPScope {
+				if net.IsEnabled {
+					subnetParticipation = &types.SubnetParticipation{
+						Gateway: net.Gateway,
+						Netmask: net.Netmask,
+					}
+					break
+				}
+			}
+		}
+		networkConf := &types.GatewayInterface{
+			Name:          extNet.ExternalNetwork.Name,
+			DisplayName:   extNet.ExternalNetwork.Name,
+			InterfaceType: "uplink",
+			Network: &types.Reference{
+				HREF: extNet.ExternalNetwork.HREF,
+				ID:   extNet.ExternalNetwork.ID,
+				Type: "application/vnd.vmware.admin.network+xml",
+				Name: extNet.ExternalNetwork.Name,
+			},
+			UseForDefaultRoute:  defaultGatewayNetwork == extNet.ExternalNetwork.Name,
+			SubnetParticipation: []*types.SubnetParticipation{subnetParticipation},
+		}
+
+		gatewayInterfaces[extNetworkIndex] = networkConf
+	}
+	return gatewayInterfaces, nil
+}
+
+// getGatewayInterfacesType extracts `external_network` blocks with more advanced settings into
+// []*types.GatewayInterface
+// This is a pretty complicated function with 3 level nesting as it is implied by API structure.
+// This structure is documented below.
+//
+// <GatewayInterface>						<---- maps directly to `external_network` block
+// 	<Name>test_external_network</Name>
+// 	<DisplayName>test_external_network</DisplayName>
+// 	<Network href="...." id="urn:vcloud:network:144bafa4-7cbe-44de-a647-e6e045b7b8c5" type="application/vnd.vmware.admin.network+xml" name="test_external_network"></Network>
+// 	<InterfaceType>uplink</InterfaceType>
+// 	<SubnetParticipation>					<----- maps to nested `subnet` block(s) inside `external_network`
+// 		<Gateway>192.168.30.49</Gateway>
+// 		<Netmask>255.255.255.240</Netmask>
+// 		<IpAddress>192.168.30.51</IpAddress>
+// 		<IpRanges>							<----- maps to `suballocate_pool` block(s) inside `subnet`
+// 			<IpRange>
+// 				<StartAddress>192.168.30.53</StartAddress>
+// 				<EndAddress>192.168.30.55</EndAddress>
+// 			</IpRange>
+// 			<IpRange>
+// 				<StartAddress>192.168.30.58</StartAddress>
+// 				<EndAddress>192.168.30.60</EndAddress>
+// 			</IpRange>
+// 		</IpRanges>
+// 		<UseForDefaultRoute>true</UseForDefaultRoute>
+// 	</SubnetParticipation>
+// 	<SubnetParticipation>				    <---- simple `subnet` block without suballocated pools and automatic IP assignment
+// 		<Gateway>292.168.30.49</Gateway>
+// 		<Netmask>255.255.255.240</Netmask>
+// 		<UseForDefaultRoute>true</UseForDefaultRoute>
+// 	</SubnetParticipation>
+// 	<ApplyRateLimit>true</ApplyRateLimit>
+// 	<InRateLimit>100</InRateLimit>
+// 	<OutRateLimit>100</OutRateLimit>
+// 	<UseForDefaultRoute>true</UseForDefaultRoute>
+// </GatewayInterface>
+func getGatewayInterfacesType(vcdClient *VCDClient, externalInterfaceSet *schema.Set) ([]*types.GatewayInterface, error) {
+	var gatewayInterfaceSlice []*types.GatewayInterface
+
+	extInterfaceList := externalInterfaceSet.List()
+	if len(extInterfaceList) > 0 {
+		gatewayInterfaceSlice = make([]*types.GatewayInterface, len(extInterfaceList))
+		// Loop over interface definitions one by one and add them to list of interfaces
+		for extInterfaceIndex, extInterface := range extInterfaceList {
+			extInterfaceMap := extInterface.(map[string]interface{})
+			externalNetworkName := extInterfaceMap["name"].(string)
+			externalNetwork, err := vcdClient.GetExternalNetworkByName(externalNetworkName)
+			if err != nil {
+				return nil, fmt.Errorf("could not look up external network %s by name: %s", externalNetworkName, err)
+			}
+			var isInterfaceUsedForDefaultRoute bool
+			var subnetParticipationSlice []*types.SubnetParticipation
+
+			// Create subnet participation definitions for a particular edge gateway
+			subnetSchema := extInterfaceMap["subnet"]
+			subnetParticipationSlice, isInterfaceUsedForDefaultRoute, err = getGatewayInterfaceSubnetParticipationType(subnetSchema.(*schema.Set))
+			if err != nil {
+				return nil, fmt.Errorf("unable to create subnet participation definition: %s", err)
+			}
+
+			// Try to create a network interface and add it to the slice of gateway interfaces
+			gwInterface, err := getGatewayInterfaceType(externalNetwork, extInterfaceMap, isInterfaceUsedForDefaultRoute, subnetParticipationSlice)
+			if err != nil {
+				return nil, fmt.Errorf("unable to create edge gateway interface definition: %s", err)
+			}
+			gatewayInterfaceSlice[extInterfaceIndex] = gwInterface
+		}
+	}
+
+	return gatewayInterfaceSlice, nil
+}
+
+// getGatewayInterfaceType gets all interface properties and returns a definition for single
+// *types.GatewayInterface
+func getGatewayInterfaceType(externalNetwork *govcd.ExternalNetwork, extInterfaceMap map[string]interface{}, usedForDefaultRoute bool, subnetParticipationSlice []*types.SubnetParticipation) (*types.GatewayInterface, error) {
+	singleGatewayInterface := &types.GatewayInterface{
+		Name:          externalNetwork.ExternalNetwork.Name,
+		DisplayName:   externalNetwork.ExternalNetwork.Name,
+		InterfaceType: "uplink",
+		Network: &types.Reference{
+			HREF: externalNetwork.ExternalNetwork.HREF,
+			ID:   externalNetwork.ExternalNetwork.ID,
+			Type: "application/vnd.vmware.admin.network+xml",
+			Name: externalNetwork.ExternalNetwork.Name,
+		},
+		UseForDefaultRoute:  usedForDefaultRoute,
+		ApplyRateLimit:      extInterfaceMap["enable_rate_limit"].(bool),
+		InRateLimit:         extInterfaceMap["incoming_rate_limit"].(float64),
+		OutRateLimit:        extInterfaceMap["outgoing_rate_limit"].(float64),
+		SubnetParticipation: subnetParticipationSlice,
+	}
+
+	return singleGatewayInterface, nil
+}
+
+// getGatewayInterfaceSubnetParticipationType creates []*types.SubnetParticipation for a particular
+func getGatewayInterfaceSubnetParticipationType(subnetSet *schema.Set) ([]*types.SubnetParticipation, bool, error) {
+	var isInterfaceUsedForDefaultRoute bool
+	subnetList := subnetSet.List()
+	subnetParticipationSlice := make([]*types.SubnetParticipation, len(subnetList))
+
+	for subnetIndex, subnet := range subnetList {
+		subnetMap := subnet.(map[string]interface{})
+		subnetParticipationSlice[subnetIndex] = &types.SubnetParticipation{
+			Gateway:            subnetMap["gateway"].(string),
+			Netmask:            subnetMap["netmask"].(string),
+			UseForDefaultRoute: subnetMap["use_for_default_route"].(bool),
+		}
+		subnetParticipationSlice[subnetIndex].IPAddress = subnetMap["ip_address"].(string)
+		if subnetMap["use_for_default_route"].(bool) {
+			isInterfaceUsedForDefaultRoute = true
+		}
+
+		// Check if there are any optional suballocated pool definitions (defined as IP ranges) and
+		// parse them
+		if subnetSchema, ok := subnetMap["suballocate_pool"]; ok {
+			ranges, err := getGatewayInterfaceIpRangeType(subnetSchema.(*schema.Set))
+			if err != nil {
+				return nil, false, fmt.Errorf("unable to prepare sub-allocation pools :%s", err)
+			}
+			// if there are any ranges returned - add them to subnet
+			if len(ranges) > 0 {
+				subnetParticipationSlice[subnetIndex].IPRanges = &types.IPRanges{}
+				subnetParticipationSlice[subnetIndex].IPRanges.IPRange = ranges
+			}
+
+		}
+	}
+	return subnetParticipationSlice, isInterfaceUsedForDefaultRoute, nil
+}
+
+// getGatewayInterfaceIpRangeType creates []*types.IPRange with IP address ranges which are shown as
+// IP pool sub-allocations in UI
+func getGatewayInterfaceIpRangeType(suballocatePoolSet *schema.Set) ([]*types.IPRange, error) {
+	var ipRange []*types.IPRange
+
+	suballocatePoolList := suballocatePoolSet.List()
+	if len(suballocatePoolList) > 0 {
+		// Allocate nested IP ranges slice size
+		ipRange = make([]*types.IPRange, len(suballocatePoolList))
+
+		for suballocatePoolIndex, suballocatePool := range suballocatePoolList {
+			suballocatePoolMap := convertToStringMap(suballocatePool.(map[string]interface{}))
+			singleRange := &types.IPRange{
+				StartAddress: suballocatePoolMap["start_address"],
+				EndAddress:   suballocatePoolMap["end_address"],
+			}
+			// Add single IP range into list
+			ipRange[suballocatePoolIndex] = singleRange
+		}
+	}
+
+	return ipRange, nil
+}
+
+// getExternalNetworkData traverses API structure over edge gateway interfaces to unpack such
+// hierarchy to `external_network` block(s).
+// external_network -> subnet(func getExternalNetworkSubnetTypeSet) ->
+// suballocate_pool (func getExternalNetworkIPRangeSubAllocatePoolTypeSet)
+// It must only convert to such structure only
+// `uplink` interfaces. One uplink exception in the case of distributed routing support (DLR) is an
+// `uplink` network `DLR_to_EDGE_%s` which is a transit interface
+func getExternalNetworkData(vcdClient *VCDClient, d *schema.ResourceData, gatewayInterfaces []*types.GatewayInterface, origin string) (*schema.Set, error) {
+	edgeGatewayName := d.Get("name").(string)
+	isDistributedRouter := d.Get("distributed_routing").(bool)
+
+	var externalNetworkSlice []interface{}
+	if len(gatewayInterfaces) > 0 {
+		for _, extNetwork := range gatewayInterfaces {
+			// Only when InterfaceType == "uplink" this interface (vNic) is connected to external
+			// network
+			if extNetwork.InterfaceType != "uplink" {
+				log.Printf("[TRACE] edge gateway - skipping read of network %s because it is not of type 'uplink' (%s)",
+					extNetwork.Network.Name, extNetwork.InterfaceType)
+				continue
+			}
+			// One of gateway interfaces can be named `DLR_to_EDGE_%s` where %s=edge_gateway_name
+			// (e.g. `DLR_to_EDGE_edge-with-complex-networks`). This interface (vNic) is added as
+			// transit interface when distributed logical routing (DLR) is enabled. It is not being
+			// defined by user and we do not need to read/set it into `external_network` block.
+			if isDistributedRouter && extNetwork.Network.Name == fmt.Sprintf("DLR_to_EDGE_%s", edgeGatewayName) {
+				log.Printf("[TRACE] edge gateway - skipping read of uplink interface network %s because it is a DLR interface",
+					extNetwork.Network.Name)
+				continue
+			}
+
+			extNetworkMap := make(map[string]interface{})
+			extNetworkMap["name"] = extNetwork.Network.Name
+
+			// TODO remove when vCD 9.0 is no longer supported. Leave only "else" block.
+			// vCD 9.0 does not return interface rate limits. Flash UI has it, but there is no
+			// documented endpoint to get interface rate limits. It always returns "false" for
+			// "enable_rate_limit" and nothing for "incoming_rate_limit" and "outgoing_rate_limit"
+			// therefore when:
+			// * vCD is 9.0 or less and this is a "read" operation for a resource (not datasource) -
+			// we check what the user has set in the config and passing through the same value.
+			// Note. If it wasn't "TypeSet" with more values - it would be possible to simply omit
+			// setting the field.
+			if vcdClient.Client.APIVCDMaxVersionIs("<= 29") && origin == "resource" {
+				log.Printf("[TRACE] edge gateway - skipping read of external networks on vCD 9.0 "+
+					"because for network %s it does not return these values", extNetwork.Network.Name)
+				stateGatewayInterfaces, _ := getGatewayInterfacesType(vcdClient, d.Get("external_network").(*schema.Set))
+				for _, stateInterface := range stateGatewayInterfaces {
+					if stateInterface.Network.Name == extNetwork.Network.Name {
+						extNetworkMap["enable_rate_limit"] = stateInterface.ApplyRateLimit
+						extNetworkMap["incoming_rate_limit"] = stateInterface.InRateLimit
+						extNetworkMap["outgoing_rate_limit"] = stateInterface.OutRateLimit
+					}
+				}
+			} else {
+				extNetworkMap["enable_rate_limit"] = extNetwork.ApplyRateLimit
+				extNetworkMap["incoming_rate_limit"] = extNetwork.InRateLimit
+				extNetworkMap["outgoing_rate_limit"] = extNetwork.OutRateLimit
+			}
+
+			if len(extNetwork.SubnetParticipation) > 0 {
+				subnet, err := getExternalNetworkSubnetTypeSet(extNetwork.SubnetParticipation, vcdClient, d, extNetwork.Network.Name)
+				if err != nil {
+					return nil, fmt.Errorf("unable to create subnet structure for storing in statefile: %s", err)
+				}
+				extNetworkMap["subnet"] = subnet
+
+				externalNetworkSlice = append(externalNetworkSlice, extNetworkMap)
+			}
+		}
+	}
+	externalNetworkSet := schema.NewSet(schema.HashResource(externalNetworkResource), externalNetworkSlice)
+
+	return externalNetworkSet, nil
+}
+
+// getExternalNetworkSubnetTypeSet creates a Hashicorp TypeSet holding all subnets defined for
+// external network (including sub-allocated pools)
+func getExternalNetworkSubnetTypeSet(subnetParticipation []*types.SubnetParticipation, vcdClient *VCDClient, d *schema.ResourceData, extNetworkName string) (*schema.Set, error) {
+	externalNetworkSubnetSlice := make([]interface{}, len(subnetParticipation))
+	for extNetsubnetIndex, extNetsubnet := range subnetParticipation {
+		extNetworkSubnetMap := make(map[string]interface{})
+		extNetworkSubnetMap["gateway"] = extNetsubnet.Gateway
+		extNetworkSubnetMap["netmask"] = extNetsubnet.Netmask
+		extNetworkSubnetMap["use_for_default_route"] = extNetsubnet.UseForDefaultRoute
+
+		// IP address is tricky. It is only possible to set the IP address during read if it
+		// was actually a used field in .tf configuration. If it was not used, it cannot be
+		// set because Terraform will recommend to rebuild whole block every time, because
+		// `computed` field causes the hash function for TypeSet to be recomputed ("known
+		// after apply") every time.
+		wasIpSet, err := wasIpAddressSet(vcdClient, d, extNetworkName, extNetsubnet.Gateway, extNetsubnet.Netmask)
+		if err != nil {
+			return nil, fmt.Errorf("could not check if IP address was set in configuration: %s", err)
+		}
+		if wasIpSet {
+			extNetworkSubnetMap["ip_address"] = extNetsubnet.IPAddress
+		}
+
+		// Check for suballocated ip pools and set them if there are any
+		if extNetsubnet.IPRanges != nil && len(extNetsubnet.IPRanges.IPRange) > 0 {
+			// Hash externalNetworkSubnetRangeSlice and add it to parent object "subnet"
+			extNetworkSubnetMap["suballocate_pool"] = getExternalNetworkIPRangeSubAllocatePoolTypeSet(extNetsubnet.IPRanges.IPRange)
+		}
+
+		// Make a set and add it to externalNetworkSubnetSlice
+		externalNetworkSubnetSlice[extNetsubnetIndex] = extNetworkSubnetMap
+	}
+
+	return schema.NewSet(schema.HashResource(subnetResource), externalNetworkSubnetSlice), nil
+}
+
+// getExternalNetworkIPRangeSubAllocatePoolTypeSet creates a Hashicorp TypeSet holding all IP ranges of sub-allocated pools
+func getExternalNetworkIPRangeSubAllocatePoolTypeSet(ipRanges []*types.IPRange) *schema.Set {
+	externalNetworkSubnetRangeSlice := make([]interface{}, len(ipRanges))
+	for ipRangeIndex, ipRange := range ipRanges {
+		extNetworkSubnetRangeMap := make(map[string]interface{})
+		extNetworkSubnetRangeMap["start_address"] = ipRange.StartAddress
+		extNetworkSubnetRangeMap["end_address"] = ipRange.EndAddress
+
+		externalNetworkSubnetRangeSlice[ipRangeIndex] = extNetworkSubnetRangeMap
+	}
+	// Hash and return IP ranges of sub-allocated pools
+	return schema.NewSet(schema.HashResource(subAllocationPool), externalNetworkSubnetRangeSlice)
+}
+
+// wasIpAddressSet checks if specific `SubnetParticipation` element had IP address field populated
+// in .tf configuration. It is needed to decide whether a computed IP address field should be set,
+// because TypeSet is very sensitive to injecting any new data (ends up with new hash and shows
+// replacement of whole object)
+func wasIpAddressSet(vcdClient *VCDClient, d *schema.ResourceData, extNetworkName, extNetworkGateway, extNetworkNetmask string) (bool, error) {
+	// Cache currently set configuration
+	gwInterfaces, err := getGatewayInterfacesType(vcdClient, d.Get("external_network").(*schema.Set))
+	if err != nil {
+		return false, fmt.Errorf("could not read current state configuration: %s", err)
+	}
+
+	for _, k := range gwInterfaces {
+		if k.Network.Name == extNetworkName {
+			for _, kk := range k.SubnetParticipation {
+				if kk.Gateway == extNetworkGateway && kk.Netmask == extNetworkNetmask {
+					if kk.IPAddress != "" {
+						return true, nil
+					}
+				}
+			}
+		}
+	}
+	return false, nil
+}
+
+// Convenience function to fill edge gateway values from resource data
+func setEdgeGatewayValues(vcdClient *VCDClient, d *schema.ResourceData, egw govcd.EdgeGateway, origin string) error {
+	log.Printf("[TRACE] edge gateway read - setting values")
 	d.SetId(egw.EdgeGateway.ID)
 	err := d.Set("name", egw.EdgeGateway.Name)
 	if err != nil {
@@ -371,22 +914,67 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	if err != nil {
 		return err
 	}
-	var gateways = make(map[string]string)
-	var networks []string
-	for _, net := range egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
-		if net.InterfaceType == "uplink" {
-			networks = append(networks, net.Network.Name)
 
-			for _, subnet := range net.SubnetParticipation {
-				gateways[subnet.Gateway] = net.Network.Name
+	_, simpleExternalNetworksSet := d.GetOk("external_networks")
+	// When `external_networks` field was not used - we set a more rich `external_network` block
+	// which allows to set multiple used subnets, manual IP addresses for IPs assigned to edge
+	// gateway and which subnet should be used as the default one for edge gateway. Data source
+	// always gets it populated.
+	if !simpleExternalNetworksSet || origin == "datasource" {
+		externalNetworkData, err := getExternalNetworkData(vcdClient, d, egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface, origin)
+		if err != nil {
+			return fmt.Errorf("[edgegateway read] could not process network interface data: %s", err)
+		}
+
+		err = d.Set("external_network", externalNetworkData)
+		if err != nil {
+			return fmt.Errorf("[edgegateway read] could not set external_network block: %s", err)
+		}
+
+	}
+
+	// only if `external_networks` field was used or it is a data source we set the older
+	// fields "external_networks"
+	if simpleExternalNetworksSet || origin == "datasource" {
+		var gateways = make(map[string]string)
+		var networks []string
+		for _, net := range egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
+			if net.InterfaceType == "uplink" {
+				networks = append(networks, net.Network.Name)
+
+				for _, subnet := range net.SubnetParticipation {
+					gateways[subnet.Gateway] = net.Network.Name
+				}
 			}
 		}
-	}
-	err = d.Set("external_networks", networks)
-	if err != nil {
-		return err
+		err = d.Set("external_networks", networks)
+		if err != nil {
+			return err
+		}
 	}
 
+	// Populate list of external_network_ip_addresses
+	log.Printf("[TRACE] creating edge gateway using simple 'external_networks' and 'default_gateway_network' fields")
+	var externalNets []interface{}
+	for _, net := range egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
+		if net.InterfaceType == "uplink" {
+			for _, subnet := range net.SubnetParticipation {
+				externalNets = append(externalNets, subnet.IPAddress)
+			}
+		}
+
+	}
+	err = d.Set("external_network_ips", externalNets)
+	if err != nil {
+		return fmt.Errorf("could not set external_network_ip_addresses field: %s", err)
+	}
+
+	_ = d.Set("use_default_route_for_dns_relay", egw.EdgeGateway.Configuration.UseDefaultRouteForDNSRelay)
+	// vCD API v29.0 does not return this field (probably because it started to work only in version
+	// which was introduced with vCD 9.1 (API v30.0))
+	if egw.EdgeGateway.Configuration.FipsModeEnabled != nil {
+		_ = d.Set("fips_mode_enabled", egw.EdgeGateway.Configuration.FipsModeEnabled)
+	}
 	_ = d.Set("advanced", egw.EdgeGateway.Configuration.AdvancedNetworkingEnabled)
 	_ = d.Set("ha_enabled", egw.EdgeGateway.Configuration.HaEnabled)
 
@@ -400,26 +988,18 @@ func setEdgeGatewayValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 		}
 
 		for _, subnet := range gw.SubnetParticipation {
-			defaultGwNet, ok := gateways[subnet.Gateway]
-			if ok { // found default gateway network - set it
-				_ = d.Set("default_gateway_network", defaultGwNet)
-			}
-
-			// Check if this subnet is used as default gateway and set the IP
+			// Check if this subnet is used as default gateway and set IP and `default_gateway_network` value
 			if subnet.UseForDefaultRoute {
+				_ = d.Set("default_gateway_network", gw.Network.Name)
 				_ = d.Set("default_external_network_ip", subnet.IPAddress)
 			}
 		}
 	}
-	// TODO: Enable this setting after we switch to a higher API version.
-	//Based on testing the API does accept (and set) the setting, but upon GET query it omits the DistributedRouting
-	// field therefore struct field defaults to false after unmarshaling.
-	//This has already been a case for us and then it was proven that API v27.0 does not return field, while API v31.0
-	// does return the field. (Thanks, Dainius)
-	//err = d.Set("distributed_routing", egw.EdgeGateway.Configuration.DistributedRoutingEnabled)
-	//if err != nil {
-	//	return err
-	//}
+
+	err = d.Set("distributed_routing", egw.EdgeGateway.Configuration.DistributedRoutingEnabled)
+	if err != nil {
+		return err
+	}
 
 	d.SetId(egw.EdgeGateway.ID)
 	return nil
@@ -496,36 +1076,4 @@ func updateFirewall(d *schema.ResourceData, egw govcd.EdgeGateway) error {
 	}
 
 	return nil
-}
-
-// resourceVcdEdgeGatewayImport is responsible for importing the resource.
-// The following steps happen as part of import
-// 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
-// 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
-// 3. The functions splits the dot-formatted path and tries to lookup the object
-// 4. If the lookup succeeds it sets the ID field for `_resource_name_` resource in statefile
-// (the resource must be already defined in .tf config otherwise `terraform import` will complain)
-// 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
-// based on the known ID of object.
-//
-// Example resource name (_resource_name_): vcd_edgegateway.my-edge-gateway
-// Example import path (_the_id_string_): org.vdc.my-edge-gw
-// Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func resourceVcdEdgeGatewayImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	resourceURI := strings.Split(d.Id(), ImportSeparator)
-	if len(resourceURI) != 3 {
-		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-name.edge-gw-name")
-	}
-	orgName, vdcName, edgeName := resourceURI[0], resourceURI[1], resourceURI[2]
-
-	vcdClient := meta.(*VCDClient)
-	edgeGateway, err := vcdClient.GetEdgeGateway(orgName, vdcName, edgeName)
-	if err != nil {
-		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
-	}
-
-	_ = d.Set("org", orgName)
-	_ = d.Set("vdc", vdcName)
-	d.SetId(edgeGateway.EdgeGateway.ID)
-	return []*schema.ResourceData{d}, nil
 }

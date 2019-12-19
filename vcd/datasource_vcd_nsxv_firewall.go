@@ -107,16 +107,15 @@ func datasourceVcdNsxvFirewallRule() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						// TODO - ipsets and security groups need further investigation and at least
-						// "Get" capability in govcd
-						// "ipsets": {
-						// 	Type:        schema.TypeSet,
-						// 	Computed:    true,
-						// 	Description: "Set of IP set names",
-						// 	Elem: &schema.Schema{
-						// 		Type: schema.TypeString,
-						// 	},
-						// },
+						"ip_sets": {
+							Type:        schema.TypeSet,
+							Computed:    true,
+							Description: "Set of IP set names",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						// TODO - uncomment once security groups are supported
 						// "security_groups": {
 						// 	Type:        schema.TypeSet,
 						// 	Computed:    true,
@@ -173,16 +172,15 @@ func datasourceVcdNsxvFirewallRule() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						// TODO - ipsets and security groups need further investigation and at least
-						// "Get" capability in govcd
-						// "ipsets": {
-						// 	Optional:    true,
-						// 	Type:        schema.TypeSet,
-						// 	Description: "Set of IP set names",
-						// 	Elem: &schema.Schema{
-						// 		Type: schema.TypeString,
-						// 	},
-						// },
+						"ip_sets": {
+							Computed:    true,
+							Type:        schema.TypeSet,
+							Description: "Set of IP set names",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						// TODO - uncomment once security groups are supported
 						// "security_groups": {
 						// 	Optional:    true,
 						// 	Type:        schema.TypeSet,
