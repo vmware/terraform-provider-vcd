@@ -41,10 +41,12 @@ The following arguments are supported:
 * `size_in_mb` - (Required) The size of the disk in MB. 
 * `bus_number` - (Required) The number of the SCSI or IDE controller itself.
 * `unit_number` - (Required) The device number on the SCSI or IDE controller of the disk.
-* `thin_provisioned` - (Optional) Specifies whether the disk storage is pre-allocated or allocated on demand.
 * `iops` - (Optional) Specifies the IOPS for the disk. Default - 0.
 * `storage_profile` - (Optional) Storage profile which overrides the VM default one.
 
+## Attribute reference
+
+* `thin_provisioned` - Specifies whether the disk storage is pre-allocated or allocated on demand.
 
 ## Importing
 
