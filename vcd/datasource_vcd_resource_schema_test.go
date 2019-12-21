@@ -7,9 +7,9 @@ import (
 	"testing"
 )
 
-func TestAccVcdDatasourceInfo(t *testing.T) {
+func TestAccVcdDatasourceResourceSchema(t *testing.T) {
 
-	configText := templateFill(testAccCheckVcdDatasourceInfo, StringMap{})
+	configText := templateFill(testAccCheckVcdDatasourceStructure, StringMap{})
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -25,20 +25,20 @@ func TestAccVcdDatasourceInfo(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"data.vcd_info.list_resources", "name", "list_resources"),
+						"data.vcd_resource_schema.struct_org", "name", "struct_org"),
 				),
 			},
 		},
 	})
 }
 
-const testAccCheckVcdDatasourceInfo = `
-data "vcd_info" "list_resources" {
-  name          = "list_resources"
-  resource_type = "resources"
+const testAccCheckVcdDatasourceStructure = `
+data "vcd_resource_schema" "struct_org" {
+  name          = "struct_org"
+  resource_type = "vcd_org"
 }
 
 output "resources" {
-  value = data.vcd_info.list_resources
+  value = data.vcd_resource_schema.struct_org
 }
 `

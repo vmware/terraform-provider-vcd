@@ -45,18 +45,18 @@ var (
 	}
 
 	VcdDatasourcesMap = map[string]*schema.Resource{
-		"vcd_info":               datasourceVcdInfo(),             // 2.7
-		"vcd_structure":          datasourceVcdStructure(),        // 2.7
-		"vcd_org":                datasourceVcdOrg(),              // 2.5
-		"vcd_org_vdc":            datasourceVcdOrgVdc(),           // 2.5
-		"vcd_catalog":            datasourceVcdCatalog(),          // 2.5
-		"vcd_catalog_media":      datasourceVcdCatalogMedia(),     // 2.5
-		"vcd_catalog_item":       datasourceVcdCatalogItem(),      // 2.5
-		"vcd_edgegateway":        datasourceVcdEdgeGateway(),      // 2.5
-		"vcd_external_network":   datasourceVcdExternalNetwork(),  // 2.5
-		"vcd_independent_disk":   datasourceVcIndependentDisk(),   // 2.5
-		"vcd_network_routed":     datasourceVcdNetworkRouted(),    // 2.5
-		"vcd_network_direct":     datasourceVcdNetworkDirect(),    // 2.5
+		"vcd_resource_list":    datasourceVcdResourceList(),       // 2.7
+		"vcd_resource_schema":  datasourceVcdResourceSchema(),     // 2.7
+		"vcd_org":              datasourceVcdOrg(),                // 2.5
+		"vcd_org_vdc":          datasourceVcdOrgVdc(),             // 2.5
+		"vcd_catalog":          datasourceVcdCatalog(),            // 2.5
+		"vcd_catalog_media":    datasourceVcdCatalogMedia(),       // 2.5
+		"vcd_catalog_item":     datasourceVcdCatalogItem(),        // 2.5
+		"vcd_edgegateway":      datasourceVcdEdgeGateway(),        // 2.5
+		"vcd_external_network": datasourceVcdExternalNetwork(),    // 2.5
+		"vcd_independent_disk": datasourceVcIndependentDisk(),     // 2.5
+		"vcd_network_routed":   datasourceVcdNetworkRouted(),      // 2.5
+		"vcd_network_direct":   datasourceVcdNetworkDirect(),      // 2.5
 		"vcd_network_isolated":   datasourceVcdNetworkIsolated(),  // 2.5
 		"vcd_vapp":               datasourceVcdVApp(),             // 2.5
 		"vcd_vapp_vm":            datasourceVcdVAppVm(),           // 2.6

@@ -1,12 +1,12 @@
 --
 layout: "vcd"
-page_title: "vCloudDirector: vcd_structure"
-sidebar_current: "docs-vcd-datasource-structure"
+page_title: "vCloudDirector: vcd_resource_schema"
+sidebar_current: "docs-vcd-datasource-resource-schema"
 description: |-
   Provides information about a vCD resource structure
 ---
 
-# vcd\_structure
+# vcd\_resource_schema
 
 Provides a vCloud Director generic structure data source. It shows the structure of any vCD resource.
 
@@ -17,14 +17,14 @@ Supported in provider *v2.7+*
 Showing a structure with simple attributes only 
 
 ```hcl
-data "vcd_structure" "org_struct" {
+data "vcd_resource_schema" "org_struct" {
   name          = "org_struct"
   resource_type = "vcd_org"
 }
 
 // Shows the organization attributes
 output "org_struct" {
-  value = data.vcd_structure.org_struct.attributes
+  value = data.vcd_resource_schema.org_struct.attributes
 }
 /* 
 output:
@@ -137,13 +137,13 @@ org_struct = [
 Showing a structure with both simple and compound attributes
 
 ```hcl
-data "vcd_structure" "network_isolated_struct" {
+data "vcd_resource_schema" "network_isolated_struct" {
   name          = "net_struct"
   resource_type = "vcd_network_isolated"
 }
 
 output "net_struct" {
-  value = data.vcd_structure.net_struct
+  value = data.vcd_resource_schema.net_struct
 }
 /* 
 output:

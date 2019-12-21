@@ -1,12 +1,12 @@
 --
 layout: "vcd"
-page_title: "vCloudDirector: vcd_info"
-sidebar_current: "docs-vcd-datasource-info"
+page_title: "vCloudDirector: vcd_resource_list"
+sidebar_current: "docs-vcd-datasource-resource-list"
 description: |-
-  Provides information about vCD resources
+  Provides lists of vCD resources
 ---
 
-# vcd\_info
+# vcd\_resource_list
 
 Provides a vCloud Director generic data source. It provides a list of existing resources in various formats.
 
@@ -15,15 +15,15 @@ Supported in provider *v2.7+*
 ## Example Usage 1
 
 ```hcl
-data "vcd_info" "list_of_orgs" {
+data "vcd_resource_list" "list_of_orgs" {
   name          = "list_of_orgs"
-  resource_type = "org"
+  resource_type = "vcd_org"
   list_mode     = "name"
 }
 
 // Shows the list of organizations
 output "org_list" {
-  value = data.vcd_info.list_of_orgs.list
+  value = data.vcd_resource_list.list_of_orgs.list
 }
 /* 
 output:
@@ -37,7 +37,7 @@ output:
 ## Example Usage 2
 
 ```hcl
-data "vcd_info" "list_of_orgs" {
+data "vcd_resource_list" "list_of_orgs" {
   name          = "list_of_orgs"
   resource_type = "org"
   list_mode     = "name_id"
@@ -45,7 +45,7 @@ data "vcd_info" "list_of_orgs" {
 
 // Shows the list of organizations with the corresponding ID
 output "org_list" {
-  value = data.vcd_info.list_of_orgs.list
+  value = data.vcd_resource_list.list_of_orgs.list
 }
 /* 
 output:
@@ -58,7 +58,7 @@ output:
 
 ## Example Usage 3
 ```hcl
-data "vcd_info" "list_of_nets" {
+data "vcd_resource_list" "list_of_nets" {
   name          = "list_of_nets"
   resource_type = "network" // Finds all networks, regardless of their type
   list_mode     = "import"
@@ -66,7 +66,7 @@ data "vcd_info" "list_of_nets" {
 
 // Shows the list of all networks with the corresponding import command
 output "net_list" {
-  value = data.vcd_info.list_of_nets.list
+  value = data.vcd_resource_list.list_of_nets.list
 }
 
 /*
@@ -81,7 +81,7 @@ list_networks_import = [
 
 ## Example Usage 4
 ```hcl
-data "vcd_info" "list_network_hierarchy" {
+data "vcd_resource_list" "list_network_hierarchy" {
   name          = "list_of_nets"
   resource_type = "network" // Finds all networks, regardless of their type
   list_mode     = "hierarchy"
@@ -89,7 +89,7 @@ data "vcd_info" "list_network_hierarchy" {
 
 // Shows the list of all networks with their parent entities
 output "net_network_hierarchy" {
-  value = data.vcd_info.list_network_hierarchy.list
+  value = data.vcd_resource_list.list_network_hierarchy.list
 }
 
 /*
@@ -105,7 +105,7 @@ list_networks_hierarchy = [
 
 ## Example Usage 5
 ```hcl
-data "vcd_info" "list_of_nets" {
+data "vcd_resource_list" "list_of_nets" {
   name          = "list_of_nets"
   resource_type = "network_routed"
   list_mode     = "name"
@@ -113,12 +113,12 @@ data "vcd_info" "list_of_nets" {
 
 // Shows the list of routed networks
 output "net_list" {
-  value = data.vcd_info.list_of_nets.list
+  value = data.vcd_resource_list.list_of_nets.list
 }
 
 // Uses the list of networks to get the data source of each
 data "vcd_network_routed" "full_networks" {
-  for_each = toset(data.vcd_info.net_list.list)
+  for_each = toset(data.vcd_resource_list.net_list.list)
   name     = each.value
   org      = "my-org"
   vdc      = "my-vdc"
@@ -176,14 +176,14 @@ full_networks = {
 ## Example Usage 6
 
 ```hcl
-data "vcd_info" "list_of_resources" {
+data "vcd_resource_list" "list_of_resources" {
   name          = "list_of_resources"
   resource_type = "resources"
 }
 
 // Shows the list of resource types for VCD provider
 output "resource_list" {
-  value = data.vcd_info.list_of_resources.list
+  value = data.vcd_resource_list.list_of_resources.list
 }
 ```
 

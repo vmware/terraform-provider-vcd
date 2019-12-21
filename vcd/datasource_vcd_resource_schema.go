@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
-func datasourceVcdStructure() *schema.Resource {
+func datasourceVcdResourceSchema() *schema.Resource {
 	Attribute := schema.Schema{
 		Type:        schema.TypeList,
 		Computed:    true,
@@ -52,7 +52,7 @@ func datasourceVcdStructure() *schema.Resource {
 		},
 	}
 	return &schema.Resource{
-		Read: datasourceVcdStructureRead,
+		Read: datasourceVcdResourceSchemaRead,
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
@@ -89,7 +89,7 @@ func datasourceVcdStructure() *schema.Resource {
 	}
 }
 
-func datasourceVcdStructureRead(d *schema.ResourceData, meta interface{}) error {
+func datasourceVcdResourceSchemaRead(d *schema.ResourceData, meta interface{}) error {
 
 	resourceType := d.Get("resource_type").(string)
 

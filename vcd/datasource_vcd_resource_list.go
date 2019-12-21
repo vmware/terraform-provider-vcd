@@ -8,9 +8,9 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
-func datasourceVcdInfo() *schema.Resource {
+func datasourceVcdResourceList() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceVcdInfoRead,
+		Read: datasourceVcdResourceListRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
@@ -458,17 +458,6 @@ func vappVmList(d *schema.ResourceData, meta interface{}) (list []string, err er
 	return list, nil
 }
 
-/*
-func getDataSourceList() (list []string, err error) {
-
-	p := Provider()
-	for _, r := range p.DataSources() {
-		list = append(list, r.Name)
-	}
-	return
-}
-*/
-
 func getResourcesList() (list []string, err error) {
 	resources := VcdResourcesMap
 	for name := range resources {
@@ -477,7 +466,7 @@ func getResourcesList() (list []string, err error) {
 	return
 }
 
-func datasourceVcdInfoRead(d *schema.ResourceData, meta interface{}) error {
+func datasourceVcdResourceListRead(d *schema.ResourceData, meta interface{}) error {
 
 	requested := d.Get("resource_type")
 	var err error
@@ -486,25 +475,26 @@ func datasourceVcdInfoRead(d *schema.ResourceData, meta interface{}) error {
 	// Note: do not try to get the data sources list, as it would result in a circular reference
 	case "resource", "resources":
 		list, err = getResourcesList()
-	case "org", "orgs":
+	case "vcd_org", "org", "orgs":
 		list, err = orgList(d, meta)
-	case "external_network", "external_networks":
+	case "vcd_external_network", "external_network", "external_networks":
 		list, err = externalNetworkList(d, meta)
-	case "vdc", "vdcs":
+	case "vcd_org_vdc", "vdc", "vdcs":
 		list, err = vdcList(d, meta)
-	case "catalog", "catalogs":
+	case "vcd_catalog", "catalog", "catalogs":
 		list, err = catalogList(d, meta)
-	case "catalog_item", "catalog_items", "catalogitem", "catalogitems":
+	case "vcd_catalog_item", "catalog_item", "catalog_items", "catalogitem", "catalogitems":
 		list, err = catalogItemList(d, meta)
-	case "vapp", "vapps":
+	case "vcd_vapp", "vapp", "vapps":
 		list, err = vappList(d, meta)
-	case "vapp_vm", "vapp_vms":
+	case "vcd_vapp_vm", "vapp_vm", "vapp_vms":
 		list, err = vappVmList(d, meta)
-	case "org_user", "user", "users":
+	case "vcd_org_user", "org_user", "user", "users":
 		list, err = orgUserList(d, meta)
-	case "edge_gateway", "edge", "edgegateway":
+	case "vcd_edgegateway", "edge_gateway", "edge", "edgegateway":
 		list, err = edgeGatewayList(d, meta)
-	case "network", "networks", "network_direct", "network_routed", "network_isolated":
+	case "vcd_network_isolated", "vcd_network_direct", "vcd_network_routed",
+		"network", "networks", "network_direct", "network_routed", "network_isolated":
 		list, err = networkList(d, meta)
 		//// place holder to remind of what needs to be implemented
 		//	case "edgegateway_vpn",
@@ -525,7 +515,6 @@ func datasourceVcdInfoRead(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 	err = d.Set("list", list)
-	fmt.Printf("%#v\n", list)
 	if err != nil {
 		return err
 	}
