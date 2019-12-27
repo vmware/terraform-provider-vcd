@@ -1,4 +1,9 @@
 ## 2.7.0 (Unreleased)
+
+* Drop support for vCD 9.0 
+* **New Resource:** `vcd_vm_internal_disk` VM internal disk configuration
+* `vcd_vapp_vm` Internal disks in VM template allows to be edited by `override_template_disk` field 
+ 
 ## 2.6.0 (December 13, 2019)
 
 FEATURES:
