@@ -815,14 +815,14 @@ func importStateIdEdgeGatewayObject(vcd TestConfig, edgeGatewayName, objectName 
 }
 
 // Used by all entities that depend on Org + VDC + vApp VM (such as VM internal disks)
-func importStateIdVmObject(vcd TestConfig, vappName, vmName, objectName string) resource.ImportStateIdFunc {
+func importStateIdVmObject(orgName, vdcName, vappName, vmName, objectName string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
-		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || vappName == "" || vmName == "" || objectName == "" {
+		if orgName == "" || vdcName == "" || vappName == "" || vmName == "" || objectName == "" {
 			return "", fmt.Errorf("missing information to generate import path")
 		}
-		return testConfig.VCD.Org +
+		return orgName +
 			ImportSeparator +
-			testConfig.VCD.Vdc +
+			vdcName +
 			ImportSeparator +
 			vappName +
 			ImportSeparator +

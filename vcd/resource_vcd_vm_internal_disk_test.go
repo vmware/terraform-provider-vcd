@@ -6,11 +6,9 @@ import (
 	"fmt"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"regexp"
-	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
 func TestAccVcdVmInternalDisk(t *testing.T) {
@@ -21,44 +19,44 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 		return
 	}
 
-	adminVdc, err := getAdminVdc()
-	if err != nil {
-		t.Skip(fmt.Sprintf("error retrieving if VDC is thing provisioned %s", err))
-		return
-	}
-
-	vapp, err := getAvailableVapp()
-	if err != nil {
-		t.Skip("No suitable vApp found for this test")
-		return
-	}
-	var vm *govcd.VM
-
-	if vapp.VApp.Children != nil && len(vapp.VApp.Children.VM) > 0 {
-		vm, err = vapp.GetVMById(vapp.VApp.Children.VM[0].ID, false)
+	/*	adminVdc, err := getAdminVdc()
 		if err != nil {
-			t.Skip(fmt.Sprintf("error retrieving VM %s", vapp.VApp.Children.VM[0].Name))
+			t.Skip(fmt.Sprintf("error retrieving if VDC is thing provisioned %s", err))
 			return
 		}
-	}
-	if vm == nil {
-		t.Skip(fmt.Sprintf("No VM available in vApp %s", vapp.VApp.Name))
-		return
-	}
 
-	// for test to run correctly VM has to be power on
-	task, err := vm.PowerOn()
-	if err != nil {
-		t.Skip(fmt.Sprintf("Error powering up vm %s", err))
-		return
-	}
-	_ = task.WaitTaskCompletion()
+		vapp, err := getAvailableVapp()
+		if err != nil {
+			t.Skip("No suitable vApp found for this test")
+			return
+		}
+		var vm *govcd.VM
+
+		if vapp.VApp.Children != nil && len(vapp.VApp.Children.VM) > 0 {
+			vm, err = vapp.GetVMById(vapp.VApp.Children.VM[0].ID, false)
+			if err != nil {
+				t.Skip(fmt.Sprintf("error retrieving VM %s", vapp.VApp.Children.VM[0].Name))
+				return
+			}
+		}
+		if vm == nil {
+			t.Skip(fmt.Sprintf("No VM available in vApp %s", vapp.VApp.Name))
+			return
+		}
+
+		// for test to run correctly VM has to be power on
+		task, err := vm.PowerOn()
+		if err != nil {
+			t.Skip(fmt.Sprintf("Error powering up vm %s", err))
+			return
+		}
+		_ = task.WaitTaskCompletion()*/
 
 	storageProfile := testConfig.VCD.ProviderVdc.StorageProfile
-	if *adminVdc.UsesFastProvisioning {
+	/*	if *adminVdc.UsesFastProvisioning {
 		// to avoid `Cannot use multiple storage profiles in a fast-provisioned VDC` we need to reuse VM storage profile
 		storageProfile = vm.VM.StorageProfile.Name
-	}
+	}*/
 
 	diskResourceName := "disk1"
 	diskSize := "13333"
@@ -68,11 +66,14 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 	unitNumber := "0"
 	allowReboot := true
 
+	vappName := "TestInternalDiskVapp"
+	vmName := "TestInternalDiskVm"
+	vdcName := "ForInternalDiskTest"
 	var params = StringMap{
-		"Org":                testConfig.VCD.Org,
-		"VDC":                testConfig.VCD.Vdc,
-		"VappName":           vapp.VApp.Name,
-		"VmName":             vm.VM.Name,
+		"Org": testConfig.VCD.Org,
+		//"VDC": testConfig.VCD.Vdc,
+		//		"VappName":           vapp.VApp.Name,
+		//		"VmName":             vm.VM.Name,
 		"FuncName":           "TestVappVmDS",
 		"Tags":               "vm",
 		"DiskResourceName":   diskResourceName,
@@ -83,6 +84,25 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 		"UnitNumber":         unitNumber,
 		"StorageProfileName": testConfig.VCD.ProviderVdc.StorageProfile,
 		"AllowReboot":        allowReboot,
+
+		"VdcName":                   vdcName,
+		"OrgName":                   testConfig.VCD.Org,
+		"AllocationModel":           "ReservationPool",
+		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
+		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
+		"Allocated":                 "1024",
+		"Reserved":                  "1024",
+		"Limit":                     "1024",
+		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+		// cause vDC ignores empty values and use default
+		"MemoryGuaranteed": "1",
+		"CpuGuaranteed":    "1",
+
+		"Catalog":      testSuiteCatalogName,
+		"CatalogItem":  testSuiteCatalogOVAItem,
+		"VappName":     vappName,
+		"VmName":       vmName,
+		"ComputerName": vmName + "Unique",
 	}
 	params["FuncName"] = t.Name() + "-IdeCreate"
 	configTextIde := templateFill(sourceTestVmInternalDiskIde, params)
@@ -104,7 +124,7 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "size_in_mb", diskSize),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "bus_type", "ide"),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "bus_number", "0"),
-					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "unit_number", "1"),
+					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "unit_number", "0"),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "storage_profile", storageProfile),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "allow_vm_reboot", "false"),
 				),
@@ -116,14 +136,16 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "bus_number", busNumber),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "unit_number", unitNumber),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "storage_profile", storageProfile),
-					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "thin_provisioned", strconv.FormatBool(*adminVdc.IsThinProvision)),
+					//resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "thin_provisioned", strconv.FormatBool(*adminVdc.IsThinProvision)),
+					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "thin_provisioned", "true"),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "iops", "0"),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "size_in_mb", diskSize),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "bus_type", "ide"),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "bus_number", "0"),
-					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "unit_number", "1"),
+					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "unit_number", "0"),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "storage_profile", storageProfile),
-					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "thin_provisioned", strconv.FormatBool(*adminVdc.IsThinProvision)),
+					//resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "thin_provisioned", strconv.FormatBool(*adminVdc.IsThinProvision)),
+					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "thin_provisioned", "true"),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "iops", "0"),
 				),
 			},
@@ -136,24 +158,26 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "bus_number", busNumber),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "unit_number", unitNumber),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "storage_profile", storageProfile),
-					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "thin_provisioned", strconv.FormatBool(*adminVdc.IsThinProvision)),
+					//resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "thin_provisioned", strconv.FormatBool(*adminVdc.IsThinProvision)),
+					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "thin_provisioned", "true"),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "iops", "0"),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "allow_vm_reboot", "false"),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "bus_type", "ide"),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "bus_number", "0"),
-					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "unit_number", "1"),
+					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "unit_number", "0"),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "storage_profile", storageProfile),
-					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "thin_provisioned", strconv.FormatBool(*adminVdc.IsThinProvision)),
+					//resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "thin_provisioned", strconv.FormatBool(*adminVdc.IsThinProvision)),
+					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName, "thin_provisioned", "true"),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "size_in_mb", biggerDiskSize),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "iops", "0"),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "allow_vm_reboot", "true"),
 				),
 			},
 			resource.TestStep{
-				ResourceName:      "vcd_vm_internal_disk." + TestAccVcdVdc + "-import",
+				ResourceName:      "vcd_vm_internal_disk." + diskResourceName + "-import",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdVmObject(testConfig, vapp.VApp.Name, vm.VM.Name, "3001"),
+				ImportStateIdFunc: importStateIdVmObject(testConfig.VCD.Org, vdcName, vappName, vmName, "3000"),
 				// These fields can't be retrieved
 				ImportStateVerifyIgnore: []string{"org", "vdc", "allow_vm_reboot", "thin_provisioned"},
 			},
@@ -191,40 +215,96 @@ func getAdminVdc() (*types.AdminVdc, error) {
 	return adminVdc.AdminVdc, nil
 }
 
-const sourceTestVmInternalDiskIde = `
+// we need VDC with disabled fast provisioning to edit disks
+const sourceTestVmInternalDiskOrgVdcAndVM = `
+resource "vcd_org_vdc" "{{.VdcName}}" {
+  org  = "{{.OrgName}}"
+  name = "{{.VdcName}}" 
+
+  allocation_model = "{{.AllocationModel}}"
+  network_pool_name     = "{{.NetworkPool}}"
+  provider_vdc_name     = "{{.ProviderVdc}}"
+
+  compute_capacity {
+    cpu {
+      allocated = "{{.Allocated}}"
+      limit     = "{{.Limit}}"
+    }
+
+    memory {
+      allocated = "{{.Allocated}}"
+      limit     = "{{.Limit}}"
+    }
+  }
+
+  storage_profile {
+    name = "{{.ProviderVdcStorageProfile}}"
+    enabled  = true
+    limit    = 102400
+    default  = true
+  }
+
+  enabled                  = true
+  enable_thin_provisioning = true
+  enable_fast_provisioning = false
+  delete_force             = true
+  delete_recursive         = true
+}
+
+resource "vcd_vapp" "{{.VappName}}" {
+  org              = "{{.Org}}"
+  vdc              =  vcd_org_vdc.{{.VdcName}}.name
+  name = "{{.VappName}}"
+}
+
+resource "vcd_vapp_vm" "{{.VmName}}" {
+  org              = "{{.Org}}"
+  vdc              =  vcd_org_vdc.{{.VdcName}}.name
+  vapp_name     = vcd_vapp.{{.VappName}}.name
+  name          = "{{.VmName}}"
+  computer_name = "{{.ComputerName}}"
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  memory        = 1024
+  cpus          = 1
+  cpu_cores     = 1
+}
+`
+
+const sourceTestVmInternalDiskIde = sourceTestVmInternalDiskOrgVdcAndVM + `
 resource "vcd_vm_internal_disk" "{{.DiskResourceName}}_ide" {
   org              = "{{.Org}}"
-  vdc              = "{{.VDC}}"
-  vapp_name     = "{{.VappName}}"
-  vm_name     = "{{.VmName}}"
+  vdc              =  vcd_org_vdc.{{.VdcName}}.name
+  vapp_name     = vcd_vapp.{{.VappName}}.name
+  vm_name     = vcd_vapp_vm.{{.VmName}}.name
   bus_type = "ide"
   size_in_mb = "{{.Size}}"
   bus_number = "0"
-  unit_number = "1"
+  unit_number = "0"
   storage_profile = "{{.StorageProfileName}}"
   allow_vm_reboot = "false"
 }
 `
 
-const sourceTestVmInternalDisk = `
+const sourceTestVmInternalDisk = sourceTestVmInternalDiskOrgVdcAndVM + `
 resource "vcd_vm_internal_disk" "{{.DiskResourceName}}_ide" {
   org              = "{{.Org}}"
-  vdc              = "{{.VDC}}"
-  vapp_name     = "{{.VappName}}"
-  vm_name     = "{{.VmName}}"
+  vdc              =  vcd_org_vdc.{{.VdcName}}.name
+  vapp_name     = vcd_vapp.{{.VappName}}.name
+  vm_name     = vcd_vapp_vm.{{.VmName}}.name
   bus_type = "ide"
   size_in_mb = "{{.Size}}"
   bus_number = "0"
-  unit_number = "1"
+  unit_number = "0"
   storage_profile = "{{.StorageProfileName}}"
   allow_vm_reboot = "true" 
 }
 
 resource "vcd_vm_internal_disk" "{{.DiskResourceName}}" {
   org              = "{{.Org}}"
-  vdc              = "{{.VDC}}"
-  vapp_name     = "{{.VappName}}"
-  vm_name     = "{{.VmName}}"
+  vdc              =  vcd_org_vdc.{{.VdcName}}.name
+  vapp_name     = vcd_vapp.{{.VappName}}.name
+  vm_name     = vcd_vapp_vm.{{.VmName}}.name
   bus_type = "{{.BusType}}"
   size_in_mb = "{{.Size}}"
   bus_number = "{{.BusNumber}}"
@@ -234,12 +314,12 @@ resource "vcd_vm_internal_disk" "{{.DiskResourceName}}" {
 }
 `
 
-const sourceTestVmInternalDisk_Update1 = `
+const sourceTestVmInternalDisk_Update1 = sourceTestVmInternalDiskOrgVdcAndVM + `
 resource "vcd_vm_internal_disk" "{{.DiskResourceName}}" {
   org              = "{{.Org}}"
-  vdc              = "{{.VDC}}"
-  vapp_name     = "{{.VappName}}"
-  vm_name     = "{{.VmName}}"
+  vdc              =  vcd_org_vdc.{{.VdcName}}.name
+  vapp_name     = vcd_vapp.{{.VappName}}.name
+  vm_name     = vcd_vapp_vm.{{.VmName}}.name
   bus_type = "{{.BusType}}"
   size_in_mb = "{{.SizeBigger}}"
   bus_number = "{{.BusNumber}}"
@@ -250,13 +330,13 @@ resource "vcd_vm_internal_disk" "{{.DiskResourceName}}" {
 
 resource "vcd_vm_internal_disk" "{{.DiskResourceName}}_ide" {
   org              = "{{.Org}}"
-  vdc              = "{{.VDC}}"
-  vapp_name     = "{{.VappName}}"
-  vm_name     = "{{.VmName}}"
+  vdc              =  vcd_org_vdc.{{.VdcName}}.name
+  vapp_name     = vcd_vapp.{{.VappName}}.name
+  vm_name     = vcd_vapp_vm.{{.VmName}}.name
   bus_type = "ide"
   size_in_mb = "{{.SizeBigger}}"
   bus_number = "0"
-  unit_number = "1"
+  unit_number = "0"
   storage_profile = "{{.StorageProfileName}}"
   allow_vm_reboot = "true"
 }
