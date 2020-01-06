@@ -3,8 +3,6 @@
 package vcd
 
 import (
-	"fmt"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"regexp"
 	"testing"
 
@@ -195,7 +193,7 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 	})
 }
 
-func getAdminVdc() (*types.AdminVdc, error) {
+/*func getAdminVdc() (*types.AdminVdc, error) {
 	vcdClient, err := getTestVCDFromJson(testConfig)
 	if err != nil {
 		return nil, fmt.Errorf("error getting client configuration: %s", err)
@@ -213,7 +211,7 @@ func getAdminVdc() (*types.AdminVdc, error) {
 		return nil, fmt.Errorf("vdc not found : %s", err)
 	}
 	return adminVdc.AdminVdc, nil
-}
+}*/
 
 // we need VDC with disabled fast provisioning to edit disks
 const sourceTestVmInternalDiskOrgVdcAndVM = `
