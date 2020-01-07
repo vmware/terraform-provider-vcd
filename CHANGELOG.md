@@ -1,4 +1,8 @@
 ## 2.7.0 (Unreleased)
+
+NOTES:
+* Drop support for vCD 9.0
+
 ## 2.6.0 (December 13, 2019)
 
 FEATURES:
