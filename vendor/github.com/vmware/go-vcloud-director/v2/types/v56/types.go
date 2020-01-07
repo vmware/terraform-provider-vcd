@@ -382,6 +382,7 @@ type Vdc struct {
 
 	Link               LinkList             `xml:"Link,omitempty"`
 	Description        string               `xml:"Description,omitempty"`
+	Tasks              *TasksInProgress     `xml:"Tasks,omitempty"`
 	AllocationModel    string               `xml:"AllocationModel"`
 	ComputeCapacity    []*ComputeCapacity   `xml:"ComputeCapacity"`
 	ResourceEntities   []*ResourceEntities  `xml:"ResourceEntities,omitempty"`
@@ -389,10 +390,9 @@ type Vdc struct {
 	Capabilities       []*Capabilities      `xml:"Capabilities,omitempty"`
 	NicQuota           int                  `xml:"NicQuota"`
 	NetworkQuota       int                  `xml:"NetworkQuota"`
+	UsedNetworkCount   int                  `xml:"UsedNetworkCount,omitempty"`
 	VMQuota            int                  `xml:"VmQuota"`
 	IsEnabled          bool                 `xml:"IsEnabled"`
-	Tasks              *TasksInProgress     `xml:"Tasks,omitempty"`
-	UsedNetworkCount   int                  `xml:"UsedNetworkCount,omitempty"`
 	VdcStorageProfiles *VdcStorageProfiles  `xml:"VdcStorageProfiles"`
 }
 
@@ -405,15 +405,17 @@ type AdminVdc struct {
 	Xmlns string `xml:"xmlns,attr"`
 	Vdc
 
-	ResourceGuaranteedMemory *float64   `xml:"ResourceGuaranteedMemory,omitempty"`
-	ResourceGuaranteedCpu    *float64   `xml:"ResourceGuaranteedCpu,omitempty"`
-	VCpuInMhz                *int64     `xml:"VCpuInMhz,omitempty"`
-	IsThinProvision          *bool      `xml:"IsThinProvision,omitempty"`
-	NetworkPoolReference     *Reference `xml:"NetworkPoolReference,omitempty"`
-	ProviderVdcReference     *Reference `xml:"ProviderVdcReference"`
-	UsesFastProvisioning     *bool      `xml:"UsesFastProvisioning,omitempty"`
-	OverCommitAllowed        bool       `xml:"OverCommitAllowed,omitempty"`
-	VmDiscoveryEnabled       bool       `xml:"VmDiscoveryEnabled,omitempty"`
+	VCpuInMhz2               *int64         `xml:"VCpuInMhz2,omitempty"`
+	ResourceGuaranteedMemory *float64       `xml:"ResourceGuaranteedMemory,omitempty"`
+	ResourceGuaranteedCpu    *float64       `xml:"ResourceGuaranteedCpu,omitempty"`
+	VCpuInMhz                *int64         `xml:"VCpuInMhz,omitempty"`
+	IsThinProvision          *bool          `xml:"IsThinProvision,omitempty"`
+	NetworkPoolReference     *Reference     `xml:"NetworkPoolReference,omitempty"`
+	ProviderVdcReference     *Reference     `xml:"ProviderVdcReference"`
+	ResourcePoolRefs         *VimObjectRefs `xml:"vmext:ResourcePoolRefs,omitempty"`
+	UsesFastProvisioning     *bool          `xml:"UsesFastProvisioning,omitempty"`
+	OverCommitAllowed        bool           `xml:"OverCommitAllowed,omitempty"`
+	VmDiscoveryEnabled       bool           `xml:"VmDiscoveryEnabled,omitempty"`
 }
 
 // VdcStorageProfile represents the parameters to create a storage profile in an organization vDC.

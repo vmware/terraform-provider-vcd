@@ -72,7 +72,7 @@ func (vm *VM) Refresh() error {
 	vm.VM = &types.VM{}
 
 	_, err := vm.client.ExecuteRequestWithApiVersion(refreshUrl, http.MethodGet,
-		"", "error refreshing VM: %s", nil, vm.VM, vm.client.GetDefaultAPIVersionOrLaterThan32())
+		"", "error refreshing VM: %s", nil, vm.VM, vm.client.GetSpecificApiVersionOnCondition(">= 32.0", "32.0"))
 
 	// The request was successful
 	return err
@@ -1024,7 +1024,6 @@ func (vm *VM) UpdateInternalDisksAsync(disksSettingToUpdate *types.VmSpecSection
 		return Task{}, fmt.Errorf("cannot update disks, VM HREF is unset")
 	}
 
-	disksSettingToUpdate.Info = "Virtual hardware requirements (simplified)"
 	vmSpecSectionModified := true
 	disksSettingToUpdate.Modified = &vmSpecSectionModified
 
@@ -1035,6 +1034,6 @@ func (vm *VM) UpdateInternalDisksAsync(disksSettingToUpdate *types.VmSpecSection
 			Ovf:           types.XMLNamespaceOVF,
 			Name:          vm.VM.Name,
 			VmSpecSection: disksSettingToUpdate,
-		}, vm.client.GetDefaultAPIVersionOrLaterThan32())
+		}, vm.client.GetSpecificApiVersionOnCondition(">= 32.0", "32.0"))
 
 }

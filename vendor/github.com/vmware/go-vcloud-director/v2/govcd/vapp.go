@@ -893,7 +893,7 @@ func (client *Client) GetVMByHref(vmHref string) (*VM, error) {
 	newVm := NewVM(client)
 
 	_, err := client.ExecuteRequestWithApiVersion(vmHref, http.MethodGet,
-		"", "error retrieving vm: %s", nil, newVm.VM, client.GetDefaultAPIVersionOrLaterThan32())
+		"", "error retrieving vm: %s", nil, newVm.VM, client.GetSpecificApiVersionOnCondition(">= 32.0", "32.0"))
 
 	if err != nil {
 

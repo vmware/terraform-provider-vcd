@@ -272,7 +272,7 @@ func (vdc *Vdc) FindStorageProfileReference(name string) (types.Reference, error
 	}
 	for _, sp := range vdc.Vdc.VdcStorageProfiles.VdcStorageProfile {
 		if sp.Name == name {
-			return types.Reference{HREF: sp.HREF, Name: sp.Name}, nil
+			return types.Reference{HREF: sp.HREF, Name: sp.Name, ID: sp.ID}, nil
 		}
 	}
 	return types.Reference{}, fmt.Errorf("can't find any VDC Storage_profiles")
