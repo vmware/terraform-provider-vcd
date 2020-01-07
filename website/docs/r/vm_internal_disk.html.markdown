@@ -14,7 +14,7 @@ Supported in provider *v2.6+*
 
 ## Example Usage
 
-```
+```hcl
 resource "vcd_vm_internal_disk" "disk1" {
   vapp_name     = "my-vapp"
   vm_name     = "my-vm1"
