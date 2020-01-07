@@ -464,8 +464,12 @@ func getInternalDiskForImport(d *schema.ResourceData, meta interface{}, orgName,
 	}
 
 	d.SetId(disk.DiskId)
-	d.Set("org", orgName)
-	d.Set("vdc", vdcName)
+	if vcdClient.Org != orgName {
+		d.Set("org", orgName)
+	}
+	if vcdClient.Vdc != vdcName {
+		d.Set("vdc", vdcName)
+	}
 	d.Set("vapp_name", vappName)
 	d.Set("vm_name", vmName)
 	return []*schema.ResourceData{d}, nil
