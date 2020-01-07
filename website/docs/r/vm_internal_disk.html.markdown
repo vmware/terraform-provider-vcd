@@ -16,15 +16,15 @@ Supported in provider *v2.6+*
 
 ```hcl
 resource "vcd_vm_internal_disk" "disk1" {
-  vapp_name     = "my-vapp"
-  vm_name     = "my-vm1"
-  bus_type = "sata"
-  size_in_mb = "13333"
-  bus_number = 0
-  unit_number = 1
+  vapp_name       = "my-vapp"
+  vm_name         = "my-vm1"
+  bus_type        = "sata"
+  size_in_mb      = "13333"
+  bus_number      = 0
+  unit_number     = 1
   storage_profile = "Development"
   allow_vm_reboot = true
-  depends_on   = ["vcd_vapp_vm.web1"]
+  depends_on      = ["vcd_vapp_vm.web1"]
 }
 ```
 
