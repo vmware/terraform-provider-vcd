@@ -3,8 +3,6 @@
 package vcd
 
 import (
-	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -19,7 +17,6 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 	var vm govcd.VM
 	var diskResourceName = "TestAccVcdVAppVm_Basic_1"
 	var diskName = "TestAccVcdIndependentDiskBasic"
-	var internalDiskSize = 20000
 
 	var params = StringMap{
 		"Org":                testConfig.VCD.Org,
@@ -38,7 +35,6 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 		"storageProfileName": "*",
 		"diskResourceName":   diskResourceName,
 		"Tags":               "vapp vm",
-		"InternalDiskSize":   internalDiskSize,
 	}
 
 	configText := templateFill(testAccCheckVcdVAppVm_basic, params)
@@ -68,7 +64,6 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_vm."+vmName, "metadata.vm_metadata", "VM Metadata."),
 					resource.TestCheckOutput("disk", diskName),
-					testCheckInternalDiskNonStringOutputs(internalDiskSize),
 				),
 			},
 			resource.TestStep{
@@ -78,46 +73,10 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 				ImportStateIdFunc: importStateIdVappObject(testConfig, vappName2, vmName),
 				// These fields can't be retrieved from user data
 				ImportStateVerifyIgnore: []string{"template_name", "catalog_name", "network_name",
-					"initscript", "accept_all_eulas", "power_on", "computer_name", "override_template_disk"},
+					"initscript", "accept_all_eulas", "power_on", "computer_name"},
 			},
 		},
 	})
-}
-
-func testCheckInternalDiskNonStringOutputs(internalDiskSize int) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		outputs := s.RootModule().Outputs
-
-		if outputs["internal_disk_size"].Value != internalDiskSize {
-			return fmt.Errorf("internal disk size value didn't match")
-		}
-
-		if outputs["internal_disk_iops"].Value != 0 {
-			return fmt.Errorf("internal disk iops value didn't match")
-		}
-
-		if outputs["internal_disk_bus_type"].Value != "paravirtual" {
-			return fmt.Errorf("internal disk bus type value didn't match")
-		}
-
-		if outputs["internal_disk_bus_number"].Value != 0 {
-			return fmt.Errorf("internal disk bus number value didn't match")
-		}
-
-		if outputs["internal_disk_unit_number"].Value != 0 {
-			return fmt.Errorf("internal disk unit number value didn't match")
-		}
-
-		if outputs["internal_disk_thin_provisioned"].Value != true {
-			return fmt.Errorf("internal disk thin provisioned value didn't match")
-		}
-
-		if outputs["internal_disk_storage_profile"].Value != "*" {
-			return fmt.Errorf("internal disk storage profile value didn't match")
-		}
-
-		return nil
-	}
 }
 
 func TestAccVcdVAppVm_Clone(t *testing.T) {
@@ -240,17 +199,7 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   metadata = {
     vm_metadata = "VM Metadata."
   }
- 
-  override_template_disk {
-    bus_type         = "paravirtual"
-    size_in_mb       = "{{.InternalDiskSize}}"
-    bus_number       = 0
-    unit_number      = 0
-    iops             = 0
-    thin_provisioned = true
-    storage_profile  = "{{.storageProfileName}}"
-  }
- 
+
   network {
     name               = vcd_network_routed.{{.NetworkName}}.name
     ip                 = "10.10.102.161"
@@ -267,41 +216,6 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
 
 output "disk" {
   value = tolist(vcd_vapp_vm.{{.VmName}}.disk)[0].name
-}
-
-output "internal_disk_size" {
-  value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].size_in_mb
-  depends_on = [vcd_vapp_vm.{{.VmName}}]
-}
-
-output "internal_disk_iops" {
-  value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].iops
-  depends_on = [vcd_vapp_vm.{{.VmName}}]
-}
-
-output "internal_disk_bus_type" {
-  value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].bus_type
-  depends_on = [vcd_vapp_vm.{{.VmName}}]
-}
-
-output "internal_disk_bus_number" {
-  value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].bus_number
-  depends_on = [vcd_vapp_vm.{{.VmName}}]
-}
-
-output "internal_disk_unit_number" {
-  value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].unit_number
-  depends_on = [vcd_vapp_vm.{{.VmName}}]
-}
-
-output "internal_disk_thin_provisioned" {
-  value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].thin_provisioned
-  depends_on = [vcd_vapp_vm.{{.VmName}}]
-}
-
-output "internal_disk_storage_profile" {
-  value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].storage_profile
-  depends_on = [vcd_vapp_vm.{{.VmName}}]
 }
 `
 
@@ -372,5 +286,4 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
     ip_allocation_mode = vcd_vapp_vm.{{.VmName}}.network.0.ip_allocation_mode
   }
 }
-
 `

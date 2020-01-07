@@ -3,6 +3,8 @@
 package vcd
 
 import (
+	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"regexp"
 	"testing"
 
@@ -54,6 +56,7 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 			return
 		}
 		_ = task.WaitTaskCompletion()*/
+	internalDiskSize := 20000
 
 	storageProfile := testConfig.VCD.ProviderVdc.StorageProfile
 	/*	if *adminVdc.UsesFastProvisioning {
@@ -85,7 +88,7 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 		"BusType":            busType,
 		"BusNumber":          busNumber,
 		"UnitNumber":         unitNumber,
-		"StorageProfileName": testConfig.VCD.ProviderVdc.StorageProfile,
+		"StorageProfileName": storageProfile,
 		"AllowReboot":        allowReboot,
 
 		"VdcName":                   vdcName,
@@ -106,6 +109,8 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 		"VappName":     vappName,
 		"VmName":       vmName,
 		"ComputerName": vmName + "Unique",
+
+		"InternalDiskSize": internalDiskSize,
 	}
 	params["FuncName"] = t.Name() + "-IdeCreate"
 	configTextIde := templateFill(sourceTestVmInternalDiskIde, params)
@@ -130,6 +135,7 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "unit_number", "0"),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "storage_profile", storageProfile),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "allow_vm_reboot", "false"),
+					testCheckInternalDiskNonStringOutputs(internalDiskSize),
 				),
 			},
 			resource.TestStep{
@@ -196,6 +202,42 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 			},*/
 		},
 	})
+}
+
+func testCheckInternalDiskNonStringOutputs(internalDiskSize int) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		outputs := s.RootModule().Outputs
+
+		if outputs["internal_disk_size"].Value != internalDiskSize {
+			return fmt.Errorf("internal disk size value didn't match")
+		}
+
+		if outputs["internal_disk_iops"].Value != 0 {
+			return fmt.Errorf("internal disk iops value didn't match")
+		}
+
+		if outputs["internal_disk_bus_type"].Value != "paravirtual" {
+			return fmt.Errorf("internal disk bus type value didn't match")
+		}
+
+		if outputs["internal_disk_bus_number"].Value != 0 {
+			return fmt.Errorf("internal disk bus number value didn't match")
+		}
+
+		if outputs["internal_disk_unit_number"].Value != 0 {
+			return fmt.Errorf("internal disk unit number value didn't match")
+		}
+
+		if outputs["internal_disk_thin_provisioned"].Value != true {
+			return fmt.Errorf("internal disk thin provisioned value didn't match")
+		}
+
+		if outputs["internal_disk_storage_profile"].Value != "*" {
+			return fmt.Errorf("internal disk storage profile value didn't match")
+		}
+
+		return nil
+	}
 }
 
 /*func getAdminVdc() (*types.AdminVdc, error) {
@@ -271,7 +313,53 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   memory        = 1024
   cpus          = 1
   cpu_cores     = 1
+
+  override_template_disk {
+    bus_type         = "paravirtual"
+    size_in_mb       = "{{.InternalDiskSize}}"
+    bus_number       = 0
+    unit_number      = 0
+    iops             = 0
+    thin_provisioned = true
+    storage_profile  = "{{.StorageProfileName}}"
+  }
 }
+
+output "internal_disk_size" {
+  value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].size_in_mb
+  depends_on = [vcd_vapp_vm.{{.VmName}}]
+}
+
+output "internal_disk_iops" {
+  value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].iops
+  depends_on = [vcd_vapp_vm.{{.VmName}}]
+}
+
+output "internal_disk_bus_type" {
+  value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].bus_type
+  depends_on = [vcd_vapp_vm.{{.VmName}}]
+}
+
+output "internal_disk_bus_number" {
+  value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].bus_number
+  depends_on = [vcd_vapp_vm.{{.VmName}}]
+}
+
+output "internal_disk_unit_number" {
+  value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].unit_number
+  depends_on = [vcd_vapp_vm.{{.VmName}}]
+}
+
+output "internal_disk_thin_provisioned" {
+  value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].thin_provisioned
+  depends_on = [vcd_vapp_vm.{{.VmName}}]
+}
+
+output "internal_disk_storage_profile" {
+  value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].storage_profile
+  depends_on = [vcd_vapp_vm.{{.VmName}}]
+}
+
 `
 
 const sourceTestVmInternalDiskIde = sourceTestVmInternalDiskOrgVdcAndVM + `
