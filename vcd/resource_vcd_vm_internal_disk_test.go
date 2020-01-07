@@ -16,6 +16,11 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
+	// In general VM internal disks works with Org users, but due we need create VDC with disabled fast provisioning value, we have to be sys admins
+	if !usingSysAdmin() {
+		t.Skip("VM internal disks tests requires system admin privileges")
+		return
+	}
 
 	/*	adminVdc, err := getAdminVdc()
 		if err != nil {
