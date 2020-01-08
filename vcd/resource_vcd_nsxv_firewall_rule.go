@@ -301,6 +301,7 @@ func resourceVcdNsxvFirewallRuleUpdate(d *schema.ResourceData, meta interface{})
 	// IP set IDs (ipset-454 insted of a0c3c92a-a180-48fb-96ec-91c610c7c254:ipset-460) for update
 	// operations only. Otherwise update operation fails with exception.
 	var shortIds bool
+	// if vCD older or 9.0
 	if vcdClient.Client.APIVCDMaxVersionIs("<= 29") {
 		log.Println("[DEBUG] vcd_nsxv_firewall_rule update - using short IDs for update operations because vCD is <= 9.0 ")
 		shortIds = true

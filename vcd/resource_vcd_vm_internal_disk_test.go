@@ -12,13 +12,12 @@ import (
 )
 
 func TestAccVcdVmInternalDisk(t *testing.T) {
-	// This test requires access to the vCD before filling templates
 	// Thus it won't run in the short test
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	// In general VM internal disks works with Org users, but due we need create VDC with disabled fast provisioning value, we have to be sys admins
+	// In general VM internal disks works with Org users, but since we need to create VDC with disabled fast provisioning value, we have to be sys admins
 	if !usingSysAdmin() {
 		t.Skip("VM internal disks tests requires system admin privileges")
 		return
@@ -100,7 +99,7 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 		"Reserved":                  "1024",
 		"Limit":                     "1024",
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
-		// cause vDC ignores empty values and use default
+		// because vDC ignores empty values and use default
 		"MemoryGuaranteed": "1",
 		"CpuGuaranteed":    "1",
 
@@ -363,43 +362,42 @@ output "internal_disk_storage_profile" {
 `
 
 const sourceTestVmInternalDiskIde = sourceTestVmInternalDiskOrgVdcAndVM + `
-resource "vcd_vm_internal_disk" "{{.DiskResourceName}}_ide" {
-  org              = "{{.Org}}"
-  vdc              =  vcd_org_vdc.{{.VdcName}}.name
-  vapp_name     = vcd_vapp.{{.VappName}}.name
-  vm_name     = vcd_vapp_vm.{{.VmName}}.name
-  bus_type = "ide"
-  size_in_mb = "{{.Size}}"
-  bus_number = "0"
-  unit_number = "0"
-  storage_profile = "{{.StorageProfileName}}"
-  allow_vm_reboot = "false"
+resource "vcd_vm_internal_disk" "imported" {
+  vapp_name   = "vApp_system_1"
+  vm_name     = "TerraformDisk1"
+  bus_type    = "paravirtual"
+  size_in_mb  = "22384"
+  bus_number  = 0
+  unit_number = 0
+  #storage_profile = "Development"
+  #allow_vm_reboot = true
+  #depends_on   = ["vcd_vapp_vm.Override3Disks3"]
 }
 `
 
 const sourceTestVmInternalDisk = sourceTestVmInternalDiskOrgVdcAndVM + `
 resource "vcd_vm_internal_disk" "{{.DiskResourceName}}_ide" {
-  org              = "{{.Org}}"
-  vdc              =  vcd_org_vdc.{{.VdcName}}.name
-  vapp_name     = vcd_vapp.{{.VappName}}.name
-  vm_name     = vcd_vapp_vm.{{.VmName}}.name
-  bus_type = "ide"
-  size_in_mb = "{{.Size}}"
-  bus_number = "0"
-  unit_number = "0"
+  org             = "{{.Org}}"
+  vdc             =  vcd_org_vdc.{{.VdcName}}.name
+  vapp_name       = vcd_vapp.{{.VappName}}.name
+  vm_name         = vcd_vapp_vm.{{.VmName}}.name
+  bus_type        = "ide"
+  size_in_mb      = "{{.Size}}"
+  bus_number      = "0"
+  unit_number     = "0"
   storage_profile = "{{.StorageProfileName}}"
   allow_vm_reboot = "true" 
 }
 
 resource "vcd_vm_internal_disk" "{{.DiskResourceName}}" {
-  org              = "{{.Org}}"
-  vdc              =  vcd_org_vdc.{{.VdcName}}.name
-  vapp_name     = vcd_vapp.{{.VappName}}.name
-  vm_name     = vcd_vapp_vm.{{.VmName}}.name
-  bus_type = "{{.BusType}}"
-  size_in_mb = "{{.Size}}"
-  bus_number = "{{.BusNumber}}"
-  unit_number = "{{.UnitNumber}}"
+  org             = "{{.Org}}"
+  vdc             =  vcd_org_vdc.{{.VdcName}}.name
+  vapp_name       = vcd_vapp.{{.VappName}}.name
+  vm_name         = vcd_vapp_vm.{{.VmName}}.name
+  bus_type        = "{{.BusType}}"
+  size_in_mb      = "{{.Size}}"
+  bus_number      = "{{.BusNumber}}"
+  unit_number     = "{{.UnitNumber}}"
   storage_profile = "{{.StorageProfileName}}"
   allow_vm_reboot = "false"
 }
@@ -407,27 +405,27 @@ resource "vcd_vm_internal_disk" "{{.DiskResourceName}}" {
 
 const sourceTestVmInternalDisk_Update1 = sourceTestVmInternalDiskOrgVdcAndVM + `
 resource "vcd_vm_internal_disk" "{{.DiskResourceName}}" {
-  org              = "{{.Org}}"
-  vdc              =  vcd_org_vdc.{{.VdcName}}.name
-  vapp_name     = vcd_vapp.{{.VappName}}.name
-  vm_name     = vcd_vapp_vm.{{.VmName}}.name
-  bus_type = "{{.BusType}}"
-  size_in_mb = "{{.SizeBigger}}"
-  bus_number = "{{.BusNumber}}"
-  unit_number = "{{.UnitNumber}}"
+  org             = "{{.Org}}"
+  vdc             =  vcd_org_vdc.{{.VdcName}}.name
+  vapp_name       = vcd_vapp.{{.VappName}}.name
+  vm_name         = vcd_vapp_vm.{{.VmName}}.name
+  bus_type        = "{{.BusType}}"
+  size_in_mb      = "{{.SizeBigger}}"
+  bus_number      = "{{.BusNumber}}"
+  unit_number     = "{{.UnitNumber}}"
   storage_profile = "{{.StorageProfileName}}"
   allow_vm_reboot = "false"
 }
 
 resource "vcd_vm_internal_disk" "{{.DiskResourceName}}_ide" {
-  org              = "{{.Org}}"
-  vdc              =  vcd_org_vdc.{{.VdcName}}.name
-  vapp_name     = vcd_vapp.{{.VappName}}.name
-  vm_name     = vcd_vapp_vm.{{.VmName}}.name
-  bus_type = "ide"
-  size_in_mb = "{{.SizeBigger}}"
-  bus_number = "0"
-  unit_number = "0"
+  org             = "{{.Org}}"
+  vdc             =  vcd_org_vdc.{{.VdcName}}.name
+  vapp_name       = vcd_vapp.{{.VappName}}.name
+  vm_name         = vcd_vapp_vm.{{.VmName}}.name
+  bus_type        = "ide"
+  size_in_mb      = "{{.SizeBigger}}"
+  bus_number      = "0"
+  unit_number     = "0"
   storage_profile = "{{.StorageProfileName}}"
   allow_vm_reboot = "true"
 }

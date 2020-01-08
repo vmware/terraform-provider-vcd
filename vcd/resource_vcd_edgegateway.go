@@ -790,6 +790,7 @@ func getExternalNetworkData(vcdClient *VCDClient, d *schema.ResourceData, gatewa
 			// we check what the user has set in the config and passing through the same value.
 			// Note. If it wasn't "TypeSet" with more values - it would be possible to simply omit
 			// setting the field.
+			// "<= 29" -> if vCD older or 9.0
 			if vcdClient.Client.APIVCDMaxVersionIs("<= 29") && origin == "resource" {
 				log.Printf("[TRACE] edge gateway - skipping read of external networks on vCD 9.0 "+
 					"because for network %s it does not return these values", extNetwork.Network.Name)

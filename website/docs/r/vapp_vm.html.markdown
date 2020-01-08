@@ -174,7 +174,7 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
 * `guest_properties` - (Optional; *v2.5+*) Key value map of guest properties
 * `description`  - (Computed; *v2.6+*) The VM description. Note: description is read only. Currently, this field has
   the description of the OVA used to create the VM
-* `override_template_disk` - (Optional; *v2.6+*) Allows to update internal disk in template before first VM boot. Disk are matched by `bus_type`, `bus_number` and `unit_number`. See [Override template Disk](#override_template_disk) below for details.
+* `override_template_disk` - (Optional; *v2.7+*) Allows to update internal disk in template before first VM boot. Disk are matched by `bus_type`, `bus_number` and `unit_number`. See [Override template Disk](#override_template_disk) below for details.
 
 <a id="disk"></a>
 ## Disk
@@ -299,19 +299,19 @@ resource "vcd_vapp_vm" "web2" {
 
 The following additional attributes are exported:
 
-* `internal_disk` - (*v2.6+*) A block provides internal disk of VM details. See [Internal Disk](#internalDisk) below for details.
+* `internal_disk` - (*v2.7+*) A block providing internal disk of VM details. See [Internal Disk](#internalDisk) below for details.
 
 <a id="internalDisk"></a>
 ## Internal disk
 
-* `disk_id` - (*v2.6+*) Specifies a unique identifier for this disk in the scope of the corresponding VM.
-* `bus_type` - (*v2.6+*) The type of disk controller. Possible values: `ide`, `parallel`( LSI Logic Parallel SCSI), `sas`(LSI Logic SAS (SCSI)), `paravirtual`(Paravirtual (SCSI)), `sata`. 
-* `size_in_mb` - (*v2.6+*) The size of the disk in MB. 
-* `bus_number` - (*v2.6+*) The number of the SCSI or IDE controller itself.
-* `unit_number` - (*v2.6+*) The device number on the SCSI or IDE controller of the disk.
-* `thin_provisioned` - (*v2.6+*) Specifies whether the disk storage is pre-allocated or allocated on demand.
-* `iops` - (*v2.6+*) Specifies the IOPS for the disk. Default - 0.
-* `storage_profile` - (*v2.6+*) Storage profile which overrides the VM default one.
+* `disk_id` - (*v2.7+*) Specifies a unique identifier for this disk in the scope of the corresponding VM.
+* `bus_type` - (*v2.7+*) The type of disk controller. Possible values: `ide`, `parallel`( LSI Logic Parallel SCSI), `sas`(LSI Logic SAS (SCSI)), `paravirtual`(Paravirtual (SCSI)), `sata`. 
+* `size_in_mb` - (*v2.7+*) The size of the disk in MB. 
+* `bus_number` - (*v2.7+*) The number of the SCSI or IDE controller itself.
+* `unit_number` - (*v2.7+*) The device number on the SCSI or IDE controller of the disk.
+* `thin_provisioned` - (*v2.7+*) Specifies whether the disk storage is pre-allocated or allocated on demand.
+* `iops` - (*v2.7+*) Specifies the IOPS for the disk. Default - 0.
+* `storage_profile` - (*v2.7+*) Storage profile which overrides the VM default one.
 
 
 ## Importing

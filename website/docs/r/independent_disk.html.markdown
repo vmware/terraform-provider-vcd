@@ -94,7 +94,7 @@ further operations.
 
 If you want to list IDs there is a special command **`terraform import vcd_independent_disk.imported list@org-name.vdc-name.my-independent-disk-name`**
 where `org-name` is the organization used, `vdc-name` is vDC name and `my-independent-disk-name`
-is independent disk name. The output for this command should look similar to below one:
+is independent disk name. The output for this command should look similar to the one below:
 
 ```shell
 $ terraform import vcd_independent_disk.imported list@org-name.vdc-name.my-independent-disk-name

@@ -10,7 +10,7 @@ description: |-
 
 Provides a vCloud Director VM internal disk resource. This can be used to create and delete VM internal disks.
 
-Supported in provider *v2.6+*
+Supported in provider *v2.7+*
 
 ## Example Usage
 
@@ -35,8 +35,8 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 * `vapp_name` - (Required) The vApp this VM internal disk belongs to.
-* `vm_name` - (Required) VM in vApp in which internal disk created.
-* `allow_vm_reboot` - (Optional) Powers off VM when changing any attribute of an IDE disk or unit/bus number of other disk types, after the change is complete VM is powered back on. Without this setting enabled, such changes on a powered on VM would fail.
+* `vm_name` - (Required) VM in vApp in which internal disk is created.
+* `allow_vm_reboot` - (Optional) Powers off VM when changing any attribute of an IDE disk or unit/bus number of other disk types, after the change is complete VM is powered back on. Without this setting enabled, such changes on a powered-on VM would fail.
 * `bus_type` - (Required) The type of disk controller. Possible values: `ide`, `parallel`( LSI Logic Parallel SCSI), `sas`(LSI Logic SAS (SCSI)), `paravirtual`(Paravirtual (SCSI)), `sata`. 
 * `size_in_mb` - (Required) The size of the disk in MB. 
 * `bus_number` - (Required) The number of the SCSI or IDE controller itself.

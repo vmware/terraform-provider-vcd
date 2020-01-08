@@ -44,13 +44,13 @@ func resourceVmInternalDisk() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "VM in vApp in which internal disk created",
+				Description: "VM in vApp in which internal disk is created",
 			},
 			"allow_vm_reboot": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     false,
-				Description: "Powers off VM when changing any attribute of an IDE disk or unit/bus number of other disk types, after the change is complete VM is powered back on. Without this setting enabled, such changes on a powered on VM would fail.",
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+				Description: "	Powers off VM when changing any attribute of an IDE disk or unit/bus number of other disk types, after the change is complete VM is powered back on. Without this setting enabled, such changes on a powered-on VM would fail.",
 			},
 			"bus_type": {
 				Type:         schema.TypeString,
@@ -298,6 +298,7 @@ func resourceVmInternalDiskUpdate(d *schema.ResourceData, meta interface{}) erro
 	//diskSettingsToUpdate.BusNumber = d.Get("bus_number").(int)
 	//diskSettingsToUpdate.AdapterType = internalDiskBusTypes[d.Get("bus_type").(string)]
 	diskSettingsToUpdate.SizeMb = int64(d.Get("size_in_mb").(int))
+	// Note can't change adapter type, bus number, unit number as vSphere changes diskId
 
 	var storageProfilePrt *types.Reference
 	var overrideVmDefault bool

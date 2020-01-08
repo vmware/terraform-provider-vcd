@@ -1255,6 +1255,7 @@ func updateTemplateInternalDisks(d *schema.ResourceData, meta interface{}, vm go
 	return nil
 }
 
+// getMatchedDisk returns matched disk by adapter type, bus number and unit number
 func getMatchedDisk(internalDiskProvidedConfig map[string]interface{}, diskSettings []*types.DiskSettings) *types.DiskSettings {
 	for _, diskSetting := range diskSettings {
 		if diskSetting.AdapterType == internalDiskBusTypes[internalDiskProvidedConfig["bus_type"].(string)] &&
