@@ -113,8 +113,11 @@ resource "vcd_vapp_vm" "web2" {
 
   depends_on = ["vcd_vapp.web"]
 }
+```
 
 ## Example Usage (Override Template Disk)
+
+```hcl
 resource "vcd_network_direct" "net" {
   name             = "net"
   external_network = "corp-network"
@@ -183,7 +186,7 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
 * `guest_properties` - (Optional; *v2.5+*) Key value map of guest properties
 * `description`  - (Computed; *v2.6+*) The VM description. Note: description is read only. Currently, this field has
   the description of the OVA used to create the VM
-* `override_template_disk` - (Optional; *v2.7+*) Allows to update internal disk in template before first VM boot. Disk are matched by `bus_type`, `bus_number` and `unit_number`. See [Override template Disk](#override_template_disk) below for details.
+* `override_template_disk` - (Optional; *v2.7+*) Allows to update internal disk in template before first VM boot. Disk are matched by `bus_type`, `bus_number` and `unit_number`. See [Override template Disk](#override-template-disk) below for details.
 
 <a id="disk"></a>
 ## Disk
@@ -223,7 +226,7 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
 
   * `ip_allocation_mode=NONE` - **`ip`** field can be omitted or set to an empty string "". Empty string may be useful when doing HCL variable interpolation.
 
-<a id="override_template_disk"></a>
+<a id="override-template-disk"></a>
 ## Override template disk
 Allows to update internal disk in template before first VM boot. Disk are matched by `bus_type`, `bus_number` and `unit_number`
 Changes are ignored on update. To manage internal disk later please use [`vcd_vm_internal_disk`](/docs/providers/vcd/r/vm_internal_disk.html) resource. 
