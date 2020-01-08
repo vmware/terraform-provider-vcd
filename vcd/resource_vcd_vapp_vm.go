@@ -273,12 +273,6 @@ func resourceVcdVAppVm() *schema.Resource {
 						Required:    true,
 						Description: "The device number on the SCSI or IDE controller of the disk.",
 					},
-					"thin_provisioned": {
-						Type:        schema.TypeBool,
-						ForceNew:    true,
-						Optional:    true,
-						Description: "Specifies whether the disk storage is pre-allocated or allocated on demand.",
-					},
 					"iops": {
 						Type:        schema.TypeInt,
 						ForceNew:    true,
@@ -1235,10 +1229,9 @@ func updateTemplateInternalDisks(d *schema.ResourceData, meta interface{}, vm go
 			diskCreatedByTemplate.Iops = &iops
 		}
 
-		if value, ok := internalDiskProvidedConfig["thin_provisioned"]; ok {
-			thinProvisioned := value.(bool)
-			diskCreatedByTemplate.ThinProvisioned = &thinProvisioned
-		}
+		// value is required but not treated.
+		isThinProvisioned := true
+		diskCreatedByTemplate.ThinProvisioned = &isThinProvisioned
 
 		diskCreatedByTemplate.SizeMb = int64(internalDiskProvidedConfig["size_in_mb"].(int))
 		diskCreatedByTemplate.StorageProfile = storageProfilePrt

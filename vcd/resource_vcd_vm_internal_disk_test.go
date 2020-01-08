@@ -227,10 +227,6 @@ func testCheckInternalDiskNonStringOutputs(internalDiskSize int) resource.TestCh
 			return fmt.Errorf("internal disk unit number value didn't match")
 		}
 
-		if outputs["internal_disk_thin_provisioned"].Value != true {
-			return fmt.Errorf("internal disk thin provisioned value didn't match")
-		}
-
 		if outputs["internal_disk_storage_profile"].Value != "*" {
 			return fmt.Errorf("internal disk storage profile value didn't match")
 		}
@@ -319,7 +315,6 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
     bus_number       = 0
     unit_number      = 0
     iops             = 0
-    thin_provisioned = true
     storage_profile  = "{{.StorageProfileName}}"
   }
 }
@@ -349,11 +344,6 @@ output "internal_disk_unit_number" {
   depends_on = [vcd_vapp_vm.{{.VmName}}]
 }
 
-output "internal_disk_thin_provisioned" {
-  value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].thin_provisioned
-  depends_on = [vcd_vapp_vm.{{.VmName}}]
-}
-
 output "internal_disk_storage_profile" {
   value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].storage_profile
   depends_on = [vcd_vapp_vm.{{.VmName}}]
@@ -362,16 +352,17 @@ output "internal_disk_storage_profile" {
 `
 
 const sourceTestVmInternalDiskIde = sourceTestVmInternalDiskOrgVdcAndVM + `
-resource "vcd_vm_internal_disk" "imported" {
-  vapp_name   = "vApp_system_1"
-  vm_name     = "TerraformDisk1"
-  bus_type    = "paravirtual"
-  size_in_mb  = "22384"
-  bus_number  = 0
-  unit_number = 0
-  #storage_profile = "Development"
-  #allow_vm_reboot = true
-  #depends_on   = ["vcd_vapp_vm.Override3Disks3"]
+resource "vcd_vm_internal_disk" "{{.DiskResourceName}}_ide" {
+  org             = "{{.Org}}"
+  vdc             =  vcd_org_vdc.{{.VdcName}}.name
+  vapp_name       = vcd_vapp.{{.VappName}}.name
+  vm_name         = vcd_vapp_vm.{{.VmName}}.name
+  bus_type        = "ide"
+  size_in_mb      = "{{.Size}}"
+  bus_number      = "0"
+  unit_number     = "0"
+  storage_profile = "{{.StorageProfileName}}"
+  allow_vm_reboot = "false"
 }
 `
 
