@@ -114,8 +114,19 @@ resource "vcd_vapp_vm" "web2" {
   depends_on = ["vcd_vapp.web"]
 }
 
+## Example Usage (Override Template Disk)
+resource "vcd_network_direct" "net" {
+  name             = "net"
+  external_network = "corp-network"
+}
+
+resource "vcd_vapp" "web" {
+  name = "web"
+  depends_on = ["vcd_network_direct.net"]
+}
+
 resource "vcd_vapp_vm" "internalDiskOverride" {
-  vapp_name     = "${vcd_vapp.web.name}"
+  vapp_name     = vcd_vapp.web.name
   name          = "internalDiskOverride"
   catalog_name  = "Boxes"
   template_name = "lampstack-1.10.1-ubuntu-10.04"
@@ -132,8 +143,6 @@ resource "vcd_vapp_vm" "internalDiskOverride" {
     thin_provisioned = true
     storage_profile  = "*"
   }
-
-  depends_on = ["vcd_vapp.web"]
 }
 
 ```
@@ -218,6 +227,7 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
 ## Override template disk
 Allows to update internal disk in template before first VM boot. Disk are matched by `bus_type`, `bus_number` and `unit_number`
 Changes are ignored on update. To manage internal disk later please use [`vcd_vm_internal_disk`](/docs/providers/vcd/r/vm_internal_disk.html) resource. 
+Managing disks in VM allowed if vDC isn't fast provisioned.
 
 * `bus_type` - (Required) The type of disk controller. Possible values: `ide`, `parallel`( LSI Logic Parallel SCSI), `sas`(LSI Logic SAS (SCSI)), `paravirtual`(Paravirtual (SCSI)), `sata`. 
 * `size_in_mb` - (Required) The size of the disk in MB. 
