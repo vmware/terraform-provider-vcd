@@ -81,7 +81,7 @@ further operations.
 
 If you want to list IDs there is a special command **`terraform import vcd_vm_internal_disk.imported list@org-name.vcd-name.vapp-name.vm-name`**
 where `org-name` is the organization used, `vdc-name` is vDC name, `vapp-name` is vAPP name and `vm_name` is VM name in that vAPP.
-The output for this command should look similar to below one:
+The output for this command should look similar to the one below:
 
 ```shell
 $ terraform import vcd_vm_internal_disk.imported list@org-name.vdc-name.vapp-name.vm-name
