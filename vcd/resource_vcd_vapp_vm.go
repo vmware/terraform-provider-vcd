@@ -243,10 +243,11 @@ func resourceVcdVAppVm() *schema.Resource {
 				Set:      resourceVcdVmIndependentDiskHash,
 			},
 			"override_template_disk": {
-				Type:        schema.TypeSet,
-				Optional:    true,
-				ForceNew:    true,
-				Description: " A block to match internal_disk interface in template. Multiple can be used. Disk will be matched by bus_type, bus_number and unit_number.",
+				Type:             schema.TypeSet,
+				Optional:         true,
+				ForceNew:         true,
+				Description:      " A block to match internal_disk interface in template. Multiple can be used. Disk will be matched by bus_type, bus_number and unit_number.",
+				DiffSuppressFunc: suppressAlways(),
 				Elem: &schema.Resource{Schema: map[string]*schema.Schema{
 					"bus_type": {
 						Type:         schema.TypeString,
