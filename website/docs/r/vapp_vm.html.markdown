@@ -118,16 +118,6 @@ resource "vcd_vapp_vm" "web2" {
 ## Example Usage (Override Template Disk)
 
 ```hcl
-resource "vcd_network_direct" "net" {
-  name             = "net"
-  external_network = "corp-network"
-}
-
-resource "vcd_vapp" "web" {
-  name = "web"
-  depends_on = ["vcd_network_direct.net"]
-}
-
 resource "vcd_vapp_vm" "internalDiskOverride" {
   vapp_name     = vcd_vapp.web.name
   name          = "internalDiskOverride"
