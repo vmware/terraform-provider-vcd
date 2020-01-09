@@ -424,7 +424,7 @@ func listInternalDisksForImport(meta interface{}, orgName, vdcName, vappName, vm
 		return nil, fmt.Errorf("[Error] failed to get VM: %s", err)
 	}
 
-	_, _ = fmt.Fprintln(getTerraformStdout(), "Retrieving all disks by name")
+	_, _ = fmt.Fprintln(getTerraformStdout(), "Retrieving all disks")
 	if vm.VM.VmSpecSection.DiskSection == nil || vm.VM.VmSpecSection.DiskSection.DiskSettings == nil ||
 		len(vm.VM.VmSpecSection.DiskSection.DiskSettings) == 0 {
 		return nil, fmt.Errorf("no internal disks found on VM: %s", vmName)

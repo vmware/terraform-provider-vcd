@@ -34,8 +34,8 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
-* `vapp_name` - (Required) The vApp this VM internal disk belongs to.
-* `vm_name` - (Required) VM in vApp in which internal disk is created.
+* `vapp_name` - (Required) The vAPP this VM internal disk belongs to.
+* `vm_name` - (Required) VM in vAPP in which internal disk is created.
 * `allow_vm_reboot` - (Optional) Powers off VM when changing any attribute of an IDE disk or unit/bus number of other disk types, after the change is complete VM is powered back on. Without this setting enabled, such changes on a powered-on VM would fail. Defaults to false.
 * `bus_type` - (Required) The type of disk controller. Possible values: `ide`, `parallel`( LSI Logic Parallel SCSI), `sas`(LSI Logic SAS (SCSI)), `paravirtual`(Paravirtual (SCSI)), `sata`. 
 * `size_in_mb` - (Required) The size of the disk in MB. 
@@ -86,7 +86,7 @@ The output for this command should look similar to the one below:
 ```shell
 $ terraform import vcd_vm_internal_disk.imported list@org-name.vdc-name.vapp-name.vm-name
 vcd_vm_internal_disk.imported: Importing from ID "list@org-name.vdc-name.vapp-name.vm-name"...
-Retrieving all disks by name
+Retrieving all disks
 No	ID	    BusType		BusNumber	UnitNumber	Size	StoragePofile	Iops	ThinProvisioned
 --	--	    -------		---------	----------	----	-------------	----	---------------
 1	2000	paravirtual	0		    0		    16384	*               0	    true
