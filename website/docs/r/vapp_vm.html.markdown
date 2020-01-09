@@ -218,8 +218,9 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
 <a id="override-template-disk"></a>
 ## Override template disk
 Allows to update internal disk in template before first VM boot. Disk are matched by `bus_type`, `bus_number` and `unit_number`
-Changes are ignored on update. To manage internal disk later please use [`vcd_vm_internal_disk`](/docs/providers/vcd/r/vm_internal_disk.html) resource. 
-Managing disks in VM allowed if VDC isn't fast provisioned.
+Changes are ignored on update. To manage internal disk later please use [`vcd_vm_internal_disk`](/docs/providers/vcd/r/vm_internal_disk.html) resource.
+ 
+~> **Note:** Managing disks in VM is possible only when VDC fast provisioned is disabled.
 
 * `bus_type` - (Required) The type of disk controller. Possible values: `ide`, `parallel`( LSI Logic Parallel SCSI), `sas`(LSI Logic SAS (SCSI)), `paravirtual`(Paravirtual (SCSI)), `sata`. 
 * `size_in_mb` - (Required) The size of the disk in MB. 
