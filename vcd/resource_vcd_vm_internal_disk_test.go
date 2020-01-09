@@ -324,34 +324,27 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
 
 output "internal_disk_size" {
   value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].size_in_mb
-  depends_on = [vcd_vapp_vm.{{.VmName}}]
 }
 
 output "internal_disk_iops" {
   value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].iops
-  depends_on = [vcd_vapp_vm.{{.VmName}}]
 }
 
 output "internal_disk_bus_type" {
   value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].bus_type
-  depends_on = [vcd_vapp_vm.{{.VmName}}]
 }
 
 output "internal_disk_bus_number" {
   value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].bus_number
-  depends_on = [vcd_vapp_vm.{{.VmName}}]
 }
 
 output "internal_disk_unit_number" {
   value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].unit_number
-  depends_on = [vcd_vapp_vm.{{.VmName}}]
 }
 
 output "internal_disk_storage_profile" {
   value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].storage_profile
-  depends_on = [vcd_vapp_vm.{{.VmName}}]
 }
-
 `
 
 const sourceTestVmInternalDiskIde = sourceTestVmInternalDiskOrgVdcAndVM + `
