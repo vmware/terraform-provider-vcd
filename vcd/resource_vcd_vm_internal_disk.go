@@ -47,10 +47,10 @@ func resourceVmInternalDisk() *schema.Resource {
 				Description: "VM in vApp in which internal disk is created",
 			},
 			"allow_vm_reboot": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
-				Description: "	Powers off VM when changing any attribute of an IDE disk or unit/bus number of other disk types, after the change is complete VM is powered back on. Without this setting enabled, such changes on a powered-on VM would fail.",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Powers off VM when changing any attribute of an IDE disk or unit/bus number of other disk types, after the change is complete VM is powered back on. Without this setting enabled, such changes on a powered-on VM would fail.",
 			},
 			"bus_type": {
 				Type:         schema.TypeString,
@@ -367,7 +367,7 @@ var errHelpInternalDiskImport = fmt.Errorf(`resource id must be specified in one
 'org-name.vdc-name.vapp-name.vm-name.my-internal-disk-id' to import by rule id
 'list@org-name.vdc-name.vapp-name.vm-name' to get a list of internal disks with their IDs`)
 
-// resourceVcdIndependentDiskImport is responsible for importing the resource.
+// resourceVcdVmInternalDiskImport is responsible for importing the resource.
 // The following steps happen as part of import
 // 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
 // 2a. If the `_the_id_string_` contains a dot formatted path to resource as in the example below

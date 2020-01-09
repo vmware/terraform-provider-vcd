@@ -131,7 +131,6 @@ func Provider() terraform.ResourceProvider {
 			"vcd_nsxv_dhcp_relay":    resourceVcdNsxvDhcpRelay(),    // 2.6
 			"vcd_nsxv_ip_set":        resourceVcdIpSet(),            // 2.6
 			"vcd_vm_internal_disk":   resourceVmInternalDisk(),      // 2.7
-			"vcd_ipset":              resourceVcdIpSet(),            // 2.6
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
