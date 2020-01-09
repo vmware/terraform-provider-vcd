@@ -128,7 +128,8 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config:      configTextIde,
+				Config: configTextIde,
+				// expected to fail for allow_vm_reboot=false and bus_type = "ide" (VM needs to be power off to add IDE disk)
 				ExpectError: regexp.MustCompile(`.*The attempted operation cannot be performed in the current state \(Powered on\).*`),
 				Check: resource.ComposeTestCheckFunc(resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "size_in_mb", diskSize),
 					resource.TestCheckResourceAttr("vcd_vm_internal_disk."+diskResourceName+"_ide", "bus_type", "ide"),
