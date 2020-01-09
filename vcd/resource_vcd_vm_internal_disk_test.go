@@ -12,11 +12,7 @@ import (
 )
 
 func TestAccVcdVmInternalDisk(t *testing.T) {
-	// Thus it won't run in the short test
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
+
 	// In general VM internal disks works with Org users, but since we need to create VDC with disabled fast provisioning value, we have to be sys admins
 	if !usingSysAdmin() {
 		t.Skip("VM internal disks tests requires system admin privileges")
@@ -120,6 +116,12 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 	params["FuncName"] = t.Name() + "-Update2"
 	//configText_update2 := templateFill(sourceTestVmInternalDisk_Update2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText+configText_update1)
+
+	// Thus it won't run in the short test
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -352,6 +354,7 @@ output "internal_disk_storage_profile" {
 `
 
 const sourceTestVmInternalDiskIde = sourceTestVmInternalDiskOrgVdcAndVM + `
+# skip-binary-test: expected to fail for allow_vm_reboot=false and bus_type = "ide"
 resource "vcd_vm_internal_disk" "{{.DiskResourceName}}_ide" {
   org             = "{{.Org}}"
   vdc             =  vcd_org_vdc.{{.VdcName}}.name
