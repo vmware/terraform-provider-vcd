@@ -176,7 +176,7 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
 * `guest_properties` - (Optional; *v2.5+*) Key value map of guest properties
 * `description`  - (Computed; *v2.6+*) The VM description. Note: description is read only. Currently, this field has
   the description of the OVA used to create the VM
-* `override_template_disk` - (Optional; *v2.7+*) Allows to update internal disk in template before first VM boot. Disk are matched by `bus_type`, `bus_number` and `unit_number`. See [Override template Disk](#override-template-disk) below for details.
+* `override_template_disk` - (Optional; *v2.7+*) Allows to update internal disk in template before first VM boot. Disk is matched by `bus_type`, `bus_number` and `unit_number`. See [Override template Disk](#override-template-disk) below for details.
 
 <a id="disk"></a>
 ## Disk
@@ -218,7 +218,7 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
 
 <a id="override-template-disk"></a>
 ## Override template disk
-Allows to update internal disk in template before first VM boot. Disk are matched by `bus_type`, `bus_number` and `unit_number`
+Allows to update internal disk in template before first VM boot. Disk is matched by `bus_type`, `bus_number` and `unit_number`.
 Changes are ignored on update. This part isn't reread on refresh. To manage internal disk later please use [`vcd_vm_internal_disk`](/docs/providers/vcd/r/vm_internal_disk.html) resource.
  
 ~> **Note:** Managing disks in VM is possible only when VDC fast provisioned is disabled.

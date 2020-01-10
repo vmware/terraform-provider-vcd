@@ -14,6 +14,8 @@ This can be used to create, update and delete VM internal disks on already creat
 
 To manage disks which already exist inside a VM, please [import](#importing) them first.
 
+~> **Note:** Managing disks in VM is possible only when VDC fast provisioned is disabled.
+
 Supported in provider *v2.7+*
 
 ## Example Usage
@@ -104,7 +106,7 @@ Error: resource was not imported! resource id must be specified in one of these 
 
 ```
 
-Now to import disk with ID 301 one could supply this command:
+Now to import disk with ID 3001 one could supply this command:
 
 ```shell
 $ terraform import vcd_vm_internal_disk.imported org-name.vdc-name.vapp-name.vm-name.3001
