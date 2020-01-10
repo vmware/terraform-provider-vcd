@@ -437,8 +437,11 @@ func listInternalDisksForImport(meta interface{}, orgName, vdcName, vappName, vm
 	fmt.Fprintln(writer, "No\tID\tBusType\tBusNumber\tUnitNumber\tSize\tStoragePofile\tIops\tThinProvisioned")
 	fmt.Fprintln(writer, "--\t--\t-------\t---------\t----------\t----\t-------------\t----\t---------------")
 	for index, disk := range vm.VM.VmSpecSection.DiskSection.DiskSettings {
-		fmt.Fprintf(writer, "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%d\t%t\n", (index + 1), disk.DiskId, internalDiskBusTypesFromValues[disk.AdapterType], disk.BusNumber, disk.UnitNumber, disk.SizeMb,
-			disk.StorageProfile.Name, *disk.Iops, *disk.ThinProvisioned)
+		// API shows internal disk and independent disks in one list. If disk.Disk != nil then it's independent disk
+		if disk.Disk == nil {
+			fmt.Fprintf(writer, "%d\t%s\t%s\t%d\t%d\t%d\t%s\t%d\t%t\n", (index + 1), disk.DiskId, internalDiskBusTypesFromValues[disk.AdapterType], disk.BusNumber, disk.UnitNumber, disk.SizeMb,
+				disk.StorageProfile.Name, *disk.Iops, *disk.ThinProvisioned)
+		}
 	}
 	writer.Flush()
 

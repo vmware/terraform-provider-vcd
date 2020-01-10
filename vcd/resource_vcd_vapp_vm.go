@@ -1166,17 +1166,20 @@ func updateStateOfInternalDisks(d *schema.ResourceData, vm govcd.VM) error {
 	existingInternalDisks := vm.VM.VmSpecSection.DiskSection.DiskSettings
 	var internalDiskList []map[string]interface{}
 	for _, internalDisk := range existingInternalDisks {
-		newValue := map[string]interface{}{
-			"disk_id":          internalDisk.DiskId,
-			"bus_type":         internalDiskBusTypesFromValues[internalDisk.AdapterType],
-			"size_in_mb":       int(internalDisk.SizeMb),
-			"bus_number":       internalDisk.BusNumber,
-			"unit_number":      internalDisk.UnitNumber,
-			"iops":             int(*internalDisk.Iops),
-			"thin_provisioned": *internalDisk.ThinProvisioned,
-			"storage_profile":  internalDisk.StorageProfile.Name,
+		// API shows internal disk and independent disks in one list. If disk.Disk != nil then it's independent disk
+		if internalDisk.Disk == nil {
+			newValue := map[string]interface{}{
+				"disk_id":          internalDisk.DiskId,
+				"bus_type":         internalDiskBusTypesFromValues[internalDisk.AdapterType],
+				"size_in_mb":       int(internalDisk.SizeMb),
+				"bus_number":       internalDisk.BusNumber,
+				"unit_number":      internalDisk.UnitNumber,
+				"iops":             int(*internalDisk.Iops),
+				"thin_provisioned": *internalDisk.ThinProvisioned,
+				"storage_profile":  internalDisk.StorageProfile.Name,
+			}
+			internalDiskList = append(internalDiskList, newValue)
 		}
-		internalDiskList = append(internalDiskList, newValue)
 	}
 
 	return d.Set("internal_disk", internalDiskList)
