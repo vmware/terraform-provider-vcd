@@ -252,7 +252,7 @@ func resourceVcdVAppVm() *schema.Resource {
 						Type:         schema.TypeString,
 						Required:     true,
 						ForceNew:     true,
-						ValidateFunc: validation.StringInSlice([]string{"ide", "parallel", "sas", "paravirtual", "sata"}, true),
+						ValidateFunc: validation.StringInSlice([]string{"ide", "parallel", "sas", "paravirtual", "sata"}, false),
 						Description:  "The type of disk controller. Possible values: ide, parallel( LSI Logic Parallel SCSI), sas(LSI Logic SAS (SCSI)), paravirtual(Paravirtual (SCSI)), sata",
 					},
 					"size_in_mb": {
