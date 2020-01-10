@@ -46,12 +46,6 @@ func resourceVmInternalDisk() *schema.Resource {
 				ForceNew:    true,
 				Description: "VM in vApp in which internal disk is created",
 			},
-			"allow_vm_reboot": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     false,
-				Description: "Powers off VM when changing any attribute of an IDE disk or unit/bus number of other disk types, after the change is complete VM is powered back on. Without this setting enabled, such changes on a powered-on VM would fail.",
-			},
 			"bus_type": {
 				Type:         schema.TypeString,
 				Required:     true,
@@ -92,6 +86,12 @@ func resourceVmInternalDisk() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				Description: "Storage profile to override the VM default one",
+			},
+			"allow_vm_reboot": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "Powers off VM when changing any attribute of an IDE disk or unit/bus number of other disk types, after the change is complete VM is powered back on. Without this setting enabled, such changes on a powered-on VM would fail.",
 			},
 		},
 	}
@@ -276,6 +276,10 @@ func resourceVmInternalDiskUpdate(d *schema.ResourceData, meta interface{}) erro
 	vcdClient.lockParentVm(d)
 	defer vcdClient.unLockParentVm(d)
 
+	// ignore only allow_vm_reboot change, allows to avoid empty update
+	if d.HasChange("allow_vm_reboot") && !d.HasChange("iops") && !d.HasChange("size_in_mb") && !d.HasChange("storage_profile") {
+		return nil
+	}
 	vm, vdc, err := getVm(vcdClient, d)
 	if err != nil {
 		return err
@@ -473,5 +477,6 @@ func getInternalDiskForImport(d *schema.ResourceData, meta interface{}, orgName,
 	}
 	d.Set("vapp_name", vappName)
 	d.Set("vm_name", vmName)
+	d.Set("allow_vm_reboot", false)
 	return []*schema.ResourceData{d}, nil
 }
