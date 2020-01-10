@@ -112,8 +112,6 @@ var internalDiskBusTypesFromValues = map[string]string{
 	"6": "sata",
 }
 
-var vmStatusBefore string
-
 // resourceVmInternalDiskCreate creates an internal disk for VM
 func resourceVmInternalDiskCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
@@ -157,7 +155,7 @@ func resourceVmInternalDiskCreate(d *schema.ResourceData, meta interface{}) erro
 		OverrideVmDefault:   overrideVmDefault,
 	}
 
-	err = powerOffIfNeeded(d, vm)
+	vmStatusBefore, err := powerOffIfNeeded(d, vm)
 	if err != nil {
 		return err
 	}
@@ -169,7 +167,7 @@ func resourceVmInternalDiskCreate(d *schema.ResourceData, meta interface{}) erro
 
 	d.SetId(diskId)
 
-	err = powerOnIfNeeded(d, vm)
+	err = powerOnIfNeeded(d, vm, vmStatusBefore)
 	if err != nil {
 		return err
 	}
@@ -177,7 +175,7 @@ func resourceVmInternalDiskCreate(d *schema.ResourceData, meta interface{}) erro
 	return resourceVmInternalDiskRead(d, meta)
 }
 
-func powerOnIfNeeded(d *schema.ResourceData, vm *govcd.VM) error {
+func powerOnIfNeeded(d *schema.ResourceData, vm *govcd.VM, vmStatusBefore string) error {
 	vmStatus, err := vm.GetStatus()
 	if err != nil {
 		return fmt.Errorf("error getting VM status before ensuring it is powered on: %s", err)
@@ -198,26 +196,26 @@ func powerOnIfNeeded(d *schema.ResourceData, vm *govcd.VM) error {
 	return nil
 }
 
-func powerOffIfNeeded(d *schema.ResourceData, vm *govcd.VM) error {
+func powerOffIfNeeded(d *schema.ResourceData, vm *govcd.VM) (string, error) {
 	vmStatus, err := vm.GetStatus()
 	if err != nil {
-		return fmt.Errorf("error getting VM status before ensuring it is powered off: %s", err)
+		return "", fmt.Errorf("error getting VM status before ensuring it is powered off: %s", err)
 	}
-	vmStatusBefore = vmStatus
+	vmStatusBefore := vmStatus
 
 	if vmStatus != "POWERED_OFF" && d.Get("bus_type").(string) == "ide" && d.Get("allow_vm_reboot").(bool) {
 		log.Printf("[DEBUG] Powering off VM %s for adding/updating internal disk.", vm.VM.Name)
 
 		task, err := vm.PowerOff()
 		if err != nil {
-			return fmt.Errorf("error powering off VM for adding internal disk: %s", err)
+			return vmStatusBefore, fmt.Errorf("error powering off VM for adding internal disk: %s", err)
 		}
 		err = task.WaitTaskCompletion()
 		if err != nil {
-			return fmt.Errorf(errorCompletingTask, err)
+			return vmStatusBefore, fmt.Errorf(errorCompletingTask, err)
 		}
 	}
-	return nil
+	return vmStatusBefore, nil
 }
 
 // resourceVmInternalDiskDelete deletes disk from VM
@@ -232,7 +230,7 @@ func resourceVmInternalDiskDelete(d *schema.ResourceData, m interface{}) error {
 		return err
 	}
 
-	err = powerOffIfNeeded(d, vm)
+	vmStatusBefore, err := powerOffIfNeeded(d, vm)
 	if err != nil {
 		return err
 	}
@@ -242,7 +240,7 @@ func resourceVmInternalDiskDelete(d *schema.ResourceData, m interface{}) error {
 		return fmt.Errorf("[Error] failed to delete internal disk: %s", err)
 	}
 
-	err = powerOnIfNeeded(d, vm)
+	err = powerOnIfNeeded(d, vm, vmStatusBefore)
 	if err != nil {
 		return err
 	}
@@ -286,7 +284,7 @@ func resourceVmInternalDiskUpdate(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	// has refresh inside
-	err = powerOffIfNeeded(d, vm)
+	vmStatusBefore, err := powerOffIfNeeded(d, vm)
 	if err != nil {
 		return err
 	}
@@ -328,7 +326,7 @@ func resourceVmInternalDiskUpdate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 
-	err = powerOnIfNeeded(d, vm)
+	err = powerOnIfNeeded(d, vm, vmStatusBefore)
 	if err != nil {
 		return err
 	}
