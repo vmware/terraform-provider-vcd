@@ -116,6 +116,7 @@ resource "vcd_vapp_vm" "web2" {
 ```
 
 ## Example Usage (Override Template Disk)
+This example shows how to [change VM template's disk properties](#override-template-disk) when the VM is created.
 
 ```hcl
 resource "vcd_vapp_vm" "internalDiskOverride" {
