@@ -643,6 +643,7 @@ func expandDisksProperties(v interface{}) ([]diskParams, error) {
 func getVmIndependentDisks(vm govcd.VM) []string {
 
 	var disks []string
+	// We use VirtualHardwareSection due in time of implementation we didn't have access to VmSpecSection which we used for internal disks.
 	for _, item := range vm.VM.VirtualHardwareSection.Item {
 		// disk resource type is 17
 		if item.ResourceType == 17 && item.HostResource[0].Disk != "" {
@@ -1167,6 +1168,8 @@ func updateStateOfInternalDisks(d *schema.ResourceData, vm govcd.VM) error {
 	var internalDiskList []map[string]interface{}
 	for _, internalDisk := range existingInternalDisks {
 		// API shows internal disk and independent disks in one list. If disk.Disk != nil then it's independent disk
+		// We use VmSpecSection as it is newer type than VirtualHardwareSection. It is used by HTML5 vCD client, has easy understandable structure.
+		// VirtualHardwareSection is a mess, has undocumented relationships between elements and very hard to use without issues for internal disks.
 		if internalDisk.Disk == nil {
 			newValue := map[string]interface{}{
 				"disk_id":          internalDisk.DiskId,
