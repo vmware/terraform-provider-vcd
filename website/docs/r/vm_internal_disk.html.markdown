@@ -104,7 +104,7 @@ Error: resource was not imported! resource id must be specified in one of these 
 
 ```
 
-Now to import disk with ID urn:vcloud:disk:1bbc273d-7701-4f06-97be-428b46b0805e one could supply this command:
+Now to import disk with ID 301 one could supply this command:
 
 ```shell
 $ terraform import vcd_vm_internal_disk.imported org-name.vdc-name.vapp-name.vm-name.3001
