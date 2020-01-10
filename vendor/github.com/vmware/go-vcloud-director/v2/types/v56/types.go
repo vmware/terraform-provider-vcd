@@ -1414,6 +1414,7 @@ type DiskSettings struct {
 	BusNumber           int        `xml:"BusNumber"`                     //	The number of the SCSI or IDE controller itself.
 	AdapterType         string     `xml:"AdapterType"`                   // The type of disk controller, e.g. IDE vs SCSI and if SCSI bus-logic vs LSI logic.
 	ThinProvisioned     *bool      `xml:"ThinProvisioned,omitempty"`     // Specifies whether the disk storage is pre-allocated or allocated on demand.
+	Disk                *Reference `xml:"Disk,omitempty"`                // Specifies reference to a named disk.
 	StorageProfile      *Reference `xml:"StorageProfile,omitempty"`      // Specifies reference to a storage profile to be associated with the disk.
 	OverrideVmDefault   bool       `xml:"overrideVmDefault"`             // Specifies that the disk storage profile overrides the VM's default storage profile.
 	Iops                *int64     `xml:"iops,omitempty"`                // Specifies the IOPS for the disk.
