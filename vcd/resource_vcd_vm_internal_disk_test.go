@@ -322,6 +322,16 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   }
 }
 
+resource "vcd_independent_disk" "IndependentDisk1" {
+  org             = "{{.Org}}"
+  vdc             = vcd_org_vdc.{{.VdcName}}.name
+  name            = "TestAccVcdVmInternalDiskTest"
+  size            = "5"
+  bus_type        = "SCSI"
+  bus_sub_type    = "lsilogicsas"
+  storage_profile = "{{.StorageProfileName}}"
+}
+
 output "internal_disk_size" {
   value = vcd_vapp_vm.{{.VmName}}.internal_disk[0].size_in_mb
 }
