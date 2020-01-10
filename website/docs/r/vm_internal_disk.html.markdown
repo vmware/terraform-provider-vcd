@@ -8,7 +8,11 @@ description: |-
 
 # vcd\_vm\_internal\_disk
 
-Provides a vCloud Director VM internal disk resource. This can be used to create and delete VM internal disks.
+This can be used to create, update and delete VM internal disks on already created VMs.
+
+~> **Note:** To adjust disk parameters when creating a new VM, please use [override_template_disk](/docs/providers/vcd/r/vapp_vm.html#override-template-disk).
+
+To manage disks which already exist inside a VM, please [import](#importing) them first.
 
 Supported in provider *v2.7+*
 
