@@ -66,7 +66,7 @@ func TestAccVcdVAppVmUpdateCustomization(t *testing.T) {
 			resource.TestStep{
 				Config: configTextVMUpdateStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					// testAccCheckVcdVMCustomization("vcd_vapp_vm.test-vm", true),
+					testAccCheckVcdVMCustomization("vcd_vapp_vm.test-vm", true),
 					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm", &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "name", netVmName1),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "network.#", "2"),
