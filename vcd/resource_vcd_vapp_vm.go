@@ -1340,6 +1340,9 @@ func isForcedCustomization(customizationBlock interface{}) bool {
 	}
 
 	cust := customizationSlice[0]
+	if cust == nil {
+		return false
+	}
 	fc := cust.(map[string]interface{})
 	forceCust, ok := fc["force"]
 	forceCustBool := forceCust.(bool)

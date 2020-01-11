@@ -66,7 +66,7 @@ func TestAccVcdVAppVmUpdateCustomization(t *testing.T) {
 			resource.TestStep{
 				Config: configTextVMUpdateStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckVcdVMCustomization("vcd_vapp_vm.test-vm", true),
+					// testAccCheckVcdVMCustomization("vcd_vapp_vm.test-vm", true),
 					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm", &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "name", netVmName1),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "network.#", "2"),
@@ -93,14 +93,15 @@ func TestAccVcdVAppVmCreateCustomization(t *testing.T) {
 	)
 
 	var params = StringMap{
-		"Org":         testConfig.VCD.Org,
-		"Vdc":         testConfig.VCD.Vdc,
-		"EdgeGateway": testConfig.Networking.EdgeGateway,
-		"Catalog":     testSuiteCatalogName,
-		"CatalogItem": testSuiteCatalogOVAItem,
-		"VAppName":    netVappName,
-		"VMName":      netVmName1,
-		"Tags":        "vapp vm",
+		"Org":           testConfig.VCD.Org,
+		"Vdc":           testConfig.VCD.Vdc,
+		"EdgeGateway":   testConfig.Networking.EdgeGateway,
+		"Catalog":       testSuiteCatalogName,
+		"CatalogItem":   testSuiteCatalogOVAItem,
+		"VAppName":      netVappName,
+		"VMName":        netVmName1,
+		"Tags":          "vapp vm",
+		"Customization": "true",
 	}
 
 	configTextVMUpdateStep2 := templateFill(testAccCheckVcdVAppVmCreateCustomization, params)
@@ -125,6 +126,53 @@ func TestAccVcdVAppVmCreateCustomization(t *testing.T) {
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm2", "customization.#", "1"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm2", "customization.0.force", "true"),
+				),
+			},
+		},
+	})
+}
+
+// TestAccVcdVAppVmCreateCustomizationFalse if VM is booted up succesfullly when
+// customization.force=true. This test covers a previous bug.
+func TestAccVcdVAppVmCreateCustomizationFalse(t *testing.T) {
+	var (
+		vapp        govcd.VApp
+		vm          govcd.VM
+		netVappName string = t.Name()
+		netVmName1  string = t.Name() + "VM"
+	)
+
+	var params = StringMap{
+		"Org":           testConfig.VCD.Org,
+		"Vdc":           testConfig.VCD.Vdc,
+		"EdgeGateway":   testConfig.Networking.EdgeGateway,
+		"Catalog":       testSuiteCatalogName,
+		"CatalogItem":   testSuiteCatalogOVAItem,
+		"VAppName":      netVappName,
+		"VMName":        netVmName1,
+		"Tags":          "vapp vm",
+		"Customization": "false",
+	}
+
+	configTextVM := templateFill(testAccCheckVcdVAppVmCreateCustomization, params)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVcdVAppVmDestroy(netVappName),
+		Steps: []resource.TestStep{
+			// Step 0 - Create new VM and set set customization.force=false
+			resource.TestStep{
+				Config: configTextVM,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm2", &vapp, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm2", "name", netVmName1),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm2", "network.#", "1"),
 				),
 			},
 		},
@@ -304,7 +352,7 @@ resource "vcd_vapp_vm" "test-vm2" {
   }
 
   customization {
-    force = true
+    force = {{.Customization}}
   }
 }
 `
