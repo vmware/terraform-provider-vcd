@@ -320,6 +320,12 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
     iops             = 0
     storage_profile  = "{{.StorageProfileName}}"
   }
+
+  disk {
+    name        = vcd_independent_disk.IndependentDisk1.name
+    bus_number  = 3
+    unit_number = 0
+  }
 }
 
 resource "vcd_independent_disk" "IndependentDisk1" {
