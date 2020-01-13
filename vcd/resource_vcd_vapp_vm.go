@@ -1169,7 +1169,7 @@ func updateStateOfInternalDisks(d *schema.ResourceData, vm govcd.VM) error {
 	for _, internalDisk := range existingInternalDisks {
 		// API shows internal disk and independent disks in one list. If disk.Disk != nil then it's independent disk
 		// We use VmSpecSection as it is newer type than VirtualHardwareSection. It is used by HTML5 vCD client, has easy understandable structure.
-		// VirtualHardwareSection is a mess, has undocumented relationships between elements and very hard to use without issues for internal disks.
+		// VirtualHardwareSection has undocumented relationships between elements and very hard to use without issues for internal disks.
 		if internalDisk.Disk == nil {
 			newValue := map[string]interface{}{
 				"disk_id":          internalDisk.DiskId,
