@@ -296,9 +296,6 @@ func resourceVmInternalDiskUpdate(d *schema.ResourceData, meta interface{}) erro
 	log.Printf("[TRACE] Internal Disk with id %s found", d.Id())
 	iops := int64(d.Get("iops").(int))
 	diskSettingsToUpdate.Iops = &iops
-	//diskSettingsToUpdate.UnitNumber = d.Get("unit_number").(int)
-	//diskSettingsToUpdate.BusNumber = d.Get("bus_number").(int)
-	//diskSettingsToUpdate.AdapterType = internalDiskBusTypes[d.Get("bus_type").(string)]
 	diskSettingsToUpdate.SizeMb = int64(d.Get("size_in_mb").(int))
 	// Note can't change adapter type, bus number, unit number as vSphere changes diskId
 
