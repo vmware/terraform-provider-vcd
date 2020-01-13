@@ -643,7 +643,7 @@ func expandDisksProperties(v interface{}) ([]diskParams, error) {
 func getVmIndependentDisks(vm govcd.VM) []string {
 
 	var disks []string
-	// We use VirtualHardwareSection due in time of implementation we didn't have access to VmSpecSection which we used for internal disks.
+	// We use VirtualHardwareSection because in time of implementation we didn't have access to VmSpecSection which we used for internal disks.
 	for _, item := range vm.VM.VirtualHardwareSection.Item {
 		// disk resource type is 17
 		if item.ResourceType == 17 && item.HostResource[0].Disk != "" {
@@ -1164,6 +1164,9 @@ func updateStateOfInternalDisks(d *schema.ResourceData, vm govcd.VM) error {
 		return err
 	}
 
+	if vm.VM.VmSpecSection == nil || vm.VM.VmSpecSection.DiskSection == nil {
+		return fmt.Errorf("[updateStateOfInternalDisks] VmSpecSection part is missing")
+	}
 	existingInternalDisks := vm.VM.VmSpecSection.DiskSection.DiskSettings
 	var internalDiskList []map[string]interface{}
 	for _, internalDisk := range existingInternalDisks {
@@ -1194,6 +1197,10 @@ func updateTemplateInternalDisks(d *schema.ResourceData, meta interface{}, vm go
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	}
+
+	if vm.VM.VmSpecSection == nil || vm.VM.VmSpecSection.DiskSection == nil {
+		return fmt.Errorf("[updateTemplateInternalDisks] VmSpecSection part is missing")
 	}
 
 	diskSettings := vm.VM.VmSpecSection.DiskSection.DiskSettings

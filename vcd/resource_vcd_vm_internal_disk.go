@@ -130,7 +130,7 @@ func resourceVmInternalDiskCreate(d *schema.ResourceData, meta interface{}) erro
 	if storageProfileName, ok := d.GetOk("storage_profile"); ok {
 		storageProfile, err := vdc.FindStorageProfileReference(storageProfileName.(string))
 		if err != nil {
-			return fmt.Errorf("[vm creation] error retrieving storage profile %s : %s", storageProfileName, err)
+			return fmt.Errorf("[internal disk creation] error retrieving storage profile %s : %s", storageProfileName, err)
 		}
 		storageProfilePrt = &storageProfile
 		overrideVmDefault = true
@@ -237,7 +237,7 @@ func resourceVmInternalDiskDelete(d *schema.ResourceData, m interface{}) error {
 
 	err = vm.DeleteInternalDisk(d.Id())
 	if err != nil {
-		return fmt.Errorf("[Error] failed to delete internal disk: %s", err)
+		return fmt.Errorf("[resourceVmInternalDiskDelete] failed to delete internal disk: %s", err)
 	}
 
 	err = powerOnIfNeeded(d, vm, vmStatusBefore)
@@ -257,11 +257,11 @@ func getVm(vcdClient *VCDClient, d *schema.ResourceData) (*govcd.VM, *govcd.Vdc,
 	}
 	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
 	if err != nil {
-		return nil, nil, fmt.Errorf("[Error] failed to get vApp: %s", err)
+		return nil, nil, fmt.Errorf("[getVm] failed to get vApp: %s", err)
 	}
 	vm, err := vapp.GetVMByName(d.Get("vm_name").(string), false)
 	if err != nil {
-		return nil, nil, fmt.Errorf("[Error] failed to get VM: %s", err)
+		return nil, nil, fmt.Errorf("[getVm] failed to get VM: %s", err)
 	}
 	return vm, vdc, err
 }
@@ -355,7 +355,9 @@ func resourceVmInternalDiskRead(d *schema.ResourceData, m interface{}) error {
 	_ = d.Set("size_in_mb", diskSettings.SizeMb)
 	_ = d.Set("bus_number", diskSettings.BusNumber)
 	_ = d.Set("unit_number", diskSettings.UnitNumber)
-	_ = d.Set("thin_provisioned", *diskSettings.ThinProvisioned)
+	if diskSettings.ThinProvisioned != nil {
+		_ = d.Set("thin_provisioned", *diskSettings.ThinProvisioned)
+	}
 	_ = d.Set("iops", diskSettings.Iops)
 	_ = d.Set("storage_profile", diskSettings.StorageProfile.Name)
 
@@ -431,7 +433,7 @@ func listInternalDisksForImport(meta interface{}, orgName, vdcName, vappName, vm
 
 	writer := tabwriter.NewWriter(getTerraformStdout(), 0, 8, 1, '\t', tabwriter.AlignRight)
 
-	fmt.Fprintln(writer, "No\tID\tBusType\tBusNumber\tUnitNumber\tSize\tStoragePofile\tIops\tThinProvisioned")
+	fmt.Fprintln(writer, "No\tID\tBusType\tBusNumber\tUnitNumber\tSize\tStorageProfile\tIops\tThinProvisioned")
 	fmt.Fprintln(writer, "--\t--\t-------\t---------\t----------\t----\t-------------\t----\t---------------")
 	for index, disk := range vm.VM.VmSpecSection.DiskSection.DiskSettings {
 		// API shows internal disk and independent disks in one list. If disk.Disk != nil then it's independent disk
