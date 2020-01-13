@@ -6,7 +6,7 @@ description: |-
   Provides an organization VDC data source.
 ---
 
-# vcd\_org\_vcd
+# vcd\_org\_vdc
 
 Provides a vCloud Director Organization VDC data source. An Organization VDC can be used to reference a VCD and use its 
 data within other resources or data sources.
