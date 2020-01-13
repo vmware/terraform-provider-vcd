@@ -3,6 +3,7 @@ package vcd
 import (
 	"bytes"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"log"
 	"net"
 	"sort"
@@ -11,12 +12,12 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 func resourceVcdVAppVm() *schema.Resource {
+
 	return &schema.Resource{
 		Create: resourceVcdVAppVmCreate,
 		Update: resourceVcdVAppVmUpdate,
@@ -241,6 +242,98 @@ func resourceVcdVAppVm() *schema.Resource {
 				Optional: true,
 				Set:      resourceVcdVmIndependentDiskHash,
 			},
+			"override_template_disk": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				ForceNew:    true,
+				Description: "A block to match internal_disk interface in template. Multiple can be used. Disk will be matched by bus_type, bus_number and unit_number.",
+				Elem: &schema.Resource{Schema: map[string]*schema.Schema{
+					"bus_type": {
+						Type:         schema.TypeString,
+						Required:     true,
+						ForceNew:     true,
+						ValidateFunc: validation.StringInSlice([]string{"ide", "parallel", "sas", "paravirtual", "sata"}, false),
+						Description:  "The type of disk controller. Possible values: ide, parallel( LSI Logic Parallel SCSI), sas(LSI Logic SAS (SCSI)), paravirtual(Paravirtual (SCSI)), sata",
+					},
+					"size_in_mb": {
+						Type:        schema.TypeInt,
+						ForceNew:    true,
+						Required:    true,
+						Description: "The size of the disk in MB.",
+					},
+					"bus_number": {
+						Type:        schema.TypeInt,
+						ForceNew:    true,
+						Required:    true,
+						Description: "The number of the SCSI or IDE controller itself.",
+					},
+					"unit_number": {
+						Type:        schema.TypeInt,
+						ForceNew:    true,
+						Required:    true,
+						Description: "The device number on the SCSI or IDE controller of the disk.",
+					},
+					"iops": {
+						Type:        schema.TypeInt,
+						ForceNew:    true,
+						Optional:    true,
+						Description: "Specifies the IOPS for the disk. Default - 0.",
+					},
+					"storage_profile": &schema.Schema{
+						Type:        schema.TypeString,
+						ForceNew:    true,
+						Optional:    true,
+						Description: "Storage profile to override the VM default one",
+					},
+				}},
+			},
+			"internal_disk": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "A block will show internal disk details",
+				Elem: &schema.Resource{Schema: map[string]*schema.Schema{
+					"disk_id": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "The disk ID.",
+					},
+					"bus_type": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "The type of disk controller. Possible values: ide, parallel( LSI Logic Parallel SCSI), sas(LSI Logic SAS (SCSI)), paravirtual(Paravirtual (SCSI)), sata",
+					},
+					"size_in_mb": {
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "The size of the disk in MB.",
+					},
+					"bus_number": {
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "The number of the SCSI or IDE controller itself.",
+					},
+					"unit_number": {
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "The device number on the SCSI or IDE controller of the disk.",
+					},
+					"thin_provisioned": {
+						Type:        schema.TypeBool,
+						Computed:    true,
+						Description: "Specifies whether the disk storage is pre-allocated or allocated on demand.",
+					},
+					"iops": {
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "Specifies the IOPS for the disk. Default - 0.",
+					},
+					"storage_profile": &schema.Schema{
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "Storage profile to override the VM default one",
+					},
+				}},
+			},
 			"expose_hardware_virtualization": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -417,6 +510,20 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 
 	d.SetId(vm.VM.ID)
 
+	// update existing internal disks in template
+	err = updateTemplateInternalDisks(d, meta, *vm)
+	if err != nil {
+		d.Set("override_template_disk", nil)
+		return fmt.Errorf("error managing internal disks : %s", err)
+	} else {
+		// add details of internal disk to state
+		errReadInternalDisk := updateStateOfInternalDisks(d, *vm)
+		if errReadInternalDisk != nil {
+			d.Set("internal_disk", nil)
+			log.Printf("error reading interal disks : %s", errReadInternalDisk)
+		}
+	}
+
 	// TODO do not trigger resourceVcdVAppVmUpdate from create. These must be separate actions.
 	err = resourceVcdVAppVmUpdateExecute(d, meta)
 	if err != nil {
@@ -427,6 +534,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 		return err
 	}
+
 	return nil
 }
 
@@ -535,6 +643,7 @@ func expandDisksProperties(v interface{}) ([]diskParams, error) {
 func getVmIndependentDisks(vm govcd.VM) []string {
 
 	var disks []string
+	// We use VirtualHardwareSection because in time of implementation we didn't have access to VmSpecSection which we used for internal disks.
 	for _, item := range vm.VM.VirtualHardwareSection.Item {
 		// disk resource type is 17
 		if item.ResourceType == 17 && item.HostResource[0].Disk != "" {
@@ -646,7 +755,8 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("cpu_cores") || d.HasChange("power_on") || d.HasChange("disk") ||
 		d.HasChange("expose_hardware_virtualization") || d.HasChange("network") || d.HasChange("computer_name") {
 
-		log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t), power_on(%t), disk(%t), expose_hardware_virtualization(%t), network(%t), computer_name(%t)",
+		log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t), power_on(%t), disk(%t), expose_hardware_virtualization(%t),"+
+			" network(%t), computer_name(%t)",
 			vm.VM.Name, d.HasChange("memory"), d.HasChange("cpus"), d.HasChange("cpu_cores"), d.HasChange("power_on"), d.HasChange("disk"),
 			d.HasChange("expose_hardware_virtualization"), d.HasChange("network"), d.HasChange("computer_name"))
 
@@ -1003,10 +1113,16 @@ func genericVcdVAppVmRead(d *schema.ResourceData, meta interface{}, origin strin
 		return fmt.Errorf("[VM read] unable to set guest properties in state: %s", err)
 	}
 
+	err = updateStateOfInternalDisks(d, *vm)
+	if err != nil {
+		d.Set("internal_disk", nil)
+		return fmt.Errorf("[VM read] error reading internal disks : %s", err)
+	}
+
 	err = updateStateOfAttachedDisks(d, *vm, vdc)
 	if err != nil {
 		d.Set("disk", nil)
-		return fmt.Errorf("[VM read] error updating attached disks : %s", err)
+		return fmt.Errorf("[VM read] error reading attached disks : %s", err)
 	}
 
 	guestCustomizationSection, err := vm.GetGuestCustomizationSection()
@@ -1040,6 +1156,121 @@ func updateStateOfAttachedDisks(d *schema.ResourceData, vm govcd.VM, vdc *govcd.
 	}
 
 	return d.Set("disk", transformed)
+}
+
+func updateStateOfInternalDisks(d *schema.ResourceData, vm govcd.VM) error {
+	err := vm.Refresh()
+	if err != nil {
+		return err
+	}
+
+	if vm.VM.VmSpecSection == nil || vm.VM.VmSpecSection.DiskSection == nil {
+		return fmt.Errorf("[updateStateOfInternalDisks] VmSpecSection part is missing")
+	}
+	existingInternalDisks := vm.VM.VmSpecSection.DiskSection.DiskSettings
+	var internalDiskList []map[string]interface{}
+	for _, internalDisk := range existingInternalDisks {
+		// API shows internal disk and independent disks in one list. If disk.Disk != nil then it's independent disk
+		// We use VmSpecSection as it is newer type than VirtualHardwareSection. It is used by HTML5 vCD client, has easy understandable structure.
+		// VirtualHardwareSection has undocumented relationships between elements and very hard to use without issues for internal disks.
+		if internalDisk.Disk == nil {
+			newValue := map[string]interface{}{
+				"disk_id":          internalDisk.DiskId,
+				"bus_type":         internalDiskBusTypesFromValues[internalDisk.AdapterType],
+				"size_in_mb":       int(internalDisk.SizeMb),
+				"bus_number":       internalDisk.BusNumber,
+				"unit_number":      internalDisk.UnitNumber,
+				"iops":             int(*internalDisk.Iops),
+				"thin_provisioned": *internalDisk.ThinProvisioned,
+				"storage_profile":  internalDisk.StorageProfile.Name,
+			}
+			internalDiskList = append(internalDiskList, newValue)
+		}
+	}
+
+	return d.Set("internal_disk", internalDiskList)
+}
+
+func updateTemplateInternalDisks(d *schema.ResourceData, meta interface{}, vm govcd.VM) error {
+	vcdClient := meta.(*VCDClient)
+
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	if err != nil {
+		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	}
+
+	if vm.VM.VmSpecSection == nil || vm.VM.VmSpecSection.DiskSection == nil {
+		return fmt.Errorf("[updateTemplateInternalDisks] VmSpecSection part is missing")
+	}
+
+	diskSettings := vm.VM.VmSpecSection.DiskSection.DiskSettings
+
+	var storageProfilePrt *types.Reference
+	var overrideVmDefault bool
+
+	internalDisksList := d.Get("override_template_disk").(*schema.Set).List()
+
+	if len(internalDisksList) == 0 {
+		return nil
+	}
+
+	for _, internalDisk := range internalDisksList {
+		internalDiskProvidedConfig := internalDisk.(map[string]interface{})
+		diskCreatedByTemplate := getMatchedDisk(internalDiskProvidedConfig, diskSettings)
+
+		storageProfileName := internalDiskProvidedConfig["storage_profile"].(string)
+		if storageProfileName != "" {
+			storageProfile, err := vdc.FindStorageProfileReference(storageProfileName)
+			if err != nil {
+				return fmt.Errorf("[vm creation] error retrieving storage profile %s : %s", storageProfileName, err)
+			}
+			storageProfilePrt = &storageProfile
+			overrideVmDefault = true
+		} else {
+			storageProfilePrt = vm.VM.StorageProfile
+			overrideVmDefault = false
+		}
+
+		if diskCreatedByTemplate == nil {
+			return fmt.Errorf("[vm creation] disk with bus type %s, bust number %d and unit number %d not found",
+				internalDiskProvidedConfig["bus_type"].(string), internalDiskProvidedConfig["bus_number"].(int), internalDiskProvidedConfig["unit_number"].(int))
+		}
+
+		// Update details of internal disk for disk existing in template
+		if value, ok := internalDiskProvidedConfig["iops"]; ok {
+			iops := int64(value.(int))
+			diskCreatedByTemplate.Iops = &iops
+		}
+
+		// value is required but not treated.
+		isThinProvisioned := true
+		diskCreatedByTemplate.ThinProvisioned = &isThinProvisioned
+
+		diskCreatedByTemplate.SizeMb = int64(internalDiskProvidedConfig["size_in_mb"].(int))
+		diskCreatedByTemplate.StorageProfile = storageProfilePrt
+		diskCreatedByTemplate.OverrideVmDefault = overrideVmDefault
+	}
+
+	vmSpecSection := vm.VM.VmSpecSection
+	vmSpecSection.DiskSection.DiskSettings = diskSettings
+	_, err = vm.UpdateInternalDisks(vmSpecSection)
+	if err != nil {
+		return fmt.Errorf("error updating VM disks: %s", err)
+	}
+
+	return nil
+}
+
+// getMatchedDisk returns matched disk by adapter type, bus number and unit number
+func getMatchedDisk(internalDiskProvidedConfig map[string]interface{}, diskSettings []*types.DiskSettings) *types.DiskSettings {
+	for _, diskSetting := range diskSettings {
+		if diskSetting.AdapterType == internalDiskBusTypes[internalDiskProvidedConfig["bus_type"].(string)] &&
+			diskSetting.BusNumber == internalDiskProvidedConfig["bus_number"].(int) &&
+			diskSetting.UnitNumber == internalDiskProvidedConfig["unit_number"].(int) {
+			return diskSetting
+		}
+	}
+	return nil
 }
 
 func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {

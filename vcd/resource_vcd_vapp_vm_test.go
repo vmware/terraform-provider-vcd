@@ -286,6 +286,4 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
     ip_allocation_mode = vcd_vapp_vm.{{.VmName}}.network.0.ip_allocation_mode
   }
 }
-
-
 `

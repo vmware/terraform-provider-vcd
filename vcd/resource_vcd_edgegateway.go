@@ -304,7 +304,7 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	// In version 9.7+ the advanced property is true by default
-	if vcdClient.APIVCDMaxVersionIs(">= 32.0") {
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 32.0") {
 		if !d.Get("advanced").(bool) {
 			return fmt.Errorf("'advanced' property for vCD 9.7+ must be set to 'true'")
 		}
@@ -352,7 +352,7 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 	// vCD 9.0 does not support FIPS Mode and fails if XML tag <FipsModeEnabled> is sent therefore
 	// field value must be sent only if user specified its value
 	if fipsModeEnabled, ok := d.GetOkExists("fips_mode_enabled"); ok {
-		if vcdClient.APIVCDMaxVersionIs("<= 29.0") { // vCD 9.0 or less
+		if vcdClient.Client.APIVCDMaxVersionIs("<= 29.0") { // vCD 9.0 or less
 			return fmt.Errorf("ERROR! FIPS mode is only supported starting" +
 				" with vCD 9.1. Please do not set this field when using with vCD 9.0")
 		}
@@ -790,7 +790,8 @@ func getExternalNetworkData(vcdClient *VCDClient, d *schema.ResourceData, gatewa
 			// we check what the user has set in the config and passing through the same value.
 			// Note. If it wasn't "TypeSet" with more values - it would be possible to simply omit
 			// setting the field.
-			if vcdClient.APIVCDMaxVersionIs("<= 29") && origin == "resource" {
+			// "<= 29" -> if vCD older or 9.0
+			if vcdClient.Client.APIVCDMaxVersionIs("<= 29") && origin == "resource" {
 				log.Printf("[TRACE] edge gateway - skipping read of external networks on vCD 9.0 "+
 					"because for network %s it does not return these values", extNetwork.Network.Name)
 				stateGatewayInterfaces, _ := getGatewayInterfacesType(vcdClient, d.Get("external_network").(*schema.Set))
