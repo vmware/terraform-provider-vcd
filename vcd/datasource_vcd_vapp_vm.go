@@ -122,6 +122,53 @@ func datasourceVcdVAppVm() *schema.Resource {
 				Computed: true,
 				Set:      resourceVcdVmIndependentDiskHash,
 			},
+			"internal_disk": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: "A block will show internal disk details",
+				Elem: &schema.Resource{Schema: map[string]*schema.Schema{
+					"disk_id": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "The disk ID.",
+					},
+					"bus_type": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "The type of disk controller. Possible values: ide, parallel( LSI Logic Parallel SCSI), sas(LSI Logic SAS (SCSI)), paravirtual(Paravirtual (SCSI)), sata",
+					},
+					"size_in_mb": {
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "The size of the disk in MB.",
+					},
+					"bus_number": {
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "The number of the SCSI or IDE controller itself.",
+					},
+					"unit_number": {
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "The device number on the SCSI or IDE controller of the disk.",
+					},
+					"thin_provisioned": {
+						Type:        schema.TypeBool,
+						Computed:    true,
+						Description: "Specifies whether the disk storage is pre-allocated or allocated on demand.",
+					},
+					"iops": {
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "Specifies the IOPS for the disk. Default - 0.",
+					},
+					"storage_profile": &schema.Schema{
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "Storage profile to override the VM default one",
+					},
+				}},
+			},
 			"expose_hardware_virtualization": &schema.Schema{
 				Type:        schema.TypeBool,
 				Computed:    true,
