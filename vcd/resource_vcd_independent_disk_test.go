@@ -38,9 +38,6 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "-Compatibility"
 	configTextForCompatibility := templateFill(testAccCheckVcdIndependentDiskForCompatibility, params)
-	/*	params["FuncName"] = t.Name()
-		configText := templateFill(testAccCheckVcdIndependentDiskBasic, params)
-	*/
 	params["FuncName"] = t.Name() + "-WithoutOptionals"
 	configTextWithoutOptionals := templateFill(testAccCheckVcdIndependentDiskWithoutOptionals, params)
 
@@ -60,7 +57,6 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 				Config: configTextForCompatibility,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDiskCreated("vcd_independent_disk."+resourceName),
-					//resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "size_in_bytes", "5242880000"),
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "owner_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "datastore_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "iops", regexp.MustCompile(`^\d+$`)),
@@ -74,17 +70,6 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 				ImportStateIdFunc:       importStateIdByDisk("vcd_independent_disk." + resourceName),
 				ImportStateVerifyIgnore: []string{"org", "vdc", "size"},
 			},
-			/*			resource.TestStep{
-						Config: configText,
-						Check: resource.ComposeTestCheckFunc(
-							testAccCheckDiskCreated("vcd_independent_disk."+resourceName+"second"),
-							resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName+"second", "size_in_bytes", "5242880000"),
-							resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName+"second", "owner_name", regexp.MustCompile(`^\S+`)),
-							resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName+"second", "datastore_name", regexp.MustCompile(`^\S+`)),
-							resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName+"second", "iops", regexp.MustCompile(`^\d+$`)),
-							resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName+"second", "is_attached", "false"),
-						),
-					},*/
 			resource.TestStep{
 				Config: configTextWithoutOptionals,
 				Check: resource.ComposeTestCheckFunc(
@@ -192,16 +177,3 @@ resource "vcd_independent_disk" "{{.secondResourceName}}" {
   size            = "{{.size}}"
 }
 `
-
-/*const testAccCheckVcdIndependentDiskBasic = `
-resource "vcd_independent_disk" "{{.secondResourceName}}" {
-  org             = "{{.Org}}"
-  vdc             = "{{.Vdc}}"
-  name            = "{{.secondName}}"
-  size_in_bytes   = "{{.sizeInBytes}}"
-  bus_type        = "{{.busType}}"
-  bus_sub_type    = "{{.busSubType}}"
-  storage_profile = "{{.storageProfileName}}"
-}
-`
-*/

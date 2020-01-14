@@ -21,21 +21,20 @@ import (
 type VCDClientOption func(*VCDClient) error
 
 type VCDClient struct {
-	Client            Client  // Client for the underlying VCD instance
-	sessionHREF       url.URL // HREF for the session API
-	QueryHREF         url.URL // HREF for the query API
-	Mutex             sync.Mutex
-	supportedVersions SupportedVersions // Versions from /api/versions endpoint
+	Client      Client  // Client for the underlying VCD instance
+	sessionHREF url.URL // HREF for the session API
+	QueryHREF   url.URL // HREF for the query API
+	Mutex       sync.Mutex
 }
 
 func (vcdCli *VCDClient) vcdloginurl() error {
-	if err := vcdCli.validateAPIVersion(); err != nil {
+	if err := vcdCli.Client.validateAPIVersion(); err != nil {
 		return fmt.Errorf("could not find valid version for login: %s", err)
 	}
 
 	// find login address matching the API version
 	var neededVersion VersionInfo
-	for _, versionInfo := range vcdCli.supportedVersions.VersionInfos {
+	for _, versionInfo := range vcdCli.Client.supportedVersions.VersionInfos {
 		if versionInfo.Version == vcdCli.Client.APIVersion {
 			neededVersion = versionInfo
 			break

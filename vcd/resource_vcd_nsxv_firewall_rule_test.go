@@ -1057,7 +1057,8 @@ func TestAccVcdNsxvEdgeFirewallRuleVms(t *testing.T) {
 	if err != nil {
 		t.Skip("unable to validate vCD version - skipping test")
 	}
-	if vcdClient.APIVCDMaxVersionIs("= 29.0") {
+	// if vCD older or 9.0
+	if vcdClient.Client.APIVCDMaxVersionIs("= 29.0") {
 		t.Skip("Skipping this test for vCD 9.0 because of a known issue: " +
 			"https://github.com/terraform-providers/terraform-provider-vcd/issues/420")
 	}
