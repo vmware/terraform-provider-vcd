@@ -44,6 +44,55 @@ func datasourceVcdOrg() *schema.Resource {
 				Computed:    true,
 				Description: "True if this organization is allowed to share catalogs.",
 			},
+			"vapp_lease": &schema.Schema{
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"maximum_runtime_lease_in_sec": &schema.Schema{
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "How long vApps can run before they are automatically stopped (in seconds)",
+						},
+						"power_off_on_runtime_lease_expiration": &schema.Schema{
+							Type:     schema.TypeBool,
+							Computed: true,
+							Description: "When true, vApps are powered off when the runtime lease expires. " +
+								"When false or missing, vApps are suspended when the runtime lease expires",
+						},
+						"maximum_storage_lease_in_sec": &schema.Schema{
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "How long stopped vApps are available before being automatically cleaned up (in seconds)",
+						},
+						"delete_on_storage_lease_expiration": &schema.Schema{
+							Type:     schema.TypeBool,
+							Computed: true,
+							Description: "If true, storage for a vApp is deleted when the vApp's lease expires. " +
+								"If false, the storage is flagged for deletion, but not deleted.",
+						},
+					},
+				},
+			},
+			"vapp_template_lease": &schema.Schema{
+				Type:     schema.TypeList,
+				Computed: true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"maximum_storage_lease_in_sec": &schema.Schema{
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "How long vApp templates are available before being automatically cleaned up (in seconds)",
+						},
+						"delete_on_storage_lease_expiration": &schema.Schema{
+							Type:     schema.TypeBool,
+							Computed: true,
+							Description: "If true, storage for a vAppTemplate is deleted when the vAppTemplate lease expires. " +
+								"If false, the storage is flagged for deletion, but not deleted",
+						},
+					},
+				},
+			},
 			"delay_after_power_on_seconds": &schema.Schema{
 				Type:        schema.TypeInt,
 				Computed:    true,

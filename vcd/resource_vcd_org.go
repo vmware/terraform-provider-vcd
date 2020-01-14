@@ -74,6 +74,70 @@ func resourceOrg() *schema.Resource {
 				Default:     true,
 				Description: "True if this organization is allowed to share catalogs.",
 			},
+			"vapp_lease": &schema.Schema{
+				Type:        schema.TypeList,
+				Optional:    true,
+				Computed:    true,
+				MaxItems:    1,
+				Description: "Defines lease parameters for vApps created in this organization",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"maximum_runtime_lease_in_sec": &schema.Schema{
+							Type:     schema.TypeInt,
+							Optional: true,
+							//Default:      604800, // (7 days)
+							Description:  "How long vApps can run before they are automatically stopped (in seconds)",
+							ValidateFunc: validation.IntAtLeast(3600), // Lease can't be less than 1 hour
+						},
+						"power_off_on_runtime_lease_expiration": &schema.Schema{
+							Type:     schema.TypeBool,
+							Optional: true,
+							Default:  false,
+							Description: "When true, vApps are powered off when the runtime lease expires. " +
+								"When false or missing, vApps are suspended when the runtime lease expires",
+						},
+						"maximum_storage_lease_in_sec": &schema.Schema{
+							Type:     schema.TypeInt,
+							Optional: true,
+							//Default:      1209600, // (14 days)
+							Description:  "How long stopped vApps are available before being automatically cleaned up (in seconds)",
+							ValidateFunc: validation.IntAtLeast(3600), // Lease can't be less than 1 hour
+						},
+						"delete_on_storage_lease_expiration": &schema.Schema{
+							Type:     schema.TypeBool,
+							Optional: true,
+							Default:  false,
+							Description: "If true, storage for a vApp is deleted when the vApp's lease expires. " +
+								"If false, the storage is flagged for deletion, but not deleted.",
+						},
+					},
+				},
+			},
+			"vapp_template_lease": &schema.Schema{
+				Type:        schema.TypeList,
+				Optional:    true,
+				Computed:    true,
+				MaxItems:    1,
+				Description: "Defines lease parameters for vApp templates created in this organization",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"maximum_storage_lease_in_sec": &schema.Schema{
+							Type:     schema.TypeInt,
+							Optional: true,
+							//Default:      2592000, // (30 days)
+							Description:  "How long vApp templates are available before being automatically cleaned up (in seconds)",
+							ValidateFunc: validation.IntAtLeast(3600), // Lease can't be less than 1 hour
+						},
+						"delete_on_storage_lease_expiration": &schema.Schema{
+							Type:     schema.TypeBool,
+							Optional: true,
+							Default:  false,
+							Description: "If true, storage for a vAppTemplate is deleted when the vAppTemplate lease expires. " +
+								"If false, the storage is flagged for deletion, but not deleted",
+						},
+					},
+				},
+			},
 			"delay_after_power_on_seconds": &schema.Schema{
 				Type:        schema.TypeInt,
 				Optional:    true,
@@ -112,19 +176,19 @@ func resourceOrgCreate(d *schema.ResourceData, m interface{}) error {
 	task, err := govcd.CreateOrg(vcdClient.VCDClient, orgName, fullName, description, settings, isEnabled)
 
 	if err != nil {
-		log.Printf("[DEBUG] Error creating Org: %#v", err)
-		return fmt.Errorf("error creating Org: %#v", err)
+		log.Printf("[DEBUG] Error creating Org: %s", err)
+		return fmt.Errorf("[org creation] error creating Org %s: %s", orgName, err)
 	}
 
 	err = task.WaitTaskCompletion()
 	if err != nil {
 		log.Printf("[DEBUG] Error running Org creation task: %s", err)
-		return fmt.Errorf("error running Org creation task: %s", err)
+		return fmt.Errorf("[org creation] error running Org (%s) creation task: %s", orgName, err)
 	}
 
 	org, err := vcdClient.GetAdminOrgByName(orgName)
 	if err != nil {
-		return fmt.Errorf("error retrieving Org %s after creation: %s", orgName, err)
+		return fmt.Errorf("[org creation] error retrieving Org %s after creation: %s", orgName, err)
 	}
 	log.Printf("[TRACE] Org %s created with id: %s", orgName, org.AdminOrg.ID)
 
@@ -134,19 +198,68 @@ func resourceOrgCreate(d *schema.ResourceData, m interface{}) error {
 
 func getSettings(d *schema.ResourceData) *types.OrgSettings {
 	settings := &types.OrgSettings{}
-	General := &types.OrgGeneralSettings{}
+	vappLeaseSettings := &types.VAppLeaseSettings{}
+	vappTemplateLeaseSettings := &types.VAppTemplateLeaseSettings{}
 
-	General.DeployedVMQuota = d.Get("deployed_vm_quota").(int)
-	General.StoredVMQuota = d.Get("stored_vm_quota").(int)
-
-	delay, ok := d.GetOk("delay_after_power_on_seconds")
+	vappInputProvided := false
+	vappTemplateInputProvided := false
+	item, ok := d.GetOk("vapp_lease")
 	if ok {
-		General.DelayAfterPowerOnSeconds = delay.(int)
+		vappInputProvided = true
+		itemSlice := item.([]interface{})
+		itemMap := itemSlice[0].(map[string]interface{})
+		maxRuntimeLease, isSet := itemMap["maximum_runtime_lease_in_sec"]
+		if isSet {
+			vappLeaseSettings.DeploymentLeaseSeconds = maxRuntimeLease.(int)
+		}
+		powerOffOnLeaseExpiration, isSet := itemMap["power_off_on_runtime_lease_expiration"]
+		if isSet {
+			vappLeaseSettings.PowerOffOnRuntimeLeaseExpiration = powerOffOnLeaseExpiration.(bool)
+		}
+		maxStorageLease, isSet := itemMap["maximum_storage_lease_in_sec"]
+		if isSet {
+			vappLeaseSettings.StorageLeaseSeconds = maxStorageLease.(int)
+		}
+		deleteOnLeaseExpiration, isSet := itemMap["delete_on_storage_lease_expiration"]
+		if isSet {
+			vappLeaseSettings.DeleteOnStorageLeaseExpiration = deleteOnLeaseExpiration.(bool)
+		}
+	}
+	item, ok = d.GetOk("vapp_template_lease")
+	if ok {
+		vappTemplateInputProvided = true
+		itemSlice := item.([]interface{})
+		itemMap := itemSlice[0].(map[string]interface{})
+		maxStorageLease, isSet := itemMap["maximum_storage_lease_in_sec"]
+		if isSet {
+			vappTemplateLeaseSettings.StorageLeaseSeconds = maxStorageLease.(int)
+		}
+		deleteOnLeaseExpiration, isSet := itemMap["delete_on_storage_lease_expiration"]
+		if isSet {
+			vappTemplateLeaseSettings.DeleteOnStorageLeaseExpiration = deleteOnLeaseExpiration.(bool)
+		}
 	}
 
-	General.CanPublishCatalogs = d.Get("can_publish_catalogs").(bool)
+	deployedVmQuota := d.Get("deployed_vm_quota").(int)
+	storedVmQuota := d.Get("stored_vm_quota").(int)
+	delay := d.Get("delay_after_power_on_seconds").(int)
+	canPublishCatalogs := d.Get("can_publish_catalogs").(bool)
 
-	settings.OrgGeneralSettings = General
+	generalSettings := &types.OrgGeneralSettings{
+		DeployedVMQuota:          deployedVmQuota,
+		StoredVMQuota:            storedVmQuota,
+		DelayAfterPowerOnSeconds: delay,
+		CanPublishCatalogs:       canPublishCatalogs,
+	}
+
+	settings.OrgGeneralSettings = generalSettings
+	if vappInputProvided {
+		settings.OrgVAppLeaseSettings = vappLeaseSettings
+	}
+	if vappTemplateInputProvided {
+		settings.OrgVAppTemplateSettings = vappTemplateLeaseSettings
+	}
+
 	return settings
 }
 
@@ -222,6 +335,8 @@ func resourceOrgUpdate(d *schema.ResourceData, m interface{}) error {
 	adminOrg.AdminOrg.Description = d.Get("description").(string)
 	adminOrg.AdminOrg.IsEnabled = d.Get("is_enabled").(bool)
 	adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings = settings.OrgGeneralSettings
+	adminOrg.AdminOrg.OrgSettings.OrgVAppTemplateSettings = settings.OrgVAppTemplateSettings
+	adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings = settings.OrgVAppLeaseSettings
 
 	log.Printf("[TRACE] Org with id %s found", orgName)
 	task, err := adminOrg.Update()
@@ -240,6 +355,7 @@ func resourceOrgUpdate(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
+// setOrgData sets the data into the resource, taking it from the provided adminOrg
 func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
 	_ = d.Set("name", adminOrg.AdminOrg.Name)
 	_ = d.Set("full_name", adminOrg.AdminOrg.FullName)
@@ -249,8 +365,28 @@ func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
 	_ = d.Set("stored_vm_quota", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.StoredVMQuota)
 	_ = d.Set("can_publish_catalogs", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.CanPublishCatalogs)
 	_ = d.Set("delay_after_power_on_seconds", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.DelayAfterPowerOnSeconds)
+	var err error
 
-	return nil
+	vappLease := map[string]interface{}{
+		"maximum_runtime_lease_in_sec":          adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings.DeploymentLeaseSeconds,
+		"power_off_on_runtime_lease_expiration": adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings.PowerOffOnRuntimeLeaseExpiration,
+		"maximum_storage_lease_in_sec":          adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings.StorageLeaseSeconds,
+		"delete_on_storage_lease_expiration":    adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings.DeleteOnStorageLeaseExpiration,
+	}
+	vappLeaseSlice := []map[string]interface{}{vappLease}
+	err = d.Set("vapp_lease", vappLeaseSlice)
+	if err != nil {
+		return err
+	}
+
+	vappTemplateLease := map[string]interface{}{
+		"maximum_storage_lease_in_sec":       adminOrg.AdminOrg.OrgSettings.OrgVAppTemplateSettings.StorageLeaseSeconds,
+		"delete_on_storage_lease_expiration": adminOrg.AdminOrg.OrgSettings.OrgVAppTemplateSettings.DeleteOnStorageLeaseExpiration,
+	}
+	vappTemplateLeaseSlice := []map[string]interface{}{vappTemplateLease}
+	err = d.Set("vapp_template_lease", vappTemplateLeaseSlice)
+
+	return err
 }
 
 // Retrieves an Org resource from vCD

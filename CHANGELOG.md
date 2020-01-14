@@ -5,6 +5,10 @@ FEATURES:
 * **New Resource:** `vcd_vm_internal_disk` VM internal disk configuration
 * `vcd_vapp_vm` Internal disks in VM template allows to be edited by `override_template_disk` field 
 
+IMPROVEMENTS:
+
+* `resource/vcd_org` and `datasource/vcd_org` include a section `vapp_lease` and a section `vapp_template_lease` to define lease related parameters of depending entities - [GH-385]
+
 NOTES:
 * Drop support for vCD 9.0
 
