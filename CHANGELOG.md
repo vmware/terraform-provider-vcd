@@ -5,6 +5,12 @@ FEATURES:
 * **New Resource:** `vcd_vm_internal_disk` VM internal disk configuration
 * `vcd_vapp_vm` Internal disks in VM template allows to be edited by `override_template_disk` field 
 
+IMPROVEMENTS: 
+* `vcd_vapp_vm` `disk` has new attribute `size_in_mb` [#433]
+
+BUG FIXES:
+* Fix `vcd_vapp_vm` read resrouce. Internal disks after refresh would loose values. [#433]
+
 NOTES:
 * Drop support for vCD 9.0
 
