@@ -86,8 +86,8 @@ func resourceOrg() *schema.Resource {
 							Type:     schema.TypeInt,
 							Optional: true,
 							//Default:      604800, // (7 days)
-							Description:  "How long vApps can run before they are automatically stopped (in seconds)",
-							ValidateFunc: validation.IntAtLeast(3600), // Lease can't be less than 1 hour
+							Description:  "How long vApps can run before they are automatically stopped (in seconds). 0 means never expires",
+							ValidateFunc: IntLeaseSeconds(), // Lease can be ether 0 or 3600+
 						},
 						"power_off_on_runtime_lease_expiration": &schema.Schema{
 							Type:     schema.TypeBool,
@@ -100,8 +100,8 @@ func resourceOrg() *schema.Resource {
 							Type:     schema.TypeInt,
 							Optional: true,
 							//Default:      1209600, // (14 days)
-							Description:  "How long stopped vApps are available before being automatically cleaned up (in seconds)",
-							ValidateFunc: validation.IntAtLeast(3600), // Lease can't be less than 1 hour
+							Description:  "How long stopped vApps are available before being automatically cleaned up (in seconds). 0 means never expires",
+							ValidateFunc: IntLeaseSeconds(), // Lease can be ether 0 or 3600+
 						},
 						"delete_on_storage_lease_expiration": &schema.Schema{
 							Type:     schema.TypeBool,
@@ -125,8 +125,8 @@ func resourceOrg() *schema.Resource {
 							Type:     schema.TypeInt,
 							Optional: true,
 							//Default:      2592000, // (30 days)
-							Description:  "How long vApp templates are available before being automatically cleaned up (in seconds)",
-							ValidateFunc: validation.IntAtLeast(3600), // Lease can't be less than 1 hour
+							Description:  "How long vApp templates are available before being automatically cleaned up (in seconds). 0 means never expires",
+							ValidateFunc: IntLeaseSeconds(), // Lease can be ether 0 or 3600+
 						},
 						"delete_on_storage_lease_expiration": &schema.Schema{
 							Type:     schema.TypeBool,
@@ -210,19 +210,23 @@ func getSettings(d *schema.ResourceData) *types.OrgSettings {
 		itemMap := itemSlice[0].(map[string]interface{})
 		maxRuntimeLease, isSet := itemMap["maximum_runtime_lease_in_sec"]
 		if isSet {
-			vappLeaseSettings.DeploymentLeaseSeconds = maxRuntimeLease.(int)
+			tmpInt := maxRuntimeLease.(int)
+			vappLeaseSettings.DeploymentLeaseSeconds = &tmpInt
 		}
 		powerOffOnLeaseExpiration, isSet := itemMap["power_off_on_runtime_lease_expiration"]
 		if isSet {
-			vappLeaseSettings.PowerOffOnRuntimeLeaseExpiration = powerOffOnLeaseExpiration.(bool)
+			tmpBool := powerOffOnLeaseExpiration.(bool)
+			vappLeaseSettings.PowerOffOnRuntimeLeaseExpiration = &tmpBool
 		}
 		maxStorageLease, isSet := itemMap["maximum_storage_lease_in_sec"]
 		if isSet {
-			vappLeaseSettings.StorageLeaseSeconds = maxStorageLease.(int)
+			tmpInt := maxStorageLease.(int)
+			vappLeaseSettings.StorageLeaseSeconds = &tmpInt
 		}
 		deleteOnLeaseExpiration, isSet := itemMap["delete_on_storage_lease_expiration"]
 		if isSet {
-			vappLeaseSettings.DeleteOnStorageLeaseExpiration = deleteOnLeaseExpiration.(bool)
+			tmpBool := deleteOnLeaseExpiration.(bool)
+			vappLeaseSettings.DeleteOnStorageLeaseExpiration = &tmpBool
 		}
 	}
 	item, ok = d.GetOk("vapp_template_lease")
@@ -232,11 +236,13 @@ func getSettings(d *schema.ResourceData) *types.OrgSettings {
 		itemMap := itemSlice[0].(map[string]interface{})
 		maxStorageLease, isSet := itemMap["maximum_storage_lease_in_sec"]
 		if isSet {
-			vappTemplateLeaseSettings.StorageLeaseSeconds = maxStorageLease.(int)
+			tmpInt := maxStorageLease.(int)
+			vappTemplateLeaseSettings.StorageLeaseSeconds = &tmpInt
 		}
 		deleteOnLeaseExpiration, isSet := itemMap["delete_on_storage_lease_expiration"]
 		if isSet {
-			vappTemplateLeaseSettings.DeleteOnStorageLeaseExpiration = deleteOnLeaseExpiration.(bool)
+			tmpBool := deleteOnLeaseExpiration.(bool)
+			vappTemplateLeaseSettings.DeleteOnStorageLeaseExpiration = &tmpBool
 		}
 	}
 

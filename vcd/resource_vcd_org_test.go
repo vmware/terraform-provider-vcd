@@ -85,11 +85,11 @@ func TestAccVcdOrgFull(t *testing.T) {
 			canPublishCatalogs:    false,
 			deployedVmQuota:       0,
 			storedVmQuota:         0,
-			runtimeLease:          3601, // 1 hour and 1 second
+			runtimeLease:          0, // never expires
 			powerOffonLeaseExp:    true,
-			vappStorageLease:      3601, // 1 hour and 1 second
+			vappStorageLease:      0, // never expires
 			templDeleteOnLeaseExp: true,
-			templStorageLease:     3600 * 24 * 365, // 1 year
+			templStorageLease:     0, // never expires
 			vappDeleteOnLeaseExp:  true,
 		},
 		{
@@ -113,9 +113,9 @@ func TestAccVcdOrgFull(t *testing.T) {
 			storedVmQuota:         10,
 			runtimeLease:          3600 * 24, // 1 day
 			powerOffonLeaseExp:    false,
-			vappStorageLease:      3600 * 24, // 1 day
+			vappStorageLease:      3600 * 24 * 30, // 1 month
 			templDeleteOnLeaseExp: false,
-			templStorageLease:     3600 * 24, // 1 day
+			templStorageLease:     3600 * 24 * 365, // 1 year
 			vappDeleteOnLeaseExp:  false,
 		},
 		{

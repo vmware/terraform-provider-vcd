@@ -66,9 +66,9 @@ The following arguments are supported:
 
 The `vapp_lease` section contains lease parameters for vApps created in the current organization, as defined below:
 
-* `maximum_runtime_lease_in_sec` - (Optional) - How long vApps can run before they are automatically stopped (in seconds). Minimum 3600. - Default is 604800 (7 days)
+* `maximum_runtime_lease_in_sec` - (Optional) - How long vApps can run before they are automatically stopped (in seconds). 0 means never expires. Values accepted from 3600+. - Default is 604800 (7 days)
 * `power_off_on_runtime_lease_expiration` - Optional - When true, vApps are powered off when the runtime lease expires. When false or missing, vApps are suspended when the runtime lease expires.
-* `maximum_storage_lease_in_sec` - (Optional) - How long stopped vApps are available before being automatically cleaned up (in seconds). Minimum 3600.. Default is 1209600 (14 days)
+* `maximum_storage_lease_in_sec` - (Optional) - How long stopped vApps are available before being automatically cleaned up (in seconds). 0 means never expires. Regular values accepted from 3600+. Default is 1209600 (14 days)
 * `delete_on_storage_lease_expiration` - (Optional) - If true, storage for a vApp is deleted when the vApp's lease expires. If false, the storage is flagged for deletion, but not deleted.
 
 <a id="vapp-template-lease"></a>
@@ -76,7 +76,7 @@ The `vapp_lease` section contains lease parameters for vApps created in the curr
 
 The `vapp_template_lease` section contains lease parameters for vApp templates created in the current organization, as defined below:
 
-* `maximum_storage_lease_in_sec` - (Optional) - How long vApp templates are available before being automatically cleaned up (in seconds). Minimum 3600.. Default is 2419200 (30 days)
+* `maximum_storage_lease_in_sec` - (Optional) - How long vApp templates are available before being automatically cleaned up (in seconds). 0 means never expires. Regular values accepted from 3600+. Default is 2419200 (30 days)
 * `delete_on_storage_lease_expiration` - (Optional) - If true, storage for a vAppTemplate is deleted when the vAppTemplate lease expires. If false, the storage is flagged for deletion, but not deleted
 
 ## Importing
