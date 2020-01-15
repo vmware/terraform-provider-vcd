@@ -3,12 +3,14 @@ package vcd
 import (
 	"bytes"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"log"
 	"net"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -202,6 +204,12 @@ func resourceVcdVAppVm() *schema.Resource {
 							Optional:    true,
 							Type:        schema.TypeString,
 							Description: "Mac address of network interface",
+						},
+						"dhcp_wait_seconds": {
+							Optional:     true,
+							Type:         schema.TypeInt,
+							ValidateFunc: validation.IntAtLeast(0),
+							Description:  "Optional number of seconds to try and wait for DHCP IP",
 						},
 					},
 				},
@@ -1059,7 +1067,7 @@ func genericVcdVAppVmRead(d *schema.ResourceData, meta interface{}, origin strin
 		_ = d.Set("mac", mac)
 		// TODO v3.0 EO remove this case block when we cleanup deprecated 'ip' and 'network_name' attributes
 	default:
-		networks, err := readNetworks(*vm, *vapp)
+		networks, err := readNetworks(d, *vm, *vapp)
 		if err != nil {
 			return fmt.Errorf("[ VM read] failed reading network details: %s", err)
 		}
@@ -1414,6 +1422,41 @@ func networksToConfig(networks []interface{}, vdc *govcd.Vdc, vapp govcd.VApp, v
 	return networkConnectionSection, nil
 }
 
+// checkDhcpWaitEnabled loops over `network` blocks and checks if any of the blocks which are using
+// IPAllocationModeDHCP and have `dhcp_wait_seconds` > 0. It returns 3 values:
+// * maxWaitSeconds - longest specified time for wait
+// * nicIndexes - a slice of NIC indexes which are using DHCP and have `dhcp_wait_seconds` > 0
+// * dhcpWaitSecondsInt - a slice whose slice indexes correspond to the slice of nicIndexes with
+// specified time
+func checkDhcpWaitEnabled(networks []interface{}) (int, []int, []int) {
+	var maxWaitSeconds int
+	var nicIndexes []int
+	var dhcpWaitSecondsInt []int
+
+	for nicIndex, singleNetwork := range networks {
+		nic := singleNetwork.(map[string]interface{})
+
+		// validate if the NIC is suitable for DHCP waiting (has DHCP interface)
+		ipAllocationMode := nic["ip_allocation_mode"].(string)
+		if ipAllocationMode != types.IPAllocationModeDHCP {
+			log.Printf("[DEBUG] [ VM read] NIC '%d' is not using DHCP in 'ip_allocation_mode'. Skipping IP wait", nicIndex)
+			continue
+		}
+
+		dhcpWaitSeconds, ok := nic["dhcp_wait_seconds"]
+		log.Printf("[DEBUG] [ VM read] NIC '%d' configured DHCP wait seconds: %v", nicIndex, dhcpWaitSeconds)
+		if ok {
+			if dhcpWaitSeconds.(int) > maxWaitSeconds {
+				maxWaitSeconds = dhcpWaitSeconds.(int)
+			}
+
+			dhcpWaitSecondsInt = append(dhcpWaitSecondsInt, dhcpWaitSeconds.(int))
+			nicIndexes = append(nicIndexes, nicIndex)
+		}
+	}
+	return maxWaitSeconds, nicIndexes, dhcpWaitSecondsInt
+}
+
 // deprecatedNetworksToConfig converts deprecated network configuration in fields
 // TODO v3.0 remove this function once 'network_name', 'vapp_network_name', 'ip' are deprecated
 func deprecatedNetworksToConfig(network_name, vapp_network_name, ip string, vdc *govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (types.NetworkConnectionSection, error) {
@@ -1510,7 +1553,7 @@ func deprecatedReadNetworks(network_name, vapp_network_name string, vm govcd.VM)
 }
 
 // readNetworks returns network configuration for saving into statefile
-func readNetworks(vm govcd.VM, vapp govcd.VApp) ([]map[string]interface{}, error) {
+func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp) ([]map[string]interface{}, error) {
 	// Determine type for all networks in vApp
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 	if err != nil {
@@ -1558,6 +1601,39 @@ func readNetworks(vm govcd.VM, vapp govcd.VApp) ([]map[string]interface{}, error
 
 		nets = append(nets, singleNIC)
 	}
+
+	// If at least one`dhcp_wait_seconds` was defined and is more than 0 - try to lookup IPs
+	maxDhcpWaitSeconds, nicIndexes, dhcpWaitSeconds := checkDhcpWaitEnabled(d.Get("network").([]interface{}))
+	log.Printf("[DEBUG] [ VM read] '%s' NICs '%v' dhcp_wait_seconds - '%v' seconds",
+		vm.VM.Name, nicIndexes, dhcpWaitSeconds)
+	if maxDhcpWaitSeconds > 0 && len(nicIndexes) > 0 {
+		log.Printf("[DEBUG] [ VM read] '%s' waiting for DHCP IPs up to '%d' seconds",
+			vm.VM.Name, maxDhcpWaitSeconds)
+
+		start := time.Now()
+		nicIps, timeout, err := vm.WaitForDhcpIpByNicIndexes(nicIndexes, maxDhcpWaitSeconds, true)
+		if err != nil {
+			return nil, fmt.Errorf("unable to to lookup DHCP IPs for VM NICs '%v': %s", nicIndexes, err)
+		}
+
+		if timeout {
+			_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: Timed out waiting %d seconds for VM "+
+				"%s to report DHCP IPs. You may want to increase 'dhcp_wait_seconds' or ensure "+
+				"your DHCP settings are correct.\n", vm.VM.Name, maxDhcpWaitSeconds)
+		}
+
+		log.Printf("[DEBUG] [ VM read] '%s' waiting for DHCP IPs took '%s' (of '%ds')",
+			vm.VM.Name, time.Since(start), maxDhcpWaitSeconds)
+
+		for sliceIndex, nicIndex := range nicIndexes {
+			log.Printf("[DEBUG] [ VM read] '%s' NIC %d reported IP %s",
+				vm.VM.Name, nicIndex, nicIps[sliceIndex])
+			nets[nicIndex]["ip"] = nicIps[sliceIndex]
+			nets[nicIndex]["dhcp_wait_seconds"] = dhcpWaitSeconds[sliceIndex]
+
+		}
+	}
+
 	return nets, nil
 }
 
