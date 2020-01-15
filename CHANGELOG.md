@@ -9,7 +9,7 @@ IMPROVEMENTS:
 * `vcd_vapp_vm` `disk` has new attribute `size_in_mb` [#433]
 
 BUG FIXES:
-Fix `vcd_vapp_vm` read resource. Independent disks would lose values after refresh. [#433]
+Fix `vcd_vapp_vm` resource read - independent disks where losing `bus_number` and `unit_number` values after refresh. [#433]
 
 NOTES:
 * Drop support for vCD 9.0

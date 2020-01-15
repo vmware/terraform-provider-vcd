@@ -1145,7 +1145,7 @@ func updateStateOfAttachedDisks(d *schema.ResourceData, vm govcd.VM, vdc *govcd.
 	transformed := schema.NewSet(resourceVcdVmIndependentDiskHash, []interface{}{})
 
 	for _, existingDiskHref := range existingDisks {
-		diskSettings, err := filterIndependentDiskFromVmDisks(vm, existingDiskHref)
+		diskSettings, err := getIndependentDiskFromVmDisks(vm, existingDiskHref)
 		if err != nil {
 			return fmt.Errorf("did not find disk `%s`: %s", existingDiskHref, err)
 		}
@@ -1162,7 +1162,8 @@ func updateStateOfAttachedDisks(d *schema.ResourceData, vm govcd.VM, vdc *govcd.
 	return d.Set("disk", transformed)
 }
 
-func filterIndependentDiskFromVmDisks(vm govcd.VM, diskHref string) (*types.DiskSettings, error) {
+// getIndependentDiskFromVmDisks finds independent disk in VM disk list.
+func getIndependentDiskFromVmDisks(vm govcd.VM, diskHref string) (*types.DiskSettings, error) {
 	if vm.VM.VmSpecSection == nil || vm.VM.VmSpecSection.DiskSection == nil {
 		return nil, govcd.ErrorEntityNotFound
 	}
