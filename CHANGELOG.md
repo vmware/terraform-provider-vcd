@@ -9,7 +9,7 @@ IMPROVEMENTS:
 * `vcd_vapp_vm` `disk` has new attribute `size_in_mb` [#433]
 
 BUG FIXES:
-* Fix `vcd_vapp_vm` read resrouce. Internal disks after refresh would loose values. [#433]
+Fix `vcd_vapp_vm` read resource. Internal disks after refresh would loose values. [#433]
 
 NOTES:
 * Drop support for vCD 9.0
