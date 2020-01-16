@@ -157,6 +157,13 @@ func resourceVcdVAppVm() *schema.Resource {
 				Type:          schema.TypeString,
 				Optional:      true,
 			},
+			"network_dhcp_wait_seconds": {
+				Optional:     true,
+				Type:         schema.TypeInt,
+				ValidateFunc: validation.IntAtLeast(0),
+				Description: "Optional number of seconds to try and wait for DHCP IP (valid for " +
+					"'network' block only)",
+			},
 			"network": {
 				ConflictsWith: []string{"ip", "network_name", "vapp_network_name", "network_href"},
 				Optional:      true,
@@ -204,12 +211,6 @@ func resourceVcdVAppVm() *schema.Resource {
 							Optional:    true,
 							Type:        schema.TypeString,
 							Description: "Mac address of network interface",
-						},
-						"dhcp_wait_seconds": {
-							Optional:     true,
-							Type:         schema.TypeInt,
-							ValidateFunc: validation.IntAtLeast(0),
-							Description:  "Optional number of seconds to try and wait for DHCP IP",
 						},
 					},
 				},
@@ -1428,16 +1429,11 @@ func networksToConfig(networks []interface{}, vdc *govcd.Vdc, vapp govcd.VApp, v
 	return networkConnectionSection, nil
 }
 
-// checkDhcpWaitEnabled loops over `network` blocks and checks if any of the blocks which are using
-// IPAllocationModeDHCP and have `dhcp_wait_seconds` > 0. It returns 3 values:
-// * maxWaitSeconds - longest specified time for wait
-// * nicIndexes - a slice of NIC indexes which are using DHCP and have `dhcp_wait_seconds` > 0
-// * dhcpWaitSecondsInt - a slice whose slice indexes correspond to the slice of nicIndexes with
-// specified time
-func checkDhcpWaitEnabled(networks []interface{}) (int, []int, []int) {
-	var maxWaitSeconds int
+// getNicIndexesWithDhcpEnabled loops over `network` blocks and checks if any of the blocks which are using
+// IPAllocationModeDHCP and have `network_dhcp_wait_seconds` > 0. It returns 3 values:
+// * nicIndexes - a slice of NIC indexes which are using DHCP and have `network_dhcp_wait_seconds` > 0
+func getNicIndexesWithDhcpEnabled(networks []interface{}) []int {
 	var nicIndexes []int
-	var dhcpWaitSecondsInt []int
 
 	for nicIndex, singleNetwork := range networks {
 		nic := singleNetwork.(map[string]interface{})
@@ -1448,19 +1444,11 @@ func checkDhcpWaitEnabled(networks []interface{}) (int, []int, []int) {
 			log.Printf("[DEBUG] [VM read] NIC '%d' is not using DHCP in 'ip_allocation_mode'. Skipping IP wait", nicIndex)
 			continue
 		}
+		log.Printf("[DEBUG] [VM read] NIC '%d' is using DHCP in 'ip_allocation_mode'.", nicIndex)
+		nicIndexes = append(nicIndexes, nicIndex)
 
-		dhcpWaitSeconds, ok := nic["dhcp_wait_seconds"]
-		log.Printf("[DEBUG] [VM read] NIC '%d' configured DHCP wait seconds: %v", nicIndex, dhcpWaitSeconds)
-		if ok {
-			if dhcpWaitSeconds.(int) > maxWaitSeconds {
-				maxWaitSeconds = dhcpWaitSeconds.(int)
-			}
-
-			dhcpWaitSecondsInt = append(dhcpWaitSecondsInt, dhcpWaitSeconds.(int))
-			nicIndexes = append(nicIndexes, nicIndex)
-		}
 	}
-	return maxWaitSeconds, nicIndexes, dhcpWaitSecondsInt
+	return nicIndexes
 }
 
 // deprecatedNetworksToConfig converts deprecated network configuration in fields
@@ -1608,35 +1596,43 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp) ([]map[s
 		nets = append(nets, singleNIC)
 	}
 
-	// If at least one`dhcp_wait_seconds` was defined and is more than 0 - try to lookup IPs
-	maxDhcpWaitSeconds, nicIndexes, dhcpWaitSeconds := checkDhcpWaitEnabled(d.Get("network").([]interface{}))
-	log.Printf("[DEBUG] [VM read] '%s' NICs '%v' dhcp_wait_seconds - '%v' seconds",
-		vm.VM.Name, nicIndexes, dhcpWaitSeconds)
-	if maxDhcpWaitSeconds > 0 && len(nicIndexes) > 0 {
-		log.Printf("[DEBUG] [VM read] '%s' waiting for DHCP IPs up to '%d' seconds",
-			vm.VM.Name, maxDhcpWaitSeconds)
+	// If at least one`network_dhcp_wait_seconds` was defined
+	if maxDhcpWaitSeconds, ok := d.GetOk("network_dhcp_wait_seconds"); ok {
+		maxDhcpWaitSecondsInt := maxDhcpWaitSeconds.(int)
 
-		start := time.Now()
-		nicIps, timeout, err := vm.WaitForDhcpIpByNicIndexes(nicIndexes, maxDhcpWaitSeconds, true)
-		if err != nil {
-			return nil, fmt.Errorf("unable to to lookup DHCP IPs for VM NICs '%v': %s", nicIndexes, err)
+		// lookup NIC indexes which have DHCP enabled
+		nicIndexes := getNicIndexesWithDhcpEnabled(d.Get("network").([]interface{}))
+		log.Printf("[DEBUG] [VM read] '%s' DHCP is used on NICs %v with wait time '%d seconds'",
+			vm.VM.Name, nicIndexes, maxDhcpWaitSecondsInt)
+		if len(nicIndexes) == 0 {
+			_, _ = fmt.Fprint(getTerraformStdout(), "INFO: Using 'network_dhcp_wait_seconds' only "+
+				"makes sense if at least one NIC is using 'ip_allocation_mode=DHCP'")
 		}
 
-		if timeout {
-			_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: Timed out waiting %d seconds for VM "+
-				"%s to report DHCP IPs. You may want to increase 'dhcp_wait_seconds' or ensure "+
-				"your DHCP settings are correct.\n", vm.VM.Name, maxDhcpWaitSeconds)
-		}
+		if len(nicIndexes) > 0 { // at least one NIC uses DHCP for IP allocation mode
+			log.Printf("[DEBUG] [VM read] '%s' waiting for DHCP IPs up to '%d' seconds on NICs %v",
+				vm.VM.Name, maxDhcpWaitSeconds, nicIndexes)
 
-		log.Printf("[DEBUG] [VM read] '%s' waiting for DHCP IPs took '%s' (of '%ds')",
-			vm.VM.Name, time.Since(start), maxDhcpWaitSeconds)
+			start := time.Now()
+			nicIps, timeout, err := vm.WaitForDhcpIpByNicIndexes(nicIndexes, maxDhcpWaitSecondsInt, true)
+			if err != nil {
+				return nil, fmt.Errorf("unable to to lookup DHCP IPs for VM NICs '%v': %s", nicIndexes, err)
+			}
 
-		for sliceIndex, nicIndex := range nicIndexes {
-			log.Printf("[DEBUG] [VM read] '%s' NIC %d reported IP %s",
-				vm.VM.Name, nicIndex, nicIps[sliceIndex])
-			nets[nicIndex]["ip"] = nicIps[sliceIndex]
-			nets[nicIndex]["dhcp_wait_seconds"] = dhcpWaitSeconds[sliceIndex]
+			if timeout {
+				_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: Timed out waiting %d seconds for VM "+
+					"%s to report DHCP IPs. You may want to increase 'network_dhcp_wait_seconds' or ensure "+
+					"your DHCP settings are correct.\n", vm.VM.Name, maxDhcpWaitSeconds)
+			}
 
+			log.Printf("[DEBUG] [VM read] '%s' waiting for DHCP IPs took '%s' (of '%ds')",
+				vm.VM.Name, time.Since(start), maxDhcpWaitSeconds)
+
+			for sliceIndex, nicIndex := range nicIndexes {
+				log.Printf("[DEBUG] [VM read] '%s' NIC %d reported IP %s",
+					vm.VM.Name, nicIndex, nicIps[sliceIndex])
+				nets[nicIndex]["ip"] = nicIps[sliceIndex]
+			}
 		}
 	}
 

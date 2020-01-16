@@ -69,9 +69,8 @@ func TestAccVcdVAppVmDhcpWait(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip_allocation_mode", "DHCP"),
 					resource.TestMatchResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip", regexp.MustCompile(`^11.10.0.\d{1,3}$`)),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.0.mac"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.dhcp_wait_seconds", "180"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network_dhcp_wait_seconds", "180"),
 
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.dhcp_wait_seconds", "0"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.ip_allocation_mode", "NONE"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.is_primary", "false"),
 					// sleepTester(),
@@ -89,9 +88,8 @@ func TestAccVcdVAppVmDhcpWait(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip_allocation_mode", "DHCP"),
 					resource.TestMatchResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip", regexp.MustCompile(`^11.10.0.\d{1,3}$`)),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.0.mac"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.dhcp_wait_seconds", "200"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network_dhcp_wait_seconds", "200"),
 
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.dhcp_wait_seconds", "0"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.ip_allocation_mode", "NONE"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.is_primary", "false"),
 					// sleepTester(),
@@ -154,12 +152,12 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 
   initscript = "echo 'LinkLocalAddressing=no' >> /etc/systemd/network/99-dhcp-en.network ; systemctl restart networking"
 
+  network_dhcp_wait_seconds = {{.DhcpWaitSeconds}}
   network {
     type               = "org"
     name               = vcd_network_routed.net.name
     ip_allocation_mode = "DHCP"
     is_primary         = true
-    dhcp_wait_seconds  = {{.DhcpWaitSeconds}}
   }
   
   network {
