@@ -3,10 +3,13 @@
 package vcd
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
@@ -19,20 +22,22 @@ func TestAccVcdVAppVmDhcpWait(t *testing.T) {
 	)
 
 	var params = StringMap{
-		"Org":         testConfig.VCD.Org,
-		"Vdc":         testConfig.VCD.Vdc,
-		"EdgeGateway": testConfig.Networking.EdgeGateway,
-		"Catalog":     testSuiteCatalogName,
-		"CatalogItem": testSuiteCatalogOVAItem,
-		"VAppName":    netVappName,
-		"VMName":      netVmName1,
-		"Tags":        "vapp vm",
+		"Org":             testConfig.VCD.Org,
+		"Vdc":             testConfig.VCD.Vdc,
+		"EdgeGateway":     testConfig.Networking.EdgeGateway,
+		"Catalog":         testSuiteCatalogName,
+		"CatalogItem":     testSuiteCatalogOVAItem,
+		"VAppName":        netVappName,
+		"VMName":          netVmName1,
+		"Tags":            "vapp vm",
+		"DhcpWaitSeconds": 180,
 	}
 
 	configTextVM := templateFill(testAccCheckVcdVAppVmDhcpWait, params)
 
-	// params["FuncName"] = t.Name() + "-step1"
-	// configTextVMUpdateStep1 := templateFill(testAccCheckVcdVAppVmNetworkVmStep1, params)
+	params["FuncName"] = t.Name() + "-step1"
+	params["DhcpWaitSeconds"] = 200
+	configTextVMDhcpWaitUpdateStep1 := templateFill(testAccCheckVcdVAppVmDhcpWait, params)
 
 	// params["FuncName"] = t.Name() + "-step2"
 	// configTextVMUpdateStep2 := templateFill(testAccCheckVcdVAppVmNetworkVmStep2, params)
@@ -64,10 +69,44 @@ func TestAccVcdVAppVmDhcpWait(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip_allocation_mode", "DHCP"),
 					resource.TestMatchResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip", regexp.MustCompile(`^11.10.0.\d{1,3}$`)),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.0.mac"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.dhcp_wait_seconds", "180"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.dhcp_wait_seconds", "0"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.ip_allocation_mode", "NONE"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.is_primary", "false"),
+					// sleepTester(),
+				),
+			},
+			resource.TestStep{
+				Config: configTextVMDhcpWaitUpdateStep1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm."+netVmName1, &vapp, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "name", netVmName1),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.name", "multinic-net"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.type", "org"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.is_primary", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip_allocation_mode", "DHCP"),
+					resource.TestMatchResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip", regexp.MustCompile(`^11.10.0.\d{1,3}$`)),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.0.mac"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.dhcp_wait_seconds", "200"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.dhcp_wait_seconds", "0"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.ip_allocation_mode", "NONE"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.is_primary", "false"),
+					// sleepTester(),
 				),
 			},
 		},
 	})
+} //
+
+func sleepTester() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		fmt.Println("sleeping")
+		time.Sleep(2 * time.Minute)
+		return nil
+	}
 }
 
 const testAccCheckVcdVAppVmDhcpWaitShared = `
@@ -106,18 +145,21 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 
   vapp_name     = vcd_vapp.{{.VAppName}}.name
   name          = "{{.VMName}}"
+  computer_name = "dhcp-vm"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
   memory        = 512
   cpus          = 2
   cpu_cores     = 1
 
+  initscript = "echo 'LinkLocalAddressing=no' >> /etc/systemd/network/99-dhcp-en.network ; systemctl restart networking"
+
   network {
     type               = "org"
     name               = vcd_network_routed.net.name
     ip_allocation_mode = "DHCP"
     is_primary         = true
-    dhcp_wait_seconds  = 180
+    dhcp_wait_seconds  = {{.DhcpWaitSeconds}}
   }
   
   network {
