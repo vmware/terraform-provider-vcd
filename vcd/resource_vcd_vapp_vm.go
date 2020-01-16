@@ -381,6 +381,7 @@ func resourceVcdVAppVm() *schema.Resource {
 }
 
 func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
+	log.Printf("[DEBUG] [VM create] started")
 	vcdClient := meta.(*VCDClient)
 
 	vcdClient.lockParentVapp(d)
@@ -542,7 +543,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 		return err
 	}
-
+	log.Printf("[DEBUG] [VM create] finished")
 	return nil
 }
 
@@ -662,6 +663,7 @@ func getVmIndependentDisks(vm govcd.VM) []string {
 }
 
 func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
+	log.Printf("[DEBUG] [VM update] started with lock")
 	vcdClient := meta.(*VCDClient)
 
 	// When there is more then one VM in a vApp Terraform will try to parallelise their creation.
@@ -676,7 +678,7 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) error {
-
+	log.Printf("[DEBUG] [VM update] started without lock")
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -886,10 +888,10 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		if err != nil {
 			return fmt.Errorf("error getting VM status before ensuring it is powered on: %s", err)
 		}
-		log.Printf("[DEBUG] Powering on VM %s after update. Previous state %s", vm.VM.Name, vmStatus)
 
 		// Simply power on if customization is not requested
 		if !customizationNeeded && vmStatus != "POWERED_ON" {
+			log.Printf("[DEBUG] Powering on VM %s after update. Previous state %s", vm.VM.Name, vmStatus)
 			task, err := vm.PowerOn()
 			if err != nil {
 				return fmt.Errorf("error powering on: %s", err)
@@ -924,7 +926,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			}
 		}
 	}
-
+	log.Printf("[DEBUG] [VM update] finished")
 	return resourceVcdVAppVmRead(d, meta)
 }
 
@@ -1008,6 +1010,7 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 }
 
 func genericVcdVAppVmRead(d *schema.ResourceData, meta interface{}, origin string) error {
+	log.Printf("[DEBUG] [VM read] started with origin %s", origin)
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -1061,7 +1064,7 @@ func genericVcdVAppVmRead(d *schema.ResourceData, meta interface{}, origin strin
 	case networkName != "" || vappNetworkName != "":
 		ip, mac, err := deprecatedReadNetworks(networkName, vappNetworkName, *vm)
 		if err != nil {
-			return fmt.Errorf("[ VM read] failed reading network details: %s", err)
+			return fmt.Errorf("[VM read] failed reading network details: %s", err)
 		}
 		_ = d.Set("ip", ip)
 		_ = d.Set("mac", mac)
@@ -1069,7 +1072,7 @@ func genericVcdVAppVmRead(d *schema.ResourceData, meta interface{}, origin strin
 	default:
 		networks, err := readNetworks(d, *vm, *vapp)
 		if err != nil {
-			return fmt.Errorf("[ VM read] failed reading network details: %s", err)
+			return fmt.Errorf("[VM read] failed reading network details: %s", err)
 		}
 
 		err = d.Set("network", networks)
@@ -1139,6 +1142,7 @@ func genericVcdVAppVmRead(d *schema.ResourceData, meta interface{}, origin strin
 	}
 	_ = d.Set("computer_name", guestCustomizationSection.ComputerName)
 
+	log.Printf("[DEBUG] [VM read] finished with origin %s", origin)
 	return nil
 }
 
@@ -1282,6 +1286,8 @@ func getMatchedDisk(internalDiskProvidedConfig map[string]interface{}, diskSetti
 }
 
 func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
+	log.Printf("[DEBUG] [VM delete] started")
+
 	vcdClient := meta.(*VCDClient)
 
 	vcdClient.lockParentVapp(d)
@@ -1356,7 +1362,7 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf("error deleting: %s", err)
 	}
-
+	log.Printf("[DEBUG] [VM delete] finished")
 	return nil
 }
 
@@ -1439,12 +1445,12 @@ func checkDhcpWaitEnabled(networks []interface{}) (int, []int, []int) {
 		// validate if the NIC is suitable for DHCP waiting (has DHCP interface)
 		ipAllocationMode := nic["ip_allocation_mode"].(string)
 		if ipAllocationMode != types.IPAllocationModeDHCP {
-			log.Printf("[DEBUG] [ VM read] NIC '%d' is not using DHCP in 'ip_allocation_mode'. Skipping IP wait", nicIndex)
+			log.Printf("[DEBUG] [VM read] NIC '%d' is not using DHCP in 'ip_allocation_mode'. Skipping IP wait", nicIndex)
 			continue
 		}
 
 		dhcpWaitSeconds, ok := nic["dhcp_wait_seconds"]
-		log.Printf("[DEBUG] [ VM read] NIC '%d' configured DHCP wait seconds: %v", nicIndex, dhcpWaitSeconds)
+		log.Printf("[DEBUG] [VM read] NIC '%d' configured DHCP wait seconds: %v", nicIndex, dhcpWaitSeconds)
 		if ok {
 			if dhcpWaitSeconds.(int) > maxWaitSeconds {
 				maxWaitSeconds = dhcpWaitSeconds.(int)
@@ -1604,10 +1610,10 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp) ([]map[s
 
 	// If at least one`dhcp_wait_seconds` was defined and is more than 0 - try to lookup IPs
 	maxDhcpWaitSeconds, nicIndexes, dhcpWaitSeconds := checkDhcpWaitEnabled(d.Get("network").([]interface{}))
-	log.Printf("[DEBUG] [ VM read] '%s' NICs '%v' dhcp_wait_seconds - '%v' seconds",
+	log.Printf("[DEBUG] [VM read] '%s' NICs '%v' dhcp_wait_seconds - '%v' seconds",
 		vm.VM.Name, nicIndexes, dhcpWaitSeconds)
 	if maxDhcpWaitSeconds > 0 && len(nicIndexes) > 0 {
-		log.Printf("[DEBUG] [ VM read] '%s' waiting for DHCP IPs up to '%d' seconds",
+		log.Printf("[DEBUG] [VM read] '%s' waiting for DHCP IPs up to '%d' seconds",
 			vm.VM.Name, maxDhcpWaitSeconds)
 
 		start := time.Now()
@@ -1622,11 +1628,11 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp) ([]map[s
 				"your DHCP settings are correct.\n", vm.VM.Name, maxDhcpWaitSeconds)
 		}
 
-		log.Printf("[DEBUG] [ VM read] '%s' waiting for DHCP IPs took '%s' (of '%ds')",
+		log.Printf("[DEBUG] [VM read] '%s' waiting for DHCP IPs took '%s' (of '%ds')",
 			vm.VM.Name, time.Since(start), maxDhcpWaitSeconds)
 
 		for sliceIndex, nicIndex := range nicIndexes {
-			log.Printf("[DEBUG] [ VM read] '%s' NIC %d reported IP %s",
+			log.Printf("[DEBUG] [VM read] '%s' NIC %d reported IP %s",
 				vm.VM.Name, nicIndex, nicIps[sliceIndex])
 			nets[nicIndex]["ip"] = nicIps[sliceIndex]
 			nets[nicIndex]["dhcp_wait_seconds"] = dhcpWaitSeconds[sliceIndex]
