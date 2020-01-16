@@ -76,7 +76,7 @@ resource "vcd_vapp" "{{.VAppName}}" {
   vdc = "{{.Vdc}}"
 
   name       = "{{.VAppName}}"
-  depends_on = ["vcd_network_routed.net"]
+  depends_on = [vcd_network_routed.net]
 }
 
 resource "vcd_network_routed" "net" {
