@@ -85,9 +85,9 @@ func resourceOrg() *schema.Resource {
 						"maximum_runtime_lease_in_sec": &schema.Schema{
 							Type:     schema.TypeInt,
 							Optional: true,
-							//Default:      604800, // (7 days)
+							// If not set, the default is 604800 (7 days)
 							Description:  "How long vApps can run before they are automatically stopped (in seconds). 0 means never expires",
-							ValidateFunc: IntLeaseSeconds(), // Lease can be ether 0 or 3600+
+							ValidateFunc: IntLeaseSeconds(), // Lease can be either 0 or 3600+
 						},
 						"power_off_on_runtime_lease_expiration": &schema.Schema{
 							Type:     schema.TypeBool,
@@ -99,9 +99,9 @@ func resourceOrg() *schema.Resource {
 						"maximum_storage_lease_in_sec": &schema.Schema{
 							Type:     schema.TypeInt,
 							Optional: true,
-							//Default:      1209600, // (14 days)
+							// If not set, the default is 1209600 (14 days)
 							Description:  "How long stopped vApps are available before being automatically cleaned up (in seconds). 0 means never expires",
-							ValidateFunc: IntLeaseSeconds(), // Lease can be ether 0 or 3600+
+							ValidateFunc: IntLeaseSeconds(), // Lease can be either 0 or 3600+
 						},
 						"delete_on_storage_lease_expiration": &schema.Schema{
 							Type:     schema.TypeBool,
@@ -124,9 +124,9 @@ func resourceOrg() *schema.Resource {
 						"maximum_storage_lease_in_sec": &schema.Schema{
 							Type:     schema.TypeInt,
 							Optional: true,
-							//Default:      2592000, // (30 days)
+							// If not set, the default is 2592000 (30 days)
 							Description:  "How long vApp templates are available before being automatically cleaned up (in seconds). 0 means never expires",
-							ValidateFunc: IntLeaseSeconds(), // Lease can be ether 0 or 3600+
+							ValidateFunc: IntLeaseSeconds(), // Lease can be either 0 or 3600+
 						},
 						"delete_on_storage_lease_expiration": &schema.Schema{
 							Type:     schema.TypeBool,

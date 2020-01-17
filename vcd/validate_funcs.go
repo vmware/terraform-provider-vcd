@@ -113,6 +113,9 @@ func validateMultipleOf4() schema.SchemaValidateFunc {
 	}
 }
 
+// IntLeaseSeconds validates amount of seconds for lease
+// A value of 0 is accepted, as it means "never expires"
+// Regular values must be > 3600
 func IntLeaseSeconds() schema.SchemaValidateFunc {
 	return func(i interface{}, k string) (s []string, es []error) {
 		v, ok := i.(int)
