@@ -208,8 +208,8 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
 * `override_template_disk` - (Optional; *v2.7+*) Allows to update internal disk in template before first VM boot. Disk is matched by `bus_type`, `bus_number` and `unit_number`. See [Override template Disk](#override-template-disk) below for details.
 * `network_dhcp_wait_seconds` - (Optional; *v2.7+*) Allows to wait for up to a defined amount of
   seconds before IP address is reported for NICs with `ip_allocation_mode=DHCP` setting. It
-  constantly checks if IP is present so the time given is a maximum.  __At least one__ of the
-  folowing __must be true__:
+  constantly checks if IP is present so the time given is a maximum. VM must be powered on and 
+  __atleast one__ of the folowing __must be true__:
  * VM has guest tools. It waits for IP address to be reported in vCD UI. This is a slower option, but
   does not require for the VM to use Edge Gateways DHCP service.
  * VM DHCP interface is connected to routed Org network and is using Edge Gateways DHCP service (not

@@ -1596,13 +1596,13 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp) ([]map[s
 		nets = append(nets, singleNIC)
 	}
 
-	// state
-	s := d.State()
-
-	log.Printf("[DEBUG] [VM read] state %s, d.Get %s", s.Attributes["network_dhcp_wait_seconds"], d.Get("network_dhcp_wait_seconds"))
+	vmStatus, err := vm.GetStatus()
+	if err != nil {
+		return nil, fmt.Errorf("unablet to check if VM is powered on: %s", err)
+	}
 
 	// If at least one`network_dhcp_wait_seconds` was defined
-	if maxDhcpWaitSeconds, ok := d.GetOk("network_dhcp_wait_seconds"); ok {
+	if maxDhcpWaitSeconds, ok := d.GetOk("network_dhcp_wait_seconds"); ok && vmStatus == "POWERED_ON" {
 		maxDhcpWaitSecondsInt := maxDhcpWaitSeconds.(int)
 
 		// lookup NIC indexes which have DHCP enabled
