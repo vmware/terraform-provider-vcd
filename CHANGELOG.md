@@ -2,8 +2,11 @@
 
 FEATURES:
 
-* **New Resource:** `vcd_vm_internal_disk` VM internal disk configuration
-* `vcd_vapp_vm` Internal disks in VM template allows to be edited by `override_template_disk` field 
+* **New Resource:** `vcd_vm_internal_disk` VM internal disk configuration [GH-412]
+* `vcd_vapp_vm` Internal disks in VM template allows to be edited by `override_template_disk` field
+  [GH-412]
+* `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` get optional `network_dhcp_wait_seconds` field
+  to ensure `ip` is reported when `ip_allocation_mode=DHCP` is used [GH-xx]
 
 NOTES:
 * Drop support for vCD 9.0

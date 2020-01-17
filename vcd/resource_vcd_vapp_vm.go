@@ -1596,27 +1596,35 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp) ([]map[s
 		nets = append(nets, singleNIC)
 	}
 
+	// state
+	s := d.State()
+
+	log.Printf("[DEBUG] [VM read] state %s, d.Get %s", s.Attributes["network_dhcp_wait_seconds"], d.Get("network_dhcp_wait_seconds"))
+
 	// If at least one`network_dhcp_wait_seconds` was defined
 	if maxDhcpWaitSeconds, ok := d.GetOk("network_dhcp_wait_seconds"); ok {
 		maxDhcpWaitSecondsInt := maxDhcpWaitSeconds.(int)
 
 		// lookup NIC indexes which have DHCP enabled
-		nicIndexes := getNicIndexesWithDhcpEnabled(d.Get("network").([]interface{}))
+		dhcpNicIndexes := getNicIndexesWithDhcpEnabled(d.Get("network").([]interface{}))
 		log.Printf("[DEBUG] [VM read] '%s' DHCP is used on NICs %v with wait time '%d seconds'",
-			vm.VM.Name, nicIndexes, maxDhcpWaitSecondsInt)
-		if len(nicIndexes) == 0 {
+			vm.VM.Name, dhcpNicIndexes, maxDhcpWaitSecondsInt)
+		if len(dhcpNicIndexes) == 0 {
 			_, _ = fmt.Fprint(getTerraformStdout(), "INFO: Using 'network_dhcp_wait_seconds' only "+
 				"makes sense if at least one NIC is using 'ip_allocation_mode=DHCP'")
 		}
+		stdout := getTerraformStdout()
+		_, _ = fmt.Fprintf(stdout, "INFO: Waiting up to '%ds' for DHCP IPs to be reported for NICs %v\n",
+			maxDhcpWaitSecondsInt, dhcpNicIndexes)
 
-		if len(nicIndexes) > 0 { // at least one NIC uses DHCP for IP allocation mode
+		if len(dhcpNicIndexes) > 0 { // at least one NIC uses DHCP for IP allocation mode
 			log.Printf("[DEBUG] [VM read] '%s' waiting for DHCP IPs up to '%d' seconds on NICs %v",
-				vm.VM.Name, maxDhcpWaitSeconds, nicIndexes)
+				vm.VM.Name, maxDhcpWaitSeconds, dhcpNicIndexes)
 
 			start := time.Now()
-			nicIps, timeout, err := vm.WaitForDhcpIpByNicIndexes(nicIndexes, maxDhcpWaitSecondsInt, true)
+			nicIps, timeout, err := vm.WaitForDhcpIpByNicIndexes(dhcpNicIndexes, maxDhcpWaitSecondsInt, true)
 			if err != nil {
-				return nil, fmt.Errorf("unable to to lookup DHCP IPs for VM NICs '%v': %s", nicIndexes, err)
+				return nil, fmt.Errorf("unable to to lookup DHCP IPs for VM NICs '%v': %s", dhcpNicIndexes, err)
 			}
 
 			if timeout {
@@ -1627,8 +1635,10 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp) ([]map[s
 
 			log.Printf("[DEBUG] [VM read] '%s' waiting for DHCP IPs took '%s' (of '%ds')",
 				vm.VM.Name, time.Since(start), maxDhcpWaitSeconds)
+			_, _ = fmt.Fprintf(stdout, "INFO: Got DHCP IPs after'%fs'\n",
+				time.Since(start).Seconds())
 
-			for sliceIndex, nicIndex := range nicIndexes {
+			for sliceIndex, nicIndex := range dhcpNicIndexes {
 				log.Printf("[DEBUG] [VM read] '%s' NIC %d reported IP %s",
 					vm.VM.Name, nicIndex, nicIps[sliceIndex])
 				nets[nicIndex]["ip"] = nicIps[sliceIndex]

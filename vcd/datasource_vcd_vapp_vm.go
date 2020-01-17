@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 )
 
 func datasourceVcdVAppVm() *schema.Resource {
@@ -70,6 +71,13 @@ func datasourceVcdVAppVm() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Storage profile used with the VM",
+			},
+			"network_dhcp_wait_seconds": {
+				Optional:     true,
+				Type:         schema.TypeInt,
+				ValidateFunc: validation.IntAtLeast(0),
+				Description: "Optional number of seconds to try and wait for DHCP IP (valid for " +
+					"'network' block only)",
 			},
 			"network": {
 				Computed:    true,
