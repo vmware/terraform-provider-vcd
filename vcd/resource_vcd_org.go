@@ -373,22 +373,38 @@ func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
 	_ = d.Set("delay_after_power_on_seconds", adminOrg.AdminOrg.OrgSettings.OrgGeneralSettings.DelayAfterPowerOnSeconds)
 	var err error
 
-	vappLease := map[string]interface{}{
-		"maximum_runtime_lease_in_sec":          adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings.DeploymentLeaseSeconds,
-		"power_off_on_runtime_lease_expiration": adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings.PowerOffOnRuntimeLeaseExpiration,
-		"maximum_storage_lease_in_sec":          adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings.StorageLeaseSeconds,
-		"delete_on_storage_lease_expiration":    adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings.DeleteOnStorageLeaseExpiration,
+	vappLeaseSettings := adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings
+	var vappLease = make(map[string]interface{})
+
+	if vappLeaseSettings.DeploymentLeaseSeconds != nil {
+		vappLease["maximum_runtime_lease_in_sec"] = *vappLeaseSettings.DeploymentLeaseSeconds
 	}
+	if vappLeaseSettings.StorageLeaseSeconds != nil {
+		vappLease["maximum_storage_lease_in_sec"] = *vappLeaseSettings.StorageLeaseSeconds
+	}
+	if vappLeaseSettings.PowerOffOnRuntimeLeaseExpiration != nil {
+		vappLease["power_off_on_runtime_lease_expiration"] = *vappLeaseSettings.PowerOffOnRuntimeLeaseExpiration
+	}
+	if vappLeaseSettings.DeleteOnStorageLeaseExpiration != nil {
+		vappLease["delete_on_storage_lease_expiration"] = *vappLeaseSettings.DeleteOnStorageLeaseExpiration
+	}
+
 	vappLeaseSlice := []map[string]interface{}{vappLease}
 	err = d.Set("vapp_lease", vappLeaseSlice)
 	if err != nil {
 		return err
 	}
 
-	vappTemplateLease := map[string]interface{}{
-		"maximum_storage_lease_in_sec":       adminOrg.AdminOrg.OrgSettings.OrgVAppTemplateSettings.StorageLeaseSeconds,
-		"delete_on_storage_lease_expiration": adminOrg.AdminOrg.OrgSettings.OrgVAppTemplateSettings.DeleteOnStorageLeaseExpiration,
+	vappTemplateSettings := adminOrg.AdminOrg.OrgSettings.OrgVAppTemplateSettings
+	var vappTemplateLease = make(map[string]interface{})
+
+	if vappTemplateSettings.StorageLeaseSeconds != nil {
+		vappTemplateLease["maximum_storage_lease_in_sec"] = vappTemplateSettings.StorageLeaseSeconds
 	}
+	if vappTemplateSettings.DeleteOnStorageLeaseExpiration != nil {
+		vappTemplateLease["delete_on_storage_lease_expiration"] = vappTemplateSettings.DeleteOnStorageLeaseExpiration
+	}
+
 	vappTemplateLeaseSlice := []map[string]interface{}{vappTemplateLease}
 	err = d.Set("vapp_template_lease", vappTemplateLeaseSlice)
 
