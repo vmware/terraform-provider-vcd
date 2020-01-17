@@ -3,13 +3,10 @@
 package vcd
 
 import (
-	"fmt"
 	"regexp"
 	"testing"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
@@ -39,12 +36,6 @@ func TestAccVcdVAppVmDhcpWait(t *testing.T) {
 	params["DhcpWaitSeconds"] = 200
 	configTextVMDhcpWaitUpdateStep1 := templateFill(testAccCheckVcdVAppVmDhcpWait, params)
 
-	// params["FuncName"] = t.Name() + "-step2"
-	// configTextVMUpdateStep2 := templateFill(testAccCheckVcdVAppVmNetworkVmStep2, params)
-
-	// params["FuncName"] = t.Name() + "-step3"
-	// configTextVMUpdateStep3 := templateFill(testAccCheckVcdVAppVmNetworkVmStep3, params)
-
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -73,7 +64,6 @@ func TestAccVcdVAppVmDhcpWait(t *testing.T) {
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.ip_allocation_mode", "NONE"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.is_primary", "false"),
-					// sleepTester(),
 				),
 			},
 			resource.TestStep{
@@ -92,19 +82,10 @@ func TestAccVcdVAppVmDhcpWait(t *testing.T) {
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.ip_allocation_mode", "NONE"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.is_primary", "false"),
-					// sleepTester(),
 				),
 			},
 		},
 	})
-} //
-
-func sleepTester() resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		fmt.Println("sleeping")
-		time.Sleep(2 * time.Minute)
-		return nil
-	}
 }
 
 const testAccCheckVcdVAppVmDhcpWaitShared = `
@@ -150,8 +131,6 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   cpus          = 2
   cpu_cores     = 1
 
-  initscript = "echo 'LinkLocalAddressing=no' >> /etc/systemd/network/99-dhcp-en.network ; systemctl restart networking"
-
   network_dhcp_wait_seconds = {{.DhcpWaitSeconds}}
   network {
     type               = "org"
@@ -164,6 +143,5 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     type               = "none"
     ip_allocation_mode = "NONE"
   }
-
 }
 `
