@@ -216,6 +216,8 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
   relayed). It works by querying DHCP leases on edge gateway. In general it is quicker than waiting
   until UI reports IP addresses, but is more constrained. However this is the only option if guest
   tools are not present on the VM.
+  
+  
 
 <a id="disk"></a>
 ## Disk
