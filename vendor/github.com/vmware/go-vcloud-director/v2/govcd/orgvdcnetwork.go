@@ -232,5 +232,5 @@ func (vdc *Vdc) FindEdgeGatewayNameByNetwork(networkName string) (string, error)
 			}
 		}
 	}
-	return "", fmt.Errorf("no edge gateway connection found")
+	return "", ErrorEntityNotFound
 }

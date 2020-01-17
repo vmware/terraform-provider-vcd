@@ -406,3 +406,45 @@ type EdgeDhcpRelayAgent struct {
 type EdgeDhcpRelayAgents struct {
 	Agents []EdgeDhcpRelayAgent `xml:"relayAgent"`
 }
+
+// EdgeDhcpLease holds a list of EdgeDhcpLeaseInfo
+type EdgeDhcpLease struct {
+	XMLName        xml.Name             `xml:"dhcpLeaseInfo"`
+	DhcpLeaseInfos []*EdgeDhcpLeaseInfo `xml:"leaseInfo"`
+}
+
+// EdgeDhcpLeaseInfo contains information about DHCP leases provided by NSX-V edge gateway
+type EdgeDhcpLeaseInfo struct {
+	// Uid statement records the client identifier used by the client to acquire the lease. Clients
+	// are not required to send client identifiers, and this statement only appears if the client
+	// did in fact send one.
+	Uid string `xml:"uid"`
+	// MacAddress holds hardware (MAC) address of requester (e.g. "00:50:56:01:29:c8")
+	MacAddress string `xml:"macAddress"`
+	// IpAddress holds the IP address assigned to a particular MAC address (e.g. "10.10.10.100")
+	IpAddress string `xml:"ipAddress"`
+	// ClientHostname Most DHCP clients will send their hostname in the host-name option. If a
+	// client sends its hostname in this way, the hostname is recorded on the lease with a
+	// client-hostname statement. This is not required by the protocol, however, so many specialized
+	// DHCP clients do not send a host-name option.
+	ClientHostname string `xml:"clientHostname"`
+	// BindingState declares the lease’s binding state. When the DHCP server is not configured to
+	// use the failover protocol, a lease’s binding state may be active, free or abandoned. The
+	// failover protocol adds some additional transitional states, as well as the backup state,
+	// which indicates that the lease is available for allocation by the failover secondary
+	BindingState string `xml:"bindingState"`
+	// NextBindingState statement indicates what state the lease will move to when the current state
+	// expires. The time when the current state expires is specified in the ends statement.
+	NextBindingState string `xml:"nextBindingState"`
+	// Cltt holds value of clients last transaction time (format is "weekday year/month/day
+	// hour:minute:second", e.g. "2 2019/12/17 06:12:03")
+	Cltt string `xml:"cltt"`
+	// Starts holds the start time of a lease (format is "weekday year/month/day
+	// hour:minute:second", e.g. "2 2019/12/17 06:12:03")
+	Starts string `xml:"starts"`
+	// Ends holds the end time of a lease (format is "weekday year/month/day hour:minute:second",
+	// e.g. "3 2019/12/18 06:12:03")
+	Ends string `xml:"ends"`
+	// HardwareType holds ... (e.g. "ethernet")
+	HardwareType string `xml:"hardwareType"`
+}
