@@ -1610,9 +1610,6 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp) ([]map[s
 			_, _ = fmt.Fprint(getTerraformStdout(), "INFO: Using 'network_dhcp_wait_seconds' only "+
 				"makes sense if at least one NIC is using 'ip_allocation_mode=DHCP'")
 		}
-		stdout := getTerraformStdout()
-		_, _ = fmt.Fprintf(stdout, "INFO: Waiting up to '%ds' for DHCP IPs to be reported for NICs %v\n",
-			maxDhcpWaitSecondsInt, dhcpNicIndexes)
 
 		if len(dhcpNicIndexes) > 0 { // at least one NIC uses DHCP for IP allocation mode
 			log.Printf("[DEBUG] [VM read] '%s' waiting for DHCP IPs up to '%d' seconds on NICs %v",
@@ -1625,15 +1622,13 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp) ([]map[s
 			}
 
 			if timeout {
-				_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: Timed out waiting %d seconds for VM "+
-					"%s to report DHCP IPs. You may want to increase 'network_dhcp_wait_seconds' or ensure "+
+				_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: VM %s timed out waiting %d seconds "+
+					"to report DHCP IPs. You may want to increase 'network_dhcp_wait_seconds' or ensure "+
 					"your DHCP settings are correct.\n", vm.VM.Name, maxDhcpWaitSeconds)
 			}
 
 			log.Printf("[DEBUG] [VM read] '%s' waiting for DHCP IPs took '%s' (of '%ds')",
 				vm.VM.Name, time.Since(start), maxDhcpWaitSeconds)
-			_, _ = fmt.Fprintf(stdout, "INFO: Got DHCP IPs after '%fs'\n",
-				time.Since(start).Seconds())
 
 			for sliceIndex, nicIndex := range dhcpNicIndexes {
 				log.Printf("[DEBUG] [VM read] '%s' NIC %d reported IP %s",
