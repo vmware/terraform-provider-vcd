@@ -54,6 +54,7 @@ func TestAccVcdOrgBasic(t *testing.T) {
 						resourceName, "description", params["Description"].(string)),
 					resource.TestCheckResourceAttr(
 						resourceName, "is_enabled", "true"),
+					// Testing defaults lease values is not reliable, as such values vary for different vCD versions
 				),
 			},
 		},

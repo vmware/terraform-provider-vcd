@@ -83,11 +83,10 @@ func resourceOrg() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"maximum_runtime_lease_in_sec": &schema.Schema{
-							Type:     schema.TypeInt,
-							Optional: true,
-							// If not set, the default is 604800 (7 days)
+							Type:         schema.TypeInt,
+							Optional:     true,
 							Description:  "How long vApps can run before they are automatically stopped (in seconds). 0 means never expires",
-							ValidateFunc: IntLeaseSeconds(), // Lease can be either 0 or 3600+
+							ValidateFunc: validateIntLeaseSeconds(), // Lease can be either 0 or 3600+
 						},
 						"power_off_on_runtime_lease_expiration": &schema.Schema{
 							Type:     schema.TypeBool,
@@ -97,11 +96,10 @@ func resourceOrg() *schema.Resource {
 								"When false or missing, vApps are suspended when the runtime lease expires",
 						},
 						"maximum_storage_lease_in_sec": &schema.Schema{
-							Type:     schema.TypeInt,
-							Optional: true,
-							// If not set, the default is 1209600 (14 days)
+							Type:         schema.TypeInt,
+							Optional:     true,
 							Description:  "How long stopped vApps are available before being automatically cleaned up (in seconds). 0 means never expires",
-							ValidateFunc: IntLeaseSeconds(), // Lease can be either 0 or 3600+
+							ValidateFunc: validateIntLeaseSeconds(), // Lease can be either 0 or 3600+
 						},
 						"delete_on_storage_lease_expiration": &schema.Schema{
 							Type:     schema.TypeBool,
@@ -122,11 +120,10 @@ func resourceOrg() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"maximum_storage_lease_in_sec": &schema.Schema{
-							Type:     schema.TypeInt,
-							Optional: true,
-							// If not set, the default is 2592000 (30 days)
+							Type:         schema.TypeInt,
+							Optional:     true,
 							Description:  "How long vApp templates are available before being automatically cleaned up (in seconds). 0 means never expires",
-							ValidateFunc: IntLeaseSeconds(), // Lease can be either 0 or 3600+
+							ValidateFunc: validateIntLeaseSeconds(), // Lease can be either 0 or 3600+
 						},
 						"delete_on_storage_lease_expiration": &schema.Schema{
 							Type:     schema.TypeBool,
@@ -193,7 +190,7 @@ func resourceOrgCreate(d *schema.ResourceData, m interface{}) error {
 	log.Printf("[TRACE] Org %s created with id: %s", orgName, org.AdminOrg.ID)
 
 	d.SetId(org.AdminOrg.ID)
-	return nil
+	return resourceOrgRead(d, m)
 }
 
 func getSettings(d *schema.ResourceData) *types.OrgSettings {
@@ -374,41 +371,53 @@ func setOrgData(d *schema.ResourceData, adminOrg *govcd.AdminOrg) error {
 	var err error
 
 	vappLeaseSettings := adminOrg.AdminOrg.OrgSettings.OrgVAppLeaseSettings
-	var vappLease = make(map[string]interface{})
+	// OrgVAppLeaseSettings should always be filled, as the API silently uses defaults when we don't provide lease values,
+	// but let's try to make it future proof and check for initialization
+	if vappLeaseSettings != nil {
+		var vappLease = make(map[string]interface{})
 
-	if vappLeaseSettings.DeploymentLeaseSeconds != nil {
-		vappLease["maximum_runtime_lease_in_sec"] = *vappLeaseSettings.DeploymentLeaseSeconds
-	}
-	if vappLeaseSettings.StorageLeaseSeconds != nil {
-		vappLease["maximum_storage_lease_in_sec"] = *vappLeaseSettings.StorageLeaseSeconds
-	}
-	if vappLeaseSettings.PowerOffOnRuntimeLeaseExpiration != nil {
-		vappLease["power_off_on_runtime_lease_expiration"] = *vappLeaseSettings.PowerOffOnRuntimeLeaseExpiration
-	}
-	if vappLeaseSettings.DeleteOnStorageLeaseExpiration != nil {
-		vappLease["delete_on_storage_lease_expiration"] = *vappLeaseSettings.DeleteOnStorageLeaseExpiration
-	}
+		if vappLeaseSettings.DeploymentLeaseSeconds != nil {
+			vappLease["maximum_runtime_lease_in_sec"] = *vappLeaseSettings.DeploymentLeaseSeconds
+		}
+		if vappLeaseSettings.StorageLeaseSeconds != nil {
+			vappLease["maximum_storage_lease_in_sec"] = *vappLeaseSettings.StorageLeaseSeconds
+		}
+		if vappLeaseSettings.PowerOffOnRuntimeLeaseExpiration != nil {
+			vappLease["power_off_on_runtime_lease_expiration"] = *vappLeaseSettings.PowerOffOnRuntimeLeaseExpiration
+		}
+		if vappLeaseSettings.DeleteOnStorageLeaseExpiration != nil {
+			vappLease["delete_on_storage_lease_expiration"] = *vappLeaseSettings.DeleteOnStorageLeaseExpiration
+		}
 
-	vappLeaseSlice := []map[string]interface{}{vappLease}
-	err = d.Set("vapp_lease", vappLeaseSlice)
-	if err != nil {
-		return err
+		vappLeaseSlice := []map[string]interface{}{vappLease}
+		err = d.Set("vapp_lease", vappLeaseSlice)
+		if err != nil {
+			return err
+		}
 	}
 
 	vappTemplateSettings := adminOrg.AdminOrg.OrgSettings.OrgVAppTemplateSettings
-	var vappTemplateLease = make(map[string]interface{})
+	// OrgVAppTemplateSettings should always be filled, as the API silently uses defaults when we don't provide lease values,
+	// but let's try to make it future proof and check for initialization
+	if vappTemplateSettings != nil {
 
-	if vappTemplateSettings.StorageLeaseSeconds != nil {
-		vappTemplateLease["maximum_storage_lease_in_sec"] = vappTemplateSettings.StorageLeaseSeconds
+		var vappTemplateLease = make(map[string]interface{})
+
+		if vappTemplateSettings.StorageLeaseSeconds != nil {
+			vappTemplateLease["maximum_storage_lease_in_sec"] = vappTemplateSettings.StorageLeaseSeconds
+		}
+		if vappTemplateSettings.DeleteOnStorageLeaseExpiration != nil {
+			vappTemplateLease["delete_on_storage_lease_expiration"] = vappTemplateSettings.DeleteOnStorageLeaseExpiration
+		}
+
+		vappTemplateLeaseSlice := []map[string]interface{}{vappTemplateLease}
+		err = d.Set("vapp_template_lease", vappTemplateLeaseSlice)
+		if err != nil {
+			return err
+		}
 	}
-	if vappTemplateSettings.DeleteOnStorageLeaseExpiration != nil {
-		vappTemplateLease["delete_on_storage_lease_expiration"] = vappTemplateSettings.DeleteOnStorageLeaseExpiration
-	}
 
-	vappTemplateLeaseSlice := []map[string]interface{}{vappTemplateLease}
-	err = d.Set("vapp_template_lease", vappTemplateLeaseSlice)
-
-	return err
+	return nil
 }
 
 // Retrieves an Org resource from vCD
