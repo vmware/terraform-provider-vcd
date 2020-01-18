@@ -27,13 +27,13 @@ func TestAccVcdVAppVmDhcpWait(t *testing.T) {
 		"VAppName":        netVappName,
 		"VMName":          netVmName1,
 		"Tags":            "vapp vm",
-		"DhcpWaitSeconds": 180,
+		"DhcpWaitSeconds": 300,
 	}
 
 	configTextVM := templateFill(testAccCheckVcdVAppVmDhcpWait, params)
 
 	params["FuncName"] = t.Name() + "-step1"
-	params["DhcpWaitSeconds"] = 200
+	params["DhcpWaitSeconds"] = 310
 	configTextVMDhcpWaitUpdateStep1 := templateFill(testAccCheckVcdVAppVmDhcpWait, params)
 
 	if vcdShortTest {
@@ -60,7 +60,7 @@ func TestAccVcdVAppVmDhcpWait(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip_allocation_mode", "DHCP"),
 					resource.TestMatchResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip", regexp.MustCompile(`^11.10.0.\d{1,3}$`)),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.0.mac"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network_dhcp_wait_seconds", "180"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network_dhcp_wait_seconds", "300"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.ip_allocation_mode", "NONE"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.is_primary", "false"),
@@ -68,7 +68,7 @@ func TestAccVcdVAppVmDhcpWait(t *testing.T) {
 					// Check data source
 					resource.TestMatchResourceAttr("data.vcd_vapp_vm.ds", "network.0.ip", regexp.MustCompile(`^11.10.0.\d{1,3}$`)),
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName1, "network.0.ip", "data.vcd_vapp_vm.ds", "network.0.ip"),
-					resource.TestCheckResourceAttr("data.vcd_vapp_vm.ds", "network_dhcp_wait_seconds", "180"),
+					resource.TestCheckResourceAttr("data.vcd_vapp_vm.ds", "network_dhcp_wait_seconds", "300"),
 				),
 			},
 			resource.TestStep{
@@ -83,7 +83,7 @@ func TestAccVcdVAppVmDhcpWait(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip_allocation_mode", "DHCP"),
 					resource.TestMatchResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip", regexp.MustCompile(`^11.10.0.\d{1,3}$`)),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.0.mac"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network_dhcp_wait_seconds", "200"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network_dhcp_wait_seconds", "310"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.ip_allocation_mode", "NONE"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.is_primary", "false"),
@@ -91,7 +91,7 @@ func TestAccVcdVAppVmDhcpWait(t *testing.T) {
 					// Check data source
 					resource.TestMatchResourceAttr("data.vcd_vapp_vm.ds", "network.0.ip", regexp.MustCompile(`^11.10.0.\d{1,3}$`)),
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName1, "network.0.ip", "data.vcd_vapp_vm.ds", "network.0.ip"),
-					resource.TestCheckResourceAttr("data.vcd_vapp_vm.ds", "network_dhcp_wait_seconds", "200"),
+					resource.TestCheckResourceAttr("data.vcd_vapp_vm.ds", "network_dhcp_wait_seconds", "310"),
 				),
 			},
 		},

@@ -1432,6 +1432,7 @@ func networksToConfig(networks []interface{}, vdc *govcd.Vdc, vapp govcd.VApp, v
 // getVmNicIndexesWithDhcpEnabled loops over VMs NICs and returns list of indexes for the ones using
 // DHCP
 func getVmNicIndexesWithDhcpEnabled(networkConnectionSection *types.NetworkConnectionSection) []int {
+
 	var nicIndexes []int
 
 	for nicIndex, singleNic := range networkConnectionSection.NetworkConnection {
@@ -1622,7 +1623,10 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp) ([]map[s
 			}
 
 			if timeout {
-				_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: VM %s timed out waiting %d seconds "+
+				log.Printf("[DEBUG] [VM read] VM %s timed out waiting %d seconds "+
+					"to report DHCP IPs. You may want to increase 'network_dhcp_wait_seconds' or ensure "+
+					"your DHCP settings are correct.\n", vm.VM.Name, maxDhcpWaitSeconds)
+				_, _ = fmt.Fprintf(getTerraformStdout(), "WARNING: VM %s timed out waiting %d seconds "+
 					"to report DHCP IPs. You may want to increase 'network_dhcp_wait_seconds' or ensure "+
 					"your DHCP settings are correct.\n", vm.VM.Name, maxDhcpWaitSeconds)
 			}
