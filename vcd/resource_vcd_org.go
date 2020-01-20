@@ -198,11 +198,11 @@ func getSettings(d *schema.ResourceData) *types.OrgSettings {
 	vappLeaseSettings := &types.VAppLeaseSettings{}
 	vappTemplateLeaseSettings := &types.VAppTemplateLeaseSettings{}
 
-	vappInputProvided := false
-	vappTemplateInputProvided := false
+	vappLeaseInputProvided := false
+	vappTemplateLeaseInputProvided := false
 	item, ok := d.GetOk("vapp_lease")
 	if ok {
-		vappInputProvided = true
+		vappLeaseInputProvided = true
 		itemSlice := item.([]interface{})
 		itemMap := itemSlice[0].(map[string]interface{})
 		maxRuntimeLease, isSet := itemMap["maximum_runtime_lease_in_sec"]
@@ -228,7 +228,7 @@ func getSettings(d *schema.ResourceData) *types.OrgSettings {
 	}
 	item, ok = d.GetOk("vapp_template_lease")
 	if ok {
-		vappTemplateInputProvided = true
+		vappTemplateLeaseInputProvided = true
 		itemSlice := item.([]interface{})
 		itemMap := itemSlice[0].(map[string]interface{})
 		maxStorageLease, isSet := itemMap["maximum_storage_lease_in_sec"]
@@ -256,10 +256,10 @@ func getSettings(d *schema.ResourceData) *types.OrgSettings {
 	}
 
 	settings.OrgGeneralSettings = generalSettings
-	if vappInputProvided {
+	if vappLeaseInputProvided {
 		settings.OrgVAppLeaseSettings = vappLeaseSettings
 	}
-	if vappTemplateInputProvided {
+	if vappTemplateLeaseInputProvided {
 		settings.OrgVAppTemplateSettings = vappTemplateLeaseSettings
 	}
 
