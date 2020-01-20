@@ -66,18 +66,24 @@ The following arguments are supported:
 
 The `vapp_lease` section contains lease parameters for vApps created in the current organization, as defined below:
 
-* `maximum_runtime_lease_in_sec` - (Required) - How long vApps can run before they are automatically stopped (in seconds). 0 means never expires. Values accepted from 3600+. - Default when `vapp_lease` block is omitted is 604800 (7 days) but may vary depending on vCD version
-* `power_off_on_runtime_lease_expiration` - (Required) - When true, vApps are powered off when the runtime lease expires. When false, vApps are suspended when the runtime lease expires. Default when `vapp_lease` block is omitted is false
-* `maximum_storage_lease_in_sec` - (Required) - How long stopped vApps are available before being automatically cleaned up (in seconds). 0 means never expires. Regular values accepted from 3600+. Default when `vapp_lease` block is omitted is 2592000 (30 days) but may vary depending on vCD version
-* `delete_on_storage_lease_expiration` - (Required) - If true, storage for a vApp is deleted when the vApp's lease expires. If false, the storage is flagged for deletion, but not deleted. Default when `vapp_lease` block is omitted is false
+* `maximum_runtime_lease_in_sec` - (Required) - How long vApps can run before they are automatically stopped (in seconds). 0 means never expires. Values accepted from 3600+
+<br>Note: Default when the whole `vapp_lease` block is omitted is 604800 (7 days) but may vary depending on vCD version
+* `power_off_on_runtime_lease_expiration` - (Required) - When true, vApps are powered off when the runtime lease expires. When false, vApps are suspended when the runtime lease expires.
+<br>Note: Default when the whole `vapp_lease` block is omitted is false
+* `maximum_storage_lease_in_sec` - (Required) - How long stopped vApps are available before being automatically cleaned up (in seconds). 0 means never expires. Regular values accepted from 3600+
+<br>Note: Default when the whole `vapp_lease` block is omitted is 2592000 (30 days) but may vary depending on vCD version
+* `delete_on_storage_lease_expiration` - (Required) - If true, storage for a vApp is deleted when the vApp's lease expires. If false, the storage is flagged for deletion, but not deleted.
+<br>Note: Default when the whole `vapp_lease` block is omitted is false
 
 <a id="vapp-template-lease"></a>
 ## vApp Template Lease
 
 The `vapp_template_lease` section contains lease parameters for vApp templates created in the current organization, as defined below:
 
-* `maximum_storage_lease_in_sec` - (Required) - How long vApp templates are available before being automatically cleaned up (in seconds). 0 means never expires. Regular values accepted from 3600+. Default when `vapp_template_lease` block is omitted is 2592000 (30 days) but may vary depending on vCD version
-* `delete_on_storage_lease_expiration` - (Required) - If true, storage for a vAppTemplate is deleted when the vAppTemplate lease expires. If false, the storage is flagged for deletion, but not deleted. Default when `vapp_template_lease block is omitted is false
+* `maximum_storage_lease_in_sec` - (Required) - How long vApp templates are available before being automatically cleaned up (in seconds). 0 means never expires. Regular values accepted from 3600+
+<br>Note: Default when the whole `vapp_template_lease` block is omitted is 2592000 (30 days) but may vary depending on vCD version
+* `delete_on_storage_lease_expiration` - (Required) - If true, storage for a vAppTemplate is deleted when the vAppTemplate lease expires. If false, the storage is flagged for deletion, but not deleted. 
+<br>Note: Default when the whole `vapp_template_lease` block is omitted is false
 
 ## Importing
 

@@ -58,8 +58,8 @@ The following arguments are supported:
 * `stored_vm_quota` - Maximum number of virtual machines in vApps or vApp templates that can be stored in an undeployed state by a member of this organization.
 * `can_publish_catalogs` - True if this organization is allowed to share catalogs.
 * `delay_after_power_on_seconds` - Specifies this organization's default for virtual machine boot delay after power on.
-* `vapp_lease` - (*v2.7*) - Defines lease parameters for vApps created in this organization. See [vApp Lease](#vapp-lease) below for details. 
-* `vapp_template_lease` - (*v2.7*) - Defines lease parameters for vApp templates created in this organization. See [vApp Template Lease](#vapp-template-lease) below for details.
+* `vapp_lease` - (*v2.7+*) - Defines lease parameters for vApps created in this organization. See [vApp Lease](#vapp-lease) below for details. 
+* `vapp_template_lease` - (*v2.7+*) - Defines lease parameters for vApp templates created in this organization. See [vApp Template Lease](#vapp-template-lease) below for details.
 
 <a id="vapp-lease"></a>
 ## vApp Lease
@@ -67,7 +67,7 @@ The following arguments are supported:
 The `vapp_lease` section contains lease parameters for vApps created in the current organization, as defined below:
 
 * `maximum_runtime_lease_in_sec` - How long vApps can run before they are automatically stopped (in seconds)
-* `power_off_on_runtime_lease_expiration` - When true, vApps are powered off when the runtime lease expires. When false or missing, vApps are suspended when the runtime lease expires.
+* `power_off_on_runtime_lease_expiration` - When true, vApps are powered off when the runtime lease expires. When false, vApps are suspended when the runtime lease expires.
 * `maximum_storage_lease_in_sec` - How long stopped vApps are available before being automatically cleaned up (in seconds)
 * `delete_on_storage_lease_expiration` - If true, storage for a vApp is deleted when the vApp's lease expires. If false, the storage is flagged for deletion, but not deleted.
 
@@ -76,5 +76,5 @@ The `vapp_lease` section contains lease parameters for vApps created in the curr
 
 The `vapp_template_lease` section contains lease parameters for vApp templates created in the current organization, as defined below:
 
-* `maximum_storage_lease_in_sec` - (Optional) - How long vApp templates are available before being automatically cleaned up (in seconds)
-* `delete_on_storage_lease_expiration` - (Optional) - If true, storage for a vAppTemplate is deleted when the vAppTemplate lease expires. If false, the storage is flagged for deletion, but not deleted
+* `maximum_storage_lease_in_sec` - How long vApp templates are available before being automatically cleaned up (in seconds)
+* `delete_on_storage_lease_expiration` - If true, storage for a vAppTemplate is deleted when the vAppTemplate lease expires. If false, the storage is flagged for deletion, but not deleted

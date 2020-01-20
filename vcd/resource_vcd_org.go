@@ -84,27 +84,25 @@ func resourceOrg() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"maximum_runtime_lease_in_sec": &schema.Schema{
 							Type:         schema.TypeInt,
-							Optional:     true,
+							Required:     true,
 							Description:  "How long vApps can run before they are automatically stopped (in seconds). 0 means never expires",
 							ValidateFunc: validateIntLeaseSeconds(), // Lease can be either 0 or 3600+
 						},
 						"power_off_on_runtime_lease_expiration": &schema.Schema{
 							Type:     schema.TypeBool,
-							Optional: true,
-							Default:  false,
+							Required: true,
 							Description: "When true, vApps are powered off when the runtime lease expires. " +
 								"When false or missing, vApps are suspended when the runtime lease expires",
 						},
 						"maximum_storage_lease_in_sec": &schema.Schema{
 							Type:         schema.TypeInt,
-							Optional:     true,
+							Required:     true,
 							Description:  "How long stopped vApps are available before being automatically cleaned up (in seconds). 0 means never expires",
 							ValidateFunc: validateIntLeaseSeconds(), // Lease can be either 0 or 3600+
 						},
 						"delete_on_storage_lease_expiration": &schema.Schema{
 							Type:     schema.TypeBool,
-							Optional: true,
-							Default:  false,
+							Required: true,
 							Description: "If true, storage for a vApp is deleted when the vApp's lease expires. " +
 								"If false, the storage is flagged for deletion, but not deleted.",
 						},
@@ -121,14 +119,14 @@ func resourceOrg() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"maximum_storage_lease_in_sec": &schema.Schema{
 							Type:         schema.TypeInt,
-							Optional:     true,
+							Required:     true,
 							Description:  "How long vApp templates are available before being automatically cleaned up (in seconds). 0 means never expires",
 							ValidateFunc: validateIntLeaseSeconds(), // Lease can be either 0 or 3600+
 						},
 						"delete_on_storage_lease_expiration": &schema.Schema{
 							Type:     schema.TypeBool,
-							Optional: true,
-							Default:  false,
+							Required: true,
+							//Default:  false,
 							Description: "If true, storage for a vAppTemplate is deleted when the vAppTemplate lease expires. " +
 								"If false, the storage is flagged for deletion, but not deleted",
 						},
