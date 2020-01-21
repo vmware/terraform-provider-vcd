@@ -439,7 +439,7 @@ func QueryPortGroups(vcdCli *VCDClient, filter string) ([]*types.PortGroupRecord
 	return results.Results.PortGroupRecord, nil
 }
 
-// GetExternalNetwork returns an ExternalNetwork reference if user the network name matches an existing one.
+// GetExternalNetwork returns an ExternalNetwork reference if the network name matches an existing one.
 // If no valid external network is found, it returns an empty ExternalNetwork reference and an error
 // Deprecated: use vcdClient.GetExternalNetworkByName instead
 func GetExternalNetwork(vcdClient *VCDClient, networkName string) (*ExternalNetwork, error) {
