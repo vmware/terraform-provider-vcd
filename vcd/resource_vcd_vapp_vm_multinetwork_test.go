@@ -28,6 +28,11 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 		"Tags":        "vapp vm",
 	}
 
+	// Create objects for testing field values accross update steps
+	nic0Mac := testCachedFieldValue{}
+	nic1Mac := testCachedFieldValue{}
+	nic2Mac := testCachedFieldValue{}
+
 	configTextVM := templateFill(testAccCheckVcdVAppVmNetworkVm, params)
 
 	params["FuncName"] = t.Name() + "-step1"
@@ -63,6 +68,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip", "11.10.0.152"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.0.mac"),
+					nic0Mac.testCacheResourceFieldValue("vcd_vapp_vm."+netVmName1, "network.0.mac"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.name", "multinic-net"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.type", "org"),
@@ -70,6 +76,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.ip_allocation_mode", "DHCP"),
 					//resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.1.ip"), // We cannot guarantee DHCP
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.1.mac"),
+					nic1Mac.testCacheResourceFieldValue("vcd_vapp_vm."+netVmName1, "network.1.mac"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.name", "multinic-net"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.type", "org"),
@@ -77,6 +84,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.ip_allocation_mode", "MANUAL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.ip", "11.10.0.170"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.2.mac"),
+					nic2Mac.testCacheResourceFieldValue("vcd_vapp_vm."+netVmName1, "network.2.mac"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.3.name", "multinic-net2"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.3.type", "org"),
@@ -119,7 +127,9 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.is_primary", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip", "11.10.0.152"),
+					// Ensure that the MAC address (and the NIC itself) stays the same after update procedure
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.0.mac"),
+					nic0Mac.testCheckCachedResourceFieldValue("vcd_vapp_vm."+netVmName1, "network.0.mac"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.name", "multinic-net"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.type", "org"),
@@ -127,6 +137,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.ip_allocation_mode", "DHCP"),
 					//resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.1.ip"), // We cannot guarantee DHCP
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.1.mac"),
+					nic1Mac.testCheckCachedResourceFieldValue("vcd_vapp_vm."+netVmName1, "network.1.mac"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.name", "multinic-net"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.type", "org"),
@@ -134,6 +145,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.ip_allocation_mode", "MANUAL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.ip", "11.10.0.170"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.2.mac"),
+					nic2Mac.testCheckCachedResourceFieldValue("vcd_vapp_vm."+netVmName1, "network.2.mac"),
 				),
 			},
 			// Step 2 - update (remove all NICs)
