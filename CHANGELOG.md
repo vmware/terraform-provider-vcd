@@ -7,7 +7,7 @@ FEATURES:
 
 IMPROVEMENTS:
 
-* `resource/vcd_org` and `datasource/vcd_org` include a section `vapp_lease` and a section `vapp_template_lease` to define lease related parameters of depending entities - [GH-385]
+* `resource/vcd_org` and `datasource/vcd_org` include a section `vapp_lease` and a section `vapp_template_lease` to define lease related parameters of depending entities - [GH-432]
 
 NOTES:
 * Drop support for vCD 9.0

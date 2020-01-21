@@ -92,7 +92,7 @@ func resourceOrg() *schema.Resource {
 							Type:     schema.TypeBool,
 							Required: true,
 							Description: "When true, vApps are powered off when the runtime lease expires. " +
-								"When false or missing, vApps are suspended when the runtime lease expires",
+								"When false, vApps are suspended when the runtime lease expires",
 						},
 						"maximum_storage_lease_in_sec": &schema.Schema{
 							Type:         schema.TypeInt,
@@ -126,7 +126,6 @@ func resourceOrg() *schema.Resource {
 						"delete_on_storage_lease_expiration": &schema.Schema{
 							Type:     schema.TypeBool,
 							Required: true,
-							//Default:  false,
 							Description: "If true, storage for a vAppTemplate is deleted when the vAppTemplate lease expires. " +
 								"If false, the storage is flagged for deletion, but not deleted",
 						},

@@ -58,7 +58,7 @@ func datasourceVcdOrg() *schema.Resource {
 							Type:     schema.TypeBool,
 							Computed: true,
 							Description: "When true, vApps are powered off when the runtime lease expires. " +
-								"When false or missing, vApps are suspended when the runtime lease expires",
+								"When false, vApps are suspended when the runtime lease expires",
 						},
 						"maximum_storage_lease_in_sec": &schema.Schema{
 							Type:        schema.TypeInt,
