@@ -185,7 +185,6 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
 * `bus_number` - (Required) Bus number on which to place the disk controller
 * `unit_number` - (Required) Unit number (slot) on the bus specified by BusNumber.
 
-
 <a id="network"></a>
 ## Network
 
@@ -303,6 +302,7 @@ resource "vcd_vapp_vm" "web2" {
 The following additional attributes are exported:
 
 * `internal_disk` - (*v2.7+*) A block providing internal disk of VM details. See [Internal Disk](#internalDisk) below for details.
+* `disk.size_in_mb` - (*v2.7+*) Independent disk size in MB.
 
 <a id="internalDisk"></a>
 ## Internal disk
