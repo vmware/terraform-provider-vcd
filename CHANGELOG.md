@@ -12,16 +12,15 @@ IMPROVEMENTS:
 * `resource/vcd_org` and `datasource/vcd_org` include a section `vapp_lease` and a section
   `vapp_template_lease` to define lease related parameters of depending entities - [GH-432]
 
-BUG FIXES: Fix `vcd_vapp_vm` resource read - independent disks where losing `bus_number` and
-`unit_number` values after refresh. [GH-433]
+BUG FIXES: 
+* Fix `vcd_vapp_vm` resource read - independent disks where losing `bus_number` and `unit_number`
+  values after refresh. [GH-433]
+* `resource/vcd_vapp_vm` `network` block changes caused MAC address changes in existing NICs
+  [GH-436,GH-407]
+
 
 NOTES:
 * Drop support for vCD 9.0
-
-BUG FIXES:
-
-* `resource/vcd_vapp_vm` `network` block changes caused MAC address changes in existing NICs
-  [GH-436,GH-407]
 
 ## 2.6.0 (December 13, 2019)
 
