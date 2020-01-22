@@ -247,6 +247,11 @@ func resourceVcdVAppVm() *schema.Resource {
 						Required:    true,
 						Description: "Unit number (slot) on the bus specified by BusNumber",
 					},
+					"size_in_mb": {
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "The size of the disk in MB.",
+					},
 				}},
 				Optional: true,
 				Set:      resourceVcdVmIndependentDiskHash,
@@ -1153,22 +1158,34 @@ func updateStateOfAttachedDisks(d *schema.ResourceData, vm govcd.VM, vdc *govcd.
 	transformed := schema.NewSet(resourceVcdVmIndependentDiskHash, []interface{}{})
 
 	for _, existingDiskHref := range existingDisks {
-		disk, err := vdc.GetDiskByHref(existingDiskHref)
+		diskSettings, err := getIndependentDiskFromVmDisks(vm, existingDiskHref)
 		if err != nil {
 			return fmt.Errorf("did not find disk `%s`: %s", existingDiskHref, err)
 		}
-
-		// There is no need to try to recover bus_number and unit_number, as those are only used
-		// when installing the disk.
-
 		newValues := map[string]interface{}{
-			"name": disk.Disk.Name,
+			"name":        diskSettings.Disk.Name,
+			"bus_number":  strconv.Itoa(diskSettings.BusNumber),
+			"unit_number": strconv.Itoa(diskSettings.UnitNumber),
+			"size_in_mb":  diskSettings.SizeMb,
 		}
 
 		transformed.Add(newValues)
 	}
 
 	return d.Set("disk", transformed)
+}
+
+// getIndependentDiskFromVmDisks finds independent disk in VM disk list.
+func getIndependentDiskFromVmDisks(vm govcd.VM, diskHref string) (*types.DiskSettings, error) {
+	if vm.VM.VmSpecSection == nil || vm.VM.VmSpecSection.DiskSection == nil {
+		return nil, govcd.ErrorEntityNotFound
+	}
+	for _, disk := range vm.VM.VmSpecSection.DiskSection.DiskSettings {
+		if disk.Disk != nil && disk.Disk.HREF == diskHref {
+			return disk, nil
+		}
+	}
+	return nil, govcd.ErrorEntityNotFound
 }
 
 func updateStateOfInternalDisks(d *schema.ResourceData, vm govcd.VM) error {

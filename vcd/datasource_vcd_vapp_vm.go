@@ -126,6 +126,21 @@ func datasourceVcdVAppVm() *schema.Resource {
 						Computed:    true,
 						Description: "Independent disk name",
 					},
+					"bus_number": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "Bus number on which to place the disk controller",
+					},
+					"unit_number": {
+						Type:        schema.TypeString,
+						Computed:    true,
+						Description: "Unit number (slot) on the bus specified by BusNumber",
+					},
+					"size_in_mb": {
+						Type:        schema.TypeInt,
+						Computed:    true,
+						Description: "The size of the disk in MB.",
+					},
 				}},
 				Computed: true,
 				Set:      resourceVcdVmIndependentDiskHash,

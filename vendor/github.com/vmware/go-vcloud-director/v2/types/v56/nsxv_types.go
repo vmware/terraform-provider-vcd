@@ -445,6 +445,6 @@ type EdgeDhcpLeaseInfo struct {
 	// Ends holds the end time of a lease (format is "weekday year/month/day hour:minute:second",
 	// e.g. "3 2019/12/18 06:12:03")
 	Ends string `xml:"ends"`
-	// HardwareType holds ... (e.g. "ethernet")
+	// HardwareType holds type of hardware, usually "ethernet"
 	HardwareType string `xml:"hardwareType"`
 }
