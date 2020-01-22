@@ -10,7 +10,7 @@ import (
 )
 
 // testCachedFieldValue structure with attached functions is useful for testing specific field value
-// accross different `resource.TestStep` in Terraform acceptance tests. One particular use case is
+// across different `resource.TestStep` in Terraform acceptance tests. One particular use case is
 // to check whether MAC address does not change when a `vcd_vapp_vm` resource's network stack is
 // updated (between different TestSteps).
 type testCachedFieldValue struct {
@@ -39,7 +39,7 @@ func (c *testCachedFieldValue) cacheTestResourceFieldValue(resource, field strin
 
 // testCheckCachedResourceFieldValue has the default signature of Terraform acceptance test
 // functions, but is able to verify if the value is equal to previously cached value using
-// 'cacheTestResourceFieldValue'. This allows to check if a particular field value changed accross
+// 'cacheTestResourceFieldValue'. This allows to check if a particular field value changed across
 // multiple resource.TestSteps.
 func (c *testCachedFieldValue) testCheckCachedResourceFieldValue(resource, field string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {

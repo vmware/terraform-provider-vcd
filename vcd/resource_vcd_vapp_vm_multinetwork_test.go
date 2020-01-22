@@ -28,7 +28,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 		"Tags":        "vapp vm",
 	}
 
-	// Create objects for testing field values accross update steps
+	// Create objects for testing field values across update steps
 	nic0Mac := testCachedFieldValue{}
 	nic1Mac := testCachedFieldValue{}
 	nic2Mac := testCachedFieldValue{}
