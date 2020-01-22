@@ -2,7 +2,7 @@
 
 FEATURES:
 
-* **New Resource:** `vcd_vm_internal_disk` VM internal disk configuration
+* **New Resource:** `vcd_vm_internal_disk` VM internal disk configuration [GH-412]
 * `vcd_vapp_vm` Internal disks in VM template allows to be edited by `override_template_disk` field
   [GH-412]
 
