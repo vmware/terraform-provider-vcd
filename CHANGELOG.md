@@ -8,6 +8,11 @@ FEATURES:
 NOTES:
 * Drop support for vCD 9.0
 
+BUG FIXES:
+
+* `resource/vcd_vapp_vm` `network` block changes caused MAC address changes in existing NICs
+  [GH-436,GH-407]
+
 ## 2.6.0 (December 13, 2019)
 
 FEATURES:
