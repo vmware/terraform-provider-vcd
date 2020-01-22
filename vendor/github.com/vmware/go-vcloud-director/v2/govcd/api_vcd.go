@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
@@ -24,7 +23,6 @@ type VCDClient struct {
 	Client      Client  // Client for the underlying VCD instance
 	sessionHREF url.URL // HREF for the session API
 	QueryHREF   url.URL // HREF for the query API
-	Mutex       sync.Mutex
 }
 
 func (vcdCli *VCDClient) vcdloginurl() error {
