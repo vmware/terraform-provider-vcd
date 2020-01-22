@@ -17,10 +17,10 @@ type testCachedFieldValue struct {
 	fieldValue string
 }
 
-// testCacheResourceFieldValue has the same signature as builtin Terraform Test functions, however
+// cacheTestResourceFieldValue has the same signature as builtin Terraform Test functions, however
 // it is attached to a struct which allows to store a field value and then check against this value
 // with 'testCheckCachedResourceFieldValue'
-func (c *testCachedFieldValue) testCacheResourceFieldValue(resource, field string) resource.TestCheckFunc {
+func (c *testCachedFieldValue) cacheTestResourceFieldValue(resource, field string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[resource]
 		if !ok {
@@ -39,7 +39,7 @@ func (c *testCachedFieldValue) testCacheResourceFieldValue(resource, field strin
 
 // testCheckCachedResourceFieldValue has the default signature of Terraform acceptance test
 // functions, but is able to verify if the value is equal to previously cached value using
-// 'testCacheResourceFieldValue'. This allows to check if a particular field value changed accross
+// 'cacheTestResourceFieldValue'. This allows to check if a particular field value changed accross
 // multiple resource.TestSteps.
 func (c *testCachedFieldValue) testCheckCachedResourceFieldValue(resource, field string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
