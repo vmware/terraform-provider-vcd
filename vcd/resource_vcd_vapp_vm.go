@@ -685,24 +685,6 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 	return resourceVcdVAppVmUpdateExecute(d, meta)
 }
 
-// onlyHasChange is a schema helper which accepts Terraform schema definition and checks if field
-// with `fieldName` is the only one which has change (using d.HasChange)
-func onlyHasChange(fieldName string, schema map[string]*schema.Schema, d *schema.ResourceData) bool {
-	log.Printf("[DEBUG] [VM update] checking if only field '%s' has change during update", fieldName)
-	for schemaFieldName := range vmSchema {
-		// Skip checking defined field
-		if schemaFieldName == fieldName {
-			continue
-		}
-		if d.HasChange(schemaFieldName) {
-			log.Printf("[DEBUG] [VM update] field '%s' has change. Expected only '%s' to have change",
-				schemaFieldName, fieldName)
-			return false
-		}
-	}
-	return true
-}
-
 func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[DEBUG] [VM update] started without lock")
 
