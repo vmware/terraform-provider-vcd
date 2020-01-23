@@ -107,6 +107,11 @@ func datasourceVcdVAppVm() *schema.Resource {
 							Type:        schema.TypeString,
 							Description: "Mac address of network interface",
 						},
+						"adapter_type": {
+							Computed:    true,
+							Type:        schema.TypeString,
+							Description: "Network card adapter type ('E1000', 'E1000E', 'SRIOVETHERNETCARD', 'VMXNET3')",
+						},
 					},
 				},
 			},

@@ -203,6 +203,13 @@ func resourceVcdVAppVm() *schema.Resource {
 							Type:        schema.TypeString,
 							Description: "Mac address of network interface",
 						},
+						"adapter_type": {
+							Computed:     true,
+							Optional:     true,
+							Type:         schema.TypeString,
+							ValidateFunc: validation.StringInSlice([]string{"VMXNET3", "E1000", "E1000E", "SRIOVETHERNETCARD"}, false),
+							Description:  "Network card adapter type. One of 'E1000', 'E1000E', 'SRIOVETHERNETCARD', 'VMXNET3'",
+						},
 					},
 				},
 			},
@@ -1426,6 +1433,12 @@ func networksToConfig(networks []interface{}, vdc *govcd.Vdc, vapp govcd.VApp, v
 		if net.ParseIP(ip) != nil {
 			netConn.IPAddress = ip
 		}
+
+		adapterType, isSetAdapterType := nic["adapter_type"]
+		if isSetAdapterType {
+			netConn.NetworkAdapterType = adapterType.(string)
+		}
+
 		networkConnectionSection.NetworkConnection = append(networkConnectionSection.NetworkConnection, netConn)
 	}
 	return networkConnectionSection, nil
@@ -1559,6 +1572,7 @@ func readNetworks(vm govcd.VM, vapp govcd.VApp) ([]map[string]interface{}, error
 		singleNIC["ip_allocation_mode"] = vmNet.IPAddressAllocationMode
 		singleNIC["ip"] = vmNet.IPAddress
 		singleNIC["mac"] = vmNet.MACAddress
+		singleNIC["adapter_type"] = vmNet.NetworkAdapterType
 		if vmNet.Network != types.NoneNetwork {
 			singleNIC["name"] = vmNet.Network
 		}
