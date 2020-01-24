@@ -113,6 +113,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.6.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.6.ip", "192.168.2.51"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.6.mac"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.6.adapter_type", "PCNet32"),
 				),
 			},
 			// Step 1 - update
@@ -179,6 +180,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.ip", "192.168.2.51"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.1.mac"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.adapter_type", "VMXNET3"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.name", "multinic-net"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.type", "org"),
@@ -186,6 +188,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.ip", "11.10.0.152"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.2.mac"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.adapter_type", "VMXNET2"),
 				),
 			},
 		},
@@ -280,7 +283,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     name               = vcd_network_routed.net.name
     ip_allocation_mode = "DHCP"
     is_primary         = true
-    adapter_type       = "VMXNET3"
+    adapter_type       = "vmxnet3"
   }
 
   network {
@@ -289,7 +292,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     ip                 = "11.10.0.170"
     ip_allocation_mode = "MANUAL"
     is_primary         = false
-    adapter_type       = "E1000"
+    adapter_type       = "e1000"
   }
 
   network {
@@ -297,7 +300,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     name               = vcd_network_routed.net2.name
     ip_allocation_mode = "POOL"
     is_primary         = false
-    adapter_type       = "E1000E"
+    adapter_type       = "e1000e"
   }
 
   network {
@@ -316,6 +319,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     type               = "vapp"
     name               = vcd_vapp_network.vappNet.name
     ip_allocation_mode = "POOL"
+    adapter_type       = "pcnet32"
   }
 }
 `
@@ -404,6 +408,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     type               = "org"
     name               = vcd_network_routed.net.name
     ip_allocation_mode = "POOL"
+    adapter_type       = "vmxnet2"
   }
 }
 `

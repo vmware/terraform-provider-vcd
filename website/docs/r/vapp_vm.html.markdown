@@ -192,9 +192,12 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
 * `name` (Optional) Name of the network this VM should connect to. Always required except for `type` `NONE`.
 * `is_primary` (Optional) Set to true if network interface should be primary. First network card in the list will be primary by default.
 * `mac` - (Computed) Mac address of network interface.
-* `adapter_type` - (Optional, Computed) Adapter type. One of the following - `E1000`, `E1000E`,
-    `SRIOVETHERNETCARD`, `VMXNET3`. **Note:** Adapter with type `SRIOVETHERNETCARD` **must** be
-    connected to a **direct** vApp network connected to a direct VDC network.
+* `adapter_type` - (Optional, Computed) Adapter type. Some known adapter types - `VMXNET3`, `E1000`,
+    `E1000E`, `SRIOVETHERNETCARD`, `VMXNET2`, `PCNet32`.
+    
+    **Note:** Adapter with type `SRIOVETHERNETCARD` **must** be connected to a **direct** vApp
+    network connected to a direct VDC network. Unless such an SR-IOV-capable external network is
+    available in your VDC, you cannot connect an SR-IOV device. 
 * `ip_allocation_mode` (Required) IP address allocation mode. One of `POOL`, `DHCP`, `MANUAL`, `NONE`:  
 
   * `POOL` - Static IP address is allocated automatically from defined static pool in network.
