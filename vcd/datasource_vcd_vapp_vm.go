@@ -110,7 +110,7 @@ func datasourceVcdVAppVm() *schema.Resource {
 						"adapter_type": {
 							Computed:    true,
 							Type:        schema.TypeString,
-							Description: "Network card adapter type ('E1000', 'E1000E', 'SRIOVETHERNETCARD', 'VMXNET3')",
+							Description: "Network card adapter type. (e.g. 'E1000', 'E1000E', 'SRIOVETHERNETCARD', 'VMXNET3', 'PCNet32')",
 						},
 					},
 				},
