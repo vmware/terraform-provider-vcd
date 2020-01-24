@@ -15,7 +15,7 @@ Fix `vcd_vapp_vm` resource read - independent disks where losing `bus_number` an
 
 NOTES:
 * Drop support for vCD 9.0
-* Bump terraform-plugin-sdk to v1.5.0
+* Bump terraform-plugin-sdk to v1.5.0 [GH-442]
 
 ## 2.6.0 (December 13, 2019)
 
