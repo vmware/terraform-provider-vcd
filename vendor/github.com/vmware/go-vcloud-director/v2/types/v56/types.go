@@ -697,8 +697,8 @@ type VAppTemplateLeaseSettings struct {
 	Type string   `xml:"type,attr,omitempty"` // The MIME type of the entity.
 	Link LinkList `xml:"Link,omitempty"`      // A reference to an entity or operation associated with this object.
 
-	DeleteOnStorageLeaseExpiration bool `xml:"DeleteOnStorageLeaseExpiration,omitempty"`
-	StorageLeaseSeconds            int  `xml:"StorageLeaseSeconds,omitempty"`
+	DeleteOnStorageLeaseExpiration *bool `xml:"DeleteOnStorageLeaseExpiration,omitempty"`
+	StorageLeaseSeconds            *int  `xml:"StorageLeaseSeconds,omitempty"`
 }
 
 type VAppLeaseSettings struct {
@@ -706,10 +706,10 @@ type VAppLeaseSettings struct {
 	Type string   `xml:"type,attr,omitempty"` // The MIME type of the entity.
 	Link LinkList `xml:"Link,omitempty"`      // A reference to an entity or operation associated with this object.
 
-	DeleteOnStorageLeaseExpiration   bool `xml:"DeleteOnStorageLeaseExpiration,omitempty"`
-	DeploymentLeaseSeconds           int  `xml:"DeploymentLeaseSeconds,omitempty"`
-	StorageLeaseSeconds              int  `xml:"StorageLeaseSeconds,omitempty"`
-	PowerOffOnRuntimeLeaseExpiration bool `xml:"PowerOffOnRuntimeLeaseExpiration,omitempty"`
+	DeleteOnStorageLeaseExpiration   *bool `xml:"DeleteOnStorageLeaseExpiration,omitempty"`
+	DeploymentLeaseSeconds           *int  `xml:"DeploymentLeaseSeconds,omitempty"`
+	StorageLeaseSeconds              *int  `xml:"StorageLeaseSeconds,omitempty"`
+	PowerOffOnRuntimeLeaseExpiration *bool `xml:"PowerOffOnRuntimeLeaseExpiration,omitempty"`
 }
 
 type OrgFederationSettings struct {

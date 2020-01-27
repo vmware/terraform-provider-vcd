@@ -692,6 +692,21 @@ func (cat *Catalog) GetCatalogItemByHref(catalogItemHref string) (*CatalogItem, 
 	return catItem, nil
 }
 
+// GetVappTemplateByHref finds a vApp template by HREF
+// On success, returns a pointer to the vApp template structure and a nil error
+// On failure, returns a nil pointer and an error
+func (cat *Catalog) GetVappTemplateByHref(href string) (*VAppTemplate, error) {
+
+	vappTemplate := NewVAppTemplate(cat.client)
+
+	_, err := cat.client.ExecuteRequest(href, http.MethodGet,
+		"", "error retrieving catalog item: %s", nil, vappTemplate.VAppTemplate)
+	if err != nil {
+		return nil, err
+	}
+	return vappTemplate, nil
+}
+
 // GetCatalogItemByName finds a CatalogItem by Name
 // On success, returns a pointer to the CatalogItem structure and a nil error
 // On failure, returns a nil pointer and an error
