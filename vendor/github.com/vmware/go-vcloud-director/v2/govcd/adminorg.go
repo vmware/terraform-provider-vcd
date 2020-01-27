@@ -90,6 +90,7 @@ func (adminOrg *AdminOrg) GetVdcByName(vdcname string) (Vdc, error) {
 // CreateVdc creates a VDC with the given params under the given organization.
 // Returns an AdminVdc.
 // API Documentation: https://code.vmware.com/apis/220/vcloud#/doc/doc/operations/POST-VdcConfiguration.html
+// Deprecated in favor adminOrg.CreateOrgVdcAsync
 func (adminOrg *AdminOrg) CreateVdc(vdcConfiguration *types.VdcConfiguration) (Task, error) {
 	err := validateVdcConfiguration(vdcConfiguration)
 	if err != nil {
@@ -117,6 +118,7 @@ func (adminOrg *AdminOrg) CreateVdc(vdcConfiguration *types.VdcConfiguration) (T
 }
 
 // Creates the vdc and waits for the asynchronous task to complete.
+// Deprecated in favor adminOrg.CreateOrgVdc
 func (adminOrg *AdminOrg) CreateVdcWait(vdcDefinition *types.VdcConfiguration) error {
 	task, err := adminOrg.CreateVdc(vdcDefinition)
 	if err != nil {
@@ -660,8 +662,9 @@ func (adminOrg *AdminOrg) GetVDCByHref(vdcHref string) (*Vdc, error) {
 
 	vdc := NewVdc(adminOrg.client)
 
-	_, err := adminOrg.client.ExecuteRequest(vdcHREF, http.MethodGet,
-		"", "error getting vdc: %s", nil, vdc.Vdc)
+	_, err := adminOrg.client.ExecuteRequestWithApiVersion(vdcHREF, http.MethodGet,
+		"", "error getting vdc: %s", nil, vdc.Vdc,
+		adminOrg.client.GetSpecificApiVersionOnCondition(">= 32.0", "32.0"))
 
 	if err != nil {
 		return nil, err
@@ -724,8 +727,8 @@ func (adminOrg *AdminOrg) GetAdminVDCByHref(vdcHref string) (*AdminVdc, error) {
 
 	adminVdc := NewAdminVdc(adminOrg.client)
 
-	_, err := adminOrg.client.ExecuteRequest(vdcHref, http.MethodGet,
-		"", "error getting vdc: %s", nil, adminVdc.AdminVdc)
+	_, err := adminOrg.client.ExecuteRequestWithApiVersion(vdcHref, http.MethodGet,
+		"", "error getting vdc: %s", nil, adminVdc.AdminVdc, adminVdc.client.GetSpecificApiVersionOnCondition(">= 32.0", "32.0"))
 
 	if err != nil {
 		return nil, err

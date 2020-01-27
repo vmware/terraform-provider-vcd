@@ -201,7 +201,18 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Optional:    true,
 				Description: "True if discovery of vCenter VMs is enabled for resource pools backing this VDC. If left unspecified, the actual behaviour depends on enablement at the organization level and at the system level.",
 			},
-
+			"elasticity": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "Set to true to indicate if the Generic vDC is to be elastic.",
+			},
+			"include_vm_memory_overhead": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "Set to true to indicate if the GENERIC vDC is to include memory overhead into its accounting for admission control.",
+			},
 			"delete_force": &schema.Schema{
 				Type:        schema.TypeBool,
 				Required:    true,
@@ -360,6 +371,14 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 		if err := d.Set("storage_profile", storageProfileStateData); err != nil {
 			return fmt.Errorf("error setting compute_capacity: %s", err)
 		}
+	}
+
+	if adminVdc.AdminVdc.IsElastic != nil {
+		_ = d.Set("elasticity", adminVdc.AdminVdc.IsElastic)
+	}
+
+	if adminVdc.AdminVdc.IncludeMemoryOverhead != nil {
+		_ = d.Set("elasticity", adminVdc.AdminVdc.IncludeMemoryOverhead)
 	}
 
 	vdc, err := adminOrg.GetVDCByName(d.Get("name").(string), false)
@@ -697,6 +716,16 @@ func getUpdatedVdcInput(d *schema.ResourceData, vcdClient *VCDClient, vdc *govcd
 		vdc.AdminVdc.VmDiscoveryEnabled = d.Get("enable_vm_discovery").(bool)
 	}
 
+	if d.HasChange("elasticity") {
+		elasticityPt := d.Get("elasticity").(bool)
+		vdc.AdminVdc.IsElastic = &elasticityPt
+	}
+
+	if d.HasChange("include_vm_memory_overhead") {
+		memoryOverheadPt := d.Get("include_vm_memory_overhead").(bool)
+		vdc.AdminVdc.IncludeMemoryOverhead = &memoryOverheadPt
+	}
+
 	//cleanup
 	vdc.AdminVdc.Tasks = nil
 
@@ -836,6 +865,16 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 
 	if vmDiscoveryEnabled, ok := d.GetOk("enable_vm_discovery"); ok {
 		params.VmDiscoveryEnabled = vmDiscoveryEnabled.(bool)
+	}
+
+	if elasticity, ok := d.GetOk("elasticity"); ok {
+		elasticityPt := elasticity.(bool)
+		params.IsElastic = &elasticityPt
+	}
+
+	if vmMemoryOverhead, ok := d.GetOk("include_vm_memory_overhead"); ok {
+		vmMemoryOverheadPt := vmMemoryOverhead.(bool)
+		params.IncludeMemoryOverhead = &vmMemoryOverheadPt
 	}
 
 	return params, nil

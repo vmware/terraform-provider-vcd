@@ -26,6 +26,24 @@ type SupportedVersions struct {
 	VersionInfos `xml:"VersionInfo"`
 }
 
+// map allows you get vCD version from max supported API version
+var vcdVersionToApiVersion = map[string]string{
+	"29.0": "9.0",
+	"30.0": "9.1",
+	"31.0": "9.5",
+	"32.0": "9.7",
+	"33.0": "10.0",
+}
+
+// map allows you get max supported API version from vCD version
+var vpiVersionToVcdVersion = map[string]string{
+	"9.0":  "29.0",
+	"9.1":  "30.0",
+	"9.5":  "31.0",
+	"9.7":  "32.0",
+	"10.0": "33.0",
+}
+
 // APIVCDMaxVersionIs compares against maximum vCD supported API version from /api/versions (not necessarily
 // the currently used one). This allows to check what is the maximum API version that vCD instance
 // supports and can be used to guess vCD product version. API 31.0 support was first introduced in
