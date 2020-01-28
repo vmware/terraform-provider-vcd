@@ -34,8 +34,15 @@ func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 		"Tags":                      "vdc",
 		"FuncName":                  "TestAccVcdOrgVdcReservationPool",
 		// cause vDC ignores empty values and use default
-		"MemoryGuaranteed": "1",
-		"CpuGuaranteed":    "1",
+		"MemoryGuaranteed":              "1",
+		"CpuGuaranteed":                 "1",
+		"FlexElasticKey":                "",
+		"FlexElasticValue":              "",
+		"FlexElasticValueUpdate":        "",
+		"FlexMemoryOverheadKey":         "",
+		"equalsChar":                    "",
+		"FlexMemoryOverheadValue":       "",
+		"FlexMemoryOverheadValueUpdate": "",
 	}
 	runOrgVdcTest(t, params, allocationModel)
 }
@@ -48,19 +55,26 @@ func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 	allocationModel := "AllocationPool"
 
 	var params = StringMap{
-		"VdcName":                   TestAccVcdVdc,
-		"OrgName":                   testConfig.VCD.Org,
-		"AllocationModel":           "AllocationPool",
-		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
-		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
-		"Allocated":                 "2048",
-		"Reserved":                  "1024",
-		"Limit":                     "2048",
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
-		"Tags":                      "vdc",
-		"FuncName":                  "TestAccVcdOrgVdcAllocationPool",
-		"MemoryGuaranteed":          "0.3",
-		"CpuGuaranteed":             "0.45",
+		"VdcName":                       TestAccVcdVdc,
+		"OrgName":                       testConfig.VCD.Org,
+		"AllocationModel":               "AllocationPool",
+		"ProviderVdc":                   testConfig.VCD.ProviderVdc.Name,
+		"NetworkPool":                   testConfig.VCD.ProviderVdc.NetworkPool,
+		"Allocated":                     "2048",
+		"Reserved":                      "1024",
+		"Limit":                         "2048",
+		"ProviderVdcStorageProfile":     testConfig.VCD.ProviderVdc.StorageProfile,
+		"Tags":                          "vdc",
+		"FuncName":                      "TestAccVcdOrgVdcAllocationPool",
+		"MemoryGuaranteed":              "0.3",
+		"CpuGuaranteed":                 "0.45",
+		"FlexElasticKey":                "",
+		"FlexElasticValue":              "",
+		"FlexElasticValueUpdate":        "",
+		"FlexMemoryOverheadKey":         "",
+		"equalsChar":                    "",
+		"FlexMemoryOverheadValue":       "",
+		"FlexMemoryOverheadValueUpdate": "",
 	}
 	runOrgVdcTest(t, params, allocationModel)
 }
@@ -74,19 +88,70 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 	allocationModel := "AllocationVApp"
 
 	var params = StringMap{
-		"VdcName":                   TestAccVcdVdc,
-		"OrgName":                   testConfig.VCD.Org,
-		"AllocationModel":           allocationModel,
-		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
-		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
-		"Allocated":                 "0",
-		"Reserved":                  "0",
-		"Limit":                     "2048",
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
-		"Tags":                      "vdc",
-		"FuncName":                  "TestAccVcdOrgVdcAllocationVapp",
-		"MemoryGuaranteed":          "0.5",
-		"CpuGuaranteed":             "0.6",
+		"VdcName":                       TestAccVcdVdc,
+		"OrgName":                       testConfig.VCD.Org,
+		"AllocationModel":               allocationModel,
+		"ProviderVdc":                   testConfig.VCD.ProviderVdc.Name,
+		"NetworkPool":                   testConfig.VCD.ProviderVdc.NetworkPool,
+		"Allocated":                     "0",
+		"Reserved":                      "0",
+		"Limit":                         "2048",
+		"ProviderVdcStorageProfile":     testConfig.VCD.ProviderVdc.StorageProfile,
+		"Tags":                          "vdc",
+		"FuncName":                      "TestAccVcdOrgVdcAllocationVapp",
+		"MemoryGuaranteed":              "0.5",
+		"CpuGuaranteed":                 "0.6",
+		"FlexElasticKey":                "",
+		"FlexElasticValue":              "",
+		"FlexElasticValueUpdate":        "",
+		"FlexMemoryOverheadKey":         "",
+		"equalsChar":                    "",
+		"FlexMemoryOverheadValue":       "",
+		"FlexMemoryOverheadValueUpdate": "",
+	}
+	runOrgVdcTest(t, params, allocationModel)
+}
+
+func TestAccVcdOrgVdcAllocationFlex(t *testing.T) {
+	if !usingSysAdmin() {
+		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
+	}
+
+	vcdClient, err := getTestVCDFromJson(testConfig)
+	if err != nil {
+		t.Skip("unable to validate vCD version - skipping test")
+	}
+
+	// if vCD older then 9.7
+	if vcdClient.Client.APIVCDMaxVersionIs("< 32.0") {
+		t.Skip("Skipping this test as Flex supported from 9.7 version")
+	}
+
+	validateConfiguration(t)
+
+	allocationModel := "Flex"
+
+	var params = StringMap{
+		"VdcName":                       TestAccVcdVdc,
+		"OrgName":                       testConfig.VCD.Org,
+		"AllocationModel":               allocationModel,
+		"ProviderVdc":                   testConfig.VCD.ProviderVdc.Name,
+		"NetworkPool":                   testConfig.VCD.ProviderVdc.NetworkPool,
+		"Allocated":                     "0",
+		"Reserved":                      "0",
+		"Limit":                         "2048",
+		"ProviderVdcStorageProfile":     testConfig.VCD.ProviderVdc.StorageProfile,
+		"Tags":                          "vdc",
+		"FuncName":                      t.Name(),
+		"MemoryGuaranteed":              "0.5",
+		"CpuGuaranteed":                 "0.6",
+		"FlexElasticKey":                "elasticity",
+		"FlexElasticValue":              "false",
+		"FlexElasticValueUpdate":        "true",
+		"FlexMemoryOverheadKey":         "include_vm_memory_overhead",
+		"equalsChar":                    "=",
+		"FlexMemoryOverheadValue":       "false",
+		"FlexMemoryOverheadValueUpdate": "true",
 	}
 	runOrgVdcTest(t, params, allocationModel)
 }
@@ -379,6 +444,8 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   enable_fast_provisioning = true
   delete_force             = true
   delete_recursive         = true
+  {{.FlexElasticKey}} {{.equalsChar}} {{.FlexElasticValue}}
+  {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValue}}
 }
 `
 
@@ -423,5 +490,7 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   enable_fast_provisioning = false
   delete_force             = false
   delete_recursive         = false
+  {{.FlexElasticKey}} {{.equalsChar}} {{.FlexElasticValueUpdate}}
+  {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValueUpdate}}
 }
 `

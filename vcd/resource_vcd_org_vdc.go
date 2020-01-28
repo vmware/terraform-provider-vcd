@@ -76,8 +76,8 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"AllocationVApp", "AllocationPool", "ReservationPool"}, false),
-				Description:  "The allocation model used by this VDC; must be one of {AllocationVApp, AllocationPool, ReservationPool}",
+				ValidateFunc: validation.StringInSlice([]string{"AllocationVApp", "AllocationPool", "ReservationPool", "Flex"}, false),
+				Description:  "The allocation model used by this VDC; must be one of {AllocationVApp, AllocationPool, ReservationPool, Flex}",
 			},
 			"compute_capacity": &schema.Schema{
 				Required: true,
@@ -205,13 +205,13 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Computed:    true,
-				Description: "Set to true to indicate if the Generic vDC is to be elastic.",
+				Description: "Set to true to indicate if the Flex vDC is to be elastic.",
 			},
 			"include_vm_memory_overhead": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Computed:    true,
-				Description: "Set to true to indicate if the GENERIC vDC is to include memory overhead into its accounting for admission control.",
+				Description: "Set to true to indicate if the Flex vDC is to include memory overhead into its accounting for admission control.",
 			},
 			"delete_force": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -242,6 +242,12 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 
 	if !vcdClient.Client.IsSysAdmin {
 		return fmt.Errorf("functionality requires system administrator privileges")
+	}
+
+	_, elasticityConfigured := d.GetOk("elasticity")
+	_, vmMemoryOverheadConfigured := d.GetOk("include_vm_memory_overhead")
+	if d.Get("allocation_model").(string) != "Flex" && elasticityConfigured || vmMemoryOverheadConfigured {
+		return fmt.Errorf("`elasticity` and `include_vm_memory_overhead` can be used only with Flex allocation model")
 	}
 
 	// vdc creation is accessible only in administrator API part
