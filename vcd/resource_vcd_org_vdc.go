@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -202,16 +203,18 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Description: "True if discovery of vCenter VMs is enabled for resource pools backing this VDC. If left unspecified, the actual behaviour depends on enablement at the organization level and at the system level.",
 			},
 			"elasticity": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Computed:    true,
-				Description: "Set to true to indicate if the Flex vDC is to be elastic.",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringInSlice([]string{"true", "false"}, false),
+				Description:  "Set to true to indicate if the Flex vDC is to be elastic.",
 			},
 			"include_vm_memory_overhead": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Computed:    true,
-				Description: "Set to true to indicate if the Flex vDC is to include memory overhead into its accounting for admission control.",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Computed:     true,
+				ValidateFunc: validation.StringInSlice([]string{"true", "false"}, false),
+				Description:  "Set to true to indicate if the Flex vDC is to include memory overhead into its accounting for admission control.",
 			},
 			"delete_force": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -244,9 +247,10 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("functionality requires system administrator privileges")
 	}
 
+	// check that only for Flex elasticity and include_vm_memory_overhead are used
 	_, elasticityConfigured := d.GetOk("elasticity")
 	_, vmMemoryOverheadConfigured := d.GetOk("include_vm_memory_overhead")
-	if d.Get("allocation_model").(string) != "Flex" && elasticityConfigured || vmMemoryOverheadConfigured {
+	if d.Get("allocation_model").(string) != "Flex" && (elasticityConfigured || vmMemoryOverheadConfigured) {
 		return fmt.Errorf("`elasticity` and `include_vm_memory_overhead` can be used only with Flex allocation model")
 	}
 
@@ -269,32 +273,14 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[DEBUG] Creating vdc: %#v", params)
 
-	task, err := adminOrg.CreateVdc(params)
+	vdc, err := adminOrg.CreateOrgVdc(params)
 	if err != nil {
 		log.Printf("[DEBUG] Error creating vdc: %s", err)
 		return fmt.Errorf("error creating vdc: %s", err)
 	}
 
-	err = task.WaitTaskCompletion()
-	if err != nil {
-		log.Printf("[DEBUG] Error waiting for vdc to finish: %s", err)
-		return fmt.Errorf("error waiting for vdc to finish: %s", err)
-	}
-
-	err = adminOrg.Refresh()
-	if err != nil {
-		log.Printf("[DEBUG] Unable to refresh org.")
-		return fmt.Errorf("unable to refresh org. %s", err)
-	}
-
-	adminVdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
-	if err != nil {
-		log.Printf("[DEBUG] Unable to find vdc.")
-		return fmt.Errorf("unable to find VDC. %s", err)
-	}
-
-	d.SetId(adminVdc.AdminVdc.ID)
-	log.Printf("[TRACE] vdc created: %#v", task)
+	d.SetId(vdc.Vdc.ID)
+	log.Printf("[TRACE] vdc created: %#v", vdc)
 
 	err = createOrUpdateMetadata(d, meta)
 	if err != nil {
@@ -380,11 +366,11 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 	}
 
 	if adminVdc.AdminVdc.IsElastic != nil {
-		_ = d.Set("elasticity", adminVdc.AdminVdc.IsElastic)
+		_ = d.Set("elasticity", strconv.FormatBool(*adminVdc.AdminVdc.IsElastic))
 	}
 
 	if adminVdc.AdminVdc.IncludeMemoryOverhead != nil {
-		_ = d.Set("elasticity", adminVdc.AdminVdc.IncludeMemoryOverhead)
+		_ = d.Set("include_vm_memory_overhead", strconv.FormatBool(*adminVdc.AdminVdc.IncludeMemoryOverhead))
 	}
 
 	vdc, err := adminOrg.GetVDCByName(d.Get("name").(string), false)
@@ -723,12 +709,18 @@ func getUpdatedVdcInput(d *schema.ResourceData, vcdClient *VCDClient, vdc *govcd
 	}
 
 	if d.HasChange("elasticity") {
-		elasticityPt := d.Get("elasticity").(bool)
+		elasticityPt, err := strconv.ParseBool(d.Get("elasticity").(string))
+		if err != nil {
+			return &govcd.AdminVdc{}, err
+		}
 		vdc.AdminVdc.IsElastic = &elasticityPt
 	}
 
 	if d.HasChange("include_vm_memory_overhead") {
-		memoryOverheadPt := d.Get("include_vm_memory_overhead").(bool)
+		memoryOverheadPt, err := strconv.ParseBool(d.Get("include_vm_memory_overhead").(string))
+		if err != nil {
+			return &govcd.AdminVdc{}, err
+		}
 		vdc.AdminVdc.IncludeMemoryOverhead = &memoryOverheadPt
 	}
 
@@ -874,12 +866,18 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 	}
 
 	if elasticity, ok := d.GetOk("elasticity"); ok {
-		elasticityPt := elasticity.(bool)
+		elasticityPt, err := strconv.ParseBool(elasticity.(string))
+		if err != nil {
+			return &types.VdcConfiguration{}, err
+		}
 		params.IsElastic = &elasticityPt
 	}
 
 	if vmMemoryOverhead, ok := d.GetOk("include_vm_memory_overhead"); ok {
-		vmMemoryOverheadPt := vmMemoryOverhead.(bool)
+		vmMemoryOverheadPt, err := strconv.ParseBool(vmMemoryOverhead.(string))
+		if err != nil {
+			return &types.VdcConfiguration{}, err
+		}
 		params.IncludeMemoryOverhead = &vmMemoryOverheadPt
 	}
 
