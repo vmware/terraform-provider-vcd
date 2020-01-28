@@ -7,12 +7,10 @@ package govcd
 import (
 	"errors"
 	"fmt"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
 	"net/http"
 	"net/url"
-	"reflect"
-
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 type AdminVdc struct {
@@ -67,7 +65,7 @@ func (adminVdc *AdminVdc) UpdateAsync() (Task, error) {
 	if realFunction.UpdateVdcAsync == nil {
 		return Task{}, fmt.Errorf("function UpdateVdcAsync is not defined for %s", "vdc"+apiVersion)
 	}
-	util.Logger.Printf("[DEBUG] UpdateAsync call function type: %s, which is for version %s", realFunction.Type, realFunction.SupportedVersion)
+	util.Logger.Printf("[DEBUG] UpdateAsync call function for version %s", realFunction.SupportedVersion)
 
 	return realFunction.UpdateVdcAsync(adminVdc)
 
@@ -91,7 +89,7 @@ func (adminVdc *AdminVdc) Update() (AdminVdc, error) {
 		return AdminVdc{}, fmt.Errorf("function UpdateVdc is not defined for %s", "vdc"+apiVersion)
 	}
 
-	util.Logger.Printf("[DEBUG] Update call function type: %s, which is for version %s", realFunction.Type, realFunction.SupportedVersion)
+	util.Logger.Printf("[DEBUG] Update call function for version %s", realFunction.SupportedVersion)
 
 	updatedAdminVdc, err := realFunction.UpdateVdc(adminVdc)
 	if err != nil {
@@ -101,7 +99,6 @@ func (adminVdc *AdminVdc) Update() (AdminVdc, error) {
 }
 
 type vdcProducer struct {
-	Type             string
 	SupportedVersion string
 	CreateVdc        func(adminOrg *AdminOrg, vdcConfiguration *types.VdcConfiguration) (*Vdc, error)
 	CreateVdcAsync   func(adminOrg *AdminOrg, vdcConfiguration *types.VdcConfiguration) (Task, error)
@@ -110,7 +107,6 @@ type vdcProducer struct {
 }
 
 var vdcCrudV90 = vdcProducer{
-	Type:             "VDC",
 	SupportedVersion: "29.0",
 	CreateVdc:        createVdc,
 	CreateVdcAsync:   createVdcAsync,
@@ -119,7 +115,6 @@ var vdcCrudV90 = vdcProducer{
 }
 
 var vdcCrudV97 = vdcProducer{
-	Type:             "VDC",
 	SupportedVersion: "32.0",
 	CreateVdc:        createVdcV97,
 	CreateVdcAsync:   createVdcAsyncV97,
@@ -151,7 +146,7 @@ func (adminOrg *AdminOrg) CreateOrgVdc(vdcConfiguration *types.VdcConfiguration)
 		return nil, fmt.Errorf("function CreateVdc is not defined for %s", "vdc"+apiVersion)
 	}
 
-	util.Logger.Printf("[DEBUG] CreateOrgVdc call function type: %s, which is for version %s", realFunction.Type, realFunction.SupportedVersion)
+	util.Logger.Printf("[DEBUG] CreateOrgVdc call function for version %s", realFunction.SupportedVersion)
 	return realFunction.CreateVdc(adminOrg, vdcConfiguration)
 }
 
@@ -170,7 +165,7 @@ func (adminOrg *AdminOrg) CreateOrgVdcAsync(vdcConfiguration *types.VdcConfigura
 		return Task{}, fmt.Errorf("function CreateVdcAsync is not defined for %s", "vdc"+apiVersion)
 	}
 
-	util.Logger.Printf("[DEBUG] CreateOrgVdcAsync call function type: %s, which is for version %s and function1 is %s", realFunction.Type, realFunction.SupportedVersion, reflect.TypeOf(realFunction.CreateVdcAsync))
+	util.Logger.Printf("[DEBUG] CreateOrgVdcAsync call function for version %s", realFunction.SupportedVersion)
 
 	return realFunction.CreateVdcAsync(adminOrg, vdcConfiguration)
 }
@@ -317,7 +312,10 @@ func createVdcAsyncV97(adminOrg *AdminOrg, vdcConfiguration *types.VdcConfigurat
 
 // validateVdcConfigurationV97 uses validateVdcConfiguration and additionally checks Flex dependent values
 func validateVdcConfigurationV97(vdcDefinition types.VdcConfiguration) error {
-	validateVdcConfiguration(&vdcDefinition)
+	err := validateVdcConfiguration(&vdcDefinition)
+	if err != nil {
+		return err
+	}
 	if vdcDefinition.AllocationModel == "Flex" && vdcDefinition.IsElastic == nil {
 		return errors.New("VdcConfiguration missing required field: IsElastic")
 	}
