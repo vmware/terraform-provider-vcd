@@ -9,6 +9,32 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
+var dataSourceMap = map[string]*schema.Resource{
+	"vcd_org":                datasourceVcdOrg(),              // 2.5
+	"vcd_org_vdc":            datasourceVcdOrgVdc(),           // 2.5
+	"vcd_catalog":            datasourceVcdCatalog(),          // 2.5
+	"vcd_catalog_media":      datasourceVcdCatalogMedia(),     // 2.5
+	"vcd_catalog_item":       datasourceVcdCatalogItem(),      // 2.5
+	"vcd_edgegateway":        datasourceVcdEdgeGateway(),      // 2.5
+	"vcd_external_network":   datasourceVcdExternalNetwork(),  // 2.5
+	"vcd_independent_disk":   datasourceVcIndependentDisk(),   // 2.5
+	"vcd_network_routed":     datasourceVcdNetworkRouted(),    // 2.5
+	"vcd_network_direct":     datasourceVcdNetworkDirect(),    // 2.5
+	"vcd_network_isolated":   datasourceVcdNetworkIsolated(),  // 2.5
+	"vcd_vapp":               datasourceVcdVApp(),             // 2.5
+	"vcd_vapp_vm":            datasourceVcdVAppVm(),           // 2.6
+	"vcd_lb_service_monitor": datasourceVcdLbServiceMonitor(), // 2.4
+	"vcd_lb_server_pool":     datasourceVcdLbServerPool(),     // 2.4
+	"vcd_lb_app_profile":     datasourceVcdLBAppProfile(),     // 2.4
+	"vcd_lb_app_rule":        datasourceVcdLBAppRule(),        // 2.4
+	"vcd_lb_virtual_server":  datasourceVcdLbVirtualServer(),  // 2.4
+	"vcd_nsxv_dnat":          datasourceVcdNsxvDnat(),         // 2.5
+	"vcd_nsxv_snat":          datasourceVcdNsxvSnat(),         // 2.5
+	"vcd_nsxv_firewall_rule": datasourceVcdNsxvFirewallRule(), // 2.5
+	"vcd_nsxv_dhcp_relay":    datasourceVcdNsxvDhcpRelay(),    // 2.6
+	"vcd_nsxv_ip_set":        datasourceVcdIpSet(),            // 2.6
+}
+
 // Provider returns a terraform.ResourceProvider.
 func Provider() terraform.ResourceProvider {
 
@@ -133,31 +159,7 @@ func Provider() terraform.ResourceProvider {
 			"vcd_vm_internal_disk":   resourceVmInternalDisk(),      // 2.7
 		},
 
-		DataSourcesMap: map[string]*schema.Resource{
-			"vcd_org":                datasourceVcdOrg(),              // 2.5
-			"vcd_org_vdc":            datasourceVcdOrgVdc(),           // 2.5
-			"vcd_catalog":            datasourceVcdCatalog(),          // 2.5
-			"vcd_catalog_media":      datasourceVcdCatalogMedia(),     // 2.5
-			"vcd_catalog_item":       datasourceVcdCatalogItem(),      // 2.5
-			"vcd_edgegateway":        datasourceVcdEdgeGateway(),      // 2.5
-			"vcd_external_network":   datasourceVcdExternalNetwork(),  // 2.5
-			"vcd_independent_disk":   datasourceVcIndependentDisk(),   // 2.5
-			"vcd_network_routed":     datasourceVcdNetworkRouted(),    // 2.5
-			"vcd_network_direct":     datasourceVcdNetworkDirect(),    // 2.5
-			"vcd_network_isolated":   datasourceVcdNetworkIsolated(),  // 2.5
-			"vcd_vapp":               datasourceVcdVApp(),             // 2.5
-			"vcd_vapp_vm":            datasourceVcdVAppVm(),           // 2.6
-			"vcd_lb_service_monitor": datasourceVcdLbServiceMonitor(), // 2.4
-			"vcd_lb_server_pool":     datasourceVcdLbServerPool(),     // 2.4
-			"vcd_lb_app_profile":     datasourceVcdLBAppProfile(),     // 2.4
-			"vcd_lb_app_rule":        datasourceVcdLBAppRule(),        // 2.4
-			"vcd_lb_virtual_server":  datasourceVcdLbVirtualServer(),  // 2.4
-			"vcd_nsxv_dnat":          datasourceVcdNsxvDnat(),         // 2.5
-			"vcd_nsxv_snat":          datasourceVcdNsxvSnat(),         // 2.5
-			"vcd_nsxv_firewall_rule": datasourceVcdNsxvFirewallRule(), // 2.5
-			"vcd_nsxv_dhcp_relay":    datasourceVcdNsxvDhcpRelay(),    // 2.6
-			"vcd_nsxv_ip_set":        datasourceVcdIpSet(),            // 2.6
-		},
+		DataSourcesMap: dataSourceMap,
 
 		ConfigureFunc: providerConfigure,
 	}

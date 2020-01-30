@@ -3,10 +3,11 @@ package vcd
 import (
 	"errors"
 	"fmt"
+	"log"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"log"
 )
 
 func datasourceVcIndependentDisk() *schema.Resource {
@@ -109,9 +110,9 @@ func dataSourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) 
 		identifier = nameValue
 		disks, err := vdc.GetDisksByName(identifier, true)
 		if govcd.IsNotFound(err) {
-			log.Printf("unable to find disk with name %s: %s. Removing from state", identifier, err)
-			d.SetId("")
-			return nil
+			//log.Printf("unable to find disk with name %s: %s. Removing from state", identifier, err)
+			//d.SetId("")
+			return fmt.Errorf("unable to find disk with name %s: %s. Removing from state", identifier, err)
 		}
 		if err != nil {
 			return fmt.Errorf("unable to find disk with name %s: %s", identifier, err)
