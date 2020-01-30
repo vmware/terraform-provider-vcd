@@ -178,12 +178,12 @@ func datasourceVcdOrgVdc() *schema.Resource {
 				Description: "True if discovery of vCenter VMs is enabled for resource pools backing this VDC. If left unspecified, the actual behaviour depends on enablement at the organization level and at the system level.",
 			},
 			"elasticity": &schema.Schema{
-				Type:        schema.TypeString,
+				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Set to true to indicate if the Flex vDC is to be elastic.",
 			},
 			"include_vm_memory_overhead": &schema.Schema{
-				Type:        schema.TypeString,
+				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Set to true to indicate if the Flex vDC is to include memory overhead into its accounting for admission control.",
 			},
