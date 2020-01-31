@@ -3,12 +3,13 @@ package vcd
 import (
 	"bytes"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"log"
 	"net"
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -204,9 +205,9 @@ func resourceVcdVAppVm() *schema.Resource {
 							Description: "Mac address of network interface",
 						},
 						"adapter_type": {
+							Type:             schema.TypeString,
 							Computed:         true,
 							Optional:         true,
-							Type:             schema.TypeString,
 							DiffSuppressFunc: suppressCase,
 							Description:      "Network card adapter type. (e.g. 'E1000', 'E1000E', 'SRIOVETHERNETCARD', 'VMXNET3', 'PCNet32')",
 						},
