@@ -62,8 +62,6 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string) func(*t
 				},
 			},
 		})
-
-		return
 	}
 }
 
