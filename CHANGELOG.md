@@ -9,10 +9,11 @@ IMPROVEMENTS:
 
 * `vcd_vapp_vm` `disk` has new attribute `size_in_mb` [#433]
 * `resource/vcd_org` and `datasource/vcd_org` include a section `vapp_lease` and a section `vapp_template_lease` to define lease related parameters of depending entities - [GH-432]
-* `datasource/*` - all data sources will return an error when object is not found [GH-xx]
+* `datasource/*` - all data sources return an error when object is not found [GH-446]
 
 BUG FIXES:
-Fix `vcd_vapp_vm` resource read - independent disks where losing `bus_number` and `unit_number` values after refresh. [#433]
+* fix `vcd_vapp_vm` resource read - independent disks where losing `bus_number` and `unit_number` values after refresh. [GH-433]
+* `datasource/vcd_nsxv_dhcp_relay` crashes if no DHCP relay settings are present in Edge Gateway [GH-446]
 
 NOTES:
 * Drop support for vCD 9.0

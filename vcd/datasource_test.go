@@ -14,8 +14,8 @@ import (
 )
 
 // TestAccDataSourceNotFound is using Go sub-tests to ensure that "read" methods for all (current and future) data
-// sources defined in this provider always return error and substring 'govcd.ErrorEntityNotFound' in itwhen an object is
-// not found.
+// sources defined in this provider always return error and substring 'govcd.ErrorEntityNotFound' in it when an object
+// is not found.
 func TestAccDataSourceNotFound(t *testing.T) {
 	// Exit the test early
 	if vcdShortTest {
