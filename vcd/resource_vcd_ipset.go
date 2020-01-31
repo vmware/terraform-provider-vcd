@@ -149,7 +149,7 @@ func genericVcdIpSetRead(d *schema.ResourceData, meta interface{}, origin string
 	}
 
 	if err != nil {
-		return fmt.Errorf("unable to find load balancer application rule with ID %s: %s", d.Id(), err)
+		return fmt.Errorf("unable to find IP set with ID %s: %s", d.Id(), err)
 	}
 
 	err = setIpSetData(d, ipSet, vdc, origin)

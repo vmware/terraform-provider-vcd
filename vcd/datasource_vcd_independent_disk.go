@@ -109,11 +109,6 @@ func dataSourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) 
 	} else {
 		identifier = nameValue
 		disks, err := vdc.GetDisksByName(identifier, true)
-		if govcd.IsNotFound(err) {
-			//log.Printf("unable to find disk with name %s: %s. Removing from state", identifier, err)
-			//d.SetId("")
-			return fmt.Errorf("unable to find disk with name %s: %s. Removing from state", identifier, err)
-		}
 		if err != nil {
 			return fmt.Errorf("unable to find disk with name %s: %s", identifier, err)
 		}
