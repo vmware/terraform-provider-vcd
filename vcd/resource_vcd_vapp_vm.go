@@ -1679,8 +1679,12 @@ func resourceVcdVappVmImport(d *schema.ResourceData, meta interface{}) ([]*schem
 		return nil, fmt.Errorf("[VM import] error retrieving VM %s: %s", vmName, err)
 	}
 	_ = d.Set("name", vmName)
-	_ = d.Set("org", orgName)
-	_ = d.Set("vdc", vdcName)
+	if vcdClient.Org != orgName {
+		_ = d.Set("org", orgName)
+	}
+	if vcdClient.Vdc != vdcName {
+		_ = d.Set("vdc", vdcName)
+	}
 	_ = d.Set("vapp_name", vappName)
 	d.SetId(vm.VM.ID)
 	return []*schema.ResourceData{d}, nil
