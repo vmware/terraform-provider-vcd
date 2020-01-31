@@ -303,7 +303,7 @@ func getDhcpRelayAgentsType(relayAgentsSet *schema.Set, edge *govcd.EdgeGateway)
 // setDhcpRelayServerData sets DHCP relay server related fields into statefile
 func setDhcpRelayServerData(d *schema.ResourceData, edgeRelay *types.EdgeDhcpRelay, edge *govcd.EdgeGateway, vdc *govcd.Vdc) error {
 	relayServer := edgeRelay.RelayServer
-	// If relay server has no comment - just return it empty
+	// If relay server has no config - just return it empty
 	if relayServer == nil {
 		return nil
 	}
