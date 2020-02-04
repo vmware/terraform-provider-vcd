@@ -190,3 +190,31 @@ const testAccCheckVcdCatalogItemUpdate = `
   }
 }
 `
+
+// testDeleteExistingCatalog deletes catalog with name from test or returns a failure
+func testDeleteExistingCatalogItem(t *testing.T, catalogItemName string) func() {
+	return func() {
+		vcdClient := createTemporaryVCDConnection()
+
+		org, _, err := vcdClient.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+		if err != nil {
+			t.Errorf(err.Error())
+		}
+
+		catalog, err := org.GetCatalogByName(testConfig.VCD.Catalog.Name, false)
+		if err != nil {
+			t.Errorf(err.Error())
+		}
+
+		catalogItem, err := catalog.GetCatalogItemByNameOrId(catalogItemName, false)
+		if err != nil {
+			t.Errorf(err.Error())
+		}
+
+		err = catalogItem.Delete()
+		if err != nil {
+			t.Errorf(err.Error())
+		}
+		return
+	}
+}

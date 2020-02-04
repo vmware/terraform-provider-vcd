@@ -88,9 +88,13 @@ func resourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
 
 	catalog, err := adminOrg.GetCatalogByNameOrId(d.Id(), false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
-		d.SetId("")
-		return fmt.Errorf("error retrieving catalog %s : %s", d.Id(), err)
+		errMessage := fmt.Errorf("unable to find catalog with ID %s: %s", d.Id(), err)
+		if govcd.IsNotFound(err) {
+			log.Printf("[INFO] %s", errMessage)
+			d.SetId("")
+			return nil
+		}
+		return errMessage
 	}
 
 	_ = d.Set("description", catalog.Catalog.Description)

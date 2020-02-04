@@ -10,6 +10,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
+func init() {
+	testingTags["catalog"] = "resource_vcd_catalog_test.go"
+}
+
 var TestAccVcdCatalog = "TestAccVcdCatalogBasic"
 var TestAccVcdCatalogDescription = "TestAccVcdCatalogBasicDescription"
 
@@ -106,10 +110,6 @@ func testAccCheckCatalogDestroy(s *terraform.State) error {
 	return nil
 }
 
-func init() {
-	testingTags["catalog"] = "resource_vcd_catalog_test.go"
-}
-
 const testAccCheckVcdCatalogBasic = `
 resource "vcd_catalog" "{{.CatalogName}}" {
   org = "{{.Org}}" 
@@ -121,3 +121,26 @@ resource "vcd_catalog" "{{.CatalogName}}" {
   delete_recursive  = "true"
 }
 `
+
+// testDeleteExistingCatalog deletes catalog with name from test or returns a failure
+func testDeleteExistingCatalog(t *testing.T, catalogName string) func() {
+	return func() {
+		vcdClient := createTemporaryVCDConnection()
+
+		org, _, err := vcdClient.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+		if err != nil {
+			t.Errorf(err.Error())
+		}
+
+		catalog, err := org.GetCatalogByName(catalogName, false)
+		if err != nil {
+			t.Errorf(err.Error())
+		}
+
+		err = catalog.Delete(false, false)
+		if err != nil {
+			t.Errorf(err.Error())
+		}
+		return
+	}
+}

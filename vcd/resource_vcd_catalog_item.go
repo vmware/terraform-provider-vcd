@@ -153,6 +153,10 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 func resourceVcdCatalogItemRead(d *schema.ResourceData, meta interface{}) error {
 	catalogItem, err := findCatalogItem(d, meta.(*VCDClient))
 	if err != nil {
+		if govcd.IsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		log.Printf("[DEBUG] Unable to find media item: %s", err)
 		return err
 	}
