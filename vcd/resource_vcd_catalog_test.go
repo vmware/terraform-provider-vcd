@@ -144,16 +144,19 @@ func testDeleteExistingCatalog(t *testing.T, catalogName string) func() {
 		org, _, err := vcdClient.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
 		if err != nil {
 			t.Errorf(err.Error())
+			t.FailNow()
 		}
 
-		catalog, err := org.GetCatalogByName(catalogName, false)
+		catalog, err := org.GetCatalogByNameOrId(catalogName, false)
 		if err != nil {
 			t.Errorf(err.Error())
+			t.FailNow()
 		}
 
 		err = catalog.Delete(false, false)
 		if err != nil {
 			t.Errorf(err.Error())
+			t.FailNow()
 		}
 		return
 	}

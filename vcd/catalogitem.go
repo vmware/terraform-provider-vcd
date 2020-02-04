@@ -71,7 +71,7 @@ func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.Catal
 
 	catalogItem, err := catalog.GetCatalogItemByNameOrId(identifier, false)
 	if err != nil {
-		errMessage := fmt.Errorf("unable to find catalog with ID %s: %s", d.Id(), err)
+		errMessage := fmt.Errorf("unable to find catalog item with ID %s: %s", d.Id(), err)
 		if govcd.IsNotFound(err) {
 			log.Printf("[INFO] %s", errMessage)
 			d.SetId("")

@@ -153,7 +153,7 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 func resourceVcdCatalogItemRead(d *schema.ResourceData, meta interface{}) error {
 	catalogItem, err := findCatalogItem(d, meta.(*VCDClient))
 	if err != nil {
-		if govcd.IsNotFound(err) {
+		if govcd.ContainsNotFound(err) {
 			d.SetId("")
 			return nil
 		}
