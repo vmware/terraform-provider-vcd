@@ -48,6 +48,20 @@ func TestAccVcdCatalogBasic(t *testing.T) {
 						"vcd_catalog."+TestAccVcdCatalog, "description", TestAccVcdCatalogDescription),
 				),
 			},
+			// Step to ensure that "READ" works properly and proposes to create new item when an object does not exist
+			// PlanOnly must true because otherwise it does not complain on the plan
+			resource.TestStep{
+				Config:             configText,
+				PreConfig:          testDeleteExistingCatalog(t, TestAccVcdCatalog),
+				PlanOnly:           true,
+				ExpectNonEmptyPlan: true,
+				Check:              testAccCheckVcdCatalogExists("vcd_catalog." + TestAccVcdCatalog),
+			},
+			// Recreate the resource after detecting deletion
+			resource.TestStep{
+				Config: configText,
+				Check:  testAccCheckVcdCatalogExists("vcd_catalog." + TestAccVcdCatalog),
+			},
 			resource.TestStep{
 				ResourceName:      "vcd_catalog." + TestAccVcdCatalog + "-import",
 				ImportState:       true,
