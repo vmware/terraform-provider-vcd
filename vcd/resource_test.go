@@ -3,9 +3,7 @@
 package vcd
 
 import (
-	"bytes"
 	"fmt"
-	"html/template"
 	"regexp"
 	"testing"
 
@@ -14,15 +12,17 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 )
 
-var testNotFoundMap map[string]*testNotFoundDataSet
+// testResourceNotFoundMap holds a map of definitions for all resources defined in provider
+var testResourceNotFoundMap map[string]*testResourceNotFound
 
-// testDeleteFunc is a
-type testDeleteFunc func(t *testing.T, itemName string) func()
+// testResourceDeleteFunc is a function which accepts an itemIdentifier and returns a function which is capable of
+// deleting resource by that identifier upon call
+type testResourceDeleteFunc func(t *testing.T, itemIdentifier string) func()
 
-type testNotFoundDataSet struct {
-	// deleteFunc matches signature of type testDeleteFunc and will handle the deletion of item defined in `deleteItem`
-	// field
-	deleteFunc testDeleteFunc
+// testResourceNotFound is a structure which consists of all possible
+type testResourceNotFound struct {
+	// deleteFunc matches signature of type testResourceDeleteFunc and will handle the deletion of specific
+	deleteFunc testResourceDeleteFunc
 
 	// Two below parameters are then ones which are used throughout all tests
 	//
@@ -32,35 +32,14 @@ type testNotFoundDataSet struct {
 	config string
 }
 
-func init() {
-	// configFile := getConfigFileName()
-	// if configFile != "" {
-	// 	testConfig = getConfigStruct(configFile)
-	// }
-
-}
-
-// Validate that all resources have functions defined
-// func init() {
-// 	for definedResourceName := range globalResourceMap {
-// 		functionSet, resourceExists := testNotFoundMap[definedResourceName]
-// 		if !resourceExists {
-// 			panic(fmt.Errorf("no function defined for resource '%s'", definedResourceName))
-// 		}
-//
-// 		if functionSet == nil {
-// 			panic(fmt.Errorf("empty function data set for resource '%s'", definedResourceName))
-// 		}
-// 	}
-// }
-
-func setupList() {
+// defineNotFoundTests must contain definitions for all resources which are present in 'globalResourceMap'
+func defineNotFoundTests() {
 
 	mainItemName := "ReadTest"
 
 	// validate if all resources have functions mapped
-	testNotFoundMap = make(map[string]*testNotFoundDataSet)
-	testNotFoundMap["vcd_catalog"] = &testNotFoundDataSet{
+	testResourceNotFoundMap = make(map[string]*testResourceNotFound)
+	testResourceNotFoundMap["vcd_catalog"] = &testResourceNotFound{
 		deleteFunc: testDeleteExistingCatalog,
 		config:     testAccCheckVcdCatalogBasic,
 		params: StringMap{
@@ -69,7 +48,7 @@ func setupList() {
 		},
 	}
 
-	testNotFoundMap["vcd_catalog_item"] = &testNotFoundDataSet{
+	testResourceNotFoundMap["vcd_catalog_item"] = &testResourceNotFound{
 		deleteFunc: testDeleteExistingCatalogItem,
 		config:     testAccCheckVcdCatalogItemBasic,
 		params: StringMap{
@@ -84,7 +63,7 @@ func setupList() {
 		},
 	}
 
-	testNotFoundMap["vcd_catalog_media"] = &testNotFoundDataSet{
+	testResourceNotFoundMap["vcd_catalog_media"] = &testResourceNotFound{
 		deleteFunc: testDeleteExistingCatalogMedia,
 		config:     testAccCheckVcdCatalogMediaBasic,
 		params: StringMap{
@@ -99,7 +78,7 @@ func setupList() {
 		},
 	}
 
-	testNotFoundMap["vcd_dnat"] = &testNotFoundDataSet{
+	testResourceNotFoundMap["vcd_dnat"] = &testResourceNotFound{
 		deleteFunc: testDeleteExistingDnatRule,
 		config:     testAccCheckVcdDnatWithOrgNetw,
 		params: StringMap{
@@ -112,12 +91,14 @@ func setupList() {
 			"Gateway":           "10.10.102.1",
 			"StartIpAddress":    "10.10.102.51",
 			"EndIpAddress":      "10.10.102.100",
-			"Tags":              "gateway",
 		},
 	}
 
 }
 
+// TestAccVcdResourceNotFound loops over all resources defined in provider `globalResourceMap` and checks that there is
+// a corresponding ResourceNotFound test defined in `testResourceNotFoundMap`. If not - it fails the test. Then for each
+// definition it runs a 'singleResourceNotFoundTest' test.
 func TestAccVcdResourceNotFound(t *testing.T) {
 	// No point for running these tests when we don't have connection
 	if vcdShortTest {
@@ -125,53 +106,55 @@ func TestAccVcdResourceNotFound(t *testing.T) {
 		return
 	}
 
-	setupList()
+	defineNotFoundTests()
 
-	// for providerResourceName := range globalResourceMRap { // With validation
-	for providerResourceName := range testNotFoundMap {
-		functionSet, resourceExists := testNotFoundMap[providerResourceName]
+	// for providerResourceName := range globalResourceMap { // PRODUCTION. validate against all resources defined in provider
+	for providerResourceName := range testResourceNotFoundMap { // DEVELOPMENT ONLY - run tests only for resources which have test structure defined
+		functionSet, resourceExists := testResourceNotFoundMap[providerResourceName]
 		if !resourceExists {
 			t.Errorf("resource '%s' does not have tests", providerResourceName)
 		}
 
-		// Run subtests
-		t.Run(providerResourceName, oneResourceTestRunner(t, providerResourceName, functionSet))
+		// Run a sub-test for a specific resource
+		t.Run(providerResourceName, singleResourceNotFoundTest(t, providerResourceName, functionSet))
 
 	}
 
 }
 
-// oneResourceTestRunner is meant to only check if plan\apply deleted outside of Terraform does not fail, but rather
-// proposes to recreate the item.
-func oneResourceTestRunner(t *testing.T, subTestName string, notFoundData *testNotFoundDataSet) func(t *testing.T) {
+// extractResourceAddress extracts resource address in format _resource_type_._resource_name_ (e.g. vcd_catalog.my-catalog)
+// which is useful in acceptance test addressing
+func extractResourceAddress(resourceType, configText string) string {
+	var rgx = regexp.MustCompile(`resource\s+"` + resourceType + `"\s+"(\w*)"`)
+	rs := rgx.FindStringSubmatch(configText)
+	return resourceType + "." + rs[1]
+}
+
+// singleResourceNotFoundTest runs a NotFound test by specified data. It has the following workflow:
+// 1. Creates a resource as defined in  testResourceNotFound.config parameter filled by testResourceNotFound.params
+// parameters. Captures its ID as well.
+// 2. Uses a supplied 'testResourceNotFound.deleteFunc' to delete the resource without using Terraform by the captured
+// ID in step 1.
+// 3. Runs apply (in acceptance test step 1) and expects a non empty plan which means that a resource must be recreated
+// because it was not found
+func singleResourceNotFoundTest(t *testing.T, subTestName string, notFoundData *testResourceNotFound) func(t *testing.T) {
 	return func(t *testing.T) {
-		// No point for running test when we don't have connection
-		if vcdShortTest {
-			t.Skip(acceptanceTestsSkipped)
-			return
-		}
+		params := notFoundData.params
+		// Setting unique name to have a binary test file created for debugging if needed
+		params["FuncName"] = "NotFound-" + subTestName
+		// Adding skip directive as running these tests in binary test mode add no value
+		binaryTestSkipText := "# skip-binary-test: resource not found test only works in acceptance tests\n"
+		configText := templateFill(binaryTestSkipText+notFoundData.config, params)
 
-		var configTextBytes bytes.Buffer
-		configTemplate := template.Must(template.New("letter").Parse(notFoundData.config))
-		err := configTemplate.Execute(&configTextBytes, notFoundData.params)
-		if err != nil {
-			t.Errorf("could not generate template for '%s' resource", subTestName)
-		}
-
-		configText := configTextBytes.String()
-
-		// Extract _resource_address_ from definition like resource 'vcd_xxx" "_resource_address_" {'
-		resourceAddress := func(vcdName string) string {
-			var rgx = regexp.MustCompile(`resource\s+"` + vcdName + `"\s+"(\w*)"`)
-			rs := rgx.FindStringSubmatch(configText)
-			return vcdName + "." + rs[1]
-		}(subTestName)
-
+		// Extract _resource_address_ from .tf definition like resource 'vcd_xxx" "_resource_address_" {'
+		resourceAddress := extractResourceAddress(subTestName, configText)
 		debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
+		// Initialize a cached field to capture provisioned "ID" field of resource which is being tested
 		idStore := testCachedFieldValue{}
 
-		wrappedDelete := func() {
+		// Make a closure of 'deleteFunc' so that idStore.fieldValue can be evaluate at step1 (when it is already filled)
+		deleteResourceWithId := func() {
 			notFoundData.deleteFunc(t, idStore.fieldValue)()
 			return
 		}
@@ -180,18 +163,23 @@ func oneResourceTestRunner(t *testing.T, subTestName string, notFoundData *testN
 			PreCheck:  func() { testAccPreCheck(t) },
 			Providers: testAccProviders,
 			Steps: []resource.TestStep{
+				// Step 0 - create a resource to be deleted and capture its ID
 				resource.TestStep{
 					Config: configText,
-					// Ensure the ID was set to make sure object was created
+					// in Step 1
 					Check: resource.ComposeAggregateTestCheckFunc(
+						// Ensure the ID is set
 						resource.TestCheckResourceAttrSet(resourceAddress, "id"),
+						// Store the ID for usage in step 1
 						idStore.cacheTestResourceFieldValue(resourceAddress, "id"),
 					),
 				},
+				// Step 1 - use 'PreConfig' function to 'delete' the resource created in Step 0 and expect and non empty
+				// plan
 				resource.TestStep{
 					Config:    configText,
 					PlanOnly:  true,
-					PreConfig: wrappedDelete,
+					PreConfig: deleteResourceWithId,
 					// It should offer to recreate during refresh when an object does not exist on apply
 					ExpectNonEmptyPlan: true,
 				},
@@ -199,6 +187,14 @@ func oneResourceTestRunner(t *testing.T, subTestName string, notFoundData *testN
 		})
 	}
 }
+
+///////////
+/////////// NOT FOR REVIEW BEYOND THIS LINE. THIS WILL COME IN HERE WITH ANOTHER PR
+///////////
+///////////
+///////////
+///////////
+///////////
 
 type testCachedFieldValue struct {
 	fieldValue string
