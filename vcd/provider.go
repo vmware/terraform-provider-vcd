@@ -3,11 +3,53 @@ package vcd
 import (
 	"fmt"
 	"os"
+	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
+
+// VcdResources is a public function which allows to access all resources defined in this provider
+// When 'nameRegexp' is not empty - it will return only those matching the regexp.
+// When 'includeDeprecated' is false - it will skip out the resources which have a DeprecationMessage set.
+func VcdResources(nameRegexp string, includeDeprecated bool) (map[string]*schema.Resource, error) {
+	var (
+		err error
+		re  *regexp.Regexp
+	)
+	filteredResources := make(map[string]*schema.Resource)
+
+	// validate regex if it was provided
+	if nameRegexp != "" {
+		re, err = regexp.Compile(nameRegexp)
+		if err != nil {
+			return nil, fmt.Errorf("unable to compile regexp: %s", err)
+		}
+	}
+
+	// copy the map with filtering out unwanted object
+	for resourceName, schemaResource := range globalResourceMap {
+
+		// Skip deprecated resources if it was requested so
+		if !includeDeprecated && schemaResource.DeprecationMessage != "" {
+			continue
+		}
+		// If regex was defined - try to filter based on it
+		if re != nil {
+			// if it does not match regex - skip it
+			doesNotmatchRegex := !re.MatchString(resourceName)
+			if doesNotmatchRegex {
+				continue
+			}
+
+		}
+
+		filteredResources[resourceName] = schemaResource
+	}
+
+	return filteredResources, nil
+}
 
 var globalResourceMap = map[string]*schema.Resource{
 	"vcd_network":            resourceVcdNetwork(),          // 1.0 DEPRECATED: replaced by vcd_network_routed
