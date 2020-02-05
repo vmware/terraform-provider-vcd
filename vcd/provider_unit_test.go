@@ -110,23 +110,6 @@ func TestGetMajorVersion(t *testing.T) {
 
 func TestVcdResources(t *testing.T) {
 
-	// deprecatedResource := func() *schema.Resource {
-	// 	return &schema.Resource{
-	// 		DeprecationMessage: "This resource is deprecated",
-	// 	}
-	// }
-	//
-	// testResource := func() *schema.Resource {
-	// 	return &schema.Resource{}
-	// }
-	//
-	// testResourceMap := map[string]*schema.Resource{
-	// 	"vcd_deprecated_resource": deprecatedResource(), // Deprecated resource example
-	// 	"vcd_used_resource":       testResource(),
-	// 	"vcd_used_resource2":      testResource(),
-	// 	"vcd_used_resource3":      testResource(),
-	// }
-
 	type args struct {
 		nameRegexp        string
 		includeDeprecated bool
