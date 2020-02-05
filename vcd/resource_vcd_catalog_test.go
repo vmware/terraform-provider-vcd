@@ -158,6 +158,5 @@ func testDeleteExistingCatalog(t *testing.T, catalogName string) func() {
 			t.Errorf(err.Error())
 			t.FailNow()
 		}
-		return
 	}
 }

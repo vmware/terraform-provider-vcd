@@ -156,7 +156,6 @@ func singleResourceNotFoundTest(t *testing.T, subTestName string, notFoundData *
 		// Make a closure of 'deleteFunc' so that idStore.fieldValue can be evaluate at step1 (when it is already filled)
 		deleteResourceWithId := func() {
 			notFoundData.deleteFunc(t, idStore.fieldValue)()
-			return
 		}
 
 		resource.Test(t, resource.TestCase{
@@ -216,31 +215,6 @@ func (c *testCachedFieldValue) cacheTestResourceFieldValue(resource, field strin
 		}
 		// Store the value in cache
 		c.fieldValue = value
-		return nil
-	}
-}
-
-// testCheckCachedResourceFieldValue has the default signature of Terraform acceptance test
-// functions, but is able to verify if the value is equal to previously cached value using
-// 'cacheTestResourceFieldValue'. This allows to check if a particular field value changed across
-// multiple resource.TestSteps.
-func (c *testCachedFieldValue) testCheckCachedResourceFieldValue(resource, field string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[resource]
-		if !ok {
-			return fmt.Errorf("resource not found: %s", resource)
-		}
-
-		value, exists := rs.Primary.Attributes[field]
-		if !exists {
-			return fmt.Errorf("field %s in resource %s does not exist", field, resource)
-		}
-
-		if value != c.fieldValue {
-			return fmt.Errorf("got '%s - %s' field value %s, expected: %s",
-				resource, field, value, c.fieldValue)
-		}
-
 		return nil
 	}
 }

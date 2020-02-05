@@ -262,7 +262,5 @@ func testDeleteExistingCatalogMedia(t *testing.T, mediaItemName string) func() {
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-
-		return
 	}
 }

@@ -215,6 +215,5 @@ func testDeleteExistingCatalogItem(t *testing.T, catalogItemNameOrId string) fun
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		return
 	}
 }

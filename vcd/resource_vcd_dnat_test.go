@@ -434,6 +434,5 @@ func testDeleteExistingDnatRule(t *testing.T, dnatRuleId string) func() {
 		if err != nil {
 			t.Error(err.Error())
 		}
-		return
 	}
 }
