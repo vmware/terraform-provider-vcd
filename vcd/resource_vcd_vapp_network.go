@@ -2,24 +2,23 @@ package vcd
 
 import (
 	"fmt"
-	"log"
-
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"log"
 )
 
 func resourceVcdVappNetwork() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdVappNetworkCreate,
+		Create: resourceVappNetworkCreate,
 		Read:   resourceVappNetworkRead,
+		Update: resourceVappNetworkUpdate,
 		Delete: resourceVappNetworkDelete,
 
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 			},
 			"vapp_name": &schema.Schema{
 				Type:     schema.TypeString,
@@ -39,6 +38,11 @@ func resourceVcdVappNetwork() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
+			"description": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Optional description for the network",
+			},
 			"netmask": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
@@ -54,33 +58,50 @@ func resourceVcdVappNetwork() *schema.Resource {
 			"dns1": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
 				Default:  "8.8.8.8",
 			},
 
 			"dns2": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
 				Default:  "8.8.4.4",
 			},
 
 			"dns_suffix": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
 			},
 
 			"guest_vlan_allowed": &schema.Schema{
 				Type:     schema.TypeBool,
 				Optional: true,
-				ForceNew: true,
 			},
-
+			"org_network": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "org network name to which vapp network is connected",
+			},
+			"firewall_enabled": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "firewall service enabled or disabled. Default - true",
+			},
+			"nat_enabled": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "NAT service enabled or disabled. Default - true",
+			},
+			"retain_ip_mac_enabled": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "NAT service enabled or disabled. Default - true",
+			},
 			"dhcp_pool": &schema.Schema{
 				Type:     schema.TypeSet,
 				Optional: true,
-				ForceNew: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"start_address": &schema.Schema{
@@ -117,7 +138,6 @@ func resourceVcdVappNetwork() *schema.Resource {
 			"static_ip_pool": &schema.Schema{
 				Type:     schema.TypeSet,
 				Optional: true,
-				ForceNew: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"start_address": &schema.Schema{
@@ -137,7 +157,7 @@ func resourceVcdVappNetwork() *schema.Resource {
 	}
 }
 
-func resourceVcdVappNetworkCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceVappNetworkCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentVapp(d)
 	defer vcdClient.unLockParentVapp(d)
@@ -157,14 +177,22 @@ func resourceVcdVappNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 
+	natEnabled := d.Get("nat_enabled").(bool)
+	fwEnabled := d.Get("firewall_enabled").(bool)
+	retainIpMacEnabled := d.Get("retain_ip_mac_enabled").(bool)
+
 	vappNetworkSettings := &govcd.VappNetworkSettings{
-		Name:           d.Get("name").(string),
-		Gateway:        d.Get("gateway").(string),
-		NetMask:        d.Get("netmask").(string),
-		DNS1:           d.Get("dns1").(string),
-		DNS2:           d.Get("dns2").(string),
-		DNSSuffix:      d.Get("dns_suffix").(string),
-		StaticIPRanges: staticIpRanges.IPRange,
+		Name:               d.Get("name").(string),
+		Gateway:            d.Get("gateway").(string),
+		NetMask:            d.Get("netmask").(string),
+		DNS1:               d.Get("dns1").(string),
+		DNS2:               d.Get("dns2").(string),
+		DNSSuffix:          d.Get("dns_suffix").(string),
+		StaticIPRanges:     staticIpRanges.IPRange,
+		NatEnabled:         &natEnabled,
+		FirewallEnabled:    &fwEnabled,
+		Description:        d.Get("description").(string),
+		RetainIpMacEnabled: &retainIpMacEnabled,
 	}
 
 	if _, ok := d.GetOk("guest_vlan_allowed"); ok {
@@ -183,8 +211,16 @@ func resourceVcdVappNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 					EndAddress: data["end_address"].(string)}}
 		}
 	}
-
-	task, err := vapp.AddIsolatedNetwork(vappNetworkSettings)
+	var task govcd.Task
+	if networkId, ok := d.GetOk("org_network"); ok {
+		orgNetwork, err := vdc.GetOrgVdcNetworkByNameOrId(networkId.(string), true)
+		if err != nil {
+			return err
+		}
+		task, err = vapp.AddNatRoutedNetwork(vappNetworkSettings, orgNetwork.OrgVDCNetwork)
+	} else {
+		task, err = vapp.AddIsolatedNetwork(vappNetworkSettings)
+	}
 
 	if err != nil {
 		return fmt.Errorf("error creating vApp network. %#v", err)
@@ -195,7 +231,28 @@ func resourceVcdVappNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("error waiting for task to complete: %+v", err)
 	}
 
-	d.SetId(d.Get("name").(string))
+	// move to govcd? in read function too?
+	vAppNetworkConfig, err := vapp.GetNetworkConfig()
+	if err != nil {
+		return fmt.Errorf("error getting vApp networks: %#v", err)
+	}
+
+	vAppNetwork := types.VAppNetworkConfiguration{}
+	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
+		if networkConfig.NetworkName == d.Get("name").(string) {
+			vAppNetwork = networkConfig
+		}
+	}
+
+	// TODO
+	//d.SetId(d.Get("name").(string))
+	// we need not changeable value
+	// Parsing UUID from 'https://bos1-vcloud-static-170-210.eng.vmware.com/api/admin/network/6ced8e2f-29dd-4201-9801-a02cb8bed821/action/reset'
+	networkId, err := govcd.GetUuidFromHref(vAppNetwork.Link.HREF)
+	if err != nil {
+		return fmt.Errorf("unable to get network ID from HREF: %s", err)
+	}
+	d.SetId(networkId)
 
 	return resourceVappNetworkRead(d, meta)
 }
@@ -218,9 +275,16 @@ func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error getting vApp networks: %#v", err)
 	}
 
+	// TODO make read by ID and then by name
+
 	vAppNetwork := types.VAppNetworkConfiguration{}
 	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
-		if networkConfig.NetworkName == d.Get("name").(string) {
+		networkId, err := govcd.GetUuidFromHref(networkConfig.Link.HREF)
+		if err != nil {
+			return fmt.Errorf("unable to get network ID from HREF: %s", err)
+		}
+		//name check to support old Id's which are names
+		if d.Id() == networkId || networkConfig.NetworkName == d.Get("name").(string) {
 			vAppNetwork = networkConfig
 		}
 	}
@@ -232,6 +296,7 @@ func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.Set("name", vAppNetwork.NetworkName)
+	d.Set("description", vAppNetwork.Description)
 	d.Set("href", vAppNetwork.HREF)
 	if c := vAppNetwork.Configuration; c != nil {
 		d.Set("fence_mode", c.FenceMode)
@@ -256,6 +321,85 @@ func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
+func resourceVappNetworkUpdate(d *schema.ResourceData, meta interface{}) error {
+	vcdClient := meta.(*VCDClient)
+	vcdClient.lockParentVapp(d)
+	defer vcdClient.unLockParentVapp(d)
+
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	if err != nil {
+		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	}
+
+	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
+	if err != nil {
+		return fmt.Errorf("error finding vApp. %#v", err)
+	}
+
+	staticIpRanges, err := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
+	if err != nil {
+		return err
+	}
+
+	natEnabled := d.Get("nat_enabled").(bool)
+	fwEnabled := d.Get("firewall_enabled").(bool)
+	retainIpMacEnabled := d.Get("retain_ip_mac_enabled").(bool)
+
+	vappNetworkSettings := &govcd.VappNetworkSettings{
+		Id:                 d.Id(),
+		Name:               d.Get("name").(string),
+		Description:        d.Get("description").(string),
+		Gateway:            d.Get("gateway").(string),
+		NetMask:            d.Get("netmask").(string),
+		DNS1:               d.Get("dns1").(string),
+		DNS2:               d.Get("dns2").(string),
+		DNSSuffix:          d.Get("dns_suffix").(string),
+		StaticIPRanges:     staticIpRanges.IPRange,
+		NatEnabled:         &natEnabled,
+		FirewallEnabled:    &fwEnabled,
+		RetainIpMacEnabled: &retainIpMacEnabled,
+	}
+
+	if _, ok := d.GetOk("guest_vlan_allowed"); ok {
+		convertedValue := d.Get("guest_vlan_allowed").(bool)
+		vappNetworkSettings.GuestVLANAllowed = &convertedValue
+	}
+
+	if dhcp, ok := d.GetOk("dhcp_pool"); ok && len(dhcp.(*schema.Set).List()) > 0 {
+		for _, item := range dhcp.(*schema.Set).List() {
+			data := item.(map[string]interface{})
+			vappNetworkSettings.DhcpSettings = &govcd.DhcpSettings{
+				IsEnabled:        data["enabled"].(bool),
+				DefaultLeaseTime: data["default_lease_time"].(int),
+				MaxLeaseTime:     data["max_lease_time"].(int),
+				IPRange: &types.IPRange{StartAddress: data["start_address"].(string),
+					EndAddress: data["end_address"].(string)}}
+		}
+	}
+
+	var orgVdcNetwork *types.OrgVDCNetwork
+	if networkId, ok := d.GetOk("org_network"); ok {
+		orgNetwork, err := vdc.GetOrgVdcNetworkByNameOrId(networkId.(string), true)
+		if err != nil {
+			return err
+		}
+		orgVdcNetwork = orgNetwork.OrgVDCNetwork
+	}
+
+	//TODO what about isolated
+	task, err := vapp.UpdateNetworkConfig(vappNetworkSettings, orgVdcNetwork)
+	if err != nil {
+		return fmt.Errorf("error creating vApp network. %#v", err)
+	}
+
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return fmt.Errorf("error waiting for task to complete: %+v", err)
+	}
+
+	return resourceVappNetworkRead(d, meta)
+}
+
 func resourceVappNetworkDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentVapp(d)
@@ -271,6 +415,7 @@ func resourceVappNetworkDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error finding vApp: %#v", err)
 	}
 
+	//TODO change remove by Id
 	task, err := vapp.RemoveIsolatedNetwork(d.Get("name").(string))
 	if err != nil {
 		return fmt.Errorf("error removing vApp network: %#v", err)

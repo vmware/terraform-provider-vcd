@@ -99,11 +99,12 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"vcd_network":            resourceVcdNetwork(),          // 1.0 DEPRECATED: replaced by vcd_network_routed
-			"vcd_network_routed":     resourceVcdNetworkRouted(),    // 2.0
-			"vcd_network_direct":     resourceVcdNetworkDirect(),    // 2.0
-			"vcd_network_isolated":   resourceVcdNetworkIsolated(),  // 2.0
-			"vcd_vapp_network":       resourceVcdVappNetwork(),      // 2.1
+			"vcd_network":          resourceVcdNetwork(),         // 1.0 DEPRECATED: replaced by vcd_network_routed
+			"vcd_network_routed":   resourceVcdNetworkRouted(),   // 2.0
+			"vcd_network_direct":   resourceVcdNetworkDirect(),   // 2.0
+			"vcd_network_isolated": resourceVcdNetworkIsolated(), // 2.0
+			"vcd_vapp_network":     resourceVcdVappNetwork(),     // 2.1
+			//"vcd_vapp_org_network":       resourceVcdVappNetwork(),      // 2.1
 			"vcd_vapp":               resourceVcdVApp(),             // 1.0
 			"vcd_firewall_rules":     resourceVcdFirewallRules(),    // 1.0
 			"vcd_dnat":               resourceVcdDNAT(),             // 1.0
