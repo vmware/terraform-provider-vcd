@@ -244,7 +244,7 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("functionality requires system administrator privileges")
 	}
 
-	// check that only for Flex elasticity and include_vm_memory_overhead are used
+	// check that elasticity and include_vm_memory_overhead are used only for Flex
 	_, elasticityConfigured := d.GetOkExists("elasticity")
 	_, vmMemoryOverheadConfigured := d.GetOkExists("include_vm_memory_overhead")
 	if d.Get("allocation_model").(string) != "Flex" && (elasticityConfigured || vmMemoryOverheadConfigured) {
