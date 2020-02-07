@@ -159,18 +159,18 @@ func TestVcdResources(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := VcdResources(tt.args.nameRegexp, tt.args.includeDeprecated)
+			got, err := Resources(tt.args.nameRegexp, tt.args.includeDeprecated)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("VcdResources() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Resources() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
 			if len(got) != tt.wantLen {
-				t.Errorf("VcdResources() returned = %d elements, want %d", len(got), tt.wantLen)
+				t.Errorf("Resources() returned = %d elements, want %d", len(got), tt.wantLen)
 			}
 
 			if !tt.lenOnly && !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("VcdResources() got = %v, want %v", got, tt.want)
+				t.Errorf("Resources() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -221,18 +221,18 @@ func TestVcdDataSources(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := VcdDataSources(tt.args.nameRegexp, tt.args.includeDeprecated)
+			got, err := DataSources(tt.args.nameRegexp, tt.args.includeDeprecated)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("VcdResources() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("Resources() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
 			if len(got) != tt.wantLen {
-				t.Errorf("VcdResources() returned = %d elements, want %d", len(got), tt.wantLen)
+				t.Errorf("Resources() returned = %d elements, want %d", len(got), tt.wantLen)
 			}
 
 			if !tt.lenOnly && !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("VcdResources() got = %v, want %v", got, tt.want)
+				t.Errorf("Resources() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
