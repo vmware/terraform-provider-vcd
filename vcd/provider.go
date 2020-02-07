@@ -3,13 +3,28 @@ package vcd
 import (
 	"fmt"
 	"os"
+	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
-var dataSourceMap = map[string]*schema.Resource{
+// VcdDataSources is a public functions which allows to filter and access all defined data sources
+// When 'nameRegexp' is not empty - it will return only those matching the regexp
+// When 'includeDeprecated' is false - it will skip out the resources which have a DeprecationMessage set
+func VcdDataSources(nameRegexp string, includeDeprecated bool) (map[string]*schema.Resource, error) {
+	return vcdSchemaFilter(globalDataSourceMap, nameRegexp, includeDeprecated)
+}
+
+// VcdResources is a public functions which allows to filter and access all defined resources
+// When 'nameRegexp' is not empty - it will return only those matching the regexp
+// When 'includeDeprecated' is false - it will skip out the resources which have a DeprecationMessage set
+func VcdResources(nameRegexp string, includeDeprecated bool) (map[string]*schema.Resource, error) {
+	return vcdSchemaFilter(globalResourceMap, nameRegexp, includeDeprecated)
+}
+
+var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_org":                datasourceVcdOrg(),              // 2.5
 	"vcd_org_vdc":            datasourceVcdOrgVdc(),           // 2.5
 	"vcd_catalog":            datasourceVcdCatalog(),          // 2.5
@@ -33,6 +48,41 @@ var dataSourceMap = map[string]*schema.Resource{
 	"vcd_nsxv_firewall_rule": datasourceVcdNsxvFirewallRule(), // 2.5
 	"vcd_nsxv_dhcp_relay":    datasourceVcdNsxvDhcpRelay(),    // 2.6
 	"vcd_nsxv_ip_set":        datasourceVcdIpSet(),            // 2.6
+}
+
+var globalResourceMap = map[string]*schema.Resource{
+	"vcd_network":            resourceVcdNetwork(),          // 1.0 DEPRECATED: replaced by vcd_network_routed
+	"vcd_network_routed":     resourceVcdNetworkRouted(),    // 2.0
+	"vcd_network_direct":     resourceVcdNetworkDirect(),    // 2.0
+	"vcd_network_isolated":   resourceVcdNetworkIsolated(),  // 2.0
+	"vcd_vapp_network":       resourceVcdVappNetwork(),      // 2.1
+	"vcd_vapp":               resourceVcdVApp(),             // 1.0
+	"vcd_firewall_rules":     resourceVcdFirewallRules(),    // 1.0
+	"vcd_dnat":               resourceVcdDNAT(),             // 1.0
+	"vcd_snat":               resourceVcdSNAT(),             // 1.0
+	"vcd_edgegateway":        resourceVcdEdgeGateway(),      // 2.4
+	"vcd_edgegateway_vpn":    resourceVcdEdgeGatewayVpn(),   // 1.0
+	"vcd_vapp_vm":            resourceVcdVAppVm(),           // 1.0
+	"vcd_org":                resourceOrg(),                 // 2.0
+	"vcd_org_vdc":            resourceVcdOrgVdc(),           // 2.2
+	"vcd_org_user":           resourceVcdOrgUser(),          // 2.4
+	"vcd_catalog":            resourceVcdCatalog(),          // 2.0
+	"vcd_catalog_item":       resourceVcdCatalogItem(),      // 2.0
+	"vcd_catalog_media":      resourceVcdCatalogMedia(),     // 2.0
+	"vcd_inserted_media":     resourceVcdInsertedMedia(),    // 2.1
+	"vcd_independent_disk":   resourceVcdIndependentDisk(),  // 2.1
+	"vcd_external_network":   resourceVcdExternalNetwork(),  // 2.2
+	"vcd_lb_service_monitor": resourceVcdLbServiceMonitor(), // 2.4
+	"vcd_lb_server_pool":     resourceVcdLBServerPool(),     // 2.4
+	"vcd_lb_app_profile":     resourceVcdLBAppProfile(),     // 2.4
+	"vcd_lb_app_rule":        resourceVcdLBAppRule(),        // 2.4
+	"vcd_lb_virtual_server":  resourceVcdLBVirtualServer(),  // 2.4
+	"vcd_nsxv_dnat":          resourceVcdNsxvDnat(),         // 2.5
+	"vcd_nsxv_snat":          resourceVcdNsxvSnat(),         // 2.5
+	"vcd_nsxv_firewall_rule": resourceVcdNsxvFirewallRule(), // 2.5
+	"vcd_nsxv_dhcp_relay":    resourceVcdNsxvDhcpRelay(),    // 2.6
+	"vcd_nsxv_ip_set":        resourceVcdIpSet(),            // 2.6
+	"vcd_vm_internal_disk":   resourceVmInternalDisk(),      // 2.7
 }
 
 // Provider returns a terraform.ResourceProvider.
@@ -124,42 +174,8 @@ func Provider() terraform.ResourceProvider {
 			},
 		},
 
-		ResourcesMap: map[string]*schema.Resource{
-			"vcd_network":            resourceVcdNetwork(),          // 1.0 DEPRECATED: replaced by vcd_network_routed
-			"vcd_network_routed":     resourceVcdNetworkRouted(),    // 2.0
-			"vcd_network_direct":     resourceVcdNetworkDirect(),    // 2.0
-			"vcd_network_isolated":   resourceVcdNetworkIsolated(),  // 2.0
-			"vcd_vapp_network":       resourceVcdVappNetwork(),      // 2.1
-			"vcd_vapp":               resourceVcdVApp(),             // 1.0
-			"vcd_firewall_rules":     resourceVcdFirewallRules(),    // 1.0
-			"vcd_dnat":               resourceVcdDNAT(),             // 1.0
-			"vcd_snat":               resourceVcdSNAT(),             // 1.0
-			"vcd_edgegateway":        resourceVcdEdgeGateway(),      // 2.4
-			"vcd_edgegateway_vpn":    resourceVcdEdgeGatewayVpn(),   // 1.0
-			"vcd_vapp_vm":            resourceVcdVAppVm(),           // 1.0
-			"vcd_org":                resourceOrg(),                 // 2.0
-			"vcd_org_vdc":            resourceVcdOrgVdc(),           // 2.2
-			"vcd_org_user":           resourceVcdOrgUser(),          // 2.4
-			"vcd_catalog":            resourceVcdCatalog(),          // 2.0
-			"vcd_catalog_item":       resourceVcdCatalogItem(),      // 2.0
-			"vcd_catalog_media":      resourceVcdCatalogMedia(),     // 2.0
-			"vcd_inserted_media":     resourceVcdInsertedMedia(),    // 2.1
-			"vcd_independent_disk":   resourceVcdIndependentDisk(),  // 2.1
-			"vcd_external_network":   resourceVcdExternalNetwork(),  // 2.2
-			"vcd_lb_service_monitor": resourceVcdLbServiceMonitor(), // 2.4
-			"vcd_lb_server_pool":     resourceVcdLBServerPool(),     // 2.4
-			"vcd_lb_app_profile":     resourceVcdLBAppProfile(),     // 2.4
-			"vcd_lb_app_rule":        resourceVcdLBAppRule(),        // 2.4
-			"vcd_lb_virtual_server":  resourceVcdLBVirtualServer(),  // 2.4
-			"vcd_nsxv_dnat":          resourceVcdNsxvDnat(),         // 2.5
-			"vcd_nsxv_snat":          resourceVcdNsxvSnat(),         // 2.5
-			"vcd_nsxv_firewall_rule": resourceVcdNsxvFirewallRule(), // 2.5
-			"vcd_nsxv_dhcp_relay":    resourceVcdNsxvDhcpRelay(),    // 2.6
-			"vcd_nsxv_ip_set":        resourceVcdIpSet(),            // 2.6
-			"vcd_vm_internal_disk":   resourceVmInternalDisk(),      // 2.7
-		},
-
-		DataSourcesMap: dataSourceMap,
+		ResourcesMap:   globalResourceMap,
+		DataSourcesMap: globalDataSourceMap,
 
 		ConfigureFunc: providerConfigure,
 	}
@@ -210,4 +226,46 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	}
 
 	return config.Client()
+}
+
+// vcdSchemaFilter is a function which allows to filters and export type 'map[string]*schema.Resource' which may hold
+// Terraform's native resource or data source list
+// When 'nameRegexp' is not empty - it will return only those matching the regexp
+// When 'includeDeprecated' is false - it will skip out the resources which have a DeprecationMessage set
+func vcdSchemaFilter(schemaMap map[string]*schema.Resource, nameRegexp string, includeDeprecated bool) (map[string]*schema.Resource, error) {
+	var (
+		err error
+		re  *regexp.Regexp
+	)
+	filteredResources := make(map[string]*schema.Resource)
+
+	// validate regex if it was provided
+	if nameRegexp != "" {
+		re, err = regexp.Compile(nameRegexp)
+		if err != nil {
+			return nil, fmt.Errorf("unable to compile regexp: %s", err)
+		}
+	}
+
+	// copy the map with filtering out unwanted object
+	for resourceName, schemaResource := range schemaMap {
+
+		// Skip deprecated resources if it was requested so
+		if !includeDeprecated && schemaResource.DeprecationMessage != "" {
+			continue
+		}
+		// If regex was defined - try to filter based on it
+		if re != nil {
+			// if it does not match regex - skip it
+			doesNotmatchRegex := !re.MatchString(resourceName)
+			if doesNotmatchRegex {
+				continue
+			}
+
+		}
+
+		filteredResources[resourceName] = schemaResource
+	}
+
+	return filteredResources, nil
 }

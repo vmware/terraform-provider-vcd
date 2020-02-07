@@ -22,9 +22,8 @@ func TestAccDataSourceNotFound(t *testing.T) {
 	}
 
 	// Run a sub-test for each of data source defined in provider
-	allDataSources := getAllDatasourceNames()
-	for _, dataSourceName := range allDataSources {
-		t.Run(dataSourceName, testSpecificDataSourceNotFound(t, dataSourceName))
+	for _, dataSource := range Provider().DataSources() {
+		t.Run(dataSource.Name, testSpecificDataSourceNotFound(t, dataSource.Name))
 	}
 }
 
@@ -66,20 +65,10 @@ data "{{.DataSourceName}}" "not-existing" {
 }
 `
 
-// getAllDatasourceNames returns all data source names defined in provider
-func getAllDatasourceNames() []string {
-	var allDataSources []string
-	for _, ds := range Provider().DataSources() {
-		allDataSources = append(allDataSources, ds.Name)
-	}
-
-	return allDataSources
-}
-
 // getMandatoryDataSourceSchemaFields checks schema definitions for data sources and return slice of mandatory fields
 func getMandatoryDataSourceSchemaFields(dataSourceName string) []string {
 	var mandatoryFields []string
-	schema := dataSourceMap[dataSourceName]
+	schema := globalDataSourceMap[dataSourceName]
 	for fieldName, fieldSchema := range schema.Schema {
 		if fieldSchema.Required {
 			mandatoryFields = append(mandatoryFields, fieldName)
