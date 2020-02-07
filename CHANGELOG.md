@@ -2,21 +2,28 @@
 
 FEATURES:
 
-* **New Resource:** `vcd_vm_internal_disk` VM internal disk configuration
-* `vcd_vapp_vm` Internal disks in VM template allows to be edited by `override_template_disk` field 
+* **New Resource:** `vcd_vm_internal_disk` VM internal disk configuration [GH-412]
+* `vcd_vapp_vm` Internal disks in VM template allows to be edited by `override_template_disk` field
+  [GH-412]
 
 IMPROVEMENTS:
 
-* `vcd_vapp_vm` `disk` has new attribute `size_in_mb` [#433]
-* `resource/vcd_org` and `datasource/vcd_org` include a section `vapp_lease` and a section `vapp_template_lease` to define lease related parameters of depending entities - [GH-432]
+* `resource/vcd_org` and `datasource/vcd_org` include a section `vapp_lease` and a section
+  `vapp_template_lease` to define lease related parameters of depending entities - [GH-432]
 * `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` include a field `adapter_type` in `network`
   defintion to specify NIC type - [GH-441]
+* `vcd_vapp_vm` `disk` has new attribute `size_in_mb` [GH-433]
 
-BUG FIXES:
-Fix `vcd_vapp_vm` resource read - independent disks where losing `bus_number` and `unit_number` values after refresh. [#433]
+BUG FIXES: 
+* Fix `vcd_vapp_vm` resource read - independent disks where losing `bus_number` and `unit_number`
+  values after refresh. [GH-433]
+* `resource/vcd_vapp_vm` `network` block changes caused MAC address changes in existing NICs
+  [GH-436,GH-407]
+
 
 NOTES:
 * Drop support for vCD 9.0
+* Bump terraform-plugin-sdk to v1.5.0 [GH-442]
 
 ## 2.6.0 (December 13, 2019)
 

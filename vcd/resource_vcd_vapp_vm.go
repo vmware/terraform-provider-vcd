@@ -1391,6 +1391,7 @@ func resourceVcdVmIndependentDiskHash(v interface{}) int {
 // networksToConfig converts terraform schema for 'networks' and converts to types.NetworkConnectionSection
 // which is used for creating new VM
 func networksToConfig(networks []interface{}, vdc *govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (types.NetworkConnectionSection, error) {
+
 	networkConnectionSection := types.NetworkConnectionSection{}
 	for index, singleNetwork := range networks {
 		nic := singleNetwork.(map[string]interface{})
@@ -1399,6 +1400,7 @@ func networksToConfig(networks []interface{}, vdc *govcd.Vdc, vapp govcd.VApp, v
 		networkName := nic["name"].(string)
 		ipAllocationMode := nic["ip_allocation_mode"].(string)
 		ip := nic["ip"].(string)
+		macAddress, macIsSet := nic["mac"].(string)
 
 		isPrimary := nic["is_primary"].(bool)
 		if isPrimary {
@@ -1427,6 +1429,10 @@ func networksToConfig(networks []interface{}, vdc *govcd.Vdc, vapp govcd.VApp, v
 		netConn.IPAddressAllocationMode = ipAllocationMode
 		netConn.NetworkConnectionIndex = index
 		netConn.Network = networkName
+		if macIsSet {
+			netConn.MACAddress = macAddress
+		}
+
 		if ipAllocationMode == types.IPAllocationModeNone {
 			netConn.Network = types.NoneNetwork
 		}
