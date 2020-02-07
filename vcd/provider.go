@@ -10,14 +10,14 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
-// DataSources is a public functions which allows to filter and access all defined data sources
+// DataSources is a public function which allows to filter and access all defined data sources
 // When 'nameRegexp' is not empty - it will return only those matching the regexp
 // When 'includeDeprecated' is false - it will skip out the resources which have a DeprecationMessage set
 func DataSources(nameRegexp string, includeDeprecated bool) (map[string]*schema.Resource, error) {
 	return vcdSchemaFilter(globalDataSourceMap, nameRegexp, includeDeprecated)
 }
 
-// Resources is a public functions which allows to filter and access all defined resources
+// Resources is a public function which allows to filter and access all defined resources
 // When 'nameRegexp' is not empty - it will return only those matching the regexp
 // When 'includeDeprecated' is false - it will skip out the resources which have a DeprecationMessage set
 func Resources(nameRegexp string, includeDeprecated bool) (map[string]*schema.Resource, error) {
