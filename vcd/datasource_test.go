@@ -3,10 +3,8 @@
 package vcd
 
 import (
-	"bytes"
 	"regexp"
 	"testing"
-	"text/template"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
@@ -43,13 +41,10 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string) func(*t
 			"MandatoryFields": addedParams,
 		}
 
-		// Generate template without using `templateFill` because we do not need to store the config
-		var configText bytes.Buffer
-		configTemplate := template.Must(template.New("letter").Parse(testAccUnavailableDataSource))
-		err := configTemplate.Execute(&configText, params)
-		if err != nil {
-			t.Errorf("could not generate template for %s data source", dataSourceName)
-		}
+		params["FuncName"] = "NotFoundDataSource-" + dataSourceName
+		// Adding skip directive as running these tests in binary test mode add no value
+		binaryTestSkipText := "# skip-binary-test: data source not found test only works in acceptance tests\n"
+		configText := templateFill(binaryTestSkipText+testAccUnavailableDataSource, params)
 
 		debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
@@ -57,7 +52,7 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string) func(*t
 			Providers: testAccProviders,
 			Steps: []resource.TestStep{
 				resource.TestStep{
-					Config:      configText.String(),
+					Config:      configText,
 					ExpectError: regexp.MustCompile(`.*` + regexp.QuoteMeta(govcd.ErrorEntityNotFound.Error()) + `.*`),
 				},
 			},
