@@ -299,7 +299,8 @@ func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("description", vAppNetwork.Description)
 	d.Set("href", vAppNetwork.HREF)
 	if c := vAppNetwork.Configuration; c != nil {
-		d.Set("fence_mode", c.FenceMode)
+		// TODO not appears in state file
+		//d.Set("fence_mode", c.FenceMode)
 		if c.IPScopes != nil {
 			d.Set("gateway", c.IPScopes.IPScope[0].Gateway)
 			d.Set("netmask", c.IPScopes.IPScope[0].Netmask)
@@ -315,6 +316,15 @@ func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
 			if err != nil {
 				return err
 			}
+		}
+		// TODO id or name should read ^^
+		d.Set("org_network", vAppNetwork.Configuration.ParentNetwork.Name)
+		d.Set("retain_ip_mac_enabled", vAppNetwork.Configuration.RetainNetInfoAcrossDeployments)
+		if vAppNetwork.Configuration.Features != nil && vAppNetwork.Configuration.Features.FirewallService != nil {
+			d.Set("firewall_enabled", vAppNetwork.Configuration.Features.FirewallService.IsEnabled)
+		}
+		if vAppNetwork.Configuration.Features != nil && vAppNetwork.Configuration.Features.NatService != nil {
+			d.Set("nat_enabled", vAppNetwork.Configuration.Features.NatService.IsEnabled)
 		}
 	}
 

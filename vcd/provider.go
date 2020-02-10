@@ -99,12 +99,11 @@ func Provider() terraform.ResourceProvider {
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
-			"vcd_network":          resourceVcdNetwork(),         // 1.0 DEPRECATED: replaced by vcd_network_routed
-			"vcd_network_routed":   resourceVcdNetworkRouted(),   // 2.0
-			"vcd_network_direct":   resourceVcdNetworkDirect(),   // 2.0
-			"vcd_network_isolated": resourceVcdNetworkIsolated(), // 2.0
-			"vcd_vapp_network":     resourceVcdVappNetwork(),     // 2.1
-			//"vcd_vapp_org_network":       resourceVcdVappNetwork(),      // 2.1
+			"vcd_network":            resourceVcdNetwork(),          // 1.0 DEPRECATED: replaced by vcd_network_routed
+			"vcd_network_routed":     resourceVcdNetworkRouted(),    // 2.0
+			"vcd_network_direct":     resourceVcdNetworkDirect(),    // 2.0
+			"vcd_network_isolated":   resourceVcdNetworkIsolated(),  // 2.0
+			"vcd_vapp_network":       resourceVcdVappNetwork(),      // 2.1
 			"vcd_vapp":               resourceVcdVApp(),             // 1.0
 			"vcd_firewall_rules":     resourceVcdFirewallRules(),    // 1.0
 			"vcd_dnat":               resourceVcdDNAT(),             // 1.0
@@ -132,6 +131,7 @@ func Provider() terraform.ResourceProvider {
 			"vcd_nsxv_dhcp_relay":    resourceVcdNsxvDhcpRelay(),    // 2.6
 			"vcd_nsxv_ip_set":        resourceVcdIpSet(),            // 2.6
 			"vcd_vm_internal_disk":   resourceVmInternalDisk(),      // 2.7
+			"vcd_vapp_org_network":   resourceVcdVappOrgNetwork(),   // 2.7
 		},
 
 		DataSourcesMap: map[string]*schema.Resource{
