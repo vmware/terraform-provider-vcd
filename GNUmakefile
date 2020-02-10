@@ -144,7 +144,7 @@ vendor-check:
 
 # checks that the code can compile
 test-compile:
-	cd vcd && go test -tags ALL -c .
+	cd vcd && go test -race -tags ALL -c .
 
 # builds the website and allows running it from localhost
 website:
