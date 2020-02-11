@@ -23,7 +23,8 @@ BUG FIXES:
 NOTES:
 * Drop support for vCD 9.0
 * Bump terraform-plugin-sdk to v1.5.0 [GH-442]
-* Testing uses `-race` flags for go test to check if there are no data races [GH-453]
+* `make test` and `make test-binary` use `-race` flags for `go test` to check if there are no data races. Additionally
+ GNUMakefile support `make installrace` and `make buildrace` to build binary with race detection enabled. [GH-453]
 
 ## 2.6.0 (December 13, 2019)
 
