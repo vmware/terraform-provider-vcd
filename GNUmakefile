@@ -23,7 +23,7 @@ install: build
 	@sh -c "'$(CURDIR)/scripts/install-plugin.sh'"
 
 # builds and deploys the plugin with race detector enabled (useful for troubleshooting)
-installrace: build
+installrace: buildrace
 	@sh -c "'$(CURDIR)/scripts/install-plugin.sh'"
 
 # makes .tf files from test templates

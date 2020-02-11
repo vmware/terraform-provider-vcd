@@ -67,8 +67,11 @@ type cachedConnection struct {
 	connection *VCDClient
 }
 
-type mutexedMap struct {
+type cacheStorage struct {
+	// conMap holds  Cached VDC authenticated connection
 	conMap map[string]cachedConnection
+	// cacheClientServedCount records how many times we have cached a connection
+	cacheClientServedCount int
 	sync.Mutex
 }
 
@@ -77,10 +80,7 @@ var (
 	enableConnectionCache bool = os.Getenv("VCD_CACHE") != ""
 
 	// Cached VDC authenticated connection
-	cachedVCDClients = &mutexedMap{conMap: make(map[string]cachedConnection)}
-
-	// Records how many times we have cached a connection
-	cacheClientServedCount int = 0
+	cachedVCDClients = &cacheStorage{conMap: make(map[string]cachedConnection)}
 
 	// Invalidates the cache after a given time (connection tokens usually expire after 20 to 30 minutes)
 	maxConnectionValidity time.Duration = 20 * time.Minute
@@ -356,7 +356,6 @@ func ProviderAuthenticate(client *govcd.VCDClient, user, password, token, org st
 }
 
 func (c *Config) Client() (*VCDClient, error) {
-
 	rawData := c.User + "#" +
 		c.Password + "#" +
 		c.Token + "#" +
@@ -369,7 +368,9 @@ func (c *Config) Client() (*VCDClient, error) {
 	client, ok := cachedVCDClients.conMap[checksum]
 	cachedVCDClients.Unlock()
 	if ok && enableConnectionCache {
-		cacheClientServedCount += 1
+		cachedVCDClients.Lock()
+		cachedVCDClients.cacheClientServedCount += 1
+		cachedVCDClients.Unlock()
 		// debugPrintf("[%s] cached connection served %d times (size:%d)\n",
 		elapsed := time.Since(client.initTime)
 		if elapsed > maxConnectionValidity {
