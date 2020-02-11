@@ -3,12 +3,13 @@ package vcd
 import (
 	"bytes"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"log"
 	"net"
 	"sort"
 	"strconv"
 	"strings"
+
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -28,6 +29,21 @@ func resourceVcdVAppVm() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
+			"org": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Description: "The name of organization to use, optional if defined at provider " +
+					"level. Useful when connected as sysadmin working across different organizations",
+				DiffSuppressFunc: suppressProviderFieldValue("org"),
+			},
+			"vdc": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         true,
+				Description:      "The name of VDC to use, optional if defined at provider level",
+				DiffSuppressFunc: suppressProviderFieldValue("vdc"),
+			},
 			"vapp_name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
@@ -45,19 +61,6 @@ func resourceVcdVAppVm() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				Description: "Computer name to assign to this virtual machine",
-			},
-			"org": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				Description: "The name of organization to use, optional if defined at provider " +
-					"level. Useful when connected as sysadmin working across different organizations",
-			},
-			"vdc": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "The name of VDC to use, optional if defined at provider level",
 			},
 			"template_name": &schema.Schema{
 				Type:        schema.TypeString,

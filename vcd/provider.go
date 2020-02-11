@@ -85,9 +85,15 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_vm_internal_disk":   resourceVmInternalDisk(),      // 2.7
 }
 
+var (
+	// providerOrg is populated with global org value (set in provider) during authentication
+	providerOrg string
+	// providerVdc is populated with global org value (set in provider) during authentication
+	providerVdc string
+)
+
 // Provider returns a terraform.ResourceProvider.
 func Provider() terraform.ResourceProvider {
-
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"user": &schema.Schema{
@@ -204,6 +210,11 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		MaxRetryTimeout: maxRetryTimeout,
 		InsecureFlag:    d.Get("allow_unverified_ssl").(bool),
 	}
+
+	// Store default org and vdc in global scope
+	providerOrg = d.Get("org").(string)
+	providerVdc = d.Get("vdc").(string)
+
 	// If the provider includes logging directives,
 	// it will activate logging from upstream go-vcloud-director
 	logging := d.Get("logging").(bool)

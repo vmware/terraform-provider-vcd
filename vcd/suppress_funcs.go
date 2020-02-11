@@ -90,3 +90,33 @@ func suppressAlways() schema.SchemaDiffSuppressFunc {
 func suppressCase(k, old, new string, d *schema.ResourceData) bool {
 	return strings.EqualFold(old, new)
 }
+
+// suppressProviderFieldValue 'org' or 'vdc' fields are special in terraform-provider-vdc because they can be set
+// globally (in 'provider') section, or explicitly for each resource. A situation can occur when 'org' and/or 'vdc'
+// fields are set (e.g. during an import), but the user relies on global setting in 'provider' section and does not want
+// to populate them for each resource.
+// This suppressFunc suppresses a plan diff when all three conditions are met:
+// * old value (in the statefile) is set
+// * new value (in .tf config) is unset (empty)
+// * old value coincides with value provided for 'provider' section
+func suppressProviderFieldValue(fieldName string) schema.SchemaDiffSuppressFunc {
+	if !stringInSlice(fieldName, []string{"org", "vdc"}) {
+		panic("only 'org' and 'vdc' are supported now")
+	}
+	return func(k string, old string, new string, d *schema.ResourceData) bool {
+		var globalValue string
+
+		switch fieldName {
+		case "org":
+			globalValue = providerOrg
+		case "vdc":
+			globalValue = providerVdc
+		}
+
+		// "new value is empty" and "old value is not empty" and "old value = 'provider' section value"
+		if new == "" && old != "" && old == globalValue {
+			return true
+		}
+		return false
+	}
+}

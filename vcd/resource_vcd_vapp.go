@@ -25,12 +25,6 @@ func resourceVcdVApp() *schema.Resource {
 		},
 
 		Schema: map[string]*schema.Schema{
-			"name": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "A name for the vApp, unique withing the VDC",
-			},
 			"org": {
 				Type:     schema.TypeString,
 				Required: false,
@@ -38,12 +32,20 @@ func resourceVcdVApp() *schema.Resource {
 				ForceNew: true,
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
+				DiffSuppressFunc: suppressProviderFieldValue("org"),
 			},
 			"vdc": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         true,
+				Description:      "The name of VDC to use, optional if defined at provider level",
+				DiffSuppressFunc: suppressProviderFieldValue("vdc"),
+			},
+			"name": {
 				Type:        schema.TypeString,
-				Optional:    true,
+				Required:    true,
 				ForceNew:    true,
-				Description: "The name of VDC to use, optional if defined at provider level",
+				Description: "A name for the vApp, unique withing the VDC",
 			},
 			"template_name": {
 				Type:        schema.TypeString,
