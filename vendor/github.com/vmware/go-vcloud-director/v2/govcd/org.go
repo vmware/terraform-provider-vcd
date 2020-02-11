@@ -134,9 +134,6 @@ func (org *Org) CreateCatalog(name, description string) (Catalog, error) {
 }
 
 func validateVdcConfiguration(vdcDefinition *types.VdcConfiguration) error {
-	if vdcDefinition.Xmlns == "" {
-		return errors.New("VdcConfiguration missing required field: Xmlns")
-	}
 	if vdcDefinition.Name == "" {
 		return errors.New("VdcConfiguration missing required field: Name")
 	}

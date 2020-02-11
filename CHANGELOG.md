@@ -17,11 +17,13 @@ BUG FIXES:
   values after refresh. [GH-433]
 * `resource/vcd_vapp_vm` `network` block changes caused MAC address changes in existing NICs
   [GH-436,GH-407]
+* Fix a potential data race in client connection caching [GH-453]
 
 
 NOTES:
 * Drop support for vCD 9.0
 * Bump terraform-plugin-sdk to v1.5.0 [GH-442]
+* Testing uses `-race` flags for go test to check if there are no data races [GH-453]
 
 ## 2.6.0 (December 13, 2019)
 
