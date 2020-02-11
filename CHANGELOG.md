@@ -17,7 +17,7 @@ BUG FIXES:
   values after refresh. [GH-433]
 * `resource/vcd_vapp_vm` `network` block changes caused MAC address changes in existing NICs
   [GH-436,GH-407]
-* Fix a potential data race in client connection caching [GH-453]
+* Fix a potential data race in client connection caching when VCD_CACHE is enabled [GH-453]
 
 
 NOTES:
