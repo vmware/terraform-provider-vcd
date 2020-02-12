@@ -164,7 +164,7 @@ func TestAccVcdOrgVdcAllocationFlex(t *testing.T) {
 		"MemoryGuaranteed":          "0.5",
 		"CpuGuaranteed":             "0.6",
 		// Below parameters are for Flex allocation model.
-		// Part of HCL is created dynamically and with empty values we don't create the Flex part:
+		// Part of HCL is created dynamically and these parameters allows provide keys an values:
 		"equalsChar":                         "=",
 		"FlexElasticKey":                     "elasticity",
 		"FlexElasticValue":                   "false",

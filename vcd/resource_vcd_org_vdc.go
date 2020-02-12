@@ -237,7 +237,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 // Creates a new VDC from a resource definition
 func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 	orgVdcName := d.Get("name").(string)
-	log.Printf("[TRACE] VDC creation initiated for VDC: %s", orgVdcName)
+	log.Printf("[TRACE] VDC %s creation initiated", orgVdcName)
 
 	vcdClient := meta.(*VCDClient)
 
@@ -290,7 +290,7 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 // Fetches information about an existing VDC for a data definition
 func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 	vdcName := d.Get("name").(string)
-	log.Printf("[TRACE] VDC read initiated for VDC: %s", vdcName)
+	log.Printf("[TRACE] VDC %s read initiated", vdcName)
 
 	vcdClient := meta.(*VCDClient)
 
@@ -508,7 +508,7 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 // Deletes a VDC, optionally removing all objects in it as well
 func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
 	vdcName := d.Get("name").(string)
-	log.Printf("[TRACE] VDC delete started %s", vdcName)
+	log.Printf("[TRACE] VDC delete started: %s", vdcName)
 
 	vcdClient := meta.(*VCDClient)
 
