@@ -26,8 +26,8 @@ type SupportedVersions struct {
 	VersionInfos `xml:"VersionInfo"`
 }
 
-// map allows you get vCD version from max supported API version
-var vcdVersionToApiVersion = map[string]string{
+// apiVersionToVcdVersion gets the vCD version from max supported API version
+var apiVersionToVcdVersion = map[string]string{
 	"29.0": "9.0",
 	"30.0": "9.1",
 	"31.0": "9.5",
@@ -35,14 +35,17 @@ var vcdVersionToApiVersion = map[string]string{
 	"33.0": "10.0",
 }
 
-// map allows you get max supported API version from vCD version
-var vpiVersionToVcdVersion = map[string]string{
+// vcdVersionToApiVersion gets the max supported API version from vCD version
+var vcdVersionToApiVersion = map[string]string{
 	"9.0":  "29.0",
 	"9.1":  "30.0",
 	"9.5":  "31.0",
 	"9.7":  "32.0",
 	"10.0": "33.0",
 }
+
+// to make vcdVersionToApiVersion used
+var _ = vcdVersionToApiVersion
 
 // APIVCDMaxVersionIs compares against maximum vCD supported API version from /api/versions (not necessarily
 // the currently used one). This allows to check what is the maximum API version that vCD instance
