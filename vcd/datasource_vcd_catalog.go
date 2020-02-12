@@ -51,7 +51,7 @@ func datasourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		log.Printf("[DEBUG] Catalog %s not found. Setting ID to nothing", identifier)
 		d.SetId("")
-		return fmt.Errorf("error retrieving catalog %s", identifier)
+		return fmt.Errorf("error retrieving catalog %s: %s", identifier, err)
 	}
 
 	_ = d.Set("description", catalog.Catalog.Description)

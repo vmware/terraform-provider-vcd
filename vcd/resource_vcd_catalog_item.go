@@ -151,7 +151,11 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 }
 
 func resourceVcdCatalogItemRead(d *schema.ResourceData, meta interface{}) error {
-	catalogItem, err := findCatalogItem(d, meta.(*VCDClient))
+	return genericVcdCatalogItemRead(d, meta, "resource")
+}
+
+func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin string) error {
+	catalogItem, err := findCatalogItem(d, meta.(*VCDClient), origin)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find media item: %s", err)
 		return err
@@ -193,7 +197,7 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 
 	log.Printf("[TRACE] adding/updating metadata for catalog item")
 
-	catalogItem, err := findCatalogItem(d, meta.(*VCDClient))
+	catalogItem, err := findCatalogItem(d, meta.(*VCDClient), "resource")
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find media item: %s", err)
 		return err
