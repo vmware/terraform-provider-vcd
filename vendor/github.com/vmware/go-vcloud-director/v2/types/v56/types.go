@@ -210,7 +210,7 @@ type NetworkConfiguration struct {
 	IPScopes                       *IPScopes        `xml:"IpScopes,omitempty"`
 	ParentNetwork                  *Reference       `xml:"ParentNetwork,omitempty"`
 	FenceMode                      string           `xml:"FenceMode"`
-	RetainNetInfoAcrossDeployments bool             `xml:"RetainNetInfoAcrossDeployments,omitempty"`
+	RetainNetInfoAcrossDeployments *bool            `xml:"RetainNetInfoAcrossDeployments,omitempty"`
 	Features                       *NetworkFeatures `xml:"Features,omitempty"`
 	GuestVlanAllowed               *bool            `xml:"GuestVlanAllowed,omitempty"`
 

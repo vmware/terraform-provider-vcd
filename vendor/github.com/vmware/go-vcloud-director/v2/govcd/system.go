@@ -206,6 +206,9 @@ func CreateAndConfigureEdgeGatewayAsync(vcdClient *VCDClient, orgName, vdcName, 
 	if egwConfiguration.Name != egwName {
 		return Task{}, fmt.Errorf("name mismatch: '%s' used as parameter but '%s' in the configuration structure", egwName, egwConfiguration.Name)
 	}
+
+	egwConfiguration.Xmlns = types.XMLNamespaceVCloud
+
 	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
 	if err != nil {
 		return Task{}, err
@@ -636,6 +639,9 @@ func CreateExternalNetwork(vcdClient *VCDClient, externalNetworkData *types.Exte
 	externalNetwork.OperationKey = externalNetworkData.OperationKey
 	externalNetwork.Link = externalNetworkData.Link
 	externalNetwork.Configuration = externalNetworkData.Configuration
+	if externalNetwork.Configuration != nil {
+		externalNetwork.Configuration.Xmlns = types.XMLNamespaceVCloud
+	}
 	externalNetwork.VCloudExtension = externalNetworkData.VCloudExtension
 	externalNetwork.XmlnsVmext = types.XMLNamespaceExtension
 	externalNetwork.XmlnsVcloud = types.XMLNamespaceVCloud
@@ -914,4 +920,25 @@ func (vcdClient *VCDClient) GetAdminOrgByNameOrId(identifier string) (*AdminOrg,
 		return nil, err
 	}
 	return entity.(*AdminOrg), err
+}
+
+// Returns the UUID part of an HREF
+// Similar to getBareEntityUuid, but tailored to HREF
+func GetUuidFromHref(href string) (string, error) {
+	util.Logger.Printf("[TRACE] GetUuidFromHref got href: %s", href)
+	// Regular expression to match an ID:
+	//     1 string starting by 'https://' and ending with a '/',
+	//     followed by
+	//        1 group of 8 hexadecimal digits
+	//        3 groups of 4 hexadecimal digits
+	//        1 group of 12 hexadecimal digits
+
+	reGetID := regexp.MustCompile(`^https://.+/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}).*$`)
+	matchList := reGetID.FindAllStringSubmatch(href, -1)
+
+	if len(matchList) == 0 || len(matchList[0]) < 2 {
+		return "", fmt.Errorf("error extracting UUID from '%s'", href)
+	}
+	util.Logger.Printf("[TRACE] GetUuidFromHref returns UUID : %s", matchList[0][1])
+	return matchList[0][1], nil
 }
