@@ -101,7 +101,7 @@ func TestAccVcdLbServerPool(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.3.max_connections", "0"),
 				),
 			},
-			// configTextStep1 attaches monitor_id, changes some member settings
+			// configTextStep1 attaches monitor_id, changes ItemDelete member settings
 			resource.TestStep{
 				Config: configTextStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(

@@ -10,7 +10,7 @@ import (
 )
 
 // suppressWordToEmptyString is a DiffSuppressFunc which ignore the change from word to empty string "".
-// This is useful when API returns some default value but it is not set (and not sent via API) in config.
+// This is useful when API returns ItemDelete default value but it is not set (and not sent via API) in config.
 func suppressWordToEmptyString(word string) schema.SchemaDiffSuppressFunc {
 	return func(k string, old string, new string, d *schema.ResourceData) bool {
 		if old == word && new == "" {

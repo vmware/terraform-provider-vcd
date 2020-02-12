@@ -13,7 +13,7 @@ import (
 func resourceVcdCatalogMedia() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceVcdMediaCreate,
-		Delete: resourceVcdMediaDelete,
+		Delete: toDeleteFunc(resourceVcdMediaDelete),
 		Read:   resourceVcdMediaRead,
 		Update: resourceVcdMediaUpdate,
 		Importer: &schema.ResourceImporter{
@@ -206,12 +206,12 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 	}
 
 	media, err := catalog.GetMediaByNameOrId(identifier, false)
-	if govcd.IsNotFound(err) && origin == "resource" {
-		log.Printf("[INFO] unable to find media with ID %s: %s. Removing from state", identifier, err)
-		d.SetId("")
-		return nil
-	}
 	if err != nil {
+		if govcd.ContainsNotFound(err) && origin == "resource" {
+			log.Printf("[INFO] unable to find media with ID %s: %s. Removing from state", identifier, err)
+			d.SetId("")
+			return nil
+		}
 		log.Printf("[DEBUG] Unable to find media: %s", err)
 		return err
 	}
@@ -245,7 +245,7 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 	return err
 }
 
-func resourceVcdMediaDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdMediaDelete(d vcdResourceDataInterface, meta interface{}) error {
 	return deleteCatalogItem(d, meta.(*VCDClient))
 }
 

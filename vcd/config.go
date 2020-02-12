@@ -293,7 +293,7 @@ func (cli *VCDClient) GetOrgAndVdcFromResource(d *schema.ResourceData) (org *gov
 }
 
 // Same as GetOrgAndVdc, but using data from the resource, if available.
-func (cli *VCDClient) GetAdminOrgFromResource(d *schema.ResourceData) (org *govcd.AdminOrg, err error) {
+func (cli *VCDClient) GetAdminOrgFromResource(d vcdResourceDataInterface) (org *govcd.AdminOrg, err error) {
 	orgName := d.Get("org").(string)
 	return cli.GetAdminOrg(orgName)
 }

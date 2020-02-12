@@ -11,21 +11,33 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
+// Register configuration for resource not found test
+func init() {
+	registerReadTest(func() {
+		testResourceNotFoundTestMap["vcd_catalog_media"] = &testResourceNotFound{
+			deleteFunc: resourceVcdMediaDelete,
+			config:     testAccCheckVcdCatalogMediaBasic,
+			params: StringMap{
+				"Org":              testConfig.VCD.Org,
+				"Catalog":          testConfig.VCD.Catalog.Name,
+				"CatalogMediaName": TestAccVcdCatalogMedia,
+				"Description":      TestAccVcdCatalogMediaDescription,
+				"MediaPath":        testConfig.Media.MediaPath,
+				"UploadPieceSize":  testConfig.Media.UploadPieceSize,
+				"UploadProgress":   testConfig.Media.UploadProgress,
+				"Tags":             "catalog",
+			},
+		}
+	})
+}
+
 var TestAccVcdCatalogMedia = "TestAccVcdCatalogMediaBasic"
 var TestAccVcdCatalogMediaDescription = "TestAccVcdCatalogMediaBasicDescription"
 
 func TestAccVcdCatalogMediaBasic(t *testing.T) {
 
-	var params = StringMap{
-		"Org":              testConfig.VCD.Org,
-		"Catalog":          testConfig.VCD.Catalog.Name,
-		"CatalogMediaName": TestAccVcdCatalogMedia,
-		"Description":      TestAccVcdCatalogMediaDescription,
-		"MediaPath":        testConfig.Media.MediaPath,
-		"UploadPieceSize":  testConfig.Media.UploadPieceSize,
-		"UploadProgress":   testConfig.Media.UploadProgress,
-		"Tags":             "catalog",
-	}
+	// Reuse configuration registered for resource not found test
+	params := testResourceNotFoundTestMap["vcd_catalog_media"].params
 
 	configText := templateFill(testAccCheckVcdCatalogMediaBasic, params)
 	params["FuncName"] = t.Name() + "-Update"

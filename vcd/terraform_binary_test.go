@@ -215,7 +215,7 @@ func TestCustomTemplates(t *testing.T) {
 			reOrgUserTest := regexp.MustCompile(`#_ORG_USER_`)
 			templateText = reOrgUserTest.ReplaceAllString(templateText, orgUserText)
 
-			// For some items, we want a different value for testing and for building
+			// For ItemDelete items, we want a different value for testing and for building
 			// For example, the Ova for testing might be a tiny one, while the one for
 			// building the environment would be a beefier one, which can also run the
 			// VMware tools.

@@ -11,23 +11,35 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
+// Register configuration for resource not found test
+func init() {
+	registerReadTest(func() {
+		testResourceNotFoundTestMap["vcd_catalog_item"] = &testResourceNotFound{
+			deleteFunc: resourceVcdCatalogItemDelete,
+			config:     testAccCheckVcdCatalogItemBasic,
+			params: StringMap{
+				"Org":             testConfig.VCD.Org,
+				"Catalog":         testSuiteCatalogName,
+				"CatalogItemName": TestAccVcdCatalogItem,
+				"Description":     TestAccVcdCatalogItemDescription,
+				"OvaPath":         testConfig.Ova.OvaPath,
+				"UploadPieceSize": testConfig.Ova.UploadPieceSize,
+				"UploadProgress":  testConfig.Ova.UploadProgress,
+				"Tags":            "catalog",
+			},
+		}
+	})
+}
+
 var TestAccVcdCatalogItem = "TestAccVcdCatalogItemBasic"
 var TestAccVcdCatalogItemDescription = "TestAccVcdCatalogItemBasicDescription"
 
 func TestAccVcdCatalogItemBasic(t *testing.T) {
 
-	var params = StringMap{
-		"Org":             testConfig.VCD.Org,
-		"Catalog":         testSuiteCatalogName,
-		"CatalogItemName": TestAccVcdCatalogItem,
-		"Description":     TestAccVcdCatalogItemDescription,
-		"OvaPath":         testConfig.Ova.OvaPath,
-		"UploadPieceSize": testConfig.Ova.UploadPieceSize,
-		"UploadProgress":  testConfig.Ova.UploadProgress,
-		"Tags":            "catalog",
-	}
+	// Reuse configuration registered for resource not found test
+	params := testResourceNotFoundTestMap["vcd_catalog_item"].params
+	configText := templateFill(testResourceNotFoundTestMap["vcd_catalog_item"].config, params)
 
-	configText := templateFill(testAccCheckVcdCatalogItemBasic, params)
 	params["FuncName"] = t.Name() + "-Update"
 	updateConfigText := templateFill(testAccCheckVcdCatalogItemUpdate, params)
 	if vcdShortTest {

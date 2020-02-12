@@ -14,19 +14,31 @@ func init() {
 	testingTags["catalog"] = "resource_vcd_catalog_test.go"
 }
 
+// Register configuration for resource not found test
+func init() {
+	registerReadTest(func() {
+		testResourceNotFoundTestMap["vcd_catalog"] = &testResourceNotFound{
+			deleteFunc: vcdResourceVcdCatalogDelete,
+			config:     testAccCheckVcdCatalogBasic,
+			params: StringMap{
+				"Org":         testConfig.VCD.Org,
+				"CatalogName": TestAccVcdCatalog,
+				"Description": TestAccVcdCatalogDescription,
+				"Tags":        "catalog",
+			},
+		}
+	})
+}
+
 var TestAccVcdCatalog = "TestAccVcdCatalogBasic"
 var TestAccVcdCatalogDescription = "TestAccVcdCatalogBasicDescription"
 
 func TestAccVcdCatalogBasic(t *testing.T) {
+	// Reuse configuration registered for resource not found test
+	configText := templateFill(
+		testResourceNotFoundTestMap["vcd_catalog"].config,
+		testResourceNotFoundTestMap["vcd_catalog"].params)
 
-	var params = StringMap{
-		"Org":         testConfig.VCD.Org,
-		"CatalogName": TestAccVcdCatalog,
-		"Description": TestAccVcdCatalogDescription,
-		"Tags":        "catalog",
-	}
-
-	configText := templateFill(testAccCheckVcdCatalogBasic, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return

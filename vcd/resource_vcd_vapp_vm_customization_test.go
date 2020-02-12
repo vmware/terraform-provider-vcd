@@ -169,10 +169,10 @@ func testAccCheckVcdVMCustomization(node string, customizationPending bool) reso
 		}
 
 		// When force customization was not explicitly triggered - wait until the VM exits from its original GC_PENDING
-		// state after provisioning. This takes some time until the VM boots starts guest tools and reports success.
+		// state after provisioning. This takes ItemDelete time until the VM boots starts guest tools and reports success.
 		if !customizationPending {
 			// Not using maxRetryTimeout for timeout here because it would force for maxRetryTimeout to be quite long
-			// time by default as it takes some time (around 150s during testing) for Photon OS to boot
+			// time by default as it takes ItemDelete time (around 150s during testing) for Photon OS to boot
 			// first time and get rid of "GC_PENDING" state
 			err = vm.BlockWhileGuestCustomizationStatus("GC_PENDING", minIfLess(300, conn.Client.MaxRetryTimeout))
 			if err != nil {

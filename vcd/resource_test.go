@@ -1,4 +1,4 @@
-// +build ALL
+// +build ALL functional
 
 package vcd
 
@@ -7,22 +7,17 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 )
 
-// testResourceNotFoundMap holds a map of definitions for all resources defined in provider
-var testResourceNotFoundMap map[string]*testResourceNotFound
-
-// testResourceDeleteFunc is a function which accepts an itemIdentifier and returns a function which is capable of
-// deleting resource by that identifier upon call
-type testResourceDeleteFunc func(t *testing.T, itemIdentifier string) func()
+// testResourceNotFoundTestMap holds a map of definitions for all resources defined in provider
+var testResourceNotFoundTestMap = make(map[string]*testResourceNotFound)
 
 // testResourceNotFound is a structure which consists of all possible
 type testResourceNotFound struct {
-	// deleteFunc matches signature of type testResourceDeleteFunc and will handle the deletion of specific
-	deleteFunc testResourceDeleteFunc
+	// deleteFunc is a functions with schema.DeleteFunc behavior but having a signature of locally defined
+	// interface 'vcdResourceDataInterface'
+	deleteFunc func(d vcdResourceDataInterface, meta interface{}) error
 
 	// Two below parameters are then ones which are used throughout all tests
 	//
@@ -32,72 +27,14 @@ type testResourceNotFound struct {
 	config string
 }
 
-// defineNotFoundTests must contain definitions for all resources which are present in 'globalResourceMap'
-func defineNotFoundTests() {
+var funcStack = []func(){}
 
-	mainItemName := "ReadTest"
-
-	// validate if all resources have functions mapped
-	testResourceNotFoundMap = make(map[string]*testResourceNotFound)
-	testResourceNotFoundMap["vcd_catalog"] = &testResourceNotFound{
-		deleteFunc: testDeleteExistingCatalog,
-		config:     testAccCheckVcdCatalogBasic,
-		params: StringMap{
-			"CatalogName": mainItemName,
-			"Org":         testConfig.VCD.Org,
-		},
-	}
-
-	testResourceNotFoundMap["vcd_catalog_item"] = &testResourceNotFound{
-		deleteFunc: testDeleteExistingCatalogItem,
-		config:     testAccCheckVcdCatalogItemBasic,
-		params: StringMap{
-			"CatalogItemName": mainItemName,
-			"Org":             testConfig.VCD.Org,
-			"Catalog":         testConfig.VCD.Catalog.Name,
-			"Description":     TestAccVcdCatalogItemDescription,
-			"OvaPath":         testConfig.Ova.OvaPath,
-			"UploadPieceSize": testConfig.Ova.UploadPieceSize,
-			"UploadProgress":  testConfig.Ova.UploadProgress,
-			"Tags":            "catalog",
-		},
-	}
-
-	testResourceNotFoundMap["vcd_catalog_media"] = &testResourceNotFound{
-		deleteFunc: testDeleteExistingCatalogMedia,
-		config:     testAccCheckVcdCatalogMediaBasic,
-		params: StringMap{
-			"CatalogMediaName": mainItemName,
-			"Org":              testConfig.VCD.Org,
-			"Catalog":          testConfig.VCD.Catalog.Name,
-			"Description":      TestAccVcdCatalogMediaDescription,
-			"MediaPath":        testConfig.Media.MediaPath,
-			"UploadPieceSize":  testConfig.Media.UploadPieceSize,
-			"UploadProgress":   testConfig.Media.UploadProgress,
-			"Tags":             "catalog",
-		},
-	}
-
-	testResourceNotFoundMap["vcd_dnat"] = &testResourceNotFound{
-		deleteFunc: testDeleteExistingDnatRule,
-		config:     testAccCheckVcdDnatWithOrgNetw,
-		params: StringMap{
-			"DnatName":          mainItemName,
-			"Org":               testConfig.VCD.Org,
-			"Vdc":               testConfig.VCD.Vdc,
-			"EdgeGateway":       testConfig.Networking.EdgeGateway,
-			"ExternalIp":        testConfig.Networking.ExternalIp,
-			"OrgVdcNetworkName": orgVdcNetworkName,
-			"Gateway":           "10.10.102.1",
-			"StartIpAddress":    "10.10.102.51",
-			"EndIpAddress":      "10.10.102.100",
-		},
-	}
-
+func registerReadTest(f func()) {
+	funcStack = append(funcStack, f)
 }
 
 // TestAccVcdResourceNotFound loops over all resources defined in provider `globalResourceMap` and checks that there is
-// a corresponding ResourceNotFound test defined in `testResourceNotFoundMap`. If not - it fails the test. Then for each
+// a corresponding ResourceNotFound test defined in `testResourceNotFoundTestMap`. If not - it fails the test. Then for each
 // definition it runs a 'singleResourceNotFoundTest' test.
 func TestAccVcdResourceNotFound(t *testing.T) {
 	// No point for running these tests when we don't have connection
@@ -106,11 +43,14 @@ func TestAccVcdResourceNotFound(t *testing.T) {
 		return
 	}
 
-	defineNotFoundTests()
+	// Execute all funcs
+	for _, f := range funcStack {
+		f()
+	}
 
 	// for providerResourceName := range globalResourceMap { // PRODUCTION. validate against all resources defined in provider
-	for providerResourceName := range testResourceNotFoundMap { // DEVELOPMENT ONLY - run tests only for resources which have test structure defined
-		functionSet, resourceExists := testResourceNotFoundMap[providerResourceName]
+	for providerResourceName := range testResourceNotFoundTestMap { // DEVELOPMENT ONLY - run tests only for resources which have test structure defined
+		functionSet, resourceExists := testResourceNotFoundTestMap[providerResourceName]
 		if !resourceExists {
 			t.Errorf("resource '%s' does not have tests", providerResourceName)
 		}
@@ -119,7 +59,6 @@ func TestAccVcdResourceNotFound(t *testing.T) {
 		t.Run(providerResourceName, singleResourceNotFoundTest(t, providerResourceName, functionSet))
 
 	}
-
 }
 
 // extractResourceAddress extracts resource address in format _resource_type_._resource_name_ (e.g. vcd_catalog.my-catalog)
@@ -149,13 +88,20 @@ func singleResourceNotFoundTest(t *testing.T, subTestName string, notFoundData *
 		// Extract _resource_address_ from .tf definition like resource 'vcd_xxx" "_resource_address_" {'
 		resourceAddress := extractResourceAddress(subTestName, configText)
 		debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+		// fmt.Println(configText)
 
 		// Initialize a cached field to capture provisioned "ID" field of resource which is being tested
 		idStore := testCachedFieldValue{}
 
-		// Make a closure of 'deleteFunc' so that idStore.fieldValue can be evaluate at step1 (when it is already filled)
+		// Make a closure of 'deleteFunc' so that idStore.fieldValue can be evaluated at step1 (when it is already
+		// filled in step 0)
 		deleteResourceWithId := func() {
-			notFoundData.deleteFunc(t, idStore.fieldValue)()
+			vcdClient := createTemporaryVCDConnection()
+			d := schemaResourceData{id: idStore.fieldValue, configText: configText, org: vcdClient.Org, vdc: vcdClient.Vdc}
+			err := notFoundData.deleteFunc(d, vcdClient)
+			if err != nil {
+				panic(fmt.Sprintf("could not delete '%s': %s", resourceAddress, err))
+			}
 		}
 
 		resource.Test(t, resource.TestCase{
@@ -184,37 +130,5 @@ func singleResourceNotFoundTest(t *testing.T, subTestName string, notFoundData *
 				},
 			},
 		})
-	}
-}
-
-///////////
-/////////// NOT FOR REVIEW BEYOND THIS LINE. THIS WILL COME IN HERE WITH ANOTHER PR
-///////////
-///////////
-///////////
-///////////
-///////////
-
-type testCachedFieldValue struct {
-	fieldValue string
-}
-
-// cacheTestResourceFieldValue has the same signature as builtin Terraform Test functions, however
-// it is attached to a struct which allows to store a field value and then check against this value
-// with 'testCheckCachedResourceFieldValue'
-func (c *testCachedFieldValue) cacheTestResourceFieldValue(resource, field string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[resource]
-		if !ok {
-			return fmt.Errorf("resource not found: %s", resource)
-		}
-
-		value, exists := rs.Primary.Attributes[field]
-		if !exists {
-			return fmt.Errorf("field %s in resource %s does not exist", field, resource)
-		}
-		// Store the value in cache
-		c.fieldValue = value
-		return nil
 	}
 }
