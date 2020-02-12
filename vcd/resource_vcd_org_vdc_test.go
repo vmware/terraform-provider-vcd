@@ -119,13 +119,13 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 		"FlexElasticKey":                     "",
 		"FlexElasticValue":                   "",
 		"FlexElasticValueUpdate":             "",
-		"ElasticityValueForAssert":           "false",
-		"ElasticityUpdateValueForAssert":     "false",
+		"ElasticityValueForAssert":           "true",
+		"ElasticityUpdateValueForAssert":     "true",
 		"FlexMemoryOverheadKey":              "",
 		"FlexMemoryOverheadValue":            "",
 		"FlexMemoryOverheadValueUpdate":      "",
-		"MemoryOverheadValueForAssert":       "true",
-		"MemoryOverheadUpdateValueForAssert": "true",
+		"MemoryOverheadValueForAssert":       "false",
+		"MemoryOverheadUpdateValueForAssert": "false",
 	}
 	runOrgVdcTest(t, params, allocationModel)
 }
