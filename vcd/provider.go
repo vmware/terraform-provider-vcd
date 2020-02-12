@@ -10,45 +10,44 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
-// VcdResources is a public function which allows to access all resources defined in this provider
-// When 'nameRegexp' is not empty - it will return only those matching the regexp.
-// When 'includeDeprecated' is false - it will skip out the resources which have a DeprecationMessage set.
-func VcdResources(nameRegexp string, includeDeprecated bool) (map[string]*schema.Resource, error) {
-	var (
-		err error
-		re  *regexp.Regexp
-	)
-	filteredResources := make(map[string]*schema.Resource)
+// DataSources is a public function which allows to filter and access all defined data sources
+// When 'nameRegexp' is not empty - it will return only those matching the regexp
+// When 'includeDeprecated' is false - it will skip out the resources which have a DeprecationMessage set
+func DataSources(nameRegexp string, includeDeprecated bool) (map[string]*schema.Resource, error) {
+	return vcdSchemaFilter(globalDataSourceMap, nameRegexp, includeDeprecated)
+}
 
-	// validate regex if it was provided
-	if nameRegexp != "" {
-		re, err = regexp.Compile(nameRegexp)
-		if err != nil {
-			return nil, fmt.Errorf("unable to compile regexp: %s", err)
-		}
-	}
+// Resources is a public function which allows to filter and access all defined resources
+// When 'nameRegexp' is not empty - it will return only those matching the regexp
+// When 'includeDeprecated' is false - it will skip out the resources which have a DeprecationMessage set
+func Resources(nameRegexp string, includeDeprecated bool) (map[string]*schema.Resource, error) {
+	return vcdSchemaFilter(globalResourceMap, nameRegexp, includeDeprecated)
+}
 
-	// copy the map with filtering out unwanted object
-	for resourceName, schemaResource := range globalResourceMap {
-
-		// Skip deprecated resources if it was requested so
-		if !includeDeprecated && schemaResource.DeprecationMessage != "" {
-			continue
-		}
-		// If regex was defined - try to filter based on it
-		if re != nil {
-			// if it does not match regex - skip it
-			doesNotmatchRegex := !re.MatchString(resourceName)
-			if doesNotmatchRegex {
-				continue
-			}
-
-		}
-
-		filteredResources[resourceName] = schemaResource
-	}
-
-	return filteredResources, nil
+var globalDataSourceMap = map[string]*schema.Resource{
+	"vcd_org":                datasourceVcdOrg(),              // 2.5
+	"vcd_org_vdc":            datasourceVcdOrgVdc(),           // 2.5
+	"vcd_catalog":            datasourceVcdCatalog(),          // 2.5
+	"vcd_catalog_media":      datasourceVcdCatalogMedia(),     // 2.5
+	"vcd_catalog_item":       datasourceVcdCatalogItem(),      // 2.5
+	"vcd_edgegateway":        datasourceVcdEdgeGateway(),      // 2.5
+	"vcd_external_network":   datasourceVcdExternalNetwork(),  // 2.5
+	"vcd_independent_disk":   datasourceVcIndependentDisk(),   // 2.5
+	"vcd_network_routed":     datasourceVcdNetworkRouted(),    // 2.5
+	"vcd_network_direct":     datasourceVcdNetworkDirect(),    // 2.5
+	"vcd_network_isolated":   datasourceVcdNetworkIsolated(),  // 2.5
+	"vcd_vapp":               datasourceVcdVApp(),             // 2.5
+	"vcd_vapp_vm":            datasourceVcdVAppVm(),           // 2.6
+	"vcd_lb_service_monitor": datasourceVcdLbServiceMonitor(), // 2.4
+	"vcd_lb_server_pool":     datasourceVcdLbServerPool(),     // 2.4
+	"vcd_lb_app_profile":     datasourceVcdLBAppProfile(),     // 2.4
+	"vcd_lb_app_rule":        datasourceVcdLBAppRule(),        // 2.4
+	"vcd_lb_virtual_server":  datasourceVcdLbVirtualServer(),  // 2.4
+	"vcd_nsxv_dnat":          datasourceVcdNsxvDnat(),         // 2.5
+	"vcd_nsxv_snat":          datasourceVcdNsxvSnat(),         // 2.5
+	"vcd_nsxv_firewall_rule": datasourceVcdNsxvFirewallRule(), // 2.5
+	"vcd_nsxv_dhcp_relay":    datasourceVcdNsxvDhcpRelay(),    // 2.6
+	"vcd_nsxv_ip_set":        datasourceVcdIpSet(),            // 2.6
 }
 
 var globalResourceMap = map[string]*schema.Resource{
@@ -175,33 +174,8 @@ func Provider() terraform.ResourceProvider {
 			},
 		},
 
-		ResourcesMap: globalResourceMap,
-
-		DataSourcesMap: map[string]*schema.Resource{
-			"vcd_org":                datasourceVcdOrg(),              // 2.5
-			"vcd_org_vdc":            datasourceVcdOrgVdc(),           // 2.5
-			"vcd_catalog":            datasourceVcdCatalog(),          // 2.5
-			"vcd_catalog_media":      datasourceVcdCatalogMedia(),     // 2.5
-			"vcd_catalog_item":       datasourceVcdCatalogItem(),      // 2.5
-			"vcd_edgegateway":        datasourceVcdEdgeGateway(),      // 2.5
-			"vcd_external_network":   datasourceVcdExternalNetwork(),  // 2.5
-			"vcd_independent_disk":   datasourceVcIndependentDisk(),   // 2.5
-			"vcd_network_routed":     datasourceVcdNetworkRouted(),    // 2.5
-			"vcd_network_direct":     datasourceVcdNetworkDirect(),    // 2.5
-			"vcd_network_isolated":   datasourceVcdNetworkIsolated(),  // 2.5
-			"vcd_vapp":               datasourceVcdVApp(),             // 2.5
-			"vcd_vapp_vm":            datasourceVcdVAppVm(),           // 2.6
-			"vcd_lb_service_monitor": datasourceVcdLbServiceMonitor(), // 2.4
-			"vcd_lb_server_pool":     datasourceVcdLbServerPool(),     // 2.4
-			"vcd_lb_app_profile":     datasourceVcdLBAppProfile(),     // 2.4
-			"vcd_lb_app_rule":        datasourceVcdLBAppRule(),        // 2.4
-			"vcd_lb_virtual_server":  datasourceVcdLbVirtualServer(),  // 2.4
-			"vcd_nsxv_dnat":          datasourceVcdNsxvDnat(),         // 2.5
-			"vcd_nsxv_snat":          datasourceVcdNsxvSnat(),         // 2.5
-			"vcd_nsxv_firewall_rule": datasourceVcdNsxvFirewallRule(), // 2.5
-			"vcd_nsxv_dhcp_relay":    datasourceVcdNsxvDhcpRelay(),    // 2.6
-			"vcd_nsxv_ip_set":        datasourceVcdIpSet(),            // 2.6
-		},
+		ResourcesMap:   globalResourceMap,
+		DataSourcesMap: globalDataSourceMap,
 
 		ConfigureFunc: providerConfigure,
 	}
@@ -252,4 +226,46 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	}
 
 	return config.Client()
+}
+
+// vcdSchemaFilter is a function which allows to filters and export type 'map[string]*schema.Resource' which may hold
+// Terraform's native resource or data source list
+// When 'nameRegexp' is not empty - it will return only those matching the regexp
+// When 'includeDeprecated' is false - it will skip out the resources which have a DeprecationMessage set
+func vcdSchemaFilter(schemaMap map[string]*schema.Resource, nameRegexp string, includeDeprecated bool) (map[string]*schema.Resource, error) {
+	var (
+		err error
+		re  *regexp.Regexp
+	)
+	filteredResources := make(map[string]*schema.Resource)
+
+	// validate regex if it was provided
+	if nameRegexp != "" {
+		re, err = regexp.Compile(nameRegexp)
+		if err != nil {
+			return nil, fmt.Errorf("unable to compile regexp: %s", err)
+		}
+	}
+
+	// copy the map with filtering out unwanted object
+	for resourceName, schemaResource := range schemaMap {
+
+		// Skip deprecated resources if it was requested so
+		if !includeDeprecated && schemaResource.DeprecationMessage != "" {
+			continue
+		}
+		// If regex was defined - try to filter based on it
+		if re != nil {
+			// if it does not match regex - skip it
+			doesNotmatchRegex := !re.MatchString(resourceName)
+			if doesNotmatchRegex {
+				continue
+			}
+
+		}
+
+		filteredResources[resourceName] = schemaResource
+	}
+
+	return filteredResources, nil
 }

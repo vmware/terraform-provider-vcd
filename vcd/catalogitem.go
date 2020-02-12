@@ -47,7 +47,7 @@ func deleteCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) error {
 }
 
 // Finds catalog item which can be vapp template OVA or media ISO file
-func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.CatalogItem, error) {
+func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd.CatalogItem, error) {
 	log.Printf("[TRACE] Catalog item read initiated")
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
@@ -78,6 +78,10 @@ func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.Catal
 			return nil, errMessage
 		}
 		return nil, errMessage
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("unable to find catalog item %s: %s", identifier, err)
 	}
 
 	d.SetId(catalogItem.CatalogItem.ID)

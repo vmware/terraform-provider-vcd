@@ -176,3 +176,198 @@ func TestVcdResources(t *testing.T) {
 		})
 	}
 }
+
+func TestVcdResources(t *testing.T) {
+	type args struct {
+		nameRegexp        string
+		includeDeprecated bool
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    map[string]*schema.Resource
+		wantLen int
+		lenOnly bool // whether to ignore actual 'want' value if 'len' is ok
+		wantErr bool
+	}{
+		{
+			name:    "GetAllResources",
+			args:    args{nameRegexp: "", includeDeprecated: true},
+			want:    globalResourceMap,
+			wantLen: len(Provider().Resources()),
+			wantErr: false,
+		},
+		{
+			name:    "MatchExactResourceName",
+			args:    args{nameRegexp: "vcd_vapp_vm", includeDeprecated: false},
+			wantLen: 1, // should return only one because exact name was given
+			lenOnly: true,
+			wantErr: false,
+		},
+		{
+			name:    "MatchNoResources",
+			args:    args{nameRegexp: "NonExistingName", includeDeprecated: false},
+			want:    make(map[string]*schema.Resource),
+			wantLen: 0,
+			wantErr: false,
+		},
+		{
+			name:    "InvalidRegexpError",
+			args:    args{nameRegexp: "[0-9]++", includeDeprecated: false},
+			want:    nil,
+			wantLen: 0,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Resources(tt.args.nameRegexp, tt.args.includeDeprecated)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Resources() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if len(got) != tt.wantLen {
+				t.Errorf("Resources() returned = %d elements, want %d", len(got), tt.wantLen)
+			}
+
+			if !tt.lenOnly && !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Resources() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestVcdDataSources(t *testing.T) {
+	type args struct {
+		nameRegexp        string
+		includeDeprecated bool
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    map[string]*schema.Resource
+		wantLen int
+		lenOnly bool // whether to ignore actual 'want' value if 'len' is ok
+		wantErr bool
+	}{
+		{
+			name:    "GetAllDataSources",
+			args:    args{nameRegexp: "", includeDeprecated: true},
+			want:    globalDataSourceMap,
+			wantLen: len(Provider().DataSources()),
+			wantErr: false,
+		},
+		{
+			name:    "MatchExactDataSourceName",
+			args:    args{nameRegexp: "vcd_vapp_vm", includeDeprecated: false},
+			wantLen: 1, // should return only one because exact name was given
+			lenOnly: true,
+			wantErr: false,
+		},
+		{
+			name:    "MatchNoDataSources",
+			args:    args{nameRegexp: "NonExistingName", includeDeprecated: false},
+			want:    make(map[string]*schema.Resource),
+			wantLen: 0,
+			wantErr: false,
+		},
+		{
+			name:    "InvalidRegexpError",
+			args:    args{nameRegexp: "[0-9]++", includeDeprecated: false},
+			want:    nil,
+			wantLen: 0,
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := DataSources(tt.args.nameRegexp, tt.args.includeDeprecated)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Resources() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if len(got) != tt.wantLen {
+				t.Errorf("Resources() returned = %d elements, want %d", len(got), tt.wantLen)
+			}
+
+			if !tt.lenOnly && !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Resources() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestVcdSchemaFilter(t *testing.T) {
+
+	fakeSchema := make(map[string]*schema.Resource)
+	terraformObject := schema.Resource{}
+	deprecatedTerraformObject := schema.Resource{DeprecationMessage: "Deprecated"}
+	fakeSchema["resource_one"] = &terraformObject
+	fakeSchema["resource_two"] = &terraformObject
+	fakeSchema["resource_three"] = &deprecatedTerraformObject
+
+	type args struct {
+		nameRegexp        string
+		includeDeprecated bool
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    map[string]*schema.Resource
+		wantLen int
+		lenOnly bool // whether to ignore actual 'want' value if 'len' is ok
+		wantErr bool
+	}{
+		{
+			name:    "GetAllResources",
+			args:    args{nameRegexp: "", includeDeprecated: true},
+			want:    fakeSchema,
+			wantLen: len(fakeSchema),
+			wantErr: false,
+		},
+		{
+			name:    "MatchExactDataSourceName",
+			args:    args{nameRegexp: "resource_two", includeDeprecated: false},
+			wantLen: 1, // should return only one because exact name was given
+			lenOnly: true,
+			wantErr: false,
+		},
+		{
+			name:    "MatchNoDataSources",
+			args:    args{nameRegexp: "NonExistingName", includeDeprecated: false},
+			want:    make(map[string]*schema.Resource),
+			wantLen: 0,
+			wantErr: false,
+		},
+		{
+			name:    "OnlyNonDeprecated",
+			args:    args{nameRegexp: "", includeDeprecated: false},
+			want:    nil,
+			wantLen: 2,
+			lenOnly: true,
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := vcdSchemaFilter(fakeSchema, tt.args.nameRegexp, tt.args.includeDeprecated)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Resources() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if len(got) != tt.wantLen {
+				t.Errorf("Resources() returned = %d elements, want %d", len(got), tt.wantLen)
+			}
+
+			if !tt.lenOnly && !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Resources() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
