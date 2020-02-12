@@ -112,7 +112,7 @@ func datasourceVcdOrgRead(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		log.Printf("Org with id %s not found. Setting ID to nothing", identifier)
 		d.SetId("")
-		return fmt.Errorf("org %s not found", identifier)
+		return fmt.Errorf("org %s not found: %s", identifier, err)
 	}
 	log.Printf("Org with id %s found", identifier)
 	d.SetId(adminOrg.AdminOrg.ID)
