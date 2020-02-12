@@ -505,7 +505,7 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 
 // Deletes a VDC, optionally removing all objects in it as well
 func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[TRACE] VDC delete started")
+	log.Printf("[TRACE] VDC delete started %s", d.Get("name").(string))
 
 	vcdClient := meta.(*VCDClient)
 
