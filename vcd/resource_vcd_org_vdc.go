@@ -236,7 +236,8 @@ func resourceVcdOrgVdc() *schema.Resource {
 
 // Creates a new VDC from a resource definition
 func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[TRACE] VDC creation initiated for VDC: %s", d.Get("name").(string))
+	orgVdcName := d.Get("name").(string)
+	log.Printf("[TRACE] VDC creation initiated for VDC: %s", orgVdcName)
 
 	vcdClient := meta.(*VCDClient)
 
@@ -257,7 +258,6 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	orgVdcName := d.Get("name").(string)
 	orgVdc, _ := adminOrg.GetVDCByName(orgVdcName, false)
 	if orgVdc != nil {
 		return fmt.Errorf("org VDC with such name already exists: %s", orgVdcName)
