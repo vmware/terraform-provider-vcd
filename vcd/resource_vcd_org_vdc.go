@@ -236,7 +236,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 
 // Creates a new VDC from a resource definition
 func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[TRACE] VDC creation initiated")
+	log.Printf("[TRACE] VDC creation initiated for VDC: %s", d.Get("name").(string))
 
 	vcdClient := meta.(*VCDClient)
 
@@ -289,7 +289,8 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 
 // Fetches information about an existing VDC for a data definition
 func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[TRACE] VDC read initiated")
+	vdcName := d.Get("name").(string)
+	log.Printf("[TRACE] VDC read initiated for VDC: %s", vdcName)
 
 	vcdClient := meta.(*VCDClient)
 
@@ -298,10 +299,10 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	adminVdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
+	adminVdc, err := adminOrg.GetAdminVDCByName(vdcName, false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find VDC")
-		return fmt.Errorf("unable to find VDC %s", err)
+		log.Printf("[DEBUG] Unable to find VDC %s", vdcName)
+		return fmt.Errorf("unable to find VDC %s, err: %s", vdcName, err)
 	}
 
 	return setOrgVdcData(d, vcdClient, adminOrg, adminVdc)
@@ -370,10 +371,11 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 		_ = d.Set("include_vm_memory_overhead", *adminVdc.AdminVdc.IncludeMemoryOverhead)
 	}
 
-	vdc, err := adminOrg.GetVDCByName(d.Get("name").(string), false)
+	vdcName := d.Get("name").(string)
+	vdc, err := adminOrg.GetVDCByName(vdcName, false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find VDC")
-		return fmt.Errorf("unable to find VDC %s", err)
+		log.Printf("[DEBUG] Unable to find VDC %s", vdcName)
+		return fmt.Errorf("unable to find VDC %s, error:  %s", vdcName, err)
 	}
 	metadata, err := vdc.GetMetadata()
 	if err != nil {
@@ -461,7 +463,8 @@ func getMetadataStruct(metadata []*types.MetadataEntry) StringMap {
 
 //resourceVcdVdcUpdate function updates resource with found configurations changes
 func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[TRACE] VDC update initiated")
+	vdcName := d.Get("name").(string)
+	log.Printf("[TRACE] VDC %s update initiated", vdcName)
 
 	vcdClient := meta.(*VCDClient)
 
@@ -470,7 +473,6 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	vdcName := d.Get("name").(string)
 	if d.HasChange("name") {
 		oldValue, _ := d.GetChange("name")
 		vdcName = oldValue.(string)
@@ -478,20 +480,20 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	adminVdc, err := adminOrg.GetAdminVDCByName(vdcName, false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find VDC.")
-		return fmt.Errorf("unable to find VDC %s", err)
+		log.Printf("[DEBUG] Unable to find VDC %s", vdcName)
+		return fmt.Errorf("unable to find VDC %s, error:  %s", vdcName, err)
 	}
 
 	changedAdminVdc, err := getUpdatedVdcInput(d, vcdClient, adminVdc)
 	if err != nil {
-		log.Printf("[DEBUG] Error updating VDC %s", err)
-		return fmt.Errorf("error updating VDC %s", err)
+		log.Printf("[DEBUG] Error updating VDC %s with error %s", vdcName, err)
+		return fmt.Errorf("error updating VDC %s, err: %s", vdcName, err)
 	}
 
 	_, err = changedAdminVdc.Update()
 	if err != nil {
-		log.Printf("[DEBUG] Error updating VDC %s", err)
-		return fmt.Errorf("error updating VDC %s", err)
+		log.Printf("[DEBUG] Error updating VDC %s with error %s", vdcName, err)
+		return fmt.Errorf("error updating VDC %s, err: %s", vdcName, err)
 	}
 
 	err = createOrUpdateMetadata(d, meta)
@@ -505,11 +507,11 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 
 // Deletes a VDC, optionally removing all objects in it as well
 func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[TRACE] VDC delete started %s", d.Get("name").(string))
+	vdcName := d.Get("name").(string)
+	log.Printf("[TRACE] VDC delete started %s", vdcName)
 
 	vcdClient := meta.(*VCDClient)
 
-	vdcName := d.Get("name").(string)
 	if !vcdClient.Client.IsSysAdmin {
 		return fmt.Errorf("functionality requires system administrator privileges")
 	}
@@ -521,15 +523,15 @@ func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
 
 	vdc, err := adminOrg.GetVDCByName(vdcName, false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find VDC. Removing from tfstate")
+		log.Printf("[DEBUG] Unable to find VDC %s. Removing from tfstate", vdcName)
 		d.SetId("")
 		return nil
 	}
 
 	err = vdc.DeleteWait(d.Get("delete_force").(bool), d.Get("delete_recursive").(bool))
 	if err != nil {
-		log.Printf("[DEBUG] Error removing VDC %s", err)
-		return fmt.Errorf("error removing VDC %s", err)
+		log.Printf("[DEBUG] Error removing VDC %s, err: %s", vdcName, err)
+		return fmt.Errorf("error removing VDC %s, err: %s", vdcName, err)
 	}
 
 	_, err = adminOrg.GetVDCByName(vdcName, true)
@@ -914,8 +916,8 @@ func resourceVcdOrgVdcImport(d *schema.ResourceData, meta interface{}) ([]*schem
 
 	adminVdc, err := adminOrg.GetAdminVDCByName(vdcName, false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find VDC")
-		return nil, fmt.Errorf("unable to find VDC %s", err)
+		log.Printf("[DEBUG] Unable to find VDC %s", vdcName)
+		return nil, fmt.Errorf("unable to find VDC %s, err: %s", vdcName, err)
 	}
 
 	_ = d.Set("org", orgName)
