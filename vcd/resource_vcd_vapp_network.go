@@ -211,30 +211,17 @@ func resourceVappNetworkCreate(d *schema.ResourceData, meta interface{}) error {
 					EndAddress: data["end_address"].(string)}}
 		}
 	}
-	var task govcd.Task
+	var orgVdcNetwork *types.OrgVDCNetwork
 	if networkId, ok := d.GetOk("org_network"); ok {
 		orgNetwork, err := vdc.GetOrgVdcNetworkByNameOrId(networkId.(string), true)
+		orgVdcNetwork = orgNetwork.OrgVDCNetwork
 		if err != nil {
 			return err
 		}
-		task, err = vapp.AddNatRoutedNetwork(vappNetworkSettings, orgNetwork.OrgVDCNetwork)
-	} else {
-		task, err = vapp.AddIsolatedNetwork(vappNetworkSettings)
 	}
-
+	vAppNetworkConfig, err := vapp.AddNetwork(vappNetworkSettings, orgVdcNetwork)
 	if err != nil {
 		return fmt.Errorf("error creating vApp network. %#v", err)
-	}
-
-	err = task.WaitTaskCompletion()
-	if err != nil {
-		return fmt.Errorf("error waiting for task to complete: %+v", err)
-	}
-
-	// move to govcd? in read function too?
-	vAppNetworkConfig, err := vapp.GetNetworkConfig()
-	if err != nil {
-		return fmt.Errorf("error getting vApp networks: %#v", err)
 	}
 
 	vAppNetwork := types.VAppNetworkConfiguration{}
@@ -318,7 +305,9 @@ func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 		// TODO id or name should read ^^
-		d.Set("org_network", vAppNetwork.Configuration.ParentNetwork.Name)
+		if vAppNetwork.Configuration.ParentNetwork != nil {
+			d.Set("org_network", vAppNetwork.Configuration.ParentNetwork.Name)
+		}
 		d.Set("retain_ip_mac_enabled", vAppNetwork.Configuration.RetainNetInfoAcrossDeployments)
 		if vAppNetwork.Configuration.Features != nil && vAppNetwork.Configuration.Features.FirewallService != nil {
 			d.Set("firewall_enabled", vAppNetwork.Configuration.Features.FirewallService.IsEnabled)
@@ -397,16 +386,10 @@ func resourceVappNetworkUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	//TODO what about isolated
-	task, err := vapp.UpdateNetworkConfig(vappNetworkSettings, orgVdcNetwork)
+	_, err = vapp.UpdateNetwork(vappNetworkSettings, orgVdcNetwork)
 	if err != nil {
 		return fmt.Errorf("error creating vApp network. %#v", err)
 	}
-
-	err = task.WaitTaskCompletion()
-	if err != nil {
-		return fmt.Errorf("error waiting for task to complete: %+v", err)
-	}
-
 	return resourceVappNetworkRead(d, meta)
 }
 

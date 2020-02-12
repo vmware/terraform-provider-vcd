@@ -91,26 +91,14 @@ func resourceVappOrgNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 		RetainIpMacEnabled: &retainIpMacEnabled,
 	}
 
-	var task govcd.Task
 	orgNetwork, err := vdc.GetOrgVdcNetworkByNameOrId(d.Get("org_network").(string), true)
 	if err != nil {
 		return err
 	}
 
-	task, err = vapp.AddOrgNetwork(vappNetworkSettings, orgNetwork.OrgVDCNetwork, d.Get("is_fenced").(bool))
+	vAppNetworkConfig, err := vapp.AddOrgNetwork(vappNetworkSettings, orgNetwork.OrgVDCNetwork, d.Get("is_fenced").(bool))
 	if err != nil {
 		return fmt.Errorf("error creating vApp org network. %#v", err)
-	}
-
-	err = task.WaitTaskCompletion()
-	if err != nil {
-		return fmt.Errorf("error waiting for task to complete: %+v", err)
-	}
-
-	// move to govcd? in read function too?
-	vAppNetworkConfig, err := vapp.GetNetworkConfig()
-	if err != nil {
-		return fmt.Errorf("error getting vApp networks: %#v", err)
 	}
 
 	vAppNetwork := types.VAppNetworkConfiguration{}
@@ -209,14 +197,9 @@ func resourceVappOrgNetworkUpdate(d *schema.ResourceData, meta interface{}) erro
 		FirewallEnabled:    &fwEnabled,
 	}
 
-	task, err := vapp.UpdateOrgNetworkConfig(vappNetworkSettings, d.Get("is_fenced").(bool))
+	_, err = vapp.UpdateOrgNetwork(vappNetworkSettings, d.Get("is_fenced").(bool))
 	if err != nil {
 		return fmt.Errorf("error creating vApp network. %#v", err)
-	}
-
-	err = task.WaitTaskCompletion()
-	if err != nil {
-		return fmt.Errorf("error waiting for task to complete: %+v", err)
 	}
 
 	return resourceVappOrgNetworkRead(d, meta)
