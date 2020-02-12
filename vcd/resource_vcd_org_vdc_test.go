@@ -36,8 +36,8 @@ func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 		// cause vDC ignores empty values and use default
 		"MemoryGuaranteed": "1",
 		"CpuGuaranteed":    "1",
-		// These parameters for Flex allocation.
-		// Part of HCL created dynamically and with empty values we don't create Flex part
+		// Below parameters are for Flex allocation model.
+		// Part of HCL is created dynamically and with empty values we don't create the Flex part:
 		"equalsChar":                         "",
 		"FlexElasticKey":                     "",
 		"FlexElasticValue":                   "",
@@ -74,8 +74,8 @@ func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 		"FuncName":                  "TestAccVcdOrgVdcAllocationPool",
 		"MemoryGuaranteed":          "0.3",
 		"CpuGuaranteed":             "0.45",
-		// These parameters for Flex allocation.
-		// Part of HCL created dynamically and with empty values we don't create Flex part
+		// Below parameters are for Flex allocation model.
+		// Part of HCL is created dynamically and with empty values we don't create the Flex part:
 		"equalsChar":                         "",
 		"FlexElasticKey":                     "",
 		"FlexElasticValue":                   "",
@@ -113,8 +113,8 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 		"FuncName":                  "TestAccVcdOrgVdcAllocationVapp",
 		"MemoryGuaranteed":          "0.5",
 		"CpuGuaranteed":             "0.6",
-		// These parameters for Flex allocation.
-		// Part of HCL created dynamically and with empty values we don't create Flex part
+		// Below parameters are for Flex allocation model.
+		// Part of HCL is created dynamically and with empty values we don't create the Flex part:
 		"equalsChar":                         "",
 		"FlexElasticKey":                     "",
 		"FlexElasticValue":                   "",
@@ -163,8 +163,8 @@ func TestAccVcdOrgVdcAllocationFlex(t *testing.T) {
 		"FuncName":                  t.Name(),
 		"MemoryGuaranteed":          "0.5",
 		"CpuGuaranteed":             "0.6",
-		// These parameters for Flex allocation.
-		// Part of HCL created dynamically and these parameters allows provide keys an values.
+		// Below parameters are for Flex allocation model.
+		// Part of HCL is created dynamically and with empty values we don't create the Flex part:
 		"equalsChar":                         "=",
 		"FlexElasticKey":                     "elasticity",
 		"FlexElasticValue":                   "false",
