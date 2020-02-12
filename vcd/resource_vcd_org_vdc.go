@@ -237,7 +237,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 // Creates a new VDC from a resource definition
 func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 	orgVdcName := d.Get("name").(string)
-	log.Printf("[TRACE] VDC %s creation initiated", orgVdcName)
+	log.Printf("[TRACE] VDC creation initiated: %s", orgVdcName)
 
 	vcdClient := meta.(*VCDClient)
 
@@ -290,7 +290,7 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 // Fetches information about an existing VDC for a data definition
 func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 	vdcName := d.Get("name").(string)
-	log.Printf("[TRACE] VDC %s read initiated", vdcName)
+	log.Printf("[TRACE] VDC read initiated: %s", vdcName)
 
 	vcdClient := meta.(*VCDClient)
 
@@ -464,7 +464,7 @@ func getMetadataStruct(metadata []*types.MetadataEntry) StringMap {
 //resourceVcdVdcUpdate function updates resource with found configurations changes
 func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 	vdcName := d.Get("name").(string)
-	log.Printf("[TRACE] VDC %s update initiated", vdcName)
+	log.Printf("[TRACE] VDC update initiated: %s", vdcName)
 
 	vcdClient := meta.(*VCDClient)
 
