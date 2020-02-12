@@ -5,7 +5,7 @@ FEATURES:
 * **New Resource:** `vcd_vm_internal_disk` VM internal disk configuration [GH-412]
 * `vcd_vapp_vm` Internal disks in VM template allows to be edited by `override_template_disk` field
   [GH-412]
-* `vcd_org_vdc` can be created with Flex allocation in vCD 9.7 and later. Also two new fields added for Flex - `elasticity`, `include_vm_memory_overhead` [#443]
+* `vcd_org_vdc` can be created with Flex allocation in vCD 9.7 and later. Also two new fields added for Flex - `elasticity`, `include_vm_memory_overhead` [GH-443]
 
 IMPROVEMENTS:
 

@@ -180,12 +180,12 @@ func datasourceVcdOrgVdc() *schema.Resource {
 			"elasticity": &schema.Schema{
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Set to true to indicate if the Flex vDC is to be elastic.",
+				Description: "True if the Flex VDC is elastic.",
 			},
 			"include_vm_memory_overhead": &schema.Schema{
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "Set to true to indicate if the Flex vDC is to include memory overhead into its accounting for admission control.",
+				Description: "True if the Flex VDC includes memory overhead into its accounting for admission control.",
 			},
 			"metadata": {
 				Type:        schema.TypeMap,

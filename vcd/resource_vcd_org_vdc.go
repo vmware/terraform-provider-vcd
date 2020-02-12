@@ -205,23 +205,23 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Computed:    true,
-				Description: "Set to true to indicate if the Flex vDC is to be elastic.",
+				Description: "Set to true to indicate if the Flex VDC is to be elastic.",
 			},
 			"include_vm_memory_overhead": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Computed:    true,
-				Description: "Set to true to indicate if the Flex vDC is to include memory overhead into its accounting for admission control.",
+				Description: "Set to true to indicate if the Flex VDC is to include memory overhead into its accounting for admission control.",
 			},
 			"delete_force": &schema.Schema{
 				Type:        schema.TypeBool,
 				Required:    true,
-				Description: "When destroying use delete_force=True to remove a vdc and any objects it contains, regardless of their state.",
+				Description: "When destroying use delete_force=True to remove a VDC and any objects it contains, regardless of their state.",
 			},
 			"delete_recursive": &schema.Schema{
 				Type:        schema.TypeBool,
 				Required:    true,
-				Description: "When destroying use delete_recursive=True to remove the vdc and any objects it contains that are in a state that normally allows removal.",
+				Description: "When destroying use delete_recursive=True to remove the VDC and any objects it contains that are in a state that normally allows removal.",
 			},
 			"metadata": {
 				Type:        schema.TypeMap,
@@ -234,9 +234,9 @@ func resourceVcdOrgVdc() *schema.Resource {
 	}
 }
 
-// Creates a new vdc from a resource definition
+// Creates a new VDC from a resource definition
 func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[TRACE] vdc creation initiated")
+	log.Printf("[TRACE] VDC creation initiated")
 
 	vcdClient := meta.(*VCDClient)
 
@@ -248,10 +248,10 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 	_, elasticityConfigured := d.GetOkExists("elasticity")
 	_, vmMemoryOverheadConfigured := d.GetOkExists("include_vm_memory_overhead")
 	if d.Get("allocation_model").(string) != "Flex" && (elasticityConfigured || vmMemoryOverheadConfigured) {
-		return fmt.Errorf("`elasticity` and `include_vm_memory_overhead` can be used only with Flex allocation model")
+		return fmt.Errorf("`elasticity` and `include_vm_memory_overhead` can be used only with Flex allocation model (vCD 9.7+)")
 	}
 
-	// vdc creation is accessible only in administrator API part
+	// VDC creation is accessible only in administrator API part
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrg, err)
@@ -268,16 +268,16 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	log.Printf("[DEBUG] Creating vdc: %#v", params)
+	log.Printf("[DEBUG] Creating VDC: %#v", params)
 
 	vdc, err := adminOrg.CreateOrgVdc(params)
 	if err != nil {
-		log.Printf("[DEBUG] Error creating vdc: %s", err)
-		return fmt.Errorf("error creating vdc: %s", err)
+		log.Printf("[DEBUG] Error creating VDC: %s", err)
+		return fmt.Errorf("error creating VDC: %s", err)
 	}
 
 	d.SetId(vdc.Vdc.ID)
-	log.Printf("[TRACE] vdc created: %#v", vdc)
+	log.Printf("[TRACE] VDC created: %#v", vdc)
 
 	err = createOrUpdateMetadata(d, meta)
 	if err != nil {
@@ -287,9 +287,9 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 	return resourceVcdVdcRead(d, meta)
 }
 
-// Fetches information about an existing vdc for a data definition
+// Fetches information about an existing VDC for a data definition
 func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[TRACE] vdc read initiated")
+	log.Printf("[TRACE] VDC read initiated")
 
 	vcdClient := meta.(*VCDClient)
 
@@ -461,7 +461,7 @@ func getMetadataStruct(metadata []*types.MetadataEntry) StringMap {
 
 //resourceVcdVdcUpdate function updates resource with found configurations changes
 func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[TRACE] vdc update initiated")
+	log.Printf("[TRACE] VDC update initiated")
 
 	vcdClient := meta.(*VCDClient)
 
@@ -499,13 +499,13 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error updating VDC metadata: %s", err)
 	}
 
-	log.Printf("[TRACE] vdc update completed: %s", adminVdc.AdminVdc.Name)
+	log.Printf("[TRACE] VDC update completed: %s", adminVdc.AdminVdc.Name)
 	return resourceVcdVdcRead(d, meta)
 }
 
-// Deletes a vdc, optionally removing all objects in it as well
+// Deletes a VDC, optionally removing all objects in it as well
 func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[TRACE] vdc delete started")
+	log.Printf("[TRACE] VDC delete started")
 
 	vcdClient := meta.(*VCDClient)
 
@@ -521,22 +521,22 @@ func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
 
 	vdc, err := adminOrg.GetVDCByName(vdcName, false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find vdc. Removing from tfstate")
+		log.Printf("[DEBUG] Unable to find VDC. Removing from tfstate")
 		d.SetId("")
 		return nil
 	}
 
 	err = vdc.DeleteWait(d.Get("delete_force").(bool), d.Get("delete_recursive").(bool))
 	if err != nil {
-		log.Printf("[DEBUG] Error removing vdc %s", err)
-		return fmt.Errorf("error removing vdc %s", err)
+		log.Printf("[DEBUG] Error removing VDC %s", err)
+		return fmt.Errorf("error removing VDC %s", err)
 	}
 
 	_, err = adminOrg.GetVDCByName(vdcName, true)
 	if err == nil {
 		return fmt.Errorf("vdc %s still found after deletion", vdcName)
 	}
-	log.Printf("[TRACE] vdc delete completed: %s", vdcName)
+	log.Printf("[TRACE] VDC delete completed: %s", vdcName)
 	return nil
 }
 
@@ -706,13 +706,11 @@ func getUpdatedVdcInput(d *schema.ResourceData, vcdClient *VCDClient, vdc *govcd
 	}
 
 	if d.HasChange("elasticity") {
-		elasticityPt := d.Get("elasticity").(bool)
-		vdc.AdminVdc.IsElastic = &elasticityPt
+		vdc.AdminVdc.IsElastic = takeBoolPointer(d.Get("elasticity").(bool))
 	}
 
 	if d.HasChange("include_vm_memory_overhead") {
-		memoryOverheadPt := d.Get("include_vm_memory_overhead").(bool)
-		vdc.AdminVdc.IncludeMemoryOverhead = &memoryOverheadPt
+		vdc.AdminVdc.IncludeMemoryOverhead = takeBoolPointer(d.Get("include_vm_memory_overhead").(bool))
 	}
 
 	//cleanup
