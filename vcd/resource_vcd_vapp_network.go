@@ -231,10 +231,7 @@ func resourceVappNetworkCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	// TODO
-	//d.SetId(d.Get("name").(string))
-	// we need not changeable value
-	// Parsing UUID from 'https://bos1-vcloud-static-170-210.eng.vmware.com/api/admin/network/6ced8e2f-29dd-4201-9801-a02cb8bed821/action/reset'
+	// Parsing UUID from 'https://bos1-vcloud-static-170-210.eng.vmware.com/api/admin/network/6ced8e2f-29dd-4201-9801-a02cb8bed821/action/reset' or similar
 	networkId, err := govcd.GetUuidFromHref(vAppNetwork.Link.HREF)
 	if err != nil {
 		return fmt.Errorf("unable to get network ID from HREF: %s", err)
@@ -262,17 +259,16 @@ func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error getting vApp networks: %#v", err)
 	}
 
-	// TODO make read by ID and then by name
-
 	vAppNetwork := types.VAppNetworkConfiguration{}
 	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
 		networkId, err := govcd.GetUuidFromHref(networkConfig.Link.HREF)
 		if err != nil {
 			return fmt.Errorf("unable to get network ID from HREF: %s", err)
 		}
-		//name check to support old Id's which are names
+		// name check needed to support old resource Id's which was names
 		if d.Id() == networkId || networkConfig.NetworkName == d.Get("name").(string) {
 			vAppNetwork = networkConfig
+			break
 		}
 	}
 
@@ -286,8 +282,6 @@ func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("description", vAppNetwork.Description)
 	d.Set("href", vAppNetwork.HREF)
 	if c := vAppNetwork.Configuration; c != nil {
-		// TODO not appears in state file
-		//d.Set("fence_mode", c.FenceMode)
 		if c.IPScopes != nil {
 			d.Set("gateway", c.IPScopes.IPScope[0].Gateway)
 			d.Set("netmask", c.IPScopes.IPScope[0].Netmask)
@@ -304,7 +298,6 @@ func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
 				return err
 			}
 		}
-		// TODO id or name should read ^^
 		if vAppNetwork.Configuration.ParentNetwork != nil {
 			d.Set("org_network", vAppNetwork.Configuration.ParentNetwork.Name)
 		}
@@ -385,7 +378,6 @@ func resourceVappNetworkUpdate(d *schema.ResourceData, meta interface{}) error {
 		orgVdcNetwork = orgNetwork.OrgVDCNetwork
 	}
 
-	//TODO what about isolated
 	_, err = vapp.UpdateNetwork(vappNetworkSettings, orgVdcNetwork)
 	if err != nil {
 		return fmt.Errorf("error creating vApp network. %#v", err)
@@ -408,15 +400,9 @@ func resourceVappNetworkDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error finding vApp: %#v", err)
 	}
 
-	//TODO change remove by Id
-	task, err := vapp.RemoveIsolatedNetwork(d.Get("name").(string))
+	_, err = vapp.RemoveNetwork(d.Id())
 	if err != nil {
 		return fmt.Errorf("error removing vApp network: %#v", err)
-	}
-
-	err = task.WaitTaskCompletion()
-	if err != nil {
-		return fmt.Errorf("error waiting for task to complete: %+v", err)
 	}
 
 	d.SetId("")

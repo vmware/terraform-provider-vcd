@@ -220,15 +220,9 @@ func resourceVappOrgNetworkDelete(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("error finding vApp: %#v", err)
 	}
 
-	//TODO change remove by Id
-	task, err := vapp.RemoveIsolatedNetwork(d.Get("org_network").(string))
+	_, err = vapp.RemoveNetwork(d.Id())
 	if err != nil {
 		return fmt.Errorf("error removing vApp network: %#v", err)
-	}
-
-	err = task.WaitTaskCompletion()
-	if err != nil {
-		return fmt.Errorf("error waiting for task to complete: %+v", err)
 	}
 
 	d.SetId("")
