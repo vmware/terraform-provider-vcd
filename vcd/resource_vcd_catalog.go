@@ -135,34 +135,6 @@ func vcdResourceVcdCatalogDelete(d vcdResourceDataInterface, meta interface{}) e
 	return nil
 }
 
-//
-// func resourceVcdCatalogDelete(d *schema.ResourceData, meta interface{}) error {
-// 	log.Printf("[TRACE] Catalog delete started")
-//
-// 	vcdClient := meta.(*VCDClient)
-//
-// 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
-// 	if err != nil {
-// 		return fmt.Errorf(errorRetrievingOrg, err)
-// 	}
-//
-// 	adminCatalog, err := adminOrg.GetAdminCatalogByNameOrId(d.Id(), false)
-// 	if err != nil {
-// 		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
-// 		d.SetId("")
-// 		return nil
-// 	}
-//
-// 	err = adminCatalog.Delete(d.Get("delete_force").(bool), d.Get("delete_recursive").(bool))
-// 	if err != nil {
-// 		log.Printf("[DEBUG] Error removing catalog %#v", err)
-// 		return fmt.Errorf("error removing catalog %#v", err)
-// 	}
-//
-// 	log.Printf("[TRACE] Catalog delete completed: %#v", adminCatalog.AdminCatalog)
-// 	return nil
-// }
-
 // Imports a Catalog into Terraform state
 // This function task is to get the data from vCD and fill the resource data container
 // Expects the d.ID() to be a path to the resource made of org_name.catalog_name
