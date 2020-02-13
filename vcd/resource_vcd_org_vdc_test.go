@@ -35,6 +35,8 @@ func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 		"Allocated":                 "1024",
 		"Reserved":                  "1024",
 		"Limit":                     "1024",
+		"LimitIncreased":            "1100",
+		"AllocatedIncreased":        "1100",
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  "TestAccVcdOrgVdcReservationPool",
@@ -89,6 +91,8 @@ func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 		"Allocated":                 "2048",
 		"Reserved":                  "1024",
 		"Limit":                     "2048",
+		"LimitIncreased":            "2148",
+		"AllocatedIncreased":        "2148",
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  "TestAccVcdOrgVdcAllocationPool",
@@ -142,6 +146,8 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 		"Allocated":                 "0",
 		"Reserved":                  "0",
 		"Limit":                     "2048",
+		"LimitIncreased":            "2148",
+		"AllocatedIncreased":        "0",
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  "TestAccVcdOrgVdcAllocationVapp",
@@ -201,6 +207,8 @@ func TestAccVcdOrgVdcAllocationFlex(t *testing.T) {
 		"Allocated":                 "1024",
 		"Reserved":                  "0",
 		"Limit":                     "1024",
+		"LimitIncreased":            "1124",
+		"AllocatedIncreased":        "1124",
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  t.Name(),
@@ -362,9 +370,9 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.default", "true"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.allocated", params["Allocated"].(string)),
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.allocated", params["AllocatedIncreased"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.limit", params["Limit"].(string)),
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.limit", params["LimitIncreased"].(string)),
 					resource.TestMatchResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.overhead", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
@@ -372,9 +380,9 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 					resource.TestMatchResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.used", regexp.MustCompile(`^\d+$`)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.allocated", params["Allocated"].(string)),
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.allocated", params["AllocatedIncreased"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.limit", params["Limit"].(string)),
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.limit", params["LimitIncreased"].(string)),
 					resource.TestMatchResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.overhead", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
@@ -536,13 +544,13 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
 
   compute_capacity {
     cpu {
-      allocated = "{{.Allocated}}"
-      limit     = "{{.Limit}}"
+      allocated = "{{.AllocatedIncreased}}"
+      limit     = "{{.LimitIncreased}}"
     }
 
     memory {
-      allocated = "{{.Allocated}}"
-      limit     = "{{.Limit}}"
+      allocated = "{{.AllocatedIncreased}}"
+      limit     = "{{.LimitIncreased}}"
     }
   }
 

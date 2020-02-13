@@ -608,17 +608,17 @@ func capacityWithUsage(d map[string]interface{}, units string) *types.CapacityWi
 func getUpdatedVdcInput(d *schema.ResourceData, vcdClient *VCDClient, vdc *govcd.AdminVdc) (*govcd.AdminVdc, error) {
 
 	if d.HasChange("compute_capacity") {
-		computeCapacityList := d.Get("compute_capacity").(*schema.Set).List()
+		computeCapacityList := d.Get("compute_capacity").([]interface{})
 		if len(computeCapacityList) == 0 {
 			return &govcd.AdminVdc{}, errors.New("no compute_capacity field")
 		}
 		computeCapacity := computeCapacityList[0].(map[string]interface{})
 
-		cpuCapacityList := computeCapacity["cpu"].(*schema.Set).List()
+		cpuCapacityList := computeCapacity["cpu"].([]interface{})
 		if len(cpuCapacityList) == 0 {
 			return &govcd.AdminVdc{}, errors.New("no cpu field in compute_capacity")
 		}
-		memoryCapacityList := computeCapacity["memory"].(*schema.Set).List()
+		memoryCapacityList := computeCapacity["memory"].([]interface{})
 		if len(memoryCapacityList) == 0 {
 			return &govcd.AdminVdc{}, errors.New("no memory field in compute_capacity")
 		}
