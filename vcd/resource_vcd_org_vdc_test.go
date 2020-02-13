@@ -19,6 +19,11 @@ func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 	}
 	validateConfiguration(t)
 
+	vcdClient, err := getTestVCDFromJson(testConfig)
+	if err != nil {
+		t.Skip("unable to validate vCD version - skipping test")
+	}
+
 	allocationModel := "ReservationPool"
 
 	var params = StringMap{
@@ -42,14 +47,23 @@ func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 		"FlexElasticKey":                     "",
 		"FlexElasticValue":                   "",
 		"FlexElasticValueUpdate":             "",
-		"ElasticityValueForAssert":           "false",
-		"ElasticityUpdateValueForAssert":     "false",
+		"ElasticityValueForAssert":           "",
+		"ElasticityUpdateValueForAssert":     "",
 		"FlexMemoryOverheadKey":              "",
 		"FlexMemoryOverheadValue":            "",
 		"FlexMemoryOverheadValueUpdate":      "",
-		"MemoryOverheadValueForAssert":       "true",
-		"MemoryOverheadUpdateValueForAssert": "true",
+		"MemoryOverheadValueForAssert":       "",
+		"MemoryOverheadUpdateValueForAssert": "",
 	}
+
+	// In version 9.7+ the properties are returned false by default
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 32.0") {
+		params["MemoryOverheadValueForAssert"] = "true"
+		params["MemoryOverheadUpdateValueForAssert"] = "true"
+		params["ElasticityValueForAssert"] = "false"
+		params["ElasticityUpdateValueForAssert"] = "false"
+	}
+
 	runOrgVdcTest(t, params, allocationModel)
 }
 
@@ -58,6 +72,12 @@ func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
 	}
 	validateConfiguration(t)
+
+	vcdClient, err := getTestVCDFromJson(testConfig)
+	if err != nil {
+		t.Skip("unable to validate vCD version - skipping test")
+	}
+
 	allocationModel := "AllocationPool"
 
 	var params = StringMap{
@@ -80,14 +100,23 @@ func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 		"FlexElasticKey":                     "",
 		"FlexElasticValue":                   "",
 		"FlexElasticValueUpdate":             "",
-		"ElasticityValueForAssert":           "false",
-		"ElasticityUpdateValueForAssert":     "false",
+		"ElasticityValueForAssert":           "",
+		"ElasticityUpdateValueForAssert":     "",
 		"FlexMemoryOverheadKey":              "",
 		"FlexMemoryOverheadValue":            "",
 		"FlexMemoryOverheadValueUpdate":      "",
-		"MemoryOverheadValueForAssert":       "true",
-		"MemoryOverheadUpdateValueForAssert": "true",
+		"MemoryOverheadValueForAssert":       "",
+		"MemoryOverheadUpdateValueForAssert": "",
 	}
+
+	// In version 9.7+ the properties are returned false by default
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 32.0") {
+		params["MemoryOverheadValueForAssert"] = "true"
+		params["MemoryOverheadUpdateValueForAssert"] = "true"
+		params["ElasticityValueForAssert"] = "false"
+		params["ElasticityUpdateValueForAssert"] = "false"
+	}
+
 	runOrgVdcTest(t, params, allocationModel)
 }
 
@@ -96,6 +125,11 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
 	}
 	validateConfiguration(t)
+
+	vcdClient, err := getTestVCDFromJson(testConfig)
+	if err != nil {
+		t.Skip("unable to validate vCD version - skipping test")
+	}
 
 	allocationModel := "AllocationVApp"
 
@@ -119,14 +153,23 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 		"FlexElasticKey":                     "",
 		"FlexElasticValue":                   "",
 		"FlexElasticValueUpdate":             "",
-		"ElasticityValueForAssert":           "true",
-		"ElasticityUpdateValueForAssert":     "true",
+		"ElasticityValueForAssert":           "",
+		"ElasticityUpdateValueForAssert":     "",
 		"FlexMemoryOverheadKey":              "",
 		"FlexMemoryOverheadValue":            "",
 		"FlexMemoryOverheadValueUpdate":      "",
-		"MemoryOverheadValueForAssert":       "false",
-		"MemoryOverheadUpdateValueForAssert": "false",
+		"MemoryOverheadValueForAssert":       "",
+		"MemoryOverheadUpdateValueForAssert": "",
 	}
+
+	// In version 9.7+ the properties are returned false by default
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 32.0") {
+		params["MemoryOverheadValueForAssert"] = "false"
+		params["MemoryOverheadUpdateValueForAssert"] = "false"
+		params["ElasticityValueForAssert"] = "true"
+		params["ElasticityUpdateValueForAssert"] = "true"
+	}
+
 	runOrgVdcTest(t, params, allocationModel)
 }
 
@@ -271,9 +314,9 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 					resource.TestMatchResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.used", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "elasticity", regexp.MustCompile(`^(|`+params["ElasticityValueForAssert"].(string)+`)$`)),
+						"vcd_org_vdc."+TestAccVcdVdc, "elasticity", regexp.MustCompile(`^`+params["ElasticityValueForAssert"].(string)+`$`)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "include_vm_memory_overhead", regexp.MustCompile(`^(|`+params["MemoryOverheadValueForAssert"].(string)+`)$`)),
+						"vcd_org_vdc."+TestAccVcdVdc, "include_vm_memory_overhead", regexp.MustCompile(`^`+params["MemoryOverheadValueForAssert"].(string)+`$`)),
 				),
 			},
 			resource.TestStep{
@@ -339,9 +382,9 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 					resource.TestMatchResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.used", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "elasticity", regexp.MustCompile(`^(|`+params["ElasticityUpdateValueForAssert"].(string)+`)$`)),
+						"vcd_org_vdc."+TestAccVcdVdc, "elasticity", regexp.MustCompile(`^`+params["ElasticityUpdateValueForAssert"].(string)+`$`)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "include_vm_memory_overhead", regexp.MustCompile(`^(|`+params["MemoryOverheadUpdateValueForAssert"].(string)+`)$`)),
+						"vcd_org_vdc."+TestAccVcdVdc, "include_vm_memory_overhead", regexp.MustCompile(`^`+params["MemoryOverheadUpdateValueForAssert"].(string)+`$`)),
 				),
 			},
 			resource.TestStep{
