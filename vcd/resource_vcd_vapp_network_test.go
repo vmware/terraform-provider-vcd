@@ -4,6 +4,7 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -19,35 +20,80 @@ const newVappNetworkName = "TestAccVcdVappNetwork_Basic"
 const netmask = "255.255.255.0"
 const guestVlanAllowed = "true"
 
-func TestAccVcdVappNetwork_Basic(t *testing.T) {
+func TestAccVcdVappNetwork_Isolated(t *testing.T) {
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 
-	resourceName := "TestVappNetwork"
-
 	var params = StringMap{
-		"Org":              testConfig.VCD.Org,
-		"Vdc":              testConfig.VCD.Vdc,
-		"resourceName":     resourceName,
-		"vappNetworkName":  newVappNetworkName,
-		"gateway":          gateway,
-		"netmask":          netmask,
-		"dns1":             dns1,
-		"dns2":             dns2,
-		"dnsSuffix":        dnsSuffix,
-		"guestVlanAllowed": guestVlanAllowed,
-		"startAddress":     "192.168.1.10",
-		"endAddress":       "192.168.1.20",
-		"vappName":         vappNameForNetworkTest,
-		"maxLeaseTime":     "7200",
-		"defaultLeaseTime": "3600",
-		"dhcpStartAddress": "192.168.1.21",
-		"dhcpEndAddress":   "192.168.1.22",
-		"dhcpEnabled":      "true",
+		"Org":                testConfig.VCD.Org,
+		"Vdc":                testConfig.VCD.Vdc,
+		"resourceName":       resourceName,
+		"vappNetworkName":    newVappNetworkName,
+		"gateway":            gateway,
+		"netmask":            netmask,
+		"dns1":               dns1,
+		"dns2":               dns2,
+		"dnsSuffix":          dnsSuffix,
+		"guestVlanAllowed":   guestVlanAllowed,
+		"startAddress":       "192.168.1.10",
+		"endAddress":         "192.168.1.20",
+		"vappName":           vappNameForNetworkTest,
+		"maxLeaseTime":       "7200",
+		"defaultLeaseTime":   "3600",
+		"dhcpStartAddress":   "192.168.1.21",
+		"dhcpEndAddress":     "192.168.1.22",
+		"dhcpEnabled":        "true",
+		"EdgeGateway":        testConfig.Networking.EdgeGateway,
+		"NetworkName":        "TestAccVcdVAppNet",
+		"orgNetwork":         "",
+		"firewallEnabled":    "false",
+		"natEnabled":         "false",
+		"retainIpMacEnabled": "false",
 	}
 
+	rungVappNetworkTest(t, params)
+}
+
+func TestAccVcdVappNetwork_Nat(t *testing.T) {
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	var params = StringMap{
+		"Org":                testConfig.VCD.Org,
+		"Vdc":                testConfig.VCD.Vdc,
+		"resourceName":       resourceName,
+		"vappNetworkName":    newVappNetworkName,
+		"gateway":            gateway,
+		"netmask":            netmask,
+		"dns1":               dns1,
+		"dns2":               dns2,
+		"dnsSuffix":          dnsSuffix,
+		"guestVlanAllowed":   guestVlanAllowed,
+		"startAddress":       "192.168.1.10",
+		"endAddress":         "192.168.1.20",
+		"vappName":           vappNameForNetworkTest,
+		"maxLeaseTime":       "7200",
+		"defaultLeaseTime":   "3600",
+		"dhcpStartAddress":   "192.168.1.21",
+		"dhcpEndAddress":     "192.168.1.22",
+		"dhcpEnabled":        "true",
+		"EdgeGateway":        testConfig.Networking.EdgeGateway,
+		"NetworkName":        "TestAccVcdVAppNet",
+		"orgNetwork":         "TestAccVcdVAppNet",
+		"firewallEnabled":    "false",
+		"natEnabled":         "false",
+		"retainIpMacEnabled": "true",
+		"FuncName":           "TestAccVcdVappNetwork_Nat",
+	}
+
+	rungVappNetworkTest(t, params)
+}
+
+func rungVappNetworkTest(t *testing.T, params StringMap) {
 	configText := templateFill(testAccCheckVappNetwork_basic, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
@@ -59,19 +105,19 @@ func TestAccVcdVappNetwork_Basic(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVappNetworkExists("vcd_vapp_network."+resourceName),
+					testAccCheckVappNetworkExists("vcd_vapp_network."+params["resourceName"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+resourceName, "gateway", gateway),
+						"vcd_vapp_network."+params["resourceName"].(string), "gateway", gateway),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+resourceName, "netmask", netmask),
+						"vcd_vapp_network."+params["resourceName"].(string), "netmask", netmask),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+resourceName, "dns1", dns1),
+						"vcd_vapp_network."+params["resourceName"].(string), "dns1", dns1),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+resourceName, "dns2", dns2),
+						"vcd_vapp_network."+params["resourceName"].(string), "dns2", dns2),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+resourceName, "dns_suffix", dnsSuffix),
+						"vcd_vapp_network."+params["resourceName"].(string), "dns_suffix", dnsSuffix),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+resourceName, "guest_vlan_allowed", guestVlanAllowed),
+						"vcd_vapp_network."+params["resourceName"].(string), "guest_vlan_allowed", guestVlanAllowed),
 				),
 			},
 		},
@@ -144,7 +190,11 @@ func isVappNetworkFound(conn *VCDClient, rs *terraform.ResourceState, origin str
 
 	var found bool
 	for _, vappNetworkConfig := range networkConfig.NetworkConfig {
-		if vappNetworkConfig.NetworkName == newVappNetworkName && vappNetworkConfig.Configuration.IPScopes.IPScope[0].DNSSuffix == dnsSuffix {
+		networkId, err := govcd.GetUuidFromHref(vappNetworkConfig.Link.HREF)
+		if err != nil {
+			return false, fmt.Errorf("unable to get network ID from HREF: %s", err)
+		}
+		if networkId == rs.Primary.ID {
 			found = true
 		}
 	}
@@ -157,6 +207,19 @@ resource "vcd_vapp" "{{.vappName}}" {
   name = "{{.vappName}}"
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
+}
+
+resource "vcd_network_routed" "{{.NetworkName}}" {
+  name         = "{{.NetworkName}}"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  gateway      = "10.10.102.1"
+
+  static_ip_pool {
+    start_address = "10.10.102.2"
+    end_address   = "10.10.102.254"
+  }
 }
 
 resource "vcd_vapp_network" "{{.resourceName}}" {
@@ -184,6 +247,11 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
     enabled            = "{{.dhcpEnabled}}"
   }
 
-  depends_on = ["vcd_vapp.{{.vappName}}"]
+  org_network           = "{{.orgNetwork}}"
+  firewall_enabled      = "{{.firewallEnabled}}"
+  nat_enabled           = "{{.natEnabled}}"
+  retain_ip_mac_enabled = "{{.retainIpMacEnabled}}"
+
+  depends_on = ["vcd_vapp.{{.vappName}}", "vcd_network_routed.{{.NetworkName}}"]
 }
 `

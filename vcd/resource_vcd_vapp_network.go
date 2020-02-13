@@ -214,10 +214,10 @@ func resourceVappNetworkCreate(d *schema.ResourceData, meta interface{}) error {
 	var orgVdcNetwork *types.OrgVDCNetwork
 	if networkId, ok := d.GetOk("org_network"); ok {
 		orgNetwork, err := vdc.GetOrgVdcNetworkByNameOrId(networkId.(string), true)
-		orgVdcNetwork = orgNetwork.OrgVDCNetwork
 		if err != nil {
 			return err
 		}
+		orgVdcNetwork = orgNetwork.OrgVDCNetwork
 	}
 	vAppNetworkConfig, err := vapp.AddNetwork(vappNetworkSettings, orgVdcNetwork)
 	if err != nil {
