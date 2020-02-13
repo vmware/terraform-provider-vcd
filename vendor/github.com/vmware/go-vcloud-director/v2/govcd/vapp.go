@@ -996,6 +996,13 @@ func (vapp *VApp) UpdateNetworkAsync(networkSettingsToUpdate *VappNetworkSetting
 		networkToUpdate.Configuration.Features.NatService = &types.NatService{IsEnabled: *networkSettingsToUpdate.NatEnabled, NatType: "ipTranslation", Policy: "allowTrafficIn"}
 	}
 
+	if networkToUpdate.Configuration.Features.FirewallService != nil && networkSettingsToUpdate.FirewallEnabled != nil {
+		networkToUpdate.Configuration.Features.FirewallService.IsEnabled = *networkSettingsToUpdate.FirewallEnabled
+	}
+	if networkToUpdate.Configuration.Features.FirewallService == nil && networkSettingsToUpdate.FirewallEnabled != nil {
+		networkToUpdate.Configuration.Features.FirewallService = &types.FirewallService{IsEnabled: *networkSettingsToUpdate.FirewallEnabled}
+	}
+
 	networkToUpdate.Configuration.Features.FirewallService.IsEnabled = *networkSettingsToUpdate.FirewallEnabled
 	networkToUpdate.Configuration.RetainNetInfoAcrossDeployments = networkSettingsToUpdate.RetainIpMacEnabled
 	if networkToUpdate.Configuration.ParentNetwork != nil && orgNetwork != nil && networkToUpdate.Configuration.ParentNetwork.HREF != orgNetwork.HREF {
