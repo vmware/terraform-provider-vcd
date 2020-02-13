@@ -77,7 +77,7 @@ func getMandatoryDataSourceSchemaFields(dataSourceName string) []string {
 	return mandatoryFields
 }
 
-// getMandatoryDataSourceRuntimeFields contains ItemDelete exceptions where the schema does not require field, but it is
+// getMandatoryDataSourceRuntimeFields contains some exceptions where the schema does not require field, but it is
 // validated during runtime and is mandatory
 func getMandatoryDataSourceRuntimeFields(dataSourceName string) []string {
 	// vcd_independent_disk validates at runtime if `id` or `name` are required
@@ -113,7 +113,7 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			}
 			templateFields = templateFields + `vapp_name = "` + vapp.VApp.Name + `"` + "\n"
 
-			// Invalid fields which are required for ItemDelete resources for search (usually they are used instead of `name`)
+			// Invalid fields which are required for some resources for search (usually they are used instead of `name`)
 		case "rule_id":
 			templateFields = templateFields + `rule_id = "347928347234"` + "\n"
 		case "name":
