@@ -83,7 +83,7 @@ func singleResourceNotFoundTest(t *testing.T, subTestName string, notFoundData *
 	return func(t *testing.T) {
 		params := notFoundData.params
 		// Setting unique name to have a binary test file created for debugging if needed
-		params["FuncName"] = "NotFound-" + subTestName
+		params["FuncName"] = "NotFoundResource-" + subTestName
 		// Adding skip directive as running these tests in binary test mode add no value
 		binaryTestSkipText := "# skip-binary-test: resource not found test only works in acceptance tests\n"
 		configText := templateFill(binaryTestSkipText+notFoundData.config, params)
