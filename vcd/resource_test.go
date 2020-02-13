@@ -27,10 +27,13 @@ type testResourceNotFound struct {
 	config string
 }
 
-var funcStack = []func(){}
+// registerFuncStack makes a slice of functions for delayed call. Main reason for this delayed call is to have late
+// evaluation of variables which are populated later than init() functions occur
+var registerFuncStack = []func(){}
 
+// Push a function to registerFuncStack for late evaluation
 func registerReadTest(f func()) {
-	funcStack = append(funcStack, f)
+	registerFuncStack = append(registerFuncStack, f)
 }
 
 // TestAccVcdResourceNotFound loops over all resources defined in provider `globalResourceMap` and checks that there is
@@ -44,7 +47,7 @@ func TestAccVcdResourceNotFound(t *testing.T) {
 	}
 
 	// Execute all funcs
-	for _, f := range funcStack {
+	for _, f := range registerFuncStack {
 		f()
 	}
 
