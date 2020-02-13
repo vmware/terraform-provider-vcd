@@ -3,30 +3,18 @@
 package vcd
 
 import (
-	"fmt"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
-const vappNameForNetworkTest = "TestAccVappForNetworkTest"
-const gateway = "192.168.1.1"
-const dns1 = "8.8.8.8"
-const dns2 = "1.1.1.1"
-const dnsSuffix = "biz.biz"
-const newVappNetworkName = "TestAccVcdVappNetwork_Basic"
-const netmask = "255.255.255.0"
-const guestVlanAllowed = "true"
-
-func TestAccVcdVappNetwork_Isolated(t *testing.T) {
+func TestAccVcdVappOrgNetwork_NotFenced(t *testing.T) {
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 
-	resourceName = "TestAccVcdVappNetwork_Isolated"
+	resourceName = "TestAccVcdVappOrgNetwork_NotFenced"
 
 	var params = StringMap{
 		"Org":                testConfig.VCD.Org,
@@ -55,16 +43,16 @@ func TestAccVcdVappNetwork_Isolated(t *testing.T) {
 		"retainIpMacEnabled": "false",
 	}
 
-	rungVappNetworkTest(t, params)
+	rungVappOrgNetworkTest(t, params)
 }
 
-func TestAccVcdVappNetwork_Nat(t *testing.T) {
+func TestAccVcdVappOrgNetwork_Fenced(t *testing.T) {
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 
-	resourceName = "TestAccVcdVappNetwork_Nat"
+	resourceName = "TestAccVcdVappOrgNetwork_Fenced"
 
 	var params = StringMap{
 		"Org":                testConfig.VCD.Org,
@@ -94,11 +82,11 @@ func TestAccVcdVappNetwork_Nat(t *testing.T) {
 		"FuncName":           "TestAccVcdVappNetwork_Nat",
 	}
 
-	rungVappNetworkTest(t, params)
+	rungVappOrgNetworkTest(t, params)
 }
 
-func rungVappNetworkTest(t *testing.T, params StringMap) {
-	configText := templateFill(testAccCheckVappNetwork_basic, params)
+func rungVappOrgNetworkTest(t *testing.T, params StringMap) {
+	configText := templateFill(testAccCheckOrgVappNetwork_basic, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
@@ -128,85 +116,7 @@ func rungVappNetworkTest(t *testing.T, params StringMap) {
 	})
 }
 
-func testAccCheckVappNetworkExists(n string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[n]
-		if !ok {
-			return fmt.Errorf("not found: %s", n)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("no vapp network ID is set")
-		}
-
-		conn := testAccProvider.Meta().(*VCDClient)
-
-		found, err := isVappNetworkFound(conn, rs, "exist")
-		if err != nil {
-			return err
-		}
-
-		if !found {
-			return fmt.Errorf("vApp network was not found")
-		}
-
-		return nil
-	}
-}
-
-// TODO: In future this can be improved to check if network delete only,
-// when test suite will create vApp which can be reused
-func testAccCheckVappNetworkDestroy(s *terraform.State) error {
-	conn := testAccProvider.Meta().(*VCDClient)
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "vcd_vapp" {
-			continue
-		}
-
-		_, err := isVappNetworkFound(conn, rs, "destroy")
-		if err == nil {
-			return fmt.Errorf("vapp %s still exists", vappNameForNetworkTest)
-		}
-	}
-
-	return nil
-}
-
-func isVappNetworkFound(conn *VCDClient, rs *terraform.ResourceState, origin string) (bool, error) {
-	_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
-	if err != nil {
-		return false, fmt.Errorf(errorRetrievingOrgAndVdc, err)
-	}
-
-	vapp, err := vdc.GetVAppByName(vappNameForNetworkTest, false)
-	if err != nil {
-		return false, fmt.Errorf("error retrieving vApp: %s, %#v", rs.Primary.ID, err)
-	}
-
-	// Avoid looking for network when the purpose is only finding whether the vApp exists
-	if origin == "destroy" {
-		return true, nil
-	}
-	networkConfig, err := vapp.GetNetworkConfig()
-	if err != nil {
-		return false, fmt.Errorf("error retrieving network config from vApp: %#v", err)
-	}
-
-	var found bool
-	for _, vappNetworkConfig := range networkConfig.NetworkConfig {
-		networkId, err := govcd.GetUuidFromHref(vappNetworkConfig.Link.HREF)
-		if err != nil {
-			return false, fmt.Errorf("unable to get network ID from HREF: %s", err)
-		}
-		if networkId == rs.Primary.ID {
-			found = true
-		}
-	}
-
-	return found, nil
-}
-
-const testAccCheckVappNetwork_basic = `
+const testAccCheckOrgVappNetwork_basic = `
 resource "vcd_vapp" "{{.vappName}}" {
   name = "{{.vappName}}"
   org  = "{{.Org}}"
@@ -226,32 +136,14 @@ resource "vcd_network_routed" "{{.NetworkName}}" {
   }
 }
 
-resource "vcd_vapp_network" "{{.resourceName}}" {
+resource "vcd_vapp_org_network" "{{.resourceName}}" {
   org                = "{{.Org}}"
   vdc                = "{{.Vdc}}"
-  name               = "{{.vappNetworkName}}"
   vapp_name          = "{{.vappName}}"
-  gateway            = "{{.gateway}}"
-  netmask            = "{{.netmask}}"
-  dns1               = "{{.dns1}}"
-  dns2               = "{{.dns2}}"
-  dns_suffix         = "{{.dnsSuffix}}"
-  guest_vlan_allowed = {{.guestVlanAllowed}}
+  org_network        = "{{.orgNetwork}}"
+  
+  is_fenced = true
 
-  static_ip_pool {
-    start_address = "{{.startAddress}}"
-    end_address   = "{{.endAddress}}"
-  }
-
-  dhcp_pool {
-    max_lease_time     = "{{.maxLeaseTime}}"
-    default_lease_time = "{{.defaultLeaseTime}}"
-    start_address      = "{{.dhcpStartAddress}}"
-    end_address        = "{{.dhcpEndAddress}}"
-    enabled            = "{{.dhcpEnabled}}"
-  }
-
-  org_network           = "{{.orgNetwork}}"
   firewall_enabled      = "{{.firewallEnabled}}"
   nat_enabled           = "{{.natEnabled}}"
   retain_ip_mac_enabled = "{{.retainIpMacEnabled}}"
