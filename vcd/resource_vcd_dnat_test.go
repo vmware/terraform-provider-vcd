@@ -410,29 +410,3 @@ resource "vcd_dnat" "{{.DnatName}}" {
   description     = "{{.Description}}"
 }
 `
-
-// testDeleteExistingCatalogMedia deletes catalog with name from test or returns a failure
-func testDeleteExistingDnatRule(t *testing.T, dnatRuleId string) func() {
-	return func() {
-		vcdClient := createTemporaryVCDConnection()
-		_, vdc, err := vcdClient.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
-		if err != nil {
-			t.Errorf(err.Error())
-		}
-
-		egw, err := vdc.GetEdgeGatewayByNameOrId(testConfig.Networking.EdgeGateway, false)
-		if err != nil {
-			t.Errorf(err.Error())
-		}
-
-		natRule, err := egw.GetNatRule(dnatRuleId)
-		if err != nil || natRule == nil {
-			t.Error(err.Error())
-		}
-
-		err = egw.RemoveNATRule(natRule.ID)
-		if err != nil {
-			t.Error(err.Error())
-		}
-	}
-}

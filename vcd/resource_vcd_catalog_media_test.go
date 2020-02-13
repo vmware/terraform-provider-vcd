@@ -244,35 +244,3 @@ const testAccCheckVcdCatalogMediaUpdate = `
   }
 }
 `
-
-// testDeleteExistingCatalogMedia deletes catalog with name from test or returns a failure
-func testDeleteExistingCatalogMedia(t *testing.T, mediaItemName string) func() {
-	return func() {
-		vcdClient := createTemporaryVCDConnection()
-
-		org, _, err := vcdClient.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
-		if err != nil {
-			t.Errorf(err.Error())
-		}
-
-		catalog, err := org.GetCatalogByName(testConfig.VCD.Catalog.Name, false)
-		if err != nil {
-			t.Errorf(err.Error())
-		}
-
-		mediaItem, err := catalog.GetMediaByNameOrId(mediaItemName, false)
-		if err != nil {
-			t.Errorf(err.Error())
-		}
-
-		task, err := mediaItem.Delete()
-		if err != nil {
-			t.Errorf(err.Error())
-		}
-
-		err = task.WaitTaskCompletion()
-		if err != nil {
-			t.Errorf(err.Error())
-		}
-	}
-}
