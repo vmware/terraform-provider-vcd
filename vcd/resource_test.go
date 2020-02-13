@@ -11,7 +11,7 @@ import (
 )
 
 // testResourceNotFoundTestMap holds a map of definitions for all resources defined in provider
-var testResourceNotFoundTestMap = make(map[string]*testResourceNotFound)
+var testResourceNotFoundTestMap = make(map[string]testResourceNotFound)
 
 // testResourceNotFound is a structure which consists of all possible
 type testResourceNotFound struct {
@@ -79,7 +79,7 @@ func extractResourceAddress(resourceType, configText string) string {
 // ID in step 1.
 // 3. Runs apply (in acceptance test step 1) and expects a non empty plan which means that a resource must be recreated
 // because it was not found
-func singleResourceNotFoundTest(t *testing.T, subTestName string, notFoundData *testResourceNotFound) func(t *testing.T) {
+func singleResourceNotFoundTest(t *testing.T, subTestName string, notFoundData testResourceNotFound) func(t *testing.T) {
 	return func(t *testing.T) {
 		params := notFoundData.params
 		// Setting unique name to have a binary test file created for debugging if needed

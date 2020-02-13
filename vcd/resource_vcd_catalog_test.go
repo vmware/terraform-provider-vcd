@@ -17,7 +17,7 @@ func init() {
 // Register configuration for resource not found test
 func init() {
 	registerReadTest(func() {
-		testResourceNotFoundTestMap["vcd_catalog"] = &testResourceNotFound{
+		testResourceNotFoundTestMap["vcd_catalog"] = testResourceNotFound{
 			deleteFunc: vcdResourceVcdCatalogDelete,
 			config:     testAccCheckVcdCatalogBasic,
 			params: StringMap{
