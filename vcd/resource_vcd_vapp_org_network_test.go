@@ -17,30 +17,22 @@ func TestAccVcdVappOrgNetwork_NotFenced(t *testing.T) {
 	resourceName = "TestAccVcdVappOrgNetwork_NotFenced"
 
 	var params = StringMap{
-		"Org":                testConfig.VCD.Org,
-		"Vdc":                testConfig.VCD.Vdc,
-		"resourceName":       resourceName,
-		"vappNetworkName":    newVappNetworkName,
-		"gateway":            gateway,
-		"netmask":            netmask,
-		"dns1":               dns1,
-		"dns2":               dns2,
-		"dnsSuffix":          dnsSuffix,
-		"guestVlanAllowed":   guestVlanAllowed,
-		"startAddress":       "192.168.1.10",
-		"endAddress":         "192.168.1.20",
-		"vappName":           vappNameForNetworkTest,
-		"maxLeaseTime":       "7200",
-		"defaultLeaseTime":   "3600",
-		"dhcpStartAddress":   "192.168.1.21",
-		"dhcpEndAddress":     "192.168.1.22",
-		"dhcpEnabled":        "true",
-		"EdgeGateway":        testConfig.Networking.EdgeGateway,
-		"NetworkName":        "TestAccVcdVAppNet",
-		"orgNetwork":         "",
-		"firewallEnabled":    "false",
-		"natEnabled":         "false",
-		"retainIpMacEnabled": "false",
+		"Org":                         testConfig.VCD.Org,
+		"Vdc":                         testConfig.VCD.Vdc,
+		"resourceName":                resourceName,
+		"vappName":                    vappNameForNetworkTest,
+		"EdgeGateway":                 testConfig.Networking.EdgeGateway,
+		"NetworkName":                 "TestAccVcdVAppNet",
+		"orgNetwork":                  "TestAccVcdVAppNet",
+		"firewallEnabled":             "false",
+		"firewallEnabledForUpdate":    "false",
+		"natEnabled":                  "false",
+		"natEnabledForUpdate":         "false",
+		"retainIpMacEnabled":          "false",
+		"retainIpMacEnabledForUpdate": "true",
+		"isFenced":                    "false",
+		"isFencedForUpdate":           "true",
+		"FuncName":                    "TestAccVcdVappOrgNetwork_NotFenced",
 	}
 
 	rungVappOrgNetworkTest(t, params)
@@ -55,31 +47,22 @@ func TestAccVcdVappOrgNetwork_Fenced(t *testing.T) {
 	resourceName = "TestAccVcdVappOrgNetwork_Fenced"
 
 	var params = StringMap{
-		"Org":                testConfig.VCD.Org,
-		"Vdc":                testConfig.VCD.Vdc,
-		"resourceName":       resourceName,
-		"vappNetworkName":    newVappNetworkName,
-		"gateway":            gateway,
-		"netmask":            netmask,
-		"dns1":               dns1,
-		"dns2":               dns2,
-		"dnsSuffix":          dnsSuffix,
-		"guestVlanAllowed":   guestVlanAllowed,
-		"startAddress":       "192.168.1.10",
-		"endAddress":         "192.168.1.20",
-		"vappName":           vappNameForNetworkTest,
-		"maxLeaseTime":       "7200",
-		"defaultLeaseTime":   "3600",
-		"dhcpStartAddress":   "192.168.1.21",
-		"dhcpEndAddress":     "192.168.1.22",
-		"dhcpEnabled":        "true",
-		"EdgeGateway":        testConfig.Networking.EdgeGateway,
-		"NetworkName":        "TestAccVcdVAppNet",
-		"orgNetwork":         "TestAccVcdVAppNet",
-		"firewallEnabled":    "false",
-		"natEnabled":         "false",
-		"retainIpMacEnabled": "true",
-		"FuncName":           "TestAccVcdVappNetwork_Nat",
+		"Org":                         testConfig.VCD.Org,
+		"Vdc":                         testConfig.VCD.Vdc,
+		"resourceName":                resourceName,
+		"vappName":                    vappNameForNetworkTest,
+		"EdgeGateway":                 testConfig.Networking.EdgeGateway,
+		"NetworkName":                 "TestAccVcdVAppNet",
+		"orgNetwork":                  "TestAccVcdVAppNet",
+		"firewallEnabled":             "false",
+		"firewallEnabledForUpdate":    "true",
+		"natEnabled":                  "false",
+		"natEnabledForUpdate":         "true",
+		"retainIpMacEnabled":          "true",
+		"retainIpMacEnabledForUpdate": "false",
+		"isFenced":                    "true",
+		"isFencedForUpdate":           "false",
+		"FuncName":                    "TestAccVcdVappOrgNetwork_Fenced",
 	}
 
 	rungVappOrgNetworkTest(t, params)
@@ -88,6 +71,9 @@ func TestAccVcdVappOrgNetwork_Fenced(t *testing.T) {
 func rungVappOrgNetworkTest(t *testing.T, params StringMap) {
 	configText := templateFill(testAccCheckOrgVappNetwork_basic, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	params["FuncName"] = t.Name() + "-Update"
+	updateConfigText := templateFill(testAccCheckOrgVappNetwork_update, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateConfigText)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -97,19 +83,37 @@ func rungVappOrgNetworkTest(t *testing.T, params StringMap) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVappNetworkExists("vcd_vapp_network."+params["resourceName"].(string)),
+					testAccCheckVappNetworkExists("vcd_vapp_org_network."+params["resourceName"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "gateway", gateway),
+						"vcd_vapp_org_network."+params["resourceName"].(string), "vapp_name", params["vappName"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "netmask", netmask),
+						"vcd_vapp_org_network."+params["resourceName"].(string), "org_network", params["orgNetwork"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dns1", dns1),
+						"vcd_vapp_org_network."+params["resourceName"].(string), "retain_ip_mac_enabled", params["retainIpMacEnabled"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dns2", dns2),
+						"vcd_vapp_org_network."+params["resourceName"].(string), "is_fenced", params["isFenced"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dns_suffix", dnsSuffix),
+						"vcd_vapp_org_network."+params["resourceName"].(string), "firewall_enabled", params["firewallEnabled"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "guest_vlan_allowed", guestVlanAllowed),
+						"vcd_vapp_org_network."+params["resourceName"].(string), "nat_enabled", params["natEnabled"].(string)),
+				),
+			},
+			resource.TestStep{
+				Config: updateConfigText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVappNetworkExists("vcd_vapp_org_network."+params["resourceName"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp_org_network."+params["resourceName"].(string), "vapp_name", params["vappName"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp_org_network."+params["resourceName"].(string), "org_network", params["orgNetwork"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp_org_network."+params["resourceName"].(string), "retain_ip_mac_enabled", params["retainIpMacEnabledForUpdate"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp_org_network."+params["resourceName"].(string), "is_fenced", params["isFencedForUpdate"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp_org_network."+params["resourceName"].(string), "firewall_enabled", params["firewallEnabledForUpdate"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp_org_network."+params["resourceName"].(string), "nat_enabled", params["natEnabledForUpdate"].(string)),
 				),
 			},
 		},
@@ -142,11 +146,48 @@ resource "vcd_vapp_org_network" "{{.resourceName}}" {
   vapp_name          = "{{.vappName}}"
   org_network        = "{{.orgNetwork}}"
   
-  is_fenced = true
+  is_fenced = "{{.isFenced}}"
 
   firewall_enabled      = "{{.firewallEnabled}}"
   nat_enabled           = "{{.natEnabled}}"
   retain_ip_mac_enabled = "{{.retainIpMacEnabled}}"
+
+  depends_on = ["vcd_vapp.{{.vappName}}", "vcd_network_routed.{{.NetworkName}}"]
+}
+`
+
+const testAccCheckOrgVappNetwork_update = `
+# skip-binary-test: only for updates
+resource "vcd_vapp" "{{.vappName}}" {
+  name = "{{.vappName}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+}
+
+resource "vcd_network_routed" "{{.NetworkName}}" {
+  name         = "{{.NetworkName}}"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  gateway      = "10.10.102.1"
+
+  static_ip_pool {
+    start_address = "10.10.102.2"
+    end_address   = "10.10.102.254"
+  }
+}
+
+resource "vcd_vapp_org_network" "{{.resourceName}}" {
+  org                = "{{.Org}}"
+  vdc                = "{{.Vdc}}"
+  vapp_name          = "{{.vappName}}"
+  org_network        = "{{.orgNetwork}}"
+  
+  is_fenced = "{{.isFencedForUpdate}}"
+
+  firewall_enabled      = "{{.firewallEnabledForUpdate}}"
+  nat_enabled           = "{{.natEnabledForUpdate}}"
+  retain_ip_mac_enabled = "{{.retainIpMacEnabledForUpdate}}"
 
   depends_on = ["vcd_vapp.{{.vappName}}", "vcd_network_routed.{{.NetworkName}}"]
 }
