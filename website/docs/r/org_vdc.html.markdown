@@ -83,14 +83,14 @@ The following arguments are supported:
 * `vm_quota` - (Optional) The maximum number of VMs that can be created in this VDC. Includes deployed and undeployed VMs in vApps and vApp templates. Defaults to 0, which specifies an unlimited number.
 * `enabled` - (Optional) True if this VDC is enabled for use by the organization VDCs. Default is true.
 * `storage_profile` - (Required, System Admin) Storage profiles supported by this VDC.  See [Storage Profile](#storageprofile) below for details.
-* `memory_guaranteed` - (Optional, System Admin) Percentage of allocated memory resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. When Allocation model is AllocationPool minimum value is 0.2. If left empty, vCD sets a value.
-* `cpu_guaranteed` - (Optional, System Admin) Percentage of allocated CPU resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when AllocationModel is AllocationVApp or AllocationPool. If left empty, vCD sets a value.
-* `cpu_speed` - (Optional, System Admin) Specifies the clock frequency, in Megahertz, for any virtual CPU that is allocated to a VM. A VM with 2 vCPUs will consume twice as much of this value. Ignored for ReservationPool. Required when AllocationModel is AllocationVApp or AllocationPool, and may not be less than 256 MHz. Defaults to 1000 MHz if value isn't provided.
+* `memory_guaranteed` - (Optional, System Admin) Percentage of allocated memory resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when allocationModel is AllocationVApp, AllocationPool or Flex. When Allocation model is AllocationPool minimum value is 0.2. If left empty, vCD sets a value.
+* `cpu_guaranteed` - (Optional, System Admin) Percentage of allocated CPU resources guaranteed to vApps deployed in this VDC. For example, if this value is 0.75, then 75% of allocated resources are guaranteed. Required when allocationModel is AllocationVApp, AllocationPool or Flex. If left empty, vCD sets a value.
+* `cpu_speed` - (Optional, System Admin) Specifies the clock frequency, in Megahertz, for any virtual CPU that is allocated to a VM. A VM with 2 vCPUs will consume twice as much of this value. Ignored for ReservationPool. Required when allocationModel is AllocationVApp, AllocationPool or Flex, and may not be less than 256 MHz. Defaults to 1000 MHz if value isn't provided.
 * `metadata` - (Optional; *v2.4+*) Key value map of metadata to assign to this VDC
 * `enable_thin_provisioning` - (Optional, System Admin) Boolean to request thin provisioning. Request will be honored only if the underlying data store supports it. Thin provisioning saves storage space by committing it on demand. This allows over-allocation of storage.
 * `enable_fast_provisioning` - (Optional, System Admin) Request fast provisioning. Request will be honored only if the underlying datastore supports it. Fast provisioning can reduce the time it takes to create virtual machines by using vSphere linked clones. If you disable fast provisioning, all provisioning operations will result in full clones.
 * `network_pool_name` - (Optional, System Admin) Reference to a network pool in the Provider VDC. Required if this VDC will contain routed or isolated networks.
-* `allow_over_commit` - (Optional) Set to false to disallow creation of the VDC if the AllocationModel is AllocationPool or ReservationPool and the ComputeCapacity you specified is greater than what the backing Provider VDC can supply. Default is true.
+* `allow_over_commit` - (Optional) Set to false to disallow creation of the VDC if the allocationModel is AllocationPool or ReservationPool and the ComputeCapacity you specified is greater than what the backing Provider VDC can supply. Default is true.
 * `enable_vm_discovery` - (Optional) If true, discovery of vCenter VMs is enabled for resource pools backing this VDC. If false, discovery is disabled. If left unspecified, the actual behaviour depends on enablement at the organization level and at the system level.
 * `elasticity` - (Optional, *v2.7+*, *vCD 9.7+*) Indicates if the Flex VDC should be elastic. Required with the Flex allocation model.
 * `include_vm_memory_overhead` - (Optional, *v2.7+*, *vCD 9.7+*) Indicates if the Flex VDC should include memory overhead into its accounting for admission control. Required with the Flex allocation model.
@@ -111,8 +111,8 @@ The following arguments are supported:
 
 Capacity must be specified twice, once for `memory` and another for `cpu`.  Each has the same structure:
 
-* `allocated` - (Optional) Capacity that is committed to be available. Value in MB or MHz. Used with AllocationPool ("Allocation pool") and ReservationPool ("Reservation pool").
-* `limit` - (Optional) Capacity limit relative to the value specified for Allocation. It must not be less than that value. If it is greater than that value, it implies over provisioning. A value of 0 specifies unlimited units. Value in MB or MHz. Used with AllocationVApp ("Pay as you go").
+* `allocated` - (Optional) Capacity that is committed to be available. Value in MB or MHz. Used with AllocationPool ("Allocation pool"), ReservationPool ("Reservation pool"), Flex.
+* `limit` - (Optional) Capacity limit relative to the value specified for Allocation. It must not be less than that value. If it is greater than that value, it implies over provisioning. A value of 0 specifies unlimited units. Value in MB or MHz. Used with AllocationVApp ("Pay as you go") or Flex(only for memory)).
 
 ## Importing
 
