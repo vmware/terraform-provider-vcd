@@ -206,6 +206,9 @@ func CreateAndConfigureEdgeGatewayAsync(vcdClient *VCDClient, orgName, vdcName, 
 	if egwConfiguration.Name != egwName {
 		return Task{}, fmt.Errorf("name mismatch: '%s' used as parameter but '%s' in the configuration structure", egwName, egwConfiguration.Name)
 	}
+
+	egwConfiguration.Xmlns = types.XMLNamespaceVCloud
+
 	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
 	if err != nil {
 		return Task{}, err
@@ -636,6 +639,9 @@ func CreateExternalNetwork(vcdClient *VCDClient, externalNetworkData *types.Exte
 	externalNetwork.OperationKey = externalNetworkData.OperationKey
 	externalNetwork.Link = externalNetworkData.Link
 	externalNetwork.Configuration = externalNetworkData.Configuration
+	if externalNetwork.Configuration != nil {
+		externalNetwork.Configuration.Xmlns = types.XMLNamespaceVCloud
+	}
 	externalNetwork.VCloudExtension = externalNetworkData.VCloudExtension
 	externalNetwork.XmlnsVmext = types.XMLNamespaceExtension
 	externalNetwork.XmlnsVcloud = types.XMLNamespaceVCloud
