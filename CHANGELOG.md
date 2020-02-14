@@ -13,6 +13,7 @@ IMPROVEMENTS:
 * `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` include a field `adapter_type` in `network`
   defintion to specify NIC type - [GH-441]
 * `vcd_vapp_vm` `disk` has new attribute `size_in_mb` [GH-433]
+* `datasource/*` - all data sources return an error when object is not found [GH-446]
 
 BUG FIXES:
 
@@ -23,7 +24,6 @@ BUG FIXES:
   `vapp_template_lease` to define lease related parameters of depending entities - [GH-432]
 * `resource/vcd_vapp_vm` `network` block changes caused MAC address changes in existing NICs
   [GH-436,GH-407]
-* `datasource/*` - all data sources return an error when object is not found [GH-446]
 
 NOTES:
 * Drop support for vCD 9.0
