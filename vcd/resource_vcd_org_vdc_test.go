@@ -261,6 +261,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 		return
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateText)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -495,9 +496,9 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   name = "{{.VdcName}}"
   org  = "{{.OrgName}}"
 
-  allocation_model = "{{.AllocationModel}}"
-  network_pool_name     = "{{.NetworkPool}}"
-  provider_vdc_name     = "{{.ProviderVdc}}"
+  allocation_model  = "{{.AllocationModel}}"
+  network_pool_name = "{{.NetworkPool}}"
+  provider_vdc_name = "{{.ProviderVdc}}"
 
   compute_capacity {
     cpu {
@@ -538,9 +539,9 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   name = "{{.VdcName}}"
   org  = "{{.OrgName}}"
 
-  allocation_model = "{{.AllocationModel}}"
-  network_pool_name     = "{{.NetworkPool}}"
-  provider_vdc_name     = "{{.ProviderVdc}}"
+  allocation_model  = "{{.AllocationModel}}"
+  network_pool_name = "{{.NetworkPool}}"
+  provider_vdc_name = "{{.ProviderVdc}}"
 
   compute_capacity {
     cpu {
