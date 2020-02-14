@@ -34,101 +34,12 @@ func NewAdminOrg(cli *Client) *AdminOrg {
 	}
 }
 
-// GetAdminVdcByName function uses a valid VDC name and returns a admin VDC object.
-// If no VDC is found, then it returns an empty VDC and no error.
-// Otherwise it returns an empty VDC and an error.
-// Deprecated: Use adminOrg.GetAdminVDCByName
-func (adminOrg *AdminOrg) GetAdminVdcByName(vdcname string) (AdminVdc, error) {
-	for _, vdcs := range adminOrg.AdminOrg.Vdcs.Vdcs {
-		if vdcs.Name == vdcname {
-			adminVdc := NewAdminVdc(adminOrg.client)
-			_, err := adminOrg.client.ExecuteRequest(vdcs.HREF, http.MethodGet,
-				"", "error getting vdc: %s", nil, adminVdc.AdminVdc)
-			return *adminVdc, err
-		}
-	}
-	return AdminVdc{}, nil
-}
-
 // CreateCatalog creates a catalog with given name and description under the
 // the given organization. Returns an AdminCatalog that contains a creation
 // task.
 // API Documentation: https://code.vmware.com/apis/220/vcloud#/doc/doc/operations/POST-CreateCatalog.html
 func (adminOrg *AdminOrg) CreateCatalog(name, description string) (AdminCatalog, error) {
 	return CreateCatalog(adminOrg.client, adminOrg.AdminOrg.Link, name, description)
-}
-
-// If user specifies valid vdc name then this returns a vdc object.
-// If no vdc is found, then it returns an empty vdc and no error.
-// Otherwise it returns an empty vdc and an error. This function
-// allows users to use an AdminOrg to fetch a vdc as well.
-// Deprecated: Use adminOrg.GetVDCByName instead
-func (adminOrg *AdminOrg) GetVdcByName(vdcname string) (Vdc, error) {
-	for _, vdcs := range adminOrg.AdminOrg.Vdcs.Vdcs {
-		if vdcs.Name == vdcname {
-			splitByAdminHREF := strings.Split(vdcs.HREF, "/api/admin")
-
-			// admin user and normal user will have different urls
-			var vdcHREF string
-			if len(splitByAdminHREF) == 1 {
-				vdcHREF = vdcs.HREF
-			} else {
-				vdcHREF = splitByAdminHREF[0] + "/api" + splitByAdminHREF[1]
-			}
-
-			vdc := NewVdc(adminOrg.client)
-
-			_, err := adminOrg.client.ExecuteRequest(vdcHREF, http.MethodGet,
-				"", "error getting vdc: %s", nil, vdc.Vdc)
-
-			return *vdc, err
-		}
-	}
-	return Vdc{}, nil
-}
-
-// CreateVdc creates a VDC with the given params under the given organization.
-// Returns an AdminVdc.
-// API Documentation: https://code.vmware.com/apis/220/vcloud#/doc/doc/operations/POST-VdcConfiguration.html
-func (adminOrg *AdminOrg) CreateVdc(vdcConfiguration *types.VdcConfiguration) (Task, error) {
-	err := validateVdcConfiguration(vdcConfiguration)
-	if err != nil {
-		return Task{}, err
-	}
-
-	vdcConfiguration.Xmlns = types.XMLNamespaceVCloud
-
-	vdcCreateHREF, err := url.ParseRequestURI(adminOrg.AdminOrg.HREF)
-	if err != nil {
-		return Task{}, fmt.Errorf("error parsing admin org url: %s", err)
-	}
-	vdcCreateHREF.Path += "/vdcsparams"
-
-	adminVdc := NewAdminVdc(adminOrg.client)
-
-	_, err = adminOrg.client.ExecuteRequest(vdcCreateHREF.String(), http.MethodPost,
-		"application/vnd.vmware.admin.createVdcParams+xml", "error retrieving vdc: %s", vdcConfiguration, adminVdc.AdminVdc)
-	if err != nil {
-		return Task{}, err
-	}
-
-	// Return the task
-	task := NewTask(adminOrg.client)
-	task.Task = adminVdc.AdminVdc.Tasks.Task[0]
-	return *task, nil
-}
-
-// Creates the vdc and waits for the asynchronous task to complete.
-func (adminOrg *AdminOrg) CreateVdcWait(vdcDefinition *types.VdcConfiguration) error {
-	task, err := adminOrg.CreateVdc(vdcDefinition)
-	if err != nil {
-		return err
-	}
-	err = task.WaitTaskCompletion()
-	if err != nil {
-		return fmt.Errorf("couldn't finish creating vdc %s", err)
-	}
-	return nil
 }
 
 //   Deletes the org, returning an error if the vCD call fails.
@@ -662,8 +573,9 @@ func (adminOrg *AdminOrg) GetVDCByHref(vdcHref string) (*Vdc, error) {
 
 	vdc := NewVdc(adminOrg.client)
 
-	_, err := adminOrg.client.ExecuteRequest(vdcHREF, http.MethodGet,
-		"", "error getting vdc: %s", nil, vdc.Vdc)
+	_, err := adminOrg.client.ExecuteRequestWithApiVersion(vdcHREF, http.MethodGet,
+		"", "error getting vdc: %s", nil, vdc.Vdc,
+		adminOrg.client.GetSpecificApiVersionOnCondition(">= 32.0", "32.0"))
 
 	if err != nil {
 		return nil, err
@@ -721,67 +633,31 @@ func (adminOrg *AdminOrg) GetVDCByNameOrId(identifier string, refresh bool) (*Vd
 	return entity.(*Vdc), err
 }
 
-// GetVDCByHref retrieves a VDC using a direct call with the HREF
-func (adminOrg *AdminOrg) GetAdminVDCByHref(vdcHref string) (*AdminVdc, error) {
+// If user specifies valid vdc name then this returns a vdc object.
+// If no vdc is found, then it returns an empty vdc and no error.
+// Otherwise it returns an empty vdc and an error. This function
+// allows users to use an AdminOrg to fetch a vdc as well.
+// Deprecated: Use adminOrg.GetVDCByName instead
+func (adminOrg *AdminOrg) GetVdcByName(vdcname string) (Vdc, error) {
+	for _, vdcs := range adminOrg.AdminOrg.Vdcs.Vdcs {
+		if vdcs.Name == vdcname {
+			splitByAdminHREF := strings.Split(vdcs.HREF, "/api/admin")
 
-	adminVdc := NewAdminVdc(adminOrg.client)
+			// admin user and normal user will have different urls
+			var vdcHREF string
+			if len(splitByAdminHREF) == 1 {
+				vdcHREF = vdcs.HREF
+			} else {
+				vdcHREF = splitByAdminHREF[0] + "/api" + splitByAdminHREF[1]
+			}
 
-	_, err := adminOrg.client.ExecuteRequest(vdcHref, http.MethodGet,
-		"", "error getting vdc: %s", nil, adminVdc.AdminVdc)
+			vdc := NewVdc(adminOrg.client)
 
-	if err != nil {
-		return nil, err
-	}
-	return adminVdc, nil
-}
+			_, err := adminOrg.client.ExecuteRequest(vdcHREF, http.MethodGet,
+				"", "error getting vdc: %s", nil, vdc.Vdc)
 
-// GetAdminVDCByName finds an Admin VDC by Name
-// On success, returns a pointer to the AdminVdc structure and a nil error
-// On failure, returns a nil pointer and an error
-func (adminOrg *AdminOrg) GetAdminVDCByName(vdcName string, refresh bool) (*AdminVdc, error) {
-	if refresh {
-		err := adminOrg.Refresh()
-		if err != nil {
-			return nil, err
+			return *vdc, err
 		}
 	}
-	for _, vdc := range adminOrg.AdminOrg.Vdcs.Vdcs {
-		if vdc.Name == vdcName {
-			return adminOrg.GetAdminVDCByHref(vdc.HREF)
-		}
-	}
-	return nil, ErrorEntityNotFound
-}
-
-// GetAdminVDCById finds an Admin VDC by ID
-// On success, returns a pointer to the AdminVdc structure and a nil error
-// On failure, returns a nil pointer and an error
-func (adminOrg *AdminOrg) GetAdminVDCById(vdcId string, refresh bool) (*AdminVdc, error) {
-	if refresh {
-		err := adminOrg.Refresh()
-		if err != nil {
-			return nil, err
-		}
-	}
-	for _, vdc := range adminOrg.AdminOrg.Vdcs.Vdcs {
-		if equalIds(vdcId, vdc.ID, vdc.HREF) {
-			return adminOrg.GetAdminVDCByHref(vdc.HREF)
-		}
-	}
-	return nil, ErrorEntityNotFound
-}
-
-// GetAdminVDCByNameOrId finds an Admin VDC by Name Or ID
-// On success, returns a pointer to the AdminVdc structure and a nil error
-// On failure, returns a nil pointer and an error
-func (adminOrg *AdminOrg) GetAdminVDCByNameOrId(identifier string, refresh bool) (*AdminVdc, error) {
-	getByName := func(name string, refresh bool) (interface{}, error) {
-		return adminOrg.GetAdminVDCByName(name, refresh)
-	}
-	getById := func(id string, refresh bool) (interface{}, error) { return adminOrg.GetAdminVDCById(id, refresh) }
-	entity, err := getEntityByNameOrId(getByName, getById, identifier, refresh)
-	if entity == nil {
-		return nil, err
-	}
-	return entity.(*AdminVdc), err
+	return Vdc{}, nil
 }

@@ -210,7 +210,7 @@ type NetworkConfiguration struct {
 	IPScopes                       *IPScopes        `xml:"IpScopes,omitempty"`
 	ParentNetwork                  *Reference       `xml:"ParentNetwork,omitempty"`
 	FenceMode                      string           `xml:"FenceMode"`
-	RetainNetInfoAcrossDeployments *bool            `xml:"RetainNetInfoAcrossDeployments,omitempty"`
+	RetainNetInfoAcrossDeployments bool             `xml:"RetainNetInfoAcrossDeployments,omitempty"`
 	Features                       *NetworkFeatures `xml:"Features,omitempty"`
 	GuestVlanAllowed               *bool            `xml:"GuestVlanAllowed,omitempty"`
 
@@ -416,6 +416,8 @@ type AdminVdc struct {
 	UsesFastProvisioning     *bool          `xml:"UsesFastProvisioning,omitempty"`
 	OverCommitAllowed        bool           `xml:"OverCommitAllowed,omitempty"`
 	VmDiscoveryEnabled       bool           `xml:"VmDiscoveryEnabled,omitempty"`
+	IsElastic                *bool          `xml:"IsElastic,omitempty"`             // Supported from 32.0 for the Flex model
+	IncludeMemoryOverhead    *bool          `xml:"IncludeMemoryOverhead,omitempty"` // Supported from 32.0 for the Flex model
 }
 
 // VdcStorageProfile represents the parameters to create a storage profile in an organization vDC.
@@ -443,7 +445,7 @@ type VdcConfiguration struct {
 	Xmlns                    string               `xml:"xmlns,attr"`
 	Name                     string               `xml:"name,attr"`
 	Description              string               `xml:"Description,omitempty"`
-	AllocationModel          string               `xml:"AllocationModel"`
+	AllocationModel          string               `xml:"AllocationModel"` // Flex supported from 32.0
 	ComputeCapacity          []*ComputeCapacity   `xml:"ComputeCapacity"`
 	NicQuota                 int                  `xml:"NicQuota,omitempty"`
 	NetworkQuota             int                  `xml:"NetworkQuota,omitempty"`
@@ -459,6 +461,8 @@ type VdcConfiguration struct {
 	UsesFastProvisioning     bool                 `xml:"UsesFastProvisioning,omitempty"`
 	OverCommitAllowed        bool                 `xml:"OverCommitAllowed,omitempty"`
 	VmDiscoveryEnabled       bool                 `xml:"VmDiscoveryEnabled,omitempty"`
+	IsElastic                *bool                `xml:"IsElastic,omitempty"`             // Supported from 32.0 for the Flex model
+	IncludeMemoryOverhead    *bool                `xml:"IncludeMemoryOverhead,omitempty"` // Supported from 32.0 for the Flex model
 }
 
 // Task represents an asynchronous operation in vCloud Director.

@@ -215,7 +215,7 @@ github.com/ulikunitz/xz/lzma
 # github.com/vmihailenco/msgpack v4.0.1+incompatible
 github.com/vmihailenco/msgpack
 github.com/vmihailenco/msgpack/codes
-# github.com/vmware/go-vcloud-director/v2 v2.6.0-alpha.3
+# github.com/vmware/go-vcloud-director/v2 v2.6.0-alpha.2 => github.com/vbauzysvmware/go-vcloud-director/v2 v2.0.0-20200212093239-7ceccf95e954
 github.com/vmware/go-vcloud-director/v2/govcd
 github.com/vmware/go-vcloud-director/v2/types/v56
 github.com/vmware/go-vcloud-director/v2/util
