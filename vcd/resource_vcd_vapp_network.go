@@ -278,7 +278,6 @@ func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
 		return nil
 	}
 
-	d.Set("name", vAppNetwork.NetworkName)
 	d.Set("description", vAppNetwork.Description)
 	d.Set("href", vAppNetwork.HREF)
 	if c := vAppNetwork.Configuration; c != nil {
@@ -337,9 +336,9 @@ func resourceVappNetworkUpdate(d *schema.ResourceData, meta interface{}) error {
 	fwEnabled := d.Get("firewall_enabled").(bool)
 	retainIpMacEnabled := d.Get("retain_ip_mac_enabled").(bool)
 
+	// we can't change network name as this results ID(href) change
 	vappNetworkSettings := &govcd.VappNetworkSettings{
 		Id:                 d.Id(),
-		Name:               d.Get("name").(string),
 		Description:        d.Get("description").(string),
 		Gateway:            d.Get("gateway").(string),
 		NetMask:            d.Get("netmask").(string),

@@ -29,33 +29,32 @@ func TestAccVcdVappNetwork_Isolated(t *testing.T) {
 	resourceName = "TestAccVcdVappNetwork_Isolated"
 
 	var params = StringMap{
-		"Org":             testConfig.VCD.Org,
-		"Vdc":             testConfig.VCD.Vdc,
-		"resourceName":    resourceName,
-		"vappNetworkName": newVappNetworkName,
-		// change id with name?
-		"vappNetworkNameForUpdate": newVappNetworkName + "updated",
-		"description":              "network description",
-		"gateway":                  gateway,
-		"netmask":                  netmask,
-		"dns1":                     dns1,
-		"dns2":                     dns2,
-		"dnsSuffix":                dnsSuffix,
-		"guestVlanAllowed":         guestVlanAllowed,
-		"startAddress":             "192.168.1.10",
-		"endAddress":               "192.168.1.20",
-		"vappName":                 vappNameForNetworkTest,
-		"maxLeaseTime":             "7200",
-		"defaultLeaseTime":         "3600",
-		"dhcpStartAddress":         "192.168.1.21",
-		"dhcpEndAddress":           "192.168.1.22",
-		"dhcpEnabled":              "true",
-		"EdgeGateway":              testConfig.Networking.EdgeGateway,
-		"NetworkName":              "TestAccVcdVAppNet",
-		"orgNetwork":               "",
-		"firewallEnabled":          "false",
-		"natEnabled":               "false",
-		"retainIpMacEnabled":       "false",
+		"Org":          testConfig.VCD.Org,
+		"Vdc":          testConfig.VCD.Vdc,
+		"resourceName": resourceName,
+		// we can't change network name as this results ID(href) change
+		"vappNetworkName":    newVappNetworkName,
+		"description":        "network description",
+		"gateway":            gateway,
+		"netmask":            netmask,
+		"dns1":               dns1,
+		"dns2":               dns2,
+		"dnsSuffix":          dnsSuffix,
+		"guestVlanAllowed":   guestVlanAllowed,
+		"startAddress":       "192.168.1.10",
+		"endAddress":         "192.168.1.20",
+		"vappName":           vappNameForNetworkTest,
+		"maxLeaseTime":       "7200",
+		"defaultLeaseTime":   "3600",
+		"dhcpStartAddress":   "192.168.1.21",
+		"dhcpEndAddress":     "192.168.1.22",
+		"dhcpEnabled":        "true",
+		"EdgeGateway":        testConfig.Networking.EdgeGateway,
+		"NetworkName":        "TestAccVcdVAppNet",
+		"orgNetwork":         "",
+		"firewallEnabled":    "false",
+		"natEnabled":         "false",
+		"retainIpMacEnabled": "false",
 	}
 
 	rungVappNetworkTest(t, params)
@@ -70,34 +69,33 @@ func TestAccVcdVappNetwork_Nat(t *testing.T) {
 	resourceName = "TestAccVcdVappNetwork_Nat"
 
 	var params = StringMap{
-		"Org":             testConfig.VCD.Org,
-		"Vdc":             testConfig.VCD.Vdc,
-		"resourceName":    resourceName,
-		"vappNetworkName": newVappNetworkName,
-		// change id with name?
-		"vappNetworkNameForUpdate": newVappNetworkName + "updated",
-		"description":              "network description",
-		"gateway":                  gateway,
-		"netmask":                  netmask,
-		"dns1":                     dns1,
-		"dns2":                     dns2,
-		"dnsSuffix":                dnsSuffix,
-		"guestVlanAllowed":         guestVlanAllowed,
-		"startAddress":             "192.168.1.10",
-		"endAddress":               "192.168.1.20",
-		"vappName":                 vappNameForNetworkTest,
-		"maxLeaseTime":             "7200",
-		"defaultLeaseTime":         "3600",
-		"dhcpStartAddress":         "192.168.1.21",
-		"dhcpEndAddress":           "192.168.1.22",
-		"dhcpEnabled":              "true",
-		"EdgeGateway":              testConfig.Networking.EdgeGateway,
-		"NetworkName":              "TestAccVcdVAppNet",
-		"orgNetwork":               "TestAccVcdVAppNet",
-		"firewallEnabled":          "false",
-		"natEnabled":               "false",
-		"retainIpMacEnabled":       "true",
-		"FuncName":                 "TestAccVcdVappNetwork_Nat",
+		"Org":          testConfig.VCD.Org,
+		"Vdc":          testConfig.VCD.Vdc,
+		"resourceName": resourceName,
+		// we can't change network name as this results ID(href) change
+		"vappNetworkName":    newVappNetworkName,
+		"description":        "network description",
+		"gateway":            gateway,
+		"netmask":            netmask,
+		"dns1":               dns1,
+		"dns2":               dns2,
+		"dnsSuffix":          dnsSuffix,
+		"guestVlanAllowed":   guestVlanAllowed,
+		"startAddress":       "192.168.1.10",
+		"endAddress":         "192.168.1.20",
+		"vappName":           vappNameForNetworkTest,
+		"maxLeaseTime":       "7200",
+		"defaultLeaseTime":   "3600",
+		"dhcpStartAddress":   "192.168.1.21",
+		"dhcpEndAddress":     "192.168.1.22",
+		"dhcpEnabled":        "true",
+		"EdgeGateway":        testConfig.Networking.EdgeGateway,
+		"NetworkName":        "TestAccVcdVAppNet",
+		"orgNetwork":         "TestAccVcdVAppNet",
+		"firewallEnabled":    "false",
+		"natEnabled":         "false",
+		"retainIpMacEnabled": "true",
+		"FuncName":           "TestAccVcdVappNetwork_Nat",
 	}
 
 	rungVappNetworkTest(t, params)
@@ -119,6 +117,8 @@ func rungVappNetworkTest(t *testing.T, params StringMap) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVappNetworkExists("vcd_vapp_network."+params["resourceName"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp_network."+params["resourceName"].(string), "name", params["vappNetworkName"].(string)),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_network."+params["resourceName"].(string), "description", params["description"].(string)),
 					resource.TestCheckResourceAttr(
@@ -157,8 +157,8 @@ func rungVappNetworkTest(t *testing.T, params StringMap) {
 				Config: updateConfigText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVappNetworkExists("vcd_vapp_network."+params["resourceName"].(string)),
-					//resource.TestCheckResourceAttr(
-					//	"vcd_vapp_network."+params["resourceName"].(string), "name", params["vappNetworkNameForUpdate"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp_network."+params["resourceName"].(string), "name", params["vappNetworkName"].(string)),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_network."+params["resourceName"].(string), "description", params["description"].(string)),
 					resource.TestCheckResourceAttr(
