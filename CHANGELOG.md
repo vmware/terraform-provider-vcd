@@ -8,19 +8,23 @@ FEATURES:
 
 IMPROVEMENTS:
 
+* `vcd_vapp_vm` `disk` has new attribute `size_in_mb` [#433]
+* `resource/vcd_org` and `datasource/vcd_org` include a section `vapp_lease` and a section `vapp_template_lease` to define lease related parameters of depending entities - [GH-432]
+* `datasource/*` - all data sources return an error when object is not found [GH-446]
+
+BUG FIXES:
+
+* fix `vcd_vapp_vm` resource read - independent disks where losing `bus_number` and `unit_number` values after refresh. [GH-433]
+* `datasource/vcd_nsxv_dhcp_relay` crashes if no DHCP relay settings are present in Edge Gateway [GH-446]
 * `vcd_vapp_vm` `disk` has new attribute `size_in_mb` [GH-433]
 * `resource/vcd_org` and `datasource/vcd_org` include a section `vapp_lease` and a section
   `vapp_template_lease` to define lease related parameters of depending entities - [GH-432]
-
-BUG FIXES: 
-* Fix `vcd_vapp_vm` resource read - independent disks where losing `bus_number` and `unit_number`
-  values after refresh. [GH-433]
 * `resource/vcd_vapp_vm` `network` block changes caused MAC address changes in existing NICs
   [GH-436,GH-407]
 * Fix a potential data race in client connection caching when VCD_CACHE is enabled [GH-453]
-
-
+  
 NOTES:
+
 * Drop support for vCD 9.0
 * Bump terraform-plugin-sdk to v1.5.0 [GH-442]
 * `make test` and `make test-binary` use `-race` flags for `go test` to check if there are no data races. Additionally

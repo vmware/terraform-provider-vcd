@@ -4,7 +4,7 @@ import "github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 
 func datasourceVcdCatalogItem() *schema.Resource {
 	return &schema.Resource{
-		Read: resourceVcdCatalogItemRead,
+		Read: dataSourceVcdCatalogItemRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
@@ -32,4 +32,8 @@ func datasourceVcdCatalogItem() *schema.Resource {
 			},
 		},
 	}
+}
+
+func dataSourceVcdCatalogItemRead(d *schema.ResourceData, meta interface{}) error {
+	return genericVcdCatalogItemRead(d, meta, "datasource")
 }
