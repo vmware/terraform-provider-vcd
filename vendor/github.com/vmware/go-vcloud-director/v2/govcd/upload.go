@@ -20,9 +20,9 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
-// mutemutexedProgress is a thread-safe structure to update and report progress during an UploadTask.
+// mutexedProgress is a thread-safe structure to update and report progress during an UploadTask.
 //
-// Value must be read/written using Get/Set values insted of directly accessing the
+// Value must be read/written using LockedGet/LockedSet values instead of directly accessing the `progress` variable
 type mutexedProgress struct {
 	progress float64
 	sync.Mutex
