@@ -529,6 +529,7 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   delete_recursive           = true
   {{.FlexElasticKey}}                 {{.equalsChar}} {{.FlexElasticValueUpdate}}
   {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValueUpdate}}
+}
 `
 
 const testAccCheckVcdVdc_update = `
