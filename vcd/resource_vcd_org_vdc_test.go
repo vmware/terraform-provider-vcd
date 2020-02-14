@@ -43,7 +43,7 @@ func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 		// cause vDC ignores empty values and use default
 		"MemoryGuaranteed": "1",
 		"CpuGuaranteed":    "1",
-		// Below parameters are for Flex allocation model.
+		// The parameters below are for Flex allocation model
 		// Part of HCL is created dynamically and with empty values we don't create the Flex part:
 		"equalsChar":                         "",
 		"FlexElasticKey":                     "",
@@ -98,7 +98,7 @@ func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 		"FuncName":                  "TestAccVcdOrgVdcAllocationPool",
 		"MemoryGuaranteed":          "0.3",
 		"CpuGuaranteed":             "0.45",
-		// Below parameters are for Flex allocation model.
+		// The parameters below are for Flex allocation model
 		// Part of HCL is created dynamically and with empty values we don't create the Flex part:
 		"equalsChar":                         "",
 		"FlexElasticKey":                     "",
@@ -153,7 +153,7 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 		"FuncName":                  "TestAccVcdOrgVdcAllocationVapp",
 		"MemoryGuaranteed":          "0.5",
 		"CpuGuaranteed":             "0.6",
-		// Below parameters are for Flex allocation model.
+		// The parameters below are for Flex allocation model
 		// Part of HCL is created dynamically and with empty values we don't create the Flex part:
 		"equalsChar":                         "",
 		"FlexElasticKey":                     "",
@@ -191,7 +191,7 @@ func TestAccVcdOrgVdcAllocationFlex(t *testing.T) {
 
 	// if vCD older then 9.7
 	if vcdClient.Client.APIVCDMaxVersionIs("< 32.0") {
-		t.Skip("Skipping this test as Flex supported from 9.7 version")
+		t.Skip("Skipping this test as Flex is supported from version 9.7")
 	}
 
 	validateConfiguration(t)
@@ -214,7 +214,7 @@ func TestAccVcdOrgVdcAllocationFlex(t *testing.T) {
 		"FuncName":                  t.Name(),
 		"MemoryGuaranteed":          "0.5",
 		"CpuGuaranteed":             "0.6",
-		// Below parameters are for Flex allocation model.
+		// The parameters below are for Flex allocation model
 		// Part of HCL is created dynamically and these parameters with values result in the Flex part of the template being filled:
 		"equalsChar":                         "=",
 		"FlexElasticKey":                     "elasticity",
@@ -522,14 +522,13 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
     vdc_metadata = "VDC Metadata"
   }
 
-  enabled                  = true
-  enable_thin_provisioning = true
-  enable_fast_provisioning = true
-  delete_force             = true
-  delete_recursive         = true
-  {{.FlexElasticKey}} {{.equalsChar}} {{.FlexElasticValue}}
-  {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValue}}
-}
+  enabled                    = true
+  enable_thin_provisioning   = true
+  enable_fast_provisioning   = true
+  delete_force               = true
+  delete_recursive           = true
+  {{.FlexElasticKey}}                 {{.equalsChar}} {{.FlexElasticValueUpdate}}
+  {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValueUpdate}}
 `
 
 const testAccCheckVcdVdc_update = `
@@ -566,14 +565,14 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
     vdc_metadata2 = "VDC Metadata2"
   }
 
-  cpu_guaranteed           = {{.CpuGuaranteed}}
-  memory_guaranteed        = {{.MemoryGuaranteed}}
-  enabled                  = false
-  enable_thin_provisioning = false
-  enable_fast_provisioning = false
-  delete_force             = false
-  delete_recursive         = false
-  {{.FlexElasticKey}} {{.equalsChar}} {{.FlexElasticValueUpdate}}
+  cpu_guaranteed             = {{.CpuGuaranteed}}
+  memory_guaranteed          = {{.MemoryGuaranteed}}
+  enabled                    = false
+  enable_thin_provisioning   = false
+  enable_fast_provisioning   = false
+  delete_force               = false
+  delete_recursive           = false
+  {{.FlexElasticKey}}                 {{.equalsChar}} {{.FlexElasticValueUpdate}}
   {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValueUpdate}}
 }
 `
