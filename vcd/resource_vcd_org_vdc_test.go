@@ -527,8 +527,8 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   enable_fast_provisioning   = true
   delete_force               = true
   delete_recursive           = true
-  {{.FlexElasticKey}}                 {{.equalsChar}} {{.FlexElasticValueUpdate}}
-  {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValueUpdate}}
+  {{.FlexElasticKey}}                 {{.equalsChar}} {{.FlexElasticValue}}
+  {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValue}}
 }
 `
 
