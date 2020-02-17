@@ -249,6 +249,7 @@ func queryMedia(client *Client, mediaUrl string, newItemName string) (*types.Med
 
 // Verifies provided file header matches standard
 func verifyIso(filePath string) (bool, error) {
+	// #nosec G304 - linter does not like 'filePath' to be a variable. However this is necessary for file uploads.
 	file, err := os.Open(filePath)
 	if err != nil {
 		return false, err

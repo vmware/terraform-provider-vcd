@@ -75,7 +75,7 @@ func uploadFile(client *Client, filePath string, uDetails uploadDetails) (int64,
 	}
 
 	util.Logger.Printf("[TRACE] Uploading will use piece size: %#v \n", pieceSize)
-
+	// #nosec G304 - linter does not like 'filePath' to be a variable. However this is necessary for file uploads.
 	file, err := os.Open(filePath)
 	if err != nil {
 		util.Logger.Printf("[ERROR] during upload process - file open issue : %s, error %s ", filePath, err)
