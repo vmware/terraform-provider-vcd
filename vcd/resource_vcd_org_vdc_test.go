@@ -19,6 +19,11 @@ func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 	}
 	validateConfiguration(t)
 
+	vcdClient, err := getTestVCDFromJson(testConfig)
+	if err != nil {
+		t.Skip("unable to validate vCD version - skipping test")
+	}
+
 	allocationModel := "ReservationPool"
 
 	var params = StringMap{
@@ -30,13 +35,37 @@ func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 		"Allocated":                 "1024",
 		"Reserved":                  "1024",
 		"Limit":                     "1024",
+		"LimitIncreased":            "1100",
+		"AllocatedIncreased":        "1100",
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  "TestAccVcdOrgVdcReservationPool",
 		// cause vDC ignores empty values and use default
 		"MemoryGuaranteed": "1",
 		"CpuGuaranteed":    "1",
+		// The parameters below are for Flex allocation model
+		// Part of HCL is created dynamically and with empty values we don't create the Flex part:
+		"equalsChar":                         "",
+		"FlexElasticKey":                     "",
+		"FlexElasticValue":                   "",
+		"FlexElasticValueUpdate":             "",
+		"ElasticityValueForAssert":           "",
+		"ElasticityUpdateValueForAssert":     "",
+		"FlexMemoryOverheadKey":              "",
+		"FlexMemoryOverheadValue":            "",
+		"FlexMemoryOverheadValueUpdate":      "",
+		"MemoryOverheadValueForAssert":       "",
+		"MemoryOverheadUpdateValueForAssert": "",
 	}
+
+	// In version 9.7+ the properties are returned false by default
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 32.0") {
+		params["MemoryOverheadValueForAssert"] = "true"
+		params["MemoryOverheadUpdateValueForAssert"] = "true"
+		params["ElasticityValueForAssert"] = "false"
+		params["ElasticityUpdateValueForAssert"] = "false"
+	}
+
 	runOrgVdcTest(t, params, allocationModel)
 }
 
@@ -45,6 +74,12 @@ func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
 	}
 	validateConfiguration(t)
+
+	vcdClient, err := getTestVCDFromJson(testConfig)
+	if err != nil {
+		t.Skip("unable to validate vCD version - skipping test")
+	}
+
 	allocationModel := "AllocationPool"
 
 	var params = StringMap{
@@ -56,12 +91,36 @@ func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 		"Allocated":                 "2048",
 		"Reserved":                  "1024",
 		"Limit":                     "2048",
+		"LimitIncreased":            "2148",
+		"AllocatedIncreased":        "2148",
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  "TestAccVcdOrgVdcAllocationPool",
 		"MemoryGuaranteed":          "0.3",
 		"CpuGuaranteed":             "0.45",
+		// The parameters below are for Flex allocation model
+		// Part of HCL is created dynamically and with empty values we don't create the Flex part:
+		"equalsChar":                         "",
+		"FlexElasticKey":                     "",
+		"FlexElasticValue":                   "",
+		"FlexElasticValueUpdate":             "",
+		"ElasticityValueForAssert":           "",
+		"ElasticityUpdateValueForAssert":     "",
+		"FlexMemoryOverheadKey":              "",
+		"FlexMemoryOverheadValue":            "",
+		"FlexMemoryOverheadValueUpdate":      "",
+		"MemoryOverheadValueForAssert":       "",
+		"MemoryOverheadUpdateValueForAssert": "",
 	}
+
+	// In version 9.7+ the properties are returned false by default
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 32.0") {
+		params["MemoryOverheadValueForAssert"] = "true"
+		params["MemoryOverheadUpdateValueForAssert"] = "true"
+		params["ElasticityValueForAssert"] = "false"
+		params["ElasticityUpdateValueForAssert"] = "false"
+	}
+
 	runOrgVdcTest(t, params, allocationModel)
 }
 
@@ -70,6 +129,11 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
 	}
 	validateConfiguration(t)
+
+	vcdClient, err := getTestVCDFromJson(testConfig)
+	if err != nil {
+		t.Skip("unable to validate vCD version - skipping test")
+	}
 
 	allocationModel := "AllocationVApp"
 
@@ -82,11 +146,87 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 		"Allocated":                 "0",
 		"Reserved":                  "0",
 		"Limit":                     "2048",
+		"LimitIncreased":            "2148",
+		"AllocatedIncreased":        "0",
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  "TestAccVcdOrgVdcAllocationVapp",
 		"MemoryGuaranteed":          "0.5",
 		"CpuGuaranteed":             "0.6",
+		// The parameters below are for Flex allocation model
+		// Part of HCL is created dynamically and with empty values we don't create the Flex part:
+		"equalsChar":                         "",
+		"FlexElasticKey":                     "",
+		"FlexElasticValue":                   "",
+		"FlexElasticValueUpdate":             "",
+		"ElasticityValueForAssert":           "",
+		"ElasticityUpdateValueForAssert":     "",
+		"FlexMemoryOverheadKey":              "",
+		"FlexMemoryOverheadValue":            "",
+		"FlexMemoryOverheadValueUpdate":      "",
+		"MemoryOverheadValueForAssert":       "",
+		"MemoryOverheadUpdateValueForAssert": "",
+	}
+
+	// In version 9.7+ the properties are returned false by default
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 32.0") {
+		params["MemoryOverheadValueForAssert"] = "false"
+		params["MemoryOverheadUpdateValueForAssert"] = "false"
+		params["ElasticityValueForAssert"] = "true"
+		params["ElasticityUpdateValueForAssert"] = "true"
+	}
+
+	runOrgVdcTest(t, params, allocationModel)
+}
+
+func TestAccVcdOrgVdcAllocationFlex(t *testing.T) {
+	if !usingSysAdmin() {
+		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
+	}
+
+	vcdClient, err := getTestVCDFromJson(testConfig)
+	if err != nil {
+		t.Skip("unable to validate vCD version - skipping test")
+	}
+
+	// if vCD older then 9.7
+	if vcdClient.Client.APIVCDMaxVersionIs("< 32.0") {
+		t.Skip("Skipping this test as Flex is supported from version 9.7")
+	}
+
+	validateConfiguration(t)
+
+	allocationModel := "Flex"
+
+	var params = StringMap{
+		"VdcName":                   TestAccVcdVdc,
+		"OrgName":                   testConfig.VCD.Org,
+		"AllocationModel":           allocationModel,
+		"ProviderVdc":               testConfig.VCD.ProviderVdc.Name,
+		"NetworkPool":               testConfig.VCD.ProviderVdc.NetworkPool,
+		"Allocated":                 "1024",
+		"Reserved":                  "0",
+		"Limit":                     "1024",
+		"LimitIncreased":            "1124",
+		"AllocatedIncreased":        "1124",
+		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+		"Tags":                      "vdc",
+		"FuncName":                  t.Name(),
+		"MemoryGuaranteed":          "0.5",
+		"CpuGuaranteed":             "0.6",
+		// The parameters below are for Flex allocation model
+		// Part of HCL is created dynamically and these parameters with values result in the Flex part of the template being filled:
+		"equalsChar":                         "=",
+		"FlexElasticKey":                     "elasticity",
+		"FlexElasticValue":                   "false",
+		"FlexElasticValueUpdate":             "true",
+		"ElasticityValueForAssert":           "false",
+		"ElasticityUpdateValueForAssert":     "true",
+		"FlexMemoryOverheadKey":              "include_vm_memory_overhead",
+		"FlexMemoryOverheadValue":            "false",
+		"FlexMemoryOverheadValueUpdate":      "true",
+		"MemoryOverheadValueForAssert":       "false",
+		"MemoryOverheadUpdateValueForAssert": "true",
 	}
 	runOrgVdcTest(t, params, allocationModel)
 }
@@ -121,6 +261,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 		return
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateText)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -181,6 +322,10 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.used", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "elasticity", regexp.MustCompile(`^`+params["ElasticityValueForAssert"].(string)+`$`)),
+					resource.TestMatchResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "include_vm_memory_overhead", regexp.MustCompile(`^`+params["MemoryOverheadValueForAssert"].(string)+`$`)),
 				),
 			},
 			resource.TestStep{
@@ -226,9 +371,9 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.default", "true"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.allocated", params["Allocated"].(string)),
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.allocated", params["AllocatedIncreased"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.limit", params["Limit"].(string)),
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.limit", params["LimitIncreased"].(string)),
 					resource.TestMatchResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.overhead", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
@@ -236,15 +381,19 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 					resource.TestMatchResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.cpu.0.used", regexp.MustCompile(`^\d+$`)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.allocated", params["Allocated"].(string)),
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.allocated", params["AllocatedIncreased"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.limit", params["Limit"].(string)),
+						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.limit", params["LimitIncreased"].(string)),
 					resource.TestMatchResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.overhead", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "compute_capacity.0.memory.0.used", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "elasticity", regexp.MustCompile(`^`+params["ElasticityUpdateValueForAssert"].(string)+`$`)),
+					resource.TestMatchResourceAttr(
+						"vcd_org_vdc."+TestAccVcdVdc, "include_vm_memory_overhead", regexp.MustCompile(`^`+params["MemoryOverheadUpdateValueForAssert"].(string)+`$`)),
 				),
 			},
 			resource.TestStep{
@@ -347,9 +496,9 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   name = "{{.VdcName}}"
   org  = "{{.OrgName}}"
 
-  allocation_model = "{{.AllocationModel}}"
-  network_pool_name     = "{{.NetworkPool}}"
-  provider_vdc_name     = "{{.ProviderVdc}}"
+  allocation_model  = "{{.AllocationModel}}"
+  network_pool_name = "{{.NetworkPool}}"
+  provider_vdc_name = "{{.ProviderVdc}}"
 
   compute_capacity {
     cpu {
@@ -374,11 +523,13 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
     vdc_metadata = "VDC Metadata"
   }
 
-  enabled                  = true
-  enable_thin_provisioning = true
-  enable_fast_provisioning = true
-  delete_force             = true
-  delete_recursive         = true
+  enabled                    = true
+  enable_thin_provisioning   = true
+  enable_fast_provisioning   = true
+  delete_force               = true
+  delete_recursive           = true
+  {{.FlexElasticKey}}                 {{.equalsChar}} {{.FlexElasticValue}}
+  {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValue}}
 }
 `
 
@@ -388,19 +539,19 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   name = "{{.VdcName}}"
   org  = "{{.OrgName}}"
 
-  allocation_model = "{{.AllocationModel}}"
-  network_pool_name     = "{{.NetworkPool}}"
-  provider_vdc_name     = "{{.ProviderVdc}}"
+  allocation_model  = "{{.AllocationModel}}"
+  network_pool_name = "{{.NetworkPool}}"
+  provider_vdc_name = "{{.ProviderVdc}}"
 
   compute_capacity {
     cpu {
-      allocated = "{{.Allocated}}"
-      limit     = "{{.Limit}}"
+      allocated = "{{.AllocatedIncreased}}"
+      limit     = "{{.LimitIncreased}}"
     }
 
     memory {
-      allocated = "{{.Allocated}}"
-      limit     = "{{.Limit}}"
+      allocated = "{{.AllocatedIncreased}}"
+      limit     = "{{.LimitIncreased}}"
     }
   }
 
@@ -416,12 +567,14 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
     vdc_metadata2 = "VDC Metadata2"
   }
 
-  cpu_guaranteed           = {{.CpuGuaranteed}}
-  memory_guaranteed        = {{.MemoryGuaranteed}}
-  enabled                  = false
-  enable_thin_provisioning = false
-  enable_fast_provisioning = false
-  delete_force             = false
-  delete_recursive         = false
+  cpu_guaranteed             = {{.CpuGuaranteed}}
+  memory_guaranteed          = {{.MemoryGuaranteed}}
+  enabled                    = false
+  enable_thin_provisioning   = false
+  enable_fast_provisioning   = false
+  delete_force               = false
+  delete_recursive           = false
+  {{.FlexElasticKey}}                 {{.equalsChar}} {{.FlexElasticValueUpdate}}
+  {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValueUpdate}}
 }
 `

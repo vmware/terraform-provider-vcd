@@ -40,7 +40,7 @@ const (
 	// MimeVApp mime for a vApp
 	MimeVApp = "application/vnd.vmware.vcloud.vApp+xml"
 	// MimeQueryRecords mime for the query records
-	MimeQueryRecords = "application/vnd.vmware.vcloud.query.records+xml"
+	MimeQueryRecords = "application/vnd.vmware.vchs.query.records+xml"
 	// MimeAPIExtensibility mime for api extensibility
 	MimeAPIExtensibility = "application/vnd.vmware.vcloud.apiextensibility+xml"
 	// MimeEntity mime for vcloud entity
@@ -161,7 +161,6 @@ const (
 	EdgeFirewallPath       = "/firewall/config"
 	EdgeCreateFirewallPath = "/firewall/config/rules"
 	EdgeVnicConfig         = "/vnics"
-	EdgeVdcVnicConfig      = "/vdcNetworks"
 	EdgeDhcpRelayPath      = "/dhcp/config/relay"
 	LbConfigPath           = "/loadbalancer/config/"
 	LbMonitorPath          = "/loadbalancer/config/monitors/"

@@ -26,27 +26,6 @@ type SupportedVersions struct {
 	VersionInfos `xml:"VersionInfo"`
 }
 
-// apiVersionToVcdVersion gets the vCD version from max supported API version
-var apiVersionToVcdVersion = map[string]string{
-	"29.0": "9.0",
-	"30.0": "9.1",
-	"31.0": "9.5",
-	"32.0": "9.7",
-	"33.0": "10.0",
-}
-
-// vcdVersionToApiVersion gets the max supported API version from vCD version
-var vcdVersionToApiVersion = map[string]string{
-	"9.0":  "29.0",
-	"9.1":  "30.0",
-	"9.5":  "31.0",
-	"9.7":  "32.0",
-	"10.0": "33.0",
-}
-
-// to make vcdVersionToApiVersion used
-var _ = vcdVersionToApiVersion
-
 // APIVCDMaxVersionIs compares against maximum vCD supported API version from /api/versions (not necessarily
 // the currently used one). This allows to check what is the maximum API version that vCD instance
 // supports and can be used to guess vCD product version. API 31.0 support was first introduced in
@@ -57,21 +36,21 @@ var _ = vcdVersionToApiVersion
 // Format: ">= 27.0, < 32.0", ">= 30.0", "= 27.0"
 //
 // vCD version mapping to API version support https://code.vmware.com/doc/preview?id=8072
-func (cli *Client) APIVCDMaxVersionIs(versionConstraint string) bool {
-	err := cli.vcdFetchSupportedVersions()
+func (vcdCli *VCDClient) APIVCDMaxVersionIs(versionConstraint string) bool {
+	err := vcdCli.vcdFetchSupportedVersions()
 	if err != nil {
 		util.Logger.Printf("[ERROR] could not retrieve supported versions: %s", err)
 		return false
 	}
 
 	util.Logger.Printf("[TRACE] checking max API version against constraints '%s'", versionConstraint)
-	maxVersion, err := cli.maxSupportedVersion()
+	maxVersion, err := vcdCli.maxSupportedVersion()
 	if err != nil {
 		util.Logger.Printf("[ERROR] unable to find max supported version : %s", err)
 		return false
 	}
 
-	isSupported, err := cli.apiVersionMatchesConstraint(maxVersion, versionConstraint)
+	isSupported, err := vcdCli.apiVersionMatchesConstraint(maxVersion, versionConstraint)
 	if err != nil {
 		util.Logger.Printf("[ERROR] unable to find max supported version : %s", err)
 		return false
@@ -87,11 +66,11 @@ func (cli *Client) APIVCDMaxVersionIs(versionConstraint string) bool {
 // Format: ">= 27.0, < 32.0", ">= 30.0", "= 27.0"
 //
 // vCD version mapping to API version support https://code.vmware.com/doc/preview?id=8072
-func (cli *Client) APIClientVersionIs(versionConstraint string) bool {
+func (vcdCli *VCDClient) APIClientVersionIs(versionConstraint string) bool {
 
 	util.Logger.Printf("[TRACE] checking current API version against constraints '%s'", versionConstraint)
 
-	isSupported, err := cli.apiVersionMatchesConstraint(cli.APIVersion, versionConstraint)
+	isSupported, err := vcdCli.apiVersionMatchesConstraint(vcdCli.Client.APIVersion, versionConstraint)
 	if err != nil {
 		util.Logger.Printf("[ERROR] unable to find cur supported version : %s", err)
 		return false
@@ -103,30 +82,30 @@ func (cli *Client) APIClientVersionIs(versionConstraint string) bool {
 // vcdFetchSupportedVersions retrieves list of supported versions from
 // /api/versions endpoint and stores them in VCDClient for future uses.
 // It only does it once.
-func (cli *Client) vcdFetchSupportedVersions() error {
+func (vcdCli *VCDClient) vcdFetchSupportedVersions() error {
 	// Only fetch /versions if it is not stored already
-	numVersions := len(cli.supportedVersions.VersionInfos)
+	numVersions := len(vcdCli.supportedVersions.VersionInfos)
 	if numVersions > 0 {
 		util.Logger.Printf("[TRACE] skipping fetch of versions because %d are stored", numVersions)
 		return nil
 	}
 
-	apiEndpoint := cli.VCDHREF
+	apiEndpoint := vcdCli.Client.VCDHREF
 	apiEndpoint.Path += "/versions"
 
 	suppVersions := new(SupportedVersions)
-	_, err := cli.ExecuteRequest(apiEndpoint.String(), http.MethodGet,
+	_, err := vcdCli.Client.ExecuteRequest(apiEndpoint.String(), http.MethodGet,
 		"", "error fetching versions: %s", nil, suppVersions)
 
-	cli.supportedVersions = *suppVersions
+	vcdCli.supportedVersions = *suppVersions
 
 	return err
 }
 
 // maxSupportedVersion parses supported version list and returns the highest version in string format.
-func (cli *Client) maxSupportedVersion() (string, error) {
-	versions := make([]*semver.Version, len(cli.supportedVersions.VersionInfos))
-	for index, versionInfo := range cli.supportedVersions.VersionInfos {
+func (vcdCli *VCDClient) maxSupportedVersion() (string, error) {
+	versions := make([]*semver.Version, len(vcdCli.supportedVersions.VersionInfos))
+	for index, versionInfo := range vcdCli.supportedVersions.VersionInfos {
 		version, _ := semver.NewVersion(versionInfo.Version)
 		versions[index] = version
 	}
@@ -145,15 +124,15 @@ func (cli *Client) maxSupportedVersion() (string, error) {
 
 // vcdCheckSupportedVersion checks if there is at least one specified version exactly matching listed ones.
 // Format example "27.0"
-func (cli *Client) vcdCheckSupportedVersion(version string) (bool, error) {
-	return cli.checkSupportedVersionConstraint(fmt.Sprintf("= %s", version))
+func (vcdCli *VCDClient) vcdCheckSupportedVersion(version string) (bool, error) {
+	return vcdCli.checkSupportedVersionConstraint(fmt.Sprintf("= %s", version))
 }
 
 // Checks if there is at least one specified version matching the list returned by vCD.
 // Constraint format can be in format ">= 27.0, < 32",">= 30" ,"= 27.0".
-func (cli *Client) checkSupportedVersionConstraint(versionConstraint string) (bool, error) {
-	for _, versionInfo := range cli.supportedVersions.VersionInfos {
-		versionMatch, err := cli.apiVersionMatchesConstraint(versionInfo.Version, versionConstraint)
+func (vcdCli *VCDClient) checkSupportedVersionConstraint(versionConstraint string) (bool, error) {
+	for _, versionInfo := range vcdCli.supportedVersions.VersionInfos {
+		versionMatch, err := vcdCli.apiVersionMatchesConstraint(versionInfo.Version, versionConstraint)
 		if err != nil {
 			return false, fmt.Errorf("cannot match version: %s", err)
 		}
@@ -165,7 +144,7 @@ func (cli *Client) checkSupportedVersionConstraint(versionConstraint string) (bo
 	return false, fmt.Errorf("version %s is not supported", versionConstraint)
 }
 
-func (cli *Client) apiVersionMatchesConstraint(version, versionConstraint string) (bool, error) {
+func (vcdCli *VCDClient) apiVersionMatchesConstraint(version, versionConstraint string) (bool, error) {
 
 	checkVer, err := semver.NewVersion(version)
 	if err != nil {
@@ -186,27 +165,16 @@ func (cli *Client) apiVersionMatchesConstraint(version, versionConstraint string
 }
 
 // validateAPIVersion fetches API versions
-func (cli *Client) validateAPIVersion() error {
-	err := cli.vcdFetchSupportedVersions()
+func (vcdCli *VCDClient) validateAPIVersion() error {
+	err := vcdCli.vcdFetchSupportedVersions()
 	if err != nil {
 		return fmt.Errorf("could not retrieve supported versions: %s", err)
 	}
 
 	// Check if version is supported
-	if ok, err := cli.vcdCheckSupportedVersion(cli.APIVersion); !ok || err != nil {
-		return fmt.Errorf("API version %s is not supported: %s", cli.APIVersion, err)
+	if ok, err := vcdCli.vcdCheckSupportedVersion(vcdCli.Client.APIVersion); !ok || err != nil {
+		return fmt.Errorf("API version %s is not supported: %s", vcdCli.Client.APIVersion, err)
 	}
 
 	return nil
-}
-
-// GetSpecificApiVersionOnCondition returns default version or wantedApiVersion if it is connected to version
-// described in vcdApiVersionCondition
-// f.e. values ">= 32.0", "32.0" returns 32.0 if vCD version is above or 9.7
-func (cli *Client) GetSpecificApiVersionOnCondition(vcdApiVersionCondition, wantedApiVersion string) string {
-	apiVersion := cli.APIVersion
-	if cli.APIVCDMaxVersionIs(vcdApiVersionCondition) {
-		apiVersion = wantedApiVersion
-	}
-	return apiVersion
 }

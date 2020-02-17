@@ -115,7 +115,7 @@ func executeUpload(client *Client, media *types.Media, mediaFilePath, mediaName 
 		return UploadTask{}, fmt.Errorf("[ERROR] Issue getting upload link: %s", err)
 	}
 
-	callBack, uploadProgress := getProgressCallBackFunction()
+	callBack, uploadProgress := getCallBackFunction()
 
 	uploadError := *new(error)
 

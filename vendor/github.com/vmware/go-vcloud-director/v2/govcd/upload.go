@@ -14,31 +14,10 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"sync"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
-
-// mutexedProgress is a thread-safe structure to update and report progress during an UploadTask.
-//
-// Value must be read/written using LockedGet/LockedSet values instead of directly accessing the `progress` variable
-type mutexedProgress struct {
-	progress float64
-	sync.Mutex
-}
-
-func (p *mutexedProgress) LockedSet(progress float64) {
-	p.Lock()
-	defer p.Unlock()
-	p.progress = progress
-}
-
-func (p *mutexedProgress) LockedGet() float64 {
-	p.Lock()
-	defer p.Unlock()
-	return p.progress
-}
 
 // uploadLink - vCD created temporary upload link
 // uploadedBytes - how much of file already uploaded
@@ -218,12 +197,12 @@ func createTaskForVcdImport(client *Client, taskHREF string) (Task, error) {
 	return *task, nil
 }
 
-func getProgressCallBackFunction() (func(int64, int64), *mutexedProgress) {
-	uploadProgress := &mutexedProgress{}
+func getCallBackFunction() (func(int64, int64), *float64) {
+	var uploadProgress float64
 	callback := func(bytesUploaded, totalSize int64) {
-		uploadProgress.LockedSet((float64(bytesUploaded) / float64(totalSize)) * 100)
+		uploadProgress = (float64(bytesUploaded) / float64(totalSize)) * 100
 	}
-	return callback, uploadProgress
+	return callback, &uploadProgress
 }
 
 func validateAndFixFilePath(file string) (string, error) {

@@ -145,8 +145,6 @@ func (vdc *Vdc) CreateOrgVDCNetwork(networkConfig *types.OrgVDCNetwork) (Task, e
 				return Task{}, fmt.Errorf("error decoding vdc response: %s", err)
 			}
 
-			networkConfig.Xmlns = types.XMLNamespaceVCloud
-
 			output, err := xml.MarshalIndent(networkConfig, "  ", "    ")
 			if err != nil {
 				return Task{}, fmt.Errorf("error marshaling OrgVDCNetwork compose: %s", err)

@@ -10,14 +10,14 @@ import (
 )
 
 type UploadTask struct {
-	uploadProgress *mutexedProgress
+	uploadProgress *float64
 	*Task
 	uploadError *error
 }
 
 // Creates wrapped Task which is dedicated for upload functionality and
 // provides additional functionality to monitor upload progress.
-func NewUploadTask(task *Task, uploadProgress *mutexedProgress, uploadError *error) *UploadTask {
+func NewUploadTask(task *Task, uploadProgress *float64, uploadError *error) *UploadTask {
 	return &UploadTask{
 		uploadProgress,
 		task,
@@ -26,7 +26,7 @@ func NewUploadTask(task *Task, uploadProgress *mutexedProgress, uploadError *err
 }
 
 func (uploadTask *UploadTask) GetUploadProgress() string {
-	return fmt.Sprintf("%.2f", uploadTask.uploadProgress.LockedGet())
+	return fmt.Sprintf("%.2f", *uploadTask.uploadProgress)
 }
 
 func (uploadTask *UploadTask) ShowUploadProgress() error {
@@ -37,8 +37,8 @@ func (uploadTask *UploadTask) ShowUploadProgress() error {
 			return *uploadTask.uploadError
 		}
 
-		fmt.Printf("\rUpload progress %.2f%%", uploadTask.uploadProgress.LockedGet())
-		if uploadTask.uploadProgress.LockedGet() == 100.00 {
+		fmt.Printf("\rUpload progress %.2f%%", *uploadTask.uploadProgress)
+		if *uploadTask.uploadProgress == 100.00 {
 			break
 		}
 		time.Sleep(1 * time.Second)

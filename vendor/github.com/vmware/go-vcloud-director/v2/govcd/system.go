@@ -206,9 +206,6 @@ func CreateAndConfigureEdgeGatewayAsync(vcdClient *VCDClient, orgName, vdcName, 
 	if egwConfiguration.Name != egwName {
 		return Task{}, fmt.Errorf("name mismatch: '%s' used as parameter but '%s' in the configuration structure", egwName, egwConfiguration.Name)
 	}
-
-	egwConfiguration.Xmlns = types.XMLNamespaceVCloud
-
 	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
 	if err != nil {
 		return Task{}, err
@@ -442,7 +439,7 @@ func QueryPortGroups(vcdCli *VCDClient, filter string) ([]*types.PortGroupRecord
 	return results.Results.PortGroupRecord, nil
 }
 
-// GetExternalNetwork returns an ExternalNetwork reference if the network name matches an existing one.
+// GetExternalNetwork returns an ExternalNetwork reference if user the network name matches an existing one.
 // If no valid external network is found, it returns an empty ExternalNetwork reference and an error
 // Deprecated: use vcdClient.GetExternalNetworkByName instead
 func GetExternalNetwork(vcdClient *VCDClient, networkName string) (*ExternalNetwork, error) {
@@ -639,9 +636,6 @@ func CreateExternalNetwork(vcdClient *VCDClient, externalNetworkData *types.Exte
 	externalNetwork.OperationKey = externalNetworkData.OperationKey
 	externalNetwork.Link = externalNetworkData.Link
 	externalNetwork.Configuration = externalNetworkData.Configuration
-	if externalNetwork.Configuration != nil {
-		externalNetwork.Configuration.Xmlns = types.XMLNamespaceVCloud
-	}
 	externalNetwork.VCloudExtension = externalNetworkData.VCloudExtension
 	externalNetwork.XmlnsVmext = types.XMLNamespaceExtension
 	externalNetwork.XmlnsVcloud = types.XMLNamespaceVCloud
