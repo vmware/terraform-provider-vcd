@@ -202,6 +202,13 @@ var vmSchema = map[string]*schema.Schema{
 					Type:        schema.TypeString,
 					Description: "Mac address of network interface",
 				},
+				"adapter_type": {
+					Type:             schema.TypeString,
+					Computed:         true,
+					Optional:         true,
+					DiffSuppressFunc: suppressCase,
+					Description:      "Network card adapter type. (e.g. 'E1000', 'E1000E', 'SRIOVETHERNETCARD', 'VMXNET3', 'PCNet32')",
+				},
 			},
 		},
 	},
