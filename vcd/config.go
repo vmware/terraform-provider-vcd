@@ -68,7 +68,7 @@ type cachedConnection struct {
 }
 
 type cacheStorage struct {
-	// conMap holds  Cached VDC authenticated connection
+	// conMap holds cached VDC authenticated connection
 	conMap map[string]cachedConnection
 	// cacheClientServedCount records how many times we have cached a connection
 	cacheClientServedCount int
