@@ -19,6 +19,7 @@ func resourceVcdVappNetwork() *schema.Resource {
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},
 			"vapp_name": &schema.Schema{
 				Type:     schema.TypeString,
@@ -339,6 +340,7 @@ func resourceVappNetworkUpdate(d *schema.ResourceData, meta interface{}) error {
 	// we can't change network name as this results ID(href) change
 	vappNetworkSettings := &govcd.VappNetworkSettings{
 		Id:                 d.Id(),
+		Name:               d.Get("name").(string),
 		Description:        d.Get("description").(string),
 		Gateway:            d.Get("gateway").(string),
 		NetMask:            d.Get("netmask").(string),

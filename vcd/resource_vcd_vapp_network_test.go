@@ -33,28 +33,45 @@ func TestAccVcdVappNetwork_Isolated(t *testing.T) {
 		"Vdc":          testConfig.VCD.Vdc,
 		"resourceName": resourceName,
 		// we can't change network name as this results ID(href) change
-		"vappNetworkName":    newVappNetworkName,
-		"description":        "network description",
-		"gateway":            gateway,
-		"netmask":            netmask,
-		"dns1":               dns1,
-		"dns2":               dns2,
-		"dnsSuffix":          dnsSuffix,
-		"guestVlanAllowed":   guestVlanAllowed,
-		"startAddress":       "192.168.1.10",
-		"endAddress":         "192.168.1.20",
-		"vappName":           vappNameForNetworkTest,
-		"maxLeaseTime":       "7200",
-		"defaultLeaseTime":   "3600",
-		"dhcpStartAddress":   "192.168.1.21",
-		"dhcpEndAddress":     "192.168.1.22",
-		"dhcpEnabled":        "true",
-		"EdgeGateway":        testConfig.Networking.EdgeGateway,
-		"NetworkName":        "TestAccVcdVAppNet",
-		"orgNetwork":         "",
-		"firewallEnabled":    "false",
-		"natEnabled":         "false",
-		"retainIpMacEnabled": "false",
+		"vappNetworkName":             newVappNetworkName,
+		"description":                 "network description",
+		"descriptionForUpdate":        "update",
+		"gateway":                     gateway,
+		"netmask":                     netmask,
+		"dns1":                        dns1,
+		"dns1ForUpdate":               "8.8.8.7",
+		"dns2":                        dns2,
+		"dns2ForUpdate":               "1.1.1.2",
+		"dnsSuffix":                   dnsSuffix,
+		"dnsSuffixForUpdate":          "updated",
+		"guestVlanAllowed":            guestVlanAllowed,
+		"guestVlanAllowedForUpdate":   "false",
+		"startAddress":                "192.168.1.10",
+		"startAddressForUpdate":       "192.168.1.11",
+		"endAddress":                  "192.168.1.20",
+		"endAddressForUpdate":         "192.168.1.21",
+		"vappName":                    vappNameForNetworkTest,
+		"maxLeaseTime":                "7200",
+		"maxLeaseTimeForUpdate":       "7300",
+		"defaultLeaseTime":            "3600",
+		"defaultLeaseTimeForUpdate":   "3500",
+		"dhcpStartAddress":            "192.168.1.21",
+		"dhcpStartAddressForUpdate":   "192.168.1.22",
+		"dhcpEndAddress":              "192.168.1.22",
+		"dhcpEndAddressForUpdate":     "192.168.1.23",
+		"dhcpEnabled":                 "true",
+		"dhcpEnabledForUpdate":        "false",
+		"EdgeGateway":                 testConfig.Networking.EdgeGateway,
+		"NetworkName":                 "TestAccVcdVAppNet",
+		"NetworkName2":                "TestAccVcdVAppNet2",
+		"orgNetwork":                  "",
+		"orgNetworkForUpdate":         "",
+		"firewallEnabled":             "false",
+		"firewallEnabledForUpdate":    "false",
+		"natEnabled":                  "false",
+		"natEnabledForUpdate":         "false",
+		"retainIpMacEnabled":          "false",
+		"retainIpMacEnabledForUpdate": "true",
 	}
 
 	rungVappNetworkTest(t, params)
@@ -73,29 +90,46 @@ func TestAccVcdVappNetwork_Nat(t *testing.T) {
 		"Vdc":          testConfig.VCD.Vdc,
 		"resourceName": resourceName,
 		// we can't change network name as this results ID(href) change
-		"vappNetworkName":    newVappNetworkName,
-		"description":        "network description",
-		"gateway":            gateway,
-		"netmask":            netmask,
-		"dns1":               dns1,
-		"dns2":               dns2,
-		"dnsSuffix":          dnsSuffix,
-		"guestVlanAllowed":   guestVlanAllowed,
-		"startAddress":       "192.168.1.10",
-		"endAddress":         "192.168.1.20",
-		"vappName":           vappNameForNetworkTest,
-		"maxLeaseTime":       "7200",
-		"defaultLeaseTime":   "3600",
-		"dhcpStartAddress":   "192.168.1.21",
-		"dhcpEndAddress":     "192.168.1.22",
-		"dhcpEnabled":        "true",
-		"EdgeGateway":        testConfig.Networking.EdgeGateway,
-		"NetworkName":        "TestAccVcdVAppNet",
-		"orgNetwork":         "TestAccVcdVAppNet",
-		"firewallEnabled":    "false",
-		"natEnabled":         "false",
-		"retainIpMacEnabled": "true",
-		"FuncName":           "TestAccVcdVappNetwork_Nat",
+		"vappNetworkName":             newVappNetworkName,
+		"description":                 "network description",
+		"descriptionForUpdate":        "update",
+		"gateway":                     gateway,
+		"netmask":                     netmask,
+		"dns1":                        dns1,
+		"dns1ForUpdate":               "8.8.8.7",
+		"dns2":                        dns2,
+		"dns2ForUpdate":               "1.1.1.2",
+		"dnsSuffix":                   dnsSuffix,
+		"dnsSuffixForUpdate":          "updated",
+		"guestVlanAllowed":            guestVlanAllowed,
+		"guestVlanAllowedForUpdate":   "false",
+		"startAddress":                "192.168.1.10",
+		"startAddressForUpdate":       "192.168.1.11",
+		"endAddress":                  "192.168.1.20",
+		"endAddressForUpdate":         "192.168.1.21",
+		"vappName":                    vappNameForNetworkTest,
+		"maxLeaseTime":                "7200",
+		"maxLeaseTimeForUpdate":       "7300",
+		"defaultLeaseTime":            "3600",
+		"defaultLeaseTimeForUpdate":   "3500",
+		"dhcpStartAddress":            "192.168.1.21",
+		"dhcpStartAddressForUpdate":   "192.168.1.22",
+		"dhcpEndAddress":              "192.168.1.22",
+		"dhcpEndAddressForUpdate":     "192.168.1.23",
+		"dhcpEnabled":                 "true",
+		"dhcpEnabledForUpdate":        "false",
+		"EdgeGateway":                 testConfig.Networking.EdgeGateway,
+		"NetworkName":                 "TestAccVcdVAppNet",
+		"NetworkName2":                "TestAccVcdVAppNet2",
+		"orgNetwork":                  "TestAccVcdVAppNet",
+		"orgNetworkForUpdate":         "TestAccVcdVAppNet2",
+		"firewallEnabled":             "false",
+		"firewallEnabledForUpdate":    "true",
+		"natEnabled":                  "false",
+		"natEnabledForUpdate":         "true",
+		"retainIpMacEnabled":          "false",
+		"retainIpMacEnabledForUpdate": "false",
+		"FuncName":                    "TestAccVcdVappNetwork_Nat",
 	}
 
 	rungVappNetworkTest(t, params)
@@ -106,7 +140,7 @@ func rungVappNetworkTest(t *testing.T, params StringMap) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	params["FuncName"] = t.Name() + "-Update"
 	updateConfigText := templateFill(testAccCheckVappNetwork_update, params)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", testAccCheckVappNetwork_update)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateConfigText)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -144,6 +178,10 @@ func rungVappNetworkTest(t *testing.T, params StringMap) {
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.84879490.enabled", params["dhcpEnabled"].(string)),
 					resource.TestCheckResourceAttr(
+						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.84879490.default_lease_time", params["defaultLeaseTime"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.84879490.max_lease_time", params["maxLeaseTime"].(string)),
+					resource.TestCheckResourceAttr(
 						"vcd_vapp_network."+params["resourceName"].(string), "org_network", params["orgNetwork"].(string)),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_network."+params["resourceName"].(string), "retain_ip_mac_enabled", params["retainIpMacEnabled"].(string)),
@@ -160,37 +198,41 @@ func rungVappNetworkTest(t *testing.T, params StringMap) {
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_network."+params["resourceName"].(string), "name", params["vappNetworkName"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "description", params["description"].(string)),
+						"vcd_vapp_network."+params["resourceName"].(string), "description", params["descriptionForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_network."+params["resourceName"].(string), "gateway", gateway),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_network."+params["resourceName"].(string), "netmask", netmask),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dns1", dns1),
+						"vcd_vapp_network."+params["resourceName"].(string), "dns1", params["dns1ForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dns2", dns2),
+						"vcd_vapp_network."+params["resourceName"].(string), "dns2", params["dns2ForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dns_suffix", dnsSuffix),
+						"vcd_vapp_network."+params["resourceName"].(string), "dns_suffix", params["dnsSuffixForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "guest_vlan_allowed", guestVlanAllowed),
+						"vcd_vapp_network."+params["resourceName"].(string), "guest_vlan_allowed", params["guestVlanAllowedForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "static_ip_pool.2802459930.start_address", params["startAddress"].(string)),
+						"vcd_vapp_network."+params["resourceName"].(string), "static_ip_pool.132829107.start_address", params["startAddressForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "static_ip_pool.2802459930.end_address", params["endAddress"].(string)),
+						"vcd_vapp_network."+params["resourceName"].(string), "static_ip_pool.132829107.end_address", params["endAddressForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.84879490.start_address", params["dhcpStartAddress"].(string)),
+						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.225014714.start_address", params["dhcpStartAddressForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.84879490.end_address", params["dhcpEndAddress"].(string)),
+						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.225014714.end_address", params["dhcpEndAddressForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.84879490.enabled", params["dhcpEnabled"].(string)),
+						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.225014714.enabled", params["dhcpEnabledForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "org_network", params["orgNetwork"].(string)),
+						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.225014714.default_lease_time", params["defaultLeaseTimeForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "retain_ip_mac_enabled", params["retainIpMacEnabled"].(string)),
+						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.225014714.max_lease_time", params["maxLeaseTimeForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "firewall_enabled", params["firewallEnabled"].(string)),
+						"vcd_vapp_network."+params["resourceName"].(string), "org_network", params["orgNetworkForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "nat_enabled", params["natEnabled"].(string)),
+						"vcd_vapp_network."+params["resourceName"].(string), "retain_ip_mac_enabled", params["retainIpMacEnabledForUpdate"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp_network."+params["resourceName"].(string), "firewall_enabled", params["firewallEnabledForUpdate"].(string)),
+					resource.TestCheckResourceAttr(
+						"vcd_vapp_network."+params["resourceName"].(string), "nat_enabled", params["natEnabledForUpdate"].(string)),
 				),
 			},
 		},
@@ -350,37 +392,49 @@ resource "vcd_network_routed" "{{.NetworkName}}" {
   }
 }
 
+resource "vcd_network_routed" "{{.NetworkName2}}" {
+  name         = "{{.NetworkName2}}"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  gateway      = "10.10.103.1"
+
+  static_ip_pool {
+    start_address = "10.10.103.2"
+    end_address   = "10.10.103.254"
+  }
+}
+
 resource "vcd_vapp_network" "{{.resourceName}}" {
   org                = "{{.Org}}"
   vdc                = "{{.Vdc}}"
   name               = "{{.vappNetworkName}}"
-  description        = "{{.description}}"
+  description        = "{{.descriptionForUpdate}}"
   vapp_name          = "{{.vappName}}"
   gateway            = "{{.gateway}}"
   netmask            = "{{.netmask}}"
-  dns1               = "{{.dns1}}"
-  dns2               = "{{.dns2}}"
-  dns_suffix         = "{{.dnsSuffix}}"
-  guest_vlan_allowed = {{.guestVlanAllowed}}
-
+  dns1               = "{{.dns1ForUpdate}}"
+  dns2               = "{{.dns2ForUpdate}}"
+  dns_suffix         = "{{.dnsSuffixForUpdate}}"
+  guest_vlan_allowed = {{.guestVlanAllowedForUpdate}}
   static_ip_pool {
-    start_address = "{{.startAddress}}"
-    end_address   = "{{.endAddress}}"
+    start_address = "{{.startAddressForUpdate}}"
+    end_address   = "{{.endAddressForUpdate}}"
   }
 
   dhcp_pool {
-    max_lease_time     = "{{.maxLeaseTime}}"
-    default_lease_time = "{{.defaultLeaseTime}}"
-    start_address      = "{{.dhcpStartAddress}}"
-    end_address        = "{{.dhcpEndAddress}}"
-    enabled            = "{{.dhcpEnabled}}"
+    max_lease_time     = "{{.maxLeaseTimeForUpdate}}"
+    default_lease_time = "{{.defaultLeaseTimeForUpdate}}"
+    start_address      = "{{.dhcpStartAddressForUpdate}}"
+    end_address        = "{{.dhcpEndAddressForUpdate}}"
+    enabled            = "{{.dhcpEnabledForUpdate}}"
   }
 
-  org_network           = "{{.orgNetwork}}"
-  firewall_enabled      = "{{.firewallEnabled}}"
-  nat_enabled           = "{{.natEnabled}}"
-  retain_ip_mac_enabled = "{{.retainIpMacEnabled}}"
+  org_network           = "{{.orgNetworkForUpdate}}"
+  firewall_enabled      = "{{.firewallEnabledForUpdate}}"
+  nat_enabled           = "{{.natEnabledForUpdate}}"
+  retain_ip_mac_enabled = "{{.retainIpMacEnabledForUpdate}}"
 
-  depends_on = ["vcd_vapp.{{.vappName}}", "vcd_network_routed.{{.NetworkName}}"]
+  depends_on = ["vcd_vapp.{{.vappName}}", "vcd_network_routed.{{.NetworkName}}", "vcd_network_routed.{{.NetworkName2}}"]
 }
 `
