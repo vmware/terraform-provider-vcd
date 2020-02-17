@@ -18,8 +18,8 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-// vmSchema is defined as global so that it can be directly accessible in other places
-var vmSchema = map[string]*schema.Schema{
+// vappVmSchema is defined as global so that it can be directly accessible in other places
+var vappVmSchema = map[string]*schema.Schema{
 	"vapp_name": &schema.Schema{
 		Type:        schema.TypeString,
 		Required:    true,
@@ -391,7 +391,7 @@ func resourceVcdVAppVm() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: resourceVcdVappVmImport,
 		},
-		Schema: vmSchema,
+		Schema: vappVmSchema,
 	}
 }
 
@@ -697,7 +697,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 
 	// Exit early only if "network_dhcp_wait_seconds" is changed because this field only supports
 	// update so that its value can be written into statefile and be accessible in read function
-	if onlyHasChange("network_dhcp_wait_seconds", vmSchema, d) {
+	if onlyHasChange("network_dhcp_wait_seconds", vappVmSchema, d) {
 		log.Printf("[DEBUG] [VM update] exiting early because only 'network_dhcp_wait_seconds' has change")
 		return resourceVcdVAppVmRead(d, meta)
 	}
