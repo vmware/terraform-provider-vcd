@@ -64,6 +64,9 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_vm."+vmName, "metadata.vm_metadata", "VM Metadata."),
 					resource.TestCheckOutput("disk", diskName),
+					resource.TestCheckOutput("disk_bus_number", "1"),
+					resource.TestCheckOutput("disk_unit_number", "0"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+vmName, "disk.3908069514.size_in_mb", "5"),
 				),
 			},
 			resource.TestStep{
@@ -217,6 +220,12 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
 output "disk" {
   value = tolist(vcd_vapp_vm.{{.VmName}}.disk)[0].name
 }
+output "disk_bus_number" {
+  value = tolist(vcd_vapp_vm.{{.VmName}}.disk)[0].bus_number
+}
+output "disk_unit_number" {
+  value = tolist(vcd_vapp_vm.{{.VmName}}.disk)[0].unit_number
+}
 `
 
 const testAccCheckVcdVAppVm_clone = `
@@ -286,6 +295,4 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
     ip_allocation_mode = vcd_vapp_vm.{{.VmName}}.network.0.ip_allocation_mode
   }
 }
-
-
 `

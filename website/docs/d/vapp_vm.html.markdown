@@ -87,5 +87,6 @@ The following arguments are supported:
 * `description`  -  The VM description. Note: description is read only. Currently, this field has
   the description of the OVA used to create the VM
 * `expose_hardware_virtualization` -  Expose hardware-assisted CPU virtualization to guest OS
+* `internal_disk` - (*v2.7+*) A block providing internal disk of VM details
 
 See [VM resource](/docs/providers/vcd/r/vapp_vm.html#attribute-reference) for more info about VM attributes.
