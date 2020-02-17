@@ -142,8 +142,8 @@ func genericVcdIpSetRead(d *schema.ResourceData, meta interface{}, origin string
 		ipSet, err = vdc.GetNsxvIpSetById(d.Id())
 	}
 
-	if govcd.IsNotFound(err) {
-		log.Printf("unable to find IP set with ID %s: %s. Removing from state", d.Id(), err)
+	if govcd.IsNotFound(err) && origin == "resource" {
+		log.Printf("[INFO] unable to find IP set with ID %s: %s. Removing from state", d.Id(), err)
 		d.SetId("")
 		return nil
 	}

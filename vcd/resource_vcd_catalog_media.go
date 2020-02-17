@@ -182,6 +182,10 @@ func resourceVcdMediaCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceVcdMediaRead(d *schema.ResourceData, meta interface{}) error {
+	return genericVcdMediaRead(d, meta, "resource")
+}
+
+func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string) error {
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetAdminOrgFromResource(d)
@@ -202,8 +206,8 @@ func resourceVcdMediaRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	media, err := catalog.GetMediaByNameOrId(identifier, false)
-	if govcd.IsNotFound(err) {
-		log.Printf("unable to find media with ID %s: %s. Removing from state", identifier, err)
+	if govcd.IsNotFound(err) && origin == "resource" {
+		log.Printf("[INFO] unable to find media with ID %s: %s. Removing from state", identifier, err)
 		d.SetId("")
 		return nil
 	}
