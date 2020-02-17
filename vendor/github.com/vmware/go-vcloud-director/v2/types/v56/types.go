@@ -382,6 +382,7 @@ type Vdc struct {
 
 	Link               LinkList             `xml:"Link,omitempty"`
 	Description        string               `xml:"Description,omitempty"`
+	Tasks              *TasksInProgress     `xml:"Tasks,omitempty"`
 	AllocationModel    string               `xml:"AllocationModel"`
 	ComputeCapacity    []*ComputeCapacity   `xml:"ComputeCapacity"`
 	ResourceEntities   []*ResourceEntities  `xml:"ResourceEntities,omitempty"`
@@ -389,10 +390,9 @@ type Vdc struct {
 	Capabilities       []*Capabilities      `xml:"Capabilities,omitempty"`
 	NicQuota           int                  `xml:"NicQuota"`
 	NetworkQuota       int                  `xml:"NetworkQuota"`
+	UsedNetworkCount   int                  `xml:"UsedNetworkCount,omitempty"`
 	VMQuota            int                  `xml:"VmQuota"`
 	IsEnabled          bool                 `xml:"IsEnabled"`
-	Tasks              *TasksInProgress     `xml:"Tasks,omitempty"`
-	UsedNetworkCount   int                  `xml:"UsedNetworkCount,omitempty"`
 	VdcStorageProfiles *VdcStorageProfiles  `xml:"VdcStorageProfiles"`
 }
 
@@ -405,15 +405,19 @@ type AdminVdc struct {
 	Xmlns string `xml:"xmlns,attr"`
 	Vdc
 
-	ResourceGuaranteedMemory *float64   `xml:"ResourceGuaranteedMemory,omitempty"`
-	ResourceGuaranteedCpu    *float64   `xml:"ResourceGuaranteedCpu,omitempty"`
-	VCpuInMhz                *int64     `xml:"VCpuInMhz,omitempty"`
-	IsThinProvision          *bool      `xml:"IsThinProvision,omitempty"`
-	NetworkPoolReference     *Reference `xml:"NetworkPoolReference,omitempty"`
-	ProviderVdcReference     *Reference `xml:"ProviderVdcReference"`
-	UsesFastProvisioning     *bool      `xml:"UsesFastProvisioning,omitempty"`
-	OverCommitAllowed        bool       `xml:"OverCommitAllowed,omitempty"`
-	VmDiscoveryEnabled       bool       `xml:"VmDiscoveryEnabled,omitempty"`
+	VCpuInMhz2               *int64         `xml:"VCpuInMhz2,omitempty"`
+	ResourceGuaranteedMemory *float64       `xml:"ResourceGuaranteedMemory,omitempty"`
+	ResourceGuaranteedCpu    *float64       `xml:"ResourceGuaranteedCpu,omitempty"`
+	VCpuInMhz                *int64         `xml:"VCpuInMhz,omitempty"`
+	IsThinProvision          *bool          `xml:"IsThinProvision,omitempty"`
+	NetworkPoolReference     *Reference     `xml:"NetworkPoolReference,omitempty"`
+	ProviderVdcReference     *Reference     `xml:"ProviderVdcReference"`
+	ResourcePoolRefs         *VimObjectRefs `xml:"vmext:ResourcePoolRefs,omitempty"`
+	UsesFastProvisioning     *bool          `xml:"UsesFastProvisioning,omitempty"`
+	OverCommitAllowed        bool           `xml:"OverCommitAllowed,omitempty"`
+	VmDiscoveryEnabled       bool           `xml:"VmDiscoveryEnabled,omitempty"`
+	IsElastic                *bool          `xml:"IsElastic,omitempty"`             // Supported from 32.0 for the Flex model
+	IncludeMemoryOverhead    *bool          `xml:"IncludeMemoryOverhead,omitempty"` // Supported from 32.0 for the Flex model
 }
 
 // VdcStorageProfile represents the parameters to create a storage profile in an organization vDC.
@@ -441,7 +445,7 @@ type VdcConfiguration struct {
 	Xmlns                    string               `xml:"xmlns,attr"`
 	Name                     string               `xml:"name,attr"`
 	Description              string               `xml:"Description,omitempty"`
-	AllocationModel          string               `xml:"AllocationModel"`
+	AllocationModel          string               `xml:"AllocationModel"` // Flex supported from 32.0
 	ComputeCapacity          []*ComputeCapacity   `xml:"ComputeCapacity"`
 	NicQuota                 int                  `xml:"NicQuota,omitempty"`
 	NetworkQuota             int                  `xml:"NetworkQuota,omitempty"`
@@ -457,6 +461,8 @@ type VdcConfiguration struct {
 	UsesFastProvisioning     bool                 `xml:"UsesFastProvisioning,omitempty"`
 	OverCommitAllowed        bool                 `xml:"OverCommitAllowed,omitempty"`
 	VmDiscoveryEnabled       bool                 `xml:"VmDiscoveryEnabled,omitempty"`
+	IsElastic                *bool                `xml:"IsElastic,omitempty"`             // Supported from 32.0 for the Flex model
+	IncludeMemoryOverhead    *bool                `xml:"IncludeMemoryOverhead,omitempty"` // Supported from 32.0 for the Flex model
 }
 
 // Task represents an asynchronous operation in vCloud Director.
@@ -695,8 +701,8 @@ type VAppTemplateLeaseSettings struct {
 	Type string   `xml:"type,attr,omitempty"` // The MIME type of the entity.
 	Link LinkList `xml:"Link,omitempty"`      // A reference to an entity or operation associated with this object.
 
-	DeleteOnStorageLeaseExpiration bool `xml:"DeleteOnStorageLeaseExpiration,omitempty"`
-	StorageLeaseSeconds            int  `xml:"StorageLeaseSeconds,omitempty"`
+	DeleteOnStorageLeaseExpiration *bool `xml:"DeleteOnStorageLeaseExpiration,omitempty"`
+	StorageLeaseSeconds            *int  `xml:"StorageLeaseSeconds,omitempty"`
 }
 
 type VAppLeaseSettings struct {
@@ -704,10 +710,10 @@ type VAppLeaseSettings struct {
 	Type string   `xml:"type,attr,omitempty"` // The MIME type of the entity.
 	Link LinkList `xml:"Link,omitempty"`      // A reference to an entity or operation associated with this object.
 
-	DeleteOnStorageLeaseExpiration   bool `xml:"DeleteOnStorageLeaseExpiration,omitempty"`
-	DeploymentLeaseSeconds           int  `xml:"DeploymentLeaseSeconds,omitempty"`
-	StorageLeaseSeconds              int  `xml:"StorageLeaseSeconds,omitempty"`
-	PowerOffOnRuntimeLeaseExpiration bool `xml:"PowerOffOnRuntimeLeaseExpiration,omitempty"`
+	DeleteOnStorageLeaseExpiration   *bool `xml:"DeleteOnStorageLeaseExpiration,omitempty"`
+	DeploymentLeaseSeconds           *int  `xml:"DeploymentLeaseSeconds,omitempty"`
+	StorageLeaseSeconds              *int  `xml:"StorageLeaseSeconds,omitempty"`
+	PowerOffOnRuntimeLeaseExpiration *bool `xml:"PowerOffOnRuntimeLeaseExpiration,omitempty"`
 }
 
 type OrgFederationSettings struct {
@@ -1360,9 +1366,105 @@ type VM struct {
 	// TODO: OVF Sections to be implemented
 	// Environment OVF_Environment `xml:"Environment,omitempty"
 
+	VmSpecSection *VmSpecSection `xml:"VmSpecSection,omitempty"`
+
 	VMCapabilities *VMCapabilities `xml:"VmCapabilities,omitempty"` // Allows you to specify certain capabilities of this virtual machine.
 	StorageProfile *Reference      `xml:"StorageProfile,omitempty"` // A reference to a storage profile to be used for this object. The specified storage profile must exist in the organization vDC that contains the object. If not specified, the default storage profile for the vDC is used.
 	ProductSection *ProductSection `xml:"ProductSection,omitempty"`
+}
+
+// VMDiskChange represents a virtual machine only with Disk setting update part
+type VMDiskChange struct {
+	XMLName xml.Name `xml:"Vm"`
+	Ovf     string   `xml:"xmlns:ovf,attr,omitempty"`
+	Xsi     string   `xml:"xmlns:xsi,attr,omitempty"`
+	Xmlns   string   `xml:"xmlns,attr,omitempty"`
+
+	HREF string `xml:"href,attr,omitempty"` // The URI of the VM entity.
+	Type string `xml:"type,attr,omitempty"` // The MIME type of the entity - application/vnd.vmware.vcloud.vm+xml
+	Name string `xml:"name,attr"`           // VM name
+	ID   string `xml:"id,attr,omitempty"`   // VM ID. The entity identifier, expressed in URN format. The value of this attribute uniquely identifies the entity, persists for the life of the entity, and is never reused.
+
+	VmSpecSection *VmSpecSection `xml:"VmSpecSection,omitempty"` // Container for the specification of this virtual machine. This is an alternative to using ovf:VirtualHardwareSection + ovf:OperatingSystemSection
+}
+
+// VmSpecSection from VM struct
+type VmSpecSection struct {
+	Modified          *bool             `xml:"Modified,attr,omitempty"`
+	Info              string            `xml:"ovf:Info"`
+	OsType            string            `xml:"OsType,omitempty"`            // The type of the OS. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
+	NumCpus           *int              `xml:"NumCpus,omitempty"`           // Number of CPUs. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
+	NumCoresPerSocket *int              `xml:"NumCoresPerSocket,omitempty"` // Number of cores among which to distribute CPUs in this virtual machine. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
+	CpuResourceMhz    *CpuResourceMhz   `xml:"CpuResourceMhz,omitempty"`    // CPU compute resources. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
+	MemoryResourceMb  *MemoryResourceMb `xml:"MemoryResourceMb"`            // Memory compute resources. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
+	MediaSection      *MediaSection     `xml:"MediaSection,omitempty"`      // The media devices of this VM.
+	DiskSection       *DiskSection      `xml:"DiskSection,omitempty"`       // virtual disks of this VM.
+	HardwareVersion   *HardwareVersion  `xml:"HardwareVersion"`             // vSphere name of Virtual Hardware Version of this VM. Example: vmx-13 - This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
+	VmToolsVersion    string            `xml:"VmToolsVersion,omitempty"`    // VMware tools version of this VM.
+	VirtualCpuType    string            `xml:"VirtualCpuType,omitempty"`    // The capabilities settings for this VM. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
+	TimeSyncWithHost  *bool             `xml:"TimeSyncWithHost,omitempty"`  // Synchronize the VM's time with the host.
+}
+
+// DiskSection from VM/VmSpecSection struct
+type DiskSection struct {
+	DiskSettings []*DiskSettings `xml:"DiskSettings"`
+}
+
+// DiskSettings from VM/VmSpecSection/DiskSection struct
+type DiskSettings struct {
+	DiskId              string     `xml:"DiskId,omitempty"`              // Specifies a unique identifier for this disk in the scope of the corresponding VM. This element is optional when creating a VM, but if it is provided it should be unique. This element is mandatory when updating an existing disk.
+	SizeMb              int64      `xml:"SizeMb"`                        // The size of the disk in MB.
+	UnitNumber          int        `xml:"UnitNumber"`                    // The device number on the SCSI or IDE controller of the disk.
+	BusNumber           int        `xml:"BusNumber"`                     //	The number of the SCSI or IDE controller itself.
+	AdapterType         string     `xml:"AdapterType"`                   // The type of disk controller, e.g. IDE vs SCSI and if SCSI bus-logic vs LSI logic.
+	ThinProvisioned     *bool      `xml:"ThinProvisioned,omitempty"`     // Specifies whether the disk storage is pre-allocated or allocated on demand.
+	Disk                *Reference `xml:"Disk,omitempty"`                // Specifies reference to a named disk.
+	StorageProfile      *Reference `xml:"StorageProfile,omitempty"`      // Specifies reference to a storage profile to be associated with the disk.
+	OverrideVmDefault   bool       `xml:"overrideVmDefault"`             // Specifies that the disk storage profile overrides the VM's default storage profile.
+	Iops                *int64     `xml:"iops,omitempty"`                // Specifies the IOPS for the disk.
+	VirtualQuantity     *int64     `xml:"VirtualQuantity,omitempty"`     // The actual size of the disk.
+	VirtualQuantityUnit string     `xml:"VirtualQuantityUnit,omitempty"` // The units in which VirtualQuantity is measured.
+}
+
+// MediaSection from VM/VmSpecSection struct
+type MediaSection struct {
+	MediaSettings []*MediaSettings `xml:"MediaSettings"`
+}
+
+// MediaSettings from VM/VmSpecSection/MediaSection struct
+type MediaSettings struct {
+	DeviceId    string     `xml:"DeviceId,omitempty"`    // Describes the media device whose media mount is being specified here. This deviceId must match the RASD.InstanceID attribute in the VirtualHardwareSection of the vApp's OVF description.
+	MediaType   string     `xml:"MediaType,omitempty"`   // Specified the type of media that is mounted onto the device.
+	MediaState  string     `xml:"MediaState,omitempty"`  // Specifies the state of the media device.
+	MediaImage  *Reference `xml:"MediaImage,omitempty"`  // The media image that is mounted onto the device. This property can be 'null' which represents that no media is mounted on the device.
+	UnitNumber  int        `xml:"UnitNumber"`            // Specified the type of media that is mounted onto the device.
+	BusNumber   int        `xml:"BusNumber"`             //	The bus number of the media device controller.
+	AdapterType string     `xml:"AdapterType,omitempty"` // The type of controller, e.g. IDE vs SCSI and if SCSI bus-logic vs LSI logic
+}
+
+// CpuResourceMhz from VM/VmSpecSection struct
+type CpuResourceMhz struct {
+	Configured  int64  `xml:"Configured`             // The amount of resource configured on the virtual machine.
+	Reservation *int64 `xml:"Reservation,omitempty"` // The amount of reservation of this resource on the underlying virtualization infrastructure.
+	Limit       *int64 `xml:"Limit,omitempty"`       // The limit for how much of this resource can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited.
+	SharesLevel string `xml:"SharesLevel,omitempty"` //	Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload.
+	Shares      *int   `xml:"Shares,omitempty"`      // Custom priority for the resource. This field is read-only, unless the shares level is CUSTOM.
+}
+
+// MemoryResourceMb from VM/VmSpecSection struct
+type MemoryResourceMb struct {
+	Configured  int64  `xml:"Configured`             // The amount of resource configured on the virtual machine.
+	Reservation *int64 `xml:"Reservation,omitempty"` // The amount of reservation of this resource on the underlying virtualization infrastructure.
+	Limit       *int64 `xml:"Limit,omitempty"`       // The limit for how much of this resource can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited.
+	SharesLevel string `xml:"SharesLevel,omitempty"` //	Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload.
+	Shares      *int   `xml:"Shares,omitempty"`      // Custom priority for the resource. This is a read-only, unless the share level is CUSTOM.
+}
+
+// HardwareVersion from VM/VmSpecSection struct
+type HardwareVersion struct {
+	HREF  string `xml:"href,attr"`
+	Type  string `xml:"type,attr,omitempty"`
+	Value string `xml:",chardata"`
 }
 
 // ovf:VirtualHardwareSection from VM struct
@@ -1877,6 +1979,7 @@ type FirewallService struct {
 type NatService struct {
 	Xmlns string `xml:"xmlns,attr,omitempty"`
 	// Elements
+
 	IsEnabled  bool       `xml:"IsEnabled"`            // Enable or disable the service using this flag
 	NatType    string     `xml:"NatType,omitempty"`    // One of: ipTranslation (use IP translation), portForwarding (use port forwarding)
 	Policy     string     `xml:"Policy,omitempty"`     // One of: allowTraffic (Allow all traffic), allowTrafficIn (Allow inbound traffic only)
@@ -2565,52 +2668,4 @@ type AdminCatalogRecord struct {
 	Status                  string    `xml:"status,attr,omitempty"`
 	Link                    *Link     `xml:"Link,omitempty"`
 	Vdc                     *Metadata `xml:"Metadata,omitempty"`
-}
-
-// EdgeGatewayVnics is a data structure holding information of vNic configuration in NSX-V edge
-// gateway
-type EdgeGatewayVnics struct {
-	XMLName xml.Name `xml:"vnics"`
-	Vnic    []struct {
-		Label         string `xml:"label"`
-		Name          string `xml:"name"`
-		AddressGroups struct {
-			AddressGroup struct {
-				PrimaryAddress     string `xml:"primaryAddress,omitempty"`
-				SecondaryAddresses struct {
-					IpAddress []string `xml:"ipAddress,omitempty"`
-				} `xml:"secondaryAddresses,omitempty"`
-				SubnetMask         string `xml:"subnetMask,omitempty"`
-				SubnetPrefixLength string `xml:"subnetPrefixLength,omitempty"`
-			} `xml:"addressGroup,omitempty"`
-		} `xml:"addressGroups,omitempty"`
-		Mtu                 string `xml:"mtu,omitempty"`
-		Type                string `xml:"type,omitempty"`
-		IsConnected         string `xml:"isConnected,omitempty"`
-		Index               *int   `xml:"index"`
-		PortgroupId         string `xml:"portgroupId,omitempty"`
-		PortgroupName       string `xml:"portgroupName,omitempty"`
-		EnableProxyArp      string `xml:"enableProxyArp,omitempty"`
-		EnableSendRedirects string `xml:"enableSendRedirects,omitempty"`
-		SubInterfaces       struct {
-			SubInterface []struct {
-				IsConnected         string `xml:"isConnected,omitempty"`
-				Label               string `xml:"label,omitempty"`
-				Name                string `xml:"name,omitempty"`
-				Index               *int   `xml:"index,omitempty"`
-				TunnelId            string `xml:"tunnelId,omitempty"`
-				LogicalSwitchId     string `xml:"logicalSwitchId,omitempty"`
-				LogicalSwitchName   string `xml:"logicalSwitchName,omitempty"`
-				EnableSendRedirects string `xml:"enableSendRedirects,omitempty"`
-				Mtu                 string `xml:"mtu,omitempty"`
-				AddressGroups       struct {
-					AddressGroup struct {
-						PrimaryAddress     string `xml:"primaryAddress,omitempty"`
-						SubnetMask         string `xml:"subnetMask,omitempty"`
-						SubnetPrefixLength string `xml:"subnetPrefixLength,omitempty"`
-					} `xml:"addressGroup,omitempty"`
-				} `xml:"addressGroups,omitempty"`
-			} `xml:"subInterface,omitempty"`
-		} `xml:"subInterfaces,omitempty"`
-	} `xml:"vnic,omitempty"`
 }

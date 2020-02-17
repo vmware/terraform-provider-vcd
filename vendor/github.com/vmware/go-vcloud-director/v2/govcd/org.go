@@ -71,7 +71,7 @@ func (org *Org) FindCatalog(catalogName string) (Catalog, error) {
 	return Catalog{}, nil
 }
 
-// If user specifies valid vdc name then this returns a vdc object.
+// GetVdcByName if user specifies valid vdc name then this returns a vdc object.
 // If no vdc is found, then it returns an empty vdc and no error.
 // Otherwise it returns an empty vdc and an error.
 // Deprecated: use org.GetVDCByName instead
@@ -134,9 +134,6 @@ func (org *Org) CreateCatalog(name, description string) (Catalog, error) {
 }
 
 func validateVdcConfiguration(vdcDefinition *types.VdcConfiguration) error {
-	if vdcDefinition.Xmlns == "" {
-		return errors.New("VdcConfiguration missing required field: Xmlns")
-	}
 	if vdcDefinition.Name == "" {
 		return errors.New("VdcConfiguration missing required field: Name")
 	}

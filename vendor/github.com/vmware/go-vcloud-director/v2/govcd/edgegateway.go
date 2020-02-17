@@ -942,6 +942,8 @@ func (egw *EdgeGateway) AddIpsecVPN(ipsecVPNConfig *types.EdgeGatewayServiceConf
 		fmt.Printf("error: %s\n", err)
 	}
 
+	ipsecVPNConfig.Xmlns = types.XMLNamespaceVCloud
+
 	apiEndpoint, _ := url.ParseRequestURI(egw.EdgeGateway.HREF)
 	apiEndpoint.Path += "/action/configureServices"
 
@@ -1254,19 +1256,19 @@ func validateUpdateLBGeneralParams(logLevel string) error {
 	return nil
 }
 
-// getVnics retrieves a structure of type EdgeGatewayVnics which contains network interfaces
-// available in Edge Gateway
-func (egw *EdgeGateway) getVnics() (*types.EdgeGatewayVnics, error) {
+// getVdcNetworks retrieves a structure of type EdgeGatewayInterfaces which contains network
+// interfaces available in Edge Gateway (uses "/vdcNetworks" endpoint)
+func (egw *EdgeGateway) getVdcNetworks() (*types.EdgeGatewayInterfaces, error) {
 	if !egw.HasAdvancedNetworking() {
 		return nil, fmt.Errorf("only advanced edge gateway supports vNics")
 	}
 
-	httpPath, err := egw.buildProxiedEdgeEndpointURL(types.EdgeVnicConfig)
+	httpPath, err := egw.buildProxiedEdgeEndpointURL("/vdcNetworks")
 	if err != nil {
 		return nil, fmt.Errorf("could not get Edge Gateway API endpoint: %s", err)
 	}
 
-	vnicConfig := &types.EdgeGatewayVnics{}
+	vnicConfig := &types.EdgeGatewayInterfaces{}
 	_, err = egw.client.ExecuteRequest(httpPath, http.MethodGet, types.AnyXMLMime,
 		"unable to edge gateway vnic configuration: %s", nil, vnicConfig)
 
@@ -1281,7 +1283,7 @@ func (egw *EdgeGateway) getVnics() (*types.EdgeGatewayVnics, error) {
 // networkType one of: 'internal', 'uplink', 'trunk', 'subinterface'
 // networkName cannot be empty
 func (egw *EdgeGateway) GetVnicIndexByNetworkNameAndType(networkName, networkType string) (*int, error) {
-	vnics, err := egw.getVnics()
+	vnics, err := egw.getVdcNetworks()
 	if err != nil {
 		return nil, fmt.Errorf("cannot retrieve vNic configuration: %s", err)
 	}
@@ -1296,7 +1298,7 @@ func (egw *EdgeGateway) GetVnicIndexByNetworkNameAndType(networkName, networkTyp
 // Warning: this function assumes that there are no duplicate network names attached. If it is so
 // this function will return the first network
 func (egw *EdgeGateway) GetAnyVnicIndexByNetworkName(networkName string) (*int, string, error) {
-	vnics, err := egw.getVnics()
+	vnics, err := egw.getVdcNetworks()
 	if err != nil {
 		return nil, "", fmt.Errorf("cannot retrieve vNic configuration: %s", err)
 	}
@@ -1325,7 +1327,7 @@ func (egw *EdgeGateway) GetAnyVnicIndexByNetworkName(networkName string) (*int, 
 // GetNetworkNameAndTypeByVnicIndex returns network name and network type for given vNic index
 // returned networkType can be one of: 'internal', 'uplink', 'trunk', 'subinterface'
 func (egw *EdgeGateway) GetNetworkNameAndTypeByVnicIndex(vNicIndex int) (string, string, error) {
-	vnics, err := egw.getVnics()
+	vnics, err := egw.getVdcNetworks()
 	if err != nil {
 		return "", "", fmt.Errorf("cannot retrieve vNic configuration: %s", err)
 	}
@@ -1333,7 +1335,7 @@ func (egw *EdgeGateway) GetNetworkNameAndTypeByVnicIndex(vNicIndex int) (string,
 }
 
 // getVnicIndexByNetworkNameAndType is wrapped and used by public function GetVnicIndexByNetworkNameAndType
-func getVnicIndexByNetworkNameAndType(networkName, networkType string, vnics *types.EdgeGatewayVnics) (*int, error) {
+func getVnicIndexByNetworkNameAndType(networkName, networkType string, vnics *types.EdgeGatewayInterfaces) (*int, error) {
 	if networkName == "" {
 		return nil, fmt.Errorf("network name cannot be empty")
 	}
@@ -1347,21 +1349,13 @@ func getVnicIndexByNetworkNameAndType(networkName, networkType string, vnics *ty
 	var foundIndex *int
 	foundCount := 0
 
-	for _, vnic := range vnics.Vnic {
-		// Look for matching portgroup name and network type
-		if networkType != types.EdgeGatewayVnicTypeSubinterface && vnic.PortgroupName == networkName && vnic.Type == networkType {
+	for _, vnic := range vnics.EdgeInterface {
+		// Look for matching portgroup name and network type. If the PortgroupName is not empty -
+		// check that it contains network name as well.
+		if vnic.Name == networkName && vnic.Type == networkType &&
+			(vnic.PortgroupName == networkName || vnic.PortgroupName == "") {
 			foundIndex = vnic.Index
 			foundCount++
-		}
-
-		// if looking for subinterface - check if they are defined and search for logicalSwitchName
-		if networkType == types.EdgeGatewayVnicTypeSubinterface && len(vnic.SubInterfaces.SubInterface) > 0 {
-			for _, subInterface := range vnic.SubInterfaces.SubInterface {
-				if subInterface.LogicalSwitchName == networkName {
-					foundIndex = subInterface.Index
-					foundCount++
-				}
-			}
 		}
 	}
 
@@ -1378,7 +1372,7 @@ func getVnicIndexByNetworkNameAndType(networkName, networkType string, vnics *ty
 }
 
 // getNetworkNameAndTypeByVnicIndex looks up network type and name in list of edge gateway interfaces
-func getNetworkNameAndTypeByVnicIndex(vNicIndex int, vnics *types.EdgeGatewayVnics) (string, string, error) {
+func getNetworkNameAndTypeByVnicIndex(vNicIndex int, vnics *types.EdgeGatewayInterfaces) (string, string, error) {
 	if vNicIndex < 0 {
 		return "", "", fmt.Errorf("vNic index cannot be negative")
 	}
@@ -1386,22 +1380,11 @@ func getNetworkNameAndTypeByVnicIndex(vNicIndex int, vnics *types.EdgeGatewayVni
 	foundCount := 0
 	var networkName, networkType string
 
-	for _, vnic := range vnics.Vnic {
+	for _, vnic := range vnics.EdgeInterface {
 		if vnic.Index != nil && *vnic.Index == vNicIndex {
 			foundCount++
-			networkName = vnic.PortgroupName
+			networkName = vnic.Name
 			networkType = vnic.Type
-		}
-
-		// Search inside "subinterface tree"
-		if vnic.Type == types.EdgeGatewayVnicTypeTrunk && len(vnic.SubInterfaces.SubInterface) > 0 {
-			for _, subInterface := range vnic.SubInterfaces.SubInterface {
-				if subInterface.Index != nil && *subInterface.Index == vNicIndex {
-					foundCount++
-					networkName = subInterface.LogicalSwitchName
-					networkType = types.EdgeGatewayVnicTypeSubinterface
-				}
-			}
 		}
 	}
 
