@@ -226,12 +226,8 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
 * `bus_number` - (Required) Bus number on which to place the disk controller
 * `unit_number` - (Required) Unit number (slot) on the bus specified by BusNumber.
 
-<<<<<<< HEAD
-
 <a id="network-block"></a>
-=======
-<a id="network"></a>
->>>>>>> master
+
 ## Network
 
 * `type` (Required) Network type, one of: `none`, `vapp` or `org`. `none` creates a NIC with no network attached, `vapp` attaches a vApp network, while `org` attaches organization VDC network.
