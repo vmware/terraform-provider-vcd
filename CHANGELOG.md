@@ -25,6 +25,7 @@ BUG FIXES:
   `vapp_template_lease` to define lease related parameters of depending entities - [GH-432]
 * `resource/vcd_vapp_vm` `network` block changes caused MAC address changes in existing NICs
   [GH-436,GH-407]
+* `resource/vcd_vapp_vm` when customization.force=false crashes with interface {} is nil [GH-XXX]
 
 NOTES:
 * Drop support for vCD 9.0
