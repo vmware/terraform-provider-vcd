@@ -1481,6 +1481,12 @@ func getVmNicIndexesWithDhcpEnabled(networkConnectionSection *types.NetworkConne
 
 	var nicIndexes []int
 
+	// Sort NIC cards by their virtual slot numbers as the API returns them in random order
+	sort.SliceStable(networkConnectionSection.NetworkConnection, func(i, j int) bool {
+		return networkConnectionSection.NetworkConnection[i].NetworkConnectionIndex <
+			networkConnectionSection.NetworkConnection[j].NetworkConnectionIndex
+	})
+
 	for nicIndex, singleNic := range networkConnectionSection.NetworkConnection {
 
 		// validate if the NIC is suitable for DHCP waiting (has DHCP interface)
