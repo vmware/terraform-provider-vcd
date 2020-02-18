@@ -916,7 +916,7 @@ func (vm *VM) getEdgeGatewaysForRoutedNics(nicDhcpConfigs []nicDhcpConfig) ([]ni
 
 		// This nicIndex is not attached to routed network, move further
 		if IsNotFound(err) {
-			util.Logger.Printf("[TRACE] VM '%s' NIC with index %d is not attached to edge gateway routed network\n",
+			util.Logger.Printf("[TRACE] VM '%s' DHCP IP Lookup - NIC with index %d is not attached to edge gateway routed network\n",
 				vm.VM.Name, nic.vmNicIndex)
 		} else {
 			// Lookup edge gateway
@@ -926,7 +926,7 @@ func (vm *VM) getEdgeGatewaysForRoutedNics(nicDhcpConfigs []nicDhcpConfig) ([]ni
 					nic.vmNicIndex, err)
 			}
 
-			util.Logger.Printf("[TRACE] VM '%s' NIC with index %d is attached to edge gateway routed network\n",
+			util.Logger.Printf("[TRACE] VM '%s' DHCP IP Lookup NIC with index %d is attached to edge gateway routed network\n",
 				vm.VM.Name, nic.vmNicIndex)
 			nicDhcpConfigs[index].routedNetworkEdgeGateway = edgeGateway
 		}
@@ -986,7 +986,7 @@ func allNicsHaveIps(nicConfigs []nicDhcpConfig) bool {
 // * VM DHCP interface is connected to routed Org network and is using Edge Gateway DHCP. (Takes
 // less time, but is more constrained)
 func (vm *VM) WaitForDhcpIpByNicIndexes(nicIndexes []int, maxWaitSeconds int, useDhcpLeaseCheck bool) ([]string, bool, error) {
-	util.Logger.Printf("[TRACE] VM '%s' - attempting to lookup IP addresses for DHCP NICs %v\n",
+	util.Logger.Printf("[TRACE] VM '%s' DHCP IP Lookup - attempting to lookup IP addresses for DHCP NICs %v\n",
 		vm.VM.Name, nicIndexes)
 	// validate NIC indexes
 	if len(nicIndexes) == 0 {
@@ -1022,7 +1022,7 @@ func (vm *VM) WaitForDhcpIpByNicIndexes(nicIndexes []int, maxWaitSeconds int, us
 		// If timeout occured - return as much as was found
 		case <-timeoutAfter:
 			ipSlice := getIpsFromNicDhcpConfigs(nicStates)
-			util.Logger.Printf("[DEBUG] VM '%s' NICs with indexes %v did not all report IP "+
+			util.Logger.Printf("[DEBUG] VM '%s' DHCP IP Lookup - NICs with indexes %v did not all report IP "+
 				"addresses after %d seconds. Indexes: %v ,IPs: '%s'\n", vm.VM.Name, nicIndexes,
 				maxWaitSeconds, nicIndexes, strings.Join(ipSlice, ", "))
 			return ipSlice, true, nil
@@ -1037,12 +1037,12 @@ func (vm *VM) WaitForDhcpIpByNicIndexes(nicIndexes []int, maxWaitSeconds int, us
 
 			// All IP addresses found - return
 			if allNicsHaveIps(nicStates) {
-				util.Logger.Printf("[TRACE] VM '%s' NICs with indexes %v all reported their IPs using guest tools\n",
+				util.Logger.Printf("[TRACE] VM '%s' DHCP IP Lookup - NICs with indexes %v all reported their IPs using guest tools\n",
 					vm.VM.Name, nicIndexes)
 				return getIpsFromNicDhcpConfigs(nicStates), false, nil
 			}
 
-			util.Logger.Printf("[DEBUG] VM '%s' NICs with indexes %v did not all report their IPs using guest tools\n",
+			util.Logger.Printf("[DEBUG] VM '%s' DHCP IP Lookup - NICs with indexes %v did not all report their IPs using guest tools\n",
 				vm.VM.Name, nicIndexes)
 
 			// Step 2 If enabled - check if DHCP leases in edge gateways can hint IP addresses
@@ -1055,11 +1055,11 @@ func (vm *VM) WaitForDhcpIpByNicIndexes(nicIndexes []int, maxWaitSeconds int, us
 
 				// All IP addresses found - return
 				if allNicsHaveIps(nicStates) {
-					util.Logger.Printf("[TRACE] VM '%s' NICs with indexes %v all reported their IPs after lease check\n",
+					util.Logger.Printf("[DEBUG] VM '%s' DHCP IP Lookup - NICs with indexes %v all reported their IPs after lease check\n",
 						vm.VM.Name, nicIndexes)
 					return getIpsFromNicDhcpConfigs(nicStates), false, nil
 				}
-				util.Logger.Printf("[DEBUG] VM '%s' NICs with indexes %v did not all report their IPs using DHCP leases\n",
+				util.Logger.Printf("[DEBUG] VM '%s' DHCP IP Lookup - NICs with indexes %v did not all report their IPs using DHCP leases\n",
 					vm.VM.Name, nicIndexes)
 			}
 		}
