@@ -154,7 +154,7 @@ resource "vcd_vapp_vm" "TestAccVcdVAppVmDhcpWaitVM" {
   cpus          = 2
   cpu_cores     = 1
 
-  network_dhcp_wait_seconds = 220
+  network_dhcp_wait_seconds = 300 # 5 minutes
   network {
     type               = "org"
     name               = vcd_network_routed.net.name
