@@ -31,6 +31,7 @@ output "vm" {
 ```
 
 Sample output:
+
 ```
 vm = {
   "computer_name" = "TestVM"
