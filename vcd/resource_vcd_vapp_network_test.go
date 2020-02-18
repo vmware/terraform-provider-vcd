@@ -68,10 +68,10 @@ func TestAccVcdVappNetwork_Isolated(t *testing.T) {
 		"orgNetworkForUpdate":         "",
 		"firewallEnabled":             "false",
 		"firewallEnabledForUpdate":    "false",
-		"natEnabled":                  "false",
-		"natEnabledForUpdate":         "false",
+		"natEnabled":                  "true",
+		"natEnabledForUpdate":         "true",
 		"retainIpMacEnabled":          "false",
-		"retainIpMacEnabledForUpdate": "true",
+		"retainIpMacEnabledForUpdate": "false",
 	}
 
 	rungVappNetworkTest(t, params)
@@ -128,7 +128,7 @@ func TestAccVcdVappNetwork_Nat(t *testing.T) {
 		"natEnabled":                  "false",
 		"natEnabledForUpdate":         "true",
 		"retainIpMacEnabled":          "false",
-		"retainIpMacEnabledForUpdate": "false",
+		"retainIpMacEnabledForUpdate": "true",
 		"FuncName":                    "TestAccVcdVappNetwork_Nat",
 	}
 
@@ -234,6 +234,14 @@ func rungVappNetworkTest(t *testing.T, params StringMap) {
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_network."+params["resourceName"].(string), "nat_enabled", params["natEnabledForUpdate"].(string)),
 				),
+			},
+			resource.TestStep{
+				ResourceName:      "vcd_vapp_network." + params["resourceName"].(string) + "-import",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdVappObject(testConfig, params["vappName"].(string), params["vappNetworkName"].(string)),
+				// These fields can't be retrieved from user data. firewall_enabled is null and as so we need ignore in some cases
+				ImportStateVerifyIgnore: []string{"org", "vdc", "firewall_enabled"},
 			},
 		},
 	})

@@ -6,6 +6,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"log"
+	"strings"
 )
 
 func resourceVcdVappOrgNetwork() *schema.Resource {
@@ -14,6 +15,9 @@ func resourceVcdVappOrgNetwork() *schema.Resource {
 		Read:   resourceVappOrgNetworkRead,
 		Update: resourceVappOrgNetworkUpdate,
 		Delete: resourceVappOrgNetworkDelete,
+		Importer: &schema.ResourceImporter{
+			State: resourceVcdVappOrgNetworkImport,
+		},
 
 		Schema: map[string]*schema.Schema{
 			"vapp_name": &schema.Schema{
@@ -48,7 +52,7 @@ func resourceVcdVappOrgNetwork() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				Description: "NAT service enabled or disabled. Default - true",
+				Description: "NAT service enabled or disabled. Default - false",
 			},
 			"firewall_enabled": {
 				Type:        schema.TypeBool,
@@ -228,4 +232,70 @@ func resourceVappOrgNetworkDelete(d *schema.ResourceData, meta interface{}) erro
 	d.SetId("")
 
 	return nil
+}
+
+// resourceVcdVappOrgNetworkImport is responsible for importing the resource.
+// The following steps happen as part of import
+// 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
+// 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
+// 3. The functions splits the dot-formatted path and tries to lookup the object
+// 4. If the lookup succeeds it sets the ID field for `_resource_name_` resource in statefile
+// (the resource must be already defined in .tf config otherwise `terraform import` will complain)
+// 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
+// based on the known ID of object.
+//
+// Example resource name (_resource_name_): vcd_vapp_org_network.org_network_name
+// Example import path (_the_id_string_): org-name.vdc-name.vapp-name.org-network-name
+func resourceVcdVappOrgNetworkImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+	if len(resourceURI) != 4 {
+		return nil, fmt.Errorf("[vApp org network import] resource name must be specified as org-name.vdc-name.vapp-name.org-network-name")
+	}
+	orgName, vdcName, vappName, networkName := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
+
+	vcdClient := meta.(*VCDClient)
+	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
+	if err != nil {
+		return nil, fmt.Errorf("[VM import] unable to find VDC %s: %s ", vdcName, err)
+	}
+
+	vapp, err := vdc.GetVAppByName(vappName, false)
+	if err != nil {
+		return nil, fmt.Errorf("[VM import] error retrieving vapp %s: %s", vappName, err)
+	}
+	vAppNetworkConfig, err := vapp.GetNetworkConfig()
+	if err != nil {
+		return nil, fmt.Errorf("[VM import] error retrieving vApp network configuration %s: %s", networkName, err)
+	}
+
+	vappNetworkToImport := types.VAppNetworkConfiguration{}
+	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
+		// name check needed to support old resource Id's which was names
+		if networkConfig.NetworkName == networkName {
+			vappNetworkToImport = networkConfig
+			break
+		}
+	}
+
+	if vappNetworkToImport == (types.VAppNetworkConfiguration{}) {
+		return nil, fmt.Errorf("didn't find vApp org network: %s", networkName)
+	}
+
+	networkId, err := govcd.GetUuidFromHref(vappNetworkToImport.Link.HREF)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get network ID from HREF: %s", err)
+	}
+
+	d.SetId(networkId)
+
+	if vcdClient.Org != orgName {
+		d.Set("org", orgName)
+	}
+	if vcdClient.Vdc != vdcName {
+		d.Set("vdc", vdcName)
+	}
+	_ = d.Set("org_network", networkName)
+	_ = d.Set("vapp_name", vappName)
+
+	return []*schema.ResourceData{d}, nil
 }

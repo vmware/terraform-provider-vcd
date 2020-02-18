@@ -6,6 +6,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"log"
+	"strings"
 )
 
 func resourceVcdVappNetwork() *schema.Resource {
@@ -14,7 +15,9 @@ func resourceVcdVappNetwork() *schema.Resource {
 		Read:   resourceVappNetworkRead,
 		Update: resourceVappNetworkUpdate,
 		Delete: resourceVappNetworkDelete,
-
+		Importer: &schema.ResourceImporter{
+			State: resourceVcdVappNetworkImport,
+		},
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
@@ -280,20 +283,47 @@ func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	d.Set("description", vAppNetwork.Description)
-	d.Set("href", vAppNetwork.HREF)
-	if c := vAppNetwork.Configuration; c != nil {
-		if c.IPScopes != nil {
-			d.Set("gateway", c.IPScopes.IPScope[0].Gateway)
-			d.Set("netmask", c.IPScopes.IPScope[0].Netmask)
-			d.Set("dns1", c.IPScopes.IPScope[0].DNS1)
-			d.Set("dns2", c.IPScopes.IPScope[0].DNS2)
-			d.Set("dnsSuffix", c.IPScopes.IPScope[0].DNSSuffix)
+	if config := vAppNetwork.Configuration; config != nil {
+		if config.IPScopes != nil {
+			d.Set("gateway", config.IPScopes.IPScope[0].Gateway)
+			d.Set("netmask", config.IPScopes.IPScope[0].Netmask)
+			d.Set("dns1", config.IPScopes.IPScope[0].DNS1)
+			d.Set("dns2", config.IPScopes.IPScope[0].DNS2)
+			d.Set("dns_suffix", config.IPScopes.IPScope[0].DNSSuffix)
 		}
+
+		if config.Features != nil && config.Features.DhcpService != nil {
+			transformed := schema.NewSet(resourceVcdNetworkIPAddressHash, []interface{}{})
+			newValues := map[string]interface{}{
+				"enabled":            config.Features.DhcpService.IsEnabled,
+				"max_lease_time":     config.Features.DhcpService.MaxLeaseTime,
+				"default_lease_time": config.Features.DhcpService.DefaultLeaseTime,
+			}
+			if config.Features.DhcpService.IPRange != nil {
+				newValues["start_address"] = config.Features.DhcpService.IPRange.StartAddress
+				newValues["end_address"] = config.Features.DhcpService.IPRange.EndAddress
+			}
+			transformed.Add(newValues)
+			d.Set("dhcp_pool", transformed)
+		}
+
+		if config.IPScopes != nil && config.IPScopes.IPScope[0].IPRanges != nil {
+			staticIpRanges := schema.NewSet(resourceVcdNetworkIPAddressHash, []interface{}{})
+			for _, ipRange := range config.IPScopes.IPScope[0].IPRanges.IPRange {
+				newValues := map[string]interface{}{
+					"start_address": ipRange.StartAddress,
+					"end_address":   ipRange.EndAddress,
+				}
+				staticIpRanges.Add(newValues)
+			}
+			d.Set("static_ip_pool", staticIpRanges)
+		}
+
 		// TODO adjust when we have option to switch between API versions or upgrade the default version
 		// API does not return GuestVlanAllowed if API client version is 27.0 (default at the moment) therefore we rely
 		// on updating statefile only if the field was returned. In API v31.0 - the field is returned.
-		if c.GuestVlanAllowed != nil {
-			err = d.Set("guest_vlan_allowed", *c.GuestVlanAllowed)
+		if config.GuestVlanAllowed != nil {
+			err = d.Set("guest_vlan_allowed", *config.GuestVlanAllowed)
 			if err != nil {
 				return err
 			}
@@ -301,13 +331,13 @@ func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
 		if vAppNetwork.Configuration.ParentNetwork != nil {
 			d.Set("org_network", vAppNetwork.Configuration.ParentNetwork.Name)
 		}
-		d.Set("retain_ip_mac_enabled", vAppNetwork.Configuration.RetainNetInfoAcrossDeployments)
 		if vAppNetwork.Configuration.Features != nil && vAppNetwork.Configuration.Features.FirewallService != nil {
 			d.Set("firewall_enabled", vAppNetwork.Configuration.Features.FirewallService.IsEnabled)
 		}
 		if vAppNetwork.Configuration.Features != nil && vAppNetwork.Configuration.Features.NatService != nil {
 			d.Set("nat_enabled", vAppNetwork.Configuration.Features.NatService.IsEnabled)
 		}
+		d.Set("retain_ip_mac_enabled", vAppNetwork.Configuration.RetainNetInfoAcrossDeployments)
 	}
 
 	return nil
@@ -409,4 +439,70 @@ func resourceVappNetworkDelete(d *schema.ResourceData, meta interface{}) error {
 	d.SetId("")
 
 	return nil
+}
+
+// resourceVcdVappNetworkImport is responsible for importing the resource.
+// The following steps happen as part of import
+// 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
+// 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
+// 3. The functions splits the dot-formatted path and tries to lookup the object
+// 4. If the lookup succeeds it sets the ID field for `_resource_name_` resource in statefile
+// (the resource must be already defined in .tf config otherwise `terraform import` will complain)
+// 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
+// based on the known ID of object.
+//
+// Example resource name (_resource_name_): vcd_vapp_network.network_name
+// Example import path (_the_id_string_): org-name.vdc-name.vapp-name.network-name
+func resourceVcdVappNetworkImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+	if len(resourceURI) != 4 {
+		return nil, fmt.Errorf("[vApp network import] resource name must be specified as org-name.vdc-name.vapp-name.network-name")
+	}
+	orgName, vdcName, vappName, networkName := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
+
+	vcdClient := meta.(*VCDClient)
+	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
+	if err != nil {
+		return nil, fmt.Errorf("[VM import] unable to find VDC %s: %s ", vdcName, err)
+	}
+
+	vapp, err := vdc.GetVAppByName(vappName, false)
+	if err != nil {
+		return nil, fmt.Errorf("[VM import] error retrieving vapp %s: %s", vappName, err)
+	}
+	vAppNetworkConfig, err := vapp.GetNetworkConfig()
+	if err != nil {
+		return nil, fmt.Errorf("[VM import] error retrieving vApp network configuration %s: %s", networkName, err)
+	}
+
+	vappNetworkToImport := types.VAppNetworkConfiguration{}
+	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
+		// name check needed to support old resource Id's which was names
+		if networkConfig.NetworkName == networkName {
+			vappNetworkToImport = networkConfig
+			break
+		}
+	}
+
+	if vappNetworkToImport == (types.VAppNetworkConfiguration{}) {
+		return nil, fmt.Errorf("didn't find vApp network: %s", networkName)
+	}
+
+	networkId, err := govcd.GetUuidFromHref(vappNetworkToImport.Link.HREF)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get network ID from HREF: %s", err)
+	}
+
+	d.SetId(networkId)
+
+	if vcdClient.Org != orgName {
+		d.Set("org", orgName)
+	}
+	if vcdClient.Vdc != vdcName {
+		d.Set("vdc", vdcName)
+	}
+	_ = d.Set("name", networkName)
+	_ = d.Set("vapp_name", vappName)
+
+	return []*schema.ResourceData{d}, nil
 }
