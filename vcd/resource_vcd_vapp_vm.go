@@ -1662,7 +1662,7 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp) ([]map[s
 			vm.VM.Name, dhcpNicIndexes, maxDhcpWaitSecondsInt)
 		if len(dhcpNicIndexes) == 0 {
 			_, _ = fmt.Fprint(getTerraformStdout(), "INFO: Using 'network_dhcp_wait_seconds' only "+
-				"makes sense if at least one NIC is using 'ip_allocation_mode=DHCP'")
+				"makes sense if at least one NIC is using 'ip_allocation_mode=DHCP'\n")
 		}
 
 		if len(dhcpNicIndexes) > 0 { // at least one NIC uses DHCP for IP allocation mode
