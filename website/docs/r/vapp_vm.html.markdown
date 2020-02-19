@@ -140,6 +140,35 @@ resource "vcd_vapp_vm" "internalDiskOverride" {
 
 ```
 
+## Example Usage (Wait for IP addresses on DHCP NIC)
+This example shows how to use [`network_dhcp_wait_seconds`](#network_dhcp_wait_seconds) with DHCP.
+
+```hcl
+resource "vcd_vapp_vm" "TestAccVcdVAppVmDhcpWaitVM" {
+  vapp_name     = vcd_vapp.TestAccVcdVAppVmDhcpWait.name
+  name          = "brr"
+  computer_name = "dhcp-vm"
+  catalog_name  = "cat-dserplis"
+  template_name = "photon-rev2"
+  memory        = 512
+  cpus          = 2
+  cpu_cores     = 1
+
+  network_dhcp_wait_seconds = 300 # 5 minutes
+  network {
+    type               = "org"
+    name               = vcd_network_routed.net.name
+    ip_allocation_mode = "DHCP"
+    is_primary         = true
+  }
+}
+
+resource "vcd_nsxv_ip_set" "test-ipset" {
+  name                   = "ipset-with-dhcp-ip"
+  ip_addresses           = [vcd_vapp_vm.TestAccVcdVAppVmDhcpWaitVM.network.0.ip]
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -170,13 +199,24 @@ DHCP.
 * `expose_hardware_virtualization` - (Optional; *v2.2+*) Boolean for exposing full CPU virtualization to the
 guest operating system so that applications that require hardware virtualization can run on virtual machines without binary
 translation or paravirtualization. Useful for hypervisor nesting provided underlying hardware supports it. Default is `false`.
-* `network` - (Optional; *v2.2+*) A block to define network interface. Multiple can be used. See [Network](#network) and 
+* `network` - (Optional; *v2.2+*) A block to define network interface. Multiple can be used. See [Network](#network-block) and 
 example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_name`.
 * `customization` - (Optional; *v2.5+*) A block to define for guest customization options. See [Customization](#customization)
 * `guest_properties` - (Optional; *v2.5+*) Key value map of guest properties
 * `description`  - (Computed; *v2.6+*) The VM description. Note: description is read only. Currently, this field has
   the description of the OVA used to create the VM
 * `override_template_disk` - (Optional; *v2.7+*) Allows to update internal disk in template before first VM boot. Disk is matched by `bus_type`, `bus_number` and `unit_number`. See [Override template Disk](#override-template-disk) below for details.
+* `network_dhcp_wait_seconds` - (Optional; *v2.7+*) Optional number of seconds to try and wait for DHCP IP (only valid
+  for adapters in `network` block with `ip_allocation_mode=DHCP`). It constantly checks if IP is present so the time given
+  is a maximum. VM must be powered on and _at least one_ of the following _must be true_:
+ * VM has Guest Tools. It waits for IP address to be reported by Guest Tools. This is a slower option, but
+  does not require for the VM to use Edge Gateways DHCP service.
+ * VM DHCP interface is connected to routed Org network and is using Edge Gateways DHCP service (not
+  relayed). It works by querying DHCP leases on Edge Gateway. In general it is quicker than waiting
+  until Guest Tools report IP addresses, but is more constrained. However this is the only option if Guest
+  Tools are not present on the VM.
+  
+
 
 <a id="disk"></a>
 ## Disk
@@ -185,7 +225,8 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
 * `bus_number` - (Required) Bus number on which to place the disk controller
 * `unit_number` - (Required) Unit number (slot) on the bus specified by BusNumber.
 
-<a id="network"></a>
+<a id="network-block"></a>
+
 ## Network
 
 * `type` (Required) Network type, one of: `none`, `vapp` or `org`. `none` creates a NIC with no network attached, `vapp` attaches a vApp network, while `org` attaches organization VDC network.
@@ -207,7 +248,10 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
   * `POOL` - Static IP address is allocated automatically from defined static pool in network.
   
   * `DHCP` - IP address is obtained from a DHCP service. Field `ip` is not guaranteed to be populated. Because of this it may appear
-  after multiple `terraform refresh` operations.
+  after multiple `terraform refresh` operations.  **Note.**
+    [`network_dhcp_wait_seconds`](#network_dhcp_wait_seconds) parameter can help to ensure IP is
+    reported on first run.
+
   
   * `MANUAL` - IP address is assigned manually in the `ip` field. Must be valid IP address from static pool.
   
@@ -218,8 +262,12 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
   * `ip_allocation_mode=POOL` - **`ip`** value must be omitted or empty string "". Empty string may be useful when doing HCL
   variable interpolation. Field `ip` will be populated with an assigned IP from static pool after run.
   
-  * `ip_allocation_mode=DHCP` - **`ip`** value must be omitted or empty string "". Field `ip` is not guaranteed to be populated
-  after run due to the VM lacking VMware tools or not working properly with DHCP. Because of this `ip` may also appear after multiple `terraform refresh` operations when is reported back to vCD.
+  * `ip_allocation_mode=DHCP` - **`ip`** value must be omitted or empty string "". Field `ip` is not
+    guaranteed to be populated after run due to the VM lacking VMware tools or not working properly
+    with DHCP. Because of this `ip` may also appear after multiple `terraform refresh` operations
+    when is reported back to vCD. **Note.**
+    [`network_dhcp_wait_seconds`](#network_dhcp_wait_seconds) parameter can help to ensure IP is
+    reported on first run.
 
   * `ip_allocation_mode=MANUAL` - **`ip`** value must be valid IP address from a subnet defined in `static pool` for network.
 

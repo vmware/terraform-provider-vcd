@@ -6,6 +6,8 @@ FEATURES:
 * `vcd_vapp_vm` Internal disks in VM template allows to be edited by `override_template_disk` field
   [GH-412]
 * `vcd_org_vdc` can be created with Flex allocation in vCD 9.7 and later. Also two new fields added for Flex - `elasticity`, `include_vm_memory_overhead` [GH-443]
+* `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` get optional `network_dhcp_wait_seconds` field
+  to ensure `ip` is reported when `ip_allocation_mode=DHCP` is used [GH-436]
 
 IMPROVEMENTS:
 
