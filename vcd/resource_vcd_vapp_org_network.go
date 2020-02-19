@@ -124,6 +124,10 @@ func resourceVappOrgNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 }
 
 func resourceVappOrgNetworkRead(d *schema.ResourceData, meta interface{}) error {
+	return genericVappOrgNetworkRead(d, meta, "resource")
+}
+
+func genericVappOrgNetworkRead(d *schema.ResourceData, meta interface{}, origin string) error {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -142,21 +146,30 @@ func resourceVappOrgNetworkRead(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	vAppNetwork := types.VAppNetworkConfiguration{}
+	var networkId string
 	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
-		networkId, err := govcd.GetUuidFromHref(networkConfig.Link.HREF)
+		networkId, err = govcd.GetUuidFromHref(networkConfig.Link.HREF)
 		if err != nil {
 			return fmt.Errorf("unable to get network ID from HREF: %s", err)
 		}
-		//name check to support old Id's which are names
-		if networkId == d.Id() {
+		// name check needed for datasource to find network as don't have ID
+		if d.Id() == networkId || networkConfig.NetworkName == d.Get("org_network").(string) {
 			vAppNetwork = networkConfig
 		}
 	}
 
 	if vAppNetwork == (types.VAppNetworkConfiguration{}) {
-		log.Printf("[DEBUG] Network no longer exists. Removing from tfstate")
-		d.SetId("")
-		return nil
+		if origin == "resource" {
+			log.Printf("[DEBUG] Network no longer exists. Removing from tfstate")
+			d.SetId("")
+			return nil
+		}
+		return fmt.Errorf("[VAPP org network read] didn't find vApp org network: %s", d.Get("org_network").(string))
+	}
+
+	// needs to set for datasource
+	if d.Id() == "" {
+		d.SetId(networkId)
 	}
 
 	_ = d.Set("retain_ip_mac_enabled", *vAppNetwork.Configuration.RetainNetInfoAcrossDeployments)
@@ -167,10 +180,10 @@ func resourceVappOrgNetworkRead(d *schema.ResourceData, meta interface{}) error 
 	}
 	_ = d.Set("is_fenced", isFenced)
 	if vAppNetwork.Configuration.Features != nil && vAppNetwork.Configuration.Features.FirewallService != nil {
-		d.Set("firewall_enabled", vAppNetwork.Configuration.Features.FirewallService.IsEnabled)
+		_ = d.Set("firewall_enabled", vAppNetwork.Configuration.Features.FirewallService.IsEnabled)
 	}
 	if vAppNetwork.Configuration.Features != nil && vAppNetwork.Configuration.Features.NatService != nil {
-		d.Set("nat_enabled", vAppNetwork.Configuration.Features.NatService.IsEnabled)
+		_ = d.Set("nat_enabled", vAppNetwork.Configuration.Features.NatService.IsEnabled)
 	}
 	return nil
 }
@@ -289,10 +302,10 @@ func resourceVcdVappOrgNetworkImport(d *schema.ResourceData, meta interface{}) (
 	d.SetId(networkId)
 
 	if vcdClient.Org != orgName {
-		d.Set("org", orgName)
+		_ = d.Set("org", orgName)
 	}
 	if vcdClient.Vdc != vdcName {
-		d.Set("vdc", vdcName)
+		_ = d.Set("vdc", vdcName)
 	}
 	_ = d.Set("org_network", networkName)
 	_ = d.Set("vapp_name", vappName)

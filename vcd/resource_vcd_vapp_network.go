@@ -1,7 +1,9 @@
 package vcd
 
 import (
+	"bytes"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
@@ -137,7 +139,7 @@ func resourceVcdVappNetwork() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceVcdNetworkIPAddressHash,
+				Set: resourceVcdDhcpPoolHash,
 			},
 			"static_ip_pool": &schema.Schema{
 				Type:     schema.TypeSet,
@@ -246,6 +248,10 @@ func resourceVappNetworkCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
+	return genericVappNetworkRead(d, meta, "resource")
+}
+
+func genericVappNetworkRead(d *schema.ResourceData, meta interface{}, origin string) error {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -264,12 +270,13 @@ func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	vAppNetwork := types.VAppNetworkConfiguration{}
+	var networkId string
 	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
-		networkId, err := govcd.GetUuidFromHref(networkConfig.Link.HREF)
+		networkId, err = govcd.GetUuidFromHref(networkConfig.Link.HREF)
 		if err != nil {
 			return fmt.Errorf("unable to get network ID from HREF: %s", err)
 		}
-		// name check needed to support old resource Id's which was names
+		// name check needed to support old resource Id's which was names or datasource
 		if d.Id() == networkId || networkConfig.NetworkName == d.Get("name").(string) {
 			vAppNetwork = networkConfig
 			break
@@ -277,23 +284,29 @@ func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if vAppNetwork == (types.VAppNetworkConfiguration{}) {
-		log.Printf("[DEBUG] Network no longer exists. Removing from tfstate")
-		d.SetId("")
-		return nil
+		if origin == "resource" {
+			log.Printf("[DEBUG] Network no longer exists. Removing from tfstate")
+			d.SetId("")
+			return nil
+		}
+		return fmt.Errorf("[VAPP network read] didn't find vApp network: %s", d.Get("name").(string))
 	}
 
-	d.Set("description", vAppNetwork.Description)
+	// needs to set for datasource. Do not set always as keep back compatibility when ID was name.
+	if d.Id() == "" {
+		d.SetId(networkId)
+	}
+	_ = d.Set("description", vAppNetwork.Description)
 	if config := vAppNetwork.Configuration; config != nil {
 		if config.IPScopes != nil {
-			d.Set("gateway", config.IPScopes.IPScope[0].Gateway)
-			d.Set("netmask", config.IPScopes.IPScope[0].Netmask)
-			d.Set("dns1", config.IPScopes.IPScope[0].DNS1)
-			d.Set("dns2", config.IPScopes.IPScope[0].DNS2)
-			d.Set("dns_suffix", config.IPScopes.IPScope[0].DNSSuffix)
+			_ = d.Set("gateway", config.IPScopes.IPScope[0].Gateway)
+			_ = d.Set("netmask", config.IPScopes.IPScope[0].Netmask)
+			_ = d.Set("dns1", config.IPScopes.IPScope[0].DNS1)
+			_ = d.Set("dns2", config.IPScopes.IPScope[0].DNS2)
+			_ = d.Set("dns_suffix", config.IPScopes.IPScope[0].DNSSuffix)
 		}
-
 		if config.Features != nil && config.Features.DhcpService != nil {
-			transformed := schema.NewSet(resourceVcdNetworkIPAddressHash, []interface{}{})
+			transformed := schema.NewSet(resourceVcdDhcpPoolHash, []interface{}{})
 			newValues := map[string]interface{}{
 				"enabled":            config.Features.DhcpService.IsEnabled,
 				"max_lease_time":     config.Features.DhcpService.MaxLeaseTime,
@@ -304,7 +317,10 @@ func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
 				newValues["end_address"] = config.Features.DhcpService.IPRange.EndAddress
 			}
 			transformed.Add(newValues)
-			d.Set("dhcp_pool", transformed)
+			err = d.Set("dhcp_pool", transformed)
+			if err != nil {
+				return fmt.Errorf("[vApp network DHCP pool read] set issue: %s", err)
+			}
 		}
 
 		if config.IPScopes != nil && config.IPScopes.IPScope[0].IPRanges != nil {
@@ -316,7 +332,10 @@ func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
 				}
 				staticIpRanges.Add(newValues)
 			}
-			d.Set("static_ip_pool", staticIpRanges)
+			err = d.Set("static_ip_pool", staticIpRanges)
+			if err != nil {
+				return fmt.Errorf("[vApp network static pool read] set issue: %s", err)
+			}
 		}
 
 		// TODO adjust when we have option to switch between API versions or upgrade the default version
@@ -328,18 +347,17 @@ func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
 				return err
 			}
 		}
-		if vAppNetwork.Configuration.ParentNetwork != nil {
-			d.Set("org_network", vAppNetwork.Configuration.ParentNetwork.Name)
+		if config.ParentNetwork != nil {
+			_ = d.Set("org_network", config.ParentNetwork.Name)
 		}
-		if vAppNetwork.Configuration.Features != nil && vAppNetwork.Configuration.Features.FirewallService != nil {
-			d.Set("firewall_enabled", vAppNetwork.Configuration.Features.FirewallService.IsEnabled)
+		if config.Features != nil && config.Features.FirewallService != nil {
+			_ = d.Set("firewall_enabled", vAppNetwork.Configuration.Features.FirewallService.IsEnabled)
 		}
-		if vAppNetwork.Configuration.Features != nil && vAppNetwork.Configuration.Features.NatService != nil {
-			d.Set("nat_enabled", vAppNetwork.Configuration.Features.NatService.IsEnabled)
+		if config.Features != nil && config.Features.NatService != nil {
+			_ = d.Set("nat_enabled", config.Features.NatService.IsEnabled)
 		}
-		d.Set("retain_ip_mac_enabled", vAppNetwork.Configuration.RetainNetInfoAcrossDeployments)
+		_ = d.Set("retain_ip_mac_enabled", config.RetainNetInfoAcrossDeployments)
 	}
-
 	return nil
 }
 
@@ -496,13 +514,28 @@ func resourceVcdVappNetworkImport(d *schema.ResourceData, meta interface{}) ([]*
 	d.SetId(networkId)
 
 	if vcdClient.Org != orgName {
-		d.Set("org", orgName)
+		_ = d.Set("org", orgName)
 	}
 	if vcdClient.Vdc != vdcName {
-		d.Set("vdc", vdcName)
+		_ = d.Set("vdc", vdcName)
 	}
 	_ = d.Set("name", networkName)
 	_ = d.Set("vapp_name", vappName)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func resourceVcdDhcpPoolHash(v interface{}) int {
+	var buf bytes.Buffer
+	m := v.(map[string]interface{})
+	buf.WriteString(fmt.Sprintf("%t-", m["enabled"].(bool)))
+	buf.WriteString(fmt.Sprintf("%d-", m["max_lease_time"].(int)))
+	buf.WriteString(fmt.Sprintf("%d-", m["default_lease_time"].(int)))
+	if m["start_address"] != nil {
+		buf.WriteString(fmt.Sprintf("%s-", strings.ToLower(m["start_address"].(string))))
+	}
+	if m["end_address"] != nil {
+		buf.WriteString(fmt.Sprintf("%s-", strings.ToLower(m["end_address"].(string))))
+	}
+	return hashcode.String(buf.String())
 }

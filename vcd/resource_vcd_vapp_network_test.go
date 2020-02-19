@@ -5,6 +5,7 @@ package vcd
 import (
 	"fmt"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/util"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -172,15 +173,15 @@ func rungVappNetworkTest(t *testing.T, params StringMap) {
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_network."+params["resourceName"].(string), "static_ip_pool.2802459930.end_address", params["endAddress"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.84879490.start_address", params["dhcpStartAddress"].(string)),
+						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.3992831158.start_address", params["dhcpStartAddress"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.84879490.end_address", params["dhcpEndAddress"].(string)),
+						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.3992831158.end_address", params["dhcpEndAddress"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.84879490.enabled", params["dhcpEnabled"].(string)),
+						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.3992831158.enabled", params["dhcpEnabled"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.84879490.default_lease_time", params["defaultLeaseTime"].(string)),
+						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.3992831158.default_lease_time", params["defaultLeaseTime"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.84879490.max_lease_time", params["maxLeaseTime"].(string)),
+						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.3992831158.max_lease_time", params["maxLeaseTime"].(string)),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_network."+params["resourceName"].(string), "org_network", params["orgNetwork"].(string)),
 					resource.TestCheckResourceAttr(
@@ -216,15 +217,15 @@ func rungVappNetworkTest(t *testing.T, params StringMap) {
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_network."+params["resourceName"].(string), "static_ip_pool.132829107.end_address", params["endAddressForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.225014714.start_address", params["dhcpStartAddressForUpdate"].(string)),
+						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.4252262036.start_address", params["dhcpStartAddressForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.225014714.end_address", params["dhcpEndAddressForUpdate"].(string)),
+						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.4252262036.end_address", params["dhcpEndAddressForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.225014714.enabled", params["dhcpEnabledForUpdate"].(string)),
+						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.4252262036.enabled", params["dhcpEnabledForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.225014714.default_lease_time", params["defaultLeaseTimeForUpdate"].(string)),
+						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.4252262036.default_lease_time", params["defaultLeaseTimeForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.225014714.max_lease_time", params["maxLeaseTimeForUpdate"].(string)),
+						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.4252262036.max_lease_time", params["maxLeaseTimeForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_network."+params["resourceName"].(string), "org_network", params["orgNetworkForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
@@ -257,6 +258,8 @@ func testAccCheckVappNetworkExists(n string) resource.TestCheckFunc {
 		if rs.Primary.ID == "" {
 			return fmt.Errorf("no vapp network ID is set")
 		}
+
+		util.Logger.Printf("$$$$$$$$$$$$$$$$ %#v", rs.Primary.Attributes)
 
 		conn := testAccProvider.Meta().(*VCDClient)
 

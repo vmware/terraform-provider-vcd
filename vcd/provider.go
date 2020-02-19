@@ -158,6 +158,8 @@ func Provider() terraform.ResourceProvider {
 			"vcd_nsxv_firewall_rule": datasourceVcdNsxvFirewallRule(), // 2.5
 			"vcd_nsxv_dhcp_relay":    datasourceVcdNsxvDhcpRelay(),    // 2.6
 			"vcd_nsxv_ip_set":        datasourceVcdIpSet(),            // 2.6
+			"vcd_vapp_network":       datasourceVcdVappNetwork(),      // 2.7
+			"vcd_vapp_org_network":   datasourceVcdVappOrgNetwork(),   // 2.7
 		},
 
 		ConfigureFunc: providerConfigure,
