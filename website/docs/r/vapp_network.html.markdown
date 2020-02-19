@@ -49,6 +49,7 @@ The following arguments are supported:
   connected as sysadmin working across different organisations.
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level.
 * `name` - (Required) A unique name for the network.
+* `description` - (Optional; *v2.7+*) Description of vApp network
 * `vapp_name` - (Required) The vApp this VM should belong to.
 * `netmask` - (Optional) The netmask for the new network. Default is `255.255.255.0`.
 * `gateway` (Optional) The gateway for this network.
@@ -58,6 +59,10 @@ The following arguments are supported:
 * `guest_vlan_allowed` (Optional) True if Network allows guest VLAN tagging. This value supported from vCD version 9.0
 * `static_ip_pool` - (Optional) A range of IPs permitted to be used as static IPs for virtual machines; see [IP Pools](#ip-pools) below for details.
 * `dhcp_pool` - (Optional) A range of IPs to issue to virtual machines that don't have a static IP; see [IP Pools](#ip-pools) below for details.
+* `org_network` -  (Optional; *v2.7+*) An Org network name to which vApp network is connected to. If not configured, then isolated network created.
+* `firewall_enabled` -  (Optional; *v2.7+*) Firewall service enabled or disabled. Default - true.
+* `nat_enabled` -  (Optional; *v2.7+*) NAT service enabled or disabled. Default - true.
+* `retain_ip_mac_enabled` - (Optional; *v2.7+*) Specifies whether the network resources such as IP/MAC of router will be retained across deployments. Default - false.
 
 <a id="ip-pools"></a>
 ## IP Pools
