@@ -41,6 +41,7 @@ func resourceVcdVappOrgNetwork() *schema.Resource {
 			"org_network": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
+				ForceNew: true,
 			},
 			"is_fenced": &schema.Schema{
 				Type:        schema.TypeBool,
