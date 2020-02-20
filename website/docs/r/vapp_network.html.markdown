@@ -53,8 +53,8 @@ The following arguments are supported:
 * `vapp_name` - (Required) The vApp this VM should belong to.
 * `netmask` - (Optional) The netmask for the new network. Default is `255.255.255.0`.
 * `gateway` (Optional) The gateway for this network.
-* `dns1` - (Optional) First DNS server to use. Default is `8.8.8.8`.
-* `dns2` - (Optional) Second DNS server to use. Default is `8.8.4.4`.
+* `dns1` - (Optional) First DNS server to use.
+* `dns2` - (Optional) Second DNS server to use.
 * `dns_suffix` - (Optional) A FQDN for the virtual machines on this network.
 * `guest_vlan_allowed` (Optional) True if Network allows guest VLAN tagging. This value supported from vCD version 9.0
 * `static_ip_pool` - (Optional) A range of IPs permitted to be used as static IPs for virtual machines; see [IP Pools](#ip-pools) below for details.

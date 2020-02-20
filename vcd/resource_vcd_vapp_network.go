@@ -64,13 +64,11 @@ func resourceVcdVappNetwork() *schema.Resource {
 			"dns1": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  "8.8.8.8",
 			},
 
 			"dns2": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  "8.8.4.4",
 			},
 
 			"dns_suffix": &schema.Schema{
