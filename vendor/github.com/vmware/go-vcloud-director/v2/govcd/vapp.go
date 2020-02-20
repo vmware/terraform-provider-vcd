@@ -35,7 +35,7 @@ func (vcdCli *VCDClient) NewVApp(client *Client) VApp {
 
 // struct type used to pass information for vApp network creation
 type VappNetworkSettings struct {
-	Id                 string
+	ID                 string
 	Name               string
 	Description        string
 	Gateway            string
@@ -226,7 +226,10 @@ func (vapp *VApp) AddNewVMWithStorageProfile(name string, vappTemplate VAppTempl
 // ======================================================================
 func (vapp *VApp) RemoveVM(vm VM) error {
 
-	vapp.Refresh()
+	err := vapp.Refresh()
+	if err != nil {
+		return fmt.Errorf("error refreshing vApp before removing VM: %s", err)
+	}
 	task := NewTask(vapp.client)
 	if vapp.VApp.Tasks != nil {
 		for _, taskItem := range vapp.VApp.Tasks.Task {
@@ -764,7 +767,7 @@ func (vapp *VApp) AddIsolatedNetwork(newIsolatedNetworkSettings *VappNetworkSett
 		newIsolatedNetworkSettings.DhcpSettings.IPRange.EndAddress = newIsolatedNetworkSettings.DhcpSettings.IPRange.StartAddress
 	}
 
-	// explicitly check if to add data, to not send any values
+	// only add values if available. Won't be send to API if not provided
 	var networkFeatures *types.NetworkFeatures
 	if newIsolatedNetworkSettings.DhcpSettings != nil {
 		networkFeatures = &types.NetworkFeatures{DhcpService: &types.DhcpService{
@@ -830,7 +833,7 @@ func (vapp *VApp) AddNetworkAsync(newNetworkSettings *VappNetworkSettings, orgNe
 		newNetworkSettings.DhcpSettings.IPRange.EndAddress = newNetworkSettings.DhcpSettings.IPRange.StartAddress
 	}
 
-	// explicitly check if to add data, to not send any values
+	// only add values if available. Won't be send to API if not provided
 	var networkFeatures *types.NetworkFeatures
 	if newNetworkSettings.DhcpSettings != nil {
 		networkFeatures = &types.NetworkFeatures{DhcpService: &types.DhcpService{
@@ -856,7 +859,7 @@ func (vapp *VApp) AddNetworkAsync(newNetworkSettings *VappNetworkSettings, orgNe
 		NetworkName: newNetworkSettings.Name,
 		Description: newNetworkSettings.Description,
 		Configuration: &types.NetworkConfiguration{
-			FenceMode:        types.FenceModeNAT,
+			FenceMode:        types.FenceModeIsolated,
 			GuestVlanAllowed: newNetworkSettings.GuestVLANAllowed,
 			Features:         networkFeatures,
 			IPScopes: &types.IPScopes{IPScope: []*types.IPScope{&types.IPScope{IsInherited: false, Gateway: newNetworkSettings.Gateway,
@@ -871,6 +874,7 @@ func (vapp *VApp) AddNetworkAsync(newNetworkSettings *VappNetworkSettings, orgNe
 		vappConfiguration.Configuration.ParentNetwork = &types.Reference{
 			HREF: orgNetwork.HREF,
 		}
+		vappConfiguration.Configuration.FenceMode = types.FenceModeNAT
 	}
 
 	networkConfigurations = append(networkConfigurations,
@@ -914,14 +918,14 @@ func (vapp *VApp) AddOrgNetworkAsync(newNetworkSettings *VappNetworkSettings, or
 	networkConfigurations := vapp.VApp.NetworkConfigSection.NetworkConfig
 	var services types.NetworkFeatures
 	var natService types.NatService
-	if newNetworkSettings.NatEnabled != nil {
-		natService = types.NatService{IsEnabled: *newNetworkSettings.NatEnabled, NatType: "ipTranslation", Policy: "allowTrafficIn"}
-	}
 	if newNetworkSettings.FirewallEnabled != nil {
 		services = types.NetworkFeatures{
 			FirewallService: &types.FirewallService{IsEnabled: *newNetworkSettings.FirewallEnabled},
 			NatService:      &natService,
 		}
+	}
+	if newNetworkSettings.FirewallEnabled != nil && newNetworkSettings.NatEnabled != nil {
+		natService = types.NatService{IsEnabled: *newNetworkSettings.NatEnabled, NatType: "ipTranslation", Policy: "allowTrafficIn"}
 	}
 	vappConfiguration := types.VAppNetworkConfiguration{
 		NetworkName: orgNetwork.Name,
@@ -942,7 +946,7 @@ func (vapp *VApp) AddOrgNetworkAsync(newNetworkSettings *VappNetworkSettings, or
 
 }
 
-// UpdateNetwork updates vApp networks(isolated or connected to org VDC network)
+// UpdateNetwork updates vApp networks (isolated or connected to Org VDC network)
 // Returns pointer to types.NetworkConfigSection or error
 func (vapp *VApp) UpdateNetwork(newNetworkSettings *VappNetworkSettings, orgNetwork *types.OrgVDCNetwork) (*types.NetworkConfigSection, error) {
 	task, err := vapp.UpdateNetworkAsync(newNetworkSettings, orgNetwork)
@@ -962,7 +966,7 @@ func (vapp *VApp) UpdateNetwork(newNetworkSettings *VappNetworkSettings, orgNetw
 	return vAppNetworkConfig, nil
 }
 
-// UpdateNetworkAsync asyncronously updates vApp networks(isolated or connected to org VDC network).
+// UpdateNetworkAsync asyncronously updates vApp networks (isolated or connected to Org VDC network).
 // Returns task or error
 func (vapp *VApp) UpdateNetworkAsync(networkSettingsToUpdate *VappNetworkSettings, orgNetwork *types.OrgVDCNetwork) (Task, error) {
 	util.Logger.Printf("[TRACE] UpdateNetworkAsync with values: %#v and connect to org network: %#v", networkSettingsToUpdate, orgNetwork)
@@ -978,7 +982,7 @@ func (vapp *VApp) UpdateNetworkAsync(networkSettingsToUpdate *VappNetworkSetting
 			return Task{}, err
 		}
 
-		if uuid == networkSettingsToUpdate.Id {
+		if uuid == networkSettingsToUpdate.ID {
 			networkToUpdate = networkConfig
 			networkToUpdateIndex = index
 			break
@@ -986,7 +990,7 @@ func (vapp *VApp) UpdateNetworkAsync(networkSettingsToUpdate *VappNetworkSetting
 	}
 
 	if networkToUpdate == (types.VAppNetworkConfiguration{}) {
-		return Task{}, fmt.Errorf("not found network to update with Id %s", networkSettingsToUpdate.Id)
+		return Task{}, fmt.Errorf("not found network to update with Id %s", networkSettingsToUpdate.ID)
 	}
 
 	if networkToUpdate.Configuration.Features.NatService != nil && networkSettingsToUpdate.NatEnabled != nil {
@@ -1053,7 +1057,7 @@ func (vapp *VApp) UpdateNetworkAsync(networkSettingsToUpdate *VappNetworkSetting
 	return updateNetworkConfigurations(vapp, currentNetworkConfiguration.NetworkConfig)
 }
 
-// UpdateOrgNetwork updates to vApp added org VDC network
+// UpdateOrgNetwork updates Org VDC network which is part of a vApp
 // Returns pointer to types.NetworkConfigSection or error
 func (vapp *VApp) UpdateOrgNetwork(newNetworkSettings *VappNetworkSettings, isFenced bool) (*types.NetworkConfigSection, error) {
 	task, err := vapp.UpdateOrgNetworkAsync(newNetworkSettings, isFenced)
@@ -1073,7 +1077,7 @@ func (vapp *VApp) UpdateOrgNetwork(newNetworkSettings *VappNetworkSettings, isFe
 	return vAppNetworkConfig, nil
 }
 
-// UpdateOrgNetworkAsync asyncronously updates to vApp added org VDC network
+// UpdateOrgNetworkAsync asyncronously updates Org VDC network which is part of a vApp
 // Returns task or error
 func (vapp *VApp) UpdateOrgNetworkAsync(networkSettingsToUpdate *VappNetworkSettings, isFenced bool) (Task, error) {
 	util.Logger.Printf("[TRACE] UpdateOrgNetworkAsync with values: %#v ", networkSettingsToUpdate)
@@ -1090,7 +1094,7 @@ func (vapp *VApp) UpdateOrgNetworkAsync(networkSettingsToUpdate *VappNetworkSett
 			return Task{}, err
 		}
 
-		if uuid == networkSettingsToUpdate.Id {
+		if uuid == networkSettingsToUpdate.ID {
 			networkToUpdate = networkConfig
 			networkToUpdateIndex = index
 			break
@@ -1098,7 +1102,7 @@ func (vapp *VApp) UpdateOrgNetworkAsync(networkSettingsToUpdate *VappNetworkSett
 	}
 
 	if networkToUpdate == (types.VAppNetworkConfiguration{}) {
-		return Task{}, fmt.Errorf("not found network to update with Id %s", networkSettingsToUpdate.Id)
+		return Task{}, fmt.Errorf("not found network to update with Id %s", networkSettingsToUpdate.ID)
 	}
 
 	fenceMode := types.FenceModeBridged
@@ -1145,7 +1149,7 @@ func validateNetworkConfigSettings(networkSettings *VappNetworkSettings) error {
 	return nil
 }
 
-// RemoveNetwork removes any network from vApp
+// RemoveNetwork removes any network (be it isolated or connected to an Org Network) from vApp
 // Returns pointer to types.NetworkConfigSection or error
 func (vapp *VApp) RemoveNetwork(id string) (*types.NetworkConfigSection, error) {
 	task, err := vapp.RemoveNetworkAsync(id)
@@ -1165,12 +1169,12 @@ func (vapp *VApp) RemoveNetwork(id string) (*types.NetworkConfigSection, error) 
 	return vAppNetworkConfig, nil
 }
 
-// RemoveNetworkAsync asyncronously removes vApp any network
-// Accepts network Id or name
-func (vapp *VApp) RemoveNetworkAsync(id string) (Task, error) {
+// RemoveNetworkAsync asyncronously removes any network (be it isolated or connected to an Org Network) from vApp
+// Accepts network ID or name
+func (vapp *VApp) RemoveNetworkAsync(identifier string) (Task, error) {
 
-	if id == "" {
-		return Task{}, fmt.Errorf("network id/name can't be empty")
+	if identifier == "" {
+		return Task{}, fmt.Errorf("network ID/name can't be empty")
 	}
 
 	networkConfigurations := vapp.VApp.NetworkConfigSection.NetworkConfig
@@ -1180,7 +1184,7 @@ func (vapp *VApp) RemoveNetworkAsync(id string) (Task, error) {
 		if err != nil {
 			return Task{}, fmt.Errorf("unable to get network ID from HREF: %s", err)
 		}
-		if networkId == id || networkConfig.NetworkName == id {
+		if networkId == identifier || networkConfig.NetworkName == identifier {
 			isNetworkFound = true
 			networkConfigurations = append(networkConfigurations[:index], networkConfigurations[index+1:]...)
 			break
@@ -1188,7 +1192,7 @@ func (vapp *VApp) RemoveNetworkAsync(id string) (Task, error) {
 	}
 
 	if !isNetworkFound {
-		return Task{}, fmt.Errorf("network to remove %s, wasn't found", id)
+		return Task{}, fmt.Errorf("network to remove %s, wasn't found", identifier)
 	}
 
 	return updateNetworkConfigurations(vapp, networkConfigurations)

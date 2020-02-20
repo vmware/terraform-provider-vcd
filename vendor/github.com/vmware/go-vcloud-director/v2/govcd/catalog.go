@@ -181,12 +181,12 @@ func (cat *Catalog) UploadOvf(ovaFileName, itemName, description string, uploadP
 		return UploadTask{}, err
 	}
 
-	callBack, uploadProgress := getCallBackFunction()
+	progressCallBack, uploadProgress := getProgressCallBackFunction()
 
 	uploadError := *new(error)
 
 	//sending upload process to background, this allows no to lock and return task to client
-	go uploadFiles(cat.client, vappTemplate, &ovfFileDesc, tmpDir, filesAbsPaths, uploadPieceSize, callBack, &uploadError)
+	go uploadFiles(cat.client, vappTemplate, &ovfFileDesc, tmpDir, filesAbsPaths, uploadPieceSize, progressCallBack, &uploadError)
 
 	var task Task
 	for _, item := range vappTemplate.Tasks.Task {
@@ -220,7 +220,7 @@ func (cat *Catalog) UploadOvf(ovaFileName, itemName, description string, uploadP
 // uploadPieceSize - size of chunks in which the file will be uploaded to the catalog.
 // callBack a function with signature //function(bytesUpload, totalSize) to let the caller monitor progress of the upload operation.
 // uploadError - error to be ready be task
-func uploadFiles(client *Client, vappTemplate *types.VAppTemplate, ovfFileDesc *Envelope, tempPath string, filesAbsPaths []string, uploadPieceSize int64, callBack func(bytesUpload, totalSize int64), uploadError *error) error {
+func uploadFiles(client *Client, vappTemplate *types.VAppTemplate, ovfFileDesc *Envelope, tempPath string, filesAbsPaths []string, uploadPieceSize int64, progressCallBack func(bytesUpload, totalSize int64), uploadError *error) error {
 	var uploadedBytes int64
 	for _, item := range vappTemplate.Files.File {
 		if item.BytesTransferred == 0 {
@@ -239,7 +239,7 @@ func uploadFiles(client *Client, vappTemplate *types.VAppTemplate, ovfFileDesc *
 					uploadPieceSize:          uploadPieceSize,
 					uploadedBytesForCallback: uploadedBytes,
 					allFilesSize:             getAllFileSizeSum(ovfFileDesc),
-					callBack:                 callBack,
+					callBack:                 progressCallBack,
 					uploadError:              uploadError,
 				}
 				tempVar, err := uploadMultiPartFile(client, chunkFilePaths, details)
@@ -257,7 +257,7 @@ func uploadFiles(client *Client, vappTemplate *types.VAppTemplate, ovfFileDesc *
 					uploadPieceSize:          uploadPieceSize,
 					uploadedBytesForCallback: uploadedBytes,
 					allFilesSize:             getAllFileSizeSum(ovfFileDesc),
-					callBack:                 callBack,
+					callBack:                 progressCallBack,
 					uploadError:              uploadError,
 				}
 				tempVar, err := uploadFile(client, findFilePath(filesAbsPaths, item.Name), details)
@@ -368,6 +368,7 @@ func queryVappTemplate(client *Client, vappTemplateUrl *url.URL, newItemName str
 // Function will return parsed part for upload files from description xml.
 func uploadOvfDescription(client *Client, ovfFile string, ovfUploadUrl *url.URL) error {
 	util.Logger.Printf("[TRACE] Uploding ovf description with file: %s and url: %s\n", ovfFile, ovfUploadUrl)
+	// #nosec G304 - linter does not like 'filePath' to be a variable. However this is necessary for file uploads.
 	openedFile, err := os.Open(ovfFile)
 	if err != nil {
 		return err
@@ -506,6 +507,7 @@ func getOvfPath(filesAbsPaths []string) (string, error) {
 }
 
 func getOvf(ovfFilePath string) (Envelope, error) {
+	// #nosec G304 - linter does not like 'filePath' to be a variable. However this is necessary for file uploads.
 	openedFile, err := os.Open(ovfFilePath)
 	if err != nil {
 		return Envelope{}, err

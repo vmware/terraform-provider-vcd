@@ -163,6 +163,7 @@ const (
 	EdgeVnicConfig         = "/vnics"
 	EdgeVdcVnicConfig      = "/vdcNetworks"
 	EdgeDhcpRelayPath      = "/dhcp/config/relay"
+	EdgeDhcpLeasePath      = "/dhcp/leaseInfo"
 	LbConfigPath           = "/loadbalancer/config/"
 	LbMonitorPath          = "/loadbalancer/config/monitors/"
 	LbServerPoolPath       = "/loadbalancer/config/pools/"
