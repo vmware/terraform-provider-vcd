@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_vapp_network"
+page_title: "vCloudDirector: vcd_vapp_org_network"
 sidebar_current: "docs-vcd-resource-vapp-org-network"
 description: |-
   Provides a vCloud Director vApp Org Network. This can be used to create and delete internal Org networks for vApps to connect.

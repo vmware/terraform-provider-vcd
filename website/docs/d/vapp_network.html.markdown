@@ -1,0 +1,45 @@
+---
+layout: "vcd"
+page_title: "vCloudDirector: vcd_vapp_network"
+sidebar_current: "docs-vcd-datasource-vapp-network"
+description: |-
+  Provides a vCloud Director vApp network data source. This can be used to access vApp network.
+---
+
+# vcd\_vapp\_network
+
+Provides a vCloud Director vApp network data source. This can be used to access vApp network.
+
+Supported in provider *v2.7+*
+
+## Example Usage
+
+```hcl
+
+data "vcd_vapp" "web" {
+  name= "web"
+}
+
+data "vcd_vapp_network" "network1" {
+  vapp_name     = "${vcd_vapp.web.name}"
+  name          = "isolated-newtwork"
+}
+
+output "gateway" {
+  value = data.vcd_vapp_network.network1.gateway
+}
+```
+
+## Argument Reference
+
+The following arguments are supported:
+
+* `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
+* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
+* `vapp_name` - (Required) The vApp name.
+* `name` - (Required) A name for the vApp network, unique within the vApp 
+
+## Attribute reference
+
+All attributes defined in [vApp network resource](/docs/providers/vcd/r/vapp_network.html#attribute-reference) are supported.
+
