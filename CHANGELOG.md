@@ -2,19 +2,35 @@
 
 FEATURES:
 
-* **New Resource:** `vcd_vm_internal_disk` VM internal disk configuration
-* `vcd_vapp_vm` Internal disks in VM template allows to be edited by `override_template_disk` field 
+* **New Resource:** `vcd_vm_internal_disk` VM internal disk configuration [GH-412]
+* `vcd_vapp_vm` Internal disks in VM template allows to be edited by `override_template_disk` field
+  [GH-412]
+* `vcd_org_vdc` can be created with Flex allocation in vCD 9.7 and later. Also two new fields added for Flex - `elasticity`, `include_vm_memory_overhead` [GH-443]
+* `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` get optional `network_dhcp_wait_seconds` field
+  to ensure `ip` is reported when `ip_allocation_mode=DHCP` is used [GH-436]
 
 IMPROVEMENTS:
 
-* `vcd_vapp_vm` `disk` has new attribute `size_in_mb` [#433]
-* `resource/vcd_org` and `datasource/vcd_org` include a section `vapp_lease` and a section `vapp_template_lease` to define lease related parameters of depending entities - [GH-432]
+* `resource/vcd_org` and `datasource/vcd_org` include a section `vapp_lease` and a section
+  `vapp_template_lease` to define lease related parameters of depending entities - [GH-432]
+* `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` include a field `adapter_type` in `network`
+  defintion to specify NIC type - [GH-441]
+* `vcd_vapp_vm` `disk` has new attribute `size_in_mb` [GH-433]
+* `datasource/*` - all data sources return an error when object is not found [GH-446]
 
 BUG FIXES:
-Fix `vcd_vapp_vm` resource read - independent disks where losing `bus_number` and `unit_number` values after refresh. [#433]
+
+* fix `vcd_vapp_vm` resource read - independent disks where losing `bus_number` and `unit_number` values after refresh. [GH-433]
+* `datasource/vcd_nsxv_dhcp_relay` crashes if no DHCP relay settings are present in Edge Gateway [GH-446]
+* `vcd_vapp_vm` `disk` has new attribute `size_in_mb` [GH-433]
+* `resource/vcd_org` and `datasource/vcd_org` include a section `vapp_lease` and a section
+  `vapp_template_lease` to define lease related parameters of depending entities - [GH-432]
+* `resource/vcd_vapp_vm` `network` block changes caused MAC address changes in existing NICs
+  [GH-436,GH-407]
 
 NOTES:
 * Drop support for vCD 9.0
+* Bump terraform-plugin-sdk to v1.5.0 [GH-442]
 
 ## 2.6.0 (December 13, 2019)
 

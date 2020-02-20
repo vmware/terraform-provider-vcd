@@ -12,7 +12,7 @@
     "//": "allowInsecure will skip the check on self-signed certificates",
     "allowInsecure": true,
     "//": "tfAcceptanceTests is needed to allow the whole test suite to run",
-    "//": "Warning: it may cost time (from 14 to 40 min) and possibly money",
+    "//": "Warning: it may cost time (up to a few hours) and possibly money",
     "tfAcceptanceTests": true,
     "//": "If enabled, the test suite will cache the provider connection for up to 20 minutes",
     "//": "and then renew it automatically. This will save some heavy network traffic.",
