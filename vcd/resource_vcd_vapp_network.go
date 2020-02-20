@@ -276,7 +276,7 @@ func genericVappNetworkRead(d *schema.ResourceData, meta interface{}, origin str
 		if err != nil {
 			return fmt.Errorf("unable to get network ID from HREF: %s", err)
 		}
-		// Name check needed to support old resource ID's which were names or datasource has only name
+		// Name check needed to support old resource ID's which were names or datasource has only name provided by user
 		if d.Id() == networkId || networkConfig.NetworkName == d.Get("name").(string) {
 			vAppNetwork = networkConfig
 			break
