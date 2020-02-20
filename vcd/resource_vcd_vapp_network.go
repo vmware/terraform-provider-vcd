@@ -276,7 +276,7 @@ func genericVappNetworkRead(d *schema.ResourceData, meta interface{}, origin str
 		if err != nil {
 			return fmt.Errorf("unable to get network ID from HREF: %s", err)
 		}
-		// name check needed to support old resource Id's which was names or datasource
+		// Name check needed to support old resource ID's which were names or datasource has only name
 		if d.Id() == networkId || networkConfig.NetworkName == d.Get("name").(string) {
 			vAppNetwork = networkConfig
 			break
@@ -385,7 +385,6 @@ func resourceVappNetworkUpdate(d *schema.ResourceData, meta interface{}) error {
 	fwEnabled := d.Get("firewall_enabled").(bool)
 	retainIpMacEnabled := d.Get("retain_ip_mac_enabled").(bool)
 
-	// we can't change network name as this results ID(href) change
 	vappNetworkSettings := &govcd.VappNetworkSettings{
 		Id:                 d.Id(),
 		Name:               d.Get("name").(string),
@@ -495,7 +494,6 @@ func resourceVcdVappNetworkImport(d *schema.ResourceData, meta interface{}) ([]*
 
 	vappNetworkToImport := types.VAppNetworkConfiguration{}
 	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
-		// name check needed to support old resource Id's which was names
 		if networkConfig.NetworkName == networkName {
 			vappNetworkToImport = networkConfig
 			break

@@ -39,9 +39,10 @@ func resourceVcdVappOrgNetwork() *schema.Resource {
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
 			"org_network": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Organization network name to which vApp network connected to",
 			},
 			"is_fenced": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -113,7 +114,6 @@ func resourceVappOrgNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 		}
 	}
 
-	// we need not changeable value
 	// Parsing UUID from 'https://bos1-vcloud-static-170-210.eng.vmware.com/api/admin/network/6ced8e2f-29dd-4201-9801-a02cb8bed821/action/reset'
 	networkId, err := govcd.GetUuidFromHref(vAppNetwork.Link.HREF)
 	if err != nil {
@@ -284,7 +284,6 @@ func resourceVcdVappOrgNetworkImport(d *schema.ResourceData, meta interface{}) (
 
 	vappNetworkToImport := types.VAppNetworkConfiguration{}
 	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
-		// name check needed to support old resource Id's which was names
 		if networkConfig.NetworkName == networkName {
 			vappNetworkToImport = networkConfig
 			break

@@ -33,7 +33,7 @@ func TestAccVcdVappNetwork_Isolated(t *testing.T) {
 		"Org":          testConfig.VCD.Org,
 		"Vdc":          testConfig.VCD.Vdc,
 		"resourceName": resourceName,
-		// we can't change network name as this results ID(href) change
+		// we can't change network name as this results in ID (HREF) change
 		"vappNetworkName":             newVappNetworkName,
 		"description":                 "network description",
 		"descriptionForUpdate":        "update",
@@ -90,7 +90,7 @@ func TestAccVcdVappNetwork_Nat(t *testing.T) {
 		"Org":          testConfig.VCD.Org,
 		"Vdc":          testConfig.VCD.Vdc,
 		"resourceName": resourceName,
-		// we can't change network name as this results ID(href) change
+		// we can't change network name as this results in ID (HREF) change
 		"vappNetworkName":             newVappNetworkName,
 		"description":                 "network description",
 		"descriptionForUpdate":        "update",
