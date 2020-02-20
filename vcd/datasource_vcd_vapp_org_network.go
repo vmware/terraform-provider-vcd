@@ -26,7 +26,7 @@ func datasourceVcdVappOrgNetwork() *schema.Resource {
 			"org_network": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Organization network name to which vApp network connected to",
+				Description: "Organization network name to which vApp network is connected to",
 			},
 			"is_fenced": &schema.Schema{
 				Type:        schema.TypeBool,

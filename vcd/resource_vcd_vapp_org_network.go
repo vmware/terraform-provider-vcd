@@ -42,7 +42,7 @@ func resourceVcdVappOrgNetwork() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Organization network name to which vApp network connected to",
+				Description: "Organization network name to which vApp network is connected to",
 			},
 			"is_fenced": &schema.Schema{
 				Type:        schema.TypeBool,
