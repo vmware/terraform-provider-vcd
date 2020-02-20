@@ -209,7 +209,7 @@ func resourceVappOrgNetworkUpdate(d *schema.ResourceData, meta interface{}) erro
 	fwEnabled := d.Get("firewall_enabled").(bool)
 
 	vappNetworkSettings := &govcd.VappNetworkSettings{
-		Id:                 d.Id(),
+		ID:                 d.Id(),
 		RetainIpMacEnabled: &retainIpMacEnabled,
 		NatEnabled:         &natEnabled,
 		FirewallEnabled:    &fwEnabled,

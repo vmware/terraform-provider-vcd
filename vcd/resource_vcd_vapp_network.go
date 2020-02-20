@@ -386,7 +386,7 @@ func resourceVappNetworkUpdate(d *schema.ResourceData, meta interface{}) error {
 	retainIpMacEnabled := d.Get("retain_ip_mac_enabled").(bool)
 
 	vappNetworkSettings := &govcd.VappNetworkSettings{
-		Id:                 d.Id(),
+		ID:                 d.Id(),
 		Name:               d.Get("name").(string),
 		Description:        d.Get("description").(string),
 		Gateway:            d.Get("gateway").(string),
