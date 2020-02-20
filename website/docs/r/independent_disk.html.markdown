@@ -14,7 +14,7 @@ Supported in provider *v2.1+*
 
 ## Example Usage
 
-```
+```hcl
 resource "vcd_independent_disk" "myNewIndependentDisk" {  
   vdc             = "my-vcd"
   
