@@ -21,7 +21,7 @@ data "vcd_vapp" "web" {
 }
 
 data "vcd_vapp_network" "network1" {
-  vapp_name     = "${vcd_vapp.web.name}"
+  vapp_name     = vcd_vapp.web.name
   name          = "isolated-newtwork"
 }
 
