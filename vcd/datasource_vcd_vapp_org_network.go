@@ -9,8 +9,9 @@ func datasourceVcdVappOrgNetwork() *schema.Resource {
 		Read: datasourceVappOrgNetworkRead,
 		Schema: map[string]*schema.Schema{
 			"vapp_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "vApp network name",
 			},
 			"org": &schema.Schema{
 				Type:     schema.TypeString,

@@ -22,14 +22,16 @@ func resourceVcdVappNetwork() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "vApp network name",
 			},
 			"vapp_name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "vApp to use",
 			},
 			"org": {
 				Type:     schema.TypeString,
@@ -50,35 +52,38 @@ func resourceVcdVappNetwork() *schema.Resource {
 				Description: "Optional description for the network",
 			},
 			"netmask": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				Default:  "255.255.255.0",
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Default:     "255.255.255.0",
+				Description: "Netmask address for a subnet. Default is 255.255.255.0",
 			},
 			"gateway": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: "Gateway of the network",
 			},
-
 			"dns1": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Primary DNS server",
 			},
-
 			"dns2": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Secondary DNS server",
 			},
-
 			"dns_suffix": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "DNS suffix",
 			},
 
 			"guest_vlan_allowed": &schema.Schema{
-				Type:     schema.TypeBool,
-				Optional: true,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "True if Network allows guest VLAN tagging",
 			},
 			"org_network": {
 				Type:        schema.TypeString,
@@ -104,8 +109,9 @@ func resourceVcdVappNetwork() *schema.Resource {
 				Description: "Specifies whether the network resources such as IP/MAC of router will be retained across deployments. Default is false.",
 			},
 			"dhcp_pool": &schema.Schema{
-				Type:     schema.TypeSet,
-				Optional: true,
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "A range of IPs to issue to virtual machines that don't have a static IP",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"start_address": &schema.Schema{
@@ -140,8 +146,9 @@ func resourceVcdVappNetwork() *schema.Resource {
 				Set: resourceVcdDhcpPoolHash,
 			},
 			"static_ip_pool": &schema.Schema{
-				Type:     schema.TypeSet,
-				Optional: true,
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Description: "A range of IPs permitted to be used as static IPs for virtual machines",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"start_address": &schema.Schema{
