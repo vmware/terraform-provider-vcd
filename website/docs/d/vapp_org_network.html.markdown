@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_vapp\_org\_network
 
-Provides a vCloud Director vApp Org network data source. This can be used to access vApp Org network.
+Provides a vCloud Director vApp Org network data source. This can be used to access vApp Org VDC network.
 
 Supported in provider *v2.7+*
 
