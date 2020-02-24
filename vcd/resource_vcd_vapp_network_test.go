@@ -17,7 +17,6 @@ const gateway = "192.168.1.1"
 const dns1 = "8.8.8.8"
 const dns2 = "1.1.1.1"
 const dnsSuffix = "biz.biz"
-const newVappNetworkName = "TestAccVcdVappNetwork_Basic"
 const netmask = "255.255.255.0"
 const guestVlanAllowed = "true"
 
@@ -34,7 +33,7 @@ func TestAccVcdVappNetwork_Isolated(t *testing.T) {
 		"Vdc":          testConfig.VCD.Vdc,
 		"resourceName": resourceName,
 		// we can't change network name as this results in ID (HREF) change
-		"vappNetworkName":             newVappNetworkName,
+		"vappNetworkName":             resourceName,
 		"description":                 "network description",
 		"descriptionForUpdate":        "update",
 		"gateway":                     gateway,
@@ -91,7 +90,7 @@ func TestAccVcdVappNetwork_Nat(t *testing.T) {
 		"Vdc":          testConfig.VCD.Vdc,
 		"resourceName": resourceName,
 		// we can't change network name as this results in ID (HREF) change
-		"vappNetworkName":             newVappNetworkName,
+		"vappNetworkName":             resourceName,
 		"description":                 "network description",
 		"descriptionForUpdate":        "update",
 		"gateway":                     gateway,

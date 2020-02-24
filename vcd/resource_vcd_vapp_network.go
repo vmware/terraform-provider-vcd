@@ -500,6 +500,11 @@ func resourceVcdVappNetworkImport(d *schema.ResourceData, meta interface{}) ([]*
 		return nil, fmt.Errorf("didn't find vApp network: %s", networkName)
 	}
 
+	if vappNetworkToImport.Configuration.FenceMode == types.FenceModeBridged ||
+		(vappNetworkToImport.Configuration.FenceMode == types.FenceModeNAT && vappNetworkToImport.Configuration.Features.DhcpService == nil) {
+		return nil, fmt.Errorf("found vApp org network, not vApp network: %s", networkName)
+	}
+
 	networkId, err := govcd.GetUuidFromHref(vappNetworkToImport.Link.HREF, false)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get network ID from HREF: %s", err)

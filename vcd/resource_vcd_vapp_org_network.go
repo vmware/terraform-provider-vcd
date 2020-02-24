@@ -291,6 +291,11 @@ func resourceVcdVappOrgNetworkImport(d *schema.ResourceData, meta interface{}) (
 		return nil, fmt.Errorf("didn't find vApp org network: %s", networkName)
 	}
 
+	if vappNetworkToImport.Configuration.FenceMode == types.FenceModeIsolated ||
+		(vappNetworkToImport.Configuration.FenceMode == types.FenceModeNAT && vappNetworkToImport.Configuration.Features.DhcpService != nil) {
+		return nil, fmt.Errorf("found vApp network, not vApp org network: %s", networkName)
+	}
+
 	networkId, err := govcd.GetUuidFromHref(vappNetworkToImport.Link.HREF, false)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get network ID from HREF: %s", err)
