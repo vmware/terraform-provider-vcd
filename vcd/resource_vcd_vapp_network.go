@@ -200,17 +200,8 @@ func resourceVappNetworkCreate(d *schema.ResourceData, meta interface{}) error {
 		vappNetworkSettings.GuestVLANAllowed = &convertedValue
 	}
 
-	if dhcp, ok := d.GetOk("dhcp_pool"); ok && len(dhcp.(*schema.Set).List()) > 0 {
-		for _, item := range dhcp.(*schema.Set).List() {
-			data := item.(map[string]interface{})
-			vappNetworkSettings.DhcpSettings = &govcd.DhcpSettings{
-				IsEnabled:        data["enabled"].(bool),
-				DefaultLeaseTime: data["default_lease_time"].(int),
-				MaxLeaseTime:     data["max_lease_time"].(int),
-				IPRange: &types.IPRange{StartAddress: data["start_address"].(string),
-					EndAddress: data["end_address"].(string)}}
-		}
-	}
+	expandDhcpPool(d, vappNetworkSettings)
+
 	var orgVdcNetwork *types.OrgVDCNetwork
 	if networkId, ok := d.GetOk("org_network"); ok {
 		orgNetwork, err := vdc.GetOrgVdcNetworkByNameOrId(networkId.(string), true)
@@ -243,6 +234,20 @@ func resourceVappNetworkCreate(d *schema.ResourceData, meta interface{}) error {
 	d.SetId(networkId)
 
 	return resourceVappNetworkRead(d, meta)
+}
+
+func expandDhcpPool(d *schema.ResourceData, vappNetworkSettings *govcd.VappNetworkSettings) {
+	if dhcp, ok := d.GetOk("dhcp_pool"); ok && len(dhcp.(*schema.Set).List()) > 0 {
+		for _, item := range dhcp.(*schema.Set).List() {
+			data := item.(map[string]interface{})
+			vappNetworkSettings.DhcpSettings = &govcd.DhcpSettings{
+				IsEnabled:        data["enabled"].(bool),
+				DefaultLeaseTime: data["default_lease_time"].(int),
+				MaxLeaseTime:     data["max_lease_time"].(int),
+				IPRange: &types.IPRange{StartAddress: data["start_address"].(string),
+					EndAddress: data["end_address"].(string)}}
+		}
+	}
 }
 
 func resourceVappNetworkRead(d *schema.ResourceData, meta interface{}) error {
@@ -399,17 +404,7 @@ func resourceVappNetworkUpdate(d *schema.ResourceData, meta interface{}) error {
 		vappNetworkSettings.GuestVLANAllowed = &convertedValue
 	}
 
-	if dhcp, ok := d.GetOk("dhcp_pool"); ok && len(dhcp.(*schema.Set).List()) > 0 {
-		for _, item := range dhcp.(*schema.Set).List() {
-			data := item.(map[string]interface{})
-			vappNetworkSettings.DhcpSettings = &govcd.DhcpSettings{
-				IsEnabled:        data["enabled"].(bool),
-				DefaultLeaseTime: data["default_lease_time"].(int),
-				MaxLeaseTime:     data["max_lease_time"].(int),
-				IPRange: &types.IPRange{StartAddress: data["start_address"].(string),
-					EndAddress: data["end_address"].(string)}}
-		}
-	}
+	expandDhcpPool(d, vappNetworkSettings)
 
 	var orgVdcNetwork *types.OrgVDCNetwork
 	if networkId, ok := d.GetOk("org_network"); ok {
