@@ -87,14 +87,10 @@ func resourceVappOrgNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("error finding vApp. %#v", err)
 	}
 
-	natEnabled := d.Get("nat_enabled").(bool)
-	fwEnabled := d.Get("firewall_enabled").(bool)
-	retainIpMacEnabled := d.Get("retain_ip_mac_enabled").(bool)
-
 	vappNetworkSettings := &govcd.VappNetworkSettings{
-		NatEnabled:         &natEnabled,
-		FirewallEnabled:    &fwEnabled,
-		RetainIpMacEnabled: &retainIpMacEnabled,
+		NatEnabled:         takeBoolPointer(d.Get("nat_enabled").(bool)),
+		FirewallEnabled:    takeBoolPointer(d.Get("firewall_enabled").(bool)),
+		RetainIpMacEnabled: takeBoolPointer(d.Get("retain_ip_mac_enabled").(bool)),
 	}
 
 	orgNetwork, err := vdc.GetOrgVdcNetworkByNameOrId(d.Get("org_network").(string), true)
@@ -204,15 +200,11 @@ func resourceVappOrgNetworkUpdate(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("error finding vApp. %#v", err)
 	}
 
-	retainIpMacEnabled := d.Get("retain_ip_mac_enabled").(bool)
-	natEnabled := d.Get("nat_enabled").(bool)
-	fwEnabled := d.Get("firewall_enabled").(bool)
-
 	vappNetworkSettings := &govcd.VappNetworkSettings{
 		ID:                 d.Id(),
-		RetainIpMacEnabled: &retainIpMacEnabled,
-		NatEnabled:         &natEnabled,
-		FirewallEnabled:    &fwEnabled,
+		NatEnabled:         takeBoolPointer(d.Get("nat_enabled").(bool)),
+		FirewallEnabled:    takeBoolPointer(d.Get("firewall_enabled").(bool)),
+		RetainIpMacEnabled: takeBoolPointer(d.Get("retain_ip_mac_enabled").(bool)),
 	}
 
 	_, err = vapp.UpdateOrgNetwork(vappNetworkSettings, d.Get("is_fenced").(bool))

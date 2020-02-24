@@ -181,22 +181,18 @@ func resourceVappNetworkCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	natEnabled := d.Get("nat_enabled").(bool)
-	fwEnabled := d.Get("firewall_enabled").(bool)
-	retainIpMacEnabled := d.Get("retain_ip_mac_enabled").(bool)
-
 	vappNetworkSettings := &govcd.VappNetworkSettings{
 		Name:               d.Get("name").(string),
+		Description:        d.Get("description").(string),
 		Gateway:            d.Get("gateway").(string),
 		NetMask:            d.Get("netmask").(string),
 		DNS1:               d.Get("dns1").(string),
 		DNS2:               d.Get("dns2").(string),
 		DNSSuffix:          d.Get("dns_suffix").(string),
 		StaticIPRanges:     staticIpRanges.IPRange,
-		NatEnabled:         &natEnabled,
-		FirewallEnabled:    &fwEnabled,
-		Description:        d.Get("description").(string),
-		RetainIpMacEnabled: &retainIpMacEnabled,
+		NatEnabled:         takeBoolPointer(d.Get("nat_enabled").(bool)),
+		FirewallEnabled:    takeBoolPointer(d.Get("firewall_enabled").(bool)),
+		RetainIpMacEnabled: takeBoolPointer(d.Get("retain_ip_mac_enabled").(bool)),
 	}
 
 	if _, ok := d.GetOk("guest_vlan_allowed"); ok {
@@ -379,10 +375,6 @@ func resourceVappNetworkUpdate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	natEnabled := d.Get("nat_enabled").(bool)
-	fwEnabled := d.Get("firewall_enabled").(bool)
-	retainIpMacEnabled := d.Get("retain_ip_mac_enabled").(bool)
-
 	vappNetworkSettings := &govcd.VappNetworkSettings{
 		ID:                 d.Id(),
 		Name:               d.Get("name").(string),
@@ -393,9 +385,9 @@ func resourceVappNetworkUpdate(d *schema.ResourceData, meta interface{}) error {
 		DNS2:               d.Get("dns2").(string),
 		DNSSuffix:          d.Get("dns_suffix").(string),
 		StaticIPRanges:     staticIpRanges.IPRange,
-		NatEnabled:         &natEnabled,
-		FirewallEnabled:    &fwEnabled,
-		RetainIpMacEnabled: &retainIpMacEnabled,
+		NatEnabled:         takeBoolPointer(d.Get("nat_enabled").(bool)),
+		FirewallEnabled:    takeBoolPointer(d.Get("firewall_enabled").(bool)),
+		RetainIpMacEnabled: takeBoolPointer(d.Get("retain_ip_mac_enabled").(bool)),
 	}
 
 	if _, ok := d.GetOk("guest_vlan_allowed"); ok {
