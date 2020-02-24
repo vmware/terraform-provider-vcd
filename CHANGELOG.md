@@ -30,10 +30,15 @@ BUG FIXES:
 * `resource/vcd_org` and `datasource/vcd_org` include a section `vapp_lease` and a section
   `vapp_template_lease` to define lease related parameters of depending entities - [GH-432]
 * `resource/vcd_vapp_vm` `network` block changes caused MAC address changes in existing NICs
+  [GH-436,GH-407]
+* Fix a potential data race in client connection caching when VCD_CACHE is enabled [GH-453]
 
 NOTES:
+
 * Drop support for vCD 9.0
 * Bump terraform-plugin-sdk to v1.5.0 [GH-442]
+* `make seqtestacc` and `make test-binary` use `-race` flags for `go test` to check if there are no data races.
+ Additionally GNUMakefile supports `make installrace` and `make buildrace` to build binary with race detection enabled. [GH-453]
 
 ## 2.6.0 (December 13, 2019)
 
