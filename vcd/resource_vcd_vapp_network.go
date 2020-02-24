@@ -469,7 +469,7 @@ func resourceVcdVappNetworkImport(d *schema.ResourceData, meta interface{}) ([]*
 	vcdClient := meta.(*VCDClient)
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if err != nil {
-		return nil, fmt.Errorf("[VM import] unable to find VDC %s: %s ", vdcName, err)
+		return nil, fmt.Errorf("[vApp network import] unable to find VDC %s: %s ", vdcName, err)
 	}
 
 	vapp, err := vdc.GetVAppByName(vappName, false)
