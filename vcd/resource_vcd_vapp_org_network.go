@@ -236,7 +236,7 @@ func resourceVappOrgNetworkDelete(d *schema.ResourceData, meta interface{}) erro
 
 	_, err = vapp.RemoveNetwork(d.Id())
 	if err != nil {
-		return fmt.Errorf("error removing vApp network: %#v", err)
+		return fmt.Errorf("error removing vApp network: %s", err)
 	}
 
 	d.SetId("")
