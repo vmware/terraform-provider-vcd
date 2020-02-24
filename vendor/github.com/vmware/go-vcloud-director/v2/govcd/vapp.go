@@ -819,7 +819,7 @@ func (vapp *VApp) AddNetwork(newNetworkSettings *VappNetworkSettings, orgNetwork
 	return vAppNetworkConfig, nil
 }
 
-// AddNetworkAsync creates asyncronously isolated or nat routed network for vApp. Returns Task or error
+// AddNetworkAsync creates asynchronously isolated or nat routed network for vApp. Returns Task or error
 // If orgNetwork is nil, then isolated network created.
 func (vapp *VApp) AddNetworkAsync(newNetworkSettings *VappNetworkSettings, orgNetwork *types.OrgVDCNetwork) (Task, error) {
 
@@ -903,7 +903,7 @@ func (vapp *VApp) AddOrgNetwork(newNetworkSettings *VappNetworkSettings, orgNetw
 	return vAppNetworkConfig, nil
 }
 
-// AddOrgNetworkAsync adds asyncronously Org VDC network as vApp network. Returns Task or error
+// AddOrgNetworkAsync adds asynchronously Org VDC network as vApp network. Returns Task or error
 func (vapp *VApp) AddOrgNetworkAsync(newNetworkSettings *VappNetworkSettings, orgNetwork *types.OrgVDCNetwork, isFenced bool) (Task, error) {
 
 	if orgNetwork == nil {
@@ -966,7 +966,7 @@ func (vapp *VApp) UpdateNetwork(newNetworkSettings *VappNetworkSettings, orgNetw
 	return vAppNetworkConfig, nil
 }
 
-// UpdateNetworkAsync asyncronously updates vApp networks (isolated or connected to Org VDC network).
+// UpdateNetworkAsync asynchronously updates vApp networks (isolated or connected to Org VDC network).
 // Returns task or error
 func (vapp *VApp) UpdateNetworkAsync(networkSettingsToUpdate *VappNetworkSettings, orgNetwork *types.OrgVDCNetwork) (Task, error) {
 	util.Logger.Printf("[TRACE] UpdateNetworkAsync with values: %#v and connect to org network: %#v", networkSettingsToUpdate, orgNetwork)
@@ -977,7 +977,7 @@ func (vapp *VApp) UpdateNetworkAsync(networkSettingsToUpdate *VappNetworkSetting
 	var networkToUpdate types.VAppNetworkConfiguration
 	var networkToUpdateIndex int
 	for index, networkConfig := range currentNetworkConfiguration.NetworkConfig {
-		uuid, err := GetUuidFromHref(networkConfig.Link.HREF)
+		uuid, err := GetUuidFromHref(networkConfig.Link.HREF, false)
 		if err != nil {
 			return Task{}, err
 		}
@@ -1077,7 +1077,7 @@ func (vapp *VApp) UpdateOrgNetwork(newNetworkSettings *VappNetworkSettings, isFe
 	return vAppNetworkConfig, nil
 }
 
-// UpdateOrgNetworkAsync asyncronously updates Org VDC network which is part of a vApp
+// UpdateOrgNetworkAsync asynchronously updates Org VDC network which is part of a vApp
 // Returns task or error
 func (vapp *VApp) UpdateOrgNetworkAsync(networkSettingsToUpdate *VappNetworkSettings, isFenced bool) (Task, error) {
 	util.Logger.Printf("[TRACE] UpdateOrgNetworkAsync with values: %#v ", networkSettingsToUpdate)
@@ -1089,7 +1089,7 @@ func (vapp *VApp) UpdateOrgNetworkAsync(networkSettingsToUpdate *VappNetworkSett
 	var networkToUpdateIndex int
 
 	for index, networkConfig := range currentNetworkConfiguration.NetworkConfig {
-		uuid, err := GetUuidFromHref(networkConfig.Link.HREF)
+		uuid, err := GetUuidFromHref(networkConfig.Link.HREF, false)
 		if err != nil {
 			return Task{}, err
 		}
@@ -1169,7 +1169,7 @@ func (vapp *VApp) RemoveNetwork(id string) (*types.NetworkConfigSection, error) 
 	return vAppNetworkConfig, nil
 }
 
-// RemoveNetworkAsync asyncronously removes any network (be it isolated or connected to an Org Network) from vApp
+// RemoveNetworkAsync asynchronously removes any network (be it isolated or connected to an Org Network) from vApp
 // Accepts network ID or name
 func (vapp *VApp) RemoveNetworkAsync(identifier string) (Task, error) {
 
@@ -1180,7 +1180,7 @@ func (vapp *VApp) RemoveNetworkAsync(identifier string) (Task, error) {
 	networkConfigurations := vapp.VApp.NetworkConfigSection.NetworkConfig
 	isNetworkFound := false
 	for index, networkConfig := range networkConfigurations {
-		networkId, err := GetUuidFromHref(networkConfig.Link.HREF)
+		networkId, err := GetUuidFromHref(networkConfig.Link.HREF, false)
 		if err != nil {
 			return Task{}, fmt.Errorf("unable to get network ID from HREF: %s", err)
 		}

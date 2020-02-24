@@ -115,7 +115,7 @@ func resourceVappOrgNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	// Parsing UUID from 'https://bos1-vcloud-static-170-210.eng.vmware.com/api/admin/network/6ced8e2f-29dd-4201-9801-a02cb8bed821/action/reset'
-	networkId, err := govcd.GetUuidFromHref(vAppNetwork.Link.HREF)
+	networkId, err := govcd.GetUuidFromHref(vAppNetwork.Link.HREF, false)
 	if err != nil {
 		return fmt.Errorf("unable to get network ID from HREF: %s", err)
 	}
@@ -149,7 +149,7 @@ func genericVappOrgNetworkRead(d *schema.ResourceData, meta interface{}, origin 
 	vAppNetwork := types.VAppNetworkConfiguration{}
 	var networkId string
 	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
-		networkId, err = govcd.GetUuidFromHref(networkConfig.Link.HREF)
+		networkId, err = govcd.GetUuidFromHref(networkConfig.Link.HREF, false)
 		if err != nil {
 			return fmt.Errorf("unable to get network ID from HREF: %s", err)
 		}
@@ -294,7 +294,7 @@ func resourceVcdVappOrgNetworkImport(d *schema.ResourceData, meta interface{}) (
 		return nil, fmt.Errorf("didn't find vApp org network: %s", networkName)
 	}
 
-	networkId, err := govcd.GetUuidFromHref(vappNetworkToImport.Link.HREF)
+	networkId, err := govcd.GetUuidFromHref(vappNetworkToImport.Link.HREF, false)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get network ID from HREF: %s", err)
 	}

@@ -316,7 +316,7 @@ func isVappNetworkFound(conn *VCDClient, rs *terraform.ResourceState, origin str
 
 	var found bool
 	for _, vappNetworkConfig := range networkConfig.NetworkConfig {
-		networkId, err := govcd.GetUuidFromHref(vappNetworkConfig.Link.HREF)
+		networkId, err := govcd.GetUuidFromHref(vappNetworkConfig.Link.HREF, false)
 		if err != nil {
 			return false, fmt.Errorf("unable to get network ID from HREF: %s", err)
 		}

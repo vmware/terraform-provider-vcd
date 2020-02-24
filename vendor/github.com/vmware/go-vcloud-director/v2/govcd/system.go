@@ -93,24 +93,6 @@ func getBareEntityUuid(entityId string) (string, error) {
 	return matchList[0][1], nil
 }
 
-// Returns the UUID part of an HREF
-// Similar to getBareEntityUuid, but tailored to HREF
-func getUuidFromHref(href string) (string, error) {
-	// Regular expression to match an ID:
-	//     1 string starting by 'https://' and ending with a '/',
-	//     followed by
-	//        1 group of 8 hexadecimal digits
-	//        3 groups of 4 hexadecimal digits
-	//        1 group of 12 hexadecimal digits
-	reGetID := regexp.MustCompile(`^https://.+/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$`)
-	matchList := reGetID.FindAllStringSubmatch(href, -1)
-
-	if len(matchList) == 0 || len(matchList[0]) < 2 {
-		return "", fmt.Errorf("error extracting UUID from '%s'", href)
-	}
-	return matchList[0][1], nil
-}
-
 // CreateEdgeGatewayAsync creates an edge gateway using a simplified configuration structure
 // https://code.vmware.com/apis/442/vcloud-director/doc/doc/operations/POST-CreateEdgeGateway.html
 //
@@ -392,7 +374,7 @@ func getOrgHREFById(vcdClient *VCDClient, orgId string) (string, error) {
 	// Look for org UUID within OrgList
 	for _, org := range orgList.Org {
 		// ID in orgList is usually empty. We extract the UUID from HREF to make the comparison
-		uuidFromHref, err := getUuidFromHref(org.HREF)
+		uuidFromHref, err := GetUuidFromHref(org.HREF, true)
 		if err != nil {
 			return "", err
 		}
@@ -924,8 +906,8 @@ func (vcdClient *VCDClient) GetAdminOrgByNameOrId(identifier string) (*AdminOrg,
 
 // Returns the UUID part of an HREF
 // Similar to getBareEntityUuid, but tailored to HREF
-func GetUuidFromHref(href string) (string, error) {
-	util.Logger.Printf("[TRACE] GetUuidFromHref got href: %s", href)
+func GetUuidFromHref(href string, idAtEnd bool) (string, error) {
+	util.Logger.Printf("[TRACE] GetUuidFromHref got href: %s with idAtEnd: %t", href, idAtEnd)
 	// Regular expression to match an ID:
 	//     1 string starting by 'https://' and ending with a '/',
 	//     followed by
@@ -933,7 +915,13 @@ func GetUuidFromHref(href string) (string, error) {
 	//        3 groups of 4 hexadecimal digits
 	//        1 group of 12 hexadecimal digits
 
-	reGetID := regexp.MustCompile(`^https://.+/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}).*$`)
+	searchExpression := `^https://.+/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})`
+	if idAtEnd {
+		searchExpression += `$`
+	} else {
+		searchExpression += `.*$`
+	}
+	reGetID := regexp.MustCompile(searchExpression)
 	matchList := reGetID.FindAllStringSubmatch(href, -1)
 
 	if len(matchList) == 0 || len(matchList[0]) < 2 {
