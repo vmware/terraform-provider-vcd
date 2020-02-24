@@ -19,8 +19,8 @@ resource "vcd_vapp_org_network" "vappOrgNet" {
   org = "my-org" #Optional
   vdc = "my-vdc" #Optional
 
-  vapp_name    = "my-vapp"
-  org_network  = "my-org-network"
+  vapp_name         = "my-vapp"
+  org_network_name  = "my-org-network"
 }
 ```
 
@@ -32,7 +32,7 @@ The following arguments are supported:
   connected as sysadmin working across different organisations.
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
 * `vapp_name` - (Required) The vApp this VM should belong to.
-* `org_network` - (Required) An Org network name to which vApp network is connected to.
+* `org_network_name` - (Required) An Org network name to which vApp network is connected to.
 * `is_fenced` (Optional) "Fencing allows identical virtual machines in different vApp networks connect to organization VDC networks that are accessed in this vApp. Default is false.
 * `firewall_enabled` - (Optional) Firewall service enabled or disabled. Configurable when `is_fenced` is true. Default is true. 
 * `nat_enabled` - (Optional) NAT service enabled or disabled. Configurable when `is_fenced` is true. Default is true.

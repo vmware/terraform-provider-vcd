@@ -58,7 +58,7 @@ The following arguments are supported:
 * `guest_vlan_allowed` (Optional) True if Network allows guest VLAN tagging. This value supported from vCD version 9.0
 * `static_ip_pool` - (Optional) A range of IPs permitted to be used as static IPs for virtual machines; see [IP Pools](#ip-pools) below for details.
 * `dhcp_pool` - (Optional) A range of IPs to issue to virtual machines that don't have a static IP; see [IP Pools](#ip-pools) below for details.
-* `org_network` - (Optional; *v2.7+*) An Org network name to which vApp network is connected to. If not configured, then isolated network created.
+* `org_network_name` - (Optional; *v2.7+*) An Org network name to which vApp network is connected to. If not configured, then isolated network created.
 * `firewall_enabled` - (Optional; *v2.7+*) Firewall service enabled or disabled. Default is true.
 * `nat_enabled` - (Optional; *v2.7+*) NAT service enabled or disabled. Default is true.
 * `retain_ip_mac_enabled` - (Optional; *v2.7+*) Specifies whether the network resources such as IP/MAC of router will be retained across deployments. Default is false.

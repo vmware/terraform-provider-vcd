@@ -68,7 +68,7 @@ func datasourceVcdVappNetwork() *schema.Resource {
 				Computed:    true,
 				Description: "True if Network allows guest VLAN tagging",
 			},
-			"org_network": {
+			"org_network_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "org network name to which vapp network is connected",

@@ -186,7 +186,7 @@ output "staticIpPoolEndAddress" {
   value  = tolist(data.vcd_vapp_network.network-ds.static_ip_pool)[0].end_address
 }
 output "orgNetwork" {
-  value = data.vcd_vapp_network.network-ds.org_network
+  value = data.vcd_vapp_network.network-ds.org_network_name
 } 
 output "retain_ip_mac_enabled" {
   value = data.vcd_vapp_network.network-ds.retain_ip_mac_enabled

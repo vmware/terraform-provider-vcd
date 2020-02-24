@@ -85,7 +85,7 @@ func resourceVcdVappNetwork() *schema.Resource {
 				Optional:    true,
 				Description: "True if Network allows guest VLAN tagging",
 			},
-			"org_network": {
+			"org_network_name": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "org network name to which vapp network is connected",
@@ -210,7 +210,7 @@ func resourceVappNetworkCreate(d *schema.ResourceData, meta interface{}) error {
 	expandDhcpPool(d, vappNetworkSettings)
 
 	var orgVdcNetwork *types.OrgVDCNetwork
-	if networkId, ok := d.GetOk("org_network"); ok {
+	if networkId, ok := d.GetOk("org_network_name"); ok {
 		orgNetwork, err := vdc.GetOrgVdcNetworkByNameOrId(networkId.(string), true)
 		if err != nil {
 			return err
@@ -358,7 +358,7 @@ func genericVappNetworkRead(d *schema.ResourceData, meta interface{}, origin str
 			}
 		}
 		if config.ParentNetwork != nil {
-			_ = d.Set("org_network", config.ParentNetwork.Name)
+			_ = d.Set("org_network_name", config.ParentNetwork.Name)
 		}
 		if config.Features != nil && config.Features.FirewallService != nil {
 			_ = d.Set("firewall_enabled", vAppNetwork.Configuration.Features.FirewallService.IsEnabled)
@@ -414,7 +414,7 @@ func resourceVappNetworkUpdate(d *schema.ResourceData, meta interface{}) error {
 	expandDhcpPool(d, vappNetworkSettings)
 
 	var orgVdcNetwork *types.OrgVDCNetwork
-	if networkId, ok := d.GetOk("org_network"); ok {
+	if networkId, ok := d.GetOk("org_network_name"); ok {
 		orgNetwork, err := vdc.GetOrgVdcNetworkByNameOrId(networkId.(string), true)
 		if err != nil {
 			return err

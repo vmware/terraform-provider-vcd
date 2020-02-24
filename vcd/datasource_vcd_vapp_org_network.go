@@ -24,7 +24,7 @@ func datasourceVcdVappOrgNetwork() *schema.Resource {
 				Optional:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"org_network": &schema.Schema{
+			"org_network_name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Organization network name to which vApp network is connected to",

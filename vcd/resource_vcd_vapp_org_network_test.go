@@ -87,7 +87,7 @@ func rungVappOrgNetworkTest(t *testing.T, params StringMap) {
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_org_network."+params["resourceName"].(string), "vapp_name", params["vappName"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_org_network."+params["resourceName"].(string), "org_network", params["orgNetwork"].(string)),
+						"vcd_vapp_org_network."+params["resourceName"].(string), "org_network_name", params["orgNetwork"].(string)),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_org_network."+params["resourceName"].(string), "retain_ip_mac_enabled", params["retainIpMacEnabled"].(string)),
 					resource.TestCheckResourceAttr(
@@ -105,7 +105,7 @@ func rungVappOrgNetworkTest(t *testing.T, params StringMap) {
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_org_network."+params["resourceName"].(string), "vapp_name", params["vappName"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_org_network."+params["resourceName"].(string), "org_network", params["orgNetwork"].(string)),
+						"vcd_vapp_org_network."+params["resourceName"].(string), "org_network_name", params["orgNetwork"].(string)),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_org_network."+params["resourceName"].(string), "retain_ip_mac_enabled", params["retainIpMacEnabledForUpdate"].(string)),
 					resource.TestCheckResourceAttr(

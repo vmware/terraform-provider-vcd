@@ -183,7 +183,7 @@ func rungVappNetworkTest(t *testing.T, params StringMap) {
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.3992831158.max_lease_time", params["maxLeaseTime"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "org_network", params["orgNetwork"].(string)),
+						"vcd_vapp_network."+params["resourceName"].(string), "org_network_name", params["orgNetwork"].(string)),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_network."+params["resourceName"].(string), "retain_ip_mac_enabled", params["retainIpMacEnabled"].(string)),
 					resource.TestCheckResourceAttr(
@@ -227,7 +227,7 @@ func rungVappNetworkTest(t *testing.T, params StringMap) {
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.4252262036.max_lease_time", params["maxLeaseTimeForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "org_network", params["orgNetworkForUpdate"].(string)),
+						"vcd_vapp_network."+params["resourceName"].(string), "org_network_name", params["orgNetworkForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_network."+params["resourceName"].(string), "retain_ip_mac_enabled", params["retainIpMacEnabledForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
@@ -374,7 +374,7 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
     enabled            = "{{.dhcpEnabled}}"
   }
 
-  org_network           = "{{.orgNetwork}}"
+  org_network_name      = "{{.orgNetwork}}"
   firewall_enabled      = "{{.firewallEnabled}}"
   nat_enabled           = "{{.natEnabled}}"
   retain_ip_mac_enabled = "{{.retainIpMacEnabled}}"

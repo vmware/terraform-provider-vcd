@@ -39,7 +39,7 @@ func resourceVcdVappOrgNetwork() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"org_network": &schema.Schema{
+			"org_network_name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -94,7 +94,7 @@ func resourceVappOrgNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 		RetainIpMacEnabled: takeBoolPointer(d.Get("retain_ip_mac_enabled").(bool)),
 	}
 
-	orgNetwork, err := vdc.GetOrgVdcNetworkByNameOrId(d.Get("org_network").(string), true)
+	orgNetwork, err := vdc.GetOrgVdcNetworkByNameOrId(d.Get("org_network_name").(string), true)
 	if err != nil {
 		return err
 	}
@@ -155,7 +155,7 @@ func genericVappOrgNetworkRead(d *schema.ResourceData, meta interface{}, origin 
 			return fmt.Errorf("unable to get network ID from HREF: %s", err)
 		}
 		// name check needed for datasource to find network as don't have ID
-		if d.Id() == networkId || networkConfig.NetworkName == d.Get("org_network").(string) {
+		if d.Id() == networkId || networkConfig.NetworkName == d.Get("org_network_name").(string) {
 			vAppNetwork = networkConfig
 		}
 	}
@@ -166,7 +166,7 @@ func genericVappOrgNetworkRead(d *schema.ResourceData, meta interface{}, origin 
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("[VAPP org network read] didn't find vApp org network: %s", d.Get("org_network").(string))
+		return fmt.Errorf("[VAPP org network read] didn't find vApp org network: %s", d.Get("org_network_name").(string))
 	}
 
 	// needs to set for datasource
@@ -304,7 +304,7 @@ func resourceVcdVappOrgNetworkImport(d *schema.ResourceData, meta interface{}) (
 	if vcdClient.Vdc != vdcName {
 		_ = d.Set("vdc", vdcName)
 	}
-	_ = d.Set("org_network", networkName)
+	_ = d.Set("org_network_name", networkName)
 	_ = d.Set("vapp_name", vappName)
 
 	return []*schema.ResourceData{d}, nil

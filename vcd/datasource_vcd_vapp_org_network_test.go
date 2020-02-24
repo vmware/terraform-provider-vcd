@@ -108,8 +108,8 @@ func testCheckVappOrgNetworkNonStringOutputs(firewallEnabled, natEnabled, retain
 const datasourceTestVappOrgNetwork = `
 
 data "vcd_vapp_org_network" "network-ds" {
-  vapp_name   = "{{.VappName}}"
-  org_network = "{{.orgNetwork}}" 
+  vapp_name        = "{{.VappName}}"
+  org_network_name = "{{.orgNetwork}}" 
 }
 
 output "retain_ip_mac_enabled" {
