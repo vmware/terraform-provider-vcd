@@ -8,6 +8,10 @@ FEATURES:
 * `vcd_org_vdc` can be created with Flex allocation in vCD 9.7 and later. Also two new fields added for Flex - `elasticity`, `include_vm_memory_overhead` [GH-443]
 * `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` get optional `network_dhcp_wait_seconds` field
   to ensure `ip` is reported when `ip_allocation_mode=DHCP` is used [GH-436]
+* **New Resource:** `vcd_vapp_org_network` vApp organization network [GH-455]
+* `vcd_vapp_network` supports isolated network and vApp network connected to Org VDC networks [GH-455]
+* **New Data Source:** `vcd_vapp_org_network` vApp org network [GH-455]
+* **New Data Source:** `vcd_vapp_network` vApp network [GH-455]
 
 IMPROVEMENTS:
 
@@ -26,7 +30,6 @@ BUG FIXES:
 * `resource/vcd_org` and `datasource/vcd_org` include a section `vapp_lease` and a section
   `vapp_template_lease` to define lease related parameters of depending entities - [GH-432]
 * `resource/vcd_vapp_vm` `network` block changes caused MAC address changes in existing NICs
-  [GH-436,GH-407]
 
 NOTES:
 * Drop support for vCD 9.0
