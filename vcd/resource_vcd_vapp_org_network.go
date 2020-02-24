@@ -54,19 +54,19 @@ func resourceVcdVappOrgNetwork() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				Description: "Specifies whether the network resources such as IP/MAC of router will be retained across deployments. Default - false.",
+				Description: "Specifies whether the network resources such as IP/MAC of router will be retained across deployments. Default is false.",
 			},
 			"firewall_enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: "firewall service enabled or disabled. Default - true",
+				Description: "firewall service enabled or disabled. Default is true",
 			},
 			"nat_enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: "NAT service enabled or disabled. Default - true",
+				Description: "NAT service enabled or disabled. Default is true",
 			},
 		},
 	}

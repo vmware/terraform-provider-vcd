@@ -284,7 +284,7 @@ Changes are ignored on update. This part isn't reread on refresh. To manage inte
 * `size_in_mb` - (Required) The size of the disk in MB. 
 * `bus_number` - (Required) The number of the SCSI or IDE controller itself.
 * `unit_number` - (Required) The device number on the SCSI or IDE controller of the disk.
-* `iops` - (Optional) Specifies the IOPS for the disk. Default - 0.
+* `iops` - (Optional) Specifies the IOPS for the disk. Default is 0.
 * `storage_profile` - (Optional) Storage profile which overrides the VM default one.
 
 
@@ -371,7 +371,7 @@ The following additional attributes are exported:
 * `bus_number` - (*v2.7+*) The number of the SCSI or IDE controller itself.
 * `unit_number` - (*v2.7+*) The device number on the SCSI or IDE controller of the disk.
 * `thin_provisioned` - (*v2.7+*) Specifies whether the disk storage is pre-allocated or allocated on demand.
-* `iops` - (*v2.7+*) Specifies the IOPS for the disk. Default - 0.
+* `iops` - (*v2.7+*) Specifies the IOPS for the disk. Default is 0.
 * `storage_profile` - (*v2.7+*) Storage profile which overrides the VM default one.
 
 
