@@ -266,16 +266,16 @@ func resourceVcdVappOrgNetworkImport(d *schema.ResourceData, meta interface{}) (
 	vcdClient := meta.(*VCDClient)
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if err != nil {
-		return nil, fmt.Errorf("[vApp network import] unable to find VDC %s: %s ", vdcName, err)
+		return nil, fmt.Errorf("[vApp org network import] unable to find VDC %s: %s ", vdcName, err)
 	}
 
 	vapp, err := vdc.GetVAppByName(vappName, false)
 	if err != nil {
-		return nil, fmt.Errorf("[VM import] error retrieving vapp %s: %s", vappName, err)
+		return nil, fmt.Errorf("[vApp org network import] error retrieving vapp %s: %s", vappName, err)
 	}
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 	if err != nil {
-		return nil, fmt.Errorf("[VM import] error retrieving vApp network configuration %s: %s", networkName, err)
+		return nil, fmt.Errorf("[vApp org network import] error retrieving vApp network configuration %s: %s", networkName, err)
 	}
 
 	vappNetworkToImport := types.VAppNetworkConfiguration{}
