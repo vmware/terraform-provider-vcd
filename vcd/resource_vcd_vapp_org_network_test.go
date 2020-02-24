@@ -152,7 +152,7 @@ resource "vcd_vapp_org_network" "{{.resourceName}}" {
   org                = "{{.Org}}"
   vdc                = "{{.Vdc}}"
   vapp_name          = "{{.vappName}}"
-  org_network        = "{{.orgNetwork}}"
+  org_network_name   = "{{.orgNetwork}}"
   
   is_fenced = "{{.isFenced}}"
 
@@ -189,7 +189,7 @@ resource "vcd_vapp_org_network" "{{.resourceName}}" {
   org                = "{{.Org}}"
   vdc                = "{{.Vdc}}"
   vapp_name          = "{{.vappName}}"
-  org_network        = "{{.orgNetwork}}"
+  org_network_name   = "{{.orgNetwork}}"
   
   is_fenced = "{{.isFencedForUpdate}}"
 
