@@ -110,6 +110,10 @@ func resourceVappOrgNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 		}
 	}
 
+	if vAppNetwork == (types.VAppNetworkConfiguration{}) {
+		return fmt.Errorf("didn't find vApp network: %s", d.Get("name").(string))
+	}
+
 	// Parsing UUID from 'https://bos1-vcloud-static-170-210.eng.vmware.com/api/admin/network/6ced8e2f-29dd-4201-9801-a02cb8bed821/action/reset'
 	networkId, err := govcd.GetUuidFromHref(vAppNetwork.Link.HREF, false)
 	if err != nil {
