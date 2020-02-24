@@ -441,7 +441,7 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
     enabled            = "{{.dhcpEnabledForUpdate}}"
   }
 
-  org_network           = "{{.orgNetworkForUpdate}}"
+  org_network_name           = "{{.orgNetworkForUpdate}}"
   firewall_enabled      = "{{.firewallEnabledForUpdate}}"
   nat_enabled           = "{{.natEnabledForUpdate}}"
   retain_ip_mac_enabled = "{{.retainIpMacEnabledForUpdate}}"
