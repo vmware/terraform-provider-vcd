@@ -46,7 +46,7 @@ func TestAccVcdResourceNotFound(t *testing.T) {
 		return
 	}
 
-	// Execute all funcs
+	// Execute all functions
 	for _, f := range registerFuncStack {
 		f()
 	}

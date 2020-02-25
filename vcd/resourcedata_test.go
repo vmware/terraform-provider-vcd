@@ -5,8 +5,8 @@ import (
 	"strconv"
 )
 
-// schemaResourceData implements an interface vcdResourceDataInterface and allows to mimick Terraform's native
-// schema.Resourcedata (usually marked consumed as 'd' variable). This allows to reuse functions created for Terraform
+// schemaResourceData implements an interface vcdResourceDataInterface and allows to mimic Terraform's native
+// schema.Resourcedata (usually consumed as 'd' variable). This allows to reuse functions created for Terraform
 // to work properly. One of such cases is the need to be able to delete an existing object.
 type schemaResourceData struct {
 	id         string

@@ -1,12 +1,35 @@
 package vcd
 
-import "github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+import (
+	"time"
 
-// vcdResourceDataInterface defines a wider interface for Terraform's 'schema.ResourceData' type.
+	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+)
+
+// vcdResourceDataInterface defines an interface for Terraform's 'schema.ResourceData' type.
 type vcdResourceDataInterface interface {
 	Id() string
 	Get(key string) interface{}
 	SetId(v string)
+
+	// Unused in testing context, but still useful to have for a better auto-completion
+	UnsafeSetFieldRaw(key string, value string)
+	GetChange(key string) (interface{}, interface{})
+	GetOk(key string) (interface{}, bool)
+	GetOkExists(key string) (interface{}, bool)
+	HasChanges(keys ...string) bool
+	HasChange(key string) bool
+	Partial(on bool)
+	Set(key string, value interface{}) error
+	SetPartial(k string)
+	MarkNewResource()
+	IsNewResource() bool
+	ConnInfo() map[string]string
+	SetConnInfo(v map[string]string)
+	SetType(t string)
+	State() *terraform.InstanceState
+	Timeout(key string) time.Duration
 }
 
 // vcdDeleteFunc type is almost as Terraform's schema.DeleteFunc, but it accepts a locally
