@@ -81,7 +81,7 @@ func extractResourceAddress(resourceType, configText string) string {
 // because it was not found
 func singleResourceNotFoundTest(t *testing.T, subTestName string, notFoundData testResourceNotFound) func(t *testing.T) {
 	return func(t *testing.T) {
-		params := notFoundData.params
+		params := notFoundData.params.Copy()
 		// Setting unique name to have a binary test file created for debugging if needed
 		params["FuncName"] = "NotFoundResource-" + subTestName
 		// Adding skip directive as running these tests in binary test mode add no value

@@ -38,6 +38,14 @@ type VCDClient struct {
 // Type used to simplify reading resource definitions
 type StringMap map[string]interface{}
 
+func (s StringMap) Copy() map[string]interface{} {
+	result := make(map[string]interface{})
+	for k, v := range s {
+		result[k] = v
+	}
+	return result
+}
+
 const (
 	// Most common error messages in the library
 

@@ -37,7 +37,7 @@ var TestAccVcdCatalogItemDescription = "TestAccVcdCatalogItemBasicDescription"
 func TestAccVcdCatalogItemBasic(t *testing.T) {
 
 	// Reuse configuration registered for resource not found test
-	params := testResourceNotFoundTestMap["vcd_catalog_item"].params
+	params := testResourceNotFoundTestMap["vcd_catalog_item"].params.Copy()
 	configText := templateFill(testResourceNotFoundTestMap["vcd_catalog_item"].config, params)
 
 	params["FuncName"] = t.Name() + "-Update"
