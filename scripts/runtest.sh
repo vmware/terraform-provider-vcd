@@ -388,6 +388,9 @@ case $wanted in
     extnetwork)
         acceptance_test extnetwork
         ;;
+    skiplong)
+        acceptance_test "functional skipLong"
+        ;;
     *)
         echo "Unhandled testing method $wanted"
         echo "Accepted methods: $accepted"

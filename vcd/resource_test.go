@@ -1,4 +1,4 @@
-// +build ALL functional
+// +build ALL functional !skipLong
 
 package vcd
 
@@ -9,32 +9,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 )
-
-// testResourceNotFoundTestMap holds a map of definitions for all resources defined in provider
-var testResourceNotFoundTestMap = make(map[string]testResourceNotFound)
-
-// testResourceNotFound is a structure which consists of all possible
-type testResourceNotFound struct {
-	// deleteFunc is a functions with schema.DeleteFunc behavior but having a signature of locally defined
-	// interface 'vcdResourceDataInterface'
-	deleteFunc func(d vcdResourceDataInterface, meta interface{}) error
-
-	// Two below parameters are then ones which are used throughout all tests
-	//
-	// params holds the variables which are to be injected into template
-	params StringMap
-	// config holds the .tf configuration with replaceable variables defined
-	config string
-}
-
-// registerFuncStack makes a slice of functions for delayed call. Main reason for this delayed call is to have late
-// evaluation of variables which are populated later than init() functions occur
-var registerFuncStack = []func(){}
-
-// Push a function to registerFuncStack for late evaluation
-func registerReadTest(f func()) {
-	registerFuncStack = append(registerFuncStack, f)
-}
 
 // TestAccVcdResourceNotFound loops over all resources defined in provider `globalResourceMap` and checks that there is
 // a corresponding ResourceNotFound test defined in `testResourceNotFoundTestMap`. If not - it fails the test. Then for each
@@ -47,8 +21,8 @@ func TestAccVcdResourceNotFound(t *testing.T) {
 	}
 
 	// Execute all functions
-	for _, f := range registerFuncStack {
-		f()
+	for _, registerTest := range registerTestResourceNotFound {
+		registerTest()
 	}
 
 	// for providerResourceName := range globalResourceMap { // PRODUCTION. validate against all resources defined in provider

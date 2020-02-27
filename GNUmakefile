@@ -118,6 +118,10 @@ testnetwork: fmtcheck
 testextnetwork: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' extnetwork"
 
+# Runs the acceptance test suite with skipLong tag to avoid long tests for external network
+test-skiplong: fmtcheck
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' skiplong"
+
 # vets all .go files
 vet:
 	@echo "go vet ."

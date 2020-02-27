@@ -169,6 +169,33 @@ var (
 	testArtifactNames = make(map[string]string)
 )
 
+var (
+	// testResourceNotFoundTestMap holds a map of definitions for all resources defined in provider
+	testResourceNotFoundTestMap = make(map[string]testResourceNotFound)
+
+	// registerTestResourceNotFound makes a slice of functions for delayed call. Main reason for this delayed call is to have late
+	registerTestResourceNotFound = []func(){}
+)
+
+// testResourceNotFound is a structure which consists of all possible
+type testResourceNotFound struct {
+	// deleteFunc is a functions with schema.DeleteFunc behavior but having a signature of locally defined
+	// interface 'vcdResourceDataInterface'
+	deleteFunc func(d vcdResourceDataInterface, meta interface{}) error
+
+	// Two below parameters are then ones which are used throughout all tests
+	// in regular workflow
+	// params holds the variables which are to be injected into template
+	params StringMap
+	// config holds the .tf configuration with replaceable variables defined
+	config string
+}
+
+// registerReadTest registers
+func registerReadTest(f func()) {
+	registerTestResourceNotFound = append(registerTestResourceNotFound, f)
+}
+
 // Returns true if the current configuration uses a system administrator for connections
 func usingSysAdmin() bool {
 	return strings.ToLower(testConfig.Provider.SysOrg) == "system"
