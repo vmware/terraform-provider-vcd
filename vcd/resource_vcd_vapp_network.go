@@ -217,7 +217,7 @@ func resourceVappNetworkCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 		orgVdcNetwork = orgNetwork.OrgVDCNetwork
 	}
-	vAppNetworkConfig, err := vapp.AddNetwork(vappNetworkSettings, orgVdcNetwork)
+	vAppNetworkConfig, err := vapp.CreateVappNetwork(vappNetworkSettings, orgVdcNetwork)
 	if err != nil {
 		return fmt.Errorf("error creating vApp network. %#v", err)
 	}

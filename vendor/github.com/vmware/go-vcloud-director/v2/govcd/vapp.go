@@ -754,7 +754,7 @@ func (vapp *VApp) AddRAWNetworkConfig(orgvdcnetworks []*types.OrgVDCNetwork) (Ta
 }
 
 // Function allows to create isolated network for vApp. This is equivalent to vCD UI function - vApp network creation.
-// Deprecated: in favor of vapp.AddNetwork
+// Deprecated: in favor of vapp.CreateVappNetwork
 func (vapp *VApp) AddIsolatedNetwork(newIsolatedNetworkSettings *VappNetworkSettings) (Task, error) {
 
 	err := validateNetworkConfigSettings(newIsolatedNetworkSettings)
@@ -798,11 +798,11 @@ func (vapp *VApp) AddIsolatedNetwork(newIsolatedNetworkSettings *VappNetworkSett
 
 }
 
-// AddNetwork creates isolated or nat routed(connected to Org VDC network) network for vApp.
+// CreateVappNetwork creates isolated or nat routed(connected to Org VDC network) network for vApp.
 // Returns pointer to types.NetworkConfigSection or error
 // If orgNetwork is nil, then isolated network created.
-func (vapp *VApp) AddNetwork(newNetworkSettings *VappNetworkSettings, orgNetwork *types.OrgVDCNetwork) (*types.NetworkConfigSection, error) {
-	task, err := vapp.AddNetworkAsync(newNetworkSettings, orgNetwork)
+func (vapp *VApp) CreateVappNetwork(newNetworkSettings *VappNetworkSettings, orgNetwork *types.OrgVDCNetwork) (*types.NetworkConfigSection, error) {
+	task, err := vapp.CreateVappNetworkAsync(newNetworkSettings, orgNetwork)
 	if err != nil {
 		return nil, err
 	}
@@ -819,9 +819,9 @@ func (vapp *VApp) AddNetwork(newNetworkSettings *VappNetworkSettings, orgNetwork
 	return vAppNetworkConfig, nil
 }
 
-// AddNetworkAsync creates asynchronously isolated or nat routed network for vApp. Returns Task or error
+// CreateVappNetworkAsync creates asynchronously isolated or nat routed network for vApp. Returns Task or error
 // If orgNetwork is nil, then isolated network created.
-func (vapp *VApp) AddNetworkAsync(newNetworkSettings *VappNetworkSettings, orgNetwork *types.OrgVDCNetwork) (Task, error) {
+func (vapp *VApp) CreateVappNetworkAsync(newNetworkSettings *VappNetworkSettings, orgNetwork *types.OrgVDCNetwork) (Task, error) {
 
 	err := validateNetworkConfigSettings(newNetworkSettings)
 	if err != nil {
@@ -850,6 +850,7 @@ func (vapp *VApp) AddNetworkAsync(newNetworkSettings *VappNetworkSettings, orgNe
 		}
 		networkFeatures.FirewallService = &types.FirewallService{IsEnabled: *newNetworkSettings.FirewallEnabled}
 	}
+	// NAT can not work without fire wall enabled
 	if newNetworkSettings.FirewallEnabled != nil && newNetworkSettings.NatEnabled != nil {
 		networkFeatures.NatService = &types.NatService{IsEnabled: *newNetworkSettings.NatEnabled, NatType: "ipTranslation", Policy: "allowTrafficIn"}
 	}
@@ -1151,8 +1152,8 @@ func validateNetworkConfigSettings(networkSettings *VappNetworkSettings) error {
 
 // RemoveNetwork removes any network (be it isolated or connected to an Org Network) from vApp
 // Returns pointer to types.NetworkConfigSection or error
-func (vapp *VApp) RemoveNetwork(id string) (*types.NetworkConfigSection, error) {
-	task, err := vapp.RemoveNetworkAsync(id)
+func (vapp *VApp) RemoveNetwork(identifier string) (*types.NetworkConfigSection, error) {
+	task, err := vapp.RemoveNetworkAsync(identifier)
 	if err != nil {
 		return nil, err
 	}
