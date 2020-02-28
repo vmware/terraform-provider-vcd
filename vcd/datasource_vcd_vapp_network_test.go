@@ -80,7 +80,7 @@ func TestAccVcdVappNetworkDS(t *testing.T) {
 		RetainIpMacEnabled: &retainIpMacEnabled,
 	}
 
-	_, err = vapp.AddNetwork(vappNetworkSettings, data.network)
+	_, err = vapp.CreateVappNetwork(vappNetworkSettings, data.network)
 	if err != nil {
 		fmt.Printf("%s\n", err)
 		t.Skip("error adding vApp network")
