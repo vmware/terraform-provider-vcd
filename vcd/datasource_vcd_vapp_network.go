@@ -86,7 +86,7 @@ func datasourceVcdVappNetwork() *schema.Resource {
 			"retain_ip_mac_enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "NAT service enabled or disabled. Default is true",
+				Description: "Specifies whether the network resources such as IP/MAC of router will be retained across deployments.",
 			},
 			"dhcp_pool": &schema.Schema{
 				Type:        schema.TypeSet,

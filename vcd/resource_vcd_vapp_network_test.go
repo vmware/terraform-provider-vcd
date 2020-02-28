@@ -5,7 +5,6 @@ package vcd
 import (
 	"fmt"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
-	"github.com/vmware/go-vcloud-director/v2/util"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -257,8 +256,6 @@ func testAccCheckVappNetworkExists(n string) resource.TestCheckFunc {
 		if rs.Primary.ID == "" {
 			return fmt.Errorf("no vapp network ID is set")
 		}
-
-		util.Logger.Printf("$$$$$$$$$$$$$$$$ %#v", rs.Primary.Attributes)
 
 		conn := testAccProvider.Meta().(*VCDClient)
 

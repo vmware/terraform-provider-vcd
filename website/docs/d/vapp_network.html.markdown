@@ -21,8 +21,8 @@ data "vcd_vapp" "web" {
 }
 
 data "vcd_vapp_network" "network1" {
-  vapp_name     = vcd_vapp.web.name
-  name          = "isolated-newtwork"
+  vapp_name     = data.vcd_vapp.web.name
+  name          = "isolated-network"
 }
 
 output "gateway" {

@@ -3,12 +3,12 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_vapp_network"
 sidebar_current: "docs-vcd-resource-vapp-network"
 description: |-
-  Allows to provision vApp network and optionally connect them to existing Org VDC networks. This can be used to create and delete internal networks for vApps to connect.
+  Allows to provision vApp network and optionally connect them to existing Org VDC networks.
 ---
 
 # vcd\_vapp\_network
 
- Allows to provision vApp network and optionally connect them to existing Org Vdc networks. This can be used to create and delete internal networks for vApps to connect.
+ Allows to provision vApp network and optionally connect them to existing Org Vdc networks.
 
 Supported in provider *v2.1+*
 

@@ -121,7 +121,7 @@ func rungVappOrgNetworkTest(t *testing.T, params StringMap) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdVappObject(testConfig, params["vappName"].(string), params["orgNetwork"].(string)),
-				// These fields can't be retrieved from user data. firewall_enabled is null and as so we need ignore in some cases
+				// These fields can't be retrieved from user data.
 				ImportStateVerifyIgnore: []string{"org", "vdc"},
 			},
 		},
