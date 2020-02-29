@@ -4,6 +4,7 @@ package vcd
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -39,6 +40,7 @@ func TestAccVcdVAppVmUpdateCustomization(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "-step1"
 	configTextVMUpdateStep1 := templateFill(testAccCheckVcdVAppVmUpdateCustomizationStep1, params)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -57,22 +59,24 @@ func TestAccVcdVAppVmUpdateCustomization(t *testing.T) {
 					testAccCheckVcdVMCustomization("vcd_vapp_vm.test-vm", false),
 					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm", &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "name", netVmName1),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "network.#", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "network.#", "0"),
 
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.#", "0"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.#", "1"),
 				),
 			},
 			// Step 1 - Update - change network configuration and force customization
 			resource.TestStep{
 				Config: configTextVMUpdateStep1,
+				// The plan should never be empty because force works as a flag and every update triggers "update"
+				ExpectNonEmptyPlan: true,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVMCustomization("vcd_vapp_vm.test-vm", true),
 					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm", &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "name", netVmName1),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "network.#", "2"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "network.#", "0"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.#", "1"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.force", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.force", "false"),
 				),
 			},
 		},
@@ -93,14 +97,15 @@ func TestAccVcdVAppVmCreateCustomization(t *testing.T) {
 	)
 
 	var params = StringMap{
-		"Org":         testConfig.VCD.Org,
-		"Vdc":         testConfig.VCD.Vdc,
-		"EdgeGateway": testConfig.Networking.EdgeGateway,
-		"Catalog":     testSuiteCatalogName,
-		"CatalogItem": testSuiteCatalogOVAItem,
-		"VAppName":    netVappName,
-		"VMName":      netVmName1,
-		"Tags":        "vapp vm",
+		"Org":           testConfig.VCD.Org,
+		"Vdc":           testConfig.VCD.Vdc,
+		"EdgeGateway":   testConfig.Networking.EdgeGateway,
+		"Catalog":       testSuiteCatalogName,
+		"CatalogItem":   testSuiteCatalogOVAItem,
+		"VAppName":      netVappName,
+		"VMName":        netVmName1,
+		"Tags":          "vapp vm",
+		"Customization": "true",
 	}
 
 	configTextVMUpdateStep2 := templateFill(testAccCheckVcdVAppVmCreateCustomization, params)
@@ -118,13 +123,16 @@ func TestAccVcdVAppVmCreateCustomization(t *testing.T) {
 			// Step 0 - Create new VM and force customization initially
 			resource.TestStep{
 				Config: configTextVMUpdateStep2,
+				// The plan should never be empty because force works as a flag and every update triggers "update"
+				ExpectNonEmptyPlan: true,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm2", &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm2", "name", netVmName1),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm2", "network.#", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm2", "network.#", "0"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm2", "customization.#", "1"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm2", "customization.0.force", "true"),
+					// Always store 'customization.0.force=false' in statefile so that a diff is always triggered
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm2", "customization.0.force", "false"),
 				),
 			},
 		},
@@ -213,24 +221,6 @@ resource "vcd_vapp" "test-vapp" {
 
   name       = "{{.VAppName}}"
 }
-
-resource "vcd_vapp_network" "vappNet" {
-  org = "{{.Org}}"
-  vdc = "{{.Vdc}}"
-
-  name       = "vapp-net"
-  vapp_name  = vcd_vapp.test-vapp.name
-  gateway    = "192.168.2.1"
-  netmask    = "255.255.255.0"
-  dns1       = "192.168.2.1"
-  dns2       = "192.168.2.2"
-  dns_suffix = "mybiz.biz"
-
-  static_ip_pool {
-    start_address = "192.168.2.51"
-    end_address   = "192.168.2.100"
-  }
-}
 `
 
 const testAccCheckVcdVAppVmUpdateCustomization = testAccCheckVcdVAppVmCustomizationShared + `
@@ -246,15 +236,11 @@ resource "vcd_vapp_vm" "test-vm" {
   cpus          = 2
   cpu_cores     = 1
 
-  network {
-    type               = "vapp"
-    name               = vcd_vapp_network.vappNet.name
-    ip_allocation_mode = "POOL"
-  }
 }
 `
 
 const testAccCheckVcdVAppVmUpdateCustomizationStep1 = testAccCheckVcdVAppVmCustomizationShared + `
+# skip-binary-test: customization.0.force=true will always trigger "update" because it is a flag, not setting
 resource "vcd_vapp_vm" "test-vm" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
@@ -266,17 +252,6 @@ resource "vcd_vapp_vm" "test-vm" {
   memory        = 512
   cpus          = 2
   cpu_cores     = 1
-
-  network {
-    type               = "vapp"
-    name               = vcd_vapp_network.vappNet.name
-    ip_allocation_mode = "POOL"
-  }
-
-  network {
-    type               = "none"
-    ip_allocation_mode = "NONE"
-  }
 
   customization {
     force = true
@@ -297,14 +272,226 @@ resource "vcd_vapp_vm" "test-vm2" {
   cpus          = 2
   cpu_cores     = 1
 
-  network {
-    type               = "vapp"
-    name               = vcd_vapp_network.vappNet.name
-    ip_allocation_mode = "POOL"
+  customization {
+    force = {{.Customization}}
   }
+}
+`
+
+// TestAccVcdVAppVmCreateCustomizationFalse checks if VM is booted up successfully when  customization.force=true.
+// This test covers a previous bug.
+func TestAccVcdVAppVmCreateCustomizationFalse(t *testing.T) {
+	var (
+		vapp        govcd.VApp
+		vm          govcd.VM
+		netVappName string = t.Name()
+		netVmName1  string = t.Name() + "VM"
+	)
+
+	var params = StringMap{
+		"Org":           testConfig.VCD.Org,
+		"Vdc":           testConfig.VCD.Vdc,
+		"EdgeGateway":   testConfig.Networking.EdgeGateway,
+		"Catalog":       testSuiteCatalogName,
+		"CatalogItem":   testSuiteCatalogOVAItem,
+		"VAppName":      netVappName,
+		"VMName":        netVmName1,
+		"Tags":          "vapp vm",
+		"Customization": "false",
+	}
+
+	configTextVM := templateFill(testAccCheckVcdVAppVmCreateCustomization, params)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVcdVAppVmDestroy(netVappName),
+		Steps: []resource.TestStep{
+			// Step 0 - Create new VM and set set customization.force=false
+			resource.TestStep{
+				Config: configTextVM,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm2", &vapp, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm2", "name", netVmName1),
+				),
+			},
+		},
+	})
+}
+
+// TestAccVcdVAppVmCustomizationSettings tests out possible customization options
+func TestAccVcdVAppVmCustomizationSettings(t *testing.T) {
+	var (
+		vapp        govcd.VApp
+		vm          govcd.VM
+		netVappName string = t.Name()
+		netVmName1  string = t.Name() + "VM"
+	)
+
+	var params = StringMap{
+		"Org":         testConfig.VCD.Org,
+		"Vdc":         testConfig.VCD.Vdc,
+		"EdgeGateway": testConfig.Networking.EdgeGateway,
+		"Catalog":     testSuiteCatalogName,
+		"CatalogItem": testSuiteCatalogOVAItem,
+		"VAppName":    netVappName,
+		"VMName":      netVmName1,
+		"Tags":        "vapp vm",
+	}
+
+	configTextVM := templateFill(testAccCheckVcdVAppVmUpdateCustomizationSettings, params)
+
+	params["FuncName"] = t.Name() + "-step1"
+	configTextVMStep1 := templateFill(testAccCheckVcdVAppVmUpdateCustomizationSettingsStep1, params)
+
+	params["FuncName"] = t.Name() + "-step2"
+	configTextVMStep2 := templateFill(testAccCheckVcdVAppVmUpdateCustomizationSettingsStep2, params)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVcdVAppVmDestroy(netVappName),
+		Steps: []resource.TestStep{
+			// Step 0
+			resource.TestStep{
+				Config: configTextVM,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm", &vapp, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "name", netVmName1),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "network.#", "0"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.#", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.change_sid", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.allow_local_admin_password", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.must_change_password_on_first_login", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.number_of_auto_logons", "4"),
+				),
+			},
+			// Step 1 - join org domain must fail
+			resource.TestStep{
+				Taint:  []string{"vcd_vapp_vm.test-vm"},
+				Config: configTextVMStep1,
+				// Our testing suite does not have Windows OS to actually try domain join so the point of this test is
+				// to prove that values are actually set and try to be applied on vCD.
+				// ExpectError: regexp.MustCompile(`Join Domain is not supported for OS type .*`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm", &vapp, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "name", netVmName1),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "network.#", "0"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.#", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.admin_password", "some password"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.join_domain", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.join_org_domain", "true"),
+				),
+			},
+			// Step 2 - join org domain enabled
+			resource.TestStep{
+				Taint:  []string{"vcd_vapp_vm.test-vm"},
+				Config: configTextVMStep2,
+				// Our testing suite does not have Windows OS to actually try domain join so the point of this test is
+				// to prove that values are actually set and try to be applied on vCD.
+				ExpectError: regexp.MustCompile(`Join Domain is not supported for OS type .*`),
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm", &vapp, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "name", netVmName1),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "network.#", "0"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.#", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.join_domain", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.join_domain_name", "UnrealDomain"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.join_domain_user", "NoUser"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.join_domain_password", "NoPass"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.join_domain_account_ou", "ou=IT,dc=some,dc=com"),
+				),
+			},
+		},
+	})
+}
+
+const testAccCheckVcdVAppVmUpdateCustomizationSettings = testAccCheckVcdVAppVmCustomizationShared + `
+resource "vcd_vapp_vm" "test-vm" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name     = vcd_vapp.test-vapp.name
+  name          = "{{.VMName}}"
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  memory        = 512
+  cpus          = 2
+  cpu_cores     = 1
 
   customization {
-    force = true
+	enabled                             = true
+	change_sid                          = true
+	allow_local_admin_password          = false
+	must_change_password_on_first_login = true
+	auto_generate_password              = true
+	number_of_auto_logons               = 4
+  }
+}
+`
+
+const testAccCheckVcdVAppVmUpdateCustomizationSettingsStep1 = testAccCheckVcdVAppVmCustomizationShared + `
+# skip-binary-test: it will fail on purpose
+resource "vcd_vapp_vm" "test-vm" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name     = vcd_vapp.test-vapp.name
+  name          = "{{.VMName}}"
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  memory        = 512
+  cpus          = 2
+  cpu_cores     = 1
+
+  customization {
+	enabled         = false
+	admin_password  = "some password"
+	auto_generate_password = false
+	join_domain     = true
+	join_org_domain = true
+  }
+}
+`
+
+const testAccCheckVcdVAppVmUpdateCustomizationSettingsStep2 = testAccCheckVcdVAppVmCustomizationShared + `
+# skip-binary-test: it will fail on purpose
+resource "vcd_vapp_vm" "test-vm" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name     = vcd_vapp.test-vapp.name
+  name          = "{{.VMName}}"
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+  memory        = 512
+  cpus          = 2
+  cpu_cores     = 1
+
+  customization {
+	enabled                = true
+	join_domain            = true
+	join_domain_name       = "UnrealDomain"
+	join_domain_user       = "NoUser"
+	join_domain_password   = "NoPass"
+	join_domain_account_ou = "ou=IT,dc=some,dc=com"
   }
 }
 `

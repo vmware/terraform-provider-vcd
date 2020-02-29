@@ -8,6 +8,7 @@ FEATURES:
 * `vcd_org_vdc` can be created with Flex allocation in vCD 9.7 and later. Also two new fields added for Flex - `elasticity`, `include_vm_memory_overhead` [GH-443]
 * `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` get optional `network_dhcp_wait_seconds` field
   to ensure `ip` is reported when `ip_allocation_mode=DHCP` is used [GH-436]
+* `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` `customization` block supports all available features [GH-XXX]
 
 IMPROVEMENTS:
 
@@ -28,6 +29,11 @@ BUG FIXES:
 * `resource/vcd_vapp_vm` `network` block changes caused MAC address changes in existing NICs
   [GH-436,GH-407]
 * Fix a potential data race in client connection caching when VCD_CACHE is enabled [GH-453]
+* *`resource/vcd_vapp_vm` when customization.force=false crashes with interface {} is nil [GH-XXX]
+
+DEPRECATIONS:
+
+* `resource/vcd_vapp_vm` field `initscript` is now deprecated in favor of `customization.0.initscript` [GH-XXX]
 
 NOTES:
 

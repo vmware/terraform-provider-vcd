@@ -184,7 +184,9 @@ The following arguments are supported:
 * `cpus` - (Optional) The number of virtual CPUs to allocate to the VM. Socket count is a result of: virtual logical processors/cores per socket. The default is 1
 * `cpu_cores` - (Optional; *v2.1+*) The number of cores per socket. The default is 1
 * `metadata` - (Optional; *v2.2+*) Key value map of metadata to assign to this VM
-* `initscript` (Optional) Script to run on initial boot or with customization.force=true set
+* `initscript` (Optional **Deprecated** by `customization.0.initscript`) Script to run on initial boot or with
+customization.force=true set. See [Customization](#customization-block) to read more about Guest customization and other
+options.
 * `storage_profile` (Optional; *v2.6+*) Storage profile to override the default one
 * `network_name` - (Optional; **Deprecated** by `network`) Name of the network this VM should connect to.
 * `vapp_network_name` - (Optional; v2.1+; **Deprecated** by `network`) Name of the vApp network this VM should connect to.
@@ -201,7 +203,7 @@ guest operating system so that applications that require hardware virtualization
 translation or paravirtualization. Useful for hypervisor nesting provided underlying hardware supports it. Default is `false`.
 * `network` - (Optional; *v2.2+*) A block to define network interface. Multiple can be used. See [Network](#network-block) and 
 example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_name`.
-* `customization` - (Optional; *v2.5+*) A block to define for guest customization options. See [Customization](#customization)
+* `customization` - (Optional; *v2.5+*) A block to define for guest customization options. See [Customization](#customization-block)
 * `guest_properties` - (Optional; *v2.5+*) Key value map of guest properties
 * `description`  - (Computed; *v2.6+*) The VM description. Note: description is read only. Currently, this field has
   the description of the OVA used to create the VM
@@ -288,14 +290,44 @@ Changes are ignored on update. This part isn't reread on refresh. To manage inte
 * `storage_profile` - (Optional) Storage profile which overrides the VM default one.
 
 
-<a id="customization"></a>
+<a id="customization-block"></a>
 ## Customization
+
+When you customize your guest OS you can set up a virtual machine with the operating system that you want.
+
+vCloud Director can customize the network settings of the guest operating system of a virtual machine created from a
+vApp template. When you customize your guest operating system, you can create and deploy multiple unique virtual
+machines based on the same vApp template without machine name or network conflicts.
+
+When you configure a vApp template with the prerequisites for guest customization and add a virtual machine to a vApp
+based on that template, vCloud Director creates a package with guest customization tools. When you deploy and power on
+the virtual machine for the first time, vCloud Director copies the package, runs the tools, and deletes the package from
+the virtual machine.
+
+~> **Note:** The settings below work so that all values are inherited from template and only the specified fields are
+overridden with exception being `force` field which works like a flag.
 
 * `force` (Optional) **Warning.** `true` value will cause the VM to reboot on every `apply` operation.
 This field works as a flag and triggers force customization when `true` during an update 
 (`terraform apply`) every time. It never complains about a change in statefile. Can be used when guest customization
 is needed after VM configuration (e.g. NIC change, customization options change, etc.) and then set back to `false`.
 **Note.** It will not have effect when `power_on` field is set to `false`. See [example workflow below](#example-forced-customization-workflow).
+* `enabled` (Optional; *v2.7+*) `true` will enable guest customization which may occur on first boot or if the `force` flag is used.
+This option should be selected for **Power on and Force re-customization to work**. For backwards compatibility it is
+enabled by default when deprecated field `initscript` is used.
+* `change_sid` (Optional; *v2.7+*) Allows to change SID (security identifier). Only applicable for Windows operating systems.
+* `allow_local_admin_password` (Optional; *v2.7+*) Allow local administrator password.
+* `must_change_password_on_first_login` (Optional; *v2.7+*) Require Administrator to change password on first login.
+* `auto_generate_password` (Optional; *v2.7+*) Auto generate password.
+* `admin_password` (Optional; *v2.7+*) Manually specify Administrator password.
+* `number_of_auto_logons` (Optional; *v2.7+*) Number of times to log on automatically. `0` means disabled.
+* `join_domain` (Optional; *v2.7+*) Enable this VM to join a domain.
+* `join_org_domain` (Optional; *v2.7+*) Set to `true` to use organization's domain.
+* `join_domain_name` (Optional; *v2.7+*) Set the domain name to override organization's domain name.
+* `join_domain_user` (Optional; *v2.7+*) User to be used for domain join.
+* `join_domain_password` (Optional; *v2.7+*) Password to be used for domain join.
+* `join_domain_account_ou` (Optional; *v2.7+*) Organizational unit to be used for domain join.
+* `initscript` (Optional; *v2.7+*) Provide initscript to be executed when customization is applied.
 
 ## Example forced customization workflow
 
@@ -306,7 +338,7 @@ resource "vcd_vapp_vm" "web2" {
   vapp_name     = "${vcd_vapp.web.name}"
   name          = "web2"
   catalog_name  = "Boxes"
-  template_name = "lampstack-1.10.1-ubuntu-10.04"
+  template_name = "windows"
   memory        = 2048
   cpus          = 1
 
@@ -319,8 +351,7 @@ resource "vcd_vapp_vm" "web2" {
 }
 ```
 
-Step 2 - Change VM configuration and force customization (VM will be rebooted during
-`terraform apply`):
+Step 2 - Override some VM customization options and force customization (VM will be rebooted during `terraform apply`):
 
 ```hcl
 resource "vcd_vapp_vm" "web2" {
@@ -332,13 +363,18 @@ resource "vcd_vapp_vm" "web2" {
   }
 
   customization {
-    force = true
+    force                      = true
+    change_sid                 = true
+    allow_local_admin_password = true
+    auto_generate_password     = false
+    admin_password             = "my-secure-password"
+    # Other customization options to override the ones from template
   }
 }
 ```
 
-Step 3 - Once customization is done, set the force customization flag to false (or remove it) to
-prevent forcing customization on every `terraform apply` command:
+Step 3 - Once customization is done, set the force customization flag to false (or remove it) to prevent forcing
+customization on every `terraform apply` command:
 
 ```hcl
 resource "vcd_vapp_vm" "web2" {
@@ -350,7 +386,12 @@ resource "vcd_vapp_vm" "web2" {
   }
 
   customization {
-    force = false
+    force                      = false
+    change_sid                 = true
+    allow_local_admin_password = true
+    auto_generate_password     = false
+    admin_password             = "my-secure-password"
+    # Other customization options to override the ones from template
   }
 }
 ```

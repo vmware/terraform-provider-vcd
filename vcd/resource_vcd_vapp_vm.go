@@ -105,10 +105,12 @@ var vappVmSchema = map[string]*schema.Schema{
 		Type:          schema.TypeString,
 	},
 	"initscript": &schema.Schema{
-		Type:        schema.TypeString,
-		Optional:    true,
-		ForceNew:    true,
-		Description: "Script to run on initial boot or with customization.force=true set",
+		Type:          schema.TypeString,
+		Optional:      true,
+		ForceNew:      true,
+		Description:   "Script to run on initial boot or with customization.force=true set",
+		Deprecated:    "Please use `initscript` setting in `customization` block instead",
+		ConflictsWith: []string{"customization.0.initscript"},
 	},
 	"metadata": {
 		Type:     schema.TypeMap,
@@ -358,6 +360,7 @@ var vappVmSchema = map[string]*schema.Schema{
 	},
 	"customization": &schema.Schema{
 		Optional:    true,
+		Computed:    true,
 		MinItems:    1,
 		MaxItems:    1,
 		Type:        schema.TypeList,
@@ -375,6 +378,94 @@ var vappVmSchema = map[string]*schema.Schema{
 					// VM for customization at next boot and reboot it.
 					DiffSuppressFunc: suppressFalse(),
 					Description:      "'true' value will cause the VM to reboot on every 'apply' operation",
+				},
+				"enabled": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Computed:    true,
+					Description: "'true' value will enable guest customization. It may occur on first boot or when 'force' is used",
+				},
+				"change_sid": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Computed:    true,
+					Description: "'true' value will change SID. Applicable only for Windows VMs",
+				},
+				"allow_local_admin_password": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Computed:    true,
+					Description: "Allow local administrator password",
+				},
+				"must_change_password_on_first_login": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Computed:    true,
+					Description: "Require Administrator to change password on first login",
+				},
+				"auto_generate_password": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Computed:    true,
+					Description: "Auto generate password",
+				},
+				"admin_password": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Computed:    true,
+					Sensitive:   true,
+					Description: "Manually specify admin password",
+				},
+				"number_of_auto_logons": {
+					Type:         schema.TypeInt,
+					Optional:     true,
+					Computed:     true,
+					Description:  "Number of times to log on automatically. '0' - disabled.",
+					ValidateFunc: validation.IntAtLeast(0),
+				},
+				"join_domain": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Computed:    true,
+					Description: "Enable this VM to join a domain",
+				},
+				"join_org_domain": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Computed:    true,
+					Description: "Use organization's domain for joining",
+				},
+				"join_domain_name": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Computed:    true,
+					Description: "Custom domain name for join",
+				},
+				"join_domain_user": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Computed:    true,
+					Description: "Username for custom domain name join",
+				},
+				"join_domain_password": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Computed:    true,
+					Sensitive:   true,
+					Description: "Password for custom domain name join",
+				},
+				"join_domain_account_ou": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					Computed:    true,
+					Description: "Account organizational unit for domain name join",
+				},
+				"initscript": &schema.Schema{
+					Type:          schema.TypeString,
+					Optional:      true,
+					Computed:      true,
+					Description:   "Script to run on initial boot or with customization.force=true set",
+					ConflictsWith: []string{"initscript"},
 				},
 			},
 		},
@@ -471,6 +562,9 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("[VM creation] error getting VM %s : %s", vmName, err)
 	}
 
+	// VM creation already succeeded so ID must be set
+	d.SetId(vm.VM.ID)
+
 	// The below operation assumes VM is powered off and does not check for it because VM is being
 	// powered on in the last stage of create/update cycle
 	if d.Get("expose_hardware_virtualization").(bool) {
@@ -486,37 +580,8 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	// for back compatibility we allow to set computer name from `name` if computer_name isn't provided
-	var computerName string
-	if cName, ok := d.GetOk("computer_name"); ok {
-		computerName = cName.(string)
-	} else {
-		computerName = d.Get("name").(string)
-	}
-
-	if initScript, ok := d.GetOk("initscript"); ok {
-		if _, ok := d.GetOk("computer_name"); !ok {
-			_, _ = fmt.Fprint(getTerraformStdout(), "WARNING of DEPRECATED behavior: when `initscript` is set,"+
-				" VM `name` is used as a computer name - this behavior will be removed in future versions, hence please use the new `computer_name` field instead\n")
-		}
-		task, err := vm.RunCustomizationScript(computerName, initScript.(string))
-		if err != nil {
-			return fmt.Errorf("error with init script setting: %s", err)
-		}
-		err = task.WaitTaskCompletion()
-		if err != nil {
-			return fmt.Errorf(errorCompletingTask, err)
-		}
-	} else if newComputerName, ok := d.GetOk("computer_name"); ok {
-		customizationSection, err := vm.GetGuestCustomizationSection()
-		if err != nil {
-			return fmt.Errorf("error get customization section before applying computer name: %s", err)
-		}
-		customizationSection.ComputerName = newComputerName.(string)
-		_, err = vm.SetGuestCustomizationSection(customizationSection)
-		if err != nil {
-			return fmt.Errorf("error with applying computer name: %s", err)
-		}
+	if err := updateGuestCustomizationSetting(d, vm); err != nil {
+		return fmt.Errorf("error setting guest customization during creation: %s", err)
 	}
 
 	if _, ok := d.GetOk("guest_properties"); ok {
@@ -531,8 +596,6 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 			return fmt.Errorf("error setting guest properties: %s", err)
 		}
 	}
-
-	d.SetId(vm.VM.ID)
 
 	// update existing internal disks in template
 	err = updateTemplateInternalDisks(d, meta, *vm)
@@ -785,13 +848,23 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		}
 	}
 
-	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("cpu_cores") || d.HasChange("power_on") || d.HasChange("disk") ||
-		d.HasChange("expose_hardware_virtualization") || d.HasChange("network") || d.HasChange("computer_name") {
+	// Update guest customization if any of the customization related fields have changed
+	if d.HasChanges("customization", "computer_name", "name", "initscript") {
+		log.Printf("[TRACE] VM %s customization has changes: customization(%t), computer_name(%t), name(%t), initscript(%t)",
+			vm.VM.Name, d.HasChange("customization"), d.HasChange("computer_name"), d.HasChange("name"), d.HasChange("initscript"))
+		err = updateGuestCustomizationSetting(d, vm)
+		if err != nil {
+			return fmt.Errorf("errors updating guest customization: %s", err)
+		}
+
+	}
+
+	if d.HasChanges("memory", "cpus", "cpu_cores", "power_on", "disk", "expose_hardware_virtualization", "network") {
 
 		log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t), power_on(%t), disk(%t), expose_hardware_virtualization(%t),"+
-			" network(%t), computer_name(%t)",
+			" network(%t)",
 			vm.VM.Name, d.HasChange("memory"), d.HasChange("cpus"), d.HasChange("cpu_cores"), d.HasChange("power_on"), d.HasChange("disk"),
-			d.HasChange("expose_hardware_virtualization"), d.HasChange("network"), d.HasChange("computer_name"))
+			d.HasChange("expose_hardware_virtualization"), d.HasChange("network"))
 
 		// If customization is not requested then a simple shutdown is enough
 		if vmStatusBeforeUpdate != "POWERED_OFF" && !customizationNeeded {
@@ -889,20 +962,6 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 				return fmt.Errorf("unable to update network configuration: %s", err)
 			}
 		}
-
-		// we pass init script, to not override with empty one
-		if d.HasChange("computer_name") {
-			customizationSection, err := vm.GetGuestCustomizationSection()
-			if err != nil {
-				return fmt.Errorf("error get customization section before applying computer name: %s", err)
-			}
-			customizationSection.ComputerName = d.Get("computer_name").(string)
-			_, err = vm.SetGuestCustomizationSection(customizationSection)
-			if err != nil {
-				return fmt.Errorf("error with applying computer name: %s", err)
-			}
-		}
-
 	}
 
 	// If the VM was powered off during update but it has to be powered off
@@ -1159,11 +1218,9 @@ func genericVcdVAppVmRead(d *schema.ResourceData, meta interface{}, origin strin
 		return fmt.Errorf("[VM read] error reading attached disks : %s", err)
 	}
 
-	guestCustomizationSection, err := vm.GetGuestCustomizationSection()
-	if err != nil {
-		return fmt.Errorf("[VM read] error reading guest customization : %s", err)
+	if err := setGuestCustomizationData(d, vm); err != nil {
+		return fmt.Errorf("error storing customzation block: %s", err)
 	}
-	_ = d.Set("computer_name", guestCustomizationSection.ComputerName)
 
 	log.Printf("[DEBUG] [VM read] finished with origin %s", origin)
 	return nil
@@ -1804,4 +1861,162 @@ func resourceVcdVappVmImport(d *schema.ResourceData, meta interface{}) ([]*schem
 	_ = d.Set("vapp_name", vappName)
 	d.SetId(vm.VM.ID)
 	return []*schema.ResourceData{d}, nil
+}
+
+// updateGuestCustomizationSetting is responsible for setting all the data related to VM customization
+func updateGuestCustomizationSetting(d *schema.ResourceData, vm *govcd.VM) error {
+	// Retrieve existing customization section to only customize what was throughout this function
+	customizationSection, err := vm.GetGuestCustomizationSection()
+	if err != nil {
+		return fmt.Errorf("error getting existing customization section before changing: %s", err)
+	}
+
+	// for back compatibility we allow to set computer name from `name` if computer_name isn't provided
+	var computerName string
+	if cName, ok := d.GetOk("computer_name"); ok {
+		computerName = cName.(string)
+	} else {
+		computerName = d.Get("name").(string)
+	}
+
+	// When initscript is set
+	if initScript, ok := d.GetOk("initscript"); ok {
+		if _, ok := d.GetOk("computer_name"); !ok {
+			_, _ = fmt.Fprint(getTerraformStdout(), "WARNING of DEPRECATED behavior: when `initscript` is set,"+
+				" VM `name` is used as a computer name - this behavior will be removed in future versions, hence please use the new `computer_name` field instead\n")
+		}
+		// As per legacy behavior compatibility - specifying initscript automatically enables customization
+		customizationSection.Enabled = takeBoolPointer(true)
+		customizationSection.CustomizationScript = initScript.(string)
+		customizationSection.ComputerName = computerName
+	} else if _, isSetComputerName := d.GetOk("computer_name"); isSetComputerName {
+		customizationSection.ComputerName = computerName
+	}
+
+	// Process parameters from 'customization' block
+	customizationInterface := d.Get("customization")
+	customizationSlice := customizationInterface.([]interface{})
+	if len(customizationSlice) == 1 {
+		cust := customizationSlice[0]
+		if cust != nil {
+			// customBlock := cust.(map[string]interface{})
+
+			// Only react to "enabled" field when legacy `initscript` is not specified. Legacy behavior is such that when `initscript`
+			// is specified - guest customization is enabled by default therefore we ignore "enabled" field
+			if _, isSetDeprecatedInitScript := d.GetOk("initscript"); !isSetDeprecatedInitScript {
+				// if enabled, isEnabled := customBlock["enabled"]; isEnabled {
+				if enabled, isSetEnabled := d.GetOkExists("customization.0.enabled"); isSetEnabled {
+					customizationSection.Enabled = takeBoolPointer(enabled.(bool))
+				}
+			}
+
+			// customization.0.initscript should be set here. Once people migrate to 'customization.0.initscript' there is
+			// no longer need for previous "magic" behaviour which automatically set `customization=true`
+			if initScript, isSetInitScript := d.GetOkExists("customization.0.initscript"); isSetInitScript {
+				customizationSection.CustomizationScript = initScript.(string)
+			}
+
+			if changeSid, isSetChangeSid := d.GetOkExists("customization.0.change_sid"); isSetChangeSid {
+				customizationSection.ChangeSid = takeBoolPointer(changeSid.(bool))
+			}
+
+			if allowLocalAdminPasswd, isSetAllowLocalAdminPasswd := d.GetOkExists("customization.0.allow_local_admin_password"); isSetAllowLocalAdminPasswd {
+				customizationSection.AdminPasswordEnabled = takeBoolPointer(allowLocalAdminPasswd.(bool))
+
+			}
+
+			if mustChangeOnFirstLogin, isSetMustChangeOnFirstLogin := d.GetOkExists("customization.0.must_change_password_on_first_login"); isSetMustChangeOnFirstLogin {
+				customizationSection.ResetPasswordRequired = takeBoolPointer(mustChangeOnFirstLogin.(bool))
+			}
+
+			if autoGeneratePasswd, isSetAutoGeneratePasswd := d.GetOkExists("customization.0.auto_generate_password"); isSetAutoGeneratePasswd {
+				customizationSection.AdminPasswordAuto = takeBoolPointer(autoGeneratePasswd.(bool))
+			}
+
+			if adminPasswd, isSetAdminPasswd := d.GetOkExists("customization.0.admin_password"); isSetAdminPasswd {
+				customizationSection.AdminPassword = adminPasswd.(string)
+				// customizationSection.AdminPasswordEnabled = takeBoolPointer(true)
+			}
+
+			if nrTimesForLogin, isSetNrTimesForLogin := d.GetOkExists("customization.0.number_of_auto_logons"); isSetNrTimesForLogin {
+				// The AdminAutoLogonEnabled is "hidden" from direct user input to behave exactly like UI does. UI sets
+				// the value of this field behind the scenes based on number_of_auto_logons count.
+				// AdminAutoLogonEnabled=false if number_of_auto_logons == 0
+				// AdminAutoLogonEnabled=true if number_of_auto_logons > 0
+				isMoreThanZero := nrTimesForLogin.(int) > 0
+				customizationSection.AdminAutoLogonEnabled = takeBoolPointer(isMoreThanZero)
+
+				customizationSection.AdminAutoLogonCount = nrTimesForLogin.(int)
+			}
+
+			if joinDomain, isSetJoinDomain := d.GetOkExists("customization.0.join_domain"); isSetJoinDomain {
+				customizationSection.JoinDomainEnabled = takeBoolPointer(joinDomain.(bool))
+			}
+
+			if joinOrgDomain, isSetJoinOrgDomain := d.GetOkExists("customization.0.join_org_domain"); isSetJoinOrgDomain {
+				customizationSection.UseOrgSettings = takeBoolPointer(joinOrgDomain.(bool))
+			}
+
+			if joinDomainName, isSetJoinDomainName := d.GetOkExists("customization.0.join_domain_name"); isSetJoinDomainName {
+				customizationSection.DomainName = joinDomainName.(string)
+			}
+
+			if joinDomainUser, isSetJoinDomainUser := d.GetOkExists("customization.0.join_domain_user"); isSetJoinDomainUser {
+				customizationSection.DomainUserName = joinDomainUser.(string)
+			}
+
+			if joinDomainPasswd, isSetJoinDomainPasswd := d.GetOkExists("customization.0.join_domain_password"); isSetJoinDomainPasswd {
+				customizationSection.DomainUserPassword = joinDomainPasswd.(string)
+			}
+
+			if joinDomainOu, isSetJoinDomainOu := d.GetOkExists("customization.0.join_domain_account_ou"); isSetJoinDomainOu {
+				customizationSection.MachineObjectOU = joinDomainOu.(string)
+			}
+
+		}
+	}
+
+	// Apply any of the settings we have set
+	if _, err = vm.SetGuestCustomizationSection(customizationSection); err != nil {
+		return fmt.Errorf("error applying guest customization details: %s", err)
+	}
+
+	return nil
+}
+
+// setGuestCustomizationData is responsible for persisting all guest customization details into statefile
+func setGuestCustomizationData(d *schema.ResourceData, vm *govcd.VM) error {
+	customizationSection, err := vm.GetGuestCustomizationSection()
+	if err != nil {
+		return fmt.Errorf("unable to get guest customization section: %s", err)
+	}
+
+	_ = d.Set("computer_name", customizationSection.ComputerName)
+
+	customizationBlock := make([]interface{}, 1)
+	customizationBlockAttributes := make(map[string]interface{})
+
+	customizationBlockAttributes["enabled"] = customizationSection.Enabled
+	customizationBlockAttributes["change_sid"] = customizationSection.ChangeSid
+	customizationBlockAttributes["allow_local_admin_password"] = customizationSection.AdminPasswordEnabled
+	customizationBlockAttributes["must_change_password_on_first_login"] = customizationSection.ResetPasswordRequired
+	customizationBlockAttributes["auto_generate_password"] = customizationSection.AdminPasswordAuto
+	customizationBlockAttributes["admin_password"] = customizationSection.AdminPassword
+	customizationBlockAttributes["number_of_auto_logons"] = customizationSection.AdminAutoLogonCount
+	customizationBlockAttributes["join_domain"] = customizationSection.JoinDomainEnabled
+	customizationBlockAttributes["join_org_domain"] = customizationSection.UseOrgSettings
+	customizationBlockAttributes["join_domain_name"] = customizationSection.DomainName
+	customizationBlockAttributes["join_domain_user"] = customizationSection.DomainUserName
+	customizationBlockAttributes["join_domain_password"] = customizationSection.DomainUserPassword
+	customizationBlockAttributes["join_domain_account_ou"] = customizationSection.MachineObjectOU
+	customizationBlockAttributes["initscript"] = customizationSection.CustomizationScript
+
+	customizationBlock[0] = customizationBlockAttributes
+
+	err = d.Set("customization", customizationBlock)
+	if err != nil {
+		return fmt.Errorf("")
+	}
+
+	return nil
 }
