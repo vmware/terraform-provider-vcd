@@ -1603,21 +1603,21 @@ type GuestCustomizationSection struct {
 	// FIXME: Fix the OVF section
 	Info string `xml:"ovf:Info"`
 	// Elements
-	Enabled               bool     `xml:"Enabled,omitempty"`               // True if guest customization is enabled.
-	ChangeSid             bool     `xml:"ChangeSid,omitempty"`             // True if customization can change the Windows SID of this virtual machine.
+	Enabled               *bool    `xml:"Enabled,omitempty"`               // True if guest customization is enabled.
+	ChangeSid             *bool    `xml:"ChangeSid,omitempty"`             // True if customization can change the Windows SID of this virtual machine.
 	VirtualMachineID      string   `xml:"VirtualMachineId,omitempty"`      // Virtual machine ID to apply.
-	JoinDomainEnabled     bool     `xml:"JoinDomainEnabled,omitempty"`     // True if this virtual machine can join a Windows Domain.
-	UseOrgSettings        bool     `xml:"UseOrgSettings,omitempty"`        // True if customization should use organization settings (OrgGuestPersonalizationSettings) when joining a Windows Domain.
+	JoinDomainEnabled     *bool    `xml:"JoinDomainEnabled,omitempty"`     // True if this virtual machine can join a Windows Domain.
+	UseOrgSettings        *bool    `xml:"UseOrgSettings,omitempty"`        // True if customization should use organization settings (OrgGuestPersonalizationSettings) when joining a Windows Domain.
 	DomainName            string   `xml:"DomainName,omitempty"`            // The name of the Windows Domain to join.
 	DomainUserName        string   `xml:"DomainUserName,omitempty"`        // User name to specify when joining a Windows Domain.
 	DomainUserPassword    string   `xml:"DomainUserPassword,omitempty"`    // Password to use with DomainUserName.
 	MachineObjectOU       string   `xml:"MachineObjectOU,omitempty"`       // The name of the Windows Domain Organizational Unit (OU) in which the computer account for this virtual machine will be created.
-	AdminPasswordEnabled  bool     `xml:"AdminPasswordEnabled,omitempty"`  // True if guest customization can modify administrator password settings for this virtual machine.
-	AdminPasswordAuto     bool     `xml:"AdminPasswordAuto,omitempty"`     // True if the administrator password for this virtual machine should be automatically generated.
+	AdminPasswordEnabled  *bool    `xml:"AdminPasswordEnabled,omitempty"`  // True if guest customization can modify administrator password settings for this virtual machine.
+	AdminPasswordAuto     *bool    `xml:"AdminPasswordAuto,omitempty"`     // True if the administrator password for this virtual machine should be automatically generated.
 	AdminPassword         string   `xml:"AdminPassword,omitempty"`         // True if the administrator password for this virtual machine should be set to this string. (AdminPasswordAuto must be false.)
-	AdminAutoLogonEnabled bool     `xml:"AdminAutoLogonEnabled,omitempty"` // True if guest administrator should automatically log into this virtual machine.
+	AdminAutoLogonEnabled *bool    `xml:"AdminAutoLogonEnabled,omitempty"` // True if guest administrator should automatically log into this virtual machine.
 	AdminAutoLogonCount   int      `xml:"AdminAutoLogonCount,omitempty"`   // Number of times administrator can automatically log into this virtual machine. In case AdminAutoLogon is set to True, this value should be between 1 and 100. Otherwise, it should be 0.
-	ResetPasswordRequired bool     `xml:"ResetPasswordRequired,omitempty"` // True if the administrator password for this virtual machine must be reset after first use.
+	ResetPasswordRequired *bool    `xml:"ResetPasswordRequired,omitempty"` // True if the administrator password for this virtual machine must be reset after first use.
 	CustomizationScript   string   `xml:"CustomizationScript,omitempty"`   // Script to run on guest customization. The entire script must appear in this element. Use the XML entity &#13; to represent a newline. Unicode characters can be represented in the form &#xxxx; where xxxx is the character number.
 	ComputerName          string   `xml:"ComputerName,omitempty"`          // Computer name to assign to this virtual machine.
 	Link                  LinkList `xml:"Link,omitempty"`                  // A link to an operation on this section.

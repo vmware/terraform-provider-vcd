@@ -445,6 +445,9 @@ func (vm *VM) BlockWhileGuestCustomizationStatus(unwantedStatus string, timeOutA
 	}
 }
 
+// Customize function allows to set computername, apply customization script and enable or disble the changeSid option
+//
+// Deprecated: Use vm.SetGuestCustomizationSection()
 func (vm *VM) Customize(computername, script string, changeSid bool) (Task, error) {
 	err := vm.Refresh()
 	if err != nil {
@@ -459,10 +462,10 @@ func (vm *VM) Customize(computername, script string, changeSid bool) (Task, erro
 		HREF:                vm.VM.HREF,
 		Type:                types.MimeGuestCustomizationSection,
 		Info:                "Specifies Guest OS Customization Settings",
-		Enabled:             true,
+		Enabled:             takeBoolPointer(true),
 		ComputerName:        computername,
 		CustomizationScript: script,
-		ChangeSid:           false,
+		ChangeSid:           takeBoolPointer(changeSid),
 	}
 
 	apiEndpoint, _ := url.ParseRequestURI(vm.VM.HREF)

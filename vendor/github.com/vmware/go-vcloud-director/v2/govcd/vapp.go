@@ -365,6 +365,9 @@ func (vapp *VApp) RunCustomizationScript(computername, script string) (Task, err
 	return vapp.Customize(computername, script, false)
 }
 
+// Customize applies customization to first child VM
+//
+// Deprecated: Use vm.SetGuestCustomizationSection()
 func (vapp *VApp) Customize(computername, script string, changeSid bool) (Task, error) {
 	err := vapp.Refresh()
 	if err != nil {
@@ -384,10 +387,10 @@ func (vapp *VApp) Customize(computername, script string, changeSid bool) (Task, 
 		HREF:                vapp.VApp.Children.VM[0].HREF,
 		Type:                types.MimeGuestCustomizationSection,
 		Info:                "Specifies Guest OS Customization Settings",
-		Enabled:             true,
+		Enabled:             takeBoolPointer(true),
 		ComputerName:        computername,
 		CustomizationScript: script,
-		ChangeSid:           false,
+		ChangeSid:           takeBoolPointer(changeSid),
 	}
 
 	apiEndpoint, _ := url.ParseRequestURI(vapp.VApp.Children.VM[0].HREF)
