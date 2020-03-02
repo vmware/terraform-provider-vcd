@@ -8,7 +8,7 @@ FEATURES:
 * `vcd_org_vdc` can be created with Flex allocation in vCD 9.7 and later. Also two new fields added for Flex - `elasticity`, `include_vm_memory_overhead` [GH-443]
 * `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` get optional `network_dhcp_wait_seconds` field
   to ensure `ip` is reported when `ip_allocation_mode=DHCP` is used [GH-436]
-* `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` `customization` block supports all available features [GH-XXX]
+* `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` `customization` block supports all available features [GH-462]
 
 IMPROVEMENTS:
 
@@ -29,11 +29,12 @@ BUG FIXES:
 * `resource/vcd_vapp_vm` `network` block changes caused MAC address changes in existing NICs
   [GH-436,GH-407]
 * Fix a potential data race in client connection caching when VCD_CACHE is enabled [GH-453]
-* *`resource/vcd_vapp_vm` when customization.force=false crashes with interface {} is nil [GH-XXX]
+* `resource/vcd_vapp_vm` when customization.0.force=false crashes with interface {} is nil [GH-462]
+* `resource/vcd_vapp_vm` `customization.0.force=true` could have skipped "Forced customization" on each apply [GH-462]
 
 DEPRECATIONS:
 
-* `resource/vcd_vapp_vm` field `initscript` is now deprecated in favor of `customization.0.initscript` [GH-XXX]
+* `resource/vcd_vapp_vm` field `initscript` is now deprecated in favor of `customization.0.initscript` [GH-462]
 
 NOTES:
 
@@ -41,6 +42,7 @@ NOTES:
 * Bump terraform-plugin-sdk to v1.5.0 [GH-442]
 * `make seqtestacc` and `make test-binary` use `-race` flags for `go test` to check if there are no data races.
  Additionally GNUMakefile supports `make installrace` and `make buildrace` to build binary with race detection enabled. [GH-453]
+* Added `make test-upgrade-prepare` directive [GH-XXX]
 
 ## 2.6.0 (December 13, 2019)
 
