@@ -324,7 +324,10 @@ func genericVappNetworkRead(d *schema.ResourceData, meta interface{}, origin str
 			}
 			if config.Features.DhcpService.IPRange != nil {
 				newValues["start_address"] = config.Features.DhcpService.IPRange.StartAddress
-				newValues["end_address"] = config.Features.DhcpService.IPRange.EndAddress
+				// when only start address provided, API returns end address same as start address
+				if config.Features.DhcpService.IPRange.StartAddress != config.Features.DhcpService.IPRange.EndAddress {
+					newValues["end_address"] = config.Features.DhcpService.IPRange.EndAddress
+				}
 			}
 			transformed.Add(newValues)
 			err = d.Set("dhcp_pool", transformed)
