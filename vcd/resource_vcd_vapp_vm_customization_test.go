@@ -39,7 +39,9 @@ func TestAccVcdVAppVmUpdateCustomization(t *testing.T) {
 	configTextVM := templateFill(testAccCheckVcdVAppVmUpdateCustomization, params)
 
 	params["FuncName"] = t.Name() + "-step1"
-	configTextVMUpdateStep1 := templateFill(testAccCheckVcdVAppVmUpdateCustomizationStep1, params)
+	params["Customization"] = "true"
+	params["SkipTest"] = "# skip-binary-test: customization.force=true must always request for update"
+	configTextVMUpdateStep1 := templateFill(testAccCheckVcdVAppVmCreateCustomization, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -107,7 +109,7 @@ func TestAccVcdVAppVmCreateCustomization(t *testing.T) {
 		"Tags":          "vapp vm",
 		"Customization": "true",
 	}
-
+	params["SkipTest"] = "# skip-binary-test: customization.force=true must always request for update"
 	configTextVMUpdateStep2 := templateFill(testAccCheckVcdVAppVmCreateCustomization, params)
 
 	if vcdShortTest {
@@ -239,27 +241,8 @@ resource "vcd_vapp_vm" "test-vm" {
 }
 `
 
-const testAccCheckVcdVAppVmUpdateCustomizationStep1 = testAccCheckVcdVAppVmCustomizationShared + `
-# skip-binary-test: customization.0.force=true will always trigger "update" because it is a flag, not setting
-resource "vcd_vapp_vm" "test-vm" {
-  org = "{{.Org}}"
-  vdc = "{{.Vdc}}"
-
-  vapp_name     = vcd_vapp.test-vapp.name
-  name          = "{{.VMName}}"
-  catalog_name  = "{{.Catalog}}"
-  template_name = "{{.CatalogItem}}"
-  memory        = 512
-  cpus          = 2
-  cpu_cores     = 1
-
-  customization {
-    force = true
-  }
-}
-`
-
 const testAccCheckVcdVAppVmCreateCustomization = testAccCheckVcdVAppVmCustomizationShared + `
+{{.SkipTest}}
 resource "vcd_vapp_vm" "test-vm2" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
@@ -298,6 +281,7 @@ func TestAccVcdVAppVmCreateCustomizationFalse(t *testing.T) {
 		"VMName":        netVmName1,
 		"Tags":          "vapp vm",
 		"Customization": "false",
+		"SkipTest":      "",
 	}
 
 	configTextVM := templateFill(testAccCheckVcdVAppVmCreateCustomization, params)
