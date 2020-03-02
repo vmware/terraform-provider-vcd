@@ -42,7 +42,7 @@ NOTES:
 * Bump terraform-plugin-sdk to v1.5.0 [GH-442]
 * `make seqtestacc` and `make test-binary` use `-race` flags for `go test` to check if there are no data races.
  Additionally GNUMakefile supports `make installrace` and `make buildrace` to build binary with race detection enabled. [GH-453]
-* Added `make test-upgrade-prepare` directive [GH-XXX]
+* Added `make test-upgrade-prepare` directive [GH-462]
 
 ## 2.6.0 (December 13, 2019)
 
