@@ -359,12 +359,18 @@ func genericVappNetworkRead(d *schema.ResourceData, meta interface{}, origin str
 		}
 		if config.ParentNetwork != nil {
 			_ = d.Set("org_network_name", config.ParentNetwork.Name)
+		} else {
+			_ = d.Set("org_network_name", nil)
 		}
 		if config.Features != nil && config.Features.FirewallService != nil {
 			_ = d.Set("firewall_enabled", vAppNetwork.Configuration.Features.FirewallService.IsEnabled)
+		} else {
+			_ = d.Set("firewall_enabled", nil)
 		}
 		if config.Features != nil && config.Features.NatService != nil {
 			_ = d.Set("nat_enabled", config.Features.NatService.IsEnabled)
+		} else {
+			_ = d.Set("nat_enabled", nil)
 		}
 		_ = d.Set("retain_ip_mac_enabled", config.RetainNetInfoAcrossDeployments)
 	}
@@ -414,8 +420,8 @@ func resourceVappNetworkUpdate(d *schema.ResourceData, meta interface{}) error {
 	expandDhcpPool(d, vappNetworkSettings)
 
 	var orgVdcNetwork *types.OrgVDCNetwork
-	if networkId, ok := d.GetOk("org_network_name"); ok {
-		orgNetwork, err := vdc.GetOrgVdcNetworkByNameOrId(networkId.(string), true)
+	if networkName, ok := d.GetOk("org_network_name"); ok {
+		orgNetwork, err := vdc.GetOrgVdcNetworkByNameOrId(networkName.(string), true)
 		if err != nil {
 			return err
 		}

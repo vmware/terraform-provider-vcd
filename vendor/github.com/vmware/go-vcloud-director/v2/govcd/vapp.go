@@ -978,15 +978,17 @@ func (vapp *VApp) UpdateNetworkAsync(networkSettingsToUpdate *VappNetworkSetting
 	var networkToUpdate types.VAppNetworkConfiguration
 	var networkToUpdateIndex int
 	for index, networkConfig := range currentNetworkConfiguration.NetworkConfig {
-		uuid, err := GetUuidFromHref(networkConfig.Link.HREF, false)
-		if err != nil {
-			return Task{}, err
-		}
+		if networkConfig.Link != nil {
+			uuid, err := GetUuidFromHref(networkConfig.Link.HREF, false)
+			if err != nil {
+				return Task{}, err
+			}
 
-		if uuid == networkSettingsToUpdate.ID {
-			networkToUpdate = networkConfig
-			networkToUpdateIndex = index
-			break
+			if uuid == networkSettingsToUpdate.ID {
+				networkToUpdate = networkConfig
+				networkToUpdateIndex = index
+				break
+			}
 		}
 	}
 
@@ -1010,10 +1012,18 @@ func (vapp *VApp) UpdateNetworkAsync(networkSettingsToUpdate *VappNetworkSetting
 
 	networkToUpdate.Configuration.Features.FirewallService.IsEnabled = *networkSettingsToUpdate.FirewallEnabled
 	networkToUpdate.Configuration.RetainNetInfoAcrossDeployments = networkSettingsToUpdate.RetainIpMacEnabled
+	// new network to connect
+	if networkToUpdate.Configuration.ParentNetwork == nil && orgNetwork != nil {
+		networkToUpdate.Configuration.FenceMode = types.FenceModeNAT
+		networkToUpdate.Configuration.ParentNetwork = &types.Reference{HREF: orgNetwork.HREF}
+	}
+	// change network to connect
 	if networkToUpdate.Configuration.ParentNetwork != nil && orgNetwork != nil && networkToUpdate.Configuration.ParentNetwork.HREF != orgNetwork.HREF {
 		networkToUpdate.Configuration.ParentNetwork = &types.Reference{HREF: orgNetwork.HREF}
 	}
-	if networkToUpdate.Configuration.ParentNetwork != nil && orgNetwork == nil {
+	// remove network to connect
+	if orgNetwork == nil {
+		networkToUpdate.Configuration.FenceMode = types.FenceModeIsolated
 		networkToUpdate.Configuration.ParentNetwork = nil
 	}
 	networkToUpdate.Description = networkSettingsToUpdate.Description
@@ -1090,15 +1100,17 @@ func (vapp *VApp) UpdateOrgNetworkAsync(networkSettingsToUpdate *VappNetworkSett
 	var networkToUpdateIndex int
 
 	for index, networkConfig := range currentNetworkConfiguration.NetworkConfig {
-		uuid, err := GetUuidFromHref(networkConfig.Link.HREF, false)
-		if err != nil {
-			return Task{}, err
-		}
+		if networkConfig.Link != nil {
+			uuid, err := GetUuidFromHref(networkConfig.Link.HREF, false)
+			if err != nil {
+				return Task{}, err
+			}
 
-		if uuid == networkSettingsToUpdate.ID {
-			networkToUpdate = networkConfig
-			networkToUpdateIndex = index
-			break
+			if uuid == networkSettingsToUpdate.ID {
+				networkToUpdate = networkConfig
+				networkToUpdateIndex = index
+				break
+			}
 		}
 	}
 

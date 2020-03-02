@@ -183,9 +183,13 @@ func genericVappOrgNetworkRead(d *schema.ResourceData, meta interface{}, origin 
 	_ = d.Set("is_fenced", isFenced)
 	if vAppNetwork.Configuration.Features != nil && vAppNetwork.Configuration.Features.FirewallService != nil {
 		_ = d.Set("firewall_enabled", vAppNetwork.Configuration.Features.FirewallService.IsEnabled)
+	} else {
+		_ = d.Set("firewall_enabled", nil)
 	}
 	if vAppNetwork.Configuration.Features != nil && vAppNetwork.Configuration.Features.NatService != nil {
 		_ = d.Set("nat_enabled", vAppNetwork.Configuration.Features.NatService.IsEnabled)
+	} else {
+		_ = d.Set("nat_enabled", nil)
 	}
 	return nil
 }
