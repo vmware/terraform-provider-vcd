@@ -93,14 +93,14 @@ func resourceVcdVappNetwork() *schema.Resource {
 			"firewall_enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     true,
-				Description: "firewall service enabled or disabled. Default is true",
+				Computed:    true,
+				Description: "firewall service enabled or disabled",
 			},
 			"nat_enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     true,
-				Description: "NAT service enabled or disabled. Default is true",
+				Computed:    true,
+				Description: "NAT service enabled or disabled",
 			},
 			"retain_ip_mac_enabled": {
 				Type:        schema.TypeBool,
