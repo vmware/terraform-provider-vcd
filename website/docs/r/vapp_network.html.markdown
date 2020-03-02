@@ -3,12 +3,12 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_vapp_network"
 sidebar_current: "docs-vcd-resource-vapp-network"
 description: |-
-  Allows to provision vApp network and optionally connect them to existing Org VDC networks.
+ Allows to provision vApp network and optionally connect it to existing Org VDC network.
 ---
 
 # vcd\_vapp\_network
 
- Allows to provision vApp network and optionally connect them to existing Org Vdc networks.
+ Allows to provision vApp network and optionally connect it to existing Org VDC network.
 
 Supported in provider *v2.1+*
 
@@ -60,7 +60,7 @@ The following arguments are supported:
 * `dhcp_pool` - (Optional) A range of IPs to issue to virtual machines that don't have a static IP; see [IP Pools](#ip-pools) below for details.
 * `org_network_name` - (Optional; *v2.7+*) An Org network name to which vApp network is connected to. If not configured, then isolated network created.
 * `firewall_enabled` - (Optional; *v2.7+*) Firewall service enabled or disabled. Default is true.
-* `nat_enabled` - (Optional; *v2.7+*) NAT service enabled or disabled. Default is true.
+* `nat_enabled` - (Optional; *v2.7+*) NAT service enabled or disabled. Default is true. Configurable when `firewall_enabled` is true.
 * `retain_ip_mac_enabled` - (Optional; *v2.7+*) Specifies whether the network resources such as IP/MAC of router will be retained across deployments. Default is false.
 
 <a id="ip-pools"></a>
