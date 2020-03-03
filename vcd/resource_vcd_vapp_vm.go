@@ -620,7 +620,7 @@ func isItVappNetwork(vAppNetworkName string, vapp govcd.VApp) (bool, error) {
 		}
 	}
 
-	return false, fmt.Errorf("configured vApp network isn't found: %s", err)
+	return false, fmt.Errorf("configured vApp network isn't found: %s", vAppNetworkName)
 }
 
 type diskParams struct {
