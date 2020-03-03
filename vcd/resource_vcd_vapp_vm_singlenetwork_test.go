@@ -3,6 +3,7 @@
 package vcd
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -185,7 +186,7 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 				Config: configTextStep10,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(netVappName, netVmNameBothNetworks, "vcd_vapp_vm."+netVmNameBothNetworks, &vapp, &vm),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmNameBothNetworks, "ip", "11.10.0.152"),
+					resource.TestMatchResourceAttr("vcd_vapp_vm."+netVmNameBothNetworks, "ip", regexp.MustCompile(`^11.10.0.152|11.10.2.51*$`)),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmNameBothNetworks, "mac"),
 				),
 			},
@@ -303,7 +304,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 	cpus              = 2
 	cpu_cores         = 2
 	power_on          = "false"
-	vapp_network_name = vcd_vapp_network.vappNet.id
+	vapp_network_name = vcd_vapp_network.vappNet.name
 	ip                = "allocated"
   }  
 `
@@ -323,7 +324,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 	cpu_cores         = 2
 	power_on          = "false"
 	network_name      = vcd_network_routed.net.name
-	vapp_network_name = vcd_vapp_network.vappNet.id
+	vapp_network_name = vcd_vapp_network.vappNet.name
 	ip                = "allocated"
   }  
 `
