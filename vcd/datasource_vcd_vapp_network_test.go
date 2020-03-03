@@ -120,6 +120,13 @@ func TestAccVcdVappNetworkDS(t *testing.T) {
 			},
 		},
 	})
+
+	_, err = vapp.RemoveNetwork(vappNetworkSettings.Name)
+	if err != nil {
+		fmt.Printf("%s\n", err)
+		t.Skip("error removing vApp network")
+		return
+	}
 }
 
 func testCheckVappNetworkNonStringOutputs(guestVlanAllowed, firewallEnabled, natEnabled, retainIpMacEnabled bool) resource.TestCheckFunc {
