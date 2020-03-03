@@ -85,6 +85,13 @@ func TestAccVcdVappOrgNetworkDS(t *testing.T) {
 		},
 	})
 
+	err = vapp.BlockWhileStatus("UNRESOLVED", testConfig.Provider.MaxRetryTimeout)
+	if err != nil {
+		fmt.Printf("%s\n", err)
+		t.Skip("error waiting for vApp to be in UNRESOLVED state")
+		return
+	}
+
 	_, err = vapp.RemoveNetwork(data.network.Name)
 	if err != nil {
 		fmt.Printf("%s\n", err)
