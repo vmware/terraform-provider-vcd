@@ -168,7 +168,7 @@ func genericVappOrgNetworkRead(d *schema.ResourceData, meta interface{}, origin 
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("[VAPP org network read] didn't find vApp org network: %s", d.Get("org_network_name").(string))
+		return fmt.Errorf("[VAPP org network read] %s : %s", govcd.ErrorEntityNotFound, d.Get("org_network_name").(string))
 	}
 
 	// needs to set for datasource

@@ -118,6 +118,8 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			templateFields = templateFields + `rule_id = "347928347234"` + "\n"
 		case "name":
 			templateFields = templateFields + `name = "does-not-exist"` + "\n"
+		case "org_network_name":
+			templateFields = templateFields + `org_network_name = "does-not-exist"` + "\n"
 		}
 
 	}

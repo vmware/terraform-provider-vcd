@@ -301,7 +301,7 @@ func genericVappNetworkRead(d *schema.ResourceData, meta interface{}, origin str
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("[VAPP network read] didn't find vApp network: %s", d.Get("name").(string))
+		return fmt.Errorf("[VAPP network read] %s : %s", govcd.ErrorEntityNotFound, d.Get("name").(string))
 	}
 
 	// needs to set for datasource. Do not set always as keep back compatibility when ID was name.
