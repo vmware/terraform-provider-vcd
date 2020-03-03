@@ -67,7 +67,7 @@ func TestAccVcdVappOrgNetworkDS(t *testing.T) {
 		"VDC":        testConfig.VCD.Vdc,
 		"VappName":   vapp.VApp.Name,
 		"orgNetwork": data.network.Name,
-		"FuncName":   "TestVappOrgVmDS",
+		"FuncName":   "TestVappOrgNetworkDS",
 	}
 	configText := templateFill(datasourceTestVappOrgNetwork, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)

@@ -91,7 +91,7 @@ func TestAccVcdVappNetworkDS(t *testing.T) {
 		"Org":             testConfig.VCD.Org,
 		"VDC":             testConfig.VCD.Vdc,
 		"VappName":        vapp.VApp.Name,
-		"FuncName":        "TestVappVmDS",
+		"FuncName":        "TestVappNetworkDS",
 		"vappNetworkName": networkName,
 	}
 	configText := templateFill(datasourceTestVappNetwork, params)
