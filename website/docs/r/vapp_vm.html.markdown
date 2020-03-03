@@ -329,7 +329,7 @@ enabled by default when deprecated field `initscript` is used.
 * `join_domain_account_ou` (Optional; *v2.7+*) Organizational unit to be used for domain join.
 * `initscript` (Optional; *v2.7+*) Provide initscript to be executed when customization is applied.
 
-## Example forced customization workflow
+## Example of a Forced Customization Workflow
 
 Step 1 - Setup VM:
 
@@ -355,7 +355,8 @@ Step 2 - Override some VM customization options and force customization (VM will
 
 ```hcl
 resource "vcd_vapp_vm" "web2" {
-//...
+  #...
+
   network {
     type               = "org"
     name               = "net"
@@ -378,7 +379,8 @@ customization on every `terraform apply` command:
 
 ```hcl
 resource "vcd_vapp_vm" "web2" {
-//...
+  #...
+  
   network {
     type               = "org"
     name               = "net"
