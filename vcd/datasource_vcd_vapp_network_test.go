@@ -97,7 +97,7 @@ func TestAccVcdVappNetworkDS(t *testing.T) {
 	configText := templateFill(datasourceTestVappNetwork, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
