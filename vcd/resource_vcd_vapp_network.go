@@ -26,6 +26,7 @@ func resourceVcdVappNetwork() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: "vApp network name",
+				// we can't change network name as this results in ID (HREF) change
 			},
 			"vapp_name": &schema.Schema{
 				Type:        schema.TypeString,
@@ -180,7 +181,7 @@ func resourceVappNetworkCreate(d *schema.ResourceData, meta interface{}) error {
 
 	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
 	if err != nil {
-		return fmt.Errorf("error finding vApp. %#v", err)
+		return fmt.Errorf("error finding vApp. %s", err)
 	}
 
 	staticIpRanges, err := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
@@ -188,8 +189,9 @@ func resourceVappNetworkCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
+	vappNetworkName := d.Get("name").(string)
 	vappNetworkSettings := &govcd.VappNetworkSettings{
-		Name:               d.Get("name").(string),
+		Name:               vappNetworkName,
 		Description:        d.Get("description").(string),
 		Gateway:            d.Get("gateway").(string),
 		NetMask:            d.Get("netmask").(string),
@@ -219,18 +221,18 @@ func resourceVappNetworkCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 	vAppNetworkConfig, err := vapp.CreateVappNetwork(vappNetworkSettings, orgVdcNetwork)
 	if err != nil {
-		return fmt.Errorf("error creating vApp network. %#v", err)
+		return fmt.Errorf("error creating vApp network. %s", err)
 	}
 
 	vAppNetwork := types.VAppNetworkConfiguration{}
 	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
-		if networkConfig.NetworkName == d.Get("name").(string) {
+		if networkConfig.NetworkName == vappNetworkName {
 			vAppNetwork = networkConfig
 		}
 	}
 
 	if vAppNetwork == (types.VAppNetworkConfiguration{}) {
-		return fmt.Errorf("didn't find vApp network: %s", d.Get("name").(string))
+		return fmt.Errorf("didn't find vApp network: %s", vappNetworkName)
 	}
 
 	// Parsing UUID from 'https://bos1-vcloud-static-170-210.eng.vmware.com/api/admin/network/6ced8e2f-29dd-4201-9801-a02cb8bed821/action/reset' or similar
@@ -271,24 +273,25 @@ func genericVappNetworkRead(d *schema.ResourceData, meta interface{}, origin str
 
 	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
 	if err != nil {
-		return fmt.Errorf("error finding Vapp: %#v", err)
+		return fmt.Errorf("error finding Vapp: %s", err)
 	}
 
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 	if err != nil {
-		return fmt.Errorf("error getting vApp networks: %#v", err)
+		return fmt.Errorf("error getting vApp networks: %s", err)
 	}
 
 	vAppNetwork := types.VAppNetworkConfiguration{}
 	var networkId string
+	vappNetworkName := d.Get("name").(string)
 	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
 		if networkConfig.Link != nil {
 			networkId, err = govcd.GetUuidFromHref(networkConfig.Link.HREF, false)
 			if err != nil {
 				return fmt.Errorf("unable to get network ID from HREF: %s", err)
 			}
-			// Check name as well to support old resource ID's which are names and datasources which have names provided by the user
-			if d.Id() == networkId || networkConfig.NetworkName == d.Get("name").(string) {
+			// Check name as well to support old resource IDs that are names and datasources that have names provided by the user
+			if d.Id() == networkId || networkConfig.NetworkName == vappNetworkName {
 				vAppNetwork = networkConfig
 				break
 			}
@@ -301,7 +304,7 @@ func genericVappNetworkRead(d *schema.ResourceData, meta interface{}, origin str
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("[VAPP network read] %s : %s", govcd.ErrorEntityNotFound, d.Get("name").(string))
+		return fmt.Errorf("[VAPP network read] %s : %s", govcd.ErrorEntityNotFound, vappNetworkName)
 	}
 
 	// needs to set for datasource. Do not set always as keep back compatibility when ID was name.
@@ -394,7 +397,7 @@ func resourceVappNetworkUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
 	if err != nil {
-		return fmt.Errorf("error finding vApp. %#v", err)
+		return fmt.Errorf("error finding vApp. %s", err)
 	}
 
 	staticIpRanges, err := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
@@ -435,7 +438,7 @@ func resourceVappNetworkUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	_, err = vapp.UpdateNetwork(vappNetworkSettings, orgVdcNetwork)
 	if err != nil {
-		return fmt.Errorf("error creating vApp network. %#v", err)
+		return fmt.Errorf("error creating vApp network. %s", err)
 	}
 	return resourceVappNetworkRead(d, meta)
 }
@@ -452,7 +455,7 @@ func resourceVappNetworkDelete(d *schema.ResourceData, meta interface{}) error {
 
 	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
 	if err != nil {
-		return fmt.Errorf("error finding vApp: %#v", err)
+		return fmt.Errorf("error finding vApp: %s", err)
 	}
 
 	_, err = vapp.RemoveNetwork(d.Id())

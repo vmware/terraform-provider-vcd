@@ -9,11 +9,6 @@ import (
 )
 
 func TestAccVcdVappOrgNetwork_NotFenced(t *testing.T) {
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
 	resourceName = "TestAccVcdVappOrgNetwork_NotFenced"
 
 	var params = StringMap{
@@ -35,15 +30,10 @@ func TestAccVcdVappOrgNetwork_NotFenced(t *testing.T) {
 		"FuncName":                    "TestAccVcdVappOrgNetwork_NotFenced",
 	}
 
-	rungVappOrgNetworkTest(t, params)
+	runVappOrgNetworkTest(t, params)
 }
 
 func TestAccVcdVappOrgNetwork_Fenced(t *testing.T) {
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
 	resourceName = "TestAccVcdVappOrgNetwork_Fenced"
 
 	var params = StringMap{
@@ -65,16 +55,22 @@ func TestAccVcdVappOrgNetwork_Fenced(t *testing.T) {
 		"FuncName":                    "TestAccVcdVappOrgNetwork_Fenced",
 	}
 
-	rungVappOrgNetworkTest(t, params)
+	runVappOrgNetworkTest(t, params)
 }
 
-func rungVappOrgNetworkTest(t *testing.T, params StringMap) {
+func runVappOrgNetworkTest(t *testing.T, params StringMap) {
 	configText := templateFill(testAccCheckOrgVappNetwork_basic, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	params["FuncName"] = t.Name() + "-Update"
 	updateConfigText := templateFill(testAccCheckOrgVappNetwork_update, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateConfigText)
 
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resourceName := params["resourceName"].(string)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -83,41 +79,41 @@ func rungVappOrgNetworkTest(t *testing.T, params StringMap) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVappNetworkExists("vcd_vapp_org_network."+params["resourceName"].(string)),
+					testAccCheckVappNetworkExists("vcd_vapp_org_network."+resourceName),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_org_network."+params["resourceName"].(string), "vapp_name", params["vappName"].(string)),
+						"vcd_vapp_org_network."+resourceName, "vapp_name", params["vappName"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_org_network."+params["resourceName"].(string), "org_network_name", params["orgNetwork"].(string)),
+						"vcd_vapp_org_network."+resourceName, "org_network_name", params["orgNetwork"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_org_network."+params["resourceName"].(string), "retain_ip_mac_enabled", params["retainIpMacEnabled"].(string)),
+						"vcd_vapp_org_network."+resourceName, "retain_ip_mac_enabled", params["retainIpMacEnabled"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_org_network."+params["resourceName"].(string), "is_fenced", params["isFenced"].(string)),
+						"vcd_vapp_org_network."+resourceName, "is_fenced", params["isFenced"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_org_network."+params["resourceName"].(string), "firewall_enabled", params["firewallEnabled"].(string)),
+						"vcd_vapp_org_network."+resourceName, "firewall_enabled", params["firewallEnabled"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_org_network."+params["resourceName"].(string), "nat_enabled", params["natEnabled"].(string)),
+						"vcd_vapp_org_network."+resourceName, "nat_enabled", params["natEnabled"].(string)),
 				),
 			},
 			resource.TestStep{
 				Config: updateConfigText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVappNetworkExists("vcd_vapp_org_network."+params["resourceName"].(string)),
+					testAccCheckVappNetworkExists("vcd_vapp_org_network."+resourceName),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_org_network."+params["resourceName"].(string), "vapp_name", params["vappName"].(string)),
+						"vcd_vapp_org_network."+resourceName, "vapp_name", params["vappName"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_org_network."+params["resourceName"].(string), "org_network_name", params["orgNetwork"].(string)),
+						"vcd_vapp_org_network."+resourceName, "org_network_name", params["orgNetwork"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_org_network."+params["resourceName"].(string), "retain_ip_mac_enabled", params["retainIpMacEnabledForUpdate"].(string)),
+						"vcd_vapp_org_network."+resourceName, "retain_ip_mac_enabled", params["retainIpMacEnabledForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_org_network."+params["resourceName"].(string), "is_fenced", params["isFencedForUpdate"].(string)),
+						"vcd_vapp_org_network."+resourceName, "is_fenced", params["isFencedForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_org_network."+params["resourceName"].(string), "firewall_enabled", params["firewallEnabledForUpdate"].(string)),
+						"vcd_vapp_org_network."+resourceName, "firewall_enabled", params["firewallEnabledForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_org_network."+params["resourceName"].(string), "nat_enabled", params["natEnabledForUpdate"].(string)),
+						"vcd_vapp_org_network."+resourceName, "nat_enabled", params["natEnabledForUpdate"].(string)),
 				),
 			},
 			resource.TestStep{
-				ResourceName:      "vcd_vapp_org_network." + params["resourceName"].(string) + "-import",
+				ResourceName:      "vcd_vapp_org_network." + resourceName + "-import",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdVappObject(testConfig, params["vappName"].(string), params["orgNetwork"].(string)),

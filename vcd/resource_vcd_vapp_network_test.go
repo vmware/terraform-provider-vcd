@@ -20,11 +20,6 @@ const netmask = "255.255.255.0"
 const guestVlanAllowed = "true"
 
 func TestAccVcdVappNetwork_Isolated(t *testing.T) {
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
 	resourceName = "TestAccVcdVappNetwork_Isolated"
 
 	var params = StringMap{
@@ -77,11 +72,6 @@ func TestAccVcdVappNetwork_Isolated(t *testing.T) {
 }
 
 func TestAccVcdVappNetwork_Nat(t *testing.T) {
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
 	resourceName = "TestAccVcdVappNetwork_Nat"
 
 	var params = StringMap{
@@ -141,6 +131,12 @@ func rungVappNetworkTest(t *testing.T, params StringMap) {
 	updateConfigText := templateFill(testAccCheckVappNetwork_update, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateConfigText)
 
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resourceName := params["resourceName"].(string)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -149,93 +145,93 @@ func rungVappNetworkTest(t *testing.T, params StringMap) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVappNetworkExists("vcd_vapp_network."+params["resourceName"].(string)),
+					testAccCheckVappNetworkExists("vcd_vapp_network."+resourceName),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "name", params["vappNetworkName"].(string)),
+						"vcd_vapp_network."+resourceName, "name", params["vappNetworkName"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "description", params["description"].(string)),
+						"vcd_vapp_network."+resourceName, "description", params["description"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "gateway", gateway),
+						"vcd_vapp_network."+resourceName, "gateway", gateway),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "netmask", netmask),
+						"vcd_vapp_network."+resourceName, "netmask", netmask),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dns1", dns1),
+						"vcd_vapp_network."+resourceName, "dns1", dns1),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dns2", dns2),
+						"vcd_vapp_network."+resourceName, "dns2", dns2),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dns_suffix", dnsSuffix),
+						"vcd_vapp_network."+resourceName, "dns_suffix", dnsSuffix),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "guest_vlan_allowed", guestVlanAllowed),
+						"vcd_vapp_network."+resourceName, "guest_vlan_allowed", guestVlanAllowed),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "static_ip_pool.2802459930.start_address", params["startAddress"].(string)),
+						"vcd_vapp_network."+resourceName, "static_ip_pool.2802459930.start_address", params["startAddress"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "static_ip_pool.2802459930.end_address", params["endAddress"].(string)),
+						"vcd_vapp_network."+resourceName, "static_ip_pool.2802459930.end_address", params["endAddress"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.3992831158.start_address", params["dhcpStartAddress"].(string)),
+						"vcd_vapp_network."+resourceName, "dhcp_pool.3992831158.start_address", params["dhcpStartAddress"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.3992831158.end_address", params["dhcpEndAddress"].(string)),
+						"vcd_vapp_network."+resourceName, "dhcp_pool.3992831158.end_address", params["dhcpEndAddress"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.3992831158.enabled", params["dhcpEnabled"].(string)),
+						"vcd_vapp_network."+resourceName, "dhcp_pool.3992831158.enabled", params["dhcpEnabled"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.3992831158.default_lease_time", params["defaultLeaseTime"].(string)),
+						"vcd_vapp_network."+resourceName, "dhcp_pool.3992831158.default_lease_time", params["defaultLeaseTime"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.3992831158.max_lease_time", params["maxLeaseTime"].(string)),
+						"vcd_vapp_network."+resourceName, "dhcp_pool.3992831158.max_lease_time", params["maxLeaseTime"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "org_network_name", params["orgNetwork"].(string)),
+						"vcd_vapp_network."+resourceName, "org_network_name", params["orgNetwork"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "retain_ip_mac_enabled", params["retainIpMacEnabled"].(string)),
+						"vcd_vapp_network."+resourceName, "retain_ip_mac_enabled", params["retainIpMacEnabled"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "firewall_enabled", params["firewallEnabled"].(string)),
+						"vcd_vapp_network."+resourceName, "firewall_enabled", params["firewallEnabled"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "nat_enabled", params["natEnabled"].(string)),
+						"vcd_vapp_network."+resourceName, "nat_enabled", params["natEnabled"].(string)),
 				),
 			},
 			resource.TestStep{
 				Config: updateConfigText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVappNetworkExists("vcd_vapp_network."+params["resourceName"].(string)),
+					testAccCheckVappNetworkExists("vcd_vapp_network."+resourceName),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "name", params["vappNetworkName"].(string)),
+						"vcd_vapp_network."+resourceName, "name", params["vappNetworkName"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "description", params["descriptionForUpdate"].(string)),
+						"vcd_vapp_network."+resourceName, "description", params["descriptionForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "gateway", gateway),
+						"vcd_vapp_network."+resourceName, "gateway", gateway),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "netmask", netmask),
+						"vcd_vapp_network."+resourceName, "netmask", netmask),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dns1", params["dns1ForUpdate"].(string)),
+						"vcd_vapp_network."+resourceName, "dns1", params["dns1ForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dns2", params["dns2ForUpdate"].(string)),
+						"vcd_vapp_network."+resourceName, "dns2", params["dns2ForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dns_suffix", params["dnsSuffixForUpdate"].(string)),
+						"vcd_vapp_network."+resourceName, "dns_suffix", params["dnsSuffixForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "guest_vlan_allowed", params["guestVlanAllowedForUpdate"].(string)),
+						"vcd_vapp_network."+resourceName, "guest_vlan_allowed", params["guestVlanAllowedForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "static_ip_pool.132829107.start_address", params["startAddressForUpdate"].(string)),
+						"vcd_vapp_network."+resourceName, "static_ip_pool.132829107.start_address", params["startAddressForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "static_ip_pool.132829107.end_address", params["endAddressForUpdate"].(string)),
+						"vcd_vapp_network."+resourceName, "static_ip_pool.132829107.end_address", params["endAddressForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.4252262036.start_address", params["dhcpStartAddressForUpdate"].(string)),
+						"vcd_vapp_network."+resourceName, "dhcp_pool.4252262036.start_address", params["dhcpStartAddressForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.4252262036.end_address", params["dhcpEndAddressForUpdate"].(string)),
+						"vcd_vapp_network."+resourceName, "dhcp_pool.4252262036.end_address", params["dhcpEndAddressForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.4252262036.enabled", params["dhcpEnabledForUpdate"].(string)),
+						"vcd_vapp_network."+resourceName, "dhcp_pool.4252262036.enabled", params["dhcpEnabledForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.4252262036.default_lease_time", params["defaultLeaseTimeForUpdate"].(string)),
+						"vcd_vapp_network."+resourceName, "dhcp_pool.4252262036.default_lease_time", params["defaultLeaseTimeForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "dhcp_pool.4252262036.max_lease_time", params["maxLeaseTimeForUpdate"].(string)),
+						"vcd_vapp_network."+resourceName, "dhcp_pool.4252262036.max_lease_time", params["maxLeaseTimeForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "org_network_name", params["orgNetworkForUpdate"].(string)),
+						"vcd_vapp_network."+resourceName, "org_network_name", params["orgNetworkForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "retain_ip_mac_enabled", params["retainIpMacEnabledForUpdate"].(string)),
+						"vcd_vapp_network."+resourceName, "retain_ip_mac_enabled", params["retainIpMacEnabledForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "firewall_enabled", params["firewallEnabledForUpdate"].(string)),
+						"vcd_vapp_network."+resourceName, "firewall_enabled", params["firewallEnabledForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_network."+params["resourceName"].(string), "nat_enabled", params["natEnabledForUpdate"].(string)),
+						"vcd_vapp_network."+resourceName, "nat_enabled", params["natEnabledForUpdate"].(string)),
 				),
 			},
 			resource.TestStep{
-				ResourceName:      "vcd_vapp_network." + params["resourceName"].(string) + "-import",
+				ResourceName:      "vcd_vapp_network." + resourceName + "-import",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdVappObject(testConfig, params["vappName"].(string), params["vappNetworkName"].(string)),

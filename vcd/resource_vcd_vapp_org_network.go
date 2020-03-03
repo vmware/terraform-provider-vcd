@@ -83,9 +83,10 @@ func resourceVappOrgNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
+	vappName := d.Get("vapp_name").(string)
+	vapp, err := vdc.GetVAppByName(vappName, false)
 	if err != nil {
-		return fmt.Errorf("error finding vApp. %#v", err)
+		return fmt.Errorf("error finding vApp: %s and err: %s", vappName, err)
 	}
 
 	vappNetworkSettings := &govcd.VappNetworkSettings{
@@ -139,12 +140,12 @@ func genericVappOrgNetworkRead(d *schema.ResourceData, meta interface{}, origin 
 
 	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
 	if err != nil {
-		return fmt.Errorf("error finding Vapp: %#v", err)
+		return fmt.Errorf("error finding Vapp: %s", err)
 	}
 
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 	if err != nil {
-		return fmt.Errorf("error getting vApp networks: %#v", err)
+		return fmt.Errorf("error getting vApp networks: %s", err)
 	}
 
 	vAppNetwork := types.VAppNetworkConfiguration{}
@@ -206,9 +207,10 @@ func resourceVappOrgNetworkUpdate(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
+	vappName := d.Get("vapp_name").(string)
+	vapp, err := vdc.GetVAppByName(vappName, false)
 	if err != nil {
-		return fmt.Errorf("error finding vApp. %#v", err)
+		return fmt.Errorf("error finding vApp: %s and err:  %s", vappName, err)
 	}
 
 	vappNetworkSettings := &govcd.VappNetworkSettings{
