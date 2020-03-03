@@ -282,14 +282,16 @@ func genericVappNetworkRead(d *schema.ResourceData, meta interface{}, origin str
 	vAppNetwork := types.VAppNetworkConfiguration{}
 	var networkId string
 	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
-		networkId, err = govcd.GetUuidFromHref(networkConfig.Link.HREF, false)
-		if err != nil {
-			return fmt.Errorf("unable to get network ID from HREF: %s", err)
-		}
-		// Check name as well to support old resource ID's which are names and datasources which have names provided by the user
-		if d.Id() == networkId || networkConfig.NetworkName == d.Get("name").(string) {
-			vAppNetwork = networkConfig
-			break
+		if networkConfig.Link != nil {
+			networkId, err = govcd.GetUuidFromHref(networkConfig.Link.HREF, false)
+			if err != nil {
+				return fmt.Errorf("unable to get network ID from HREF: %s", err)
+			}
+			// Check name as well to support old resource ID's which are names and datasources which have names provided by the user
+			if d.Id() == networkId || networkConfig.NetworkName == d.Get("name").(string) {
+				vAppNetwork = networkConfig
+				break
+			}
 		}
 	}
 

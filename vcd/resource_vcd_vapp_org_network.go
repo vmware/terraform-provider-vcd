@@ -150,13 +150,15 @@ func genericVappOrgNetworkRead(d *schema.ResourceData, meta interface{}, origin 
 	vAppNetwork := types.VAppNetworkConfiguration{}
 	var networkId string
 	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
-		networkId, err = govcd.GetUuidFromHref(networkConfig.Link.HREF, false)
-		if err != nil {
-			return fmt.Errorf("unable to get network ID from HREF: %s", err)
-		}
-		// name check needed for datasource to find network as don't have ID
-		if d.Id() == networkId || networkConfig.NetworkName == d.Get("org_network_name").(string) {
-			vAppNetwork = networkConfig
+		if networkConfig.Link != nil {
+			networkId, err = govcd.GetUuidFromHref(networkConfig.Link.HREF, false)
+			if err != nil {
+				return fmt.Errorf("unable to get network ID from HREF: %s", err)
+			}
+			// name check needed for datasource to find network as don't have ID
+			if d.Id() == networkId || networkConfig.NetworkName == d.Get("org_network_name").(string) {
+				vAppNetwork = networkConfig
+			}
 		}
 	}
 
