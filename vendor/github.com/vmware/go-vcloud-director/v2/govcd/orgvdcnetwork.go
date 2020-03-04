@@ -234,3 +234,111 @@ func (vdc *Vdc) FindEdgeGatewayNameByNetwork(networkName string) (string, error)
 	}
 	return "", fmt.Errorf("no edge gateway connection found")
 }
+
+// getParentVdc retrieves the VDC to which the network is attached
+func (orgVdcNet *OrgVDCNetwork) getParentVdc() (*Vdc, error) {
+	for _, link := range orgVdcNet.OrgVDCNetwork.Link {
+		if link.Type == "application/vnd.vmware.vcloud.vdc+xml" {
+
+			vdc := NewVdc(orgVdcNet.client)
+
+			_, err := orgVdcNet.client.ExecuteRequest(link.HREF, http.MethodGet,
+				"", "error retrieving parent vdc: %s", nil, vdc.Vdc)
+			if err != nil {
+				return nil, err
+			}
+
+			return vdc, nil
+		}
+	}
+	return nil, fmt.Errorf("could not find a parent Vdc for network %s", orgVdcNet.OrgVDCNetwork.Name)
+}
+
+// getEdgeGateway retrieves the edge gateway connected to a routed network
+func (orgVdcNet *OrgVDCNetwork) getEdgeGateway() (*EdgeGateway, error) {
+	// If it is not routed, returns an error
+	if orgVdcNet.OrgVDCNetwork.Configuration.FenceMode != types.FenceModeNAT {
+		return nil, fmt.Errorf("network %s is not routed", orgVdcNet.OrgVDCNetwork.Name)
+	}
+	vdc, err := orgVdcNet.getParentVdc()
+	if err != nil {
+		return nil, err
+	}
+
+	// Since this function can be called from Update(), we must take into account the
+	// possibility of a name change. If this is happening, we need to retrieve the original
+	// name, which is still stored in the VDC.
+	oldNetwork, err := vdc.GetOrgVdcNetworkById(orgVdcNet.OrgVDCNetwork.ID, false)
+	if err != nil {
+		return nil, err
+	}
+	networkName := oldNetwork.OrgVDCNetwork.Name
+
+	edgeGatewayName, err := vdc.FindEdgeGatewayNameByNetwork(networkName)
+	if err != nil {
+		return nil, err
+	}
+
+	return vdc.GetEdgeGatewayByName(edgeGatewayName, false)
+}
+
+// UpdateAsync will change the contents of a network using the information in the
+// receiver data structure.
+func (orgVdcNet *OrgVDCNetwork) UpdateAsync() (Task, error) {
+	if orgVdcNet.OrgVDCNetwork.HREF == "" {
+		return Task{}, fmt.Errorf("cannot update network: HREF is empty")
+	}
+	if orgVdcNet.OrgVDCNetwork.Name == "" {
+		return Task{}, fmt.Errorf("cannot update network: name is empty")
+	}
+	if orgVdcNet.OrgVDCNetwork.Configuration == nil {
+		return Task{}, fmt.Errorf("cannot update network: configuration is empty")
+	}
+
+	href := orgVdcNet.OrgVDCNetwork.HREF
+
+	if !strings.Contains(href, "/api/admin/") {
+		href = strings.ReplaceAll(href, "/api/", "/api/admin/")
+	}
+
+	// Routed networks need to have edge gateway information for both creation and update.
+	// Since the network data structure doesn't return edge gateway information,
+	// we fetch it explicitly.
+	if orgVdcNet.OrgVDCNetwork.Configuration.FenceMode == types.FenceModeNAT {
+		edgeGateway, err := orgVdcNet.getEdgeGateway()
+		if err != nil {
+			return Task{}, fmt.Errorf("error retrieving edge gateway for network %s : %s", orgVdcNet.OrgVDCNetwork.Name, err)
+		}
+		orgVdcNet.OrgVDCNetwork.EdgeGateway = &types.Reference{
+			HREF: edgeGateway.EdgeGateway.HREF,
+			ID:   edgeGateway.EdgeGateway.ID,
+			Type: edgeGateway.EdgeGateway.Type,
+			Name: edgeGateway.EdgeGateway.Name,
+		}
+	}
+	return orgVdcNet.client.ExecuteTaskRequest(href, http.MethodPut,
+		types.MimeOrgVdcNetwork, "error updating Org VDC network: %s", orgVdcNet.OrgVDCNetwork)
+}
+
+// Update is a wrapper around UpdateAsync, where we
+// explicitly wait for the task to finish.
+func (orgVdcNet *OrgVDCNetwork) Update() error {
+	task, err := orgVdcNet.UpdateAsync()
+	if err != nil {
+		return err
+	}
+	err = task.WaitTaskCompletion()
+
+	return err
+}
+
+// Rename is a wrapper around Update(), where we only change the name of the network
+// Since the purpose is explicitly changing the name, the function will fail if the new name
+// is not different from the existing one
+func (orgVdcNet *OrgVDCNetwork) Rename(newName string) error {
+	if orgVdcNet.OrgVDCNetwork.Name == newName {
+		return fmt.Errorf("new name is the same ase the existing name")
+	}
+	orgVdcNet.OrgVDCNetwork.Name = newName
+	return orgVdcNet.Update()
+}

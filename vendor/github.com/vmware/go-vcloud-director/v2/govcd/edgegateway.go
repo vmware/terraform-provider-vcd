@@ -53,6 +53,8 @@ type NatRule struct {
 	Description  string
 }
 
+// AddDhcpPool adds (or updates) the DHCP pool connected to a specific network.
+// TODO: this is legacy code from 2015, which requires a Terraform structure to work. It may need some re-thinking.
 func (egw *EdgeGateway) AddDhcpPool(network *types.OrgVDCNetwork, dhcppool []interface{}) (Task, error) {
 	newEdgeConfig := egw.EdgeGateway.Configuration.EdgeGatewayServiceConfiguration
 	util.Logger.Printf("[DEBUG] EDGE GATEWAY: %#v", newEdgeConfig)
@@ -67,7 +69,11 @@ func (egw *EdgeGateway) AddDhcpPool(network *types.OrgVDCNetwork, dhcppool []int
 
 			// Kludgy IF to avoid deleting DNAT rules not created by us.
 			// If matches, let's skip it and continue the loop
-			if dhcpPoolService.Network.HREF == network.HREF {
+			// Note: a simple comparison of HREF fields may fail if one of them is
+			// from a tenant object and the other from a provider object. They may have the
+			// same ID but different paths. Using 'equalIds' we determine equality even with
+			// different paths
+			if equalIds(network.HREF, "", dhcpPoolService.Network.HREF) {
 				continue
 			}
 
@@ -1395,4 +1401,25 @@ func getNetworkNameAndTypeByVnicIndex(vNicIndex int, vnics *types.EdgeGatewayInt
 	}
 
 	return networkName, networkType, nil
+}
+
+func (egw *EdgeGateway) UpdateAsync() (Task, error) {
+
+	egw.EdgeGateway.Xmlns = types.XMLNamespaceVCloud
+	egw.EdgeGateway.Configuration.Xmlns = types.XMLNamespaceVCloud
+	egw.EdgeGateway.Tasks = nil
+
+	// Return the task
+	return egw.client.ExecuteTaskRequest(egw.EdgeGateway.HREF, http.MethodPut,
+		types.MimeEdgeGateway, "error updating Edge Gateway: %s", egw.EdgeGateway)
+}
+
+func (egw *EdgeGateway) Update() error {
+
+	task, err := egw.UpdateAsync()
+	if err != nil {
+		return err
+	}
+	return task.WaitTaskCompletion()
+
 }
