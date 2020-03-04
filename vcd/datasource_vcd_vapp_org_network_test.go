@@ -5,7 +5,6 @@ package vcd
 import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -49,25 +48,17 @@ func TestAccVcdVappOrgNetworkDS(t *testing.T) {
 	var natEnabled = false
 	var retainIpMacEnabled = true
 
-	vappNetworkSettings := &govcd.VappNetworkSettings{
-		FirewallEnabled:    &fwEnabled,
-		NatEnabled:         &natEnabled,
-		RetainIpMacEnabled: &retainIpMacEnabled,
-	}
-
-	_, err = vapp.AddOrgNetwork(vappNetworkSettings, data.network, true)
-	if err != nil {
-		fmt.Printf("%s\n", err)
-		t.Skip("error adding vApp network")
-		return
-	}
-
 	var params = StringMap{
-		"Org":        testConfig.VCD.Org,
-		"VDC":        testConfig.VCD.Vdc,
-		"VappName":   vapp.VApp.Name,
-		"orgNetwork": data.network.Name,
-		"FuncName":   "TestVappOrgNetworkDS",
+		"Org":                testConfig.VCD.Org,
+		"Vdc":                testConfig.VCD.Vdc,
+		"resourceName":       resourceName,
+		"vappName":           vapp.VApp.Name,
+		"orgNetwork":         data.network.Name,
+		"firewallEnabled":    fwEnabled,
+		"natEnabled":         natEnabled,
+		"retainIpMacEnabled": retainIpMacEnabled,
+		"isFenced":           "true",
+		"FuncName":           "TestVappOrgNetworkDS",
 	}
 	configText := templateFill(datasourceTestVappOrgNetwork, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
@@ -84,20 +75,6 @@ func TestAccVcdVappOrgNetworkDS(t *testing.T) {
 			},
 		},
 	})
-
-	err = vapp.BlockWhileStatus("UNRESOLVED", testConfig.Provider.MaxRetryTimeout)
-	if err != nil {
-		fmt.Printf("%s\n", err)
-		t.Skip("error waiting for vApp to be in UNRESOLVED state")
-		return
-	}
-
-	_, err = vapp.RemoveNetwork(data.network.Name)
-	if err != nil {
-		fmt.Printf("%s\n", err)
-		t.Skip("error removing vApp network")
-		return
-	}
 }
 
 func testCheckVappOrgNetworkNonStringOutputs(firewallEnabled, natEnabled, retainIpMacEnabled bool) resource.TestCheckFunc {
@@ -120,10 +97,22 @@ func testCheckVappOrgNetworkNonStringOutputs(firewallEnabled, natEnabled, retain
 }
 
 const datasourceTestVappOrgNetwork = `
+resource "vcd_vapp_org_network" "createVappOrgNetwork" {
+  org                = "{{.Org}}"
+  vdc                = "{{.Vdc}}"
+  vapp_name          = "{{.vappName}}"
+  org_network_name   = "{{.orgNetwork}}"
+  
+  is_fenced = "{{.isFenced}}"
+
+  firewall_enabled      = "{{.firewallEnabled}}"
+  nat_enabled           = "{{.natEnabled}}"
+  retain_ip_mac_enabled = "{{.retainIpMacEnabled}}"
+}
 
 data "vcd_vapp_org_network" "network-ds" {
-  vapp_name        = "{{.VappName}}"
-  org_network_name = "{{.orgNetwork}}" 
+  vapp_name        = "{{.vappName}}"
+  org_network_name = vcd_vapp_org_network.createVappOrgNetwork.org_network_name
 }
 
 output "retain_ip_mac_enabled" {

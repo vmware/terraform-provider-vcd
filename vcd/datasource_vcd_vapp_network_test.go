@@ -5,8 +5,6 @@ package vcd
 import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -14,13 +12,6 @@ import (
 
 // TestAccVcdVappNetworkDS tests a vApp network data source if a vApp is found in the VDC
 func TestAccVcdVappNetworkDS(t *testing.T) {
-	// This test requires access to the vCD before filling templates
-	// Thus it won't run in the short test
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
 	vapp, err := getAvailableVapp()
 	if err != nil {
 		t.Skip("No suitable vApp found for this test")
@@ -64,38 +55,38 @@ func TestAccVcdVappNetworkDS(t *testing.T) {
 	var natEnabled = false
 	var retainIpMacEnabled = true
 
-	vappNetworkSettings := &govcd.VappNetworkSettings{
-		Name:               networkName,
-		Gateway:            gateway,
-		NetMask:            netmask,
-		DNS1:               dns1,
-		DNS2:               dns2,
-		DNSSuffix:          dnsSuffix,
-		StaticIPRanges:     []*types.IPRange{{StartAddress: startAddress, EndAddress: endAddress}},
-		DhcpSettings:       &govcd.DhcpSettings{IsEnabled: true, MaxLeaseTime: maxLeaseTime, DefaultLeaseTime: defaultLeaseTime, IPRange: &types.IPRange{StartAddress: dhcpStartAddress, EndAddress: dhcpEndAddress}},
-		GuestVLANAllowed:   &guestVlanAllowed,
-		Description:        description,
-		FirewallEnabled:    &fwEnabled,
-		NatEnabled:         &natEnabled,
-		RetainIpMacEnabled: &retainIpMacEnabled,
-	}
-
-	_, err = vapp.CreateVappNetwork(vappNetworkSettings, data.network)
-	if err != nil {
-		fmt.Printf("%s\n", err)
-		t.Skip("error adding vApp network")
-		return
-	}
-
 	var params = StringMap{
-		"Org":             testConfig.VCD.Org,
-		"VDC":             testConfig.VCD.Vdc,
-		"VappName":        vapp.VApp.Name,
-		"FuncName":        "TestVappNetworkDS",
-		"vappNetworkName": networkName,
+		"Org":                testConfig.VCD.Org,
+		"VDC":                testConfig.VCD.Vdc,
+		"vappName":           vapp.VApp.Name,
+		"FuncName":           "TestVappNetworkDS",
+		"vappNetworkName":    networkName,
+		"description":        description,
+		"gateway":            gateway,
+		"netmask":            netmask,
+		"dns1":               dns1,
+		"dns2":               dns2,
+		"dnsSuffix":          dnsSuffix,
+		"guestVlanAllowed":   guestVlanAllowed,
+		"startAddress":       startAddress,
+		"endAddress":         endAddress,
+		"maxLeaseTime":       maxLeaseTime,
+		"defaultLeaseTime":   defaultLeaseTime,
+		"dhcpStartAddress":   dhcpStartAddress,
+		"dhcpEndAddress":     dhcpEndAddress,
+		"dhcpEnabled":        "true",
+		"orgNetwork":         data.network.Name,
+		"firewallEnabled":    fwEnabled,
+		"natEnabled":         natEnabled,
+		"retainIpMacEnabled": retainIpMacEnabled,
 	}
 	configText := templateFill(datasourceTestVappNetwork, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -120,20 +111,6 @@ func TestAccVcdVappNetworkDS(t *testing.T) {
 			},
 		},
 	})
-
-	err = vapp.BlockWhileStatus("UNRESOLVED", testConfig.Provider.MaxRetryTimeout)
-	if err != nil {
-		fmt.Printf("%s\n", err)
-		t.Skip("error waiting for vApp to be in UNRESOLVED state")
-		return
-	}
-
-	_, err = vapp.RemoveNetwork(vappNetworkSettings.Name)
-	if err != nil {
-		fmt.Printf("%s\n", err)
-		t.Skip("error removing vApp network")
-		return
-	}
 }
 
 func testCheckVappNetworkNonStringOutputs(guestVlanAllowed, firewallEnabled, natEnabled, retainIpMacEnabled bool) resource.TestCheckFunc {
@@ -160,10 +137,42 @@ func testCheckVappNetworkNonStringOutputs(guestVlanAllowed, firewallEnabled, nat
 }
 
 const datasourceTestVappNetwork = `
+resource "vcd_vapp_network" "createdVappNetwork" {
+  org                = "{{.Org}}"
+  vdc                = "{{.VDC}}"
+  name               = "{{.vappNetworkName}}"
+  description        = "{{.description}}"
+  vapp_name          = "{{.vappName}}"
+  gateway            = "{{.gateway}}"
+  netmask            = "{{.netmask}}"
+  dns1               = "{{.dns1}}"
+  dns2               = "{{.dns2}}"
+  dns_suffix         = "{{.dnsSuffix}}"
+  guest_vlan_allowed = {{.guestVlanAllowed}}
+
+  static_ip_pool {
+    start_address = "{{.startAddress}}"
+    end_address   = "{{.endAddress}}"
+  }
+
+  dhcp_pool {
+    max_lease_time     = "{{.maxLeaseTime}}"
+    default_lease_time = "{{.defaultLeaseTime}}"
+    start_address      = "{{.dhcpStartAddress}}"
+    end_address        = "{{.dhcpEndAddress}}"
+    enabled            = "{{.dhcpEnabled}}"
+  }
+
+  org_network_name      = "{{.orgNetwork}}"
+  firewall_enabled      = "{{.firewallEnabled}}"
+  nat_enabled           = "{{.natEnabled}}"
+  retain_ip_mac_enabled = "{{.retainIpMacEnabled}}"
+}
+ 
 
 data "vcd_vapp_network" "network-ds" {
-  name       = "{{.vappNetworkName}}"
-  vapp_name  = "{{.VappName}}"
+  name       =  vcd_vapp_network.createdVappNetwork.name
+  vapp_name  = "{{.vappName}}"
 }
 
 output "netmask" {
