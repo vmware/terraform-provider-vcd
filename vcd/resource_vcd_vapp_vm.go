@@ -589,6 +589,9 @@ func addVdcNetwork(networkNameToAdd string, vdc *govcd.Vdc, vapp govcd.VApp, vcd
 	}
 
 	if !isAlreadyVappNetwork {
+		// TODO remove when major release is done
+		_, _ = fmt.Fprintf(getTerraformStdout(), "DEPRECATED: attaching an Org network `%s` to a vApp `%s` through VM's network block alone is deprecated. "+
+			"Network should be first attached to a vApp by creating a vcd_vapp_org_network resource and only then referenced in the network block. \n", networkNameToAdd, vapp.VApp.Name)
 		task, err := vapp.AddRAWNetworkConfig([]*types.OrgVDCNetwork{vdcNetwork})
 		if err != nil {
 			return &types.OrgVDCNetwork{}, fmt.Errorf("error assigning network to vApp: %s", err)
