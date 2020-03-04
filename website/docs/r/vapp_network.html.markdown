@@ -3,12 +3,12 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_vapp_network"
 sidebar_current: "docs-vcd-resource-vapp-network"
 description: |-
- Allows to provision vApp network and optionally connect it to existing Org VDC network.
+ Allows to provision a vApp network and optionally connect it to an existing Org VDC network.
 ---
 
 # vcd\_vapp\_network
 
- Allows to provision vApp network and optionally connect it to existing Org VDC network.
+ Allows to provision a vApp network and optionally connect it to an existing Org VDC network.
 
 Supported in provider *v2.1+*
 
@@ -16,8 +16,8 @@ Supported in provider *v2.1+*
 
 ```hcl
 resource "vcd_vapp_network" "vappNet" {
-  org = "my-org" #Optional
-  vdc = "my-vdc" #Optional
+  org = "my-org" # Optional
+  vdc = "my-vdc" # Optional
 
   name               = "my-net"
   vapp_name          = "my-vapp"
@@ -49,7 +49,7 @@ The following arguments are supported:
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level.
 * `name` - (Required) A unique name for the network.
 * `description` - (Optional; *v2.7+*) Description of vApp network
-* `vapp_name` - (Required) The vApp this VM should belong to.
+* `vapp_name` - (Required) The vApp this network belongs to.
 * `netmask` - (Optional) The netmask for the new network. Default is `255.255.255.0`.
 * `gateway` (Optional) The gateway for this network.
 * `dns1` - (Optional) First DNS server to use.
@@ -58,7 +58,7 @@ The following arguments are supported:
 * `guest_vlan_allowed` (Optional) True if Network allows guest VLAN tagging. This value supported from vCD version 9.0
 * `static_ip_pool` - (Optional) A range of IPs permitted to be used as static IPs for virtual machines; see [IP Pools](#ip-pools) below for details.
 * `dhcp_pool` - (Optional) A range of IPs to issue to virtual machines that don't have a static IP; see [IP Pools](#ip-pools) below for details.
-* `org_network_name` - (Optional; *v2.7+*) An Org network name to which vApp network is connected to. If not configured, then isolated network created.
+* `org_network_name` - (Optional; *v2.7+*) An Org network name to which vApp network is connected. If not configured, then an isolated network is created.
 * `firewall_enabled` - (Optional; *v2.7+*) Firewall service enabled or disabled.
 * `nat_enabled` - (Optional; *v2.7+*) NAT service enabled or disabled. Configurable when `firewall_enabled` is true.
 * `retain_ip_mac_enabled` - (Optional; *v2.7+*) Specifies whether the network resources such as IP/MAC of router will be retained across deployments. Default is false.

@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_vapp\_org\_network
 
-Provides a data source for vCloud director Org network attached to vApp.. This can be used to access vApp Org VDC network.
+Provides a data source for vCloud director Org network attached to vApp. This can be used to access vApp Org VDC network.
 
 Supported in provider *v2.7+*
 
@@ -41,5 +41,5 @@ The following arguments are supported:
 
 ## Attribute reference
 
-All attributes defined in [vApp org network resource](/docs/providers/vcd/r/vapp_org_network.html#attribute-reference) are supported.
+All attributes defined in [`vcd_vapp_org_network`](/docs/providers/vcd/r/vapp_org_network.html#attribute-reference) are supported.
 
