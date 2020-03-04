@@ -948,6 +948,8 @@ func (egw *EdgeGateway) AddIpsecVPN(ipsecVPNConfig *types.EdgeGatewayServiceConf
 		fmt.Printf("error: %s\n", err)
 	}
 
+	ipsecVPNConfig.Xmlns = types.XMLNamespaceVCloud
+
 	apiEndpoint, _ := url.ParseRequestURI(egw.EdgeGateway.HREF)
 	apiEndpoint.Path += "/action/configureServices"
 
