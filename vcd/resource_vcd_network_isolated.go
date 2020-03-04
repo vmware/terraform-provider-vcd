@@ -15,6 +15,7 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceVcdNetworkIsolatedCreate,
 		Read:   resourceVcdNetworkIsolatedRead,
+		Update: resourceVcdNetworkIsolatedUpdate,
 		Delete: resourceVcdNetworkDelete,
 		Importer: &schema.ResourceImporter{
 			State: resourceVcdNetworkIsolatedImport,
@@ -23,7 +24,6 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "A unique name for this network",
 			},
 			"org": {
@@ -42,7 +42,6 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional description for the network",
 			},
 			"netmask": &schema.Schema{
@@ -64,8 +63,6 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 			"dns1": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
-				ForceNew:     true,
-				Default:      "8.8.8.8",
 				Description:  "First DNS server to use",
 				ValidateFunc: validation.SingleIP(),
 			},
@@ -73,8 +70,6 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 			"dns2": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
-				ForceNew:     true,
-				Default:      "8.8.4.4",
 				Description:  "Second DNS server to use",
 				ValidateFunc: validation.SingleIP(),
 			},
@@ -82,7 +77,6 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 			"dns_suffix": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "A FQDN for the virtual machines on this network",
 			},
 
@@ -96,14 +90,12 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				ForceNew:    true,
 				Description: "Defines if this network is shared between multiple VDCs in the Org",
 			},
 
 			"dhcp_pool": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "A range of IPs to issue to virtual machines that don't have a static IP",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -141,7 +133,6 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 			"static_ip_pool": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "A range of IPs permitted to be used as static IPs for virtual machines",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -179,6 +170,9 @@ func resourceVcdNetworkIsolatedCreate(d *schema.ResourceData, meta interface{}) 
 	netMask := d.Get("netmask").(string)
 	dns1 := d.Get("dns1").(string)
 	dns2 := d.Get("dns2").(string)
+	if dns1 == "" {
+		dns1 = gatewayName
+	}
 
 	ipRanges, err := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
 	if err != nil {
@@ -246,12 +240,6 @@ func resourceVcdNetworkIsolatedCreate(d *schema.ResourceData, meta interface{}) 
 	if err != nil {
 		return fmt.Errorf("error: %s", err)
 	}
-
-	network, err := vdc.GetOrgVdcNetworkByName(networkName, true)
-	if err != nil {
-		return fmt.Errorf("error retrieving network %s after creation", networkName)
-	}
-	d.SetId(network.OrgVDCNetwork.ID)
 
 	return resourceVcdNetworkIsolatedRead(d, meta)
 }
@@ -386,4 +374,76 @@ func resourceVcdNetworkIsolatedImport(d *schema.ResourceData, meta interface{}) 
 	_ = d.Set("vdc", vdcName)
 	d.SetId(network.OrgVDCNetwork.ID)
 	return []*schema.ResourceData{d}, nil
+}
+
+func resourceVcdNetworkIsolatedUpdate(d *schema.ResourceData, meta interface{}) error {
+	var (
+		vcdClient          = meta.(*VCDClient)
+		networkName        = d.Get("name").(string)
+		networkDescription = d.Get("description").(string)
+		isShared           = d.Get("shared").(bool)
+		dns1               = d.Get("dns1").(string)
+		dns2               = d.Get("dns2").(string)
+		dnsSuffix          = d.Get("dns_suffix").(string)
+		dhcpPool           = d.Get("dhcp_pool").(*schema.Set).List()
+		identifier         = d.Id()
+		ipRanges           types.IPRanges
+		dhcpPoolService    []*types.DhcpPoolService
+	)
+
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	if err != nil {
+		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	}
+
+	if identifier == "" {
+		identifier = networkName
+	}
+
+	network, err := vdc.GetOrgVdcNetworkByNameOrId(identifier, false)
+	if err != nil {
+		return fmt.Errorf("[network isolated update] error looking for %s: %s", identifier, err)
+	}
+
+	if d.HasChange("static_ip_pool") {
+		ipRanges, err = expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
+		if err != nil {
+			return fmt.Errorf("[independent network update] error expanding static IP pool: %s", err)
+		}
+		network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].IPRanges = &ipRanges
+	}
+
+	if d.HasChange("dhcp_pool") {
+		if len(dhcpPool) > 0 {
+			for _, pool := range dhcpPool {
+
+				poolMap := pool.(map[string]interface{})
+
+				var poolService types.DhcpPoolService
+
+				poolService.IsEnabled = true
+				poolService.DefaultLeaseTime = poolMap["default_lease_time"].(int)
+				poolService.MaxLeaseTime = poolMap["max_lease_time"].(int)
+				poolService.LowIPAddress = poolMap["start_address"].(string)
+				poolService.HighIPAddress = poolMap["end_address"].(string)
+				dhcpPoolService = append(dhcpPoolService, &poolService)
+			}
+			network.OrgVDCNetwork.ServiceConfig.GatewayDhcpService.Pool = dhcpPoolService
+		}
+	}
+
+	network.OrgVDCNetwork.Name = networkName
+	network.OrgVDCNetwork.Description = networkDescription
+	network.OrgVDCNetwork.IsShared = isShared
+
+	network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].DNS1 = dns1
+	network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].DNS2 = dns2
+	network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].DNS2 = dnsSuffix
+
+	err = network.Update()
+	if err != nil {
+		return fmt.Errorf("error updating isolated network: %s", err)
+	}
+
+	return resourceVcdNetworkIsolatedRead(d, meta)
 }

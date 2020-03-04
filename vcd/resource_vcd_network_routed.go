@@ -19,6 +19,7 @@ func resourceVcdNetworkRouted() *schema.Resource {
 		Create: resourceVcdNetworkRoutedCreate,
 		Read:   resourceVcdNetworkRoutedRead,
 		Delete: resourceVcdNetworkDeleteLocked,
+		Update: resourceVcdNetworkRoutedUpdate,
 		Importer: &schema.ResourceImporter{
 			State: resourceVcdNetworkRoutedImport,
 		},
@@ -26,7 +27,6 @@ func resourceVcdNetworkRouted() *schema.Resource {
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "A unique name for the network",
 			},
 			"org": {
@@ -53,7 +53,6 @@ func resourceVcdNetworkRouted() *schema.Resource {
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional description for the network",
 			},
 
@@ -88,8 +87,6 @@ func resourceVcdNetworkRouted() *schema.Resource {
 			"dns1": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
-				ForceNew:     true,
-				Default:      "8.8.8.8",
 				Description:  "First DNS server to use",
 				ValidateFunc: validation.SingleIP(),
 			},
@@ -97,8 +94,6 @@ func resourceVcdNetworkRouted() *schema.Resource {
 			"dns2": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
-				ForceNew:     true,
-				Default:      "8.8.4.4",
 				Description:  "Second DNS server to use",
 				ValidateFunc: validation.SingleIP(),
 			},
@@ -106,15 +101,12 @@ func resourceVcdNetworkRouted() *schema.Resource {
 			"dns_suffix": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "A FQDN for the virtual machines on this network",
 			},
 
 			"href": &schema.Schema{
 				Type:        schema.TypeString,
-				Optional:    true,
 				Computed:    true,
-				ForceNew:    true,
 				Description: "Network Hypertext Reference",
 			},
 
@@ -122,14 +114,12 @@ func resourceVcdNetworkRouted() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				ForceNew:    true,
 				Description: "Defines if this network is shared between multiple VDCs in the Org",
 			},
 
 			"dhcp_pool": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "A range of IPs to issue to virtual machines that don't have a static IP",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -148,19 +138,19 @@ func resourceVcdNetworkRouted() *schema.Resource {
 						},
 
 						"default_lease_time": &schema.Schema{
-							Type:             schema.TypeInt,
-							Removed:          "vCD doesn't process this input. It sets the value to max_lease_time",
-							Default:          3600,
-							Optional:         true,
-							DiffSuppressFunc: suppressAlways(),
-							Description:      "The default DHCP lease time to use",
+							Type: schema.TypeInt,
+							//Removed:          "vCD doesn't process this input. It sets the value to max_lease_time",
+							Default:  3600,
+							Optional: true,
+							// DiffSuppressFunc: suppressAlways(),
+							Description: "The default DHCP lease time to use",
 						},
 
 						"max_lease_time": &schema.Schema{
 							Type:        schema.TypeInt,
 							Default:     7200,
 							Optional:    true,
-							Description: "HThe maximum DHCP lease time to use",
+							Description: "The maximum DHCP lease time to use",
 						},
 					},
 				},
@@ -169,7 +159,6 @@ func resourceVcdNetworkRouted() *schema.Resource {
 			"static_ip_pool": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "A range of IPs permitted to be used as static IPs for virtual machines",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -453,8 +442,8 @@ func getDhcpFromEdgeGateway(networkHref string, edgeGateway *govcd.EdgeGateway) 
 			dhcpRec := map[string]interface{}{
 				"start_address":      dhcp.LowIPAddress,
 				"end_address":        dhcp.HighIPAddress,
-				"default_lease_time": dhcp.MaxLeaseTime,
 				"max_lease_time":     dhcp.MaxLeaseTime,
+				"default_lease_time": dhcp.DefaultLeaseTime,
 			}
 			dhcpConfig = append(dhcpConfig, dhcpRec)
 		}
@@ -548,4 +537,80 @@ func resourceVcdNetworkRoutedImport(d *schema.ResourceData, meta interface{}) ([
 	d.SetId(network.OrgVDCNetwork.ID)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func resourceVcdNetworkRoutedUpdate(d *schema.ResourceData, meta interface{}) error {
+	vcdClient := meta.(*VCDClient)
+	vcdClient.lockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
+
+	networkName := d.Get("name").(string)
+	description := d.Get("description").(string)
+	dns1 := d.Get("dns1").(string)
+	dns2 := d.Get("dns2").(string)
+	dnsSuffix := d.Get("dns_suffix").(string)
+	isShared := d.Get("shared").(bool)
+	networkInterface := d.Get("interface_type").(string)
+
+	identifier := d.Id()
+	if identifier == "" {
+		identifier = networkName
+	}
+	//network, err := vdc.GetOrgVdcNetworkByNameOrId(identifier, false)
+	network, err := getNetwork(d, vcdClient)
+	if err != nil {
+		return fmt.Errorf("[network routed update] error getting network %s: %s", identifier, err)
+	}
+	network.OrgVDCNetwork.Name = networkName
+	network.OrgVDCNetwork.Description = description
+	network.OrgVDCNetwork.IsShared = d.Get("shared").(bool)
+	ipRanges, err := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
+	if err != nil {
+		return err
+	}
+
+	trueValue := true
+	switch strings.ToLower(networkInterface) {
+	case "internal":
+		// default: no configuration is needed
+		network.OrgVDCNetwork.Configuration.SubInterface = nil
+	case "subinterface":
+		network.OrgVDCNetwork.Configuration.SubInterface = &trueValue
+	case "distributed":
+		network.OrgVDCNetwork.Configuration.DistributedInterface = &trueValue
+	}
+	network.OrgVDCNetwork.IsShared = isShared
+	network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].DNS1 = dns1
+	network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].DNS2 = dns2
+	network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].DNSSuffix = dnsSuffix
+	network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].IPRanges = &ipRanges
+
+	err = network.Update()
+	if err != nil {
+		return fmt.Errorf("[network routed update] error updating network %s: %s", network.OrgVDCNetwork.Name, err)
+	}
+	if d.HasChange("dhcp_pool") {
+		_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		}
+		edgeGatewayName := d.Get("edge_gateway").(string)
+		edgeGateway, err := vdc.GetEdgeGatewayByName(edgeGatewayName, false)
+		if err != nil {
+			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
+		}
+		if dhcp, ok := d.GetOk("dhcp_pool"); ok {
+			task, err := edgeGateway.AddDhcpPool(network.OrgVDCNetwork, dhcp.(*schema.Set).List())
+			if err != nil {
+				return fmt.Errorf("error updating DHCP pool: %s", err)
+			}
+
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				return fmt.Errorf(errorCompletingTask, err)
+			}
+		}
+	}
+
+	return resourceVcdNetworkRoutedRead(d, meta)
 }

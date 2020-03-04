@@ -9,9 +9,12 @@ IMPROVEMENTS:
 
 * `vcd_vapp_vm` `disk` has new attribute `size_in_mb` [#433]
 * `resource/vcd_org` and `datasource/vcd_org` include a section `vapp_lease` and a section `vapp_template_lease` to define lease related parameters of depending entities - [GH-432]
+* `resource/vcd_network_routed`, `resource/vcd_network_direct`, and `resource/vcd_network_isolated` now support in place updates.
 
 BUG FIXES:
 Fix `vcd_vapp_vm` resource read - independent disks where losing `bus_number` and `unit_number` values after refresh. [#433]
+Fix `external_network_gateway` not filled in `datasource vcd_network_direct` [#450]
+
 
 NOTES:
 * Drop support for vCD 9.0

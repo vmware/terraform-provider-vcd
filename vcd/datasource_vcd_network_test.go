@@ -134,6 +134,13 @@ func TestAccVcdNetworkDirectDS(t *testing.T) {
 	configText := templateFill(template, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
+	externalNetworkGateway := ""
+	if data.network.Configuration != nil &&
+		data.network.Configuration.IPScopes != nil &&
+		len(data.network.Configuration.IPScopes.IPScope) > 0 {
+		externalNetworkGateway = data.network.Configuration.IPScopes.IPScope[0].Gateway
+	}
+
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -147,6 +154,7 @@ func TestAccVcdNetworkDirectDS(t *testing.T) {
 					resource.TestCheckOutput("network_name", data.network.Name),
 					resource.TestCheckOutput("network_description", data.network.Description),
 					resource.TestCheckOutput("external_network", data.parent),
+					resource.TestCheckOutput("external_network_gateway", externalNetworkGateway),
 				),
 			},
 		},
@@ -294,6 +302,10 @@ output "network_vdc" {
 
 output "external_network" {
   value = data.vcd_network_direct.{{.NetworkName}}.external_network
+}
+
+output "external_network_gateway" {
+  value = data.vcd_network_direct.{{.NetworkName}}.external_network_gateway
 }
 `
 
