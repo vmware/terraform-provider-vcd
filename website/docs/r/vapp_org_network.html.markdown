@@ -20,6 +20,7 @@ resource "vcd_vapp_org_network" "vappOrgNet" {
   vdc = "my-vdc" # Optional
 
   vapp_name         = "my-vapp"
+
  # Comment below line to create an isolated vApp network
   org_network_name  = "my-org-network"
 }
