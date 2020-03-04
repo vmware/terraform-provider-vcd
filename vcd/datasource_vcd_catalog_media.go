@@ -6,7 +6,7 @@ import (
 
 func datasourceVcdCatalogMedia() *schema.Resource {
 	return &schema.Resource{
-		Read: resourceVcdMediaRead,
+		Read: dataSourceVcdMediaRead,
 
 		Schema: map[string]*schema.Schema{
 			"org": {
@@ -73,4 +73,8 @@ func datasourceVcdCatalogMedia() *schema.Resource {
 			},
 		},
 	}
+}
+
+func dataSourceVcdMediaRead(d *schema.ResourceData, meta interface{}) error {
+	return genericVcdMediaRead(d, meta, "datasource")
 }

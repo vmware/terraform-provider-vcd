@@ -303,6 +303,10 @@ func getDhcpRelayAgentsType(relayAgentsSet *schema.Set, edge *govcd.EdgeGateway)
 // setDhcpRelayServerData sets DHCP relay server related fields into statefile
 func setDhcpRelayServerData(d *schema.ResourceData, edgeRelay *types.EdgeDhcpRelay, edge *govcd.EdgeGateway, vdc *govcd.Vdc) error {
 	relayServer := edgeRelay.RelayServer
+	// If relay server has no config - just return it empty
+	if relayServer == nil {
+		return nil
+	}
 
 	relayServerIpAddresses := convertToTypeSet(relayServer.IpAddress)
 	relayServerIpAddressesSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), relayServerIpAddresses)
@@ -335,6 +339,10 @@ func setDhcpRelayServerData(d *schema.ResourceData, edgeRelay *types.EdgeDhcpRel
 // setDhcpRelayAgentData sets DHCP relay agent related fields into statefile
 func setDhcpRelayAgentData(d *schema.ResourceData, edgeRelay *types.EdgeDhcpRelay, edge *govcd.EdgeGateway, vdc *govcd.Vdc) error {
 	relayAgents := edgeRelay.RelayAgents
+	// If there are no relay agents - just return it empty
+	if relayAgents == nil {
+		return nil
+	}
 
 	relayAgentSlice := make([]interface{}, len(relayAgents.Agents))
 
