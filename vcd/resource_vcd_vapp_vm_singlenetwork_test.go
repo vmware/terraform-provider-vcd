@@ -3,7 +3,6 @@
 package vcd
 
 import (
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -186,7 +185,7 @@ func TestAccVcdVAppVmSingleNIC(t *testing.T) {
 				Config: configTextStep10,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(netVappName, netVmNameBothNetworks, "vcd_vapp_vm."+netVmNameBothNetworks, &vapp, &vm),
-					resource.TestMatchResourceAttr("vcd_vapp_vm."+netVmNameBothNetworks, "ip", regexp.MustCompile(`^(?:11.10.0.152|11.10.0.2)$`)),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmNameBothNetworks, "ip", "11.10.0.152"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmNameBothNetworks, "mac"),
 				),
 			},
