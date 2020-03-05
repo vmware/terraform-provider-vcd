@@ -23,7 +23,7 @@ IMPROVEMENTS:
 * `datasource/*` - all data sources return an error when object is not found [GH-446]
 
 DEPRECATIONS:
-* `resource/vcd_vapp_vm` `network.name` deprecated attaching vApp Org network when `network.type=org` and doesn't exist. Requires to create/attach vApp network with `vcd_vapp_network` or `vcd_vapp_org_network` before referencing it.   
+* `resource/vcd_vapp_vm` `network.name` deprecated automatic attaching of vApp Org network when `network.type=org` and it doesn't exist. Requires to create/attach vApp network with `vcd_vapp_network` or `vcd_vapp_org_network` before referencing it.   
 
 BUG FIXES:
 
