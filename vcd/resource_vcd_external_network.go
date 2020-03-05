@@ -239,7 +239,7 @@ func getExternalNetworkInput(d *schema.ResourceData, vcdClient *VCDClient) (*typ
 		Name: d.Get("name").(string),
 		Configuration: &types.NetworkConfiguration{
 			Xmlns:                          types.XMLNamespaceVCloud,
-			RetainNetInfoAcrossDeployments: d.Get("retain_net_info_across_deployments").(bool),
+			RetainNetInfoAcrossDeployments: takeBoolPointer(d.Get("retain_net_info_across_deployments").(bool)),
 		},
 	}
 
