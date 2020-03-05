@@ -188,7 +188,7 @@ func datasourceVcdVAppVm() *schema.Resource {
 					"iops": {
 						Type:        schema.TypeInt,
 						Computed:    true,
-						Description: "Specifies the IOPS for the disk. Default - 0.",
+						Description: "Specifies the IOPS for the disk. Default is 0.",
 					},
 					"storage_profile": &schema.Schema{
 						Type:        schema.TypeString,
