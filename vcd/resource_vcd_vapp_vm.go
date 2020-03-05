@@ -1899,12 +1899,10 @@ func updateGuestCustomizationSetting(d *schema.ResourceData, vm *govcd.VM) error
 	if len(customizationSlice) == 1 {
 		cust := customizationSlice[0]
 		if cust != nil {
-			// customBlock := cust.(map[string]interface{})
 
 			// Only react to "enabled" field when legacy `initscript` is not specified. Legacy behavior is such that when `initscript`
 			// is specified - guest customization is enabled by default therefore we ignore "enabled" field
 			if _, isSetDeprecatedInitScript := d.GetOk("initscript"); !isSetDeprecatedInitScript {
-				// if enabled, isEnabled := customBlock["enabled"]; isEnabled {
 				if enabled, isSetEnabled := d.GetOkExists("customization.0.enabled"); isSetEnabled {
 					customizationSection.Enabled = takeBoolPointer(enabled.(bool))
 				}
