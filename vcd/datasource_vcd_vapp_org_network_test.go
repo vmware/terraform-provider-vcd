@@ -4,8 +4,9 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 )
@@ -51,7 +52,6 @@ func TestAccVcdVappOrgNetworkDS(t *testing.T) {
 	var params = StringMap{
 		"Org":                testConfig.VCD.Org,
 		"Vdc":                testConfig.VCD.Vdc,
-		"resourceName":       resourceName,
 		"vappName":           vapp.VApp.Name,
 		"orgNetwork":         data.network.Name,
 		"firewallEnabled":    fwEnabled,
