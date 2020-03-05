@@ -11,107 +11,126 @@ description: |-
 Provides a vCloud Director VM resource. This can be used to create,
 modify, and delete VMs within a vApp.
 
-~> **Note:** To make sure resources are created in the right order and both plan apply and destroy succeeds, use the `depends_on` clause (see example below)
-
-
 ## Example Usage
 
 ```hcl
-resource "vcd_network_direct" "net" {
+# System administrator rights are required to connect external network
+resource "vcd_network_direct" "direct-external" {
   name             = "net"
-  external_network = "corp-network"
+  external_network = "my-ext-net"
 }
-
+​
 resource "vcd_vapp" "web" {
   name = "web"
-
-  depends_on = ["vcd_network_direct.net"]
 }
-
+​
+resource "vcd_vapp_org_network" "routed-net" {
+  vapp_name        = vcd_vapp.web.name
+  org_network_name = "my-vdc-int-net"
+}
+​
+resource "vcd_vapp_org_network" "direct-net" {
+  vapp_name        = vcd_vapp.web.name
+  org_network_name = vcd_network_direct.direct-external.name
+}
+​
+resource "vcd_vapp_network" "vapp-net" {
+  name               = "my-vapp-net"
+  vapp_name          = vcd_vapp.web.name
+  gateway            = "192.168.2.1"
+  netmask            = "255.255.255.0"
+  dns1               = "192.168.2.1"
+  dns2               = "192.168.2.2"
+  dns_suffix         = "mybiz.biz"
+  guest_vlan_allowed = true
+​
+  static_ip_pool {
+    start_address = "192.168.2.51"
+    end_address   = "192.168.2.100"
+  }
+​
+}
+​
 resource "vcd_vapp_vm" "web1" {
-  vapp_name     = "${vcd_vapp.web.name}"
+  vapp_name     = vcd_vapp.web.name
   name          = "web1"
-  catalog_name  = "Boxes"
-  template_name = "lampstack-1.10.1-ubuntu-10.04"
-  memory        = 2048
+  catalog_name  = "my-catalog"
+  template_name = "photon-os"
+  memory        = 1024
   cpus          = 2
   cpu_cores     = 1
-
+​
   metadata = {
     role    = "web"
     env     = "staging"
     version = "v1"
     my_key  = "my value"
   }
-
+​
   guest_properties = {
     "guest.hostname"   = "my-host"
     "another.var.name" = "var-value"
   }
-
+​
   network {
     type               = "org"
-    name               = "net"
-    ip                 = "10.10.104.161"
-    ip_allocation_mode = "MANUAL"
+    name               = vcd_vapp_org_network.direct-net.org_network_name
+    ip_allocation_mode = "POOL"
     is_primary         = true
   }
-
-  depends_on = ["vcd_vapp.web"]
 }
 
+resource "vcd_independent_disk" "disk1" {
+  name         = "logDisk"
+  size         = "512"
+  bus_type     = "SCSI"
+  bus_sub_type = "VirtualSCSI"
+}
+​
 resource "vcd_vapp_vm" "web2" {
-  vapp_name     = "${vcd_vapp.web.name}"
+  vapp_name     = vcd_vapp.web.name
   name          = "web2"
-  catalog_name  = "Boxes"
-  template_name = "lampstack-1.10.1-ubuntu-10.04"
-  memory        = 2048
+  catalog_name  = "my-catalog"
+  template_name = "photon-os"
+  memory        = 1024
   cpus          = 1
-
+​
   metadata = {
     role    = "web"
     env     = "staging"
     version = "v1"
     my_key  = "my value"
   }
-
-  network {
-    type               = "org"
-    name               = "net"
-    ip                 = "10.10.104.162"
-    ip_allocation_mode = "MANUAL"
-    is_primary         = true
-  }
-
-  network {
-    type               = "vapp"
-    name               = "vapp-network"
-    ip_allocation_mode = "POOL"
-  }
-
-  network {
-    type               = "none"
-    ip_allocation_mode = "NONE"
-  }
-
-  disk {
-    name        = "logDisk1"
-    bus_number  = 1
-    unit_number = 0
-  }
-
-  disk {
-    name        = "logDisk2"
-    bus_number  = 1
-    unit_number = 1
-  }
-
+​
   guest_properties = {
     "guest.hostname" = "my-hostname"
     "guest.other"    = "another-setting"
   }
-
-  depends_on = ["vcd_vapp.web"]
+​
+  network {
+    type               = "org"
+    name               = vcd_vapp_org_network.routed-net.org_network_name
+    ip_allocation_mode = "POOL"
+    is_primary         = true
+  }
+​
+  network {
+    type               = "vapp"
+    name               = vcd_vapp_network.vapp-net.name
+    ip_allocation_mode = "POOL"
+  }
+​
+  network {
+    type               = "none"
+    ip_allocation_mode = "NONE"
+  }
+​
+  disk {
+    name        = vcd_independent_disk.disk1.name
+    bus_number  = 1
+    unit_number = 0
+  }
+​
 }
 ```
 
@@ -231,8 +250,8 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
 
 ## Network
 
-* `type` (Required) Network type, one of: `none`, `vapp` or `org`. `none` creates a NIC with no network attached, `vapp` attaches a vApp network, while `org` attaches organization VDC network.
-* `name` (Optional) Name of the network this VM should connect to. Always required except for `type` `NONE`.
+* `type` (Required) Network type, one of: `none`, `vapp` or `org`. `none` creates a NIC with no network attached. `vapp` requires `name` of existing vApp network (created with `vcd_vapp_network`). `org` requires attached vApp Org network `name` (attached with `vcd_vapp_org_network`).
+* `name` (Optional) Name of the network this VM should connect to. Always required except for `type` `NONE`. 
 * `is_primary` (Optional) Set to true if network interface should be primary. First network card in the list will be primary by default.
 * `mac` - (Computed) Mac address of network interface.
 * `adapter_type` - (Optional, Computed) Adapter type (names are case insensitive). Some known adapter types - `VMXNET3`,
@@ -286,7 +305,7 @@ Changes are ignored on update. This part isn't reread on refresh. To manage inte
 * `size_in_mb` - (Required) The size of the disk in MB. 
 * `bus_number` - (Required) The number of the SCSI or IDE controller itself.
 * `unit_number` - (Required) The device number on the SCSI or IDE controller of the disk.
-* `iops` - (Optional) Specifies the IOPS for the disk. Default - 0.
+* `iops` - (Optional) Specifies the IOPS for the disk. Default is 0.
 * `storage_profile` - (Optional) Storage profile which overrides the VM default one.
 
 
@@ -414,7 +433,7 @@ The following additional attributes are exported:
 * `bus_number` - (*v2.7+*) The number of the SCSI or IDE controller itself.
 * `unit_number` - (*v2.7+*) The device number on the SCSI or IDE controller of the disk.
 * `thin_provisioned` - (*v2.7+*) Specifies whether the disk storage is pre-allocated or allocated on demand.
-* `iops` - (*v2.7+*) Specifies the IOPS for the disk. Default - 0.
+* `iops` - (*v2.7+*) Specifies the IOPS for the disk. Default is 0.
 * `storage_profile` - (*v2.7+*) Storage profile which overrides the VM default one.
 
 

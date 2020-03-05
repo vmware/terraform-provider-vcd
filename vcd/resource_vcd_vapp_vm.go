@@ -290,7 +290,7 @@ var vappVmSchema = map[string]*schema.Schema{
 				Type:        schema.TypeInt,
 				ForceNew:    true,
 				Optional:    true,
-				Description: "Specifies the IOPS for the disk. Default - 0.",
+				Description: "Specifies the IOPS for the disk. Default is 0.",
 			},
 			"storage_profile": &schema.Schema{
 				Type:        schema.TypeString,
@@ -338,7 +338,7 @@ var vappVmSchema = map[string]*schema.Schema{
 			"iops": {
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "Specifies the IOPS for the disk. Default - 0.",
+				Description: "Specifies the IOPS for the disk. Default is 0.",
 			},
 			"storage_profile": &schema.Schema{
 				Type:        schema.TypeString,
@@ -652,6 +652,9 @@ func addVdcNetwork(networkNameToAdd string, vdc *govcd.Vdc, vapp govcd.VApp, vcd
 	}
 
 	if !isAlreadyVappNetwork {
+		// TODO remove when major release is done
+		_, _ = fmt.Fprintf(getTerraformStdout(), "DEPRECATED: attaching an Org network `%s` to a vApp `%s` through VM's network block alone is deprecated. "+
+			"Network should be first attached to a vApp by creating a `vcd_vapp_org_network` resource and only then referenced in the network block. \n", networkNameToAdd, vapp.VApp.Name)
 		task, err := vapp.AddRAWNetworkConfig([]*types.OrgVDCNetwork{vdcNetwork})
 		if err != nil {
 			return &types.OrgVDCNetwork{}, fmt.Errorf("error assigning network to vApp: %s", err)
@@ -683,7 +686,7 @@ func isItVappNetwork(vAppNetworkName string, vapp govcd.VApp) (bool, error) {
 		}
 	}
 
-	return false, fmt.Errorf("configured vApp network isn't found: %s", err)
+	return false, fmt.Errorf("configured vApp network isn't found: %s", vAppNetworkName)
 }
 
 type diskParams struct {

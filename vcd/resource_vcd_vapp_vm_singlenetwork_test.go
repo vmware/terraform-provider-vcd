@@ -303,7 +303,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 	cpus              = 2
 	cpu_cores         = 2
 	power_on          = "false"
-	vapp_network_name = vcd_vapp_network.vappNet.id
+	vapp_network_name = vcd_vapp_network.vappNet.name
 	ip                = "allocated"
   }  
 `
@@ -323,7 +323,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 	cpu_cores         = 2
 	power_on          = "false"
 	network_name      = vcd_network_routed.net.name
-	vapp_network_name = vcd_vapp_network.vappNet.id
+	vapp_network_name = vcd_vapp_network.vappNet.name
 	ip                = "allocated"
   }  
 `

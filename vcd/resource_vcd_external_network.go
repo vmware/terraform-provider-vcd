@@ -235,11 +235,12 @@ func resourceVcdExternalNetworkDelete(d *schema.ResourceData, meta interface{}) 
 // getExternalNetworkInput is an helper for transforming the resource input into the ExternalNetwork structure
 // any cast operations or default values should be done here so that the create method is simple
 func getExternalNetworkInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.ExternalNetwork, error) {
+	retainInfo := d.Get("retain_net_info_across_deployments").(bool)
 	params := &types.ExternalNetwork{
 		Name: d.Get("name").(string),
 		Configuration: &types.NetworkConfiguration{
 			Xmlns:                          types.XMLNamespaceVCloud,
-			RetainNetInfoAcrossDeployments: takeBoolPointer(d.Get("retain_net_info_across_deployments").(bool)),
+			RetainNetInfoAcrossDeployments: &retainInfo,
 		},
 	}
 

@@ -8,6 +8,10 @@ FEATURES:
 * `vcd_org_vdc` can be created with Flex allocation in vCD 9.7 and later. Also two new fields added for Flex - `elasticity`, `include_vm_memory_overhead` [GH-443]
 * `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` get optional `network_dhcp_wait_seconds` field
   to ensure `ip` is reported when `ip_allocation_mode=DHCP` is used [GH-436]
+* **New Resource:** `vcd_vapp_org_network` vApp organization network [GH-455]
+* `vcd_vapp_network` supports isolated network and vApp network connected to Org VDC networks [GH-455]
+* **New Data Source:** `vcd_vapp_org_network` vApp org network [GH-455]
+* **New Data Source:** `vcd_vapp_network` vApp network [GH-455]
 * `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` `customization` block supports all available features [GH-462]
 
 IMPROVEMENTS:
@@ -18,6 +22,9 @@ IMPROVEMENTS:
   defintion to specify NIC type - [GH-441]
 * `vcd_vapp_vm` `disk` has new attribute `size_in_mb` [GH-433]
 * `datasource/*` - all data sources return an error when object is not found [GH-446]
+
+DEPRECATIONS:
+* `resource/vcd_vapp_vm` `network.name` deprecated automatic attaching of vApp Org network when `network.type=org` and it doesn't exist. Requires to create/attach vApp Org network with `vcd_vapp_org_network` before referencing it.   
 
 BUG FIXES:
 
