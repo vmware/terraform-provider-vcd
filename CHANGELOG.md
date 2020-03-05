@@ -22,6 +22,10 @@ IMPROVEMENTS:
 * `vcd_vapp_vm` `disk` has new attribute `size_in_mb` [GH-433]
 * `datasource/*` - all data sources return an error when object is not found [GH-446]
 
+DEPRECATIONS:
+* `resource/vcd_vapp_vm` `network.name` deprecated creation/attaching vApp network when doesn't exist. Requires to create/attach 
+ vApp network with `vcd_vapp_network` or `vcd_vapp_org_network` before referencing it.   
+
 BUG FIXES:
 
 * fix `vcd_vapp_vm` resource read - independent disks where losing `bus_number` and `unit_number` values after refresh. [GH-433]
