@@ -210,7 +210,7 @@ type NetworkConfiguration struct {
 	IPScopes                       *IPScopes        `xml:"IpScopes,omitempty"`
 	ParentNetwork                  *Reference       `xml:"ParentNetwork,omitempty"`
 	FenceMode                      string           `xml:"FenceMode"`
-	RetainNetInfoAcrossDeployments bool             `xml:"RetainNetInfoAcrossDeployments,omitempty"`
+	RetainNetInfoAcrossDeployments *bool            `xml:"RetainNetInfoAcrossDeployments,omitempty"`
 	Features                       *NetworkFeatures `xml:"Features,omitempty"`
 	GuestVlanAllowed               *bool            `xml:"GuestVlanAllowed,omitempty"`
 
@@ -1367,6 +1367,10 @@ type VM struct {
 	// Environment OVF_Environment `xml:"Environment,omitempty"
 
 	VmSpecSection *VmSpecSection `xml:"VmSpecSection,omitempty"`
+
+	// GuestCustomizationSection contains settings for VM customization like admin password, SID
+	// changes, domain join configuration, etc
+	GuestCustomizationSection *GuestCustomizationSection `xml:"GuestCustomizationSection,omitempty"`
 
 	VMCapabilities *VMCapabilities `xml:"VmCapabilities,omitempty"` // Allows you to specify certain capabilities of this virtual machine.
 	StorageProfile *Reference      `xml:"StorageProfile,omitempty"` // A reference to a storage profile to be used for this object. The specified storage profile must exist in the organization vDC that contains the object. If not specified, the default storage profile for the vDC is used.
