@@ -207,6 +207,95 @@ func datasourceVcdVAppVm() *schema.Resource {
 				Computed:    true,
 				Description: "Key/value settings for guest properties",
 			},
+
+			"customization": &schema.Schema{
+				Computed:    true,
+				MinItems:    1,
+				MaxItems:    1,
+				Type:        schema.TypeList,
+				Description: "Guest customization block",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"force": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "'true' value will cause the VM to reboot on every 'apply' operation",
+						},
+						"enabled": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "'true' value will enable guest customization. It may occur on first boot or when 'force' is used",
+						},
+						"change_sid": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "'true' value will change SID. Applicable only for Windows VMs",
+						},
+						"allow_local_admin_password": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Allow local administrator password",
+						},
+						"must_change_password_on_first_login": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Require Administrator to change password on first login",
+						},
+						"auto_generate_password": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Auto generate password",
+						},
+						"admin_password": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Sensitive:   true,
+							Description: "Manually specify admin password",
+						},
+						"number_of_auto_logons": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Number of times to log on automatically",
+						},
+						"join_domain": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Enable this VM to join a domain",
+						},
+						"join_org_domain": {
+							Type:        schema.TypeBool,
+							Computed:    true,
+							Description: "Use organization's domain for joining",
+						},
+						"join_domain_name": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Custom domain name for join",
+						},
+						"join_domain_user": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Username for custom domain name join",
+						},
+						"join_domain_password": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Sensitive:   true,
+							Description: "Password for custom domain name join",
+						},
+						"join_domain_account_ou": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Account organizational unit for domain name join",
+						},
+						"initscript": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Script to run on initial boot or with customization.force=true set",
+						},
+					},
+				},
+			},
 		},
 	}
 }
