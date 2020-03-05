@@ -128,13 +128,13 @@ func TestAccVcdVAppVmCreateCustomization(t *testing.T) {
 				// The plan should never be empty because force works as a flag and every update triggers "update"
 				ExpectNonEmptyPlan: true,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm2", &vapp, &vm),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm2", "name", netVmName1),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm2", "network.#", "0"),
+					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm", &vapp, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "name", netVmName1),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "network.#", "0"),
 
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm2", "customization.#", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.#", "1"),
 					// Always store 'customization.0.force=false' in statefile so that a diff is always triggered
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm2", "customization.0.force", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.force", "false"),
 				),
 			},
 		},
@@ -243,7 +243,7 @@ resource "vcd_vapp_vm" "test-vm" {
 
 const testAccCheckVcdVAppVmCreateCustomization = testAccCheckVcdVAppVmCustomizationShared + `
 {{.SkipTest}}
-resource "vcd_vapp_vm" "test-vm2" {
+resource "vcd_vapp_vm" "test-vm" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
@@ -300,8 +300,8 @@ func TestAccVcdVAppVmCreateCustomizationFalse(t *testing.T) {
 			resource.TestStep{
 				Config: configTextVM,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm2", &vapp, &vm),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm2", "name", netVmName1),
+					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm", &vapp, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "name", netVmName1),
 				),
 			},
 		},
