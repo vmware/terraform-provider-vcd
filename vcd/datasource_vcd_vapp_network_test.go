@@ -12,13 +12,7 @@ import (
 
 // TestAccVcdVappNetworkDS tests a vApp network data source if a vApp is found in the VDC
 func TestAccVcdVappNetworkDS(t *testing.T) {
-	vapp, err := getAvailableVapp()
-	if err != nil {
-		t.Skip("No suitable vApp found for this test")
-		return
-	}
-
-	err = getAvailableNetworks()
+	err := getAvailableNetworks()
 
 	if err != nil {
 		fmt.Printf("%s\n", err)
@@ -58,7 +52,7 @@ func TestAccVcdVappNetworkDS(t *testing.T) {
 	var params = StringMap{
 		"Org":                testConfig.VCD.Org,
 		"VDC":                testConfig.VCD.Vdc,
-		"vappName":           vapp.VApp.Name,
+		"vappName":           "TestAccVcdVappNetworkDS",
 		"FuncName":           "TestVappNetworkDS",
 		"vappNetworkName":    networkName,
 		"description":        description,
@@ -137,12 +131,18 @@ func testCheckVappNetworkNonStringOutputs(guestVlanAllowed, firewallEnabled, nat
 }
 
 const datasourceTestVappNetwork = `
+resource "vcd_vapp" "{{.vappName}}" {
+  name = "{{.vappName}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.VDC}}"
+}
+
 resource "vcd_vapp_network" "createdVappNetwork" {
   org                = "{{.Org}}"
   vdc                = "{{.VDC}}"
   name               = "{{.vappNetworkName}}"
   description        = "{{.description}}"
-  vapp_name          = "{{.vappName}}"
+  vapp_name          = vcd_vapp.{{.vappName}}.name
   gateway            = "{{.gateway}}"
   netmask            = "{{.netmask}}"
   dns1               = "{{.dns1}}"

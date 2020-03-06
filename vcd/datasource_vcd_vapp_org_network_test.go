@@ -20,13 +20,7 @@ func TestAccVcdVappOrgNetworkDS(t *testing.T) {
 		return
 	}
 
-	vapp, err := getAvailableVapp()
-	if err != nil {
-		t.Skip("No suitable vApp found for this test")
-		return
-	}
-
-	err = getAvailableNetworks()
+	err := getAvailableNetworks()
 
 	if err != nil {
 		fmt.Printf("%s\n", err)
@@ -52,7 +46,7 @@ func TestAccVcdVappOrgNetworkDS(t *testing.T) {
 	var params = StringMap{
 		"Org":                testConfig.VCD.Org,
 		"Vdc":                testConfig.VCD.Vdc,
-		"vappName":           vapp.VApp.Name,
+		"vappName":           "TestAccVcdVappOrgNetworkDS",
 		"orgNetwork":         data.network.Name,
 		"firewallEnabled":    fwEnabled,
 		"natEnabled":         natEnabled,
@@ -97,10 +91,16 @@ func testCheckVappOrgNetworkNonStringOutputs(firewallEnabled, natEnabled, retain
 }
 
 const datasourceTestVappOrgNetwork = `
+resource "vcd_vapp" "{{.vappName}}" {
+  name = "{{.vappName}}"
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+}
+
 resource "vcd_vapp_org_network" "createVappOrgNetwork" {
   org                = "{{.Org}}"
   vdc                = "{{.Vdc}}"
-  vapp_name          = "{{.vappName}}"
+  vapp_name          = vcd_vapp.{{.vappName}}.name
   org_network_name   = "{{.orgNetwork}}"
   
   is_fenced = "{{.isFenced}}"
