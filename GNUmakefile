@@ -40,6 +40,10 @@ test-binary-orguser: install
 test-upgrade:
 	@sh -c "'$(CURDIR)/scripts/test-upgrade.sh'"
 
+# makes .tf files from test templates for upgrade testing, but does not execute them
+test-upgrade-prepare:
+	@sh -c "skip_upgrade_execution=1 '$(CURDIR)/scripts/test-upgrade.sh'"
+
 # runs test using Terraform binary as system administrator using binary with race detection enabled
 test-binary: installrace
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider"

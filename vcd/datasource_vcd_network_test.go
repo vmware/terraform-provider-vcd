@@ -1,4 +1,4 @@
-// +build network ALL functional
+// +build network vm ALL functional
 
 package vcd
 

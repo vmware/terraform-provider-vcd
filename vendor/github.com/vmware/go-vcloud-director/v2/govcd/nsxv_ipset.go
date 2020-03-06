@@ -20,7 +20,7 @@ func (vdc *Vdc) CreateNsxvIpSet(ipSetConfig *types.EdgeIpSet) (*types.EdgeIpSet,
 		return nil, err
 	}
 
-	vdcId, err := getUuidFromHref(vdc.Vdc.HREF)
+	vdcId, err := GetUuidFromHref(vdc.Vdc.HREF, true)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get vdc ID from HREF: %s", err)
 	}
@@ -146,7 +146,7 @@ func (vdc *Vdc) GetNsxvIpSetByNameOrId(identifier string) (*types.EdgeIpSet, err
 // GetAllNsxvIpSets retrieves all IP sets and returns []*types.EdgeIpSet or an
 // error of type ErrorEntityNotFound if there are no IP sets
 func (vdc *Vdc) GetAllNsxvIpSets() ([]*types.EdgeIpSet, error) {
-	vdcId, err := getUuidFromHref(vdc.Vdc.HREF)
+	vdcId, err := GetUuidFromHref(vdc.Vdc.HREF, true)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get vdc ID from HREF: %s", err)
 	}
