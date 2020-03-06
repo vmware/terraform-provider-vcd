@@ -8,17 +8,16 @@ description: |-
 
 # vcd\_vapp
 
-Provides a vCloud Director vApp resource. This can be used to create,
-modify, and delete vApps.
+Provides a vCloud Director vApp resource. This can be used to create, modify, and delete vApps.
 
-## Example Usage
+## Example of vApp with 2 VMs
 
 Example with more than one VM under a vApp.
 
 ```hcl
-resource "vcd_network_direct" "net" {
+resource "vcd_network_direct" "direct-network" {
   name             = "net"
-  external_network = "corp-network"
+  external_network = "my-ext-net"
 }
 
 resource "vcd_vapp" "web" {
@@ -27,85 +26,56 @@ resource "vcd_vapp" "web" {
   metadata = {
     CostAccount = "Marketing Department"
   }
+}
 
-  depends_on = ["vcd_network_direct.net"]
+resource "vcd_vapp_org_network" "direct-network" {
+  vapp_name         = vcd_vapp.web.name
+  org_network_name  = vcd_network_direct.direct-network.name
 }
 
 resource "vcd_vapp_vm" "web1" {
-  vapp_name     = "${vcd_vapp.web.name}"
+  vapp_name     = vcd_vapp.web.name
   name          = "web1"
-  catalog_name  = "Boxes"
-  template_name = "lampstack-1.10.1-ubuntu-10.04"
+
+  catalog_name  = "my-catalog"
+  template_name = "photon-os"
+
   memory        = 2048
   cpus          = 1
 
-  network_name = "net"
-  ip           = "10.10.104.161"
+  network {
+    type               = "org"
+    name               = vcd_vapp_org_network.direct-network.org_network_name
+    ip_allocation_mode = "POOL"
+  }
 
   guest_properties = {
     "vapp.property1"   = "value1"
     "vapp.property2"   = "value2"
   }
-
-  depends_on = ["vcd_vapp.web"]
 }
 
 resource "vcd_vapp_vm" "web2" {
-  vapp_name     = "${vcd_vapp.web.name}"
+  vapp_name     = vcd_vapp.web.name
   name          = "web2"
-  catalog_name  = "Boxes"
-  template_name = "lampstack-1.10.1-ubuntu-10.04"
+
+  catalog_name  = "my-catalog"
+  template_name = "photon-os"
+
   memory        = 2048
   cpus          = 1
 
-  network_name = "net"
-  ip           = "10.10.104.162"
-
-  depends_on = ["vcd_vapp.web"]
-}
-```
-
-## Example of vApp with single VM
-
-**Not recommended in v2.0+** : in the earlier version of the provider it was possible to define a vApp with a single VM in one resource, but it is not recommended as of *v2.0+* provider. Please define vApp and VM in separate resources instead.
-The implicit inclusion of one VM in a vApp is **Deprecated in 2.5**
-
-```hcl
-resource "vcd_network_routed" "net" {
-  # ...
-}
-
-resource "vcd_vapp" "web" {
-  name          = "web"
-  catalog_name  = "Boxes"
-  template_name = "lampstack-1.10.1-ubuntu-10.04"
-  memory        = 2048
-  cpus          = 1
-
-  network_name = "${vcd_network.net.name}"
-  ip           = "10.10.104.160"
-
-  metadata = {
-    role    = "web"
-    env     = "staging"
-    version = "v1"
+  network {
+    type               = "org"
+    name               = vcd_vapp_org_network.direct-network.org_network_name
+    ip_allocation_mode = "POOL"
   }
-
-  ovf {
-    hostname = "web"
-  }
-
-  depends_on = ["vcd_network_routed.net"]
 }
 ```
 
 ## Example of Empty vApp with no VMs
 
 ```hcl
-resource "vcd_network_routed" "net" {
-  # ...
-}
-
 resource "vcd_vapp" "web" {
   name = "web"
 
@@ -113,8 +83,6 @@ resource "vcd_vapp" "web" {
     boss = "Why is this vApp empty?"
     john = "I don't really know. Maybe somebody did forget to clean it up."
   }
-
-  depends_on = ["vcd_network_routed.net"]
 }
 ```
 
