@@ -10,9 +10,9 @@ FEATURES:
 IMPROVEMENTS:
 
 * `vcd_vapp_network` supports isolated network and vApp network connected to Org VDC networks
-  [GH-455]
+  [GH-455,GH-468]
 * `vcd_vapp_network` does not default `dns1` and `dns2` fields to 8.8.8.8 and 8.8.4.4 respectively
-  [GH-455]
+  [GH-455,GH-468]
 * `vcd_org_vdc` can be created with Flex allocation in vCD 9.7 and later. Also two new fields added
   for Flex - `elasticity`, `include_vm_memory_overhead` [GH-443]
 * `resource/vcd_org` and `datasource/vcd_org` include a section `vapp_lease` and a section
