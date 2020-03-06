@@ -19,6 +19,10 @@ func TestAccVcdVappVmDS(t *testing.T) {
 		"Tags":        "vm",
 	}
 	configText := templateFill(datasourceTestVappVm, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.ParallelTest(t, resource.TestCase{
