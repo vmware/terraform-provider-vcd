@@ -13,7 +13,7 @@ IMPROVEMENTS:
   [GH-455,GH-468]
 * `vcd_vapp_network` does not default `dns1` and `dns2` fields to 8.8.8.8 and 8.8.4.4 respectively
   [GH-455,GH-468]
-* `vcd_org_vdc` can be created with Flex allocation in vCD 9.7 and later. Also two new fields added
+* `vcd_org_vdc` can be created with Flex allocation model in vCD 9.7 and later. Also two new fields added
   for Flex - `elasticity`, `include_vm_memory_overhead` [GH-443]
 * `resource/vcd_org` and `datasource/vcd_org` include a section `vapp_lease` and a section
   `vapp_template_lease` to define lease related parameters of depending entities - [GH-432]
@@ -44,7 +44,7 @@ BUG FIXES:
 * `resource/vcd_vapp_vm` `network` block changes caused MAC address changes in existing NICs
   [GH-436,GH-407]
 * Fix a potential data race in client connection caching when VCD_CACHE is enabled [GH-453]
-* `resource/vcd_vapp_vm` when customization.0.force=false crashes with interface {} is nil [GH-462]
+* `resource/vcd_vapp_vm` when `customization.0.force=false` crashes with `interface {} is nil` [GH-462]
 * `resource/vcd_vapp_vm` `customization.0.force=true` could have skipped "Forced customization" on
   each apply [GH-462]
 
@@ -55,7 +55,7 @@ NOTES:
 * `make seqtestacc` and `make test-binary` use `-race` flags for `go test` to check if there are no
   data races. Additionally GNUMakefile supports `make installrace` and `make buildrace` to build
   binary with race detection enabled. [GH-453]
-* Added `make test-upgrade-prepare` directive [GH-462]
+* Add `make test-upgrade-prepare` directive [GH-462]
 
 ## 2.6.0 (December 13, 2019)
 
