@@ -25,7 +25,7 @@ IMPROVEMENTS:
 * `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` include a field `adapter_type` in `network`
   definition to specify NIC type - [GH-441]
 * `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` `customization` block supports all available
-  features [GH-462]
+  features [GH-462, GH-469]
 * `datasource/*` - all data sources return an error when object is not found [GH-446]
 
 DEPRECATIONS:
