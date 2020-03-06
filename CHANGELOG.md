@@ -22,7 +22,7 @@ IMPROVEMENTS:
 * `resource/vcd_org` and `datasource/vcd_org` include a section `vapp_lease` and a section
   `vapp_template_lease` to define lease related parameters of depending entities - [GH-432]
 * `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` include a field `adapter_type` in `network`
-  defintion to specify NIC type - [GH-441]
+  definition to specify NIC type - [GH-441]
 * `vcd_vapp_vm` `disk` has new attribute `size_in_mb` [GH-433]
 * `datasource/*` - all data sources return an error when object is not found [GH-446]
 
