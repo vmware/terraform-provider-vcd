@@ -26,7 +26,7 @@ IMPROVEMENTS:
   definition to specify NIC type - [GH-441]
 * `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` `customization` block supports all available
   features [GH-462, GH-469]
-* `datasource/*` - all data sources return an error when object is not found [GH-446]
+* `datasource/*` - all data sources return an error when object is not found [GH-446, GH-470]
 
 DEPRECATIONS:
 * `resource/vcd_vapp_vm` `network.name` deprecates automatic attachment of vApp Org network when
