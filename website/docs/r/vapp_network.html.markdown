@@ -51,7 +51,7 @@ The following arguments are supported:
 * `description` - (Optional; *v2.7+*) Description of vApp network
 * `vapp_name` - (Required) The vApp this network belongs to.
 * `netmask` - (Optional) The netmask for the new network. Default is `255.255.255.0`.
-* `gateway` (Optional) The gateway for this network.
+* `gateway` (Required) The gateway for this network.
 * `dns1` - (Optional) First DNS server to use.
 * `dns2` - (Optional) Second DNS server to use.
 * `dns_suffix` - (Optional) A FQDN for the virtual machines on this network.

@@ -3,53 +3,59 @@
 FEATURES:
 
 * **New Resource:** `vcd_vm_internal_disk` VM internal disk configuration [GH-412]
-* `vcd_vapp_vm` Internal disks in VM template allows to be edited by `override_template_disk` field
-  [GH-412]
-* `vcd_org_vdc` can be created with Flex allocation in vCD 9.7 and later. Also two new fields added for Flex - `elasticity`, `include_vm_memory_overhead` [GH-443]
-* `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` get optional `network_dhcp_wait_seconds` field
-  to ensure `ip` is reported when `ip_allocation_mode=DHCP` is used [GH-436]
 * **New Resource:** `vcd_vapp_org_network` vApp organization network [GH-455]
-* `vcd_vapp_network` supports isolated network and vApp network connected to Org VDC networks [GH-455]
 * **New Data Source:** `vcd_vapp_org_network` vApp org network [GH-455]
 * **New Data Source:** `vcd_vapp_network` vApp network [GH-455]
-* `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` `customization` block supports all available features [GH-462]
 
 IMPROVEMENTS:
 
+* `vcd_vapp_network` supports isolated network and vApp network connected to Org VDC networks
+  [GH-455,GH-468]
+* `vcd_vapp_network` does not default `dns1` and `dns2` fields to 8.8.8.8 and 8.8.4.4 respectively
+  [GH-455,GH-468]
+* `vcd_org_vdc` can be created with Flex allocation model in vCD 9.7 and later. Also two new fields added
+  for Flex - `elasticity`, `include_vm_memory_overhead` [GH-443]
 * `resource/vcd_org` and `datasource/vcd_org` include a section `vapp_lease` and a section
   `vapp_template_lease` to define lease related parameters of depending entities - [GH-432]
-* `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` include a field `adapter_type` in `network`
-  defintion to specify NIC type - [GH-441]
+* `resource/vcd_vapp_vm` Internal disks in VM template can be edited by `override_template_disk`
+  field [GH-412]
 * `vcd_vapp_vm` `disk` has new attribute `size_in_mb` [GH-433]
-* `datasource/*` - all data sources return an error when object is not found [GH-446]
+* `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` get optional `network_dhcp_wait_seconds` field
+  to ensure `ip` is reported when `ip_allocation_mode=DHCP` is used [GH-436]
+* `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` include a field `adapter_type` in `network`
+  definition to specify NIC type - [GH-441]
+* `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` `customization` block supports all available
+  features [GH-462, GH-469]
+* `datasource/*` - all data sources return an error when object is not found [GH-446, GH-470]
 
 DEPRECATIONS:
-* `resource/vcd_vapp_vm` `network.name` deprecated automatic attaching of vApp Org network when `network.type=org` and it doesn't exist. Requires to create/attach vApp Org network with `vcd_vapp_org_network` before referencing it.   
+* `resource/vcd_vapp_vm` `network.name` deprecates automatic attachment of vApp Org network when
+  `network.type=org` and it is not attached with `vcd_vapp_org_network` before referencing it.
+  [GH-455]
+* `resource/vcd_vapp_vm` field `initscript` is now deprecated in favor of
+  `customization.0.initscript` to group all guest customization settings [GH-462]
 
 BUG FIXES:
 
-* fix `vcd_vapp_vm` resource read - independent disks where losing `bus_number` and `unit_number` values after refresh. [GH-433]
-* `datasource/vcd_nsxv_dhcp_relay` crashes if no DHCP relay settings are present in Edge Gateway [GH-446]
-* `vcd_vapp_vm` `disk` has new attribute `size_in_mb` [GH-433]
-* `resource/vcd_org` and `datasource/vcd_org` include a section `vapp_lease` and a section
-  `vapp_template_lease` to define lease related parameters of depending entities - [GH-432]
+* `resource/vcd_vapp_vm` read - independent disks where losing `bus_number` and `unit_number`
+  values after refresh [GH-433]
+* `datasource/vcd_nsxv_dhcp_relay` crashes if no DHCP relay settings are present in Edge Gateway
+  [GH-446]
 * `resource/vcd_vapp_vm` `network` block changes caused MAC address changes in existing NICs
   [GH-436,GH-407]
 * Fix a potential data race in client connection caching when VCD_CACHE is enabled [GH-453]
-* `resource/vcd_vapp_vm` when customization.0.force=false crashes with interface {} is nil [GH-462]
-* `resource/vcd_vapp_vm` `customization.0.force=true` could have skipped "Forced customization" on each apply [GH-462]
-
-DEPRECATIONS:
-
-* `resource/vcd_vapp_vm` field `initscript` is now deprecated in favor of `customization.0.initscript` [GH-462]
+* `resource/vcd_vapp_vm` when `customization.0.force=false` crashes with `interface {} is nil` [GH-462]
+* `resource/vcd_vapp_vm` `customization.0.force=true` could have skipped "Forced customization" on
+  each apply [GH-462]
 
 NOTES:
 
 * Drop support for vCD 9.0
 * Bump terraform-plugin-sdk to v1.5.0 [GH-442]
-* `make seqtestacc` and `make test-binary` use `-race` flags for `go test` to check if there are no data races.
- Additionally GNUMakefile supports `make installrace` and `make buildrace` to build binary with race detection enabled. [GH-453]
-* Added `make test-upgrade-prepare` directive [GH-462]
+* `make seqtestacc` and `make test-binary` use `-race` flags for `go test` to check if there are no
+  data races. Additionally GNUMakefile supports `make installrace` and `make buildrace` to build
+  binary with race detection enabled. [GH-453]
+* Add `make test-upgrade-prepare` directive [GH-462]
 
 ## 2.6.0 (December 13, 2019)
 

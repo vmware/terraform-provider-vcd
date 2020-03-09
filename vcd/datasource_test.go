@@ -29,6 +29,12 @@ func TestAccDataSourceNotFound(t *testing.T) {
 
 func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string) func(*testing.T) {
 	return func(t *testing.T) {
+
+		// Skip sub-test if conditions are not met
+		if dataSourceName == "vcd_external_network" && !usingSysAdmin() {
+			t.Skip(`Works only with system admin privileges`)
+		}
+
 		// Get list of mandatory fields in schema for a particular data source
 		mandatoryFields := getMandatoryDataSourceSchemaFields(dataSourceName)
 		mandatoryRuntimeFields := getMandatoryDataSourceRuntimeFields(dataSourceName)
