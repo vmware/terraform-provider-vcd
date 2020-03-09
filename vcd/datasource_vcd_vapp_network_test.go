@@ -53,7 +53,7 @@ func TestAccVcdVappNetworkDS(t *testing.T) {
 		"Org":                testConfig.VCD.Org,
 		"VDC":                testConfig.VCD.Vdc,
 		"vappName":           "TestAccVcdVappNetworkDS",
-		"FuncName":           "TestVappNetworkDS",
+		"FuncName":           "TestAccVcdVappNetworkDS",
 		"vappNetworkName":    networkName,
 		"description":        description,
 		"gateway":            gateway,

@@ -13,13 +13,6 @@ import (
 
 // TestAccVcdVappOrgNetworkDS tests a vApp org network data source if a vApp is found in the VDC
 func TestAccVcdVappOrgNetworkDS(t *testing.T) {
-	// This test requires access to the vCD before filling templates
-	// Thus it won't run in the short test
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
 	err := getAvailableNetworks()
 
 	if err != nil {
@@ -52,10 +45,15 @@ func TestAccVcdVappOrgNetworkDS(t *testing.T) {
 		"natEnabled":         natEnabled,
 		"retainIpMacEnabled": retainIpMacEnabled,
 		"isFenced":           "true",
-		"FuncName":           "TestVappOrgNetworkDS",
+		"FuncName":           "TestAccVcdVappOrgNetworkDS",
 	}
 	configText := templateFill(datasourceTestVappOrgNetwork, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },

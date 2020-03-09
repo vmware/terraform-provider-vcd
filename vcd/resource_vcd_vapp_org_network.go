@@ -300,7 +300,7 @@ func resourceVcdVappOrgNetworkImport(d *schema.ResourceData, meta interface{}) (
 	}
 
 	if vappNetworkToImport.Configuration.FenceMode == types.FenceModeIsolated ||
-		(vappNetworkToImport.Configuration.FenceMode == types.FenceModeNAT && vappNetworkToImport.Configuration.Features.DhcpService != nil) {
+		(vappNetworkToImport.Configuration.FenceMode == types.FenceModeNAT && vappNetworkToImport.Configuration.IPScopes.IPScope[0].IsInherited == false) {
 		return nil, fmt.Errorf("found vApp network, not vApp org network: %s", networkName)
 	}
 

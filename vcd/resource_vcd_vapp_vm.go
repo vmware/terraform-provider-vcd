@@ -668,8 +668,28 @@ func addVdcNetwork(networkNameToAdd string, vdc *govcd.Vdc, vapp govcd.VApp, vcd
 	return vdcNetwork, nil
 }
 
-// isItVappNetwork checks if it is a genuine vApp network (not only attached to vApp)
+// isItVappNetwork checks if it is a vApp network (not vApp Org Network)
 func isItVappNetwork(vAppNetworkName string, vapp govcd.VApp) (bool, error) {
+	vAppNetworkConfig, err := vapp.GetNetworkConfig()
+	if err != nil {
+		return false, fmt.Errorf("error getting vApp networks: %s", err)
+	}
+
+	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
+		if networkConfig.NetworkName == vAppNetworkName &&
+			networkConfig.Configuration.FenceMode == types.FenceModeIsolated ||
+			(networkConfig.Configuration.FenceMode == types.FenceModeNAT &&
+				networkConfig.Configuration.IPScopes.IPScope[0].IsInherited == false) {
+			log.Printf("[TRACE] vApp network found: %s", vAppNetworkName)
+			return true, nil
+		}
+	}
+
+	return false, fmt.Errorf("configured vApp network isn't found: %s", vAppNetworkName)
+}
+
+// isItIsolatedVappNetwork checks if it is a isolated vApp network (not only attached to vApp)
+func isItIsolatedVappNetwork(vAppNetworkName string, vapp govcd.VApp) (bool, error) {
 
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 	if err != nil {
@@ -1565,7 +1585,7 @@ func getVmNicIndexesWithDhcpEnabled(networkConnectionSection *types.NetworkConne
 // TODO v3.0 remove this function once 'network_name', 'vapp_network_name', 'ip' are deprecated
 func deprecatedNetworksToConfig(network_name, vapp_network_name, ip string, vdc *govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (types.NetworkConnectionSection, error) {
 	if vapp_network_name != "" {
-		isVappNetwork, err := isItVappNetwork(vapp_network_name, vapp)
+		isVappNetwork, err := isItIsolatedVappNetwork(vapp_network_name, vapp)
 		if err != nil {
 			return types.NetworkConnectionSection{}, fmt.Errorf("unable to find vApp network %s: %s", vapp_network_name, err)
 		}
@@ -1670,7 +1690,8 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp) ([]map[s
 		switch {
 		case netConfig.NetworkName == types.NoneNetwork:
 			vAppNetworkTypes[netConfig.NetworkName] = types.NoneNetwork
-		case netConfig.Configuration.ParentNetwork == nil && netConfig.Configuration.FenceMode == "isolated":
+		case netConfig.Configuration.FenceMode == types.FenceModeIsolated ||
+			(netConfig.Configuration.FenceMode == types.FenceModeNAT && netConfig.Configuration.IPScopes.IPScope[0].IsInherited == false):
 			vAppNetworkTypes[netConfig.NetworkName] = "vapp"
 		default:
 			vAppNetworkTypes[netConfig.NetworkName] = "org"

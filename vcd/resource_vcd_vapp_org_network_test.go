@@ -147,7 +147,7 @@ resource "vcd_network_routed" "{{.NetworkName}}" {
 resource "vcd_vapp_org_network" "{{.resourceName}}" {
   org                = "{{.Org}}"
   vdc                = "{{.Vdc}}"
-  vapp_name          = "{{.vappName}}"
+  vapp_name          = vcd_vapp.{{.vappName}}.name
   org_network_name   = "{{.orgNetwork}}"
   
   is_fenced = "{{.isFenced}}"
