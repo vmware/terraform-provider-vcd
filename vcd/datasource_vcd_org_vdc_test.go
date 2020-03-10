@@ -131,8 +131,6 @@ func validateDataSource(t *testing.T, configText string, datasourceVdc string) {
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.overhead", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.allocated", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d+$`)),
-					resource.TestMatchResourceAttr("data."+datasourceVdc, "elasticity", regexp.MustCompile(`^\S+$`)),
-					resource.TestMatchResourceAttr("data."+datasourceVdc, "include_vm_memory_overhead", regexp.MustCompile(`^\S+$`))),
 			},
 		},
 	})
