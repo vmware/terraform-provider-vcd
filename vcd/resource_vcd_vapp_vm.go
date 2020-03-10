@@ -668,7 +668,7 @@ func addVdcNetwork(networkNameToAdd string, vdc *govcd.Vdc, vapp govcd.VApp, vcd
 	return vdcNetwork, nil
 }
 
-// isItVappNetwork checks if it is a vApp network (not vApp Org Network)
+// isItVappNetwork checks if it is an vApp network (not vApp Org Network)
 func isItVappNetwork(vAppNetworkName string, vapp govcd.VApp) (bool, error) {
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 	if err != nil {
@@ -677,9 +677,7 @@ func isItVappNetwork(vAppNetworkName string, vapp govcd.VApp) (bool, error) {
 
 	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
 		if networkConfig.NetworkName == vAppNetworkName &&
-			networkConfig.Configuration.FenceMode == types.FenceModeIsolated ||
-			(networkConfig.Configuration.FenceMode == types.FenceModeNAT &&
-				networkConfig.Configuration.IPScopes.IPScope[0].IsInherited == false) {
+			isVappNetwork(&networkConfig) {
 			log.Printf("[TRACE] vApp network found: %s", vAppNetworkName)
 			return true, nil
 		}
@@ -688,7 +686,7 @@ func isItVappNetwork(vAppNetworkName string, vapp govcd.VApp) (bool, error) {
 	return false, fmt.Errorf("configured vApp network isn't found: %s", vAppNetworkName)
 }
 
-// isItIsolatedVappNetwork checks if it is a isolated vApp network (not only attached to vApp)
+// isItIsolatedVappNetwork checks if it is an isolated vApp network (not only attached to vApp)
 func isItIsolatedVappNetwork(vAppNetworkName string, vapp govcd.VApp) (bool, error) {
 
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
@@ -1690,8 +1688,7 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp) ([]map[s
 		switch {
 		case netConfig.NetworkName == types.NoneNetwork:
 			vAppNetworkTypes[netConfig.NetworkName] = types.NoneNetwork
-		case netConfig.Configuration.FenceMode == types.FenceModeIsolated ||
-			(netConfig.Configuration.FenceMode == types.FenceModeNAT && netConfig.Configuration.IPScopes.IPScope[0].IsInherited == false):
+		case isVappNetwork(&netConfig):
 			vAppNetworkTypes[netConfig.NetworkName] = "vapp"
 		default:
 			vAppNetworkTypes[netConfig.NetworkName] = "org"

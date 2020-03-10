@@ -279,7 +279,7 @@ resource "vcd_vapp_org_network" "vappAttachedNet" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
-  vapp_name  = vcd_vapp.{{.VAppName}}.name
+  vapp_name        = vcd_vapp.{{.VAppName}}.name
   org_network_name = vcd_network_routed.net.name
 }
 
@@ -287,7 +287,7 @@ resource "vcd_vapp_org_network" "vappAttachedRoutedNet2" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
-  vapp_name  = vcd_vapp.{{.VAppName}}.name
+  vapp_name        = vcd_vapp.{{.VAppName}}.name
   org_network_name = vcd_network_routed.net2.name
   is_fenced        = true
 }

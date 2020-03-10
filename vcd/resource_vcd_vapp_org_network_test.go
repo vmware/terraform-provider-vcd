@@ -148,15 +148,13 @@ resource "vcd_vapp_org_network" "{{.resourceName}}" {
   org                = "{{.Org}}"
   vdc                = "{{.Vdc}}"
   vapp_name          = vcd_vapp.{{.vappName}}.name
-  org_network_name   = "{{.orgNetwork}}"
+  org_network_name   = vcd_network_routed.{{.NetworkName}}.name
   
   is_fenced = "{{.isFenced}}"
 
   firewall_enabled      = "{{.firewallEnabled}}"
   nat_enabled           = "{{.natEnabled}}"
   retain_ip_mac_enabled = "{{.retainIpMacEnabled}}"
-
-  depends_on = ["vcd_vapp.{{.vappName}}", "vcd_network_routed.{{.NetworkName}}"]
 }
 `
 
@@ -184,15 +182,13 @@ resource "vcd_network_routed" "{{.NetworkName}}" {
 resource "vcd_vapp_org_network" "{{.resourceName}}" {
   org                = "{{.Org}}"
   vdc                = "{{.Vdc}}"
-  vapp_name          = "{{.vappName}}"
-  org_network_name   = "{{.orgNetwork}}"
+  vapp_name          = vcd_vapp.{{.vappName}}.name
+  org_network_name   = vcd_network_routed.{{.NetworkName}}.name
   
   is_fenced = "{{.isFencedForUpdate}}"
 
   firewall_enabled      = "{{.firewallEnabledForUpdate}}"
   nat_enabled           = "{{.natEnabledForUpdate}}"
   retain_ip_mac_enabled = "{{.retainIpMacEnabledForUpdate}}"
-
-  depends_on = ["vcd_vapp.{{.vappName}}", "vcd_network_routed.{{.NetworkName}}"]
 }
 `
