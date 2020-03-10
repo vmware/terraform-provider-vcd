@@ -292,7 +292,7 @@ func isVappNetworkFound(conn *VCDClient, rs *terraform.ResourceState, origin str
 		return false, fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	vapp, err := vdc.GetVAppByName(vappNameForNetworkTest, false)
+	vapp, err := vdc.GetVAppByName(rs.Primary.Attributes["vapp_name"], false)
 	if err != nil {
 		return false, fmt.Errorf("error retrieving vApp: %s, %#v", rs.Primary.ID, err)
 	}
