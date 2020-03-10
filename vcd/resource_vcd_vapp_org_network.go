@@ -322,7 +322,7 @@ func resourceVcdVappOrgNetworkImport(d *schema.ResourceData, meta interface{}) (
 	return []*schema.ResourceData{d}, nil
 }
 
-// Allows to identify if vApp network and not vApp Org network
+// Allows to identify if given network config is a vApp network and not a vApp Org network
 func isVappNetwork(networkConfig *types.VAppNetworkConfiguration) bool {
 	if networkConfig.Configuration.FenceMode == types.FenceModeIsolated ||
 		(networkConfig.Configuration.FenceMode == types.FenceModeNAT && networkConfig.Configuration.IPScopes != nil &&

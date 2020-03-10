@@ -27,8 +27,8 @@ IMPROVEMENTS:
 * `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` `customization` block supports all available
   features [GH-462, GH-469]
 * `datasource/*` - all data sources return an error when object is not found [GH-446, GH-470]
-* `vcd_vapp_vm` allows to add routed vApp network, not only isolated one. `network.name` can be reference 
-`vcd_vapp_network.name` [GH-472]
+* `vcd_vapp_vm` allows to add routed vApp network, not only isolated one. `vcd_vapp_network.name` of a vApp network
+ with `org_network_name` set [GH-472]
 
 DEPRECATIONS:
 * `resource/vcd_vapp_vm` `network.name` deprecates automatic attachment of vApp Org network when
