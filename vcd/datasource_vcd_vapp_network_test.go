@@ -12,25 +12,6 @@ import (
 
 // TestAccVcdVappNetworkDS tests a vApp network data source if a vApp is found in the VDC
 func TestAccVcdVappNetworkDS(t *testing.T) {
-	err := getAvailableNetworks()
-
-	if err != nil {
-		fmt.Printf("%s\n", err)
-		t.Skip("error getting available networks")
-		return
-	}
-	if len(availableNetworks) == 0 {
-		t.Skip("No networks found - data source test skipped")
-		return
-	}
-
-	networkType := "vcd_network_routed"
-	data, ok := availableNetworks[networkType]
-	if !ok {
-		t.Skip("no routed network found ")
-		return
-	}
-
 	networkName := "TestAccVcdVappNetworkDS"
 	description := "Created in test"
 	const gateway = "192.168.0.1"
@@ -69,7 +50,8 @@ func TestAccVcdVappNetworkDS(t *testing.T) {
 		"dhcpStartAddress":   dhcpStartAddress,
 		"dhcpEndAddress":     dhcpEndAddress,
 		"dhcpEnabled":        "true",
-		"orgNetwork":         data.network.Name,
+		"orgNetwork":         "TestAccVcdVappNetworkDSOrgNetwork",
+		"EdgeGateway":        testConfig.Networking.EdgeGateway,
 		"firewallEnabled":    fwEnabled,
 		"natEnabled":         natEnabled,
 		"retainIpMacEnabled": retainIpMacEnabled,
@@ -99,7 +81,7 @@ func TestAccVcdVappNetworkDS(t *testing.T) {
 					resource.TestCheckOutput("dhcpEndAddress", dhcpEndAddress),
 					resource.TestCheckOutput("staticIpPoolStartAddress", startAddress),
 					resource.TestCheckOutput("staticIpPoolEndAddress", endAddress),
-					resource.TestCheckOutput("orgNetwork", data.network.Name),
+					resource.TestCheckOutput("orgNetwork", params["orgNetwork"].(string)),
 					testCheckVappNetworkNonStringOutputs(guestVlanAllowed, fwEnabled, natEnabled, retainIpMacEnabled),
 				),
 			},
@@ -137,6 +119,19 @@ resource "vcd_vapp" "{{.vappName}}" {
   vdc  = "{{.VDC}}"
 }
 
+resource "vcd_network_routed" "{{.orgNetwork}}" {
+  name         = "{{.orgNetwork}}"
+  org          = "{{.Org}}"
+  vdc          = "{{.VDC}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  gateway      = "10.10.102.1"
+
+  static_ip_pool {
+    start_address = "10.10.102.2"
+    end_address   = "10.10.102.254"
+  }
+}
+
 resource "vcd_vapp_network" "createdVappNetwork" {
   org                = "{{.Org}}"
   vdc                = "{{.VDC}}"
@@ -163,7 +158,7 @@ resource "vcd_vapp_network" "createdVappNetwork" {
     enabled            = "{{.dhcpEnabled}}"
   }
 
-  org_network_name      = "{{.orgNetwork}}"
+  org_network_name      = vcd_network_routed.{{.orgNetwork}}.name
   firewall_enabled      = "{{.firewallEnabled}}"
   nat_enabled           = "{{.natEnabled}}"
   retain_ip_mac_enabled = "{{.retainIpMacEnabled}}"
