@@ -13,32 +13,6 @@ import (
 
 // TestAccVcdVappOrgNetworkDS tests a vApp org network data source if a vApp is found in the VDC
 func TestAccVcdVappOrgNetworkDS(t *testing.T) {
-	// This test requires access to the vCD before filling templates
-	// Thus it won't run in the short test
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
-	err := getAvailableNetworks()
-
-	if err != nil {
-		fmt.Printf("%s\n", err)
-		t.Skip("error getting available networks")
-		return
-	}
-	if len(availableNetworks) == 0 {
-		t.Skip("No networks found - data source test skipped")
-		return
-	}
-
-	networkType := "vcd_network_routed"
-	data, ok := availableNetworks[networkType]
-	if !ok {
-		t.Skip("no routed network found ")
-		return
-	}
-
 	var fwEnabled = false
 	var natEnabled = false
 	var retainIpMacEnabled = true
@@ -47,15 +21,22 @@ func TestAccVcdVappOrgNetworkDS(t *testing.T) {
 		"Org":                testConfig.VCD.Org,
 		"Vdc":                testConfig.VCD.Vdc,
 		"vappName":           "TestAccVcdVappOrgNetworkDS",
-		"orgNetwork":         data.network.Name,
+		"orgNetwork":         "TestAccVcdVappOrgNetworkDSOrgNetwork",
+		"EdgeGateway":        testConfig.Networking.EdgeGateway,
 		"firewallEnabled":    fwEnabled,
 		"natEnabled":         natEnabled,
 		"retainIpMacEnabled": retainIpMacEnabled,
 		"isFenced":           "true",
-		"FuncName":           "TestVappOrgNetworkDS",
+
+		"FuncName": "TestAccVcdVappOrgNetworkDS",
 	}
 	configText := templateFill(datasourceTestVappOrgNetwork, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
@@ -97,11 +78,24 @@ resource "vcd_vapp" "{{.vappName}}" {
   vdc  = "{{.Vdc}}"
 }
 
+resource "vcd_network_routed" "{{.orgNetwork}}" {
+  name         = "{{.orgNetwork}}"
+  org          = "{{.Org}}"
+  vdc          = "{{.Vdc}}"
+  edge_gateway = "{{.EdgeGateway}}"
+  gateway      = "10.10.102.1"
+
+  static_ip_pool {
+    start_address = "10.10.102.2"
+    end_address   = "10.10.102.254"
+  }
+}
+
 resource "vcd_vapp_org_network" "createVappOrgNetwork" {
   org                = "{{.Org}}"
   vdc                = "{{.Vdc}}"
   vapp_name          = vcd_vapp.{{.vappName}}.name
-  org_network_name   = "{{.orgNetwork}}"
+  org_network_name   = vcd_network_routed.{{.orgNetwork}}.name
   
   is_fenced = "{{.isFenced}}"
 
