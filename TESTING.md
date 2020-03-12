@@ -8,6 +8,7 @@
 - [Adding new tests](#adding-new-tests)
   - [Parallelism considerations](#parallelism-considerations)
 - [Binary testing](#binary-testing)
+- [Handling failures in binary tests](#handling-failures-in-binary-tests)
 - [Upgrade testing](#upgrade-testing)
 - [Custom terraform scripts](#custom-terraform-scripts)
 - [Environment variables](#environment-variables)
@@ -334,6 +335,39 @@ The "pause" option will stop the test after every call to the terraform tool, wa
 When the test runs unattended, it is possible to stop it gracefully by creating a file named `pause` inside the
 `test-artifacts` directory. When such file exists, the test execution stops at the next `terraform` command, waiting
 for user input.
+
+## Handling failures in binary tests
+
+When one test fails, the binary test script will attempt to recover it, by running `terraform destroy`. If the recovery
+fails, the whole test halts. If recovery succeeds, the names of the failed test are recorded inside 
+`./vcd/test-artifacts/failed_tests.txt` and the summary at the end of the test will show them.
+
+If the test runs with `make test-binary`, the output is captured inside `./vcd/test-artifacts/test-binary-TIME.txt` (where
+`TIME` has the format `YYYY-MM-DD-HH-MM`). To see the actual failure, open the output file and search for the name of
+the test that failed.
+
+For example, the test ends with this annotation :
+
+```
+# ---------------------------------------------------------
+# Operations dir: /path/to/terraform-provider-vcd/vcd/test-artifacts/tmp
+# Started:        Thu Mar 12 14:10:43 CET 2020
+# Ended:          Thu Mar 12 14:12:16 CET 2020
+# Elapsed:        1m:33s (93 sec)
+# exit code:      0
+# ---------------------------------------------------------
+# ---------------------------------------------------------
+# FAILED TESTS    4
+# ---------------------------------------------------------
+Thu Mar 12 14:11:02 CET 2020 - vcd.TestUser_test_user_catalog_author_basic.tf (apply)
+Thu Mar 12 14:11:08 CET 2020 - vcd.TestUser_test_user_catalog_author_basic.tf (plancheck)
+Thu Mar 12 14:11:30 CET 2020 - vcd.TestUser_test_user_admin_basic.tf (apply)
+Thu Mar 12 14:11:36 CET 2020 - vcd.TestUser_test_user_admin_basic.tf (plancheck)
+# ---------------------------------------------------------
+```
+
+In the output file (in the directory `./vcd/test-artifacts`), look for `vcd.TestUser_test_user_catalog_author_basic.tf`
+and you will see the operations occurring with the actual errors.
 
 ## Upgrade testing
 

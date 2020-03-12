@@ -152,10 +152,13 @@ function binary_test {
     cp $scripts_dir/test-binary.sh test-artifacts/test-binary.sh
     chmod +x test-artifacts/test-binary.sh
     cd test-artifacts
-    if [ -f already_run.txt ]
-    then
-        rm -f already_run.txt
-    fi
+    for old_file in already_run.txt failed_tests.txt
+    do
+        if [ -f ${old_file} ]
+        then
+            rm -f ${old_file}
+        fi
+    done
     if [ -n "$NORUN" ]
     then
         pwd
@@ -178,7 +181,8 @@ function binary_test {
         ./test-binary.sh test-env-destroy
         exit $?
     fi
-     ./test-binary.sh
+    timestamp=$(date +%Y-%m-%d-%H-%M)
+    ./test-binary.sh 2>&1 | tee test-binary-${timestamp}.txt
 }
 
 function exists_in_path {
