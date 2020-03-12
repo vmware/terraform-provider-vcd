@@ -514,8 +514,7 @@ func resourceVcdVappNetworkImport(d *schema.ResourceData, meta interface{}) ([]*
 		return nil, fmt.Errorf("didn't find vApp network: %s", networkName)
 	}
 
-	if vappNetworkToImport.Configuration.FenceMode == types.FenceModeBridged ||
-		(vappNetworkToImport.Configuration.FenceMode == types.FenceModeNAT && vappNetworkToImport.Configuration.Features.DhcpService == nil) {
+	if isVappOrgNetwork(&vappNetworkToImport) {
 		return nil, fmt.Errorf("found vApp org network, not vApp network: %s", networkName)
 	}
 
@@ -551,4 +550,9 @@ func resourceVcdDhcpPoolHash(v interface{}) int {
 		buf.WriteString(fmt.Sprintf("%s-", strings.ToLower(m["end_address"].(string))))
 	}
 	return hashcode.String(buf.String())
+}
+
+// Allows to identify if vApp Org network and not vApp network
+func isVappOrgNetwork(networkConfig *types.VAppNetworkConfiguration) bool {
+	return !isVappNetwork(networkConfig)
 }
