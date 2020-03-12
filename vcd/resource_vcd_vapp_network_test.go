@@ -73,7 +73,7 @@ func TestAccVcdVappNetwork_Isolated(t *testing.T) {
 		"retainIpMacEnabledForUpdate": "false",
 	}
 
-	// In version 9.1 the property description are not supported
+	// In version 9.1 the property description is not supported
 	if vcdClient.Client.APIVCDMaxVersionIs("<= 30.0") {
 		params["description"] = ""
 		params["descriptionForUpdate"] = ""
@@ -137,7 +137,7 @@ func TestAccVcdVappNetwork_Nat(t *testing.T) {
 		"FuncName":                    "TestAccVcdVappNetwork_Nat",
 	}
 
-	// In version 9.1 the property description are not supported
+	// In version 9.1 the property description is not supported
 	if vcdClient.Client.APIVCDMaxVersionIs("<= 30.0") {
 		params["description"] = ""
 		params["descriptionForUpdate"] = ""
