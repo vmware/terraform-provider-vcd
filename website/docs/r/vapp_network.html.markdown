@@ -48,7 +48,7 @@ The following arguments are supported:
   connected as sysadmin working across different organisations.
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level.
 * `name` - (Required) A unique name for the network.
-* `description` - (Optional; *v2.7+*) Description of vApp network
+* `description` - (Optional; *v2.7+*, *vCD 9.5+*) Description of vApp network
 * `vapp_name` - (Required) The vApp this network belongs to.
 * `netmask` - (Optional) The netmask for the new network. Default is `255.255.255.0`.
 * `gateway` (Required) The gateway for this network.
