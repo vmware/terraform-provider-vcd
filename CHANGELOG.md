@@ -25,7 +25,7 @@ IMPROVEMENTS:
 * `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` include a field `adapter_type` in `network`
   definition to specify NIC type - [GH-441]
 * `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` `customization` block supports all available
-  features [GH-462, GH-469]
+  features [GH-462, GH-469, GH-477]
 * `datasource/*` - all data sources return an error when object is not found [GH-446, GH-470]
 * `vcd_vapp_vm` allows to add routed vApp network, not only isolated one. `network.name` can reference 
   `vcd_vapp_network.name` of a vApp network with `org_network_name` set [GH-472]
@@ -48,7 +48,7 @@ BUG FIXES:
 * Fix a potential data race in client connection caching when VCD_CACHE is enabled [GH-453]
 * `resource/vcd_vapp_vm` when `customization.0.force=false` crashes with `interface {} is nil` [GH-462]
 * `resource/vcd_vapp_vm` `customization.0.force=true` could have skipped "Forced customization" on
-  each apply [GH-462]
+  each apply [GH-462, GH-477]
 
 NOTES:
 
