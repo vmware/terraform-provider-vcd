@@ -75,7 +75,7 @@ func TestAccVcdVAppVmUpdateCustomization(t *testing.T) {
 					testAccCheckVcdVMCustomization("vcd_vapp_vm.test-vm", true),
 					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm", &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "name", netVmName1),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "network.#", "0"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "network.#", "1"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.#", "1"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.force", "false"),
@@ -130,7 +130,7 @@ func TestAccVcdVAppVmCreateCustomization(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm", &vapp, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "name", netVmName1),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "network.#", "0"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "network.#", "1"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.#", "1"),
 					// Always store 'customization.0.force=false' in statefile so that a diff is always triggered
@@ -202,7 +202,7 @@ func testAccCheckVcdVMCustomization(node string, customizationPending bool) reso
 		// Customization status of "GC_PENDING" is expected now and it is an error if something else is set
 		if customizationPending && customizationStatus != "GC_PENDING" {
 			return fmt.Errorf("customizationStatus should be 'GC_PENDING'instead of '%s' for vm %s",
-				vm.VM.Name, customizationStatus)
+				customizationStatus, vm.VM.Name)
 		}
 
 		if customizationPending && customizationStatus == "GC_PENDING" {
@@ -222,6 +222,24 @@ resource "vcd_vapp" "test-vapp" {
   vdc = "{{.Vdc}}"
 
   name       = "{{.VAppName}}"
+}
+
+resource "vcd_vapp_network" "vappNet" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  name       = "vapp-net"
+  vapp_name  = vcd_vapp.test-vapp.name
+  gateway    = "192.168.2.1"
+  netmask    = "255.255.255.0"
+  dns1       = "192.168.2.1"
+  dns2       = "192.168.2.2"
+  dns_suffix = "mybiz.biz"
+
+  static_ip_pool {
+    start_address = "192.168.2.51"
+    end_address   = "192.168.2.100"
+  }
 }
 `
 
@@ -257,6 +275,12 @@ resource "vcd_vapp_vm" "test-vm" {
 
   customization {
     force = {{.Customization}}
+  }
+
+  network {
+    type               = "vapp"
+    name               = vcd_vapp_network.vappNet.name
+    ip_allocation_mode = "POOL"
   }
 }
 `
