@@ -33,6 +33,18 @@ resource "vcd_org" "{{.Org}}" {
   deployed_vm_quota = 50
   delete_force      = "true"
   delete_recursive  = "true"
+
+  vapp_lease {
+    maximum_runtime_lease_in_sec          = 0
+    power_off_on_runtime_lease_expiration = false
+    maximum_storage_lease_in_sec          = 0
+    delete_on_storage_lease_expiration    = false
+  }
+
+  vapp_template_lease {
+    maximum_storage_lease_in_sec       = 0
+    delete_on_storage_lease_expiration = false
+  }
 }
 
 #_ORG_USER_
@@ -79,10 +91,17 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
   name                    = "{{.EdgeGateway}}"
   description             = "{{.Org}} edge gateway"
   configuration           = "compact"
-  default_gateway_network = vcd_external_network.{{.ExternalNetwork}}.name
   advanced                = true
 
-  external_networks = [vcd_external_network.{{.ExternalNetwork}}.name]
+  external_network {
+    name = vcd_external_network.{{.ExternalNetwork}}.name
+    subnet {
+      ip_address            = "{{.ExternalNetworkStartIp}}"
+      gateway               = "{{.MainGateway}}"
+      netmask               = "{{.MainNetmask}}"
+      use_for_default_route = true
+    }
+  }
 }
 
 resource "vcd_catalog" "{{.Catalog}}" {

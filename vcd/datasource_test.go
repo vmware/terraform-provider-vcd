@@ -29,6 +29,12 @@ func TestAccDataSourceNotFound(t *testing.T) {
 
 func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string) func(*testing.T) {
 	return func(t *testing.T) {
+
+		// Skip sub-test if conditions are not met
+		if dataSourceName == "vcd_external_network" && !usingSysAdmin() {
+			t.Skip(`Works only with system admin privileges`)
+		}
+
 		// Get list of mandatory fields in schema for a particular data source
 		mandatoryFields := getMandatoryDataSourceSchemaFields(dataSourceName)
 		mandatoryRuntimeFields := getMandatoryDataSourceRuntimeFields(dataSourceName)
@@ -118,6 +124,8 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			templateFields = templateFields + `rule_id = "347928347234"` + "\n"
 		case "name":
 			templateFields = templateFields + `name = "does-not-exist"` + "\n"
+		case "org_network_name":
+			templateFields = templateFields + `org_network_name = "does-not-exist"` + "\n"
 		}
 
 	}

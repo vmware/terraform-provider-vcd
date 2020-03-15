@@ -560,3 +560,7 @@ func combinedTaskErrorMessage(task *types.Task, err error) string {
 	}
 	return extendedError
 }
+
+func takeBoolPointer(value bool) *bool {
+	return &value
+}
