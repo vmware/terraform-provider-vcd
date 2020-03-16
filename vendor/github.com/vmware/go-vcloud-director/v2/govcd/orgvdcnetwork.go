@@ -288,13 +288,13 @@ func (orgVdcNet *OrgVDCNetwork) getEdgeGateway() (*EdgeGateway, error) {
 // receiver data structure.
 func (orgVdcNet *OrgVDCNetwork) UpdateAsync() (Task, error) {
 	if orgVdcNet.OrgVDCNetwork.HREF == "" {
-		return Task{}, fmt.Errorf("cannot update network: HREF is empty")
+		return Task{}, fmt.Errorf("cannot update Org VDC network: HREF is empty")
 	}
 	if orgVdcNet.OrgVDCNetwork.Name == "" {
-		return Task{}, fmt.Errorf("cannot update network: name is empty")
+		return Task{}, fmt.Errorf("cannot update Org VDC network: name is empty")
 	}
 	if orgVdcNet.OrgVDCNetwork.Configuration == nil {
-		return Task{}, fmt.Errorf("cannot update network: configuration is empty")
+		return Task{}, fmt.Errorf("cannot update Org VDC network: configuration is empty")
 	}
 
 	href := orgVdcNet.OrgVDCNetwork.HREF
@@ -309,7 +309,7 @@ func (orgVdcNet *OrgVDCNetwork) UpdateAsync() (Task, error) {
 	if orgVdcNet.OrgVDCNetwork.Configuration.FenceMode == types.FenceModeNAT {
 		edgeGateway, err := orgVdcNet.getEdgeGateway()
 		if err != nil {
-			return Task{}, fmt.Errorf("error retrieving edge gateway for network %s : %s", orgVdcNet.OrgVDCNetwork.Name, err)
+			return Task{}, fmt.Errorf("error retrieving edge gateway for Org VDC network %s : %s", orgVdcNet.OrgVDCNetwork.Name, err)
 		}
 		orgVdcNet.OrgVDCNetwork.EdgeGateway = &types.Reference{
 			HREF: edgeGateway.EdgeGateway.HREF,
@@ -324,14 +324,18 @@ func (orgVdcNet *OrgVDCNetwork) UpdateAsync() (Task, error) {
 
 // Update is a wrapper around UpdateAsync, where we
 // explicitly wait for the task to finish.
+// The pointer receiver is refreshed after update
 func (orgVdcNet *OrgVDCNetwork) Update() error {
 	task, err := orgVdcNet.UpdateAsync()
 	if err != nil {
 		return err
 	}
 	err = task.WaitTaskCompletion()
+	if err != nil {
+		return err
+	}
 
-	return err
+	return orgVdcNet.Refresh()
 }
 
 // Rename is a wrapper around Update(), where we only change the name of the network

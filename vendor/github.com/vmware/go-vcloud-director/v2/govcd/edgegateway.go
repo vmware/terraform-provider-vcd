@@ -1405,6 +1405,7 @@ func getNetworkNameAndTypeByVnicIndex(vNicIndex int, vnics *types.EdgeGatewayInt
 	return networkName, networkType, nil
 }
 
+// UpdateAsync updates the edge gateway in place with the information contained in the internal structure
 func (egw *EdgeGateway) UpdateAsync() (Task, error) {
 
 	egw.EdgeGateway.Xmlns = types.XMLNamespaceVCloud
@@ -1416,12 +1417,17 @@ func (egw *EdgeGateway) UpdateAsync() (Task, error) {
 		types.MimeEdgeGateway, "error updating Edge Gateway: %s", egw.EdgeGateway)
 }
 
+// Update is a wrapper around UpdateAsync
+// The pointer receiver is refreshed after update
 func (egw *EdgeGateway) Update() error {
 
 	task, err := egw.UpdateAsync()
 	if err != nil {
 		return err
 	}
-	return task.WaitTaskCompletion()
-
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return err
+	}
+	return egw.Refresh()
 }
