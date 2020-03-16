@@ -20,7 +20,7 @@ const netmask = "255.255.255.0"
 const guestVlanAllowed = "true"
 
 func TestAccVcdVappNetwork_Isolated(t *testing.T) {
-	resourceName = "TestAccVcdVappNetwork_Isolated"
+	vappNetworkResourceName := "TestAccVcdVappNetwork_Isolated"
 
 	vcdClient, err := getTestVCDFromJson(testConfig)
 	if err != nil {
@@ -30,9 +30,9 @@ func TestAccVcdVappNetwork_Isolated(t *testing.T) {
 	var params = StringMap{
 		"Org":          testConfig.VCD.Org,
 		"Vdc":          testConfig.VCD.Vdc,
-		"resourceName": resourceName,
+		"resourceName": vappNetworkResourceName,
 		// we can't change network name as this results in ID (HREF) change
-		"vappNetworkName":             resourceName,
+		"vappNetworkName":             vappNetworkResourceName,
 		"description":                 "network description",
 		"descriptionForUpdate":        "update",
 		"gateway":                     gateway,
@@ -83,7 +83,7 @@ func TestAccVcdVappNetwork_Isolated(t *testing.T) {
 }
 
 func TestAccVcdVappNetwork_Nat(t *testing.T) {
-	resourceName = "TestAccVcdVappNetwork_Nat"
+	vappNetworkResourceName := "TestAccVcdVappNetwork_Nat"
 
 	vcdClient, err := getTestVCDFromJson(testConfig)
 	if err != nil {
@@ -93,9 +93,9 @@ func TestAccVcdVappNetwork_Nat(t *testing.T) {
 	var params = StringMap{
 		"Org":          testConfig.VCD.Org,
 		"Vdc":          testConfig.VCD.Vdc,
-		"resourceName": resourceName,
+		"resourceName": vappNetworkResourceName,
 		// we can't change network name as this results in ID (HREF) change
-		"vappNetworkName":             resourceName,
+		"vappNetworkName":             vappNetworkResourceName,
 		"description":                 "network description",
 		"descriptionForUpdate":        "update",
 		"gateway":                     gateway,

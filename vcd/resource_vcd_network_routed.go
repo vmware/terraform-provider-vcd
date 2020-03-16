@@ -369,17 +369,17 @@ func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origi
 	}
 
 	if network.OrgVDCNetwork.Configuration.SubInterface == nil {
-		d.Set("interface_type", "internal")
+		_ = d.Set("interface_type", "internal")
 	} else {
 		if *network.OrgVDCNetwork.Configuration.SubInterface {
-			d.Set("interface_type", "subinterface")
+			_ = d.Set("interface_type", "subinterface")
 		} else {
 			if *network.OrgVDCNetwork.Configuration.DistributedInterface {
-				d.Set("interface_type", "distributed")
+				_ = d.Set("interface_type", "distributed")
 			}
 		}
 	}
-	d.Set("description", network.OrgVDCNetwork.Description)
+	_ = d.Set("description", network.OrgVDCNetwork.Description)
 
 	d.SetId(network.OrgVDCNetwork.ID)
 	return nil

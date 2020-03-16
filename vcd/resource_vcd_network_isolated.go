@@ -170,9 +170,6 @@ func resourceVcdNetworkIsolatedCreate(d *schema.ResourceData, meta interface{}) 
 	netMask := d.Get("netmask").(string)
 	dns1 := d.Get("dns1").(string)
 	dns2 := d.Get("dns2").(string)
-	if dns1 == "" {
-		dns1 = gatewayName
-	}
 
 	ipRanges, err := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
 	if err != nil {
@@ -249,26 +246,35 @@ func resourceVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}) er
 }
 
 func genericVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}, origin string) error {
-	vcdClient := meta.(*VCDClient)
+	var network *govcd.OrgVDCNetwork
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
-	if err != nil {
-		return fmt.Errorf("[network isolated read] "+errorRetrievingOrgAndVdc, err)
-	}
+	switch origin {
+	case "resource", "datasource":
+		// From the resource creation or data source, we need to retrieve the network from scratch
+		vcdClient := meta.(*VCDClient)
 
-	identifier := d.Id()
-
-	if identifier == "" {
-		identifier = d.Get("name").(string)
-	}
-	network, err := vdc.GetOrgVdcNetworkByNameOrId(identifier, false)
-	if err != nil {
-		if origin == "resource" {
-			log.Printf("[DEBUG] Network %s no longer exists. Removing from tfstate", identifier)
-			d.SetId("")
-			return nil
+		_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+		if err != nil {
+			return fmt.Errorf("[network isolated read] "+errorRetrievingOrgAndVdc, err)
 		}
-		return fmt.Errorf("[network isolated read] error looking for %s: %s", identifier, err)
+
+		identifier := d.Id()
+
+		if identifier == "" {
+			identifier = d.Get("name").(string)
+		}
+		network, err = vdc.GetOrgVdcNetworkByNameOrId(identifier, false)
+		if err != nil {
+			if origin == "resource" {
+				log.Printf("[DEBUG] Network %s no longer exists. Removing from tfstate", identifier)
+				d.SetId("")
+				return nil
+			}
+			return fmt.Errorf("[network isolated read] error looking for %s: %s", identifier, err)
+		}
+	case "resource-update":
+		// From update, we get the network directly
+		network = meta.(*govcd.OrgVDCNetwork)
 	}
 
 	_ = d.Set("name", network.OrgVDCNetwork.Name)
@@ -311,7 +317,7 @@ func genericVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}, ori
 			return fmt.Errorf("[network isolated read] dhcp set %s", err)
 		}
 	}
-	d.Set("description", network.OrgVDCNetwork.Description)
+	_ = d.Set("description", network.OrgVDCNetwork.Description)
 
 	d.SetId(network.OrgVDCNetwork.ID)
 	return nil
@@ -445,5 +451,6 @@ func resourceVcdNetworkIsolatedUpdate(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf("error updating isolated network: %s", err)
 	}
 
-	return resourceVcdNetworkIsolatedRead(d, meta)
+	// The update returns already a network. No need to retrieve it twice
+	return genericVcdNetworkIsolatedRead(d, network, "resource-update")
 }
