@@ -208,35 +208,7 @@ func resourceVcdNetworkDirectUpdate(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf("[network direct update] error getting network: %s", err)
 	}
 
-	externalNetworkName := d.Get("external_network").(string)
 	networkName := d.Get("name").(string)
-	externalNetwork, err := vcdClient.GetExternalNetworkByName(externalNetworkName)
-	if err != nil {
-		return fmt.Errorf("unable to find external network %s (%s)", externalNetworkName, err)
-	}
-
-	externalNetworkReference := network.OrgVDCNetwork.Configuration.ParentNetwork
-	needsExternalNetworkChange := false
-
-	// Undefined external network
-	if externalNetworkReference == nil || externalNetworkReference.Name == "" {
-		needsExternalNetworkChange = true
-	} else {
-		// external network changed
-		if externalNetworkReference.Name != externalNetwork.ExternalNetwork.Name ||
-			externalNetworkReference.HREF != externalNetwork.ExternalNetwork.HREF {
-			needsExternalNetworkChange = true
-		}
-	}
-
-	if needsExternalNetworkChange {
-		network.OrgVDCNetwork.Configuration.ParentNetwork = &types.Reference{
-			HREF: externalNetwork.ExternalNetwork.HREF,
-			Type: externalNetwork.ExternalNetwork.Type,
-			Name: externalNetwork.ExternalNetwork.Name,
-		}
-	}
-
 	network.OrgVDCNetwork.Name = networkName
 	network.OrgVDCNetwork.Description = d.Get("description").(string)
 	network.OrgVDCNetwork.IsShared = d.Get("shared").(bool)
@@ -258,7 +230,6 @@ func getNetwork(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.OrgVDCNetw
 
 	identifier := d.Id()
 	if identifier == "" {
-		fmt.Printf("-- identifier is empty\n")
 		identifier = d.Get("name").(string)
 	}
 	if identifier == "" {
