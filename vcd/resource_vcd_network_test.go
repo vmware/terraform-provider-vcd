@@ -708,6 +708,36 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 	})
 }
 
+// TestHashFunc makes sure that the hash used to compute the network static IP pool and DHCP pool
+// doesn't change.
+// It tests some IP pairs with the hard coded hash result as of version 2.8.0
+// If this test fails, we may have introduced a breaking change that causes a plan update.
+func TestHashFunc(t *testing.T) {
+	var tests = []struct {
+		startIp string
+		endIp   string
+		want    int
+	}{
+		// Hard coded values obtained on 2020-03-17 (version 2.8.0)
+		// Do not change
+		{"10.10.10.2", "10.10.10.100", 3116097209},
+		{"192.168.1.2", "192.168.1.20", 3331633131},
+		{"10.10.1.2", "10.10.1.100", 2850949493},
+		{"10.10.0.101", "10.10.0.200", 4005846706},
+	}
+	for _, tc := range tests {
+		value := map[string]interface{}{
+			groupStartLabel: tc.startIp,
+			groupEndLabel:   tc.endIp,
+		}
+		got := resourceVcdNetworkIPAddressHash(value)
+		if got != tc.want {
+			t.Logf("start: %s, end: %s - want %d, got %d", tc.startIp, tc.endIp, tc.want, got)
+			t.Fail()
+		}
+	}
+}
+
 func testAccCheckVcdNetworkExists(name string, network *govcd.OrgVDCNetwork) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
