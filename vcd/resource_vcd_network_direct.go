@@ -145,7 +145,7 @@ func genericVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}, origi
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf("[network direct read] "+errorRetrievingOrgAndVdc, err)
+		return fmt.Errorf("[direct network read] "+errorRetrievingOrgAndVdc, err)
 	}
 
 	identifier := d.Id()
@@ -160,7 +160,7 @@ func genericVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}, origi
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("[network direct read] network %s not found: %s", identifier, err)
+		return fmt.Errorf("[direct network read] network %s not found: %s", identifier, err)
 	}
 
 	_ = d.Set("name", network.OrgVDCNetwork.Name)
@@ -205,7 +205,7 @@ func resourceVcdNetworkDirectUpdate(d *schema.ResourceData, meta interface{}) er
 	}
 	network, err := getNetwork(d, vcdClient)
 	if err != nil {
-		return fmt.Errorf("[network direct update] error getting network: %s", err)
+		return fmt.Errorf("[direct network update] error getting network: %s", err)
 	}
 
 	networkName := d.Get("name").(string)
@@ -215,7 +215,7 @@ func resourceVcdNetworkDirectUpdate(d *schema.ResourceData, meta interface{}) er
 
 	err = network.Update()
 	if err != nil {
-		return fmt.Errorf("[network direct update] error updating network %s: %s", network.OrgVDCNetwork.Name, err)
+		return fmt.Errorf("[direct network update] error updating network %s: %s", network.OrgVDCNetwork.Name, err)
 	}
 
 	return resourceVcdNetworkDirectRead(d, meta)
@@ -259,23 +259,23 @@ func getNetwork(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.OrgVDCNetw
 func resourceVcdNetworkDirectImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
-		return nil, fmt.Errorf("[network direct import] resource name must be specified as org-name.vdc-name.network-name")
+		return nil, fmt.Errorf("[direct network import] resource name must be specified as org-name.vdc-name.network-name")
 	}
 	orgName, vdcName, networkName := resourceURI[0], resourceURI[1], resourceURI[2]
 
 	vcdClient := meta.(*VCDClient)
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if err != nil {
-		return nil, fmt.Errorf("[network direct import] unable to find VDC %s: %s ", vdcName, err)
+		return nil, fmt.Errorf("[direct network import] unable to find VDC %s: %s ", vdcName, err)
 	}
 
 	network, err := vdc.GetOrgVdcNetworkByName(networkName, false)
 	if err != nil {
-		return nil, fmt.Errorf("[network direct import] error retrieving network %s: %s", networkName, err)
+		return nil, fmt.Errorf("[direct network import] error retrieving network %s: %s", networkName, err)
 	}
 	parentNetwork := network.OrgVDCNetwork.Configuration.ParentNetwork
 	if parentNetwork == nil || parentNetwork.Name == "" {
-		return nil, fmt.Errorf("[network direct import] no parent network found for %s", network.OrgVDCNetwork.Name)
+		return nil, fmt.Errorf("[direct network import] no parent network found for %s", network.OrgVDCNetwork.Name)
 	}
 
 	_ = d.Set("org", orgName)

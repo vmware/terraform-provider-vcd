@@ -301,7 +301,7 @@ func genericVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}, ori
 		}
 		err := d.Set("static_ip_pool", newSet.List())
 		if err != nil {
-			return fmt.Errorf("[network isolated read] static_ip set %s", err)
+			return fmt.Errorf("[isolated network read] static_ip set %s", err)
 		}
 	}
 	dhcpPool := getDhcpPool(network)
@@ -314,7 +314,7 @@ func genericVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}, ori
 		}
 		err := d.Set("dhcp_pool", newSet.List())
 		if err != nil {
-			return fmt.Errorf("[network isolated read] dhcp set %s", err)
+			return fmt.Errorf("[isolated network read] dhcp set %s", err)
 		}
 	}
 	_ = d.Set("description", network.OrgVDCNetwork.Description)
@@ -361,19 +361,19 @@ func getDhcpPool(network *govcd.OrgVDCNetwork) []map[string]interface{} {
 func resourceVcdNetworkIsolatedImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
-		return nil, fmt.Errorf("[network isolated import] resource name must be specified as org-name.vdc-name.network-name")
+		return nil, fmt.Errorf("[isolated network import] resource name must be specified as org-name.vdc-name.network-name")
 	}
 	orgName, vdcName, networkName := resourceURI[0], resourceURI[1], resourceURI[2]
 
 	vcdClient := meta.(*VCDClient)
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if err != nil {
-		return nil, fmt.Errorf("[network import] unable to find VDC %s: %s ", vdcName, err)
+		return nil, fmt.Errorf("[isolated network import] unable to find VDC %s: %s ", vdcName, err)
 	}
 
 	network, err := vdc.GetOrgVdcNetworkByName(networkName, false)
 	if err != nil {
-		return nil, fmt.Errorf("[network import] error retrieving Org VDC network %s: %s", networkName, err)
+		return nil, fmt.Errorf("[isolated network import] error retrieving Org VDC network %s: %s", networkName, err)
 	}
 
 	_ = d.Set("org", orgName)
@@ -408,13 +408,13 @@ func resourceVcdNetworkIsolatedUpdate(d *schema.ResourceData, meta interface{}) 
 
 	network, err := vdc.GetOrgVdcNetworkByNameOrId(identifier, false)
 	if err != nil {
-		return fmt.Errorf("[network isolated update] error looking for %s: %s", identifier, err)
+		return fmt.Errorf("[isolated network update] error looking for %s: %s", identifier, err)
 	}
 
 	if d.HasChange("static_ip_pool") {
 		ipRanges, err = expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
 		if err != nil {
-			return fmt.Errorf("[independent network update] error expanding static IP pool: %s", err)
+			return fmt.Errorf("[isolated network update] error expanding static IP pool: %s", err)
 		}
 		network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].IPRanges = &ipRanges
 	}
