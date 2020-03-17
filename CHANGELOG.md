@@ -1,4 +1,8 @@
 ## 2.8.0 (Unreleased)
+
+BUG FIXES:
+* `resource/vcd_vapp_vm` sometimes reports incorrect `ip` in legacy network configuration [GH-XXX]
+
 ## 2.7.0 (March 13, 2020)
 
 FEATURES:
