@@ -1,3 +1,5 @@
+// +build unit ALL
+
 package vcd
 
 import (
@@ -32,7 +34,6 @@ func Test_deprecatedReadNetworks(t *testing.T) {
 		{
 			name: "CorrectNicOrder",
 			args: args{vmText: testGetVmTextWithCustomNetworkSection(networkSectionCorrectOrder)},
-			// Expect IP and MAC to be for primary network
 			// Expect IP and MAC to be for primary network
 			ip:      "0.0.0.0",
 			mac:     "00:50:56:29:01:45",
