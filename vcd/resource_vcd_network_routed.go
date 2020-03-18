@@ -138,11 +138,9 @@ func resourceVcdNetworkRouted() *schema.Resource {
 						},
 
 						"default_lease_time": &schema.Schema{
-							Type: schema.TypeInt,
-							//Removed:          "vCD doesn't process this input. It sets the value to max_lease_time",
-							Default:  3600,
-							Optional: true,
-							// DiffSuppressFunc: suppressAlways(),
+							Type:        schema.TypeInt,
+							Default:     7200, // vCD doesn't process this input. It sets the value to max_lease_time
+							Optional:    true,
 							Description: "The default DHCP lease time to use",
 						},
 
@@ -154,7 +152,7 @@ func resourceVcdNetworkRouted() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceVcdNetworkIPAddressHash,
+				Set: resourceVcdNetworkDhcpPoolHash,
 			},
 			"static_ip_pool": &schema.Schema{
 				Type:        schema.TypeSet,
@@ -177,7 +175,7 @@ func resourceVcdNetworkRouted() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceVcdNetworkIPAddressHash,
+				Set: resourceVcdNetworkStaticIpPoolHash,
 			},
 		},
 	}
@@ -343,7 +341,7 @@ func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origi
 	dhcp := getDhcpFromEdgeGateway(network.OrgVDCNetwork.HREF, edgeGateway)
 	if len(dhcp) > 0 {
 		newSet := &schema.Set{
-			F: resourceVcdNetworkIPAddressHash,
+			F: resourceVcdNetworkDhcpPoolHash,
 		}
 		for _, element := range dhcp {
 			newSet.Add(element)
@@ -357,7 +355,7 @@ func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origi
 	staticIpPool := getStaticIpPool(network)
 	if len(staticIpPool) > 0 {
 		newSet := &schema.Set{
-			F: resourceVcdNetworkIPAddressHash,
+			F: resourceVcdNetworkStaticIpPoolHash,
 		}
 		for _, element := range staticIpPool {
 			newSet.Add(element)
@@ -484,8 +482,8 @@ func resourceVcdNetworkDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-// resourceVcdNetworkDelete computes a hash for a Static IP pool or DHCP pool
-func resourceVcdNetworkIPAddressHash(v interface{}) int {
+// resourceVcdNetworkStaticIpPoolHash computes a hash for a Static IP pool
+func resourceVcdNetworkStaticIpPoolHash(v interface{}) int {
 	// Handle this function with care.
 	// Changing the hash algorithm will trigger a plan update.
 	var buf bytes.Buffer
@@ -494,6 +492,24 @@ func resourceVcdNetworkIPAddressHash(v interface{}) int {
 		strings.ToLower(m["start_address"].(string))))
 	buf.WriteString(fmt.Sprintf("%s-",
 		strings.ToLower(m["end_address"].(string))))
+
+	return hashcode.String(buf.String())
+}
+
+// resourceVcdNetworkDhcpPoolHash computes a hash for a DHCP pool
+func resourceVcdNetworkDhcpPoolHash(v interface{}) int {
+	// Handle this function with care.
+	// Changing the hash algorithm will trigger a plan update.
+	var buf bytes.Buffer
+	m := v.(map[string]interface{})
+	buf.WriteString(fmt.Sprintf("%s-",
+		strings.ToLower(m["start_address"].(string))))
+	buf.WriteString(fmt.Sprintf("%s-",
+		strings.ToLower(m["end_address"].(string))))
+	buf.WriteString(fmt.Sprintf("%d-",
+		m["default_lease_time"].(int)))
+	buf.WriteString(fmt.Sprintf("%d-",
+		m["max_lease_time"].(int)))
 
 	return hashcode.String(buf.String())
 }

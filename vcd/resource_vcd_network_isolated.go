@@ -128,7 +128,7 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceVcdNetworkIPAddressHash,
+				Set: resourceVcdNetworkDhcpPoolHash,
 			},
 			"static_ip_pool": &schema.Schema{
 				Type:        schema.TypeSet,
@@ -151,7 +151,7 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceVcdNetworkIPAddressHash,
+				Set: resourceVcdNetworkStaticIpPoolHash,
 			},
 		},
 	}
@@ -294,7 +294,7 @@ func genericVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}, ori
 	staticIpPool := getStaticIpPool(network)
 	if len(staticIpPool) > 0 {
 		newSet := &schema.Set{
-			F: resourceVcdNetworkIPAddressHash,
+			F: resourceVcdNetworkStaticIpPoolHash,
 		}
 		for _, element := range staticIpPool {
 			newSet.Add(element)
@@ -307,7 +307,7 @@ func genericVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}, ori
 	dhcpPool := getDhcpPool(network)
 	if len(dhcpPool) > 0 {
 		newSet := &schema.Set{
-			F: resourceVcdNetworkIPAddressHash,
+			F: resourceVcdNetworkDhcpPoolHash,
 		}
 		for _, element := range dhcpPool {
 			newSet.Add(element)
