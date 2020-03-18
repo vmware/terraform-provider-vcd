@@ -1,4 +1,9 @@
 ## 2.8.0 (Unreleased)
+
+IMPROVEMENTS:
+
+* `vcd_vapp_network`, `vcd_vapp_org_network` has now missing import documentation 
+
 ## 2.7.0 (March 13, 2020)
 
 FEATURES:
