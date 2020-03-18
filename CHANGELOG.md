@@ -1,7 +1,9 @@
 ## 2.8.0 (Unreleased)
 
 BUG FIXES:
-* `resource/vcd_vapp_vm` sometimes reports incorrect `ip` in legacy network configuration [GH-478]
+* `resource/vcd_vapp_vm` sometimes reports incorrect `vcd_vapp_vm.ip` and `vcd_vapp_vm.mac` fields in legacy network
+configuration (when using `vcd_vapp_vm.network_name` and `vcd_vapp_vm.vapp_network_name` parameters instead of
+`vcd_vapp_vm.network` blocks) [GH-478]
 
 ## 2.7.0 (March 13, 2020)
 
