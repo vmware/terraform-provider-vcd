@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sync"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/mutexkv"
@@ -74,15 +75,20 @@ type cachedConnection struct {
 	connection *VCDClient
 }
 
+type cacheStorage struct {
+	// conMap holds cached VDC authenticated connection
+	conMap map[string]cachedConnection
+	// cacheClientServedCount records how many times we have cached a connection
+	cacheClientServedCount int
+	sync.Mutex
+}
+
 var (
 	// Enables the caching of authenticated connections
 	enableConnectionCache bool = os.Getenv("VCD_CACHE") != ""
 
 	// Cached VDC authenticated connection
-	cachedVCDClients = make(map[string]cachedConnection)
-
-	// Records how many times we have cached a connection
-	cacheClientServedCount int = 0
+	cachedVCDClients = &cacheStorage{conMap: make(map[string]cachedConnection)}
 
 	// Invalidates the cache after a given time (connection tokens usually expire after 20 to 30 minutes)
 	maxConnectionValidity time.Duration = 20 * time.Minute
@@ -358,7 +364,6 @@ func ProviderAuthenticate(client *govcd.VCDClient, user, password, token, org st
 }
 
 func (c *Config) Client() (*VCDClient, error) {
-
 	rawData := c.User + "#" +
 		c.Password + "#" +
 		c.Token + "#" +
@@ -367,14 +372,20 @@ func (c *Config) Client() (*VCDClient, error) {
 	checksum := fmt.Sprintf("%x", sha1.Sum([]byte(rawData)))
 
 	// The cached connection is served only if the variable VCD_CACHE is set
-	client, ok := cachedVCDClients[checksum]
+	cachedVCDClients.Lock()
+	client, ok := cachedVCDClients.conMap[checksum]
+	cachedVCDClients.Unlock()
 	if ok && enableConnectionCache {
-		cacheClientServedCount += 1
+		cachedVCDClients.Lock()
+		cachedVCDClients.cacheClientServedCount += 1
+		cachedVCDClients.Unlock()
 		// debugPrintf("[%s] cached connection served %d times (size:%d)\n",
 		elapsed := time.Since(client.initTime)
 		if elapsed > maxConnectionValidity {
 			debugPrintf("cached connection invalidated after %2.0f minutes \n", maxConnectionValidity.Minutes())
-			delete(cachedVCDClients, checksum)
+			cachedVCDClients.Lock()
+			delete(cachedVCDClients.conMap, checksum)
+			cachedVCDClients.Unlock()
 		} else {
 			return client.connection, nil
 		}
@@ -398,7 +409,9 @@ func (c *Config) Client() (*VCDClient, error) {
 	if err != nil {
 		return nil, fmt.Errorf("something went wrong during authentication: %s", err)
 	}
-	cachedVCDClients[checksum] = cachedConnection{initTime: time.Now(), connection: vcdClient}
+	cachedVCDClients.Lock()
+	cachedVCDClients.conMap[checksum] = cachedConnection{initTime: time.Now(), connection: vcdClient}
+	cachedVCDClients.Unlock()
 
 	return vcdClient, nil
 }

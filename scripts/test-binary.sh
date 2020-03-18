@@ -13,6 +13,12 @@ build_script=cust.full-env.tf
 unset in_building
 operations=(init plan apply plancheck destroy)
 skipping_items=($build_script)
+failed_tests=0
+
+if [ -f failed_tests.txt ]
+then
+    rm -f failed_tests.txt
+fi
 
 if [ -f skip-files.txt ]
 then
@@ -76,7 +82,7 @@ function make_environment {
     destination=$PWD/fake_home/.terraform.d/plugins/terraform-provider-vcd_$from_version
 
     # Adds the previous version plugin to the test environment in both the current path and the
-    # directory where terraform puts downloaded plugins. We want to give terraform a plugin to 
+    # directory where terraform puts downloaded plugins. We want to give terraform a plugin to
     # use and avoid unnecessary downloads.
     if [ ! -f $destination ]
     then
@@ -277,7 +283,35 @@ function summary {
     echo "# Elapsed:        $elapsed ($secs sec)"
     echo "# exit code:      $exit_code"
     echo "$dash_line"
+    if [ "$failed_tests" != 0 ]
+    then
+        echo "$dash_line"
+        echo "# FAILED TESTS    $failed_tests"
+        echo "$dash_line"
+        cat $runtime_dir/failed_tests.txt
+        echo "$dash_line"
+    fi
     exit $exit_code
+}
+
+function interactive {
+    echo "Paused at user request - Press ENTER when ready"
+    echo "(Enter 'q' to exit with 0, 'x' to exit with 1, 'c' to continue without further pause)"
+    read answer
+    case $answer in
+        q)
+            echo "Exit at user request"
+            exit 0
+            ;;
+        x)
+            echo "Exit with non-zero code at user request"
+            exit 1
+            ;;
+        c)
+            unset will_pause
+            echo "Execution will not pause any more"
+            ;;
+    esac
 }
 
 function run {
@@ -301,23 +335,69 @@ function run {
     fi
     if [ -n "$will_pause" ]
     then
-        echo "Paused at user request - Press ENTER when ready"
-        echo "(Enter 'q' to exit with 0, 'x' to exit with 1, 'c' to continue without further pause)"
-        read answer
-        case $answer in
-            q)
-                echo "Exit at user request"
-                exit 0
+        interactive
+    fi
+}
+
+function run_with_recover {
+    test_name=$1
+    phase=$2
+    shift
+    shift
+    cmd="$@"
+    echo "# $cmd"
+    if [ -n "$DRY_RUN" ]
+    then
+        return
+    fi
+    $cmd
+    exit_code=$?
+    if [ "$exit_code" != "0" ]
+    then
+        echo "$(date) - $test_name ($phase)" >> $runtime_dir/failed_tests.txt
+        failed_tests=$((failed_tests+1))
+        case $phase in
+            init)
+                # An error on initialization should not be recoverable
+                echo "EXECUTION ERROR"
+                summary
                 ;;
-            x)
-                echo "Exit with non-zero code at user request"
-                exit 1
+            plan | plancheck)
+                # an error in plan does not need any recovery,
+                # in addition to recording the file in the failed list
+                # The destroy will be called anyway
                 ;;
-            c)
-                unset will_pause
-                echo "Execution will not pause any more"
+            apply | destroy)
+
+                # errors in apply should be recoverable after a destroy
+
+                # an error in destroy means we are leaving behind hanging entities.
+                # nonetheless we try to recover with an additional destroy
+
+                echo $dash_line
+                echo "# ATTEMPTING RECOVERY AFTER FAILURE (phase $phase - exit code $exit_code)"
+                echo $dash_line
+                run terraform destroy -auto-approve
+                # if 'run' doesn't produce an error, we continue the tests,
+                # leaving behind the name of the test failed in failed_tests.txt
+                # otherwise, the test is definitely aborted
                 ;;
+
+            *)
+                echo "unhandled phase in recovery'$phase'"
+                exit $exit_code
+                ;;
+
         esac
+    fi
+    if [ -f $pause_file ]
+    then
+        rm -f $pause_file
+        export will_pause=1
+    fi
+    if [ -n "$will_pause" ]
+    then
+        interactive
     fi
 }
 
@@ -461,15 +541,15 @@ do
         case $phase in
             init)
                 # 'custom_terraform' can process both regular and upgrade operations
-                run custom_terraform init $init_options
+                run_with_recover $CF init custom_terraform init $init_options
                 ;;
             plan)
                 # 'custom_terraform' can process both regular and upgrade operations
-                run custom_terraform plan $plan_options
+                run_with_recover $CF plan custom_terraform plan $plan_options
                 ;;
             apply)
                 # 'custom_terraform' can process both regular and upgrade operations
-                run custom_terraform apply -auto-approve $apply_options
+                run_with_recover $CF apply custom_terraform apply -auto-approve $apply_options
                 ;;
             plancheck)
                 # Skip plan check if a `.tf` example contains line "# skip-plan-check"
@@ -483,7 +563,7 @@ do
                     # and this allows to validate if reads work properly and there is no immediate
                     # plan change right after apply succeeded
                     [ -n "$upgrading" ] && run terraform version
-                    run terraform plan -detailed-exitcode $plancheck_options 
+                    run_with_recover $CF plancheck terraform plan -detailed-exitcode $plancheck_options
                 fi
                 ;;
             destroy)
@@ -494,7 +574,7 @@ do
                     exit 1
                 fi
                 [ -n "$upgrading" ] && run terraform version
-                run terraform destroy -auto-approve $destroy_options
+                run_with_recover $CF destroy terraform destroy -auto-approve $destroy_options
                 ;;
         esac
     done

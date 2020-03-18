@@ -47,7 +47,7 @@ The following arguments are supported:
 * `size_in_mb` - (Required) The size of the disk in MB. 
 * `bus_number` - (Required) The number of the SCSI or IDE controller itself.
 * `unit_number` - (Required) The device number on the SCSI or IDE controller of the disk.
-* `iops` - (Optional) Specifies the IOPS for the disk. Default - 0.
+* `iops` - (Optional) Specifies the IOPS for the disk. Default is 0.
 * `storage_profile` - (Optional) Storage profile which overrides the VM default one.
 
 ## Attribute reference

@@ -9,6 +9,10 @@ default: build
 build: fmtcheck
 	go install
 
+# builds the plugin with race detector enabled
+buildrace: fmtcheck
+	go install --race
+
 # creates a .zip archive of the code
 dist:
 	git archive --format=zip -o source.zip HEAD
@@ -16,6 +20,10 @@ dist:
 
 # builds and deploys the plugin
 install: build
+	@sh -c "'$(CURDIR)/scripts/install-plugin.sh'"
+
+# builds and deploys the plugin with race detector enabled (useful for troubleshooting)
+installrace: buildrace
 	@sh -c "'$(CURDIR)/scripts/install-plugin.sh'"
 
 # makes .tf files from test templates
@@ -32,8 +40,12 @@ test-binary-orguser: install
 test-upgrade:
 	@sh -c "'$(CURDIR)/scripts/test-upgrade.sh'"
 
-# runs test using Terraform binary as system administrator
-test-binary: install
+# makes .tf files from test templates for upgrade testing, but does not execute them
+test-upgrade-prepare:
+	@sh -c "skip_upgrade_execution=1 '$(CURDIR)/scripts/test-upgrade.sh'"
+
+# runs test using Terraform binary as system administrator using binary with race detection enabled
+test-binary: installrace
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider"
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' binary"
 
@@ -75,7 +87,7 @@ testacc: testunit
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' acceptance"
 
 # Runs full acceptance test sequentially (using "-parallel 1" flag for go test)
-seqtestacc: testunit
+testacc-race-seq: testunit
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' sequential-acceptance"
 
 # Runs the acceptance test with tag 'multiple'
@@ -148,7 +160,7 @@ vendor-check:
 
 # checks that the code can compile
 test-compile:
-	cd vcd && go test -tags ALL -c .
+	cd vcd && go test -race -tags ALL -c .
 
 # builds the website and allows running it from localhost
 website:
@@ -166,5 +178,5 @@ ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
 endif
 	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
 
-.PHONY: build test seqtestacc testacc vet static fmt fmtcheck vendor-check test-compile website website-test
+.PHONY: build test testacc-race-seq testacc vet static fmt fmtcheck vendor-check test-compile website website-test
 

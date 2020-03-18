@@ -1,31 +1,64 @@
-## 2.7.0 (Unreleased)
+## 2.8.0 (Unreleased)
+## 2.7.0 (March 13, 2020)
 
 FEATURES:
 
-* **New Resource:** `vcd_vm_internal_disk` VM internal disk configuration [GH-412]
-* `vcd_vapp_vm` Internal disks in VM template allows to be edited by `override_template_disk` field
-  [GH-412]
+* **New Resource:** `vcd_vm_internal_disk` VM internal disk configuration ([#412](https://github.com/terraform-providers/terraform-provider-vcd/issues/412))
+* **New Resource:** `vcd_vapp_org_network` vApp organization network ([#455](https://github.com/terraform-providers/terraform-provider-vcd/issues/455))
+* **New Data Source:** `vcd_vapp_org_network` vApp org network ([#455](https://github.com/terraform-providers/terraform-provider-vcd/issues/455))
+* **New Data Source:** `vcd_vapp_network` vApp network ([#455](https://github.com/terraform-providers/terraform-provider-vcd/issues/455))
 
 IMPROVEMENTS:
 
-* `vcd_vapp_vm` `disk` has new attribute `size_in_mb` [#433]
-* `resource/vcd_org` and `datasource/vcd_org` include a section `vapp_lease` and a section `vapp_template_lease` to define lease related parameters of depending entities - [GH-432]
-* `datasource/*` - all data sources return an error when object is not found [GH-446]
+* `vcd_vapp_network` supports isolated network and vApp network connected to Org VDC networks
+  ([#455](https://github.com/terraform-providers/terraform-provider-vcd/issues/455),[#468](https://github.com/terraform-providers/terraform-provider-vcd/issues/468))
+* `vcd_vapp_network` does not default `dns1` and `dns2` fields to 8.8.8.8 and 8.8.4.4 respectively
+  ([#455](https://github.com/terraform-providers/terraform-provider-vcd/issues/455),[#468](https://github.com/terraform-providers/terraform-provider-vcd/issues/468))
+* `vcd_org_vdc` can be created with Flex allocation model in vCD 9.7 and later. Also two new fields added
+  for Flex - `elasticity`, `include_vm_memory_overhead` ([#443](https://github.com/terraform-providers/terraform-provider-vcd/issues/443))
+* `resource/vcd_org` and `datasource/vcd_org` include a section `vapp_lease` and a section
+  `vapp_template_lease` to define lease related parameters of depending entities - ([#432](https://github.com/terraform-providers/terraform-provider-vcd/issues/432))
+* `resource/vcd_vapp_vm` Internal disks in VM template can be edited by `override_template_disk`
+  field ([#412](https://github.com/terraform-providers/terraform-provider-vcd/issues/412))
+* `vcd_vapp_vm` `disk` has new attribute `size_in_mb` ([#433](https://github.com/terraform-providers/terraform-provider-vcd/issues/433))
+* `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` get optional `network_dhcp_wait_seconds` field
+  to ensure `ip` is reported when `ip_allocation_mode=DHCP` is used ([#436](https://github.com/terraform-providers/terraform-provider-vcd/issues/436))
+* `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` include a field `adapter_type` in `network`
+  definition to specify NIC type - ([#441](https://github.com/terraform-providers/terraform-provider-vcd/issues/441))
+* `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` `customization` block supports all available
+  features ([#462](https://github.com/terraform-providers/terraform-provider-vcd/issues/462), [#469](https://github.com/terraform-providers/terraform-provider-vcd/issues/469), [#477](https://github.com/terraform-providers/terraform-provider-vcd/issues/477))
+* `datasource/*` - all data sources return an error when object is not found ([#446](https://github.com/terraform-providers/terraform-provider-vcd/issues/446), [#470](https://github.com/terraform-providers/terraform-provider-vcd/issues/470))
+* `vcd_vapp_vm` allows to add routed vApp network, not only isolated one. `network.name` can reference 
+  `vcd_vapp_network.name` of a vApp network with `org_network_name` set ([#472](https://github.com/terraform-providers/terraform-provider-vcd/issues/472))
+
+DEPRECATIONS:
+* `resource/vcd_vapp_vm` `network.name` deprecates automatic attachment of vApp Org network when
+  `network.type=org` and it is not attached with `vcd_vapp_org_network` before referencing it.
+  ([#455](https://github.com/terraform-providers/terraform-provider-vcd/issues/455))
+* `resource/vcd_vapp_vm` field `initscript` is now deprecated in favor of
+  `customization.0.initscript` to group all guest customization settings ([#462](https://github.com/terraform-providers/terraform-provider-vcd/issues/462))
 
 BUG FIXES:
-* fix `vcd_vapp_vm` resource read - independent disks where losing `bus_number` and `unit_number` values after refresh. [GH-433]
-* `datasource/vcd_nsxv_dhcp_relay` crashes if no DHCP relay settings are present in Edge Gateway [GH-446]
-* `vcd_vapp_vm` `disk` has new attribute `size_in_mb` [GH-433]
-* `resource/vcd_org` and `datasource/vcd_org` include a section `vapp_lease` and a section
-  `vapp_template_lease` to define lease related parameters of depending entities - [GH-432]
-* `resource/vcd_vapp_vm` `network` block changes caused MAC address changes in existing NICs
-  [GH-436,GH-407]
-  
 
+* `resource/vcd_vapp_vm` read - independent disks where losing `bus_number` and `unit_number`
+  values after refresh ([#433](https://github.com/terraform-providers/terraform-provider-vcd/issues/433))
+* `datasource/vcd_nsxv_dhcp_relay` crashes if no DHCP relay settings are present in Edge Gateway
+  ([#446](https://github.com/terraform-providers/terraform-provider-vcd/issues/446))
+* `resource/vcd_vapp_vm` `network` block changes caused MAC address changes in existing NICs
+  ([#436](https://github.com/terraform-providers/terraform-provider-vcd/issues/436),[#407](https://github.com/terraform-providers/terraform-provider-vcd/issues/407))
+* Fix a potential data race in client connection caching when VCD_CACHE is enabled ([#453](https://github.com/terraform-providers/terraform-provider-vcd/issues/453))
+* `resource/vcd_vapp_vm` when `customization.0.force=false` crashes with `interface {} is nil` ([#462](https://github.com/terraform-providers/terraform-provider-vcd/issues/462))
+* `resource/vcd_vapp_vm` `customization.0.force=true` could have skipped "Forced customization" on
+  each apply ([#462](https://github.com/terraform-providers/terraform-provider-vcd/issues/462), [#477](https://github.com/terraform-providers/terraform-provider-vcd/issues/477))
 
 NOTES:
+
 * Drop support for vCD 9.0
-* Bump terraform-plugin-sdk to v1.5.0 [GH-442]
+* Bump terraform-plugin-sdk to v1.5.0 ([#442](https://github.com/terraform-providers/terraform-provider-vcd/issues/442))
+* `make seqtestacc` and `make test-binary` use `-race` flags for `go test` to check if there are no
+  data races. Additionally GNUMakefile supports `make installrace` and `make buildrace` to build
+  binary with race detection enabled. ([#453](https://github.com/terraform-providers/terraform-provider-vcd/issues/453))
+* Add `make test-upgrade-prepare` directive ([#462](https://github.com/terraform-providers/terraform-provider-vcd/issues/462))
 
 ## 2.6.0 (December 13, 2019)
 

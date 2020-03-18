@@ -76,8 +76,8 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"AllocationVApp", "AllocationPool", "ReservationPool"}, false),
-				Description:  "The allocation model used by this VDC; must be one of {AllocationVApp, AllocationPool, ReservationPool}",
+				ValidateFunc: validation.StringInSlice([]string{"AllocationVApp", "AllocationPool", "ReservationPool", "Flex"}, false),
+				Description:  "The allocation model used by this VDC; must be one of {AllocationVApp, AllocationPool, ReservationPool, Flex}",
 			},
 			"compute_capacity": &schema.Schema{
 				Required: true,
@@ -201,16 +201,27 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Optional:    true,
 				Description: "True if discovery of vCenter VMs is enabled for resource pools backing this VDC. If left unspecified, the actual behaviour depends on enablement at the organization level and at the system level.",
 			},
-
+			"elasticity": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "Set to true to indicate if the Flex VDC is to be elastic.",
+			},
+			"include_vm_memory_overhead": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "Set to true to indicate if the Flex VDC is to include memory overhead into its accounting for admission control.",
+			},
 			"delete_force": &schema.Schema{
 				Type:        schema.TypeBool,
 				Required:    true,
-				Description: "When destroying use delete_force=True to remove a vdc and any objects it contains, regardless of their state.",
+				Description: "When destroying use delete_force=True to remove a VDC and any objects it contains, regardless of their state.",
 			},
 			"delete_recursive": &schema.Schema{
 				Type:        schema.TypeBool,
 				Required:    true,
-				Description: "When destroying use delete_recursive=True to remove the vdc and any objects it contains that are in a state that normally allows removal.",
+				Description: "When destroying use delete_recursive=True to remove the VDC and any objects it contains that are in a state that normally allows removal.",
 			},
 			"metadata": {
 				Type:        schema.TypeMap,
@@ -223,23 +234,35 @@ func resourceVcdOrgVdc() *schema.Resource {
 	}
 }
 
-// Creates a new vdc from a resource definition
+// Creates a new VDC from a resource definition
 func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[TRACE] vdc creation initiated")
+	orgVdcName := d.Get("name").(string)
+	log.Printf("[TRACE] VDC creation initiated: %s", orgVdcName)
 
 	vcdClient := meta.(*VCDClient)
+
+	err := isFlexAllowed(d, vcdClient)
+	if err != nil {
+		return err
+	}
 
 	if !vcdClient.Client.IsSysAdmin {
 		return fmt.Errorf("functionality requires system administrator privileges")
 	}
 
-	// vdc creation is accessible only in administrator API part
+	// check that elasticity and include_vm_memory_overhead are used only for Flex
+	_, elasticityConfigured := d.GetOkExists("elasticity")
+	_, vmMemoryOverheadConfigured := d.GetOkExists("include_vm_memory_overhead")
+	if d.Get("allocation_model").(string) != "Flex" && (elasticityConfigured || vmMemoryOverheadConfigured) {
+		return fmt.Errorf("`elasticity` and `include_vm_memory_overhead` can be used only with Flex allocation model (vCD 9.7+)")
+	}
+
+	// VDC creation is accessible only in administrator API part
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	orgVdcName := d.Get("name").(string)
 	orgVdc, _ := adminOrg.GetVDCByName(orgVdcName, false)
 	if orgVdc != nil {
 		return fmt.Errorf("org VDC with such name already exists: %s", orgVdcName)
@@ -250,34 +273,16 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	log.Printf("[DEBUG] Creating vdc: %#v", params)
+	log.Printf("[DEBUG] Creating VDC: %#v", params)
 
-	task, err := adminOrg.CreateVdc(params)
+	vdc, err := adminOrg.CreateOrgVdc(params)
 	if err != nil {
-		log.Printf("[DEBUG] Error creating vdc: %s", err)
-		return fmt.Errorf("error creating vdc: %s", err)
+		log.Printf("[DEBUG] Error creating VDC: %s", err)
+		return fmt.Errorf("error creating VDC: %s", err)
 	}
 
-	err = task.WaitTaskCompletion()
-	if err != nil {
-		log.Printf("[DEBUG] Error waiting for vdc to finish: %s", err)
-		return fmt.Errorf("error waiting for vdc to finish: %s", err)
-	}
-
-	err = adminOrg.Refresh()
-	if err != nil {
-		log.Printf("[DEBUG] Unable to refresh org.")
-		return fmt.Errorf("unable to refresh org. %s", err)
-	}
-
-	adminVdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
-	if err != nil {
-		log.Printf("[DEBUG] Unable to find vdc.")
-		return fmt.Errorf("unable to find VDC. %s", err)
-	}
-
-	d.SetId(adminVdc.AdminVdc.ID)
-	log.Printf("[TRACE] vdc created: %#v", task)
+	d.SetId(vdc.Vdc.ID)
+	log.Printf("[TRACE] VDC created: %#v", vdc)
 
 	err = createOrUpdateMetadata(d, meta)
 	if err != nil {
@@ -287,9 +292,26 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 	return resourceVcdVdcRead(d, meta)
 }
 
-// Fetches information about an existing vdc for a data definition
+// isFlexAllowed explicitly checks if it is allowed to use properties with lower version vCD
+func isFlexAllowed(d *schema.ResourceData, vcdClient *VCDClient) error {
+	if vcdClient.Client.APIVCDMaxVersionIs("< 32.0") {
+		if d.Get("allocation_model").(string) == "Flex" {
+			return fmt.Errorf("'Flex' allocation model only available for vCD 9.7+")
+		}
+		if _, configured := d.GetOkExists("elasticity"); configured {
+			return fmt.Errorf("'elasticity' only available for vCD 9.7+ when allocation model is `Flex`")
+		}
+		if _, configured := d.GetOkExists("include_vm_memory_overhead"); configured {
+			return fmt.Errorf("'include_vm_memory_overhead' only available for vCD 9.7+ when allocation model is `Flex`")
+		}
+	}
+	return nil
+}
+
+// Fetches information about an existing VDC for a data definition
 func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[TRACE] vdc read initiated")
+	vdcName := d.Get("name").(string)
+	log.Printf("[TRACE] VDC read initiated: %s", vdcName)
 
 	vcdClient := meta.(*VCDClient)
 
@@ -298,10 +320,10 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	adminVdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
+	adminVdc, err := adminOrg.GetAdminVDCByName(vdcName, false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find VDC")
-		return fmt.Errorf("unable to find VDC %s", err)
+		log.Printf("[DEBUG] Unable to find VDC %s", vdcName)
+		return fmt.Errorf("unable to find VDC %s, err: %s", vdcName, err)
 	}
 
 	return setOrgVdcData(d, vcdClient, adminOrg, adminVdc)
@@ -362,10 +384,19 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 		}
 	}
 
-	vdc, err := adminOrg.GetVDCByName(d.Get("name").(string), false)
+	if adminVdc.AdminVdc.IsElastic != nil {
+		_ = d.Set("elasticity", *adminVdc.AdminVdc.IsElastic)
+	}
+
+	if adminVdc.AdminVdc.IncludeMemoryOverhead != nil {
+		_ = d.Set("include_vm_memory_overhead", *adminVdc.AdminVdc.IncludeMemoryOverhead)
+	}
+
+	vdcName := d.Get("name").(string)
+	vdc, err := adminOrg.GetVDCByName(vdcName, false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find VDC")
-		return fmt.Errorf("unable to find VDC %s", err)
+		log.Printf("[DEBUG] Unable to find VDC %s", vdcName)
+		return fmt.Errorf("unable to find VDC %s, error:  %s", vdcName, err)
 	}
 	metadata, err := vdc.GetMetadata()
 	if err != nil {
@@ -453,7 +484,8 @@ func getMetadataStruct(metadata []*types.MetadataEntry) StringMap {
 
 //resourceVcdVdcUpdate function updates resource with found configurations changes
 func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[TRACE] vdc update initiated")
+	vdcName := d.Get("name").(string)
+	log.Printf("[TRACE] VDC update initiated: %s", vdcName)
 
 	vcdClient := meta.(*VCDClient)
 
@@ -462,7 +494,6 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	vdcName := d.Get("name").(string)
 	if d.HasChange("name") {
 		oldValue, _ := d.GetChange("name")
 		vdcName = oldValue.(string)
@@ -470,20 +501,20 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	adminVdc, err := adminOrg.GetAdminVDCByName(vdcName, false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find VDC.")
-		return fmt.Errorf("unable to find VDC %s", err)
+		log.Printf("[DEBUG] Unable to find VDC %s", vdcName)
+		return fmt.Errorf("unable to find VDC %s, error:  %s", vdcName, err)
 	}
 
 	changedAdminVdc, err := getUpdatedVdcInput(d, vcdClient, adminVdc)
 	if err != nil {
-		log.Printf("[DEBUG] Error updating VDC %s", err)
-		return fmt.Errorf("error updating VDC %s", err)
+		log.Printf("[DEBUG] Error updating VDC %s with error %s", vdcName, err)
+		return fmt.Errorf("error updating VDC %s, err: %s", vdcName, err)
 	}
 
 	_, err = changedAdminVdc.Update()
 	if err != nil {
-		log.Printf("[DEBUG] Error updating VDC %s", err)
-		return fmt.Errorf("error updating VDC %s", err)
+		log.Printf("[DEBUG] Error updating VDC %s with error %s", vdcName, err)
+		return fmt.Errorf("error updating VDC %s, err: %s", vdcName, err)
 	}
 
 	err = createOrUpdateMetadata(d, meta)
@@ -491,17 +522,17 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error updating VDC metadata: %s", err)
 	}
 
-	log.Printf("[TRACE] vdc update completed: %s", adminVdc.AdminVdc.Name)
+	log.Printf("[TRACE] VDC update completed: %s", adminVdc.AdminVdc.Name)
 	return resourceVcdVdcRead(d, meta)
 }
 
-// Deletes a vdc, optionally removing all objects in it as well
+// Deletes a VDC, optionally removing all objects in it as well
 func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[TRACE] vdc delete started")
+	vdcName := d.Get("name").(string)
+	log.Printf("[TRACE] VDC delete started: %s", vdcName)
 
 	vcdClient := meta.(*VCDClient)
 
-	vdcName := d.Get("name").(string)
 	if !vcdClient.Client.IsSysAdmin {
 		return fmt.Errorf("functionality requires system administrator privileges")
 	}
@@ -513,22 +544,22 @@ func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
 
 	vdc, err := adminOrg.GetVDCByName(vdcName, false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find vdc. Removing from tfstate")
+		log.Printf("[DEBUG] Unable to find VDC %s. Removing from tfstate", vdcName)
 		d.SetId("")
 		return nil
 	}
 
 	err = vdc.DeleteWait(d.Get("delete_force").(bool), d.Get("delete_recursive").(bool))
 	if err != nil {
-		log.Printf("[DEBUG] Error removing vdc %s", err)
-		return fmt.Errorf("error removing vdc %s", err)
+		log.Printf("[DEBUG] Error removing VDC %s, err: %s", vdcName, err)
+		return fmt.Errorf("error removing VDC %s, err: %s", vdcName, err)
 	}
 
 	_, err = adminOrg.GetVDCByName(vdcName, true)
 	if err == nil {
 		return fmt.Errorf("vdc %s still found after deletion", vdcName)
 	}
-	log.Printf("[TRACE] vdc delete completed: %s", vdcName)
+	log.Printf("[TRACE] VDC delete completed: %s", vdcName)
 	return nil
 }
 
@@ -598,17 +629,17 @@ func capacityWithUsage(d map[string]interface{}, units string) *types.CapacityWi
 func getUpdatedVdcInput(d *schema.ResourceData, vcdClient *VCDClient, vdc *govcd.AdminVdc) (*govcd.AdminVdc, error) {
 
 	if d.HasChange("compute_capacity") {
-		computeCapacityList := d.Get("compute_capacity").(*schema.Set).List()
+		computeCapacityList := d.Get("compute_capacity").([]interface{})
 		if len(computeCapacityList) == 0 {
 			return &govcd.AdminVdc{}, errors.New("no compute_capacity field")
 		}
 		computeCapacity := computeCapacityList[0].(map[string]interface{})
 
-		cpuCapacityList := computeCapacity["cpu"].(*schema.Set).List()
+		cpuCapacityList := computeCapacity["cpu"].([]interface{})
 		if len(cpuCapacityList) == 0 {
 			return &govcd.AdminVdc{}, errors.New("no cpu field in compute_capacity")
 		}
-		memoryCapacityList := computeCapacity["memory"].(*schema.Set).List()
+		memoryCapacityList := computeCapacity["memory"].([]interface{})
 		if len(memoryCapacityList) == 0 {
 			return &govcd.AdminVdc{}, errors.New("no memory field in compute_capacity")
 		}
@@ -695,6 +726,14 @@ func getUpdatedVdcInput(d *schema.ResourceData, vcdClient *VCDClient, vdc *govcd
 
 	if d.HasChange("enable_vm_discovery") {
 		vdc.AdminVdc.VmDiscoveryEnabled = d.Get("enable_vm_discovery").(bool)
+	}
+
+	if d.HasChange("elasticity") {
+		vdc.AdminVdc.IsElastic = takeBoolPointer(d.Get("elasticity").(bool))
+	}
+
+	if d.HasChange("include_vm_memory_overhead") {
+		vdc.AdminVdc.IncludeMemoryOverhead = takeBoolPointer(d.Get("include_vm_memory_overhead").(bool))
 	}
 
 	//cleanup
@@ -838,6 +877,16 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 		params.VmDiscoveryEnabled = vmDiscoveryEnabled.(bool)
 	}
 
+	if elasticity, ok := d.GetOkExists("elasticity"); ok {
+		elasticityPt := elasticity.(bool)
+		params.IsElastic = &elasticityPt
+	}
+
+	if vmMemoryOverhead, ok := d.GetOkExists("include_vm_memory_overhead"); ok {
+		vmMemoryOverheadPt := vmMemoryOverhead.(bool)
+		params.IncludeMemoryOverhead = &vmMemoryOverheadPt
+	}
+
 	return params, nil
 }
 
@@ -888,8 +937,8 @@ func resourceVcdOrgVdcImport(d *schema.ResourceData, meta interface{}) ([]*schem
 
 	adminVdc, err := adminOrg.GetAdminVDCByName(vdcName, false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find VDC")
-		return nil, fmt.Errorf("unable to find VDC %s", err)
+		log.Printf("[DEBUG] Unable to find VDC %s", vdcName)
+		return nil, fmt.Errorf("unable to find VDC %s, err: %s", vdcName, err)
 	}
 
 	_ = d.Set("org", orgName)

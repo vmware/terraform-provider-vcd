@@ -175,7 +175,7 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				Optional:      true,
 				Computed:      true,
 				ForceNew:      true,
-				Deprecated:    "Please use the more advanced 'external_network' block(s)",
+				Deprecated:    "Please use 'use_for_default_route' flag in the more advanced 'external_network' block(s)",
 				Description:   "External network to be used as default gateway. Its name must be included in 'external_networks'. An empty value will skip the default gateway",
 			},
 			"default_external_network_ip": &schema.Schema{
