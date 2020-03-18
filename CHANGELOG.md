@@ -1,4 +1,10 @@
 ## 2.8.0 (Unreleased)
+
+NOTES:
+
+* Bump terraform-plugin-sdk to v1.8.0 [GH-XXX]
+* Update Travis to use Go 1.14 [GH-XXX]
+
 ## 2.7.0 (March 13, 2020)
 
 FEATURES:
