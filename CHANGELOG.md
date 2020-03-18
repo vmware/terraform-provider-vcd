@@ -2,7 +2,7 @@
 
 IMPROVEMENTS:
 
-* `vcd_vapp_network`, `vcd_vapp_org_network` has now missing import documentation 
+* `vcd_vapp_network`, `vcd_vapp_org_network` has now missing import documentation [#481] 
 
 ## 2.7.0 (March 13, 2020)
 
