@@ -76,3 +76,22 @@ DHCP Pools additionally support the following attributes:
 * `default_lease_time` - (Optional) The default DHCP lease time to use. Defaults to `3600`.
 * `max_lease_time` - (Optional) The maximum DHCP lease time to use. Defaults to `7200`.
 * `enabled` - (Optional) Allows to enable or disable service. Default is true.
+
+## Importing
+
+~> **Note:** The current implementation of Terraform import can only import resources into the state.
+It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
+
+An existing vApp Network can be [imported][docs-import] into this resource
+via supplying the full dot separated path for vApp Network. An example is below:
+
+[docs-import]: https://www.terraform.io/docs/import/
+
+```
+terraform import vcd_vapp_network.imported org-name.vdc-name.vapp-name.network-name
+```
+
+NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
+
+The above would import the vApp Network named `network-name` that is defined on vApp `vapp-name` 
+which is configured in organization named `my-org` and vDC named `my-org-vdc`.
