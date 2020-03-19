@@ -5,8 +5,8 @@ IMPROVEMENTS:
 * `resource/vcd_network_routed`, `resource/vcd_network_direct`, and `resource/vcd_network_isolated` now support in place updates. [GH-465]
 
 BUG FIXES
-* Fix Issue [GH-434] Using wrong defaults for `vcd_network_isolated` and `vcd_network_routed` DNS
-* Fix Issue [GH-450] `external_network_gateway` not filled in datasource `vcd_network_direct`
+* Using wrong defaults for `vcd_network_isolated` and `vcd_network_routed` DNS [GH-434]
+* `external_network_gateway` not filled in datasource `vcd_network_direct` [GH-450]
 
 ## 2.7.0 (March 13, 2020)
 
