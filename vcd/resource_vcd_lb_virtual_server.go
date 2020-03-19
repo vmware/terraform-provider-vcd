@@ -59,7 +59,7 @@ func resourceVcdLBVirtualServer() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				Description:  "IP address that the load balancer listens on",
-				ValidateFunc: validation.SingleIP(),
+				ValidateFunc: validation.IsIPAddress,
 			},
 			"protocol": &schema.Schema{
 				Type:         schema.TypeString,

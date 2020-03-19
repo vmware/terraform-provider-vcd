@@ -20,7 +20,7 @@ Requirements
 ------------
 
 -	[Terraform](https://www.terraform.io/downloads.html)
--	[Go](https://golang.org/doc/install) 1.13 (to build the provider plugin)
+-	[Go](https://golang.org/doc/install) 1.14 (to build the provider plugin)
 
 Building The Provider (the modules way)
 --------------------------------------
@@ -70,7 +70,7 @@ compatibility only. This means a few things:
 [see more](https://github.com/golang/go/wiki/Modules#how-to-use-modules) on how to use modules and toggle between modes.
 * `vendor` directory is __not to be changed manually__. Always use Go modules when introducing new dependencies
 and always rebuild the vendor directory using `go mod vendor` if you have changed `go.mod` or `go.sum`. Travis CI will
-catch and fail if it is not done. **Note** Go 1.13+ must be used for `go mod vendor` as starting with this version
+catch and fail if it is not done. **Note** Go 1.14+ must be used for `go mod vendor` as starting with this version
 "/vendor" directory structure changed and Travis will fail if "/vendor" is built and commited with Go <1.12.
 * When developing `terraform-provider-vcd` one often needs to add extra stuff to `go-vcloud-director`. Go modules
 have a convenient [replace](https://github.com/golang/go/wiki/Modules#when-should-i-use-the-replace-directive)
