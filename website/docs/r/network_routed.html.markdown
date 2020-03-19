@@ -50,8 +50,8 @@ The following arguments are supported:
 * `edge_gateway` - (Required) The name of the edge gateway
 * `netmask` - (Optional) The netmask for the new network. Defaults to `255.255.255.0`
 * `gateway` (Required) The gateway for this network
-* `dns1` - (Optional) First DNS server to use. Defaults to `8.8.8.8`
-* `dns2` - (Optional) Second DNS server to use. Defaults to `8.8.4.4`
+* `dns1` - (Optional) First DNS server to use.
+* `dns2` - (Optional) Second DNS server to use.
 * `dns_suffix` - (Optional) A FQDN for the virtual machines on this network
 * `shared` - (Optional) Defines if this network is shared between multiple VDCs
   in the Org.  Defaults to `false`.
@@ -68,9 +68,8 @@ Static IP Pools and DHCP Pools support the following attributes:
 * `start_address` - (Required) The first address in the IP Range
 * `end_address` - (Required) The final address in the IP Range
 
-DHCP Pools additionally support the following attributes:
+DHCP Pools additionally support the following attribute:
 
-* `default_lease_time` - (Optional) The default DHCP lease time to use. Defaults to `3600`.
 * `max_lease_time` - (Optional) The maximum DHCP lease time to use. Defaults to `7200`.
 
 ## Importing
