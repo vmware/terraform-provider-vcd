@@ -9,12 +9,12 @@ import (
 )
 
 func TestAccVcdVappOrgNetwork_NotFenced(t *testing.T) {
-	resourceName = "TestAccVcdVappOrgNetwork_NotFenced"
+	vappNetworkResourceName := "TestAccVcdVappOrgNetwork_NotFenced"
 
 	var params = StringMap{
 		"Org":                         testConfig.VCD.Org,
 		"Vdc":                         testConfig.VCD.Vdc,
-		"resourceName":                resourceName,
+		"resourceName":                vappNetworkResourceName,
 		"vappName":                    "TestAccVcdVappOrgNetwork_NotFenced",
 		"EdgeGateway":                 testConfig.Networking.EdgeGateway,
 		"NetworkName":                 "TestAccVcdVAppNetNotFenced",
@@ -34,12 +34,12 @@ func TestAccVcdVappOrgNetwork_NotFenced(t *testing.T) {
 }
 
 func TestAccVcdVappOrgNetwork_Fenced(t *testing.T) {
-	resourceName = "TestAccVcdVappOrgNetwork_Fenced"
+	vappNetworkResourceName := "TestAccVcdVappOrgNetwork_Fenced"
 
 	var params = StringMap{
 		"Org":                         testConfig.VCD.Org,
 		"Vdc":                         testConfig.VCD.Vdc,
-		"resourceName":                resourceName,
+		"resourceName":                vappNetworkResourceName,
 		"vappName":                    "TestAccVcdVappOrgNetwork_Fenced",
 		"EdgeGateway":                 testConfig.Networking.EdgeGateway,
 		"NetworkName":                 "TestAccVcdVAppNetFenced",

@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
@@ -13,6 +14,7 @@ func resourceVcdNetworkDirect() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceVcdNetworkDirectCreate,
 		Read:   resourceVcdNetworkDirectRead,
+		Update: resourceVcdNetworkDirectUpdate,
 		Delete: resourceVcdNetworkDelete,
 		Importer: &schema.ResourceImporter{
 			State: resourceVcdNetworkDirectImport,
@@ -21,7 +23,6 @@ func resourceVcdNetworkDirect() *schema.Resource {
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "A unique name for this network",
 			},
 			"org": {
@@ -40,7 +41,6 @@ func resourceVcdNetworkDirect() *schema.Resource {
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional description for the network",
 			},
 			"external_network": &schema.Schema{
@@ -76,16 +76,13 @@ func resourceVcdNetworkDirect() *schema.Resource {
 			},
 			"href": &schema.Schema{
 				Type:        schema.TypeString,
-				Optional:    true,
 				Computed:    true,
-				ForceNew:    true,
 				Description: "Network Hypertext Reference",
 			},
 			"shared": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				ForceNew:    true,
 				Description: "Defines if this network is shared between multiple VDCs in the Org",
 			},
 		},
@@ -148,7 +145,7 @@ func genericVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}, origi
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf("[network direct read] "+errorRetrievingOrgAndVdc, err)
+		return fmt.Errorf("[direct network read] "+errorRetrievingOrgAndVdc, err)
 	}
 
 	identifier := d.Id()
@@ -163,7 +160,7 @@ func genericVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}, origi
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("[network direct read] network %s not found: %s", identifier, err)
+		return fmt.Errorf("[direct network read] network %s not found: %s", identifier, err)
 	}
 
 	_ = d.Set("name", network.OrgVDCNetwork.Name)
@@ -191,12 +188,59 @@ func genericVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}, origi
 	_ = d.Set("external_network_dns1", currentNetwork.Dns1)
 	_ = d.Set("external_network_dns2", currentNetwork.Dns2)
 	_ = d.Set("external_network_dns_suffix", currentNetwork.DnsSuffix)
+	// Fixes issue #450
+	_ = d.Set("external_network_gateway", currentNetwork.DefaultGateway)
 
 	_ = d.Set("description", network.OrgVDCNetwork.Description)
 
 	d.SetId(network.OrgVDCNetwork.ID)
 
 	return nil
+}
+
+func resourceVcdNetworkDirectUpdate(d *schema.ResourceData, meta interface{}) error {
+	vcdClient := meta.(*VCDClient)
+	if !vcdClient.Client.IsSysAdmin {
+		return fmt.Errorf("update of a vcd_network_direct requires system administrator privileges")
+	}
+	network, err := getNetwork(d, vcdClient)
+	if err != nil {
+		return fmt.Errorf("[direct network update] error getting network: %s", err)
+	}
+
+	networkName := d.Get("name").(string)
+	network.OrgVDCNetwork.Name = networkName
+	network.OrgVDCNetwork.Description = d.Get("description").(string)
+	network.OrgVDCNetwork.IsShared = d.Get("shared").(bool)
+
+	err = network.Update()
+	if err != nil {
+		return fmt.Errorf("[direct network update] error updating network %s: %s", network.OrgVDCNetwork.Name, err)
+	}
+
+	return resourceVcdNetworkDirectRead(d, meta)
+}
+
+func getNetwork(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.OrgVDCNetwork, error) {
+
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	if err != nil {
+		return nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	}
+
+	identifier := d.Id()
+	if identifier == "" {
+		identifier = d.Get("name").(string)
+	}
+	if identifier == "" {
+		return nil, fmt.Errorf("[get network] no identifier found for network")
+	}
+	network, err := vdc.GetOrgVdcNetworkByNameOrId(identifier, false)
+	if err != nil {
+		return nil, fmt.Errorf("[get network] error getting network %s: %s", identifier, err)
+	}
+
+	return network, nil
 }
 
 // resourceVcdNetworkDirectImport is responsible for importing the resource.
@@ -215,23 +259,23 @@ func genericVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}, origi
 func resourceVcdNetworkDirectImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
-		return nil, fmt.Errorf("[network direct import] resource name must be specified as org-name.vdc-name.network-name")
+		return nil, fmt.Errorf("[direct network import] resource name must be specified as org-name.vdc-name.network-name")
 	}
 	orgName, vdcName, networkName := resourceURI[0], resourceURI[1], resourceURI[2]
 
 	vcdClient := meta.(*VCDClient)
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if err != nil {
-		return nil, fmt.Errorf("[network direct import] unable to find VDC %s: %s ", vdcName, err)
+		return nil, fmt.Errorf("[direct network import] unable to find VDC %s: %s ", vdcName, err)
 	}
 
 	network, err := vdc.GetOrgVdcNetworkByName(networkName, false)
 	if err != nil {
-		return nil, fmt.Errorf("[network direct import] error retrieving network %s: %s", networkName, err)
+		return nil, fmt.Errorf("[direct network import] error retrieving network %s: %s", networkName, err)
 	}
 	parentNetwork := network.OrgVDCNetwork.Configuration.ParentNetwork
 	if parentNetwork == nil || parentNetwork.Name == "" {
-		return nil, fmt.Errorf("[network direct import] no parent network found for %s", network.OrgVDCNetwork.Name)
+		return nil, fmt.Errorf("[direct network import] no parent network found for %s", network.OrgVDCNetwork.Name)
 	}
 
 	_ = d.Set("org", orgName)
