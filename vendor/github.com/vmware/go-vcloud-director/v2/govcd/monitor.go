@@ -250,6 +250,14 @@ func LogAdminCatalog(catalog types.AdminCatalog) {
 	out("log", prettyAdminCatalog(catalog))
 }
 
+func LogEdgeGateway(edgeGateway types.EdgeGateway) {
+	out("log", prettyEdgeGateway(edgeGateway))
+}
+
+func ShowEdgeGateway(edgeGateway types.EdgeGateway) {
+	out("screen", prettyEdgeGateway(edgeGateway))
+}
+
 // Auxiliary function to monitor a task
 // It can be used in association with WaitInspectTaskCompletion
 func outTask(destination string, task *types.Task, howManyTimes int, elapsed time.Duration, first, last bool) {

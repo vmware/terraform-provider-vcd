@@ -163,7 +163,7 @@ func resourceVcdVappNetwork() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceVcdNetworkIPAddressHash,
+				Set: resourceVcdNetworkStaticIpPoolHash,
 			},
 		},
 	}
@@ -342,7 +342,7 @@ func genericVappNetworkRead(d *schema.ResourceData, meta interface{}, origin str
 		}
 
 		if config.IPScopes != nil && config.IPScopes.IPScope[0].IPRanges != nil {
-			staticIpRanges := schema.NewSet(resourceVcdNetworkIPAddressHash, []interface{}{})
+			staticIpRanges := schema.NewSet(resourceVcdNetworkStaticIpPoolHash, []interface{}{})
 			for _, ipRange := range config.IPScopes.IPScope[0].IPRanges.IPRange {
 				newValues := map[string]interface{}{
 					"start_address": ipRange.StartAddress,

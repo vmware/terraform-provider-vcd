@@ -359,13 +359,18 @@ function run_with_recover {
         case $phase in
             init)
                 # An error on initialization should not be recoverable
-                echo "EXECUTION ERROR"
+                echo $dash_line
+                echo "NON-RECOVERABLE EXECUTION ERROR (phase: $phase)"
+                echo $dash_line
                 summary
                 ;;
             plan | plancheck)
                 # an error in plan does not need any recovery,
                 # in addition to recording the file in the failed list
                 # The destroy will be called anyway
+                echo $dash_line
+                echo "RECOVERING FROM plancheck phase. A 'destroy' will run next"
+                echo $dash_line
                 ;;
             apply | destroy)
 
@@ -384,7 +389,9 @@ function run_with_recover {
                 ;;
 
             *)
+                echo $dash_line
                 echo "unhandled phase in recovery'$phase'"
+                echo $dash_line
                 exit $exit_code
                 ;;
 

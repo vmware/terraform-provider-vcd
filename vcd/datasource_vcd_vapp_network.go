@@ -120,7 +120,7 @@ func datasourceVcdVappNetwork() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceVcdNetworkIPAddressHash,
+				Set: resourceVcdDhcpPoolHash,
 			},
 			"static_ip_pool": &schema.Schema{
 				Type:        schema.TypeSet,
@@ -139,7 +139,7 @@ func datasourceVcdVappNetwork() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceVcdNetworkIPAddressHash,
+				Set: resourceVcdNetworkStaticIpPoolHash,
 			},
 		},
 	}
