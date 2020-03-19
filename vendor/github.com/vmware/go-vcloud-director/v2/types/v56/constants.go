@@ -35,6 +35,8 @@ const (
 	MimeVDC = "application/vnd.vmware.vcloud.vdc+xml"
 	// MimeVDC mime for a admin VDC
 	MimeAdminVDC = "application/vnd.vmware.admin.vdc+xml"
+	// MimeEdgeGateway mime for an Edge Gateway
+	MimeEdgeGateway = "application/vnd.vmware.admin.edgeGateway+xml"
 	// MimeVAppTemplate mime for a vapp template
 	MimeVAppTemplate = "application/vnd.vmware.vcloud.vAppTemplate+xml"
 	// MimeVApp mime for a vApp
@@ -55,6 +57,8 @@ const (
 	MimeError = "application/vnd.vmware.vcloud.error+xml"
 	// MimeNetwork mime for a network
 	MimeNetwork = "application/vnd.vmware.vcloud.network+xml"
+	// MimeOrgVdcNetwork mime for an Org VDC network
+	MimeOrgVdcNetwork = "application/vnd.vmware.vcloud.orgVdcNetwork+xml"
 	//MimeDiskCreateParams mime for create independent disk
 	MimeDiskCreateParams = "application/vnd.vmware.vcloud.diskCreateParams+xml"
 	// Mime for VMs
