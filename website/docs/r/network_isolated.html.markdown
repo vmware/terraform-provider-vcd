@@ -47,8 +47,8 @@ The following arguments are supported:
 * `description` - (Optional *v2.6+*) An optional description of the network
 * `netmask` - (Optional) The netmask for the new network. Defaults to `255.255.255.0`
 * `gateway` (Required) The gateway for this network
-* `dns1` - (Optional) First DNS server to use. Defaults to `8.8.8.8`
-* `dns2` - (Optional) Second DNS server to use. Defaults to `8.8.4.4`
+* `dns1` - (Optional) First DNS server to use.
+* `dns2` - (Optional) Second DNS server to use.
 * `dns_suffix` - (Optional) A FQDN for the virtual machines on this network
 * `shared` - (Optional) Defines if this network is shared between multiple VDCs
   in the Org.  Defaults to `false`.

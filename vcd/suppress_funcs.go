@@ -77,15 +77,6 @@ func getTerraformStdout() *os.File {
 	}
 }
 
-// suppressAlways suppresses the processing of the property unconditionally
-// Used when we want to remove a property that should not have been
-// added in the first place, but we want to keep compatibility
-func suppressAlways() schema.SchemaDiffSuppressFunc {
-	return func(k string, old string, new string, d *schema.ResourceData) bool {
-		return true
-	}
-}
-
 // suppressCase is a schema.SchemaDiffSuppressFunc which ignore case changes
 func suppressCase(k, old, new string, d *schema.ResourceData) bool {
 	return strings.EqualFold(old, new)

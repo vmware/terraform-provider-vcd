@@ -15,6 +15,7 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceVcdNetworkIsolatedCreate,
 		Read:   resourceVcdNetworkIsolatedRead,
+		Update: resourceVcdNetworkIsolatedUpdate,
 		Delete: resourceVcdNetworkDelete,
 		Importer: &schema.ResourceImporter{
 			State: resourceVcdNetworkIsolatedImport,
@@ -23,7 +24,6 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "A unique name for this network",
 			},
 			"org": {
@@ -42,7 +42,6 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional description for the network",
 			},
 			"netmask": &schema.Schema{
@@ -64,8 +63,6 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 			"dns1": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
-				ForceNew:     true,
-				Default:      "8.8.8.8",
 				Description:  "First DNS server to use",
 				ValidateFunc: validation.SingleIP(),
 			},
@@ -73,8 +70,6 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 			"dns2": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
-				ForceNew:     true,
-				Default:      "8.8.4.4",
 				Description:  "Second DNS server to use",
 				ValidateFunc: validation.SingleIP(),
 			},
@@ -82,7 +77,6 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 			"dns_suffix": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "A FQDN for the virtual machines on this network",
 			},
 
@@ -96,14 +90,12 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				ForceNew:    true,
 				Description: "Defines if this network is shared between multiple VDCs in the Org",
 			},
 
 			"dhcp_pool": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "A range of IPs to issue to virtual machines that don't have a static IP",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -136,12 +128,11 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceVcdNetworkIPAddressHash,
+				Set: resourceVcdNetworkIsolatedDhcpPoolHash,
 			},
 			"static_ip_pool": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "A range of IPs permitted to be used as static IPs for virtual machines",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -160,7 +151,7 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceVcdNetworkIPAddressHash,
+				Set: resourceVcdNetworkStaticIpPoolHash,
 			},
 		},
 	}
@@ -247,12 +238,6 @@ func resourceVcdNetworkIsolatedCreate(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf("error: %s", err)
 	}
 
-	network, err := vdc.GetOrgVdcNetworkByName(networkName, true)
-	if err != nil {
-		return fmt.Errorf("error retrieving network %s after creation", networkName)
-	}
-	d.SetId(network.OrgVDCNetwork.ID)
-
 	return resourceVcdNetworkIsolatedRead(d, meta)
 }
 
@@ -261,26 +246,35 @@ func resourceVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}) er
 }
 
 func genericVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}, origin string) error {
-	vcdClient := meta.(*VCDClient)
+	var network *govcd.OrgVDCNetwork
 
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
-	if err != nil {
-		return fmt.Errorf("[network isolated read] "+errorRetrievingOrgAndVdc, err)
-	}
+	switch origin {
+	case "resource", "datasource":
+		// From the resource creation or data source, we need to retrieve the network from scratch
+		vcdClient := meta.(*VCDClient)
 
-	identifier := d.Id()
-
-	if identifier == "" {
-		identifier = d.Get("name").(string)
-	}
-	network, err := vdc.GetOrgVdcNetworkByNameOrId(identifier, false)
-	if err != nil {
-		if origin == "resource" {
-			log.Printf("[DEBUG] Network %s no longer exists. Removing from tfstate", identifier)
-			d.SetId("")
-			return nil
+		_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+		if err != nil {
+			return fmt.Errorf("[network isolated read] "+errorRetrievingOrgAndVdc, err)
 		}
-		return fmt.Errorf("[network isolated read] error looking for %s: %s", identifier, err)
+
+		identifier := d.Id()
+
+		if identifier == "" {
+			identifier = d.Get("name").(string)
+		}
+		network, err = vdc.GetOrgVdcNetworkByNameOrId(identifier, false)
+		if err != nil {
+			if origin == "resource" {
+				log.Printf("[DEBUG] Network %s no longer exists. Removing from tfstate", identifier)
+				d.SetId("")
+				return nil
+			}
+			return fmt.Errorf("[network isolated read] error looking for %s: %s", identifier, err)
+		}
+	case "resource-update":
+		// From update, we get the network directly
+		network = meta.(*govcd.OrgVDCNetwork)
 	}
 
 	_ = d.Set("name", network.OrgVDCNetwork.Name)
@@ -300,30 +294,30 @@ func genericVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}, ori
 	staticIpPool := getStaticIpPool(network)
 	if len(staticIpPool) > 0 {
 		newSet := &schema.Set{
-			F: resourceVcdNetworkIPAddressHash,
+			F: resourceVcdNetworkStaticIpPoolHash,
 		}
 		for _, element := range staticIpPool {
 			newSet.Add(element)
 		}
 		err := d.Set("static_ip_pool", newSet.List())
 		if err != nil {
-			return fmt.Errorf("[network isolated read] static_ip set %s", err)
+			return fmt.Errorf("[isolated network read] static_ip set %s", err)
 		}
 	}
 	dhcpPool := getDhcpPool(network)
 	if len(dhcpPool) > 0 {
 		newSet := &schema.Set{
-			F: resourceVcdNetworkIPAddressHash,
+			F: resourceVcdNetworkIsolatedDhcpPoolHash,
 		}
 		for _, element := range dhcpPool {
 			newSet.Add(element)
 		}
 		err := d.Set("dhcp_pool", newSet.List())
 		if err != nil {
-			return fmt.Errorf("[network isolated read] dhcp set %s", err)
+			return fmt.Errorf("[isolated network read] dhcp set %s", err)
 		}
 	}
-	d.Set("description", network.OrgVDCNetwork.Description)
+	_ = d.Set("description", network.OrgVDCNetwork.Description)
 
 	d.SetId(network.OrgVDCNetwork.ID)
 	return nil
@@ -351,6 +345,11 @@ func getDhcpPool(network *govcd.OrgVDCNetwork) []map[string]interface{} {
 	return dhcpPool
 }
 
+// resourceVcdNetworkIsolatedDhcpPoolHash computes a hash for a DHCP pool
+func resourceVcdNetworkIsolatedDhcpPoolHash(v interface{}) int {
+	return genericResourceVcdNetworkDhcpPoolHash(v, "isolated")
+}
+
 // resourceVcdNetworkIsolatedImport is responsible for importing the resource.
 // The following steps happen as part of import
 // 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
@@ -367,23 +366,96 @@ func getDhcpPool(network *govcd.OrgVDCNetwork) []map[string]interface{} {
 func resourceVcdNetworkIsolatedImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
-		return nil, fmt.Errorf("[network isolated import] resource name must be specified as org-name.vdc-name.network-name")
+		return nil, fmt.Errorf("[isolated network import] resource name must be specified as org-name.vdc-name.network-name")
 	}
 	orgName, vdcName, networkName := resourceURI[0], resourceURI[1], resourceURI[2]
 
 	vcdClient := meta.(*VCDClient)
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if err != nil {
-		return nil, fmt.Errorf("[network import] unable to find VDC %s: %s ", vdcName, err)
+		return nil, fmt.Errorf("[isolated network import] unable to find VDC %s: %s ", vdcName, err)
 	}
 
 	network, err := vdc.GetOrgVdcNetworkByName(networkName, false)
 	if err != nil {
-		return nil, fmt.Errorf("[network import] error retrieving Org VDC network %s: %s", networkName, err)
+		return nil, fmt.Errorf("[isolated network import] error retrieving Org VDC network %s: %s", networkName, err)
 	}
 
 	_ = d.Set("org", orgName)
 	_ = d.Set("vdc", vdcName)
 	d.SetId(network.OrgVDCNetwork.ID)
 	return []*schema.ResourceData{d}, nil
+}
+
+func resourceVcdNetworkIsolatedUpdate(d *schema.ResourceData, meta interface{}) error {
+	var (
+		vcdClient          = meta.(*VCDClient)
+		networkName        = d.Get("name").(string)
+		networkDescription = d.Get("description").(string)
+		isShared           = d.Get("shared").(bool)
+		dns1               = d.Get("dns1").(string)
+		dns2               = d.Get("dns2").(string)
+		dnsSuffix          = d.Get("dns_suffix").(string)
+		dhcpPool           = d.Get("dhcp_pool").(*schema.Set).List()
+		identifier         = d.Id()
+		ipRanges           types.IPRanges
+		dhcpPoolService    []*types.DhcpPoolService
+	)
+
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	if err != nil {
+		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	}
+
+	if identifier == "" {
+		identifier = networkName
+	}
+
+	network, err := vdc.GetOrgVdcNetworkByNameOrId(identifier, false)
+	if err != nil {
+		return fmt.Errorf("[isolated network update] error looking for %s: %s", identifier, err)
+	}
+
+	if d.HasChange("static_ip_pool") {
+		ipRanges, err = expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
+		if err != nil {
+			return fmt.Errorf("[isolated network update] error expanding static IP pool: %s", err)
+		}
+		network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].IPRanges = &ipRanges
+	}
+
+	if d.HasChange("dhcp_pool") {
+		if len(dhcpPool) > 0 {
+			for _, pool := range dhcpPool {
+
+				poolMap := pool.(map[string]interface{})
+
+				var poolService types.DhcpPoolService
+
+				poolService.IsEnabled = true
+				poolService.DefaultLeaseTime = poolMap["default_lease_time"].(int)
+				poolService.MaxLeaseTime = poolMap["max_lease_time"].(int)
+				poolService.LowIPAddress = poolMap["start_address"].(string)
+				poolService.HighIPAddress = poolMap["end_address"].(string)
+				dhcpPoolService = append(dhcpPoolService, &poolService)
+			}
+			network.OrgVDCNetwork.ServiceConfig.GatewayDhcpService.Pool = dhcpPoolService
+		}
+	}
+
+	network.OrgVDCNetwork.Name = networkName
+	network.OrgVDCNetwork.Description = networkDescription
+	network.OrgVDCNetwork.IsShared = isShared
+
+	network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].DNS1 = dns1
+	network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].DNS2 = dns2
+	network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].DNS2 = dnsSuffix
+
+	err = network.Update()
+	if err != nil {
+		return fmt.Errorf("error updating isolated network: %s", err)
+	}
+
+	// The update returns already a network. No need to retrieve it twice
+	return genericVcdNetworkIsolatedRead(d, network, "resource-update")
 }
