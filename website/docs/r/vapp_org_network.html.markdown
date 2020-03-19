@@ -40,3 +40,21 @@ The following arguments are supported:
 * `nat_enabled` - (Optional) NAT service enabled or disabled. Configurable when `is_fenced` and `firewall_enabled` is true.
 * `retain_ip_mac_enabled` - (Optional) Specifies whether the network resources such as IP/MAC of router will be retained across deployments. Configurable when `is_fenced` is true.
 
+## Importing
+
+~> **Note:** The current implementation of Terraform import can only import resources into the state.
+It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
+
+An existing vApp Org Network can be [imported][docs-import] into this resource
+via supplying the full dot separated path for vApp Org Network. An example is below:
+
+[docs-import]: https://www.terraform.io/docs/import/
+
+```
+terraform import vcd_vapp_org_network.imported org-name.vdc-name.vapp-name.org-network-name
+```
+
+NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
+
+The above command would import the vApp Org Network named `org-network-name` that is defined on vApp 
+`vapp-name` which is configured in organization named `my-org` and VDC named `my-org-vdc`.
