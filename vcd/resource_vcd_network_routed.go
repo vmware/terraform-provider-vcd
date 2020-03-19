@@ -139,8 +139,7 @@ func resourceVcdNetworkRouted() *schema.Resource {
 
 						"default_lease_time": &schema.Schema{
 							Type:        schema.TypeInt,
-							Default:     7200, // vCD doesn't process this input. It sets the value to max_lease_time
-							Optional:    true,
+							Computed:    true, // vCD doesn't process this field as input. It sets the value to max_lease_time
 							Description: "The default DHCP lease time to use",
 						},
 
@@ -152,7 +151,7 @@ func resourceVcdNetworkRouted() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceVcdNetworkDhcpPoolHash,
+				Set: resourceVcdNetworkRoutedDhcpPoolHash,
 			},
 			"static_ip_pool": &schema.Schema{
 				Type:        schema.TypeSet,
@@ -341,7 +340,7 @@ func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origi
 	dhcp := getDhcpFromEdgeGateway(network.OrgVDCNetwork.HREF, edgeGateway)
 	if len(dhcp) > 0 {
 		newSet := &schema.Set{
-			F: resourceVcdNetworkDhcpPoolHash,
+			F: resourceVcdNetworkRoutedDhcpPoolHash,
 		}
 		for _, element := range dhcp {
 			newSet.Add(element)
@@ -496,8 +495,7 @@ func resourceVcdNetworkStaticIpPoolHash(v interface{}) int {
 	return hashcode.String(buf.String())
 }
 
-// resourceVcdNetworkDhcpPoolHash computes a hash for a DHCP pool
-func resourceVcdNetworkDhcpPoolHash(v interface{}) int {
+func genericResourceVcdNetworkDhcpPoolHash(v interface{}, networkType string) int {
 	// Handle this function with care.
 	// Changing the hash algorithm will trigger a plan update.
 	var buf bytes.Buffer
@@ -507,11 +505,22 @@ func resourceVcdNetworkDhcpPoolHash(v interface{}) int {
 	buf.WriteString(fmt.Sprintf("%s-",
 		strings.ToLower(m["end_address"].(string))))
 	buf.WriteString(fmt.Sprintf("%d-",
-		m["default_lease_time"].(int)))
-	buf.WriteString(fmt.Sprintf("%d-",
 		m["max_lease_time"].(int)))
 
+	switch networkType {
+	case "isolated":
+		buf.WriteString(fmt.Sprintf("%d-", m["default_lease_time"].(int)))
+	case "routed":
+		// do nothing
+	default:
+		panic(fmt.Sprintf("network type %s not supported", networkType))
+	}
 	return hashcode.String(buf.String())
+}
+
+// resourceVcdNetworkRoutedDhcpPoolHash computes a hash for a DHCP pool
+func resourceVcdNetworkRoutedDhcpPoolHash(v interface{}) int {
+	return genericResourceVcdNetworkDhcpPoolHash(v, "routed")
 }
 
 // resourceVcdNetworkRoutedImport is responsible for importing the resource.

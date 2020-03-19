@@ -318,7 +318,6 @@ func TestAccVcdNetworkRoutedDhcp(t *testing.T) {
 		gateway:            "10.10.102.1",
 		startDhcpIpAddress: "10.10.102.51",
 		endDhcpIpAddress:   "10.10.102.100",
-		defaultLeaseTime:   86400,
 		maxLeaseTime:       86400,
 		configText:         testAccCheckVcdNetworkRoutedDhcp,
 		resourceName:       "vcd_network_routed",
@@ -328,7 +327,6 @@ func TestAccVcdNetworkRoutedDhcp(t *testing.T) {
 		name:               routedDhcpNetwork + "-update",
 		startDhcpIpAddress: "10.10.102.52",
 		endDhcpIpAddress:   "10.10.102.99",
-		defaultLeaseTime:   604800,
 		maxLeaseTime:       604800,
 		configText:         testAccCheckVcdNetworkRoutedDhcp,
 		resourceName:       "vcd_network_routed",
@@ -343,7 +341,6 @@ func TestAccVcdNetworkRoutedDhcpSub(t *testing.T) {
 		gateway:            "10.10.102.1",
 		startDhcpIpAddress: "10.10.102.51",
 		endDhcpIpAddress:   "10.10.102.100",
-		defaultLeaseTime:   7200, // hard-coded default: vCD doesn't honor it during creation or update
 		configText:         testAccCheckVcdNetworkRoutedDhcp,
 		resourceName:       "vcd_network_routed",
 		interfaceName:      "subinterface",
@@ -353,7 +350,6 @@ func TestAccVcdNetworkRoutedDhcpSub(t *testing.T) {
 		gateway:            "10.10.102.1",
 		startDhcpIpAddress: "10.10.102.52",
 		endDhcpIpAddress:   "10.10.102.99",
-		defaultLeaseTime:   7200, // hard-coded default: vCD doesn't honor it during creation or update
 		configText:         testAccCheckVcdNetworkRoutedDhcp,
 		resourceName:       "vcd_network_routed",
 		interfaceName:      "subinterface",
@@ -369,7 +365,6 @@ func TestAccVcdNetworkRoutedMixed(t *testing.T) {
 		endStaticIpAddress1:   "10.10.102.50",
 		startDhcpIpAddress:    "10.10.102.51",
 		endDhcpIpAddress:      "10.10.102.100",
-		defaultLeaseTime:      7200, // hard-coded default: vCD doesn't honor it during creation or update
 		configText:            testAccCheckVcdNetworkRoutedMixed,
 		resourceName:          "vcd_network_routed",
 		interfaceName:         "internal",
@@ -381,7 +376,6 @@ func TestAccVcdNetworkRoutedMixed(t *testing.T) {
 		endStaticIpAddress1:   "10.10.102.45",
 		startDhcpIpAddress:    "10.10.102.52",
 		endDhcpIpAddress:      "10.10.102.99",
-		defaultLeaseTime:      7200, // hard-coded default: vCD doesn't honor it during creation or update
 		configText:            testAccCheckVcdNetworkRoutedMixed,
 		resourceName:          "vcd_network_routed",
 		interfaceName:         "internal",
@@ -397,7 +391,6 @@ func TestAccVcdNetworkRoutedMixedSub(t *testing.T) {
 		endStaticIpAddress1:   "10.10.102.50",
 		startDhcpIpAddress:    "10.10.102.51",
 		endDhcpIpAddress:      "10.10.102.100",
-		defaultLeaseTime:      7200, // hard-coded default: vCD doesn't honor it during creation or update
 		configText:            testAccCheckVcdNetworkRoutedMixed,
 		resourceName:          "vcd_network_routed",
 		interfaceName:         "subinterface",
@@ -409,7 +402,6 @@ func TestAccVcdNetworkRoutedMixedSub(t *testing.T) {
 		endStaticIpAddress1:   "10.10.102.45",
 		startDhcpIpAddress:    "10.10.102.52",
 		endDhcpIpAddress:      "10.10.102.99",
-		defaultLeaseTime:      7200, // hard-coded default: vCD doesn't honor it during creation or update
 		configText:            testAccCheckVcdNetworkRoutedMixed,
 		resourceName:          "vcd_network_routed",
 		interfaceName:         "subinterface",
@@ -552,7 +544,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdNetworkExists(networkName, &network),
-					checkNetWorkIpGroups(resourceDef, def, resourceVcdNetworkStaticIpPoolHash, resourceVcdNetworkDhcpPoolHash),
+					checkNetWorkIpGroups(resourceDef, def, resourceVcdNetworkStaticIpPoolHash, resourceVcdNetworkIsolatedDhcpPoolHash),
 					resource.TestCheckResourceAttr(
 						resourceDef, "name", networkName),
 					resource.TestCheckResourceAttr(
@@ -575,7 +567,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						},
 						resourceVcdNetworkStaticIpPoolHash,
 					),
-					checkNetWorkIpGroups(resourceDef, updateDef, resourceVcdNetworkStaticIpPoolHash, resourceVcdNetworkDhcpPoolHash),
+					checkNetWorkIpGroups(resourceDef, updateDef, resourceVcdNetworkStaticIpPoolHash, resourceVcdNetworkIsolatedDhcpPoolHash),
 					resource.TestCheckResourceAttr(
 						resourceDef, "name", updateDef.name),
 					resource.TestCheckResourceAttr(
@@ -588,6 +580,10 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 			},
 		}
 	case isolatedStaticNetwork2, routedStaticNetwork2, routedStaticNetworkSub2, routedStaticNetworkDist, routedStaticNetworkDist2:
+		hashFunc := resourceVcdNetworkRoutedDhcpPoolHash
+		if def.name == isolatedStaticNetwork2 {
+			hashFunc = resourceVcdNetworkIsolatedDhcpPoolHash
+		}
 		steps = []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -597,7 +593,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "name", networkName),
 					resource.TestCheckResourceAttr(
 						resourceDef, "description", def.description),
-					checkNetWorkIpGroups(resourceDef, def, resourceVcdNetworkStaticIpPoolHash, resourceVcdNetworkDhcpPoolHash),
+					checkNetWorkIpGroups(resourceDef, def, resourceVcdNetworkStaticIpPoolHash, hashFunc),
 					resource.TestCheckResourceAttr(
 						resourceDef, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
@@ -612,7 +608,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "name", updateDef.name),
 					resource.TestCheckResourceAttr(
 						resourceDef, "description", updateDef.description),
-					checkNetWorkIpGroups(resourceDef, updateDef, resourceVcdNetworkStaticIpPoolHash, resourceVcdNetworkDhcpPoolHash),
+					checkNetWorkIpGroups(resourceDef, updateDef, resourceVcdNetworkStaticIpPoolHash, hashFunc),
 					resource.TestCheckResourceAttr(
 						resourceDef, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
@@ -621,6 +617,10 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 			},
 		}
 	case routedStaticNetwork1, isolatedStaticNetwork1:
+		hashFunc := resourceVcdNetworkRoutedDhcpPoolHash
+		if def.name == isolatedStaticNetwork1 {
+			hashFunc = resourceVcdNetworkIsolatedDhcpPoolHash
+		}
 		steps = []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -630,7 +630,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "name", networkName),
 					resource.TestCheckResourceAttr(
 						resourceDef, "description", def.description),
-					checkNetWorkIpGroups(resourceDef, def, resourceVcdNetworkStaticIpPoolHash, resourceVcdNetworkDhcpPoolHash),
+					checkNetWorkIpGroups(resourceDef, def, resourceVcdNetworkStaticIpPoolHash, hashFunc),
 					resource.TestCheckResourceAttr(
 						resourceDef, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
@@ -645,7 +645,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "name", updateDef.name),
 					resource.TestCheckResourceAttr(
 						resourceDef, "description", updateDef.description),
-					checkNetWorkIpGroups(resourceDef, updateDef, resourceVcdNetworkStaticIpPoolHash, resourceVcdNetworkDhcpPoolHash),
+					checkNetWorkIpGroups(resourceDef, updateDef, resourceVcdNetworkStaticIpPoolHash, hashFunc),
 					resource.TestCheckResourceAttr(
 						resourceDef, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
@@ -654,6 +654,10 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 			},
 		}
 	case routedMixedNetwork, isolatedMixedNetwork1, routedMixedNetworkSub:
+		hashFunc := resourceVcdNetworkRoutedDhcpPoolHash
+		if def.name == isolatedMixedNetwork1 {
+			hashFunc = resourceVcdNetworkIsolatedDhcpPoolHash
+		}
 		steps = []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -663,7 +667,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "name", networkName),
 					resource.TestCheckResourceAttr(
 						resourceDef, "description", def.description),
-					checkNetWorkIpGroups(resourceDef, def, resourceVcdNetworkStaticIpPoolHash, resourceVcdNetworkDhcpPoolHash),
+					checkNetWorkIpGroups(resourceDef, def, resourceVcdNetworkStaticIpPoolHash, hashFunc),
 					resource.TestCheckResourceAttr(
 						resourceDef, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
@@ -678,7 +682,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "name", updateDef.name),
 					resource.TestCheckResourceAttr(
 						resourceDef, "description", updateDef.description),
-					checkNetWorkIpGroups(resourceDef, updateDef, resourceVcdNetworkStaticIpPoolHash, resourceVcdNetworkDhcpPoolHash),
+					checkNetWorkIpGroups(resourceDef, updateDef, resourceVcdNetworkStaticIpPoolHash, hashFunc),
 					resource.TestCheckResourceAttr(
 						resourceDef, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
@@ -687,6 +691,10 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 			},
 		}
 	case isolatedDhcpNetwork, routedDhcpNetwork, routedDhcpNetworkSub:
+		hashFunc := resourceVcdNetworkRoutedDhcpPoolHash
+		if def.name == isolatedDhcpNetwork {
+			hashFunc = resourceVcdNetworkIsolatedDhcpPoolHash
+		}
 		steps = []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -696,7 +704,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "name", networkName),
 					resource.TestCheckResourceAttr(
 						resourceDef, "description", def.description),
-					checkNetWorkIpGroups(resourceDef, def, resourceVcdNetworkStaticIpPoolHash, resourceVcdNetworkDhcpPoolHash),
+					checkNetWorkIpGroups(resourceDef, def, resourceVcdNetworkStaticIpPoolHash, hashFunc),
 					resource.TestCheckResourceAttr(
 						resourceDef, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
@@ -711,7 +719,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "name", updateDef.name),
 					resource.TestCheckResourceAttr(
 						resourceDef, "description", updateDef.description),
-					checkNetWorkIpGroups(resourceDef, updateDef, resourceVcdNetworkStaticIpPoolHash, resourceVcdNetworkDhcpPoolHash),
+					checkNetWorkIpGroups(resourceDef, updateDef, resourceVcdNetworkStaticIpPoolHash, hashFunc),
 					resource.TestCheckResourceAttr(
 						resourceDef, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
@@ -752,17 +760,18 @@ func TestHashFunc(t *testing.T) {
 		endIp        string
 		maxLease     int
 		defaultLease int
-		want         int
+		wantIso      int
+		wantRouted   int
 	}{
 		// Hard coded values obtained on 2020-03-18 (version 2.8.0)
 		// Do not change
-		{"10.10.10.2", "10.10.10.100", 8000, 3600, 3827726072},
-		{"192.168.1.2", "192.168.1.20", 9000, 4000, 684682336},
-		{"10.10.1.2", "10.10.1.100", 9000, 4000, 545103368},
-		{"10.10.1.2", "10.10.1.100", 86400, 3600, 2299657950},
-		{"10.10.0.101", "10.10.0.200", 9500, 5000, 2636843274},
-		{"10.10.0.1", "10.10.0.50", 3600, 7200, 3394532989},
-		{"10.10.0.1", "10.10.0.50", 7200, 7200, 2964735978},
+		{"10.10.10.2", "10.10.10.100", 8000, 3600, 1030199880, 1056625442},
+		{"192.168.1.2", "192.168.1.20", 9000, 4000, 631317345, 159171876},
+		{"10.10.1.2", "10.10.1.100", 9000, 4000, 756273417, 3024715874},
+		{"10.10.1.2", "10.10.1.100", 86400, 3600, 3223781707, 13051714},
+		{"10.10.0.101", "10.10.0.200", 9500, 5000, 1068413432, 77228404},
+		{"10.10.0.1", "10.10.0.50", 3600, 7200, 3836851868, 4072727102},
+		{"10.10.0.1", "10.10.0.50", 7200, 7200, 2964735978, 2283983785},
 	}
 	var testsStatic = []struct {
 		startIp string
@@ -776,31 +785,52 @@ func TestHashFunc(t *testing.T) {
 		{"10.10.1.2", "10.10.1.100", 2850949493},
 		{"10.10.0.101", "10.10.0.200", 4005846706},
 	}
-	for _, tc := range testsStatic {
-		value := map[string]interface{}{
-			groupStartLabel: tc.startIp,
-			groupEndLabel:   tc.endIp,
+	t.Run("static", func(t *testing.T) {
+		for _, tc := range testsStatic {
+			value := map[string]interface{}{
+				groupStartLabel: tc.startIp,
+				groupEndLabel:   tc.endIp,
+			}
+			got := resourceVcdNetworkStaticIpPoolHash(value)
+			if got != tc.want {
+				t.Logf("startIp: %s, endIp: %s - want %d, got %d", tc.startIp, tc.endIp, tc.want, got)
+				t.Fail()
+			}
 		}
-		got := resourceVcdNetworkStaticIpPoolHash(value)
-		if got != tc.want {
-			t.Logf("startIp: %s, endIp: %s - want %d, got %d", tc.startIp, tc.endIp, tc.want, got)
-			t.Fail()
+	})
+	// DHCP in isolated network
+	t.Run("dhcp-isolated", func(t *testing.T) {
+		for _, tc := range testsDhcp {
+			value := map[string]interface{}{
+				groupStartLabel:   tc.startIp,
+				groupEndLabel:     tc.endIp,
+				groupMaxLease:     tc.maxLease,
+				groupDefaultLease: tc.defaultLease,
+			}
+			got := resourceVcdNetworkIsolatedDhcpPoolHash(value)
+			if got != tc.wantIso {
+				t.Logf("startIp: %s, endIp: %s, maxLease: %d, defaultLease: %d - want %d, got %d",
+					tc.startIp, tc.endIp, tc.maxLease, tc.defaultLease, tc.wantIso, got)
+				t.Fail()
+			}
 		}
-	}
-	for _, tc := range testsDhcp {
-		value := map[string]interface{}{
-			groupStartLabel:   tc.startIp,
-			groupEndLabel:     tc.endIp,
-			groupMaxLease:     tc.maxLease,
-			groupDefaultLease: tc.defaultLease,
+	})
+	// DHCP in routed network
+	t.Run("dhcp-routed", func(t *testing.T) {
+		for _, tc := range testsDhcp {
+			value := map[string]interface{}{
+				groupStartLabel: tc.startIp,
+				groupEndLabel:   tc.endIp,
+				groupMaxLease:   tc.maxLease,
+			}
+			got := resourceVcdNetworkRoutedDhcpPoolHash(value)
+			if got != tc.wantRouted {
+				t.Logf("startIp: %s, endIp: %s, maxLease: %d - want %d, got %d",
+					tc.startIp, tc.endIp, tc.maxLease, tc.wantRouted, got)
+				t.Fail()
+			}
 		}
-		got := resourceVcdNetworkDhcpPoolHash(value)
-		if got != tc.want {
-			t.Logf("startIp: %s, endIp: %s, maxLease: %d, defaultLease: %d - want %d, got %d",
-				tc.startIp, tc.endIp, tc.maxLease, tc.maxLease, tc.want, got)
-			t.Fail()
-		}
-	}
+	})
 }
 
 func testAccCheckVcdNetworkExists(name string, network *govcd.OrgVDCNetwork) resource.TestCheckFunc {
@@ -1099,7 +1129,6 @@ resource "vcd_network_routed" "{{.ResourceName}}" {
   dhcp_pool {
     start_address      = "{{.StartDhcpIpAddress}}"
     end_address        = "{{.EndDhcpIpAddress}}"
-    default_lease_time = "{{.DefaultLeaseTime}}"
     max_lease_time     = "{{.MaxLeaseTime}}"
   }
 }

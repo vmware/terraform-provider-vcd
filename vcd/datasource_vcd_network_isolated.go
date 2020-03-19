@@ -90,7 +90,7 @@ func datasourceVcdNetworkIsolated() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceVcdNetworkDhcpPoolHash,
+				Set: resourceVcdNetworkIsolatedDhcpPoolHash,
 			},
 			"static_ip_pool": &schema.Schema{
 				Type:        schema.TypeSet,

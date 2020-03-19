@@ -128,7 +128,7 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceVcdNetworkDhcpPoolHash,
+				Set: resourceVcdNetworkIsolatedDhcpPoolHash,
 			},
 			"static_ip_pool": &schema.Schema{
 				Type:        schema.TypeSet,
@@ -307,7 +307,7 @@ func genericVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}, ori
 	dhcpPool := getDhcpPool(network)
 	if len(dhcpPool) > 0 {
 		newSet := &schema.Set{
-			F: resourceVcdNetworkDhcpPoolHash,
+			F: resourceVcdNetworkIsolatedDhcpPoolHash,
 		}
 		for _, element := range dhcpPool {
 			newSet.Add(element)
@@ -343,6 +343,11 @@ func getDhcpPool(network *govcd.OrgVDCNetwork) []map[string]interface{} {
 	}
 
 	return dhcpPool
+}
+
+// resourceVcdNetworkIsolatedDhcpPoolHash computes a hash for a DHCP pool
+func resourceVcdNetworkIsolatedDhcpPoolHash(v interface{}) int {
+	return genericResourceVcdNetworkDhcpPoolHash(v, "isolated")
 }
 
 // resourceVcdNetworkIsolatedImport is responsible for importing the resource.

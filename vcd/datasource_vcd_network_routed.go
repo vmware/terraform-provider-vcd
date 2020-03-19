@@ -116,7 +116,7 @@ func datasourceVcdNetworkRouted() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceVcdNetworkDhcpPoolHash,
+				Set: resourceVcdNetworkRoutedDhcpPoolHash,
 			},
 			"static_ip_pool": &schema.Schema{
 				Type:        schema.TypeSet,
