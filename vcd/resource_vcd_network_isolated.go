@@ -50,28 +50,28 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 				ForceNew:     true,
 				Default:      "255.255.255.0",
 				Description:  "The netmask for the new network",
-				ValidateFunc: validation.SingleIP(),
+				ValidateFunc: validation.IsIPAddress,
 			},
 			"gateway": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
 				Description:  "The gateway for this network",
-				ValidateFunc: validation.SingleIP(),
+				ValidateFunc: validation.IsIPAddress,
 			},
 
 			"dns1": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
 				Description:  "First DNS server to use",
-				ValidateFunc: validation.SingleIP(),
+				ValidateFunc: validation.IsIPAddress,
 			},
 
 			"dns2": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
 				Description:  "Second DNS server to use",
-				ValidateFunc: validation.SingleIP(),
+				ValidateFunc: validation.IsIPAddress,
 			},
 
 			"dns_suffix": &schema.Schema{
@@ -103,14 +103,14 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "The first address in the IP Range",
-							ValidateFunc: validation.SingleIP(),
+							ValidateFunc: validation.IsIPAddress,
 						},
 
 						"end_address": &schema.Schema{
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "The final address in the IP Range",
-							ValidateFunc: validation.SingleIP(),
+							ValidateFunc: validation.IsIPAddress,
 						},
 
 						"default_lease_time": &schema.Schema{
@@ -140,14 +140,14 @@ func resourceVcdNetworkIsolated() *schema.Resource {
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "The first address in the IP Range",
-							ValidateFunc: validation.SingleIP(),
+							ValidateFunc: validation.IsIPAddress,
 						},
 
 						"end_address": &schema.Schema{
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "The final address in the IP Range",
-							ValidateFunc: validation.SingleIP(),
+							ValidateFunc: validation.IsIPAddress,
 						},
 					},
 				},
