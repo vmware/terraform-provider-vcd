@@ -93,5 +93,5 @@ terraform import vcd_vapp_network.imported org-name.vdc-name.vapp-name.network-n
 
 NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 
-The above would import the vApp Network named `network-name` that is defined on vApp `vapp-name` 
-which is configured in organization named `my-org` and vDC named `my-org-vdc`.
+The above command would import the vApp Network named `network-name` that is defined on vApp `vapp-name` 
+which is configured in organization named `my-org` and VDC named `my-org-vdc`.
