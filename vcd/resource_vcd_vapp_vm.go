@@ -1165,7 +1165,7 @@ func genericVcdVAppVmRead(d *schema.ResourceData, meta interface{}, origin strin
 	switch {
 	// TODO v3.0 remove this case block when we cleanup deprecated 'ip' and 'network_name' attributes
 	case networkName != "" || vappNetworkName != "":
-		ip, mac, err := deprecatedReadNetworks(networkName, vappNetworkName, *vm)
+		ip, mac, err := deprecatedReadNetworks(*vm)
 		if err != nil {
 			return fmt.Errorf("[VM read] failed reading network details: %s", err)
 		}
@@ -1656,14 +1656,18 @@ func deprecatedNetworksToConfig(network_name, vapp_network_name, ip string, vdc 
 // deprecatedReadNetworks handles read for deprecated network attributes 'ip' and 'mac' and returns
 // them for saving in statefile
 // TODO v3.0 remove this function once 'network_name', 'vapp_network_name', 'ip' are deprecated
-func deprecatedReadNetworks(network_name, vapp_network_name string, vm govcd.VM) (string, string, error) {
+func deprecatedReadNetworks(vm govcd.VM) (string, string, error) {
 	if len(vm.VM.NetworkConnectionSection.NetworkConnection) == 0 {
 		return "", "", fmt.Errorf("0 NICs found")
 	}
 
-	// The API returns unordered list of NICs therefore we want to be sure and pick 'ip' and 'mac' from primary NIC.
-	primaryNicIndex := vm.VM.NetworkConnectionSection.PrimaryNetworkConnectionIndex
+	// Sort NIC cards by their virtual slot numbers as the API sometimes returns them in random order
+	sort.SliceStable(vm.VM.NetworkConnectionSection.NetworkConnection, func(i, j int) bool {
+		return vm.VM.NetworkConnectionSection.NetworkConnection[i].NetworkConnectionIndex <
+			vm.VM.NetworkConnectionSection.NetworkConnection[j].NetworkConnectionIndex
+	})
 
+	primaryNicIndex := vm.VM.NetworkConnectionSection.PrimaryNetworkConnectionIndex
 	ip := vm.VM.NetworkConnectionSection.NetworkConnection[primaryNicIndex].IPAddress
 	// If allocation mode is DHCP and we're not getting the IP - we set this to na (not available)
 	if vm.VM.NetworkConnectionSection.NetworkConnection[primaryNicIndex].IPAddressAllocationMode == types.IPAllocationModeDHCP && ip == "" {

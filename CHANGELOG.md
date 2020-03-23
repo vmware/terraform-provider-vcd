@@ -3,10 +3,19 @@
 IMPROVEMENTS:
 
 * `resource/vcd_network_routed`, `resource/vcd_network_direct`, and `resource/vcd_network_isolated` now support in place updates. [GH-465]
+* `vcd_vapp_network`, `vcd_vapp_org_network` has now missing import documentation [GH-481] 
 
 BUG FIXES
 * Using wrong defaults for `vcd_network_isolated` and `vcd_network_routed` DNS [GH-434]
 * `external_network_gateway` not filled in datasource `vcd_network_direct` [GH-450]
+* `resource/vcd_vapp_vm` sometimes reports incorrect `vcd_vapp_vm.ip` and `vcd_vapp_vm.mac` fields in deprecated network
+configuration (when using `vcd_vapp_vm.network_name` and `vcd_vapp_vm.vapp_network_name` parameters instead of
+`vcd_vapp_vm.network` blocks) [GH-478]
+
+NOTES:
+
+* Bump terraform-plugin-sdk to v1.8.0 [GH-479]
+* Update Travis to use Go 1.14 [GH-479]
 
 ## 2.7.0 (March 13, 2020)
 
