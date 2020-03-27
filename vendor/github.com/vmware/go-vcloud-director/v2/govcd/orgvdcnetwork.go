@@ -200,8 +200,9 @@ func (vdc *Vdc) CreateOrgVDCNetwork(networkConfig *types.OrgVDCNetwork) (Task, e
 func (vdc *Vdc) GetNetworkList() ([]*types.QueryResultOrgVdcNetworkRecordType, error) {
 	// Find the list of networks with the wanted name
 	result, err := vdc.client.QueryWithNotEncodedParams(nil, map[string]string{
-		"type":   "orgVdcNetwork",
-		"filter": fmt.Sprintf("vdc==%s", url.QueryEscape(vdc.Vdc.ID)),
+		"type":          "orgVdcNetwork",
+		"filter":        fmt.Sprintf("vdc==%s", url.QueryEscape(vdc.Vdc.ID)),
+		"filterEncoded": "true",
 	})
 	if err != nil {
 		return nil, fmt.Errorf("[findEdgeGatewayConnection] error returning the list of networks for VDC: %s", err)
@@ -215,8 +216,9 @@ func (vdc *Vdc) FindEdgeGatewayNameByNetwork(networkName string) (string, error)
 
 	// Find the list of networks with the wanted name
 	result, err := vdc.client.QueryWithNotEncodedParams(nil, map[string]string{
-		"type":   "orgVdcNetwork",
-		"filter": fmt.Sprintf("name==%s;vdc==%s", url.QueryEscape(networkName), url.QueryEscape(vdc.Vdc.ID)),
+		"type":          "orgVdcNetwork",
+		"filter":        fmt.Sprintf("name==%s;vdc==%s", url.QueryEscape(networkName), url.QueryEscape(vdc.Vdc.ID)),
+		"filterEncoded": "true",
 	})
 	if err != nil {
 		return "", fmt.Errorf("[findEdgeGatewayConnection] error returning the list of networks for VDC: %s", err)
