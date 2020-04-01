@@ -322,9 +322,8 @@ func isCatalogFromSameOrg(adminOrg *AdminOrg, catalogName string) (bool, error) 
 func (adminOrg *AdminOrg) FindAdminCatalogRecords(name string) ([]*types.AdminCatalogRecord, error) {
 	util.Logger.Printf("[DEBUG] FindAdminCatalogRecords with name: %s and org name: %s", name, adminOrg.AdminOrg.Name)
 	results, err := adminOrg.client.QueryWithNotEncodedParams(nil, map[string]string{
-		"type":          "adminCatalog",
-		"filter":        fmt.Sprintf("name==%s;orgName==%s", url.QueryEscape(name), url.QueryEscape(adminOrg.AdminOrg.Name)),
-		"filterEncoded": "true",
+		"type":   "adminCatalog",
+		"filter": fmt.Sprintf("name==%s;orgName==%s", url.QueryEscape(name), url.QueryEscape(adminOrg.AdminOrg.Name)),
 	})
 	if err != nil {
 		return nil, err

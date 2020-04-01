@@ -33,8 +33,6 @@ var apiVersionToVcdVersion = map[string]string{
 	"31.0": "9.5",
 	"32.0": "9.7",
 	"33.0": "10.0",
-	"34.0": "10.1",
-	"35.0": "10.1",
 }
 
 // vcdVersionToApiVersion gets the max supported API version from vCD version
@@ -44,7 +42,6 @@ var vcdVersionToApiVersion = map[string]string{
 	"9.5":  "31.0",
 	"9.7":  "32.0",
 	"10.0": "33.0",
-	"10.1": "34.0",
 }
 
 // to make vcdVersionToApiVersion used

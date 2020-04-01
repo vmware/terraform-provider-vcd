@@ -663,8 +663,7 @@ func (vdc *Vdc) QueryVM(vappName, vmName string) (VMRecord, error) {
 	}
 
 	results, err := vdc.QueryWithNotEncodedParams(nil, map[string]string{"type": typeMedia,
-		"filter":        "name==" + url.QueryEscape(vmName) + ";containerName==" + url.QueryEscape(vappName),
-		"filterEncoded": "true"})
+		"filter": "name==" + url.QueryEscape(vmName) + ";containerName==" + url.QueryEscape(vappName)})
 	if err != nil {
 		return VMRecord{}, fmt.Errorf("error querying vm %s", err)
 	}
