@@ -637,3 +637,42 @@ func (mediaRecord *MediaRecord) Delete() (Task, error) {
 	return mediaRecord.client.ExecuteTaskRequest(mediaRecord.MediaRecord.HREF, http.MethodDelete,
 		"", "error deleting Media item: %s", nil)
 }
+
+// QueryAllMedia returns media image found in system using `name` as query.
+func (vdc *Vdc) QueryAllMedia(mediaName string) ([]*MediaRecord, error) {
+	util.Logger.Printf("[TRACE] Querying medias by name\n")
+
+	if mediaName == "" {
+		return nil, errors.New("media name is empty")
+	}
+
+	typeMedia := "media"
+	if vdc.client.IsSysAdmin {
+		typeMedia = "adminMedia"
+	}
+
+	results, err := vdc.client.QueryWithNotEncodedParams(nil, map[string]string{"type": typeMedia,
+		"filter": fmt.Sprintf("name==%s", url.QueryEscape(mediaName))})
+	if err != nil {
+		return nil, fmt.Errorf("error querying medias %s", err)
+	}
+
+	mediaResults := results.Results.MediaRecord
+	if vdc.client.IsSysAdmin {
+		mediaResults = results.Results.AdminMediaRecord
+	}
+
+	if len(mediaResults) == 0 {
+		return nil, ErrorEntityNotFound
+	}
+
+	var newMediaRecords []*MediaRecord
+	for _, mediaResult := range mediaResults {
+		newMediaRecord := NewMediaRecord(vdc.client)
+		newMediaRecord.MediaRecord = mediaResult
+		newMediaRecords = append(newMediaRecords, newMediaRecord)
+	}
+
+	util.Logger.Printf("[TRACE] Found media records by name: %#v \n", mediaResults)
+	return newMediaRecords, nil
+}
