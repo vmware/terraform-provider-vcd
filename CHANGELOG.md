@@ -4,7 +4,7 @@ IMPROVEMENTS:
 
 * `resource/vcd_network_routed`, `resource/vcd_network_direct`, and `resource/vcd_network_isolated` now support in place updates. [GH-465]
 * `vcd_vapp_network`, `vcd_vapp_org_network` has now missing import documentation [GH-481] 
-* `resource/vcd_vapp_vm` allows to create empty VM. New fields added `boot_image`, `os_type` and `hardware_version`. Also supports `description` updates.
+* `resource/vcd_vapp_vm` allows to create empty VM. New fields added `boot_image`, `os_type` and `hardware_version`. Also supports `description` updates. [GH-484]
  
 BUG FIXES
 * Using wrong defaults for `vcd_network_isolated` and `vcd_network_routed` DNS [GH-434]
