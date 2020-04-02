@@ -4,6 +4,8 @@ IMPROVEMENTS:
 
 * `resource/vcd_network_routed`, `resource/vcd_network_direct`, and `resource/vcd_network_isolated` now support in place updates. [GH-465]
 * `vcd_vapp_network`, `vcd_vapp_org_network` has now missing import documentation [GH-481] 
+* `resource/vcd_vapp_vm` does not search/validate None network definition in vApp when
+  `dhcp_wait_seconds` parameter is used [GH-485]
 
 BUG FIXES
 * Using wrong defaults for `vcd_network_isolated` and `vcd_network_routed` DNS [GH-434]
