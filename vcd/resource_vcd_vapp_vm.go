@@ -1723,9 +1723,9 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp) ([]map[s
 
 		var ok bool
 		if singleNIC["type"], ok = vAppNetworkTypes[vmNet.Network]; !ok {
-			// Prior vCD 10.1  used to return a placeholder for none networks. It allowed to
-			// identify NIC type for types.NoneNetwork. This was removed in 10.1 therefore we when
-			// vApp network type has no details - the NIC network type is types.NoneNetwork
+			// Prior vCD 10.1 used to return a placeholder for none networks. It allowed to identify
+			// NIC type for types.NoneNetwork. This was removed in 10.1 therefore when vApp network
+			// type has no details - the NIC network type is types.NoneNetwork
 			singleNIC["type"] = types.NoneNetwork
 		}
 
