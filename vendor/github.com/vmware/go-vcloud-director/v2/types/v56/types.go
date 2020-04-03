@@ -1457,7 +1457,7 @@ type CpuResourceMhz struct {
 
 // MemoryResourceMb from VM/VmSpecSection struct
 type MemoryResourceMb struct {
-	Configured  int64  `xml:"Configured`             // The amount of resource configured on the virtual machine.
+	Configured  int64  `xml:"Configured"`            // The amount of resource configured on the virtual machine.
 	Reservation *int64 `xml:"Reservation,omitempty"` // The amount of reservation of this resource on the underlying virtualization infrastructure.
 	Limit       *int64 `xml:"Limit,omitempty"`       // The limit for how much of this resource can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited.
 	SharesLevel string `xml:"SharesLevel,omitempty"` //	Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload.
@@ -2125,6 +2125,61 @@ type QueryResultRecordsType struct {
 	PortGroupRecord                 []*PortGroupRecordType                            `xml:"PortgroupRecord"`                 // A record representing a port group
 	OrgVdcNetworkRecord             []*QueryResultOrgVdcNetworkRecordType             `xml:"OrgVdcNetworkRecord"`             // A record representing a org VDC network
 	AdminCatalogRecord              []*AdminCatalogRecord                             `xml:"AdminCatalogRecord"`              // A record representing a catalog
+	CatalogItemRecord               []*QueryResultCatalogItemType                     `xml:"CatalogItemRecord"`               // A record representing a catalog item
+	AdminCatalogItemRecord          []*QueryResultCatalogItemType                     `xml:"AdminCatalogItemRecord"`          // A record representing an admin catalog item
+	VappTemplateRecord              []*QueryResultVappTemplateType                    `xml:"VAppTemplateRecord"`              // A record representing a vApp template
+	AdminVappTemplateRecord         []*QueryResultVappTemplateType                    `xml:"AdminVAppTemplateRecord"`         // A record representing an admin vApp template
+}
+
+// QueryResultCatalogItemType represents a catalog item as query result
+type QueryResultCatalogItemType struct {
+	HREF         string    `xml:"href,attr,omitempty"`         // The URI of the entity.
+	ID           string    `xml:"id,attr,omitempty"`           // Catalog Item ID.
+	Type         string    `xml:"type,attr,omitempty"`         // The MIME type of the entity.
+	Entity       string    `xml:"entity,attr,omitempty"`       // Entity reference or ID
+	EntityName   string    `xml:"entityName,attr,omitempty"`   // Entity name
+	EntityType   string    `xml:"entityType,attr,omitempty"`   // Entity name
+	Catalog      string    `xml:"catalog,attr,omitempty"`      // Catalog reference or ID
+	CatalogName  string    `xml:"catalogName,attr,omitempty"`  // Catalog name
+	OwnerName    string    `xml:"ownerName,attr,omitempty"`    // Owner name
+	Owner        string    `xml:"owner,attr,omitempty"`        // Owner reference or ID
+	IsPublished  bool      `xml:"isPublished,attr,omitempty"`  // True if this entity is in a published catalog
+	Vdc          string    `xml:"vdc,attr,omitempty"`          // VDC reference or ID
+	VdcName      string    `xml:"vdcName,attr,omitempty"`      // VDC name
+	IsVdcEnabled bool      `xml:"isVdcEnabled,attr,omitempty"` // True if the containing VDC is enabled
+	CreationDate string    `xml:"creationDate,attr,omitempty"` // Creation date
+	IsExpired    bool      `xml:"isExpired,attr,omitempty"`    // True if this entity is expired
+	Status       string    `xml:"status,attr,omitempty"`       // Status
+	Name         string    `xml:"name,attr,omitempty"`         // Catalog Item name.
+	Link         *Link     `xml:"Link,omitempty"`
+	Metadata     *Metadata `xml:"Metadata,omitempty"`
+}
+
+// QueryResultVappTemplateType represents a vApp template as query result
+type QueryResultVappTemplateType struct {
+	HREF               string    `xml:"href,attr,omitempty"`               // The URI of the entity.
+	ID                 string    `xml:"id,attr,omitempty"`                 // vApp template ID.
+	Type               string    `xml:"type,attr,omitempty"`               // The MIME type of the entity.
+	OwnerName          string    `xml:"ownerName,attr,omitempty"`          // Owner name
+	CatalogName        string    `xml:"catalogName,attr,omitempty"`        // Catalog name
+	IsPublished        bool      `xml:"isPublished,attr,omitempty"`        // True if this entity is in a published catalog
+	Name               string    `xml:"name,attr,omitempty"`               // vApp template name.
+	Description        string    `xml:"description,attr,omitempty"`        // vApp template description.
+	Vdc                string    `xml:"vdc,attr,omitempty"`                // VDC reference or ID
+	VdcName            string    `xml:"vdcName,attr,omitempty"`            // VDC name
+	Org                string    `xml:"org,attr,omitempty"`                // Organization reference or ID
+	CreationDate       string    `xml:"creationDate,attr,omitempty"`       // Creation date
+	IsBusy             bool      `xml:"isBusy,attr,omitempty"`             // True if the vApp template is busy
+	IsGoldMaster       bool      `xml:"isGoldMaster,attr,omitempty"`       // True if the vApp template is a gold master
+	IsEnabled          bool      `xml:"isEnabled,attr,omitempty"`          // True if the vApp template is enabled
+	Status             string    `xml:"status,attr,omitempty"`             // Status
+	IsDeployed         bool      `xml:"isDeployed,attr,omitempty"`         // True if this entity is deployed
+	IsExpired          bool      `xml:"isExpired,attr,omitempty"`          // True if this entity is expired
+	StorageProfileName string    `xml:"storageProfileName,attr,omitempty"` // Storage profile name
+	Version            string    `xml:"version,attr,omitempty"`            // Storage profile name
+	LastSuccessfulSync string    `xml:"lastSuccessfulSync,attr,omitempty"` // Date of last successful sync
+	Link               *Link     `xml:"Link,omitempty"`
+	Metadata           *Metadata `xml:"Metadata,omitempty"`
 }
 
 // QueryResultEdgeGatewayRecordType represents an edge gateway record as query result.
@@ -2671,5 +2726,5 @@ type AdminCatalogRecord struct {
 	Version                 int64     `xml:"version,attr,omitempty"`
 	Status                  string    `xml:"status,attr,omitempty"`
 	Link                    *Link     `xml:"Link,omitempty"`
-	Vdc                     *Metadata `xml:"Metadata,omitempty"`
+	Metadata                *Metadata `xml:"Metadata,omitempty"`
 }

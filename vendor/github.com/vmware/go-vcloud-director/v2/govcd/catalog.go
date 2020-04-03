@@ -349,7 +349,7 @@ func queryVappTemplate(client *Client, vappTemplateUrl *url.URL, newItemName str
 	vappTemplateParsed := &types.VAppTemplate{}
 
 	_, err := client.ExecuteRequest(vappTemplateUrl.String(), http.MethodGet,
-		"", "error quering vApp template: %s", nil, vappTemplateParsed)
+		"", "error querying vApp template: %s", nil, vappTemplateParsed)
 	if err != nil {
 		return nil, err
 	}
