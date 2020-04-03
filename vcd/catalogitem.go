@@ -46,7 +46,7 @@ func deleteCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) error {
 	return nil
 }
 
-// Finds catalog item which can be vapp template OVA or media ISO file
+// Finds catalog item which can be vApp template OVA or media ISO file
 func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd.CatalogItem, error) {
 	log.Printf("[TRACE] Catalog item read initiated")
 
@@ -69,7 +69,24 @@ func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient, origin string
 		identifier = d.Get("name").(string)
 	}
 
-	catalogItem, err := catalog.GetCatalogItemByNameOrId(identifier, false)
+	var catalogItem *govcd.CatalogItem
+	if origin == "datasource" {
+		//search,hasSearch := d.GetOk("search")
+		//if hasSearch {
+		//	fmt.Printf("%# v\n",pretty.Formatter(search))
+		//}
+		filter, hasFilter := d.GetOk("filter")
+		if hasFilter {
+			catalogItem, err = searchVappTemplateByFilter(catalog, filter, vcdClient.Client.IsSysAdmin)
+			if err != nil {
+				return nil, err
+			}
+			d.SetId(catalogItem.CatalogItem.ID)
+			return catalogItem, nil
+		}
+	}
+
+	catalogItem, err = catalog.GetCatalogItemByNameOrId(identifier, false)
 	if govcd.IsNotFound(err) && origin == "resource" {
 		log.Printf("[INFO] Unable to find catalog item %s. Removing from tfstate", identifier)
 		d.SetId("")

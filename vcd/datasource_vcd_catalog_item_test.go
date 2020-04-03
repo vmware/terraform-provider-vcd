@@ -75,6 +75,41 @@ func TestAccVcdCatalogAndItemDatasource(t *testing.T) {
 	})
 }
 
+func TestAccVcdCatalogItemFilter(t *testing.T) {
+	var params = StringMap{
+		"Org":         testConfig.VCD.Org,
+		"Catalog":     testConfig.VCD.Catalog.Name,
+		"CatalogItem": "mystery",
+		// This is a bad regular expression (full name)
+		// but it's the only one that allows us to retrieve
+		// the entity consistently
+		// A better one would be testConfig.VCD.Catalog.CatalogItem[0:6],
+		// but only if we don't have more recent items with similar name
+		"NameRegex": testConfig.VCD.Catalog.CatalogItem,
+		"Tags":      "catalog",
+	}
+
+	configText := templateFill(testAccCatalogItemFilter, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:  func() { preRunChecks(t) },
+		Providers: testAccProviders,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckOutput("name", testConfig.VCD.Catalog.CatalogItem),
+				),
+			},
+		},
+	})
+}
+
 func catalogItemDestroyed(catalog, itemName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		conn := testAccProvider.Meta().(*VCDClient)
@@ -93,6 +128,30 @@ func catalogItemDestroyed(catalog, itemName string) resource.TestCheckFunc {
 		return nil
 	}
 }
+
+const testAccCatalogItemFilter = `
+data "vcd_catalog_item" "{{.CatalogItem}}" {
+  org     = "{{.Org}}"
+  catalog = "{{.Catalog}}"
+  # name    = "{{.CatalogItem}}"
+  filter {
+    name_regex = "{{.NameRegex}}"
+    latest     = false
+    //metadata {
+    // key       = "ONE"
+    // value     = "\\w+"
+    //}
+    //metadata {
+    // key       = "TWO"
+    // value     = "\\w+ \\w+"
+    //}
+  }
+}
+
+output "name" {
+  value = data.vcd_catalog_item.{{.CatalogItem}}.name
+}
+`
 
 const testAccCheckVcdCatalogItemDS = `
 data "vcd_catalog" "{{.Catalog}}" {
