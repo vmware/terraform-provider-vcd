@@ -147,6 +147,7 @@ var vappVmSchema = map[string]*schema.Schema{
 	"os_type": &schema.Schema{
 		Type:        schema.TypeString,
 		Optional:    true,
+		Computed:    true,
 		Description: "Operating System type. Possible values can be found in documentation.",
 	},
 	"hardware_version": &schema.Schema{
@@ -520,12 +521,21 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 
 	//create not empty VM - use provided template
 	if catalogName != "" && templateName != "" {
-		catalog, err := org.GetCatalogByName(d.Get("catalog_name").(string), false)
+
+		if catalogName == "" {
+			return fmt.Errorf("`catalog_name` is required when creating templated VM")
+		}
+
+		if templateName == "" {
+			return fmt.Errorf("`template_name` is required when creating templated VM")
+		}
+
+		catalog, err := org.GetCatalogByName(catalogName, false)
 		if err != nil {
 			return fmt.Errorf("error finding catalog %s: %s", d.Get("catalog_name").(string), err)
 		}
 
-		catalogItem, err := catalog.GetCatalogItemByName(d.Get("template_name").(string), false)
+		catalogItem, err := catalog.GetCatalogItemByName(templateName, false)
 		if err != nil {
 			return fmt.Errorf("error finding catalog item: %s", err)
 		}
@@ -587,19 +597,9 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		// VM creation already succeeded so ID must be set
 		d.SetId(vm.VM.ID)
 
-		// The below operation assumes VM is powered off and does not check for it because VM is being
-		// powered on in the last stage of create/update cycle
-		if d.Get("expose_hardware_virtualization").(bool) {
-
-			task, err := vm.ToggleHardwareVirtualization(true)
-			if err != nil {
-				return fmt.Errorf("error enabling hardware assisted virtualization: %s", err)
-			}
-			err = task.WaitTaskCompletion()
-
-			if err != nil {
-				return fmt.Errorf(errorCompletingTask, err)
-			}
+		err = handleExposeHardwareVirtualization(d, vm)
+		if err != nil {
+			return err
 		}
 
 		if err := updateGuestCustomizationSetting(d, vm); err != nil {
@@ -2168,6 +2168,14 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 		return nil, fmt.Errorf("`os_type` is required when creating empty VM")
 	}
 
+	if _, ok = d.GetOk("network_name"); ok {
+		return nil, fmt.Errorf("`network_name` can't be used with empty VM, please use `network` configuration")
+	}
+
+	if _, ok = d.GetOk("vapp_network_name"); ok {
+		return nil, fmt.Errorf("`vapp_network_name` can't be used with empty VM, please use `network` configuration")
+	}
+
 	var hardWareVersion interface{}
 	if hardWareVersion, ok = d.GetOk("hardware_version"); !ok {
 		return nil, fmt.Errorf("`hardware_version` is required when creating empty VM")
@@ -2185,7 +2193,7 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 			return nil, fmt.Errorf("[VM creation] error getting boot image %s : %s", bootImageName, err)
 		}
 		if len(result) > 1 {
-			return nil, fmt.Errorf("[VM creation] error found one than more boot image %s : %s", bootImageName, err)
+			return nil, fmt.Errorf("[VM creation] error found more than one boot image %s : %s", bootImageName, err)
 		}
 		bootImage = &types.Media{HREF: result[0].MediaRecord.HREF, Name: result[0].MediaRecord.Name, ID: result[0].MediaRecord.ID}
 	} else {
@@ -2223,8 +2231,8 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 				Modified:          takeBoolPointer(true),
 				Info:              "Virtual Machine specification",
 				OsType:            osType.(string),
-				NumCpus:           takeIntAddress(d.Get("cpus").(int)),
-				NumCoresPerSocket: takeIntAddress(d.Get("cpu_cores").(int)),
+				NumCpus:           takeIntPointer(d.Get("cpus").(int)),
+				NumCoresPerSocket: takeIntPointer(d.Get("cpu_cores").(int)),
 				CpuResourceMhz:    &types.CpuResourceMhz{Configured: 0},
 				MemoryResourceMb:  &types.MemoryResourceMb{Configured: int64(memory.(int))},
 				MediaSection:      nil,
@@ -2267,19 +2275,9 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 		return nil, fmt.Errorf("unable to setup network configuration for empty VM %s", err)
 	}
 
-	// The below operation assumes VM is powered off and does not check for it because VM is being
-	// powered on in the last stage of create/update cycle
-	if d.Get("expose_hardware_virtualization").(bool) {
-
-		task, err := newVm.ToggleHardwareVirtualization(true)
-		if err != nil {
-			return nil, fmt.Errorf("error enabling hardware assisted virtualization: %s", err)
-		}
-		err = task.WaitTaskCompletion()
-
-		if err != nil {
-			return nil, fmt.Errorf(errorCompletingTask, err)
-		}
+	err = handleExposeHardwareVirtualization(d, newVm)
+	if err != nil {
+		return nil, err
 	}
 
 	if _, ok := d.GetOk("guest_properties"); ok {
@@ -2307,4 +2305,23 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 		}
 	}
 	return newVm, nil
+}
+
+// handleExposeHardwareVirtualization toggles hardware virtualization according `expose_hardware_virtualization` field value.
+func handleExposeHardwareVirtualization(d *schema.ResourceData, newVm *govcd.VM) error {
+	// The below operation assumes VM is powered off and does not check for it because VM is being
+	// powered on in the last stage of create/update cycle
+	if d.Get("expose_hardware_virtualization").(bool) {
+
+		task, err := newVm.ToggleHardwareVirtualization(true)
+		if err != nil {
+			return fmt.Errorf("error enabling hardware assisted virtualization: %s", err)
+		}
+		err = task.WaitTaskCompletion()
+
+		if err != nil {
+			return fmt.Errorf(errorCompletingTask, err)
+		}
+	}
+	return nil
 }

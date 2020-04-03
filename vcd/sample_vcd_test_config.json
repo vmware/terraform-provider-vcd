@@ -90,8 +90,8 @@
     "//": "Size in megabytes",
     "uploadPieceSize": 5,
     "uploadProgress": true,
-    "//": "Upload media name",
-    "mediaName" : "file1"
+    "//": "Already uploaded media name",
+    "mediaName" : "linuxOS"
   },
   "testEnvBuild": {
     "//": "This section is optional for running tests. It's only needed to build the test environment in a new vCD",

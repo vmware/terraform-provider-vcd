@@ -152,7 +152,7 @@ func takeBoolPointer(value bool) *bool {
 	return &value
 }
 
-// takeIntAddress is a helper which can gives address of `int`
-func takeIntAddress(x int) *int {
+// takeIntPointer accepts an int and returns a pointer to this value.
+func takeIntPointer(x int) *int {
 	return &x
 }
