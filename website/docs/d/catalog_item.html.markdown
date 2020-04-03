@@ -96,7 +96,7 @@ output "filtered_item" {
 }
 ```
 
-Will find a catalog item with name staring with `p` and ending with `11`.
+Will find a catalog item with name starting with `p` and ending with `11`.
 It fails if there are several items named as requested, such as `photon-v11`, `platform911`, or `poorName211`
 Note that regular expressions are case sensitive: `photon-v11` and `Photon-v11` are two different entities.
 
@@ -126,8 +126,8 @@ data "vcd_catalog_item" "mystery" {
   catalog = "cat-datacloud"
   
   filter {
-    date = ">= 2020-03-20"
-    latest     = true
+    date   = ">= 2020-03-20"
+    latest = true
   }
 }
 # Alternative date conditions for the same value:
