@@ -42,11 +42,16 @@ func (vdc *Vdc) Query(params map[string]string) (Results, error) {
 
 // QueryWithNotEncodedParams uses Query API to search for requested data
 func (client *Client) QueryWithNotEncodedParams(params map[string]string, notEncodedParams map[string]string) (Results, error) {
+	return client.QueryWithNotEncodedParamsWithApiVersion(params, notEncodedParams, client.APIVersion)
+}
+
+// QueryWithNotEncodedParams uses Query API to search for requested data
+func (client *Client) QueryWithNotEncodedParamsWithApiVersion(params map[string]string, notEncodedParams map[string]string, apiVersion string) (Results, error) {
 	queryUlr := client.VCDHREF
 	queryUlr.Path += "/query"
 
-	req := client.NewRequestWitNotEncodedParams(params, notEncodedParams, http.MethodGet, queryUlr, nil)
-	req.Header.Add("Accept", "vnd.vmware.vcloud.org+xml;version="+client.APIVersion)
+	req := client.NewRequestWitNotEncodedParamsWithApiVersion(params, notEncodedParams, http.MethodGet, queryUlr, nil, apiVersion)
+	req.Header.Add("Accept", "vnd.vmware.vcloud.org+xml;version="+apiVersion)
 
 	return getResult(client, req)
 }
@@ -57,6 +62,14 @@ func (vcdCli *VCDClient) QueryWithNotEncodedParams(params map[string]string, not
 
 func (vdc *Vdc) QueryWithNotEncodedParams(params map[string]string, notEncodedParams map[string]string) (Results, error) {
 	return vdc.client.QueryWithNotEncodedParams(params, notEncodedParams)
+}
+
+func (vcdCli *VCDClient) QueryWithNotEncodedParamsWithApiVersion(params map[string]string, notEncodedParams map[string]string, apiVersion string) (Results, error) {
+	return vcdCli.Client.QueryWithNotEncodedParamsWithApiVersion(params, notEncodedParams, apiVersion)
+}
+
+func (vdc *Vdc) QueryWithNotEncodedParamsWithApiVersion(params map[string]string, notEncodedParams map[string]string, apiVersion string) (Results, error) {
+	return vdc.client.QueryWithNotEncodedParamsWithApiVersion(params, notEncodedParams, apiVersion)
 }
 
 func getResult(client *Client, request *http.Request) (Results, error) {

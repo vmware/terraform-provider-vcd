@@ -1421,9 +1421,9 @@ type MediaSection struct {
 // MediaSettings from VM/VmSpecSection/MediaSection struct
 type MediaSettings struct {
 	DeviceId    string     `xml:"DeviceId,omitempty"`    // Describes the media device whose media mount is being specified here. This deviceId must match the RASD.InstanceID attribute in the VirtualHardwareSection of the vApp's OVF description.
+	MediaImage  *Reference `xml:"MediaImage,omitempty"`  // The media image that is mounted onto the device. This property can be 'null' which represents that no media is mounted on the device.
 	MediaType   string     `xml:"MediaType,omitempty"`   // Specified the type of media that is mounted onto the device.
 	MediaState  string     `xml:"MediaState,omitempty"`  // Specifies the state of the media device.
-	MediaImage  *Reference `xml:"MediaImage,omitempty"`  // The media image that is mounted onto the device. This property can be 'null' which represents that no media is mounted on the device.
 	UnitNumber  int        `xml:"UnitNumber"`            // Specified the type of media that is mounted onto the device.
 	BusNumber   int        `xml:"BusNumber"`             //	The bus number of the media device controller.
 	AdapterType string     `xml:"AdapterType,omitempty"` // The type of controller, e.g. IDE vs SCSI and if SCSI bus-logic vs LSI logic

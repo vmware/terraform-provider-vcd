@@ -1357,7 +1357,7 @@ func (vm *VM) UpdateInternalDisksAsync(disksSettingToUpdate *types.VmSpecSection
 
 }
 
-// AddEmptyVm adds new empty VM (without template) to vApp and returns new created VM or error.
+// AddEmptyVm adds an empty VM (without template) to vApp and returns the new created VM or an error.
 func (vapp *VApp) AddEmptyVm(reComposeVAppParams *types.RecomposeVAppParamsForEmptyVm) (*VM, error) {
 	task, err := vapp.AddEmptyVmAsync(reComposeVAppParams)
 	if err != nil {
@@ -1378,7 +1378,7 @@ func (vapp *VApp) AddEmptyVm(reComposeVAppParams *types.RecomposeVAppParamsForEm
 
 }
 
-// AddEmptyVmAsync adds new empty VM (without template) to vApp and returns Task or error.
+// AddEmptyVmAsync adds an empty VM (without template) to the vApp and returns a Task and an error.
 func (vapp *VApp) AddEmptyVmAsync(reComposeVAppParams *types.RecomposeVAppParamsForEmptyVm) (Task, error) {
 	err := validateEmptyVmParams(reComposeVAppParams)
 	if err != nil {
@@ -1395,6 +1395,7 @@ func (vapp *VApp) AddEmptyVmAsync(reComposeVAppParams *types.RecomposeVAppParams
 		types.MimeRecomposeVappParams, "error instantiating a new VM: %s", reComposeVAppParams)
 }
 
+// validateEmptyVmParams checks if all required parameters are provided
 func validateEmptyVmParams(reComposeVAppParams *types.RecomposeVAppParamsForEmptyVm) error {
 	if reComposeVAppParams.CreateItem == nil {
 		return fmt.Errorf("[AddEmptyVmAsync] CreateItem can't be empty")

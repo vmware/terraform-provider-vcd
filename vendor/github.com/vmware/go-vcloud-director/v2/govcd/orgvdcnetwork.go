@@ -87,7 +87,7 @@ func (orgVdcNet *OrgVDCNetwork) Delete() (Task, error) {
 	return *task, nil
 }
 
-// Looks for an Org Vdc network and, if found, will delete it.
+// RemoveOrgVdcNetworkIfExists looks for an Org Vdc network and, if found, will delete it.
 func RemoveOrgVdcNetworkIfExists(vdc Vdc, networkName string) error {
 	network, err := vdc.GetOrgVdcNetworkByName(networkName, true)
 
@@ -102,11 +102,11 @@ func RemoveOrgVdcNetworkIfExists(vdc Vdc, networkName string) error {
 	// The network was found. We attempt deletion
 	task, err := network.Delete()
 	if err != nil {
-		return fmt.Errorf("error deleting network [phase 1] %s", networkName)
+		return fmt.Errorf("error deleting network '%s' [phase 1]: %s", networkName, err)
 	}
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		return fmt.Errorf("error deleting network [task] %s", networkName)
+		return fmt.Errorf("error deleting network '%s' [task]: %s", networkName, err)
 	}
 	return nil
 }
@@ -200,8 +200,9 @@ func (vdc *Vdc) CreateOrgVDCNetwork(networkConfig *types.OrgVDCNetwork) (Task, e
 func (vdc *Vdc) GetNetworkList() ([]*types.QueryResultOrgVdcNetworkRecordType, error) {
 	// Find the list of networks with the wanted name
 	result, err := vdc.client.QueryWithNotEncodedParams(nil, map[string]string{
-		"type":   "orgVdcNetwork",
-		"filter": fmt.Sprintf("vdc==%s", url.QueryEscape(vdc.Vdc.ID)),
+		"type":          "orgVdcNetwork",
+		"filter":        fmt.Sprintf("vdc==%s", url.QueryEscape(vdc.Vdc.ID)),
+		"filterEncoded": "true",
 	})
 	if err != nil {
 		return nil, fmt.Errorf("[findEdgeGatewayConnection] error returning the list of networks for VDC: %s", err)
@@ -215,8 +216,9 @@ func (vdc *Vdc) FindEdgeGatewayNameByNetwork(networkName string) (string, error)
 
 	// Find the list of networks with the wanted name
 	result, err := vdc.client.QueryWithNotEncodedParams(nil, map[string]string{
-		"type":   "orgVdcNetwork",
-		"filter": fmt.Sprintf("name==%s;vdc==%s", url.QueryEscape(networkName), url.QueryEscape(vdc.Vdc.ID)),
+		"type":          "orgVdcNetwork",
+		"filter":        fmt.Sprintf("name==%s;vdc==%s", url.QueryEscape(networkName), url.QueryEscape(vdc.Vdc.ID)),
+		"filterEncoded": "true",
 	})
 	if err != nil {
 		return "", fmt.Errorf("[findEdgeGatewayConnection] error returning the list of networks for VDC: %s", err)

@@ -52,6 +52,7 @@ var vdcVersionedFuncsV97 = vdcVersionedFuncs{
 	UpdateVdcAsync:   updateVdcAsyncV97,
 }
 
+// TODO: add a wrapper function to use newest available method when version is higher than currently handled
 // VDC function mapping by vDC version
 var vdcVersionedFuncsByVcdVersion = map[string]vdcVersionedFuncs{
 	"vdc9.0":  vdcVersionedFuncsV90,
@@ -59,6 +60,7 @@ var vdcVersionedFuncsByVcdVersion = map[string]vdcVersionedFuncs{
 	"vdc9.5":  vdcVersionedFuncsV90,
 	"vdc9.7":  vdcVersionedFuncsV97,
 	"vdc10.0": vdcVersionedFuncsV97,
+	"vdc10.1": vdcVersionedFuncsV97,
 }
 
 // GetAdminVdcByName function uses a valid VDC name and returns a admin VDC object.
