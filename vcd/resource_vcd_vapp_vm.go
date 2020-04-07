@@ -522,14 +522,6 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	//create not empty VM - use provided template
 	if catalogName != "" && templateName != "" {
 
-		if catalogName == "" {
-			return fmt.Errorf("`catalog_name` is required when creating templated VM")
-		}
-
-		if templateName == "" {
-			return fmt.Errorf("`template_name` is required when creating templated VM")
-		}
-
 		catalog, err := org.GetCatalogByName(catalogName, false)
 		if err != nil {
 			return fmt.Errorf("error finding catalog %s: %s", d.Get("catalog_name").(string), err)
