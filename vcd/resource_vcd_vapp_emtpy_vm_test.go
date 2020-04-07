@@ -3,6 +3,7 @@
 package vcd
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -16,6 +17,10 @@ func TestAccVcdVAppEmptyVm(t *testing.T) {
 		netVappName string = t.Name()
 		netVmName1  string = t.Name() + "VM"
 	)
+
+	if testConfig.Media.MediaName == "" {
+		fmt.Print("Warning: `MediaName` isn't configured, boot image won't be tested.")
+	}
 
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
