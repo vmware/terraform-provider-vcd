@@ -102,7 +102,7 @@ func resourceVcdLBServerPool() *schema.Resource {
 							Description: "IP address of member in server pool",
 						},
 						"port": {
-							Required:    true,
+							Optional:    true,
 							ForceNew:    false,
 							Type:        schema.TypeInt,
 							Description: "Port at which the member is to receive traffic from the load balancer",
