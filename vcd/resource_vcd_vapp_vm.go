@@ -887,22 +887,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			vm.VM.Name, d.HasChange("memory"), d.HasChange("cpus"), d.HasChange("cpu_cores"), d.HasChange("power_on"), d.HasChange("disk"),
 			d.HasChange("expose_hardware_virtualization"), d.HasChange("network"))
 
-		// If customization is not requested then a simple shutdown is enough
-		if vmStatusBeforeUpdate != "POWERED_OFF" && !customizationNeeded {
-			log.Printf("[DEBUG] Powering off VM %s for offline update. Previous state %s",
-				vm.VM.Name, vmStatusBeforeUpdate)
-			task, err := vm.PowerOff()
-			if err != nil {
-				return fmt.Errorf("error Powering Off: %s", err)
-			}
-			err = task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf(errorCompletingTask, err)
-			}
-		}
-
-		// If customization was requested then a shutdown with undeploy is needed
-		if vmStatusBeforeUpdate != "POWERED_OFF" && customizationNeeded {
+		if vmStatusBeforeUpdate != "POWERED_OFF" {
 			log.Printf("[DEBUG] Un-deploying VM %s for offline update. Previous state %s",
 				vm.VM.Name, vmStatusBeforeUpdate)
 			task, err := vm.Undeploy()
