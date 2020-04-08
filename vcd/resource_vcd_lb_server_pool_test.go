@@ -99,7 +99,7 @@ func TestAccVcdLbServerPool(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.3.weight", "6"),
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.3.min_connections", "0"),
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.3.max_connections", "0"),
-					
+
 					// Member 5
 					resource.TestMatchResourceAttr("vcd_lb_server_pool.server-pool", "member.4.id", regexp.MustCompile(`^member-\d*$`)),
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.4.condition", "disabled"),
@@ -121,7 +121,6 @@ func TestAccVcdLbServerPool(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.5.weight", "6"),
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.5.min_connections", "0"),
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.5.max_connections", "0"),
-
 				),
 			},
 			// configTextStep1 attaches monitor_id, changes some member settings
@@ -180,7 +179,6 @@ func TestAccVcdLbServerPool(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.3.max_connections", "0"),
 					//resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "type", "http"),
 
-			
 					// Data source testing - it must expose all fields which resource has
 					resource.TestMatchResourceAttr("data.vcd_lb_server_pool.ds-lb-server-pool", "id", regexp.MustCompile(`^pool-\d*$`)),
 					resource.TestCheckResourceAttr("data.vcd_lb_server_pool.ds-lb-server-pool", "name", t.Name()+"-step1"),
