@@ -99,6 +99,29 @@ func TestAccVcdLbServerPool(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.3.weight", "6"),
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.3.min_connections", "0"),
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.3.max_connections", "0"),
+					
+					// Member 5
+					resource.TestMatchResourceAttr("vcd_lb_server_pool.server-pool", "member.4.id", regexp.MustCompile(`^member-\d*$`)),
+					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.4.condition", "disabled"),
+					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.4.name", "member5"),
+					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.4.ip_address", "4.4.4.4"),
+					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.4.port", "33333"),
+					// resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.4.monitor_port", "44444"),
+					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.4.weight", "6"),
+					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.4.min_connections", "0"),
+					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.4.max_connections", "0"),
+
+					// Member 6
+					resource.TestMatchResourceAttr("vcd_lb_server_pool.server-pool", "member.5.id", regexp.MustCompile(`^member-\d*$`)),
+					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.5.condition", "disabled"),
+					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.5.name", "member6"),
+					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.5.ip_address", "4.4.4.4"),
+					// resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.5.port", "33333"),
+					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.5.monitor_port", "44444"),
+					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.5.weight", "6"),
+					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.5.min_connections", "0"),
+					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.5.max_connections", "0"),
+
 				),
 			},
 			// configTextStep1 attaches monitor_id, changes some member settings
@@ -157,28 +180,7 @@ func TestAccVcdLbServerPool(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.3.max_connections", "0"),
 					//resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "type", "http"),
 
-					// Member 5
-					resource.TestMatchResourceAttr("vcd_lb_server_pool.server-pool", "member.4.id", regexp.MustCompile(`^member-\d*$`)),
-					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.4.condition", "disabled"),
-					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.4.name", "member5"),
-					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.4.ip_address", "6.6.6.6"),
-					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.4.port", "33333"),
-					// resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.4.monitor_port", "44444"),
-					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.4.weight", "1"),
-					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.4.min_connections", "0"),
-					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.4.max_connections", "0"),
-
-					// Member 6
-					resource.TestMatchResourceAttr("vcd_lb_server_pool.server-pool", "member.5.id", regexp.MustCompile(`^member-\d*$`)),
-					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.5.condition", "disabled"),
-					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.5.name", "member6"),
-					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.5.ip_address", "6.6.6.6"),
-					// resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.5.port", "33333"),
-					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.5.monitor_port", "44444"),
-					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.5.weight", "1"),
-					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.5.min_connections", "0"),
-					resource.TestCheckResourceAttr("vcd_lb_server_pool.server-pool", "member.5.max_connections", "0"),
-
+			
 					// Data source testing - it must expose all fields which resource has
 					resource.TestMatchResourceAttr("data.vcd_lb_server_pool.ds-lb-server-pool", "id", regexp.MustCompile(`^pool-\d*$`)),
 					resource.TestCheckResourceAttr("data.vcd_lb_server_pool.ds-lb-server-pool", "name", t.Name()+"-step1"),
