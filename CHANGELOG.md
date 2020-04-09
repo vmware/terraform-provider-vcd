@@ -15,6 +15,9 @@ BUG FIXES
 configuration (when using `vcd_vapp_vm.network_name` and `vcd_vapp_vm.vapp_network_name` parameters instead of
 `vcd_vapp_vm.network` blocks) [GH-478]
 
+DEPRECATIONS:
+* vCD 9.1 support is deprecated. Next version will require at least version 9.5 [GH-489]
+
 NOTES:
 
 * Bump terraform-plugin-sdk to v1.8.0 [GH-479]
