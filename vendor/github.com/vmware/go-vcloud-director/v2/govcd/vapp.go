@@ -1194,24 +1194,25 @@ func (vapp *VApp) RemoveNetworkAsync(identifier string) (Task, error) {
 	}
 
 	networkConfigurations := vapp.VApp.NetworkConfigSection.NetworkConfig
-	isNetworkFound := false
-	for index, networkConfig := range networkConfigurations {
+	for _, networkConfig := range networkConfigurations {
 		networkId, err := GetUuidFromHref(networkConfig.Link.HREF, false)
 		if err != nil {
 			return Task{}, fmt.Errorf("unable to get network ID from HREF: %s", err)
 		}
 		if networkId == identifier || networkConfig.NetworkName == identifier {
-			isNetworkFound = true
-			networkConfigurations = append(networkConfigurations[:index], networkConfigurations[index+1:]...)
-			break
+			deleteUrl := vapp.client.VCDHREF.String() + "/network/" + networkId
+			errMessage := fmt.Sprintf("detaching vApp network %s (id '%s'): %%s", networkConfig.NetworkName, networkId)
+			task, err := vapp.client.ExecuteTaskRequest(deleteUrl, http.MethodDelete, types.AnyXMLMime, errMessage, nil)
+			if err != nil {
+				return Task{}, err
+			}
+
+			return task, nil
 		}
 	}
 
-	if !isNetworkFound {
-		return Task{}, fmt.Errorf("network to remove %s, wasn't found", identifier)
-	}
+	return Task{}, fmt.Errorf("network to remove %s, wasn't found", identifier)
 
-	return updateNetworkConfigurations(vapp, networkConfigurations)
 }
 
 // Removes vApp isolated network
