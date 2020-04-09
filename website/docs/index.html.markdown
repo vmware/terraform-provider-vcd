@@ -20,10 +20,10 @@ When upgrading the provider please check for such labels for the resources you a
 
 The following vCloud Director versions are supported by this provider:
 
-* 9.1
 * 9.5
 * 9.7
 * 10.0
+* 10.1
 
 ## Example Usage
 
