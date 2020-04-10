@@ -162,6 +162,8 @@ func newFileUploadRequest(client *Client, requestUrl string, filePart []byte, of
 // partDataSize - how much bytes will be uploaded
 // uploadDetails - file upload settings and data
 func uploadPartFile(client *Client, part []byte, partDataSize int64, uDetails uploadDetails) error {
+	// Avoids session time out, as the multi part upload is treated as one request
+	makeEmptyRequest(client)
 	request, err := newFileUploadRequest(client, uDetails.uploadLink, part, uDetails.uploadedBytes, partDataSize, uDetails.fileSizeToUpload)
 	if err != nil {
 		return err
@@ -176,6 +178,15 @@ func uploadPartFile(client *Client, part []byte, partDataSize int64, uDetails up
 	uDetails.callBack(uDetails.uploadedBytesForCallback+partDataSize, uDetails.allFilesSize)
 
 	return nil
+}
+
+// call query for task which are very fast and optimised as UI calls it very often
+func makeEmptyRequest(client *Client) {
+	apiEndpoint := client.VCDHREF
+	apiEndpoint.Path += "/query?type=task&format=records&page=1&pageSize=5&"
+
+	_, _ = client.ExecuteRequest(apiEndpoint.String(), http.MethodGet,
+		"", "error making empty request: %s", nil, nil)
 }
 
 func getUploadLink(files *types.FilesList) (*url.URL, error) {
