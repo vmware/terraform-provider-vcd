@@ -9,12 +9,38 @@ import (
 	"strings"
 )
 
+/*
+This file contains functions that allows an extended query including metadata fields.
+
+The metadata fields need to be requested explicitly (we can't just ask for generic metadata to be included
+in the query result. Due to the query system implementation, when we request metadata fields, we must also
+list the regular fields that we want in the result.
+For this reason, we need to have the list of fields supported by the query for each query type. Not all the
+fields can be used in the "fields" parameter of the query.
+
+The function queryFieldsOnDemand provides the fields for the supported types.
+
+ */
+
 // MetadataFilter is a definition of a value used to filter metadata.
 // It is made of a Type (such as 'STRING', 'INT', 'BOOL") and a Value, which is the value we want to search for.
 type MetadataFilter struct {
 	Type  string
 	Value string
 }
+
+const (
+	// The QT* constants are the names used with Query requests to retrieve the corresponding entities
+	QtVappTemplate      = "vappTemplate"      // vApp template
+	QtAdminVappTemplate = "adminVAppTemplate" // vApp template as admin
+	QtEdgeGateway       = "edgeGateway"       // edge gateway
+	QtOrgVdcNetwork     = "orgVdcNetwork"     // Org VDC network
+	QtAdminCatalog      = "adminCatalog"      // catalog
+	QtCatalogItem       = "catalogItem"       // catalog item
+	QtAdminCatalogItem  = "adminCatalogItem"  // catalog item as admin
+	QtAdminMedia        = "adminMedia"        // media item as admin
+	QtMedia             = "media"             // media item
+)
 
 // queryFieldsOnDemand returns the list of fields that can be requested in the option "fields" of a query
 // Note that an alternative approach using `reflect` would require several exceptions to list all the
@@ -29,14 +55,20 @@ func queryFieldsOnDemand(queryType string) ([]string, error) {
 		orgVdcNetworkFields = []string{"name", "defaultGateway", "netmask", "dns1", "dns2", "dnsSuffix", "linkType",
 			"connectedTo", "vdc", "isBusy", "isShared", "vdcName", "isIpScopeInherited"}
 		adminCatalogFields = []string{"name", "isPublished", "isShared", "creationDate", "orgName", "ownerName",
-			"numberOfVAppTemplates", "numberOfMedia", "owner", "publishSubscriptionType", "status"}
+			"numberOfMedia", "owner"}
+		mediaFields = []string{"ownerName", "catalogName", "isPublished", "name", "vdc", "vdcName", "org",
+			"creationDate", "isBusy", "storageB", "owner", "catalog", "catalogItem", "status",
+			"storageProfileName", "taskStatusName", "isInCatalog", "task",
+			"isIso", "isVdcEnabled", "taskStatus", "taskDetails"}
+		// entities for which the fields on demand are supported
 		fieldsOnDemand = map[string][]string{
-			"vappTemplate":      vappTemplatefields,
-			"adminVAppTemplate": vappTemplatefields,
-			"edgeGateway":       edgeGatewayFields,
-			"orgNetwork":        orgVdcNetworkFields,
-			"adminOrgNetwork":   orgVdcNetworkFields,
-			"adminCatalog":      adminCatalogFields,
+			QtVappTemplate:      vappTemplatefields,
+			QtAdminVappTemplate: vappTemplatefields,
+			QtEdgeGateway:       edgeGatewayFields,
+			QtOrgVdcNetwork:     orgVdcNetworkFields,
+			QtAdminCatalog:      adminCatalogFields,
+			QtMedia:             mediaFields,
+			QtAdminMedia:        mediaFields,
 		}
 	)
 
@@ -49,16 +81,12 @@ func queryFieldsOnDemand(queryType string) ([]string, error) {
 
 // QueryWithMetadataFields is a wrapper around QueryWithNotEncodedParams with additional metadata fields
 // being returned.
-// The metadata fields need to be requested explicitly (we can't just ask for generic metadata to be included
-// in the query result. When we request metadata fields, we must also list the regular fields that we want
-// in the result. For this reason, we neeed to have the list of fields supported by the query for each
-// query type. Not all the fields can be used in the "fields" parameter of the query.
 //
 // * queryType is the type of the query. Only the ones listed within queryFieldsOnDemand are supported
 // * params and notEncodedParams are the same ones passed to QueryWithNotEncodedParams
 // * metadataFields is the list of fields to be included in the query results
 // * if isSystem is true, metadata fields are requested as 'metadata@SYSTEM:fieldName'
-func (catalog *Catalog) QueryWithMetadataFields(queryType string, params, notEncodedParams map[string]string,
+func (client *Client) QueryWithMetadataFields(queryType string, params, notEncodedParams map[string]string,
 	metadataFields []string, isSystem bool) (Results, error) {
 	if notEncodedParams == nil {
 		notEncodedParams = make(map[string]string)
@@ -66,7 +94,7 @@ func (catalog *Catalog) QueryWithMetadataFields(queryType string, params, notEnc
 	notEncodedParams["type"] = queryType
 
 	if len(metadataFields) == 0 {
-		return catalog.client.QueryWithNotEncodedParams(params, notEncodedParams)
+		return client.QueryWithNotEncodedParams(params, notEncodedParams)
 	}
 
 	fields, err := queryFieldsOnDemand(queryType)
@@ -91,22 +119,22 @@ func (catalog *Catalog) QueryWithMetadataFields(queryType string, params, notEnc
 
 	notEncodedParams["fields"] = strings.Join(fields, ",") + "," + metadataFieldText
 
-	return catalog.client.QueryWithNotEncodedParams(params, notEncodedParams)
+	return client.QueryWithNotEncodedParams(params, notEncodedParams)
 }
 
-// QueryWithMetadataFilter is a wrapper around QueryWithNotEncodedParams with additional filtering
+// QueryByMetadataFilter is a wrapper around QueryWithNotEncodedParams with additional filtering
 // on metadata fields
 // Unlike QueryWithMetadataFields, this function does not return the metadata fields, but only uses
 // them to perform the filter.
 // *
 // * params and notEncodedParams are the same ones passed to QueryWithNotEncodedParams
-// * metadataFilteris is a map of conditions to use for filtering
+// * metadataFilter is is a map of conditions to use for filtering
 // * if isSystem is true, metadata fields are requested as 'metadata@SYSTEM:fieldName'
-func (catalog *Catalog) QueryWithMetadataFilter(params, notEncodedParams map[string]string,
+func (client *Client) QueryByMetadataFilter(params, notEncodedParams map[string]string,
 	metadataFilters map[string]MetadataFilter, isSystem bool) (Results, error) {
 
 	if len(metadataFilters) == 0 {
-		return Results{}, fmt.Errorf("[QueryWithMetadataFilter] no metadata fields provided")
+		return Results{}, fmt.Errorf("[QueryByMetadataFilter] no metadata fields provided")
 	}
 
 	metadataFilterText := ""
@@ -131,5 +159,5 @@ func (catalog *Catalog) QueryWithMetadataFilter(params, notEncodedParams map[str
 	}
 	notEncodedParams["filter"] = filter
 
-	return catalog.client.QueryWithNotEncodedParams(params, notEncodedParams)
+	return client.QueryWithNotEncodedParams(params, notEncodedParams)
 }

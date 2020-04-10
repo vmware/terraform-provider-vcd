@@ -383,12 +383,19 @@ func (adminOrg *AdminOrg) FindCatalog(catalogName string) (Catalog, error) {
 // On success, returns a pointer to the Catalog structure and a nil error
 // On failure, returns a nil pointer and an error
 func (adminOrg *AdminOrg) GetCatalogByHref(catalogHref string) (*Catalog, error) {
-	catalogURL := adminOrg.client.VCDHREF
-	catalogURL.Path += "/catalog/" + strings.Split(catalogHref, "/api/admin/catalog/")[1] //gets id
+	splitByAdminHREF := strings.Split(catalogHref, "/api/admin")
+
+	// admin user and normal user will have different urls
+	var catalogHREF string
+	if len(splitByAdminHREF) == 1 {
+		catalogHREF = catalogHref
+	} else {
+		catalogHREF = splitByAdminHREF[0] + "/api" + splitByAdminHREF[1]
+	}
 
 	cat := NewCatalog(adminOrg.client)
 
-	_, err := adminOrg.client.ExecuteRequest(catalogURL.String(), http.MethodGet,
+	_, err := adminOrg.client.ExecuteRequest(catalogHREF, http.MethodGet,
 		"", "error retrieving catalog: %s", nil, cat.Catalog)
 
 	if err != nil {

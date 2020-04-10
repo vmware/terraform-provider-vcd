@@ -2470,6 +2470,8 @@ type MediaRecordType struct {
 	IsVdcEnabled       bool   `xml:"isVdcEnabled,attr,omitempty"`
 	TaskStatus         string `xml:"taskStatus,attr,omitempty"`
 	TaskDetails        string `xml:"taskDetails,attr,omitempty"`
+	Link         *Link     `xml:"Link,omitempty"`
+	Metadata     *Metadata `xml:"Metadata,omitempty"`
 }
 
 // DiskCreateParams element for create independent disk
@@ -2632,24 +2634,25 @@ type PortGroupRecordType struct {
 // Reference: vCloud API 27.0 - Org VDC Network
 // https://code.vmware.com/apis/72/doc/doc/types/QueryResultOrgVdcNetworkRecordType.html
 type QueryResultOrgVdcNetworkRecordType struct {
-	Xmlns              string  `xml:"xmlns,attr,omitempty"`
-	HREF               string  `xml:"href,attr,omitempty"`
-	Id                 string  `xml:"id,attr,omitempty"`
-	Type               string  `xml:"type,attr,omitempty"`
-	Name               string  `xml:"name,attr,omitempty"`
-	DefaultGateway     string  `xml:"defaultGateway,attr,omitempty"`
-	Netmask            string  `xml:"netmask,attr,omitempty"`
-	Dns1               string  `xml:"dns1,attr,omitempty"`
-	Dns2               string  `xml:"dns2,attr,omitempty"`
-	DnsSuffix          string  `xml:"dnsSuffix,attr,omitempty"`
-	LinkType           int     `xml:"linkType,attr,omitempty"` // 0 = direct, 1 = routed, 2 = isolated
-	ConnectedTo        string  `xml:"connectedTo,attr,omitempty"`
-	Vdc                string  `xml:"vdc,attr,omitempty"`
-	IsBusy             bool    `xml:"isBusy,attr,omitempty"`
-	IsShared           bool    `xml:"isShared,attr,omitempty"`
-	VdcName            string  `xml:"vdcName,attr,omitempty"`
-	IsIpScopeInherited bool    `xml:"isIpScopeInherited,attr,omitempty"`
-	Link               []*Link `xml:"Link,omitempty"`
+	Xmlns              string    `xml:"xmlns,attr,omitempty"`
+	HREF               string    `xml:"href,attr,omitempty"`
+	Id                 string    `xml:"id,attr,omitempty"`
+	Type               string    `xml:"type,attr,omitempty"`
+	Name               string    `xml:"name,attr,omitempty"`
+	DefaultGateway     string    `xml:"defaultGateway,attr,omitempty"`
+	Netmask            string    `xml:"netmask,attr,omitempty"`
+	Dns1               string    `xml:"dns1,attr,omitempty"`
+	Dns2               string    `xml:"dns2,attr,omitempty"`
+	DnsSuffix          string    `xml:"dnsSuffix,attr,omitempty"`
+	LinkType           int       `xml:"linkType,attr,omitempty"` // 0 = direct, 1 = routed, 2 = isolated
+	ConnectedTo        string    `xml:"connectedTo,attr,omitempty"`
+	Vdc                string    `xml:"vdc,attr,omitempty"`
+	IsBusy             bool      `xml:"isBusy,attr,omitempty"`
+	IsShared           bool      `xml:"isShared,attr,omitempty"`
+	VdcName            string    `xml:"vdcName,attr,omitempty"`
+	IsIpScopeInherited bool      `xml:"isIpScopeInherited,attr,omitempty"`
+	Link               []*Link   `xml:"Link,omitempty"`
+	Metadata           *Metadata `xml:"Metadata,omitempty"`
 }
 
 // Represents org VDC Network
