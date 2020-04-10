@@ -887,22 +887,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			vm.VM.Name, d.HasChange("memory"), d.HasChange("cpus"), d.HasChange("cpu_cores"), d.HasChange("power_on"), d.HasChange("disk"),
 			d.HasChange("expose_hardware_virtualization"), d.HasChange("network"))
 
-		// If customization is not requested then a simple shutdown is enough
-		if vmStatusBeforeUpdate != "POWERED_OFF" && !customizationNeeded {
-			log.Printf("[DEBUG] Powering off VM %s for offline update. Previous state %s",
-				vm.VM.Name, vmStatusBeforeUpdate)
-			task, err := vm.PowerOff()
-			if err != nil {
-				return fmt.Errorf("error Powering Off: %s", err)
-			}
-			err = task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf(errorCompletingTask, err)
-			}
-		}
-
-		// If customization was requested then a shutdown with undeploy is needed
-		if vmStatusBeforeUpdate != "POWERED_OFF" && customizationNeeded {
+		if vmStatusBeforeUpdate != "POWERED_OFF" {
 			log.Printf("[DEBUG] Un-deploying VM %s for offline update. Previous state %s",
 				vm.VM.Name, vmStatusBeforeUpdate)
 			task, err := vm.Undeploy()
@@ -1167,7 +1152,7 @@ func genericVcdVAppVmRead(d *schema.ResourceData, meta interface{}, origin strin
 	case networkName != "" || vappNetworkName != "":
 		ip, mac, err := deprecatedReadNetworks(*vm)
 		if err != nil {
-			return fmt.Errorf("[VM read] failed reading network details: %s", err)
+			return fmt.Errorf("[VM read] failed reading deprecated network details: %s", err)
 		}
 		_ = d.Set("ip", ip)
 		_ = d.Set("mac", mac)
@@ -1723,7 +1708,10 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp) ([]map[s
 
 		var ok bool
 		if singleNIC["type"], ok = vAppNetworkTypes[vmNet.Network]; !ok {
-			return []map[string]interface{}{}, fmt.Errorf("unable to determine vApp network type for: %s", vmNet.Network)
+			// Prior vCD 10.1 used to return a placeholder for none networks. It allowed to identify
+			// NIC type for types.NoneNetwork. This was removed in 10.1 therefore when vApp network
+			// type has no details - the NIC network type is types.NoneNetwork
+			singleNIC["type"] = types.NoneNetwork
 		}
 
 		nets = append(nets, singleNIC)
