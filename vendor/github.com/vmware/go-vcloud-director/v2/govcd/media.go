@@ -306,7 +306,7 @@ func queryMediaWithFilter(vdc *Vdc, filter string) ([]*types.MediaRecordType, er
 		typeMedia = "adminMedia"
 	}
 
-	results, err := vdc.QueryWithNotEncodedParams(nil, map[string]string{"type": typeMedia, "filter": filter})
+	results, err := vdc.QueryWithNotEncodedParams(nil, map[string]string{"type": typeMedia, "filter": filter, "filterEncoded": "true"})
 	if err != nil {
 		return nil, fmt.Errorf("error querying medias %s", err)
 	}
@@ -487,7 +487,8 @@ func (catalog *Catalog) GetMediaById(mediaId string) (*Media, error) {
 	}
 
 	results, err := catalog.client.QueryWithNotEncodedParams(nil, map[string]string{"type": typeMedia,
-		"filter": fmt.Sprintf("catalogName==%s", url.QueryEscape(catalog.Catalog.Name))})
+		"filter":        fmt.Sprintf("catalogName==%s", url.QueryEscape(catalog.Catalog.Name)),
+		"filterEncoded": "true"})
 	if err != nil {
 		return nil, fmt.Errorf("error querying medias %s", err)
 	}
@@ -572,7 +573,8 @@ func (catalog *Catalog) QueryMedia(mediaName string) (*MediaRecord, error) {
 	results, err := catalog.client.QueryWithNotEncodedParams(nil, map[string]string{"type": typeMedia,
 		"filter": fmt.Sprintf("name==%s;catalogName==%s",
 			url.QueryEscape(mediaName),
-			url.QueryEscape(catalog.Catalog.Name))})
+			url.QueryEscape(catalog.Catalog.Name)),
+		"filterEncoded": "true"})
 	if err != nil {
 		return nil, fmt.Errorf("error querying medias %s", err)
 	}
