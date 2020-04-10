@@ -66,5 +66,5 @@ All attributes defined in [edge gateway resource](/docs/providers/vcd/r/edgegate
 
 * `name_regex` (Optional) matches the name using a regular expression.
 
-See [Filters reference](/docs/providers/vcd/guides/filters.html) for details and examples.
+See [Filters reference](/docs/providers/vcd/guides/data_source_filters.html) for details and examples.
 

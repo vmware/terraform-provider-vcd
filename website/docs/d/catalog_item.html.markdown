@@ -66,5 +66,5 @@ The following arguments are supported:
   are set, it retrieves the newest item.
 * `metadata` (Optional) One or more parameters that will match metadata contents.
 
-See [Filters reference](/docs/providers/vcd/guides/filters.html) for details and examples.
+See [Filters reference](/docs/providers/vcd/guides/data_source_filters.html) for details and examples.
 
