@@ -19,6 +19,7 @@ NOTES:
 
 * Bump terraform-plugin-sdk to v1.8.0 [GH-479]
 * Update Travis to use Go 1.14 [GH-479]
+* Dropped support for vCD 9.1 [GH-492]
 
 ## 2.7.0 (March 13, 2020)
 
