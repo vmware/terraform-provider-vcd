@@ -199,13 +199,47 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 		return fmt.Errorf("unable to find catalog: %s", err)
 	}
 
-	identifier := d.Id()
+	var media *govcd.Media
 
-	if identifier == "" {
-		identifier = d.Get("name").(string)
+	if origin == "datasource" {
+		filter, hasFilter := d.GetOk("filter")
+		if hasFilter {
+			criteria, err := buildCriteria(filter)
+			if err != nil {
+				return err
+			}
+			queryType := govcd.QtMedia
+			if vcdClient.Client.IsSysAdmin {
+				queryType = govcd.QtAdminMedia
+			}
+			queryItems, err := vcdClient.Client.SearchByFilter(queryType, criteria)
+			if err != nil {
+				return err
+			}
+			if len(queryItems) == 0 {
+				return fmt.Errorf("no media found with given criteria")
+			}
+			if len(queryItems) > 1 {
+				var itemNames = make([]string, len(queryItems))
+				for i, item := range queryItems {
+					itemNames[i] = item.GetName()
+				}
+				return fmt.Errorf("more than one media item found by given criteria: %v", itemNames)
+			}
+			media, err = catalog.GetMediaByHref(queryItems[0].GetHref())
+		}
 	}
 
-	media, err := catalog.GetMediaByNameOrId(identifier, false)
+	identifier := d.Id()
+	if media == nil {
+		if identifier == "" {
+			identifier = d.Get("name").(string)
+		}
+		if identifier == "" {
+			return fmt.Errorf("media identifier is empty")
+		}
+		media, err = catalog.GetMediaByNameOrId(identifier, false)
+	}
 	if govcd.IsNotFound(err) && origin == "resource" {
 		log.Printf("[INFO] unable to find media with ID %s: %s. Removing from state", identifier, err)
 		d.SetId("")
@@ -218,7 +252,7 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 
 	d.SetId(media.Media.ID)
 
-	mediaRecord, err := catalog.QueryMedia(d.Get("name").(string))
+	mediaRecord, err := catalog.QueryMedia(media.Media.Name)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to query media: %s", err)
 		return err
