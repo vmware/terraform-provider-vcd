@@ -2,60 +2,77 @@ package vcd
 
 import (
 	"fmt"
-	"regexp"
 
-	"github.com/araddon/dateparse"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
-// This file contains general purpose functions to support queries for different entities
-// Functions related to specific entities are named 'entity_type_filter.go'
-
-// compareDate will get a date from string `got`, and will parse `wanted`
-// for an expression containing an operator (>, <, >=, <=, ==) and a date
-// (many formats supported, but 'YYYY-MM-DD[ hh:mm[:ss]]' preferred)
-// For example:
-// got:    "2020-03-09T09:50:51.500Z"
-// wanted: ">= 2020-03-08"
-// result: true
-// got:    "2020-03-09T09:50:51.500Z"
-// wanted: "< 02-mar-2020"
-// result: false
-// See https://github.com/araddon/dateparse for more info
-func compareDate(wanted, got string) (bool, error) {
-
-	reExpression := regexp.MustCompile(`(>=|<=|==|<|=|>)\s*(.+)`)
-
-	expList := reExpression.FindAllStringSubmatch(wanted, -1)
-	if len(expList) == 0 || len(expList[0]) == 0 {
-		return false, fmt.Errorf("expression not found in '%s'", wanted)
+func buildMetadataCriteria(filter interface{}) ([]govcd.MetadataDef, bool, error) {
+	var definitions []govcd.MetadataDef
+	var useApiSearch bool
+	filterList, ok := filter.([]interface{})
+	if !ok {
+		return nil, useApiSearch, fmt.Errorf("metadata block is not a list")
+	}
+	for _, raw := range filterList {
+		metadataMap, ok := raw.(map[string]interface{})
+		if !ok {
+			return nil, useApiSearch, fmt.Errorf("metadata internal block is not a map")
+		}
+		var def govcd.MetadataDef
+		for key, value := range metadataMap {
+			switch key {
+			case "key":
+				def.Key = value.(string)
+			case "value":
+				def.Value = value
+			case "type":
+				def.Type = value.(string)
+			case "is_system":
+				def.IsSystem = value.(bool)
+			case "use_api_search":
+				useApiSearch = value.(bool)
+			}
+		}
+		definitions = append(definitions, def)
 	}
 
-	operator := expList[0][1]
-	wantedTime, err := dateparse.ParseStrict(expList[0][2])
-	if err != nil {
-		return false, err
+	return definitions, useApiSearch, nil
+}
+
+func buildCriteria(filter interface{}) (*govcd.FilterDef, error) {
+	var criteria = govcd.NewFilterDef()
+
+	filterList, ok := filter.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("[buildCriteria] filter is not a list")
 	}
 
-	gotTime, err := dateparse.ParseStrict(got)
-	if err != nil {
-		return false, err
+	filterMap, ok := filterList[0].(map[string]interface{})
+	if !ok {
+		return nil, fmt.Errorf("[buildCriteria] filter is not a map")
 	}
+	for key, value := range filterMap {
+		switch key {
 
-	wantedSeconds := wantedTime.Unix()
-	gotSeconds := gotTime.Unix()
-
-	switch operator {
-	case "=", "==":
-		return gotSeconds == wantedSeconds, nil
-	case ">":
-		return gotSeconds > wantedSeconds, nil
-	case ">=":
-		return gotSeconds >= wantedSeconds, nil
-	case "<=":
-		return gotSeconds <= wantedSeconds, nil
-	case "<":
-		return gotSeconds < wantedSeconds, nil
-	default:
-		return false, fmt.Errorf("unsupported operator '%s'", operator)
+		case govcd.FilterNameRegex, govcd.FilterIp, govcd.FilterDate:
+			err := criteria.AddFilter(key, value.(string))
+			if err != nil {
+				return nil, fmt.Errorf("[buildCriteria] error adding filter %s", err)
+			}
+		case govcd.FilterLatest:
+			strValue := fmt.Sprintf("%v", value.(bool))
+			err := criteria.AddFilter(key, strValue)
+			if err != nil {
+				return nil, fmt.Errorf("[buildCriteria] error adding filter %s", err)
+			}
+		case "metadata":
+			definitions, useApiSearch, err := buildMetadataCriteria(value)
+			if err != nil {
+				return nil, fmt.Errorf("[buildCriteria] error adding metadata criteria %s", err)
+			}
+			criteria.UseMetadataApiFilter = useApiSearch
+			criteria.Metadata = definitions
+		}
 	}
+	return criteria, nil
 }
