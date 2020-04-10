@@ -148,19 +148,21 @@ func genericVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}, origi
 		return fmt.Errorf("[direct network read] "+errorRetrievingOrgAndVdc, err)
 	}
 
-	identifier := d.Id()
-
-	if identifier == "" {
-		identifier = d.Get("name").(string)
-	}
-	network, err := vdc.GetOrgVdcNetworkByNameOrId(identifier, false)
+	//identifier := d.Id()
+	//
+	//if identifier == "" {
+	//	identifier = d.Get("name").(string)
+	//}
+	//network, err := vdc.GetOrgVdcNetworkByNameOrId(identifier, false)
+	network, err := getNetwork(d, vcdClient, origin == "datasource", "direct")
 	if err != nil {
 		if origin == "resource" {
-			log.Printf("[DEBUG] Network %s no longer exists. Removing from tfstate", identifier)
+			networkName := d.Get("name").(string)
+			log.Printf("[DEBUG] Network %s no longer exists. Removing from tfstate", networkName)
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("[direct network read] network %s not found: %s", identifier, err)
+		return fmt.Errorf("[direct network read] network not found: %s", err)
 	}
 
 	_ = d.Set("name", network.OrgVDCNetwork.Name)
@@ -203,7 +205,7 @@ func resourceVcdNetworkDirectUpdate(d *schema.ResourceData, meta interface{}) er
 	if !vcdClient.Client.IsSysAdmin {
 		return fmt.Errorf("update of a vcd_network_direct requires system administrator privileges")
 	}
-	network, err := getNetwork(d, vcdClient)
+	network, err := getNetwork(d, vcdClient, false, "direct")
 	if err != nil {
 		return fmt.Errorf("[direct network update] error getting network: %s", err)
 	}
@@ -221,11 +223,49 @@ func resourceVcdNetworkDirectUpdate(d *schema.ResourceData, meta interface{}) er
 	return resourceVcdNetworkDirectRead(d, meta)
 }
 
-func getNetwork(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.OrgVDCNetwork, error) {
+func getNetwork(d *schema.ResourceData, vcdClient *VCDClient, isDataSource bool, wanted string) (*govcd.OrgVDCNetwork, error) {
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
 		return nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	}
+
+	var network *govcd.OrgVDCNetwork
+	if isDataSource {
+		filter, hasFilter := d.GetOk("filter")
+
+		if hasFilter {
+			criteria, err := buildCriteria(filter)
+			if err != nil {
+				return nil, err
+			}
+			queryType := govcd.QtOrgVdcNetwork
+			rawQueryItems, err := vcdClient.Client.SearchByFilter(queryType, criteria)
+			if err != nil {
+				return nil, err
+			}
+			var queryItems []govcd.QueryItem
+			for _, item := range rawQueryItems {
+				if item.GetType() == "network_"+wanted {
+					queryItems = append(queryItems, item)
+				}
+			}
+			if len(queryItems) == 0 {
+				return nil, fmt.Errorf("no networks found with given criteria")
+			}
+			if len(queryItems) > 1 {
+				var itemNames = make([]string, len(queryItems))
+				for i, item := range queryItems {
+					itemNames[i] = item.GetName()
+				}
+				return nil, fmt.Errorf("more than one network found by given criteria: %v", itemNames)
+			}
+			network, err = vdc.GetOrgVdcNetworkByHref(queryItems[0].GetHref())
+			if err != nil {
+				return nil, err
+			}
+			return network, nil
+		}
 	}
 
 	identifier := d.Id()
@@ -235,7 +275,7 @@ func getNetwork(d *schema.ResourceData, vcdClient *VCDClient) (*govcd.OrgVDCNetw
 	if identifier == "" {
 		return nil, fmt.Errorf("[get network] no identifier found for network")
 	}
-	network, err := vdc.GetOrgVdcNetworkByNameOrId(identifier, false)
+	network, err = vdc.GetOrgVdcNetworkByNameOrId(identifier, false)
 	if err != nil {
 		return nil, fmt.Errorf("[get network] error getting network %s: %s", identifier, err)
 	}
