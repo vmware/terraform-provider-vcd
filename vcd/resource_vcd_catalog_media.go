@@ -200,11 +200,12 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 	}
 
 	var media *govcd.Media
+	var criteria *govcd.FilterDef
 
 	if origin == "datasource" {
 		filter, hasFilter := d.GetOk("filter")
 		if hasFilter {
-			criteria, err := buildCriteria(filter)
+			criteria, err = buildCriteria(filter)
 			if err != nil {
 				return err
 			}
@@ -212,7 +213,8 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 			if vcdClient.Client.IsSysAdmin {
 				queryType = govcd.QtAdminMedia
 			}
-			queryItems, err := vcdClient.Client.SearchByFilter(queryType, criteria)
+			var queryItems []govcd.QueryItem
+			queryItems, err = vcdClient.Client.SearchByFilter(queryType, criteria)
 			if err != nil {
 				return err
 			}

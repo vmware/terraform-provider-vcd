@@ -54,12 +54,18 @@ func datasourceVcdCatalog() *schema.Resource {
 }
 
 func datasourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
-	vcdClient := meta.(*VCDClient)
+	var (
+		vcdClient = meta.(*VCDClient)
+		err       error
+		adminOrg  *govcd.AdminOrg
+		catalog   *govcd.Catalog
+		criteria  *govcd.FilterDef
+	)
 
 	orgName := d.Get("org").(string)
 	identifier := d.Get("name").(string)
 	log.Printf("[TRACE] Reading Org %s", orgName)
-	adminOrg, err := vcdClient.VCDClient.GetAdminOrgByName(orgName)
+	adminOrg, err = vcdClient.VCDClient.GetAdminOrgByName(orgName)
 
 	if err != nil {
 		log.Printf("[DEBUG] Org %s not found. Setting ID to nothing", orgName)
@@ -70,15 +76,14 @@ func datasourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
 
 	filter, hasFilter := d.GetOk("filter")
 
-	var catalog *govcd.Catalog
-
 	if hasFilter {
-		criteria, err := buildCriteria(filter)
+		var queryItems []govcd.QueryItem
+		criteria, err = buildCriteria(filter)
 		if err != nil {
 			return err
 		}
 		queryType := govcd.QtAdminCatalog
-		queryItems, err := vcdClient.Client.SearchByFilter(queryType, criteria)
+		queryItems, err = vcdClient.Client.SearchByFilter(queryType, criteria)
 		if err != nil {
 			return err
 		}

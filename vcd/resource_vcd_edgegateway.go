@@ -427,17 +427,20 @@ func genericVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}, origin 
 	var edgeGateway *govcd.EdgeGateway
 	var hasFilter bool
 	var filter interface{}
+	var criteria *govcd.FilterDef
+
 	if origin == "datasource" {
 
 		filter, hasFilter = d.GetOk("filter")
 		if hasFilter {
 
-			criteria, err := buildCriteria(filter)
+			criteria, err = buildCriteria(filter)
 			if err != nil {
 				return err
 			}
+			var queryItems []govcd.QueryItem
 			queryType := govcd.QtEdgeGateway
-			queryItems, err := vcdClient.Client.SearchByFilter(queryType, criteria)
+			queryItems, err = vcdClient.Client.SearchByFilter(queryType, criteria)
 			if err != nil {
 				return err
 			}
