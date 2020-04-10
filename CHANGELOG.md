@@ -14,6 +14,8 @@ BUG FIXES
 * `resource/vcd_vapp_vm` sometimes reports incorrect `vcd_vapp_vm.ip` and `vcd_vapp_vm.mac` fields in deprecated network
 configuration (when using `vcd_vapp_vm.network_name` and `vcd_vapp_vm.vapp_network_name` parameters instead of
 `vcd_vapp_vm.network` blocks) [GH-478]
+* `resource/vcd_vapp_org_network` fix potential error 'NAT rule cannot be configured for nics with
+  DHCP addressing mode' during removal [GH-489]
 
 DEPRECATIONS:
 * vCD 9.1 support is deprecated. Next version will require at least version 9.5 [GH-489]
