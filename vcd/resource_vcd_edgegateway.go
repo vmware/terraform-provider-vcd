@@ -418,21 +418,52 @@ func genericVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}, origin 
 
 	vcdClient := meta.(*VCDClient)
 
-	identifier := d.Id()
-	if identifier == "" {
-		identifier = d.Get("name").(string)
-	}
-	if identifier == "" {
-		return fmt.Errorf("[edgegateway read] no identifier provided")
-	}
-
 	orgName := d.Get("org").(string)
 	vdcName := d.Get("vdc").(string)
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if err != nil {
 		return fmt.Errorf("[edgegateway read] error retrieving org and vdc: %s", err)
 	}
-	edgeGateway, err := vdc.GetEdgeGatewayByNameOrId(identifier, false)
+	var edgeGateway *govcd.EdgeGateway
+	var hasFilter bool
+	var filter interface{}
+	if origin == "datasource" {
+
+		filter, hasFilter = d.GetOk("filter")
+		if hasFilter {
+
+			criteria, err := buildCriteria(filter)
+			if err != nil {
+				return err
+			}
+			queryType := govcd.QtEdgeGateway
+			queryItems, err := vcdClient.Client.SearchByFilter(queryType, criteria)
+			if err != nil {
+				return err
+			}
+			if len(queryItems) == 0 {
+				return fmt.Errorf("no edge gateways found with given criteria")
+			}
+			if len(queryItems) > 1 {
+				var itemNames = make([]string, len(queryItems))
+				for i, item := range queryItems {
+					itemNames[i] = item.GetName()
+				}
+				return fmt.Errorf("more than one edge gateways found by given criteria: %v", itemNames)
+			}
+			edgeGateway, err = vdc.GetEdgeGatewayByHref(queryItems[0].GetHref())
+		}
+	}
+	identifier := d.Id()
+	if identifier == "" {
+		identifier = d.Get("name").(string)
+	}
+	if identifier == "" && !hasFilter {
+		return fmt.Errorf("[edgegateway read] no identifier provided")
+	}
+	if edgeGateway == nil {
+		edgeGateway, err = vdc.GetEdgeGatewayByNameOrId(identifier, false)
+	}
 	if err != nil {
 		if origin == "resource" {
 			log.Printf("[edgegateway read] edge gateway %s not found. Removing from state file: %s", identifier, err)
