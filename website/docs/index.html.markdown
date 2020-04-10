@@ -6,7 +6,7 @@ description: |-
   The VMware vCloud Director provider is used to interact with the resources supported by VMware vCloud Director. The provider needs to be configured with the proper credentials before it can be used.
 ---
 
-# VMware vCloud Director Provider 2.8
+# VMware vCloud Director Provider 2.9
 
 The VMware vCloud Director provider is used to interact with the resources supported by VMware vCloud Director. The provider needs to be configured with the proper credentials before it can be used.
 
@@ -20,7 +20,6 @@ When upgrading the provider please check for such labels for the resources you a
 
 The following vCloud Director versions are supported by this provider:
 
-* 9.1
 * 9.5
 * 9.7
 * 10.0
