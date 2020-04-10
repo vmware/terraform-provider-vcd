@@ -46,6 +46,15 @@ func deleteCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) error {
 	return nil
 }
 
+// vappTemplateToCatalogItem returns the catalog item corresponding to the associated vApp template
+func vappTemplateToCatalogItem(vappTemplateName string, catalog *govcd.Catalog) (*govcd.CatalogItem, error) {
+	item, err := catalog.GetCatalogItemByName(vappTemplateName, false)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving catalog item from vapp template %s: %s", vappTemplateName, err)
+	}
+	return item, nil
+}
+
 // Finds catalog item which can be vApp template OVA or media ISO file
 func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd.CatalogItem, error) {
 	log.Printf("[TRACE] Catalog item read initiated")
@@ -71,20 +80,43 @@ func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient, origin string
 
 	var catalogItem *govcd.CatalogItem
 	if origin == "datasource" {
-		//search,hasSearch := d.GetOk("search")
-		//if hasSearch {
-		//	fmt.Printf("%# v\n",pretty.Formatter(search))
-		//}
 		filter, hasFilter := d.GetOk("filter")
 		if hasFilter {
-			catalogItem, err = searchVappTemplateByFilter(catalog, filter, vcdClient.Client.IsSysAdmin)
+			criteria, err := buildCriteria(filter)
 			if err != nil {
 				return nil, err
 			}
+			queryType := govcd.QtVappTemplate
+			if vcdClient.Client.IsSysAdmin {
+				queryType = govcd.QtAdminVappTemplate
+			}
+			queryItems, err := vcdClient.Client.SearchByFilter(queryType, criteria)
+			if err != nil {
+				return nil, err
+			}
+			if len(queryItems) == 0 {
+				return nil, fmt.Errorf("no items found with given criteria")
+			}
+			if len(queryItems) > 1 {
+				var itemNames = make([]string, len(queryItems))
+				for i, item := range queryItems {
+					itemNames[i] = item.GetName()
+				}
+				return nil, fmt.Errorf("more than one item found by given criteria: %v", itemNames)
+			}
+			catalogItem, err = vappTemplateToCatalogItem(queryItems[0].GetName(), catalog)
+			if len(queryItems) == 0 {
+				return nil, err
+			}
+			if catalogItem == nil {
+				return nil, fmt.Errorf("unexpected nil value for catalog item after conversion from vApp template")
+			}
+
 			d.SetId(catalogItem.CatalogItem.ID)
 			return catalogItem, nil
 		}
 	}
+	// No filter: we continue with single item  GET
 
 	catalogItem, err = catalog.GetCatalogItemByNameOrId(identifier, false)
 	if govcd.IsNotFound(err) && origin == "resource" {

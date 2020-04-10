@@ -104,6 +104,8 @@ func TestAccVcdCatalogItemFilter(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckOutput("name", testConfig.VCD.Catalog.CatalogItem),
+					resource.TestCheckOutput("catalog", testConfig.VCD.Catalog.Name),
+					resource.TestCheckOutput("catalog_media", "test_media"),
 				),
 			},
 		},
@@ -135,21 +137,50 @@ data "vcd_catalog_item" "{{.CatalogItem}}" {
   catalog = "{{.Catalog}}"
   # name    = "{{.CatalogItem}}"
   filter {
-    name_regex = "{{.NameRegex}}"
+    //name_regex = "{{.NameRegex}}"
     latest     = false
-    //metadata {
-    // key       = "ONE"
-    // value     = "\\w+"
-    //}
-    //metadata {
-    // key       = "TWO"
-    // value     = "\\w+ \\w+"
-    //}
+    metadata {
+     key       = "ONE"
+     value     = "\\w+"
+    }
+    metadata {
+     key       = "TWO"
+     value     = "\\w+ \\w+"
+    }
   }
 }
 
 output "name" {
   value = data.vcd_catalog_item.{{.CatalogItem}}.name
+}
+
+# WIP
+data "vcd_catalog" "mystery" {
+  org     = "{{.Org}}"
+  # name    = "{{.Catalog}}"
+  filter {
+    //name_regex = "{{.NameRegex}}"
+    date         = "<= 2020-04-01"
+    latest       = false
+  }
+}
+
+output "catalog" {
+  value = data.vcd_catalog.mystery.name
+}
+
+data "vcd_catalog_media" "mystery" {
+  org     = "{{.Org}}"
+  catalog = "{{.Catalog}}"
+  filter {
+    //name_regex = "{{.NameRegex}}"
+    date         = ">= 2020-02-01"
+    latest       = true
+  }
+}
+
+output "catalog_media" {
+  value = data.vcd_catalog_media.mystery.name
 }
 `
 
