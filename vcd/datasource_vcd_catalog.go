@@ -44,6 +44,7 @@ func datasourceVcdCatalog() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"name_regex": elementNameRegex,
 						"date":       elementDate,
+						"earliest":   elementEarliest,
 						"latest":     elementLatest,
 						"metadata":   elementMetadata,
 					},
@@ -78,17 +79,18 @@ func datasourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
 
 	if hasFilter {
 		var queryItems []govcd.QueryItem
+		var explanation string
 		criteria, err = buildCriteria(filter)
 		if err != nil {
 			return err
 		}
 		queryType := govcd.QtAdminCatalog
-		queryItems, err = vcdClient.Client.SearchByFilter(queryType, criteria)
+		queryItems, explanation, err = vcdClient.Client.SearchByFilter(queryType, criteria)
 		if err != nil {
 			return err
 		}
 		if len(queryItems) == 0 {
-			return fmt.Errorf("no catalogs found with given criteria")
+			return fmt.Errorf("no catalogs found with given criteria (%s)", explanation)
 		}
 		if len(queryItems) > 1 {
 			var itemNames = make([]string, len(queryItems))

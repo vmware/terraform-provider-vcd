@@ -46,6 +46,7 @@ func datasourceVcdCatalogItem() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"name_regex": elementNameRegex,
 						"date":       elementDate,
+						"earliest":   elementEarliest,
 						"latest":     elementLatest,
 						"metadata":   elementMetadata,
 					},

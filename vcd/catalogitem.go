@@ -90,12 +90,12 @@ func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient, origin string
 			if vcdClient.Client.IsSysAdmin {
 				queryType = govcd.QtAdminVappTemplate
 			}
-			queryItems, err := vcdClient.Client.SearchByFilter(queryType, criteria)
+			queryItems, explanation, err := vcdClient.Client.SearchByFilter(queryType, criteria)
 			if err != nil {
 				return nil, err
 			}
 			if len(queryItems) == 0 {
-				return nil, fmt.Errorf("no items found with given criteria")
+				return nil, fmt.Errorf("no items found with given criteria (%s)", explanation)
 			}
 			if len(queryItems) > 1 {
 				var itemNames = make([]string, len(queryItems))

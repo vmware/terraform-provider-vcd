@@ -240,7 +240,7 @@ func getNetwork(d *schema.ResourceData, vcdClient *VCDClient, isDataSource bool,
 				return nil, err
 			}
 			queryType := govcd.QtOrgVdcNetwork
-			rawQueryItems, err := vcdClient.Client.SearchByFilter(queryType, criteria)
+			rawQueryItems, explanation, err := vcdClient.Client.SearchByFilter(queryType, criteria)
 			if err != nil {
 				return nil, err
 			}
@@ -251,7 +251,7 @@ func getNetwork(d *schema.ResourceData, vcdClient *VCDClient, isDataSource bool,
 				}
 			}
 			if len(queryItems) == 0 {
-				return nil, fmt.Errorf("no networks found with given criteria")
+				return nil, fmt.Errorf("no networks found with given criteria (%s)", explanation)
 			}
 			if len(queryItems) > 1 {
 				var itemNames = make([]string, len(queryItems))
