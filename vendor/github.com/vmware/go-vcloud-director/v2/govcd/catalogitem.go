@@ -51,7 +51,7 @@ func (catalogItem *CatalogItem) Delete() error {
 }
 
 // queryCatalogItemList returns a list of Catalog Item for the given parent
-func  queryCatalogItemList(client *Client, parentField, parentValue string) ([]*types.QueryResultCatalogItemType, error) {
+func queryCatalogItemList(client *Client, parentField, parentValue string) ([]*types.QueryResultCatalogItemType, error) {
 
 	catalogItemType := QtCatalogItem
 	if client.IsSysAdmin {
@@ -91,7 +91,7 @@ func (vdc *AdminVdc) QueryCatalogItemList() ([]*types.QueryResultCatalogItemType
 }
 
 // queryVappTemplateList returns a list of vApp templates for the given parent
-func  queryVappTemplateList(client *Client, parentField,parentValue string )( []*types.QueryResultVappTemplateType, error) {
+func queryVappTemplateList(client *Client, parentField, parentValue string) ([]*types.QueryResultVappTemplateType, error) {
 
 	vappTemplateType := QtVappTemplate
 	if client.IsSysAdmin {

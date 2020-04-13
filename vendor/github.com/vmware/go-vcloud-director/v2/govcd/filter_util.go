@@ -14,11 +14,12 @@ const (
 	FilterDate      = "date"       // a date expression (>|<|==|>=|<= date)
 	FilterIp        = "ip"         // An IP, searched by regular expression
 	FilterLatest    = "latest"     // gets the newest element
+	FilterEarliest  = "earliest"   // gets the oldest element
 )
 
 var (
 	// Filters currently supported in the engine
-	SupportedFilters = []string{FilterNameRegex, FilterDate, FilterIp, FilterLatest}
+	SupportedFilters = []string{FilterNameRegex, FilterDate, FilterIp, FilterLatest, FilterEarliest}
 
 	// Metadata types recognized so far. "NONE" is the same as ""
 	SupportedMetadataTypes = []string{"NONE", "STRING", "INT", "BOOL"}
@@ -32,25 +33,48 @@ type MetadataDef struct {
 	IsSystem bool        // if true, the metadata field will be addressed as metadata@SYSTEM:key
 }
 
+// matchResult stores the result of a condition evaluation
+// Used to build the human readable description of the engine operations
+type matchResult struct {
+	Name       string
+	Type       string
+	Definition string
+	Result     bool
+}
+
 // The definition of all the criteria used by the engine to retrieve data
 type FilterDef struct {
 	// A collection of filters (with keys from SupportedFilters)
-	Filters              map[string]string
+	Filters map[string]string
 
 	// A list of metadata filters
-	Metadata             []MetadataDef
+	Metadata []MetadataDef
 
 	// If true, the query will include metadata fields and search for exact values.
 	// Otherwise, the engine will collect metadata fields and search by regexp
 	UseMetadataApiFilter bool
 }
 
-// Creates a new filter definition
+// NewFilterDef builds a new filter definition
 func NewFilterDef() *FilterDef {
 	return &FilterDef{
 		Filters:  make(map[string]string),
 		Metadata: nil,
 	}
+}
+
+// validateMetadataType checks that a metadata type is within supported types
+func validateMetadataType(valueType string) error {
+	typeSupported := false
+	for _, supported := range SupportedMetadataTypes {
+		if valueType == supported {
+			typeSupported = true
+		}
+	}
+	if !typeSupported {
+		return fmt.Errorf("metadata type '%s' not supported", valueType)
+	}
+	return nil
 }
 
 // AddFilter adds a new filter to the criteria
@@ -73,14 +97,9 @@ func (fd *FilterDef) AddMetadataFilter(key, value, valueType string, isSystem, u
 	if useMetadataApiFilter {
 		fd.UseMetadataApiFilter = true
 	}
-	typeSupported := false
-	for _, supported := range SupportedMetadataTypes {
-		if valueType == supported {
-			typeSupported = true
-		}
-	}
-	if !typeSupported {
-		return fmt.Errorf("metadata type '%s' not supported", valueType)
+	err := validateMetadataType(valueType)
+	if err != nil {
+		return err
 	}
 	fd.Metadata = append(fd.Metadata, MetadataDef{
 		Key:      key,
@@ -91,10 +110,10 @@ func (fd *FilterDef) AddMetadataFilter(key, value, valueType string, isSystem, u
 	return nil
 }
 
-// StringToBool converts a string to a bool
+// stringToBool converts a string to a bool
 // The following values are recognized as TRUE:
 //  t, true, y, yes, ok
-func StringToBool(s string) bool {
+func stringToBool(s string) bool {
 	switch strings.ToLower(s) {
 	case "t", "true", "y", "yes", "ok":
 		return true
@@ -155,14 +174,26 @@ func compareDate(wanted, got string) (bool, error) {
 
 // conditionText provides a human readable string of searching criteria
 func conditionText(criteria *FilterDef) string {
-	var result string
+	result := "criteria: "
 
 	for k, v := range criteria.Filters {
 		result += fmt.Sprintf(`("%s" -> "%s") `, k, v)
 	}
 	for _, m := range criteria.Metadata {
-		result += fmt.Sprintf(`m("%s" -> "%s")`, m.Key, m.Value)
+		marker := "meta"
+		if criteria.UseMetadataApiFilter {
+			marker = "metaApi"
+		}
+		result += fmt.Sprintf(`%s("%s" -> "%s") `, marker, m.Key, m.Value)
 	}
 	return result
 }
 
+// matchesToText provides a human readable string of search operations results
+func matchesToText(matches []matchResult) string {
+	result := ""
+	for _, item := range matches {
+		result += fmt.Sprintf("name: %s; type: %s definition: %s; result: %v\n", item.Name, item.Type, item.Definition, item.Result)
+	}
+	return result
+}

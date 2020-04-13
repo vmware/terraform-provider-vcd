@@ -19,12 +19,12 @@ type QueryItem interface {
 type (
 	// All the Query* types are localizations of Query records that can be returned from a query.
 	// Each one of these implements the QueryItem interface
-	QueryVAppTemplate     types.QueryResultVappTemplateType
-	QueryCatalogItem      types.QueryResultCatalogItemType
-	QueryEdgeGateway      types.QueryResultEdgeGatewayRecordType
-	QueryAdminCatalog     types.AdminCatalogRecord
-	QueryOrgVdcNetwork    types.QueryResultOrgVdcNetworkRecordType
-	QueryMedia            types.MediaRecordType
+	QueryVAppTemplate  types.QueryResultVappTemplateType
+	QueryCatalogItem   types.QueryResultCatalogItemType
+	QueryEdgeGateway   types.QueryResultEdgeGatewayRecordType
+	QueryAdminCatalog  types.AdminCatalogRecord
+	QueryOrgVdcNetwork types.QueryResultOrgVdcNetworkRecordType
+	QueryMedia         types.MediaRecordType
 )
 
 // getMetadataValue is a generic metadata lookup for all query items
@@ -125,8 +125,11 @@ func (network QueryOrgVdcNetwork) GetMetadataValue(key string) string {
 	return getMetadataValue(network.Metadata, key)
 }
 
-// resultsToQueryItem converts a set of query results into a list of query items
-func resultsToQueryItem(queryType string, results Results) ([]QueryItem, error) {
+// --------------------------------------------------------------
+// result conversion
+// --------------------------------------------------------------
+// resultToQueryItems converts a set of query results into a list of query items
+func resultToQueryItems(queryType string, results Results) ([]QueryItem, error) {
 	resultSize := int64(results.Results.Total)
 	if resultSize < 1 {
 		return nil, nil

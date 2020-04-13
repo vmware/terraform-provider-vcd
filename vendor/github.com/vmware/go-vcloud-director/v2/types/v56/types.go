@@ -2443,35 +2443,35 @@ type Media struct {
 // Description: Represents Media record
 // Since: 1.5
 type MediaRecordType struct {
-	HREF               string `xml:"href,attr,omitempty"`
-	ID                 string `xml:"id,attr,omitempty"`
-	Type               string `xml:"type,attr,omitempty"`
-	OwnerName          string `xml:"ownerName,attr,omitempty"`
-	CatalogName        string `xml:"catalogName,attr,omitempty"`
-	IsPublished        bool   `xml:"isPublished,attr,omitempty"`
-	Name               string `xml:"name,attr"`
-	Vdc                string `xml:"vdc,attr,omitempty"`
-	VdcName            string `xml:"vdcName,attr,omitempty"`
-	Org                string `xml:"org,attr,omitempty"`
-	CreationDate       string `xml:"creationDate,attr,omitempty"`
-	IsBusy             bool   `xml:"isBusy,attr,omitempty"`
-	StorageB           int64  `xml:"storageB,attr,omitempty"`
-	Owner              string `xml:"owner,attr,omitempty"`
-	Catalog            string `xml:"catalog,attr,omitempty"`
-	CatalogItem        string `xml:"catalogItem,attr,omitempty"`
-	Status             string `xml:"status,attr,omitempty"`
-	StorageProfileName string `xml:"storageProfileName,attr,omitempty"`
-	Version            int64  `xml:"version,attr,omitempty"`
-	LastSuccessfulSync string `xml:"lastSuccessfulSync,attr,omitempty"`
-	TaskStatusName     string `xml:"taskStatusName,attr,omitempty"`
-	IsInCatalog        bool   `xml:"isInCatalog,attr,omitempty"`
-	Task               string `xml:"task,attr,omitempty"`
-	IsIso              bool   `xml:"isIso,attr,omitempty"`
-	IsVdcEnabled       bool   `xml:"isVdcEnabled,attr,omitempty"`
-	TaskStatus         string `xml:"taskStatus,attr,omitempty"`
-	TaskDetails        string `xml:"taskDetails,attr,omitempty"`
-	Link         *Link     `xml:"Link,omitempty"`
-	Metadata     *Metadata `xml:"Metadata,omitempty"`
+	HREF               string    `xml:"href,attr,omitempty"`
+	ID                 string    `xml:"id,attr,omitempty"`
+	Type               string    `xml:"type,attr,omitempty"`
+	OwnerName          string    `xml:"ownerName,attr,omitempty"`
+	CatalogName        string    `xml:"catalogName,attr,omitempty"`
+	IsPublished        bool      `xml:"isPublished,attr,omitempty"`
+	Name               string    `xml:"name,attr"`
+	Vdc                string    `xml:"vdc,attr,omitempty"`
+	VdcName            string    `xml:"vdcName,attr,omitempty"`
+	Org                string    `xml:"org,attr,omitempty"`
+	CreationDate       string    `xml:"creationDate,attr,omitempty"`
+	IsBusy             bool      `xml:"isBusy,attr,omitempty"`
+	StorageB           int64     `xml:"storageB,attr,omitempty"`
+	Owner              string    `xml:"owner,attr,omitempty"`
+	Catalog            string    `xml:"catalog,attr,omitempty"`
+	CatalogItem        string    `xml:"catalogItem,attr,omitempty"`
+	Status             string    `xml:"status,attr,omitempty"`
+	StorageProfileName string    `xml:"storageProfileName,attr,omitempty"`
+	Version            int64     `xml:"version,attr,omitempty"`
+	LastSuccessfulSync string    `xml:"lastSuccessfulSync,attr,omitempty"`
+	TaskStatusName     string    `xml:"taskStatusName,attr,omitempty"`
+	IsInCatalog        bool      `xml:"isInCatalog,attr,omitempty"`
+	Task               string    `xml:"task,attr,omitempty"`
+	IsIso              bool      `xml:"isIso,attr,omitempty"`
+	IsVdcEnabled       bool      `xml:"isVdcEnabled,attr,omitempty"`
+	TaskStatus         string    `xml:"taskStatus,attr,omitempty"`
+	TaskDetails        string    `xml:"taskDetails,attr,omitempty"`
+	Link               *Link     `xml:"Link,omitempty"`
+	Metadata           *Metadata `xml:"Metadata,omitempty"`
 }
 
 // DiskCreateParams element for create independent disk

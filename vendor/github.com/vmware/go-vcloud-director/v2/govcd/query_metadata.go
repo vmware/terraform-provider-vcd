@@ -20,7 +20,7 @@ fields can be used in the "fields" parameter of the query.
 
 The function queryFieldsOnDemand provides the fields for the supported types.
 
- */
+*/
 
 // MetadataFilter is a definition of a value used to filter metadata.
 // It is made of a Type (such as 'STRING', 'INT', 'BOOL") and a Value, which is the value we want to search for.
@@ -126,7 +126,7 @@ func (client *Client) QueryWithMetadataFields(queryType string, params, notEncod
 // on metadata fields
 // Unlike QueryWithMetadataFields, this function does not return the metadata fields, but only uses
 // them to perform the filter.
-// *
+//
 // * params and notEncodedParams are the same ones passed to QueryWithNotEncodedParams
 // * metadataFilter is is a map of conditions to use for filtering
 // * if isSystem is true, metadata fields are requested as 'metadata@SYSTEM:fieldName'
