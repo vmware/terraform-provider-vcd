@@ -21,6 +21,8 @@ When you don't know the name, you may get the data source using the `filter` sec
   are recognized, but one of `yyyy-mm-dd [hh:mm[:ss]]` or `dd-MMM-yyyy [hh:mm[:ss]]` is recommended.
 * `latest` (Optional) If `true`, retrieve the latest item among the ones matching other parameters. If no other parameters
   are set, it retrieves the newest item.
+* `earliest` (Optional) If `true`, retrieve the earliest item among the ones matching other parameters. If no other parameters
+  are set, it retrieves the oldest item.
 * `ip` (Optional) matches the IP of the resource using a regular expression.
 * `metadata` (Optional) One or more parameters that will match metadata contents, as defined below
 
@@ -191,12 +193,13 @@ To match only `cloud`, the value should be specified as `"^cloud$"`.
 Several data sources with a quick search
 
 ```hcl
-# Finds a catalog created after April 2nd, 2020
+# Finds the oldest catalog created after April 2nd, 2020
 data "vcd_catalog" "mystery" {
   org = "datacloud"
 
   filter {
-    date = ">= 2020-04-02 10:00"
+    date     = ">= 2020-04-02 10:00"
+    earliest = "true"
   }
 }
 
