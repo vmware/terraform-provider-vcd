@@ -223,7 +223,7 @@ data "vcd_edgegateway" "mystery" {
   }
 }
 
-# Finds a media item created after March 1st, 2020
+# Finds the newest media item created after March 1st, 2020
 data "vcd_catalog_media" "mystery" {
   org     = "datacloud"
   catalog = "cat-datacloud"
