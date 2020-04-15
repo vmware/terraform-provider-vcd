@@ -16,6 +16,7 @@ configuration (when using `vcd_vapp_vm.network_name` and `vcd_vapp_vm.vapp_netwo
 `vcd_vapp_vm.network` blocks) [GH-478]
 * `resource/vcd_vapp_org_network` fix potential error 'NAT rule cannot be configured for nics with
   DHCP addressing mode' during removal [GH-489]
+* `resource/vcd_org_vdc` vCD 10.1 support for "no provider VDC found" errors [GH-489]
 
 DEPRECATIONS:
 * vCD 9.1 support is deprecated. Next version will require at least version 9.5 [GH-489]
