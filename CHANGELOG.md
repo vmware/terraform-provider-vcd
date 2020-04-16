@@ -1,30 +1,30 @@
-## 2.8.0 (Unreleased)
+## 2.8.0 (April 16, 2020)
 
 IMPROVEMENTS:
 
-* `resource/vcd_network_routed`, `resource/vcd_network_direct`, and `resource/vcd_network_isolated` now support in place updates. [GH-465]
-* `vcd_vapp_network`, `vcd_vapp_org_network` has now missing import documentation [GH-481] 
+* `resource/vcd_network_routed`, `resource/vcd_network_direct`, and `resource/vcd_network_isolated` now support in place updates. ([#465](https://github.com/terraform-providers/terraform-provider-vcd/issues/465))
+* `vcd_vapp_network`, `vcd_vapp_org_network` has now missing import documentation [[#481](https://github.com/terraform-providers/terraform-provider-vcd/issues/481)] 
 * `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` simplifies network adapter validation when it
   is not attached to network (`network.x.type=none` and `network.x.ip_allocation_mode=none`) and
-  `network_dhcp_wait_seconds` is defined. This is required for vCD 10.1 support [GH-485]
+  `network_dhcp_wait_seconds` is defined. This is required for vCD 10.1 support ([#485](https://github.com/terraform-providers/terraform-provider-vcd/issues/485))
 
 BUG FIXES
-* Using wrong defaults for `vcd_network_isolated` and `vcd_network_routed` DNS [GH-434]
-* `external_network_gateway` not filled in datasource `vcd_network_direct` [GH-450]
+* Using wrong defaults for `vcd_network_isolated` and `vcd_network_routed` DNS ([#434](https://github.com/terraform-providers/terraform-provider-vcd/issues/434))
+* `external_network_gateway` not filled in datasource `vcd_network_direct` ([#450](https://github.com/terraform-providers/terraform-provider-vcd/issues/450))
 * `resource/vcd_vapp_vm` sometimes reports incorrect `vcd_vapp_vm.ip` and `vcd_vapp_vm.mac` fields in deprecated network
 configuration (when using `vcd_vapp_vm.network_name` and `vcd_vapp_vm.vapp_network_name` parameters instead of
-`vcd_vapp_vm.network` blocks) [GH-478]
+`vcd_vapp_vm.network` blocks) ([#478](https://github.com/terraform-providers/terraform-provider-vcd/issues/478))
 * `resource/vcd_vapp_org_network` fix potential error 'NAT rule cannot be configured for nics with
-  DHCP addressing mode' during removal [GH-489]
-* `resource/vcd_org_vdc` supports vCD 10.1 and resolves "no provider VDC found" errors [GH-489]
+  DHCP addressing mode' during removal ([#489](https://github.com/terraform-providers/terraform-provider-vcd/issues/489))
+* `resource/vcd_org_vdc` supports vCD 10.1 and resolves "no provider VDC found" errors ([#489](https://github.com/terraform-providers/terraform-provider-vcd/issues/489))
 
 DEPRECATIONS:
-* vCD 9.1 support is deprecated. Next version will require at least version 9.5 [GH-489]
+* vCD 9.1 support is deprecated. Next version will require at least version 9.5 ([#489](https://github.com/terraform-providers/terraform-provider-vcd/issues/489))
 
 NOTES:
 
-* Bump terraform-plugin-sdk to v1.8.0 [GH-479]
-* Update Travis to use Go 1.14 [GH-479]
+* Bump terraform-plugin-sdk to v1.8.0 ([#479](https://github.com/terraform-providers/terraform-provider-vcd/issues/479))
+* Update Travis to use Go 1.14 ([#479](https://github.com/terraform-providers/terraform-provider-vcd/issues/479))
 
 ## 2.7.0 (March 13, 2020)
 
