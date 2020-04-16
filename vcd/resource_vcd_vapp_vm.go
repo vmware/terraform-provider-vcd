@@ -931,6 +931,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 
 		// If customization was requested then a shutdown with undeploy is needed
 		if vmStatusBeforeUpdate != "POWERED_OFF" && customizationNeeded {
+		if vmStatusBeforeUpdate != "POWERED_OFF" {
 			log.Printf("[DEBUG] Un-deploying VM %s for offline update. Previous state %s",
 				vm.VM.Name, vmStatusBeforeUpdate)
 			task, err := vm.Undeploy()
