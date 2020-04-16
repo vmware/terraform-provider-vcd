@@ -22,7 +22,7 @@ var (
 	SupportedFilters = []string{FilterNameRegex, FilterDate, FilterIp, FilterLatest, FilterEarliest}
 
 	// Metadata types recognized so far. "NONE" is the same as ""
-	SupportedMetadataTypes = []string{"NONE", "STRING", "INT", "BOOL"}
+	SupportedMetadataTypes = []string{"NONE", "STRING", "NUMBER", "BOOLEAN", "DATETIME"}
 )
 
 // Definition of metadata structure
