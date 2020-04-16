@@ -469,11 +469,11 @@ do
         echo "# $dash_line"
         continue
     fi
-    init_options=$(grep '^# init-options' $CF | sed -e 's/# init-options //')
-    plan_options=$(grep '^# plan-options' $CF | sed -e 's/# plan-options //')
-    apply_options=$(grep '^# apply-options' $CF | sed -e 's/# apply-options //')
-    plancheck_options=$(grep '^# plancheck-options' $CF | sed -e 's/# plancheck-options //')
-    destroy_options=$(grep '^# destroy-options' $CF | sed -e 's/# destroy-options //')
+    init_options="-compact-warnings $(grep '^# init-options' $CF | sed -e 's/# init-options //')"
+    plan_options="-compact-warnings $(grep '^# plan-options' $CF | sed -e 's/# plan-options //')"
+    apply_options="-compact-warnings $(grep '^# apply-options' $CF | sed -e 's/# apply-options //')"
+    plancheck_options="-compact-warnings $(grep '^# plancheck-options' $CF | sed -e 's/# plancheck-options //')"
+    destroy_options="-compact-warnings $(grep '^# destroy-options' $CF | sed -e 's/# destroy-options //')"
     using_tags=$(grep '^# tags' $CF | sed -e 's/# tags //')
     already_run=$(grep $CF already_run.txt)
     if [ -n "$already_run" ]

@@ -405,6 +405,11 @@ func (c *Config) Client() (*VCDClient, error) {
 	cachedVCDClients.conMap[checksum] = cachedConnection{initTime: time.Now(), connection: vcdClient}
 	cachedVCDClients.Unlock()
 
+	// Throw a deprecated warning for vCD versions <= 9.1
+	if vcdClient.Client.APIVCDMaxVersionIs("<= 30") {
+		_, _ = fmt.Fprintln(getTerraformStdout(), "WARNING: Support for vCD versions older than 9.5 is deprecated")
+	}
+
 	return vcdClient, nil
 }
 
