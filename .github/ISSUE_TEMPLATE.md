@@ -20,8 +20,8 @@ If this issue appears to affect multiple resources, it may be an issue with Terr
 ```
 
 ### Debug Output
-Please provide a link to GitHub Gist(s) containing complete debug output. You can enable debug by
-using the below commands:
+Please provide a link to GitHub [Gist(s)](gist.github.com/) containing complete debug output. You
+can enable debug by using the below commands:
 ```hcl
 export TF_LOG_PATH=tf.log            
 export TF_LOG=TRACE                  
@@ -36,7 +36,7 @@ files in working directory `tf.log` and `go-vcloud-director.log`. The `tf.log` i
 Terraform debug log (more information about it is in
 https://www.terraform.io/docs/internals/debugging.html) while the `go-vcloud-director.log` is a
 specific log file for `terraform-provider-vcd` containing debug information about performed API
-calls.
+calls. Please attach both of them to your Gist.
 
 ### Panic Output
 If Terraform produced a panic, please provide a link to a GitHub Gist containing the output of the `crash.log`.
