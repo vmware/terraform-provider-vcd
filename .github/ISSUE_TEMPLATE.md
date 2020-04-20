@@ -24,7 +24,7 @@ Please provide a link to GitHub Gist(s) containing complete debug output. You ca
 using the below commands:
 ```hcl
 export TF_LOG_PATH=tf.log            
-export TF_LOG=trace                  
+export TF_LOG=TRACE                  
 export GOVCD_LOG_FILE=go-vcloud-director.log
 export GOVCD_LOG=true     
 ```
