@@ -837,3 +837,8 @@ func (vdc *Vdc) buildNsxvNetworkServiceEndpointURL(optionalSuffix string) (strin
 
 	return hostname, nil
 }
+
+// QueryMediaList retrieves a list of media items for the VDC
+func (vdc *Vdc) QueryMediaList() ([]*types.MediaRecordType, error) {
+	return getExistingMedia(vdc)
+}

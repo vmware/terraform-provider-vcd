@@ -3,6 +3,8 @@ package govcd
 import (
 	"fmt"
 	"regexp"
+
+	"github.com/kr/pretty"
 )
 
 // A conditionDef is the data being carried by the filter engine when performing comparisons
@@ -44,11 +46,11 @@ type metadataRegexpCondition struct {
 func matchName(stored, item interface{}) (bool, string, error) {
 	re, ok := stored.(nameCondition)
 	if !ok {
-		return false, "", fmt.Errorf("stored value is not a Name Regexp")
+		return false, "", fmt.Errorf("stored value is not a Name Regexp (%# v)", pretty.Formatter(stored))
 	}
 	queryItem, ok := item.(QueryItem)
 	if !ok {
-		return false, "", fmt.Errorf("item is not a queryItem searchable by regex")
+		return false, "", fmt.Errorf("item is not a queryItem searchable by regex: %# v", pretty.Formatter(item))
 	}
 	return re.regExpression.MatchString(queryItem.GetName()), fmt.Sprintf("%s =~ %s", re.regExpression.String(), queryItem.GetName()), nil
 }
@@ -64,11 +66,12 @@ func matchName(stored, item interface{}) (bool, string, error) {
 func matchIp(stored, item interface{}) (bool, string, error) {
 	re, ok := stored.(ipCondition)
 	if !ok {
-		return false, "", fmt.Errorf("stored value is not a Condition Regexp")
+		return false, "", fmt.Errorf("stored value is not a Condition Regexp (%# v)", pretty.Formatter(stored))
 	}
 	queryItem, ok := item.(QueryItem)
 	if !ok {
-		return false, "", fmt.Errorf("item is not a queryItem searchable by Ip")
+		//return false, "", fmt.Errorf("item is not a queryItem searchable by Ip")
+		return false, "", fmt.Errorf("item is not a queryItem searchable by Ip: %# v", pretty.Formatter(item))
 	}
 	ip := queryItem.GetIp()
 	if ip == "" {
@@ -88,17 +91,17 @@ func matchIp(stored, item interface{}) (bool, string, error) {
 func matchDate(stored, item interface{}) (bool, string, error) {
 	expr, ok := stored.(dateCondition)
 	if !ok {
-		return false, "", fmt.Errorf("stored value is not a condition date")
+		return false, "", fmt.Errorf("stored value is not a condition date (%# v)", pretty.Formatter(stored))
 	}
 	queryItem, ok := item.(QueryItem)
 	if !ok {
-		return false, "", fmt.Errorf("item is not a queryItem searchable by date")
+		return false, "", fmt.Errorf("item is not a queryItem searchable by date: %# v", pretty.Formatter(item))
 	}
 	if queryItem.GetDate() == "" {
 		return false, "", nil
 	}
 
-	result, err := compareDate(expr.dateExpression, queryItem.GetDate())
+	result, err := CompareDate(expr.dateExpression, queryItem.GetDate())
 	return result, fmt.Sprintf("%s %s", queryItem.GetDate(), expr.dateExpression), err
 }
 
@@ -113,11 +116,11 @@ func matchDate(stored, item interface{}) (bool, string, error) {
 func matchMetadata(stored, item interface{}) (bool, string, error) {
 	re, ok := stored.(metadataRegexpCondition)
 	if !ok {
-		return false, "", fmt.Errorf("stored value is not a Metadata condition")
+		return false, "", fmt.Errorf("stored value is not a Metadata condition (%# v)", pretty.Formatter(stored))
 	}
 	queryItem, ok := item.(QueryItem)
 	if !ok {
-		return false, "", fmt.Errorf("item is not a queryItem searchable by Metadata")
+		return false, "", fmt.Errorf("item is not a queryItem searchable by Metadata: %# v", pretty.Formatter(item))
 	}
 	return re.regExpression.MatchString(queryItem.GetMetadataValue(re.key)), fmt.Sprintf("metadata: %s -> %s", re.key, re.regExpression.String()), nil
 }

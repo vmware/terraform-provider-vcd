@@ -184,6 +184,10 @@ github.com/hashicorp/terraform-svchost/disco
 github.com/hashicorp/yamux
 # github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
 github.com/jmespath/go-jmespath
+# github.com/kr/pretty v0.2.0
+github.com/kr/pretty
+# github.com/kr/text v0.1.0
+github.com/kr/text
 # github.com/mattn/go-colorable v0.1.1
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.5
@@ -222,7 +226,7 @@ github.com/ulikunitz/xz/lzma
 # github.com/vmihailenco/msgpack v4.0.1+incompatible
 github.com/vmihailenco/msgpack
 github.com/vmihailenco/msgpack/codes
-# github.com/vmware/go-vcloud-director/v2 v2.7.0 => github.com/dataclouder/go-vcloud-director/v2 v2.8.0-alpha.3
+# github.com/vmware/go-vcloud-director/v2 v2.7.0 => github.com/dataclouder/go-vcloud-director/v2 v2.8.0-alpha.4.0.20200420124312-be513ee7db7f
 github.com/vmware/go-vcloud-director/v2/govcd
 github.com/vmware/go-vcloud-director/v2/types/v56
 github.com/vmware/go-vcloud-director/v2/util

@@ -122,7 +122,7 @@ func stringToBool(s string) bool {
 	}
 }
 
-// compareDate will get a date from string `got`, and will parse `wanted`
+// CompareDate will get a date from string `got`, and will parse `wanted`
 // for an expression containing an operator (>, <, >=, <=, ==) and a date
 // (many formats supported, but 'YYYY-MM-DD[ hh:mm[:ss]]' preferred)
 // For example:
@@ -133,7 +133,7 @@ func stringToBool(s string) bool {
 // wanted: "< 02-mar-2020"
 // result: false
 // See https://github.com/araddon/dateparse for more info
-func compareDate(wanted, got string) (bool, error) {
+func CompareDate(wanted, got string) (bool, error) {
 
 	reExpression := regexp.MustCompile(`(>=|<=|==|<|=|>)\s*(.+)`)
 
@@ -153,8 +153,8 @@ func compareDate(wanted, got string) (bool, error) {
 		return false, err
 	}
 
-	wantedSeconds := wantedTime.Unix()
-	gotSeconds := gotTime.Unix()
+	wantedSeconds := wantedTime.UnixNano()
+	gotSeconds := gotTime.UnixNano()
 
 	switch operator {
 	case "=", "==":

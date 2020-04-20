@@ -31,11 +31,12 @@ type MetadataFilter struct {
 
 const (
 	// The QT* constants are the names used with Query requests to retrieve the corresponding entities
-	QtVappTemplate      = "vappTemplate"      // vApp template
+	QtVappTemplate      = "vAppTemplate"      // vApp template
 	QtAdminVappTemplate = "adminVAppTemplate" // vApp template as admin
 	QtEdgeGateway       = "edgeGateway"       // edge gateway
 	QtOrgVdcNetwork     = "orgVdcNetwork"     // Org VDC network
-	QtAdminCatalog      = "adminCatalog"      // catalog
+	QtCatalog           = "catalog"           // catalog
+	QtAdminCatalog      = "adminCatalog"      // catalog as admin
 	QtCatalogItem       = "catalogItem"       // catalog item
 	QtAdminCatalogItem  = "adminCatalogItem"  // catalog item as admin
 	QtAdminMedia        = "adminMedia"        // media item as admin
@@ -54,21 +55,26 @@ func queryFieldsOnDemand(queryType string) ([]string, error) {
 			"gatewayStatus", "haStatus"}
 		orgVdcNetworkFields = []string{"name", "defaultGateway", "netmask", "dns1", "dns2", "dnsSuffix", "linkType",
 			"connectedTo", "vdc", "isBusy", "isShared", "vdcName", "isIpScopeInherited"}
-		adminCatalogFields = []string{"name", "isPublished", "isShared", "creationDate", "orgName", "ownerName",
+		catalogFields = []string{"name", "isPublished", "isShared", "creationDate", "orgName", "ownerName",
 			"numberOfMedia", "owner"}
 		mediaFields = []string{"ownerName", "catalogName", "isPublished", "name", "vdc", "vdcName", "org",
 			"creationDate", "isBusy", "storageB", "owner", "catalog", "catalogItem", "status",
 			"storageProfileName", "taskStatusName", "isInCatalog", "task",
 			"isIso", "isVdcEnabled", "taskStatus", "taskDetails"}
 		// entities for which the fields on demand are supported
+		catalogItemFields = []string{"entity", "entityName", "entityType", "catalog", "catalogName", "ownerName",
+			"owner", "isPublished", "vdc", "vdcName", "isVdcEnabled", "creationDate", "isExpired", "status"}
 		fieldsOnDemand = map[string][]string{
 			QtVappTemplate:      vappTemplatefields,
 			QtAdminVappTemplate: vappTemplatefields,
 			QtEdgeGateway:       edgeGatewayFields,
 			QtOrgVdcNetwork:     orgVdcNetworkFields,
-			QtAdminCatalog:      adminCatalogFields,
+			QtCatalog:           catalogFields,
+			QtAdminCatalog:      catalogFields,
 			QtMedia:             mediaFields,
 			QtAdminMedia:        mediaFields,
+			QtCatalogItem:       catalogItemFields,
+			QtAdminCatalogItem:  catalogItemFields,
 		}
 	)
 
@@ -92,6 +98,7 @@ func (client *Client) QueryWithMetadataFields(queryType string, params, notEncod
 		notEncodedParams = make(map[string]string)
 	}
 	notEncodedParams["type"] = queryType
+	notEncodedParams["pageSize"] = "128" // Temporary workaround. TODO: loop until rows fetched == total
 
 	if len(metadataFields) == 0 {
 		return client.QueryWithNotEncodedParams(params, notEncodedParams)
@@ -158,6 +165,7 @@ func (client *Client) QueryByMetadataFilter(params, notEncodedParams map[string]
 		filter = metadataFilterText
 	}
 	notEncodedParams["filter"] = filter
+	notEncodedParams["pageSize"] = "128" // Temporary workaround. TODO: loop until rows fetched == total
 
 	return client.QueryWithNotEncodedParams(params, notEncodedParams)
 }

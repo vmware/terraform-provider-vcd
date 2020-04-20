@@ -2124,7 +2124,8 @@ type QueryResultRecordsType struct {
 	VirtualCenterRecord             []*QueryResultVirtualCenterRecordType             `xml:"VirtualCenterRecord"`             // A record representing a vSphere server
 	PortGroupRecord                 []*PortGroupRecordType                            `xml:"PortgroupRecord"`                 // A record representing a port group
 	OrgVdcNetworkRecord             []*QueryResultOrgVdcNetworkRecordType             `xml:"OrgVdcNetworkRecord"`             // A record representing a org VDC network
-	AdminCatalogRecord              []*AdminCatalogRecord                             `xml:"AdminCatalogRecord"`              // A record representing a catalog
+	CatalogRecord                   []*CatalogRecord                                  `xml:"CatalogRecord"`                   // A record representing a catalog
+	AdminCatalogRecord              []*CatalogRecord                                  `xml:"AdminCatalogRecord"`              // A record representing an admin catalog
 	CatalogItemRecord               []*QueryResultCatalogItemType                     `xml:"CatalogItemRecord"`               // A record representing a catalog item
 	AdminCatalogItemRecord          []*QueryResultCatalogItemType                     `xml:"AdminCatalogItemRecord"`          // A record representing an admin catalog item
 	VappTemplateRecord              []*QueryResultVappTemplateType                    `xml:"VAppTemplateRecord"`              // A record representing a vApp template
@@ -2711,7 +2712,7 @@ type User struct {
 // Issue that description partly matches with what is returned
 // Description: Represents Catalog record
 // Since: 1.5
-type AdminCatalogRecord struct {
+type CatalogRecord struct {
 	HREF                    string    `xml:"href,attr,omitempty"`
 	ID                      string    `xml:"id,attr,omitempty"`
 	Type                    string    `xml:"type,attr,omitempty"`
@@ -2731,3 +2732,5 @@ type AdminCatalogRecord struct {
 	Link                    *Link     `xml:"Link,omitempty"`
 	Metadata                *Metadata `xml:"Metadata,omitempty"`
 }
+
+type AdminCatalogRecord CatalogRecord

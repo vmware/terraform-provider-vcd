@@ -23,6 +23,7 @@ type (
 	QueryCatalogItem   types.QueryResultCatalogItemType
 	QueryEdgeGateway   types.QueryResultEdgeGatewayRecordType
 	QueryAdminCatalog  types.AdminCatalogRecord
+	QueryCatalog       types.CatalogRecord
 	QueryOrgVdcNetwork types.QueryResultOrgVdcNetworkRecordType
 	QueryMedia         types.MediaRecordType
 )
@@ -79,6 +80,15 @@ func (catItem QueryCatalogItem) GetMetadataValue(key string) string {
 // --------------------------------------------------------------
 // catalog
 // --------------------------------------------------------------
+func (catalog QueryCatalog) GetHref() string { return catalog.HREF }
+func (catalog QueryCatalog) GetName() string { return catalog.Name }
+func (catalog QueryCatalog) GetIp() string   { return "" }
+func (catalog QueryCatalog) GetType() string { return "catalog" }
+func (catalog QueryCatalog) GetDate() string { return catalog.CreationDate }
+func (catalog QueryCatalog) GetMetadataValue(key string) string {
+	return getMetadataValue(catalog.Metadata, key)
+}
+
 func (catalog QueryAdminCatalog) GetHref() string { return catalog.HREF }
 func (catalog QueryAdminCatalog) GetName() string { return catalog.Name }
 func (catalog QueryAdminCatalog) GetIp() string   { return "" }
@@ -167,6 +177,10 @@ func resultToQueryItems(queryType string, results Results) ([]QueryItem, error) 
 	case QtOrgVdcNetwork:
 		for i, item := range results.Results.OrgVdcNetworkRecord {
 			items[i] = QueryOrgVdcNetwork(*item)
+		}
+	case QtCatalog:
+		for i, item := range results.Results.CatalogRecord {
+			items[i] = QueryCatalog(*item)
 		}
 	case QtAdminCatalog:
 		for i, item := range results.Results.AdminCatalogRecord {

@@ -2,9 +2,12 @@ package govcd
 
 import (
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/kr/pretty"
 
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
@@ -34,11 +37,11 @@ func searchByFilter(queryByMetadata queryByMetadataFunc, queryWithMetadataFields
 
 	// By setting the latest date to the early possible date, we make sure that it will be swapped
 	// at the first comparison
-	var latestDate = "0001-01-01 00:00:00"
+	var latestDate = "1970-01-01 00:00:00"
 
-	// earliest date is set to a date in the future (100 years from now), so that any date found will be evaluated as
+	// earliest date is set to a date in the future (10 years from now), so that any date found will be evaluated as
 	// earlier than this one
-	var earliestDate = time.Now().AddDate(100, 0, 0).String()
+	var earliestDate = time.Now().AddDate(10, 0, 0).String()
 
 	// List of metadata fields that will be added to the query
 	var metadataFields []string
@@ -50,6 +53,12 @@ func searchByFilter(queryByMetadata queryByMetadataFunc, queryWithMetadataFields
 	searchLatest := false
 	// Will search the earliest item if requested
 	searchEarliest := false
+
+	// A null filter is converted into an empty object.
+	// Using an empty filter is equivalent to fetching all items without filtering
+	if criteria == nil {
+		criteria = &FilterDef{}
+	}
 
 	// A text containing the human-readable form of the criteria being used, and the detail on how they matched the
 	// data being fetched
@@ -157,6 +166,9 @@ func searchByFilter(queryByMetadata queryByMetadataFunc, queryWithMetadataFields
 	if err != nil {
 		return nil, explanation, fmt.Errorf("[SearchByFilter] error retrieving query item list: %s", err)
 	}
+	if os.Getenv("GOVCD_FAIL") == "1" {
+		return nil, "", fmt.Errorf("[SearchByFilter] list of retrieved items %# v", pretty.Formatter(itemResult))
+	}
 	var itemList []QueryItem
 
 	// Converting the query result into a list of QueryItems
@@ -164,12 +176,19 @@ func searchByFilter(queryByMetadata queryByMetadataFunc, queryWithMetadataFields
 	if err != nil {
 		return nil, explanation, fmt.Errorf("[SearchByFilter] error converting QueryItem  item list: %s", err)
 	}
+	if os.Getenv("GOVCD_FAIL") == "2" {
+		return nil, "", fmt.Errorf("[SearchByFilter] list of converted items %# v", pretty.Formatter(itemList))
+	}
 
 	// Process the list using the conditions gathered above
 	for _, item := range itemList {
 		numOfMatches := 0
 
 		for _, condition := range conditions {
+
+			if os.Getenv("GOVCD_FAIL") == "3" {
+				return nil, "", fmt.Errorf("[SearchByFilter]\n++condition %# v\n++item %# v", pretty.Formatter(condition), pretty.Formatter(item))
+			}
 			result, definition, err := conditionMatches(condition.conditionType, condition.stored, item)
 			if err != nil {
 				return nil, explanation, fmt.Errorf("[SearchByFilter] error applying condition %v: %s", condition, err)
@@ -220,7 +239,7 @@ func searchByFilter(queryByMetadata queryByMetadataFunc, queryWithMetadataFields
 				continue
 			}
 			util.Logger.Printf("[SearchByFilter] search latest: comparing %s to %s", latestDate, itemDate)
-			greater, err := compareDate(fmt.Sprintf("> %s", latestDate), itemDate)
+			greater, err := CompareDate(fmt.Sprintf("> %s", latestDate), itemDate)
 			if err != nil {
 				return nil, explanation, fmt.Errorf("[SearchByFilter] error comparing dates %s > %s : %s",
 					candidate.GetDate(), latestDate, err)
@@ -246,7 +265,7 @@ func searchByFilter(queryByMetadata queryByMetadataFunc, queryWithMetadataFields
 				continue
 			}
 			util.Logger.Printf("[SearchByFilter] search earliest: comparing %s to %s", earliestDate, candidate.GetDate())
-			greater, err := compareDate(fmt.Sprintf("< %s", earliestDate), candidate.GetDate())
+			greater, err := CompareDate(fmt.Sprintf("< %s", earliestDate), candidate.GetDate())
 			if err != nil {
 				return nil, explanation, fmt.Errorf("[SearchByFilter] error comparing dates %s > %s: %s",
 					candidate.GetDate(), earliestDate, err)

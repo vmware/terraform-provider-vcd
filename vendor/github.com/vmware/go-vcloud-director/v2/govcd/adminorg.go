@@ -319,7 +319,7 @@ func isCatalogFromSameOrg(adminOrg *AdminOrg, catalogName string) (bool, error) 
 }
 
 // FindAdminCatalogRecords uses catalog name to return AdminCatalogRecord information.
-func (adminOrg *AdminOrg) FindAdminCatalogRecords(name string) ([]*types.AdminCatalogRecord, error) {
+func (adminOrg *AdminOrg) FindAdminCatalogRecords(name string) ([]*types.CatalogRecord, error) {
 	util.Logger.Printf("[DEBUG] FindAdminCatalogRecords with name: %s and org name: %s", name, adminOrg.AdminOrg.Name)
 	results, err := adminOrg.client.QueryWithNotEncodedParams(nil, map[string]string{
 		"type":          "adminCatalog",
@@ -668,4 +668,31 @@ func (adminOrg *AdminOrg) GetVdcByName(vdcname string) (Vdc, error) {
 		}
 	}
 	return Vdc{}, nil
+}
+
+// QueryCatalogList returns a list of catalogs for this organization
+func (adminOrg *AdminOrg) QueryCatalogList() ([]*types.CatalogRecord, error) {
+	util.Logger.Printf("[DEBUG] QueryCatalogList with org name %s", adminOrg.AdminOrg.Name)
+	queryType := QtCatalog
+	if adminOrg.client.IsSysAdmin {
+		queryType = QtAdminCatalog
+	}
+	results, err := adminOrg.client.QueryWithNotEncodedParams(nil, map[string]string{
+		"type":          queryType,
+		"filter":        fmt.Sprintf("orgName==%s", url.QueryEscape(adminOrg.AdminOrg.Name)),
+		"filterEncoded": "true",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var catalogs []*types.CatalogRecord
+
+	if adminOrg.client.IsSysAdmin {
+		catalogs = results.Results.AdminCatalogRecord
+	} else {
+		catalogs = results.Results.CatalogRecord
+	}
+	util.Logger.Printf("[DEBUG] QueryCatalogList returned with : %#v and error: %s", catalogs, err)
+	return catalogs, nil
 }
