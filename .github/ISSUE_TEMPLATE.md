@@ -22,7 +22,7 @@ If this issue appears to affect multiple resources, it may be an issue with Terr
 ### Debug Output
 Please provide a link to GitHub [Gist(s)](gist.github.com/) containing complete debug output. You
 can enable debug by using the below commands:
-```hcl
+```shell
 export TF_LOG_PATH=tf.log            
 export TF_LOG=TRACE                  
 export GOVCD_LOG_FILE=go-vcloud-director.log
