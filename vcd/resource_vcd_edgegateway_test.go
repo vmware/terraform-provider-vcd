@@ -276,7 +276,7 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "configuration", "compact"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "advanced", "true"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "distributed_routing", "false"),
-					resource.TestCheckNoResourceAttr("vcd_edgegateway.egw", "fips_mode_enabled"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "fips_mode_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "use_default_route_for_dns_relay", "true"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "default_gateway_network", newExternalNetworkVcd),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "default_external_network_ip", "192.168.30.51"),
@@ -312,7 +312,7 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "external_network_ips.#", "data.vcd_edgegateway.egw", "external_network_ips.#"),
 					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "external_network_ips.0", "data.vcd_edgegateway.egw", "external_network_ips.0"),
 					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "external_network_ips.1", "data.vcd_edgegateway.egw", "external_network_ips.1"),
-					resource.TestCheckNoResourceAttr("data.vcd_edgegateway.egw", "fips_mode_enabled"),
+					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "fips_mode_enabled", "data.vcd_edgegateway.egw", "fips_mode_enabled"),
 					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "use_default_route_for_dns_relay", "data.vcd_edgegateway.egw", "use_default_route_for_dns_relay"),
 					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "advanced", "data.vcd_edgegateway.egw", "advanced"),
 					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "distributed_routing", "data.vcd_edgegateway.egw", "distributed_routing"),
@@ -341,7 +341,7 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "configuration", "compact"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "advanced", "true"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "distributed_routing", "false"),
-					resource.TestCheckNoResourceAttr("vcd_edgegateway.egw", "fips_mode_enabled"),
+					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "fips_mode_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "ha_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "description", ""),
 
@@ -729,9 +729,8 @@ resource "vcd_edgegateway" "egw" {
 	configuration           = "compact"
 	advanced                = true
   
-	# FIPS mode is not set because otherwise provider would try to send this field
-	# and vCD 9.0 complains about it, because it was introduced in vCD 9.1 only
-	# fips_mode_enabled               = false
+    # can be only true when system setting Allow FIPS Mode is enabled
+	fips_mode_enabled               = false
 	use_default_route_for_dns_relay = true
 	distributed_routing             = false
   
