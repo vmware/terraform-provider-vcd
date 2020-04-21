@@ -1,4 +1,9 @@
 ## 2.9.0 (Unreleased)
+
+NOTES:
+
+* Dropped support for vCD 9.1 [GH-492]
+
 ## 2.8.0 (April 16, 2020)
 
 IMPROVEMENTS:
