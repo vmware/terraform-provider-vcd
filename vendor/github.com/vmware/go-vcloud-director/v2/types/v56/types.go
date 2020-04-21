@@ -405,19 +405,20 @@ type AdminVdc struct {
 	Xmlns string `xml:"xmlns,attr"`
 	Vdc
 
-	VCpuInMhz2               *int64         `xml:"VCpuInMhz2,omitempty"`
-	ResourceGuaranteedMemory *float64       `xml:"ResourceGuaranteedMemory,omitempty"`
-	ResourceGuaranteedCpu    *float64       `xml:"ResourceGuaranteedCpu,omitempty"`
-	VCpuInMhz                *int64         `xml:"VCpuInMhz,omitempty"`
-	IsThinProvision          *bool          `xml:"IsThinProvision,omitempty"`
-	NetworkPoolReference     *Reference     `xml:"NetworkPoolReference,omitempty"`
-	ProviderVdcReference     *Reference     `xml:"ProviderVdcReference"`
-	ResourcePoolRefs         *VimObjectRefs `xml:"vmext:ResourcePoolRefs,omitempty"`
-	UsesFastProvisioning     *bool          `xml:"UsesFastProvisioning,omitempty"`
-	OverCommitAllowed        bool           `xml:"OverCommitAllowed,omitempty"`
-	VmDiscoveryEnabled       bool           `xml:"VmDiscoveryEnabled,omitempty"`
-	IsElastic                *bool          `xml:"IsElastic,omitempty"`             // Supported from 32.0 for the Flex model
-	IncludeMemoryOverhead    *bool          `xml:"IncludeMemoryOverhead,omitempty"` // Supported from 32.0 for the Flex model
+	VCpuInMhz2                    *int64         `xml:"VCpuInMhz2,omitempty"`
+	ResourceGuaranteedMemory      *float64       `xml:"ResourceGuaranteedMemory,omitempty"`
+	ResourceGuaranteedCpu         *float64       `xml:"ResourceGuaranteedCpu,omitempty"`
+	VCpuInMhz                     *int64         `xml:"VCpuInMhz,omitempty"`
+	IsThinProvision               *bool          `xml:"IsThinProvision,omitempty"`
+	NetworkPoolReference          *Reference     `xml:"NetworkPoolReference,omitempty"`
+	ProviderVdcReference          *Reference     `xml:"ProviderVdcReference"`
+	ResourcePoolRefs              *VimObjectRefs `xml:"vmext:ResourcePoolRefs,omitempty"`
+	UsesFastProvisioning          *bool          `xml:"UsesFastProvisioning,omitempty"`
+	OverCommitAllowed             bool           `xml:"OverCommitAllowed,omitempty"`
+	VmDiscoveryEnabled            bool           `xml:"VmDiscoveryEnabled,omitempty"`
+	IsElastic                     *bool          `xml:"IsElastic,omitempty"`                     // Supported from 32.0 for the Flex model
+	IncludeMemoryOverhead         *bool          `xml:"IncludeMemoryOverhead,omitempty"`         // Supported from 32.0 for the Flex model
+	UniversalNetworkPoolReference *Reference     `xml:"UniversalNetworkPoolReference,omitempty"` // Reference to a universal network pool
 }
 
 // VdcStorageProfile represents the parameters to create a storage profile in an organization vDC.
@@ -1375,6 +1376,7 @@ type VM struct {
 	VMCapabilities *VMCapabilities `xml:"VmCapabilities,omitempty"` // Allows you to specify certain capabilities of this virtual machine.
 	StorageProfile *Reference      `xml:"StorageProfile,omitempty"` // A reference to a storage profile to be used for this object. The specified storage profile must exist in the organization vDC that contains the object. If not specified, the default storage profile for the vDC is used.
 	ProductSection *ProductSection `xml:"ProductSection,omitempty"`
+	Media          *Reference      `xml:"Media,omitempty"` // Reference to the media object to insert in a new VM.
 }
 
 // VMDiskChange represents a virtual machine only with Disk setting update part

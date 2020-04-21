@@ -89,7 +89,7 @@ func NewVCDClient(vcdEndpoint url.URL, insecure bool, options ...VCDClientOption
 	// Setting defaults
 	vcdClient := &VCDClient{
 		Client: Client{
-			APIVersion: "29.0", // supported by vCD 9.0, 9.1, 9.5, 9.7, 10.0
+			APIVersion: "31.0", // supported by 9.5, 9.7, 10.0, 10.1
 			VCDHREF:    vcdEndpoint,
 			Http: http.Client{
 				Transport: &http.Transport{
