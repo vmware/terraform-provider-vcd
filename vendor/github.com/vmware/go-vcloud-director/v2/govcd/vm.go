@@ -1355,3 +1355,33 @@ func (vm *VM) UpdateInternalDisksAsync(disksSettingToUpdate *types.VmSpecSection
 		}, vm.client.GetSpecificApiVersionOnCondition(">= 32.0", "32.0"))
 
 }
+
+func (vapp *VApp) AddEmptyVm(reComposeVAppParams *types.RecomposeVAppParamsForEmptyVm) (*VM, error) {
+	// TODO add validation
+	task, err := vapp.AddEmptyVmAsync(reComposeVAppParams)
+	if err != nil {
+		return nil, err
+	}
+
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return nil, err
+	}
+
+	newVm, err := vapp.GetVMByName(reComposeVAppParams.CreateItem.Name, true)
+	if err != nil {
+		return nil, err
+	}
+
+	return newVm, nil
+
+}
+
+func (vapp *VApp) AddEmptyVmAsync(reComposeVAppParams *types.RecomposeVAppParamsForEmptyVm) (Task, error) {
+	apiEndpoint, _ := url.ParseRequestURI(vapp.VApp.HREF)
+	apiEndpoint.Path += "/action/recomposeVApp"
+
+	// Return the task
+	return vapp.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPost,
+		types.MimeRecomposeVappParams, "error instantiating a new VM: %s", reComposeVAppParams)
+}

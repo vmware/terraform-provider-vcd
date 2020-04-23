@@ -564,3 +564,8 @@ func combinedTaskErrorMessage(task *types.Task, err error) string {
 func takeBoolPointer(value bool) *bool {
 	return &value
 }
+
+// takeIntAddress is a helper which can gives address of `int`
+func takeIntAddress(x int) *int {
+	return &x
+}

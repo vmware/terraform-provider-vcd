@@ -7,3 +7,5 @@ require (
 	github.com/hashicorp/terraform-plugin-sdk v1.8.0
 	github.com/vmware/go-vcloud-director/v2 v2.8.0-alpha.1
 )
+
+replace github.com/vmware/go-vcloud-director/v2 => github.com/vbauzysvmware/go-vcloud-director/v2 v2.2.0-alpha.3.0.20200423113554-903e506eb116
