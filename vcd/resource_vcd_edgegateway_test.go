@@ -4,7 +4,6 @@ package vcd
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 	"testing"
 
@@ -21,18 +20,6 @@ var (
 	ipV4Regex = regexp.MustCompile(`^(?:\d+\.){3}\d+$`)
 )
 
-// Since we can't set the "advanced" property to false by default,
-// as it would fail on 9.7+, we can run the test with VCD_ADVANCED_FALSE=1
-// and see what would happen on different vCD versions. It will succeed on
-// 9.1 and 9.5, and fail quickly on 9.7+
-// Note: there is another method to handle this issue, and it is by
-// checking the vCD version before running the test. However, since the provider is
-// not initialized until the test starts, this approach would require an extra
-// vCD connection.
-func getAdvancedProperty() bool {
-	return os.Getenv("VCD_ADVANCED_FALSE") == ""
-}
-
 func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 	var edgeGatewayVcdName string = "test_edge_gateway_basic"
 
@@ -43,7 +30,7 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 		"EdgeGateway":     edgeGatewayNameBasic,
 		"EdgeGatewayVcd":  edgeGatewayVcdName,
 		"ExternalNetwork": testConfig.Networking.ExternalNetwork,
-		"Advanced":        getAdvancedProperty(),
+		"Advanced":        "true",
 		"Tags":            "gateway",
 	}
 	configText := templateFill(testAccEdgeGatewayBasic, params)
@@ -99,7 +86,7 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 		"NewExternalNetworkVcd": newExternalNetworkVcd,
 		"Type":                  testConfig.Networking.ExternalNetworkPortGroupType,
 		"PortGroup":             testConfig.Networking.ExternalNetworkPortGroup,
-		"Advanced":              getAdvancedProperty(),
+		"Advanced":              "true",
 		"Vcenter":               testConfig.Networking.Vcenter,
 	}
 	configText := templateFill(testAccEdgeGatewayComplex, params)
@@ -244,7 +231,7 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 		"NewExternalNetworkVcd": newExternalNetworkVcd,
 		"Type":                  testConfig.Networking.ExternalNetworkPortGroupType,
 		"PortGroup":             testConfig.Networking.ExternalNetworkPortGroup,
-		"Advanced":              getAdvancedProperty(),
+		"Advanced":              "true",
 		"Vcenter":               testConfig.Networking.Vcenter,
 	}
 	configText := templateFill(testAccEdgeGatewayNetworks, params)
@@ -436,7 +423,7 @@ func TestAccVcdEdgeGatewayRateLimits(t *testing.T) {
 		"Tags":                  "gateway",
 		"NewExternalNetwork":    newExternalNetwork,
 		"NewExternalNetworkVcd": newExternalNetworkVcd,
-		"Advanced":              getAdvancedProperty(),
+		"Advanced":              "true",
 		"Vcenter":               testConfig.Networking.Vcenter,
 		"EnableRateLimit":       "true",
 		"IncomingRateLimit":     "88.888",
@@ -556,7 +543,7 @@ func TestAccVcdEdgeGatewayParallelCreation(t *testing.T) {
 		"NewExternalNetworkVcd": newExternalNetworkVcd,
 		"Type":                  testConfig.Networking.ExternalNetworkPortGroupType,
 		"PortGroup":             testConfig.Networking.ExternalNetworkPortGroup,
-		"Advanced":              getAdvancedProperty(),
+		"Advanced":              "true",
 		"Vcenter":               testConfig.Networking.Vcenter,
 	}
 	configText := templateFill(testAccEdgeGatewayParallel, params)

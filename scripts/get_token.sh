@@ -1,6 +1,6 @@
 #!/bin/bash
 # This script will connect to the vCD using username and password,
-# and show the header that cointains an authorization token.
+# and show the header that contains an authorization token.
 #
 user=$1
 password=$2
@@ -15,7 +15,7 @@ fi
 
 auth=$(echo -n "$user@$org:$password" |base64)
 
-curl -I -k --header "Accept: application/*;version=29.0" \
+curl -I -k --header "Accept: application/*;version=31.0" \
     --header "Authorization: Basic $auth" \
     --request POST https://$IP/api/sessions
 

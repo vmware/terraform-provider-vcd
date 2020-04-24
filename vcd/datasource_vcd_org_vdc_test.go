@@ -83,8 +83,6 @@ func validateResourceAndDataSource(t *testing.T, configText string, datasourceVd
 					resource.TestCheckResourceAttrPair(
 						"data."+datasourceVdc, "compute_capacity.0.cpu.0.limit", "vcd_org_vdc."+vdcName, "compute_capacity.0.cpu.0.limit"),
 					resource.TestMatchResourceAttr(
-						"data."+datasourceVdc, "compute_capacity.0.cpu.0.overhead", regexp.MustCompile(`^\d+$`)),
-					resource.TestMatchResourceAttr(
 						"data."+datasourceVdc, "compute_capacity.0.cpu.0.reserved", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
 						"data."+datasourceVdc, "compute_capacity.0.cpu.0.used", regexp.MustCompile(`^\d+$`)),
@@ -92,8 +90,6 @@ func validateResourceAndDataSource(t *testing.T, configText string, datasourceVd
 						"data."+datasourceVdc, "compute_capacity.0.memory.0.allocated", "vcd_org_vdc."+vdcName, "compute_capacity.0.memory.0.allocated"),
 					resource.TestCheckResourceAttrPair(
 						"data."+datasourceVdc, "compute_capacity.0.memory.0.limit", "vcd_org_vdc."+vdcName, "compute_capacity.0.memory.0.limit"),
-					resource.TestMatchResourceAttr(
-						"data."+datasourceVdc, "compute_capacity.0.memory.0.overhead", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
 						"data."+datasourceVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
@@ -123,12 +119,10 @@ func validateDataSource(t *testing.T, configText string, datasourceVdc string) {
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "enable_vm_discovery", regexp.MustCompile(`^\S+$`)),
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.cpu.0.allocated", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.cpu.0.limit", regexp.MustCompile(`^\d+$`)),
-					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.cpu.0.overhead", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.cpu.0.allocated", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.cpu.0.reserved", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.allocated", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.limit", regexp.MustCompile(`^\d+$`)),
-					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.overhead", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.allocated", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d+$`))),
 			},

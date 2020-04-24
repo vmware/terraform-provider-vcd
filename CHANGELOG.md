@@ -1,5 +1,9 @@
 ## 2.9.0 (Unreleased)
 
+IMPROVEMENTS:
+
+* Removed code which handled specific cases for API 29.0 and 30.0. Supported VCD versions now: 9.5 - 10.1 [GH-499]
+
 NOTES:
 
 * Dropped support for vCD 9.1 [GH-492]
