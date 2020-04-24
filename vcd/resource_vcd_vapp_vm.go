@@ -68,8 +68,6 @@ var vappVmSchema = map[string]*schema.Schema{
 		Optional:    true,
 		Computed:    true,
 		Description: "The VM description",
-		// Note: description is read only, as we lack the needed fields to set it at creation.
-		// Currently, this field has the description of the OVA used to create the VM
 	},
 	"memory": &schema.Schema{
 		Type:         schema.TypeInt,
@@ -1492,24 +1490,6 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("[VM delete] error getting VM %s : %s", identifier, err)
 	}
 
-	status, err := vm.GetStatus()
-	if err != nil {
-		return fmt.Errorf("error getting VM status: %s", err)
-	}
-
-	log.Printf("[TRACE] VM Status: %s", status)
-	if status != "POWERED_OFF" {
-		log.Printf("[TRACE] Powering off VM: %s", vm.VM.Name)
-		task, err := vm.PowerOff()
-		if err != nil {
-			return fmt.Errorf("error Powering off VM: %s", err)
-		}
-		err = task.WaitTaskCompletion()
-		if err != nil {
-			return fmt.Errorf("error Powering off VM: %s", err)
-		}
-	}
-
 	deployed, err := vm.IsDeployed()
 	if err != nil {
 		return fmt.Errorf("error getting VM deploy status: %s", err)
@@ -2134,7 +2114,7 @@ func setGuestCustomizationData(d *schema.ResourceData, vm *govcd.VM) error {
 }
 
 func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vdc *govcd.Vdc, vapp *govcd.VApp) (*govcd.VM, error) {
-	log.Printf("[TRACE] Creating VM: %s", d.Get("name").(string))
+	log.Printf("[TRACE] Creating empty VM: %s", d.Get("name").(string))
 
 	var ok bool
 	var memory interface{}

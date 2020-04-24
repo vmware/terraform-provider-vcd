@@ -195,6 +195,7 @@ This example shows how to create empty VM.
 resource "vcd_vapp_vm" "emptyVM" {
   vapp_name     = vcd_vapp.web.name
   name          = "VmWithoutTemplate"
+  computer_name = "emptyVM"
   memory        = 2048
   cpus          = 2
   cpu_cores     = 1
