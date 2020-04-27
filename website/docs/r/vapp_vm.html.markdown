@@ -216,8 +216,8 @@ The following arguments are supported:
 * `vapp_name` - (Required) The vApp this VM belongs to.
 * `name` - (Required) A name for the VM, unique within the vApp 
 * `computer_name` - (Optional; *v2.5+*) Computer name to assign to this virtual machine. 
-* `catalog_name` - (Optional; *v2.8+*) The catalog name in which to find the given vApp Template
-* `template_name` - (Optional; *v2.8+*) The name of the vApp Template to use
+* `catalog_name` - (Optional; *v2.9+*) The catalog name in which to find the given vApp Template
+* `template_name` - (Optional; *v2.9+*) The name of the vApp Template to use
 * `memory` - (Optional) The amount of RAM (in MB) to allocate to the VM
 * `cpus` - (Optional) The number of virtual CPUs to allocate to the VM. Socket count is a result of: virtual logical processors/cores per socket. The default is 1
 * `cpu_cores` - (Optional; *v2.1+*) The number of cores per socket. The default is 1
@@ -243,7 +243,7 @@ translation or paravirtualization. Useful for hypervisor nesting provided underl
 example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_name`.
 * `customization` - (Optional; *v2.5+*) A block to define for guest customization options. See [Customization](#customization-block)
 * `guest_properties` - (Optional; *v2.5+*) Key value map of guest properties
-* `description`  - (Optional; *v2.8+*) The VM description. Note: for VM from Template `description` is read only. Currently, this field has
+* `description`  - (Optional; *v2.9+*) The VM description. Note: for VM from Template `description` is read only. Currently, this field has
   the description of the OVA used to create the VM.
 * `override_template_disk` - (Optional; *v2.7+*) Allows to update internal disk in template before first VM boot. Disk is matched by `bus_type`, `bus_number` and `unit_number`. See [Override template Disk](#override-template-disk) below for details.
 * `network_dhcp_wait_seconds` - (Optional; *v2.7+*) Optional number of seconds to try and wait for DHCP IP (only valid
@@ -255,9 +255,9 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
   relayed). It works by querying DHCP leases on Edge Gateway. In general it is quicker than waiting
   until Guest Tools report IP addresses, but is more constrained. However this is the only option if Guest
   Tools are not present on the VM.
-* `os_type` - (Optional; *v2.8+*) Operating System type. Possible values can be found in [Os Types](#os-types). Required when creating empty VM.
-* `hardware_version` - (Optional; *v2.8+*) Virtual Hardware Version (e.g.`vmx-14`, `vmx-13`, `vmx-12`, etc.). Required when creating empty VM.
-* `boot_image` - (Optional; *v2.8+*) Media name to mount as boot image. On update if value changed to empty it will eject mounted media. 
+* `os_type` - (Optional; *v2.9+*) Operating System type. Possible values can be found in [Os Types](#os-types). Required when creating empty VM.
+* `hardware_version` - (Optional; *v2.9+*) Virtual Hardware Version (e.g.`vmx-14`, `vmx-13`, `vmx-12`, etc.). Required when creating empty VM.
+* `boot_image` - (Optional; *v2.9+*) Media name to mount as boot image which can be found in any accessible catalog. On update if value changed to empty it will eject mounted media. 
 
 
 <a id="disk"></a>
