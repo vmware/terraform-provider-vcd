@@ -257,7 +257,7 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
   Tools are not present on the VM.
 * `os_type` - (Optional; *v2.9+*) Operating System type. Possible values can be found in [Os Types](#os-types). Required when creating empty VM.
 * `hardware_version` - (Optional; *v2.9+*) Virtual Hardware Version (e.g.`vmx-14`, `vmx-13`, `vmx-12`, etc.). Required when creating empty VM.
-* `boot_image` - (Optional; *v2.9+*) Media name to mount as boot image which can be found in any accessible catalog. On update if value changed to empty it will eject mounted media. 
+* `boot_image` - (Optional; *v2.9+*) Media name to mount as boot image which can be found in any accessible catalog. Image is mounted only during VM creation. On update if value is changed to empty it will eject the mounted media. 
 
 
 <a id="disk"></a>
