@@ -2216,11 +2216,8 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 
 	newVm, err := vapp.AddEmptyVm(recomposeVAppParamsForEmptyVm)
 	if err != nil {
-		return nil, err
-	}
-	if err != nil {
 		d.SetId("")
-		return nil, fmt.Errorf("[VM creation] error getting VM %s : %s", vmName, err)
+		return nil, fmt.Errorf("[VM creation] error creating VM %s : %s", vmName, err)
 	}
 
 	d.SetId(newVm.VM.ID)
