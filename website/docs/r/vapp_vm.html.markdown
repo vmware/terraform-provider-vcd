@@ -216,7 +216,7 @@ The following arguments are supported:
 * `vapp_name` - (Required) The vApp this VM belongs to.
 * `name` - (Required) A name for the VM, unique within the vApp 
 * `computer_name` - (Optional; *v2.5+*) Computer name to assign to this virtual machine. 
-* `catalog_name` - (Optional; *v2.9+*) The catalog name in which to find the given vApp Template
+* `catalog_name` - (Optional; *v2.9+*) The catalog name in which to find the given vApp Template or media for `boot_image`.
 * `template_name` - (Optional; *v2.9+*) The name of the vApp Template to use
 * `memory` - (Optional) The amount of RAM (in MB) to allocate to the VM
 * `cpus` - (Optional) The number of virtual CPUs to allocate to the VM. Socket count is a result of: virtual logical processors/cores per socket. The default is 1

@@ -60,8 +60,7 @@ var vappVmSchema = map[string]*schema.Schema{
 	"catalog_name": &schema.Schema{
 		Type:        schema.TypeString,
 		Optional:    true,
-		ForceNew:    true,
-		Description: "The catalog name in which to find the given vApp Template",
+		Description: "The catalog name in which to find the given vApp Template or media for boot_image",
 	},
 	"description": &schema.Schema{
 		Type:        schema.TypeString,
@@ -2147,14 +2146,20 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 
 	var bootImage *types.Media
 	if bootImageName, ok := d.GetOk("boot_image"); ok {
-		result, err := vdc.QueryAllMedia(bootImageName.(string))
-		if err != nil || len(result) == 0 {
+		var catalogName interface{}
+		if catalogName, ok = d.GetOk("catalog_name"); !ok {
+			return nil, fmt.Errorf("`catalogName` is required when creating empty VM with boot_image")
+		}
+		catalog, err := org.GetCatalogByName(catalogName.(string), false)
+		if err != nil {
+			return nil, fmt.Errorf("error finding catalog %s: %s", catalogName, err)
+		}
+		result, err := catalog.GetMediaByName(bootImageName.(string), false)
+		if err != nil {
 			return nil, fmt.Errorf("[VM creation] error getting boot image %s : %s", bootImageName, err)
 		}
-		if len(result) > 1 {
-			return nil, fmt.Errorf("[VM creation] error found more than one boot image %s", bootImageName)
-		}
-		bootImage = &types.Media{HREF: result[0].MediaRecord.HREF, Name: result[0].MediaRecord.Name, ID: result[0].MediaRecord.ID}
+
+		bootImage = &types.Media{HREF: result.Media.HREF, Name: result.Media.Name, ID: result.Media.ID}
 	} else {
 		bootImage = nil
 	}

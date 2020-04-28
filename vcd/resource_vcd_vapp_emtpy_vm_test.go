@@ -309,6 +309,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   
   os_type                        = "sles10_64Guest"
   hardware_version               = "vmx-11"
+  catalog_name                   = "{{.Catalog}}"
   boot_image                     = "{{.Media}}"
   expose_hardware_virtualization = true
   computer_name                  = "compName"
@@ -409,6 +410,8 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 
   os_type                        = "rhel4Guest"
   hardware_version               = "vmx-13"
+  catalog_name                   = ""
+  boot_image                     = ""
   expose_hardware_virtualization = false
   computer_name                  = "compNameUp"
 
