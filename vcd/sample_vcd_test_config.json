@@ -89,7 +89,9 @@
     "mediaPath": "../test-resources/test.iso",
     "//": "Size in megabytes",
     "uploadPieceSize": 5,
-    "uploadProgress": true
+    "uploadProgress": true,
+    "//": "Already uploaded media name",
+    "mediaName" : "linuxOS"
   },
   "testEnvBuild": {
     "//": "This section is optional for running tests. It's only needed to build the test environment in a new vCD",

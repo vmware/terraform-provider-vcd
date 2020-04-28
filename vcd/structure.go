@@ -151,3 +151,8 @@ func convertToTypeSet(param []string) []interface{} {
 func takeBoolPointer(value bool) *bool {
 	return &value
 }
+
+// takeIntPointer accepts an int and returns a pointer to this value.
+func takeIntPointer(x int) *int {
+	return &x
+}
