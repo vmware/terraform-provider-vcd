@@ -202,6 +202,7 @@ resource "vcd_vapp_vm" "emptyVM" {
  
   os_type = "sles10_64Guest"
   hardware_version = "vmx-14"
+  catalog_name  = "my-catalog"
   boot_image = "myMedia"
 }
 

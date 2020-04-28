@@ -2150,7 +2150,7 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 	if bootImageName, ok := d.GetOk("boot_image"); ok {
 		var catalogName interface{}
 		if catalogName, ok = d.GetOk("catalog_name"); !ok {
-			return nil, fmt.Errorf("`catalogName` is required when creating empty VM with boot_image")
+			return nil, fmt.Errorf("`catalog_name` is required when creating empty VM with boot_image")
 		}
 		catalog, err := org.GetCatalogByName(catalogName.(string), false)
 		if err != nil {
