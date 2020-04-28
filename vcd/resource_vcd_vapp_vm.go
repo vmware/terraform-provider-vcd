@@ -1021,15 +1021,17 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		bootImage := d.Get("boot_image")
 		if d.HasChange("boot_image") && bootImage.(string) == "" {
 			previousBootImageValue, _ := d.GetChange("boot_image")
-			result, err := vdc.QueryAllMedia(previousBootImageValue.(string))
-			if err != nil || len(result) == 0 {
-				return fmt.Errorf("[VM update] error quering boot image %s : %s", previousBootImageValue, err)
+			previousCatalogName, _ := d.GetChange("catalog_name")
+			catalog, err := org.GetCatalogByName(previousCatalogName.(string), false)
+			if err != nil {
+				return fmt.Errorf("[VM Update] error finding catalog %s: %s", previousCatalogName, err)
 			}
-			if len(result) > 1 {
-				return fmt.Errorf("[VM update] error found more than one boot image %s", previousBootImageValue)
+			result, err := catalog.GetMediaByName(previousBootImageValue.(string), false)
+			if err != nil {
+				return fmt.Errorf("[VM Update] error getting boot image %s : %s", previousBootImageValue, err)
 			}
 
-			task, err := vm.HandleEjectMedia(org, result[0].MediaRecord.CatalogName, result[0].MediaRecord.Name)
+			task, err := vm.HandleEjectMedia(org, previousCatalogName.(string), result.Media.Name)
 			if err != nil {
 				return fmt.Errorf("error: %#v", err)
 			}
