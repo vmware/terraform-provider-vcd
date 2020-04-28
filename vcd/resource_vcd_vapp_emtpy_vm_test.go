@@ -19,7 +19,7 @@ func TestAccVcdVAppEmptyVm(t *testing.T) {
 	)
 
 	if testConfig.Media.MediaName == "" {
-		fmt.Print("Warning: `MediaName` isn't configured, boot image won't be tested.")
+		fmt.Println("Warning: `MediaName` is not configured: boot image won't be tested.")
 	}
 
 	var params = StringMap{

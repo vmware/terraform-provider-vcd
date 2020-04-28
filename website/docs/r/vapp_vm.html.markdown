@@ -189,7 +189,7 @@ resource "vcd_nsxv_ip_set" "test-ipset" {
 ```
 
 ## Example Usage (Empty VM)
-This example shows how to create empty VM.
+This example shows how to create an empty VM.
 
 ```hcl
 resource "vcd_vapp_vm" "emptyVM" {

@@ -522,12 +522,12 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 
 		catalog, err := org.GetCatalogByName(catalogName, false)
 		if err != nil {
-			return fmt.Errorf("error finding catalog %s: %s", d.Get("catalog_name").(string), err)
+			return fmt.Errorf("error finding catalog %s: %s", catalogName, err)
 		}
 
 		catalogItem, err := catalog.GetCatalogItemByName(templateName, false)
 		if err != nil {
-			return fmt.Errorf("error finding catalog item: %s", err)
+			return fmt.Errorf("error finding catalog item %s: %s", templateName, err)
 		}
 
 		vappTemplate, err := catalogItem.GetVAppTemplate()
@@ -1027,7 +1027,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 				return fmt.Errorf("[VM update] error quering boot image %s : %s", previousBootImageValue, err)
 			}
 			if len(result) > 1 {
-				return fmt.Errorf("[VM update] error found one than more boot image %s : %s", previousBootImageValue, err)
+				return fmt.Errorf("[VM update] error found more than one boot image %s", previousBootImageValue)
 			}
 
 			task, err := vm.HandleEjectMedia(org, result[0].MediaRecord.CatalogName, result[0].MediaRecord.Name)
@@ -2152,7 +2152,7 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 			return nil, fmt.Errorf("[VM creation] error getting boot image %s : %s", bootImageName, err)
 		}
 		if len(result) > 1 {
-			return nil, fmt.Errorf("[VM creation] error found more than one boot image %s : %s", bootImageName, err)
+			return nil, fmt.Errorf("[VM creation] error found more than one boot image %s", bootImageName)
 		}
 		bootImage = &types.Media{HREF: result[0].MediaRecord.HREF, Name: result[0].MediaRecord.Name, ID: result[0].MediaRecord.ID}
 	} else {
