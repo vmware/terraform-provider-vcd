@@ -565,7 +565,7 @@ func takeBoolPointer(value bool) *bool {
 	return &value
 }
 
-// takeIntAddress is a helper which can gives address of `int`
+// takeIntAddress is a helper that returns the address of an `int`
 func takeIntAddress(x int) *int {
 	return &x
 }

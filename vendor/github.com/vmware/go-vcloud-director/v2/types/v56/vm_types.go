@@ -19,6 +19,7 @@ type VmSpecSection struct {
 	TimeSyncWithHost  *bool             `xml:"TimeSyncWithHost,omitempty"`  // Synchronize the VM's time with the host.
 }
 
+// RecomposeVAppParamsForEmptyVm represents a vApp structure which allows to create VM.
 type RecomposeVAppParamsForEmptyVm struct {
 	XMLName          xml.Name    `xml:"RecomposeVAppParams"`
 	XmlnsVcloud      string      `xml:"xmlns,attr"`
@@ -27,8 +28,8 @@ type RecomposeVAppParamsForEmptyVm struct {
 	AllEULAsAccepted bool        `xml:"AllEULAsAccepted,omitempty"`
 }
 
+// CreateItem represents structure to create VM, part of RecomposeVAppParams structure.
 type CreateItem struct {
-	//XMLName                   xml.Name                   `xml:"CreateItem"`
 	Name                      string                     `xml:"name,attr,omitempty"`
 	Description               string                     `xml:"Description,omitempty"`
 	GuestCustomizationSection *GuestCustomizationSection `xml:"GuestCustomizationSection,omitempty"`

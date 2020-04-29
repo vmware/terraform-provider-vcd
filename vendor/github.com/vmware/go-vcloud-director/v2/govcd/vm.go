@@ -1352,12 +1352,13 @@ func (vm *VM) UpdateInternalDisksAsync(disksSettingToUpdate *types.VmSpecSection
 			Ovf:           types.XMLNamespaceOVF,
 			Name:          vm.VM.Name,
 			VmSpecSection: disksSettingToUpdate,
+			// API version requirements changes through vCD version to access VmSpecSection
 		}, vm.client.GetSpecificApiVersionOnCondition(">= 32.0", "32.0"))
 
 }
 
+// AddEmptyVm adds an empty VM (without template) to vApp and returns the new created VM or an error.
 func (vapp *VApp) AddEmptyVm(reComposeVAppParams *types.RecomposeVAppParamsForEmptyVm) (*VM, error) {
-	// TODO add validation
 	task, err := vapp.AddEmptyVmAsync(reComposeVAppParams)
 	if err != nil {
 		return nil, err
@@ -1377,11 +1378,101 @@ func (vapp *VApp) AddEmptyVm(reComposeVAppParams *types.RecomposeVAppParamsForEm
 
 }
 
+// AddEmptyVmAsync adds an empty VM (without template) to the vApp and returns a Task and an error.
 func (vapp *VApp) AddEmptyVmAsync(reComposeVAppParams *types.RecomposeVAppParamsForEmptyVm) (Task, error) {
+	err := validateEmptyVmParams(reComposeVAppParams)
+	if err != nil {
+		return Task{}, err
+	}
 	apiEndpoint, _ := url.ParseRequestURI(vapp.VApp.HREF)
 	apiEndpoint.Path += "/action/recomposeVApp"
+
+	reComposeVAppParams.XmlnsVcloud = types.XMLNamespaceVCloud
+	reComposeVAppParams.XmlnsOvf = types.XMLNamespaceOVF
 
 	// Return the task
 	return vapp.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPost,
 		types.MimeRecomposeVappParams, "error instantiating a new VM: %s", reComposeVAppParams)
+}
+
+// validateEmptyVmParams checks if all required parameters are provided
+func validateEmptyVmParams(reComposeVAppParams *types.RecomposeVAppParamsForEmptyVm) error {
+	if reComposeVAppParams.CreateItem == nil {
+		return fmt.Errorf("[AddEmptyVmAsync] CreateItem can't be empty")
+	}
+
+	if reComposeVAppParams.CreateItem.Name == "" {
+		return fmt.Errorf("[AddEmptyVmAsync] CreateItem.Name can't be empty")
+	}
+
+	if reComposeVAppParams.CreateItem.VmSpecSection == nil {
+		return fmt.Errorf("[AddEmptyVmAsync] CreateItem.VmSpecSection can't be empty")
+	}
+
+	if reComposeVAppParams.CreateItem.VmSpecSection.HardwareVersion == nil {
+		return fmt.Errorf("[AddEmptyVmAsync] CreateItem.VmSpecSection.HardwareVersion can't be empty")
+	}
+
+	if reComposeVAppParams.CreateItem.VmSpecSection.HardwareVersion.Value == "" {
+		return fmt.Errorf("[AddEmptyVmAsync] CreateItem.VmSpecSection.HardwareVersion.Value can't be empty")
+	}
+
+	if reComposeVAppParams.CreateItem.VmSpecSection.MemoryResourceMb == nil {
+		return fmt.Errorf("[AddEmptyVmAsync] CreateItem.VmSpecSection.MemoryResourceMb can't be empty")
+	}
+
+	if reComposeVAppParams.CreateItem.VmSpecSection.MemoryResourceMb.Configured <= int64(0) {
+		return fmt.Errorf("[AddEmptyVmAsync] CreateItem.VmSpecSection.MemoryResourceMb.Configured can't be empty")
+	}
+
+	return nil
+}
+
+// UpdateVmSpecSection updates VM Spec section and returns refreshed VM or error.
+func (vm *VM) UpdateVmSpecSection(vmSettingsToUpdate *types.VmSpecSection, description string) (*VM, error) {
+	task, err := vm.UpdateVmSpecSectionAsync(vmSettingsToUpdate, description)
+	if err != nil {
+		return nil, err
+	}
+
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return nil, err
+	}
+
+	err = vm.Refresh()
+	if err != nil {
+		return nil, err
+	}
+
+	return vm, nil
+
+}
+
+// UpdateVmSpecSectionAsync updates VM Spec section and returns Task and error.
+func (vm *VM) UpdateVmSpecSectionAsync(vmSettingsToUpdate *types.VmSpecSection, description string) (Task, error) {
+	if vm.VM.HREF == "" {
+		return Task{}, fmt.Errorf("cannot update disks, VM HREF is unset")
+	}
+
+	vmSpecSectionModified := true
+	vmSettingsToUpdate.Modified = &vmSpecSectionModified
+
+	// `reconfigureVm` updates Vm name, Description, and any or all of the following sections.
+	//    VirtualHardwareSection
+	//    OperatingSystemSection
+	//    NetworkConnectionSection
+	//    GuestCustomizationSection
+	// Sections not included in the request body will not be updated.
+
+	return vm.client.ExecuteTaskRequestWithApiVersion(vm.VM.HREF+"/action/reconfigureVm", http.MethodPost,
+		types.MimeVM, "error updating VM spec section: %s", &types.VM{
+			XMLName:       xml.Name{},
+			Xmlns:         types.XMLNamespaceVCloud,
+			Ovf:           types.XMLNamespaceOVF,
+			Name:          vm.VM.Name,
+			Description:   description,
+			VmSpecSection: vmSettingsToUpdate,
+			// API version requirements changes through vCD version to access VmSpecSection
+		}, vm.client.GetSpecificApiVersionOnCondition(">= 32.0", "32.0"))
 }
