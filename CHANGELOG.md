@@ -2,6 +2,7 @@
 
 IMPROVEMENTS:
 
+* `resource/vcd_vapp_vm` allows creating empty VM. New fields added `boot_image`, `os_type` and `hardware_version`. Also, supports `description` updates. [GH-484]
 * Removed code which handled specific cases for API 29.0 and 30.0. Supported VCD versions now: 9.5 - 10.1 [GH-499]
 
 NOTES:
