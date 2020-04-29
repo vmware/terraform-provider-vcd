@@ -92,6 +92,7 @@ type TestConfig struct {
 		MediaPath       string `json:"mediaPath,omitempty"`
 		UploadPieceSize int64  `json:"uploadPieceSize,omitempty"`
 		UploadProgress  bool   `json:"uploadProgress,omitempty"`
+		MediaName       string `json:"mediaName,omitempty"`
 	} `json:"media"`
 	// Data used to create a new environment, in addition to the regular test configuration file
 	TestEnvBuild struct {
