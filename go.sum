@@ -190,8 +190,6 @@ github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 github.com/ulikunitz/xz v0.5.5 h1:pFrO0lVpTBXLpYw+pnLj6TbvHuyjXMfjGeCwSqCVwok=
 github.com/ulikunitz/xz v0.5.5/go.mod h1:2bypXElzHzzJZwzH67Y6wb67pO62Rzfn7BSiF4ABRW8=
-github.com/vbauzysvmware/go-vcloud-director/v2 v2.2.0-alpha.3.0.20200423113554-903e506eb116 h1:HnkL4QyBxY4kGcp2SxedDF7l3KcedzkO36+fG1N1yEc=
-github.com/vbauzysvmware/go-vcloud-director/v2 v2.2.0-alpha.3.0.20200423113554-903e506eb116/go.mod h1:XY9Fmqp1JeHIU2nP87NykB6unNCsY6qV4Zdu5JI4aZU=
 github.com/vbauzysvmware/go-vcloud-director/v2 v2.2.0-alpha.3.0.20200429130617-e58f02f19583 h1:U0ZlTdSE1+SpdrrZjuEXMHLrLlNsT4hGOvvJ46XuHgE=
 github.com/vbauzysvmware/go-vcloud-director/v2 v2.2.0-alpha.3.0.20200429130617-e58f02f19583/go.mod h1:XY9Fmqp1JeHIU2nP87NykB6unNCsY6qV4Zdu5JI4aZU=
 github.com/vmihailenco/msgpack v3.3.3+incompatible h1:wapg9xDUZDzGCNFlwc5SqI1rvcciqcxEHac4CYj89xI=
