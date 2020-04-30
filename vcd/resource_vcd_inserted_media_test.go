@@ -181,7 +181,13 @@ resource "vcd_vapp" "{{.VappName}}" {
   name       = "{{.VappName}}"
   org        = "{{.Org}}"
   vdc        = "{{.Vdc}}"
-  depends_on = ["vcd_network_routed.{{.NetworkName}}"]
+}
+
+resource "vcd_vapp_org_network" "vappNetwork1" {
+  org                = "{{.Org}}"
+  vdc                = "{{.Vdc}}"
+  vapp_name          = vcd_vapp.{{.VappName}}.name
+  org_network_name   = vcd_network_routed.{{.NetworkName}}.name 
 }
 
 resource "vcd_vapp_vm" "{{.VmName}}" {
@@ -191,12 +197,14 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   name          = "{{.VmName}}"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
-  network_name  = vcd_network_routed.{{.NetworkName}}.name
   memory        = 1024
   cpus          = 1
-  ip            = "10.10.102.161"
   power_on      = "false"
-  depends_on    = ["vcd_vapp.{{.VappName}}"]
+  network {
+    type               = "org"
+    name               = vcd_vapp_org_network.vappNetwork1.org_network_name
+    ip_allocation_mode = "POOL"
+  }
 }
 
 resource "vcd_catalog_media" "{{.CatalogMediaName}}" {
