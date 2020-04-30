@@ -84,8 +84,12 @@ func datasourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
 		if err != nil {
 			return err
 		}
-		queryType := govcd.QtAdminCatalog
-		queryItems, explanation, err = vcdClient.Client.SearchByFilter(queryType, criteria)
+		queryType := govcd.QtCatalog
+		if vcdClient.Client.IsSysAdmin {
+			queryType = govcd.QtAdminCatalog
+		}
+
+		queryItems, explanation, err = adminOrg.SearchByFilter(queryType, criteria)
 		if err != nil {
 			return err
 		}

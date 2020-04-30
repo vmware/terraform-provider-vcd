@@ -180,7 +180,7 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 		return err
 	}
 	_ = d.Set("name", catalogItem.CatalogItem.Name)
-	_ = d.Set("created", catalogItem.CatalogItem.DateCreated)
+	_ = d.Set("created", vAppTemplate.VAppTemplate.DateCreated)
 	_ = d.Set("description", catalogItem.CatalogItem.Description)
 	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 

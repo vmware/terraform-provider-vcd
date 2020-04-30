@@ -240,7 +240,8 @@ func getNetwork(d *schema.ResourceData, vcdClient *VCDClient, isDataSource bool,
 				return nil, err
 			}
 			queryType := govcd.QtOrgVdcNetwork
-			rawQueryItems, explanation, err := vcdClient.Client.SearchByFilter(queryType, criteria)
+			// The field "vdc" in the network structure contains the VDC IF or HREF
+			rawQueryItems, explanation, err := vdc.SearchByFilter(queryType, "vdc", criteria)
 			if err != nil {
 				return nil, err
 			}

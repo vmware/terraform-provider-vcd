@@ -437,6 +437,9 @@ func getDhcpFromEdgeGateway(networkHref string, edgeGateway *govcd.EdgeGateway) 
 		return dhcpConfig
 	}
 	for _, dhcp := range gwConf.EdgeGatewayServiceConfiguration.GatewayDhcpService.Pool {
+		if dhcp.Network == nil {
+			continue
+		}
 		if haveSameUuid(dhcp.Network.HREF, networkHref) {
 			dhcpRec := map[string]interface{}{
 				"start_address":      dhcp.LowIPAddress,

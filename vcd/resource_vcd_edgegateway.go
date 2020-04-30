@@ -441,7 +441,8 @@ func genericVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}, origin 
 			}
 			var queryItems []govcd.QueryItem
 			queryType := govcd.QtEdgeGateway
-			queryItems, explanation, err = vcdClient.Client.SearchByFilter(queryType, criteria)
+			// The field "vdc" in edge gateway structure, contains the VDC ID
+			queryItems, explanation, err = vdc.SearchByFilter(queryType, "vdc", criteria)
 			if err != nil {
 				return err
 			}

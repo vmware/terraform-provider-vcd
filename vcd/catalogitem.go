@@ -90,7 +90,9 @@ func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient, origin string
 			if vcdClient.Client.IsSysAdmin {
 				queryType = govcd.QtAdminVappTemplate
 			}
-			queryItems, explanation, err := vcdClient.Client.SearchByFilter(queryType, criteria)
+			// Note: the search is made by vApp template, for which the parent ID is the one of the VDC
+			// To search by catalog affiliation, we need to use the catalog name
+			queryItems, explanation, err := catalog.SearchByFilter(queryType, "catalogName", criteria)
 			if err != nil {
 				return nil, err
 			}

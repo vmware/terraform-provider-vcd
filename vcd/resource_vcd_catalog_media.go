@@ -215,7 +215,8 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 				queryType = govcd.QtAdminMedia
 			}
 			var queryItems []govcd.QueryItem
-			queryItems, explanation, err = vcdClient.Client.SearchByFilter(queryType, criteria)
+			// The field "catalog" in media structure contains the catalog ID
+			queryItems, explanation, err = catalog.SearchByFilter(queryType, "catalog", criteria)
 			if err != nil {
 				return err
 			}

@@ -13,9 +13,10 @@ var (
 
 	// elementNameRegex should be available for most data sources.
 	elementNameRegex = &schema.Schema{
-		Type:        schema.TypeString,
-		Optional:    true,
-		Description: "Search by name with a regular expression",
+		Type:         schema.TypeString,
+		Optional:     true,
+		Description:  "Search by name with a regular expression",
+		ValidateFunc: validation.StringIsValidRegExp,
 	}
 
 	// elementDate applies to those data sources that have a creation date
@@ -41,9 +42,10 @@ var (
 
 	// elementIp applies to those data sources that expose an IP address
 	elementIp = &schema.Schema{
-		Type:        schema.TypeString,
-		Optional:    true,
-		Description: "Search by IP. The value can be a regular expression",
+		Type:         schema.TypeString,
+		Optional:     true,
+		Description:  "Search by IP. The value can be a regular expression",
+		ValidateFunc: validation.StringIsValidRegExp,
 	}
 
 	// elementMetadata applies to most data sources. It can be used even if the corresponding resource interface
@@ -65,9 +67,10 @@ var (
 					Description: "True if is a metadata@SYSTEM key",
 				},
 				"value": &schema.Schema{
-					Type:        schema.TypeString,
-					Required:    true,
-					Description: `Metadata value (can be a regular expression if "use_api_search" is false)`,
+					Type:         schema.TypeString,
+					Required:     true,
+					Description:  `Metadata value (can be a regular expression if "use_api_search" is false)`,
+					ValidateFunc: validation.StringIsValidRegExp,
 				},
 				"type": &schema.Schema{
 					Type:         schema.TypeString,
