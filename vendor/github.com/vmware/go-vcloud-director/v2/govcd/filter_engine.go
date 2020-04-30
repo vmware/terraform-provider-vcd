@@ -15,7 +15,7 @@ import (
 type queryWithMetadataFunc func(queryType string, params, notEncodedParams map[string]string,
 	metadataFields []string, isSystem bool) (Results, error)
 
-type queryByMetadataFunc func(params, notEncodedParams map[string]string,
+type queryByMetadataFunc func(queryType string, params, notEncodedParams map[string]string,
 	metadataFilters map[string]MetadataFilter, isSystem bool) (Results, error)
 
 type resultsConverterFunc func(queryType string, results Results) ([]QueryItem, error)
@@ -48,6 +48,7 @@ func searchByFilter(queryByMetadata queryByMetadataFunc, queryWithMetadataFields
 
 	// If set, metadata fields will be passed as 'metadata@SYSTEM:fieldName'
 	var isSystem bool
+	var params = make(map[string]string)
 
 	// Will search the latest item if requested
 	searchLatest := false
@@ -88,6 +89,11 @@ func searchByFilter(queryByMetadata queryByMetadataFunc, queryWithMetadataFields
 				return nil, explanation, fmt.Errorf("error compiling regular expression '%s' : %s ", value, err)
 			}
 			conditions = append(conditions, conditionDef{key, ipCondition{re}})
+		case FilterParent:
+			conditions = append(conditions, conditionDef{key, parentCondition{value}})
+		case FilterParentId:
+			conditions = append(conditions, conditionDef{key, parentIdCondition{value}})
+
 		case FilterLatest:
 			searchLatest = stringToBool(value)
 
@@ -95,7 +101,7 @@ func searchByFilter(queryByMetadata queryByMetadataFunc, queryWithMetadataFields
 			searchEarliest = stringToBool(value)
 
 		default:
-			return nil, explanation, fmt.Errorf("[SearchByFilter] filter '%s' not supported (only allowed %v), %s)", key, value, SupportedFilters)
+			return nil, explanation, fmt.Errorf("[SearchByFilter] filter '%s' not supported (only allowed %v), %s)", key, value, supportedFilters)
 		}
 	}
 
@@ -152,12 +158,10 @@ func searchByFilter(queryByMetadata queryByMetadataFunc, queryWithMetadataFields
 
 	var itemResult Results
 	var err error
-	params := map[string]string{}
 
 	if criteria.UseMetadataApiFilter {
-		params["type"] = queryType
 		// This result will not include metadata fields. The query will use metadata parameters to restrict the search
-		itemResult, err = queryByMetadata(nil, params, metadataFilter, isSystem)
+		itemResult, err = queryByMetadata(queryType, nil, params, metadataFilter, isSystem)
 	} else {
 		// This result includes metadata fields, if they exist.
 		itemResult, err = queryWithMetadataFields(queryType, nil, params, metadataFields, isSystem)
@@ -167,7 +171,7 @@ func searchByFilter(queryByMetadata queryByMetadataFunc, queryWithMetadataFields
 		return nil, explanation, fmt.Errorf("[SearchByFilter] error retrieving query item list: %s", err)
 	}
 	if os.Getenv("GOVCD_FAIL") == "1" {
-		return nil, "", fmt.Errorf("[SearchByFilter] list of retrieved items %# v", pretty.Formatter(itemResult))
+		return nil, "", fmt.Errorf("[SearchByFilter] list of retrieved items %# v", pretty.Formatter(itemResult.Results))
 	}
 	var itemList []QueryItem
 
@@ -300,6 +304,10 @@ func conditionMatches(conditionType string, stored, item interface{}) (bool, str
 		return matchDate(stored, item)
 	case FilterIp:
 		return matchIp(stored, item)
+	case FilterParent:
+		return matchParent(stored, item)
+	case FilterParentId:
+		return matchParentId(stored, item)
 	case "metadata":
 		return matchMetadata(stored, item)
 	}
@@ -312,4 +320,62 @@ func conditionMatches(conditionType string, stored, item interface{}) (bool, str
 // Also returns a human readable text of the conditions being passed and how they matched the data found
 func (client *Client) SearchByFilter(queryType string, criteria *FilterDef) ([]QueryItem, string, error) {
 	return searchByFilter(client.QueryByMetadataFilter, client.QueryWithMetadataFields, resultToQueryItems, queryType, criteria)
+}
+
+// catalog.SearchByFilter runs the search for a specific catalog
+// The 'parentField' argument defines which filter will be added, depending on the items we search for:
+//   - 'catalog' contains the catalog HREF or ID
+//   - 'catalogName' contains the catalog name
+func (catalog *Catalog) SearchByFilter(queryType, parentField string, criteria *FilterDef) ([]QueryItem, string, error) {
+	var err error
+	switch parentField {
+	case "catalog":
+		err = criteria.AddFilter(FilterParentId, catalog.Catalog.ID)
+	case "catalogName":
+		err = criteria.AddFilter(FilterParent, catalog.Catalog.Name)
+	default:
+		return nil, "", fmt.Errorf("unrecognized filter field '%s'", parentField)
+	}
+	if err != nil {
+		return nil, "", fmt.Errorf("error setting parent filter for catalog %s with fieldName '%s'", catalog.Catalog.Name, parentField)
+	}
+	return catalog.client.SearchByFilter(queryType, criteria)
+}
+
+// vdc.SearchByFilter runs the search for a specific VDC
+// The 'parentField' argument defines which filter will be added, depending on the items we search for:
+//   - 'vdc' contains the VDC HREF or ID
+//   - 'vdcName' contains the VDC name
+func (vdc *Vdc) SearchByFilter(queryType, parentField string, criteria *FilterDef) ([]QueryItem, string, error) {
+	var err error
+	switch parentField {
+	case "vdc":
+		err = criteria.AddFilter(FilterParentId, vdc.Vdc.ID)
+	case "vdcName":
+		err = criteria.AddFilter(FilterParent, vdc.Vdc.Name)
+	default:
+		return nil, "", fmt.Errorf("unrecognized filter field '%s'", parentField)
+	}
+	if err != nil {
+		return nil, "", fmt.Errorf("error setting parent filter for VDC %s with fieldName '%s'", vdc.Vdc.Name, parentField)
+	}
+	return vdc.client.SearchByFilter(queryType, criteria)
+}
+
+// adminOrg.SearchByFilter runs the search for a specific Org
+func (org *AdminOrg) SearchByFilter(queryType string, criteria *FilterDef) ([]QueryItem, string, error) {
+	err := criteria.AddFilter(FilterParent, org.AdminOrg.Name)
+	if err != nil {
+		return nil, "", fmt.Errorf("error setting parent filter for Org %s with fieldName 'orgName'", org.AdminOrg.Name)
+	}
+	return org.client.SearchByFilter(queryType, criteria)
+}
+
+// org.SearchByFilter runs the search for a specific Org
+func (org *Org) SearchByFilter(queryType string, criteria *FilterDef) ([]QueryItem, string, error) {
+	err := criteria.AddFilter(FilterParent, org.Org.Name)
+	if err != nil {
+		return nil, "", fmt.Errorf("error setting parent filter for Org %s with fieldName 'orgName'", org.Org.Name)
+	}
+	return org.client.SearchByFilter(queryType, criteria)
 }

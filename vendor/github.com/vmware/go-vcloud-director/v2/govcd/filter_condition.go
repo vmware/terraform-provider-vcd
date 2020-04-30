@@ -35,6 +35,63 @@ type metadataRegexpCondition struct {
 	regExpression *regexp.Regexp
 }
 
+// a parentCondition compares the entity parent name with the one stored
+type parentCondition struct {
+	parentName string
+}
+
+// a parentIdCondition compares the entity parent ID with the one stored
+type parentIdCondition struct {
+	parentId string
+}
+
+// matchParent matches the wanted parent name (passed in 'stored') to the parent of the queryItem
+// Input:
+//   * stored: the data of the condition (a parentCondition)
+//   * item:   a QueryItem
+// Returns:
+//   * bool:   the result of the comparison
+//   * string: a description of the operation
+//   * error:  an error when the input is not as expected
+func matchParent(stored, item interface{}) (bool, string, error) {
+	condition, ok := stored.(parentCondition)
+	if !ok {
+		return false, "", fmt.Errorf("stored value is not a Parent condition (%# v)", pretty.Formatter(stored))
+	}
+	queryItem, ok := item.(QueryItem)
+	if !ok {
+		return false, "", fmt.Errorf("item is not a queryItem searchable by parent: %# v", pretty.Formatter(item))
+	}
+	parent := queryItem.GetParentName()
+
+	return condition.parentName == parent, fmt.Sprintf("%s == %s", condition.parentName, queryItem.GetParentName()), nil
+}
+
+// matchParentId matches the wanted parent ID (passed in 'stored') to the parent ID of the queryItem
+// The IDs being compared are filtered through extractUuid, to make them homogeneous
+// Input:
+//   * stored: the data of the condition (a parentCondition)
+//   * item:   a QueryItem
+// Returns:
+//   * bool:   the result of the comparison
+//   * string: a description of the operation
+//   * error:  an error when the input is not as expected
+func matchParentId(stored, item interface{}) (bool, string, error) {
+	condition, ok := stored.(parentIdCondition)
+	if !ok {
+		return false, "", fmt.Errorf("stored value is not a Parent ID condition (%# v)", pretty.Formatter(stored))
+	}
+	queryItem, ok := item.(QueryItem)
+	if !ok {
+		return false, "", fmt.Errorf("item is not a queryItem searchable by parent ID: %# v", pretty.Formatter(item))
+	}
+	parentId := queryItem.GetParentId()
+	parentId = extractUuid(parentId)
+	condition.parentId = extractUuid(condition.parentId)
+
+	return condition.parentId == parentId, fmt.Sprintf("%s =~ %s", condition.parentId, parentId), nil
+}
+
 // matchName matches a name (passed in 'stored') to the name of the queryItem
 // Input:
 //   * stored: the data of the condition (a nameCondition)

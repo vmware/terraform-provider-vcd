@@ -2190,6 +2190,7 @@ type QueryResultEdgeGatewayRecordType struct {
 	Type                string `xml:"type,attr,omitempty"`                // The MIME type of the entity.
 	Name                string `xml:"name,attr,omitempty"`                // EdgeGateway name.
 	Vdc                 string `xml:"vdc,attr,omitempty"`                 // VDC Reference or ID
+	OrgVdcName          string `xml:"orgVdcName,attr,omitempty"`          // VDC name
 	NumberOfExtNetworks int    `xml:"numberOfExtNetworks,attr,omitempty"` // Number of external networks connected to the edgeGateway.	Yes	Yes
 	NumberOfOrgNetworks int    `xml:"numberOfOrgNetworks,attr,omitempty"` // Number of org VDC networks connected to the edgeGateway	Yes	Yes
 	IsBusy              bool   `xml:"isBusy,attr"`                        // True if this Edge Gateway is busy.	Yes	Yes

@@ -6,6 +6,7 @@ package govcd
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 )
 
@@ -51,7 +52,7 @@ func queryFieldsOnDemand(queryType string) ([]string, error) {
 		vappTemplatefields = []string{"ownerName", "catalogName", "isPublished", "name", "vdc", "vdcName",
 			"org", "creationDate", "isBusy", "isGoldMaster", "isEnabled", "status", "isDeployed", "isExpired",
 			"storageProfileName"}
-		edgeGatewayFields = []string{"name", "vdc", "numberOfExtNetworks", "numberOfOrgNetworks", "isBusy",
+		edgeGatewayFields = []string{"name", "vdc", "orgVdcName", "numberOfExtNetworks", "numberOfOrgNetworks", "isBusy",
 			"gatewayStatus", "haStatus"}
 		orgVdcNetworkFields = []string{"name", "defaultGateway", "netmask", "dns1", "dns2", "dnsSuffix", "linkType",
 			"connectedTo", "vdc", "isBusy", "isShared", "vdcName", "isIpScopeInherited"}
@@ -85,6 +86,87 @@ func queryFieldsOnDemand(queryType string) ([]string, error) {
 	return fields, nil
 }
 
+func addResults(queryType string, cumulativeResults, newResults Results) (Results, int, error) {
+
+	var size int
+	switch queryType {
+	case QtAdminVappTemplate:
+		cumulativeResults.Results.AdminVappTemplateRecord = append(cumulativeResults.Results.AdminVappTemplateRecord, newResults.Results.AdminVappTemplateRecord...)
+		size = len(newResults.Results.AdminVappTemplateRecord)
+	case QtVappTemplate:
+		size = len(newResults.Results.VappTemplateRecord)
+		cumulativeResults.Results.VappTemplateRecord = append(cumulativeResults.Results.VappTemplateRecord, newResults.Results.VappTemplateRecord...)
+	case QtCatalogItem:
+		cumulativeResults.Results.CatalogItemRecord = append(cumulativeResults.Results.CatalogItemRecord, newResults.Results.CatalogItemRecord...)
+		size = len(newResults.Results.CatalogItemRecord)
+	case QtAdminCatalogItem:
+		cumulativeResults.Results.AdminCatalogItemRecord = append(cumulativeResults.Results.AdminCatalogItemRecord, newResults.Results.AdminCatalogItemRecord...)
+		size = len(newResults.Results.AdminCatalogItemRecord)
+	case QtMedia:
+		cumulativeResults.Results.MediaRecord = append(cumulativeResults.Results.MediaRecord, newResults.Results.MediaRecord...)
+		size = len(newResults.Results.MediaRecord)
+	case QtAdminMedia:
+		cumulativeResults.Results.AdminMediaRecord = append(cumulativeResults.Results.AdminMediaRecord, newResults.Results.AdminMediaRecord...)
+		size = len(newResults.Results.AdminMediaRecord)
+	case QtCatalog:
+		cumulativeResults.Results.CatalogRecord = append(cumulativeResults.Results.CatalogRecord, newResults.Results.CatalogRecord...)
+		size = len(newResults.Results.CatalogRecord)
+	case QtAdminCatalog:
+		cumulativeResults.Results.AdminCatalogRecord = append(cumulativeResults.Results.AdminCatalogRecord, newResults.Results.AdminCatalogRecord...)
+		size = len(newResults.Results.AdminCatalogRecord)
+	case QtOrgVdcNetwork:
+		cumulativeResults.Results.OrgVdcNetworkRecord = append(cumulativeResults.Results.OrgVdcNetworkRecord, newResults.Results.OrgVdcNetworkRecord...)
+		size = len(newResults.Results.OrgVdcNetworkRecord)
+	case QtEdgeGateway:
+		cumulativeResults.Results.EdgeGatewayRecord = append(cumulativeResults.Results.EdgeGatewayRecord, newResults.Results.EdgeGatewayRecord...)
+		size = len(newResults.Results.EdgeGatewayRecord)
+
+	default:
+		return Results{}, 0, fmt.Errorf("query type %s not supported", queryType)
+	}
+
+	return cumulativeResults, size, nil
+}
+
+func (client *Client) cumulativeQuery(queryType string, params, notEncodedParams map[string]string) (Results, error) {
+
+	result, err := client.QueryWithNotEncodedParams(params, notEncodedParams)
+	if err != nil {
+		return Results{}, err
+	}
+	wanted := int(result.Results.Total)
+	retrieved := int(wanted)
+	if retrieved > result.Results.PageSize {
+		retrieved = result.Results.PageSize
+	}
+	if retrieved == wanted {
+		return result, nil
+	}
+	page := result.Results.Page
+
+	var cumulativeResult = Results{
+		Results: result.Results,
+		client:  nil,
+	}
+
+	for retrieved != wanted {
+		page++
+		notEncodedParams["page"] = fmt.Sprintf("%d", page)
+		var size int
+		newResult, err := client.QueryWithNotEncodedParams(params, notEncodedParams)
+		if err != nil {
+			return Results{}, err
+		}
+		cumulativeResult, size, err = addResults(queryType, cumulativeResult, newResult)
+		if err != nil {
+			return Results{}, err
+		}
+		retrieved += size
+	}
+
+	return result, nil
+}
+
 // QueryWithMetadataFields is a wrapper around QueryWithNotEncodedParams with additional metadata fields
 // being returned.
 //
@@ -98,10 +180,9 @@ func (client *Client) QueryWithMetadataFields(queryType string, params, notEncod
 		notEncodedParams = make(map[string]string)
 	}
 	notEncodedParams["type"] = queryType
-	notEncodedParams["pageSize"] = "128" // Temporary workaround. TODO: loop until rows fetched == total
 
 	if len(metadataFields) == 0 {
-		return client.QueryWithNotEncodedParams(params, notEncodedParams)
+		return client.cumulativeQuery(queryType, params, notEncodedParams)
 	}
 
 	fields, err := queryFieldsOnDemand(queryType)
@@ -126,7 +207,7 @@ func (client *Client) QueryWithMetadataFields(queryType string, params, notEncod
 
 	notEncodedParams["fields"] = strings.Join(fields, ",") + "," + metadataFieldText
 
-	return client.QueryWithNotEncodedParams(params, notEncodedParams)
+	return client.cumulativeQuery(queryType, params, notEncodedParams)
 }
 
 // QueryByMetadataFilter is a wrapper around QueryWithNotEncodedParams with additional filtering
@@ -137,12 +218,16 @@ func (client *Client) QueryWithMetadataFields(queryType string, params, notEncod
 // * params and notEncodedParams are the same ones passed to QueryWithNotEncodedParams
 // * metadataFilter is is a map of conditions to use for filtering
 // * if isSystem is true, metadata fields are requested as 'metadata@SYSTEM:fieldName'
-func (client *Client) QueryByMetadataFilter(params, notEncodedParams map[string]string,
+func (client *Client) QueryByMetadataFilter(queryType string, params, notEncodedParams map[string]string,
 	metadataFilters map[string]MetadataFilter, isSystem bool) (Results, error) {
 
 	if len(metadataFilters) == 0 {
 		return Results{}, fmt.Errorf("[QueryByMetadataFilter] no metadata fields provided")
 	}
+	if notEncodedParams == nil {
+		notEncodedParams = make(map[string]string)
+	}
+	notEncodedParams["type"] = queryType
 
 	metadataFilterText := ""
 	prefix := "metadata"
@@ -151,7 +236,7 @@ func (client *Client) QueryByMetadataFilter(params, notEncodedParams map[string]
 	}
 	count := 0
 	for key, value := range metadataFilters {
-		metadataFilterText += fmt.Sprintf("%s:%s==%s:%s", prefix, key, value.Type, value.Value)
+		metadataFilterText += fmt.Sprintf("%s:%s==%s:%s", prefix, key, value.Type, url.QueryEscape(value.Value))
 		if count < len(metadataFilters)-1 {
 			metadataFilterText += ","
 		}
@@ -165,7 +250,6 @@ func (client *Client) QueryByMetadataFilter(params, notEncodedParams map[string]
 		filter = metadataFilterText
 	}
 	notEncodedParams["filter"] = filter
-	notEncodedParams["pageSize"] = "128" // Temporary workaround. TODO: loop until rows fetched == total
 
-	return client.QueryWithNotEncodedParams(params, notEncodedParams)
+	return client.cumulativeQuery(queryType, params, notEncodedParams)
 }

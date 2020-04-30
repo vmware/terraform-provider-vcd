@@ -15,14 +15,33 @@ const (
 	FilterIp        = "ip"         // An IP, searched by regular expression
 	FilterLatest    = "latest"     // gets the newest element
 	FilterEarliest  = "earliest"   // gets the oldest element
+	FilterParent    = "parent"     // matches the entity parent
+	FilterParentId  = "parent_id"  // matches the entity parent ID
 )
 
 var (
-	// Filters currently supported in the engine
-	SupportedFilters = []string{FilterNameRegex, FilterDate, FilterIp, FilterLatest, FilterEarliest}
+	// Filters currently supported in the engine, available to users
+	supportedFilters = []string{
+		FilterNameRegex,
+		FilterDate,
+		FilterIp,
+		FilterLatest,
+		FilterEarliest,
+		FilterParent,
+		FilterParentId,
+	}
 
 	// Metadata types recognized so far. "NONE" is the same as ""
 	SupportedMetadataTypes = []string{"NONE", "STRING", "NUMBER", "BOOLEAN", "DATETIME"}
+
+	// retrievedMetadataTypes maps the internal value of metadata type with the
+	// string needed when searching for a metadata field in the API
+	retrievedMetadataTypes = map[string]string{
+		"MetadataBooleanValue":  "BOOLEAN",
+		"MetadataStringValue":   "STRING",
+		"MetadataNumberValue":   "NUMBER",
+		"MetadataDateTimeValue": "STRING", // values for DATETIME can't be passed as such in a query.
+	}
 )
 
 // Definition of metadata structure
@@ -79,7 +98,7 @@ func validateMetadataType(valueType string) error {
 
 // AddFilter adds a new filter to the criteria
 func (fd *FilterDef) AddFilter(key, value string) error {
-	for _, allowed := range SupportedFilters {
+	for _, allowed := range supportedFilters {
 		if key == allowed {
 			fd.Filters[key] = value
 			return nil

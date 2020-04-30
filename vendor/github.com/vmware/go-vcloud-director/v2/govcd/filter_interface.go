@@ -13,6 +13,8 @@ type QueryItem interface {
 	GetType() string
 	GetIp() string
 	GetMetadataValue(key string) string
+	GetParentName() string
+	GetParentId() string
 	GetHref() string
 }
 
@@ -44,11 +46,13 @@ func getMetadataValue(metadata *types.Metadata, key string) string {
 // --------------------------------------------------------------
 // vApp template
 // --------------------------------------------------------------
-func (vappTemplate QueryVAppTemplate) GetHref() string { return vappTemplate.HREF }
-func (vappTemplate QueryVAppTemplate) GetName() string { return vappTemplate.Name }
-func (vappTemplate QueryVAppTemplate) GetType() string { return "vapp_template" }
-func (vappTemplate QueryVAppTemplate) GetIp() string   { return "" }
-func (vappTemplate QueryVAppTemplate) GetDate() string { return vappTemplate.CreationDate }
+func (vappTemplate QueryVAppTemplate) GetHref() string       { return vappTemplate.HREF }
+func (vappTemplate QueryVAppTemplate) GetName() string       { return vappTemplate.Name }
+func (vappTemplate QueryVAppTemplate) GetType() string       { return "vapp_template" }
+func (vappTemplate QueryVAppTemplate) GetIp() string         { return "" }
+func (vappTemplate QueryVAppTemplate) GetDate() string       { return vappTemplate.CreationDate }
+func (vappTemplate QueryVAppTemplate) GetParentName() string { return vappTemplate.CatalogName }
+func (vappTemplate QueryVAppTemplate) GetParentId() string   { return vappTemplate.Vdc }
 func (vappTemplate QueryVAppTemplate) GetMetadataValue(key string) string {
 	return getMetadataValue(vappTemplate.Metadata, key)
 }
@@ -56,11 +60,13 @@ func (vappTemplate QueryVAppTemplate) GetMetadataValue(key string) string {
 // --------------------------------------------------------------
 // media item
 // --------------------------------------------------------------
-func (media QueryMedia) GetHref() string { return media.HREF }
-func (media QueryMedia) GetName() string { return media.Name }
-func (media QueryMedia) GetType() string { return "catalog_media" }
-func (media QueryMedia) GetIp() string   { return "" }
-func (media QueryMedia) GetDate() string { return media.CreationDate }
+func (media QueryMedia) GetHref() string       { return media.HREF }
+func (media QueryMedia) GetName() string       { return media.Name }
+func (media QueryMedia) GetType() string       { return "catalog_media" }
+func (media QueryMedia) GetIp() string         { return "" }
+func (media QueryMedia) GetDate() string       { return media.CreationDate }
+func (media QueryMedia) GetParentName() string { return media.CatalogName }
+func (media QueryMedia) GetParentId() string   { return media.Catalog }
 func (media QueryMedia) GetMetadataValue(key string) string {
 	return getMetadataValue(media.Metadata, key)
 }
@@ -68,11 +74,13 @@ func (media QueryMedia) GetMetadataValue(key string) string {
 // --------------------------------------------------------------
 // catalog item
 // --------------------------------------------------------------
-func (catItem QueryCatalogItem) GetHref() string { return catItem.HREF }
-func (catItem QueryCatalogItem) GetName() string { return catItem.Name }
-func (catItem QueryCatalogItem) GetIp() string   { return "" }
-func (catItem QueryCatalogItem) GetType() string { return "catalog_item" }
-func (catItem QueryCatalogItem) GetDate() string { return catItem.CreationDate }
+func (catItem QueryCatalogItem) GetHref() string       { return catItem.HREF }
+func (catItem QueryCatalogItem) GetName() string       { return catItem.Name }
+func (catItem QueryCatalogItem) GetIp() string         { return "" }
+func (catItem QueryCatalogItem) GetType() string       { return "catalog_item" }
+func (catItem QueryCatalogItem) GetDate() string       { return catItem.CreationDate }
+func (catItem QueryCatalogItem) GetParentName() string { return catItem.CatalogName }
+func (catItem QueryCatalogItem) GetParentId() string   { return catItem.Catalog }
 func (catItem QueryCatalogItem) GetMetadataValue(key string) string {
 	return getMetadataValue(catItem.Metadata, key)
 }
@@ -80,20 +88,24 @@ func (catItem QueryCatalogItem) GetMetadataValue(key string) string {
 // --------------------------------------------------------------
 // catalog
 // --------------------------------------------------------------
-func (catalog QueryCatalog) GetHref() string { return catalog.HREF }
-func (catalog QueryCatalog) GetName() string { return catalog.Name }
-func (catalog QueryCatalog) GetIp() string   { return "" }
-func (catalog QueryCatalog) GetType() string { return "catalog" }
-func (catalog QueryCatalog) GetDate() string { return catalog.CreationDate }
+func (catalog QueryCatalog) GetHref() string       { return catalog.HREF }
+func (catalog QueryCatalog) GetName() string       { return catalog.Name }
+func (catalog QueryCatalog) GetIp() string         { return "" }
+func (catalog QueryCatalog) GetType() string       { return "catalog" }
+func (catalog QueryCatalog) GetDate() string       { return catalog.CreationDate }
+func (catalog QueryCatalog) GetParentName() string { return catalog.OrgName }
+func (catalog QueryCatalog) GetParentId() string   { return "" }
 func (catalog QueryCatalog) GetMetadataValue(key string) string {
 	return getMetadataValue(catalog.Metadata, key)
 }
 
-func (catalog QueryAdminCatalog) GetHref() string { return catalog.HREF }
-func (catalog QueryAdminCatalog) GetName() string { return catalog.Name }
-func (catalog QueryAdminCatalog) GetIp() string   { return "" }
-func (catalog QueryAdminCatalog) GetType() string { return "catalog" }
-func (catalog QueryAdminCatalog) GetDate() string { return catalog.CreationDate }
+func (catalog QueryAdminCatalog) GetHref() string       { return catalog.HREF }
+func (catalog QueryAdminCatalog) GetName() string       { return catalog.Name }
+func (catalog QueryAdminCatalog) GetIp() string         { return "" }
+func (catalog QueryAdminCatalog) GetType() string       { return "catalog" }
+func (catalog QueryAdminCatalog) GetDate() string       { return catalog.CreationDate }
+func (catalog QueryAdminCatalog) GetParentName() string { return catalog.OrgName }
+func (catalog QueryAdminCatalog) GetParentId() string   { return "" }
 func (catalog QueryAdminCatalog) GetMetadataValue(key string) string {
 	return getMetadataValue(catalog.Metadata, key)
 }
@@ -101,11 +113,13 @@ func (catalog QueryAdminCatalog) GetMetadataValue(key string) string {
 // --------------------------------------------------------------
 // edge gateway
 // --------------------------------------------------------------
-func (egw QueryEdgeGateway) GetHref() string { return egw.HREF }
-func (egw QueryEdgeGateway) GetName() string { return egw.Name }
-func (egw QueryEdgeGateway) GetIp() string   { return "" }
-func (egw QueryEdgeGateway) GetType() string { return "edge_gateway" }
-func (egw QueryEdgeGateway) GetDate() string { return "" }
+func (egw QueryEdgeGateway) GetHref() string       { return egw.HREF }
+func (egw QueryEdgeGateway) GetName() string       { return egw.Name }
+func (egw QueryEdgeGateway) GetIp() string         { return "" }
+func (egw QueryEdgeGateway) GetType() string       { return "edge_gateway" }
+func (egw QueryEdgeGateway) GetDate() string       { return "" }
+func (egw QueryEdgeGateway) GetParentName() string { return egw.OrgVdcName }
+func (egw QueryEdgeGateway) GetParentId() string   { return egw.Vdc }
 func (egw QueryEdgeGateway) GetMetadataValue(key string) string {
 	// Edge Gateway doesn't support metadata
 	return ""
@@ -130,7 +144,9 @@ func (network QueryOrgVdcNetwork) GetType() string {
 		return "network"
 	}
 }
-func (network QueryOrgVdcNetwork) GetDate() string { return "" }
+func (network QueryOrgVdcNetwork) GetDate() string       { return "" }
+func (network QueryOrgVdcNetwork) GetParentName() string { return network.VdcName }
+func (network QueryOrgVdcNetwork) GetParentId() string   { return network.Vdc }
 func (network QueryOrgVdcNetwork) GetMetadataValue(key string) string {
 	return getMetadataValue(network.Metadata, key)
 }
