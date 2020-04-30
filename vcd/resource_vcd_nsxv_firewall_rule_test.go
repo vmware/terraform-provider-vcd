@@ -1048,21 +1048,6 @@ resource "vcd_nsxv_ip_set" "aceeptance-ipset-2" {
 `
 
 func TestAccVcdNsxvEdgeFirewallRuleVms(t *testing.T) {
-	// vCD 9.0 has a known bug - therefore skip the test if it is vCD 9.0
-	vcdClient, err := getTestVCDFromJson(testConfig)
-	if err != nil {
-		t.Skip("unable to validate vCD version - skipping test")
-	}
-	err = ProviderAuthenticate(vcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg)
-	if err != nil {
-		t.Skip("unable to validate vCD version - skipping test")
-	}
-	// if vCD older or 9.0
-	if vcdClient.Client.APIVCDMaxVersionIs("= 29.0") {
-		t.Skip("Skipping this test for vCD 9.0 because of a known issue: " +
-			"https://github.com/terraform-providers/terraform-provider-vcd/issues/420")
-	}
-
 	// String map to fill the template
 	var params = StringMap{
 		"Org":              testConfig.VCD.Org,

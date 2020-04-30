@@ -34,9 +34,9 @@ type vdcVersionedFuncs struct {
 	UpdateVdcAsync   func(adminVdc *AdminVdc) (Task, error)
 }
 
-// VDC function mapping for API version 29.0 (from vCD 9.1)
-var vdcVersionedFuncsV90 = vdcVersionedFuncs{
-	SupportedVersion: "29.0",
+// VDC function mapping for API version 31.0 (from vCD 9.5)
+var vdcVersionedFuncsV95 = vdcVersionedFuncs{
+	SupportedVersion: "31.0",
 	CreateVdc:        createVdc,
 	CreateVdcAsync:   createVdcAsync,
 	UpdateVdc:        updateVdc,
@@ -55,9 +55,7 @@ var vdcVersionedFuncsV97 = vdcVersionedFuncs{
 // TODO: add a wrapper function to use newest available method when version is higher than currently handled
 // VDC function mapping by vDC version
 var vdcVersionedFuncsByVcdVersion = map[string]vdcVersionedFuncs{
-	"vdc9.0":  vdcVersionedFuncsV90,
-	"vdc9.1":  vdcVersionedFuncsV90,
-	"vdc9.5":  vdcVersionedFuncsV90,
+	"vdc9.5":  vdcVersionedFuncsV95,
 	"vdc9.7":  vdcVersionedFuncsV97,
 	"vdc10.0": vdcVersionedFuncsV97,
 	"vdc10.1": vdcVersionedFuncsV97,

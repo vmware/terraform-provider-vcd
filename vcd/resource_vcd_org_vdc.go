@@ -40,10 +40,6 @@ func resourceVcdOrgVdc() *schema.Resource {
 					Type:     schema.TypeInt,
 					Computed: true,
 				},
-				"overhead": {
-					Type:     schema.TypeInt,
-					Computed: true,
-				},
 			},
 		},
 	}
@@ -450,14 +446,12 @@ func getComputeCapacities(capacities []*types.ComputeCapacity) *[]map[string]int
 		cpuValueMap["allocated"] = int(capacity.CPU.Allocated)
 		cpuValueMap["reserved"] = int(capacity.CPU.Reserved)
 		cpuValueMap["used"] = int(capacity.CPU.Used)
-		cpuValueMap["overhead"] = int(capacity.CPU.Overhead)
 
 		memoryValueMap := map[string]interface{}{}
 		memoryValueMap["limit"] = int(capacity.Memory.Limit)
 		memoryValueMap["allocated"] = int(capacity.Memory.Allocated)
 		memoryValueMap["reserved"] = int(capacity.Memory.Reserved)
 		memoryValueMap["used"] = int(capacity.Memory.Used)
-		memoryValueMap["overhead"] = int(capacity.Memory.Overhead)
 
 		var memoryCapacityArray []map[string]interface{}
 		memoryCapacityArray = append(memoryCapacityArray, memoryValueMap)

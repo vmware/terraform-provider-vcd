@@ -723,11 +723,11 @@ func QueryNetworkPoolByName(vcdCli *VCDClient, name string) ([]*types.QueryResul
 
 // QueryProviderVdcByName finds a provider VDC by name
 func QueryProviderVdcByName(vcdCli *VCDClient, name string) ([]*types.QueryResultVMWProviderVdcRecordType, error) {
-	results, err := vcdCli.QueryWithNotEncodedParamsWithApiVersion(nil, map[string]string{
+	results, err := vcdCli.QueryWithNotEncodedParams(nil, map[string]string{
 		"type":          "providerVdc",
 		"filter":        fmt.Sprintf("name==%s", url.QueryEscape(name)),
 		"filterEncoded": "true",
-	}, vcdCli.Client.GetSpecificApiVersionOnCondition(">= 31.0", "31.0"))
+	})
 	if err != nil {
 		return nil, err
 	}

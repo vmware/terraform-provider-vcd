@@ -297,17 +297,7 @@ func resourceVcdNsxvFirewallRuleUpdate(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	// TODO remove this code when vCD 9.0 is not supported anymore. vCD 9.0 asks for short formatted
-	// IP set IDs (ipset-454 insted of a0c3c92a-a180-48fb-96ec-91c610c7c254:ipset-460) for update
-	// operations only. Otherwise update operation fails with exception.
-	var shortIds bool
-	// if vCD older or 9.0
-	if vcdClient.Client.APIVCDMaxVersionIs("<= 29") {
-		log.Println("[DEBUG] vcd_nsxv_firewall_rule update - using short IDs for update operations because vCD is <= 9.0 ")
-		shortIds = true
-	}
-
-	updateFirewallRule, err := getFirewallRule(d, edgeGateway, vdc, shortIds)
+	updateFirewallRule, err := getFirewallRule(d, edgeGateway, vdc, false)
 	updateFirewallRule.ID = d.Id() // We already know an ID for update and it allows to change name
 
 	if err != nil {
