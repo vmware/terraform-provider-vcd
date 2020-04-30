@@ -1,4 +1,13 @@
 ## 2.9.0 (Unreleased)
+
+IMPROVEMENTS:
+
+* `resource/vcd_vapp_vm` allows creating empty VM. New fields added `boot_image`, `os_type` and `hardware_version`. Also, supports `description` updates. [GH-484]
+
+NOTES:
+
+* Dropped support for vCD 9.1 [GH-492]
+
 ## 2.8.0 (April 16, 2020)
 
 IMPROVEMENTS:
