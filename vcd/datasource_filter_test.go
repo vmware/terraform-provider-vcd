@@ -1,4 +1,4 @@
-// +build search ALL
+// +build search functional ALL
 
 package vcd
 
@@ -29,6 +29,7 @@ type filterCollection struct {
 // It allows using the same entities several times without repeating the queries.
 var filtersByType filterCollection
 
+// elements to create data source HCL scripts
 const (
 	onlyOrg = `
   org     = "{{.Org}}"
@@ -52,6 +53,8 @@ var ancestors = map[string]string{
 	"vcd_network_direct":   orgAndVdc,
 	"vcd_network_isolated": orgAndVdc,
 }
+
+// Data needed to create test vApp templates
 var vAppTemplateBaseName = "catItemQuery"
 var vAppTemplateRequestData = []govcd.VappTemplateData{
 	{vAppTemplateBaseName + "1", "", "", govcd.StringMap{"one": "first", "two": "second"}, false},
@@ -61,6 +64,7 @@ var vAppTemplateRequestData = []govcd.VappTemplateData{
 	{vAppTemplateBaseName + "5", "", "", govcd.StringMap{"ghj": "first", "klm": "second"}, false},
 }
 
+// getFiltersForAvailableEntities collects data from existing resources and creates filters for each of them
 func getFiltersForAvailableEntities(entityTYpe string, dataGeneration bool) ([]govcd.FilterMatch, error) {
 
 	var (
@@ -176,6 +180,7 @@ func getFiltersForAvailableEntities(entityTYpe string, dataGeneration bool) ([]g
 	return results, nil
 }
 
+// updateMatchEntity returns the appropriate resource type for each entity in the filter
 func updateMatchEntity(match govcd.FilterMatch) govcd.FilterMatch {
 	switch match.EntityType {
 	case "QueryVAppTemplate", "QueryCatalogItem":
@@ -200,18 +205,35 @@ func updateMatchEntity(match govcd.FilterMatch) govcd.FilterMatch {
 	return match
 }
 
+// generateTemplates creates a template HCL script from a set of filters
+// In addition to the script text, returns a map of expected values, to be evaluated in a Terraform test
 func generateTemplates(matches []govcd.FilterMatch) (string, map[string]string, error) {
 
-	var expectedResults = make(map[string]string)
-	var templates string
-	var err error
-	maxItems := 5
+	const (
+		itemDelta       = 200           // base for number generation when using two metadata methods for the same data
+		maxAllowedItems = itemDelta / 2 // maximum number of items that will be collected
+	)
+	var (
+		expectedResults = make(map[string]string)
+		templates       string
+		err             error
+		maxItems        = 5
+	)
+
+	// Limits the number of items to poll for test generation.
+	// If many items exist, it could lead to an expensive test
 	itemsNum := os.Getenv("VCD_MAX_ITEMS")
 	if itemsNum != "" {
 		maxItems, err = strconv.Atoi(itemsNum)
 		if err != nil {
 			maxItems = 5
 		}
+		if maxItems <= 0 {
+			maxItems = 1 // at least one item will be evaluated
+		}
+	}
+	if maxItems > maxAllowedItems {
+		maxItems = maxAllowedItems
 	}
 
 	for i, match := range matches {
@@ -220,14 +242,17 @@ func generateTemplates(matches []govcd.FilterMatch) (string, map[string]string, 
 		}
 		match = updateMatchEntity(match)
 		hasMetadata := false
-		dsName := fmt.Sprintf("mystery%d", i)
+		dsName := fmt.Sprintf("unknown%d", i)
+		// creates the header of the data source
 		entityText := fmt.Sprintf("data \"%s\" \"%s\"{\n", match.EntityType, dsName)
 		entityText += fmt.Sprintf("  # expected name: '%s'\n", match.ExpectedName)
 		entityText += ancestors[match.EntityType]
+		// Adds regular filters
 		filterText := "  filter {\n"
 		for k, v := range match.Criteria.Filters {
 			filterText += fmt.Sprintf("    %s = \"%s\"\n", k, strings.ReplaceAll(v, `\`, `\\`))
 		}
+		// If there are metadata elements, adds filters for them
 		for _, m := range match.Criteria.Metadata {
 			hasMetadata = true
 			filterText += "    metadata {\n"
@@ -244,14 +269,17 @@ func generateTemplates(matches []govcd.FilterMatch) (string, map[string]string, 
 		entityText += filterText
 		entityText += "}\n\n"
 
+		// For each data source, adds an output element, to simplify the test checks
 		entityText += fmt.Sprintf("output \"%s\" {\n", dsName)
 		entityText += fmt.Sprintf("  value = data.%s.%s.name\n", match.EntityType, dsName)
 		entityText += "}\n"
 
 		templates += entityText + "\n"
 		expectedResults[dsName] = match.ExpectedName
+		// If there are metadata elements, generates a second data source, where the search is
+		// performed in the query
 		if hasMetadata {
-			newDsName := fmt.Sprintf("mystery%d", i+100)
+			newDsName := fmt.Sprintf("unknown%d", i+itemDelta)
 			secondText := strings.ReplaceAll(entityText, dsName, newDsName)
 			secondText = strings.ReplaceAll(secondText, "use_api_search = false", "use_api_search = true")
 			templates += secondText + "\n"
@@ -261,6 +289,12 @@ func generateTemplates(matches []govcd.FilterMatch) (string, map[string]string, 
 	return templates, expectedResults, nil
 }
 
+// TestAccSearchEngine generates a script with many data sources for each entity that
+// supports the filter engine.
+// The test triggers a search of the existing entities. For each type:
+// 1. It will generate filters based on the data in the entity
+// 2. It will then generate the HCL script for the data source
+// 3. The test will check that each data source matches the expected entity name
 func TestAccSearchEngine(t *testing.T) {
 	// This test requires access to the vCD before filling templates
 	// Thus it won't run in the short test
@@ -269,19 +303,24 @@ func TestAccSearchEngine(t *testing.T) {
 		return
 	}
 
+	// "networks" includes vcd_network_isolated, vcd_network_routed, and vcd_network_direct
 	t.Run("networks", func(t *testing.T) { runSearchTest(govcd.QtOrgVdcNetwork, "networks", t) })
+	// The data used for catalog item filtering belongs to the inner vApp template
 	t.Run("catalog_items", func(t *testing.T) { runSearchTest(govcd.QtVappTemplate, "catalog_items", t) })
+	t.Run("media", func(t *testing.T) { runSearchTest(govcd.QtMedia, "media", t) })
 	t.Run("catalog", func(t *testing.T) { runSearchTest(govcd.QtCatalog, "catalog", t) })
 	t.Run("edge_gateway", func(t *testing.T) { runSearchTest(govcd.QtEdgeGateway, "edge_gateway", t) })
-	t.Run("media", func(t *testing.T) { runSearchTest(govcd.QtMedia, "media", t) })
 }
 
+// runSearchTest builds the test elements for the given entityType and run the test itself
 func runSearchTest(entityType, label string, t *testing.T) {
 
 	generateData := false
 
 	if entityType == govcd.QtAdminVappTemplate || entityType == govcd.QtVappTemplate {
-		generateData = true
+		if os.Getenv("VCD_TEST_DATA_GENERATION") != "" {
+			generateData = true
+		}
 	}
 	filters, err := getFiltersForAvailableEntities(entityType, generateData)
 	if err != nil {
@@ -340,6 +379,8 @@ func runSearchTest(entityType, label string, t *testing.T) {
 	}
 }
 
+// makeCheckFuncsFromMap generates a container TestCheckFunc using a map containing the names of the
+// output elements with the corresponding expected values
 func makeCheckFuncsFromMap(m map[string]string) resource.TestCheckFunc {
 	var checkFuncs []resource.TestCheckFunc
 	for k, v := range m {

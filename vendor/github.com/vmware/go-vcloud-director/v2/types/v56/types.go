@@ -507,7 +507,6 @@ type CapacityWithUsage struct {
 	Limit     int64  `xml:"Limit"`
 	Reserved  int64  `xml:"Reserved,omitempty"`
 	Used      int64  `xml:"Used,omitempty"`
-	Overhead  int64  `xml:"Overhead,omitempty"` // not available anymore from API v30.0
 }
 
 // ComputeCapacity represents VDC compute capacity.
