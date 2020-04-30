@@ -405,19 +405,20 @@ type AdminVdc struct {
 	Xmlns string `xml:"xmlns,attr"`
 	Vdc
 
-	VCpuInMhz2               *int64         `xml:"VCpuInMhz2,omitempty"`
-	ResourceGuaranteedMemory *float64       `xml:"ResourceGuaranteedMemory,omitempty"`
-	ResourceGuaranteedCpu    *float64       `xml:"ResourceGuaranteedCpu,omitempty"`
-	VCpuInMhz                *int64         `xml:"VCpuInMhz,omitempty"`
-	IsThinProvision          *bool          `xml:"IsThinProvision,omitempty"`
-	NetworkPoolReference     *Reference     `xml:"NetworkPoolReference,omitempty"`
-	ProviderVdcReference     *Reference     `xml:"ProviderVdcReference"`
-	ResourcePoolRefs         *VimObjectRefs `xml:"vmext:ResourcePoolRefs,omitempty"`
-	UsesFastProvisioning     *bool          `xml:"UsesFastProvisioning,omitempty"`
-	OverCommitAllowed        bool           `xml:"OverCommitAllowed,omitempty"`
-	VmDiscoveryEnabled       bool           `xml:"VmDiscoveryEnabled,omitempty"`
-	IsElastic                *bool          `xml:"IsElastic,omitempty"`             // Supported from 32.0 for the Flex model
-	IncludeMemoryOverhead    *bool          `xml:"IncludeMemoryOverhead,omitempty"` // Supported from 32.0 for the Flex model
+	VCpuInMhz2                    *int64         `xml:"VCpuInMhz2,omitempty"`
+	ResourceGuaranteedMemory      *float64       `xml:"ResourceGuaranteedMemory,omitempty"`
+	ResourceGuaranteedCpu         *float64       `xml:"ResourceGuaranteedCpu,omitempty"`
+	VCpuInMhz                     *int64         `xml:"VCpuInMhz,omitempty"`
+	IsThinProvision               *bool          `xml:"IsThinProvision,omitempty"`
+	NetworkPoolReference          *Reference     `xml:"NetworkPoolReference,omitempty"`
+	ProviderVdcReference          *Reference     `xml:"ProviderVdcReference"`
+	ResourcePoolRefs              *VimObjectRefs `xml:"vmext:ResourcePoolRefs,omitempty"`
+	UsesFastProvisioning          *bool          `xml:"UsesFastProvisioning,omitempty"`
+	OverCommitAllowed             bool           `xml:"OverCommitAllowed,omitempty"`
+	VmDiscoveryEnabled            bool           `xml:"VmDiscoveryEnabled,omitempty"`
+	IsElastic                     *bool          `xml:"IsElastic,omitempty"`                     // Supported from 32.0 for the Flex model
+	IncludeMemoryOverhead         *bool          `xml:"IncludeMemoryOverhead,omitempty"`         // Supported from 32.0 for the Flex model
+	UniversalNetworkPoolReference *Reference     `xml:"UniversalNetworkPoolReference,omitempty"` // Reference to a universal network pool
 }
 
 // VdcStorageProfile represents the parameters to create a storage profile in an organization vDC.
@@ -1375,6 +1376,7 @@ type VM struct {
 	VMCapabilities *VMCapabilities `xml:"VmCapabilities,omitempty"` // Allows you to specify certain capabilities of this virtual machine.
 	StorageProfile *Reference      `xml:"StorageProfile,omitempty"` // A reference to a storage profile to be used for this object. The specified storage profile must exist in the organization vDC that contains the object. If not specified, the default storage profile for the vDC is used.
 	ProductSection *ProductSection `xml:"ProductSection,omitempty"`
+	Media          *Reference      `xml:"Media,omitempty"` // Reference to the media object to insert in a new VM.
 }
 
 // VMDiskChange represents a virtual machine only with Disk setting update part
@@ -1390,23 +1392,6 @@ type VMDiskChange struct {
 	ID   string `xml:"id,attr,omitempty"`   // VM ID. The entity identifier, expressed in URN format. The value of this attribute uniquely identifies the entity, persists for the life of the entity, and is never reused.
 
 	VmSpecSection *VmSpecSection `xml:"VmSpecSection,omitempty"` // Container for the specification of this virtual machine. This is an alternative to using ovf:VirtualHardwareSection + ovf:OperatingSystemSection
-}
-
-// VmSpecSection from VM struct
-type VmSpecSection struct {
-	Modified          *bool             `xml:"Modified,attr,omitempty"`
-	Info              string            `xml:"ovf:Info"`
-	OsType            string            `xml:"OsType,omitempty"`            // The type of the OS. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
-	NumCpus           *int              `xml:"NumCpus,omitempty"`           // Number of CPUs. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
-	NumCoresPerSocket *int              `xml:"NumCoresPerSocket,omitempty"` // Number of cores among which to distribute CPUs in this virtual machine. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
-	CpuResourceMhz    *CpuResourceMhz   `xml:"CpuResourceMhz,omitempty"`    // CPU compute resources. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
-	MemoryResourceMb  *MemoryResourceMb `xml:"MemoryResourceMb"`            // Memory compute resources. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
-	MediaSection      *MediaSection     `xml:"MediaSection,omitempty"`      // The media devices of this VM.
-	DiskSection       *DiskSection      `xml:"DiskSection,omitempty"`       // virtual disks of this VM.
-	HardwareVersion   *HardwareVersion  `xml:"HardwareVersion"`             // vSphere name of Virtual Hardware Version of this VM. Example: vmx-13 - This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
-	VmToolsVersion    string            `xml:"VmToolsVersion,omitempty"`    // VMware tools version of this VM.
-	VirtualCpuType    string            `xml:"VirtualCpuType,omitempty"`    // The capabilities settings for this VM. This parameter may be omitted when using the VmSpec to update the contents of an existing VM.
-	TimeSyncWithHost  *bool             `xml:"TimeSyncWithHost,omitempty"`  // Synchronize the VM's time with the host.
 }
 
 // DiskSection from VM/VmSpecSection struct
@@ -1438,9 +1423,9 @@ type MediaSection struct {
 // MediaSettings from VM/VmSpecSection/MediaSection struct
 type MediaSettings struct {
 	DeviceId    string     `xml:"DeviceId,omitempty"`    // Describes the media device whose media mount is being specified here. This deviceId must match the RASD.InstanceID attribute in the VirtualHardwareSection of the vApp's OVF description.
+	MediaImage  *Reference `xml:"MediaImage,omitempty"`  // The media image that is mounted onto the device. This property can be 'null' which represents that no media is mounted on the device.
 	MediaType   string     `xml:"MediaType,omitempty"`   // Specified the type of media that is mounted onto the device.
 	MediaState  string     `xml:"MediaState,omitempty"`  // Specifies the state of the media device.
-	MediaImage  *Reference `xml:"MediaImage,omitempty"`  // The media image that is mounted onto the device. This property can be 'null' which represents that no media is mounted on the device.
 	UnitNumber  int        `xml:"UnitNumber"`            // Specified the type of media that is mounted onto the device.
 	BusNumber   int        `xml:"BusNumber"`             //	The bus number of the media device controller.
 	AdapterType string     `xml:"AdapterType,omitempty"` // The type of controller, e.g. IDE vs SCSI and if SCSI bus-logic vs LSI logic
