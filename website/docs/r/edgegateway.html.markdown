@@ -142,8 +142,7 @@ The following arguments are supported:
 * `fips_mode_enabled` - (Optional) When FIPS mode is enabled, any secure communication to or from
   the NSX Edge uses cryptographic algorithms or protocols that are allowed by United States Federal
   Information Processing Standards (FIPS). FIPS mode turns on the cipher suites that comply with
-  FIPS. Default is `false`. **Note:** to use FIPS mode it must be enabled in vCD system settings and
-  is only supported starting with vCD version 9.1. This field __must not__ be set for vCD 9.0.
+  FIPS. Default is `false`. **Note:** to use FIPS mode it must be enabled in vCD system settings.
 * `use_default_route_for_dns_relay` - (Optional) When default route is set, it will be used for
   gateways' default routing and DNS forwarding. Default is `false`.
 * `lb_enabled` - (Optional) Enable load balancing. Default is `false`.

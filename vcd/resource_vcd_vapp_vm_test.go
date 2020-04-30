@@ -184,7 +184,13 @@ resource "vcd_vapp" "{{.VappName}}" {
   name = "{{.VappName}}"
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
-  depends_on = ["vcd_network_routed.{{.NetworkName}}"]
+}
+
+resource "vcd_vapp_org_network" "vappNetwork1" {
+  org                = "{{.Org}}"
+  vdc                = "{{.Vdc}}"
+  vapp_name          = vcd_vapp.{{.VappName}}.name
+  org_network_name   = vcd_network_routed.{{.NetworkName}}.name 
 }
 
 resource "vcd_vapp_vm" "{{.VmName}}" {
@@ -204,10 +210,10 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   }
 
   network {
-    name               = vcd_network_routed.{{.NetworkName}}.name
-    ip                 = "10.10.102.161"
     type               = "org"
+    name               = vcd_vapp_org_network.vappNetwork1.org_network_name
     ip_allocation_mode = "MANUAL"
+    ip                 = "10.10.102.161"
   }
 
   disk {
@@ -246,8 +252,14 @@ resource "vcd_network_routed" "{{.NetworkName}}" {
 resource "vcd_vapp" "{{.VappName}}" {
   name = "{{.VappName}}"
   org  = "{{.Org}}"
-  vdc  = "{{.Vdc}}"
-  depends_on = ["vcd_network_routed.{{.NetworkName}}"]
+  vdc  = "{{.Vdc}}" 
+}
+
+resource "vcd_vapp_org_network" "vappNetwork1" {
+  org                = "{{.Org}}"
+  vdc                = "{{.Vdc}}"
+  vapp_name          = vcd_vapp.{{.VappName}}.name
+  org_network_name   = vcd_network_routed.{{.NetworkName}}.name 
 }
 
 resource "vcd_vapp_vm" "{{.VmName}}" {
@@ -267,10 +279,10 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   }
 
   network {
-    name               = vcd_network_routed.{{.NetworkName}}.name
-    ip                 = "{{.IP}}"
     type               = "org"
+    name               = vcd_vapp_org_network.vappNetwork1.org_network_name
     ip_allocation_mode = "MANUAL"
+    ip                 = "{{.IP}}"
   }
 }
 

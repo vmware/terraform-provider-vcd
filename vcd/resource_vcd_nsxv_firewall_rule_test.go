@@ -1048,21 +1048,6 @@ resource "vcd_nsxv_ip_set" "aceeptance-ipset-2" {
 `
 
 func TestAccVcdNsxvEdgeFirewallRuleVms(t *testing.T) {
-	// vCD 9.0 has a known bug - therefore skip the test if it is vCD 9.0
-	vcdClient, err := getTestVCDFromJson(testConfig)
-	if err != nil {
-		t.Skip("unable to validate vCD version - skipping test")
-	}
-	err = ProviderAuthenticate(vcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg)
-	if err != nil {
-		t.Skip("unable to validate vCD version - skipping test")
-	}
-	// if vCD older or 9.0
-	if vcdClient.Client.APIVCDMaxVersionIs("= 29.0") {
-		t.Skip("Skipping this test for vCD 9.0 because of a known issue: " +
-			"https://github.com/terraform-providers/terraform-provider-vcd/issues/420")
-	}
-
 	// String map to fill the template
 	var params = StringMap{
 		"Org":              testConfig.VCD.Org,
@@ -1186,8 +1171,13 @@ resource "vcd_network_routed" "net" {
 }
 resource "vcd_vapp" "fw-test" {
   name = "fw-test"
+}
 
-  depends_on = [vcd_network_routed.net]
+resource "vcd_vapp_org_network" "vappNetwork1" {
+  org                = "{{.Org}}"
+  vdc                = "{{.Vdc}}"
+  vapp_name          = vcd_vapp.fw-test.name
+  org_network_name   = vcd_network_routed.net.name 
 }
 
 resource "vcd_vapp_vm" "fw-vm" {
@@ -1203,7 +1193,7 @@ resource "vcd_vapp_vm" "fw-vm" {
   cpu_cores     = 1
 
   network {
-    name               = vcd_network_routed.net.name
+    name               = vcd_vapp_org_network.vappNetwork1.org_network_name
     type               = "org"
     ip_allocation_mode = "POOL"
   }

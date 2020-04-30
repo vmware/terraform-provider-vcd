@@ -22,11 +22,6 @@ const guestVlanAllowed = "true"
 func TestAccVcdVappNetwork_Isolated(t *testing.T) {
 	vappNetworkResourceName := "TestAccVcdVappNetwork_Isolated"
 
-	vcdClient, err := getTestVCDFromJson(testConfig)
-	if err != nil {
-		t.Skip("unable to validate vCD version - skipping test")
-	}
-
 	var params = StringMap{
 		"Org":          testConfig.VCD.Org,
 		"Vdc":          testConfig.VCD.Vdc,
@@ -73,22 +68,11 @@ func TestAccVcdVappNetwork_Isolated(t *testing.T) {
 		"retainIpMacEnabledForUpdate": "false",
 	}
 
-	// In version 9.1 the property description is not supported
-	if vcdClient.Client.APIVCDMaxVersionIs("<= 30.0") {
-		params["description"] = ""
-		params["descriptionForUpdate"] = ""
-	}
-
 	runVappNetworkTest(t, params)
 }
 
 func TestAccVcdVappNetwork_Nat(t *testing.T) {
 	vappNetworkResourceName := "TestAccVcdVappNetwork_Nat"
-
-	vcdClient, err := getTestVCDFromJson(testConfig)
-	if err != nil {
-		t.Skip("unable to validate vCD version - skipping test")
-	}
 
 	var params = StringMap{
 		"Org":          testConfig.VCD.Org,
@@ -135,12 +119,6 @@ func TestAccVcdVappNetwork_Nat(t *testing.T) {
 		"retainIpMacEnabled":          "false",
 		"retainIpMacEnabledForUpdate": "true",
 		"FuncName":                    "TestAccVcdVappNetwork_Nat",
-	}
-
-	// In version 9.1 the property description is not supported
-	if vcdClient.Client.APIVCDMaxVersionIs("<= 30.0") {
-		params["description"] = ""
-		params["descriptionForUpdate"] = ""
 	}
 
 	runVappNetworkTest(t, params)

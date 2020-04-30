@@ -33,10 +33,6 @@ func datasourceVcdOrgVdc() *schema.Resource {
 					Type:     schema.TypeInt,
 					Computed: true,
 				},
-				"overhead": {
-					Type:     schema.TypeInt,
-					Computed: true,
-				},
 			},
 		},
 	}

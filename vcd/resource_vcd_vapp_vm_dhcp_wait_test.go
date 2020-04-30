@@ -103,8 +103,7 @@ resource "vcd_vapp" "{{.VAppName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
-  name       = "{{.VAppName}}"
-  depends_on = [vcd_network_routed.net]
+  name       = "{{.VAppName}}" 
 }
 
 resource "vcd_network_routed" "net" {
@@ -125,6 +124,14 @@ resource "vcd_network_routed" "net" {
     end_address   = "11.10.0.254"
   }
 }
+
+resource "vcd_vapp_org_network" "vappNetwork1" {
+  org                = "{{.Org}}"
+  vdc                = "{{.Vdc}}"
+  vapp_name          = vcd_vapp.{{.VAppName}}.name
+  org_network_name   = vcd_network_routed.net.name 
+}
+
 `
 
 const testAccCheckVcdVAppVmDhcpWait = testAccCheckVcdVAppVmDhcpWaitShared + `
@@ -144,11 +151,11 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   network_dhcp_wait_seconds = {{.DhcpWaitSeconds}}
   network {
     type               = "org"
-    name               = vcd_network_routed.net.name
+    name               = vcd_vapp_org_network.vappNetwork1.org_network_name
     ip_allocation_mode = "DHCP"
     is_primary         = true
   }
-  
+ 
   network {
     type               = "none"
     ip_allocation_mode = "NONE"

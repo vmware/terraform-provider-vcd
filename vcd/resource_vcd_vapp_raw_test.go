@@ -121,6 +121,13 @@ resource "vcd_vapp" "{{.VappName}}" {
   depends_on   = ["vcd_network_routed.{{.NetworkName}}"]
 }
 
+resource "vcd_vapp_org_network" "vappNetwork1" {
+  org                = "{{.Org}}"
+  vdc                = "{{.Vdc}}"
+  vapp_name          = vcd_vapp.{{.VappName}}.name
+  org_network_name   = vcd_network_routed.{{.NetworkName}}.name 
+}
+
 resource "vcd_vapp_vm" "{{.VmName}}" {
   org           = "{{.Org}}"
   vdc           = "{{.Vdc}}"
@@ -131,8 +138,10 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   memory        = 1024
   cpus          = 1
 
-  network_name = vcd_network_routed.{{.NetworkName}}.name
-  ip           = "10.10.102.161"
-  depends_on   = ["vcd_vapp.{{.VappName}}"]
+  network {
+    type               = "org"
+    name               = vcd_vapp_org_network.vappNetwork1.org_network_name
+    ip_allocation_mode = "POOL"
+  }
 }
 `
