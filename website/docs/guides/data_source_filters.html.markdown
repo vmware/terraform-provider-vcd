@@ -127,7 +127,7 @@ data "vcd_catalog_item" "mystery" {
 }
 ```
 
-Finds an item where the metadata contains a key `Code` with value `BlackEafle`.
+Finds an item where the metadata contains a key `Code` with value `BlackEagle`.
 Will fail if the criteria match more than one item.
 
 ## Example filter 5
