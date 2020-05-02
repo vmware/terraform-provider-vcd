@@ -34,7 +34,8 @@ When you don't know the name, you may get the data source using the `filter` sec
 * `use_api_search` (Optional) If true, the search happens using the API query for Metadata, without using regular
    expressions. It is slightly faster than using the search by regular expression, but when this is set, the type
    field is mandatory.
-* `type` (Optional) One of `STRING`, `NUMBER`, `BOOL`, `DATETIME`. It is required when `use_api_search` is set.
+* `type` (Optional) One of `STRING`, `NUMBER`, `BOOLEAN`, `DATETIME`. It is required when `use_api_search` is set.
+  Note that in most cases, `STRING` is accepted also for other types.
 
 ### Availability of filters
 
