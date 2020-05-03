@@ -40,7 +40,8 @@ When you don't know the name, you may get the data source using the `filter` sec
 ### Availability of filters
 
 Not all the data sources support filters, and when they do, they may not support all the search fields. For example,
-and edge gateway only supports `name_regex`, while the `vcd_network_*` support the full set.
+an edge gateway only supports `name_regex`, while the `vcd_network_*` support name, IP, and metadata, and catalog related
+objects support name, date, and metadata.
 
 ### About metadata search
 
@@ -52,7 +53,7 @@ Note that the names of the metadata fields are case sensitive.
 ## Example filter 1
 
 ```hcl
-data "vcd_catalog_item" "mystery" {
+data "vcd_catalog_item" "unknown" {
 
   org     = "datacloud"
   catalog = "cat-datacloud"
@@ -63,7 +64,7 @@ data "vcd_catalog_item" "mystery" {
 }
 
 output "filtered_item" {
-    value = data.vcd_catalog_item.mystery
+    value = data.vcd_catalog_item.unknown
 }
 ```
 
@@ -74,7 +75,7 @@ Note that regular expressions are case sensitive: `photon-v11` and `Photon-v11` 
 ## Example filter 2
 
 ```hcl
-data "vcd_catalog_item" "mystery" {
+data "vcd_catalog_item" "unknown" {
 
   org     = "datacloud"
   catalog = "cat-datacloud"
@@ -91,7 +92,7 @@ Will find the most recent item where the name starts by `CentOS`.
 ## Example filter 3
 
 ```hcl
-data "vcd_catalog_item" "mystery" {
+data "vcd_catalog_item" "unknown" {
 
   org     = "datacloud"
   catalog = "cat-datacloud"
@@ -113,7 +114,7 @@ Will find the most recent item created on or after March 23rd, 2020
 ## Example filter 4
 
 ```hcl
-data "vcd_catalog_item" "mystery" {
+data "vcd_catalog_item" "unknown" {
 
   org     = "datacloud"
   catalog = "cat-datacloud"
@@ -133,7 +134,7 @@ Will fail if the criteria match more than one item.
 ## Example filter 5
 
 ```hcl
-data "vcd_catalog_item" "mystery" {
+data "vcd_catalog_item" "unknown" {
 
   org     = "datacloud"
   catalog = "cat-datacloud"
@@ -157,12 +158,12 @@ data "vcd_catalog_item" "mystery" {
 
 You can use several `metadata` blocks. This example finds an item where the metadata contains a key `ONE` with
 value `FirstValue`, and a key `TWO` with value `SecondValue`.
-Will fail if the criteria match more than one item.
+Will fail if the criteria match more than one item. Will also fail if only one of the two metadata fields was found.
 
 ## Example filter 6
 
 ```hcl
-data "vcd_catalog_item" "mystery" {
+data "vcd_catalog_item" "unknown" {
 
   org     = "datacloud"
   catalog = "cat-datacloud"
@@ -182,20 +183,17 @@ data "vcd_catalog_item" "mystery" {
 
 Will perform the same search of example 5, using regular expressions instead of exact values.
 
-
 Note that the `value` is treated as a regular expression when `use_api_search` is false. For example:
 `value = "cloud"` will match a metadata value `cloud`, but also one containing `on clouds` or `cloud9`.
 To match only `cloud`, the value should be specified as `"^cloud$"`.
 
-
 ## Example filter 7
-
 
 Several data sources with a quick search
 
 ```hcl
 # Finds the oldest catalog created after April 2nd, 2020
-data "vcd_catalog" "mystery" {
+data "vcd_catalog" "unknown_cat" {
   org = "datacloud"
 
   filter {
@@ -205,7 +203,7 @@ data "vcd_catalog" "mystery" {
 }
 
 # Finds an isolated network with gateway IP starting with `192.168.3`
-data "vcd_network_isolated" "mystery" {
+data "vcd_network_isolated" "unknown_net" {
   org = "datacloud"
   vdc = "vdc-datacloud"
 
@@ -215,7 +213,7 @@ data "vcd_network_isolated" "mystery" {
 }
 
 # Finds an edge gateway with name starting with `gw` and ending with `191`
-data "vcd_edgegateway" "mystery" {
+data "vcd_edgegateway" "unknown_egw" {
   org = "datacloud"
   vdc = "vdc-datacloud"
 
@@ -225,7 +223,7 @@ data "vcd_edgegateway" "mystery" {
 }
 
 # Finds the newest media item created after March 1st, 2020
-data "vcd_catalog_media" "mystery" {
+data "vcd_catalog_media" "unknown_cm" {
   org     = "datacloud"
   catalog = "cat-datacloud"
 
