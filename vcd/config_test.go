@@ -52,8 +52,11 @@ type TestConfig struct {
 			StorageProfile string `json:"storageProfile"`
 		} `json:"providerVdc"`
 		Catalog struct {
-			Name        string `json:"name,omitempty"`
-			CatalogItem string `json:"catalogItem,omitempty"`
+			Name                    string `json:"name,omitempty"`
+			CatalogItem             string `json:"catalogItem,omitempty"`
+			CatalogItemWithMultiVms string `json:"catalogItemWithMultiVms,omitempty"`
+			VmName1                 string `json:"vmName1,omitempty"`
+			VmName2                 string `json:"vmName2,omitempty"`
 		} `json:"catalog"`
 	} `json:"vcd"`
 	Networking struct {

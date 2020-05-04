@@ -837,3 +837,35 @@ func (vdc *Vdc) buildNsxvNetworkServiceEndpointURL(optionalSuffix string) (strin
 
 	return hostname, nil
 }
+
+// Finds VM template using catalog name, vApp template name, VN name in template. Returns types.QueryResultVMRecordType
+func (vdc *Vdc) QueryVappVmTemplate(catalogName, vappTemplateName, vmNameInTemplate string) (*types.QueryResultVMRecordType, error) {
+
+	typeVm := "vm"
+	if vdc.client.IsSysAdmin {
+		typeVm = "adminVM"
+	}
+
+	results, err := vdc.QueryWithNotEncodedParams(nil, map[string]string{"type": typeVm,
+		"filter": "catalogName==" + url.QueryEscape(catalogName) + ";containerName==" + url.QueryEscape(vappTemplateName) + ";name==" + url.QueryEscape(vmNameInTemplate) +
+			";isVAppTemplate==true;status!=FAILED_CREATION;status!=UNKNOWN;status!=UNRECOGNIZED;status!=UNRESOLVED&links=true;",
+		"filterEncoded": "true"})
+	if err != nil {
+		return nil, fmt.Errorf("error quering all vApp templates: %s", err)
+	}
+
+	vmResults := results.Results.VMRecord
+	if vdc.client.IsSysAdmin {
+		vmResults = results.Results.AdminVMRecord
+	}
+
+	if len(vmResults) == 0 {
+		return nil, fmt.Errorf("didn't found any result")
+	}
+
+	if len(vmResults) > 1 {
+		return nil, fmt.Errorf("found more than 1 result: %d", len(vmResults))
+	}
+
+	return vmResults[0], nil
+}

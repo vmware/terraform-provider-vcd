@@ -57,6 +57,12 @@ var vappVmSchema = map[string]*schema.Schema{
 		ForceNew:    true,
 		Description: "The name of the vApp Template to use",
 	},
+	"vm_name_in_template": &schema.Schema{
+		Type:        schema.TypeString,
+		Optional:    true,
+		ForceNew:    true,
+		Description: "The name of the VM in vApp Template to use. In cases when vApp template has more than one VM",
+	},
 	"catalog_name": &schema.Schema{
 		Type:        schema.TypeString,
 		Optional:    true,
@@ -524,16 +530,28 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 			return fmt.Errorf("error finding catalog %s: %s", catalogName, err)
 		}
 
-		catalogItem, err := catalog.GetCatalogItemByName(templateName, false)
-		if err != nil {
-			return fmt.Errorf("error finding catalog item %s: %s", templateName, err)
-		}
+		var vappTemplate govcd.VAppTemplate
+		if vmNameInTemplate, ok := d.GetOk("vm_name_in_template"); ok {
+			vmInTempateRecord, err := vdc.QueryVappVmTemplate(catalogName, templateName, vmNameInTemplate.(string))
+			if err != nil {
+				return fmt.Errorf("error quering vm template %s: %s", vmNameInTemplate, err)
+			}
+			returnedVappTemplate, err := catalog.GetVappTemplateByHref(vmInTempateRecord.HREF)
+			if err != nil {
+				return fmt.Errorf("error quering vm template %s: %s", vmNameInTemplate, err)
+			}
+			vappTemplate = *returnedVappTemplate
+		} else {
+			catalogItem, err := catalog.GetCatalogItemByName(templateName, false)
+			if err != nil {
+				return fmt.Errorf("error finding catalog item %s: %s", templateName, err)
+			}
+			vappTemplate, err = catalogItem.GetVAppTemplate()
+			if err != nil {
+				return fmt.Errorf("error finding VAppTemplate: %s", err)
+			}
 
-		vappTemplate, err := catalogItem.GetVAppTemplate()
-		if err != nil {
-			return fmt.Errorf("error finding VAppTemplate: %s", err)
 		}
-
 		acceptEulas := d.Get("accept_all_eulas").(bool)
 
 		vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
@@ -979,31 +997,6 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			err = task.WaitTaskCompletion()
 			if err != nil {
 				return err
-			}
-		}
-
-		if d.HasChange("hardware_version") {
-			vmSpecSection := vm.VM.VmSpecSection
-			vmSpecSection.HardwareVersion = &types.HardwareVersion{Value: d.Get("hardware_version").(string)}
-			_, err := vm.UpdateVmSpecSection(vmSpecSection, vm.VM.Description)
-			if err != nil {
-				return fmt.Errorf("error changing hardware version: %s", err)
-			}
-		}
-
-		if d.HasChange("os_type") {
-			vmSpecSection := vm.VM.VmSpecSection
-			vmSpecSection.OsType = d.Get("os_type").(string)
-			_, err := vm.UpdateVmSpecSection(vmSpecSection, vm.VM.Description)
-			if err != nil {
-				return fmt.Errorf("error changing os type: %s", err)
-			}
-		}
-
-		if d.HasChange("description") {
-			_, err := vm.UpdateVmSpecSection(vm.VM.VmSpecSection, d.Get("description").(string))
-			if err != nil {
-				return fmt.Errorf("error changing description: %s", err)
 			}
 		}
 

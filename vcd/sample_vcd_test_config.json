@@ -29,7 +29,10 @@
     "//": "Catalog name to be created (if using testEnvBuild) or to reuse if exists already",
     "catalog": {
       "name": "tf_catalog",
-      "catalogItem": "tf_catalog_item"
+      "catalogItem": "tf_catalog_item",
+      "catalogItemWithMultiVms": "item_with_multi_vms",
+      "vmName1": "first_vm_name_in_multi_vm_item",
+      "vmName2": "second-vm_name_in_multi_vm_item"
     },
     "providerVdc": {
       "//": "Provider VDC details are needed for creating organization VDC",
