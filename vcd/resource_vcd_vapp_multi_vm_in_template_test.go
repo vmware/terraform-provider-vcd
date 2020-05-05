@@ -37,6 +37,11 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 		return
 	}
 
+	if testConfig.VCD.Catalog.CatalogItemWithMultiVms == "" || testConfig.VCD.Catalog.VmName1 == "" || testConfig.VCD.Catalog.VmName2 == "" {
+		t.Skip("Variables catalogItemWithMultiVms, vmName1, vmName2  must be set to run multi VM in vApp template tests")
+		return
+	}
+
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
