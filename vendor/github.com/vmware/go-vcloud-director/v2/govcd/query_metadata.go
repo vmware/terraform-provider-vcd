@@ -11,7 +11,7 @@ import (
 )
 
 /*
-This file contains functions that allows an extended query including metadata fields.
+This file contains functions that allow an extended query including metadata fields.
 
 The metadata fields need to be requested explicitly (we can't just ask for generic metadata to be included
 in the query result. Due to the query system implementation, when we request metadata fields, we must also
@@ -20,6 +20,12 @@ For this reason, we need to have the list of fields supported by the query for e
 fields can be used in the "fields" parameter of the query.
 
 The function queryFieldsOnDemand provides the fields for the supported types.
+
+Example: we have type "X" with fields "a", "b", "c", "d". It supports metadata.
+If we want to query X without metadata, we run a simple query?type=X;[...]
+
+If we also want metadata, we need to know which keys we want to fetch, and run
+query?type=X;fields=a,b,c,d,metadata:key1,metadata:key2
 
 */
 
@@ -48,6 +54,7 @@ const (
 // Note that an alternative approach using `reflect` would require several exceptions to list all the
 // fields that are not supported.
 func queryFieldsOnDemand(queryType string) ([]string, error) {
+	// entities for which the fields on demand are supported
 	var (
 		vappTemplatefields = []string{"ownerName", "catalogName", "isPublished", "name", "vdc", "vdcName",
 			"org", "creationDate", "isBusy", "isGoldMaster", "isEnabled", "status", "isDeployed", "isExpired",
@@ -62,7 +69,6 @@ func queryFieldsOnDemand(queryType string) ([]string, error) {
 			"creationDate", "isBusy", "storageB", "owner", "catalog", "catalogItem", "status",
 			"storageProfileName", "taskStatusName", "isInCatalog", "task",
 			"isIso", "isVdcEnabled", "taskStatus", "taskDetails"}
-		// entities for which the fields on demand are supported
 		catalogItemFields = []string{"entity", "entityName", "entityType", "catalog", "catalogName", "ownerName",
 			"owner", "isPublished", "vdc", "vdcName", "isVdcEnabled", "creationDate", "isExpired", "status"}
 		fieldsOnDemand = map[string][]string{
@@ -86,6 +92,7 @@ func queryFieldsOnDemand(queryType string) ([]string, error) {
 	return fields, nil
 }
 
+// addResults takes records from the appropriate field in the latest results and adds them to the cumulative results
 func addResults(queryType string, cumulativeResults, newResults Results) (Results, int, error) {
 
 	var size int
@@ -128,6 +135,7 @@ func addResults(queryType string, cumulativeResults, newResults Results) (Result
 	return cumulativeResults, size, nil
 }
 
+// cumulativeQuery runs a paginated query and collects all elements until the total number of records is retrieved
 func (client *Client) cumulativeQuery(queryType string, params, notEncodedParams map[string]string) (Results, error) {
 
 	result, err := client.QueryWithNotEncodedParams(params, notEncodedParams)
@@ -167,14 +175,14 @@ func (client *Client) cumulativeQuery(queryType string, params, notEncodedParams
 	return result, nil
 }
 
-// QueryWithMetadataFields is a wrapper around QueryWithNotEncodedParams with additional metadata fields
+// queryWithMetadataFields is a wrapper around QueryWithNotEncodedParams with additional metadata fields
 // being returned.
 //
 // * queryType is the type of the query. Only the ones listed within queryFieldsOnDemand are supported
 // * params and notEncodedParams are the same ones passed to QueryWithNotEncodedParams
 // * metadataFields is the list of fields to be included in the query results
 // * if isSystem is true, metadata fields are requested as 'metadata@SYSTEM:fieldName'
-func (client *Client) QueryWithMetadataFields(queryType string, params, notEncodedParams map[string]string,
+func (client *Client) queryWithMetadataFields(queryType string, params, notEncodedParams map[string]string,
 	metadataFields []string, isSystem bool) (Results, error) {
 	if notEncodedParams == nil {
 		notEncodedParams = make(map[string]string)
@@ -187,11 +195,11 @@ func (client *Client) QueryWithMetadataFields(queryType string, params, notEncod
 
 	fields, err := queryFieldsOnDemand(queryType)
 	if err != nil {
-		return Results{}, fmt.Errorf("[QueryWithMetadataFields] %s", err)
+		return Results{}, fmt.Errorf("[queryWithMetadataFields] %s", err)
 	}
 
 	if len(fields) == 0 {
-		return Results{}, fmt.Errorf("[QueryWithMetadataFields] no fields found for type '%s'", queryType)
+		return Results{}, fmt.Errorf("[queryWithMetadataFields] no fields found for type '%s'", queryType)
 	}
 	metadataFieldText := ""
 	prefix := "metadata"
@@ -210,19 +218,19 @@ func (client *Client) QueryWithMetadataFields(queryType string, params, notEncod
 	return client.cumulativeQuery(queryType, params, notEncodedParams)
 }
 
-// QueryByMetadataFilter is a wrapper around QueryWithNotEncodedParams with additional filtering
+// queryByMetadataFilter is a wrapper around QueryWithNotEncodedParams with additional filtering
 // on metadata fields
-// Unlike QueryWithMetadataFields, this function does not return the metadata fields, but only uses
+// Unlike queryWithMetadataFields, this function does not return the metadata fields, but only uses
 // them to perform the filter.
 //
 // * params and notEncodedParams are the same ones passed to QueryWithNotEncodedParams
 // * metadataFilter is is a map of conditions to use for filtering
 // * if isSystem is true, metadata fields are requested as 'metadata@SYSTEM:fieldName'
-func (client *Client) QueryByMetadataFilter(queryType string, params, notEncodedParams map[string]string,
+func (client *Client) queryByMetadataFilter(queryType string, params, notEncodedParams map[string]string,
 	metadataFilters map[string]MetadataFilter, isSystem bool) (Results, error) {
 
 	if len(metadataFilters) == 0 {
-		return Results{}, fmt.Errorf("[QueryByMetadataFilter] no metadata fields provided")
+		return Results{}, fmt.Errorf("[queryByMetadataFilter] no metadata fields provided")
 	}
 	if notEncodedParams == nil {
 		notEncodedParams = make(map[string]string)

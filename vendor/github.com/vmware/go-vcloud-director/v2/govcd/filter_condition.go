@@ -79,7 +79,7 @@ func matchParent(stored, item interface{}) (bool, string, error) {
 func matchParentId(stored, item interface{}) (bool, string, error) {
 	condition, ok := stored.(parentIdCondition)
 	if !ok {
-		return false, "", fmt.Errorf("stored value is not a Parent ID condition (%# v)", pretty.Formatter(stored))
+		return false, "", fmt.Errorf("stored value is not a parent ID condition (%# v)", pretty.Formatter(stored))
 	}
 	queryItem, ok := item.(QueryItem)
 	if !ok {
@@ -127,7 +127,6 @@ func matchIp(stored, item interface{}) (bool, string, error) {
 	}
 	queryItem, ok := item.(QueryItem)
 	if !ok {
-		//return false, "", fmt.Errorf("item is not a queryItem searchable by Ip")
 		return false, "", fmt.Errorf("item is not a queryItem searchable by Ip: %# v", pretty.Formatter(item))
 	}
 	ip := queryItem.GetIp()
@@ -158,7 +157,7 @@ func matchDate(stored, item interface{}) (bool, string, error) {
 		return false, "", nil
 	}
 
-	result, err := CompareDate(expr.dateExpression, queryItem.GetDate())
+	result, err := compareDate(expr.dateExpression, queryItem.GetDate())
 	return result, fmt.Sprintf("%s %s", queryItem.GetDate(), expr.dateExpression), err
 }
 

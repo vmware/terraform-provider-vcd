@@ -31,17 +31,6 @@ func searchByFilter(queryByMetadata queryByMetadataFunc, queryWithMetadataFields
 	var conditions []conditionDef
 	// List of candidate items that match all conditions
 	var candidatesByConditions []QueryItem
-	// item with the latest date among the candidates
-	var candidateByLatest QueryItem
-	var candidateByEarliest QueryItem
-
-	// By setting the latest date to the early possible date, we make sure that it will be swapped
-	// at the first comparison
-	var latestDate = "1970-01-01 00:00:00"
-
-	// earliest date is set to a date in the future (10 years from now), so that any date found will be evaluated as
-	// earlier than this one
-	var earliestDate = time.Now().AddDate(10, 0, 0).String()
 
 	// List of metadata fields that will be added to the query
 	var metadataFields []string
@@ -236,6 +225,11 @@ func searchByFilter(queryByMetadata queryByMetadataFunc, queryWithMetadataFields
 	}
 	var emptyDatesFound []string
 	if searchLatest {
+		// By setting the latest date to the early possible date, we make sure that it will be swapped
+		// at the first comparison
+		var latestDate = "1970-01-01 00:00:00"
+		// item with the latest date among the candidates
+		var candidateByLatest QueryItem
 		for _, candidate := range candidatesByConditions {
 			itemDate := candidate.GetDate()
 			if itemDate == "" {
@@ -243,7 +237,7 @@ func searchByFilter(queryByMetadata queryByMetadataFunc, queryWithMetadataFields
 				continue
 			}
 			util.Logger.Printf("[SearchByFilter] search latest: comparing %s to %s", latestDate, itemDate)
-			greater, err := CompareDate(fmt.Sprintf("> %s", latestDate), itemDate)
+			greater, err := compareDate(fmt.Sprintf("> %s", latestDate), itemDate)
 			if err != nil {
 				return nil, explanation, fmt.Errorf("[SearchByFilter] error comparing dates %s > %s : %s",
 					candidate.GetDate(), latestDate, err)
@@ -262,6 +256,11 @@ func searchByFilter(queryByMetadata queryByMetadataFunc, queryWithMetadataFields
 		}
 	}
 	if searchEarliest {
+		// earliest date is set to a date in the future (10 years from now), so that any date found will be evaluated as
+		// earlier than this one
+		var earliestDate = time.Now().AddDate(10, 0, 0).String()
+		// item with the earliest date among the candidates
+		var candidateByEarliest QueryItem
 		for _, candidate := range candidatesByConditions {
 			itemDate := candidate.GetDate()
 			if itemDate == "" {
@@ -269,7 +268,7 @@ func searchByFilter(queryByMetadata queryByMetadataFunc, queryWithMetadataFields
 				continue
 			}
 			util.Logger.Printf("[SearchByFilter] search earliest: comparing %s to %s", earliestDate, candidate.GetDate())
-			greater, err := CompareDate(fmt.Sprintf("< %s", earliestDate), candidate.GetDate())
+			greater, err := compareDate(fmt.Sprintf("< %s", earliestDate), candidate.GetDate())
 			if err != nil {
 				return nil, explanation, fmt.Errorf("[SearchByFilter] error comparing dates %s > %s: %s",
 					candidate.GetDate(), earliestDate, err)
@@ -319,10 +318,10 @@ func conditionMatches(conditionType string, stored, item interface{}) (bool, str
 // Returns a list of QueryItem interface elements, which can be cast back to the wanted real type
 // Also returns a human readable text of the conditions being passed and how they matched the data found
 func (client *Client) SearchByFilter(queryType string, criteria *FilterDef) ([]QueryItem, string, error) {
-	return searchByFilter(client.QueryByMetadataFilter, client.QueryWithMetadataFields, resultToQueryItems, queryType, criteria)
+	return searchByFilter(client.queryByMetadataFilter, client.queryWithMetadataFields, resultToQueryItems, queryType, criteria)
 }
 
-// catalog.SearchByFilter runs the search for a specific catalog
+// SearchByFilter runs the search for a specific catalog
 // The 'parentField' argument defines which filter will be added, depending on the items we search for:
 //   - 'catalog' contains the catalog HREF or ID
 //   - 'catalogName' contains the catalog name
@@ -342,7 +341,7 @@ func (catalog *Catalog) SearchByFilter(queryType, parentField string, criteria *
 	return catalog.client.SearchByFilter(queryType, criteria)
 }
 
-// vdc.SearchByFilter runs the search for a specific VDC
+// SearchByFilter runs the search for a specific VDC
 // The 'parentField' argument defines which filter will be added, depending on the items we search for:
 //   - 'vdc' contains the VDC HREF or ID
 //   - 'vdcName' contains the VDC name
@@ -362,7 +361,7 @@ func (vdc *Vdc) SearchByFilter(queryType, parentField string, criteria *FilterDe
 	return vdc.client.SearchByFilter(queryType, criteria)
 }
 
-// adminOrg.SearchByFilter runs the search for a specific Org
+// SearchByFilter runs the search for a specific Org
 func (org *AdminOrg) SearchByFilter(queryType string, criteria *FilterDef) ([]QueryItem, string, error) {
 	err := criteria.AddFilter(FilterParent, org.AdminOrg.Name)
 	if err != nil {
@@ -371,7 +370,7 @@ func (org *AdminOrg) SearchByFilter(queryType string, criteria *FilterDef) ([]Qu
 	return org.client.SearchByFilter(queryType, criteria)
 }
 
-// org.SearchByFilter runs the search for a specific Org
+// SearchByFilter runs the search for a specific Org
 func (org *Org) SearchByFilter(queryType string, criteria *FilterDef) ([]QueryItem, string, error) {
 	err := criteria.AddFilter(FilterParent, org.Org.Name)
 	if err != nil {

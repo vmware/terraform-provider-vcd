@@ -11,6 +11,13 @@ import (
 // This file contains functions that help create tests for filtering.
 // It is not in the '*_test.go' namespace because we want to use these functions from tests in other packages.
 // All exported functions from this file have the prefix "Helper"
+//
+// Moreover, this file is not in a separate package for the following reasons:
+//     * getExistingMedia is private
+//     * getMetadata is private
+//     * the 'client' component in all entity objects is private
+//     * the tests that are now in filter_engine_test.go would need to go in a separate package, with consequent
+//       need for configuration file parser duplication.
 
 type StringMap map[string]string
 
@@ -35,6 +42,15 @@ type VappTemplateData struct {
 	VappTemplateCreationDate string
 	Metadata                 StringMap
 	Created                  bool
+}
+
+// retrievedMetadataTypes maps the internal value of metadata type with the
+// string needed when searching for a metadata field in the API
+var retrievedMetadataTypes = map[string]string{
+	"MetadataBooleanValue":  "BOOLEAN",
+	"MetadataStringValue":   "STRING",
+	"MetadataNumberValue":   "NUMBER",
+	"MetadataDateTimeValue": "STRING", // values for DATETIME can't be passed as such in a query when the date contains colons.
 }
 
 // HelperMakeFiltersFromEdgeGateways looks at the existing edge gateways and creates a set of criteria to retrieve each of them
@@ -109,7 +125,7 @@ func makeDateFilter(items []DateItem) ([]FilterMatch, error) {
 	earliestFound := false
 	latestFound := false
 	for _, item := range items {
-		greater, err := CompareDate(">"+latestDate, item.Date)
+		greater, err := compareDate(">"+latestDate, item.Date)
 		if err != nil {
 			return nil, err
 		}
@@ -119,7 +135,7 @@ func makeDateFilter(items []DateItem) ([]FilterMatch, error) {
 			latestEntity = item.Entity
 			latestFound = true
 		}
-		greater, err = CompareDate("<"+earliestDate, item.Date)
+		greater, err = compareDate("<"+earliestDate, item.Date)
 		if err != nil {
 			return nil, err
 		}
@@ -446,7 +462,7 @@ func (client *Client) metadataToFilter(href string, filter *FilterDef) (*FilterD
 	metadata, err := getMetadata(client, href)
 	if err == nil && metadata != nil && len(metadata.MetadataEntry) > 0 {
 		for _, md := range metadata.MetadataEntry {
-
+			isSystem := md.Domain == "SYSTEM"
 			var fType string
 			var ok bool
 			if md.TypedValue.XsiType == "" {
@@ -457,7 +473,7 @@ func (client *Client) metadataToFilter(href string, filter *FilterDef) (*FilterD
 					fType = "STRING"
 				}
 			}
-			err = filter.AddMetadataFilter(md.Key, md.TypedValue.Value, fType, false, false)
+			err = filter.AddMetadataFilter(md.Key, md.TypedValue.Value, fType, isSystem, false)
 			if err != nil {
 				return nil, err
 			}

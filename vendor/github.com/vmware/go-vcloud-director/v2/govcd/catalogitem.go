@@ -60,7 +60,7 @@ func queryCatalogItemList(client *Client, parentField, parentValue string) ([]*t
 
 	filterText := fmt.Sprintf("%s==%s", parentField, url.QueryEscape(parentValue))
 
-	results, err := client.QueryWithNotEncodedParams(nil, map[string]string{
+	results, err := client.cumulativeQuery(catalogItemType, nil, map[string]string{
 		"type":   catalogItemType,
 		"filter": filterText,
 	})
@@ -97,7 +97,7 @@ func queryVappTemplateList(client *Client, parentField, parentValue string) ([]*
 	if client.IsSysAdmin {
 		vappTemplateType = QtAdminVappTemplate
 	}
-	results, err := client.QueryWithNotEncodedParams(nil, map[string]string{
+	results, err := client.cumulativeQuery(vappTemplateType, nil, map[string]string{
 		"type":   vappTemplateType,
 		"filter": fmt.Sprintf("%s==%s", parentField, url.QueryEscape(parentValue)),
 	})
