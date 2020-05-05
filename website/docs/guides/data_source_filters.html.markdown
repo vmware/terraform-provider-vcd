@@ -189,6 +189,32 @@ To match only `cloud`, the value should be specified as `"^cloud$"`.
 
 ## Example filter 7
 
+```hcl
+data "vcd_catalog_item" "unknown" {
+
+  org     = "datacloud"
+  catalog = "cat-datacloud"
+
+  filter {
+    metadata {
+     key       = "vapp.origin.type"
+     value     = "com.vmware.vcloud.entity.vapp"
+     is_system = true
+    }
+    metadata {
+     key       = "vapp.origin.name"
+     value     = "my_vapp_name"
+     is_system = true
+    }
+  }
+}
+```
+
+Will search a catalog item using SYSTEM metadata. In this example, it was a vApp that was converted to a template, and
+got system metadata from vCD.
+
+## Example filter 8
+
 Several data sources with a quick search
 
 ```hcl
