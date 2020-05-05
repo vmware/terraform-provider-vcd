@@ -209,11 +209,11 @@ resource "vcd_vapp_vm" "emptyVM" {
 ```
 
 ## Example Usage (vApp template with multi VMs)
-This example shows how to create an empty VM.
+This example shows how to create a VM using vApp template with multi VMs.
 
 ```hcl
 resource "vcd_vapp_vm" "secondVM" {
-  vapp_name           = vcd_vapp. vcd_vapp.web.name
+  vapp_name           = vcd_vapp.vcd_vapp.web.name
   name                = "secondVM"
   computer_name       = "db-vm"
   catalog_name        = "cat-where-is-template"
