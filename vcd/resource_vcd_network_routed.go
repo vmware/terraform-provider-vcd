@@ -289,16 +289,14 @@ func resourceVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}) erro
 func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origin string) error {
 	vcdClient := meta.(*VCDClient)
 
+	if !nameOrFilterIsSet(d) {
+		return fmt.Errorf(noNameOrFilterError, "vcd_network_direct")
+	}
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
-	//identifier := d.Id()
-	//
-	//if identifier == "" {
-	//	identifier = d.Get("name").(string)
-	//}
-	//network, err := vdc.GetOrgVdcNetworkByNameOrId(identifier, false)
+
 	network, err := getNetwork(d, vcdClient, origin == "datasource", "routed")
 	if err != nil {
 		if origin == "resource" {
@@ -437,6 +435,7 @@ func getDhcpFromEdgeGateway(networkHref string, edgeGateway *govcd.EdgeGateway) 
 		return dhcpConfig
 	}
 	for _, dhcp := range gwConf.EdgeGatewayServiceConfiguration.GatewayDhcpService.Pool {
+		// This check should avoid a crash when the network is not referenced. See Issue #500
 		if dhcp.Network == nil {
 			continue
 		}

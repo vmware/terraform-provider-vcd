@@ -60,9 +60,12 @@ func datasourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
 		err       error
 		adminOrg  *govcd.AdminOrg
 		catalog   *govcd.Catalog
-		criteria  *govcd.FilterDef
+		//criteria  *govcd.FilterDef
 	)
 
+	if !nameOrFilterIsSet(d) {
+		return fmt.Errorf(noNameOrFilterError, "vcd_catalog")
+	}
 	orgName := d.Get("org").(string)
 	identifier := d.Get("name").(string)
 	log.Printf("[TRACE] Reading Org %s", orgName)
@@ -78,32 +81,7 @@ func datasourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
 	filter, hasFilter := d.GetOk("filter")
 
 	if hasFilter {
-		var queryItems []govcd.QueryItem
-		var explanation string
-		criteria, err = buildCriteria(filter)
-		if err != nil {
-			return err
-		}
-		queryType := govcd.QtCatalog
-		if vcdClient.Client.IsSysAdmin {
-			queryType = govcd.QtAdminCatalog
-		}
-
-		queryItems, explanation, err = adminOrg.SearchByFilter(queryType, criteria)
-		if err != nil {
-			return err
-		}
-		if len(queryItems) == 0 {
-			return fmt.Errorf("no catalogs found with given criteria (%s)", explanation)
-		}
-		if len(queryItems) > 1 {
-			var itemNames = make([]string, len(queryItems))
-			for i, item := range queryItems {
-				itemNames[i] = item.GetName()
-			}
-			return fmt.Errorf("more than one catalog found by given criteria: %v", itemNames)
-		}
-		catalog, err = adminOrg.GetCatalogByHref(queryItems[0].GetHref())
+		catalog, err = getCatalogByFilter(adminOrg, filter, vcdClient.Client.IsSysAdmin)
 	} else {
 		catalog, err = adminOrg.GetCatalogByNameOrId(identifier, false)
 	}

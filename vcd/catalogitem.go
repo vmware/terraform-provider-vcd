@@ -82,36 +82,10 @@ func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient, origin string
 	if origin == "datasource" {
 		filter, hasFilter := d.GetOk("filter")
 		if hasFilter {
-			criteria, err := buildCriteria(filter)
+
+			catalogItem, err = getCatalogItemByFilter(catalog, filter, vcdClient.Client.IsSysAdmin)
 			if err != nil {
 				return nil, err
-			}
-			queryType := govcd.QtVappTemplate
-			if vcdClient.Client.IsSysAdmin {
-				queryType = govcd.QtAdminVappTemplate
-			}
-			// Note: the search is made by vApp template, for which the parent ID is the one of the VDC
-			// To search by catalog affiliation, we need to use the catalog name
-			queryItems, explanation, err := catalog.SearchByFilter(queryType, "catalogName", criteria)
-			if err != nil {
-				return nil, err
-			}
-			if len(queryItems) == 0 {
-				return nil, fmt.Errorf("no items found with given criteria (%s)", explanation)
-			}
-			if len(queryItems) > 1 {
-				var itemNames = make([]string, len(queryItems))
-				for i, item := range queryItems {
-					itemNames[i] = item.GetName()
-				}
-				return nil, fmt.Errorf("more than one item found by given criteria: %v", itemNames)
-			}
-			catalogItem, err = vappTemplateToCatalogItem(queryItems[0].GetName(), catalog)
-			if len(queryItems) == 0 {
-				return nil, err
-			}
-			if catalogItem == nil {
-				return nil, fmt.Errorf("unexpected nil value for catalog item after conversion from vApp template")
 			}
 
 			d.SetId(catalogItem.CatalogItem.ID)

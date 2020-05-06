@@ -188,6 +188,9 @@ func resourceVcdMediaRead(d *schema.ResourceData, meta interface{}) error {
 func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string) error {
 	vcdClient := meta.(*VCDClient)
 
+	if !nameOrFilterIsSet(d) {
+		return fmt.Errorf(noNameOrFilterError, "vcd_catalog_media")
+	}
 	org, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrg, err)
@@ -200,37 +203,15 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 	}
 
 	var media *govcd.Media
-	var criteria *govcd.FilterDef
-	var explanation string
 
 	if origin == "datasource" {
 		filter, hasFilter := d.GetOk("filter")
 		if hasFilter {
-			criteria, err = buildCriteria(filter)
+
+			media, err = getMediaByFilter(catalog, filter, vcdClient.Client.IsSysAdmin)
 			if err != nil {
 				return err
 			}
-			queryType := govcd.QtMedia
-			if vcdClient.Client.IsSysAdmin {
-				queryType = govcd.QtAdminMedia
-			}
-			var queryItems []govcd.QueryItem
-			// The field "catalog" in media structure contains the catalog ID
-			queryItems, explanation, err = catalog.SearchByFilter(queryType, "catalog", criteria)
-			if err != nil {
-				return err
-			}
-			if len(queryItems) == 0 {
-				return fmt.Errorf("no media found with given criteria (%s)", explanation)
-			}
-			if len(queryItems) > 1 {
-				var itemNames = make([]string, len(queryItems))
-				for i, item := range queryItems {
-					itemNames[i] = item.GetName()
-				}
-				return fmt.Errorf("more than one media item found by given criteria: %v", itemNames)
-			}
-			media, err = catalog.GetMediaByHref(queryItems[0].GetHref())
 		}
 	}
 

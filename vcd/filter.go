@@ -8,6 +8,8 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
+const noNameOrFilterError = "no 'name' or 'filter' was found in definition for type %s"
+
 // These elements are used to compose a filter block for data sources
 var (
 
@@ -137,10 +139,13 @@ func buildCriteria(filterBlock interface{}) (*govcd.FilterDef, error) {
 	if !ok {
 		return nil, fmt.Errorf("[buildCriteria] filter is not a list")
 	}
+	if len(filterList) == 0 || filterList[0] == nil {
+		return criteria, nil
+	}
 
 	filterMap, ok := filterList[0].(map[string]interface{})
 	if !ok {
-		return nil, fmt.Errorf("[buildCriteria] filter is not a map")
+		return nil, fmt.Errorf("[buildCriteria] filter is not a map: %#v", filterList[0])
 	}
 	errorAddingFilter := "[buildCriteria] error adding filter '%s': %s"
 	for key, value := range filterMap {
@@ -169,4 +174,11 @@ func buildCriteria(filterBlock interface{}) (*govcd.FilterDef, error) {
 		}
 	}
 	return criteria, nil
+}
+
+// nameOrFilterIsSet checks if either a name or a filter is set in the data source
+func nameOrFilterIsSet(d *schema.ResourceData) bool {
+	_, nameOk := d.GetOk("name")
+	_, filterOk := d.GetOk("filter")
+	return nameOk || filterOk
 }

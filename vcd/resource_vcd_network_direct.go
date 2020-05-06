@@ -143,17 +143,14 @@ func resourceVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}) erro
 func genericVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}, origin string) error {
 	vcdClient := meta.(*VCDClient)
 
+	if !nameOrFilterIsSet(d) {
+		return fmt.Errorf(noNameOrFilterError, "vcd_network_direct")
+	}
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
 		return fmt.Errorf("[direct network read] "+errorRetrievingOrgAndVdc, err)
 	}
 
-	//identifier := d.Id()
-	//
-	//if identifier == "" {
-	//	identifier = d.Get("name").(string)
-	//}
-	//network, err := vdc.GetOrgVdcNetworkByNameOrId(identifier, false)
 	network, err := getNetwork(d, vcdClient, origin == "datasource", "direct")
 	if err != nil {
 		if origin == "resource" {
@@ -235,33 +232,7 @@ func getNetwork(d *schema.ResourceData, vcdClient *VCDClient, isDataSource bool,
 		filter, hasFilter := d.GetOk("filter")
 
 		if hasFilter {
-			criteria, err := buildCriteria(filter)
-			if err != nil {
-				return nil, err
-			}
-			queryType := govcd.QtOrgVdcNetwork
-			// The field "vdc" in the network structure contains the VDC IF or HREF
-			rawQueryItems, explanation, err := vdc.SearchByFilter(queryType, "vdc", criteria)
-			if err != nil {
-				return nil, err
-			}
-			var queryItems []govcd.QueryItem
-			for _, item := range rawQueryItems {
-				if item.GetType() == "network_"+wanted {
-					queryItems = append(queryItems, item)
-				}
-			}
-			if len(queryItems) == 0 {
-				return nil, fmt.Errorf("no networks found with given criteria (%s)", explanation)
-			}
-			if len(queryItems) > 1 {
-				var itemNames = make([]string, len(queryItems))
-				for i, item := range queryItems {
-					itemNames[i] = item.GetName()
-				}
-				return nil, fmt.Errorf("more than one network found by given criteria: %v", itemNames)
-			}
-			network, err = vdc.GetOrgVdcNetworkByHref(queryItems[0].GetHref())
+			network, err = getNetworkByFilter(vdc, filter, wanted)
 			if err != nil {
 				return nil, err
 			}
