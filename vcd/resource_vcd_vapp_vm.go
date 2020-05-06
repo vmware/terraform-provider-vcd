@@ -1000,6 +1000,31 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			}
 		}
 
+		if d.HasChange("hardware_version") {
+			vmSpecSection := vm.VM.VmSpecSection
+			vmSpecSection.HardwareVersion = &types.HardwareVersion{Value: d.Get("hardware_version").(string)}
+			_, err := vm.UpdateVmSpecSection(vmSpecSection, vm.VM.Description)
+			if err != nil {
+				return fmt.Errorf("error changing hardware version: %s", err)
+			}
+		}
+
+		if d.HasChange("os_type") {
+			vmSpecSection := vm.VM.VmSpecSection
+			vmSpecSection.OsType = d.Get("os_type").(string)
+			_, err := vm.UpdateVmSpecSection(vmSpecSection, vm.VM.Description)
+			if err != nil {
+				return fmt.Errorf("error changing os type: %s", err)
+			}
+		}
+
+		if d.HasChange("description") {
+			_, err := vm.UpdateVmSpecSection(vm.VM.VmSpecSection, d.Get("description").(string))
+			if err != nil {
+				return fmt.Errorf("error changing description: %s", err)
+			}
+		}
+
 		if d.HasChange("network") {
 			networkConnectionSection, err := networksToConfig(d.Get("network").([]interface{}), vdc, *vapp, vcdClient)
 			if err != nil {
