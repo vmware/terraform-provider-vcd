@@ -6,9 +6,10 @@ description: |-
   Provides guidance on filters.
 ---
 
-(supported in provider *v2.9+*)
 
 ## Retrieving a data source by filter
+
+Supported in provider *v2.9+*
 
 Several data sources can be retrieved using a filter.
 The criteria should be specific enough to retrieve a single item. The retrieval will fail if the criteria match more than
@@ -30,10 +31,12 @@ When you don't know the name, you may get the data source using the `filter` sec
 
 * `key` (Required) The name of the metadata field
 * `value` (Required) The value to look for. It is treated as a regular expression if `use_api_search` is not set.
-* `is_system` (Optional) If `true`, the metadata fields will be passed as `metadata@SYSTEM:fieldName`.
-* `use_api_search` (Optional) If true, the search happens using the API query for Metadata, without using regular
-   expressions. It is slightly faster than using the search by regular expression, but when this is set, the type
-   field is mandatory.
+* `is_system` (Optional) If `true`, the metadata fields will be passed as `metadata@SYSTEM:fieldName`. This parameter
+is needed when searching for metadata that was set by the system, such as the annotations in metadata when a vApp is
+saved into a catalog. See Example 7 below.
+* `use_api_search` (Optional) When true - filtering will happen in vCD server, using the API query for Metadata, without
+   using regular expressions. It is slightly faster than using the search by regular expression, but when this is set,
+   the type field is mandatory.
 * `type` (Optional) One of `STRING`, `NUMBER`, `BOOLEAN`, `DATETIME`. It is required when `use_api_search` is set.
   Note that in most cases, `STRING` is accepted also for other types.
 
@@ -42,6 +45,12 @@ When you don't know the name, you may get the data source using the `filter` sec
 Not all the data sources support filters, and when they do, they may not support all the search fields. For example,
 an edge gateway only supports `name_regex`, while the `vcd_network_*` support name, IP, and metadata, and catalog related
 objects support name, date, and metadata.
+
+### Empty filter
+
+An empty filter will retrieve all existing entities for the given parent, without restrictions. This idiom is **useful when
+you know that there is only one such entity**, and you want to access it without knowing the name.
+Like populated filters, when the search returns more than one item, the data source retrieval fails.
 
 ### About metadata search
 
@@ -258,4 +267,17 @@ data "vcd_catalog_media" "unknown_cm" {
     latest = true
   }
 }
+
+# Finds an edge gateway when you know for sure that there is only one in your VDC
+data "vcd_edgegateway" "only_egw" {
+  org = "datacloud"
+  vdc = "vdc-datacloud"
+
+  filter {
+  }
+}
+# You can achieve the same result using a generic regular expression
+# such as
+#   name_regex = ".*"
+
 ```
