@@ -90,7 +90,7 @@ func searchByFilter(queryByMetadata queryByMetadataFunc, queryWithMetadataFields
 			searchEarliest = stringToBool(value)
 
 		default:
-			return nil, explanation, fmt.Errorf("[SearchByFilter] filter '%s' not supported (only allowed %v), %s)", key, value, supportedFilters)
+			return nil, explanation, fmt.Errorf("[SearchByFilter] filter '%s' not supported (only allowed %v)", key, supportedFilters)
 		}
 	}
 
@@ -159,8 +159,8 @@ func searchByFilter(queryByMetadata queryByMetadataFunc, queryWithMetadataFields
 	if err != nil {
 		return nil, explanation, fmt.Errorf("[SearchByFilter] error retrieving query item list: %s", err)
 	}
-	if os.Getenv("GOVCD_FAIL") == "1" {
-		return nil, "", fmt.Errorf("[SearchByFilter] list of retrieved items %# v", pretty.Formatter(itemResult.Results))
+	if dataInspectionRequested("QE1") {
+		util.Logger.Printf("[INSPECT-QE1-SearchByFilter] list of retrieved items %# v\n", pretty.Formatter(itemResult.Results))
 	}
 	var itemList []QueryItem
 
@@ -169,8 +169,8 @@ func searchByFilter(queryByMetadata queryByMetadataFunc, queryWithMetadataFields
 	if err != nil {
 		return nil, explanation, fmt.Errorf("[SearchByFilter] error converting QueryItem  item list: %s", err)
 	}
-	if os.Getenv("GOVCD_FAIL") == "2" {
-		return nil, "", fmt.Errorf("[SearchByFilter] list of converted items %# v", pretty.Formatter(itemList))
+	if dataInspectionRequested("QE2") {
+		util.Logger.Printf("[INSPECT-QE2-SearchByFilter] list of converted items %# v\n", pretty.Formatter(itemList))
 	}
 
 	// Process the list using the conditions gathered above
@@ -179,8 +179,8 @@ func searchByFilter(queryByMetadata queryByMetadataFunc, queryWithMetadataFields
 
 		for _, condition := range conditions {
 
-			if os.Getenv("GOVCD_FAIL") == "3" {
-				return nil, "", fmt.Errorf("[SearchByFilter]\n++condition %# v\n++item %# v", pretty.Formatter(condition), pretty.Formatter(item))
+			if dataInspectionRequested("QE3") {
+				util.Logger.Printf("[INSPECT-QE3-SearchByFilter]\ncondition %# v\nitem %# v\n", pretty.Formatter(condition), pretty.Formatter(item))
 			}
 			result, definition, err := conditionMatches(condition.conditionType, condition.stored, item)
 			if err != nil {
@@ -377,4 +377,10 @@ func (org *Org) SearchByFilter(queryType string, criteria *FilterDef) ([]QueryIt
 		return nil, "", fmt.Errorf("error setting parent filter for Org %s with fieldName 'orgName'", org.Org.Name)
 	}
 	return org.client.SearchByFilter(queryType, criteria)
+}
+
+// dataInspectionRequested checks if the given code was found in the inspection environment variable.
+func dataInspectionRequested(code string) bool {
+	govcdInspect := os.Getenv("GOVCD_INSPECT")
+	return strings.Contains(govcdInspect, code)
 }
