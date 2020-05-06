@@ -9,7 +9,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
-// Deletes catalog item which can be vapp template OVA or media ISO file
+// Deletes catalog item which can be vApp template OVA or media ISO file
 func deleteCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) error {
 	log.Printf("[TRACE] Catalog item delete started")
 
@@ -44,15 +44,6 @@ func deleteCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) error {
 	log.Printf("[TRACE] Catalog item delete completed: %s", catalogItemName)
 
 	return nil
-}
-
-// vappTemplateToCatalogItem returns the catalog item corresponding to the associated vApp template
-func vappTemplateToCatalogItem(vappTemplateName string, catalog *govcd.Catalog) (*govcd.CatalogItem, error) {
-	item, err := catalog.GetCatalogItemByName(vappTemplateName, false)
-	if err != nil {
-		return nil, fmt.Errorf("error retrieving catalog item from vapp template %s: %s", vappTemplateName, err)
-	}
-	return item, nil
 }
 
 // Finds catalog item which can be vApp template OVA or media ISO file
