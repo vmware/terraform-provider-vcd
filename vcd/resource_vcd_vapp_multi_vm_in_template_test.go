@@ -10,6 +10,12 @@ import (
 )
 
 func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
+
+	if testConfig.VCD.Catalog.CatalogItemWithMultiVms == "" || testConfig.VCD.Catalog.VmName1 == "" || testConfig.VCD.Catalog.VmName2 == "" {
+		t.Skip("Variables catalogItemWithMultiVms, vmName1, vmName2  must be set to run multi VM in vApp template tests")
+		return
+	}
+
 	var vapp govcd.VApp
 	var vm govcd.VM
 	vappName := t.Name()
@@ -34,11 +40,6 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 	configText := templateFill(testAccCheckVcdVAppVmMultiVmInTemplate, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
-	if testConfig.VCD.Catalog.CatalogItemWithMultiVms == "" || testConfig.VCD.Catalog.VmName1 == "" || testConfig.VCD.Catalog.VmName2 == "" {
-		t.Skip("Variables catalogItemWithMultiVms, vmName1, vmName2  must be set to run multi VM in vApp template tests")
 		return
 	}
 
