@@ -534,11 +534,11 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		if vmNameInTemplate, ok := d.GetOk("vm_name_in_template"); ok {
 			vmInTempateRecord, err := vdc.QueryVappVmTemplate(catalogName, templateName, vmNameInTemplate.(string))
 			if err != nil {
-				return fmt.Errorf("error quering vm template %s: %s", vmNameInTemplate, err)
+				return fmt.Errorf("error quering VM template %s: %s", vmNameInTemplate, err)
 			}
 			returnedVappTemplate, err := catalog.GetVappTemplateByHref(vmInTempateRecord.HREF)
 			if err != nil {
-				return fmt.Errorf("error quering vm template %s: %s", vmNameInTemplate, err)
+				return fmt.Errorf("error quering VM template %s: %s", vmNameInTemplate, err)
 			}
 			vappTemplate = *returnedVappTemplate
 		} else {
