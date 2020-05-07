@@ -84,12 +84,13 @@ type TestConfig struct {
 		LogHttpResponse bool   `json:"logHttpResponse,omitempty"`
 	} `json:"logging"`
 	Ova struct {
-		OvaPath         string `json:"ovaPath,omitempty"`
-		UploadPieceSize int64  `json:"uploadPieceSize,omitempty"`
-		UploadProgress  bool   `json:"uploadProgress,omitempty"`
-		OvaTestFileName string `json:"ovaTestFileName,omitempty"`
-		OvaDownloadUrl  string `json:"ovaDownloadUrl,omitempty"`
-		Preserve        bool   `json:"preserve,omitempty"`
+		OvaPath             string `json:"ovaPath,omitempty"`
+		UploadPieceSize     int64  `json:"uploadPieceSize,omitempty"`
+		UploadProgress      bool   `json:"uploadProgress,omitempty"`
+		OvaTestFileName     string `json:"ovaTestFileName,omitempty"`
+		OvaDownloadUrl      string `json:"ovaDownloadUrl,omitempty"`
+		Preserve            bool   `json:"preserve,omitempty"`
+		OvaVappMultiVmsPath string `json:"ovaVappMultiVmsPath,omitempty"`
 	} `json:"ova"`
 	Media struct {
 		MediaPath       string `json:"mediaPath,omitempty"`

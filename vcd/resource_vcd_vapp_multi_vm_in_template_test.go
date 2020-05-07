@@ -11,8 +11,8 @@ import (
 
 func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 
-	if testConfig.VCD.Catalog.CatalogItemWithMultiVms == "" || testConfig.VCD.Catalog.VmName1 == "" || testConfig.VCD.Catalog.VmName2 == "" {
-		t.Skip("Variables catalogItemWithMultiVms, vmName1, vmName2  must be set to run multi VM in vApp template tests")
+	if testConfig.VCD.Catalog.VmName1 == "" || testConfig.VCD.Catalog.VmName2 == "" {
+		t.Skip("Variables vmName1, vmName2  must be set to run multi VM in vApp template tests")
 		return
 	}
 
@@ -21,13 +21,17 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 	vappName := t.Name()
 	vmName := t.Name() + "VM"
 	vmName2 := t.Name() + "VM2"
+	catalogItemMultiVm := "template_name       = vcd_catalog_item.defaultOva.name"
+	if testConfig.VCD.Catalog.CatalogItemWithMultiVms != "" {
+		catalogItemMultiVm = "template_name  = \"" + testConfig.VCD.Catalog.CatalogItemWithMultiVms + "\""
+	}
 	var params = StringMap{
 		"Org":                testConfig.VCD.Org,
 		"Vdc":                testConfig.VCD.Vdc,
 		"EdgeGateway":        testConfig.Networking.EdgeGateway,
 		"NetworkName":        "TestAccVcdVAppVmNet",
 		"Catalog":            testConfig.VCD.Catalog.Name,
-		"CatalogItemMultiVm": testConfig.VCD.Catalog.CatalogItemWithMultiVms,
+		"CatalogItemMultiVm": catalogItemMultiVm,
 		"VmNameInTemplate":   testConfig.VCD.Catalog.VmName1,
 		"VmNameInTemplate2":  testConfig.VCD.Catalog.VmName2,
 		"VappName":           vappName,
@@ -35,9 +39,16 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 		"VmName2":            vmName2,
 		"ComputerName":       vmName + "-unique",
 		"Tags":               "vapp vm",
+		"OvaPath":            testConfig.Ova.OvaVappMultiVmsPath,
 	}
 
-	configText := templateFill(testAccCheckVcdVAppVmMultiVmInTemplate, params)
+	var configText string
+	if testConfig.VCD.Catalog.CatalogItemWithMultiVms == "" {
+		configText = templateFill(defaultCatalogItem+testAccCheckVcdVAppVmMultiVmInTemplate, params)
+	} else {
+		configText = templateFill(testAccCheckVcdVAppVmMultiVmInTemplate, params)
+	}
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -79,6 +90,16 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 	})
 }
 
+const defaultCatalogItem = `
+resource "vcd_catalog_item" "defaultOva" {
+  org     = "{{.Org}}"
+  catalog = "{{.Catalog}}"
+
+  name                 = "TestAccVcdVAppMultiVmInTemplate"
+  ova_path             = "{{.OvaPath}}"
+}
+`
+
 const testAccCheckVcdVAppVmMultiVmInTemplate = `
 resource "vcd_network_routed" "{{.NetworkName}}" {
   name         = "{{.NetworkName}}"
@@ -112,7 +133,7 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   name		          = "{{.VmName}}"
   computer_name 	  = "{{.ComputerName}}"
   catalog_name		  = "{{.Catalog}}"
-  template_name		  = "{{.CatalogItemMultiVm}}"
+  {{.CatalogItemMultiVm}}
   vm_name_in_template = "{{.VmNameInTemplate}}"
   memory        	  = 1024
   cpus                = 2
@@ -137,7 +158,7 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
   name		          = "{{.VmName2}}"
   computer_name 	  = "{{.ComputerName}}"
   catalog_name		  = "{{.Catalog}}"
-  template_name		  = "{{.CatalogItemMultiVm}}"
+  {{.CatalogItemMultiVm}}
   vm_name_in_template = "{{.VmNameInTemplate2}}"
   memory        	  = 1024
   cpus                = 2
