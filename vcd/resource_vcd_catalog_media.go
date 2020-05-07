@@ -188,9 +188,6 @@ func resourceVcdMediaRead(d *schema.ResourceData, meta interface{}) error {
 func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string) error {
 	vcdClient := meta.(*VCDClient)
 
-	if !nameOrFilterIsSet(d) {
-		return fmt.Errorf(noNameOrFilterError, "vcd_catalog_media")
-	}
 	org, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrg, err)
@@ -205,6 +202,9 @@ func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string
 	var media *govcd.Media
 
 	if origin == "datasource" {
+		if !nameOrFilterIsSet(d) {
+			return fmt.Errorf(noNameOrFilterError, "vcd_catalog_media")
+		}
 		filter, hasFilter := d.GetOk("filter")
 		if hasFilter {
 

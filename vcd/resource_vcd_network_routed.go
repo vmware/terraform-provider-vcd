@@ -289,9 +289,6 @@ func resourceVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}) erro
 func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origin string) error {
 	vcdClient := meta.(*VCDClient)
 
-	if !nameOrFilterIsSet(d) {
-		return fmt.Errorf(noNameOrFilterError, "vcd_network_direct")
-	}
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)

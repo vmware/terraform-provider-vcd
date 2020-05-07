@@ -249,9 +249,6 @@ func genericVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}, ori
 	var network *govcd.OrgVDCNetwork
 	var err error
 
-	if !nameOrFilterIsSet(d) {
-		return fmt.Errorf(noNameOrFilterError, "vcd_network_isolated")
-	}
 	switch origin {
 	case "resource", "datasource":
 		// From the resource creation or data source, we need to retrieve the network from scratch

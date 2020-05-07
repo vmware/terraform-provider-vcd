@@ -143,9 +143,6 @@ func resourceVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}) erro
 func genericVcdNetworkDirectRead(d *schema.ResourceData, meta interface{}, origin string) error {
 	vcdClient := meta.(*VCDClient)
 
-	if !nameOrFilterIsSet(d) {
-		return fmt.Errorf(noNameOrFilterError, "vcd_network_direct")
-	}
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
 		return fmt.Errorf("[direct network read] "+errorRetrievingOrgAndVdc, err)
@@ -229,6 +226,9 @@ func getNetwork(d *schema.ResourceData, vcdClient *VCDClient, isDataSource bool,
 
 	var network *govcd.OrgVDCNetwork
 	if isDataSource {
+		if !nameOrFilterIsSet(d) {
+			return nil, fmt.Errorf(noNameOrFilterError, "vcd_network_"+wanted)
+		}
 		filter, hasFilter := d.GetOk("filter")
 
 		if hasFilter {

@@ -71,6 +71,9 @@ func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient, origin string
 
 	var catalogItem *govcd.CatalogItem
 	if origin == "datasource" {
+		if !nameOrFilterIsSet(d) {
+			return nil, fmt.Errorf(noNameOrFilterError, "vcd_catalog_item")
+		}
 		filter, hasFilter := d.GetOk("filter")
 		if hasFilter {
 

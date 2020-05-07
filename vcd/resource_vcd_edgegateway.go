@@ -411,9 +411,6 @@ func genericVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}, origin 
 
 	vcdClient := meta.(*VCDClient)
 
-	if !nameOrFilterIsSet(d) {
-		return fmt.Errorf(noNameOrFilterError, "vcd_edgegateway")
-	}
 	orgName := d.Get("org").(string)
 	vdcName := d.Get("vdc").(string)
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
@@ -426,6 +423,9 @@ func genericVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}, origin 
 
 	if origin == "datasource" {
 
+		if !nameOrFilterIsSet(d) {
+			return fmt.Errorf(noNameOrFilterError, "vcd_edgegateway")
+		}
 		filter, hasFilter = d.GetOk("filter")
 		if hasFilter {
 			edgeGateway, err = getEdgeGatewayByFilter(vdc, filter)

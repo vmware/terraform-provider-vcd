@@ -160,9 +160,6 @@ func resourceVcdCatalogItemRead(d *schema.ResourceData, meta interface{}) error 
 }
 
 func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin string) error {
-	if !nameOrFilterIsSet(d) {
-		return fmt.Errorf(noNameOrFilterError, "vcd_catalog_item")
-	}
 	catalogItem, err := findCatalogItem(d, meta.(*VCDClient), origin)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find media item: %s", err)
