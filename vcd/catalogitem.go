@@ -47,6 +47,7 @@ func deleteCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) error {
 }
 
 // Finds catalog item which can be vApp template OVA or media ISO file
+// TODO: This function should be updated in the context of Issue #502
 func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd.CatalogItem, error) {
 	log.Printf("[TRACE] Catalog item read initiated")
 

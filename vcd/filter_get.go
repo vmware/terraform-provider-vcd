@@ -59,6 +59,7 @@ func getCatalogByFilter(org *govcd.AdminOrg, filter interface{}, isSysAdmin bool
 }
 
 // getCatalogItemByFilter finds a catalog item using a filter block
+// TODO: This function should be updated in the context of Issue #502
 func getCatalogItemByFilter(catalog *govcd.Catalog, filter interface{}, isSysAdmin bool) (*govcd.CatalogItem, error) {
 	queryType := govcd.QtVappTemplate
 	if isSysAdmin {
