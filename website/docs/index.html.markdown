@@ -38,13 +38,13 @@ The most common - tenant - use case when you set user to organization administra
 ```hcl
 # Configure the VMware vCloud Director Provider
 provider "vcd" {
-  user                 = "${var.vcd_user}"
-  password             = "${var.vcd_pass}"
-  org                  = "${var.vcd_org}"
-  vdc                  = "${var.vcd_vdc}"
-  url                  = "${var.vcd_url}"
-  max_retry_timeout    = "${var.vcd_max_retry_timeout}"
-  allow_unverified_ssl = "${var.vcd_allow_unverified_ssl}"
+  user                 = var.vcd_user
+  password             = var.vcd_pass
+  org                  = var.vcd_org
+  vdc                  = var.vcd_vdc
+  url                  = var.vcd_url
+  max_retry_timeout    = var.vcd_max_retry_timeout
+  allow_unverified_ssl = var.vcd_allow_unverified_ssl
 }
 
 # Create a new network in organization and VDC defined above
@@ -61,11 +61,11 @@ When you want to manage resources across different organizations from a single c
 # Configure the VMware vCloud Director Provider
 provider "vcd" {
   user                 = "administrator"
-  password             = "${var.vcd_pass}"
+  password             = var.vcd_pass
   org                  = "System"
-  url                  = "${var.vcd_url}"
-  max_retry_timeout    = "${var.vcd_max_retry_timeout}"
-  allow_unverified_ssl = "${var.vcd_allow_unverified_ssl}"
+  url                  = var.vcd_url
+  max_retry_timeout    = var.vcd_max_retry_timeout
+  allow_unverified_ssl = var.vcd_allow_unverified_ssl
 }
 
 # Create a new network in some organization and VDC
@@ -93,13 +93,13 @@ When you want to manage resources across different organizations but set a defau
 # Configure the VMware vCloud Director Provider
 provider "vcd" {
   user                 = "administrator"
-  password             = "${var.vcd_pass}"
+  password             = var.vcd_pass
   sysorg               = "System"
-  org                  = "${var.vcd_org}"                  # Default for resources
-  vdc                  = "${var.vcd_vdc}"                  # Default for resources
-  url                  = "${var.vcd_url}"
-  max_retry_timeout    = "${var.vcd_max_retry_timeout}"
-  allow_unverified_ssl = "${var.vcd_allow_unverified_ssl}"
+  org                  = var.vcd_org                  # Default for resources
+  vdc                  = var.vcd_vdc                  # Default for resources
+  url                  = var.vcd_url
+  max_retry_timeout    = var.vcd_max_retry_timeout
+  allow_unverified_ssl = var.vcd_allow_unverified_ssl
 }
 
 # Create a new network in the default organization and VDC
@@ -124,13 +124,13 @@ You can connect using an authorization token instead of username and password.
 provider "vcd" {
   user                 = ""
   password             = ""
-  token                = "${var.token}"
+  token                = var.token
   sysorg               = "System"
-  org                  = "${var.vcd_org}"                  # Default for resources
-  vdc                  = "${var.vcd_vdc}"                  # Default for resources
-  url                  = "${var.vcd_url}"
-  max_retry_timeout    = "${var.vcd_max_retry_timeout}"
-  allow_unverified_ssl = "${var.vcd_allow_unverified_ssl}"
+  org                  = var.vcd_org                  # Default for resources
+  vdc                  = var.vcd_vdc                  # Default for resources
+  url                  = var.vcd_url
+  max_retry_timeout    = var.vcd_max_retry_timeout
+  allow_unverified_ssl = var.vcd_allow_unverified_ssl
 }
 
 # Create a new network in the default organization and VDC
@@ -171,13 +171,36 @@ The string after `x-vcloud-authorization:` is the token.
 The token will grant the same abilities as the account used to run the above script. Using a token produced
 by an org admin to run a task that requires a system administrator will fail.
 
+### Connecting with SAML user using Microsoft Active Directory Federation Services (ADFS) and setting custom Relaying Party Trust Identifier
+
+Take special attention to `user`, `use_saml_adfs` and `saml_rpt_id` fields.
+
+```hcl
+# Configure the VMware vCloud Director Provider
+provider "vcd" {
+  user                 = "test@contoso.com"
+  password             = var.vcd_pass
+  sysorg               = "my-org"
+  use_saml_adfs        = true
+  # If `saml_rpt_id` is not specified - vCD SAML Entity ID will be used automatically
+  saml_rpt_id          = "my-custom-rpt-id"
+  org                  = var.vcd_org                  # Default for resources
+  vdc                  = var.vcd_vdc                  # Default for resources
+  url                  = var.vcd_url
+  max_retry_timeout    = var.vcd_max_retry_timeout
+  allow_unverified_ssl = var.vcd_allow_unverified_ssl
+}
+```
+
 ## Argument Reference
 
 The following arguments are used to configure the VMware vCloud Director Provider:
 
-* `user` - (Required) This is the username for vCloud Director API operations. Can also
-  be specified with the `VCD_USER` environment variable.  
-  *v2.0+* `user` may be "administrator" (set `org` or `sysorg` to "System" in this case).
+* `user` - (Required) This is the username for vCloud Director API operations. Can also be specified
+  with the `VCD_USER` environment variable. *v2.0+* `user` may be "administrator" (set `org` or
+  `sysorg` to "System" in this case). 
+  *v2.9+* When using with SAML and ADFS - username format must be in Active Directory format -
+  `user@contoso.com` or `contoso.com\user` in combination with `use_saml_adfs` option.
   
 * `password` - (Required) This is the password for vCloud Director API operations. Can
   also be specified with the `VCD_PASSWORD` environment variable.
@@ -186,7 +209,17 @@ The following arguments are used to configure the VMware vCloud Director Provide
    instead of username and password. When this is set, username and password will
     be ignored, but should be left in configuration either empty or with any custom values.
     A token can be specified with the `VCD_TOKEN` environment variable.
-    
+
+* `use_saml_adfs` - (Optional) Set `true` to use SAML login flow with Active Directory Federation
+  Services (ADFS) using "/adfs/services/trust/13/usernamemixed" endpoint. Please note that
+  credentials for ADFS should be formatted as `user@contoso.com` or `contoso.com\user`. Can also be
+  set with `VCD_USE_SAML_ADFS` environment variable.
+
+* `saml_rpt_id` - (Optional) By default vCD SAML entity ID will be used as Relaying Party Trust
+  Identifier (RPT ID). If a different RPT ID is needed - on can set it using `saml_rpt_id` field. Can also be
+  set with `VCD_SAML_RPT_ID` environment variable.
+
+
 * `org` - (Required) This is the vCloud Director Org on which to run API
   operations. Can also be specified with the `VCD_ORG` environment
   variable.  
