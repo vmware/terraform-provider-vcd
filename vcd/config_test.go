@@ -55,8 +55,8 @@ type TestConfig struct {
 			Name                    string `json:"name,omitempty"`
 			CatalogItem             string `json:"catalogItem,omitempty"`
 			CatalogItemWithMultiVms string `json:"catalogItemWithMultiVms,omitempty"`
-			VmName1                 string `json:"vmName1,omitempty"`
-			VmName2                 string `json:"vmName2,omitempty"`
+			VmName1InMultiVmItem    string `json:"vmName1InMultiVmItem,omitempty"`
+			VmName2InMultiVmItem    string `json:"VmName2InMultiVmItem,omitempty"`
 		} `json:"catalog"`
 	} `json:"vcd"`
 	Networking struct {
@@ -463,6 +463,13 @@ func getConfigStruct(config string) TestConfig {
 			panic("error retrieving absolute path for Media path " + configStruct.Media.MediaPath)
 		}
 		configStruct.Media.MediaPath = mediaPath
+	}
+	if configStruct.Ova.OvaVappMultiVmsPath != "" {
+		multiVmOvaPath, err := filepath.Abs(configStruct.Ova.OvaVappMultiVmsPath)
+		if err != nil {
+			panic("error retrieving absolute path for multi OVA path " + configStruct.Ova.OvaVappMultiVmsPath)
+		}
+		configStruct.Ova.OvaVappMultiVmsPath = multiVmOvaPath
 	}
 
 	// Partial duplication of actions performed in createSuiteCatalogAndItem

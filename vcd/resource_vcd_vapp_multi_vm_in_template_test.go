@@ -11,8 +11,13 @@ import (
 
 func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 
-	if testConfig.VCD.Catalog.VmName1 == "" || testConfig.VCD.Catalog.VmName2 == "" {
-		t.Skip("Variables vmName1, vmName2  must be set to run multi VM in vApp template tests")
+	if testConfig.VCD.Catalog.VmName1InMultiVmItem == "" || testConfig.VCD.Catalog.VmName2InMultiVmItem == "" {
+		t.Skip("Variables vmName1InMultiVmItem, VmName2InMultiVmItem  must be set to run multi VM in vApp template tests")
+		return
+	}
+
+	if testConfig.VCD.Catalog.CatalogItemWithMultiVms == "" && testConfig.Ova.OvaVappMultiVmsPath == "" {
+		t.Skip("Variable `catalogItemWithMultiVms` or `ovaVappMultiVmsPath` must be set to run multi VM in vApp template tests")
 		return
 	}
 
@@ -24,6 +29,9 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 	catalogItemMultiVm := "template_name       = vcd_catalog_item.defaultOva.name"
 	if testConfig.VCD.Catalog.CatalogItemWithMultiVms != "" {
 		catalogItemMultiVm = "template_name  = \"" + testConfig.VCD.Catalog.CatalogItemWithMultiVms + "\""
+		t.Log("Test using `catalogItemWithMultiVms` variable from configuration")
+	} else {
+		t.Log("Test using `ovaVappMultiVmsPath` variable from configuration")
 	}
 	var params = StringMap{
 		"Org":                testConfig.VCD.Org,
@@ -32,8 +40,8 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 		"NetworkName":        "TestAccVcdVAppVmNet",
 		"Catalog":            testConfig.VCD.Catalog.Name,
 		"CatalogItemMultiVm": catalogItemMultiVm,
-		"VmNameInTemplate":   testConfig.VCD.Catalog.VmName1,
-		"VmNameInTemplate2":  testConfig.VCD.Catalog.VmName2,
+		"VmNameInTemplate":   testConfig.VCD.Catalog.VmName1InMultiVmItem,
+		"VmNameInTemplate2":  testConfig.VCD.Catalog.VmName2InMultiVmItem,
 		"VappName":           vappName,
 		"VmName":             vmName,
 		"VmName2":            vmName2,
