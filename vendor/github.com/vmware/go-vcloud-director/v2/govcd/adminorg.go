@@ -677,7 +677,7 @@ func (adminOrg *AdminOrg) QueryCatalogList() ([]*types.CatalogRecord, error) {
 	if adminOrg.client.IsSysAdmin {
 		queryType = QtAdminCatalog
 	}
-	results, err := adminOrg.client.QueryWithNotEncodedParams(nil, map[string]string{
+	results, err := adminOrg.client.cumulativeQuery(queryType, nil, map[string]string{
 		"type":          queryType,
 		"filter":        fmt.Sprintf("orgName==%s", url.QueryEscape(adminOrg.AdminOrg.Name)),
 		"filterEncoded": "true",

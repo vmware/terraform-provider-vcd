@@ -317,6 +317,7 @@ func conditionMatches(conditionType string, stored, item interface{}) (bool, str
 // It requires a queryType and a set of criteria.
 // Returns a list of QueryItem interface elements, which can be cast back to the wanted real type
 // Also returns a human readable text of the conditions being passed and how they matched the data found
+// See "## Query engine" in CODING_GUIDELINES.md for more info
 func (client *Client) SearchByFilter(queryType string, criteria *FilterDef) ([]QueryItem, string, error) {
 	return searchByFilter(client.queryByMetadataFilter, client.queryWithMetadataFields, resultToQueryItems, queryType, criteria)
 }
