@@ -36,7 +36,7 @@ func TestProviderVersion(t *testing.T) {
 	reExpectedVersion := regexp.MustCompile(`(?m)^` + expectedText)
 	reFoundVersion := regexp.MustCompile(`(?m)^` + vcdHeader + ` \d+\.\d+`)
 	if reExpectedVersion.MatchString(string(indexText)) {
-		if os.Getenv(testVerbose) != "" {
+		if vcdTestVerbose {
 			t.Logf("Found expected version <%s> in index.html.markdown", currentProviderVersion)
 		}
 	} else {
