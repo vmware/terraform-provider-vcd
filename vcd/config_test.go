@@ -891,7 +891,7 @@ func setBoolFlag(variable *bool, name, envVar, help string) {
 
 func init() {
 
-	// To list the flags when we run "go test -vcd-help", the flag name must start with "vcd"
+	// To list the flags when we run "go test -tags functional -vcd-help", the flag name must start with "vcd"
 	// They will all appear alongside the native flags when we use an invalid one
 	setBoolFlag(&vcdHelp, "vcd-help", "VCD_HELP", "Show vcd flags")
 	setBoolFlag(&testDistributedNetworks, "vcd-test-distributed", "", "enables testing of distributed network")
