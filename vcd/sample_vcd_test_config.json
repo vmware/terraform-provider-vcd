@@ -30,7 +30,7 @@
     "catalog": {
       "name": "tf_catalog",
       "catalogItem": "tf_catalog_item",
-      "//": "if catalog item isn't provided then default OVA is used which configured in `ovaVappMultiVmsPath`",
+      "//": "if catalog item isn't provided then default OVA is used as defined in `ovaVappMultiVmsPath`",
       "catalogItemWithMultiVms": "item_with_multi_vms",
       "//": "VM name in default OVA is secondVM",
       "vmName1InMultiVmItem": "secondVM",

@@ -134,16 +134,17 @@ resource "vcd_vapp_org_network" "vappNetwork1" {
   vapp_name        = vcd_vapp.{{.VappName}}.name
   org_network_name = vcd_network_routed.{{.NetworkName}}.name
 }
+
 resource "vcd_vapp_vm" "{{.VmName}}" {
-  org         		  = "{{.Org}}"
-  vdc         		  = "{{.Vdc}}"
+  org         	      = "{{.Org}}"
+  vdc         	      = "{{.Vdc}}"
   vapp_name 	      = vcd_vapp.{{.VappName}}.name
-  name		          = "{{.VmName}}"
-  computer_name 	  = "{{.ComputerName}}"
-  catalog_name		  = "{{.Catalog}}"
+  name    	          = "{{.VmName}}"
+  computer_name       = "{{.ComputerName}}"
+  catalog_name	      = "{{.Catalog}}"
   {{.CatalogItemMultiVm}}
   vm_name_in_template = "{{.VmNameInTemplate}}"
-  memory        	  = 1024
+  memory              = 1024
   cpus                = 2
   cpu_cores           = 1
 
@@ -160,15 +161,15 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
 }
 
 resource "vcd_vapp_vm" "{{.VmName2}}" {
-  org         		  = "{{.Org}}"
-  vdc         		  = "{{.Vdc}}"
-  vapp_name 	      = vcd_vapp.{{.VappName}}.name
-  name		          = "{{.VmName2}}"
-  computer_name 	  = "{{.ComputerName}}"
-  catalog_name		  = "{{.Catalog}}"
+  org         	      = "{{.Org}}"
+  vdc         	      = "{{.Vdc}}"
+  vapp_name           = vcd_vapp.{{.VappName}}.name
+  name	              = "{{.VmName2}}"
+  computer_name       = "{{.ComputerName}}"
+  catalog_name	      = "{{.Catalog}}"
   {{.CatalogItemMultiVm}}
   vm_name_in_template = "{{.VmNameInTemplate2}}"
-  memory        	  = 1024
+  memory              = 1024
   cpus                = 2
   cpu_cores           = 1
 
