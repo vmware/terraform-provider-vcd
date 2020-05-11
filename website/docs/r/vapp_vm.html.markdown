@@ -209,7 +209,7 @@ resource "vcd_vapp_vm" "emptyVM" {
 ```
 
 ## Example Usage (vApp template with multi VMs)
-This example shows how to create a VM using vApp template with multi VMs.
+This example shows how to create a VM from a vApp template with multiple VMs by specifying which VM to use.
 
 ```hcl
 resource "vcd_vapp_vm" "secondVM" {
@@ -218,7 +218,7 @@ resource "vcd_vapp_vm" "secondVM" {
   computer_name       = "db-vm"
   catalog_name        = "cat-where-is-template"
   template_name       = "vappWithMultiVm"
-  vm_name_in_template = "secondVM"
+  vm_name_in_template = "secondVM" # Specifies which VM to use from the template
   memory              = 512
   cpus                = 2
   cpu_cores           = 1
@@ -237,7 +237,7 @@ The following arguments are supported:
 * `computer_name` - (Optional; *v2.5+*) Computer name to assign to this virtual machine. 
 * `catalog_name` - (Optional; *v2.9+*) The catalog name in which to find the given vApp Template or media for `boot_image`.
 * `template_name` - (Optional; *v2.9+*) The name of the vApp Template to use
-* `vm_name_in_template` - (Optional; *v2.9+*) The name of the VM in vApp Template to use. In cases when vApp template has more than one VM.
+* `vm_name_in_template` - (Optional; *v2.9+*) The name of the VM in vApp Template to use. For cases when vApp template has more than one VM.
 * `memory` - (Optional) The amount of RAM (in MB) to allocate to the VM
 * `cpus` - (Optional) The number of virtual CPUs to allocate to the VM. Socket count is a result of: virtual logical processors/cores per socket. The default is 1
 * `cpu_cores` - (Optional; *v2.1+*) The number of cores per socket. The default is 1
