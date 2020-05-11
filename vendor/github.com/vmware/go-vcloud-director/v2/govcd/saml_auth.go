@@ -64,7 +64,7 @@ func (vcdCli *VCDClient) vcdAuthorizeSamlAdfs(user, pass, org, overrideRptId str
 	// Step 3 - authenticate to ADFS to receive SIGN token which can be used for vCD authentication
 	signToken, err := vcdAuthorizeSamlGetSamlAuthToken(vcdCli, user, pass, samlEntityId, adfsAuthEndPoint, org)
 	if err != nil {
-		return fmt.Errorf("SAML - could get auth token from  IdP (ADFS). Did you specify "+
+		return fmt.Errorf("SAML - could not get auth token from IdP (ADFS). Did you specify "+
 			"username in ADFS format ('user@contoso.com' or 'contoso.com\\user')? : %s", err)
 	}
 
