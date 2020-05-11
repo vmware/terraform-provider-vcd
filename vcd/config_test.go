@@ -884,7 +884,6 @@ func importStateIdVmObject(orgName, vdcName, vappName, vmName, objectIdentifier 
 func setBoolFlag(variable *bool, name, envVar, help string) {
 	if envVar != "" && os.Getenv(envVar) != "" {
 		*variable = true
-		return
 	}
 	flag.BoolVar(variable, name, *variable, help)
 }

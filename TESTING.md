@@ -493,3 +493,6 @@ used in the documentation index.
    (Use `./scripts/get_token.sh` to retrieve one)
 * `VCD_TEST_DISTRIBUTED_NETWORK=1` (`-vcd-test-distributed`) runs testing of distributed networks (requires the edge gateway to have distributed
   routing enabled)
+
+When both the environment variable and the command line option are possible, the environment variable gets evaluated first: is it is set,
+also the flag becomes true.
