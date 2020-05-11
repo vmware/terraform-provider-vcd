@@ -215,9 +215,9 @@ The following arguments are used to configure the VMware vCloud Director Provide
   credentials for ADFS should be formatted as `user@contoso.com` or `contoso.com\user`. Can also be
   set with `VCD_USE_SAML_ADFS` environment variable.
 
-* `saml_rpt_id` - (Optional) By default vCD SAML entity ID will be used as Relaying Party Trust
-  Identifier (RPT ID). If a different RPT ID is needed - on can set it using `saml_rpt_id` field. Can also be
-  set with `VCD_SAML_RPT_ID` environment variable.
+* `saml_rpt_id` - (Optional) When using `use_saml_adfs` vCD SAML entity ID will be used as Relaying
+  Party Trust Identifier (RPT ID) by default. If a different RPT ID is needed - one can set it using
+  `saml_rpt_id` field. Can also be set with `VCD_SAML_RPT_ID` environment variable.
 
 
 * `org` - (Required) This is the vCloud Director Org on which to run API
