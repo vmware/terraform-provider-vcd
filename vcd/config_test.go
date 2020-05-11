@@ -496,11 +496,19 @@ func getConfigStruct(config string) TestConfig {
 	return configStruct
 }
 
+// setTestEnv enables environment variables that are also used in non-test code
+func setTestEnv() {
+	if enableDebug {
+		_ = os.Setenv("GOVCD_DEBUG", "1")
+	}
+}
+
 // This function is called before any other test
 func TestMain(m *testing.M) {
 
 	// Enable custom flags
 	flag.Parse()
+	setTestEnv()
 	// If -vcd-help was in the command line
 	if vcdHelp {
 		fmt.Println("vcd flags:")
