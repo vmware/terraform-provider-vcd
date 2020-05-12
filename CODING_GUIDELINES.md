@@ -32,14 +32,14 @@ the query engine in go-vcloud-director. Only types supported by such engine can 
 
 To add filtering for a new data source:
 
-1. make sure the underlying entity supports filtering (See "Supporting a new type in the query engine" in 
+1. Make sure the underlying entity supports filtering (See "Supporting a new type in the query engine" in 
 [go-vcloud-director coding guidelines](https://github.com/vmware/go-vcloud-director/blob/master/CODING_GUIDELINES.md))
 
 2. Add a "filter" field in the data source definition, using the elements listed in `filter.go`
 
 3. Add a function `Get_TYPE_ByFilter` in `filter_get.go`, using the existing ones as model
 
-4. in the data source `Read` function add:
+4. In the data source `Read` function add:
 
 ```go
         var instance *govcd._TYPE_
