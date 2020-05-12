@@ -107,16 +107,19 @@ func getMediaByFilter(catalog *govcd.Catalog, filter interface{}, isSysAdmin boo
 func getNetworkByFilter(vdc *govcd.Vdc, filter interface{}, wanted string) (*govcd.OrgVDCNetwork, error) {
 	queryType := types.QtOrgVdcNetwork
 	var searchFunc = func(queryType string, criteria *govcd.FilterDef) ([]govcd.QueryItem, string, error) {
-		return vdc.SearchByFilter(queryType, "vdc", criteria)
+		items, explanation, err := vdc.SearchByFilter(queryType, "vdc", criteria)
+		var newItems []govcd.QueryItem
+		for _, item := range items {
+			if item.GetType() == "network_"+wanted {
+				newItems = append(newItems, item)
+			}
+		}
+		return newItems, explanation, err
 	}
 
-	queryItem, err := getEntityByFilter(searchFunc, queryType, "network", filter)
+	queryItem, err := getEntityByFilter(searchFunc, queryType, "network_"+wanted, filter)
 	if err != nil {
 		return nil, err
-	}
-
-	if queryItem.GetType() != "network_"+wanted {
-		return nil, fmt.Errorf("[getNetworkByFilter] wanted type network_%s but found %s ", wanted, queryItem.GetType())
 	}
 
 	network, err := vdc.GetOrgVdcNetworkByHref(queryItem.GetHref())
