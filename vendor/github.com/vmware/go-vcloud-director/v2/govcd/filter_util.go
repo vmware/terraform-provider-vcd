@@ -6,29 +6,20 @@ import (
 	"strings"
 
 	"github.com/araddon/dateparse"
-)
 
-// Names of the filters allowed in the search engine
-const (
-	FilterNameRegex = "name_regex" // a name, searched by regular expression
-	FilterDate      = "date"       // a date expression (>|<|==|>=|<= date)
-	FilterIp        = "ip"         // An IP, searched by regular expression
-	FilterLatest    = "latest"     // gets the newest element
-	FilterEarliest  = "earliest"   // gets the oldest element
-	FilterParent    = "parent"     // matches the entity parent
-	FilterParentId  = "parent_id"  // matches the entity parent ID
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 var (
 	// supportedFilters lists the filters currently supported in the engine, available to users
 	supportedFilters = []string{
-		FilterNameRegex,
-		FilterDate,
-		FilterIp,
-		FilterLatest,
-		FilterEarliest,
-		FilterParent,
-		FilterParentId,
+		types.FilterNameRegex,
+		types.FilterDate,
+		types.FilterIp,
+		types.FilterLatest,
+		types.FilterEarliest,
+		types.FilterParent,
+		types.FilterParentId,
 	}
 
 	// SupportedMetadataTypes are the metadata types recognized so far. "NONE" is the same as ""
@@ -133,8 +124,8 @@ func stringToBool(s string) bool {
 }
 
 // compareDate will get a date from string `got`, and will parse `wanted`
-// for an expression containing an operator (>, <, >=, <=, ==) and a date
-// (many formats supported, but 'YYYY-MM-DD[ hh:mm[:ss]]' preferred)
+// for an expression starting with an operator (>, <, >=, <=, ==) followed by a date
+// (many formats supported, but 'YYYY-MM-DD[ hh:mm[:ss[.nnnZ]]' preferred)
 // For example:
 // got:    "2020-03-09T09:50:51.500Z"
 // wanted: ">= 2020-03-08"

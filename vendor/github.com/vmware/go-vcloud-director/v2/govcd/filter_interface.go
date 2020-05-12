@@ -162,43 +162,43 @@ func resultToQueryItems(queryType string, results Results) ([]QueryItem, error) 
 	}
 	var items = make([]QueryItem, resultSize)
 	switch queryType {
-	case QtAdminCatalogItem:
+	case types.QtAdminCatalogItem:
 		for i, item := range results.Results.AdminCatalogItemRecord {
 			items[i] = QueryCatalogItem(*item)
 		}
-	case QtCatalogItem:
+	case types.QtCatalogItem:
 		for i, item := range results.Results.CatalogItemRecord {
 			items[i] = QueryCatalogItem(*item)
 		}
-	case QtMedia:
+	case types.QtMedia:
 		for i, item := range results.Results.MediaRecord {
 			items[i] = QueryMedia(*item)
 		}
-	case QtAdminMedia:
+	case types.QtAdminMedia:
 		for i, item := range results.Results.AdminMediaRecord {
 			items[i] = QueryMedia(*item)
 		}
-	case QtVappTemplate:
+	case types.QtVappTemplate:
 		for i, item := range results.Results.VappTemplateRecord {
 			items[i] = QueryVAppTemplate(*item)
 		}
-	case QtAdminVappTemplate:
+	case types.QtAdminVappTemplate:
 		for i, item := range results.Results.AdminVappTemplateRecord {
 			items[i] = QueryVAppTemplate(*item)
 		}
-	case QtEdgeGateway:
+	case types.QtEdgeGateway:
 		for i, item := range results.Results.EdgeGatewayRecord {
 			items[i] = QueryEdgeGateway(*item)
 		}
-	case QtOrgVdcNetwork:
+	case types.QtOrgVdcNetwork:
 		for i, item := range results.Results.OrgVdcNetworkRecord {
 			items[i] = QueryOrgVdcNetwork(*item)
 		}
-	case QtCatalog:
+	case types.QtCatalog:
 		for i, item := range results.Results.CatalogRecord {
 			items[i] = QueryCatalog(*item)
 		}
-	case QtAdminCatalog:
+	case types.QtAdminCatalog:
 		for i, item := range results.Results.AdminCatalogRecord {
 			items[i] = QueryAdminCatalog(*item)
 		}

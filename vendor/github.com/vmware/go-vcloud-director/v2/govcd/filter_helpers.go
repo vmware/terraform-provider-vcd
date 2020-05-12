@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 // This file contains functions that help create tests for filtering.
@@ -67,7 +69,7 @@ func HelperMakeFiltersFromEdgeGateways(vdc *Vdc) ([]FilterMatch, error) {
 	for i, egw := range egwResult.EdgeGatewayRecord {
 
 		filter := NewFilterDef()
-		err = filter.AddFilter(FilterNameRegex, strToRegex(egw.Name))
+		err = filter.AddFilter(types.FilterNameRegex, strToRegex(egw.Name))
 		if err != nil {
 			return nil, err
 		}
@@ -112,7 +114,7 @@ func makeDateFilter(items []DateItem) ([]FilterMatch, error) {
 	entityType := items[0].EntityType
 	if len(items) == 1 {
 		filter := NewFilterDef()
-		err := filter.AddFilter(FilterDate, "=="+items[0].Date)
+		err := filter.AddFilter(types.FilterDate, "=="+items[0].Date)
 		filters = append(filters, FilterMatch{filter, items[0].Name, items[0].Entity, entityType})
 		return filters, err
 	}
@@ -146,18 +148,18 @@ func makeDateFilter(items []DateItem) ([]FilterMatch, error) {
 			earliestFound = true
 		}
 		exactFilter := NewFilterDef()
-		_ = exactFilter.AddFilter(FilterDate, "=="+item.Date)
+		_ = exactFilter.AddFilter(types.FilterDate, "=="+item.Date)
 		filters = append(filters, FilterMatch{exactFilter, item.Name, item.Entity, item.EntityType})
 	}
 
 	if earliestFound && latestFound && earliestDate != latestDate {
 		earlyFilter := NewFilterDef()
-		_ = earlyFilter.AddFilter(FilterDate, "<"+latestDate)
-		_ = earlyFilter.AddFilter(FilterEarliest, "true")
+		_ = earlyFilter.AddFilter(types.FilterDate, "<"+latestDate)
+		_ = earlyFilter.AddFilter(types.FilterEarliest, "true")
 
 		lateFilter := NewFilterDef()
-		_ = lateFilter.AddFilter(FilterDate, ">"+earliestDate)
-		_ = lateFilter.AddFilter(FilterLatest, "true")
+		_ = lateFilter.AddFilter(types.FilterDate, ">"+earliestDate)
+		_ = lateFilter.AddFilter(types.FilterLatest, "true")
 
 		filters = append(filters, FilterMatch{earlyFilter, earliestName, earliestEntity, entityType})
 		filters = append(filters, FilterMatch{lateFilter, latestName, latestEntity, entityType})
@@ -244,13 +246,13 @@ func queryItemToFilter(item QueryItem, entityType string) (*FilterDef, []DateIte
 
 	var dateInfo []DateItem
 	filter := NewFilterDef()
-	err := filter.AddFilter(FilterNameRegex, strToRegex(item.GetName()))
+	err := filter.AddFilter(types.FilterNameRegex, strToRegex(item.GetName()))
 	if err != nil {
 		return nil, nil, err
 	}
 
 	if item.GetIp() != "" {
-		err = filter.AddFilter(FilterIp, ipToRegex(item.GetIp()))
+		err = filter.AddFilter(types.FilterIp, ipToRegex(item.GetIp()))
 		if err != nil {
 			return nil, nil, err
 		}

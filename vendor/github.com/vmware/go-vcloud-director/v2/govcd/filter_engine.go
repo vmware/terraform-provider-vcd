@@ -9,6 +9,7 @@ import (
 
 	"github.com/kr/pretty"
 
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
@@ -64,29 +65,29 @@ func searchByFilter(queryByMetadata queryByMetadataFunc, queryWithMetadataFields
 			continue
 		}
 		switch key {
-		case FilterNameRegex:
+		case types.FilterNameRegex:
 			re, err := regexp.Compile(value)
 			if err != nil {
 				return nil, explanation, fmt.Errorf("error compiling regular expression '%s' : %s ", value, err)
 			}
 			conditions = append(conditions, conditionDef{key, nameCondition{re}})
-		case FilterDate:
+		case types.FilterDate:
 			conditions = append(conditions, conditionDef{key, dateCondition{value}})
-		case FilterIp:
+		case types.FilterIp:
 			re, err := regexp.Compile(value)
 			if err != nil {
 				return nil, explanation, fmt.Errorf("error compiling regular expression '%s' : %s ", value, err)
 			}
 			conditions = append(conditions, conditionDef{key, ipCondition{re}})
-		case FilterParent:
+		case types.FilterParent:
 			conditions = append(conditions, conditionDef{key, parentCondition{value}})
-		case FilterParentId:
+		case types.FilterParentId:
 			conditions = append(conditions, conditionDef{key, parentIdCondition{value}})
 
-		case FilterLatest:
+		case types.FilterLatest:
 			searchLatest = stringToBool(value)
 
-		case FilterEarliest:
+		case types.FilterEarliest:
 			searchEarliest = stringToBool(value)
 
 		default:
@@ -96,7 +97,7 @@ func searchByFilter(queryByMetadata queryByMetadataFunc, queryWithMetadataFields
 
 	// We can't allow the search for both the oldest and the newest item
 	if searchEarliest && searchLatest {
-		return nil, explanation, fmt.Errorf("only one of '%s' or '%s' can be used for a set of criteria", FilterEarliest, FilterLatest)
+		return nil, explanation, fmt.Errorf("only one of '%s' or '%s' can be used for a set of criteria", types.FilterEarliest, types.FilterLatest)
 	}
 
 	var metadataFilter = make(map[string]MetadataFilter)
@@ -297,15 +298,15 @@ func searchByFilter(queryByMetadata queryByMetadataFunc, queryWithMetadataFields
 // depending on conditionType
 func conditionMatches(conditionType string, stored, item interface{}) (bool, string, error) {
 	switch conditionType {
-	case FilterNameRegex:
+	case types.FilterNameRegex:
 		return matchName(stored, item)
-	case FilterDate:
+	case types.FilterDate:
 		return matchDate(stored, item)
-	case FilterIp:
+	case types.FilterIp:
 		return matchIp(stored, item)
-	case FilterParent:
+	case types.FilterParent:
 		return matchParent(stored, item)
-	case FilterParentId:
+	case types.FilterParentId:
 		return matchParentId(stored, item)
 	case "metadata":
 		return matchMetadata(stored, item)
@@ -330,9 +331,9 @@ func (catalog *Catalog) SearchByFilter(queryType, parentField string, criteria *
 	var err error
 	switch parentField {
 	case "catalog":
-		err = criteria.AddFilter(FilterParentId, catalog.Catalog.ID)
+		err = criteria.AddFilter(types.FilterParentId, catalog.Catalog.ID)
 	case "catalogName":
-		err = criteria.AddFilter(FilterParent, catalog.Catalog.Name)
+		err = criteria.AddFilter(types.FilterParent, catalog.Catalog.Name)
 	default:
 		return nil, "", fmt.Errorf("unrecognized filter field '%s'", parentField)
 	}
@@ -350,9 +351,9 @@ func (vdc *Vdc) SearchByFilter(queryType, parentField string, criteria *FilterDe
 	var err error
 	switch parentField {
 	case "vdc":
-		err = criteria.AddFilter(FilterParentId, vdc.Vdc.ID)
+		err = criteria.AddFilter(types.FilterParentId, vdc.Vdc.ID)
 	case "vdcName":
-		err = criteria.AddFilter(FilterParent, vdc.Vdc.Name)
+		err = criteria.AddFilter(types.FilterParent, vdc.Vdc.Name)
 	default:
 		return nil, "", fmt.Errorf("unrecognized filter field '%s'", parentField)
 	}
@@ -364,7 +365,7 @@ func (vdc *Vdc) SearchByFilter(queryType, parentField string, criteria *FilterDe
 
 // SearchByFilter runs the search for a specific Org
 func (org *AdminOrg) SearchByFilter(queryType string, criteria *FilterDef) ([]QueryItem, string, error) {
-	err := criteria.AddFilter(FilterParent, org.AdminOrg.Name)
+	err := criteria.AddFilter(types.FilterParent, org.AdminOrg.Name)
 	if err != nil {
 		return nil, "", fmt.Errorf("error setting parent filter for Org %s with fieldName 'orgName'", org.AdminOrg.Name)
 	}
@@ -373,7 +374,7 @@ func (org *AdminOrg) SearchByFilter(queryType string, criteria *FilterDef) ([]Qu
 
 // SearchByFilter runs the search for a specific Org
 func (org *Org) SearchByFilter(queryType string, criteria *FilterDef) ([]QueryItem, string, error) {
-	err := criteria.AddFilter(FilterParent, org.Org.Name)
+	err := criteria.AddFilter(types.FilterParent, org.Org.Name)
 	if err != nil {
 		return nil, "", fmt.Errorf("error setting parent filter for Org %s with fieldName 'orgName'", org.Org.Name)
 	}

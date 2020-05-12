@@ -53,9 +53,9 @@ func (catalogItem *CatalogItem) Delete() error {
 // queryCatalogItemList returns a list of Catalog Item for the given parent
 func queryCatalogItemList(client *Client, parentField, parentValue string) ([]*types.QueryResultCatalogItemType, error) {
 
-	catalogItemType := QtCatalogItem
+	catalogItemType := types.QtCatalogItem
 	if client.IsSysAdmin {
-		catalogItemType = QtAdminCatalogItem
+		catalogItemType = types.QtAdminCatalogItem
 	}
 
 	filterText := fmt.Sprintf("%s==%s", parentField, url.QueryEscape(parentValue))
@@ -93,9 +93,9 @@ func (vdc *AdminVdc) QueryCatalogItemList() ([]*types.QueryResultCatalogItemType
 // queryVappTemplateList returns a list of vApp templates for the given parent
 func queryVappTemplateList(client *Client, parentField, parentValue string) ([]*types.QueryResultVappTemplateType, error) {
 
-	vappTemplateType := QtVappTemplate
+	vappTemplateType := types.QtVappTemplate
 	if client.IsSysAdmin {
-		vappTemplateType = QtAdminVappTemplate
+		vappTemplateType = types.QtAdminVappTemplate
 	}
 	results, err := client.cumulativeQuery(vappTemplateType, nil, map[string]string{
 		"type":   vappTemplateType,

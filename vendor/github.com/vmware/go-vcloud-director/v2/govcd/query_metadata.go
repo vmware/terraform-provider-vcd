@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 /*
@@ -36,20 +38,6 @@ type MetadataFilter struct {
 	Value string
 }
 
-const (
-	// The QT* constants are the names used with Query requests to retrieve the corresponding entities
-	QtVappTemplate      = "vAppTemplate"      // vApp template
-	QtAdminVappTemplate = "adminVAppTemplate" // vApp template as admin
-	QtEdgeGateway       = "edgeGateway"       // edge gateway
-	QtOrgVdcNetwork     = "orgVdcNetwork"     // Org VDC network
-	QtCatalog           = "catalog"           // catalog
-	QtAdminCatalog      = "adminCatalog"      // catalog as admin
-	QtCatalogItem       = "catalogItem"       // catalog item
-	QtAdminCatalogItem  = "adminCatalogItem"  // catalog item as admin
-	QtAdminMedia        = "adminMedia"        // media item as admin
-	QtMedia             = "media"             // media item
-)
-
 // queryFieldsOnDemand returns the list of fields that can be requested in the option "fields" of a query
 // Note that an alternative approach using `reflect` would require several exceptions to list all the
 // fields that are not supported.
@@ -72,16 +60,16 @@ func queryFieldsOnDemand(queryType string) ([]string, error) {
 		catalogItemFields = []string{"entity", "entityName", "entityType", "catalog", "catalogName", "ownerName",
 			"owner", "isPublished", "vdc", "vdcName", "isVdcEnabled", "creationDate", "isExpired", "status"}
 		fieldsOnDemand = map[string][]string{
-			QtVappTemplate:      vappTemplatefields,
-			QtAdminVappTemplate: vappTemplatefields,
-			QtEdgeGateway:       edgeGatewayFields,
-			QtOrgVdcNetwork:     orgVdcNetworkFields,
-			QtCatalog:           catalogFields,
-			QtAdminCatalog:      catalogFields,
-			QtMedia:             mediaFields,
-			QtAdminMedia:        mediaFields,
-			QtCatalogItem:       catalogItemFields,
-			QtAdminCatalogItem:  catalogItemFields,
+			types.QtVappTemplate:      vappTemplatefields,
+			types.QtAdminVappTemplate: vappTemplatefields,
+			types.QtEdgeGateway:       edgeGatewayFields,
+			types.QtOrgVdcNetwork:     orgVdcNetworkFields,
+			types.QtCatalog:           catalogFields,
+			types.QtAdminCatalog:      catalogFields,
+			types.QtMedia:             mediaFields,
+			types.QtAdminMedia:        mediaFields,
+			types.QtCatalogItem:       catalogItemFields,
+			types.QtAdminCatalogItem:  catalogItemFields,
 		}
 	)
 
@@ -97,34 +85,34 @@ func addResults(queryType string, cumulativeResults, newResults Results) (Result
 
 	var size int
 	switch queryType {
-	case QtAdminVappTemplate:
+	case types.QtAdminVappTemplate:
 		cumulativeResults.Results.AdminVappTemplateRecord = append(cumulativeResults.Results.AdminVappTemplateRecord, newResults.Results.AdminVappTemplateRecord...)
 		size = len(newResults.Results.AdminVappTemplateRecord)
-	case QtVappTemplate:
+	case types.QtVappTemplate:
 		size = len(newResults.Results.VappTemplateRecord)
 		cumulativeResults.Results.VappTemplateRecord = append(cumulativeResults.Results.VappTemplateRecord, newResults.Results.VappTemplateRecord...)
-	case QtCatalogItem:
+	case types.QtCatalogItem:
 		cumulativeResults.Results.CatalogItemRecord = append(cumulativeResults.Results.CatalogItemRecord, newResults.Results.CatalogItemRecord...)
 		size = len(newResults.Results.CatalogItemRecord)
-	case QtAdminCatalogItem:
+	case types.QtAdminCatalogItem:
 		cumulativeResults.Results.AdminCatalogItemRecord = append(cumulativeResults.Results.AdminCatalogItemRecord, newResults.Results.AdminCatalogItemRecord...)
 		size = len(newResults.Results.AdminCatalogItemRecord)
-	case QtMedia:
+	case types.QtMedia:
 		cumulativeResults.Results.MediaRecord = append(cumulativeResults.Results.MediaRecord, newResults.Results.MediaRecord...)
 		size = len(newResults.Results.MediaRecord)
-	case QtAdminMedia:
+	case types.QtAdminMedia:
 		cumulativeResults.Results.AdminMediaRecord = append(cumulativeResults.Results.AdminMediaRecord, newResults.Results.AdminMediaRecord...)
 		size = len(newResults.Results.AdminMediaRecord)
-	case QtCatalog:
+	case types.QtCatalog:
 		cumulativeResults.Results.CatalogRecord = append(cumulativeResults.Results.CatalogRecord, newResults.Results.CatalogRecord...)
 		size = len(newResults.Results.CatalogRecord)
-	case QtAdminCatalog:
+	case types.QtAdminCatalog:
 		cumulativeResults.Results.AdminCatalogRecord = append(cumulativeResults.Results.AdminCatalogRecord, newResults.Results.AdminCatalogRecord...)
 		size = len(newResults.Results.AdminCatalogRecord)
-	case QtOrgVdcNetwork:
+	case types.QtOrgVdcNetwork:
 		cumulativeResults.Results.OrgVdcNetworkRecord = append(cumulativeResults.Results.OrgVdcNetworkRecord, newResults.Results.OrgVdcNetworkRecord...)
 		size = len(newResults.Results.OrgVdcNetworkRecord)
-	case QtEdgeGateway:
+	case types.QtEdgeGateway:
 		cumulativeResults.Results.EdgeGatewayRecord = append(cumulativeResults.Results.EdgeGatewayRecord, newResults.Results.EdgeGatewayRecord...)
 		size = len(newResults.Results.EdgeGatewayRecord)
 
