@@ -18,8 +18,11 @@ one item.
 When you don't know the name, you may get the data source using the `filter` section, and using one or more of the following criteria:
 
 * `name_regex` (Optional) matches the name using a regular expression.
-* `date` (Optional) is an expression containing an operator (`>`, `<`, `>=`, `<=`, `==`) and a date. Several formats 
-  are recognized, but one of `yyyy-mm-dd [hh:mm[:ss]]` or `dd-MMM-yyyy [hh:mm[:ss]]` is recommended.
+* `date` (Optional) is an expression starting with an operator (`>`, `<`, `>=`, `<=`, `==`), followed by a date, with
+  optional spaces in between. For example: `> 2020-02-01 12:35:00.523Z`
+  The filter recognizes several formats, but one of `yyyy-mm-dd [hh:mm[:ss[.nnnZ]]]` or `dd-MMM-yyyy [hh:mm[:ss[.nnnZ]]]`
+  is recommended. The time stamp can be defined down to microsecond level. One of the formats used in creation dates
+  for vApp templates, catalogs, etc, is  `"YYYY-MM-DDThh:mm:ss.µµµZ"` (RFC3339)
 * `latest` (Optional) If `true`, retrieve the latest item among the ones matching other parameters. If no other parameters
   are set, it retrieves the newest item.
 * `earliest` (Optional) If `true`, retrieve the earliest item among the ones matching other parameters. If no other parameters
