@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 // Functions in this file perform search by filter for all the data sources that support filters
@@ -38,9 +39,9 @@ func getEntityByFilter(search searchByFilterFunc, queryType, label string, filte
 
 // getCatalogByFilter finds a catalog using a filter block
 func getCatalogByFilter(org *govcd.AdminOrg, filter interface{}, isSysAdmin bool) (*govcd.Catalog, error) {
-	queryType := govcd.QtCatalog
+	queryType := types.QtCatalog
 	if isSysAdmin {
-		queryType = govcd.QtAdminCatalog
+		queryType = types.QtAdminCatalog
 	}
 
 	var searchFunc = func(queryType string, criteria *govcd.FilterDef) ([]govcd.QueryItem, string, error) {
@@ -61,9 +62,9 @@ func getCatalogByFilter(org *govcd.AdminOrg, filter interface{}, isSysAdmin bool
 // getCatalogItemByFilter finds a catalog item using a filter block
 // TODO: This function should be updated in the context of Issue #502
 func getCatalogItemByFilter(catalog *govcd.Catalog, filter interface{}, isSysAdmin bool) (*govcd.CatalogItem, error) {
-	queryType := govcd.QtVappTemplate
+	queryType := types.QtVappTemplate
 	if isSysAdmin {
-		queryType = govcd.QtAdminVappTemplate
+		queryType = types.QtAdminVappTemplate
 	}
 	var searchFunc = func(queryType string, criteria *govcd.FilterDef) ([]govcd.QueryItem, string, error) {
 		return catalog.SearchByFilter(queryType, "catalogName", criteria)
@@ -82,9 +83,9 @@ func getCatalogItemByFilter(catalog *govcd.Catalog, filter interface{}, isSysAdm
 
 // getMediaByFilter finds a media item using a filter block
 func getMediaByFilter(catalog *govcd.Catalog, filter interface{}, isSysAdmin bool) (*govcd.Media, error) {
-	queryType := govcd.QtMedia
+	queryType := types.QtMedia
 	if isSysAdmin {
-		queryType = govcd.QtAdminMedia
+		queryType = types.QtAdminMedia
 	}
 	var searchFunc = func(queryType string, criteria *govcd.FilterDef) ([]govcd.QueryItem, string, error) {
 		return catalog.SearchByFilter(queryType, "catalog", criteria)
@@ -104,7 +105,7 @@ func getMediaByFilter(catalog *govcd.Catalog, filter interface{}, isSysAdmin boo
 
 // getNetworkByFilter finds a network using a filter block
 func getNetworkByFilter(vdc *govcd.Vdc, filter interface{}, wanted string) (*govcd.OrgVDCNetwork, error) {
-	queryType := govcd.QtOrgVdcNetwork
+	queryType := types.QtOrgVdcNetwork
 	var searchFunc = func(queryType string, criteria *govcd.FilterDef) ([]govcd.QueryItem, string, error) {
 		return vdc.SearchByFilter(queryType, "vdc", criteria)
 	}
@@ -127,7 +128,7 @@ func getNetworkByFilter(vdc *govcd.Vdc, filter interface{}, wanted string) (*gov
 
 // getEdgeGatewayByFilter finds an edge gateway using a filter block
 func getEdgeGatewayByFilter(vdc *govcd.Vdc, filter interface{}) (*govcd.EdgeGateway, error) {
-	queryType := govcd.QtEdgeGateway
+	queryType := types.QtEdgeGateway
 	var searchFunc = func(queryType string, criteria *govcd.FilterDef) ([]govcd.QueryItem, string, error) {
 		return vdc.SearchByFilter(queryType, "vdc", criteria)
 	}

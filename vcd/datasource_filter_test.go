@@ -11,6 +11,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 type filterCollection struct {
@@ -123,7 +124,7 @@ func getFiltersForAvailableEntities(entityTYpe string, dataGeneration bool) ([]g
 	}
 	var results []govcd.FilterMatch
 	switch entityTYpe {
-	case govcd.QtAdminVappTemplate, govcd.QtVappTemplate:
+	case types.QtAdminVappTemplate, types.QtVappTemplate:
 		if filtersByType.vAppTemplates != nil {
 			return filtersByType.vAppTemplates, nil
 		}
@@ -134,7 +135,7 @@ func getFiltersForAvailableEntities(entityTYpe string, dataGeneration bool) ([]g
 		filtersByType.vAppTemplates = vappTemplateFilters
 		results = vappTemplateFilters
 
-	case govcd.QtEdgeGateway:
+	case types.QtEdgeGateway:
 		if filtersByType.edgeGateways != nil {
 			return filtersByType.edgeGateways, nil
 		}
@@ -144,7 +145,7 @@ func getFiltersForAvailableEntities(entityTYpe string, dataGeneration bool) ([]g
 		}
 		filtersByType.edgeGateways = egwFilters
 		results = egwFilters
-	case govcd.QtMedia, govcd.QtAdminMedia:
+	case types.QtMedia, types.QtAdminMedia:
 		if filtersByType.mediaItems != nil {
 			return filtersByType.mediaItems, nil
 		}
@@ -155,7 +156,7 @@ func getFiltersForAvailableEntities(entityTYpe string, dataGeneration bool) ([]g
 		filtersByType.mediaItems = mediaFilters
 		results = mediaFilters
 
-	case govcd.QtCatalog, govcd.QtAdminCatalog:
+	case types.QtCatalog, types.QtAdminCatalog:
 		if filtersByType.catalogs != nil {
 			return filtersByType.catalogs, nil
 		}
@@ -165,7 +166,7 @@ func getFiltersForAvailableEntities(entityTYpe string, dataGeneration bool) ([]g
 		}
 		filtersByType.catalogs = catalogFilters
 		results = catalogFilters
-	case govcd.QtOrgVdcNetwork:
+	case types.QtOrgVdcNetwork:
 		if filtersByType.networks != nil {
 			return filtersByType.networks, nil
 		}
@@ -304,12 +305,12 @@ func TestAccSearchEngine(t *testing.T) {
 	}
 
 	// "networks" includes vcd_network_isolated, vcd_network_routed, and vcd_network_direct
-	t.Run("networks", func(t *testing.T) { runSearchTest(govcd.QtOrgVdcNetwork, "networks", t) })
+	t.Run("networks", func(t *testing.T) { runSearchTest(types.QtOrgVdcNetwork, "networks", t) })
 	// The data used for catalog item filtering belongs to the inner vApp template
-	t.Run("catalog_items", func(t *testing.T) { runSearchTest(govcd.QtVappTemplate, "catalog_items", t) })
-	t.Run("media", func(t *testing.T) { runSearchTest(govcd.QtMedia, "media", t) })
-	t.Run("catalog", func(t *testing.T) { runSearchTest(govcd.QtCatalog, "catalog", t) })
-	t.Run("edge_gateway", func(t *testing.T) { runSearchTest(govcd.QtEdgeGateway, "edge_gateway", t) })
+	t.Run("catalog_items", func(t *testing.T) { runSearchTest(types.QtVappTemplate, "catalog_items", t) })
+	t.Run("media", func(t *testing.T) { runSearchTest(types.QtMedia, "media", t) })
+	t.Run("catalog", func(t *testing.T) { runSearchTest(types.QtCatalog, "catalog", t) })
+	t.Run("edge_gateway", func(t *testing.T) { runSearchTest(types.QtEdgeGateway, "edge_gateway", t) })
 }
 
 // runSearchTest builds the test elements for the given entityType and run the test itself
@@ -317,7 +318,7 @@ func runSearchTest(entityType, label string, t *testing.T) {
 
 	generateData := false
 
-	if entityType == govcd.QtAdminVappTemplate || entityType == govcd.QtVappTemplate {
+	if entityType == types.QtAdminVappTemplate || entityType == types.QtVappTemplate {
 		if os.Getenv("VCD_TEST_DATA_GENERATION") != "" {
 			generateData = true
 		}

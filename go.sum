@@ -36,8 +36,8 @@ github.com/bgentry/speakeasy v0.1.0 h1:ByYyxL9InA1OWqxJqqp2A5pYHUrCiAL6K3J+LKSsQ
 github.com/bgentry/speakeasy v0.1.0/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kBD4zp0CCIs=
 github.com/cheggaaa/pb v1.0.27/go.mod h1:pQciLPpbU0oxA0h+VJYYLxO+XeDQb5pZijXscXHm81s=
 github.com/client9/misspell v0.3.4/go.mod h1:qj6jICC3Q7zFZvVWo7KLAzC3yx5G7kyvSDkc90ppPyw=
-github.com/dataclouder/go-vcloud-director/v2 v2.8.0-alpha.4.0.20200510094641-84a2c7d3f4fb h1:MICQXAdCeUSbmE63H6oEyJ4Q9HGydC8gyY0JzWt9UNs=
-github.com/dataclouder/go-vcloud-director/v2 v2.8.0-alpha.4.0.20200510094641-84a2c7d3f4fb/go.mod h1:QARPFI5EJce4Cs9g0gL5mlHGhdN7C40CyOqvh7c+RrA=
+github.com/dataclouder/go-vcloud-director/v2 v2.8.0-alpha.4.0.20200512115424-ed648bf25600 h1:Uo1UgHPNxpSaqtDRn3540GyIrEY0KYZsZlr/d42jpeg=
+github.com/dataclouder/go-vcloud-director/v2 v2.8.0-alpha.4.0.20200512115424-ed648bf25600/go.mod h1:QARPFI5EJce4Cs9g0gL5mlHGhdN7C40CyOqvh7c+RrA=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=

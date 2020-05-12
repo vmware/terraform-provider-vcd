@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 const noNameOrFilterError = "no 'name' or 'filter' was found in definition for type %s"
@@ -151,12 +152,12 @@ func buildCriteria(filterBlock interface{}) (*govcd.FilterDef, error) {
 	for key, value := range filterMap {
 		switch key {
 
-		case govcd.FilterNameRegex, govcd.FilterIp, govcd.FilterDate:
+		case types.FilterNameRegex, types.FilterIp, types.FilterDate:
 			err := criteria.AddFilter(key, value.(string))
 			if err != nil {
 				return nil, fmt.Errorf(errorAddingFilter, key, err)
 			}
-		case govcd.FilterLatest, govcd.FilterEarliest:
+		case types.FilterLatest, types.FilterEarliest:
 			strValue := fmt.Sprintf("%v", value.(bool))
 			err := criteria.AddFilter(key, strValue)
 			if err != nil {
