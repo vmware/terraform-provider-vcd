@@ -227,6 +227,7 @@ github.com/ulikunitz/xz/lzma
 github.com/vmihailenco/msgpack
 github.com/vmihailenco/msgpack/codes
 # github.com/vmware/go-vcloud-director/v2 v2.8.0-alpha.3 => github.com/dataclouder/go-vcloud-director/v2 v2.8.0-alpha.4.0.20200510094641-84a2c7d3f4fb
+# github.com/vmware/go-vcloud-director/v2 v2.8.0-alpha.4
 github.com/vmware/go-vcloud-director/v2/govcd
 github.com/vmware/go-vcloud-director/v2/types/v56
 github.com/vmware/go-vcloud-director/v2/util
