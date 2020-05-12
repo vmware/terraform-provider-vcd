@@ -234,7 +234,7 @@ func (client *Client) queryByMetadataFilter(queryType string, params, notEncoded
 	for key, value := range metadataFilters {
 		metadataFilterText += fmt.Sprintf("%s:%s==%s:%s", prefix, key, value.Type, url.QueryEscape(value.Value))
 		if count < len(metadataFilters)-1 {
-			metadataFilterText += ","
+			metadataFilterText += ";"
 		}
 		count++
 	}

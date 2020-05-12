@@ -223,4 +223,3 @@ const (
 	QtAdminMedia        = "adminMedia"        // media item as admin
 	QtMedia             = "media"             // media item
 )
-
