@@ -60,8 +60,11 @@ The following arguments are supported:
 (Supported in provider *v2.9+*)
 
 * `name_regex` (Optional) matches the name using a regular expression.
-* `date` (Optional) is an expression containing an operator (`>`, `<`, `>=`, `<=`, `==`) and a date. Several formats 
-  are recognized, but one of `yyyy-mm-dd [hh:mm[:ss]]` or `dd-MMM-yyyy [hh:mm[:ss]]` is recommended.
+* `date` (Optional) is an expression starting with an operator (`>`, `<`, `>=`, `<=`, `==`), followed by a date, with
+  optional spaces in between. For example: `> 2020-02-01 12:35:00.523Z`
+  The filter recognizes several formats, but one of `yyyy-mm-dd [hh:mm[:ss[.nnnZ]]]` or `dd-MMM-yyyy [hh:mm[:ss[.nnnZ]]]`
+  is recommended.
+  Comparison with equality operator (`==`) need to define the date to the microseconds.
 * `latest` (Optional) If `true`, retrieve the latest item among the ones matching other parameters. If no other parameters
   are set, it retrieves the newest item.
 * `earliest` (Optional) If `true`, retrieve the earliest item among the ones matching other parameters. If no other parameters

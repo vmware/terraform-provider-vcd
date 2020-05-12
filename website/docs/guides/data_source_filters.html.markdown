@@ -23,6 +23,7 @@ When you don't know the name, you may get the data source using the `filter` sec
   The filter recognizes several formats, but one of `yyyy-mm-dd [hh:mm[:ss[.nnnZ]]]` or `dd-MMM-yyyy [hh:mm[:ss[.nnnZ]]]`
   is recommended. The time stamp can be defined down to microsecond level. One of the formats used in creation dates
   for vApp templates, catalogs, etc, is  `"YYYY-MM-DDThh:mm:ss.µµµZ"` (RFC3339)
+  Comparison with equality operator (`==`) needs the date to be defined with microseconds precision.
 * `latest` (Optional) If `true`, retrieve the latest item among the ones matching other parameters. If no other parameters
   are set, it retrieves the newest item.
 * `earliest` (Optional) If `true`, retrieve the earliest item among the ones matching other parameters. If no other parameters
@@ -43,6 +44,31 @@ saved into a catalog. See Example 7 below.
 * `type` (Optional) One of `STRING`, `NUMBER`, `BOOLEAN`, `DATETIME`. It is required when `use_api_search` is set.
   Note that in most cases, `STRING` is accepted also for other types.
 
+### Multiple filter expressions
+
+When a filter contains multiple clauses, you achieve the overall match only if all the clauses match. For example:
+
+```hcl
+ filter {
+    name_regex = "^p.*11$"
+    date       = "> 2020-02-10"
+   metadata {
+     key   = "key1"
+     value = "value1"
+    }
+   metadata {
+     key   = "keyABC"
+     value = "valueXYZ"
+    }
+  }
+```
+
+This filter will retrieve the entity ONLY if ALL the conditions are true:
+
+* The name starts with `p` and ends with `11`
+* The entity was created after the 10th of February
+* Both metadata fields were found with the requested values
+
 ### Availability of filters
 
 Not all the data sources support filters, and when they do, they may not support all the search fields. For example,
@@ -60,7 +86,7 @@ Like populated filters, when the search returns more than one item, the data sou
 Metadata can be searched even for those data sources that don't expose metadata in their interface. If the `filter`
 section lists `metadata` among the available criteria, you can search the metadata and get the results accordingly,
 although the vcd provider may not show the metadata for the found item.
-Note that the names of the metadata fields are case sensitive.
+Note that the names of the metadata fields are case-sensitive.
 
 ## Example filter 1
 
@@ -82,7 +108,7 @@ output "filtered_item" {
 
 Will find a catalog item with name starting with `p` and ending with `11`.
 It fails if there are several items named as requested, such as `photon-v11`, `platform911`, or `poorName211`
-Note that regular expressions are case sensitive: `photon-v11` and `Photon-v11` are two different entities.
+Note that regular expressions are case-sensitive: `photon-v11` and `Photon-v11` are two different entities.
 
 ## Example filter 2
 
@@ -168,8 +194,8 @@ data "vcd_catalog_item" "unknown" {
 }
 ```
 
-You can use several `metadata` blocks. This example finds an item where the metadata contains a key `ONE` with
-value `FirstValue`, and a key `TWO` with value `SecondValue`.
+When you use several `metadata` blocks, they must all match to have a filter match. This example finds an item where the
+metadata contains a key `ONE` with value `FirstValue`, AND a key `TWO` with value `SecondValue`.
 Will fail if the criteria match more than one item. Will also fail if only one of the two metadata fields was found.
 
 ## Example filter 6
@@ -187,7 +213,7 @@ data "vcd_catalog_item" "unknown" {
     }
     metadata {
      key   = "TWO"
-     value = "^S\\w+$"    # regular expression
+     value = "^S\\w+$" # regular expression
     }
   }
 }

@@ -63,10 +63,6 @@ All attributes defined in [routed network resource](/docs/providers/vcd/r/networ
 (Supported in provider *v2.9+*)
 
 * `name_regex` (Optional) matches the name using a regular expression.
-* `date` (Optional) is an expression containing an operator (`>`, `<`, `>=`, `<=`, `==`) and a date. Several formats 
-  are recognized, but one of `yyyy-mm-dd [hh:mm[:ss]]` or `dd-MMM-yyyy [hh:mm[:ss]]` is recommended.
-* `latest` (Optional) If `true`, retrieve the latest item among the ones matching other parameters. If no other parameters
-  are set, it retrieves the newest item.
 * `ip` (Optional) matches the IP of the resource using a regular expression.
 * `metadata` (Optional) One or more parameters that will match metadata contents.
 
