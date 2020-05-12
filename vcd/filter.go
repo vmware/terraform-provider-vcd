@@ -51,7 +51,7 @@ var (
 	}
 
 	// elementMetadata applies to most data sources. It can be used even if the corresponding resource interface
-	// does not handle metadata
+	// does not handle metadata i.e. we can search by metadata in VCD even if the VCD provider does not handle it yet
 	elementMetadata = &schema.Schema{
 		Type:        schema.TypeList,
 		Optional:    true,
