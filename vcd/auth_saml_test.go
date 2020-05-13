@@ -21,7 +21,7 @@ func TestAccVcdSamlAuth(t *testing.T) {
 		t.Skip(t.Name() + "requires 'samlUser' and 'samlPassword' to be specified in configuration")
 		return
 	}
-	// Store value of connection caching
+	// Backup default authentication configuration
 	backupUser := testConfig.Provider.User
 	backupPassword := testConfig.Provider.Password
 	backupUseSamlAdfs := testConfig.Provider.UseSamlAdfs
