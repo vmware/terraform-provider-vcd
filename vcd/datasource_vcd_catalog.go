@@ -60,7 +60,6 @@ func datasourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
 		err       error
 		adminOrg  *govcd.AdminOrg
 		catalog   *govcd.Catalog
-		//criteria  *govcd.FilterDef
 	)
 
 	if !nameOrFilterIsSet(d) {
