@@ -54,6 +54,11 @@ vcd:
         #
         # An optional description for the catalog item
         catalogItemDescription: myitem to create vapps
+        #
+        # Item in the catalog. If available it will be used to test vApp with multi VMs and `ovaMultiVmPath` will be ignored
+        catalogItemWithMultiVms: my item with multi VMs
+        # Name of VM in `catalogItemWithMultiVms` template or in `ovaMultiVmPath` if `catalogItemWithMultiVms` isn't provided. Default vmName `thirdVM` in default OVA.
+        vmNameInMultiVmItem: thirdVM
     # Existing VDC networks. At least one is needed.
     network:
       # First vdc network (mandatory)
@@ -141,6 +146,9 @@ ova:
   #
   # The chunked ova (vmdk inside are split) for tests
   ovaChunkedPath: ../test-resources/template_with_custom_chunk_size.ova
+  #
+  # The ova with multi VMs for tests.
+  ovaMultiVmPath: ../test-resources/vapp_with_3_vms.ova
 media:
   # The iso for uploading media item for tests.
   # Default paths are simple iso provided by project

@@ -53,8 +53,11 @@ type TestConfig struct {
 			StorageProfile string `json:"storageProfile"`
 		} `json:"providerVdc"`
 		Catalog struct {
-			Name        string `json:"name,omitempty"`
-			CatalogItem string `json:"catalogItem,omitempty"`
+			Name                    string `json:"name,omitempty"`
+			CatalogItem             string `json:"catalogItem,omitempty"`
+			CatalogItemWithMultiVms string `json:"catalogItemWithMultiVms,omitempty"`
+			VmName1InMultiVmItem    string `json:"vmName1InMultiVmItem,omitempty"`
+			VmName2InMultiVmItem    string `json:"VmName2InMultiVmItem,omitempty"`
 		} `json:"catalog"`
 	} `json:"vcd"`
 	Networking struct {
@@ -82,12 +85,13 @@ type TestConfig struct {
 		LogHttpResponse bool   `json:"logHttpResponse,omitempty"`
 	} `json:"logging"`
 	Ova struct {
-		OvaPath         string `json:"ovaPath,omitempty"`
-		UploadPieceSize int64  `json:"uploadPieceSize,omitempty"`
-		UploadProgress  bool   `json:"uploadProgress,omitempty"`
-		OvaTestFileName string `json:"ovaTestFileName,omitempty"`
-		OvaDownloadUrl  string `json:"ovaDownloadUrl,omitempty"`
-		Preserve        bool   `json:"preserve,omitempty"`
+		OvaPath             string `json:"ovaPath,omitempty"`
+		UploadPieceSize     int64  `json:"uploadPieceSize,omitempty"`
+		UploadProgress      bool   `json:"uploadProgress,omitempty"`
+		OvaTestFileName     string `json:"ovaTestFileName,omitempty"`
+		OvaDownloadUrl      string `json:"ovaDownloadUrl,omitempty"`
+		Preserve            bool   `json:"preserve,omitempty"`
+		OvaVappMultiVmsPath string `json:"ovaVappMultiVmsPath,omitempty"`
 	} `json:"ova"`
 	Media struct {
 		MediaPath       string `json:"mediaPath,omitempty"`
@@ -482,6 +486,13 @@ func getConfigStruct(config string) TestConfig {
 			panic("error retrieving absolute path for Media path " + configStruct.Media.MediaPath)
 		}
 		configStruct.Media.MediaPath = mediaPath
+	}
+	if configStruct.Ova.OvaVappMultiVmsPath != "" {
+		multiVmOvaPath, err := filepath.Abs(configStruct.Ova.OvaVappMultiVmsPath)
+		if err != nil {
+			panic("error retrieving absolute path for multi OVA path " + configStruct.Ova.OvaVappMultiVmsPath)
+		}
+		configStruct.Ova.OvaVappMultiVmsPath = multiVmOvaPath
 	}
 
 	// Partial duplication of actions performed in createSuiteCatalogAndItem

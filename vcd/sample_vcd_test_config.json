@@ -29,7 +29,13 @@
     "//": "Catalog name to be created (if using testEnvBuild) or to reuse if exists already",
     "catalog": {
       "name": "tf_catalog",
-      "catalogItem": "tf_catalog_item"
+      "catalogItem": "tf_catalog_item",
+      "//": "if catalog item isn't provided then default OVA is used as defined in `ovaVappMultiVmsPath`",
+      "catalogItemWithMultiVms": "item_with_multi_vms",
+      "//": "VM name in default OVA is secondVM",
+      "vmName1InMultiVmItem": "secondVM",
+      "//": "VM name in default OVA is thirdVM",
+      "vmName2InMultiVmItem": "thirdVM"
     },
     "providerVdc": {
       "//": "Provider VDC details are needed for creating organization VDC",
@@ -83,7 +89,8 @@
     "//": "Name for downloaded file which will be saved in test-resources folder",
     "ovaTestFileName": "photon.ova",
     "//": "Won't destroy resources created for test suite. Will be reused next time running tests",
-    "preserve": true
+    "preserve": true,
+    "ovaVappMultiVmsPath": "../test-resources/vapp_with_3_vms.ova"
   },
   "media": {
     "mediaPath": "../test-resources/test.iso",
