@@ -18,6 +18,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 	"text/template"
@@ -33,9 +34,20 @@ import (
 // Structure to get info from a config json file that the user specifies
 type TestConfig struct {
 	Provider struct {
-		User                     string `json:"user"`
-		Password                 string `json:"password"`
-		Token                    string `json:"token,omitempty"`
+		User            string `json:"user"`
+		Password        string `json:"password"`
+		Token           string `json:"token,omitempty"`
+		UseSamlAdfs     bool   `json:"useSamlAdfs"`
+		CustomAdfsRptId string `json:"customAdfsRptId,omitempty"`
+
+		// The below `SamlUser`, `SamlPassword` and `SamlCustomRptId` variables are optional and are
+		// related to additional test run specifically with SAML user/password. It can be useful in
+		// case local user is used for test run (defined by above 'User', 'Password' variables).
+		// SamlUser takes ADFS friendly format ('contoso.com\username' or 'username@contoso.com')
+		SamlUser        string `json:"samlUser,omitempty"`
+		SamlPassword    string `json:"samlPassword,omitempty"`
+		SamlCustomRptId string `json:"samlCustomRptId,omitempty"`
+
 		Url                      string `json:"url"`
 		SysOrg                   string `json:"sysOrg"`
 		AllowInsecure            bool   `json:"allowInsecure"`
@@ -144,6 +156,8 @@ provider "vcd" {
   user                 = "{{.User}}"
   password             = "{{.Password}}"
   token                = "{{.Token}}"
+  use_saml_adfs        = "{{.UseSamlAdfs}}"
+  saml_rpt_id          = "{{.SamlRptId}}"
   url                  = "{{.Url}}"
   sysorg               = "{{.SysOrg}}"
   org                  = "{{.Org}}"
@@ -244,6 +258,8 @@ func templateFill(tmpl string, data StringMap) string {
 		data["User"] = testConfig.Provider.User
 		data["Password"] = testConfig.Provider.Password
 		data["Token"] = testConfig.Provider.Token
+		data["UseSamlAdfs"] = testConfig.Provider.UseSamlAdfs
+		data["SamlRptId"] = testConfig.Provider.CustomAdfsRptId
 		data["Url"] = testConfig.Provider.Url
 		data["SysOrg"] = testConfig.Provider.SysOrg
 		data["Org"] = testConfig.VCD.Org
@@ -420,6 +436,10 @@ func getConfigStruct(config string) TestConfig {
 	_ = os.Setenv("VCD_USER", configStruct.Provider.User)
 	_ = os.Setenv("VCD_PASSWORD", configStruct.Provider.Password)
 	_ = os.Setenv("VCD_TOKEN", configStruct.Provider.Token)
+
+	_ = os.Setenv("VCD_USE_SAML_ADFS", strconv.FormatBool(configStruct.Provider.UseSamlAdfs))
+	_ = os.Setenv("VCD_SAML_RPT_ID", configStruct.Provider.CustomAdfsRptId)
+
 	_ = os.Setenv("VCD_URL", configStruct.Provider.Url)
 	_ = os.Setenv("VCD_SYS_ORG", configStruct.Provider.SysOrg)
 	_ = os.Setenv("VCD_ORG", configStruct.VCD.Org)

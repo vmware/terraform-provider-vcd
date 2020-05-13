@@ -2,16 +2,18 @@
 
 ## Table of contents
 
-- [Meeting prerequisites: Building the test environment](#meeting-prerequisites-building-the-test-environment)
-- [Running tests](#running-tests)
-- [Tests split by feature set](#tests-split-by-feature-set)
-- [Adding new tests](#adding-new-tests)
-  - [Parallelism considerations](#parallelism-considerations)
-- [Binary testing](#binary-testing)
-- [Handling failures in binary tests](#handling-failures-in-binary-tests)
-- [Upgrade testing](#upgrade-testing)
-- [Custom terraform scripts](#custom-terraform-scripts)
-- [Environment variables](#environment-variables)
+- [Testing terraform-provider-vcd](#testing-terraform-provider-vcd)
+  - [Table of contents](#table-of-contents)
+  - [Meeting prerequisites: Building the test environment](#meeting-prerequisites-building-the-test-environment)
+  - [Running tests](#running-tests)
+  - [Tests split by feature set](#tests-split-by-feature-set)
+  - [Adding new tests](#adding-new-tests)
+    - [Parallelism considerations](#parallelism-considerations)
+  - [Binary testing](#binary-testing)
+  - [Handling failures in binary tests](#handling-failures-in-binary-tests)
+  - [Upgrade testing](#upgrade-testing)
+  - [Custom terraform scripts](#custom-terraform-scripts)
+  - [Environment variables](#environment-variables)
 
 ## Meeting prerequisites: Building the test environment
 
@@ -438,6 +440,9 @@ ProviderSysOrg               | provider.sysOrg
 ProviderUrl                  | provider.url
 ProviderUser                 | provider.user
 ProviderPassword             | provider.password
+ProviderSamlUser             | provider.samlUser
+ProviderSamlPassword         | provider.samlPassword
+ProviderSamlRptId            | provider.samlCustomRptId
 
 
 The files generated from `./vcd/test-templates` will end up in `./vcd/test-artifacts`, and you will recognize them because their name will start by `cust.` instead of `vcd.`, and they all use the tag `custom`.
