@@ -8,6 +8,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -125,6 +126,27 @@ type TestConfig struct {
 var (
 	testSuiteCatalogName    = "TestSuiteCatalog"
 	testSuiteCatalogOVAItem = "TestSuiteOVA"
+
+	// vcdAddProvider will add the provide section to the template
+	vcdAddProvider = os.Getenv(envVcdAddProvider) != ""
+
+	// vcdSkipTemplateWriting disable the writing of the template to a .tf file
+	vcdSkipTemplateWriting = false
+
+	// vcdRemoveOrgVdcFromTemplate removes org and vdc from template, thus tetsing with the
+	// variables in provider section
+	vcdRemoveOrgVdcFromTemplate = false
+
+	// vcdTestOrgUser enables testing with the Org User
+	vcdTestOrgUser = false
+
+	// vcdHelp displays the vcd-* flags
+	vcdHelp = false
+
+	// Distributed networks require an edge gateway with distributed routing enabled,
+	// which in turn requires a NSX controller. To run the distributed test, users
+	// need to set the environment variable VCD_TEST_DISTRIBUTED_NETWORK
+	testDistributedNetworks = os.Getenv("VCD_TEST_DISTRIBUTED_NETWORK") != ""
 )
 
 const (
@@ -133,6 +155,7 @@ const (
 	envVcdAddProvider              = "VCD_ADD_PROVIDER"
 	envVcdSkipTemplateWriting      = "VCD_SKIP_TEMPLATE_WRITING"
 	envVcdRemoveOrgVdcFromTemplate = "REMOVE_ORG_VDC_FROM_TEMPLATE"
+	envVcdTestOrgUser              = "VCD_TEST_ORG_USER"
 
 	// Warning message used for all tests
 	acceptanceTestsSkipped = "Acceptance tests skipped unless env 'TF_ACC' set"
@@ -239,7 +262,7 @@ func templateFill(tmpl string, data StringMap) string {
 	}
 
 	// If requested, the provider defined in testConfig will be added to test snippets.
-	if os.Getenv(envVcdAddProvider) != "" {
+	if vcdAddProvider {
 		// the original template is prefixed with the provider template
 		tmpl = providerTemplate + tmpl
 
@@ -289,7 +312,7 @@ func templateFill(tmpl string, data StringMap) string {
 	// These templates will help investigate failed tests using Terraform
 	// Writing is enabled by default. It can be skipped using an environment variable.
 	TemplateWriting := true
-	if os.Getenv(envVcdSkipTemplateWriting) != "" {
+	if vcdSkipTemplateWriting {
 		TemplateWriting = false
 	}
 	var writeStr []byte = buf.Bytes()
@@ -299,7 +322,7 @@ func templateFill(tmpl string, data StringMap) string {
 	// templates will be changed on-the-fly, to comment out the
 	// definitions of org and vdc. This will force the test to
 	// borrow org and vcd from the provider.
-	if os.Getenv(envVcdRemoveOrgVdcFromTemplate) != "" {
+	if vcdRemoveOrgVdcFromTemplate {
 		reOrg := regexp.MustCompile(`\sorg\s*=`)
 		buf2 := reOrg.ReplaceAll(buf.Bytes(), []byte("# org = "))
 		reVdc := regexp.MustCompile(`\svdc\s*=`)
@@ -407,11 +430,11 @@ func getConfigStruct(config string) TestConfig {
 		configStruct.Provider.SysOrg = configStruct.VCD.Org
 	}
 
-	if os.Getenv("VCD_TEST_ORG_USER") != "" {
+	if vcdTestOrgUser {
 		user := configStruct.TestEnvBuild.OrgUser
 		password := configStruct.TestEnvBuild.OrgUserPassword
 		if user == "" || password == "" {
-			panic("VCD_TEST_ORG_USER was enabled, but org user credentials were not found in the configuration file")
+			panic(fmt.Sprintf("%s was enabled, but org user credentials were not found in the configuration file", envVcdTestOrgUser))
 		}
 		configStruct.Provider.User = user
 		configStruct.Provider.Password = password
@@ -484,8 +507,33 @@ func getConfigStruct(config string) TestConfig {
 	return configStruct
 }
 
+// setTestEnv enables environment variables that are also used in non-test code
+func setTestEnv() {
+	if enableDebug {
+		_ = os.Setenv("GOVCD_DEBUG", "1")
+	}
+}
+
 // This function is called before any other test
 func TestMain(m *testing.M) {
+
+	// Enable custom flags
+	flag.Parse()
+	setTestEnv()
+	// If -vcd-help was in the command line
+	if vcdHelp {
+		fmt.Println("vcd flags:")
+		fmt.Println()
+		// Prints only the flags defined in this package
+		flag.CommandLine.VisitAll(func(f *flag.Flag) {
+			if strings.Contains(f.Name, "vcd-") {
+				fmt.Printf("  -%-40s %s (%v)\n", f.Name, f.Usage, f.Value)
+			}
+		})
+		fmt.Println()
+		os.Exit(0)
+	}
+
 	// Fills the configuration variable: it will be available to all tests,
 	// or the whole suite will fail if it is not found.
 	// If VCD_SHORT_TEST is defined, it means that "make test" is called,
@@ -842,4 +890,31 @@ func importStateIdVmObject(orgName, vdcName, vappName, vmName, objectIdentifier 
 			ImportSeparator +
 			objectIdentifier, nil
 	}
+}
+
+// setBoolFlag binds a flag to a boolean variable (passed as pointer)
+// it also uses an optional environment variable that, if set, will
+// update the variable before binding it to the flag.
+func setBoolFlag(varPointer *bool, name, envVar, help string) {
+	if envVar != "" && os.Getenv(envVar) != "" {
+		*varPointer = true
+	}
+	flag.BoolVar(varPointer, name, *varPointer, help)
+}
+
+func init() {
+
+	// To list the flags when we run "go test -tags functional -vcd-help", the flag name must start with "vcd"
+	// They will all appear alongside the native flags when we use an invalid one
+	setBoolFlag(&vcdHelp, "vcd-help", "VCD_HELP", "Show vcd flags")
+	setBoolFlag(&testDistributedNetworks, "vcd-test-distributed", "", "enables testing of distributed network")
+	setBoolFlag(&enableDebug, "vcd-debug", "GOVCD_DEBUG", "enables debug output")
+	setBoolFlag(&vcdTestVerbose, "vcd-verbose", "TEST_VERBOSE", "enables verbose output")
+	setBoolFlag(&enableTrace, "vcd-trace", "GOVCD_TRACE", "enables function calls tracing")
+	setBoolFlag(&vcdShortTest, "vcd-short", "VCD_SHORT_TEST", "runs short test")
+	setBoolFlag(&vcdAddProvider, "vcd-add-provider", envVcdAddProvider, "add provider to test scripts")
+	setBoolFlag(&vcdSkipTemplateWriting, "vcd-skip-template-write", envVcdSkipTemplateWriting, "Skip writing templates to file")
+	setBoolFlag(&vcdRemoveOrgVdcFromTemplate, "vcd-remove-org-vdc-from-template", envVcdRemoveOrgVdcFromTemplate, "Remove org and VDC from template")
+	setBoolFlag(&vcdTestOrgUser, "vcd-test-org-user", envVcdTestOrgUser, "Run tests with org user")
+
 }

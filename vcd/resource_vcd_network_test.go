@@ -4,7 +4,6 @@ package vcd
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 	"testing"
 
@@ -53,11 +52,6 @@ const (
 	groupDefaultLease        string = "default_lease_time"
 	groupMaxLease            string = "max_lease_time"
 )
-
-// Distributed networks require an edge gateway with distributed routing enabled,
-// which in turn requires a NSX controller. To run the distributed test, users
-// need to set the environment variable VCD_TEST_DISTRIBUTED_NETWORK
-var testDistributedNetworks = os.Getenv("VCD_TEST_DISTRIBUTED_NETWORK") != ""
 
 func TestAccVcdNetworkIsolatedStatic1(t *testing.T) {
 	var def = networkDef{
