@@ -114,6 +114,12 @@ func getNetworkByFilter(vdc *govcd.Vdc, filter interface{}, wanted string) (*gov
 				newItems = append(newItems, item)
 			}
 		}
+		// If no items were found, we need to bail out here. If we don't,
+		// we will get the standard error message from getEntityByFilter, which may contain
+		// references to networks of different type
+		if len(newItems) == 0 {
+			return nil, "", fmt.Errorf("no network_%s found", wanted)
+		}
 		return newItems, explanation, err
 	}
 
