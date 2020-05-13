@@ -4,9 +4,11 @@ IMPROVEMENTS:
 
 * `resource/vcd_vapp_vm` allows creating empty VM. New fields added `boot_image`, `os_type` and `hardware_version`. Also, supports `description` updates. [GH-484]
 * Removed code that handled specific cases for API 29.0 and 30.0. This library now supports VCD versions from 9.5 to 10.1 included [GH-499]
+* Added command line flags to test suite, corresponding to environment variables listed in TESTING.md [GH-505]
+* `resource/vcd_vapp_vm` allows creating VM from multi VM vApp template [GH-501]
 * Add support for SAML auth with Active Directory Federation Services (ADFS) as IdP using
   "/adfs/services/trust/13/usernamemixed" endpoint. [GH-502]
-  
+
 NOTES:
 
 * Dropped support for vCD 9.1 [GH-492]
