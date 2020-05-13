@@ -42,7 +42,7 @@ import (
 // X-Vcloud-Authorization token
 // 6 - Set the received X-Vcloud-Authorization for further usage
 func (vcdCli *VCDClient) vcdAuthorizeSamlAdfs(user, pass, org, overrideRptId string) error {
-	// Step 1 - find SAML enetity ID configured in vCD metadata URL unless overrideRptId is provided
+	// Step 1 - find SAML entity ID configured in vCD metadata URL unless overrideRptId is provided
 	// Example URL: url.Scheme + "://" + url.Host + "/cloud/org/" + org + "/saml/metadata/alias/vcd"
 	samlEntityId := overrideRptId
 	var err error
