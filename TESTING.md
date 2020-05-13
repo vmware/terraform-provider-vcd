@@ -11,7 +11,7 @@
 - [Handling failures in binary tests](#handling-failures-in-binary-tests)
 - [Upgrade testing](#upgrade-testing)
 - [Custom terraform scripts](#custom-terraform-scripts)
-- [Environment variables](#environment-variables)
+- [Environment variables and corresponding flags](#environment-variables-and-corresponding-flags)
 
 ## Meeting prerequisites: Building the test environment
 
@@ -468,26 +468,30 @@ To run these tests, you go inside `test-artifacts` and execute:
 The execution then proceeds as explained in [Binary testing](#Binary-testing).
 
 
-## Environment variables
+## Environment variables and corresponding flags
 
-There are several environment variables that can affect the tests:
+There are several environment variables that can affect the tests. Many of them have a corresponding flag
+that can be used in combination with the `go test` command. You can see them using the `-vcd-help` flag.
 
 * `TF_ACC=1` enables the acceptance tests. It is also set when you run `make testacc`.
-* `GOVCD_DEBUG=1` enables debug output of the test suite
-* `VCD_SKIP_TEMPLATE_WRITING=1` skips the production of test templates into `./vcd/test-artifacts`
-* `ADD_PROVIDER=1` Adds the full provider definition to the snippets inside `./vcd/test-artifacts`.
+* `GOVCD_DEBUG=1` (`-vcd-debug`) enables debug output of the test suite
+* `GOVCD_TRACE=1` (`-vcd-trace`) enables function calls tracing
+* `VCD_SKIP_TEMPLATE_WRITING=1`  (`-vcd-skip-template-write`) skips the production of test templates into `./vcd/test-artifacts`
+* `VCD_ADD_PROVIDER=1` (`-vcd-add-provider`) Adds the full provider definition to the snippets inside `./vcd/test-artifacts`.
    **WARNING**: the provider definition includes your vCloud Director credentials.
 * `VCD_CONFIG=FileName` sets the file name for the test configuration file.
-* `REMOVE_ORG_VDC_FROM_TEMPLATE` is a quick way of enabling an alternate testing mode:
+* `REMOVE_ORG_VDC_FROM_TEMPLATE` (`-vcd-remove-org-vdc-from-template`) is a quick way of enabling an alternate testing mode:
 When `REMOVE_ORG_VDC_FROM_TEMPLATE` is set, the terraform
 templates will be changed on-the-fly, to comment out the definitions of org and vdc. This will force the test to
 borrow org and vcd from the provider.
 * `VCD_TEST_SUITE_CLEANUP=1` will clean up testing resources that were created in previous test runs.
-* `TEST_VERBOSE=1` enables verbose output in some tests, such as the list of used tags, or the version
+* `VCD_TEST_VERBOSE=1` (`-vcd-verbose`) enables verbose output in some tests, such as the list of used tags, or the version
 used in the documentation index.
-* `VCD_TEST_ORG_USER=1` will enable tests with Org User, using the credentials from the configuration file
+* `VCD_TEST_ORG_USER=1` (`-vcd-test-org-user`) will enable tests with Org User, using the credentials from the configuration file
   (`testEnvBuild.OrgUser` and `testEnvBuild.OrgUserPassword`)
 * `VCD_TOKEN=string` : specifies the authentication token to use instead of username/password
    (Use `./scripts/get_token.sh` to retrieve one)
-* `VCD_TEST_DISTRIBUTED_NETWORK=1` runs testing of distributed networks (requires the edge gateway to have distributed
+* `VCD_TEST_DISTRIBUTED_NETWORK=1` (`-vcd-test-distributed`) runs testing of distributed networks (requires the edge gateway to have distributed
   routing enabled)
+
+When both the environment variable and the command line option are possible, the environment variable gets evaluated first.
