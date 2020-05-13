@@ -34,15 +34,10 @@ When you don't know the name, you may get the data source using the `filter` sec
 ### Metadata filter arguments
 
 * `key` (Required) The name of the metadata field
-* `value` (Required) The value to look for. It is treated as a regular expression if `use_api_search` is not set.
+* `value` (Required) The value to look for. It is treated as a regular expression.
 * `is_system` (Optional) If `true`, the metadata fields will be passed as `metadata@SYSTEM:fieldName`. This parameter
 is needed when searching for metadata that was set by the system, such as the annotations in metadata when a vApp is
 saved into a catalog. See Example 7 below.
-* `use_api_search` (Optional) When true - filtering will happen in vCD server, using the API query for Metadata, without
-   using regular expressions. It is slightly faster than using the search by regular expression, but when this is set,
-   the type field is mandatory.
-* `type` (Optional) One of `STRING`, `NUMBER`, `BOOLEAN`, `DATETIME`. It is required when `use_api_search` is set.
-  Note that in most cases, `STRING` is accepted also for other types.
 
 ### Multiple filter expressions
 
@@ -181,13 +176,11 @@ data "vcd_catalog_item" "unknown" {
     metadata {
      key            = "ONE"
      value          = "FirstValue"  # explicit value
-     use_api_search = "true"
      type           = "STRING"
     }
     metadata {
      key            = "TWO"
      value          = "SecondValue" # explicit value
-     use_api_search = "true"
      type           = "STRING"
     }
   }
@@ -221,7 +214,7 @@ data "vcd_catalog_item" "unknown" {
 
 Will perform the same search of example 5, using regular expressions instead of exact values.
 
-Note that the `value` is treated as a regular expression when `use_api_search` is false. For example:
+Note that the `value` is treated as a regular expression. For example:
 `value = "cloud"` will match a metadata value `cloud`, but also one containing `on clouds` or `cloud9`.
 To match only `cloud`, the value should be specified as `"^cloud$"`.
 
