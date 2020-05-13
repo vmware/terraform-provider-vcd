@@ -16,6 +16,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"github.com/vmware/go-vcloud-director/v2/util"
@@ -86,16 +87,19 @@ func disableDebugShowResponse() {
 func debugShowRequest(req *http.Request, payload string) {
 	if debugShowRequestEnabled {
 		header := "[\n"
-		for key, value := range req.Header {
+		for key, value := range util.SanitizedHeader(req.Header) {
 			header += fmt.Sprintf("\t%s => %s\n", key, value)
 		}
 		header += "]\n"
+		fmt.Println("** REQUEST **")
+		fmt.Printf("time:    %s\n", time.Now().Format("2006-01-02T15:04:05.000Z"))
 		fmt.Printf("method:  %s\n", req.Method)
 		fmt.Printf("host:    %s\n", req.Host)
 		fmt.Printf("length:  %d\n", req.ContentLength)
 		fmt.Printf("URL:     %s\n", req.URL.String())
 		fmt.Printf("header:  %s\n", header)
 		fmt.Printf("payload: %s\n", payload)
+		fmt.Println()
 	}
 }
 
@@ -104,10 +108,13 @@ func debugShowRequest(req *http.Request, payload string) {
 // of the response as it is being processed.
 func debugShowResponse(resp *http.Response, body []byte) {
 	if debugShowResponseEnabled {
+		fmt.Println("## RESPONSE ##")
+		fmt.Printf("time:   %s\n", time.Now().Format("2006-01-02T15:04:05.000Z"))
 		fmt.Printf("status: %d - %s \n", resp.StatusCode, resp.Status)
 		fmt.Printf("length: %d\n", resp.ContentLength)
-		fmt.Printf("header: %v\n", resp.Header)
-		fmt.Printf("body: %s\n", body)
+		fmt.Printf("header: %v\n", util.SanitizedHeader(resp.Header))
+		fmt.Printf("body:   %s\n", body)
+		fmt.Println()
 	}
 }
 
