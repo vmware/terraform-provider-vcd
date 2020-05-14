@@ -34,7 +34,7 @@ func resourceVcdOrgSamlGroup() *schema.Resource {
 				Required:    true,
 				Description: "SAML group name",
 			},
-			"role_name": &schema.Schema{
+			"role": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "Role name to assign",
