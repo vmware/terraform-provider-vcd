@@ -13,14 +13,23 @@ import (
 )
 
 func TestAccVcdOrgGroup(t *testing.T) {
+
+	role1 := govcd.OrgUserRoleOrganizationAdministrator
+	role2 := govcd.OrgUserRoleDeferToIdentityProvider
+
 	var params = StringMap{
 		"Org":       testConfig.VCD.Org,
 		"GroupName": "TestAccVcdOrgGroup",
-		"RoleName":  govcd.OrgUserRoleDeferToIdentityProvider,
+		"RoleName":  role1,
 		"Tags":      "user",
 	}
 
 	configText := templateFill(testAccOrgGroup, params)
+
+	params["FuncName"] = t.Name() + "-Step1"
+	params["RoleName"] = role2
+	configText2 := templateFill(testAccOrgGroup, params)
+
 	resource.ParallelTest(t, resource.TestCase{
 		Providers:    testAccProviders,
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -29,19 +38,27 @@ func TestAccVcdOrgGroup(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestMatchResourceAttr("vcd_org_saml_group.group", "id", regexp.MustCompile(`^urn:vcloud:group:`)),
-					resource.TestCheckResourceAttr("vcd_org_saml_group.group", "name", "TestAccVcdOrgGroup"),
-					resource.TestCheckResourceAttr("vcd_org_saml_group.group", "description", ""),
-					// When rule_tag is not specified - we expect it to be the same as ID
-					// resource.TestCheckResourceAttrPair("vcd_org_saml_group.group", "name", "vcd_nsxv_snat.test", "id"),
+					resource.TestMatchResourceAttr("vcd_org_group.group", "id", regexp.MustCompile(`^urn:vcloud:group:`)),
+					resource.TestCheckResourceAttr("vcd_org_group.group", "name", "TestAccVcdOrgGroup"),
+					resource.TestCheckResourceAttr("vcd_org_group.group", "role", role1),
+					resource.TestCheckResourceAttr("vcd_org_group.group", "description", ""),
 				),
 			},
-			// resource.TestStep{ // Step 2 - resource import
-			// 	ResourceName:      "vcd_nsxv_snat.imported",
-			// 	ImportState:       true,
-			// 	ImportStateVerify: true,
-			// 	ImportStateIdFunc: importStateIdByResourceName("vcd_nsxv_snat.test"),
-			// },
+			resource.TestStep{
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_org_group.group", "id", regexp.MustCompile(`^urn:vcloud:group:`)),
+					resource.TestCheckResourceAttr("vcd_org_group.group", "name", "TestAccVcdOrgGroup"),
+					resource.TestCheckResourceAttr("vcd_org_group.group", "role", role2),
+					resource.TestCheckResourceAttr("vcd_org_group.group", "description", ""),
+				),
+			},
+			resource.TestStep{
+				ResourceName:      "vcd_org_group.group-import",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdOrgObject(testConfig, params["GroupName"].(string)),
+			},
 		},
 	})
 }
@@ -65,9 +82,8 @@ func testAccCheckVcdGroupDestroy(groupName string) resource.TestCheckFunc {
 }
 
 const testAccOrgGroup = `
-resource "vcd_org_saml_group" "group" {
-  org            = "{{.Org}}"
-  name           = "{{.GroupName}}"
-  role           = "{{.RoleName}}"
+resource "vcd_org_group" "group" {
+  name = "{{.GroupName}}"
+  role = "{{.RoleName}}"
 }
 `

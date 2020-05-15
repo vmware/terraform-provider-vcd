@@ -2,20 +2,21 @@ package vcd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-func resourceVcdOrgSamlGroup() *schema.Resource {
+func resourceVcdOrgGroup() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdOrgSamlGroupCreate,
-		Read:   resourceVcdOrgSamlGroupRead,
-		Update: resourceVcdOrgSamlGroupUpdate,
-		Delete: resourceVcdOrgSamlGroupDelete,
+		Create: resourceVcdOrgGroupCreate,
+		Read:   resourceVcdOrgGroupRead,
+		Update: resourceVcdOrgGroupUpdate,
+		Delete: resourceVcdOrgGroupDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdOrgSamlGroupImport,
+			State: resourceVcdOrgGroupImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -46,7 +47,7 @@ func resourceVcdOrgSamlGroup() *schema.Resource {
 	}
 }
 
-func resourceVcdOrgSamlGroupCreate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdOrgGroupCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
@@ -74,16 +75,10 @@ func resourceVcdOrgSamlGroupCreate(d *schema.ResourceData, meta interface{}) err
 
 	d.SetId(createdGroup.Group.ID)
 
-	return resourceVcdOrgSamlGroupRead(d, meta)
+	return resourceVcdOrgGroupRead(d, meta)
 }
 
-// resourceVcdOrgSamlGroupUpdate
-func resourceVcdOrgSamlGroupUpdate(d *schema.ResourceData, meta interface{}) error {
-	return resourceVcdOrgSamlGroupRead(d, meta)
-}
-
-// resourceVcdOrgSamlGroupRead
-func resourceVcdOrgSamlGroupRead(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdOrgGroupRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
@@ -102,8 +97,38 @@ func resourceVcdOrgSamlGroupRead(d *schema.ResourceData, meta interface{}) error
 	return nil
 }
 
-// resourceVcdOrgSamlGroupDelete
-func resourceVcdOrgSamlGroupDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdOrgGroupUpdate(d *schema.ResourceData, meta interface{}) error {
+	vcdClient := meta.(*VCDClient)
+	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+	if err != nil {
+		return fmt.Errorf(errorRetrievingOrg, err)
+	}
+
+	// The only possible change for now is 'role'
+	if d.HasChange("role") {
+		group, err := adminOrg.GetGroupById(d.Id(), false)
+		if err != nil {
+			return fmt.Errorf("error finding group for update %s: %s", group.Group.Name, err)
+		}
+
+		roleName := d.Get("role").(string)
+		role, err := adminOrg.GetRoleReference(roleName)
+		if err != nil {
+			return fmt.Errorf("unable to find role %s: %s", roleName, err)
+		}
+
+		group.Group.Role = role
+		err = group.Update()
+
+		if err != nil {
+			return fmt.Errorf("error updating group %s: %s", group.Group.Name, err)
+		}
+	}
+
+	return resourceVcdOrgGroupRead(d, meta)
+}
+
+func resourceVcdOrgGroupDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
@@ -123,7 +148,24 @@ func resourceVcdOrgSamlGroupDelete(d *schema.ResourceData, meta interface{}) err
 	return nil
 }
 
-// resourceVcdOrgSamlGroupImport
-func resourceVcdOrgSamlGroupImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdOrgGroupImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+	if len(resourceURI) != 2 {
+		return nil, fmt.Errorf("resource name must be specified as org.org_group")
+	}
+	orgName, groupName := resourceURI[0], resourceURI[1]
+
+	vcdClient := meta.(*VCDClient)
+	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
+	if err != nil {
+		return nil, fmt.Errorf(errorRetrievingOrg, orgName)
+	}
+
+	group, err := adminOrg.GetGroupByName(groupName, false)
+	if err != nil {
+		return nil, fmt.Errorf("[group import] error retrieving group %s: %s", groupName, err)
+	}
+
+	d.SetId(group.Group.ID)
 	return []*schema.ResourceData{d}, nil
 }
