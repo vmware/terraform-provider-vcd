@@ -138,7 +138,7 @@ func (vcdCli *VCDClient) GetAuthResponse(username, password, org string) (*http.
 	var resp *http.Response
 	switch {
 	case vcdCli.Client.UseSamlAdfs:
-		err = vcdCli.vcdAuthorizeSamlAdfs(username, password, org, vcdCli.Client.CustomAdfsRptId)
+		err = vcdCli.authorizeSamlAdfs(username, password, org, vcdCli.Client.CustomAdfsRptId)
 		if err != nil {
 			return nil, fmt.Errorf("error authorizing SAML: %s", err)
 		}

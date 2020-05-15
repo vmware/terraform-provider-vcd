@@ -201,7 +201,8 @@ func (cli *Client) newRequest(params map[string]string, notEncodedParams map[str
 		req.Header.Add("Accept", "application/*+xml;version="+apiVersion)
 	}
 
-	// Merge in additional headers before logging if any where specified
+	// Merge in additional headers before logging if any where specified in additionalHeader
+	// paramter
 	if additionalHeader != nil && len(additionalHeader) > 0 {
 		for headerName, headerValueSlice := range additionalHeader {
 			for _, singleHeaderValue := range headerValueSlice {

@@ -19,7 +19,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
-// vcdAuthorizeSamlAdfs is the main entry point for SAML authentication on ADFS endpoint
+// authorizeSamlAdfs is the main entry point for SAML authentication on ADFS endpoint
 // "/adfs/services/trust/13/usernamemixed"
 // Input parameters:
 // user - username for authentication to ADFS server (e.g. 'test@contoso.com' or
@@ -41,13 +41,13 @@ import (
 // 5 - Authenticate to vCD using SIGN token in order to receive back regular
 // X-Vcloud-Authorization token
 // 6 - Set the received X-Vcloud-Authorization for further usage
-func (vcdCli *VCDClient) vcdAuthorizeSamlAdfs(user, pass, org, overrideRptId string) error {
+func (vcdCli *VCDClient) authorizeSamlAdfs(user, pass, org, overrideRptId string) error {
 	// Step 1 - find SAML entity ID configured in vCD metadata URL unless overrideRptId is provided
 	// Example URL: url.Scheme + "://" + url.Host + "/cloud/org/" + org + "/saml/metadata/alias/vcd"
 	samlEntityId := overrideRptId
 	var err error
 	if overrideRptId == "" {
-		samlEntityId, err = vcdAuthorizeSamlGetSamlEntityId(vcdCli, org)
+		samlEntityId, err = getSamlEntityId(vcdCli, org)
 		if err != nil {
 			return fmt.Errorf("SAML - error getting vCD SAML Entity ID: %s", err)
 		}
@@ -56,13 +56,13 @@ func (vcdCli *VCDClient) vcdAuthorizeSamlAdfs(user, pass, org, overrideRptId str
 	// Step 2 - find ADFS server used for SAML by calling vCD SAML endpoint and hoping for a
 	// redirect to ADFS server. Example URL:
 	// url.Scheme + "://" + url.Host + "/login/my-org/saml/login/alias/vcd?service=tenant:" + org
-	adfsAuthEndPoint, err := vcdAuthorizeSamlGetAdfsServer(vcdCli, org)
+	adfsAuthEndPoint, err := getSamlAdfsServer(vcdCli, org)
 	if err != nil {
 		return fmt.Errorf("SAML - error getting IdP (ADFS): %s", err)
 	}
 
 	// Step 3 - authenticate to ADFS to receive SIGN token which can be used for vCD authentication
-	signToken, err := vcdAuthorizeSamlGetSamlAuthToken(vcdCli, user, pass, samlEntityId, adfsAuthEndPoint, org)
+	signToken, err := getSamlAuthToken(vcdCli, user, pass, samlEntityId, adfsAuthEndPoint, org)
 	if err != nil {
 		return fmt.Errorf("SAML - could not get auth token from IdP (ADFS). Did you specify "+
 			"username in ADFS format ('user@contoso.com' or 'contoso.com\\user')? : %s", err)
@@ -77,7 +77,7 @@ func (vcdCli *VCDClient) vcdAuthorizeSamlAdfs(user, pass, org, overrideRptId str
 		adfsAuthEndPoint, samlEntityId)
 
 	// Step 5 - authenticate to vCD with SIGN token and receive vCD regular token in exchange
-	accessToken, err := vcdAuthorizeSignToken(vcdCli, base64GzippedSignToken, org)
+	accessToken, err := authorizeSignToken(vcdCli, base64GzippedSignToken, org)
 	if err != nil {
 		return fmt.Errorf("SAML - error submitting SIGN token to vCD: %s", err)
 	}
@@ -91,13 +91,13 @@ func (vcdCli *VCDClient) vcdAuthorizeSamlAdfs(user, pass, org, overrideRptId str
 	return nil
 }
 
-// vcdAuthorizeSamlGetAdfsServer finds out Active Directory Federation Service (ADFS) server to use
+// getSamlAdfsServer finds out Active Directory Federation Service (ADFS) server to use
 // for SAML authentication
 // It works by temporarily patching existing http.Client behavior to avoid automatically
 // following HTTP redirects and searches for Location header after the request to vCD SAML redirect
 // address. The URL to search redirect location is:
 // url.Scheme + "://" + url.Host + "/login/my-org/saml/login/alias/vcd?service=tenant:" + org
-func vcdAuthorizeSamlGetAdfsServer(vcdCli *VCDClient, org string) (string, error) {
+func getSamlAdfsServer(vcdCli *VCDClient, org string) (string, error) {
 	url := vcdCli.Client.VCDHREF
 
 	// Backup existing http.Client redirect behavior so that it does not follow HTTP redirects
@@ -150,10 +150,10 @@ func vcdAuthorizeSamlGetAdfsServer(vcdCli *VCDClient, org string) (string, error
 	return authEndPoint, nil
 }
 
-// vcdAuthorizeSamlGetSamlEntityId attempts to load vCD hosted SAML metadata from URL:
+// getSamlEntityId attempts to load vCD hosted SAML metadata from URL:
 // url.Scheme + "://" + url.Host + "/cloud/org/" + org + "/saml/metadata/alias/vcd"
 // Returns an error if Entity ID is empty
-func vcdAuthorizeSamlGetSamlEntityId(vcdCli *VCDClient, org string) (string, error) {
+func getSamlEntityId(vcdCli *VCDClient, org string) (string, error) {
 	url := vcdCli.Client.VCDHREF
 	samlMetadataUrl := url.Scheme + "://" + url.Host + "/cloud/org/" + org + "/saml/metadata/alias/vcd"
 
@@ -174,10 +174,10 @@ func vcdAuthorizeSamlGetSamlEntityId(vcdCli *VCDClient, org string) (string, err
 	return samlEntityId, nil
 }
 
-// vcdAuthorizeSamlGetSamlAuthToken generates a token request payload using function
+// getSamlAuthToken generates a token request payload using function
 // getSamlTokenRequestBody. This request is submited to ADFS server endpoint
 // "/adfs/services/trust/13/usernamemixed" and `RequestedSecurityTokenTxt` is expected in response
-func vcdAuthorizeSamlGetSamlAuthToken(vcdCli *VCDClient, user, pass, samlEntityId, authEndpoint, org string) (string, error) {
+func getSamlAuthToken(vcdCli *VCDClient, user, pass, samlEntityId, authEndpoint, org string) (string, error) {
 	requestBody := getSamlTokenRequestBody(user, pass, samlEntityId, authEndpoint)
 	samlTokenRequestBody := strings.NewReader(requestBody)
 	tokenRequestResponse := types.AdfsAuthResponseEnvelope{}
@@ -206,9 +206,9 @@ func vcdAuthorizeSamlGetSamlAuthToken(vcdCli *VCDClient, user, pass, samlEntityI
 	return tokenString, nil
 }
 
-// vcdAuthorizeSignToken submits a SIGN token received from ADFS server and gets regular vCD
+// authorizeSignToken submits a SIGN token received from ADFS server and gets regular vCD
 // "X-Vcloud-Authorization" token in exchange
-func vcdAuthorizeSignToken(vcdCli *VCDClient, base64GzippedSignToken, org string) (string, error) {
+func authorizeSignToken(vcdCli *VCDClient, base64GzippedSignToken, org string) (string, error) {
 	url, err := url.Parse(vcdCli.Client.VCDHREF.Scheme + "://" + vcdCli.Client.VCDHREF.Host + "/api/sessions")
 	if err != nil {
 		return "", fmt.Errorf("SAML error - could not parse URL for posting SIGN token: %s", err)
