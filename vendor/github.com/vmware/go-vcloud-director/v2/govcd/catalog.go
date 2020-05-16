@@ -349,7 +349,7 @@ func queryVappTemplate(client *Client, vappTemplateUrl *url.URL, newItemName str
 	vappTemplateParsed := &types.VAppTemplate{}
 
 	_, err := client.ExecuteRequest(vappTemplateUrl.String(), http.MethodGet,
-		"", "error quering vApp template: %s", nil, vappTemplateParsed)
+		"", "error querying vApp template: %s", nil, vappTemplateParsed)
 	if err != nil {
 		return nil, err
 	}
@@ -760,4 +760,24 @@ func (cat *Catalog) GetCatalogItemByNameOrId(identifier string, refresh bool) (*
 		return nil, err
 	}
 	return entity.(*CatalogItem), err
+}
+
+// QueryMediaList retrieves a list of media items for the catalog
+func (catalog *Catalog) QueryMediaList() ([]*types.MediaRecordType, error) {
+	typeMedia := "media"
+	if catalog.client.IsSysAdmin {
+		typeMedia = "adminMedia"
+	}
+
+	filter := fmt.Sprintf("catalog==" + url.QueryEscape(catalog.Catalog.HREF))
+	results, err := catalog.client.QueryWithNotEncodedParams(nil, map[string]string{"type": typeMedia, "filter": filter, "filterEncoded": "true"})
+	if err != nil {
+		return nil, fmt.Errorf("error querying medias %s", err)
+	}
+
+	mediaResults := results.Results.MediaRecord
+	if catalog.client.IsSysAdmin {
+		mediaResults = results.Results.AdminMediaRecord
+	}
+	return mediaResults, nil
 }

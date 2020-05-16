@@ -838,6 +838,11 @@ func (vdc *Vdc) buildNsxvNetworkServiceEndpointURL(optionalSuffix string) (strin
 	return hostname, nil
 }
 
+// QueryMediaList retrieves a list of media items for the VDC
+func (vdc *Vdc) QueryMediaList() ([]*types.MediaRecordType, error) {
+	return getExistingMedia(vdc)
+}
+
 // QueryVappVmTemplate Finds VM template using catalog name, vApp template name, VN name in template. Returns types.QueryResultVMRecordType
 func (vdc *Vdc) QueryVappVmTemplate(catalogName, vappTemplateName, vmNameInTemplate string) (*types.QueryResultVMRecordType, error) {
 
