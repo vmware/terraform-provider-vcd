@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -32,6 +33,13 @@ func resourceVcdOrgGroup() *schema.Resource {
 				Required:    true,
 				ForceNew:    true, // vCD does not allow to change group name
 				Description: "SAML group name",
+			},
+			"provider_type": &schema.Schema{
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true, // vCD does not allow to change group name
+				Description:  "SAML group name",
+				ValidateFunc: validation.StringInSlice([]string{"SAML", "LDAP"}, false),
 			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
@@ -64,7 +72,7 @@ func resourceVcdOrgGroupCreate(d *schema.ResourceData, meta interface{}) error {
 	groupDefinition := types.Group{
 		Name:         d.Get("name").(string),
 		Role:         role,
-		ProviderType: govcd.OrgUserProviderSAML, // 'SAML' is the only accepted. Others get HTTP 403
+		ProviderType: d.Get("provider_type").(string), // 'SAML' is the only accepted. Others get HTTP 403
 	}
 	newGroup.Group = &groupDefinition
 
@@ -93,6 +101,7 @@ func resourceVcdOrgGroupRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("name", group.Group.Name)
 	d.Set("description", group.Group.Description)
 	d.Set("role", group.Group.Role.Name)
+	d.Set("provider_type", group.Group.ProviderType)
 
 	return nil
 }

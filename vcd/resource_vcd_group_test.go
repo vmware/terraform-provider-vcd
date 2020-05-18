@@ -18,10 +18,11 @@ func TestAccVcdOrgGroup(t *testing.T) {
 	role2 := govcd.OrgUserRoleDeferToIdentityProvider
 
 	var params = StringMap{
-		"Org":       testConfig.VCD.Org,
-		"GroupName": "TestAccVcdOrgGroup",
-		"RoleName":  role1,
-		"Tags":      "user",
+		"Org":          testConfig.VCD.Org,
+		"GroupName":    "TestAccVcdOrgGroup",
+		"ProviderType": "SAML",
+		"RoleName":     role1,
+		"Tags":         "user",
 	}
 
 	configText := templateFill(testAccOrgGroup, params)
@@ -83,7 +84,8 @@ func testAccCheckVcdGroupDestroy(groupName string) resource.TestCheckFunc {
 
 const testAccOrgGroup = `
 resource "vcd_org_group" "group" {
-  name = "{{.GroupName}}"
-  role = "{{.RoleName}}"
+  provider_type = "{{.ProviderType}}"
+  name          = "{{.GroupName}}"
+  role          = "{{.RoleName}}"
 }
 `

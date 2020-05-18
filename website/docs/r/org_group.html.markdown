@@ -3,24 +3,28 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_org_group"
 sidebar_current: "docs-vcd-resource-org-group"
 description: |-
-  Provides a vCloud Director Organization group. This can be used to create, update, and delete organization groups.
+  Provides a vCloud Director Organization group. This can be used to create, update, and delete organization groups defined in SAML or LDAP.
 ---
 
 # vcd\_org\_group
 
-Provides a vCloud Director Organization group. This can be used to create, update, and delete organization groups.
+Provides a vCloud Director Organization group. This can be used to create, update, and delete
+organization groups defined in `SAML` or `LDAP`.
 
 Supported in provider *v2.9+*
 
-~> **Note:** Only `System Administrator` or `Org Administrator` users can create groups.
+~> **Note:** This operation requires the rights included in the predefined `Organization
+Administrator` role or an equivalent set of rights.
 
 ## Example Usage
 
 ```hcl
 resource "vcd_org_group" "org1" {
   org  = "org1"
-  name = "Org1-AdminGroup"
-  role = "Organization Administrator"
+  
+  provider_type = "SAML"
+  name          = "Org1-AdminGroup"
+  role          = "Organization Administrator"
 }
 ```
 
@@ -30,8 +34,7 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to which the VDC belongs. Optional if defined at provider level.
 * `name` - (Required) A unique name for the group.
-* `provider_type` - (Optional) Identity provider type for this this group. Only `SAML` is supported
-  at this time and it will default to it.
+* `provider_type` - (Required) Identity provider type for this this group. One of `SAML` or `LDAP`.
 * `role` - (Required) The role of the user. Role names can be retrieved from the organization. Both built-in roles and
   custom built can be used. The roles normally available are:
     * `Organization Administrator`
@@ -58,9 +61,10 @@ org user. For example, using this structure, representing an existing user that 
 
 ```hcl
 resource "vcd_org_group" "my-admin-group" {
-  org  = "my-org"
-  name = "my-admin-group"
-  role = "Organization Administrator"
+  org           = "my-org"
+  provider_type = "SAML"
+  name          = "my-admin-group"
+  role          = "Organization Administrator"
 }
 ```
 
