@@ -6,10 +6,11 @@ package govcd
 
 import (
 	"fmt"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
 // GetMetadata calls private function getMetadata() with vm.client and vm.VM.HREF

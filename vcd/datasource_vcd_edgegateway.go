@@ -8,8 +8,9 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "name of the edge gateway. (Optional when 'filter' is used)",
 			},
 			"org": &schema.Schema{
 				Type:     schema.TypeString,
@@ -188,6 +189,18 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 								},
 							},
 						},
+					},
+				},
+			},
+			"filter": &schema.Schema{
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				MinItems:    1,
+				Optional:    true,
+				Description: "Criteria for retrieving an edge gateway by various attributes",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name_regex": elementNameRegex,
 					},
 				},
 			},

@@ -2108,7 +2108,63 @@ type QueryResultRecordsType struct {
 	VirtualCenterRecord             []*QueryResultVirtualCenterRecordType             `xml:"VirtualCenterRecord"`             // A record representing a vSphere server
 	PortGroupRecord                 []*PortGroupRecordType                            `xml:"PortgroupRecord"`                 // A record representing a port group
 	OrgVdcNetworkRecord             []*QueryResultOrgVdcNetworkRecordType             `xml:"OrgVdcNetworkRecord"`             // A record representing a org VDC network
-	AdminCatalogRecord              []*AdminCatalogRecord                             `xml:"AdminCatalogRecord"`              // A record representing a catalog
+	CatalogRecord                   []*CatalogRecord                                  `xml:"CatalogRecord"`                   // A record representing a catalog
+	AdminCatalogRecord              []*CatalogRecord                                  `xml:"AdminCatalogRecord"`              // A record representing an admin catalog
+	CatalogItemRecord               []*QueryResultCatalogItemType                     `xml:"CatalogItemRecord"`               // A record representing a catalog item
+	AdminCatalogItemRecord          []*QueryResultCatalogItemType                     `xml:"AdminCatalogItemRecord"`          // A record representing an admin catalog item
+	VappTemplateRecord              []*QueryResultVappTemplateType                    `xml:"VAppTemplateRecord"`              // A record representing a vApp template
+	AdminVappTemplateRecord         []*QueryResultVappTemplateType                    `xml:"AdminVAppTemplateRecord"`         // A record representing an admin vApp template
+}
+
+// QueryResultCatalogItemType represents a catalog item as query result
+type QueryResultCatalogItemType struct {
+	HREF         string    `xml:"href,attr,omitempty"`         // The URI of the entity.
+	ID           string    `xml:"id,attr,omitempty"`           // Catalog Item ID.
+	Type         string    `xml:"type,attr,omitempty"`         // The MIME type of the entity.
+	Entity       string    `xml:"entity,attr,omitempty"`       // Entity reference or ID
+	EntityName   string    `xml:"entityName,attr,omitempty"`   // Entity name
+	EntityType   string    `xml:"entityType,attr,omitempty"`   // Entity name
+	Catalog      string    `xml:"catalog,attr,omitempty"`      // Catalog reference or ID
+	CatalogName  string    `xml:"catalogName,attr,omitempty"`  // Catalog name
+	OwnerName    string    `xml:"ownerName,attr,omitempty"`    // Owner name
+	Owner        string    `xml:"owner,attr,omitempty"`        // Owner reference or ID
+	IsPublished  bool      `xml:"isPublished,attr,omitempty"`  // True if this entity is in a published catalog
+	Vdc          string    `xml:"vdc,attr,omitempty"`          // VDC reference or ID
+	VdcName      string    `xml:"vdcName,attr,omitempty"`      // VDC name
+	IsVdcEnabled bool      `xml:"isVdcEnabled,attr,omitempty"` // True if the containing VDC is enabled
+	CreationDate string    `xml:"creationDate,attr,omitempty"` // Creation date
+	IsExpired    bool      `xml:"isExpired,attr,omitempty"`    // True if this entity is expired
+	Status       string    `xml:"status,attr,omitempty"`       // Status
+	Name         string    `xml:"name,attr,omitempty"`         // Catalog Item name.
+	Link         *Link     `xml:"Link,omitempty"`
+	Metadata     *Metadata `xml:"Metadata,omitempty"`
+}
+
+// QueryResultVappTemplateType represents a vApp template as query result
+type QueryResultVappTemplateType struct {
+	HREF               string    `xml:"href,attr,omitempty"`               // The URI of the entity.
+	ID                 string    `xml:"id,attr,omitempty"`                 // vApp template ID.
+	Type               string    `xml:"type,attr,omitempty"`               // The MIME type of the entity.
+	OwnerName          string    `xml:"ownerName,attr,omitempty"`          // Owner name
+	CatalogName        string    `xml:"catalogName,attr,omitempty"`        // Catalog name
+	IsPublished        bool      `xml:"isPublished,attr,omitempty"`        // True if this entity is in a published catalog
+	Name               string    `xml:"name,attr,omitempty"`               // vApp template name.
+	Description        string    `xml:"description,attr,omitempty"`        // vApp template description.
+	Vdc                string    `xml:"vdc,attr,omitempty"`                // VDC reference or ID
+	VdcName            string    `xml:"vdcName,attr,omitempty"`            // VDC name
+	Org                string    `xml:"org,attr,omitempty"`                // Organization reference or ID
+	CreationDate       string    `xml:"creationDate,attr,omitempty"`       // Creation date
+	IsBusy             bool      `xml:"isBusy,attr,omitempty"`             // True if the vApp template is busy
+	IsGoldMaster       bool      `xml:"isGoldMaster,attr,omitempty"`       // True if the vApp template is a gold master
+	IsEnabled          bool      `xml:"isEnabled,attr,omitempty"`          // True if the vApp template is enabled
+	Status             string    `xml:"status,attr,omitempty"`             // Status
+	IsDeployed         bool      `xml:"isDeployed,attr,omitempty"`         // True if this entity is deployed
+	IsExpired          bool      `xml:"isExpired,attr,omitempty"`          // True if this entity is expired
+	StorageProfileName string    `xml:"storageProfileName,attr,omitempty"` // Storage profile name
+	Version            string    `xml:"version,attr,omitempty"`            // Storage profile name
+	LastSuccessfulSync string    `xml:"lastSuccessfulSync,attr,omitempty"` // Date of last successful sync
+	Link               *Link     `xml:"Link,omitempty"`
+	Metadata           *Metadata `xml:"Metadata,omitempty"`
 }
 
 // QueryResultEdgeGatewayRecordType represents an edge gateway record as query result.
@@ -2118,6 +2174,7 @@ type QueryResultEdgeGatewayRecordType struct {
 	Type                string `xml:"type,attr,omitempty"`                // The MIME type of the entity.
 	Name                string `xml:"name,attr,omitempty"`                // EdgeGateway name.
 	Vdc                 string `xml:"vdc,attr,omitempty"`                 // VDC Reference or ID
+	OrgVdcName          string `xml:"orgVdcName,attr,omitempty"`          // VDC name
 	NumberOfExtNetworks int    `xml:"numberOfExtNetworks,attr,omitempty"` // Number of external networks connected to the edgeGateway.	Yes	Yes
 	NumberOfOrgNetworks int    `xml:"numberOfOrgNetworks,attr,omitempty"` // Number of org VDC networks connected to the edgeGateway	Yes	Yes
 	IsBusy              bool   `xml:"isBusy,attr"`                        // True if this Edge Gateway is busy.	Yes	Yes
@@ -2372,33 +2429,35 @@ type Media struct {
 // Description: Represents Media record
 // Since: 1.5
 type MediaRecordType struct {
-	HREF               string `xml:"href,attr,omitempty"`
-	ID                 string `xml:"id,attr,omitempty"`
-	Type               string `xml:"type,attr,omitempty"`
-	OwnerName          string `xml:"ownerName,attr,omitempty"`
-	CatalogName        string `xml:"catalogName,attr,omitempty"`
-	IsPublished        bool   `xml:"isPublished,attr,omitempty"`
-	Name               string `xml:"name,attr"`
-	Vdc                string `xml:"vdc,attr,omitempty"`
-	VdcName            string `xml:"vdcName,attr,omitempty"`
-	Org                string `xml:"org,attr,omitempty"`
-	CreationDate       string `xml:"creationDate,attr,omitempty"`
-	IsBusy             bool   `xml:"isBusy,attr,omitempty"`
-	StorageB           int64  `xml:"storageB,attr,omitempty"`
-	Owner              string `xml:"owner,attr,omitempty"`
-	Catalog            string `xml:"catalog,attr,omitempty"`
-	CatalogItem        string `xml:"catalogItem,attr,omitempty"`
-	Status             string `xml:"status,attr,omitempty"`
-	StorageProfileName string `xml:"storageProfileName,attr,omitempty"`
-	Version            int64  `xml:"version,attr,omitempty"`
-	LastSuccessfulSync string `xml:"lastSuccessfulSync,attr,omitempty"`
-	TaskStatusName     string `xml:"taskStatusName,attr,omitempty"`
-	IsInCatalog        bool   `xml:"isInCatalog,attr,omitempty"`
-	Task               string `xml:"task,attr,omitempty"`
-	IsIso              bool   `xml:"isIso,attr,omitempty"`
-	IsVdcEnabled       bool   `xml:"isVdcEnabled,attr,omitempty"`
-	TaskStatus         string `xml:"taskStatus,attr,omitempty"`
-	TaskDetails        string `xml:"taskDetails,attr,omitempty"`
+	HREF               string    `xml:"href,attr,omitempty"`
+	ID                 string    `xml:"id,attr,omitempty"`
+	Type               string    `xml:"type,attr,omitempty"`
+	OwnerName          string    `xml:"ownerName,attr,omitempty"`
+	CatalogName        string    `xml:"catalogName,attr,omitempty"`
+	IsPublished        bool      `xml:"isPublished,attr,omitempty"`
+	Name               string    `xml:"name,attr"`
+	Vdc                string    `xml:"vdc,attr,omitempty"`
+	VdcName            string    `xml:"vdcName,attr,omitempty"`
+	Org                string    `xml:"org,attr,omitempty"`
+	CreationDate       string    `xml:"creationDate,attr,omitempty"`
+	IsBusy             bool      `xml:"isBusy,attr,omitempty"`
+	StorageB           int64     `xml:"storageB,attr,omitempty"`
+	Owner              string    `xml:"owner,attr,omitempty"`
+	Catalog            string    `xml:"catalog,attr,omitempty"`
+	CatalogItem        string    `xml:"catalogItem,attr,omitempty"`
+	Status             string    `xml:"status,attr,omitempty"`
+	StorageProfileName string    `xml:"storageProfileName,attr,omitempty"`
+	Version            int64     `xml:"version,attr,omitempty"`
+	LastSuccessfulSync string    `xml:"lastSuccessfulSync,attr,omitempty"`
+	TaskStatusName     string    `xml:"taskStatusName,attr,omitempty"`
+	IsInCatalog        bool      `xml:"isInCatalog,attr,omitempty"`
+	Task               string    `xml:"task,attr,omitempty"`
+	IsIso              bool      `xml:"isIso,attr,omitempty"`
+	IsVdcEnabled       bool      `xml:"isVdcEnabled,attr,omitempty"`
+	TaskStatus         string    `xml:"taskStatus,attr,omitempty"`
+	TaskDetails        string    `xml:"taskDetails,attr,omitempty"`
+	Link               *Link     `xml:"Link,omitempty"`
+	Metadata           *Metadata `xml:"Metadata,omitempty"`
 }
 
 // DiskCreateParams element for create independent disk
@@ -2561,24 +2620,25 @@ type PortGroupRecordType struct {
 // Reference: vCloud API 27.0 - Org VDC Network
 // https://code.vmware.com/apis/72/doc/doc/types/QueryResultOrgVdcNetworkRecordType.html
 type QueryResultOrgVdcNetworkRecordType struct {
-	Xmlns              string  `xml:"xmlns,attr,omitempty"`
-	HREF               string  `xml:"href,attr,omitempty"`
-	Id                 string  `xml:"id,attr,omitempty"`
-	Type               string  `xml:"type,attr,omitempty"`
-	Name               string  `xml:"name,attr,omitempty"`
-	DefaultGateway     string  `xml:"defaultGateway,attr,omitempty"`
-	Netmask            string  `xml:"netmask,attr,omitempty"`
-	Dns1               string  `xml:"dns1,attr,omitempty"`
-	Dns2               string  `xml:"dns2,attr,omitempty"`
-	DnsSuffix          string  `xml:"dnsSuffix,attr,omitempty"`
-	LinkType           int     `xml:"linkType,attr,omitempty"` // 0 = direct, 1 = routed, 2 = isolated
-	ConnectedTo        string  `xml:"connectedTo,attr,omitempty"`
-	Vdc                string  `xml:"vdc,attr,omitempty"`
-	IsBusy             bool    `xml:"isBusy,attr,omitempty"`
-	IsShared           bool    `xml:"isShared,attr,omitempty"`
-	VdcName            string  `xml:"vdcName,attr,omitempty"`
-	IsIpScopeInherited bool    `xml:"isIpScopeInherited,attr,omitempty"`
-	Link               []*Link `xml:"Link,omitempty"`
+	Xmlns              string    `xml:"xmlns,attr,omitempty"`
+	HREF               string    `xml:"href,attr,omitempty"`
+	Id                 string    `xml:"id,attr,omitempty"`
+	Type               string    `xml:"type,attr,omitempty"`
+	Name               string    `xml:"name,attr,omitempty"`
+	DefaultGateway     string    `xml:"defaultGateway,attr,omitempty"`
+	Netmask            string    `xml:"netmask,attr,omitempty"`
+	Dns1               string    `xml:"dns1,attr,omitempty"`
+	Dns2               string    `xml:"dns2,attr,omitempty"`
+	DnsSuffix          string    `xml:"dnsSuffix,attr,omitempty"`
+	LinkType           int       `xml:"linkType,attr,omitempty"` // 0 = direct, 1 = routed, 2 = isolated
+	ConnectedTo        string    `xml:"connectedTo,attr,omitempty"`
+	Vdc                string    `xml:"vdc,attr,omitempty"`
+	IsBusy             bool      `xml:"isBusy,attr,omitempty"`
+	IsShared           bool      `xml:"isShared,attr,omitempty"`
+	VdcName            string    `xml:"vdcName,attr,omitempty"`
+	IsIpScopeInherited bool      `xml:"isIpScopeInherited,attr,omitempty"`
+	Link               []*Link   `xml:"Link,omitempty"`
+	Metadata           *Metadata `xml:"Metadata,omitempty"`
 }
 
 // Represents org VDC Network
@@ -2637,7 +2697,7 @@ type User struct {
 // Issue that description partly matches with what is returned
 // Description: Represents Catalog record
 // Since: 1.5
-type AdminCatalogRecord struct {
+type CatalogRecord struct {
 	HREF                    string    `xml:"href,attr,omitempty"`
 	ID                      string    `xml:"id,attr,omitempty"`
 	Type                    string    `xml:"type,attr,omitempty"`
@@ -2655,5 +2715,7 @@ type AdminCatalogRecord struct {
 	Version                 int64     `xml:"version,attr,omitempty"`
 	Status                  string    `xml:"status,attr,omitempty"`
 	Link                    *Link     `xml:"Link,omitempty"`
-	Vdc                     *Metadata `xml:"Metadata,omitempty"`
+	Metadata                *Metadata `xml:"Metadata,omitempty"`
 }
+
+type AdminCatalogRecord CatalogRecord

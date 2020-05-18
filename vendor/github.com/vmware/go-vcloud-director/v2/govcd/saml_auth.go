@@ -153,6 +153,7 @@ func getSamlAdfsServer(vcdCli *VCDClient, org string) (string, error) {
 // getSamlEntityId attempts to load vCD hosted SAML metadata from URL:
 // url.Scheme + "://" + url.Host + "/cloud/org/" + org + "/saml/metadata/alias/vcd"
 // Returns an error if Entity ID is empty
+// Sample response body can be found in saml_auth_unit_test.go
 func getSamlEntityId(vcdCli *VCDClient, org string) (string, error) {
 	url := vcdCli.Client.VCDHREF
 	samlMetadataUrl := url.Scheme + "://" + url.Host + "/cloud/org/" + org + "/saml/metadata/alias/vcd"
@@ -177,6 +178,7 @@ func getSamlEntityId(vcdCli *VCDClient, org string) (string, error) {
 // getSamlAuthToken generates a token request payload using function
 // getSamlTokenRequestBody. This request is submited to ADFS server endpoint
 // "/adfs/services/trust/13/usernamemixed" and `RequestedSecurityTokenTxt` is expected in response
+// Sample response body can be found in saml_auth_unit_test.go
 func getSamlAuthToken(vcdCli *VCDClient, user, pass, samlEntityId, authEndpoint, org string) (string, error) {
 	requestBody := getSamlTokenRequestBody(user, pass, samlEntityId, authEndpoint)
 	samlTokenRequestBody := strings.NewReader(requestBody)
@@ -208,6 +210,7 @@ func getSamlAuthToken(vcdCli *VCDClient, user, pass, samlEntityId, authEndpoint,
 
 // authorizeSignToken submits a SIGN token received from ADFS server and gets regular vCD
 // "X-Vcloud-Authorization" token in exchange
+// Sample response body can be found in saml_auth_unit_test.go
 func authorizeSignToken(vcdCli *VCDClient, base64GzippedSignToken, org string) (string, error) {
 	url, err := url.Parse(vcdCli.Client.VCDHREF.Scheme + "://" + vcdCli.Client.VCDHREF.Host + "/api/sessions")
 	if err != nil {
