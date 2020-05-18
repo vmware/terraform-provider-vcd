@@ -39,7 +39,7 @@ func resourceVcdOrgGroup() *schema.Resource {
 				Required:     true,
 				ForceNew:     true, // vCD does not allow to change group name
 				Description:  "SAML group name",
-				ValidateFunc: validation.StringInSlice([]string{"SAML", "LDAP"}, false),
+				ValidateFunc: validation.StringInSlice([]string{"SAML", "INTEGRATED"}, false),
 			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,

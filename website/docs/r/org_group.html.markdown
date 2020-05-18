@@ -14,7 +14,9 @@ organization groups defined in `SAML` or `LDAP`.
 Supported in provider *v2.9+*
 
 ~> **Note:** This operation requires the rights included in the predefined `Organization
-Administrator` role or an equivalent set of rights.
+Administrator` role or an equivalent set of rights. `SAML` or `LDAP` must be configured as vCD
+does not support local groups and will return HTTP error 403 "This operation is denied." if selected
+`provider_type` is not configured.
 
 ## Example Usage
 
@@ -34,7 +36,9 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to which the VDC belongs. Optional if defined at provider level.
 * `name` - (Required) A unique name for the group.
-* `provider_type` - (Required) Identity provider type for this this group. One of `SAML` or `LDAP`.
+* `provider_type` - (Required) Identity provider type for this this group. One of `SAML` or
+  `INTEGRATED`. **Note** `LDAP` must be configured to create `INTEGRATED` groups and names must
+  match `LDAP` group names. If LDAP is not configured - it will return.
 * `role` - (Required) The role of the user. Role names can be retrieved from the organization. Both built-in roles and
   custom built can be used. The roles normally available are:
     * `Organization Administrator`
