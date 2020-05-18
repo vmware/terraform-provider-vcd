@@ -1,0 +1,18 @@
+{
+  "VcdIp": "10.150.171.64",
+  "Info": "Persistent list of entities to be destroyed.  If this file is found when starting the tests, its entities will be  processed for removal before any other operation.",
+  "EntityList": [
+   {
+    "Name": "GetDhcpAddress",
+    "EntityType": "vapp",
+    "Parent": "",
+    "CreatedBy": "createTestVapp"
+   },
+   {
+    "Name": "TestCreateOrgVdcNetworkDhcp",
+    "EntityType": "network",
+    "Parent": "dserplis|vdc-dserplis",
+    "CreatedBy": "TestCreateOrgVdcNetworkDhcp"
+   }
+  ]
+ }

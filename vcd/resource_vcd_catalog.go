@@ -37,6 +37,11 @@ func resourceVcdCatalog() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 			},
+			"created": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Time stamp of when the catalog was created",
+			},
 			"delete_force": &schema.Schema{
 				Type:        schema.TypeBool,
 				Required:    true,
@@ -94,6 +99,7 @@ func resourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	_ = d.Set("description", catalog.Catalog.Description)
+	_ = d.Set("created", catalog.Catalog.DateCreated)
 	d.SetId(catalog.Catalog.ID)
 	log.Printf("[TRACE] Catalog read completed: %#v", catalog.Catalog)
 	return nil

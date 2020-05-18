@@ -293,19 +293,16 @@ func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origi
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
-	identifier := d.Id()
 
-	if identifier == "" {
-		identifier = d.Get("name").(string)
-	}
-	network, err := vdc.GetOrgVdcNetworkByNameOrId(identifier, false)
+	network, err := getNetwork(d, vcdClient, origin == "datasource", "routed")
 	if err != nil {
 		if origin == "resource" {
-			log.Printf("[DEBUG] Network %s no longer exists. Removing from tfstate", identifier)
+			networkName := d.Get("name").(string)
+			log.Printf("[DEBUG] Network %s no longer exists. Removing from tfstate", networkName)
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("[routed network read] error retrieving Org VDC network %s: %s", identifier, err)
+		return fmt.Errorf("[routed network read] error retrieving Org VDC network  %s", err)
 	}
 	edgeGatewayName := d.Get("edge_gateway").(string)
 
@@ -435,6 +432,10 @@ func getDhcpFromEdgeGateway(networkHref string, edgeGateway *govcd.EdgeGateway) 
 		return dhcpConfig
 	}
 	for _, dhcp := range gwConf.EdgeGatewayServiceConfiguration.GatewayDhcpService.Pool {
+		// This check should avoid a crash when the network is not referenced. See Issue #500
+		if dhcp.Network == nil {
+			continue
+		}
 		if haveSameUuid(dhcp.Network.HREF, networkHref) {
 			dhcpRec := map[string]interface{}{
 				"start_address":      dhcp.LowIPAddress,
@@ -584,7 +585,7 @@ func resourceVcdNetworkRoutedUpdate(d *schema.ResourceData, meta interface{}) er
 	if identifier == "" {
 		identifier = networkName
 	}
-	network, err := getNetwork(d, vcdClient)
+	network, err := getNetwork(d, vcdClient, false, "routed")
 	if err != nil {
 		return fmt.Errorf("[routed network update] error getting network %s: %s", identifier, err)
 	}

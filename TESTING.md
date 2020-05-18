@@ -493,5 +493,9 @@ used in the documentation index.
    (Use `./scripts/get_token.sh` to retrieve one)
 * `VCD_TEST_DISTRIBUTED_NETWORK=1` (`-vcd-test-distributed`) runs testing of distributed networks (requires the edge gateway to have distributed
   routing enabled)
+* `VCD_TEST_DATA_GENERATION=1` generates some sample catalog items for data source filter engine test
+* `GOVCD_KEEP_TEST_OBJECTS=1` does not delete test objects created with `VCD_TEST_DATA_GENERATION`
+* `VCD_MAX_ITEMS=number` during filter engine tests, limits the collection of data sources of a given type to the number
+  indicated. The default is 5. The maximum is 100.
 
 When both the environment variable and the command line option are possible, the environment variable gets evaluated first.
