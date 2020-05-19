@@ -18,12 +18,13 @@ func TestAccVcdSamlAuth(t *testing.T) {
 
 	// Skip test if explicit SAML credentials are not specified
 	if testConfig.Provider.SamlUser == "" || testConfig.Provider.SamlPassword == "" {
-		t.Skip(t.Name() + "requires 'samlUser' and 'samlPassword' to be specified in configuration")
+		t.Skip(t.Name() + " requires 'samlUser' and 'samlPassword' to be specified in configuration")
 		return
 	}
 	// Backup default authentication configuration
 	backupUser := testConfig.Provider.User
 	backupPassword := testConfig.Provider.Password
+	backupToken := testConfig.Provider.Token
 	backupUseSamlAdfs := testConfig.Provider.UseSamlAdfs
 	backupCustomRptId := testConfig.Provider.CustomAdfsRptId
 	backupSysOrg := testConfig.Provider.SysOrg
@@ -37,12 +38,14 @@ func TestAccVcdSamlAuth(t *testing.T) {
 	// Temporarily override user and password variables
 	_ = os.Setenv("VCD_USER", testConfig.Provider.SamlUser)
 	_ = os.Setenv("VCD_PASSWORD", testConfig.Provider.SamlPassword)
+	_ = os.Unsetenv("VCD_TOKEN")
 	_ = os.Setenv("VCD_USE_SAML_ADFS", "true")
 	_ = os.Setenv("VCD_SAML_RPT_ID", testConfig.Provider.SamlCustomRptId)
 	_ = os.Setenv("VCD_SYS_ORG", testConfig.VCD.Org)
 
 	testConfig.Provider.User = testConfig.Provider.SamlUser
 	testConfig.Provider.Password = testConfig.Provider.SamlPassword
+	testConfig.Provider.Token = ""
 	testConfig.Provider.UseSamlAdfs = true
 	testConfig.Provider.CustomAdfsRptId = testConfig.Provider.SamlCustomRptId
 	testConfig.Provider.SysOrg = testConfig.VCD.Org
@@ -54,11 +57,13 @@ func TestAccVcdSamlAuth(t *testing.T) {
 			backupUser, backupUseSamlAdfs, backupCustomRptId, testConfig.Provider.SysOrg)
 		testConfig.Provider.User = backupUser
 		testConfig.Provider.Password = backupPassword
+		testConfig.Provider.Token = backupToken
 		testConfig.Provider.UseSamlAdfs = backupUseSamlAdfs
 		testConfig.Provider.CustomAdfsRptId = backupCustomRptId
 		testConfig.Provider.SysOrg = backupSysOrg
 		_ = os.Setenv("VCD_USER", testConfig.Provider.User)
 		_ = os.Setenv("VCD_PASSWORD", testConfig.Provider.Password)
+		_ = os.Setenv("VCD_TOKEN", testConfig.Provider.Token)
 		_ = os.Setenv("VCD_USE_SAML_ADFS", strconv.FormatBool(testConfig.Provider.UseSamlAdfs))
 		_ = os.Setenv("VCD_SAML_RPT_ID", testConfig.Provider.CustomAdfsRptId)
 		_ = os.Setenv("VCD_SYS_ORG", testConfig.Provider.SysOrg)
