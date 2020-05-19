@@ -10,8 +10,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 )
 
-// TestAccVcdSamlAuth explicitly tests a simple operation using SAML auth when explicit SAML
-// testing user and password are specified.
+// TestAccVcdSamlAuth tests a simple operation using SAML auth when explicit SAML testing user and
+// password are specified.
 // Note. The test cannot be run in parallel because it temporarily overrides authentication cache
 // and credentials for the purpose of its run. It restores them at the end.
 func TestAccVcdSamlAuth(t *testing.T) {

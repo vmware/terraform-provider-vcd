@@ -35,13 +35,19 @@ import (
 // Structure to get info from a config json file that the user specifies
 type TestConfig struct {
 	Provider struct {
-		User            string `json:"user"`
-		Password        string `json:"password"`
-		Token           string `json:"token,omitempty"`
-		UseSamlAdfs     bool   `json:"useSamlAdfs"`
+		User     string `json:"user"`
+		Password string `json:"password"`
+		Token    string `json:"token,omitempty"`
+
+		// UseSamlAdfs specifies if SAML auth is used for authenticating vCD instead of local login.
+		// The above `User` and `Password` will be used to authenticate against ADFS IdP when true.
+		UseSamlAdfs bool `json:"useSamlAdfs"`
+
+		// CustomAdfsRptId allows to set custom Relaying Party Trust identifier if needed. Only has
+		// effect if `UseSamlAdfs` is true.
 		CustomAdfsRptId string `json:"customAdfsRptId,omitempty"`
 
-		// The below `SamlUser`, `SamlPassword` and `SamlCustomRptId` variables are optional and are
+		// The variables `SamlUser`, `SamlPassword` and `SamlCustomRptId` are optional and are
 		// related to additional test run specifically with SAML user/password. It can be useful in
 		// case local user is used for test run (defined by above 'User', 'Password' variables).
 		// SamlUser takes ADFS friendly format ('contoso.com\username' or 'username@contoso.com')
