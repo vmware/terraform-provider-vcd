@@ -109,9 +109,9 @@ func Provider() terraform.ResourceProvider {
 			"auth_type": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
-				DefaultFunc:  schema.EnvDefaultFunc("VCD_AUTH_TYPE", nil),
-				Description:  "'saml_adfs' and 'token's are the only supported now",
-				ValidateFunc: validation.StringInSlice([]string{"saml_adfs", "token"}, false),
+				DefaultFunc:  schema.EnvDefaultFunc("VCD_AUTH_TYPE", "integrated"),
+				Description:  "'integrated', 'saml_adfs' and 'token's are the only supported now. 'integrated' is default.",
+				ValidateFunc: validation.StringInSlice([]string{"integrated", "saml_adfs", "token"}, false),
 			},
 			"saml_adfs_rpt_id": &schema.Schema{
 				Type:        schema.TypeString,
@@ -302,18 +302,6 @@ func validateProviderSchema(d *schema.ResourceData) error {
 	org := d.Get("org").(string)
 	if sysOrg == "" && org == "" {
 		return fmt.Errorf(`both "org" and "sysorg" properties are empty`)
-	}
-
-	authType := d.Get("auth_type").(string)
-	// All auth type related validations go here
-	if authType != "" {
-		// if AuthType is specified - only accept "token" value when auth_type=="token"
-		// Still allow to specify just "token" without "auth_type" for backwards compatibility.
-		token := d.Get("token").(string)
-		if token != "" && authType != "token" {
-			return fmt.Errorf("'token' was specified, but auth_type is not empty (%s) and not 'token'", authType)
-		}
-
 	}
 
 	return nil

@@ -59,6 +59,8 @@ func createTemporaryVCDConnection() *VCDClient {
 		User:            testConfig.Provider.User,
 		Password:        testConfig.Provider.Password,
 		Token:           testConfig.Provider.Token,
+		UseSamlAdfs:     testConfig.Provider.UseSamlAdfs,
+		CustomAdfsRptId: testConfig.Provider.CustomAdfsRptId,
 		SysOrg:          testConfig.Provider.SysOrg,
 		Org:             testConfig.VCD.Org,
 		Vdc:             testConfig.VCD.Vdc,

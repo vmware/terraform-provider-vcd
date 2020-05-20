@@ -40,6 +40,7 @@ The most common - tenant - use case when you set user to organization administra
 provider "vcd" {
   user                 = var.vcd_user
   password             = var.vcd_pass
+  auth_type            = "integrated"
   org                  = var.vcd_org
   vdc                  = var.vcd_vdc
   url                  = var.vcd_url
@@ -62,6 +63,7 @@ When you want to manage resources across different organizations from a single c
 provider "vcd" {
   user                 = "administrator"
   password             = var.vcd_pass
+  auth_type            = "integrated"
   org                  = "System"
   url                  = var.vcd_url
   max_retry_timeout    = var.vcd_max_retry_timeout
@@ -94,6 +96,7 @@ When you want to manage resources across different organizations but set a defau
 provider "vcd" {
   user                 = "administrator"
   password             = var.vcd_pass
+  auth_type            = "integrated"
   sysorg               = "System"
   org                  = var.vcd_org                  # Default for resources
   vdc                  = var.vcd_vdc                  # Default for resources
@@ -122,8 +125,7 @@ You can connect using an authorization token instead of username and password.
 
 ```hcl
 provider "vcd" {
-  user                 = ""
-  password             = ""
+  auth_type            = "token"
   token                = var.token
   sysorg               = "System"
   org                  = var.vcd_org                  # Default for resources
@@ -206,7 +208,8 @@ The following arguments are used to configure the VMware vCloud Director Provide
 * `password` - (Required) This is the password for vCloud Director API operations. Can
   also be specified with the `VCD_PASSWORD` environment variable.
 
-* `auth_type` - (Optional) `token` or `saml_adfs` at the moment.
+* `auth_type` - (Optional) `integrated`, `token` or `saml_adfs`. Default is `integrated`.
+  * `integrated` - vCD local users and LDAP users (provided LDAP is configured for Organization).
   * `saml_adfs` allows to use SAML login flow with Active Directory Federation
   Services (ADFS) using "/adfs/services/trust/13/usernamemixed" endpoint. Please note that
   credentials for ADFS should be formatted as `user@contoso.com` or `contoso.com\user`. Can also be

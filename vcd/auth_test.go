@@ -87,7 +87,24 @@ func TestAccAuth(t *testing.T) {
 	})
 
 	testCases = append(testCases, authTestCase{
-		name:       "SamlSystemUserAndPassword",
+		name:       "SystemUserAndPassword,AuthType=integrated",
+		skip:       testConfig.Provider.UseSamlAdfs,
+		skipReason: "testConfig.Provider.UseSamlAdfs must be false",
+		configText: `
+			provider "vcd" {
+				user      = "` + testConfig.Provider.User + `"
+				password  = "` + testConfig.Provider.Password + `"
+				auth_type = "integrated"
+				sysorg    = "System"
+				org       = "` + testConfig.VCD.Org + `"
+				url       = "` + testConfig.Provider.Url + `"
+				allow_unverified_ssl = true
+			}
+	  `,
+	})
+
+	testCases = append(testCases, authTestCase{
+		name:       "SamlSystemUserAndPassword,AuthType=saml_adfs",
 		skip:       !testConfig.Provider.UseSamlAdfs,
 		skipReason: "testConfig.Provider.UseSamlAdfs must be true",
 		configText: `
@@ -151,7 +168,7 @@ func TestAccAuth(t *testing.T) {
 	})
 
 	testCases = append(testCases, authTestCase{
-		name: "auth_type=token",
+		name: "Token,AuthType=token",
 		configText: `
 		provider "vcd" {
 		  auth_type = "token"
@@ -169,7 +186,7 @@ func TestAccAuth(t *testing.T) {
 
 	// auth_type=saml_adfs is only run if credentials were provided
 	testCases = append(testCases, authTestCase{
-		name:       "auth_type=saml_adfs,EmptySysOrg",
+		name:       "EmptySysOrg,AuthType=saml_adfs",
 		skip:       (testConfig.Provider.SamlUser == "" || testConfig.Provider.SamlPassword == ""),
 		skipReason: "testConfig.Provider.SamlUser and testConfig.Provider.SamlPassword must be set",
 		configText: `
