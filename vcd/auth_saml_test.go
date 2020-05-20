@@ -4,7 +4,6 @@ package vcd
 
 import (
 	"os"
-	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -39,8 +38,8 @@ func TestAccVcdSamlAuth(t *testing.T) {
 	_ = os.Setenv("VCD_USER", testConfig.Provider.SamlUser)
 	_ = os.Setenv("VCD_PASSWORD", testConfig.Provider.SamlPassword)
 	_ = os.Unsetenv("VCD_TOKEN")
-	_ = os.Setenv("VCD_USE_SAML_ADFS", "true")
-	_ = os.Setenv("VCD_SAML_RPT_ID", testConfig.Provider.SamlCustomRptId)
+	_ = os.Setenv("VCD_AUTH_TYPE", "saml_adfs")
+	_ = os.Setenv("VCD_SAML_ADFS_RPT_ID", testConfig.Provider.SamlCustomRptId)
 	_ = os.Setenv("VCD_SYS_ORG", testConfig.VCD.Org)
 
 	testConfig.Provider.User = testConfig.Provider.SamlUser
@@ -64,8 +63,14 @@ func TestAccVcdSamlAuth(t *testing.T) {
 		_ = os.Setenv("VCD_USER", testConfig.Provider.User)
 		_ = os.Setenv("VCD_PASSWORD", testConfig.Provider.Password)
 		_ = os.Setenv("VCD_TOKEN", testConfig.Provider.Token)
-		_ = os.Setenv("VCD_USE_SAML_ADFS", strconv.FormatBool(testConfig.Provider.UseSamlAdfs))
-		_ = os.Setenv("VCD_SAML_RPT_ID", testConfig.Provider.CustomAdfsRptId)
+
+		if testConfig.Provider.UseSamlAdfs {
+			_ = os.Setenv("VCD_AUTH_TYPE", "saml_adfs")
+		} else {
+			_ = os.Unsetenv("VCD_AUTH_TYPE")
+		}
+
+		_ = os.Setenv("VCD_SAML_ADFS_RPT_ID", testConfig.Provider.CustomAdfsRptId)
 		_ = os.Setenv("VCD_SYS_ORG", testConfig.Provider.SysOrg)
 		enableConnectionCache = backupEnableConnectionCache
 		cachedVCDClients.reset()
@@ -76,7 +81,7 @@ func TestAccVcdSamlAuth(t *testing.T) {
 		"Tags":    "auth",
 	}
 
-	configText := templateFill(testAccCheckVcdAcc, params)
+	configText := templateFill(testAccCheckVcdOrg, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -92,15 +97,15 @@ func TestAccVcdSamlAuth(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet("data.vcd_org.saml-auth", "id"),
+					resource.TestCheckResourceAttrSet("data.vcd_org.auth", "id"),
 				),
 			},
 		},
 	})
 }
 
-const testAccCheckVcdAcc = `
-data "vcd_org" "saml-auth" {
+const testAccCheckVcdOrg = `
+data "vcd_org" "auth" {
   name = "{{.OrgName}}"
 }
 `

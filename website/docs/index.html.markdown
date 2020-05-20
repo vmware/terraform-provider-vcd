@@ -140,6 +140,7 @@ resource "vcd_network_routed" "net1" {
 ```
 When using a token, the fields `user` and `password` will be ignored, but they need to be in the script.
 
+### Shell script to obtain token
 To obtain a token you can use this sample shell script:
 
 ```sh
@@ -181,9 +182,9 @@ provider "vcd" {
   user                 = "test@contoso.com"
   password             = var.vcd_pass
   sysorg               = "my-org"
-  use_saml_adfs        = true
-  # If `saml_rpt_id` is not specified - vCD SAML Entity ID will be used automatically
-  saml_rpt_id          = "my-custom-rpt-id"
+  auth_type            = "saml_adfs"
+  # If `saml_adfs_rpt_id` is not specified - vCD SAML Entity ID will be used automatically
+  saml_adfs_rpt_id     = "my-custom-rpt-id"
   org                  = var.vcd_org                  # Default for resources
   vdc                  = var.vcd_vdc                  # Default for resources
   url                  = var.vcd_url
@@ -205,20 +206,22 @@ The following arguments are used to configure the VMware vCloud Director Provide
 * `password` - (Required) This is the password for vCloud Director API operations. Can
   also be specified with the `VCD_PASSWORD` environment variable.
   
-* `token` - (Optional; *v2.6+*) This is the authorization token that can be used
-   instead of username and password. When this is set, username and password will
-    be ignored, but should be left in configuration either empty or with any custom values.
-    A token can be specified with the `VCD_TOKEN` environment variable.
+* `token` - (Optional; *v2.6+*) This is the authorization token that can be used instead of username
+   and password (in combination with field `auth_type=token`). When this is set, username and
+   password will be ignored, but should be left in configuration either empty or with any custom
+   values. A token can be specified with the `VCD_TOKEN` environment variable.
 
-* `use_saml_adfs` - (Optional) Set `true` to use SAML login flow with Active Directory Federation
+* `auth_type` - (Optional) `token` or `saml_adfs` at the moment.
+  * `saml_adfs` allows to use SAML login flow with Active Directory Federation
   Services (ADFS) using "/adfs/services/trust/13/usernamemixed" endpoint. Please note that
   credentials for ADFS should be formatted as `user@contoso.com` or `contoso.com\user`. Can also be
-  set with `VCD_USE_SAML_ADFS` environment variable.
+  set with `VCD_AUTH_TYPE` environment variable.
+  * `token` allows to specify token in [`token`](#token) field.
 
-* `saml_rpt_id` - (Optional) When using `use_saml_adfs` vCD SAML entity ID will be used as Relaying
-  Party Trust Identifier (RPT ID) by default. If a different RPT ID is needed - one can set it using
-  `saml_rpt_id` field. Can also be set with `VCD_SAML_RPT_ID` environment variable.
-
+* `saml_adfs_rpt_id` - (Optional) When using `auth_type=saml_adfs` vCD SAML entity ID will be
+  used as Relaying Party Trust Identifier (RPT ID) by default. If a different RPT ID is needed - one
+  can set it using `saml_rpt_id` field. Can also be set with `VCD_SAML_ADFS_RPT_ID` environment
+  variable.
 
 * `org` - (Required) This is the vCloud Director Org on which to run API
   operations. Can also be specified with the `VCD_ORG` environment

@@ -9,6 +9,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
+func init() {
+	testingTags["api"] = "provider_test.go"
+}
+
 var testAccProviders map[string]terraform.ResourceProvider
 var testAccProvider *schema.Provider
 
@@ -46,10 +50,6 @@ func testAccPreCheck(t *testing.T) {
 	if testConfig.VCD.Vdc == "" {
 		t.Fatal("vcd.vdc must be set for acceptance tests")
 	}
-}
-
-func init() {
-	testingTags["api"] = "provider_test.go"
 }
 
 // createTemporaryVCDConnection is meant to create a VCDClient to check environment before executing specific acceptance

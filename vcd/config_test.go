@@ -19,7 +19,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
-	"strconv"
 	"strings"
 	"testing"
 	"text/template"
@@ -31,6 +30,23 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
+
+func init() {
+
+	// To list the flags when we run "go test -tags functional -vcd-help", the flag name must start with "vcd"
+	// They will all appear alongside the native flags when we use an invalid one
+	setBoolFlag(&vcdHelp, "vcd-help", "VCD_HELP", "Show vcd flags")
+	setBoolFlag(&testDistributedNetworks, "vcd-test-distributed", "", "enables testing of distributed network")
+	setBoolFlag(&enableDebug, "vcd-debug", "GOVCD_DEBUG", "enables debug output")
+	setBoolFlag(&vcdTestVerbose, "vcd-verbose", "TEST_VERBOSE", "enables verbose output")
+	setBoolFlag(&enableTrace, "vcd-trace", "GOVCD_TRACE", "enables function calls tracing")
+	setBoolFlag(&vcdShortTest, "vcd-short", "VCD_SHORT_TEST", "runs short test")
+	setBoolFlag(&vcdAddProvider, "vcd-add-provider", envVcdAddProvider, "add provider to test scripts")
+	setBoolFlag(&vcdSkipTemplateWriting, "vcd-skip-template-write", envVcdSkipTemplateWriting, "Skip writing templates to file")
+	setBoolFlag(&vcdRemoveOrgVdcFromTemplate, "vcd-remove-org-vdc-from-template", envVcdRemoveOrgVdcFromTemplate, "Remove org and VDC from template")
+	setBoolFlag(&vcdTestOrgUser, "vcd-test-org-user", envVcdTestOrgUser, "Run tests with org user")
+
+}
 
 // Structure to get info from a config json file that the user specifies
 type TestConfig struct {
@@ -470,8 +486,10 @@ func getConfigStruct(config string) TestConfig {
 	_ = os.Setenv("VCD_PASSWORD", configStruct.Provider.Password)
 	_ = os.Setenv("VCD_TOKEN", configStruct.Provider.Token)
 
-	_ = os.Setenv("VCD_USE_SAML_ADFS", strconv.FormatBool(configStruct.Provider.UseSamlAdfs))
-	_ = os.Setenv("VCD_SAML_RPT_ID", configStruct.Provider.CustomAdfsRptId)
+	if configStruct.Provider.UseSamlAdfs {
+		_ = os.Setenv("VCD_AUTH_TYPE", "saml_adfs")
+		_ = os.Setenv("VCD_SAML_ADFS_RPT_ID", configStruct.Provider.CustomAdfsRptId)
+	}
 
 	_ = os.Setenv("VCD_URL", configStruct.Provider.Url)
 	_ = os.Setenv("VCD_SYS_ORG", configStruct.Provider.SysOrg)
@@ -928,19 +946,41 @@ func setBoolFlag(varPointer *bool, name, envVar, help string) {
 	flag.BoolVar(varPointer, name, *varPointer, help)
 }
 
-func init() {
+type envHelper struct {
+	vars map[string]string
+}
 
-	// To list the flags when we run "go test -tags functional -vcd-help", the flag name must start with "vcd"
-	// They will all appear alongside the native flags when we use an invalid one
-	setBoolFlag(&vcdHelp, "vcd-help", "VCD_HELP", "Show vcd flags")
-	setBoolFlag(&testDistributedNetworks, "vcd-test-distributed", "", "enables testing of distributed network")
-	setBoolFlag(&enableDebug, "vcd-debug", "GOVCD_DEBUG", "enables debug output")
-	setBoolFlag(&vcdTestVerbose, "vcd-verbose", "TEST_VERBOSE", "enables verbose output")
-	setBoolFlag(&enableTrace, "vcd-trace", "GOVCD_TRACE", "enables function calls tracing")
-	setBoolFlag(&vcdShortTest, "vcd-short", "VCD_SHORT_TEST", "runs short test")
-	setBoolFlag(&vcdAddProvider, "vcd-add-provider", envVcdAddProvider, "add provider to test scripts")
-	setBoolFlag(&vcdSkipTemplateWriting, "vcd-skip-template-write", envVcdSkipTemplateWriting, "Skip writing templates to file")
-	setBoolFlag(&vcdRemoveOrgVdcFromTemplate, "vcd-remove-org-vdc-from-template", envVcdRemoveOrgVdcFromTemplate, "Remove org and VDC from template")
-	setBoolFlag(&vcdTestOrgUser, "vcd-test-org-user", envVcdTestOrgUser, "Run tests with org user")
+// newEnvVarHelper helps to initialize
+func newEnvVarHelper() *envHelper {
+	return &envHelper{vars: make(map[string]string)}
+}
 
+// saveVcdVars checks all env vars with VCD prefix and saves them in a map
+func (env *envHelper) saveVcdVars() {
+	for _, envVar := range os.Environ() {
+		if strings.HasPrefix(envVar, "VCD") {
+			// os.Environ returns a slice of "key=value" strings. The first "=" separated "key" and
+			// "value" therefore we split only first "=" match as env vars may have syntax of
+			// "key=value=else"
+			splitKeyValue := strings.SplitN(envVar, "=", 2)
+			key := splitKeyValue[0]
+			value := splitKeyValue[1]
+			env.vars[key] = value
+		}
+	}
+
+}
+
+// unsetVcdVars unsets all environment variables with prefix "VCD"
+func (env *envHelper) unsetVcdVars() {
+	for keyName := range env.vars {
+		os.Unsetenv(keyName)
+	}
+}
+
+// restoreVcdVars restores all env variables with prefix "VCD" stored in parent struct
+func (env *envHelper) restoreVcdVars() {
+	for keyName, valueName := range env.vars {
+		os.Setenv(keyName, valueName)
+	}
 }
