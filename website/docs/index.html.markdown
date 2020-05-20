@@ -205,11 +205,6 @@ The following arguments are used to configure the VMware vCloud Director Provide
   
 * `password` - (Required) This is the password for vCloud Director API operations. Can
   also be specified with the `VCD_PASSWORD` environment variable.
-  
-* `token` - (Optional; *v2.6+*) This is the authorization token that can be used instead of username
-   and password (in combination with field `auth_type=token`). When this is set, username and
-   password will be ignored, but should be left in configuration either empty or with any custom
-   values. A token can be specified with the `VCD_TOKEN` environment variable.
 
 * `auth_type` - (Optional) `token` or `saml_adfs` at the moment.
   * `saml_adfs` allows to use SAML login flow with Active Directory Federation
@@ -217,6 +212,11 @@ The following arguments are used to configure the VMware vCloud Director Provide
   credentials for ADFS should be formatted as `user@contoso.com` or `contoso.com\user`. Can also be
   set with `VCD_AUTH_TYPE` environment variable.
   * `token` allows to specify token in [`token`](#token) field.
+  
+* `token` - (Optional; *v2.6+*) This is the authorization token that can be used instead of username
+   and password (in combination with field `auth_type=token`). When this is set, username and
+   password will be ignored, but should be left in configuration either empty or with any custom
+   values. A token can be specified with the `VCD_TOKEN` environment variable.
 
 * `saml_adfs_rpt_id` - (Optional) When using `auth_type=saml_adfs` vCD SAML entity ID will be
   used as Relaying Party Trust Identifier (RPT ID) by default. If a different RPT ID is needed - one
