@@ -98,7 +98,6 @@ func Provider() terraform.ResourceProvider {
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_USER", nil),
 				Description: "The user name for VCD API operations.",
-				// ConflictsWith: []string{"token"},
 			},
 
 			"password": &schema.Schema{
@@ -106,7 +105,6 @@ func Provider() terraform.ResourceProvider {
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_PASSWORD", nil),
 				Description: "The user password for VCD API operations.",
-				// ConflictsWith: []string{"token"},
 			},
 			"auth_type": &schema.Schema{
 				Type:         schema.TypeString,
@@ -127,7 +125,6 @@ func Provider() terraform.ResourceProvider {
 				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_TOKEN", nil),
 				Description: "The token used instead of username/password for VCD API operations.",
-				// ConflictsWith: []string{"user", "password"},
 			},
 
 			"sysorg": &schema.Schema{
