@@ -218,10 +218,9 @@ The following arguments are used to configure the VMware vCloud Director Provide
    password will be ignored, but should be left in configuration either empty or with any custom
    values. A token can be specified with the `VCD_TOKEN` environment variable.
 
-* `saml_adfs_rpt_id` - (Optional) When using `auth_type=saml_adfs` vCD SAML entity ID will be
-  used as Relaying Party Trust Identifier (RPT ID) by default. If a different RPT ID is needed - one
-  can set it using `saml_rpt_id` field. Can also be set with `VCD_SAML_ADFS_RPT_ID` environment
-  variable.
+* `saml_adfs_rpt_id` - (Optional) When using `auth_type=saml_adfs` vCD SAML entity ID will be used
+  as Relaying Party Trust Identifier (RPT ID) by default. If a different RPT ID is needed - one can
+  set it using this field. It can also be set with `VCD_SAML_ADFS_RPT_ID` environment variable.
 
 * `org` - (Required) This is the vCloud Director Org on which to run API
   operations. Can also be specified with the `VCD_ORG` environment
