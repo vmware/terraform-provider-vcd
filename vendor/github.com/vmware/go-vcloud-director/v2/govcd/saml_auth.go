@@ -19,6 +19,26 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
+/*
+This file implements SAML authentication flow using Microsoft Active Directory Federation Services
+(ADFS). It adds support to authenticate to Cloud Director using SAML authentication (by applying
+WithSamlAdfs() configuration option to NewVCDClient function). The identity provider (IdP) must be
+Active Directory Federation Services (ADFS) and "/adfs/services/trust/13/usernamemixed" endpoint
+must be enabled to make it work. Furthermore username must be supplied in ADFS friendly format -
+test@contoso.com' or 'contoso.com\test'.
+
+It works by finding ADFS login endpoint for vCD by querying vCD SAML redirect endpoint
+for specific Org and then submits authentication request to "/adfs/services/trust/13/usernamemixed"
+endpoint of ADFS server. Using ADFS response it constructs a SIGN token which vCD accepts for the
+"/api/sessions". After first initial "login" it grabs the regular X-Vcloud-Authorization token and
+uses it for further requests.
+More information in vCD documentation:
+https://code.vmware.com/docs/10000/vcloud-api-programming-guide-for-service-providers/GUID-335CFC35-7AD8-40E5-91BE-53971937A2BB.html
+
+There is a working code example in /samples/saml_auth_adfs directory how to setup client using SAML
+auth.
+*/
+
 // authorizeSamlAdfs is the main entry point for SAML authentication on ADFS endpoint
 // "/adfs/services/trust/13/usernamemixed"
 // Input parameters:
@@ -30,7 +50,9 @@ import (
 // as relaying party trust ID
 //
 // The general concept is to get a SIGN token from ADFS IdP (Identity Provider) and exchange it with
-// regular vCD token for further operations. This is achieved with the following steps:
+// regular vCD token for further operations. It is documented in
+// https://code.vmware.com/docs/10000/vcloud-api-programming-guide-for-service-providers/GUID-335CFC35-7AD8-40E5-91BE-53971937A2BB.html
+// This is achieved with the following steps:
 // 1 - Lookup vCD Entity ID to use for ADFS authentication or use custom value if overrideRptId
 // field is provided
 // 2 - Find ADFS server name by querying vCD SAML URL which responds with HTTP redirect (302)
@@ -97,6 +119,10 @@ func (vcdCli *VCDClient) authorizeSamlAdfs(user, pass, org, overrideRptId string
 // following HTTP redirects and searches for Location header after the request to vCD SAML redirect
 // address. The URL to search redirect location is:
 // url.Scheme + "://" + url.Host + "/login/my-org/saml/login/alias/vcd?service=tenant:" + org
+//
+// Concurrency note. This function temporarily patches `vcdCli.Client.Http` therefore http.Client
+// would not follow redirects during this time. It is however safe as vCDClient is not expected to
+// use `http.Client` in any other place before authentication occurs.
 func getSamlAdfsServer(vcdCli *VCDClient, org string) (string, error) {
 	url := vcdCli.Client.VCDHREF
 
@@ -176,7 +202,7 @@ func getSamlEntityId(vcdCli *VCDClient, org string) (string, error) {
 }
 
 // getSamlAuthToken generates a token request payload using function
-// getSamlTokenRequestBody. This request is submited to ADFS server endpoint
+// getSamlTokenRequestBody. This request is submitted to ADFS server endpoint
 // "/adfs/services/trust/13/usernamemixed" and `RequestedSecurityTokenTxt` is expected in response
 // Sample response body can be found in saml_auth_unit_test.go
 func getSamlAuthToken(vcdCli *VCDClient, user, pass, samlEntityId, authEndpoint, org string) (string, error) {
