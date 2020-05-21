@@ -8,6 +8,10 @@ IMPROVEMENTS:
 * Added command line flags to test suite, corresponding to environment variables listed in TESTING.md [GH-505]
 * `resource/vcd_vapp_vm` allows creating VM from multi VM vApp template [GH-501]
 
+BUG FIXES:
+* `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` can report `network.X.is_primary` attribute
+  incorrectly when VM is imported to Terraform and NIC indexes in vCD do not start with 0. [GH-512] 
+
 NOTES:
 
 * Dropped support for vCD 9.1 [GH-492]
