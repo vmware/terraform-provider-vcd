@@ -163,8 +163,9 @@ func (vapp *VApp) AddNewVMWithStorageProfile(name string, vappTemplate VAppTempl
 		return Task{}, fmt.Errorf("vApp Template can not be empty")
 	}
 
-	if vappTemplate.VAppTemplate.Children == nil || len(vappTemplate.VAppTemplate.Children.VM) < 1 {
-		return Task{}, fmt.Errorf("vApp Template must have at least one child VM")
+	templateHref := vappTemplate.VAppTemplate.HREF
+	if vappTemplate.VAppTemplate.Children != nil && len(vappTemplate.VAppTemplate.Children.VM) != 0 {
+		templateHref = vappTemplate.VAppTemplate.Children.VM[0].HREF
 	}
 
 	// Status 8 means The object is resolved and powered off.
@@ -195,7 +196,7 @@ func (vapp *VApp) AddNewVMWithStorageProfile(name string, vappTemplate VAppTempl
 		Description: vapp.VApp.Description,
 		SourcedItem: &types.SourcedCompositionItemParam{
 			Source: &types.Reference{
-				HREF: vappTemplate.VAppTemplate.Children.VM[0].HREF,
+				HREF: templateHref,
 				Name: name,
 			},
 			InstantiationParams: &types.InstantiationParams{}, // network config is injected below
@@ -234,9 +235,11 @@ func (vapp *VApp) RemoveVM(vm VM) error {
 	if vapp.VApp.Tasks != nil {
 		for _, taskItem := range vapp.VApp.Tasks.Task {
 			task.Task = taskItem
-			err := task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf("error performing task: %s", err)
+			if task.Task.Status != "error" && task.Task.Status != "success" {
+				err := task.WaitTaskCompletion()
+				if err != nil {
+					return fmt.Errorf("error performing task: %s", err)
+				}
 			}
 		}
 	}

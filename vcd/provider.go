@@ -53,39 +53,40 @@ var globalDataSourceMap = map[string]*schema.Resource{
 }
 
 var globalResourceMap = map[string]*schema.Resource{
-	"vcd_network":            resourceVcdNetwork(),          // 1.0 DEPRECATED: replaced by vcd_network_routed
-	"vcd_network_routed":     resourceVcdNetworkRouted(),    // 2.0
-	"vcd_network_direct":     resourceVcdNetworkDirect(),    // 2.0
-	"vcd_network_isolated":   resourceVcdNetworkIsolated(),  // 2.0
-	"vcd_vapp_network":       resourceVcdVappNetwork(),      // 2.1
-	"vcd_vapp":               resourceVcdVApp(),             // 1.0
-	"vcd_firewall_rules":     resourceVcdFirewallRules(),    // 1.0
-	"vcd_dnat":               resourceVcdDNAT(),             // 1.0
-	"vcd_snat":               resourceVcdSNAT(),             // 1.0
-	"vcd_edgegateway":        resourceVcdEdgeGateway(),      // 2.4
-	"vcd_edgegateway_vpn":    resourceVcdEdgeGatewayVpn(),   // 1.0
-	"vcd_vapp_vm":            resourceVcdVAppVm(),           // 1.0
-	"vcd_org":                resourceOrg(),                 // 2.0
-	"vcd_org_vdc":            resourceVcdOrgVdc(),           // 2.2
-	"vcd_org_user":           resourceVcdOrgUser(),          // 2.4
-	"vcd_catalog":            resourceVcdCatalog(),          // 2.0
-	"vcd_catalog_item":       resourceVcdCatalogItem(),      // 2.0
-	"vcd_catalog_media":      resourceVcdCatalogMedia(),     // 2.0
-	"vcd_inserted_media":     resourceVcdInsertedMedia(),    // 2.1
-	"vcd_independent_disk":   resourceVcdIndependentDisk(),  // 2.1
-	"vcd_external_network":   resourceVcdExternalNetwork(),  // 2.2
-	"vcd_lb_service_monitor": resourceVcdLbServiceMonitor(), // 2.4
-	"vcd_lb_server_pool":     resourceVcdLBServerPool(),     // 2.4
-	"vcd_lb_app_profile":     resourceVcdLBAppProfile(),     // 2.4
-	"vcd_lb_app_rule":        resourceVcdLBAppRule(),        // 2.4
-	"vcd_lb_virtual_server":  resourceVcdLBVirtualServer(),  // 2.4
-	"vcd_nsxv_dnat":          resourceVcdNsxvDnat(),         // 2.5
-	"vcd_nsxv_snat":          resourceVcdNsxvSnat(),         // 2.5
-	"vcd_nsxv_firewall_rule": resourceVcdNsxvFirewallRule(), // 2.5
-	"vcd_nsxv_dhcp_relay":    resourceVcdNsxvDhcpRelay(),    // 2.6
-	"vcd_nsxv_ip_set":        resourceVcdIpSet(),            // 2.6
-	"vcd_vm_internal_disk":   resourceVmInternalDisk(),      // 2.7
-	"vcd_vapp_org_network":   resourceVcdVappOrgNetwork(),   // 2.7
+	"vcd_network":             resourceVcdNetwork(),           // 1.0 DEPRECATED: replaced by vcd_network_routed
+	"vcd_network_routed":      resourceVcdNetworkRouted(),     // 2.0
+	"vcd_network_direct":      resourceVcdNetworkDirect(),     // 2.0
+	"vcd_network_isolated":    resourceVcdNetworkIsolated(),   // 2.0
+	"vcd_vapp_network":        resourceVcdVappNetwork(),       // 2.1
+	"vcd_vapp":                resourceVcdVApp(),              // 1.0
+	"vcd_firewall_rules":      resourceVcdFirewallRules(),     // 1.0
+	"vcd_dnat":                resourceVcdDNAT(),              // 1.0
+	"vcd_snat":                resourceVcdSNAT(),              // 1.0
+	"vcd_edgegateway":         resourceVcdEdgeGateway(),       // 2.4
+	"vcd_edgegateway_vpn":     resourceVcdEdgeGatewayVpn(),    // 1.0
+	"vcd_vapp_vm":             resourceVcdVAppVm(),            // 1.0
+	"vcd_org":                 resourceOrg(),                  // 2.0
+	"vcd_org_vdc":             resourceVcdOrgVdc(),            // 2.2
+	"vcd_org_user":            resourceVcdOrgUser(),           // 2.4
+	"vcd_catalog":             resourceVcdCatalog(),           // 2.0
+	"vcd_catalog_item":        resourceVcdCatalogItem(),       // 2.0
+	"vcd_catalog_media":       resourceVcdCatalogMedia(),      // 2.0
+	"vcd_inserted_media":      resourceVcdInsertedMedia(),     // 2.1
+	"vcd_independent_disk":    resourceVcdIndependentDisk(),   // 2.1
+	"vcd_external_network":    resourceVcdExternalNetwork(),   // 2.2
+	"vcd_lb_service_monitor":  resourceVcdLbServiceMonitor(),  // 2.4
+	"vcd_lb_server_pool":      resourceVcdLBServerPool(),      // 2.4
+	"vcd_lb_app_profile":      resourceVcdLBAppProfile(),      // 2.4
+	"vcd_lb_app_rule":         resourceVcdLBAppRule(),         // 2.4
+	"vcd_lb_virtual_server":   resourceVcdLBVirtualServer(),   // 2.4
+	"vcd_nsxv_dnat":           resourceVcdNsxvDnat(),          // 2.5
+	"vcd_nsxv_snat":           resourceVcdNsxvSnat(),          // 2.5
+	"vcd_nsxv_firewall_rule":  resourceVcdNsxvFirewallRule(),  // 2.5
+	"vcd_nsxv_dhcp_relay":     resourceVcdNsxvDhcpRelay(),     // 2.6
+	"vcd_nsxv_ip_set":         resourceVcdIpSet(),             // 2.6
+	"vcd_vm_internal_disk":    resourceVmInternalDisk(),       // 2.7
+	"vcd_vapp_org_network":    resourceVcdVappOrgNetwork(),    // 2.7
+	"vcd_vapp_firewall_rules": resourceVcdVappFirewallRules(), // 2.9
 }
 
 // Provider returns a terraform.ResourceProvider.

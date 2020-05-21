@@ -168,14 +168,33 @@ func isBinary(data string, req *http.Request) bool {
 	return false
 }
 
-// Scans the header for known keys that contain authentication tokens
-// and hide the contents
-func logSanitizedHeader(input_header http.Header) {
-	for key, value := range input_header {
-		if (key == "Config-Secret" || key == "authorization" || key == "Authorization" || key == "X-Vcloud-Authorization") &&
-			!LogPasswords {
-			value = []string{"********"}
+// SanitizedHeader returns a http.Header with sensitive fields masked
+func SanitizedHeader(inputHeader http.Header) http.Header {
+	if LogPasswords {
+		return inputHeader
+	}
+	var sensitiveKeys = []string{
+		"Config-Secret",
+		"Authorization",
+		"X-Vcloud-Authorization",
+		"X-Vmware-Vcloud-Access-Token",
+	}
+	var sanitizedHeader = make(http.Header)
+	for key, value := range inputHeader {
+		for _, sk := range sensitiveKeys {
+			if strings.EqualFold(sk, key) {
+				value = []string{"********"}
+				break
+			}
 		}
+		sanitizedHeader[key] = value
+	}
+	return sanitizedHeader
+}
+
+// logSanitizedHeader logs the contents of the header after sanitizing
+func logSanitizedHeader(inputHeader http.Header) {
+	for key, value := range SanitizedHeader(inputHeader) {
 		Logger.Printf("\t%s: %s\n", key, value)
 	}
 }

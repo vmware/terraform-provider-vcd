@@ -107,6 +107,8 @@ const (
 	MimeExternalNetwork = "application/vnd.vmware.admin.vmwexternalnet+xml"
 	// Mime of an Org User
 	MimeAdminUser = "application/vnd.vmware.admin.user+xml"
+	// Mime of vApp network
+	MimeVappNetwork = "application/vnd.vmware.vcloud.vAppNetwork+xml"
 )
 
 const (
@@ -197,4 +199,29 @@ const (
 	EdgeGatewayVnicTypeTrunk        = "trunk"
 	EdgeGatewayVnicTypeSubinterface = "subinterface"
 	EdgeGatewayVnicTypeAny          = "any"
+)
+
+// Names of the filters allowed in the search engine
+const (
+	FilterNameRegex = "name_regex" // a name, searched by regular expression
+	FilterDate      = "date"       // a date expression (>|<|==|>=|<= date)
+	FilterIp        = "ip"         // An IP, searched by regular expression
+	FilterLatest    = "latest"     // gets the newest element
+	FilterEarliest  = "earliest"   // gets the oldest element
+	FilterParent    = "parent"     // matches the entity parent
+	FilterParentId  = "parent_id"  // matches the entity parent ID
+)
+
+const (
+	// The QT* constants are the names used with Query requests to retrieve the corresponding entities
+	QtVappTemplate      = "vAppTemplate"      // vApp template
+	QtAdminVappTemplate = "adminVAppTemplate" // vApp template as admin
+	QtEdgeGateway       = "edgeGateway"       // edge gateway
+	QtOrgVdcNetwork     = "orgVdcNetwork"     // Org VDC network
+	QtCatalog           = "catalog"           // catalog
+	QtAdminCatalog      = "adminCatalog"      // catalog as admin
+	QtCatalogItem       = "catalogItem"       // catalog item
+	QtAdminCatalogItem  = "adminCatalogItem"  // catalog item as admin
+	QtAdminMedia        = "adminMedia"        // media item as admin
+	QtMedia             = "media"             // media item
 )

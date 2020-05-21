@@ -85,6 +85,9 @@ func getProtocol(protocol types.FirewallRuleProtocols) string {
 	if protocol.TCP {
 		return "tcp"
 	}
+	if protocol.TCP && protocol.UDP {
+		return "tcp&udp"
+	}
 	if protocol.UDP {
 		return "udp"
 	}
