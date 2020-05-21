@@ -51,10 +51,20 @@ output "external_ip" {
 
 The following arguments are supported:
 
-* `name` - (Required) A unique name for the edge gateway.
+* `name` - (Required) A unique name for the edge gateway (optional when `filter` is used)
 * `org` - (Optional) The name of organization to which the VDC belongs. Optional if defined at provider level.
 * `vdc` - (Optional) The name of VDC that owns the edge gateway. Optional if defined at provider level. 
+* `filter` - (Optional; *2.9+*) Retrieves the data source using one or more filter parameters
 
 ## Attribute Reference
 
 All attributes defined in [edge gateway resource](/docs/providers/vcd/r/edgegateway.html#attribute-reference) are supported.
+
+## Filter arguments
+
+(Supported in provider *v2.9+*)
+
+* `name_regex` (Optional) matches the name using a regular expression.
+
+See [Filters reference](/docs/providers/vcd/guides/data_source_filters.html) for details and examples.
+

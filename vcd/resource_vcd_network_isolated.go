@@ -247,30 +247,23 @@ func resourceVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}) er
 
 func genericVcdNetworkIsolatedRead(d *schema.ResourceData, meta interface{}, origin string) error {
 	var network *govcd.OrgVDCNetwork
+	var err error
 
 	switch origin {
 	case "resource", "datasource":
 		// From the resource creation or data source, we need to retrieve the network from scratch
 		vcdClient := meta.(*VCDClient)
 
-		_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
-		if err != nil {
-			return fmt.Errorf("[network isolated read] "+errorRetrievingOrgAndVdc, err)
-		}
+		network, err = getNetwork(d, vcdClient, origin == "datasource", "isolated")
 
-		identifier := d.Id()
-
-		if identifier == "" {
-			identifier = d.Get("name").(string)
-		}
-		network, err = vdc.GetOrgVdcNetworkByNameOrId(identifier, false)
 		if err != nil {
 			if origin == "resource" {
-				log.Printf("[DEBUG] Network %s no longer exists. Removing from tfstate", identifier)
+				networkName := d.Get("name").(string)
+				log.Printf("[DEBUG] Network %s no longer exists. Removing from tfstate", networkName)
 				d.SetId("")
 				return nil
 			}
-			return fmt.Errorf("[network isolated read] error looking for %s: %s", identifier, err)
+			return fmt.Errorf("[network isolated read] error looking for network: %s", err)
 		}
 	case "resource-update":
 		// From update, we get the network directly

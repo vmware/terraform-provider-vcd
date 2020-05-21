@@ -44,6 +44,11 @@ func resourceVcdCatalogItem() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 			},
+			"created": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Time stamp of when the item was created",
+			},
 			"ova_path": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
@@ -174,6 +179,8 @@ func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin 
 	if err != nil {
 		return err
 	}
+	_ = d.Set("name", catalogItem.CatalogItem.Name)
+	_ = d.Set("created", vAppTemplate.VAppTemplate.DateCreated)
 	_ = d.Set("description", catalogItem.CatalogItem.Description)
 	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 

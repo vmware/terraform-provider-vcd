@@ -24,7 +24,7 @@ fi
 
 accepted_commands=(static token short acceptance sequential-acceptance multiple binary
     binary-prepare catalog gateway vapp vm network extnetwork multinetwork 
-    short-provider lb user acceptance-orguser short-provider-orguser)
+    short-provider lb user acceptance-orguser short-provider-orguser search)
 
 accepted="[${accepted_commands[*]}]"
 
@@ -358,6 +358,9 @@ case $wanted in
         ;;
     sequential-acceptance)
         acceptance_test functional "-race --parallel=1"
+        ;;
+    search)
+        acceptance_test search
         ;;
     multinetwork)
         multiple_test TestAccVcdVappNetworkMulti
