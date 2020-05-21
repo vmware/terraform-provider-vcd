@@ -110,7 +110,7 @@ func Provider() terraform.ResourceProvider {
 				Type:         schema.TypeString,
 				Optional:     true,
 				DefaultFunc:  schema.EnvDefaultFunc("VCD_AUTH_TYPE", "integrated"),
-				Description:  "'integrated', 'saml_adfs' and 'token's are the only supported now. 'integrated' is default.",
+				Description:  "'integrated', 'saml_adfs', and 'token' are the only supported now. 'integrated' is default.",
 				ValidateFunc: validation.StringInSlice([]string{"integrated", "saml_adfs", "token"}, false),
 			},
 			"saml_adfs_rpt_id": &schema.Schema{
@@ -249,7 +249,6 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	} else {
 		ImportSeparator = d.Get("import_separator").(string)
 	}
-	// spew.Dump(config)
 	return config.Client()
 }
 
