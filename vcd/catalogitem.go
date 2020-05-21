@@ -9,7 +9,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
-// Deletes catalog item which can be vapp template OVA or media ISO file
+// Deletes catalog item which can be vApp template OVA or media ISO file
 func deleteCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) error {
 	log.Printf("[TRACE] Catalog item delete started")
 
@@ -46,7 +46,8 @@ func deleteCatalogItem(d *schema.ResourceData, vcdClient *VCDClient) error {
 	return nil
 }
 
-// Finds catalog item which can be vapp template OVA or media ISO file
+// Finds catalog item which can be vApp template OVA or media ISO file
+// TODO: This function should be updated in the context of Issue #502
 func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient, origin string) (*govcd.CatalogItem, error) {
 	log.Printf("[TRACE] Catalog item read initiated")
 
@@ -69,7 +70,26 @@ func findCatalogItem(d *schema.ResourceData, vcdClient *VCDClient, origin string
 		identifier = d.Get("name").(string)
 	}
 
-	catalogItem, err := catalog.GetCatalogItemByNameOrId(identifier, false)
+	var catalogItem *govcd.CatalogItem
+	if origin == "datasource" {
+		if !nameOrFilterIsSet(d) {
+			return nil, fmt.Errorf(noNameOrFilterError, "vcd_catalog_item")
+		}
+		filter, hasFilter := d.GetOk("filter")
+		if hasFilter {
+
+			catalogItem, err = getCatalogItemByFilter(catalog, filter, vcdClient.Client.IsSysAdmin)
+			if err != nil {
+				return nil, err
+			}
+
+			d.SetId(catalogItem.CatalogItem.ID)
+			return catalogItem, nil
+		}
+	}
+	// No filter: we continue with single item  GET
+
+	catalogItem, err = catalog.GetCatalogItemByNameOrId(identifier, false)
 	if govcd.IsNotFound(err) && origin == "resource" {
 		log.Printf("[INFO] Unable to find catalog item %s. Removing from tfstate", identifier)
 		d.SetId("")

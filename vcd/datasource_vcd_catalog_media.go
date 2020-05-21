@@ -22,8 +22,8 @@ func datasourceVcdCatalogMedia() *schema.Resource {
 			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
-				Required:    true,
-				Description: "media name",
+				Optional:    true,
+				Description: "media name (Optional when 'filter' is used)",
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
@@ -70,6 +70,22 @@ func datasourceVcdCatalogMedia() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Storage profile name",
+			},
+			"filter": &schema.Schema{
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				MinItems:    1,
+				Optional:    true,
+				Description: "Criteria for retrieving a catalog media by various attributes",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name_regex": elementNameRegex,
+						"date":       elementDate,
+						"earliest":   elementEarliest,
+						"latest":     elementLatest,
+						"metadata":   elementMetadata,
+					},
+				},
 			},
 		},
 	}

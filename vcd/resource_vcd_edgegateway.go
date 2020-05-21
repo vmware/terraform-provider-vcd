@@ -411,21 +411,39 @@ func genericVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}, origin 
 
 	vcdClient := meta.(*VCDClient)
 
-	identifier := d.Id()
-	if identifier == "" {
-		identifier = d.Get("name").(string)
-	}
-	if identifier == "" {
-		return fmt.Errorf("[edgegateway read] no identifier provided")
-	}
-
 	orgName := d.Get("org").(string)
 	vdcName := d.Get("vdc").(string)
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if err != nil {
 		return fmt.Errorf("[edgegateway read] error retrieving org and vdc: %s", err)
 	}
-	edgeGateway, err := vdc.GetEdgeGatewayByNameOrId(identifier, false)
+	var edgeGateway *govcd.EdgeGateway
+	var hasFilter bool
+	var filter interface{}
+
+	if origin == "datasource" {
+
+		if !nameOrFilterIsSet(d) {
+			return fmt.Errorf(noNameOrFilterError, "vcd_edgegateway")
+		}
+		filter, hasFilter = d.GetOk("filter")
+		if hasFilter {
+			edgeGateway, err = getEdgeGatewayByFilter(vdc, filter)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	identifier := d.Id()
+	if identifier == "" {
+		identifier = d.Get("name").(string)
+	}
+	if identifier == "" && !hasFilter {
+		return fmt.Errorf("[edgegateway read] no identifier provided")
+	}
+	if edgeGateway == nil {
+		edgeGateway, err = vdc.GetEdgeGatewayByNameOrId(identifier, false)
+	}
 	if err != nil {
 		if origin == "resource" {
 			log.Printf("[edgegateway read] edge gateway %s not found. Removing from state file: %s", identifier, err)

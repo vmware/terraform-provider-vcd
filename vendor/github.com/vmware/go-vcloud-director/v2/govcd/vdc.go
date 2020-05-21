@@ -837,3 +837,43 @@ func (vdc *Vdc) buildNsxvNetworkServiceEndpointURL(optionalSuffix string) (strin
 
 	return hostname, nil
 }
+
+// QueryMediaList retrieves a list of media items for the VDC
+func (vdc *Vdc) QueryMediaList() ([]*types.MediaRecordType, error) {
+	return getExistingMedia(vdc)
+}
+
+// QueryVappVmTemplate Finds VM template using catalog name, vApp template name, VN name in template. Returns types.QueryResultVMRecordType
+func (vdc *Vdc) QueryVappVmTemplate(catalogName, vappTemplateName, vmNameInTemplate string) (*types.QueryResultVMRecordType, error) {
+
+	queryType := "vm"
+	if vdc.client.IsSysAdmin {
+		queryType = "adminVM"
+	}
+
+	// this allows to query deployed and not deployed templates
+	results, err := vdc.QueryWithNotEncodedParams(nil, map[string]string{"type": queryType,
+		"filter": "catalogName==" + url.QueryEscape(catalogName) + ";containerName==" + url.QueryEscape(vappTemplateName) + ";name==" + url.QueryEscape(vmNameInTemplate) +
+			";isVAppTemplate==true;status!=FAILED_CREATION;status!=UNKNOWN;status!=UNRECOGNIZED;status!=UNRESOLVED&links=true;",
+		"filterEncoded": "true"})
+	if err != nil {
+		return nil, fmt.Errorf("error quering all vApp templates: %s", err)
+	}
+
+	vmResults := results.Results.VMRecord
+	if vdc.client.IsSysAdmin {
+		vmResults = results.Results.AdminVMRecord
+	}
+
+	if len(vmResults) == 0 {
+		return nil, fmt.Errorf("[QueryVappVmTemplate] did not find any result with catalog name: %s, "+
+			"vApp template name: %s, VM name: %s", catalogName, vappTemplateName, vmNameInTemplate)
+	}
+
+	if len(vmResults) > 1 {
+		return nil, fmt.Errorf("[QueryVappVmTemplate] found more than 1 result: %d with with catalog name: %s, "+
+			"vApp template name: %s, VM name: %s", len(vmResults), catalogName, vappTemplateName, vmNameInTemplate)
+	}
+
+	return vmResults[0], nil
+}

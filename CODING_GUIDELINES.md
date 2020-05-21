@@ -25,6 +25,39 @@ TypeSet with more than one element blocks AND where vCD API returns them without
 *Note*. The schema definition may optionally use a `Set` function of type `SchemaSetFunc`. It may be
 used when a default hashing function (which calcluates hash based on all fields) is not suitable.
 
+## Filtering
+
+Filters provide the ability of retrieving a data source by criteria other than the plain name. They depend on
+the query engine in go-vcloud-director. Only types supported by such engine can have a filter.
+
+To add filtering for a new data source:
+
+1. Make sure the underlying entity supports filtering (See "Supporting a new type in the query engine" in 
+[go-vcloud-director coding guidelines](https://github.com/vmware/go-vcloud-director/blob/master/CODING_GUIDELINES.md))
+
+2. Add a "filter" field in the data source definition, using the elements listed in `filter.go`
+
+3. Add a function `Get_TYPE_ByFilter` in `filter_get.go`, using the existing ones as model
+
+4. In the data source `Read` function add:
+
+```go
+        var instance *govcd._TYPE_
+		if !nameOrFilterIsSet(d) {
+			return fmt.Errorf(noNameOrFilterError, "vcd_TYPE")
+		}
+		filter, hasFilter = d.GetOk("filter")
+		if hasFilter {
+			instance, err = get_TYPE_ByFilter(vdc, filter)
+			if err != nil {
+				return err
+			}
+		}
+        // use instance
+```
+
+5. Extend the test `TestAccSearchEngine` in `datasource_filter_test.go` to include the new type.
+
 ## Testing
 
 Every feature in the provider must include testing. See

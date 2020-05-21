@@ -4,7 +4,6 @@ package vcd
 
 import (
 	"fmt"
-	"os"
 	"reflect"
 	"regexp"
 	"testing"
@@ -473,7 +472,7 @@ func resourceFieldsEqual(firstObject, secondObject string, excludeFields []strin
 				continue
 			}
 
-			if os.Getenv(testVerbose) != "" {
+			if vcdTestVerbose {
 				fmt.Printf("field %s %s (value %s) and %s (value %s))\n", fieldName, firstObject,
 					resource1.Primary.Attributes[fieldName], secondObject, resource2.Primary.Attributes[fieldName])
 			}
