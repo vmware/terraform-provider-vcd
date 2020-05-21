@@ -212,7 +212,7 @@ func TestAccVcdVappVm_NicIndex(t *testing.T) {
 	})
 }
 
-// validateNicPriority checkes if NIC with vCD index is 2 is reported as primary nic after import
+// validateNicPriority checks if NIC with vCD index is 2 is reported as primary nic after import
 func validateNicPriority(state []*terraform.InstanceState) error {
 	// This imported VM has no NIC with index 0, but has NICs with indexes 1 and 2. However
 	// terraform starts indexing them from 0 therefore vCD NIC indexes do not coincide with
@@ -238,6 +238,7 @@ func validateNicPriority(state []*terraform.InstanceState) error {
 	return nil
 }
 
+// testAccVcdVappVmNicIndexcreateVappVm creates vApp and empty VM with NICs 1 and 2 (no NIC 0)
 func testAccVcdVappVmNicIndexcreateVappVm(vappName, vmName string) (*govcd.VApp, *govcd.VM, error) {
 	vcdClient := createTemporaryVCDConnection()
 	org, err := vcdClient.GetOrgByName(testConfig.VCD.Org)
