@@ -354,12 +354,12 @@ func expandVappFirewallRules(d *schema.ResourceData, vapp *govcd.VApp) ([]*types
 // based on the known ID of object.
 //
 // Example resource name (_resource_name_): vcd_vapp_firewall_rules.my_existing_firewall_rules
-// Example import path (_the_id_string_): org.my_existing_vdc.vapp_name.network_name
+// Example import path (_the_id_string_): org.my_existing_vdc.vapp_name.network_name or org.my_existing_vdc.vapp_id.network_id
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func vappFirewallRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 4 {
-		return nil, fmt.Errorf("resource name must be specified as rg.my_existing_vdc.vapp_name.network_name")
+		return nil, fmt.Errorf("resource name must be specified as rg.my_existing_vdc.vapp_name.network_name or org.my_existing_vdc.vapp_id.network_id")
 	}
 	orgName, vdcName, vappId, networkId := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
 

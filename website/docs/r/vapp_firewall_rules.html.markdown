@@ -93,3 +93,27 @@ Each firewall rule supports the following attributes:
 * `source_vm_ip_type` - (Optional) The value can be one of: `assigned` - assigned internal IP be automatically choosen. `NAT`: NATed external IP will be automatically choosen
 * `source_vm_nic_id` - (Optional) VM NIC ID to which this rule applies
 * `enable_logging`- (Optional) 'true' value will enable rule logging. Default is false
+
+## Importing
+
+~> **Note:** The current implementation of Terraform import can only import resources into the state.
+It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
+
+An existing an vApp network firewall rules can be [imported][docs-import] into this resource
+via supplying the full dot separated path to vapp network. An example is
+below:
+
+```
+terraform import vcd_vapp_firewall_rules.my-rules my-org.my-vdc.vapp_name.network_name
+```
+or using IDs:
+```
+terraform import vcd_vapp_firewall_rules.my-rules my-org.my-vdc.vapp_id.network_id
+```
+
+NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
+
+[docs-import]:https://www.terraform.io/docs/import/
+
+After that, you can expand the configuration file and either update or delete the vApp network rules as needed. Running `terraform plan`
+at this stage will show the difference between the minimal configuration file and the vApp network rules stored properties.
