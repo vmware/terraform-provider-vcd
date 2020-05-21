@@ -61,7 +61,7 @@ func TestAccAuth(t *testing.T) {
 			provider "vcd" {
 				user     = "` + testConfig.Provider.User + `"
 				password = "` + testConfig.Provider.Password + `"
-				sysorg   = "System"
+				sysorg   = "` + testConfig.Provider.SysOrg + `" 
 				org      = "` + testConfig.VCD.Org + `"
 				vdc      = "` + testConfig.VCD.Vdc + `"
 				url      = "` + testConfig.Provider.Url + `"
@@ -78,7 +78,7 @@ func TestAccAuth(t *testing.T) {
 			provider "vcd" {
 				user     = "` + testConfig.Provider.User + `"
 				password = "` + testConfig.Provider.Password + `"
-				sysorg   = "System"
+				sysorg   = "` + testConfig.Provider.SysOrg + `" 
 				org      = "` + testConfig.VCD.Org + `"
 				url      = "` + testConfig.Provider.Url + `"
 				allow_unverified_ssl = true
@@ -95,7 +95,7 @@ func TestAccAuth(t *testing.T) {
 				user      = "` + testConfig.Provider.User + `"
 				password  = "` + testConfig.Provider.Password + `"
 				auth_type = "integrated"
-				sysorg    = "System"
+				sysorg    = "` + testConfig.Provider.SysOrg + `" 
 				org       = "` + testConfig.VCD.Org + `"
 				url       = "` + testConfig.Provider.Url + `"
 				allow_unverified_ssl = true
@@ -113,7 +113,7 @@ func TestAccAuth(t *testing.T) {
 				password         = "` + testConfig.Provider.Password + `"
 				auth_type        = "saml_adfs"
 				saml_adfs_rpt_id = "` + testConfig.Provider.CustomAdfsRptId + `"
-				sysorg           = "System"
+				sysorg           = "` + testConfig.Provider.SysOrg + `" 
 				vdc              = "` + testConfig.VCD.Vdc + `"
 				url              = "` + testConfig.Provider.Url + `"
 				allow_unverified_ssl = true
@@ -127,7 +127,7 @@ func TestAccAuth(t *testing.T) {
 		provider "vcd" {
 		  user     = "` + testConfig.Provider.User + `"
 		  password = "` + testConfig.Provider.Password + `"
-		  org      = "System"
+		  org      = "` + testConfig.Provider.SysOrg + `" 
 		  url      = "` + testConfig.Provider.Url + `"
 		  allow_unverified_ssl = true
 		}
@@ -142,7 +142,7 @@ func TestAccAuth(t *testing.T) {
 		configText: `
 		provider "vcd" {
 			token    = "` + tempConn.Client.VCDToken + `"
-			sysorg   = "System"
+			sysorg   = "` + testConfig.Provider.SysOrg + `" 
 			org      = "` + testConfig.VCD.Org + `"
 			vdc      = "` + testConfig.VCD.Vdc + `"
 			url      = "` + testConfig.Provider.Url + `"
@@ -158,7 +158,7 @@ func TestAccAuth(t *testing.T) {
 		  user     = "invalidUser"
 		  password = "invalidPassword"
 		  token    = "` + tempConn.Client.VCDToken + `"
-		  sysorg   = "System"
+		  sysorg   = "` + testConfig.Provider.SysOrg + `" 
 		  org      = "` + testConfig.VCD.Org + `"
 		  vdc      = "` + testConfig.VCD.Vdc + `"
 		  url      = "` + testConfig.Provider.Url + `"
@@ -175,7 +175,7 @@ func TestAccAuth(t *testing.T) {
 		  user      = "invalidUser"
 		  password  = "invalidPassword"
 		  token     = "` + tempConn.Client.VCDToken + `"
-		  sysorg    = "System"
+		  sysorg    = "` + testConfig.Provider.SysOrg + `" 
 		  org       = "` + testConfig.VCD.Org + `"
 		  vdc       = "` + testConfig.VCD.Vdc + `"
 		  url       = "` + testConfig.Provider.Url + `"
