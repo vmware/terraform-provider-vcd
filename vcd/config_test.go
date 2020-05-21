@@ -205,8 +205,8 @@ provider "vcd" {
   user                 = "{{.User}}"
   password             = "{{.Password}}"
   token                = "{{.Token}}"
-  use_saml_adfs        = "{{.UseSamlAdfs}}"
-  saml_rpt_id          = "{{.SamlRptId}}"
+  auth_type            = "{{.AuthType}}"
+  saml_adfs_rpt_id     = "{{.SamlAdfsCustomRptId}}"
   url                  = "{{.Url}}"
   sysorg               = "{{.SysOrg}}"
   org                  = "{{.Org}}"
@@ -257,9 +257,10 @@ func GetVarsFromTemplate(tmpl string) []string {
 	return varList
 }
 
-// Fills a template with data provided as a StringMap
-// Returns the text of a ready-to-use Terraform directive.
-// It also saves the filled template to a file, for further troubleshooting.
+// templateFill fills a template with data provided as a StringMap and adds `provider`
+// configuration.
+// Returns the text of a ready-to-use Terraform directive. It also saves the filled
+// template to a file, for further troubleshooting.
 func templateFill(tmpl string, data StringMap) string {
 
 	// Gets the name of the function containing the template
@@ -306,9 +307,8 @@ func templateFill(tmpl string, data StringMap) string {
 		// provider data
 		data["User"] = testConfig.Provider.User
 		data["Password"] = testConfig.Provider.Password
+		data["SamlAdfsCustomRptId"] = testConfig.Provider.CustomAdfsRptId
 		data["Token"] = testConfig.Provider.Token
-		data["UseSamlAdfs"] = testConfig.Provider.UseSamlAdfs
-		data["SamlRptId"] = testConfig.Provider.CustomAdfsRptId
 		data["Url"] = testConfig.Provider.Url
 		data["SysOrg"] = testConfig.Provider.SysOrg
 		data["Org"] = testConfig.VCD.Org
@@ -321,6 +321,16 @@ func templateFill(tmpl string, data StringMap) string {
 			data["LoggingFile"] = testConfig.Logging.LogFileName
 		} else {
 			data["LoggingFile"] = util.ApiLogFileName
+		}
+
+		// Pick correct auth_type
+		switch {
+		case testConfig.Provider.Token != "":
+			data["AuthType"] = "token"
+		case testConfig.Provider.UseSamlAdfs:
+			data["AuthType"] = "saml_adfs"
+		default:
+			data["AuthType"] = "integrated" // default AuthType for local and LDAP users
 		}
 	}
 	if _, ok := data["Tags"]; !ok {

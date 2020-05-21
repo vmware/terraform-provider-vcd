@@ -8,7 +8,8 @@ IMPROVEMENTS:
 * Added command line flags to test suite, corresponding to environment variables listed in TESTING.md [GH-505]
 * `resource/vcd_vapp_vm` allows creating VM from multi VM vApp template [GH-501]
 * Add support for SAML auth with Active Directory Federation Services (ADFS) as IdP using
-  "/adfs/services/trust/13/usernamemixed" endpoint. [GH-504]
+  "/adfs/services/trust/13/usernamemixed" endpoint usin auth_type="saml_adfs". [GH-504]
+* Add support for LDAP authentication using auth_type="integrated". [GH-504]
 
 NOTES:
 
