@@ -3,7 +3,7 @@
 
 ## Defaults for logging
 
-Use of the standard Go `log` package is cwdeprecated and should be avoided. 
+Use of the standard Go `log` package is deprecated and should be avoided. 
 The recommended way of logging is through the logger `util.Logger`, which supports [all the functions normally available to `log`](https://golang.org/pkg/log/#Logger).
 
 
@@ -90,4 +90,4 @@ Variable                    | Corresponding environment var
 `LogHttpResponse`           | `GOVCD_LOG_SKIP_HTTP_RESP`
 `SetSkipTags`               | `GOVCD_LOG_SKIP_TAGS`
 `SetApiLogFunctions`        | `GOVCD_LOG_INCLUDE_FUNCTIONS`
-
+`OverwriteLog`              | `GOVCD_LOG_OVERWRITE`

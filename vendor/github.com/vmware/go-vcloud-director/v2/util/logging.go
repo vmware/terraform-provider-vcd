@@ -23,6 +23,9 @@ const (
 	// Name of the environment variable that enables logging
 	envUseLog = "GOVCD_LOG"
 
+	// envOverwriteLog allows to overwrite file on every initialization
+	envOverwriteLog = "GOVCD_LOG_OVERWRITE"
+
 	// Name of the environment variable with the log file name
 	envLogFileName = "GOVCD_LOG_FILE"
 
@@ -60,6 +63,9 @@ var (
 	// activated by GOVCD_LOG
 	EnableLogging bool = false
 
+	// OverwriteLog specifies if log file should be overwritten on every run
+	OverwriteLog bool = false
+
 	// Enable logging of passwords
 	// activated by GOVCD_LOG_PASSWORDS
 	LogPasswords bool = false
@@ -94,8 +100,14 @@ var (
 )
 
 func newLogger(logpath string) *log.Logger {
-	// println("LogFile: " + logpath)
-	file, err := os.Create(logpath)
+	var err error
+	var file *os.File
+	if OverwriteLog {
+		file, err = os.OpenFile(logpath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0640)
+	} else {
+		file, err = os.OpenFile(logpath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0640)
+	}
+
 	if err != nil {
 		fmt.Printf("error opening log file %s : %v", logpath, err)
 		os.Exit(1)
@@ -374,6 +386,11 @@ func InitLogging() {
 	if EnableLogging || os.Getenv(envUseLog) != "" {
 		EnableLogging = true
 	}
+
+	if os.Getenv(envOverwriteLog) != "" {
+		OverwriteLog = true
+	}
+
 	SetLog()
 }
 
