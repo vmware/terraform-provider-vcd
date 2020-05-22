@@ -3,7 +3,10 @@
 package vcd
 
 import (
+	"bytes"
 	"fmt"
+	"os"
+	"sort"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -160,17 +163,16 @@ func TestAccVcdVAppVm_Clone(t *testing.T) {
 	})
 }
 
-// TestAccVcdVappVm_NicIndex aims to replicate issue when VM is created outside of Terraform and
-// NICs are not indexed starting with 0. It is not possible to create a VM with network cards
-// starting with index other than 0 in terraform-provider-vcd however it can happen when VM is
+// TestAccVcdVappVm_NicIndex aims to replicate an issue when a VM is created outside of Terraform
+// and NICs are not indexed starting with 0. It is not possible to create a VM with network cards
+// starting with index other than 0 in terraform-provider-vcd although it can happen when the VM is
 // imported from other systems.
 //
 // This test creates a VM using go-vcloud-director SDK with such vCD NIC indexes:
 // * vCD NIC index 1 (is_primary=false) - Terraform network block index 0 (is_primary=false)
 // * vCD NIC index 2 (is_primary=true) - Terraform network block index 1 (is_primary=true)
-// Before resolving below mentioned issue terraform-provider-vcd would report is_primary=false for
-// both NICs.
-// GitHub issue: https://github.com/terraform-providers/terraform-provider-vcd/issues/458
+// Before Issue 458 was resolved, terraform-provider-vcd would report is_primary=false for both NICs.
+// (GitHub issue: https://github.com/terraform-providers/terraform-provider-vcd/issues/458)
 func TestAccVcdVappVm_NicIndex(t *testing.T) {
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -202,9 +204,8 @@ func TestAccVcdVappVm_NicIndex(t *testing.T) {
 		// indexing and uses ImportStateCheck function to check that NIC priority is correctly set
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				ResourceName: "vcd_vapp_vm." + vmName + "-import",
-				ImportState:  true,
-				// ImportStateVerify: true,
+				ResourceName:      "vcd_vapp_vm." + vmName + "-import",
+				ImportState:       true,
 				ImportStateIdFunc: importStateIdVappObject(testConfig, t.Name()+"-vApp", t.Name()),
 				ImportStateCheck:  validateNicPriority,
 			},
@@ -212,10 +213,16 @@ func TestAccVcdVappVm_NicIndex(t *testing.T) {
 	})
 }
 
-// validateNicPriority checks if NIC with vCD index is 2 is reported as primary nic after import
+// validateNicPriority checks if NIC with vCD index 2 is reported as primary nic after import
 func validateNicPriority(state []*terraform.InstanceState) error {
+
+	if os.Getenv("GOVCD_DEBUG") != "" {
+		stateString := dumpResourceWithNonEmptyValues(state[0], true)
+		fmt.Println(stateString)
+	}
+
 	// This imported VM has no NIC with index 0, but has NICs with indexes 1 and 2. However
-	// terraform starts indexing them from 0 therefore vCD NIC indexes do not coincide with
+	// Terraform starts indexing them from 0 therefore vCD NIC indexes do not coincide with
 	// Terraform network block index:
 	// VCD NIC index 1 = Terraform NIC index 0
 	// VCD NIC index 2 = Terraform NIC index 1
@@ -471,3 +478,29 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
   }
 }
 `
+
+// dumpResourceWithNonEmptyValues helps to print all attributes in InstanceState
+// skipEmptyValues allows to hide attributes with empty values
+func dumpResourceWithNonEmptyValues(res *terraform.InstanceState, skipEmptyValues bool) string {
+	var buf bytes.Buffer
+	attributes := res.Attributes
+	attrKeys := make([]string, 0, len(attributes))
+	for ak, av := range attributes {
+		if ak == "id" {
+			continue
+		}
+		// Skip attributes with empty values
+		if skipEmptyValues && av == "" {
+			continue
+		}
+
+		attrKeys = append(attrKeys, ak)
+	}
+	sort.Strings(attrKeys)
+
+	for _, ak := range attrKeys {
+		av := attributes[ak]
+		buf.WriteString(fmt.Sprintf("%s = %s\n", ak, av))
+	}
+	return buf.String()
+}
