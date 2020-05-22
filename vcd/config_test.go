@@ -494,7 +494,12 @@ func getConfigStruct(config string) TestConfig {
 	}
 	_ = os.Setenv("VCD_USER", configStruct.Provider.User)
 	_ = os.Setenv("VCD_PASSWORD", configStruct.Provider.Password)
-	_ = os.Setenv("VCD_TOKEN", configStruct.Provider.Token)
+	// VCD_TOKEN supplied via CLI has bigger priority than configured one
+	if os.Getenv("VCD_TOKEN") == "" {
+		_ = os.Setenv("VCD_TOKEN", configStruct.Provider.Token)
+	} else {
+		configStruct.Provider.Token = os.Getenv("VCD_TOKEN")
+	}
 
 	if configStruct.Provider.UseSamlAdfs {
 		_ = os.Setenv("VCD_AUTH_TYPE", "saml_adfs")
@@ -603,10 +608,16 @@ func TestMain(m *testing.M) {
 			os.Exit(1)
 		}
 		fmt.Printf("Connecting to %s\n", testConfig.Provider.Url)
+
 		authentication := "password"
+		if testConfig.Provider.UseSamlAdfs {
+			authentication = "SAML password"
+		}
+		// Token based auth has priority over other types
 		if testConfig.Provider.Token != "" {
 			authentication = "token"
 		}
+
 		fmt.Printf("as user %s@%s (using %s)\n", testConfig.Provider.User, testConfig.Provider.SysOrg, authentication)
 		// Provider initialization moved here from provider_test.init
 		testAccProvider = Provider().(*schema.Provider)
