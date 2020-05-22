@@ -114,6 +114,7 @@ func TestAccAuth(t *testing.T) {
 				auth_type        = "saml_adfs"
 				saml_adfs_rpt_id = "` + testConfig.Provider.CustomAdfsRptId + `"
 				sysorg           = "` + testConfig.Provider.SysOrg + `" 
+				org              = "` + testConfig.VCD.Org + `"
 				vdc              = "` + testConfig.VCD.Vdc + `"
 				url              = "` + testConfig.Provider.Url + `"
 				allow_unverified_ssl = true
@@ -152,6 +153,20 @@ func TestAccAuth(t *testing.T) {
 	})
 
 	testCases = append(testCases, authTestCase{
+		name: "TokenAuthOnly,AuthType=token",
+		configText: `
+		provider "vcd" {
+			token    = "` + tempConn.Client.VCDToken + `"
+			sysorg   = "` + testConfig.Provider.SysOrg + `" 
+			org      = "` + testConfig.VCD.Org + `"
+			vdc      = "` + testConfig.VCD.Vdc + `"
+			url      = "` + testConfig.Provider.Url + `"
+			allow_unverified_ssl = true
+		  }
+	  `,
+	})
+
+	testCases = append(testCases, authTestCase{
 		name: "TokenPriorityOverUserAndPassword",
 		configText: `
 		provider "vcd" {
@@ -168,7 +183,7 @@ func TestAccAuth(t *testing.T) {
 	})
 
 	testCases = append(testCases, authTestCase{
-		name: "Token,AuthType=token",
+		name: "TokenWithUserAndPassword,AuthType=token",
 		configText: `
 		provider "vcd" {
 		  auth_type = "token"
