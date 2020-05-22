@@ -67,8 +67,8 @@ The following arguments are supported:
 
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations.
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level.
-* `vapp_id` - (Required) The identifier of vApp. [vApp](/docs/providers/vcd/r/vapp.html).
-* `network_id` - (Required) The identifier of vApp network. [vApp network](/docs/providers/vcd/r/vapp_network.html).
+* `vapp_id` - (Required) The identifier of [vApp](/docs/providers/vcd/r/vapp.html).
+* `network_id` - (Required) The identifier of [vApp network](/docs/providers/vcd/r/vapp_network.html).
 * `default_action` - (Required) Either 'allow' or 'drop'. Specifies what to do should none of the rules match.
 * `log_default_action` - (Optional) Flag to enable logging for default action. Default value is `false`.
 * `rule` - (Optional) Configures a firewall rule; see [Rules](#rules) below for details.
