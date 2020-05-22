@@ -9,9 +9,9 @@ description: |-
 # vcd\_vapp\_firewall\_rules
 
 Provides a vCloud Director vApp Firewall resource. This can be used to create,
-modify, and delete firewall settings and rules.
+modify, and delete firewall settings and rules in a [vApp network](/docs/providers/vcd/r/vapp_network.html).
 
-~> **Note:** Using this resource overrides any existing firewall rules on vApp network.
+!> **Warning:** Using this resource overrides any existing firewall rules on vApp network.
 
 ## Example Usage
 
@@ -32,8 +32,8 @@ resource "vcd_vapp_network" "vapp-net" {
     start_address = "192.168.2.51"
     end_address   = "192.168.2.100"
   }
-​
 }
+
 resource "vcd_vapp_firewall_rules" "vapp_fw" {
   vapp_id        = vcd_vapp.TestAccVcdVAppForInsert.id
   network_id     = vcd_vapp_network.vapp-net.id
@@ -65,12 +65,12 @@ resource "vcd_vapp_firewall_rules" "vapp_fw" {
 
 The following arguments are supported:
 
-* `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
-* `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
-* `vapp_id` - (Required) The identifier of vApp
-* `network_id` - (Required) The identifier of vApp network
-* `default_action` - (Required) Either "allow" or "drop". Specifies what to do should none of the rules match
-* `log_default_action` - (Optional) Flag to enable logging for default action. Default value is false
+* `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations.
+* `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level.
+* `vapp_id` - (Required) The identifier of vApp.
+* `network_id` - (Required) The identifier of vApp network.
+* `default_action` - (Required) Either 'allow' or 'drop'. Specifies what to do should none of the rules match.
+* `log_default_action` - (Optional) Flag to enable logging for default action. Default value is `false`.
 * `rule` - (Optional) Configures a firewall rule; see [Rules](#rules) below for details.
 
 <a id="rules"></a>
@@ -78,21 +78,21 @@ The following arguments are supported:
 
 Each firewall rule supports the following attributes:
 
-* `description` - (Optional) Name of the firewall rule
-* `enabled` - (Optional) 'true' value will enable firewall rule
-* `policy` - (Optional) Specifies what to do when this rule is matched. Either "allow" or "drop"
-* `protocol` - (Optional) The protocol to match. One of "tcp", "udp", "icmp", "any"" or "tcp&udp"
-* `destination_port` - (Optional) The destination port to match. Either a port number or "any"
-* `destination_ip` - (Optional) The destination IP to match. Either an IP address, IP range or "any"
-* `destination_vm_id` - (Optional) Destination VM identifier
-* `destination_vm_ip_type` - (Optional) The value can be one of: `assigned` - assigned internal IP be automatically choosen. `NAT`: NATed external IP will be automatically choosen
-* `destination_vm_nic_id` - (Optional) VM NIC ID to which this rule applies
-* `source_port` - (Optional) The source port to match. Either a port number or "any"
-* `source_ip` - (Optional) The source IP to match. Either an IP address, IP range or "any"
-* `source_vm_id` - (Optional) Source VM identifier
-* `source_vm_ip_type` - (Optional) The value can be one of: `assigned` - assigned internal IP be automatically choosen. `NAT`: NATed external IP will be automatically choosen
-* `source_vm_nic_id` - (Optional) VM NIC ID to which this rule applies
-* `enable_logging`- (Optional) 'true' value will enable rule logging. Default is false
+* `description` - (Optional) Name of the firewall rule.
+* `enabled` - (Optional) `true` value will enable firewall rule.
+* `policy` - (Optional) Specifies what to do when this rule is matched. Either `allow` or `drop`.
+* `protocol` - (Optional) The protocol to match. One of `tcp`, `udp`, `icmp`, `any` or `tcp&udp`.
+* `destination_port` - (Optional) The destination port to match. Either a port number or `any`.
+* `destination_ip` - (Optional) The destination IP to match. Either an IP address, IP range or `any`.
+* `destination_vm_id` - (Optional) Destination VM identifier.
+* `destination_vm_ip_type` - (Optional) The value can be one of: `assigned` - use assigned internal IP, `NAT` - use NATed external IP.
+* `destination_vm_nic_id` - (Optional) VM NIC ID to which this rule applies.
+* `source_port` - (Optional) The source port to match. Either a port number or `any`.
+* `source_ip` - (Optional) The source IP to match. Either an IP address, IP range or `any`.
+* `source_vm_id` - (Optional) Source VM identifier.
+* `source_vm_ip_type` - (Optional) The value can be one of: `assigned` - use assigned internal IP, `NAT` - use NATed external IP.
+* `source_vm_nic_id` - (Optional) VM NIC ID to which this rule applies.
+* `enable_logging`- (Optional) `true` value will enable rule logging. Default is `false`.
 
 ## Importing
 
