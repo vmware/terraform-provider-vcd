@@ -790,7 +790,8 @@ func getTestVCDFromJson(testConfig TestConfig) (*govcd.VCDClient, error) {
 	if err != nil {
 		return &govcd.VCDClient{}, fmt.Errorf("could not parse Url: %s", err)
 	}
-	vcdClient := govcd.NewVCDClient(*configUrl, true)
+	vcdClient := govcd.NewVCDClient(*configUrl, true,
+		govcd.WithSamlAdfs(testConfig.Provider.UseSamlAdfs, testConfig.Provider.CustomAdfsRptId))
 	return vcdClient, nil
 }
 
