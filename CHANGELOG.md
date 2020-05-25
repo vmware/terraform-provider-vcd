@@ -11,6 +11,10 @@ IMPROVEMENTS:
   "/adfs/services/trust/13/usernamemixed" endpoint usin auth_type="saml_adfs". [GH-504]
 * Add support for LDAP authentication using auth_type="integrated". [GH-504]
 
+BUG FIXES:
+* `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` can report `network.X.is_primary` attribute
+  incorrectly when VM is imported to Terraform and NIC indexes in vCD do not start with 0. [GH-512] 
+
 NOTES:
 
 * Dropped support for vCD 9.1 [GH-492]
