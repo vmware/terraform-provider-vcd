@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"strings"
 
 	semver "github.com/hashicorp/go-version"
 
@@ -121,6 +122,13 @@ func (cli *Client) vcdFetchSupportedVersions() error {
 		"", "error fetching versions: %s", nil, suppVersions)
 
 	cli.supportedVersions = *suppVersions
+
+	// Log all supported API versions in one line to help identify vCD version from logs
+	allApiVersions := make([]string, len(cli.supportedVersions.VersionInfos))
+	for versionIndex, version := range cli.supportedVersions.VersionInfos {
+		allApiVersions[versionIndex] = version.Version
+	}
+	util.Logger.Printf("[DEBUG] supported API versions : %s", strings.Join(allApiVersions, ","))
 
 	return err
 }
