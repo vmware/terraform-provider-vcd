@@ -14,7 +14,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"reflect"
 	"strings"
 	"time"
 
@@ -36,10 +35,20 @@ type Client struct {
 	// This must be >0 to avoid instant timeout errors.
 	MaxRetryTimeout int
 
+	// UseSamlAdfs specifies if SAML auth is used for authenticating vCD instead of local login.
+	// The following conditions must be met so that authentication SAML authentication works:
+	// * SAML IdP (Identity Provider) is Active Directory Federation Service (ADFS)
+	// * Authentication endpoint "/adfs/services/trust/13/usernamemixed" must be enabled on ADFS
+	// server
+	UseSamlAdfs bool
+	// CustomAdfsRptId allows to set custom Relaying Party Trust identifier. By default vCD Entity
+	// ID is used as Relaying Party Trust identifier.
+	CustomAdfsRptId string
+
 	supportedVersions SupportedVersions // Versions from /api/versions endpoint
 }
 
-// The header key used by default to set the authorization token.
+// AuthorizationHeader header key used by default to set the authorization token.
 const AuthorizationHeader = "X-Vcloud-Authorization"
 
 // General purpose error to be used whenever an entity is not found from a "GET" request
@@ -147,6 +156,12 @@ func (cli *Client) NewRequestWitNotEncodedParams(params map[string]string, notEn
 // * body - request body
 // * apiVersion - provided Api version overrides default Api version value used in request parameter
 func (cli *Client) NewRequestWitNotEncodedParamsWithApiVersion(params map[string]string, notEncodedParams map[string]string, method string, reqUrl url.URL, body io.Reader, apiVersion string) *http.Request {
+	return cli.newRequest(params, notEncodedParams, method, reqUrl, body, apiVersion, nil)
+}
+
+// newRequest is the parent of many "specific" "NewRequest" functions.
+// Note. It is kept private to avoid breaking public API on every new field addition.
+func (cli *Client) newRequest(params map[string]string, notEncodedParams map[string]string, method string, reqUrl url.URL, body io.Reader, apiVersion string, additionalHeader http.Header) *http.Request {
 	reqValues := url.Values{}
 
 	// Build up our request parameters
@@ -163,6 +178,14 @@ func (cli *Client) NewRequestWitNotEncodedParamsWithApiVersion(params map[string
 		}
 	}
 
+	// If the body contains data - try to read all contents for logging and re-create another
+	// io.Reader with all contents to use it down the line
+	var readBody []byte
+	if body != nil {
+		readBody, _ = ioutil.ReadAll(body)
+		body = bytes.NewReader(readBody)
+	}
+
 	// Build the request, no point in checking for errors here as we're just
 	// passing a string version of an url.URL struct and http.NewRequest returns
 	// error only if can't process an url.ParseRequestURI().
@@ -171,39 +194,38 @@ func (cli *Client) NewRequestWitNotEncodedParamsWithApiVersion(params map[string
 	if cli.VCDAuthHeader != "" && cli.VCDToken != "" {
 		// Add the authorization header
 		req.Header.Add(cli.VCDAuthHeader, cli.VCDToken)
+	}
+	if (cli.VCDAuthHeader != "" && cli.VCDToken != "") ||
+		(additionalHeader != nil && additionalHeader.Get("Authorization") != "") {
 		// Add the Accept header for VCD
 		req.Header.Add("Accept", "application/*+xml;version="+apiVersion)
 	}
 
-	// Avoids passing data if the logging of requests is disabled
-	if util.LogHttpRequest {
-		// Makes a safe copy of the request body, and passes it
-		// to the processing function.
-		payload := ""
-		if req.ContentLength > 0 {
-			// We try to convert body to a *bytes.Buffer
-			var ibody interface{} = body
-			bbody, ok := ibody.(*bytes.Buffer)
-			// If the inner object is a bytes.Buffer, we get a safe copy of the data.
-			// If it is really just an io.Reader, we don't, as the copy would empty the reader
-			if ok {
-				payload = bbody.String()
-			} else {
-				// With this content, we'll know that the payload is not really empty, but
-				// it was unavailable due to the body type.
-				payload = fmt.Sprintf("<Not retrieved from type %s>", reflect.TypeOf(body))
+	// Merge in additional headers before logging if any where specified in additionalHeader
+	// paramter
+	if additionalHeader != nil && len(additionalHeader) > 0 {
+		for headerName, headerValueSlice := range additionalHeader {
+			for _, singleHeaderValue := range headerValueSlice {
+				req.Header.Add(headerName, singleHeaderValue)
 			}
 		}
-		util.ProcessRequestOutput(util.FuncNameCallStack(), method, reqUrl.String(), payload, req)
+	}
 
+	// Avoids passing data if the logging of requests is disabled
+	if util.LogHttpRequest {
+		payload := ""
+		if req.ContentLength > 0 {
+			payload = string(readBody)
+		}
+		util.ProcessRequestOutput(util.FuncNameCallStack(), method, reqUrl.String(), payload, req)
 		debugShowRequest(req, payload)
 	}
+
 	return req
 
 }
 
-// NewRequest creates a new HTTP request and applies necessary auth headers if
-// set.
+// NewRequest creates a new HTTP request and applies necessary auth headers if set.
 func (cli *Client) NewRequest(params map[string]string, method string, reqUrl url.URL, body io.Reader) *http.Request {
 	return cli.NewRequestWitNotEncodedParams(params, nil, method, reqUrl, body)
 }
@@ -237,9 +259,13 @@ func decodeBody(resp *http.Response, out interface{}) error {
 	}
 
 	debugShowResponse(resp, body)
-	// Unmarshal the XML.
-	if err = xml.Unmarshal(body, &out); err != nil {
-		return err
+
+	// only attempty to unmarshal if body is not empty
+	if len(body) > 0 {
+		// Unmarshal the XML.
+		if err = xml.Unmarshal(body, &out); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -266,7 +292,8 @@ func checkRespWithErrType(resp *http.Response, err, errType error) (*http.Respon
 		http.StatusOK,        // 200
 		http.StatusCreated,   // 201
 		http.StatusAccepted,  // 202
-		http.StatusNoContent: // 204
+		http.StatusNoContent, // 204
+		http.StatusFound:     // 302
 		return resp, nil
 	// Invalid request, parse the XML error returned and return it.
 	case

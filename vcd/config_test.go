@@ -1,4 +1,4 @@
-// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool user search ALL
+// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool user search auth ALL
 
 package vcd
 
@@ -31,12 +31,46 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
+func init() {
+
+	// To list the flags when we run "go test -tags functional -vcd-help", the flag name must start with "vcd"
+	// They will all appear alongside the native flags when we use an invalid one
+	setBoolFlag(&vcdHelp, "vcd-help", "VCD_HELP", "Show vcd flags")
+	setBoolFlag(&testDistributedNetworks, "vcd-test-distributed", "", "enables testing of distributed network")
+	setBoolFlag(&enableDebug, "vcd-debug", "GOVCD_DEBUG", "enables debug output")
+	setBoolFlag(&vcdTestVerbose, "vcd-verbose", "TEST_VERBOSE", "enables verbose output")
+	setBoolFlag(&enableTrace, "vcd-trace", "GOVCD_TRACE", "enables function calls tracing")
+	setBoolFlag(&vcdShortTest, "vcd-short", "VCD_SHORT_TEST", "runs short test")
+	setBoolFlag(&vcdAddProvider, "vcd-add-provider", envVcdAddProvider, "add provider to test scripts")
+	setBoolFlag(&vcdSkipTemplateWriting, "vcd-skip-template-write", envVcdSkipTemplateWriting, "Skip writing templates to file")
+	setBoolFlag(&vcdRemoveOrgVdcFromTemplate, "vcd-remove-org-vdc-from-template", envVcdRemoveOrgVdcFromTemplate, "Remove org and VDC from template")
+	setBoolFlag(&vcdTestOrgUser, "vcd-test-org-user", envVcdTestOrgUser, "Run tests with org user")
+
+}
+
 // Structure to get info from a config json file that the user specifies
 type TestConfig struct {
 	Provider struct {
-		User                     string `json:"user"`
-		Password                 string `json:"password"`
-		Token                    string `json:"token,omitempty"`
+		User     string `json:"user"`
+		Password string `json:"password"`
+		Token    string `json:"token,omitempty"`
+
+		// UseSamlAdfs specifies if SAML auth is used for authenticating vCD instead of local login.
+		// The above `User` and `Password` will be used to authenticate against ADFS IdP when true.
+		UseSamlAdfs bool `json:"useSamlAdfs"`
+
+		// CustomAdfsRptId allows to set custom Relaying Party Trust identifier if needed. Only has
+		// effect if `UseSamlAdfs` is true.
+		CustomAdfsRptId string `json:"customAdfsRptId,omitempty"`
+
+		// The variables `SamlUser`, `SamlPassword` and `SamlCustomRptId` are optional and are
+		// related to additional test run specifically with SAML user/password. It can be useful in
+		// case local user is used for test run (defined by above 'User', 'Password' variables).
+		// SamlUser takes ADFS friendly format ('contoso.com\username' or 'username@contoso.com')
+		SamlUser        string `json:"samlUser,omitempty"`
+		SamlPassword    string `json:"samlPassword,omitempty"`
+		SamlCustomRptId string `json:"samlCustomRptId,omitempty"`
+
 		Url                      string `json:"url"`
 		SysOrg                   string `json:"sysOrg"`
 		AllowInsecure            bool   `json:"allowInsecure"`
@@ -171,6 +205,8 @@ provider "vcd" {
   user                 = "{{.User}}"
   password             = "{{.Password}}"
   token                = "{{.Token}}"
+  auth_type            = "{{.AuthType}}"
+  saml_adfs_rpt_id     = "{{.SamlAdfsCustomRptId}}"
   url                  = "{{.Url}}"
   sysorg               = "{{.SysOrg}}"
   org                  = "{{.Org}}"
@@ -221,9 +257,10 @@ func GetVarsFromTemplate(tmpl string) []string {
 	return varList
 }
 
-// Fills a template with data provided as a StringMap
-// Returns the text of a ready-to-use Terraform directive.
-// It also saves the filled template to a file, for further troubleshooting.
+// templateFill fills a template with data provided as a StringMap and adds `provider`
+// configuration.
+// Returns the text of a ready-to-use Terraform directive. It also saves the filled
+// template to a file, for further troubleshooting.
 func templateFill(tmpl string, data StringMap) string {
 
 	// Gets the name of the function containing the template
@@ -270,6 +307,7 @@ func templateFill(tmpl string, data StringMap) string {
 		// provider data
 		data["User"] = testConfig.Provider.User
 		data["Password"] = testConfig.Provider.Password
+		data["SamlAdfsCustomRptId"] = testConfig.Provider.CustomAdfsRptId
 		data["Token"] = testConfig.Provider.Token
 		data["Url"] = testConfig.Provider.Url
 		data["SysOrg"] = testConfig.Provider.SysOrg
@@ -283,6 +321,16 @@ func templateFill(tmpl string, data StringMap) string {
 			data["LoggingFile"] = testConfig.Logging.LogFileName
 		} else {
 			data["LoggingFile"] = util.ApiLogFileName
+		}
+
+		// Pick correct auth_type
+		switch {
+		case testConfig.Provider.Token != "":
+			data["AuthType"] = "token"
+		case testConfig.Provider.UseSamlAdfs:
+			data["AuthType"] = "saml_adfs"
+		default:
+			data["AuthType"] = "integrated" // default AuthType for local and LDAP users
 		}
 	}
 	if _, ok := data["Tags"]; !ok {
@@ -446,7 +494,18 @@ func getConfigStruct(config string) TestConfig {
 	}
 	_ = os.Setenv("VCD_USER", configStruct.Provider.User)
 	_ = os.Setenv("VCD_PASSWORD", configStruct.Provider.Password)
-	_ = os.Setenv("VCD_TOKEN", configStruct.Provider.Token)
+	// VCD_TOKEN supplied via CLI has bigger priority than configured one
+	if os.Getenv("VCD_TOKEN") == "" {
+		_ = os.Setenv("VCD_TOKEN", configStruct.Provider.Token)
+	} else {
+		configStruct.Provider.Token = os.Getenv("VCD_TOKEN")
+	}
+
+	if configStruct.Provider.UseSamlAdfs {
+		_ = os.Setenv("VCD_AUTH_TYPE", "saml_adfs")
+		_ = os.Setenv("VCD_SAML_ADFS_RPT_ID", configStruct.Provider.CustomAdfsRptId)
+	}
+
 	_ = os.Setenv("VCD_URL", configStruct.Provider.Url)
 	_ = os.Setenv("VCD_SYS_ORG", configStruct.Provider.SysOrg)
 	_ = os.Setenv("VCD_ORG", configStruct.VCD.Org)
@@ -549,10 +608,16 @@ func TestMain(m *testing.M) {
 			os.Exit(1)
 		}
 		fmt.Printf("Connecting to %s\n", testConfig.Provider.Url)
+
 		authentication := "password"
+		if testConfig.Provider.UseSamlAdfs {
+			authentication = "SAML password"
+		}
+		// Token based auth has priority over other types
 		if testConfig.Provider.Token != "" {
 			authentication = "token"
 		}
+
 		fmt.Printf("as user %s@%s (using %s)\n", testConfig.Provider.User, testConfig.Provider.SysOrg, authentication)
 		// Provider initialization moved here from provider_test.init
 		testAccProvider = Provider().(*schema.Provider)
@@ -736,7 +801,8 @@ func getTestVCDFromJson(testConfig TestConfig) (*govcd.VCDClient, error) {
 	if err != nil {
 		return &govcd.VCDClient{}, fmt.Errorf("could not parse Url: %s", err)
 	}
-	vcdClient := govcd.NewVCDClient(*configUrl, true)
+	vcdClient := govcd.NewVCDClient(*configUrl, true,
+		govcd.WithSamlAdfs(testConfig.Provider.UseSamlAdfs, testConfig.Provider.CustomAdfsRptId))
 	return vcdClient, nil
 }
 
@@ -902,19 +968,41 @@ func setBoolFlag(varPointer *bool, name, envVar, help string) {
 	flag.BoolVar(varPointer, name, *varPointer, help)
 }
 
-func init() {
+type envHelper struct {
+	vars map[string]string
+}
 
-	// To list the flags when we run "go test -tags functional -vcd-help", the flag name must start with "vcd"
-	// They will all appear alongside the native flags when we use an invalid one
-	setBoolFlag(&vcdHelp, "vcd-help", "VCD_HELP", "Show vcd flags")
-	setBoolFlag(&testDistributedNetworks, "vcd-test-distributed", "", "enables testing of distributed network")
-	setBoolFlag(&enableDebug, "vcd-debug", "GOVCD_DEBUG", "enables debug output")
-	setBoolFlag(&vcdTestVerbose, "vcd-verbose", "TEST_VERBOSE", "enables verbose output")
-	setBoolFlag(&enableTrace, "vcd-trace", "GOVCD_TRACE", "enables function calls tracing")
-	setBoolFlag(&vcdShortTest, "vcd-short", "VCD_SHORT_TEST", "runs short test")
-	setBoolFlag(&vcdAddProvider, "vcd-add-provider", envVcdAddProvider, "add provider to test scripts")
-	setBoolFlag(&vcdSkipTemplateWriting, "vcd-skip-template-write", envVcdSkipTemplateWriting, "Skip writing templates to file")
-	setBoolFlag(&vcdRemoveOrgVdcFromTemplate, "vcd-remove-org-vdc-from-template", envVcdRemoveOrgVdcFromTemplate, "Remove org and VDC from template")
-	setBoolFlag(&vcdTestOrgUser, "vcd-test-org-user", envVcdTestOrgUser, "Run tests with org user")
+// newEnvVarHelper helps to initialize
+func newEnvVarHelper() *envHelper {
+	return &envHelper{vars: make(map[string]string)}
+}
 
+// saveVcdVars checks all env vars with VCD prefix and saves them in a map
+func (env *envHelper) saveVcdVars() {
+	for _, envVar := range os.Environ() {
+		if strings.HasPrefix(envVar, "VCD") {
+			// os.Environ returns a slice of "key=value" strings. The first "=" separated "key" and
+			// "value" therefore we split only first "=" match as env vars may have syntax of
+			// "key=value=else"
+			splitKeyValue := strings.SplitN(envVar, "=", 2)
+			key := splitKeyValue[0]
+			value := splitKeyValue[1]
+			env.vars[key] = value
+		}
+	}
+
+}
+
+// unsetVcdVars unsets all environment variables with prefix "VCD"
+func (env *envHelper) unsetVcdVars() {
+	for keyName := range env.vars {
+		os.Unsetenv(keyName)
+	}
+}
+
+// restoreVcdVars restores all env variables with prefix "VCD" stored in parent struct
+func (env *envHelper) restoreVcdVars() {
+	for keyName, valueName := range env.vars {
+		os.Setenv(keyName, valueName)
+	}
 }
