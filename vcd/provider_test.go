@@ -1,4 +1,4 @@
-// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbAppProfile lbAppRule lbServiceMonitor lbServerPool lbVirtualServer user search ALL
+// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbAppProfile lbAppRule lbServiceMonitor lbServerPool lbVirtualServer user search auth ALL
 
 package vcd
 
@@ -8,6 +8,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
+
+func init() {
+	testingTags["api"] = "provider_test.go"
+}
 
 var testAccProviders map[string]terraform.ResourceProvider
 var testAccProvider *schema.Provider
@@ -48,10 +52,6 @@ func testAccPreCheck(t *testing.T) {
 	}
 }
 
-func init() {
-	testingTags["api"] = "provider_test.go"
-}
-
 // createTemporaryVCDConnection is meant to create a VCDClient to check environment before executing specific acceptance
 // tests and before VCDClient is accessible.
 func createTemporaryVCDConnection() *VCDClient {
@@ -59,6 +59,8 @@ func createTemporaryVCDConnection() *VCDClient {
 		User:            testConfig.Provider.User,
 		Password:        testConfig.Provider.Password,
 		Token:           testConfig.Provider.Token,
+		UseSamlAdfs:     testConfig.Provider.UseSamlAdfs,
+		CustomAdfsRptId: testConfig.Provider.CustomAdfsRptId,
 		SysOrg:          testConfig.Provider.SysOrg,
 		Org:             testConfig.VCD.Org,
 		Vdc:             testConfig.VCD.Vdc,
