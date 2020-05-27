@@ -117,7 +117,7 @@ func NewVCDClient(vcdEndpoint url.URL, insecure bool, options ...VCDClientOption
 	return vcdClient
 }
 
-// Authenticate is an helper function that performs a login in vCloud Director.
+// Authenticate is a helper function that performs a login in vCloud Director.
 func (vcdCli *VCDClient) Authenticate(username, password, org string) error {
 	_, err := vcdCli.GetAuthResponse(username, password, org)
 	return err
@@ -132,11 +132,24 @@ func (vcdCli *VCDClient) GetAuthResponse(username, password, org string) (*http.
 	if err != nil {
 		return nil, fmt.Errorf("error finding LoginUrl: %s", err)
 	}
-	// Authorize
-	resp, err := vcdCli.vcdAuthorize(username, password, org)
-	if err != nil {
-		return nil, fmt.Errorf("error authorizing: %s", err)
+
+	// Choose correct auth mechanism based on what type of authentication is used. The end result
+	// for each of the below functions is to set authorization token vcdCli.Client.VCDToken.
+	var resp *http.Response
+	switch {
+	case vcdCli.Client.UseSamlAdfs:
+		err = vcdCli.authorizeSamlAdfs(username, password, org, vcdCli.Client.CustomAdfsRptId)
+		if err != nil {
+			return nil, fmt.Errorf("error authorizing SAML: %s", err)
+		}
+	default:
+		// Authorize
+		resp, err = vcdCli.vcdAuthorize(username, password, org)
+		if err != nil {
+			return nil, fmt.Errorf("error authorizing: %s", err)
+		}
 	}
+
 	return resp, nil
 }
 
@@ -214,6 +227,21 @@ func WithAPIVersion(version string) VCDClientOption {
 func WithHttpTimeout(timeout int64) VCDClientOption {
 	return func(vcdClient *VCDClient) error {
 		vcdClient.Client.Http.Timeout = time.Duration(timeout) * time.Second
+		return nil
+	}
+}
+
+// WithSamlAdfs specifies if SAML auth is used for authenticating to vCD instead of local login.
+// The following conditions must be met so that SAML authentication works:
+// * SAML IdP (Identity Provider) is Active Directory Federation Service (ADFS)
+// * WS-Trust authentication endpoint "/adfs/services/trust/13/usernamemixed" must be enabled on
+// ADFS server
+// By default vCD SAML Entity ID will be used as Relaying Party Trust Identifier unless
+// customAdfsRptId is specified
+func WithSamlAdfs(useSaml bool, customAdfsRptId string) VCDClientOption {
+	return func(vcdClient *VCDClient) error {
+		vcdClient.Client.UseSamlAdfs = useSaml
+		vcdClient.Client.CustomAdfsRptId = customAdfsRptId
 		return nil
 	}
 }

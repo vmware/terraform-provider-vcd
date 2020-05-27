@@ -1,70 +1,83 @@
 {
-    "comment": "see sample_govcd_test_config.yaml for fields description",
-	"provider": {
-		"user": "someuser",
-		"password": "somepassword",
+  "comment": "see sample_govcd_test_config.yaml for fields description",
+  "provider": {
+    "user": "someuser",
+    "password": "somepassword",
     "//": "If token is provided, username and password are ignored",
     "token": "an_auth_token",
-		"url": "https://11.111.1.111/api",
-		"sysOrg": "System",
-		"//": "(Optional) In some cases the vCloud Director SDK must wait. It can be",
-		"//": "customized using the below var. If it is not set SDK assumes a default value.",
-		"maxRetryTimeout": 60,
-    "httpTimeout" : 600
-	},
-	"vcd": {
-		"org": "myorg",
-		"vdc": "myvdc",
-		"provider_vdc": {
-			"name": "myprovidervdc",
-			"storage_profile": "mystorageprofile",
-			"network_pool": "mynetworkpool"
-		},
-		"catalog": {
-			"name": "mycat",
-			"//": "One item in the catalog. It will be used to compose test vApps. Some tests",
-			"//": "rely on it being Photon OS. It is is not Photon OS - the tests will be skipped",
-			"catalogItem": "myitem",
-			"description": "my cat for loading",
-			"catalogItemDescription": "my item to create vapps"
-		},
-		"network": {
-			"network1": "mynet",
-			"network2": "mynet2"
-		},
-		"storageProfile": {
-			"storageProfile1": "Development",
-			"storageProfile2": "*"
-		},
-		"edgeGateway": "myedgegw",
-		"externalIp": "10.150.10.10",
-		"externalNetmask": "255.255.224.0",
-		"internalIp": "192.168.1.10",
-		"internalNetmask": "255.255.255.0",
-		"externalNetwork": "myexternalnet",
+    "//": "If useSamlAdfs is true - client will try to authenticate against ADFS using SAML.",
+    "useSamlAdfs": false,
+    "//": "customAdfsRptId allows to specify custom Relaying Party Trust Identifier. By default",
+    "//": "client will use vCD SAML Entity ID",
+    "customAdfsRptId": "",
+
+    "//": "The 3 fields below allow to set SAML credentials for tests that specifically use it.",
+    "//": "May be useful when local user credentials are used by default.",
+    "//": "Such credentials will authenticate to Org specified in vcd.org parameter.",
+    "samlUser": "",
+    "samlPassword": "",
+    "samlCustomRptId": "",
+
+    "url": "https://11.111.1.111/api",
+    "sysOrg": "System",
+    "//": "(Optional) In some cases the vCloud Director SDK must wait. It can be",
+    "//": "customized using the below var. If it is not set SDK assumes a default value.",
+    "maxRetryTimeout": 60,
+    "httpTimeout": 600
+  },
+  "vcd": {
+    "org": "myorg",
+    "vdc": "myvdc",
+    "provider_vdc": {
+      "name": "myprovidervdc",
+      "storage_profile": "mystorageprofile",
+      "network_pool": "mynetworkpool"
+    },
+    "catalog": {
+      "name": "mycat",
+      "//": "One item in the catalog. It will be used to compose test vApps. Some tests",
+      "//": "rely on it being Photon OS. It is is not Photon OS - the tests will be skipped",
+      "catalogItem": "myitem",
+      "description": "my cat for loading",
+      "catalogItemDescription": "my item to create vapps"
+    },
+    "network": {
+      "network1": "mynet",
+      "network2": "mynet2"
+    },
+    "storageProfile": {
+      "storageProfile1": "Development",
+      "storageProfile2": "*"
+    },
+    "edgeGateway": "myedgegw",
+    "externalIp": "10.150.10.10",
+    "externalNetmask": "255.255.224.0",
+    "internalIp": "192.168.1.10",
+    "internalNetmask": "255.255.255.0",
+    "externalNetwork": "myexternalnet",
     "//": "A port group name for creating an external network",
-		"externalNetworkPortGroup": "ForTestingPG",
+    "externalNetworkPortGroup": "ForTestingPG",
     "externalNetworkPortGroupType": "NETWORK",
-		"vimServer": "vc9",
-        "disk": {
-            "size": 1048576,
-            "sizeForUpdate": 1048576
-        }
-	},
-	"logging": {
-		"enabled": true,
-		"logFileName": "go-vcloud-director.log",
-		"logHttpRequests": true,
-		"skipResponseTags": "SupportedVersions,VAppTemplate",
-		"apiLogFunctions": "FindVAppByName",
-		"logHttpResponses": true
-	},
+    "vimServer": "vc9",
+    "disk": {
+      "size": 1048576,
+      "sizeForUpdate": 1048576
+    }
+  },
+  "logging": {
+    "enabled": true,
+    "logFileName": "go-vcloud-director.log",
+    "logHttpRequests": true,
+    "skipResponseTags": "SupportedVersions,VAppTemplate",
+    "apiLogFunctions": "FindVAppByName",
+    "logHttpResponses": true
+  },
   "ova": {
     "ovaPath": "../test-resources/test_vapp_template.ova",
     "ovaChunkedPath": "../test-resources/template_with_custom_chunk_size.ova"
   },
   "media": {
     "mediaPath": "../test-resources/test.iso",
-    "mediaName": "uploadedMediaName",
+    "mediaName": "uploadedMediaName"
   }
 }
