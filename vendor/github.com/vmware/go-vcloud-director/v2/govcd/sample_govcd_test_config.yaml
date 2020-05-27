@@ -13,6 +13,18 @@ provider:
     password: somepassword
     # If token is provided, username and password are ignored
     token: an_auth_token
+    # If useSamlAdfs is true - client will try to authenticate against ADFS using SAML.
+    useSamlAdfs: false
+    # customAdfsRptId allows to specify custom Relaying Party Trust Identifier. By default client
+    # will use vCD SAML Entity ID
+    # customAdfsRptId: ""
+
+    # The 3 fields below allow to set SAML credentials for tests that specifically use it.
+    # May be useful when local user credentials are used by default. Such credentials will
+    # authenticate to Org specified in vcd.org parameter.
+    # samlUser: test@test-forest.net
+    # samlPassword: XXX
+    # samlCustomRptId: "my-optional-custom-relaying-party-trust-id"
     #
     # The vCD address, in the format https://vCD_IP/api
     # or https://vCD_host_name/api

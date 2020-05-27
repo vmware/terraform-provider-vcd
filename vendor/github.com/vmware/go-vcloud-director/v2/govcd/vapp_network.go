@@ -48,6 +48,8 @@ func (vapp *VApp) UpdateNetworkFirewallRulesAsync(networkId string, firewallRule
 	networkToUpdate.Configuration.Features.FirewallService.DefaultAction = defaultAction
 	networkToUpdate.Configuration.Features.FirewallService.FirewallRule = firewallRules
 
+	// here we use `PUT /network/{id}` which allow to change vApp network.
+	// But `GET /network/{id}` can return org VDC network or vApp network.
 	apiEndpoint := vapp.client.VCDHREF
 	apiEndpoint.Path += "/network/" + uuid
 

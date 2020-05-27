@@ -225,7 +225,9 @@ type NetworkConfiguration struct {
 	// SyslogServerSettings           SyslogServerSettings `xml:"SyslogServerSettings,omitempty"`
 }
 
-// VAppNetworkConfiguration represents a vApp network configuration
+// VAppNetworkConfiguration represents a vApp network configurations
+// Used in vApp network configuration actions as part of vApp type.
+// VApp.NetworkConfigSection.NetworkConfig or directly as NetworkConfigSection.NetworkConfig for various API calls.
 // Type: VAppNetworkConfigurationType
 // Namespace: http://www.vmware.com/vcloud/v1.5
 // Description: Represents a vApp network configuration.
@@ -243,6 +245,7 @@ type VAppNetworkConfiguration struct {
 }
 
 // VAppNetworkType represents a vApp network configuration
+// Used as input PUT /network/{id}
 // Type: VAppNetworkType
 // Namespace: http://www.vmware.com/vcloud/v1.5
 // Description: Represents a vApp network configuration.
@@ -1452,7 +1455,7 @@ type MediaSettings struct {
 
 // CpuResourceMhz from VM/VmSpecSection struct
 type CpuResourceMhz struct {
-	Configured  int64  `xml:"Configured`             // The amount of resource configured on the virtual machine.
+	Configured  int64  `xml:"Configured"`            // The amount of resource configured on the virtual machine.
 	Reservation *int64 `xml:"Reservation,omitempty"` // The amount of reservation of this resource on the underlying virtualization infrastructure.
 	Limit       *int64 `xml:"Limit,omitempty"`       // The limit for how much of this resource can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited.
 	SharesLevel string `xml:"SharesLevel,omitempty"` //	Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload.
