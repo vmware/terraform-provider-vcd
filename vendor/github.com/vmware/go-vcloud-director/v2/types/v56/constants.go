@@ -20,8 +20,6 @@ const (
 	Version511 = "5.11"
 	// Version is the default version number
 	Version = Version511
-	// SoapXML mime type
-	SoapXML = "application/soap+xml"
 )
 
 const (
