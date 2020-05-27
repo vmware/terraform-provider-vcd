@@ -1788,7 +1788,7 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp) ([]map[s
 			vm.VM.NetworkConnectionSection.NetworkConnection[j].NetworkConnectionIndex
 	})
 
-	for netIndex, vmNet := range vm.VM.NetworkConnectionSection.NetworkConnection {
+	for _, vmNet := range vm.VM.NetworkConnectionSection.NetworkConnection {
 		singleNIC := make(map[string]interface{})
 		singleNIC["ip_allocation_mode"] = vmNet.IPAddressAllocationMode
 		singleNIC["ip"] = vmNet.IPAddress
@@ -1799,7 +1799,7 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp) ([]map[s
 		}
 
 		singleNIC["is_primary"] = false
-		if netIndex == vm.VM.NetworkConnectionSection.PrimaryNetworkConnectionIndex {
+		if vmNet.NetworkConnectionIndex == vm.VM.NetworkConnectionSection.PrimaryNetworkConnectionIndex {
 			singleNIC["is_primary"] = true
 		}
 

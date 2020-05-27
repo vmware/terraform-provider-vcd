@@ -25,6 +25,16 @@ type Config struct {
 	Href            string
 	MaxRetryTimeout int
 	InsecureFlag    bool
+
+	// UseSamlAdfs specifies if SAML auth is used for authenticating vCD instead of local login.
+	// The following conditions must be met so that authentication SAML authentication works:
+	// * SAML IdP (Identity Provider) is Active Directory Federation Service (ADFS)
+	// * Authentication endpoint "/adfs/services/trust/13/usernamemixed" must be enabled on ADFS
+	// server
+	UseSamlAdfs bool
+	// CustomAdfsRptId allows to set custom Relaying Party Trust identifier. By default vCD Entity
+	// ID is used as Relaying Party Trust identifier.
+	CustomAdfsRptId string
 }
 
 type VCDClient struct {
@@ -73,6 +83,14 @@ type cacheStorage struct {
 	// cacheClientServedCount records how many times we have cached a connection
 	cacheClientServedCount int
 	sync.Mutex
+}
+
+// reset clears connection cache so that next session is forced to re-authenticate
+func (c *cacheStorage) reset() {
+	c.Lock()
+	defer c.Unlock()
+	c.cacheClientServedCount = 0
+	c.conMap = make(map[string]cachedConnection)
 }
 
 var (
@@ -408,7 +426,8 @@ func (c *Config) Client() (*VCDClient, error) {
 
 	vcdClient := &VCDClient{
 		VCDClient: govcd.NewVCDClient(*authUrl, c.InsecureFlag,
-			govcd.WithMaxRetryTimeout(c.MaxRetryTimeout)),
+			govcd.WithMaxRetryTimeout(c.MaxRetryTimeout),
+			govcd.WithSamlAdfs(c.UseSamlAdfs, c.CustomAdfsRptId)),
 		SysOrg:          c.SysOrg,
 		Org:             c.Org,
 		Vdc:             c.Vdc,
@@ -422,11 +441,6 @@ func (c *Config) Client() (*VCDClient, error) {
 	cachedVCDClients.Lock()
 	cachedVCDClients.conMap[checksum] = cachedConnection{initTime: time.Now(), connection: vcdClient}
 	cachedVCDClients.Unlock()
-
-	// Throw a deprecated warning for vCD versions <= 9.1
-	if vcdClient.Client.APIVCDMaxVersionIs("<= 30") {
-		_, _ = fmt.Fprintln(getTerraformStdout(), "WARNING: Support for vCD versions older than 9.5 is deprecated")
-	}
 
 	return vcdClient, nil
 }

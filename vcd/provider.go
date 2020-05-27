@@ -6,6 +6,7 @@ import (
 	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
@@ -91,21 +92,33 @@ var globalResourceMap = map[string]*schema.Resource{
 
 // Provider returns a terraform.ResourceProvider.
 func Provider() terraform.ResourceProvider {
-
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"user": &schema.Schema{
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_USER", nil),
 				Description: "The user name for VCD API operations.",
 			},
 
 			"password": &schema.Schema{
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				DefaultFunc: schema.EnvDefaultFunc("VCD_PASSWORD", nil),
 				Description: "The user password for VCD API operations.",
+			},
+			"auth_type": &schema.Schema{
+				Type:         schema.TypeString,
+				Optional:     true,
+				DefaultFunc:  schema.EnvDefaultFunc("VCD_AUTH_TYPE", "integrated"),
+				Description:  "'integrated', 'saml_adfs', and 'token' are the only supported now. 'integrated' is default.",
+				ValidateFunc: validation.StringInSlice([]string{"integrated", "saml_adfs", "token"}, false),
+			},
+			"saml_adfs_rpt_id": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("VCD_SAML_ADFS_RPT_ID", nil),
+				Description: "Allows to specify custom Relaying Party Trust Identifier for auth_type=saml_adfs",
 			},
 
 			"token": &schema.Schema{
@@ -177,16 +190,18 @@ func Provider() terraform.ResourceProvider {
 				Description: "Defines the import separation string to be used with 'terraform import'",
 			},
 		},
-
 		ResourcesMap:   globalResourceMap,
 		DataSourcesMap: globalDataSourceMap,
-
-		ConfigureFunc: providerConfigure,
+		ConfigureFunc:  providerConfigure,
 	}
 }
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	maxRetryTimeout := d.Get("max_retry_timeout").(int)
+
+	if err := validateProviderSchema(d); err != nil {
+		return nil, fmt.Errorf("[provider validation] :%s", err)
+	}
 
 	// If sysOrg is defined, we use it for authentication.
 	// Otherwise, we use the default org defined for regular usage
@@ -194,9 +209,7 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	if connectOrg == "" {
 		connectOrg = d.Get("org").(string)
 	}
-	if connectOrg == "" {
-		return nil, fmt.Errorf(`[provider configure] Both "org" and "sysorg" properties are empty`)
-	}
+
 	config := Config{
 		User:            d.Get("user").(string),
 		Password:        d.Get("password").(string),
@@ -208,6 +221,15 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		MaxRetryTimeout: maxRetryTimeout,
 		InsecureFlag:    d.Get("allow_unverified_ssl").(bool),
 	}
+
+	// auth_type dependent configuration
+	authType := d.Get("auth_type").(string)
+	switch authType {
+	case "saml_adfs":
+		config.UseSamlAdfs = true
+		config.CustomAdfsRptId = d.Get("saml_adfs_rpt_id").(string)
+	}
+
 	// If the provider includes logging directives,
 	// it will activate logging from upstream go-vcloud-director
 	logging := d.Get("logging").(bool)
@@ -228,7 +250,6 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	} else {
 		ImportSeparator = d.Get("import_separator").(string)
 	}
-
 	return config.Client()
 }
 
@@ -272,4 +293,16 @@ func vcdSchemaFilter(schemaMap map[string]*schema.Resource, nameRegexp string, i
 	}
 
 	return filteredResources, nil
+}
+
+func validateProviderSchema(d *schema.ResourceData) error {
+
+	// Validate org and sys org
+	sysOrg := d.Get("sysorg").(string)
+	org := d.Get("org").(string)
+	if sysOrg == "" && org == "" {
+		return fmt.Errorf(`both "org" and "sysorg" properties are empty`)
+	}
+
+	return nil
 }
