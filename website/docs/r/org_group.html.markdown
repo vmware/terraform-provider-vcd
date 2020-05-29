@@ -38,7 +38,7 @@ The following arguments are supported:
 * `name` - (Required) A unique name for the group.
 * `provider_type` - (Required) Identity provider type for this this group. One of `SAML` or
   `INTEGRATED`. **Note** `LDAP` must be configured to create `INTEGRATED` groups and names must
-  match `LDAP` group names. If LDAP is not configured - it will return.
+  match `LDAP` group names. If LDAP is not configured - it will return 403 errors.
 * `role` - (Required) The role of the user. Role names can be retrieved from the organization. Both built-in roles and
   custom built can be used. The roles normally available are:
     * `Organization Administrator`

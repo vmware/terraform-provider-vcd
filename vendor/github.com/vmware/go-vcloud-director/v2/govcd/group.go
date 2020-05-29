@@ -29,9 +29,10 @@ func NewGroup(cli *Client, org *AdminOrg) *OrgGroup {
 	}
 }
 
-// CreateGroup creates a group in Org. The only supported ProviderType for groups is 'SAML'. Other
-// types which are supported for users throw HTTP 403 error.
-// Mandatory fields are: 'Name" and 'Role.HREF'.
+// CreateGroup creates a group in Org. Supported provider types are `OrgUserProviderIntegrated` and
+// `OrgUserProviderSAML`.
+//
+// Note. This request will return HTTP 403 if Org is not configured for SAML or LDAP usage.
 func (adminOrg *AdminOrg) CreateGroup(group *types.Group) (*OrgGroup, error) {
 	if err := validateCreateUpdateGroup(group); err != nil {
 		return nil, err
@@ -87,7 +88,7 @@ func (adminOrg *AdminOrg) GetGroupByName(name string, refresh bool) (*OrgGroup, 
 	return nil, ErrorEntityNotFound
 }
 
-// GetGroupById  retrieves group by Id
+// GetGroupById retrieves group by Id
 func (adminOrg *AdminOrg) GetGroupById(id string, refresh bool) (*OrgGroup, error) {
 	if refresh {
 		err := adminOrg.Refresh()
@@ -134,7 +135,7 @@ func (group *OrgGroup) Update() error {
 	return err
 }
 
-// Delete removes a group definition
+// Delete removes a group
 func (group *OrgGroup) Delete() error {
 	if err := validateDeleteGroup(group.Group); err != nil {
 		return err
