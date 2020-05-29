@@ -36,6 +36,7 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to which the VDC belongs. Optional if defined at provider level.
 * `name` - (Required) A unique name for the group.
+* `description` - (Optional) The description of Organization group
 * `provider_type` - (Required) Identity provider type for this this group. One of `SAML` or
   `INTEGRATED`. **Note** `LDAP` must be configured to create `INTEGRATED` groups and names must
   match `LDAP` group names. If LDAP is not configured - it will return 403 errors.
@@ -48,12 +49,12 @@ The following arguments are supported:
     * `Console Access Only`
     * `Defer to Identity Provider`
 
+
 ## Attribute Reference
 
 The following attributes are exported on this resource:
 
 * `id` - The ID of the Organization group
-* `description` - The description of Organization group
 
 ## Importing
 

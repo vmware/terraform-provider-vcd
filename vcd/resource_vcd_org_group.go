@@ -43,8 +43,8 @@ func resourceVcdOrgGroup() *schema.Resource {
 			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
-				Computed:    true, // vCD does not set the description
-				Description: "Description",
+				Optional:    true,
+				Description: "Description. Can only be set when provider_type=INTEGRATED",
 			},
 			"role": &schema.Schema{
 				Type:        schema.TypeString,
@@ -73,6 +73,7 @@ func resourceVcdOrgGroupCreate(d *schema.ResourceData, meta interface{}) error {
 		Name:         d.Get("name").(string),
 		Role:         role,
 		ProviderType: d.Get("provider_type").(string),
+		Description:  d.Get("description").(string),
 	}
 	newGroup.Group = &groupDefinition
 
@@ -113,25 +114,29 @@ func resourceVcdOrgGroupUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	// The only possible change for now is 'role'
-	if d.HasChange("role") {
-		group, err := adminOrg.GetGroupById(d.Id(), false)
-		if err != nil {
-			return fmt.Errorf("error finding group for update %s: %s", group.Group.Name, err)
-		}
+	group, err := adminOrg.GetGroupById(d.Id(), false)
+	if err != nil {
+		return fmt.Errorf("error finding group for update %s: %s", group.Group.Name, err)
+	}
 
+	// Role change
+	if d.HasChange("role") {
 		roleName := d.Get("role").(string)
 		role, err := adminOrg.GetRoleReference(roleName)
 		if err != nil {
 			return fmt.Errorf("unable to find role %s: %s", roleName, err)
 		}
-
 		group.Group.Role = role
-		err = group.Update()
+	}
 
-		if err != nil {
-			return fmt.Errorf("error updating group %s: %s", group.Group.Name, err)
-		}
+	// Description change
+	if d.HasChange("description") {
+		group.Group.Description = d.Get("description").(string)
+	}
+
+	err = group.Update()
+	if err != nil {
+		return fmt.Errorf("error updating group %s: %s", group.Group.Name, err)
 	}
 
 	return resourceVcdOrgGroupRead(d, meta)
