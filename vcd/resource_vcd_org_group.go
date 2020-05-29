@@ -44,12 +44,12 @@ func resourceVcdOrgGroup() *schema.Resource {
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Description. Can only be set when provider_type=INTEGRATED",
+				Description: "Description",
 			},
 			"role": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Role name to assign",
+				Description: "Existing role name to assign",
 			},
 		},
 	}
