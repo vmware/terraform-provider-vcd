@@ -37,7 +37,7 @@ func resourceVcdOrgGroup() *schema.Resource {
 			"provider_type": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ForceNew:     true, // vCD does not allow to change group name
+				ForceNew:     true, // vCD does not allow to change provider type
 				Description:  "SAML group name",
 				ValidateFunc: validation.StringInSlice([]string{"SAML", "INTEGRATED"}, false),
 			},
@@ -72,7 +72,7 @@ func resourceVcdOrgGroupCreate(d *schema.ResourceData, meta interface{}) error {
 	groupDefinition := types.Group{
 		Name:         d.Get("name").(string),
 		Role:         role,
-		ProviderType: d.Get("provider_type").(string), // 'SAML' is the only accepted. Others get HTTP 403
+		ProviderType: d.Get("provider_type").(string),
 	}
 	newGroup.Group = &groupDefinition
 
