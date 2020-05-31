@@ -1,5 +1,10 @@
 ## 2.9.0 (Unreleased)
 
+FEATURES:
+
+* **New Resource**: `vcd_vm_affinity_rule` VM affinity and anti-affinity rules [GH-514]
+* **New Data Source**: `vcd_vm_affinity_rule` VM affinity and anti-affinity rules [GH-514]
+
 IMPROVEMENTS:
 
 * `resource/vcd_vapp_vm` allows creating empty VM. New fields added `boot_image`, `os_type` and `hardware_version`. Also, supports `description` updates. [GH-484]
