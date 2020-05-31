@@ -71,13 +71,29 @@ data "{{.DataSourceName}}" "not-existing" {
 }
 `
 
+// dataSourceFieldExceptions is a list of fields that are not mandatory but have an alternative field
+// that could be used. They are not marked as mandatory, and would make the test fail for unwanted
+// reasons. Thus, we determine that if a field is in this list, it should be treated as mandatory
+var dataSourceFieldExceptions = map[string]string{
+	// resource name        field   reason
+	// -------------------  ------- -----------------------------------
+	"vcd_vm_affinity_rule": "name", // Can use `rule_id` as alternative
+	"vcd_catalog":          "name", // Can use the `search` block
+	"vcd_catalog_item":     "name", // Can use the `search` block
+	"vcd_catalog_media":    "name", // Can use the `search` block
+	"vcd_edgegateway":      "name", // Can use the `search` block
+	"vcd_network_routed":   "name", // Can use the `search` block
+	"vcd_network_direct":   "name", // Can use the `search` block
+	"vcd_network_isolated": "name", // Can use the `search` block
+}
+
 // getMandatoryDataSourceSchemaFields checks schema definitions for data sources and return slice of mandatory fields
 func getMandatoryDataSourceSchemaFields(dataSourceName string) []string {
 	var mandatoryFields []string
 	schema := globalDataSourceMap[dataSourceName]
-	_, filterFound := schema.Schema["filter"]
+	exceptionFieldName, hasException := dataSourceFieldExceptions[dataSourceName]
 	for fieldName, fieldSchema := range schema.Schema {
-		if fieldSchema.Required || (filterFound && fieldName == "name") {
+		if fieldSchema.Required || (hasException && fieldName == exceptionFieldName) {
 			mandatoryFields = append(mandatoryFields, fieldName)
 		}
 	}
