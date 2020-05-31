@@ -6,6 +6,20 @@
     "user": "root",
     "password": "somePassword",
     "token": "Access token to be used instead of username/password",
+
+    "//": "If useSamlAdfs is true - client will try to authenticate against ADFS using SAML.",
+    "useSamlAdfs": false,
+    "//": "customAdfsRptId allows to specify custom Relaying Party Trust Identifier. By default",
+    "//": "client will use vCD SAML Entity ID",
+    "customAdfsRptId": "rpt-id",
+    
+    "//": "The 3 fields below allow to set SAML credentials for tests that specifically use it.",
+    "//": "May be useful when local user credentials are used by default.",
+    "//": "These credentials will authenticate to the Org specified in vcd.org parameter.",
+    "samlUser": "",
+    "samlPassword": "",
+    "samlCustomRptId": "",
+
     "url": "https://10.13.21.20/api",
     "//": "Use 'System' if you are Sys admin and Org name if you tenant",
     "sysOrg": "System",

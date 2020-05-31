@@ -16,6 +16,10 @@ import (
 	semver "github.com/hashicorp/go-version"
 )
 
+func init() {
+	testingTags["unit"] = "provider_unit_test.go"
+}
+
 // Checks that the provider header in index.html.markdown
 // has the version defined in the VERSION file
 func TestProviderVersion(t *testing.T) {
@@ -102,10 +106,6 @@ func TestGetMajorVersion(t *testing.T) {
 		t.Fail()
 	}
 	t.Logf("%s", version)
-}
-
-func init() {
-	testingTags["unit"] = "provider_unit_test.go"
 }
 
 func TestVcdResources(t *testing.T) {
