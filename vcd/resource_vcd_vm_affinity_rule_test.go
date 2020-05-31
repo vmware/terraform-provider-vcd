@@ -225,6 +225,7 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 		"Required":               "true",
 		"VirtualMachineIds":      strings.Join(creationVmNames, ",\n    "),
 		"FuncName":               data.name,
+		"SkipNotice":             "# skip-binary-test: needs external resources",
 	}
 
 	configText := templateFill(testAccVmAffinityRuleBase+testAccVmAffinityRuleOperation, params)
@@ -234,6 +235,7 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 	params["VirtualMachineIds"] = strings.Join(updateVmNames, ",\n    ")
 	params["Required"] = "false"
 	params["Enabled"] = "false"
+	params["SkipNotice"] = "# skip-binary-test: only for updates"
 	updateText := templateFill(testAccVmAffinityRuleBase+testAccVmAffinityRuleOperation, params)
 
 	debugPrintf("#[DEBUG] CREATION CONFIGURATION: %s", configText)
@@ -546,6 +548,7 @@ data "vcd_vapp_vm" "Test_EmptyVm3b" {
 // testAccVmAffinityRuleOperation is the dynamic part of the test
 // This template is filled for every affinity rule definition
 const testAccVmAffinityRuleOperation = `
+{{.SkipNotice}}
 resource "vcd_vm_affinity_rule" "{{.AffinityRuleIdentifier}}" {
 
   org      = "{{.Org}}"
