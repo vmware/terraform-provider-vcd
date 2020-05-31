@@ -1432,7 +1432,7 @@ type MediaSettings struct {
 
 // CpuResourceMhz from VM/VmSpecSection struct
 type CpuResourceMhz struct {
-	Configured  int64  `xml:"Configured`             // The amount of resource configured on the virtual machine.
+	Configured  int64  `xml:"Configured"`            // The amount of resource configured on the virtual machine.
 	Reservation *int64 `xml:"Reservation,omitempty"` // The amount of reservation of this resource on the underlying virtualization infrastructure.
 	Limit       *int64 `xml:"Limit,omitempty"`       // The limit for how much of this resource can be consumed on the underlying virtualization infrastructure. This is only valid when the resource allocation is not unlimited.
 	SharesLevel string `xml:"SharesLevel,omitempty"` //	Pre-determined relative priorities according to which the non-reserved portion of this resource is made available to the virtualized workload.
@@ -2719,3 +2719,28 @@ type CatalogRecord struct {
 }
 
 type AdminCatalogRecord CatalogRecord
+
+// VmAffinityRule defines an affinity (or anti-affinity) rule for a group of VmReferences`
+// https://code.vmware.com/apis/722/doc/doc/types/VmAffinityRuleType.html
+type VmAffinityRule struct {
+	XMLName         xml.Name         `xml:"VmAffinityRule"`
+	Xmlns           string           `xml:"xmlns,attr"`
+	HREF            string           `xml:"href,attr,omitempty"`
+	ID              string           `xml:"id,attr,omitempty"`
+	Name            string           `xml:"Name"`
+	OperationKey    string           `xml:"OperationKey,attr,omitempty"` // Optional unique identifier to support idempotent semantics for create and delete operations
+	IsEnabled       *bool            `xml:"IsEnabled"`                   // True if the affinity rule is enabled
+	IsMandatory     *bool            `xml:"IsMandatory"`                 // True if this affinity rule is mandatory. When a rule is mandatory, a host failover will not power on the VM if doing so would violate the rule
+	Polarity        string           `xml:"Polarity"`                    // The polarity of this rule. One of: Affinity, Anti-Affinity
+	VmReferences    []*VMs           `xml:"VmReferences"`                // A list of VmReferences under a specific VM affinity rule.
+	Link            []*Link          `xml:"Link,omitempty"`              //
+	VCloudExtension *VCloudExtension `xml:"VCloudExtension,omitempty"`   // An optional extension element that can contain an arbitrary number of elements and attributes
+}
+
+// VmAffinityRules defines a list of VmAffinityRule
+type VmAffinityRules struct {
+	HREF           string            `xml:"href,attr,omitempty"`
+	Type           string            `xml:"type,attr,omitempty"`
+	Link           *Link             `xml:"Link,omitempty"` //
+	VmAffinityRule []*VmAffinityRule `xml:"VmAffinityRule,omitempty"`
+}

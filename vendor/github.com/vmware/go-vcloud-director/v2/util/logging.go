@@ -23,6 +23,9 @@ const (
 	// Name of the environment variable that enables logging
 	envUseLog = "GOVCD_LOG"
 
+	// envOverwriteLog allows to overwrite file on every initialization
+	envOverwriteLog = "GOVCD_LOG_OVERWRITE"
+
 	// Name of the environment variable with the log file name
 	envLogFileName = "GOVCD_LOG_FILE"
 
@@ -60,6 +63,9 @@ var (
 	// activated by GOVCD_LOG
 	EnableLogging bool = false
 
+	// OverwriteLog specifies if log file should be overwritten on every run
+	OverwriteLog bool = false
+
 	// Enable logging of passwords
 	// activated by GOVCD_LOG_PASSWORDS
 	LogPasswords bool = false
@@ -94,8 +100,14 @@ var (
 )
 
 func newLogger(logpath string) *log.Logger {
-	// println("LogFile: " + logpath)
-	file, err := os.Create(logpath)
+	var err error
+	var file *os.File
+	if OverwriteLog {
+		file, err = os.OpenFile(logpath, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0640)
+	} else {
+		file, err = os.OpenFile(logpath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0640)
+	}
+
 	if err != nil {
 		fmt.Printf("error opening log file %s : %v", logpath, err)
 		os.Exit(1)
@@ -138,13 +150,36 @@ func SetLog() {
 	}
 }
 
-// Hides passwords that may be used in a request
+// hidePasswords hides passwords that may be used in a request
 func hidePasswords(in string, onScreen bool) string {
 	if !onScreen && LogPasswords {
 		return in
 	}
-	re := regexp.MustCompile(`("[^\"]*[Pp]assword"\s*:\s*)"[^\"]+"`)
-	return re.ReplaceAllString(in, `${1}"********"`)
+	var out string
+	re1 := regexp.MustCompile(`("[^\"]*[Pp]assword"\s*:\s*)"[^\"]+"`)
+	out = re1.ReplaceAllString(in, `${1}"********"`)
+
+	// Replace password in ADFS SAML request
+	re2 := regexp.MustCompile(`(\s*<o:Password.*ext">)(.*)(</o:Password>)`)
+	out = re2.ReplaceAllString(out, `${1}******${3}`)
+	return out
+}
+
+// hideTokens hides SAML auth response token
+func hideTokens(in string, onScreen bool) string {
+	if !onScreen && LogPasswords {
+		return in
+	}
+	var out string
+	// Filters out the below:
+	// Token data between <e:CipherValue> </e:CipherValue>
+	re1 := regexp.MustCompile(`(.*<e:CipherValue>)(.*)(</e:CipherValue>.*)`)
+	out = re1.ReplaceAllString(in, `${1}******${3}`)
+	// Token data between <xenc:CipherValue> </xenc:CipherValue>
+	re2 := regexp.MustCompile(`(.*<xenc:CipherValue>)(.*)(</xenc:CipherValue>.*)`)
+	out = re2.ReplaceAllString(out, `${1}******${3}`)
+
+	return out
 }
 
 // Determines whether a string is likely to contain binary data
@@ -181,6 +216,19 @@ func SanitizedHeader(inputHeader http.Header) http.Header {
 	}
 	var sanitizedHeader = make(http.Header)
 	for key, value := range inputHeader {
+		// Explicitly mask only token in SIGN token so that other details are not obfuscated
+		// Header format: SIGN token="`+base64GzippedSignToken+`",org="`+org+`"
+		if (key == "authorization" || key == "Authorization") && len(value) == 1 &&
+			strings.HasPrefix(value[0], "SIGN") && !LogPasswords {
+
+			re := regexp.MustCompile(`(SIGN token=")([^"]*)(.*)`)
+			out := re.ReplaceAllString(value[0], `${1}********${3}"`)
+
+			Logger.Printf("\t%s: %s\n", key, out)
+			// Do not perform any post processing on this header
+			continue
+		}
+
 		for _, sk := range sensitiveKeys {
 			if strings.EqualFold(sk, key) {
 				value = []string{"********"}
@@ -281,9 +329,9 @@ func ProcessResponseOutput(caller string, resp *http.Response, result string) {
 	dataSize := len(result)
 	outTextSize := len(outText)
 	if outTextSize != dataSize {
-		Logger.Printf("Response text: [%d -> %d] %s\n", dataSize, outTextSize, outText)
+		Logger.Printf("Response text: [%d -> %d] %s\n", dataSize, outTextSize, hideTokens(outText, false))
 	} else {
-		Logger.Printf("Response text: [%d] %s\n", dataSize, outText)
+		Logger.Printf("Response text: [%d] %s\n", dataSize, hideTokens(outText, false))
 	}
 }
 
@@ -338,6 +386,11 @@ func InitLogging() {
 	if EnableLogging || os.Getenv(envUseLog) != "" {
 		EnableLogging = true
 	}
+
+	if os.Getenv(envOverwriteLog) != "" {
+		OverwriteLog = true
+	}
+
 	SetLog()
 }
 
