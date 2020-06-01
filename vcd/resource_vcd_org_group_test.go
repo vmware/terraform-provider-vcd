@@ -18,7 +18,7 @@ import (
 // TestAccVcdOrgGroup tests INTEGRATED (LDAP) group management in Terraform.
 // In step 0 it spawns its own testing LDAP container with Terraform config held in `ldapSetup` var.
 // In step 1 PreConfig it uses SDK to configure LDAP settings in vCD and tests group management
-// LDAP will be unconfigured after test run
+// LDAP configuration will be removed after test run
 // More about LDAP testing container - https://github.com/rroemhild/docker-test-openldap
 //
 // Note. External network must be properly configured (including DNS records) and must be able to
