@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -95,8 +96,14 @@ func resourceVcdOrgGroupRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	group, err := adminOrg.GetGroupById(d.Id(), false)
+	if govcd.IsNotFound(err) {
+		log.Printf("error finding group for deletion %s: %s. Removing from state", d.Id(), err)
+		d.SetId("")
+		return nil
+	}
+
 	if err != nil {
-		return fmt.Errorf("error finding group for deletion %s: %s", group.Group.Name, err)
+		return fmt.Errorf("error finding group for deletion  %s: %s", d.Id(), err)
 	}
 
 	d.Set("name", group.Group.Name)
