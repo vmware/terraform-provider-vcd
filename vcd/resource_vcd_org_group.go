@@ -123,7 +123,7 @@ func resourceVcdOrgGroupUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	group, err := adminOrg.GetGroupById(d.Id(), false)
 	if err != nil {
-		return fmt.Errorf("error finding group for update %s: %s", group.Group.Name, err)
+		return fmt.Errorf("error finding group for update %s: %s", d.Id(), err)
 	}
 
 	// Role change
@@ -158,7 +158,7 @@ func resourceVcdOrgGroupDelete(d *schema.ResourceData, meta interface{}) error {
 
 	group, err := adminOrg.GetGroupById(d.Id(), false)
 	if err != nil {
-		return fmt.Errorf("error finding group for deletion %s: %s", group.Group.Name, err)
+		return fmt.Errorf("error finding group for deletion %s: %s", d.Id(), err)
 	}
 
 	err = group.Delete()

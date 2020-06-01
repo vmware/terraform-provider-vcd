@@ -29,19 +29,19 @@ func TestAccVcdOrgGroup(t *testing.T) {
 		t.Skip("TestAccVcdOrgGroup requires system admin privileges")
 		return
 	}
-
+	// LDAP is being configured using go-vcloud-director - binary test cannot be run
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 
-	// LDAP is being configured using go-vcloud-director - binary test cannot be run
 	var ldapSetupParams = StringMap{
 		"ExternalNetwork": testConfig.Networking.ExternalNetwork,
 		"GuestImage":      testConfig.VCD.Catalog.CatalogItem,
 		"CatalogName":     testConfig.VCD.Catalog.Name,
 	}
 	ldapSetupConfig := templateFill(ldapSetup, ldapSetupParams)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 0 (LDAP server configuration): %s", ldapSetupConfig)
 
 	role1 := govcd.OrgUserRoleOrganizationAdministrator
 	role2 := govcd.OrgUserRoleVappAuthor
@@ -56,11 +56,13 @@ func TestAccVcdOrgGroup(t *testing.T) {
 	}
 
 	groupConfigText := templateFill(testAccOrgGroup, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", groupConfigText)
 
 	params["FuncName"] = t.Name() + "-Step2"
 	params["RoleName"] = role2
 	params["Description"] = "Description2"
 	groupConfigText2 := templateFill(testAccOrgGroup, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", groupConfigText2)
 
 	nic0Ip := testCachedFieldValue{}
 
@@ -80,11 +82,17 @@ func TestAccVcdOrgGroup(t *testing.T) {
 		ldapConfig.configureOrgLdap()
 	}
 
-	// Deconfigure LDAP in the end of test
+	// Remove LDAP settings at the end of test
 	defer func() {
-		fmt.Printf("# Deconfiguring LDAP settings for Org '%s'\n", ldapConfig.org.AdminOrg.Name)
-		ldapConfig.org.LdapDisable()
+		fmt.Printf("# Removing LDAP settings for Org '%s'\n", ldapConfig.org.AdminOrg.Name)
+		err := ldapConfig.org.LdapDisable()
+		if err != nil {
+			ldapConfig.t.Errorf("error removing LDAP settings for Org '%s': %s", ldapConfig.org.AdminOrg.Name, err)
+		}
 	}()
+
+	// groupIdRegex is reused a few times in tests to match IDs
+	groupIdRegex := regexp.MustCompile(`^urn:vcloud:group:`)
 
 	resource.Test(t, resource.TestCase{
 		Providers: testAccProviders,
@@ -118,11 +126,11 @@ func TestAccVcdOrgGroup(t *testing.T) {
 				Config: ldapSetupConfig + groupConfigText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// sleepTester(),
-					resource.TestMatchResourceAttr("vcd_org_group.group1", "id", regexp.MustCompile(`^urn:vcloud:group:`)),
+					resource.TestMatchResourceAttr("vcd_org_group.group1", "id", groupIdRegex),
 					resource.TestCheckResourceAttr("vcd_org_group.group1", "name", "ship_crew"),
 					resource.TestCheckResourceAttr("vcd_org_group.group1", "role", role1),
 					resource.TestCheckResourceAttr("vcd_org_group.group1", "description", "Description1"),
-					resource.TestMatchResourceAttr("vcd_org_group.group2", "id", regexp.MustCompile(`^urn:vcloud:group:`)),
+					resource.TestMatchResourceAttr("vcd_org_group.group2", "id", groupIdRegex),
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "name", "admin_staff"),
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "role", role1),
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "description", "Description1"),
@@ -134,11 +142,11 @@ func TestAccVcdOrgGroup(t *testing.T) {
 				Config: ldapSetupConfig + groupConfigText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					// sleepTester(),
-					resource.TestMatchResourceAttr("vcd_org_group.group1", "id", regexp.MustCompile(`^urn:vcloud:group:`)),
+					resource.TestMatchResourceAttr("vcd_org_group.group1", "id", groupIdRegex),
 					resource.TestCheckResourceAttr("vcd_org_group.group1", "name", "ship_crew"),
 					resource.TestCheckResourceAttr("vcd_org_group.group1", "role", role2),
 					resource.TestCheckResourceAttr("vcd_org_group.group1", "description", "Description2"),
-					resource.TestMatchResourceAttr("vcd_org_group.group2", "id", regexp.MustCompile(`^urn:vcloud:group:`)),
+					resource.TestMatchResourceAttr("vcd_org_group.group2", "id", groupIdRegex),
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "name", "admin_staff"),
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "role", role2),
 					resource.TestCheckResourceAttr("vcd_org_group.group2", "description", "Description2"),
