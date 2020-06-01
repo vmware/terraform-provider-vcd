@@ -337,7 +337,7 @@ func (l *ldapConfigurator) orgConfigureLdap(ldapServerIp string) {
 		},
 	}
 
-	err := l.org.LdapConfigure(ldapSettings)
+	_, err := l.org.LdapConfigure(ldapSettings)
 	if err != nil {
 		fmt.Println(" Failed")
 		l.t.Errorf("failed configuring LDAP for Org '%s': %s", testConfig.VCD.Org, err)
