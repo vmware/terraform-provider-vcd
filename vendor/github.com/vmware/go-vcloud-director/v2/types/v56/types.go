@@ -2712,11 +2712,11 @@ type Group struct {
 	Href string `xml:"href,attr,omitempty"`
 	// Type holds mime type for group
 	Type string `xml:"type,attr"`
-	// Description is a read only field. It cannot be set or updated.
+	// Description sets description for group
 	Description string `xml:"Description"`
 	// Name of the group. Cannot be updated.
 	Name string `xml:"name,attr"`
-	// ProviderType - 'SAML'
+	// ProviderType - 'SAML', 'INTEGRATED'
 	ProviderType string `xml:"ProviderType"`
 	// Role - reference to existing role
 	Role *Reference `xml:"Role,omitempty"`
