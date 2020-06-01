@@ -18,9 +18,10 @@ func datasourceVcdCatalogItem() *schema.Resource {
 				Description: "catalog containing the item",
 			},
 			"name": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Name of the item. It is optional when a filter is provided",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "Name of the item. It is optional when a filter is provided",
+				ExactlyOneOf: []string{"name", "filter"},
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,

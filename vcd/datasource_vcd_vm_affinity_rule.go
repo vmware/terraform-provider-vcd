@@ -22,16 +22,15 @@ func datasourceVcdVmAffinityRule() *schema.Resource {
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
 			"name": &schema.Schema{
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"rule_id"},
-				Description:   "VM affinity rule name. Used to retrieve a rule only when the name is unique",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"name", "rule_id"},
+				Description:  "VM affinity rule name. Used to retrieve a rule only when the name is unique",
 			},
 			"rule_id": &schema.Schema{
-				Type:          schema.TypeString,
-				Optional:      true,
-				ConflictsWith: []string{"name"},
-				Description:   "VM affinity rule ID. It's the preferred way of identifying a rule",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "VM affinity rule ID. It's the preferred way of identifying a rule",
 			},
 			"polarity": &schema.Schema{
 				Type:        schema.TypeString,
