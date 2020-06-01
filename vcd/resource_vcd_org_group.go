@@ -97,13 +97,13 @@ func resourceVcdOrgGroupRead(d *schema.ResourceData, meta interface{}) error {
 
 	group, err := adminOrg.GetGroupById(d.Id(), false)
 	if govcd.IsNotFound(err) {
-		log.Printf("error finding group for deletion %s: %s. Removing from state", d.Id(), err)
+		log.Printf("error finding group %s: %s. Removing from state", d.Id(), err)
 		d.SetId("")
 		return nil
 	}
 
 	if err != nil {
-		return fmt.Errorf("error finding group for deletion  %s: %s", d.Id(), err)
+		return fmt.Errorf("error finding group %s: %s", d.Id(), err)
 	}
 
 	d.Set("name", group.Group.Name)
@@ -136,7 +136,7 @@ func resourceVcdOrgGroupUpdate(d *schema.ResourceData, meta interface{}) error {
 		group.Group.Role = role
 	}
 
-	// Description change
+	// vCD API and UI at the moment do not update description when provider_type=SAML.
 	if d.HasChange("description") {
 		group.Group.Description = d.Get("description").(string)
 	}
@@ -169,6 +169,12 @@ func resourceVcdOrgGroupDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
+// resourceVcdOrgGroupImport imports an org group into Terraform state
+// This function task is to get the data from vCD and fill the resource data container
+// Expects the d.ID() to be a path to the resource made of Org name + dot + OrgGroup name
+//
+// Example import path (id): my-org.my-group
+// Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func resourceVcdOrgGroupImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 2 {

@@ -18,7 +18,7 @@ Administrator` role or an equivalent set of rights. `SAML` or `LDAP` must be con
 does not support local groups and will return HTTP error 403 "This operation is denied." if selected
 `provider_type` is not configured.
 
-## Example Usage
+## Example Usage to add SAML group
 
 ```hcl
 resource "vcd_org_group" "org1" {
@@ -30,6 +30,19 @@ resource "vcd_org_group" "org1" {
 }
 ```
 
+## Example Usage to add LDAP group
+
+```hcl
+resource "vcd_org_group" "org1" {
+  org  = "org1"
+  
+  provider_type = "INTEGRATED"
+  name          = "ldap-group"
+  role          = "Organization Administrator"
+}
+```
+
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -40,7 +53,7 @@ The following arguments are supported:
 * `provider_type` - (Required) Identity provider type for this this group. One of `SAML` or
   `INTEGRATED`. **Note** `LDAP` must be configured to create `INTEGRATED` groups and names must
   match `LDAP` group names. If LDAP is not configured - it will return 403 errors.
-* `role` - (Required) The role of the user. Role names can be retrieved from the organization. Both built-in roles and
+* `role` - (Required) The role of the group. Role names can be retrieved from the organization. Both built-in roles and
   custom built can be used. The roles normally available are:
     * `Organization Administrator`
     * `Catalog Author`
@@ -61,8 +74,8 @@ The following attributes are exported on this resource:
 ~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
 configuration. [More information.][docs-import]
 
-An existing user can be [imported][docs-import] into this resource via supplying the full dot separated path for an
-org user. For example, using this structure, representing an existing user that was **not** created using Terraform:
+An existing group can be [imported][docs-import] into this resource via supplying the full dot separated path for an
+org group. For example, using this structure, representing an existing group that was **not** created using Terraform:
 
 ```hcl
 resource "vcd_org_group" "my-admin-group" {
@@ -73,7 +86,7 @@ resource "vcd_org_group" "my-admin-group" {
 }
 ```
 
-You can import such user into terraform state using this command
+You can import such group into terraform state using this command
 
 ```
 terraform import vcd_org_group.my-admin-group my-org.my-admin-group
