@@ -40,7 +40,7 @@ resource "vcd_vapp_firewall_rules" "vapp_fw" {
   default_action = "drop"
 
   rule {
-    description      = "drop-ftp-out"
+    name      = "drop-ftp-out"
     policy           = "drop"
     protocol         = "tcp"
     destination_port = "21"
@@ -50,7 +50,7 @@ resource "vcd_vapp_firewall_rules" "vapp_fw" {
   }
 
   rule {
-    description      = "allow-outbound"
+    name      = "allow-outbound"
     policy           = "allow"
     protocol         = "any"
     destination_port = "any"
@@ -78,10 +78,10 @@ The following arguments are supported:
 
 Each firewall rule supports the following attributes:
 
-* `description` - (Optional) Name of the firewall rule.
+* `name` - (Optional) Name of the firewall rule.
 * `enabled` - (Optional) `true` value will enable firewall rule.
 * `policy` - (Optional) Specifies what to do when this rule is matched. Either `allow` or `drop`.
-* `protocol` - (Optional) The protocol to match. One of `tcp`, `udp`, `icmp`, `any` or `tcp&udp`.
+* `protocol` - (Optional) The protocol to match. One of `tcp`, `udp`, `icmp`, `any` or `tcp&udp`. Default is `any`.
 * `destination_port` - (Optional) The destination port to match. Either a port number or `any`.
 * `destination_ip` - (Optional) The destination IP to match. Either an IP address, IP range or `any`.
 * `destination_vm_id` - (Optional) Destination VM identifier.

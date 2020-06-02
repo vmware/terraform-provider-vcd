@@ -12,10 +12,10 @@ import (
 
 func resourceVcdVappFirewallRules() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdVapFirewallRulesCreateUpdate,
+		Create: resourceVcdVapFirewallRulesCreate,
 		Delete: resourceVAppFirewallRulesDelete,
 		Read:   resourceVappFirewallRulesRead,
-		Update: resourceVcdVapFirewallRulesCreateUpdate,
+		Update: resourceVcdVapFirewallRulesUpdate,
 		Importer: &schema.ResourceImporter{
 			State: vappFirewallRuleImport,
 		},
@@ -65,7 +65,7 @@ func resourceVcdVappFirewallRules() *schema.Resource {
 				Optional: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
-						"description": &schema.Schema{
+						"name": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "Rule name",
@@ -85,18 +85,19 @@ func resourceVcdVappFirewallRules() *schema.Resource {
 						"protocol": &schema.Schema{
 							Type:         schema.TypeString,
 							Optional:     true,
+							Default:      "any",
 							ValidateFunc: validation.StringInSlice([]string{"any", "icmp", "tcp", "udp", "tcp&udp"}, true),
-							Description:  "Specify the protocols to which the rule should be applied. Possible one of: `any`, `icmp`, `tcp`, `udp`, `tcp&udp`",
+							Description:  "Specify the protocols to which the rule should be applied. One of: `any`, `icmp`, `tcp`, `udp`, `tcp&udp`",
 						},
 						"destination_port": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "Destination port range to which this rule applies.",
+							Description: "Destination port to which this rule applies.",
 						},
 						"destination_ip": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "Destination IP address to which the rule applies. A value of Any matches any IP address.",
+							Description: "Destination IP address to which the rule applies. A value of `Any` matches any IP address.",
 						},
 						"destination_vm_id": &schema.Schema{
 							Type:        schema.TypeString,
@@ -107,22 +108,22 @@ func resourceVcdVappFirewallRules() *schema.Resource {
 							Type:         schema.TypeString,
 							Optional:     true,
 							ValidateFunc: validation.StringInSlice([]string{"assigned", "NAT"}, false),
-							Description:  "The value can be one of: `assigned` - assigned internal IP be automatically choosen. `NAT`: NATed external IP will be automatically choosen.",
+							Description:  "The value can be one of: `assigned` - assigned internal IP will be automatically chosen. `NAT`: NATed external IP will be automatically chosen.",
 						},
 						"destination_vm_nic_id": &schema.Schema{
 							Type:        schema.TypeInt,
 							Optional:    true,
-							Description: "VM NIC ID to which this rule applies.",
+							Description: "Destination VM NIC ID to which this rule applies.",
 						},
 						"source_port": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "Source port range to which this rule applies.",
+							Description: "Source port to which this rule applies.",
 						},
 						"source_ip": &schema.Schema{
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: "Source IP address to which the rule applies. A value of Any matches any IP address.",
+							Description: "Source IP address to which the rule applies. A value of `Any` matches any IP address.",
 						},
 						"source_vm_id": &schema.Schema{
 							Type:        schema.TypeString,
@@ -133,12 +134,12 @@ func resourceVcdVappFirewallRules() *schema.Resource {
 							Type:         schema.TypeString,
 							Optional:     true,
 							ValidateFunc: validation.StringInSlice([]string{"assigned", "NAT"}, false),
-							Description:  "The value can be one of: `assigned` - assigned internal IP be automatically choosen. `NAT`: NATed external IP will be automatically choosen.",
+							Description:  "The value can be one of: `assigned` - assigned internal IP will be automatically chosen. `NAT`: NATed external IP will be automatically chosen.",
 						},
 						"source_vm_nic_id": &schema.Schema{
 							Type:        schema.TypeInt,
 							Optional:    true,
-							Description: "VM NIC ID to which this rule applies.",
+							Description: "Source VM NIC ID to which this rule applies.",
 						},
 						"enable_logging": {
 							Type:        schema.TypeBool,
@@ -152,19 +153,15 @@ func resourceVcdVappFirewallRules() *schema.Resource {
 		},
 	}
 }
+func resourceVcdVapFirewallRulesCreate(d *schema.ResourceData, meta interface{}) error {
+	return resourceVcdVapFirewallRulesUpdate(d, meta)
+}
 
-func resourceVcdVapFirewallRulesCreateUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdVapFirewallRulesUpdate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	vapp, err := getVapp(vcdClient, d, meta)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
-	}
-
-	vappId := d.Get("vapp_id").(string)
-	vapp, err := vdc.GetVAppById(vappId, false)
-	if err != nil {
-		return fmt.Errorf("error finding vApp. %s", err)
+		return err
 	}
 
 	vcdClient.lockParentVappWithName(d, vapp.VApp.Name)
@@ -180,7 +177,7 @@ func resourceVcdVapFirewallRulesCreateUpdate(d *schema.ResourceData, meta interf
 		d.Get("default_action").(string), d.Get("log_default_action").(bool))
 	if err != nil {
 		log.Printf("[INFO] Error setting firewall rules: %s", err)
-		return fmt.Errorf("error setting firewall rules: %#v", err)
+		return fmt.Errorf("error setting firewall rules: %s", err)
 	}
 
 	d.SetId(vappNetwork.ID)
@@ -188,18 +185,26 @@ func resourceVcdVapFirewallRulesCreateUpdate(d *schema.ResourceData, meta interf
 	return resourceVappFirewallRulesRead(d, meta)
 }
 
-func resourceVAppFirewallRulesDelete(d *schema.ResourceData, meta interface{}) error {
-	vcdClient := meta.(*VCDClient)
-
+func getVapp(vcdClient *VCDClient, d *schema.ResourceData, meta interface{}) (*govcd.VApp, error) {
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
 	vappId := d.Get("vapp_id").(string)
 	vapp, err := vdc.GetVAppById(vappId, false)
 	if err != nil {
-		return fmt.Errorf("error finding vApp. %s", err)
+		return nil, fmt.Errorf("error finding vApp. %s", err)
+	}
+
+	return vapp, nil
+}
+
+func resourceVAppFirewallRulesDelete(d *schema.ResourceData, meta interface{}) error {
+	vcdClient := meta.(*VCDClient)
+	vapp, err := getVapp(vcdClient, d, meta)
+	if err != nil {
+		return err
 	}
 
 	vcdClient.lockParentVappWithName(d, vapp.VApp.Name)
@@ -217,16 +222,9 @@ func resourceVAppFirewallRulesDelete(d *schema.ResourceData, meta interface{}) e
 
 func resourceVappFirewallRulesRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-
-	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	vapp, err := getVapp(vcdClient, d, meta)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
-	}
-
-	vappId := d.Get("vapp_id").(string)
-	vapp, err := vdc.GetVAppById(vappId, false)
-	if err != nil {
-		return fmt.Errorf("error finding vApp. %s", err)
+		return err
 	}
 
 	vappNetwork, err := vapp.GetVappNetworkById(d.Get("network_id").(string), false)
@@ -237,7 +235,7 @@ func resourceVappFirewallRulesRead(d *schema.ResourceData, meta interface{}) err
 	var rules []map[string]interface{}
 	for _, rule := range vappNetwork.Configuration.Features.FirewallService.FirewallRule {
 		singleRule := make(map[string]interface{})
-		singleRule["description"] = rule.Description
+		singleRule["name"] = rule.Description
 		singleRule["enabled"] = rule.IsEnabled
 		singleRule["policy"] = rule.Policy
 		singleRule["protocol"] = getProtocol(*rule.Protocols)
@@ -307,13 +305,11 @@ func expandVappFirewallRules(d *schema.ResourceData, vapp *govcd.VApp) ([]*types
 		rule := &types.FirewallRule{
 			IsEnabled:            configuredRule["enabled"].(bool),
 			MatchOnTranslate:     false,
-			Description:          configuredRule["description"].(string),
+			Description:          configuredRule["name"].(string),
 			Policy:               configuredRule["policy"].(string),
 			Protocols:            protocol,
-			Port:                 getNumericPort(configuredRule["destination_port"]),
 			DestinationPortRange: strings.ToLower(configuredRule["destination_port"].(string)),
 			DestinationIP:        strings.ToLower(configuredRule["destination_ip"].(string)),
-			SourcePort:           getNumericPort(configuredRule["source_port"]),
 			SourcePortRange:      strings.ToLower(configuredRule["source_port"].(string)),
 			SourceIP:             strings.ToLower(configuredRule["source_ip"].(string)),
 			EnableLogging:        configuredRule["enable_logging"].(bool),

@@ -17,10 +17,11 @@ func TestAccVcdVappFirewallRules(t *testing.T) {
 	}
 
 	var (
-		vmName1  = "TestAccVcdVappFirewallRulesVm1"
-		vmName2  = "TestAccVcdVappFirewallRulesVm2"
-		vmName3  = "TestAccVcdVappFirewallRulesVm3"
-		vappName = t.Name() + "_vapp"
+		vmName1         = "TestAccVcdVappFirewallRulesVm1"
+		vmName2         = "TestAccVcdVappFirewallRulesVm2"
+		vmName3         = "TestAccVcdVappFirewallRulesVm3"
+		vappName        = t.Name() + "_vapp"
+		vappNetworkName = "vapp-routed-net"
 	)
 
 	var params = StringMap{
@@ -30,10 +31,10 @@ func TestAccVcdVappFirewallRules(t *testing.T) {
 		"DefaultAction": "drop",
 		"ResourceName":  t.Name(),
 		"FuncName":      t.Name(),
-		"Description1":  "description1",
-		"Description2":  "description2",
-		"Description3":  "description3",
-		"Description4":  "description4",
+		"Name1":         "Name1",
+		"Name2":         "Name2",
+		"Name3":         "Name3",
+		"Name4":         "Name4",
 		"NetworkName":   "TestAccVcdVAppVmNet",
 		"VappName":      vappName,
 		"VmName1":       vmName1,
@@ -44,11 +45,13 @@ func TestAccVcdVappFirewallRules(t *testing.T) {
 	params["FuncName"] = t.Name() + "-step2"
 	configTextForUpdate := templateFill(testAccVcdVappFirewallRules_rules_forUpdate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configTextForUpdate)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
+	resourceName := "vcd_vapp_firewall_rules." + t.Name()
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
@@ -56,120 +59,127 @@ func TestAccVcdVappFirewallRules(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVappFirewallRulesExists("vcd_vapp_firewall_rules."+t.Name(), params["Description1"].(string)),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.0.enabled", "true"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.0.policy", "drop"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.0.protocol", "udp"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.0.destination_port", "21"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.0.destination_ip", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.0.source_port", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.0.source_ip", "10.10.0.0/24"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.0.enable_logging", "false"),
+					testAccCheckVcdVappFirewallRulesExists(resourceName, params["Name1"].(string)),
+					resource.TestCheckResourceAttr(resourceName, "rule.0.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceName, "rule.0.policy", "drop"),
+					resource.TestCheckResourceAttr(resourceName, "rule.0.protocol", "udp"),
+					resource.TestCheckResourceAttr(resourceName, "rule.0.destination_port", "21"),
+					resource.TestCheckResourceAttr(resourceName, "rule.0.destination_ip", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.0.source_port", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.0.source_ip", "10.10.0.0/24"),
+					resource.TestCheckResourceAttr(resourceName, "rule.0.enable_logging", "false"),
 
-					testAccCheckVcdVappFirewallRulesExists("vcd_vapp_firewall_rules."+t.Name(), params["Description2"].(string)),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.1.enabled", "true"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.1.policy", "allow"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.1.protocol", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.1.destination_port", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.1.destination_ip", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.1.source_port", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.1.source_ip", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.1.enable_logging", "false"),
+					testAccCheckVcdVappFirewallRulesExists(resourceName, params["Name2"].(string)),
+					resource.TestCheckResourceAttr(resourceName, "rule.1.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceName, "rule.1.policy", "allow"),
+					resource.TestCheckResourceAttr(resourceName, "rule.1.protocol", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.1.destination_port", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.1.destination_ip", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.1.source_port", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.1.source_ip", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.1.enable_logging", "false"),
 
-					testAccCheckVcdVappFirewallRulesExists("vcd_vapp_firewall_rules."+t.Name(), params["Description3"].(string)),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.2.enabled", "true"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.2.policy", "allow"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.2.protocol", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.2.destination_port", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.2.destination_vm_ip_type", "assigned"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.2.destination_vm_nic_id", "0"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.2.source_port", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.2.source_vm_nic_id", "0"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.2.source_vm_ip_type", "NAT"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.2.enable_logging", "false"),
+					testAccCheckVcdVappFirewallRulesExists(resourceName, params["Name3"].(string)),
+					resource.TestCheckResourceAttr(resourceName, "rule.2.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceName, "rule.2.policy", "allow"),
+					resource.TestCheckResourceAttr(resourceName, "rule.2.protocol", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.2.destination_port", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.2.destination_vm_ip_type", "assigned"),
+					resource.TestCheckResourceAttr(resourceName, "rule.2.destination_vm_nic_id", "0"),
+					resource.TestCheckResourceAttr(resourceName, "rule.2.source_port", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.2.source_vm_nic_id", "0"),
+					resource.TestCheckResourceAttr(resourceName, "rule.2.source_vm_ip_type", "NAT"),
+					resource.TestCheckResourceAttr(resourceName, "rule.2.enable_logging", "false"),
 
-					testAccCheckVcdVappFirewallRulesExists("vcd_vapp_firewall_rules."+t.Name(), params["Description4"].(string)),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.3.enabled", "false"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.3.policy", "drop"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.3.protocol", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.3.destination_port", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.3.destination_ip", "external"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.3.source_port", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.3.source_ip", "internal"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.3.enable_logging", "true"),
+					testAccCheckVcdVappFirewallRulesExists(resourceName, params["Name4"].(string)),
+					resource.TestCheckResourceAttr(resourceName, "rule.3.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceName, "rule.3.policy", "drop"),
+					resource.TestCheckResourceAttr(resourceName, "rule.3.protocol", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.3.destination_port", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.3.destination_ip", "external"),
+					resource.TestCheckResourceAttr(resourceName, "rule.3.source_port", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.3.source_ip", "internal"),
+					resource.TestCheckResourceAttr(resourceName, "rule.3.enable_logging", "true"),
 
-					testAccCheckVcdVappFirewallRulesExists("vcd_vapp_firewall_rules."+t.Name()+"2", params["Description1"].(string)),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name()+"2", "rule.0.enabled", "true"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name()+"2", "rule.0.policy", "drop"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name()+"2", "rule.0.protocol", "udp"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name()+"2", "rule.0.destination_port", "221"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name()+"2", "rule.0.destination_ip", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name()+"2", "rule.0.source_port", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name()+"2", "rule.0.source_ip", "10.10.0.10/24"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name()+"2", "rule.0.enable_logging", "false"),
+					testAccCheckVcdVappFirewallRulesExists(resourceName+"2", params["Name1"].(string)),
+					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.policy", "drop"),
+					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.protocol", "udp"),
+					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.destination_port", "221"),
+					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.destination_ip", "any"),
+					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.source_port", "any"),
+					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.source_ip", "10.10.0.10/24"),
+					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.enable_logging", "false"),
 				),
 			},
-			resource.TestStep{ // Step 2 - resource import
+			resource.TestStep{ // Step 1 - resource import
 				ResourceName:            "vcd_vapp_firewall_rules.imported",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateIdFunc:       importStateVappFirewallRuleObject(testConfig, vappName, "vapp-routed-net"),
+				ImportStateIdFunc:       importStateVappFirewallRuleObject(testConfig, vappName, vappNetworkName),
 				ImportStateVerifyIgnore: []string{"network_id", "org", "vdc"},
 			},
-			resource.TestStep{ // Step r - update
+			resource.TestStep{ // Step 2 - resource import by ID
+				ResourceName:            "vcd_vapp_firewall_rules.imported2",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateVappFirewallRuleById(testConfig, resourceName),
+				ImportStateVerifyIgnore: []string{"network_id", "org", "vdc"},
+			},
+			resource.TestStep{ // Step 3 - update
 				Config: configTextForUpdate,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVappFirewallRulesExists("vcd_vapp_firewall_rules."+t.Name(), params["Description1"].(string)),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.0.enabled", "true"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.0.policy", "drop"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.0.protocol", "udp"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.0.destination_port", "21"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.0.destination_ip", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.0.source_port", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.0.source_ip", "10.10.0.0/24"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.0.enable_logging", "false"),
+					testAccCheckVcdVappFirewallRulesExists(resourceName, params["Name1"].(string)),
+					resource.TestCheckResourceAttr(resourceName, "rule.0.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceName, "rule.0.policy", "drop"),
+					resource.TestCheckResourceAttr(resourceName, "rule.0.protocol", "udp"),
+					resource.TestCheckResourceAttr(resourceName, "rule.0.destination_port", "21"),
+					resource.TestCheckResourceAttr(resourceName, "rule.0.destination_ip", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.0.source_port", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.0.source_ip", "10.10.0.0/24"),
+					resource.TestCheckResourceAttr(resourceName, "rule.0.enable_logging", "false"),
 
-					testAccCheckVcdVappFirewallRulesExists("vcd_vapp_firewall_rules."+t.Name(), params["Description2"].(string)),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.1.enabled", "true"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.1.policy", "allow"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.1.protocol", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.1.destination_port", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.1.destination_ip", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.1.source_port", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.1.source_ip", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.1.enable_logging", "false"),
+					testAccCheckVcdVappFirewallRulesExists(resourceName, params["Name2"].(string)),
+					resource.TestCheckResourceAttr(resourceName, "rule.1.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceName, "rule.1.policy", "allow"),
+					resource.TestCheckResourceAttr(resourceName, "rule.1.protocol", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.1.destination_port", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.1.destination_ip", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.1.source_port", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.1.source_ip", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.1.enable_logging", "false"),
 
-					testAccCheckVcdVappFirewallRulesExists("vcd_vapp_firewall_rules."+t.Name(), params["Description4"].(string)),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.2.enabled", "false"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.2.policy", "drop"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.2.protocol", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.2.destination_port", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.2.destination_ip", "internal"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.2.source_port", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.2.source_ip", "external"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.2.enable_logging", "true"),
+					testAccCheckVcdVappFirewallRulesExists(resourceName, params["Name4"].(string)),
+					resource.TestCheckResourceAttr(resourceName, "rule.2.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceName, "rule.2.policy", "drop"),
+					resource.TestCheckResourceAttr(resourceName, "rule.2.protocol", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.2.destination_port", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.2.destination_ip", "internal"),
+					resource.TestCheckResourceAttr(resourceName, "rule.2.source_port", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.2.source_ip", "external"),
+					resource.TestCheckResourceAttr(resourceName, "rule.2.enable_logging", "true"),
 
-					testAccCheckVcdVappFirewallRulesExists("vcd_vapp_firewall_rules."+t.Name(), params["Description3"].(string)),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.3.enabled", "true"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.3.policy", "allow"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.3.protocol", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.3.destination_port", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.3.destination_vm_ip_type", "assigned"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.3.destination_vm_nic_id", "0"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.3.source_port", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.3.source_vm_nic_id", "0"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.3.source_vm_ip_type", "NAT"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name(), "rule.3.enable_logging", "false"),
+					testAccCheckVcdVappFirewallRulesExists(resourceName, params["Name3"].(string)),
+					resource.TestCheckResourceAttr(resourceName, "rule.3.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceName, "rule.3.policy", "allow"),
+					resource.TestCheckResourceAttr(resourceName, "rule.3.protocol", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.3.destination_port", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.3.destination_vm_ip_type", "assigned"),
+					resource.TestCheckResourceAttr(resourceName, "rule.3.destination_vm_nic_id", "0"),
+					resource.TestCheckResourceAttr(resourceName, "rule.3.source_port", "any"),
+					resource.TestCheckResourceAttr(resourceName, "rule.3.source_vm_nic_id", "0"),
+					resource.TestCheckResourceAttr(resourceName, "rule.3.source_vm_ip_type", "NAT"),
+					resource.TestCheckResourceAttr(resourceName, "rule.3.enable_logging", "false"),
 
-					testAccCheckVcdVappFirewallRulesExists("vcd_vapp_firewall_rules."+t.Name()+"2", params["Description1"].(string)),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name()+"2", "rule.0.enabled", "true"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name()+"2", "rule.0.policy", "drop"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name()+"2", "rule.0.protocol", "udp"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name()+"2", "rule.0.destination_port", "221"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name()+"2", "rule.0.destination_ip", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name()+"2", "rule.0.source_port", "any"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name()+"2", "rule.0.source_ip", "10.10.0.10/24"),
-					resource.TestCheckResourceAttr("vcd_vapp_firewall_rules."+t.Name()+"2", "rule.0.enable_logging", "false"),
+					testAccCheckVcdVappFirewallRulesExists(resourceName+"2", params["Name1"].(string)),
+					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.policy", "drop"),
+					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.protocol", "udp"),
+					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.destination_port", "221"),
+					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.destination_ip", "any"),
+					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.source_port", "any"),
+					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.source_ip", "10.10.0.10/24"),
+					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.enable_logging", "false"),
 				),
 			},
 		},
@@ -177,22 +187,44 @@ func TestAccVcdVappFirewallRules(t *testing.T) {
 
 }
 
-func importStateVappFirewallRuleObject(testConfig TestConfig, vappName, objectName string) resource.ImportStateIdFunc {
-	return func(*terraform.State) (string, error) {
-		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || vappName == "" || objectName == "" {
-			return "", fmt.Errorf("missing information to generate import path")
+func importStateVappFirewallRuleById(testConfig TestConfig, resourceName string) resource.ImportStateIdFunc {
+	return func(s *terraform.State) (string, error) {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return "", fmt.Errorf("not found: %s", resourceName)
+		}
+		vappId := rs.Primary.Attributes["vapp_id"]
+		objectId := rs.Primary.Attributes["network_id"]
+		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || vappId == "" || objectId == "" {
+			return "", fmt.Errorf("missing information to generate import path %s, %s, %s, %s", testConfig.VCD.Org, testConfig.VCD.Vdc, vappId, objectId)
 		}
 		return testConfig.VCD.Org +
 			ImportSeparator +
 			testConfig.VCD.Vdc +
 			ImportSeparator +
-			vappName +
+			vappId +
 			ImportSeparator +
-			objectName, nil
+			objectId, nil
 	}
 }
 
-func testAccCheckVcdVappFirewallRulesExists(n, description string) resource.TestCheckFunc {
+func importStateVappFirewallRuleObject(testConfig TestConfig, vappIdOrName, objectNameOrId string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+
+		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || vappIdOrName == "" || objectNameOrId == "" {
+			return "", fmt.Errorf("missing information to generate import path %s, %s, %s, %s", testConfig.VCD.Org, testConfig.VCD.Vdc, vappIdOrName, objectNameOrId)
+		}
+		return testConfig.VCD.Org +
+			ImportSeparator +
+			testConfig.VCD.Vdc +
+			ImportSeparator +
+			vappIdOrName +
+			ImportSeparator +
+			objectNameOrId, nil
+	}
+}
+
+func testAccCheckVcdVappFirewallRulesExists(n, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 
@@ -222,12 +254,12 @@ func testAccCheckVcdVappFirewallRulesExists(n, description string) resource.Test
 		}
 
 		for _, rule := range vapp_network.Configuration.Features.FirewallService.FirewallRule {
-			if rule.Description == description {
+			if rule.Description == name {
 				return nil
 			}
 		}
 
-		return fmt.Errorf("no rule with provided description is found")
+		return fmt.Errorf("no rule with provided name is found")
 	}
 }
 
@@ -333,7 +365,7 @@ resource "vcd_vapp_firewall_rules" "{{.ResourceName}}" {
   network_id     = vcd_vapp_network.vappRoutedNet.id
 
   rule {
-    description      = "{{.Description1}}"
+    name      = "{{.Name1}}"
     policy           = "drop"
     protocol         = "udp"
     destination_port = "21"
@@ -343,7 +375,7 @@ resource "vcd_vapp_firewall_rules" "{{.ResourceName}}" {
   }
 
   rule {
-    description      = "{{.Description2}}"
+    name      = "{{.Name2}}"
     policy           = "allow"
     protocol         = "any"
     destination_port = "any"
@@ -353,7 +385,7 @@ resource "vcd_vapp_firewall_rules" "{{.ResourceName}}" {
   }
 
   rule {
-    description            = "{{.Description3}}"
+    name            = "{{.Name3}}"
     policy                 = "allow"
     protocol               = "any"
     destination_vm_id      = vcd_vapp_vm.{{.VmName2}}.id
@@ -367,7 +399,7 @@ resource "vcd_vapp_firewall_rules" "{{.ResourceName}}" {
   }
 
   rule {
-    description      = "{{.Description4}}"
+    name      = "{{.Name4}}"
     enabled          = false
     policy           = "drop"
     protocol         = "any"
@@ -387,7 +419,7 @@ resource "vcd_vapp_firewall_rules" "{{.ResourceName}}2" {
   network_id     = vcd_vapp_org_network.vappAttachedNet.id
 
   rule {
-    description      = "{{.Description1}}"
+    name      = "{{.Name1}}"
     policy           = "drop"
     protocol         = "udp"
     destination_port = "221"
@@ -407,7 +439,7 @@ resource "vcd_vapp_firewall_rules" "{{.ResourceName}}" {
   network_id     = vcd_vapp_network.vappRoutedNet.id
 
   rule {
-    description      = "{{.Description1}}"
+    name      = "{{.Name1}}"
     policy           = "drop"
     protocol         = "udp"
     destination_port = "21"
@@ -417,7 +449,7 @@ resource "vcd_vapp_firewall_rules" "{{.ResourceName}}" {
   }
 
   rule {
-    description      = "{{.Description2}}"
+    name      = "{{.Name2}}"
     policy           = "allow"
     protocol         = "any"
     destination_port = "any"
@@ -427,7 +459,7 @@ resource "vcd_vapp_firewall_rules" "{{.ResourceName}}" {
   }
 
   rule {
-    description      = "{{.Description4}}"
+    name      = "{{.Name4}}"
     enabled          = false
     policy           = "drop"
     protocol         = "any"
@@ -439,7 +471,7 @@ resource "vcd_vapp_firewall_rules" "{{.ResourceName}}" {
   }
 
   rule {
-    description            = "{{.Description3}}"
+    name            = "{{.Name3}}"
     policy                 = "allow"
     protocol               = "any"
     destination_vm_id      = vcd_vapp_vm.{{.VmName2}}.id
@@ -461,7 +493,7 @@ resource "vcd_vapp_firewall_rules" "{{.ResourceName}}2" {
   network_id     = vcd_vapp_org_network.vappAttachedNet.id
 
   rule {
-    description      = "{{.Description1}}"
+    name      = "{{.Name1}}"
     policy           = "drop"
     protocol         = "udp"
     destination_port = "221"
