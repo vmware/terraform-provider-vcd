@@ -3,10 +3,12 @@
 package vcd
 
 import (
+	"bytes"
 	"fmt"
 	"net"
 	"regexp"
 	"testing"
+	"text/template"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
@@ -35,12 +37,21 @@ func TestAccVcdOrgGroup(t *testing.T) {
 		return
 	}
 
-	var ldapSetupParams = StringMap{
-		"ExternalNetwork": testConfig.Networking.ExternalNetwork,
-		"GuestImage":      testConfig.VCD.Catalog.CatalogItem,
-		"CatalogName":     testConfig.VCD.Catalog.Name,
+	ldapConfigParams := struct {
+		ExternalNetwork string
+		GuestImage      string
+		CatalogName     string
+	}{
+		ExternalNetwork: testConfig.Networking.ExternalNetwork,
+		GuestImage:      testConfig.VCD.Catalog.CatalogItem,
+		CatalogName:     testConfig.VCD.Catalog.Name,
 	}
-	ldapSetupConfig := templateFill(ldapSetup, ldapSetupParams)
+	// getLdapSetupTemplate does not use regular templateFill because this part is used for
+	// automated LDAP configuration setup
+	ldapSetupConfig, err := getLdapSetupTemplate(ldapSetup, ldapConfigParams)
+	if err != nil {
+		t.Errorf("failed processing LDAP setup template: %s", err)
+	}
 	debugPrintf("#[DEBUG] CONFIGURATION for step 0 (LDAP server configuration): %s", ldapSetupConfig)
 
 	role1 := govcd.OrgUserRoleOrganizationAdministrator
@@ -244,6 +255,21 @@ resource "vcd_vapp_vm" "ldap-container" {
   }
 }
 `
+
+// getLdapSetupTemplate
+func getLdapSetupTemplate(templateText string, params interface{}) (string, error) {
+	var ldapSetupCfg bytes.Buffer
+	tmpl, err := template.New("test").Parse(templateText)
+	if err != nil {
+		panic(err)
+	}
+	err = tmpl.Execute(&ldapSetupCfg, params)
+	if err != nil {
+		return "", err
+	}
+
+	return ldapSetupCfg.String(), nil
+}
 
 // isTcpPortOpen checks if remote TCP port is open or closed every 8 seconds until timeout is
 // reached
