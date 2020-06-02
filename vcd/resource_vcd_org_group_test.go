@@ -303,7 +303,10 @@ func (l *ldapConfigurator) configureOrgLdap() {
 
 	// Step 1 - ensure LDAP is already UP and serving connections on TCP 389
 	fmt.Printf("# Waiting until LDAP responds on %s:389 :", l.nic0Ip.fieldValue)
-	_ = isTcpPortOpen(l.nic0Ip.fieldValue, "389", testConfig.Provider.MaxRetryTimeout)
+	isPortOpen := isTcpPortOpen(l.nic0Ip.fieldValue, "389", testConfig.Provider.MaxRetryTimeout)
+	if !isPortOpen {
+		l.t.Error("error waiting for LDAP to respond")
+	}
 
 	// Step 2 - configure LDAP
 	l.orgConfigureLdap(l.nic0Ip.fieldValue)
