@@ -11,7 +11,7 @@ description: |-
 Provides a vCloud Director vApp Firewall resource. This can be used to create,
 modify, and delete firewall settings and rules in a [vApp network](/docs/providers/vcd/r/vapp_network.html).
 
-!> **Warning:** Using this resource overrides any existing firewall rules on vApp network.
+!> **Warning:** Using this resource overrides any existing firewall rules on vApp network. It's recommended to have only one resource per vApp. 
 
 ## Example Usage
 
@@ -65,8 +65,8 @@ resource "vcd_vapp_firewall_rules" "vapp_fw" {
 
 The following arguments are supported:
 
-* `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations.
-* `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level.
+* `org` - The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations.
+* `vdc` - The name of VDC to use, optional if defined at provider level.
 * `vapp_id` - (Required) The identifier of [vApp](/docs/providers/vcd/r/vapp.html).
 * `network_id` - (Required) The identifier of [vApp network](/docs/providers/vcd/r/vapp_network.html).
 * `default_action` - (Required) Either 'allow' or 'drop'. Specifies what to do should none of the rules match.
@@ -79,7 +79,7 @@ The following arguments are supported:
 Each firewall rule supports the following attributes:
 
 * `name` - (Optional) Name of the firewall rule.
-* `enabled` - (Optional) `true` value will enable firewall rule.
+* `enabled` - (Optional) `true` value will enable firewall rule. Default is `true`.
 * `policy` - (Optional) Specifies what to do when this rule is matched. Either `allow` or `drop`.
 * `protocol` - (Optional) The protocol to match. One of `tcp`, `udp`, `icmp`, `any` or `tcp&udp`. Default is `any`.
 * `destination_port` - (Optional) The destination port to match. Either a port number or `any`.

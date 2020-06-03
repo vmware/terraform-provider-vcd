@@ -169,7 +169,7 @@ func (cli *VCDClient) unlockEdgeGateway(d *schema.ResourceData) {
 	vcdMutexKV.Unlock(key)
 }
 
-// function lockParentVappWithName locks using provided vappName.
+// lockParentVappWithName locks using provided vappName.
 // Parent means the resource belongs to the vApp being locked
 func (cli *VCDClient) lockParentVappWithName(d *schema.ResourceData, vappName string) {
 	if vappName == "" {
