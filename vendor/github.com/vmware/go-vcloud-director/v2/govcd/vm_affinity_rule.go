@@ -21,9 +21,9 @@ func NewVmAffinityRule(cli *Client) *VmAffinityRule {
 	}
 }
 
-// correctPolarity validates the polarity passed as a string
+// validPolarity validates the polarity passed as a string
 // Accepted values are only 'Affinity' and 'Anti-Affinity'
-func correctPolarity(polarity string) bool {
+func validPolarity(polarity string) bool {
 	return polarity == types.PolarityAffinity || polarity == types.PolarityAntiAffinity
 }
 
@@ -32,14 +32,7 @@ func (vdc *Vdc) GetAllVmAffinityRuleList() ([]*types.VmAffinityRule, error) {
 
 	affinityRules := new(types.VmAffinityRules)
 
-	href := ""
-
-	for _, link := range vdc.Vdc.Link {
-		if link.Rel == "down" && link.Type == "application/vnd.vmware.vcloud.vmaffinityrules+xml" {
-			href = link.HREF
-			break
-		}
-	}
+	href := vdc.getLinkHref("down", "application/vnd.vmware.vcloud.vmaffinityrules+xml")
 	if href == "" {
 		return nil, fmt.Errorf("no link with VM affinity rule found in VDC %s", vdc.Vdc.Name)
 	}
@@ -90,7 +83,6 @@ func (vdc *Vdc) GetVmAffinityRuleByHref(href string) (*VmAffinityRule, error) {
 		return nil, err
 	}
 
-	//fmt.Printf("<<<%# v>>>\n",pretty.Formatter(affinityRule.VmAffinityRule))
 	return affinityRule, nil
 }
 
@@ -158,6 +150,15 @@ func (vdc *Vdc) GetVmAffinityRuleByNameOrId(identifier string) (*VmAffinityRule,
 	return entity.(*VmAffinityRule), err
 }
 
+// validateAffinityRule checks that a VM affinity rule has all the needed properties
+// If checkVMs is true, then the function checks that all VMs in the internal list exist.
+// The usual workflow is:
+// 1. validation without VM checking
+// 2. creation or update
+// 3. if no error -> end
+// 4. if error, validation with VM checks
+//    4a. if validation error, it was a VM issue: return combined original error + validation error
+//    4b. if no validation error, the failure was due to something else: return only original error
 func validateAffinityRule(client *Client, affinityRuleDef *types.VmAffinityRule, checkVMs bool) (*types.VmAffinityRule, error) {
 	if affinityRuleDef == nil {
 		return nil, fmt.Errorf("empty definition given for a VM affinity rule")
@@ -168,12 +169,9 @@ func validateAffinityRule(client *Client, affinityRuleDef *types.VmAffinityRule,
 	if affinityRuleDef.Polarity == "" {
 		return nil, fmt.Errorf("no polarity given for a VM affinity rule")
 	}
-	if !correctPolarity(affinityRuleDef.Polarity) {
+	if !validPolarity(affinityRuleDef.Polarity) {
 		return nil, fmt.Errorf("illegal polarity given (%s) for a VM affinity rule", affinityRuleDef.Polarity)
 	}
-	//if len(affinityRuleDef.VmReferences) == 0 || len (affinityRuleDef.VmReferences[0].VMReference) <2 {
-	//	return nil, fmt.Errorf("at least 2 VMs should be given for a VM Affinity Rule")
-	//}
 	// Ensure the VMs in the list are different
 	var seenVms = make(map[string]bool)
 	var allVmMap = make(map[string]bool)
@@ -225,6 +223,7 @@ func validateAffinityRule(client *Client, affinityRuleDef *types.VmAffinityRule,
 	return affinityRuleDef, nil
 }
 
+// CreateVmAffinityRuleAsync creates a new VM affinity rule, and returns a task that handles the operation
 func (vdc *Vdc) CreateVmAffinityRuleAsync(affinityRuleDef *types.VmAffinityRule) (Task, error) {
 
 	var err error
@@ -236,13 +235,7 @@ func (vdc *Vdc) CreateVmAffinityRuleAsync(affinityRuleDef *types.VmAffinityRule)
 
 	affinityRuleDef.Xmlns = types.XMLNamespaceVCloud
 
-	href := ""
-	for _, link := range vdc.Vdc.Link {
-		if link.Rel == "add" && link.Type == "application/vnd.vmware.vcloud.vmaffinityrule+xml" {
-			href = link.HREF
-			break
-		}
-	}
+	href := vdc.getLinkHref("add", "application/vnd.vmware.vcloud.vmaffinityrule+xml")
 	if href == "" {
 		return Task{}, fmt.Errorf("no link with VM affinity rule found in VDC %s", vdc.Vdc.Name)
 	}
@@ -264,6 +257,7 @@ func (vdc *Vdc) CreateVmAffinityRuleAsync(affinityRuleDef *types.VmAffinityRule)
 	return task, err
 }
 
+// CreateVmAffinityRule is a wrap around CreateVmAffinityRuleAsync that handles the task and returns the finished object
 func (vdc *Vdc) CreateVmAffinityRule(affinityRuleDef *types.VmAffinityRule) (*VmAffinityRule, error) {
 
 	task, err := vdc.CreateVmAffinityRuleAsync(affinityRuleDef)
@@ -286,6 +280,7 @@ func (vdc *Vdc) CreateVmAffinityRule(affinityRuleDef *types.VmAffinityRule) (*Vm
 	return vmAffinityRule, nil
 }
 
+// Delete removes a VM affinity rule from vCD
 func (vmar *VmAffinityRule) Delete() error {
 
 	if vmar == nil || vmar.VmAffinityRule == nil {
@@ -297,12 +292,9 @@ func (vmar *VmAffinityRule) Delete() error {
 	}
 
 	deleteHref := vmar.VmAffinityRule.HREF
-	if vmar.VmAffinityRule.Link != nil {
-		for _, link := range vmar.VmAffinityRule.Link {
-			if link.Rel == "remove" {
-				deleteHref = link.HREF
-			}
-		}
+	linkHref := vmar.getLinkHref("remove")
+	if linkHref != "" {
+		deleteHref = linkHref
 	}
 
 	deleteTask, err := vmar.client.ExecuteTaskRequest(deleteHref, http.MethodDelete,
@@ -313,6 +305,20 @@ func (vmar *VmAffinityRule) Delete() error {
 	return deleteTask.WaitTaskCompletion()
 }
 
+// getLinkHref returns an HREF for a given value of Rel
+func (vmar *VmAffinityRule) getLinkHref(rel string) string {
+	if vmar.VmAffinityRule.Link != nil {
+		for _, link := range vmar.VmAffinityRule.Link {
+			if link.Rel == rel {
+				return link.HREF
+			}
+		}
+	}
+	return ""
+}
+
+// Update modifies a VM affinity rule using as input
+// the entity's internal data.
 func (vmar *VmAffinityRule) Update() error {
 	var err error
 	var affinityRuleDef *types.VmAffinityRule
@@ -332,12 +338,9 @@ func (vmar *VmAffinityRule) Update() error {
 	vmar.VmAffinityRule = affinityRuleDef
 
 	updateRef := vmar.VmAffinityRule.HREF
-	if vmar.VmAffinityRule.Link != nil {
-		for _, link := range vmar.VmAffinityRule.Link {
-			if link.Rel == "edit" {
-				updateRef = link.HREF
-			}
-		}
+	linkHref := vmar.getLinkHref("edit")
+	if linkHref != "" {
+		updateRef = linkHref
 	}
 
 	vmar.VmAffinityRule.Link = nil
@@ -363,6 +366,7 @@ func (vmar *VmAffinityRule) Update() error {
 	return vmar.Refresh()
 }
 
+// Refresh gets a fresh copy of the VM affinity rule from vCD
 func (vmar *VmAffinityRule) Refresh() error {
 	var newVmAffinityRule types.VmAffinityRule
 	_, err := vmar.client.ExecuteRequest(vmar.VmAffinityRule.HREF, http.MethodGet,
@@ -374,6 +378,7 @@ func (vmar *VmAffinityRule) Refresh() error {
 	return nil
 }
 
+// SetEnabled is a shortcut to update only the IsEnabled property of a VM affinity rule
 func (vmar *VmAffinityRule) SetEnabled(value bool) error {
 	if vmar.VmAffinityRule.IsEnabled != nil {
 		currentValue := *vmar.VmAffinityRule.IsEnabled
@@ -385,6 +390,7 @@ func (vmar *VmAffinityRule) SetEnabled(value bool) error {
 	return vmar.Update()
 }
 
+// SetMandatory is a shortcut to update only the IsMandatory property of a VM affinity rule
 func (vmar *VmAffinityRule) SetMandatory(value bool) error {
 	if vmar.VmAffinityRule.IsMandatory != nil {
 		currentValue := *vmar.VmAffinityRule.IsMandatory

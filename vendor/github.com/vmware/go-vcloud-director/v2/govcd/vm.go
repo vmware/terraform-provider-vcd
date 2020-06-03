@@ -1492,7 +1492,6 @@ func (client *Client) QueryVmList(filter types.VmQueryFilter) ([]*types.QueryRes
 		params["filter"] = filter.String()
 	}
 	vmResult, err := client.cumulativeQuery(queryType, nil, params)
-	//vmResult, err := client.queryWithMetadataFields(queryType, nil, params, []string{"noSuchKey"}, false)
 	if err != nil {
 		return nil, fmt.Errorf("error getting VM list : %s", err)
 	}
