@@ -140,7 +140,7 @@ func (vdc *Vdc) GetVmAffinityRuleByNameOrId(identifier string) (*VmAffinityRule,
 		if len(list) == 1 {
 			return list[0], nil
 		}
-		return nil, fmt.Errorf("more than item matches the name '%s'", name)
+		return nil, fmt.Errorf("more than one item matches the name '%s'", name)
 	}
 	getById := func(id string, refresh bool) (interface{}, error) { return vdc.GetVmAffinityRuleById(id) }
 	entity, err := getEntityByNameOrId(getByName, getById, identifier, false)
