@@ -344,6 +344,10 @@ func testAccCheckVcdVmAffinityRuleExists(resourceName string, orgName, vdcName s
 // The 'rule' object was created when checking for creation
 func testAccCheckVmAffinityRuleDestroy(rule *govcd.VmAffinityRule, orgName, vdcName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
+
+		if rule == nil {
+			return fmt.Errorf("affinity rule passed to destroy check is null")
+		}
 		conn := testAccProvider.Meta().(*VCDClient)
 		org, err := conn.VCDClient.GetAdminOrgByName(orgName)
 		if err != nil {

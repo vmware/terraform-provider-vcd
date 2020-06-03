@@ -156,10 +156,9 @@ func getVmAffinityRule(d *schema.ResourceData, meta interface{}) (*govcd.VmAffin
 
 	// If ID is set, we use it
 	identifier := d.Id()
-	var vmAffinityRule *govcd.VmAffinityRule
 
 	// The method variable stores the information about how we found the rule, for logging purposes
-	method := "[undetected]"
+	method := "id"
 
 	// The secondary method of retrieval is from the internal 'rule_id' field
 	if identifier == "" {
@@ -167,46 +166,30 @@ func getVmAffinityRule(d *schema.ResourceData, meta interface{}) (*govcd.VmAffin
 		method = "rule_id"
 	}
 
-	// If the above methods failed, we try to retrieve by name
+	// The last method of retrieval is by name
 	if identifier == "" {
-		// Attempt retrieving the rule by name
 		if name == "" {
 			return nil, fmt.Errorf("both name and ID are empty")
 		}
-		ruleList, err := vdc.GetVmAffinityRulesByName(name, "")
-		if err != nil {
-			return nil, err
-		}
-
-		if len(ruleList) == 0 {
-			return nil, fmt.Errorf("no rule retrieved with name %s: %s", name, govcd.ErrorEntityNotFound)
-		}
-
-		// We need to account for possible duplicates
-		if len(ruleList) > 1 {
-			return nil, fmt.Errorf("no ID provided and more than one rule retrieved with name %s", name)
-		}
-		vmAffinityRule = ruleList[0]
+		identifier = name
 		method = "name"
-	} else {
-		vmAffinityRule, err = vdc.GetVmAffinityRuleById(identifier)
-		if method == "[undetected]" {
-			method = "id"
-		}
-		if err != nil {
-			return nil, fmt.Errorf("error retrieving Rule by ID %s (%s)", identifier, method)
-		}
+	}
+
+	vmAffinityRule, err := vdc.GetVmAffinityRuleByNameOrId(identifier)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving rule by %s (%s): %s", method, identifier, err)
 	}
 
 	util.Logger.Printf("[TRACE] [get vm affinity rule] Retrieved by %s\n", method)
 	return vmAffinityRule, nil
 }
 
+// resourceVcdVmAffinityRuleRead reads a resource VM affinity rule
 func resourceVcdVmAffinityRuleRead(d *schema.ResourceData, meta interface{}) error {
 	return genericVcdVmAffinityRuleRead(d, meta, "resource")
 }
 
-// genericVcdVmAffinityRuleRead retrieve an affinity rule using the resource data
+// genericVcdVmAffinityRuleRead retrieve an affinity rule using the resource or data source data
 func genericVcdVmAffinityRuleRead(d *schema.ResourceData, meta interface{}, origin string) error {
 	util.Logger.Printf("[TRACE] VM affinity rule Read")
 
@@ -273,6 +256,7 @@ func resourceVcdVmAffinityRuleUpdate(d *schema.ResourceData, meta interface{}) e
 	return resourceVcdVmAffinityRuleRead(d, meta)
 }
 
+// resourceVcdVmAffinityRuleDelete removes a VM affinity rule
 func resourceVcdVmAffinityRuleDelete(d *schema.ResourceData, meta interface{}) error {
 	util.Logger.Printf("[TRACE] VM affinity rule Delete")
 	vmAffinityRule, err := getVmAffinityRule(d, meta)

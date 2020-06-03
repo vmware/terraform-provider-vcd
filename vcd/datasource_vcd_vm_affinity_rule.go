@@ -60,6 +60,7 @@ func datasourceVcdVmAffinityRule() *schema.Resource {
 	}
 }
 
+// datasourceVcdVmAffinityRuleRead reads a data source VM affinity rule
 func datasourceVcdVmAffinityRuleRead(d *schema.ResourceData, meta interface{}) error {
 	return genericVcdVmAffinityRuleRead(d, meta, "datasource")
 }
