@@ -54,6 +54,7 @@ func TestAccVcdVmAffinityRule(t *testing.T) {
 	vappList, err := makeVappGroup("TestAccVcdVmAffinityRule", vdc, vappDefinition)
 	if err != nil {
 		t.Errorf("error creating vApp collection: %s", err)
+		return
 	}
 
 	defer func() {
@@ -434,7 +435,7 @@ func makeEmptyVm(vapp *govcd.VApp, name string) (*govcd.VM, error) {
 	requestDetails := &types.RecomposeVAppParamsForEmptyVm{
 		CreateItem: &types.CreateItem{
 			Name:                      name,
-			NetworkConnectionSection:  nil,
+			NetworkConnectionSection:  &types.NetworkConnectionSection{},
 			Description:               "created by makeEmptyVm",
 			GuestCustomizationSection: nil,
 			VmSpecSection: &types.VmSpecSection{
@@ -474,6 +475,22 @@ func makeVappGroup(label string, vdc *govcd.Vdc, groupDefinition map[string][]st
 
 		existingVapp, err := vdc.GetVAppByName(vappName, false)
 		if err == nil {
+
+			if existingVapp.VApp.Children == nil || len(existingVapp.VApp.Children.VM) == 0 {
+				return nil, fmt.Errorf("found vApp %s but without VMs", vappName)
+			}
+			foundVms := 0
+			for _, vmName := range vmNames {
+				for _, existingVM := range existingVapp.VApp.Children.VM {
+					if existingVM.Name == vmName {
+						foundVms++
+					}
+				}
+			}
+			if foundVms < 2 {
+				return nil, fmt.Errorf("found vApp %s but with %d VMs instead of 2 ", vappName, foundVms)
+			}
+
 			vappList = append(vappList, existingVapp)
 			if vcdTestVerbose {
 				fmt.Printf("Using existing vApp %s\n", vappName)
