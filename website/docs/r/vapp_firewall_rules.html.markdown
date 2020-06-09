@@ -35,12 +35,12 @@ resource "vcd_vapp_network" "vapp-net" {
 }
 
 resource "vcd_vapp_firewall_rules" "vapp_fw" {
-  vapp_id        = vcd_vapp.TestAccVcdVAppForInsert.id
+  vapp_id        = vcd_vapp.web.id
   network_id     = vcd_vapp_network.vapp-net.id
   default_action = "drop"
 
   rule {
-    name      = "drop-ftp-out"
+    name             = "drop-ftp-out"
     policy           = "drop"
     protocol         = "tcp"
     destination_port = "21"
@@ -50,7 +50,7 @@ resource "vcd_vapp_firewall_rules" "vapp_fw" {
   }
 
   rule {
-    name      = "allow-outbound"
+    name             = "allow-outbound"
     policy           = "allow"
     protocol         = "any"
     destination_port = "any"

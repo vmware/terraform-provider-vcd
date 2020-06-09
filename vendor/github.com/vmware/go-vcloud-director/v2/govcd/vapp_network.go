@@ -11,7 +11,8 @@ import (
 	"net/http"
 )
 
-// UpdateNetworkFirewallRules updates vApp networks firewall rules.
+// UpdateNetworkFirewallRules updates vApp networks firewall rules. It will overwrite existing ones as there is
+// no 100 % way identify them separately.
 // Returns pointer to types.VAppNetwork or error
 func (vapp *VApp) UpdateNetworkFirewallRules(networkId string, firewallRules []*types.FirewallRule, defaultAction string, logDefaultAction bool) (*types.VAppNetwork, error) {
 	task, err := vapp.UpdateNetworkFirewallRulesAsync(networkId, firewallRules, defaultAction, logDefaultAction)
@@ -26,7 +27,8 @@ func (vapp *VApp) UpdateNetworkFirewallRules(networkId string, firewallRules []*
 	return vapp.GetVappNetworkById(networkId, false)
 }
 
-// UpdateNetworkFirewallRulesAsync asynchronously updates vApp networks firewall rules.
+// UpdateNetworkFirewallRulesAsync asynchronously updates vApp networks firewall rules. It will overwrite existing ones
+// as there is no 100 % way identify them separately.
 // Returns task or error
 func (vapp *VApp) UpdateNetworkFirewallRulesAsync(networkId string, firewallRules []*types.FirewallRule, defaultAction string, logDefaultAction bool) (Task, error) {
 	util.Logger.Printf("[TRACE] UpdateNetworkFirewallRulesAsync with values: id: %s and firewallServiceConfiguration: %#v", networkId, firewallRules)
@@ -41,6 +43,8 @@ func (vapp *VApp) UpdateNetworkFirewallRulesAsync(networkId string, firewallRule
 	}
 	networkToUpdate.Xmlns = types.XMLNamespaceVCloud
 
+	// If API didn't return Firewall service XML part, that means vApp network isn't connected to org network or not fenced.
+	// In other words there isn't firewall when you connected directly or isolated.
 	if networkToUpdate.Configuration.Features.FirewallService == nil {
 		return Task{}, fmt.Errorf("provided network isn't connecd to org network or isn't fenced")
 	}
@@ -60,7 +64,7 @@ func (vapp *VApp) UpdateNetworkFirewallRulesAsync(networkId string, firewallRule
 // GetVappNetworkById returns a VApp network reference if the vApp network ID matches an existing one.
 // If no valid VApp network is found, it returns a nil VApp network reference and an error
 func (vapp *VApp) GetVappNetworkById(id string, refresh bool) (*types.VAppNetwork, error) {
-	util.Logger.Printf("[TRACE] [GetVappNetworkById] getting vApp Network: %s", id)
+	util.Logger.Printf("[TRACE] [GetVappNetworkById] getting vApp Network: %s and refresh %t", id, refresh)
 
 	if refresh {
 		err := vapp.Refresh()
@@ -76,6 +80,10 @@ func (vapp *VApp) GetVappNetworkById(id string, refresh bool) (*types.VAppNetwor
 
 	util.Logger.Printf("[TRACE] Looking for networks: %s --- %d", id, len(vapp.VApp.NetworkConfigSection.NetworkConfig))
 	for _, vappNetwork := range vapp.VApp.NetworkConfigSection.NetworkConfig {
+		// break early for disconnected network interfaces. They don't have all information
+		if vappNetwork.NetworkName == "none" {
+			continue
+		}
 		util.Logger.Printf("[TRACE] Looking at: %s", vappNetwork.Link.HREF)
 		if equalIds(id, vappNetwork.ID, vappNetwork.Link.HREF) {
 			vappNetwork := &types.VAppNetwork{}
@@ -95,9 +103,10 @@ func (vapp *VApp) GetVappNetworkById(id string, refresh bool) (*types.VAppNetwor
 	return nil, ErrorEntityNotFound
 }
 
-// GetVMByName returns a VM reference if the VM name matches an existing one.
-// If no valid VM is found, it returns a nil VM reference and an error
+// GetVappNetworkByName returns a VAppNetwork reference if the vApp network name matches an existing one.
+// If no valid vApp network is found, it returns a nil VAppNetwork reference and an error
 func (vapp *VApp) GetVappNetworkByName(vappNetworkName string, refresh bool) (*types.VAppNetwork, error) {
+	util.Logger.Printf("[TRACE] [GetVappNetworkByName] getting vApp Network: %s and refresh %t", vappNetworkName, refresh)
 	if refresh {
 		err := vapp.Refresh()
 		if err != nil {
@@ -133,4 +142,53 @@ func (vapp *VApp) GetVappNetworkByNameOrId(identifier string, refresh bool) (*ty
 		return nil, err
 	}
 	return entity.(*types.VAppNetwork), err
+}
+
+// UpdateNetworkNatRules updates vApp networks NAT rules.
+// Returns pointer to types.VAppNetwork or error
+func (vapp *VApp) UpdateNetworkNatRules(networkId string, natRules []*types.NatRule, natType, policy string) (*types.VAppNetwork, error) {
+	task, err := vapp.UpdateNetworkNatRulesAsync(networkId, natRules, natType, policy)
+	if err != nil {
+		return nil, err
+	}
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return nil, fmt.Errorf("%s", combinedTaskErrorMessage(task.Task, err))
+	}
+
+	return vapp.GetVappNetworkById(networkId, false)
+}
+
+// UpdateNetworkNatRulesAsync asynchronously updates vApp NAT rules.
+// Returns task or error
+func (vapp *VApp) UpdateNetworkNatRulesAsync(networkId string, natRules []*types.NatRule, natType, policy string) (Task, error) {
+	util.Logger.Printf("[TRACE] UpdateNetworkNatRulesAsync with values: id: %s and natRules: %#v", networkId, natRules)
+
+	uuid := extractUuid(networkId)
+	networkToUpdate, err := vapp.GetVappNetworkById(uuid, true)
+	if err != nil {
+		return Task{}, err
+	}
+
+	if networkToUpdate.Configuration.Features == nil {
+		networkToUpdate.Configuration.Features = &types.NetworkFeatures{}
+	}
+	networkToUpdate.Xmlns = types.XMLNamespaceVCloud
+
+	if networkToUpdate.Configuration.Features.NatService == nil {
+		return Task{}, fmt.Errorf("provided network isn't connected to org network or isn't fenced")
+	}
+	networkToUpdate.Configuration.Features.NatService.NatType = natType
+	networkToUpdate.Configuration.Features.NatService.Policy = policy
+	networkToUpdate.Configuration.Features.NatService.NatRule = natRules
+	networkToUpdate.Configuration.Features.NatService.IsEnabled = true
+	networkToUpdate.Configuration.Features.FirewallService.IsEnabled = true
+
+	// here we use `PUT /network/{id}` which allow to change vApp network.
+	// But `GET /network/{id}` can return org VDC network or vApp network.
+	apiEndpoint := vapp.client.VCDHREF
+	apiEndpoint.Path += "/network/" + uuid
+
+	return vapp.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPut,
+		types.MimeVappNetwork, "error updating vApp Network NAT rules: %s", networkToUpdate)
 }
