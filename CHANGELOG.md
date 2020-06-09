@@ -2,6 +2,7 @@
 FEATURES:
 
 * **New Resource:** `resource/vcd_vapp_firewall_rules` vApp network firewall rules [GH-511]
+* **New Resource:** `resource/vcd_vapp_nat_rules` vApp network NAT rules [GH-518]
 
 IMPROVEMENTS:
 
