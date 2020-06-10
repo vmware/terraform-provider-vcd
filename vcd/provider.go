@@ -60,9 +60,9 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_network_isolated":   resourceVcdNetworkIsolated(),  // 2.0
 	"vcd_vapp_network":       resourceVcdVappNetwork(),      // 2.1
 	"vcd_vapp":               resourceVcdVApp(),             // 1.0
-	"vcd_firewall_rules":     resourceVcdFirewallRules(),    // 1.0 DEPRECATED: replaced by vcd_nsxv_firewall_rule
-	"vcd_dnat":               resourceVcdDNAT(),             // 1.0 DEPRECATED: replaced by vcd_nsxv_dnat
-	"vcd_snat":               resourceVcdSNAT(),             // 1.0 DEPRECATED: replaced by vcd_nsxv_snat
+	"vcd_firewall_rules":     resourceVcdFirewallRules(),    // 1.0 DEPRECATED: Use only for non-advanced edge gateway. Replaced by vcd_nsxv_firewall_rule
+	"vcd_dnat":               resourceVcdDNAT(),             // 1.0 DEPRECATED: Use only for non-advanced edge gateway. Replaced by vcd_nsxv_dnat
+	"vcd_snat":               resourceVcdSNAT(),             // 1.0 DEPRECATED: Use only for non-advanced edge gateway. Replaced by vcd_nsxv_snat
 	"vcd_edgegateway":        resourceVcdEdgeGateway(),      // 2.4
 	"vcd_edgegateway_vpn":    resourceVcdEdgeGatewayVpn(),   // 1.0
 	"vcd_vapp_vm":            resourceVcdVAppVm(),           // 1.0

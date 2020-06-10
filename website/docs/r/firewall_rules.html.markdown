@@ -11,7 +11,7 @@ description: |-
 Provides a vCloud Director Firewall resource. This can be used to create,
 modify, and delete firewall settings and rules.
 
-~> **Note:** Please use the improved [`vcd_nsxv_firewall_rule`](/docs/providers/vcd/r/nsxv_firewall_rule.html)
+~> **Note:** DEPRECATED: Please use the improved [`vcd_nsxv_firewall_rule`](/docs/providers/vcd/r/nsxv_firewall_rule.html)
 resource with advanced edge gateways (NSX-V).
 
 ~> **Note:** Using this resource automatically enables default firewall rule logging. This may cause
