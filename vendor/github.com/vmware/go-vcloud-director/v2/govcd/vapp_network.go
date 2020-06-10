@@ -11,7 +11,8 @@ import (
 	"net/http"
 )
 
-// UpdateNetworkFirewallRules updates vApp networks firewall rules.
+// UpdateNetworkFirewallRules updates vApp networks firewall rules. It will overwrite existing ones as there is
+// no 100% way to identify them separately.
 // Returns pointer to types.VAppNetwork or error
 func (vapp *VApp) UpdateNetworkFirewallRules(networkId string, firewallRules []*types.FirewallRule, defaultAction string, logDefaultAction bool) (*types.VAppNetwork, error) {
 	task, err := vapp.UpdateNetworkFirewallRulesAsync(networkId, firewallRules, defaultAction, logDefaultAction)
@@ -26,7 +27,8 @@ func (vapp *VApp) UpdateNetworkFirewallRules(networkId string, firewallRules []*
 	return vapp.GetVappNetworkById(networkId, false)
 }
 
-// UpdateNetworkFirewallRulesAsync asynchronously updates vApp networks firewall rules.
+// UpdateNetworkFirewallRulesAsync asynchronously updates vApp networks firewall rules. It will overwrite existing ones
+// as there is no 100% way to identify them separately.
 // Returns task or error
 func (vapp *VApp) UpdateNetworkFirewallRulesAsync(networkId string, firewallRules []*types.FirewallRule, defaultAction string, logDefaultAction bool) (Task, error) {
 	util.Logger.Printf("[TRACE] UpdateNetworkFirewallRulesAsync with values: id: %s and firewallServiceConfiguration: %#v", networkId, firewallRules)
@@ -41,6 +43,8 @@ func (vapp *VApp) UpdateNetworkFirewallRulesAsync(networkId string, firewallRule
 	}
 	networkToUpdate.Xmlns = types.XMLNamespaceVCloud
 
+	// If API didn't return Firewall service XML part, that means vApp network isn't connected to org network or not fenced.
+	// In other words there isn't firewall when you connected directly or isolated.
 	if networkToUpdate.Configuration.Features.FirewallService == nil {
 		return Task{}, fmt.Errorf("provided network isn't connecd to org network or isn't fenced")
 	}
@@ -60,7 +64,7 @@ func (vapp *VApp) UpdateNetworkFirewallRulesAsync(networkId string, firewallRule
 // GetVappNetworkById returns a VApp network reference if the vApp network ID matches an existing one.
 // If no valid VApp network is found, it returns a nil VApp network reference and an error
 func (vapp *VApp) GetVappNetworkById(id string, refresh bool) (*types.VAppNetwork, error) {
-	util.Logger.Printf("[TRACE] [GetVappNetworkById] getting vApp Network: %s", id)
+	util.Logger.Printf("[TRACE] [GetVappNetworkById] getting vApp Network: %s and refresh %t", id, refresh)
 
 	if refresh {
 		err := vapp.Refresh()
@@ -95,9 +99,10 @@ func (vapp *VApp) GetVappNetworkById(id string, refresh bool) (*types.VAppNetwor
 	return nil, ErrorEntityNotFound
 }
 
-// GetVMByName returns a VM reference if the VM name matches an existing one.
-// If no valid VM is found, it returns a nil VM reference and an error
+// GetVappNetworkByName returns a VAppNetwork reference if the vApp network name matches an existing one.
+// If no valid vApp network is found, it returns a nil VAppNetwork reference and an error
 func (vapp *VApp) GetVappNetworkByName(vappNetworkName string, refresh bool) (*types.VAppNetwork, error) {
+	util.Logger.Printf("[TRACE] [GetVappNetworkByName] getting vApp Network: %s and refresh %t", vappNetworkName, refresh)
 	if refresh {
 		err := vapp.Refresh()
 		if err != nil {
