@@ -12,10 +12,10 @@ import (
 
 func resourceVcdVappFirewallRules() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdVapFirewallRulesCreate,
-		Delete: resourceVAppFirewallRulesDelete,
+		Create: resourceVcdVappFirewallRulesCreate,
+		Delete: resourceVappFirewallRulesDelete,
 		Read:   resourceVappFirewallRulesRead,
-		Update: resourceVcdVapFirewallRulesUpdate,
+		Update: resourceVcdVappFirewallRulesUpdate,
 		Importer: &schema.ResourceImporter{
 			State: vappFirewallRuleImport,
 		},
@@ -153,11 +153,11 @@ func resourceVcdVappFirewallRules() *schema.Resource {
 		},
 	}
 }
-func resourceVcdVapFirewallRulesCreate(d *schema.ResourceData, meta interface{}) error {
-	return resourceVcdVapFirewallRulesUpdate(d, meta)
+func resourceVcdVappFirewallRulesCreate(d *schema.ResourceData, meta interface{}) error {
+	return resourceVcdVappFirewallRulesUpdate(d, meta)
 }
 
-func resourceVcdVapFirewallRulesUpdate(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdVappFirewallRulesUpdate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	vapp, err := getVapp(vcdClient, d, meta)
 	if err != nil {
@@ -200,7 +200,7 @@ func getVapp(vcdClient *VCDClient, d *schema.ResourceData, meta interface{}) (*g
 	return vapp, nil
 }
 
-func resourceVAppFirewallRulesDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceVappFirewallRulesDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	vapp, err := getVapp(vcdClient, d, meta)
 	if err != nil {
@@ -263,6 +263,8 @@ func resourceVappFirewallRulesRead(d *schema.ResourceData, meta interface{}) err
 	return nil
 }
 
+// getVmIdFromVmVappLocalId returns vm ID using VAppScopedLocalID.
+// VAppScopedLocalID is another ID provided in VM entity.
 func getVmIdFromVmVappLocalId(vapp *govcd.VApp, vmVappLocalId string) string {
 	for _, vm := range vapp.VApp.Children.VM {
 		if vm.VAppScopedLocalID == vmVappLocalId {
