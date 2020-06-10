@@ -9,7 +9,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-// deprecated
+// deprecated in favor of vcd_nsxv_snat
 func resourceVcdSNAT() *schema.Resource {
 	return &schema.Resource{
 		Create:             resourceVcdSNATCreate,
