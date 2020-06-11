@@ -9,12 +9,14 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
+// deprecated in favor of vcd_nsxv_snat
 func resourceVcdSNAT() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdSNATCreate,
-		Delete: resourceVcdSNATDelete,
-		Read:   resourceVcdSNATRead,
-		Update: resourceVcdSNATUpdate,
+		Create:             resourceVcdSNATCreate,
+		Delete:             resourceVcdSNATDelete,
+		Read:               resourceVcdSNATRead,
+		Update:             resourceVcdSNATUpdate,
+		DeprecationMessage: "vcd_snat is deprecated. It should only be used for non-advanced edge gateways. Use vcd_nsxv_snat instead.",
 
 		Schema: map[string]*schema.Schema{
 			"org": {
