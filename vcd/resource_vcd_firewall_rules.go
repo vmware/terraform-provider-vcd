@@ -9,11 +9,13 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
+// deprecated in favor of vcd_nsxv_firewall_rule
 func resourceVcdFirewallRules() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdFirewallRulesCreate,
-		Delete: resourceFirewallRulesDelete,
-		Read:   resourceFirewallRulesRead,
+		Create:             resourceVcdFirewallRulesCreate,
+		Delete:             resourceFirewallRulesDelete,
+		Read:               resourceFirewallRulesRead,
+		DeprecationMessage: "vcd_firewall_rules is deprecated. It should only be used for non-advanced edge gateways. Use vcd_nsxv_firewall_rule instead.",
 
 		Schema: map[string]*schema.Schema{
 			"edge_gateway": &schema.Schema{

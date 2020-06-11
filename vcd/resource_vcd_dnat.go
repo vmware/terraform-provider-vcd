@@ -12,12 +12,14 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
+// deprecated in favor of vcd_nsxv_dnat
 func resourceVcdDNAT() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdDNATCreate,
-		Delete: resourceVcdDNATDelete,
-		Read:   resourceVcdDNATRead,
-		Update: resourceVcdDNATUpdate,
+		Create:             resourceVcdDNATCreate,
+		Delete:             resourceVcdDNATDelete,
+		Read:               resourceVcdDNATRead,
+		Update:             resourceVcdDNATUpdate,
+		DeprecationMessage: "vcd_dnat is deprecated. It should only be used for non-advanced edge gateways. Use vcd_nsxv_dnat instead.",
 
 		Schema: map[string]*schema.Schema{
 			"edge_gateway": &schema.Schema{
