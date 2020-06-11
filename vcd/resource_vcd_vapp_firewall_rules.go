@@ -8,6 +8,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 	"log"
 	"strings"
+	"text/tabwriter"
 )
 
 func resourceVcdVappFirewallRules() *schema.Resource {
@@ -341,6 +342,10 @@ func expandVappFirewallRules(d *schema.ResourceData, vapp *govcd.VApp) ([]*types
 	return firewallRules, nil
 }
 
+var errHelpVappNetworkFirewallRulesImport = fmt.Errorf(`resource id must be specified in one of these formats:
+'org-name.vdc-name.vapp-name.network_name', 'org.vdc-name.vapp-id.network-id' or 
+'list@org-name.vdc-name.vapp-name' to get a list of vapp networks with their IDs`)
+
 // vappFirewallRuleImport is responsible for importing the resource.
 // The following steps happen as part of import
 // 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
@@ -353,14 +358,33 @@ func expandVappFirewallRules(d *schema.ResourceData, vapp *govcd.VApp) ([]*types
 //
 // Example resource name (_resource_name_): vcd_vapp_firewall_rules.my_existing_firewall_rules
 // Example import path (_the_id_string_): org.my_existing_vdc.vapp_name.network_name or org.my_existing_vdc.vapp_id.network_id
+// Example list path (_the_id_string_): list@org-name.vdc-name.vapp-name
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func vappFirewallRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	var commandOrgName, orgName, vdcName, vappName string
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
-	if len(resourceURI) != 4 {
-		return nil, fmt.Errorf("resource name must be specified as rg.my_existing_vdc.vapp_name.network_name or org.my_existing_vdc.vapp_id.network_id")
-	}
-	orgName, vdcName, vappId, networkId := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
 
+	log.Printf("[DEBUG] importing vcd_vapp_firewall_rules resource with provided id %s", d.Id())
+
+	if len(resourceURI) != 4 && len(resourceURI) != 3 {
+		return nil, errHelpVappNetworkFirewallRulesImport
+	}
+	if strings.Contains(d.Id(), "list@") {
+		commandOrgName, vdcName, vappName = resourceURI[0], resourceURI[1], resourceURI[2]
+		commandOrgNameSplit := strings.Split(commandOrgName, "@")
+		if len(commandOrgNameSplit) != 2 {
+			return nil, errHelpVappNetworkFirewallRulesImport
+		}
+		orgName = commandOrgNameSplit[1]
+		return listVappNetworksForImport(meta, orgName, vdcName, vappName)
+	} else {
+		orgName, vdcName, vappId, networkId := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
+		return getFirewallRules(d, meta, orgName, vdcName, vappId, networkId)
+	}
+
+}
+
+func getFirewallRules(d *schema.ResourceData, meta interface{}, orgName, vdcName, vappId, networkId string) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
@@ -389,4 +413,40 @@ func vappFirewallRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema
 	d.SetId(vappNetwork.ID)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func listVappNetworksForImport(meta interface{}, orgName, vdcName, vappId string) ([]*schema.ResourceData, error) {
+
+	vcdClient := meta.(*VCDClient)
+	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
+	if err != nil {
+		return nil, fmt.Errorf("[vapp network firewall rules import] unable to find VDC %s: %s ", vdcName, err)
+	}
+
+	stdout := getTerraformStdout()
+	_, _ = fmt.Fprintln(stdout, "Retrieving all vApp networks by name")
+	vapp, err := vdc.GetVAppByNameOrId(vappId, false)
+	if err != nil {
+		return nil, fmt.Errorf("unable to retrieve vApp by name: %s", err)
+	}
+
+	writer := tabwriter.NewWriter(stdout, 0, 8, 1, '\t', tabwriter.AlignRight)
+
+	fmt.Fprintln(writer, "No\tvApp ID\tID\tName\t")
+	fmt.Fprintln(writer, "--\t-------\t--\t----\t")
+
+	for index, vappNetwork := range vapp.VApp.NetworkConfigSection.NetworkConfig {
+		uuid, err := govcd.GetUuidFromHref(vappNetwork.Link.HREF, false)
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse vApp network ID: %s, %s", err, uuid)
+		}
+
+		fmt.Fprintf(writer, "%d\t%s\t%s\t%s\n", (index + 1), vapp.VApp.ID, uuid, vappNetwork.NetworkName)
+	}
+	err = writer.Flush()
+	if err != nil {
+		return nil, fmt.Errorf("unable to write to stdout: %s", err)
+	}
+
+	return nil, fmt.Errorf("resource was not imported! %s", errHelpDiskImport)
 }
