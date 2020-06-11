@@ -240,7 +240,7 @@ func resourceVappNetworkCreate(d *schema.ResourceData, meta interface{}) error {
 	if err != nil {
 		return fmt.Errorf("unable to get network ID from HREF: %s", err)
 	}
-	d.SetId(networkId)
+	d.SetId(normalizeId("urn:vcloud:network:", networkId))
 
 	return resourceVappNetworkRead(d, meta)
 }
@@ -309,7 +309,7 @@ func genericVappNetworkRead(d *schema.ResourceData, meta interface{}, origin str
 
 	// needs to set for datasource. Do not set always as keep back compatibility when ID was name.
 	if d.Id() == "" {
-		d.SetId(networkId)
+		d.SetId(normalizeId("urn:vcloud:network:", networkId))
 	}
 	_ = d.Set("description", vAppNetwork.Description)
 	if config := vAppNetwork.Configuration; config != nil {
@@ -523,7 +523,7 @@ func resourceVcdVappNetworkImport(d *schema.ResourceData, meta interface{}) ([]*
 		return nil, fmt.Errorf("unable to get network ID from HREF: %s", err)
 	}
 
-	d.SetId(networkId)
+	d.SetId(normalizeId("urn:vcloud:network:", networkId))
 
 	if vcdClient.Org != orgName {
 		_ = d.Set("org", orgName)

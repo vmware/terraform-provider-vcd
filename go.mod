@@ -12,3 +12,5 @@ require (
 	github.com/vmware/go-vcloud-director/v2 v2.8.0-alpha.7
 	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37 // indirect
 )
+
+replace github.com/vmware/go-vcloud-director/v2 => github.com/vbauzysvmware/go-vcloud-director/v2 v2.0.0-20200611123821-e0c9ba01658a
