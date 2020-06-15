@@ -153,6 +153,10 @@ func (group *OrgGroup) Delete() error {
 
 // validateCreateGroup checks if mandatory fields are set for group creation and update
 func validateCreateUpdateGroup(group *types.Group) error {
+	if group == nil {
+		return fmt.Errorf("group cannot be nil")
+	}
+
 	if group.Name == "" {
 		return fmt.Errorf("group must have a name")
 	}
@@ -169,6 +173,10 @@ func validateCreateUpdateGroup(group *types.Group) error {
 
 // validateDeleteGroup checks if mandatory fields are set for delete
 func validateDeleteGroup(group *types.Group) error {
+	if group == nil {
+		return fmt.Errorf("group cannot be nil")
+	}
+
 	if group.Href == "" {
 		return fmt.Errorf("HREF must be set to delete group")
 	}

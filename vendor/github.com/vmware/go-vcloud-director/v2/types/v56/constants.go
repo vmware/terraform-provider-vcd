@@ -113,6 +113,8 @@ const (
 	MimeAdminGroup = "application/vnd.vmware.admin.group+xml"
 	// MimeOrgLdapSettings
 	MimeOrgLdapSettings = "application/vnd.vmware.admin.organizationldapsettings+xml"
+	// Mime of vApp network
+	MimeVappNetwork = "application/vnd.vmware.vcloud.vAppNetwork+xml"
 )
 
 const (
