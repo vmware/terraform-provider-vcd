@@ -19,6 +19,12 @@ BUG FIXES:
 * `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` can report `network.X.is_primary` attribute
   incorrectly when VM is imported to Terraform and NIC indexes in vCD do not start with 0. [GH-512] 
 
+DEPRECATIONS:
+
+* Deprecated `vcd_snat` (replaced by `vcd_nsxv_snat`), `vcd_dnat` (replaced by `vcd_nsxv_dnat`), and `vcd_firewall_rules` (replaced by `vcd_nsxv_firewall_rule`) [GH-518]
+  The deprecated resources are to be used only with non-advanced edge gateway.
+
+
 NOTES:
 
 * Dropped support for vCD 9.1 [GH-492]
