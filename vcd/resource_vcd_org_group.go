@@ -33,13 +33,13 @@ func resourceVcdOrgGroup() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true, // vCD does not allow to change group name
-				Description: "SAML group name",
+				Description: "Group name",
 			},
 			"provider_type": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true, // vCD does not allow to change provider type
-				Description:  "SAML group name",
+				Description:  "Identity provider type - 'SAML' or 'INTEGRATED' for LDAP",
 				ValidateFunc: validation.StringInSlice([]string{"SAML", "INTEGRATED"}, false),
 			},
 			"description": &schema.Schema{
