@@ -22,6 +22,10 @@ data "vcd_vapp" "test-tf" {
   vdc              = "vdc-tf"
 }
 
+output "id" {
+  value = data.vcd_vapp.test-tf.id
+}
+
 output "name" {
   value = data.vcd_vapp.test-tf.name
 }
