@@ -118,10 +118,10 @@ NOTE: the default separator (.) can be changed using Provider.import_separator o
 After that, you can expand the configuration file and either update or delete the vApp network rules as needed. Running `terraform plan`
 at this stage will show the difference between the minimal configuration file and the vApp network rules stored properties.
 
-### Listing vApp network IDs
+### Listing vApp Network IDs
 
 If you want to list IDs there is a special command **`terraform import vcd_vapp_firewall_rules.imported list@org-name.vcd-name.vapp-name`**
-where `org-name` is the organization used, `vdc-name` is vDC name and `vapp-name` is vAPP name. 
+where `org-name` is the organization used, `vdc-name` is VDC name and `vapp-name` is vApp name. 
 The output for this command should look similar to the one below:
 
 ```shell
