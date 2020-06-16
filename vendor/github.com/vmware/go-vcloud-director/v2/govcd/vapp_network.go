@@ -12,7 +12,7 @@ import (
 )
 
 // UpdateNetworkFirewallRules updates vApp networks firewall rules. It will overwrite existing ones as there is
-// no 100 % way identify them separately.
+// no 100% way to identify them separately.
 // Returns pointer to types.VAppNetwork or error
 func (vapp *VApp) UpdateNetworkFirewallRules(networkId string, firewallRules []*types.FirewallRule, defaultAction string, logDefaultAction bool) (*types.VAppNetwork, error) {
 	task, err := vapp.UpdateNetworkFirewallRulesAsync(networkId, firewallRules, defaultAction, logDefaultAction)
@@ -28,7 +28,7 @@ func (vapp *VApp) UpdateNetworkFirewallRules(networkId string, firewallRules []*
 }
 
 // UpdateNetworkFirewallRulesAsync asynchronously updates vApp networks firewall rules. It will overwrite existing ones
-// as there is no 100 % way identify them separately.
+// as there is no 100% way to identify them separately.
 // Returns task or error
 func (vapp *VApp) UpdateNetworkFirewallRulesAsync(networkId string, firewallRules []*types.FirewallRule, defaultAction string, logDefaultAction bool) (Task, error) {
 	util.Logger.Printf("[TRACE] UpdateNetworkFirewallRulesAsync with values: id: %s and firewallServiceConfiguration: %#v", networkId, firewallRules)
@@ -181,8 +181,6 @@ func (vapp *VApp) UpdateNetworkNatRulesAsync(networkId string, natRules []*types
 	networkToUpdate.Configuration.Features.NatService.NatType = natType
 	networkToUpdate.Configuration.Features.NatService.Policy = policy
 	networkToUpdate.Configuration.Features.NatService.NatRule = natRules
-	networkToUpdate.Configuration.Features.NatService.IsEnabled = true
-	networkToUpdate.Configuration.Features.FirewallService.IsEnabled = true
 
 	// here we use `PUT /network/{id}` which allow to change vApp network.
 	// But `GET /network/{id}` can return org VDC network or vApp network.
@@ -191,4 +189,32 @@ func (vapp *VApp) UpdateNetworkNatRulesAsync(networkId string, natRules []*types
 
 	return vapp.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPut,
 		types.MimeVappNetwork, "error updating vApp Network NAT rules: %s", networkToUpdate)
+}
+
+// RemoveAllNetworkNatRules removes all NAT rules from a vApp network
+// Returns error
+func (vapp *VApp) RemoveAllNetworkNatRules(networkId string) error {
+	task, err := vapp.UpdateNetworkNatRulesAsync(networkId, []*types.NatRule{}, "ipTranslation", "allowTraffic")
+	if err != nil {
+		return err
+	}
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return fmt.Errorf("%s", combinedTaskErrorMessage(task.Task, err))
+	}
+	return nil
+}
+
+// RemoveAllNetworkFirewallRules removes all network all firewall rules from a vApp network.
+// Returns error
+func (vapp *VApp) RemoveAllNetworkFirewallRules(networkId string) error {
+	task, err := vapp.UpdateNetworkFirewallRulesAsync(networkId, []*types.FirewallRule{}, "allow", false)
+	if err != nil {
+		return err
+	}
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return fmt.Errorf("%s", combinedTaskErrorMessage(task.Task, err))
+	}
+	return nil
 }

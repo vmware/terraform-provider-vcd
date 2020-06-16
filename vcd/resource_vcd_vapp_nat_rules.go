@@ -181,8 +181,7 @@ func resourceVAppNetworkNatRulesDelete(d *schema.ResourceData, meta interface{})
 	vcdClient.lockParentVappWithName(d, vapp.VApp.Name)
 	defer vcdClient.unLockParentVappWithName(d, vapp.VApp.Name)
 
-	_, err = vapp.UpdateNetworkNatRules(d.Get("network_id").(string), []*types.NatRule{},
-		"portForwarding", "allowTraffic")
+	err = vapp.RemoveAllNetworkNatRules(d.Get("network_id").(string))
 	if err != nil {
 		log.Printf("[INFO] Error deleting NAT rules: %s", err)
 		return fmt.Errorf("error deleting NAT rules: %s", err)

@@ -604,7 +604,7 @@ func takeIntAddress(x int) *int {
 	return &x
 }
 
-// takeStringPointer is a helper that returns the address of an `string`
+// takeStringPointer is a helper that returns the address of a `string`
 func takeStringPointer(x string) *string {
 	return &x
 }
