@@ -235,9 +235,13 @@ func (vapp *VApp) RemoveVM(vm VM) error {
 	if vapp.VApp.Tasks != nil {
 		for _, taskItem := range vapp.VApp.Tasks.Task {
 			task.Task = taskItem
-			err := task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf("error performing task: %s", err)
+			// Leftover tasks may have unhandled errors that can be dismissed at this stage
+			// we complete any incomplete tasks at this stage, to finish the refresh.
+			if task.Task.Status != "error" && task.Task.Status != "success" {
+				err := task.WaitTaskCompletion()
+				if err != nil {
+					return fmt.Errorf("error performing task: %s", err)
+				}
 			}
 		}
 	}

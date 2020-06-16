@@ -109,6 +109,12 @@ const (
 	MimeExternalNetwork = "application/vnd.vmware.admin.vmwexternalnet+xml"
 	// Mime of an Org User
 	MimeAdminUser = "application/vnd.vmware.admin.user+xml"
+	// MimeAdminGroup specifies groups
+	MimeAdminGroup = "application/vnd.vmware.admin.group+xml"
+	// MimeOrgLdapSettings
+	MimeOrgLdapSettings = "application/vnd.vmware.admin.organizationldapsettings+xml"
+	// Mime of vApp network
+	MimeVappNetwork = "application/vnd.vmware.vcloud.vAppNetwork+xml"
 )
 
 const (
@@ -224,4 +230,11 @@ const (
 	QtAdminCatalogItem  = "adminCatalogItem"  // catalog item as admin
 	QtAdminMedia        = "adminMedia"        // media item as admin
 	QtMedia             = "media"             // media item
+)
+
+// LDAP modes for Organization
+const (
+	LdapModeNone   = "NONE"
+	LdapModeSystem = "SYSTEM"
+	LdapModeCustom = "CUSTOM"
 )
