@@ -641,6 +641,10 @@ type OrgUserList struct {
 	User []*Reference `xml:"UserReference,omitempty"`
 }
 
+type OrgGroupList struct {
+	Group []*Reference `xml:"GroupReference,omitempty"`
+}
+
 // List of available roles in the organization
 type OrgRoleType struct {
 	RoleReference []*Reference `xml:"RoleReference,omitempty"`
@@ -671,6 +675,7 @@ type AdminOrg struct {
 	Link            LinkList         `xml:"Link,omitempty"`
 	Tasks           *TasksInProgress `xml:"Tasks,omitempty"`
 	Users           *OrgUserList     `xml:"Users,omitempty"`
+	Groups          *OrgGroupList    `xml:"Groups,omitempty"`
 	Catalogs        *CatalogsList    `xml:"Catalogs,omitempty"`
 	OrgSettings     *OrgSettings     `xml:"Settings,omitempty"`
 	Vdcs            *VDCList         `xml:"Vdcs,omitempty"`
@@ -753,9 +758,11 @@ type OrgFederationSettings struct {
 // Description: Represents the ldap settings of a vCloud Director organization.
 // Since: 0.9
 type OrgLdapSettingsType struct {
-	HREF string   `xml:"href,attr,omitempty"` // The URI of the entity.
-	Type string   `xml:"type,attr,omitempty"` // The MIME type of the entity.
-	Link LinkList `xml:"Link,omitempty"`      // A reference to an entity or operation associated with this object.
+	XMLName xml.Name `xml:"OrgLdapSettings"`
+	Xmlns   string   `xml:"xmlns,attr,omitempty"`
+	HREF    string   `xml:"href,attr,omitempty"` // The URI of the entity.
+	Type    string   `xml:"type,attr,omitempty"` // The MIME type of the entity.
+	Link    LinkList `xml:"Link,omitempty"`      // A reference to an entity or operation associated with this object.
 
 	CustomUsersOu         string                 `xml:"CustomUsersOu,omitempty"`         // If OrgLdapMode is SYSTEM, specifies an LDAP attribute=value pair to use for OU (organizational unit).
 	OrgLdapMode           string                 `xml:"OrgLdapMode,omitempty"`           // LDAP mode you want
@@ -767,40 +774,43 @@ type OrgLdapSettingsType struct {
 // Namespace: http://www.vmware.com/vcloud/v1.5
 // Description: Represents the custom ldap settings of a vCloud Director organization.
 // Since: 0.9
+// Note. Order of these fields matter and API will error if it is changed
 type CustomOrgLdapSettings struct {
 	HREF string   `xml:"href,attr,omitempty"` // The URI of the entity.
 	Type string   `xml:"type,attr,omitempty"` // The MIME type of the entity.
 	Link LinkList `xml:"Link,omitempty"`      // A reference to an entity or operation associated with this object.
 
-	AuthenticationMechanism  string                  `xml:"AuthenticationMechanism"`
-	ConnectorType            string                  `xml:"ConnectorType"`   // Defines LDAP service implementation type
-	GroupAttributes          *OrgLdapGroupAttributes `xml:"GroupAttributes"` // Defines how LDAP attributes are used when importing a group.
-	GroupSearchBase          string                  `xml:"GroupSearchBase,omitempty"`
 	HostName                 string                  `xml:"HostName,omitempty"`
-	IsGroupSearchBaseEnabled bool                    `xml:"IsGroupSearchBaseEnabled"`
+	Port                     int                     `xml:"Port"`
 	IsSsl                    bool                    `xml:"IsSsl,omitempty"`
 	IsSslAcceptAll           bool                    `xml:"IsSslAcceptAll,omitempty"`
-	Password                 string                  `xml:"Password,omitempty"`
-	Port                     int                     `xml:"Port"`
-	Realm                    string                  `xml:"Realm,omitempty"`
 	SearchBase               string                  `xml:"SearchBase,omitempty"`
-	UseExternalKerberos      bool                    `xml:"UseExternalKerberos"`
-	UserAttributes           *OrgLdapUserAttributes  `xml:"UserAttributes"` // Defines how LDAP attributes are used when importing a user.
 	Username                 string                  `xml:"UserName,omitempty"`
+	Password                 string                  `xml:"Password,omitempty"`
+	AuthenticationMechanism  string                  `xml:"AuthenticationMechanism"`
+	IsGroupSearchBaseEnabled bool                    `xml:"IsGroupSearchBaseEnabled"`
+	GroupSearchBase          string                  `xml:"GroupSearchBase,omitempty"`
+	ConnectorType            string                  `xml:"ConnectorType"`   // Defines LDAP service implementation type
+	UserAttributes           *OrgLdapUserAttributes  `xml:"UserAttributes"`  // Defines how LDAP attributes are used when importing a user.
+	GroupAttributes          *OrgLdapGroupAttributes `xml:"GroupAttributes"` // Defines how LDAP attributes are used when importing a group.
+	UseExternalKerberos      bool                    `xml:"UseExternalKerberos"`
+
+	Realm string `xml:"Realm,omitempty"`
 }
 
-// OrgLdapGroupAttributesType represents the ldap group attribute settings for a vCloud Director organization.
+// OrgLdapGroupAttributes	 represents the ldap group attribute settings for a vCloud Director organization.
 // Type: OrgLdapGroupAttributesType
 // Namespace: http://www.vmware.com/vcloud/v1.5
 // Description: Represents the ldap group attribute settings of a vCloud Director organization.
 // Since: 0.9
+// Note. Order of these fields matter and API will error if it is changed
 type OrgLdapGroupAttributes struct {
-	Membership           string `xml:"Membership"`
-	GroupName            string `xml:"GroupName"`
-	BackLinkIdentifier   string `xml:"BackLinkIdentifier,omitempty"`
-	MempershipIdentifier string `xml:"MempershipIdentifier"`
 	ObjectClass          string `xml:"ObjectClass"`
 	ObjectIdentifier     string `xml:"ObjectIdentifier"`
+	GroupName            string `xml:"GroupName"`
+	Membership           string `xml:"Membership"`
+	BackLinkIdentifier   string `xml:"BackLinkIdentifier,omitempty"`
+	MembershipIdentifier string `xml:"MembershipIdentifier"`
 }
 
 // OrgLdapUserAttributesType represents the ldap user attribute settings for a vCloud Director organization.
@@ -808,17 +818,18 @@ type OrgLdapGroupAttributes struct {
 // Namespace: http://www.vmware.com/vcloud/v1.5
 // Description: Represents the ldap user attribute settings of a vCloud Director organization.
 // Since: 0.9
+// Note. Order of these fields matter and API will error if it is changed.
 type OrgLdapUserAttributes struct {
+	ObjectClass               string `xml:"ObjectClass"`
+	ObjectIdentifier          string `xml:"ObjectIdentifier"`
+	Username                  string `xml:"UserName,omitempty"`
 	Email                     string `xml:"Email"`
 	FullName                  string `xml:"FullName"`
 	GivenName                 string `xml:"GivenName"`
-	GroupBackLinkIdentifier   string `xml:"GroupBackLinkIdentifier,omitempty"`
-	GroupMempershipIdentifier string `xml:"GroupMempershipIdentifier"`
-	ObjectClass               string `xml:"ObjectClass"`
-	ObjectIdentifier          string `xml:"ObjectIdentifier"`
 	Surname                   string `xml:"Surname"`
 	Telephone                 string `xml:"Telephone"`
-	Username                  string `xml:"UserName,omitempty"`
+	GroupMembershipIdentifier string `xml:"GroupMembershipIdentifier"`
+	GroupBackLinkIdentifier   string `xml:"GroupBackLinkIdentifier,omitempty"`
 }
 
 // VDCList contains a list of references to Org VDCs
@@ -2712,6 +2723,26 @@ type User struct {
 	GroupReferences *GroupReference  `xml:"GroupReferences,omitempty"`
 	Password        string           `xml:"Password,omitempty"`
 	Tasks           *TasksInProgress `xml:"Tasks"`
+}
+
+// Group represents Org group definition
+type Group struct {
+	XMLName xml.Name `xml:"Group"`
+	Xmlns   string   `xml:"xmlns,attr"`
+	// Id holds ID in format urn:vcloud:group:252fe08e-ae1b-409c-9dda-a531bb1ed69a
+	ID string `xml:"id,attr,omitempty"`
+	// Href holds reference to group object
+	Href string `xml:"href,attr,omitempty"`
+	// Type holds mime type for group
+	Type string `xml:"type,attr"`
+	// Description sets description for group
+	Description string `xml:"Description"`
+	// Name of the group. Cannot be updated.
+	Name string `xml:"name,attr"`
+	// ProviderType - 'SAML', 'INTEGRATED'
+	ProviderType string `xml:"ProviderType"`
+	// Role - reference to existing role
+	Role *Reference `xml:"Role,omitempty"`
 }
 
 // Type: AdminCatalogRecord
