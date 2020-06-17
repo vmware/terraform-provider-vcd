@@ -109,6 +109,12 @@ const (
 	MimeExternalNetwork = "application/vnd.vmware.admin.vmwexternalnet+xml"
 	// Mime of an Org User
 	MimeAdminUser = "application/vnd.vmware.admin.user+xml"
+	// MimeAdminGroup specifies groups
+	MimeAdminGroup = "application/vnd.vmware.admin.group+xml"
+	// MimeOrgLdapSettings
+	MimeOrgLdapSettings = "application/vnd.vmware.admin.organizationldapsettings+xml"
+	// Mime of vApp network
+	MimeVappNetwork = "application/vnd.vmware.vcloud.vAppNetwork+xml"
 )
 
 const (
@@ -260,3 +266,10 @@ func (qf VmQueryFilter) String() string {
 		"isVAppTemplate==true",  // Will find only those VM that are inside a template
 	}[qf]
 }
+
+// LDAP modes for Organization
+const (
+	LdapModeNone   = "NONE"
+	LdapModeSystem = "SYSTEM"
+	LdapModeCustom = "CUSTOM"
+)

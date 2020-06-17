@@ -89,6 +89,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_vm_internal_disk":   resourceVmInternalDisk(),      // 2.7
 	"vcd_vapp_org_network":   resourceVcdVappOrgNetwork(),   // 2.7
 	"vcd_vm_affinity_rule":   resourceVcdVmAffinityRule(),   // 2.9
+	"vcd_org_group":          resourceVcdOrgGroup(),         // 2.9
 }
 
 // Provider returns a terraform.ResourceProvider.
