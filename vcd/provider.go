@@ -87,6 +87,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_nsxv_ip_set":         resourceVcdIpSet(),             // 2.6
 	"vcd_vm_internal_disk":    resourceVmInternalDisk(),       // 2.7
 	"vcd_vapp_org_network":    resourceVcdVappOrgNetwork(),    // 2.7
+	"vcd_org_group":           resourceVcdOrgGroup(),          // 2.9
 	"vcd_vapp_firewall_rules": resourceVcdVappFirewallRules(), // 2.9
 }
 

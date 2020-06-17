@@ -85,7 +85,7 @@ type cacheStorage struct {
 	sync.Mutex
 }
 
-// reset clears connection cache so that next session is forced to re-authenticate
+// reset clears cache to force re-authentication
 func (c *cacheStorage) reset() {
 	c.Lock()
 	defer c.Unlock()
