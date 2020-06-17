@@ -4,6 +4,13 @@ FEATURES:
 * **New Resource:** `resource/vcd_vapp_firewall_rules` vApp network firewall rules [GH-511]
 * **New Resource:** `resource/vcd_vapp_nat_rules` vApp network NAT rules [GH-518]
 
+FEATURES:
+
+* Add support for SAML auth with Active Directory Federation Services (ADFS) as IdP using
+  "/adfs/services/trust/13/usernamemixed" endpoint usin auth_type="saml_adfs". [GH-504]
+* Add support for LDAP authentication using auth_type="integrated". [GH-504]
+* **New Resource:** `vcd_org_group` Org Group management [GH-513]
+
 IMPROVEMENTS:
 
 * `resource/vcd_vapp_vm` allows creating empty VM. New fields added `boot_image`, `os_type` and `hardware_version`. Also, supports `description` updates. [GH-484]
@@ -11,9 +18,6 @@ IMPROVEMENTS:
 * Removed code that handled specific cases for API 29.0 and 30.0. This library now supports VCD versions from 9.5 to 10.1 included [GH-499]
 * Added command line flags to test suite, corresponding to environment variables listed in TESTING.md [GH-505]
 * `resource/vcd_vapp_vm` allows creating VM from multi VM vApp template [GH-501]
-* Add support for SAML auth with Active Directory Federation Services (ADFS) as IdP using
-  "/adfs/services/trust/13/usernamemixed" endpoint usin auth_type="saml_adfs". [GH-504]
-* Add support for LDAP authentication using auth_type="integrated". [GH-504]
 
 BUG FIXES:
 * `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` can report `network.X.is_primary` attribute
