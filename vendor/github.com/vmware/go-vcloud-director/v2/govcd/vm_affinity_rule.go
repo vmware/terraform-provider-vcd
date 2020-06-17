@@ -264,7 +264,7 @@ func (vdc *Vdc) CreateVmAffinityRule(affinityRuleDef *types.VmAffinityRule) (*Vm
 	if err != nil {
 		return nil, err
 	}
-	// The rule ID is the ID of the task owner
+	// The rule ID is the ID of the task owner (see Task definition in types.go)
 	ruleId := task.Task.Owner.ID
 
 	err = task.WaitTaskCompletion()

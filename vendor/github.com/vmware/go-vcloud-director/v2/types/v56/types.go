@@ -494,29 +494,35 @@ type VdcConfiguration struct {
 // Namespace: http://www.vmware.com/vcloud/v1.5
 // Description: Represents an asynchronous operation in vCloud Director.
 // Since: 0.9
+// Comments added from https://code.vmware.com/apis/912/vmware-cloud-director/doc/doc/types/TaskType.html
 type Task struct {
-	HREF             string           `xml:"href,attr,omitempty"`
-	Type             string           `xml:"type,attr,omitempty"`
-	ID               string           `xml:"id,attr,omitempty"`
-	OperationKey     string           `xml:"operationKey,attr,omitempty"`
-	Name             string           `xml:"name,attr"`
-	Status           string           `xml:"status,attr"`
-	Operation        string           `xml:"operation,attr,omitempty"`
-	OperationName    string           `xml:"operationName,attr,omitempty"`
-	ServiceNamespace string           `xml:"serviceNamespace,attr,omitempty"`
-	StartTime        string           `xml:"startTime,attr,omitempty"`
-	EndTime          string           `xml:"endTime,attr,omitempty"`
-	ExpiryTime       string           `xml:"expiryTime,attr,omitempty"`
-	CancelRequested  bool             `xml:"cancelRequested,attr,omitempty"`
-	Description      string           `xml:"Description,omitempty"`
-	Details          string           `xml:"Details,omitempty"`
-	Error            *Error           `xml:"Error,omitempty"`
-	Link             *Link            `xml:"Link,omitempty"`
-	Organization     *Reference       `xml:"Organization,omitempty"`
-	Owner            *Reference       `xml:"Owner,omitempty"`
-	Progress         int              `xml:"Progress,omitempty"`
-	Tasks            *TasksInProgress `xml:"Tasks,omitempty"`
-	User             *Reference       `xml:"User,omitempty"`
+	HREF             string           `xml:"href,attr,omitempty"`             // The URI of the entity.
+	Type             string           `xml:"type,attr,omitempty"`             // The MIME type of the entity.
+	ID               string           `xml:"id,attr,omitempty"`               // The entity identifier, expressed in URN format. The value of this attribute uniquely identifies the entity, persists for the life of the entity, and is never reused.
+	OperationKey     string           `xml:"operationKey,attr,omitempty"`     // Optional unique identifier to support idempotent semantics for create and delete operations.
+	Name             string           `xml:"name,attr"`                       // The name of the entity.
+	Status           string           `xml:"status,attr"`                     // The execution status of the task. One of queued, preRunning, running, success, error, aborted
+	Operation        string           `xml:"operation,attr,omitempty"`        // A message describing the operation that is tracked by this task.
+	OperationName    string           `xml:"operationName,attr,omitempty"`    // The short name of the operation that is tracked by this task.
+	ServiceNamespace string           `xml:"serviceNamespace,attr,omitempty"` // Identifier of the service that created the task. It must not start with com.vmware.vcloud and the length must be between 1 and 128 symbols.
+	StartTime        string           `xml:"startTime,attr,omitempty"`        // The date and time the system started executing the task. May not be present if the task has not been executed yet.
+	EndTime          string           `xml:"endTime,attr,omitempty"`          // The date and time that processing of the task was completed. May not be present if the task is still being executed.
+	ExpiryTime       string           `xml:"expiryTime,attr,omitempty"`       // The date and time at which the task resource will be destroyed and no longer available for retrieval. May not be present if the task has not been executed or is still being executed.
+	CancelRequested  bool             `xml:"cancelRequested,attr,omitempty"`  // Whether user has requested this processing to be canceled.
+	Description      string           `xml:"Description,omitempty"`           // Optional description.
+	Details          string           `xml:"Details,omitempty"`               // Detailed message about the task. Also contained by the Owner entity when task status is preRunning.
+	Error            *Error           `xml:"Error,omitempty"`                 // Represents error information from a failed task.
+	Link             *Link            `xml:"Link,omitempty"`                  // A reference to an entity or operation associated with this object.
+	Organization     *Reference       `xml:"Organization,omitempty"`          // The organization to which the User belongs.
+	Owner            *Reference       `xml:"Owner,omitempty"`                 // Reference to the owner of the task. This is typically the object that the task is creating or updating.
+	Progress         int              `xml:"Progress,omitempty"`              // Read-only indicator of task progress as an approximate percentage between 0 and 100. Not available for all tasks.
+	Tasks            *TasksInProgress `xml:"Tasks,omitempty"`                 // A list of queued, running, or recently completed tasks associated with this entity.
+	User             *Reference       `xml:"User,omitempty"`                  // The user who started the task.
+	//
+	// TODO: add the following fields
+	// Params      anyType        The parameters with which this task was started.
+	// Result      ResultType	    An optional element that can be used to hold the result of a task.
+	// VcTaskList  VcTaskListType List of Virtual Center tasks related to this vCD task.
 }
 
 // CapacityWithUsage represents a capacity and usage of a given resource.
