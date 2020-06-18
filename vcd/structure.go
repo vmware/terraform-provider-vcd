@@ -159,3 +159,13 @@ func takeBoolPointer(value bool) *bool {
 func takeIntPointer(x int) *int {
 	return &x
 }
+
+// normalizeId checks if the ID contains a wanted prefix
+// If it does, the function returns the original ID.
+// Otherwise, it returns the prefix + the ID
+func normalizeId(prefix, id string) string {
+	if strings.Contains(id, prefix) {
+		return id
+	}
+	return prefix + id
+}

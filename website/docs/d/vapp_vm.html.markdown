@@ -21,10 +21,13 @@ data "vcd_vapp" "web" {
 }
 
 data "vcd_vapp_vm" "web1" {
-  vapp_name     = "${vcd_vapp.web.name}"
+  vapp_name     = data.vcd_vapp.web.name
   name          = "web1"
 }
 
+output "vm_id" {
+  value = data.vcd_vapp_vm.id
+}
 output "vm" {
   value = data.vcd_vapp_vm.web1
 }
