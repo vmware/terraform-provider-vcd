@@ -448,5 +448,5 @@ func listVappNetworksForImport(meta interface{}, orgName, vdcName, vappId string
 		return nil, fmt.Errorf("unable to write to stdout: %s", err)
 	}
 
-	return nil, fmt.Errorf("resource was not imported! %s", errHelpDiskImport)
+	return nil, fmt.Errorf("resource was not imported! %s", errHelpVappNetworkFirewallRulesImport)
 }

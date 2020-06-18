@@ -245,14 +245,15 @@ func (vapp *VApp) UpdateNetworkStaticRoutingAsync(networkId string, staticRoutes
 		return Task{}, err
 	}
 
+	if !isVappNetwork(networkToUpdate) {
+		return Task{}, fmt.Errorf("network static routing can be applied only for vapp network, not vapp org network")
+	}
+
 	if networkToUpdate.Configuration.Features == nil {
 		networkToUpdate.Configuration.Features = &types.NetworkFeatures{}
 	}
 	networkToUpdate.Xmlns = types.XMLNamespaceVCloud
 
-	/*	if networkToUpdate.Configuration.Features.StaticRoutingService == nil {
-		return Task{}, fmt.Errorf("provided network isn't vapp network, but vapp org network")
-	}*/
 	networkToUpdate.Configuration.Features.StaticRoutingService = &types.StaticRoutingService{IsEnabled: enabled, StaticRoute: staticRoutes}
 
 	// here we use `PUT /network/{id}` which allow to change vApp network.
@@ -262,6 +263,17 @@ func (vapp *VApp) UpdateNetworkStaticRoutingAsync(networkId string, staticRoutes
 
 	return vapp.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPut,
 		types.MimeVappNetwork, "error updating vApp Network static routes: %s", networkToUpdate)
+}
+
+// Allows to identify if given network config is a vApp network and not a vApp Org network
+func isVappNetwork(networkConfig *types.VAppNetwork) bool {
+	if networkConfig.Configuration.FenceMode == types.FenceModeIsolated ||
+		(networkConfig.Configuration.FenceMode == types.FenceModeNAT && networkConfig.Configuration.IPScopes != nil &&
+			networkConfig.Configuration.IPScopes.IPScope != nil && len(networkConfig.Configuration.IPScopes.IPScope) > 0 &&
+			!networkConfig.Configuration.IPScopes.IPScope[0].IsInherited) {
+		return true
+	}
+	return false
 }
 
 // RemoveAllNetworkStaticRoutes removes all static routes from a vApp network
