@@ -218,3 +218,62 @@ func (vapp *VApp) RemoveAllNetworkFirewallRules(networkId string) error {
 	}
 	return nil
 }
+
+// UpdateNetworkStaticRouting updates vApp network static routes.
+// Returns pointer to types.VAppNetwork or error
+func (vapp *VApp) UpdateNetworkStaticRouting(networkId string, staticRoutes []*types.StaticRoute, enabled bool) (*types.VAppNetwork, error) {
+	task, err := vapp.UpdateNetworkStaticRoutingAsync(networkId, staticRoutes, enabled)
+	if err != nil {
+		return nil, err
+	}
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return nil, fmt.Errorf("%s", combinedTaskErrorMessage(task.Task, err))
+	}
+
+	return vapp.GetVappNetworkById(networkId, false)
+}
+
+// UpdateNetworkNatRulesAsync asynchronously updates vApp network static routes.
+// Returns task or error
+func (vapp *VApp) UpdateNetworkStaticRoutingAsync(networkId string, staticRoutes []*types.StaticRoute, enabled bool) (Task, error) {
+	util.Logger.Printf("[TRACE] UpdateNetworkStaticRoutingAsync with values: id: %s and staticRoutes: %#v, enable: %t", networkId, staticRoutes, enabled)
+
+	uuid := extractUuid(networkId)
+	networkToUpdate, err := vapp.GetVappNetworkById(uuid, true)
+	if err != nil {
+		return Task{}, err
+	}
+
+	if networkToUpdate.Configuration.Features == nil {
+		networkToUpdate.Configuration.Features = &types.NetworkFeatures{}
+	}
+	networkToUpdate.Xmlns = types.XMLNamespaceVCloud
+
+	/*	if networkToUpdate.Configuration.Features.StaticRoutingService == nil {
+		return Task{}, fmt.Errorf("provided network isn't vapp network, but vapp org network")
+	}*/
+	networkToUpdate.Configuration.Features.StaticRoutingService = &types.StaticRoutingService{IsEnabled: enabled, StaticRoute: staticRoutes}
+
+	// here we use `PUT /network/{id}` which allow to change vApp network.
+	// But `GET /network/{id}` can return org VDC network or vApp network.
+	apiEndpoint := vapp.client.VCDHREF
+	apiEndpoint.Path += "/network/" + uuid
+
+	return vapp.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPut,
+		types.MimeVappNetwork, "error updating vApp Network static routes: %s", networkToUpdate)
+}
+
+// RemoveAllNetworkStaticRoutes removes all static routes from a vApp network
+// Returns error
+func (vapp *VApp) RemoveAllNetworkStaticRoutes(networkId string) error {
+	task, err := vapp.UpdateNetworkStaticRoutingAsync(networkId, []*types.StaticRoute{}, false)
+	if err != nil {
+		return err
+	}
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return fmt.Errorf("%s", combinedTaskErrorMessage(task.Task, err))
+	}
+	return nil
+}
