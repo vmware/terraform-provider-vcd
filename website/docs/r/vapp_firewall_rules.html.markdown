@@ -127,7 +127,7 @@ The output for this command should look similar to the one below:
 
 ```shell
 $ terraform import vcd_vapp_firewall_rules.imported list@org-name.vdc-name.vapp-name
-vcd_vm_internal_disk.imported: Importing from ID "list@org-name.vdc-name.vapp-name"...
+vcd_vapp_firewall_rules.imported: Importing from ID "list@org-name.vdc-name.vapp-name"...
 Retrieving all vApp networks by name
 No	vApp ID                                                 ID                                      Name	
 --	-------                                                 --                                      ----	
