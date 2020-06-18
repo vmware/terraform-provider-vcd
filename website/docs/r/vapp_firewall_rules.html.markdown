@@ -10,6 +10,7 @@ description: |-
 
 Provides a vCloud Director vApp Firewall resource. This can be used to create,
 modify, and delete firewall settings and rules in a [vApp network](/docs/providers/vcd/r/vapp_network.html).
+Firewall rules can be applied to networks connected Org network or vApp networks which are fenced.
 
 !> **Warning:** Using this resource overrides any existing firewall rules on vApp network. It's recommended to have only one resource per vApp. 
 
@@ -133,14 +134,14 @@ No	vApp ID                                                 ID                   
 1	urn:vcloud:vapp:77755b9c-5ec9-41f7-aceb-4cf158786482	0027c6ae-7d59-457e-b33e-a89e97f0bdc1	Net2
 2	urn:vcloud:vapp:77755b9c-5ec9-41f7-aceb-4cf158786482	36986073-8051-4f6d-a1c6-bda648bdf6ba	Net1      		
 
-Error: resource was not imported! resource id must be specified in one of these formats:
-'org-name.vdc-name.my-independent-disk-id' to import by rule id
-'list@org-name.vdc-name.my-independent-disk-name' to get a list of disks with their IDs
+Error: resource id must be specified in one of these formats:
+'org-name.vdc-name.vapp-name.network_name', 'org.vdc-name.vapp-id.network-id' or 
+'list@org-name.vdc-name.vapp-name' to get a list of vapp networks with their IDs
 
 ```
 
 Now to import vApp network firewall rules with ID 0027c6ae-7d59-457e-b33e-a89e97f0bdc1 one could supply this command:
 
 ```shell
-$ terraform import vcd_vm_internal_disk.imported org-name.vdc-name.urn:vcloud:vapp:77755b9c-5ec9-41f7-aceb-4cf158786482.0027c6ae-7d59-457e-b33e-a89e97f0bdc1
+$ terraform import vcd_vapp_firewall_rules.imported org-name.vdc-name.urn:vcloud:vapp:77755b9c-5ec9-41f7-aceb-4cf158786482.0027c6ae-7d59-457e-b33e-a89e97f0bdc1
 ```
