@@ -226,7 +226,7 @@ type NetworkConfiguration struct {
 }
 
 // VAppNetworkConfiguration represents a vApp network configuration
-// Used in vApp network configuration actions as part of vApp type.
+// Used in vApp network configuration actions as part of vApp type,
 // VApp.NetworkConfigSection.NetworkConfig or directly as NetworkConfigSection.NetworkConfig for various API calls.
 // Type: VAppNetworkConfigurationType
 // Namespace: http://www.vmware.com/vcloud/v1.5
@@ -1811,8 +1811,8 @@ type GatewayFeatures struct {
 // Description: Represents Static Routing network service.
 // Since: 1.5
 type StaticRoutingService struct {
-	IsEnabled   bool           `xml:"IsEnabled"`             // Enable or disable the service using this flag
-	StaticRoute []*StaticRoute `xml:"StaticRoute,omitempty"` // Details of each Static Route.
+	IsEnabled   bool         `xml:"IsEnabled"`             // Enable or disable the service using this flag
+	StaticRoute *StaticRoute `xml:"StaticRoute,omitempty"` // Details of each Static Route.
 }
 
 // StaticRoute represents a static route entry
