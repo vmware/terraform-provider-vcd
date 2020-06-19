@@ -86,12 +86,12 @@ Each firewall rule supports the following attributes:
 * `destination_port` - (Optional) The destination port to match. Either a port number or `any`.
 * `destination_ip` - (Optional) The destination IP to match. Either an IP address, IP range or `any`.
 * `destination_vm_id` - (Optional) Destination VM identifier.
-* `destination_vm_ip_type` - (Optional) The value can be one of: `assigned` - use assigned internal IP, `NAT` - use NATed external IP.
+* `destination_vm_ip_type` - (Optional) The value can be one of: `assigned` - assigned internal IP will be automatically chosen, `NAT` - NATed external IP will be automatically chosen.
 * `destination_vm_nic_id` - (Optional) VM NIC ID to which this rule applies.
 * `source_port` - (Optional) The source port to match. Either a port number or `any`.
 * `source_ip` - (Optional) The source IP to match. Either an IP address, IP range or `any`.
 * `source_vm_id` - (Optional) Source VM identifier.
-* `source_vm_ip_type` - (Optional) The value can be one of: `assigned` - use assigned internal IP, `NAT` - use NATed external IP.
+* `source_vm_ip_type` - (Optional) The value can be one of: `assigned` - assigned internal IP will be automatically chosen, `NAT` - NATed external IP will be automatically chosen.
 * `source_vm_nic_id` - (Optional) VM NIC ID to which this rule applies.
 * `enable_logging`- (Optional) `true` value will enable rule logging. Default is `false`.
 
