@@ -10,6 +10,7 @@ description: |-
 
 Provides a vCloud Director vApp Firewall resource. This can be used to create,
 modify, and delete firewall settings and rules in a [vApp network](/docs/providers/vcd/r/vapp_network.html).
+Firewall rules can be applied to networks connected to Org network or vApp networks which are fenced.
 
 !> **Warning:** Using this resource overrides any existing firewall rules on vApp network. It's recommended to have only one resource per vApp. 
 
@@ -85,12 +86,12 @@ Each firewall rule supports the following attributes:
 * `destination_port` - (Optional) The destination port to match. Either a port number or `any`.
 * `destination_ip` - (Optional) The destination IP to match. Either an IP address, IP range or `any`.
 * `destination_vm_id` - (Optional) Destination VM identifier.
-* `destination_vm_ip_type` - (Optional) The value can be one of: `assigned` - use assigned internal IP, `NAT` - use NATed external IP.
+* `destination_vm_ip_type` - (Optional) The value can be one of: `assigned` - assigned internal IP will be automatically chosen, `NAT` - NATed external IP will be automatically chosen.
 * `destination_vm_nic_id` - (Optional) VM NIC ID to which this rule applies.
 * `source_port` - (Optional) The source port to match. Either a port number or `any`.
 * `source_ip` - (Optional) The source IP to match. Either an IP address, IP range or `any`.
 * `source_vm_id` - (Optional) Source VM identifier.
-* `source_vm_ip_type` - (Optional) The value can be one of: `assigned` - use assigned internal IP, `NAT` - use NATed external IP.
+* `source_vm_ip_type` - (Optional) The value can be one of: `assigned` - assigned internal IP will be automatically chosen, `NAT` - NATed external IP will be automatically chosen.
 * `source_vm_nic_id` - (Optional) VM NIC ID to which this rule applies.
 * `enable_logging`- (Optional) `true` value will enable rule logging. Default is `false`.
 
@@ -100,15 +101,17 @@ Each firewall rule supports the following attributes:
 It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
 
 An existing an vApp network firewall rules can be [imported][docs-import] into this resource
-via supplying the full dot separated path to vapp network. An example is
+via supplying the full dot separated path to vApp network. An example is
 below:
 
 ```
-terraform import vcd_vapp_firewall_rules.my-rules my-org.my-vdc.vapp_name.network_name
+terraform import vcd_vapp_firewall_rules.my-rules my-org.my-vdc.vapp-name.network-name
 ```
+
 or using IDs:
+
 ```
-terraform import vcd_vapp_firewall_rules.my-rules my-org.my-vdc.vapp_id.network_id
+terraform import vcd_vapp_firewall_rules.my-rules my-org.my-vdc.vapp-id.network-id
 ```
 
 NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
@@ -126,21 +129,21 @@ The output for this command should look similar to the one below:
 
 ```shell
 $ terraform import vcd_vapp_firewall_rules.imported list@org-name.vdc-name.vapp-name
-vcd_vm_internal_disk.imported: Importing from ID "list@org-name.vdc-name.vapp-name"...
+vcd_vapp_firewall_rules.imported: Importing from ID "list@org-name.vdc-name.vapp-name"...
 Retrieving all vApp networks by name
 No	vApp ID                                                 ID                                      Name	
 --	-------                                                 --                                      ----	
 1	urn:vcloud:vapp:77755b9c-5ec9-41f7-aceb-4cf158786482	0027c6ae-7d59-457e-b33e-a89e97f0bdc1	Net2
 2	urn:vcloud:vapp:77755b9c-5ec9-41f7-aceb-4cf158786482	36986073-8051-4f6d-a1c6-bda648bdf6ba	Net1      		
 
-Error: resource was not imported! resource id must be specified in one of these formats:
-'org-name.vdc-name.my-independent-disk-id' to import by rule id
-'list@org-name.vdc-name.my-independent-disk-name' to get a list of disks with their IDs
+Error: resource id must be specified in one of these formats:
+'org-name.vdc-name.vapp-name.network_name', 'org.vdc-name.vapp-id.network-id' or 
+'list@org-name.vdc-name.vapp-name' to get a list of vapp networks with their IDs
 
 ```
 
 Now to import vApp network firewall rules with ID 0027c6ae-7d59-457e-b33e-a89e97f0bdc1 one could supply this command:
 
 ```shell
-$ terraform import vcd_vm_internal_disk.imported org-name.vdc-name.urn:vcloud:vapp:77755b9c-5ec9-41f7-aceb-4cf158786482.0027c6ae-7d59-457e-b33e-a89e97f0bdc1
+$ terraform import vcd_vapp_firewall_rules.imported org-name.vdc-name.urn:vcloud:vapp:77755b9c-5ec9-41f7-aceb-4cf158786482.0027c6ae-7d59-457e-b33e-a89e97f0bdc1
 ```
