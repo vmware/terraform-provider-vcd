@@ -56,10 +56,10 @@ resource "vcd_vm_affinity_rule" "Test_VmAffinityRule1" {
 
 The following arguments are supported:
 
-* `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
+* `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organizations
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 * `name` - (Required) The name of VM affinity rule. Duplicates are allowed, although the name can be used to retrieve
-  the rule only if it was unique.
+  the rule (as data source or when importing) only if it is unique.
 * `polarity` - (Required) One of `Affinity` or `Anti-Affinity`. This property cannot be changed. Once created, if we
    need to change polarity, we need to remove the rule and create a new one.
 * `enabled` (Optional) True if this affinity rule is enabled. The default is `true`
