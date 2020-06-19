@@ -211,8 +211,7 @@ func resourceVappFirewallRulesDelete(d *schema.ResourceData, meta interface{}) e
 	vcdClient.lockParentVappWithName(d, vapp.VApp.Name)
 	defer vcdClient.unLockParentVappWithName(d, vapp.VApp.Name)
 
-	_, err = vapp.UpdateNetworkFirewallRules(d.Get("network_id").(string), []*types.FirewallRule{},
-		d.Get("default_action").(string), d.Get("log_default_action").(bool))
+	err = vapp.RemoveAllNetworkFirewallRules(d.Get("network_id").(string))
 	if err != nil {
 		log.Printf("[INFO] Error setting firewall rules: %s", err)
 		return fmt.Errorf("error setting firewall rules: %#v", err)
