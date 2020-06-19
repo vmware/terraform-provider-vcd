@@ -312,7 +312,7 @@ func isVappNetworkFound(conn *VCDClient, rs *terraform.ResourceState, origin str
 		if err != nil {
 			return false, fmt.Errorf("unable to get network ID from HREF: %s", err)
 		}
-		if networkId == rs.Primary.ID {
+		if normalizeId("urn:vcloud:network:", networkId) == rs.Primary.ID {
 			found = true
 		}
 	}
