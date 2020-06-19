@@ -10,7 +10,7 @@ description: |-
 
 Provides a vCloud Director vApp Firewall resource. This can be used to create,
 modify, and delete firewall settings and rules in a [vApp network](/docs/providers/vcd/r/vapp_network.html).
-Firewall rules can be applied to networks connected Org network or vApp networks which are fenced.
+Firewall rules can be applied to networks connected to Org network or vApp networks which are fenced.
 
 !> **Warning:** Using this resource overrides any existing firewall rules on vApp network. It's recommended to have only one resource per vApp. 
 
@@ -101,15 +101,17 @@ Each firewall rule supports the following attributes:
 It does not generate configuration. [More information.](https://www.terraform.io/docs/import/)
 
 An existing an vApp network firewall rules can be [imported][docs-import] into this resource
-via supplying the full dot separated path to vapp network. An example is
+via supplying the full dot separated path to vApp network. An example is
 below:
 
 ```
-terraform import vcd_vapp_firewall_rules.my-rules my-org.my-vdc.vapp_name.network_name
+terraform import vcd_vapp_firewall_rules.my-rules my-org.my-vdc.vapp-name.network-name
 ```
+
 or using IDs:
+
 ```
-terraform import vcd_vapp_firewall_rules.my-rules my-org.my-vdc.vapp_id.network_id
+terraform import vcd_vapp_firewall_rules.my-rules my-org.my-vdc.vapp-id.network-id
 ```
 
 NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
