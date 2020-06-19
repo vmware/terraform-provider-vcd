@@ -25,6 +25,9 @@ data "vcd_edgegateway" "mygw" {
 output "external_network" {
   value = data.vcd_edgegateway.mygw.default_gateway_network
 }
+output "edge_gateway_id" {
+  value = data.vcd_edgegateway.mygw.id
+}
 
 # Get the name of the default gateway from the data source
 # and use it to establish a second data source

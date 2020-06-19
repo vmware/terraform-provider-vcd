@@ -85,6 +85,9 @@ func getProtocol(protocol types.FirewallRuleProtocols) string {
 	if protocol.TCP {
 		return "tcp"
 	}
+	if protocol.TCP && protocol.UDP {
+		return "tcp&udp"
+	}
 	if protocol.UDP {
 		return "udp"
 	}
@@ -155,4 +158,14 @@ func takeBoolPointer(value bool) *bool {
 // takeIntPointer accepts an int and returns a pointer to this value.
 func takeIntPointer(x int) *int {
 	return &x
+}
+
+// normalizeId checks if the ID contains a wanted prefix
+// If it does, the function returns the original ID.
+// Otherwise, it returns the prefix + the ID
+func normalizeId(prefix, id string) string {
+	if strings.Contains(id, prefix) {
+		return id
+	}
+	return prefix + id
 }
