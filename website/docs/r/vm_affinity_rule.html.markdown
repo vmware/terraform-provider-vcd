@@ -67,12 +67,6 @@ The following arguments are supported:
    power on the VM if doing so would violate the rule. The default is `true`
 * `virtual_machine_ids` (Required) A set of virtual machine IDs that compose this rule. At least 2 IDs must be provided.
 
-
-## Attribute Reference 
-
-* `rule_id` - Is the ID of the affinity rule, calculated after creation. It's the preferred way to retrieve the affinity
-rule, especially if the rule name could have duplicates.
-  
 ## Importing
 
 ~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate

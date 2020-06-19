@@ -40,11 +40,6 @@ func resourceVcdVmAffinityRule() *schema.Resource {
 				Required:    true,
 				Description: "VM affinity rule name",
 			},
-			"rule_id": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "VM affinity rule ID for look up",
-			},
 			"polarity": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
@@ -162,8 +157,11 @@ func getVmAffinityRule(d *schema.ResourceData, meta interface{}) (*govcd.VmAffin
 
 	// The secondary method of retrieval is from the internal 'rule_id' field
 	if identifier == "" {
-		identifier = d.Get("rule_id").(string)
-		method = "rule_id"
+		ruleId, ok := d.GetOk("rule_id")
+		if ok {
+			identifier = ruleId.(string)
+			method = "rule_id"
+		}
 	}
 
 	// The last method of retrieval is by name
@@ -205,7 +203,9 @@ func genericVcdVmAffinityRuleRead(d *schema.ResourceData, meta interface{}, orig
 	}
 
 	_ = d.Set("name", vmAffinityRule.VmAffinityRule.Name)
-	_ = d.Set("rule_id", vmAffinityRule.VmAffinityRule.ID)
+	if origin == "datasource" {
+		_ = d.Set("rule_id", vmAffinityRule.VmAffinityRule.ID)
+	}
 	_ = d.Set("required", *vmAffinityRule.VmAffinityRule.IsMandatory)
 	_ = d.Set("enabled", *vmAffinityRule.VmAffinityRule.IsEnabled)
 	_ = d.Set("polarity", vmAffinityRule.VmAffinityRule.Polarity)

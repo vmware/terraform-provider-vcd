@@ -229,7 +229,9 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 		"SkipNotice":             "# skip-binary-test: needs external resources",
 	}
 
-	configText := templateFill(testAccVmAffinityRuleBase+testAccVmAffinityRuleOperation, params)
+	configText := templateFill(testAccVmAffinityRuleBase+
+		testAccVmAffinityRuleOperation+
+		testAccVmAffinityRuleDataSource, params)
 
 	params["FuncName"] = data.name + "-update"
 	params["AffinityRuleName"] = data.name + "-update"
@@ -287,19 +289,19 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 			},
 			// Tests import by name
 			resource.TestStep{
-				ResourceName:            "vcd_vm_affinity_rule." + data.name + "-import-name",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateIdFunc:       importStateIdOrgVdcObject(testConfig, data.name+"-update"),
-				ImportStateVerifyIgnore: []string{"org", "vdc"},
+				Config:            updateText,
+				ResourceName:      "vcd_vm_affinity_rule." + data.name + "-import-name",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, data.name+"-update"),
 			},
 			// Tests import by ID
 			resource.TestStep{
-				ResourceName:            "vcd_vm_affinity_rule." + data.name + "-import-id",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateIdFunc:       importStateIdByAffinityRule("vcd_vm_affinity_rule." + data.name),
-				ImportStateVerifyIgnore: []string{"org", "vdc"},
+				Config:            updateText,
+				ResourceName:      "vcd_vm_affinity_rule." + data.name + "-import-id",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdByAffinityRule("vcd_vm_affinity_rule." + data.name),
 			},
 		},
 	})
@@ -583,7 +585,10 @@ resource "vcd_vm_affinity_rule" "{{.AffinityRuleIdentifier}}" {
     {{.VirtualMachineIds}}
   ]
 }
+`
 
+const testAccVmAffinityRuleDataSource = `
+{{.SkipNotice}}
 data "vcd_vm_affinity_rule" "ds_affinity_rule_by_name" {
 	name = vcd_vm_affinity_rule.{{.AffinityRuleIdentifier}}.name
 }
