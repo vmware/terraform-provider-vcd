@@ -991,7 +991,8 @@ func (vapp *VApp) UpdateNetworkAsync(networkSettingsToUpdate *VappNetworkSetting
 			if err != nil {
 				return Task{}, err
 			}
-			if uuid == extractUuid(networkSettingsToUpdate.ID) {
+
+			if uuid == networkSettingsToUpdate.ID {
 				networkToUpdate = networkConfig
 				networkToUpdateIndex = index
 				break
@@ -1113,7 +1114,7 @@ func (vapp *VApp) UpdateOrgNetworkAsync(networkSettingsToUpdate *VappNetworkSett
 				return Task{}, err
 			}
 
-			if uuid == extractUuid(networkSettingsToUpdate.ID) {
+			if uuid == networkSettingsToUpdate.ID {
 				networkToUpdate = networkConfig
 				networkToUpdateIndex = index
 				break
@@ -1203,7 +1204,7 @@ func (vapp *VApp) RemoveNetworkAsync(identifier string) (Task, error) {
 		if err != nil {
 			return Task{}, fmt.Errorf("unable to get network ID from HREF: %s", err)
 		}
-		if networkId == extractUuid(identifier) || networkConfig.NetworkName == identifier {
+		if networkId == identifier || networkConfig.NetworkName == identifier {
 			deleteUrl := vapp.client.VCDHREF.String() + "/network/" + networkId
 			errMessage := fmt.Sprintf("detaching vApp network %s (id '%s'): %%s", networkConfig.NetworkName, networkId)
 			task, err := vapp.client.ExecuteTaskRequest(deleteUrl, http.MethodDelete, types.AnyXMLMime, errMessage, nil)
