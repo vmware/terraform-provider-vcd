@@ -2019,7 +2019,7 @@ type NatRule struct {
 	// Elements
 	Description        string                 `xml:"Description,omitempty"`        // A description of the rule.
 	RuleType           string                 `xml:"RuleType,omitempty"`           // Type of NAT rule. One of: SNAT (source NAT), DNAT (destination NAT)
-	IsEnabled          *bool                  `xml:"IsEnabled"`                    // Used to enable or disable the firewall rule. Default value is true.
+	IsEnabled          *bool                  `xml:"IsEnabled"`                    // Used to enable or disable the firewall rule.
 	ID                 string                 `xml:"Id,omitempty"`                 // Firewall rule identifier.
 	GatewayNatRule     *GatewayNatRule        `xml:"GatewayNatRule,omitempty"`     // Defines SNAT and DNAT types.
 	OneToOneBasicRule  *NatOneToOneBasicRule  `xml:"OneToOneBasicRule,omitempty"`  // Maps one internal IP address to one external IP address.
