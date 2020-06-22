@@ -213,8 +213,8 @@ func resourceVappFirewallRulesDelete(d *schema.ResourceData, meta interface{}) e
 
 	err = vapp.RemoveAllNetworkFirewallRules(d.Get("network_id").(string))
 	if err != nil {
-		log.Printf("[INFO] Error setting firewall rules: %s", err)
-		return fmt.Errorf("error setting firewall rules: %#v", err)
+		log.Printf("[INFO] Error removing firewall rules: %s", err)
+		return fmt.Errorf("error removing firewall rules: %s", err)
 	}
 
 	return nil

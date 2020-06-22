@@ -69,9 +69,6 @@ func TestAccVcdVappNatRules(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "rule.1.external_ip", "10.10.102.13"),
 					resource.TestCheckResourceAttr(resourceName, "rule.1.vm_nic_id", "0"),
 
-					//resource.TestCheckResourceAttr(resourceName, "rule.0.mapping_mode", "automatic"),
-					//resource.TestCheckResourceAttr(resourceName, "rule.1.vm_nic_id", "0"),
-
 					testAccCheckVcdVappNatRulesExists(resourceName+"2", 2),
 					resource.TestCheckResourceAttr(resourceName+"2", "enable_ip_masquerade", "true"),
 
@@ -107,7 +104,6 @@ func TestAccVcdVappNatRules(t *testing.T) {
 					testAccCheckVcdVappNatRulesExists(resourceName, 2),
 					resource.TestCheckResourceAttr(resourceName, "rule.0.mapping_mode", "manual"),
 					resource.TestCheckResourceAttr(resourceName, "rule.0.external_ip", "10.10.102.14"),
-					//resource.TestCheckResourceAttr(resourceName, "rule.0.mapping_mode", "automatic"),
 					resource.TestCheckResourceAttr(resourceName, "rule.0.vm_nic_id", "0"),
 
 					resource.TestCheckResourceAttr(resourceName, "rule.1.mapping_mode", "automatic"),

@@ -64,6 +64,7 @@ resource "vcd_vapp_nat_rules" "vapp_nat" {
     vm_nic_id       = "0"
     vm_id           = vcd_vapp_vm.Vm2.id
   }
+
 resource "vcd_vapp_nat_rules" "vapp_nat2" {
   vapp_id    = vcd_vapp.web.id
   network_id = vcd_vapp_network.vapp_org_net.id
@@ -107,8 +108,8 @@ Each NAT rule supports the following attributes:
 * `vm_id` - (Optional) VM to which this rule applies.
 * `vm_nic_id` - (Optional) VM NIC ID to which this rule applies.
 * `external_ip` - (Optional) External IP address to forward to or External IP address to map to VM.
-* `external_port` - (Optional) External port to forward to.
-* `forward_to_port` - (Optional) Internal port to forward.
+* `external_port` - (Optional) External port to forward to. `-1` value for any port.
+* `forward_to_port` - (Optional) Internal port to forward. `-1` value for any port.
 * `protocol` - (Optional) Protocol to forward. One of: `TCP` (forward TCP packets), `UDP` (forward UDP packets), `TCP_UDP` (forward TCP and UDP packets).
 
 ## Importing

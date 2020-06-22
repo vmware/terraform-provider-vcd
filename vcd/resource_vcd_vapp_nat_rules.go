@@ -156,7 +156,7 @@ func resourceVappNetworkNatRulesUpdate(d *schema.ResourceData, meta interface{})
 		natType, policy)
 	if err != nil {
 		log.Printf("[INFO] Error setting NAT rules: %s", err)
-		return fmt.Errorf("error setting NAT rules: %#v", err)
+		return fmt.Errorf("error setting NAT rules: %s", err)
 	}
 
 	d.SetId(vappNetwork.ID)
