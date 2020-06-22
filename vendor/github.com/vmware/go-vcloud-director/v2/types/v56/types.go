@@ -256,7 +256,7 @@ type VAppNetwork struct {
 	Type     string `xml:"type,attr,omitempty"`
 	ID       string `xml:"id,attr,omitempty"`
 	Name     string `xml:"name,attr"`
-	Deployed *bool  `xml:"deployed,attr"`
+	Deployed *bool  `xml:"deployed,attr"` // True if the network is deployed.
 
 	Link          *Link                 `xml:"Link,omitempty"`
 	Description   string                `xml:"Description,omitempty"`

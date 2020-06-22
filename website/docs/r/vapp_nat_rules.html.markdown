@@ -108,7 +108,7 @@ Each NAT rule supports the following attributes:
 * `vm_id` - (Optional) VM to which this rule applies.
 * `vm_nic_id` - (Optional) VM NIC ID to which this rule applies.
 * `external_ip` - (Optional) External IP address to forward to or External IP address to map to VM.
-* `external_port` - (Optional) External port to forward to. `-1` value for any port.
+* `external_port` - (Optional) External port to forward. `-1` value for any port.
 * `forward_to_port` - (Optional) Internal port to forward. `-1` value for any port.
 * `protocol` - (Optional) Protocol to forward. One of: `TCP` (forward TCP packets), `UDP` (forward UDP packets), `TCP_UDP` (forward TCP and UDP packets).
 

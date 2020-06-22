@@ -45,8 +45,11 @@ func TestAccVcdVappNatRules(t *testing.T) {
 	configText := templateFill(testAccVcdVappNatRules_rules, params)
 	params["FuncName"] = t.Name() + "-step2"
 	configTextForUpdate := templateFill(testAccVcdVappNatRules_rules_forUpdate, params)
+	params["FuncName"] = t.Name() + "-step3"
+	configTextForDelete := templateFill(testAccVcdVappNatRules_rules_forDelete, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configTextForUpdate)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configTextForDelete)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -123,6 +126,13 @@ func TestAccVcdVappNatRules(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName+"2", "rule.1.forward_to_port", "800"),
 				),
 			},
+			resource.TestStep{ // Step 3 - delete
+				Config: configTextForDelete,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdVappNatRulesDeleted("vcd_vapp_org_network.vappAttachedNet"),
+					testAccCheckVcdVappNatRulesDeleted("vcd_vapp_network.vappRoutedNet"),
+				),
+			},
 		},
 	})
 
@@ -161,6 +171,42 @@ func testAccCheckVcdVappNatRulesExists(n string, rulesCount int) resource.TestCh
 			return nil
 		}
 		return fmt.Errorf("no rule with provided name is found")
+	}
+}
+
+func testAccCheckVcdVappNatRulesDeleted(n string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+
+		if !ok {
+			return fmt.Errorf("not found: %s", n)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("no record ID is set")
+		}
+
+		conn := testAccProvider.Meta().(*VCDClient)
+
+		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
+		}
+
+		vapp, err := vdc.GetVAppByName(rs.Primary.Attributes["vapp_name"], false)
+		if err != nil {
+			return err
+		}
+
+		vapp_network, err := vapp.GetVappNetworkById(rs.Primary.ID, false)
+		if err != nil {
+			return err
+		}
+
+		if len(vapp_network.Configuration.Features.NatService.NatRule) == 0 {
+			return nil
+		}
+		return fmt.Errorf("no rule with provided network name is found")
 	}
 }
 
@@ -363,3 +409,4 @@ resource "vcd_vapp_nat_rules" "{{.ResourceName}}2" {
   }
 }
 `
+const testAccVcdVappNatRules_rules_forDelete = testAccVcdVappNatRules_vappAndVm

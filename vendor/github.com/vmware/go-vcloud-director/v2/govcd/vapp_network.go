@@ -81,7 +81,7 @@ func (vapp *VApp) GetVappNetworkById(id string, refresh bool) (*types.VAppNetwor
 	util.Logger.Printf("[TRACE] Looking for networks: %s --- %d", id, len(vapp.VApp.NetworkConfigSection.NetworkConfig))
 	for _, vappNetwork := range vapp.VApp.NetworkConfigSection.NetworkConfig {
 		// break early for empty network interfaces. They don't have all information
-		if vappNetwork.NetworkName == "none" {
+		if vappNetwork.NetworkName == types.NoneNetwork {
 			continue
 		}
 		util.Logger.Printf("[TRACE] Looking at: %s", vappNetwork.Link.HREF)
@@ -208,7 +208,12 @@ func (vapp *VApp) RemoveAllNetworkNatRules(networkId string) error {
 // RemoveAllNetworkFirewallRules removes all network all firewall rules from a vApp network.
 // Returns error
 func (vapp *VApp) RemoveAllNetworkFirewallRules(networkId string) error {
-	task, err := vapp.UpdateNetworkFirewallRulesAsync(networkId, []*types.FirewallRule{}, "allow", false)
+	networkToUpdate, err := vapp.GetVappNetworkById(networkId, true)
+	if err != nil {
+		return err
+	}
+	task, err := vapp.UpdateNetworkFirewallRulesAsync(networkId, []*types.FirewallRule{},
+		networkToUpdate.Configuration.Features.FirewallService.DefaultAction, networkToUpdate.Configuration.Features.FirewallService.LogDefaultAction)
 	if err != nil {
 		return err
 	}

@@ -102,7 +102,7 @@ func resourceVcdVappNetworkNatRules() *schema.Resource {
 						"external_port": &schema.Schema{
 							Type:        schema.TypeInt,
 							Optional:    true,
-							Description: "External port to forward to.",
+							Description: "External port to forward.",
 						},
 						"forward_to_port": &schema.Schema{
 							Type:        schema.TypeInt,
