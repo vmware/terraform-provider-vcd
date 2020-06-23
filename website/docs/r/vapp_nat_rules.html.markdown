@@ -37,9 +37,9 @@ resource "vcd_vapp_network" "vapp-net" {
   }
 }
 
-resource "vcd_vapp_org_network" "vapp_org_net" {
+resource "vcd_vapp_org_network" "vapp-org-net" {
   vapp_name        = vcd_vapp.web.name
-  org_network_name = vcd_network_routed.network_routed.name
+  org_network_name = vcd_network_routed.network-routed.name
   is_fenced        = true
 }
 
@@ -68,7 +68,7 @@ resource "vcd_vapp_nat_rules" "vapp-nat" {
 
 resource "vcd_vapp_nat_rules" "vapp-nat2" {
   vapp_id    = vcd_vapp.web.id
-  network_id = vcd_vapp_network.vapp_org_net.id
+  network_id = vcd_vapp_network.vapp-org-net.id
   nat_type   = "ipTranslation"
 
   rule {

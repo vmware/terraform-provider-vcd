@@ -35,7 +35,7 @@ resource "vcd_vapp_network" "vapp-net" {
   }
 }
 
-resource "vcd_vapp_firewall_rules" "vapp_fw" {
+resource "vcd_vapp_firewall_rules" "vapp-fw" {
   vapp_id        = vcd_vapp.web.id
   network_id     = vcd_vapp_network.vapp-net.id
   default_action = "drop"
