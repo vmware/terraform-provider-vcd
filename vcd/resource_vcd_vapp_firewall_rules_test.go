@@ -1,4 +1,4 @@
-// +build functional gateway ALL
+// +build functional vapp ALL
 
 package vcd
 
