@@ -45,7 +45,7 @@ func resourceVcdVappNetworkStaticRouting() *schema.Resource {
 				ForceNew:    true,
 				Description: "vApp network identifier",
 			},
-			"enable": &schema.Schema{
+			"enabled": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
@@ -103,7 +103,7 @@ func resourceVappNetworkStaticRoutingUpdate(d *schema.ResourceData, meta interfa
 	if err != nil {
 		return fmt.Errorf("error expanding static routes: %s", err)
 	}
-	vappNetwork, err := vapp.UpdateNetworkStaticRouting(networkId, staticRouting, d.Get("enable").(bool))
+	vappNetwork, err := vapp.UpdateNetworkStaticRouting(networkId, staticRouting, d.Get("enabled").(bool))
 	if err != nil {
 		log.Printf("[INFO] Error setting static routing: %s", err)
 		return fmt.Errorf("error setting static routing: %s", err)
@@ -173,7 +173,7 @@ func resourceVappNetworkStaticRoutingRead(d *schema.ResourceData, meta interface
 		singleRule["next_hop_ip"] = rule.NextHopIP
 		rules = append(rules, singleRule)
 	}
-	_ = d.Set("enable", vappNetwork.Configuration.Features.StaticRoutingService.IsEnabled)
+	_ = d.Set("enabled", vappNetwork.Configuration.Features.StaticRoutingService.IsEnabled)
 	_ = d.Set("rule", rules)
 	return nil
 }

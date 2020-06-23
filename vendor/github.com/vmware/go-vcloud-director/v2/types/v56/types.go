@@ -1817,8 +1817,8 @@ type GatewayFeatures struct {
 // Description: Represents Static Routing network service.
 // Since: 1.5
 type StaticRoutingService struct {
-	IsEnabled   bool         `xml:"IsEnabled"`             // Enable or disable the service using this flag
-	StaticRoute *StaticRoute `xml:"StaticRoute,omitempty"` // Details of each Static Route.
+	IsEnabled   bool           `xml:"IsEnabled"`             // Enable or disable the service using this flag
+	StaticRoute []*StaticRoute `xml:"StaticRoute,omitempty"` // Details of each Static Route.
 }
 
 // StaticRoute represents a static route entry

@@ -12,6 +12,7 @@ Provides a vCloud Director vApp static routing resource. This can be used to cre
 modify, and delete static routing rules in a [vApp network](/docs/providers/vcd/r/vapp_network.html).
 
 ~> **Note:** Resource used for vApp network, not vApp Org network.
+
 !> **Warning:** Using this resource overrides any existing static routing rules on vApp network. It's recommended to have only one resource per vApp. 
 
 ## Example Usage
@@ -38,10 +39,10 @@ resource "vcd_vapp_network" "vapp-net" {
   }
 }
 
-resource "vcd_vapp_static_routing" "vapp1_static_routing" {
+resource "vcd_vapp_static_routing" "vapp1-static-routing" {
   vapp_id    = vcd_vapp.web.id
   network_id = vcd_vapp_network.vapp-net.id
-  enable     = false
+  enabled    = false
 
   rule {
     name         = "drule1"
@@ -65,6 +66,7 @@ The following arguments are supported:
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
 * `vapp_id` - (Required) The identifier of [vApp](/docs/providers/vcd/r/vapp.html).
 * `network_id` - (Required) The identifier of [vApp network](/docs/providers/vcd/r/vapp_network.html).
+* `enabled` - (Optional) Enable or disable static Routing.
 * `enable_ip_masquerade` - (Optional) Enable or disable static Routing. Default value is `true`.
 * `rule` - (Optional) Configures a static routing rule; see [Rules](#rules) below for details.
 
