@@ -219,7 +219,7 @@ const (
 )
 
 const (
-	// The Qt* constants are the names used with Query requests to retrieve the corresponding entities
+	// The Qt* (Query Type) constants are the names used with Query requests to retrieve the corresponding entities
 	QtVappTemplate      = "vAppTemplate"      // vApp template
 	QtAdminVappTemplate = "adminVAppTemplate" // vApp template as admin
 	QtEdgeGateway       = "edgeGateway"       // edge gateway
