@@ -306,5 +306,5 @@ func expandVappNetworkNatRules(d *schema.ResourceData, vapp *govcd.VApp, natType
 // Example import path (_the_id_string_): org.my_existing_vdc.vapp_name.network_name or org.my_existing_vdc.vapp_id.network_id
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func vappNetworkNatRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	return vappFirewallRuleImport(d, meta)
+	return vappNetworkRuleImport(d, meta, "vcd_vapp_nat_rules")
 }
