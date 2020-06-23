@@ -75,9 +75,8 @@ data "{{.DataSourceName}}" "not-existing" {
 func getMandatoryDataSourceSchemaFields(dataSourceName string) []string {
 	var mandatoryFields []string
 	schema := globalDataSourceMap[dataSourceName]
-	_, filterFound := schema.Schema["filter"]
 	for fieldName, fieldSchema := range schema.Schema {
-		if fieldSchema.Required || (filterFound && fieldName == "name") {
+		if fieldSchema.Required || (len(fieldSchema.ExactlyOneOf) > 0 && fieldSchema.ExactlyOneOf[0] == fieldName) {
 			mandatoryFields = append(mandatoryFields, fieldName)
 		}
 	}

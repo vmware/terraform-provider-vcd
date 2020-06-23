@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"log"
-	"regexp"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
@@ -400,20 +399,6 @@ func getStaticIpPool(network *govcd.OrgVDCNetwork) []map[string]interface{} {
 	}
 
 	return staticIpPool
-}
-
-// hasSameUuid compares two IDs (or HREF)
-// and returns true if the UUID part of the two input strings are the same.
-// This is useful when comparing a HREF to a ID, or a HREF from an admin path
-// to a HREF from a regular user path.
-func haveSameUuid(s1, s2 string) bool {
-	reUuid := regexp.MustCompile(`/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$`)
-	s1List := reUuid.FindAllStringSubmatch(s1, -1)
-	s2List := reUuid.FindAllStringSubmatch(s2, -1)
-	if len(s1List) > 0 && len(s1List[0]) > 0 && len(s2List) > 0 && len(s2List[0]) > 0 {
-		return s1List[0][1] == s2List[0][1]
-	}
-	return false
 }
 
 // getDhcpFromEdgeGateway examines the edge gateway for a DHCP service

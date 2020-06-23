@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -160,6 +161,17 @@ func takeIntPointer(x int) *int {
 	return &x
 }
 
+// extractUuid finds an UUID in the input string
+// Returns an empty string if no UUID was found
+func extractUuid(input string) string {
+	reGetID := regexp.MustCompile(`([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})`)
+	matchListId := reGetID.FindAllStringSubmatch(input, -1)
+	if len(matchListId) > 0 && len(matchListId[0]) > 0 {
+		return matchListId[0][1]
+	}
+	return ""
+}
+
 // normalizeId checks if the ID contains a wanted prefix
 // If it does, the function returns the original ID.
 // Otherwise, it returns the prefix + the ID
@@ -168,4 +180,12 @@ func normalizeId(prefix, id string) string {
 		return id
 	}
 	return prefix + id
+}
+
+// haveSameUuid compares two IDs (or HREF)
+// and returns true if the UUID part of the two input strings are the same.
+// This is useful when comparing a HREF to a ID, or a HREF from an admin path
+// to a HREF from a regular user path.
+func haveSameUuid(s1, s2 string) bool {
+	return extractUuid(s1) == extractUuid(s2)
 }

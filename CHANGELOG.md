@@ -1,6 +1,9 @@
 ## 2.9.0 (Unreleased)
 FEATURES:
 
+* **New Resource**: `vcd_vm_affinity_rule` VM affinity and anti-affinity rules [GH-514]
+* **New Data Source**: `vcd_vm_affinity_rule` VM affinity and anti-affinity rules [GH-514]
+* **New Resource:** `vcd_org_group` Org Group management [GH-513]
 * Add support for SAML auth with Active Directory Federation Services (ADFS) as IdP using
   "/adfs/services/trust/13/usernamemixed" endpoint usin auth_type="saml_adfs". [GH-504]
 * Add support for LDAP authentication using auth_type="integrated". [GH-504]
