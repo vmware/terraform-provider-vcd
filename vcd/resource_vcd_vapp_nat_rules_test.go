@@ -241,6 +241,8 @@ resource "vcd_vapp_network" "vappRoutedNet" {
   netmask          = "255.255.255.0"
   org_network_name = vcd_network_routed.network_routed.name
 
+  nat_enabled = true
+
   static_ip_pool {
     start_address = "192.168.22.2"
     end_address   = "192.168.22.254"
@@ -254,6 +256,8 @@ resource "vcd_vapp_org_network" "vappAttachedNet" {
   vapp_name        = vcd_vapp.{{.VappName}}.name
   org_network_name = vcd_network_routed.network_routed.name
   is_fenced        = true
+
+  nat_enabled = true
 }
 
 resource "vcd_vapp_vm" "{{.VmName1}}" {
