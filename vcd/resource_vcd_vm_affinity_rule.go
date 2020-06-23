@@ -91,12 +91,38 @@ func resourceToAffinityRule(d *schema.ResourceData, meta interface{}) (*types.Vm
 	}
 	var vmReferences []*types.Reference
 
+	var invalidEntries = make(map[string]bool)
+	var foundEntries = make(map[string]bool)
 	for _, vmId := range vmIdList {
 		for _, vm := range fullVmList {
-			if extractUuid(vmId) == extractUuid(vm.HREF) {
-				vmReferences = append(vmReferences, &types.Reference{HREF: vm.HREF})
+			uuid := extractUuid(vmId)
+			if uuid != "" {
+				if extractUuid(vmId) == extractUuid(vm.HREF) {
+					vmReferences = append(vmReferences, &types.Reference{HREF: vm.HREF})
+					foundEntries[vmId] = true
+				}
+			} else {
+				invalidEntries[vmId] = true
 			}
 		}
+	}
+	if len(invalidEntries) > 0 {
+		var invalidItems []string
+		for k := range invalidEntries {
+			invalidItems = append(invalidItems, k)
+		}
+		return nil, fmt.Errorf("invalid entries (not a VM ID) detected: %v", invalidItems)
+	}
+	if len(vmIdList) > len(foundEntries) {
+
+		var notExistingVms []string
+		for _, vmId := range vmIdList {
+			_, exists := foundEntries[vmId]
+			if !exists {
+				notExistingVms = append(notExistingVms, vmId)
+			}
+		}
+		return nil, fmt.Errorf("not existing VMs detected: %v", notExistingVms)
 	}
 
 	var vmAffinityRuleDef = &types.VmAffinityRule{
