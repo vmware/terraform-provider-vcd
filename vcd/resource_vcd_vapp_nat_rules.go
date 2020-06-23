@@ -57,7 +57,7 @@ func resourceVcdVappNetworkNatRules() *schema.Resource {
 			"nat_type": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validation.StringInSlice([]string{"portForwarding", "ipTranslation"}, false),
+				ValidateFunc: validation.StringInSlice([]string{portForwardingNatType, ipTranslationNatType}, false),
 				Description:  "One of: `ipTranslation` (use IP translation), `portForwarding` (use port forwarding).",
 			},
 			"enable_ip_masquerade": &schema.Schema{
@@ -240,7 +240,10 @@ func resourceVappNetworkNatRulesRead(d *schema.ResourceData, meta interface{}) e
 		_ = d.Set("enable_ip_masquerade", false)
 	}
 	_ = d.Set("nat_type", vappNetwork.Configuration.Features.NatService.NatType)
-	_ = d.Set("rule", rules)
+	err = d.Set("rule", rules)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
