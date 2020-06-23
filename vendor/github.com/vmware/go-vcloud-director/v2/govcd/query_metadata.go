@@ -59,6 +59,11 @@ func queryFieldsOnDemand(queryType string) ([]string, error) {
 			"isIso", "isVdcEnabled", "taskStatus", "taskDetails"}
 		catalogItemFields = []string{"entity", "entityName", "entityType", "catalog", "catalogName", "ownerName",
 			"owner", "isPublished", "vdc", "vdcName", "isVdcEnabled", "creationDate", "isExpired", "status"}
+		vmFields = []string{"catalogName", "container", "containerName", "datastoreName", "description",
+			"gcStatus", "guestOs", "hardwareVersion", "hostName", "isAutoNature", "isDeleted", "isDeployed", "isPublished",
+			"isVAppTemplate", "isVdcEnabled", "memoryMB", "moref", "name", "numberOfCpus", "org", "status",
+			"storageProfileName", "vc", "vdc", "vmToolsVersion", "containerStatus", "pvdcHighestSupportedHardwareVersion",
+		}
 		fieldsOnDemand = map[string][]string{
 			types.QtVappTemplate:      vappTemplatefields,
 			types.QtAdminVappTemplate: vappTemplatefields,
@@ -70,6 +75,8 @@ func queryFieldsOnDemand(queryType string) ([]string, error) {
 			types.QtAdminMedia:        mediaFields,
 			types.QtCatalogItem:       catalogItemFields,
 			types.QtAdminCatalogItem:  catalogItemFields,
+			types.QtVm:                vmFields,
+			types.QtAdminVm:           vmFields,
 		}
 	)
 
@@ -115,6 +122,12 @@ func addResults(queryType string, cumulativeResults, newResults Results) (Result
 	case types.QtEdgeGateway:
 		cumulativeResults.Results.EdgeGatewayRecord = append(cumulativeResults.Results.EdgeGatewayRecord, newResults.Results.EdgeGatewayRecord...)
 		size = len(newResults.Results.EdgeGatewayRecord)
+	case types.QtVm:
+		cumulativeResults.Results.VMRecord = append(cumulativeResults.Results.VMRecord, newResults.Results.VMRecord...)
+		size = len(newResults.Results.VMRecord)
+	case types.QtAdminVm:
+		cumulativeResults.Results.AdminVMRecord = append(cumulativeResults.Results.AdminVMRecord, newResults.Results.AdminVMRecord...)
+		size = len(newResults.Results.AdminVMRecord)
 
 	default:
 		return Results{}, 0, fmt.Errorf("query type %s not supported", queryType)
@@ -125,6 +138,33 @@ func addResults(queryType string, cumulativeResults, newResults Results) (Result
 
 // cumulativeQuery runs a paginated query and collects all elements until the total number of records is retrieved
 func (client *Client) cumulativeQuery(queryType string, params, notEncodedParams map[string]string) (Results, error) {
+	var supportedQueryTypes = []string{
+		types.QtVappTemplate,
+		types.QtAdminVappTemplate,
+		types.QtEdgeGateway,
+		types.QtOrgVdcNetwork,
+		types.QtCatalog,
+		types.QtAdminCatalog,
+		types.QtMedia,
+		types.QtAdminMedia,
+		types.QtCatalogItem,
+		types.QtAdminCatalogItem,
+		types.QtVm,
+		types.QtAdminVm,
+	}
+	// Make sure the query type is supported
+	// We need to check early, as queries that would return less than 25 items (default page size) would succeed,
+	// but the check on query type will happen once that threshold is crossed.
+	isSupported := false
+	for _, qt := range supportedQueryTypes {
+		if qt == queryType {
+			isSupported = true
+			break
+		}
+	}
+	if !isSupported {
+		return Results{}, fmt.Errorf("[cumulativeQuery] query type %s not supported", queryType)
+	}
 
 	result, err := client.QueryWithNotEncodedParams(params, notEncodedParams)
 	if err != nil {

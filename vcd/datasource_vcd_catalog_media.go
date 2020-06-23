@@ -21,9 +21,10 @@ func datasourceVcdCatalogMedia() *schema.Resource {
 				Description: "catalog name where upload the Media file",
 			},
 			"name": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "media name (Optional when 'filter' is used)",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"name", "filter"},
+				Description:  "media name (Optional when 'filter' is used)",
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,

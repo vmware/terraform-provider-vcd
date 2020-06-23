@@ -19,9 +19,10 @@ func datasourceVcdCatalog() *schema.Resource {
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"name": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Name of the catalog. (Optional if 'filter' is used)",
+				Type:         schema.TypeString,
+				Optional:     true,
+				Description:  "Name of the catalog. (Optional if 'filter' is used)",
+				ExactlyOneOf: []string{"name", "filter"},
 			},
 			"created": &schema.Schema{
 				Type:        schema.TypeString,

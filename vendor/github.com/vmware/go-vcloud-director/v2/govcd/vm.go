@@ -1476,3 +1476,28 @@ func (vm *VM) UpdateVmSpecSectionAsync(vmSettingsToUpdate *types.VmSpecSection, 
 			// API version requirements changes through vCD version to access VmSpecSection
 		}, vm.client.GetSpecificApiVersionOnCondition(">= 32.0", "32.0"))
 }
+
+// QueryVmList returns a list of all VMs in all the organizations available to the caller
+func (client *Client) QueryVmList(filter types.VmQueryFilter) ([]*types.QueryResultVMRecordType, error) {
+	var vmList []*types.QueryResultVMRecordType
+	queryType := types.QtVm
+	if client.IsSysAdmin {
+		queryType = types.QtAdminVm
+	}
+	params := map[string]string{
+		"type":          queryType,
+		"filterEncoded": "true",
+	}
+	if filter.String() != "" {
+		params["filter"] = filter.String()
+	}
+	vmResult, err := client.cumulativeQuery(queryType, nil, params)
+	if err != nil {
+		return nil, fmt.Errorf("error getting VM list : %s", err)
+	}
+	vmList = vmResult.Results.VMRecord
+	if client.IsSysAdmin {
+		vmList = vmResult.Results.AdminVMRecord
+	}
+	return vmList, nil
+}

@@ -877,3 +877,13 @@ func (vdc *Vdc) QueryVappVmTemplate(catalogName, vappTemplateName, vmNameInTempl
 
 	return vmResults[0], nil
 }
+
+// getLinkHref returns a link HREF for a wanted combination of rel and type
+func (vdc *Vdc) getLinkHref(rel, linkType string) string {
+	for _, link := range vdc.Vdc.Link {
+		if link.Rel == rel && link.Type == linkType {
+			return link.HREF
+		}
+	}
+	return ""
+}

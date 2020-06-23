@@ -51,9 +51,11 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_nsxv_ip_set":        datasourceVcdIpSet(),            // 2.6
 	"vcd_vapp_network":       datasourceVcdVappNetwork(),      // 2.7
 	"vcd_vapp_org_network":   datasourceVcdVappOrgNetwork(),   // 2.7
+	"vcd_vm_affinity_rule":   datasourceVcdVmAffinityRule(),   // 2.9
 }
 
 var globalResourceMap = map[string]*schema.Resource{
+
 	"vcd_network":             resourceVcdNetwork(),           // 1.0 DEPRECATED: replaced by vcd_network_routed
 	"vcd_network_routed":      resourceVcdNetworkRouted(),     // 2.0
 	"vcd_network_direct":      resourceVcdNetworkDirect(),     // 2.0
@@ -89,6 +91,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_vapp_org_network":    resourceVcdVappOrgNetwork(),    // 2.7
 	"vcd_org_group":           resourceVcdOrgGroup(),          // 2.9
 	"vcd_vapp_firewall_rules": resourceVcdVappFirewallRules(), // 2.9
+	"vcd_vm_affinity_rule":    resourceVcdVmAffinityRule(),    // 2.9
 }
 
 // Provider returns a terraform.ResourceProvider.
