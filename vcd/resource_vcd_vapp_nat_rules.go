@@ -218,13 +218,14 @@ func resourceVappNetworkNatRulesRead(d *schema.ResourceData, meta interface{}) e
 	for _, rule := range vappNetwork.Configuration.Features.NatService.NatRule {
 		singleRule := make(map[string]interface{})
 		singleRule["id"] = rule.ID
-		if vappNetwork.Configuration.Features.NatService.NatType == portForwardingNatType {
+		switch vappNetwork.Configuration.Features.NatService.NatType {
+		case portForwardingNatType:
 			singleRule["external_port"] = rule.VMRule.ExternalPort
 			singleRule["vm_nic_id"] = rule.VMRule.VMNicID
 			singleRule["forward_to_port"] = rule.VMRule.InternalPort
 			singleRule["protocol"] = rule.VMRule.Protocol
 			singleRule["vm_id"] = getVmIdFromVmVappLocalId(vapp, rule.VMRule.VAppScopedVMID)
-		} else if vappNetwork.Configuration.Features.NatService.NatType == ipTranslationNatType {
+		case ipTranslationNatType:
 			singleRule["vm_nic_id"] = rule.OneToOneVMRule.VMNicID
 			singleRule["external_ip"] = rule.OneToOneVMRule.ExternalIPAddress
 			singleRule["mapping_mode"] = rule.OneToOneVMRule.MappingMode
