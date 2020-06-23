@@ -80,6 +80,10 @@ func (vapp *VApp) GetVappNetworkById(id string, refresh bool) (*types.VAppNetwor
 
 	util.Logger.Printf("[TRACE] Looking for networks: %s --- %d", id, len(vapp.VApp.NetworkConfigSection.NetworkConfig))
 	for _, vappNetwork := range vapp.VApp.NetworkConfigSection.NetworkConfig {
+		// Break early for empty network interfaces. They don't have all information
+		if vappNetwork.NetworkName == types.NoneNetwork {
+			continue
+		}
 		util.Logger.Printf("[TRACE] Looking at: %s", vappNetwork.Link.HREF)
 		if equalIds(id, vappNetwork.ID, vappNetwork.Link.HREF) {
 			vappNetwork := &types.VAppNetwork{}
@@ -138,4 +142,84 @@ func (vapp *VApp) GetVappNetworkByNameOrId(identifier string, refresh bool) (*ty
 		return nil, err
 	}
 	return entity.(*types.VAppNetwork), err
+}
+
+// UpdateNetworkNatRules updates vApp networks NAT rules.
+// Returns pointer to types.VAppNetwork or error
+func (vapp *VApp) UpdateNetworkNatRules(networkId string, natRules []*types.NatRule, natType, policy string) (*types.VAppNetwork, error) {
+	task, err := vapp.UpdateNetworkNatRulesAsync(networkId, natRules, natType, policy)
+	if err != nil {
+		return nil, err
+	}
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return nil, fmt.Errorf("%s", combinedTaskErrorMessage(task.Task, err))
+	}
+
+	return vapp.GetVappNetworkById(networkId, false)
+}
+
+// UpdateNetworkNatRulesAsync asynchronously updates vApp NAT rules.
+// Returns task or error
+func (vapp *VApp) UpdateNetworkNatRulesAsync(networkId string, natRules []*types.NatRule, natType, policy string) (Task, error) {
+	util.Logger.Printf("[TRACE] UpdateNetworkNatRulesAsync with values: id: %s and natRules: %#v", networkId, natRules)
+
+	uuid := extractUuid(networkId)
+	networkToUpdate, err := vapp.GetVappNetworkById(uuid, true)
+	if err != nil {
+		return Task{}, err
+	}
+
+	if networkToUpdate.Configuration.Features == nil {
+		networkToUpdate.Configuration.Features = &types.NetworkFeatures{}
+	}
+	networkToUpdate.Xmlns = types.XMLNamespaceVCloud
+
+	if networkToUpdate.Configuration.Features.NatService == nil {
+		return Task{}, fmt.Errorf("provided network isn't connected to org network or isn't fenced")
+	}
+	networkToUpdate.Configuration.Features.NatService.NatType = natType
+	networkToUpdate.Configuration.Features.NatService.Policy = policy
+	networkToUpdate.Configuration.Features.NatService.NatRule = natRules
+
+	// here we use `PUT /network/{id}` which allow to change vApp network.
+	// But `GET /network/{id}` can return org VDC network or vApp network.
+	apiEndpoint := vapp.client.VCDHREF
+	apiEndpoint.Path += "/network/" + uuid
+
+	return vapp.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPut,
+		types.MimeVappNetwork, "error updating vApp Network NAT rules: %s", networkToUpdate)
+}
+
+// RemoveAllNetworkNatRules removes all NAT rules from a vApp network
+// Returns error
+func (vapp *VApp) RemoveAllNetworkNatRules(networkId string) error {
+	task, err := vapp.UpdateNetworkNatRulesAsync(networkId, []*types.NatRule{}, "ipTranslation", "allowTraffic")
+	if err != nil {
+		return err
+	}
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return fmt.Errorf("%s", combinedTaskErrorMessage(task.Task, err))
+	}
+	return nil
+}
+
+// RemoveAllNetworkFirewallRules removes all network firewall rules from a vApp network.
+// Returns error
+func (vapp *VApp) RemoveAllNetworkFirewallRules(networkId string) error {
+	networkToUpdate, err := vapp.GetVappNetworkById(networkId, true)
+	if err != nil {
+		return err
+	}
+	task, err := vapp.UpdateNetworkFirewallRulesAsync(networkId, []*types.FirewallRule{},
+		networkToUpdate.Configuration.Features.FirewallService.DefaultAction, networkToUpdate.Configuration.Features.FirewallService.LogDefaultAction)
+	if err != nil {
+		return err
+	}
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return fmt.Errorf("%s", combinedTaskErrorMessage(task.Task, err))
+	}
+	return nil
 }

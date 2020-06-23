@@ -226,7 +226,7 @@ type NetworkConfiguration struct {
 }
 
 // VAppNetworkConfiguration represents a vApp network configuration
-// Used in vApp network configuration actions as part of vApp type.
+// Used in vApp network configuration actions as part of vApp type,
 // VApp.NetworkConfigSection.NetworkConfig or directly as NetworkConfigSection.NetworkConfig for various API calls.
 // Type: VAppNetworkConfigurationType
 // Namespace: http://www.vmware.com/vcloud/v1.5
@@ -256,7 +256,7 @@ type VAppNetwork struct {
 	Type     string `xml:"type,attr,omitempty"`
 	ID       string `xml:"id,attr,omitempty"`
 	Name     string `xml:"name,attr"`
-	Deployed bool   `xml:"deployed,attr"`
+	Deployed *bool  `xml:"deployed,attr"` // True if the network is deployed.
 
 	Link          *Link                 `xml:"Link,omitempty"`
 	Description   string                `xml:"Description,omitempty"`
@@ -2025,7 +2025,7 @@ type NatRule struct {
 	// Elements
 	Description        string                 `xml:"Description,omitempty"`        // A description of the rule.
 	RuleType           string                 `xml:"RuleType,omitempty"`           // Type of NAT rule. One of: SNAT (source NAT), DNAT (destination NAT)
-	IsEnabled          bool                   `xml:"IsEnabled"`                    // Used to enable or disable the firewall rule. Default value is true.
+	IsEnabled          *bool                  `xml:"IsEnabled"`                    // Used to enable or disable the firewall rule.
 	ID                 string                 `xml:"Id,omitempty"`                 // Firewall rule identifier.
 	GatewayNatRule     *GatewayNatRule        `xml:"GatewayNatRule,omitempty"`     // Defines SNAT and DNAT types.
 	OneToOneBasicRule  *NatOneToOneBasicRule  `xml:"OneToOneBasicRule,omitempty"`  // Maps one internal IP address to one external IP address.
@@ -2072,10 +2072,10 @@ type NatOneToOneBasicRule struct {
 type NatOneToOneVMRule struct {
 	Xmlns string `xml:"xmlns,attr,omitempty"`
 	// Elements
-	MappingMode       string `xml:"MappingMode"`       // Mapping mode.
-	ExternalIPAddress string `xml:"ExternalIpAddress"` // External IP address to map.
-	VAppScopedVMID    string `xml:"VAppScopedVmId"`    // VAppScopedVmId of VM to which this rule applies.
-	VMNicID           int    `xml:"VmNicId"`           // VM NIC ID to which this rule applies.
+	MappingMode       string  `xml:"MappingMode"`       // Mapping mode.
+	ExternalIPAddress *string `xml:"ExternalIpAddress"` // External IP address to map.
+	VAppScopedVMID    string  `xml:"VAppScopedVmId"`    // VAppScopedVmId of VM to which this rule applies.
+	VMNicID           int     `xml:"VmNicId"`           // VM NIC ID to which this rule applies.
 }
 
 // NatPortForwardingRule represents the NAT rule for port forwarding between internal IP/port and external IP/port.
