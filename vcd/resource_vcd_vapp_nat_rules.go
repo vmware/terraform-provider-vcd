@@ -23,7 +23,7 @@ func resourceVcdVappNetworkNatRules() *schema.Resource {
 		Read:   resourceVappNetworkNatRulesRead,
 		Update: resourceVappNetworkNatRulesUpdate,
 		Importer: &schema.ResourceImporter{
-			State: vappNetworkNatRuleImport,
+			State: vappNetworkNatRulesImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -74,7 +74,7 @@ func resourceVcdVappNetworkNatRules() *schema.Resource {
 						"id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Id of the rule. Can be used to track syslog messages.",
+							Description: "ID of the rule. Can be used to track syslog messages.",
 						},
 						"mapping_mode": &schema.Schema{
 							Type:         schema.TypeString,
@@ -292,7 +292,7 @@ func expandVappNetworkNatRules(d *schema.ResourceData, vapp *govcd.VApp, natType
 	return natRules, nil
 }
 
-// vappNetworkNatRuleImport is responsible for importing the resource.
+// vappNetworkNatRulesImport is responsible for importing the resource.
 // The following steps happen as part of import
 // 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
 // 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
@@ -305,6 +305,6 @@ func expandVappNetworkNatRules(d *schema.ResourceData, vapp *govcd.VApp, natType
 // Example resource name (_resource_name_): vcd_vapp_nat_rules.my_existing_nat_rules
 // Example import path (_the_id_string_): org.my_existing_vdc.vapp_name.network_name or org.my_existing_vdc.vapp_id.network_id
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func vappNetworkNatRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func vappNetworkNatRulesImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	return vappNetworkRuleImport(d, meta, "vcd_vapp_nat_rules")
 }

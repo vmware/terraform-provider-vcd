@@ -18,7 +18,7 @@ func resourceVcdVappFirewallRules() *schema.Resource {
 		Read:   resourceVappFirewallRulesRead,
 		Update: resourceVcdVappFirewallRulesUpdate,
 		Importer: &schema.ResourceImporter{
-			State: vappFirewallRuleImport,
+			State: vappFirewallRulesImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -348,7 +348,7 @@ var errHelpVappNetworkRulesImport = fmt.Errorf(`resource id must be specified in
 'org-name.vdc-name.vapp-name.network_name', 'org.vdc-name.vapp-id.network-id' or 
 'list@org-name.vdc-name.vapp-name' to get a list of vapp networks with their IDs`)
 
-// vappFirewallRuleImport is responsible for importing the resource.
+// vappFirewallRulesImport is responsible for importing the resource.
 // The following steps happen as part of import
 // 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
 // 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
@@ -362,7 +362,7 @@ var errHelpVappNetworkRulesImport = fmt.Errorf(`resource id must be specified in
 // Example import path (_the_id_string_): org.my_existing_vdc.vapp_name.network_name or org.my_existing_vdc.vapp_id.network_id
 // Example list path (_the_id_string_): list@org-name.vdc-name.vapp-name
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func vappFirewallRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func vappFirewallRulesImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	return vappNetworkRuleImport(d, meta, "vcd_vapp_firewall_rules")
 }
 func vappNetworkRuleImport(d *schema.ResourceData, meta interface{}, resourceType string) ([]*schema.ResourceData, error) {
@@ -384,12 +384,12 @@ func vappNetworkRuleImport(d *schema.ResourceData, meta interface{}, resourceTyp
 		return listVappNetworksForImport(meta, orgName, vdcName, vappName)
 	} else {
 		orgName, vdcName, vappId, networkId := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
-		return getRules(d, meta, orgName, vdcName, vappId, networkId)
+		return getNetworkRules(d, meta, orgName, vdcName, vappId, networkId)
 	}
 
 }
 
-func getRules(d *schema.ResourceData, meta interface{}, orgName, vdcName, vappId, networkId string) ([]*schema.ResourceData, error) {
+func getNetworkRules(d *schema.ResourceData, meta interface{}, orgName, vdcName, vappId, networkId string) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
@@ -425,7 +425,7 @@ func listVappNetworksForImport(meta interface{}, orgName, vdcName, vappId string
 	vcdClient := meta.(*VCDClient)
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if err != nil {
-		return nil, fmt.Errorf("[vapp network rules import] unable to find VDC %s: %s ", vdcName, err)
+		return nil, fmt.Errorf("[vapp network rules import, network list] unable to find VDC %s: %s ", vdcName, err)
 	}
 
 	stdout := getTerraformStdout()

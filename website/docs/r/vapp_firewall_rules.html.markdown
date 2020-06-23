@@ -12,7 +12,7 @@ Provides a vCloud Director vApp Firewall resource. This can be used to create,
 modify, and delete firewall settings and rules in a [vApp network](/docs/providers/vcd/r/vapp_network.html).
 Firewall rules can be applied to networks connected to Org network or vApp networks which are fenced.
 
-!> **Warning:** Using this resource overrides any existing firewall rules on vApp network. It's recommended to have only one resource per vApp. 
+!> **Warning:** Using this resource overrides any existing firewall rules on vApp network. It's recommended to have only one resource per vApp and vApp network. 
 
 ## Example Usage
 
