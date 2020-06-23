@@ -41,6 +41,7 @@ func TestAccVcdVappNatRules(t *testing.T) {
 		"VmName2":       vmName2,
 		"VmName3":       vmName3,
 		"ExternalIp":    testConfig.Networking.ExternalIp,
+		"Tags":          "vapp",
 	}
 	configText := templateFill(testAccVcdVappNatRules_rules, params)
 	params["FuncName"] = t.Name() + "-step2"

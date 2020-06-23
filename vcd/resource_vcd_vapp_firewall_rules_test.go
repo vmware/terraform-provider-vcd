@@ -40,6 +40,7 @@ func TestAccVcdVappFirewallRules(t *testing.T) {
 		"VmName1":       vmName1,
 		"VmName2":       vmName2,
 		"VmName3":       vmName3,
+		"Tags":          "vapp",
 	}
 	configText := templateFill(testAccVcdVappFirewallRules_rules, params)
 	params["FuncName"] = t.Name() + "-step2"
