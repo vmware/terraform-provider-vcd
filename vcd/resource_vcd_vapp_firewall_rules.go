@@ -256,7 +256,10 @@ func resourceVappFirewallRulesRead(d *schema.ResourceData, meta interface{}) err
 		singleRule["enable_logging"] = rule.EnableLogging
 		rules = append(rules, singleRule)
 	}
-	_ = d.Set("rule", rules)
+	err = d.Set("rule", rules)
+	if err != nil {
+		return err
+	}
 	_ = d.Set("default_action", vappNetwork.Configuration.Features.FirewallService.DefaultAction)
 	_ = d.Set("log_default_action", vappNetwork.Configuration.Features.FirewallService.LogDefaultAction)
 
