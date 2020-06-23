@@ -84,12 +84,12 @@ func resourceVcdVappNetworkNatRules() *schema.Resource {
 						},
 						"vm_id": &schema.Schema{
 							Type:        schema.TypeString,
-							Optional:    true,
+							Required:    true,
 							Description: "VM to which this rule applies.",
 						},
 						"vm_nic_id": &schema.Schema{
 							Type:        schema.TypeInt,
-							Optional:    true,
+							Required:    true,
 							Description: "VM NIC ID to which this rule applies.",
 						},
 						"external_ip": &schema.Schema{

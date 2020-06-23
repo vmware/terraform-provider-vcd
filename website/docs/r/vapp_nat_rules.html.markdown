@@ -104,8 +104,8 @@ The following arguments are supported:
 Each NAT rule supports the following attributes:
 
 * `mapping_mode` - (Optional) Mapping mode. One of: `automatic`, `manual`.
-* `vm_id` - (Optional) VM to which this rule applies.
-* `vm_nic_id` - (Optional) VM NIC ID to which this rule applies.
+* `vm_id` - (Required) VM to which this rule applies.
+* `vm_nic_id` - (Required) VM NIC ID to which this rule applies.
 * `external_ip` - (Optional) External IP address to forward to or External IP address to map to VM.
 * `external_port` - (Optional) External port to forward. `-1` value for any port.
 * `forward_to_port` - (Optional) Internal port to forward. `-1` value for any port.
