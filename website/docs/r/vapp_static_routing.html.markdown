@@ -13,7 +13,7 @@ modify, and delete static routing rules in a [vApp network](/docs/providers/vcd/
 
 ~> **Note:** Resource used for vApp network, not vApp Org network.
 
-!> **Warning:** Using this resource overrides any existing static routing rules on vApp network. It's recommended to have only one resource per vApp. 
+!> **Warning:** Using this resource overrides any existing static routing rules on vApp network. It's recommended to have only one resource per vApp and vApp network. 
 
 ## Example Usage
 
@@ -67,7 +67,6 @@ The following arguments are supported:
 * `vapp_id` - (Required) The identifier of [vApp](/docs/providers/vcd/r/vapp.html).
 * `network_id` - (Required) The identifier of [vApp network](/docs/providers/vcd/r/vapp_network.html).
 * `enabled` - (Optional) Enable or disable static Routing.
-* `enable_ip_masquerade` - (Optional) Enable or disable static Routing. Default value is `true`.
 * `rule` - (Optional) Configures a static routing rule; see [Rules](#rules) below for details.
 
 <a id="rules"></a>
