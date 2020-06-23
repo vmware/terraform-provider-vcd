@@ -219,7 +219,7 @@ const (
 )
 
 const (
-	// The QT* constants are the names used with Query requests to retrieve the corresponding entities
+	// The Qt* (Query Type) constants are the names used with Query requests to retrieve the corresponding entities
 	QtVappTemplate      = "vAppTemplate"      // vApp template
 	QtAdminVappTemplate = "adminVAppTemplate" // vApp template as admin
 	QtEdgeGateway       = "edgeGateway"       // edge gateway
@@ -230,7 +230,42 @@ const (
 	QtAdminCatalogItem  = "adminCatalogItem"  // catalog item as admin
 	QtAdminMedia        = "adminMedia"        // media item as admin
 	QtMedia             = "media"             // media item
+	QtVm                = "vm"                // Virtual machine
+	QtAdminVm           = "adminVM"           // Virtual machine as admin
 )
+
+const (
+	// Affinity and anti affinity definitions
+	PolarityAffinity     = "Affinity"
+	PolarityAntiAffinity = "Anti-Affinity"
+)
+
+// VmQueryFilter defines how we search VMs
+type VmQueryFilter int
+
+const (
+	// VmQueryFilterAll defines a no-filter search, i.e. will return all elements
+	VmQueryFilterAll VmQueryFilter = iota
+
+	// VmQueryFilterOnlyDeployed defines a filter for deployed VMs
+	VmQueryFilterOnlyDeployed
+
+	// VmQueryFilterOnlyTemplates defines a filter for VMs inside a template
+	VmQueryFilterOnlyTemplates
+)
+
+// String converts a VmQueryFilter into the corresponding filter needed by the query to get the wanted result
+func (qf VmQueryFilter) String() string {
+	// Makes sure that we handle out-of-range values
+	if qf < VmQueryFilterAll || qf > VmQueryFilterOnlyTemplates {
+		return ""
+	}
+	return [...]string{
+		"",                      // No filter: will not remove any items
+		"isVAppTemplate==false", // Will find only the deployed VMs
+		"isVAppTemplate==true",  // Will find only those VM that are inside a template
+	}[qf]
+}
 
 // LDAP modes for Organization
 const (

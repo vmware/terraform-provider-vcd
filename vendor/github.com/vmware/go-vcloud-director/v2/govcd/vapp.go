@@ -1128,6 +1128,7 @@ func (vapp *VApp) UpdateOrgNetworkAsync(networkSettingsToUpdate *VappNetworkSett
 	fenceMode := types.FenceModeBridged
 	if isFenced {
 		fenceMode = types.FenceModeNAT
+		// If existing vApp Org network
 		if networkToUpdate.Configuration.Features != nil {
 			if networkToUpdate.Configuration.Features.FirewallService != nil {
 				networkToUpdate.Configuration.Features.FirewallService.IsEnabled = *networkSettingsToUpdate.FirewallEnabled
@@ -1140,6 +1141,7 @@ func (vapp *VApp) UpdateOrgNetworkAsync(networkSettingsToUpdate *VappNetworkSett
 				networkToUpdate.Configuration.Features.NatService = &types.NatService{IsEnabled: *networkSettingsToUpdate.NatEnabled, NatType: "ipTranslation", Policy: "allowTrafficIn"}
 			}
 		} else {
+			// If new vApp Org network
 			networkToUpdate.Configuration.Features = &types.NetworkFeatures{
 				FirewallService: &types.FirewallService{IsEnabled: *networkSettingsToUpdate.FirewallEnabled},
 				NatService:      &types.NatService{IsEnabled: *networkSettingsToUpdate.NatEnabled, NatType: "ipTranslation", Policy: "allowTrafficIn"}}
