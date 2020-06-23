@@ -43,7 +43,7 @@ resource "vcd_vapp_org_network" "vapp_org_net" {
   is_fenced        = true
 }
 
-resource "vcd_vapp_nat_rules" "vapp_nat" {
+resource "vcd_vapp_nat_rules" "vapp-nat" {
   vapp_id              = vcd_vapp.web.id
   network_id           = vcd_vapp_network.vapp-net.id
   nat_type             = "portForwarding"
@@ -54,7 +54,7 @@ resource "vcd_vapp_nat_rules" "vapp_nat" {
     forward_to_port = "-1"
     protocol        = "TCP_UDP"
     vm_nic_id       = "0"
-    vm_id           = vcd_vapp_vm.Vm1.id
+    vm_id           = vcd_vapp_vm.vm1.id
   }
 
   rule {
@@ -62,11 +62,11 @@ resource "vcd_vapp_nat_rules" "vapp_nat" {
     forward_to_port = "80"
     protocol        = "TCP"
     vm_nic_id       = "0"
-    vm_id           = vcd_vapp_vm.Vm2.id
+    vm_id           = vcd_vapp_vm.vm2.id
   }
 }
 
-resource "vcd_vapp_nat_rules" "vapp_nat2" {
+resource "vcd_vapp_nat_rules" "vapp-nat2" {
   vapp_id    = vcd_vapp.web.id
   network_id = vcd_vapp_network.vapp_org_net.id
   nat_type   = "ipTranslation"
@@ -75,13 +75,13 @@ resource "vcd_vapp_nat_rules" "vapp_nat2" {
     mapping_mode = "manual"
     external_ip  = "10.10.103.13"
     vm_nic_id    = 0
-    vm_id        = vcd_vapp_vm.Vm1.id
+    vm_id        = vcd_vapp_vm.vm1.id
   }
 
   rule {
     mapping_mode = "automatic"
     vm_nic_id    = 0
-    vm_id        = vcd_vapp_vm.Vm2.id
+    vm_id        = vcd_vapp_vm.vm2.id
   }
 }
 ```
