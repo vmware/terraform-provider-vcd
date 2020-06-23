@@ -1,4 +1,4 @@
-// +build functional gateway ALL
+// +build functional vapp ALL
 
 package vcd
 
@@ -41,12 +41,16 @@ func TestAccVcdVappNatRules(t *testing.T) {
 		"VmName2":       vmName2,
 		"VmName3":       vmName3,
 		"ExternalIp":    testConfig.Networking.ExternalIp,
+		"Tags":          "vapp",
 	}
 	configText := templateFill(testAccVcdVappNatRules_rules, params)
 	params["FuncName"] = t.Name() + "-step2"
 	configTextForUpdate := templateFill(testAccVcdVappNatRules_rules_forUpdate, params)
+	params["FuncName"] = t.Name() + "-step3"
+	configTextForDelete := templateFill(testAccVcdVappNatRules_rules_forDelete, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configTextForUpdate)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configTextForDelete)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -68,9 +72,6 @@ func TestAccVcdVappNatRules(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "rule.1.mapping_mode", "manual"),
 					resource.TestCheckResourceAttr(resourceName, "rule.1.external_ip", "10.10.102.13"),
 					resource.TestCheckResourceAttr(resourceName, "rule.1.vm_nic_id", "0"),
-
-					//resource.TestCheckResourceAttr(resourceName, "rule.0.mapping_mode", "automatic"),
-					//resource.TestCheckResourceAttr(resourceName, "rule.1.vm_nic_id", "0"),
 
 					testAccCheckVcdVappNatRulesExists(resourceName+"2", 2),
 					resource.TestCheckResourceAttr(resourceName+"2", "enable_ip_masquerade", "true"),
@@ -107,7 +108,6 @@ func TestAccVcdVappNatRules(t *testing.T) {
 					testAccCheckVcdVappNatRulesExists(resourceName, 2),
 					resource.TestCheckResourceAttr(resourceName, "rule.0.mapping_mode", "manual"),
 					resource.TestCheckResourceAttr(resourceName, "rule.0.external_ip", "10.10.102.14"),
-					//resource.TestCheckResourceAttr(resourceName, "rule.0.mapping_mode", "automatic"),
 					resource.TestCheckResourceAttr(resourceName, "rule.0.vm_nic_id", "0"),
 
 					resource.TestCheckResourceAttr(resourceName, "rule.1.mapping_mode", "automatic"),
@@ -125,6 +125,13 @@ func TestAccVcdVappNatRules(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName+"2", "rule.1.vm_nic_id", "0"),
 					resource.TestCheckResourceAttr(resourceName+"2", "rule.1.protocol", "UDP"),
 					resource.TestCheckResourceAttr(resourceName+"2", "rule.1.forward_to_port", "800"),
+				),
+			},
+			resource.TestStep{ // Step 3 - delete
+				Config: configTextForDelete,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdVappNatRulesDeleted("vcd_vapp_org_network.vappAttachedNet"),
+					testAccCheckVcdVappNatRulesDeleted("vcd_vapp_network.vappRoutedNet"),
 				),
 			},
 		},
@@ -168,6 +175,42 @@ func testAccCheckVcdVappNatRulesExists(n string, rulesCount int) resource.TestCh
 	}
 }
 
+func testAccCheckVcdVappNatRulesDeleted(n string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+
+		if !ok {
+			return fmt.Errorf("not found: %s", n)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("no record ID is set")
+		}
+
+		conn := testAccProvider.Meta().(*VCDClient)
+
+		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
+		}
+
+		vapp, err := vdc.GetVAppByName(rs.Primary.Attributes["vapp_name"], false)
+		if err != nil {
+			return err
+		}
+
+		vapp_network, err := vapp.GetVappNetworkById(rs.Primary.ID, false)
+		if err != nil {
+			return err
+		}
+
+		if len(vapp_network.Configuration.Features.NatService.NatRule) == 0 {
+			return nil
+		}
+		return fmt.Errorf("no rule with provided network name is found")
+	}
+}
+
 const testAccVcdVappNatRules_vappAndVm = `
 resource "vcd_network_routed" "network_routed" {
   name         = "{{.NetworkName}}"
@@ -198,6 +241,8 @@ resource "vcd_vapp_network" "vappRoutedNet" {
   netmask          = "255.255.255.0"
   org_network_name = vcd_network_routed.network_routed.name
 
+  nat_enabled = true
+
   static_ip_pool {
     start_address = "192.168.22.2"
     end_address   = "192.168.22.254"
@@ -211,6 +256,8 @@ resource "vcd_vapp_org_network" "vappAttachedNet" {
   vapp_name        = vcd_vapp.{{.VappName}}.name
   org_network_name = vcd_network_routed.network_routed.name
   is_fenced        = true
+
+  nat_enabled = true
 }
 
 resource "vcd_vapp_vm" "{{.VmName1}}" {
@@ -367,3 +414,4 @@ resource "vcd_vapp_nat_rules" "{{.ResourceName}}2" {
   }
 }
 `
+const testAccVcdVappNatRules_rules_forDelete = testAccVcdVappNatRules_vappAndVm

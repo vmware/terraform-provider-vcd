@@ -18,7 +18,7 @@ func resourceVcdVappFirewallRules() *schema.Resource {
 		Read:   resourceVappFirewallRulesRead,
 		Update: resourceVcdVappFirewallRulesUpdate,
 		Importer: &schema.ResourceImporter{
-			State: vappFirewallRuleImport,
+			State: vappFirewallRulesImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -211,11 +211,10 @@ func resourceVappFirewallRulesDelete(d *schema.ResourceData, meta interface{}) e
 	vcdClient.lockParentVappWithName(d, vapp.VApp.Name)
 	defer vcdClient.unLockParentVappWithName(d, vapp.VApp.Name)
 
-	_, err = vapp.UpdateNetworkFirewallRules(d.Get("network_id").(string), []*types.FirewallRule{},
-		d.Get("default_action").(string), d.Get("log_default_action").(bool))
+	err = vapp.RemoveAllNetworkFirewallRules(d.Get("network_id").(string))
 	if err != nil {
-		log.Printf("[INFO] Error setting firewall rules: %s", err)
-		return fmt.Errorf("error setting firewall rules: %#v", err)
+		log.Printf("[INFO] Error removing firewall rules: %s", err)
+		return fmt.Errorf("error removing firewall rules: %s", err)
 	}
 
 	return nil
@@ -257,7 +256,10 @@ func resourceVappFirewallRulesRead(d *schema.ResourceData, meta interface{}) err
 		singleRule["enable_logging"] = rule.EnableLogging
 		rules = append(rules, singleRule)
 	}
-	_ = d.Set("rule", rules)
+	err = d.Set("rule", rules)
+	if err != nil {
+		return err
+	}
 	_ = d.Set("default_action", vappNetwork.Configuration.Features.FirewallService.DefaultAction)
 	_ = d.Set("log_default_action", vappNetwork.Configuration.Features.FirewallService.LogDefaultAction)
 
@@ -342,11 +344,11 @@ func expandVappFirewallRules(d *schema.ResourceData, vapp *govcd.VApp) ([]*types
 	return firewallRules, nil
 }
 
-var errHelpVappNetworkFirewallRulesImport = fmt.Errorf(`resource id must be specified in one of these formats:
+var errHelpVappNetworkRulesImport = fmt.Errorf(`resource id must be specified in one of these formats:
 'org-name.vdc-name.vapp-name.network_name', 'org.vdc-name.vapp-id.network-id' or 
 'list@org-name.vdc-name.vapp-name' to get a list of vapp networks with their IDs`)
 
-// vappFirewallRuleImport is responsible for importing the resource.
+// vappFirewallRulesImport is responsible for importing the resource.
 // The following steps happen as part of import
 // 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
 // 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
@@ -360,31 +362,34 @@ var errHelpVappNetworkFirewallRulesImport = fmt.Errorf(`resource id must be spec
 // Example import path (_the_id_string_): org.my_existing_vdc.vapp_name.network_name or org.my_existing_vdc.vapp_id.network_id
 // Example list path (_the_id_string_): list@org-name.vdc-name.vapp-name
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func vappFirewallRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func vappFirewallRulesImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	return vappNetworkRuleImport(d, meta, "vcd_vapp_firewall_rules")
+}
+func vappNetworkRuleImport(d *schema.ResourceData, meta interface{}, resourceType string) ([]*schema.ResourceData, error) {
 	var commandOrgName, orgName, vdcName, vappName string
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 
-	log.Printf("[DEBUG] importing vcd_vapp_firewall_rules resource with provided id %s", d.Id())
+	log.Printf("[DEBUG] importing %s resource with provided id %s", resourceType, d.Id())
 
 	if len(resourceURI) != 4 && len(resourceURI) != 3 {
-		return nil, errHelpVappNetworkFirewallRulesImport
+		return nil, errHelpVappNetworkRulesImport
 	}
 	if strings.Contains(d.Id(), "list@") {
 		commandOrgName, vdcName, vappName = resourceURI[0], resourceURI[1], resourceURI[2]
 		commandOrgNameSplit := strings.Split(commandOrgName, "@")
 		if len(commandOrgNameSplit) != 2 {
-			return nil, errHelpVappNetworkFirewallRulesImport
+			return nil, errHelpVappNetworkRulesImport
 		}
 		orgName = commandOrgNameSplit[1]
 		return listVappNetworksForImport(meta, orgName, vdcName, vappName)
 	} else {
 		orgName, vdcName, vappId, networkId := resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
-		return getFirewallRules(d, meta, orgName, vdcName, vappId, networkId)
+		return getNetworkRules(d, meta, orgName, vdcName, vappId, networkId)
 	}
 
 }
 
-func getFirewallRules(d *schema.ResourceData, meta interface{}, orgName, vdcName, vappId, networkId string) ([]*schema.ResourceData, error) {
+func getNetworkRules(d *schema.ResourceData, meta interface{}, orgName, vdcName, vappId, networkId string) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
@@ -420,7 +425,7 @@ func listVappNetworksForImport(meta interface{}, orgName, vdcName, vappId string
 	vcdClient := meta.(*VCDClient)
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if err != nil {
-		return nil, fmt.Errorf("[vapp network firewall rules import] unable to find VDC %s: %s ", vdcName, err)
+		return nil, fmt.Errorf("[vapp network rules import, network list] unable to find VDC %s: %s ", vdcName, err)
 	}
 
 	stdout := getTerraformStdout()
@@ -448,5 +453,5 @@ func listVappNetworksForImport(meta interface{}, orgName, vdcName, vappId string
 		return nil, fmt.Errorf("unable to write to stdout: %s", err)
 	}
 
-	return nil, fmt.Errorf("resource was not imported! %s", errHelpVappNetworkFirewallRulesImport)
+	return nil, fmt.Errorf("resource was not imported! %s", errHelpVappNetworkRulesImport)
 }

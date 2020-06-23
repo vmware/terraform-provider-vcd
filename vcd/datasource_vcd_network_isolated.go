@@ -9,9 +9,10 @@ func datasourceVcdNetworkIsolated() *schema.Resource {
 		Read: datasourceVcdNetworkIsolatedRead,
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "A unique name for this network (optional if 'filter' is used)",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"name", "filter"},
+				Description:  "A unique name for this network (optional if 'filter' is used)",
 			},
 			"org": {
 				Type:     schema.TypeString,

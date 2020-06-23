@@ -8,9 +8,10 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "name of the edge gateway. (Optional when 'filter' is used)",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"name", "filter"},
+				Description:  "name of the edge gateway. (Optional when 'filter' is used)",
 			},
 			"org": &schema.Schema{
 				Type:     schema.TypeString,

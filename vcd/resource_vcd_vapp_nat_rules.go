@@ -23,7 +23,7 @@ func resourceVcdVappNetworkNatRules() *schema.Resource {
 		Read:   resourceVappNetworkNatRulesRead,
 		Update: resourceVappNetworkNatRulesUpdate,
 		Importer: &schema.ResourceImporter{
-			State: vappNetworkNatRuleImport,
+			State: vappNetworkNatRulesImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -57,7 +57,7 @@ func resourceVcdVappNetworkNatRules() *schema.Resource {
 			"nat_type": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validation.StringInSlice([]string{"portForwarding", "ipTranslation"}, false),
+				ValidateFunc: validation.StringInSlice([]string{portForwardingNatType, ipTranslationNatType}, false),
 				Description:  "One of: `ipTranslation` (use IP translation), `portForwarding` (use port forwarding).",
 			},
 			"enable_ip_masquerade": &schema.Schema{
@@ -74,7 +74,7 @@ func resourceVcdVappNetworkNatRules() *schema.Resource {
 						"id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Id of the rule. Can be used to track syslog messages.",
+							Description: "ID of the rule. Can be used to track syslog messages.",
 						},
 						"mapping_mode": &schema.Schema{
 							Type:         schema.TypeString,
@@ -84,12 +84,12 @@ func resourceVcdVappNetworkNatRules() *schema.Resource {
 						},
 						"vm_id": &schema.Schema{
 							Type:        schema.TypeString,
-							Optional:    true,
+							Required:    true,
 							Description: "VM to which this rule applies.",
 						},
 						"vm_nic_id": &schema.Schema{
 							Type:        schema.TypeInt,
-							Optional:    true,
+							Required:    true,
 							Description: "VM NIC ID to which this rule applies.",
 						},
 						"external_ip": &schema.Schema{
@@ -102,7 +102,7 @@ func resourceVcdVappNetworkNatRules() *schema.Resource {
 						"external_port": &schema.Schema{
 							Type:        schema.TypeInt,
 							Optional:    true,
-							Description: "External port to forward to.",
+							Description: "External port to forward.",
 						},
 						"forward_to_port": &schema.Schema{
 							Type:        schema.TypeInt,
@@ -156,7 +156,7 @@ func resourceVappNetworkNatRulesUpdate(d *schema.ResourceData, meta interface{})
 		natType, policy)
 	if err != nil {
 		log.Printf("[INFO] Error setting NAT rules: %s", err)
-		return fmt.Errorf("error setting NAT rules: %#v", err)
+		return fmt.Errorf("error setting NAT rules: %s", err)
 	}
 
 	d.SetId(vappNetwork.ID)
@@ -218,13 +218,14 @@ func resourceVappNetworkNatRulesRead(d *schema.ResourceData, meta interface{}) e
 	for _, rule := range vappNetwork.Configuration.Features.NatService.NatRule {
 		singleRule := make(map[string]interface{})
 		singleRule["id"] = rule.ID
-		if vappNetwork.Configuration.Features.NatService.NatType == portForwardingNatType {
+		switch vappNetwork.Configuration.Features.NatService.NatType {
+		case portForwardingNatType:
 			singleRule["external_port"] = rule.VMRule.ExternalPort
 			singleRule["vm_nic_id"] = rule.VMRule.VMNicID
 			singleRule["forward_to_port"] = rule.VMRule.InternalPort
 			singleRule["protocol"] = rule.VMRule.Protocol
 			singleRule["vm_id"] = getVmIdFromVmVappLocalId(vapp, rule.VMRule.VAppScopedVMID)
-		} else if vappNetwork.Configuration.Features.NatService.NatType == ipTranslationNatType {
+		case ipTranslationNatType:
 			singleRule["vm_nic_id"] = rule.OneToOneVMRule.VMNicID
 			singleRule["external_ip"] = rule.OneToOneVMRule.ExternalIPAddress
 			singleRule["mapping_mode"] = rule.OneToOneVMRule.MappingMode
@@ -240,7 +241,10 @@ func resourceVappNetworkNatRulesRead(d *schema.ResourceData, meta interface{}) e
 		_ = d.Set("enable_ip_masquerade", false)
 	}
 	_ = d.Set("nat_type", vappNetwork.Configuration.Features.NatService.NatType)
-	_ = d.Set("rule", rules)
+	err = d.Set("rule", rules)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -288,7 +292,7 @@ func expandVappNetworkNatRules(d *schema.ResourceData, vapp *govcd.VApp, natType
 	return natRules, nil
 }
 
-// vappNetworkNatRuleImport is responsible for importing the resource.
+// vappNetworkNatRulesImport is responsible for importing the resource.
 // The following steps happen as part of import
 // 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
 // 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
@@ -301,6 +305,6 @@ func expandVappNetworkNatRules(d *schema.ResourceData, vapp *govcd.VApp, natType
 // Example resource name (_resource_name_): vcd_vapp_nat_rules.my_existing_nat_rules
 // Example import path (_the_id_string_): org.my_existing_vdc.vapp_name.network_name or org.my_existing_vdc.vapp_id.network_id
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
-func vappNetworkNatRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	return vappFirewallRuleImport(d, meta)
+func vappNetworkNatRulesImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	return vappNetworkRuleImport(d, meta, "vcd_vapp_nat_rules")
 }
