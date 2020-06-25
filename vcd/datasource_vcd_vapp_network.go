@@ -73,16 +73,6 @@ func datasourceVcdVappNetwork() *schema.Resource {
 				Computed:    true,
 				Description: "org network name to which vapp network is connected",
 			},
-			"firewall_enabled": {
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Description: "firewall service enabled or disabled. Default is true",
-			},
-			"nat_enabled": {
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Description: "NAT service enabled or disabled. Default is true",
-			},
 			"retain_ip_mac_enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,

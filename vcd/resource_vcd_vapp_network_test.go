@@ -60,10 +60,6 @@ func TestAccVcdVappNetwork_Isolated(t *testing.T) {
 		"NetworkName2":                "TestAccVcdVAppNet2",
 		"orgNetwork":                  "",
 		"orgNetworkForUpdate":         "",
-		"firewallEnabled":             "false",
-		"firewallEnabledForUpdate":    "false",
-		"natEnabled":                  "true",
-		"natEnabledForUpdate":         "true",
 		"retainIpMacEnabled":          "false",
 		"retainIpMacEnabledForUpdate": "false",
 	}
@@ -112,10 +108,6 @@ func TestAccVcdVappNetwork_Nat(t *testing.T) {
 		"NetworkName2":                "TestAccVcdVAppNet2",
 		"orgNetwork":                  "TestAccVcdVAppNet",
 		"orgNetworkForUpdate":         "TestAccVcdVAppNet2",
-		"firewallEnabled":             "false",
-		"firewallEnabledForUpdate":    "true",
-		"natEnabled":                  "false",
-		"natEnabledForUpdate":         "true",
 		"retainIpMacEnabled":          "false",
 		"retainIpMacEnabledForUpdate": "true",
 		"FuncName":                    "TestAccVcdVappNetwork_Nat",
@@ -180,10 +172,6 @@ func runVappNetworkTest(t *testing.T, params StringMap) {
 						resourceName, "org_network_name", params["orgNetwork"].(string)),
 					resource.TestCheckResourceAttr(
 						resourceName, "retain_ip_mac_enabled", params["retainIpMacEnabled"].(string)),
-					resource.TestCheckResourceAttr(
-						resourceName, "firewall_enabled", params["firewallEnabled"].(string)),
-					resource.TestCheckResourceAttr(
-						resourceName, "nat_enabled", params["natEnabled"].(string)),
 				),
 			},
 			resource.TestStep{
@@ -224,10 +212,6 @@ func runVappNetworkTest(t *testing.T, params StringMap) {
 						resourceName, "org_network_name", params["orgNetworkForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
 						resourceName, "retain_ip_mac_enabled", params["retainIpMacEnabledForUpdate"].(string)),
-					resource.TestCheckResourceAttr(
-						resourceName, "firewall_enabled", params["firewallEnabledForUpdate"].(string)),
-					resource.TestCheckResourceAttr(
-						resourceName, "nat_enabled", params["natEnabledForUpdate"].(string)),
 				),
 			},
 			resource.TestStep{
@@ -235,8 +219,8 @@ func runVappNetworkTest(t *testing.T, params StringMap) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdVappObject(testConfig, params["vappName"].(string), params["vappNetworkName"].(string)),
-				// These fields can't be retrieved from user data. firewall_enabled is null and as so we need ignore in some cases
-				ImportStateVerifyIgnore: []string{"org", "vdc", "firewall_enabled"},
+				// These fields can't be retrieved from user data.
+				ImportStateVerifyIgnore: []string{"org", "vdc"},
 			},
 		},
 	})
@@ -367,8 +351,6 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
   }
 
   org_network_name      = "{{.orgNetwork}}"
-  firewall_enabled      = "{{.firewallEnabled}}"
-  nat_enabled           = "{{.natEnabled}}"
   retain_ip_mac_enabled = "{{.retainIpMacEnabled}}"
 
   depends_on = ["vcd_vapp.{{.vappName}}", "vcd_network_routed.{{.NetworkName}}"]
@@ -434,8 +416,6 @@ resource "vcd_vapp_network" "{{.resourceName}}" {
   }
 
   org_network_name      = "{{.orgNetworkForUpdate}}"
-  firewall_enabled      = "{{.firewallEnabledForUpdate}}"
-  nat_enabled           = "{{.natEnabledForUpdate}}"
   retain_ip_mac_enabled = "{{.retainIpMacEnabledForUpdate}}"
 
   depends_on = ["vcd_vapp.{{.vappName}}", "vcd_network_routed.{{.NetworkName}}", "vcd_network_routed.{{.NetworkName2}}"]

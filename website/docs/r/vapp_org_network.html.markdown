@@ -36,8 +36,6 @@ The following arguments are supported:
 * `vapp_name` - (Required) The vApp this network belongs to.
 * `org_network_name` - (Optional; *v2.7+*) An Org network name to which vApp network is connected. If not configured, then an isolated network is created.
 * `is_fenced` (Optional) Fencing allows identical virtual machines in different vApp networks connect to organization VDC networks that are accessed in this vApp. Default is false.
-* `firewall_enabled` - (Optional) Firewall service enabled or disabled. Configurable when `is_fenced` is true. Default is true. 
-* `nat_enabled` - (Optional) NAT service enabled or disabled. Configurable when `is_fenced` and `firewall_enabled` is true.
 * `retain_ip_mac_enabled` - (Optional) Specifies whether the network resources such as IP/MAC of router will be retained across deployments. Configurable when `is_fenced` is true.
 
 ## Importing

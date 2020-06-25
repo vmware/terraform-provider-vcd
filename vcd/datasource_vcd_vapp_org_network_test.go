@@ -13,8 +13,6 @@ import (
 
 // TestAccVcdVappOrgNetworkDS tests a vApp org network data source if a vApp is found in the VDC
 func TestAccVcdVappOrgNetworkDS(t *testing.T) {
-	var fwEnabled = false
-	var natEnabled = false
 	var retainIpMacEnabled = true
 
 	var params = StringMap{
@@ -23,8 +21,6 @@ func TestAccVcdVappOrgNetworkDS(t *testing.T) {
 		"vappName":           "TestAccVcdVappOrgNetworkDS",
 		"orgNetwork":         "TestAccVcdVappOrgNetworkDSOrgNetwork",
 		"EdgeGateway":        testConfig.Networking.EdgeGateway,
-		"firewallEnabled":    fwEnabled,
-		"natEnabled":         natEnabled,
 		"retainIpMacEnabled": retainIpMacEnabled,
 		"isFenced":           "true",
 
@@ -45,14 +41,14 @@ func TestAccVcdVappOrgNetworkDS(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testCheckVappOrgNetworkNonStringOutputs(fwEnabled, natEnabled, retainIpMacEnabled),
+					testCheckVappOrgNetworkNonStringOutputs(retainIpMacEnabled),
 				),
 			},
 		},
 	})
 }
 
-func testCheckVappOrgNetworkNonStringOutputs(firewallEnabled, natEnabled, retainIpMacEnabled bool) resource.TestCheckFunc {
+func testCheckVappOrgNetworkNonStringOutputs(retainIpMacEnabled bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		outputs := s.RootModule().Outputs
 
@@ -60,13 +56,6 @@ func testCheckVappOrgNetworkNonStringOutputs(firewallEnabled, natEnabled, retain
 			return fmt.Errorf("retain_ip_mac_enabled value didn't match")
 		}
 
-		if outputs["firewall_enabled"].Value != firewallEnabled {
-			return fmt.Errorf("retain_ip_mac_enabled value didn't match")
-		}
-
-		if outputs["nat_enabled"].Value != natEnabled {
-			return fmt.Errorf("retain_ip_mac_enabled value didn't match")
-		}
 		return nil
 	}
 }
@@ -99,8 +88,6 @@ resource "vcd_vapp_org_network" "createVappOrgNetwork" {
   
   is_fenced = "{{.isFenced}}"
 
-  firewall_enabled      = "{{.firewallEnabled}}"
-  nat_enabled           = "{{.natEnabled}}"
   retain_ip_mac_enabled = "{{.retainIpMacEnabled}}"
 }
 
@@ -111,11 +98,5 @@ data "vcd_vapp_org_network" "network-ds" {
 
 output "retain_ip_mac_enabled" {
   value = data.vcd_vapp_org_network.network-ds.retain_ip_mac_enabled
-} 
-output "firewall_enabled" {
-  value = data.vcd_vapp_org_network.network-ds.firewall_enabled
-} 
-output "nat_enabled" {
-  value = data.vcd_vapp_org_network.network-ds.nat_enabled
-} 
+}  
 `

@@ -25,8 +25,8 @@ data "vcd_vapp_org_network" "network1" {
   org_network_name  = "my-vapp-org-network"
 }
 
-output "firewallEnabled" {
-  value = data.vcd_vapp_network.network1.firewall_enabled
+output "id" {
+  value = data.vcd_vapp_network.network1.id
 }
 ```
 

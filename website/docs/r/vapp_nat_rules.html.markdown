@@ -11,7 +11,6 @@ description: |-
 Provides a vCloud Director vApp NAT resource. This can be used to create,
 modify, and delete NAT rules in a [vApp network](/docs/providers/vcd/r/vapp_network.html).
 NAT rules can be applied to [vApp networks connected to Org network](/docs/providers/vcd/r/vapp_network.html) or [vApp org networks](/docs/providers/vcd/r/vapp_org_network.html) which are fenced.
-To enable the service use `firewall_enabled` and `nat_enabled` argument in the network resource.
 
 !> **Warning:** Using this resource overrides any existing NAT rules on vApp network. It's recommended to have only one resource per vApp and vApp network. 
 
@@ -30,9 +29,6 @@ resource "vcd_vapp_network" "vapp-net" {
   netmask            = "255.255.255.0"
   dns1               = "192.168.2.1"
 
-  firewall_enabled = true
-  nat_enabled      = true
-​
   static_ip_pool {
     start_address = "192.168.2.51"
     end_address   = "192.168.2.100"
@@ -96,6 +92,7 @@ The following arguments are supported:
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
 * `vapp_id` - (Required) The identifier of [vApp](/docs/providers/vcd/r/vapp.html).
 * `network_id` - (Required) The identifier of [vApp network](/docs/providers/vcd/r/vapp_network.html).
+* `enabled` - (Optional) Enable or disable NAT. Default is `true`.
 * `nat_type` - (Required) "One of: `ipTranslation` (use IP translation), `portForwarding` (use port forwarding). For `ipTranslation` fields `vm_id`, `vm_nic_id`, `mapping_mode` are required and `external_ip` is optional. For `portForwarding` fields `vm_id`, `vm_nic_id`, `protocol`, `external_port` and `forward_to_port` are required.
 * `enable_ip_masquerade` - (Optional) When enabled translates a virtual machine's private, internal IP address to a public IP address for outbound traffic. Default value is `false`.
 * `rule` - (Optional) Configures a NAT rule; see [Rules](#rules) below for details.

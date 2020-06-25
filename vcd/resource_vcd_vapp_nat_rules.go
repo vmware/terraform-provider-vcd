@@ -54,6 +54,12 @@ func resourceVcdVappNetworkNatRules() *schema.Resource {
 				ForceNew:    true,
 				Description: "vApp network identifier",
 			},
+			"enabled": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Enable or disable NAT service.",
+			},
 			"nat_type": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
@@ -152,11 +158,17 @@ func resourceVappNetworkNatRulesUpdate(d *schema.ResourceData, meta interface{})
 	if !d.Get("enable_ip_masquerade").(bool) && natType == portForwardingNatType {
 		policy = allowTrafficPolicy
 	}
-	vappNetwork, err := vapp.UpdateNetworkNatRules(networkId, netRules,
+	vappNetwork, err := vapp.UpdateNetworkNatRules(networkId, netRules, d.Get("enabled").(bool),
 		natType, policy)
 	if err != nil {
 		log.Printf("[INFO] Error setting NAT rules: %s", err)
 		return fmt.Errorf("error setting NAT rules: %s", err)
+	}
+
+	if vappNetwork.Configuration.Features.FirewallService != nil &&
+		vappNetwork.Configuration.Features.FirewallService.IsEnabled == false &&
+		d.Get("enabled").(bool) == true {
+		_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: to enable NAT, Firewall has to be enabled. Please use vcd_vapp_firewall_rules to enable firewall. \n")
 	}
 
 	d.SetId(vappNetwork.ID)
@@ -233,6 +245,7 @@ func resourceVappNetworkNatRulesRead(d *schema.ResourceData, meta interface{}) e
 		}
 		rules = append(rules, singleRule)
 	}
+	_ = d.Set("enabled", vappNetwork.Configuration.Features.NatService.IsEnabled)
 	if vappNetwork.Configuration.Features.NatService.NatType == portForwardingNatType &&
 		vappNetwork.Configuration.Features.NatService.Policy == allowTrafficInPolicy {
 		_ = d.Set("enable_ip_masquerade", true)

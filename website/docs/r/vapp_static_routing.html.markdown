@@ -63,7 +63,7 @@ The following arguments are supported:
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
 * `vapp_id` - (Required) The identifier of [vApp](/docs/providers/vcd/r/vapp.html).
 * `network_id` - (Required) The identifier of [vApp network](/docs/providers/vcd/r/vapp_network.html).
-* `enabled` - (Optional) Enable or disable static Routing.
+* `enabled` - (Optional) Enable or disable static Routing. Default is `true`.
 * `rule` - (Optional) Configures a static routing rule; see [Rules](#rules) below for details.
 
 <a id="rules"></a>
