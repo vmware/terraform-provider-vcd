@@ -29,9 +29,6 @@ resource "vcd_vapp_network" "vapp-net" {
   gateway            = "192.168.2.1"
   netmask            = "255.255.255.0"
   dns1               = "192.168.2.1"
-
-  firewall_enabled = true
-  nat_enabled      = true
 ​
   static_ip_pool {
     start_address = "192.168.2.51"
