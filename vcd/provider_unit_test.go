@@ -9,6 +9,7 @@ import (
 	"path"
 	"reflect"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -300,5 +301,38 @@ func TestVcdSchemaFilter(t *testing.T) {
 				t.Errorf("Resources() got = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+// TestDocsNames checks that all documentation files are named "filename.html.markdown'
+func TestDocsNames(t *testing.T) {
+	type dirType struct {
+		name        string
+		description string
+	}
+	var docsDirectories = []dirType{
+		{"d", "data sources"},
+		{"r", "resources"},
+		{"guides", "guides"},
+	}
+
+	for _, dirDef := range docsDirectories {
+		dir := path.Join(getCurrentDir(), "..", "website", "docs", dirDef.name)
+		_, err := os.Stat(dir)
+		if os.IsNotExist(err) {
+			t.Errorf("Could not find directory %s (%s)\n", dirDef.name, dirDef.description)
+			continue
+		}
+
+		files, err := ioutil.ReadDir(dir)
+		if err != nil {
+			t.Errorf("error retrieving files from %s", dir)
+			continue
+		}
+		for _, f := range files {
+			if !strings.Contains(f.Name(), ".html.markdown") {
+				t.Errorf("file \"%s/%s\" doesn't end with '.html.markdown'", dir, f.Name())
+			}
+		}
 	}
 }

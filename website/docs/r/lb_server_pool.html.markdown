@@ -126,10 +126,10 @@ continue until they naturally end. This allows to gracefully remove member node 
 * `monitor_port` - (Required) Monitor Port at which the member is to receive health monitor requests. **Note:** can
 be the same as `port`
 * `weight` - (Required) The proportion of traffic this member is to handle. Must be an integer in the range 1-256.
-* `min_connections` - (Optional) The maximum number of concurrent connections the member can handle. **Note:** when the
+* `max_connections` - (Optional) The maximum number of concurrent connections the member can handle. **Note:** when the
 number of incoming requests exceeds the maximum, requests are queued and the load balancer waits for a connection to be
 released. 
-* `max_connections` - (Optional) The minimum number of concurrent connections a member must always accept.
+* `min_connections` - (Optional) The minimum number of concurrent connections a member must always accept.
 
 ## Attribute Reference
 
