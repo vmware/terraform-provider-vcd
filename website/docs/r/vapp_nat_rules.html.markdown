@@ -10,6 +10,8 @@ description: |-
 
 Provides a vCloud Director vApp NAT resource. This can be used to create,
 modify, and delete NAT rules in a [vApp network](/docs/providers/vcd/r/vapp_network.html).
+NAT rules can be applied to networks connected to Org network or vApp networks which are fenced.
+To enable the service use firewall_enabled argument in the network resource.
 
 !> **Warning:** Using this resource overrides any existing NAT rules on vApp network. It's recommended to have only one resource per vApp and vApp network. 
 
