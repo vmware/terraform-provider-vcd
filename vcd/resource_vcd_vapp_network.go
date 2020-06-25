@@ -554,5 +554,5 @@ func resourceVcdDhcpPoolHash(v interface{}) int {
 
 // Allows to identify if vApp Org network and not vApp network
 func isVappOrgNetwork(networkConfig *types.VAppNetworkConfiguration) bool {
-	return !isVappNetwork(networkConfig)
+	return !govcd.IsVappNetwork(networkConfig.Configuration)
 }

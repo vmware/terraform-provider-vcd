@@ -717,7 +717,7 @@ func isItVappNetwork(vAppNetworkName string, vapp govcd.VApp) (bool, error) {
 
 	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
 		if networkConfig.NetworkName == vAppNetworkName &&
-			isVappNetwork(&networkConfig) {
+			govcd.IsVappNetwork(networkConfig.Configuration) {
 			log.Printf("[TRACE] vApp network found: %s", vAppNetworkName)
 			return true, nil
 		}
@@ -1774,7 +1774,7 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp) ([]map[s
 		switch {
 		case netConfig.NetworkName == types.NoneNetwork:
 			vAppNetworkTypes[netConfig.NetworkName] = types.NoneNetwork
-		case isVappNetwork(&netConfig):
+		case govcd.IsVappNetwork(netConfig.Configuration):
 			vAppNetworkTypes[netConfig.NetworkName] = "vapp"
 		default:
 			vAppNetworkTypes[netConfig.NetworkName] = "org"

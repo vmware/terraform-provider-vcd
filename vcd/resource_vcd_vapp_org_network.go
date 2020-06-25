@@ -299,7 +299,7 @@ func resourceVcdVappOrgNetworkImport(d *schema.ResourceData, meta interface{}) (
 		return nil, fmt.Errorf("didn't find vApp org network: %s", networkName)
 	}
 
-	if isVappNetwork(&vappNetworkToImport) {
+	if govcd.IsVappNetwork(vappNetworkToImport.Configuration) {
 		return nil, fmt.Errorf("found vApp network, not vApp org network: %s", networkName)
 	}
 
@@ -320,15 +320,4 @@ func resourceVcdVappOrgNetworkImport(d *schema.ResourceData, meta interface{}) (
 	_ = d.Set("vapp_name", vappName)
 
 	return []*schema.ResourceData{d}, nil
-}
-
-// Allows to identify if given network config is a vApp network and not a vApp Org network
-func isVappNetwork(networkConfig *types.VAppNetworkConfiguration) bool {
-	if networkConfig.Configuration.FenceMode == types.FenceModeIsolated ||
-		(networkConfig.Configuration.FenceMode == types.FenceModeNAT && networkConfig.Configuration.IPScopes != nil &&
-			networkConfig.Configuration.IPScopes.IPScope != nil && len(networkConfig.Configuration.IPScopes.IPScope) > 0 &&
-			!networkConfig.Configuration.IPScopes.IPScope[0].IsInherited) {
-		return true
-	}
-	return false
 }
