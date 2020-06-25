@@ -42,7 +42,7 @@ resource "vcd_vapp_network" "vapp-net" {
 resource "vcd_vapp_static_routing" "vapp1-static-routing" {
   vapp_id    = vcd_vapp.web.id
   network_id = vcd_vapp_network.vapp-net.id
-  enabled    = false
+  enabled    = true
 
   rule {
     name         = "rule1"
