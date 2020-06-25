@@ -1,4 +1,4 @@
-// +build functional gateway ALL
+// +build functional vapp ALL
 
 package vcd
 
@@ -31,12 +31,13 @@ func TestAccVcdVappStaticRouting(t *testing.T) {
 		"NetworkName":   "TestAccVcdVAppVmNet",
 		"VappName":      vappName,
 		"ExternalIp":    testConfig.Networking.ExternalIp,
+		"Tags":          "vapp",
 	}
 	configText := templateFill(testAccVcdVappStaticRouting_routes, params)
 	params["FuncName"] = t.Name() + "-step2"
 	configTextForUpdate := templateFill(testAccVcdVappStaticRouting_routes_forUpdate, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", configTextForUpdate)
+	debugPrintf("#[DEBUG] UPDATE CONFIGURATION: %s", configTextForUpdate)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -51,7 +52,7 @@ func TestAccVcdVappStaticRouting(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVappStaticRoutesExists(resourceName, 2),
-					resource.TestCheckResourceAttr(resourceName, "enable", "true"),
+					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
 
 					resource.TestCheckResourceAttr(resourceName, "rule.0.name", "rule1"),
 					resource.TestCheckResourceAttr(resourceName, "rule.0.network_cidr", "10.10.0.0/24"),
@@ -81,7 +82,7 @@ func TestAccVcdVappStaticRouting(t *testing.T) {
 				Config: configTextForUpdate,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVappStaticRoutesExists(resourceName, 2),
-					resource.TestCheckResourceAttr(resourceName, "enable", "false"),
+					resource.TestCheckResourceAttr(resourceName, "enabled", "false"),
 
 					resource.TestCheckResourceAttr(resourceName, "rule.0.name", "rule1"),
 					resource.TestCheckResourceAttr(resourceName, "rule.0.network_cidr", "10.10.1.0/24"),
@@ -185,7 +186,7 @@ resource "vcd_vapp_static_routing" "{{.ResourceName}}" {
   vdc        = "{{.Vdc}}"
   vapp_id    = vcd_vapp.{{.VappName}}.id
   network_id = vcd_vapp_network.vappRoutedNet.id
-  enable     = true
+  enabled     = true
 
   rule {
     name         = "rule1"
@@ -207,7 +208,7 @@ resource "vcd_vapp_static_routing" "{{.ResourceName}}" {
   vdc        = "{{.Vdc}}"
   vapp_id    = vcd_vapp.{{.VappName}}.id
   network_id = vcd_vapp_network.vappRoutedNet.id
-  enable     = false
+  enabled     = false
 
   rule {
     name         = "rule1"

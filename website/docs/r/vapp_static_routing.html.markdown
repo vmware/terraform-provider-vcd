@@ -45,7 +45,7 @@ resource "vcd_vapp_static_routing" "vapp1-static-routing" {
   enabled    = false
 
   rule {
-    name         = "drule1"
+    name         = "rule1"
     network_cidr = "10.10.0.0/24"
     next_hop_ip  = "192.168.2.2"
   }
