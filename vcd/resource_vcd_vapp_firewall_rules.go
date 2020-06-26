@@ -53,7 +53,7 @@ func resourceVcdVappFirewallRules() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: "Enable or disable firewall service.",
+				Description: "Enable or disable firewall service. Default is `true`",
 			},
 			"default_action": &schema.Schema{
 				Type:         schema.TypeString,

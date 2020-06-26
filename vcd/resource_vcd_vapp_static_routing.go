@@ -49,7 +49,7 @@ func resourceVcdVappNetworkStaticRouting() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: "Enable or disable static Routing.",
+				Description: "Enable or disable static Routing. Default is `true`.",
 			},
 			"rule": &schema.Schema{
 				Type:     schema.TypeList,

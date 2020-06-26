@@ -58,7 +58,7 @@ func resourceVcdVappNetworkNatRules() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: "Enable or disable NAT service.",
+				Description: "Enable or disable NAT service. Default is `true`.",
 			},
 			"nat_type": &schema.Schema{
 				Type:         schema.TypeString,
@@ -168,7 +168,7 @@ func resourceVappNetworkNatRulesUpdate(d *schema.ResourceData, meta interface{})
 	if vappNetwork.Configuration.Features.FirewallService != nil &&
 		!vappNetwork.Configuration.Features.FirewallService.IsEnabled &&
 		d.Get("enabled").(bool) {
-		_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: to enable NAT, Firewall has to be enabled. Please use vcd_vapp_firewall_rules to enable firewall. \n")
+		_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: to enable NAT, firewall has to be enabled. Please use vcd_vapp_firewall_rules.enabled to enable the firewall.\n")
 	}
 
 	d.SetId(vappNetwork.ID)
