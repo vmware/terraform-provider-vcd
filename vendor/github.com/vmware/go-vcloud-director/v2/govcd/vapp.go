@@ -46,8 +46,6 @@ type VappNetworkSettings struct {
 	GuestVLANAllowed   *bool
 	StaticIPRanges     []*types.IPRange
 	DhcpSettings       *DhcpSettings
-	NatEnabled         *bool
-	FirewallEnabled    *bool
 	RetainIpMacEnabled *bool
 	VappFenceEnabled   *bool
 }
@@ -852,17 +850,6 @@ func (vapp *VApp) CreateVappNetworkAsync(newNetworkSettings *VappNetworkSettings
 		}
 	}
 
-	if newNetworkSettings.FirewallEnabled != nil {
-		if networkFeatures == nil {
-			networkFeatures = &types.NetworkFeatures{}
-		}
-		networkFeatures.FirewallService = &types.FirewallService{IsEnabled: *newNetworkSettings.FirewallEnabled}
-	}
-	// NAT can not work without fire wall enabled
-	if newNetworkSettings.FirewallEnabled != nil && newNetworkSettings.NatEnabled != nil {
-		networkFeatures.NatService = &types.NatService{IsEnabled: *newNetworkSettings.NatEnabled, NatType: "ipTranslation", Policy: "allowTrafficIn"}
-	}
-
 	networkConfigurations := vapp.VApp.NetworkConfigSection.NetworkConfig
 	vappConfiguration := types.VAppNetworkConfiguration{
 		NetworkName: newNetworkSettings.Name,
@@ -925,22 +912,10 @@ func (vapp *VApp) AddOrgNetworkAsync(newNetworkSettings *VappNetworkSettings, or
 	}
 
 	networkConfigurations := vapp.VApp.NetworkConfigSection.NetworkConfig
-	var services types.NetworkFeatures
-	var natService types.NatService
-	if newNetworkSettings.FirewallEnabled != nil {
-		services = types.NetworkFeatures{
-			FirewallService: &types.FirewallService{IsEnabled: *newNetworkSettings.FirewallEnabled},
-			NatService:      &natService,
-		}
-	}
-	if newNetworkSettings.FirewallEnabled != nil && newNetworkSettings.NatEnabled != nil {
-		natService = types.NatService{IsEnabled: *newNetworkSettings.NatEnabled, NatType: "ipTranslation", Policy: "allowTrafficIn"}
-	}
 	vappConfiguration := types.VAppNetworkConfiguration{
 		NetworkName: orgNetwork.Name,
 		Configuration: &types.NetworkConfiguration{
 			FenceMode: fenceMode,
-			Features:  &services,
 			ParentNetwork: &types.Reference{
 				HREF: orgNetwork.HREF,
 			},
@@ -1002,22 +977,6 @@ func (vapp *VApp) UpdateNetworkAsync(networkSettingsToUpdate *VappNetworkSetting
 	if networkToUpdate == (types.VAppNetworkConfiguration{}) {
 		return Task{}, fmt.Errorf("not found network to update with Id %s", networkSettingsToUpdate.ID)
 	}
-
-	if networkToUpdate.Configuration.Features.NatService != nil && networkSettingsToUpdate.NatEnabled != nil {
-		networkToUpdate.Configuration.Features.NatService.IsEnabled = *networkSettingsToUpdate.NatEnabled
-	}
-	if networkToUpdate.Configuration.Features.NatService == nil && networkSettingsToUpdate.NatEnabled != nil {
-		networkToUpdate.Configuration.Features.NatService = &types.NatService{IsEnabled: *networkSettingsToUpdate.NatEnabled, NatType: "ipTranslation", Policy: "allowTrafficIn"}
-	}
-
-	if networkToUpdate.Configuration.Features.FirewallService != nil && networkSettingsToUpdate.FirewallEnabled != nil {
-		networkToUpdate.Configuration.Features.FirewallService.IsEnabled = *networkSettingsToUpdate.FirewallEnabled
-	}
-	if networkToUpdate.Configuration.Features.FirewallService == nil && networkSettingsToUpdate.FirewallEnabled != nil {
-		networkToUpdate.Configuration.Features.FirewallService = &types.FirewallService{IsEnabled: *networkSettingsToUpdate.FirewallEnabled}
-	}
-
-	networkToUpdate.Configuration.Features.FirewallService.IsEnabled = *networkSettingsToUpdate.FirewallEnabled
 	networkToUpdate.Configuration.RetainNetInfoAcrossDeployments = networkSettingsToUpdate.RetainIpMacEnabled
 	// new network to connect
 	if networkToUpdate.Configuration.ParentNetwork == nil && orgNetwork != nil {
@@ -1128,24 +1087,6 @@ func (vapp *VApp) UpdateOrgNetworkAsync(networkSettingsToUpdate *VappNetworkSett
 	fenceMode := types.FenceModeBridged
 	if isFenced {
 		fenceMode = types.FenceModeNAT
-		// If existing vApp Org network
-		if networkToUpdate.Configuration.Features != nil {
-			if networkToUpdate.Configuration.Features.FirewallService != nil {
-				networkToUpdate.Configuration.Features.FirewallService.IsEnabled = *networkSettingsToUpdate.FirewallEnabled
-			} else {
-				networkToUpdate.Configuration.Features.FirewallService = &types.FirewallService{IsEnabled: *networkSettingsToUpdate.FirewallEnabled}
-			}
-			if networkToUpdate.Configuration.Features.NatService != nil {
-				networkToUpdate.Configuration.Features.NatService.IsEnabled = *networkSettingsToUpdate.NatEnabled
-			} else {
-				networkToUpdate.Configuration.Features.NatService = &types.NatService{IsEnabled: *networkSettingsToUpdate.NatEnabled, NatType: "ipTranslation", Policy: "allowTrafficIn"}
-			}
-		} else {
-			// If new vApp Org network
-			networkToUpdate.Configuration.Features = &types.NetworkFeatures{
-				FirewallService: &types.FirewallService{IsEnabled: *networkSettingsToUpdate.FirewallEnabled},
-				NatService:      &types.NatService{IsEnabled: *networkSettingsToUpdate.NatEnabled, NatType: "ipTranslation", Policy: "allowTrafficIn"}}
-		}
 	}
 
 	networkToUpdate.Configuration.RetainNetInfoAcrossDeployments = networkSettingsToUpdate.RetainIpMacEnabled

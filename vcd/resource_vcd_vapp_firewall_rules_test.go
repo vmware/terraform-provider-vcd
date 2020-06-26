@@ -60,6 +60,10 @@ func TestAccVcdVappFirewallRules(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
+					resource.TestCheckResourceAttr(resourceName, "default_action", "drop"),
+					resource.TestCheckResourceAttr(resourceName, "log_default_action", "true"),
+
 					testAccCheckVcdVappFirewallRulesExists(resourceName, params["Name1"].(string)),
 					resource.TestCheckResourceAttr(resourceName, "rule.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceName, "rule.0.policy", "drop"),
@@ -102,6 +106,9 @@ func TestAccVcdVappFirewallRules(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "rule.3.source_ip", "internal"),
 					resource.TestCheckResourceAttr(resourceName, "rule.3.enable_logging", "true"),
 
+					resource.TestCheckResourceAttr(resourceName+"2", "enabled", "true"),
+					resource.TestCheckResourceAttr(resourceName+"2", "default_action", "drop"),
+					resource.TestCheckResourceAttr(resourceName+"2", "log_default_action", "true"),
 					testAccCheckVcdVappFirewallRulesExists(resourceName+"2", params["Name1"].(string)),
 					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.policy", "drop"),
@@ -130,6 +137,9 @@ func TestAccVcdVappFirewallRules(t *testing.T) {
 			resource.TestStep{ // Step 3 - update
 				Config: configTextForUpdate,
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "enabled", "false"),
+					resource.TestCheckResourceAttr(resourceName, "default_action", "allow"),
+					resource.TestCheckResourceAttr(resourceName+"2", "log_default_action", "false"),
 					testAccCheckVcdVappFirewallRulesExists(resourceName, params["Name1"].(string)),
 					resource.TestCheckResourceAttr(resourceName, "rule.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceName, "rule.0.policy", "drop"),
@@ -172,6 +182,9 @@ func TestAccVcdVappFirewallRules(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "rule.3.source_vm_ip_type", "NAT"),
 					resource.TestCheckResourceAttr(resourceName, "rule.3.enable_logging", "false"),
 
+					resource.TestCheckResourceAttr(resourceName+"2", "enabled", "false"),
+					resource.TestCheckResourceAttr(resourceName+"2", "default_action", "allow"),
+					resource.TestCheckResourceAttr(resourceName+"2", "log_default_action", "false"),
 					testAccCheckVcdVappFirewallRulesExists(resourceName+"2", params["Name1"].(string)),
 					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.enabled", "true"),
 					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.policy", "drop"),
@@ -365,6 +378,10 @@ resource "vcd_vapp_firewall_rules" "{{.ResourceName}}" {
   default_action = "{{.DefaultAction}}"
   network_id     = vcd_vapp_network.vappRoutedNet.id
 
+  log_default_action = true
+
+  enabled = true
+
   rule {
     name      = "{{.Name1}}"
     policy           = "drop"
@@ -419,6 +436,8 @@ resource "vcd_vapp_firewall_rules" "{{.ResourceName}}2" {
   default_action = "{{.DefaultAction}}"
   network_id     = vcd_vapp_org_network.vappAttachedNet.id
 
+  log_default_action = true
+
   rule {
     name      = "{{.Name1}}"
     policy           = "drop"
@@ -436,8 +455,12 @@ resource "vcd_vapp_firewall_rules" "{{.ResourceName}}" {
   org            = "{{.Org}}"
   vdc            = "{{.Vdc}}"
   vapp_id        = vcd_vapp.TestAccVcdVappFirewallRules_vapp.id
-  default_action = "{{.DefaultAction}}"
+  default_action = "allow"
   network_id     = vcd_vapp_network.vappRoutedNet.id
+
+  log_default_action = false
+
+  enabled = false
 
   rule {
     name      = "{{.Name1}}"
@@ -490,8 +513,12 @@ resource "vcd_vapp_firewall_rules" "{{.ResourceName}}2" {
   org            = "{{.Org}}"
   vdc            = "{{.Vdc}}"
   vapp_id        = vcd_vapp.TestAccVcdVappFirewallRules_vapp.id
-  default_action = "{{.DefaultAction}}"
+  default_action = "allow"
   network_id     = vcd_vapp_org_network.vappAttachedNet.id
+
+  log_default_action = false
+
+  enabled = false
 
   rule {
     name      = "{{.Name1}}"

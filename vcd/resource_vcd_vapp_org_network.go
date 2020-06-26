@@ -57,18 +57,6 @@ func resourceVcdVappOrgNetwork() *schema.Resource {
 				Default:     false,
 				Description: "Specifies whether the network resources such as IP/MAC of router will be retained across deployments. Default is false.",
 			},
-			"firewall_enabled": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Computed:    true,
-				Description: "firewall service enabled or disabled.",
-			},
-			"nat_enabled": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Computed:    true,
-				Description: "NAT service enabled or disabled.",
-			},
 		},
 	}
 }
@@ -90,8 +78,6 @@ func resourceVappOrgNetworkCreate(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	vappNetworkSettings := &govcd.VappNetworkSettings{
-		NatEnabled:         takeBoolPointer(d.Get("nat_enabled").(bool)),
-		FirewallEnabled:    takeBoolPointer(d.Get("firewall_enabled").(bool)),
 		RetainIpMacEnabled: takeBoolPointer(d.Get("retain_ip_mac_enabled").(bool)),
 	}
 
@@ -184,16 +170,6 @@ func genericVappOrgNetworkRead(d *schema.ResourceData, meta interface{}, origin 
 		isFenced = true
 	}
 	_ = d.Set("is_fenced", isFenced)
-	if vAppNetwork.Configuration.Features != nil && vAppNetwork.Configuration.Features.FirewallService != nil {
-		_ = d.Set("firewall_enabled", vAppNetwork.Configuration.Features.FirewallService.IsEnabled)
-	} else {
-		_ = d.Set("firewall_enabled", nil)
-	}
-	if vAppNetwork.Configuration.Features != nil && vAppNetwork.Configuration.Features.NatService != nil {
-		_ = d.Set("nat_enabled", vAppNetwork.Configuration.Features.NatService.IsEnabled)
-	} else {
-		_ = d.Set("nat_enabled", nil)
-	}
 	return nil
 }
 
@@ -215,8 +191,6 @@ func resourceVappOrgNetworkUpdate(d *schema.ResourceData, meta interface{}) erro
 
 	vappNetworkSettings := &govcd.VappNetworkSettings{
 		ID:                 d.Id(),
-		NatEnabled:         takeBoolPointer(d.Get("nat_enabled").(bool)),
-		FirewallEnabled:    takeBoolPointer(d.Get("firewall_enabled").(bool)),
 		RetainIpMacEnabled: takeBoolPointer(d.Get("retain_ip_mac_enabled").(bool)),
 	}
 
@@ -299,7 +273,7 @@ func resourceVcdVappOrgNetworkImport(d *schema.ResourceData, meta interface{}) (
 		return nil, fmt.Errorf("didn't find vApp org network: %s", networkName)
 	}
 
-	if isVappNetwork(&vappNetworkToImport) {
+	if govcd.IsVappNetwork(vappNetworkToImport.Configuration) {
 		return nil, fmt.Errorf("found vApp network, not vApp org network: %s", networkName)
 	}
 
@@ -320,15 +294,4 @@ func resourceVcdVappOrgNetworkImport(d *schema.ResourceData, meta interface{}) (
 	_ = d.Set("vapp_name", vappName)
 
 	return []*schema.ResourceData{d}, nil
-}
-
-// Allows to identify if given network config is a vApp network and not a vApp Org network
-func isVappNetwork(networkConfig *types.VAppNetworkConfiguration) bool {
-	if networkConfig.Configuration.FenceMode == types.FenceModeIsolated ||
-		(networkConfig.Configuration.FenceMode == types.FenceModeNAT && networkConfig.Configuration.IPScopes != nil &&
-			networkConfig.Configuration.IPScopes.IPScope != nil && len(networkConfig.Configuration.IPScopes.IPScope) > 0 &&
-			!networkConfig.Configuration.IPScopes.IPScope[0].IsInherited) {
-		return true
-	}
-	return false
 }

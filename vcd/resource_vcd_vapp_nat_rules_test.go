@@ -64,8 +64,10 @@ func TestAccVcdVappNatRules(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
+					resource.TestCheckResourceAttr(resourceName, "nat_type", "ipTranslation"),
+					resource.TestCheckResourceAttr(resourceName, "enabled", "true"),
 					testAccCheckVcdVappNatRulesExists(resourceName, 2),
-
 					resource.TestCheckResourceAttr(resourceName, "rule.0.mapping_mode", "automatic"),
 					resource.TestCheckResourceAttr(resourceName, "rule.0.vm_nic_id", "0"),
 
@@ -73,8 +75,11 @@ func TestAccVcdVappNatRules(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "rule.1.external_ip", "10.10.102.13"),
 					resource.TestCheckResourceAttr(resourceName, "rule.1.vm_nic_id", "0"),
 
-					testAccCheckVcdVappNatRulesExists(resourceName+"2", 2),
+					resource.TestCheckResourceAttr(resourceName+"2", "enabled", "true"),
+					resource.TestCheckResourceAttr(resourceName+"2", "nat_type", "portForwarding"),
+					resource.TestCheckResourceAttr(resourceName+"2", "enabled", "true"),
 					resource.TestCheckResourceAttr(resourceName+"2", "enable_ip_masquerade", "true"),
+					testAccCheckVcdVappNatRulesExists(resourceName+"2", 2),
 
 					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.external_port", "22"),
 					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.vm_nic_id", "0"),
@@ -105,6 +110,8 @@ func TestAccVcdVappNatRules(t *testing.T) {
 			resource.TestStep{ // Step 3 - update
 				Config: configTextForUpdate,
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "enabled", "false"),
+					resource.TestCheckResourceAttr(resourceName, "nat_type", "ipTranslation"),
 					testAccCheckVcdVappNatRulesExists(resourceName, 2),
 					resource.TestCheckResourceAttr(resourceName, "rule.0.mapping_mode", "manual"),
 					resource.TestCheckResourceAttr(resourceName, "rule.0.external_ip", "10.10.102.14"),
@@ -113,8 +120,10 @@ func TestAccVcdVappNatRules(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "rule.1.mapping_mode", "automatic"),
 					resource.TestCheckResourceAttr(resourceName, "rule.1.vm_nic_id", "0"),
 
-					testAccCheckVcdVappNatRulesExists(resourceName+"2", 2),
+					resource.TestCheckResourceAttr(resourceName+"2", "enabled", "false"),
+					resource.TestCheckResourceAttr(resourceName+"2", "nat_type", "portForwarding"),
 					resource.TestCheckResourceAttr(resourceName+"2", "enable_ip_masquerade", "false"),
+					testAccCheckVcdVappNatRulesExists(resourceName+"2", 2),
 
 					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.external_port", "11"),
 					resource.TestCheckResourceAttr(resourceName+"2", "rule.0.vm_nic_id", "0"),
@@ -241,8 +250,6 @@ resource "vcd_vapp_network" "vappRoutedNet" {
   netmask          = "255.255.255.0"
   org_network_name = vcd_network_routed.network_routed.name
 
-  nat_enabled = true
-
   static_ip_pool {
     start_address = "192.168.22.2"
     end_address   = "192.168.22.254"
@@ -257,7 +264,6 @@ resource "vcd_vapp_org_network" "vappAttachedNet" {
   org_network_name = vcd_network_routed.network_routed.name
   is_fenced        = true
 
-  nat_enabled = true
 }
 
 resource "vcd_vapp_vm" "{{.VmName1}}" {
@@ -318,12 +324,21 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
 `
 
 const testAccVcdVappNatRules_rules = testAccVcdVappNatRules_vappAndVm + `
+# For NAT rules to work, firewall has to be enabled.
+resource "vcd_vapp_firewall_rules" "vapp_fw" {
+  vapp_id    = vcd_vapp.TestAccVcdVappNatRules_vapp.id
+  network_id = vcd_vapp_network.vappRoutedNet.id
+  default_action = "drop"
+  enabled = true
+}
+
 resource "vcd_vapp_nat_rules" "{{.ResourceName}}" {
   org        = "{{.Org}}"
   vdc        = "{{.Vdc}}"
   vapp_id    = vcd_vapp.TestAccVcdVappNatRules_vapp.id
   network_id = vcd_vapp_network.vappRoutedNet.id
   nat_type   = "ipTranslation"
+  enabled    = true
 
   rule {
     mapping_mode = "automatic" 
@@ -347,6 +362,7 @@ resource "vcd_vapp_nat_rules" "{{.ResourceName}}2" {
   
   nat_type             = "portForwarding"
   enable_ip_masquerade = true
+  enabled              = true
 
   rule {
     external_port        = 22
@@ -367,12 +383,22 @@ resource "vcd_vapp_nat_rules" "{{.ResourceName}}2" {
 `
 
 const testAccVcdVappNatRules_rules_forUpdate = testAccVcdVappNatRules_vappAndVm + `
+# For NAT rules to work, firewall has to be enabled.
+resource "vcd_vapp_firewall_rules" "vapp_fw" {
+  vapp_id    = vcd_vapp.TestAccVcdVappNatRules_vapp.id
+  network_id = vcd_vapp_network.vappRoutedNet.id
+  default_action = "drop"
+  enabled = true
+}
+
 resource "vcd_vapp_nat_rules" "{{.ResourceName}}" {
   org        = "{{.Org}}"
   vdc        = "{{.Vdc}}"
   vapp_id    = vcd_vapp.TestAccVcdVappNatRules_vapp.id
   network_id = vcd_vapp_network.vappRoutedNet.id
   nat_type   = "ipTranslation"
+
+  enabled = false
 
   rule {
     mapping_mode = "manual"
@@ -396,7 +422,8 @@ resource "vcd_vapp_nat_rules" "{{.ResourceName}}2" {
  
   nat_type             = "portForwarding"
   enable_ip_masquerade = false
- 
+  enabled              = false
+
   rule {
     external_port   = 11
     vm_nic_id       = 0

@@ -19,10 +19,6 @@ func TestAccVcdVappOrgNetwork_NotFenced(t *testing.T) {
 		"EdgeGateway":                 testConfig.Networking.EdgeGateway,
 		"NetworkName":                 "TestAccVcdVAppNetNotFenced",
 		"orgNetwork":                  "TestAccVcdVAppNetNotFenced",
-		"firewallEnabled":             "false",
-		"firewallEnabledForUpdate":    "false",
-		"natEnabled":                  "false",
-		"natEnabledForUpdate":         "false",
 		"retainIpMacEnabled":          "false",
 		"retainIpMacEnabledForUpdate": "true",
 		"isFenced":                    "false",
@@ -44,10 +40,6 @@ func TestAccVcdVappOrgNetwork_Fenced(t *testing.T) {
 		"EdgeGateway":                 testConfig.Networking.EdgeGateway,
 		"NetworkName":                 "TestAccVcdVAppNetFenced",
 		"orgNetwork":                  "TestAccVcdVAppNetFenced",
-		"firewallEnabled":             "false",
-		"firewallEnabledForUpdate":    "true",
-		"natEnabled":                  "false",
-		"natEnabledForUpdate":         "true",
 		"retainIpMacEnabled":          "true",
 		"retainIpMacEnabledForUpdate": "false",
 		"isFenced":                    "true",
@@ -88,10 +80,6 @@ func runVappOrgNetworkTest(t *testing.T, params StringMap) {
 						resourceName, "retain_ip_mac_enabled", params["retainIpMacEnabled"].(string)),
 					resource.TestCheckResourceAttr(
 						resourceName, "is_fenced", params["isFenced"].(string)),
-					resource.TestCheckResourceAttr(
-						resourceName, "firewall_enabled", params["firewallEnabled"].(string)),
-					resource.TestCheckResourceAttr(
-						resourceName, "nat_enabled", params["natEnabled"].(string)),
 				),
 			},
 			resource.TestStep{
@@ -106,10 +94,6 @@ func runVappOrgNetworkTest(t *testing.T, params StringMap) {
 						resourceName, "retain_ip_mac_enabled", params["retainIpMacEnabledForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
 						resourceName, "is_fenced", params["isFencedForUpdate"].(string)),
-					resource.TestCheckResourceAttr(
-						resourceName, "firewall_enabled", params["firewallEnabledForUpdate"].(string)),
-					resource.TestCheckResourceAttr(
-						resourceName, "nat_enabled", params["natEnabledForUpdate"].(string)),
 				),
 			},
 			resource.TestStep{
@@ -152,8 +136,6 @@ resource "vcd_vapp_org_network" "{{.resourceName}}" {
   
   is_fenced = "{{.isFenced}}"
 
-  firewall_enabled      = "{{.firewallEnabled}}"
-  nat_enabled           = "{{.natEnabled}}"
   retain_ip_mac_enabled = "{{.retainIpMacEnabled}}"
 }
 `
@@ -187,8 +169,6 @@ resource "vcd_vapp_org_network" "{{.resourceName}}" {
   
   is_fenced = "{{.isFencedForUpdate}}"
 
-  firewall_enabled      = "{{.firewallEnabledForUpdate}}"
-  nat_enabled           = "{{.natEnabledForUpdate}}"
   retain_ip_mac_enabled = "{{.retainIpMacEnabledForUpdate}}"
 }
 `

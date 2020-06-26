@@ -26,8 +26,6 @@ func TestAccVcdVappNetworkDS(t *testing.T) {
 	const maxLeaseTime = 3500
 	const defaultLeaseTime = 2400
 	var guestVlanAllowed = true
-	var fwEnabled = false
-	var natEnabled = false
 	var retainIpMacEnabled = true
 
 	var params = StringMap{
@@ -52,8 +50,6 @@ func TestAccVcdVappNetworkDS(t *testing.T) {
 		"dhcpEnabled":        "true",
 		"orgNetwork":         "TestAccVcdVappNetworkDSOrgNetwork",
 		"EdgeGateway":        testConfig.Networking.EdgeGateway,
-		"firewallEnabled":    fwEnabled,
-		"natEnabled":         natEnabled,
 		"retainIpMacEnabled": retainIpMacEnabled,
 	}
 	configText := templateFill(datasourceTestVappNetwork, params)
@@ -82,14 +78,14 @@ func TestAccVcdVappNetworkDS(t *testing.T) {
 					resource.TestCheckOutput("staticIpPoolStartAddress", startAddress),
 					resource.TestCheckOutput("staticIpPoolEndAddress", endAddress),
 					resource.TestCheckOutput("orgNetwork", params["orgNetwork"].(string)),
-					testCheckVappNetworkNonStringOutputs(guestVlanAllowed, fwEnabled, natEnabled, retainIpMacEnabled),
+					testCheckVappNetworkNonStringOutputs(guestVlanAllowed, retainIpMacEnabled),
 				),
 			},
 		},
 	})
 }
 
-func testCheckVappNetworkNonStringOutputs(guestVlanAllowed, firewallEnabled, natEnabled, retainIpMacEnabled bool) resource.TestCheckFunc {
+func testCheckVappNetworkNonStringOutputs(guestVlanAllowed, retainIpMacEnabled bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		outputs := s.RootModule().Outputs
 
@@ -101,13 +97,6 @@ func testCheckVappNetworkNonStringOutputs(guestVlanAllowed, firewallEnabled, nat
 			return fmt.Errorf("retain_ip_mac_enabled value didn't match")
 		}
 
-		if outputs["firewall_enabled"].Value != firewallEnabled {
-			return fmt.Errorf("retain_ip_mac_enabled value didn't match")
-		}
-
-		if outputs["nat_enabled"].Value != natEnabled {
-			return fmt.Errorf("retain_ip_mac_enabled value didn't match")
-		}
 		return nil
 	}
 }
@@ -159,8 +148,6 @@ resource "vcd_vapp_network" "createdVappNetwork" {
   }
 
   org_network_name      = vcd_network_routed.{{.orgNetwork}}.name
-  firewall_enabled      = "{{.firewallEnabled}}"
-  nat_enabled           = "{{.natEnabled}}"
   retain_ip_mac_enabled = "{{.retainIpMacEnabled}}"
 }
  
@@ -208,11 +195,5 @@ output "orgNetwork" {
 } 
 output "retain_ip_mac_enabled" {
   value = data.vcd_vapp_network.network-ds.retain_ip_mac_enabled
-} 
-output "firewall_enabled" {
-  value = data.vcd_vapp_network.network-ds.firewall_enabled
-} 
-output "nat_enabled" {
-  value = data.vcd_vapp_network.network-ds.nat_enabled
-} 
+}
 `

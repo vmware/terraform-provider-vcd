@@ -211,8 +211,8 @@ github.com/vmihailenco/msgpack v3.3.3+incompatible h1:wapg9xDUZDzGCNFlwc5SqI1rvc
 github.com/vmihailenco/msgpack v3.3.3+incompatible/go.mod h1:fy3FlTQTDXWkZ7Bh6AcGMlsjHatGryHQYUTf1ShIgkk=
 github.com/vmihailenco/msgpack v4.0.1+incompatible h1:RMF1enSPeKTlXrXdOcqjFUElywVZjjC6pqse21bKbEU=
 github.com/vmihailenco/msgpack v4.0.1+incompatible/go.mod h1:fy3FlTQTDXWkZ7Bh6AcGMlsjHatGryHQYUTf1ShIgkk=
-github.com/vmware/go-vcloud-director/v2 v2.8.0-beta.1 h1:hP7wb+9A9jPxL2MYWgQlwyB0bOGzRnqK2q7PL/sa8Vc=
-github.com/vmware/go-vcloud-director/v2 v2.8.0-beta.1/go.mod h1:QARPFI5EJce4Cs9g0gL5mlHGhdN7C40CyOqvh7c+RrA=
+github.com/vmware/go-vcloud-director/v2 v2.8.0-beta.2 h1:ZCvmPfR4yT+8LmS5rFUSPhWtlFVGjmMQQwEAFp1hh4o=
+github.com/vmware/go-vcloud-director/v2 v2.8.0-beta.2/go.mod h1:QARPFI5EJce4Cs9g0gL5mlHGhdN7C40CyOqvh7c+RrA=
 github.com/zclconf/go-cty v1.0.0/go.mod h1:xnAOWiHeOqg2nWS62VtQ7pbOu17FtxJNW8RLEih+O3s=
 github.com/zclconf/go-cty v1.1.0/go.mod h1:xnAOWiHeOqg2nWS62VtQ7pbOu17FtxJNW8RLEih+O3s=
 github.com/zclconf/go-cty v1.2.0/go.mod h1:hOPWgoHbaTUnI5k4D2ld+GRpFJSCe6bCM7m1q/N4PQ8=

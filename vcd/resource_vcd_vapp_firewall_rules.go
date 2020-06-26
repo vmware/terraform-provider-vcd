@@ -49,6 +49,12 @@ func resourceVcdVappFirewallRules() *schema.Resource {
 				ForceNew:    true,
 				Description: "vApp network identifier",
 			},
+			"enabled": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     true,
+				Description: "Enable or disable firewall service. Default is `true`",
+			},
 			"default_action": &schema.Schema{
 				Type:         schema.TypeString,
 				Required:     true,
@@ -174,7 +180,7 @@ func resourceVcdVappFirewallRulesUpdate(d *schema.ResourceData, meta interface{}
 		return fmt.Errorf("error expanding firewall rules: %s", err)
 	}
 
-	vappNetwork, err := vapp.UpdateNetworkFirewallRules(networkId, firewallRules,
+	vappNetwork, err := vapp.UpdateNetworkFirewallRules(networkId, firewallRules, d.Get("enabled").(bool),
 		d.Get("default_action").(string), d.Get("log_default_action").(bool))
 	if err != nil {
 		log.Printf("[INFO] Error setting firewall rules: %s", err)
@@ -260,6 +266,7 @@ func resourceVappFirewallRulesRead(d *schema.ResourceData, meta interface{}) err
 	if err != nil {
 		return err
 	}
+	_ = d.Set("enabled", vappNetwork.Configuration.Features.FirewallService.IsEnabled)
 	_ = d.Set("default_action", vappNetwork.Configuration.Features.FirewallService.DefaultAction)
 	_ = d.Set("log_default_action", vappNetwork.Configuration.Features.FirewallService.LogDefaultAction)
 

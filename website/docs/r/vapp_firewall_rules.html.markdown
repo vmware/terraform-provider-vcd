@@ -10,7 +10,7 @@ description: |-
 
 Provides a vCloud Director vApp Firewall resource. This can be used to create,
 modify, and delete firewall settings and rules in a [vApp network](/docs/providers/vcd/r/vapp_network.html).
-Firewall rules can be applied to networks connected to Org network or vApp networks which are fenced.
+Firewall rules can be applied to [vApp networks connected to Org network](/docs/providers/vcd/r/vapp_network.html) or [vApp org networks](/docs/providers/vcd/r/vapp_org_network.html) which are fenced. 
 
 !> **Warning:** Using this resource overrides any existing firewall rules on vApp network. It's recommended to have only one resource per vApp and vApp network. 
 
@@ -28,7 +28,7 @@ resource "vcd_vapp_network" "vapp-net" {
   gateway            = "192.168.2.1"
   netmask            = "255.255.255.0"
   dns1               = "192.168.2.1"
-​
+
   static_ip_pool {
     start_address = "192.168.2.51"
     end_address   = "192.168.2.100"
@@ -70,6 +70,7 @@ The following arguments are supported:
 * `vdc` - The name of VDC to use, optional if defined at provider level.
 * `vapp_id` - (Required) The identifier of [vApp](/docs/providers/vcd/r/vapp.html).
 * `network_id` - (Required) The identifier of [vApp network](/docs/providers/vcd/r/vapp_network.html).
+* `enabled` - (Optional) Enable or disable firewall. Default is `true`.
 * `default_action` - (Required) Either 'allow' or 'drop'. Specifies what to do should none of the rules match.
 * `log_default_action` - (Optional) Flag to enable logging for default action. Default value is `false`.
 * `rule` - (Optional) Configures a firewall rule; see [Rules](#rules) below for details.
