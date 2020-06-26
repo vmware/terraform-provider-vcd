@@ -41,6 +41,15 @@ resource "vcd_vapp_org_network" "vapp-org-net" {
   is_fenced        = true
 }
 
+# In order to enable NAT service, firewall needs to be enabled as well
+resource "vcd_vapp_firewall_rules" "vapp_fw1" {
+  vapp_id        = vcd_vapp.web.id
+  network_id     = vcd_vapp_network.vapp-net.id
+  default_action = "drop"
+  enabled = true
+}
+
+
 resource "vcd_vapp_nat_rules" "vapp-nat" {
   vapp_id              = vcd_vapp.web.id
   network_id           = vcd_vapp_network.vapp-net.id
@@ -64,6 +73,14 @@ resource "vcd_vapp_nat_rules" "vapp-nat" {
   }
 }
 
+# In order to enable NAT service, firewall needs to be enabled as well
+resource "vcd_vapp_firewall_rules" "vapp_fw2" {
+  vapp_id    = vcd_vapp.web.id
+  network_id = vcd_vapp_network.vapp-org-net.id
+  default_action = "drop"
+  enabled = true
+}
+
 resource "vcd_vapp_nat_rules" "vapp-nat2" {
   vapp_id    = vcd_vapp.web.id
   network_id = vcd_vapp_network.vapp-org-net.id
@@ -83,13 +100,6 @@ resource "vcd_vapp_nat_rules" "vapp-nat2" {
   }
 }
 
-# Must be defined just to enable FW for NAT rules to work if it wasn't enabled.
-resource "vcd_vapp_firewall_rules" "vapp_fw" {
-  vapp_id    = vcd_vapp.web.id
-  network_id = vcd_vapp_network.vapp-org-net.id
-  default_action = "drop"
-  enabled = true
-}
 ```
 
 ## Argument Reference
