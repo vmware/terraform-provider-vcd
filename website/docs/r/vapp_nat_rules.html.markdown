@@ -49,7 +49,6 @@ resource "vcd_vapp_firewall_rules" "vapp_fw1" {
   enabled = true
 }
 
-
 resource "vcd_vapp_nat_rules" "vapp-nat" {
   vapp_id              = vcd_vapp.web.id
   network_id           = vcd_vapp_network.vapp-net.id

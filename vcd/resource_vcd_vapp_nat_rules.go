@@ -168,7 +168,7 @@ func resourceVappNetworkNatRulesUpdate(d *schema.ResourceData, meta interface{})
 	if vappNetwork.Configuration.Features.FirewallService != nil &&
 		!vappNetwork.Configuration.Features.FirewallService.IsEnabled &&
 		d.Get("enabled").(bool) {
-		_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: to enable NAT, firewall has to be enabled. Please use vcd_vapp_firewall_rules.enabled to enable the firewall.\n")
+		_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: for NAT rules to work, firewall has to be enabled. It can be enabled using vcd_vapp_firewall_rules\n")
 	}
 
 	d.SetId(vappNetwork.ID)
@@ -262,7 +262,7 @@ func resourceVappNetworkNatRulesRead(d *schema.ResourceData, meta interface{}) e
 	if vappNetwork.Configuration.Features.FirewallService != nil &&
 		!vappNetwork.Configuration.Features.FirewallService.IsEnabled &&
 		d.Get("enabled").(bool) {
-		_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: to enable NAT, firewall has to be enabled. Please use vcd_vapp_firewall_rules.enabled to enable the firewall.\n")
+		_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: for NAT rules to work, firewall has to be enabled. It can be enabled using  vcd_vapp_firewall_rules\n")
 	}
 
 	return nil
