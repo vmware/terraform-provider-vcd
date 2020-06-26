@@ -82,6 +82,14 @@ resource "vcd_vapp_nat_rules" "vapp-nat2" {
     vm_id        = vcd_vapp_vm.vm2.id
   }
 }
+
+# Must be defined just to enable FW for NAT rules to work if it wasn't enabled.
+resource "vcd_vapp_firewall_rules" "vapp_fw" {
+  vapp_id    = vcd_vapp.web.id
+  network_id = vcd_vapp_network.vapp-org-net.id
+  default_action = "drop"
+  enabled = true
+}
 ```
 
 ## Argument Reference
@@ -92,7 +100,7 @@ The following arguments are supported:
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
 * `vapp_id` - (Required) The identifier of [vApp](/docs/providers/vcd/r/vapp.html).
 * `network_id` - (Required) The identifier of [vApp network](/docs/providers/vcd/r/vapp_network.html).
-* `enabled` - (Optional) Enable or disable NAT. Default is `true`.
+* `enabled` - (Optional) Enable or disable NAT. Default is `true`. To enable the NAT service, firewall[vcd_vapp_firewall_rules](/docs/providers/vcd/r/vapp_firewall_rules.html) needs to be enabled as well.
 * `nat_type` - (Required) "One of: `ipTranslation` (use IP translation), `portForwarding` (use port forwarding). For `ipTranslation` fields `vm_id`, `vm_nic_id`, `mapping_mode` are required and `external_ip` is optional. For `portForwarding` fields `vm_id`, `vm_nic_id`, `protocol`, `external_port` and `forward_to_port` are required.
 * `enable_ip_masquerade` - (Optional) When enabled translates a virtual machine's private, internal IP address to a public IP address for outbound traffic. Default value is `false`.
 * `rule` - (Optional) Configures a NAT rule; see [Rules](#rules) below for details.
