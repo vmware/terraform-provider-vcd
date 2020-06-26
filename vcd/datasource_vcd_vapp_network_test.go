@@ -26,8 +26,6 @@ func TestAccVcdVappNetworkDS(t *testing.T) {
 	const maxLeaseTime = 3500
 	const defaultLeaseTime = 2400
 	var guestVlanAllowed = true
-	var fwEnabled = false
-	var natEnabled = false
 	var retainIpMacEnabled = true
 
 	var params = StringMap{

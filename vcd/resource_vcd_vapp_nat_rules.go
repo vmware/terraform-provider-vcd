@@ -166,8 +166,8 @@ func resourceVappNetworkNatRulesUpdate(d *schema.ResourceData, meta interface{})
 	}
 
 	if vappNetwork.Configuration.Features.FirewallService != nil &&
-		vappNetwork.Configuration.Features.FirewallService.IsEnabled == false &&
-		d.Get("enabled").(bool) == true {
+		!vappNetwork.Configuration.Features.FirewallService.IsEnabled &&
+		d.Get("enabled").(bool) {
 		_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: to enable NAT, Firewall has to be enabled. Please use vcd_vapp_firewall_rules to enable firewall. \n")
 	}
 
