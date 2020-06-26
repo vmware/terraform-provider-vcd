@@ -324,7 +324,7 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
 `
 
 const testAccVcdVappNatRules_rules = testAccVcdVappNatRules_vappAndVm + `
-#for NAT rules to work, firewall has to be enabled.
+# For NAT rules to work, firewall has to be enabled.
 resource "vcd_vapp_firewall_rules" "vapp_fw" {
   vapp_id    = vcd_vapp.TestAccVcdVappNatRules_vapp.id
   network_id = vcd_vapp_network.vappRoutedNet.id
@@ -383,7 +383,7 @@ resource "vcd_vapp_nat_rules" "{{.ResourceName}}2" {
 `
 
 const testAccVcdVappNatRules_rules_forUpdate = testAccVcdVappNatRules_vappAndVm + `
-#for NAT rules to work, firewall has to be enabled.
+# For NAT rules to work, firewall has to be enabled.
 resource "vcd_vapp_firewall_rules" "vapp_fw" {
   vapp_id    = vcd_vapp.TestAccVcdVappNatRules_vapp.id
   network_id = vcd_vapp_network.vappRoutedNet.id
