@@ -262,7 +262,7 @@ func resourceVappNetworkNatRulesRead(d *schema.ResourceData, meta interface{}) e
 	if vappNetwork.Configuration.Features.FirewallService != nil &&
 		!vappNetwork.Configuration.Features.FirewallService.IsEnabled &&
 		d.Get("enabled").(bool) {
-		_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: for NAT rules to work, firewall has to be enabled. It can be enabled using  vcd_vapp_firewall_rules\n")
+		_, _ = fmt.Fprint(getTerraformStdout(), "WARNING: for NAT rules to work, firewall has to be enabled. It can be enabled using vcd_vapp_firewall_rules\n")
 	}
 
 	return nil
