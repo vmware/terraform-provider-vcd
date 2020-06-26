@@ -324,8 +324,7 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
 `
 
 const testAccVcdVappNatRules_rules = testAccVcdVappNatRules_vappAndVm + `
-# Must be defined just to enable FW for NAT rules to work if it wasn't enabled.
-# Just as exmample, doesn't impact test
+# Just as example, doesn't impact test. A reminder for NAT to work FW needs to be enabled
 resource "vcd_vapp_firewall_rules" "vapp_fw" {
   vapp_id    = vcd_vapp.TestAccVcdVappNatRules_vapp.id
   network_id = vcd_vapp_network.vappRoutedNet.id
@@ -384,8 +383,7 @@ resource "vcd_vapp_nat_rules" "{{.ResourceName}}2" {
 `
 
 const testAccVcdVappNatRules_rules_forUpdate = testAccVcdVappNatRules_vappAndVm + `
-# Must be defined just to enable FW for NAT rules to work if it wasn't enabled.
-# Just as exmample, doesn't impact test
+# Just as example, doesn't impact test. A reminder for NAT to work FW needs to be enabled
 resource "vcd_vapp_firewall_rules" "vapp_fw" {
   vapp_id    = vcd_vapp.TestAccVcdVappNatRules_vapp.id
   network_id = vcd_vapp_network.vappRoutedNet.id
