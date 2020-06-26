@@ -176,6 +176,7 @@ func (vapp *VApp) UpdateNetworkNatRulesAsync(networkId string, natRules []*types
 	}
 	networkToUpdate.Xmlns = types.XMLNamespaceVCloud
 
+	// if services are empty return by API, then we can deduce that network isn't connected to Org network or fenced
 	if networkToUpdate.Configuration.Features.NatService == nil && networkToUpdate.Configuration.Features.FirewallService == nil {
 		return Task{}, fmt.Errorf("provided network isn't connected to org network or isn't fenced")
 	}
