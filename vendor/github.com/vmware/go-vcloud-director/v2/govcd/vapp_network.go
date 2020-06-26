@@ -179,6 +179,9 @@ func (vapp *VApp) UpdateNetworkNatRulesAsync(networkId string, natRules []*types
 	if networkToUpdate.Configuration.Features.NatService == nil && networkToUpdate.Configuration.Features.FirewallService == nil {
 		return Task{}, fmt.Errorf("provided network isn't connected to org network or isn't fenced")
 	}
+	if networkToUpdate.Configuration.Features.NatService == nil {
+		networkToUpdate.Configuration.Features.NatService = &types.NatService{}
+	}
 	networkToUpdate.Configuration.Features.NatService.IsEnabled = enabled
 	networkToUpdate.Configuration.Features.NatService.NatType = natType
 	networkToUpdate.Configuration.Features.NatService.Policy = policy
