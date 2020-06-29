@@ -24,6 +24,8 @@ BUG FIXES:
 * `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` can report `network.X.is_primary` attribute
   incorrectly when VM is imported to Terraform and NIC indexes in vCD do not start with 0. [GH-512] 
 * Rename docs files from `.markdown` to `.html.markdown` (Add test to check file name consistency) [GH-522]
+* `nat_enabled` and `firewall_enabled` were incorrectly added to `vcd_vapp_network` and would collide with the depending resources. 
+Now moved to respective resources `vcd_vapp_nat_rules` and `vcd_vapp_firewall_rules`.
 
 DEPRECATIONS:
 
