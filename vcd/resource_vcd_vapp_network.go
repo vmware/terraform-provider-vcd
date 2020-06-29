@@ -91,6 +91,18 @@ func resourceVcdVappNetwork() *schema.Resource {
 				Optional:    true,
 				Description: "org network name to which vapp network is connected",
 			},
+			"firewall_enabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "firewall service enabled or disabled. Default is true",
+				Removed:     "Was incorrectly added and would collide with the depending resource. Now moved to vcd_vapp_firewall_rules.enabled",
+			},
+			"nat_enabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "NAT service enabled or disabled. Default is true",
+				Removed:     "Was incorrectly added and would collide with the depending resource. Now moved to vcd_vapp_nat_rules.enabled",
+			},
 			"retain_ip_mac_enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
