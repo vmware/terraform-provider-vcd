@@ -95,13 +95,13 @@ func resourceVcdVappNetwork() *schema.Resource {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "firewall service enabled or disabled. Default is true",
-				Removed:     "firewall_enabled were incorrectly added and would collide with the depending resources. Now moved to respective resources vcd_vapp_firewall_rules.enabled",
+				Removed:     "Was incorrectly added and would collide with the depending resource. Now moved to vcd_vapp_firewall_rules.enabled",
 			},
 			"nat_enabled": {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "NAT service enabled or disabled. Default is true",
-				Removed:     "nat_enabled were incorrectly added and would collide with the depending resources. Now moved to respective resources vcd_vapp_nat_rules.enabled",
+				Removed:     "Was incorrectly added and would collide with the depending resource. Now moved to vcd_vapp_nat_rules.enabled",
 			},
 			"retain_ip_mac_enabled": {
 				Type:        schema.TypeBool,
