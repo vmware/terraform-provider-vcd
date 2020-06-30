@@ -1,41 +1,41 @@
-## 2.9.0 (Unreleased)
+## 2.9.0 (June 30, 2020)
 FEATURES:
 
-* **New Resource**: `vcd_vm_affinity_rule` VM affinity and anti-affinity rules [GH-514]
-* **New Data Source**: `vcd_vm_affinity_rule` VM affinity and anti-affinity rules [GH-514]
-* **New Resource:** `vcd_org_group` Org Group management [GH-513]
+* **New Resource**: `vcd_vm_affinity_rule` VM affinity and anti-affinity rules ([#514](https://github.com/terraform-providers/terraform-provider-vcd/issues/514))
+* **New Data Source**: `vcd_vm_affinity_rule` VM affinity and anti-affinity rules ([#514](https://github.com/terraform-providers/terraform-provider-vcd/issues/514))
+* **New Resource:** `vcd_org_group` Org Group management ([#513](https://github.com/terraform-providers/terraform-provider-vcd/issues/513))
 * Add support for SAML auth with Active Directory Federation Services (ADFS) as IdP using
-  "/adfs/services/trust/13/usernamemixed" endpoint usin auth_type="saml_adfs". [GH-504]
-* Add support for LDAP authentication using auth_type="integrated". [GH-504]
-* **New Resource:** `vcd_org_group` Org Group management [GH-513]
-* **New Resource:** `resource/vcd_vapp_firewall_rules` vApp network firewall rules [GH-511]
-* **New Resource:** `resource/vcd_vapp_nat_rules` vApp network NAT rules [GH-518]
-* **New Resource:** `resource/vcd_vapp_static_routing` vApp network static routing rules [GH-520]
+  "/adfs/services/trust/13/usernamemixed" endpoint usin auth_type="saml_adfs". ([#504](https://github.com/terraform-providers/terraform-provider-vcd/issues/504))
+* Add support for LDAP authentication using auth_type="integrated". ([#504](https://github.com/terraform-providers/terraform-provider-vcd/issues/504))
+* **New Resource:** `vcd_org_group` Org Group management ([#513](https://github.com/terraform-providers/terraform-provider-vcd/issues/513))
+* **New Resource:** `resource/vcd_vapp_firewall_rules` vApp network firewall rules ([#511](https://github.com/terraform-providers/terraform-provider-vcd/issues/511))
+* **New Resource:** `resource/vcd_vapp_nat_rules` vApp network NAT rules ([#518](https://github.com/terraform-providers/terraform-provider-vcd/issues/518))
+* **New Resource:** `resource/vcd_vapp_static_routing` vApp network static routing rules ([#520](https://github.com/terraform-providers/terraform-provider-vcd/issues/520))
 
 IMPROVEMENTS:
 
-* `resource/vcd_vapp_vm` allows creating empty VM. New fields added `boot_image`, `os_type` and `hardware_version`. Also, supports `description` updates. [GH-484]
-* Data sources `vcd_edgegateway`, `vcd_catalog`, `vcd_catalog_item`, `vcd_catalog_media`, `vcd_network_*` allow search by filter. [GH-487]
-* Removed code that handled specific cases for API 29.0 and 30.0. This library now supports VCD versions from 9.5 to 10.1 included [GH-499]
-* Added command line flags to test suite, corresponding to environment variables listed in TESTING.md [GH-505]
-* `resource/vcd_vapp_vm` allows creating VM from multi VM vApp template [GH-501]
+* `resource/vcd_vapp_vm` allows creating empty VM. New fields added `boot_image`, `os_type` and `hardware_version`. Also, supports `description` updates. ([#484](https://github.com/terraform-providers/terraform-provider-vcd/issues/484))
+* Data sources `vcd_edgegateway`, `vcd_catalog`, `vcd_catalog_item`, `vcd_catalog_media`, `vcd_network_*` allow search by filter. ([#487](https://github.com/terraform-providers/terraform-provider-vcd/issues/487))
+* Removed code that handled specific cases for API 29.0 and 30.0. This library now supports VCD versions from 9.5 to 10.1 included ([#499](https://github.com/terraform-providers/terraform-provider-vcd/issues/499))
+* Added command line flags to test suite, corresponding to environment variables listed in TESTING.md ([#505](https://github.com/terraform-providers/terraform-provider-vcd/issues/505))
+* `resource/vcd_vapp_vm` allows creating VM from multi VM vApp template ([#501](https://github.com/terraform-providers/terraform-provider-vcd/issues/501))
 
 BUG FIXES:
 * `resource/vcd_vapp_vm` and `datasource/vcd_vapp_vm` can report `network.X.is_primary` attribute
-  incorrectly when VM is imported to Terraform and NIC indexes in vCD do not start with 0. [GH-512] 
-* Rename docs files from `.markdown` to `.html.markdown` (Add test to check file name consistency) [GH-522]
+  incorrectly when VM is imported to Terraform and NIC indexes in vCD do not start with 0. [[#512](https://github.com/terraform-providers/terraform-provider-vcd/issues/512)] 
+* Rename docs files from `.markdown` to `.html.markdown` (Add test to check file name consistency) ([#522](https://github.com/terraform-providers/terraform-provider-vcd/issues/522))
 * `nat_enabled` and `firewall_enabled` were incorrectly added to `vcd_vapp_network` and would collide with the depending resources. 
 Now moved to respective resources `vcd_vapp_nat_rules` and `vcd_vapp_firewall_rules`.
 
 DEPRECATIONS:
 
-* Deprecated `vcd_snat` (replaced by `vcd_nsxv_snat`), `vcd_dnat` (replaced by `vcd_nsxv_dnat`), and `vcd_firewall_rules` (replaced by `vcd_nsxv_firewall_rule`) [GH-518]
+* Deprecated `vcd_snat` (replaced by `vcd_nsxv_snat`), `vcd_dnat` (replaced by `vcd_nsxv_dnat`), and `vcd_firewall_rules` (replaced by `vcd_nsxv_firewall_rule`) ([#518](https://github.com/terraform-providers/terraform-provider-vcd/issues/518))
   The deprecated resources are to be used only with non-advanced edge gateway.
 
 
 NOTES:
 
-* Dropped support for vCD 9.1 [GH-492]
+* Dropped support for vCD 9.1 ([#492](https://github.com/terraform-providers/terraform-provider-vcd/issues/492))
 
 ## 2.8.0 (April 16, 2020)
 
