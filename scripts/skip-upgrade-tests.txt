@@ -66,3 +66,4 @@ vcd.vcd.runVappNetworkTest.tf v2.8.0 "nat_enabled and firewall_enabled were move
 vcd.TestAccVcdVappNetwork_Isolated-Update.tf v2.8.0 "nat_enabled and firewall_enabled were moved to respective resources vcd_vapp_nat_rules and vcd_vapp_firewall_rules"
 vcd.TestAccVcdVappNetwork_Nat-Update.tf v2.8.0 "nat_enabled and firewall_enabled were moved to respective resources vcd_vapp_nat_rules and vcd_vapp_firewall_rules"
 vcd.TestAccVcdVappOrgNetworkDS.tf v2.8.0 "nat_enabled and firewall_enabled were moved to respective resources vcd_vapp_nat_rules and vcd_vapp_firewall_rules"
+vcd.TestAccVcdVappOrgNetwork_Fenced.tf v2.8.0 "nat_enabled and firewall_enabled were moved to respective resources vcd_vapp_nat_rules and vcd_vapp_firewall_rules"
