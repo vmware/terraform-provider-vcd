@@ -2,7 +2,7 @@
 
 IMPROVEMENTS:
 
-* Added command `make tag` to check testing tags isolation. It also runs when calling `make test` [GH-532]
+* Added command `make tagverify` to check testing tags isolation. It also runs when calling `make test` [GH-532]
 
 
 ## 2.9.0 (June 30, 2020)
