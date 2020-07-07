@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# This test checks that all the build tags defined in api_vcd_test.go
+# This test checks that all the build tags defined in config_test.go and provider_test.go
 # can run individually
 
 if [ ! -d vcd ]
