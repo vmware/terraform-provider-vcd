@@ -1,4 +1,4 @@
-// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool user search auth ALL
+// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool lbAppProfile lbAppRule lbVirtualServer user search auth ALL
 
 package vcd
 
