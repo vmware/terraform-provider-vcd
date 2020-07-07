@@ -1,10 +1,15 @@
 ## 2.10.0 (Unreleased)
+
+IMPROVEMENTS:
+
+* Added command `make tag` to check testing tags isolation. It also runs when calling `make test` [GH-532]
+
+
 ## 2.9.0 (June 30, 2020)
 FEATURES:
 
 * **New Resource**: `vcd_vm_affinity_rule` VM affinity and anti-affinity rules ([#514](https://github.com/terraform-providers/terraform-provider-vcd/issues/514))
 * **New Data Source**: `vcd_vm_affinity_rule` VM affinity and anti-affinity rules ([#514](https://github.com/terraform-providers/terraform-provider-vcd/issues/514))
-* **New Resource:** `vcd_org_group` Org Group management ([#513](https://github.com/terraform-providers/terraform-provider-vcd/issues/513))
 * Add support for SAML auth with Active Directory Federation Services (ADFS) as IdP using
   "/adfs/services/trust/13/usernamemixed" endpoint usin auth_type="saml_adfs". ([#504](https://github.com/terraform-providers/terraform-provider-vcd/issues/504))
 * Add support for LDAP authentication using auth_type="integrated". ([#504](https://github.com/terraform-providers/terraform-provider-vcd/issues/504))
