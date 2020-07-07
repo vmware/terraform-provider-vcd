@@ -11,9 +11,9 @@ fi
 cd $sources
 
 
-for section in  features improvements bugfixes deprecations notes
+for section in  features improvements bug-fixes deprecations notes
 do
-    echo "## $(echo $section | tr 'a-z' 'A-Z')"
+    echo "## $(echo $section | tr 'a-z' 'A-Z' | tr '-' ' ')"
     for f in $(ls *${section}.md | sort -n)
     do
         #echo $f
