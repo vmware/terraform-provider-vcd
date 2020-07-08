@@ -75,7 +75,7 @@ testunit: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' unit"
 
 # Runs the basic execution test
-test: testunit
+test: testunit tagverify
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' short"
 
 # Runs the full acceptance test as Org user
@@ -161,6 +161,10 @@ vendor-check:
 # checks that the code can compile
 test-compile:
 	cd vcd && go test -race -tags ALL -c .
+
+# checks that tagged tests can run independently
+tagverify:
+	@scripts/test-tags.sh
 
 # builds the website and allows running it from localhost
 website:
