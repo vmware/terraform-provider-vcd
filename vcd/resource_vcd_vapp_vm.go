@@ -232,6 +232,12 @@ var vappVmSchema = map[string]*schema.Schema{
 					DiffSuppressFunc: suppressCase,
 					Description:      "Network card adapter type. (e.g. 'E1000', 'E1000E', 'SRIOVETHERNETCARD', 'VMXNET3', 'PCNet32')",
 				},
+				"connect": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Default:     true,
+					Description: "If the virtual machine is undeployed, this value specifies whether the NIC should be connected upon deployment. If the virtual machine is deployed, this value reports the current status of this NIC's connection, and can be updated to change that connection status.",
+				},
 			},
 		},
 	},
@@ -1609,7 +1615,7 @@ func networksToConfig(networks []interface{}, vdc *govcd.Vdc, vapp govcd.VApp, v
 			}
 		}
 
-		netConn.IsConnected = true
+		netConn.IsConnected = nic["connect"].(bool)
 		netConn.IPAddressAllocationMode = ipAllocationMode
 		netConn.NetworkConnectionIndex = index
 		netConn.Network = networkName
@@ -1794,6 +1800,7 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp) ([]map[s
 		singleNIC["ip"] = vmNet.IPAddress
 		singleNIC["mac"] = vmNet.MACAddress
 		singleNIC["adapter_type"] = vmNet.NetworkAdapterType
+		singleNIC["connect"] = vmNet.IsConnected
 		if vmNet.Network != types.NoneNetwork {
 			singleNIC["name"] = vmNet.Network
 		}

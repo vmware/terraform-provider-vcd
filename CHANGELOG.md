@@ -3,6 +3,7 @@
 IMPROVEMENTS:
 
 * Added command `make tagverify` to check testing tags isolation. It also runs when calling `make test` [GH-532]
+* `resource/vcd_vapp_vm` allows toggle network connection with `network.connect`  [#535]
 
 
 ## 2.9.0 (June 30, 2020)

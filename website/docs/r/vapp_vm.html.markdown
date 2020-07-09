@@ -333,6 +333,8 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
   * `ip_allocation_mode=MANUAL` - **`ip`** value must be valid IP address from a subnet defined in `static pool` for network.
 
   * `ip_allocation_mode=NONE` - **`ip`** field can be omitted or set to an empty string "". Empty string may be useful when doing HCL variable interpolation.
+  
+  * `connect` - If the virtual machine is undeployed, this value specifies whether the NIC should be connected upon deployment. If the virtual machine is deployed, this value reports the current status of this NIC's connection, and can be updated to change that connection status.
 
 <a id="override-template-disk"></a>
 ## Override template disk

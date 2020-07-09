@@ -120,6 +120,12 @@ func datasourceVcdVAppVm() *schema.Resource {
 							Computed:    true,
 							Description: "Network card adapter type. (e.g. 'E1000', 'E1000E', 'SRIOVETHERNETCARD', 'VMXNET3', 'PCNet32')",
 						},
+						"connect": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     true,
+							Description: "If the virtual machine is undeployed, this value specifies whether the NIC should be connected upon deployment. If the virtual machine is deployed, this value reports the current status of this NIC's connection, and can be updated to change that connection status.",
+						},
 					},
 				},
 			},
