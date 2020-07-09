@@ -123,6 +123,7 @@ resource "vcd_vapp_vm" "web2" {
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
+    connect            = false
   }
 ​
   disk {
