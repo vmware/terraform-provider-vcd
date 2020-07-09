@@ -1,10 +1,6 @@
 ## 2.10.0 (Unreleased)
 
-IMPROVEMENTS:
-
-* Added command `make tagverify` to check testing tags isolation. It also runs when calling `make test` [GH-532]
-* `resource/vcd_vapp_vm` allows toggle network connection with `network.connect`  [#535]
-
+Changes in progress for v2.10.0 are available at [.changes/v2.10.0](https://github.com/terraform-providers/terraform-provider-vcd/tree/master/.changes/v2.10.0) until the release.
 
 ## 2.9.0 (June 30, 2020)
 FEATURES:
