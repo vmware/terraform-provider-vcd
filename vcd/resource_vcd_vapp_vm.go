@@ -236,7 +236,7 @@ var vappVmSchema = map[string]*schema.Schema{
 					Type:        schema.TypeBool,
 					Optional:    true,
 					Default:     true,
-					Description: "If the virtual machine is undeployed, this value specifies whether the NIC should be connected upon deployment. If the virtual machine is deployed, this value reports the current status of this NIC's connection, and can be updated to change that connection status.",
+					Description: "It defines if NIC is connected or not.",
 				},
 			},
 		},
