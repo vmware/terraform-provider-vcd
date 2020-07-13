@@ -70,4 +70,5 @@ vcd.TestAccVcdVappOrgNetwork_Fenced.tf v2.8.0 "nat_enabled and firewall_enabled 
 vcd.TestAccVcdVappOrgNetwork_NotFenced.tf v2.8.0 "nat_enabled and firewall_enabled were moved to respective resources vcd_vapp_nat_rules and vcd_vapp_firewall_rules"
 vcd.TestAccVcdVAppEmptyVm.tf v2.9.0 "connect" default is true, but for "none" networks connect always return false from API.
 vcd.TestAccVcdVAppVmDhcpWait.tf v2.9.0 "connect" default is true, but for "none" networks connect always return false from API.
+vcd.TestAccVcdVAppVmDhcpWait-step1.tf v2.9.0 "connect" default is true, but for "none" networks connect always return false from API.
 vcd.TestAccVcdVAppVmMultiNIC.tf v2.9.0 "connect" default is true, but for "none" networks connect always return false from API.

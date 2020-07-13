@@ -138,7 +138,6 @@ resource "vcd_vapp_org_network" "vappNetwork1" {
 `
 
 const testAccCheckVcdVAppVmDhcpWait = testAccCheckVcdVAppVmDhcpWaitShared + `
-# skip-binary-test: only for updates
 resource "vcd_vapp_vm" "{{.VMName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
