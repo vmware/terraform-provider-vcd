@@ -69,7 +69,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip", "11.10.0.152"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.adapter_type", "PCNet32"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.0.mac"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.connect", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.connected", "true"),
 					nic0Mac.cacheTestResourceFieldValue("vcd_vapp_vm."+netVmName1, "network.0.mac"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.name", "multinic-net"),
@@ -79,7 +79,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					// resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.1.ip"), // We cannot guarantee DHCP
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.1.mac"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.adapter_type", "VMXNET3"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.connect", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.connected", "true"),
 					nic1Mac.cacheTestResourceFieldValue("vcd_vapp_vm."+netVmName1, "network.1.mac"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.name", "multinic-net"),
@@ -87,7 +87,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.is_primary", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.ip_allocation_mode", "MANUAL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.ip", "11.10.0.170"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.connect", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.connected", "false"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.2.mac"),
 					// Adapter type is set to "E1000"
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.adapter_type", "E1000"),
@@ -98,7 +98,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.3.is_primary", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.3.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.3.ip", "12.10.0.152"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.3.connect", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.3.connected", "true"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.3.mac"),
 					// Adapter type is set to "E1000E"
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.3.adapter_type", "E1000E"),
@@ -109,7 +109,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.4.is_primary", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.4.ip_allocation_mode", "NONE"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.4.ip", ""),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.4.connect", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.4.connected", "false"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.4.mac"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.5.name", ""),
@@ -117,7 +117,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.5.is_primary", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.5.ip_allocation_mode", "NONE"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.5.ip", ""),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.5.connect", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.5.connected", "false"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.5.mac"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.6.name", "vapp-net"),
@@ -126,26 +126,26 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.6.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.6.ip", "192.168.2.51"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.6.mac"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.6.connect", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.6.connected", "true"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.6.adapter_type", "VMXNET3"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.7.name", "vapp-routed-net"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.7.type", "vapp"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.7.is_primary", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.7.ip_allocation_mode", "MANUAL"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.7.connect", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.7.connected", "true"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.7.ip", "192.168.2.2"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.8.name", "multinic-net"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.8.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.8.is_primary", "false"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.8.connect", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.8.connected", "true"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.8.ip_allocation_mode", "POOL"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.9.name", "multinic-net2"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.9.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.9.is_primary", "false"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.9.connect", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.9.connected", "true"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.9.ip_allocation_mode", "POOL"),
 				),
 			},
@@ -161,7 +161,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.is_primary", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip", "11.10.0.152"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.connect", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.connected", "true"),
 					// Ensure that the MAC address (and the NIC itself) stays the same after update procedure
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.0.mac"),
 					// Ensuring adapter type stays intact after update
@@ -172,7 +172,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.is_primary", "true"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.ip_allocation_mode", "DHCP"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.connect", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.connected", "true"),
 					//resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.1.ip"), // We cannot guarantee DHCP
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.1.mac"),
 					// Ensuring adapter type stays intact after update
@@ -184,7 +184,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.is_primary", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.ip_allocation_mode", "MANUAL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.ip", "11.10.0.170"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.connect", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.connected", "true"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.2.mac"),
 					// Ensuring adapter type stays intact after update
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.adapter_type", "E1000"),
@@ -195,7 +195,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.3.is_primary", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.3.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.3.ip", "12.10.0.152"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.3.connect", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.3.connected", "true"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.3.mac", "00:00:00:11:11:11"),
 				),
 			},
@@ -220,7 +220,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.is_primary", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip_allocation_mode", "NONE"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip", ""),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.connect", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.connected", "false"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.0.mac"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.name", "vapp-net"),
@@ -228,7 +228,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.is_primary", "true"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.ip", "192.168.2.51"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.connect", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.connected", "true"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.1.mac"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.adapter_type", "VMXNET3"),
 
@@ -237,7 +237,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.is_primary", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.ip", "11.10.0.152"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.connect", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.connected", "true"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.2.mac"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.adapter_type", "VMXNET2"),
 				),
@@ -371,7 +371,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     ip_allocation_mode = "MANUAL"
     is_primary         = false
     adapter_type       = "e1000"
-    connect            = false
+    connected            = false
   }
 
   network {
@@ -388,13 +388,13 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     ip_allocation_mode = "NONE"
     ip                 = ""
     name               = ""
-    connect            = false
+    connected            = false
   }
 
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
-    connect            = false  
+    connected            = false  
   }
 
   network {
@@ -459,7 +459,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     ip                 = "11.10.0.170"
     ip_allocation_mode = "MANUAL"
     is_primary         = false
-    connect            = true
+    connected            = true
   }
 
   network {
@@ -524,7 +524,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
-    connect            = false
+    connected            = false
   }
 
   network {

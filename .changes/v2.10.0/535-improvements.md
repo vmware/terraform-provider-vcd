@@ -1,1 +1,1 @@
-* `resource/vcd_vapp_vm` allows toggle network connection with `network.connect` [GH-535]
+* `resource/vcd_vapp_vm` allows toggle network connection with `network.connected` [GH-535]

@@ -123,7 +123,7 @@ resource "vcd_vapp_vm" "web2" {
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
-    connect            = false
+    connected            = false
   }
 ​
   disk {
@@ -335,7 +335,7 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
 
   * `ip_allocation_mode=NONE` - **`ip`** field can be omitted or set to an empty string "". Empty string may be useful when doing HCL variable interpolation.
   
-  * `connect` - It defines if NIC is connected or not.
+  * `connected` - It defines if NIC is connected or not.
 
 <a id="override-template-disk"></a>
 ## Override template disk
