@@ -139,10 +139,13 @@ func TestAccVcdVAppEmptyVm(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.9.ip_allocation_mode", "POOL"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "os_type", "sles10_64Guest"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "hardware_version", "vmx-11"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "hardware_version", "vmx-14"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "expose_hardware_virtualization", "true"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "computer_name", "compName"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "description", "test empty VM"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "cpu_hot_add_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "memory_hot_add_enabled", "true"),
 				),
 			},
 			// Step 1 - update
@@ -191,10 +194,13 @@ func TestAccVcdVAppEmptyVm(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.3.mac", "00:00:00:11:11:11"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "os_type", "rhel4Guest"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "hardware_version", "vmx-13"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "hardware_version", "vmx-15"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "expose_hardware_virtualization", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "computer_name", "compNameUp"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "description", "test empty VM updated"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "cpu_hot_add_enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "memory_hot_add_enabled", "false"),
 				),
 			},
 		},
@@ -308,11 +314,14 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   cpu_cores     = 1 
   
   os_type                        = "sles10_64Guest"
-  hardware_version               = "vmx-11"
+  hardware_version               = "vmx-14"
   catalog_name                   = "{{.Catalog}}"
   boot_image                     = "{{.Media}}"
   expose_hardware_virtualization = true
   computer_name                  = "compName"
+
+  cpu_hot_add_enabled    = true
+  memory_hot_add_enabled = true
 
   network {
     type               = "org"
@@ -409,7 +418,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   description   = "test empty VM updated"
 
   os_type                        = "rhel4Guest"
-  hardware_version               = "vmx-13"
+  hardware_version               = "vmx-15"
   catalog_name                   = ""
   boot_image                     = ""
   expose_hardware_virtualization = false
