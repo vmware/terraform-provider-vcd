@@ -371,7 +371,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     ip_allocation_mode = "MANUAL"
     is_primary         = false
     adapter_type       = "e1000"
-    connected            = false
+    connected          = false
   }
 
   network {
@@ -388,13 +388,13 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     ip_allocation_mode = "NONE"
     ip                 = ""
     name               = ""
-    connected            = false
+    connected          = false
   }
 
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
-    connected            = false  
+    connected          = false  
   }
 
   network {
@@ -459,7 +459,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     ip                 = "11.10.0.170"
     ip_allocation_mode = "MANUAL"
     is_primary         = false
-    connected            = true
+    connected          = true
   }
 
   network {
@@ -524,7 +524,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
-    connected            = false
+    connected          = false
   }
 
   network {

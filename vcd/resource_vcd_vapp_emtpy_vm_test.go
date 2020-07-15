@@ -366,13 +366,13 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     ip_allocation_mode = "NONE"
     ip                 = ""
     name               = ""
-    connected            = false
+    connected          = false
   }
 
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
-    connected            = false
+    connected          = false
   }
 
   network {
