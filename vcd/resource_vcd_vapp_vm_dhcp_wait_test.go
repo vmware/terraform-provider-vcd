@@ -162,7 +162,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
-    connected            = "false"
+    connected          = "false"
   }
 }
 
