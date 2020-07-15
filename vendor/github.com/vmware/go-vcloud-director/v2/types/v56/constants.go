@@ -115,6 +115,8 @@ const (
 	MimeOrgLdapSettings = "application/vnd.vmware.admin.organizationldapsettings+xml"
 	// Mime of vApp network
 	MimeVappNetwork = "application/vnd.vmware.vcloud.vAppNetwork+xml"
+	// Mime of VM capabilities
+	MimeVmCapabilities = "application/vnd.vmware.vcloud.vmCapabilitiesSection+xml"
 )
 
 const (

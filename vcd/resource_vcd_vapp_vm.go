@@ -491,6 +491,18 @@ var vappVmSchema = map[string]*schema.Schema{
 			},
 		},
 	},
+	"cpu_hot_add_enabled": {
+		Type:        schema.TypeBool,
+		Optional:    true,
+		Default:     false,
+		Description: "True if the virtual machine supports addition of virtual CPUs while powered on.",
+	},
+	"memory_hot_add_enabled": {
+		Type:        schema.TypeBool,
+		Optional:    true,
+		Default:     false,
+		Description: "True if the virtual machine supports addition of memory while powered on.",
+	},
 }
 
 func resourceVcdVAppVm() *schema.Resource {
@@ -1000,28 +1012,30 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			}
 		}
 
-		if d.HasChange("hardware_version") {
+		if d.HasChange("hardware_version") || d.HasChange("os_type") || d.HasChange("description") {
 			vmSpecSection := vm.VM.VmSpecSection
-			vmSpecSection.HardwareVersion = &types.HardwareVersion{Value: d.Get("hardware_version").(string)}
-			_, err := vm.UpdateVmSpecSection(vmSpecSection, vm.VM.Description)
+			description := vm.VM.Description
+			if d.HasChange("hardware_version") {
+				vmSpecSection.HardwareVersion = &types.HardwareVersion{Value: d.Get("hardware_version").(string)}
+			}
+			if d.HasChange("os_type") {
+				vmSpecSection.OsType = d.Get("os_type").(string)
+			}
+
+			if d.HasChange("description") {
+				description = d.Get("description").(string)
+			}
+
+			_, err := vm.UpdateVmSpecSection(vmSpecSection, description)
 			if err != nil {
-				return fmt.Errorf("error changing hardware version: %s", err)
+				return fmt.Errorf("error changing VM spec section: %s", err)
 			}
 		}
 
-		if d.HasChange("os_type") {
-			vmSpecSection := vm.VM.VmSpecSection
-			vmSpecSection.OsType = d.Get("os_type").(string)
-			_, err := vm.UpdateVmSpecSection(vmSpecSection, vm.VM.Description)
+		if d.HasChange("cpu_hot_add_enabled") || d.HasChange("memory_hot_add_enabled") {
+			_, err := vm.UpdateVmCapabilities(d.Get("cpu_hot_add_enabled").(bool), d.Get("memory_hot_add_enabled").(bool))
 			if err != nil {
-				return fmt.Errorf("error changing os type: %s", err)
-			}
-		}
-
-		if d.HasChange("description") {
-			_, err := vm.UpdateVmSpecSection(vm.VM.VmSpecSection, d.Get("description").(string))
-			if err != nil {
-				return fmt.Errorf("error changing description: %s", err)
+				return fmt.Errorf("error changeing VM capabilities: %s", err)
 			}
 		}
 
