@@ -77,7 +77,7 @@ func TestAccVcdVAppEmptyVm(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.ip_allocation_mode", "DHCP"),
 					// resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.1.ip"), // We cannot guarantee DHCP
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.1.mac"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.adapter_type", "E1000"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.adapter_type", "VMXNET3"),
 					nic1Mac.cacheTestResourceFieldValue("vcd_vapp_vm."+netVmName1, "network.1.mac"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.name", "multinic-net"),
@@ -138,8 +138,8 @@ func TestAccVcdVAppEmptyVm(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.9.is_primary", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.9.ip_allocation_mode", "POOL"),
 
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "os_type", "sles10_64Guest"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "hardware_version", "vmx-14"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "os_type", "sles11_64Guest"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "hardware_version", "vmx-13"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "expose_hardware_virtualization", "true"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "computer_name", "compName"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "description", "test empty VM"),
@@ -173,7 +173,7 @@ func TestAccVcdVAppEmptyVm(t *testing.T) {
 					//resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.1.ip"), // We cannot guarantee DHCP
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.1.mac"),
 					// Ensuring adapter type stays intact after update
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.adapter_type", "E1000"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.adapter_type", "VMXNET3"),
 					nic1Mac.testCheckCachedResourceFieldValue("vcd_vapp_vm."+netVmName1, "network.1.mac"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.2.name", "multinic-net"),
@@ -194,7 +194,7 @@ func TestAccVcdVAppEmptyVm(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.3.mac", "00:00:00:11:11:11"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "os_type", "rhel4Guest"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "hardware_version", "vmx-15"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "hardware_version", "vmx-14"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "expose_hardware_virtualization", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "computer_name", "compNameUp"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "description", "test empty VM updated"),
@@ -313,8 +313,8 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   cpus          = 2
   cpu_cores     = 1 
   
-  os_type                        = "sles10_64Guest"
-  hardware_version               = "vmx-14"
+  os_type                        = "sles11_64Guest"
+  hardware_version               = "vmx-13"
   catalog_name                   = "{{.Catalog}}"
   boot_image                     = "{{.Media}}"
   expose_hardware_virtualization = true
@@ -418,7 +418,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   description   = "test empty VM updated"
 
   os_type                        = "rhel4Guest"
-  hardware_version               = "vmx-15"
+  hardware_version               = "vmx-14"
   catalog_name                   = ""
   boot_image                     = ""
   expose_hardware_virtualization = false

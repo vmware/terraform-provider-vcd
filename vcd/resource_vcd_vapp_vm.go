@@ -933,13 +933,13 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 	}
 
 	if d.HasChanges("memory", "cpus", "cpu_cores", "power_on", "disk", "expose_hardware_virtualization",
-		"network", "boot_image", "hardware_version", "os_type", "description") {
+		"network", "boot_image", "hardware_version", "os_type", "description", "cpu_hot_add_enabled", "memory_hot_add_enabled") {
 
 		log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t), power_on(%t), disk(%t), expose_hardware_virtualization(%t),"+
-			" network(%t), boot_image(%t), hardware_version(%t), os_type(%t), description(%t)",
+			" network(%t), boot_image(%t), hardware_version(%t), os_type(%t), description(%t), cpu_hot_add_enabled(%t), memory_hot_add_enabled(%t)",
 			vm.VM.Name, d.HasChange("memory"), d.HasChange("cpus"), d.HasChange("cpu_cores"), d.HasChange("power_on"), d.HasChange("disk"),
 			d.HasChange("expose_hardware_virtualization"), d.HasChange("network"), d.HasChange("boot_image"), d.HasChange("hardware_version"),
-			d.HasChange("os_type"), d.HasChange("description"))
+			d.HasChange("os_type"), d.HasChange("description"), d.HasChange("cpu_hot_add_enabled"), d.HasChange("memory_hot_add_enabled"))
 
 		if vmStatusBeforeUpdate != "POWERED_OFF" {
 			log.Printf("[DEBUG] Un-deploying VM %s for offline update. Previous state %s",
@@ -2287,6 +2287,13 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 		_, err = newVm.SetProductSectionList(vmProperties)
 		if err != nil {
 			return nil, fmt.Errorf("error setting guest properties: %s", err)
+		}
+	}
+
+	if d.HasChange("cpu_hot_add_enabled") || d.HasChange("memory_hot_add_enabled") {
+		_, err := newVm.UpdateVmCapabilities(d.Get("cpu_hot_add_enabled").(bool), d.Get("memory_hot_add_enabled").(bool))
+		if err != nil {
+			return nil, fmt.Errorf("error changeing VM capabilities: %s", err)
 		}
 	}
 
