@@ -89,6 +89,7 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
 `
 
 const testAccCheckVcdVAppVm_capabilitiesUpdate = `
+# skip-binary-test: only for updates
 resource "vcd_vapp" "{{.VappName}}" {
   name = "{{.VappName}}"
   org  = "{{.Org}}"
