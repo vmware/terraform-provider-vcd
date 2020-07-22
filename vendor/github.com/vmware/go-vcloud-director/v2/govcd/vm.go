@@ -1536,3 +1536,20 @@ func (vm *VM) UpdateVmCapabilitiesAsync(cpuHot, memoryHot bool) (Task, error) {
 			MemoryHotAddEnabled: memoryHot,
 		})
 }
+
+func (vm *VM) GetMetrics() (types.CurrentUsage, error) {
+	if vm.VM.HREF == "" {
+		return types.CurrentUsage{}, fmt.Errorf("cannot get VM metrics, VM HREF is unset")
+	}
+
+	// Empty struct before a new unmarshal, otherwise we end up with duplicate
+	// elements in slices.
+	metrics := &types.CurrentUsage{}
+
+	_, err := vm.client.ExecuteRequest(vm.VM.HREF+"/metrics/current", http.MethodGet, "", "error refreshing vApp: %s", nil, metrics)
+	if err != nil {
+		return types.CurrentUsage{}, err
+	}
+	// The request was successful
+	return *metrics, nil
+}
