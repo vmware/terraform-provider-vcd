@@ -831,7 +831,56 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient.lockParentVapp(d)
 	defer vcdClient.unLockParentVapp(d)
 
+	err := resourceVmHotUpdate(d, meta)
+	if err != nil {
+		return err
+	}
+
 	return resourceVcdVAppVmUpdateExecute(d, meta)
+}
+
+func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}) error {
+	_, _, _, _, _, vm, err := getVmFromResource(d, meta)
+	if err != nil {
+		return err
+	}
+	if d.Get("memory_hot_add_enabled").(bool) && d.HasChange("memory") {
+		err = changeMemorySize(d, vm)
+		if err != nil {
+			return err
+		}
+	}
+	if d.Get("cpu_hot_add_enabled").(bool) && d.HasChange("cpus") {
+		err = changeCpuCount(d, vm)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func changeCpuCount(d *schema.ResourceData, vm *govcd.VM) error {
+	task, err := vm.ChangeCPUCount(d.Get("cpus").(int))
+	if err != nil {
+		return fmt.Errorf("error changing cpus: %s", err)
+	}
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func changeMemorySize(d *schema.ResourceData, vm *govcd.VM) error {
+	task, err := vm.ChangeMemorySize(d.Get("memory").(int))
+	if err != nil {
+		return fmt.Errorf("error changing memory size: %s", err)
+	}
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) error {
@@ -844,32 +893,9 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		return resourceVcdVAppVmRead(d, meta)
 	}
 
-	vcdClient := meta.(*VCDClient)
-
-	org, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	vcdClient, org, vdc, vapp, identifier, vm, err := getVmFromResource(d, meta)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
-	}
-
-	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
-
-	if err != nil {
-		return fmt.Errorf("error finding vApp: %s", err)
-	}
-
-	identifier := d.Id()
-	if identifier == "" {
-		identifier = d.Get("name").(string)
-	}
-	if identifier == "" {
-		return fmt.Errorf("[VM update] neither name or ID was set")
-	}
-
-	vm, err := vapp.GetVMByNameOrId(identifier, false)
-
-	if err != nil {
-		d.SetId("")
-		return fmt.Errorf("[VM update] error getting VM %s: %s", identifier, err)
+		return err
 	}
 
 	vmStatusBeforeUpdate, err := vm.GetStatus()
@@ -938,8 +964,18 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 
 	}
 
-	if d.HasChanges("memory", "cpus", "cpu_cores", "power_on", "disk", "expose_hardware_virtualization",
-		"network", "boot_image", "hardware_version", "os_type", "description", "cpu_hot_add_enabled", "memory_hot_add_enabled") {
+	memoryChangedInHot := false
+	if d.Get("memory_hot_add_enabled").(bool) && d.HasChange("memory") {
+		memoryChangedInHot = true
+	}
+	cpusChangedInHot := false
+	if d.Get("cpu_hot_add_enabled").(bool) && d.HasChange("cpus") {
+		cpusChangedInHot = true
+	}
+
+	if d.HasChanges("cpu_cores", "power_on", "disk", "expose_hardware_virtualization", "network", "boot_image",
+		"hardware_version", "os_type", "description", "cpu_hot_add_enabled",
+		"memory_hot_add_enabled") || !memoryChangedInHot || !cpusChangedInHot {
 
 		log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t), power_on(%t), disk(%t), expose_hardware_virtualization(%t),"+
 			" network(%t), boot_image(%t), hardware_version(%t), os_type(%t), description(%t), cpu_hot_add_enabled(%t), memory_hot_add_enabled(%t)",
@@ -973,28 +1009,23 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			}
 		}
 
-		if d.HasChange("memory") {
-
-			task, err := vm.ChangeMemorySize(d.Get("memory").(int))
-			if err != nil {
-				return fmt.Errorf("error changing memory size: %s", err)
-			}
-
-			err = task.WaitTaskCompletion()
+		if !d.Get("memory_hot_add_enabled").(bool) && d.HasChange("memory") {
+			err = changeMemorySize(d, vm)
 			if err != nil {
 				return err
 			}
 		}
 
-		if d.HasChange("cpus") || d.HasChange("cpu_cores") {
-			var task govcd.Task
-			var err error
-			if d.Get("cpu_cores") != nil {
-				coreCounts := d.Get("cpu_cores").(int)
-				task, err = vm.ChangeCPUCountWithCore(d.Get("cpus").(int), &coreCounts)
-			} else {
-				task, err = vm.ChangeCPUCount(d.Get("cpus").(int))
+		if !d.Get("cpu_hot_add_enabled").(bool) && d.HasChange("cpus") {
+			err = changeCpuCount(d, vm)
+			if err != nil {
+				return err
 			}
+		}
+
+		if d.HasChange("cpu_cores") {
+			coreCounts := d.Get("cpu_cores").(int)
+			task, err := vm.ChangeCPUCountWithCore(d.Get("cpus").(int), &coreCounts)
 			if err != nil {
 				return fmt.Errorf("error changing cpu count: %s", err)
 			}
@@ -1081,7 +1112,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		}
 	}
 
-	// If the VM was powered off during update but it has to be powered off
+	// If the VM was powered off during update but it has to be powered on
 	if d.Get("power_on").(bool) {
 		vmStatus, err := vm.GetStatus()
 		if err != nil {
@@ -1127,6 +1158,37 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 	}
 	log.Printf("[DEBUG] [VM update] finished")
 	return resourceVcdVAppVmRead(d, meta)
+}
+
+func getVmFromResource(d *schema.ResourceData, meta interface{}) (*VCDClient, *govcd.Org, *govcd.Vdc, *govcd.VApp, string, *govcd.VM, error) {
+	vcdClient := meta.(*VCDClient)
+
+	org, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	if err != nil {
+		return nil, nil, nil, nil, "", nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	}
+
+	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
+
+	if err != nil {
+		return nil, nil, nil, nil, "", nil, fmt.Errorf("error finding vApp: %s", err)
+	}
+
+	identifier := d.Id()
+	if identifier == "" {
+		identifier = d.Get("name").(string)
+	}
+	if identifier == "" {
+		return nil, nil, nil, nil, "", nil, fmt.Errorf("[VM update] neither name or ID was set")
+	}
+
+	vm, err := vapp.GetVMByNameOrId(identifier, false)
+
+	if err != nil {
+		d.SetId("")
+		return nil, nil, nil, nil, "", nil, fmt.Errorf("[VM update] error getting VM %s: %s", identifier, err)
+	}
+	return vcdClient, org, vdc, vapp, identifier, vm, nil
 }
 
 // updates attached disks to latest state. Removed not needed and add new ones
