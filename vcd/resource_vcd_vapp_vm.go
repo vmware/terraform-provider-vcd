@@ -2214,7 +2214,7 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 			NetworkConnectionSection: &types.NetworkConnectionSection{
 				PrimaryNetworkConnectionIndex: 0,
 				NetworkConnection: []*types.NetworkConnection{
-					&types.NetworkConnection{Network: "none", NetworkConnectionIndex: 0, IPAddress: "any", IsConnected: false, IPAddressAllocationMode: "DHCP"}},
+					&types.NetworkConnection{Network: "none", NetworkConnectionIndex: 0, IPAddress: "any", IsConnected: false, IPAddressAllocationMode: "NONE"}},
 			},
 			Description:               d.Get("description").(string),
 			GuestCustomizationSection: customizationSection,
