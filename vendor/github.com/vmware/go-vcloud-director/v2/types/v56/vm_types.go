@@ -37,14 +37,3 @@ type CreateItem struct {
 	VmSpecSection             *VmSpecSection             `xml:"VmSpecSection,omitempty"`
 	BootImage                 *Media                     `xml:"Media,omitempty"` // boot image as vApp template. Href, Id and name needed.
 }
-
-type CurrentUsage struct {
-	Link    *Link     `xml:"Link,omitempty"`
-	Metrics []*Metric `xml:"Metric,omitempty"`
-}
-
-type Metric struct {
-	Name  string `xml:"name,attr,omitempty"`
-	Unit  string `xml:"unit,attr,omitempty"`
-	Value string `xml:"value,attr,omitempty"`
-}

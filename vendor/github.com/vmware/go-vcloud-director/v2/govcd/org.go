@@ -332,3 +332,19 @@ func (org *Org) QueryCatalogList() ([]*types.CatalogRecord, error) {
 	util.Logger.Printf("[DEBUG] QueryCatalogList returned with : %#v and error: %s", catalogs, err)
 	return catalogs, nil
 }
+
+// GetTaskList returns Tasks for Organization and error.
+func (org *Org) GetTaskList() (types.TasksList, error) {
+
+	metrics := &types.TasksList{}
+	href := org.client.VCDHREF
+	href.Path = href.Path + "/tasksList/" + extractUuid(org.Org.ID)
+
+	_, err := org.client.ExecuteRequest(href.String(), http.MethodGet, "", "error refreshing vApp: %s", nil, metrics)
+	if err != nil {
+		return types.TasksList{}, err
+	}
+
+	// The request was successful
+	return *metrics, nil
+}

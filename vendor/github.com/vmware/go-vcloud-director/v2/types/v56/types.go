@@ -2390,6 +2390,13 @@ type Extension struct {
 	Link LinkList `xml:"Link,omitempty"` // A reference to an entity or operation associated with this object.
 }
 
+// Namespace: http://www.vmware.com/vcloud/v1.5
+// Retrieve a list of tasks
+type TasksList struct {
+	XMLName xml.Name `xml:"TasksList"`
+	Task    []*Task  `xml:"Task,omitempty"`
+}
+
 type ExternalNetworkReferences struct {
 	ExternalNetworkReference []*ExternalNetworkReference `xml:"ExternalNetworkReference,omitempty"` // A reference to an entity or operation associated with this object.
 }
