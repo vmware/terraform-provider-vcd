@@ -1070,7 +1070,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		}
 
 		if d.HasChange("cpu_hot_add_enabled") || d.HasChange("memory_hot_add_enabled") {
-			_, err := vm.UpdateVmCapabilities(d.Get("cpu_hot_add_enabled").(bool), d.Get("memory_hot_add_enabled").(bool))
+			_, err := vm.UpdateVmCpuAndMemoryHotAdd(d.Get("cpu_hot_add_enabled").(bool), d.Get("memory_hot_add_enabled").(bool))
 			if err != nil {
 				return fmt.Errorf("error changing VM capabilities: %s", err)
 			}
@@ -2360,7 +2360,7 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 	}
 
 	if d.HasChange("cpu_hot_add_enabled") || d.HasChange("memory_hot_add_enabled") {
-		_, err := newVm.UpdateVmCapabilities(d.Get("cpu_hot_add_enabled").(bool), d.Get("memory_hot_add_enabled").(bool))
+		_, err := newVm.UpdateVmCpuAndMemoryHotAdd(d.Get("cpu_hot_add_enabled").(bool), d.Get("memory_hot_add_enabled").(bool))
 		if err != nil {
 			return nil, fmt.Errorf("error changing VM capabilities: %s", err)
 		}

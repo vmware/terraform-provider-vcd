@@ -1502,9 +1502,9 @@ func (client *Client) QueryVmList(filter types.VmQueryFilter) ([]*types.QueryRes
 	return vmList, nil
 }
 
-// UpdateVmCapabilities updates VM Capabilities and returns refreshed VM or error.
-func (vm *VM) UpdateVmCapabilities(cpuHot, memoryHot bool) (*VM, error) {
-	task, err := vm.UpdateVmCapabilitiesAsync(cpuHot, memoryHot)
+// UpdateVmCpuAndMemoryHotAdd updates VM Capabilities and returns refreshed VM or error.
+func (vm *VM) UpdateVmCpuAndMemoryHotAdd(cpuAdd, memoryAdd bool) (*VM, error) {
+	task, err := vm.UpdateVmCpuAndMemoryHotAddAsync(cpuAdd, memoryAdd)
 	if err != nil {
 		return nil, err
 	}
@@ -1523,8 +1523,8 @@ func (vm *VM) UpdateVmCapabilities(cpuHot, memoryHot bool) (*VM, error) {
 
 }
 
-// UpdateVmCapabilitiesAsync updates VM Capabilities and returns Task and error.
-func (vm *VM) UpdateVmCapabilitiesAsync(cpuHot, memoryHot bool) (Task, error) {
+// UpdateVmCpuAndMemoryHotAddAsync updates VM Capabilities and returns Task and error.
+func (vm *VM) UpdateVmCpuAndMemoryHotAddAsync(cpuHot, memoryAdd bool) (Task, error) {
 	if vm.VM.HREF == "" {
 		return Task{}, fmt.Errorf("cannot update VM capabilities, VM HREF is unset")
 	}
@@ -1533,6 +1533,6 @@ func (vm *VM) UpdateVmCapabilitiesAsync(cpuHot, memoryHot bool) (Task, error) {
 		types.MimeVmCapabilities, "error updating VM capabilities section: %s", &types.VmCapabilities{
 			Xmlns:               types.XMLNamespaceVCloud,
 			CPUHotAddEnabled:    cpuHot,
-			MemoryHotAddEnabled: memoryHot,
+			MemoryHotAddEnabled: memoryAdd,
 		})
 }
