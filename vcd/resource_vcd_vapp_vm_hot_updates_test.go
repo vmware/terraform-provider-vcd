@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -39,6 +40,9 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "-step1"
 	configTextVMUpdateStep1 := templateFill(testAccCheckVcdVAppHotUpdateVmStep1, params)
+
+	params["FuncName"] = t.Name() + "-step2"
+	configTextVMUpdateStep2 := templateFill(testAccCheckVcdVAppHotUpdateVmStep2, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -79,6 +83,10 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "cpus", "3"),
 					testAccCheckVcdVmNotRestarted("vcd_vapp_vm."+hotVmName1, hotVappName, hotVmName1),
 				),
+			},
+			resource.TestStep{
+				Config:      configTextVMUpdateStep2,
+				ExpectError: regexp.MustCompile(`update stopped: VM needs to reboot to change properties.*`),
 			},
 		},
 	})
@@ -181,5 +189,35 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 
   cpu_hot_add_enabled    = true
   memory_hot_add_enabled = true
+}
+`
+
+const testAccCheckVcdVAppHotUpdateVmStep2 = `
+# skip-binary-test: only for updates
+resource "vcd_vapp" "{{.VAppName}}" {
+	org = "{{.Org}}"
+	vdc = "{{.Vdc}}"
+
+	name       = "{{.VAppName}}"
+}
+
+resource "vcd_vapp_vm" "{{.VMName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name     = vcd_vapp.{{.VAppName}}.name
+  computer_name = "compNameUp"
+  name          = "{{.VMName}}"
+
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+ 
+  memory        = 3072
+  cpus          = 3
+
+  cpu_hot_add_enabled    = false
+  memory_hot_add_enabled = true
+
+  prevent_reboot = true
 }
 `

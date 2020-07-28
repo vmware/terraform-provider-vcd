@@ -509,6 +509,12 @@ var vappVmSchema = map[string]*schema.Schema{
 		Default:     false,
 		Description: "True if the virtual machine supports addition of memory while powered on.",
 	},
+	"prevent_reboot": {
+		Type:        schema.TypeBool,
+		Optional:    true,
+		Default:     false,
+		Description: "True if the update of resource should fail when virtual machine reboot needed.",
+	},
 }
 
 func resourceVcdVAppVm() *schema.Resource {
@@ -964,18 +970,24 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 
 	}
 
-	memoryChangedInHot := false
+	memoryNeedToChage := true
 	if d.Get("memory_hot_add_enabled").(bool) && d.HasChange("memory") {
-		memoryChangedInHot = true
+		memoryNeedToChage = false
+	} else if !d.HasChange("memory") {
+		// also nothing to change
+		memoryNeedToChage = false
 	}
-	cpusChangedInHot := false
+	cpusNeedToChange := true
 	if d.Get("cpu_hot_add_enabled").(bool) && d.HasChange("cpus") {
-		cpusChangedInHot = true
+		cpusNeedToChange = false
+	} else if !d.HasChange("cpus") {
+		// also nothing to change
+		cpusNeedToChange = false
 	}
 
 	if d.HasChanges("cpu_cores", "power_on", "disk", "expose_hardware_virtualization", "network", "boot_image",
 		"hardware_version", "os_type", "description", "cpu_hot_add_enabled",
-		"memory_hot_add_enabled") || !memoryChangedInHot || !cpusChangedInHot {
+		"memory_hot_add_enabled") || memoryNeedToChage || cpusNeedToChange {
 
 		log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t), power_on(%t), disk(%t), expose_hardware_virtualization(%t),"+
 			" network(%t), boot_image(%t), hardware_version(%t), os_type(%t), description(%t), cpu_hot_add_enabled(%t), memory_hot_add_enabled(%t)",
@@ -984,6 +996,9 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			d.HasChange("os_type"), d.HasChange("description"), d.HasChange("cpu_hot_add_enabled"), d.HasChange("memory_hot_add_enabled"))
 
 		if vmStatusBeforeUpdate != "POWERED_OFF" {
+			if d.Get("prevent_reboot").(bool) {
+				return fmt.Errorf("update stopped: VM needs to reboot to change properties, but `prevent_reboot` is `true`")
+			}
 			log.Printf("[DEBUG] Un-deploying VM %s for offline update. Previous state %s",
 				vm.VM.Name, vmStatusBeforeUpdate)
 			task, err := vm.Undeploy()
