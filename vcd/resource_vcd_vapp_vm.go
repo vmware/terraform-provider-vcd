@@ -664,7 +664,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 			}
 		}
 		// TODO do not trigger resourceVcdVAppVmUpdate from create. These must be separate actions.
-		err = resourceVcdVAppVmUpdateExecute(d, meta)
+		err = resourceVcdVAppVmUpdateExecute(d, meta, "create")
 		if err != nil {
 			errAttachedDisk := updateStateOfAttachedDisks(d, *vm, vdc)
 			if errAttachedDisk != nil {
@@ -842,7 +842,7 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	return resourceVcdVAppVmUpdateExecute(d, meta)
+	return resourceVcdVAppVmUpdateExecute(d, meta, "update")
 }
 
 func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -889,7 +889,7 @@ func changeMemorySize(d *schema.ResourceData, vm *govcd.VM) error {
 	return nil
 }
 
-func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) error {
+func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, executionType string) error {
 	log.Printf("[DEBUG] [VM update] started without lock")
 
 	// Exit early only if "network_dhcp_wait_seconds" is changed because this field only supports
@@ -970,24 +970,26 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 
 	}
 
-	memoryNeedToChage := true
-	if d.Get("memory_hot_add_enabled").(bool) && d.HasChange("memory") {
-		memoryNeedToChage = false
-	} else if !d.HasChange("memory") {
-		// also nothing to change
-		memoryNeedToChage = false
-	}
+	memoryNeedToChange := true
 	cpusNeedToChange := true
-	if d.Get("cpu_hot_add_enabled").(bool) && d.HasChange("cpus") {
-		cpusNeedToChange = false
-	} else if !d.HasChange("cpus") {
-		// also nothing to change
-		cpusNeedToChange = false
+	if executionType == "update" {
+		if d.Get("memory_hot_add_enabled").(bool) && d.HasChange("memory") {
+			memoryNeedToChange = false
+		} else if !d.HasChange("memory") {
+			// also nothing to change
+			memoryNeedToChange = false
+		}
+		if d.Get("cpu_hot_add_enabled").(bool) && d.HasChange("cpus") {
+			cpusNeedToChange = false
+		} else if !d.HasChange("cpus") {
+			// also nothing to change
+			cpusNeedToChange = false
+		}
 	}
 
 	if d.HasChanges("cpu_cores", "power_on", "disk", "expose_hardware_virtualization", "network", "boot_image",
 		"hardware_version", "os_type", "description", "cpu_hot_add_enabled",
-		"memory_hot_add_enabled") || memoryNeedToChage || cpusNeedToChange {
+		"memory_hot_add_enabled") || memoryNeedToChange || cpusNeedToChange {
 
 		log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t), power_on(%t), disk(%t), expose_hardware_virtualization(%t),"+
 			" network(%t), boot_image(%t), hardware_version(%t), os_type(%t), description(%t), cpu_hot_add_enabled(%t), memory_hot_add_enabled(%t)",
@@ -1024,14 +1026,14 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			}
 		}
 
-		if !d.Get("memory_hot_add_enabled").(bool) && d.HasChange("memory") {
+		if !d.Get("memory_hot_add_enabled").(bool) && d.HasChange("memory") || executionType == "create" {
 			err = changeMemorySize(d, vm)
 			if err != nil {
 				return err
 			}
 		}
 
-		if !d.Get("cpu_hot_add_enabled").(bool) && d.HasChange("cpus") {
+		if !d.Get("cpu_hot_add_enabled").(bool) && d.HasChange("cpus") || executionType == "create" {
 			err = changeCpuCount(d, vm)
 			if err != nil {
 				return err
