@@ -732,6 +732,24 @@ func isItVappNetwork(vAppNetworkName string, vapp govcd.VApp) (bool, error) {
 	return false, fmt.Errorf("configured vApp network isn't found: %s", vAppNetworkName)
 }
 
+// isItVappOrgNetwork checks if it is an vApp Org network (not vApp Network)
+func isItVappOrgNetwork(vAppNetworkName string, vapp govcd.VApp) (bool, error) {
+	vAppNetworkConfig, err := vapp.GetNetworkConfig()
+	if err != nil {
+		return false, fmt.Errorf("error getting vApp networks: %s", err)
+	}
+
+	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
+		if networkConfig.NetworkName == vAppNetworkName &&
+			!govcd.IsVappNetwork(networkConfig.Configuration) {
+			log.Printf("[TRACE] vApp Org network found: %s", vAppNetworkName)
+			return true, nil
+		}
+	}
+
+	return false, fmt.Errorf("configured vApp Org network isn't found: %s", vAppNetworkName)
+}
+
 // isItIsolatedVappNetwork checks if it is an isolated vApp network (not only attached to vApp)
 func isItIsolatedVappNetwork(vAppNetworkName string, vapp govcd.VApp) (bool, error) {
 
@@ -1599,9 +1617,13 @@ func networksToConfig(networks []interface{}, vdc *govcd.Vdc, vapp govcd.VApp, v
 
 		networkType := nic["type"].(string)
 		if networkType == "org" {
-			_, err := addVdcNetwork(networkName, vdc, vapp, vcdClient)
+			//_, err := addVdcNetwork(networkName, vdc, vapp, vcdClient)
+			isVappOrgNetwork, err := isItVappOrgNetwork(networkName, vapp)
 			if err != nil {
 				return types.NetworkConnectionSection{}, fmt.Errorf("unable to attach org network %s: %s", networkName, err)
+			}
+			if !isVappOrgNetwork {
+				return types.NetworkConnectionSection{}, fmt.Errorf("vApp Org network : %s is not found", networkName)
 			}
 		}
 
