@@ -37,19 +37,21 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 	}
 
 	configTextVM := templateFill(testAccCheckVcdVAppHotUpdateVm, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 
 	params["FuncName"] = t.Name() + "-step1"
 	configTextVMUpdateStep1 := templateFill(testAccCheckVcdVAppHotUpdateVmStep1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVMUpdateStep1)
 
 	params["FuncName"] = t.Name() + "-step2"
 	configTextVMUpdateStep2 := templateFill(testAccCheckVcdVAppHotUpdateVmStep2, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVMUpdateStep2)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 
-	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,

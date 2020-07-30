@@ -27,15 +27,15 @@ func TestAccVcdVAppVmCapabilities(t *testing.T) {
 	}
 
 	configText := templateFill(testAccCheckVcdVAppVm_capabilities, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 
 	params["FuncName"] = t.Name() + "-step1"
 	configText1 := templateFill(testAccCheckVcdVAppVm_capabilitiesUpdate, params)
-
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText1)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
