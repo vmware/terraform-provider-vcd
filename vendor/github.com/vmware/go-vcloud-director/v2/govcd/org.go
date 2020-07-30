@@ -336,15 +336,20 @@ func (org *Org) QueryCatalogList() ([]*types.CatalogRecord, error) {
 // GetTaskList returns Tasks for Organization and error.
 func (org *Org) GetTaskList() (types.TasksList, error) {
 
-	metrics := &types.TasksList{}
-	href := org.client.VCDHREF
-	href.Path = href.Path + "/tasksList/" + extractUuid(org.Org.ID)
+	for _, link := range org.Org.Link {
+		if link.Rel == "down" && link.Type == "application/vnd.vmware.vcloud.tasksList+xml" {
 
-	_, err := org.client.ExecuteRequest(href.String(), http.MethodGet, "", "error refreshing vApp: %s", nil, metrics)
-	if err != nil {
-		return types.TasksList{}, err
+			tasksList := &types.TasksList{}
+
+			_, err := org.client.ExecuteRequest(link.HREF, http.MethodGet, "",
+				"error getting taskList: %s", nil, tasksList)
+			if err != nil {
+				return types.TasksList{}, err
+			}
+
+			return *tasksList, nil
+		}
 	}
 
-	// The request was successful
-	return *metrics, nil
+	return types.TasksList{}, nil
 }
