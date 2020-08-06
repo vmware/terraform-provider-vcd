@@ -282,7 +282,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   cpu_hot_add_enabled    = false
   memory_hot_add_enabled = true
 
-  prevent_reboot = true
+  prevent_update_power_off = true
 
   network {
     type               = "org"

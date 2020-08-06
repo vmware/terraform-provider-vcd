@@ -239,8 +239,8 @@ The following arguments are supported:
 * `catalog_name` - (Optional; *v2.9+*) The catalog name in which to find the given vApp Template or media for `boot_image`.
 * `template_name` - (Optional; *v2.9+*) The name of the vApp Template to use
 * `vm_name_in_template` - (Optional; *v2.9+*) The name of the VM in vApp Template to use. For cases when vApp template has more than one VM.
-* `memory` - (Optional) The amount of RAM (in MB) to allocate to the VM. If `memory_hot_add_enabled` is true, then memory will be increased without VM restart.
-* `cpus` - (Optional) The number of virtual CPUs to allocate to the VM. Socket count is a result of: virtual logical processors/cores per socket. The default is 1. If `cpu_hot_add_enabled` is true, then cpus will be increased without VM restart.
+* `memory` - (Optional) The amount of RAM (in MB) to allocate to the VM. If `memory_hot_add_enabled` is true, then memory will be increased without VM power off.
+* `cpus` - (Optional) The number of virtual CPUs to allocate to the VM. Socket count is a result of: virtual logical processors/cores per socket. The default is 1. If `cpu_hot_add_enabled` is true, then cpus will be increased without VM power off.
 * `cpu_cores` - (Optional; *v2.1+*) The number of cores per socket. The default is 1
 * `metadata` - (Optional; *v2.2+*) Key value map of metadata to assign to this VM
 * `initscript` (Optional **Deprecated** by `customization.0.initscript`) Script to run on initial boot or with
@@ -281,7 +281,7 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
 * `boot_image` - (Optional; *v2.9+*) Media name to mount as boot image. Image is mounted only during VM creation. On update if value is changed to empty it will eject the mounted media. If you want to mount an image later, please use [vcd_inserted_media](/docs/providers/vcd/r/inserted_media.html).  
 * `cpu_hot_add_enabled` - (Optional; *v2.10+*) True if the virtual machine supports addition of virtual CPUs while powered on. Default is `false`.
 * `memory_hot_add_enabled` - (Optional; *v2.10+*) True if the virtual machine supports addition of memory while powered on. Default is `false`.
-* `prevent_reboot` - (Optional; *v2.10+*) True if the update of resource should fail when virtual machine reboot needed. Default is `false`.
+* `prevent_update_power_off` - (Optional; *v2.10+*) True if the update of resource should fail when virtual machine power off needed. Default is `false`.
 
 <a id="disk"></a>
 ## Disk

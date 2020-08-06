@@ -509,11 +509,11 @@ var vappVmSchema = map[string]*schema.Schema{
 		Default:     false,
 		Description: "True if the virtual machine supports addition of memory while powered on.",
 	},
-	"prevent_reboot": {
+	"prevent_update_power_off": {
 		Type:        schema.TypeBool,
 		Optional:    true,
 		Default:     false,
-		Description: "True if the update of resource should fail when virtual machine reboot needed.",
+		Description: "True if the update of resource should fail when virtual machine power off needed.",
 	},
 }
 
@@ -1010,8 +1010,8 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			d.HasChange("os_type"), d.HasChange("description"), d.HasChange("cpu_hot_add_enabled"), d.HasChange("memory_hot_add_enabled"))
 
 		if vmStatusBeforeUpdate != "POWERED_OFF" {
-			if d.Get("prevent_reboot").(bool) {
-				return fmt.Errorf("update stopped: VM needs to reboot to change properties, but `prevent_reboot` is `true`")
+			if d.Get("prevent_update_power_off").(bool) {
+				return fmt.Errorf("update stopped: VM needs to power off to change properties, but `prevent_update_power_off` is `true`")
 			}
 			log.Printf("[DEBUG] Un-deploying VM %s for offline update. Previous state %s",
 				vm.VM.Name, vmStatusBeforeUpdate)
