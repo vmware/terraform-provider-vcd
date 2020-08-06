@@ -69,6 +69,17 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "memory", "2048"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "cpus", "1"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.0.ip_allocation_mode", "NONE"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.0.is_primary", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.0.connected", "false"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.is_primary", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.name", "multinic-net"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.type", "org"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.ip_allocation_mode", "DHCP"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+hotVmName1, "network.1.mac"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.connected", "true"),
 				),
 			},
 			// Step 1 - update
@@ -83,6 +94,18 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "memory", "3072"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "cpus", "3"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.0.name", "multinic-net"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.0.type", "org"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.0.is_primary", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.0.ip_allocation_mode", "DHCP"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+hotVmName1, "network.0.mac"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.0.connected", "true"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.is_primary", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.ip_allocation_mode", "NONE"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.connected", "false"),
+
 					testAccCheckVcdVmNotRestarted("vcd_vapp_vm."+hotVmName1, hotVappName, hotVmName1),
 				),
 			},
@@ -136,7 +159,7 @@ func testAccCheckVcdVmNotRestarted(n string, vappName, vmName string) resource.T
 	}
 }
 
-const testAccCheckVcdVAppHotUpdateVm = `
+const testSharedHotUpdate = `
 resource "vcd_vapp" "{{.VAppName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
@@ -144,6 +167,34 @@ resource "vcd_vapp" "{{.VAppName}}" {
   name       = "{{.VAppName}}"
 }
 
+resource "vcd_network_routed" "net" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  name         = "multinic-net"
+  edge_gateway = "{{.EdgeGateway}}"
+  gateway      = "11.10.0.1"
+
+  dhcp_pool {
+    start_address = "11.10.0.2"
+    end_address   = "11.10.0.100"
+  }
+
+  static_ip_pool {
+    start_address = "11.10.0.152"
+    end_address   = "11.10.0.254"
+  }
+}
+
+resource "vcd_vapp_org_network" "vappNetwork1" {
+  org                = "{{.Org}}"
+  vdc                = "{{.Vdc}}"
+  vapp_name          = vcd_vapp.{{.VAppName}}.name
+  org_network_name   = vcd_network_routed.net.name 
+}
+`
+
+const testAccCheckVcdVAppHotUpdateVm = testSharedHotUpdate + `
 resource "vcd_vapp_vm" "{{.VMName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
@@ -163,18 +214,23 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   cpu_hot_add_enabled    = true
   memory_hot_add_enabled = true
 
+  network {
+    type               = "none"
+    ip_allocation_mode = "NONE"
+    connected          = "false"
+  }
+ 
+  network {
+    type               = "org"
+    name               = vcd_vapp_org_network.vappNetwork1.org_network_name
+    ip_allocation_mode = "DHCP"
+    is_primary         = true
+  }
  }
 `
 
-const testAccCheckVcdVAppHotUpdateVmStep1 = `
-# skip-binary-test: only for updates
-resource "vcd_vapp" "{{.VAppName}}" {
-	org = "{{.Org}}"
-	vdc = "{{.Vdc}}"
-
-	name       = "{{.VAppName}}"
-}
-
+const testAccCheckVcdVAppHotUpdateVmStep1 = `# skip-binary-test: only for updates
+` + testSharedHotUpdate + `
 resource "vcd_vapp_vm" "{{.VMName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
@@ -191,18 +247,24 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 
   cpu_hot_add_enabled    = true
   memory_hot_add_enabled = true
+
+  network {
+    type               = "org"
+    name               = vcd_vapp_org_network.vappNetwork1.org_network_name
+    ip_allocation_mode = "DHCP"
+  }
+ 
+  network {
+    type               = "none"
+    ip_allocation_mode = "NONE"
+    connected          = "false"
+    is_primary         = true
+  }
 }
 `
 
-const testAccCheckVcdVAppHotUpdateVmStep2 = `
-# skip-binary-test: only for updates
-resource "vcd_vapp" "{{.VAppName}}" {
-	org = "{{.Org}}"
-	vdc = "{{.Vdc}}"
-
-	name       = "{{.VAppName}}"
-}
-
+const testAccCheckVcdVAppHotUpdateVmStep2 = `# skip-binary-test: only for updates
+` + testSharedHotUpdate + `
 resource "vcd_vapp_vm" "{{.VMName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
@@ -221,5 +283,18 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   memory_hot_add_enabled = true
 
   prevent_reboot = true
+
+  network {
+    type               = "org"
+    name               = vcd_vapp_org_network.vappNetwork1.org_network_name
+    ip_allocation_mode = "DHCP"
+  }
+ 
+  network {
+    type               = "none"
+    ip_allocation_mode = "NONE"
+    connected          = "false"
+    is_primary         = true
+  }
 }
 `
