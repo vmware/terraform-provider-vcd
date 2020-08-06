@@ -109,9 +109,10 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 					testAccCheckVcdVmNotRestarted("vcd_vapp_vm."+hotVmName1, hotVappName, hotVmName1),
 				),
 			},
+			// Step 2 - update
 			resource.TestStep{
 				Config:      configTextVMUpdateStep2,
-				ExpectError: regexp.MustCompile(`update stopped: VM needs to reboot to change properties.*`),
+				ExpectError: regexp.MustCompile(`update stopped: VM needs to power off to change properties.*`),
 			},
 		},
 	})

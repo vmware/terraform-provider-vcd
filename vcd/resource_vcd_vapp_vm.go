@@ -982,20 +982,14 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 
 	}
 
-	memoryNeedToChange := true
-	cpusNeedToChange := true
+	memoryNeedToChange := false
+	cpusNeedToChange := false
 	if executionType == "update" {
-		if d.Get("memory_hot_add_enabled").(bool) && d.HasChange("memory") {
-			memoryNeedToChange = false
-		} else if !d.HasChange("memory") {
-			// also nothing to change
-			memoryNeedToChange = false
+		if !d.Get("memory_hot_add_enabled").(bool) && d.HasChange("memory") {
+			memoryNeedToChange = true
 		}
-		if d.Get("cpu_hot_add_enabled").(bool) && d.HasChange("cpus") {
-			cpusNeedToChange = false
-		} else if !d.HasChange("cpus") {
-			// also nothing to change
-			cpusNeedToChange = false
+		if !d.Get("cpu_hot_add_enabled").(bool) && d.HasChange("cpus") {
+			cpusNeedToChange = true
 		}
 	}
 
