@@ -888,10 +888,7 @@ func isNetworkRemoved(d *schema.ResourceData) bool {
 	oldNetworksRaw, newNetworkRaw := d.GetChange("network")
 	oldNetworks := oldNetworksRaw.([]interface{})
 	newNetworks := newNetworkRaw.([]interface{})
-	if len(oldNetworks) > len(newNetworks) {
-		return true
-	}
-	return false
+	return len(oldNetworks) > len(newNetworks)
 }
 
 func changeCpuCount(d *schema.ResourceData, vm *govcd.VM) error {
