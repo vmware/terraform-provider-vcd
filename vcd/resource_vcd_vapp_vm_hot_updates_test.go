@@ -47,6 +47,18 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 	configTextVMUpdateStep2 := templateFill(testAccCheckVcdVAppHotUpdateVmStep2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVMUpdateStep2)
 
+	params["FuncName"] = t.Name() + "-step3"
+	configTextVMUpdateStep3 := templateFill(testAccCheckVcdVAppHotUpdateVmStep3, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVMUpdateStep2)
+
+	params["FuncName"] = t.Name() + "-step4"
+	configTextVMUpdateStep4 := templateFill(testAccCheckVcdVAppHotUpdateVmStep4, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVMUpdateStep2)
+
+	params["FuncName"] = t.Name() + "-step5"
+	configTextVMUpdateStep5 := templateFill(testAccCheckVcdVAppHotUpdateVmStep5, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVMUpdateStep2)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -113,6 +125,66 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 			resource.TestStep{
 				Config:      configTextVMUpdateStep2,
 				ExpectError: regexp.MustCompile(`update stopped: VM needs to power off to change properties.*`),
+			},
+			// Step 3 - update
+			resource.TestStep{
+				Config: configTextVMUpdateStep3,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckVcdVAppVmExists(hotVappName, hotVmName1, "vcd_vapp_vm."+hotVmName1, &vapp, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "name", hotVmName1),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "cpu_hot_add_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "memory_hot_add_enabled", "true"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "memory", "3072"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "cpus", "3"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.0.name", "multinic-net"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.0.type", "org"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.0.is_primary", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.0.ip_allocation_mode", "DHCP"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+hotVmName1, "network.0.mac"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.0.connected", "true"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.is_primary", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.ip_allocation_mode", "NONE"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.connected", "false"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.2.is_primary", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.2.ip_allocation_mode", "NONE"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.2.connected", "false"),
+					testAccCheckVcdVmNotRestarted("vcd_vapp_vm."+hotVmName1, hotVappName, hotVmName1),
+				),
+			},
+			// Step 4 - update
+			resource.TestStep{
+				Config:      configTextVMUpdateStep4,
+				ExpectError: regexp.MustCompile(`update stopped: VM needs to power off to change properties.*`),
+			},
+			// Step 5 - update
+			resource.TestStep{
+				Config: configTextVMUpdateStep5,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					testAccCheckVcdVAppVmExists(hotVappName, hotVmName1, "vcd_vapp_vm."+hotVmName1, &vapp, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "name", hotVmName1),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "cpu_hot_add_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "memory_hot_add_enabled", "true"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "memory", "3072"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "cpus", "3"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.0.is_primary", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.0.ip_allocation_mode", "NONE"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.0.connected", "false"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.name", "multinic-net"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.type", "org"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.is_primary", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.ip_allocation_mode", "DHCP"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+hotVmName1, "network.1.mac"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.connected", "true"),
+				),
 			},
 		},
 	})
@@ -295,6 +367,119 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     type               = "none"
     ip_allocation_mode = "NONE"
     connected          = "false"
+    is_primary         = true
+  }
+}
+`
+const testAccCheckVcdVAppHotUpdateVmStep3 = `# skip-binary-test: only for updates
+` + testSharedHotUpdate + `
+resource "vcd_vapp_vm" "{{.VMName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name     = vcd_vapp.{{.VAppName}}.name
+  computer_name = "compNameUp"
+  name          = "{{.VMName}}"
+
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+ 
+  memory        = 3072
+  cpus          = 3
+
+  cpu_hot_add_enabled    = true
+  memory_hot_add_enabled = true
+
+  prevent_update_power_off = true
+
+  network {
+    type               = "org"
+    name               = vcd_vapp_org_network.vappNetwork1.org_network_name
+    ip_allocation_mode = "DHCP"
+  }
+ 
+  network {
+    type               = "none"
+    ip_allocation_mode = "NONE"
+    connected          = "false"
+    is_primary         = true
+  }
+
+  network {
+    type               = "none"
+    ip_allocation_mode = "NONE"
+    connected          = "false"
+  }
+}
+`
+
+const testAccCheckVcdVAppHotUpdateVmStep4 = `# skip-binary-test: only for updates
+` + testSharedHotUpdate + `
+resource "vcd_vapp_vm" "{{.VMName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name     = vcd_vapp.{{.VAppName}}.name
+  computer_name = "compNameUp"
+  name          = "{{.VMName}}"
+
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+ 
+  memory        = 3072
+  cpus          = 3
+
+  cpu_hot_add_enabled    = true
+  memory_hot_add_enabled = true
+
+  prevent_update_power_off = true
+
+  network {
+    type               = "none"
+    ip_allocation_mode = "NONE"
+    connected          = "false"
+    is_primary         = true
+  }
+
+  network {
+    type               = "none"
+    ip_allocation_mode = "NONE"
+    connected          = "false"
+  }
+}
+`
+
+const testAccCheckVcdVAppHotUpdateVmStep5 = `# skip-binary-test: only for updates
+` + testSharedHotUpdate + `
+resource "vcd_vapp_vm" "{{.VMName}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name     = vcd_vapp.{{.VAppName}}.name
+  computer_name = "compNameUp"
+  name          = "{{.VMName}}"
+
+  catalog_name  = "{{.Catalog}}"
+  template_name = "{{.CatalogItem}}"
+ 
+  memory        = 3072
+  cpus          = 3
+
+  cpu_hot_add_enabled    = true
+  memory_hot_add_enabled = true
+
+  prevent_update_power_off = false
+
+  network {
+    type               = "none"
+    ip_allocation_mode = "NONE"
+    connected          = "false"
+  }
+
+  network {
+    type               = "org"
+    name               = vcd_vapp_org_network.vappNetwork1.org_network_name
+    ip_allocation_mode = "DHCP"
     is_primary         = true
   }
 }
