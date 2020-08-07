@@ -57,7 +57,7 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckVcdVAppVmDestroy(hotVappName),
 		Steps: []resource.TestStep{
-			// Step 0 - Create with variations of all possible NICs
+			// Step 0 - create
 			resource.TestStep{
 				Config: configTextVM,
 				Check: resource.ComposeAggregateTestCheckFunc(
