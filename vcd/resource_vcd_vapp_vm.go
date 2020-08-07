@@ -863,7 +863,7 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	if d.HasChange("network") {
+	if d.HasChange("network") && !isNetworkRemoved(d) {
 		networkConnectionSection, err := networksToConfig(d.Get("network").([]interface{}), vdc, *vapp, vcdClient)
 		if err != nil {
 			return fmt.Errorf("unable to setup network configuration for update: %s", err)
@@ -875,6 +875,16 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	return nil
+}
+
+func isNetworkRemoved(d *schema.ResourceData) bool {
+	oldNetworksRaw, newNetworkRaw := d.GetChange("network")
+	oldNetworks := oldNetworksRaw.([]interface{})
+	newNetworks := newNetworkRaw.([]interface{})
+	if len(oldNetworks) > len(newNetworks) {
+		return true
+	}
+	return false
 }
 
 func changeCpuCount(d *schema.ResourceData, vm *govcd.VM) error {
@@ -911,7 +921,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		return resourceVcdVAppVmRead(d, meta)
 	}
 
-	_, org, vdc, _, identifier, vm, err := getVmFromResource(d, meta)
+	vcdClient, org, vdc, vapp, identifier, vm, err := getVmFromResource(d, meta)
 	if err != nil {
 		return err
 	}
@@ -995,13 +1005,13 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 
 	if d.HasChanges("cpu_cores", "power_on", "disk", "expose_hardware_virtualization", "boot_image",
 		"hardware_version", "os_type", "description", "cpu_hot_add_enabled",
-		"memory_hot_add_enabled") || memoryNeedToChange || cpusNeedToChange {
+		"memory_hot_add_enabled") || memoryNeedToChange || cpusNeedToChange || isNetworkRemoved(d) {
 
 		log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t), power_on(%t), disk(%t), expose_hardware_virtualization(%t),"+
-			" boot_image(%t), hardware_version(%t), os_type(%t), description(%t), cpu_hot_add_enabled(%t), memory_hot_add_enabled(%t)",
+			" boot_image(%t), hardware_version(%t), os_type(%t), description(%t), cpu_hot_add_enabled(%t), memory_hot_add_enabled(%t), networks(%t)",
 			vm.VM.Name, d.HasChange("memory"), d.HasChange("cpus"), d.HasChange("cpu_cores"), d.HasChange("power_on"), d.HasChange("disk"),
 			d.HasChange("expose_hardware_virtualization"), d.HasChange("boot_image"), d.HasChange("hardware_version"),
-			d.HasChange("os_type"), d.HasChange("description"), d.HasChange("cpu_hot_add_enabled"), d.HasChange("memory_hot_add_enabled"))
+			d.HasChange("os_type"), d.HasChange("description"), d.HasChange("cpu_hot_add_enabled"), d.HasChange("memory_hot_add_enabled"), d.HasChange("networks"))
 
 		if vmStatusBeforeUpdate != "POWERED_OFF" {
 			if d.Get("prevent_update_power_off").(bool) {
@@ -1056,6 +1066,17 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			err = task.WaitTaskCompletion()
 			if err != nil {
 				return fmt.Errorf(errorCompletingTask, err)
+			}
+		}
+
+		if d.HasChange("network") && isNetworkRemoved(d) {
+			networkConnectionSection, err := networksToConfig(d.Get("network").([]interface{}), vdc, *vapp, vcdClient)
+			if err != nil {
+				return fmt.Errorf("unable to setup network configuration for update: %s", err)
+			}
+			err = vm.UpdateNetworkConnectionSection(&networkConnectionSection)
+			if err != nil {
+				return fmt.Errorf("unable to update network configuration: %s", err)
 			}
 		}
 
