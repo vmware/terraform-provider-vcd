@@ -837,6 +837,13 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient.lockParentVapp(d)
 	defer vcdClient.unLockParentVapp(d)
 
+	// Exit early only if "network_dhcp_wait_seconds" is changed because this field only supports
+	// update so that its value can be written into statefile and be accessible in read function
+	if onlyHasChange("network_dhcp_wait_seconds", vappVmSchema, d) {
+		log.Printf("[DEBUG] [VM update] exiting early because only 'network_dhcp_wait_seconds' has change")
+		return resourceVcdVAppVmRead(d, meta)
+	}
+
 	err := resourceVmHotUpdate(d, meta)
 	if err != nil {
 		return err
@@ -913,13 +920,6 @@ func changeMemorySize(d *schema.ResourceData, vm *govcd.VM) error {
 
 func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, executionType string) error {
 	log.Printf("[DEBUG] [VM update] started without lock")
-
-	// Exit early only if "network_dhcp_wait_seconds" is changed because this field only supports
-	// update so that its value can be written into statefile and be accessible in read function
-	if onlyHasChange("network_dhcp_wait_seconds", vappVmSchema, d) {
-		log.Printf("[DEBUG] [VM update] exiting early because only 'network_dhcp_wait_seconds' has change")
-		return resourceVcdVAppVmRead(d, meta)
-	}
 
 	vcdClient, org, vdc, vapp, identifier, vm, err := getVmFromResource(d, meta)
 	if err != nil {
