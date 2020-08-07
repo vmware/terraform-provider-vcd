@@ -149,7 +149,7 @@ func (vdc *Vdc) Delete(force bool, recursive bool) (Task, error) {
 		return Task{}, fmt.Errorf("error deleting vdc: %s", err)
 	}
 	task := NewTask(vdc.client)
-	if err = decodeBody(resp, task.Task); err != nil {
+	if err = decodeBody(types.BodyTypeXML, resp, task.Task); err != nil {
 		return Task{}, fmt.Errorf("error decoding task response: %s", err)
 	}
 	if task.Task.Status == "error" {

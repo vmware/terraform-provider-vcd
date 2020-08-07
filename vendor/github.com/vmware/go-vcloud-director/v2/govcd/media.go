@@ -174,7 +174,7 @@ func createMedia(client *Client, link, mediaName, mediaDescription string, fileS
 	defer response.Body.Close()
 
 	mediaForUpload := &types.Media{}
-	if err = decodeBody(response, mediaForUpload); err != nil {
+	if err = decodeBody(types.BodyTypeXML, response, mediaForUpload); err != nil {
 		return nil, err
 	}
 

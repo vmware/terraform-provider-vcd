@@ -221,7 +221,7 @@ func createTaskForVcdImport(client *Client, taskHREF string) (Task, error) {
 
 	task := NewTask(client)
 
-	if err = decodeBody(response, task.Task); err != nil {
+	if err = decodeBody(types.BodyTypeXML, response, task.Task); err != nil {
 		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
 	}
 

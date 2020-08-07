@@ -461,7 +461,7 @@ func createItemForUpload(client *Client, createHREF *url.URL, catalogItemName st
 	defer response.Body.Close()
 
 	catalogItemParsed := &types.CatalogItem{}
-	if err = decodeBody(response, catalogItemParsed); err != nil {
+	if err = decodeBody(types.BodyTypeXML, response, catalogItemParsed); err != nil {
 		return nil, err
 	}
 

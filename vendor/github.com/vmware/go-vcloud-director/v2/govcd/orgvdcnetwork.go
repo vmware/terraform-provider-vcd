@@ -79,7 +79,7 @@ func (orgVdcNet *OrgVDCNetwork) Delete() (Task, error) {
 
 	task := NewTask(orgVdcNet.client)
 
-	if err = decodeBody(resp, task.Task); err != nil {
+	if err = decodeBody(types.BodyTypeXML, resp, task.Task); err != nil {
 		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
 	}
 
@@ -169,7 +169,7 @@ func (vdc *Vdc) CreateOrgVDCNetwork(networkConfig *types.OrgVDCNetwork) (Task, e
 				break
 			}
 			orgVDCNetwork := NewOrgVDCNetwork(vdc.client)
-			if err = decodeBody(resp, orgVDCNetwork.OrgVDCNetwork); err != nil {
+			if err = decodeBody(types.BodyTypeXML, resp, orgVDCNetwork.OrgVDCNetwork); err != nil {
 				return Task{}, fmt.Errorf("error decoding orgvdcnetwork response: %s", err)
 			}
 			activeTasks := 0
