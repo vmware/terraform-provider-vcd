@@ -991,6 +991,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 
 	memoryNeedToChange := false
 	cpusNeedToChange := false
+	networksNeedToChange := false
 	if executionType == "update" {
 		if !d.Get("memory_hot_add_enabled").(bool) && d.HasChange("memory") {
 			memoryNeedToChange = true
@@ -998,17 +999,23 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		if !d.Get("cpu_hot_add_enabled").(bool) && d.HasChange("cpus") {
 			cpusNeedToChange = true
 		}
+		if isNetworkRemoved(d) && d.HasChange("network") {
+			networksNeedToChange = true
+		}
+	} else {
+		// if create happens allow to process it, keeping it as it was
+		networksNeedToChange = true
 	}
 
 	if d.HasChanges("cpu_cores", "power_on", "disk", "expose_hardware_virtualization", "boot_image",
 		"hardware_version", "os_type", "description", "cpu_hot_add_enabled",
-		"memory_hot_add_enabled") || memoryNeedToChange || cpusNeedToChange || isNetworkRemoved(d) {
+		"memory_hot_add_enabled") || memoryNeedToChange || cpusNeedToChange || networksNeedToChange {
 
 		log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t), power_on(%t), disk(%t), expose_hardware_virtualization(%t),"+
 			" boot_image(%t), hardware_version(%t), os_type(%t), description(%t), cpu_hot_add_enabled(%t), memory_hot_add_enabled(%t), networks(%t)",
 			vm.VM.Name, d.HasChange("memory"), d.HasChange("cpus"), d.HasChange("cpu_cores"), d.HasChange("power_on"), d.HasChange("disk"),
 			d.HasChange("expose_hardware_virtualization"), d.HasChange("boot_image"), d.HasChange("hardware_version"),
-			d.HasChange("os_type"), d.HasChange("description"), d.HasChange("cpu_hot_add_enabled"), d.HasChange("memory_hot_add_enabled"), d.HasChange("networks"))
+			d.HasChange("os_type"), d.HasChange("description"), d.HasChange("cpu_hot_add_enabled"), d.HasChange("memory_hot_add_enabled"), d.HasChange("network"))
 
 		if vmStatusBeforeUpdate != "POWERED_OFF" {
 			if d.Get("prevent_update_power_off").(bool) && executionType == "update" {
@@ -1066,7 +1073,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			}
 		}
 
-		if d.HasChange("network") && isNetworkRemoved(d) {
+		if d.HasChange("network") && networksNeedToChange {
 			networkConnectionSection, err := networksToConfig(d.Get("network").([]interface{}), vdc, *vapp, vcdClient)
 			if err != nil {
 				return fmt.Errorf("unable to setup network configuration for update: %s", err)
