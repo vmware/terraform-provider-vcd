@@ -92,6 +92,13 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.ip_allocation_mode", "DHCP"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+hotVmName1, "network.1.mac"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.connected", "true"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "metadata.mediaItem_metadata", "data 1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "metadata.mediaItem_metadata2", "data 2"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "metadata.mediaItem_metadata3", "data 3"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, `guest_properties.guest.hostname`, "test-host"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, `guest_properties.guest.another.subkey`, "another-value"),
 				),
 			},
 			// Step 1 - update
@@ -117,6 +124,11 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.is_primary", "true"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.ip_allocation_mode", "NONE"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.connected", "false"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "metadata.mediaItem_metadata", "data 1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "metadata.mediaItem_metadata2", "data 3"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, `guest_properties.guest.hostname`, "test-host2"),
 
 					testAccCheckVcdVmNotRestarted("vcd_vapp_vm."+hotVmName1, hotVappName, hotVmName1),
 				),
@@ -299,6 +311,18 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     ip_allocation_mode = "DHCP"
     is_primary         = true
   }
+
+  metadata = {
+    mediaItem_metadata = "data 1"
+    mediaItem_metadata2 = "data 2"
+    mediaItem_metadata3 = "data 3"
+  }
+
+  guest_properties = {
+	"guest.hostname"       = "test-host"
+	"guest.another.subkey" = "another-value"
+  }
+
  }
 `
 
@@ -332,6 +356,15 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     ip_allocation_mode = "NONE"
     connected          = "false"
     is_primary         = true
+  }
+
+  metadata = {
+    mediaItem_metadata = "data 1"
+    mediaItem_metadata2 = "data 3"
+  }
+
+  guest_properties = {
+	"guest.hostname"       = "test-host2"
   }
 }
 `
