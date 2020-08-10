@@ -583,7 +583,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 			return fmt.Errorf("error finding vApp: %s", err)
 		}
 
-		// Determine whether we use new 'networks' or deprecated network configuration and process inputs based on it.
+		// Determine whether we use new 'network' or deprecated network configuration and process inputs based on it.
 		// TODO v3.0 remove else branch once 'network_name', 'vapp_network_name', 'ip' are deprecated
 		networkConnectionSection := types.NetworkConnectionSection{}
 		if len(d.Get("network").([]interface{})) > 0 {
@@ -1012,7 +1012,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		"memory_hot_add_enabled") || memoryNeedToChange || cpusNeedToChange || networksNeedToChange {
 
 		log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t), power_on(%t), disk(%t), expose_hardware_virtualization(%t),"+
-			" boot_image(%t), hardware_version(%t), os_type(%t), description(%t), cpu_hot_add_enabled(%t), memory_hot_add_enabled(%t), networks(%t)",
+			" boot_image(%t), hardware_version(%t), os_type(%t), description(%t), cpu_hot_add_enabled(%t), memory_hot_add_enabled(%t), network(%t)",
 			vm.VM.Name, d.HasChange("memory"), d.HasChange("cpus"), d.HasChange("cpu_cores"), d.HasChange("power_on"), d.HasChange("disk"),
 			d.HasChange("expose_hardware_virtualization"), d.HasChange("boot_image"), d.HasChange("hardware_version"),
 			d.HasChange("os_type"), d.HasChange("description"), d.HasChange("cpu_hot_add_enabled"), d.HasChange("memory_hot_add_enabled"), d.HasChange("network"))
@@ -1691,7 +1691,7 @@ func resourceVcdVmIndependentDiskHash(v interface{}) int {
 	return hashcode.String(buf.String())
 }
 
-// networksToConfig converts terraform schema for 'networks' and converts to types.NetworkConnectionSection
+// networksToConfig converts terraform schema for 'network' and converts to types.NetworkConnectionSection
 // which is used for creating new VM
 func networksToConfig(networks []interface{}, vdc *govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (types.NetworkConnectionSection, error) {
 
