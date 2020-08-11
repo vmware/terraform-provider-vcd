@@ -1021,7 +1021,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			networksNeedsColdChange = true
 		}
 	} else if len(d.Get("network").([]interface{})) > 0 {
-		// if create happens allow to process it(keeping it as it was), but avoid changing deprecated way of assigning of network
+		// if create happens allow to process it(keeping it as it was), but avoid changing deprecated way of assigning of network('vapp_network_name', 'network_name')
 		networksNeedsColdChange = true
 	}
 
