@@ -1020,8 +1020,8 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		if isNetworkRemoved(d) && d.HasChange("network") {
 			networksNeedsColdChange = true
 		}
-	} else {
-		// if create happens allow to process it, keeping it as it was
+	} else if len(d.Get("network").([]interface{})) > 0 {
+		// if create happens allow to process it(keeping it as it was), but avoid changing deprecated way of assigning of network
 		networksNeedsColdChange = true
 	}
 
