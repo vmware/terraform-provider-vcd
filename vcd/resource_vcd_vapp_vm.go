@@ -862,6 +862,7 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}) error {
 			return err
 		}
 	}
+
 	if d.Get("cpu_hot_add_enabled").(bool) && d.HasChange("cpus") {
 		err = changeCpuCount(d, vm)
 		if err != nil {
@@ -869,6 +870,7 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	// hot update possible for adding new or update existing network, removing of network has to be done with cold update
 	if d.HasChange("network") && !isNetworkRemoved(d) {
 		networkConnectionSection, err := networksToConfig(d.Get("network").([]interface{}), vdc, *vapp, vcdClient)
 		if err != nil {
@@ -1023,6 +1025,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		networksNeedsColdChange = true
 	}
 
+	// this represent fields which has to be changed in cold (with VM power off)
 	if d.HasChanges("cpu_cores", "power_on", "disk", "expose_hardware_virtualization", "boot_image",
 		"hardware_version", "os_type", "description", "cpu_hot_add_enabled",
 		"memory_hot_add_enabled") || memoryNeedsColdChange || cpusNeedsColdChange || networksNeedsColdChange {
@@ -1113,6 +1116,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			}
 		}
 
+		// updating fields of VM spec section
 		if d.HasChange("hardware_version") || d.HasChange("os_type") || d.HasChange("description") {
 			vmSpecSection := vm.VM.VmSpecSection
 			description := vm.VM.Description
