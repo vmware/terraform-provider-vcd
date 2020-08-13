@@ -61,5 +61,5 @@ To add filtering for a new data source:
 ## Testing
 
 Every feature in the provider must include testing. See
-[TESTING.md](https://github.com/terraform-providers/terraform-provider-vcd/blob/master/TESTING.md)
+[TESTING.md](https://github.com/vmware/terraform-provider-vcd/blob/master/TESTING.md)
 for more info.

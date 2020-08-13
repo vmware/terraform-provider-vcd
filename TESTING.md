@@ -226,7 +226,7 @@ $ go test -v .
            make testacc
            make testcatalog
  FAIL
- FAIL	github.com/terraform-providers/terraform-provider-vcd/v2/vcd	0.017s
+ FAIL	github.com/vmware/terraform-provider-vcd/v2/vcd	0.017s
 ```
 
 ## Adding new tests
