@@ -11,7 +11,7 @@ description: |-
 The VMware vCloud Director provider is used to interact with the resources supported by VMware vCloud Director. The provider needs to be configured with the proper credentials before it can be used.
 
 Use the navigation to the left to read about the available resources. Please refer to
-[CHANGELOG.md](https://github.com/terraform-providers/terraform-provider-vcd/blob/master/CHANGELOG.md)
+[CHANGELOG.md](https://github.com/vmware/terraform-provider-vcd/blob/master/CHANGELOG.md)
 to track feature additions.
 
 ~> **NOTE:** Version 2.9 does not support NSX-T yet.

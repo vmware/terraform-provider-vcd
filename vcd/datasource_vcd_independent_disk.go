@@ -42,7 +42,7 @@ func datasourceVcIndependentDisk() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			// we enable this when when we solve https://github.com/terraform-providers/terraform-provider-vcd/issues/355
+			// we enable this when when we solve https://github.com/vmware/terraform-provider-vcd/issues/355
 			/*			"size_in_bytes": {
 						Type:        schema.TypeInt,
 						Computed:    true,
