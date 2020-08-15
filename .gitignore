@@ -34,3 +34,4 @@ vcd/org_user_pwd.txt
 # Test exclusions
 !command/test-fixtures/**/*.tfstate
 !command/test-fixtures/**/.terraform/
+dist/
