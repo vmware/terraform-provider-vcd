@@ -62,10 +62,12 @@ func TestAccVcdVAppVmDhcpWait(t *testing.T) {
 					// TODO: re-enable when the behavior is fixed.
 					// resource.TestMatchResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip", regexp.MustCompile(`^11.10.0.\d{1,3}$`)),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.0.mac"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.connected", "true"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network_dhcp_wait_seconds", "300"),
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.ip_allocation_mode", "NONE"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.is_primary", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.connected", "false"),
 
 					// Check data source
 					resource.TestMatchResourceAttr("data.vcd_vapp_vm.ds", "network.0.ip", regexp.MustCompile(`^11.10.0.\d{1,3}$`)),
@@ -89,6 +91,7 @@ func TestAccVcdVAppVmDhcpWait(t *testing.T) {
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.ip_allocation_mode", "NONE"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.is_primary", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.connected", "false"),
 
 					// Check data source
 					resource.TestMatchResourceAttr("data.vcd_vapp_vm.ds", "network.0.ip", regexp.MustCompile(`^11.10.0.\d{1,3}$`)),
@@ -161,6 +164,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
+    connected          = "false"
   }
 }
 

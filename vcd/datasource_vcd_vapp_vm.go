@@ -120,6 +120,12 @@ func datasourceVcdVAppVm() *schema.Resource {
 							Computed:    true,
 							Description: "Network card adapter type. (e.g. 'E1000', 'E1000E', 'SRIOVETHERNETCARD', 'VMXNET3', 'PCNet32')",
 						},
+						"connected": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Default:     true,
+							Description: "It defines if NIC is connected or not.",
+						},
 					},
 				},
 			},

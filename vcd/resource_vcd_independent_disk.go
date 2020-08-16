@@ -54,12 +54,12 @@ func resourceVcdIndependentDisk() *schema.Resource {
 				Type:     schema.TypeFloat,
 				Required: true,
 				ForceNew: true,
-				// we enable this when when we solve https://github.com/terraform-providers/terraform-provider-vcd/issues/355
+				// we enable this when when we solve https://github.com/vmware/terraform-provider-vcd/issues/355
 				//ConflictsWith: []string{"size_in_bytes"},
 				//Deprecated:    "In favor of size_in_bytes",
 				Description: "size in MB",
 			},
-			// we enable this when when we solve https://github.com/terraform-providers/terraform-provider-vcd/issues/355
+			// we enable this when when we solve https://github.com/vmware/terraform-provider-vcd/issues/355
 			/*			"size_in_bytes": {
 						Type:          schema.TypeInt,
 						Optional:      true,
@@ -141,7 +141,7 @@ func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) 
 	size, sizeProvided := d.GetOk("size")
 	//sizeInBytes, sizeInBytesProvided := d.GetOk("size_in_bytes")
 
-	// we enable this when when we solve https://github.com/terraform-providers/terraform-provider-vcd/issues/355
+	// we enable this when when we solve https://github.com/vmware/terraform-provider-vcd/issues/355
 	/*	if !sizeProvided && !sizeInBytesProvided {
 		return fmt.Errorf("size_in_bytes isn't provided")
 	}*/
@@ -282,7 +282,7 @@ func setMainData(d *schema.ResourceData, disk *govcd.Disk) {
 	_ = d.Set("name", disk.Disk.Name)
 	_ = d.Set("description", disk.Disk.Description)
 	_ = d.Set("storage_profile", disk.Disk.StorageProfile.Name)
-	// we enable this when when we solve https://github.com/terraform-providers/terraform-provider-vcd/issues/355
+	// we enable this when when we solve https://github.com/vmware/terraform-provider-vcd/issues/355
 	//_ = d.Set("size_in_bytes", disk.Disk.Size)
 	_ = d.Set("bus_type", busTypesFromValues[disk.Disk.BusType])
 	_ = d.Set("bus_sub_type", busSubTypesFromValues[disk.Disk.BusSubType])

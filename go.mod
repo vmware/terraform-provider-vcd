@@ -1,4 +1,4 @@
-module github.com/terraform-providers/terraform-provider-vcd/v2
+module github.com/vmware/terraform-provider-vcd/v2
 
 go 1.13
 
