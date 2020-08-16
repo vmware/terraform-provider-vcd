@@ -27,6 +27,7 @@ func Resources(nameRegexp string, includeDeprecated bool) (map[string]*schema.Re
 
 var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_org":                datasourceVcdOrg(),              // 2.5
+	"vcd_org_user":           datasourceVcdOrgUser(),          // 2.10
 	"vcd_org_vdc":            datasourceVcdOrgVdc(),           // 2.5
 	"vcd_catalog":            datasourceVcdCatalog(),          // 2.5
 	"vcd_catalog_media":      datasourceVcdCatalogMedia(),     // 2.5
@@ -94,6 +95,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_vapp_nat_rules":      resourceVcdVappNetworkNatRules(),      // 2.9
 	"vcd_vapp_static_routing": resourceVcdVappNetworkStaticRouting(), // 2.9
 	"vcd_vm_affinity_rule":    resourceVcdVmAffinityRule(),           // 2.9
+	"vcd_access_control_vapp": resourceVcdAccessControlVapp(),        // 2.10
 }
 
 // Provider returns a terraform.ResourceProvider.
