@@ -63,7 +63,12 @@ func queryFieldsOnDemand(queryType string) ([]string, error) {
 			"gcStatus", "guestOs", "hardwareVersion", "hostName", "isAutoNature", "isDeleted", "isDeployed", "isPublished",
 			"isVAppTemplate", "isVdcEnabled", "memoryMB", "moref", "name", "numberOfCpus", "org", "status",
 			"storageProfileName", "vc", "vdc", "vmToolsVersion", "containerStatus", "pvdcHighestSupportedHardwareVersion",
-		}
+			"isComputePolicyCompliant", "vmSizingPolicyId", "vmPlacementPolicyId", "encrypted", "dateCreated",
+			"totalStorageAllocatedMb", "isExpired"}
+		vappFields = []string{"creationDate", "isBusy", "isDeployed", "isEnabled", "isExpired", "isInMaintenanceMode", "isPublic",
+			"ownerName", "status", "vdc", "vdcName", "numberOfVMs", "numberOfCpus", "cpuAllocationMhz", "cpuAllocationInMhz",
+			"storageKB", "memoryAllocationMB", "isAutoDeleteNotified", "isAutoUndeployNotified", "isVdcEnabled", "honorBookOrder",
+			"pvdcHighestSupportedHardwareVersion", "lowestHardwareVersionInVApp"}
 		fieldsOnDemand = map[string][]string{
 			types.QtVappTemplate:      vappTemplatefields,
 			types.QtAdminVappTemplate: vappTemplatefields,
@@ -77,6 +82,8 @@ func queryFieldsOnDemand(queryType string) ([]string, error) {
 			types.QtAdminCatalogItem:  catalogItemFields,
 			types.QtVm:                vmFields,
 			types.QtAdminVm:           vmFields,
+			types.QtVapp:              vappFields,
+			types.QtAdminVapp:         vappFields,
 		}
 	)
 
@@ -128,6 +135,12 @@ func addResults(queryType string, cumulativeResults, newResults Results) (Result
 	case types.QtAdminVm:
 		cumulativeResults.Results.AdminVMRecord = append(cumulativeResults.Results.AdminVMRecord, newResults.Results.AdminVMRecord...)
 		size = len(newResults.Results.AdminVMRecord)
+	case types.QtVapp:
+		cumulativeResults.Results.VAppRecord = append(cumulativeResults.Results.VAppRecord, newResults.Results.VAppRecord...)
+		size = len(newResults.Results.VAppRecord)
+	case types.QtAdminVapp:
+		cumulativeResults.Results.AdminVAppRecord = append(cumulativeResults.Results.AdminVAppRecord, newResults.Results.AdminVAppRecord...)
+		size = len(newResults.Results.AdminVAppRecord)
 
 	default:
 		return Results{}, 0, fmt.Errorf("query type %s not supported", queryType)
@@ -151,6 +164,8 @@ func (client *Client) cumulativeQuery(queryType string, params, notEncodedParams
 		types.QtAdminCatalogItem,
 		types.QtVm,
 		types.QtAdminVm,
+		types.QtVapp,
+		types.QtAdminVapp,
 	}
 	// Make sure the query type is supported
 	// We need to check early, as queries that would return less than 25 items (default page size) would succeed,

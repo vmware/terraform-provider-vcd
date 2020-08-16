@@ -1480,10 +1480,7 @@ func (vm *VM) UpdateVmSpecSectionAsync(vmSettingsToUpdate *types.VmSpecSection, 
 // QueryVmList returns a list of all VMs in all the organizations available to the caller
 func (client *Client) QueryVmList(filter types.VmQueryFilter) ([]*types.QueryResultVMRecordType, error) {
 	var vmList []*types.QueryResultVMRecordType
-	queryType := types.QtVm
-	if client.IsSysAdmin {
-		queryType = types.QtAdminVm
-	}
+	queryType := client.GetQueryType(types.QtVm)
 	params := map[string]string{
 		"type":          queryType,
 		"filterEncoded": "true",

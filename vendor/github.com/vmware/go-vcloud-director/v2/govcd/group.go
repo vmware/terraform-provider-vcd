@@ -98,7 +98,7 @@ func (adminOrg *AdminOrg) GetGroupById(id string, refresh bool) (*OrgGroup, erro
 	}
 
 	for _, group := range adminOrg.AdminOrg.Groups.Group {
-		if group.ID == id {
+		if equalIds(id, group.ID, group.HREF) {
 			return adminOrg.GetGroupByHref(group.HREF)
 		}
 	}

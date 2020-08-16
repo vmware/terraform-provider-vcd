@@ -1332,3 +1332,22 @@ func (vapp *VApp) GetVMByNameOrId(identifier string, refresh bool) (*VM, error) 
 	}
 	return entity.(*VM), err
 }
+
+// QueryVappList returns a list of all VMs in all the organizations available to the caller
+func (client *Client) QueryVappList() ([]*types.QueryResultVAppRecordType, error) {
+	var vappList []*types.QueryResultVAppRecordType
+	queryType := client.GetQueryType(types.QtVapp)
+	params := map[string]string{
+		"type":          queryType,
+		"filterEncoded": "true",
+	}
+	vappResult, err := client.cumulativeQuery(queryType, nil, params)
+	if err != nil {
+		return nil, fmt.Errorf("error getting vApp list : %s", err)
+	}
+	vappList = vappResult.Results.VAppRecord
+	if client.IsSysAdmin {
+		vappList = vappResult.Results.AdminVAppRecord
+	}
+	return vappList, nil
+}

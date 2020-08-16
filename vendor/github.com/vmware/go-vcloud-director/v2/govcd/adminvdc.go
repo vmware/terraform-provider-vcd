@@ -52,13 +52,25 @@ var vdcVersionedFuncsV97 = vdcVersionedFuncs{
 	UpdateVdcAsync:   updateVdcAsyncV97,
 }
 
-// TODO: add a wrapper function to use newest available method when version is higher than currently handled
-// VDC function mapping by vDC version
+// vdcVersionedFuncsByVcdVersion is a map of VDC functions by vCD version
 var vdcVersionedFuncsByVcdVersion = map[string]vdcVersionedFuncs{
-	"vdc9.5":  vdcVersionedFuncsV95,
-	"vdc9.7":  vdcVersionedFuncsV97,
-	"vdc10.0": vdcVersionedFuncsV97,
-	"vdc10.1": vdcVersionedFuncsV97,
+	"vdc9.5": vdcVersionedFuncsV95,
+	"vdc9.7": vdcVersionedFuncsV97,
+
+	// If we add a new function to this list, we also need to update the "default" entry
+	// The "default" entry will hold the highest currently available function
+	"default": vdcVersionedFuncsV97,
+}
+
+// getVdcVersionedFuncsByVdcVersion is a wrapper function that retrieves the requested versioned VDC function
+// When the wanted version does not exist in the map, it returns the highest available one.
+func getVdcVersionedFuncsByVdcVersion(version string) vdcVersionedFuncs {
+	f, ok := vdcVersionedFuncsByVcdVersion[version]
+	if ok {
+		return f
+	} else {
+		return vdcVersionedFuncsByVcdVersion["default"]
+	}
 }
 
 // GetAdminVdcByName function uses a valid VDC name and returns a admin VDC object.
@@ -231,10 +243,7 @@ func (adminVdc *AdminVdc) UpdateAsync() (Task, error) {
 	if err != nil {
 		return Task{}, err
 	}
-	vdcFunctions, ok := vdcVersionedFuncsByVcdVersion["vdc"+apiVersionToVcdVersion[apiVersion]]
-	if !ok {
-		return Task{}, fmt.Errorf("no entity type found %s", "vdc"+apiVersion)
-	}
+	vdcFunctions := getVdcVersionedFuncsByVdcVersion("vdc" + apiVersionToVcdVersion[apiVersion])
 	if vdcFunctions.UpdateVdcAsync == nil {
 		return Task{}, fmt.Errorf("function UpdateVdcAsync is not defined for %s", "vdc"+apiVersion)
 	}
@@ -254,10 +263,7 @@ func (adminVdc *AdminVdc) Update() (AdminVdc, error) {
 		return AdminVdc{}, err
 	}
 
-	vdcFunctions, ok := vdcVersionedFuncsByVcdVersion["vdc"+apiVersionToVcdVersion[apiVersion]]
-	if !ok {
-		return AdminVdc{}, fmt.Errorf("no entity type found %s", "vdc"+apiVersion)
-	}
+	vdcFunctions := getVdcVersionedFuncsByVdcVersion("vdc" + apiVersionToVcdVersion[apiVersion])
 	if vdcFunctions.UpdateVdc == nil {
 		return AdminVdc{}, fmt.Errorf("function UpdateVdc is not defined for %s", "vdc"+apiVersion)
 	}
@@ -279,10 +285,7 @@ func (adminOrg *AdminOrg) CreateOrgVdc(vdcConfiguration *types.VdcConfiguration)
 	if err != nil {
 		return nil, err
 	}
-	vdcFunctions, ok := vdcVersionedFuncsByVcdVersion["vdc"+apiVersionToVcdVersion[apiVersion]]
-	if !ok {
-		return nil, fmt.Errorf("no entity type found %s", "vdc"+apiVersion)
-	}
+	vdcFunctions := getVdcVersionedFuncsByVdcVersion("vdc" + apiVersionToVcdVersion[apiVersion])
 	if vdcFunctions.CreateVdc == nil {
 		return nil, fmt.Errorf("function CreateVdc is not defined for %s", "vdc"+apiVersion)
 	}
@@ -298,10 +301,7 @@ func (adminOrg *AdminOrg) CreateOrgVdcAsync(vdcConfiguration *types.VdcConfigura
 	if err != nil {
 		return Task{}, err
 	}
-	vdcFunctions, ok := vdcVersionedFuncsByVcdVersion["vdc"+apiVersionToVcdVersion[apiVersion]]
-	if !ok {
-		return Task{}, fmt.Errorf("no entity type found %s", "vdc"+apiVersion)
-	}
+	vdcFunctions := getVdcVersionedFuncsByVdcVersion("vdc" + apiVersionToVcdVersion[apiVersion])
 	if vdcFunctions.CreateVdcAsync == nil {
 		return Task{}, fmt.Errorf("function CreateVdcAsync is not defined for %s", "vdc"+apiVersion)
 	}
@@ -464,4 +464,17 @@ func validateVdcConfigurationV97(vdcDefinition types.VdcConfiguration) error {
 		return errors.New("VdcConfiguration missing required field: IncludeMemoryOverhead")
 	}
 	return nil
+}
+
+// GetVappList returns the list of vApps for an Admin VDC
+func (vdc *AdminVdc) GetVappList() []*types.ResourceReference {
+	var list []*types.ResourceReference
+	for _, resourceEntities := range vdc.AdminVdc.ResourceEntities {
+		for _, resourceReference := range resourceEntities.ResourceEntity {
+			if resourceReference.Type == types.MimeVApp {
+				list = append(list, resourceReference)
+			}
+		}
+	}
+	return list
 }

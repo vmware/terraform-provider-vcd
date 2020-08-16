@@ -115,6 +115,8 @@ const (
 	MimeOrgLdapSettings = "application/vnd.vmware.admin.organizationldapsettings+xml"
 	// Mime of vApp network
 	MimeVappNetwork = "application/vnd.vmware.vcloud.vAppNetwork+xml"
+	// Mime of access control
+	MimeControlAccess = "application/vnd.vmware.vcloud.controlAccess+xml"
 )
 
 const (
@@ -232,7 +234,21 @@ const (
 	QtMedia             = "media"             // media item
 	QtVm                = "vm"                // Virtual machine
 	QtAdminVm           = "adminVM"           // Virtual machine as admin
+	QtVapp              = "vApp"              // vApp
+	QtAdminVapp         = "adminVApp"         // vApp as admin
 )
+
+// AdminQueryTypes returns the corresponding "admin" query type for each regular type
+var AdminQueryTypes = map[string]string{
+	QtEdgeGateway:   QtEdgeGateway,       // EdgeGateway query type is the same for admin and regular users
+	QtOrgVdcNetwork: QtOrgVdcNetwork,     // Org VDC Network query type is the same for admin and regular users
+	QtVappTemplate:  QtAdminVappTemplate,
+	QtCatalog:       QtAdminCatalog,
+	QtCatalogItem:   QtAdminCatalogItem,
+	QtMedia:         QtAdminMedia,
+	QtVm:            QtAdminVm,
+	QtVapp:          QtAdminVapp,
+}
 
 const (
 	// Affinity and anti affinity definitions
@@ -272,4 +288,11 @@ const (
 	LdapModeNone   = "NONE"
 	LdapModeSystem = "SYSTEM"
 	LdapModeCustom = "CUSTOM"
+)
+
+// Access control modes
+const (
+	ControlAccessReadOnly    = "ReadOnly"
+	ControlAccessReadWrite   = "Change"
+	ControlAccessFullControl = "FullControl"
 )
