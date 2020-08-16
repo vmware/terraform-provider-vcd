@@ -240,8 +240,8 @@ const (
 
 // AdminQueryTypes returns the corresponding "admin" query type for each regular type
 var AdminQueryTypes = map[string]string{
-	QtEdgeGateway:   QtEdgeGateway,       // EdgeGateway query type is the same for admin and regular users
-	QtOrgVdcNetwork: QtOrgVdcNetwork,     // Org VDC Network query type is the same for admin and regular users
+	QtEdgeGateway:   QtEdgeGateway,   // EdgeGateway query type is the same for admin and regular users
+	QtOrgVdcNetwork: QtOrgVdcNetwork, // Org VDC Network query type is the same for admin and regular users
 	QtVappTemplate:  QtAdminVappTemplate,
 	QtCatalog:       QtAdminCatalog,
 	QtCatalogItem:   QtAdminCatalogItem,
