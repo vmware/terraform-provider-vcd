@@ -16,10 +16,10 @@ import (
 func (client Client) GetAccessControl(href, entityType, entityName string) (*types.ControlAccessParams, error) {
 
 	href += "/controlAccess"
-	var vappControlAccess types.ControlAccessParams
-	errorMessage := fmt.Sprintf("error retrieving access control for %s %s", entityType, entityName)
+	var controlAccess types.ControlAccessParams
+	errorMessage := fmt.Sprintf("error retrieving access control for %s %s (%s)", entityType, entityName, href)
 	resp, err := client.ExecuteRequest(href, http.MethodGet,
-		types.MimeControlAccess, errorMessage+": %s", nil, &vappControlAccess)
+		types.MimeControlAccess, errorMessage+": %s", nil, &controlAccess)
 
 	if err != nil {
 		return nil, err
@@ -27,11 +27,11 @@ func (client Client) GetAccessControl(href, entityType, entityName string) (*typ
 	if resp == nil {
 		return nil, fmt.Errorf("[client.GetAccessControl] nil response received")
 	}
-	return &vappControlAccess, nil
+	return &controlAccess, nil
 }
 
 // SetAccessControl changes the access control information for this entity
-//There are two ways of setting the access:
+// There are two ways of setting the access:
 // with accessControl.IsSharedToEveryone = true we give access to everyone
 // with accessControl.IsSharedToEveryone = false, accessControl.AccessSettings defines which subjects can access the vApp
 // For each setting we must provide:
@@ -43,7 +43,7 @@ func (client *Client) SetAccessControl(accessControl *types.ControlAccessParams,
 	// Make sure that subjects in the setting list are used only once
 	if accessControl.AccessSettings != nil && len(accessControl.AccessSettings.AccessSetting) > 0 {
 		if accessControl.IsSharedToEveryone {
-			return fmt.Errorf("[client.SetAccessControl] can't set IsSharedToEveryone and AccessSettings at the same time for %s %s", entityType, entityName)
+			return fmt.Errorf("[client.SetAccessControl] can't set IsSharedToEveryone and AccessSettings at the same time for %s %s (%s)", entityType, entityName, href)
 		}
 		var used = make(map[string]bool)
 		for _, setting := range accessControl.AccessSettings.AccessSetting {
@@ -57,7 +57,7 @@ func (client *Client) SetAccessControl(accessControl *types.ControlAccessParams,
 			}
 		}
 	}
-	errorMessage := fmt.Sprintf("[client.SetAccessControl] error setting access control for %s %s", entityType, entityName)
+	errorMessage := fmt.Sprintf("[client.SetAccessControl] error setting access control for %s %s (%s)", entityType, entityName, href)
 
 	accessControl.Xmlns = types.XMLNamespaceVCloud
 	resp, err := client.ExecuteRequest(href, http.MethodPost, types.MimeControlAccess,
@@ -137,7 +137,7 @@ func (catalog AdminCatalog) RemoveAccessControl() error {
 	return catalog.SetAccessControl(&types.ControlAccessParams{IsSharedToEveryone: false})
 }
 
-// IsShared shows whether a vApp is shared or not, regardless of the number of subjects sharing it
+// IsShared shows whether a catalog is shared or not, regardless of the number of subjects sharing it
 func (catalog AdminCatalog) IsShared() bool {
 	settings, err := catalog.GetAccessControl()
 	if err != nil {
@@ -160,7 +160,7 @@ func (vdc *Vdc) GetVappAccessControl(vappIdentifier string) (*types.ControlAcces
 	return vapp.GetAccessControl()
 }
 
-// GetCatalogAccessControl is a convenience method to retrieve access control for a vApp
+// GetCatalogAccessControl is a convenience method to retrieve access control for a catalog
 // from an organization.
 // The input variable catalogIdentifier can be either the catalog name or its ID
 func (org *AdminOrg) GetCatalogAccessControl(catalogIdentifier string) (*types.ControlAccessParams, error) {
@@ -171,7 +171,7 @@ func (org *AdminOrg) GetCatalogAccessControl(catalogIdentifier string) (*types.C
 	return catalog.GetAccessControl()
 }
 
-// GetCatalogAccessControl is a convenience method to retrieve access control for a vApp
+// GetCatalogAccessControl is a convenience method to retrieve access control for a catalog
 // from an organization.
 // The input variable catalogIdentifier can be either the catalog name or its ID
 func (org *Org) GetCatalogAccessControl(catalogIdentifier string) (*types.ControlAccessParams, error) {
@@ -217,7 +217,7 @@ func (catalog Catalog) RemoveAccessControl() error {
 	return catalog.SetAccessControl(&types.ControlAccessParams{IsSharedToEveryone: false})
 }
 
-// IsShared shows whether a vApp is shared or not, regardless of the number of subjects sharing it
+// IsShared shows whether a catalog is shared or not, regardless of the number of subjects sharing it
 func (catalog Catalog) IsShared() bool {
 	settings, err := catalog.GetAccessControl()
 	if err != nil {

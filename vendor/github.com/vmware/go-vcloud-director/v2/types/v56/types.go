@@ -2836,14 +2836,14 @@ type AccessSettingList struct {
 	AccessSetting []*AccessSetting `xml:"AccessSetting"`
 }
 
-// LocalSubject is the user or group to which control access settings apply.
+// LocalSubject is the user, group, or organization to which control access settings apply.
 type LocalSubject struct {
-	HREF string `xml:"href,attr"`
-	Name string `xml:"name,attr"`
-	Type string `xml:"type,attr"`
+	HREF string `xml:"href,attr"` // Required - The URL with the full identification of the subject
+	Name string `xml:"name,attr"` // The name of the subject. Not needed in input, but it is returned on reading
+	Type string `xml:"type,attr"` // Required - The MIME type of the subject. So far, we are using users, groups, and organizations
 }
 
-// AccessSettings controls access to the resource.
+// AccessSetting controls access to the resource.
 type AccessSetting struct {
 	XMLName         xml.Name         `xml:"AccessSetting"`
 	Subject         *LocalSubject    `xml:"Subject,omitempty"`         // The user or group to which these settings apply.
