@@ -106,11 +106,11 @@ func resourceAccessControlVappUpdate(d *schema.ResourceData, meta interface{}) e
 		accessControl.IsSharedToEveryone = true
 		accessControl.EveryoneAccessLevel = &everyoneAccessLevel
 		if len(sharedList) > 0 {
-			return fmt.Errorf("when 'shared_to_everyone' is true, 'shared' must not be filled")
+			return fmt.Errorf("[resourceAccessControlVappUpdate] when 'shared_to_everyone' is true, 'shared' must not be filled")
 		}
 	} else {
 		if everyoneAccessLevel != "" {
-			return fmt.Errorf("if 'shared_to_everyone' is false, we can't set 'everyone_access_level'")
+			return fmt.Errorf("[resourceAccessControlVappUpdate] if 'shared_to_everyone' is false, we can't set 'everyone_access_level'")
 		}
 	}
 
@@ -126,7 +126,7 @@ func resourceAccessControlVappUpdate(d *schema.ResourceData, meta interface{}) e
 	vappId := d.Get("vapp_id").(string)
 	vapp, err := vdc.GetVAppByNameOrId(vappId, false)
 	if err != nil {
-		return fmt.Errorf("error finding vApp %s. %s", vappId, err)
+		return fmt.Errorf("[resourceAccessControlVappUpdate] error finding vApp %s. %s", vappId, err)
 	}
 	vcdClient.lockParentVappWithName(d, vapp.VApp.Name)
 	defer vcdClient.unLockParentVappWithName(d, vapp.VApp.Name)
@@ -146,7 +146,7 @@ func resourceAccessControlVappUpdate(d *schema.ResourceData, meta interface{}) e
 	err = vapp.SetAccessControl(&accessControl)
 
 	if err != nil {
-		return err
+		return fmt.Errorf("[resourceAccessControlVappUpdate] error setting access control for vApp %s: %s", vapp.VApp.Name, err)
 	}
 
 	return resourceAccessControlVappRead(d, meta)
@@ -168,17 +168,17 @@ func resourceAccessControlVappRead(d *schema.ResourceData, meta interface{}) err
 
 	accessControl, err := vapp.GetAccessControl()
 	if err != nil {
-		return fmt.Errorf("error retrieving access control for vApp %s : %s", vapp.VApp.Name, err)
+		return fmt.Errorf("[resourceAccessControlVappRead] error retrieving access control for vApp %s : %s", vapp.VApp.Name, err)
 	}
 
 	if accessControl.AccessSettings != nil {
 		sharedList, err := accessControlListToSharedSet(accessControl.AccessSettings.AccessSetting)
 		if err != nil {
-			return fmt.Errorf("error converting access control list %s", err)
+			return fmt.Errorf("[resourceAccessControlVappRead] error converting access control list %s", err)
 		}
 		err = d.Set("shared", sharedList)
 		if err != nil {
-			return fmt.Errorf("error setting access control list %s", err)
+			return fmt.Errorf("[resourceAccessControlVappRead] error setting access control list %s", err)
 		}
 	}
 	_ = d.Set("vapp_id", vapp.VApp.ID)

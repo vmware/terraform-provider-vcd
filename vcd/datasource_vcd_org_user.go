@@ -39,10 +39,9 @@ func datasourceVcdOrgUser() *schema.Resource {
 				Description: "The user's description",
 			},
 			"provider_type": &schema.Schema{
-				Type:     schema.TypeString,
-				Computed: true,
-				Description: "Identity provider type for this this user. One of: 'INTEGRATED', 'SAML', 'OAUTH'. " +
-					"When empty, the default value 'INTEGRATED' is used.",
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Identity provider type for this this user. One of: 'INTEGRATED', 'SAML', 'OAUTH'. ",
 			},
 			"full_name": &schema.Schema{
 				Type:        schema.TypeString,
@@ -78,8 +77,7 @@ func datasourceVcdOrgUser() *schema.Resource {
 				Type:     schema.TypeBool,
 				Computed: true,
 				Description: "If the user account has been locked due to too many invalid login attempts, the value " +
-					"will change to true (only the system can lock the user). " +
-					"To unlock the user re-set this flag to false.",
+					"will change to true (only the system can lock the user). ",
 			},
 			"deployed_vm_quota": &schema.Schema{
 				Type:        schema.TypeInt,
