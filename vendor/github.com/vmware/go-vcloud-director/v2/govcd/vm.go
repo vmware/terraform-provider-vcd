@@ -1452,7 +1452,7 @@ func (vm *VM) UpdateVmSpecSection(vmSettingsToUpdate *types.VmSpecSection, descr
 // UpdateVmSpecSectionAsync updates VM Spec section and returns Task and error.
 func (vm *VM) UpdateVmSpecSectionAsync(vmSettingsToUpdate *types.VmSpecSection, description string) (Task, error) {
 	if vm.VM.HREF == "" {
-		return Task{}, fmt.Errorf("cannot update disks, VM HREF is unset")
+		return Task{}, fmt.Errorf("cannot update VM spec section, VM HREF is unset")
 	}
 
 	vmSpecSectionModified := true
@@ -1500,4 +1500,39 @@ func (client *Client) QueryVmList(filter types.VmQueryFilter) ([]*types.QueryRes
 		vmList = vmResult.Results.AdminVMRecord
 	}
 	return vmList, nil
+}
+
+// UpdateVmCpuAndMemoryHotAdd updates VM Capabilities and returns refreshed VM or error.
+func (vm *VM) UpdateVmCpuAndMemoryHotAdd(cpuAdd, memoryAdd bool) (*VM, error) {
+	task, err := vm.UpdateVmCpuAndMemoryHotAddAsync(cpuAdd, memoryAdd)
+	if err != nil {
+		return nil, err
+	}
+
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return nil, err
+	}
+
+	err = vm.Refresh()
+	if err != nil {
+		return nil, err
+	}
+
+	return vm, nil
+
+}
+
+// UpdateVmCpuAndMemoryHotAddAsync updates VM Capabilities and returns Task and error.
+func (vm *VM) UpdateVmCpuAndMemoryHotAddAsync(cpuHot, memoryAdd bool) (Task, error) {
+	if vm.VM.HREF == "" {
+		return Task{}, fmt.Errorf("cannot update VM capabilities, VM HREF is unset")
+	}
+
+	return vm.client.ExecuteTaskRequest(vm.VM.HREF+"/vmCapabilities", http.MethodPut,
+		types.MimeVmCapabilities, "error updating VM capabilities section: %s", &types.VmCapabilities{
+			Xmlns:               types.XMLNamespaceVCloud,
+			CPUHotAddEnabled:    cpuHot,
+			MemoryHotAddEnabled: memoryAdd,
+		})
 }

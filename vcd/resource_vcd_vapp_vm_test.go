@@ -87,7 +87,7 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 				ImportStateIdFunc: importStateIdVappObject(testConfig, vappName2, vmName),
 				// These fields can't be retrieved from user data
 				ImportStateVerifyIgnore: []string{"template_name", "catalog_name", "network_name",
-					"initscript", "accept_all_eulas", "power_on", "computer_name"},
+					"initscript", "accept_all_eulas", "power_on", "computer_name", "prevent_update_power_off"},
 			},
 		},
 	})
