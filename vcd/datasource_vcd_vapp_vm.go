@@ -122,8 +122,7 @@ func datasourceVcdVAppVm() *schema.Resource {
 						},
 						"connected": {
 							Type:        schema.TypeBool,
-							Optional:    true,
-							Default:     true,
+							Computed:    true,
 							Description: "It defines if NIC is connected or not.",
 						},
 					},
@@ -301,6 +300,16 @@ func datasourceVcdVAppVm() *schema.Resource {
 						},
 					},
 				},
+			},
+			"cpu_hot_add_enabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if the virtual machine supports addition of virtual CPUs while powered on.",
+			},
+			"memory_hot_add_enabled": {
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if the virtual machine supports addition of memory while powered on.",
 			},
 		},
 	}

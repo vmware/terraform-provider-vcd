@@ -497,6 +497,24 @@ var vappVmSchema = map[string]*schema.Schema{
 			},
 		},
 	},
+	"cpu_hot_add_enabled": {
+		Type:        schema.TypeBool,
+		Optional:    true,
+		Default:     false,
+		Description: "True if the virtual machine supports addition of virtual CPUs while powered on.",
+	},
+	"memory_hot_add_enabled": {
+		Type:        schema.TypeBool,
+		Optional:    true,
+		Default:     false,
+		Description: "True if the virtual machine supports addition of memory while powered on.",
+	},
+	"prevent_update_power_off": {
+		Type:        schema.TypeBool,
+		Optional:    true,
+		Default:     false,
+		Description: "True if the update of resource should fail when virtual machine power off needed.",
+	},
 }
 
 func resourceVcdVAppVm() *schema.Resource {
@@ -565,7 +583,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 			return fmt.Errorf("error finding vApp: %s", err)
 		}
 
-		// Determine whether we use new 'networks' or deprecated network configuration and process inputs based on it.
+		// Determine whether we use new 'network' or deprecated network configuration and process inputs based on it.
 		// TODO v3.0 remove else branch once 'network_name', 'vapp_network_name', 'ip' are deprecated
 		networkConnectionSection := types.NetworkConnectionSection{}
 		if len(d.Get("network").([]interface{})) > 0 {
@@ -619,17 +637,9 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 			return fmt.Errorf("error setting guest customization during creation: %s", err)
 		}
 
-		if _, ok := d.GetOk("guest_properties"); ok {
-			vmProperties, err := getGuestProperties(d)
-			if err != nil {
-				return fmt.Errorf("unable to convert guest properties to data structure")
-			}
-
-			log.Printf("[TRACE] Setting VM guest properties")
-			_, err = vm.SetProductSectionList(vmProperties)
-			if err != nil {
-				return fmt.Errorf("error setting guest properties: %s", err)
-			}
+		err = addRemoveGuestProperties(d, vm)
+		if err != nil {
+			return err
 		}
 
 		// update existing internal disks in template
@@ -645,8 +655,14 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 				log.Printf("error reading interal disks : %s", errReadInternalDisk)
 			}
 		}
+
+		err = addRemoveMetaData(d, vm)
+		if err != nil {
+			return err
+		}
+
 		// TODO do not trigger resourceVcdVAppVmUpdate from create. These must be separate actions.
-		err = resourceVcdVAppVmUpdateExecute(d, meta)
+		err = resourceVcdVAppVmUpdateExecute(d, meta, "create")
 		if err != nil {
 			errAttachedDisk := updateStateOfAttachedDisks(d, *vm, vdc)
 			if errAttachedDisk != nil {
@@ -667,6 +683,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 		return resourceVcdVAppVmRead(d, meta)
 	}
+
 	log.Printf("[DEBUG] [VM create] finished")
 	return nil
 }
@@ -819,12 +836,6 @@ func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient.lockParentVapp(d)
 	defer vcdClient.unLockParentVapp(d)
 
-	return resourceVcdVAppVmUpdateExecute(d, meta)
-}
-
-func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[DEBUG] [VM update] started without lock")
-
 	// Exit early only if "network_dhcp_wait_seconds" is changed because this field only supports
 	// update so that its value can be written into statefile and be accessible in read function
 	if onlyHasChange("network_dhcp_wait_seconds", vappVmSchema, d) {
@@ -832,39 +843,59 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		return resourceVcdVAppVmRead(d, meta)
 	}
 
-	vcdClient := meta.(*VCDClient)
-
-	org, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	err := resourceVmHotUpdate(d, meta)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		return err
 	}
 
-	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
+	return resourceVcdVAppVmUpdateExecute(d, meta, "update")
+}
 
+func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}) error {
+	vcdClient, _, vdc, vapp, _, vm, err := getVmFromResource(d, meta)
 	if err != nil {
-		return fmt.Errorf("error finding vApp: %s", err)
+		return err
+	}
+	if d.Get("memory_hot_add_enabled").(bool) && d.HasChange("memory") {
+		err = changeMemorySize(d, vm)
+		if err != nil {
+			return err
+		}
 	}
 
-	identifier := d.Id()
-	if identifier == "" {
-		identifier = d.Get("name").(string)
-	}
-	if identifier == "" {
-		return fmt.Errorf("[VM update] neither name or ID was set")
+	if d.Get("cpu_hot_add_enabled").(bool) && d.HasChange("cpus") {
+		err = changeCpuCount(d, vm)
+		if err != nil {
+			return err
+		}
 	}
 
-	vm, err := vapp.GetVMByNameOrId(identifier, false)
+	// hot update possible for adding new or update existing network, removing of network has to be done with cold update
+	if d.HasChange("network") && !isNetworkRemoved(d) {
+		networkConnectionSection, err := networksToConfig(d.Get("network").([]interface{}), vdc, *vapp, vcdClient)
+		if err != nil {
+			return fmt.Errorf("unable to setup network configuration for update: %s", err)
+		}
+		err = vm.UpdateNetworkConnectionSection(&networkConnectionSection)
+		if err != nil {
+			return fmt.Errorf("unable to update network configuration: %s", err)
+		}
+	}
 
+	err = addRemoveMetaData(d, vm)
 	if err != nil {
-		d.SetId("")
-		return fmt.Errorf("[VM update] error getting VM %s: %s", identifier, err)
+		return err
 	}
 
-	vmStatusBeforeUpdate, err := vm.GetStatus()
+	err = addRemoveGuestProperties(d, vm)
 	if err != nil {
-		return fmt.Errorf("[VM update] error getting VM (%s) status before update: %s", identifier, err)
+		return err
 	}
 
+	return nil
+}
+
+func addRemoveGuestProperties(d *schema.ResourceData, vm *govcd.VM) error {
 	if d.HasChange("guest_properties") {
 		vmProperties, err := getGuestProperties(d)
 		if err != nil {
@@ -877,9 +908,10 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			return fmt.Errorf("error setting guest properties: %s", err)
 		}
 	}
-	// Check if the user requested for forced customization of VM
-	customizationNeeded := isForcedCustomization(d.Get("customization"))
+	return nil
+}
 
+func addRemoveMetaData(d *schema.ResourceData, vm *govcd.VM) error {
 	// VM does not have to be in POWERED_OFF state for metadata operations
 	if d.HasChange("metadata") {
 		oldRaw, newRaw := d.GetChange("metadata")
@@ -914,6 +946,55 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			}
 		}
 	}
+	return nil
+}
+
+func isNetworkRemoved(d *schema.ResourceData) bool {
+	oldNetworksRaw, newNetworkRaw := d.GetChange("network")
+	oldNetworks := oldNetworksRaw.([]interface{})
+	newNetworks := newNetworkRaw.([]interface{})
+	return len(oldNetworks) > len(newNetworks)
+}
+
+func changeCpuCount(d *schema.ResourceData, vm *govcd.VM) error {
+	task, err := vm.ChangeCPUCount(d.Get("cpus").(int))
+	if err != nil {
+		return fmt.Errorf("error changing cpus: %s", err)
+	}
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func changeMemorySize(d *schema.ResourceData, vm *govcd.VM) error {
+	task, err := vm.ChangeMemorySize(d.Get("memory").(int))
+	if err != nil {
+		return fmt.Errorf("error changing memory size: %s", err)
+	}
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, executionType string) error {
+	log.Printf("[DEBUG] [VM update] started without lock")
+
+	vcdClient, org, vdc, vapp, identifier, vm, err := getVmFromResource(d, meta)
+	if err != nil {
+		return err
+	}
+
+	vmStatusBeforeUpdate, err := vm.GetStatus()
+	if err != nil {
+		return fmt.Errorf("[VM update] error getting VM (%s) status before update: %s", identifier, err)
+	}
+
+	// Check if the user requested for forced customization of VM
+	customizationNeeded := isForcedCustomization(d.Get("customization"))
 
 	// Update guest customization if any of the customization related fields have changed
 	if d.HasChanges("customization", "computer_name", "name", "initscript") {
@@ -926,16 +1007,39 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 
 	}
 
-	if d.HasChanges("memory", "cpus", "cpu_cores", "power_on", "disk", "expose_hardware_virtualization",
-		"network", "boot_image", "hardware_version", "os_type", "description") {
+	memoryNeedsColdChange := false
+	cpusNeedsColdChange := false
+	networksNeedsColdChange := false
+	if executionType == "update" {
+		if !d.Get("memory_hot_add_enabled").(bool) && d.HasChange("memory") {
+			memoryNeedsColdChange = true
+		}
+		if !d.Get("cpu_hot_add_enabled").(bool) && d.HasChange("cpus") {
+			cpusNeedsColdChange = true
+		}
+		if isNetworkRemoved(d) && d.HasChange("network") {
+			networksNeedsColdChange = true
+		}
+	} else if len(d.Get("network").([]interface{})) > 0 {
+		// if create happens allow to process it(keeping it as it was), but avoid changing deprecated way of assigning of network('vapp_network_name', 'network_name')
+		networksNeedsColdChange = true
+	}
+
+	// this represent fields which has to be changed in cold (with VM power off)
+	if d.HasChanges("cpu_cores", "power_on", "disk", "expose_hardware_virtualization", "boot_image",
+		"hardware_version", "os_type", "description", "cpu_hot_add_enabled",
+		"memory_hot_add_enabled") || memoryNeedsColdChange || cpusNeedsColdChange || networksNeedsColdChange {
 
 		log.Printf("[TRACE] VM %s has changes: memory(%t), cpus(%t), cpu_cores(%t), power_on(%t), disk(%t), expose_hardware_virtualization(%t),"+
-			" network(%t), boot_image(%t), hardware_version(%t), os_type(%t), description(%t)",
+			" boot_image(%t), hardware_version(%t), os_type(%t), description(%t), cpu_hot_add_enabled(%t), memory_hot_add_enabled(%t), network(%t)",
 			vm.VM.Name, d.HasChange("memory"), d.HasChange("cpus"), d.HasChange("cpu_cores"), d.HasChange("power_on"), d.HasChange("disk"),
-			d.HasChange("expose_hardware_virtualization"), d.HasChange("network"), d.HasChange("boot_image"), d.HasChange("hardware_version"),
-			d.HasChange("os_type"), d.HasChange("description"))
+			d.HasChange("expose_hardware_virtualization"), d.HasChange("boot_image"), d.HasChange("hardware_version"),
+			d.HasChange("os_type"), d.HasChange("description"), d.HasChange("cpu_hot_add_enabled"), d.HasChange("memory_hot_add_enabled"), d.HasChange("network"))
 
 		if vmStatusBeforeUpdate != "POWERED_OFF" {
+			if d.Get("prevent_update_power_off").(bool) && executionType == "update" {
+				return fmt.Errorf("update stopped: VM needs to power off to change properties, but `prevent_update_power_off` is `true`")
+			}
 			log.Printf("[DEBUG] Un-deploying VM %s for offline update. Previous state %s",
 				vm.VM.Name, vmStatusBeforeUpdate)
 			task, err := vm.Undeploy()
@@ -961,28 +1065,23 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			}
 		}
 
-		if d.HasChange("memory") {
-
-			task, err := vm.ChangeMemorySize(d.Get("memory").(int))
-			if err != nil {
-				return fmt.Errorf("error changing memory size: %s", err)
-			}
-
-			err = task.WaitTaskCompletion()
+		if memoryNeedsColdChange || executionType == "create" {
+			err = changeMemorySize(d, vm)
 			if err != nil {
 				return err
 			}
 		}
 
-		if d.HasChange("cpus") || d.HasChange("cpu_cores") {
-			var task govcd.Task
-			var err error
-			if d.Get("cpu_cores") != nil {
-				coreCounts := d.Get("cpu_cores").(int)
-				task, err = vm.ChangeCPUCountWithCore(d.Get("cpus").(int), &coreCounts)
-			} else {
-				task, err = vm.ChangeCPUCount(d.Get("cpus").(int))
+		if cpusNeedsColdChange || executionType == "create" {
+			err = changeCpuCount(d, vm)
+			if err != nil {
+				return err
 			}
+		}
+
+		if d.HasChange("cpu_cores") {
+			coreCounts := d.Get("cpu_cores").(int)
+			task, err := vm.ChangeCPUCountWithCore(d.Get("cpus").(int), &coreCounts)
 			if err != nil {
 				return fmt.Errorf("error changing cpu count: %s", err)
 			}
@@ -990,6 +1089,17 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			err = task.WaitTaskCompletion()
 			if err != nil {
 				return fmt.Errorf(errorCompletingTask, err)
+			}
+		}
+
+		if networksNeedsColdChange {
+			networkConnectionSection, err := networksToConfig(d.Get("network").([]interface{}), vdc, *vapp, vcdClient)
+			if err != nil {
+				return fmt.Errorf("unable to setup network configuration for update: %s", err)
+			}
+			err = vm.UpdateNetworkConnectionSection(&networkConnectionSection)
+			if err != nil {
+				return fmt.Errorf("unable to update network configuration: %s", err)
 			}
 		}
 
@@ -1006,41 +1116,34 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 			}
 		}
 
-		if d.HasChange("hardware_version") {
+		// updating fields of VM spec section
+		if d.HasChange("hardware_version") || d.HasChange("os_type") || d.HasChange("description") {
 			vmSpecSection := vm.VM.VmSpecSection
-			vmSpecSection.HardwareVersion = &types.HardwareVersion{Value: d.Get("hardware_version").(string)}
-			_, err := vm.UpdateVmSpecSection(vmSpecSection, vm.VM.Description)
+			description := vm.VM.Description
+			if d.HasChange("hardware_version") {
+				vmSpecSection.HardwareVersion = &types.HardwareVersion{Value: d.Get("hardware_version").(string)}
+			}
+			if d.HasChange("os_type") {
+				vmSpecSection.OsType = d.Get("os_type").(string)
+			}
+
+			if d.HasChange("description") {
+				description = d.Get("description").(string)
+			}
+
+			_, err := vm.UpdateVmSpecSection(vmSpecSection, description)
 			if err != nil {
-				return fmt.Errorf("error changing hardware version: %s", err)
+				return fmt.Errorf("error changing VM spec section: %s", err)
 			}
 		}
 
-		if d.HasChange("os_type") {
-			vmSpecSection := vm.VM.VmSpecSection
-			vmSpecSection.OsType = d.Get("os_type").(string)
-			_, err := vm.UpdateVmSpecSection(vmSpecSection, vm.VM.Description)
+		if d.HasChange("cpu_hot_add_enabled") || d.HasChange("memory_hot_add_enabled") {
+			_, err := vm.UpdateVmCpuAndMemoryHotAdd(d.Get("cpu_hot_add_enabled").(bool), d.Get("memory_hot_add_enabled").(bool))
 			if err != nil {
-				return fmt.Errorf("error changing os type: %s", err)
+				return fmt.Errorf("error changing VM capabilities: %s", err)
 			}
 		}
 
-		if d.HasChange("description") {
-			_, err := vm.UpdateVmSpecSection(vm.VM.VmSpecSection, d.Get("description").(string))
-			if err != nil {
-				return fmt.Errorf("error changing description: %s", err)
-			}
-		}
-
-		if d.HasChange("network") {
-			networkConnectionSection, err := networksToConfig(d.Get("network").([]interface{}), vdc, *vapp, vcdClient)
-			if err != nil {
-				return fmt.Errorf("unable to setup network configuration for update: %s", err)
-			}
-			err = vm.UpdateNetworkConnectionSection(&networkConnectionSection)
-			if err != nil {
-				return fmt.Errorf("unable to update network configuration: %s", err)
-			}
-		}
 		// we detach boot image if it's value change to empty.
 		bootImage := d.Get("boot_image")
 		if d.HasChange("boot_image") && bootImage.(string) == "" {
@@ -1067,7 +1170,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 		}
 	}
 
-	// If the VM was powered off during update but it has to be powered off
+	// If the VM was powered off during update but it has to be powered on
 	if d.Get("power_on").(bool) {
 		vmStatus, err := vm.GetStatus()
 		if err != nil {
@@ -1113,6 +1216,37 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}) er
 	}
 	log.Printf("[DEBUG] [VM update] finished")
 	return resourceVcdVAppVmRead(d, meta)
+}
+
+func getVmFromResource(d *schema.ResourceData, meta interface{}) (*VCDClient, *govcd.Org, *govcd.Vdc, *govcd.VApp, string, *govcd.VM, error) {
+	vcdClient := meta.(*VCDClient)
+
+	org, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	if err != nil {
+		return nil, nil, nil, nil, "", nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	}
+
+	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
+
+	if err != nil {
+		return nil, nil, nil, nil, "", nil, fmt.Errorf("error finding vApp: %s", err)
+	}
+
+	identifier := d.Id()
+	if identifier == "" {
+		identifier = d.Get("name").(string)
+	}
+	if identifier == "" {
+		return nil, nil, nil, nil, "", nil, fmt.Errorf("[VM update] neither name or ID was set")
+	}
+
+	vm, err := vapp.GetVMByNameOrId(identifier, false)
+
+	if err != nil {
+		d.SetId("")
+		return nil, nil, nil, nil, "", nil, fmt.Errorf("[VM update] error getting VM %s: %s", identifier, err)
+	}
+	return vcdClient, org, vdc, vapp, identifier, vm, nil
 }
 
 // updates attached disks to latest state. Removed not needed and add new ones
@@ -1268,6 +1402,8 @@ func genericVcdVAppVmRead(d *schema.ResourceData, meta interface{}, origin strin
 
 	_ = d.Set("href", vm.VM.HREF)
 	_ = d.Set("expose_hardware_virtualization", vm.VM.NestedHypervisorEnabled)
+	_ = d.Set("cpu_hot_add_enabled", vm.VM.VMCapabilities.CPUHotAddEnabled)
+	_ = d.Set("memory_hot_add_enabled", vm.VM.VMCapabilities.MemoryHotAddEnabled)
 
 	cpus := 0
 	coresPerSocket := 0
@@ -1575,7 +1711,7 @@ func resourceVcdVmIndependentDiskHash(v interface{}) int {
 	return hashcode.String(buf.String())
 }
 
-// networksToConfig converts terraform schema for 'networks' and converts to types.NetworkConnectionSection
+// networksToConfig converts terraform schema for 'network' and converts to types.NetworkConnectionSection
 // which is used for creating new VM
 func networksToConfig(networks []interface{}, vdc *govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (types.NetworkConnectionSection, error) {
 
@@ -2268,17 +2404,21 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 		return nil, err
 	}
 
-	if _, ok := d.GetOk("guest_properties"); ok {
-		vmProperties, err := getGuestProperties(d)
-		if err != nil {
-			return nil, fmt.Errorf("unable to convert guest properties to data structure")
-		}
+	err = addRemoveGuestProperties(d, newVm)
+	if err != nil {
+		return nil, err
+	}
 
-		log.Printf("[TRACE] Setting VM guest properties")
-		_, err = newVm.SetProductSectionList(vmProperties)
+	if d.HasChange("cpu_hot_add_enabled") || d.HasChange("memory_hot_add_enabled") {
+		_, err := newVm.UpdateVmCpuAndMemoryHotAdd(d.Get("cpu_hot_add_enabled").(bool), d.Get("memory_hot_add_enabled").(bool))
 		if err != nil {
-			return nil, fmt.Errorf("error setting guest properties: %s", err)
+			return nil, fmt.Errorf("error changing VM capabilities: %s", err)
 		}
+	}
+
+	err = addRemoveMetaData(d, newVm)
+	if err != nil {
+		return nil, err
 	}
 
 	if d.Get("power_on").(bool) {

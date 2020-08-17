@@ -117,6 +117,8 @@ const (
 	MimeVappNetwork = "application/vnd.vmware.vcloud.vAppNetwork+xml"
 	// Mime of access control
 	MimeControlAccess = "application/vnd.vmware.vcloud.controlAccess+xml"
+	// Mime of VM capabilities
+	MimeVmCapabilities = "application/vnd.vmware.vcloud.vmCapabilitiesSection+xml"
 )
 
 const (
