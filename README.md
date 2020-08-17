@@ -78,7 +78,7 @@ directive which can allow you to redirect import path to your own version of `go
 `go.mod` can be altered:
  * You can replace your import with a forked branch like this:
  ```go
-    module github.com/terraform-providers/terraform-provider-vcd/v2
+    module github.com/vmware/terraform-provider-vcd/v2
     require (
     	...
     	github.com/vmware/go-vcloud-director/v2 v2.1.0-alpha.2
@@ -87,7 +87,7 @@ directive which can allow you to redirect import path to your own version of `go
  ```
  * You can also replace pointer to a branch with relative directory
  ```go
-     module github.com/terraform-providers/terraform-provider-vcd/v2
+     module github.com/vmware/terraform-provider-vcd/v2
      require (
      	...
      	github.com/vmware/go-vcloud-director/v2 v2.1.0-alpha.2
