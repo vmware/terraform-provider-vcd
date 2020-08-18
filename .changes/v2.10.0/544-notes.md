@@ -1,1 +1,1 @@
-* Dropped support for vCD 9.5 [GH-544]
+* Dropped support for VCD 9.5 [GH-544]
