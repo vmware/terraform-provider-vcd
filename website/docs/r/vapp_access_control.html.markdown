@@ -1,12 +1,12 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_access_control_vapp"
-sidebar_current: "docs-vcd-resource-access-control-vapp"
+page_title: "vCloudDirector: vcd_vapp_access_control"
+sidebar_current: "docs-vcd-resource-vapp-access-control"
 description: |-
   Provides a vCloud Director Access Control structure for a vApp.
 ---
 
-# vcd\_access\_control\_vapp
+# vcd\_vapp\_access\_control
 
 Provides a vCloud Director Access Contrpl structure for a vApp. This can be used to create, update, and delete access control structures for a vApp.
 
@@ -39,7 +39,7 @@ data "vcd_vapp" "Vapp-AC-2" {
   name = "Vapp-AC-2"
 }
 
-resource "vcd_access_control_vapp" "AC-not-shared" {
+resource "vcd_vapp_access_control" "AC-not-shared" {
 
   vapp_id  = vcd_vapp.Vapp-AC-0.id
 
@@ -47,7 +47,7 @@ resource "vcd_access_control_vapp" "AC-not-shared" {
 }
 
 
-resource "vcd_access_control_vapp" "AC-global" {
+resource "vcd_vapp_access_control" "AC-global" {
 
   vapp_id  = vcd_vapp.Vapp-AC-1.id
 
@@ -55,7 +55,7 @@ resource "vcd_access_control_vapp" "AC-global" {
   everyone_access_level = "Change"
 }
 
-resource "vcd_access_control_vapp" "AC-users" {
+resource "vcd_vapp_access_control" "AC-users" {
   vapp_id  = vcd_vapp.Vapp-AC-1.id
 
   shared_to_everyone    = false
@@ -101,7 +101,7 @@ An existing `access_control_vapp` can be [imported][docs-import] into this resou
 For example, using this structure, representing an existing access control structure that was **not** created using Terraform:
 
 ```hcl
-resource "vcd_access_control_vapp" "my-ac" {
+resource "vcd_vapp_access_control" "my-ac" {
   org  = "my-org"
   vdc  = "my-vdc"
   
@@ -112,8 +112,8 @@ resource "vcd_access_control_vapp" "my-ac" {
 You can import such structure into terraform state using one of these commands
 
 ```
-terraform import vcd_access_control_vapp.my-ac my-org.my-vdc.vapp-id
-terraform import vcd_access_control_vapp.my-ac my-org.my-vdc.vapp-name
+terraform import vcd_vapp_access_control.my-ac my-org.my-vdc.vapp-id
+terraform import vcd_vapp_access_control.my-ac my-org.my-vdc.vapp-name
 ```
 
 terraform will import the structure using either the vApp name or its ID.
@@ -129,7 +129,7 @@ at this stage will show the difference between the minimal configuration file an
 If you don't know the vApp ID and want to see which ones are available, you can run:
 
 ```
-terraform import vcd_access_control_vapp.my-ac list@my-org.my-vdc.any-string
+terraform import vcd_vapp_access_control.my-ac list@my-org.my-vdc.any-string
 ```
 
 Terraform will exit with an error message containing the list of available vApps.

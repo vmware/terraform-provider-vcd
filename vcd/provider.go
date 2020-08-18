@@ -95,7 +95,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_vapp_nat_rules":      resourceVcdVappNetworkNatRules(),      // 2.9
 	"vcd_vapp_static_routing": resourceVcdVappNetworkStaticRouting(), // 2.9
 	"vcd_vm_affinity_rule":    resourceVcdVmAffinityRule(),           // 2.9
-	"vcd_access_control_vapp": resourceVcdAccessControlVapp(),        // 2.10
+	"vcd_vapp_access_control": resourceVcdAccessControlVapp(),        // 2.10
 }
 
 // Provider returns a terraform.ResourceProvider.

@@ -63,10 +63,10 @@ func TestAccVcdVappAccessControl(t *testing.T) {
 	debugPrintf("#[DEBUG] CREATION CONFIGURATION: %s", configText)
 	debugPrintf("#[DEBUG] UPDATE CONFIGURATION: %s", updateText)
 
-	resourceAC0 := "vcd_access_control_vapp.AC-Vapp0"
-	resourceAC1 := "vcd_access_control_vapp.AC-Vapp1"
-	resourceAC2 := "vcd_access_control_vapp.AC-Vapp2"
-	resourceAC3 := "vcd_access_control_vapp.AC-Vapp3"
+	resourceAC0 := "vcd_vapp_access_control.AC-Vapp0"
+	resourceAC1 := "vcd_vapp_access_control.AC-Vapp1"
+	resourceAC2 := "vcd_vapp_access_control.AC-Vapp2"
+	resourceAC3 := "vcd_vapp_access_control.AC-Vapp3"
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -143,7 +143,7 @@ func TestAccVcdVappAccessControl(t *testing.T) {
 			// Tests import by name
 			resource.TestStep{
 				Config:            configText,
-				ResourceName:      "vcd_access_control_vapp.AC-Vapp1",
+				ResourceName:      "vcd_vapp_access_control.AC-Vapp1",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, "Vapp-AC-1"),
@@ -151,10 +151,10 @@ func TestAccVcdVappAccessControl(t *testing.T) {
 			// Tests import by ID
 			resource.TestStep{
 				Config:            configText,
-				ResourceName:      "vcd_access_control_vapp.AC-Vapp2",
+				ResourceName:      "vcd_vapp_access_control.AC-Vapp2",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdViaResource("vcd_access_control_vapp.AC-Vapp2"),
+				ImportStateIdFunc: importStateIdViaResource("vcd_vapp_access_control.AC-Vapp2"),
 			},
 		},
 	})
@@ -271,7 +271,7 @@ resource "vcd_vapp" "{{.VappName3}}" {
   name = "{{.VappName3}}"
 }
 
-resource "vcd_access_control_vapp" "{{.AccessControlIdentifier0}}" {
+resource "vcd_vapp_access_control" "{{.AccessControlIdentifier0}}" {
 
   org      = "{{.Org}}"
   vdc      = "{{.Vdc}}"
@@ -281,7 +281,7 @@ resource "vcd_access_control_vapp" "{{.AccessControlIdentifier0}}" {
   {{.EveryoneAccessLevel}}
 }
 
-resource "vcd_access_control_vapp" "{{.AccessControlIdentifier1}}" {
+resource "vcd_vapp_access_control" "{{.AccessControlIdentifier1}}" {
 
   org      = "{{.Org}}"
   vdc      = "{{.Vdc}}"
@@ -295,7 +295,7 @@ resource "vcd_access_control_vapp" "{{.AccessControlIdentifier1}}" {
   }
 }
 
-resource "vcd_access_control_vapp" "{{.AccessControlIdentifier2}}" {
+resource "vcd_vapp_access_control" "{{.AccessControlIdentifier2}}" {
 
   org      = "{{.Org}}"
   vdc      = "{{.Vdc}}"
@@ -313,7 +313,7 @@ resource "vcd_access_control_vapp" "{{.AccessControlIdentifier2}}" {
   }
 }
 
-resource "vcd_access_control_vapp" "{{.AccessControlIdentifier3}}" {
+resource "vcd_vapp_access_control" "{{.AccessControlIdentifier3}}" {
 
   org      = "{{.Org}}"
   vdc      = "{{.Vdc}}"

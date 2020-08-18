@@ -1029,7 +1029,7 @@ func importStateIdViaResource(resource string) resource.ImportStateIdFunc {
 }
 
 // testAccFindValuesInSet finds several elements as belonging to the same item in a set
-// * resourceName is the complete identifier of the resource (such as vcd_access_control_vapp.Name)
+// * resourceName is the complete identifier of the resource (such as vcd_vapp_access_control.Name)
 // * prefix is the name of the set (e.g. "shared" in vApp access control)
 // * wanted is a map of values to check (such as {"subject_name" : "xxx", "access_level": "yyy"})
 // The function returns successfully if all the wanted elements are found within the same set ID
