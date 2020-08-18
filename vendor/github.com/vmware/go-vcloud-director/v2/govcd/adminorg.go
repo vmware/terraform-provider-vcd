@@ -581,9 +581,8 @@ func (adminOrg *AdminOrg) GetVDCByHref(vdcHref string) (*Vdc, error) {
 
 	vdc := NewVdc(adminOrg.client)
 
-	_, err := adminOrg.client.ExecuteRequestWithApiVersion(vdcHREF, http.MethodGet,
-		"", "error getting vdc: %s", nil, vdc.Vdc,
-		adminOrg.client.GetSpecificApiVersionOnCondition(">= 32.0", "32.0"))
+	_, err := adminOrg.client.ExecuteRequest(vdcHREF, http.MethodGet,
+		"", "error getting vdc: %s", nil, vdc.Vdc)
 
 	if err != nil {
 		return nil, err
