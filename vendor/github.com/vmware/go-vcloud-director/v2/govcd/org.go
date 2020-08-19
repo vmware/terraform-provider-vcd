@@ -334,7 +334,7 @@ func (org *Org) QueryCatalogList() ([]*types.CatalogRecord, error) {
 }
 
 // GetTaskList returns Tasks for Organization and error.
-func (org *Org) GetTaskList() (types.TasksList, error) {
+func (org *Org) GetTaskList() (*types.TasksList, error) {
 
 	for _, link := range org.Org.Link {
 		if link.Rel == "down" && link.Type == "application/vnd.vmware.vcloud.tasksList+xml" {
@@ -344,12 +344,12 @@ func (org *Org) GetTaskList() (types.TasksList, error) {
 			_, err := org.client.ExecuteRequest(link.HREF, http.MethodGet, "",
 				"error getting taskList: %s", nil, tasksList)
 			if err != nil {
-				return types.TasksList{}, err
+				return nil, err
 			}
 
-			return *tasksList, nil
+			return tasksList, nil
 		}
 	}
 
-	return types.TasksList{}, nil
+	return nil, fmt.Errorf("link not found")
 }
