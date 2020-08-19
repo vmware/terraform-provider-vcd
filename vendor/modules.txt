@@ -216,6 +216,8 @@ github.com/mitchellh/mapstructure
 github.com/mitchellh/reflectwalk
 # github.com/oklog/run v1.0.0
 github.com/oklog/run
+# github.com/peterhellberg/link v1.1.0
+github.com/peterhellberg/link
 # github.com/posener/complete v1.2.1
 github.com/posener/complete
 github.com/posener/complete/cmd
@@ -232,7 +234,7 @@ github.com/ulikunitz/xz/lzma
 # github.com/vmihailenco/msgpack v4.0.1+incompatible
 github.com/vmihailenco/msgpack
 github.com/vmihailenco/msgpack/codes
-# github.com/vmware/go-vcloud-director/v2 v2.9.0-alpha.1 => github.com/dataclouder/go-vcloud-director/v2 v2.5.0-alpha.4.0.20200817144118-26a93722ee02
+# github.com/vmware/go-vcloud-director/v2 v2.9.0-alpha.1 => github.com/dataclouder/go-vcloud-director/v2 v2.5.0-alpha.4.0.20200819094648-0e62e1e802bd
 github.com/vmware/go-vcloud-director/v2/govcd
 github.com/vmware/go-vcloud-director/v2/types/v56
 github.com/vmware/go-vcloud-director/v2/util
