@@ -27,7 +27,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
-	"github.com/kr/pretty"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
@@ -1035,9 +1034,9 @@ func importStateIdViaResource(resource string) resource.ImportStateIdFunc {
 // The function returns successfully if all the wanted elements are found within the same set ID
 // For example, given the following contents in the resource:
 //
-//	"shared.2503357709.access_level":"FullControl",
-//	"shared.3479897784.user_id":"urn:vcloud:user:ec571e04-7e75-4dc5-8f53-c3ef63b9b414",
-//	"shared.2503357709.user_id":"urn:vcloud:user:465308a5-7456-42c8-939c-bd971b0e0d3f",
+//  "shared.2503357709.access_level":"FullControl",
+//  "shared.3479897784.user_id":"urn:vcloud:user:ec571e04-7e75-4dc5-8f53-c3ef63b9b414",
+//  "shared.2503357709.user_id":"urn:vcloud:user:465308a5-7456-42c8-939c-bd971b0e0d3f",
 //  "shared.2503357709.subject_name":"ac-user1",
 //  "shared.3479897784.subject_name":"ac-user2",
 //  "shared.3479897784.access_level":"Change"
@@ -1078,8 +1077,6 @@ func testAccFindValuesInSet(resourceName string, prefix string, wanted map[strin
 				return nil
 			}
 		}
-		fmt.Printf("%#v\n", wanted)
-		fmt.Printf("%# v\n", pretty.Formatter(rs.Primary.Attributes))
 		return fmt.Errorf("resource %s - %d matches found - wanted %d", resourceName, len(matches), len(wanted))
 	}
 }
