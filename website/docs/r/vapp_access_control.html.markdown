@@ -56,7 +56,7 @@ resource "vcd_vapp_access_control" "AC-global" {
 }
 
 resource "vcd_vapp_access_control" "AC-users" {
-  vapp_id  = data.vcd_vapp.Vapp-AC-1.id
+  vapp_id  = data.vcd_vapp.Vapp-AC-2.id
 
   shared_to_everyone    = false
 
