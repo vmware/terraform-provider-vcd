@@ -14,13 +14,13 @@ func datasourceVcdOrgUser() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ExactlyOneOf: []string{"name", "user_id"},
-				Description:  "User's name. Only lowercase letters allowed. Cannot be changed after creation",
+				Description:  `User's name. Required if "user_id" is not set`,
 			},
 			"user_id": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
 				ExactlyOneOf: []string{"name", "user_id"},
-				Description:  "User's name. Only lowercase letters allowed. Cannot be changed after creation",
+				Description:  `User's id. Required if "name" is not set`,
 			},
 			"org": {
 				Type:     schema.TypeString,
@@ -96,15 +96,13 @@ func datasourceVcdOrgUser() *schema.Resource {
 func datasourceVcdOrgUserRead(d *schema.ResourceData, meta interface{}) error {
 
 	var identifier string
-	_, nameOk := d.GetOk("name")
-	_, idOk := d.GetOk("user_id")
+	name := d.Get("name").(string)
+	id := d.Get("user_id").(string)
 
-	if nameOk {
-		identifier = d.Get("name").(string)
+	if name != "" {
+		identifier = name
 	} else {
-		if idOk {
-			identifier = d.Get("user_id").(string)
-		}
+		identifier = id
 	}
 
 	vcdClient := meta.(*VCDClient)

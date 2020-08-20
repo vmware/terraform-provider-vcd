@@ -21,8 +21,17 @@ data "vcd_org_user" "my-org-admin" {
   name = "my-org-admin"
 }
 
-output "user" {
+data "vcd_org_user" "my-vapp-creator" {
+  org     = "my-org"
+  user_id = "urn:vcloud:user:c311eb35-6984-4d26-3ee9-0000deadbeef"
+}
+
+output "admin_user" {
   value = data.vcd_org_user.my-org-admin
+}
+
+output "vapp_creator_user" {
+  value = data.vcd_org_user.my-vapp-creator
 }
 ```
 
@@ -31,7 +40,8 @@ output "user" {
 The following arguments are supported:
 
 * `org` - (Optional) The name of organization to which the user belongs. Optional if defined at provider level.
-* `name` - (Required) A unique name for the user.
+* `name` - (Optional) The name of the user. Required if `user_id` is not set
+* `user_id` - (Optional) The ID of the user. Required if `name` is not set
 
 ## Attribute reference
 

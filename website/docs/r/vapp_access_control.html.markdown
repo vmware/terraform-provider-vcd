@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_vapp\_access\_control
 
-Provides a vCloud Director Access Contrpl structure for a vApp. This can be used to create, update, and delete access control structures for a vApp.
+Provides a vCloud Director Access Control structure for a vApp. This can be used to create, update, and delete access control structures for a vApp.
 
 !> **Warning:** The access control info is tied to a vApp. Thus, there could be only one instance per vApp. Using a different
 definition for the same vApp ID will result in a previous instance to be overwritten.
@@ -41,7 +41,7 @@ data "vcd_vapp" "Vapp-AC-2" {
 
 resource "vcd_vapp_access_control" "AC-not-shared" {
 
-  vapp_id  = vcd_vapp.Vapp-AC-0.id
+  vapp_id  = data.vcd_vapp.Vapp-AC-0.id
 
   shared_to_everyone    = false
 }
@@ -49,23 +49,23 @@ resource "vcd_vapp_access_control" "AC-not-shared" {
 
 resource "vcd_vapp_access_control" "AC-global" {
 
-  vapp_id  = vcd_vapp.Vapp-AC-1.id
+  vapp_id  = data.vcd_vapp.Vapp-AC-1.id
 
   shared_to_everyone    = true
   everyone_access_level = "Change"
 }
 
 resource "vcd_vapp_access_control" "AC-users" {
-  vapp_id  = vcd_vapp.Vapp-AC-1.id
+  vapp_id  = data.vcd_vapp.Vapp-AC-1.id
 
   shared_to_everyone    = false
 
   shared {
-    user_id      = vcd_org_user.ac-admin1.id
+    user_id      = data.vcd_org_user.ac-admin1.id
     access_level = "FullControl"
   }
   shared {
-    user_id      = vcd_org_user.ac-vapp-creator2.id
+    user_id      = data.vcd_org_user.ac-vapp-creator2.id
     access_level = "Change"
   }
 }
