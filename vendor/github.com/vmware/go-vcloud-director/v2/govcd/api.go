@@ -255,12 +255,10 @@ func decodeBody(bodyType types.BodyType, resp *http.Response, out interface{}) e
 
 	// In case of JSON, body does not have indents in response therefore it must be indented
 	if bodyType == types.BodyTypeJSON {
-		var prettyJSON bytes.Buffer
-		err := json.Indent(&prettyJSON, body, "", "  ")
+		body, err = indentJsonBody(body)
 		if err != nil {
-			return fmt.Errorf("error indenting response JSON: %s", err)
+			return err
 		}
-		body = prettyJSON.Bytes()
 	}
 
 	util.ProcessResponseOutput(util.FuncNameCallStack(), resp, fmt.Sprintf("%s", body))
@@ -288,6 +286,17 @@ func decodeBody(bodyType types.BodyType, resp *http.Response, out interface{}) e
 	}
 
 	return nil
+}
+
+// indentJsonBody indents raw JSON body for easier readability
+func indentJsonBody(body []byte) ([]byte, error) {
+	var prettyJSON bytes.Buffer
+	err := json.Indent(&prettyJSON, body, "", "  ")
+	if err != nil {
+		return nil, fmt.Errorf("error indenting response JSON: %s", err)
+	}
+	body = prettyJSON.Bytes()
+	return body, nil
 }
 
 // checkResp wraps http.Client.Do() and verifies the request, if status code

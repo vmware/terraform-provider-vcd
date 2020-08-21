@@ -117,6 +117,8 @@ const (
 	MimeOrgLdapSettings = "application/vnd.vmware.admin.organizationldapsettings+xml"
 	// Mime of vApp network
 	MimeVappNetwork = "application/vnd.vmware.vcloud.vAppNetwork+xml"
+	// Mime of VM capabilities
+	MimeVmCapabilities = "application/vnd.vmware.vcloud.vmCapabilitiesSection+xml"
 )
 
 const (
@@ -290,4 +292,11 @@ const (
 const (
 	// FiqlQueryTimestampFormat is the format accepted by Cloud API time comparison operator in FIQL query filters
 	FiqlQueryTimestampFormat = "2006-01-02T15:04:05.000Z"
+)
+
+// These constants allow to construct OpenAPI endpoint paths and avoid strings in code for easy replacement in future.
+const (
+	OpenApiPathVersion1_0_0           = "1.0.0/"
+	OpenApiEndpointRoles              = "roles/"
+	OpenApiEndpointVdcComputePolicies = "vdcComputePolicies/"
 )

@@ -1065,17 +1065,18 @@ type UndeployVAppParams struct {
 	UndeployPowerAction string `xml:"UndeployPowerAction,omitempty"`
 }
 
-// VMCapabilities allows you to specify certain capabilities of this virtual machine.
+// VmCapabilities allows you to specify certain capabilities of this virtual machine.
 // Type: VmCapabilitiesType
 // Namespace: http://www.vmware.com/vcloud/v1.5
 // Description: Allows you to specify certain capabilities of this virtual machine.
 // Since: 5.1
-type VMCapabilities struct {
+type VmCapabilities struct {
+	Xmlns               string   `xml:"xmlns,attr"`
 	HREF                string   `xml:"href,attr,omitempty"`
 	Type                string   `xml:"type,attr,omitempty"`
+	MemoryHotAddEnabled bool     `xml:"MemoryHotAddEnabled,omitempty"`
 	CPUHotAddEnabled    bool     `xml:"CpuHotAddEnabled,omitempty"`
 	Link                LinkList `xml:"Link,omitempty"`
-	MemoryHotAddEnabled bool     `xml:"MemoryHotAddEnabled,omitempty"`
 }
 
 // VMs represents a list of virtual machines.
@@ -1412,7 +1413,7 @@ type VM struct {
 	// changes, domain join configuration, etc
 	GuestCustomizationSection *GuestCustomizationSection `xml:"GuestCustomizationSection,omitempty"`
 
-	VMCapabilities *VMCapabilities `xml:"VmCapabilities,omitempty"` // Allows you to specify certain capabilities of this virtual machine.
+	VMCapabilities *VmCapabilities `xml:"VmCapabilities,omitempty"` // Allows you to specify certain capabilities of this virtual machine.
 	StorageProfile *Reference      `xml:"StorageProfile,omitempty"` // A reference to a storage profile to be used for this object. The specified storage profile must exist in the organization vDC that contains the object. If not specified, the default storage profile for the vDC is used.
 	ProductSection *ProductSection `xml:"ProductSection,omitempty"`
 	Media          *Reference      `xml:"Media,omitempty"` // Reference to the media object to insert in a new VM.
@@ -2387,6 +2388,13 @@ type QueryResultVirtualCenterRecordType struct {
 // Since: 1.0
 type Extension struct {
 	Link LinkList `xml:"Link,omitempty"` // A reference to an entity or operation associated with this object.
+}
+
+// Namespace: http://www.vmware.com/vcloud/v1.5
+// Retrieve a list of tasks
+type TasksList struct {
+	XMLName xml.Name `xml:"TasksList"`
+	Task    []*Task  `xml:"Task,omitempty"`
 }
 
 type ExternalNetworkReferences struct {

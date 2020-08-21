@@ -1,13 +1,23 @@
 package govcd
 
-import "fmt"
+/*
+ * Copyright 2020 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
+ */
 
+import (
+	"fmt"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
+)
+
+// endpointMinApiVersions holds mapping of OpenAPI endpoints and API versions they were introduced in.
 var endpointMinApiVersions = map[string]string{
-	"1.0.0/roles/": "31.0",
+	types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointRoles: "31.0",
+	types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointVdcComputePolicies: "32.0",
 }
 
-// checkOpenApiEndpointCompatibility checks if required VCD version is sufficient to work with this endpoint and returns
-// either error, either version
+// checkOpenApiEndpointCompatibility checks if VCD version (to which the client is connected) is sufficient to work with
+// specified OpenAPI endpoint and returns either error, either Api version to use for calling that endpoint. This Api
+// version can then be supplied to low level OpenAPI client functions.
 func (client *Client) checkOpenApiEndpointCompatibility(endpoint string) (string, error) {
 	minimumApiVersion, ok := endpointMinApiVersions[endpoint]
 	if !ok {
