@@ -5,6 +5,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"text/tabwriter"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -169,8 +170,9 @@ func resourceVmSizingPolicyRead(d *schema.ResourceData, meta interface{}) error 
 
 	policy, err := adminOrg.GetVdcComputePolicyById(d.Id())
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find VM sizing policy %s", policyName)
-		return fmt.Errorf("unable to find VM sizing policy %s, err: %s", policyName, err)
+		log.Printf("[DEBUG] Unable to find VM sizing policy %s. Removing from tfstate.", policyName)
+		d.SetId("")
+		return fmt.Errorf("unable to find VM sizing policy %s, err: %s. Removing from tfstate", policyName, err)
 	}
 
 	return setVmSizingPolicy(d, policy)
@@ -459,6 +461,9 @@ func getMemoryInput(memoryPart []interface{}, params *types.VdcComputePolicy) (*
 	return params, nil
 }
 
+var errHelpVmSizingPolicyImport = fmt.Errorf(`resource id must be specified in one of these formats:
+'org-name.vm-sizing-policy-id' or 'list@org-name' to get a list of VM sizing policies with their IDs`)
+
 // resourceVmSizingPolicyImport is responsible for importing the resource.
 // The following steps happen as part of import
 // 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
@@ -471,17 +476,34 @@ func getMemoryInput(memoryPart []interface{}, params *types.VdcComputePolicy) (*
 //
 // Example resource name (_resource_name_): vcd_vm_sizing_policy.my_existing_policy_name
 // Example import path (_the_id_string_): org.my_existing_vm_sizing_policy_id
+// Example list path (_the_id_string_): list@org-name
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
 func resourceVmSizingPolicyImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
-	if len(resourceURI) != 2 {
-		return nil, fmt.Errorf("resource name must be specified as org.my_existing_vm_sizing_policy_id")
-	}
-	orgName, policyId := resourceURI[0], resourceURI[1]
 
+	log.Printf("[DEBUG] importing VM sizing policy resource with provided id %s", d.Id())
+
+	if len(resourceURI) != 1 && len(resourceURI) != 2 {
+		return nil, errHelpVmSizingPolicyImport
+	}
+	if strings.Contains(d.Id(), "list@") {
+		commandOrgName := resourceURI[0]
+		commandOrgNameSplit := strings.Split(commandOrgName, "@")
+		if len(commandOrgNameSplit) != 2 {
+			return nil, errHelpVmSizingPolicyImport
+		}
+		orgId := commandOrgNameSplit[1]
+		return listVmSizingPoliciesForImport(meta, orgId)
+	} else {
+		orgId, policyId := resourceURI[0], resourceURI[1]
+		return getVmSizingPolicy(d, meta, orgId, policyId)
+	}
+}
+
+func getVmSizingPolicy(d *schema.ResourceData, meta interface{}, orgId, policyId string) ([]*schema.ResourceData, error) {
 	vcdClient := meta.(*VCDClient)
 
-	adminOrg, err := vcdClient.GetAdminOrg(orgName)
+	adminOrg, err := vcdClient.GetAdminOrgByNameOrId(orgId)
 	if err != nil {
 		return nil, fmt.Errorf(errorRetrievingOrg, err)
 	}
@@ -492,10 +514,43 @@ func resourceVmSizingPolicyImport(d *schema.ResourceData, meta interface{}) ([]*
 		return nil, fmt.Errorf("unable to find VM sizing policy %s, err: %s", policyId, err)
 	}
 
-	_ = d.Set("org", orgName)
-	_ = d.Set("name", vmSizingPolicy.VdcComputePolicy.Name)
+	if vcdClient.Org != adminOrg.AdminOrg.Name && vcdClient.Org != adminOrg.AdminOrg.ID {
+		d.Set("org", adminOrg.AdminOrg.Name)
+	}
 
+	_ = d.Set("name", vmSizingPolicy.VdcComputePolicy.Name)
 	d.SetId(vmSizingPolicy.VdcComputePolicy.ID)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func listVmSizingPoliciesForImport(meta interface{}, orgId string) ([]*schema.ResourceData, error) {
+
+	vcdClient := meta.(*VCDClient)
+	org, err := vcdClient.GetAdminOrgByNameOrId(orgId)
+	if err != nil {
+		return nil, fmt.Errorf("[listVmSizingPoliciesForImport] unable to find Org %s: %s ", orgId, err)
+	}
+
+	stdout := getTerraformStdout()
+	_, _ = fmt.Fprintln(stdout, "Retrieving all VM sizing policies")
+	policies, err := org.GetAllVdcComputePolicies(nil)
+	if err != nil {
+		return nil, fmt.Errorf("unable to retrieve VM sizing policies: %s", err)
+	}
+
+	writer := tabwriter.NewWriter(stdout, 0, 8, 1, '\t', tabwriter.AlignRight)
+
+	fmt.Fprintln(writer, "No\tID\tName\t")
+	fmt.Fprintln(writer, "--\t--\t----\t")
+
+	for index, policy := range policies {
+		fmt.Fprintf(writer, "%d\t%s\t%s\n", (index + 1), policy.ID, policy.Name)
+	}
+	err = writer.Flush()
+	if err != nil {
+		return nil, fmt.Errorf("unable to write to stdout: %s", err)
+	}
+
+	return nil, fmt.Errorf("resource was not imported! %s", errHelpVmSizingPolicyImport)
 }

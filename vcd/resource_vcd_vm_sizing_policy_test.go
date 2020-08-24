@@ -155,10 +155,11 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				ResourceName:      resource4,
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateIdFunc: importStateVmSizingPolicyById(testConfig, resource4),
+				ResourceName:            resource4,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateVmSizingPolicyById(testConfig, resource4),
+				ImportStateVerifyIgnore: []string{"org"},
 			},
 		},
 	})
