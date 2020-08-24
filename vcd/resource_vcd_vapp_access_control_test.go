@@ -187,7 +187,7 @@ func testAccCheckVcdVappAccessControlExists(resourceName string, orgName, vdcNam
 		if err != nil {
 			return fmt.Errorf("error: could not find vApp %s: %s", rs.Primary.ID, err)
 		}
-		_, err = vapp.GetAccessControl()
+		_, err = vapp.GetAccessControl(tenantContext)
 		if err != nil {
 			return fmt.Errorf("error: could not get access control for vApp %s: %s", vapp.VApp.Name, err)
 		}

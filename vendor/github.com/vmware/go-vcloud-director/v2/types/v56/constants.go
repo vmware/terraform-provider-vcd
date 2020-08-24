@@ -31,6 +31,8 @@ const (
 	MimeOrgList = "application/vnd.vmware.vcloud.orgList+xml"
 	// MimeOrg mime for org
 	MimeOrg = "application/vnd.vmware.vcloud.org+xml"
+	// MimeAdminOrg mime for admin org
+	MimeAdminOrg = "application/vnd.vmware.admin.organization+xml"
 	// MimeCatalog mime for catalog
 	MimeCatalog = "application/vnd.vmware.vcloud.catalog+xml"
 	// MimeCatalogItem mime for catalog item
@@ -321,4 +323,12 @@ const (
 const (
 	OpenApiPathVersion1_0_0 = "1.0.0/"
 	OpenApiEndpointRoles    = "roles/"
+)
+
+// Header keys to run operations in tenant context
+const (
+	// HeaderTenantContext requires the Org ID of the tenant
+	HeaderTenantContext = "X-VMWARE-VCLOUD-TENANT-CONTEXT"
+	// HeaderAuthContext requires the Org name of the tenant
+	HeaderAuthContext = "X-VMWARE-VCLOUD-AUTH-CONTEXT"
 )

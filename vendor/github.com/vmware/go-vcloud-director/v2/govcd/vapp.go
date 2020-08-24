@@ -66,7 +66,7 @@ func (vapp *VApp) getParentVDC() (Vdc, error) {
 			vdc := NewVdc(vapp.client)
 
 			_, err := vapp.client.ExecuteRequest(link.HREF, http.MethodGet,
-				"", "error retrieving paren vdc: %s", nil, vdc.Vdc)
+				"", "error retrieving parent vdc: %s", nil, vdc.Vdc)
 			if err != nil {
 				return Vdc{}, err
 			}
@@ -1350,4 +1350,34 @@ func (client *Client) QueryVappList() ([]*types.QueryResultVAppRecordType, error
 		vappList = vappResult.Results.AdminVAppRecord
 	}
 	return vappList, nil
+}
+
+// GetOrgInfo finds the organization to which the vApp belongs (through the VDC), and returns its name and ID
+func (vapp *VApp) GetOrgInfo() (string, string, error) {
+	var orgHref string
+	var err error
+	vdc, err := vapp.getParentVDC()
+	if err != nil {
+		return "", "", err
+	}
+	var orgId string
+	for _, link := range vdc.Vdc.Link {
+		if link.Rel == "up" && (link.Type == types.MimeOrg || link.Type == types.MimeAdminOrg) {
+			orgId, err = GetUuidFromHref(link.HREF, true)
+			if err != nil {
+				return "", "", err
+			}
+			orgHref = link.HREF
+			break
+		}
+	}
+
+	var org types.Org
+	_, err = vdc.client.ExecuteRequest(orgHref, http.MethodGet,
+		"", "error retrieving org: %s", nil, &org)
+	if err != nil {
+		return "", "", err
+	}
+
+	return org.Name, orgId, nil
 }

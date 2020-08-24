@@ -781,3 +781,32 @@ func (catalog *Catalog) QueryMediaList() ([]*types.MediaRecordType, error) {
 	}
 	return mediaResults, nil
 }
+
+// GetOrgInfo finds the organization to which the catalog belongs, and returns its name and ID
+func (catalog *Catalog) GetOrgInfo() (string, string, error) {
+	var orgId string
+	var orgHref string
+	var err error
+	for _, link := range catalog.Catalog.Link {
+		if link.Rel == "up" && (link.Type == types.MimeOrg || link.Type == types.MimeAdminOrg) {
+			orgId, err = GetUuidFromHref(link.HREF, true)
+			if err != nil {
+				return "", "", err
+			}
+			orgHref = link.HREF
+			break
+		}
+	}
+	if orgHref == "" || orgId == "" {
+		return "", "", fmt.Errorf("error retrieving org info for catalog %s", catalog.Catalog.Name)
+	}
+
+	var org types.Org
+	_, err = catalog.client.ExecuteRequest(orgHref, http.MethodGet,
+		"", "error retrieving org: %s", nil, &org)
+	if err != nil {
+		return "", "", err
+	}
+
+	return org.Name, orgId, nil
+}

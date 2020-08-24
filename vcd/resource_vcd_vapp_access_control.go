@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -87,6 +88,10 @@ func resourceVcdAccessControlVapp() *schema.Resource {
 	}
 }
 
+// tenantContext defines whether we run access control operations in the context of the tenant or the original caller.
+// By default it is ON (= run as tenant). We can turn it off by setting the environment variable VCD_ORIGINAL_CONTEXT.
+var tenantContext = os.Getenv("VCD_ORIGINAL_CONTEXT") == ""
+
 func resourceAccessControlVappCreate(d *schema.ResourceData, meta interface{}) error {
 	return resourceAccessControlVappUpdate(d, meta)
 }
@@ -143,7 +148,7 @@ func resourceAccessControlVappUpdate(d *schema.ResourceData, meta interface{}) e
 		}
 	}
 
-	err = vapp.SetAccessControl(&accessControl)
+	err = vapp.SetAccessControl(&accessControl, tenantContext)
 
 	if err != nil {
 		return fmt.Errorf("[resourceAccessControlVappUpdate] error setting access control for vApp %s: %s", vapp.VApp.Name, err)
@@ -166,7 +171,7 @@ func resourceAccessControlVappRead(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("[resourceAccessControlVappRead] error retrieving vApp %s. %s", vappId, err)
 	}
 
-	accessControl, err := vapp.GetAccessControl()
+	accessControl, err := vapp.GetAccessControl(tenantContext)
 	if err != nil {
 		return fmt.Errorf("[resourceAccessControlVappRead] error retrieving access control for vApp %s : %s", vapp.VApp.Name, err)
 	}
@@ -203,7 +208,7 @@ func resourceAccessControlVappDelete(d *schema.ResourceData, meta interface{}) e
 	if err != nil {
 		return fmt.Errorf("error finding vApp. %s", err)
 	}
-	err = vapp.RemoveAccessControl()
+	err = vapp.RemoveAccessControl(tenantContext)
 	if err != nil {
 		return fmt.Errorf("error removing access control for vApp %s: %s", vapp.VApp.Name, err)
 	}
