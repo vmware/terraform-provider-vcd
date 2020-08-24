@@ -782,8 +782,12 @@ func (catalog *Catalog) QueryMediaList() ([]*types.MediaRecordType, error) {
 	return mediaResults, nil
 }
 
-// GetOrgInfo finds the organization to which the catalog belongs, and returns its name and ID
-func (catalog *Catalog) GetOrgInfo() (string, string, error) {
+// getOrgInfo finds the organization to which the catalog belongs, and returns its name and ID
+func (catalog *Catalog) getOrgInfo() (orgInfoType, error) {
+	previous, exists := orgInfoCache[catalog.Catalog.ID]
+	if exists {
+		return previous, nil
+	}
 	var orgId string
 	var orgHref string
 	var err error
@@ -791,22 +795,26 @@ func (catalog *Catalog) GetOrgInfo() (string, string, error) {
 		if link.Rel == "up" && (link.Type == types.MimeOrg || link.Type == types.MimeAdminOrg) {
 			orgId, err = GetUuidFromHref(link.HREF, true)
 			if err != nil {
-				return "", "", err
+				return orgInfoType{}, err
 			}
 			orgHref = link.HREF
 			break
 		}
 	}
 	if orgHref == "" || orgId == "" {
-		return "", "", fmt.Errorf("error retrieving org info for catalog %s", catalog.Catalog.Name)
+		return orgInfoType{}, fmt.Errorf("error retrieving org info for catalog %s", catalog.Catalog.Name)
 	}
 
 	var org types.Org
 	_, err = catalog.client.ExecuteRequest(orgHref, http.MethodGet,
 		"", "error retrieving org: %s", nil, &org)
 	if err != nil {
-		return "", "", err
+		return orgInfoType{}, err
 	}
 
-	return org.Name, orgId, nil
+	orgInfoCache[catalog.Catalog.ID] = orgInfoType{
+		id:   orgId,
+		name: org.Name,
+	}
+	return orgInfoType{name: org.Name, id: orgId}, nil
 }

@@ -15,6 +15,16 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
+// orgInfoType is the basic information about an organization (needed for tenant context)
+type orgInfoType struct {
+	id   string
+	name string
+}
+
+// orgInfoCache is a cache to save org information, avoid repeated calls to compute the same result.
+// The keys to this map are the requesting objects IDs.
+var orgInfoCache = make(map[string]orgInfoType)
+
 // GetAccessControl retrieves the access control information for the requested entity
 func (client Client) GetAccessControl(href, entityType, entityName string, headerValues map[string]string) (*types.ControlAccessParams, error) {
 
@@ -133,7 +143,7 @@ func (vapp VApp) GetAccessControl(useTenantContext bool) (*types.ControlAccessPa
 	}
 	// if useTenantContext is false, we use an empty header (= default behavior)
 	// if it is true, we use a header populated with tenant context values
-	accessControlHeader, err := vapp.GetAccessControlHeader(useTenantContext)
+	accessControlHeader, err := vapp.getAccessControlHeader(useTenantContext)
 	if err != nil {
 		return nil, err
 	}
@@ -149,7 +159,7 @@ func (vapp VApp) SetAccessControl(accessControl *types.ControlAccessParams, useT
 
 	// if useTenantContext is false, we use an empty header (= default behavior)
 	// if it is true, we use a header populated with tenant context values
-	accessControlHeader, err := vapp.GetAccessControlHeader(useTenantContext)
+	accessControlHeader, err := vapp.getAccessControlHeader(useTenantContext)
 	if err != nil {
 		return err
 	}
@@ -184,7 +194,7 @@ func (adminCatalog AdminCatalog) GetAccessControl(useTenantContext bool) (*types
 
 	// if useTenantContext is false, we use an empty header (= default behavior)
 	// if it is true, we use a header populated with tenant context values
-	accessControlHeader, err := adminCatalog.GetAccessControlHeader(useTenantContext)
+	accessControlHeader, err := adminCatalog.getAccessControlHeader(useTenantContext)
 	if err != nil {
 		return nil, err
 	}
@@ -201,7 +211,7 @@ func (adminCatalog AdminCatalog) SetAccessControl(accessControl *types.ControlAc
 
 	// if useTenantContext is false, we use an empty header (= default behavior)
 	// if it is true, we use a header populated with tenant context values
-	accessControlHeader, err := adminCatalog.GetAccessControlHeader(useTenantContext)
+	accessControlHeader, err := adminCatalog.getAccessControlHeader(useTenantContext)
 	if err != nil {
 		return err
 	}
@@ -265,7 +275,7 @@ func (catalog Catalog) GetAccessControl(useTenantContext bool) (*types.ControlAc
 		return nil, fmt.Errorf("catalog HREF is empty")
 	}
 	href := strings.Replace(catalog.Catalog.HREF, "/admin/", "/", 1)
-	accessControlHeader, err := catalog.GetAccessControlHeader(useTenantContext)
+	accessControlHeader, err := catalog.getAccessControlHeader(useTenantContext)
 	if err != nil {
 		return nil, err
 	}
@@ -283,7 +293,7 @@ func (catalog Catalog) SetAccessControl(accessControl *types.ControlAccessParams
 
 	// if useTenantContext is false, we use an empty header (= default behavior)
 	// if it is true, we use a header populated with tenant context values
-	accessControlHeader, err := catalog.GetAccessControlHeader(useTenantContext)
+	accessControlHeader, err := catalog.getAccessControlHeader(useTenantContext)
 	if err != nil {
 		return err
 	}
@@ -307,46 +317,46 @@ func (catalog Catalog) IsShared(useTenantContext bool) bool {
 	return settings.AccessSettings != nil
 }
 
-// GetAccessControlHeader builds the data needed to set the header when tenant context is required.
+// getAccessControlHeader builds the data needed to set the header when tenant context is required.
 // If useTenantContext is false, it returns an empty map.
 // Otherwise, it finds the Org ID and name (going up in the hierarchy through the VDC)
 // and creates the header data
-func (vapp *VApp) GetAccessControlHeader(useTenantContext bool) (map[string]string, error) {
+func (vapp *VApp) getAccessControlHeader(useTenantContext bool) (map[string]string, error) {
 	if !useTenantContext {
 		return map[string]string{}, nil
 	}
-	orgName, orgId, err := vapp.GetOrgInfo()
+	orgInfo, err := vapp.getOrgInfo()
 	if err != nil {
 		return nil, err
 	}
-	return map[string]string{types.HeaderTenantContext: orgId, types.HeaderAuthContext: orgName}, nil
+	return map[string]string{types.HeaderTenantContext: orgInfo.id, types.HeaderAuthContext: orgInfo.name}, nil
 }
 
-// GetAccessControlHeader builds the data needed to set the header when tenant context is required.
+// getAccessControlHeader builds the data needed to set the header when tenant context is required.
 // If useTenantContext is false, it returns an empty map.
 // Otherwise, it finds the Org ID and name and creates the header data
-func (catalog *Catalog) GetAccessControlHeader(useTenantContext bool) (map[string]string, error) {
+func (catalog *Catalog) getAccessControlHeader(useTenantContext bool) (map[string]string, error) {
 	if !useTenantContext {
 		return map[string]string{}, nil
 	}
-	orgName, orgId, err := catalog.GetOrgInfo()
+	orgInfo, err := catalog.getOrgInfo()
 	if err != nil {
 		return nil, err
 	}
-	return map[string]string{types.HeaderTenantContext: orgId, types.HeaderAuthContext: orgName}, nil
+	return map[string]string{types.HeaderTenantContext: orgInfo.id, types.HeaderAuthContext: orgInfo.name}, nil
 }
 
-// GetAccessControlHeader builds the data needed to set the header when tenant context is required.
+// getAccessControlHeader builds the data needed to set the header when tenant context is required.
 // If useTenantContext is false, it returns an empty map.
 // Otherwise, it finds the Org ID and name and creates the header data
-func (adminCatalog *AdminCatalog) GetAccessControlHeader(useTenantContext bool) (map[string]string, error) {
+func (adminCatalog *AdminCatalog) getAccessControlHeader(useTenantContext bool) (map[string]string, error) {
 	if !useTenantContext {
 		return map[string]string{}, nil
 	}
-	orgName, orgId, err := adminCatalog.GetOrgInfo()
+	orgInfo, err := adminCatalog.getOrgInfo()
 
 	if err != nil {
 		return nil, err
 	}
-	return map[string]string{types.HeaderTenantContext: orgId, types.HeaderAuthContext: orgName}, nil
+	return map[string]string{types.HeaderTenantContext: orgInfo.id, types.HeaderAuthContext: orgInfo.name}, nil
 }

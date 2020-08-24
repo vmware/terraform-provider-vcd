@@ -85,8 +85,12 @@ func (adminCatalog *AdminCatalog) Refresh() error {
 	return nil
 }
 
-// GetOrgInfo finds the organization to which the admin catalog belongs, and returns its name and ID
-func (adminCatalog *AdminCatalog) GetOrgInfo() (string, string, error) {
+// getOrgInfo finds the organization to which the admin catalog belongs, and returns its name and ID
+func (adminCatalog *AdminCatalog) getOrgInfo() (orgInfoType, error) {
+	previous, exists := orgInfoCache[adminCatalog.AdminCatalog.ID]
+	if exists {
+		return previous, nil
+	}
 	var orgId string
 	var orgHref string
 	var err error
@@ -94,21 +98,25 @@ func (adminCatalog *AdminCatalog) GetOrgInfo() (string, string, error) {
 		if link.Rel == "up" && (link.Type == types.MimeOrg || link.Type == types.MimeAdminOrg) {
 			orgId, err = GetUuidFromHref(link.HREF, true)
 			if err != nil {
-				return "", "", err
+				return orgInfoType{}, err
 			}
 			orgHref = link.HREF
 			break
 		}
 	}
 	if orgHref == "" || orgId == "" {
-		return "", "", fmt.Errorf("error retrieving org info for admin catalog %s", adminCatalog.AdminCatalog.Name)
+		return orgInfoType{}, fmt.Errorf("error retrieving org info for admin catalog %s", adminCatalog.AdminCatalog.Name)
 	}
 	var org types.Org
 	_, err = adminCatalog.client.ExecuteRequest(orgHref, http.MethodGet,
 		"", "error retrieving org: %s", nil, &org)
 	if err != nil {
-		return "", "", err
+		return orgInfoType{}, err
 	}
 
-	return org.Name, orgId, nil
+	orgInfoCache[adminCatalog.AdminCatalog.ID] = orgInfoType{
+		id:   orgId,
+		name: org.Name,
+	}
+	return orgInfoType{name: org.Name, id: orgId}, nil
 }

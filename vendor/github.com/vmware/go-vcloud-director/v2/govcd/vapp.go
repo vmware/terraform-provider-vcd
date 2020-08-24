@@ -1333,7 +1333,7 @@ func (vapp *VApp) GetVMByNameOrId(identifier string, refresh bool) (*VM, error) 
 	return entity.(*VM), err
 }
 
-// QueryVappList returns a list of all VMs in all the organizations available to the caller
+// QueryVappList returns a list of all vApps in all the organizations available to the caller
 func (client *Client) QueryVappList() ([]*types.QueryResultVAppRecordType, error) {
 	var vappList []*types.QueryResultVAppRecordType
 	queryType := client.GetQueryType(types.QtVapp)
@@ -1352,20 +1352,24 @@ func (client *Client) QueryVappList() ([]*types.QueryResultVAppRecordType, error
 	return vappList, nil
 }
 
-// GetOrgInfo finds the organization to which the vApp belongs (through the VDC), and returns its name and ID
-func (vapp *VApp) GetOrgInfo() (string, string, error) {
+// getOrgInfo finds the organization to which the vApp belongs (through the VDC), and returns its name and ID
+func (vapp *VApp) getOrgInfo() (orgInfoType, error) {
+	previous, exists := orgInfoCache[vapp.VApp.ID]
+	if exists {
+		return previous, nil
+	}
 	var orgHref string
 	var err error
 	vdc, err := vapp.getParentVDC()
 	if err != nil {
-		return "", "", err
+		return orgInfoType{}, err
 	}
 	var orgId string
 	for _, link := range vdc.Vdc.Link {
 		if link.Rel == "up" && (link.Type == types.MimeOrg || link.Type == types.MimeAdminOrg) {
 			orgId, err = GetUuidFromHref(link.HREF, true)
 			if err != nil {
-				return "", "", err
+				return orgInfoType{}, err
 			}
 			orgHref = link.HREF
 			break
@@ -1376,8 +1380,11 @@ func (vapp *VApp) GetOrgInfo() (string, string, error) {
 	_, err = vdc.client.ExecuteRequest(orgHref, http.MethodGet,
 		"", "error retrieving org: %s", nil, &org)
 	if err != nil {
-		return "", "", err
+		return orgInfoType{}, err
 	}
-
-	return org.Name, orgId, nil
+	orgInfoCache[vapp.VApp.ID] = orgInfoType{
+		id:   orgId,
+		name: org.Name,
+	}
+	return orgInfoType{name: org.Name, id: orgId}, nil
 }
