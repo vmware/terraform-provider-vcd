@@ -142,7 +142,7 @@ func (egw *EdgeGateway) AddDhcpPool(network *types.OrgVDCNetwork, dhcppool []int
 
 	task := NewTask(egw.client)
 
-	if err = decodeBody(resp, task.Task); err != nil {
+	if err = decodeBody(types.BodyTypeXML, resp, task.Task); err != nil {
 		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
 	}
 
@@ -709,7 +709,7 @@ func (egw *EdgeGateway) CreateFirewallRules(defaultAction string, rules []*types
 
 	task := NewTask(egw.client)
 
-	if err = decodeBody(resp, task.Task); err != nil {
+	if err = decodeBody(types.BodyTypeXML, resp, task.Task); err != nil {
 		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
 	}
 
@@ -997,7 +997,7 @@ func (egw *EdgeGateway) DeleteAsync(force bool, recursive bool) (Task, error) {
 		return Task{}, fmt.Errorf("error deleting edge gateway: %s", err)
 	}
 	task := NewTask(egw.client)
-	if err = decodeBody(resp, task.Task); err != nil {
+	if err = decodeBody(types.BodyTypeXML, resp, task.Task); err != nil {
 		return Task{}, fmt.Errorf("error decoding task response: %s", err)
 	}
 	return *task, err

@@ -734,12 +734,12 @@ func (vm *VM) GetQuestion() (types.VmPendingQuestion, error) {
 	}
 
 	if http.StatusOK != resp.StatusCode {
-		return types.VmPendingQuestion{}, fmt.Errorf("error getting question: %s", ParseErr(resp, &types.Error{}))
+		return types.VmPendingQuestion{}, fmt.Errorf("error getting question: %s", ParseErr(types.BodyTypeXML, resp, &types.Error{}))
 	}
 
 	question := &types.VmPendingQuestion{}
 
-	if err = decodeBody(resp, question); err != nil {
+	if err = decodeBody(types.BodyTypeXML, resp, question); err != nil {
 		return types.VmPendingQuestion{}, fmt.Errorf("error decoding question response: %s", err)
 	}
 
@@ -1352,7 +1352,6 @@ func (vm *VM) UpdateInternalDisksAsync(disksSettingToUpdate *types.VmSpecSection
 			Ovf:           types.XMLNamespaceOVF,
 			Name:          vm.VM.Name,
 			VmSpecSection: disksSettingToUpdate,
-			// API version requirements changes through vCD version to access VmSpecSection
 		})
 }
 
@@ -1472,7 +1471,6 @@ func (vm *VM) UpdateVmSpecSectionAsync(vmSettingsToUpdate *types.VmSpecSection, 
 			Name:          vm.VM.Name,
 			Description:   description,
 			VmSpecSection: vmSettingsToUpdate,
-			// API version requirements changes through vCD version to access VmSpecSection
 		})
 }
 
