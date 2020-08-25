@@ -157,20 +157,22 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 					resource.TestCheckResourceAttr(resource4, "memory.0.reservation_guarantee", params["MemoryReservation"].(string)),
 				),
 			},
+			// Tests import by id
 			resource.TestStep{
-				ResourceName:            resource4,
+				ResourceName:            resource4 + "-import-id",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateIdFunc:       importStateVmSizingPolicyById(testConfig, resource4),
+				ImportStateIdFunc:       importStateVmSizingPolicyByIdOrName(testConfig, resource4, true),
 				ImportStateVerifyIgnore: []string{"org"},
 			},
-			/*			resource.TestStep{
-						ResourceName:            resource4,
-						ImportState:             true,
-						ImportStateVerify:       true,
-						ImportStateIdFunc:       importStateVmSizingPolicyByName(testConfig, resource4),
-						ImportStateVerifyIgnore: []string{"org"},
-					},*/
+			// Tests import by name
+			resource.TestStep{
+				ResourceName:            resource4 + "-import-name",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateVmSizingPolicyByIdOrName(testConfig, resource4, false),
+				ImportStateVerifyIgnore: []string{"org"},
+			},
 			resource.TestStep{
 				Config: dataSourceText,
 				Check: resource.ComposeTestCheckFunc(
@@ -193,18 +195,25 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 	})
 }
 
-func importStateVmSizingPolicyById(testConfig TestConfig, resourceName string) resource.ImportStateIdFunc {
+func importStateVmSizingPolicyByIdOrName(testConfig TestConfig, resourceName string, byId bool) resource.ImportStateIdFunc {
 	return func(s *terraform.State) (string, error) {
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
 			return "", fmt.Errorf("not found: %s", resourceName)
 		}
-		if testConfig.VCD.Org == "" || rs.Primary.ID == "" {
-			return "", fmt.Errorf("missing information to generate import path %s, %s", testConfig.VCD.Org, rs.Primary.ID)
+		var identifier string
+		if byId {
+			identifier = rs.Primary.ID
+		} else {
+			identifier = rs.Primary.Attributes["name"]
+		}
+
+		if testConfig.VCD.Org == "" || identifier == "" {
+			return "", fmt.Errorf("missing information to generate import path %s, %s", testConfig.VCD.Org, identifier)
 		}
 		return testConfig.VCD.Org +
 			ImportSeparator +
-			rs.Primary.ID, nil
+			identifier, nil
 	}
 }
 

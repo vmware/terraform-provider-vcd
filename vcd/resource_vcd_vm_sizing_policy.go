@@ -499,7 +499,7 @@ func getMemoryInput(memoryPart []interface{}, params *types.VdcComputePolicy) (*
 }
 
 var errHelpVmSizingPolicyImport = fmt.Errorf(`resource id must be specified in one of these formats:
-'org-name.vm-sizing-policy-id' or 'list@org-name' to get a list of VM sizing policies with their IDs`)
+'org-name.vm-sizing-policy-name', 'org-id.vm-sizing-policy-id' or 'list@org-name' to get a list of VM sizing policies with their IDs`)
 
 // resourceVmSizingPolicyImport is responsible for importing the resource.
 // The following steps happen as part of import
@@ -545,10 +545,21 @@ func getVmSizingPolicy(d *schema.ResourceData, meta interface{}, orgId, policyId
 		return nil, fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	vmSizingPolicy, err := adminOrg.GetVdcComputePolicyById(policyId)
+	var vmSizingPolicy *govcd.VdcComputePolicy
+	vmSizingPolicy, err = adminOrg.GetVdcComputePolicyById(policyId)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find VM sizing policy %s", policyId)
-		return nil, fmt.Errorf("unable to find VM sizing policy %s, err: %s", policyId, err)
+		queryParams := url.Values{}
+		queryParams.Add("filter", "name=="+policyId)
+		vmSizingPolicies, err := adminOrg.GetAllVdcComputePolicies(queryParams)
+		if err != nil {
+			log.Printf("[DEBUG] Unable to find VM sizing policy %s", policyId)
+			return nil, fmt.Errorf("unable to find VM sizing policy %s, err: %s", policyId, err)
+		}
+		if len(vmSizingPolicies) != 1 {
+			log.Printf("[DEBUG] Unable to find unique VM sizing policy %s", policyId)
+			return nil, fmt.Errorf("unable to find unique VM sizing policy %s, err: %s", policyId, err)
+		}
+		vmSizingPolicy = vmSizingPolicies[0]
 	}
 
 	if vcdClient.Org != adminOrg.AdminOrg.Name && vcdClient.Org != adminOrg.AdminOrg.ID {
