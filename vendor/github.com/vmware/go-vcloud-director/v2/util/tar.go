@@ -9,6 +9,7 @@ import (
 	"errors"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -128,4 +129,26 @@ func sanitizedName(filename string) string {
 	filename = strings.TrimLeft(filename, "./")
 	filename = strings.Replace(filename, "../../", "../", -1)
 	return strings.Replace(filename, "..\\", "", -1)
+}
+
+// GetFileContentType returns the real file type
+func GetFileContentType(file string) (string, error) { // Open File
+	f, err := os.Open(file)
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+	// Only the first 512 bytes are used to sniff the content type.
+	buffer := make([]byte, 512)
+
+	_, err = f.Read(buffer)
+	if err != nil {
+		return "", err
+	}
+
+	// Use the net/http package's handy DectectContentType function. Always returns a valid
+	// content-type by returning "application/octet-stream" if no others seemed to match.
+	contentType := http.DetectContentType(buffer)
+
+	return contentType, nil
 }

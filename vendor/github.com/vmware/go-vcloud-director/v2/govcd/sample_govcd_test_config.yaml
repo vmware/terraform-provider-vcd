@@ -161,6 +161,9 @@ ova:
   #
   # The ova with multi VMs for tests.
   ovaMultiVmPath: ../test-resources/vapp_with_3_vms.ova
+  #
+  # The ovf for uploading catalog item for tests.
+  ovfPath: ../test-resources/test_vapp_template_ovf/descriptor.ovf
 media:
   # The iso for uploading media item for tests.
   # Default paths are simple iso provided by project
