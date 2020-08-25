@@ -42,12 +42,15 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 	configText := templateFill(testAccCheckVmSizingPolicy_basic, params)
 	params["FuncName"] = t.Name() + "-Update"
 	updateText := templateFill(testAccCheckVmSizingPolicy_update, params)
+	params["FuncName"] = t.Name() + "-DataSource"
+	dataSourceText := templateFill(testAccCheckVmSizingPolicy_update+testAccVmSizingPolicyDataSource, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateText)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", dataSourceText)
 
 	resource1 := "vcd_vm_sizing_policy." + params["PolicyName"].(string) + "_1"
 	resource2 := "vcd_vm_sizing_policy." + params["PolicyName"].(string) + "_2"
@@ -160,6 +163,31 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateVmSizingPolicyById(testConfig, resource4),
 				ImportStateVerifyIgnore: []string{"org"},
+			},
+			/*			resource.TestStep{
+						ResourceName:            resource4,
+						ImportState:             true,
+						ImportStateVerify:       true,
+						ImportStateIdFunc:       importStateVmSizingPolicyByName(testConfig, resource4),
+						ImportStateVerifyIgnore: []string{"org"},
+					},*/
+			resource.TestStep{
+				Config: dataSourceText,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckOutput("description", params["Description"].(string)+"_updated"),
+
+					resource.TestCheckOutput("shares", params["CpuShare"].(string)),
+					resource.TestCheckOutput("limit_in_mhz", params["CpuLimit"].(string)),
+					resource.TestCheckOutput("count", params["CpuCount"].(string)),
+					resource.TestCheckOutput("speed_in_mhz", params["CpuSpeed"].(string)),
+					resource.TestCheckOutput("cores_per_socket", params["CoresPerSocket"].(string)),
+					resource.TestCheckOutput("reservation_guarantee", params["CpuReservation"].(string)),
+
+					resource.TestCheckOutput("memory_shares", params["MemoryShare"].(string)),
+					resource.TestCheckOutput("size_in_mb", params["MemorySize"].(string)),
+					resource.TestCheckOutput("limit_in_mb", params["MemoryLimit"].(string)),
+					resource.TestCheckOutput("memory_reservation_guarantee", params["MemoryReservation"].(string)),
+				),
 			},
 		},
 	})
@@ -347,5 +375,54 @@ resource "vcd_vm_sizing_policy" "{{.PolicyName}}_4" {
     limit_in_mb           = "{{.MemoryLimit}}"
     reservation_guarantee = "{{.MemoryReservation}}"
   }
+}
+`
+const testAccVmSizingPolicyDataSource = `
+data "vcd_vm_sizing_policy" "vcd_vm_sizing_policy_by_name" {
+	name = vcd_vm_sizing_policy.{{.PolicyName}}_4.name
+}
+
+output "description" {
+	value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.description
+}
+
+output "shares" {
+	value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.cpu[0].shares
+}
+
+output "count" {
+	value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.cpu[0].count
+}
+
+output "limit_in_mhz" {
+	value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.cpu[0].limit_in_mhz
+}
+
+output "speed_in_mhz" {
+	value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.cpu[0].speed_in_mhz
+}
+
+output "cores_per_socket" {
+	value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.cpu[0].cores_per_socket
+}
+
+output "reservation_guarantee" {
+	value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.cpu[0].reservation_guarantee
+}
+
+output "memory_shares" {
+	value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.memory[0].shares
+}
+
+output "size_in_mb" {
+	value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.memory[0].size_in_mb
+}
+
+output "limit_in_mb" {
+	value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.memory[0].limit_in_mb
+}
+
+output "memory_reservation_guarantee" {
+	value = data.vcd_vm_sizing_policy.vcd_vm_sizing_policy_by_name.memory[0].reservation_guarantee
 }
 `

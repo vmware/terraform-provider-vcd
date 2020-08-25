@@ -246,6 +246,11 @@ func ParseErr(bodyType types.BodyType, resp *http.Response, errType error) error
 		return fmt.Errorf("[ParseErr]: error parsing error body for non-200 request: %s (%+v)", err, resp)
 	}
 
+	// response body maybe empty for some error, such like 416, 400
+	if errType.Error() == "API Error: 0: " {
+		errType = fmt.Errorf(resp.Status)
+	}
+
 	return errType
 }
 
@@ -325,31 +330,32 @@ func checkRespWithErrType(bodyType types.BodyType, resp *http.Response, err, err
 		return resp, nil
 	// Invalid request, parse the XML error returned and return it.
 	case
-		http.StatusBadRequest,                  // 400
-		http.StatusUnauthorized,                // 401
-		http.StatusForbidden,                   // 403
-		http.StatusNotFound,                    // 404
-		http.StatusMethodNotAllowed,            // 405
-		http.StatusNotAcceptable,               // 406
-		http.StatusProxyAuthRequired,           // 407
-		http.StatusRequestTimeout,              // 408
-		http.StatusConflict,                    // 409
-		http.StatusGone,                        // 410
-		http.StatusLengthRequired,              // 411
-		http.StatusPreconditionFailed,          // 412
-		http.StatusRequestEntityTooLarge,       // 413
-		http.StatusRequestURITooLong,           // 414
-		http.StatusUnsupportedMediaType,        // 415
-		http.StatusLocked,                      // 423
-		http.StatusFailedDependency,            // 424
-		http.StatusUpgradeRequired,             // 426
-		http.StatusPreconditionRequired,        // 428
-		http.StatusTooManyRequests,             // 429
-		http.StatusRequestHeaderFieldsTooLarge, // 431
-		http.StatusUnavailableForLegalReasons,  // 451
-		http.StatusInternalServerError,         // 500
-		http.StatusServiceUnavailable,          // 503
-		http.StatusGatewayTimeout:              // 504
+		http.StatusBadRequest,                   // 400
+		http.StatusUnauthorized,                 // 401
+		http.StatusForbidden,                    // 403
+		http.StatusNotFound,                     // 404
+		http.StatusMethodNotAllowed,             // 405
+		http.StatusNotAcceptable,                // 406
+		http.StatusProxyAuthRequired,            // 407
+		http.StatusRequestTimeout,               // 408
+		http.StatusConflict,                     // 409
+		http.StatusGone,                         // 410
+		http.StatusLengthRequired,               // 411
+		http.StatusPreconditionFailed,           // 412
+		http.StatusRequestEntityTooLarge,        // 413
+		http.StatusRequestURITooLong,            // 414
+		http.StatusUnsupportedMediaType,         // 415
+		http.StatusRequestedRangeNotSatisfiable, // 416
+		http.StatusLocked,                       // 423
+		http.StatusFailedDependency,             // 424
+		http.StatusUpgradeRequired,              // 426
+		http.StatusPreconditionRequired,         // 428
+		http.StatusTooManyRequests,              // 429
+		http.StatusRequestHeaderFieldsTooLarge,  // 431
+		http.StatusUnavailableForLegalReasons,   // 451
+		http.StatusInternalServerError,          // 500
+		http.StatusServiceUnavailable,           // 503
+		http.StatusGatewayTimeout:               // 504
 		return nil, ParseErr(bodyType, resp, errType)
 	// Unhandled response.
 	default:
@@ -634,5 +640,10 @@ func takeIntAddress(x int) *int {
 
 // takeStringPointer is a helper that returns the address of a `string`
 func takeStringPointer(x string) *string {
+	return &x
+}
+
+// takeFloatAddress is a helper that returns the address of an `float64`
+func takeFloatAddress(x float64) *float64 {
 	return &x
 }

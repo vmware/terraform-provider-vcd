@@ -2,7 +2,9 @@ package vcd
 
 import (
 	"fmt"
+	"github.com/vmware/go-vcloud-director/v2/util"
 	"log"
+	"net/url"
 	"strconv"
 	"strings"
 	"text/tabwriter"
@@ -156,8 +158,13 @@ func resourceVmSizingPolicyCreate(d *schema.ResourceData, meta interface{}) erro
 	return resourceVmSizingPolicyRead(d, meta)
 }
 
-// Fetches information about an existing VM sizing policy for a data definition
+// resourceVcdVmAffinityRuleRead reads a resource VM affinity rule
 func resourceVmSizingPolicyRead(d *schema.ResourceData, meta interface{}) error {
+	return genericVcdVmSizingPolicyRead(d, meta)
+}
+
+// Fetches information about an existing VM sizing policy for a data definition
+func genericVcdVmSizingPolicyRead(d *schema.ResourceData, meta interface{}) error {
 	policyName := d.Get("name").(string)
 	log.Printf("[TRACE] VM sizing policy read initiated: %s", policyName)
 
@@ -168,51 +175,81 @@ func resourceVmSizingPolicyRead(d *schema.ResourceData, meta interface{}) error 
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	policy, err := adminOrg.GetVdcComputePolicyById(d.Id())
-	if err != nil {
-		log.Printf("[DEBUG] Unable to find VM sizing policy %s. Removing from tfstate.", policyName)
-		d.SetId("")
-		return fmt.Errorf("unable to find VM sizing policy %s, err: %s. Removing from tfstate", policyName, err)
+	// The method variable stores the information about how we found the rule, for logging purposes
+	method := "id"
+
+	var policy *govcd.VdcComputePolicy
+	if d.Id() != "" {
+		policy, err = adminOrg.GetVdcComputePolicyById(d.Id())
+		if err != nil {
+			log.Printf("[DEBUG] Unable to find VM sizing policy %s. Removing from tfstate.", policyName)
+			d.SetId("")
+			return fmt.Errorf("unable to find VM sizing policy %s, err: %s. Removing from tfstate", policyName, err)
+		}
 	}
 
-	return setVmSizingPolicy(d, policy)
+	// The secondary method of retrieval is from name
+	if d.Id() == "" {
+		if policyName == "" {
+			return fmt.Errorf("both name and ID are empty")
+		}
+		method = "name"
+		queryParams := url.Values{}
+		queryParams.Add("filter", "name=="+policyName)
+		filteredPoliciesByName, err := adminOrg.GetAllVdcComputePolicies(queryParams)
+		if err != nil {
+			log.Printf("[DEBUG] Unable to find VM sizing policy %s. Removing from tfstate.", policyName)
+			d.SetId("")
+			return fmt.Errorf("unable to find VM sizing policy %s, err: %s. Removing from tfstate", policyName, err)
+		}
+		if len(filteredPoliciesByName) != 1 {
+			log.Printf("[DEBUG] Unable to find VM sizing policy %s . Found Policies by name: %d. Removing from tfstate.", policyName, len(filteredPoliciesByName))
+			d.SetId("")
+			return fmt.Errorf("[DEBUG] Unable to find VM sizing policy %s, err: %s. Found Policies by name: %d. Removing from tfstate", policyName, err, len(filteredPoliciesByName))
+		}
+		policy = filteredPoliciesByName[0]
+		d.SetId(policy.VdcComputePolicy.ID)
+	}
+
+	util.Logger.Printf("[TRACE] [get VM sizing policy] Retrieved by %s\n", method)
+	return setVmSizingPolicy(d, *policy.VdcComputePolicy)
 }
 
 // setVmSizingPolicy sets object state from *govcd.VdcComputePolicy
-func setVmSizingPolicy(d *schema.ResourceData, policy *govcd.VdcComputePolicy) error {
+func setVmSizingPolicy(d *schema.ResourceData, policy types.VdcComputePolicy) error {
 
-	_ = d.Set("name", policy.VdcComputePolicy.Name)
-	_ = d.Set("description", policy.VdcComputePolicy.Description)
+	_ = d.Set("name", policy.Name)
+	_ = d.Set("description", policy.Description)
 
 	var cpuList []map[string]interface{}
 	cpuMap := make(map[string]interface{})
 
-	if policy.VdcComputePolicy.CPUShares != nil {
-		cpuMap["shares"] = policy.VdcComputePolicy.CPUShares
+	if policy.CPUShares != nil {
+		cpuMap["shares"] = strconv.Itoa(*policy.CPUShares)
 	}
 	cpuFieldProvided := false
-	if policy.VdcComputePolicy.CPUShares != nil {
-		cpuMap["shares"] = strconv.Itoa(*policy.VdcComputePolicy.CPUShares)
+	if policy.CPUShares != nil {
+		cpuMap["shares"] = strconv.Itoa(*policy.CPUShares)
 		cpuFieldProvided = true
 	}
-	if policy.VdcComputePolicy.CPULimit != nil {
-		cpuMap["limit_in_mhz"] = strconv.Itoa(*policy.VdcComputePolicy.CPULimit)
+	if policy.CPULimit != nil {
+		cpuMap["limit_in_mhz"] = strconv.Itoa(*policy.CPULimit)
 		cpuFieldProvided = true
 	}
-	if policy.VdcComputePolicy.CPUCount != nil {
-		cpuMap["count"] = strconv.Itoa(*policy.VdcComputePolicy.CPUCount)
+	if policy.CPUCount != nil {
+		cpuMap["count"] = strconv.Itoa(*policy.CPUCount)
 		cpuFieldProvided = true
 	}
-	if policy.VdcComputePolicy.CPUSpeed != nil {
-		cpuMap["speed_in_mhz"] = strconv.Itoa(*policy.VdcComputePolicy.CPUSpeed)
+	if policy.CPUSpeed != nil {
+		cpuMap["speed_in_mhz"] = strconv.Itoa(*policy.CPUSpeed)
 		cpuFieldProvided = true
 	}
-	if policy.VdcComputePolicy.CoresPerSocket != nil {
-		cpuMap["cores_per_socket"] = strconv.Itoa(*policy.VdcComputePolicy.CoresPerSocket)
+	if policy.CoresPerSocket != nil {
+		cpuMap["cores_per_socket"] = strconv.Itoa(*policy.CoresPerSocket)
 		cpuFieldProvided = true
 	}
-	if policy.VdcComputePolicy.CPUReservationGuarantee != nil {
-		cpuMap["reservation_guarantee"] = strconv.FormatFloat(*policy.VdcComputePolicy.CPUReservationGuarantee, 'f', -1, 64)
+	if policy.CPUReservationGuarantee != nil {
+		cpuMap["reservation_guarantee"] = strconv.FormatFloat(*policy.CPUReservationGuarantee, 'f', -1, 64)
 		cpuFieldProvided = true
 	}
 	if cpuFieldProvided {
@@ -226,20 +263,20 @@ func setVmSizingPolicy(d *schema.ResourceData, policy *govcd.VdcComputePolicy) e
 	var memoryList []map[string]interface{}
 	memoryMap := make(map[string]interface{})
 	memoryFieldProvided := false
-	if policy.VdcComputePolicy.Memory != nil {
-		memoryMap["size_in_mb"] = strconv.Itoa(*policy.VdcComputePolicy.Memory)
+	if policy.Memory != nil {
+		memoryMap["size_in_mb"] = strconv.Itoa(*policy.Memory)
 		memoryFieldProvided = true
 	}
-	if policy.VdcComputePolicy.MemoryLimit != nil {
-		memoryMap["limit_in_mb"] = strconv.Itoa(*policy.VdcComputePolicy.MemoryLimit)
+	if policy.MemoryLimit != nil {
+		memoryMap["limit_in_mb"] = strconv.Itoa(*policy.MemoryLimit)
 		memoryFieldProvided = true
 	}
-	if policy.VdcComputePolicy.MemoryShares != nil {
-		memoryMap["shares"] = strconv.Itoa(*policy.VdcComputePolicy.MemoryShares)
+	if policy.MemoryShares != nil {
+		memoryMap["shares"] = strconv.Itoa(*policy.MemoryShares)
 		memoryFieldProvided = true
 	}
-	if policy.VdcComputePolicy.MemoryReservationGuarantee != nil {
-		memoryMap["reservation_guarantee"] = strconv.FormatFloat(*policy.VdcComputePolicy.MemoryReservationGuarantee, 'f', -1, 64)
+	if policy.MemoryReservationGuarantee != nil {
+		memoryMap["reservation_guarantee"] = strconv.FormatFloat(*policy.MemoryReservationGuarantee, 'f', -1, 64)
 		memoryFieldProvided = true
 	}
 	if memoryFieldProvided {
@@ -250,7 +287,7 @@ func setVmSizingPolicy(d *schema.ResourceData, policy *govcd.VdcComputePolicy) e
 		}
 	}
 
-	log.Printf("[TRACE] VM sizing policy read completed: %#v", policy.VdcComputePolicy.Name)
+	log.Printf("[TRACE] VM sizing policy read completed: %#v", policy.Name)
 	return nil
 }
 
@@ -545,7 +582,7 @@ func listVmSizingPoliciesForImport(meta interface{}, orgId string) ([]*schema.Re
 	fmt.Fprintln(writer, "--\t--\t----\t")
 
 	for index, policy := range policies {
-		fmt.Fprintf(writer, "%d\t%s\t%s\n", (index + 1), policy.ID, policy.Name)
+		fmt.Fprintf(writer, "%d\t%s\t%s\n", (index + 1), policy.VdcComputePolicy.ID, policy.VdcComputePolicy.Name)
 	}
 	err = writer.Flush()
 	if err != nil {

@@ -45,7 +45,7 @@ func (org *AdminOrg) GetVdcComputePolicyById(id string) (*VdcComputePolicy, erro
 
 // GetAllVdcComputePolicies retrieves all VDC compute policies using OpenAPI endpoint. Query parameters can be supplied to perform additional
 // filtering
-func (org *AdminOrg) GetAllVdcComputePolicies(queryParameters url.Values) ([]*types.VdcComputePolicy, error) {
+func (org *AdminOrg) GetAllVdcComputePolicies(queryParameters url.Values) ([]*VdcComputePolicy, error) {
 	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointVdcComputePolicies
 	minimumApiVersion, err := org.client.checkOpenApiEndpointCompatibility(endpoint)
 	if err != nil {
@@ -64,7 +64,16 @@ func (org *AdminOrg) GetAllVdcComputePolicies(queryParameters url.Values) ([]*ty
 		return nil, err
 	}
 
-	return responses, nil
+	var wrappedVcdComputePolicies []*VdcComputePolicy
+	for _, response := range responses {
+		wrappedVcdComputePolicy := &VdcComputePolicy{
+			client:           org.client,
+			VdcComputePolicy: response,
+		}
+		wrappedVcdComputePolicies = append(wrappedVcdComputePolicies, wrappedVcdComputePolicy)
+	}
+
+	return wrappedVcdComputePolicies, nil
 }
 
 // Create creates a new VDC Compute Policy using OpenAPI endpoint
