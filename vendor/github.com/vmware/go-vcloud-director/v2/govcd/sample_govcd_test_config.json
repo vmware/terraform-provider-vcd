@@ -74,7 +74,8 @@
   },
   "ova": {
     "ovaPath": "../test-resources/test_vapp_template.ova",
-    "ovaChunkedPath": "../test-resources/template_with_custom_chunk_size.ova"
+    "ovaChunkedPath": "../test-resources/template_with_custom_chunk_size.ova",
+    "ovfPath": "../test-resources/test_vapp_template_ovf/descriptor.ovf"
   },
   "media": {
     "mediaPath": "../test-resources/test.iso",

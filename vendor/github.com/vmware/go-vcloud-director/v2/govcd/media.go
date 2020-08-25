@@ -61,7 +61,9 @@ func NewMediaRecord(cli *Client) *MediaRecord {
 // Uploads an ISO file as media. This method only uploads bits to vCD spool area.
 // Returns errors if any occur during upload from vCD or upload process. On upload fail client may need to
 // remove vCD catalog item which waits for files to be uploaded.
-// Recommend to use catalog.UploadMediaImage which let's expect in which catalog file will be placed
+//
+// Deprecated: This method is broken in API V32.0+. Please use catalog.UploadMediaImage because VCD does not support
+// uploading directly to VDC anymore.
 func (vdc *Vdc) UploadMediaImage(mediaName, mediaDescription, filePath string, uploadPieceSize int64) (UploadTask, error) {
 	util.Logger.Printf("[TRACE] UploadImage: %s, image name: %v \n", mediaName, mediaDescription)
 

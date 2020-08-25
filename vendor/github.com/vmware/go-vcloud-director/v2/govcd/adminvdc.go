@@ -34,15 +34,6 @@ type vdcVersionedFuncs struct {
 	UpdateVdcAsync   func(adminVdc *AdminVdc) (Task, error)
 }
 
-// VDC function mapping for API version 31.0 (from vCD 9.5)
-var vdcVersionedFuncsV95 = vdcVersionedFuncs{
-	SupportedVersion: "31.0",
-	CreateVdc:        createVdc,
-	CreateVdcAsync:   createVdcAsync,
-	UpdateVdc:        updateVdc,
-	UpdateVdcAsync:   updateVdcAsync,
-}
-
 // VDC function mapping for API version 32.0 (from vCD 9.7)
 var vdcVersionedFuncsV97 = vdcVersionedFuncs{
 	SupportedVersion: "32.0",
@@ -54,7 +45,6 @@ var vdcVersionedFuncsV97 = vdcVersionedFuncs{
 
 // vdcVersionedFuncsByVcdVersion is a map of VDC functions by vCD version
 var vdcVersionedFuncsByVcdVersion = map[string]vdcVersionedFuncs{
-	"vdc9.5": vdcVersionedFuncsV95,
 	"vdc9.7": vdcVersionedFuncsV97,
 
 	// If we add a new function to this list, we also need to update the "default" entry
@@ -91,16 +81,9 @@ func (adminOrg *AdminOrg) GetAdminVdcByName(vdcname string) (AdminVdc, error) {
 
 // GetAdminVDCByHref retrieves a VDC using a direct call with the HREF
 func (adminOrg *AdminOrg) GetAdminVDCByHref(vdcHref string) (*AdminVdc, error) {
-
 	adminVdc := NewAdminVdc(adminOrg.client)
-
-	// We are executing below request with a specific API version in the header, because we want to retrieve the most
-	// available fields in AdminVdc which vCD provides, but also which our code understands. As we can't blindly use
-	// the latest version, we're limiting the highest used version to the one we support with
-	// the GetSpecificApiVersionOnCondition(...) function. Specifically, the API version 32 returns
-	// two additional fields: IncludeMemoryOverhead and IsElastic for Flex allocation
-	_, err := adminOrg.client.ExecuteRequestWithApiVersion(vdcHref, http.MethodGet,
-		"", "error getting vdc: %s", nil, adminVdc.AdminVdc, adminVdc.client.GetSpecificApiVersionOnCondition(">= 32.0", "32.0"))
+	_, err := adminOrg.client.ExecuteRequest(vdcHref, http.MethodGet,
+		"", "error getting vdc: %s", nil, adminVdc.AdminVdc)
 
 	if err != nil {
 		return nil, err
@@ -219,13 +202,8 @@ func (adminVdc *AdminVdc) Refresh() error {
 	// elements in slices.
 	unmarshalledAdminVdc := &types.AdminVdc{}
 
-	// We are executing below request with a specific API version in the header, because we want to retrieve the most
-	// available fields in AdminVdc which vCD provides, but also which our code understands. As we can't blindly use
-	// the latest version, we're limiting the highest used version to the one we support with
-	// the GetSpecificApiVersionOnCondition(...) function. Specifically, the API version 32 returns
-	// two additional fields: IncludeMemoryOverhead and IsElastic for Flex allocation
-	_, err := adminVdc.client.ExecuteRequestWithApiVersion(adminVdc.AdminVdc.HREF, http.MethodGet,
-		"", "error refreshing VDC: %s", nil, unmarshalledAdminVdc, adminVdc.client.GetSpecificApiVersionOnCondition(">= 32.0", "32.0"))
+	_, err := adminVdc.client.ExecuteRequest(adminVdc.AdminVdc.HREF, http.MethodGet,
+		"", "error refreshing VDC: %s", nil, unmarshalledAdminVdc)
 	if err != nil {
 		return err
 	}
@@ -311,53 +289,6 @@ func (adminOrg *AdminOrg) CreateOrgVdcAsync(vdcConfiguration *types.VdcConfigura
 	return vdcFunctions.CreateVdcAsync(adminOrg, vdcConfiguration)
 }
 
-// createVdc creates a VDC with the given params under the given organization.
-// Returns a Vdc pointer and an error
-func createVdc(adminOrg *AdminOrg, vdcConfiguration *types.VdcConfiguration) (*Vdc, error) {
-	util.Logger.Printf("[TRACE] createVdc called %#v", *vdcConfiguration)
-	err := adminOrg.CreateVdcWait(vdcConfiguration)
-	if err != nil {
-		return nil, err
-	}
-
-	vdc, err := adminOrg.GetVDCByName(vdcConfiguration.Name, true)
-	if err != nil {
-		return nil, err
-	}
-	return vdc, nil
-}
-
-// updateVdcAsync updates a VDC with the given params. Returns a Task and error
-func updateVdcAsync(adminVdc *AdminVdc) (Task, error) {
-	util.Logger.Printf("[TRACE] updateVdcAsync called %#v", *adminVdc)
-	adminVdc.AdminVdc.Xmlns = types.XMLNamespaceVCloud
-
-	// Return the task
-	return adminVdc.client.ExecuteTaskRequest(adminVdc.AdminVdc.HREF, http.MethodPut,
-		types.MimeAdminVDC, "error updating VDC: %s", adminVdc.AdminVdc)
-}
-
-// updateVdc updates a VDC with the given params. Returns an AdminVdc.
-func updateVdc(adminVdc *AdminVdc) (*AdminVdc, error) {
-	util.Logger.Printf("[TRACE] updateVdc called %#v", *adminVdc)
-	task, err := updateVdcAsync(adminVdc)
-	if err != nil {
-		return nil, err
-	}
-
-	err = task.WaitTaskCompletion()
-	if err != nil {
-		return nil, err
-	}
-
-	err = adminVdc.Refresh()
-	if err != nil {
-		return nil, err
-	}
-
-	return adminVdc, nil
-}
-
 // updateVdcAsyncV97 updates a VDC with the given params. Supports Flex type allocation.
 // Needs vCD 9.7+ to work. Returns a Task and an error.
 func updateVdcAsyncV97(adminVdc *AdminVdc) (Task, error) {
@@ -365,9 +296,8 @@ func updateVdcAsyncV97(adminVdc *AdminVdc) (Task, error) {
 	adminVdc.AdminVdc.Xmlns = types.XMLNamespaceVCloud
 
 	// Return the task
-	return adminVdc.client.ExecuteTaskRequestWithApiVersion(adminVdc.AdminVdc.HREF, http.MethodPut,
-		types.MimeAdminVDC, "error updating VDC: %s", adminVdc.AdminVdc,
-		adminVdc.client.GetSpecificApiVersionOnCondition(">= 32.0", "32.0"))
+	return adminVdc.client.ExecuteTaskRequest(adminVdc.AdminVdc.HREF, http.MethodPut,
+		types.MimeAdminVDC, "error updating VDC: %s", adminVdc.AdminVdc)
 }
 
 // updateVdcV97 updates a VDC with the given params
@@ -388,13 +318,6 @@ func updateVdcV97(adminVdc *AdminVdc) (*AdminVdc, error) {
 		return nil, err
 	}
 	return adminVdc, nil
-}
-
-// createVdcAsync creates a VDC with the given params under the given organization.
-// Returns a Task and an error
-func createVdcAsync(adminOrg *AdminOrg, vdcConfiguration *types.VdcConfiguration) (Task, error) {
-	util.Logger.Printf("[TRACE] createVdcAsync called %#v", *vdcConfiguration)
-	return adminOrg.CreateVdc(vdcConfiguration)
 }
 
 // createVdcV97 creates a VDC with the given params under the given organization
@@ -437,10 +360,9 @@ func createVdcAsyncV97(adminOrg *AdminOrg, vdcConfiguration *types.VdcConfigurat
 
 	adminVdc := NewAdminVdc(adminOrg.client)
 
-	_, err = adminOrg.client.ExecuteRequestWithApiVersion(vdcCreateHREF.String(), http.MethodPost,
+	_, err = adminOrg.client.ExecuteRequest(vdcCreateHREF.String(), http.MethodPost,
 		"application/vnd.vmware.admin.createVdcParams+xml", "error creating VDC: %s",
-		vdcConfiguration, adminVdc.AdminVdc,
-		adminOrg.client.GetSpecificApiVersionOnCondition(">= 32.0", "32.0"))
+		vdcConfiguration, adminVdc.AdminVdc)
 	if err != nil {
 		return Task{}, err
 	}

@@ -173,15 +173,15 @@ func (vapp VApp) RemoveAccessControl(useTenantContext bool) error {
 }
 
 // IsShared shows whether a vApp is shared or not, regardless of the number of subjects sharing it
-func (vapp VApp) IsShared(useTenantContext bool) bool {
+func (vapp VApp) IsShared(useTenantContext bool) (bool,error) {
 	settings, err := vapp.GetAccessControl(useTenantContext)
 	if err != nil {
-		return false
+		return false, err
 	}
 	if settings.IsSharedToEveryone {
-		return true
+		return true, nil
 	}
-	return settings.AccessSettings != nil
+	return settings.AccessSettings != nil, nil
 }
 
 // GetAccessControl retrieves the access control information for this catalog
@@ -224,15 +224,15 @@ func (adminCatalog AdminCatalog) RemoveAccessControl(useTenantContext bool) erro
 }
 
 // IsShared shows whether a catalog is shared or not, regardless of the number of subjects sharing it
-func (adminCatalog AdminCatalog) IsShared(useTenantContext bool) bool {
+func (adminCatalog AdminCatalog) IsShared(useTenantContext bool) (bool,error) {
 	settings, err := adminCatalog.GetAccessControl(useTenantContext)
 	if err != nil {
-		return false
+		return false, err
 	}
 	if settings.IsSharedToEveryone {
-		return true
+		return true, nil
 	}
-	return settings.AccessSettings != nil
+	return settings.AccessSettings != nil,nil
 }
 
 // GetVappAccessControl is a convenience method to retrieve access control for a vApp
@@ -306,15 +306,15 @@ func (catalog Catalog) RemoveAccessControl(useTenantContext bool) error {
 }
 
 // IsShared shows whether a catalog is shared or not, regardless of the number of subjects sharing it
-func (catalog Catalog) IsShared(useTenantContext bool) bool {
+func (catalog Catalog) IsShared(useTenantContext bool) (bool,error) {
 	settings, err := catalog.GetAccessControl(useTenantContext)
 	if err != nil {
-		return false
+		return false, err
 	}
 	if settings.IsSharedToEveryone {
-		return true
+		return true, nil
 	}
-	return settings.AccessSettings != nil
+	return settings.AccessSettings != nil,nil
 }
 
 // getAccessControlHeader builds the data needed to set the header when tenant context is required.

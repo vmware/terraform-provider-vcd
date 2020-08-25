@@ -72,8 +72,8 @@ func (vm *VM) Refresh() error {
 	// elements in slices.
 	vm.VM = &types.VM{}
 
-	_, err := vm.client.ExecuteRequestWithApiVersion(refreshUrl, http.MethodGet,
-		"", "error refreshing VM: %s", nil, vm.VM, vm.client.GetSpecificApiVersionOnCondition(">= 32.0", "32.0"))
+	_, err := vm.client.ExecuteRequest(refreshUrl, http.MethodGet,
+		"", "error refreshing VM: %s", nil, vm.VM)
 
 	// The request was successful
 	return err
@@ -1345,16 +1345,14 @@ func (vm *VM) UpdateInternalDisksAsync(disksSettingToUpdate *types.VmSpecSection
 	vmSpecSectionModified := true
 	disksSettingToUpdate.Modified = &vmSpecSectionModified
 
-	return vm.client.ExecuteTaskRequestWithApiVersion(vm.VM.HREF+"/action/reconfigureVm", http.MethodPost,
+	return vm.client.ExecuteTaskRequest(vm.VM.HREF+"/action/reconfigureVm", http.MethodPost,
 		types.MimeVM, "error updating VM disks: %s", &types.VMDiskChange{
 			XMLName:       xml.Name{},
 			Xmlns:         types.XMLNamespaceVCloud,
 			Ovf:           types.XMLNamespaceOVF,
 			Name:          vm.VM.Name,
 			VmSpecSection: disksSettingToUpdate,
-			// API version requirements changes through vCD version to access VmSpecSection
-		}, vm.client.GetSpecificApiVersionOnCondition(">= 32.0", "32.0"))
-
+		})
 }
 
 // AddEmptyVm adds an empty VM (without template) to vApp and returns the new created VM or an error.
@@ -1465,7 +1463,7 @@ func (vm *VM) UpdateVmSpecSectionAsync(vmSettingsToUpdate *types.VmSpecSection, 
 	//    GuestCustomizationSection
 	// Sections not included in the request body will not be updated.
 
-	return vm.client.ExecuteTaskRequestWithApiVersion(vm.VM.HREF+"/action/reconfigureVm", http.MethodPost,
+	return vm.client.ExecuteTaskRequest(vm.VM.HREF+"/action/reconfigureVm", http.MethodPost,
 		types.MimeVM, "error updating VM spec section: %s", &types.VM{
 			XMLName:       xml.Name{},
 			Xmlns:         types.XMLNamespaceVCloud,
@@ -1473,8 +1471,7 @@ func (vm *VM) UpdateVmSpecSectionAsync(vmSettingsToUpdate *types.VmSpecSection, 
 			Name:          vm.VM.Name,
 			Description:   description,
 			VmSpecSection: vmSettingsToUpdate,
-			// API version requirements changes through vCD version to access VmSpecSection
-		}, vm.client.GetSpecificApiVersionOnCondition(">= 32.0", "32.0"))
+		})
 }
 
 // QueryVmList returns a list of all VMs in all the organizations available to the caller

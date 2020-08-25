@@ -88,7 +88,7 @@ func resourceVcdAccessControlVapp() *schema.Resource {
 	}
 }
 
-// tenantContext defines whether we run access control operations in the context of the tenant or the original caller.
+// tenantContext defines whether we run access control operations in the context of the original caller.
 // By default it is ON (= run as tenant). We can turn it off by setting the environment variable VCD_ORIGINAL_CONTEXT.
 var tenantContext = os.Getenv("VCD_ORIGINAL_CONTEXT") == ""
 
