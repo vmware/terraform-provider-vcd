@@ -3,12 +3,13 @@ package vcd
 import (
 	"bytes"
 	"fmt"
+	"log"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
-	"log"
-	"strings"
 )
 
 func resourceVcdVappNetwork() *schema.Resource {
@@ -354,15 +355,7 @@ func genericVappNetworkRead(d *schema.ResourceData, meta interface{}, origin str
 			}
 		}
 
-		// TODO adjust when we have option to switch between API versions or upgrade the default version
-		// API does not return GuestVlanAllowed if API client version is 27.0 (default at the moment) therefore we rely
-		// on updating statefile only if the field was returned. In API v31.0 - the field is returned.
-		if config.GuestVlanAllowed != nil {
-			err = d.Set("guest_vlan_allowed", *config.GuestVlanAllowed)
-			if err != nil {
-				return err
-			}
-		}
+		_ = d.Set("guest_vlan_allowed", *config.GuestVlanAllowed)
 		if config.ParentNetwork != nil {
 			_ = d.Set("org_network_name", config.ParentNetwork.Name)
 		} else {
