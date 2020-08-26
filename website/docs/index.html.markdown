@@ -24,7 +24,6 @@ When upgrading the provider please check for such labels for the resources you a
 
 The following vCloud Director versions are supported by this provider:
 
-* 9.5
 * 9.7
 * 10.0
 * 10.1
@@ -160,7 +159,7 @@ fi
 
 auth=$(echo -n "$user@$org:$password" | base64)
 
-curl -I -k --header "Accept: application/*;version=31.0" \
+curl -I -k --header "Accept: application/*;version=32.0" \
     --header "Authorization: Basic $auth" \
     --request POST https://$IP/api/sessions
 ```

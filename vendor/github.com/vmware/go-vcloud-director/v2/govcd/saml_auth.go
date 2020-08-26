@@ -158,7 +158,7 @@ func getSamlAdfsServer(vcdCli *VCDClient, org string) (string, error) {
 		return "", fmt.Errorf("SAML - ADFS server query failed: %s", err)
 	}
 
-	err = decodeBody(httpResponse, nil)
+	err = decodeBody(types.BodyTypeXML, httpResponse, nil)
 	if err != nil {
 		return "", fmt.Errorf("SAML - error decoding body: %s", err)
 	}
@@ -218,13 +218,13 @@ func getSamlAuthToken(vcdCli *VCDClient, user, pass, samlEntityId, authEndpoint,
 	req := vcdCli.Client.NewRequest(nil, http.MethodPost, *authEndpointUrl, samlTokenRequestBody)
 	req.Header.Add("Content-Type", types.SoapXML)
 	resp, err := vcdCli.Client.Http.Do(req)
-	resp, err = checkRespWithErrType(resp, err, &types.AdfsAuthErrorEnvelope{})
+	resp, err = checkRespWithErrType(types.BodyTypeXML, resp, err, &types.AdfsAuthErrorEnvelope{})
 	if err != nil {
 		return "", fmt.Errorf("SAML - ADFS token request query failed for RPT ID ('%s'): %s",
 			samlEntityId, err)
 	}
 
-	err = decodeBody(resp, &tokenRequestResponse)
+	err = decodeBody(types.BodyTypeXML, resp, &tokenRequestResponse)
 	if err != nil {
 		return "", fmt.Errorf("SAML - error decoding ADFS token request response: %s", err)
 	}
@@ -251,7 +251,7 @@ func authorizeSignToken(vcdCli *VCDClient, base64GzippedSignToken, org string) (
 	if err != nil {
 		return "", fmt.Errorf("SAML - error submitting SIGN token for authentication to %s: %s", req.URL.String(), err)
 	}
-	err = decodeBody(resp, nil)
+	err = decodeBody(types.BodyTypeXML, resp, nil)
 	if err != nil {
 		return "", fmt.Errorf("SAML - error decoding body SIGN token auth response: %s", err)
 	}

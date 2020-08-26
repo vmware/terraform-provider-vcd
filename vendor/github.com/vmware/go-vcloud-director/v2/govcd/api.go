@@ -7,6 +7,7 @@ package govcd
 
 import (
 	"bytes"
+	"encoding/json"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -236,22 +237,34 @@ func (cli *Client) NewRequestWithApiVersion(params map[string]string, method str
 	return cli.NewRequestWitNotEncodedParamsWithApiVersion(params, nil, method, reqUrl, body, apiVersion)
 }
 
-// ParseErr takes an error XML resp, error interface for unmarshaling and returns a single string for
+// ParseErr takes an error XML resp, error interface for unmarshalling and returns a single string for
 // use in error messages.
-func ParseErr(resp *http.Response, errType error) error {
+func ParseErr(bodyType types.BodyType, resp *http.Response, errType error) error {
 	// if there was an error decoding the body, just return that
-	if err := decodeBody(resp, errType); err != nil {
+	if err := decodeBody(bodyType, resp, errType); err != nil {
 		util.Logger.Printf("[ParseErr]: unhandled response <--\n%+v\n-->\n", resp)
 		return fmt.Errorf("[ParseErr]: error parsing error body for non-200 request: %s (%+v)", err, resp)
+	}
+
+	// response body maybe empty for some error, such like 416, 400
+	if errType.Error() == "API Error: 0: " {
+		errType = fmt.Errorf(resp.Status)
 	}
 
 	return errType
 }
 
-// decodeBody is used to XML decode a response body
-func decodeBody(resp *http.Response, out interface{}) error {
-
+// decodeBody is used to decode a response body of types.BodyType
+func decodeBody(bodyType types.BodyType, resp *http.Response, out interface{}) error {
 	body, err := ioutil.ReadAll(resp.Body)
+
+	// In case of JSON, body does not have indents in response therefore it must be indented
+	if bodyType == types.BodyTypeJSON {
+		body, err = indentJsonBody(body)
+		if err != nil {
+			return err
+		}
+	}
 
 	util.ProcessResponseOutput(util.FuncNameCallStack(), resp, fmt.Sprintf("%s", body))
 	if err != nil {
@@ -260,15 +273,35 @@ func decodeBody(resp *http.Response, out interface{}) error {
 
 	debugShowResponse(resp, body)
 
-	// only attempty to unmarshal if body is not empty
+	// only attempt to unmarshal if body is not empty
 	if len(body) > 0 {
-		// Unmarshal the XML.
-		if err = xml.Unmarshal(body, &out); err != nil {
-			return err
+		switch bodyType {
+		case types.BodyTypeXML:
+			if err = xml.Unmarshal(body, &out); err != nil {
+				return err
+			}
+		case types.BodyTypeJSON:
+			if err = json.Unmarshal(body, &out); err != nil {
+				return err
+			}
+
+		default:
+			panic(fmt.Sprintf("unknown body type: %d", bodyType))
 		}
 	}
 
 	return nil
+}
+
+// indentJsonBody indents raw JSON body for easier readability
+func indentJsonBody(body []byte) ([]byte, error) {
+	var prettyJSON bytes.Buffer
+	err := json.Indent(&prettyJSON, body, "", "  ")
+	if err != nil {
+		return nil, fmt.Errorf("error indenting response JSON: %s", err)
+	}
+	body = prettyJSON.Bytes()
+	return body, nil
 }
 
 // checkResp wraps http.Client.Do() and verifies the request, if status code
@@ -276,12 +309,12 @@ func decodeBody(resp *http.Response, out interface{}) error {
 // parses the resultant XML error and returns a descriptive error, if the
 // status code is not handled it returns a generic error with the status code.
 func checkResp(resp *http.Response, err error) (*http.Response, error) {
-	return checkRespWithErrType(resp, err, &types.Error{})
+	return checkRespWithErrType(types.BodyTypeXML, resp, err, &types.Error{})
 }
 
 // checkRespWithErrType allows to specify custom error errType for checkResp unmarshaling
 // the error.
-func checkRespWithErrType(resp *http.Response, err, errType error) (*http.Response, error) {
+func checkRespWithErrType(bodyType types.BodyType, resp *http.Response, err, errType error) (*http.Response, error) {
 	if err != nil {
 		return resp, err
 	}
@@ -297,32 +330,33 @@ func checkRespWithErrType(resp *http.Response, err, errType error) (*http.Respon
 		return resp, nil
 	// Invalid request, parse the XML error returned and return it.
 	case
-		http.StatusBadRequest,                  // 400
-		http.StatusUnauthorized,                // 401
-		http.StatusForbidden,                   // 403
-		http.StatusNotFound,                    // 404
-		http.StatusMethodNotAllowed,            // 405
-		http.StatusNotAcceptable,               // 406
-		http.StatusProxyAuthRequired,           // 407
-		http.StatusRequestTimeout,              // 408
-		http.StatusConflict,                    // 409
-		http.StatusGone,                        // 410
-		http.StatusLengthRequired,              // 411
-		http.StatusPreconditionFailed,          // 412
-		http.StatusRequestEntityTooLarge,       // 413
-		http.StatusRequestURITooLong,           // 414
-		http.StatusUnsupportedMediaType,        // 415
-		http.StatusLocked,                      // 423
-		http.StatusFailedDependency,            // 424
-		http.StatusUpgradeRequired,             // 426
-		http.StatusPreconditionRequired,        // 428
-		http.StatusTooManyRequests,             // 429
-		http.StatusRequestHeaderFieldsTooLarge, // 431
-		http.StatusUnavailableForLegalReasons,  // 451
-		http.StatusInternalServerError,         // 500
-		http.StatusServiceUnavailable,          // 503
-		http.StatusGatewayTimeout:              // 504
-		return nil, ParseErr(resp, errType)
+		http.StatusBadRequest,                   // 400
+		http.StatusUnauthorized,                 // 401
+		http.StatusForbidden,                    // 403
+		http.StatusNotFound,                     // 404
+		http.StatusMethodNotAllowed,             // 405
+		http.StatusNotAcceptable,                // 406
+		http.StatusProxyAuthRequired,            // 407
+		http.StatusRequestTimeout,               // 408
+		http.StatusConflict,                     // 409
+		http.StatusGone,                         // 410
+		http.StatusLengthRequired,               // 411
+		http.StatusPreconditionFailed,           // 412
+		http.StatusRequestEntityTooLarge,        // 413
+		http.StatusRequestURITooLong,            // 414
+		http.StatusUnsupportedMediaType,         // 415
+		http.StatusRequestedRangeNotSatisfiable, // 416
+		http.StatusLocked,                       // 423
+		http.StatusFailedDependency,             // 424
+		http.StatusUpgradeRequired,              // 426
+		http.StatusPreconditionRequired,         // 428
+		http.StatusTooManyRequests,              // 429
+		http.StatusRequestHeaderFieldsTooLarge,  // 431
+		http.StatusUnavailableForLegalReasons,   // 451
+		http.StatusInternalServerError,          // 500
+		http.StatusServiceUnavailable,           // 503
+		http.StatusGatewayTimeout:               // 504
+		return nil, ParseErr(bodyType, resp, errType)
 	// Unhandled response.
 	default:
 		return nil, fmt.Errorf("unhandled API response, please report this issue, status code: %s", resp.Status)
@@ -373,7 +407,7 @@ func (client *Client) executeTaskRequest(pathURL, requestType, contentType, erro
 
 	task := NewTask(client)
 
-	if err = decodeBody(resp, task.Task); err != nil {
+	if err = decodeBody(types.BodyTypeXML, resp, task.Task); err != nil {
 		return Task{}, fmt.Errorf("error decoding Task response: %s", err)
 	}
 
@@ -489,7 +523,7 @@ func (client *Client) executeRequest(pathURL, requestType, contentType, errorMes
 		return resp, fmt.Errorf(errorMessage, err)
 	}
 
-	if err = decodeBody(resp, out); err != nil {
+	if err = decodeBody(types.BodyTypeXML, resp, out); err != nil {
 		return resp, fmt.Errorf("error decoding response: %s", err)
 	}
 
@@ -575,7 +609,7 @@ func executeRequestCustomErr(pathURL string, params map[string]string, requestTy
 		return resp, err
 	}
 
-	return checkRespWithErrType(resp, err, errType)
+	return checkRespWithErrType(types.BodyTypeXML, resp, err, errType)
 }
 
 func isMessageWithPlaceHolder(message string) bool {
