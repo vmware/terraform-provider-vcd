@@ -1080,3 +1080,15 @@ func testAccFindValuesInSet(resourceName string, prefix string, wanted map[strin
 		return fmt.Errorf("resource %s - %d matches found - wanted %d", resourceName, len(matches), len(wanted))
 	}
 }
+
+// skipOnEnvVariable takes a TestCheckFunc and skips it if the given environment variable was set with
+// an expected value
+func skipOnEnvVariable(envVar, envValue, notes string, f resource.TestCheckFunc) resource.TestCheckFunc {
+	if os.Getenv(envVar) == envValue {
+		fmt.Printf("### Check skipped at user request - Variable %s - reason: %s\n", envVar, notes)
+		return func(s *terraform.State) error {
+			return nil
+		}
+	}
+	return f
+}
