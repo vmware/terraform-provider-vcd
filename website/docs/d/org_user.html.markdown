@@ -10,7 +10,7 @@ description: |-
 
 Provides a vCloud Director Org User data source. This can be used to read organization users, including org administrators.
 
-Supported in provider *v2.10+*
+Supported in provider *v3.0+*
 
 
 ## Example Usage
@@ -40,8 +40,8 @@ output "vapp_creator_user" {
 The following arguments are supported:
 
 * `org` - (Optional) The name of organization to which the user belongs. Optional if defined at provider level.
-* `name` - (Optional) The name of the user. Required if `user_id` is not set
-* `user_id` - (Optional) The ID of the user. Required if `name` is not set
+* `name` - (Optional) The name of the user. Required if `user_id` is not set.
+* `user_id` - (Optional) The ID of the user. Required if `name` is not set.
 
 ## Attribute reference
 
