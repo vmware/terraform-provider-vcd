@@ -13,7 +13,10 @@ Provides a vCloud Director Access Control structure for a vApp. This can be used
 !> **Warning:** The access control info is tied to a vApp. Thus, there could be only one instance per vApp. Using a different
 definition for the same vApp ID will result in a previous instance to be overwritten.
 
-Supported in provider *v2.10+*
+!> **Note:** access control operations run in tenant context, meaning that, even if the user is a system administrator,
+in every request it uses headers items that define the tenant context as restricted to the organization to which the vApp belongs.
+
+Supported in provider *v3.0+*
 
 ## Example Usage
 
@@ -51,20 +54,20 @@ resource "vcd_vapp_access_control" "AC-global" {
 
   vapp_id  = data.vcd_vapp.Vapp-AC-1.id
 
-  shared_to_everyone    = true
+  shared_with_everyone  = true
   everyone_access_level = "Change"
 }
 
 resource "vcd_vapp_access_control" "AC-users" {
   vapp_id  = data.vcd_vapp.Vapp-AC-2.id
 
-  shared_to_everyone    = false
+  shared_with_everyone    = false
 
-  shared {
+  shared_with {
     user_id      = data.vcd_org_user.ac-admin1.id
     access_level = "FullControl"
   }
-  shared {
+  shared_with {
     user_id      = data.vcd_org_user.ac-vapp-creator2.id
     access_level = "Change"
   }
@@ -78,13 +81,15 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to which the vApp belongs. Optional if defined at provider level.
 * `vdc` - (Optional) The name of organization to which the vApp belongs. Optional if defined at provider level.
 * `vapp_id` - (Required) A unique identifier for the vApp.
-* `shared_to_everyone` - (Required) Whether the vApp is shared to everyone
+* `shared_with_everyone` - (Required) Whether the vApp is shared with everyone. If any `shared_with` blocks are included,
+  this property cannot be used.
 * `everyone_access_level` - (Optional) Access level when the vApp is shared with everyone (one of `ReadOnly`, `Change`, 
-`FullControl`). Required if `shared_to_everyone is set.
-* `shared` - (Optional) one or more blocks defining a subject to which we are sharing. See [shared](#shared) below for detail.
+`FullControl`). Required if `shared_with_everyone is set.
+* `shared_with` - (Optional) one or more blocks defining a subject to which we are sharing. 
+   See [shared_with](#shared_with) below for detail. It cannot be used if `shared_with_everyone` is set.
 
 
-## shared
+## shared_with
 
 * `user_id` - (Optional) The ID of a user with which we are sharing. Required if `group_id` is not set.
 * `group_id` - (Optional) The ID of a group with which we are sharing. Required if `user_id` is not set.

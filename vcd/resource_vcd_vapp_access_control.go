@@ -43,18 +43,18 @@ func resourceVcdAccessControlVapp() *schema.Resource {
 				ForceNew:    true,
 				Description: "vApp identifier",
 			},
-			"shared_to_everyone": &schema.Schema{
+			"shared_with_everyone": &schema.Schema{
 				Type:        schema.TypeBool,
 				Required:    true,
-				Description: "Whether the vApp is shared to everyone",
+				Description: "Whether the vApp is shared with everyone",
 			},
 			"everyone_access_level": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringInSlice([]string{types.ControlAccessReadOnly, types.ControlAccessReadWrite, types.ControlAccessFullControl}, true),
-				Description:  "Access level when the vApp is shared with everyone (one of ReadOnly, Change, FullControl). Required when shared_to_everyone is set",
+				Description:  "Access level when the vApp is shared with everyone (one of ReadOnly, Change, FullControl). Required when shared_with_everyone is set",
 			},
-			"shared": &schema.Schema{
+			"shared_with": &schema.Schema{
 				Type:     schema.TypeSet,
 				Optional: true,
 				MinItems: 1,
@@ -102,20 +102,20 @@ func resourceAccessControlVappUpdate(d *schema.ResourceData, meta interface{}) e
 
 	var accessControl types.ControlAccessParams
 
-	isSharedToEveryone := d.Get("shared_to_everyone").(bool)
+	isSharedToEveryone := d.Get("shared_with_everyone").(bool)
 	everyoneAccessLevel := d.Get("everyone_access_level").(string)
-	sharedList := d.Get("shared").(*schema.Set).List()
+	sharedList := d.Get("shared_with").(*schema.Set).List()
 
 	// Early checks, so that we can fail as soon as possible
 	if isSharedToEveryone {
 		accessControl.IsSharedToEveryone = true
 		accessControl.EveryoneAccessLevel = &everyoneAccessLevel
 		if len(sharedList) > 0 {
-			return fmt.Errorf("[resourceAccessControlVappUpdate] when 'shared_to_everyone' is true, 'shared' must not be filled")
+			return fmt.Errorf("[resourceAccessControlVappUpdate] when 'shared_with_everyone' is true, 'shared_with' must not be filled")
 		}
 	} else {
 		if everyoneAccessLevel != "" {
-			return fmt.Errorf("[resourceAccessControlVappUpdate] if 'shared_to_everyone' is false, we can't set 'everyone_access_level'")
+			return fmt.Errorf("[resourceAccessControlVappUpdate] if 'shared_with_everyone' is false, we can't set 'everyone_access_level'")
 		}
 	}
 
@@ -181,13 +181,13 @@ func resourceAccessControlVappRead(d *schema.ResourceData, meta interface{}) err
 		if err != nil {
 			return fmt.Errorf("[resourceAccessControlVappRead] error converting access control list %s", err)
 		}
-		err = d.Set("shared", sharedList)
+		err = d.Set("shared_with", sharedList)
 		if err != nil {
 			return fmt.Errorf("[resourceAccessControlVappRead] error setting access control list %s", err)
 		}
 	}
 	_ = d.Set("vapp_id", vapp.VApp.ID)
-	_ = d.Set("shared_to_everyone", accessControl.IsSharedToEveryone)
+	_ = d.Set("shared_with_everyone", accessControl.IsSharedToEveryone)
 	if accessControl.IsSharedToEveryone {
 		_ = d.Set("everyone_access_level", accessControl.EveryoneAccessLevel)
 	}

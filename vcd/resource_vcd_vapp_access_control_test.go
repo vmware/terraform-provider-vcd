@@ -80,39 +80,39 @@ func TestAccVcdVappAccessControl(t *testing.T) {
 					testAccCheckVcdVappAccessControlExists(resourceAC1, testConfig.VCD.Org, testConfig.VCD.Vdc),
 					testAccCheckVcdVappAccessControlExists(resourceAC2, testConfig.VCD.Org, testConfig.VCD.Vdc),
 					testAccCheckVcdVappAccessControlExists(resourceAC3, testConfig.VCD.Org, testConfig.VCD.Vdc),
-					resource.TestCheckResourceAttr(resourceAC0, "shared_to_everyone", "true"),
+					resource.TestCheckResourceAttr(resourceAC0, "shared_with_everyone", "true"),
 					resource.TestCheckResourceAttr(resourceAC0, "everyone_access_level", "Change"),
-					resource.TestCheckResourceAttr(resourceAC0, "shared.#", "0"),
+					resource.TestCheckResourceAttr(resourceAC0, "shared_with.#", "0"),
 
-					resource.TestCheckResourceAttr(resourceAC1, "shared_to_everyone", "false"),
-					resource.TestCheckResourceAttr(resourceAC1, "shared.#", "1"),
-					testAccFindValuesInSet(resourceAC2, "shared", map[string]string{
+					resource.TestCheckResourceAttr(resourceAC1, "shared_with_everyone", "false"),
+					resource.TestCheckResourceAttr(resourceAC1, "shared_with.#", "1"),
+					testAccFindValuesInSet(resourceAC2, "shared_with", map[string]string{
 						"subject_name": "ac-user1",
 						"access_level": types.ControlAccessFullControl,
 					}),
 
-					resource.TestCheckResourceAttr(resourceAC2, "shared_to_everyone", "false"),
-					resource.TestCheckResourceAttr(resourceAC2, "shared.#", "2"),
-					testAccFindValuesInSet(resourceAC2, "shared", map[string]string{
+					resource.TestCheckResourceAttr(resourceAC2, "shared_with_everyone", "false"),
+					resource.TestCheckResourceAttr(resourceAC2, "shared_with.#", "2"),
+					testAccFindValuesInSet(resourceAC2, "shared_with", map[string]string{
 						"subject_name": "ac-user1",
 						"access_level": types.ControlAccessFullControl,
 					}),
-					testAccFindValuesInSet(resourceAC2, "shared", map[string]string{
+					testAccFindValuesInSet(resourceAC2, "shared_with", map[string]string{
 						"subject_name": "ac-user2",
 						"access_level": types.ControlAccessReadWrite,
 					}),
 
-					resource.TestCheckResourceAttr(resourceAC3, "shared_to_everyone", "false"),
-					resource.TestCheckResourceAttr(resourceAC3, "shared.#", "3"),
-					testAccFindValuesInSet(resourceAC3, "shared", map[string]string{
+					resource.TestCheckResourceAttr(resourceAC3, "shared_with_everyone", "false"),
+					resource.TestCheckResourceAttr(resourceAC3, "shared_with.#", "3"),
+					testAccFindValuesInSet(resourceAC3, "shared_with", map[string]string{
 						"subject_name": "ac-user1",
 						"access_level": types.ControlAccessFullControl,
 					}),
-					testAccFindValuesInSet(resourceAC3, "shared", map[string]string{
+					testAccFindValuesInSet(resourceAC3, "shared_with", map[string]string{
 						"subject_name": "ac-user2",
 						"access_level": types.ControlAccessReadWrite,
 					}),
-					testAccFindValuesInSet(resourceAC3, "shared", map[string]string{
+					testAccFindValuesInSet(resourceAC3, "shared_with", map[string]string{
 						"subject_name": "ac-user3",
 						"access_level": types.ControlAccessReadOnly,
 					}),
@@ -122,19 +122,19 @@ func TestAccVcdVappAccessControl(t *testing.T) {
 				Config: updateText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVappAccessControlExists(resourceAC0, testConfig.VCD.Org, testConfig.VCD.Vdc),
-					resource.TestCheckResourceAttr(resourceAC0, "shared_to_everyone", "false"),
-					resource.TestCheckResourceAttr(resourceAC1, "shared.#", "1"),
-					testAccFindValuesInSet(resourceAC1, "shared", map[string]string{
+					resource.TestCheckResourceAttr(resourceAC0, "shared_with_everyone", "false"),
+					resource.TestCheckResourceAttr(resourceAC1, "shared_with.#", "1"),
+					testAccFindValuesInSet(resourceAC1, "shared_with", map[string]string{
 						"subject_name": "ac-user1",
 						"access_level": types.ControlAccessReadWrite,
 					}),
-					resource.TestCheckResourceAttr(resourceAC2, "shared.#", "2"),
-					testAccFindValuesInSet(resourceAC2, "shared", map[string]string{
+					resource.TestCheckResourceAttr(resourceAC2, "shared_with.#", "2"),
+					testAccFindValuesInSet(resourceAC2, "shared_with", map[string]string{
 						"subject_name": "ac-user1",
 						"access_level": types.ControlAccessReadWrite,
 					}),
-					resource.TestCheckResourceAttr(resourceAC3, "shared.#", "3"),
-					testAccFindValuesInSet(resourceAC3, "shared", map[string]string{
+					resource.TestCheckResourceAttr(resourceAC3, "shared_with.#", "3"),
+					testAccFindValuesInSet(resourceAC3, "shared_with", map[string]string{
 						"subject_name": "ac-user1",
 						"access_level": types.ControlAccessReadWrite,
 					}),
@@ -277,7 +277,7 @@ resource "vcd_vapp_access_control" "{{.AccessControlIdentifier0}}" {
   vdc      = "{{.Vdc}}"
   vapp_id  = vcd_vapp.{{.VappName0}}.id
 
-  shared_to_everyone    = {{.SharedToEveryone}}
+  shared_with_everyone    = {{.SharedToEveryone}}
   {{.EveryoneAccessLevel}}
 }
 
@@ -287,9 +287,9 @@ resource "vcd_vapp_access_control" "{{.AccessControlIdentifier1}}" {
   vdc      = "{{.Vdc}}"
   vapp_id  = vcd_vapp.{{.VappName1}}.id
 
-  shared_to_everyone    = false
+  shared_with_everyone    = false
 
-  shared {
+  shared_with {
     user_id      = vcd_org_user.{{.UserName1}}.id
     access_level = "{{.AccessLevel1}}"
   }
@@ -301,13 +301,13 @@ resource "vcd_vapp_access_control" "{{.AccessControlIdentifier2}}" {
   vdc      = "{{.Vdc}}"
   vapp_id  = vcd_vapp.{{.VappName2}}.id
 
-  shared_to_everyone    = false
+  shared_with_everyone    = false
 
-  shared {
+  shared_with {
     user_id      = vcd_org_user.{{.UserName1}}.id
     access_level = "{{.AccessLevel1}}"
   }
-  shared {
+  shared_with {
     user_id      = vcd_org_user.{{.UserName2}}.id
     access_level = "{{.AccessLevel2}}"
   }
@@ -319,17 +319,17 @@ resource "vcd_vapp_access_control" "{{.AccessControlIdentifier3}}" {
   vdc      = "{{.Vdc}}"
   vapp_id  = vcd_vapp.{{.VappName3}}.id
 
-  shared_to_everyone    = false
+  shared_with_everyone = false
 
-  shared {
+  shared_with {
     user_id      = vcd_org_user.{{.UserName1}}.id
     access_level = "{{.AccessLevel1}}"
   }
-  shared {
+  shared_with {
     user_id      = vcd_org_user.{{.UserName2}}.id
     access_level = "{{.AccessLevel2}}"
   }
-  shared {
+  shared_with {
     user_id      = vcd_org_user.{{.UserName3}}.id
     access_level = "{{.AccessLevel3}}"
   }
