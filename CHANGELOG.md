@@ -1,6 +1,6 @@
-## 2.10.0 (Unreleased)
+## 3.0.0 (Unreleased)
 
-Changes in progress for v2.10.0 are available at [.changes/v2.10.0](https://github.com/vmware/terraform-provider-vcd/tree/master/.changes/v2.10.0) until the release.
+Changes in progress for v2.10.0 are available at [.changes/v3.0.0](https://github.com/vmware/terraform-provider-vcd/tree/master/.changes/v3.0.0) until the release.
 
 ## 2.9.0 (June 30, 2020)
 FEATURES:
