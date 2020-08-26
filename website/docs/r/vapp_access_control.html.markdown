@@ -46,7 +46,7 @@ resource "vcd_vapp_access_control" "AC-not-shared" {
 
   vapp_id  = data.vcd_vapp.Vapp-AC-0.id
 
-  shared_to_everyone    = false
+  shared_with_everyone = false
 }
 
 
