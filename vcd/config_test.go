@@ -1,4 +1,4 @@
-// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool lbAppProfile lbAppRule lbVirtualServer user search auth ALL
+// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool lbAppProfile lbAppRule lbVirtualServer user search auth nsxt ALL
 
 package vcd
 
@@ -1025,5 +1025,4 @@ func skipNoNsxtConfiguration(t *testing.T) {
 	if testConfig.VCD.NsxtProviderVdc.StorageProfile == "" {
 		t.Skip(generalMessage + "No storage profile specified")
 	}
-
 }

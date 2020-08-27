@@ -5,7 +5,7 @@ package vcd
 import "testing"
 
 func init() {
-	testingTags["vdc"] = "resource_vcd_org_vdc_nsxt_test.go"
+	testingTags["nsxt"] = "resource_vcd_org_vdc_nsxt_test.go"
 }
 
 func TestAccVcdOrgVdcNsxt(t *testing.T) {
@@ -13,12 +13,11 @@ func TestAccVcdOrgVdcNsxt(t *testing.T) {
 		t.Skip(t.Name() + " requires system admin privileges")
 	}
 	skipNoNsxtConfiguration(t)
-	validateConfiguration(t)
 
 	allocationModel := "ReservationPool"
 
 	var params = StringMap{
-		"VdcName":                   TestAccVcdVdc,
+		"VdcName":                   t.Name(),
 		"OrgName":                   testConfig.VCD.Org,
 		"AllocationModel":           "ReservationPool",
 		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
