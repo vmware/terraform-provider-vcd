@@ -4,10 +4,6 @@ package vcd
 
 import "testing"
 
-func init() {
-	testingTags["nsxt"] = "resource_vcd_org_vdc_nsxt_test.go"
-}
-
 func TestAccVcdOrgVdcNsxt(t *testing.T) {
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
@@ -28,7 +24,7 @@ func TestAccVcdOrgVdcNsxt(t *testing.T) {
 		"LimitIncreased":            "1100",
 		"AllocatedIncreased":        "1100",
 		"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
-		"Tags":                      "vdc",
+		"Tags":                      "vdc nsxt",
 		"FuncName":                  t.Name(),
 		// cause vDC ignores empty values and use default
 		"MemoryGuaranteed": "1",
