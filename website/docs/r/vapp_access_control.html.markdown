@@ -10,10 +10,10 @@ description: |-
 
 Provides a vCloud Director Access Control structure for a vApp. This can be used to create, update, and delete access control structures for a vApp.
 
-!> **Warning:** The access control info is tied to a vApp. Thus, there could be only one instance per vApp. Using a different
+~> **Warning:** The access control info is tied to a vApp. Thus, there could be only one instance per vApp. Using a different
 definition for the same vApp ID will result in a previous instance to be overwritten.
 
-!> **Note:** access control operations run in tenant context, meaning that, even if the user is a system administrator,
+-> **Note:** Access control operations run in tenant context, meaning that, even if the user is a system administrator,
 in every request it uses headers items that define the tenant context as restricted to the organization to which the vApp belongs.
 
 Supported in provider *v3.0+*
