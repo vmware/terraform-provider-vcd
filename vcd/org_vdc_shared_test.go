@@ -13,94 +13,6 @@ import (
 
 var TestAccVcdVdc = "TestAccVcdVdcBasic"
 
-const testAccCheckVcdVdc_basic = `
-resource "vcd_org_vdc" "{{.VdcName}}" {
-  name = "{{.VdcName}}"
-  org  = "{{.OrgName}}"
-
-  allocation_model  = "{{.AllocationModel}}"
-  network_pool_name = "{{.NetworkPool}}"
-  provider_vdc_name = "{{.ProviderVdc}}"
-
-  compute_capacity {
-    cpu {
-      allocated = "{{.Allocated}}"
-      limit     = "{{.Limit}}"
-    }
-
-    memory {
-      allocated = "{{.Allocated}}"
-      limit     = "{{.Limit}}"
-    }
-  }
-
-  storage_profile {
-    name = "{{.ProviderVdcStorageProfile}}"
-    enabled  = true
-    limit    = 10240
-    default  = true
-  }
-
-  metadata = {
-    vdc_metadata = "VDC Metadata"
-  }
-
-  enabled                    = true
-  enable_thin_provisioning   = true
-  enable_fast_provisioning   = true
-  delete_force               = true
-  delete_recursive           = true
-  {{.FlexElasticKey}}                 {{.equalsChar}} {{.FlexElasticValue}}
-  {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValue}}
-}
-`
-
-const testAccCheckVcdVdc_update = `
-# skip-binary-test: only for updates
-resource "vcd_org_vdc" "{{.VdcName}}" {
-  name = "{{.VdcName}}"
-  org  = "{{.OrgName}}"
-
-  allocation_model  = "{{.AllocationModel}}"
-  network_pool_name = "{{.NetworkPool}}"
-  provider_vdc_name = "{{.ProviderVdc}}"
-
-  compute_capacity {
-    cpu {
-      allocated = "{{.AllocatedIncreased}}"
-      limit     = "{{.LimitIncreased}}"
-    }
-
-    memory {
-      allocated = "{{.AllocatedIncreased}}"
-      limit     = "{{.LimitIncreased}}"
-    }
-  }
-
-  storage_profile {
-    name = "{{.ProviderVdcStorageProfile}}"
-    enabled  = true
-    limit    = 10240
-    default  = true
-  }
-
-  metadata = {
-    vdc_metadata = "VDC Metadata"
-    vdc_metadata2 = "VDC Metadata2"
-  }
-
-  cpu_guaranteed             = {{.CpuGuaranteed}}
-  memory_guaranteed          = {{.MemoryGuaranteed}}
-  enabled                    = false
-  enable_thin_provisioning   = false
-  enable_fast_provisioning   = false
-  delete_force               = false
-  delete_recursive           = false
-  {{.FlexElasticKey}}                 {{.equalsChar}} {{.FlexElasticValueUpdate}}
-  {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValueUpdate}}
-}
-`
-
 func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 
 	if !usingSysAdmin() {
@@ -333,3 +245,91 @@ func testAccCheckVdcDestroy(s *terraform.State) error {
 
 	return nil
 }
+
+const testAccCheckVcdVdc_basic = `
+resource "vcd_org_vdc" "{{.VdcName}}" {
+  name = "{{.VdcName}}"
+  org  = "{{.OrgName}}"
+
+  allocation_model  = "{{.AllocationModel}}"
+  network_pool_name = "{{.NetworkPool}}"
+  provider_vdc_name = "{{.ProviderVdc}}"
+
+  compute_capacity {
+    cpu {
+      allocated = "{{.Allocated}}"
+      limit     = "{{.Limit}}"
+    }
+
+    memory {
+      allocated = "{{.Allocated}}"
+      limit     = "{{.Limit}}"
+    }
+  }
+
+  storage_profile {
+    name = "{{.ProviderVdcStorageProfile}}"
+    enabled  = true
+    limit    = 10240
+    default  = true
+  }
+
+  metadata = {
+    vdc_metadata = "VDC Metadata"
+  }
+
+  enabled                    = true
+  enable_thin_provisioning   = true
+  enable_fast_provisioning   = true
+  delete_force               = true
+  delete_recursive           = true
+  {{.FlexElasticKey}}        {{.equalsChar}} {{.FlexElasticValue}}
+  {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValue}}
+}
+`
+
+const testAccCheckVcdVdc_update = `
+# skip-binary-test: only for updates
+resource "vcd_org_vdc" "{{.VdcName}}" {
+  name = "{{.VdcName}}"
+  org  = "{{.OrgName}}"
+
+  allocation_model  = "{{.AllocationModel}}"
+  network_pool_name = "{{.NetworkPool}}"
+  provider_vdc_name = "{{.ProviderVdc}}"
+
+  compute_capacity {
+    cpu {
+      allocated = "{{.AllocatedIncreased}}"
+      limit     = "{{.LimitIncreased}}"
+    }
+
+    memory {
+      allocated = "{{.AllocatedIncreased}}"
+      limit     = "{{.LimitIncreased}}"
+    }
+  }
+
+  storage_profile {
+    name = "{{.ProviderVdcStorageProfile}}"
+    enabled  = true
+    limit    = 10240
+    default  = true
+  }
+
+  metadata = {
+    vdc_metadata = "VDC Metadata"
+    vdc_metadata2 = "VDC Metadata2"
+  }
+
+  cpu_guaranteed             = {{.CpuGuaranteed}}
+  memory_guaranteed          = {{.MemoryGuaranteed}}
+  enabled                    = false
+  enable_thin_provisioning   = false
+  enable_fast_provisioning   = false
+  delete_force               = false
+  delete_recursive           = false
+  {{.FlexElasticKey}}        {{.equalsChar}} {{.FlexElasticValueUpdate}}
+  {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValueUpdate}}
+}
+`
