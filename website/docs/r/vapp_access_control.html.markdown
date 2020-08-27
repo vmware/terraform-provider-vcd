@@ -84,7 +84,7 @@ The following arguments are supported:
 * `shared_with_everyone` - (Required) Whether the vApp is shared with everyone. If any `shared_with` blocks are included,
   this property cannot be used.
 * `everyone_access_level` - (Optional) Access level when the vApp is shared with everyone (one of `ReadOnly`, `Change`, 
-`FullControl`). Required if `shared_with_everyone is set.
+`FullControl`). Required if `shared_with_everyone` is set.
 * `shared_with` - (Optional) one or more blocks defining a subject to which we are sharing. 
    See [shared_with](#shared_with) below for detail. It cannot be used if `shared_with_everyone` is set.
 
