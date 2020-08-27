@@ -11,6 +11,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 )
 
+func init() {
+	testingTags["vdc"] = "resource_vcd_org_vdc_test.go"
+}
+
 var TestAccVcdVdc = "TestAccVcdVdcBasic"
 
 func TestAccVcdOrgVdcReservationPool(t *testing.T) {
@@ -34,7 +38,7 @@ func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 		"AllocatedIncreased":        "1100",
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
-		"FuncName":                  "TestAccVcdOrgVdcReservationPool",
+		"FuncName":                  t.Name(),
 		// cause vDC ignores empty values and use default
 		"MemoryGuaranteed": "1",
 		"CpuGuaranteed":    "1",
@@ -77,7 +81,7 @@ func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 		"AllocatedIncreased":        "2148",
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
-		"FuncName":                  "TestAccVcdOrgVdcAllocationPool",
+		"FuncName":                  t.Name(),
 		"MemoryGuaranteed":          "0.3",
 		"CpuGuaranteed":             "0.45",
 		// The parameters below are for Flex allocation model
@@ -119,7 +123,7 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 		"AllocatedIncreased":        "0",
 		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
-		"FuncName":                  "TestAccVcdOrgVdcAllocationVapp",
+		"FuncName":                  t.Name(),
 		"MemoryGuaranteed":          "0.5",
 		"CpuGuaranteed":             "0.6",
 		// The parameters below are for Flex allocation model
@@ -230,9 +234,9 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "allocation_model", allocationModel),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "network_pool_name", testConfig.VCD.ProviderVdc.NetworkPool),
+						"vcd_org_vdc."+TestAccVcdVdc, "network_pool_name", params["NetworkPool"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "provider_vdc_name", testConfig.VCD.ProviderVdc.Name),
+						"vcd_org_vdc."+TestAccVcdVdc, "provider_vdc_name", params["ProviderVdc"].(string)),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "enabled", "true"),
 					resource.TestCheckResourceAttr(
@@ -246,7 +250,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "metadata.vdc_metadata", "VDC Metadata"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.name", testConfig.VCD.ProviderVdc.StorageProfile),
+						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.name", params["ProviderVdcStorageProfile"].(string)),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.enabled", "true"),
 					resource.TestCheckResourceAttr(
@@ -286,9 +290,9 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "allocation_model", allocationModel),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "network_pool_name", testConfig.VCD.ProviderVdc.NetworkPool),
+						"vcd_org_vdc."+TestAccVcdVdc, "network_pool_name", params["NetworkPool"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "provider_vdc_name", testConfig.VCD.ProviderVdc.Name),
+						"vcd_org_vdc."+TestAccVcdVdc, "provider_vdc_name", params["ProviderVdc"].(string)),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "enabled", "false"),
 					resource.TestCheckResourceAttr(
@@ -310,7 +314,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "metadata.vdc_metadata2", "VDC Metadata2"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.name", testConfig.VCD.ProviderVdc.StorageProfile),
+						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.name", params["ProviderVdcStorageProfile"].(string)),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.enabled", "true"),
 					resource.TestCheckResourceAttr(
@@ -428,10 +432,6 @@ func testAccCheckVdcDestroy(s *terraform.State) error {
 	}
 
 	return nil
-}
-
-func init() {
-	testingTags["vdc"] = "resource_vcd_org_vdc_test.go"
 }
 
 const testAccCheckVcdVdc_basic = `

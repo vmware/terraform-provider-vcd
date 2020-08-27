@@ -86,6 +86,11 @@ type TestConfig struct {
 			NetworkPool    string `json:"networkPool"`
 			StorageProfile string `json:"storageProfile"`
 		} `json:"providerVdc"`
+		NsxtProviderVdc struct {
+			Name           string `json:"name"`
+			StorageProfile string `json:"storageProfile"`
+			NetworkPool    string `json:"networkPool"`
+		} `json:"nsxtProviderVdc"`
 		Catalog struct {
 			Name                    string `json:"name,omitempty"`
 			CatalogItem             string `json:"catalogItem,omitempty"`
@@ -1005,4 +1010,20 @@ func (env *envHelper) restoreVcdVars() {
 	for keyName, valueName := range env.vars {
 		os.Setenv(keyName, valueName)
 	}
+}
+
+// skipNoNsxtConfiguration allows to skip a test if NSX-T configuration is missing
+func skipNoNsxtConfiguration(t *testing.T) {
+	generalMessage := "Missing NSX-T config: "
+	if testConfig.VCD.NsxtProviderVdc.Name == "" {
+		t.Skip(generalMessage + "No provider vdc specified")
+	}
+	if testConfig.VCD.NsxtProviderVdc.NetworkPool == "" {
+		t.Skip(generalMessage + "No network pool specified")
+	}
+
+	if testConfig.VCD.NsxtProviderVdc.StorageProfile == "" {
+		t.Skip(generalMessage + "No storage profile specified")
+	}
+
 }
