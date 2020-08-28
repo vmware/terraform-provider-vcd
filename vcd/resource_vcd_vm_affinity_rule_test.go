@@ -301,7 +301,7 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 				ResourceName:      "vcd_vm_affinity_rule." + data.name + "-import-id",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdByAffinityRule("vcd_vm_affinity_rule." + data.name),
+				ImportStateIdFunc: importStateIdViaResource("vcd_vm_affinity_rule." + data.name),
 			},
 		},
 	})
@@ -378,26 +378,6 @@ func testAccCheckVmAffinityRuleDestroy(rule *govcd.VmAffinityRule, orgName, vdcN
 			return fmt.Errorf("rule %s was found", rule.VmAffinityRule.Name)
 		}
 		return nil
-	}
-}
-
-// importStateIdByAffinityRule runs the import of a VM affinity rule using the resource ID
-func importStateIdByAffinityRule(resource string) resource.ImportStateIdFunc {
-	return func(s *terraform.State) (string, error) {
-		rs, ok := s.RootModule().Resources[resource]
-		if !ok {
-			return "", fmt.Errorf("resource not found: %s", resource)
-		}
-
-		if rs.Primary.ID == "" {
-			return "", fmt.Errorf("no ID is set for %s resource", resource)
-		}
-
-		importId := testConfig.VCD.Org + "." + testConfig.VCD.Vdc + "." + rs.Primary.ID
-		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || rs.Primary.ID == "" {
-			return "", fmt.Errorf("missing information to generate import path: %s", importId)
-		}
-		return importId, nil
 	}
 }
 

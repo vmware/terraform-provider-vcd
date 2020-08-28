@@ -887,3 +887,16 @@ func (vdc *Vdc) getLinkHref(rel, linkType string) string {
 	}
 	return ""
 }
+
+// GetVappList returns the list of vApps for a VDC
+func (vdc *Vdc) GetVappList() []*types.ResourceReference {
+	var list []*types.ResourceReference
+	for _, resourceEntities := range vdc.Vdc.ResourceEntities {
+		for _, resourceReference := range resourceEntities.ResourceEntity {
+			if resourceReference.Type == types.MimeVApp {
+				list = append(list, resourceReference)
+			}
+		}
+	}
+	return list
+}

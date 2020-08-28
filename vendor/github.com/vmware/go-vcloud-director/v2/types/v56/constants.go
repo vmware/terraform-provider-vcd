@@ -31,6 +31,8 @@ const (
 	MimeOrgList = "application/vnd.vmware.vcloud.orgList+xml"
 	// MimeOrg mime for org
 	MimeOrg = "application/vnd.vmware.vcloud.org+xml"
+	// MimeAdminOrg mime for admin org
+	MimeAdminOrg = "application/vnd.vmware.admin.organization+xml"
 	// MimeCatalog mime for catalog
 	MimeCatalog = "application/vnd.vmware.vcloud.catalog+xml"
 	// MimeCatalogItem mime for catalog item
@@ -117,6 +119,8 @@ const (
 	MimeOrgLdapSettings = "application/vnd.vmware.admin.organizationldapsettings+xml"
 	// Mime of vApp network
 	MimeVappNetwork = "application/vnd.vmware.vcloud.vAppNetwork+xml"
+	// Mime of access control
+	MimeControlAccess = "application/vnd.vmware.vcloud.controlAccess+xml"
 	// Mime of VM capabilities
 	MimeVmCapabilities = "application/vnd.vmware.vcloud.vmCapabilitiesSection+xml"
 )
@@ -236,7 +240,21 @@ const (
 	QtMedia             = "media"             // media item
 	QtVm                = "vm"                // Virtual machine
 	QtAdminVm           = "adminVM"           // Virtual machine as admin
+	QtVapp              = "vApp"              // vApp
+	QtAdminVapp         = "adminVApp"         // vApp as admin
 )
+
+// AdminQueryTypes returns the corresponding "admin" query type for each regular type
+var AdminQueryTypes = map[string]string{
+	QtEdgeGateway:   QtEdgeGateway,   // EdgeGateway query type is the same for admin and regular users
+	QtOrgVdcNetwork: QtOrgVdcNetwork, // Org VDC Network query type is the same for admin and regular users
+	QtVappTemplate:  QtAdminVappTemplate,
+	QtCatalog:       QtAdminCatalog,
+	QtCatalogItem:   QtAdminCatalogItem,
+	QtMedia:         QtAdminMedia,
+	QtVm:            QtAdminVm,
+	QtVapp:          QtAdminVapp,
+}
 
 const (
 	// Affinity and anti affinity definitions
@@ -278,6 +296,13 @@ const (
 	LdapModeCustom = "CUSTOM"
 )
 
+// Access control modes
+const (
+	ControlAccessReadOnly    = "ReadOnly"
+	ControlAccessReadWrite   = "Change"
+	ControlAccessFullControl = "FullControl"
+)
+
 // BodyType allows to define API body types where applicable
 type BodyType int
 
@@ -298,4 +323,12 @@ const (
 const (
 	OpenApiPathVersion1_0_0 = "1.0.0/"
 	OpenApiEndpointRoles    = "roles/"
+)
+
+// Header keys to run operations in tenant context
+const (
+	// HeaderTenantContext requires the Org ID of the tenant
+	HeaderTenantContext = "X-VMWARE-VCLOUD-TENANT-CONTEXT"
+	// HeaderAuthContext requires the Org name of the tenant
+	HeaderAuthContext = "X-VMWARE-VCLOUD-AUTH-CONTEXT"
 )

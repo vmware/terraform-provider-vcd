@@ -66,7 +66,7 @@ func (vapp *VApp) getParentVDC() (Vdc, error) {
 			vdc := NewVdc(vapp.client)
 
 			_, err := vapp.client.ExecuteRequest(link.HREF, http.MethodGet,
-				"", "error retrieving paren vdc: %s", nil, vdc.Vdc)
+				"", "error retrieving parent vdc: %s", nil, vdc.Vdc)
 			if err != nil {
 				return Vdc{}, err
 			}
@@ -1331,4 +1331,38 @@ func (vapp *VApp) GetVMByNameOrId(identifier string, refresh bool) (*VM, error) 
 		return nil, err
 	}
 	return entity.(*VM), err
+}
+
+// QueryVappList returns a list of all vApps in all the organizations available to the caller
+func (client *Client) QueryVappList() ([]*types.QueryResultVAppRecordType, error) {
+	var vappList []*types.QueryResultVAppRecordType
+	queryType := client.GetQueryType(types.QtVapp)
+	params := map[string]string{
+		"type":          queryType,
+		"filterEncoded": "true",
+	}
+	vappResult, err := client.cumulativeQuery(queryType, nil, params)
+	if err != nil {
+		return nil, fmt.Errorf("error getting vApp list : %s", err)
+	}
+	vappList = vappResult.Results.VAppRecord
+	if client.IsSysAdmin {
+		vappList = vappResult.Results.AdminVAppRecord
+	}
+	return vappList, nil
+}
+
+// getOrgInfo finds the organization to which the vApp belongs (through the VDC), and returns its name and ID
+func (vapp *VApp) getOrgInfo() (orgInfoType, error) {
+	previous, exists := orgInfoCache[vapp.VApp.ID]
+	if exists {
+		return previous, nil
+	}
+	//var orgHref string
+	var err error
+	vdc, err := vapp.getParentVDC()
+	if err != nil {
+		return orgInfoType{}, err
+	}
+	return getOrgInfo(vapp.client, vdc.Vdc.Link, vapp.VApp.ID, vapp.VApp.Name, "vApp")
 }
