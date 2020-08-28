@@ -9,9 +9,6 @@ require (
 	github.com/hashicorp/hcl/v2 v2.3.0 // indirect
 	github.com/hashicorp/terraform-config-inspect v0.0.0-20191212124732-c6ae6269b9d7 // indirect
 	github.com/hashicorp/terraform-plugin-sdk v1.8.0
-	github.com/vmware/go-vcloud-director/v2 v2.9.0-alpha.4
+	github.com/vmware/go-vcloud-director/v2 v2.9.0-alpha.5
 	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37 // indirect
 )
-
-// replace github.com/vmware/go-vcloud-director/v2 => ../go-vcloud-director
-replace github.com/vmware/go-vcloud-director/v2 => github.com/dataclouder/go-vcloud-director/v2 v2.5.0-alpha.4.0.20200825083213-eb9e097e26d3

@@ -1358,33 +1358,11 @@ func (vapp *VApp) getOrgInfo() (orgInfoType, error) {
 	if exists {
 		return previous, nil
 	}
-	var orgHref string
+	//var orgHref string
 	var err error
 	vdc, err := vapp.getParentVDC()
 	if err != nil {
 		return orgInfoType{}, err
 	}
-	var orgId string
-	for _, link := range vdc.Vdc.Link {
-		if link.Rel == "up" && (link.Type == types.MimeOrg || link.Type == types.MimeAdminOrg) {
-			orgId, err = GetUuidFromHref(link.HREF, true)
-			if err != nil {
-				return orgInfoType{}, err
-			}
-			orgHref = link.HREF
-			break
-		}
-	}
-
-	var org types.Org
-	_, err = vdc.client.ExecuteRequest(orgHref, http.MethodGet,
-		"", "error retrieving org: %s", nil, &org)
-	if err != nil {
-		return orgInfoType{}, err
-	}
-	orgInfoCache[vapp.VApp.ID] = orgInfoType{
-		id:   orgId,
-		name: org.Name,
-	}
-	return orgInfoType{name: org.Name, id: orgId}, nil
+	return getOrgInfo(vapp.client, vdc.Vdc.Link, vapp.VApp.ID, vapp.VApp.Name, "vApp")
 }
