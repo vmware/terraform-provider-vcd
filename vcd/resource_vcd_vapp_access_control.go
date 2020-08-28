@@ -24,7 +24,6 @@ func resourceVcdAccessControlVapp() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
 				ForceNew: true,
 				Description: "The name of organization to use, optional if defined at provider " +
@@ -32,7 +31,6 @@ func resourceVcdAccessControlVapp() *schema.Resource {
 			},
 			"vdc": {
 				Type:        schema.TypeString,
-				Required:    false,
 				Optional:    true,
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
@@ -102,12 +100,15 @@ func resourceAccessControlVappUpdate(d *schema.ResourceData, meta interface{}) e
 
 	var accessControl types.ControlAccessParams
 
-	isSharedToEveryone := d.Get("shared_with_everyone").(bool)
+	isSharedWithEveryone := d.Get("shared_with_everyone").(bool)
 	everyoneAccessLevel := d.Get("everyone_access_level").(string)
 	sharedList := d.Get("shared_with").(*schema.Set).List()
 
 	// Early checks, so that we can fail as soon as possible
-	if isSharedToEveryone {
+	if isSharedWithEveryone {
+		if everyoneAccessLevel == "" {
+			return fmt.Errorf("[resourceAccessControlVappUpdate] 'shared_with_everyone' was set, but 'everyone_access_level' was not")
+		}
 		accessControl.IsSharedToEveryone = true
 		accessControl.EveryoneAccessLevel = &everyoneAccessLevel
 		if len(sharedList) > 0 {
@@ -136,7 +137,7 @@ func resourceAccessControlVappUpdate(d *schema.ResourceData, meta interface{}) e
 	vcdClient.lockParentVappWithName(d, vapp.VApp.Name)
 	defer vcdClient.unLockParentVappWithName(d, vapp.VApp.Name)
 
-	if !isSharedToEveryone {
+	if !isSharedWithEveryone {
 		accessControlList, err := sharedSetToAccessControl(adminOrg, sharedList)
 		if err != nil {
 			return err
