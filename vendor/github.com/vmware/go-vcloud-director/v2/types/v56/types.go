@@ -403,20 +403,21 @@ type Vdc struct {
 	Name         string `xml:"name,attr"`
 	Status       int    `xml:"status,attr,omitempty"`
 
-	Link               LinkList             `xml:"Link,omitempty"`
-	Description        string               `xml:"Description,omitempty"`
-	Tasks              *TasksInProgress     `xml:"Tasks,omitempty"`
-	AllocationModel    string               `xml:"AllocationModel"`
-	ComputeCapacity    []*ComputeCapacity   `xml:"ComputeCapacity"`
-	ResourceEntities   []*ResourceEntities  `xml:"ResourceEntities,omitempty"`
-	AvailableNetworks  []*AvailableNetworks `xml:"AvailableNetworks,omitempty"`
-	Capabilities       []*Capabilities      `xml:"Capabilities,omitempty"`
-	NicQuota           int                  `xml:"NicQuota"`
-	NetworkQuota       int                  `xml:"NetworkQuota"`
-	UsedNetworkCount   int                  `xml:"UsedNetworkCount,omitempty"`
-	VMQuota            int                  `xml:"VmQuota"`
-	IsEnabled          bool                 `xml:"IsEnabled"`
-	VdcStorageProfiles *VdcStorageProfiles  `xml:"VdcStorageProfiles"`
+	Link                 LinkList             `xml:"Link,omitempty"`
+	Description          string               `xml:"Description,omitempty"`
+	Tasks                *TasksInProgress     `xml:"Tasks,omitempty"`
+	AllocationModel      string               `xml:"AllocationModel"`
+	ComputeCapacity      []*ComputeCapacity   `xml:"ComputeCapacity"`
+	ResourceEntities     []*ResourceEntities  `xml:"ResourceEntities,omitempty"`
+	AvailableNetworks    []*AvailableNetworks `xml:"AvailableNetworks,omitempty"`
+	Capabilities         []*Capabilities      `xml:"Capabilities,omitempty"`
+	NicQuota             int                  `xml:"NicQuota"`
+	NetworkQuota         int                  `xml:"NetworkQuota"`
+	UsedNetworkCount     int                  `xml:"UsedNetworkCount,omitempty"`
+	VMQuota              int                  `xml:"VmQuota"`
+	IsEnabled            bool                 `xml:"IsEnabled"`
+	VdcStorageProfiles   *VdcStorageProfiles  `xml:"VdcStorageProfiles"`
+	DefaultComputePolicy *Reference           `xml:"DefaultComputePolicy"`
 }
 
 // AdminVdc represents the admin view of an organization VDC.
@@ -2811,4 +2812,12 @@ type VmAffinityRules struct {
 	Type           string            `xml:"type,attr,omitempty"`
 	Link           *Link             `xml:"Link,omitempty"` //
 	VmAffinityRule []*VmAffinityRule `xml:"VmAffinityRule,omitempty"`
+}
+
+type VdcComputePolicyReferences struct {
+	Xmlns                     string       `xml:"xmlns,attr"`
+	HREF                      string       `xml:"href,attr,omitempty"`
+	Type                      string       `xml:"type,attr,omitempty"`
+	Link                      *Link        `xml:"Link,omitempty"`
+	VdcComputePolicyReference []*Reference `xml:"VdcComputePolicyReference,omitempty"`
 }

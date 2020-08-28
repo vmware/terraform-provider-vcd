@@ -62,6 +62,52 @@ resource "vcd_org_vdc" "my-vdc" {
 }
 ```
 
+## Example Usage (With VM sizing policies)
+
+```hcl
+resource "vcd_vm_sizing_policy" "size_1" {
+  name        = "size-one"
+
+  cpu {
+    shares                = "886"
+    limit_in_mhz          = "2400"
+    count                 = "9"
+    speed_in_mhz          = "2500"
+    cores_per_socket      = "3"
+    reservation_guarantee = "0.55"
+  }
+
+}
+
+resource "vcd_vm_sizing_policy" "size_2" {
+  name        = "size-two"
+
+  cpu {
+    shares                = "886"
+    limit_in_mhz          = "2400"
+    count                 = "9"
+    speed_in_mhz          = "2500"
+    cores_per_socket      = "3"
+    reservation_guarantee = "0.55"
+  }
+
+  memory {
+    shares                = "1580"
+    size_in_mb            = "3200"
+    limit_in_mb           = "2800"
+    reservation_guarantee = "0.3"
+  }
+}
+resource "vcd_org_vdc" "my-vdc" {
+  name        = "my-vdc"
+  description = "The pride of my work"
+  org         = "my-org"
+  ...  
+  default_vm_sizing_policy_id = vcd_vm_sizing_policy.size_1.id
+  vm_sizing_policy_ids        = [vcd_vm_sizing_policy.size_1.id, vcd_vm_sizing_policy.size_2.id]
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -96,7 +142,8 @@ The following arguments are supported:
 * `include_vm_memory_overhead` - (Optional, *v2.7+*, *vCD 9.7+*) Indicates if the Flex VDC should include memory overhead into its accounting for admission control. Required with the Flex allocation model.
 * `delete_force` - (Required) When destroying use `delete_force=True` to remove a VDC and any objects it contains, regardless of their state.
 * `delete_recursive` - (Required) When destroying use `delete_recursive=True` to remove the VDC and any objects it contains that are in a state that normally allows removal.
-
+* `default_vm_sizing_policy_id` - (Optional, *v3.0+*, *vCD 10.0+*) Set of VM sizing policy IDs.
+* `vm_sizing_policy_ids` - (Optional, *v3.0+*, *vCD 10.0+*) Default VM sizing policy ID.
 
 <a id="storageprofile"></a>
 ## Storage Profile

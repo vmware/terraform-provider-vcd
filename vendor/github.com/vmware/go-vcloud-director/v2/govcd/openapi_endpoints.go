@@ -14,6 +14,7 @@ import (
 var endpointMinApiVersions = map[string]string{
 	types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointRoles:              "31.0",
 	types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointVdcComputePolicies: "32.0",
+	types.OpenApiEndpointAssignedComputePolicies:                            "33.0",
 }
 
 // checkOpenApiEndpointCompatibility checks if VCD version (to which the client is connected) is sufficient to work with

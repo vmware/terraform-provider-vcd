@@ -188,6 +188,19 @@ func datasourceVcdOrgVdc() *schema.Resource {
 				Computed:    true,
 				Description: "Key and value pairs for Org VDC metadata",
 			},
+			"vm_sizing_policy_ids": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "Set of VM sizing policy IDs",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"default_vm_sizing_policy_id": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Id of default VM sizing policy ID",
+			},
 		},
 	}
 }
