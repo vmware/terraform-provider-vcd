@@ -1012,21 +1012,6 @@ func (env *envHelper) restoreVcdVars() {
 	}
 }
 
-<<<<<<< HEAD
-// skipNoNsxtConfiguration allows to skip a test if NSX-T configuration is missing
-func skipNoNsxtConfiguration(t *testing.T) {
-	generalMessage := "Missing NSX-T config: "
-	if testConfig.VCD.NsxtProviderVdc.Name == "" {
-		t.Skip(generalMessage + "No provider vdc specified")
-	}
-	if testConfig.VCD.NsxtProviderVdc.NetworkPool == "" {
-		t.Skip(generalMessage + "No network pool specified")
-	}
-
-	if testConfig.VCD.NsxtProviderVdc.StorageProfile == "" {
-		t.Skip(generalMessage + "No storage profile specified")
-	}
-=======
 // importStateIdViaResource runs the import of a VM affinity rule using the resource ID
 func importStateIdViaResource(resource string) resource.ImportStateIdFunc {
 	return func(s *terraform.State) (string, error) {
@@ -1111,5 +1096,19 @@ func skipOnEnvVariable(envVar, envValue, notes string, f resource.TestCheckFunc)
 		}
 	}
 	return f
->>>>>>> master
+}
+
+// skipNoNsxtConfiguration allows to skip a test if NSX-T configuration is missing
+func skipNoNsxtConfiguration(t *testing.T) {
+	generalMessage := "Missing NSX-T config: "
+	if testConfig.VCD.NsxtProviderVdc.Name == "" {
+		t.Skip(generalMessage + "No provider VDC specified")
+	}
+	if testConfig.VCD.NsxtProviderVdc.NetworkPool == "" {
+		t.Skip(generalMessage + "No network pool specified")
+	}
+
+	if testConfig.VCD.NsxtProviderVdc.StorageProfile == "" {
+		t.Skip(generalMessage + "No storage profile specified")
+	}
 }

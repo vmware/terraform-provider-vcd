@@ -1,1 +1,1 @@
-* Add support for NSX-T Org Vdc [GH-550]
+* Add support for NSX-T Org VDC [GH-550]
