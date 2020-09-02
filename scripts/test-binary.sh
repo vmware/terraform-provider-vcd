@@ -569,7 +569,19 @@ do
                     # -detailed-exitcode will return exit code 2 when the plan was not empty
                     # and this allows to validate if reads work properly and there is no immediate
                     # plan change right after apply succeeded
-                    [ -n "$upgrading" ] && run terraform version
+                    if [ -n "$upgrading" ]
+                    then
+                        # Replace the version in HCL configuration file
+                        major_from=$(echo $from_version | tr -d 'v' | tr '.' ' '| awk '{print $1}')
+                        minor_from=$(echo $from_version | tr -d 'v' | tr '.' ' '| awk '{print $2}')
+                        major_to=$(echo $to_version | tr -d 'v' | tr '.' ' '| awk '{print $1}')
+                        minor_to=$(echo $to_version | tr -d 'v' | tr '.' ' '| awk '{print $2}')
+                        short_from="${major_from}.${minor_from}"
+                        short_to="${major_to}.${minor_to}"
+                        sed -i -e 's/version *= "~> '${short_from}'"/version = "~> '${short_to}'"/'  config.tf
+                        run terraform init
+                        run terraform version
+                    fi
                     run_with_recover $CF plancheck terraform plan -detailed-exitcode $plancheck_options
                 fi
                 ;;

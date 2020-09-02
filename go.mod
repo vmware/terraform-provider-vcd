@@ -1,4 +1,4 @@
-module github.com/vmware/terraform-provider-vcd/v2
+module github.com/vmware/terraform-provider-vcd/v3
 
 go 1.13
 
@@ -9,6 +9,6 @@ require (
 	github.com/hashicorp/hcl/v2 v2.3.0 // indirect
 	github.com/hashicorp/terraform-config-inspect v0.0.0-20191212124732-c6ae6269b9d7 // indirect
 	github.com/hashicorp/terraform-plugin-sdk v1.8.0
-	github.com/vmware/go-vcloud-director/v2 v2.9.0-alpha.4
+	github.com/vmware/go-vcloud-director/v2 v2.9.0-alpha.5
 	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37 // indirect
 )
