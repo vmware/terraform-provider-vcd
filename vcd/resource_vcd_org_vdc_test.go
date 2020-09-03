@@ -19,11 +19,6 @@ func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 	}
 	validateConfiguration(t)
 
-	vcdClient, err := getTestVCDFromJson(testConfig)
-	if err != nil {
-		t.Skip("unable to validate vCD version - skipping test")
-	}
-
 	allocationModel := "ReservationPool"
 
 	var params = StringMap{
@@ -49,21 +44,13 @@ func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 		"FlexElasticKey":                     "",
 		"FlexElasticValue":                   "",
 		"FlexElasticValueUpdate":             "",
-		"ElasticityValueForAssert":           "",
-		"ElasticityUpdateValueForAssert":     "",
 		"FlexMemoryOverheadKey":              "",
 		"FlexMemoryOverheadValue":            "",
 		"FlexMemoryOverheadValueUpdate":      "",
-		"MemoryOverheadValueForAssert":       "",
-		"MemoryOverheadUpdateValueForAssert": "",
-	}
-
-	// In version 9.7+ the properties are returned false by default
-	if vcdClient.Client.APIVCDMaxVersionIs(">= 32.0") {
-		params["MemoryOverheadValueForAssert"] = "true"
-		params["MemoryOverheadUpdateValueForAssert"] = "true"
-		params["ElasticityValueForAssert"] = "false"
-		params["ElasticityUpdateValueForAssert"] = "false"
+		"MemoryOverheadValueForAssert":       "true",
+		"MemoryOverheadUpdateValueForAssert": "true",
+		"ElasticityValueForAssert":           "false",
+		"ElasticityUpdateValueForAssert":     "false",
 	}
 
 	runOrgVdcTest(t, params, allocationModel)
@@ -74,11 +61,6 @@ func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
 	}
 	validateConfiguration(t)
-
-	vcdClient, err := getTestVCDFromJson(testConfig)
-	if err != nil {
-		t.Skip("unable to validate vCD version - skipping test")
-	}
 
 	allocationModel := "AllocationPool"
 
@@ -104,21 +86,13 @@ func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 		"FlexElasticKey":                     "",
 		"FlexElasticValue":                   "",
 		"FlexElasticValueUpdate":             "",
-		"ElasticityValueForAssert":           "",
-		"ElasticityUpdateValueForAssert":     "",
+		"ElasticityValueForAssert":           "false",
+		"ElasticityUpdateValueForAssert":     "false",
 		"FlexMemoryOverheadKey":              "",
 		"FlexMemoryOverheadValue":            "",
 		"FlexMemoryOverheadValueUpdate":      "",
-		"MemoryOverheadValueForAssert":       "",
-		"MemoryOverheadUpdateValueForAssert": "",
-	}
-
-	// In version 9.7+ the properties are returned false by default
-	if vcdClient.Client.APIVCDMaxVersionIs(">= 32.0") {
-		params["MemoryOverheadValueForAssert"] = "true"
-		params["MemoryOverheadUpdateValueForAssert"] = "true"
-		params["ElasticityValueForAssert"] = "false"
-		params["ElasticityUpdateValueForAssert"] = "false"
+		"MemoryOverheadValueForAssert":       "true",
+		"MemoryOverheadUpdateValueForAssert": "true",
 	}
 
 	runOrgVdcTest(t, params, allocationModel)
@@ -129,11 +103,6 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
 	}
 	validateConfiguration(t)
-
-	vcdClient, err := getTestVCDFromJson(testConfig)
-	if err != nil {
-		t.Skip("unable to validate vCD version - skipping test")
-	}
 
 	allocationModel := "AllocationVApp"
 
@@ -159,21 +128,13 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 		"FlexElasticKey":                     "",
 		"FlexElasticValue":                   "",
 		"FlexElasticValueUpdate":             "",
-		"ElasticityValueForAssert":           "",
-		"ElasticityUpdateValueForAssert":     "",
+		"ElasticityValueForAssert":           "true",
+		"ElasticityUpdateValueForAssert":     "true",
 		"FlexMemoryOverheadKey":              "",
 		"FlexMemoryOverheadValue":            "",
 		"FlexMemoryOverheadValueUpdate":      "",
-		"MemoryOverheadValueForAssert":       "",
-		"MemoryOverheadUpdateValueForAssert": "",
-	}
-
-	// In version 9.7+ the properties are returned false by default
-	if vcdClient.Client.APIVCDMaxVersionIs(">= 32.0") {
-		params["MemoryOverheadValueForAssert"] = "false"
-		params["MemoryOverheadUpdateValueForAssert"] = "false"
-		params["ElasticityValueForAssert"] = "true"
-		params["ElasticityUpdateValueForAssert"] = "true"
+		"MemoryOverheadValueForAssert":       "false",
+		"MemoryOverheadUpdateValueForAssert": "false",
 	}
 
 	runOrgVdcTest(t, params, allocationModel)
@@ -182,16 +143,6 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 func TestAccVcdOrgVdcAllocationFlex(t *testing.T) {
 	if !usingSysAdmin() {
 		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
-	}
-
-	vcdClient, err := getTestVCDFromJson(testConfig)
-	if err != nil {
-		t.Skip("unable to validate vCD version - skipping test")
-	}
-
-	// if vCD older then 9.7
-	if vcdClient.Client.APIVCDMaxVersionIs("< 32.0") {
-		t.Skip("Skipping this test as Flex is supported from version 9.7")
 	}
 
 	validateConfiguration(t)

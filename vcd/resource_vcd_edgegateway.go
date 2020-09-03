@@ -302,13 +302,6 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("no valid VDC named '%s' was found", vdcName)
 	}
 
-	// In version 9.7+ the advanced property is true by default
-	if vcdClient.Client.APIVCDMaxVersionIs(">= 32.0") {
-		if !d.Get("advanced").(bool) {
-			return fmt.Errorf("'advanced' property for vCD 9.7+ must be set to 'true'")
-		}
-	}
-
 	var gwInterfaces []*types.GatewayInterface
 
 	simpleExtNetworksSlice, simpleExtNetsExist := d.GetOk("external_networks")

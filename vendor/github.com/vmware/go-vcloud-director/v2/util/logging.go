@@ -335,7 +335,7 @@ func ProcessResponseOutput(caller string, resp *http.Response, result string) {
 	}
 }
 
-// Sets the list of tahs to skip
+// Sets the list of tags to skip
 func SetSkipTags(tags string) {
 	if tags != "" {
 		skipTags = strings.Split(tags, ",")

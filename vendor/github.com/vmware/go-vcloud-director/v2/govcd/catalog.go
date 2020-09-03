@@ -18,6 +18,7 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
@@ -102,7 +103,9 @@ func (cat *Catalog) FindCatalogItem(catalogItemName string) (CatalogItem, error)
 	return CatalogItem{}, nil
 }
 
-// Uploads an ova file to a catalog. This method only uploads bits to vCD spool area.
+// UploadOvf uploads an ova/ovf file to a catalog. This method only uploads bits to vCD spool area.
+// ovaFileName should be the path of OVA or OVF file(not ovf folder) itself. For OVF,
+// user need to make sure all the files that OVF depends on exist and locate under the same folder.
 // Returns errors if any occur during upload from vCD or upload process. On upload fail client may need to
 // remove vCD catalog item which waits for files to be uploaded. Files from ova are extracted to system
 // temp folder "govcd+random number" and left for inspection on error.
@@ -129,24 +132,48 @@ func (cat *Catalog) UploadOvf(ovaFileName, itemName, description string, uploadP
 		}
 	}
 
-	filesAbsPaths, tmpDir, err := util.Unpack(ovaFileName)
+	isOvf := false
+	fileContentType, err := util.GetFileContentType(ovaFileName)
 	if err != nil {
-		return UploadTask{}, fmt.Errorf("%s. Unpacked files for checking are accessible in: "+tmpDir, err)
+		return UploadTask{}, err
 	}
-
-	ovfFilePath, err := getOvfPath(filesAbsPaths)
-	if err != nil {
-		return UploadTask{}, fmt.Errorf("%s. Unpacked files for checking are accessible in: "+tmpDir, err)
+	if strings.Contains(fileContentType, "text/xml") {
+		isOvf = true
+	}
+	ovfFilePath := ovaFileName
+	tmpDir := path.Dir(ovaFileName)
+	filesAbsPaths := []string{ovfFilePath}
+	if !isOvf {
+		filesAbsPaths, tmpDir, err = util.Unpack(ovaFileName)
+		if err != nil {
+			return UploadTask{}, fmt.Errorf("%s. Unpacked files for checking are accessible in: %s", err, tmpDir)
+		}
+		ovfFilePath, err = getOvfPath(filesAbsPaths)
+		if err != nil {
+			return UploadTask{}, fmt.Errorf("%s. Unpacked files for checking are accessible in: %s", err, tmpDir)
+		}
 	}
 
 	ovfFileDesc, err := getOvf(ovfFilePath)
 	if err != nil {
-		return UploadTask{}, fmt.Errorf("%s. Unpacked files for checking are accessible in: "+tmpDir, err)
+		return UploadTask{}, fmt.Errorf("%s. OVF/Unpacked files for checking are accessible in: %s", err, tmpDir)
 	}
 
-	err = validateOvaContent(filesAbsPaths, &ovfFileDesc, tmpDir)
-	if err != nil {
-		return UploadTask{}, fmt.Errorf("%s. Unpacked files for checking are accessible in: "+tmpDir, err)
+	if !isOvf {
+		err = validateOvaContent(filesAbsPaths, &ovfFileDesc, tmpDir)
+		if err != nil {
+			return UploadTask{}, fmt.Errorf("%s. Unpacked files for checking are accessible in: %s", err, tmpDir)
+		}
+	} else {
+		dir := path.Dir(ovfFilePath)
+		for _, fileItem := range ovfFileDesc.File {
+			dependFile := path.Join(dir, fileItem.HREF)
+			dependFile, err := validateAndFixFilePath(dependFile)
+			if err != nil {
+				return UploadTask{}, err
+			}
+			filesAbsPaths = append(filesAbsPaths, dependFile)
+		}
 	}
 
 	catalogItemUploadURL, err := findCatalogItemUploadLink(cat, "application/vnd.vmware.vcloud.uploadVAppTemplateParams+xml")
@@ -186,7 +213,7 @@ func (cat *Catalog) UploadOvf(ovaFileName, itemName, description string, uploadP
 	uploadError := *new(error)
 
 	//sending upload process to background, this allows no to lock and return task to client
-	go uploadFiles(cat.client, vappTemplate, &ovfFileDesc, tmpDir, filesAbsPaths, uploadPieceSize, progressCallBack, &uploadError)
+	go uploadFiles(cat.client, vappTemplate, &ovfFileDesc, tmpDir, filesAbsPaths, uploadPieceSize, progressCallBack, &uploadError, isOvf)
 
 	var task Task
 	for _, item := range vappTemplate.Tasks.Task {
@@ -220,7 +247,7 @@ func (cat *Catalog) UploadOvf(ovaFileName, itemName, description string, uploadP
 // uploadPieceSize - size of chunks in which the file will be uploaded to the catalog.
 // callBack a function with signature //function(bytesUpload, totalSize) to let the caller monitor progress of the upload operation.
 // uploadError - error to be ready be task
-func uploadFiles(client *Client, vappTemplate *types.VAppTemplate, ovfFileDesc *Envelope, tempPath string, filesAbsPaths []string, uploadPieceSize int64, progressCallBack func(bytesUpload, totalSize int64), uploadError *error) error {
+func uploadFiles(client *Client, vappTemplate *types.VAppTemplate, ovfFileDesc *Envelope, tempPath string, filesAbsPaths []string, uploadPieceSize int64, progressCallBack func(bytesUpload, totalSize int64), uploadError *error, isOvf bool) error {
 	var uploadedBytes int64
 	for _, item := range vappTemplate.Files.File {
 		if item.BytesTransferred == 0 {
@@ -272,13 +299,15 @@ func uploadFiles(client *Client, vappTemplate *types.VAppTemplate, ovfFileDesc *
 	}
 
 	//remove extracted files with temp dir
-	err := os.RemoveAll(tempPath)
-	if err != nil {
-		util.Logger.Printf("[Error] Error removing temporary files: %#v", err)
-		*uploadError = err
-		return err
+	//If isOvf flag is true, means tempPath is origin OVF folder, not extracted, won't delete
+	if !isOvf {
+		err := os.RemoveAll(tempPath)
+		if err != nil {
+			util.Logger.Printf("[Error] Error removing temporary files: %#v", err)
+			*uploadError = err
+			return err
+		}
 	}
-
 	return nil
 }
 
@@ -461,7 +490,7 @@ func createItemForUpload(client *Client, createHREF *url.URL, catalogItemName st
 	defer response.Body.Close()
 
 	catalogItemParsed := &types.CatalogItem{}
-	if err = decodeBody(response, catalogItemParsed); err != nil {
+	if err = decodeBody(types.BodyTypeXML, response, catalogItemParsed); err != nil {
 		return nil, err
 	}
 
@@ -780,4 +809,45 @@ func (catalog *Catalog) QueryMediaList() ([]*types.MediaRecordType, error) {
 		mediaResults = results.Results.AdminMediaRecord
 	}
 	return mediaResults, nil
+}
+
+// getOrgInfo finds the organization to which the entity belongs, and returns its name and ID
+func getOrgInfo(client *Client, links types.LinkList, id, name, entityType string) (orgInfoType, error) {
+	previous, exists := orgInfoCache[id]
+	if exists {
+		return previous, nil
+	}
+	var orgId string
+	var orgHref string
+	var err error
+	for _, link := range links {
+		if link.Rel == "up" && (link.Type == types.MimeOrg || link.Type == types.MimeAdminOrg) {
+			orgId, err = GetUuidFromHref(link.HREF, true)
+			if err != nil {
+				return orgInfoType{}, err
+			}
+			orgHref = link.HREF
+			break
+		}
+	}
+	if orgHref == "" || orgId == "" {
+		return orgInfoType{}, fmt.Errorf("error retrieving org info for %s %s", entityType, name)
+	}
+	var org types.Org
+	_, err = client.ExecuteRequest(orgHref, http.MethodGet,
+		"", "error retrieving org: %s", nil, &org)
+	if err != nil {
+		return orgInfoType{}, err
+	}
+
+	orgInfoCache[id] = orgInfoType{
+		id:   orgId,
+		name: org.Name,
+	}
+	return orgInfoType{name: org.Name, id: orgId}, nil
+}
+
+// getOrgInfo finds the organization to which the catalog belongs, and returns its name and ID
+func (catalog *Catalog) getOrgInfo() (orgInfoType, error) {
+	return getOrgInfo(catalog.client, catalog.Catalog.Link, catalog.Catalog.ID, catalog.Catalog.Name, "Catalog")
 }

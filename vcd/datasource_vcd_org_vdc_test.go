@@ -18,6 +18,7 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 		"ExistingVdcName": testConfig.VCD.Vdc,
 		"VdcName":         vdcName,
 		"OrgName":         testConfig.VCD.Org,
+		"StorageProfile":  testConfig.VCD.ProviderVdc.StorageProfile,
 		"FuncName":        vdcName,
 	}
 
@@ -72,10 +73,10 @@ func validateResourceAndDataSource(t *testing.T, configText string, datasourceVd
 						"data."+datasourceVdc, "enabled", "vcd_org_vdc."+vdcName, "enabled"),
 					resource.TestCheckResourceAttrPair(
 						"data."+datasourceVdc, "enable_thin_provisioning", "vcd_org_vdc."+vdcName, "enable_thin_provisioning"),
-					resource.TestCheckResourceAttrPair(
-						"data."+datasourceVdc, "storage_profile.0.enabled", "vcd_org_vdc."+vdcName, "storage_profile.0.enabled"),
-					resource.TestCheckResourceAttrPair(
-						"data."+datasourceVdc, "storage_profile.0.default", "vcd_org_vdc."+vdcName, "storage_profile.0.default"),
+					resource.TestCheckResourceAttr("vcd_org_vdc."+vdcName, "storage_profile.0.enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_org_vdc."+vdcName, "storage_profile.0.default", "true"),
+					resource.TestCheckResourceAttr("vcd_org_vdc."+vdcName, "storage_profile.0.limit", "0"),
+					resource.TestCheckResourceAttr("vcd_org_vdc."+vdcName, "storage_profile.0.name", testConfig.VCD.ProviderVdc.StorageProfile),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+vdcName, "metadata.vdc_metadata", "VDC Metadata"),
 					resource.TestCheckResourceAttrPair(
@@ -157,10 +158,10 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   }
 
   storage_profile {
-    name    = data.vcd_org_vdc.existingVdc.storage_profile[0].name
-    enabled = data.vcd_org_vdc.existingVdc.storage_profile[0].enabled
-    limit   = data.vcd_org_vdc.existingVdc.storage_profile[0].limit
-    default = data.vcd_org_vdc.existingVdc.storage_profile[0].default
+    name    = "{{.StorageProfile}}"
+    enabled = true
+    limit   = 0
+    default = true
   }
 
   metadata = {

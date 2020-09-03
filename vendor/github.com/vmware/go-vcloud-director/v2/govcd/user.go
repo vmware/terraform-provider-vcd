@@ -146,7 +146,7 @@ func (adminOrg *AdminOrg) GetUserById(id string, refresh bool) (*OrgUser, error)
 	}
 
 	for _, user := range adminOrg.AdminOrg.Users.User {
-		if user.ID == id {
+		if equalIds(id, user.ID, user.HREF) {
 			return adminOrg.GetUserByHref(user.HREF)
 		}
 	}

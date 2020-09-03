@@ -52,7 +52,7 @@ resource "vcd_org_user" "test_user_vapp_author" {
 
 The following arguments are supported:
 
-* `org` - (Optional) The name of organization to which the VDC belongs. Optional if defined at provider level.
+* `org` - (Optional) The name of organization to which the user belongs. Optional if defined at provider level.
 * `name` - (Required) A unique name for the user.
 * `password` - (Optional, but required if `password_file` was not given) The user password. This value is never returned 
   on read. It is inspected on create and modify. To modify, fill with a different value. Note that if you remove the 
@@ -61,7 +61,7 @@ The following arguments are supported:
   usage: after changing the password, run an apply again with the password blank.
   Using this property instead of `password` has the advantage that the sensitive data is not saved into Terraform state 
   file. The disadvantage is that a password change requires also changing the file name.
-* `provider_type` - (Optional) Identity provider type for this this user. One of: `INTEGRATED`, `SAML`, `OAUTH`. The default
+* `provider_type` - (Optional) Identity provider type for this user. One of: `INTEGRATED`, `SAML`, `OAUTH`. The default
    is `INTEGRATED`.
 * `role` - (Required) The role of the user. Role names can be retrieved from the organization. Both built-in roles and
   custom built can be used. The roles normally available are:
@@ -77,7 +77,7 @@ The following arguments are supported:
 * `email_address` - (Optional) The Org User email address. Needs to be a properly formatted email address.
 * `instant_messaging` - (Optional) The Org User instant messaging.
 * `enabled` - (Optional) True if the user is enabled and can log in. The default is `true`.
-* `is_group_role` - (Optional) True if this user has a group role.. The default is `false`.
+* `is_group_role` - (Optional) True if this user has a group role. The default is `false`.
 * `is_locked` - (Optional)aIf the user account has been locked due to too many invalid login attempts, the value will 
   change to true (only the system can lock the user). To unlock the user re-set this flag to false. 
 * `take_ownership` - (Optional) Take ownership of user's objects on deletion.

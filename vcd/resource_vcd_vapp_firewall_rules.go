@@ -24,7 +24,6 @@ func resourceVcdVappFirewallRules() *schema.Resource {
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
 				ForceNew: true,
 				Description: "The name of organization to use, optional if defined at provider " +
@@ -32,7 +31,6 @@ func resourceVcdVappFirewallRules() *schema.Resource {
 			},
 			"vdc": {
 				Type:        schema.TypeString,
-				Required:    false,
 				Optional:    true,
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",

@@ -263,15 +263,23 @@ func TestAccVcdOrgUserWithDS(t *testing.T) {
 
 	ud := userData[0]
 
+	dsOrgUser := testConfig.TestEnvBuild.OrgUser
 	var params = StringMap{
 		"Org":             testConfig.VCD.Org,
 		"UserName":        ud.name,
 		"OrgUserPassword": orgUserPasswordText,
 		"RoleName":        ud.roleName,
 		"Tags":            "user",
+		"DSUserName":      dsOrgUser,
 		"FuncName":        "TestUser_" + ud.name + "_withDS",
 	}
-	configText := templateFill(testAccOrgUserWithOrgDatasource, params)
+
+	var template = testAccOrgUserWithOrgDatasource
+	if dsOrgUser != "" {
+		template += testAccOrgUserDatasource
+	}
+
+	configText := templateFill(template, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -296,6 +304,10 @@ func TestAccVcdOrgUserWithDS(t *testing.T) {
 						resource.TestCheckResourceAttrPair(
 							"vcd_org_user."+ud.name, "stored_vm_quota",
 							"data.vcd_org."+testConfig.VCD.Org, "stored_vm_quota"),
+						resource.TestCheckResourceAttr(
+							"data.vcd_org_user."+dsOrgUser, "name", dsOrgUser),
+						resource.TestCheckResourceAttr(
+							"data.vcd_org_user."+dsOrgUser, "role", govcd.OrgUserRoleOrganizationAdministrator),
 					),
 				},
 			},
@@ -375,5 +387,13 @@ resource "vcd_org_user" "{{.UserName}}" {
   deployed_vm_quota = data.vcd_org.{{.Org}}.deployed_vm_quota
   stored_vm_quota   = data.vcd_org.{{.Org}}.stored_vm_quota
   take_ownership    = true
+}
+`
+
+const testAccOrgUserDatasource = `
+
+data "vcd_org_user" "{{.DSUserName}}" {
+  org  = data.vcd_org.{{.Org}}.name
+  name = "{{.DSUserName}}"
 }
 `

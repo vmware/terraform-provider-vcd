@@ -11,7 +11,7 @@ then
 fi
 
 wanted=$1
-timeout=360m
+timeout=500m
 if [ -n "$VCD_TIMEOUT" ]
 then
     timeout=$VCD_TIMEOUT
@@ -245,7 +245,7 @@ function make_token {
 
   echo "# Connecting to $url ($sysorg)"
   curl --silent --head --insecure \
-    --header "Accept: application/*;version=31.0" \
+    --header "Accept: application/*;version=32.0" \
     --header "Authorization: Basic $auth" \
     --request POST $url/sessions | grep -i authorization
 }

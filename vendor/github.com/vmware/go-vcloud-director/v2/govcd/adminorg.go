@@ -92,7 +92,7 @@ func (adminOrg *AdminOrg) Delete(force bool, recursive bool) error {
 	}
 
 	task := NewTask(adminOrg.client)
-	if err = decodeBody(resp, task.Task); err != nil {
+	if err = decodeBody(types.BodyTypeXML, resp, task.Task); err != nil {
 		return fmt.Errorf("error decoding task response: %s", err)
 	}
 	return task.WaitTaskCompletion()
@@ -239,7 +239,7 @@ func (adminOrg *AdminOrg) removeAllOrgVDCs() error {
 			return fmt.Errorf("error deleting vdc: %s", err)
 		}
 		task := NewTask(adminOrg.client)
-		if err = decodeBody(resp, task.Task); err != nil {
+		if err = decodeBody(types.BodyTypeXML, resp, task.Task); err != nil {
 			return fmt.Errorf("error decoding task response: %s", err)
 		}
 		if task.Task.Status == "error" {
@@ -581,9 +581,8 @@ func (adminOrg *AdminOrg) GetVDCByHref(vdcHref string) (*Vdc, error) {
 
 	vdc := NewVdc(adminOrg.client)
 
-	_, err := adminOrg.client.ExecuteRequestWithApiVersion(vdcHREF, http.MethodGet,
-		"", "error getting vdc: %s", nil, vdc.Vdc,
-		adminOrg.client.GetSpecificApiVersionOnCondition(">= 32.0", "32.0"))
+	_, err := adminOrg.client.ExecuteRequest(vdcHREF, http.MethodGet,
+		"", "error getting vdc: %s", nil, vdc.Vdc)
 
 	if err != nil {
 		return nil, err

@@ -149,7 +149,7 @@ func (vdc *Vdc) Delete(force bool, recursive bool) (Task, error) {
 		return Task{}, fmt.Errorf("error deleting vdc: %s", err)
 	}
 	task := NewTask(vdc.client)
-	if err = decodeBody(resp, task.Task); err != nil {
+	if err = decodeBody(types.BodyTypeXML, resp, task.Task); err != nil {
 		return Task{}, fmt.Errorf("error decoding task response: %s", err)
 	}
 	if task.Task.Status == "error" {
@@ -886,4 +886,17 @@ func (vdc *Vdc) getLinkHref(rel, linkType string) string {
 		}
 	}
 	return ""
+}
+
+// GetVappList returns the list of vApps for a VDC
+func (vdc *Vdc) GetVappList() []*types.ResourceReference {
+	var list []*types.ResourceReference
+	for _, resourceEntities := range vdc.Vdc.ResourceEntities {
+		for _, resourceReference := range resourceEntities.ResourceEntity {
+			if resourceReference.Type == types.MimeVApp {
+				list = append(list, resourceReference)
+			}
+		}
+	}
+	return list
 }

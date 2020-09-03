@@ -1,5 +1,9 @@
 package govcd
 
+/*
+ * Copyright 2020 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
+ */
+
 import (
 	"fmt"
 
@@ -28,6 +32,8 @@ type (
 	QueryCatalog       types.CatalogRecord
 	QueryOrgVdcNetwork types.QueryResultOrgVdcNetworkRecordType
 	QueryMedia         types.MediaRecordType
+	QueryVapp          types.QueryResultVAppRecordType
+	QueryVm            types.QueryResultVMRecordType
 )
 
 // getMetadataValue is a generic metadata lookup for all query items
@@ -152,6 +158,34 @@ func (network QueryOrgVdcNetwork) GetMetadataValue(key string) string {
 }
 
 // --------------------------------------------------------------
+// vApp
+// --------------------------------------------------------------
+func (vapp QueryVapp) GetHref() string       { return vapp.HREF }
+func (vapp QueryVapp) GetName() string       { return vapp.Name }
+func (vapp QueryVapp) GetType() string       { return "vApp" }
+func (vapp QueryVapp) GetIp() string         { return "" }
+func (vapp QueryVapp) GetDate() string       { return vapp.CreationDate }
+func (vapp QueryVapp) GetParentName() string { return vapp.VdcName }
+func (vapp QueryVapp) GetParentId() string   { return vapp.VdcHREF }
+func (vapp QueryVapp) GetMetadataValue(key string) string {
+	return getMetadataValue(vapp.MetaData, key)
+}
+
+// --------------------------------------------------------------
+// VM
+// --------------------------------------------------------------
+func (vm QueryVm) GetHref() string       { return vm.HREF }
+func (vm QueryVm) GetName() string       { return vm.Name }
+func (vm QueryVm) GetType() string       { return "VM" }
+func (vm QueryVm) GetIp() string         { return vm.IpAddress }
+func (vm QueryVm) GetDate() string       { return vm.DateCreated }
+func (vm QueryVm) GetParentName() string { return vm.ContainerName }
+func (vm QueryVm) GetParentId() string   { return vm.VdcHREF }
+func (vm QueryVm) GetMetadataValue(key string) string {
+	return getMetadataValue(vm.MetaData, key)
+}
+
+// --------------------------------------------------------------
 // result conversion
 // --------------------------------------------------------------
 // resultToQueryItems converts a set of query results into a list of query items
@@ -202,9 +236,39 @@ func resultToQueryItems(queryType string, results Results) ([]QueryItem, error) 
 		for i, item := range results.Results.AdminCatalogRecord {
 			items[i] = QueryAdminCatalog(*item)
 		}
+	case types.QtVm:
+		for i, item := range results.Results.VMRecord {
+			items[i] = QueryVm(*item)
+		}
+	case types.QtAdminVm:
+		for i, item := range results.Results.AdminVMRecord {
+			items[i] = QueryVm(*item)
+		}
+	case types.QtVapp:
+		for i, item := range results.Results.VAppRecord {
+			items[i] = QueryVapp(*item)
+		}
+	case types.QtAdminVapp:
+		for i, item := range results.Results.AdminVAppRecord {
+			items[i] = QueryVapp(*item)
+		}
 	}
 	if len(items) > 0 {
 		return items, nil
 	}
 	return nil, fmt.Errorf("unsupported query type %s", queryType)
+}
+
+// GetQueryType is an utility function to get the appropriate query type depending on
+// the user's role
+func (client Client) GetQueryType(queryType string) string {
+	if client.IsSysAdmin {
+		adminType, ok := types.AdminQueryTypes[queryType]
+		if ok {
+			return adminType
+		} else {
+			panic(fmt.Sprintf("no corresponding admin type found for type %s", queryType))
+		}
+	}
+	return queryType
 }
