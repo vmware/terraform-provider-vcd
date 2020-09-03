@@ -238,8 +238,6 @@ github.com/vmihailenco/msgpack/codes
 github.com/vmware/go-vcloud-director/v2/govcd
 github.com/vmware/go-vcloud-director/v2/types/v56
 github.com/vmware/go-vcloud-director/v2/util
-# github.com/vmware/terraform-provider-vcd/v3 v3.0.0-20200828124223-85100ed1058c
-github.com/vmware/terraform-provider-vcd/v3/vcd
 # github.com/zclconf/go-cty v1.2.1
 github.com/zclconf/go-cty/cty
 github.com/zclconf/go-cty/cty/convert
