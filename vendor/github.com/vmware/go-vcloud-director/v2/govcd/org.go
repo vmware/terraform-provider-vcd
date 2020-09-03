@@ -309,10 +309,7 @@ func (org *Org) GetVDCByNameOrId(identifier string, refresh bool) (*Vdc, error) 
 // QueryCatalogList returns a list of catalogs for this organization
 func (org *Org) QueryCatalogList() ([]*types.CatalogRecord, error) {
 	util.Logger.Printf("[DEBUG] QueryCatalogList with org name %s", org.Org.Name)
-	queryType := types.QtCatalog
-	if org.client.IsSysAdmin {
-		queryType = types.QtAdminCatalog
-	}
+	queryType := org.client.GetQueryType(types.QtCatalog)
 	results, err := org.client.cumulativeQuery(queryType, nil, map[string]string{
 		"type":          queryType,
 		"filter":        fmt.Sprintf("orgName==%s", url.QueryEscape(org.Org.Name)),

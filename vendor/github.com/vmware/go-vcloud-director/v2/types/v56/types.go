@@ -1134,7 +1134,6 @@ type ReComposeVAppParams struct {
 	VAppParent          *Reference                   `xml:"VAppParent,omitempty"`          // Reserved. Unimplemented.
 	InstantiationParams *InstantiationParams         `xml:"InstantiationParams,omitempty"` // Instantiation parameters for the composed vApp.
 	SourcedItem         *SourcedCompositionItemParam `xml:"SourcedItem,omitempty"`         // Composition item. One of: vApp vAppTemplate Vm.
-	ComputePolicy       *ComputePolicy               `xml:"ComputePolicy,omitempty"`       // accessible only from version API 33.0
 	AllEULAsAccepted    bool                         `xml:"AllEULAsAccepted,omitempty"`
 	DeleteItem          *DeleteItem                  `xml:"DeleteItem,omitempty"`
 }
@@ -1159,6 +1158,7 @@ type SourcedCompositionItemParam struct {
 	NetworkAssignment   []*NetworkAssignment `xml:"NetworkAssignment,omitempty"`   // If Source references a Vm, this element maps a network name specified in the Vm to the network name of a vApp network defined in the composed vApp.
 	StorageProfile      *Reference           `xml:"StorageProfile,omitempty"`      // If Source references a Vm, this element contains a reference to a storage profile to be used for the Vm. The specified storage profile must exist in the organization vDC that contains the composed vApp. If not specified, the default storage profile for the vDC is used.
 	LocalityParams      *LocalityParams      `xml:"LocalityParams,omitempty"`      // Represents locality parameters. Locality parameters provide a hint that may help the placement engine optimize placement of a VM and an independent a Disk so that the VM can make efficient use of the disk.
+	ComputePolicy       *ComputePolicy       `xml:"ComputePolicy,omitempty"`       // accessible only from version API 33.0
 }
 
 // LocalityParams represents locality parameters. Locality parameters provide a hint that may help the placement engine optimize placement of a VM with respect to another VM or an independent disk.
@@ -2084,6 +2084,7 @@ type QueryResultRecordsType struct {
 	VMRecord                        []*QueryResultVMRecordType                        `xml:"VMRecord"`                        // A record representing a VM result.
 	AdminVMRecord                   []*QueryResultVMRecordType                        `xml:"AdminVMRecord"`                   // A record representing a Admin VM result.
 	VAppRecord                      []*QueryResultVAppRecordType                      `xml:"VAppRecord"`                      // A record representing a VApp result.
+	AdminVAppRecord                 []*QueryResultVAppRecordType                      `xml:"AdminVAppRecord"`                 // A record representing a VApp result as admin.
 	OrgVdcStorageProfileRecord      []*QueryResultOrgVdcStorageProfileRecordType      `xml:"OrgVdcStorageProfileRecord"`      // A record representing storage profiles
 	MediaRecord                     []*MediaRecordType                                `xml:"MediaRecord"`                     // A record representing media
 	AdminMediaRecord                []*MediaRecordType                                `xml:"AdminMediaRecord"`                // A record representing Admin media
@@ -2172,74 +2173,82 @@ type QueryResultEdgeGatewayRecordType struct {
 // QueryResultVMRecordType represents a VM record as query result.
 type QueryResultVMRecordType struct {
 	// Attributes
-	HREF                 string    `xml:"href,attr,omitempty"` // The URI of the entity.
-	ID                   string    `xml:"id,attr,omitempty"`
-	Name                 string    `xml:"name,attr,omitempty"`          // VM name.
-	Type                 string    `xml:"type,attr,omitempty"`          // Contains the type of the resource.
-	ContainerName        string    `xml:"containerName,attr,omitempty"` // The name of the vApp or vApp template that contains this VM.
-	ContainerID          string    `xml:"container,attr,omitempty"`     // The ID of the vApp or vApp template that contains this VM.
-	OwnerName            string    `xml:"ownerName,attr,omitempty"`
-	Owner                string    `xml:"owner,attr,omitempty"`
-	VdcHREF              string    `xml:"vdc,attr,omitempty"`
-	VAppTemplate         bool      `xml:"isVAppTemplate,attr,omitempty"`
-	Deleted              bool      `xml:"isDeleted,attr,omitempty"`
-	GuestOS              string    `xml:"guestOs,attr,omitempty"`
-	Cpus                 int       `xml:"numberOfCpus,attr,omitempty"`
-	MemoryMB             int       `xml:"memoryMB,attr,omitempty"`
-	Status               string    `xml:"status,attr,omitempty"`
-	NetworkName          string    `xml:"networkName,attr,omitempty"`
-	NetworkHref          string    `xml:"network,attr,omitempty"`
-	IpAddress            string    `xml:"ipAddress,attr,omitempty"` // If configured, the IP Address of the VM on the primary network, otherwise empty.
-	Busy                 bool      `xml:"isBusy,attr,omitempty"`
-	Deployed             bool      `xml:"isDeployed,attr,omitempty"` // True if the virtual machine is deployed.
-	Published            bool      `xml:"isPublished,attr,omitempty"`
-	CatalogName          string    `xml:"catalogName,attr,omitempty"`
-	HardwareVersion      int       `xml:"hardwareVersion,attr,omitempty"`
-	VmToolsStatus        string    `xml:"vmToolsStatus,attr,omitempty"`
-	MaintenanceMode      bool      `xml:"isInMaintenanceMode,attr,omitempty"`
-	AutoNature           bool      `xml:"isAutoNature,attr,omitempty"` //  	True if the parent vApp is a managed vApp
-	StorageProfileName   string    `xml:"storageProfileName,attr,omitempty"`
-	GcStatus             string    `xml:"gcStatus,attr,omitempty"` // GC status of this VM.
-	AutoUndeployDate     string    `xml:"autoUndeployDate,attr,omitempty"`
-	AutoDeleteDate       string    `xml:"autoDeleteDate,attr,omitempty"`
-	AutoUndeployNotified bool      `xml:"isAutoUndeployNotified,attr,omitempty"`
-	AutoDeleteNotified   bool      `xml:"isAutoDeleteNotified,attr,omitempty"`
-	Link                 []*Link   `xml:"Link,omitempty"`
-	MetaData             *Metadata `xml:"Metadata,omitempty"`
+	HREF                     string    `xml:"href,attr,omitempty"` // The URI of the entity.
+	ID                       string    `xml:"id,attr,omitempty"`
+	Name                     string    `xml:"name,attr,omitempty"`          // VM name.
+	Type                     string    `xml:"type,attr,omitempty"`          // Contains the type of the resource.
+	ContainerName            string    `xml:"containerName,attr,omitempty"` // The name of the vApp or vApp template that contains this VM.
+	ContainerID              string    `xml:"container,attr,omitempty"`     // The ID of the vApp or vApp template that contains this VM.
+	OwnerName                string    `xml:"ownerName,attr,omitempty"`
+	Owner                    string    `xml:"owner,attr,omitempty"`
+	VdcHREF                  string    `xml:"vdc,attr,omitempty"`
+	VAppTemplate             bool      `xml:"isVAppTemplate,attr,omitempty"`
+	Deleted                  bool      `xml:"isDeleted,attr,omitempty"`
+	GuestOS                  string    `xml:"guestOs,attr,omitempty"`
+	Cpus                     int       `xml:"numberOfCpus,attr,omitempty"`
+	MemoryMB                 int       `xml:"memoryMB,attr,omitempty"`
+	Status                   string    `xml:"status,attr,omitempty"`
+	NetworkName              string    `xml:"networkName,attr,omitempty"`
+	NetworkHref              string    `xml:"network,attr,omitempty"`
+	IpAddress                string    `xml:"ipAddress,attr,omitempty"` // If configured, the IP Address of the VM on the primary network, otherwise empty.
+	Busy                     bool      `xml:"isBusy,attr,omitempty"`
+	Deployed                 bool      `xml:"isDeployed,attr,omitempty"` // True if the virtual machine is deployed.
+	Published                bool      `xml:"isPublished,attr,omitempty"`
+	CatalogName              string    `xml:"catalogName,attr,omitempty"`
+	HardwareVersion          int       `xml:"hardwareVersion,attr,omitempty"`
+	VmToolsStatus            string    `xml:"vmToolsStatus,attr,omitempty"`
+	MaintenanceMode          bool      `xml:"isInMaintenanceMode,attr,omitempty"`
+	AutoNature               bool      `xml:"isAutoNature,attr,omitempty"` //  	True if the parent vApp is a managed vApp
+	StorageProfileName       string    `xml:"storageProfileName,attr,omitempty"`
+	GcStatus                 string    `xml:"gcStatus,attr,omitempty"` // GC status of this VM.
+	AutoUndeployDate         string    `xml:"autoUndeployDate,attr,omitempty"`
+	AutoDeleteDate           string    `xml:"autoDeleteDate,attr,omitempty"`
+	AutoUndeployNotified     bool      `xml:"isAutoUndeployNotified,attr,omitempty"`
+	AutoDeleteNotified       bool      `xml:"isAutoDeleteNotified,attr,omitempty"`
+	IsComputePolicyCompliant bool      `xml:"isComputePolicyCompliant,attr,omitempty"`
+	VmSizingPolicyId         string    `xml:"vmSizingPolicyId,attr,omitempty"`
+	VmPlacementPolicyId      string    `xml:"vmPlacementPolicyId,attr,omitempty"`
+	Encrypted                bool      `xml:"encrypted,attr,omitempty"`
+	DateCreated              string    `xml:"dateCreated,attr,omitempty"`
+	TotalStorageAllocatedMb  string    `xml:"totalStorageAllocatedMb,attr,omitempty"`
+	IsExpired                bool      `xml:"isExpired,attr,omitempty"`
+	Link                     []*Link   `xml:"Link,omitempty"`
+	MetaData                 *Metadata `xml:"Metadata,omitempty"`
 }
 
 // QueryResultVAppRecordType represents a VM record as query result.
 type QueryResultVAppRecordType struct {
 	// Attributes
-	HREF                    string `xml:"href,attr,omitempty"`         // The URI of the entity.
-	Name                    string `xml:"name,attr"`                   // The name of the entity.
-	CreationDate            string `xml:"creationDate,attr,omitempty"` // Creation date/time of the vApp.
-	Busy                    bool   `xml:"isBusy,attr,omitempty"`
-	Deployed                bool   `xml:"isDeployed,attr,omitempty"` // True if the vApp is deployed.
-	Enabled                 bool   `xml:"isEnabled,attr,omitempty"`
-	Expired                 bool   `xml:"isExpired,attr,omitempty"`
-	MaintenanceMode         bool   `xml:"isInMaintenanceMode,attr,omitempty"`
-	Public                  bool   `xml:"isPublic,attr,omitempty"`
-	OwnerName               string `xml:"ownerName,attr,omitempty"`
-	Status                  string `xml:"status,attr,omitempty"`
-	VdcHREF                 string `xml:"vdc,attr,omitempty"`
-	VdcName                 string `xml:"vdcName,attr,omitempty"`
-	NumberOfVMs             int    `xml:"numberOfVMs,attr,omitempty"`
-	NumberOfCPUs            int    `xml:"numberOfCpus,attr,omitempty"`
-	CpuAllocationMhz        int    `xml:"cpuAllocationMhz,attr,omitempty"`
-	CpuAllocationInMhz      int    `xml:"cpuAllocationInMhz,attr,omitempty"`
-	StorageKB               int    `xml:"storageKB,attr,omitempty"`
-	MemoryAllocationMB      int    `xml:"memoryAllocationMB,attr,omitempty"`
-	AutoDeleteNotified      bool   `xml:"isAutoDeleteNotified,attr,omitempty"`
-	AutoUndeployNotified    bool   `xml:"isAutoUndeployNotified,attr,omitempty"`
-	VdcEnabled              bool   `xml:"isVdcEnabled,attr,omitempty"`
-	HonorBootOrder          bool   `xml:"honorBookOrder,attr,omitempty"`
-	HighestSupportedVersion int    `xml:"pvdcHighestSupportedHardwareVersion,attr,omitempty"`
-	LowestHardwareVersion   int    `xml:"lowestHardwareVersionInVApp,attr,omitempty"`
-	TaskHREF                string `xml:"task,attr,omitempty"`
-	TaskStatusName          string `xml:"taskStatusName,attr,omitempty"`
-	TaskStatus              string `xml:"TaskStatus,attr,omitempty"`
-	TaskDetails             string `xml:"taskDetails,attr,omitempty"`
+	HREF                    string    `xml:"href,attr,omitempty"`         // The URI of the entity.
+	Name                    string    `xml:"name,attr"`                   // The name of the entity.
+	CreationDate            string    `xml:"creationDate,attr,omitempty"` // Creation date/time of the vApp.
+	Busy                    bool      `xml:"isBusy,attr,omitempty"`
+	Deployed                bool      `xml:"isDeployed,attr,omitempty"` // True if the vApp is deployed.
+	Enabled                 bool      `xml:"isEnabled,attr,omitempty"`
+	Expired                 bool      `xml:"isExpired,attr,omitempty"`
+	MaintenanceMode         bool      `xml:"isInMaintenanceMode,attr,omitempty"`
+	Public                  bool      `xml:"isPublic,attr,omitempty"`
+	OwnerName               string    `xml:"ownerName,attr,omitempty"`
+	Status                  string    `xml:"status,attr,omitempty"`
+	VdcHREF                 string    `xml:"vdc,attr,omitempty"`
+	VdcName                 string    `xml:"vdcName,attr,omitempty"`
+	NumberOfVMs             int       `xml:"numberOfVMs,attr,omitempty"`
+	NumberOfCPUs            int       `xml:"numberOfCpus,attr,omitempty"`
+	CpuAllocationMhz        int       `xml:"cpuAllocationMhz,attr,omitempty"`
+	CpuAllocationInMhz      int       `xml:"cpuAllocationInMhz,attr,omitempty"`
+	StorageKB               int       `xml:"storageKB,attr,omitempty"`
+	MemoryAllocationMB      int       `xml:"memoryAllocationMB,attr,omitempty"`
+	AutoDeleteNotified      bool      `xml:"isAutoDeleteNotified,attr,omitempty"`
+	AutoUndeployNotified    bool      `xml:"isAutoUndeployNotified,attr,omitempty"`
+	VdcEnabled              bool      `xml:"isVdcEnabled,attr,omitempty"`
+	HonorBootOrder          bool      `xml:"honorBookOrder,attr,omitempty"`
+	HighestSupportedVersion int       `xml:"pvdcHighestSupportedHardwareVersion,attr,omitempty"`
+	LowestHardwareVersion   int       `xml:"lowestHardwareVersionInVApp,attr,omitempty"`
+	TaskHREF                string    `xml:"task,attr,omitempty"`
+	TaskStatusName          string    `xml:"taskStatusName,attr,omitempty"`
+	TaskStatus              string    `xml:"TaskStatus,attr,omitempty"`
+	TaskDetails             string    `xml:"taskDetails,attr,omitempty"`
+	MetaData                *Metadata `xml:"Metadata,omitempty"`
 }
 
 // QueryResultOrgVdcStorageProfileRecordType represents a storage
@@ -2757,6 +2766,42 @@ type VmAffinityRules struct {
 	Type           string            `xml:"type,attr,omitempty"`
 	Link           *Link             `xml:"Link,omitempty"` //
 	VmAffinityRule []*VmAffinityRule `xml:"VmAffinityRule,omitempty"`
+}
+
+// ControlAccessParams specifies access controls for a resource.
+type ControlAccessParams struct {
+	XMLName             xml.Name           `xml:"ControlAccessParams"`
+	Xmlns               string             `xml:"xmlns,attr"`
+	IsSharedToEveryone  bool               `xml:"IsSharedToEveryone"`            // If true, the resource is shared with everyone in the organization. Defaults to false.
+	EveryoneAccessLevel *string            `xml:"EveryoneAccessLevel,omitempty"` // If IsSharedToEveryone is true, this element must be present to specify the access level. for all members of the organization. One of: FullControl Change ReadOnly
+	AccessSettings      *AccessSettingList `xml:"AccessSettings,omitempty"`      // The access settings to be applied if IsSharedToEveryone is false. Required on create and modify if IsSharedToEveryone is false.
+}
+
+// AccessSettingList is a tagged list of AccessSetting
+type AccessSettingList struct {
+	AccessSetting []*AccessSetting `xml:"AccessSetting"`
+}
+
+// LocalSubject is the user, group, or organization to which control access settings apply.
+type LocalSubject struct {
+	HREF string `xml:"href,attr"` // Required - The URL with the full identification of the subject
+	Name string `xml:"name,attr"` // The name of the subject. Not needed in input, but it is returned on reading
+	Type string `xml:"type,attr"` // Required - The MIME type of the subject. So far, we are using users, groups, and organizations
+}
+
+// AccessSetting controls access to the resource.
+type AccessSetting struct {
+	XMLName         xml.Name         `xml:"AccessSetting"`
+	Subject         *LocalSubject    `xml:"Subject,omitempty"`         // The user or group to which these settings apply.
+	ExternalSubject *ExternalSubject `xml:"ExternalSubject,omitempty"` // Subject existing external of VCD, to which these settings apply.
+	AccessLevel     string           `xml:"AccessLevel"`               // The access level for the subject. One of: FullControl Change ReadOnly Deny (only for a VDC resource)
+}
+
+// ExternalSubjectType is a reference to a user or group managed by an identity provider configured for use in this organization.
+type ExternalSubject struct {
+	IdpType   string `xml:"IdpType"`   // The type of identity provider for example: OAUTH, SAML, LDAP etc for this SubjectID.
+	IsUser    bool   `xml:"IsUser"`    // If true, SubjectID is a reference to a user defined by this organization's identity provider. If false or empty, SubjectID is a reference to a group defined by this organization's identity provider.
+	SubjectId string `xml:"SubjectId"` // The primary key that your identity provider uses to uniquely identify the user or group referenced in SubjectId.
 }
 
 type VdcComputePolicyReferences struct {

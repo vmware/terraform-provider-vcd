@@ -100,7 +100,7 @@ func getAllVdcComputePolicies(client *Client, queryParameters url.Values) ([]*Vd
 	return wrappedVcdComputePolicies, nil
 }
 
-// Create creates a new VDC Compute Policy using OpenAPI endpoint
+// CreateVdcComputePolicy creates a new VDC Compute Policy using OpenAPI endpoint
 func (org *AdminOrg) CreateVdcComputePolicy(newVdcComputePolicy *types.VdcComputePolicy) (*VdcComputePolicy, error) {
 	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointVdcComputePolicies
 	minimumApiVersion, err := org.client.checkOpenApiEndpointCompatibility(endpoint)
@@ -215,6 +215,7 @@ func (vdc *AdminVdc) GetAllAssignedVdcComputePolicies(queryParameters url.Values
 	return wrappedVcdComputePolicies, nil
 }
 
+// SetAssignedComputePolicies assign(set) compute policies using OpenAPI endpoint.
 func (vdc *AdminVdc) SetAssignedComputePolicies(computePolicyReferences types.VdcComputePolicyReferences) (*types.VdcComputePolicyReferences, error) {
 	util.Logger.Printf("[TRACE]Set Compute Policies started")
 

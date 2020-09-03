@@ -387,3 +387,16 @@ func validateVdcConfigurationV97(vdcDefinition types.VdcConfiguration) error {
 	}
 	return nil
 }
+
+// GetVappList returns the list of vApps for an Admin VDC
+func (vdc *AdminVdc) GetVappList() []*types.ResourceReference {
+	var list []*types.ResourceReference
+	for _, resourceEntities := range vdc.AdminVdc.ResourceEntities {
+		for _, resourceReference := range resourceEntities.ResourceEntity {
+			if resourceReference.Type == types.MimeVApp {
+				list = append(list, resourceReference)
+			}
+		}
+	}
+	return list
+}

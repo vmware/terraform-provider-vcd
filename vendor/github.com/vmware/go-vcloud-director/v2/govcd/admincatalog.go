@@ -84,3 +84,8 @@ func (adminCatalog *AdminCatalog) Refresh() error {
 
 	return nil
 }
+
+// getOrgInfo finds the organization to which the admin catalog belongs, and returns its name and ID
+func (adminCatalog *AdminCatalog) getOrgInfo() (orgInfoType, error) {
+	return getOrgInfo(adminCatalog.client, adminCatalog.AdminCatalog.Link, adminCatalog.AdminCatalog.ID, adminCatalog.AdminCatalog.Name, "AdminCatalog")
+}
