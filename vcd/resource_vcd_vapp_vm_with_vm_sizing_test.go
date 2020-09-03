@@ -120,7 +120,7 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 						"vcd_vm_sizing_policy.minSize2", "id"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "cpu_cores", "3"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "memory", "1024"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "memory", "2048"),
 
 					testAccCheckVcdVAppVmExistsByVdc(testAccVcdVdc, netVappName, netVmName4, "vcd_vapp_vm."+netVmName4, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName4, "name", netVmName4),
@@ -173,7 +173,7 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 						"vcd_vm_sizing_policy.minSize2", "id"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "cpu_cores", "3"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "memory", "2048"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "memory", "3072"),
 
 					testAccCheckVcdVAppVmExistsByVdc(testAccVcdVdc, netVappName, netVmName5, "vcd_vapp_vm."+netVmName5, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName5, "name", netVmName5),
@@ -285,7 +285,7 @@ resource "vcd_vm_sizing_policy" "minSize3" {
   memory {
     shares                = "1580"
     size_in_mb            = "1800"
-    limit_in_mb           = "2800"
+    limit_in_mb           = "4800"
     reservation_guarantee = "0.5"
   }
 }
@@ -313,7 +313,7 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   storage_profile {
     name = "{{.ProviderVdcStorageProfile}}"
     enabled  = true
-    limit    = 40240
+    limit    = 90240
     default  = true
   }
 
@@ -391,7 +391,7 @@ resource "vcd_vapp_vm" "{{.VMName}}3" {
   power_on      = "false"
 
   sizing_policy_id = vcd_vm_sizing_policy.minSize2.id
-  memory           = 1024
+  memory           = 2048
 }
 
 resource "vcd_vapp_vm" "{{.VMName}}4" {
@@ -459,7 +459,7 @@ resource "vcd_vapp_vm" "{{.VMName}}3" {
 
   sizing_policy_id = vcd_vm_sizing_policy.minSize2.id
   # allows to change only not defined in sizing policy
-  memory           = 2048
+  memory           = 3072
 }
 
 resource "vcd_vapp_vm" "{{.VMName}}5" {
