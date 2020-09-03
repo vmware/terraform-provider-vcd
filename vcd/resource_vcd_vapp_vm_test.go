@@ -87,7 +87,7 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 				ImportStateIdFunc: importStateIdVappObject(testConfig, vappName2, vmName),
 				// These fields can't be retrieved from user data
 				ImportStateVerifyIgnore: []string{"template_name", "catalog_name", "network_name",
-					"initscript", "accept_all_eulas", "power_on", "computer_name"},
+					"initscript", "accept_all_eulas", "power_on", "computer_name", "prevent_update_power_off"},
 			},
 		},
 	})
@@ -172,7 +172,7 @@ func TestAccVcdVAppVm_Clone(t *testing.T) {
 // * vCD NIC index 1 (is_primary=false) - Terraform network block index 0 (is_primary=false)
 // * vCD NIC index 2 (is_primary=true) - Terraform network block index 1 (is_primary=true)
 // Before Issue 458 was resolved, terraform-provider-vcd would report is_primary=false for both NICs.
-// (GitHub issue: https://github.com/terraform-providers/terraform-provider-vcd/issues/458)
+// (GitHub issue: https://github.com/vmware/terraform-provider-vcd/issues/458)
 func TestAccVcdVappVm_NicIndex(t *testing.T) {
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)

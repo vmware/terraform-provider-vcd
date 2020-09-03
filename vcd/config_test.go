@@ -1,4 +1,4 @@
-// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool lbAppProfile lbAppRule lbVirtualServer user search auth ALL
+// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool lbAppProfile lbAppRule lbVirtualServer access_control user search auth ALL
 
 package vcd
 
@@ -1005,4 +1005,90 @@ func (env *envHelper) restoreVcdVars() {
 	for keyName, valueName := range env.vars {
 		os.Setenv(keyName, valueName)
 	}
+}
+
+// importStateIdViaResource runs the import of a VM affinity rule using the resource ID
+func importStateIdViaResource(resource string) resource.ImportStateIdFunc {
+	return func(s *terraform.State) (string, error) {
+		rs, ok := s.RootModule().Resources[resource]
+		if !ok {
+			return "", fmt.Errorf("resource not found: %s", resource)
+		}
+
+		if rs.Primary.ID == "" {
+			return "", fmt.Errorf("no ID is set for %s resource", resource)
+		}
+
+		importId := testConfig.VCD.Org + "." + testConfig.VCD.Vdc + "." + rs.Primary.ID
+		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || rs.Primary.ID == "" {
+			return "", fmt.Errorf("missing information to generate import path: %s", importId)
+		}
+		return importId, nil
+	}
+}
+
+// testAccFindValuesInSet finds several elements as belonging to the same item in a set
+// * resourceName is the complete identifier of the resource (such as vcd_vapp_access_control.Name)
+// * prefix is the name of the set (e.g. "shared" in vApp access control)
+// * wanted is a map of values to check (such as {"subject_name" : "xxx", "access_level": "yyy"})
+// The function returns successfully if all the wanted elements are found within the same set ID
+// For example, given the following contents in the resource:
+//
+//  "shared.2503357709.access_level":"FullControl",
+//  "shared.3479897784.user_id":"urn:vcloud:user:ec571e04-7e75-4dc5-8f53-c3ef63b9b414",
+//  "shared.2503357709.user_id":"urn:vcloud:user:465308a5-7456-42c8-939c-bd971b0e0d3f",
+//  "shared.2503357709.subject_name":"ac-user1",
+//  "shared.3479897784.subject_name":"ac-user2",
+//  "shared.3479897784.access_level":"Change"
+//
+// We pass "shared" as prefix, and map[string]string{"subject_name": "ac-user1", "access_level": "FullControl"} as wanted
+// The function will match the elements belonging to set "2503357709", and return successfully, because both elements were found.
+func testAccFindValuesInSet(resourceName string, prefix string, wanted map[string]string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("not found: %s", resourceName)
+		}
+
+		var matches = make(map[string]int)
+		for key, value := range rs.Primary.Attributes {
+			keyList := strings.Split(key, ".")
+			if len(keyList) == 3 {
+				foundPrefix := keyList[0]
+				setID := keyList[1]
+				foundKey := keyList[2]
+				for wKey, wValue := range wanted {
+					if foundPrefix == prefix && foundKey == wKey {
+						if wValue == value {
+							_, ok := matches[setID]
+							if !ok {
+								matches[setID] = 0
+							}
+							matches[setID]++
+						}
+					}
+				}
+			}
+		}
+
+		for _, value := range matches {
+			if value == len(wanted) {
+				return nil
+			}
+		}
+		return fmt.Errorf("resource %s - %d matches found - wanted %d", resourceName, len(matches), len(wanted))
+	}
+}
+
+// skipOnEnvVariable takes a TestCheckFunc and skips it if the given environment variable was set with
+// an expected value
+func skipOnEnvVariable(envVar, envValue, notes string, f resource.TestCheckFunc) resource.TestCheckFunc {
+	if os.Getenv(envVar) == envValue {
+		fmt.Printf("### Check skipped at user request - Variable %s - reason: %s\n", envVar, notes)
+		return func(s *terraform.State) error {
+			return nil
+		}
+	}
+	return f
 }

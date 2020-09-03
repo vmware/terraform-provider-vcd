@@ -593,7 +593,7 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
 // TODO external network has a bug that it uses a TypeList for `ip_scope` field. If the below two
 // network has second ip_scope defined - then vCD API orders them differently and a replacement is
 // suggested.
-// GitHUB issue - https://github.com/terraform-providers/terraform-provider-vcd/issues/395
+// GitHUB issue - https://github.com/vmware/terraform-provider-vcd/issues/395
 const testAccEdgeGatewayComplexNetwork = `
 resource "vcd_external_network" "{{.NewExternalNetwork}}" {
   name        = "{{.NewExternalNetworkVcd}}"

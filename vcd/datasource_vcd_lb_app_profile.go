@@ -84,7 +84,7 @@ func datasourceVcdLBAppProfile() *schema.Resource {
 					" address of a client connecting to a Web server through the load balancer. " +
 					"Only applies for types HTTP and HTTPS",
 			},
-			// TODO https://github.com/terraform-providers/terraform-provider-vcd/issues/258
+			// TODO https://github.com/vmware/terraform-provider-vcd/issues/258
 			// This will not give much use without SSL certs being available
 			"enable_pool_side_ssl": &schema.Schema{
 				Type:     schema.TypeBool,

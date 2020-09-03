@@ -257,11 +257,6 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	err = isFlexAllowed(d, vcdClient)
-	if err != nil {
-		return err
-	}
-
 	if !vcdClient.Client.IsSysAdmin {
 		return fmt.Errorf("functionality requires system administrator privileges")
 	}
@@ -319,22 +314,6 @@ func isSizingPolicyAllowed(d *schema.ResourceData, vcdClient *VCDClient) error {
 		_, okDefaultPolicy := d.GetOk("default_vm_sizing_policy_id")
 		if okSizingPolicy || okDefaultPolicy {
 			return fmt.Errorf("'vm_sizing_policy_ids' and `default_vm_sizing_policy_id` only available for vCD 10.0+")
-		}
-	}
-	return nil
-}
-
-// isFlexAllowed explicitly checks if it is allowed to use properties with lower version vCD
-func isFlexAllowed(d *schema.ResourceData, vcdClient *VCDClient) error {
-	if vcdClient.Client.APIVCDMaxVersionIs("< 32.0") {
-		if d.Get("allocation_model").(string) == "Flex" {
-			return fmt.Errorf("'Flex' allocation model only available for vCD 9.7+")
-		}
-		if _, configured := d.GetOkExists("elasticity"); configured {
-			return fmt.Errorf("'elasticity' only available for vCD 9.7+ when allocation model is `Flex`")
-		}
-		if _, configured := d.GetOkExists("include_vm_memory_overhead"); configured {
-			return fmt.Errorf("'include_vm_memory_overhead' only available for vCD 9.7+ when allocation model is `Flex`")
 		}
 	}
 	return nil

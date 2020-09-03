@@ -33,7 +33,6 @@ func resourceVcdVApp() *schema.Resource {
 			},
 			"org": {
 				Type:     schema.TypeString,
-				Required: false,
 				Optional: true,
 				ForceNew: true,
 				Description: "The name of organization to use, optional if defined at provider " +
