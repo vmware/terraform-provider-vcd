@@ -1357,40 +1357,33 @@ func (vm *VM) UpdateInternalDisksAsync(disksSettingToUpdate *types.VmSpecSection
 
 // AddEmptyVm adds an empty VM (without template) to vApp and returns the new created VM or an error.
 func (vapp *VApp) AddEmptyVm(reComposeVAppParams *types.RecomposeVAppParamsForEmptyVm) (*VM, error) {
-	task, err := vapp.AddEmptyVmAsync(reComposeVAppParams)
+	apiVersion, err := vapp.client.maxSupportedVersion()
 	if err != nil {
 		return nil, err
 	}
-
-	err = task.WaitTaskCompletion()
-	if err != nil {
-		return nil, err
+	vmFunctions := getVmVersionedFuncsByVdcVersion("vm" + apiVersionToVcdVersion[apiVersion])
+	if vmFunctions.AddEmptyVm == nil {
+		return nil, fmt.Errorf("function AddEmptyVm is not defined for %s", "vdc"+apiVersion)
 	}
 
-	newVm, err := vapp.GetVMByName(reComposeVAppParams.CreateItem.Name, true)
-	if err != nil {
-		return nil, err
-	}
-
-	return newVm, nil
-
+	util.Logger.Printf("[DEBUG] AddEmptyVm call function for version %s", vmFunctions.SupportedVersion)
+	return vmFunctions.AddEmptyVm(vapp, reComposeVAppParams)
 }
 
 // AddEmptyVmAsync adds an empty VM (without template) to the vApp and returns a Task and an error.
 func (vapp *VApp) AddEmptyVmAsync(reComposeVAppParams *types.RecomposeVAppParamsForEmptyVm) (Task, error) {
-	err := validateEmptyVmParams(reComposeVAppParams)
+	apiVersion, err := vapp.client.maxSupportedVersion()
 	if err != nil {
 		return Task{}, err
 	}
-	apiEndpoint, _ := url.ParseRequestURI(vapp.VApp.HREF)
-	apiEndpoint.Path += "/action/recomposeVApp"
+	vmFunctions := getVmVersionedFuncsByVdcVersion("vm" + apiVersionToVcdVersion[apiVersion])
+	if vmFunctions.AddEmptyVmAsync == nil {
+		return Task{}, fmt.Errorf("function AddEmptyVmAsync is not defined for %s", "vdc"+apiVersion)
+	}
 
-	reComposeVAppParams.XmlnsVcloud = types.XMLNamespaceVCloud
-	reComposeVAppParams.XmlnsOvf = types.XMLNamespaceOVF
+	util.Logger.Printf("[DEBUG] AddEmptyVmAsync call function for version %s", vmFunctions.SupportedVersion)
 
-	// Return the task
-	return vapp.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPost,
-		types.MimeRecomposeVappParams, "error instantiating a new VM: %s", reComposeVAppParams)
+	return vmFunctions.AddEmptyVmAsync(vapp, reComposeVAppParams)
 }
 
 // validateEmptyVmParams checks if all required parameters are provided
@@ -1532,4 +1525,215 @@ func (vm *VM) UpdateVmCpuAndMemoryHotAddAsync(cpuHot, memoryAdd bool) (Task, err
 			CPUHotAddEnabled:    cpuHot,
 			MemoryHotAddEnabled: memoryAdd,
 		})
+}
+
+// vmVersionedFuncs is a generic representation of VM CRUD operations across multiple versions
+type vmVersionedFuncs struct {
+	SupportedVersion string
+	GetVMByHref      func(client *Client, vmHref string) (*VM, error)
+	AddEmptyVm       func(vapp *VApp, reComposeVAppParams *types.RecomposeVAppParamsForEmptyVm) (*VM, error)
+	AddEmptyVmAsync  func(vapp *VApp, reComposeVAppParams *types.RecomposeVAppParamsForEmptyVm) (Task, error)
+}
+
+// VM function mapping for API version 33.0 (from vCD 10.0)
+var vmVersionedFuncsV10 = vmVersionedFuncs{
+	SupportedVersion: "33.0",
+	GetVMByHref:      getVMByHrefV10,
+	AddEmptyVm:       addEmptyVmV10,
+	AddEmptyVmAsync:  addEmptyVmAsyncV10,
+}
+
+// VM function mapping for API version 32.0 (from vCD 9.7)
+var vmVersionedFuncsV97 = vmVersionedFuncs{
+	SupportedVersion: "32.0",
+	GetVMByHref:      getVMByHrefV97,
+	AddEmptyVm:       addEmptyVmV97,
+	AddEmptyVmAsync:  addEmptyVmAsyncV97,
+}
+
+// vmVersionedFuncsByVcdVersion is a map of VDC functions by vCD version
+var vmVersionedFuncsByVcdVersion = map[string]vmVersionedFuncs{
+	"vm10.2": vmVersionedFuncsV10,
+	"vm10.1": vmVersionedFuncsV10,
+	"vm10.0": vmVersionedFuncsV10,
+	"vm9.7":  vmVersionedFuncsV97,
+
+	// If we add a new function to this list, we also need to update the "default" entry
+	// The "default" entry will hold the highest currently available function
+	"default": vmVersionedFuncsV10,
+}
+
+// getVmVersionedFuncsByVdcVersion is a wrapper function that retrieves the requested versioned VDC function
+// When the wanted version does  not exist in the map, it returns the highest available one.
+func getVmVersionedFuncsByVdcVersion(version string) vmVersionedFuncs {
+	f, ok := vmVersionedFuncsByVcdVersion[version]
+	if ok {
+		return f
+	} else {
+		return vmVersionedFuncsByVcdVersion["default"]
+	}
+}
+
+// addEmptyVmAsyncV10 adds an empty VM (without template) to the vApp and returns a Task and an error.
+func addEmptyVmAsyncV10(vapp *VApp, reComposeVAppParams *types.RecomposeVAppParamsForEmptyVm) (Task, error) {
+	err := validateEmptyVmParams(reComposeVAppParams)
+	if err != nil {
+		return Task{}, err
+	}
+	apiEndpoint, _ := url.ParseRequestURI(vapp.VApp.HREF)
+	apiEndpoint.Path += "/action/recomposeVApp"
+
+	reComposeVAppParams.XmlnsVcloud = types.XMLNamespaceVCloud
+	reComposeVAppParams.XmlnsOvf = types.XMLNamespaceOVF
+
+	// Return the task
+	return vapp.client.ExecuteTaskRequestWithApiVersion(apiEndpoint.String(), http.MethodPost,
+		types.MimeRecomposeVappParams, "error instantiating a new VM: %s", reComposeVAppParams,
+		vapp.client.GetSpecificApiVersionOnCondition(">= 33.0", "33.0"))
+}
+
+// addEmptyVmV10 adds an empty VM (without template) to vApp and returns the new created VM or an error.
+func addEmptyVmV10(vapp *VApp, reComposeVAppParams *types.RecomposeVAppParamsForEmptyVm) (*VM, error) {
+	task, err := addEmptyVmAsyncV10(vapp, reComposeVAppParams)
+	if err != nil {
+		return nil, err
+	}
+
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return nil, err
+	}
+
+	err = vapp.Refresh()
+	if err != nil {
+		return nil, fmt.Errorf("error refreshing vapp: %s", err)
+	}
+
+	//vApp Might Not Have Any VMs
+	if vapp.VApp.Children == nil {
+		return nil, ErrorEntityNotFound
+	}
+
+	util.Logger.Printf("[TRACE] Looking for VM: %s", reComposeVAppParams.CreateItem.Name)
+	for _, child := range vapp.VApp.Children.VM {
+
+		util.Logger.Printf("[TRACE] Looking at: %s", child.Name)
+		if child.Name == reComposeVAppParams.CreateItem.Name {
+			return getVMByHrefV10(vapp.client, child.HREF)
+		}
+
+	}
+	util.Logger.Printf("[TRACE] Couldn't find VM: %s", reComposeVAppParams.CreateItem.Name)
+	return nil, ErrorEntityNotFound
+}
+
+// addEmptyVmAsyncV97 adds an empty VM (without template) to the vApp and returns a Task and an error.
+func addEmptyVmAsyncV97(vapp *VApp, reComposeVAppParams *types.RecomposeVAppParamsForEmptyVm) (Task, error) {
+	err := validateEmptyVmParams(reComposeVAppParams)
+	if err != nil {
+		return Task{}, err
+	}
+	apiEndpoint, _ := url.ParseRequestURI(vapp.VApp.HREF)
+	apiEndpoint.Path += "/action/recomposeVApp"
+
+	reComposeVAppParams.XmlnsVcloud = types.XMLNamespaceVCloud
+	reComposeVAppParams.XmlnsOvf = types.XMLNamespaceOVF
+
+	// Return the task
+	return vapp.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPost,
+		types.MimeRecomposeVappParams, "error instantiating a new VM: %s", reComposeVAppParams)
+}
+
+// addEmptyVmV97 adds an empty VM (without template) to vApp and returns the new created VM or an error.
+func addEmptyVmV97(vapp *VApp, reComposeVAppParams *types.RecomposeVAppParamsForEmptyVm) (*VM, error) {
+	task, err := addEmptyVmAsyncV97(vapp, reComposeVAppParams)
+	if err != nil {
+		return nil, err
+	}
+
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return nil, err
+	}
+
+	err = vapp.Refresh()
+	if err != nil {
+		return nil, fmt.Errorf("error refreshing vapp: %s", err)
+	}
+
+	//vApp Might Not Have Any VMs
+	if vapp.VApp.Children == nil {
+		return nil, ErrorEntityNotFound
+	}
+
+	util.Logger.Printf("[TRACE] Looking for VM: %s", reComposeVAppParams.CreateItem.Name)
+	for _, child := range vapp.VApp.Children.VM {
+
+		util.Logger.Printf("[TRACE] Looking at: %s", child.Name)
+		if child.Name == reComposeVAppParams.CreateItem.Name {
+			return getVMByHrefV97(vapp.client, child.HREF)
+		}
+
+	}
+	util.Logger.Printf("[TRACE] Couldn't find VM: %s", reComposeVAppParams.CreateItem.Name)
+	return nil, ErrorEntityNotFound
+}
+
+// getVMByHrefV10 returns a VM reference by running a vCD API call
+// If no valid VM is found, it returns a nil VM reference and an error
+// Note that the pointer receiver here is a Client instead of a VApp, because
+// there are cases where we know the VM HREF but not which VApp it belongs to.
+func getVMByHrefV10(client *Client, vmHref string) (*VM, error) {
+
+	newVm := NewVM(client)
+
+	_, err := client.ExecuteRequestWithApiVersion(vmHref, http.MethodGet,
+		"", "error retrieving vm: %s", nil, newVm.VM,
+		client.GetSpecificApiVersionOnCondition(">= 33.0", "33.0"))
+
+	if err != nil {
+
+		return nil, err
+	}
+
+	return newVm, nil
+}
+
+// getVMByHrefV97 returns a VM reference by running a vCD API call
+// If no valid VM is found, it returns a nil VM reference and an error
+// Note that the pointer receiver here is a Client instead of a VApp, because
+// there are cases where we know the VM HREF but not which VApp it belongs to.
+func getVMByHrefV97(client *Client, vmHref string) (*VM, error) {
+
+	newVm := NewVM(client)
+
+	_, err := client.ExecuteRequest(vmHref, http.MethodGet,
+		"", "error retrieving vm: %s", nil, newVm.VM)
+
+	if err != nil {
+
+		return nil, err
+	}
+
+	return newVm, nil
+}
+
+// GetVMByHref returns a VM reference by running a vCD API call
+// If no valid VM is found, it returns a nil VM reference and an error
+// Note that the pointer receiver here is a Client instead of a VApp, because
+// there are cases where we know the VM HREF but not which VApp it belongs to.
+func (client *Client) GetVMByHref(vmHref string) (*VM, error) {
+
+	apiVersion, err := client.maxSupportedVersion()
+	if err != nil {
+		return nil, err
+	}
+	vmFunctions := getVmVersionedFuncsByVdcVersion("vm" + apiVersionToVcdVersion[apiVersion])
+	if vmFunctions.GetVMByHref == nil {
+		return nil, fmt.Errorf("function GetVMByHref is not defined for %s", "vdc"+apiVersion)
+	}
+
+	util.Logger.Printf("[DEBUG] GetVMByHref call function for version %s", vmFunctions.SupportedVersion)
+
+	return vmFunctions.GetVMByHref(client, vmHref)
 }

@@ -227,6 +227,25 @@ resource "vcd_vapp_vm" "secondVM" {
 
 ```
 
+## Example Usage (VM with sizing policy)
+This example shows how to create a VM using VM sizing policy.
+
+```hcl
+data "vcd_vm_sizing_policy" "minSize" {
+	name = "minimum size"
+}
+
+resource "vcd_vapp_vm" "secondVM" {
+  vapp_name           = vcd_vapp.web.name
+  name                = "secondVM"
+  computer_name       = "db-vm"
+  catalog_name        = "cat-where-is-template"
+  template_name       = "vappWithMultiVm"
+  sizing_policy_id    = data.vcd_vm_sizing_policy.minSize.id # Specifies which sizing policy to use
+}
+
+```
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -240,8 +259,8 @@ The following arguments are supported:
 * `template_name` - (Optional; *v2.9+*) The name of the vApp Template to use
 * `vm_name_in_template` - (Optional; *v2.9+*) The name of the VM in vApp Template to use. For cases when vApp template has more than one VM.
 * `memory` - (Optional) The amount of RAM (in MB) to allocate to the VM
-* `cpus` - (Optional) The number of virtual CPUs to allocate to the VM. Socket count is a result of: virtual logical processors/cores per socket. The default is 1
-* `cpu_cores` - (Optional; *v2.1+*) The number of cores per socket. The default is 1
+* `cpus` - (Optional) The number of virtual CPUs to allocate to the VM. Socket count is a result of: virtual logical processors/cores per socket.
+* `cpu_cores` - (Optional; *v2.1+*) The number of cores per socket.
 * `metadata` - (Optional; *v2.2+*) Key value map of metadata to assign to this VM
 * `initscript` (Optional **Deprecated** by `customization.0.initscript`) Script to run on initial boot or with
 customization.force=true set. See [Customization](#customization-block) to read more about Guest customization and other
@@ -279,7 +298,7 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
 * `os_type` - (Optional; *v2.9+*) Operating System type. Possible values can be found in [Os Types](#os-types). Required when creating empty VM.
 * `hardware_version` - (Optional; *v2.9+*) Virtual Hardware Version (e.g.`vmx-14`, `vmx-13`, `vmx-12`, etc.). Required when creating empty VM.
 * `boot_image` - (Optional; *v2.9+*) Media name to mount as boot image. Image is mounted only during VM creation. On update if value is changed to empty it will eject the mounted media. If you want to mount an image later, please use [vcd_inserted_media](/docs/providers/vcd/r/inserted_media.html).  
-
+* `sizing_policy_id` (Optional; *v3.0+*, *vCD 10.0+*) VM sizing policy ID. Has to be assigned to Org VDC.
 
 <a id="disk"></a>
 ## Disk

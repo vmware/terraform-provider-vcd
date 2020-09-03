@@ -252,7 +252,12 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 
 	vcdClient := meta.(*VCDClient)
 
-	err := isFlexAllowed(d, vcdClient)
+	err := isSizingPolicyAllowed(d, vcdClient)
+	if err != nil {
+		return err
+	}
+
+	err = isFlexAllowed(d, vcdClient)
 	if err != nil {
 		return err
 	}
@@ -300,12 +305,23 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error adding metadata to VDC: %s", err)
 	}
 
-	err = addAssignedVmSizingPolicies(d, meta)
+	err = addAssignedVmSizingPolicies(vcdClient, d, meta)
 	if err != nil {
 		return fmt.Errorf("error assigning VM sizing policies to VDC: %s", err)
 	}
 
 	return resourceVcdVdcRead(d, meta)
+}
+
+func isSizingPolicyAllowed(d *schema.ResourceData, vcdClient *VCDClient) error {
+	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
+		_, okSizingPolicy := d.GetOk("vm_sizing_policy_ids")
+		_, okDefaultPolicy := d.GetOk("default_vm_sizing_policy_id")
+		if okSizingPolicy || okDefaultPolicy {
+			return fmt.Errorf("'vm_sizing_policy_ids' and `default_vm_sizing_policy_id` only available for vCD 10.0+")
+		}
+	}
+	return nil
 }
 
 // isFlexAllowed explicitly checks if it is allowed to use properties with lower version vCD
@@ -424,20 +440,22 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 		return fmt.Errorf("error setting metadata: %s", err)
 	}
 
-	assignedVmSizingPolicies, err := adminVdc.GetAllAssignedVdcComputePolicies(nil)
-	if err != nil {
-		log.Printf("[DEBUG] Unable to get assigned VM sizing policies")
-		return fmt.Errorf("unable to get assigned VM sizing policies %s", err)
-	}
-	var policyIds []string
-	for _, policy := range assignedVmSizingPolicies {
-		policyIds = append(policyIds, policy.VdcComputePolicy.ID)
-	}
-	vmSizingPoliciesSlice := convertToTypeSet(policyIds)
-	vmSizingPoliciesSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), vmSizingPoliciesSlice)
-	_ = d.Set("vm_sizing_policy_ids", vmSizingPoliciesSet)
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 33.0") {
+		assignedVmSizingPolicies, err := adminVdc.GetAllAssignedVdcComputePolicies(nil)
+		if err != nil {
+			log.Printf("[DEBUG] Unable to get assigned VM sizing policies")
+			return fmt.Errorf("unable to get assigned VM sizing policies %s", err)
+		}
+		var policyIds []string
+		for _, policy := range assignedVmSizingPolicies {
+			policyIds = append(policyIds, policy.VdcComputePolicy.ID)
+		}
+		vmSizingPoliciesSlice := convertToTypeSet(policyIds)
+		vmSizingPoliciesSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), vmSizingPoliciesSlice)
+		_ = d.Set("vm_sizing_policy_ids", vmSizingPoliciesSet)
 
-	_ = d.Set("default_vm_sizing_policy_id", adminVdc.AdminVdc.DefaultComputePolicy.ID)
+		_ = d.Set("default_vm_sizing_policy_id", adminVdc.AdminVdc.DefaultComputePolicy.ID)
+	}
 
 	log.Printf("[TRACE] vdc read completed: %#v", adminVdc.AdminVdc)
 	return nil
@@ -519,6 +537,11 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	vcdClient := meta.(*VCDClient)
 
+	err := isSizingPolicyAllowed(d, vcdClient)
+	if err != nil {
+		return err
+	}
+
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrg, err)
@@ -552,7 +575,7 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error updating VDC metadata: %s", err)
 	}
 
-	err = updateAssignedVmSizingPolicies(d, meta)
+	err = updateAssignedVmSizingPolicies(vcdClient, d, meta)
 	if err != nil {
 		return fmt.Errorf("error assigning VM sizing policies to VDC: %s", err)
 	}
@@ -599,59 +622,59 @@ func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
 }
 
 // updateAssignedVmSizingPolicies handles VM sizing policies.
-func updateAssignedVmSizingPolicies(d *schema.ResourceData, meta interface{}) error {
+func updateAssignedVmSizingPolicies(vcdClient *VCDClient, d *schema.ResourceData, meta interface{}) error {
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 33.0") {
+		log.Printf("[TRACE] updating assigned VM sizing policies to VDC")
 
-	log.Printf("[TRACE] updating assigned VM sizing policies to VDC")
+		_, idsOk := d.GetOk("vm_sizing_policy_ids")
+		_, defaultIdOk := d.GetOk("default_vm_sizing_policy_id")
 
-	_, idsOk := d.GetOk("vm_sizing_policy_ids")
-	_, defaultIdOk := d.GetOk("default_vm_sizing_policy_id")
+		if idsOk != defaultIdOk {
+			return fmt.Errorf("both fields are required `vm_sizing_policy_ids` and `default_vm_sizing_policy_id`")
+		}
 
-	if idsOk != defaultIdOk {
-		return fmt.Errorf("both fields are required `vm_sizing_policy_ids` and `default_vm_sizing_policy_id`")
-	}
+		vcdClient := meta.(*VCDClient)
+		vcdComputePolicyHref := vcdClient.Client.VCDHREF.Scheme + "://" + vcdClient.Client.VCDHREF.Host + "/cloudapi/" + types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointVdcComputePolicies
 
-	vcdClient := meta.(*VCDClient)
-	vcdComputePolicyHref := vcdClient.Client.VCDHREF.Scheme + "://" + vcdClient.Client.VCDHREF.Host + "/cloudapi/" + types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointVdcComputePolicies
-
-	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
-	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
-	}
-
-	vdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
-	if err != nil {
-		return fmt.Errorf(errorRetrievingVdcFromOrg, d.Get("org").(string), d.Get("name").(string), err)
-	}
-
-	if d.HasChange("default_vm_sizing_policy_id") && !d.HasChange("vm_sizing_policy_ids") {
-		defaultPolicyId := d.Get("default_vm_sizing_policy_id").(string)
-		vdc.AdminVdc.DefaultComputePolicy = &types.Reference{HREF: vcdComputePolicyHref + defaultPolicyId, ID: defaultPolicyId}
-		_, err := vdc.Update()
+		adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 		if err != nil {
-			return fmt.Errorf("error setting default VM sizing policy. %s", err)
+			return fmt.Errorf(errorRetrievingOrg, err)
 		}
-	}
 
-	if d.HasChange("vm_sizing_policy_ids") && !d.HasChange("default_vm_sizing_policy_id") {
-		vmSizingPolicyIdStrings := convertSchemaSetToSliceOfStrings(d.Get("vm_sizing_policy_ids").(*schema.Set))
-		policyReferences := types.VdcComputePolicyReferences{}
-		var vdcComputePolicyReferenceList []*types.Reference
-		for _, policyId := range vmSizingPolicyIdStrings {
-			vdcComputePolicyReferenceList = append(vdcComputePolicyReferenceList, &types.Reference{HREF: vcdComputePolicyHref + policyId})
-		}
-		policyReferences.VdcComputePolicyReference = vdcComputePolicyReferenceList
-
-		_, err = vdc.SetAssignedComputePolicies(policyReferences)
+		vdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
 		if err != nil {
-			return fmt.Errorf("error setting VM sizing policies. %s", err)
+			return fmt.Errorf(errorRetrievingVdcFromOrg, d.Get("org").(string), d.Get("name").(string), err)
+		}
+
+		if d.HasChange("default_vm_sizing_policy_id") && !d.HasChange("vm_sizing_policy_ids") {
+			defaultPolicyId := d.Get("default_vm_sizing_policy_id").(string)
+			vdc.AdminVdc.DefaultComputePolicy = &types.Reference{HREF: vcdComputePolicyHref + defaultPolicyId, ID: defaultPolicyId}
+			_, err := vdc.Update()
+			if err != nil {
+				return fmt.Errorf("error setting default VM sizing policy. %s", err)
+			}
+		}
+
+		if d.HasChange("vm_sizing_policy_ids") && !d.HasChange("default_vm_sizing_policy_id") {
+			vmSizingPolicyIdStrings := convertSchemaSetToSliceOfStrings(d.Get("vm_sizing_policy_ids").(*schema.Set))
+			policyReferences := types.VdcComputePolicyReferences{}
+			var vdcComputePolicyReferenceList []*types.Reference
+			for _, policyId := range vmSizingPolicyIdStrings {
+				vdcComputePolicyReferenceList = append(vdcComputePolicyReferenceList, &types.Reference{HREF: vcdComputePolicyHref + policyId})
+			}
+			policyReferences.VdcComputePolicyReference = vdcComputePolicyReferenceList
+
+			_, err = vdc.SetAssignedComputePolicies(policyReferences)
+			if err != nil {
+				return fmt.Errorf("error setting VM sizing policies. %s", err)
+			}
+		}
+
+		err = changeVmSizingPoliciesAndDefaultId(d, vcdComputePolicyHref, vdc)
+		if err != nil {
+			return err
 		}
 	}
-
-	err = changeVmSizingPoliciesAndDefaultId(d, vcdComputePolicyHref, vdc)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -707,34 +730,34 @@ func changeVmSizingPoliciesAndDefaultId(d *schema.ResourceData, vcdComputePolicy
 
 // addAssignedVmSizingPolicies handles VM sizing policies. Created VDC generates default VM sizing policy which requires additional handling.
 // Assigning and setting default VM sizing policies requires different API calls. Default approach is add new policies, set new default, remove all policies.
-func addAssignedVmSizingPolicies(d *schema.ResourceData, meta interface{}) error {
+func addAssignedVmSizingPolicies(vcdClient *VCDClient, d *schema.ResourceData, meta interface{}) error {
 
-	log.Printf("[TRACE] updating assigned VM sizing policies to VDC")
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 33.0") {
+		log.Printf("[TRACE] updating assigned VM sizing policies to VDC")
+		_, idsOk := d.GetOk("vm_sizing_policy_ids")
+		_, defaultIdOk := d.GetOk("default_vm_sizing_policy_id")
+		if idsOk != defaultIdOk {
+			return fmt.Errorf("both fields are required `vm_sizing_policy_ids` and `default_vm_sizing_policy_id`")
+		}
 
-	_, idsOk := d.GetOk("vm_sizing_policy_ids")
-	_, defaultIdOk := d.GetOk("default_vm_sizing_policy_id")
-	if idsOk != defaultIdOk {
-		return fmt.Errorf("both fields are required `vm_sizing_policy_ids` and `default_vm_sizing_policy_id`")
+		vcdClient := meta.(*VCDClient)
+		vcdComputePolicyHref := vcdClient.Client.VCDHREF.Scheme + "://" + vcdClient.Client.VCDHREF.Host + "/cloudapi/" + types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointVdcComputePolicies
+
+		adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingOrg, err)
+		}
+
+		vdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingVdcFromOrg, d.Get("org").(string), d.Get("name").(string), err)
+		}
+
+		err = changeVmSizingPoliciesAndDefaultId(d, vcdComputePolicyHref, vdc)
+		if err != nil {
+			return err
+		}
 	}
-
-	vcdClient := meta.(*VCDClient)
-	vcdComputePolicyHref := vcdClient.Client.VCDHREF.Scheme + "://" + vcdClient.Client.VCDHREF.Host + "/cloudapi/" + types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointVdcComputePolicies
-
-	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
-	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
-	}
-
-	vdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
-	if err != nil {
-		return fmt.Errorf(errorRetrievingVdcFromOrg, d.Get("org").(string), d.Get("name").(string), err)
-	}
-
-	err = changeVmSizingPoliciesAndDefaultId(d, vcdComputePolicyHref, vdc)
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 

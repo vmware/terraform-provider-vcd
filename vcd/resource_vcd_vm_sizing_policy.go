@@ -170,7 +170,7 @@ func genericVcdVmSizingPolicyRead(d *schema.ResourceData, meta interface{}) erro
 
 	vcdClient := meta.(*VCDClient)
 
-	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+	org, _, err := vcdClient.GetOrgAndVdc(d.Get("org").(string), "")
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
@@ -180,7 +180,7 @@ func genericVcdVmSizingPolicyRead(d *schema.ResourceData, meta interface{}) erro
 
 	var policy *govcd.VdcComputePolicy
 	if d.Id() != "" {
-		policy, err = adminOrg.GetVdcComputePolicyById(d.Id())
+		policy, err = org.GetVdcComputePolicyById(d.Id())
 		if err != nil {
 			log.Printf("[DEBUG] Unable to find VM sizing policy %s. Removing from tfstate.", policyName)
 			d.SetId("")
@@ -196,7 +196,7 @@ func genericVcdVmSizingPolicyRead(d *schema.ResourceData, meta interface{}) erro
 		method = "name"
 		queryParams := url.Values{}
 		queryParams.Add("filter", "name=="+policyName)
-		filteredPoliciesByName, err := adminOrg.GetAllVdcComputePolicies(queryParams)
+		filteredPoliciesByName, err := org.GetAllVdcComputePolicies(queryParams)
 		if err != nil {
 			log.Printf("[DEBUG] Unable to find VM sizing policy %s. Removing from tfstate.", policyName)
 			d.SetId("")

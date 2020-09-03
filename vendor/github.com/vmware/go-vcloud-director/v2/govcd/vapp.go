@@ -156,6 +156,22 @@ func (vapp *VApp) AddNewVM(name string, vappTemplate VAppTemplate, network *type
 func (vapp *VApp) AddNewVMWithStorageProfile(name string, vappTemplate VAppTemplate,
 	network *types.NetworkConnectionSection,
 	storageProfileRef *types.Reference, acceptAllEulas bool) (Task, error) {
+	return addNewVMW(vapp, name, vappTemplate, network, storageProfileRef, nil, acceptAllEulas)
+}
+
+// AddNewVMWithComputePolicy adds VM from vApp template with custom NetworkConnectionSection and optional storage profile
+// and compute policy
+func (vapp *VApp) AddNewVMWithComputePolicy(name string, vappTemplate VAppTemplate,
+	network *types.NetworkConnectionSection,
+	storageProfileRef *types.Reference, computePolicy *types.VdcComputePolicy, acceptAllEulas bool) (Task, error) {
+	return addNewVMW(vapp, name, vappTemplate, network, storageProfileRef, computePolicy, acceptAllEulas)
+}
+
+// addNewVMW adds VM from vApp template with custom NetworkConnectionSection and optional storage profile
+// and optional compute policy
+func addNewVMW(vapp *VApp, name string, vappTemplate VAppTemplate,
+	network *types.NetworkConnectionSection,
+	storageProfileRef *types.Reference, computePolicy *types.VdcComputePolicy, acceptAllEulas bool) (Task, error) {
 
 	if vappTemplate == (VAppTemplate{}) || vappTemplate.VAppTemplate == nil {
 		return Task{}, fmt.Errorf("vApp Template can not be empty")
@@ -207,6 +223,16 @@ func (vapp *VApp) AddNewVMWithStorageProfile(name string, vappTemplate VAppTempl
 		vAppComposition.SourcedItem.StorageProfile = storageProfileRef
 	}
 
+	if computePolicy != nil && vapp.client.APIVCDMaxVersionIs("< 33.0") {
+		util.Logger.Printf("[Warning] compute policy is ignored because VCD version doesn't support it")
+	}
+
+	// Add compute policy
+	if computePolicy != nil {
+		vcdComputePolicyHref := vapp.client.VCDHREF.Scheme + "://" + vapp.client.VCDHREF.Host + "/cloudapi/" + types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointVdcComputePolicies
+		vAppComposition.ComputePolicy = &types.ComputePolicy{VmSizingPolicy: &types.Reference{HREF: vcdComputePolicyHref + computePolicy.ID}}
+	}
+
 	// Inject network config
 	vAppComposition.SourcedItem.InstantiationParams.NetworkConnectionSection = network
 
@@ -214,8 +240,9 @@ func (vapp *VApp) AddNewVMWithStorageProfile(name string, vappTemplate VAppTempl
 	apiEndpoint.Path += "/action/recomposeVApp"
 
 	// Return the task
-	return vapp.client.ExecuteTaskRequest(apiEndpoint.String(), http.MethodPost,
-		types.MimeRecomposeVappParams, "error instantiating a new VM: %s", vAppComposition)
+	return vapp.client.ExecuteTaskRequestWithApiVersion(apiEndpoint.String(), http.MethodPost,
+		types.MimeRecomposeVappParams, "error instantiating a new VM: %s", vAppComposition,
+		vapp.client.GetSpecificApiVersionOnCondition(">= 33.0", "33.0"))
 
 }
 
@@ -1245,25 +1272,6 @@ func (vapp *VApp) SetProductSectionList(productSection *types.ProductSectionList
 // or returned as set before
 func (vapp *VApp) GetProductSectionList() (*types.ProductSectionList, error) {
 	return getProductSectionList(vapp.client, vapp.VApp.HREF)
-}
-
-// GetVMByHref returns a VM reference by running a vCD API call
-// If no valid VM is found, it returns a nil VM reference and an error
-// Note that the pointer receiver here is a Client instead of a VApp, because
-// there are cases where we know the VM HREF but not which VApp it belongs to.
-func (client *Client) GetVMByHref(vmHref string) (*VM, error) {
-
-	newVm := NewVM(client)
-
-	_, err := client.ExecuteRequest(vmHref, http.MethodGet,
-		"", "error retrieving vm: %s", nil, newVm.VM)
-
-	if err != nil {
-
-		return nil, err
-	}
-
-	return newVm, nil
 }
 
 // GetVMByName returns a VM reference if the VM name matches an existing one.
