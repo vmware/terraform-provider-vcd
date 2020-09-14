@@ -3,13 +3,13 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_vm_sizing_policy"
 sidebar_current: "docs-vcd-datasource-vm-sizing-policy"
 description: |-
-  Provides a vCloud DirectorVM sizing policy data source. This can be
+  Provides a vCloud Director VM sizing policy data source. This can be
   used to read VM sizing policy.
 ---
 
 # vcd\_vm\_sizing\_policy
 
-Provides a vCloud DirectorVM sizing policy data source. This can be
+Provides a vCloud Director VM sizing policy data source. This can be
 used to read VM sizing policy.
 
 Supported in provider *v3.0+*

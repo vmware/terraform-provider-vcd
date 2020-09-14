@@ -613,7 +613,10 @@ func updateAssignedVmSizingPolicies(vcdClient *VCDClient, d *schema.ResourceData
 		}
 
 		vcdClient := meta.(*VCDClient)
-		vcdComputePolicyHref := vcdClient.Client.VCDHREF.Scheme + "://" + vcdClient.Client.VCDHREF.Host + "/cloudapi/" + types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointVdcComputePolicies
+		vcdComputePolicyHref, err := vcdClient.Client.OpenApiBuildEndpoint(types.OpenApiPathVersion1_0_0, types.OpenApiEndpointVdcComputePolicies)
+		if err != nil {
+			return fmt.Errorf("error constructing HREF for compute policy")
+		}
 
 		adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 		if err != nil {
@@ -627,7 +630,7 @@ func updateAssignedVmSizingPolicies(vcdClient *VCDClient, d *schema.ResourceData
 
 		if d.HasChange("default_vm_sizing_policy_id") && !d.HasChange("vm_sizing_policy_ids") {
 			defaultPolicyId := d.Get("default_vm_sizing_policy_id").(string)
-			vdc.AdminVdc.DefaultComputePolicy = &types.Reference{HREF: vcdComputePolicyHref + defaultPolicyId, ID: defaultPolicyId}
+			vdc.AdminVdc.DefaultComputePolicy = &types.Reference{HREF: vcdComputePolicyHref.String() + defaultPolicyId, ID: defaultPolicyId}
 			_, err := vdc.Update()
 			if err != nil {
 				return fmt.Errorf("error setting default VM sizing policy. %s", err)
@@ -639,7 +642,7 @@ func updateAssignedVmSizingPolicies(vcdClient *VCDClient, d *schema.ResourceData
 			policyReferences := types.VdcComputePolicyReferences{}
 			var vdcComputePolicyReferenceList []*types.Reference
 			for _, policyId := range vmSizingPolicyIdStrings {
-				vdcComputePolicyReferenceList = append(vdcComputePolicyReferenceList, &types.Reference{HREF: vcdComputePolicyHref + policyId})
+				vdcComputePolicyReferenceList = append(vdcComputePolicyReferenceList, &types.Reference{HREF: vcdComputePolicyHref.String() + policyId})
 			}
 			policyReferences.VdcComputePolicyReference = vdcComputePolicyReferenceList
 
@@ -649,7 +652,7 @@ func updateAssignedVmSizingPolicies(vcdClient *VCDClient, d *schema.ResourceData
 			}
 		}
 
-		err = changeVmSizingPoliciesAndDefaultId(d, vcdComputePolicyHref, vdc)
+		err = changeVmSizingPoliciesAndDefaultId(d, vcdComputePolicyHref.String(), vdc)
 		if err != nil {
 			return err
 		}
@@ -720,7 +723,10 @@ func addAssignedVmSizingPolicies(vcdClient *VCDClient, d *schema.ResourceData, m
 		}
 
 		vcdClient := meta.(*VCDClient)
-		vcdComputePolicyHref := vcdClient.Client.VCDHREF.Scheme + "://" + vcdClient.Client.VCDHREF.Host + "/cloudapi/" + types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointVdcComputePolicies
+		vcdComputePolicyHref, err := vcdClient.Client.OpenApiBuildEndpoint(types.OpenApiPathVersion1_0_0, types.OpenApiEndpointVdcComputePolicies)
+		if err != nil {
+			return fmt.Errorf("error constructing HREF for compute policy")
+		}
 
 		adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 		if err != nil {
@@ -732,7 +738,7 @@ func addAssignedVmSizingPolicies(vcdClient *VCDClient, d *schema.ResourceData, m
 			return fmt.Errorf(errorRetrievingVdcFromOrg, d.Get("org").(string), d.Get("name").(string), err)
 		}
 
-		err = changeVmSizingPoliciesAndDefaultId(d, vcdComputePolicyHref, vdc)
+		err = changeVmSizingPoliciesAndDefaultId(d, vcdComputePolicyHref.String(), vdc)
 		if err != nil {
 			return err
 		}

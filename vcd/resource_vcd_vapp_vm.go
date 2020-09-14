@@ -2468,9 +2468,13 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 }
 
 func addSizingPolicy(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, recomposeVAppParamsForEmptyVm *types.RecomposeVAppParamsForEmptyVm) error {
-	vcdComputePolicyHref := vcdClient.Client.VCDHREF.Scheme + "://" + vcdClient.Client.VCDHREF.Host + "/cloudapi/" + types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointVdcComputePolicies
+	vcdComputePolicyHref, err := vcdClient.Client.OpenApiBuildEndpoint(types.OpenApiPathVersion1_0_0, types.OpenApiEndpointVdcComputePolicies)
+	if err != nil {
+		return fmt.Errorf("error constructing HREF for compute policy")
+	}
+
 	if value, ok := d.GetOk("sizing_policy_id"); ok {
-		recomposeVAppParamsForEmptyVm.CreateItem.ComputePolicy = &types.ComputePolicy{VmSizingPolicy: &types.Reference{HREF: vcdComputePolicyHref + value.(string)}}
+		recomposeVAppParamsForEmptyVm.CreateItem.ComputePolicy = &types.ComputePolicy{VmSizingPolicy: &types.Reference{HREF: vcdComputePolicyHref.String() + value.(string)}}
 		sizingPolicy, err := org.GetVdcComputePolicyById(value.(string))
 		if err != nil {
 			return fmt.Errorf("error getting sizing policy %s: %s", value.(string), err)

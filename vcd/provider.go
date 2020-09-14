@@ -53,7 +53,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_vapp_network":       datasourceVcdVappNetwork(),      // 2.7
 	"vcd_vapp_org_network":   datasourceVcdVappOrgNetwork(),   // 2.7
 	"vcd_vm_affinity_rule":   datasourceVcdVmAffinityRule(),   // 2.9
-	"vcd_vm_sizing_policy":   datasourceVcdVmSizingPolicy(),   // 2.10
+	"vcd_vm_sizing_policy":   datasourceVcdVmSizingPolicy(),   // 3.0
 }
 
 var globalResourceMap = map[string]*schema.Resource{
@@ -96,7 +96,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_vapp_static_routing": resourceVcdVappNetworkStaticRouting(), // 2.9
 	"vcd_vm_affinity_rule":    resourceVcdVmAffinityRule(),           // 2.9
 	"vcd_vapp_access_control": resourceVcdAccessControlVapp(),        // 3.0
-	"vcd_vm_sizing_policy":    resourceVcdVmSizingPolicy(),           // 2.10
+	"vcd_vm_sizing_policy":    resourceVcdVmSizingPolicy(),           // 3.0
 }
 
 // Provider returns a terraform.ResourceProvider.
