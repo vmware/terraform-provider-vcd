@@ -226,11 +226,13 @@ func addNewVMW(vapp *VApp, name string, vappTemplate VAppTemplate,
 	if computePolicy != nil && vapp.client.APIVCDMaxVersionIs("< 33.0") {
 		util.Logger.Printf("[Warning] compute policy is ignored because VCD version doesn't support it")
 	}
-
 	// Add compute policy
-	if computePolicy != nil {
-		vcdComputePolicyHref := vapp.client.VCDHREF.Scheme + "://" + vapp.client.VCDHREF.Host + "/cloudapi/" + types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointVdcComputePolicies
-		vAppComposition.SourcedItem.ComputePolicy = &types.ComputePolicy{VmSizingPolicy: &types.Reference{HREF: vcdComputePolicyHref + computePolicy.ID}}
+	if computePolicy != nil && computePolicy.ID != "" && vapp.client.APIVCDMaxVersionIs("> 32.0") {
+		vcdComputePolicyHref, err := vapp.client.OpenApiBuildEndpoint(types.OpenApiPathVersion1_0_0, types.OpenApiEndpointVdcComputePolicies, computePolicy.ID)
+		if err != nil {
+			return Task{}, fmt.Errorf("error constructing HREF for compute policy")
+		}
+		vAppComposition.SourcedItem.ComputePolicy = &types.ComputePolicy{VmSizingPolicy: &types.Reference{HREF: vcdComputePolicyHref.String()}}
 	}
 
 	// Inject network config

@@ -323,11 +323,10 @@ const (
 
 // These constants allow to construct OpenAPI endpoint paths and avoid strings in code for easy replacement in future.
 const (
-	OpenApiPathVersion1_0_0                = "1.0.0/"
-	OpenApiEndpointRoles                   = "roles/"
-	OpenApiEndpointVdcComputePolicies      = "vdcComputePolicies/"
-	OpenApiEndpointAssignedComputePolicies = "/computePolicies"
-	OpenApiEndpointVdcs                    = "vdcs/"
+	OpenApiPathVersion1_0_0                   = "1.0.0/"
+	OpenApiEndpointRoles                      = "roles/"
+	OpenApiEndpointVdcComputePolicies         = "vdcComputePolicies/"
+	OpenApiEndpointVdcAssignedComputePolicies = "vdcs/%s/computePolicies"
 )
 
 // Header keys to run operations in tenant context

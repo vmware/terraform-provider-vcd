@@ -6,7 +6,6 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 	"net/http"
 	"net/url"
-	"strings"
 )
 
 type VdcComputePolicy struct {
@@ -185,13 +184,13 @@ func (vdcComputePolicy *VdcComputePolicy) Delete() error {
 // GetAllAssignedVdcComputePolicies retrieves all VDC assigned compute policies using OpenAPI endpoint. Query parameters can be supplied to perform additional
 // filtering
 func (vdc *AdminVdc) GetAllAssignedVdcComputePolicies(queryParameters url.Values) ([]*VdcComputePolicy, error) {
-	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointVdcs + vdc.AdminVdc.ID + types.OpenApiEndpointAssignedComputePolicies
-	minimumApiVersion, err := vdc.client.checkOpenApiEndpointCompatibility(types.OpenApiEndpointAssignedComputePolicies)
+	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointVdcAssignedComputePolicies
+	minimumApiVersion, err := vdc.client.checkOpenApiEndpointCompatibility(endpoint)
 	if err != nil {
 		return nil, err
 	}
 
-	urlRef, err := vdc.client.OpenApiBuildEndpoint(endpoint)
+	urlRef, err := vdc.client.OpenApiBuildEndpoint(fmt.Sprintf(endpoint, vdc.AdminVdc.ID))
 	if err != nil {
 		return nil, err
 	}
@@ -215,9 +214,9 @@ func (vdc *AdminVdc) GetAllAssignedVdcComputePolicies(queryParameters url.Values
 	return wrappedVcdComputePolicies, nil
 }
 
-// SetAssignedComputePolicies assign(set) compute policies using OpenAPI endpoint.
+// SetAssignedComputePolicies assign(set) compute policies.
 func (vdc *AdminVdc) SetAssignedComputePolicies(computePolicyReferences types.VdcComputePolicyReferences) (*types.VdcComputePolicyReferences, error) {
-	util.Logger.Printf("[TRACE]Set Compute Policies started")
+	util.Logger.Printf("[TRACE] Set Compute Policies started")
 
 	if !vdc.client.IsSysAdmin {
 		return nil, fmt.Errorf("functionality requires system administrator privileges")
@@ -227,12 +226,12 @@ func (vdc *AdminVdc) SetAssignedComputePolicies(computePolicyReferences types.Vd
 	if err != nil {
 		return nil, fmt.Errorf("error parsing vdc url: %s", err)
 	}
-	splitVdcId := strings.Split(vdc.AdminVdc.HREF, "/api/vdc/")
-	if len(splitVdcId) == 1 {
-		adminVdcPolicyHREF.Path = "/api/admin/vdc/" + strings.Split(vdc.AdminVdc.HREF, "/api/admin/vdc/")[1] + "/computePolicies"
-	} else {
-		adminVdcPolicyHREF.Path = "/api/admin/vdc/" + splitVdcId[1] + "/computePolicies"
+
+	vdcId, err := GetUuidFromHref(vdc.AdminVdc.HREF, true)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get vdc ID from HREF: %s", err)
 	}
+	adminVdcPolicyHREF.Path = "/api/admin/vdc/" + vdcId + "/computePolicies"
 
 	returnedVdcComputePolicies := &types.VdcComputePolicyReferences{}
 	computePolicyReferences.Xmlns = types.XMLNamespaceVCloud
