@@ -56,6 +56,12 @@
       "name": "Must-already-exist-provider-vdc-name",
       "storageProfile": "Must-already-exist-storage-profile-name",
       "networkPool": "Must-already-exist-network-pool-name"
+    },
+    "nsxtProviderVdc": {
+      "//": "If the environment supports NSX-T Provider VDC details are needed for creating NSX-T backed org VDC",
+      "name": "nsxTPvdc1",
+      "storageProfile": "*",
+      "networkPool": "NSX-T Overlay 1"
     }
   },
   "networking": {
