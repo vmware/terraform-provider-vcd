@@ -40,7 +40,7 @@ resource "vcd_edgegateway_settings" "egw-settings" {
 of the edge gateway doesn't get updated. To reconcile the state of the data source with the values modified in vcd_edgegateway_settings,
 you need to run `terraform refresh` after `apply`.
 
-~> **Note:** Although tenants can enable load balancing using this resource, they can't set the LB log related properties.
+~> **Note:** Although tenants can enable load balancing using this resource, they can't set the properties `lb_logging_enabled` and `lb_loglevel`.
 
 ## Argument Reference
 
