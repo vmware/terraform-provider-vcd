@@ -1,4 +1,4 @@
-// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool lbAppProfile lbAppRule lbVirtualServer access_control user search auth ALL
+// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool lbAppProfile lbAppRule lbVirtualServer access_control user search auth nsxt ALL
 
 package vcd
 
@@ -86,6 +86,11 @@ type TestConfig struct {
 			NetworkPool    string `json:"networkPool"`
 			StorageProfile string `json:"storageProfile"`
 		} `json:"providerVdc"`
+		NsxtProviderVdc struct {
+			Name           string `json:"name"`
+			StorageProfile string `json:"storageProfile"`
+			NetworkPool    string `json:"networkPool"`
+		} `json:"nsxtProviderVdc"`
 		Catalog struct {
 			Name                    string `json:"name,omitempty"`
 			CatalogItem             string `json:"catalogItem,omitempty"`
@@ -1091,4 +1096,19 @@ func skipOnEnvVariable(envVar, envValue, notes string, f resource.TestCheckFunc)
 		}
 	}
 	return f
+}
+
+// skipNoNsxtConfiguration allows to skip a test if NSX-T configuration is missing
+func skipNoNsxtConfiguration(t *testing.T) {
+	generalMessage := "Missing NSX-T config: "
+	if testConfig.VCD.NsxtProviderVdc.Name == "" {
+		t.Skip(generalMessage + "No provider VDC specified")
+	}
+	if testConfig.VCD.NsxtProviderVdc.NetworkPool == "" {
+		t.Skip(generalMessage + "No network pool specified")
+	}
+
+	if testConfig.VCD.NsxtProviderVdc.StorageProfile == "" {
+		t.Skip(generalMessage + "No storage profile specified")
+	}
 }
