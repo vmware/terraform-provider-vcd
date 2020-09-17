@@ -36,11 +36,11 @@ resource "vcd_edgegateway_settings" "egw-settings" {
 }
 ```
 
--> **Tip #1:** Although this resource changes values in the edge gateway referenced as a data source, Terraform state
+-> **Tip:** Although this resource changes values in the edge gateway referenced as a data source, Terraform state
 of the edge gateway doesn't get updated. To reconcile the state of the data source with the values modified in vcd_edgegateway_settings,
 you need to run `terraform refresh` after `apply`.
 
--> **Tip #2** Although tenants can enable load balancing using this resource, they can't set the LB log related properties.
+~> **Note:** Although tenants can enable load balancing using this resource, they can't set the LB log related properties.
 
 ## Argument Reference
 
