@@ -14,6 +14,9 @@ organization user.
 The main use case of this resource is to allow both providers and tenants to change edge gateways global settings (such as
 enabling load balancing or firewall) when the edge gateway was created outside of terraform.
 
+~> **Warning:** The edge gateway settings info is tied to an edge gateway. Thus, there could be only one instance per 
+edge gateway. Using a different definition for the same edge gateway ID will result in a previous instance to be overwritten.
+
 Supported in provider *v3.0+*
 
 ## Example Usage
@@ -40,7 +43,7 @@ resource "vcd_edgegateway_settings" "egw-settings" {
 of the edge gateway doesn't get updated. To reconcile the state of the data source with the values modified in vcd_edgegateway_settings,
 you need to run `terraform refresh` after `apply`.
 
-~> **Note:** Although tenants can enable load balancing using this resource, they can't set the properties `lb_logging_enabled` and `lb_loglevel`.
+=> **Note:** Although tenants can enable load balancing using this resource, they can't set the properties `lb_logging_enabled` and `lb_loglevel`.
 
 ## Argument Reference
 
@@ -61,3 +64,31 @@ Default is `false`. Note: **only system administrators can change this property*
 order) logging. Default `false`.
 * `fw_default_rule_action` (Optional) Default firewall rule (last in the processing order) action.
 One of `accept` or `deny`. Default `deny`.
+
+## Importing
+
+~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
+configuration. [More information.][docs-import]
+
+An existing edge gateway settings can be [imported][docs-import] into this resource via supplying its path. 
+The path for this resource is made of org-name.vdc-name.edge-name
+For example, using this structure, representing an edge gateway settings that was **not** created using Terraform:
+
+```hcl
+resource "vcd_edgegateway_settings" "tf-egw" {
+  edge_gateway_name = "my-edge-gw"
+}
+```
+
+You can import such resource into terraform state using this command
+
+```
+terraform import vcd_edgegateway_settings.tf-egw my-org.my-vdc.my-edge-gw
+```
+* **Note 1**: the name to provide here is the name of the edge gateway, as this resource is tied to it.
+* **Note 2**: the separator can be changed using `Provider.import_separator` or variable `VCD_IMPORT_SEPARATOR`
+
+[docs-import]:https://www.terraform.io/docs/import/
+
+After importing, if you run `terraform plan` you will see the rest of the values and modify the script accordingly for 
+further operations.

@@ -193,6 +193,13 @@ func TestAccVcdEdgeGatewaySettingsBasic(t *testing.T) {
 					checkEdgeGatewaySettingsCorrespondence("fw_default_rule_action", "accept"),
 				),
 			},
+			resource.TestStep{
+				ResourceName:            "vcd_edgegateway_settings." + testConfig.Networking.EdgeGateway + "-import",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdOrgVdcObject(testConfig, testConfig.Networking.EdgeGateway),
+				ImportStateVerifyIgnore: []string{"external_network", "external_networks"},
+			},
 		},
 	})
 }
@@ -352,6 +359,9 @@ data "vcd_edgegateway" "egw" {
 }
 
 resource "vcd_edgegateway_settings" "{{.EgwSettings}}" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
   edge_gateway_id         = data.vcd_edgegateway.egw.id
   lb_enabled              = {{.LbEnabled}}
   lb_acceleration_enabled = {{.LbAccelerationEnabled}}

@@ -3,6 +3,7 @@ package vcd
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -16,7 +17,7 @@ func resourceVcdEdgeGatewaySettings() *schema.Resource {
 		Update: resourceVcdEdgeGatewaySettingsUpdate,
 		Delete: resourceVcdEdgeGatewaySettingsDelete,
 		Importer: &schema.ResourceImporter{
-			State: resourceVcdEdgeGatewayImport,
+			State: resourceVcdEdgeGatewaySettingsImport,
 		},
 		Schema: map[string]*schema.Schema{
 			"org": &schema.Schema{
@@ -134,7 +135,6 @@ func getVcdEdgeGateway(d *schema.ResourceData, meta interface{}) (*govcd.EdgeGat
 func resourceVcdEdgeGatewaySettingsRead(d *schema.ResourceData, meta interface{}) error {
 	edgeGateway, err := getVcdEdgeGateway(d, meta)
 	if err != nil {
-
 		log.Printf("[edgegateway settings read] edge gateway not found. Removing from state file: %s", err)
 		d.SetId("")
 		return nil
@@ -191,4 +191,38 @@ func resourceVcdEdgeGatewaySettingsUpdate(d *schema.ResourceData, meta interface
 
 func resourceVcdEdgeGatewaySettingsDelete(d *schema.ResourceData, meta interface{}) error {
 	return resourceVcdEdgeGatewaySettingsUpdate(d, meta)
+}
+
+// resourceVcdEdgeGatewaySettingsImport is responsible for importing the resource.
+// The following steps happen as part of import
+// 1. The user supplies `terraform import _resource_name_ _the_id_string_` command
+// 2. `_the_id_string_` contains a dot formatted path to resource as in the example below
+// 3. The functions splits the dot-formatted path and tries to lookup the object
+// 4. If the lookup succeeds it sets the ID field for `_resource_name_` resource in statefile
+// (the resource must be already defined in .tf config otherwise `terraform import` will complain)
+// 5. `terraform refresh` is being implicitly launched. The Read method looks up all other fields
+// based on the known ID of object.
+//
+// Example resource name (_resource_name_): vcd_edgegateway_settings.my-edge-gateway-name
+// Example import path (_the_id_string_): org.vdc.my-edge-gw
+// Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
+func resourceVcdEdgeGatewaySettingsImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+	resourceURI := strings.Split(d.Id(), ImportSeparator)
+	if len(resourceURI) != 3 {
+		return nil, fmt.Errorf("[resourceVcdEdgeGatewaySettingsImport] resource name must be specified as org-name.vdc-name.edge-gw-name")
+	}
+	orgName, vdcName, edgeName := resourceURI[0], resourceURI[1], resourceURI[2]
+
+	vcdClient := meta.(*VCDClient)
+	edgeGateway, err := vcdClient.GetEdgeGateway(orgName, vdcName, edgeName)
+	if err != nil {
+		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
+	}
+
+	_ = d.Set("org", orgName)
+	_ = d.Set("vdc", vdcName)
+	_ = d.Set("edge_gateway_name", edgeGateway.EdgeGateway.Name)
+	_ = d.Set("edge_gateway_id", edgeGateway.EdgeGateway.ID)
+	d.SetId(edgeGateway.EdgeGateway.ID)
+	return []*schema.ResourceData{d}, nil
 }
