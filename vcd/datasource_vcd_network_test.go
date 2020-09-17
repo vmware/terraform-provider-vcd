@@ -322,10 +322,6 @@ data "vcd_network_routed" "{{.NetworkName}}" {
   vdc          = "{{.VDC}}"
 }
 
-output "default_gateway" {
-  value = data.vcd_edgegateway.{{.EdgeGateway}}.default_gateway_network
-}
-
 output "network_name" {
   value = data.vcd_network_routed.{{.NetworkName}}.name
 }

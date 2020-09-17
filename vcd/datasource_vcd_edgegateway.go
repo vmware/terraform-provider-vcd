@@ -40,21 +40,6 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 				Computed:    true,
 				Description: "Enable high availability on this edge gateway",
 			},
-			"external_networks": &schema.Schema{
-				Type:        schema.TypeList,
-				Computed:    true,
-				Description: "A list of external networks to be used by the edge gateway",
-				Deprecated:  "Please use the more advanced 'external_network' block(s)",
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-			},
-			"default_gateway_network": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Deprecated:  "Please use the more advanced 'external_network' block(s)",
-				Description: "External network to be used as default gateway. Its name must be included in 'external_networks'. An empty value will skip the default gateway",
-			},
 			"default_external_network_ip": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
