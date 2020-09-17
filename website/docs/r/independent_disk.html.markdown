@@ -10,8 +10,6 @@ description: |-
 
 Provides a vCloud Director independent disk resource. This can be used to create and delete independent disks.
 
-Supported in provider *v2.1+*
-
 ## Example Usage
 
 ```hcl
@@ -19,7 +17,7 @@ resource "vcd_independent_disk" "myNewIndependentDisk" {
   vdc             = "my-vcd"
   
   name            = "logDisk"
-  size            = "33000"
+  size_in_mb      = "1024"
   bus_type        = "SCSI"
   bus_sub_type    = "VirtualSCSI"
   storage_profile = "external"
@@ -47,7 +45,7 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 * `name` - (Required) Disk name
-* `size` - (Required) Size of disk in MB. On read this values isn't refreshed.
+* `size_in_mb` - (Required, *v3.0+*) Size of disk in MB.
 * `bus_type` - (Optional) Disk bus type. Values can be: `IDE`, `SCSI`, `SATA` 
 * `bus_sub_type` - (Optional) Disk bus subtype. Values can be: `buslogic`, `lsilogic`, `lsilogicsas`, `VirtualSCSI` for `SCSI` and `ahci` for `SATA`
 * `storage_profile` - (Optional) The name of storage profile where disk will be created
