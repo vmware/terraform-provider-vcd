@@ -8,10 +8,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
-	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-const implicitVmInVappDeprecation = "Creation of vApp and an implicit single VM in the same structure is deprecated."
 const vAppUnknownStatus = "-unknown-status-"
 
 func resourceVcdVApp() *schema.Resource {
@@ -44,70 +42,10 @@ func resourceVcdVApp() *schema.Resource {
 				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
-			"template_name": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "The name of the vApp Template to use",
-				Deprecated: implicitVmInVappDeprecation +
-					" Use vcd_vapp_vm.template_name instead",
-			},
-			"catalog_name": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "The catalog name in which to find the given vApp Template",
-				Deprecated: implicitVmInVappDeprecation +
-					" Use vcd_vapp_vm.catalog_name instead",
-			},
-			"network_name": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "Name of the network this vApp should join",
-				Deprecated: implicitVmInVappDeprecation +
-					" Use vcd_vapp_vm.network instead",
-			},
-			"memory": {
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Description: "The amount of RAM (in MB) to allocate to the vApp",
-				Deprecated: implicitVmInVappDeprecation +
-					" Use vcd_vapp_vm.memory instead",
-			},
-			"cpus": {
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Description: "The number of virtual CPUs to allocate to the vApp",
-				Deprecated: implicitVmInVappDeprecation +
-					" Use vcd_vapp_vm.cpus instead",
-			},
-			"ip": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				Description: "The IP to assign to this vApp",
-				Deprecated: implicitVmInVappDeprecation +
-					" Use vcd_vapp_vm.network instead",
-			},
-			"storage_profile": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Storage profile to be used by the vApp",
-				Deprecated: implicitVmInVappDeprecation +
-					"use vcd_vapp_vm.storage_profile instead",
-			},
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "Optional description of the vApp",
-			},
-			"initscript": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: "A script to be run only on initial boot",
-				Deprecated: implicitVmInVappDeprecation +
-					" Use vcd_vapp_vm.initscript instead",
 			},
 			"metadata": {
 				Type:     schema.TypeMap,
@@ -115,13 +53,6 @@ func resourceVcdVApp() *schema.Resource {
 				// For now underlying go-vcloud-director repo only supports
 				// a value of type String in this map.
 				Description: "Key value map of metadata to assign to this vApp. Key and value can be any string.",
-			},
-			"ovf": {
-				Type:        schema.TypeMap,
-				Optional:    true,
-				Description: "Key value map of ovf parameters to assign to VM product section",
-				Deprecated: implicitVmInVappDeprecation +
-					" Use guest_properties in this resource or vcd_vapp_vm.guest_properties instead",
 			},
 			"href": {
 				Type:        schema.TypeString,
@@ -133,14 +64,6 @@ func resourceVcdVApp() *schema.Resource {
 				Optional:    true,
 				Default:     true,
 				Description: "A boolean value stating if this vApp should be powered on",
-			},
-			"accept_all_eulas": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				Description: "Automatically accept EULA if OVA has it",
-				Deprecated: implicitVmInVappDeprecation +
-					" Use vcd_vapp_vm.accept_all_eulas instead",
 			},
 			"guest_properties": {
 				Type:        schema.TypeMap,
@@ -163,7 +86,7 @@ func resourceVcdVApp() *schema.Resource {
 
 func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-	org, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
 		return fmt.Errorf("error retrieving Org and VDC: %s", err)
 	}
@@ -172,140 +95,15 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient.lockVapp(d)
 	defer vcdClient.unLockVapp(d)
 
-	if _, ok := d.GetOk("template_name"); ok {
-		if _, ok := d.GetOk("catalog_name"); ok {
+	e := vdc.ComposeRawVApp(d.Get("name").(string))
 
-			catalog, err := org.GetCatalogByName(d.Get("catalog_name").(string), false)
-			if err != nil {
-				return fmt.Errorf("error finding catalog: %#v", err)
-			}
+	if e != nil {
+		return fmt.Errorf("error: %#v", e)
+	}
 
-			catalogitem, err := catalog.GetCatalogItemByName(d.Get("template_name").(string), false)
-			if err != nil {
-				return fmt.Errorf("error finding catalog item: %#v", err)
-			}
-
-			vappTemplate, err := catalogitem.GetVAppTemplate()
-			if err != nil {
-				return fmt.Errorf("error finding VAppTemplate: %#v", err)
-			}
-
-			log.Printf("[DEBUG] VAppTemplate: %#v", vappTemplate)
-			net, err := vdc.GetOrgVdcNetworkByName(d.Get("network_name").(string), false)
-			if err != nil {
-				return fmt.Errorf("error finding OrgVCD Network: %s", err)
-			}
-			nets := []*types.OrgVDCNetwork{net.OrgVDCNetwork}
-
-			storageProfileReference := types.Reference{}
-
-			// Override default_storage_profile if we find the given storage profile
-			if d.Get("storage_profile").(string) != "" {
-				storageProfileReference, err = vdc.FindStorageProfileReference(d.Get("storage_profile").(string))
-				if err != nil {
-					return fmt.Errorf("error finding storage profile %s", d.Get("storage_profile").(string))
-				}
-			}
-
-			log.Printf("storage_profile %s", storageProfileReference)
-
-			vapp, err := vdc.GetVAppByName(vappName, false)
-			if err != nil {
-				task, err := vdc.ComposeVApp(nets, vappTemplate, storageProfileReference, vappName, d.Get("description").(string), d.Get("accept_all_eulas").(bool))
-				if err != nil {
-					return fmt.Errorf("error creating vApp: %#v", err)
-				}
-
-				err = task.WaitTaskCompletion()
-				if err != nil {
-					return fmt.Errorf("error creating vApp: %#v", err)
-				}
-				vapp, err = vdc.GetVAppByName(vappName, true)
-				if err != nil {
-					return fmt.Errorf("error creating vApp: %#v", err)
-				}
-			}
-
-			err = vapp.BlockWhileStatus("UNRESOLVED", vcdClient.MaxRetryTimeout)
-			if err != nil {
-				return fmt.Errorf("error composing vApp: %s", err)
-			}
-
-			task, err := vapp.ChangeVMName(vappName)
-			if err != nil {
-				return fmt.Errorf("error with VM name change: %#v", err)
-			}
-
-			err = task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf("error changing vmname: %#v", err)
-			}
-
-			networks := []map[string]interface{}{map[string]interface{}{
-				"ip":         d.Get("ip").(string),
-				"is_primary": true,
-				"orgnetwork": d.Get("network_name").(string),
-			}}
-			task, err = vapp.ChangeNetworkConfig(networks, d.Get("ip").(string))
-			if err != nil {
-				return fmt.Errorf("error with networking change: %#v", err)
-			}
-			err = task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf("error changing network: %#v", err)
-			}
-
-			if ovf, ok := d.GetOk("ovf"); ok {
-				//lint:ignore SA1019 Property "ovf" is deprecated. Preserving until removal
-				task, err := vapp.SetOvf(convertToStringMap(ovf.(map[string]interface{})))
-
-				if err != nil {
-					return fmt.Errorf("error setting the ovf: %#v", err)
-				}
-				err = task.WaitTaskCompletion()
-				if err != nil {
-					return fmt.Errorf("error completing tasks: %#v", err)
-				}
-			}
-
-			initscript, ok := d.GetOk("initscript")
-			if ok {
-				log.Printf("running customisation script")
-				task, err := vapp.RunCustomizationScript(d.Get("name").(string), initscript.(string))
-				if err != nil {
-					return fmt.Errorf("error with init script setting: %#v", err)
-				}
-				err = task.WaitTaskCompletion()
-				if err != nil {
-					return fmt.Errorf(errorCompletingTask, err)
-				}
-			}
-
-			if d.Get("power_on").(bool) {
-
-				task, err := vapp.PowerOn()
-				if err != nil {
-					return fmt.Errorf("error powering on the machine: %#v", err)
-				}
-				err = task.WaitTaskCompletion()
-
-				if err != nil {
-					return fmt.Errorf("error completing powerOn tasks: %#v", err)
-				}
-			}
-		}
-	} else {
-
-		e := vdc.ComposeRawVApp(d.Get("name").(string))
-
-		if e != nil {
-			return fmt.Errorf("error: %#v", e)
-		}
-
-		e = vdc.Refresh()
-		if e != nil {
-			return fmt.Errorf("error: %#v", e)
-		}
+	e = vdc.Refresh()
+	if e != nil {
+		return fmt.Errorf("error: %#v", e)
 	}
 
 	vapp, err := vdc.GetVAppByName(vappName, true)
@@ -351,11 +149,6 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	if err != nil {
 		return fmt.Errorf("error finding VApp: %#v", err)
-	}
-
-	status, err := vapp.GetStatus()
-	if err != nil {
-		return fmt.Errorf("error getting VApp status: %#v", err)
 	}
 
 	if d.HasChange("guest_properties") {
@@ -405,89 +198,6 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
-	if d.HasChange("storage_profile") {
-		task, err := vapp.ChangeStorageProfile(d.Get("storage_profile").(string))
-		if err != nil {
-			return fmt.Errorf("error changing storage_profile: %#v", err)
-		}
-
-		err = task.WaitTaskCompletion()
-		if err != nil {
-			return err
-		}
-	}
-
-	if d.HasChange("memory") || d.HasChange("cpus") || d.HasChange("power_on") || d.HasChange("ovf") {
-
-		if status != "POWERED_OFF" {
-
-			task, err := vapp.PowerOff()
-			if err != nil {
-				// can't *always* power off an empty vApp so not necesarrily an error
-				if _, ok := d.GetOk("template_name"); ok {
-					return fmt.Errorf("error Powering Off: %#v", err)
-				}
-			}
-
-			if task.Task != nil {
-				err = task.WaitTaskCompletion()
-				if err != nil {
-					return fmt.Errorf(errorCompletingTask, err)
-				}
-			}
-		}
-
-		if d.HasChange("memory") {
-
-			task, err := vapp.ChangeMemorySize(d.Get("memory").(int))
-			if err != nil {
-				return fmt.Errorf("error changing memory size: %#v", err)
-			}
-
-			err = task.WaitTaskCompletion()
-			if err != nil {
-				return err
-			}
-		}
-
-		if d.HasChange("cpus") {
-			task, err := vapp.ChangeCPUCount(d.Get("cpus").(int))
-			if err != nil {
-				return fmt.Errorf("error changing cpu count: %#v", err)
-			}
-
-			err = task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf(errorCompletingTask, err)
-			}
-		}
-
-		if d.Get("power_on").(bool) {
-			task, err := vapp.PowerOn()
-			if err != nil {
-				return fmt.Errorf("error Powering Up: %#v", err)
-			}
-			err = task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf("error completing tasks: %#v", err)
-			}
-		}
-
-		if ovf, ok := d.GetOk("ovf"); ok {
-			//lint:ignore SA1019 Property "ovf" is deprecated. Preserving until removal
-			task, err := vapp.SetOvf(convertToStringMap(ovf.(map[string]interface{})))
-
-			if err != nil {
-				return fmt.Errorf("error setting the ovf: %#v", err)
-			}
-			err = task.WaitTaskCompletion()
-			if err != nil {
-				return fmt.Errorf(errorCompletingTask, err)
-			}
-		}
-
-	}
-
 	return resourceVcdVAppRead(d, meta)
 }
 
@@ -498,7 +208,7 @@ func resourceVcdVAppRead(d *schema.ResourceData, meta interface{}) error {
 func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string) error {
 	vcdClient := meta.(*VCDClient)
 
-	org, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
@@ -518,28 +228,6 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string)
 			return nil
 		}
 		return fmt.Errorf("[vapp read] error retrieving vApp %s: %s", identifier, err)
-	}
-
-	if _, ok := d.GetOk("ip"); ok {
-		ip := "allocated"
-
-		oldIp, newIp := d.GetChange("ip")
-
-		log.Printf("[DEBUG] IP has changes, old: %s - new: %s", oldIp, newIp)
-
-		if newIp != "allocated" {
-			log.Printf("[DEBUG] IP is assigned. Lets get it (%s)", d.Get("ip"))
-			ip, err = getVAppIPAddress(d, meta, *vdc, *org)
-			if err != nil {
-				return err
-			}
-		} else {
-			log.Printf("[DEBUG] IP is 'allocated'")
-		}
-
-		_ = d.Set("ip", ip)
-	} else {
-		_ = d.Set("ip", "allocated")
 	}
 
 	// update guest properties
@@ -584,30 +272,6 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string)
 	d.SetId(vapp.VApp.ID)
 
 	return nil
-}
-
-func getVAppIPAddress(d *schema.ResourceData, meta interface{}, vdc govcd.Vdc, org govcd.Org) (string, error) {
-	var ip string
-
-	vapp, err := vdc.GetVAppByNameOrId(d.Id(), true)
-	if err != nil {
-		return "", fmt.Errorf("unable to find vApp")
-	}
-
-	// getting the IP of the specific Vm, rather than index zero.
-	// Required as once we add more VM's, index zero doesn't guarantee the
-	// 'first' one, and tests will fail sometimes (annoying huh?)
-	vm, err := vapp.GetVMByName(d.Get("name").(string), false)
-	if err != nil {
-		return "", fmt.Errorf("unable to find VM: %s", err)
-	}
-
-	ip = vm.VM.NetworkConnectionSection.NetworkConnection[0].IPAddress
-	if ip == "" {
-		return "", fmt.Errorf("timeout: VM did not acquire IP address")
-	}
-
-	return ip, err
 }
 
 func resourceVcdVAppDelete(d *schema.ResourceData, meta interface{}) error {
