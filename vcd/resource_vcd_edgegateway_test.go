@@ -39,7 +39,7 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 		return
 	}
 	if !usingSysAdmin() {
-		t.Skip("Edge gateway tests requires system admin privileges")
+		t.Skip("Edge Gateway tests require system admin privileges")
 		return
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)

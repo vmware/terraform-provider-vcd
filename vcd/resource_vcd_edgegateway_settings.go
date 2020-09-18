@@ -64,7 +64,7 @@ func resourceVcdEdgeGatewaySettings() *schema.Resource {
 				Default:     false,
 				Optional:    true,
 				Description: "Enable load balancer logging. (Disabled by default)",
-				// Due to a vCD bug, this field can only be changed by a system administrator
+				// Due to a VCD bug, this field can only be changed by a system administrator
 			},
 			"lb_loglevel": &schema.Schema{
 				Type:         schema.TypeString,
@@ -73,7 +73,7 @@ func resourceVcdEdgeGatewaySettings() *schema.Resource {
 				ValidateFunc: validateCase("lower"),
 				Description: "Log level. One of 'emergency', 'alert', 'critical', 'error', " +
 					"'warning', 'notice', 'info', 'debug'. ('info' by default)",
-				// Due to a vCD bug, this field can only be changed by a system administrator
+				// Due to a VCD bug, this field can only be changed by a system administrator
 			},
 			"fw_enabled": &schema.Schema{
 				Type:        schema.TypeBool,

@@ -14,7 +14,7 @@ import (
 
 func TestAccVcdEdgeGatewaySettingsFull(t *testing.T) {
 	if !usingSysAdmin() {
-		t.Skip("Edge gateway resource tests requires system admin privileges")
+		t.Skip("Edge Gateway resource tests require system admin privileges")
 		return
 	}
 
