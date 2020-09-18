@@ -518,50 +518,6 @@ func resourceVcdEdgeGatewayImport(d *schema.ResourceData, meta interface{}) ([]*
 	return []*schema.ResourceData{d}, nil
 }
 
-// getSimpleGatewayInterfaces aims to add compatibility layer to go-vcloud-director
-// CreateEdgeGateway function which is a wrapper around CreateAndConfigureEdgeGateway. The layer
-// resides here so that code can work together getGatewayInterfaces
-func getSimpleGatewayInterfaces(vcdClient *VCDClient, externalNetworks []string, defaultGatewayNetwork string) ([]*types.GatewayInterface, error) {
-	gatewayInterfaces := make([]*types.GatewayInterface, len(externalNetworks))
-	// Add external networks inside the configuration structure
-	for extNetworkIndex, extNetName := range externalNetworks {
-		extNet, err := vcdClient.GetExternalNetworkByName(extNetName)
-		if err != nil {
-			return nil, err
-		}
-
-		// Populate the subnet participation only if default gateway was set
-		var subnetParticipation *types.SubnetParticipation
-		if defaultGatewayNetwork != "" && extNet.ExternalNetwork.Name == defaultGatewayNetwork {
-			for _, net := range extNet.ExternalNetwork.Configuration.IPScopes.IPScope {
-				if net.IsEnabled {
-					subnetParticipation = &types.SubnetParticipation{
-						Gateway: net.Gateway,
-						Netmask: net.Netmask,
-					}
-					break
-				}
-			}
-		}
-		networkConf := &types.GatewayInterface{
-			Name:          extNet.ExternalNetwork.Name,
-			DisplayName:   extNet.ExternalNetwork.Name,
-			InterfaceType: "uplink",
-			Network: &types.Reference{
-				HREF: extNet.ExternalNetwork.HREF,
-				ID:   extNet.ExternalNetwork.ID,
-				Type: "application/vnd.vmware.admin.network+xml",
-				Name: extNet.ExternalNetwork.Name,
-			},
-			UseForDefaultRoute:  defaultGatewayNetwork == extNet.ExternalNetwork.Name,
-			SubnetParticipation: []*types.SubnetParticipation{subnetParticipation},
-		}
-
-		gatewayInterfaces[extNetworkIndex] = networkConf
-	}
-	return gatewayInterfaces, nil
-}
-
 // getGatewayInterfacesType extracts `external_network` blocks with more advanced settings into
 // []*types.GatewayInterface
 // This is a pretty complicated function with 3 level nesting as it is implied by API structure.
