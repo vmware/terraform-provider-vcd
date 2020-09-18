@@ -59,12 +59,6 @@ func resourceVcdVApp() *schema.Resource {
 				Computed:    true,
 				Description: "vApp Hyper Reference",
 			},
-			"power_on": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				Description: "A boolean value stating if this vApp should be powered on",
-			},
 			"guest_properties": {
 				Type:        schema.TypeMap,
 				Optional:    true,
@@ -247,16 +241,6 @@ func genericVcdVAppRead(d *schema.ResourceData, meta interface{}, origin string)
 	}
 	_ = d.Set("status", vapp.VApp.Status)
 	_ = d.Set("status_text", statusText)
-	// Power status is not easy to define.
-	// It should be set when status == 4, but even when we request it the status
-	// change may not happen until late. Returning the power status at an early
-	// stage may mislead both users and terraform, with the result of having
-	// unnecessary update requests.
-	// We have two fields that produce better information:
-	// * status (numeric status code, such as "4")
-	// * status_text (status as a string, such as "POWERED_ON")
-	// _ = d.Set("power_on", vapp.VApp.Status == 4)
-
 	_ = d.Set("href", vapp.VApp.HREF)
 	_ = d.Set("description", vapp.VApp.Description)
 	metadata, err := vapp.GetMetadata()

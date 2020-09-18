@@ -12,39 +12,35 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
-var vappName string = "TestAccVcdVAppVapp"
-var vappNameAllocated = "TestAccVcdVAppVappAllocated"
-var vappNamePowerOff = "TestAccVcdVAppVappPowerOff"
+var vappName = "TestAccVcdVAppVapp"
 
-func TestAccVcdVApp_PowerOff(t *testing.T) {
+func TestAccVcdVApp_Basic(t *testing.T) {
 	var vapp govcd.VApp
 
 	var params = StringMap{
-		"Org":               testConfig.VCD.Org,
-		"Vdc":               testConfig.VCD.Vdc,
-		"EdgeGateway":       testConfig.Networking.EdgeGateway,
-		"NetworkName":       "TestAccVcdVAppNet",
-		"NetworkName2":      "TestAccVcdVAppNet2",
-		"NetworkName3":      "TestAccVcdVAppNet3",
-		"Catalog":           testSuiteCatalogName,
-		"CatalogItem":       testSuiteCatalogOVAItem,
-		"VappName":          vappName,
-		"VappNameAllocated": vappNameAllocated,
-		"VappNamePowerOff":  vappNamePowerOff,
-		"FuncName":          "TestAccCheckVcdVApp_PowerOff",
-		"Tags":              "vapp",
+		"Org":          testConfig.VCD.Org,
+		"Vdc":          testConfig.VCD.Vdc,
+		"EdgeGateway":  testConfig.Networking.EdgeGateway,
+		"NetworkName":  "TestAccVcdVAppNet",
+		"NetworkName2": "TestAccVcdVAppNet2",
+		"NetworkName3": "TestAccVcdVAppNet3",
+		"Catalog":      testSuiteCatalogName,
+		"CatalogItem":  testSuiteCatalogOVAItem,
+		"VappName":     vappName,
+		"FuncName":     "TestAccCheckVcdVApp_PowerOff",
+		"Tags":         "vapp",
 	}
 	configText := templateFill(testAccCheckVcdVApp_basic, params)
 
 	params["FuncName"] = "TestAccCheckVcdVApp_powerOff"
 
-	configTextPoweroff := templateFill(testAccCheckVcdVApp_powerOff, params)
+	configTextUpdate := templateFill(testAccCheckVcdVApp_update, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION basic: %s\n", configText)
-	debugPrintf("#[DEBUG] CONFIGURATION poweroff: %s\n", configTextPoweroff)
+	debugPrintf("#[DEBUG] CONFIGURATION udpate: %s\n", configTextUpdate)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -54,57 +50,33 @@ func TestAccVcdVApp_PowerOff(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppExists("vcd_vapp."+vappName, &vapp),
-					testAccCheckVcdVAppAttributes(&vapp),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp."+vappName, "name", vappName),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp."+vappName, "ip", "10.10.102.160"),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp."+vappName, "power_on", "true"),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp."+vappName, "metadata.vapp_metadata", "vApp Metadata."),
+					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "name", vappName),
+					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "metadata.vapp_metadata", "vApp Metadata."),
 					resource.TestMatchResourceAttr("vcd_vapp."+vappName, "href",
 						regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}`)),
+					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "name", vappName),
+					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "metadata.vapp_metadata", "vApp Metadata."),
+					resource.TestCheckResourceAttr("vcd_vapp."+vappName, `guest_properties.guest.hostname`, "test-host"),
+					resource.TestCheckResourceAttr("vcd_vapp."+vappName, `guest_properties.guest.another.subkey`, "another-value"),
 				),
 			},
-
 			resource.TestStep{
-				Config: configText,
+				Config: configTextUpdate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(
-						"vcd_vapp."+vappNameAllocated, "name", vappNameAllocated),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp."+vappNameAllocated, "ip", "allocated"),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp."+vappNameAllocated, "power_on", "true"),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp."+vappNameAllocated, "metadata.vapp_metadata", "vApp Metadata."),
-				),
-			},
-
-			resource.TestStep{
-				Config: configTextPoweroff,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVAppExists("vcd_vapp."+vappNamePowerOff, &vapp),
-					testAccCheckVcdVAppAttributes_off(&vapp),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp."+vappNamePowerOff, "name", vappNamePowerOff),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp."+vappNamePowerOff, "ip", "10.10.103.160"),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp."+vappNamePowerOff, "power_on", "false"),
-					resource.TestCheckResourceAttr(
-						"vcd_vapp."+vappNamePowerOff, "metadata.vapp_metadata", "vApp Metadata."),
+					testAccCheckVcdVAppExists("vcd_vapp."+vappName, &vapp),
+					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "name", vappName),
+					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "metadata.vapp_metadata", "vApp Metadata updated"),
+					resource.TestCheckResourceAttr("vcd_vapp."+vappName, `guest_properties.guest.another.subkey`, "new-value"),
+					resource.TestCheckResourceAttr("vcd_vapp."+vappName, `guest_properties.guest.third.subkey`, "third-value"),
 				),
 			},
 			resource.TestStep{
-				ResourceName:      "vcd_vapp." + vappNamePowerOff + "-import",
+				ResourceName:      "vcd_vapp." + vappName + "-import",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, vappNamePowerOff),
+				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, vappName),
 				// These fields can't be retrieved from user data
-				ImportStateVerifyIgnore: []string{"template_name", "catalog_name", "ovf", "network_name",
-					"memory", "cpus", "ip", "storage_profile", "initscript", "accept_all_eulas", "power_on"},
+				ImportStateVerifyIgnore: []string{},
 			},
 		},
 	})
@@ -164,143 +136,42 @@ func testAccCheckVcdVAppDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccCheckVcdVAppAttributes(vapp *govcd.VApp) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		if vapp.VApp.Name != vappName {
-			return fmt.Errorf("bad name: %s", vapp.VApp.Name)
-		}
-
-		if vapp.VApp.Name != vapp.VApp.Children.VM[0].Name {
-			return fmt.Errorf("VApp and VM names do not match. %s != %s",
-				vapp.VApp.Name, vapp.VApp.Children.VM[0].Name)
-		}
-
-		status, _ := vapp.GetStatus()
-		if status != "POWERED_ON" {
-			return fmt.Errorf("VApp is not powered on")
-		}
-
-		return nil
-	}
-}
-
-func testAccCheckVcdVAppAttributes_off(vapp *govcd.VApp) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		if vapp.VApp.Name != vappNamePowerOff {
-			return fmt.Errorf("bad name: %s", vapp.VApp.Name)
-		}
-
-		if vapp.VApp.Name != vapp.VApp.Children.VM[0].Name {
-			return fmt.Errorf("VApp and VM names do not match. %s != %s",
-				vapp.VApp.Name, vapp.VApp.Children.VM[0].Name)
-		}
-
-		status, _ := vapp.GetStatus()
-		if status != "POWERED_OFF" {
-			return fmt.Errorf("VApp is still powered on")
-		}
-
-		return nil
-	}
-}
-
 func init() {
 	testingTags["vapp"] = "resource_vcd_vapp_test.go"
 }
 
-const testAccCheckVcdVApp_basic = `resource "vcd_network_routed" "{{.NetworkName}}" {
-  name         = "{{.NetworkName}}"
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
-  gateway      = "10.10.102.1"
-
-  static_ip_pool {
-    start_address = "10.10.102.2"
-    end_address   = "10.10.102.254"
-  }
-}
-
-resource "vcd_network_routed" "{{.NetworkName3}}" {
-  name         = "{{.NetworkName3}}"
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
-  gateway      = "10.10.202.1"
-
-  static_ip_pool {
-    start_address = "10.10.202.2"
-    end_address   = "10.10.202.254"
-  }
-}
+const testAccCheckVcdVApp_basic = `
 
 resource "vcd_vapp" "{{.VappName}}" {
   org           = "{{.Org}}"
   vdc           = "{{.Vdc}}"
   name          = "{{.VappName}}"
-  template_name = "{{.CatalogItem}}"
-  catalog_name  = "{{.Catalog}}"
-  network_name  = vcd_network_routed.{{.NetworkName}}.name
-  memory        = 1024
-  cpus          = 1
-  ip            = "10.10.102.160"
 
   metadata = {
     vapp_metadata = "vApp Metadata."
   }
-}
 
-resource "vcd_vapp" "{{.VappNameAllocated}}" {
-  org           = "{{.Org}}"
-  vdc           = "{{.Vdc}}"
-  name          = "{{.VappNameAllocated}}"
-  template_name = "{{.CatalogItem}}"
-  catalog_name  = "{{.Catalog}}"
-  network_name  = vcd_network_routed.{{.NetworkName3}}.name
-  memory        = 1024
-  cpus          = 1
-  ip            = "allocated"
-
-  metadata = {
-    vapp_metadata = "vApp Metadata."
+  guest_properties = {
+	"guest.hostname"       = "test-host"
+	"guest.another.subkey" = "another-value"
   }
 }
 `
 
-const testAccCheckVcdVApp_powerOff = `resource "vcd_network_routed" "{{.NetworkName2}}" {
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  name         = "{{.NetworkName2}}"
-  edge_gateway = "{{.EdgeGateway}}"
-  gateway      = "10.10.103.1"
-
-  static_ip_pool {
-    start_address = "10.10.103.2"
-    end_address   = "10.10.103.170"
-  }
-
-  dhcp_pool {
-    start_address = "10.10.103.171"
-    end_address   = "10.10.103.254"
-  }
-}
-
-resource "vcd_vapp" "{{.VappNamePowerOff}}" {
+const testAccCheckVcdVApp_update = `
+# skip-binary-test: only for updates
+resource "vcd_vapp" "{{.VappName}}" {
   org           = "{{.Org}}"
   vdc           = "{{.Vdc}}"
-  name          = "{{.VappNamePowerOff}}"
-  template_name = "{{.CatalogItem}}"
-  catalog_name  = "{{.Catalog}}"
-  network_name  = vcd_network_routed.{{.NetworkName2}}.name
-  memory        = 1024
-  cpus          = 1
-  ip            = "10.10.103.160"
-  power_on      = false
+  name          = "{{.VappName}}"
 
   metadata = {
-    vapp_metadata = "vApp Metadata."
+    vapp_metadata = "vApp Metadata updated"
+  }
+
+  guest_properties = {
+	"guest.another.subkey" = "new-value"
+	"guest.third.subkey"   = "third-value"
   }
 }
 `

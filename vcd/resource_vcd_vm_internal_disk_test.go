@@ -253,7 +253,7 @@ resource "vcd_independent_disk" "IndependentDisk1" {
   org             = "{{.Org}}"
   vdc             = vcd_org_vdc.{{.VdcName}}.name
   name            = "TestAccVcdVmInternalDiskTest"
-  size            = "5"
+  size_in_mb      = "5"
   bus_type        = "SCSI"
   bus_sub_type    = "lsilogicsas"
   storage_profile = "{{.StorageProfileName}}"
