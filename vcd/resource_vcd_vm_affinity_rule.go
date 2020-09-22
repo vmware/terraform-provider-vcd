@@ -62,10 +62,24 @@ func resourceVcdVmAffinityRule() *schema.Resource {
 				Description: "True if this affinity rule is enabled",
 			},
 			"virtual_machine_ids": {
-				Type:        schema.TypeSet,
-				Required:    true,
-				MinItems:    2,
-				Description: "Set of VM IDs assigned to this rule",
+				Type:         schema.TypeSet,
+				ExactlyOneOf: []string{"virtual_machine_ids", "vm_ids"},
+				Optional:     true,
+				Computed:     true,
+				MinItems:     2,
+				Description:  "Set of VM IDs assigned to this rule",
+				Deprecated:   "In favor of vm_ids",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"vm_ids": {
+				Type:         schema.TypeSet,
+				ExactlyOneOf: []string{"virtual_machine_ids", "vm_ids"},
+				Optional:     true,
+				Computed:     true,
+				MinItems:     2,
+				Description:  "Set of VM IDs assigned to this rule",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -82,7 +96,15 @@ func resourceToAffinityRule(d *schema.ResourceData, meta interface{}) (*types.Vm
 	polarity := d.Get("polarity").(string)
 	required := d.Get("required").(bool)
 	enabled := d.Get("enabled").(bool)
-	rawVms := d.Get("virtual_machine_ids").(*schema.Set)
+	deprecatedValue, deprecatedOk := d.GetOk("virtual_machine_ids")
+	value, ok := d.GetOk("vm_ids")
+	var rawVms *schema.Set
+	if deprecatedOk {
+		rawVms = deprecatedValue.(*schema.Set)
+	}
+	if ok {
+		rawVms = value.(*schema.Set)
+	}
 	vmIdList := convertSchemaSetToSliceOfStrings(rawVms)
 
 	fullVmList, err := vcdClient.Client.QueryVmList(types.VmQueryFilterOnlyDeployed)
@@ -244,6 +266,7 @@ func genericVcdVmAffinityRuleRead(d *schema.ResourceData, meta interface{}, orig
 	endpointVmSlice := convertToTypeSet(endpointVMs)
 	endpointVmSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointVmSlice)
 	err = d.Set("virtual_machine_ids", endpointVmSet)
+	err = d.Set("vm_ids", endpointVmSet)
 	if err != nil {
 		return fmt.Errorf("[VM affinity rule read] error setting the list of VM IDs: %s ", err)
 	}

@@ -45,7 +45,7 @@ resource "vcd_vm_affinity_rule" "Test_VmAffinityRule1" {
   enabled  = true
   polarity = "Affinity"
 
-  virtual_machine_ids = [
+  vm_ids = [
     data.vcd_vapp_vm.Test_EmptyVm1a.id,
     data.vcd_vapp_vm.Test_EmptyVm1b.id,
     data.vcd_vapp_vm.Test_EmptyVm1c.id
@@ -65,7 +65,8 @@ The following arguments are supported:
 * `enabled` (Optional) True if this affinity rule is enabled. The default is `true`
 * `required` (Optional) True if this affinity rule is required. When a rule is mandatory, a host failover will not 
    power on the VM if doing so would violate the rule. The default is `true`
-* `virtual_machine_ids` (Required) A set of virtual machine IDs that compose this rule. At least 2 IDs must be provided.
+* `vm_ids` (Required) A set of virtual machine IDs that compose this rule. At least 2 IDs must be provided.
+* `virtual_machine_ids` (Optional, deprecated in favor of `vm_ids`) A set of virtual machine IDs that compose this rule. At least 2 IDs must be provided.
 
 ## Importing
 
