@@ -50,7 +50,7 @@ The following arguments are supported:
 * `memory` - (Optional) Configures memory policy; see [Memory](#memory) below for details.
  
 <a id="cpu"></a>
-## Cpu
+## CPU
  
  Each VM sizing policy supports the following attributes:
  
