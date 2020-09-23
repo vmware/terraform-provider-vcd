@@ -49,36 +49,42 @@ func resourceVcdVmSizingPolicy() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"speed_in_mhz": {
 							Type:         schema.TypeString,
+							ForceNew:     true,
 							Optional:     true,
 							Description:  "Defines the vCPU speed of a core in MHz.",
 							ValidateFunc: IsIntAndAtLeast(0),
 						},
 						"count": {
 							Type:         schema.TypeString,
+							ForceNew:     true,
 							Optional:     true,
 							Description:  "Defines the number of vCPUs configured for a VM. This is a VM hardware configuration. When a tenant assigns the VM sizing policy to a VM, this count becomes the configured number of vCPUs for the VM.",
 							ValidateFunc: IsIntAndAtLeast(0),
 						},
 						"cores_per_socket": {
 							Type:         schema.TypeString,
+							ForceNew:     true,
 							Optional:     true,
 							Description:  "The number of cores per socket for a VM. This is a VM hardware configuration. The number of vCPUs that is defined in the VM sizing policy must be divisible by the number of cores per socket. If the number of vCPUs is not divisible by the number of cores per socket, the number of cores per socket becomes invalid.",
 							ValidateFunc: IsIntAndAtLeast(0),
 						},
 						"reservation_guarantee": {
 							Type:         schema.TypeString,
+							ForceNew:     true,
 							Optional:     true,
 							Description:  "Defines how much of the CPU resources of a VM are reserved. The allocated CPU for a VM equals the number of vCPUs times the vCPU speed in MHz. The value of the attribute ranges between 0 and one. Value of 0 CPU reservation guarantee defines no CPU reservation. Value of 1 defines 100% of CPU reserved.",
 							ValidateFunc: IsFloatAndBetween(0, 1),
 						},
 						"limit_in_mhz": {
 							Type:         schema.TypeString,
+							ForceNew:     true,
 							Optional:     true,
 							Description:  "Defines the CPU limit in MHz for a VM. If not defined in the VDC compute policy, CPU limit is equal to the vCPU speed multiplied by the number of vCPUs.",
 							ValidateFunc: IsIntAndAtLeast(0),
 						},
 						"shares": {
 							Type:         schema.TypeString,
+							ForceNew:     true,
 							Optional:     true,
 							Description:  "Defines the number of CPU shares for a VM. Shares specify the relative importance of a VM within a virtual data center. If a VM has twice as many shares of CPU as another VM, it is entitled to consume twice as much CPU when these two virtual machines are competing for resources. If not defined in the VDC compute policy, normal shares are applied to the VM.",
 							ValidateFunc: IsIntAndAtLeast(0),
@@ -95,24 +101,28 @@ func resourceVcdVmSizingPolicy() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"size_in_mb": {
 							Type:         schema.TypeString,
+							ForceNew:     true,
 							Optional:     true,
 							Description:  "Defines the memory configured for a VM in MB. This is a VM hardware configuration. When a tenant assigns the VM sizing policy to a VM, the VM receives the amount of memory defined by this attribute.",
 							ValidateFunc: IsIntAndAtLeast(0),
 						},
 						"reservation_guarantee": {
 							Type:         schema.TypeString,
+							ForceNew:     true,
 							Optional:     true,
 							Description:  "Defines the reserved amount of memory that is configured for a VM. The value of the attribute ranges between 0 and one. Value of 0 memory reservation guarantee defines no memory reservation. Value of 1 defines 100% of memory reserved.",
 							ValidateFunc: IsFloatAndBetween(0, 1),
 						},
 						"limit_in_mb": {
 							Type:         schema.TypeString,
+							ForceNew:     true,
 							Optional:     true,
 							Description:  "Defines the memory limit in MB for a VM. If not defined in the VM sizing policy, memory limit is equal to the allocated memory for the VM.",
 							ValidateFunc: IsIntAndAtLeast(0),
 						},
 						"shares": {
 							Type:         schema.TypeString,
+							ForceNew:     true,
 							Optional:     true,
 							Description:  "Defines the number of memory shares for a VM. Shares specify the relative importance of a VM within a virtual data center. If a VM has twice as many shares of memory as another VM, it is entitled to consume twice as much memory when these two virtual machines are competing for resources. If not defined in the VDC compute policy, normal shares are applied to the VM.",
 							ValidateFunc: IsIntAndAtLeast(0),
@@ -442,7 +452,7 @@ func getCpuInput(cpuPart []interface{}, params *types.VdcComputePolicy) (*types.
 		params.CPUShares = &convertedNumber
 	}
 	count := cpuMap["count"].(string)
-	if shares != "" {
+	if count != "" {
 		convertedNumber, err := strconv.Atoi(count)
 		if err != nil {
 			return nil, fmt.Errorf("value `%s` count is not number. err: %s", count, err)
@@ -450,7 +460,7 @@ func getCpuInput(cpuPart []interface{}, params *types.VdcComputePolicy) (*types.
 		params.CPUCount = &convertedNumber
 	}
 	coresPerSocket := cpuMap["cores_per_socket"].(string)
-	if shares != "" {
+	if coresPerSocket != "" {
 		convertedNumber, err := strconv.Atoi(coresPerSocket)
 		if err != nil {
 			return nil, fmt.Errorf("value `%s` cores_per_socket is not number. err: %s", coresPerSocket, err)
