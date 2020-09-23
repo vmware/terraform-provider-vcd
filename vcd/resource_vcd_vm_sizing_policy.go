@@ -170,9 +170,16 @@ func genericVcdVmSizingPolicyRead(d *schema.ResourceData, meta interface{}) erro
 
 	vcdClient := meta.(*VCDClient)
 
-	org, _, err := vcdClient.GetOrgAndVdc(d.Get("org").(string), "")
+	orgName := d.Get("org").(string)
+	if orgName == "" {
+		orgName = vcdClient.Org
+	}
+	if orgName == "" {
+		return fmt.Errorf("empty Org name provided")
+	}
+	org, err := vcdClient.VCDClient.GetOrgByName(orgName)
 	if err != nil {
-		return fmt.Errorf(errorRetrievingOrg, err)
+		return fmt.Errorf("error retrieving Org %s: %s", orgName, err)
 	}
 
 	// The method variable stores the information about how we found the rule, for logging purposes
