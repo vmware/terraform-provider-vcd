@@ -49,8 +49,8 @@ The following arguments are supported:
 * `cpu` - (Optional) Configures cpu policy; see [Cpu](#cpu) below for details.
 * `memory` - (Optional) Configures memory policy; see [Memory](#memory) below for details.
  
- <a id="cpu"></a>
- ## Cpu
+<a id="cpu"></a>
+## Cpu
  
  Each VM sizing policy supports the following attributes:
  
@@ -61,8 +61,8 @@ The following arguments are supported:
  * `cores_per_socket` - (Optional) The number of cores per socket for a VM. This is a VM hardware configuration. The number of vCPUs that is defined in the VM sizing policy must be divisible by the number of cores per socket. If the number of vCPUs is not divisible by the number of cores per socket, the number of cores per socket becomes invalid.
  * `reservation_guarantee` - (Optional) Defines how much of the CPU resources of a VM are reserved. The allocated CPU for a VM equals the number of vCPUs times the vCPU speed in MHz. The value of the attribute ranges between 0 and one. Value of 0 CPU reservation guarantee defines no CPU reservation. Value of 1 defines 100% of CPU reserved.
  
-  <a id="memory"></a>
-  ## Memory
+<a id="memory"></a>
+## Memory
   
   Each VM sizing policy supports the following attributes:
   
