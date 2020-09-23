@@ -239,7 +239,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
-				Description: "Id of default VM sizing policy ID",
+				Description: "ID of default VM sizing policy ID",
 			},
 		},
 	}
@@ -258,7 +258,7 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if !vcdClient.Client.IsSysAdmin {
-		return fmt.Errorf("functionality requires system administrator privileges")
+		return fmt.Errorf("functionality requires System administrator privileges")
 	}
 
 	// check that elasticity and include_vm_memory_overhead are used only for Flex
@@ -313,7 +313,7 @@ func isSizingPolicyAllowed(d *schema.ResourceData, vcdClient *VCDClient) error {
 		_, okSizingPolicy := d.GetOk("vm_sizing_policy_ids")
 		_, okDefaultPolicy := d.GetOk("default_vm_sizing_policy_id")
 		if okSizingPolicy || okDefaultPolicy {
-			return fmt.Errorf("'vm_sizing_policy_ids' and `default_vm_sizing_policy_id` only available for vCD 10.0+")
+			return fmt.Errorf("'vm_sizing_policy_ids' and `default_vm_sizing_policy_id` only available for VCD 10.0+")
 		}
 	}
 	return nil
@@ -571,7 +571,7 @@ func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
 	if !vcdClient.Client.IsSysAdmin {
-		return fmt.Errorf("functionality requires system administrator privileges")
+		return fmt.Errorf("functionality requires System administrator privileges")
 	}
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)

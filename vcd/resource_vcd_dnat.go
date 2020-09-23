@@ -137,7 +137,7 @@ func resourceVcdDNATCreate(d *schema.ResourceData, meta interface{}) error {
 		}
 	} else if networkName != "" && networkType == "ext" {
 		if !vcdClient.Client.IsSysAdmin {
-			return fmt.Errorf("functionality requires system administrator privileges")
+			return fmt.Errorf("functionality requires System administrator privileges")
 		}
 
 		externalNetwork, err := vcdClient.GetExternalNetworkByNameOrId(networkName)

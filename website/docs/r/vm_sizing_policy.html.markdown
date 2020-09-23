@@ -12,7 +12,7 @@ description: |-
 Provides a vCloud Director VM sizing policy resource. This can be
 used to create, modify, and delete VM sizing policy.
 
-Supported in provider *v3.0+*
+Supported in provider *v3.0+* and requires VCD 10.0+
 
 ## Example Usage
 
@@ -54,7 +54,7 @@ The following arguments are supported:
  
  Each VM sizing policy supports the following attributes:
  
- * `shares` - (Optional)Defines the number of CPU shares for a VM. Shares specify the relative importance of a VM within a virtual data center. If a VM has twice as many shares of CPU as another VM, it is entitled to consume twice as much CPU when these two virtual machines are competing for resources. If not defined in the VDC compute policy, normal shares are applied to the VM.
+ * `shares` - (Optional) Defines the number of CPU shares for a VM. Shares specify the relative importance of a VM within a virtual data center. If a VM has twice as many shares of CPU as another VM, it is entitled to consume twice as much CPU when these two virtual machines are competing for resources. If not defined in the VDC compute policy, normal shares are applied to the VM.
  * `limit_in_mhz` - (Optional) Defines the CPU limit in MHz for a VM. If not defined in the VDC compute policy, CPU limit is equal to the vCPU speed multiplied by the number of vCPUs.
  * `count` - (Required) Defines the number of vCPUs configured for a VM. This is a VM hardware configuration. When a tenant assigns the VM sizing policy to a VM, this count becomes the configured number of vCPUs for the VM.
  * `speed_in_mhz` - (Optional) Defines the vCPU speed of a core in MHz.

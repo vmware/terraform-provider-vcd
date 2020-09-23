@@ -199,7 +199,7 @@ func datasourceVcdOrgVdc() *schema.Resource {
 			"default_vm_sizing_policy_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Id of default VM sizing policy ID",
+				Description: "ID of default VM sizing policy ID",
 			},
 		},
 	}

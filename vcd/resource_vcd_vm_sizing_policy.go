@@ -131,7 +131,7 @@ func resourceVmSizingPolicyCreate(d *schema.ResourceData, meta interface{}) erro
 	vcdClient := meta.(*VCDClient)
 
 	if !vcdClient.Client.IsSysAdmin {
-		return fmt.Errorf("functionality requires system administrator privileges")
+		return fmt.Errorf("functionality requires System administrator privileges")
 	}
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
@@ -333,7 +333,7 @@ func resourceVmSizingPolicyDelete(d *schema.ResourceData, meta interface{}) erro
 	vcdClient := meta.(*VCDClient)
 
 	if !vcdClient.Client.IsSysAdmin {
-		return fmt.Errorf("functionality requires system administrator privileges")
+		return fmt.Errorf("functionality requires System administrator privileges")
 	}
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)

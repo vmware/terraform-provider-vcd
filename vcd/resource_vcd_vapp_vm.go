@@ -555,7 +555,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 
 	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
 		if _, ok := d.GetOk("sizing_policy_id"); ok {
-			return fmt.Errorf("'sizing_policy_id' only available for vCD 10.0+")
+			return fmt.Errorf("'sizing_policy_id' only available for VCD 10.0+")
 		}
 	}
 

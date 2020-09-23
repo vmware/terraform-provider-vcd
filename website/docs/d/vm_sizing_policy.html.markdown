@@ -12,7 +12,7 @@ description: |-
 Provides a vCloud Director VM sizing policy data source. This can be
 used to read VM sizing policy.
 
-Supported in provider *v3.0+*
+Supported in provider *v3.0+* and requires VCD 10.0+
 
 ## Example Usage
 
