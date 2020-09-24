@@ -24,22 +24,27 @@ func datasourceNsxtManagerRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	nsxtManagerName := d.Get("name").(string)
 
-	nsxtManager, err := vcdClient.QueryNsxtManagerByName(nsxtManagerName)
+	nsxtManagers, err := vcdClient.QueryNsxtManagerByName(nsxtManagerName)
 	if err != nil {
 		return fmt.Errorf("could not find NSX-T manager by name '%s': %s", nsxtManagerName, err)
 	}
 
-	if len(nsxtManager) == 0 {
+	if len(nsxtManagers) == 0 {
 		return fmt.Errorf("%s found %d NSX-T managers with name '%s'",
-			govcd.ErrorEntityNotFound, len(nsxtManager), nsxtManagerName)
+			govcd.ErrorEntityNotFound, len(nsxtManagers), nsxtManagerName)
 	}
 
-	if len(nsxtManager) > 1 {
-		return fmt.Errorf("found %d NSX-T managers with name '%s'", len(nsxtManager), nsxtManagerName)
+	if len(nsxtManagers) > 1 {
+		return fmt.Errorf("found %d NSX-T managers with name '%s'", len(nsxtManagers), nsxtManagerName)
 	}
 
-	id := extractUuid(nsxtManager[0].HREF)
-	d.SetId("urn:vcloud:nsxtmanager:" + id)
+	// We try to keep IDs clean
+	id := extractUuid(nsxtManagers[0].HREF)
+	urn, err := govcd.BuildUrnWithUuid("urn:vcloud:nsxtmanager:", id)
+	if err != nil {
+		return fmt.Errorf("could not construct URN from id '%s': %s", id, err)
+	}
+	d.SetId(urn)
 
 	return nil
 }

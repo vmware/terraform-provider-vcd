@@ -21,11 +21,22 @@ var networkV2IpScope = &schema.Resource{
 			ValidateFunc: validation.IsIPAddress,
 		},
 		"prefix_length": &schema.Schema{
-			Type:     schema.TypeInt,
-			Required: true,
-			// ForceNew:    true,
-			Description: "Network mask",
-			// ValidateFunc: validation.IsIPAddress,
+			Type:         schema.TypeInt,
+			Required:     true,
+			Description:  "Network mask",
+			ValidateFunc: validation.IntAtLeast(1),
+		},
+		"enabled": &schema.Schema{
+			Type:        schema.TypeBool,
+			Optional:    true,
+			Default:     true,
+			Description: "If subnet is enabled",
+		},
+		"static_ip_pool": &schema.Schema{
+			Type:        schema.TypeSet,
+			Optional:    true,
+			Description: "IP ranges used for static pool allocation in the network",
+			Elem:        networkV2IpRange,
 		},
 		"dns1": &schema.Schema{
 			Type:         schema.TypeString,
@@ -49,18 +60,6 @@ var networkV2IpScope = &schema.Resource{
 			Description: "DNS suffix",
 			// Only NSX-V allows configuring DNS
 			ConflictsWith: []string{"nsxt_network"},
-		},
-		"enabled": &schema.Schema{
-			Type:        schema.TypeBool,
-			Optional:    true,
-			Default:     true,
-			Description: "If subnet is enabled",
-		},
-		"static_ip_pool": &schema.Schema{
-			Type:        schema.TypeSet,
-			Optional:    true,
-			Description: "IP ranges used for static pool allocation in the network",
-			Elem:        networkV2IpRange,
 		},
 	},
 }
@@ -127,36 +126,37 @@ func resourceVcdExternalNetworkV2() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "Network name",
 			},
 			"description": &schema.Schema{
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Network description",
 			},
 			"ip_scope": &schema.Schema{
 				Type:        schema.TypeSet,
 				Required:    true,
-				Description: "A list of IP scopes for the network",
+				Description: "A set of IP scopes for the network",
 				Elem:        networkV2IpScope,
 			},
 			"vsphere_network": &schema.Schema{
 				Type:         schema.TypeSet,
 				Optional:     true,
-				AtLeastOneOf: []string{"vsphere_network", "nsxt_network"},
-				ForceNew:     true,
-				Description:  "A list of port groups that back this network. Each referenced DV_PORTGROUP or NETWORK must exist on a vCenter server registered with the system.",
-				Elem:         networkV2VsphereNetwork,
+				ExactlyOneOf: []string{"vsphere_network", "nsxt_network"},
+
+				ForceNew:    true,
+				Description: "A set of port groups that back this network. Each referenced DV_PORTGROUP or NETWORK must exist on a vCenter server registered with the system.",
+				Elem:        networkV2VsphereNetwork,
 			},
 			"nsxt_network": &schema.Schema{
 				Type:         schema.TypeSet,
 				Optional:     true,
-				AtLeastOneOf: []string{"vsphere_network", "nsxt_network"},
+				ExactlyOneOf: []string{"vsphere_network", "nsxt_network"},
 				MaxItems:     1,
 				ForceNew:     true,
-				Description:  "",
+				Description:  "Reference to NSX-T Tier-0 router and manager",
 				Elem:         networkV2NsxtNetwork,
 			},
 		},
@@ -213,11 +213,11 @@ func resourceVcdExternalNetworkV2Read(d *schema.ResourceData, meta interface{}) 
 	log.Printf("[TRACE] external network V2 read initiated")
 
 	extNet, err := govcd.GetExternalNetworkV2ById(vcdClient.VCDClient, d.Id())
-	if govcd.ContainsNotFound(err) {
-		d.SetId("")
-		return nil
-	}
 	if err != nil {
+		if govcd.ContainsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return fmt.Errorf("could not find external network by ID '%s': %s", d.Id(), err)
 	}
 
@@ -261,7 +261,7 @@ func resourceVcdExternalNetworkV2Import(d *schema.ResourceData, meta interface{}
 }
 
 func getExternalNetworkV2Type(vcdClient *VCDClient, d *schema.ResourceData) (*types.ExternalNetworkV2, error) {
-	networkBacking, err := getNetworkBackingType(vcdClient, d)
+	networkBacking, err := getExternalNetworkV2BackingType(vcdClient, d)
 	if err != nil {
 		return nil, fmt.Errorf("error getting network backing type: %s", err)
 	}
@@ -277,9 +277,9 @@ func getExternalNetworkV2Type(vcdClient *VCDClient, d *schema.ResourceData) (*ty
 	return newExtNet, nil
 }
 
-func getNetworkBackingType(vcdClient *VCDClient, d *schema.ResourceData) (types.ExternalNetworkV2Backing, error) {
+func getExternalNetworkV2BackingType(vcdClient *VCDClient, d *schema.ResourceData) (types.ExternalNetworkV2Backing, error) {
 	var backing types.ExternalNetworkV2Backing
-	// Network backings - NSX-T
+	// Network backings
 	nsxtNetwork := d.Get("nsxt_network").(*schema.Set)
 	nsxvNetwork := d.Get("vsphere_network").(*schema.Set)
 
@@ -378,6 +378,7 @@ func setExternalNetworkV2Data(d *schema.ResourceData, net *types.ExternalNetwork
 	_ = d.Set("name", net.Name)
 	_ = d.Set("description", net.Description)
 
+	// Loop over all subnets (known as ip_scope in UI)
 	subnetSlice := make([]interface{}, len(net.Subnets.Values))
 	for i, subnet := range net.Subnets.Values {
 		subnetMap := make(map[string]interface{})
@@ -388,7 +389,7 @@ func setExternalNetworkV2Data(d *schema.ResourceData, net *types.ExternalNetwork
 		subnetMap["dns_suffix"] = subnet.DNSSuffix
 		subnetMap["enabled"] = subnet.Enabled
 
-		// Gather all IP ranges
+		// Gather all IP ranges  (known as static_ip_pool in UI)
 		if len(subnet.IPRanges.Values) > 0 {
 			ipRangeSlice := make([]interface{}, len(subnet.IPRanges.Values))
 			for ii, ipRange := range subnet.IPRanges.Values {

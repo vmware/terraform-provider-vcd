@@ -15,6 +15,10 @@ API and is capable of handling NSX-T backed external networks as well as port gr
 
 Supported in provider *3.0+*
 
+~> **Note:** This data source uses new VMware Cloud Director
+[OpenAPI](https://code.vmware.com/docs/11982/getting-started-with-vmware-cloud-director-openapi) and
+requires at least VCD *10.0+*.
+
 ## Example Usage
 
 ```hcl

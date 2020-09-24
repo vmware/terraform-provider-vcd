@@ -30,14 +30,9 @@ func TestAccVcdExternalNetworkV2Nsxt(t *testing.T) {
 	startAddress := "192.168.30.51"
 	endAddress := "192.168.30.62"
 	description := "Test External Network"
-	gateway := "192.168.30.49"
-	netmask := "24"
-	dns1 := "192.168.0.164"
-	dns2 := "192.168.0.196"
 	var params = StringMap{
-		"NsxtManager":     testConfig.Nsxt.Manager,
-		"NsxtTier0Router": testConfig.Nsxt.Tier0router,
-
+		"NsxtManager":         testConfig.Nsxt.Manager,
+		"NsxtTier0Router":     testConfig.Nsxt.Tier0router,
 		"ExternalNetworkName": t.Name(),
 		"Type":                testConfig.Networking.ExternalNetworkPortGroupType,
 		"PortGroup":           testConfig.Networking.ExternalNetworkPortGroup,
@@ -45,10 +40,8 @@ func TestAccVcdExternalNetworkV2Nsxt(t *testing.T) {
 		"StartAddress":        startAddress,
 		"EndAddress":          endAddress,
 		"Description":         description,
-		"Gateway":             gateway,
-		"Netmask":             netmask,
-		"Dns1":                dns1,
-		"Dns2":                dns2,
+		"Gateway":             "192.168.30.49",
+		"Netmask":             "24",
 		"Tags":                "network extnetwork",
 	}
 
@@ -309,10 +302,6 @@ func TestAccVcdExternalNetworkV2Nsxv(t *testing.T) {
 					testCheckOutputNonEmpty("portgroup-id"), // Match any non empty string
 
 					// Data source checks
-					// stateDumper(),
-					// Ensure datasource has the same values
-					// resourceFieldsEqual(resourceName, "data."+resourceName, []string{}),
-
 					resource.TestCheckResourceAttrPair(resourceName, "name", "data."+resourceName, "name"),
 					resource.TestCheckResourceAttrPair(resourceName, "description", "data."+resourceName, "description"),
 					resource.TestCheckResourceAttrPair(resourceName, "ip_scope.#", "data."+resourceName, "ip_scope.#"),

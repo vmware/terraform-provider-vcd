@@ -9,7 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 )
 
-// TestAccVcdDatasourceNsxtTier0Router
+// TestAccVcdDatasourceNsxtTier0Router checks if datasource can find existing Tier-0 router provided it is specified in
+// configuration
 func TestAccVcdDatasourceNsxtTier0Router(t *testing.T) {
 
 	if !usingSysAdmin() {

@@ -16,9 +16,9 @@ backed ones.
 
 ~> **Note:** This resource uses new VMware Cloud Director
 [OpenAPI](https://code.vmware.com/docs/11982/getting-started-with-vmware-cloud-director-openapi) and
-requires at least VCD *10.0+*. It includes NSX-T support.
+requires at least VCD *10.0+*.
 
-Supported in provider *v3.0+* and VCD *10.0+*.
+Supported in provider *v3.0+*.
 
 ## Example Usage (NSX-T backed external network)
 

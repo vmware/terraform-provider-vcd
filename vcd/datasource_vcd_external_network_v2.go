@@ -25,7 +25,7 @@ func datasourceVcdExternalNetworkV2() *schema.Resource {
 			"ip_scope": &schema.Schema{
 				Type:        schema.TypeSet,
 				Computed:    true,
-				Description: "A list of IP scopes for the network",
+				Description: "A set of IP scopes for the network",
 				Elem:        networkV2IpScope,
 			},
 			"vsphere_network": &schema.Schema{
@@ -37,12 +37,12 @@ func datasourceVcdExternalNetworkV2() *schema.Resource {
 						"vcenter_id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "The vCenter server name",
+							Description: "The vCenter server ID",
 						},
 						"portgroup_id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "The name of the port group",
+							Description: "The portgroup ID",
 						},
 					},
 				},
@@ -74,13 +74,13 @@ func datasourceVcdExternalNetworkV2() *schema.Resource {
 
 func datasourceVcdExternalNetworkV2Read(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
-	log.Printf("[TRACE] external network V2 read initiated")
+	log.Printf("[TRACE] external network V2 data source read initiated")
 
 	name := d.Get("name").(string)
 
 	extNet, err := govcd.GetExternalNetworkV2ByName(vcdClient.VCDClient, name)
 	if err != nil {
-		return fmt.Errorf("could not find external network by name '%s': %s", name, err)
+		return fmt.Errorf("could not find external network V2 by name '%s': %s", name, err)
 	}
 
 	d.SetId(extNet.ExternalNetwork.ID)

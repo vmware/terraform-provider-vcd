@@ -25,7 +25,7 @@ data "vcd_nsxt_manager" "main" {
 
 The following arguments are supported:
 
-* `name` - (Required) Organization VDC name
+* `name` - (Required) NSX-T manager name
 
 ## Attribute reference
 

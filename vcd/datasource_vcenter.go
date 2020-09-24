@@ -40,11 +40,13 @@ func datasourceVcenterRead(d *schema.ResourceData, meta interface{}) error {
 			len(vcs), vCenterName)
 	}
 
-	vcUuid, err := govcd.GetUuidFromHref(vcs[0].HREF, true)
+	uuid := extractUuid(vcs[0].HREF)
+	urn, err := govcd.BuildUrnWithUuid("urn:vcloud:vimserver:", uuid)
 	if err != nil {
-		return fmt.Errorf("error getting UUID from HREF '%s'", vcs[0].HREF)
+		return fmt.Errorf("could not build URN for ID '%s': %s", uuid, err)
 	}
-	d.SetId("urn:vcloud:vimserver:" + vcUuid)
+
+	d.SetId(urn)
 
 	return nil
 }

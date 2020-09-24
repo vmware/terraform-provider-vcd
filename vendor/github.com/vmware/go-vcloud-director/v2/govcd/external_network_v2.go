@@ -89,7 +89,11 @@ func GetExternalNetworkV2ByName(vcdClient *VCDClient, name string) (*ExternalNet
 		return nil, fmt.Errorf("could not find external network by name: %s", err)
 	}
 
-	if len(res) != 1 {
+	if len(res) == 0 {
+		return nil, fmt.Errorf("%s: expected exactly one external network with name '%s'. Got %d", ErrorEntityNotFound, name, len(res))
+	}
+
+	if len(res) > 1 {
 		return nil, fmt.Errorf("expected exactly one external network with name '%s'. Got %d", name, len(res))
 	}
 

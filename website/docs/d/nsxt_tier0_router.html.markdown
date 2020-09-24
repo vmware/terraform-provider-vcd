@@ -30,7 +30,8 @@ data "vcd_nsxt_tier0_router" "router" {
 
 The following arguments are supported:
 
-* `name` - (Required) Organization VDC name
+* `name` - (Required) NSX-T Tier-0 router name. **Note**. Tier-0 router name must be unique inside NSX-T manager because
+API does not allow to filter by other fields.
 * `nsxt_manager_id` - (Required) NSX-T manager should be referenced.
 
 ## Attribute reference

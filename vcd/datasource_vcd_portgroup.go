@@ -24,11 +24,6 @@ func datasourceVcdPortgroup() *schema.Resource {
 				Description:  "Portgroup type. One of 'NETWORK', 'DV_PORTGROUP'",
 				ValidateFunc: validation.StringInSlice([]string{types.ExternalNetworkBackingTypeNetwork, types.ExternalNetworkBackingDvPortgroup}, false),
 			},
-			"vcenter_id": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: "vCenter ID.",
-			},
 		},
 	}
 }
@@ -43,8 +38,10 @@ func datasourcePortgroupRead(d *schema.ResourceData, meta interface{}) error {
 	var pgs []*types.PortGroupRecordType
 
 	switch portGroupType {
+	// Standard vSwitch portgroup
 	case types.ExternalNetworkBackingTypeNetwork:
 		pgs, err = govcd.QueryNetworkPortGroup(vcdClient.VCDClient, portGroupName)
+	// Distributed switch portgroup
 	case types.ExternalNetworkBackingDvPortgroup:
 		pgs, err = govcd.QueryDistributedPortGroup(vcdClient.VCDClient, portGroupName)
 	default:

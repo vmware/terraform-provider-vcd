@@ -49,7 +49,7 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 		mandatoryFields := getMandatoryDataSourceSchemaFields(dataSourceName)
 		mandatoryRuntimeFields := getMandatoryDataSourceRuntimeFields(dataSourceName)
 		mandatoryFields = append(mandatoryFields, mandatoryRuntimeFields...)
-		addedParams := addMandatoryParams(dataSourceName, mandatoryFields, t)
+		addedParams := addMandatoryParams(dataSourceName, mandatoryFields, t, vcdClient)
 
 		var params = StringMap{
 			"DataSourceName":  dataSourceName,
@@ -103,7 +103,7 @@ func getMandatoryDataSourceRuntimeFields(dataSourceName string) []string {
 	return []string{}
 }
 
-func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *testing.T) string {
+func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *testing.T, vcdClient *VCDClient) string {
 	var templateFields string
 	for fieldIndex := range mandatoryFields {
 
@@ -135,9 +135,8 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			}
 			templateFields = templateFields + `vapp_name = "` + vapp.VApp.Name + `"` + "\n"
 		case "nsxt_manager_id":
-			client := createTemporaryVCDConnection()
 			// This test needs a valid nsxt_manager_id
-			nsxtManager, err := client.QueryNsxtManagerByName(testConfig.Nsxt.Manager)
+			nsxtManager, err := vcdClient.QueryNsxtManagerByName(testConfig.Nsxt.Manager)
 			if err != nil {
 				t.Skipf("No suitable NSX-T manager found for this test: %s", err)
 				return ""

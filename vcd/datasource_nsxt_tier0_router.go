@@ -27,7 +27,7 @@ func datasourceVcdNsxtTier0Router() *schema.Resource {
 			"is_assigned": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Defines if Tier-0 router is already assigned to external network",
+				Description: "Defines if Tier-0 router is already assigned to external network.",
 			},
 		},
 	}
@@ -36,8 +36,9 @@ func datasourceVcdNsxtTier0Router() *schema.Resource {
 // datasourceNsxtTier0RouterRead has special behavior. By default `GetImportableNsxtTier0RouterByName` which uses API
 // endpoint `1.0.0/nsxTResources/importableTier0Routers` does not return Tier-0 routers when they are used in external
 // networks. This causes a problem in regular Terraform flow - when user uses this datasource to reference Tier-0 router
-// for external network creation - next "apply" would fail with "Tier 0 router not found error". This datasource queries
-// all defined external networks and looks for Tier-0 router backing by name.
+// for external network creation - next "apply" would fail with "Tier 0 router not found error". If original endpoint
+// does not find Tier-0 router - then this datasource queries all defined external networks and looks for Tier-0 router
+// backing by name.
 func datasourceNsxtTier0RouterRead(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 	nsxtManagerId := d.Get("nsxt_manager_id").(string)
@@ -60,6 +61,7 @@ func datasourceNsxtTier0RouterRead(d *schema.ResourceData, meta interface{}) err
 	// therefore we are searching for used Tier-0 router name in external networks. This should not cause any risks as
 	// required permissions should be of the same level.
 	if govcd.ContainsNotFound(err) {
+		// Filtering by network backing is unsupported therefore queryParameters are nil
 		extNets, err := govcd.GetAllExternalNetworksV2(vcdClient.VCDClient, nil)
 		if err != nil {
 			return fmt.Errorf("could not find external networks: %s", err)
