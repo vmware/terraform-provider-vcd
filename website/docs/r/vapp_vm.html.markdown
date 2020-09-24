@@ -301,7 +301,7 @@ example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_n
 * `cpu_hot_add_enabled` - (Optional; *v2.10+*) True if the virtual machine supports addition of virtual CPUs while powered on. Default is `false`.
 * `memory_hot_add_enabled` - (Optional; *v2.10+*) True if the virtual machine supports addition of memory while powered on. Default is `false`.
 * `prevent_update_power_off` - (Optional; *v2.10+*) True if the update of resource should fail when virtual machine power off needed. Default is `false`.
-* `sizing_policy_id` (Optional; *v3.0+*, *vCD 10.0+*) VM sizing policy ID. Has to be assigned to Org VDC.
+* `sizing_policy_id` (Optional; *v3.0+*, *vCD 10.0+*) VM sizing policy ID. Has to be assigned to Org VDC using `vcd_org_vdc.vm_sizing_policy_ids` and `vcd_org_vdc.default_vm_sizing_policy_id`.
 
 <a id="disk"></a>
 ## Disk

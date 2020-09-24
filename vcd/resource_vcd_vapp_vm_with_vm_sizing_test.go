@@ -93,7 +93,7 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "description", "test empty VM"),
 
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName1, "sizing_policy_id",
-						"vcd_vm_sizing_policy.minSize2", "id"),
+						"vcd_vm_sizing_policy.size_cpu", "id"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "cpu_cores", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "memory", "1024"),
@@ -108,16 +108,16 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "description", "test empty VM2"),
 
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName2, "sizing_policy_id",
-						"vcd_vm_sizing_policy.minSize3", "id"),
+						"vcd_vm_sizing_policy.size_full", "id"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "cpu_cores", "3"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "memory", "1800"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "memory", "2048"),
 
 					testAccCheckVcdVAppVmExistsByVdc(testAccVcdVdc, netVappName, netVmName3, "vcd_vapp_vm."+netVmName3, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "name", netVmName3),
 
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName3, "sizing_policy_id",
-						"vcd_vm_sizing_policy.minSize2", "id"),
+						"vcd_vm_sizing_policy.size_cpu", "id"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "cpu_cores", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "memory", "2048"),
@@ -126,10 +126,10 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName4, "name", netVmName4),
 
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName4, "sizing_policy_id",
-						"vcd_vm_sizing_policy.minSize3", "id"),
+						"vcd_vm_sizing_policy.size_full", "id"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName4, "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName4, "cpu_cores", "3"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName4, "memory", "1800"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName4, "memory", "2048"),
 				),
 			},
 			// Step 1 - update
@@ -146,7 +146,7 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "description", "test empty VM updated"),
 
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName1, "sizing_policy_id",
-						"vcd_vm_sizing_policy.minSize2", "id"),
+						"vcd_vm_sizing_policy.size_full", "id"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "cpu_cores", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "memory", "2048"),
@@ -154,23 +154,23 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 					testAccCheckVcdVAppVmExistsByVdc(testAccVcdVdc, netVappName, netVmName2, "vcd_vapp_vm."+netVmName2, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "name", netVmName2),
 
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "os_type", "rhel4Guest"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "os_type", "sles11_64Guest"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "hardware_version", "vmx-13"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "expose_hardware_virtualization", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "computer_name", "compNameUp"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "description", "test empty VM updated2"),
 
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName2, "sizing_policy_id",
-						"vcd_vm_sizing_policy.minSize3", "id"),
+						"vcd_vm_sizing_policy.size_cpu", "id"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "cpu_cores", "3"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "memory", "1800"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "memory", "2048"),
 
 					testAccCheckVcdVAppVmExistsByVdc(testAccVcdVdc, netVappName, netVmName3, "vcd_vapp_vm."+netVmName3, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "name", netVmName3),
 
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName3, "sizing_policy_id",
-						"vcd_vm_sizing_policy.minSize2", "id"),
+						"vcd_vm_sizing_policy.size_cpu", "id"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "cpus", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "cpu_cores", "3"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName3, "memory", "3072"),
@@ -254,7 +254,7 @@ resource "vcd_vm_sizing_policy" "minSize" {
   description = "smallest size"
 }
 
-resource "vcd_vm_sizing_policy" "minSize2" {
+resource "vcd_vm_sizing_policy" "size_cpu" {
   name        = "min-size2"
   description = "smallest size2"
 
@@ -269,7 +269,7 @@ resource "vcd_vm_sizing_policy" "minSize2" {
 
 }
 
-resource "vcd_vm_sizing_policy" "minSize3" {
+resource "vcd_vm_sizing_policy" "size_full" {
   name        = "min-size3"
   description = "smallest size2"
 
@@ -284,7 +284,7 @@ resource "vcd_vm_sizing_policy" "minSize3" {
 
   memory {
     shares                = "1580"
-    size_in_mb            = "1800"
+    size_in_mb            = "2048"
     limit_in_mb           = "4800"
     reservation_guarantee = "0.5"
   }
@@ -329,8 +329,8 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   {{.FlexElasticKey}}                 {{.equalsChar}} {{.FlexElasticValue}}
   {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValue}}
 
-  default_vm_sizing_policy_id = vcd_vm_sizing_policy.minSize3.id
-  vm_sizing_policy_ids        = [vcd_vm_sizing_policy.minSize.id, vcd_vm_sizing_policy.minSize2.id,vcd_vm_sizing_policy.minSize3.id]
+  default_vm_sizing_policy_id = vcd_vm_sizing_policy.size_full.id
+  vm_sizing_policy_ids        = [vcd_vm_sizing_policy.minSize.id, vcd_vm_sizing_policy.size_cpu.id,vcd_vm_sizing_policy.size_full.id]
 }
 
 resource "vcd_vapp" "{{.VAppName}}" {
@@ -357,7 +357,9 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   expose_hardware_virtualization = true
   computer_name                  = "compName"
 
-  sizing_policy_id = vcd_vm_sizing_policy.minSize2.id
+  memory_hot_add_enabled = true
+
+  sizing_policy_id = vcd_vm_sizing_policy.size_cpu.id
   memory           = 1024
  }
 
@@ -377,7 +379,9 @@ resource "vcd_vapp_vm" "{{.VMName}}2" {
   expose_hardware_virtualization = true
   computer_name                  = "compName"
 
-  sizing_policy_id = vcd_vm_sizing_policy.minSize3.id
+  memory_hot_add_enabled = true
+
+  sizing_policy_id = vcd_vm_sizing_policy.size_full.id
  }
 
 resource "vcd_vapp_vm" "{{.VMName}}3" {
@@ -390,7 +394,7 @@ resource "vcd_vapp_vm" "{{.VMName}}3" {
   template_name = "{{.CatalogItem}}"
   power_on      = "false"
 
-  sizing_policy_id = vcd_vm_sizing_policy.minSize2.id
+  sizing_policy_id = vcd_vm_sizing_policy.size_cpu.id
   memory           = 2048
 }
 
@@ -404,7 +408,7 @@ resource "vcd_vapp_vm" "{{.VMName}}4" {
   template_name = "{{.CatalogItem}}"
   power_on      = "false"
 
-  sizing_policy_id = vcd_vm_sizing_policy.minSize3.id
+  sizing_policy_id = vcd_vm_sizing_policy.size_full.id
  }
 `
 
@@ -425,9 +429,9 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   expose_hardware_virtualization = false
   computer_name                  = "compNameUp"
 
-  sizing_policy_id = vcd_vm_sizing_policy.minSize2.id
-  # allows to change only not defined in sizing policy
-  memory           = 2048
+  memory_hot_add_enabled = true
+
+  sizing_policy_id = vcd_vm_sizing_policy.size_full.id
 }
 
 resource "vcd_vapp_vm" "{{.VMName}}2" {
@@ -438,13 +442,17 @@ resource "vcd_vapp_vm" "{{.VMName}}2" {
   name          = "{{.VMName}}2"
   description   = "test empty VM updated2"
 
-  os_type                        = "rhel4Guest"
+  os_type                        = "sles11_64Guest"
   hardware_version               = "vmx-13"
   catalog_name                   = ""
   expose_hardware_virtualization = false
   computer_name                  = "compNameUp"
 
-  sizing_policy_id = vcd_vm_sizing_policy.minSize3.id
+  memory_hot_add_enabled = true
+
+  sizing_policy_id = vcd_vm_sizing_policy.size_cpu.id
+  # allows to change only not defined in sizing policy
+  memory           = 2048
 }
 
 resource "vcd_vapp_vm" "{{.VMName}}3" {
@@ -457,7 +465,7 @@ resource "vcd_vapp_vm" "{{.VMName}}3" {
   template_name = "{{.CatalogItem}}"
   power_on      = "false"
 
-  sizing_policy_id = vcd_vm_sizing_policy.minSize2.id
+  sizing_policy_id = vcd_vm_sizing_policy.size_cpu.id
   # allows to change only not defined in sizing policy
   memory           = 3072
 }

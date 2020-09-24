@@ -553,12 +553,6 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	catalogName := d.Get("catalog_name").(string)
 	templateName := d.Get("template_name").(string)
 
-	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
-		if _, ok := d.GetOk("sizing_policy_id"); ok {
-			return fmt.Errorf("'sizing_policy_id' only available for VCD 10.0+")
-		}
-	}
-
 	//create not empty VM - use provided template
 	if catalogName != "" && templateName != "" {
 
@@ -621,6 +615,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		} else {
 			storageProfilePtr = nil
 		}
+
 		var sizingPolicy *types.VdcComputePolicy
 		if value, ok := d.GetOk("sizing_policy_id"); ok {
 			vdcComputePolicy, err := org.GetVdcComputePolicyById(value.(string))
@@ -914,6 +909,24 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
+	if d.HasChange("sizing_policy_id") {
+		var sizingPolicy *types.VdcComputePolicy
+		org, _, err := vcdClient.GetOrgAndVdcFromResource(d)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingOrg, err)
+		}
+		value := d.Get("sizing_policy_id")
+		vdcComputePolicy, err := org.GetVdcComputePolicyById(value.(string))
+		if err != nil {
+			return fmt.Errorf("error getting sizing policy %s: %s", value.(string), err)
+		}
+		sizingPolicy = vdcComputePolicy.VdcComputePolicy
+		_, err = vm.UpdateComputePolicy(sizingPolicy)
+		if err != nil {
+			return fmt.Errorf("error updating sizing policy %s: %s", value.(string), err)
+		}
+	}
+
 	return nil
 }
 
@@ -1008,6 +1021,12 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 	vcdClient, org, vdc, vapp, identifier, vm, err := getVmFromResource(d, meta)
 	if err != nil {
 		return err
+	}
+
+	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
+		if _, ok := d.GetOk("sizing_policy_id"); ok {
+			return fmt.Errorf("'sizing_policy_id' only available for VCD 10.0+")
+		}
 	}
 
 	vmStatusBeforeUpdate, err := vm.GetStatus()
