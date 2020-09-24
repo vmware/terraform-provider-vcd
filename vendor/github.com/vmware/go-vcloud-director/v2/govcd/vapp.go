@@ -228,11 +228,11 @@ func addNewVMW(vapp *VApp, name string, vappTemplate VAppTemplate,
 	}
 	// Add compute policy
 	if computePolicy != nil && computePolicy.ID != "" && vapp.client.APIVCDMaxVersionIs("> 32.0") {
-		vcdComputePolicyHref, err := vapp.client.OpenApiBuildEndpoint(types.OpenApiPathVersion1_0_0, types.OpenApiEndpointVdcComputePolicies, computePolicy.ID)
+		vdcComputePolicyHref, err := vapp.client.OpenApiBuildEndpoint(types.OpenApiPathVersion1_0_0, types.OpenApiEndpointVdcComputePolicies, computePolicy.ID)
 		if err != nil {
 			return Task{}, fmt.Errorf("error constructing HREF for compute policy")
 		}
-		vAppComposition.SourcedItem.ComputePolicy = &types.ComputePolicy{VmSizingPolicy: &types.Reference{HREF: vcdComputePolicyHref.String()}}
+		vAppComposition.SourcedItem.ComputePolicy = &types.ComputePolicy{VmSizingPolicy: &types.Reference{HREF: vdcComputePolicyHref.String()}}
 	}
 
 	// Inject network config
@@ -1282,7 +1282,7 @@ func (vapp *VApp) GetVMByName(vmName string, refresh bool) (*VM, error) {
 	if refresh {
 		err := vapp.Refresh()
 		if err != nil {
-			return nil, fmt.Errorf("error refreshing vapp: %s", err)
+			return nil, fmt.Errorf("error refreshing vApp: %s", err)
 		}
 	}
 
@@ -1310,7 +1310,7 @@ func (vapp *VApp) GetVMById(id string, refresh bool) (*VM, error) {
 	if refresh {
 		err := vapp.Refresh()
 		if err != nil {
-			return nil, fmt.Errorf("error refreshing vapp: %s", err)
+			return nil, fmt.Errorf("error refreshing vApp: %s", err)
 		}
 	}
 

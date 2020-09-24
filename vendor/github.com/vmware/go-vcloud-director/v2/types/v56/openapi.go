@@ -51,6 +51,7 @@ type Role struct {
 	ReadOnly    bool   `json:"readOnly"`
 }
 
+// In UI represented as VM sizing policy
 type VdcComputePolicy struct {
 	ID                         string   `json:"id,omitempty"`
 	Description                string   `json:"description,omitempty"`

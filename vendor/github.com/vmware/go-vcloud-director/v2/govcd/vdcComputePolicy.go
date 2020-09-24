@@ -8,6 +8,7 @@ import (
 	"net/url"
 )
 
+// In UI called VM sizing policy. In API VDC compute policy
 type VdcComputePolicy struct {
 	VdcComputePolicy *types.VdcComputePolicy
 	client           *Client
@@ -87,16 +88,16 @@ func getAllVdcComputePolicies(client *Client, queryParameters url.Values) ([]*Vd
 		return nil, err
 	}
 
-	var wrappedVcdComputePolicies []*VdcComputePolicy
+	var wrappedVdcComputePolicies []*VdcComputePolicy
 	for _, response := range responses {
-		wrappedVcdComputePolicy := &VdcComputePolicy{
+		wrappedVdcComputePolicy := &VdcComputePolicy{
 			client:           client,
 			VdcComputePolicy: response,
 		}
-		wrappedVcdComputePolicies = append(wrappedVcdComputePolicies, wrappedVcdComputePolicy)
+		wrappedVdcComputePolicies = append(wrappedVdcComputePolicies, wrappedVdcComputePolicy)
 	}
 
-	return wrappedVcdComputePolicies, nil
+	return wrappedVdcComputePolicies, nil
 }
 
 // CreateVdcComputePolicy creates a new VDC Compute Policy using OpenAPI endpoint
@@ -125,7 +126,7 @@ func (org *AdminOrg) CreateVdcComputePolicy(newVdcComputePolicy *types.VdcComput
 	return returnVdcComputePolicy, nil
 }
 
-// Update updates existing VDC compute policy
+// Update existing VDC compute policy
 func (vdcComputePolicy *VdcComputePolicy) Update() (*VdcComputePolicy, error) {
 	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointVdcComputePolicies
 	minimumApiVersion, err := vdcComputePolicy.client.checkOpenApiEndpointCompatibility(endpoint)
@@ -134,7 +135,7 @@ func (vdcComputePolicy *VdcComputePolicy) Update() (*VdcComputePolicy, error) {
 	}
 
 	if vdcComputePolicy.VdcComputePolicy.ID == "" {
-		return nil, fmt.Errorf("cannot update VDC compute policy without id")
+		return nil, fmt.Errorf("cannot update VDC compute policy without ID")
 	}
 
 	urlRef, err := vdcComputePolicy.client.OpenApiBuildEndpoint(endpoint, vdcComputePolicy.VdcComputePolicy.ID)
@@ -202,16 +203,16 @@ func (vdc *AdminVdc) GetAllAssignedVdcComputePolicies(queryParameters url.Values
 		return nil, err
 	}
 
-	var wrappedVcdComputePolicies []*VdcComputePolicy
+	var wrappedVdcComputePolicies []*VdcComputePolicy
 	for _, response := range responses {
-		wrappedVcdComputePolicy := &VdcComputePolicy{
+		wrappedVdcComputePolicy := &VdcComputePolicy{
 			client:           vdc.client,
 			VdcComputePolicy: response,
 		}
-		wrappedVcdComputePolicies = append(wrappedVcdComputePolicies, wrappedVcdComputePolicy)
+		wrappedVdcComputePolicies = append(wrappedVdcComputePolicies, wrappedVdcComputePolicy)
 	}
 
-	return wrappedVcdComputePolicies, nil
+	return wrappedVdcComputePolicies, nil
 }
 
 // SetAssignedComputePolicies assign(set) compute policies.
@@ -219,12 +220,12 @@ func (vdc *AdminVdc) SetAssignedComputePolicies(computePolicyReferences types.Vd
 	util.Logger.Printf("[TRACE] Set Compute Policies started")
 
 	if !vdc.client.IsSysAdmin {
-		return nil, fmt.Errorf("functionality requires system administrator privileges")
+		return nil, fmt.Errorf("functionality requires System Administrator privileges")
 	}
 
 	adminVdcPolicyHREF, err := url.ParseRequestURI(vdc.AdminVdc.HREF)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing vdc url: %s", err)
+		return nil, fmt.Errorf("error parsing VDC URL: %s", err)
 	}
 
 	vdcId, err := GetUuidFromHref(vdc.AdminVdc.HREF, true)

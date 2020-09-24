@@ -312,7 +312,7 @@ const (
 	// BodyTypeXML
 	BodyTypeXML BodyType = iota
 
-	// BodyTypeJSON
+	// BodyTypeJSONTestAccVcdVmInternalDisk
 	BodyTypeJSON
 )
 
