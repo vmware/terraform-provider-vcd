@@ -799,6 +799,20 @@ func QueryOrgVdcNetworkByName(vcdCli *VCDClient, name string) ([]*types.QueryRes
 	return results.Results.OrgVdcNetworkRecord, nil
 }
 
+// QueryNsxtManagerByName searches for NSX-T managers available in VCD
+func (vcdCli *VCDClient) QueryNsxtManagerByName(name string) ([]*types.QueryResultNsxtManagerRecordType, error) {
+	results, err := vcdCli.QueryWithNotEncodedParams(nil, map[string]string{
+		"type":          "nsxTManager",
+		"filter":        fmt.Sprintf("name==%s", url.QueryEscape(name)),
+		"filterEncoded": "true",
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return results.Results.NsxtManagerRecord, nil
+}
+
 // GetOrgByName finds an Organization by name
 // On success, returns a pointer to the Org structure and a nil error
 // On failure, returns a nil pointer and an error

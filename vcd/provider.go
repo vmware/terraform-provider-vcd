@@ -26,33 +26,38 @@ func Resources(nameRegexp string, includeDeprecated bool) (map[string]*schema.Re
 }
 
 var globalDataSourceMap = map[string]*schema.Resource{
-	"vcd_org":                datasourceVcdOrg(),              // 2.5
-	"vcd_org_user":           datasourceVcdOrgUser(),          // 3.0
-	"vcd_org_vdc":            datasourceVcdOrgVdc(),           // 2.5
-	"vcd_catalog":            datasourceVcdCatalog(),          // 2.5
-	"vcd_catalog_media":      datasourceVcdCatalogMedia(),     // 2.5
-	"vcd_catalog_item":       datasourceVcdCatalogItem(),      // 2.5
-	"vcd_edgegateway":        datasourceVcdEdgeGateway(),      // 2.5
-	"vcd_external_network":   datasourceVcdExternalNetwork(),  // 2.5
-	"vcd_independent_disk":   datasourceVcIndependentDisk(),   // 2.5
-	"vcd_network_routed":     datasourceVcdNetworkRouted(),    // 2.5
-	"vcd_network_direct":     datasourceVcdNetworkDirect(),    // 2.5
-	"vcd_network_isolated":   datasourceVcdNetworkIsolated(),  // 2.5
-	"vcd_vapp":               datasourceVcdVApp(),             // 2.5
-	"vcd_vapp_vm":            datasourceVcdVAppVm(),           // 2.6
-	"vcd_lb_service_monitor": datasourceVcdLbServiceMonitor(), // 2.4
-	"vcd_lb_server_pool":     datasourceVcdLbServerPool(),     // 2.4
-	"vcd_lb_app_profile":     datasourceVcdLBAppProfile(),     // 2.4
-	"vcd_lb_app_rule":        datasourceVcdLBAppRule(),        // 2.4
-	"vcd_lb_virtual_server":  datasourceVcdLbVirtualServer(),  // 2.4
-	"vcd_nsxv_dnat":          datasourceVcdNsxvDnat(),         // 2.5
-	"vcd_nsxv_snat":          datasourceVcdNsxvSnat(),         // 2.5
-	"vcd_nsxv_firewall_rule": datasourceVcdNsxvFirewallRule(), // 2.5
-	"vcd_nsxv_dhcp_relay":    datasourceVcdNsxvDhcpRelay(),    // 2.6
-	"vcd_nsxv_ip_set":        datasourceVcdIpSet(),            // 2.6
-	"vcd_vapp_network":       datasourceVcdVappNetwork(),      // 2.7
-	"vcd_vapp_org_network":   datasourceVcdVappOrgNetwork(),   // 2.7
-	"vcd_vm_affinity_rule":   datasourceVcdVmAffinityRule(),   // 2.9
+	"vcd_org":                 datasourceVcdOrg(),               // 2.5
+	"vcd_org_user":            datasourceVcdOrgUser(),           // 3.0
+	"vcd_org_vdc":             datasourceVcdOrgVdc(),            // 2.5
+	"vcd_catalog":             datasourceVcdCatalog(),           // 2.5
+	"vcd_catalog_media":       datasourceVcdCatalogMedia(),      // 2.5
+	"vcd_catalog_item":        datasourceVcdCatalogItem(),       // 2.5
+	"vcd_edgegateway":         datasourceVcdEdgeGateway(),       // 2.5
+	"vcd_external_network":    datasourceVcdExternalNetwork(),   // 2.5
+	"vcd_external_network_v2": datasourceVcdExternalNetworkV2(), // 3.0
+	"vcd_independent_disk":    datasourceVcIndependentDisk(),    // 2.5
+	"vcd_network_routed":      datasourceVcdNetworkRouted(),     // 2.5
+	"vcd_network_direct":      datasourceVcdNetworkDirect(),     // 2.5
+	"vcd_network_isolated":    datasourceVcdNetworkIsolated(),   // 2.5
+	"vcd_vapp":                datasourceVcdVApp(),              // 2.5
+	"vcd_vapp_vm":             datasourceVcdVAppVm(),            // 2.6
+	"vcd_lb_service_monitor":  datasourceVcdLbServiceMonitor(),  // 2.4
+	"vcd_lb_server_pool":      datasourceVcdLbServerPool(),      // 2.4
+	"vcd_lb_app_profile":      datasourceVcdLBAppProfile(),      // 2.4
+	"vcd_lb_app_rule":         datasourceVcdLBAppRule(),         // 2.4
+	"vcd_lb_virtual_server":   datasourceVcdLbVirtualServer(),   // 2.4
+	"vcd_nsxv_dnat":           datasourceVcdNsxvDnat(),          // 2.5
+	"vcd_nsxv_snat":           datasourceVcdNsxvSnat(),          // 2.5
+	"vcd_nsxv_firewall_rule":  datasourceVcdNsxvFirewallRule(),  // 2.5
+	"vcd_nsxv_dhcp_relay":     datasourceVcdNsxvDhcpRelay(),     // 2.6
+	"vcd_nsxv_ip_set":         datasourceVcdIpSet(),             // 2.6
+	"vcd_vapp_network":        datasourceVcdVappNetwork(),       // 2.7
+	"vcd_vapp_org_network":    datasourceVcdVappOrgNetwork(),    // 2.7
+	"vcd_vm_affinity_rule":    datasourceVcdVmAffinityRule(),    // 2.9
+	"vcd_nsxt_manager":        datasourceVcdNsxtManager(),       // 3.0
+	"vcd_nsxt_tier0_router":   datasourceVcdNsxtTier0Router(),   // 3.0
+	"vcd_portgroup":           datasourceVcdPortgroup(),         // 3.0
+	"vcd_vcenter":             datasourceVcdVcenter(),           // 3.0
 }
 
 var globalResourceMap = map[string]*schema.Resource{
@@ -95,6 +100,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_vapp_static_routing": resourceVcdVappNetworkStaticRouting(), // 2.9
 	"vcd_vm_affinity_rule":    resourceVcdVmAffinityRule(),           // 2.9
 	"vcd_vapp_access_control": resourceVcdAccessControlVapp(),        // 3.0
+	"vcd_external_network_v2": resourceVcdExternalNetworkV2(),        // 3.0
 }
 
 // Provider returns a terraform.ResourceProvider.

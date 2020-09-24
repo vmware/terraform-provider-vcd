@@ -4,7 +4,6 @@ package vcd
 
 import (
 	"fmt"
-	"reflect"
 	"regexp"
 	"testing"
 
@@ -449,40 +448,6 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 			},
 		},
 	})
-}
-
-// resourceFieldsEqual checks if secondObject has all the fields and their values set as the
-// firstObject except `[]excludeFields`. This is very useful to check if data sources have all
-// the same values as resources
-func resourceFieldsEqual(firstObject, secondObject string, excludeFields []string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		resource1, ok := s.RootModule().Resources[firstObject]
-		if !ok {
-			return fmt.Errorf("unable to find %s", firstObject)
-		}
-
-		resource2, ok := s.RootModule().Resources[secondObject]
-		if !ok {
-			return fmt.Errorf("unable to find %s", secondObject)
-		}
-
-		for fieldName := range resource1.Primary.Attributes {
-			// Do not validate the fields marked for exclusion
-			if stringInSlice(fieldName, excludeFields) {
-				continue
-			}
-
-			if vcdTestVerbose {
-				fmt.Printf("field %s %s (value %s) and %s (value %s))\n", fieldName, firstObject,
-					resource1.Primary.Attributes[fieldName], secondObject, resource2.Primary.Attributes[fieldName])
-			}
-			if !reflect.DeepEqual(resource1.Primary.Attributes[fieldName], resource2.Primary.Attributes[fieldName]) {
-				return fmt.Errorf("field %s differs in resources %s (value %s) and %s (value %s)",
-					fieldName, firstObject, resource1.Primary.Attributes[fieldName], secondObject, resource2.Primary.Attributes[fieldName])
-			}
-		}
-		return nil
-	}
 }
 
 // importStateFirewallUiNumberByResourceName constructs an import path (ID in Terraform import terms) in the format of:

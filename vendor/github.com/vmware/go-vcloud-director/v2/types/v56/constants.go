@@ -321,8 +321,11 @@ const (
 
 // These constants allow to construct OpenAPI endpoint paths and avoid strings in code for easy replacement in future.
 const (
-	OpenApiPathVersion1_0_0 = "1.0.0/"
-	OpenApiEndpointRoles    = "roles/"
+	OpenApiPathVersion1_0_0               = "1.0.0/"
+	OpenApiEndpointRoles                  = "roles/"
+	OpenApiEndpointAuditTrail             = "auditTrail/"
+	OpenApiEndpointImportableTier0Routers = "nsxTResources/importableTier0Routers"
+	OpenApiEndpointExternalNetworks       = "externalNetworks/"
 )
 
 // Header keys to run operations in tenant context
@@ -331,4 +334,13 @@ const (
 	HeaderTenantContext = "X-VMWARE-VCLOUD-TENANT-CONTEXT"
 	// HeaderAuthContext requires the Org name of the tenant
 	HeaderAuthContext = "X-VMWARE-VCLOUD-AUTH-CONTEXT"
+)
+
+const (
+	// ExternalNetworkBackingTypeNsxtTier0Router defines backing type of NSX-T Tier-0 router
+	ExternalNetworkBackingTypeNsxtTier0Router = "NSXT_TIER0"
+	// ExternalNetworkBackingTypeNetwork defines vSwitch portgroup
+	ExternalNetworkBackingTypeNetwork = "NETWORK"
+	// ExternalNetworkBackingDvPortgroup refers distributed switch portgroup
+	ExternalNetworkBackingDvPortgroup = "DV_PORTGROUP"
 )

@@ -117,6 +117,10 @@ type TestConfig struct {
 			PeerSubnetGateway string `json:"peerSubnetGw"`
 		} `json:"peer"`
 	} `json:"networking"`
+	Nsxt struct {
+		Manager     string `json:"manager"`
+		Tier0router string `json:"tier0router"`
+	} `json:"nsxt"`
 	Logging struct {
 		Enabled         bool   `json:"enabled,omitempty"`
 		LogFileName     string `json:"logFileName,omitempty"`
@@ -1110,5 +1114,12 @@ func skipNoNsxtConfiguration(t *testing.T) {
 
 	if testConfig.VCD.NsxtProviderVdc.StorageProfile == "" {
 		t.Skip(generalMessage + "No storage profile specified")
+	}
+
+	if testConfig.Nsxt.Manager == "" {
+		t.Skip(generalMessage + "No NSX-T manager specified")
+	}
+	if testConfig.Nsxt.Tier0router == "" {
+		t.Skip(generalMessage + "No NSX-T Tier-0 specified")
 	}
 }

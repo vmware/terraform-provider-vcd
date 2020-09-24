@@ -50,3 +50,69 @@ type Role struct {
 	BundleKey   string `json:"bundleKey"`
 	ReadOnly    bool   `json:"readOnly"`
 }
+
+// NsxtTier0Router defines NSX-T Tier 0 router
+type NsxtTier0Router struct {
+	ID          string `json:"id,omitempty"`
+	Description string `json:"description"`
+	DisplayName string `json:"displayName"`
+}
+
+// ExternalNetworkV2 defines a struct for OpenAPI endpoint
+type ExternalNetworkV2 struct {
+	ID              string                    `json:"id,omitempty"`
+	Name            string                    `json:"name"`
+	Description     string                    `json:"description"`
+	Subnets         ExternalNetworkV2Subnets  `json:"subnets"`
+	NetworkBackings ExternalNetworkV2Backings `json:"networkBackings"`
+}
+
+// ExternalNetworkV2IPRange defines allocated IP pools for a subnet in external network
+type ExternalNetworkV2IPRange struct {
+	StartAddress string `json:"startAddress"`
+	EndAddress   string `json:"endAddress"`
+}
+
+// ExternalNetworkV2IPRanges contains slice of ExternalNetworkV2IPRange
+type ExternalNetworkV2IPRanges struct {
+	Values []ExternalNetworkV2IPRange `json:"values"`
+}
+
+// ExternalNetworkV2Subnets contains slice of ExternalNetworkV2Subnet
+type ExternalNetworkV2Subnets struct {
+	Values []ExternalNetworkV2Subnet `json:"values"`
+}
+
+// ExternalNetworkV2Subnet defines one subnet for external network with assigned static IP ranges
+type ExternalNetworkV2Subnet struct {
+	Gateway      string                    `json:"gateway"`
+	PrefixLength int                       `json:"prefixLength"`
+	DNSSuffix    string                    `json:"dnsSuffix"`
+	DNSServer1   string                    `json:"dnsServer1"`
+	DNSServer2   string                    `json:"dnsServer2"`
+	IPRanges     ExternalNetworkV2IPRanges `json:"ipRanges"`
+	Enabled      bool                      `json:"enabled"`
+	UsedIPCount  int                       `json:"usedIpCount,omitempty"`
+	TotalIPCount int                       `json:"totalIpCount,omitempty"`
+}
+
+type ExternalNetworkV2Backings struct {
+	Values []ExternalNetworkV2Backing `json:"values"`
+}
+
+// ExternalNetworkV2Backing defines which networking subsystem is used for external network (NSX-T or NSX-V)
+type ExternalNetworkV2Backing struct {
+	// BackingID must contain either Tier-0 router ID for NSX-T or PortGroup ID for NSX-V
+	BackingID string `json:"backingId"`
+	Name      string `json:"name,omitempty"`
+	// BackingType can be either ExternalNetworkBackingTypeNsxtTier0Router in case of NSX-T or one of
+	// ExternalNetworkBackingTypeNetwork or ExternalNetworkBackingDvPortgroup in case of NSX-V
+	BackingType     string                  `json:"backingType"`
+	NetworkProvider NetworkProviderProvider `json:"networkProvider"`
+}
+
+// NetworkProvider can be NSX-T manager or vCenter
+type NetworkProviderProvider struct {
+	Name string `json:"name,omitempty"`
+	ID   string `json:"id"`
+}

@@ -127,6 +127,11 @@ vcd:
       # The minimum size is 1048576 (1 MB). While theoretically smaller amounts are allowed,
       # there is an issue when using < 1MB during updates
       sizeForUpdate: 1048576
+nsxt:
+    # NSX-T manager to be used
+    manager: nsxManager1
+    # NSX-T tier-0 router used for external network
+    tier0router: tier-0-router
 logging:
     # All items in this section are optional
     # Logging is disabled by default.

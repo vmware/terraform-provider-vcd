@@ -282,7 +282,7 @@ func ProcessRequestOutput(caller, operation, url, payload string, req *http.Requ
 		payload = "[binary data]"
 	}
 	if dataSize > 0 {
-		Logger.Printf("Request data: [%d] %s\n", dataSize, hidePasswords(payload, false))
+		Logger.Printf("Request data: [%d]\n%s\n", dataSize, hidePasswords(payload, false))
 	}
 	Logger.Printf("Req header:\n")
 	logSanitizedHeader(req.Header)
@@ -329,9 +329,9 @@ func ProcessResponseOutput(caller string, resp *http.Response, result string) {
 	dataSize := len(result)
 	outTextSize := len(outText)
 	if outTextSize != dataSize {
-		Logger.Printf("Response text: [%d -> %d] %s\n", dataSize, outTextSize, hideTokens(outText, false))
+		Logger.Printf("Response text: [%d -> %d]\n%s\n", dataSize, outTextSize, hideTokens(outText, false))
 	} else {
-		Logger.Printf("Response text: [%d] %s\n", dataSize, hideTokens(outText, false))
+		Logger.Printf("Response text: [%d]\n%s\n", dataSize, hideTokens(outText, false))
 	}
 }
 

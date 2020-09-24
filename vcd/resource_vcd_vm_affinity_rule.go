@@ -336,7 +336,7 @@ func resourceVcdVmAffinityRuleImport(d *schema.ResourceData, meta interface{}) (
 		return nil, fmt.Errorf("[VM affinity rule import] empty VM affinity rule identifier provided")
 	}
 
-	lookingForId := isUuid(affinityRuleIdentifier)
+	lookingForId := govcd.IsUuid(affinityRuleIdentifier)
 	vcdClient := meta.(*VCDClient)
 	adminOrg, err := vcdClient.GetAdminOrgByName(orgName)
 	if err != nil {

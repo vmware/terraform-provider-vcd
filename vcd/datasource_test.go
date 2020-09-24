@@ -21,18 +21,28 @@ func TestAccDataSourceNotFound(t *testing.T) {
 		return
 	}
 
+	// Setup temporary client to evaluate versions and conditionally skip tests
+	vcdClient := createTemporaryVCDConnection()
+
 	// Run a sub-test for each of data source defined in provider
 	for _, dataSource := range Provider().DataSources() {
-		t.Run(dataSource.Name, testSpecificDataSourceNotFound(t, dataSource.Name))
+		t.Run(dataSource.Name, testSpecificDataSourceNotFound(t, dataSource.Name, vcdClient))
 	}
 }
 
-func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string) func(*testing.T) {
+func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClient *VCDClient) func(*testing.T) {
 	return func(t *testing.T) {
 
 		// Skip sub-test if conditions are not met
-		if dataSourceName == "vcd_external_network" && !usingSysAdmin() {
+		switch {
+		case dataSourceName == "vcd_external_network" && !usingSysAdmin():
 			t.Skip(`Works only with system admin privileges`)
+		case dataSourceName == "vcd_external_network_v2" && vcdClient.Client.APIVCDMaxVersionIs("< 33") &&
+			!usingSysAdmin():
+			t.Skip("External network V2 requires at least API version 33 (VCD 10.0+)")
+		case (dataSourceName == "vcd_nsxt_tier0_router" || dataSourceName == "vcd_external_network_v2" || dataSourceName == "vcd_nsxt_manager") &&
+			(testConfig.Nsxt.Manager == "" || testConfig.Nsxt.Tier0router == "") || !usingSysAdmin():
+			t.Skip(`No NSX-T configuration detected`)
 		}
 
 		// Get list of mandatory fields in schema for a particular data source
@@ -103,6 +113,12 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			return templateFields
 		}
 
+		// vcd_portgroup requires portgroup  type
+		if dataSourceName == "vcd_portgroup" && mandatoryFields[fieldIndex] == "type" {
+			templateFields = templateFields + `type = "` + testConfig.Networking.ExternalNetworkPortGroupType + `"` + "\n"
+			return templateFields
+		}
+
 		switch mandatoryFields[fieldIndex] {
 		// Fields, which must be valid to satisfy a data source
 		case "org": // Some data sources require org - fill it from testConfig
@@ -118,7 +134,19 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 				return ""
 			}
 			templateFields = templateFields + `vapp_name = "` + vapp.VApp.Name + `"` + "\n"
-
+		case "nsxt_manager_id":
+			client := createTemporaryVCDConnection()
+			// This test needs a valid nsxt_manager_id
+			nsxtManager, err := client.QueryNsxtManagerByName(testConfig.Nsxt.Manager)
+			if err != nil {
+				t.Skipf("No suitable NSX-T manager found for this test: %s", err)
+				return ""
+			}
+			nsxtManagerUrn, err := govcd.BuildUrnWithUuid("urn:vcloud:nsxtmanager:", extractUuid(nsxtManager[0].HREF))
+			if err != nil {
+				t.Errorf("error building URN for NSX-T manager")
+			}
+			templateFields = templateFields + `nsxt_manager_id = "` + nsxtManagerUrn + `"` + "\n"
 			// Invalid fields which are required for some resources for search (usually they are used instead of `name`)
 		case "rule_id":
 			templateFields = templateFields + `rule_id = "347928347234"` + "\n"

@@ -258,7 +258,7 @@ func (client *Client) OpenApiPostItem(apiVersion string, urlRef *url.URL, params
 		// Task Owner ID is the ID of created object. ID must be used (although HREF exists in task) because HREF points to
 		// old XML API and here we need to pull data from OpenAPI.
 
-		newObjectUrl, _ := url.ParseRequestURI(urlRef.String() + "/" + task.Task.Owner.ID)
+		newObjectUrl, _ := url.ParseRequestURI(urlRef.String() + task.Task.Owner.ID)
 		err = client.OpenApiGetItem(apiVersion, newObjectUrl, nil, outType)
 		if err != nil {
 			return fmt.Errorf("error retrieving item after creation: %s", err)
@@ -619,4 +619,39 @@ func jsonRawMessagesToStrings(messages []json.RawMessage) []string {
 	}
 
 	return resultString
+}
+
+// copyOrNewUrlValues either creates a copy of parameters or instantiates a new url.Values if nil parameters are
+// supplied. It helps to avoid mutating supplied parameter when additional values must be injected internally.
+func copyOrNewUrlValues(parameters url.Values) url.Values {
+	parameterCopy := make(map[string][]string)
+
+	// if supplied parameters are nil - we just return new initialized
+	if parameters == nil {
+		return parameterCopy
+	}
+
+	// Copy URL values
+	for key, value := range parameters {
+		parameterCopy[key] = value
+	}
+
+	return parameterCopy
+}
+
+// queryParameterFilterAnd is a helper to append "AND" clause to FIQL filter by using ';' (semicolon) if any values are
+// already set in 'filter' value of parameters. If none existed before then 'filter' value will be set.
+//
+// Note. It does a copy of supplied 'parameters' value and does not mutate supplied original parameters.
+func queryParameterFilterAnd(filter string, parameters url.Values) url.Values {
+	newParameters := copyOrNewUrlValues(parameters)
+
+	existingFilter := newParameters.Get("filter")
+	if existingFilter == "" {
+		newParameters.Set("filter", filter)
+		return newParameters
+	}
+
+	newParameters.Set("filter", existingFilter+";"+filter)
+	return newParameters
 }

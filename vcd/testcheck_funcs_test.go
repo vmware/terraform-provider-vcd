@@ -1,9 +1,11 @@
-// +build vapp vm user ALL functional
+// +build vapp vm user nsxt ALL functional
 
 package vcd
 
 import (
 	"fmt"
+	"reflect"
+	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
@@ -58,6 +60,75 @@ func (c *testCachedFieldValue) testCheckCachedResourceFieldValue(resource, field
 				resource, field, value, c.fieldValue)
 		}
 
+		return nil
+	}
+}
+
+// testCheckMatchOutput allows to match output field with regexp
+func testCheckMatchOutput(name string, r *regexp.Regexp) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		ms := s.RootModule()
+		rs, ok := ms.Outputs[name]
+		if !ok {
+			return fmt.Errorf("Not found: %s", name)
+		}
+
+		if !r.MatchString(rs.Value.(string)) {
+			return fmt.Errorf(
+				"Output '%s': expected %#v, got %#v", name, rs.Value, rs)
+		}
+
+		return nil
+	}
+}
+
+// testCheckOutputNonEmpty checks that output field is not empty
+func testCheckOutputNonEmpty(name string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		ms := s.RootModule()
+		rs, ok := ms.Outputs[name]
+		if !ok {
+			return fmt.Errorf("Not found: %s", name)
+		}
+
+		if rs.Value.(string) == "" {
+			return fmt.Errorf("Output '%s': expected '', got %#v", name, rs)
+		}
+
+		return nil
+	}
+}
+
+// resourceFieldsEqual checks if secondObject has all the fields and their values set as the
+// firstObject except `[]excludeFields`. This is very useful to check if data sources have all
+// the same values as resources
+func resourceFieldsEqual(firstObject, secondObject string, excludeFields []string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		resource1, ok := s.RootModule().Resources[firstObject]
+		if !ok {
+			return fmt.Errorf("unable to find %s", firstObject)
+		}
+
+		resource2, ok := s.RootModule().Resources[secondObject]
+		if !ok {
+			return fmt.Errorf("unable to find %s", secondObject)
+		}
+
+		for fieldName := range resource1.Primary.Attributes {
+			// Do not validate the fields marked for exclusion
+			if stringInSlice(fieldName, excludeFields) {
+				continue
+			}
+
+			if vcdTestVerbose {
+				fmt.Printf("field %s %s (value %s) and %s (value %s))\n", fieldName, firstObject,
+					resource1.Primary.Attributes[fieldName], secondObject, resource2.Primary.Attributes[fieldName])
+			}
+			if !reflect.DeepEqual(resource1.Primary.Attributes[fieldName], resource2.Primary.Attributes[fieldName]) {
+				return fmt.Errorf("field %s differs in resources %s (value %s) and %s (value %s)",
+					fieldName, firstObject, resource1.Primary.Attributes[fieldName], secondObject, resource2.Primary.Attributes[fieldName])
+			}
+		}
 		return nil
 	}
 }
