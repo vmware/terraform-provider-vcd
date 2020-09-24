@@ -256,26 +256,19 @@ func TestAccVcdExternalNetworkV2Nsxv(t *testing.T) {
 		t.Skip(t.Name() + " requires at least API v33.0 (vCD 10+)")
 	}
 
-	startAddress := "192.168.30.51"
-	endAddress := "192.168.30.62"
 	description := "Test External Network"
-	gateway := "192.168.30.49"
-	netmask := "24"
-	dns1 := "192.168.0.164"
-	dns2 := "192.168.0.196"
 	var params = StringMap{
-
 		"ExternalNetworkName": t.Name(),
 		"Type":                testConfig.Networking.ExternalNetworkPortGroupType,
 		"PortGroup":           testConfig.Networking.ExternalNetworkPortGroup,
 		"Vcenter":             testConfig.Networking.Vcenter,
-		"StartAddress":        startAddress,
-		"EndAddress":          endAddress,
+		"StartAddress":        "192.168.30.51",
+		"EndAddress":          "192.168.30.62",
 		"Description":         description,
-		"Gateway":             gateway,
-		"Netmask":             netmask,
-		"Dns1":                dns1,
-		"Dns2":                dns2,
+		"Gateway":             "192.168.30.49",
+		"Netmask":             "24",
+		"Dns1":                "192.168.0.164",
+		"Dns2":                "192.168.0.196",
 		"Tags":                "network extnetwork",
 	}
 

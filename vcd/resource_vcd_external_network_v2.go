@@ -271,7 +271,7 @@ func getExternalNetworkV2Type(vcdClient *VCDClient, d *schema.ResourceData) (*ty
 		Name:            d.Get("name").(string),
 		Description:     d.Get("description").(string),
 		Subnets:         types.ExternalNetworkV2Subnets{Values: subnetSlice},
-		NetworkBackings: types.ExternalNetworkV2Backings{[]types.ExternalNetworkV2Backing{networkBacking}},
+		NetworkBackings: types.ExternalNetworkV2Backings{Values: []types.ExternalNetworkV2Backing{networkBacking}},
 	}
 
 	return newExtNet, nil
@@ -413,7 +413,7 @@ func setExternalNetworkV2Data(d *schema.ResourceData, net *types.ExternalNetwork
 	// Switch on first value of backing ID. If it is NSX-T - it can be only one block (limited by schema).
 	// NSX-V can have more than one
 	switch net.NetworkBackings.Values[0].BackingType {
-	case types.ExternalNetworkBackingDvPortgroup, types.ExternalNetworkBackingTypeNetwork, "PORTGROUP":
+	case types.ExternalNetworkBackingDvPortgroup, types.ExternalNetworkBackingTypeNetwork:
 		backingInterface := make([]interface{}, len(net.NetworkBackings.Values))
 		for backingIndex := range net.NetworkBackings.Values {
 			backing := net.NetworkBackings.Values[backingIndex]
