@@ -617,6 +617,11 @@ func updateAssignedVmSizingPolicies(vcdClient *VCDClient, d *schema.ResourceData
 			return fmt.Errorf("both fields are required `vm_sizing_policy_ids` and `default_vm_sizing_policy_id`")
 		}
 
+		// early return
+		if !d.HasChange("default_vm_sizing_policy_id") && !d.HasChange("vm_sizing_policy_ids") {
+			return nil
+		}
+
 		vcdClient := meta.(*VCDClient)
 		vcdComputePolicyHref, err := vcdClient.Client.OpenApiBuildEndpoint(types.OpenApiPathVersion1_0_0, types.OpenApiEndpointVdcComputePolicies)
 		if err != nil {
@@ -748,7 +753,10 @@ func addAssignedVmSizingPolicies(vcdClient *VCDClient, d *schema.ResourceData, m
 		if idsOk != defaultIdOk {
 			return fmt.Errorf("both fields are required `vm_sizing_policy_ids` and `default_vm_sizing_policy_id`")
 		}
-
+		// early return
+		if !d.HasChange("default_vm_sizing_policy_id") && !d.HasChange("vm_sizing_policy_ids") {
+			return nil
+		}
 		vcdClient := meta.(*VCDClient)
 		vcdComputePolicyHref, err := vcdClient.Client.OpenApiBuildEndpoint(types.OpenApiPathVersion1_0_0, types.OpenApiEndpointVdcComputePolicies)
 		if err != nil {
