@@ -222,7 +222,7 @@ func genericVcdVmSizingPolicyRead(d *schema.ResourceData, meta interface{}) erro
 		if len(filteredPoliciesByName) != 1 {
 			log.Printf("[DEBUG] Unable to find VM sizing policy %s . Found Policies by name: %d. Removing from tfstate.", policyName, len(filteredPoliciesByName))
 			d.SetId("")
-			return fmt.Errorf("[DEBUG] Unable to find VM sizing policy %s, err: %s. Found Policies by name: %d. Removing from tfstate", policyName, err, len(filteredPoliciesByName))
+			return fmt.Errorf("[DEBUG] Unable to find VM sizing policy %s, err: %s. Found Policies by name: %d. Removing from tfstate", policyName, govcd.ErrorEntityNotFound, len(filteredPoliciesByName))
 		}
 		policy = filteredPoliciesByName[0]
 		d.SetId(policy.VdcComputePolicy.ID)
