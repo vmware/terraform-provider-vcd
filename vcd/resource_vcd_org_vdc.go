@@ -431,7 +431,11 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 		}
 		vmSizingPoliciesSlice := convertToTypeSet(policyIds)
 		vmSizingPoliciesSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), vmSizingPoliciesSlice)
-		_ = d.Set("vm_sizing_policy_ids", vmSizingPoliciesSet)
+
+		err = d.Set("vm_sizing_policy_ids", vmSizingPoliciesSet)
+		if err != nil {
+			return err
+		}
 
 		_ = d.Set("default_vm_sizing_policy_id", adminVdc.AdminVdc.DefaultComputePolicy.ID)
 	}
