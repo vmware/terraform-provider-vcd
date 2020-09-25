@@ -261,7 +261,7 @@ func resourceVcdExternalNetworkV2Import(d *schema.ResourceData, meta interface{}
 }
 
 func getExternalNetworkV2Type(vcdClient *VCDClient, d *schema.ResourceData) (*types.ExternalNetworkV2, error) {
-	networkBacking, err := getExternalNetworkV2BackingType(vcdClient, d)
+	networkBackings, err := getExternalNetworkV2BackingType(vcdClient, d)
 	if err != nil {
 		return nil, fmt.Errorf("error getting network backing type: %s", err)
 	}
@@ -271,50 +271,58 @@ func getExternalNetworkV2Type(vcdClient *VCDClient, d *schema.ResourceData) (*ty
 		Name:            d.Get("name").(string),
 		Description:     d.Get("description").(string),
 		Subnets:         types.ExternalNetworkV2Subnets{Values: subnetSlice},
-		NetworkBackings: types.ExternalNetworkV2Backings{Values: []types.ExternalNetworkV2Backing{networkBacking}},
+		NetworkBackings: networkBackings,
 	}
 
 	return newExtNet, nil
 }
 
-func getExternalNetworkV2BackingType(vcdClient *VCDClient, d *schema.ResourceData) (types.ExternalNetworkV2Backing, error) {
-	var backing types.ExternalNetworkV2Backing
+func getExternalNetworkV2BackingType(vcdClient *VCDClient, d *schema.ResourceData) (types.ExternalNetworkV2Backings, error) {
+	var backings types.ExternalNetworkV2Backings
+	// var backing types.ExternalNetworkV2Backing
 	// Network backings
 	nsxtNetwork := d.Get("nsxt_network").(*schema.Set)
 	nsxvNetwork := d.Get("vsphere_network").(*schema.Set)
 
 	switch {
-	// NSX-T network defined
+	// NSX-T network defined. Can only be one.
 	case len(nsxtNetwork.List()) > 0:
 		nsxtNetworkSlice := nsxtNetwork.List()
 		nsxtNetworkStrings := convertToStringMap(nsxtNetworkSlice[0].(map[string]interface{}))
-		backing = types.ExternalNetworkV2Backing{
+		backing := types.ExternalNetworkV2Backing{
 			BackingID:   nsxtNetworkStrings["nsxt_tier0_router_id"], // Tier 0- router
 			BackingType: types.ExternalNetworkBackingTypeNsxtTier0Router,
 			NetworkProvider: types.NetworkProviderProvider{
 				ID: nsxtNetworkStrings["nsxt_manager_id"], // NSX-T manager
 			},
 		}
-	// NSX-V network defined
+		backings.Values = append(backings.Values, backing)
+	// NSX-V network defined. Can be multiple blocks
 	case len(nsxvNetwork.List()) > 0:
 		nsxvNetworkSlice := nsxvNetwork.List()
-		nsxvNetworkStrings := convertToStringMap(nsxvNetworkSlice[0].(map[string]interface{}))
 
-		// Lookup portgroup type to avoid user passing it because it was already present in datasource
-		pgType, err := getPortGroupTypeById(vcdClient, nsxvNetworkStrings["portgroup_id"], nsxvNetworkStrings["vcenter_id"])
-		if err != nil {
-			return backing, fmt.Errorf("error validating portgroup type: %s", err)
-		}
+		for nsxvNetworkIndex := range nsxvNetworkSlice {
 
-		backing = types.ExternalNetworkV2Backing{
-			BackingID:   nsxvNetworkStrings["portgroup_id"],
-			BackingType: pgType,
-			NetworkProvider: types.NetworkProviderProvider{
-				ID: nsxvNetworkStrings["vcenter_id"],
-			},
+			nsxvNetworkStrings := convertToStringMap(nsxvNetworkSlice[nsxvNetworkIndex].(map[string]interface{}))
+
+			// Lookup portgroup type to avoid user passing it because it was already present in datasource
+			pgType, err := getPortGroupTypeById(vcdClient, nsxvNetworkStrings["portgroup_id"], nsxvNetworkStrings["vcenter_id"])
+			if err != nil {
+				return types.ExternalNetworkV2Backings{}, fmt.Errorf("error validating portgroup type: %s", err)
+			}
+
+			backing := types.ExternalNetworkV2Backing{
+				BackingID:   nsxvNetworkStrings["portgroup_id"],
+				BackingType: pgType,
+				NetworkProvider: types.NetworkProviderProvider{
+					ID: nsxvNetworkStrings["vcenter_id"],
+				},
+			}
+
+			backings.Values = append(backings.Values, backing)
 		}
 	}
-	return backing, nil
+	return backings, nil
 }
 
 func getPortGroupTypeById(vcdClient *VCDClient, portGroupId, vCenterId string) (string, error) {
