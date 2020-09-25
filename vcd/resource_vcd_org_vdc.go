@@ -639,6 +639,7 @@ func updateAssignedVmSizingPolicies(vcdClient *VCDClient, d *schema.ResourceData
 			if err != nil {
 				return fmt.Errorf("error setting default VM sizing policy. %s", err)
 			}
+			return nil
 		}
 
 		if d.HasChange("vm_sizing_policy_ids") && !d.HasChange("default_vm_sizing_policy_id") {
@@ -654,6 +655,7 @@ func updateAssignedVmSizingPolicies(vcdClient *VCDClient, d *schema.ResourceData
 			if err != nil {
 				return fmt.Errorf("error setting VM sizing policies. %s", err)
 			}
+			return nil
 		}
 
 		err = changeVmSizingPoliciesAndDefaultId(d, vcdComputePolicyHref.String(), vdc)
@@ -699,7 +701,7 @@ func changeVmSizingPoliciesAndDefaultId(d *schema.ResourceData, vcdComputePolicy
 			return fmt.Errorf("error setting default VM sizing policy. %s", err)
 		}
 
-		// Now we can remove previously existing polices as default policy changed
+		// Now we can remove previously existing policies as default policy changed
 		vdcComputePolicyReferenceList = []*types.Reference{}
 		for _, policyId := range vmSizingPolicyIdStrings {
 			vdcComputePolicyReferenceList = append(vdcComputePolicyReferenceList, &types.Reference{HREF: vcdComputePolicyHref + policyId})
