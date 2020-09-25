@@ -14,6 +14,9 @@ used to create, modify, and delete VM sizing policy.
 
 Supported in provider *v3.0+* and requires VCD 10.0+
 
+~> **Note:** 
+CPU and memory properties of a VM sizing policy can't be updated in-place, so updating them will force a re-create. For such re-creation to succeed, the policy can't be used by VDC and VM. Hence, the policy usage has to be removed from VDC and VM beforehand. For the cases when that is not trivial, a two-step approach may be easier: to create a new policy with the new values, assign it to VDC and VM, and afterwards remove the old policy.
+
 ## Example Usage
 
 ```hcl
