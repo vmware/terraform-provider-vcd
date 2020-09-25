@@ -142,8 +142,8 @@ The following arguments are supported:
 * `include_vm_memory_overhead` - (Optional, *v2.7+*, *vCD 9.7+*) Indicates if the Flex VDC should include memory overhead into its accounting for admission control. Required with the Flex allocation model.
 * `delete_force` - (Required) When destroying use `delete_force=True` to remove a VDC and any objects it contains, regardless of their state.
 * `delete_recursive` - (Required) When destroying use `delete_recursive=True` to remove the VDC and any objects it contains that are in a state that normally allows removal.
-* `default_vm_sizing_policy_id` - (Optional, *v3.0+*, *vCD 10.0+*) Set of VM sizing policy IDs.
-* `vm_sizing_policy_ids` - (Optional, *v3.0+*, *vCD 10.0+*) Default VM sizing policy ID.
+* `default_vm_sizing_policy_id` - (Optional, *v3.0+*, *vCD 10.0+*) Set of VM sizing policy IDs. This field requires `vm_sizing_policy_ids` to configured together. 
+* `vm_sizing_policy_ids` - (Optional, *v3.0+*, *vCD 10.0+*) Default VM sizing policy ID. This field requires `default_vm_sizing_policy_id` to configured together.
 
 <a id="storageprofile"></a>
 ## Storage Profile
