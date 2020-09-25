@@ -644,6 +644,9 @@ func updateAssignedVmSizingPolicies(vcdClient *VCDClient, d *schema.ResourceData
 
 		if d.HasChange("vm_sizing_policy_ids") && !d.HasChange("default_vm_sizing_policy_id") {
 			vmSizingPolicyIdStrings := convertSchemaSetToSliceOfStrings(d.Get("vm_sizing_policy_ids").(*schema.Set))
+			if !ifIdIsPartOfSlice(d.Get("default_vm_sizing_policy_id").(string), vmSizingPolicyIdStrings) {
+				return errors.New("`default_vm_sizing_policy_id` isn't part of `vm_sizing_policy_ids`")
+			}
 			policyReferences := types.VdcComputePolicyReferences{}
 			var vdcComputePolicyReferenceList []*types.Reference
 			for _, policyId := range vmSizingPolicyIdStrings {
@@ -666,12 +669,26 @@ func updateAssignedVmSizingPolicies(vcdClient *VCDClient, d *schema.ResourceData
 	return nil
 }
 
+func ifIdIsPartOfSlice(id string, ids []string) bool {
+	found := false
+	for _, idInSlice := range ids {
+		if id == idInSlice {
+			found = true
+			break
+		}
+	}
+	return found
+}
+
 // changeVmSizingPoliciesAndDefaultId handles VM sizing policies. Created VDC generates default VM sizing policy which requires additional handling.
 // Assigning and setting default VM sizing policies requires different API calls. Default policy can't be removed, as result
 // we approach this with adding new policies, set new default, remove all old policies.
 func changeVmSizingPoliciesAndDefaultId(d *schema.ResourceData, vcdComputePolicyHref string, vdc *govcd.AdminVdc) error {
 	if d.HasChange("default_vm_sizing_policy_id") && d.HasChange("vm_sizing_policy_ids") {
 		vmSizingPolicyIdStrings := convertSchemaSetToSliceOfStrings(d.Get("vm_sizing_policy_ids").(*schema.Set))
+		if !ifIdIsPartOfSlice(d.Get("default_vm_sizing_policy_id").(string), vmSizingPolicyIdStrings) {
+			return errors.New("`default_vm_sizing_policy_id` isn't part of `vm_sizing_policy_ids`")
+		}
 		policyReferences := types.VdcComputePolicyReferences{}
 		var vdcComputePolicyReferenceList []*types.Reference
 		for _, policyId := range vmSizingPolicyIdStrings {
