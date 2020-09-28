@@ -86,8 +86,8 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 					testAccCheckVcdVAppVmExistsByVdc(testAccVcdVdc, netVappName, netVmName1, "vcd_vapp_vm."+netVmName1, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "name", netVmName1),
 
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "os_type", "sles10_64Guest"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "hardware_version", "vmx-11"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "os_type", "sles11_64Guest"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "hardware_version", "vmx-13"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "expose_hardware_virtualization", "true"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "computer_name", "compName"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "description", "test empty VM"),
@@ -101,8 +101,8 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 					testAccCheckVcdVAppVmExistsByVdc(testAccVcdVdc, netVappName, netVmName2, "vcd_vapp_vm."+netVmName2, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "name", netVmName2),
 
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "os_type", "sles10_64Guest"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "hardware_version", "vmx-11"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "os_type", "sles11_64Guest"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "hardware_version", "vmx-13"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "expose_hardware_virtualization", "true"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "computer_name", "compName"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "description", "test empty VM2"),
@@ -139,7 +139,7 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 					testAccCheckVcdVAppVmExistsByVdc(testAccVcdVdc, netVappName, netVmName1, "vcd_vapp_vm."+netVmName1, &vm),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "name", netVmName1),
 
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "os_type", "rhel4Guest"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "os_type", "sles11_64Guest"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "hardware_version", "vmx-13"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "expose_hardware_virtualization", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "computer_name", "compNameUp"),
@@ -156,9 +156,9 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "os_type", "sles11_64Guest"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "hardware_version", "vmx-13"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "expose_hardware_virtualization", "false"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "computer_name", "compNameUp"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "description", "test empty VM updated2"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "expose_hardware_virtualization", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "computer_name", "compName"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName2, "description", "test empty VM2"),
 
 					resource.TestCheckResourceAttrPair("vcd_vapp_vm."+netVmName2, "sizing_policy_id",
 						"vcd_vm_sizing_policy.size_cpu", "id"),
@@ -351,8 +351,8 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   description   = "test empty VM"
   name          = "{{.VMName}}"
   
-  os_type                        = "sles10_64Guest"
-  hardware_version               = "vmx-11"
+  os_type                        = "sles11_64Guest"
+  hardware_version               = "vmx-13"
   catalog_name                   = "{{.Catalog}}"
   expose_hardware_virtualization = true
   computer_name                  = "compName"
@@ -373,8 +373,8 @@ resource "vcd_vapp_vm" "{{.VMName}}2" {
   description   = "test empty VM2"
   name          = "{{.VMName}}2"
   
-  os_type                        = "sles10_64Guest"
-  hardware_version               = "vmx-11"
+  os_type                        = "sles11_64Guest"
+  hardware_version               = "vmx-13"
   catalog_name                   = "{{.Catalog}}"
   expose_hardware_virtualization = true
   computer_name                  = "compName"
@@ -423,7 +423,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   name          = "{{.VMName}}"
   description   = "test empty VM updated"
 
-  os_type                        = "rhel4Guest"
+  os_type                        = "sles11_64Guest"
   hardware_version               = "vmx-13"
   catalog_name                   = ""
   expose_hardware_virtualization = false
@@ -438,15 +438,17 @@ resource "vcd_vapp_vm" "{{.VMName}}2" {
   org = "{{.Org}}"
   vdc = vcd_org_vdc.{{.VdcName}}.name
 
-  vapp_name     = vcd_vapp.{{.VAppName}}.name
-  name          = "{{.VMName}}2"
-  description   = "test empty VM updated2"
+  power_on = true
 
+  vapp_name     = vcd_vapp.{{.VAppName}}.name
+  description   = "test empty VM2"
+  name          = "{{.VMName}}2"
+  
   os_type                        = "sles11_64Guest"
   hardware_version               = "vmx-13"
-  catalog_name                   = ""
-  expose_hardware_virtualization = false
-  computer_name                  = "compNameUp"
+  catalog_name                   = "{{.Catalog}}"
+  expose_hardware_virtualization = true
+  computer_name                  = "compName"
 
   memory_hot_add_enabled = true
 
