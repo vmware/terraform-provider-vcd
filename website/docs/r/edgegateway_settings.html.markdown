@@ -71,7 +71,9 @@ One of `accept` or `deny`. Default `deny`.
 configuration. [More information.][docs-import]
 
 An existing edge gateway settings can be [imported][docs-import] into this resource via supplying its path. 
+
 The path for this resource is made of org-name.vdc-name.edge-name
+
 For example, using this structure, representing an edge gateway settings that was **not** created using Terraform:
 
 ```hcl
