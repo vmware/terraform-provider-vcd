@@ -8,8 +8,8 @@ description: |-
 
 # vcd\_edgegateway\_settings
 
-Provides a resource that can update vCloud Director edge gateway global settings either as system administrator or as
-organization user.
+Provides a resource that can update vCloud Director edge gateway global settings either as System Administrator or as
+Organization user.
 
 The main use case of this resource is to allow both providers and tenants to change edge gateways global settings (such as
 enabling load balancing or firewall) when the edge gateway was created outside of terraform.
