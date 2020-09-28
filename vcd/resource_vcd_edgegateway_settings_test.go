@@ -28,7 +28,7 @@ func TestAccVcdEdgeGatewaySettingsFull(t *testing.T) {
 	// How to run in isolation:
 	//
 	//  1. make install && cd vcd
-	//  2. go test -tags gateway -v -timeout 0 -run TestAccVcdEdgeGatewaySettingsFull -vcd-add-profiler
+	//  2. go test -tags gateway -v -timeout 0 -run TestAccVcdEdgeGatewaySettingsFull -vcd-add-provider
 	//  3. cd test-artifacts
 	//  4. ./test-binary.sh clear pause names vcd.TestAccVcdEdgeGatewaySettingsFull.tf
 	//  5. -- Exit the execution after apply, and check that lb_enabled is false in edge gateway and true in edge gateway settings
