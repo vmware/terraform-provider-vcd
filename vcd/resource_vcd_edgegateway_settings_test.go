@@ -307,27 +307,26 @@ resource "vcd_external_network" "{{.NewExternalNetwork}}" {
 }
 
 resource "vcd_edgegateway" "egw" {
-	org = "{{.Org}}"
-	vdc = "{{.Vdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
 
-	name          = "{{.EdgeGateway}}"
-	configuration = "compact"
-	advanced      = true
+  name          = "{{.EdgeGateway}}"
+  configuration = "compact"
+  advanced      = true
 
-	external_network {
-	  name = vcd_external_network.{{.NewExternalNetwork}}.name
-	  subnet {
-		gateway = "192.168.30.49"
-		netmask = "255.255.255.240"
-	  }
-	}
+  external_network {
+    name = vcd_external_network.{{.NewExternalNetwork}}.name
+    subnet {
+      gateway = "192.168.30.49"
+      netmask = "255.255.255.240"
+    }
+  }
+
+  # The plan for vcd_edgegateway will fail, because it will have been changed by vcd_edgegateway_settings
+  lifecycle {
+    ignore_changes = [lb_enabled, lb_acceleration_enabled, lb_logging_enabled, lb_loglevel, fw_enabled, fw_default_rule_logging_enabled, fw_default_rule_action]
+  }
 }
-
-# The plan for edge gateway will fail, because it will have been changed by vcd_edgegateway_settings
-# Thus, we only get the plan for a single resource
-#
-# plan-options -target=vcd_edgegateway_settings.{{.EgwSettings}}
-# plancheck-options -target=vcd_edgegateway_settings.{{.EgwSettings}}
 
 resource "vcd_edgegateway_settings" "{{.EgwSettings}}" {
   provider                = vcd.orguser
@@ -340,6 +339,11 @@ resource "vcd_edgegateway_settings" "{{.EgwSettings}}" {
   fw_enabled                      = true
   fw_default_rule_logging_enabled = true
   fw_default_rule_action          = "deny"
+
+  # The plan for vcd_edgegateway_settings may fail because of logging fields not being visible to tenants
+  lifecycle {
+    ignore_changes = [lb_logging_enabled, lb_loglevel]
+  }
 }
 
 output "egw" {
