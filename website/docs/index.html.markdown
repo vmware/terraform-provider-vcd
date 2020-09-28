@@ -30,6 +30,7 @@ The following vCloud Director versions are supported by this provider:
 ## Removed resources
 
 The following resources were removed in *v3.0*:
+
 * `vcd_network` (replaced by `vcd_network_routed`)
 * `vcd_dnat` (replaced by `vcd_nsxv_dnat`)
 * `vcd_snat` (replaced by `vcd_nsxv_snat`)

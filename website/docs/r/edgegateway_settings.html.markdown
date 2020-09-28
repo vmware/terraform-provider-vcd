@@ -39,7 +39,7 @@ resource "vcd_edgegateway_settings" "egw-settings" {
 }
 ```
 
--> **Tip:** Although this resource changes values in the edge gateway referenced as a data source, Terraform state
+-> **Tip:** Although this resource changes values in the edge gateway referenced as a data source, due to how Terraform works, the state
 of the edge gateway doesn't get updated. To reconcile the state of the data source with the values modified in `vcd_edgegateway_settings`,
 you need to run `terraform refresh` after `apply`.
 
@@ -56,9 +56,9 @@ The following arguments are supported:
 * `lb_enabled` - (Optional) Enable load balancing. Default is `false`.
 * `lb_acceleration_enabled` - (Optional) Enable to configure the load balancer.
 * `lb_logging_enabled` - (Optional) Enables the edge gateway load balancer to collect traffic logs.
-Default is `false`. Note: **only System administrators can change this property**. It is ignored for Org users.
+Default is `false`. Note: **only System administrators can change this property**. It is ignored by API for Org users.
 * `lb_loglevel` - (Optional) Choose the severity of events to be logged. One of `emergency`,
-`alert`, `critical`, `error`, `warning`, `notice`, `info`, `debug`. Note: **only System administrators can change this property**. It is ignored for Org users.
+`alert`, `critical`, `error`, `warning`, `notice`, `info`, `debug`. Note: **only System administrators can change this property**. It is ignored by API for Org users.
 * `fw_enabled` (Optional) Enable firewall. Default `true`.
 * `fw_default_rule_logging_enabled` (Optional) Enable default firewall rule (last in the processing 
 order) logging. Default `false`.
