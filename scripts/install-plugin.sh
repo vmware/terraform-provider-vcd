@@ -16,6 +16,59 @@ then
     exit 1
 fi
 
+function check_empty {
+    variable="$1"
+    message="$2"
+    if [ -z "$variable" ]
+    then
+        echo $message
+        exit 1
+    fi
+}
+
+[ -z "$terraform" ] && terraform=terraform
+# Getting the version without the initial "v"
+bare_version=$(echo $version | sed -e 's/^v//')
+
+# The default target directory is the pre-0.13 one
+target_dir=$HOME/.terraform.d/plugins/
+
+terraform_exec=""
+for dir in $(echo $PATH | tr ':' ' ')
+do
+    if [ -x $dir/$terraform ]
+    then
+        terraform_exec=$dir/$terraform
+        break
+    fi
+done
+
+if [ -z "$terraform_exec" ]
+then
+    echo "$terraform executable not found"
+    exit 1
+fi
+
+# Terraform version is used to determine what the target directory should be
+terraform_version=$($terraform version | head -n 1| sed -e 's/Terraform v//')
+check_empty "$terraform_version" "terraform_version not detected"
+
+
+terraform_major=$(echo $terraform_version | tr '.' ' '| awk '{print $1}')
+check_empty "$terraform_major" "terraform_version major not detected"
+terraform_minor=$(echo $terraform_version | tr '.' ' '| awk '{print $2}')
+check_empty "$terraform_minor" "terraform_version minor not detected"
+os=$(uname -s | tr '[A-Z]' '[a-z]')
+check_empty "$os" "operating system not detected"
+arch=${os}_amd64
+
+
+# if terraform executable is 0.13+, we use the new path
+if [[ $terraform_major -gt 0 || $terraform_major -eq 0 && $terraform_minor > 12 ]]
+then
+    target_dir=$HOME/.terraform.d/plugins/registry.terraform.io/terraform-providers/vcd/$bare_version/$arch
+fi
+
 plugin_name=terraform-provider-vcd
 
 plugin_path=$GOPATH/bin/$plugin_name
@@ -27,7 +80,6 @@ then
     exit 1
 fi
 
-target_dir=$HOME/.terraform.d/plugins/
 
 if [ ! -d $target_dir ]
 then
