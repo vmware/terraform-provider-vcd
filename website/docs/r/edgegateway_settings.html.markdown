@@ -12,10 +12,16 @@ Provides a resource that can update vCloud Director edge gateway global settings
 Organization user.
 
 The main use case of this resource is to allow both providers and tenants to change edge gateways global settings (such as
-enabling load balancing or firewall) when the edge gateway was created outside of terraform.
+enabling load balancing or firewall) when the edge gateway was created outside of Terraform.
+A second use case is when the provider creates the edge gateway using Terraform, and then delegates the tenant to change
+some settings for further operations.
 
 ~> **Warning:** The edge gateway settings info is tied to an edge gateway. Thus, there could be only one instance per 
 edge gateway. Using a different definition for the same edge gateway ID will result in a previous instance to be overwritten.
+
+!> **Warning:** Using a `vcd_edgegateway` and a `vcd_edgegateway_settings` for the same entity in the same configuration
+does not work, as the main purpose of this resource is to handle general settings when the edge gateway was created outside of Terraform.
+If users can create an edge gateway, they don't need `vcd_edgegateway_settings`, as they can set the same properties directly during creation.
 
 Supported in provider *v3.0+*
 
