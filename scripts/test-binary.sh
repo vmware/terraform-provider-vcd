@@ -142,6 +142,7 @@ function get_help {
     echo "  t | tags 'tags list'   Sets the tags to use"
     echo "  c | clear              Clears list of run files"
     echo "  p | pause              Pause after each stage"
+    echo "  a | validate           Validate scripts without running tests"
     echo "  n | names 'names list' List of file names to test [QUOTES NEEDED]"
     echo "  i | test-env-init      Prepares the environment in a new vCD"
     echo "  b | test-env-apply     Builds the environment in a new vCD"
@@ -172,6 +173,36 @@ function echo_verbose {
         echo "$@"
     fi
 }
+
+function check_exit_code {
+    out=$1
+    if [ "$exit_code" != "0" ]
+    then
+        cat $out
+        exit $exit_code
+    fi
+}
+
+function validate_script {
+    script=$1
+    echo "## $script ##"
+    if [ -d vtmp ]
+    then
+        rm -rf vtmp
+    fi
+    mkdir vtmp
+    cp $script vtmp
+    cd vtmp
+    terraform init > init.out 2>&1
+    exit_code=$?
+    check_exit_code init.out
+    terraform validate > validate.out 2>&1
+    exit_code=$?
+    check_exit_code validate.out
+    cd - > /dev/null
+    rm -rf vtmp
+}
+
 
 while [ "$1" != "" ]
 do
@@ -248,6 +279,9 @@ do
         ;;
     v|verbose)
         export VERBOSE=1
+        ;;
+    validate)
+        validating=1
         ;;
     *)
         get_help 
@@ -429,7 +463,7 @@ do
         fi
     fi
     skip_request=$(grep '^\s*#\s*skip-binary-test' $CF)
-    if [ -n "$skip_request" ]
+    if [ -n "$skip_request" -a -z "$validating" ]
     then
         echo "# $CF skipped ($file_count of $how_many)"
         echo "$skip_request"
@@ -438,7 +472,7 @@ do
     unset will_skip
     for skip_file in ${skipping_items[*]}
     do
-        if [  "$CF" == "$skip_file" ]
+        if [  "$CF" == "$skip_file" -a -z "$validating" ]
         then
             will_skip=1
         fi
@@ -508,6 +542,11 @@ do
     echo "# $CF ($file_count of $how_many)"
     echo $dash_line
     opsdir=tmp
+    if [ -n "$validating" ]
+    then
+        validate_script $CF
+        continue
+    fi
     if [ -n  "$in_building" ]
     then
         url=$(grep  "^\s\+url " $build_script | awk '{print $3}' | sed -e 's/https:..//' -e 's/.api//' | tr -d '"' | tr '.' '-')
