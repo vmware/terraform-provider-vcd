@@ -20,7 +20,7 @@ some settings for further operations.
 edge gateway. Using a different definition for the same edge gateway ID will result in a previous instance to be overwritten.
 
 !> **Warning:** Using a `vcd_edgegateway` and a `vcd_edgegateway_settings` for the same entity in the same configuration
-does not work, as the main purpose of this resource is to handle general settings when the edge gateway was created outside of Terraform.
+does not work correctly, as the main purpose of this resource is to handle general settings when the edge gateway was created outside of Terraform.
 If users can create an edge gateway, they don't need `vcd_edgegateway_settings`, as they can set the same properties directly during creation.
 
 Supported in provider *v3.0+*

@@ -7,25 +7,7 @@ provider "vcd" {
   allow_unverified_ssl = "true"
 }
 
-resource "vcd_dnat" "web2" {
-  edge_gateway    = "test_edge_3"
-  org             = "au"
-  vdc             = "au-vdc"
-  external_ip     = "10.x.x.x"
-  port            = 80
-  internal_ip     = "10.x.x.x"
-  translated_port = 8080
-}
-
-resource "vcd_snat" "outbound" {
-  edge_gateway = "test_edge_3"
-  org          = "au"
-  vdc          = "au-vdc"
-  external_ip  = "10.x.x.x"
-  internal_ip  = "10.x.x.x"
-}
-
-resource "vcd_network" "net" {
+resource "vcd_network_routed" "net" {
   name         = "my-nt"
   org          = "au"
   vdc          = "au-vdc"
