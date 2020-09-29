@@ -2,7 +2,6 @@ package vcd
 
 import (
 	"flag"
-	"net"
 	"os"
 	"strings"
 
@@ -33,22 +32,6 @@ func suppressNetworkUpgradedInterface() schema.SchemaDiffSuppressFunc {
 			return true
 		}
 		return false
-	}
-}
-
-// TODO v3.0 remove once `ip` and `network_name` attributes are removed
-func suppressIfIPIsOneOf() schema.SchemaDiffSuppressFunc {
-	return func(k string, old string, new string, d *schema.ResourceData) bool {
-		switch {
-		case new == "dhcp" && (old == "na" || net.ParseIP(old) != nil):
-			return true
-		case new == "allocated" && net.ParseIP(old) != nil:
-			return true
-		case new == "" && net.ParseIP(old) != nil:
-			return true
-		default:
-			return false
-		}
 	}
 }
 

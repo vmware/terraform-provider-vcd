@@ -655,27 +655,6 @@ func isItVappNetwork(vAppNetworkName string, vapp govcd.VApp) (bool, error) {
 	return false, fmt.Errorf("configured vApp network isn't found: %s", vAppNetworkName)
 }
 
-// isItIsolatedVappNetwork checks if it is an isolated vApp network (not only attached to vApp)
-func isItIsolatedVappNetwork(vAppNetworkName string, vapp govcd.VApp) (bool, error) {
-
-	vAppNetworkConfig, err := vapp.GetNetworkConfig()
-	if err != nil {
-		return false, fmt.Errorf("error getting vApp networks: %s", err)
-	}
-	// If vApp network is "isolated" and has no ParentNetwork - it is a vApp network.
-	// https://code.vmware.com/apis/72/vcloud/doc/doc/types/NetworkConfigurationType.html
-	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
-		if networkConfig.NetworkName == vAppNetworkName &&
-			networkConfig.Configuration.ParentNetwork == nil &&
-			networkConfig.Configuration.FenceMode == "isolated" {
-			log.Printf("[TRACE] vApp network found: %s", vAppNetworkName)
-			return true, nil
-		}
-	}
-
-	return false, fmt.Errorf("configured vApp network isn't found: %s", vAppNetworkName)
-}
-
 type diskParams struct {
 	name       string
 	busNumber  *int
