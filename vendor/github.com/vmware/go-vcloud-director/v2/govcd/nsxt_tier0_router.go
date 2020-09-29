@@ -54,27 +54,35 @@ func (vcdCli *VCDClient) GetImportableNsxtTier0RouterByName(name, nsxtManagerId 
 	}
 
 	// TODO remove this when FIQL supports filtering on 'displayName'
-	// At the moment FIQL misbehaves so this is a temporary fix to make search work properly
-	filteredNsxtTier0Routers := make([]*NsxtTier0Router, 0)
-	for index, nsxtTier0Router := range nsxtTier0Routers {
-		if nsxtTier0Routers[index].NsxtTier0Router.DisplayName == name {
-			filteredNsxtTier0Routers = append(filteredNsxtTier0Routers, nsxtTier0Router)
-		}
-	}
+	nsxtTier0Routers = filterNsxtTier0RoutersInExternalNetworks(name, nsxtTier0Routers)
 	// EOF TODO remove this when FIQL supports filtering on 'displayName'
 
-	if len(filteredNsxtTier0Routers) == 0 {
+	if len(nsxtTier0Routers) == 0 {
 		// ErrorEntityNotFound is injected here for the ability to validate problem using ContainsNotFound()
 		return nil, fmt.Errorf("%s: no NSX-T Tier-0 router with name '%s' for NSX-T manager with id '%s' found",
 			ErrorEntityNotFound, name, nsxtManagerId)
 	}
 
-	if len(filteredNsxtTier0Routers) > 1 {
+	if len(nsxtTier0Routers) > 1 {
 		return nil, fmt.Errorf("more than one (%d) NSX-T Tier-0 router with name '%s' for NSX-T manager with id '%s' found",
-			len(filteredNsxtTier0Routers), name, nsxtManagerId)
+			len(nsxtTier0Routers), name, nsxtManagerId)
 	}
 
-	return filteredNsxtTier0Routers[0], nil
+	return nsxtTier0Routers[0], nil
+}
+
+// filterNsxtTier0RoutersInExternalNetworks is created as a fix for local filtering instead of using
+// FIQL filter (because it does not support it).
+func filterNsxtTier0RoutersInExternalNetworks(name string, allNnsxtTier0Routers []*NsxtTier0Router) []*NsxtTier0Router {
+	filteredNsxtTier0Routers := make([]*NsxtTier0Router, 0)
+	for index, nsxtTier0Router := range allNnsxtTier0Routers {
+		if allNnsxtTier0Routers[index].NsxtTier0Router.DisplayName == name {
+			filteredNsxtTier0Routers = append(filteredNsxtTier0Routers, nsxtTier0Router)
+		}
+	}
+
+	return filteredNsxtTier0Routers
+
 }
 
 // GetAllImportableNsxtTier0Routers retrieves all NSX-T Tier-0 routers using OpenAPI endpoint. Query parameters can be

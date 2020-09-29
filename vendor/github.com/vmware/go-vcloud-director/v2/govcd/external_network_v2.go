@@ -11,13 +11,16 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-// ExternalNetworkV2 is a type for version 2 of external network which uses OpenAPI endpoint to manage external networks
+// ExternalNetworkV2 is a type for version 2 of external network which uses OpenAPI endpoint to
+// manage external networks of both types (NSX-V and NSX-T)
 type ExternalNetworkV2 struct {
 	ExternalNetwork *types.ExternalNetworkV2
 	client          *Client
 }
 
-// CreateExternalNetwork creates a new external network using OpenAPI endpoint
+// CreateExternalNetworkV2 creates a new external network using OpenAPI endpoint. It can create
+// NSX-V and NSX-T backed networks based on what ExternalNetworkV2.NetworkBackings is
+// provided. types.ExternalNetworkV2 has documented fields.
 func CreateExternalNetworkV2(vcdClient *VCDClient, newExtNet *types.ExternalNetworkV2) (*ExternalNetworkV2, error) {
 	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointExternalNetworks
 	minimumApiVersion, err := vcdClient.Client.checkOpenApiEndpointCompatibility(endpoint)

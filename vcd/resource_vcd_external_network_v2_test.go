@@ -14,7 +14,15 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 )
 
+func TestAccVcdExternalNetworkV2NsxtVrf(t *testing.T) {
+	testAccVcdExternalNetworkV2Nsxt(t, testConfig.Nsxt.Tier0routerVrf)
+}
+
 func TestAccVcdExternalNetworkV2Nsxt(t *testing.T) {
+	testAccVcdExternalNetworkV2Nsxt(t, testConfig.Nsxt.Tier0router)
+}
+
+func testAccVcdExternalNetworkV2Nsxt(t *testing.T, nsxtTier0Router string) {
 
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
@@ -32,7 +40,7 @@ func TestAccVcdExternalNetworkV2Nsxt(t *testing.T) {
 	description := "Test External Network"
 	var params = StringMap{
 		"NsxtManager":         testConfig.Nsxt.Manager,
-		"NsxtTier0Router":     testConfig.Nsxt.Tier0router,
+		"NsxtTier0Router":     nsxtTier0Router,
 		"ExternalNetworkName": t.Name(),
 		"Type":                testConfig.Networking.ExternalNetworkPortGroupType,
 		"PortGroup":           testConfig.Networking.ExternalNetworkPortGroup,
@@ -45,6 +53,7 @@ func TestAccVcdExternalNetworkV2Nsxt(t *testing.T) {
 		"Tags":                "network extnetwork",
 	}
 
+	params["FuncName"] = t.Name()
 	configText := templateFill(testAccCheckVcdExternalNetworkV2Nsxt, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 

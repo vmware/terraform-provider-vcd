@@ -12,6 +12,7 @@ Provides a data source for available vCenter Port Groups.
 
 Supported in provider *v3.0+*
 
+
 ## Example Usage for vSwitch Port Group
 
 ```hcl

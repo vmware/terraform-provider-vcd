@@ -45,7 +45,7 @@ func datasourceNsxtTier0RouterRead(d *schema.ResourceData, meta interface{}) err
 	tier0RouterName := d.Get("name").(string)
 
 	tier0Router, err := vcdClient.GetImportableNsxtTier0RouterByName(tier0RouterName, nsxtManagerId)
-	if !govcd.ContainsNotFound(err) && err != nil {
+	if err != nil && !govcd.ContainsNotFound(err) {
 		return fmt.Errorf("could not find NSX-T Tier-0 router by name '%s' in NSX-T manager %s: %s",
 			tier0RouterName, nsxtManagerId, err)
 	}
@@ -69,7 +69,9 @@ func datasourceNsxtTier0RouterRead(d *schema.ResourceData, meta interface{}) err
 
 		for _, extNetwork := range extNets {
 			for _, v := range extNetwork.ExternalNetwork.NetworkBackings.Values {
-				if v.Name == tier0RouterName && v.BackingType == types.ExternalNetworkBackingTypeNsxtTier0Router {
+				// Very odd but when VRF Tier-0 router is used - BackingType can be UNKNOWN
+				if v.Name == tier0RouterName &&
+					(v.BackingType == types.ExternalNetworkBackingTypeNsxtTier0Router || v.BackingType == "UNKNOWN") {
 					d.Set("is_assigned", true)
 					d.SetId(v.BackingID)
 					return nil

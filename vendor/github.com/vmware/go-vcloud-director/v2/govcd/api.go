@@ -653,7 +653,7 @@ func IsUuid(identifier string) bool {
 // isUrn validates if supplied identifier is of URN format (e.g. urn:vcloud:nsxtmanager:09722307-aee0-4623-af95-7f8e577c9ebc)
 // it checks for the following criteria:
 // 1. idenfifier is not empty
-// 2. identifier has 4 elements separated by ';'
+// 2. identifier has 4 elements separated by ':'
 // 3. element 1 is 'urn' and element 4 is valid UUID
 func isUrn(identifier string) bool {
 	if identifier == "" {

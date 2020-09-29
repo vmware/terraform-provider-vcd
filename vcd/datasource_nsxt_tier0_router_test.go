@@ -9,9 +9,19 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 )
 
-// TestAccVcdDatasourceNsxtTier0Router checks if datasource can find existing Tier-0 router provided it is specified in
-// configuration
+// TestAccVcdDatasourceNsxtTier0Router checks if datasource can find existing regular Tier-0 router
+// provided it is specified in configuration
 func TestAccVcdDatasourceNsxtTier0Router(t *testing.T) {
+	testAccVcdDatasourceNsxtTier0Router(t, testConfig.Nsxt.Tier0router)
+}
+
+// TestAccVcdDatasourceNsxtTier0Router checks if datasource can find existing VRF Tier-0 router
+// provided it is specified in configuration
+func TestAccVcdDatasourceNsxtTier0RouterVrf(t *testing.T) {
+	testAccVcdDatasourceNsxtTier0Router(t, testConfig.Nsxt.Tier0routerVrf)
+}
+
+func testAccVcdDatasourceNsxtTier0Router(t *testing.T, tier0RouterName string) {
 
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
@@ -23,7 +33,7 @@ func TestAccVcdDatasourceNsxtTier0Router(t *testing.T) {
 	var params = StringMap{
 		"FuncName":        t.Name(),
 		"NsxtManager":     testConfig.Nsxt.Manager,
-		"NsxtTier0Router": testConfig.Nsxt.Tier0router,
+		"NsxtTier0Router": tier0RouterName,
 		"Tags":            "nsxt",
 	}
 

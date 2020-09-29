@@ -12,6 +12,10 @@ Provides a data source for NSX-T manager.
 
 Supported in provider *v3.0+*
 
+~> **Note:** This resource uses new VMware Cloud Director
+[OpenAPI](https://code.vmware.com/docs/11982/getting-started-with-vmware-cloud-director-openapi) and
+requires at least VCD *10.1.1+* and NSX-T *3.0+*.
+
 ## Example Usage 
 
 ```hcl

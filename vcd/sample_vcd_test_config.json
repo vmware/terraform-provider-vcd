@@ -93,7 +93,8 @@
   },
   "nsxt": {
     "manager": "nsxManager1",
-    "tier0router": "tier-0-2"
+    "tier0router": "tier-0-2",
+    "tier0routervrf": "tier-0-2"
   },
   "logging" : {
     "//": "Enables logging from go-vcloud-director in vendor",

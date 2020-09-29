@@ -132,6 +132,8 @@ nsxt:
     manager: nsxManager1
     # NSX-T tier-0 router used for external network
     tier0router: tier-0-router
+    # NSX-T tier-0 VRF router used for external network
+    tier0routervrf: tier-0-router-vrf
 logging:
     # All items in this section are optional
     # Logging is disabled by default.

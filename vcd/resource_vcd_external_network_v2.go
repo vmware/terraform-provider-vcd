@@ -189,7 +189,7 @@ func resourceVcdExternalNetworkV2Update(d *schema.ResourceData, meta interface{}
 
 	extNet, err := govcd.GetExternalNetworkV2ById(vcdClient.VCDClient, d.Id())
 	if err != nil {
-		return fmt.Errorf("could not find external network by ID '%s': %s", d.Id(), err)
+		return fmt.Errorf("could not find external network V2 by ID '%s': %s", d.Id(), err)
 	}
 
 	netType, err := getExternalNetworkV2Type(vcdClient, d)
@@ -202,7 +202,7 @@ func resourceVcdExternalNetworkV2Update(d *schema.ResourceData, meta interface{}
 
 	_, err = extNet.Update()
 	if err != nil {
-		return fmt.Errorf("error updating external network: %s", err)
+		return fmt.Errorf("error updating external network V2: %s", err)
 	}
 
 	return resourceVcdExternalNetworkV2Read(d, meta)
@@ -218,7 +218,7 @@ func resourceVcdExternalNetworkV2Read(d *schema.ResourceData, meta interface{}) 
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("could not find external network by ID '%s': %s", d.Id(), err)
+		return fmt.Errorf("could not find external network V2 by ID '%s': %s", d.Id(), err)
 	}
 
 	return setExternalNetworkV2Data(d, extNet.ExternalNetwork)
@@ -230,7 +230,7 @@ func resourceVcdExternalNetworkV2Delete(d *schema.ResourceData, meta interface{}
 
 	extNet, err := govcd.GetExternalNetworkV2ById(vcdClient.VCDClient, d.Id())
 	if err != nil {
-		return fmt.Errorf("could not find external network by ID '%s': %s", d.Id(), err)
+		return fmt.Errorf("could not find external network V2 by ID '%s': %s", d.Id(), err)
 	}
 
 	return extNet.Delete()
@@ -250,7 +250,7 @@ func resourceVcdExternalNetworkV2Import(d *schema.ResourceData, meta interface{}
 
 	extNetRes, err := govcd.GetExternalNetworkV2ByName(vcdClient.VCDClient, d.Id())
 	if err != nil {
-		return nil, fmt.Errorf("error fetching external network details %s", err)
+		return nil, fmt.Errorf("error fetching external network V2 details %s", err)
 	}
 
 	d.SetId(extNetRes.ExternalNetwork.ID)
@@ -292,7 +292,7 @@ func getExternalNetworkV2BackingType(vcdClient *VCDClient, d *schema.ResourceDat
 		backing := types.ExternalNetworkV2Backing{
 			BackingID:   nsxtNetworkStrings["nsxt_tier0_router_id"], // Tier 0- router
 			BackingType: types.ExternalNetworkBackingTypeNsxtTier0Router,
-			NetworkProvider: types.NetworkProviderProvider{
+			NetworkProvider: types.NetworkProvider{
 				ID: nsxtNetworkStrings["nsxt_manager_id"], // NSX-T manager
 			},
 		}
@@ -314,7 +314,7 @@ func getExternalNetworkV2BackingType(vcdClient *VCDClient, d *schema.ResourceDat
 			backing := types.ExternalNetworkV2Backing{
 				BackingID:   nsxvNetworkStrings["portgroup_id"],
 				BackingType: pgType,
-				NetworkProvider: types.NetworkProviderProvider{
+				NetworkProvider: types.NetworkProvider{
 					ID: nsxvNetworkStrings["vcenter_id"],
 				},
 			}
@@ -439,7 +439,8 @@ func setExternalNetworkV2Data(d *schema.ResourceData, net *types.ExternalNetwork
 			return fmt.Errorf("error setting 'vsphere_network' block: %s", err)
 		}
 
-	case types.ExternalNetworkBackingTypeNsxtTier0Router:
+	// When a VRF Tier-0 router is used - responded backingType is "UNKNOWN"
+	case types.ExternalNetworkBackingTypeNsxtTier0Router, "UNKNOWN":
 		backingInterface := make([]interface{}, 1)
 		backing := net.NetworkBackings.Values[0]
 		backingMap := make(map[string]interface{})
