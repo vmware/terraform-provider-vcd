@@ -210,8 +210,8 @@ var vappVmSchema = map[string]*schema.Schema{
 					Description:  "IP of the VM. Settings depend on `ip_allocation_mode`. Omitted or empty for DHCP, POOL, NONE. Required for MANUAL",
 				},
 				"is_primary": {
-					Default:  false,
 					Optional: true,
+					Computed: true,
 					// By default if the value is omitted it will report schema change
 					// on every terraform operation. The below function
 					// suppresses such cases "" => "false" when applying.
