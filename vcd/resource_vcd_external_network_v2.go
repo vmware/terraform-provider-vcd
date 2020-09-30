@@ -439,7 +439,10 @@ func setExternalNetworkV2Data(d *schema.ResourceData, net *types.ExternalNetwork
 			return fmt.Errorf("error setting 'vsphere_network' block: %s", err)
 		}
 
-	// When a VRF Tier-0 router is used - responded backingType is "UNKNOWN"
+	// TODO API V34.0 !Important!
+	// When a VRF Tier-0 router is used - responded backingType is "UNKNOWN" until API v34.0 where
+	// field `BackingType` is deprecated in favor of `backingTypeValue` which supports explicit
+	// `NSXT_VRF_TIER0`. VRF Tier-0 routers are only officially supported in 10.2 release.
 	case types.ExternalNetworkBackingTypeNsxtTier0Router, "UNKNOWN":
 		backingInterface := make([]interface{}, 1)
 		backing := net.NetworkBackings.Values[0]
