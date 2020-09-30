@@ -304,7 +304,7 @@ func setVmSizingPolicy(d *schema.ResourceData, policy types.VdcComputePolicy) er
 		}
 	}
 
-	log.Printf("[TRACE] VM sizing policy read completed: %#s", policy.Name)
+	log.Printf("[TRACE] VM sizing policy read completed: %s", policy.Name)
 	return nil
 }
 
