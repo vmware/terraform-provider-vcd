@@ -29,7 +29,7 @@ output "edge_gateway_id" {
 # Get the name of the default gateway from the data source
 # and use it to establish a second data source
 data "vcd_external_network" "external_network1" {
-  name = "${data.vcd_edgegateway.mygw.external_network.name}"
+  name = data.vcd_edgegateway.mygw.external_network.name
 }
 
 # From the second data source we extract the basic networking info
