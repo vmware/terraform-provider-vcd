@@ -61,8 +61,8 @@ func TestAccVcdOrgVdcWithVmSizingPolicy(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateText)
+	debugPrintf("#[DEBUG] CONFIGURATION - creation: %s", configText)
+	debugPrintf("#[DEBUG] CONFIGURATION - update: %s", updateText)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

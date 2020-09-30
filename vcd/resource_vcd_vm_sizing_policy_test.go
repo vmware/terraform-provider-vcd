@@ -48,9 +48,9 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateText)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", dataSourceText)
+	debugPrintf("#[DEBUG] CONFIGURATION - creation: %s", configText)
+	debugPrintf("#[DEBUG] CONFIGURATION - update: %s", updateText)
+	debugPrintf("#[DEBUG] CONFIGURATION - data source: %s", dataSourceText)
 
 	resource1 := "vcd_vm_sizing_policy." + params["PolicyName"].(string) + "_1"
 	resource2 := "vcd_vm_sizing_policy." + params["PolicyName"].(string) + "_2"
