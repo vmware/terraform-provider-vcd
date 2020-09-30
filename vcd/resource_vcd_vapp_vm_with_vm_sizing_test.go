@@ -311,7 +311,7 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   }
 
   storage_profile {
-    name = "{{.ProviderVdcStorageProfile}}"
+    name     = "{{.ProviderVdcStorageProfile}}"
     enabled  = true
     limit    = 90240
     default  = true
