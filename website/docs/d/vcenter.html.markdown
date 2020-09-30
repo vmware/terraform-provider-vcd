@@ -29,4 +29,8 @@ The following arguments are supported:
 
 ## Attribute reference
 
-Only ID is set to be able and reference in other resources or data sources.
+* `connection_status` -  vCenter connection status (e.g. `CONNECTED`). 
+* `is_enabled` -  Boolean value if vCenter is enabled.
+* `status` -  vCenter status (e.g. `READY`).
+* `vcenter_host` -  Hostname of configured vCenter.
+* `vcenter_version` -  vCenter version (e.g. `6.7.0`)

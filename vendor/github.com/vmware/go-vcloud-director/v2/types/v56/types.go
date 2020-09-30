@@ -2385,7 +2385,7 @@ type QueryResultVirtualCenterRecordType struct {
 	IsEnabled     bool   `xml:"isEnabled,attr,omitempty"`
 	IsSupported   bool   `xml:"isSupported,attr,omitempty"`
 	ListenerState string `xml:"listenerState,attr,omitempty"`
-	Status        string `xml:"stats,attr,omitempty"`
+	Status        string `xml:"status,attr,omitempty"`
 	Url           string `xml:"url,attr,omitempty"`
 	UserName      string `xml:"userName,attr,omitempty"`
 	VcVersion     string `xml:"vcVersion,attr,omitempty"`
