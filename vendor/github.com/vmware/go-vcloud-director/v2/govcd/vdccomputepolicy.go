@@ -1,5 +1,9 @@
 package govcd
 
+/*
+ * Copyright 2020 VMware, Inc.  All rights reserved.  Licensed under the Apache v2 License.
+ */
+
 import (
 	"fmt"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
