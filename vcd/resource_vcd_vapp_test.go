@@ -12,10 +12,9 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
-var vappName = "TestAccVcdVAppVapp"
-
 func TestAccVcdVApp_Basic(t *testing.T) {
 	var vapp govcd.VApp
+	var vappName = "TestAccVcdVAppVapp"
 
 	var params = StringMap{
 		"Org":          testConfig.VCD.Org,
@@ -32,15 +31,15 @@ func TestAccVcdVApp_Basic(t *testing.T) {
 	}
 	configText := templateFill(testAccCheckVcdVApp_basic, params)
 
-	params["FuncName"] = "TestAccCheckVcdVApp_powerOff"
-
+	params["FuncName"] = "TestAccCheckVcdVApp_update"
 	configTextUpdate := templateFill(testAccCheckVcdVApp_update, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION basic: %s\n", configText)
-	debugPrintf("#[DEBUG] CONFIGURATION udpate: %s\n", configTextUpdate)
+	debugPrintf("#[DEBUG] CONFIGURATION update: %s\n", configTextUpdate)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -51,10 +50,10 @@ func TestAccVcdVApp_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppExists("vcd_vapp."+vappName, &vapp),
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "name", vappName),
+					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "status", "1"),
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "metadata.vapp_metadata", "vApp Metadata."),
 					resource.TestMatchResourceAttr("vcd_vapp."+vappName, "href",
 						regexp.MustCompile(`[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}`)),
-					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "name", vappName),
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "metadata.vapp_metadata", "vApp Metadata."),
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, `guest_properties.guest.hostname`, "test-host"),
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, `guest_properties.guest.another.subkey`, "another-value"),
@@ -65,6 +64,8 @@ func TestAccVcdVApp_Basic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVAppExists("vcd_vapp."+vappName, &vapp),
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "name", vappName),
+					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "power_on", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "status", "4"),
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, "metadata.vapp_metadata", "vApp Metadata updated"),
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, `guest_properties.guest.another.subkey`, "new-value"),
 					resource.TestCheckResourceAttr("vcd_vapp."+vappName, `guest_properties.guest.third.subkey`, "third-value"),
@@ -76,7 +77,7 @@ func TestAccVcdVApp_Basic(t *testing.T) {
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, vappName),
 				// These fields can't be retrieved from user data
-				ImportStateVerifyIgnore: []string{},
+				ImportStateVerifyIgnore: []string{"power_on"},
 			},
 		},
 	})
@@ -106,6 +107,12 @@ func testAccCheckVcdVAppExists(n string, vapp *govcd.VApp) resource.TestCheckFun
 		}
 
 		*vapp = *newVapp
+
+		/*		// must wait until the vApp exits
+				err = vapp.BlockWhileStatus("RESOLVED", conn.Client.MaxRetryTimeout)
+				if err != nil {
+					return fmt.Errorf("error waiting for created test vApp to have working state: %s", err)
+				}*/
 
 		return nil
 	}
@@ -156,6 +163,19 @@ resource "vcd_vapp" "{{.VappName}}" {
 	"guest.another.subkey" = "another-value"
   }
 }
+
+# needed to check power on on update in next step
+resource "vcd_vapp_vm" "test_vm1" {
+  vapp_name     = vcd_vapp.{{.VappName}}.name
+  name          = "test_vm1"
+  memory        = 512
+  cpus          = 1
+  cpu_cores     = 1 
+
+  os_type                        = "rhel4Guest"
+  hardware_version               = "vmx-14"
+  computer_name                  = "compNameUp"
+}
 `
 
 const testAccCheckVcdVApp_update = `
@@ -173,5 +193,20 @@ resource "vcd_vapp" "{{.VappName}}" {
 	"guest.another.subkey" = "new-value"
 	"guest.third.subkey"   = "third-value"
   }
+
+  power_on = true
+}
+
+# vApp power on won't work if vApp doesn't have VM
+resource "vcd_vapp_vm" "test_vm1" {
+  vapp_name     = vcd_vapp.{{.VappName}}.name
+  name          = "test_vm1"
+  memory        = 512
+  cpus          = 1
+  cpu_cores     = 1 
+
+  os_type                        = "rhel4Guest"
+  hardware_version               = "vmx-14"
+  computer_name                  = "compNameUp"
 }
 `

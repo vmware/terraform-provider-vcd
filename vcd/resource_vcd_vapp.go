@@ -59,6 +59,12 @@ func resourceVcdVApp() *schema.Resource {
 				Computed:    true,
 				Description: "vApp Hyper Reference",
 			},
+			"power_on": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: "A boolean value stating if this vApp should be powered on",
+			},
 			"guest_properties": {
 				Type:        schema.TypeMap,
 				Optional:    true,
@@ -189,6 +195,17 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 			if err != nil {
 				return fmt.Errorf(errorCompletingTask, err)
 			}
+		}
+	}
+
+	if d.HasChange("power_on") && d.Get("power_on").(bool) {
+		task, err := vapp.PowerOn()
+		if err != nil {
+			return fmt.Errorf("error Powering Up: %#v", err)
+		}
+		err = task.WaitTaskCompletion()
+		if err != nil {
+			return fmt.Errorf("error completing tasks: %#v", err)
 		}
 	}
 
