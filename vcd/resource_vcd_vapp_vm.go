@@ -587,7 +587,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		// TODO v3.0 remove else branch once 'network_name', 'vapp_network_name', 'ip' are deprecated
 		networkConnectionSection := types.NetworkConnectionSection{}
 		if len(d.Get("network").([]interface{})) > 0 {
-			networkConnectionSection, err = networksToConfig(d.Get("network").([]interface{}), vdc, *vapp, vcdClient)
+			networkConnectionSection, err = networksToConfig(d, vdc, *vapp, vcdClient)
 		} else {
 			networkConnectionSection, err = deprecatedNetworksToConfig(d.Get("network_name").(string),
 				d.Get("vapp_network_name").(string), d.Get("ip").(string), vdc, *vapp, vcdClient)
@@ -872,7 +872,7 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	// hot update possible for adding new or update existing network, removing of network has to be done with cold update
 	if d.HasChange("network") && !isNetworkRemoved(d) {
-		networkConnectionSection, err := networksToConfig(d.Get("network").([]interface{}), vdc, *vapp, vcdClient)
+		networkConnectionSection, err := networksToConfig(d, vdc, *vapp, vcdClient)
 		if err != nil {
 			return fmt.Errorf("unable to setup network configuration for update: %s", err)
 		}
@@ -1093,7 +1093,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		}
 
 		if networksNeedsColdChange {
-			networkConnectionSection, err := networksToConfig(d.Get("network").([]interface{}), vdc, *vapp, vcdClient)
+			networkConnectionSection, err := networksToConfig(d, vdc, *vapp, vcdClient)
 			if err != nil {
 				return fmt.Errorf("unable to setup network configuration for update: %s", err)
 			}
@@ -1713,10 +1713,12 @@ func resourceVcdVmIndependentDiskHash(v interface{}) int {
 
 // networksToConfig converts terraform schema for 'network' and converts to types.NetworkConnectionSection
 // which is used for creating new VM
-func networksToConfig(networks []interface{}, vdc *govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (types.NetworkConnectionSection, error) {
+func networksToConfig(d *schema.ResourceData, vdc *govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (types.NetworkConnectionSection, error) {
+	networks := d.Get("network").([]interface{})
 
 	networkConnectionSection := types.NetworkConnectionSection{}
 	for index, singleNetwork := range networks {
+
 		nic := singleNetwork.(map[string]interface{})
 		netConn := &types.NetworkConnection{}
 
@@ -1729,7 +1731,8 @@ func networksToConfig(networks []interface{}, vdc *govcd.Vdc, vapp govcd.VApp, v
 		macAddress, macIsSet := nic["mac"].(string)
 
 		isPrimary := nic["is_primary"].(bool)
-		if isPrimary {
+		nicHasPrimaryChange := d.HasChange("network." + strconv.Itoa(index) + ".is_primary")
+		if nicHasPrimaryChange && isPrimary {
 			networkConnectionSection.PrimaryNetworkConnectionIndex = index
 		}
 
@@ -2384,7 +2387,7 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 	d.SetId(newVm.VM.ID)
 
 	// Due the Bug in vCD VM creation(works only with org VDC networks, not vapp) - we setup network configuration with update. Fixed only 10.1 version.
-	networkConnectionSection, err := networksToConfig(d.Get("network").([]interface{}), vdc, *vapp, vcdClient)
+	networkConnectionSection, err := networksToConfig(d, vdc, *vapp, vcdClient)
 	if err != nil {
 		return nil, fmt.Errorf("unable to setup network configuration for empty VM: %s", err)
 	}
