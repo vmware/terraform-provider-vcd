@@ -93,7 +93,7 @@ The following arguments are supported:
 * `name` - (Required) A unique name for the vApp
 * `org` - (Optional; *v2.0+*) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional; *v2.0+*) The name of VDC to use, optional if defined at provider level
-* `power_on` - (Optional, **Deprecated** in favor of `vcd_vapp_vm.power_on`) A boolean value stating if this vApp should be powered on. Default is `false`. Works only on update when vApp have already VMs.
+* `power_on` - (Optional, **Deprecated** in favor of `vcd_vapp_vm.power_on`) A boolean value stating if this vApp should be powered on. Default is `false`. Works only on update when vApp already has VMs.
 * `metadata` - (Optional) Key value map of metadata to assign to this vApp. Key and value can be any string. (Since *v2.2+* metadata is added directly to vApp instead of first VM in vApp)
 * `guest_properties` - (Optional; *v2.5+*) Key value map of vApp guest properties
 
