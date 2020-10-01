@@ -26,6 +26,12 @@ The following vCloud Director versions are supported by this provider:
 * 10.0
 * 10.1
 
+## Removed resources and fields
+
+The following fields were removed from resources in *v3.0*:
+
+*  `ip, network_name, vapp_network_name, network_href, mac, initscript` from `vcd_vapp_vm`
+
 ## Example Usage
 
 ### Connecting as Org Admin
