@@ -765,7 +765,7 @@ func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway, vd
 	deprecatedValue, deprecatedOk := endpointMap["virtual_machine_ids"]
 	value, ok := endpointMap["vm_ids"]
 	if deprecatedOk {
-		_, _ = fmt.Fprint(getTerraformStdout(), "Warning: `virtual_machine_ids` [DEPRECATED] In favor of vm_ids \n")
+		_, _ = fmt.Fprint(getTerraformStdout(), "Warning: `virtual_machine_ids` [DEPRECATED] In favor of `vm_ids` \n")
 		endpointVmIdStrings := convertSchemaSetToSliceOfStrings(deprecatedValue.(*schema.Set))
 		result.GroupingObjectIds = append(result.GroupingObjectIds, endpointVmIdStrings...)
 	}
