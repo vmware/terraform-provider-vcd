@@ -63,6 +63,7 @@ func resourceVcdVApp() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
+				Deprecated:  "Please use `vcd_vapp_vm.power_on`",
 				Description: "A boolean value stating if this vApp should be powered on",
 			},
 			"guest_properties": {
