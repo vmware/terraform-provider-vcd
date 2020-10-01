@@ -642,3 +642,8 @@ func takeIntAddress(x int) *int {
 func takeStringPointer(x string) *string {
 	return &x
 }
+
+// takeFloatAddress is a helper that returns the address of an `float64`
+func takeFloatAddress(x float64) *float64 {
+	return &x
+}

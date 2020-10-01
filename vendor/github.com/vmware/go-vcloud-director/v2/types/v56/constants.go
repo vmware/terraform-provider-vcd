@@ -123,6 +123,8 @@ const (
 	MimeControlAccess = "application/vnd.vmware.vcloud.controlAccess+xml"
 	// Mime of VM capabilities
 	MimeVmCapabilities = "application/vnd.vmware.vcloud.vmCapabilitiesSection+xml"
+	// Mime of Vdc Compute Policy References
+	MimeVdcComputePolicyReferences = "application/vnd.vmware.vcloud.vdcComputePolicyReferences+xml"
 )
 
 const (
@@ -321,8 +323,10 @@ const (
 
 // These constants allow to construct OpenAPI endpoint paths and avoid strings in code for easy replacement in future.
 const (
-	OpenApiPathVersion1_0_0 = "1.0.0/"
-	OpenApiEndpointRoles    = "roles/"
+	OpenApiPathVersion1_0_0                   = "1.0.0/"
+	OpenApiEndpointRoles                      = "roles/"
+	OpenApiEndpointVdcComputePolicies         = "vdcComputePolicies/"
+	OpenApiEndpointVdcAssignedComputePolicies = "vdcs/%s/computePolicies"
 )
 
 // Header keys to run operations in tenant context

@@ -3,6 +3,7 @@ package vcd
 import (
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -127,6 +128,44 @@ func validateIntLeaseSeconds() schema.SchemaValidateFunc {
 		valid := i == 0 || v >= 3600
 		if !valid {
 			es = append(es, fmt.Errorf("expected %s to be either 0 or a number >= 3600 , got %d", k, v))
+			return
+		}
+
+		return
+	}
+}
+
+// IsIntAndAtLeast returns a SchemaValidateFunc which tests if the provided value string is convertable to int
+// and is at least min (inclusive)
+func IsIntAndAtLeast(min int) schema.SchemaValidateFunc {
+	return func(i interface{}, k string) (warnings []string, errors []error) {
+		value, err := strconv.Atoi(i.(string))
+		if err != nil {
+			errors = append(errors, fmt.Errorf("expected type of %s to be integer", k))
+			return warnings, errors
+		}
+
+		if value < min {
+			errors = append(errors, fmt.Errorf("expected %s to be at least (%d), got %d", k, min, value))
+			return warnings, errors
+		}
+
+		return warnings, errors
+	}
+}
+
+// IsFloatAndBetween returns a SchemaValidateFunc which tests if the provided value convertable to
+// float64 and is between min and max (inclusive).
+func IsFloatAndBetween(min, max float64) schema.SchemaValidateFunc {
+	return func(i interface{}, k string) (s []string, es []error) {
+		value, err := strconv.ParseFloat(i.(string), 64)
+		if err != nil {
+			es = append(es, fmt.Errorf("expected type of %s to be float64", k))
+			return
+		}
+
+		if value < min || value > max {
+			es = append(es, fmt.Errorf("expected %s to be in the range (%f - %f), got %f", k, min, max, value))
 			return
 		}
 
