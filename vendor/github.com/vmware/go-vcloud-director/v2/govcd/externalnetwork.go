@@ -42,7 +42,7 @@ func getExternalNetworkHref(client *Client) (string, error) {
 func (externalNetwork ExternalNetwork) Refresh() error {
 
 	if !externalNetwork.client.IsSysAdmin {
-		return fmt.Errorf("functionality requires system administrator privileges")
+		return fmt.Errorf("functionality requires System Administrator privileges")
 	}
 
 	_, err := externalNetwork.client.ExecuteRequest(externalNetwork.ExternalNetwork.HREF, http.MethodGet,
@@ -62,7 +62,7 @@ func (externalNetwork *ExternalNetwork) Delete() (Task, error) {
 	util.Logger.Printf("[TRACE] ExternalNetwork.Delete")
 
 	if !externalNetwork.client.IsSysAdmin {
-		return Task{}, fmt.Errorf("functionality requires system administrator privileges")
+		return Task{}, fmt.Errorf("functionality requires System Administrator privileges")
 	}
 
 	// Return the task
