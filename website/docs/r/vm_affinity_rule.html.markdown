@@ -66,7 +66,6 @@ The following arguments are supported:
 * `required` (Optional) True if this affinity rule is required. When a rule is mandatory, a host failover will not 
    power on the VM if doing so would violate the rule. The default is `true`
 * `vm_ids` (Required) A set of virtual machine IDs that compose this rule. At least 2 IDs must be provided.
-* `virtual_machine_ids` (Optional, deprecated in favor of `vm_ids`) A set of virtual machine IDs that compose this rule. At least 2 IDs must be provided.
 
 ## Importing
 

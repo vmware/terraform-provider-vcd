@@ -241,15 +241,8 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 	params["SkipNotice"] = "# skip-binary-test: only for updates"
 	updateText := templateFill(testAccVmAffinityRuleBase+testAccVmAffinityRuleOperation, params)
 
-	params["FuncName"] = data.name + "-deprecated"
-	params["AffinityRuleName"] = data.name + "-deprecated"
-	configTextDeprecated := templateFill(testAccVmAffinityRuleBase+
-		testAccVmAffinityRuleOperationWithDeprecatedField+
-		testAccVmAffinityRuleDataSource, params)
-
 	debugPrintf("#[DEBUG] CREATION CONFIGURATION: %s", configText)
 	debugPrintf("#[DEBUG] UPDATE CONFIGURATION: %s", updateText)
-	debugPrintf("#[DEBUG] DEPRECATED CONFIGURATION: %s", configTextDeprecated)
 
 	var rule govcd.VmAffinityRule
 	resourceName := "vcd_vm_affinity_rule." + data.name
@@ -258,23 +251,6 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckVmAffinityRuleDestroy(&rule, testConfig.VCD.Org, testConfig.VCD.Vdc),
 		Steps: []resource.TestStep{
-			// Tests deprecated field
-			resource.TestStep{
-				Config: configTextDeprecated,
-				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdVmAffinityRuleExists(resourceName, testConfig.VCD.Org, testConfig.VCD.Vdc, &rule),
-					resource.TestCheckResourceAttr(
-						resourceName, "name", data.name+"-deprecated"),
-					resource.TestCheckResourceAttr(
-						resourceName, "enabled", fmt.Sprintf("%v", "false")),
-					resource.TestCheckResourceAttr(
-						resourceName, "required", fmt.Sprintf("%v", "false")),
-					resource.TestCheckResourceAttr(
-						resourceName, "virtual_machine_ids.#", fmt.Sprintf("%d", expectedUpdateVMs)),
-					resource.TestCheckResourceAttr(
-						resourceName, "polarity", data.polarity),
-				),
-			},
 			// Test creation
 			resource.TestStep{
 				Config: configText,
@@ -607,22 +583,5 @@ output "polarity_of_rule_by_name" {
 
 output "name_of_rule_by_id" {
 	value = data.vcd_vm_affinity_rule.ds_affinity_rule_by_id.name
-}
-`
-
-const testAccVmAffinityRuleOperationWithDeprecatedField = `
-{{.SkipNotice}}
-resource "vcd_vm_affinity_rule" "{{.AffinityRuleIdentifier}}" {
-
-  org      = "{{.Org}}"
-  vdc      = "{{.Vdc}}"
-  name     = "{{.AffinityRuleName}}"
-  required = {{.Required}}
-  enabled  = {{.Enabled}}
-  polarity = "{{.Polarity}}"
-
-  virtual_machine_ids = [
-    {{.VirtualMachineIds}}
-  ]
 }
 `

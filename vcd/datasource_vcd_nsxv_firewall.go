@@ -91,15 +91,6 @@ func datasourceVcdNsxvFirewallRule() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"virtual_machine_ids": {
-							Type:        schema.TypeSet,
-							Computed:    true,
-							Deprecated:  "In favor of vm_ids",
-							Description: "Set of VM IDs",
-							Elem: &schema.Schema{
-								Type: schema.TypeString,
-							},
-						},
 						"vm_ids": {
 							Type:        schema.TypeSet,
 							Computed:    true,
@@ -161,15 +152,6 @@ func datasourceVcdNsxvFirewallRule() *schema.Resource {
 							Type:        schema.TypeSet,
 							Computed:    true,
 							Description: "'vse', 'internal', 'external' or network name",
-							Elem: &schema.Schema{
-								Type: schema.TypeString,
-							},
-						},
-						"virtual_machine_ids": {
-							Type:        schema.TypeSet,
-							Computed:    true,
-							Deprecated:  "In favor of vm_ids",
-							Description: "Set of VM IDs",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},

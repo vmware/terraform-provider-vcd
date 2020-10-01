@@ -183,7 +183,6 @@ selected, the rule applies to traffic you specified. Default `false`. This
 * `ip_addresses` - (Optional) A set of IP addresses, CIDRs or ranges. A keyword `any` is also
 accepted as a parameter.
 * `gateway_interfaces` - (Optional) A set of with either three keywords `vse` (UI names it as `any`), `internal`, `external` or an org network name. It automatically looks up vNic in the backend.
-* `virtual_machine_ids` - (Optional, deprecated in favor of `vm_ids`) A set of `.id` fields of `vcd_vapp_vm` resources.
 * `vm_ids` - (Optional) A set of `.id` fields of `vcd_vapp_vm` resources.
 * `org_networks` - (Optional) A set of org network names.
 * `ip_sets` - (Optional) A set of existing IP set names (either created manually or configured using `vcd_nsxv_ip_set` resource)

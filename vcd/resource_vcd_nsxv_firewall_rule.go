@@ -119,23 +119,10 @@ func resourceVcdNsxvFirewallRule() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"virtual_machine_ids": {
-							Type:          schema.TypeSet,
-							ConflictsWith: []string{"source.0.vm_ids"},
-							Optional:      true,
-							Computed:      true,
-							Description:   "Set of VM IDs",
-							Deprecated:    "In favor of vm_ids",
-							Elem: &schema.Schema{
-								Type: schema.TypeString,
-							},
-						},
 						"vm_ids": {
-							Type:          schema.TypeSet,
-							ConflictsWith: []string{"source.0.virtual_machine_ids"},
-							Optional:      true,
-							Computed:      true,
-							Description:   "Set of VM IDs",
+							Optional:    true,
+							Type:        schema.TypeSet,
+							Description: "Set of VM IDs",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -198,23 +185,10 @@ func resourceVcdNsxvFirewallRule() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"virtual_machine_ids": {
-							ConflictsWith: []string{"destination.0.vm_ids"},
-							Type:          schema.TypeSet,
-							Optional:      true,
-							Computed:      true,
-							Description:   "Set of VM IDs",
-							Deprecated:    "In favor of vm_ids",
-							Elem: &schema.Schema{
-								Type: schema.TypeString,
-							},
-						},
 						"vm_ids": {
-							ConflictsWith: []string{"destination.0.virtual_machine_ids"},
-							Type:          schema.TypeSet,
-							Optional:      true,
-							Computed:      true,
-							Description:   "Set of VM IDs",
+							Optional:    true,
+							Type:        schema.TypeSet,
+							Description: "Set of VM IDs",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -704,7 +678,6 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 	endpointMap["ip_addresses"] = endpointIpsSet
 	endpointMap["gateway_interfaces"] = endpointGatewayInterfaceSet
 	endpointMap["org_networks"] = endpointNetworksSet
-	endpointMap["virtual_machine_ids"] = endpointVmSet
 	endpointMap["vm_ids"] = endpointVmSet
 	endpointMap["ip_sets"] = endpointIpSetSet
 	// TODO - uncomment when security groups are supported
@@ -762,17 +735,8 @@ func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway, vd
 	// 'types.EdgeFirewallEndpoint.GroupingObjectId' holds IDs for VMs, org networks, ipsets and Security groups
 
 	// Extract VM IDs from set and add them to endpoint structure
-	deprecatedValue, deprecatedOk := endpointMap["virtual_machine_ids"]
-	value, ok := endpointMap["vm_ids"]
-	if deprecatedOk {
-		_, _ = fmt.Fprint(getTerraformStdout(), "Warning: `virtual_machine_ids` [DEPRECATED] In favor of `vm_ids` \n")
-		endpointVmIdStrings := convertSchemaSetToSliceOfStrings(deprecatedValue.(*schema.Set))
-		result.GroupingObjectIds = append(result.GroupingObjectIds, endpointVmIdStrings...)
-	}
-	if ok {
-		endpointVmIdStrings := convertSchemaSetToSliceOfStrings(value.(*schema.Set))
-		result.GroupingObjectIds = append(result.GroupingObjectIds, endpointVmIdStrings...)
-	}
+	endpointVmIdStrings := convertSchemaSetToSliceOfStrings(endpointMap["vm_ids"].(*schema.Set))
+	result.GroupingObjectIds = append(result.GroupingObjectIds, endpointVmIdStrings...)
 
 	// Extract org network names from set, lookup their IDs and add them to endpoint structure
 	endpointOrgNetworkNameStrings := convertSchemaSetToSliceOfStrings(endpointMap["org_networks"].(*schema.Set))
