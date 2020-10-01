@@ -1,13 +1,16 @@
 TEST?=$$(go list ./... |grep -v 'vendor')
 GOFMT_FILES?=$$(find . -name '*.go' |grep -v vendor)
 WEBSITE_REPO=github.com/hashicorp/terraform-website
+GIT_SHORTCOMMIT=$(shell git rev-parse --short HEAD)
+DATE=$(shell date)
+
 PKG_NAME=vcd
 
 default: build
 
 # builds the plugin
 build: fmtcheck
-	go install
+	go install -ldflags="-X 'github.com/vmware/terraform-provider-vcd/v3/vcd.BuildVersion=v1.0.0' -X 'github.com/vmware/terraform-provider-vcd/v3/vcd.BuildTime=$(DATE)' -X 'github.com/vmware/terraform-provider-vcd/v3/vcd.BuildCommit=$(GIT_SHORTCOMMIT)'"
 
 # builds the plugin with race detector enabled
 buildrace: fmtcheck

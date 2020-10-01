@@ -11,6 +11,12 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
+// BuildVersion holds version which is meant to be injected at build time using ldflags
+// (e.g. 'go build -ldflags="-X 'main.BuildVersion=v1.0.0' -X 'main.BuildTime=$(date)' -X 'main.BuildCommit=$(git rev-parse --short HEAD)'"')
+var BuildVersion = "development"
+var BuildTime = "unset-time"
+var BuildCommit = "unset-commit"
+
 // DataSources is a public function which allows to filter and access all defined data sources
 // When 'nameRegexp' is not empty - it will return only those matching the regexp
 // When 'includeDeprecated' is false - it will skip out the resources which have a DeprecationMessage set

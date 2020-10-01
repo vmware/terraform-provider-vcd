@@ -15,6 +15,13 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
+func init() {
+	separator := os.Getenv("VCD_IMPORT_SEPARATOR")
+	if separator != "" {
+		ImportSeparator = separator
+	}
+}
+
 type Config struct {
 	User            string
 	Password        string
@@ -424,10 +431,20 @@ func (c *Config) Client() (*VCDClient, error) {
 		return nil, fmt.Errorf("something went wrong while retrieving URL: %s", err)
 	}
 
+	// var BuildVersion = "development"
+	// var BuildTime = "unset-time"
+	// var BuildCommit = "unset-commit"
+	// <product> / <product-version> <comment>
+	// runtime.GOOS
+
+	userAgent := fmt.Sprintf("terraform-provider-vcd/%s (%s - %s)", BuildVersion, BuildCommit, BuildTime)
+
 	vcdClient := &VCDClient{
 		VCDClient: govcd.NewVCDClient(*authUrl, c.InsecureFlag,
 			govcd.WithMaxRetryTimeout(c.MaxRetryTimeout),
-			govcd.WithSamlAdfs(c.UseSamlAdfs, c.CustomAdfsRptId)),
+			govcd.WithSamlAdfs(c.UseSamlAdfs, c.CustomAdfsRptId),
+			govcd.WithHttpUserAgent(userAgent),
+		),
 		SysOrg:          c.SysOrg,
 		Org:             c.Org,
 		Vdc:             c.Vdc,
@@ -458,11 +475,4 @@ func callFuncName() string {
 		}
 	}
 	return ""
-}
-
-func init() {
-	separator := os.Getenv("VCD_IMPORT_SEPARATOR")
-	if separator != "" {
-		ImportSeparator = separator
-	}
 }

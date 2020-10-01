@@ -534,7 +534,7 @@ func testGetVmTextWithCustomNetworkSection(networkSection string) string {
         <ovf:Info>Information about the installed software</ovf:Info>
         <ovf:Product>Photon OS</ovf:Product>
         <ovf:Vendor>VMware Inc.</ovf:Vendor>
-        <ovf:Version>3.0</ovf:Version>
+        <ovf:BuildVersion>3.0</ovf:BuildVersion>
         <ovf:FullVersion>3.0</ovf:FullVersion>
     </ovf:ProductSection>
     <RuntimeInfoSection xmlns:ns10="http://www.vmware.com/vcloud/v1.5" ns10:type="application/vnd.vmware.vcloud.virtualHardwareSection+xml" ns10:href="https://bos1-vcloud-static-170-211.eng.vmware.com/api/vApp/vm-676e755e-766e-48e3-92bd-fabdb322bed9/runtimeInfoSection">
