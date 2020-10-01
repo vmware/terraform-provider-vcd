@@ -26,6 +26,14 @@ The following vCloud Director versions are supported by this provider:
 * 10.0
 * 10.1
 
+## Removed resources and fields
+
+The following fields were removed from resources in *v3.0*:
+
+*  `external_networks, default_gateway_network` from `vcd_edgegateway`  
+*  `template_name, catalog_name, network_name, memory, cpus, ip, storage_profile, initscript, ovf, accept_all_eulas` from `vcd_vapp`
+*  `vcd_independent_disk.size` in favor for `vcd_independent_disk.size_in_mb` 
+
 ## Example Usage
 
 ### Connecting as Org Admin
