@@ -212,7 +212,6 @@ func TestAccVcdNetworkRoutedDS(t *testing.T) {
 					resource.TestCheckOutput("network_name", data.network.Name),
 					resource.TestCheckOutput("network_description", data.network.Description),
 					resource.TestCheckOutput("network_edge", data.parent),
-					resource.TestCheckOutput("default_gateway", testConfig.Networking.ExternalNetwork),
 				),
 			},
 		},
