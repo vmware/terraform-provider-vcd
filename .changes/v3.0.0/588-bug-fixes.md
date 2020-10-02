@@ -1,0 +1,1 @@
+* Fixed `vcd_independent_disk.size` issue, new field `size_in_mb` replaces the `size` [GH-588]
