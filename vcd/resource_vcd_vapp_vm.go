@@ -1339,7 +1339,6 @@ func genericVcdVAppVmRead(d *schema.ResourceData, meta interface{}, origin strin
 
 	vappName := d.Get("vapp_name").(string)
 	vapp, err := vdc.GetVAppByName(vappName, false)
-
 	if err != nil {
 		return fmt.Errorf("[VM read] error finding vApp: %s", err)
 	}
@@ -1351,8 +1350,8 @@ func genericVcdVAppVmRead(d *schema.ResourceData, meta interface{}, origin strin
 	if identifier == "" {
 		return fmt.Errorf("[VM read] neither name or ID were set for this VM")
 	}
-	vm, err := vapp.GetVMByNameOrId(identifier, false)
 
+	vm, err := vapp.GetVMByNameOrId(identifier, false)
 	if err != nil {
 		if origin == "resource" {
 			log.Printf("[DEBUG] Unable to find VM. Removing from tfstate")
@@ -1717,6 +1716,16 @@ func networksToConfig(d *schema.ResourceData, vdc *govcd.Vdc, vapp govcd.VApp, v
 	networks := d.Get("network").([]interface{})
 
 	networkConnectionSection := types.NetworkConnectionSection{}
+
+	// sets existing primary network connection index. Further changes index only if change is found
+	for index, singleNetwork := range networks {
+		nic := singleNetwork.(map[string]interface{})
+		isPrimary := nic["is_primary"].(bool)
+		if isPrimary {
+			networkConnectionSection.PrimaryNetworkConnectionIndex = index
+		}
+	}
+
 	for index, singleNetwork := range networks {
 
 		nic := singleNetwork.(map[string]interface{})
