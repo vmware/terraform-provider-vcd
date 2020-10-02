@@ -11,7 +11,7 @@ default: build
 
 # builds the plugin
 build: fmtcheck
-	go install -ldflags="-X 'github.com/vmware/terraform-provider-vcd/v3/vcd.BuildVersion=$(GIT_DESCRIBE)' -X 'github.com/vmware/terraform-provider-vcd/v3/vcd.BuildTime=$(DATE)' -X 'github.com/vmware/terraform-provider-vcd/v3/vcd.BuildCommit=$(GIT_SHORTCOMMIT)'"
+	go install -ldflags="-X 'github.com/vmware/terraform-provider-vcd/v3/vcd.BuildVersion=$(GIT_DESCRIBE)'"
 
 # builds the plugin with race detector enabled
 buildrace: fmtcheck

@@ -431,13 +431,8 @@ func (c *Config) Client() (*VCDClient, error) {
 		return nil, fmt.Errorf("something went wrong while retrieving URL: %s", err)
 	}
 
-	// var BuildVersion = "development"
-	// var BuildTime = "unset-time"
-	// var BuildCommit = "unset-commit"
-	// <product> / <product-version> <comment>
-	// runtime.GOOS
-
-	userAgent := fmt.Sprintf("terraform-provider-vcd/%s (%s - %s)", BuildVersion, BuildCommit, BuildTime)
+	userAgent := fmt.Sprintf("terraform-provider-vcd/%s (%s/%s; isProvider:%t)",
+		BuildVersion, runtime.GOOS, runtime.GOARCH, c.SysOrg == "System")
 
 	vcdClient := &VCDClient{
 		VCDClient: govcd.NewVCDClient(*authUrl, c.InsecureFlag,
