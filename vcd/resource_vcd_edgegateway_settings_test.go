@@ -312,7 +312,6 @@ resource "vcd_edgegateway" "egw" {
 
   name          = "{{.EdgeGateway}}"
   configuration = "compact"
-  advanced      = true
 
   external_network {
     name = vcd_external_network.{{.NewExternalNetwork}}.name

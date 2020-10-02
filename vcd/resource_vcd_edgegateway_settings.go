@@ -139,10 +139,6 @@ func resourceVcdEdgeGatewaySettingsRead(d *schema.ResourceData, meta interface{}
 		d.SetId("")
 		return nil
 	}
-	// Only advanced edge gateway can have the settings resource
-	if !edgeGateway.HasAdvancedNetworking() {
-		return fmt.Errorf("[edge gateway settings read] this resource is only available with advanced edge gateways")
-	}
 	if err := setLoadBalancerData(d, *edgeGateway); err != nil {
 		return err
 	}
@@ -163,10 +159,6 @@ func resourceVcdEdgeGatewaySettingsUpdate(d *schema.ResourceData, meta interface
 	edgeGateway, err := getVcdEdgeGateway(d, meta)
 	if err != nil {
 		return err
-	}
-
-	if !edgeGateway.HasAdvancedNetworking() {
-		return fmt.Errorf("[edge gateway settings update] this resource is only available with advanced edge gateways")
 	}
 
 	if d.HasChange("lb_enabled") || d.HasChange("lb_acceleration_enabled") ||
@@ -206,15 +198,25 @@ func resourceVcdEdgeGatewaySettingsDelete(d *schema.ResourceData, meta interface
 // Example resource name (_resource_name_): vcd_edgegateway_settings.my-edge-gateway-name
 // Example import path (_the_id_string_): org.vdc.my-edge-gw
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
+// Note: the edge gateway can be identified by either the name or the ID
 func resourceVcdEdgeGatewaySettingsImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
-		return nil, fmt.Errorf("[resourceVcdEdgeGatewaySettingsImport] resource name must be specified as org-name.vdc-name.edge-gw-name")
+		return nil, fmt.Errorf("[resourceVcdEdgeGatewaySettingsImport] resource name must be specified as org-name.vdc-name.edge-gw-name (or edge-gw-ID)")
 	}
 	orgName, vdcName, edgeName := resourceURI[0], resourceURI[1], resourceURI[2]
 
 	vcdClient := meta.(*VCDClient)
-	edgeGateway, err := vcdClient.GetEdgeGateway(orgName, vdcName, edgeName)
+
+	org, err := vcdClient.GetAdminOrg(orgName)
+	if err != nil {
+		return nil, fmt.Errorf("unable to find org %s: %s", orgName, err)
+	}
+	vdc, err := org.GetVDCByName(vdcName, false)
+	if err != nil {
+		return nil, fmt.Errorf("unable to find VDC %s: %s", vdcName, err)
+	}
+	edgeGateway, err := vdc.GetEdgeGatewayByNameOrId(edgeName, false)
 	if err != nil {
 		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
