@@ -226,12 +226,16 @@ resource "vcd_edgegateway" "tf-edgegateway" {
 }
 ```
 
-You can import such edge gateway into terraform state using this command
+You can import such resource into terraform state using one of the commands below
 
 ```
-terraform import vcd_edgegateway.tf-edgegateway my-org.my-vdc.my-edge-gw
+terraform import vcd_edgegateway.tf-egw my-org.my-vdc.my-edge-gw
+
+terraform import vcd_edgegateway.tf-egw my-org.my-vdc.63ed92de-4001-450c-879f-deadbeef0123
 ```
-// Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
+
+* **Note 1**: the separator can be changed using `Provider.import_separator` or variable `VCD_IMPORT_SEPARATOR`
+* **Note 2**: the identifier of the resource could be either the edge gateway name or the ID
 
 [docs-import]:https://www.terraform.io/docs/import/
 

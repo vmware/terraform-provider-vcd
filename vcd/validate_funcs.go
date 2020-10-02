@@ -135,6 +135,23 @@ func validateIntLeaseSeconds() schema.SchemaValidateFunc {
 	}
 }
 
+// validateBoolTrue validates that a given value is always true
+func validateBoolTrue() schema.SchemaValidateFunc {
+	return func(i interface{}, k string) (s []string, es []error) {
+		v, ok := i.(bool)
+		if !ok {
+			es = append(es, fmt.Errorf("expected type of %s to be bool", k))
+			return
+		}
+
+		if !v {
+			es = append(es, fmt.Errorf("expected '%s' to be true (required since 9.7+)", k))
+			return
+		}
+		return
+	}
+}
+
 // IsIntAndAtLeast returns a SchemaValidateFunc which tests if the provided value string is convertable to int
 // and is at least min (inclusive)
 func IsIntAndAtLeast(min int) schema.SchemaValidateFunc {
