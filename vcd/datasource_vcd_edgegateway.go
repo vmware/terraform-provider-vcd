@@ -25,11 +25,6 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"advanced": &schema.Schema{
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Description: "True if the gateway uses advanced networking. (Enabled by default)",
-			},
 			"configuration": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -56,7 +51,7 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 			"distributed_routing": &schema.Schema{
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "If advanced networking enabled, also enable distributed routing",
+				Description: "Enable distributed routing",
 			},
 			"lb_enabled": &schema.Schema{
 				Type:        schema.TypeBool,

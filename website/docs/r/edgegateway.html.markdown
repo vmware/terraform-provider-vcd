@@ -32,7 +32,6 @@ resource "vcd_edgegateway" "egw" {
   name                    = "my-egw"
   description             = "new edge gateway"
   configuration           = "compact"
-  advanced                = true
   
   external_network {
     name = "my-ext-net1"
@@ -71,8 +70,6 @@ resource "vcd_edgegateway" "egw" {
   name          = "edge-with-complex-networks"
   description   = "new edge gateway"
   configuration = "compact"
-  advanced      = true
-
 
   external_network {
     name = "my-main-external-network"
@@ -127,7 +124,6 @@ The following arguments are supported:
   subnets, IP addresses and  IP pool suballocation attached to edge gateway interfaces. Details are
   in [external network](#external-network) block below.
 * `configuration` - (Required) Configuration of the vShield edge VM for this gateway. One of: `compact`, `full` ("Large"), `x-large`, `full4` ("Quad Large").
-* `advanced` - (Optional) True if the gateway uses advanced networking. Default is `true`.
 * `ha_enabled` - (Optional) Enable high availability on this edge gateway. Default is `false`.
 * `distributed_routing` - (Optional) If advanced networking enabled, also enable distributed
   routing. Default is `false`.

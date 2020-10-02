@@ -34,7 +34,6 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 		"EdgeGateway":           edgeGatewayNameBasic,
 		"EdgeGatewayVcd":        edgeGatewayVcdName,
 		"ExternalNetwork":       testConfig.Networking.ExternalNetwork,
-		"Advanced":              "true",
 		"Tags":                  "gateway",
 		"NewExternalNetwork":    newExternalNetwork,
 		"NewExternalNetworkVcd": newExternalNetworkVcd,
@@ -123,7 +122,6 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 		"NewExternalNetworkVcd": newExternalNetworkVcd,
 		"Type":                  testConfig.Networking.ExternalNetworkPortGroupType,
 		"PortGroup":             testConfig.Networking.ExternalNetworkPortGroup,
-		"Advanced":              "true",
 		"Vcenter":               testConfig.Networking.Vcenter,
 	}
 	configText := templateFill(testAccEdgeGatewayNetworks, params)
@@ -150,10 +148,8 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "name", "edge-with-complex-networks"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "advanced", "true"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "description", "new edge gateway"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "configuration", "compact"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "advanced", "true"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "distributed_routing", "false"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "fips_mode_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "use_default_route_for_dns_relay", "true"),
@@ -199,7 +195,6 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "external_network_ips.1", "data.vcd_edgegateway.egw", "external_network_ips.1"),
 					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "fips_mode_enabled", "data.vcd_edgegateway.egw", "fips_mode_enabled"),
 					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "use_default_route_for_dns_relay", "data.vcd_edgegateway.egw", "use_default_route_for_dns_relay"),
-					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "advanced", "data.vcd_edgegateway.egw", "advanced"),
 					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "distributed_routing", "data.vcd_edgegateway.egw", "distributed_routing"),
 					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "configuration", "data.vcd_edgegateway.egw", "configuration"),
 					resource.TestCheckResourceAttrPair("vcd_edgegateway.egw", "default_external_network_ip", "data.vcd_edgegateway.egw", "default_external_network_ip"),
@@ -222,7 +217,6 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "name", "simple-edge-with-complex-networks"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "configuration", "compact"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "advanced", "true"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "distributed_routing", "false"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "fips_mode_enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "ha_enabled", "false"),
@@ -320,7 +314,6 @@ func TestAccVcdEdgeGatewayRateLimits(t *testing.T) {
 		"Tags":                  "gateway",
 		"NewExternalNetwork":    newExternalNetwork,
 		"NewExternalNetworkVcd": newExternalNetworkVcd,
-		"Advanced":              "true",
 		"Vcenter":               testConfig.Networking.Vcenter,
 		"EnableRateLimit":       "true",
 		"IncomingRateLimit":     "88.888",
@@ -389,9 +382,7 @@ resource "vcd_edgegateway" "egw" {
 	vdc                     = "{{.Vdc}}"
 
 	name                    = "edge-with-rate-limits"
-	configuration           = "compact"
-	advanced                = true
-  
+	configuration           = "compact" 
 
 	external_network {
 	  name = vcd_external_network.{{.NewExternalNetwork}}.name
@@ -441,7 +432,6 @@ func TestAccVcdEdgeGatewayParallelCreation(t *testing.T) {
 		"NewExternalNetworkVcd": newExternalNetworkVcd,
 		"Type":                  testConfig.Networking.ExternalNetworkPortGroupType,
 		"PortGroup":             testConfig.Networking.ExternalNetworkPortGroup,
-		"Advanced":              "true",
 		"Vcenter":               testConfig.Networking.Vcenter,
 	}
 	configText := templateFill(testAccEdgeGatewayParallel, params)
@@ -527,7 +517,6 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
   name                    = "{{.EdgeGatewayVcd}}"
   description             = "Description"
   configuration           = "compact"
-  advanced                = {{.Advanced}}
 
   external_network {
      name = vcd_external_network.{{.NewExternalNetwork}}.name
@@ -550,7 +539,6 @@ resource "vcd_edgegateway" "egw" {
 	name                    = "edge-with-complex-networks"
 	description             = "new edge gateway"
 	configuration           = "compact"
-	advanced                = true
   
     # can be only true when system setting Allow FIPS Mode is enabled
 	fips_mode_enabled               = false
@@ -621,7 +609,6 @@ resource "vcd_edgegateway" "egw" {
 
 	name                    = "simple-edge-with-complex-networks"
 	configuration           = "compact"
-	advanced                = true
 
 	external_network {
 	  name = vcd_external_network.{{.NewExternalNetwork}}.name
@@ -643,7 +630,6 @@ resource "vcd_edgegateway" "egw" {
 
 	name                    = "parallel-${count.index}"
 	configuration           = "compact"
-	advanced                = true
 
 	external_network {
 	  name = vcd_external_network.{{.NewExternalNetwork}}.name

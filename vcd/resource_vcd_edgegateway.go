@@ -138,13 +138,6 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 			},
-			"advanced": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				ForceNew:    true,
-				Description: "True if the gateway uses advanced networking. (Enabled by default)",
-			},
 			"configuration": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
@@ -176,7 +169,7 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				Optional:    true,
 				Default:     false,
 				ForceNew:    true,
-				Description: "If advanced networking enabled, also enable distributed routing",
+				Description: "Enable distributed routing",
 			},
 			"lb_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -282,7 +275,7 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 
 	var gwInterfaces []*types.GatewayInterface
 
-	log.Printf("[TRACE] creating edge gateway using advanced 'external_network' blocks")
+	log.Printf("[TRACE] creating edge gateway using 'external_network' blocks")
 	// Get gateway interfaces from complex structure
 	gwInterfaces, err = getGatewayInterfacesType(vcdClient, d.Get("external_network").(*schema.Set))
 	if err != nil {
@@ -298,7 +291,6 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 			UseDefaultRouteForDNSRelay: takeBoolPointer(d.Get("use_default_route_for_dns_relay").(bool)),
 			HaEnabled:                  takeBoolPointer(d.Get("ha_enabled").(bool)),
 			GatewayBackingConfig:       d.Get("configuration").(string),
-			AdvancedNetworkingEnabled:  takeBoolPointer(d.Get("advanced").(bool)),
 			DistributedRoutingEnabled:  takeBoolPointer(d.Get("distributed_routing").(bool)),
 			GatewayInterfaces: &types.GatewayInterfaces{
 				GatewayInterface: gwInterfaces,
@@ -326,31 +318,28 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 
-	// Only perform load balancer and firewall configuration if gateway is advanced
-	if d.Get("advanced").(bool) {
-		log.Printf("[TRACE] edge gateway load balancer configuration started")
+	log.Printf("[TRACE] edge gateway load balancer configuration started")
 
-		err := updateLoadBalancer(d, edge)
-		if err != nil {
-			return fmt.Errorf("unable to update general load balancer settings: %s", err)
-		}
+	err = updateLoadBalancer(d, edge)
+	if err != nil {
+		return fmt.Errorf("unable to update general load balancer settings: %s", err)
+	}
 
-		log.Printf("[TRACE] edge gateway load balancer configured")
+	log.Printf("[TRACE] edge gateway load balancer configured")
 
-		log.Printf("[TRACE] edge gateway firewall configuration started")
+	log.Printf("[TRACE] edge gateway firewall configuration started")
 
-		err = updateFirewall(d, edge)
-		if err != nil {
-			return fmt.Errorf("unable to update firewall settings: %s", err)
-		}
+	err = updateFirewall(d, edge)
+	if err != nil {
+		return fmt.Errorf("unable to update firewall settings: %s", err)
+	}
 
-		log.Printf("[TRACE] edge gateway firewall configured")
+	log.Printf("[TRACE] edge gateway firewall configured")
 
-		// update load balancer and firewall configuration in statefile
-		err = setEdgeGatewayComponentValues(d, edge)
-		if err != nil {
-			return err
-		}
+	// update load balancer and firewall configuration in statefile
+	err = setEdgeGatewayComponentValues(d, edge)
+	if err != nil {
+		return err
 	}
 
 	// TODO double validate if we need to use partial state here
@@ -416,15 +405,12 @@ func genericVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}, origin 
 		return err
 	}
 
-	// Only read and set the statefile if the edge gateway is advanced
-	if edgeGateway.HasAdvancedNetworking() {
-		if err := setLoadBalancerData(d, *edgeGateway); err != nil {
-			return err
-		}
+	if err := setLoadBalancerData(d, *edgeGateway); err != nil {
+		return err
+	}
 
-		if err := setFirewallData(d, *edgeGateway); err != nil {
-			return err
-		}
+	if err := setFirewallData(d, *edgeGateway); err != nil {
+		return err
 	}
 
 	d.SetId(edgeGateway.EdgeGateway.ID)
@@ -444,22 +430,19 @@ func resourceVcdEdgeGatewayUpdate(d *schema.ResourceData, meta interface{}) erro
 		return nil
 	}
 
-	// If edge gateway is advanced - check if load balancer or firewall needs adjustments
-	if edgeGateway.HasAdvancedNetworking() {
-		if d.HasChange("lb_enabled") || d.HasChange("lb_acceleration_enabled") ||
-			d.HasChange("lb_logging_enabled") || d.HasChange("lb_loglevel") {
-			err := updateLoadBalancer(d, *edgeGateway)
-			if err != nil {
-				return err
-			}
+	if d.HasChange("lb_enabled") || d.HasChange("lb_acceleration_enabled") ||
+		d.HasChange("lb_logging_enabled") || d.HasChange("lb_loglevel") {
+		err := updateLoadBalancer(d, *edgeGateway)
+		if err != nil {
+			return err
 		}
+	}
 
-		if d.HasChange("fw_enabled") || d.HasChange("fw_default_rule_logging_enabled") ||
-			d.HasChange("fw_default_rule_action") {
-			err := updateFirewall(d, *edgeGateway)
-			if err != nil {
-				return err
-			}
+	if d.HasChange("fw_enabled") || d.HasChange("fw_default_rule_logging_enabled") ||
+		d.HasChange("fw_default_rule_action") {
+		err := updateFirewall(d, *edgeGateway)
+		if err != nil {
+			return err
 		}
 	}
 
@@ -849,7 +832,6 @@ func setEdgeGatewayValues(vcdClient *VCDClient, d *schema.ResourceData, egw govc
 
 	_ = d.Set("use_default_route_for_dns_relay", egw.EdgeGateway.Configuration.UseDefaultRouteForDNSRelay)
 	_ = d.Set("fips_mode_enabled", egw.EdgeGateway.Configuration.FipsModeEnabled)
-	_ = d.Set("advanced", egw.EdgeGateway.Configuration.AdvancedNetworkingEnabled)
 	_ = d.Set("ha_enabled", egw.EdgeGateway.Configuration.HaEnabled)
 
 	for _, gw := range egw.EdgeGateway.Configuration.GatewayInterfaces.GatewayInterface {
@@ -881,16 +863,14 @@ func setEdgeGatewayValues(vcdClient *VCDClient, d *schema.ResourceData, egw govc
 // setEdgeGatewayComponentValues sets component values to the statefile which are created with
 // additional API calls
 func setEdgeGatewayComponentValues(d *schema.ResourceData, egw govcd.EdgeGateway) error {
-	if egw.HasAdvancedNetworking() {
-		err := setLoadBalancerData(d, egw)
-		if err != nil {
-			return err
-		}
+	err := setLoadBalancerData(d, egw)
+	if err != nil {
+		return err
+	}
 
-		err = setFirewallData(d, egw)
-		if err != nil {
-			return err
-		}
+	err = setFirewallData(d, egw)
+	if err != nil {
+		return err
 	}
 	return nil
 }

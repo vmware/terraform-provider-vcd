@@ -30,7 +30,7 @@ The following vCloud Director versions are supported by this provider:
 
 The following fields were removed from resources in *v3.0*:
 
-*  `external_networks, default_gateway_network` from `vcd_edgegateway`  
+*  `external_networks, default_gateway_network, advaced` from `vcd_edgegateway`  
 *  `template_name, catalog_name, network_name, memory, cpus, ip, storage_profile, initscript, ovf, accept_all_eulas` from `vcd_vapp`
 *  `vcd_independent_disk.size` in favor of `vcd_independent_disk.size_in_mb`
 *  `resource/vcd_nsxv_firewall_rule.virtual_machine_ids` renamed to `vm_ids`
