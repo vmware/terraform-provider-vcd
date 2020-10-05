@@ -54,6 +54,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_vapp_network":        datasourceVcdVappNetwork(),       // 2.7
 	"vcd_vapp_org_network":    datasourceVcdVappOrgNetwork(),    // 2.7
 	"vcd_vm_affinity_rule":    datasourceVcdVmAffinityRule(),    // 2.9
+	"vcd_vm_sizing_policy":    datasourceVcdVmSizingPolicy(),    // 3.0
 	"vcd_nsxt_manager":        datasourceVcdNsxtManager(),       // 3.0
 	"vcd_nsxt_tier0_router":   datasourceVcdNsxtTier0Router(),   // 3.0
 	"vcd_portgroup":           datasourceVcdPortgroup(),         // 3.0
@@ -67,9 +68,6 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_network_isolated":    resourceVcdNetworkIsolated(),          // 2.0
 	"vcd_vapp_network":        resourceVcdVappNetwork(),              // 2.1
 	"vcd_vapp":                resourceVcdVApp(),                     // 1.0
-	"vcd_firewall_rules":      resourceVcdFirewallRules(),            // 1.0 DEPRECATED: Use only for non-advanced edge gateway. Replaced by vcd_nsxv_firewall_rule
-	"vcd_dnat":                resourceVcdDNAT(),                     // 1.0 DEPRECATED: Use only for non-advanced edge gateway. Replaced by vcd_nsxv_dnat
-	"vcd_snat":                resourceVcdSNAT(),                     // 1.0 DEPRECATED: Use only for non-advanced edge gateway. Replaced by vcd_nsxv_snat
 	"vcd_edgegateway":         resourceVcdEdgeGateway(),              // 2.4
 	"vcd_edgegateway_vpn":     resourceVcdEdgeGatewayVpn(),           // 1.0
 	"vcd_vapp_vm":             resourceVcdVAppVm(),                   // 1.0
@@ -101,6 +99,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_vm_affinity_rule":    resourceVcdVmAffinityRule(),           // 2.9
 	"vcd_vapp_access_control": resourceVcdAccessControlVapp(),        // 3.0
 	"vcd_external_network_v2": resourceVcdExternalNetworkV2(),        // 3.0
+	"vcd_vm_sizing_policy":    resourceVcdVmSizingPolicy(),           // 3.0
 }
 
 // Provider returns a terraform.ResourceProvider.
