@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -432,7 +433,7 @@ func (c *Config) Client() (*VCDClient, error) {
 	}
 
 	userAgent := fmt.Sprintf("terraform-provider-vcd/%s (%s/%s; isProvider:%t)",
-		BuildVersion, runtime.GOOS, runtime.GOARCH, c.SysOrg == "System")
+		BuildVersion, runtime.GOOS, runtime.GOARCH, strings.ToLower(c.SysOrg) == "system")
 
 	vcdClient := &VCDClient{
 		VCDClient: govcd.NewVCDClient(*authUrl, c.InsecureFlag,
@@ -457,9 +458,8 @@ func (c *Config) Client() (*VCDClient, error) {
 	return vcdClient, nil
 }
 
-// Returns the name of the function that called the
-// current function.
-// It is used for tracing
+// callFuncName returns the name of the function that called the current function. It is used for
+// tracing
 func callFuncName() string {
 	fpcs := make([]uintptr, 1)
 	n := runtime.Callers(3, fpcs)
