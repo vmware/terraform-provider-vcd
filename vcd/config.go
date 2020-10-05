@@ -432,8 +432,7 @@ func (c *Config) Client() (*VCDClient, error) {
 		return nil, fmt.Errorf("something went wrong while retrieving URL: %s", err)
 	}
 
-	userAgent := fmt.Sprintf("terraform-provider-vcd/%s (%s/%s; isProvider:%t)",
-		BuildVersion, runtime.GOOS, runtime.GOARCH, strings.ToLower(c.SysOrg) == "system")
+	userAgent := buildUserAgent(BuildVersion, c.SysOrg)
 
 	vcdClient := &VCDClient{
 		VCDClient: govcd.NewVCDClient(*authUrl, c.InsecureFlag,
@@ -470,4 +469,12 @@ func callFuncName() string {
 		}
 	}
 	return ""
+}
+
+// buildUserAgent helps to construct HTTP User-Agent header
+func buildUserAgent(version, sysOrg string) string {
+	userAgent := fmt.Sprintf("terraform-provider-vcd/%s (%s/%s; isProvider:%t)",
+		version, runtime.GOOS, runtime.GOARCH, strings.ToLower(sysOrg) == "system")
+
+	return userAgent
 }

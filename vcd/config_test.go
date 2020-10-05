@@ -581,6 +581,10 @@ func setTestEnv() {
 // This function is called before any other test
 func TestMain(m *testing.M) {
 
+	// Set BuildVersion to have consistent User-Agent for tests:
+	// [e.g. terraform-provider-vcd/test (darwin/amd64; isProvider:true)]
+	BuildVersion = "test"
+
 	// Enable custom flags
 	flag.Parse()
 	setTestEnv()
@@ -807,7 +811,8 @@ func getTestVCDFromJson(testConfig TestConfig) (*govcd.VCDClient, error) {
 		return &govcd.VCDClient{}, fmt.Errorf("could not parse Url: %s", err)
 	}
 	vcdClient := govcd.NewVCDClient(*configUrl, true,
-		govcd.WithSamlAdfs(testConfig.Provider.UseSamlAdfs, testConfig.Provider.CustomAdfsRptId))
+		govcd.WithSamlAdfs(testConfig.Provider.UseSamlAdfs, testConfig.Provider.CustomAdfsRptId),
+		govcd.WithHttpUserAgent(buildUserAgent("test", testConfig.Provider.SysOrg)))
 	return vcdClient, nil
 }
 
