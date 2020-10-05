@@ -686,3 +686,8 @@ func BuildUrnWithUuid(urnPrefix, uuid string) (string, error) {
 
 	return urn, nil
 }
+
+// takeFloatAddress is a helper that returns the address of an `float64`
+func takeFloatAddress(x float64) *float64 {
+	return &x
+}

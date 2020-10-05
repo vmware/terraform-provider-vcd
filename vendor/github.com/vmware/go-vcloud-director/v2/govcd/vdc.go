@@ -618,7 +618,7 @@ func (vdc *Vdc) FindVMByName(vapp VApp, vm string) (VM, error) {
 
 	err = vapp.Refresh()
 	if err != nil {
-		return VM{}, fmt.Errorf("error refreshing vapp: %s", err)
+		return VM{}, fmt.Errorf("error refreshing vApp: %s", err)
 	}
 
 	//vApp Might Not Have Any VMs
