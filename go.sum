@@ -10,8 +10,8 @@ cloud.google.com/go/datastore v1.0.0/go.mod h1:LXYbyblFSglQ5pkeyhO+Qmw7ukd3C+pD7
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
-github.com/Didainius/go-vcloud-director/v2 v2.9.0-alpha.5.0.20201002084700-613f2c36c6a5 h1:nwr78WTBlL8NoSnZlVCi1HUHBsZhIT6PMBnJ2AfWmP4=
-github.com/Didainius/go-vcloud-director/v2 v2.9.0-alpha.5.0.20201002084700-613f2c36c6a5/go.mod h1:czvTQZlB4/WsOsL7rMVCb+SYAPJhx/dYoS/Sk7rc/O0=
+github.com/Didainius/go-vcloud-director/v2 v2.9.0-alpha.5.0.20201005065001-e21c68e8c19c h1:6an0YFpYUxRI/ZM5gb3QtTaE1VFWlX/zgRiIq9H6w+Q=
+github.com/Didainius/go-vcloud-director/v2 v2.9.0-alpha.5.0.20201005065001-e21c68e8c19c/go.mod h1:czvTQZlB4/WsOsL7rMVCb+SYAPJhx/dYoS/Sk7rc/O0=
 github.com/agext/levenshtein v1.2.1 h1:QmvMAjj2aEICytGiWzmxoE0x2KZvE0fvmqMOfy2tjT8=
 github.com/agext/levenshtein v1.2.1/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=
 github.com/agext/levenshtein v1.2.2 h1:0S/Yg6LYmFJ5stwQeRp6EeOcCbj7xiqQSdNelsXvaqE=
