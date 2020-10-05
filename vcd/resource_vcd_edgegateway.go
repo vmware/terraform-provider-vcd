@@ -139,11 +139,12 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				ForceNew: true,
 			},
 			"advanced": &schema.Schema{
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Default:     true,
-				ForceNew:    true,
-				Description: "True if the gateway uses advanced networking. (Enabled by default)",
+				Type:         schema.TypeBool,
+				Optional:     true,
+				Default:      true,
+				ForceNew:     true,
+				ValidateFunc: validateBoolTrue(),
+				Description:  "True if the gateway uses advanced networking. (Enabled by default - Only 'true' is accepted as of 9.7+)",
 			},
 			"configuration": &schema.Schema{
 				Type:        schema.TypeString,
@@ -533,15 +534,24 @@ func resourceVcdEdgeGatewayDelete(d *schema.ResourceData, meta interface{}) erro
 // Example resource name (_resource_name_): vcd_edgegateway.my-edge-gateway
 // Example import path (_the_id_string_): org.vdc.my-edge-gw
 // Note: the separator can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
+// Note: the edge gateway can be identified by either the name or the ID
 func resourceVcdEdgeGatewayImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
-		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-name.edge-gw-name")
+		return nil, fmt.Errorf("resource name must be specified as org-name.vdc-name.edge-gw-name (or edge-gw-ID)")
 	}
 	orgName, vdcName, edgeName := resourceURI[0], resourceURI[1], resourceURI[2]
 
 	vcdClient := meta.(*VCDClient)
-	edgeGateway, err := vcdClient.GetEdgeGateway(orgName, vdcName, edgeName)
+	org, err := vcdClient.GetAdminOrg(orgName)
+	if err != nil {
+		return nil, fmt.Errorf("unable to find org %s: %s", orgName, err)
+	}
+	vdc, err := org.GetVDCByName(vdcName, false)
+	if err != nil {
+		return nil, fmt.Errorf("unable to find VDC %s: %s", vdcName, err)
+	}
+	edgeGateway, err := vdc.GetEdgeGatewayByNameOrId(edgeName, false)
 	if err != nil {
 		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)
 	}
