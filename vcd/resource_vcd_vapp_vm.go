@@ -158,7 +158,7 @@ var vappVmSchema = map[string]*schema.Schema{
 		Type:        schema.TypeString,
 		Optional:    true,
 		Computed:    true,
-		Description: "Virtual Hardware BuildVersion (e.g.`vmx-14`, `vmx-13`, `vmx-12`, etc.)",
+		Description: "Virtual Hardware Version (e.g.`vmx-14`, `vmx-13`, `vmx-12`, etc.)",
 	},
 	"boot_image": &schema.Schema{
 		Type:        schema.TypeString,
