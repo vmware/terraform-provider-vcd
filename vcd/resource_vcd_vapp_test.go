@@ -108,12 +108,6 @@ func testAccCheckVcdVAppExists(n string, vapp *govcd.VApp) resource.TestCheckFun
 
 		*vapp = *newVapp
 
-		/*		// must wait until the vApp exits
-				err = vapp.BlockWhileStatus("RESOLVED", conn.Client.MaxRetryTimeout)
-				if err != nil {
-					return fmt.Errorf("error waiting for created test vApp to have working state: %s", err)
-				}*/
-
 		return nil
 	}
 }
