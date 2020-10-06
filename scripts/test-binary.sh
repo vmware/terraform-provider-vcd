@@ -118,6 +118,9 @@ function make_environment {
 
     if [ ! -f $origin_old_plugin ]
     then
+        # Workaround for incompatible changes introduced in terraform 0.13
+        # If we don't find the old plugin in the new path
+        # we look at the old path, create the new path, and copy the plugin there
         old_from_path=$(terraform_binary_path $from_version 0 12)
         new_from_path=$(terraform_binary_path $from_version 0 13)
         old_style_plugin=$HOME/$old_from_path/terraform-provider-vcd_$from_version
