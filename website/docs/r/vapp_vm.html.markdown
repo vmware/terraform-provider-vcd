@@ -227,6 +227,25 @@ resource "vcd_vapp_vm" "secondVM" {
 
 ```
 
+## Example Usage (VM with sizing policy)
+This example shows how to create a VM using VM sizing policy.
+
+```hcl
+data "vcd_vm_sizing_policy" "minSize" {
+	name = "minimum size"
+}
+
+resource "vcd_vapp_vm" "secondVM" {
+  vapp_name           = vcd_vapp.web.name
+  name                = "secondVM"
+  computer_name       = "db-vm"
+  catalog_name        = "cat-where-is-template"
+  template_name       = "vappWithMultiVm"
+  sizing_policy_id    = data.vcd_vm_sizing_policy.minSize.id # Specifies which sizing policy to use
+}
+
+```
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -240,8 +259,8 @@ The following arguments are supported:
 * `template_name` - (Optional; *v2.9+*) The name of the vApp Template to use
 * `vm_name_in_template` - (Optional; *v2.9+*) The name of the VM in vApp Template to use. For cases when vApp template has more than one VM.
 * `memory` - (Optional) The amount of RAM (in MB) to allocate to the VM. If `memory_hot_add_enabled` is true, then memory will be increased without VM power off.
-* `cpus` - (Optional) The number of virtual CPUs to allocate to the VM. Socket count is a result of: virtual logical processors/cores per socket. The default is 1. If `cpu_hot_add_enabled` is true, then cpus will be increased without VM power off.
-* `cpu_cores` - (Optional; *v2.1+*) The number of cores per socket. The default is 1
+* `cpus` - (Optional) The number of virtual CPUs to allocate to the VM. Socket count is a result of: virtual logical processors/cores per socket. If `cpu_hot_add_enabled` is true, then cpus will be increased without VM power off.
+* `cpu_cores` - (Optional; *v2.1+*) The number of cores per socket.
 * `metadata` - (Optional; *v2.2+*) Key value map of metadata to assign to this VM
 * `storage_profile` (Optional; *v2.6+*) Storage profile to override the default one
 * `power_on` - (Optional) A boolean value stating if this VM should be powered on. Default is `true`
@@ -272,6 +291,7 @@ example for usage details.
 * `cpu_hot_add_enabled` - (Optional; *v2.10+*) True if the virtual machine supports addition of virtual CPUs while powered on. Default is `false`.
 * `memory_hot_add_enabled` - (Optional; *v2.10+*) True if the virtual machine supports addition of memory while powered on. Default is `false`.
 * `prevent_update_power_off` - (Optional; *v2.10+*) True if the update of resource should fail when virtual machine power off needed. Default is `false`.
+* `sizing_policy_id` (Optional; *v3.0+*, *vCD 10.0+*) VM sizing policy ID. Has to be assigned to Org VDC using `vcd_org_vdc.vm_sizing_policy_ids` and `vcd_org_vdc.default_vm_sizing_policy_id`.
 
 <a id="disk"></a>
 ## Disk

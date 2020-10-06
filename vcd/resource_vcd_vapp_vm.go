@@ -77,19 +77,20 @@ var vappVmSchema = map[string]*schema.Schema{
 	"memory": &schema.Schema{
 		Type:         schema.TypeInt,
 		Optional:     true,
+		Computed:     true,
 		Description:  "The amount of RAM (in MB) to allocate to the VM",
 		ValidateFunc: validateMultipleOf4(),
 	},
 	"cpus": &schema.Schema{
 		Type:        schema.TypeInt,
 		Optional:    true,
-		Default:     1,
+		Computed:    true,
 		Description: "The number of virtual CPUs to allocate to the VM",
 	},
 	"cpu_cores": &schema.Schema{
 		Type:        schema.TypeInt,
 		Optional:    true,
-		Default:     1,
+		Computed:    true,
 		Description: "The number of cores per socket",
 	},
 	"metadata": {
@@ -469,6 +470,12 @@ var vappVmSchema = map[string]*schema.Schema{
 		Default:     false,
 		Description: "True if the update of resource should fail when virtual machine power off needed.",
 	},
+	"sizing_policy_id": {
+		Type:        schema.TypeString,
+		Optional:    true,
+		Computed:    true,
+		Description: "VM sizing policy ID. Has to be assigned to Org VDC.",
+	},
 }
 
 func resourceVcdVAppVm() *schema.Resource {
@@ -557,7 +564,17 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		} else {
 			storageProfilePtr = nil
 		}
-		task, err := vapp.AddNewVMWithStorageProfile(d.Get("name").(string), vappTemplate, &networkConnectionSection, storageProfilePtr, acceptEulas)
+
+		var sizingPolicy *types.VdcComputePolicy
+		if value, ok := d.GetOk("sizing_policy_id"); ok {
+			vdcComputePolicy, err := org.GetVdcComputePolicyById(value.(string))
+			if err != nil {
+				return fmt.Errorf("error getting sizing policy %s: %s", value.(string), err)
+			}
+			sizingPolicy = vdcComputePolicy.VdcComputePolicy
+		}
+
+		task, err := vapp.AddNewVMWithComputePolicy(d.Get("name").(string), vappTemplate, &networkConnectionSection, storageProfilePtr, sizingPolicy, acceptEulas)
 		if err != nil {
 			return fmt.Errorf("[VM creation] error adding VM: %s", err)
 		}
@@ -777,6 +794,24 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
+	if d.HasChange("sizing_policy_id") {
+		var sizingPolicy *types.VdcComputePolicy
+		org, _, err := vcdClient.GetOrgAndVdcFromResource(d)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingOrg, err)
+		}
+		value := d.Get("sizing_policy_id")
+		vdcComputePolicy, err := org.GetVdcComputePolicyById(value.(string))
+		if err != nil {
+			return fmt.Errorf("error getting sizing policy %s: %s", value.(string), err)
+		}
+		sizingPolicy = vdcComputePolicy.VdcComputePolicy
+		_, err = vm.UpdateComputePolicy(sizingPolicy)
+		if err != nil {
+			return fmt.Errorf("error updating sizing policy %s: %s", value.(string), err)
+		}
+	}
+
 	return nil
 }
 
@@ -871,6 +906,12 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 	vcdClient, org, vdc, vapp, identifier, vm, err := getVmFromResource(d, meta)
 	if err != nil {
 		return err
+	}
+
+	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
+		if _, ok := d.GetOk("sizing_policy_id"); ok {
+			return fmt.Errorf("'sizing_policy_id' only available for VCD 10.0+")
+		}
 	}
 
 	vmStatusBeforeUpdate, err := vm.GetStatus()
@@ -1324,6 +1365,10 @@ func genericVcdVAppVmRead(d *schema.ResourceData, meta interface{}, origin strin
 
 	_ = d.Set("hardware_version", vm.VM.VmSpecSection.HardwareVersion.Value)
 	_ = d.Set("os_type", vm.VM.VmSpecSection.OsType)
+
+	if vm.VM.ComputePolicy != nil && vm.VM.ComputePolicy.VmSizingPolicy != nil {
+		_ = d.Set("sizing_policy_id", vm.VM.ComputePolicy.VmSizingPolicy.ID)
+	}
 
 	log.Printf("[DEBUG] [VM read] finished with origin %s", origin)
 	return nil
@@ -2046,8 +2091,9 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 
 	var ok bool
 	var memory interface{}
-	if memory, ok = d.GetOk("memory"); !ok {
-		return nil, fmt.Errorf("`memory` is required when creating empty VM")
+	_, sizingOk := d.GetOk("sizing_policy_id")
+	if memory, ok = d.GetOk("memory"); !ok && !sizingOk {
+		return nil, fmt.Errorf("`memory` or `sizing_policy_id` is required when creating empty VM")
 	}
 
 	var osType interface{}
@@ -2133,6 +2179,11 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 		AllEULAsAccepted: true,
 	}
 
+	err := addSizingPolicy(d, vcdClient, org, recomposeVAppParamsForEmptyVm)
+	if err != nil {
+		return nil, err
+	}
+
 	newVm, err := vapp.AddEmptyVm(recomposeVAppParamsForEmptyVm)
 	if err != nil {
 		d.SetId("")
@@ -2191,6 +2242,40 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 		}
 	}
 	return newVm, nil
+}
+
+func addSizingPolicy(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, recomposeVAppParamsForEmptyVm *types.RecomposeVAppParamsForEmptyVm) error {
+	vcdComputePolicyHref, err := vcdClient.Client.OpenApiBuildEndpoint(types.OpenApiPathVersion1_0_0, types.OpenApiEndpointVdcComputePolicies)
+	if err != nil {
+		return fmt.Errorf("error constructing HREF for compute policy")
+	}
+
+	if value, ok := d.GetOk("sizing_policy_id"); ok {
+		recomposeVAppParamsForEmptyVm.CreateItem.ComputePolicy = &types.ComputePolicy{VmSizingPolicy: &types.Reference{HREF: vcdComputePolicyHref.String() + value.(string)}}
+		sizingPolicy, err := org.GetVdcComputePolicyById(value.(string))
+		if err != nil {
+			return fmt.Errorf("error getting sizing policy %s: %s", value.(string), err)
+		}
+		if _, ok = d.GetOk("cpus"); !ok && sizingPolicy.VdcComputePolicy.CPUCount == nil {
+			return fmt.Errorf("`cpus` has to be defined as provided sizing policy `sizing_policy_id` cpu count isn't configured")
+		}
+		if sizingPolicy.VdcComputePolicy.CPUCount != nil {
+			recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.NumCpus = sizingPolicy.VdcComputePolicy.CPUCount
+		}
+		if _, ok = d.GetOk("cpu_cores"); !ok && sizingPolicy.VdcComputePolicy.CoresPerSocket == nil {
+			return fmt.Errorf("`cpu_cores` has to be defined as provided sizing policy `sizing_policy_id` cpu cores per socket isn't configured")
+		}
+		if sizingPolicy.VdcComputePolicy.CoresPerSocket != nil {
+			recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.NumCoresPerSocket = sizingPolicy.VdcComputePolicy.CoresPerSocket
+		}
+		if _, ok = d.GetOk("memory"); !ok && sizingPolicy.VdcComputePolicy.Memory == nil {
+			return fmt.Errorf("`memory` has to be defined as provided sizing policy `sizing_policy_id` memory isn't configured")
+		}
+		if sizingPolicy.VdcComputePolicy.Memory != nil {
+			recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.MemoryResourceMb = &types.MemoryResourceMb{Configured: int64(*sizingPolicy.VdcComputePolicy.Memory)}
+		}
+	}
+	return nil
 }
 
 // handleExposeHardwareVirtualization toggles hardware virtualization according `expose_hardware_virtualization` field value.
