@@ -28,9 +28,58 @@ then
     done
 fi
 
+function check_empty {
+    variable="$1"
+    message="$2"
+    if [ -z "$variable" ]
+    then
+        echo $message
+        exit 1
+    fi
+}
+
+# Terraform version is used to determine what the target directory should be
+terraform_version=$(terraform version | head -n 1| sed -e 's/Terraform v//')
+check_empty "$terraform_version" "terraform_version not detected"
+
+terraform_major=$(echo $terraform_version | tr '.' ' '| awk '{print $1}')
+check_empty "$terraform_major" "terraform_version major not detected"
+terraform_minor=$(echo $terraform_version | tr '.' ' '| awk '{print $2}')
+check_empty "$terraform_minor" "terraform_version minor not detected"
+
+function terraform_binary_path {
+    version=$1
+    tversion_major=$2
+    tversion_minor=$3
+    if [ -z "$tversion_major" ]
+    then
+        tversion_major=$terraform_major
+    fi
+    if [ -z "$tversion_minor" ]
+    then
+        tversion_minor=$terraform_minor
+    fi
+    # The default target directory is the pre-0.13 one
+    target_dir=.terraform.d/plugins/
+    # Getting the version without the initial "v"
+    bare_version=$(echo $version | sed -e 's/^v//')
+    os=$(uname -s | tr '[A-Z]' '[a-z]')
+    check_empty "$os" "operating system not detected"
+    arch=${os}_amd64
+
+    # if terraform executable is 0.13+, we use the new path
+    if [[ $tversion_major -gt 0 || $tversion_major -eq 0 && $tversion_minor > 12 ]]
+    then
+        target_dir=.terraform.d/plugins/registry.terraform.io/vmware/vcd/$bare_version/$arch
+    fi
+
+    echo $target_dir
+}
 
 # 'restore_environment' removes the effects of 'make_environment'
 function restore_environment {
+    [ -z "$from_path" ] && from_path=$(terraform_binary_path $from_version)
+    [ -z "$to_path" ] && from_path=$(terraform_binary_path $to_version)
     if [ -n "$real_home" ]
     then
         export HOME=$real_home
@@ -44,7 +93,7 @@ function restore_environment {
         # Copies current version plugin to the testing environment
         # The plugin is guaranteed to be there, as its existence
         # was checked in 'make_environment'
-        cp $HOME/.terraform.d/plugins/terraform-provider-vcd_$to_version .
+        cp $to_path/terraform-provider-vcd_$to_version .
         hash -r
         terraform init
     fi
@@ -54,21 +103,40 @@ function restore_environment {
 # 'make_environment' creates a sandboxed environment where terraform uses
 # a specific plugin for it nexts operation
 function make_environment {
+
+    [ -z "$from_path" ] && from_path=$(terraform_binary_path $from_version)
+    [ -z "$to_path" ] && to_path=$(terraform_binary_path $to_version)
     if [ ! -d fake_home ]
     then
-        mkdir -p fake_home/.terraform.d/plugins
+        mkdir -p fake_home/$from_path
+        mkdir -p fake_home/$to_path
     fi
 
     # Checks that both plugins exist
-    origin_old_plugin=$HOME/.terraform.d/plugins/terraform-provider-vcd_$from_version
-    origin_new_plugin=$HOME/.terraform.d/plugins/terraform-provider-vcd_$to_version
+    origin_old_plugin=$HOME/$from_path/terraform-provider-vcd_$from_version
+    origin_new_plugin=$HOME/$to_path/terraform-provider-vcd_$to_version
+
+    if [ ! -f $origin_old_plugin ]
+    then
+        old_from_path=$(terraform_binary_path $from_version 0 12)
+        new_from_path=$(terraform_binary_path $from_version 0 13)
+        old_style_plugin=$HOME/$old_from_path/terraform-provider-vcd_$from_version
+        if [ -f $old_style_plugin ]
+        then
+            mkdir -p $HOME/$new_from_path
+            cp $old_style_plugin $origin_old_plugin
+        fi
+    fi
+
     if [ ! -f $origin_old_plugin ]
     then
         echo " $origin_old_plugin not found - test interrupted"
+        exit 1
     fi
     if [ ! -f $origin_new_plugin ]
     then
         echo " $origin_new_plugin not found - test interrupted"
+        exit 1
     fi
 
     # Masks the real HOME, to prevent terraform executable from
@@ -79,7 +147,7 @@ function make_environment {
 
     previous_version_plugin=$PWD/terraform-provider-vcd_$from_version
     latest_plugin=$PWD/terraform-provider-vcd_$to_version
-    destination=$PWD/fake_home/.terraform.d/plugins/terraform-provider-vcd_$from_version
+    destination=$PWD/fake_home/$from_path/terraform-provider-vcd_$from_version
 
     # Adds the previous version plugin to the test environment in both the current path and the
     # directory where terraform puts downloaded plugins. We want to give terraform a plugin to
@@ -585,6 +653,20 @@ do
     if [ "${operations[0]}" == "init" ]
     then
         cp $CF $opsdir/config.tf
+        if [[ $terraform_major -gt 0 || $terraform_major -eq 0 && $terraform_minor > 12 ]]
+        then
+            cat << EOF > $opsdir/versions.tf
+terraform {
+  required_providers {
+    vcd = {
+      source = "vmware/vcd"
+    }
+  }
+  required_version = ">= 0.13"
+}
+
+EOF
+        fi
     fi
     if [ -z "$DRY_RUN" ]
     then
