@@ -36,6 +36,11 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 		"Media":       testConfig.Media.MediaName,
 	}
 
+	vcdClient, err := getTestVCDFromJson(testConfig)
+	if err != nil {
+		t.Skip("unable to validate vCD version - skipping test")
+	}
+
 	configTextVM := templateFill(testAccCheckVcdVAppHotUpdateVm, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 
@@ -62,6 +67,23 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
+	}
+
+	step4func := resource.TestStep{}
+	var step5Check resource.TestCheckFunc
+	if vcdClient.Client.APIVCDMaxVersionIs("= 34.0") {
+		step4func = resource.TestStep{
+			Config:      configTextVMUpdateStep4,
+			ExpectError: regexp.MustCompile(`update stopped: VM needs to power off to change properties.*`)}
+		step5Check = resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.connected", "true")
+	} else {
+		step4func = resource.TestStep{
+			Config: configTextVMUpdateStep4,
+			Check: resource.ComposeAggregateTestCheckFunc(
+				testAccCheckVcdVmNotRestarted("vcd_vapp_vm."+hotVmName1, hotVappName, hotVmName1),
+			),
+		}
+		step5Check = testAccCheckVcdVmNotRestarted("vcd_vapp_vm."+hotVmName1, hotVappName, hotVmName1)
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -169,10 +191,7 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 				),
 			},
 			// Step 4 - update
-			resource.TestStep{
-				Config:      configTextVMUpdateStep4,
-				ExpectError: regexp.MustCompile(`update stopped: VM needs to power off to change properties.*`),
-			},
+			step4func,
 			// Step 5 - update
 			resource.TestStep{
 				Config: configTextVMUpdateStep5,
@@ -196,6 +215,7 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.ip_allocation_mode", "DHCP"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+hotVmName1, "network.1.mac"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.connected", "true"),
+					step5Check,
 				),
 			},
 		},
@@ -471,13 +491,14 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     type               = "none"
     ip_allocation_mode = "NONE"
     connected          = "false"
-    is_primary         = true
+    is_primary         = false
   }
 
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
     connected          = "false"
+    is_primary         = true
   }
 }
 `
@@ -507,13 +528,14 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     type               = "none"
     ip_allocation_mode = "NONE"
     connected          = "false"
+    is_primary         = "false"
   }
 
   network {
     type               = "org"
     name               = vcd_vapp_org_network.vappNetwork1.org_network_name
     ip_allocation_mode = "DHCP"
-    is_primary         = true
+    is_primary         = "true"
   }
 }
 `
