@@ -66,7 +66,7 @@ arch=${os}_amd64
 # if terraform executable is 0.13+, we use the new path
 if [[ $terraform_major -gt 0 || $terraform_major -eq 0 && $terraform_minor > 12 ]]
 then
-    target_dir=$HOME/.terraform.d/plugins/registry.terraform.io/terraform-providers/vcd/$bare_version/$arch
+    target_dir=$HOME/.terraform.d/plugins/registry.terraform.io/vmware/vcd/$bare_version/$arch
 fi
 
 plugin_name=terraform-provider-vcd
