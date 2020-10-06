@@ -31,6 +31,12 @@ test-binary-prepare: install
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider"
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' binary-prepare"
 
+
+# validates HCL files without executing them
+test-binary-validate: install
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider"
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' binary-validate"
+
 # runs test using Terraform binary as Org user
 test-binary-orguser: install
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider-orguser"
