@@ -212,8 +212,13 @@ do
         get_help
         ;;
     p|pause)
-        will_pause=1
-        echo "will pause"
+        if [ -n "$validating" ]
+        then
+            echo "pause not available for validation"
+        else
+            will_pause=1
+            echo "will pause"
+        fi
         ;;
     c|clear)
         if [ -f already_run.txt ]
@@ -282,6 +287,11 @@ do
         ;;
     validate)
         validating=1
+        if [ -n "$will_pause" ]
+        then
+            echo "pause disabled for validation"
+            unset will_pause
+        fi
         ;;
     *)
         get_help 
