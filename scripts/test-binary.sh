@@ -668,7 +668,7 @@ terraform {
       source = "vmware/vcd"
     }
   }
-  required_version = ">= 0.13"
+  # required_version = ">= 0.13"
 }
 
 EOF
