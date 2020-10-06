@@ -1,25 +1,7 @@
 # This file is the same as ./ResourceExamples/vcd_test.tf
 # converted into a template to make it easy to run.
 
-resource "vcd_dnat" "web2" {
-  edge_gateway    = "{{.EdgeGateway}}"
-  org             = "{{.Org}}"
-  vdc             = "{{.Vdc}}"
-  external_ip     = "{{.ExternalIp}}"
-  port            = 80
-  internal_ip     = "{{.InternalIp}}"
-  translated_port = 8080
-}
-
-resource "vcd_snat" "outbound" {
-  edge_gateway = "{{.EdgeGateway}}"
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  external_ip  = "{{.ExternalIp}}"
-  internal_ip  = "{{.InternalIp}}"
-}
-
-resource "vcd_network" "net" {
+resource "vcd_network_routed" "net" {
   name         = "my-nt"
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"

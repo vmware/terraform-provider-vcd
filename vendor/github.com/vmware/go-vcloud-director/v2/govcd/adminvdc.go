@@ -53,7 +53,7 @@ var vdcVersionedFuncsByVcdVersion = map[string]vdcVersionedFuncs{
 }
 
 // getVdcVersionedFuncsByVdcVersion is a wrapper function that retrieves the requested versioned VDC function
-// When the wanted version does not exist in the map, it returns the highest available one.
+// When the wanted version does  not exist in the map, it returns the highest available one.
 func getVdcVersionedFuncsByVdcVersion(version string) vdcVersionedFuncs {
 	f, ok := vdcVersionedFuncsByVcdVersion[version]
 	if ok {
