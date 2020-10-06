@@ -33,7 +33,7 @@ data "vcd_nsxt_tier0_router" "router" {
 }
 
 resource "vcd_external_network_v2" "ext-net-nsxt" {
-  name        = "nsxt-network"
+  name        = "nsxt-external-network"
   description = "First NSX-T backed network"
 
   nsxt_network {
@@ -82,8 +82,8 @@ data "vcd_portgroup" "sw" {
 }
 
 resource "vcd_external_network_v2" "ext-net-nsxv" {
-  name        = "TestAccVcdExternalNetworkBasic"
-  description = "Test External Network"
+  name        = "nsxv-external-network"
+  description = "NSX-V based external network"
 
   vsphere_network {
     vcenter_id     = data.vcd_vcenter.vc.id
@@ -91,11 +91,11 @@ resource "vcd_external_network_v2" "ext-net-nsxv" {
   }
 
   ip_scope {
-    gateway      = "192.168.30.49"
-    netmask      = "24"
-    dns1         = "192.168.0.164"
-    dns2         = "192.168.0.196"
-    dns_suffix   = "company.biz"
+    gateway       = "192.168.30.49"
+    prefix_length = "24"
+    dns1          = "192.168.0.164"
+    dns2          = "192.168.0.196"
+    dns_suffix    = "company.biz"
 
     static_ip_pool {
       start_address = "192.168.30.51"
