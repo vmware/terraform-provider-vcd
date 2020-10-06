@@ -70,7 +70,7 @@ func (vapp *VApp) GetVappNetworkById(id string, refresh bool) (*types.VAppNetwor
 	if refresh {
 		err := vapp.Refresh()
 		if err != nil {
-			return nil, fmt.Errorf("error refreshing vapp: %s", err)
+			return nil, fmt.Errorf("error refreshing vApp: %s", err)
 		}
 	}
 
@@ -111,7 +111,7 @@ func (vapp *VApp) GetVappNetworkByName(vappNetworkName string, refresh bool) (*t
 	if refresh {
 		err := vapp.Refresh()
 		if err != nil {
-			return nil, fmt.Errorf("error refreshing vapp: %s", err)
+			return nil, fmt.Errorf("error refreshing vApp: %s", err)
 		}
 	}
 

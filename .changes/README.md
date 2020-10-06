@@ -7,6 +7,7 @@
     * bug-fixes
     * deprecations
     * notes
+    * removals
 
 * The changes files must NOT contain the header
 

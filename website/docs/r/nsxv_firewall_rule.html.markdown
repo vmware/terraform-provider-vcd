@@ -10,11 +10,9 @@ description: |-
 # vcd\_nsxv\_firewall\_rule
 
 Provides a vCloud Director firewall rule resource for advanced edge gateways (NSX-V). This can be
-used to create, modify, and delete firewall rules. Replaces
-[`vcd_firewall_rules`](/docs/providers/vcd/r/firewall_rules.html) resource.
+used to create, modify, and delete firewall rules.
 
-~> **Note:** This resource requires advanced edge gateway (NSX-V). For non-advanced edge gateways please
-use the [`vcd_firewall_rules`](/docs/providers/vcd/r/firewall_rules.html) resource.
+~> **Note:** This resource requires advanced edge gateway (NSX-V).
 
 ## Example Usage 1 (Minimal input with dynamic edge gateway IP)
 

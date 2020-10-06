@@ -21,6 +21,53 @@ var (
 )
 
 func TestAccVcdEdgeGatewayBasic(t *testing.T) {
+	var edgeGatewayVcdName string = "test_edge_gateway_basic"
+
+	// String map to fill the template
+	var params = StringMap{
+		"Org":             testConfig.VCD.Org,
+		"Vdc":             testConfig.VCD.Vdc,
+		"EdgeGateway":     edgeGatewayNameBasic,
+		"EdgeGatewayVcd":  edgeGatewayVcdName,
+		"ExternalNetwork": testConfig.Networking.ExternalNetwork,
+		"Advanced":        "true",
+		"Tags":            "gateway",
+	}
+	configText := templateFill(testAccEdgeGatewayBasic, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	if !usingSysAdmin() {
+		t.Skip("Edge Gateway tests require system admin privileges")
+		return
+	}
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckVcdEdgeGatewayDestroy(edgeGatewayNameBasic),
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(
+						"vcd_edgegateway."+edgeGatewayNameBasic, "default_gateway_network", testConfig.Networking.ExternalNetwork),
+					resource.TestMatchResourceAttr("vcd_edgegateway."+edgeGatewayNameBasic, "default_external_network_ip", ipV4Regex),
+				),
+			},
+			resource.TestStep{
+				ResourceName:            "vcd_edgegateway." + edgeGatewayNameBasic + "-import",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateIdFunc:       importStateIdOrgVdcObject(testConfig, edgeGatewayVcdName),
+				ImportStateVerifyIgnore: []string{"external_network", "external_networks"},
+			},
+		},
+	})
+}
+
+func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 	var (
 		edgeGatewayVcdName    string = "test_edge_gateway_basic"
 		newExternalNetwork    string = "TestExternalNetwork"
@@ -181,9 +228,9 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "fw_default_rule_action", "accept"),
 
 					// TODO after
-					// https://github.com/terraform-providers/terraform-provider-aws/issues/7198
+					// https://github.com/vmware/terraform-provider-aws/issues/7198
 					// Data source checks. There is a bug in Terraform where a data source cannot
-					// have two computed TypeSet variables because they get overwritten The test
+					// have two computed TypeSet variables because they get overwritten. The test
 					// below is left such, that it triggers an error as soon as the bug is fixed.
 					// (probably when we pull in newer SDK)
 					resource.TestCheckResourceAttr("data.vcd_edgegateway.egw", "external_network.#", "1"),
