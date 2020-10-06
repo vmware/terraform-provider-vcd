@@ -138,14 +138,6 @@ func resourceVcdEdgeGateway() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 			},
-			"advanced": &schema.Schema{
-				Type:         schema.TypeBool,
-				Optional:     true,
-				Default:      true,
-				ForceNew:     true,
-				ValidateFunc: validateBoolTrue(),
-				Description:  "True if the gateway uses advanced networking. (Enabled by default - Only 'true' is accepted as of 9.7+)",
-			},
 			"configuration": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,

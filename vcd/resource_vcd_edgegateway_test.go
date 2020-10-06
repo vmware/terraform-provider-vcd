@@ -21,17 +21,26 @@ var (
 )
 
 func TestAccVcdEdgeGatewayBasic(t *testing.T) {
-	var edgeGatewayVcdName string = "test_edge_gateway_basic"
+	var (
+		edgeGatewayVcdName    string = "test_edge_gateway_basic"
+		newExternalNetwork    string = "TestExternalNetwork"
+		newExternalNetworkVcd string = "test_external_network"
+	)
 
 	// String map to fill the template
 	var params = StringMap{
-		"Org":             testConfig.VCD.Org,
-		"Vdc":             testConfig.VCD.Vdc,
-		"EdgeGateway":     edgeGatewayNameBasic,
-		"EdgeGatewayVcd":  edgeGatewayVcdName,
-		"ExternalNetwork": testConfig.Networking.ExternalNetwork,
-		"Advanced":        "true",
-		"Tags":            "gateway",
+		"Org":                   testConfig.VCD.Org,
+		"Vdc":                   testConfig.VCD.Vdc,
+		"EdgeGateway":           edgeGatewayNameBasic,
+		"EdgeGatewayVcd":        edgeGatewayVcdName,
+		"ExternalNetwork":       testConfig.Networking.ExternalNetwork,
+		"Advanced":              "true",
+		"Tags":                  "gateway",
+		"NewExternalNetwork":    newExternalNetwork,
+		"NewExternalNetworkVcd": newExternalNetworkVcd,
+		"Type":                  testConfig.Networking.ExternalNetworkPortGroupType,
+		"PortGroup":             testConfig.Networking.ExternalNetworkPortGroup,
+		"Vcenter":               testConfig.Networking.Vcenter,
 	}
 	configText := templateFill(testAccEdgeGatewayBasic, params)
 	if vcdShortTest {
@@ -51,8 +60,6 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(
-						"vcd_edgegateway."+edgeGatewayNameBasic, "default_gateway_network", testConfig.Networking.ExternalNetwork),
 					resource.TestMatchResourceAttr("vcd_edgegateway."+edgeGatewayNameBasic, "default_external_network_ip", ipV4Regex),
 				),
 			},
