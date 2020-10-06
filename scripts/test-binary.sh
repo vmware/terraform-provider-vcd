@@ -656,9 +656,12 @@ do
     if [ "${operations[0]}" == "init" ]
     then
         cp $CF $opsdir/config.tf
-        if [[ $terraform_major -gt 0 || $terraform_major -eq 0 && $terraform_minor > 12 ]]
+        has_terraform=$(grep '^\s*terraform {' $CF)
+        if [ -z "$has_terraform" ]
         then
-            cat << EOF > $opsdir/versions.tf
+            if [[ $terraform_major -gt 0 || $terraform_major -eq 0 && $terraform_minor > 12 ]]
+            then
+                cat << EOF > $opsdir/versions.tf
 terraform {
   required_providers {
     vcd = {
@@ -669,6 +672,7 @@ terraform {
 }
 
 EOF
+            fi
         fi
     fi
     if [ -z "$DRY_RUN" ]
