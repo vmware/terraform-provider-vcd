@@ -93,7 +93,7 @@ function restore_environment {
         # Copies current version plugin to the testing environment
         # The plugin is guaranteed to be there, as its existence
         # was checked in 'make_environment'
-        cp $to_path/terraform-provider-vcd_$to_version .
+        cp $HOME/$to_path/terraform-provider-vcd_$to_version .
         hash -r
         terraform init
     fi
