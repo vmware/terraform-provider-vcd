@@ -63,12 +63,12 @@ function terraform_binary_path {
     target_dir=.terraform.d/plugins/
     # Getting the version without the initial "v"
     bare_version=$(echo $version | sed -e 's/^v//')
-    os=$(uname -s | tr '[A-Z]' '[a-z]')
+    os=$(uname -s | tr '[:upper:]' '[:lower:]')
     check_empty "$os" "operating system not detected"
     arch=${os}_amd64
 
     # if terraform executable is 0.13+, we use the new path
-    if [[ $tversion_major -gt 0 || $tversion_major -eq 0 && $tversion_minor > 12 ]]
+    if [[ $tversion_major -gt 0 || $tversion_major -eq 0 && $tversion_minor -gt 12 ]]
     then
         target_dir=.terraform.d/plugins/registry.terraform.io/vmware/vcd/$bare_version/$arch
     fi
@@ -659,7 +659,7 @@ do
         has_terraform=$(grep '^\s*terraform {' $CF)
         if [ -z "$has_terraform" ]
         then
-            if [[ $terraform_major -gt 0 || $terraform_major -eq 0 && $terraform_minor > 12 ]]
+            if [[ $terraform_major -gt 0 || $terraform_major -eq 0 && $terraform_minor -gt 12 ]]
             then
                 cat << EOF > $opsdir/versions.tf
 terraform {
