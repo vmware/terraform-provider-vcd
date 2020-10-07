@@ -158,7 +158,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.name", "multinic-net"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.type", "org"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.is_primary", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.is_primary", "true"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.ip", "11.10.0.152"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.0.connected", "true"),
@@ -170,7 +170,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.name", "multinic-net"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.type", "org"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.is_primary", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.is_primary", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.ip_allocation_mode", "DHCP"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+netVmName1, "network.1.connected", "true"),
 					//resource.TestCheckResourceAttrSet("vcd_vapp_vm."+netVmName1, "network.1.ip"), // We cannot guarantee DHCP
@@ -443,14 +443,14 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     type               = "org"
     name               = vcd_network_routed.net.name
     ip_allocation_mode = "POOL"
-    is_primary         = false
+    is_primary         = true
   }
 
   network {
     type               = "org"
     name               = vcd_network_routed.net.name
     ip_allocation_mode = "DHCP"
-    is_primary         = true
+    is_primary         = false
   }
 
   network {
