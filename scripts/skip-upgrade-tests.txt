@@ -140,3 +140,4 @@ vcd.TestAccVcdVAppVmProperties-step2.tf v2.9.0 "default value power_on changed f
 vcd.TestAccVcdVAppVmProperties.tf v2.9.0 "default value power_on changed from true to false"
 vcd.TestAccVcdVAppVmUpdateCustomization.tf v2.9.0 "default value power_on changed from true to false"
 vcd.TestAccVcdVmInternalDisk-CreateALl.tf v2.9.0 "field size removed from independent disk"
+vcd.TestAccVcdVmInternalDisk-Update1.tf v2.9.0 "field size removed from independent disk"
