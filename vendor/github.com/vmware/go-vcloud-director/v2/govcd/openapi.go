@@ -612,6 +612,8 @@ func (client *Client) newOpenApiRequest(apiVersion string, params url.Values, me
 	// Inject JSON mime type
 	req.Header.Add("Content-Type", types.JSONMime)
 
+	setHttpUserAgent(client.UserAgent, req)
+
 	// Avoids passing data if the logging of requests is disabled
 	if util.LogHttpRequest {
 		payload := ""
