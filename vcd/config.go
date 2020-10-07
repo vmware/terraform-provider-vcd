@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -14,6 +15,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
+
+func init() {
+	separator := os.Getenv("VCD_IMPORT_SEPARATOR")
+	if separator != "" {
+		ImportSeparator = separator
+	}
+}
 
 type Config struct {
 	User            string
@@ -424,10 +432,14 @@ func (c *Config) Client() (*VCDClient, error) {
 		return nil, fmt.Errorf("something went wrong while retrieving URL: %s", err)
 	}
 
+	userAgent := buildUserAgent(BuildVersion, c.SysOrg)
+
 	vcdClient := &VCDClient{
 		VCDClient: govcd.NewVCDClient(*authUrl, c.InsecureFlag,
 			govcd.WithMaxRetryTimeout(c.MaxRetryTimeout),
-			govcd.WithSamlAdfs(c.UseSamlAdfs, c.CustomAdfsRptId)),
+			govcd.WithSamlAdfs(c.UseSamlAdfs, c.CustomAdfsRptId),
+			govcd.WithHttpUserAgent(userAgent),
+		),
 		SysOrg:          c.SysOrg,
 		Org:             c.Org,
 		Vdc:             c.Vdc,
@@ -445,9 +457,8 @@ func (c *Config) Client() (*VCDClient, error) {
 	return vcdClient, nil
 }
 
-// Returns the name of the function that called the
-// current function.
-// It is used for tracing
+// callFuncName returns the name of the function that called the current function. It is used for
+// tracing
 func callFuncName() string {
 	fpcs := make([]uintptr, 1)
 	n := runtime.Callers(3, fpcs)
@@ -460,9 +471,10 @@ func callFuncName() string {
 	return ""
 }
 
-func init() {
-	separator := os.Getenv("VCD_IMPORT_SEPARATOR")
-	if separator != "" {
-		ImportSeparator = separator
-	}
+// buildUserAgent helps to construct HTTP User-Agent header
+func buildUserAgent(version, sysOrg string) string {
+	userAgent := fmt.Sprintf("terraform-provider-vcd/%s (%s/%s; isProvider:%t)",
+		version, runtime.GOOS, runtime.GOARCH, strings.ToLower(sysOrg) == "system")
+
+	return userAgent
 }

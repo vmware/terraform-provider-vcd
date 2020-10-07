@@ -32,7 +32,6 @@ resource "vcd_edgegateway" "egw" {
   name                    = "my-egw"
   description             = "new edge gateway"
   configuration           = "compact"
-  advanced                = true
   
   external_network {
     name = "my-ext-net1"
@@ -71,8 +70,6 @@ resource "vcd_edgegateway" "egw" {
   name          = "edge-with-complex-networks"
   description   = "new edge gateway"
   configuration = "compact"
-  advanced      = true
-
 
   external_network {
     name = "my-main-external-network"
@@ -123,19 +120,10 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to which the VDC belongs. Optional if defined at provider level.
 * `vdc` - (Optional) The name of VDC that owns the edge gateway. Optional if defined at provider level. 
 * `name` - (Required) A unique name for the edge gateway.
-* `external_networks` - (Deprecated, Optional) An array of external network names. This supports
-  simple external networks with one subnet only. **Please use** the [external
-  network](#external-network) block structure to define external networks.
 * `external_network` - (Optional, *v2.6+*) One or more blocks defining external networks, their
   subnets, IP addresses and  IP pool suballocation attached to edge gateway interfaces. Details are
   in [external network](#external-network) block below.
 * `configuration` - (Required) Configuration of the vShield edge VM for this gateway. One of: `compact`, `full` ("Large"), `x-large`, `full4` ("Quad Large").
-* `default_gateway_network` - (Deprecated, Optional) Name of the external network to be used as
-  default gateway. It must be included in the list of `external_networks`. Providing an empty string
-  or omitting the argument will create the edge gateway without a default gateway. **Please use**
-  the  [external network](#external-network) block structure and `use_for_default_route` to specify
-  a subnet which should be used as a default route.
-* `advanced` - (Optional) True if the gateway uses advanced networking. Default is `true`.
 * `ha_enabled` - (Optional) Enable high availability on this edge gateway. Default is `false`.
 * `distributed_routing` - (Optional) If advanced networking enabled, also enable distributed
   routing. Default is `false`.
@@ -222,7 +210,18 @@ resource "vcd_edgegateway" "tf-edgegateway" {
   org               = "my-org"
   vdc               = "my-vdc"
   configuration     = "COMPUTE"
-  external_networks = ["COMPUTE"]
+
+  external_network {
+      name = "my-ext-net1"
+
+      subnet {
+        ip_address            = "192.168.30.51"
+        gateway               = "192.168.30.49"
+        netmask               = "255.255.255.240"
+        use_for_default_route = true
+      }
+  }
+
 }
 ```
 

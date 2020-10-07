@@ -91,7 +91,7 @@ func datasourceVcdNsxvFirewallRule() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"virtual_machine_ids": {
+						"vm_ids": {
 							Type:        schema.TypeSet,
 							Computed:    true,
 							Description: "Set of VM IDs",
@@ -156,7 +156,7 @@ func datasourceVcdNsxvFirewallRule() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"virtual_machine_ids": {
+						"vm_ids": {
 							Type:        schema.TypeSet,
 							Computed:    true,
 							Description: "Set of VM IDs",

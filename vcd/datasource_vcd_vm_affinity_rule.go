@@ -48,7 +48,7 @@ func datasourceVcdVmAffinityRule() *schema.Resource {
 				Computed:    true,
 				Description: "True if this affinity rule is enabled",
 			},
-			"virtual_machine_ids": {
+			"vm_ids": {
 				Type:        schema.TypeSet,
 				Computed:    true,
 				Description: "Set of VM IDs assigned to this rule",

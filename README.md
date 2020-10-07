@@ -35,7 +35,7 @@ and toggle between modes.
 
 ```
 $ cd ~/mydir
-$ git clone https://github.com/terraform-providers/terraform-provider-vcd.git
+$ git clone https://github.com/vmware/terraform-provider-vcd.git
 $ cd terraform-provider-vcd/
 $ make build
 ```
@@ -50,7 +50,7 @@ Clone repository to: `$GOPATH/src/github.com/terraform-providers/terraform-provi
 
 ```sh
 $ mkdir -p $GOPATH/src/github.com/terraform-providers; cd $GOPATH/src/github.com/terraform-providers
-$ git clone https://github.com/terraform-providers/terraform-provider-vcd.git
+$ git clone https://github.com/vmware/terraform-provider-vcd.git
 ```
 
 Enter the provider directory and build the provider
