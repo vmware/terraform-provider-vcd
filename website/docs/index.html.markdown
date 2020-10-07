@@ -25,6 +25,7 @@ The following vCloud Director versions are supported by this provider:
 * 9.7
 * 10.0
 * 10.1
+* 10.2
 
 ## Removed resources and fields
 
