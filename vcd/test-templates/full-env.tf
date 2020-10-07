@@ -91,7 +91,6 @@ resource "vcd_edgegateway" "{{.EdgeGateway}}" {
   name                    = "{{.EdgeGateway}}"
   description             = "{{.Org}} edge gateway"
   configuration           = "compact"
-  advanced                = true
 
   external_network {
     name = vcd_external_network.{{.ExternalNetwork}}.name

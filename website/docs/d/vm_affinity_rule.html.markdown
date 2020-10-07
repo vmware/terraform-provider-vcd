@@ -45,5 +45,5 @@ rule, especially if the rule name could have duplicates
 * `enabled` True if this affinity rule is enabled.
 * `required` True if this affinity rule is required. When a rule is mandatory, a host failover will not 
    power on the VM if doing so would violate the rule.
-* `virtual_machine_ids` A set of virtual machine IDs that compose this rule.
+* `vm_ids` A set of virtual machine IDs that compose this rule.
 

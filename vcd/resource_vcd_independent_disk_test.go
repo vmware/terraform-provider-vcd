@@ -27,7 +27,6 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 		"name":               name,
 		"secondName":         name + "second",
 		"size":               "5000",
-		"sizeInBytes":        "5242880000",
 		"busType":            "SCSI",
 		"busSubType":         "lsilogicsas",
 		"storageProfileName": "*",
@@ -61,6 +60,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "datastore_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "iops", regexp.MustCompile(`^\d+$`)),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "is_attached", "false"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "size_in_mb", params["size"].(string)),
 				),
 			},
 			resource.TestStep{
@@ -68,13 +68,13 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdByDisk("vcd_independent_disk." + resourceName),
-				ImportStateVerifyIgnore: []string{"org", "vdc", "size"},
+				ImportStateVerifyIgnore: []string{"org", "vdc"},
 			},
 			resource.TestStep{
 				Config: configTextWithoutOptionals,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDiskCreated("vcd_independent_disk."+resourceNameSecond),
-					//resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "size_in_bytes", "5242880000"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameSecond, "size_in_mb", params["size"].(string)),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameSecond, "bus_type", "SCSI"),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameSecond, "bus_sub_type", "lsilogic"),
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceNameSecond, "owner_name", regexp.MustCompile(`^\S+`)),
@@ -164,7 +164,7 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
   org             = "{{.Org}}"
   vdc             = "{{.Vdc}}"
   name            = "{{.name}}"
-  size            = "{{.size}}"
+  size_in_mb      = "{{.size}}"
   bus_type        = "{{.busType}}"
   bus_sub_type    = "{{.busSubType}}"
   storage_profile = "{{.storageProfileName}}"
@@ -174,6 +174,6 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
 const testAccCheckVcdIndependentDiskWithoutOptionals = `
 resource "vcd_independent_disk" "{{.secondResourceName}}" {
   name            = "{{.secondName}}"
-  size            = "{{.size}}"
+  size_in_mb      = "{{.size}}"
 }
 `
