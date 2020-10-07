@@ -11,6 +11,8 @@ description: |-
 Provides a vCloud Director Organization VDC data source. An Organization VDC can be used to reference a VCD and use its 
 data within other resources or data sources.
 
+-> **Note:** This resource supports NSX-T and NSX-V based Org VDCs
+
 Supported in provider *v2.5+*
 
 ## Example Usage

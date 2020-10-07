@@ -13,11 +13,11 @@ description: |-
 Provides a VMware Cloud Director External Network data source (version 2). New version of this data source uses new VCD
 API and is capable of handling NSX-T backed external networks as well as port group backed ones.
 
-Supported in provider *3.0+*
-
-~> **Note:** This data source uses new VMware Cloud Director
+-> **Note:** This resource uses new VMware Cloud Director
 [OpenAPI](https://code.vmware.com/docs/11982/getting-started-with-vmware-cloud-director-openapi) and
-requires at least VCD *10.0+*.
+requires at least VCD *10.0+*. It supports both NSX-T and NSX-V backed networks (NSX-T *3.0+* requires VCD *10.1.1+*)
+
+Supported in provider *v3.0+*.
 
 ## Example Usage
 

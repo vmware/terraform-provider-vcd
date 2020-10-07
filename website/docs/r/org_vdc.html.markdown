@@ -11,7 +11,8 @@ description: |-
 Provides a vCloud Director Organization VDC resource. This can be used to create and delete an Organization VDC.
 Requires system administrator privileges.
 
-~> **Note:** This resource supports NSX-T
+-> **Note:** This resource supports NSX-T and NSX-V based Org Vdcs by providing relevant
+`network_pool_name` and `provider_vdc_name`
 
 Supported in provider *v2.2+*
 

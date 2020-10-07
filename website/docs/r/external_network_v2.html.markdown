@@ -14,9 +14,9 @@ Provides a VMware Cloud Director External Network resource (version 2). New vers
 uses new VCD API and is capable of creating NSX-T backed external networks as well as port group
 backed ones.
 
-~> **Note:** This resource uses new VMware Cloud Director
+-> **Note:** This resource uses new VMware Cloud Director
 [OpenAPI](https://code.vmware.com/docs/11982/getting-started-with-vmware-cloud-director-openapi) and
-requires at least VCD *10.0+*. (NSX-T *3.0+* requires VCD *10.1.1+*)
+requires at least VCD *10.0+*. It supports both NSX-T and NSX-V backed networks (NSX-T *3.0+* requires VCD *10.1.1+*)
 
 Supported in provider *v3.0+*.
 
