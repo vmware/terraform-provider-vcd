@@ -11,13 +11,14 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-type OpenApiRole struct {
+// Role uses OpenAPI endpoint to operate user roles
+type Role struct {
 	Role   *types.Role
 	client *Client
 }
 
 // GetOpenApiRoleById retrieves role by given ID
-func (adminOrg *AdminOrg) GetOpenApiRoleById(id string) (*OpenApiRole, error) {
+func (adminOrg *AdminOrg) GetOpenApiRoleById(id string) (*Role, error) {
 	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointRoles
 	minimumApiVersion, err := adminOrg.client.checkOpenApiEndpointCompatibility(endpoint)
 	if err != nil {
@@ -33,7 +34,7 @@ func (adminOrg *AdminOrg) GetOpenApiRoleById(id string) (*OpenApiRole, error) {
 		return nil, err
 	}
 
-	role := &OpenApiRole{
+	role := &Role{
 		Role:   &types.Role{},
 		client: adminOrg.client,
 	}
@@ -48,7 +49,7 @@ func (adminOrg *AdminOrg) GetOpenApiRoleById(id string) (*OpenApiRole, error) {
 
 // GetAllOpenApiRoles retrieves all roles using OpenAPI endpoint. Query parameters can be supplied to perform additional
 // filtering
-func (adminOrg *AdminOrg) GetAllOpenApiRoles(queryParameters url.Values) ([]*types.Role, error) {
+func (adminOrg *AdminOrg) GetAllOpenApiRoles(queryParameters url.Values) ([]*Role, error) {
 	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointRoles
 	minimumApiVersion, err := adminOrg.client.checkOpenApiEndpointCompatibility(endpoint)
 	if err != nil {
@@ -60,35 +61,43 @@ func (adminOrg *AdminOrg) GetAllOpenApiRoles(queryParameters url.Values) ([]*typ
 		return nil, err
 	}
 
-	responses := []*types.Role{{}}
-
-	err = adminOrg.client.OpenApiGetAllItems(minimumApiVersion, urlRef, queryParameters, &responses)
+	typeResponses := []*types.Role{{}}
+	err = adminOrg.client.OpenApiGetAllItems(minimumApiVersion, urlRef, queryParameters, &typeResponses)
 	if err != nil {
 		return nil, err
 	}
 
-	return responses, nil
+	// Wrap all typeResponses into Role types with client
+	returnRoles := make([]*Role, len(typeResponses))
+	for sliceIndex := range typeResponses {
+		returnRoles[sliceIndex] = &Role{
+			Role:   typeResponses[sliceIndex],
+			client: adminOrg.client,
+		}
+	}
+
+	return returnRoles, nil
 }
 
-// Create creates a new role using OpenAPI endpoint
-func (role *OpenApiRole) Create(newRole *types.Role) (*OpenApiRole, error) {
+// CreateRole creates a new role using OpenAPI endpoint
+func (adminOrg *AdminOrg) CreateRole(newRole *types.Role) (*Role, error) {
 	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointRoles
-	minimumApiVersion, err := role.client.checkOpenApiEndpointCompatibility(endpoint)
+	minimumApiVersion, err := adminOrg.client.checkOpenApiEndpointCompatibility(endpoint)
 	if err != nil {
 		return nil, err
 	}
 
-	urlRef, err := role.client.OpenApiBuildEndpoint(endpoint)
+	urlRef, err := adminOrg.client.OpenApiBuildEndpoint(endpoint)
 	if err != nil {
 		return nil, err
 	}
 
-	returnRole := &OpenApiRole{
+	returnRole := &Role{
 		Role:   &types.Role{},
-		client: role.client,
+		client: adminOrg.client,
 	}
 
-	err = role.client.OpenApiPostItem(minimumApiVersion, urlRef, nil, newRole, returnRole.Role)
+	err = adminOrg.client.OpenApiPostItem(minimumApiVersion, urlRef, nil, newRole, returnRole.Role)
 	if err != nil {
 		return nil, fmt.Errorf("error creating role: %s", err)
 	}
@@ -97,7 +106,7 @@ func (role *OpenApiRole) Create(newRole *types.Role) (*OpenApiRole, error) {
 }
 
 // Update updates existing OpenAPI role
-func (role *OpenApiRole) Update() (*OpenApiRole, error) {
+func (role *Role) Update() (*Role, error) {
 	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointRoles
 	minimumApiVersion, err := role.client.checkOpenApiEndpointCompatibility(endpoint)
 	if err != nil {
@@ -113,7 +122,7 @@ func (role *OpenApiRole) Update() (*OpenApiRole, error) {
 		return nil, err
 	}
 
-	returnRole := &OpenApiRole{
+	returnRole := &Role{
 		Role:   &types.Role{},
 		client: role.client,
 	}
@@ -127,7 +136,7 @@ func (role *OpenApiRole) Update() (*OpenApiRole, error) {
 }
 
 // Delete deletes OpenAPI role
-func (role *OpenApiRole) Delete() error {
+func (role *Role) Delete() error {
 	endpoint := types.OpenApiPathVersion1_0_0 + types.OpenApiEndpointRoles
 	minimumApiVersion, err := role.client.checkOpenApiEndpointCompatibility(endpoint)
 	if err != nil {

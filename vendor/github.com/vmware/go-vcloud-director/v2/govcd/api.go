@@ -46,6 +46,10 @@ type Client struct {
 	// ID is used as Relaying Party Trust identifier.
 	CustomAdfsRptId string
 
+	// UserAgent to send for API queries. Standard format is described as:
+	// "User-Agent: <product> / <product-version> <comment>"
+	UserAgent string
+
 	supportedVersions SupportedVersions // Versions from /api/versions endpoint
 }
 
@@ -211,6 +215,8 @@ func (cli *Client) newRequest(params map[string]string, notEncodedParams map[str
 			}
 		}
 	}
+
+	setHttpUserAgent(cli.UserAgent, req)
 
 	// Avoids passing data if the logging of requests is disabled
 	if util.LogHttpRequest {
@@ -537,7 +543,7 @@ func (client *Client) executeRequest(pathURL, requestType, contentType, errorMes
 }
 
 // ExecuteRequestWithCustomError sends the request and checks for 2xx response. If the returned status code
-// was not as expected - the returned error will be unmarshaled to `errType` which implements Go's standard `error`
+// was not as expected - the returned error will be unmarshalled to `errType` which implements Go's standard `error`
 // interface.
 func (client *Client) ExecuteRequestWithCustomError(pathURL, requestType, contentType, errorMessage string,
 	payload interface{}, errType error) (*http.Response, error) {
@@ -604,12 +610,21 @@ func executeRequestCustomErr(pathURL string, params map[string]string, requestTy
 		req.Header.Add("Content-Type", contentType)
 	}
 
+	setHttpUserAgent(client.UserAgent, req)
+
 	resp, err := client.Http.Do(req)
 	if err != nil {
 		return resp, err
 	}
 
 	return checkRespWithErrType(types.BodyTypeXML, resp, err, errType)
+}
+
+// setHttpUserAgent adds User-Agent string to HTTP request. When supplied string is empty - header will not be set
+func setHttpUserAgent(userAgent string, req *http.Request) {
+	if userAgent != "" {
+		req.Header.Set("User-Agent", userAgent)
+	}
 }
 
 func isMessageWithPlaceHolder(message string) bool {

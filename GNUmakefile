@@ -1,17 +1,19 @@
 TEST?=$$(go list ./... |grep -v 'vendor')
 GOFMT_FILES?=$$(find . -name '*.go' |grep -v vendor)
 WEBSITE_REPO=github.com/hashicorp/terraform-website
+GIT_DESCRIBE=$(shell git describe)
+
 PKG_NAME=vcd
 
 default: build
 
-# builds the plugin
+# builds the plugin injecting output of `git describe` to BuildVersion variable
 build: fmtcheck
-	go install
+	go install -ldflags="-X 'github.com/vmware/terraform-provider-vcd/v3/vcd.BuildVersion=$(GIT_DESCRIBE)'"
 
-# builds the plugin with race detector enabled
+# builds the plugin with race detector enabled and injecting output of `git describe` to BuildVersion variable
 buildrace: fmtcheck
-	go install --race
+	go install --race -ldflags="-X 'github.com/vmware/terraform-provider-vcd/v3/vcd.BuildVersion=$(GIT_DESCRIBE)'"
 
 # creates a .zip archive of the code
 dist:
