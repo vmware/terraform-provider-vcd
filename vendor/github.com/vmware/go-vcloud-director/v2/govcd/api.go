@@ -46,7 +46,8 @@ type Client struct {
 	// ID is used as Relaying Party Trust identifier.
 	CustomAdfsRptId string
 
-	// UserAgent to send for API queries. Standard format is describe User-Agent: <product> / <product-version> <comment>
+	// UserAgent to send for API queries. Standard format is described as:
+	// "User-Agent: <product> / <product-version> <comment>"
 	UserAgent string
 
 	supportedVersions SupportedVersions // Versions from /api/versions endpoint
