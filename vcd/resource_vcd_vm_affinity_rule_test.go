@@ -263,7 +263,7 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 					resource.TestCheckResourceAttr(
 						resourceName, "required", fmt.Sprintf("%v", "true")),
 					resource.TestCheckResourceAttr(
-						resourceName, "virtual_machine_ids.#", fmt.Sprintf("%d", len(data.creationVms))),
+						resourceName, "vm_ids.#", fmt.Sprintf("%d", len(data.creationVms))),
 					resource.TestCheckResourceAttr(
 						resourceName, "polarity", data.polarity),
 					resource.TestCheckOutput("name_of_rule_by_id", data.name),
@@ -282,7 +282,7 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 					resource.TestCheckResourceAttr(
 						resourceName, "required", fmt.Sprintf("%v", "false")),
 					resource.TestCheckResourceAttr(
-						resourceName, "virtual_machine_ids.#", fmt.Sprintf("%d", expectedUpdateVMs)),
+						resourceName, "vm_ids.#", fmt.Sprintf("%d", expectedUpdateVMs)),
 					resource.TestCheckResourceAttr(
 						resourceName, "polarity", data.polarity),
 				),
@@ -561,7 +561,7 @@ resource "vcd_vm_affinity_rule" "{{.AffinityRuleIdentifier}}" {
   enabled  = {{.Enabled}}
   polarity = "{{.Polarity}}"
 
-  virtual_machine_ids = [
+  vm_ids = [
     {{.VirtualMachineIds}}
   ]
 }
