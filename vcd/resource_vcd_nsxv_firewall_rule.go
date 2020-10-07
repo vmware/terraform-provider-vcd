@@ -119,7 +119,7 @@ func resourceVcdNsxvFirewallRule() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"virtual_machine_ids": {
+						"vm_ids": {
 							Optional:    true,
 							Type:        schema.TypeSet,
 							Description: "Set of VM IDs",
@@ -185,7 +185,7 @@ func resourceVcdNsxvFirewallRule() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"virtual_machine_ids": {
+						"vm_ids": {
 							Optional:    true,
 							Type:        schema.TypeSet,
 							Description: "Set of VM IDs",
@@ -678,7 +678,7 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 	endpointMap["ip_addresses"] = endpointIpsSet
 	endpointMap["gateway_interfaces"] = endpointGatewayInterfaceSet
 	endpointMap["org_networks"] = endpointNetworksSet
-	endpointMap["virtual_machine_ids"] = endpointVmSet
+	endpointMap["vm_ids"] = endpointVmSet
 	endpointMap["ip_sets"] = endpointIpSetSet
 	// TODO - uncomment when security groups are supported
 	// endpointMap["security_groups"] = endpointSecurityGroupSet
@@ -735,7 +735,7 @@ func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway, vd
 	// 'types.EdgeFirewallEndpoint.GroupingObjectId' holds IDs for VMs, org networks, ipsets and Security groups
 
 	// Extract VM IDs from set and add them to endpoint structure
-	endpointVmIdStrings := convertSchemaSetToSliceOfStrings(endpointMap["virtual_machine_ids"].(*schema.Set))
+	endpointVmIdStrings := convertSchemaSetToSliceOfStrings(endpointMap["vm_ids"].(*schema.Set))
 	result.GroupingObjectIds = append(result.GroupingObjectIds, endpointVmIdStrings...)
 
 	// Extract org network names from set, lookup their IDs and add them to endpoint structure

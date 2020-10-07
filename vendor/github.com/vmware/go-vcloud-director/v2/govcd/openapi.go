@@ -35,6 +35,9 @@ import (
 // Not all API fields are supported for FIQL filtering and sometimes they return odd errors when filtering is
 // unsupported. No exact documentation exists so far.
 //
+// Note. All functions accepting URL reference (*url.URL) will make a copy of URL because they may mutate URL reference.
+// The parameter is kept as *url.URL for convenience because standard library provides pointer values.
+//
 // OpenAPI versioning.
 // OpenAPI was introduced in VCD 9.5 (with API version 31.0). Endpoints are being added with each VCD iteration.
 // Internally hosted documentation (https://HOSTNAME/docs/) can be used to check which endpoints where introduced in
@@ -67,19 +70,29 @@ func (client *Client) OpenApiBuildEndpoint(endpoint ...string) (*url.URL, error)
 // first crawling pages and accumulating all responses into []json.RawMessage (as strings). Because there is no
 // intermediate unmarshalling to exact `outType` for every page it unmarshals into response struct in one go. 'outType'
 // must be a slice of object (e.g. []*types.OpenAPIEdgeGateway) because this response contains slice of structs.
+//
+// Note. Query parameter 'pageSize' is defaulted to 128 (maximum supported) unless it is specified in queryParams
 func (client *Client) OpenApiGetAllItems(apiVersion string, urlRef *url.URL, queryParams url.Values, outType interface{}) error {
+	// copy passed in URL ref so that it is not mutated
+	urlRefCopy := copyUrlRef(urlRef)
+
 	util.Logger.Printf("[TRACE] Getting all items from endpoint %s for parsing into %s type\n",
-		urlRef.String(), reflect.TypeOf(outType))
+		urlRefCopy.String(), reflect.TypeOf(outType))
 
 	if !client.OpenApiIsSupported() {
 		return fmt.Errorf("OpenAPI is not supported on this VCD version")
 	}
 
+	// Page size is defaulted to 128 (maximum supported number) to reduce HTTP calls and improve performance unless caller
+	// provides other value
+	newQueryParams := defaultPageSize(queryParams, "128")
+	util.Logger.Printf("[TRACE] Will use 'pageSize=%s'", newQueryParams.Get("pageSize"))
+
 	// Perform API call to initial endpoint. The function call recursively follows pages using Link headers "nextPage"
 	// until it crawls all results
-	responses, err := client.openApiGetAllPages(apiVersion, urlRef, queryParams, outType, nil)
+	responses, err := client.openApiGetAllPages(apiVersion, urlRefCopy, newQueryParams, outType, nil)
 	if err != nil {
-		return fmt.Errorf("error getting all pages for endpoint %s: %s", urlRef.String(), err)
+		return fmt.Errorf("error getting all pages for endpoint %s: %s", urlRefCopy.String(), err)
 	}
 
 	// Create a slice of raw JSON messages in text so that they can be unmarshalled to specified `outType` after multiple
@@ -107,17 +120,20 @@ func (client *Client) OpenApiGetAllItems(apiVersion string, urlRef *url.URL, que
 // returned this function returns "ErrorEntityNotFound: API_ERROR" so that one can use ContainsNotFound(err) to
 // differentiate when an objects was not found from any other error.
 func (client *Client) OpenApiGetItem(apiVersion string, urlRef *url.URL, params url.Values, outType interface{}) error {
+	// copy passed in URL ref so that it is not mutated
+	urlRefCopy := copyUrlRef(urlRef)
+
 	util.Logger.Printf("[TRACE] Getting item from endpoint %s with expected response of type %s",
-		urlRef.String(), reflect.TypeOf(outType))
+		urlRefCopy.String(), reflect.TypeOf(outType))
 
 	if !client.OpenApiIsSupported() {
 		return fmt.Errorf("OpenAPI is not supported on this VCD version")
 	}
 
-	req := client.newOpenApiRequest(apiVersion, params, http.MethodGet, urlRef, nil)
+	req := client.newOpenApiRequest(apiVersion, params, http.MethodGet, urlRefCopy, nil)
 	resp, err := client.Http.Do(req)
 	if err != nil {
-		return fmt.Errorf("error performing GET request to %s: %s", urlRef.String(), err)
+		return fmt.Errorf("error performing GET request to %s: %s", urlRefCopy.String(), err)
 	}
 
 	// Bypassing the regular path using function checkRespWithErrType and returning parsed error directly
@@ -156,14 +172,17 @@ func (client *Client) OpenApiGetItem(apiVersion string, urlRef *url.URL, params 
 // Note. Even though it may return error if the item does not support synchronous request - the object may still be
 // created. OpenApiPostItem would handle both cases and always return created item.
 func (client *Client) OpenApiPostItemSync(apiVersion string, urlRef *url.URL, params url.Values, payload, outType interface{}) error {
+	// copy passed in URL ref so that it is not mutated
+	urlRefCopy := copyUrlRef(urlRef)
+
 	util.Logger.Printf("[TRACE] Posting %s item to endpoint %s with expected response of type %s",
-		reflect.TypeOf(payload), urlRef.String(), reflect.TypeOf(outType))
+		reflect.TypeOf(payload), urlRefCopy.String(), reflect.TypeOf(outType))
 
 	if !client.OpenApiIsSupported() {
 		return fmt.Errorf("OpenAPI is not supported on this VCD version")
 	}
 
-	resp, err := client.openApiPerformPostPut(http.MethodPost, apiVersion, urlRef, params, payload)
+	resp, err := client.openApiPerformPostPut(http.MethodPost, apiVersion, urlRefCopy, params, payload)
 	if err != nil {
 		return err
 	}
@@ -192,14 +211,17 @@ func (client *Client) OpenApiPostItemSync(apiVersion string, urlRef *url.URL, pa
 // Note. Even though it may return error if the item does not support asynchronous request - the object may still be
 // created. OpenApiPostItem would handle both cases and always return created item.
 func (client *Client) OpenApiPostItemAsync(apiVersion string, urlRef *url.URL, params url.Values, payload interface{}) (Task, error) {
+	// copy passed in URL ref so that it is not mutated
+	urlRefCopy := copyUrlRef(urlRef)
+
 	util.Logger.Printf("[TRACE] Posting async %s item to endpoint %s with expected task response",
-		reflect.TypeOf(payload), urlRef.String())
+		reflect.TypeOf(payload), urlRefCopy.String())
 
 	if !client.OpenApiIsSupported() {
 		return Task{}, fmt.Errorf("OpenAPI is not supported on this VCD version")
 	}
 
-	resp, err := client.openApiPerformPostPut(http.MethodPost, apiVersion, urlRef, params, payload)
+	resp, err := client.openApiPerformPostPut(http.MethodPost, apiVersion, urlRefCopy, params, payload)
 	if err != nil {
 		return Task{}, err
 	}
@@ -228,14 +250,17 @@ func (client *Client) OpenApiPostItemAsync(apiVersion string, urlRef *url.URL, p
 // asynchronous requests. The urlRef must point to POST endpoint (e.g. '/1.0.0/edgeGateways'). When a task is
 // synchronous - it will track task until it is finished and pick reference to marshal outType.
 func (client *Client) OpenApiPostItem(apiVersion string, urlRef *url.URL, params url.Values, payload, outType interface{}) error {
+	// copy passed in URL ref so that it is not mutated
+	urlRefCopy := copyUrlRef(urlRef)
+
 	util.Logger.Printf("[TRACE] Posting %s item to endpoint %s with expected response of type %s",
-		reflect.TypeOf(payload), urlRef.String(), reflect.TypeOf(outType))
+		reflect.TypeOf(payload), urlRefCopy.String(), reflect.TypeOf(outType))
 
 	if !client.OpenApiIsSupported() {
 		return fmt.Errorf("OpenAPI is not supported on this VCD version")
 	}
 
-	resp, err := client.openApiPerformPostPut(http.MethodPost, apiVersion, urlRef, params, payload)
+	resp, err := client.openApiPerformPostPut(http.MethodPost, apiVersion, urlRefCopy, params, payload)
 	if err != nil {
 		return err
 	}
@@ -258,7 +283,7 @@ func (client *Client) OpenApiPostItem(apiVersion string, urlRef *url.URL, params
 		// Task Owner ID is the ID of created object. ID must be used (although HREF exists in task) because HREF points to
 		// old XML API and here we need to pull data from OpenAPI.
 
-		newObjectUrl, _ := url.ParseRequestURI(urlRef.String() + "/" + task.Task.Owner.ID)
+		newObjectUrl, _ := url.ParseRequestURI(urlRefCopy.String() + "/" + task.Task.Owner.ID)
 		err = client.OpenApiGetItem(apiVersion, newObjectUrl, nil, outType)
 		if err != nil {
 			return fmt.Errorf("error retrieving item after creation: %s", err)
@@ -288,14 +313,17 @@ func (client *Client) OpenApiPostItem(apiVersion string, urlRef *url.URL, params
 // Note. Even though it may return error if the item does not support synchronous request - the object may still be
 // updated. OpenApiPutItem would handle both cases and always return updated item.
 func (client *Client) OpenApiPutItemSync(apiVersion string, urlRef *url.URL, params url.Values, payload, outType interface{}) error {
+	// copy passed in URL ref so that it is not mutated
+	urlRefCopy := copyUrlRef(urlRef)
+
 	util.Logger.Printf("[TRACE] Putting %s item to endpoint %s with expected response of type %s",
-		reflect.TypeOf(payload), urlRef.String(), reflect.TypeOf(outType))
+		reflect.TypeOf(payload), urlRefCopy.String(), reflect.TypeOf(outType))
 
 	if !client.OpenApiIsSupported() {
 		return fmt.Errorf("OpenAPI is not supported on this VCD version")
 	}
 
-	resp, err := client.openApiPerformPostPut(http.MethodPut, apiVersion, urlRef, params, payload)
+	resp, err := client.openApiPerformPostPut(http.MethodPut, apiVersion, urlRefCopy, params, payload)
 	if err != nil {
 		return err
 	}
@@ -324,13 +352,16 @@ func (client *Client) OpenApiPutItemSync(apiVersion string, urlRef *url.URL, par
 // Note. Even though it may return error if the item does not support asynchronous request - the object may still be
 // created. OpenApiPutItem would handle both cases and always return created item.
 func (client *Client) OpenApiPutItemAsync(apiVersion string, urlRef *url.URL, params url.Values, payload interface{}) (Task, error) {
+	// copy passed in URL ref so that it is not mutated
+	urlRefCopy := copyUrlRef(urlRef)
+
 	util.Logger.Printf("[TRACE] Putting async %s item to endpoint %s with expected task response",
-		reflect.TypeOf(payload), urlRef.String())
+		reflect.TypeOf(payload), urlRefCopy.String())
 
 	if !client.OpenApiIsSupported() {
 		return Task{}, fmt.Errorf("OpenAPI is not supported on this VCD version")
 	}
-	resp, err := client.openApiPerformPostPut(http.MethodPut, apiVersion, urlRef, params, payload)
+	resp, err := client.openApiPerformPostPut(http.MethodPut, apiVersion, urlRefCopy, params, payload)
 	if err != nil {
 		return Task{}, err
 	}
@@ -359,13 +390,16 @@ func (client *Client) OpenApiPutItemAsync(apiVersion string, urlRef *url.URL, pa
 // The urlRef must point to ID of exact item (e.g. '/1.0.0/edgeGateways/{EDGE_ID}')
 // It handles synchronous and asynchronous tasks. When a task is synchronous - it will block until it is finished.
 func (client *Client) OpenApiPutItem(apiVersion string, urlRef *url.URL, params url.Values, payload, outType interface{}) error {
+	// copy passed in URL ref so that it is not mutated
+	urlRefCopy := copyUrlRef(urlRef)
+
 	util.Logger.Printf("[TRACE] Putting %s item to endpoint %s with expected response of type %s",
-		reflect.TypeOf(payload), urlRef.String(), reflect.TypeOf(outType))
+		reflect.TypeOf(payload), urlRefCopy.String(), reflect.TypeOf(outType))
 
 	if !client.OpenApiIsSupported() {
 		return fmt.Errorf("OpenAPI is not supported on this VCD version")
 	}
-	resp, err := client.openApiPerformPostPut(http.MethodPut, apiVersion, urlRef, params, payload)
+	resp, err := client.openApiPerformPostPut(http.MethodPut, apiVersion, urlRefCopy, params, payload)
 
 	if err != nil {
 		return err
@@ -386,7 +420,7 @@ func (client *Client) OpenApiPutItem(apiVersion string, urlRef *url.URL, params 
 		}
 
 		// Here we have to find the resource once more to return it populated. Provided params ir ignored for retrieval.
-		err = client.OpenApiGetItem(apiVersion, urlRef, nil, outType)
+		err = client.OpenApiGetItem(apiVersion, urlRefCopy, nil, outType)
 		if err != nil {
 			return fmt.Errorf("error retrieving item after updating: %s", err)
 		}
@@ -411,14 +445,17 @@ func (client *Client) OpenApiPutItem(apiVersion string, urlRef *url.URL, params 
 // The urlRef must point to ID of exact item (e.g. '/1.0.0/edgeGateways/{EDGE_ID}')
 // It handles synchronous and asynchronous tasks. When a task is synchronous - it will block until it is finished.
 func (client *Client) OpenApiDeleteItem(apiVersion string, urlRef *url.URL, params url.Values) error {
-	util.Logger.Printf("[TRACE] Deleting item at endpoint %s", urlRef.String())
+	// copy passed in URL ref so that it is not mutated
+	urlRefCopy := copyUrlRef(urlRef)
+
+	util.Logger.Printf("[TRACE] Deleting item at endpoint %s", urlRefCopy.String())
 
 	if !client.OpenApiIsSupported() {
 		return fmt.Errorf("OpenAPI is not supported on this VCD version")
 	}
 
 	// Perform request
-	req := client.newOpenApiRequest(apiVersion, params, http.MethodDelete, urlRef, nil)
+	req := client.newOpenApiRequest(apiVersion, params, http.MethodDelete, urlRefCopy, nil)
 
 	resp, err := client.Http.Do(req)
 	if err != nil {
@@ -484,12 +521,15 @@ func (client *Client) openApiPerformPostPut(httpMethod string, apiVersion string
 // no intermediate unmarshalling to exact `outType` for every page it can unmarshal into direct `outType` supplied.
 // outType must be a slice of object (e.g. []*types.OpenApiRole) because accumulated responses are in JSON list
 func (client *Client) openApiGetAllPages(apiVersion string, urlRef *url.URL, queryParams url.Values, outType interface{}, responses []json.RawMessage) ([]json.RawMessage, error) {
+	// copy passed in URL ref so that it is not mutated
+	urlRefCopy := copyUrlRef(urlRef)
+
 	if responses == nil {
 		responses = []json.RawMessage{}
 	}
 
 	// Perform request
-	req := client.newOpenApiRequest(apiVersion, queryParams, http.MethodGet, urlRef, nil)
+	req := client.newOpenApiRequest(apiVersion, queryParams, http.MethodGet, urlRefCopy, nil)
 
 	resp, err := client.Http.Do(req)
 	if err != nil {
@@ -542,9 +582,11 @@ func (client *Client) openApiGetAllPages(apiVersion string, urlRef *url.URL, que
 // newOpenApiRequest is a low level function used in upstream OpenAPI functions which handles logging and
 // authentication for each API request
 func (client *Client) newOpenApiRequest(apiVersion string, params url.Values, method string, reqUrl *url.URL, body io.Reader) *http.Request {
+	// copy passed in URL ref so that it is not mutated
+	reqUrlCopy := copyUrlRef(reqUrl)
 
 	// Add the params to our URL
-	reqUrl.RawQuery += params.Encode()
+	reqUrlCopy.RawQuery += params.Encode()
 
 	// If the body contains data - try to read all contents for logging and re-create another
 	// io.Reader with all contents to use it down the line
@@ -557,7 +599,7 @@ func (client *Client) newOpenApiRequest(apiVersion string, params url.Values, me
 	// Build the request, no point in checking for errors here as we're just
 	// passing a string version of an url.URL struct and http.NewRequest returns
 	// error only if can't process an url.ParseRequestURI().
-	req, _ := http.NewRequest(method, reqUrl.String(), body)
+	req, _ := http.NewRequest(method, reqUrlCopy.String(), body)
 
 	if client.VCDAuthHeader != "" && client.VCDToken != "" {
 		// Add the authorization header
@@ -570,13 +612,15 @@ func (client *Client) newOpenApiRequest(apiVersion string, params url.Values, me
 	// Inject JSON mime type
 	req.Header.Add("Content-Type", types.JSONMime)
 
+	setHttpUserAgent(client.UserAgent, req)
+
 	// Avoids passing data if the logging of requests is disabled
 	if util.LogHttpRequest {
 		payload := ""
 		if req.ContentLength > 0 {
 			payload = string(readBody)
 		}
-		util.ProcessRequestOutput(util.FuncNameCallStack(), method, reqUrl.String(), payload, req)
+		util.ProcessRequestOutput(util.FuncNameCallStack(), method, reqUrlCopy.String(), payload, req)
 		debugShowRequest(req, payload)
 	}
 
@@ -619,4 +663,26 @@ func jsonRawMessagesToStrings(messages []json.RawMessage) []string {
 	}
 
 	return resultString
+}
+
+// defaultPageSize allows to set 'pageSize' query parameter to defaultPageSize if one is not already specified in
+// url.Values while preserving all other supplied url.Values
+func defaultPageSize(queryParams url.Values, defaultPageSize string) url.Values {
+	newQueryParams := url.Values{}
+	if queryParams != nil {
+		newQueryParams = queryParams
+	}
+
+	if _, ok := newQueryParams["pageSize"]; !ok {
+		newQueryParams.Set("pageSize", defaultPageSize)
+	}
+
+	return newQueryParams
+}
+
+// copyUrlRef creates a copy of URL reference by re-parsing it
+func copyUrlRef(in *url.URL) *url.URL {
+	// error is ignored because we expect to have correct URL supplied and this greatly simplifies code inside.
+	newUrlRef, _ := url.Parse(in.String())
+	return newUrlRef
 }

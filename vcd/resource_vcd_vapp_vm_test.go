@@ -344,7 +344,7 @@ resource "vcd_independent_disk" "{{.diskResourceName}}" {
   org             = "{{.Org}}"
   vdc             = "{{.Vdc}}"
   name            = "{{.diskName}}"
-  size            = "{{.size}}"
+  size_in_mb      = "{{.size}}"
   bus_type        = "{{.busType}}"
   bus_sub_type    = "{{.busSubType}}"
   storage_profile = "{{.storageProfileName}}"

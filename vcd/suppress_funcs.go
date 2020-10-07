@@ -38,7 +38,7 @@ func suppressNetworkUpgradedInterface() schema.SchemaDiffSuppressFunc {
 // falseBoolSuppress suppresses change if value is set to false or is empty
 func falseBoolSuppress() schema.SchemaDiffSuppressFunc {
 	return func(k string, old string, new string, d *schema.ResourceData) bool {
-		_, isTrue := d.GetOk(k)
+		_, isTrue := d.GetOkExists(k)
 		return !isTrue
 	}
 }
