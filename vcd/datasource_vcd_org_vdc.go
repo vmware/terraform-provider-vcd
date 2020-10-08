@@ -57,7 +57,7 @@ func datasourceVcdOrgVdc() *schema.Resource {
 			"allocation_model": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The allocation model used by this VDC; must be one of {AllocationVApp, AllocationPool, ReservationPool}",
+				Description: "The allocation model used by this VDC; must be one of {AllocationVApp, AllocationPool, ReservationPool, Flex}",
 			},
 			"compute_capacity": &schema.Schema{
 				Computed: true,
