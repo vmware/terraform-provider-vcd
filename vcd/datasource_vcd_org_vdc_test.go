@@ -3,6 +3,7 @@
 package vcd
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
 
@@ -22,6 +23,23 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 		"FuncName":        vdcName,
 	}
 
+	vcdClient, err := getTestVCDFromJson(testConfig)
+	if err != nil {
+		t.Skip(fmt.Sprintf("unable to get vcdClient: %s", err))
+	}
+	err = ProviderAuthenticate(vcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg)
+	if err != nil {
+		t.Skip(fmt.Sprintf("authentication error: %s", err))
+	}
+	org, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
+	if err != nil {
+		t.Skip(fmt.Sprintf("unable to get Org: %s, err: %s", testConfig.VCD.Org, err))
+	}
+	vdc, err := org.GetVDCByName(testConfig.VCD.Vdc, false)
+	if err != nil {
+		t.Skip(fmt.Sprintf("unable to get VDC: %s, err: %s", testConfig.VCD.Vdc, err))
+	}
+
 	var configText string
 	datasourceVdc := "vcd_org_vdc.existingVdc"
 	if !usingSysAdmin() {
@@ -37,7 +55,11 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 
 		validateDataSource(t, configText, datasourceVdc)
 	} else {
-		configText = templateFill(testAccCheckVcdVdcDatasource_basic, params)
+		if vdc.Vdc.AllocationModel == "Flex" {
+			configText = templateFill(testAccCheckVcdVdcDatasource_basic_flex, params)
+		} else {
+			configText = templateFill(testAccCheckVcdVdcDatasource_basic, params)
+		}
 
 		debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
@@ -137,6 +159,50 @@ data "vcd_org_vdc" "existingVdc" {
   name = "{{.ExistingVdcName}}"
 }
 
+resource "vcd_org_vdc" "{{.VdcName}}" { 
+  name = "{{.VdcName}}"
+  org  = "{{.OrgName}}"
+
+  allocation_model  = data.vcd_org_vdc.existingVdc.allocation_model
+  network_pool_name = data.vcd_org_vdc.existingVdc.network_pool_name
+  provider_vdc_name = data.vcd_org_vdc.existingVdc.provider_vdc_name
+
+  compute_capacity {
+    cpu {
+     allocated = data.vcd_org_vdc.existingVdc.compute_capacity[0].cpu[0].allocated
+     limit     = data.vcd_org_vdc.existingVdc.compute_capacity[0].cpu[0].limit
+    }
+
+    memory {
+     allocated = data.vcd_org_vdc.existingVdc.compute_capacity[0].memory[0].allocated
+     limit     = data.vcd_org_vdc.existingVdc.compute_capacity[0].memory[0].limit
+    }
+  }
+
+  storage_profile {
+    name    = "{{.StorageProfile}}"
+    enabled = true
+    limit   = 0
+    default = true
+  }
+
+  metadata = {
+    vdc_metadata = "VDC Metadata"
+  }
+
+  enabled                  = data.vcd_org_vdc.existingVdc.enabled
+  enable_thin_provisioning = data.vcd_org_vdc.existingVdc.enable_thin_provisioning
+  enable_fast_provisioning = data.vcd_org_vdc.existingVdc.enable_fast_provisioning
+  delete_force             = true
+  delete_recursive         = true
+}
+`
+const testAccCheckVcdVdcDatasource_basic_flex = `
+data "vcd_org_vdc" "existingVdc" {
+  org  = "{{.OrgName}}"
+  name = "{{.ExistingVdcName}}"
+}
+
 resource "vcd_org_vdc" "{{.VdcName}}" {
   name = "{{.VdcName}}"
   org  = "{{.OrgName}}"
@@ -173,6 +239,9 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   enable_fast_provisioning = data.vcd_org_vdc.existingVdc.enable_fast_provisioning
   delete_force             = true
   delete_recursive         = true
+
+  elasticity                 = data.vcd_org_vdc.existingVdc.elasticity
+  include_vm_memory_overhead = data.vcd_org_vdc.existingVdc.include_vm_memory_overhead
 }
 `
 

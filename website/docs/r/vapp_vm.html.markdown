@@ -262,17 +262,7 @@ The following arguments are supported:
 * `cpus` - (Optional) The number of virtual CPUs to allocate to the VM. Socket count is a result of: virtual logical processors/cores per socket. If `cpu_hot_add_enabled` is true, then cpus will be increased without VM power off.
 * `cpu_cores` - (Optional; *v2.1+*) The number of cores per socket.
 * `metadata` - (Optional; *v2.2+*) Key value map of metadata to assign to this VM
-* `initscript` (Optional **Deprecated** by `customization.0.initscript`) Script to run on initial boot or with
-customization.force=true set. See [Customization](#customization-block) to read more about Guest customization and other
-options.
 * `storage_profile` (Optional; *v2.6+*) Storage profile to override the default one
-* `network_name` - (Optional; **Deprecated** by `network`) Name of the network this VM should connect to.
-* `vapp_network_name` - (Optional; v2.1+; **Deprecated** by `network`) Name of the vApp network this VM should connect to.
-* `ip` - (Optional; **Deprecated** by `network`) The IP to assign to this vApp. Must be an IP address or
-one of `dhcp`, `allocated`, or `none`. If given the address must be within the
-  `static_ip_pool` set for the network. If left blank, and the network has
-  `dhcp_pool` set with at least one available IP then this will be set with
-DHCP.
 * `power_on` - (Optional) A boolean value stating if this VM should be powered on. Default is `true`
 * `accept_all_eulas` - (Optional; *v2.0+*) Automatically accept EULA if OVA has it. Default is `true`
 * `disk` - (Optional; *v2.1+*) Independent disk attachment configuration. See [Disk](#disk) below for details.
@@ -280,7 +270,7 @@ DHCP.
 guest operating system so that applications that require hardware virtualization can run on virtual machines without binary
 translation or paravirtualization. Useful for hypervisor nesting provided underlying hardware supports it. Default is `false`.
 * `network` - (Optional; *v2.2+*) A block to define network interface. Multiple can be used. See [Network](#network-block) and 
-example for usage details. **Deprecates**: `network_name`, `ip`, `vapp_network_name`.
+example for usage details.
 * `customization` - (Optional; *v2.5+*) A block to define for guest customization options. See [Customization](#customization-block)
 * `guest_properties` - (Optional; *v2.5+*) Key value map of guest properties
 * `description`  - (Optional; *v2.9+*) The VM description. Note: for VM from Template `description` is read only. Currently, this field has
@@ -397,8 +387,7 @@ This field works as a flag and triggers force customization when `true` during a
 is needed after VM configuration (e.g. NIC change, customization options change, etc.) and then set back to `false`.
 **Note.** It will not have effect when `power_on` field is set to `false`. See [example workflow below](#example-forced-customization-workflow).
 * `enabled` (Optional; *v2.7+*) `true` will enable guest customization which may occur on first boot or if the `force` flag is used.
-This option should be selected for **Power on and Force re-customization to work**. For backwards compatibility it is
-enabled by default when deprecated field `initscript` is used.
+This option should be selected for **Power on and Force re-customization to work**.
 * `change_sid` (Optional; *v2.7+*) Allows to change SID (security identifier). Only applicable for Windows operating systems.
 * `allow_local_admin_password` (Optional; *v2.7+*) Allow local administrator password.
 * `must_change_password_on_first_login` (Optional; *v2.7+*) Require Administrator to change password on first login.
