@@ -654,49 +654,6 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-// Adds existing org VDC network to VM network configuration
-// Returns configured OrgVDCNetwork for Vm, networkName, error if any occur
-func addVdcNetwork(networkNameToAdd string, vdc *govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (*types.OrgVDCNetwork, error) {
-	if networkNameToAdd == "" {
-		return &types.OrgVDCNetwork{}, fmt.Errorf("'network_name' must be valid when adding VM to raw vApp")
-	}
-
-	network, err := vdc.GetOrgVdcNetworkByName(networkNameToAdd, false)
-	if err != nil {
-		return &types.OrgVDCNetwork{}, fmt.Errorf("network %s wasn't found as VDC network", networkNameToAdd)
-	}
-	vdcNetwork := network.OrgVDCNetwork
-
-	vAppNetworkConfig, err := vapp.GetNetworkConfig()
-	if err != nil {
-		return &types.OrgVDCNetwork{}, fmt.Errorf("could not get network config: %s", err)
-	}
-
-	isAlreadyVappNetwork := false
-	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
-		if networkConfig.NetworkName == networkNameToAdd {
-			log.Printf("[TRACE] VDC network found as vApp network: %s", networkNameToAdd)
-			isAlreadyVappNetwork = true
-		}
-	}
-
-	if !isAlreadyVappNetwork {
-		// TODO remove when major release is done
-		_, _ = fmt.Fprintf(getTerraformStdout(), "DEPRECATED: attaching an Org network `%s` to a vApp `%s` through VM's network block alone is deprecated. "+
-			"Network should be first attached to a vApp by creating a `vcd_vapp_org_network` resource and only then referenced in the network block. \n", networkNameToAdd, vapp.VApp.Name)
-		task, err := vapp.AddRAWNetworkConfig([]*types.OrgVDCNetwork{vdcNetwork})
-		if err != nil {
-			return &types.OrgVDCNetwork{}, fmt.Errorf("error assigning network to vApp: %s", err)
-		}
-		err = task.WaitTaskCompletion()
-		if err != nil {
-			return &types.OrgVDCNetwork{}, fmt.Errorf("error assigning network to vApp:: %s", err)
-		}
-	}
-
-	return vdcNetwork, nil
-}
-
 // isItVappNetwork checks if it is an vApp network (not vApp Org Network)
 func isItVappNetwork(vAppNetworkName string, vapp govcd.VApp) (bool, error) {
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
