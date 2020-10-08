@@ -3,6 +3,7 @@
 package vcd
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
@@ -84,4 +85,31 @@ func minIfLess(min, value int) int {
 	}
 
 	return value
+}
+
+// TestAccClientUserAgent ensures that client initialization config.Client() used by provider initializes
+// go-vcloud-director client by having User-Agent set
+func TestAccClientUserAgent(t *testing.T) {
+	clientConfig := Config{
+		User:            testConfig.Provider.User,
+		Password:        testConfig.Provider.Password,
+		Token:           testConfig.Provider.Token,
+		SysOrg:          testConfig.Provider.SysOrg,
+		Org:             testConfig.VCD.Org,
+		Vdc:             testConfig.VCD.Vdc,
+		Href:            testConfig.Provider.Url,
+		MaxRetryTimeout: testConfig.Provider.MaxRetryTimeout,
+		InsecureFlag:    testConfig.Provider.AllowInsecure,
+	}
+
+	vcdClient, err := clientConfig.Client()
+	if err != nil {
+		t.Fatal("error initializing go-vcloud-director client: " + err.Error())
+	}
+
+	expectedHeaderPrefix := "terraform-provider-vcd/"
+	if !strings.HasPrefix(vcdClient.VCDClient.Client.UserAgent, expectedHeaderPrefix) {
+		t.Fatalf("Expected User-Agent header in go-vcloud-director to be '%s', got '%s'",
+			expectedHeaderPrefix, vcdClient.VCDClient.Client.UserAgent)
+	}
 }

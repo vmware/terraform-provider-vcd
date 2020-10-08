@@ -61,7 +61,7 @@ func resourceVcdVmAffinityRule() *schema.Resource {
 				Default:     true,
 				Description: "True if this affinity rule is enabled",
 			},
-			"virtual_machine_ids": {
+			"vm_ids": {
 				Type:        schema.TypeSet,
 				Required:    true,
 				MinItems:    2,
@@ -82,7 +82,7 @@ func resourceToAffinityRule(d *schema.ResourceData, meta interface{}) (*types.Vm
 	polarity := d.Get("polarity").(string)
 	required := d.Get("required").(bool)
 	enabled := d.Get("enabled").(bool)
-	rawVms := d.Get("virtual_machine_ids").(*schema.Set)
+	rawVms := d.Get("vm_ids").(*schema.Set)
 	vmIdList := convertSchemaSetToSliceOfStrings(rawVms)
 
 	fullVmList, err := vcdClient.Client.QueryVmList(types.VmQueryFilterOnlyDeployed)
@@ -243,7 +243,7 @@ func genericVcdVmAffinityRuleRead(d *schema.ResourceData, meta interface{}, orig
 	}
 	endpointVmSlice := convertToTypeSet(endpointVMs)
 	endpointVmSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointVmSlice)
-	err = d.Set("virtual_machine_ids", endpointVmSet)
+	err = d.Set("vm_ids", endpointVmSet)
 	if err != nil {
 		return fmt.Errorf("[VM affinity rule read] error setting the list of VM IDs: %s ", err)
 	}

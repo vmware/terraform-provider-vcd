@@ -77,19 +77,20 @@ var vappVmSchema = map[string]*schema.Schema{
 	"memory": &schema.Schema{
 		Type:         schema.TypeInt,
 		Optional:     true,
+		Computed:     true,
 		Description:  "The amount of RAM (in MB) to allocate to the VM",
 		ValidateFunc: validateMultipleOf4(),
 	},
 	"cpus": &schema.Schema{
 		Type:        schema.TypeInt,
 		Optional:    true,
-		Default:     1,
+		Computed:    true,
 		Description: "The number of virtual CPUs to allocate to the VM",
 	},
 	"cpu_cores": &schema.Schema{
 		Type:        schema.TypeInt,
 		Optional:    true,
-		Default:     1,
+		Computed:    true,
 		Description: "The number of cores per socket",
 	},
 	"metadata": {
@@ -179,8 +180,8 @@ var vappVmSchema = map[string]*schema.Schema{
 					Description:  "IP of the VM. Settings depend on `ip_allocation_mode`. Omitted or empty for DHCP, POOL, NONE. Required for MANUAL",
 				},
 				"is_primary": {
-					Default:  false,
 					Optional: true,
+					Computed: true,
 					// By default if the value is omitted it will report schema change
 					// on every terraform operation. The below function
 					// suppresses such cases "" => "false" when applying.
@@ -469,6 +470,12 @@ var vappVmSchema = map[string]*schema.Schema{
 		Default:     false,
 		Description: "True if the update of resource should fail when virtual machine power off needed.",
 	},
+	"sizing_policy_id": {
+		Type:        schema.TypeString,
+		Optional:    true,
+		Computed:    true,
+		Description: "VM sizing policy ID. Has to be assigned to Org VDC.",
+	},
 }
 
 func resourceVcdVAppVm() *schema.Resource {
@@ -539,7 +546,7 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 
 		networkConnectionSection := types.NetworkConnectionSection{}
 		if len(d.Get("network").([]interface{})) > 0 {
-			networkConnectionSection, err = networksToConfig(d.Get("network").([]interface{}), vdc, *vapp, vcdClient)
+			networkConnectionSection, err = networksToConfig(d, vdc, *vapp, vcdClient)
 			if err != nil {
 				return fmt.Errorf("unable to process network configuration: %s", err)
 			}
@@ -557,7 +564,17 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 		} else {
 			storageProfilePtr = nil
 		}
-		task, err := vapp.AddNewVMWithStorageProfile(d.Get("name").(string), vappTemplate, &networkConnectionSection, storageProfilePtr, acceptEulas)
+
+		var sizingPolicy *types.VdcComputePolicy
+		if value, ok := d.GetOk("sizing_policy_id"); ok {
+			vdcComputePolicy, err := org.GetVdcComputePolicyById(value.(string))
+			if err != nil {
+				return fmt.Errorf("error getting sizing policy %s: %s", value.(string), err)
+			}
+			sizingPolicy = vdcComputePolicy.VdcComputePolicy
+		}
+
+		task, err := vapp.AddNewVMWithComputePolicy(d.Get("name").(string), vappTemplate, &networkConnectionSection, storageProfilePtr, sizingPolicy, acceptEulas)
 		if err != nil {
 			return fmt.Errorf("[VM creation] error adding VM: %s", err)
 		}
@@ -635,6 +652,49 @@ func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
 
 	log.Printf("[DEBUG] [VM create] finished")
 	return nil
+}
+
+// Adds existing org VDC network to VM network configuration
+// Returns configured OrgVDCNetwork for Vm, networkName, error if any occur
+func addVdcNetwork(networkNameToAdd string, vdc *govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (*types.OrgVDCNetwork, error) {
+	if networkNameToAdd == "" {
+		return &types.OrgVDCNetwork{}, fmt.Errorf("'network_name' must be valid when adding VM to raw vApp")
+	}
+
+	network, err := vdc.GetOrgVdcNetworkByName(networkNameToAdd, false)
+	if err != nil {
+		return &types.OrgVDCNetwork{}, fmt.Errorf("network %s wasn't found as VDC network", networkNameToAdd)
+	}
+	vdcNetwork := network.OrgVDCNetwork
+
+	vAppNetworkConfig, err := vapp.GetNetworkConfig()
+	if err != nil {
+		return &types.OrgVDCNetwork{}, fmt.Errorf("could not get network config: %s", err)
+	}
+
+	isAlreadyVappNetwork := false
+	for _, networkConfig := range vAppNetworkConfig.NetworkConfig {
+		if networkConfig.NetworkName == networkNameToAdd {
+			log.Printf("[TRACE] VDC network found as vApp network: %s", networkNameToAdd)
+			isAlreadyVappNetwork = true
+		}
+	}
+
+	if !isAlreadyVappNetwork {
+		// TODO remove when major release is done
+		_, _ = fmt.Fprintf(getTerraformStdout(), "DEPRECATED: attaching an Org network `%s` to a vApp `%s` through VM's network block alone is deprecated. "+
+			"Network should be first attached to a vApp by creating a `vcd_vapp_org_network` resource and only then referenced in the network block. \n", networkNameToAdd, vapp.VApp.Name)
+		task, err := vapp.AddRAWNetworkConfig([]*types.OrgVDCNetwork{vdcNetwork})
+		if err != nil {
+			return &types.OrgVDCNetwork{}, fmt.Errorf("error assigning network to vApp: %s", err)
+		}
+		err = task.WaitTaskCompletion()
+		if err != nil {
+			return &types.OrgVDCNetwork{}, fmt.Errorf("error assigning network to vApp:: %s", err)
+		}
+	}
+
+	return vdcNetwork, nil
 }
 
 // isItVappNetwork checks if it is an vApp network (not vApp Org Network)
@@ -757,7 +817,7 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	// due the bug in VCD 10.1 hot update possible for adding new or update existing network, removing of network has to be done with cold update
 	if d.HasChange("network") && !isNetworkRemoved(d, meta) {
-		networkConnectionSection, err := networksToConfig(d.Get("network").([]interface{}), vdc, *vapp, vcdClient)
+		networkConnectionSection, err := networksToConfig(d, vdc, *vapp, vcdClient)
 		if err != nil {
 			return fmt.Errorf("unable to setup network configuration for update: %s", err)
 		}
@@ -775,6 +835,24 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}) error {
 	err = addRemoveGuestProperties(d, vm)
 	if err != nil {
 		return err
+	}
+
+	if d.HasChange("sizing_policy_id") {
+		var sizingPolicy *types.VdcComputePolicy
+		org, _, err := vcdClient.GetOrgAndVdcFromResource(d)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingOrg, err)
+		}
+		value := d.Get("sizing_policy_id")
+		vdcComputePolicy, err := org.GetVdcComputePolicyById(value.(string))
+		if err != nil {
+			return fmt.Errorf("error getting sizing policy %s: %s", value.(string), err)
+		}
+		sizingPolicy = vdcComputePolicy.VdcComputePolicy
+		_, err = vm.UpdateComputePolicy(sizingPolicy)
+		if err != nil {
+			return fmt.Errorf("error updating sizing policy %s: %s", value.(string), err)
+		}
 	}
 
 	return nil
@@ -876,6 +954,12 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		return err
 	}
 
+	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
+		if _, ok := d.GetOk("sizing_policy_id"); ok {
+			return fmt.Errorf("'sizing_policy_id' only available for VCD 10.0+")
+		}
+	}
+
 	vmStatusBeforeUpdate, err := vm.GetStatus()
 	if err != nil {
 		return fmt.Errorf("[VM update] error getting VM (%s) status before update: %s", identifier, err)
@@ -908,6 +992,8 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		if d.HasChange("network") && isNetworkRemoved(d, meta) {
 			networksNeedsColdChange = true
 		}
+	} else if len(d.Get("network").([]interface{})) > 0 {
+		networksNeedsColdChange = true
 	}
 
 	// this represent fields which has to be changed in cold (with VM power off)
@@ -978,7 +1064,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		}
 
 		if networksNeedsColdChange {
-			networkConnectionSection, err := networksToConfig(d.Get("network").([]interface{}), vdc, *vapp, vcdClient)
+			networkConnectionSection, err := networksToConfig(d, vdc, *vapp, vcdClient)
 			if err != nil {
 				return fmt.Errorf("unable to setup network configuration for update: %s", err)
 			}
@@ -1224,7 +1310,6 @@ func genericVcdVAppVmRead(d *schema.ResourceData, meta interface{}, origin strin
 
 	vappName := d.Get("vapp_name").(string)
 	vapp, err := vdc.GetVAppByName(vappName, false)
-
 	if err != nil {
 		return fmt.Errorf("[VM read] error finding vApp: %s", err)
 	}
@@ -1236,8 +1321,8 @@ func genericVcdVAppVmRead(d *schema.ResourceData, meta interface{}, origin strin
 	if identifier == "" {
 		return fmt.Errorf("[VM read] neither name or ID were set for this VM")
 	}
-	vm, err := vapp.GetVMByNameOrId(identifier, false)
 
+	vm, err := vapp.GetVMByNameOrId(identifier, false)
 	if err != nil {
 		if origin == "resource" {
 			log.Printf("[DEBUG] Unable to find VM. Removing from tfstate")
@@ -1325,6 +1410,10 @@ func genericVcdVAppVmRead(d *schema.ResourceData, meta interface{}, origin strin
 
 	_ = d.Set("hardware_version", vm.VM.VmSpecSection.HardwareVersion.Value)
 	_ = d.Set("os_type", vm.VM.VmSpecSection.OsType)
+
+	if vm.VM.ComputePolicy != nil && vm.VM.ComputePolicy.VmSizingPolicy != nil {
+		_ = d.Set("sizing_policy_id", vm.VM.ComputePolicy.VmSizingPolicy.ID)
+	}
 
 	log.Printf("[DEBUG] [VM read] finished with origin %s", origin)
 	return nil
@@ -1575,10 +1664,22 @@ func resourceVcdVmIndependentDiskHash(v interface{}) int {
 
 // networksToConfig converts terraform schema for 'network' and converts to types.NetworkConnectionSection
 // which is used for creating new VM
-func networksToConfig(networks []interface{}, vdc *govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (types.NetworkConnectionSection, error) {
+func networksToConfig(d *schema.ResourceData, vdc *govcd.Vdc, vapp govcd.VApp, vcdClient *VCDClient) (types.NetworkConnectionSection, error) {
+	networks := d.Get("network").([]interface{})
 
 	networkConnectionSection := types.NetworkConnectionSection{}
+
+	// sets existing primary network connection index. Further changes index only if change is found
 	for index, singleNetwork := range networks {
+		nic := singleNetwork.(map[string]interface{})
+		isPrimary := nic["is_primary"].(bool)
+		if isPrimary {
+			networkConnectionSection.PrimaryNetworkConnectionIndex = index
+		}
+	}
+
+	for index, singleNetwork := range networks {
+
 		nic := singleNetwork.(map[string]interface{})
 		netConn := &types.NetworkConnection{}
 
@@ -1591,7 +1692,8 @@ func networksToConfig(networks []interface{}, vdc *govcd.Vdc, vapp govcd.VApp, v
 		macAddress, macIsSet := nic["mac"].(string)
 
 		isPrimary := nic["is_primary"].(bool)
-		if isPrimary {
+		nicHasPrimaryChange := d.HasChange("network." + strconv.Itoa(index) + ".is_primary")
+		if nicHasPrimaryChange && isPrimary {
 			networkConnectionSection.PrimaryNetworkConnectionIndex = index
 		}
 
@@ -2047,8 +2149,9 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 
 	var ok bool
 	var memory interface{}
-	if memory, ok = d.GetOk("memory"); !ok {
-		return nil, fmt.Errorf("`memory` is required when creating empty VM")
+	_, sizingOk := d.GetOk("sizing_policy_id")
+	if memory, ok = d.GetOk("memory"); !ok && !sizingOk {
+		return nil, fmt.Errorf("`memory` or `sizing_policy_id` is required when creating empty VM")
 	}
 
 	var osType interface{}
@@ -2134,6 +2237,11 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 		AllEULAsAccepted: true,
 	}
 
+	err := addSizingPolicy(d, vcdClient, org, recomposeVAppParamsForEmptyVm)
+	if err != nil {
+		return nil, err
+	}
+
 	newVm, err := vapp.AddEmptyVm(recomposeVAppParamsForEmptyVm)
 	if err != nil {
 		d.SetId("")
@@ -2143,7 +2251,7 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 	d.SetId(newVm.VM.ID)
 
 	// Due the Bug in vCD VM creation(works only with org VDC networks, not vapp) - we setup network configuration with update. Fixed only 10.1 version.
-	networkConnectionSection, err := networksToConfig(d.Get("network").([]interface{}), vdc, *vapp, vcdClient)
+	networkConnectionSection, err := networksToConfig(d, vdc, *vapp, vcdClient)
 	if err != nil {
 		return nil, fmt.Errorf("unable to setup network configuration for empty VM: %s", err)
 	}
@@ -2192,6 +2300,40 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 		}
 	}
 	return newVm, nil
+}
+
+func addSizingPolicy(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, recomposeVAppParamsForEmptyVm *types.RecomposeVAppParamsForEmptyVm) error {
+	vcdComputePolicyHref, err := vcdClient.Client.OpenApiBuildEndpoint(types.OpenApiPathVersion1_0_0, types.OpenApiEndpointVdcComputePolicies)
+	if err != nil {
+		return fmt.Errorf("error constructing HREF for compute policy")
+	}
+
+	if value, ok := d.GetOk("sizing_policy_id"); ok {
+		recomposeVAppParamsForEmptyVm.CreateItem.ComputePolicy = &types.ComputePolicy{VmSizingPolicy: &types.Reference{HREF: vcdComputePolicyHref.String() + value.(string)}}
+		sizingPolicy, err := org.GetVdcComputePolicyById(value.(string))
+		if err != nil {
+			return fmt.Errorf("error getting sizing policy %s: %s", value.(string), err)
+		}
+		if _, ok = d.GetOk("cpus"); !ok && sizingPolicy.VdcComputePolicy.CPUCount == nil {
+			return fmt.Errorf("`cpus` has to be defined as provided sizing policy `sizing_policy_id` cpu count isn't configured")
+		}
+		if sizingPolicy.VdcComputePolicy.CPUCount != nil {
+			recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.NumCpus = sizingPolicy.VdcComputePolicy.CPUCount
+		}
+		if _, ok = d.GetOk("cpu_cores"); !ok && sizingPolicy.VdcComputePolicy.CoresPerSocket == nil {
+			return fmt.Errorf("`cpu_cores` has to be defined as provided sizing policy `sizing_policy_id` cpu cores per socket isn't configured")
+		}
+		if sizingPolicy.VdcComputePolicy.CoresPerSocket != nil {
+			recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.NumCoresPerSocket = sizingPolicy.VdcComputePolicy.CoresPerSocket
+		}
+		if _, ok = d.GetOk("memory"); !ok && sizingPolicy.VdcComputePolicy.Memory == nil {
+			return fmt.Errorf("`memory` has to be defined as provided sizing policy `sizing_policy_id` memory isn't configured")
+		}
+		if sizingPolicy.VdcComputePolicy.Memory != nil {
+			recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection.MemoryResourceMb = &types.MemoryResourceMb{Configured: int64(*sizingPolicy.VdcComputePolicy.Memory)}
+		}
+	}
+	return nil
 }
 
 // handleExposeHardwareVirtualization toggles hardware virtualization according `expose_hardware_virtualization` field value.

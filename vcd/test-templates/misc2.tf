@@ -134,36 +134,3 @@ resource "vcd_vapp_vm" "tf_vm_second" {
   depends_on       = ["vcd_vapp.tf_vapp", "vcd_vapp_network.tf_vapp_net", "vcd_vapp_vm.tf_vm_1", "vcd_vapp_network.tf_vapp_net"]
 }
 
-# SNAT rule to let the VMs' traffic out
-resource "vcd_snat" "outbound" {
-  edge_gateway = "{{.EdgeGateway}}"
-
-  external_ip = "{{.ExternalIp}}/32"
-  internal_ip = "192.168.0.0/24"
-}
-
-# DNAT rule to SSH the VM from the outside
-resource "vcd_dnat" "sshVM" {
-  edge_gateway = "{{.EdgeGateway}}"
-
-  external_ip     = "{{.ExternalIp}}/32"
-  port            = 2227
-  internal_ip     = "192.168.0.7/32"
-  translated_port = 22
-}
-
-# Firewall rule to allow SSH on NAT port
-resource "vcd_firewall_rules" "tf_fw_rule" {
-  edge_gateway   = "{{.EdgeGateway}}"
-  default_action = "allow"
-
-  rule {
-    description      = "allows_ssh"
-    policy           = "allow"
-    protocol         = "TCP"
-    destination_port = "2227"
-    destination_ip   = "10.150.211.101"
-    source_port      = "any"
-    source_ip        = "any"
-  }
-}

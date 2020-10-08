@@ -212,7 +212,6 @@ func TestAccVcdNetworkRoutedDS(t *testing.T) {
 					resource.TestCheckOutput("network_name", data.network.Name),
 					resource.TestCheckOutput("network_description", data.network.Description),
 					resource.TestCheckOutput("network_edge", data.parent),
-					resource.TestCheckOutput("default_gateway", testConfig.Networking.ExternalNetwork),
 				),
 			},
 		},
@@ -320,10 +319,6 @@ data "vcd_network_routed" "{{.NetworkName}}" {
   name         = "{{.NetworkName}}"
   org          = "{{.Org}}"
   vdc          = "{{.VDC}}"
-}
-
-output "default_gateway" {
-  value = data.vcd_edgegateway.{{.EdgeGateway}}.default_gateway_network
 }
 
 output "network_name" {

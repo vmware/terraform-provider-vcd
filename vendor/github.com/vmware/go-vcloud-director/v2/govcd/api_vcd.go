@@ -90,7 +90,10 @@ func NewVCDClient(vcdEndpoint url.URL, insecure bool, options ...VCDClientOption
 	vcdClient := &VCDClient{
 		Client: Client{
 			APIVersion: "32.0", // supported by 9.7+
-			VCDHREF:    vcdEndpoint,
+			// UserAgent cannot embed exact version by default because this is source code and is supposed to be used by programs,
+			// but any client can customize or disable it at all using WithHttpUserAgent() configuration options function.
+			UserAgent: "go-vcloud-director",
+			VCDHREF:   vcdEndpoint,
 			Http: http.Client{
 				Transport: &http.Transport{
 					TLSClientConfig: &tls.Config{
@@ -242,6 +245,15 @@ func WithSamlAdfs(useSaml bool, customAdfsRptId string) VCDClientOption {
 	return func(vcdClient *VCDClient) error {
 		vcdClient.Client.UseSamlAdfs = useSaml
 		vcdClient.Client.CustomAdfsRptId = customAdfsRptId
+		return nil
+	}
+}
+
+// WithHttpUserAgent allows to specify HTTP user-agent which can be useful for statistics tracking.
+// By default User-Agent is set to "go-vcloud-director". It can be unset by supplying empty value.
+func WithHttpUserAgent(userAgent string) VCDClientOption {
+	return func(vcdClient *VCDClient) error {
+		vcdClient.Client.UserAgent = userAgent
 		return nil
 	}
 }

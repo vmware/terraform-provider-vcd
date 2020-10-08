@@ -57,7 +57,7 @@ else
 
     if [ -z "$upstream_exist" ]
     then
-        git remote add upstream https://github.com/terraform-providers/terraform-provider-vcd
+        git remote add upstream https://github.com/vmware/terraform-provider-vcd
         check_exit_code "Error adding upstream"
     fi
 

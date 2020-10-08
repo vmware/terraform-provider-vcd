@@ -57,7 +57,7 @@ func datasourceVcdOrgVdc() *schema.Resource {
 			"allocation_model": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The allocation model used by this VDC; must be one of {AllocationVApp, AllocationPool, ReservationPool}",
+				Description: "The allocation model used by this VDC; must be one of {AllocationVApp, AllocationPool, ReservationPool, Flex}",
 			},
 			"compute_capacity": &schema.Schema{
 				Computed: true,
@@ -187,6 +187,19 @@ func datasourceVcdOrgVdc() *schema.Resource {
 				Type:        schema.TypeMap,
 				Computed:    true,
 				Description: "Key and value pairs for Org VDC metadata",
+			},
+			"vm_sizing_policy_ids": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "Set of VM sizing policy IDs",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"default_vm_sizing_policy_id": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "ID of default VM sizing policy ID",
 			},
 		},
 	}

@@ -25,6 +25,26 @@ The following vCloud Director versions are supported by this provider:
 * 9.7
 * 10.0
 * 10.1
+* 10.2
+
+## Removed resources and fields
+
+The following resources were removed in *v3.0*:
+
+* `vcd_network` (replaced by `vcd_network_routed`)
+* `vcd_dnat` (replaced by `vcd_nsxv_dnat`)
+* `vcd_snat` (replaced by `vcd_nsxv_snat`)
+* `vcd_firewall_rules` (replaced by `vcd_nsxv_firewall_rule`)
+
+The following fields were removed from resources in *v3.0*:
+
+*  `ip, network_name, vapp_network_name, network_href, mac, initscript` from `vcd_vapp_vm`
+*  `external_networks, default_gateway_network, advaced` from `vcd_edgegateway`  
+*  `template_name, catalog_name, network_name, memory, cpus, ip, storage_profile, initscript, ovf, accept_all_eulas` from `vcd_vapp`
+*  `vcd_independent_disk.size` in favor of `vcd_independent_disk.size_in_mb`
+*  `resource/vcd_nsxv_firewall_rule.virtual_machine_ids` renamed to `vm_ids`
+*  `resource/vcd_vm_affinity_rule.virtual_machine_ids` renamed to `vm_ids` 
+
 
 ## Removed resources and fields
 
