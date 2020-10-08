@@ -24,7 +24,7 @@ fi
 
 accepted_commands=(static token short acceptance sequential-acceptance multiple binary
     binary-prepare catalog gateway vapp vm network extnetwork multinetwork 
-    short-provider lb user acceptance-orguser short-provider-orguser search)
+    short-provider lb user acceptance-orguser short-provider-orguser search binary-validate)
 
 accepted="[${accepted_commands[*]}]"
 
@@ -181,6 +181,11 @@ function binary_test {
         ./test-binary.sh test-env-destroy
         exit $?
     fi
+    if [ -n "$VCD_ENV_VALIDATE" ]
+    then
+        ./test-binary.sh validate
+        exit $?
+    fi
     timestamp=$(date +%Y-%m-%d-%H-%M)
     ./test-binary.sh 2>&1 | tee test-binary-${timestamp}.txt
 }
@@ -327,6 +332,10 @@ case $wanted in
         binary_test
         ;;
      binary)
+        binary_test
+        ;;
+     binary-validate)
+        export VCD_ENV_VALIDATE=1
         binary_test
         ;;
     unit)

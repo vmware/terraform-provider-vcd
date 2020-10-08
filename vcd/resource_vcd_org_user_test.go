@@ -305,9 +305,9 @@ func TestAccVcdOrgUserWithDS(t *testing.T) {
 							"vcd_org_user."+ud.name, "stored_vm_quota",
 							"data.vcd_org."+testConfig.VCD.Org, "stored_vm_quota"),
 						resource.TestCheckResourceAttr(
-							"data.vcd_org_user."+dsOrgUser, "name", dsOrgUser),
+							"data.vcd_org_user.DSExistingUser", "name", dsOrgUser),
 						resource.TestCheckResourceAttr(
-							"data.vcd_org_user."+dsOrgUser, "role", govcd.OrgUserRoleOrganizationAdministrator),
+							"data.vcd_org_user.DSExistingUser", "role", govcd.OrgUserRoleOrganizationAdministrator),
 					),
 				},
 			},
@@ -392,7 +392,7 @@ resource "vcd_org_user" "{{.UserName}}" {
 
 const testAccOrgUserDatasource = `
 
-data "vcd_org_user" "{{.DSUserName}}" {
+data "vcd_org_user" "DSExistingUser" {
   org  = data.vcd_org.{{.Org}}.name
   name = "{{.DSUserName}}"
 }
