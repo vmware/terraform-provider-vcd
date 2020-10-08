@@ -773,7 +773,7 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// due the bug in VCD 10.1 hot update possible for adding new or update existing network, removing of network has to be done with cold update
-	if d.HasChange("network") && !isNetworkRemoved(d, meta) {
+	if d.HasChange("network") && !isNetworkRemovedInVcd101(d, meta) {
 		networkConnectionSection, err := networksToConfig(d, vdc, *vapp, vcdClient)
 		if err != nil {
 			return fmt.Errorf("unable to setup network configuration for update: %s", err)
@@ -869,8 +869,8 @@ func addRemoveMetaData(d *schema.ResourceData, vm *govcd.VM) error {
 	return nil
 }
 
-// isNetworkRemoved returns true only if network removed and VCD version 10.1
-func isNetworkRemoved(d *schema.ResourceData, meta interface{}) bool {
+// isNetworkRemovedInVcd101 returns true only if network removed and VCD version 10.1
+func isNetworkRemovedInVcd101(d *schema.ResourceData, meta interface{}) bool {
 	vcdClient := meta.(*VCDClient)
 	oldNetworksRaw, newNetworkRaw := d.GetChange("network")
 	oldNetworks := oldNetworksRaw.([]interface{})
@@ -946,7 +946,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		if !d.Get("cpu_hot_add_enabled").(bool) && d.HasChange("cpus") {
 			cpusNeedsColdChange = true
 		}
-		if d.HasChange("network") && isNetworkRemoved(d, meta) {
+		if d.HasChange("network") && isNetworkRemovedInVcd101(d, meta) {
 			networksNeedsColdChange = true
 		}
 	} else if len(d.Get("network").([]interface{})) > 0 {
