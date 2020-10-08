@@ -50,7 +50,7 @@ func testAccVcdExternalNetworkV2Nsxt(t *testing.T, nsxtTier0Router string) {
 		"Description":         description,
 		"Gateway":             "192.168.30.49",
 		"Netmask":             "24",
-		"Tags":                "network extnetwork",
+		"Tags":                "network extnetwork nsxt",
 	}
 
 	params["FuncName"] = t.Name()
@@ -271,7 +271,7 @@ func TestAccVcdExternalNetworkV2Nsxv(t *testing.T) {
 		"Netmask":             "24",
 		"Dns1":                "192.168.0.164",
 		"Dns2":                "192.168.0.196",
-		"Tags":                "network extnetwork",
+		"Tags":                "network extnetwork nsxt",
 	}
 
 	configText := templateFill(testAccCheckVcdExternalNetworkV2Nsxv, params)
