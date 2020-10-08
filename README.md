@@ -110,6 +110,46 @@ $ make install
 
 This command will build the plugin and transfer it to `$HOME/.terraform.d/plugins`, with a name that includes the version (as taken from the `./VERSION` file).
 
+Starting with terraform 0.13, the path where the plugin is deployed is
+```
+`$HOME/.terraform.d/plugins/registry.terraform.io/vmware/vcd/${VERSION}/${OS}_amd64/terraform-provider-vcd_v${VERSION}`
+```
+
+For example, on MacOS:
+
+```
+$HOME/.terraform.d/
+├── checkpoint_signature
+└── plugins
+    ├── registry.terraform.io
+    └── vmware
+        └── vcd
+            ├── 2.9.0
+            │   └── darwin_amd64
+            │       └── terraform-provider-vcd_v2.9.0
+            └── 3.0.0
+                └── darwin_amd64
+                    └── terraform-provider-vcd_v3.0.0
+```
+
+On Linux:
+
+```
+$HOME/.terraform.d/
+├── checkpoint_signature
+└── plugins
+    ├── registry.terraform.io
+    └── vmware
+        └── vcd
+            ├── 2.9.0
+            │   └── linux_amd64
+            │       └── terraform-provider-vcd_v2.9.0
+            └── 3.0.0
+                └── linux_amd64
+                    └── terraform-provider-vcd_v3.0.0
+```
+
+
 ### Using the new plugin
 
 Once you have installed the plugin as mentioned above, you can simply create a new `config.tf` as defined in [the manual](https://www.terraform.io/docs/providers/vcd/index.html) and run 
@@ -119,3 +159,24 @@ $ terraform init
 $ terraform plan
 $ terraform apply
 ```
+
+When using terraform 0.13+, you also need to have a `terraform` block either in your script or in an adjacent `versions.tf` file,
+containing.
+
+```
+terraform {
+  required_providers {
+    vcd = {
+      source = "vmware/vcd"
+    }
+  }
+  required_version = ">= 0.13"
+}
+```
+
+In this block, the `vmware` part of the source corresponds to the directory
+`$HOME/.terraform.d/plugins/registry.terraform.io/vmware` created by the command `make install`.
+
+Note that `versions.tf` is generated when you run the `terraform 0.13upgrade` command. If you have run such command,
+you need to edit the file and make sure the **`source`** path corresponds to the one installed, or remove the file
+altogether if you have already the right block in your script.
