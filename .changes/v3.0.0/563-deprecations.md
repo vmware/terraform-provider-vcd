@@ -1,0 +1,1 @@
+* Removed deprecated attributes `ip, network_name, vapp_network_name, network_href, mac, initscript` from `vcd_vapp_vm` [GH-563]
