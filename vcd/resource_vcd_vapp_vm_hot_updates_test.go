@@ -322,7 +322,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
-    connected          = "false"
+    connected          = false
   }
  
   network {
@@ -374,7 +374,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
-    connected          = "false"
+    connected          = false
     is_primary         = true
   }
 
@@ -419,7 +419,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
-    connected          = "false"
+    connected          = false
     is_primary         = true
   }
 }
@@ -454,14 +454,14 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
-    connected          = "false"
+    connected          = false
     is_primary         = true
   }
 
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
-    connected          = "false"
+    connected          = false
   }
 }
 `
@@ -490,15 +490,15 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
-    connected          = "false"
-    is_primary         = false
+    connected          = false
+    is_primary         = true
   }
 
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
-    connected          = "false"
-    is_primary         = true
+    connected          = false
+    is_primary         = false
   }
 }
 `
@@ -527,15 +527,15 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
-    connected          = "false"
-    is_primary         = "false"
+    connected          = false
+    is_primary         = false
   }
 
   network {
     type               = "org"
     name               = vcd_vapp_org_network.vappNetwork1.org_network_name
     ip_allocation_mode = "DHCP"
-    is_primary         = "true"
+    is_primary         = true
   }
 }
 `
