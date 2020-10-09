@@ -309,23 +309,6 @@ func TestAccVcdExternalNetworkV2Nsxv(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "vsphere_network.#", "1"),
 					testCheckOutputNonEmpty("vcenter-id"),   // Match any non empty string
 					testCheckOutputNonEmpty("portgroup-id"), // Match any non empty string
-
-					// Data source checks
-					resource.TestCheckResourceAttrPair(resourceName, "name", "data."+resourceName, "name"),
-					resource.TestCheckResourceAttrPair(resourceName, "description", "data."+resourceName, "description"),
-					resource.TestCheckResourceAttrPair(resourceName, "ip_scope.#", "data."+resourceName, "ip_scope.#"),
-					resource.TestCheckResourceAttrPair(resourceName, "ip_scope.2118535427.dns1", "data."+resourceName, "ip_scope.2118535427.dns1"),
-					resource.TestCheckResourceAttrPair(resourceName, "ip_scope.2118535427.dns2", "data."+resourceName, "ip_scope.2118535427.dns2"),
-					resource.TestCheckResourceAttrPair(resourceName, "ip_scope.2118535427.dns_suffix", "data."+resourceName, "ip_scope.2118535427.dns_suffix"),
-					resource.TestCheckResourceAttrPair(resourceName, "ip_scope.2118535427.enabled", "data."+resourceName, "ip_scope.2118535427.enabled"),
-					resource.TestCheckResourceAttrPair(resourceName, "ip_scope.2118535427.gateway", "data."+resourceName, "ip_scope.2118535427.gateway"),
-					resource.TestCheckResourceAttrPair(resourceName, "ip_scope.2118535427.prefix_length", "data."+resourceName, "ip_scope.2118535427.prefix_length"),
-					resource.TestCheckResourceAttrPair(resourceName, "ip_scope.2118535427.static_ip_pool.#", "data."+resourceName, "ip_scope.2118535427.static_ip_pool.#"),
-					resource.TestCheckResourceAttrPair(resourceName, "ip_scope.2118535427.static_ip_pool.1203345861.end_address", "data."+resourceName, "ip_scope.2118535427.static_ip_pool.1203345861.end_address"),
-					resource.TestCheckResourceAttrPair(resourceName, "ip_scope.2118535427.static_ip_pool.1203345861.start_address", "data."+resourceName, "ip_scope.2118535427.static_ip_pool.1203345861.start_address"),
-					resource.TestCheckResourceAttrPair(resourceName, "vsphere_network.#", "data."+resourceName, "vsphere_network.#"),
-					resource.TestCheckResourceAttrSet("data."+resourceName, "vsphere_network.0.portgroup_id"),
-					resource.TestCheckResourceAttrSet("data."+resourceName, "vsphere_network.0.vcenter_id"),
 				),
 			},
 			resource.TestStep{
@@ -402,10 +385,6 @@ resource "vcd_external_network_v2" "ext-net-nsxv" {
       end_address   = "{{.EndAddress}}"
     }
   }
-}
-
-data "vcd_external_network_v2" "ext-net-nsxv" {
-	name = vcd_external_network_v2.ext-net-nsxv.name
 }
 
 output "vcenter-id" {

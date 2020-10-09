@@ -422,7 +422,9 @@ func setExternalNetworkV2Data(d *schema.ResourceData, net *types.ExternalNetwork
 	// Switch on first value of backing ID. If it is NSX-T - it can be only one block (limited by schema).
 	// NSX-V can have more than one
 	switch net.NetworkBackings.Values[0].BackingType {
-	case types.ExternalNetworkBackingDvPortgroup, types.ExternalNetworkBackingTypeNetwork:
+	// Some versions of VCD behave strangely in API. They do accept a parameter of types.ExternalNetworkBackingTypeNetwork
+	// as it was always the case, but in response they do return "PORTGROUP".
+	case types.ExternalNetworkBackingDvPortgroup, types.ExternalNetworkBackingTypeNetwork, "PORTGROUP":
 		backingInterface := make([]interface{}, len(net.NetworkBackings.Values))
 		for backingIndex := range net.NetworkBackings.Values {
 			backing := net.NetworkBackings.Values[backingIndex]

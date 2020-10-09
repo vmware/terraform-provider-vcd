@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/terraform"
@@ -129,6 +130,31 @@ func resourceFieldsEqual(firstObject, secondObject string, excludeFields []strin
 					fieldName, firstObject, resource1.Primary.Attributes[fieldName], secondObject, resource2.Primary.Attributes[fieldName])
 			}
 		}
+		return nil
+	}
+}
+
+func resourceFieldIntNotEqual(object, field string, notEqualTo int) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		resource, ok := s.RootModule().Resources[object]
+		if !ok {
+			return fmt.Errorf("unable to find %s", object)
+		}
+
+		fieldValue, fieldSet := resource.Primary.Attributes[field]
+		if !fieldSet {
+			return fmt.Errorf("expected field '%s' to be set in resource '%s'", field, object)
+		}
+
+		intFieldValue, err := strconv.Atoi(fieldValue)
+		if err != nil {
+			return fmt.Errorf("could not convert field '%s' to int: %s", fieldValue, err)
+		}
+
+		if intFieldValue == notEqualTo {
+			return fmt.Errorf("expected field '%s' value to be '%d'!='%d'", object, intFieldValue, notEqualTo)
+		}
+
 		return nil
 	}
 }
