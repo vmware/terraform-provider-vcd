@@ -123,7 +123,7 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, `guest_properties.guest.another.subkey`, "another-value"),
 				),
 			},
-			// Step 1 - update
+			// Step 1 - update - network changes
 			resource.TestStep{
 				Config: configTextVMUpdateStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -160,7 +160,7 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 				Config:      configTextVMUpdateStep2,
 				ExpectError: regexp.MustCompile(`update stopped: VM needs to power off to change properties.*`),
 			},
-			// Step 3 - update
+			// Step 3 - update - add new network section
 			resource.TestStep{
 				Config: configTextVMUpdateStep3,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -190,9 +190,9 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 					testAccCheckVcdVmNotRestarted("vcd_vapp_vm."+hotVmName1, hotVappName, hotVmName1),
 				),
 			},
-			// Step 4 - update
+			// Step 4 - update - remove network section
 			step4func,
-			// Step 5 - update
+			// Step 5 - update - network changes
 			resource.TestStep{
 				Config: configTextVMUpdateStep5,
 				Check: resource.ComposeAggregateTestCheckFunc(
