@@ -555,14 +555,14 @@ The following additional attributes are exported:
 
 ## Hot and Cold update
 
-These fields can be updated only when VM is power off:
+These fields can be updated only when VM is powered off (provider automatically restarts the VM):
 `cpu_cores`, `power_on`, `disk`, `expose_hardware_virtualization`, `boot_image`, `hardware_version`, `os_type`,
 `description`, `cpu_hot_add_enabled`, `memory_hot_add_enabled`, `network`
 
 These fields can be updated when VM is power on:
 `memory`, `cpus`, `network`, `metadata`, `guest_properties`, `sizing_policy_id` 
 
-* Guest OS must support hot NIC removal for NICs to be removed using network definition. If Guest OS doesn't support it - power_on=false can be used to power off the VM before removing NICs.
+* Guest OS must support hot NIC removal for NICs to be removed using network definition. If Guest OS doesn't support it - `power_on=false` can be used to power off the VM before removing NICs.
 * VCD 10.1 has a bug and all NIC removals will be performed in cold manner.
 
 ## Importing
