@@ -49,6 +49,14 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 		return
 	}
 
+	vcdClient, err := getTestVCDFromJson(testConfig)
+	if err != nil {
+		t.Skip("unable to validate vCD version - skipping test")
+	}
+	if vcdClient.Client.APIVCDMaxVersionIs("= 35.0") {
+		t.Skip("unable to run this test in VCD 10.2")
+	}
+
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },

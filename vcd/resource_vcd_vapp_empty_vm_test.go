@@ -318,7 +318,8 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
-  power_on = true
+  # You cannot remove NICs from an active virtual machine on which no operating system is installed.
+  power_on = false
 
   vapp_name     = vcd_vapp.{{.VAppName}}.name
   description   = "test empty VM"
