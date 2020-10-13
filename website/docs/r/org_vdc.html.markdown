@@ -93,8 +93,13 @@ resource "vcd_org_vdc" "nsxt-vdc" {
     limit   = 10240
     default = true
   }
-}
 
+  enabled                  = true
+  enable_thin_provisioning = true
+  enable_fast_provisioning = true
+  delete_force             = true
+  delete_recursive         = true
+}
 ```
 
 ## Example Usage (With VM sizing policies)
