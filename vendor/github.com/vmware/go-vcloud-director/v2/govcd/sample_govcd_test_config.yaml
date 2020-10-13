@@ -58,6 +58,13 @@ vcd:
       name: nsxTPvdc1
       storage_profile: "*"
       network_pool: "NSX-T Overlay 1"
+    nsxt:
+      # NSX-T manager to be used
+      manager: nsxManager1
+      # NSX-T tier-0 router used for external network
+      tier0router: tier-0-router
+      # NSX-T tier-0 VRF router used for external network
+      tier0routerVrf: tier-0-router-vrf
     # An Org catalog, possibly containing at least one item
     catalog:
         name: mycat
@@ -127,13 +134,6 @@ vcd:
       # The minimum size is 1048576 (1 MB). While theoretically smaller amounts are allowed,
       # there is an issue when using < 1MB during updates
       sizeForUpdate: 1048576
-nsxt:
-    # NSX-T manager to be used
-    manager: nsxManager1
-    # NSX-T tier-0 router used for external network
-    tier0router: tier-0-router
-    # NSX-T tier-0 VRF router used for external network
-    tier0routervrf: tier-0-router-vrf
 logging:
     # All items in this section are optional
     # Logging is disabled by default.
