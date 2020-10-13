@@ -243,7 +243,7 @@ func resourceVcdExternalNetworkV2Delete(d *schema.ResourceData, meta interface{}
 // For this resource, the import path is just the external network name.
 //
 // Example import path (id): externalNetworkName
-// Example import command:   terraform import vcd_external_network_v2.externalNetworkName externalNetworkName
+// Example import command:   terraform import vcd_external_network_v2.externalNetworkResourceName externalNetworkName
 func resourceVcdExternalNetworkV2Import(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 
 	vcdClient := meta.(*VCDClient)
