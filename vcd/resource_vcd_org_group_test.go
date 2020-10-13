@@ -95,10 +95,12 @@ func TestAccVcdOrgGroup(t *testing.T) {
 
 	// Remove LDAP settings at the end of test
 	defer func() {
-		fmt.Printf("# Removing LDAP settings for Org '%s'\n", ldapConfig.org.AdminOrg.Name)
-		err := ldapConfig.org.LdapDisable()
-		if err != nil {
-			ldapConfig.t.Errorf("error removing LDAP settings for Org '%s': %s", ldapConfig.org.AdminOrg.Name, err)
+		if ldapConfig.org != nil && ldapConfig.org.AdminOrg != nil {
+			fmt.Printf("# Removing LDAP settings for Org '%s'\n", ldapConfig.org.AdminOrg.Name)
+			err := ldapConfig.org.LdapDisable()
+			if err != nil {
+				ldapConfig.t.Errorf("error removing LDAP settings for Org '%s': %s", ldapConfig.org.AdminOrg.Name, err)
+			}
 		}
 	}()
 

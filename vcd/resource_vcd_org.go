@@ -9,7 +9,6 @@ package vcd
 import (
 	"fmt"
 	"log"
-	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -283,7 +282,7 @@ func resourceOrgDelete(d *schema.ResourceData, m interface{}) error {
 	// organizations created by previous versions, where the ID
 	// was not reliable
 	adminOrg, err := vcdClient.VCDClient.GetAdminOrgByNameOrId(identifier)
-	if govcd.ContainsNotFound(err) && isUuid(identifier) {
+	if govcd.ContainsNotFound(err) && govcd.IsUuid(identifier) {
 		adminOrg, err = vcdClient.VCDClient.GetAdminOrgByNameOrId(orgName)
 	}
 
@@ -321,7 +320,7 @@ func resourceOrgUpdate(d *schema.ResourceData, m interface{}) error {
 	// organizations created by previous versions, where the ID
 	// was not reliable
 	adminOrg, err := vcdClient.VCDClient.GetAdminOrgByNameOrId(identifier)
-	if govcd.ContainsNotFound(err) && isUuid(identifier) {
+	if govcd.ContainsNotFound(err) && govcd.IsUuid(identifier) {
 		adminOrg, err = vcdClient.VCDClient.GetAdminOrgByNameOrId(orgName)
 	}
 
@@ -433,7 +432,7 @@ func resourceOrgRead(d *schema.ResourceData, m interface{}) error {
 	// The double attempt is a workaround when dealing with
 	// organizations created by previous versions, where the ID
 	// was not reliable
-	if govcd.ContainsNotFound(err) && isUuid(identifier) {
+	if govcd.ContainsNotFound(err) && govcd.IsUuid(identifier) {
 		// Identifier was created by previous version and it is not a valid ID
 		// If the Org is not found by ID, , the ID is invalid, and we have the name in the resource data,
 		// we try to access it using the name.
@@ -492,10 +491,4 @@ func getOrgNames(d *schema.ResourceData) (orgName string, fullName string, err e
 		return "", "", fmt.Errorf(`the value for "full_name" cannot be empty`)
 	}
 	return orgName, fullName, nil
-}
-
-// Returns true if the identifier is a bare UUID
-func isUuid(identifier string) bool {
-	reUuid := regexp.MustCompile(`^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$`)
-	return reUuid.MatchString(identifier)
 }

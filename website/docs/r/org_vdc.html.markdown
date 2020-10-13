@@ -11,6 +11,9 @@ description: |-
 Provides a vCloud Director Organization VDC resource. This can be used to create and delete an Organization VDC.
 Requires system administrator privileges.
 
+-> **Note:** This resource supports NSX-T and NSX-V based Org Vdcs by providing relevant
+`network_pool_name` and `provider_vdc_name`
+
 Supported in provider *v2.2+*
 
 ## Example Usage
@@ -53,6 +56,43 @@ resource "vcd_org_vdc" "my-vdc" {
     env     = "staging"
     version = "v1"
   }  
+
+  enabled                  = true
+  enable_thin_provisioning = true
+  enable_fast_provisioning = true
+  delete_force             = true
+  delete_recursive         = true
+}
+```
+
+## Example Usage (NSX-T)
+```hcl
+resource "vcd_org_vdc" "nsxt-vdc" {
+  name = "NSXT-VDC"
+  org  = "main-org"
+
+  allocation_model  = "ReservationPool"
+  network_pool_name = "NSX-T Overlay 1"
+  provider_vdc_name = "nsxTPvdc1"
+
+  compute_capacity {
+    cpu {
+      allocated = "1024"
+      limit     = "1024"
+    }
+
+    memory {
+      allocated = "1024"
+      limit     = "1024"
+    }
+  }
+
+  storage_profile {
+    name    = "*"
+    enabled = true
+    limit   = 10240
+    default = true
+  }
 
   enabled                  = true
   enable_thin_provisioning = true

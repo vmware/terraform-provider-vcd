@@ -325,6 +325,9 @@ const (
 const (
 	OpenApiPathVersion1_0_0                   = "1.0.0/"
 	OpenApiEndpointRoles                      = "roles/"
+	OpenApiEndpointAuditTrail                 = "auditTrail/"
+	OpenApiEndpointImportableTier0Routers     = "nsxTResources/importableTier0Routers"
+	OpenApiEndpointExternalNetworks           = "externalNetworks/"
 	OpenApiEndpointVdcComputePolicies         = "vdcComputePolicies/"
 	OpenApiEndpointVdcAssignedComputePolicies = "vdcs/%s/computePolicies"
 )
@@ -335,4 +338,15 @@ const (
 	HeaderTenantContext = "X-VMWARE-VCLOUD-TENANT-CONTEXT"
 	// HeaderAuthContext requires the Org name of the tenant
 	HeaderAuthContext = "X-VMWARE-VCLOUD-AUTH-CONTEXT"
+)
+
+const (
+	// ExternalNetworkBackingTypeNsxtTier0Router defines backing type of NSX-T Tier-0 router
+	ExternalNetworkBackingTypeNsxtTier0Router = "NSXT_TIER0"
+	// ExternalNetworkBackingTypeNsxtVrfTier0Router defines backing type of NSX-T Tier-0 VRF router
+	ExternalNetworkBackingTypeNsxtVrfTier0Router = "NSXT_VRF_TIER0"
+	// ExternalNetworkBackingTypeNetwork defines vSwitch portgroup
+	ExternalNetworkBackingTypeNetwork = "NETWORK"
+	// ExternalNetworkBackingDvPortgroup refers distributed switch portgroup
+	ExternalNetworkBackingDvPortgroup = "DV_PORTGROUP"
 )

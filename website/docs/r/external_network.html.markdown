@@ -13,6 +13,8 @@ Requires system administrator privileges.
 
 Supported in provider *v2.2+*
 
+~> **Note:** For NSX-T suported external network please use [vcd_external_network_v2](/docs/providers/vcd/r/external_network_v2.html)
+
 ## Example Usage
 
 ```hcl
