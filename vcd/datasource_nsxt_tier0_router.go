@@ -25,7 +25,7 @@ func datasourceVcdNsxtTier0Router() *schema.Resource {
 				Description: "ID of NSX-T manager.",
 			},
 			"is_assigned": &schema.Schema{
-				Type:        schema.TypeString,
+				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Defines if Tier-0 router is already assigned to external network.",
 			},
