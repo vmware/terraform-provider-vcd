@@ -36,6 +36,11 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 		"Media":       testConfig.Media.MediaName,
 	}
 
+	vcdClient, err := getTestVCDFromJson(testConfig)
+	if err != nil {
+		t.Skip("unable to validate vCD version - skipping test")
+	}
+
 	configTextVM := templateFill(testAccCheckVcdVAppHotUpdateVm, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 
@@ -62,6 +67,23 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
+	}
+
+	step4func := resource.TestStep{}
+	var step5Check resource.TestCheckFunc
+	if vcdClient.Client.APIVCDMaxVersionIs("= 34.0") {
+		step4func = resource.TestStep{
+			Config:      configTextVMUpdateStep4,
+			ExpectError: regexp.MustCompile(`update stopped: VM needs to power off to change properties.*`)}
+		step5Check = resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.connected", "true")
+	} else {
+		step4func = resource.TestStep{
+			Config: configTextVMUpdateStep4,
+			Check: resource.ComposeAggregateTestCheckFunc(
+				testAccCheckVcdVmNotRestarted("vcd_vapp_vm."+hotVmName1, hotVappName, hotVmName1),
+			),
+		}
+		step5Check = testAccCheckVcdVmNotRestarted("vcd_vapp_vm."+hotVmName1, hotVappName, hotVmName1)
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -101,7 +123,7 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, `guest_properties.guest.another.subkey`, "another-value"),
 				),
 			},
-			// Step 1 - update
+			// Step 1 - update - network changes
 			resource.TestStep{
 				Config: configTextVMUpdateStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -138,7 +160,7 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 				Config:      configTextVMUpdateStep2,
 				ExpectError: regexp.MustCompile(`update stopped: VM needs to power off to change properties.*`),
 			},
-			// Step 3 - update
+			// Step 3 - update - add new network section
 			resource.TestStep{
 				Config: configTextVMUpdateStep3,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -168,12 +190,9 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 					testAccCheckVcdVmNotRestarted("vcd_vapp_vm."+hotVmName1, hotVappName, hotVmName1),
 				),
 			},
-			// Step 4 - update
-			resource.TestStep{
-				Config:      configTextVMUpdateStep4,
-				ExpectError: regexp.MustCompile(`update stopped: VM needs to power off to change properties.*`),
-			},
-			// Step 5 - update
+			// Step 4 - update - remove network section
+			step4func,
+			// Step 5 - update - network changes
 			resource.TestStep{
 				Config: configTextVMUpdateStep5,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -196,6 +215,7 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.ip_allocation_mode", "DHCP"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+hotVmName1, "network.1.mac"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.connected", "true"),
+					step5Check,
 				),
 			},
 		},
@@ -302,7 +322,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
-    connected          = "false"
+    connected          = false
   }
  
   network {
@@ -354,7 +374,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
-    connected          = "false"
+    connected          = false
     is_primary         = true
   }
 
@@ -399,7 +419,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
-    connected          = "false"
+    connected          = false
     is_primary         = true
   }
 }
@@ -434,14 +454,14 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
-    connected          = "false"
+    connected          = false
     is_primary         = true
   }
 
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
-    connected          = "false"
+    connected          = false
   }
 }
 `
@@ -470,14 +490,15 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
-    connected          = "false"
+    connected          = false
     is_primary         = true
   }
 
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
-    connected          = "false"
+    connected          = false
+    is_primary         = false
   }
 }
 `
@@ -506,7 +527,8 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
-    connected          = "false"
+    connected          = false
+    is_primary         = false
   }
 
   network {
