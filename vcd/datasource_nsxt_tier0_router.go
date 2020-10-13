@@ -80,5 +80,6 @@ func datasourceNsxtTier0RouterRead(d *schema.ResourceData, meta interface{}) err
 		}
 	}
 
-	return govcd.ErrorEntityNotFound
+	return fmt.Errorf("%s: could not find NSX-T Tier-0 router by name '%s' in NSX-T manager %s",
+		govcd.ErrorEntityNotFound, tier0RouterName, nsxtManagerId)
 }
