@@ -245,6 +245,32 @@ function echo_verbose {
     fi
 }
 
+function check_terraform_version {
+
+    fname=$1
+    dir=$2
+    has_terraform=$(grep '^\s*terraform {' $fname)
+    if [ -z "$has_terraform" ]
+    then
+        if [[ $terraform_major -gt 0 || $terraform_major -eq 0 && $terraform_minor -gt 12 ]]
+        then
+            cat << EOF > $dir/versions.tf
+terraform {
+  required_providers {
+    vcd = {
+      source = "vmware/vcd"
+    }
+  }
+  # required_version = ">= 0.13"
+}
+
+EOF
+        fi
+    fi
+
+}
+
+
 function check_exit_code {
     out=$1
     if [ "$exit_code" != "0" ]
@@ -263,6 +289,7 @@ function validate_script {
     fi
     mkdir vtmp
     cp $script vtmp
+    check_terraform_version $script vtmp
     cd vtmp
     terraform init > init.out 2>&1
     exit_code=$?
@@ -523,6 +550,7 @@ function run_with_recover {
     fi
 }
 
+
 if [ ! -f already_run.txt ]
 then
     touch already_run.txt
@@ -656,24 +684,7 @@ do
     if [ "${operations[0]}" == "init" ]
     then
         cp $CF $opsdir/config.tf
-        has_terraform=$(grep '^\s*terraform {' $CF)
-        if [ -z "$has_terraform" ]
-        then
-            if [[ $terraform_major -gt 0 || $terraform_major -eq 0 && $terraform_minor -gt 12 ]]
-            then
-                cat << EOF > $opsdir/versions.tf
-terraform {
-  required_providers {
-    vcd = {
-      source = "vmware/vcd"
-    }
-  }
-  # required_version = ">= 0.13"
-}
-
-EOF
-            fi
-        fi
+        check_terraform_version $CF $opsdir
     fi
     if [ -z "$DRY_RUN" ]
     then
