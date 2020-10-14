@@ -52,7 +52,7 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 		return
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckVcdEdgeGatewayDestroy(edgeGatewayNameBasic),
@@ -105,7 +105,7 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 		return
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
 		CheckDestroy: testAccCheckVcdEdgeGatewayDestroy(edgeGatewayNameBasic),
