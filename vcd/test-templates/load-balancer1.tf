@@ -2,9 +2,9 @@
 ## apply-options -parallelism=1
 ## destroy-options -parallelism=1
 
-# Edge gateway load balancer configuration with all separate components and their datasources.
+# Edge gateway load balancer configuration with all separate components.
 # The below `component_count` variable is used to determine how many instances
-# of each resource or data source to create.
+# of each resource to create.
 
 # v2.4.0+
 
@@ -15,7 +15,7 @@ variable "component_count" {
 }
 
 resource "vcd_lb_service_monitor" "test" {
-  count = "${var.component_count}"
+  count = var.component_count
 
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
@@ -37,18 +37,8 @@ resource "vcd_lb_service_monitor" "test" {
   }
 }
 
-data "vcd_lb_service_monitor" "ds-lb" {
-  count = "${var.component_count}"
-
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
-  name         = "${vcd_lb_service_monitor.test[count.index].name}"
-}
-
-
 resource "vcd_lb_server_pool" "server-pool" {
-  count = "${var.component_count}"
+  count = var.component_count
 
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
@@ -58,7 +48,7 @@ resource "vcd_lb_server_pool" "server-pool" {
   algorithm = "round-robin"
   enable_transparency = "true"
 
-  monitor_id = "${vcd_lb_service_monitor.test[count.index].id}"
+  monitor_id = vcd_lb_service_monitor.test[count.index].id
 
   member {
     condition = "enabled"
@@ -103,20 +93,8 @@ resource "vcd_lb_server_pool" "server-pool" {
   }
 }
 
-
-
-data "vcd_lb_server_pool" "ds-pool" {
-  count = "${var.component_count}"
-
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
-  name         = "${vcd_lb_server_pool.server-pool[count.index].name}"
-}
-
-
 resource "vcd_lb_app_profile" "test" {
-  count = "${var.component_count}"
+  count = var.component_count
 
 	org          = "{{.Org}}"
 	vdc          = "{{.Vdc}}"
@@ -126,17 +104,8 @@ resource "vcd_lb_app_profile" "test" {
 	type           = "tcp"
 }
 
-data "vcd_lb_app_profile" "test" {
-  count = "${var.component_count}"
-  
-	org          = "{{.Org}}"
-	vdc          = "{{.Vdc}}"
-	edge_gateway = "{{.EdgeGateway}}"
-	name         = "${vcd_lb_app_profile.test[count.index].name}"
-}
-
 resource "vcd_lb_app_rule" "test" {
-  count = "${var.component_count}"
+  count = var.component_count
 
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
@@ -146,18 +115,8 @@ resource "vcd_lb_app_rule" "test" {
   script = "acl hello payload(0,6) -m bin 48656c6c6f0a"
 }
 
-data "vcd_lb_app_rule" "test" {
-  count = "${var.component_count}"
-
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
-  name         = "${vcd_lb_app_rule.test[count.index].name}"
-}
-
-
 resource "vcd_lb_virtual_server" "test" {
-  count = "${var.component_count}"
+  count = var.component_count
 
   org          = "{{.Org}}"
   vdc          = "{{.Vdc}}"
@@ -168,16 +127,7 @@ resource "vcd_lb_virtual_server" "test" {
   protocol   = "http"
   port       = 19000 + count.index # 2 virtual servers cannot listen on the same port
 
-  app_profile_id = "${vcd_lb_app_profile.test[count.index].id}"
-  server_pool_id = "${vcd_lb_server_pool.server-pool[count.index].id}"
-  app_rule_ids   = ["${vcd_lb_app_rule.test[count.index].id}"]
-}
-
-data "vcd_lb_virtual_server" "test" {
-  count = "${var.component_count}"
-
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
-  name         = "${vcd_lb_virtual_server.test[count.index].name}"
+  app_profile_id = vcd_lb_app_profile.test[count.index].id
+  server_pool_id = vcd_lb_server_pool.server-pool[count.index].id
+  app_rule_ids   = [vcd_lb_app_rule.test[count.index].id]
 }
