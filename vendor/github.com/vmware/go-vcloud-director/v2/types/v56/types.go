@@ -2102,6 +2102,7 @@ type QueryResultRecordsType struct {
 	AdminCatalogItemRecord          []*QueryResultCatalogItemType                     `xml:"AdminCatalogItemRecord"`          // A record representing an admin catalog item
 	VappTemplateRecord              []*QueryResultVappTemplateType                    `xml:"VAppTemplateRecord"`              // A record representing a vApp template
 	AdminVappTemplateRecord         []*QueryResultVappTemplateType                    `xml:"AdminVAppTemplateRecord"`         // A record representing an admin vApp template
+	NsxtManagerRecord               []*QueryResultNsxtManagerRecordType               `xml:"NsxTManagerRecord"`               // A record representing NSX-T manager
 }
 
 // QueryResultCatalogItemType represents a catalog item as query result
@@ -2330,7 +2331,7 @@ type QueryResultVirtualCenterRecordType struct {
 	IsEnabled     bool   `xml:"isEnabled,attr,omitempty"`
 	IsSupported   bool   `xml:"isSupported,attr,omitempty"`
 	ListenerState string `xml:"listenerState,attr,omitempty"`
-	Status        string `xml:"stats,attr,omitempty"`
+	Status        string `xml:"status,attr,omitempty"`
 	Url           string `xml:"url,attr,omitempty"`
 	UserName      string `xml:"userName,attr,omitempty"`
 	VcVersion     string `xml:"vcVersion,attr,omitempty"`
@@ -2642,6 +2643,17 @@ type QueryResultOrgVdcNetworkRecordType struct {
 	IsIpScopeInherited bool      `xml:"isIpScopeInherited,attr,omitempty"`
 	Link               []*Link   `xml:"Link,omitempty"`
 	Metadata           *Metadata `xml:"Metadata,omitempty"`
+}
+
+type QueryResultNsxtManagerRecordType struct {
+	Xmlns      string  `xml:"xmlns,attr,omitempty"`
+	Name       string  `xml:"name,attr"`
+	URL        string  `xml:"url,attr"`
+	HREF       string  `xml:"href,attr"`
+	Site       string  `xml:"site,attr"`
+	LocationId string  `xml:"locationId,attr"`
+	SiteName   string  `xml:"siteName,attr"`
+	Link       []*Link `xml:"Link,omitempty"`
 }
 
 // Represents org VDC Network

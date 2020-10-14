@@ -58,6 +58,13 @@ vcd:
       name: nsxTPvdc1
       storage_profile: "*"
       network_pool: "NSX-T Overlay 1"
+    nsxt:
+      # NSX-T manager to be used
+      manager: nsxManager1
+      # NSX-T tier-0 router used for external network
+      tier0router: tier-0-router
+      # NSX-T tier-0 VRF router used for external network
+      tier0routerVrf: tier-0-router-vrf
     # An Org catalog, possibly containing at least one item
     catalog:
         name: mycat
