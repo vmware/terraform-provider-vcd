@@ -57,19 +57,6 @@ test-binary: installrace
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider"
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' binary"
 
-# prepares to build the environment in a new vCD (run once before test-env-apply)
-test-env-init: install
-	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider"
-	@sh -c "'$(CURDIR)/scripts/runtest.sh' test-env-init"
-
-# build the environment in a new vCD (run once before testacc)
-test-env-apply:
-	@sh -c "'$(CURDIR)/scripts/runtest.sh' test-env-apply"
-
-# destroys the environment built with 'test-env-apply' (warning: can't be undone)
-test-env-destroy:
-	@sh -c "'$(CURDIR)/scripts/runtest.sh' test-env-destroy"
-
 # Retrieves the authorization token
 token:
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' token"

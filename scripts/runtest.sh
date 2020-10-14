@@ -187,7 +187,7 @@ function binary_test {
         exit $?
     fi
     timestamp=$(date +%Y-%m-%d-%H-%M)
-    ./test-binary.sh 2>&1 | tee test-binary-${timestamp}.txt
+    ./test-binary.sh names '*.tf' 2>&1 | tee test-binary-${timestamp}.txt
 }
 
 function exists_in_path {
@@ -314,18 +314,6 @@ case $wanted in
         ;;
     token)
         make_token
-        ;;
-    test-env-init)
-        export VCD_ENV_INIT=1
-        binary_test
-        ;;
-    test-env-apply)
-        export VCD_ENV_APPLY=1
-        binary_test
-        ;;
-    test-env-destroy)
-        export VCD_ENV_DESTROY=1
-        binary_test
         ;;
     binary-prepare)
         export NORUN=1
