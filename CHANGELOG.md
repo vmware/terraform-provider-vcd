@@ -11,8 +11,8 @@ FEATURES
 * **New Data Source**: `vcd_external_network_v2` with NSX-T support [#560](https://github.com/vmware/terraform-provider-vcd/pull/560)
 * **New Data Source**: `vcd_vcenter` useful for `vcd_external_network_v2` resource when used with NSX-V [#560](https://github.com/vmware/terraform-provider-vcd/pull/560)
 * **New Data Source**: `vcd_portgroup` useful for `vcd_external_network_v2` resource when used with NSX-V [#560](https://github.com/vmware/terraform-provider-vcd/pull/560)
-* **New Data Source**: `vcd_nsxt_manager` useful for `vcd_external_network_v2` resource when used with NSX-V [#560](https://github.com/vmware/terraform-provider-vcd/pull/560)
-* **New Data Source**: `vcd_nsxt_tier0_router` useful for `vcd_external_network_v2` resource when used with NSX-V [#560](https://github.com/vmware/terraform-provider-vcd/pull/560)
+* **New Data Source**: `vcd_nsxt_manager` useful for `vcd_external_network_v2` resource when used with NSX-T [#560](https://github.com/vmware/terraform-provider-vcd/pull/560)
+* **New Data Source**: `vcd_nsxt_tier0_router` useful for `vcd_external_network_v2` resource when used with NSX-T [#560](https://github.com/vmware/terraform-provider-vcd/pull/560)
 
 IMPROVEMENTS
 
