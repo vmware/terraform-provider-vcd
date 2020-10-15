@@ -9,10 +9,10 @@ FEATURES
 * **New Resource**: `vcd_edgegateway_settings` Changes LB and FW global settings for Edge Gateway [#557](https://github.com/vmware/terraform-provider-vcd/pull/557)
 * **New Resource**: `vcd_external_network_v2` with NSX-T support [#560](https://github.com/vmware/terraform-provider-vcd/pull/560)
 * **New Data Source**: `vcd_external_network_v2` with NSX-T support [#560](https://github.com/vmware/terraform-provider-vcd/pull/560)
-* **New Data Source**: `vcd_vcenter` [#560](https://github.com/vmware/terraform-provider-vcd/pull/560)
-* **New Data Source**: `vcd_portgroup` [#560](https://github.com/vmware/terraform-provider-vcd/pull/560)
-* **New Data Source**: `vcd_nsxt_manager` [#560](https://github.com/vmware/terraform-provider-vcd/pull/560)
-* **New Data Source**: `vcd_nsxt_tier0_router` [#560](https://github.com/vmware/terraform-provider-vcd/pull/560)
+* **New Data Source**: `vcd_vcenter` useful for `vcd_external_network_v2` resource when used with NSX-V [#560](https://github.com/vmware/terraform-provider-vcd/pull/560)
+* **New Data Source**: `vcd_portgroup` useful for `vcd_external_network_v2` resource when used with NSX-V [#560](https://github.com/vmware/terraform-provider-vcd/pull/560)
+* **New Data Source**: `vcd_nsxt_manager` useful for `vcd_external_network_v2` resource when used with NSX-V [#560](https://github.com/vmware/terraform-provider-vcd/pull/560)
+* **New Data Source**: `vcd_nsxt_tier0_router` useful for `vcd_external_network_v2` resource when used with NSX-V [#560](https://github.com/vmware/terraform-provider-vcd/pull/560)
 
 IMPROVEMENTS
 
@@ -30,16 +30,15 @@ BUG FIXES
 
 * `resource/vcd_vapp_vm` removed default value for `cpus` and `cpu_cores` [#553](https://github.com/vmware/terraform-provider-vcd/pull/553)
 * `resource/vcd_vapp_vm` fix ignoring `is_primary=false` [#556](https://github.com/vmware/terraform-provider-vcd/pull/556)
-* Fixed `vcd_independent_disk.size` issue, new field `size_in_mb` replaces the `size` [#588](https://github.com/vmware/terraform-provider-vcd/pull/588)
 
 NOTES
 
-* Added conditional skips for some checks in test `TestAccVcdVAppVmDhcpWait`
-* Dropped support for VCD 9.5 [#544](https://github.com/vmware/terraform-provider-vcd/pull/544)
 * Added support for VCD 10.2 [#544](https://github.com/vmware/terraform-provider-vcd/pull/544)
+* Dropped support for VCD 9.5 [#544](https://github.com/vmware/terraform-provider-vcd/pull/544)
 * `resource/vcd_nsxv_firewall_rule` `virtual_machine_ids` renamed to `vm_ids` [#558](https://github.com/vmware/terraform-provider-vcd/pull/558)
 * `resource/vcd_vm_affinity_rule` `virtual_machine_ids` renamed to `vm_ids` [#558](https://github.com/vmware/terraform-provider-vcd/pull/558)
 * Provider will send HTTP User-Agent while performing API calls [#566](https://github.com/vmware/terraform-provider-vcd/pull/566)
+* Added conditional skips for some checks in test `TestAccVcdVAppVmDhcpWait`
 
 REMOVALS
 
@@ -49,6 +48,7 @@ REMOVALS
 * Removed deprecated attributes `external_networks, default_gateway_network, advaced` from `vcd_edgegateway` [#588](https://github.com/vmware/terraform-provider-vcd/pull/588)
 * Removed `vcd_independent_disk.size` in favor of `vcd_independent_disk.size_in_mb` [#588](https://github.com/vmware/terraform-provider-vcd/pull/588)
 * Removed deprecated attributes `template_name, catalog_name, network_name, memory, cpus, ip, storage_profile, initscript, ovf, accept_all_eulas` from `vcd_vapp` [#588](https://github.com/vmware/terraform-provider-vcd/pull/588)
+* Fixed `vcd_independent_disk.size` issue, new field `size_in_mb` replaces the `size` [#588](https://github.com/vmware/terraform-provider-vcd/pull/588)
 
 ## 2.9.0 (June 30, 2020)
 FEATURES:
