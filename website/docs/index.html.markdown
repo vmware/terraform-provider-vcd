@@ -45,13 +45,6 @@ The following fields were removed from resources in *v3.0*:
 *  `resource/vcd_nsxv_firewall_rule.virtual_machine_ids` renamed to `vm_ids`
 *  `resource/vcd_vm_affinity_rule.virtual_machine_ids` renamed to `vm_ids` 
 
-
-## Removed resources and fields
-
-The following fields were removed from resources in *v3.0*:
-
-*  `ip, network_name, vapp_network_name, network_href, mac, initscript` from `vcd_vapp_vm`
-
 ## Example Usage
 
 ### Connecting as Org Admin
