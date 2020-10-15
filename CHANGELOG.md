@@ -1,6 +1,54 @@
-## 3.0.0 (Unreleased)
+## 3.0.0 (October 15, 2020)
 
-Changes in progress for v3.0.0 are available at [.changes/v3.0.0](https://github.com/vmware/terraform-provider-vcd/tree/master/.changes/v3.0.0) until the release.
+FEATURES
+
+* **New Resource**: `vcd_vapp_access_control` Access control for vApps [#543](https://github.com/vmware/terraform-provider-vcd/pull/543)
+* **New Data Source**: `vcd_org_user` Org User [#543](https://github.com/vmware/terraform-provider-vcd/pull/543)
+* **New Resource**: `vcd_vm_sizing_policy` VDC VM sizing policy [#553](https://github.com/vmware/terraform-provider-vcd/pull/553)
+* **New Data Source**: `vcd_vm_sizing_policy` VDC VM sizing policy [#553](https://github.com/vmware/terraform-provider-vcd/pull/553)
+* **New Resource**: `vcd_edgegateway_settings` Changes LB and FW global settings for Edge Gateway [#557](https://github.com/vmware/terraform-provider-vcd/pull/557)
+* **New Resource**: `vcd_external_network_v2` with NSX-T support [#560](https://github.com/vmware/terraform-provider-vcd/pull/560)
+* **New Data Source**: `vcd_external_network_v2` with NSX-T support [#560](https://github.com/vmware/terraform-provider-vcd/pull/560)
+* **New Data Source**: `vcd_vcenter` [#560](https://github.com/vmware/terraform-provider-vcd/pull/560)
+* **New Data Source**: `vcd_portgroup` [#560](https://github.com/vmware/terraform-provider-vcd/pull/560)
+* **New Data Source**: `vcd_nsxt_manager` [#560](https://github.com/vmware/terraform-provider-vcd/pull/560)
+* **New Data Source**: `vcd_nsxt_tier0_router` [#560](https://github.com/vmware/terraform-provider-vcd/pull/560)
+
+IMPROVEMENTS
+
+* Added command `make tagverify` to check testing tags isolation. It also runs when calling `make test` [#532](https://github.com/vmware/terraform-provider-vcd/pull/532)
+* Added directory `.changes` and script `./scripts/make-changelog.sh` to handle CHANGELOG entries [#534](https://github.com/vmware/terraform-provider-vcd/pull/534)
+* `resource/vcd_vapp_vm` allows toggle network connection with `network.connected` [#535](https://github.com/vmware/terraform-provider-vcd/pull/535)
+* `resource/vcd_vapp_vm` allows toggle memory and vCPU hot add with `cpu_hot_add_enabled` and `memory_hot_add_enabled` [#536](https://github.com/vmware/terraform-provider-vcd/pull/536)
+* `resource/vcd_vapp_vm` allows change `network` parameters without VM power off [#536](https://github.com/vmware/terraform-provider-vcd/pull/536)
+* Repository has a new home! Moved from https://github.com/terraform-providers/terraform-provider-vcd to https://github.com/vmware/terraform-provider-vcd [#542](https://github.com/vmware/terraform-provider-vcd/pull/542)
+* Added support for NSX-T Org VDC [#550](https://github.com/vmware/terraform-provider-vcd/pull/550)
+* `resource/vcd_org_vdc` new fields for assigning VM sizing policies `vm_sizing_policy_ids` and `default_vm_sizing_policy_id` [#553](https://github.com/vmware/terraform-provider-vcd/pull/553)
+* `resource/vcd_vapp_vm` new field `sizing_policy_id` uses VM sizing policy [#553](https://github.com/vmware/terraform-provider-vcd/pull/553)
+
+BUG FIXES
+
+* `resource/vcd_vapp_vm` removed default value for `cpus` and `cpu_cores` [#553](https://github.com/vmware/terraform-provider-vcd/pull/553)
+* `resource/vcd_vapp_vm` fix ignoring `is_primary=false` [#556](https://github.com/vmware/terraform-provider-vcd/pull/556)
+* Fixed `vcd_independent_disk.size` issue, new field `size_in_mb` replaces the `size` [#588](https://github.com/vmware/terraform-provider-vcd/pull/588)
+
+NOTES
+
+* Added conditional skips for some checks in test `TestAccVcdVAppVmDhcpWait`
+* Dropped support for VCD 9.5 [#544](https://github.com/vmware/terraform-provider-vcd/pull/544)
+* Added support for VCD 10.2 [#544](https://github.com/vmware/terraform-provider-vcd/pull/544)
+* `resource/vcd_nsxv_firewall_rule` `virtual_machine_ids` renamed to `vm_ids` [#558](https://github.com/vmware/terraform-provider-vcd/pull/558)
+* `resource/vcd_vm_affinity_rule` `virtual_machine_ids` renamed to `vm_ids` [#558](https://github.com/vmware/terraform-provider-vcd/pull/558)
+* Provider will send HTTP User-Agent while performing API calls [#566](https://github.com/vmware/terraform-provider-vcd/pull/566)
+
+REMOVALS
+
+* Removed deprecated resource `vcd_network` [#543](https://github.com/vmware/terraform-provider-vcd/pull/543)
+* Removed deprecated resources `vcd_dnat`, `vcd_snat`, and `vcd_firewall_rules` [#557](https://github.com/vmware/terraform-provider-vcd/pull/557)
+* Removed deprecated attributes `ip, network_name, vapp_network_name, network_href, mac, initscript` from `vcd_vapp_vm` [#563](https://github.com/vmware/terraform-provider-vcd/pull/563)
+* Removed deprecated attributes `external_networks, default_gateway_network, advaced` from `vcd_edgegateway` [#588](https://github.com/vmware/terraform-provider-vcd/pull/588)
+* Removed `vcd_independent_disk.size` in favor of `vcd_independent_disk.size_in_mb` [#588](https://github.com/vmware/terraform-provider-vcd/pull/588)
+* Removed deprecated attributes `template_name, catalog_name, network_name, memory, cpus, ip, storage_profile, initscript, ovf, accept_all_eulas` from `vcd_vapp` [#588](https://github.com/vmware/terraform-provider-vcd/pull/588)
 
 ## 2.9.0 (June 30, 2020)
 FEATURES:
