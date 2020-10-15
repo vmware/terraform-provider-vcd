@@ -42,13 +42,13 @@ NOTES
 
 REMOVALS
 
+* Fixed `vcd_independent_disk.size` issue, new field `size_in_mb` replaces the `size` [#588](https://github.com/vmware/terraform-provider-vcd/pull/588)
 * Removed deprecated resource `vcd_network` [#543](https://github.com/vmware/terraform-provider-vcd/pull/543)
 * Removed deprecated resources `vcd_dnat`, `vcd_snat`, and `vcd_firewall_rules` [#557](https://github.com/vmware/terraform-provider-vcd/pull/557)
 * Removed deprecated attributes `ip, network_name, vapp_network_name, network_href, mac, initscript` from `vcd_vapp_vm` [#563](https://github.com/vmware/terraform-provider-vcd/pull/563)
 * Removed deprecated attributes `external_networks, default_gateway_network, advaced` from `vcd_edgegateway` [#588](https://github.com/vmware/terraform-provider-vcd/pull/588)
 * Removed `vcd_independent_disk.size` in favor of `vcd_independent_disk.size_in_mb` [#588](https://github.com/vmware/terraform-provider-vcd/pull/588)
 * Removed deprecated attributes `template_name, catalog_name, network_name, memory, cpus, ip, storage_profile, initscript, ovf, accept_all_eulas` from `vcd_vapp` [#588](https://github.com/vmware/terraform-provider-vcd/pull/588)
-* Fixed `vcd_independent_disk.size` issue, new field `size_in_mb` replaces the `size` [#588](https://github.com/vmware/terraform-provider-vcd/pull/588)
 
 ## 2.9.0 (June 30, 2020)
 FEATURES:
