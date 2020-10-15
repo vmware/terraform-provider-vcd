@@ -40,9 +40,10 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 		case dataSourceName == "vcd_external_network_v2" && vcdClient.Client.APIVCDMaxVersionIs("< 33") &&
 			!usingSysAdmin():
 			t.Skip("External network V2 requires at least API version 33 (VCD 10.0+)")
-		case (dataSourceName == "vcd_nsxt_tier0_router" || dataSourceName == "vcd_external_network_v2" || dataSourceName == "vcd_nsxt_manager") &&
-			(testConfig.Nsxt.Manager == "" || testConfig.Nsxt.Tier0router == "") || !usingSysAdmin():
-			t.Skip(`No NSX-T configuration detected`)
+		case (dataSourceName == "vcd_nsxt_tier0_router" || dataSourceName == "vcd_external_network_v2" ||
+			dataSourceName == "vcd_nsxt_manager" || dataSourceName == "vcd_portgroup" || dataSourceName == "vcd_vcenter") &&
+			(testConfig.Nsxt.Manager == "" || testConfig.Nsxt.Tier0router == "" || !usingSysAdmin()):
+			t.Skip(`No NSX-T configuration detected or is not admin`)
 		}
 
 		// Get list of mandatory fields in schema for a particular data source
