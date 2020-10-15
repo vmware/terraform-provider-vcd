@@ -1,4 +1,4 @@
-## 3.0.0 (October 15, 2020)
+## 3.0.0 (October 16, 2020)
 
 FEATURES
 
