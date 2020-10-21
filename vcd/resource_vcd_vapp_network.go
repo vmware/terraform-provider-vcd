@@ -6,8 +6,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -91,18 +90,6 @@ func resourceVcdVappNetwork() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "org network name to which vapp network is connected",
-			},
-			"firewall_enabled": {
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Description: "firewall service enabled or disabled. Default is true",
-				Removed:     "Was incorrectly added and would collide with the depending resource. Now moved to vcd_vapp_firewall_rules.enabled",
-			},
-			"nat_enabled": {
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Description: "NAT service enabled or disabled. Default is true",
-				Removed:     "Was incorrectly added and would collide with the depending resource. Now moved to vcd_vapp_nat_rules.enabled",
 			},
 			"retain_ip_mac_enabled": {
 				Type:        schema.TypeBool,
@@ -528,7 +515,7 @@ func resourceVcdDhcpPoolHash(v interface{}) int {
 	if m["end_address"] != nil {
 		buf.WriteString(fmt.Sprintf("%s-", strings.ToLower(m["end_address"].(string))))
 	}
-	return hashcode.String(buf.String())
+	return hashcodeString(buf.String())
 }
 
 // Allows to identify if vApp Org network and not vApp network

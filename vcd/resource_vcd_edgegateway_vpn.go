@@ -5,7 +5,7 @@ import (
 	"log"
 	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
@@ -302,8 +302,9 @@ func resourceVcdEdgeGatewayVpnRead(d *schema.ResourceData, meta interface{}) err
 		_ = d.Set("mtu", tunnel.Mtu)
 		_ = d.Set("peer_ip_address", tunnel.PeerIPAddress)
 		_ = d.Set("peer_id", tunnel.PeerID)
-		convertAndSet("local_subnets", tunnel.LocalSubnet, d)
-		convertAndSet("peer_subnets", tunnel.PeerSubnet, d)
+		// TODO:(SDK2) fix the assignment
+		//convertAndSet("local_subnets", tunnel.LocalSubnet, d)
+		//convertAndSet("peer_subnets", tunnel.PeerSubnet, d)
 	} else {
 		return fmt.Errorf("multiple tunnels not currently supported")
 	}
@@ -313,6 +314,7 @@ func resourceVcdEdgeGatewayVpnRead(d *schema.ResourceData, meta interface{}) err
 
 func convertAndSet(key string, subNets []*types.IpsecVpnSubnet, d *schema.ResourceData) {
 	for i, subNet := range subNets {
+		// TODO: (SDK2) fix assignment. It panics with SDK 2.0
 		_ = d.Set(key+"_name_"+strconv.Itoa(i), subNet.Name)
 		_ = d.Set(key+"_getWay_"+strconv.Itoa(i), subNet.Gateway)
 		_ = d.Set(key+"_netMask_"+strconv.Itoa(i), subNet.Netmask)

@@ -1,8 +1,8 @@
 package vcd
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func datasourceVcdVAppVm() *schema.Resource {
@@ -215,8 +215,6 @@ func datasourceVcdVAppVm() *schema.Resource {
 
 			"customization": &schema.Schema{
 				Computed:    true,
-				MinItems:    1,
-				MaxItems:    1,
 				Type:        schema.TypeList,
 				Description: "Guest customization block",
 				Elem: &schema.Resource{

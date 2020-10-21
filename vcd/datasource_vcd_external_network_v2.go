@@ -6,7 +6,7 @@ import (
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func datasourceVcdExternalNetworkV2() *schema.Resource {
@@ -16,7 +16,6 @@ func datasourceVcdExternalNetworkV2() *schema.Resource {
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
@@ -50,8 +49,6 @@ func datasourceVcdExternalNetworkV2() *schema.Resource {
 			"nsxt_network": &schema.Schema{
 				Type:        schema.TypeSet,
 				Computed:    true,
-				MaxItems:    1,
-				ForceNew:    true,
 				Description: "",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{

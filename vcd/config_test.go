@@ -24,9 +24,9 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
@@ -635,8 +635,8 @@ func TestMain(m *testing.M) {
 
 		fmt.Printf("as user %s@%s (using %s)\n", testConfig.Provider.User, testConfig.Provider.SysOrg, authentication)
 		// Provider initialization moved here from provider_test.init
-		testAccProvider = Provider().(*schema.Provider)
-		testAccProviders = map[string]terraform.ResourceProvider{
+		testAccProvider = Provider()
+		testAccProviders = map[string]*schema.Provider{
 			"vcd": testAccProvider,
 		}
 

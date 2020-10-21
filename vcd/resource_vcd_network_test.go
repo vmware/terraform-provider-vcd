@@ -7,9 +7,9 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
@@ -729,6 +729,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 	}
 
 	steps = append(steps, resource.TestStep{
+		Config: updateConfigText,
 		ResourceName:      def.resourceName + "." + networkName + "-import",
 		ImportState:       true,
 		ImportStateVerify: true,
