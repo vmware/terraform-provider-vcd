@@ -10,9 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -1364,16 +1363,13 @@ func genericVcdVAppVmRead(d *schema.ResourceData, meta interface{}, origin strin
 		return fmt.Errorf("error storing customzation block: %s", err)
 	}
 
-	if vm.VM.VmSpecSection != nil && vm.VM.VmSpecSection.HardwareVersion != nil {
-		_ = d.Set("hardware_version", vm.VM.VmSpecSection.HardwareVersion.Value)
-	}
-	if vm.VM.VmSpecSection != nil {
-		_ = d.Set("os_type", vm.VM.VmSpecSection.OsType)
-	}
+	// TODO: investigate why setting these properties triggers a panic
+	//_ = d.Set("hardware_version", vm.VM.VmSpecSection.HardwareVersion.Value)
+	//_ = d.Set("os_type", vm.VM.VmSpecSection.OsType)
 
-	if vm.VM.ComputePolicy != nil && vm.VM.ComputePolicy.VmSizingPolicy != nil {
-		_ = d.Set("sizing_policy_id", vm.VM.ComputePolicy.VmSizingPolicy.ID)
-	}
+	//if vm.VM.ComputePolicy != nil && vm.VM.ComputePolicy.VmSizingPolicy != nil {
+	//	_ = d.Set("sizing_policy_id", vm.VM.ComputePolicy.VmSizingPolicy.ID)
+	//}
 
 	log.Printf("[DEBUG] [VM read] finished with origin %s", origin)
 	return nil
