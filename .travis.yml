@@ -19,5 +19,4 @@ matrix:
         - make test
         - make vet
         # - make static # temporarily suppressed
-        - make website-test
         - make tidy-check
