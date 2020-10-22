@@ -82,9 +82,10 @@ type TestConfig struct {
 		Org         string `json:"org"`
 		Vdc         string `json:"vdc"`
 		ProviderVdc struct {
-			Name           string `json:"name"`
-			NetworkPool    string `json:"networkPool"`
-			StorageProfile string `json:"storageProfile"`
+			Name            string `json:"name"`
+			NetworkPool     string `json:"networkPool"`
+			StorageProfile1 string `json:"storageProfile1"`
+			StorageProfile2 string `json:"storageProfile2"`
 		} `json:"providerVdc"`
 		NsxtProviderVdc struct {
 			Name           string `json:"name"`

@@ -39,7 +39,7 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 		"Allocated":                 "10240",
 		"Reserved":                  "0",
 		"Limit":                     "10240",
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile1,
 		"FuncName":                  t.Name(),
 		"MemoryGuaranteed":          "0.5",
 		"CpuGuaranteed":             "0.6",

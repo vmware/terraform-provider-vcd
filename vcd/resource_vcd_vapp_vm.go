@@ -812,6 +812,24 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	if d.HasChange("storage_profile") {
+		var storageProfile types.Reference
+		storageProfilePtr := &storageProfile
+		storageProfileName := d.Get("storage_profile").(string)
+		if storageProfileName != "" {
+			storageProfile, err = vdc.FindStorageProfileReference(storageProfileName)
+			if err != nil {
+				return fmt.Errorf("[vm creation] error retrieving storage profile %s : %s", storageProfileName, err)
+			}
+		} else {
+			storageProfilePtr = nil
+		}
+		_, err := vm.UpdateStorageProfile(storageProfilePtr)
+		if err != nil {
+			return fmt.Errorf("error updating sizing policy %s: %s", storageProfileName, err)
+		}
+	}
+
 	return nil
 }
 

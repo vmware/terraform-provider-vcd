@@ -1790,3 +1790,46 @@ func (client *Client) GetVMByHref(vmHref string) (*VM, error) {
 
 	return vmFunctions.GetVMByHref(client, vmHref)
 }
+
+// UpdateStorageProfile updates VM storage profile and returns refreshed VM or error.
+func (vm *VM) UpdateStorageProfile(storageProfileRef *types.Reference) (*VM, error) {
+	task, err := vm.UpdateStorageProfileAsync(storageProfileRef)
+	if err != nil {
+		return nil, err
+	}
+
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		return nil, err
+	}
+
+	err = vm.Refresh()
+	if err != nil {
+		return nil, err
+	}
+
+	return vm, nil
+}
+
+// UpdateStorageProfileAsync updates VM storage profile and returns Task and error.
+func (vm *VM) UpdateStorageProfileAsync(storageProfileRef *types.Reference) (Task, error) {
+	if vm.VM.HREF == "" {
+		return Task{}, fmt.Errorf("cannot update VM storage profile, VM HREF is unset")
+	}
+
+	// `reconfigureVm` updates Vm name, Description, and any or all of the following sections.
+	//    VirtualHardwareSection
+	//    OperatingSystemSection
+	//    NetworkConnectionSection
+	//    GuestCustomizationSection
+	// Sections not included in the request body will not be updated.
+	return vm.client.ExecuteTaskRequest(vm.VM.HREF+"/action/reconfigureVm", http.MethodPost,
+		types.MimeVM, "error updating VM spec section: %s", &types.VM{
+			XMLName:        xml.Name{},
+			Xmlns:          types.XMLNamespaceVCloud,
+			Ovf:            types.XMLNamespaceOVF,
+			Name:           vm.VM.Name,
+			Description:    vm.VM.Description,
+			StorageProfile: &types.Reference{HREF: storageProfileRef.HREF},
+		})
+}
