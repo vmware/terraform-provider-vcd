@@ -59,6 +59,10 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 		t.Skip("unable to validate vCD version - skipping test")
 	}
 
+	if !vcdClient.Client.IsSysAdmin {
+		t.Skip("Test can only run as System admin")
+	}
+
 	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
 		t.Skip("TestAccVcdOrgVdcWithVmSizingPolicy requires VCD 10.0+")
 	}
