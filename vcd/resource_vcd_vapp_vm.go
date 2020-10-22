@@ -1,5 +1,6 @@
 package vcd
 
+//lint:file-ignore SA1019 ignore deprecated functions
 import (
 	"bytes"
 	"fmt"
@@ -1363,13 +1364,16 @@ func genericVcdVAppVmRead(d *schema.ResourceData, meta interface{}, origin strin
 		return fmt.Errorf("error storing customzation block: %s", err)
 	}
 
-	// TODO: investigate why setting these properties triggers a panic
-	//_ = d.Set("hardware_version", vm.VM.VmSpecSection.HardwareVersion.Value)
-	//_ = d.Set("os_type", vm.VM.VmSpecSection.OsType)
+	if vm.VM.VmSpecSection != nil && vm.VM.VmSpecSection.HardwareVersion != nil && vm.VM.VmSpecSection.HardwareVersion.Value != "" {
+		_ = d.Set("hardware_version", vm.VM.VmSpecSection.HardwareVersion.Value)
+	}
+	if vm.VM.VmSpecSection != nil && vm.VM.VmSpecSection.OsType != "" {
+		_ = d.Set("os_type", vm.VM.VmSpecSection.OsType)
+	}
 
-	//if vm.VM.ComputePolicy != nil && vm.VM.ComputePolicy.VmSizingPolicy != nil {
-	//	_ = d.Set("sizing_policy_id", vm.VM.ComputePolicy.VmSizingPolicy.ID)
-	//}
+	if vm.VM.ComputePolicy != nil && vm.VM.ComputePolicy.VmSizingPolicy != nil {
+		_ = d.Set("sizing_policy_id", vm.VM.ComputePolicy.VmSizingPolicy.ID)
+	}
 
 	log.Printf("[DEBUG] [VM read] finished with origin %s", origin)
 	return nil
