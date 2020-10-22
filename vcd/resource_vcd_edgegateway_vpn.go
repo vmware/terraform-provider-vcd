@@ -1,9 +1,10 @@
 package vcd
 
+//lint:file-ignore SA1019 ignore deprecated functions
+
 import (
 	"fmt"
 	"log"
-	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
@@ -302,9 +303,14 @@ func resourceVcdEdgeGatewayVpnRead(d *schema.ResourceData, meta interface{}) err
 		_ = d.Set("mtu", tunnel.Mtu)
 		_ = d.Set("peer_ip_address", tunnel.PeerIPAddress)
 		_ = d.Set("peer_id", tunnel.PeerID)
-		// TODO:(SDK2) fix the assignment
-		//convertAndSet("local_subnets", tunnel.LocalSubnet, d)
-		//convertAndSet("peer_subnets", tunnel.PeerSubnet, d)
+		err := convertAndSet("local_subnets", "local", tunnel.LocalSubnet, d)
+		if err != nil {
+			return fmt.Errorf("error setting 'local_subnets': %s", err)
+		}
+		err = convertAndSet("peer_subnets", "peer", tunnel.PeerSubnet, d)
+		if err != nil {
+			return fmt.Errorf("error setting 'peer_subnets': %s", err)
+		}
 	} else {
 		return fmt.Errorf("multiple tunnels not currently supported")
 	}
@@ -312,11 +318,16 @@ func resourceVcdEdgeGatewayVpnRead(d *schema.ResourceData, meta interface{}) err
 	return nil
 }
 
-func convertAndSet(key string, subNets []*types.IpsecVpnSubnet, d *schema.ResourceData) {
-	for i, subNet := range subNets {
-		// TODO: (SDK2) fix assignment. It panics with SDK 2.0
-		_ = d.Set(key+"_name_"+strconv.Itoa(i), subNet.Name)
-		_ = d.Set(key+"_getWay_"+strconv.Itoa(i), subNet.Gateway)
-		_ = d.Set(key+"_netMask_"+strconv.Itoa(i), subNet.Netmask)
+func convertAndSet(key, prefix string, subNets []*types.IpsecVpnSubnet, d *schema.ResourceData) error {
+	var items []map[string]interface{}
+
+	for _, subNet := range subNets {
+		item := map[string]interface{}{
+			prefix + "_subnet_name":    subNet.Name,
+			prefix + "_subnet_gateway": subNet.Gateway,
+			prefix + "_subnet_mask":    subNet.Netmask,
+		}
+		items = append(items, item)
 	}
+	return d.Set(key, items)
 }
