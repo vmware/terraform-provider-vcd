@@ -150,7 +150,6 @@ func setSnatRuleData(d *schema.ResourceData, natRule *types.EdgeNatRule, edgeGat
 	_ = d.Set("enabled", natRule.Enabled)
 	_ = d.Set("logging_enabled", natRule.LoggingEnabled)
 	_ = d.Set("description", natRule.Description)
-	_ = d.Set("vnic", natRule.Vnic)
 	_ = d.Set("original_address", natRule.OriginalAddress)
 	_ = d.Set("translated_address", natRule.TranslatedAddress)
 	_ = d.Set("rule_type", natRule.RuleType)

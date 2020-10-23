@@ -289,7 +289,7 @@ func setLBAppProfileData(d *schema.ResourceData, LBProfile *types.LbAppProfile) 
 		d.Set("persistence_mechanism", "")
 		d.Set("cookie_name", "")
 		d.Set("cookie_mode", "")
-		d.Set("expiration", "")
+		d.Set("expiration", 0)
 	}
 
 	if LBProfile.HttpRedirect != nil {
