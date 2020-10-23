@@ -159,7 +159,7 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 			},
 			// Tests import by id
 			resource.TestStep{
-				ResourceName:            resource4 + "-import-id",
+				ResourceName:            resource4,
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateVmSizingPolicyByIdOrName(testConfig, resource4, true),
@@ -167,7 +167,7 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 			},
 			// Tests import by name
 			resource.TestStep{
-				ResourceName:            resource4 + "-import-name",
+				ResourceName:            resource4,
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateVmSizingPolicyByIdOrName(testConfig, resource4, false),

@@ -153,6 +153,7 @@ data "vcd_nsxv_ip_set" "test-ipset" {
 	vdc          = "{{.Vdc}}"
   
 	name         = vcd_nsxv_ip_set.test-ipset.name
+	depends_on   = [vcd_nsxv_ip_set.test-ipset]
 }
 `
 
@@ -171,6 +172,7 @@ data "vcd_nsxv_ip_set" "test-ipset" {
 	vdc          = "{{.Vdc}}"
   
 	name         = vcd_nsxv_ip_set.test-ipset.name
+	depends_on   = [vcd_nsxv_ip_set.test-ipset]
 }
 `
 
@@ -190,5 +192,6 @@ data "vcd_nsxv_ip_set" "test-ipset" {
 	vdc          = "{{.Vdc}}"
   
 	name         = vcd_nsxv_ip_set.test-ipset.name
+	depends_on   = [vcd_nsxv_ip_set.test-ipset]
 }
 `

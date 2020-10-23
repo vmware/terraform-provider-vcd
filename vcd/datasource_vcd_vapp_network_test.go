@@ -155,6 +155,7 @@ resource "vcd_vapp_network" "createdVappNetwork" {
 data "vcd_vapp_network" "network-ds" {
   name       =  vcd_vapp_network.createdVappNetwork.name
   vapp_name  = "{{.vappName}}"
+  depends_on =  [vcd_vapp_network.createdVappNetwork]
 }
 
 output "netmask" {

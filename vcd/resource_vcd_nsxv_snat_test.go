@@ -81,7 +81,7 @@ func TestAccVcdEdgeSnat(t *testing.T) {
 				),
 			},
 			resource.TestStep{ // Step 2 - resource import
-				ResourceName:      "vcd_nsxv_snat.imported",
+				ResourceName:      "vcd_nsxv_snat.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdByResourceName("vcd_nsxv_snat.test"),

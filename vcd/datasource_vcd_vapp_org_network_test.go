@@ -94,6 +94,7 @@ resource "vcd_vapp_org_network" "createVappOrgNetwork" {
 data "vcd_vapp_org_network" "network-ds" {
   vapp_name        = "{{.vappName}}"
   org_network_name = vcd_vapp_org_network.createVappOrgNetwork.org_network_name
+  depends_on 	   = [vcd_vapp_org_network.createVappOrgNetwork]
 }
 
 output "retain_ip_mac_enabled" {

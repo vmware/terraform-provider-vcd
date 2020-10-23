@@ -157,6 +157,7 @@ data "vcd_lb_virtual_server" "http" {
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
   name         = vcd_lb_virtual_server.http.name
+  depends_on   = [vcd_lb_virtual_server.http]
 }
 `
 
@@ -183,6 +184,7 @@ data "vcd_lb_virtual_server" "http" {
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
   name         = vcd_lb_virtual_server.http.name
+  depends_on   = [vcd_lb_virtual_server.http]
 }
 `
 

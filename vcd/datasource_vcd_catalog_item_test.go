@@ -64,7 +64,7 @@ func TestAccVcdCatalogAndItemDatasource(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				ResourceName:      "vcd_catalog_item." + TestCatalogItemDS + "-import",
+				ResourceName:      "vcd_catalog_item." + TestCatalogItemDS,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgCatalogObject(testConfig, TestCatalogItemDS),

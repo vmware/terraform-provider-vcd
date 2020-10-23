@@ -11,6 +11,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
+//lint:file-ignore SA1019 ignore deprecated functions
 func resourceVcdVmAffinityRule() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceVcdVmAffinityRuleCreate,

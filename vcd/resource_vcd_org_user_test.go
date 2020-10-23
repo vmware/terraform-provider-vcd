@@ -237,7 +237,7 @@ func TestAccVcdOrgUserFull(t *testing.T) {
 						),
 					},
 					resource.TestStep{
-						ResourceName:      resourceName + "-import",
+						ResourceName:      resourceName,
 						ImportState:       true,
 						ImportStateVerify: true,
 						ImportStateIdFunc: importStateIdOrgObject(testConfig, ud.name),

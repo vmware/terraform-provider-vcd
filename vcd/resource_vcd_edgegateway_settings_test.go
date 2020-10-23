@@ -194,7 +194,7 @@ func TestAccVcdEdgeGatewaySettingsBasic(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				ResourceName:            "vcd_edgegateway_settings." + testConfig.Networking.EdgeGateway + "-import",
+				ResourceName:            "vcd_edgegateway_settings." + testName,
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdOrgVdcObject(testConfig, testConfig.Networking.EdgeGateway),

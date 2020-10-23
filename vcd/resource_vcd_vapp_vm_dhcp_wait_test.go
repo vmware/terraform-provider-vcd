@@ -179,8 +179,9 @@ data "vcd_vapp_vm" "ds" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
-  vapp_name     = vcd_vapp.{{.VAppName}}.name
-  name          = vcd_vapp_vm.{{.VMName}}.name
+  vapp_name                 = vcd_vapp.{{.VAppName}}.name
+  name                      = vcd_vapp_vm.{{.VMName}}.name
   network_dhcp_wait_seconds = {{.DhcpWaitSeconds}}
+  depends_on                = [vcd_vapp_vm.{{.VMName}}]
 }
 `

@@ -45,7 +45,7 @@ func TestAccVcdCatalogBasic(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				ResourceName:      "vcd_catalog." + TestAccVcdCatalog + "-import",
+				ResourceName:      "vcd_catalog." + TestAccVcdCatalog,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgObject(testConfig, TestAccVcdCatalog),

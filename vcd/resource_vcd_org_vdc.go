@@ -1,5 +1,6 @@
 package vcd
 
+//lint:file-ignore SA1019 ignore deprecated functions
 import (
 	"errors"
 	"fmt"

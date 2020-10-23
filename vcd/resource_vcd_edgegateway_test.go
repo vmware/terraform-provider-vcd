@@ -64,7 +64,7 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				ResourceName:            "vcd_edgegateway." + edgeGatewayNameBasic + "-import",
+				ResourceName:            "vcd_edgegateway." + edgeGatewayNameBasic,
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdOrgVdcObject(testConfig, edgeGatewayVcdName),
@@ -117,7 +117,7 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				ResourceName:            "vcd_edgegateway." + edgeGatewayNameBasic + "-import",
+				ResourceName:            "vcd_edgegateway." + edgeGatewayNameBasic,
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdOrgVdcObject(testConfig, edgeGatewayVcdName),
@@ -647,6 +647,7 @@ data "vcd_edgegateway" "egw" {
   vdc = "{{.Vdc}}"
 	
   name = vcd_edgegateway.egw.name
+  depends_on = [vcd_edgegateway.egw]
 }
 
 # Use data source of existing external network to get needed gateway and netmask

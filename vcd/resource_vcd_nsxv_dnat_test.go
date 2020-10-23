@@ -137,7 +137,7 @@ func TestAccVcdEdgeDnat(t *testing.T) {
 				),
 			},
 			resource.TestStep{ // Step 4 - resource import
-				ResourceName:      "vcd_nsxv_dnat.imported",
+				ResourceName:      "vcd_nsxv_dnat.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdByResourceName("vcd_nsxv_dnat.test"),

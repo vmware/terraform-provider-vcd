@@ -167,7 +167,7 @@ func TestAccVcdOrgGroup(t *testing.T) {
 			},
 
 			resource.TestStep{
-				ResourceName:      "vcd_org_group.group-import",
+				ResourceName:      "vcd_org_group.group1",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgObject(testConfig, "ship_crew"),

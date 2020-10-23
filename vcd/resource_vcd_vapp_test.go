@@ -72,7 +72,7 @@ func TestAccVcdVApp_Basic(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				ResourceName:      "vcd_vapp." + vappName + "-import",
+				ResourceName:      "vcd_vapp." + vappName,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, vappName),

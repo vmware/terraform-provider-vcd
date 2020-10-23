@@ -65,14 +65,14 @@ func TestAccVcdVappStaticRouting(t *testing.T) {
 			},
 			// we can reuse importStateVappFirewallRuleObject as import is the same
 			resource.TestStep{ // Step 1 - resource import
-				ResourceName:            "vcd_vapp_static_routing.imported",
+				ResourceName:            "vcd_vapp_static_routing." + t.Name(),
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateVappFirewallRuleObject(testConfig, vappName, vappNetworkName),
 				ImportStateVerifyIgnore: []string{"network_id", "org", "vdc"},
 			},
 			resource.TestStep{ // Step 2 - resource import by ID
-				ResourceName:            "vcd_vapp_static_routing.imported2",
+				ResourceName:            "vcd_vapp_static_routing." + t.Name(),
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateVappFirewallRuleById(testConfig, resourceName),

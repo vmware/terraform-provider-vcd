@@ -64,7 +64,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				ResourceName:            "vcd_independent_disk." + resourceName + "-import",
+				ResourceName:            "vcd_independent_disk." + resourceName,
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdByDisk("vcd_independent_disk." + resourceName),

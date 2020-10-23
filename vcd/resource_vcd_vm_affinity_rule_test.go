@@ -290,7 +290,7 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 			// Tests import by name
 			resource.TestStep{
 				Config:            updateText,
-				ResourceName:      "vcd_vm_affinity_rule." + data.name + "-import-name",
+				ResourceName:      "vcd_vm_affinity_rule." + data.name,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, data.name+"-update"),
@@ -298,7 +298,7 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 			// Tests import by ID
 			resource.TestStep{
 				Config:            updateText,
-				ResourceName:      "vcd_vm_affinity_rule." + data.name + "-import-id",
+				ResourceName:      "vcd_vm_affinity_rule." + data.name,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdViaResource("vcd_vm_affinity_rule." + data.name),
@@ -571,10 +571,12 @@ const testAccVmAffinityRuleDataSource = `
 {{.SkipNotice}}
 data "vcd_vm_affinity_rule" "ds_affinity_rule_by_name" {
 	name = vcd_vm_affinity_rule.{{.AffinityRuleIdentifier}}.name
+	depends_on = [vcd_vm_affinity_rule.{{.AffinityRuleIdentifier}}]
 }
 
 data "vcd_vm_affinity_rule" "ds_affinity_rule_by_id" {
 	rule_id = vcd_vm_affinity_rule.{{.AffinityRuleIdentifier}}.id
+	depends_on = [vcd_vm_affinity_rule.{{.AffinityRuleIdentifier}}]
 }
 
 output "polarity_of_rule_by_name" {

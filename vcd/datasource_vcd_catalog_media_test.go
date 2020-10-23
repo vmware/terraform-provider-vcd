@@ -98,9 +98,10 @@ resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
 }
 
 data "vcd_catalog_media" "{{.NewCatalogMedia}}" {
-  org     = "{{.Org}}"
-  catalog = "{{.Catalog}}"
-  name    = vcd_catalog_media.{{.CatalogMediaName}}.name
+  org        = "{{.Org}}"
+  catalog    = "{{.Catalog}}"
+  name       = vcd_catalog_media.{{.CatalogMediaName}}.name
+  depends_on = [vcd_catalog_media.{{.CatalogMediaName}}]
 }
 
 output "size" {

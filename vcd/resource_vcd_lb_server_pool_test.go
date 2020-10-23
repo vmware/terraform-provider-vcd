@@ -292,6 +292,7 @@ resource "vcd_lb_server_pool" "server-pool" {
 	vdc          = "{{.Vdc}}"
 	edge_gateway = "{{.EdgeGateway}}"
 	name         = vcd_lb_server_pool.server-pool.name
+	depends_on   = [vcd_lb_server_pool.server-pool]
   }  
 `
 
@@ -369,5 +370,6 @@ resource "vcd_lb_service_monitor" "test-monitor" {
 	vdc          = "{{.Vdc}}"
 	edge_gateway = "{{.EdgeGateway}}"
 	name         = vcd_lb_server_pool.server-pool.name
+	depends_on   = [vcd_lb_server_pool.server-pool]
   }  
 `

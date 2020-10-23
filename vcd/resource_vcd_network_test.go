@@ -730,7 +730,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 
 	steps = append(steps, resource.TestStep{
 		Config:            updateConfigText,
-		ResourceName:      def.resourceName + "." + networkName + "-import",
+		ResourceName:      def.resourceName + "." + networkName,
 		ImportState:       true,
 		ImportStateVerify: true,
 		ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, updateDef.name),
