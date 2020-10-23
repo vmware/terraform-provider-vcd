@@ -18,5 +18,5 @@ matrix:
       script:
         - make test
         - make vet
-        # - make static # temporarily suppressed
+        - make static
         - make tidy-check
