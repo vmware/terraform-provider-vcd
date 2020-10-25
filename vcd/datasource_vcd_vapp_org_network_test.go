@@ -52,7 +52,7 @@ func testCheckVappOrgNetworkNonStringOutputs(retainIpMacEnabled bool) resource.T
 	return func(s *terraform.State) error {
 		outputs := s.RootModule().Outputs
 
-		if outputs["retain_ip_mac_enabled"].Value != fmt.Sprintf("%v",retainIpMacEnabled) {
+		if outputs["retain_ip_mac_enabled"].Value != fmt.Sprintf("%v", retainIpMacEnabled) {
 			return fmt.Errorf("retain_ip_mac_enabled value didn't match")
 		}
 

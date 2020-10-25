@@ -151,7 +151,7 @@ func testCheckInternalDiskNonStringOutputs(internalDiskSize int) resource.TestCh
 	return func(s *terraform.State) error {
 		outputs := s.RootModule().Outputs
 
-		if outputs["internal_disk_size"].Value != fmt.Sprintf("%d",internalDiskSize) {
+		if outputs["internal_disk_size"].Value != fmt.Sprintf("%d", internalDiskSize) {
 			return fmt.Errorf("internal disk size value didn't match")
 		}
 
