@@ -89,11 +89,11 @@ func testCheckVappNetworkNonStringOutputs(guestVlanAllowed, retainIpMacEnabled b
 	return func(s *terraform.State) error {
 		outputs := s.RootModule().Outputs
 
-		if outputs["guestVlanAllowed"].Value != guestVlanAllowed {
+		if outputs["guestVlanAllowed"].Value != fmt.Sprintf("%v",guestVlanAllowed) {
 			return fmt.Errorf("guestVlanAllowed value didn't match")
 		}
 
-		if outputs["retain_ip_mac_enabled"].Value != retainIpMacEnabled {
+		if outputs["retain_ip_mac_enabled"].Value != fmt.Sprintf("%v",retainIpMacEnabled) {
 			return fmt.Errorf("retain_ip_mac_enabled value didn't match")
 		}
 

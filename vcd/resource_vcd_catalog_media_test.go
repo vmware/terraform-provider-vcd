@@ -77,7 +77,7 @@ func TestAccVcdCatalogMediaBasic(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				ResourceName:      "vcd_catalog_media." + TestAccVcdCatalogMedia + "-import",
+				ResourceName:      "vcd_catalog_media." + TestAccVcdCatalogMedia,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgCatalogObject(testConfig, TestAccVcdCatalogMedia),
@@ -92,16 +92,16 @@ func testCheckMediaNonStringOutputs() resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		outputs := s.RootModule().Outputs
 
-		if outputs["is_iso"].Value != true {
+		if outputs["is_iso"].Value != "true" {
 			return fmt.Errorf("is_iso value didn't match")
 		}
 
-		if outputs["is_published"].Value != false {
+		if outputs["is_published"].Value != "false" {
 			return fmt.Errorf("is_published value didn't match")
 		}
 
-		if regexp.MustCompile(`^\d+$`).MatchString(fmt.Sprintf("%s", outputs["size"].Value)) {
-			return fmt.Errorf("size value isn't int")
+		if !regexp.MustCompile(`^\d+$`).MatchString(fmt.Sprintf("%s", outputs["size"].Value)) {
+			return fmt.Errorf("size value isn't an integer")
 		}
 
 		return nil
