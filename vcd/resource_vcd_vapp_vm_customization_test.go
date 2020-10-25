@@ -334,6 +334,11 @@ func TestAccVcdVAppVmCreateCustomizationFalse(t *testing.T) {
 
 // TestAccVcdVAppVmCustomizationSettings tests out possible customization options
 func TestAccVcdVAppVmCustomizationSettings(t *testing.T) {
+	// TODO SDK2 - fix test. Currently fails with
+	//   resource_vcd_vapp_vm_customization_test.go:369: Step 2/3 error: Error running apply:
+	//   Error: errors updating guest customization: error applying guest customization details:
+	//   unable to set guest customization section: error setting product section:
+	//   API Error: 400: 'AdminPassword' should either be reset or remain unchanged when disabled
 	var (
 		vapp        govcd.VApp
 		vm          govcd.VM
