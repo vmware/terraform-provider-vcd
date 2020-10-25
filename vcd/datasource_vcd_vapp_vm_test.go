@@ -77,5 +77,6 @@ data "vcd_vapp_vm" "vm-ds" {
   vapp_name        = vcd_vapp.web.name
   org              = "{{.Org}}"
   vdc              = "{{.VDC}}"
+  depends_on       = [vcd_vapp_vm.web1]
 }
 `

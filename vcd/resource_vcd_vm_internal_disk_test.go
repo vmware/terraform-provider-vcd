@@ -136,7 +136,7 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				ResourceName:      "vcd_vm_internal_disk." + diskResourceName + "-import",
+				ResourceName:      "vcd_vm_internal_disk." + diskResourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdVmObject(testConfig.VCD.Org, vdcName, vappName, vmName, "3000"),

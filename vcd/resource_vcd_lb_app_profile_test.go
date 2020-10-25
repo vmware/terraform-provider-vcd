@@ -178,7 +178,7 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				ResourceName:      "vcd_lb_app_profile.imported",
+				ResourceName:      "vcd_lb_app_profile.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdEdgeGatewayObject(testConfig, testConfig.Networking.EdgeGateway, params["AppProfileName"].(string)),
@@ -224,6 +224,7 @@ data "vcd_lb_app_profile" "test" {
 	vdc          = "{{.Vdc}}"
 	edge_gateway = "{{.EdgeGateway}}"
 	name         = vcd_lb_app_profile.test.name
+	depends_on   = [vcd_lb_app_profile.test]
 }
 `
 
@@ -246,6 +247,7 @@ data "vcd_lb_app_profile" "test" {
 	vdc          = "{{.Vdc}}"
 	edge_gateway = "{{.EdgeGateway}}"
 	name         = vcd_lb_app_profile.test.name
+	depends_on   = [vcd_lb_app_profile.test]
 }
 `
 
@@ -270,6 +272,7 @@ data "vcd_lb_app_profile" "test" {
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
   name         = vcd_lb_app_profile.test.name
+  depends_on   = [vcd_lb_app_profile.test]
 }  
 `
 
@@ -292,6 +295,7 @@ data "vcd_lb_app_profile" "test" {
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
   name         = vcd_lb_app_profile.test.name
+  depends_on   = [vcd_lb_app_profile.test]
 }
 `
 
@@ -316,5 +320,6 @@ data "vcd_lb_app_profile" "test" {
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
   name         = vcd_lb_app_profile.test.name
+  depends_on   = [vcd_lb_app_profile.test]
 }
 `

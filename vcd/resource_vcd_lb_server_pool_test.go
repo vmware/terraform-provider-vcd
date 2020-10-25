@@ -208,7 +208,7 @@ func TestAccVcdLbServerPool(t *testing.T) {
 			},
 			// Check that import works
 			resource.TestStep{
-				ResourceName:      "vcd_lb_server_pool.server-pool-import",
+				ResourceName:      "vcd_lb_server_pool.server-pool",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdEdgeGatewayObject(testConfig, testConfig.Networking.EdgeGateway, params["ServerPoolName"].(string)),

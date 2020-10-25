@@ -86,7 +86,7 @@ func TestAccVcdLbServiceMonitor(t *testing.T) {
 			},
 			// Check that import works
 			resource.TestStep{
-				ResourceName:      "vcd_lb_service_monitor.service-monitor-import",
+				ResourceName:      "vcd_lb_service_monitor.lb-service-monitor",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdEdgeGatewayObject(testConfig, testConfig.Networking.EdgeGateway, params["ServiceMonitorName"].(string)),
@@ -153,6 +153,7 @@ data "vcd_lb_service_monitor" "ds-lb-service-monitor" {
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
   name         = vcd_lb_service_monitor.lb-service-monitor.name
+  depends_on   = [vcd_lb_service_monitor.lb-service-monitor]
 }
 `
 

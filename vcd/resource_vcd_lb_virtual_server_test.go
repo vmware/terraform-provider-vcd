@@ -77,7 +77,7 @@ func TestAccVcdLbVirtualServer(t *testing.T) {
 
 			// Check that import works
 			resource.TestStep{ // step 1
-				ResourceName:      "vcd_lb_virtual_server.virtual-server-import",
+				ResourceName:      "vcd_lb_virtual_server.http",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdEdgeGatewayObject(testConfig, testConfig.Networking.EdgeGateway, t.Name()),

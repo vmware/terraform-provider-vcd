@@ -200,11 +200,12 @@ func TestAccVcdVappVm_NicIndex(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
+		// TODO SDK2 - fix test (missing configText)
 		// The step below imports an existing VM (created via go-vcloud-director SDK) with odd NIC
 		// indexing and uses ImportStateCheck function to check that NIC priority is correctly set
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				ResourceName:      "vcd_vapp_vm." + vmName + "-import",
+				ResourceName:      "vcd_vapp_vm." + vmName,
 				ImportState:       true,
 				ImportStateIdFunc: importStateIdVappObject(testConfig, t.Name()+"-vApp", t.Name()),
 				ImportStateCheck:  validateNicPriority,
