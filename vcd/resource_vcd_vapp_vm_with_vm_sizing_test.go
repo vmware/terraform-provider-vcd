@@ -4,10 +4,10 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
@@ -59,6 +59,10 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 		t.Skip("unable to validate vCD version - skipping test")
 	}
 
+	err = ProviderAuthenticate(vcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg)
+	if err != nil {
+		t.Skip(fmt.Sprintf("authentication error: %s", err))
+	}
 	if !vcdClient.Client.IsSysAdmin {
 		t.Skip("Test can only run as System admin")
 	}
