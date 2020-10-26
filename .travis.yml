@@ -19,7 +19,7 @@ matrix:
         - make test
         - make vet
         - make static
-        - make website-test
+#        - make website-test
     - go: "1.15.x"
       env: GO111MODULE=on
       script:
@@ -27,4 +27,4 @@ matrix:
         - make vet
         - make static
         - make vendor-check
-        - make website-test
+#        - make website-test
