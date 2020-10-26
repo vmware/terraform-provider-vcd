@@ -44,9 +44,9 @@ func TestAccVcdLbServerPool(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		Providers:    testAccProviders,
-		PreCheck:     func() { testAccPreCheck(t) },
-		CheckDestroy: testAccCheckVcdLbServerPoolDestroy(params["ServerPoolName"].(string)),
+		ProviderFactories: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		CheckDestroy:      testAccCheckVcdLbServerPoolDestroy(params["ServerPoolName"].(string)),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,

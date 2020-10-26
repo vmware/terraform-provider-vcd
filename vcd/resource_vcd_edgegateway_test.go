@@ -53,9 +53,9 @@ func TestAccVcdEdgeGatewayBasic(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdEdgeGatewayDestroy(edgeGatewayNameBasic),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdEdgeGatewayDestroy(edgeGatewayNameBasic),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -106,9 +106,9 @@ func TestAccVcdEdgeGatewayComplex(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdEdgeGatewayDestroy(edgeGatewayNameBasic),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdEdgeGatewayDestroy(edgeGatewayNameBasic),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -194,9 +194,9 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdEdgeGatewayDestroy("edge-with-complex-networks"),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdEdgeGatewayDestroy("edge-with-complex-networks"),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -394,9 +394,9 @@ func TestAccVcdEdgeGatewayRateLimits(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdEdgeGatewayDestroy("edge-with-complex-networks"),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdEdgeGatewayDestroy("edge-with-complex-networks"),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -501,8 +501,8 @@ func TestAccVcdEdgeGatewayParallelCreation(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckVcdEdgeGatewayDestroy("parallel-0"),
 			testAccCheckVcdEdgeGatewayDestroy("parallel-1"),

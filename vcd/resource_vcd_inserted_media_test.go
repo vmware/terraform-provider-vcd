@@ -46,9 +46,9 @@ func TestAccVcdMediaInsertBasic(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccResourcesDestroyed,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccResourcesDestroyed,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,

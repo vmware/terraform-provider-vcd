@@ -38,9 +38,9 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 
 	resourceCatalogItem := "vcd_catalog_item." + TestAccVcdCatalogItem
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { preRunChecks(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckCatalogItemDestroy,
+		PreCheck:          func() { preRunChecks(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckCatalogItemDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,

@@ -56,9 +56,9 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdVAppVmDestroy(vappName2),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappName2),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -127,9 +127,9 @@ func TestAccVcdVAppVm_Clone(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdVAppVmDestroy(vappName2),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappName2),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -198,8 +198,8 @@ func TestAccVcdVappVm_NicIndex(t *testing.T) {
 	}()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		// TODO SDK2 - fix test (missing configText)
 		// The step below imports an existing VM (created via go-vcloud-director SDK) with odd NIC
 		// indexing and uses ImportStateCheck function to check that NIC priority is correctly set

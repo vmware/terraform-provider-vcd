@@ -108,8 +108,8 @@ func TestAccVcdOrgGroup(t *testing.T) {
 	groupIdRegex := regexp.MustCompile(`^urn:vcloud:group:`)
 
 	resource.Test(t, resource.TestCase{
-		Providers: testAccProviders,
-		PreCheck:  func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckVcdGroupDestroy("admin_staff"),
 			testAccCheckVcdGroupDestroy("ship_crew"),

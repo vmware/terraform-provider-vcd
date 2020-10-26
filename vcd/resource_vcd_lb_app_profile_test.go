@@ -57,9 +57,9 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		Providers:    testAccProviders,
-		PreCheck:     func() { testAccPreCheck(t) },
-		CheckDestroy: testAccCheckVcdLBAppProfileDestroy(params["AppProfileName"].(string)),
+		ProviderFactories: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		CheckDestroy:      testAccCheckVcdLBAppProfileDestroy(params["AppProfileName"].(string)),
 		Steps: []resource.TestStep{
 			resource.TestStep{ // TCP
 				Config: configText,

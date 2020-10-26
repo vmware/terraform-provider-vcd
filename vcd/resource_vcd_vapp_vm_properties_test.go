@@ -43,9 +43,9 @@ func TestAccVcdVAppVmProperties(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdVAppVmDestroy(vappName2),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappName2),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,

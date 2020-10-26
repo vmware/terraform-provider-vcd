@@ -67,9 +67,9 @@ func testAccVcdExternalNetworkV2Nsxt(t *testing.T, nsxtTier0Router string) {
 	}
 	resourceName := "vcd_external_network_v2.ext-net-nsxt"
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckExternalNetworkDestroyV2(t.Name()),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckExternalNetworkDestroyV2(t.Name()),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -286,9 +286,9 @@ func TestAccVcdExternalNetworkV2Nsxv(t *testing.T) {
 
 	resourceName := "vcd_external_network_v2.ext-net-nsxv"
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckExternalNetworkDestroyV2(t.Name()),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckExternalNetworkDestroyV2(t.Name()),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,

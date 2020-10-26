@@ -39,9 +39,9 @@ func TestAccVcdIpSet(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		Providers:    testAccProviders,
-		PreCheck:     func() { testAccPreCheck(t) },
-		CheckDestroy: testAccCheckVcdIpSetDestroy("vcd_nsxv_ip_set.test-ipset", params["IpSetName"].(string)),
+		ProviderFactories: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		CheckDestroy:      testAccCheckVcdIpSetDestroy("vcd_nsxv_ip_set.test-ipset", params["IpSetName"].(string)),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,

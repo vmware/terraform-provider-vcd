@@ -48,9 +48,9 @@ func TestAccVcdLbServiceMonitor(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		Providers:    testAccProviders,
-		PreCheck:     func() { testAccPreCheck(t) },
-		CheckDestroy: testAccCheckVcdLbServiceMonitorDestroy(params["ServiceMonitorName"].(string)),
+		ProviderFactories: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		CheckDestroy:      testAccCheckVcdLbServiceMonitorDestroy(params["ServiceMonitorName"].(string)),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,

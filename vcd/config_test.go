@@ -636,8 +636,10 @@ func TestMain(m *testing.M) {
 		fmt.Printf("as user %s@%s (using %s)\n", testConfig.Provider.User, testConfig.Provider.SysOrg, authentication)
 		// Provider initialization moved here from provider_test.init
 		testAccProvider = Provider()
-		testAccProviders = map[string]*schema.Provider{
-			"vcd": testAccProvider,
+		testAccProviders = map[string]func() (*schema.Provider, error){
+			"vcd": func() (*schema.Provider, error) {
+				return testAccProvider, nil
+			},
 		}
 
 		// forcing item cleanup before test run

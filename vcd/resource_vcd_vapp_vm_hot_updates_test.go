@@ -87,9 +87,9 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdVAppVmDestroy(hotVappName),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdVAppVmDestroy(hotVappName),
 		Steps: []resource.TestStep{
 			// Step 0 - create
 			resource.TestStep{

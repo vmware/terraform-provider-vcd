@@ -738,10 +738,10 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 
 	// Don't convert this test to parallel, as it will cause IP ranges conflicts
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: func(s *terraform.State) error { return testAccCheckVcdNetworkDestroy(s, def.resourceName, networkName) },
-		Steps:        steps,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      func(s *terraform.State) error { return testAccCheckVcdNetworkDestroy(s, def.resourceName, networkName) },
+		Steps:             steps,
 	})
 }
 

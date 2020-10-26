@@ -39,9 +39,9 @@ func TestAccVcdCatalogAndItemDatasource(t *testing.T) {
 	datasourceCatalogItem := "data.vcd_catalog_item." + testSuiteCatalogOVAItem
 	resourceCatalogItem := "vcd_catalog_item." + TestCatalogItemDS
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { preRunChecks(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: catalogItemDestroyed(testSuiteCatalogName, TestCatalogItemDS),
+		PreCheck:          func() { preRunChecks(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      catalogItemDestroyed(testSuiteCatalogName, TestCatalogItemDS),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,

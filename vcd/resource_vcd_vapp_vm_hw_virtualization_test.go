@@ -40,9 +40,9 @@ func TestAccVcdVAppVm_HardwareVirtualization(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextStep0)
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdVAppVmDestroy(vappNameHwVirt),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappNameHwVirt),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configTextStep0,

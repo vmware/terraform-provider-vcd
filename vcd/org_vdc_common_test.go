@@ -31,9 +31,9 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVdcDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVdcDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,

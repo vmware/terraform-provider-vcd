@@ -167,8 +167,8 @@ func TestAccVcdEdgeGatewaySettingsBasic(t *testing.T) {
 	// Note: this test can't run in parallel, as it updates the main edge gateway in the vCD
 	// and it could interfere with other tests
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		//CheckDestroy: func(s *terraform.State) error {return nil},
 		Steps: []resource.TestStep{
 			resource.TestStep{

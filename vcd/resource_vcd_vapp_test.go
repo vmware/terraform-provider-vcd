@@ -41,9 +41,9 @@ func TestAccVcdVApp_Basic(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION update: %s\n", configTextUpdate)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdVAppDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdVAppDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,

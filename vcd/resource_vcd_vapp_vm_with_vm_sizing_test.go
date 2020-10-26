@@ -83,9 +83,9 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdVAppVmDestroyByVdc(testAccVcdVdc, netVappName),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdVAppVmDestroyByVdc(testAccVcdVdc, netVappName),
 		Steps: []resource.TestStep{
 			// Step 0 - Create using sizing policy
 			resource.TestStep{

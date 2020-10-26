@@ -64,9 +64,9 @@ acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifoth
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		Providers:    testAccProviders,
-		PreCheck:     func() { testAccPreCheck(t) },
-		CheckDestroy: testAccCheckVcdLBAppRuleDestroy(params["AppRuleName"].(string)),
+		ProviderFactories: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		CheckDestroy:      testAccCheckVcdLBAppRuleDestroy(params["AppRuleName"].(string)),
 		Steps: []resource.TestStep{
 			resource.TestStep{ // Single Line Script
 				Config: configText,

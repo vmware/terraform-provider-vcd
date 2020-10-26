@@ -64,7 +64,7 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 		debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 		resource.Test(t, resource.TestCase{
-			Providers: testAccProviders,
+			ProviderFactories: testAccProviders,
 			Steps: []resource.TestStep{
 				resource.TestStep{
 					Config:      configText,

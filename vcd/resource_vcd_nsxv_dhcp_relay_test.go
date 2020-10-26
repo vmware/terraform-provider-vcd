@@ -38,9 +38,9 @@ func TestAccVcdNsxvDhcpRelay(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		Providers:    testAccProviders,
-		PreCheck:     func() { testAccPreCheck(t) },
-		CheckDestroy: testAccCheckVcdDhcpRelaySettingsEmpty(),
+		ProviderFactories: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		CheckDestroy:      testAccCheckVcdDhcpRelaySettingsEmpty(),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,

@@ -48,9 +48,9 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configTextForCompatibility)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testDiskResourcesDestroyed,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testDiskResourcesDestroyed,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configTextForCompatibility,

@@ -41,9 +41,9 @@ func TestAccVcdVpn_Basic(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdVpnDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdVpnDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,

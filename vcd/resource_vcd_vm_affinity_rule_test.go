@@ -247,9 +247,9 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 	var rule govcd.VmAffinityRule
 	resourceName := "vcd_vm_affinity_rule." + data.name
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVmAffinityRuleDestroy(&rule, testConfig.VCD.Org, testConfig.VCD.Vdc),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVmAffinityRuleDestroy(&rule, testConfig.VCD.Org, testConfig.VCD.Vdc),
 		Steps: []resource.TestStep{
 			// Test creation
 			resource.TestStep{

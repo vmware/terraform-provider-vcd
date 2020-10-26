@@ -13,8 +13,11 @@ func init() {
 	testingTags["api"] = "provider_test.go"
 }
 
-var testAccProviders map[string]*schema.Provider
+// testAccProvider is a global provider used in tests
 var testAccProvider *schema.Provider
+
+// testAccProviders used in field ProviderFactories required for test runs in SDK 2.x
+var testAccProviders map[string]func() (*schema.Provider, error)
 
 func TestProvider(t *testing.T) {
 	if err := Provider().InternalValidate(); err != nil {

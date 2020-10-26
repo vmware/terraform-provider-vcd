@@ -63,9 +63,9 @@ func TestAccVcdNsxvEdgeFirewallRule(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		Providers:    testAccProviders,
-		PreCheck:     func() { testAccPreCheck(t) },
-		CheckDestroy: testAccCheckVcdFirewallRuleDestroy("vcd_nsxv_firewall_rule.rule6"),
+		ProviderFactories: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		CheckDestroy:      testAccCheckVcdFirewallRuleDestroy("vcd_nsxv_firewall_rule.rule6"),
 		Steps: []resource.TestStep{
 			resource.TestStep{ // Step 0 - configuration only with ip_addresses
 				Config: configText,
@@ -869,9 +869,9 @@ func TestAccVcdNsxvEdgeFirewallRuleIpSets(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		Providers:    testAccProviders,
-		PreCheck:     func() { testAccPreCheck(t) },
-		CheckDestroy: testAccCheckVcdFirewallRuleDestroy("vcd_nsxv_firewall_rule.ip_sets"),
+		ProviderFactories: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		CheckDestroy:      testAccCheckVcdFirewallRuleDestroy("vcd_nsxv_firewall_rule.ip_sets"),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -1039,9 +1039,9 @@ func TestAccVcdNsxvEdgeFirewallRuleVms(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		Providers:    testAccProviders,
-		PreCheck:     func() { testAccPreCheck(t) },
-		CheckDestroy: testAccCheckVcdFirewallRuleDestroy("vcd_nsxv_firewall_rule.vms"),
+		ProviderFactories: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		CheckDestroy:      testAccCheckVcdFirewallRuleDestroy("vcd_nsxv_firewall_rule.vms"),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,

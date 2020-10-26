@@ -32,9 +32,9 @@ func TestAccVcdVAppRaw_Basic(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdVAppRawDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdVAppRawDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,

@@ -39,9 +39,9 @@ func TestAccVcdLbVirtualServer(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		Providers:    testAccProviders,
-		PreCheck:     func() { testAccPreCheck(t) },
-		CheckDestroy: testAccCheckVcdLbVirtualServerDestroy(params["VirtualServerName"].(string)),
+		ProviderFactories: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		CheckDestroy:      testAccCheckVcdLbVirtualServerDestroy(params["VirtualServerName"].(string)),
 		Steps: []resource.TestStep{
 			resource.TestStep{ // step 0
 				Config: configText,

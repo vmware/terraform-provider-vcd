@@ -42,9 +42,9 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { preRunChecks(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: catalogMediaDestroyed(testConfig.VCD.Catalog.Name, TestCatalogMediaDS),
+		PreCheck:          func() { preRunChecks(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      catalogMediaDestroyed(testConfig.VCD.Catalog.Name, TestCatalogMediaDS),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
