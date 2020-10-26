@@ -3,7 +3,6 @@ package vcd
 import (
 	"errors"
 	"fmt"
-	"github.com/vmware/go-vcloud-director/v2/util"
 	"log"
 	"strings"
 
@@ -586,6 +585,9 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 				return fmt.Errorf("error parsing VDC storage profile ID : %s", err)
 			}
 			vdcStorageProfileDetails, err := govcd.GetStorageProfileByHref(vcdClient.VCDClient, matchedStorageProfile.HREF)
+			if err != nil {
+				return fmt.Errorf("error getting VDC storage profile: %s", err)
+			}
 			_, err = changedAdminVdc.UpdateStorageProfile(uuid, &types.AdminVdcStorageProfile{
 				Name:         storageConfiguration["name"].(string),
 				IopsSettings: nil,
