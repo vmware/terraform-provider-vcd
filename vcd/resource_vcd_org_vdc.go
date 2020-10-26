@@ -3,6 +3,7 @@ package vcd
 import (
 	"errors"
 	"fmt"
+	"github.com/vmware/go-vcloud-director/v2/util"
 	"log"
 	"strings"
 
@@ -137,6 +138,11 @@ func resourceVcdOrgVdc() *schema.Resource {
 							Type:        schema.TypeBool,
 							Required:    true,
 							Description: "True if this is default storage profile for this VDC. The default storage profile is used when an object that can specify a storage profile is created with no storage profile specified.",
+						},
+						"storage_used_mb": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Storage used, in Megabytes",
 						},
 					},
 				},
@@ -462,6 +468,7 @@ func getComputeStorageProfiles(vcdClient *VCDClient, profile *types.VdcStoragePr
 		if vdcStorageProfileDetails.ProviderVdcStorageProfile != nil {
 			storageProfileData["name"] = vdcStorageProfileDetails.ProviderVdcStorageProfile.Name
 		}
+		storageProfileData["storage_used_mb"] = vdcStorageProfileDetails.StorageUsedMB
 		root = append(root, storageProfileData)
 	}
 
@@ -1039,7 +1046,7 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 		},
 	}
 
-	var vdcStorageProfiles []*types.VdcStorageProfile
+	var vdcStorageProfiles []*types.CreateVdcStorageProfile
 	for _, storageConfigurationValues := range vdcStorageProfilesConfigurations {
 		storageConfiguration := storageConfigurationValues.(map[string]interface{})
 
@@ -1048,7 +1055,7 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 			return &types.VdcConfiguration{}, err
 		}
 
-		vdcStorageProfile := &types.VdcStorageProfile{
+		vdcStorageProfile := &types.CreateVdcStorageProfile{
 			Units:   "MB", // only this value is supported
 			Limit:   int64(storageConfiguration["limit"].(int)),
 			Default: storageConfiguration["default"].(bool),

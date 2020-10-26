@@ -116,7 +116,9 @@ func validateResourceAndDataSource(t *testing.T, configText string, datasourceVd
 					resource.TestMatchResourceAttr(
 						"data."+datasourceVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
-						"data."+datasourceVdc, "compute_capacity.0.memory.0.used", regexp.MustCompile(`^\d+$`))),
+						"data."+datasourceVdc, "compute_capacity.0.memory.0.used", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchResourceAttr(
+						"data."+datasourceVdc, "storage_profile.0.storage_used_mb", regexp.MustCompile(`^\d+$`))),
 			},
 		},
 	})
@@ -147,7 +149,8 @@ func validateDataSource(t *testing.T, configText string, datasourceVdc string) {
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.allocated", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.limit", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.allocated", regexp.MustCompile(`^\d+$`)),
-					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d+$`))),
+					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchResourceAttr("data."+datasourceVdc, "storage_profile.0.storage_used_mb", regexp.MustCompile(`^\d+$`))),
 			},
 		},
 	})
