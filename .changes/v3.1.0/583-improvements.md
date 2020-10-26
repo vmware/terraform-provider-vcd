@@ -1,0 +1,1 @@
+* `resource/vcd_org_vdc` allows to update VDC storage profile details [GH-583]
