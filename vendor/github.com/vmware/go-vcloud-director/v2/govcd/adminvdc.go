@@ -400,3 +400,24 @@ func (vdc *AdminVdc) GetVappList() []*types.ResourceReference {
 	}
 	return list
 }
+
+// UpdateStorageProfile updates VDC storage profile and returns refreshed VDC or error.
+func (vdc *AdminVdc) UpdateStorageProfile(storageProfileId string, storageProfile *types.AdminVdcStorageProfile) (*types.AdminVdcStorageProfile, error) {
+	if vdc.client.VCDHREF.String() == "" {
+		return nil, fmt.Errorf("cannot update VDC storage profile, VCD HREF is unset")
+	}
+
+	queryUrl := vdc.client.VCDHREF
+	queryUrl.Path += "/admin/vdcStorageProfile/" + storageProfileId
+
+	storageProfile.Xmlns = types.XMLNamespaceVCloud
+	updateAdminVdcStorageProfile := &types.AdminVdcStorageProfile{}
+
+	_, err := vdc.client.ExecuteRequest(queryUrl.String(), http.MethodPut,
+		types.MimeStorageProfile, "error updating VDC storage profile: %s", storageProfile, updateAdminVdcStorageProfile)
+	if err != nil {
+		return nil, fmt.Errorf("cannot update VDC storage profil, error: %s", err)
+	}
+
+	return updateAdminVdcStorageProfile, err
+}

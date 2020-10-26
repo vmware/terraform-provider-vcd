@@ -459,6 +459,34 @@ type VdcStorageProfile struct {
 	ProviderVdcStorageProfile *Reference `xml:"ProviderVdcStorageProfile"`
 }
 
+// AdminVdcStorageProfile represents the parameters to create a storage profile in an organization vDC.
+// Type: AdminVdcStorageProfileParamsType
+// Description: Represents the parameters to create a storage profile in an organization vDC.
+// https://vdc-repo.vmware.com/vmwb-repository/dcr-public/71e12563-bc11-4d64-821d-92d30f8fcfa1/7424bf8e-aec2-44ad-be7d-b98feda7bae0/doc/doc/types/AdminVdcStorageProfileType.html
+type AdminVdcStorageProfile struct {
+	Xmlns                     string                         `xml:"xmlns,attr"`
+	Name                      string                         `xml:"name,attr"`
+	Enabled                   *bool                          `xml:"Enabled,omitempty"`
+	Units                     string                         `xml:"Units"`
+	Limit                     int64                          `xml:"Limit"`
+	Default                   bool                           `xml:"Default"`
+	IopsSettings              *VdcStorageProfileIopsSettings `xml:"IopsSettingsint64"`
+	IopsAllocated             int64                          `xml:"IopsAllocated"`
+	ProviderVdcStorageProfile *Reference                     `xml:"ProviderVdcStorageProfile"`
+}
+
+// VdcStorageProfileIopsSettings represents the parameters for VDC storage profiles Iops settings.
+// Type: VdcStorageProfileIopsSettings
+// https://vdc-repo.vmware.com/vmwb-repository/dcr-public/71e12563-bc11-4d64-821d-92d30f8fcfa1/7424bf8e-aec2-44ad-be7d-b98feda7bae0/doc/doc/types/VdcStorageProfileIopsSettingsType.html
+type VdcStorageProfileIopsSettings struct {
+	Xmlns                   string `xml:"xmlns,attr"`
+	Enabled                 bool   `xml:"enabled"`
+	DiskIopsMax             int64  `xml:"diskIopsMax,"`
+	DiskIopsDefault         int64  `xml:"diskIopsDefault"`
+	StorageProfileIopsLimit int64  `xml:"storageProfileIopsLimit,omitempty"`
+	DiskIopsPerGbMax        int64  `xml:"diskIopsPerGbMax"`
+}
+
 // VdcConfiguration models the payload for creating a VDC.
 // Type: CreateVdcParamsType
 // Namespace: http://www.vmware.com/vcloud/v1.5

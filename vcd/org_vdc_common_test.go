@@ -130,7 +130,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+params["VdcName"].(string), "storage_profile.0.enabled", "true"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "storage_profile.0.limit", "10240"),
+						"vcd_org_vdc."+params["VdcName"].(string), "storage_profile.0.limit", "20480"),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+params["VdcName"].(string), "storage_profile.0.default", "true"),
 					resource.TestCheckResourceAttr(
@@ -313,7 +313,7 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   storage_profile {
     name    = "{{.ProviderVdcStorageProfile}}"
     enabled = true
-    limit   = 10240
+    limit   = 20480
     default = true
   }
 

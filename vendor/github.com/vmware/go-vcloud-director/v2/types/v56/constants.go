@@ -125,6 +125,8 @@ const (
 	MimeVmCapabilities = "application/vnd.vmware.vcloud.vmCapabilitiesSection+xml"
 	// Mime of Vdc Compute Policy References
 	MimeVdcComputePolicyReferences = "application/vnd.vmware.vcloud.vdcComputePolicyReferences+xml"
+	// Mime for Storage profile
+	MimeStorageProfile = "application/vnd.vmware.admin.vdcStorageProfile+xml "
 )
 
 const (
