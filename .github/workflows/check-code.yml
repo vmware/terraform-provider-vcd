@@ -1,10 +1,7 @@
 name: check-code
 on: [push]
-      env:
-        GO111MODULE: on
 
 jobs:
-
   build:
     name: Check
     runs-on: ubuntu-latest
