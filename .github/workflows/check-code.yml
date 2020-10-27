@@ -1,0 +1,9 @@
+name: check-code
+on: [push]
+jobs:
+  check-code:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: make fmtcheck
+      - run: make vet
