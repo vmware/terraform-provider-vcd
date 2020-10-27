@@ -7,3 +7,6 @@ jobs:
       - uses: actions/checkout@v2
       - run: make fmtcheck
       - run: make vet
+      - run: make test
+      - env:
+        GO111MODULE: on
