@@ -22,7 +22,7 @@ jobs:
       run: make vet
 
     - name: static
-      run: make test-static
+      run: make static
 
     - name: test
       run: make test
