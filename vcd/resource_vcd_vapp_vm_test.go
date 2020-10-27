@@ -3,13 +3,9 @@
 package vcd
 
 import (
-	"bytes"
-	"fmt"
-	"sort"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
@@ -315,29 +311,3 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
   }
 }
 `
-
-// dumpResourceWithNonEmptyValues helps to print all attributes in InstanceState
-// skipEmptyValues allows to hide attributes with empty values
-func dumpResourceWithNonEmptyValues(res *terraform.InstanceState, skipEmptyValues bool) string {
-	var buf bytes.Buffer
-	attributes := res.Attributes
-	attrKeys := make([]string, 0, len(attributes))
-	for ak, av := range attributes {
-		if ak == "id" {
-			continue
-		}
-		// Skip attributes with empty values
-		if skipEmptyValues && av == "" {
-			continue
-		}
-
-		attrKeys = append(attrKeys, ak)
-	}
-	sort.Strings(attrKeys)
-
-	for _, ak := range attrKeys {
-		av := attributes[ak]
-		buf.WriteString(fmt.Sprintf("%s = %s\n", ak, av))
-	}
-	return buf.String()
-}

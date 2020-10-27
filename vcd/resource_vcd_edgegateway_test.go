@@ -212,7 +212,7 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_edgegateway.egw", "external_network.*", map[string]string{
 						"enable_rate_limit":   "false",
 						"incoming_rate_limit": "0",
-						"name":                "extnet-dainius",
+						"name":                testConfig.Networking.ExternalNetwork,
 						"outgoing_rate_limit": "0",
 					}),
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_edgegateway.egw", "external_network.*", map[string]string{
@@ -241,10 +241,6 @@ func TestAccVcdEdgeGatewayExternalNetworks(t *testing.T) {
 						"start_address": "192.168.30.58",
 						"end_address":   "192.168.30.60",
 					}),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network_ips.#", "2"),
-					resource.TestCheckTypeSetElemAttr("vcd_edgegateway.egw", "external_network_ips.*", "192.168.30.51"),
-					resource.TestCheckTypeSetElemAttr("vcd_edgegateway.egw", "external_network_ips.*", "10.150.160.136"),
-
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network_ips.#", "2"),
 					resource.TestMatchResourceAttr("vcd_edgegateway.egw", "external_network_ips.0", ipV4Regex),
 					resource.TestMatchResourceAttr("vcd_edgegateway.egw", "external_network_ips.1", ipV4Regex),
@@ -417,10 +413,12 @@ func TestAccVcdEdgeGatewayRateLimits(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "name", "edge-with-rate-limits"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1841915917.name", "test_external_network"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1841915917.enable_rate_limit", "true"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1841915917.incoming_rate_limit", "88.888"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.1841915917.outgoing_rate_limit", "55.335"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_edgegateway.egw", "external_network.*", map[string]string{
+						"name":                "test_external_network",
+						"enable_rate_limit":   "true",
+						"incoming_rate_limit": "88.888",
+						"outgoing_rate_limit": "55.335",
+					}),
 				),
 			},
 			resource.TestStep{
@@ -428,10 +426,12 @@ func TestAccVcdEdgeGatewayRateLimits(t *testing.T) {
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "name", "edge-with-rate-limits"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.763048197.name", "test_external_network"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.763048197.enable_rate_limit", "false"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.763048197.incoming_rate_limit", "0"),
-					resource.TestCheckResourceAttr("vcd_edgegateway.egw", "external_network.763048197.outgoing_rate_limit", "0"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_edgegateway.egw", "external_network.*", map[string]string{
+						"name":                "test_external_network",
+						"enable_rate_limit":   "false",
+						"incoming_rate_limit": "0",
+						"outgoing_rate_limit": "0",
+					}),
 				),
 			},
 			resource.TestStep{ // step2 - import
