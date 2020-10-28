@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -68,9 +68,9 @@ func TestAccVcdVappAccessControl(t *testing.T) {
 	resourceAC2 := "vcd_vapp_access_control.AC-Vapp2"
 	resourceAC3 := "vcd_vapp_access_control.AC-Vapp3"
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVappAccessControlDestroy(testConfig.VCD.Org, testConfig.VCD.Vdc, []string{"Vapp-AC-0", "Vapp-AC-1", "Vapp-AC-2", "Vapp-AC-3"}),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVappAccessControlDestroy(testConfig.VCD.Org, testConfig.VCD.Vdc, []string{"Vapp-AC-0", "Vapp-AC-1", "Vapp-AC-2", "Vapp-AC-3"}),
 		Steps: []resource.TestStep{
 			// Test creation
 			resource.TestStep{

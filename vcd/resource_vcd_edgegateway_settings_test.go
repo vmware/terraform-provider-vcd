@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -167,8 +167,8 @@ func TestAccVcdEdgeGatewaySettingsBasic(t *testing.T) {
 	// Note: this test can't run in parallel, as it updates the main edge gateway in the vCD
 	// and it could interfere with other tests
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		//CheckDestroy: func(s *terraform.State) error {return nil},
 		Steps: []resource.TestStep{
 			resource.TestStep{
@@ -194,7 +194,7 @@ func TestAccVcdEdgeGatewaySettingsBasic(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				ResourceName:            "vcd_edgegateway_settings." + testConfig.Networking.EdgeGateway + "-import",
+				ResourceName:            "vcd_edgegateway_settings." + testName,
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdOrgVdcObject(testConfig, testConfig.Networking.EdgeGateway),

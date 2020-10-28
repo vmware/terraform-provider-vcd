@@ -7,7 +7,7 @@ import (
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func datasourceVcdNsxtTier0Router() *schema.Resource {

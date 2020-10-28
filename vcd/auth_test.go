@@ -5,7 +5,7 @@ package vcd
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 // TestAccAuth aims to test out all possible ways of `provider` section configuration and allow
@@ -240,8 +240,8 @@ func runAuthTest(t *testing.T, configText string) {
 	`
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText + dataSource,

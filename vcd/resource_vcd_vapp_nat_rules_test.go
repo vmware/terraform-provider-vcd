@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccVcdVappNatRules(t *testing.T) {
@@ -58,8 +58,8 @@ func TestAccVcdVappNatRules(t *testing.T) {
 	}
 	resourceName := "vcd_vapp_nat_rules." + t.Name()
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -94,14 +94,14 @@ func TestAccVcdVappNatRules(t *testing.T) {
 			},
 			// we can reuse importStateVappFirewallRuleObject as import is the same
 			resource.TestStep{ // Step 1 - resource import
-				ResourceName:            "vcd_vapp_nat_rules.imported",
+				ResourceName:            "vcd_vapp_nat_rules." + t.Name(),
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateVappFirewallRuleObject(testConfig, vappName, vappNetworkName),
 				ImportStateVerifyIgnore: []string{"enable_ip_masquerade", "network_id", "org", "vdc"},
 			},
 			resource.TestStep{ // Step 2 - resource import by ID
-				ResourceName:            "vcd_vapp_nat_rules.imported2",
+				ResourceName:            "vcd_vapp_nat_rules." + t.Name(),
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateVappFirewallRuleById(testConfig, resourceName),

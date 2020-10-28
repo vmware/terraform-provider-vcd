@@ -1,6 +1,6 @@
 package vcd
 
-import "github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 func datasourceVcdEdgeGateway() *schema.Resource {
 	return &schema.Resource{

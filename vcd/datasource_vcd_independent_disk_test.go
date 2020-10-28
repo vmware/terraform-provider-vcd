@@ -4,11 +4,12 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 // Test independent disk data resource
@@ -46,9 +47,9 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testDiskResourcesDestroyed,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testDiskResourcesDestroyed,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -88,14 +89,15 @@ func testCheckDiskNonStringOutputs() resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		outputs := s.RootModule().Outputs
 
-		if outputs["is_attached"].Value.(bool) != false {
+		if outputs["is_attached"].Value.(string) != "false" {
 			return fmt.Errorf("is_attached value didn't match")
 		}
 
-		if regexp.MustCompile(`^\d+$`).MatchString(fmt.Sprintf("%s", outputs["iops"].Value)) {
-			return fmt.Errorf("iops value isn't int")
+		iops := outputs["iops"].Value.(string)
+		reNumber := regexp.MustCompile(`^\d+$`)
+		if !reNumber.MatchString(iops) {
+			return fmt.Errorf("iops value isn't an integer")
 		}
-
 		return nil
 	}
 }
@@ -112,7 +114,8 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
 }
 
 data "vcd_independent_disk" "{{.dataSourceName}}" {
-  name    = vcd_independent_disk.{{.ResourceName}}.name
+  name       = vcd_independent_disk.{{.ResourceName}}.name
+  depends_on = [vcd_independent_disk.{{.ResourceName}}]
 }
 
 output "iops" {
@@ -142,6 +145,7 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
 
 data "vcd_independent_disk" "{{.datasourceNameWithId}}" {
   id         = vcd_independent_disk.{{.ResourceName}}.id
+  depends_on = [vcd_independent_disk.{{.ResourceName}}]
 }
 
 output "iops" {

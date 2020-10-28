@@ -1,7 +1,7 @@
 package vcd
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func datasourceVcdVmSizingPolicy() *schema.Resource {
@@ -26,8 +26,6 @@ func datasourceVcdVmSizingPolicy() *schema.Resource {
 			},
 			"cpu": &schema.Schema{
 				Computed: true,
-				MinItems: 0,
-				MaxItems: 1,
 				Type:     schema.TypeList,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -66,8 +64,6 @@ func datasourceVcdVmSizingPolicy() *schema.Resource {
 			},
 			"memory": &schema.Schema{
 				Computed: true,
-				MinItems: 0,
-				MaxItems: 1,
 				Type:     schema.TypeList,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{

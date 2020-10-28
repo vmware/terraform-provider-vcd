@@ -1,8 +1,9 @@
 package vcd
 
+//lint:file-ignore SA1019 ignore deprecated functions
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func datasourceVcdVAppVm() *schema.Resource {
@@ -71,6 +72,16 @@ func datasourceVcdVAppVm() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Storage profile used with the VM",
+			},
+			"os_type": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Operating System type.",
+			},
+			"hardware_version": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Virtual Hardware Version.",
 			},
 			"network_dhcp_wait_seconds": {
 				Optional:     true,
@@ -215,8 +226,6 @@ func datasourceVcdVAppVm() *schema.Resource {
 
 			"customization": &schema.Schema{
 				Computed:    true,
-				MinItems:    1,
-				MaxItems:    1,
 				Type:        schema.TypeList,
 				Description: "Guest customization block",
 				Elem: &schema.Resource{
@@ -310,6 +319,12 @@ func datasourceVcdVAppVm() *schema.Resource {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "True if the virtual machine supports addition of memory while powered on.",
+			},
+			"sizing_policy_id": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "VM sizing policy ID.",
 			},
 		},
 	}
