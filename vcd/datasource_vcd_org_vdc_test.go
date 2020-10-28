@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 var vdcName = "TestAccVcdVdcDatasource"
@@ -75,9 +75,9 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 
 func validateResourceAndDataSource(t *testing.T, configText string, datasourceVdc string) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVdcDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVdcDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -124,9 +124,9 @@ func validateResourceAndDataSource(t *testing.T, configText string, datasourceVd
 
 func validateDataSource(t *testing.T, configText string, datasourceVdc string) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVdcDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVdcDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,

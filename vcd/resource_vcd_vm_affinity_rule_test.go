@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -247,9 +247,9 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 	var rule govcd.VmAffinityRule
 	resourceName := "vcd_vm_affinity_rule." + data.name
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVmAffinityRuleDestroy(&rule, testConfig.VCD.Org, testConfig.VCD.Vdc),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVmAffinityRuleDestroy(&rule, testConfig.VCD.Org, testConfig.VCD.Vdc),
 		Steps: []resource.TestStep{
 			// Test creation
 			resource.TestStep{
@@ -290,7 +290,7 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 			// Tests import by name
 			resource.TestStep{
 				Config:            updateText,
-				ResourceName:      "vcd_vm_affinity_rule." + data.name + "-import-name",
+				ResourceName:      "vcd_vm_affinity_rule." + data.name,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, data.name+"-update"),
@@ -298,7 +298,7 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 			// Tests import by ID
 			resource.TestStep{
 				Config:            updateText,
-				ResourceName:      "vcd_vm_affinity_rule." + data.name + "-import-id",
+				ResourceName:      "vcd_vm_affinity_rule." + data.name,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdViaResource("vcd_vm_affinity_rule." + data.name),
@@ -571,10 +571,12 @@ const testAccVmAffinityRuleDataSource = `
 {{.SkipNotice}}
 data "vcd_vm_affinity_rule" "ds_affinity_rule_by_name" {
 	name = vcd_vm_affinity_rule.{{.AffinityRuleIdentifier}}.name
+	depends_on = [vcd_vm_affinity_rule.{{.AffinityRuleIdentifier}}]
 }
 
 data "vcd_vm_affinity_rule" "ds_affinity_rule_by_id" {
 	rule_id = vcd_vm_affinity_rule.{{.AffinityRuleIdentifier}}.id
+	depends_on = [vcd_vm_affinity_rule.{{.AffinityRuleIdentifier}}]
 }
 
 output "polarity_of_rule_by_name" {

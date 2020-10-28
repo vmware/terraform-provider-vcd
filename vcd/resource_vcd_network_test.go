@@ -5,13 +5,17 @@ package vcd
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
+
+func init() {
+	testingTags["network"] = "resource_vcd_network_test.go"
+}
 
 type networkDef struct {
 	name                  string
@@ -538,7 +542,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdNetworkExists(networkName, &network),
-					checkNetWorkIpGroups(resourceDef, def, resourceVcdNetworkStaticIpPoolHash, resourceVcdNetworkIsolatedDhcpPoolHash),
+					checkNetWorkIpGroups(resourceDef, def),
 					resource.TestCheckResourceAttr(
 						resourceDef, "name", networkName),
 					resource.TestCheckResourceAttr(
@@ -553,15 +557,11 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 				Config: updateConfigText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdNetworkExists(updateDef.name, &network),
-					checkIpGroup(resourceDef,
-						"static_ip_pool",
-						map[string]interface{}{
-							"start_address": updateDef.startStaticIpAddress1,
-							"end_address":   updateDef.endStaticIpAddress1,
-						},
-						resourceVcdNetworkStaticIpPoolHash,
-					),
-					checkNetWorkIpGroups(resourceDef, updateDef, resourceVcdNetworkStaticIpPoolHash, resourceVcdNetworkIsolatedDhcpPoolHash),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceDef, "static_ip_pool.*", map[string]string{
+						"start_address": updateDef.startStaticIpAddress1,
+						"end_address":   updateDef.endStaticIpAddress1,
+					}),
+					checkNetWorkIpGroups(resourceDef, updateDef),
 					resource.TestCheckResourceAttr(
 						resourceDef, "name", updateDef.name),
 					resource.TestCheckResourceAttr(
@@ -574,10 +574,6 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 			},
 		}
 	case isolatedStaticNetwork2, routedStaticNetwork2, routedStaticNetworkSub2, routedStaticNetworkDist, routedStaticNetworkDist2:
-		hashFunc := resourceVcdNetworkRoutedDhcpPoolHash
-		if def.name == isolatedStaticNetwork2 {
-			hashFunc = resourceVcdNetworkIsolatedDhcpPoolHash
-		}
 		steps = []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -587,7 +583,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "name", networkName),
 					resource.TestCheckResourceAttr(
 						resourceDef, "description", def.description),
-					checkNetWorkIpGroups(resourceDef, def, resourceVcdNetworkStaticIpPoolHash, hashFunc),
+					checkNetWorkIpGroups(resourceDef, def),
 					resource.TestCheckResourceAttr(
 						resourceDef, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
@@ -602,7 +598,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "name", updateDef.name),
 					resource.TestCheckResourceAttr(
 						resourceDef, "description", updateDef.description),
-					checkNetWorkIpGroups(resourceDef, updateDef, resourceVcdNetworkStaticIpPoolHash, hashFunc),
+					checkNetWorkIpGroups(resourceDef, updateDef),
 					resource.TestCheckResourceAttr(
 						resourceDef, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
@@ -611,10 +607,6 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 			},
 		}
 	case routedStaticNetwork1, isolatedStaticNetwork1:
-		hashFunc := resourceVcdNetworkRoutedDhcpPoolHash
-		if def.name == isolatedStaticNetwork1 {
-			hashFunc = resourceVcdNetworkIsolatedDhcpPoolHash
-		}
 		steps = []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -624,7 +616,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "name", networkName),
 					resource.TestCheckResourceAttr(
 						resourceDef, "description", def.description),
-					checkNetWorkIpGroups(resourceDef, def, resourceVcdNetworkStaticIpPoolHash, hashFunc),
+					checkNetWorkIpGroups(resourceDef, def),
 					resource.TestCheckResourceAttr(
 						resourceDef, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
@@ -639,7 +631,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "name", updateDef.name),
 					resource.TestCheckResourceAttr(
 						resourceDef, "description", updateDef.description),
-					checkNetWorkIpGroups(resourceDef, updateDef, resourceVcdNetworkStaticIpPoolHash, hashFunc),
+					checkNetWorkIpGroups(resourceDef, updateDef),
 					resource.TestCheckResourceAttr(
 						resourceDef, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
@@ -648,10 +640,6 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 			},
 		}
 	case routedMixedNetwork, isolatedMixedNetwork1, routedMixedNetworkSub:
-		hashFunc := resourceVcdNetworkRoutedDhcpPoolHash
-		if def.name == isolatedMixedNetwork1 {
-			hashFunc = resourceVcdNetworkIsolatedDhcpPoolHash
-		}
 		steps = []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -661,7 +649,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "name", networkName),
 					resource.TestCheckResourceAttr(
 						resourceDef, "description", def.description),
-					checkNetWorkIpGroups(resourceDef, def, resourceVcdNetworkStaticIpPoolHash, hashFunc),
+					checkNetWorkIpGroups(resourceDef, def),
 					resource.TestCheckResourceAttr(
 						resourceDef, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
@@ -676,7 +664,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "name", updateDef.name),
 					resource.TestCheckResourceAttr(
 						resourceDef, "description", updateDef.description),
-					checkNetWorkIpGroups(resourceDef, updateDef, resourceVcdNetworkStaticIpPoolHash, hashFunc),
+					checkNetWorkIpGroups(resourceDef, updateDef),
 					resource.TestCheckResourceAttr(
 						resourceDef, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
@@ -685,10 +673,6 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 			},
 		}
 	case isolatedDhcpNetwork, routedDhcpNetwork, routedDhcpNetworkSub:
-		hashFunc := resourceVcdNetworkRoutedDhcpPoolHash
-		if def.name == isolatedDhcpNetwork {
-			hashFunc = resourceVcdNetworkIsolatedDhcpPoolHash
-		}
 		steps = []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -698,7 +682,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "name", networkName),
 					resource.TestCheckResourceAttr(
 						resourceDef, "description", def.description),
-					checkNetWorkIpGroups(resourceDef, def, resourceVcdNetworkStaticIpPoolHash, hashFunc),
+					checkNetWorkIpGroups(resourceDef, def),
 					resource.TestCheckResourceAttr(
 						resourceDef, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
@@ -713,7 +697,7 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 						resourceDef, "name", updateDef.name),
 					resource.TestCheckResourceAttr(
 						resourceDef, "description", updateDef.description),
-					checkNetWorkIpGroups(resourceDef, updateDef, resourceVcdNetworkStaticIpPoolHash, hashFunc),
+					checkNetWorkIpGroups(resourceDef, updateDef),
 					resource.TestCheckResourceAttr(
 						resourceDef, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
@@ -729,7 +713,8 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 	}
 
 	steps = append(steps, resource.TestStep{
-		ResourceName:      def.resourceName + "." + networkName + "-import",
+		Config:            updateConfigText,
+		ResourceName:      def.resourceName + "." + networkName,
 		ImportState:       true,
 		ImportStateVerify: true,
 		ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, updateDef.name),
@@ -737,10 +722,10 @@ func runTest(def, updateDef networkDef, t *testing.T) {
 
 	// Don't convert this test to parallel, as it will cause IP ranges conflicts
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: func(s *terraform.State) error { return testAccCheckVcdNetworkDestroy(s, def.resourceName, networkName) },
-		Steps:        steps,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      func(s *terraform.State) error { return testAccCheckVcdNetworkDestroy(s, def.resourceName, networkName) },
+		Steps:             steps,
 	})
 }
 
@@ -877,37 +862,44 @@ func testAccCheckVcdNetworkDestroy(s *terraform.State, networkType string, netwo
 
 // checkNetWorkIpGroups is a wrapper around checkIpGroup that generates
 // a test for every pair of IPs in the network definition structure
-func checkNetWorkIpGroups(resourceDef string, def networkDef, staticIpHashFunc, dhcpHashFunc schema.SchemaSetFunc) resource.TestCheckFunc {
+func checkNetWorkIpGroups(resourceDef string, def networkDef) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		var checks []resource.TestCheckFunc
 
 		if def.startStaticIpAddress1 != "" {
-			f := checkIpGroup(resourceDef, "static_ip_pool",
-				map[string]interface{}{
-					groupStartLabel: def.startStaticIpAddress1,
-					groupEndLabel:   def.endStaticIpAddress1,
-				}, staticIpHashFunc)
-
+			f := resource.TestCheckTypeSetElemNestedAttrs(resourceDef, "static_ip_pool.*", map[string]string{
+				"start_address": def.startStaticIpAddress1,
+				"end_address":   def.endStaticIpAddress1,
+			})
 			checks = append(checks, f)
 		}
 		if def.startStaticIpAddress2 != "" {
-			f := checkIpGroup(resourceDef, "static_ip_pool",
-				map[string]interface{}{
-					groupStartLabel: def.startStaticIpAddress2,
-					groupEndLabel:   def.endStaticIpAddress2,
-				}, staticIpHashFunc)
-
+			f := resource.TestCheckTypeSetElemNestedAttrs(resourceDef, "static_ip_pool.*", map[string]string{
+				"start_address": def.startStaticIpAddress2,
+				"end_address":   def.endStaticIpAddress2,
+			})
 			checks = append(checks, f)
 		}
 		if def.startDhcpIpAddress != "" {
-			f := checkIpGroup(resourceDef, "dhcp_pool",
-				map[string]interface{}{
-					groupStartLabel:   def.startDhcpIpAddress,
-					groupEndLabel:     def.endDhcpIpAddress,
-					groupDefaultLease: def.defaultLeaseTime,
-					groupMaxLease:     def.maxLeaseTime,
-				}, dhcpHashFunc)
+
+			// For routed network tests - when `max_lease_time` > `default_lease_time` ->  `default_lease_time` == `max_lease_time`
+			defaultLeaseTimeValue := def.defaultLeaseTime
+			if def.name == "TestAccVcdNetworkRoutedDhcp" || def.name == "TestAccVcdNetworkRoutedDhcp-update" ||
+				def.name == "TestAccVcdNetworkRoutedDhcpSub" || def.name == "TestAccVcdNetworkRoutedDhcpSub-update" ||
+				def.name == "TestAccVcdNetworkRoutedMixed" || def.name == "TestAccVcdNetworkRoutedMixed-update" ||
+				def.name == "TestAccVcdNetworkRoutedMixedSub" || def.name == "TestAccVcdNetworkRoutedMixedSub-update" {
+				if def.maxLeaseTime > def.defaultLeaseTime {
+					defaultLeaseTimeValue = def.maxLeaseTime
+				}
+			}
+
+			f := resource.TestCheckTypeSetElemNestedAttrs(resourceDef, "dhcp_pool.*", map[string]string{
+				"start_address":      def.startDhcpIpAddress,
+				"end_address":        def.endDhcpIpAddress,
+				"default_lease_time": strconv.Itoa(defaultLeaseTimeValue),
+				"max_lease_time":     strconv.Itoa(def.maxLeaseTime),
+			})
 			checks = append(checks, f)
 		}
 
@@ -919,55 +911,6 @@ func checkNetWorkIpGroups(resourceDef string, def networkDef, staticIpHashFunc, 
 		}
 		return nil
 	}
-}
-
-// checkIpGroup will check the contents of a group of Ips in a TypeSet structure.
-// This function computes the hash for the set and then calls TestCheckResourceAttr
-// for each key in the map.
-// It can be used in a test wherever a TestCheckFunc is allowed
-// Sample call:
-//  checkIpGroup("vcd_network_isolated.MyNetworkName",
-//		"static_ip_pool",
-//		map[string]interface{}{
-//		    "start_address": "192.168.2.2",
-//		    "end_address":   "192.168.2.50",
-//		},
-//      resourceVcdNetworkIPAddressHash,
-//  ),
-//
-func checkIpGroup(resourceDef, groupName string, values map[string]interface{}, hashFunc schema.SchemaSetFunc) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-
-		var (
-			hash       = hashFunc(values)
-			ok         bool
-			startValue interface{}
-			endValue   interface{}
-		)
-		startValue, ok = values[groupStartLabel]
-		if !ok {
-			return fmt.Errorf("key '%s' not found in map", groupStartLabel)
-		}
-		endValue, ok = values[groupEndLabel]
-		if !ok {
-			return fmt.Errorf("key '%s' not found in map", groupEndLabel)
-		}
-
-		startKey := fmt.Sprintf("%s.%d.%s", groupName, hash, groupStartLabel)
-		endKey := fmt.Sprintf("%s.%d.%s", groupName, hash, groupEndLabel)
-		fStart := resource.TestCheckResourceAttr(resourceDef, startKey, startValue.(string))
-		fEnd := resource.TestCheckResourceAttr(resourceDef, endKey, endValue.(string))
-
-		err := fStart(s)
-		if err != nil {
-			return err
-		}
-		return fEnd(s)
-	}
-}
-
-func init() {
-	testingTags["network"] = "resource_vcd_network_test.go"
 }
 
 const testAccCheckVcdNetworkIsolatedStatic1 = `

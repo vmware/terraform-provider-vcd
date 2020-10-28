@@ -14,17 +14,9 @@ matrix:
     - go: tip
   include:
     - go: "1.15.x"
-      env: GOFLAGS=-mod=vendor GO111MODULE=on
-      script:
-        - make test
-        - make vet
-        - make static
-        - make website-test
-    - go: "1.15.x"
       env: GO111MODULE=on
       script:
         - make test
         - make vet
         - make static
-        - make vendor-check
-        - make website-test
+        - make tidy-check

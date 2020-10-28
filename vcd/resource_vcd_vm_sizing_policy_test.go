@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 var TestVmPolicy = "TestVmPolicyBasic"
@@ -57,9 +57,9 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 	resource3 := "vcd_vm_sizing_policy." + params["PolicyName"].(string) + "_3"
 	resource4 := "vcd_vm_sizing_policy." + params["PolicyName"].(string) + "_4"
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVmSizingPolicyDestroyed,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVmSizingPolicyDestroyed,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -159,7 +159,7 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 			},
 			// Tests import by id
 			resource.TestStep{
-				ResourceName:            resource4 + "-import-id",
+				ResourceName:            resource4,
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateVmSizingPolicyByIdOrName(testConfig, resource4, true),
@@ -167,7 +167,7 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 			},
 			// Tests import by name
 			resource.TestStep{
-				ResourceName:            resource4 + "-import-name",
+				ResourceName:            resource4,
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateVmSizingPolicyByIdOrName(testConfig, resource4, false),

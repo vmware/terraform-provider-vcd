@@ -5,7 +5,7 @@ package vcd
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 // Cloning an organization using an existing organization as data source
@@ -36,9 +36,9 @@ func TestAccVcdDatasourceOrg(t *testing.T) {
 	datasource1 := "data.vcd_org." + orgName1
 	resourceName2 := "vcd_org." + orgName2
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckOrgDestroy(orgName2),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckOrgDestroy(orgName2),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,

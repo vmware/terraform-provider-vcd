@@ -8,8 +8,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 var resourceName = "TestAccVcdIndependentDiskBasic_1"
@@ -48,9 +48,9 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configTextForCompatibility)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testDiskResourcesDestroyed,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testDiskResourcesDestroyed,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configTextForCompatibility,
@@ -64,7 +64,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				ResourceName:            "vcd_independent_disk." + resourceName + "-import",
+				ResourceName:            "vcd_independent_disk." + resourceName,
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdByDisk("vcd_independent_disk." + resourceName),

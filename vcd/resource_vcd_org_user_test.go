@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
@@ -104,9 +104,9 @@ func TestAccVcdOrgUserBasic(t *testing.T) {
 			fmt.Printf("%s (%s)\n", ud.name, ud.roleName)
 			debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 			resource.Test(t, resource.TestCase{
-				PreCheck:     func() { testAccPreCheck(t) },
-				Providers:    testAccProviders,
-				CheckDestroy: nil,
+				PreCheck:          func() { testAccPreCheck(t) },
+				ProviderFactories: testAccProviders,
+				CheckDestroy:      nil,
 				Steps: []resource.TestStep{
 					resource.TestStep{
 						Config: configText,
@@ -190,9 +190,9 @@ func TestAccVcdOrgUserFull(t *testing.T) {
 			debugPrintf("#[DEBUG] UPDATED CONFIGURATION: %s", configTextUpdated)
 			resourceName := "vcd_org_user." + ud.name
 			resource.Test(t, resource.TestCase{
-				PreCheck:     func() { testAccPreCheck(t) },
-				Providers:    testAccProviders,
-				CheckDestroy: testAccCheckVcdUserDestroy(ud.name),
+				PreCheck:          func() { testAccPreCheck(t) },
+				ProviderFactories: testAccProviders,
+				CheckDestroy:      testAccCheckVcdUserDestroy(ud.name),
 				Steps: []resource.TestStep{
 					resource.TestStep{
 						Config: configText,
@@ -237,7 +237,7 @@ func TestAccVcdOrgUserFull(t *testing.T) {
 						),
 					},
 					resource.TestStep{
-						ResourceName:      resourceName + "-import",
+						ResourceName:      resourceName,
 						ImportState:       true,
 						ImportStateVerify: true,
 						ImportStateIdFunc: importStateIdOrgObject(testConfig, ud.name),
@@ -287,9 +287,9 @@ func TestAccVcdOrgUserWithDS(t *testing.T) {
 		fmt.Printf("%s (%s)\n", ud.name, ud.roleName)
 		debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 		resource.Test(t, resource.TestCase{
-			PreCheck:     func() { testAccPreCheck(t) },
-			Providers:    testAccProviders,
-			CheckDestroy: nil,
+			PreCheck:          func() { testAccPreCheck(t) },
+			ProviderFactories: testAccProviders,
+			CheckDestroy:      nil,
 			Steps: []resource.TestStep{
 				resource.TestStep{
 					Config: configText,

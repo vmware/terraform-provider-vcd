@@ -5,7 +5,7 @@ package vcd
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
@@ -38,9 +38,9 @@ func TestAccVcdVAppVmCapabilities(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdVAppVmDestroy(vappName2),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappName2),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,

@@ -4,10 +4,10 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 // TestAccVcdVappNetworkDS tests a vApp network data source if a vApp is found in the VDC
@@ -61,8 +61,8 @@ func TestAccVcdVappNetworkDS(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -89,11 +89,11 @@ func testCheckVappNetworkNonStringOutputs(guestVlanAllowed, retainIpMacEnabled b
 	return func(s *terraform.State) error {
 		outputs := s.RootModule().Outputs
 
-		if outputs["guestVlanAllowed"].Value != guestVlanAllowed {
+		if outputs["guestVlanAllowed"].Value != fmt.Sprintf("%v", guestVlanAllowed) {
 			return fmt.Errorf("guestVlanAllowed value didn't match")
 		}
 
-		if outputs["retain_ip_mac_enabled"].Value != retainIpMacEnabled {
+		if outputs["retain_ip_mac_enabled"].Value != fmt.Sprintf("%v", retainIpMacEnabled) {
 			return fmt.Errorf("retain_ip_mac_enabled value didn't match")
 		}
 
@@ -155,6 +155,7 @@ resource "vcd_vapp_network" "createdVappNetwork" {
 data "vcd_vapp_network" "network-ds" {
   name       =  vcd_vapp_network.createdVappNetwork.name
   vapp_name  = "{{.vappName}}"
+  depends_on =  [vcd_vapp_network.createdVappNetwork]
 }
 
 output "netmask" {

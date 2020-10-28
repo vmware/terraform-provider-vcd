@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccVcdVappFirewallRules(t *testing.T) {
@@ -54,8 +54,8 @@ func TestAccVcdVappFirewallRules(t *testing.T) {
 	}
 	resourceName := "vcd_vapp_firewall_rules." + t.Name()
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -121,14 +121,14 @@ func TestAccVcdVappFirewallRules(t *testing.T) {
 				),
 			},
 			resource.TestStep{ // Step 1 - resource import
-				ResourceName:            "vcd_vapp_firewall_rules.imported",
+				ResourceName:            "vcd_vapp_firewall_rules." + t.Name(),
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateVappFirewallRuleObject(testConfig, vappName, vappNetworkName),
 				ImportStateVerifyIgnore: []string{"org", "vdc"},
 			},
 			resource.TestStep{ // Step 2 - resource import by ID
-				ResourceName:            "vcd_vapp_firewall_rules.imported2",
+				ResourceName:            "vcd_vapp_firewall_rules." + t.Name(),
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateVappFirewallRuleById(testConfig, resourceName),
