@@ -118,7 +118,7 @@ func datasourceVcdOrgVdc() *schema.Resource {
 							Computed:    true,
 							Description: "True if this is default storage profile for this VDC. The default storage profile is used when an object that can specify a storage profile is created with no storage profile specified.",
 						},
-						"storage_used_mb": {
+						"storage_used_in_mb": {
 							Type:        schema.TypeInt,
 							Computed:    true,
 							Description: "Storage used, in Megabytes",

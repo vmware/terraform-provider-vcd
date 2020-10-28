@@ -138,7 +138,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 							Required:    true,
 							Description: "True if this is default storage profile for this VDC. The default storage profile is used when an object that can specify a storage profile is created with no storage profile specified.",
 						},
-						"storage_used_mb": {
+						"storage_used_in_mb": {
 							Type:        schema.TypeInt,
 							Computed:    true,
 							Description: "Storage used, in Megabytes",
@@ -467,7 +467,7 @@ func getComputeStorageProfiles(vcdClient *VCDClient, profile *types.VdcStoragePr
 		if vdcStorageProfileDetails.ProviderVdcStorageProfile != nil {
 			storageProfileData["name"] = vdcStorageProfileDetails.ProviderVdcStorageProfile.Name
 		}
-		storageProfileData["storage_used_mb"] = vdcStorageProfileDetails.StorageUsedMB
+		storageProfileData["storage_used_in_mb"] = vdcStorageProfileDetails.StorageUsedMB
 		root = append(root, storageProfileData)
 	}
 

@@ -192,7 +192,7 @@ The following arguments are supported:
 * `enabled` - (Optional) True if this storage profile is enabled for use in the VDC. Default is true.
 * `limit` - (Required) Maximum number of MB allocated for this storage profile. A value of 0 specifies unlimited MB.
 * `default` - (Required) True if this is default storage profile for this VDC. The default storage profile is used when an object that can specify a storage profile is created with no storage profile specified.
-* `storage_used_mb` - (Computed, *v3.1+*) Storage used, in Megabytes.
+* `storage_used_in_mb` - (Computed, *v3.1+*) Storage used, in Megabytes.
 
 <a id="computecapacity"></a>
 ## Compute Capacity
