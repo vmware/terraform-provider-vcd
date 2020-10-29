@@ -105,7 +105,7 @@ func TestCustomTemplates(t *testing.T) {
 		"MainDns1":               testConfig.TestEnvBuild.Dns1,
 		"MainDns2":               testConfig.TestEnvBuild.Dns2,
 		"MediaTestName":          testConfig.TestEnvBuild.MediaName,
-		"StorageProfile2":        testConfig.TestEnvBuild.StorageProfile2,
+		"StorageProfile2":        testConfig.VCD.ProviderVdc.StorageProfile2,
 		"ExternalNetworkStartIp": testConfig.TestEnvBuild.ExternalNetworkStartIp,
 		"ExternalNetworkEndIp":   testConfig.TestEnvBuild.ExternalNetworkEndIp,
 		"RoutedNetwork":          testConfig.TestEnvBuild.RoutedNetwork,
@@ -119,7 +119,7 @@ func TestCustomTemplates(t *testing.T) {
 	if testConfig.TestEnvBuild.MediaName == "" {
 		delete(params, "MediaTestName")
 	}
-	if testConfig.TestEnvBuild.StorageProfile2 == "" {
+	if testConfig.VCD.ProviderVdc.StorageProfile2 == "" {
 		delete(params, "StorageProfile2")
 	}
 	if testConfig.TestEnvBuild.RoutedNetwork == "" {
