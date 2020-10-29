@@ -8,7 +8,7 @@ import (
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 // TestAccDataSourceNotFound is using Go sub-tests to ensure that "read" methods for all (current and future) data
@@ -64,7 +64,7 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 		debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 		resource.Test(t, resource.TestCase{
-			Providers: testAccProviders,
+			ProviderFactories: testAccProviders,
 			Steps: []resource.TestStep{
 				resource.TestStep{
 					Config:      configText,

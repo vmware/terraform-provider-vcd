@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
@@ -50,9 +50,9 @@ func TestAccVcdVAppVmUpdateCustomization(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdVAppVmDestroy(netVappName),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdVAppVmDestroy(netVappName),
 		Steps: []resource.TestStep{
 			// Step 0 - Create without customization flag
 			resource.TestStep{
@@ -118,9 +118,9 @@ func TestAccVcdVAppVmCreateCustomization(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdVAppVmDestroy(netVappName),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdVAppVmDestroy(netVappName),
 		Steps: []resource.TestStep{
 			// Step 0 - Create new VM and force customization initially
 			resource.TestStep{
@@ -316,9 +316,9 @@ func TestAccVcdVAppVmCreateCustomizationFalse(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdVAppVmDestroy(netVappName),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdVAppVmDestroy(netVappName),
 		Steps: []resource.TestStep{
 			// Step 0 - Create new VM and set set customization.force=false
 			resource.TestStep{
@@ -337,8 +337,8 @@ func TestAccVcdVAppVmCustomizationSettings(t *testing.T) {
 	var (
 		vapp        govcd.VApp
 		vm          govcd.VM
-		netVappName string = t.Name()
-		netVmName1  string = t.Name() + "VM"
+		netVappName = t.Name()
+		netVmName1  = t.Name() + "VM"
 	)
 
 	var params = StringMap{
@@ -367,11 +367,11 @@ func TestAccVcdVAppVmCustomizationSettings(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdVAppVmDestroy(netVappName),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdVAppVmDestroy(netVappName),
 		Steps: []resource.TestStep{
-			// Step 0
+			// Step 1
 			resource.TestStep{
 				Config: configTextVM,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -387,44 +387,45 @@ func TestAccVcdVAppVmCustomizationSettings(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.number_of_auto_logons", "4"),
 				),
 			},
-			// Step 1 - join org domain must fail
+			// Step 2 - join org domain (does not fail because enabled=false even though OS is not windows)
 			resource.TestStep{
-				Taint:  []string{"vcd_vapp_vm.test-vm"},
+				// Taint:  []string{"vcd_vapp_vm.test-vm"},
+				// Taint does not work in SDK 2.1.0 therefore every test step has resource address changed to force
+				// recreation of the VM
 				Config: configTextVMStep1,
-				// Our testing suite does not have Windows OS to actually try domain join so the point of this test is
-				// to prove that values are actually set and try to be applied on vCD.
-				// ExpectError: regexp.MustCompile(`Join Domain is not supported for OS type .*`),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm", &vapp, &vm),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "name", netVmName1),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "network.#", "0"),
+					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm-step2", &vapp, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm-step2", "name", netVmName1),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm-step2", "network.#", "0"),
 
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.#", "1"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.enabled", "false"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.admin_password", "some password"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.join_domain", "true"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.join_org_domain", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm-step2", "customization.#", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm-step2", "customization.0.enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm-step2", "customization.0.admin_password", "some password"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm-step2", "customization.0.join_domain", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm-step2", "customization.0.join_org_domain", "true"),
 				),
 			},
-			// Step 2 - join org domain enabled
+			// Step 3 - join org domain enabled
 			resource.TestStep{
-				Taint:  []string{"vcd_vapp_vm.test-vm"},
+				// Taint:  []string{"vcd_vapp_vm.test-vm"},
+				// Taint does not work in SDK 2.1.0 therefore every test step has resource address changed to force
+				// recreation of the VM
 				Config: configTextVMStep2,
 				// Our testing suite does not have Windows OS to actually try domain join so the point of this test is
 				// to prove that values are actually set and try to be applied on vCD.
 				ExpectError: regexp.MustCompile(`Join Domain is not supported for OS type .*`),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm", &vapp, &vm),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "name", netVmName1),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "network.#", "0"),
+					testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vapp_vm.test-vm-step3", &vapp, &vm),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm-step3", "name", netVmName1),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm-step3", "network.#", "0"),
 
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.#", "1"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.enabled", "true"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.join_domain", "true"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.join_domain_name", "UnrealDomain"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.join_domain_user", "NoUser"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.join_domain_password", "NoPass"),
-					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm", "customization.0.join_domain_account_ou", "ou=IT,dc=some,dc=com"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm-step3", "customization.#", "1"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm-step3", "customization.0.enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm-step3", "customization.0.join_domain", "true"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm-step3", "customization.0.join_domain_name", "UnrealDomain"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm-step3", "customization.0.join_domain_user", "NoUser"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm-step3", "customization.0.join_domain_password", "NoPass"),
+					resource.TestCheckResourceAttr("vcd_vapp_vm.test-vm-step3", "customization.0.join_domain_account_ou", "ou=IT,dc=some,dc=com"),
 				),
 			},
 		},
@@ -457,7 +458,7 @@ resource "vcd_vapp_vm" "test-vm" {
 
 const testAccCheckVcdVAppVmUpdateCustomizationSettingsStep1 = testAccCheckVcdVAppVmCustomizationShared + `
 # skip-binary-test: it will fail on purpose
-resource "vcd_vapp_vm" "test-vm" {
+resource "vcd_vapp_vm" "test-vm-step2" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
@@ -481,7 +482,7 @@ resource "vcd_vapp_vm" "test-vm" {
 
 const testAccCheckVcdVAppVmUpdateCustomizationSettingsStep2 = testAccCheckVcdVAppVmCustomizationShared + `
 # skip-binary-test: it will fail on purpose
-resource "vcd_vapp_vm" "test-vm" {
+resource "vcd_vapp_vm" "test-vm-step3" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 

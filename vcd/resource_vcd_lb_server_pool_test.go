@@ -10,8 +10,8 @@ import (
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccVcdLbServerPool(t *testing.T) {
@@ -44,9 +44,9 @@ func TestAccVcdLbServerPool(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		Providers:    testAccProviders,
-		PreCheck:     func() { testAccPreCheck(t) },
-		CheckDestroy: testAccCheckVcdLbServerPoolDestroy(params["ServerPoolName"].(string)),
+		ProviderFactories: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		CheckDestroy:      testAccCheckVcdLbServerPoolDestroy(params["ServerPoolName"].(string)),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -208,7 +208,7 @@ func TestAccVcdLbServerPool(t *testing.T) {
 			},
 			// Check that import works
 			resource.TestStep{
-				ResourceName:      "vcd_lb_server_pool.server-pool-import",
+				ResourceName:      "vcd_lb_server_pool.server-pool",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdEdgeGatewayObject(testConfig, testConfig.Networking.EdgeGateway, params["ServerPoolName"].(string)),
@@ -292,6 +292,7 @@ resource "vcd_lb_server_pool" "server-pool" {
 	vdc          = "{{.Vdc}}"
 	edge_gateway = "{{.EdgeGateway}}"
 	name         = vcd_lb_server_pool.server-pool.name
+	depends_on   = [vcd_lb_server_pool.server-pool]
   }  
 `
 
@@ -369,5 +370,6 @@ resource "vcd_lb_service_monitor" "test-monitor" {
 	vdc          = "{{.Vdc}}"
 	edge_gateway = "{{.EdgeGateway}}"
 	name         = vcd_lb_server_pool.server-pool.name
+	depends_on   = [vcd_lb_server_pool.server-pool]
   }  
 `

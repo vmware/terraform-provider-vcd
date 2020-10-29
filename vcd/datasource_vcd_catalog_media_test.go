@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 // Test catalog and catalog media data sources
@@ -42,9 +42,9 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { preRunChecks(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: catalogMediaDestroyed(testConfig.VCD.Catalog.Name, TestCatalogMediaDS),
+		PreCheck:          func() { preRunChecks(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      catalogMediaDestroyed(testConfig.VCD.Catalog.Name, TestCatalogMediaDS),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -98,9 +98,10 @@ resource "vcd_catalog_media"  "{{.CatalogMediaName}}" {
 }
 
 data "vcd_catalog_media" "{{.NewCatalogMedia}}" {
-  org     = "{{.Org}}"
-  catalog = "{{.Catalog}}"
-  name    = vcd_catalog_media.{{.CatalogMediaName}}.name
+  org        = "{{.Org}}"
+  catalog    = "{{.Catalog}}"
+  name       = vcd_catalog_media.{{.CatalogMediaName}}.name
+  depends_on = [vcd_catalog_media.{{.CatalogMediaName}}]
 }
 
 output "size" {

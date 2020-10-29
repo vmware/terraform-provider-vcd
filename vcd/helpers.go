@@ -3,7 +3,7 @@ package vcd
 import (
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // onlyHasChange is a schema helper which accepts Terraform schema definition and checks if field

@@ -6,9 +6,8 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -323,7 +322,6 @@ func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origi
 	_ = d.Set("href", network.OrgVDCNetwork.HREF)
 	_ = d.Set("shared", network.OrgVDCNetwork.IsShared)
 	if c := network.OrgVDCNetwork.Configuration; c != nil {
-		_ = d.Set("fence_mode", c.FenceMode)
 		if c.IPScopes != nil {
 			_ = d.Set("gateway", c.IPScopes.IPScope[0].Gateway)
 			_ = d.Set("netmask", c.IPScopes.IPScope[0].Netmask)
@@ -478,7 +476,7 @@ func resourceVcdNetworkStaticIpPoolHash(v interface{}) int {
 	buf.WriteString(fmt.Sprintf("%s-",
 		strings.ToLower(m["end_address"].(string))))
 
-	return hashcode.String(buf.String())
+	return hashcodeString(buf.String())
 }
 
 func genericResourceVcdNetworkDhcpPoolHash(v interface{}, networkType string) int {
@@ -501,7 +499,7 @@ func genericResourceVcdNetworkDhcpPoolHash(v interface{}, networkType string) in
 	default:
 		panic(fmt.Sprintf("network type %s not supported", networkType))
 	}
-	return hashcode.String(buf.String())
+	return hashcodeString(buf.String())
 }
 
 // resourceVcdNetworkRoutedDhcpPoolHash computes a hash for a DHCP pool

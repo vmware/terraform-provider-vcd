@@ -11,8 +11,8 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -108,8 +108,8 @@ func TestAccVcdOrgGroup(t *testing.T) {
 	groupIdRegex := regexp.MustCompile(`^urn:vcloud:group:`)
 
 	resource.Test(t, resource.TestCase{
-		Providers: testAccProviders,
-		PreCheck:  func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
 		CheckDestroy: resource.ComposeAggregateTestCheckFunc(
 			testAccCheckVcdGroupDestroy("admin_staff"),
 			testAccCheckVcdGroupDestroy("ship_crew"),
@@ -167,7 +167,7 @@ func TestAccVcdOrgGroup(t *testing.T) {
 			},
 
 			resource.TestStep{
-				ResourceName:      "vcd_org_group.group-import",
+				ResourceName:      "vcd_org_group.group1",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgObject(testConfig, "ship_crew"),

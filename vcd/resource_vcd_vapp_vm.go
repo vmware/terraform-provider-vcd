@@ -1,5 +1,6 @@
 package vcd
 
+//lint:file-ignore SA1019 ignore deprecated functions
 import (
 	"bytes"
 	"fmt"
@@ -10,10 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-
-	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -1365,8 +1364,12 @@ func genericVcdVAppVmRead(d *schema.ResourceData, meta interface{}, origin strin
 		return fmt.Errorf("error storing customzation block: %s", err)
 	}
 
-	_ = d.Set("hardware_version", vm.VM.VmSpecSection.HardwareVersion.Value)
-	_ = d.Set("os_type", vm.VM.VmSpecSection.OsType)
+	if vm.VM.VmSpecSection != nil && vm.VM.VmSpecSection.HardwareVersion != nil && vm.VM.VmSpecSection.HardwareVersion.Value != "" {
+		_ = d.Set("hardware_version", vm.VM.VmSpecSection.HardwareVersion.Value)
+	}
+	if vm.VM.VmSpecSection != nil && vm.VM.VmSpecSection.OsType != "" {
+		_ = d.Set("os_type", vm.VM.VmSpecSection.OsType)
+	}
 
 	if vm.VM.ComputePolicy != nil && vm.VM.ComputePolicy.VmSizingPolicy != nil {
 		_ = d.Set("sizing_policy_id", vm.VM.ComputePolicy.VmSizingPolicy.ID)
@@ -1616,7 +1619,7 @@ func resourceVcdVmIndependentDiskHash(v interface{}) int {
 	// We use the name and no other identifier to calculate the hash
 	// With the VM resource, we assume that disks have a unique name.
 	// In the event that this is not true, we return an error
-	return hashcode.String(buf.String())
+	return hashcodeString(buf.String())
 }
 
 // networksToConfig converts terraform schema for 'network' and converts to types.NetworkConnectionSection

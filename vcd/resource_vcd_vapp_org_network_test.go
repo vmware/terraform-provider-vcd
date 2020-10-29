@@ -5,7 +5,7 @@ package vcd
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func TestAccVcdVappOrgNetwork_NotFenced(t *testing.T) {
@@ -64,9 +64,9 @@ func runVappOrgNetworkTest(t *testing.T, params StringMap) {
 
 	resourceName := "vcd_vapp_org_network." + params["resourceName"].(string)
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVappNetworkDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVappNetworkDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -97,7 +97,7 @@ func runVappOrgNetworkTest(t *testing.T, params StringMap) {
 				),
 			},
 			resource.TestStep{
-				ResourceName:      resourceName + "-import",
+				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdVappObject(testConfig, params["vappName"].(string), params["orgNetwork"].(string)),

@@ -1,5 +1,5 @@
-TEST?=$$(go list ./... |grep -v 'vendor')
-GOFMT_FILES?=$$(find . -name '*.go' |grep -v vendor)
+TEST?=$$(go list ./... )
+GOFMT_FILES?=$$(find . -name '*.go' )
 WEBSITE_REPO=github.com/hashicorp/terraform-website
 GIT_DESCRIBE=$(shell git describe)
 
@@ -132,7 +132,7 @@ testextnetwork: fmtcheck
 # vets all .go files
 vet:
 	@echo "go vet ."
-	@go vet $$(go list ./... | grep -v vendor/) ; if [ $$? -ne 0 ]; then \
+	@go vet $$(go list ./... ) ; if [ $$? -ne 0 ]; then \
 		echo ""; \
 		echo "Vet found suspicious constructs. Please check the reported constructs"; \
 		echo "and fix them if necessary before submitting the code for review."; \
@@ -147,10 +147,9 @@ fmt:
 fmtcheck:
 	@sh -c "'$(CURDIR)/scripts/gofmtcheck.sh'"
 
-# runs the vendor directory check
-vendor-check:
+# runs the go tidy directory check
+tidy-check:
 	go mod tidy
-	go mod vendor
 	git diff --exit-code
 
 # checks that the code can compile
@@ -177,5 +176,5 @@ ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
 endif
 	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
 
-.PHONY: build test testacc-race-seq testacc vet static fmt fmtcheck vendor-check test-compile website website-test
+.PHONY: build test testacc-race-seq testacc vet static fmt fmtcheck tidy-check test-compile website website-test
 
