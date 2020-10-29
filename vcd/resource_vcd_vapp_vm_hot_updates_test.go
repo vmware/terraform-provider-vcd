@@ -25,7 +25,7 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 	}
 
 	if testConfig.VCD.ProviderVdc.StorageProfile1 == "" || testConfig.VCD.ProviderVdc.StorageProfile2 == "" {
-		t.Skip("Variable estConfig.VCD.ProviderVdc.StorageProfile1 and estConfig.VCD.ProviderVdc.StorageProfile2 must be configured")
+		t.Skip("Both variables testConfig.VCD.ProviderVdc.StorageProfile1 and testConfig.VCD.ProviderVdc.StorageProfile2 must be set")
 	}
 
 	var params = StringMap{
