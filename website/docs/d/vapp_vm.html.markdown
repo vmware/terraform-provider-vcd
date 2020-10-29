@@ -102,5 +102,9 @@ The following arguments are supported:
   the description of the OVA used to create the VM
 * `expose_hardware_virtualization` -  Expose hardware-assisted CPU virtualization to guest OS
 * `internal_disk` - (*v2.7+*) A block providing internal disk of VM details
+* `os_type` - (*v2.9+*) Operating System type.
+* `hardware_version` - (*v2.9+*) Virtual Hardware Version (e.g.`vmx-14`, `vmx-13`, `vmx-12`, etc.).
+* `sizing_policy_id` (*v3.0+*, *vCD 10.0+*) VM sizing policy ID.
+
 
 See [VM resource](/docs/providers/vcd/r/vapp_vm.html#attribute-reference) for more info about VM attributes.

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 var TestAccVcdCatalog = "TestAccVcdCatalogBasic"
@@ -30,9 +30,9 @@ func TestAccVcdCatalogBasic(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckCatalogDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckCatalogDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -45,7 +45,7 @@ func TestAccVcdCatalogBasic(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				ResourceName:      "vcd_catalog." + TestAccVcdCatalog + "-import",
+				ResourceName:      "vcd_catalog." + TestAccVcdCatalog,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgObject(testConfig, TestAccVcdCatalog),

@@ -40,38 +40,12 @@ $ cd terraform-provider-vcd/
 $ make build
 ```
 
-Building The Provider (the old [vendor](https://golang.org/cmd/go/#hdr-Vendor_Directories) way)
---------------------------------------
-
-Prior to version 2.1 provider used Go vendor directory for dependency management. This method is not recommended
-anymore, but can be used to build provider on Go versions < 1.11.
-
-Clone repository to: `$GOPATH/src/github.com/terraform-providers/terraform-provider-vcd`
-
-```sh
-$ mkdir -p $GOPATH/src/github.com/terraform-providers; cd $GOPATH/src/github.com/terraform-providers
-$ git clone https://github.com/vmware/terraform-provider-vcd.git
-```
-
-Enter the provider directory and build the provider
-
-```sh
-$ cd $GOPATH/src/github.com/terraform-providers/terraform-provider-vcd
-$ make build
-```
-
-
 Developing the Provider
 ---------------------------
 
-Starting with terraform-provider-vcd version 2.1 Go modules are used, while `vendor` directory is left for backwards
-compatibility only. This means a few things:
+Starting with terraform-provider-vcd version 2.1 Go modules are used. This means a few things:
 * The code no longer needs to stay in your `GOPATH`. It can though -
 [see more](https://github.com/golang/go/wiki/Modules#how-to-use-modules) on how to use modules and toggle between modes.
-* `vendor` directory is __not to be changed manually__. Always use Go modules when introducing new dependencies
-and always rebuild the vendor directory using `go mod vendor` if you have changed `go.mod` or `go.sum`. Travis CI will
-catch and fail if it is not done. **Note** Go 1.14+ must be used for `go mod vendor` as starting with this version
-"/vendor" directory structure changed and Travis will fail if "/vendor" is built and commited with Go <1.12.
 * When developing `terraform-provider-vcd` one often needs to add extra stuff to `go-vcloud-director`. Go modules
 have a convenient [replace](https://github.com/golang/go/wiki/Modules#when-should-i-use-the-replace-directive)
 directive which can allow you to redirect import path to your own version of `go-vcloud-director`.

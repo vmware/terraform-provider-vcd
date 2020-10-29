@@ -11,8 +11,8 @@ import (
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccVcdLbServiceMonitor(t *testing.T) {
@@ -48,9 +48,9 @@ func TestAccVcdLbServiceMonitor(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		Providers:    testAccProviders,
-		PreCheck:     func() { testAccPreCheck(t) },
-		CheckDestroy: testAccCheckVcdLbServiceMonitorDestroy(params["ServiceMonitorName"].(string)),
+		ProviderFactories: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		CheckDestroy:      testAccCheckVcdLbServiceMonitorDestroy(params["ServiceMonitorName"].(string)),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -86,7 +86,7 @@ func TestAccVcdLbServiceMonitor(t *testing.T) {
 			},
 			// Check that import works
 			resource.TestStep{
-				ResourceName:      "vcd_lb_service_monitor.service-monitor-import",
+				ResourceName:      "vcd_lb_service_monitor.lb-service-monitor",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdEdgeGatewayObject(testConfig, testConfig.Networking.EdgeGateway, params["ServiceMonitorName"].(string)),
@@ -153,6 +153,7 @@ data "vcd_lb_service_monitor" "ds-lb-service-monitor" {
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
   name         = vcd_lb_service_monitor.lb-service-monitor.name
+  depends_on   = [vcd_lb_service_monitor.lb-service-monitor]
 }
 `
 

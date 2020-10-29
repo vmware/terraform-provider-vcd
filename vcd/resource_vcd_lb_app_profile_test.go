@@ -10,8 +10,8 @@ import (
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccVcdLBAppProfile(t *testing.T) {
@@ -57,9 +57,9 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		Providers:    testAccProviders,
-		PreCheck:     func() { testAccPreCheck(t) },
-		CheckDestroy: testAccCheckVcdLBAppProfileDestroy(params["AppProfileName"].(string)),
+		ProviderFactories: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		CheckDestroy:      testAccCheckVcdLBAppProfileDestroy(params["AppProfileName"].(string)),
 		Steps: []resource.TestStep{
 			resource.TestStep{ // TCP
 				Config: configText,
@@ -178,7 +178,7 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				ResourceName:      "vcd_lb_app_profile.imported",
+				ResourceName:      "vcd_lb_app_profile.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdEdgeGatewayObject(testConfig, testConfig.Networking.EdgeGateway, params["AppProfileName"].(string)),
@@ -224,6 +224,7 @@ data "vcd_lb_app_profile" "test" {
 	vdc          = "{{.Vdc}}"
 	edge_gateway = "{{.EdgeGateway}}"
 	name         = vcd_lb_app_profile.test.name
+	depends_on   = [vcd_lb_app_profile.test]
 }
 `
 
@@ -246,6 +247,7 @@ data "vcd_lb_app_profile" "test" {
 	vdc          = "{{.Vdc}}"
 	edge_gateway = "{{.EdgeGateway}}"
 	name         = vcd_lb_app_profile.test.name
+	depends_on   = [vcd_lb_app_profile.test]
 }
 `
 
@@ -270,6 +272,7 @@ data "vcd_lb_app_profile" "test" {
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
   name         = vcd_lb_app_profile.test.name
+  depends_on   = [vcd_lb_app_profile.test]
 }  
 `
 
@@ -292,6 +295,7 @@ data "vcd_lb_app_profile" "test" {
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
   name         = vcd_lb_app_profile.test.name
+  depends_on   = [vcd_lb_app_profile.test]
 }
 `
 
@@ -316,5 +320,6 @@ data "vcd_lb_app_profile" "test" {
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
   name         = vcd_lb_app_profile.test.name
+  depends_on   = [vcd_lb_app_profile.test]
 }
 `

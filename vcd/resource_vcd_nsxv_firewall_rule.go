@@ -9,9 +9,8 @@ import (
 
 	"text/tabwriter"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -900,5 +899,5 @@ func resourceVcdNsxvFirewallRuleServiceHash(v interface{}) int {
 	buf.WriteString(fmt.Sprintf("%s-", port))
 	buf.WriteString(fmt.Sprintf("%s-", sourcePort))
 
-	return hashcode.String(buf.String())
+	return hashcodeString(buf.String())
 }

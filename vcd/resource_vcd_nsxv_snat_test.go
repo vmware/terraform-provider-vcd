@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func TestAccVcdEdgeSnat(t *testing.T) {
@@ -34,9 +34,9 @@ func TestAccVcdEdgeSnat(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		Providers:    testAccProviders,
-		PreCheck:     func() { testAccPreCheck(t) },
-		CheckDestroy: testAccCheckVcdNatRuleDestroy("vcd_nsxv_snat.test"),
+		ProviderFactories: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		CheckDestroy:      testAccCheckVcdNatRuleDestroy("vcd_nsxv_snat.test"),
 		Steps: []resource.TestStep{
 			resource.TestStep{ // Step 0 - minimal configuration and data source
 				Config: configText,
@@ -81,7 +81,7 @@ func TestAccVcdEdgeSnat(t *testing.T) {
 				),
 			},
 			resource.TestStep{ // Step 2 - resource import
-				ResourceName:      "vcd_nsxv_snat.imported",
+				ResourceName:      "vcd_nsxv_snat.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdByResourceName("vcd_nsxv_snat.test"),

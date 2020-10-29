@@ -7,8 +7,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 var TestAccVcdCatalogItem = "TestAccVcdCatalogItemBasic"
@@ -38,9 +38,9 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 
 	resourceCatalogItem := "vcd_catalog_item." + TestAccVcdCatalogItem
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { preRunChecks(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckCatalogItemDestroy,
+		PreCheck:          func() { preRunChecks(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckCatalogItemDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,

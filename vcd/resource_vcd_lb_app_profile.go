@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
@@ -289,7 +289,7 @@ func setLBAppProfileData(d *schema.ResourceData, LBProfile *types.LbAppProfile) 
 		d.Set("persistence_mechanism", "")
 		d.Set("cookie_name", "")
 		d.Set("cookie_mode", "")
-		d.Set("expiration", "")
+		d.Set("expiration", 0)
 	}
 
 	if LBProfile.HttpRedirect != nil {
