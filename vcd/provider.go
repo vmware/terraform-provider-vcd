@@ -5,9 +5,8 @@ import (
 	"os"
 	"regexp"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
@@ -108,7 +107,7 @@ var globalResourceMap = map[string]*schema.Resource{
 }
 
 // Provider returns a terraform.ResourceProvider.
-func Provider() terraform.ResourceProvider {
+func Provider() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"user": &schema.Schema{

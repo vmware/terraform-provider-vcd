@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 // Test catalog and catalog item data sources
@@ -39,9 +39,9 @@ func TestAccVcdCatalogAndItemDatasource(t *testing.T) {
 	datasourceCatalogItem := "data.vcd_catalog_item." + testSuiteCatalogOVAItem
 	resourceCatalogItem := "vcd_catalog_item." + TestCatalogItemDS
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { preRunChecks(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: catalogItemDestroyed(testSuiteCatalogName, TestCatalogItemDS),
+		PreCheck:          func() { preRunChecks(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      catalogItemDestroyed(testSuiteCatalogName, TestCatalogItemDS),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -64,7 +64,7 @@ func TestAccVcdCatalogAndItemDatasource(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				ResourceName:      "vcd_catalog_item." + TestCatalogItemDS + "-import",
+				ResourceName:      "vcd_catalog_item." + TestCatalogItemDS,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgCatalogObject(testConfig, TestCatalogItemDS),

@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 // TestAccVcdVappOrgNetworkDS tests a vApp org network data source if a vApp is found in the VDC
@@ -35,8 +35,8 @@ func TestAccVcdVappOrgNetworkDS(t *testing.T) {
 	}
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -52,7 +52,7 @@ func testCheckVappOrgNetworkNonStringOutputs(retainIpMacEnabled bool) resource.T
 	return func(s *terraform.State) error {
 		outputs := s.RootModule().Outputs
 
-		if outputs["retain_ip_mac_enabled"].Value != retainIpMacEnabled {
+		if outputs["retain_ip_mac_enabled"].Value != fmt.Sprintf("%v", retainIpMacEnabled) {
 			return fmt.Errorf("retain_ip_mac_enabled value didn't match")
 		}
 
@@ -94,6 +94,7 @@ resource "vcd_vapp_org_network" "createVappOrgNetwork" {
 data "vcd_vapp_org_network" "network-ds" {
   vapp_name        = "{{.vappName}}"
   org_network_name = vcd_vapp_org_network.createVappOrgNetwork.org_network_name
+  depends_on 	   = [vcd_vapp_org_network.createVappOrgNetwork]
 }
 
 output "retain_ip_mac_enabled" {

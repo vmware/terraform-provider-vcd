@@ -5,7 +5,7 @@ package vcd
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
@@ -59,9 +59,9 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdVAppVmDestroy(netVappName),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdVAppVmDestroy(netVappName),
 		Steps: []resource.TestStep{
 			// Step 0 - Create with variations of all possible NICs
 			resource.TestStep{

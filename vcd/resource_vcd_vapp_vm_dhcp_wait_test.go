@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
@@ -45,9 +45,9 @@ func TestAccVcdVAppVmDhcpWait(t *testing.T) {
 	skipEnvVar := "VCD_SKIP_DHCP_CHECK"
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVM)
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdVAppVmDestroy(netVappName),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdVAppVmDestroy(netVappName),
 		Steps: []resource.TestStep{
 			// Step 0 - Create with variations of all possible NICs
 			resource.TestStep{
@@ -179,8 +179,9 @@ data "vcd_vapp_vm" "ds" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
-  vapp_name     = vcd_vapp.{{.VAppName}}.name
-  name          = vcd_vapp_vm.{{.VMName}}.name
+  vapp_name                 = vcd_vapp.{{.VAppName}}.name
+  name                      = vcd_vapp_vm.{{.VMName}}.name
   network_dhcp_wait_seconds = {{.DhcpWaitSeconds}}
+  depends_on                = [vcd_vapp_vm.{{.VMName}}]
 }
 `

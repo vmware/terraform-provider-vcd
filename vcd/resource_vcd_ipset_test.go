@@ -9,8 +9,8 @@ import (
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccVcdIpSet(t *testing.T) {
@@ -39,9 +39,9 @@ func TestAccVcdIpSet(t *testing.T) {
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		Providers:    testAccProviders,
-		PreCheck:     func() { testAccPreCheck(t) },
-		CheckDestroy: testAccCheckVcdIpSetDestroy("vcd_nsxv_ip_set.test-ipset", params["IpSetName"].(string)),
+		ProviderFactories: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		CheckDestroy:      testAccCheckVcdIpSetDestroy("vcd_nsxv_ip_set.test-ipset", params["IpSetName"].(string)),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -51,8 +51,8 @@ func TestAccVcdIpSet(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxv_ip_set.test-ipset", "description", "test-ip-set-description"),
 					resource.TestCheckResourceAttr("vcd_nsxv_ip_set.test-ipset", "is_inheritance_allowed", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxv_ip_set.test-ipset", "ip_addresses.#", "2"),
-					resource.TestCheckResourceAttr("vcd_nsxv_ip_set.test-ipset", "ip_addresses.2555711295", "192.168.1.1"),
-					resource.TestCheckResourceAttr("vcd_nsxv_ip_set.test-ipset", "ip_addresses.2329977041", "192.168.2.1"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxv_ip_set.test-ipset", "ip_addresses.*", "192.168.1.1"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxv_ip_set.test-ipset", "ip_addresses.*", "192.168.2.1"),
 
 					// Validate that datasource has all the same fields
 					resourceFieldsEqual("vcd_nsxv_ip_set.test-ipset", "data.vcd_nsxv_ip_set.test-ipset", []string{}),
@@ -66,15 +66,15 @@ func TestAccVcdIpSet(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxv_ip_set.test-ipset", "is_inheritance_allowed", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxv_ip_set.test-ipset", "description", "test-ip-set-changed-description"),
 					resource.TestCheckResourceAttr("vcd_nsxv_ip_set.test-ipset", "ip_addresses.#", "2"),
-					resource.TestCheckResourceAttr("vcd_nsxv_ip_set.test-ipset", "ip_addresses.1441693733", "10.10.10.1"),
-					resource.TestCheckResourceAttr("vcd_nsxv_ip_set.test-ipset", "ip_addresses.2766637002", "11.11.11.1"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxv_ip_set.test-ipset", "ip_addresses.*", "10.10.10.1"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxv_ip_set.test-ipset", "ip_addresses.*", "11.11.11.1"),
 
 					// Validate that datasource has all the same fields
 					resourceFieldsEqual("vcd_nsxv_ip_set.test-ipset", "data.vcd_nsxv_ip_set.test-ipset", []string{}),
 				),
 			},
 			resource.TestStep{
-				ResourceName:      "vcd_nsxv_ip_set.imported",
+				ResourceName:      "vcd_nsxv_ip_set.test-ipset",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, "TestAccVcdIpSet-changed"),
@@ -87,8 +87,8 @@ func TestAccVcdIpSet(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxv_ip_set.test-ipset", "is_inheritance_allowed", "false"),
 					resource.TestCheckResourceAttr("vcd_nsxv_ip_set.test-ipset", "description", "test-ip-set-changed-description"),
 					resource.TestCheckResourceAttr("vcd_nsxv_ip_set.test-ipset", "ip_addresses.#", "2"),
-					resource.TestCheckResourceAttr("vcd_nsxv_ip_set.test-ipset", "ip_addresses.2083356021", "1.1.1.1/24"),
-					resource.TestCheckResourceAttr("vcd_nsxv_ip_set.test-ipset", "ip_addresses.3684382799", "10.10.10.100-10.10.10.110"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxv_ip_set.test-ipset", "ip_addresses.*", "1.1.1.1/24"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxv_ip_set.test-ipset", "ip_addresses.*", "10.10.10.100-10.10.10.110"),
 					// Validate that datasource has all the same fields
 					resourceFieldsEqual("vcd_nsxv_ip_set.test-ipset", "data.vcd_nsxv_ip_set.test-ipset", []string{}),
 				),
@@ -102,8 +102,8 @@ func TestAccVcdIpSet(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxv_ip_set.test-ipset", "is_inheritance_allowed", "false"),
 					resource.TestCheckResourceAttr("vcd_nsxv_ip_set.test-ipset", "description", "test-ip-set-changed-description"),
 					resource.TestCheckResourceAttr("vcd_nsxv_ip_set.test-ipset", "ip_addresses.#", "2"),
-					resource.TestCheckResourceAttr("vcd_nsxv_ip_set.test-ipset", "ip_addresses.2083356021", "1.1.1.1/24"),
-					resource.TestCheckResourceAttr("vcd_nsxv_ip_set.test-ipset", "ip_addresses.3684382799", "10.10.10.100-10.10.10.110"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxv_ip_set.test-ipset", "ip_addresses.*", "1.1.1.1/24"),
+					resource.TestCheckTypeSetElemAttr("vcd_nsxv_ip_set.test-ipset", "ip_addresses.*", "10.10.10.100-10.10.10.110"),
 					// Validate that datasource has all the same fields
 					resourceFieldsEqual("vcd_nsxv_ip_set.test-ipset", "data.vcd_nsxv_ip_set.test-ipset", []string{}),
 				),
@@ -153,6 +153,7 @@ data "vcd_nsxv_ip_set" "test-ipset" {
 	vdc          = "{{.Vdc}}"
   
 	name         = vcd_nsxv_ip_set.test-ipset.name
+	depends_on   = [vcd_nsxv_ip_set.test-ipset]
 }
 `
 
@@ -171,6 +172,7 @@ data "vcd_nsxv_ip_set" "test-ipset" {
 	vdc          = "{{.Vdc}}"
   
 	name         = vcd_nsxv_ip_set.test-ipset.name
+	depends_on   = [vcd_nsxv_ip_set.test-ipset]
 }
 `
 
@@ -190,5 +192,6 @@ data "vcd_nsxv_ip_set" "test-ipset" {
 	vdc          = "{{.Vdc}}"
   
 	name         = vcd_nsxv_ip_set.test-ipset.name
+	depends_on   = [vcd_nsxv_ip_set.test-ipset]
 }
 `

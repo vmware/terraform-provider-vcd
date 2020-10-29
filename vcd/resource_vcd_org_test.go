@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
@@ -38,9 +38,9 @@ func TestAccVcdOrgBasic(t *testing.T) {
 
 	resourceName := "vcd_org." + orgNameTestAccVcdOrg
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckOrgDestroy(orgNameTestAccVcdOrg),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckOrgDestroy(orgNameTestAccVcdOrg),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -197,9 +197,9 @@ func TestAccVcdOrgFull(t *testing.T) {
 
 		resourceName := "vcd_org." + od.name
 		resource.Test(t, resource.TestCase{
-			PreCheck:     func() { testAccPreCheck(t) },
-			Providers:    testAccProviders,
-			CheckDestroy: testAccCheckOrgDestroy(od.name),
+			PreCheck:          func() { testAccPreCheck(t) },
+			ProviderFactories: testAccProviders,
+			CheckDestroy:      testAccCheckOrgDestroy(od.name),
 			Steps: []resource.TestStep{
 				resource.TestStep{
 					Config: configText,
@@ -253,7 +253,7 @@ func TestAccVcdOrgFull(t *testing.T) {
 					),
 				},
 				resource.TestStep{
-					ResourceName:      resourceName + "-import",
+					ResourceName:      resourceName,
 					ImportState:       true,
 					ImportStateVerify: true,
 					ImportStateIdFunc: importStateIdTopHierarchy(od.name),

@@ -11,8 +11,8 @@ import (
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func TestAccVcdLBAppRule(t *testing.T) {
@@ -64,9 +64,9 @@ acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifoth
 	}
 
 	resource.ParallelTest(t, resource.TestCase{
-		Providers:    testAccProviders,
-		PreCheck:     func() { testAccPreCheck(t) },
-		CheckDestroy: testAccCheckVcdLBAppRuleDestroy(params["AppRuleName"].(string)),
+		ProviderFactories: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		CheckDestroy:      testAccCheckVcdLBAppRuleDestroy(params["AppRuleName"].(string)),
 		Steps: []resource.TestStep{
 			resource.TestStep{ // Single Line Script
 				Config: configText,
@@ -97,7 +97,7 @@ acl other_page2 url_beg / other2 redirect location https://www.other2.com/ ifoth
 			},
 
 			resource.TestStep{
-				ResourceName:      "vcd_lb_app_rule.imported",
+				ResourceName:      "vcd_lb_app_rule.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdEdgeGatewayObject(testConfig, testConfig.Networking.EdgeGateway, params["AppRuleName"].(string)),
@@ -152,6 +152,7 @@ data "vcd_lb_app_rule" "test" {
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
   name         = vcd_lb_app_rule.test.name
+  depends_on   = [vcd_lb_app_rule.test]
 }  
 `
 
@@ -170,6 +171,7 @@ data "vcd_lb_app_rule" "test" {
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
   name         = vcd_lb_app_rule.test.name
+  depends_on   = [vcd_lb_app_rule.test]
 } 
 `
 
@@ -190,6 +192,7 @@ data "vcd_lb_app_rule" "test" {
   vdc          = "{{.Vdc}}"
   edge_gateway = "{{.EdgeGateway}}"
   name         = vcd_lb_app_rule.test.name
+  depends_on   = [vcd_lb_app_rule.test]
 }
 
 `

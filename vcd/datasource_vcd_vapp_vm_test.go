@@ -5,7 +5,7 @@ package vcd
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 // TestAccVcdVappDS tests a VM data source if a vApp + VM is found in the VDC
@@ -26,8 +26,8 @@ func TestAccVcdVappVmDS(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -77,5 +77,6 @@ data "vcd_vapp_vm" "vm-ds" {
   vapp_name        = vcd_vapp.web.name
   org              = "{{.Org}}"
   vdc              = "{{.VDC}}"
+  depends_on       = [vcd_vapp_vm.web1]
 }
 `

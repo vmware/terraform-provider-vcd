@@ -4,11 +4,12 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/vmware/go-vcloud-director/v2/govcd"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 const vappNameForNetworkTest = "TestAccVappForNetworkTest"
@@ -130,9 +131,9 @@ func runVappNetworkTest(t *testing.T, params StringMap) {
 
 	resourceName := "vcd_vapp_network." + params["resourceName"].(string)
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVappNetworkDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVappNetworkDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -154,20 +155,17 @@ func runVappNetworkTest(t *testing.T, params StringMap) {
 						resourceName, "dns_suffix", dnsSuffix),
 					resource.TestCheckResourceAttr(
 						resourceName, "guest_vlan_allowed", guestVlanAllowed),
-					resource.TestCheckResourceAttr(
-						resourceName, "static_ip_pool.2802459930.start_address", params["startAddress"].(string)),
-					resource.TestCheckResourceAttr(
-						resourceName, "static_ip_pool.2802459930.end_address", params["endAddress"].(string)),
-					resource.TestCheckResourceAttr(
-						resourceName, "dhcp_pool.3992831158.start_address", params["dhcpStartAddress"].(string)),
-					resource.TestCheckResourceAttr(
-						resourceName, "dhcp_pool.3992831158.end_address", params["dhcpEndAddress"].(string)),
-					resource.TestCheckResourceAttr(
-						resourceName, "dhcp_pool.3992831158.enabled", params["dhcpEnabled"].(string)),
-					resource.TestCheckResourceAttr(
-						resourceName, "dhcp_pool.3992831158.default_lease_time", params["defaultLeaseTime"].(string)),
-					resource.TestCheckResourceAttr(
-						resourceName, "dhcp_pool.3992831158.max_lease_time", params["maxLeaseTime"].(string)),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "static_ip_pool.*", map[string]string{
+						"start_address": params["startAddress"].(string),
+						"end_address":   params["endAddress"].(string),
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "dhcp_pool.*", map[string]string{
+						"start_address":      params["dhcpStartAddress"].(string),
+						"end_address":        params["dhcpEndAddress"].(string),
+						"enabled":            params["dhcpEnabled"].(string),
+						"default_lease_time": params["defaultLeaseTime"].(string),
+						"max_lease_time":     params["maxLeaseTime"].(string),
+					}),
 					resource.TestCheckResourceAttr(
 						resourceName, "org_network_name", params["orgNetwork"].(string)),
 					resource.TestCheckResourceAttr(
@@ -194,20 +192,17 @@ func runVappNetworkTest(t *testing.T, params StringMap) {
 						resourceName, "dns_suffix", params["dnsSuffixForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
 						resourceName, "guest_vlan_allowed", params["guestVlanAllowedForUpdate"].(string)),
-					resource.TestCheckResourceAttr(
-						resourceName, "static_ip_pool.132829107.start_address", params["startAddressForUpdate"].(string)),
-					resource.TestCheckResourceAttr(
-						resourceName, "static_ip_pool.132829107.end_address", params["endAddressForUpdate"].(string)),
-					resource.TestCheckResourceAttr(
-						resourceName, "dhcp_pool.4252262036.start_address", params["dhcpStartAddressForUpdate"].(string)),
-					resource.TestCheckResourceAttr(
-						resourceName, "dhcp_pool.4252262036.end_address", params["dhcpEndAddressForUpdate"].(string)),
-					resource.TestCheckResourceAttr(
-						resourceName, "dhcp_pool.4252262036.enabled", params["dhcpEnabledForUpdate"].(string)),
-					resource.TestCheckResourceAttr(
-						resourceName, "dhcp_pool.4252262036.default_lease_time", params["defaultLeaseTimeForUpdate"].(string)),
-					resource.TestCheckResourceAttr(
-						resourceName, "dhcp_pool.4252262036.max_lease_time", params["maxLeaseTimeForUpdate"].(string)),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "static_ip_pool.*", map[string]string{
+						"start_address": params["startAddressForUpdate"].(string),
+						"end_address":   params["endAddressForUpdate"].(string),
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "dhcp_pool.*", map[string]string{
+						"start_address":      params["dhcpStartAddressForUpdate"].(string),
+						"end_address":        params["dhcpEndAddressForUpdate"].(string),
+						"enabled":            params["dhcpEnabledForUpdate"].(string),
+						"default_lease_time": params["defaultLeaseTimeForUpdate"].(string),
+						"max_lease_time":     params["maxLeaseTimeForUpdate"].(string),
+					}),
 					resource.TestCheckResourceAttr(
 						resourceName, "org_network_name", params["orgNetworkForUpdate"].(string)),
 					resource.TestCheckResourceAttr(
@@ -215,7 +210,7 @@ func runVappNetworkTest(t *testing.T, params StringMap) {
 				),
 			},
 			resource.TestStep{
-				ResourceName:      resourceName + "-import",
+				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdVappObject(testConfig, params["vappName"].(string), params["vappNetworkName"].(string)),

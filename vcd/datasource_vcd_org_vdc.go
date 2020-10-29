@@ -4,15 +4,13 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func datasourceVcdOrgVdc() *schema.Resource {
 	capacityWithUsage := schema.Schema{
 		Type:     schema.TypeList,
 		Computed: true,
-		MinItems: 1,
-		MaxItems: 1,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"allocated": {
@@ -61,8 +59,6 @@ func datasourceVcdOrgVdc() *schema.Resource {
 			},
 			"compute_capacity": &schema.Schema{
 				Computed: true,
-				MinItems: 1,
-				MaxItems: 1,
 				Type:     schema.TypeList,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -95,7 +91,6 @@ func datasourceVcdOrgVdc() *schema.Resource {
 			"storage_profile": &schema.Schema{
 				Type:     schema.TypeList,
 				Computed: true,
-				MinItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {

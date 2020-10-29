@@ -9,9 +9,9 @@ import (
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func TestAccVcdExternalNetworkV2NsxtVrf(t *testing.T) {
@@ -67,9 +67,9 @@ func testAccVcdExternalNetworkV2Nsxt(t *testing.T, nsxtTier0Router string) {
 	}
 	resourceName := "vcd_external_network_v2.ext-net-nsxt"
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckExternalNetworkDestroyV2(t.Name()),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckExternalNetworkDestroyV2(t.Name()),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -79,33 +79,42 @@ func testAccVcdExternalNetworkV2Nsxt(t *testing.T, nsxtTier0Router string) {
 					resource.TestCheckResourceAttr(resourceName, "vsphere_network.#", "0"),
 					resource.TestCheckResourceAttr(resourceName, "nsxt_network.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "ip_scope.#", "2"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.1420917927.dns1", ""),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.1420917927.dns2", ""),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.1420917927.dns_suffix", ""),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.1420917927.enabled", "false"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.1420917927.gateway", "192.168.30.49"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.1420917927.prefix_length", "24"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.1420917927.static_ip_pool.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.1420917927.static_ip_pool.1203345861.end_address", "192.168.30.62"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.1420917927.static_ip_pool.1203345861.start_address", "192.168.30.51"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.3421983869.dns1", ""),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.3421983869.dns2", ""),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.3421983869.dns_suffix", ""),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.3421983869.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.3421983869.gateway", "14.14.14.1"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.3421983869.prefix_length", "24"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.3421983869.static_ip_pool.#", "2"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.3421983869.static_ip_pool.2275320158.end_address", "14.14.14.25"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.3421983869.static_ip_pool.2275320158.start_address", "14.14.14.20"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.3421983869.static_ip_pool.550532203.end_address", "14.14.14.15"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.3421983869.static_ip_pool.550532203.start_address", "14.14.14.10"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*", map[string]string{
+						"dns1":          "",
+						"dns2":          "",
+						"dns_suffix":    "",
+						"enabled":       "false",
+						"gateway":       "192.168.30.49",
+						"prefix_length": "24",
+					}),
+
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*.static_ip_pool.*", map[string]string{
+						"start_address": "192.168.30.51",
+						"end_address":   "192.168.30.62",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*", map[string]string{
+						"dns1":          "",
+						"dns2":          "",
+						"dns_suffix":    "",
+						"enabled":       "true",
+						"gateway":       "14.14.14.1",
+						"prefix_length": "24",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*.static_ip_pool.*", map[string]string{
+						"start_address": "14.14.14.20",
+						"end_address":   "14.14.14.25",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*.static_ip_pool.*", map[string]string{
+						"start_address": "14.14.14.10",
+						"end_address":   "14.14.14.15",
+					}),
 					resource.TestCheckResourceAttr(resourceName, "nsxt_network.#", "1"),
 					testCheckMatchOutput("nsxt-manager", regexp.MustCompile("^urn:vcloud:nsxtmanager:.*")),
 					testCheckOutputNonEmpty("nsxt-tier0-router"), // Match any non empty string
 				),
 			},
 			resource.TestStep{
-				ResourceName:      resourceName + "-import",
+				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdTopHierarchy(t.Name()),
@@ -118,36 +127,21 @@ func testAccVcdExternalNetworkV2Nsxt(t *testing.T, nsxtTier0Router string) {
 					resource.TestCheckResourceAttr(resourceName, "vsphere_network.#", "0"),
 					resource.TestCheckResourceAttr(resourceName, "nsxt_network.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "ip_scope.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.1428757071.dns1", ""),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.1428757071.dns2", ""),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.1428757071.dns_suffix", ""),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.1428757071.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.1428757071.gateway", "192.168.30.49"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.1428757071.prefix_length", "24"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.1428757071.static_ip_pool.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.1428757071.static_ip_pool.1203345861.end_address", "192.168.30.62"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.1428757071.static_ip_pool.1203345861.start_address", "192.168.30.51"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*", map[string]string{
+						"dns1":          "",
+						"dns2":          "",
+						"dns_suffix":    "",
+						"enabled":       "true",
+						"gateway":       "192.168.30.49",
+						"prefix_length": "24",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*.static_ip_pool.*", map[string]string{
+						"start_address": "192.168.30.51",
+						"end_address":   "192.168.30.62",
+					}),
 					resource.TestCheckResourceAttr(resourceName, "nsxt_network.#", "1"),
 					testCheckMatchOutput("nsxt-manager", regexp.MustCompile("^urn:vcloud:nsxtmanager:.*")),
 					testCheckOutputNonEmpty("nsxt-tier0-router"), // Match any non empty string
-
-					// Data source
-					resource.TestCheckResourceAttrPair(resourceName, "name", "data."+resourceName, "name"),
-					resource.TestCheckResourceAttrPair(resourceName, "description", "data."+resourceName, "description"),
-					resource.TestCheckResourceAttrPair(resourceName, "ip_scope.#", "data."+resourceName, "ip_scope.#"),
-					resource.TestCheckResourceAttrPair(resourceName, "ip_scope.1428757071.dns1", "data."+resourceName, "ip_scope.1428757071.dns1"),
-					resource.TestCheckResourceAttrPair(resourceName, "ip_scope.1428757071.dns2", "data."+resourceName, "ip_scope.1428757071.dns2"),
-					resource.TestCheckResourceAttrPair(resourceName, "ip_scope.1428757071.dns_suffix", "data."+resourceName, "ip_scope.1428757071.dns_suffix"),
-					resource.TestCheckResourceAttrPair(resourceName, "ip_scope.1428757071.enabled", "data."+resourceName, "ip_scope.1428757071.enabled"),
-					resource.TestCheckResourceAttrPair(resourceName, "ip_scope.1428757071.gateway", "data."+resourceName, "ip_scope.1428757071.gateway"),
-					resource.TestCheckResourceAttrPair(resourceName, "ip_scope.1428757071.prefix_length", "data."+resourceName, "ip_scope.1428757071.prefix_length"),
-					resource.TestCheckResourceAttrPair(resourceName, "ip_scope.1428757071.static_ip_pool.#", "data."+resourceName, "ip_scope.1428757071.static_ip_pool.#"),
-					resource.TestCheckResourceAttrPair(resourceName, "ip_scope.1428757071.static_ip_pool.1203345861.end_address", "data."+resourceName, "ip_scope.1428757071.static_ip_pool.1203345861.end_address"),
-					resource.TestCheckResourceAttrPair(resourceName, "ip_scope.1428757071.static_ip_pool.1203345861.start_address", "data."+resourceName, "ip_scope.1428757071.static_ip_pool.1203345861.start_address"),
-					resource.TestCheckResourceAttrPair(resourceName, "vsphere_network.#", "data."+resourceName, "vsphere_network.#"),
-					resource.TestCheckResourceAttrPair(resourceName, "nsxt_network.#", "data."+resourceName, "nsxt_network.#"),
-					resource.TestMatchResourceAttr("data."+resourceName, "nsxt_network.0.nsxt_manager_id", regexp.MustCompile("^urn:vcloud:nsxtmanager:.*")),
-					resource.TestCheckResourceAttrSet("data."+resourceName, "nsxt_network.0.nsxt_tier0_router_id"),
 				),
 			},
 		},
@@ -234,10 +228,6 @@ resource "vcd_external_network_v2" "ext-net-nsxt" {
   }
 }
 
-data "vcd_external_network_v2" "ext-net-nsxt" {
-	name = vcd_external_network_v2.ext-net-nsxt.name
-}
-
 output "nsxt-manager" {
   value = tolist(vcd_external_network_v2.ext-net-nsxt.nsxt_network)[0].nsxt_manager_id
 }
@@ -286,9 +276,9 @@ func TestAccVcdExternalNetworkV2Nsxv(t *testing.T) {
 
 	resourceName := "vcd_external_network_v2.ext-net-nsxv"
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckExternalNetworkDestroyV2(t.Name()),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckExternalNetworkDestroyV2(t.Name()),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -296,15 +286,19 @@ func TestAccVcdExternalNetworkV2Nsxv(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
 					resource.TestCheckResourceAttr(resourceName, "description", description),
 					resource.TestCheckResourceAttr(resourceName, "ip_scope.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.2118535427.dns1", "192.168.0.164"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.2118535427.dns2", "192.168.0.196"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.2118535427.dns_suffix", "company.biz"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.2118535427.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.2118535427.gateway", "192.168.30.49"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.2118535427.prefix_length", "24"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.2118535427.static_ip_pool.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.2118535427.static_ip_pool.1203345861.end_address", "192.168.30.62"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.2118535427.static_ip_pool.1203345861.start_address", "192.168.30.51"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*", map[string]string{
+						"dns1":          "192.168.0.164",
+						"dns2":          "192.168.0.196",
+						"dns_suffix":    "company.biz",
+						"enabled":       "true",
+						"gateway":       "192.168.30.49",
+						"prefix_length": "24",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.0.static_ip_pool.*", map[string]string{
+						"start_address": "192.168.30.51",
+						"end_address":   "192.168.30.62",
+					}),
+					resource.TestCheckResourceAttr(resourceName, "ip_scope.0.static_ip_pool.#", "1"),
 					resource.TestCheckResourceAttr(resourceName, "nsxt_network.#", "0"),
 					resource.TestCheckResourceAttr(resourceName, "vsphere_network.#", "1"),
 					testCheckOutputNonEmpty("vcenter-id"),   // Match any non empty string
@@ -317,24 +311,33 @@ func TestAccVcdExternalNetworkV2Nsxv(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
 					resource.TestCheckResourceAttr(resourceName, "description", description),
 					resource.TestCheckResourceAttr(resourceName, "ip_scope.#", "2"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.2145267691.dns1", "192.168.0.164"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.2145267691.dns2", "192.168.0.196"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.2145267691.dns_suffix", "company.biz"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.2145267691.enabled", "false"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.2145267691.gateway", "192.168.30.49"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.2145267691.prefix_length", "24"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.2145267691.static_ip_pool.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.2145267691.static_ip_pool.1203345861.end_address", "192.168.30.62"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.2145267691.static_ip_pool.1203345861.start_address", "192.168.30.51"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.801323554.dns1", "8.8.8.8"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.801323554.dns2", "8.8.4.4"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.801323554.dns_suffix", "asd.biz"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.801323554.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.801323554.gateway", "88.88.88.1"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.801323554.prefix_length", "24"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.801323554.static_ip_pool.#", "1"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.801323554.static_ip_pool.2396875145.end_address", "88.88.88.100"),
-					resource.TestCheckResourceAttr(resourceName, "ip_scope.801323554.static_ip_pool.2396875145.start_address", "88.88.88.10"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*", map[string]string{
+						"dns1":          "192.168.0.164",
+						"dns2":          "192.168.0.196",
+						"dns_suffix":    "company.biz",
+						"enabled":       "false",
+						"gateway":       "192.168.30.49",
+						"prefix_length": "24",
+					}),
+					resource.TestCheckResourceAttr(resourceName, "ip_scope.0.static_ip_pool.#", "1"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*.static_ip_pool.*", map[string]string{
+						"start_address": "192.168.30.51",
+						"end_address":   "192.168.30.62",
+					}),
+
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*", map[string]string{
+						"dns1":          "8.8.8.8",
+						"dns2":          "8.8.4.4",
+						"dns_suffix":    "asd.biz",
+						"enabled":       "true",
+						"gateway":       "88.88.88.1",
+						"prefix_length": "24",
+					}),
+					resource.TestCheckResourceAttr(resourceName, "ip_scope.0.static_ip_pool.#", "1"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*.static_ip_pool.*", map[string]string{
+						"start_address": "88.88.88.10",
+						"end_address":   "88.88.88.100",
+					}),
 					resource.TestCheckResourceAttr(resourceName, "nsxt_network.#", "0"),
 					resource.TestCheckResourceAttr(resourceName, "vsphere_network.#", "1"),
 					testCheckMatchOutput("vcenter-id", regexp.MustCompile("^urn:vcloud:vimserver:.*")),
@@ -342,7 +345,7 @@ func TestAccVcdExternalNetworkV2Nsxv(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				ResourceName:      resourceName + "-import",
+				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdTopHierarchy(t.Name()),

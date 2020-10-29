@@ -1,5 +1,6 @@
 package vcd
 
+//lint:file-ignore SA1019 ignore deprecated functions
 import (
 	"fmt"
 	"log"
@@ -8,8 +9,8 @@ import (
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 var networkV2IpScope = &schema.Resource{
