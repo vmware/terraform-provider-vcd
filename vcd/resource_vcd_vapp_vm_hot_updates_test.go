@@ -24,6 +24,10 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 		fmt.Println("Warning: `MediaName` is not configured: boot image won't be tested.")
 	}
 
+	if testConfig.VCD.ProviderVdc.StorageProfile1 == "" || testConfig.VCD.ProviderVdc.StorageProfile2 == "" {
+		t.Skip("Variable estConfig.VCD.ProviderVdc.StorageProfile1 and estConfig.VCD.ProviderVdc.StorageProfile2 must be configured")
+	}
+
 	var params = StringMap{
 		"Org":             testConfig.VCD.Org,
 		"Vdc":             testConfig.VCD.Vdc,
