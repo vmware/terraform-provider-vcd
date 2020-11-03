@@ -18,6 +18,11 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 		t.Skip("VM internal disks tests requires system admin privileges")
 		return
 	}
+
+	if testConfig.VCD.ProviderVdc.StorageProfile1 == "" || testConfig.VCD.ProviderVdc.StorageProfile2 == "" {
+		t.Skip("Both variables testConfig.VCD.ProviderVdc.StorageProfile1 and testConfig.VCD.ProviderVdc.StorageProfile2 must be set")
+	}
+
 	internalDiskSize := 20000
 	storageProfile := testConfig.VCD.ProviderVdc.StorageProfile1
 	diskResourceName := "disk1"
