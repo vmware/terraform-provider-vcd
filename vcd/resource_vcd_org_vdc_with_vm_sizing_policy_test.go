@@ -38,7 +38,7 @@ func TestAccVcdOrgVdcWithVmSizingPolicy(t *testing.T) {
 		"Limit":                     "1024",
 		"LimitIncreased":            "1124",
 		"AllocatedIncreased":        "1124",
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile1,
+		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  t.Name(),
 		"MemoryGuaranteed":          "0.5",
@@ -96,7 +96,7 @@ func TestAccVcdOrgVdcWithVmSizingPolicy(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "metadata.vdc_metadata", "VDC Metadata"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.name", testConfig.VCD.ProviderVdc.StorageProfile1),
+						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.name", testConfig.VCD.ProviderVdc.StorageProfile),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.enabled", "true"),
 					resource.TestCheckResourceAttr(
@@ -157,7 +157,7 @@ func TestAccVcdOrgVdcWithVmSizingPolicy(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "metadata.vdc_metadata", "VDC Metadata"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.name", testConfig.VCD.ProviderVdc.StorageProfile1),
+						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.name", testConfig.VCD.ProviderVdc.StorageProfile),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+TestAccVcdVdc, "storage_profile.0.enabled", "true"),
 					resource.TestCheckResourceAttr(

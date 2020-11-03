@@ -29,7 +29,7 @@ func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 		"Limit":                     "1024",
 		"LimitIncreased":            "1100",
 		"AllocatedIncreased":        "1100",
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile1,
+		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  t.Name(),
 		// cause vDC ignores empty values and use default
@@ -72,7 +72,7 @@ func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 		"Limit":                     "2048",
 		"LimitIncreased":            "2148",
 		"AllocatedIncreased":        "2148",
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile1,
+		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  t.Name(),
 		"MemoryGuaranteed":          "0.3",
@@ -114,7 +114,7 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 		"Limit":                     "2048",
 		"LimitIncreased":            "2148",
 		"AllocatedIncreased":        "0",
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile1,
+		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  t.Name(),
 		"MemoryGuaranteed":          "0.5",
@@ -157,7 +157,7 @@ func TestAccVcdOrgVdcAllocationFlex(t *testing.T) {
 		"Limit":                     "1024",
 		"LimitIncreased":            "1124",
 		"AllocatedIncreased":        "1124",
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile1,
+		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"Tags":                      "vdc",
 		"FuncName":                  t.Name(),
 		"MemoryGuaranteed":          "0.5",
@@ -188,8 +188,8 @@ func validateConfiguration(t *testing.T) {
 		t.Skip("Variable providerVdc.NetworkPool must be set to run VDC tests")
 	}
 
-	if testConfig.VCD.ProviderVdc.StorageProfile1 == "" {
-		t.Skip("Variable providerVdc.StorageProfile1 must be set to run VDC tests")
+	if testConfig.VCD.ProviderVdc.StorageProfile == "" {
+		t.Skip("Variable providerVdc.StorageProfile must be set to run VDC tests")
 	}
 
 }

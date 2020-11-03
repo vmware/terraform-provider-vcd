@@ -61,7 +61,7 @@ func TestCustomTemplates(t *testing.T) {
 		"Vdc":                          testConfig.VCD.Vdc,
 		"ProviderVdc":                  testConfig.VCD.ProviderVdc.Name,
 		"NetworkPool":                  testConfig.VCD.ProviderVdc.NetworkPool,
-		"StorageProfile1":              testConfig.VCD.ProviderVdc.StorageProfile1,
+		"StorageProfile":               testConfig.VCD.ProviderVdc.StorageProfile,
 		"Catalog":                      testConfig.VCD.Catalog.Name,
 		"CatalogItem":                  testConfig.VCD.Catalog.CatalogItem,
 		"OvaPath":                      testConfig.Ova.OvaPath,
@@ -242,7 +242,7 @@ func TestCustomTemplates(t *testing.T) {
 			}
 			essentialData := []string{
 				"Org", "Vdc", "Catalog", "CatalogItem", "ExternalNetwork", "EdgeGateway",
-				"ProviderVdc", "NetworkPool", "StorageProfile1", "Vcenter",
+				"ProviderVdc", "NetworkPool", "StorageProfile", "Vcenter",
 				"MainGateway", "MainNetmask", "MainDns1", "ExternalNetworkStartIp", "ExternalNetworkEndIp"}
 			for _, essentialItem := range essentialData {
 				_, ok := params[essentialItem]

@@ -24,8 +24,8 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 		fmt.Println("Warning: `MediaName` is not configured: boot image won't be tested.")
 	}
 
-	if testConfig.VCD.ProviderVdc.StorageProfile1 == "" || testConfig.VCD.ProviderVdc.StorageProfile2 == "" {
-		t.Skip("Both variables testConfig.VCD.ProviderVdc.StorageProfile1 and testConfig.VCD.ProviderVdc.StorageProfile2 must be set")
+	if testConfig.VCD.ProviderVdc.StorageProfile == "" || testConfig.VCD.ProviderVdc.StorageProfile2 == "" {
+		t.Skip("Both variables testConfig.VCD.ProviderVdc.StorageProfile and testConfig.VCD.ProviderVdc.StorageProfile2 must be set")
 	}
 
 	var params = StringMap{
@@ -38,7 +38,7 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 		"VMName":          hotVmName1,
 		"Tags":            "vapp vm",
 		"Media":           testConfig.Media.MediaName,
-		"StorageProfile1": testConfig.VCD.ProviderVdc.StorageProfile1,
+		"StorageProfile":  testConfig.VCD.ProviderVdc.StorageProfile,
 		"StorageProfile2": testConfig.VCD.ProviderVdc.StorageProfile2,
 	}
 
@@ -128,7 +128,7 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, `guest_properties.guest.hostname`, "test-host"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, `guest_properties.guest.another.subkey`, "another-value"),
 
-					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, `storage_profile`, params["StorageProfile1"].(string)),
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, `storage_profile`, params["StorageProfile"].(string)),
 				),
 			},
 			// Step 1 - update - network changes
@@ -358,7 +358,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 	"guest.another.subkey" = "another-value"
   }
 
-  storage_profile = "{{.StorageProfile1}}"
+  storage_profile = "{{.StorageProfile}}"
  }
 `
 

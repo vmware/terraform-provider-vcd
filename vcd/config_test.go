@@ -84,7 +84,7 @@ type TestConfig struct {
 		ProviderVdc struct {
 			Name            string `json:"name"`
 			NetworkPool     string `json:"networkPool"`
-			StorageProfile1 string `json:"storageProfile1"`
+			StorageProfile  string `json:"storageProfile1"`
 			StorageProfile2 string `json:"storageProfile2"`
 		} `json:"providerVdc"`
 		NsxtProviderVdc struct {

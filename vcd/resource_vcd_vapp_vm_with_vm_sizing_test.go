@@ -39,7 +39,7 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 		"Allocated":                 "10240",
 		"Reserved":                  "0",
 		"Limit":                     "10240",
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile1,
+		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		"FuncName":                  t.Name(),
 		"MemoryGuaranteed":          "0.5",
 		"CpuGuaranteed":             "0.6",
@@ -54,8 +54,8 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 		"MemoryOverheadValueForAssert": "false",
 	}
 
-	if testConfig.VCD.ProviderVdc.StorageProfile1 == "" || testConfig.VCD.ProviderVdc.StorageProfile2 == "" {
-		t.Skip("Both variables testConfig.VCD.ProviderVdc.StorageProfile1 and testConfig.VCD.ProviderVdc.StorageProfile2 must be set")
+	if testConfig.VCD.ProviderVdc.StorageProfile == "" || testConfig.VCD.ProviderVdc.StorageProfile2 == "" {
+		t.Skip("Both variables testConfig.VCD.ProviderVdc.StorageProfile and testConfig.VCD.ProviderVdc.StorageProfile2 must be set")
 	}
 
 	vcdClient, err := getTestVCDFromJson(testConfig)

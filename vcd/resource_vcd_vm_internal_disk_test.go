@@ -19,12 +19,12 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 		return
 	}
 
-	if testConfig.VCD.ProviderVdc.StorageProfile1 == "" || testConfig.VCD.ProviderVdc.StorageProfile2 == "" {
-		t.Skip("Both variables testConfig.VCD.ProviderVdc.StorageProfile1 and testConfig.VCD.ProviderVdc.StorageProfile2 must be set")
+	if testConfig.VCD.ProviderVdc.StorageProfile == "" || testConfig.VCD.ProviderVdc.StorageProfile2 == "" {
+		t.Skip("Both variables testConfig.VCD.ProviderVdc.StorageProfile and testConfig.VCD.ProviderVdc.StorageProfile2 must be set")
 	}
 
 	internalDiskSize := 20000
-	storageProfile := testConfig.VCD.ProviderVdc.StorageProfile1
+	storageProfile := testConfig.VCD.ProviderVdc.StorageProfile
 	diskResourceName := "disk1"
 	diskSize := "13333"
 	biggerDiskSize := "14333"
@@ -57,7 +57,7 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 		"Allocated":                 "1024",
 		"Reserved":                  "1024",
 		"Limit":                     "1024",
-		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile1,
+		"ProviderVdcStorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
 		// because vDC ignores empty values and use default
 		"MemoryGuaranteed": "1",
 		"CpuGuaranteed":    "1",
