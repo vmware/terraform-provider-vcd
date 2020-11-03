@@ -111,7 +111,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Description: "True if this VDC is enabled for use by the organization VDCs. Default is true.",
 			},
 			"storage_profile": &schema.Schema{
-				Type:        schema.TypeList,
+				Type:        schema.TypeSet,
 				Required:    true,
 				ForceNew:    true,
 				MinItems:    1,
@@ -572,8 +572,8 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	if d.HasChange("storage_profile") {
-		vdcStorageProfilesConfigurations := d.Get("storage_profile").([]interface{})
-		for _, storageConfigurationValues := range vdcStorageProfilesConfigurations {
+		vdcStorageProfilesConfigurations := d.Get("storage_profile").(*schema.Set)
+		for _, storageConfigurationValues := range vdcStorageProfilesConfigurations.List() {
 			storageConfiguration := storageConfigurationValues.(map[string]interface{})
 			var matchedStorageProfile types.Reference
 			for _, vdcStorageProfile := range adminVdc.AdminVdc.VdcStorageProfiles.VdcStorageProfile {
@@ -1011,8 +1011,8 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 	}
 	computeCapacity := computeCapacityList[0].(map[string]interface{})
 
-	vdcStorageProfilesConfigurations := d.Get("storage_profile").([]interface{})
-	if len(vdcStorageProfilesConfigurations) == 0 {
+	vdcStorageProfilesConfigurations := d.Get("storage_profile").(*schema.Set)
+	if len(vdcStorageProfilesConfigurations.List()) == 0 {
 		return &types.VdcConfiguration{}, errors.New("no storage_profile field")
 	}
 
@@ -1050,7 +1050,7 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 	}
 
 	var vdcStorageProfiles []*types.CreateVdcStorageProfile
-	for _, storageConfigurationValues := range vdcStorageProfilesConfigurations {
+	for _, storageConfigurationValues := range vdcStorageProfilesConfigurations.List() {
 		storageConfiguration := storageConfigurationValues.(map[string]interface{})
 
 		href, err := getStorageProfileHREF(vcdClient, storageConfiguration["name"].(string))
