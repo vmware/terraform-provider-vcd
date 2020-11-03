@@ -54,7 +54,7 @@
     "providerVdc": {
       "//": "Provider VDC details are needed for creating organization VDC",
       "name": "Must-already-exist-provider-vdc-name",
-      "storageProfile1": "Must-already-exist-storage-profile-name",
+      "storageProfile": "Must-already-exist-storage-profile-name",
       "storageProfile2": "Must-already-exist-storage-profile-name2",
       "networkPool": "Must-already-exist-network-pool-name"
     },
