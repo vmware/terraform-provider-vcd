@@ -1008,7 +1008,7 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 		},
 	}
 
-	var vdcStorageProfiles []*types.VdcStorageProfile
+	var vdcStorageProfiles []*types.VdcStorageProfileConfiguration
 	for _, storageConfigurationValues := range vdcStorageProfilesConfigurations {
 		storageConfiguration := storageConfigurationValues.(map[string]interface{})
 
@@ -1017,7 +1017,7 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 			return &types.VdcConfiguration{}, err
 		}
 
-		vdcStorageProfile := &types.VdcStorageProfile{
+		vdcStorageProfile := &types.VdcStorageProfileConfiguration{
 			Units:   "MB", // only this value is supported
 			Limit:   int64(storageConfiguration["limit"].(int)),
 			Default: storageConfiguration["default"].(bool),
