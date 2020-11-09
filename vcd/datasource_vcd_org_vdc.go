@@ -116,7 +116,7 @@ func datasourceVcdOrgVdc() *schema.Resource {
 						"storage_used_in_mb": {
 							Type:        schema.TypeInt,
 							Computed:    true,
-							Description: "Storage used, in Megabytes",
+							Description: "Storage used in MB",
 						},
 					},
 				},
