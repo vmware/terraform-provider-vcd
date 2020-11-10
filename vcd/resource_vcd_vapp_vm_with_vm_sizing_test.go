@@ -54,6 +54,10 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 		"MemoryOverheadValueForAssert": "false",
 	}
 
+	if testConfig.VCD.ProviderVdc.StorageProfile == "" || testConfig.VCD.ProviderVdc.StorageProfile2 == "" {
+		t.Skip("Both variables testConfig.VCD.ProviderVdc.StorageProfile and testConfig.VCD.ProviderVdc.StorageProfile2 must be set")
+	}
+
 	vcdClient, err := getTestVCDFromJson(testConfig)
 	if err != nil {
 		t.Skip("unable to validate vCD version - skipping test")

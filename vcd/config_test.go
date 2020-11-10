@@ -82,9 +82,10 @@ type TestConfig struct {
 		Org         string `json:"org"`
 		Vdc         string `json:"vdc"`
 		ProviderVdc struct {
-			Name           string `json:"name"`
-			NetworkPool    string `json:"networkPool"`
-			StorageProfile string `json:"storageProfile"`
+			Name            string `json:"name"`
+			NetworkPool     string `json:"networkPool"`
+			StorageProfile  string `json:"storageProfile"`
+			StorageProfile2 string `json:"storageProfile2"`
 		} `json:"providerVdc"`
 		NsxtProviderVdc struct {
 			Name           string `json:"name"`
@@ -153,7 +154,6 @@ type TestConfig struct {
 		Dns2                         string `json:"dns2"`                         // DNS 2 for external network
 		ExternalNetworkPortGroup     string `json:"externalNetworkPortGroup"`     // port group, if different from Networking.ExternalNetworkPortGroup
 		ExternalNetworkPortGroupType string `json:"externalNetworkPortGroupType"` // port group type, if different from Networking.ExternalNetworkPortGroupType
-		StorageProfile2              string `json:"storageProfile2"`              // Second storage profile for VDC
 		RoutedNetwork                string `json:"routedNetwork"`                // optional routed network name to create
 		IsolatedNetwork              string `json:"isolatedNetwork"`              // optional isolated network name to create
 		DirectNetwork                string `json:"directNetwork"`                // optional direct network name to create
