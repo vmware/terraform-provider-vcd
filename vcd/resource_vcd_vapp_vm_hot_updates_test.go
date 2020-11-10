@@ -24,16 +24,22 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 		fmt.Println("Warning: `MediaName` is not configured: boot image won't be tested.")
 	}
 
+	if testConfig.VCD.ProviderVdc.StorageProfile == "" || testConfig.VCD.ProviderVdc.StorageProfile2 == "" {
+		t.Skip("Both variables testConfig.VCD.ProviderVdc.StorageProfile and testConfig.VCD.ProviderVdc.StorageProfile2 must be set")
+	}
+
 	var params = StringMap{
-		"Org":         testConfig.VCD.Org,
-		"Vdc":         testConfig.VCD.Vdc,
-		"EdgeGateway": testConfig.Networking.EdgeGateway,
-		"Catalog":     testSuiteCatalogName,
-		"CatalogItem": testSuiteCatalogOVAItem,
-		"VAppName":    hotVappName,
-		"VMName":      hotVmName1,
-		"Tags":        "vapp vm",
-		"Media":       testConfig.Media.MediaName,
+		"Org":             testConfig.VCD.Org,
+		"Vdc":             testConfig.VCD.Vdc,
+		"EdgeGateway":     testConfig.Networking.EdgeGateway,
+		"Catalog":         testSuiteCatalogName,
+		"CatalogItem":     testSuiteCatalogOVAItem,
+		"VAppName":        hotVappName,
+		"VMName":          hotVmName1,
+		"Tags":            "vapp vm",
+		"Media":           testConfig.Media.MediaName,
+		"StorageProfile":  testConfig.VCD.ProviderVdc.StorageProfile,
+		"StorageProfile2": testConfig.VCD.ProviderVdc.StorageProfile2,
 	}
 
 	vcdClient, err := getTestVCDFromJson(testConfig)
@@ -121,6 +127,8 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, `guest_properties.guest.hostname`, "test-host"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, `guest_properties.guest.another.subkey`, "another-value"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, `storage_profile`, params["StorageProfile"].(string)),
 				),
 			},
 			// Step 1 - update - network changes
@@ -152,6 +160,7 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, `guest_properties.guest.hostname`, "test-host2"),
 
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, `storage_profile`, params["StorageProfile2"].(string)),
 					testAccCheckVcdVmNotRestarted("vcd_vapp_vm."+hotVmName1, hotVappName, hotVmName1),
 				),
 			},
@@ -187,6 +196,9 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.2.is_primary", "false"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.2.ip_allocation_mode", "NONE"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.2.connected", "false"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, `storage_profile`, params["StorageProfile2"].(string)),
+
 					testAccCheckVcdVmNotRestarted("vcd_vapp_vm."+hotVmName1, hotVappName, hotVmName1),
 				),
 			},
@@ -215,6 +227,9 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.ip_allocation_mode", "DHCP"),
 					resource.TestCheckResourceAttrSet("vcd_vapp_vm."+hotVmName1, "network.1.mac"),
 					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, "network.1.connected", "true"),
+
+					resource.TestCheckResourceAttr("vcd_vapp_vm."+hotVmName1, `storage_profile`, params["StorageProfile2"].(string)),
+
 					step5Check,
 				),
 			},
@@ -343,6 +358,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
 	"guest.another.subkey" = "another-value"
   }
 
+  storage_profile = "{{.StorageProfile}}"
  }
 `
 
@@ -386,6 +402,8 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
   guest_properties = {
 	"guest.hostname"       = "test-host2"
   }
+
+  storage_profile = "{{.StorageProfile2}}"
 }
 `
 
@@ -422,6 +440,8 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     connected          = false
     is_primary         = true
   }
+
+  storage_profile = "{{.StorageProfile2}}"
 }
 `
 const testAccCheckVcdVAppHotUpdateVmStep3 = `# skip-binary-test: only for updates
@@ -463,6 +483,8 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     ip_allocation_mode = "NONE"
     connected          = false
   }
+
+  storage_profile = "{{.StorageProfile2}}"
 }
 `
 
@@ -500,6 +522,8 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     connected          = false
     is_primary         = false
   }
+
+  storage_profile = "{{.StorageProfile2}}"
 }
 `
 
@@ -537,5 +561,7 @@ resource "vcd_vapp_vm" "{{.VMName}}" {
     ip_allocation_mode = "DHCP"
     is_primary         = true
   }
+ 
+  storage_profile = "{{.StorageProfile2}}"
 }
 `
