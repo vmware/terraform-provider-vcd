@@ -192,6 +192,7 @@ The following arguments are supported:
 * `enabled` - (Optional) True if this storage profile is enabled for use in the VDC. Default is true.
 * `limit` - (Required) Maximum number of MB allocated for this storage profile. A value of 0 specifies unlimited MB.
 * `default` - (Required) True if this is default storage profile for this VDC. The default storage profile is used when an object that can specify a storage profile is created with no storage profile specified.
+* `storage_used_in_mb` - (Computed, *v3.1+*) Storage used, in Megabytes.
 
 <a id="computecapacity"></a>
 ## Compute Capacity
@@ -199,7 +200,7 @@ The following arguments are supported:
 Capacity must be specified twice, once for `memory` and another for `cpu`.  Each has the same structure:
 
 * `allocated` - (Optional) Capacity that is committed to be available. Value in MB or MHz. Used with AllocationPool ("Allocation pool"), ReservationPool ("Reservation pool"), Flex.
-* `limit` - (Optional) Capacity limit relative to the value specified for Allocation. It must not be less than that value. If it is greater than that value, it implies over provisioning. A value of 0 specifies unlimited units. Value in MB or MHz. Used with AllocationVApp ("Pay as you go") or Flex (only for `memory`).
+* `limit` - (Optional) Capacity limit relative to the value specified for Allocation. It must not be less than that value. If it is greater than that value, it implies over provisioning. A value of 0 specifies unlimited units. Value in MB or MHz. Used with AllocationVApp ("Pay as you go") or Flex (only for `cpu`).
 
 ## Importing
 
