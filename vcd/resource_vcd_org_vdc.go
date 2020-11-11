@@ -111,10 +111,11 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Description: "True if this VDC is enabled for use by the organization VDCs. Default is true.",
 			},
 			"storage_profile": &schema.Schema{
-				Type:     schema.TypeList,
-				Required: true,
-				ForceNew: true,
-				MinItems: 1,
+				Type:        schema.TypeSet,
+				Required:    true,
+				ForceNew:    true,
+				MinItems:    1,
+				Description: "Storage profiles supported by this VDC.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
@@ -138,9 +139,13 @@ func resourceVcdOrgVdc() *schema.Resource {
 							Required:    true,
 							Description: "True if this is default storage profile for this VDC. The default storage profile is used when an object that can specify a storage profile is created with no storage profile specified.",
 						},
+						"storage_used_in_mb": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Storage used in MB",
+						},
 					},
 				},
-				Description: "Storage profiles supported by this VDC.",
 			},
 			"memory_guaranteed": &schema.Schema{
 				Type:     schema.TypeFloat,
@@ -463,6 +468,7 @@ func getComputeStorageProfiles(vcdClient *VCDClient, profile *types.VdcStoragePr
 		if vdcStorageProfileDetails.ProviderVdcStorageProfile != nil {
 			storageProfileData["name"] = vdcStorageProfileDetails.ProviderVdcStorageProfile.Name
 		}
+		storageProfileData["storage_used_in_mb"] = vdcStorageProfileDetails.StorageUsedMB
 		root = append(root, storageProfileData)
 	}
 
@@ -563,6 +569,41 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 	err = updateAssignedVmSizingPolicies(vcdClient, d, meta)
 	if err != nil {
 		return fmt.Errorf("error assigning VM sizing policies to VDC: %s", err)
+	}
+
+	if d.HasChange("storage_profile") {
+		vdcStorageProfilesConfigurations := d.Get("storage_profile").(*schema.Set)
+		for _, storageConfigurationValues := range vdcStorageProfilesConfigurations.List() {
+			storageConfiguration := storageConfigurationValues.(map[string]interface{})
+			var matchedStorageProfile types.Reference
+			for _, vdcStorageProfile := range adminVdc.AdminVdc.VdcStorageProfiles.VdcStorageProfile {
+				if storageConfiguration["name"].(string) == vdcStorageProfile.Name {
+					matchedStorageProfile = *vdcStorageProfile
+				}
+			}
+			uuid, err := govcd.GetUuidFromHref(matchedStorageProfile.HREF, true)
+			if err != nil {
+				return fmt.Errorf("error parsing VDC storage profile ID : %s", err)
+			}
+			vdcStorageProfileDetails, err := govcd.GetStorageProfileByHref(vcdClient.VCDClient, matchedStorageProfile.HREF)
+			if err != nil {
+				return fmt.Errorf("error getting VDC storage profile: %s", err)
+			}
+			_, err = changedAdminVdc.UpdateStorageProfile(uuid, &types.AdminVdcStorageProfile{
+				Name:         storageConfiguration["name"].(string),
+				IopsSettings: nil,
+				Units:        "MB", // only this value is supported
+				Limit:        int64(storageConfiguration["limit"].(int)),
+				Default:      storageConfiguration["default"].(bool),
+				Enabled:      takeBoolPointer(storageConfiguration["enabled"].(bool)),
+				ProviderVdcStorageProfile: &types.Reference{
+					HREF: vdcStorageProfileDetails.ProviderVdcStorageProfile.HREF,
+				},
+			})
+			if err != nil {
+				return fmt.Errorf("error updating VDC storage profile: %s", err)
+			}
+		}
 	}
 
 	log.Printf("[TRACE] VDC update completed: %s", adminVdc.AdminVdc.Name)
@@ -970,8 +1011,8 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 	}
 	computeCapacity := computeCapacityList[0].(map[string]interface{})
 
-	vdcStorageProfilesConfigurations := d.Get("storage_profile").([]interface{})
-	if len(vdcStorageProfilesConfigurations) == 0 {
+	vdcStorageProfilesConfigurations := d.Get("storage_profile").(*schema.Set)
+	if len(vdcStorageProfilesConfigurations.List()) == 0 {
 		return &types.VdcConfiguration{}, errors.New("no storage_profile field")
 	}
 
@@ -1008,8 +1049,8 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 		},
 	}
 
-	var vdcStorageProfiles []*types.VdcStorageProfile
-	for _, storageConfigurationValues := range vdcStorageProfilesConfigurations {
+	var vdcStorageProfiles []*types.VdcStorageProfileConfiguration
+	for _, storageConfigurationValues := range vdcStorageProfilesConfigurations.List() {
 		storageConfiguration := storageConfigurationValues.(map[string]interface{})
 
 		href, err := getStorageProfileHREF(vcdClient, storageConfiguration["name"].(string))
@@ -1017,7 +1058,7 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 			return &types.VdcConfiguration{}, err
 		}
 
-		vdcStorageProfile := &types.VdcStorageProfile{
+		vdcStorageProfile := &types.VdcStorageProfileConfiguration{
 			Units:   "MB", // only this value is supported
 			Limit:   int64(storageConfiguration["limit"].(int)),
 			Default: storageConfiguration["default"].(bool),

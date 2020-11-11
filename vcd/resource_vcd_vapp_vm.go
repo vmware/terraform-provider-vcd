@@ -811,6 +811,18 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	storageProfileName := d.Get("storage_profile").(string)
+	if d.HasChange("storage_profile") && storageProfileName != "" {
+		storageProfile, err := vdc.FindStorageProfileReference(storageProfileName)
+		if err != nil {
+			return fmt.Errorf("[vm update] error retrieving storage profile %s : %s", storageProfileName, err)
+		}
+		_, err = vm.UpdateStorageProfile(storageProfile.HREF)
+		if err != nil {
+			return fmt.Errorf("error updating changing storage profile to %s: %s", storageProfileName, err)
+		}
+	}
+
 	return nil
 }
 

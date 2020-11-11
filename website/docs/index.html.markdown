@@ -135,7 +135,7 @@ resource "vcd_network_routed" "net2" {
 }
 ```
 
-## Connecting with authorization token
+## Connecting with authorization or bearer token
 
 You can connect using an authorization token instead of username and password.
 
@@ -181,14 +181,20 @@ curl -I -k --header "Accept: application/*;version=32.0" \
     --request POST https://$IP/api/sessions
 ```
 
-If successful, the output of this command will include a line like the following
-```
-x-vcloud-authorization: 08a321735de84f1d9ec80c3b3e18fa8b
-```
-The string after `x-vcloud-authorization:` is the token.
+If successful, the output of this command will include lines like the following:
 
-The token will grant the same abilities as the account used to run the above script. Using a token produced
-by an org admin to run a task that requires a system administrator will fail.
+```
+X-VCLOUD-AUTHORIZATION: 08a321735de84f1d9ec80c3b3e18fa8b
+X-VMWARE-VCLOUD-ACCESS-TOKEN: eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbmlzdHJhdG9yIiwiaXNzIjoiYTkzYzlkYjktNzQ3MS0zMTkyLThkMDktYThmN2VlZGE4NWY5QGY5MDZlODE1LTM0NjgtNGQ0ZS04MmJlLTcyYzFjMmVkMTBiMyIsImV4cCI6MTYwNzUxMjgyOCwidmVyc2lvbiI6InZjbG91ZF8xLjAiLCJqdGkiOiJjY2IwZjIwN2JjY2Y0NmYwYmEwNTcyNzgxZDQyNDg2MyJ9.SMjp5wsSd7CXGMdlj-weeCRdr5AazA74pwwx2w3Eqh3RdzyiEMvQfWQAuPAQjM1oOsEUnFOg2u0gYsnIyQg_p7kzXKPQwPNz3BPi0tm2DxxQtQVhOBRXCqUJ9OmRlMVu7FZZ6gKD4GhpbTkZyKMN_IgOFkkt8iXs1-weNZw5TmyVHeWiJdV0JFM45CV47jQNdQMy4OSsU-CqE2VVLOK83oJhRnlnc3O4OAAIfuVZ4SLWqgi1lIoc2vbZv0HYeWO7L_2pGfmja8CVzVhPrgIGEoDhXnvO29z1ToEXRnyMKh9cisiRkhUISpsh4aHRGUUzaZYeOejVX3PAO9aCX3iYWA
+
+The string after `X-VCLOUD-AUTHORIZATION:` is the old (deprecated) token.
+The string after `X-VMWARE-VCLOUD-ACCESS-TOKEN` is the bearer token
+```
+
+Either token will grant the same abilities as the account used to run the above script. Note, however, that the deprecated
+token may not work in recent VCD versions.
+
+Using a token produced by an org admin to run a task that requires a system administrator will fail.
 
 ### Connecting with SAML user using Microsoft Active Directory Federation Services (ADFS) and setting custom Relaying Party Trust Identifier
 
@@ -232,10 +238,11 @@ The following arguments are used to configure the VMware vCloud Director Provide
   set with `VCD_AUTH_TYPE` environment variable.
   * `token` allows to specify token in [`token`](#token) field.
   
-* `token` - (Optional; *v2.6+*) This is the authorization token that can be used instead of username
+* `token` - (Optional; *v2.6+*) This is the token that can be used instead of username
    and password (in combination with field `auth_type=token`). When this is set, username and
    password will be ignored, but should be left in configuration either empty or with any custom
    values. A token can be specified with the `VCD_TOKEN` environment variable.
+   Both a (deprecated) authorization token or a bearer token (*v3.1+*) can be used in this field.
 
 * `saml_adfs_rpt_id` - (Optional) When using `auth_type=saml_adfs` vCD SAML entity ID will be used
   as Relaying Party Trust Identifier (RPT ID) by default. If a different RPT ID is needed - one can
