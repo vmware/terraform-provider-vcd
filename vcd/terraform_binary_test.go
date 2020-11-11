@@ -164,7 +164,7 @@ func TestCustomTemplates(t *testing.T) {
 
 		reHasProvider := regexp.MustCompile(`(?m)^\s*provider\s+"`)
 
-		// If there is already a provider in the template, we abort
+		// If there is already a provider in the template, we exit
 		if reHasProvider.MatchString(templateText) {
 			fmt.Printf("File %s has already a provider: remove it and try again\n", sourceFile)
 			fmt.Println("The provider will be generated using data from configuration file")

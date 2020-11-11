@@ -388,7 +388,11 @@ func (cli *VCDClient) GetEdgeGatewayFromResource(d *schema.ResourceData, edgeGat
 func ProviderAuthenticate(client *govcd.VCDClient, user, password, token, org string) error {
 	var err error
 	if token != "" {
-		err = client.SetToken(org, govcd.AuthorizationHeader, token)
+		if len(token) > 32 {
+			err = client.SetToken(org, govcd.BearerTokenHeader, token)
+		} else {
+			err = client.SetToken(org, govcd.AuthorizationHeader, token)
+		}
 		if err != nil {
 			err = fmt.Errorf("error during token-based authentication: %s", err)
 		}
