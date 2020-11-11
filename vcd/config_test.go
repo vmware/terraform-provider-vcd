@@ -674,11 +674,11 @@ func createSuiteCatalogAndItem(config TestConfig) {
 	ovaFilePath := getCurrentDir() + "/../test-resources/" + config.Ova.OvaTestFileName
 
 	if config.Ova.OvaTestFileName == "" && testConfig.VCD.Catalog.CatalogItem == "" {
-		panic(fmt.Errorf("ovaTestFileName isn't configured. Tests aborted\n"))
+		panic(fmt.Errorf("ovaTestFileName isn't configured. Tests terminated\n"))
 	}
 
 	if config.Ova.OvaDownloadUrl == "" && testConfig.VCD.Catalog.CatalogItem == "" {
-		panic(fmt.Errorf("ovaDownloadUrl isn't configured. Tests aborted\n"))
+		panic(fmt.Errorf("ovaDownloadUrl isn't configured. Tests terminated\n"))
 	} else if testConfig.VCD.Catalog.CatalogItem == "" {
 		fmt.Printf("Downloading OVA. File will be saved as: %s\n", ovaFilePath)
 

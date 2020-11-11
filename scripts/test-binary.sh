@@ -527,7 +527,7 @@ function run_with_recover {
                 run terraform destroy -auto-approve
                 # if 'run' doesn't produce an error, we continue the tests,
                 # leaving behind the name of the test failed in failed_tests.txt
-                # otherwise, the test is definitely aborted
+                # otherwise, the test is definitely terminated
                 ;;
 
             *)
@@ -738,7 +738,7 @@ do
                 # During upgrades, 'destroy' runs with the latest plugin
                 if [ ! -f terraform.tfstate ]
                 then
-                    echo "terraform.tfstate not found - aborting"
+                    echo "terraform.tfstate not found - exiting"
                     exit 1
                 fi
                 [ -n "$upgrading" ] && run terraform version
