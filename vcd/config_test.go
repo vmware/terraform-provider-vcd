@@ -587,7 +587,7 @@ func setTestEnv() {
 // getVcdVersion returns the VCD version (three digits + build number)
 // To get the version, we establish a new connection with the credentials
 // chosen for the current test.
-func getVcdVersion(config TestConfig) (string,error) {
+func getVcdVersion(config TestConfig) (string, error) {
 	vcdClient, err := getTestVCDFromJson(config)
 	if vcdClient == nil || err != nil {
 		return "", err
