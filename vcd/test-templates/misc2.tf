@@ -6,7 +6,7 @@
 # v2.1.0
 resource "vcd_independent_disk" "tf_disk" {
   name         = "tf-disk"
-  size         = "1024"        # MB
+  size_in_mb   = "1024"        # MB
   bus_type     = "SCSI"
   bus_sub_type = "VirtualSCSI"
 }
@@ -43,7 +43,7 @@ resource "vcd_vapp" "tf_vapp" {
 # v2.1.0
 resource "vcd_vapp_network" "tf_vapp_net" {
   name       = "TfVAppNet"
-  vapp_name  = "${vcd_vapp.tf_vapp.name}"
+  vapp_name  = vcd_vapp.tf_vapp.name
   gateway    = "192.168.2.1"
   netmask    = "255.255.255.0"
   dns1       = "192.168.2.1"
@@ -62,9 +62,14 @@ resource "vcd_vapp_network" "tf_vapp_net" {
   }
 }
 
+resource "vcd_vapp_org_network" "vappNetworkRouted" {
+  vapp_name          = vcd_vapp.tf_vapp.name
+  org_network_name   = vcd_network_routed.tf_network.name
+}
+
 # vApp's VM connected to a network with routed connection to the outside
 resource "vcd_vapp_vm" "tf_vm_1" {
-  vapp_name  = "${vcd_vapp.tf_vapp.name}"
+  vapp_name  = vcd_vapp.tf_vapp.name
   name          = "TfVM1"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
@@ -74,19 +79,19 @@ resource "vcd_vapp_vm" "tf_vm_1" {
   # Connect to routed network
   network {
     type                 = "org"
-    name                 = "${vcd_network_routed.tf_network.name}"
+    name                 = vcd_network_routed.tf_network.name
     ip_allocation_mode   = "POOL"
   }
 
   # v2.1.0
   disk {
-    name        = "${vcd_independent_disk.tf_disk.name}"
+    name        = vcd_independent_disk.tf_disk.name
     bus_number  = 1
     unit_number = 0
   }
 
   accept_all_eulas = "true"
-  depends_on       = ["vcd_network_routed.tf_network", "vcd_vapp.tf_vapp", "vcd_independent_disk.tf_disk", "vcd_vapp_network.tf_vapp_net"]
+  depends_on       = [vcd_network_routed.tf_network, vcd_vapp.tf_vapp, vcd_independent_disk.tf_disk, vcd_vapp_network.tf_vapp_net]
 }
 
 resource "vcd_catalog_media" "media_for_insertion" {
@@ -102,16 +107,16 @@ resource "vcd_catalog_media" "media_for_insertion" {
 # Attach ISO to VM
 resource "vcd_inserted_media" "tf_inserted_iso" {
   catalog    = "{{.Catalog}}"
-  name       = "${vcd_catalog_media.media_for_insertion.name}"
+  name       = vcd_catalog_media.media_for_insertion.name
 
-  vapp_name  = "${vcd_vapp.tf_vapp.name}"
+  vapp_name  = vcd_vapp.tf_vapp.name
   vm_name   = "TfVM1"
 
-  depends_on = ["vcd_vapp_vm.tf_vm_1"]
+  depends_on = [vcd_vapp_vm.tf_vm_1]
 }
 
 resource "vcd_vapp_vm" "tf_vm_second" {
-  vapp_name  = "${vcd_vapp.tf_vapp.name}"
+  vapp_name  = vcd_vapp.tf_vapp.name
   name          = "TfVM2"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
@@ -122,7 +127,7 @@ resource "vcd_vapp_vm" "tf_vm_second" {
 
   network {
     type                 = "vapp"
-    name                 = "${vcd_vapp_network.tf_vapp_net.name}"
+    name                 = vcd_vapp_network.tf_vapp_net.name
     ip_allocation_mode   = "POOL"
   }
 
@@ -131,39 +136,6 @@ resource "vcd_vapp_vm" "tf_vm_second" {
   cpus = "4"
   cpu_cores        = "2"
   accept_all_eulas = "true"
-  depends_on       = ["vcd_vapp.tf_vapp", "vcd_vapp_network.tf_vapp_net", "vcd_vapp_vm.tf_vm_1", "vcd_vapp_network.tf_vapp_net"]
+  depends_on       = [vcd_vapp.tf_vapp, vcd_vapp_network.tf_vapp_net, vcd_vapp_vm.tf_vm_1, vcd_vapp_network.tf_vapp_net]
 }
 
-# SNAT rule to let the VMs' traffic out
-resource "vcd_snat" "outbound" {
-  edge_gateway = "{{.EdgeGateway}}"
-
-  external_ip = "{{.ExternalIp}}/32"
-  internal_ip = "192.168.0.0/24"
-}
-
-# DNAT rule to SSH the VM from the outside
-resource "vcd_dnat" "sshVM" {
-  edge_gateway = "{{.EdgeGateway}}"
-
-  external_ip     = "{{.ExternalIp}}/32"
-  port            = 2227
-  internal_ip     = "192.168.0.7/32"
-  translated_port = 22
-}
-
-# Firewall rule to allow SSH on NAT port
-resource "vcd_firewall_rules" "tf_fw_rule" {
-  edge_gateway   = "{{.EdgeGateway}}"
-  default_action = "allow"
-
-  rule {
-    description      = "allows_ssh"
-    policy           = "allow"
-    protocol         = "TCP"
-    destination_port = "2227"
-    destination_ip   = "10.150.211.101"
-    source_port      = "any"
-    source_ip        = "any"
-  }
-}

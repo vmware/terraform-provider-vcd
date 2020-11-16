@@ -1,25 +1,32 @@
-// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbAppProfile lbAppRule lbServiceMonitor lbServerPool lbVirtualServer user ALL
+// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbAppProfile lbAppRule lbServiceMonitor lbServerPool lbVirtualServer user access_control search auth nsxt ALL
 
 package vcd
 
 import (
+	"strings"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-var testAccProviders map[string]terraform.ResourceProvider
+func init() {
+	testingTags["api"] = "provider_test.go"
+}
+
+// testAccProvider is a global provider used in tests
 var testAccProvider *schema.Provider
 
+// testAccProviders used in field ProviderFactories required for test runs in SDK 2.x
+var testAccProviders map[string]func() (*schema.Provider, error)
+
 func TestProvider(t *testing.T) {
-	if err := Provider().(*schema.Provider).InternalValidate(); err != nil {
+	if err := Provider().InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }
 
 func TestProvider_impl(t *testing.T) {
-	var _ terraform.ResourceProvider = Provider()
+	var _ *schema.Provider = Provider()
 }
 
 // When this function is called, the initialization in config_test.go has already happened.
@@ -48,10 +55,6 @@ func testAccPreCheck(t *testing.T) {
 	}
 }
 
-func init() {
-	testingTags["api"] = "provider_test.go"
-}
-
 // createTemporaryVCDConnection is meant to create a VCDClient to check environment before executing specific acceptance
 // tests and before VCDClient is accessible.
 func createTemporaryVCDConnection() *VCDClient {
@@ -59,6 +62,8 @@ func createTemporaryVCDConnection() *VCDClient {
 		User:            testConfig.Provider.User,
 		Password:        testConfig.Provider.Password,
 		Token:           testConfig.Provider.Token,
+		UseSamlAdfs:     testConfig.Provider.UseSamlAdfs,
+		CustomAdfsRptId: testConfig.Provider.CustomAdfsRptId,
 		SysOrg:          testConfig.Provider.SysOrg,
 		Org:             testConfig.VCD.Org,
 		Vdc:             testConfig.VCD.Vdc,
@@ -82,4 +87,31 @@ func minIfLess(min, value int) int {
 	}
 
 	return value
+}
+
+// TestAccClientUserAgent ensures that client initialization config.Client() used by provider initializes
+// go-vcloud-director client by having User-Agent set
+func TestAccClientUserAgent(t *testing.T) {
+	clientConfig := Config{
+		User:            testConfig.Provider.User,
+		Password:        testConfig.Provider.Password,
+		Token:           testConfig.Provider.Token,
+		SysOrg:          testConfig.Provider.SysOrg,
+		Org:             testConfig.VCD.Org,
+		Vdc:             testConfig.VCD.Vdc,
+		Href:            testConfig.Provider.Url,
+		MaxRetryTimeout: testConfig.Provider.MaxRetryTimeout,
+		InsecureFlag:    testConfig.Provider.AllowInsecure,
+	}
+
+	vcdClient, err := clientConfig.Client()
+	if err != nil {
+		t.Fatal("error initializing go-vcloud-director client: " + err.Error())
+	}
+
+	expectedHeaderPrefix := "terraform-provider-vcd/"
+	if !strings.HasPrefix(vcdClient.VCDClient.Client.UserAgent, expectedHeaderPrefix) {
+		t.Fatalf("Expected User-Agent header in go-vcloud-director to be '%s', got '%s'",
+			expectedHeaderPrefix, vcdClient.VCDClient.Client.UserAgent)
+	}
 }

@@ -1,6 +1,6 @@
 package vcd
 
-import "github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 func datasourceVcdEdgeGateway() *schema.Resource {
 	return &schema.Resource{
@@ -8,8 +8,10 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
-				Type:     schema.TypeString,
-				Required: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"name", "filter"},
+				Description:  "name of the edge gateway. (Optional when 'filter' is used)",
 			},
 			"org": &schema.Schema{
 				Type:     schema.TypeString,
@@ -23,11 +25,6 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
-			"advanced": &schema.Schema{
-				Type:        schema.TypeBool,
-				Computed:    true,
-				Description: "True if the gateway uses advanced networking. (Enabled by default)",
-			},
 			"configuration": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -37,21 +34,6 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Enable high availability on this edge gateway",
-			},
-			"external_networks": &schema.Schema{
-				Type:        schema.TypeList,
-				Computed:    true,
-				Description: "A list of external networks to be used by the edge gateway",
-				Deprecated:  "Please use the more advanced 'external_network' block(s)",
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-			},
-			"default_gateway_network": &schema.Schema{
-				Type:        schema.TypeString,
-				Computed:    true,
-				Deprecated:  "Please use the more advanced 'external_network' block(s)",
-				Description: "External network to be used as default gateway. Its name must be included in 'external_networks'. An empty value will skip the default gateway",
 			},
 			"default_external_network_ip": &schema.Schema{
 				Type:        schema.TypeString,
@@ -69,7 +51,7 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 			"distributed_routing": &schema.Schema{
 				Type:        schema.TypeBool,
 				Computed:    true,
-				Description: "If advanced networking enabled, also enable distributed routing",
+				Description: "Enable distributed routing",
 			},
 			"lb_enabled": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -188,6 +170,18 @@ func datasourceVcdEdgeGateway() *schema.Resource {
 								},
 							},
 						},
+					},
+				},
+			},
+			"filter": &schema.Schema{
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				MinItems:    1,
+				Optional:    true,
+				Description: "Criteria for retrieving an edge gateway by various attributes",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name_regex": elementNameRegex,
 					},
 				},
 			},

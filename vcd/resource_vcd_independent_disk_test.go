@@ -8,8 +8,8 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 var resourceName = "TestAccVcdIndependentDiskBasic_1"
@@ -27,7 +27,6 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 		"name":               name,
 		"secondName":         name + "second",
 		"size":               "5000",
-		"sizeInBytes":        "5242880000",
 		"busType":            "SCSI",
 		"busSubType":         "lsilogicsas",
 		"storageProfileName": "*",
@@ -38,9 +37,6 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "-Compatibility"
 	configTextForCompatibility := templateFill(testAccCheckVcdIndependentDiskForCompatibility, params)
-	/*	params["FuncName"] = t.Name()
-		configText := templateFill(testAccCheckVcdIndependentDiskBasic, params)
-	*/
 	params["FuncName"] = t.Name() + "-WithoutOptionals"
 	configTextWithoutOptionals := templateFill(testAccCheckVcdIndependentDiskWithoutOptionals, params)
 
@@ -52,44 +48,33 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configTextForCompatibility)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testDiskResourcesDestroyed,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testDiskResourcesDestroyed,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configTextForCompatibility,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDiskCreated("vcd_independent_disk."+resourceName),
-					//resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "size_in_bytes", "5242880000"),
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "owner_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "datastore_name", regexp.MustCompile(`^\S+`)),
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName, "iops", regexp.MustCompile(`^\d+$`)),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "is_attached", "false"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "size_in_mb", params["size"].(string)),
 				),
 			},
 			resource.TestStep{
-				ResourceName:            "vcd_independent_disk." + resourceName + "-import",
+				ResourceName:            "vcd_independent_disk." + resourceName,
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateIdFunc:       importStateIdByDisk("vcd_independent_disk." + resourceName),
-				ImportStateVerifyIgnore: []string{"org", "vdc", "size"},
+				ImportStateVerifyIgnore: []string{"org", "vdc"},
 			},
-			/*			resource.TestStep{
-						Config: configText,
-						Check: resource.ComposeTestCheckFunc(
-							testAccCheckDiskCreated("vcd_independent_disk."+resourceName+"second"),
-							resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName+"second", "size_in_bytes", "5242880000"),
-							resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName+"second", "owner_name", regexp.MustCompile(`^\S+`)),
-							resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName+"second", "datastore_name", regexp.MustCompile(`^\S+`)),
-							resource.TestMatchResourceAttr("vcd_independent_disk."+resourceName+"second", "iops", regexp.MustCompile(`^\d+$`)),
-							resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName+"second", "is_attached", "false"),
-						),
-					},*/
 			resource.TestStep{
 				Config: configTextWithoutOptionals,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckDiskCreated("vcd_independent_disk."+resourceNameSecond),
-					//resource.TestCheckResourceAttr("vcd_independent_disk."+resourceName, "size_in_bytes", "5242880000"),
+					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameSecond, "size_in_mb", params["size"].(string)),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameSecond, "bus_type", "SCSI"),
 					resource.TestCheckResourceAttr("vcd_independent_disk."+resourceNameSecond, "bus_sub_type", "lsilogic"),
 					resource.TestMatchResourceAttr("vcd_independent_disk."+resourceNameSecond, "owner_name", regexp.MustCompile(`^\S+`)),
@@ -179,7 +164,7 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
   org             = "{{.Org}}"
   vdc             = "{{.Vdc}}"
   name            = "{{.name}}"
-  size            = "{{.size}}"
+  size_in_mb      = "{{.size}}"
   bus_type        = "{{.busType}}"
   bus_sub_type    = "{{.busSubType}}"
   storage_profile = "{{.storageProfileName}}"
@@ -189,19 +174,6 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
 const testAccCheckVcdIndependentDiskWithoutOptionals = `
 resource "vcd_independent_disk" "{{.secondResourceName}}" {
   name            = "{{.secondName}}"
-  size            = "{{.size}}"
+  size_in_mb      = "{{.size}}"
 }
 `
-
-/*const testAccCheckVcdIndependentDiskBasic = `
-resource "vcd_independent_disk" "{{.secondResourceName}}" {
-  org             = "{{.Org}}"
-  vdc             = "{{.Vdc}}"
-  name            = "{{.secondName}}"
-  size_in_bytes   = "{{.sizeInBytes}}"
-  bus_type        = "{{.busType}}"
-  bus_sub_type    = "{{.busSubType}}"
-  storage_profile = "{{.storageProfileName}}"
-}
-`
-*/

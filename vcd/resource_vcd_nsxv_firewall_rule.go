@@ -9,9 +9,8 @@ import (
 
 	"text/tabwriter"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -119,7 +118,7 @@ func resourceVcdNsxvFirewallRule() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"virtual_machine_ids": {
+						"vm_ids": {
 							Optional:    true,
 							Type:        schema.TypeSet,
 							Description: "Set of VM IDs",
@@ -185,7 +184,7 @@ func resourceVcdNsxvFirewallRule() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"virtual_machine_ids": {
+						"vm_ids": {
 							Optional:    true,
 							Type:        schema.TypeSet,
 							Description: "Set of VM IDs",
@@ -297,16 +296,7 @@ func resourceVcdNsxvFirewallRuleUpdate(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	// TODO remove this code when vCD 9.0 is not supported anymore. vCD 9.0 asks for short formatted
-	// IP set IDs (ipset-454 insted of a0c3c92a-a180-48fb-96ec-91c610c7c254:ipset-460) for update
-	// operations only. Otherwise update operation fails with exception.
-	var shortIds bool
-	if vcdClient.APIVCDMaxVersionIs("<= 29") {
-		log.Println("[DEBUG] vcd_nsxv_firewall_rule update - using short IDs for update operations because vCD is <= 9.0 ")
-		shortIds = true
-	}
-
-	updateFirewallRule, err := getFirewallRule(d, edgeGateway, vdc, shortIds)
+	updateFirewallRule, err := getFirewallRule(d, edgeGateway, vdc, false)
 	updateFirewallRule.ID = d.Id() // We already know an ID for update and it allows to change name
 
 	if err != nil {
@@ -687,7 +677,7 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 	endpointMap["ip_addresses"] = endpointIpsSet
 	endpointMap["gateway_interfaces"] = endpointGatewayInterfaceSet
 	endpointMap["org_networks"] = endpointNetworksSet
-	endpointMap["virtual_machine_ids"] = endpointVmSet
+	endpointMap["vm_ids"] = endpointVmSet
 	endpointMap["ip_sets"] = endpointIpSetSet
 	// TODO - uncomment when security groups are supported
 	// endpointMap["security_groups"] = endpointSecurityGroupSet
@@ -744,7 +734,7 @@ func getFirewallRuleEndpoint(endpoint []interface{}, edge *govcd.EdgeGateway, vd
 	// 'types.EdgeFirewallEndpoint.GroupingObjectId' holds IDs for VMs, org networks, ipsets and Security groups
 
 	// Extract VM IDs from set and add them to endpoint structure
-	endpointVmIdStrings := convertSchemaSetToSliceOfStrings(endpointMap["virtual_machine_ids"].(*schema.Set))
+	endpointVmIdStrings := convertSchemaSetToSliceOfStrings(endpointMap["vm_ids"].(*schema.Set))
 	result.GroupingObjectIds = append(result.GroupingObjectIds, endpointVmIdStrings...)
 
 	// Extract org network names from set, lookup their IDs and add them to endpoint structure
@@ -909,5 +899,5 @@ func resourceVcdNsxvFirewallRuleServiceHash(v interface{}) int {
 	buf.WriteString(fmt.Sprintf("%s-", port))
 	buf.WriteString(fmt.Sprintf("%s-", sourcePort))
 
-	return hashcode.String(buf.String())
+	return hashcodeString(buf.String())
 }

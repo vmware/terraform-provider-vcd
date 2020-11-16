@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
@@ -38,9 +38,9 @@ func TestAccVcdOrgBasic(t *testing.T) {
 
 	resourceName := "vcd_org." + orgNameTestAccVcdOrg
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckOrgDestroy(orgNameTestAccVcdOrg),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckOrgDestroy(orgNameTestAccVcdOrg),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -54,6 +54,7 @@ func TestAccVcdOrgBasic(t *testing.T) {
 						resourceName, "description", params["Description"].(string)),
 					resource.TestCheckResourceAttr(
 						resourceName, "is_enabled", "true"),
+					// Testing defaults lease values is not reliable, as such values vary for different vCD versions
 				),
 			},
 		},
@@ -66,47 +67,83 @@ func TestAccVcdOrgFull(t *testing.T) {
 		return
 	}
 	type testOrgData struct {
-		name               string
-		enabled            bool
-		canPublishCatalogs bool
-		deployedVmQuota    int
-		storedVmQuota      int
+		name                  string
+		enabled               bool
+		canPublishCatalogs    bool
+		deployedVmQuota       int
+		storedVmQuota         int
+		runtimeLease          int
+		powerOffonLeaseExp    bool
+		vappStorageLease      int
+		vappDeleteOnLeaseExp  bool
+		templStorageLease     int
+		templDeleteOnLeaseExp bool
 	}
 	var orgList = []testOrgData{
 		{
-			name:               "org1",
-			enabled:            true,
-			canPublishCatalogs: false,
-			deployedVmQuota:    0,
-			storedVmQuota:      0,
+			name:                  "org1",
+			enabled:               true,
+			canPublishCatalogs:    false,
+			deployedVmQuota:       0,
+			storedVmQuota:         0,
+			runtimeLease:          0, // never expires
+			powerOffonLeaseExp:    true,
+			vappStorageLease:      0, // never expires
+			templDeleteOnLeaseExp: true,
+			templStorageLease:     0, // never expires
+			vappDeleteOnLeaseExp:  true,
 		},
 		{
-			name:               "org2",
-			enabled:            false,
-			canPublishCatalogs: true,
-			deployedVmQuota:    1,
-			storedVmQuota:      1,
+			name:                  "org2",
+			enabled:               false,
+			canPublishCatalogs:    true,
+			deployedVmQuota:       1,
+			storedVmQuota:         1,
+			runtimeLease:          3600, // 1 hour
+			powerOffonLeaseExp:    true,
+			vappStorageLease:      3600, // 1 hour
+			templDeleteOnLeaseExp: true,
+			templStorageLease:     3600, // 1 hour
+			vappDeleteOnLeaseExp:  true,
 		},
 		{
-			name:               "org3",
-			enabled:            true,
-			canPublishCatalogs: true,
-			deployedVmQuota:    10,
-			storedVmQuota:      10,
+			name:                  "org3",
+			enabled:               true,
+			canPublishCatalogs:    true,
+			deployedVmQuota:       10,
+			storedVmQuota:         10,
+			runtimeLease:          3600 * 24, // 1 day
+			powerOffonLeaseExp:    false,
+			vappStorageLease:      3600 * 24 * 30, // 1 month
+			templDeleteOnLeaseExp: false,
+			templStorageLease:     3600 * 24 * 365, // 1 year
+			vappDeleteOnLeaseExp:  false,
 		},
 		{
-			name:               "org4",
-			enabled:            false,
-			canPublishCatalogs: false,
-			deployedVmQuota:    100,
-			storedVmQuota:      100,
+			name:                  "org4",
+			enabled:               false,
+			canPublishCatalogs:    false,
+			deployedVmQuota:       100,
+			storedVmQuota:         100,
+			runtimeLease:          3600 * 24 * 15, // 15 days
+			powerOffonLeaseExp:    false,
+			vappStorageLease:      3600 * 24 * 15, // 15 days
+			templDeleteOnLeaseExp: false,
+			templStorageLease:     3600 * 24 * 15, // 15 days
+			vappDeleteOnLeaseExp:  false,
 		},
 		{
-			name:               "org5",
-			enabled:            true,
-			canPublishCatalogs: true,
-			deployedVmQuota:    200,
-			storedVmQuota:      200,
+			name:                  "org5",
+			enabled:               true,
+			canPublishCatalogs:    true,
+			deployedVmQuota:       200,
+			storedVmQuota:         200,
+			runtimeLease:          3600 * 24 * 7, // 7 days (the default)
+			powerOffonLeaseExp:    false,
+			vappStorageLease:      3600 * 24 * 14, // 14 days (the default)
+			templDeleteOnLeaseExp: false,
+			templStorageLease:     3600 * 24 * 30, // 30 days (the default)
+			vappDeleteOnLeaseExp:  false,
 		},
 	}
 	willSkip := false
@@ -114,15 +151,21 @@ func TestAccVcdOrgFull(t *testing.T) {
 	for _, od := range orgList {
 
 		var params = StringMap{
-			"FuncName":           "TestAccVcdOrgFull" + "_" + od.name,
-			"OrgName":            od.name,
-			"FullName":           "Full " + od.name,
-			"Description":        "Organization " + od.name,
-			"CanPublishCatalogs": od.canPublishCatalogs,
-			"DeployedVmQuota":    od.deployedVmQuota,
-			"StoredVmQuota":      od.storedVmQuota,
-			"IsEnabled":          od.enabled,
-			"Tags":               "org",
+			"FuncName":              "TestAccVcdOrgFull" + "_" + od.name,
+			"OrgName":               od.name,
+			"FullName":              "Full " + od.name,
+			"Description":           "Organization " + od.name,
+			"CanPublishCatalogs":    od.canPublishCatalogs,
+			"DeployedVmQuota":       od.deployedVmQuota,
+			"StoredVmQuota":         od.storedVmQuota,
+			"IsEnabled":             od.enabled,
+			"RuntimeLease":          od.runtimeLease,
+			"PowerOffOnLeaseExp":    od.powerOffonLeaseExp,
+			"VappStorageLease":      od.vappStorageLease,
+			"VappDeleteOnLeaseExp":  od.vappDeleteOnLeaseExp,
+			"TemplStorageLease":     od.templStorageLease,
+			"TemplDeleteOnLeaseExp": od.templDeleteOnLeaseExp,
+			"Tags":                  "org",
 		}
 
 		configText := templateFill(testAccCheckVcdOrgFull, params)
@@ -145,16 +188,18 @@ func TestAccVcdOrgFull(t *testing.T) {
 			willSkip = true
 			continue
 		}
-		fmt.Printf("org: %-10s - enabled %-5v - catalogs %-5v - quotas [%3d %3d]\n",
-			od.name, od.enabled, od.canPublishCatalogs, od.deployedVmQuota, od.storedVmQuota)
+		fmt.Printf("org: %-5s - enabled %-5v - catalogs %-5v - quotas [%3d %3d] - vapp {%10d %5v %10d %5v} - tmpl {%10d %5v}\n",
+			od.name, od.enabled, od.canPublishCatalogs, od.deployedVmQuota, od.storedVmQuota,
+			od.runtimeLease, od.powerOffonLeaseExp, od.vappStorageLease, od.vappDeleteOnLeaseExp,
+			od.templStorageLease, od.templDeleteOnLeaseExp)
 		debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 		debugPrintf("#[DEBUG] CONFIGURATION: %s", configTextUpdated)
 
 		resourceName := "vcd_org." + od.name
 		resource.Test(t, resource.TestCase{
-			PreCheck:     func() { testAccPreCheck(t) },
-			Providers:    testAccProviders,
-			CheckDestroy: testAccCheckOrgDestroy(od.name),
+			PreCheck:          func() { testAccPreCheck(t) },
+			ProviderFactories: testAccProviders,
+			CheckDestroy:      testAccCheckOrgDestroy(od.name),
 			Steps: []resource.TestStep{
 				resource.TestStep{
 					Config: configText,
@@ -174,6 +219,18 @@ func TestAccVcdOrgFull(t *testing.T) {
 							resourceName, "deployed_vm_quota", fmt.Sprintf("%d", od.deployedVmQuota)),
 						resource.TestCheckResourceAttr(
 							resourceName, "stored_vm_quota", fmt.Sprintf("%d", od.storedVmQuota)),
+						resource.TestCheckResourceAttr(
+							resourceName, "vapp_lease.0.maximum_runtime_lease_in_sec", fmt.Sprintf("%d", od.runtimeLease)),
+						resource.TestCheckResourceAttr(
+							resourceName, "vapp_lease.0.power_off_on_runtime_lease_expiration", fmt.Sprintf("%v", od.powerOffonLeaseExp)),
+						resource.TestCheckResourceAttr(
+							resourceName, "vapp_lease.0.maximum_storage_lease_in_sec", fmt.Sprintf("%d", od.vappStorageLease)),
+						resource.TestCheckResourceAttr(
+							resourceName, "vapp_lease.0.delete_on_storage_lease_expiration", fmt.Sprintf("%v", od.vappDeleteOnLeaseExp)),
+						resource.TestCheckResourceAttr(
+							resourceName, "vapp_template_lease.0.maximum_storage_lease_in_sec", fmt.Sprintf("%d", od.templStorageLease)),
+						resource.TestCheckResourceAttr(
+							resourceName, "vapp_template_lease.0.delete_on_storage_lease_expiration", fmt.Sprintf("%v", od.templDeleteOnLeaseExp)),
 					),
 				},
 				resource.TestStep{
@@ -196,7 +253,7 @@ func TestAccVcdOrgFull(t *testing.T) {
 					),
 				},
 				resource.TestStep{
-					ResourceName:      resourceName + "-import",
+					ResourceName:      resourceName,
 					ImportState:       true,
 					ImportStateVerify: true,
 					ImportStateIdFunc: importStateIdTopHierarchy(od.name),
@@ -285,5 +342,15 @@ resource "vcd_org" "{{.OrgName}}" {
   is_enabled           = "{{.IsEnabled}}"
   delete_force         = "true"
   delete_recursive     = "true"
+  vapp_lease {
+    maximum_runtime_lease_in_sec          = {{.RuntimeLease}}
+    power_off_on_runtime_lease_expiration = {{.PowerOffOnLeaseExp}}
+    maximum_storage_lease_in_sec          = {{.VappStorageLease}}
+    delete_on_storage_lease_expiration    = {{.VappDeleteOnLeaseExp}}
+  }
+  vapp_template_lease {
+    maximum_storage_lease_in_sec          = {{.TemplStorageLease}}
+    delete_on_storage_lease_expiration    = {{.TemplDeleteOnLeaseExp}}
+  }
 }
 `

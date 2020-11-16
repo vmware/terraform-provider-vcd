@@ -3,7 +3,7 @@ package vcd
 import (
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func datasourceVcdResourceSchema() *schema.Resource {
@@ -95,7 +95,7 @@ func datasourceVcdResourceSchemaRead(d *schema.ResourceData, meta interface{}) e
 
 	d.SetId(d.Get("name").(string))
 
-	resource, ok := VcdResourcesMap[resourceType]
+	resource, ok := globalResourceMap[resourceType]
 	if !ok {
 		return fmt.Errorf("unhandled resource %s", resourceType)
 	}

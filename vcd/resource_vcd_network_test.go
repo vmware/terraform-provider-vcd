@@ -4,17 +4,22 @@ package vcd
 
 import (
 	"fmt"
-	"os"
 	"regexp"
+	"strconv"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
+func init() {
+	testingTags["network"] = "resource_vcd_network_test.go"
+}
+
 type networkDef struct {
 	name                  string
+	description           string
 	gateway               string
 	startStaticIpAddress1 string
 	endStaticIpAddress1   string
@@ -22,6 +27,8 @@ type networkDef struct {
 	endStaticIpAddress2   string
 	startDhcpIpAddress    string
 	endDhcpIpAddress      string
+	maxLeaseTime          int
+	defaultLeaseTime      int
 	externalNetwork       string
 	configText            string
 	resourceName          string
@@ -44,12 +51,11 @@ const (
 	routedDhcpNetworkSub     string = "TestAccVcdNetworkRoutedDhcpSub"
 	routedMixedNetworkSub    string = "TestAccVcdNetworkRoutedMixedSub"
 	directNetwork            string = "TestAccVcdNetworkDirect"
+	groupStartLabel          string = "start_address"
+	groupEndLabel            string = "end_address"
+	groupDefaultLease        string = "default_lease_time"
+	groupMaxLease            string = "max_lease_time"
 )
-
-// Distributed networks require an edge gateway with distributed routing enabled,
-// which in turn requires a NSX controller. To run the distributed test, users
-// need to set the environment variable VCD_TEST_DISTRIBUTED_NETWORK
-var testDistributedNetworks = os.Getenv("VCD_TEST_DISTRIBUTED_NETWORK") != ""
 
 func TestAccVcdNetworkIsolatedStatic1(t *testing.T) {
 	var def = networkDef{
@@ -60,8 +66,16 @@ func TestAccVcdNetworkIsolatedStatic1(t *testing.T) {
 		configText:            testAccCheckVcdNetworkIsolatedStatic1,
 		resourceName:          "vcd_network_isolated",
 	}
+	var updateDef = networkDef{
+		name:                  isolatedStaticNetwork1 + "-update",
+		gateway:               "192.168.2.1",
+		startStaticIpAddress1: "192.168.2.5",
+		endStaticIpAddress1:   "192.168.2.45",
+		configText:            testAccCheckVcdNetworkIsolatedStatic1,
+		resourceName:          "vcd_network_isolated",
+	}
 
-	runTest(def, t)
+	runTest(def, updateDef, t)
 }
 
 func TestAccVcdNetworkIsolatedStatic2(t *testing.T) {
@@ -75,8 +89,17 @@ func TestAccVcdNetworkIsolatedStatic2(t *testing.T) {
 		configText:            testAccCheckVcdNetworkIsolatedStatic2,
 		resourceName:          "vcd_network_isolated",
 	}
-
-	runTest(def, t)
+	var updateDef = networkDef{
+		name:                  isolatedStaticNetwork2 + "-update",
+		gateway:               "192.168.2.1",
+		startStaticIpAddress1: "192.168.2.5",
+		endStaticIpAddress1:   "192.168.2.45",
+		startStaticIpAddress2: "192.168.2.53",
+		endStaticIpAddress2:   "192.168.2.99",
+		configText:            testAccCheckVcdNetworkIsolatedStatic2,
+		resourceName:          "vcd_network_isolated",
+	}
+	runTest(def, updateDef, t)
 }
 
 func TestAccVcdNetworkIsolatedDhcp(t *testing.T) {
@@ -85,10 +108,22 @@ func TestAccVcdNetworkIsolatedDhcp(t *testing.T) {
 		gateway:            "192.168.2.1",
 		startDhcpIpAddress: "192.168.2.51",
 		endDhcpIpAddress:   "192.168.2.100",
+		defaultLeaseTime:   4000,
+		maxLeaseTime:       86400,
 		configText:         testAccCheckVcdNetworkIsolatedDhcp,
 		resourceName:       "vcd_network_isolated",
 	}
-	runTest(def, t)
+	var updateDef = networkDef{
+		name:               isolatedDhcpNetwork + "-update",
+		gateway:            "192.168.2.1",
+		startDhcpIpAddress: "192.168.2.53",
+		endDhcpIpAddress:   "192.168.2.99",
+		defaultLeaseTime:   8000,
+		maxLeaseTime:       604800,
+		configText:         testAccCheckVcdNetworkIsolatedDhcp,
+		resourceName:       "vcd_network_isolated",
+	}
+	runTest(def, updateDef, t)
 }
 
 func TestAccVcdNetworkIsolatedMixed1(t *testing.T) {
@@ -102,7 +137,18 @@ func TestAccVcdNetworkIsolatedMixed1(t *testing.T) {
 		configText:            testAccCheckVcdNetworkIsolatedMixed1,
 		resourceName:          "vcd_network_isolated",
 	}
-	runTest(def, t)
+	var updateDef = networkDef{
+		name:                  isolatedMixedNetwork1 + "-update",
+		gateway:               "192.168.2.1",
+		startStaticIpAddress1: "192.168.2.5",
+		endStaticIpAddress1:   "192.168.2.45",
+		startDhcpIpAddress:    "192.168.2.53",
+		endDhcpIpAddress:      "192.168.2.99",
+		configText:            testAccCheckVcdNetworkIsolatedMixed1,
+		resourceName:          "vcd_network_isolated",
+	}
+
+	runTest(def, updateDef, t)
 }
 func TestAccVcdNetworkIsolatedMixed2(t *testing.T) {
 	var def = networkDef{
@@ -117,7 +163,19 @@ func TestAccVcdNetworkIsolatedMixed2(t *testing.T) {
 		configText:            testAccCheckVcdNetworkIsolatedMixed2,
 		resourceName:          "vcd_network_isolated",
 	}
-	runTest(def, t)
+	var updateDef = networkDef{
+		name:                  isolatedMixedNetwork2 + "-update",
+		gateway:               "192.168.2.1",
+		startStaticIpAddress1: "192.168.2.5",
+		endStaticIpAddress1:   "192.168.2.45",
+		startStaticIpAddress2: "192.168.2.53",
+		endStaticIpAddress2:   "192.168.2.99",
+		startDhcpIpAddress:    "192.168.2.153",
+		endDhcpIpAddress:      "192.168.2.198",
+		configText:            testAccCheckVcdNetworkIsolatedMixed2,
+		resourceName:          "vcd_network_isolated",
+	}
+	runTest(def, updateDef, t)
 }
 
 // TestAccVcdNetworkRoutedStatic1 tests a routed network with static IP pool
@@ -131,7 +189,15 @@ func TestAccVcdNetworkRoutedStatic1(t *testing.T) {
 		configText:            testAccCheckVcdNetworkRoutedStatic1,
 		resourceName:          "vcd_network_routed",
 	}
-	runTest(def, t)
+	var updateDef = networkDef{
+		name:                  routedStaticNetwork1 + "-update",
+		gateway:               "10.10.102.1",
+		startStaticIpAddress1: "10.10.102.5",
+		endStaticIpAddress1:   "10.10.102.45",
+		configText:            testAccCheckVcdNetworkRoutedStatic1,
+		resourceName:          "vcd_network_routed",
+	}
+	runTest(def, updateDef, t)
 }
 
 func TestAccVcdNetworkRoutedStatic2(t *testing.T) {
@@ -146,7 +212,18 @@ func TestAccVcdNetworkRoutedStatic2(t *testing.T) {
 		resourceName:          "vcd_network_routed",
 		interfaceName:         "internal",
 	}
-	runTest(def, t)
+	var updateDef = networkDef{
+		name:                  routedStaticNetwork2 + "-update",
+		gateway:               "10.10.102.1",
+		startStaticIpAddress1: "10.10.102.5",
+		endStaticIpAddress1:   "10.10.102.45",
+		startStaticIpAddress2: "10.10.102.53",
+		endStaticIpAddress2:   "10.10.102.99",
+		configText:            testAccCheckVcdNetworkRoutedStatic2,
+		resourceName:          "vcd_network_routed",
+		interfaceName:         "internal",
+	}
+	runTest(def, updateDef, t)
 }
 
 func TestAccVcdNetworkRoutedStaticSub2(t *testing.T) {
@@ -161,7 +238,18 @@ func TestAccVcdNetworkRoutedStaticSub2(t *testing.T) {
 		resourceName:          "vcd_network_routed",
 		interfaceName:         "subinterface",
 	}
-	runTest(def, t)
+	var updateDef = networkDef{
+		name:                  routedStaticNetworkSub2 + "-update",
+		gateway:               "10.10.102.1",
+		startStaticIpAddress1: "10.10.102.5",
+		endStaticIpAddress1:   "10.10.102.45",
+		startStaticIpAddress2: "10.10.102.53",
+		endStaticIpAddress2:   "10.10.102.99",
+		configText:            testAccCheckVcdNetworkRoutedStatic2,
+		resourceName:          "vcd_network_routed",
+		interfaceName:         "subinterface",
+	}
+	runTest(def, updateDef, t)
 }
 
 func TestAccVcdNetworkRoutedStaticDist(t *testing.T) {
@@ -179,7 +267,18 @@ func TestAccVcdNetworkRoutedStaticDist(t *testing.T) {
 		resourceName:          "vcd_network_routed",
 		interfaceName:         "distributed",
 	}
-	runTest(def, t)
+	var updateDef = networkDef{
+		name:                  routedStaticNetworkDist + "-update",
+		gateway:               "10.10.103.1",
+		startStaticIpAddress1: "10.10.103.5",
+		endStaticIpAddress1:   "10.10.103.45",
+		startStaticIpAddress2: "10.10.103.53",
+		endStaticIpAddress2:   "10.10.103.99",
+		configText:            testAccCheckVcdNetworkRoutedStatic2,
+		resourceName:          "vcd_network_routed",
+		interfaceName:         "distributed",
+	}
+	runTest(def, updateDef, t)
 }
 
 func TestAccVcdNetworkRoutedStaticDist2(t *testing.T) {
@@ -197,7 +296,18 @@ func TestAccVcdNetworkRoutedStaticDist2(t *testing.T) {
 		resourceName:          "vcd_network_routed",
 		interfaceName:         "distributed",
 	}
-	runTest(def, t)
+	var updateDef = networkDef{
+		name:                  routedStaticNetworkDist2 + "update",
+		gateway:               "10.10.102.1",
+		startStaticIpAddress1: "10.10.102.5",
+		endStaticIpAddress1:   "10.10.102.45",
+		startStaticIpAddress2: "10.10.102.53",
+		endStaticIpAddress2:   "10.10.102.99",
+		configText:            testAccCheckVcdNetworkRoutedStatic2,
+		resourceName:          "vcd_network_routed",
+		interfaceName:         "distributed",
+	}
+	runTest(def, updateDef, t)
 }
 
 func TestAccVcdNetworkRoutedDhcp(t *testing.T) {
@@ -206,11 +316,21 @@ func TestAccVcdNetworkRoutedDhcp(t *testing.T) {
 		gateway:            "10.10.102.1",
 		startDhcpIpAddress: "10.10.102.51",
 		endDhcpIpAddress:   "10.10.102.100",
+		maxLeaseTime:       86400,
 		configText:         testAccCheckVcdNetworkRoutedDhcp,
 		resourceName:       "vcd_network_routed",
 		interfaceName:      "internal",
 	}
-	runTest(def, t)
+	var updateDef = networkDef{
+		name:               routedDhcpNetwork + "-update",
+		startDhcpIpAddress: "10.10.102.52",
+		endDhcpIpAddress:   "10.10.102.99",
+		maxLeaseTime:       604800,
+		configText:         testAccCheckVcdNetworkRoutedDhcp,
+		resourceName:       "vcd_network_routed",
+		interfaceName:      "internal",
+	}
+	runTest(def, updateDef, t)
 }
 
 func TestAccVcdNetworkRoutedDhcpSub(t *testing.T) {
@@ -223,7 +343,16 @@ func TestAccVcdNetworkRoutedDhcpSub(t *testing.T) {
 		resourceName:       "vcd_network_routed",
 		interfaceName:      "subinterface",
 	}
-	runTest(def, t)
+	var updateDef = networkDef{
+		name:               routedDhcpNetworkSub + "-update",
+		gateway:            "10.10.102.1",
+		startDhcpIpAddress: "10.10.102.52",
+		endDhcpIpAddress:   "10.10.102.99",
+		configText:         testAccCheckVcdNetworkRoutedDhcp,
+		resourceName:       "vcd_network_routed",
+		interfaceName:      "subinterface",
+	}
+	runTest(def, updateDef, t)
 }
 
 func TestAccVcdNetworkRoutedMixed(t *testing.T) {
@@ -238,7 +367,18 @@ func TestAccVcdNetworkRoutedMixed(t *testing.T) {
 		resourceName:          "vcd_network_routed",
 		interfaceName:         "internal",
 	}
-	runTest(def, t)
+	var updateDef = networkDef{
+		name:                  routedMixedNetwork + "-update",
+		gateway:               "10.10.102.1",
+		startStaticIpAddress1: "10.10.102.5",
+		endStaticIpAddress1:   "10.10.102.45",
+		startDhcpIpAddress:    "10.10.102.52",
+		endDhcpIpAddress:      "10.10.102.99",
+		configText:            testAccCheckVcdNetworkRoutedMixed,
+		resourceName:          "vcd_network_routed",
+		interfaceName:         "internal",
+	}
+	runTest(def, updateDef, t)
 }
 
 func TestAccVcdNetworkRoutedMixedSub(t *testing.T) {
@@ -253,7 +393,18 @@ func TestAccVcdNetworkRoutedMixedSub(t *testing.T) {
 		resourceName:          "vcd_network_routed",
 		interfaceName:         "subinterface",
 	}
-	runTest(def, t)
+	var updateDef = networkDef{
+		name:                  routedMixedNetworkSub + "-update",
+		gateway:               "10.10.102.1",
+		startStaticIpAddress1: "10.10.102.5",
+		endStaticIpAddress1:   "10.10.102.45",
+		startDhcpIpAddress:    "10.10.102.52",
+		endDhcpIpAddress:      "10.10.102.99",
+		configText:            testAccCheckVcdNetworkRoutedMixed,
+		resourceName:          "vcd_network_routed",
+		interfaceName:         "subinterface",
+	}
+	runTest(def, updateDef, t)
 }
 
 func TestAccVcdNetworkDirect(t *testing.T) {
@@ -268,20 +419,44 @@ func TestAccVcdNetworkDirect(t *testing.T) {
 		configText:      testAccCheckVcdNetworkDirect,
 		resourceName:    "vcd_network_direct",
 	}
-	runTest(def, t)
+	var updateDef = networkDef{
+		name:            directNetwork + "-update",
+		externalNetwork: testConfig.Networking.ExternalNetwork,
+		configText:      testAccCheckVcdNetworkDirect,
+		resourceName:    "vcd_network_direct",
+	}
+	runTest(def, updateDef, t)
 }
 
-func runTest(def networkDef, t *testing.T) {
+func runTest(def, updateDef networkDef, t *testing.T) {
 
 	generatedHrefRegexp := regexp.MustCompile("^https://")
 
 	networkName := def.name
-	description := fmt.Sprintf("%s description", networkName)
+	if def.description == "" {
+		def.description = fmt.Sprintf("%s description", networkName)
+	}
+	if updateDef.description == "" {
+		updateDef.description = fmt.Sprintf("%s updated description", networkName)
+	}
+	if def.maxLeaseTime == 0 {
+		def.maxLeaseTime = 7200
+	}
+	if updateDef.maxLeaseTime == 0 {
+		updateDef.maxLeaseTime = 7200
+	}
+	if def.defaultLeaseTime == 0 {
+		def.defaultLeaseTime = 3600
+	}
+	if updateDef.defaultLeaseTime == 0 {
+		updateDef.defaultLeaseTime = 3600
+	}
 	var params = StringMap{
 		"Org":                   testConfig.VCD.Org,
 		"Vdc":                   testConfig.VCD.Vdc,
-		"Description":           description,
+		"Description":           def.description,
 		"EdgeGateway":           testConfig.Networking.EdgeGateway,
+		"ResourceName":          networkName,
 		"NetworkName":           networkName,
 		"Gateway":               def.gateway,
 		"StartStaticIpAddress1": def.startStaticIpAddress1,
@@ -290,6 +465,8 @@ func runTest(def networkDef, t *testing.T) {
 		"EndStaticIpAddress2":   def.endStaticIpAddress2,
 		"StartDhcpIpAddress":    def.startDhcpIpAddress,
 		"EndDhcpIpAddress":      def.endDhcpIpAddress,
+		"DefaultLeaseTime":      def.defaultLeaseTime,
+		"MaxLeaseTime":          def.maxLeaseTime,
 		"ExternalNetwork":       def.externalNetwork,
 		"FuncName":              networkName,
 		"InterfaceType":         def.interfaceName,
@@ -298,12 +475,35 @@ func runTest(def networkDef, t *testing.T) {
 	var network govcd.OrgVDCNetwork
 	configText := templateFill(def.configText, params)
 
+	updateDef.description = firstNonEmpty(updateDef.description, def.description)
+	updateDef.name = firstNonEmpty(updateDef.name, def.name)
+	updateDef.startStaticIpAddress1 = firstNonEmpty(updateDef.startStaticIpAddress1, def.startStaticIpAddress1)
+	updateDef.startStaticIpAddress2 = firstNonEmpty(updateDef.startStaticIpAddress2, def.startStaticIpAddress2)
+	updateDef.endStaticIpAddress1 = firstNonEmpty(updateDef.endStaticIpAddress1, def.endStaticIpAddress1)
+	updateDef.endStaticIpAddress2 = firstNonEmpty(updateDef.endStaticIpAddress2, def.endStaticIpAddress2)
+	updateDef.startDhcpIpAddress = firstNonEmpty(updateDef.startDhcpIpAddress, def.startDhcpIpAddress)
+	updateDef.endDhcpIpAddress = firstNonEmpty(updateDef.endDhcpIpAddress, def.endDhcpIpAddress)
+
+	params["Description"] = updateDef.description
+	params["NetworkName"] = updateDef.name
+	params["StartStaticIpAddress1"] = updateDef.startStaticIpAddress1
+	params["StartStaticIpAddress2"] = updateDef.startStaticIpAddress2
+	params["EndStaticIpAddress1"] = updateDef.endStaticIpAddress1
+	params["EndStaticIpAddress2"] = updateDef.endStaticIpAddress2
+	params["StartDhcpIpAddress"] = updateDef.startDhcpIpAddress
+	params["EndDhcpIpAddress"] = updateDef.endDhcpIpAddress
+	params["FuncName"] = updateDef.name
+	params["MaxLeaseTime"] = updateDef.maxLeaseTime
+	params["DefaultLeaseTime"] = updateDef.defaultLeaseTime
+
+	updateConfigText := templateFill(fmt.Sprintf("\n# skip-binary-test only for updates\n%s", def.configText), params)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
-
+	debugPrintf("#[DEBUG] UPDATE CONFIGURATION: %s", updateConfigText)
 	// steps for external network
 	var steps []resource.TestStep
 
@@ -315,11 +515,22 @@ func runTest(def networkDef, t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdNetworkExists(networkName, &network),
-					testAccCheckVcdNetworkAttributes(networkName, &network),
 					resource.TestCheckResourceAttr(
 						resourceDef, "name", networkName),
 					resource.TestCheckResourceAttr(
-						resourceDef, "description", description),
+						resourceDef, "description", def.description),
+					resource.TestMatchResourceAttr(
+						resourceDef, "href", generatedHrefRegexp),
+				),
+			},
+			resource.TestStep{
+				Config: updateConfigText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdNetworkExists(updateDef.name, &network),
+					resource.TestCheckResourceAttr(
+						resourceDef, "name", updateDef.name),
+					resource.TestCheckResourceAttr(
+						resourceDef, "description", updateDef.description),
 					resource.TestMatchResourceAttr(
 						resourceDef, "href", generatedHrefRegexp),
 				),
@@ -331,17 +542,30 @@ func runTest(def networkDef, t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdNetworkExists(networkName, &network),
-					testAccCheckVcdNetworkAttributes(networkName, &network),
+					checkNetWorkIpGroups(resourceDef, def),
 					resource.TestCheckResourceAttr(
 						resourceDef, "name", networkName),
 					resource.TestCheckResourceAttr(
-						resourceDef, "description", description),
-					resource.TestCheckOutput("start_dhcp_address", def.startDhcpIpAddress),
-					resource.TestCheckOutput("end_dhcp_address", def.endDhcpIpAddress),
-					resource.TestCheckOutput("start_static_address1", def.startStaticIpAddress1),
-					resource.TestCheckOutput("end_static_address1", def.endStaticIpAddress1),
-					resource.TestCheckOutput("start_static_address2", def.startStaticIpAddress2),
-					resource.TestCheckOutput("end_static_address2", def.endStaticIpAddress2),
+						resourceDef, "description", def.description),
+					resource.TestCheckResourceAttr(
+						resourceDef, "gateway", def.gateway),
+					resource.TestMatchResourceAttr(
+						resourceDef, "href", generatedHrefRegexp),
+				),
+			},
+			resource.TestStep{
+				Config: updateConfigText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdNetworkExists(updateDef.name, &network),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceDef, "static_ip_pool.*", map[string]string{
+						"start_address": updateDef.startStaticIpAddress1,
+						"end_address":   updateDef.endStaticIpAddress1,
+					}),
+					checkNetWorkIpGroups(resourceDef, updateDef),
+					resource.TestCheckResourceAttr(
+						resourceDef, "name", updateDef.name),
+					resource.TestCheckResourceAttr(
+						resourceDef, "description", updateDef.description),
 					resource.TestCheckResourceAttr(
 						resourceDef, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
@@ -355,15 +579,26 @@ func runTest(def networkDef, t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdNetworkExists(networkName, &network),
-					testAccCheckVcdNetworkAttributes(networkName, &network),
 					resource.TestCheckResourceAttr(
 						resourceDef, "name", networkName),
 					resource.TestCheckResourceAttr(
-						resourceDef, "description", description),
-					resource.TestCheckOutput("start_static_address1", def.startStaticIpAddress1),
-					resource.TestCheckOutput("end_static_address1", def.endStaticIpAddress1),
-					resource.TestCheckOutput("start_static_address2", def.startStaticIpAddress2),
-					resource.TestCheckOutput("end_static_address2", def.endStaticIpAddress2),
+						resourceDef, "description", def.description),
+					checkNetWorkIpGroups(resourceDef, def),
+					resource.TestCheckResourceAttr(
+						resourceDef, "gateway", def.gateway),
+					resource.TestMatchResourceAttr(
+						resourceDef, "href", generatedHrefRegexp),
+				),
+			},
+			resource.TestStep{
+				Config: updateConfigText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdNetworkExists(updateDef.name, &network),
+					resource.TestCheckResourceAttr(
+						resourceDef, "name", updateDef.name),
+					resource.TestCheckResourceAttr(
+						resourceDef, "description", updateDef.description),
+					checkNetWorkIpGroups(resourceDef, updateDef),
 					resource.TestCheckResourceAttr(
 						resourceDef, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
@@ -377,13 +612,26 @@ func runTest(def networkDef, t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdNetworkExists(networkName, &network),
-					testAccCheckVcdNetworkAttributes(networkName, &network),
 					resource.TestCheckResourceAttr(
 						resourceDef, "name", networkName),
 					resource.TestCheckResourceAttr(
-						resourceDef, "description", description),
-					resource.TestCheckOutput("start_static_address1", def.startStaticIpAddress1),
-					resource.TestCheckOutput("end_static_address1", def.endStaticIpAddress1),
+						resourceDef, "description", def.description),
+					checkNetWorkIpGroups(resourceDef, def),
+					resource.TestCheckResourceAttr(
+						resourceDef, "gateway", def.gateway),
+					resource.TestMatchResourceAttr(
+						resourceDef, "href", generatedHrefRegexp),
+				),
+			},
+			resource.TestStep{
+				Config: updateConfigText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdNetworkExists(updateDef.name, &network),
+					resource.TestCheckResourceAttr(
+						resourceDef, "name", updateDef.name),
+					resource.TestCheckResourceAttr(
+						resourceDef, "description", updateDef.description),
+					checkNetWorkIpGroups(resourceDef, updateDef),
 					resource.TestCheckResourceAttr(
 						resourceDef, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
@@ -397,15 +645,26 @@ func runTest(def networkDef, t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdNetworkExists(networkName, &network),
-					testAccCheckVcdNetworkAttributes(networkName, &network),
 					resource.TestCheckResourceAttr(
 						resourceDef, "name", networkName),
 					resource.TestCheckResourceAttr(
-						resourceDef, "description", description),
-					resource.TestCheckOutput("start_static_address1", def.startStaticIpAddress1),
-					resource.TestCheckOutput("end_static_address1", def.endStaticIpAddress1),
-					resource.TestCheckOutput("start_dhcp_address", def.startDhcpIpAddress),
-					resource.TestCheckOutput("end_dhcp_address", def.endDhcpIpAddress),
+						resourceDef, "description", def.description),
+					checkNetWorkIpGroups(resourceDef, def),
+					resource.TestCheckResourceAttr(
+						resourceDef, "gateway", def.gateway),
+					resource.TestMatchResourceAttr(
+						resourceDef, "href", generatedHrefRegexp),
+				),
+			},
+			resource.TestStep{
+				Config: updateConfigText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdNetworkExists(updateDef.name, &network),
+					resource.TestCheckResourceAttr(
+						resourceDef, "name", updateDef.name),
+					resource.TestCheckResourceAttr(
+						resourceDef, "description", updateDef.description),
+					checkNetWorkIpGroups(resourceDef, updateDef),
 					resource.TestCheckResourceAttr(
 						resourceDef, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
@@ -419,13 +678,26 @@ func runTest(def networkDef, t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdNetworkExists(networkName, &network),
-					testAccCheckVcdNetworkAttributes(networkName, &network),
 					resource.TestCheckResourceAttr(
 						resourceDef, "name", networkName),
 					resource.TestCheckResourceAttr(
-						resourceDef, "description", description),
-					resource.TestCheckOutput("start_dhcp_address", def.startDhcpIpAddress),
-					resource.TestCheckOutput("end_dhcp_address", def.endDhcpIpAddress),
+						resourceDef, "description", def.description),
+					checkNetWorkIpGroups(resourceDef, def),
+					resource.TestCheckResourceAttr(
+						resourceDef, "gateway", def.gateway),
+					resource.TestMatchResourceAttr(
+						resourceDef, "href", generatedHrefRegexp),
+				),
+			},
+			resource.TestStep{
+				Config: updateConfigText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdNetworkExists(networkName, &network),
+					resource.TestCheckResourceAttr(
+						resourceDef, "name", updateDef.name),
+					resource.TestCheckResourceAttr(
+						resourceDef, "description", updateDef.description),
+					checkNetWorkIpGroups(resourceDef, updateDef),
 					resource.TestCheckResourceAttr(
 						resourceDef, "gateway", def.gateway),
 					resource.TestMatchResourceAttr(
@@ -441,18 +713,102 @@ func runTest(def networkDef, t *testing.T) {
 	}
 
 	steps = append(steps, resource.TestStep{
-		ResourceName:      def.resourceName + "." + networkName + "-import",
+		Config:            updateConfigText,
+		ResourceName:      def.resourceName + "." + networkName,
 		ImportState:       true,
 		ImportStateVerify: true,
-		ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, networkName),
+		ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, updateDef.name),
 	})
 
 	// Don't convert this test to parallel, as it will cause IP ranges conflicts
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: func(s *terraform.State) error { return testAccCheckVcdNetworkDestroy(s, def.resourceName, networkName) },
-		Steps:        steps,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      func(s *terraform.State) error { return testAccCheckVcdNetworkDestroy(s, def.resourceName, networkName) },
+		Steps:             steps,
+	})
+}
+
+// TestHashFunc makes sure that the hash used to compute the network static IP pool and DHCP pool
+// doesn't change.
+// It tests some IP pairs with the hard coded hash result as of version 2.8.0
+// If this test fails, we may have introduced a breaking change that causes a plan update.
+func TestHashFunc(t *testing.T) {
+	var testsDhcp = []struct {
+		startIp      string
+		endIp        string
+		maxLease     int
+		defaultLease int
+		wantIso      int
+		wantRouted   int
+	}{
+		// Hard coded values obtained on 2020-03-18 (version 2.8.0)
+		// Do not change
+		{"10.10.10.2", "10.10.10.100", 8000, 3600, 1030199880, 1056625442},
+		{"192.168.1.2", "192.168.1.20", 9000, 4000, 631317345, 159171876},
+		{"10.10.1.2", "10.10.1.100", 9000, 4000, 756273417, 3024715874},
+		{"10.10.1.2", "10.10.1.100", 86400, 3600, 3223781707, 13051714},
+		{"10.10.0.101", "10.10.0.200", 9500, 5000, 1068413432, 77228404},
+		{"10.10.0.1", "10.10.0.50", 3600, 7200, 3836851868, 4072727102},
+		{"10.10.0.1", "10.10.0.50", 7200, 7200, 2964735978, 2283983785},
+	}
+	var testsStatic = []struct {
+		startIp string
+		endIp   string
+		want    int
+	}{
+		// Hard coded values obtained on 2020-03-18 (version 2.8.0)
+		// Do not change
+		{"10.10.10.2", "10.10.10.100", 3116097209},
+		{"192.168.1.2", "192.168.1.20", 3331633131},
+		{"10.10.1.2", "10.10.1.100", 2850949493},
+		{"10.10.0.101", "10.10.0.200", 4005846706},
+	}
+	t.Run("static", func(t *testing.T) {
+		for _, tc := range testsStatic {
+			value := map[string]interface{}{
+				groupStartLabel: tc.startIp,
+				groupEndLabel:   tc.endIp,
+			}
+			got := resourceVcdNetworkStaticIpPoolHash(value)
+			if got != tc.want {
+				t.Logf("startIp: %s, endIp: %s - want %d, got %d", tc.startIp, tc.endIp, tc.want, got)
+				t.Fail()
+			}
+		}
+	})
+	// DHCP in isolated network
+	t.Run("dhcp-isolated", func(t *testing.T) {
+		for _, tc := range testsDhcp {
+			value := map[string]interface{}{
+				groupStartLabel:   tc.startIp,
+				groupEndLabel:     tc.endIp,
+				groupMaxLease:     tc.maxLease,
+				groupDefaultLease: tc.defaultLease,
+			}
+			got := resourceVcdNetworkIsolatedDhcpPoolHash(value)
+			if got != tc.wantIso {
+				t.Logf("startIp: %s, endIp: %s, maxLease: %d, defaultLease: %d - want %d, got %d",
+					tc.startIp, tc.endIp, tc.maxLease, tc.defaultLease, tc.wantIso, got)
+				t.Fail()
+			}
+		}
+	})
+	// DHCP in routed network
+	t.Run("dhcp-routed", func(t *testing.T) {
+		for _, tc := range testsDhcp {
+			value := map[string]interface{}{
+				groupStartLabel: tc.startIp,
+				groupEndLabel:   tc.endIp,
+				groupMaxLease:   tc.maxLease,
+			}
+			got := resourceVcdNetworkRoutedDhcpPoolHash(value)
+			if got != tc.wantRouted {
+				t.Logf("startIp: %s, endIp: %s, maxLease: %d - want %d, got %d",
+					tc.startIp, tc.endIp, tc.maxLease, tc.wantRouted, got)
+				t.Fail()
+			}
+		}
 	})
 }
 
@@ -468,9 +824,20 @@ func testAccCheckVcdNetworkExists(name string, network *govcd.OrgVDCNetwork) res
 
 		orgVDCNetwork, err := vdc.GetOrgVdcNetworkByName(name, false)
 		if err != nil {
+			// If the function was called after an update that changed the name, we need to
+			// search the network by ID
+			if network != nil {
+				orgVDCNetwork, err = vdc.GetOrgVdcNetworkById(network.OrgVDCNetwork.ID, false)
+				if err != nil {
+					return fmt.Errorf("[test network exists] error retrieving network %s (id: %s) ", name, network.OrgVDCNetwork.ID)
+				}
+				*network = *orgVDCNetwork
+				return nil
+			}
 			return fmt.Errorf("network %s does not exist ", name)
 		}
 
+		// Save the network for future use
 		*network = *orgVDCNetwork
 
 		return nil
@@ -493,23 +860,61 @@ func testAccCheckVcdNetworkDestroy(s *terraform.State, networkType string, netwo
 	return nil
 }
 
-func testAccCheckVcdNetworkAttributes(name string, network *govcd.OrgVDCNetwork) resource.TestCheckFunc {
+// checkNetWorkIpGroups is a wrapper around checkIpGroup that generates
+// a test for every pair of IPs in the network definition structure
+func checkNetWorkIpGroups(resourceDef string, def networkDef) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
-		if network.OrgVDCNetwork.Name != name {
-			return fmt.Errorf("bad name: %s", network.OrgVDCNetwork.Name)
+		var checks []resource.TestCheckFunc
+
+		if def.startStaticIpAddress1 != "" {
+			f := resource.TestCheckTypeSetElemNestedAttrs(resourceDef, "static_ip_pool.*", map[string]string{
+				"start_address": def.startStaticIpAddress1,
+				"end_address":   def.endStaticIpAddress1,
+			})
+			checks = append(checks, f)
+		}
+		if def.startStaticIpAddress2 != "" {
+			f := resource.TestCheckTypeSetElemNestedAttrs(resourceDef, "static_ip_pool.*", map[string]string{
+				"start_address": def.startStaticIpAddress2,
+				"end_address":   def.endStaticIpAddress2,
+			})
+			checks = append(checks, f)
+		}
+		if def.startDhcpIpAddress != "" {
+
+			// For routed network tests - when `max_lease_time` > `default_lease_time` ->  `default_lease_time` == `max_lease_time`
+			defaultLeaseTimeValue := def.defaultLeaseTime
+			if def.name == "TestAccVcdNetworkRoutedDhcp" || def.name == "TestAccVcdNetworkRoutedDhcp-update" ||
+				def.name == "TestAccVcdNetworkRoutedDhcpSub" || def.name == "TestAccVcdNetworkRoutedDhcpSub-update" ||
+				def.name == "TestAccVcdNetworkRoutedMixed" || def.name == "TestAccVcdNetworkRoutedMixed-update" ||
+				def.name == "TestAccVcdNetworkRoutedMixedSub" || def.name == "TestAccVcdNetworkRoutedMixedSub-update" {
+				if def.maxLeaseTime > def.defaultLeaseTime {
+					defaultLeaseTimeValue = def.maxLeaseTime
+				}
+			}
+
+			f := resource.TestCheckTypeSetElemNestedAttrs(resourceDef, "dhcp_pool.*", map[string]string{
+				"start_address":      def.startDhcpIpAddress,
+				"end_address":        def.endDhcpIpAddress,
+				"default_lease_time": strconv.Itoa(defaultLeaseTimeValue),
+				"max_lease_time":     strconv.Itoa(def.maxLeaseTime),
+			})
+			checks = append(checks, f)
 		}
 
+		for _, f := range checks {
+			err := f(s)
+			if err != nil {
+				return err
+			}
+		}
 		return nil
 	}
 }
 
-func init() {
-	testingTags["network"] = "resource_vcd_network_test.go"
-}
-
 const testAccCheckVcdNetworkIsolatedStatic1 = `
-resource "vcd_network_isolated" "{{.NetworkName}}" {
+resource "vcd_network_isolated" "{{.ResourceName}}" {
   name        = "{{.NetworkName}}"
   description = "{{.Description}}"
   org         = "{{.Org}}"
@@ -520,18 +925,11 @@ resource "vcd_network_isolated" "{{.NetworkName}}" {
     start_address = "{{.StartStaticIpAddress1}}"
     end_address   = "{{.EndStaticIpAddress1}}"
   }
-}
-
-output "start_static_address1" {
-  value = tolist(vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[0].start_address
-}
-output "end_static_address1" {
-  value = tolist(vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[0].end_address
 }
 `
 
 const testAccCheckVcdNetworkIsolatedStatic2 = `
-resource "vcd_network_isolated" "{{.NetworkName}}" {
+resource "vcd_network_isolated" "{{.ResourceName}}" {
   name        = "{{.NetworkName}}"
   description = "{{.Description}}"
   org         = "{{.Org}}"
@@ -546,24 +944,11 @@ resource "vcd_network_isolated" "{{.NetworkName}}" {
     start_address = "{{.StartStaticIpAddress2}}"
     end_address   = "{{.EndStaticIpAddress2}}"
   }
-}
-
-output "start_static_address2" {
-  value = tolist(vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[0].start_address
-}
-output "end_static_address2" {
-  value = tolist(vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[0].end_address
-}
-output "start_static_address1" {
-  value = tolist(vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[1].start_address
-}
-output "end_static_address1" {
-  value = tolist(vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[1].end_address
 }
 `
 
 const testAccCheckVcdNetworkIsolatedDhcp = `
-resource "vcd_network_isolated" "{{.NetworkName}}" {
+resource "vcd_network_isolated" "{{.ResourceName}}" {
   name        = "{{.NetworkName}}"
   description = "{{.Description}}"
   org         = "{{.Org}}"
@@ -571,20 +956,16 @@ resource "vcd_network_isolated" "{{.NetworkName}}" {
   gateway     = "{{.Gateway}}"
   dns1        = "192.168.2.1"
   dhcp_pool {
-    start_address = "{{.StartDhcpIpAddress}}"
-    end_address   = "{{.EndDhcpIpAddress}}"
+    start_address      = "{{.StartDhcpIpAddress}}"
+    end_address        = "{{.EndDhcpIpAddress}}"
+    default_lease_time = "{{.DefaultLeaseTime}}"
+    max_lease_time     = "{{.MaxLeaseTime}}"
   }
-}
-output "start_dhcp_address" {
-  value = tolist(vcd_network_isolated.{{.NetworkName}}.dhcp_pool)[0].start_address
-}
-output "end_dhcp_address" {
-  value = tolist(vcd_network_isolated.{{.NetworkName}}.dhcp_pool)[0].end_address
 }
 `
 
 const testAccCheckVcdNetworkIsolatedMixed1 = `
-resource "vcd_network_isolated" "{{.NetworkName}}" {
+resource "vcd_network_isolated" "{{.ResourceName}}" {
   name        = "{{.NetworkName}}"
   description = "{{.Description}}"
   org         = "{{.Org}}"
@@ -600,23 +981,10 @@ resource "vcd_network_isolated" "{{.NetworkName}}" {
     end_address   = "{{.EndDhcpIpAddress}}"
   }
 }
-
-output "start_dhcp_address" {
-  value = tolist(vcd_network_isolated.{{.NetworkName}}.dhcp_pool)[0].start_address
-}
-output "end_dhcp_address" {
-  value = tolist(vcd_network_isolated.{{.NetworkName}}.dhcp_pool)[0].end_address
-}
-output "start_static_address1" {
-  value = tolist(vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[0].start_address
-}
-output "end_static_address1" {
-  value = tolist(vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[0].end_address
-}
 `
 
 const testAccCheckVcdNetworkIsolatedMixed2 = `
-resource "vcd_network_isolated" "{{.NetworkName}}" {
+resource "vcd_network_isolated" "{{.ResourceName}}" {
   name        = "{{.NetworkName}}"
   description = "{{.Description}}"
   org         = "{{.Org}}"
@@ -636,29 +1004,10 @@ resource "vcd_network_isolated" "{{.NetworkName}}" {
     end_address   = "{{.EndDhcpIpAddress}}"
   }
 }
-
-output "start_dhcp_address" {
-  value = tolist(vcd_network_isolated.{{.NetworkName}}.dhcp_pool)[0].start_address
-}
-output "end_dhcp_address" {
-  value = tolist(vcd_network_isolated.{{.NetworkName}}.dhcp_pool)[0].end_address
-}
-output "start_static_address2" {
-  value = tolist(vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[0].start_address
-}
-output "end_static_address2" {
-  value = tolist(vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[0].end_address
-}
-output "start_static_address1" {
-  value = tolist(vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[1].start_address
-}
-output "end_static_address1" {
-  value = tolist(vcd_network_isolated.{{.NetworkName}}.static_ip_pool)[1].end_address
-}
 `
 
 const testAccCheckVcdNetworkDirect = `
-resource "vcd_network_direct" "{{.NetworkName}}" {
+resource "vcd_network_direct" "{{.ResourceName}}" {
   name             = "{{.NetworkName}}"
   description      = "{{.Description}}"
   org              = "{{.Org}}"
@@ -668,7 +1017,7 @@ resource "vcd_network_direct" "{{.NetworkName}}" {
 `
 
 const testAccCheckVcdNetworkRoutedStatic1 = `
-resource "vcd_network_routed" "{{.NetworkName}}" {
+resource "vcd_network_routed" "{{.ResourceName}}" {
   name         = "{{.NetworkName}}"
   description  = "{{.Description}}"
   org          = "{{.Org}}"
@@ -681,15 +1030,10 @@ resource "vcd_network_routed" "{{.NetworkName}}" {
     end_address   = "{{.EndStaticIpAddress1}}"
   }
 }
-output "end_static_address1" {
-  value = tolist(vcd_network_routed.{{.NetworkName}}.static_ip_pool)[0].end_address
-}
-output "start_static_address1" {
-  value = tolist(vcd_network_routed.{{.NetworkName}}.static_ip_pool)[0].start_address
-}`
+`
 
 const testAccCheckVcdNetworkRoutedStatic2 = `
-resource "vcd_network_routed" "{{.NetworkName}}" {
+resource "vcd_network_routed" "{{.ResourceName}}" {
   name           = "{{.NetworkName}}"
   description    = "{{.Description}}"
   org            = "{{.Org}}"
@@ -707,22 +1051,10 @@ resource "vcd_network_routed" "{{.NetworkName}}" {
     end_address   = "{{.EndStaticIpAddress2}}"
   }
 }
-output "start_static_address2" {
-  value = tolist(vcd_network_routed.{{.NetworkName}}.static_ip_pool)[0].start_address
-}
-output "end_static_address2" {
-  value = tolist(vcd_network_routed.{{.NetworkName}}.static_ip_pool)[0].end_address
-}
-output "start_static_address1" {
-  value = tolist(vcd_network_routed.{{.NetworkName}}.static_ip_pool)[1].start_address
-}
-output "end_static_address1" {
-  value = tolist(vcd_network_routed.{{.NetworkName}}.static_ip_pool)[1].end_address
-}
 `
 
 const testAccCheckVcdNetworkRoutedDhcp = `
-resource "vcd_network_routed" "{{.NetworkName}}" {
+resource "vcd_network_routed" "{{.ResourceName}}" {
   name           = "{{.NetworkName}}"
   description    = "{{.Description}}"
   org            = "{{.Org}}"
@@ -732,20 +1064,15 @@ resource "vcd_network_routed" "{{.NetworkName}}" {
   interface_type = "{{.InterfaceType}}"
 
   dhcp_pool {
-    start_address = "{{.StartDhcpIpAddress}}"
-    end_address   = "{{.EndDhcpIpAddress}}"
+    start_address      = "{{.StartDhcpIpAddress}}"
+    end_address        = "{{.EndDhcpIpAddress}}"
+    max_lease_time     = "{{.MaxLeaseTime}}"
   }
-}
-output "start_dhcp_address" {
-  value = tolist(vcd_network_routed.{{.NetworkName}}.dhcp_pool)[0].start_address
-}
-output "end_dhcp_address" {
-  value = tolist(vcd_network_routed.{{.NetworkName}}.dhcp_pool)[0].end_address
 }
 `
 
 const testAccCheckVcdNetworkRoutedMixed = `
-resource "vcd_network_routed" "{{.NetworkName}}" {
+resource "vcd_network_routed" "{{.ResourceName}}" {
   name           = "{{.NetworkName}}"
   description    = "{{.Description}}"
   org            = "{{.Org}}"
@@ -764,15 +1091,4 @@ resource "vcd_network_routed" "{{.NetworkName}}" {
     end_address   = "{{.EndDhcpIpAddress}}"
   }
 }
-output "start_dhcp_address" {
-  value = tolist(vcd_network_routed.{{.NetworkName}}.dhcp_pool)[0].start_address
-}
-output "end_dhcp_address" {
-  value = tolist(vcd_network_routed.{{.NetworkName}}.dhcp_pool)[0].end_address
-}
-output "end_static_address1" {
-  value = tolist(vcd_network_routed.{{.NetworkName}}.static_ip_pool)[0].end_address
-}
-output "start_static_address1" {
-  value = tolist(vcd_network_routed.{{.NetworkName}}.static_ip_pool)[0].start_address
-}`
+`

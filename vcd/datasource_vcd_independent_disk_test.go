@@ -4,11 +4,12 @@ package vcd
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 // Test independent disk data resource
@@ -46,9 +47,9 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testDiskResourcesDestroyed,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testDiskResourcesDestroyed,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -56,7 +57,7 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 					testAccCheckDiskCreated("vcd_independent_disk."+resourceName),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "name", diskName),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "description", diskName+"description"),
-					//resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "size_in_bytes", "5242880"),
+					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "size_in_mb", params["size"].(string)),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "bus_type", "SCSI"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "bus_sub_type", "lsilogicsas"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceName, "storage_profile", "*"),
@@ -71,7 +72,7 @@ func TestAccVcdDataSourceIndependentDisk(t *testing.T) {
 					testAccCheckDiskCreated("vcd_independent_disk."+resourceName),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "name", diskName+"WithId"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "description", diskName+"description"),
-					//resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "size_in_bytes", "5242880"),
+					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "size_in_mb", params["size"].(string)),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "bus_type", "SCSI"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "bus_sub_type", "lsilogicsas"),
 					resource.TestCheckResourceAttr("data.vcd_independent_disk."+datasourceNameWithId, "storage_profile", "*"),
@@ -88,14 +89,15 @@ func testCheckDiskNonStringOutputs() resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		outputs := s.RootModule().Outputs
 
-		if outputs["is_attached"].Value.(bool) != false {
+		if outputs["is_attached"].Value.(string) != "false" {
 			return fmt.Errorf("is_attached value didn't match")
 		}
 
-		if regexp.MustCompile(`^\d+$`).MatchString(fmt.Sprintf("%s", outputs["iops"].Value)) {
-			return fmt.Errorf("iops value isn't int")
+		iops := outputs["iops"].Value.(string)
+		reNumber := regexp.MustCompile(`^\d+$`)
+		if !reNumber.MatchString(iops) {
+			return fmt.Errorf("iops value isn't an integer")
 		}
-
 		return nil
 	}
 }
@@ -105,15 +107,15 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
   vdc             = "{{.Vdc}}"
   name            = "{{.name}}"
   description     = "{{.description}}"
-  size            = "{{.size}}" 
-  #size_in_bytes   = "{{.size}}"
+  size_in_mb      = "{{.size}}"
   bus_type        = "{{.busType}}"
   bus_sub_type    = "{{.busSubType}}"
   storage_profile = "{{.storageProfileName}}"
 }
 
 data "vcd_independent_disk" "{{.dataSourceName}}" {
-  name    = vcd_independent_disk.{{.ResourceName}}.name
+  name       = vcd_independent_disk.{{.ResourceName}}.name
+  depends_on = [vcd_independent_disk.{{.ResourceName}}]
 }
 
 output "iops" {
@@ -135,8 +137,7 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
   vdc             = "{{.Vdc}}"
   name            = "{{.name}}WithId"
   description     = "{{.description}}"
-  size            = "{{.size}}"
-  #size_in_bytes  = "{{.size}}"
+  size_in_mb      = "{{.size}}"
   bus_type        = "{{.busType}}"
   bus_sub_type    = "{{.busSubType}}"
   storage_profile = "{{.storageProfileName}}"
@@ -144,6 +145,7 @@ resource "vcd_independent_disk" "{{.ResourceName}}" {
 
 data "vcd_independent_disk" "{{.datasourceNameWithId}}" {
   id         = vcd_independent_disk.{{.ResourceName}}.id
+  depends_on = [vcd_independent_disk.{{.ResourceName}}]
 }
 
 output "iops" {

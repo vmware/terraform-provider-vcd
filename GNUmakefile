@@ -1,13 +1,19 @@
-TEST?=$$(go list ./... |grep -v 'vendor')
-GOFMT_FILES?=$$(find . -name '*.go' |grep -v vendor)
+TEST?=$$(go list ./... )
+GOFMT_FILES?=$$(find . -name '*.go' )
 WEBSITE_REPO=github.com/hashicorp/terraform-website
+GIT_DESCRIBE=$(shell git describe)
+
 PKG_NAME=vcd
 
 default: build
 
-# builds the plugin
+# builds the plugin injecting output of `git describe` to BuildVersion variable
 build: fmtcheck
-	go install
+	go install -ldflags="-X 'github.com/vmware/terraform-provider-vcd/v3/vcd.BuildVersion=$(GIT_DESCRIBE)'"
+
+# builds the plugin with race detector enabled and injecting output of `git describe` to BuildVersion variable
+buildrace: fmtcheck
+	go install --race -ldflags="-X 'github.com/vmware/terraform-provider-vcd/v3/vcd.BuildVersion=$(GIT_DESCRIBE)'"
 
 # creates a .zip archive of the code
 dist:
@@ -18,10 +24,20 @@ dist:
 install: build
 	@sh -c "'$(CURDIR)/scripts/install-plugin.sh'"
 
+# builds and deploys the plugin with race detector enabled (useful for troubleshooting)
+installrace: buildrace
+	@sh -c "'$(CURDIR)/scripts/install-plugin.sh'"
+
 # makes .tf files from test templates
 test-binary-prepare: install
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider"
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' binary-prepare"
+
+
+# validates HCL files without executing them
+test-binary-validate: install
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider"
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' binary-validate"
 
 # runs test using Terraform binary as Org user
 test-binary-orguser: install
@@ -32,23 +48,14 @@ test-binary-orguser: install
 test-upgrade:
 	@sh -c "'$(CURDIR)/scripts/test-upgrade.sh'"
 
-# runs test using Terraform binary as system administrator
-test-binary: install
+# makes .tf files from test templates for upgrade testing, but does not execute them
+test-upgrade-prepare:
+	@sh -c "skip_upgrade_execution=1 '$(CURDIR)/scripts/test-upgrade.sh'"
+
+# runs test using Terraform binary as system administrator using binary with race detection enabled
+test-binary: installrace
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider"
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' binary"
-
-# prepares to build the environment in a new vCD (run once before test-env-apply)
-test-env-init: install
-	@sh -c "'$(CURDIR)/scripts/runtest.sh' short-provider"
-	@sh -c "'$(CURDIR)/scripts/runtest.sh' test-env-init"
-
-# build the environment in a new vCD (run once before testacc)
-test-env-apply:
-	@sh -c "'$(CURDIR)/scripts/runtest.sh' test-env-apply"
-
-# destroys the environment built with 'test-env-apply' (warning: can't be undone)
-test-env-destroy:
-	@sh -c "'$(CURDIR)/scripts/runtest.sh' test-env-destroy"
 
 # Retrieves the authorization token
 token:
@@ -63,7 +70,7 @@ testunit: fmtcheck
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' unit"
 
 # Runs the basic execution test
-test: testunit
+test: testunit tagverify
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' short"
 
 # Runs the full acceptance test as Org user
@@ -74,8 +81,12 @@ testacc-orguser: testunit
 testacc: testunit
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' acceptance"
 
+# Runs the acceptance test as system administrator for search label
+test-search: testunit
+	@sh -c "'$(CURDIR)/scripts/runtest.sh' search"
+
 # Runs full acceptance test sequentially (using "-parallel 1" flag for go test)
-seqtestacc: testunit
+testacc-race-seq: testunit
 	@sh -c "'$(CURDIR)/scripts/runtest.sh' sequential-acceptance"
 
 # Runs the acceptance test with tag 'multiple'
@@ -121,7 +132,7 @@ testextnetwork: fmtcheck
 # vets all .go files
 vet:
 	@echo "go vet ."
-	@go vet $$(go list ./... | grep -v vendor/) ; if [ $$? -ne 0 ]; then \
+	@go vet $$(go list ./... ) ; if [ $$? -ne 0 ]; then \
 		echo ""; \
 		echo "Vet found suspicious constructs. Please check the reported constructs"; \
 		echo "and fix them if necessary before submitting the code for review."; \
@@ -136,15 +147,18 @@ fmt:
 fmtcheck:
 	@sh -c "'$(CURDIR)/scripts/gofmtcheck.sh'"
 
-# runs the vendor directory check
-vendor-check:
+# runs the go tidy directory check
+tidy-check:
 	go mod tidy
-	go mod vendor
 	git diff --exit-code
 
 # checks that the code can compile
 test-compile:
-	cd vcd && go test -tags ALL -c .
+	cd vcd && go test -race -tags ALL -c .
+
+# checks that tagged tests can run independently
+tagverify:
+	@scripts/test-tags.sh
 
 # builds the website and allows running it from localhost
 website:
@@ -162,5 +176,5 @@ ifeq (,$(wildcard $(GOPATH)/src/$(WEBSITE_REPO)))
 endif
 	@$(MAKE) -C $(GOPATH)/src/$(WEBSITE_REPO) website-provider-test PROVIDER_PATH=$(shell pwd) PROVIDER_NAME=$(PKG_NAME)
 
-.PHONY: build test seqtestacc testacc vet static fmt fmtcheck vendor-check test-compile website website-test
+.PHONY: build test testacc-race-seq testacc vet static fmt fmtcheck tidy-check test-compile website website-test
 

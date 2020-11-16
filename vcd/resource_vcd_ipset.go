@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -142,8 +142,8 @@ func genericVcdIpSetRead(d *schema.ResourceData, meta interface{}, origin string
 		ipSet, err = vdc.GetNsxvIpSetById(d.Id())
 	}
 
-	if govcd.IsNotFound(err) {
-		log.Printf("unable to find IP set with ID %s: %s. Removing from state", d.Id(), err)
+	if govcd.IsNotFound(err) && origin == "resource" {
+		log.Printf("[INFO] unable to find IP set with ID %s: %s. Removing from state", d.Id(), err)
 		d.SetId("")
 		return nil
 	}

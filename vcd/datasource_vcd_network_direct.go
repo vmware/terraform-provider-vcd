@@ -1,15 +1,16 @@
 package vcd
 
-import "github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+import "github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 func datasourceVcdNetworkDirect() *schema.Resource {
 	return &schema.Resource{
 		Read: datasourceVcdNetworkDirectRead,
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "A unique name for this network",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"name", "filter"},
+				Description:  "A unique name for this network (optional if 'filter' is used)",
 			},
 			"org": {
 				Type:     schema.TypeString,
@@ -66,6 +67,20 @@ func datasourceVcdNetworkDirect() *schema.Resource {
 				Type:        schema.TypeBool,
 				Computed:    true,
 				Description: "Defines if this network is shared between multiple VDCs in the Org",
+			},
+			"filter": &schema.Schema{
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				MinItems:    1,
+				Optional:    true,
+				Description: "Criteria for retrieving a network by various attributes",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name_regex": elementNameRegex,
+						"ip":         elementIp,
+						"metadata":   elementMetadata,
+					},
+				},
 			},
 		},
 	}

@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
@@ -52,9 +52,9 @@ func TestAccVcdExternalNetworkBasic(t *testing.T) {
 
 	resourceName := "vcd_external_network." + TestAccVcdExternalNetwork
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckExternalNetworkDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckExternalNetworkDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -87,7 +87,7 @@ func TestAccVcdExternalNetworkBasic(t *testing.T) {
 				),
 			},
 			resource.TestStep{
-				ResourceName:      resourceName + "-import",
+				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdTopHierarchy(TestAccVcdExternalNetwork),

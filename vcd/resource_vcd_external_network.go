@@ -1,13 +1,14 @@
 package vcd
 
+//lint:file-ignore SA1019 ignore deprecated functions
 import (
 	"fmt"
 	"log"
 	"net/url"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -43,28 +44,28 @@ func resourceVcdExternalNetwork() *schema.Resource {
 							Required:     true,
 							ForceNew:     true,
 							Description:  "Gateway of the network",
-							ValidateFunc: validation.SingleIP(),
+							ValidateFunc: validation.IsIPAddress,
 						},
 						"netmask": &schema.Schema{
 							Type:         schema.TypeString,
 							Required:     true,
 							ForceNew:     true,
 							Description:  "Network mask",
-							ValidateFunc: validation.SingleIP(),
+							ValidateFunc: validation.IsIPAddress,
 						},
 						"dns1": &schema.Schema{
 							Type:         schema.TypeString,
 							Optional:     true,
 							ForceNew:     true,
 							Description:  "Primary DNS server",
-							ValidateFunc: validation.SingleIP(),
+							ValidateFunc: validation.IsIPAddress,
 						},
 						"dns2": &schema.Schema{
 							Type:         schema.TypeString,
 							Optional:     true,
 							ForceNew:     true,
 							Description:  "Secondary DNS server",
-							ValidateFunc: validation.SingleIP(),
+							ValidateFunc: validation.IsIPAddress,
 						},
 						"dns_suffix": &schema.Schema{
 							Type:        schema.TypeString,
@@ -84,14 +85,14 @@ func resourceVcdExternalNetwork() *schema.Resource {
 										Required:     true,
 										ForceNew:     true,
 										Description:  "Start address of the IP range",
-										ValidateFunc: validation.SingleIP(),
+										ValidateFunc: validation.IsIPAddress,
 									},
 									"end_address": &schema.Schema{
 										Type:         schema.TypeString,
 										Required:     true,
 										ForceNew:     true,
 										Description:  "End address of the IP range",
-										ValidateFunc: validation.SingleIP(),
+										ValidateFunc: validation.IsIPAddress,
 									},
 								},
 							},
@@ -235,11 +236,12 @@ func resourceVcdExternalNetworkDelete(d *schema.ResourceData, meta interface{}) 
 // getExternalNetworkInput is an helper for transforming the resource input into the ExternalNetwork structure
 // any cast operations or default values should be done here so that the create method is simple
 func getExternalNetworkInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.ExternalNetwork, error) {
+	retainInfo := d.Get("retain_net_info_across_deployments").(bool)
 	params := &types.ExternalNetwork{
 		Name: d.Get("name").(string),
 		Configuration: &types.NetworkConfiguration{
 			Xmlns:                          types.XMLNamespaceVCloud,
-			RetainNetInfoAcrossDeployments: d.Get("retain_net_info_across_deployments").(bool),
+			RetainNetInfoAcrossDeployments: &retainInfo,
 		},
 	}
 

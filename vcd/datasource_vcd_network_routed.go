@@ -1,7 +1,7 @@
 package vcd
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func datasourceVcdNetworkRouted() *schema.Resource {
@@ -9,9 +9,10 @@ func datasourceVcdNetworkRouted() *schema.Resource {
 		Read: datasourceVcdNetworkRoutedRead,
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "A unique name for the network",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"name", "filter"},
+				Description:  "A unique name for this network (optional if 'filter' is used)",
 			},
 			"org": {
 				Type:     schema.TypeString,
@@ -116,7 +117,7 @@ func datasourceVcdNetworkRouted() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceVcdNetworkIPAddressHash,
+				Set: resourceVcdNetworkRoutedDhcpPoolHash,
 			},
 			"static_ip_pool": &schema.Schema{
 				Type:        schema.TypeSet,
@@ -137,7 +138,21 @@ func datasourceVcdNetworkRouted() *schema.Resource {
 						},
 					},
 				},
-				Set: resourceVcdNetworkIPAddressHash,
+				Set: resourceVcdNetworkStaticIpPoolHash,
+			},
+			"filter": &schema.Schema{
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				MinItems:    1,
+				Optional:    true,
+				Description: "Criteria for retrieving a network by various attributes",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name_regex": elementNameRegex,
+						"ip":         elementIp,
+						"metadata":   elementMetadata,
+					},
+				},
 			},
 		},
 	}

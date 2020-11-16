@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
@@ -150,7 +150,6 @@ func setSnatRuleData(d *schema.ResourceData, natRule *types.EdgeNatRule, edgeGat
 	_ = d.Set("enabled", natRule.Enabled)
 	_ = d.Set("logging_enabled", natRule.LoggingEnabled)
 	_ = d.Set("description", natRule.Description)
-	_ = d.Set("vnic", natRule.Vnic)
 	_ = d.Set("original_address", natRule.OriginalAddress)
 	_ = d.Set("translated_address", natRule.TranslatedAddress)
 	_ = d.Set("rule_type", natRule.RuleType)

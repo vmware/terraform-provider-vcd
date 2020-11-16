@@ -1,4 +1,4 @@
-// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool user ALL
+// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool lbAppProfile lbAppRule lbVirtualServer access_control user search auth nsxt ALL
 
 package vcd
 
@@ -8,8 +8,8 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
-	"html/template"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -21,21 +21,56 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"text/template"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
+func init() {
+
+	// To list the flags when we run "go test -tags functional -vcd-help", the flag name must start with "vcd"
+	// They will all appear alongside the native flags when we use an invalid one
+	setBoolFlag(&vcdHelp, "vcd-help", "VCD_HELP", "Show vcd flags")
+	setBoolFlag(&testDistributedNetworks, "vcd-test-distributed", "", "enables testing of distributed network")
+	setBoolFlag(&enableDebug, "vcd-debug", "GOVCD_DEBUG", "enables debug output")
+	setBoolFlag(&vcdTestVerbose, "vcd-verbose", "TEST_VERBOSE", "enables verbose output")
+	setBoolFlag(&enableTrace, "vcd-trace", "GOVCD_TRACE", "enables function calls tracing")
+	setBoolFlag(&vcdShortTest, "vcd-short", "VCD_SHORT_TEST", "runs short test")
+	setBoolFlag(&vcdAddProvider, "vcd-add-provider", envVcdAddProvider, "add provider to test scripts")
+	setBoolFlag(&vcdSkipTemplateWriting, "vcd-skip-template-write", envVcdSkipTemplateWriting, "Skip writing templates to file")
+	setBoolFlag(&vcdRemoveOrgVdcFromTemplate, "vcd-remove-org-vdc-from-template", envVcdRemoveOrgVdcFromTemplate, "Remove org and VDC from template")
+	setBoolFlag(&vcdTestOrgUser, "vcd-test-org-user", envVcdTestOrgUser, "Run tests with org user")
+
+}
+
 // Structure to get info from a config json file that the user specifies
 type TestConfig struct {
 	Provider struct {
-		User                     string `json:"user"`
-		Password                 string `json:"password"`
-		Token                    string `json:"token,omitempty"`
+		User     string `json:"user"`
+		Password string `json:"password"`
+		Token    string `json:"token,omitempty"`
+
+		// UseSamlAdfs specifies if SAML auth is used for authenticating vCD instead of local login.
+		// The above `User` and `Password` will be used to authenticate against ADFS IdP when true.
+		UseSamlAdfs bool `json:"useSamlAdfs"`
+
+		// CustomAdfsRptId allows to set custom Relaying Party Trust identifier if needed. Only has
+		// effect if `UseSamlAdfs` is true.
+		CustomAdfsRptId string `json:"customAdfsRptId,omitempty"`
+
+		// The variables `SamlUser`, `SamlPassword` and `SamlCustomRptId` are optional and are
+		// related to additional test run specifically with SAML user/password. It can be useful in
+		// case local user is used for test run (defined by above 'User', 'Password' variables).
+		// SamlUser takes ADFS friendly format ('contoso.com\username' or 'username@contoso.com')
+		SamlUser        string `json:"samlUser,omitempty"`
+		SamlPassword    string `json:"samlPassword,omitempty"`
+		SamlCustomRptId string `json:"samlCustomRptId,omitempty"`
+
 		Url                      string `json:"url"`
 		SysOrg                   string `json:"sysOrg"`
 		AllowInsecure            bool   `json:"allowInsecure"`
@@ -47,13 +82,22 @@ type TestConfig struct {
 		Org         string `json:"org"`
 		Vdc         string `json:"vdc"`
 		ProviderVdc struct {
-			Name           string `json:"name"`
-			NetworkPool    string `json:"networkPool"`
-			StorageProfile string `json:"storageProfile"`
+			Name            string `json:"name"`
+			NetworkPool     string `json:"networkPool"`
+			StorageProfile  string `json:"storageProfile"`
+			StorageProfile2 string `json:"storageProfile2"`
 		} `json:"providerVdc"`
+		NsxtProviderVdc struct {
+			Name           string `json:"name"`
+			StorageProfile string `json:"storageProfile"`
+			NetworkPool    string `json:"networkPool"`
+		} `json:"nsxtProviderVdc"`
 		Catalog struct {
-			Name        string `json:"name,omitempty"`
-			CatalogItem string `json:"catalogItem,omitempty"`
+			Name                    string `json:"name,omitempty"`
+			CatalogItem             string `json:"catalogItem,omitempty"`
+			CatalogItemWithMultiVms string `json:"catalogItemWithMultiVms,omitempty"`
+			VmName1InMultiVmItem    string `json:"vmName1InMultiVmItem,omitempty"`
+			VmName2InMultiVmItem    string `json:"VmName2InMultiVmItem,omitempty"`
 		} `json:"catalog"`
 	} `json:"vcd"`
 	Networking struct {
@@ -74,6 +118,11 @@ type TestConfig struct {
 			PeerSubnetGateway string `json:"peerSubnetGw"`
 		} `json:"peer"`
 	} `json:"networking"`
+	Nsxt struct {
+		Manager        string `json:"manager"`
+		Tier0router    string `json:"tier0router"`
+		Tier0routerVrf string `json:"tier0routervrf"`
+	} `json:"nsxt"`
 	Logging struct {
 		Enabled         bool   `json:"enabled,omitempty"`
 		LogFileName     string `json:"logFileName,omitempty"`
@@ -81,17 +130,19 @@ type TestConfig struct {
 		LogHttpResponse bool   `json:"logHttpResponse,omitempty"`
 	} `json:"logging"`
 	Ova struct {
-		OvaPath         string `json:"ovaPath,omitempty"`
-		UploadPieceSize int64  `json:"uploadPieceSize,omitempty"`
-		UploadProgress  bool   `json:"uploadProgress,omitempty"`
-		OvaTestFileName string `json:"ovaTestFileName,omitempty"`
-		OvaDownloadUrl  string `json:"ovaDownloadUrl,omitempty"`
-		Preserve        bool   `json:"preserve,omitempty"`
+		OvaPath             string `json:"ovaPath,omitempty"`
+		UploadPieceSize     int64  `json:"uploadPieceSize,omitempty"`
+		UploadProgress      bool   `json:"uploadProgress,omitempty"`
+		OvaTestFileName     string `json:"ovaTestFileName,omitempty"`
+		OvaDownloadUrl      string `json:"ovaDownloadUrl,omitempty"`
+		Preserve            bool   `json:"preserve,omitempty"`
+		OvaVappMultiVmsPath string `json:"ovaVappMultiVmsPath,omitempty"`
 	} `json:"ova"`
 	Media struct {
 		MediaPath       string `json:"mediaPath,omitempty"`
 		UploadPieceSize int64  `json:"uploadPieceSize,omitempty"`
 		UploadProgress  bool   `json:"uploadProgress,omitempty"`
+		MediaName       string `json:"mediaName,omitempty"`
 	} `json:"media"`
 	// Data used to create a new environment, in addition to the regular test configuration file
 	TestEnvBuild struct {
@@ -103,7 +154,6 @@ type TestConfig struct {
 		Dns2                         string `json:"dns2"`                         // DNS 2 for external network
 		ExternalNetworkPortGroup     string `json:"externalNetworkPortGroup"`     // port group, if different from Networking.ExternalNetworkPortGroup
 		ExternalNetworkPortGroupType string `json:"externalNetworkPortGroupType"` // port group type, if different from Networking.ExternalNetworkPortGroupType
-		StorageProfile2              string `json:"storageProfile2"`              // Second storage profile for VDC
 		RoutedNetwork                string `json:"routedNetwork"`                // optional routed network name to create
 		IsolatedNetwork              string `json:"isolatedNetwork"`              // optional isolated network name to create
 		DirectNetwork                string `json:"directNetwork"`                // optional direct network name to create
@@ -120,6 +170,27 @@ type TestConfig struct {
 var (
 	testSuiteCatalogName    = "TestSuiteCatalog"
 	testSuiteCatalogOVAItem = "TestSuiteOVA"
+
+	// vcdAddProvider will add the provide section to the template
+	vcdAddProvider = os.Getenv(envVcdAddProvider) != ""
+
+	// vcdSkipTemplateWriting disable the writing of the template to a .tf file
+	vcdSkipTemplateWriting = false
+
+	// vcdRemoveOrgVdcFromTemplate removes org and vdc from template, thus tetsing with the
+	// variables in provider section
+	vcdRemoveOrgVdcFromTemplate = false
+
+	// vcdTestOrgUser enables testing with the Org User
+	vcdTestOrgUser = false
+
+	// vcdHelp displays the vcd-* flags
+	vcdHelp = false
+
+	// Distributed networks require an edge gateway with distributed routing enabled,
+	// which in turn requires a NSX controller. To run the distributed test, users
+	// need to set the environment variable VCD_TEST_DISTRIBUTED_NETWORK
+	testDistributedNetworks = os.Getenv("VCD_TEST_DISTRIBUTED_NETWORK") != ""
 )
 
 const (
@@ -128,6 +199,7 @@ const (
 	envVcdAddProvider              = "VCD_ADD_PROVIDER"
 	envVcdSkipTemplateWriting      = "VCD_SKIP_TEMPLATE_WRITING"
 	envVcdRemoveOrgVdcFromTemplate = "REMOVE_ORG_VDC_FROM_TEMPLATE"
+	envVcdTestOrgUser              = "VCD_TEST_ORG_USER"
 
 	// Warning message used for all tests
 	acceptanceTestsSkipped = "Acceptance tests skipped unless env 'TF_ACC' set"
@@ -139,10 +211,13 @@ const (
 # date {{.Timestamp}}
 # file {{.CallerFileName}}
 #
+
 provider "vcd" {
   user                 = "{{.User}}"
   password             = "{{.Password}}"
   token                = "{{.Token}}"
+  auth_type            = "{{.AuthType}}"
+  saml_adfs_rpt_id     = "{{.SamlAdfsCustomRptId}}"
   url                  = "{{.Url}}"
   sysorg               = "{{.SysOrg}}"
   org                  = "{{.Org}}"
@@ -193,9 +268,10 @@ func GetVarsFromTemplate(tmpl string) []string {
 	return varList
 }
 
-// Fills a template with data provided as a StringMap
-// Returns the text of a ready-to-use Terraform directive.
-// It also saves the filled template to a file, for further troubleshooting.
+// templateFill fills a template with data provided as a StringMap and adds `provider`
+// configuration.
+// Returns the text of a ready-to-use Terraform directive. It also saves the filled
+// template to a file, for further troubleshooting.
 func templateFill(tmpl string, data StringMap) string {
 
 	// Gets the name of the function containing the template
@@ -234,7 +310,7 @@ func templateFill(tmpl string, data StringMap) string {
 	}
 
 	// If requested, the provider defined in testConfig will be added to test snippets.
-	if os.Getenv(envVcdAddProvider) != "" {
+	if vcdAddProvider {
 		// the original template is prefixed with the provider template
 		tmpl = providerTemplate + tmpl
 
@@ -242,6 +318,7 @@ func templateFill(tmpl string, data StringMap) string {
 		// provider data
 		data["User"] = testConfig.Provider.User
 		data["Password"] = testConfig.Provider.Password
+		data["SamlAdfsCustomRptId"] = testConfig.Provider.CustomAdfsRptId
 		data["Token"] = testConfig.Provider.Token
 		data["Url"] = testConfig.Provider.Url
 		data["SysOrg"] = testConfig.Provider.SysOrg
@@ -255,6 +332,16 @@ func templateFill(tmpl string, data StringMap) string {
 			data["LoggingFile"] = testConfig.Logging.LogFileName
 		} else {
 			data["LoggingFile"] = util.ApiLogFileName
+		}
+
+		// Pick correct auth_type
+		switch {
+		case testConfig.Provider.Token != "":
+			data["AuthType"] = "token"
+		case testConfig.Provider.UseSamlAdfs:
+			data["AuthType"] = "saml_adfs"
+		default:
+			data["AuthType"] = "integrated" // default AuthType for local and LDAP users
 		}
 	}
 	if _, ok := data["Tags"]; !ok {
@@ -284,7 +371,7 @@ func templateFill(tmpl string, data StringMap) string {
 	// These templates will help investigate failed tests using Terraform
 	// Writing is enabled by default. It can be skipped using an environment variable.
 	TemplateWriting := true
-	if os.Getenv(envVcdSkipTemplateWriting) != "" {
+	if vcdSkipTemplateWriting {
 		TemplateWriting = false
 	}
 	var writeStr []byte = buf.Bytes()
@@ -294,7 +381,7 @@ func templateFill(tmpl string, data StringMap) string {
 	// templates will be changed on-the-fly, to comment out the
 	// definitions of org and vdc. This will force the test to
 	// borrow org and vcd from the provider.
-	if os.Getenv(envVcdRemoveOrgVdcFromTemplate) != "" {
+	if vcdRemoveOrgVdcFromTemplate {
 		reOrg := regexp.MustCompile(`\sorg\s*=`)
 		buf2 := reOrg.ReplaceAll(buf.Bytes(), []byte("# org = "))
 		reVdc := regexp.MustCompile(`\svdc\s*=`)
@@ -402,11 +489,11 @@ func getConfigStruct(config string) TestConfig {
 		configStruct.Provider.SysOrg = configStruct.VCD.Org
 	}
 
-	if os.Getenv("VCD_TEST_ORG_USER") != "" {
+	if vcdTestOrgUser {
 		user := configStruct.TestEnvBuild.OrgUser
 		password := configStruct.TestEnvBuild.OrgUserPassword
 		if user == "" || password == "" {
-			panic("VCD_TEST_ORG_USER was enabled, but org user credentials were not found in the configuration file")
+			panic(fmt.Sprintf("%s was enabled, but org user credentials were not found in the configuration file", envVcdTestOrgUser))
 		}
 		configStruct.Provider.User = user
 		configStruct.Provider.Password = password
@@ -418,7 +505,18 @@ func getConfigStruct(config string) TestConfig {
 	}
 	_ = os.Setenv("VCD_USER", configStruct.Provider.User)
 	_ = os.Setenv("VCD_PASSWORD", configStruct.Provider.Password)
-	_ = os.Setenv("VCD_TOKEN", configStruct.Provider.Token)
+	// VCD_TOKEN supplied via CLI has bigger priority than configured one
+	if os.Getenv("VCD_TOKEN") == "" {
+		_ = os.Setenv("VCD_TOKEN", configStruct.Provider.Token)
+	} else {
+		configStruct.Provider.Token = os.Getenv("VCD_TOKEN")
+	}
+
+	if configStruct.Provider.UseSamlAdfs {
+		_ = os.Setenv("VCD_AUTH_TYPE", "saml_adfs")
+		_ = os.Setenv("VCD_SAML_ADFS_RPT_ID", configStruct.Provider.CustomAdfsRptId)
+	}
+
 	_ = os.Setenv("VCD_URL", configStruct.Provider.Url)
 	_ = os.Setenv("VCD_SYS_ORG", configStruct.Provider.SysOrg)
 	_ = os.Setenv("VCD_ORG", configStruct.VCD.Org)
@@ -459,6 +557,13 @@ func getConfigStruct(config string) TestConfig {
 		}
 		configStruct.Media.MediaPath = mediaPath
 	}
+	if configStruct.Ova.OvaVappMultiVmsPath != "" {
+		multiVmOvaPath, err := filepath.Abs(configStruct.Ova.OvaVappMultiVmsPath)
+		if err != nil {
+			panic("error retrieving absolute path for multi OVA path " + configStruct.Ova.OvaVappMultiVmsPath)
+		}
+		configStruct.Ova.OvaVappMultiVmsPath = multiVmOvaPath
+	}
 
 	// Partial duplication of actions performed in createSuiteCatalogAndItem
 	// It is needed when we run the binary tests without TEST_ACC
@@ -472,8 +577,37 @@ func getConfigStruct(config string) TestConfig {
 	return configStruct
 }
 
+// setTestEnv enables environment variables that are also used in non-test code
+func setTestEnv() {
+	if enableDebug {
+		_ = os.Setenv("GOVCD_DEBUG", "1")
+	}
+}
+
 // This function is called before any other test
 func TestMain(m *testing.M) {
+
+	// Set BuildVersion to have consistent User-Agent for tests:
+	// [e.g. terraform-provider-vcd/test (darwin/amd64; isProvider:true)]
+	BuildVersion = "test"
+
+	// Enable custom flags
+	flag.Parse()
+	setTestEnv()
+	// If -vcd-help was in the command line
+	if vcdHelp {
+		fmt.Println("vcd flags:")
+		fmt.Println()
+		// Prints only the flags defined in this package
+		flag.CommandLine.VisitAll(func(f *flag.Flag) {
+			if strings.Contains(f.Name, "vcd-") {
+				fmt.Printf("  -%-40s %s (%v)\n", f.Name, f.Usage, f.Value)
+			}
+		})
+		fmt.Println()
+		os.Exit(0)
+	}
+
 	// Fills the configuration variable: it will be available to all tests,
 	// or the whole suite will fail if it is not found.
 	// If VCD_SHORT_TEST is defined, it means that "make test" is called,
@@ -489,15 +623,23 @@ func TestMain(m *testing.M) {
 			os.Exit(1)
 		}
 		fmt.Printf("Connecting to %s\n", testConfig.Provider.Url)
+
 		authentication := "password"
+		if testConfig.Provider.UseSamlAdfs {
+			authentication = "SAML password"
+		}
+		// Token based auth has priority over other types
 		if testConfig.Provider.Token != "" {
 			authentication = "token"
 		}
+
 		fmt.Printf("as user %s@%s (using %s)\n", testConfig.Provider.User, testConfig.Provider.SysOrg, authentication)
 		// Provider initialization moved here from provider_test.init
-		testAccProvider = Provider().(*schema.Provider)
-		testAccProviders = map[string]terraform.ResourceProvider{
-			"vcd": testAccProvider,
+		testAccProvider = Provider()
+		testAccProviders = map[string]func() (*schema.Provider, error){
+			"vcd": func() (*schema.Provider, error) {
+				return testAccProvider, nil
+			},
 		}
 
 		// forcing item cleanup before test run
@@ -532,11 +674,11 @@ func createSuiteCatalogAndItem(config TestConfig) {
 	ovaFilePath := getCurrentDir() + "/../test-resources/" + config.Ova.OvaTestFileName
 
 	if config.Ova.OvaTestFileName == "" && testConfig.VCD.Catalog.CatalogItem == "" {
-		panic(fmt.Errorf("ovaTestFileName isn't configured. Tests aborted\n"))
+		panic(fmt.Errorf("ovaTestFileName isn't configured. Tests terminated\n"))
 	}
 
 	if config.Ova.OvaDownloadUrl == "" && testConfig.VCD.Catalog.CatalogItem == "" {
-		panic(fmt.Errorf("ovaDownloadUrl isn't configured. Tests aborted\n"))
+		panic(fmt.Errorf("ovaDownloadUrl isn't configured. Tests terminated\n"))
 	} else if testConfig.VCD.Catalog.CatalogItem == "" {
 		fmt.Printf("Downloading OVA. File will be saved as: %s\n", ovaFilePath)
 
@@ -676,7 +818,9 @@ func getTestVCDFromJson(testConfig TestConfig) (*govcd.VCDClient, error) {
 	if err != nil {
 		return &govcd.VCDClient{}, fmt.Errorf("could not parse Url: %s", err)
 	}
-	vcdClient := govcd.NewVCDClient(*configUrl, true)
+	vcdClient := govcd.NewVCDClient(*configUrl, true,
+		govcd.WithSamlAdfs(testConfig.Provider.UseSamlAdfs, testConfig.Provider.CustomAdfsRptId),
+		govcd.WithHttpUserAgent(buildUserAgent("test", testConfig.Provider.SysOrg)))
 	return vcdClient, nil
 }
 
@@ -811,5 +955,183 @@ func importStateIdEdgeGatewayObject(vcd TestConfig, edgeGatewayName, objectName 
 			edgeGatewayName +
 			ImportSeparator +
 			objectName, nil
+	}
+}
+
+// Used by all entities that depend on Org + VDC + vApp VM (such as VM internal disks)
+func importStateIdVmObject(orgName, vdcName, vappName, vmName, objectIdentifier string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		if orgName == "" || vdcName == "" || vappName == "" || vmName == "" || objectIdentifier == "" {
+			return "", fmt.Errorf("missing information to generate import path")
+		}
+		return orgName +
+			ImportSeparator +
+			vdcName +
+			ImportSeparator +
+			vappName +
+			ImportSeparator +
+			vmName +
+			ImportSeparator +
+			objectIdentifier, nil
+	}
+}
+
+// setBoolFlag binds a flag to a boolean variable (passed as pointer)
+// it also uses an optional environment variable that, if set, will
+// update the variable before binding it to the flag.
+func setBoolFlag(varPointer *bool, name, envVar, help string) {
+	if envVar != "" && os.Getenv(envVar) != "" {
+		*varPointer = true
+	}
+	flag.BoolVar(varPointer, name, *varPointer, help)
+}
+
+type envHelper struct {
+	vars map[string]string
+}
+
+// newEnvVarHelper helps to initialize
+func newEnvVarHelper() *envHelper {
+	return &envHelper{vars: make(map[string]string)}
+}
+
+// saveVcdVars checks all env vars with VCD prefix and saves them in a map
+func (env *envHelper) saveVcdVars() {
+	for _, envVar := range os.Environ() {
+		if strings.HasPrefix(envVar, "VCD") {
+			// os.Environ returns a slice of "key=value" strings. The first "=" separated "key" and
+			// "value" therefore we split only first "=" match as env vars may have syntax of
+			// "key=value=else"
+			splitKeyValue := strings.SplitN(envVar, "=", 2)
+			key := splitKeyValue[0]
+			value := splitKeyValue[1]
+			env.vars[key] = value
+		}
+	}
+
+}
+
+// unsetVcdVars unsets all environment variables with prefix "VCD"
+func (env *envHelper) unsetVcdVars() {
+	for keyName := range env.vars {
+		os.Unsetenv(keyName)
+	}
+}
+
+// restoreVcdVars restores all env variables with prefix "VCD" stored in parent struct
+func (env *envHelper) restoreVcdVars() {
+	for keyName, valueName := range env.vars {
+		os.Setenv(keyName, valueName)
+	}
+}
+
+// importStateIdViaResource runs the import of a VM affinity rule using the resource ID
+func importStateIdViaResource(resource string) resource.ImportStateIdFunc {
+	return func(s *terraform.State) (string, error) {
+		rs, ok := s.RootModule().Resources[resource]
+		if !ok {
+			return "", fmt.Errorf("resource not found: %s", resource)
+		}
+
+		if rs.Primary.ID == "" {
+			return "", fmt.Errorf("no ID is set for %s resource", resource)
+		}
+
+		importId := testConfig.VCD.Org + "." + testConfig.VCD.Vdc + "." + rs.Primary.ID
+		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || rs.Primary.ID == "" {
+			return "", fmt.Errorf("missing information to generate import path: %s", importId)
+		}
+		return importId, nil
+	}
+}
+
+// testAccFindValuesInSet finds several elements as belonging to the same item in a set
+// * resourceName is the complete identifier of the resource (such as vcd_vapp_access_control.Name)
+// * prefix is the name of the set (e.g. "shared" in vApp access control)
+// * wanted is a map of values to check (such as {"subject_name" : "xxx", "access_level": "yyy"})
+// The function returns successfully if all the wanted elements are found within the same set ID
+// For example, given the following contents in the resource:
+//
+//  "shared.2503357709.access_level":"FullControl",
+//  "shared.3479897784.user_id":"urn:vcloud:user:ec571e04-7e75-4dc5-8f53-c3ef63b9b414",
+//  "shared.2503357709.user_id":"urn:vcloud:user:465308a5-7456-42c8-939c-bd971b0e0d3f",
+//  "shared.2503357709.subject_name":"ac-user1",
+//  "shared.3479897784.subject_name":"ac-user2",
+//  "shared.3479897784.access_level":"Change"
+//
+// We pass "shared" as prefix, and map[string]string{"subject_name": "ac-user1", "access_level": "FullControl"} as wanted
+// The function will match the elements belonging to set "2503357709", and return successfully, because both elements were found.
+func testAccFindValuesInSet(resourceName string, prefix string, wanted map[string]string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("not found: %s", resourceName)
+		}
+
+		var matches = make(map[string]int)
+		for key, value := range rs.Primary.Attributes {
+			keyList := strings.Split(key, ".")
+			if len(keyList) == 3 {
+				foundPrefix := keyList[0]
+				setID := keyList[1]
+				foundKey := keyList[2]
+				for wKey, wValue := range wanted {
+					if foundPrefix == prefix && foundKey == wKey {
+						if wValue == value {
+							_, ok := matches[setID]
+							if !ok {
+								matches[setID] = 0
+							}
+							matches[setID]++
+						}
+					}
+				}
+			}
+		}
+
+		for _, value := range matches {
+			if value == len(wanted) {
+				return nil
+			}
+		}
+		return fmt.Errorf("resource %s - %d matches found - wanted %d", resourceName, len(matches), len(wanted))
+	}
+}
+
+// skipOnEnvVariable takes a TestCheckFunc and skips it if the given environment variable was set with
+// an expected value
+func skipOnEnvVariable(envVar, envValue, notes string, f resource.TestCheckFunc) resource.TestCheckFunc {
+	if os.Getenv(envVar) == envValue {
+		fmt.Printf("### Check skipped at user request - Variable %s - reason: %s\n", envVar, notes)
+		return func(s *terraform.State) error {
+			return nil
+		}
+	}
+	return f
+}
+
+// skipNoNsxtConfiguration allows to skip a test if NSX-T configuration is missing
+func skipNoNsxtConfiguration(t *testing.T) {
+	generalMessage := "Missing NSX-T config: "
+	if testConfig.VCD.NsxtProviderVdc.Name == "" {
+		t.Skip(generalMessage + "No provider VDC specified")
+	}
+	if testConfig.VCD.NsxtProviderVdc.NetworkPool == "" {
+		t.Skip(generalMessage + "No network pool specified")
+	}
+
+	if testConfig.VCD.NsxtProviderVdc.StorageProfile == "" {
+		t.Skip(generalMessage + "No storage profile specified")
+	}
+
+	if testConfig.Nsxt.Manager == "" {
+		t.Skip(generalMessage + "No NSX-T manager specified")
+	}
+	if testConfig.Nsxt.Tier0router == "" {
+		t.Skip(generalMessage + "No NSX-T Tier-0 specified")
+	}
+	if testConfig.Nsxt.Tier0routerVrf == "" {
+		t.Skip(generalMessage + "No VRF NSX-T Tier-0 specified")
 	}
 }

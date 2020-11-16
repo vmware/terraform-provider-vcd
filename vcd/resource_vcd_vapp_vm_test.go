@@ -5,9 +5,14 @@ package vcd
 import (
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
+
+func init() {
+	testingTags["vm"] = "resource_vcd_vapp_vm_test.go"
+}
 
 var vappName2 string = "TestAccVcdVAppVmVapp"
 var vmName string = "TestAccVcdVAppVmVm"
@@ -45,9 +50,9 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdVAppVmDestroy(vappName2),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappName2),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -64,16 +69,21 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_vm."+vmName, "metadata.vm_metadata", "VM Metadata."),
 					resource.TestCheckOutput("disk", diskName),
+					resource.TestCheckOutput("disk_bus_number", "1"),
+					resource.TestCheckOutput("disk_unit_number", "0"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_vapp_vm."+vmName, "disk.*", map[string]string{
+						"size_in_mb": "5",
+					}),
 				),
 			},
 			resource.TestStep{
-				ResourceName:      "vcd_vapp_vm." + vmName + "-import",
+				ResourceName:      "vcd_vapp_vm." + vmName,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdVappObject(testConfig, vappName2, vmName),
 				// These fields can't be retrieved from user data
-				ImportStateVerifyIgnore: []string{"template_name", "catalog_name", "network_name",
-					"initscript", "accept_all_eulas", "power_on", "computer_name"},
+				ImportStateVerifyIgnore: []string{"template_name", "catalog_name",
+					"accept_all_eulas", "power_on", "computer_name", "prevent_update_power_off"},
 			},
 		},
 	})
@@ -113,9 +123,9 @@ func TestAccVcdVAppVm_Clone(t *testing.T) {
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdVAppVmDestroy(vappName2),
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappName2),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -149,10 +159,6 @@ func TestAccVcdVAppVm_Clone(t *testing.T) {
 	})
 }
 
-func init() {
-	testingTags["vm"] = "resource_vcd_vapp_vm_test.go"
-}
-
 const testAccCheckVcdVAppVm_basic = `
 resource "vcd_network_routed" "{{.NetworkName}}" {
   name         = "{{.NetworkName}}"
@@ -171,7 +177,7 @@ resource "vcd_independent_disk" "{{.diskResourceName}}" {
   org             = "{{.Org}}"
   vdc             = "{{.Vdc}}"
   name            = "{{.diskName}}"
-  size            = "{{.size}}"
+  size_in_mb      = "{{.size}}"
   bus_type        = "{{.busType}}"
   bus_sub_type    = "{{.busSubType}}"
   storage_profile = "{{.storageProfileName}}"
@@ -181,7 +187,13 @@ resource "vcd_vapp" "{{.VappName}}" {
   name = "{{.VappName}}"
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
-  depends_on = ["vcd_network_routed.{{.NetworkName}}"]
+}
+
+resource "vcd_vapp_org_network" "vappNetwork1" {
+  org                = "{{.Org}}"
+  vdc                = "{{.Vdc}}"
+  vapp_name          = vcd_vapp.{{.VappName}}.name
+  org_network_name   = vcd_network_routed.{{.NetworkName}}.name 
 }
 
 resource "vcd_vapp_vm" "{{.VmName}}" {
@@ -201,10 +213,10 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   }
 
   network {
-    name               = vcd_network_routed.{{.NetworkName}}.name
-    ip                 = "10.10.102.161"
     type               = "org"
+    name               = vcd_vapp_org_network.vappNetwork1.org_network_name
     ip_allocation_mode = "MANUAL"
+    ip                 = "10.10.102.161"
   }
 
   disk {
@@ -216,6 +228,12 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
 
 output "disk" {
   value = tolist(vcd_vapp_vm.{{.VmName}}.disk)[0].name
+}
+output "disk_bus_number" {
+  value = tolist(vcd_vapp_vm.{{.VmName}}.disk)[0].bus_number
+}
+output "disk_unit_number" {
+  value = tolist(vcd_vapp_vm.{{.VmName}}.disk)[0].unit_number
 }
 `
 
@@ -237,8 +255,14 @@ resource "vcd_network_routed" "{{.NetworkName}}" {
 resource "vcd_vapp" "{{.VappName}}" {
   name = "{{.VappName}}"
   org  = "{{.Org}}"
-  vdc  = "{{.Vdc}}"
-  depends_on = ["vcd_network_routed.{{.NetworkName}}"]
+  vdc  = "{{.Vdc}}" 
+}
+
+resource "vcd_vapp_org_network" "vappNetwork1" {
+  org                = "{{.Org}}"
+  vdc                = "{{.Vdc}}"
+  vapp_name          = vcd_vapp.{{.VappName}}.name
+  org_network_name   = vcd_network_routed.{{.NetworkName}}.name 
 }
 
 resource "vcd_vapp_vm" "{{.VmName}}" {
@@ -258,10 +282,10 @@ resource "vcd_vapp_vm" "{{.VmName}}" {
   }
 
   network {
-    name               = vcd_network_routed.{{.NetworkName}}.name
-    ip                 = "{{.IP}}"
     type               = "org"
+    name               = vcd_vapp_org_network.vappNetwork1.org_network_name
     ip_allocation_mode = "MANUAL"
+    ip                 = "{{.IP}}"
   }
 }
 
@@ -286,6 +310,4 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
     ip_allocation_mode = vcd_vapp_vm.{{.VmName}}.network.0.ip_allocation_mode
   }
 }
-
-
 `

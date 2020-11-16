@@ -1,9 +1,10 @@
-module github.com/terraform-providers/terraform-provider-vcd/v2
+module github.com/vmware/terraform-provider-vcd/v3
 
 go 1.13
 
 require (
-	github.com/hashicorp/go-version v1.2.0
-	github.com/hashicorp/terraform-plugin-sdk v1.3.0
-	github.com/vmware/go-vcloud-director/v2 v2.5.1
+	github.com/aws/aws-sdk-go v1.30.12 // indirect
+	github.com/hashicorp/go-version v1.2.1
+	github.com/hashicorp/terraform-plugin-sdk/v2 v2.1.0
+	github.com/vmware/go-vcloud-director/v2 v2.10.0-alpha.2
 )

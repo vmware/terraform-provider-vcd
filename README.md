@@ -20,7 +20,7 @@ Requirements
 ------------
 
 -	[Terraform](https://www.terraform.io/downloads.html)
--	[Go](https://golang.org/doc/install) 1.13 (to build the provider plugin)
+-	[Go](https://golang.org/doc/install) 1.14 (to build the provider plugin)
 
 Building The Provider (the modules way)
 --------------------------------------
@@ -35,50 +35,24 @@ and toggle between modes.
 
 ```
 $ cd ~/mydir
-$ git clone https://github.com/terraform-providers/terraform-provider-vcd.git
+$ git clone https://github.com/vmware/terraform-provider-vcd.git
 $ cd terraform-provider-vcd/
 $ make build
 ```
 
-Building The Provider (the old [vendor](https://golang.org/cmd/go/#hdr-Vendor_Directories) way)
---------------------------------------
-
-Prior to version 2.1 provider used Go vendor directory for dependency management. This method is not recommended
-anymore, but can be used to build provider on Go versions < 1.11.
-
-Clone repository to: `$GOPATH/src/github.com/terraform-providers/terraform-provider-vcd`
-
-```sh
-$ mkdir -p $GOPATH/src/github.com/terraform-providers; cd $GOPATH/src/github.com/terraform-providers
-$ git clone https://github.com/terraform-providers/terraform-provider-vcd.git
-```
-
-Enter the provider directory and build the provider
-
-```sh
-$ cd $GOPATH/src/github.com/terraform-providers/terraform-provider-vcd
-$ make build
-```
-
-
 Developing the Provider
 ---------------------------
 
-Starting with terraform-provider-vcd version 2.1 Go modules are used, while `vendor` directory is left for backwards
-compatibility only. This means a few things:
+Starting with terraform-provider-vcd version 2.1 Go modules are used. This means a few things:
 * The code no longer needs to stay in your `GOPATH`. It can though -
 [see more](https://github.com/golang/go/wiki/Modules#how-to-use-modules) on how to use modules and toggle between modes.
-* `vendor` directory is __not to be changed manually__. Always use Go modules when introducing new dependencies
-and always rebuild the vendor directory using `go mod vendor` if you have changed `go.mod` or `go.sum`. Travis CI will
-catch and fail if it is not done. **Note** Go 1.13+ must be used for `go mod vendor` as starting with this version
-"/vendor" directory structure changed and Travis will fail if "/vendor" is built and commited with Go <1.12.
 * When developing `terraform-provider-vcd` one often needs to add extra stuff to `go-vcloud-director`. Go modules
 have a convenient [replace](https://github.com/golang/go/wiki/Modules#when-should-i-use-the-replace-directive)
 directive which can allow you to redirect import path to your own version of `go-vcloud-director`.
 `go.mod` can be altered:
  * You can replace your import with a forked branch like this:
  ```go
-    module github.com/terraform-providers/terraform-provider-vcd/v2
+    module github.com/vmware/terraform-provider-vcd/v2
     require (
     	...
     	github.com/vmware/go-vcloud-director/v2 v2.1.0-alpha.2
@@ -87,7 +61,7 @@ directive which can allow you to redirect import path to your own version of `go
  ```
  * You can also replace pointer to a branch with relative directory
  ```go
-     module github.com/terraform-providers/terraform-provider-vcd/v2
+     module github.com/vmware/terraform-provider-vcd/v2
      require (
      	...
      	github.com/vmware/go-vcloud-director/v2 v2.1.0-alpha.2
@@ -110,6 +84,46 @@ $ make install
 
 This command will build the plugin and transfer it to `$HOME/.terraform.d/plugins`, with a name that includes the version (as taken from the `./VERSION` file).
 
+Starting with terraform 0.13, the path where the plugin is deployed is
+```
+`$HOME/.terraform.d/plugins/registry.terraform.io/vmware/vcd/${VERSION}/${OS}_amd64/terraform-provider-vcd_v${VERSION}`
+```
+
+For example, on MacOS:
+
+```
+$HOME/.terraform.d/
+├── checkpoint_signature
+└── plugins
+    ├── registry.terraform.io
+    └── vmware
+        └── vcd
+            ├── 2.9.0
+            │   └── darwin_amd64
+            │       └── terraform-provider-vcd_v2.9.0
+            └── 3.0.0
+                └── darwin_amd64
+                    └── terraform-provider-vcd_v3.0.0
+```
+
+On Linux:
+
+```
+$HOME/.terraform.d/
+├── checkpoint_signature
+└── plugins
+    ├── registry.terraform.io
+    └── vmware
+        └── vcd
+            ├── 2.9.0
+            │   └── linux_amd64
+            │       └── terraform-provider-vcd_v2.9.0
+            └── 3.0.0
+                └── linux_amd64
+                    └── terraform-provider-vcd_v3.0.0
+```
+
+
 ### Using the new plugin
 
 Once you have installed the plugin as mentioned above, you can simply create a new `config.tf` as defined in [the manual](https://www.terraform.io/docs/providers/vcd/index.html) and run 
@@ -119,3 +133,24 @@ $ terraform init
 $ terraform plan
 $ terraform apply
 ```
+
+When using terraform 0.13+, you also need to have a `terraform` block either in your script or in an adjacent `versions.tf` file,
+containing.
+
+```
+terraform {
+  required_providers {
+    vcd = {
+      source = "vmware/vcd"
+    }
+  }
+  required_version = ">= 0.13"
+}
+```
+
+In this block, the `vmware` part of the source corresponds to the directory
+`$HOME/.terraform.d/plugins/registry.terraform.io/vmware` created by the command `make install`.
+
+Note that `versions.tf` is generated when you run the `terraform 0.13upgrade` command. If you have run such command,
+you need to edit the file and make sure the **`source`** path corresponds to the one installed, or remove the file
+altogether if you have already the right block in your script.

@@ -13,6 +13,12 @@ build_script=cust.full-env.tf
 unset in_building
 operations=(init plan apply plancheck destroy)
 skipping_items=($build_script)
+failed_tests=0
+
+if [ -f failed_tests.txt ]
+then
+    rm -f failed_tests.txt
+fi
 
 if [ -f skip-files.txt ]
 then
@@ -22,9 +28,58 @@ then
     done
 fi
 
+function check_empty {
+    variable="$1"
+    message="$2"
+    if [ -z "$variable" ]
+    then
+        echo $message
+        exit 1
+    fi
+}
+
+# Terraform version is used to determine what the target directory should be
+terraform_version=$(terraform version | head -n 1| sed -e 's/Terraform v//')
+check_empty "$terraform_version" "terraform_version not detected"
+
+terraform_major=$(echo $terraform_version | tr '.' ' '| awk '{print $1}')
+check_empty "$terraform_major" "terraform_version major not detected"
+terraform_minor=$(echo $terraform_version | tr '.' ' '| awk '{print $2}')
+check_empty "$terraform_minor" "terraform_version minor not detected"
+
+function terraform_binary_path {
+    version=$1
+    tversion_major=$2
+    tversion_minor=$3
+    if [ -z "$tversion_major" ]
+    then
+        tversion_major=$terraform_major
+    fi
+    if [ -z "$tversion_minor" ]
+    then
+        tversion_minor=$terraform_minor
+    fi
+    # The default target directory is the pre-0.13 one
+    target_dir=.terraform.d/plugins/
+    # Getting the version without the initial "v"
+    bare_version=$(echo $version | sed -e 's/^v//')
+    os=$(uname -s | tr '[:upper:]' '[:lower:]')
+    check_empty "$os" "operating system not detected"
+    arch=${os}_amd64
+
+    # if terraform executable is 0.13+, we use the new path
+    if [[ $tversion_major -gt 0 || $tversion_major -eq 0 && $tversion_minor -gt 12 ]]
+    then
+        target_dir=.terraform.d/plugins/registry.terraform.io/vmware/vcd/$bare_version/$arch
+    fi
+
+    echo $target_dir
+}
 
 # 'restore_environment' removes the effects of 'make_environment'
 function restore_environment {
+    [ -z "$from_path" ] && from_path=$(terraform_binary_path $from_version)
+    [ -z "$to_path" ] && from_path=$(terraform_binary_path $to_version)
     if [ -n "$real_home" ]
     then
         export HOME=$real_home
@@ -38,7 +93,7 @@ function restore_environment {
         # Copies current version plugin to the testing environment
         # The plugin is guaranteed to be there, as its existence
         # was checked in 'make_environment'
-        cp $HOME/.terraform.d/plugins/terraform-provider-vcd_$to_version .
+        cp $HOME/$to_path/terraform-provider-vcd_$to_version .
         hash -r
         terraform init
     fi
@@ -48,21 +103,43 @@ function restore_environment {
 # 'make_environment' creates a sandboxed environment where terraform uses
 # a specific plugin for it nexts operation
 function make_environment {
+
+    [ -z "$from_path" ] && from_path=$(terraform_binary_path $from_version)
+    [ -z "$to_path" ] && to_path=$(terraform_binary_path $to_version)
     if [ ! -d fake_home ]
     then
-        mkdir -p fake_home/.terraform.d/plugins
+        mkdir -p fake_home/$from_path
+        mkdir -p fake_home/$to_path
     fi
 
     # Checks that both plugins exist
-    origin_old_plugin=$HOME/.terraform.d/plugins/terraform-provider-vcd_$from_version
-    origin_new_plugin=$HOME/.terraform.d/plugins/terraform-provider-vcd_$to_version
+    origin_old_plugin=$HOME/$from_path/terraform-provider-vcd_$from_version
+    origin_new_plugin=$HOME/$to_path/terraform-provider-vcd_$to_version
+
+    if [ ! -f $origin_old_plugin ]
+    then
+        # Workaround for incompatible changes introduced in terraform 0.13
+        # If we don't find the old plugin in the new path
+        # we look at the old path, create the new path, and copy the plugin there
+        old_from_path=$(terraform_binary_path $from_version 0 12)
+        new_from_path=$(terraform_binary_path $from_version 0 13)
+        old_style_plugin=$HOME/$old_from_path/terraform-provider-vcd_$from_version
+        if [ -f $old_style_plugin ]
+        then
+            mkdir -p $HOME/$new_from_path
+            cp $old_style_plugin $origin_old_plugin
+        fi
+    fi
+
     if [ ! -f $origin_old_plugin ]
     then
         echo " $origin_old_plugin not found - test interrupted"
+        exit 1
     fi
     if [ ! -f $origin_new_plugin ]
     then
         echo " $origin_new_plugin not found - test interrupted"
+        exit 1
     fi
 
     # Masks the real HOME, to prevent terraform executable from
@@ -73,10 +150,10 @@ function make_environment {
 
     previous_version_plugin=$PWD/terraform-provider-vcd_$from_version
     latest_plugin=$PWD/terraform-provider-vcd_$to_version
-    destination=$PWD/fake_home/.terraform.d/plugins/terraform-provider-vcd_$from_version
+    destination=$PWD/fake_home/$from_path/terraform-provider-vcd_$from_version
 
     # Adds the previous version plugin to the test environment in both the current path and the
-    # directory where terraform puts downloaded plugins. We want to give terraform a plugin to 
+    # directory where terraform puts downloaded plugins. We want to give terraform a plugin to
     # use and avoid unnecessary downloads.
     if [ ! -f $destination ]
     then
@@ -136,6 +213,7 @@ function get_help {
     echo "  t | tags 'tags list'   Sets the tags to use"
     echo "  c | clear              Clears list of run files"
     echo "  p | pause              Pause after each stage"
+    echo "  a | validate           Validate scripts without running tests"
     echo "  n | names 'names list' List of file names to test [QUOTES NEEDED]"
     echo "  i | test-env-init      Prepares the environment in a new vCD"
     echo "  b | test-env-apply     Builds the environment in a new vCD"
@@ -167,6 +245,63 @@ function echo_verbose {
     fi
 }
 
+function check_terraform_version {
+
+    fname=$1
+    dir=$2
+    has_terraform=$(grep '^\s*terraform {' $fname)
+    if [ -z "$has_terraform" ]
+    then
+        if [[ $terraform_major -gt 0 || $terraform_major -eq 0 && $terraform_minor -gt 12 ]]
+        then
+            cat << EOF > $dir/versions.tf
+terraform {
+  required_providers {
+    vcd = {
+      source = "vmware/vcd"
+    }
+  }
+  # required_version = ">= 0.13"
+}
+
+EOF
+        fi
+    fi
+
+}
+
+
+function check_exit_code {
+    out=$1
+    if [ "$exit_code" != "0" ]
+    then
+        cat $out
+        exit $exit_code
+    fi
+}
+
+function validate_script {
+    script=$1
+    echo "## $script ##"
+    if [ -d vtmp ]
+    then
+        rm -rf vtmp
+    fi
+    mkdir vtmp
+    cp $script vtmp
+    check_terraform_version $script vtmp
+    cd vtmp
+    terraform init > init.out 2>&1
+    exit_code=$?
+    check_exit_code init.out
+    terraform validate > validate.out 2>&1
+    exit_code=$?
+    check_exit_code validate.out
+    cd - > /dev/null
+    rm -rf vtmp
+}
+
+
 while [ "$1" != "" ]
 do
   opt=$1
@@ -175,8 +310,13 @@ do
         get_help
         ;;
     p|pause)
-        will_pause=1
-        echo "will pause"
+        if [ -n "$validating" ]
+        then
+            echo "pause not available for validation"
+        else
+            will_pause=1
+            echo "will pause"
+        fi
         ;;
     c|clear)
         if [ -f already_run.txt ]
@@ -243,6 +383,14 @@ do
     v|verbose)
         export VERBOSE=1
         ;;
+    validate)
+        validating=1
+        if [ -n "$will_pause" ]
+        then
+            echo "pause disabled for validation"
+            unset will_pause
+        fi
+        ;;
     *)
         get_help 
         ;;
@@ -277,7 +425,35 @@ function summary {
     echo "# Elapsed:        $elapsed ($secs sec)"
     echo "# exit code:      $exit_code"
     echo "$dash_line"
+    if [ "$failed_tests" != 0 ]
+    then
+        echo "$dash_line"
+        echo "# FAILED TESTS    $failed_tests"
+        echo "$dash_line"
+        cat $runtime_dir/failed_tests.txt
+        echo "$dash_line"
+    fi
     exit $exit_code
+}
+
+function interactive {
+    echo "Paused at user request - Press ENTER when ready"
+    echo "(Enter 'q' to exit with 0, 'x' to exit with 1, 'c' to continue without further pause)"
+    read answer
+    case $answer in
+        q)
+            echo "Exit at user request"
+            exit 0
+            ;;
+        x)
+            echo "Exit with non-zero code at user request"
+            exit 1
+            ;;
+        c)
+            unset will_pause
+            echo "Execution will not pause any more"
+            ;;
+    esac
 }
 
 function run {
@@ -301,25 +477,79 @@ function run {
     fi
     if [ -n "$will_pause" ]
     then
-        echo "Paused at user request - Press ENTER when ready"
-        echo "(Enter 'q' to exit with 0, 'x' to exit with 1, 'c' to continue without further pause)"
-        read answer
-        case $answer in
-            q)
-                echo "Exit at user request"
-                exit 0
-                ;;
-            x)
-                echo "Exit with non-zero code at user request"
-                exit 1
-                ;;
-            c)
-                unset will_pause
-                echo "Execution will not pause any more"
-                ;;
-        esac
+        interactive
     fi
 }
+
+function run_with_recover {
+    test_name=$1
+    phase=$2
+    shift
+    shift
+    cmd="$@"
+    echo "# $cmd"
+    if [ -n "$DRY_RUN" ]
+    then
+        return
+    fi
+    $cmd
+    exit_code=$?
+    if [ "$exit_code" != "0" ]
+    then
+        echo "$(date) - $test_name ($phase)" >> $runtime_dir/failed_tests.txt
+        failed_tests=$((failed_tests+1))
+        case $phase in
+            init)
+                # An error on initialization should not be recoverable
+                echo $dash_line
+                echo "NON-RECOVERABLE EXECUTION ERROR (phase: $phase)"
+                echo $dash_line
+                summary
+                ;;
+            plan | plancheck)
+                # an error in plan does not need any recovery,
+                # in addition to recording the file in the failed list
+                # The destroy will be called anyway
+                echo $dash_line
+                echo "RECOVERING FROM plancheck phase. A 'destroy' will run next"
+                echo $dash_line
+                ;;
+            apply | destroy)
+
+                # errors in apply should be recoverable after a destroy
+
+                # an error in destroy means we are leaving behind hanging entities.
+                # nonetheless we try to recover with an additional destroy
+
+                echo $dash_line
+                echo "# ATTEMPTING RECOVERY AFTER FAILURE (phase $phase - exit code $exit_code)"
+                echo $dash_line
+                run terraform destroy -auto-approve
+                # if 'run' doesn't produce an error, we continue the tests,
+                # leaving behind the name of the test failed in failed_tests.txt
+                # otherwise, the test is definitely terminated
+                ;;
+
+            *)
+                echo $dash_line
+                echo "unhandled phase in recovery'$phase'"
+                echo $dash_line
+                exit $exit_code
+                ;;
+
+        esac
+    fi
+    if [ -f $pause_file ]
+    then
+        rm -f $pause_file
+        export will_pause=1
+    fi
+    if [ -n "$will_pause" ]
+    then
+        interactive
+    fi
+}
+
 
 if [ ! -f already_run.txt ]
 then
@@ -342,7 +572,7 @@ do
         fi
     fi
     skip_request=$(grep '^\s*#\s*skip-binary-test' $CF)
-    if [ -n "$skip_request" ]
+    if [ -n "$skip_request" -a -z "$validating" ]
     then
         echo "# $CF skipped ($file_count of $how_many)"
         echo "$skip_request"
@@ -351,7 +581,7 @@ do
     unset will_skip
     for skip_file in ${skipping_items[*]}
     do
-        if [  "$CF" == "$skip_file" ]
+        if [  "$CF" == "$skip_file" -a -z "$validating" ]
         then
             will_skip=1
         fi
@@ -382,11 +612,11 @@ do
         echo "# $dash_line"
         continue
     fi
-    init_options=$(grep '^# init-options' $CF | sed -e 's/# init-options //')
-    plan_options=$(grep '^# plan-options' $CF | sed -e 's/# plan-options //')
-    apply_options=$(grep '^# apply-options' $CF | sed -e 's/# apply-options //')
-    plancheck_options=$(grep '^# plancheck-options' $CF | sed -e 's/# plancheck-options //')
-    destroy_options=$(grep '^# destroy-options' $CF | sed -e 's/# destroy-options //')
+    init_options="-compact-warnings $(grep '^# init-options' $CF | sed -e 's/# init-options //')"
+    plan_options="-compact-warnings $(grep '^# plan-options' $CF | sed -e 's/# plan-options //')"
+    apply_options="-compact-warnings $(grep '^# apply-options' $CF | sed -e 's/# apply-options //')"
+    plancheck_options="-compact-warnings $(grep '^# plancheck-options' $CF | sed -e 's/# plancheck-options //')"
+    destroy_options="-compact-warnings $(grep '^# destroy-options' $CF | sed -e 's/# destroy-options //')"
     using_tags=$(grep '^# tags' $CF | sed -e 's/# tags //')
     already_run=$(grep $CF already_run.txt)
     if [ -n "$already_run" ]
@@ -421,6 +651,11 @@ do
     echo "# $CF ($file_count of $how_many)"
     echo $dash_line
     opsdir=tmp
+    if [ -n "$validating" ]
+    then
+        validate_script $CF
+        continue
+    fi
     if [ -n  "$in_building" ]
     then
         url=$(grep  "^\s\+url " $build_script | awk '{print $3}' | sed -e 's/https:..//' -e 's/.api//' | tr -d '"' | tr '.' '-')
@@ -449,6 +684,7 @@ do
     if [ "${operations[0]}" == "init" ]
     then
         cp $CF $opsdir/config.tf
+        check_terraform_version $CF $opsdir
     fi
     if [ -z "$DRY_RUN" ]
     then
@@ -461,15 +697,15 @@ do
         case $phase in
             init)
                 # 'custom_terraform' can process both regular and upgrade operations
-                run custom_terraform init $init_options
+                run_with_recover $CF init custom_terraform init $init_options
                 ;;
             plan)
                 # 'custom_terraform' can process both regular and upgrade operations
-                run custom_terraform plan $plan_options
+                run_with_recover $CF plan custom_terraform plan $plan_options
                 ;;
             apply)
                 # 'custom_terraform' can process both regular and upgrade operations
-                run custom_terraform apply -auto-approve $apply_options
+                run_with_recover $CF apply custom_terraform apply -auto-approve $apply_options
                 ;;
             plancheck)
                 # Skip plan check if a `.tf` example contains line "# skip-plan-check"
@@ -482,19 +718,31 @@ do
                     # -detailed-exitcode will return exit code 2 when the plan was not empty
                     # and this allows to validate if reads work properly and there is no immediate
                     # plan change right after apply succeeded
-                    [ -n "$upgrading" ] && run terraform version
-                    run terraform plan -detailed-exitcode $plancheck_options 
+                    if [ -n "$upgrading" ]
+                    then
+                        # Replace the version in HCL configuration file
+                        major_from=$(echo $from_version | tr -d 'v' | tr '.' ' '| awk '{print $1}')
+                        minor_from=$(echo $from_version | tr -d 'v' | tr '.' ' '| awk '{print $2}')
+                        major_to=$(echo $to_version | tr -d 'v' | tr '.' ' '| awk '{print $1}')
+                        minor_to=$(echo $to_version | tr -d 'v' | tr '.' ' '| awk '{print $2}')
+                        short_from="${major_from}.${minor_from}"
+                        short_to="${major_to}.${minor_to}"
+                        sed -i -e 's/version *= "~> '${short_from}'"/version = "~> '${short_to}'"/'  config.tf
+                        run terraform init
+                        run terraform version
+                    fi
+                    run_with_recover $CF plancheck terraform plan -detailed-exitcode $plancheck_options
                 fi
                 ;;
             destroy)
                 # During upgrades, 'destroy' runs with the latest plugin
                 if [ ! -f terraform.tfstate ]
                 then
-                    echo "terraform.tfstate not found - aborting"
+                    echo "terraform.tfstate not found - exiting"
                     exit 1
                 fi
                 [ -n "$upgrading" ] && run terraform version
-                run terraform destroy -auto-approve $destroy_options
+                run_with_recover $CF destroy terraform destroy -auto-approve $destroy_options
                 ;;
         esac
     done

@@ -1,4 +1,4 @@
-// +build network ALL functional
+// +build network vm ALL functional
 
 package vcd
 
@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
@@ -134,9 +134,16 @@ func TestAccVcdNetworkDirectDS(t *testing.T) {
 	configText := templateFill(template, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
+	externalNetworkGateway := ""
+	if data.network.Configuration != nil &&
+		data.network.Configuration.IPScopes != nil &&
+		len(data.network.Configuration.IPScopes.IPScope) > 0 {
+		externalNetworkGateway = data.network.Configuration.IPScopes.IPScope[0].Gateway
+	}
+
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -147,6 +154,7 @@ func TestAccVcdNetworkDirectDS(t *testing.T) {
 					resource.TestCheckOutput("network_name", data.network.Name),
 					resource.TestCheckOutput("network_description", data.network.Description),
 					resource.TestCheckOutput("external_network", data.parent),
+					resource.TestCheckOutput("external_network_gateway", externalNetworkGateway),
 				),
 			},
 		},
@@ -192,8 +200,8 @@ func TestAccVcdNetworkRoutedDS(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -204,7 +212,6 @@ func TestAccVcdNetworkRoutedDS(t *testing.T) {
 					resource.TestCheckOutput("network_name", data.network.Name),
 					resource.TestCheckOutput("network_description", data.network.Description),
 					resource.TestCheckOutput("network_edge", data.parent),
-					resource.TestCheckOutput("default_gateway", testConfig.Networking.ExternalNetwork),
 				),
 			},
 		},
@@ -249,8 +256,8 @@ func TestAccVcdNetworkIsolatedDS(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.ParallelTest(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -295,6 +302,10 @@ output "network_vdc" {
 output "external_network" {
   value = data.vcd_network_direct.{{.NetworkName}}.external_network
 }
+
+output "external_network_gateway" {
+  value = data.vcd_network_direct.{{.NetworkName}}.external_network_gateway
+}
 `
 
 const datasourceTestNetworkRouted = `
@@ -308,10 +319,6 @@ data "vcd_network_routed" "{{.NetworkName}}" {
   name         = "{{.NetworkName}}"
   org          = "{{.Org}}"
   vdc          = "{{.VDC}}"
-}
-
-output "default_gateway" {
-  value = data.vcd_edgegateway.{{.EdgeGateway}}.default_gateway_network
 }
 
 output "network_name" {

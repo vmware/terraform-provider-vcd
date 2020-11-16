@@ -3,8 +3,8 @@ package vcd
 import (
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
@@ -459,7 +459,7 @@ func vappVmList(d *schema.ResourceData, meta interface{}) (list []string, err er
 }
 
 func getResourcesList() (list []string, err error) {
-	resources := VcdResourcesMap
+	resources := globalDataSourceMap
 	for name := range resources {
 		list = append(list, name)
 	}

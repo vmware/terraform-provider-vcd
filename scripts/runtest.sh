@@ -11,7 +11,8 @@ then
 fi
 
 wanted=$1
-timeout=120m
+
+timeout=0
 if [ -n "$VCD_TIMEOUT" ]
 then
     timeout=$VCD_TIMEOUT
@@ -24,7 +25,7 @@ fi
 
 accepted_commands=(static token short acceptance sequential-acceptance multiple binary
     binary-prepare catalog gateway vapp vm network extnetwork multinetwork 
-    short-provider lb user acceptance-orguser short-provider-orguser)
+    short-provider lb user acceptance-orguser short-provider-orguser search binary-validate)
 
 accepted="[${accepted_commands[*]}]"
 
@@ -70,13 +71,13 @@ function check_for_config_file {
 function unit_test {
     if [ -n "$VERBOSE" ]
     then
-        echo " go test -i ${TEST} || exit 1"
-        echo "VCD_SHORT_TEST=1 go test -tags unit -v -timeout 3m"
+        echo "go test -race -i ${TEST} || exit 1"
+        echo "go test -race -tags unit -v -timeout 3m"
     fi
     if [ -z "$DRY_RUN" ]
     then
-        go test -i ${TEST} || exit 1
-        go test -tags unit -v -timeout 3m
+        go test -race -i ${TEST} || exit 1
+        go test -race -tags unit -v -timeout 3m
     fi
 }
 
@@ -89,13 +90,13 @@ function short_test {
     fi
     if [ -n "$VERBOSE" ]
     then
-        echo " go test  -i ${TEST} || exit 1"
-        echo "VCD_SHORT_TEST=1 go test -tags "functional $MORE_TAGS" -v -timeout 3m "
+        echo "go test -race  -i ${TEST} || exit 1"
+        echo "VCD_SHORT_TEST=1 go test -race -tags "functional $MORE_TAGS" -v -timeout 3m"
     fi
     if [ -z "$DRY_RUN" ]
     then
-        go test -i ${TEST} || exit 1
-        VCD_SHORT_TEST=1 go test -tags "functional $MORE_TAGS" -v -timeout 3m 
+        go test -race -i ${TEST} || exit 1
+        VCD_SHORT_TEST=1 go test -race -tags "functional $MORE_TAGS" -v -timeout 3m
     fi
     if [ -n "$VCD_TEST_ORG_USER" ]
     then
@@ -105,7 +106,7 @@ function short_test {
 
 function acceptance_test {
     tags="$1"
-    parallel="$2"
+    testoptions="$2"
     if [ -z "$tags" ]
     then
         tags=functional
@@ -113,13 +114,13 @@ function acceptance_test {
     if [ -n "$VERBOSE" ]
     then
         echo "# check for config file"
-        echo "TF_ACC=1 go test -tags '$tags' -v -timeout $timeout ."
+        echo "TF_ACC=1 go test -tags '$tags' -v -timeout $timeout"
     fi
 
     if [ -z "$DRY_RUN" ]
     then
         check_for_config_file
-        TF_ACC=1 go test -tags "$tags" $parallel -v -timeout $timeout .
+        TF_ACC=1 go test -tags "$tags" $testoptions -v -timeout $timeout
     fi
 }
 
@@ -132,13 +133,13 @@ function multiple_test {
     if [ -n "$VERBOSE" ]
     then
         echo "# check for config file"
-        echo "TF_ACC=1 go test -v -timeout $timeout -tags 'api multivm multinetwork' -run '$filter' ."
+        echo "TF_ACC=1 go test -race -v -timeout $timeout -tags 'api multivm multinetwork' -run '$filter'"
     fi
 
     if [ -z "$DRY_RUN" ]
     then
         check_for_config_file
-        TF_ACC=1 go test -v -timeout $timeout -tags 'api multivm multinetwork' -run "$filter" .
+        TF_ACC=1 go test -race -v -timeout $timeout -tags 'api multivm multinetwork' -run "$filter"
     fi
 }
 
@@ -152,10 +153,13 @@ function binary_test {
     cp $scripts_dir/test-binary.sh test-artifacts/test-binary.sh
     chmod +x test-artifacts/test-binary.sh
     cd test-artifacts
-    if [ -f already_run.txt ]
-    then
-        rm -f already_run.txt
-    fi
+    for old_file in already_run.txt failed_tests.txt
+    do
+        if [ -f ${old_file} ]
+        then
+            rm -f ${old_file}
+        fi
+    done
     if [ -n "$NORUN" ]
     then
         pwd
@@ -178,7 +182,13 @@ function binary_test {
         ./test-binary.sh test-env-destroy
         exit $?
     fi
-     ./test-binary.sh
+    if [ -n "$VCD_ENV_VALIDATE" ]
+    then
+        ./test-binary.sh validate
+        exit $?
+    fi
+    timestamp=$(date +%Y-%m-%d-%H-%M)
+    ./test-binary.sh names '*.tf' 2>&1 | tee test-binary-${timestamp}.txt
 }
 
 function exists_in_path {
@@ -241,7 +251,7 @@ function make_token {
 
   echo "# Connecting to $url ($sysorg)"
   curl --silent --head --insecure \
-    --header "Accept: application/*;version=29.0" \
+    --header "Accept: application/*;version=32.0" \
     --header "Authorization: Basic $auth" \
     --request POST $url/sessions | grep -i authorization
 }
@@ -306,23 +316,15 @@ case $wanted in
     token)
         make_token
         ;;
-    test-env-init)
-        export VCD_ENV_INIT=1
-        binary_test
-        ;;
-    test-env-apply)
-        export VCD_ENV_APPLY=1
-        binary_test
-        ;;
-    test-env-destroy)
-        export VCD_ENV_DESTROY=1
-        binary_test
-        ;;
     binary-prepare)
         export NORUN=1
         binary_test
         ;;
      binary)
+        binary_test
+        ;;
+     binary-validate)
+        export VCD_ENV_VALIDATE=1
         binary_test
         ;;
     unit)
@@ -353,7 +355,10 @@ case $wanted in
         acceptance_test functional
         ;;
     sequential-acceptance)
-        acceptance_test functional "--parallel=1"
+        acceptance_test functional "-race --parallel=1"
+        ;;
+    search)
+        acceptance_test search
         ;;
     multinetwork)
         multiple_test TestAccVcdVappNetworkMulti

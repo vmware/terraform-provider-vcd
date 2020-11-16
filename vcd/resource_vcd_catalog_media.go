@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
@@ -182,6 +182,10 @@ func resourceVcdMediaCreate(d *schema.ResourceData, meta interface{}) error {
 }
 
 func resourceVcdMediaRead(d *schema.ResourceData, meta interface{}) error {
+	return genericVcdMediaRead(d, meta, "resource")
+}
+
+func genericVcdMediaRead(d *schema.ResourceData, meta interface{}, origin string) error {
 	vcdClient := meta.(*VCDClient)
 
 	org, err := vcdClient.GetAdminOrgFromResource(d)
@@ -195,15 +199,34 @@ func resourceVcdMediaRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("unable to find catalog: %s", err)
 	}
 
-	identifier := d.Id()
+	var media *govcd.Media
 
-	if identifier == "" {
-		identifier = d.Get("name").(string)
+	if origin == "datasource" {
+		if !nameOrFilterIsSet(d) {
+			return fmt.Errorf(noNameOrFilterError, "vcd_catalog_media")
+		}
+		filter, hasFilter := d.GetOk("filter")
+		if hasFilter {
+
+			media, err = getMediaByFilter(catalog, filter, vcdClient.Client.IsSysAdmin)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
-	media, err := catalog.GetMediaByNameOrId(identifier, false)
-	if govcd.IsNotFound(err) {
-		log.Printf("unable to find media with ID %s: %s. Removing from state", identifier, err)
+	identifier := d.Id()
+	if media == nil {
+		if identifier == "" {
+			identifier = d.Get("name").(string)
+		}
+		if identifier == "" {
+			return fmt.Errorf("media identifier is empty")
+		}
+		media, err = catalog.GetMediaByNameOrId(identifier, false)
+	}
+	if govcd.IsNotFound(err) && origin == "resource" {
+		log.Printf("[INFO] unable to find media with ID %s: %s. Removing from state", identifier, err)
 		d.SetId("")
 		return nil
 	}
@@ -214,7 +237,7 @@ func resourceVcdMediaRead(d *schema.ResourceData, meta interface{}) error {
 
 	d.SetId(media.Media.ID)
 
-	mediaRecord, err := catalog.QueryMedia(d.Get("name").(string))
+	mediaRecord, err := catalog.QueryMedia(media.Media.Name)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to query media: %s", err)
 		return err

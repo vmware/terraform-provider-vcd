@@ -1,12 +1,12 @@
 package vcd
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func datasourceVcdCatalogMedia() *schema.Resource {
 	return &schema.Resource{
-		Read: resourceVcdMediaRead,
+		Read: dataSourceVcdMediaRead,
 
 		Schema: map[string]*schema.Schema{
 			"org": {
@@ -21,9 +21,10 @@ func datasourceVcdCatalogMedia() *schema.Resource {
 				Description: "catalog name where upload the Media file",
 			},
 			"name": &schema.Schema{
-				Type:        schema.TypeString,
-				Required:    true,
-				Description: "media name",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"name", "filter"},
+				Description:  "media name (Optional when 'filter' is used)",
 			},
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
@@ -71,6 +72,26 @@ func datasourceVcdCatalogMedia() *schema.Resource {
 				Computed:    true,
 				Description: "Storage profile name",
 			},
+			"filter": &schema.Schema{
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				MinItems:    1,
+				Optional:    true,
+				Description: "Criteria for retrieving a catalog media by various attributes",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name_regex": elementNameRegex,
+						"date":       elementDate,
+						"earliest":   elementEarliest,
+						"latest":     elementLatest,
+						"metadata":   elementMetadata,
+					},
+				},
+			},
 		},
 	}
+}
+
+func dataSourceVcdMediaRead(d *schema.ResourceData, meta interface{}) error {
+	return genericVcdMediaRead(d, meta, "datasource")
 }

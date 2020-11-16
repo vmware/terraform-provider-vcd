@@ -5,7 +5,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
@@ -36,6 +36,11 @@ func resourceVcdCatalog() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
+			},
+			"created": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Time stamp of when the catalog was created",
 			},
 			"delete_force": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -94,6 +99,7 @@ func resourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	_ = d.Set("description", catalog.Catalog.Description)
+	_ = d.Set("created", catalog.Catalog.DateCreated)
 	d.SetId(catalog.Catalog.ID)
 	log.Printf("[TRACE] Catalog read completed: %#v", catalog.Catalog)
 	return nil

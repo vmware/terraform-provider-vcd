@@ -1,13 +1,14 @@
 package vcd
 
+//lint:file-ignore SA1019 ignore deprecated functions
 import (
 	"errors"
 	"fmt"
 	"log"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -37,10 +38,6 @@ func resourceVcdOrgVdc() *schema.Resource {
 					Computed: true,
 				},
 				"used": {
-					Type:     schema.TypeInt,
-					Computed: true,
-				},
-				"overhead": {
 					Type:     schema.TypeInt,
 					Computed: true,
 				},
@@ -76,8 +73,8 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"AllocationVApp", "AllocationPool", "ReservationPool"}, false),
-				Description:  "The allocation model used by this VDC; must be one of {AllocationVApp, AllocationPool, ReservationPool}",
+				ValidateFunc: validation.StringInSlice([]string{"AllocationVApp", "AllocationPool", "ReservationPool", "Flex"}, false),
+				Description:  "The allocation model used by this VDC; must be one of {AllocationVApp, AllocationPool, ReservationPool, Flex}",
 			},
 			"compute_capacity": &schema.Schema{
 				Required: true,
@@ -114,10 +111,11 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Description: "True if this VDC is enabled for use by the organization VDCs. Default is true.",
 			},
 			"storage_profile": &schema.Schema{
-				Type:     schema.TypeList,
-				Required: true,
-				ForceNew: true,
-				MinItems: 1,
+				Type:        schema.TypeSet,
+				Required:    true,
+				ForceNew:    true,
+				MinItems:    1,
+				Description: "Storage profiles supported by this VDC.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
@@ -141,9 +139,13 @@ func resourceVcdOrgVdc() *schema.Resource {
 							Required:    true,
 							Description: "True if this is default storage profile for this VDC. The default storage profile is used when an object that can specify a storage profile is created with no storage profile specified.",
 						},
+						"storage_used_in_mb": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Storage used in MB",
+						},
 					},
 				},
-				Description: "Storage profiles supported by this VDC.",
 			},
 			"memory_guaranteed": &schema.Schema{
 				Type:     schema.TypeFloat,
@@ -201,16 +203,27 @@ func resourceVcdOrgVdc() *schema.Resource {
 				Optional:    true,
 				Description: "True if discovery of vCenter VMs is enabled for resource pools backing this VDC. If left unspecified, the actual behaviour depends on enablement at the organization level and at the system level.",
 			},
-
+			"elasticity": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "Set to true to indicate if the Flex VDC is to be elastic.",
+			},
+			"include_vm_memory_overhead": &schema.Schema{
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				Description: "Set to true to indicate if the Flex VDC is to include memory overhead into its accounting for admission control.",
+			},
 			"delete_force": &schema.Schema{
 				Type:        schema.TypeBool,
 				Required:    true,
-				Description: "When destroying use delete_force=True to remove a vdc and any objects it contains, regardless of their state.",
+				Description: "When destroying use delete_force=True to remove a VDC and any objects it contains, regardless of their state.",
 			},
 			"delete_recursive": &schema.Schema{
 				Type:        schema.TypeBool,
 				Required:    true,
-				Description: "When destroying use delete_recursive=True to remove the vdc and any objects it contains that are in a state that normally allows removal.",
+				Description: "When destroying use delete_recursive=True to remove the VDC and any objects it contains that are in a state that normally allows removal.",
 			},
 			"metadata": {
 				Type:        schema.TypeMap,
@@ -219,27 +232,54 @@ func resourceVcdOrgVdc() *schema.Resource {
 				// For now underlying go-vcloud-director repo only supports
 				// a value of type String in this map.
 			},
+			"vm_sizing_policy_ids": {
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Computed:    true,
+				Description: "Set of VM sizing policy IDs",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"default_vm_sizing_policy_id": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: "ID of default VM sizing policy ID",
+			},
 		},
 	}
 }
 
-// Creates a new vdc from a resource definition
+// Creates a new VDC from a resource definition
 func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[TRACE] vdc creation initiated")
+	orgVdcName := d.Get("name").(string)
+	log.Printf("[TRACE] VDC creation initiated: %s", orgVdcName)
 
 	vcdClient := meta.(*VCDClient)
 
-	if !vcdClient.Client.IsSysAdmin {
-		return fmt.Errorf("functionality requires system administrator privileges")
+	err := isSizingPolicyAllowed(d, vcdClient)
+	if err != nil {
+		return err
 	}
 
-	// vdc creation is accessible only in administrator API part
+	if !vcdClient.Client.IsSysAdmin {
+		return fmt.Errorf("functionality requires System administrator privileges")
+	}
+
+	// check that elasticity and include_vm_memory_overhead are used only for Flex
+	_, elasticityConfigured := d.GetOkExists("elasticity")
+	_, vmMemoryOverheadConfigured := d.GetOkExists("include_vm_memory_overhead")
+	if d.Get("allocation_model").(string) != "Flex" && (elasticityConfigured || vmMemoryOverheadConfigured) {
+		return fmt.Errorf("`elasticity` and `include_vm_memory_overhead` can be used only with Flex allocation model (vCD 9.7+)")
+	}
+
+	// VDC creation is accessible only in administrator API part
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	orgVdcName := d.Get("name").(string)
 	orgVdc, _ := adminOrg.GetVDCByName(orgVdcName, false)
 	if orgVdc != nil {
 		return fmt.Errorf("org VDC with such name already exists: %s", orgVdcName)
@@ -250,46 +290,45 @@ func resourceVcdVdcCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	log.Printf("[DEBUG] Creating vdc: %#v", params)
+	log.Printf("[DEBUG] Creating VDC: %#v", params)
 
-	task, err := adminOrg.CreateVdc(params)
+	vdc, err := adminOrg.CreateOrgVdc(params)
 	if err != nil {
-		log.Printf("[DEBUG] Error creating vdc: %s", err)
-		return fmt.Errorf("error creating vdc: %s", err)
+		log.Printf("[DEBUG] Error creating VDC: %s", err)
+		return fmt.Errorf("error creating VDC: %s", err)
 	}
 
-	err = task.WaitTaskCompletion()
-	if err != nil {
-		log.Printf("[DEBUG] Error waiting for vdc to finish: %s", err)
-		return fmt.Errorf("error waiting for vdc to finish: %s", err)
-	}
-
-	err = adminOrg.Refresh()
-	if err != nil {
-		log.Printf("[DEBUG] Unable to refresh org.")
-		return fmt.Errorf("unable to refresh org. %s", err)
-	}
-
-	adminVdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
-	if err != nil {
-		log.Printf("[DEBUG] Unable to find vdc.")
-		return fmt.Errorf("unable to find VDC. %s", err)
-	}
-
-	d.SetId(adminVdc.AdminVdc.ID)
-	log.Printf("[TRACE] vdc created: %#v", task)
+	d.SetId(vdc.Vdc.ID)
+	log.Printf("[TRACE] VDC created: %#v", vdc)
 
 	err = createOrUpdateMetadata(d, meta)
 	if err != nil {
 		return fmt.Errorf("error adding metadata to VDC: %s", err)
 	}
 
+	err = addAssignedVmSizingPolicies(vcdClient, d, meta)
+	if err != nil {
+		return fmt.Errorf("error assigning VM sizing policies to VDC: %s", err)
+	}
+
 	return resourceVcdVdcRead(d, meta)
 }
 
-// Fetches information about an existing vdc for a data definition
+func isSizingPolicyAllowed(d *schema.ResourceData, vcdClient *VCDClient) error {
+	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
+		_, okSizingPolicy := d.GetOk("vm_sizing_policy_ids")
+		_, okDefaultPolicy := d.GetOk("default_vm_sizing_policy_id")
+		if okSizingPolicy || okDefaultPolicy {
+			return fmt.Errorf("'vm_sizing_policy_ids' and `default_vm_sizing_policy_id` only available for VCD 10.0+")
+		}
+	}
+	return nil
+}
+
+// Fetches information about an existing VDC for a data definition
 func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[TRACE] vdc read initiated")
+	vdcName := d.Get("name").(string)
+	log.Printf("[TRACE] VDC read initiated: %s", vdcName)
 
 	vcdClient := meta.(*VCDClient)
 
@@ -298,10 +337,10 @@ func resourceVcdVdcRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	adminVdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
+	adminVdc, err := adminOrg.GetAdminVDCByName(vdcName, false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find VDC")
-		return fmt.Errorf("unable to find VDC %s", err)
+		log.Printf("[DEBUG] Unable to find VDC %s", vdcName)
+		return fmt.Errorf("unable to find VDC %s, err: %s", vdcName, err)
 	}
 
 	return setOrgVdcData(d, vcdClient, adminOrg, adminVdc)
@@ -362,10 +401,19 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 		}
 	}
 
-	vdc, err := adminOrg.GetVDCByName(d.Get("name").(string), false)
+	if adminVdc.AdminVdc.IsElastic != nil {
+		_ = d.Set("elasticity", *adminVdc.AdminVdc.IsElastic)
+	}
+
+	if adminVdc.AdminVdc.IncludeMemoryOverhead != nil {
+		_ = d.Set("include_vm_memory_overhead", *adminVdc.AdminVdc.IncludeMemoryOverhead)
+	}
+
+	vdcName := d.Get("name").(string)
+	vdc, err := adminOrg.GetVDCByName(vdcName, false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find VDC")
-		return fmt.Errorf("unable to find VDC %s", err)
+		log.Printf("[DEBUG] Unable to find VDC %s", vdcName)
+		return fmt.Errorf("unable to find VDC %s, error:  %s", vdcName, err)
 	}
 	metadata, err := vdc.GetMetadata()
 	if err != nil {
@@ -376,6 +424,29 @@ func setOrgVdcData(d *schema.ResourceData, vcdClient *VCDClient, adminOrg *govcd
 	if err := d.Set("metadata", getMetadataStruct(metadata.MetadataEntry)); err != nil {
 		return fmt.Errorf("error setting metadata: %s", err)
 	}
+
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 33.0") {
+		assignedVmSizingPolicies, err := adminVdc.GetAllAssignedVdcComputePolicies(nil)
+		if err != nil {
+			log.Printf("[DEBUG] Unable to get assigned VM sizing policies")
+			return fmt.Errorf("unable to get assigned VM sizing policies %s", err)
+		}
+		var policyIds []string
+		for _, policy := range assignedVmSizingPolicies {
+			policyIds = append(policyIds, policy.VdcComputePolicy.ID)
+		}
+		vmSizingPoliciesSlice := convertToTypeSet(policyIds)
+		vmSizingPoliciesSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), vmSizingPoliciesSlice)
+
+		_ = d.Set("default_vm_sizing_policy_id", adminVdc.AdminVdc.DefaultComputePolicy.ID)
+
+		err = d.Set("vm_sizing_policy_ids", vmSizingPoliciesSet)
+		if err != nil {
+			return err
+		}
+
+	}
+
 	log.Printf("[TRACE] vdc read completed: %#v", adminVdc.AdminVdc)
 	return nil
 }
@@ -397,6 +468,7 @@ func getComputeStorageProfiles(vcdClient *VCDClient, profile *types.VdcStoragePr
 		if vdcStorageProfileDetails.ProviderVdcStorageProfile != nil {
 			storageProfileData["name"] = vdcStorageProfileDetails.ProviderVdcStorageProfile.Name
 		}
+		storageProfileData["storage_used_in_mb"] = vdcStorageProfileDetails.StorageUsedMB
 		root = append(root, storageProfileData)
 	}
 
@@ -419,14 +491,12 @@ func getComputeCapacities(capacities []*types.ComputeCapacity) *[]map[string]int
 		cpuValueMap["allocated"] = int(capacity.CPU.Allocated)
 		cpuValueMap["reserved"] = int(capacity.CPU.Reserved)
 		cpuValueMap["used"] = int(capacity.CPU.Used)
-		cpuValueMap["overhead"] = int(capacity.CPU.Overhead)
 
 		memoryValueMap := map[string]interface{}{}
 		memoryValueMap["limit"] = int(capacity.Memory.Limit)
 		memoryValueMap["allocated"] = int(capacity.Memory.Allocated)
 		memoryValueMap["reserved"] = int(capacity.Memory.Reserved)
 		memoryValueMap["used"] = int(capacity.Memory.Used)
-		memoryValueMap["overhead"] = int(capacity.Memory.Overhead)
 
 		var memoryCapacityArray []map[string]interface{}
 		memoryCapacityArray = append(memoryCapacityArray, memoryValueMap)
@@ -453,16 +523,21 @@ func getMetadataStruct(metadata []*types.MetadataEntry) StringMap {
 
 //resourceVcdVdcUpdate function updates resource with found configurations changes
 func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[TRACE] vdc update initiated")
+	vdcName := d.Get("name").(string)
+	log.Printf("[TRACE] VDC update initiated: %s", vdcName)
 
 	vcdClient := meta.(*VCDClient)
+
+	err := isSizingPolicyAllowed(d, vcdClient)
+	if err != nil {
+		return err
+	}
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	vdcName := d.Get("name").(string)
 	if d.HasChange("name") {
 		oldValue, _ := d.GetChange("name")
 		vdcName = oldValue.(string)
@@ -470,20 +545,20 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	adminVdc, err := adminOrg.GetAdminVDCByName(vdcName, false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find VDC.")
-		return fmt.Errorf("unable to find VDC %s", err)
+		log.Printf("[DEBUG] Unable to find VDC %s", vdcName)
+		return fmt.Errorf("unable to find VDC %s, error:  %s", vdcName, err)
 	}
 
 	changedAdminVdc, err := getUpdatedVdcInput(d, vcdClient, adminVdc)
 	if err != nil {
-		log.Printf("[DEBUG] Error updating VDC %s", err)
-		return fmt.Errorf("error updating VDC %s", err)
+		log.Printf("[DEBUG] Error updating VDC %s with error %s", vdcName, err)
+		return fmt.Errorf("error updating VDC %s, err: %s", vdcName, err)
 	}
 
 	_, err = changedAdminVdc.Update()
 	if err != nil {
-		log.Printf("[DEBUG] Error updating VDC %s", err)
-		return fmt.Errorf("error updating VDC %s", err)
+		log.Printf("[DEBUG] Error updating VDC %s with error %s", vdcName, err)
+		return fmt.Errorf("error updating VDC %s, err: %s", vdcName, err)
 	}
 
 	err = createOrUpdateMetadata(d, meta)
@@ -491,19 +566,59 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error updating VDC metadata: %s", err)
 	}
 
-	log.Printf("[TRACE] vdc update completed: %s", adminVdc.AdminVdc.Name)
+	err = updateAssignedVmSizingPolicies(vcdClient, d, meta)
+	if err != nil {
+		return fmt.Errorf("error assigning VM sizing policies to VDC: %s", err)
+	}
+
+	if d.HasChange("storage_profile") {
+		vdcStorageProfilesConfigurations := d.Get("storage_profile").(*schema.Set)
+		for _, storageConfigurationValues := range vdcStorageProfilesConfigurations.List() {
+			storageConfiguration := storageConfigurationValues.(map[string]interface{})
+			var matchedStorageProfile types.Reference
+			for _, vdcStorageProfile := range adminVdc.AdminVdc.VdcStorageProfiles.VdcStorageProfile {
+				if storageConfiguration["name"].(string) == vdcStorageProfile.Name {
+					matchedStorageProfile = *vdcStorageProfile
+				}
+			}
+			uuid, err := govcd.GetUuidFromHref(matchedStorageProfile.HREF, true)
+			if err != nil {
+				return fmt.Errorf("error parsing VDC storage profile ID : %s", err)
+			}
+			vdcStorageProfileDetails, err := govcd.GetStorageProfileByHref(vcdClient.VCDClient, matchedStorageProfile.HREF)
+			if err != nil {
+				return fmt.Errorf("error getting VDC storage profile: %s", err)
+			}
+			_, err = changedAdminVdc.UpdateStorageProfile(uuid, &types.AdminVdcStorageProfile{
+				Name:         storageConfiguration["name"].(string),
+				IopsSettings: nil,
+				Units:        "MB", // only this value is supported
+				Limit:        int64(storageConfiguration["limit"].(int)),
+				Default:      storageConfiguration["default"].(bool),
+				Enabled:      takeBoolPointer(storageConfiguration["enabled"].(bool)),
+				ProviderVdcStorageProfile: &types.Reference{
+					HREF: vdcStorageProfileDetails.ProviderVdcStorageProfile.HREF,
+				},
+			})
+			if err != nil {
+				return fmt.Errorf("error updating VDC storage profile: %s", err)
+			}
+		}
+	}
+
+	log.Printf("[TRACE] VDC update completed: %s", adminVdc.AdminVdc.Name)
 	return resourceVcdVdcRead(d, meta)
 }
 
-// Deletes a vdc, optionally removing all objects in it as well
+// Deletes a VDC, optionally removing all objects in it as well
 func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("[TRACE] vdc delete started")
+	vdcName := d.Get("name").(string)
+	log.Printf("[TRACE] VDC delete started: %s", vdcName)
 
 	vcdClient := meta.(*VCDClient)
 
-	vdcName := d.Get("name").(string)
 	if !vcdClient.Client.IsSysAdmin {
-		return fmt.Errorf("functionality requires system administrator privileges")
+		return fmt.Errorf("functionality requires System administrator privileges")
 	}
 
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
@@ -513,22 +628,198 @@ func resourceVcdVdcDelete(d *schema.ResourceData, meta interface{}) error {
 
 	vdc, err := adminOrg.GetVDCByName(vdcName, false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find vdc. Removing from tfstate")
+		log.Printf("[DEBUG] Unable to find VDC %s. Removing from tfstate", vdcName)
 		d.SetId("")
 		return nil
 	}
 
 	err = vdc.DeleteWait(d.Get("delete_force").(bool), d.Get("delete_recursive").(bool))
 	if err != nil {
-		log.Printf("[DEBUG] Error removing vdc %s", err)
-		return fmt.Errorf("error removing vdc %s", err)
+		log.Printf("[DEBUG] Error removing VDC %s, err: %s", vdcName, err)
+		return fmt.Errorf("error removing VDC %s, err: %s", vdcName, err)
 	}
 
 	_, err = adminOrg.GetVDCByName(vdcName, true)
 	if err == nil {
 		return fmt.Errorf("vdc %s still found after deletion", vdcName)
 	}
-	log.Printf("[TRACE] vdc delete completed: %s", vdcName)
+	log.Printf("[TRACE] VDC delete completed: %s", vdcName)
+	return nil
+}
+
+// updateAssignedVmSizingPolicies handles VM sizing policies.
+func updateAssignedVmSizingPolicies(vcdClient *VCDClient, d *schema.ResourceData, meta interface{}) error {
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 33.0") {
+		log.Printf("[TRACE] updating assigned VM sizing policies to VDC")
+
+		_, idsOk := d.GetOk("vm_sizing_policy_ids")
+		_, defaultIdOk := d.GetOk("default_vm_sizing_policy_id")
+
+		if idsOk != defaultIdOk {
+			return fmt.Errorf("both fields are required `vm_sizing_policy_ids` and `default_vm_sizing_policy_id`")
+		}
+
+		// early return
+		if !d.HasChange("default_vm_sizing_policy_id") && !d.HasChange("vm_sizing_policy_ids") {
+			return nil
+		}
+
+		vcdClient := meta.(*VCDClient)
+		vcdComputePolicyHref, err := vcdClient.Client.OpenApiBuildEndpoint(types.OpenApiPathVersion1_0_0, types.OpenApiEndpointVdcComputePolicies)
+		if err != nil {
+			return fmt.Errorf("error constructing HREF for compute policy")
+		}
+
+		adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingOrg, err)
+		}
+
+		vdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingVdcFromOrg, d.Get("org").(string), d.Get("name").(string), err)
+		}
+
+		if d.HasChange("default_vm_sizing_policy_id") && !d.HasChange("vm_sizing_policy_ids") {
+			defaultPolicyId := d.Get("default_vm_sizing_policy_id").(string)
+			vdc.AdminVdc.DefaultComputePolicy = &types.Reference{HREF: vcdComputePolicyHref.String() + defaultPolicyId, ID: defaultPolicyId}
+			_, err := vdc.Update()
+			if err != nil {
+				return fmt.Errorf("error setting default VM sizing policy. %s", err)
+			}
+			return nil
+		}
+
+		if d.HasChange("vm_sizing_policy_ids") && !d.HasChange("default_vm_sizing_policy_id") {
+			vmSizingPolicyIdStrings := convertSchemaSetToSliceOfStrings(d.Get("vm_sizing_policy_ids").(*schema.Set))
+			if !ifIdIsPartOfSlice(d.Get("default_vm_sizing_policy_id").(string), vmSizingPolicyIdStrings) {
+				return errors.New("`default_vm_sizing_policy_id` isn't part of `vm_sizing_policy_ids`")
+			}
+			policyReferences := types.VdcComputePolicyReferences{}
+			var vdcComputePolicyReferenceList []*types.Reference
+			for _, policyId := range vmSizingPolicyIdStrings {
+				vdcComputePolicyReferenceList = append(vdcComputePolicyReferenceList, &types.Reference{HREF: vcdComputePolicyHref.String() + policyId})
+			}
+			policyReferences.VdcComputePolicyReference = vdcComputePolicyReferenceList
+
+			_, err = vdc.SetAssignedComputePolicies(policyReferences)
+			if err != nil {
+				return fmt.Errorf("error setting VM sizing policies. %s", err)
+			}
+			return nil
+		}
+
+		err = changeVmSizingPoliciesAndDefaultId(d, vcdComputePolicyHref.String(), vdc)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func ifIdIsPartOfSlice(id string, ids []string) bool {
+	if id == "" && len(ids) == 0 {
+		return true
+	}
+	found := false
+	for _, idInSlice := range ids {
+		if id == idInSlice {
+			found = true
+			break
+		}
+	}
+	return found
+}
+
+// changeVmSizingPoliciesAndDefaultId handles VM sizing policies. Created VDC generates default VM sizing policy which requires additional handling.
+// Assigning and setting default VM sizing policies requires different API calls. Default policy can't be removed, as result
+// we approach this with adding new policies, set new default, remove all old policies.
+func changeVmSizingPoliciesAndDefaultId(d *schema.ResourceData, vcdComputePolicyHref string, vdc *govcd.AdminVdc) error {
+	if d.HasChange("default_vm_sizing_policy_id") && d.HasChange("vm_sizing_policy_ids") {
+		vmSizingPolicyIdStrings := convertSchemaSetToSliceOfStrings(d.Get("vm_sizing_policy_ids").(*schema.Set))
+		if !ifIdIsPartOfSlice(d.Get("default_vm_sizing_policy_id").(string), vmSizingPolicyIdStrings) {
+			return errors.New("`default_vm_sizing_policy_id` isn't part of `vm_sizing_policy_ids`")
+		}
+		policyReferences := types.VdcComputePolicyReferences{}
+		var vdcComputePolicyReferenceList []*types.Reference
+		for _, policyId := range vmSizingPolicyIdStrings {
+			vdcComputePolicyReferenceList = append(vdcComputePolicyReferenceList, &types.Reference{HREF: vcdComputePolicyHref + policyId})
+		}
+
+		existingPolicies, err := vdc.GetAllAssignedVdcComputePolicies(nil)
+		if err != nil {
+			return fmt.Errorf("error getting VM sizing policies. %s", err)
+		}
+		for _, existingPolicy := range existingPolicies {
+			vdcComputePolicyReferenceList = append(vdcComputePolicyReferenceList, &types.Reference{HREF: vcdComputePolicyHref + existingPolicy.VdcComputePolicy.ID})
+		}
+
+		policyReferences.VdcComputePolicyReference = vdcComputePolicyReferenceList
+
+		_, err = vdc.SetAssignedComputePolicies(policyReferences)
+		if err != nil {
+			return fmt.Errorf("error setting VM sizing policies. %s", err)
+		}
+
+		// set default VM sizing policy
+		defaultPolicyId := d.Get("default_vm_sizing_policy_id").(string)
+		vdc.AdminVdc.DefaultComputePolicy = &types.Reference{HREF: vcdComputePolicyHref + defaultPolicyId, ID: defaultPolicyId}
+		updatedVdc, err := vdc.Update()
+		if err != nil {
+			return fmt.Errorf("error setting default VM sizing policy. %s", err)
+		}
+
+		// Now we can remove previously existing policies as default policy changed
+		vdcComputePolicyReferenceList = []*types.Reference{}
+		for _, policyId := range vmSizingPolicyIdStrings {
+			vdcComputePolicyReferenceList = append(vdcComputePolicyReferenceList, &types.Reference{HREF: vcdComputePolicyHref + policyId})
+		}
+		policyReferences.VdcComputePolicyReference = vdcComputePolicyReferenceList
+
+		_, err = updatedVdc.SetAssignedComputePolicies(policyReferences)
+		if err != nil {
+			return fmt.Errorf("error setting VM sizing policies. %s", err)
+		}
+	}
+	return nil
+}
+
+// addAssignedVmSizingPolicies handles VM sizing policies. Created VDC generates default VM sizing policy which requires additional handling.
+// Assigning and setting default VM sizing policies requires different API calls. Default approach is add new policies, set new default, remove all policies.
+func addAssignedVmSizingPolicies(vcdClient *VCDClient, d *schema.ResourceData, meta interface{}) error {
+
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 33.0") {
+		log.Printf("[TRACE] updating assigned VM sizing policies to VDC")
+		_, idsOk := d.GetOk("vm_sizing_policy_ids")
+		_, defaultIdOk := d.GetOk("default_vm_sizing_policy_id")
+		if idsOk != defaultIdOk {
+			return fmt.Errorf("both fields are required `vm_sizing_policy_ids` and `default_vm_sizing_policy_id`")
+		}
+		// early return
+		if !d.HasChange("default_vm_sizing_policy_id") && !d.HasChange("vm_sizing_policy_ids") {
+			return nil
+		}
+		vcdClient := meta.(*VCDClient)
+		vcdComputePolicyHref, err := vcdClient.Client.OpenApiBuildEndpoint(types.OpenApiPathVersion1_0_0, types.OpenApiEndpointVdcComputePolicies)
+		if err != nil {
+			return fmt.Errorf("error constructing HREF for compute policy")
+		}
+
+		adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingOrg, err)
+		}
+
+		vdc, err := adminOrg.GetAdminVDCByName(d.Get("name").(string), false)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingVdcFromOrg, d.Get("org").(string), d.Get("name").(string), err)
+		}
+
+		err = changeVmSizingPoliciesAndDefaultId(d, vcdComputePolicyHref.String(), vdc)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -598,17 +889,17 @@ func capacityWithUsage(d map[string]interface{}, units string) *types.CapacityWi
 func getUpdatedVdcInput(d *schema.ResourceData, vcdClient *VCDClient, vdc *govcd.AdminVdc) (*govcd.AdminVdc, error) {
 
 	if d.HasChange("compute_capacity") {
-		computeCapacityList := d.Get("compute_capacity").(*schema.Set).List()
+		computeCapacityList := d.Get("compute_capacity").([]interface{})
 		if len(computeCapacityList) == 0 {
 			return &govcd.AdminVdc{}, errors.New("no compute_capacity field")
 		}
 		computeCapacity := computeCapacityList[0].(map[string]interface{})
 
-		cpuCapacityList := computeCapacity["cpu"].(*schema.Set).List()
+		cpuCapacityList := computeCapacity["cpu"].([]interface{})
 		if len(cpuCapacityList) == 0 {
 			return &govcd.AdminVdc{}, errors.New("no cpu field in compute_capacity")
 		}
-		memoryCapacityList := computeCapacity["memory"].(*schema.Set).List()
+		memoryCapacityList := computeCapacity["memory"].([]interface{})
 		if len(memoryCapacityList) == 0 {
 			return &govcd.AdminVdc{}, errors.New("no memory field in compute_capacity")
 		}
@@ -697,6 +988,14 @@ func getUpdatedVdcInput(d *schema.ResourceData, vcdClient *VCDClient, vdc *govcd
 		vdc.AdminVdc.VmDiscoveryEnabled = d.Get("enable_vm_discovery").(bool)
 	}
 
+	if d.HasChange("elasticity") {
+		vdc.AdminVdc.IsElastic = takeBoolPointer(d.Get("elasticity").(bool))
+	}
+
+	if d.HasChange("include_vm_memory_overhead") {
+		vdc.AdminVdc.IncludeMemoryOverhead = takeBoolPointer(d.Get("include_vm_memory_overhead").(bool))
+	}
+
 	//cleanup
 	vdc.AdminVdc.Tasks = nil
 
@@ -712,8 +1011,8 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 	}
 	computeCapacity := computeCapacityList[0].(map[string]interface{})
 
-	vdcStorageProfilesConfigurations := d.Get("storage_profile").([]interface{})
-	if len(vdcStorageProfilesConfigurations) == 0 {
+	vdcStorageProfilesConfigurations := d.Get("storage_profile").(*schema.Set)
+	if len(vdcStorageProfilesConfigurations.List()) == 0 {
 		return &types.VdcConfiguration{}, errors.New("no storage_profile field")
 	}
 
@@ -750,8 +1049,8 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 		},
 	}
 
-	var vdcStorageProfiles []*types.VdcStorageProfile
-	for _, storageConfigurationValues := range vdcStorageProfilesConfigurations {
+	var vdcStorageProfiles []*types.VdcStorageProfileConfiguration
+	for _, storageConfigurationValues := range vdcStorageProfilesConfigurations.List() {
 		storageConfiguration := storageConfigurationValues.(map[string]interface{})
 
 		href, err := getStorageProfileHREF(vcdClient, storageConfiguration["name"].(string))
@@ -759,7 +1058,7 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 			return &types.VdcConfiguration{}, err
 		}
 
-		vdcStorageProfile := &types.VdcStorageProfile{
+		vdcStorageProfile := &types.VdcStorageProfileConfiguration{
 			Units:   "MB", // only this value is supported
 			Limit:   int64(storageConfiguration["limit"].(int)),
 			Default: storageConfiguration["default"].(bool),
@@ -838,6 +1137,16 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 		params.VmDiscoveryEnabled = vmDiscoveryEnabled.(bool)
 	}
 
+	if elasticity, ok := d.GetOkExists("elasticity"); ok {
+		elasticityPt := elasticity.(bool)
+		params.IsElastic = &elasticityPt
+	}
+
+	if vmMemoryOverhead, ok := d.GetOkExists("include_vm_memory_overhead"); ok {
+		vmMemoryOverheadPt := vmMemoryOverhead.(bool)
+		params.IncludeMemoryOverhead = &vmMemoryOverheadPt
+	}
+
 	return params, nil
 }
 
@@ -888,8 +1197,8 @@ func resourceVcdOrgVdcImport(d *schema.ResourceData, meta interface{}) ([]*schem
 
 	adminVdc, err := adminOrg.GetAdminVDCByName(vdcName, false)
 	if err != nil {
-		log.Printf("[DEBUG] Unable to find VDC")
-		return nil, fmt.Errorf("unable to find VDC %s", err)
+		log.Printf("[DEBUG] Unable to find VDC %s", vdcName)
+		return nil, fmt.Errorf("unable to find VDC %s, err: %s", vdcName, err)
 	}
 
 	_ = d.Set("org", orgName)

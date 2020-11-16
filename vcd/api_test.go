@@ -14,12 +14,9 @@ import (
 	"testing"
 )
 
-const (
-	testVerbose = "TEST_VERBOSE"
-)
-
 // These variables are needed by tests running under any tags
 var (
+	vcdTestVerbose = os.Getenv("VCD_TEST_VERBOSE") != ""
 	// Collection of defined tags in the current test run
 	testingTags = make(map[string]string)
 	// This library major version
@@ -84,7 +81,7 @@ func TestTags(t *testing.T) {
 		t.Fail()
 		return
 	}
-	if os.Getenv(testVerbose) != "" {
+	if vcdTestVerbose {
 		showTags()
 	}
 }
@@ -162,4 +159,15 @@ func getVersionFromFile(fileName string) (string, error) {
 	}
 
 	return strings.TrimSpace(string(versionText)), nil
+}
+
+// firstNonEmpty returns the first non empty string from a list
+// If all arguments are empty, returns an empty string
+func firstNonEmpty(args ...string) string {
+	for _, s := range args {
+		if s != "" {
+			return s
+		}
+	}
+	return ""
 }

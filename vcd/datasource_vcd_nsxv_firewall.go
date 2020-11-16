@@ -1,7 +1,7 @@
 package vcd
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func datasourceVcdNsxvFirewallRule() *schema.Resource {
@@ -11,20 +11,17 @@ func datasourceVcdNsxvFirewallRule() *schema.Resource {
 			"org": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
 				Description: "The name of organization to use, optional if defined at provider " +
 					"level. Useful when connected as sysadmin working across different organizations",
 			},
 			"vdc": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
 			"edge_gateway": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "Edge gateway name in which the firewall rule is located",
 			},
 			"rule_id": &schema.Schema{
@@ -63,8 +60,6 @@ func datasourceVcdNsxvFirewallRule() *schema.Resource {
 				Description: "Whether logging should be enabled for this rule. Default 'false'",
 			},
 			"source": {
-				MinItems: 1,
-				MaxItems: 1,
 				Computed: true,
 				Type:     schema.TypeList,
 				Elem: &schema.Resource{
@@ -91,7 +86,7 @@ func datasourceVcdNsxvFirewallRule() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"virtual_machine_ids": {
+						"vm_ids": {
 							Type:        schema.TypeSet,
 							Computed:    true,
 							Description: "Set of VM IDs",
@@ -128,8 +123,6 @@ func datasourceVcdNsxvFirewallRule() *schema.Resource {
 				},
 			},
 			"destination": {
-				MinItems: 1,
-				MaxItems: 1,
 				Computed: true,
 				Type:     schema.TypeList,
 				Elem: &schema.Resource{
@@ -156,7 +149,7 @@ func datasourceVcdNsxvFirewallRule() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"virtual_machine_ids": {
+						"vm_ids": {
 							Type:        schema.TypeSet,
 							Computed:    true,
 							Description: "Set of VM IDs",
@@ -194,7 +187,6 @@ func datasourceVcdNsxvFirewallRule() *schema.Resource {
 			},
 			"service": {
 				Computed: true,
-				MinItems: 1,
 				Type:     schema.TypeSet,
 				Set:      resourceVcdNsxvFirewallRuleServiceHash,
 				Elem: &schema.Resource{

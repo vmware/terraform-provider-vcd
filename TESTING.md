@@ -8,9 +8,10 @@
 - [Adding new tests](#adding-new-tests)
   - [Parallelism considerations](#parallelism-considerations)
 - [Binary testing](#binary-testing)
+- [Handling failures in binary tests](#handling-failures-in-binary-tests)
 - [Upgrade testing](#upgrade-testing)
 - [Custom terraform scripts](#custom-terraform-scripts)
-- [Environment variables](#environment-variables)
+- [Environment variables and corresponding flags](#environment-variables-and-corresponding-flags)
 
 ## Meeting prerequisites: Building the test environment
 
@@ -225,7 +226,7 @@ $ go test -v .
            make testacc
            make testcatalog
  FAIL
- FAIL	github.com/terraform-providers/terraform-provider-vcd/v2/vcd	0.017s
+ FAIL	github.com/vmware/terraform-provider-vcd/v2/vcd	0.017s
 ```
 
 ## Adding new tests
@@ -335,6 +336,39 @@ When the test runs unattended, it is possible to stop it gracefully by creating 
 `test-artifacts` directory. When such file exists, the test execution stops at the next `terraform` command, waiting
 for user input.
 
+## Handling failures in binary tests
+
+When one test fails, the binary test script will attempt to recover it, by running `terraform destroy`. If the recovery
+fails, the whole test halts. If recovery succeeds, the names of the failed test are recorded inside 
+`./vcd/test-artifacts/failed_tests.txt` and the summary at the end of the test will show them.
+
+If the test runs with `make test-binary`, the output is captured inside `./vcd/test-artifacts/test-binary-TIME.txt` (where
+`TIME` has the format `YYYY-MM-DD-HH-MM`). To see the actual failure, open the output file and search for the name of
+the test that failed.
+
+For example, the test ends with this annotation :
+
+```
+# ---------------------------------------------------------
+# Operations dir: /path/to/terraform-provider-vcd/vcd/test-artifacts/tmp
+# Started:        Thu Mar 12 14:10:43 CET 2020
+# Ended:          Thu Mar 12 14:12:16 CET 2020
+# Elapsed:        1m:33s (93 sec)
+# exit code:      0
+# ---------------------------------------------------------
+# ---------------------------------------------------------
+# FAILED TESTS    4
+# ---------------------------------------------------------
+Thu Mar 12 14:11:02 CET 2020 - vcd.TestUser_test_user_catalog_author_basic.tf (apply)
+Thu Mar 12 14:11:08 CET 2020 - vcd.TestUser_test_user_catalog_author_basic.tf (plancheck)
+Thu Mar 12 14:11:30 CET 2020 - vcd.TestUser_test_user_admin_basic.tf (apply)
+Thu Mar 12 14:11:36 CET 2020 - vcd.TestUser_test_user_admin_basic.tf (plancheck)
+# ---------------------------------------------------------
+```
+
+In the output file (in the directory `./vcd/test-artifacts`), look for `vcd.TestUser_test_user_catalog_author_basic.tf`
+and you will see the operations occurring with the actual errors.
+
 ## Upgrade testing
 
 We can test that resources updated in the current release don't break the behavior of the same resources that were
@@ -404,6 +438,9 @@ ProviderSysOrg               | provider.sysOrg
 ProviderUrl                  | provider.url
 ProviderUser                 | provider.user
 ProviderPassword             | provider.password
+ProviderSamlUser             | provider.samlUser
+ProviderSamlPassword         | provider.samlPassword
+ProviderSamlRptId            | provider.samlCustomRptId
 
 
 The files generated from `./vcd/test-templates` will end up in `./vcd/test-artifacts`, and you will recognize them because their name will start by `cust.` instead of `vcd.`, and they all use the tag `custom`.
@@ -434,26 +471,34 @@ To run these tests, you go inside `test-artifacts` and execute:
 The execution then proceeds as explained in [Binary testing](#Binary-testing).
 
 
-## Environment variables
+## Environment variables and corresponding flags
 
-There are several environment variables that can affect the tests:
+There are several environment variables that can affect the tests. Many of them have a corresponding flag
+that can be used in combination with the `go test` command. You can see them using the `-vcd-help` flag.
 
 * `TF_ACC=1` enables the acceptance tests. It is also set when you run `make testacc`.
-* `GOVCD_DEBUG=1` enables debug output of the test suite
-* `VCD_SKIP_TEMPLATE_WRITING=1` skips the production of test templates into `./vcd/test-artifacts`
-* `ADD_PROVIDER=1` Adds the full provider definition to the snippets inside `./vcd/test-artifacts`.
+* `GOVCD_DEBUG=1` (`-vcd-debug`) enables debug output of the test suite
+* `GOVCD_TRACE=1` (`-vcd-trace`) enables function calls tracing
+* `VCD_SKIP_TEMPLATE_WRITING=1`  (`-vcd-skip-template-write`) skips the production of test templates into `./vcd/test-artifacts`
+* `VCD_ADD_PROVIDER=1` (`-vcd-add-provider`) Adds the full provider definition to the snippets inside `./vcd/test-artifacts`.
    **WARNING**: the provider definition includes your vCloud Director credentials.
 * `VCD_CONFIG=FileName` sets the file name for the test configuration file.
-* `REMOVE_ORG_VDC_FROM_TEMPLATE` is a quick way of enabling an alternate testing mode:
+* `REMOVE_ORG_VDC_FROM_TEMPLATE` (`-vcd-remove-org-vdc-from-template`) is a quick way of enabling an alternate testing mode:
 When `REMOVE_ORG_VDC_FROM_TEMPLATE` is set, the terraform
 templates will be changed on-the-fly, to comment out the definitions of org and vdc. This will force the test to
 borrow org and vcd from the provider.
 * `VCD_TEST_SUITE_CLEANUP=1` will clean up testing resources that were created in previous test runs.
-* `TEST_VERBOSE=1` enables verbose output in some tests, such as the list of used tags, or the version
+* `VCD_TEST_VERBOSE=1` (`-vcd-verbose`) enables verbose output in some tests, such as the list of used tags, or the version
 used in the documentation index.
-* `VCD_TEST_ORG_USER=1` will enable tests with Org User, using the credentials from the configuration file
+* `VCD_TEST_ORG_USER=1` (`-vcd-test-org-user`) will enable tests with Org User, using the credentials from the configuration file
   (`testEnvBuild.OrgUser` and `testEnvBuild.OrgUserPassword`)
 * `VCD_TOKEN=string` : specifies the authentication token to use instead of username/password
    (Use `./scripts/get_token.sh` to retrieve one)
-* `VCD_TEST_DISTRIBUTED_NETWORK=1` runs testing of distributed networks (requires the edge gateway to have distributed
+* `VCD_TEST_DISTRIBUTED_NETWORK=1` (`-vcd-test-distributed`) runs testing of distributed networks (requires the edge gateway to have distributed
   routing enabled)
+* `VCD_TEST_DATA_GENERATION=1` generates some sample catalog items for data source filter engine test
+* `GOVCD_KEEP_TEST_OBJECTS=1` does not delete test objects created with `VCD_TEST_DATA_GENERATION`
+* `VCD_MAX_ITEMS=number` during filter engine tests, limits the collection of data sources of a given type to the number
+  indicated. The default is 5. The maximum is 100.
+
+When both the environment variable and the command line option are possible, the environment variable gets evaluated first.

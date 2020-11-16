@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
@@ -43,6 +43,11 @@ func resourceVcdCatalogItem() *schema.Resource {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
+			},
+			"created": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Time stamp of when the item was created",
 			},
 			"ova_path": &schema.Schema{
 				Type:        schema.TypeString,
@@ -151,7 +156,11 @@ func resourceVcdCatalogItemCreate(d *schema.ResourceData, meta interface{}) erro
 }
 
 func resourceVcdCatalogItemRead(d *schema.ResourceData, meta interface{}) error {
-	catalogItem, err := findCatalogItem(d, meta.(*VCDClient))
+	return genericVcdCatalogItemRead(d, meta, "resource")
+}
+
+func genericVcdCatalogItemRead(d *schema.ResourceData, meta interface{}, origin string) error {
+	catalogItem, err := findCatalogItem(d, meta.(*VCDClient), origin)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find media item: %s", err)
 		return err
@@ -170,6 +179,8 @@ func resourceVcdCatalogItemRead(d *schema.ResourceData, meta interface{}) error 
 	if err != nil {
 		return err
 	}
+	_ = d.Set("name", catalogItem.CatalogItem.Name)
+	_ = d.Set("created", vAppTemplate.VAppTemplate.DateCreated)
 	_ = d.Set("description", catalogItem.CatalogItem.Description)
 	err = d.Set("metadata", getMetadataStruct(metadata.MetadataEntry))
 
@@ -193,7 +204,7 @@ func createOrUpdateCatalogItemMetadata(d *schema.ResourceData, meta interface{})
 
 	log.Printf("[TRACE] adding/updating metadata for catalog item")
 
-	catalogItem, err := findCatalogItem(d, meta.(*VCDClient))
+	catalogItem, err := findCatalogItem(d, meta.(*VCDClient), "resource")
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find media item: %s", err)
 		return err

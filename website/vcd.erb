@@ -10,14 +10,74 @@
           <a href="/docs/providers/vcd/index.html">VMware vCloudDirector Provider</a>
         </li>
 
+        <li<%= sidebar_current("docs-vcd-guides") %>>
+          <a href="#">Guides</a>
+          <ul class="nav nav-visible">
+            <li<%= sidebar_current("docs-vcd-guides-filters") %>>
+              <a href="/docs/providers/vcd/guides/data_source_filters.html">Data source filters</a>
+            </li>
+          </ul>
+        </li>
+
         <li<%= sidebar_current("docs-vcd-data-source") %>>
           <a href="#">Data Sources</a>
-          <ul class="nav nav-visible">
-            <li<%= sidebar_current("docs-vcd-data-source-resource-list") %>>
-              <a href="/docs/providers/vcd/d/resource_list.html">vcd_resource_list</a>
+          <ul class="nav">
+            <li<%= sidebar_current("docs-vcd-data-source-org") %>>
+              <a href="/docs/providers/vcd/d/org.html">vcd_org</a>
             </li>
-            <li<%= sidebar_current("docs-vcd-data-source-resource-schema") %>>
-              <a href="/docs/providers/vcd/d/resource_schema.html">vcd_resource_schema</a>
+            <li<%= sidebar_current("docs-vcd-data-source-org-user") %>>
+              <a href="/docs/providers/vcd/d/org_user.html">vcd_org_user</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-org-vdc") %>>
+              <a href="/docs/providers/vcd/d/org_vdc.html">vcd_org_vdc</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-catalog") %>>
+              <a href="/docs/providers/vcd/d/catalog.html">vcd_catalog</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-catalog-item") %>>
+              <a href="/docs/providers/vcd/d/catalog_item.html">vcd_catalog_item</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-catalog-media") %>>
+              <a href="/docs/providers/vcd/d/catalog_media.html">vcd_catalog_media</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-external-network") %>>
+              <a href="/docs/providers/vcd/d/external_network.html">vcd_external_network</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-external-network-v2") %>>
+              <a href="/docs/providers/vcd/d/external_network_v2.html">vcd_external_network_v2</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-edgegateway") %>>
+              <a href="/docs/providers/vcd/d/edgegateway.html">vcd_edgegateway</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-network-routed") %>>
+              <a href="/docs/providers/vcd/d/network_routed.html">vcd_network_routed</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-network-isolated") %>>
+              <a href="/docs/providers/vcd/d/network_isolated.html">vcd_network_isolated</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-network-direct") %>>
+              <a href="/docs/providers/vcd/d/network_direct.html">vcd_network_direct</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-vapp") %>>
+              <a href="/docs/providers/vcd/d/vapp.html">vcd_vapp</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-vapp-network") %>>
+              <a href="/docs/providers/vcd/d/vapp_network.html">vcd_vapp_network</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-vapp-org-network") %>>
+              <a href="/docs/providers/vcd/d/vapp_org_network.html">vcd_vapp_org_network</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-vapp-vm") %>>
+              <a href="/docs/providers/vcd/d/vapp_vm.html">vcd_vapp_vm</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-vm-affinity-rule") %>>
+              <a href="/docs/providers/vcd/d/vm_affinity_rule.html">vcd_vm_affinity_rule</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-vm-sizing-policy") %>>
+              <a href="/docs/providers/vcd/d/vm_sizing_policy.html">vcd_vm_sizing_policy</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-independent-disk") %>>
+              <a href="/docs/providers/vcd/d/independent_disk.html">vcd_independent_disk</a>
             </li>
             <li<%= sidebar_current("docs-vcd-data-source-lb-service-monitor") %>>
               <a href="/docs/providers/vcd/d/lb_service_monitor.html">vcd_lb_service_monitor</a>
@@ -43,50 +103,23 @@
             <li<%= sidebar_current("docs-vcd-data-source-nsxv-firewall-rule") %>>
               <a href="/docs/providers/vcd/d/nsxv_firewall_rule.html">vcd_nsxv_firewall_rule</a>
             </li>
-            <li<%= sidebar_current("docs-vcd-data-source-org") %>>
-              <a href="/docs/providers/vcd/d/org.html">vcd_org</a>
-            </li>
-            <li<%= sidebar_current("docs-vcd-data-source-org-vdc") %>>
-              <a href="/docs/providers/vcd/d/org_vdc.html">vcd_org_vdc</a>
-            </li>
-            <li<%= sidebar_current("docs-vcd-data-source-catalog") %>>
-              <a href="/docs/providers/vcd/d/catalog.html">vcd_catalog</a>
-            </li>
-            <li<%= sidebar_current("docs-vcd-data-source-catalog-item") %>>
-              <a href="/docs/providers/vcd/d/catalog_item.html">vcd_catalog_item</a>
-            </li>
-            <li<%= sidebar_current("docs-vcd-data-source-catalog-media") %>>
-              <a href="/docs/providers/vcd/d/catalog_media.html">vcd_catalog_media</a>
-            </li>
-            <li<%= sidebar_current("docs-vcd-data-source-independent-disk") %>>
-              <a href="/docs/providers/vcd/d/independent_disk.html">vcd_independent_disk</a>
-            </li>
-            <li<%= sidebar_current("docs-vcd-data-source-external-network") %>>
-              <a href="/docs/providers/vcd/d/external_network.html">vcd_external_network</a>
-            </li>
-            <li<%= sidebar_current("docs-vcd-data-source-edgegateway") %>>
-              <a href="/docs/providers/vcd/d/edgegateway.html">vcd_edgegateway</a>
-            </li>
-            <li<%= sidebar_current("docs-vcd-data-source-network-routed") %>>
-              <a href="/docs/providers/vcd/d/network_routed.html">vcd_network_routed</a>
-            </li>
-            <li<%= sidebar_current("docs-vcd-data-source-network-isolated") %>>
-              <a href="/docs/providers/vcd/d/network_isolated.html">vcd_network_isolated</a>
-            </li>
-            <li<%= sidebar_current("docs-vcd-data-source-network-direct") %>>
-              <a href="/docs/providers/vcd/d/network_direct.html">vcd_network_direct</a>
-            </li>
-            <li<%= sidebar_current("docs-vcd-data-source-vapp") %>>
-              <a href="/docs/providers/vcd/d/vapp.html">vcd_vapp</a>
-            </li>
-            <li<%= sidebar_current("docs-vcd-data-source-vapp-vm") %>>
-              <a href="/docs/providers/vcd/d/vapp_vm.html">vcd_vapp_vm</a>
-            </li>
             <li<%= sidebar_current("docs-vcd-datasource-ipset") %>>
               <a href="/docs/providers/vcd/d/ipset.html">vcd_nsxv_ip_set</a>
             </li>
             <li<%= sidebar_current("docs-vcd-datasource-nsxv-dhcp-relay") %>>
               <a href="/docs/providers/vcd/d/nsxv_dhcp_relay.html">vcd_nsxv_dhcp_relay</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-vcenter") %>>
+              <a href="/docs/providers/vcd/d/vcenter.html">vcd_vcenter</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-portgroup") %>>
+              <a href="/docs/providers/vcd/d/portgroup.html">vcd_portgroup</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-nsxt-manager") %>>
+              <a href="/docs/providers/vcd/d/nsxt_manager.html">vcd_nsxt_manager</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-data-source-nsxt-tier0-router") %>>
+              <a href="/docs/providers/vcd/d/nsxt_tier0_router.html">vcd_nsxt_tier0_router</a>
             </li>
           </ul>
         </li>
@@ -100,6 +133,12 @@
             <li<%= sidebar_current("docs-vcd-resource-org-user") %>>
               <a href="/docs/providers/vcd/r/org_user.html">vcd_org_user</a>
             </li>
+            <li<%= sidebar_current("docs-vcd-resource-org-group") %>>
+              <a href="/docs/providers/vcd/r/org_group.html">vcd_org_group</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-resource-org-vdc") %>>
+              <a href="/docs/providers/vcd/r/org_vdc.html">vcd_org_vdc</a>
+            </li>
             <li<%= sidebar_current("docs-vcd-resource-catalog") %>>
               <a href="/docs/providers/vcd/r/catalog.html">vcd_catalog</a>
             </li>
@@ -109,24 +148,12 @@
             <li<%= sidebar_current("docs-vcd-resource-catalog-media") %>>
               <a href="/docs/providers/vcd/r/catalog_media.html">vcd_catalog_media</a>
             </li>
-            <li<%= sidebar_current("docs-vcd-resource-dnat") %>>
-              <a href="/docs/providers/vcd/r/dnat.html">vcd_dnat</a>
-            </li>
             <li<%= sidebar_current("docs-vcd-resource-external-network") %>>
               <a href="/docs/providers/vcd/r/external_network.html">vcd_external_network</a>
             </li>
-            <li<%= sidebar_current("docs-vcd-resource-firewall-rules") %>>
-              <a href="/docs/providers/vcd/r/firewall_rules.html">vcd_firewall_rules</a>
-            </li>
-            <li<%= sidebar_current("docs-vcd-independent-disk") %>>
-              <a href="/docs/providers/vcd/r/independent_disk.html">vcd_independent_disk</a>
-            </li>
-            <li<%= sidebar_current("docs-vcd-inserted-media") %>>
-              <a href="/docs/providers/vcd/r/inserted_media.html">vcd_inserted_media</a>
-            </li>
-            <li<%= sidebar_current("docs-vcd-resource-network") %>>
-              <a href="/docs/providers/vcd/r/network.html">vcd_network</a>
-            </li>
+            <li<%= sidebar_current("docs-vcd-resource-external-network-v2") %>>
+              <a href="/docs/providers/vcd/r/external_network_v2.html">vcd_external_network_v2</a>
+            </li>     
             <li<%= sidebar_current("docs-vcd-resource-network-routed") %>>
               <a href="/docs/providers/vcd/r/network_routed.html">vcd_network_routed</a>
             </li>
@@ -136,11 +163,11 @@
             <li<%= sidebar_current("docs-vcd-resource-network-isolated") %>>
               <a href="/docs/providers/vcd/r/network_isolated.html">vcd_network_isolated</a>
             </li>
-            <li<%= sidebar_current("docs-vcd-resource-snat") %>>
-              <a href="/docs/providers/vcd/r/snat.html">vcd_snat</a>
-            </li>
             <li<%= sidebar_current("docs-vcd-resource-edgegateway") %>>
               <a href="/docs/providers/vcd/r/edgegateway.html">vcd_edgegateway</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-resource-edgegateway-settings") %>>
+              <a href="/docs/providers/vcd/r/edgegateway_settings.html">vcd_edgegateway_settings</a>
             </li>
             <li<%= sidebar_current("docs-vcd-resource-edgegateway-vpn") %>>
               <a href="/docs/providers/vcd/r/edgegateway_vpn.html">vcd_edgegateway_vpn</a>
@@ -148,14 +175,41 @@
             <li<%= sidebar_current("docs-vcd-resource-vapp") %>>
               <a href="/docs/providers/vcd/r/vapp.html">vcd_vapp</a>
             </li>
+            <li<%= sidebar_current("docs-vcd-resource-vapp-access-control") %>>
+              <a href="/docs/providers/vcd/r/vapp_access_control.html">vcd_vapp_access_control</a>
+            </li>
             <li<%= sidebar_current("docs-vcd-resource-vapp-network") %>>
               <a href="/docs/providers/vcd/r/vapp_network.html">vcd_vapp_network</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-resource-vapp-org-network") %>>
+              <a href="/docs/providers/vcd/r/vapp_org_network.html">vcd_vapp_org_network</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-resource-vapp-firewall-rules") %>>
+              <a href="/docs/providers/vcd/r/vapp_firewall_rules.html">vcd_vapp_firewall_rules</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-resource-vapp-nat-rules") %>>
+              <a href="/docs/providers/vcd/r/vapp_nat_rules.html">vcd_vapp_nat_rules</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-resource-vapp-static-routing") %>>
+              <a href="/docs/providers/vcd/r/vapp_static_routing.html">vcd_vapp_static_routing</a>
             </li>
             <li<%= sidebar_current("docs-vcd-resource-vapp-vm") %>>
               <a href="/docs/providers/vcd/r/vapp_vm.html">vcd_vapp_vm</a>
             </li>
-            <li<%= sidebar_current("docs-vcd-resource-org-vdc") %>>
-              <a href="/docs/providers/vcd/r/org_vdc.html">vcd_org_vdc</a>
+            <li<%= sidebar_current("docs-vcd-resource-vm-affinity-rule") %>>
+              <a href="/docs/providers/vcd/r/vm_affinity_rule.html">vcd_vm_affinity_rule</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-resource-vm-sizing-policy") %>>
+              <a href="/docs/providers/vcd/r/vm_sizing_policy.html">vcd_vm_sizing_policy</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-vm-internal-disk") %>>
+              <a href="/docs/providers/vcd/r/vm_internal_disk.html">vcd_vm_internal_disk</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-independent-disk") %>>
+              <a href="/docs/providers/vcd/r/independent_disk.html">vcd_independent_disk</a>
+            </li>
+            <li<%= sidebar_current("docs-vcd-inserted-media") %>>
+              <a href="/docs/providers/vcd/r/inserted_media.html">vcd_inserted_media</a>
             </li>
             <li<%= sidebar_current("docs-vcd-resource-lb-service-monitor") %>>
               <a href="/docs/providers/vcd/r/lb_service_monitor.html">vcd_lb_service_monitor</a>

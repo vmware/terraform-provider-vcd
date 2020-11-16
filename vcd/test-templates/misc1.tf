@@ -23,13 +23,13 @@ resource "vcd_network_routed" "tf_net" {
 resource "vcd_vapp" "tf_vapp" {
   name = "TfVApp"
 
-  depends_on = ["vcd_network_routed.tf_net"]
+  depends_on = [vcd_network_routed.tf_net]
 }
 
 # v2.1.0
 resource "vcd_vapp_network" "tf_vapp_net" {
   name       = "TfVAppNet"
-  vapp_name  = "${vcd_vapp.tf_vapp.name}"
+  vapp_name  = vcd_vapp.tf_vapp.name
   gateway    = "192.168.2.1"
   netmask    = "255.255.255.0"
   dns1       = "192.168.2.1"
@@ -49,8 +49,13 @@ resource "vcd_vapp_network" "tf_vapp_net" {
   depends_on = ["vcd_vapp.tf_vapp"]
 }
 
+resource "vcd_vapp_org_network" "vappNetworkRouted" {
+  vapp_name          = vcd_vapp.tf_vapp.name
+  org_network_name   = vcd_network_routed.tf_net.name
+}
+
 resource "vcd_vapp_vm" "tf_vm_11" {
-  vapp_name  = "${vcd_vapp.tf_vapp.name}"
+  vapp_name     = vcd_vapp.tf_vapp.name
   name          = "TfVM11"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
@@ -60,7 +65,7 @@ resource "vcd_vapp_vm" "tf_vm_11" {
   # v2.2.0+
   network {
     type               = "vapp"
-    name               = "${vcd_vapp_network.tf_vapp_net.name}"
+    name               = vcd_vapp_network.tf_vapp_net.name
     ip_allocation_mode = "POOL"
     is_primary         = false
   }
@@ -68,7 +73,7 @@ resource "vcd_vapp_vm" "tf_vm_11" {
   # v2.2.0+
   network {
     type               = "org"
-    name               = "TfNet"
+    name               = vcd_vapp_org_network.vappNetworkRouted.org_network_name
     ip                 = "192.168.0.11"
     ip_allocation_mode = "MANUAL"
     is_primary         = true
@@ -78,6 +83,8 @@ resource "vcd_vapp_vm" "tf_vm_11" {
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
+    # NICs without networks cannot be connected by default
+    connected          = false
   }
 
   # v2.2.0+
@@ -91,47 +98,5 @@ resource "vcd_vapp_vm" "tf_vm_11" {
   }
 
   accept_all_eulas = "true"
-  depends_on       = ["vcd_network_routed.tf_net", "vcd_vapp.tf_vapp"]
-}
-
-# DNAT rule to SSH the VM from the outside
-resource "vcd_dnat" "ssh_vm11" {
-  edge_gateway = "{{.EdgeGateway}}"
-
-  #network_name = "TfNet"
-
-  external_ip     = "{{.ExternalIp}}/32"
-  port            = 2211
-  internal_ip     = "{{.InternalIp}}/32"
-  translated_port = 22
-}
-
-# SNAT rule to let the VMs' traffic out
-resource "vcd_snat" "outbound" {
-  edge_gateway = "{{.EdgeGateway}}"
-
-  #network_name = "TfNet"
-
-  external_ip = "{{.ExternalIp}}/32"
-  internal_ip = "192.168.0.0/24"
-
-  #external_ip = "192.168.0.0/24"
-  #internal_ip = "10.150.211.102/32"
-}
-
-# Firewall rule to allow SSH on NAT port
-resource "vcd_firewall_rules" "fw_allow_ssh_vm11" {
-  edge_gateway = "{{.EdgeGateway}}"
-
-  default_action = "allow"
-
-  rule {
-    description      = "Allows SSH"
-    policy           = "allow"
-    protocol         = "TCP"
-    destination_port = "2211"
-    destination_ip   = "10.150.211.102"
-    source_port      = "any"
-    source_ip        = "any"
-  }
+  depends_on       = [vcd_network_routed.tf_net, vcd_vapp.tf_vapp]
 }

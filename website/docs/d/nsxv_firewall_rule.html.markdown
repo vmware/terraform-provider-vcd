@@ -12,8 +12,7 @@ description: |-
 Provides a vCloud Director firewall rule data source for advanced edge gateways (NSX-V). This can be
 used to read existing rules by ID and use its attributes in other resources.
 
-~> **Note:** This data source requires advanced edge gateway. For non-advanced edge gateways please
-use the [`vcd_firewall_rules`](/docs/providers/vcd/r/firewall_rules.html) resource.
+~> **Note:** This data source requires advanced edge gateway.
 
 ## Example Usage
 

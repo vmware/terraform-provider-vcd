@@ -3,10 +3,11 @@
 package vcd
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 var vdcName = "TestAccVcdVdcDatasource"
@@ -18,7 +19,25 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 		"ExistingVdcName": testConfig.VCD.Vdc,
 		"VdcName":         vdcName,
 		"OrgName":         testConfig.VCD.Org,
+		"StorageProfile":  testConfig.VCD.ProviderVdc.StorageProfile,
 		"FuncName":        vdcName,
+	}
+
+	vcdClient, err := getTestVCDFromJson(testConfig)
+	if err != nil {
+		t.Skip(fmt.Sprintf("unable to get vcdClient: %s", err))
+	}
+	err = ProviderAuthenticate(vcdClient, testConfig.Provider.User, testConfig.Provider.Password, testConfig.Provider.Token, testConfig.Provider.SysOrg)
+	if err != nil {
+		t.Skip(fmt.Sprintf("authentication error: %s", err))
+	}
+	org, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
+	if err != nil {
+		t.Skip(fmt.Sprintf("unable to get Org: %s, err: %s", testConfig.VCD.Org, err))
+	}
+	vdc, err := org.GetVDCByName(testConfig.VCD.Vdc, false)
+	if err != nil {
+		t.Skip(fmt.Sprintf("unable to get VDC: %s, err: %s", testConfig.VCD.Vdc, err))
 	}
 
 	var configText string
@@ -36,7 +55,11 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 
 		validateDataSource(t, configText, datasourceVdc)
 	} else {
-		configText = templateFill(testAccCheckVcdVdcDatasource_basic, params)
+		if vdc.Vdc.AllocationModel == "Flex" {
+			configText = templateFill(testAccCheckVcdVdcDatasource_basic_flex, params)
+		} else {
+			configText = templateFill(testAccCheckVcdVdcDatasource_basic, params)
+		}
 
 		debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
@@ -52,9 +75,9 @@ func TestAccVcdVdcDatasource(t *testing.T) {
 
 func validateResourceAndDataSource(t *testing.T, configText string, datasourceVdc string) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { preRunChecks(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVdcDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVdcDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -72,18 +95,16 @@ func validateResourceAndDataSource(t *testing.T, configText string, datasourceVd
 						"data."+datasourceVdc, "enabled", "vcd_org_vdc."+vdcName, "enabled"),
 					resource.TestCheckResourceAttrPair(
 						"data."+datasourceVdc, "enable_thin_provisioning", "vcd_org_vdc."+vdcName, "enable_thin_provisioning"),
-					resource.TestCheckResourceAttrPair(
-						"data."+datasourceVdc, "storage_profile.0.enabled", "vcd_org_vdc."+vdcName, "storage_profile.0.enabled"),
-					resource.TestCheckResourceAttrPair(
-						"data."+datasourceVdc, "storage_profile.0.default", "vcd_org_vdc."+vdcName, "storage_profile.0.default"),
+					resource.TestCheckResourceAttr("vcd_org_vdc."+vdcName, "storage_profile.0.enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_org_vdc."+vdcName, "storage_profile.0.default", "true"),
+					resource.TestCheckResourceAttr("vcd_org_vdc."+vdcName, "storage_profile.0.limit", "0"),
+					resource.TestCheckResourceAttr("vcd_org_vdc."+vdcName, "storage_profile.0.name", testConfig.VCD.ProviderVdc.StorageProfile),
 					resource.TestCheckResourceAttr(
 						"vcd_org_vdc."+vdcName, "metadata.vdc_metadata", "VDC Metadata"),
 					resource.TestCheckResourceAttrPair(
 						"data."+datasourceVdc, "compute_capacity.0.cpu.0.allocated", "vcd_org_vdc."+vdcName, "compute_capacity.0.cpu.0.allocated"),
 					resource.TestCheckResourceAttrPair(
 						"data."+datasourceVdc, "compute_capacity.0.cpu.0.limit", "vcd_org_vdc."+vdcName, "compute_capacity.0.cpu.0.limit"),
-					resource.TestMatchResourceAttr(
-						"data."+datasourceVdc, "compute_capacity.0.cpu.0.overhead", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
 						"data."+datasourceVdc, "compute_capacity.0.cpu.0.reserved", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
@@ -93,11 +114,11 @@ func validateResourceAndDataSource(t *testing.T, configText string, datasourceVd
 					resource.TestCheckResourceAttrPair(
 						"data."+datasourceVdc, "compute_capacity.0.memory.0.limit", "vcd_org_vdc."+vdcName, "compute_capacity.0.memory.0.limit"),
 					resource.TestMatchResourceAttr(
-						"data."+datasourceVdc, "compute_capacity.0.memory.0.overhead", regexp.MustCompile(`^\d+$`)),
-					resource.TestMatchResourceAttr(
 						"data."+datasourceVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
-						"data."+datasourceVdc, "compute_capacity.0.memory.0.used", regexp.MustCompile(`^\d+$`))),
+						"data."+datasourceVdc, "compute_capacity.0.memory.0.used", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchResourceAttr(
+						"data."+datasourceVdc, "storage_profile.0.storage_used_in_mb", regexp.MustCompile(`^\d+$`))),
 			},
 		},
 	})
@@ -105,9 +126,9 @@ func validateResourceAndDataSource(t *testing.T, configText string, datasourceVd
 
 func validateDataSource(t *testing.T, configText string, datasourceVdc string) {
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { preRunChecks(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVdcDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVdcDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -123,20 +144,63 @@ func validateDataSource(t *testing.T, configText string, datasourceVdc string) {
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "enable_vm_discovery", regexp.MustCompile(`^\S+$`)),
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.cpu.0.allocated", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.cpu.0.limit", regexp.MustCompile(`^\d+$`)),
-					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.cpu.0.overhead", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.cpu.0.allocated", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.cpu.0.reserved", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.allocated", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.limit", regexp.MustCompile(`^\d+$`)),
-					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.overhead", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.allocated", regexp.MustCompile(`^\d+$`)),
-					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d+$`))),
+					resource.TestMatchResourceAttr("data."+datasourceVdc, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d+$`)),
+					resource.TestMatchResourceAttr("data."+datasourceVdc, "storage_profile.0.storage_used_in_mb", regexp.MustCompile(`^\d+$`))),
 			},
 		},
 	})
 }
 
 const testAccCheckVcdVdcDatasource_basic = `
+data "vcd_org_vdc" "existingVdc" {
+  org  = "{{.OrgName}}"
+  name = "{{.ExistingVdcName}}"
+}
+
+resource "vcd_org_vdc" "{{.VdcName}}" { 
+  name = "{{.VdcName}}"
+  org  = "{{.OrgName}}"
+
+  allocation_model  = data.vcd_org_vdc.existingVdc.allocation_model
+  network_pool_name = data.vcd_org_vdc.existingVdc.network_pool_name
+  provider_vdc_name = data.vcd_org_vdc.existingVdc.provider_vdc_name
+
+  compute_capacity {
+    cpu {
+     allocated = data.vcd_org_vdc.existingVdc.compute_capacity[0].cpu[0].allocated
+     limit     = data.vcd_org_vdc.existingVdc.compute_capacity[0].cpu[0].limit
+    }
+
+    memory {
+     allocated = data.vcd_org_vdc.existingVdc.compute_capacity[0].memory[0].allocated
+     limit     = data.vcd_org_vdc.existingVdc.compute_capacity[0].memory[0].limit
+    }
+  }
+
+  storage_profile {
+    name    = "{{.StorageProfile}}"
+    enabled = true
+    limit   = 0
+    default = true
+  }
+
+  metadata = {
+    vdc_metadata = "VDC Metadata"
+  }
+
+  enabled                  = data.vcd_org_vdc.existingVdc.enabled
+  enable_thin_provisioning = data.vcd_org_vdc.existingVdc.enable_thin_provisioning
+  enable_fast_provisioning = data.vcd_org_vdc.existingVdc.enable_fast_provisioning
+  delete_force             = true
+  delete_recursive         = true
+}
+`
+const testAccCheckVcdVdcDatasource_basic_flex = `
 data "vcd_org_vdc" "existingVdc" {
   org  = "{{.OrgName}}"
   name = "{{.ExistingVdcName}}"
@@ -163,10 +227,10 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   }
 
   storage_profile {
-    name    = data.vcd_org_vdc.existingVdc.storage_profile[0].name
-    enabled = data.vcd_org_vdc.existingVdc.storage_profile[0].enabled
-    limit   = data.vcd_org_vdc.existingVdc.storage_profile[0].limit
-    default = data.vcd_org_vdc.existingVdc.storage_profile[0].default
+    name    = "{{.StorageProfile}}"
+    enabled = true
+    limit   = 0
+    default = true
   }
 
   metadata = {
@@ -178,6 +242,9 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   enable_fast_provisioning = data.vcd_org_vdc.existingVdc.enable_fast_provisioning
   delete_force             = true
   delete_recursive         = true
+
+  elasticity                 = data.vcd_org_vdc.existingVdc.elasticity
+  include_vm_memory_overhead = data.vcd_org_vdc.existingVdc.include_vm_memory_overhead
 }
 `
 

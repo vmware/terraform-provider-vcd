@@ -1,11 +1,13 @@
 package vcd
 
+//lint:file-ignore SA1019 ignore deprecated functions
 import (
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 // noopValueWarningValidator is a no-op validator which only emits warning string when fieldValue
@@ -106,6 +108,65 @@ func validateMultipleOf4() schema.SchemaValidateFunc {
 
 		if value%4 != 0 {
 			es = append(es, fmt.Errorf("expected %s to be multiple of 4, got %d", k, value))
+			return
+		}
+
+		return
+	}
+}
+
+// validateIntLeaseSeconds validates amount of seconds for lease
+// A value of 0 is accepted, as it means "never expires"
+// Regular values must be > 3600
+func validateIntLeaseSeconds() schema.SchemaValidateFunc {
+	return func(i interface{}, k string) (s []string, es []error) {
+		v, ok := i.(int)
+		if !ok {
+			es = append(es, fmt.Errorf("expected type of %s to be int", k))
+			return
+		}
+
+		valid := i == 0 || v >= 3600
+		if !valid {
+			es = append(es, fmt.Errorf("expected %s to be either 0 or a number >= 3600 , got %d", k, v))
+			return
+		}
+
+		return
+	}
+}
+
+// IsIntAndAtLeast returns a SchemaValidateFunc which tests if the provided value string is convertable to int
+// and is at least min (inclusive)
+func IsIntAndAtLeast(min int) schema.SchemaValidateFunc {
+	return func(i interface{}, k string) (warnings []string, errors []error) {
+		value, err := strconv.Atoi(i.(string))
+		if err != nil {
+			errors = append(errors, fmt.Errorf("expected type of %s to be integer", k))
+			return warnings, errors
+		}
+
+		if value < min {
+			errors = append(errors, fmt.Errorf("expected %s to be at least (%d), got %d", k, min, value))
+			return warnings, errors
+		}
+
+		return warnings, errors
+	}
+}
+
+// IsFloatAndBetween returns a SchemaValidateFunc which tests if the provided value convertable to
+// float64 and is between min and max (inclusive).
+func IsFloatAndBetween(min, max float64) schema.SchemaValidateFunc {
+	return func(i interface{}, k string) (s []string, es []error) {
+		value, err := strconv.ParseFloat(i.(string), 64)
+		if err != nil {
+			es = append(es, fmt.Errorf("expected type of %s to be float64", k))
+			return
+		}
+
+		if value < min || value > max {
+			es = append(es, fmt.Errorf("expected %s to be in the range (%f - %f), got %f", k, min, max, value))
 			return
 		}
 

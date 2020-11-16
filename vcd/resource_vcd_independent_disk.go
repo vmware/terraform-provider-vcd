@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/tabwriter"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -50,24 +50,12 @@ func resourceVcdIndependentDisk() *schema.Resource {
 				Computed: true,
 				ForceNew: true,
 			},
-			"size": {
-				Type:     schema.TypeFloat,
-				Required: true,
-				ForceNew: true,
-				// we enable this when when we solve https://github.com/terraform-providers/terraform-provider-vcd/issues/355
-				//ConflictsWith: []string{"size_in_bytes"},
-				//Deprecated:    "In favor of size_in_bytes",
+			"size_in_mb": {
+				Type:        schema.TypeInt,
+				Required:    true,
+				ForceNew:    true,
 				Description: "size in MB",
 			},
-			// we enable this when when we solve https://github.com/terraform-providers/terraform-provider-vcd/issues/355
-			/*			"size_in_bytes": {
-						Type:          schema.TypeInt,
-						Optional:      true,
-						Computed:      true,
-						ForceNew:      true,
-						ConflictsWith: []string{"size"},
-						Description:   "size in bytes",
-					},*/
 			"bus_type": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
@@ -138,13 +126,7 @@ var busSubTypesFromValues = map[string]string{
 func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient := meta.(*VCDClient)
 
-	size, sizeProvided := d.GetOk("size")
-	//sizeInBytes, sizeInBytesProvided := d.GetOk("size_in_bytes")
-
-	// we enable this when when we solve https://github.com/terraform-providers/terraform-provider-vcd/issues/355
-	/*	if !sizeProvided && !sizeInBytesProvided {
-		return fmt.Errorf("size_in_bytes isn't provided")
-	}*/
+	size, sizeProvided := d.GetOk("size_in_mb")
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
@@ -162,15 +144,9 @@ func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) 
 	if sizeProvided {
 		diskCreateParams = &types.DiskCreateParams{Disk: &types.Disk{
 			Name: diskName,
-			Size: int64(size.(float64) * 1024 * 1024),
+			Size: int64(size.(int) * 1024 * 1024),
 		}}
 	}
-	/*	if sizeInBytesProvided {
-		diskCreateParams = &types.DiskCreateParams{Disk: &types.Disk{
-			Name: diskName,
-			Size: int64(sizeInBytes.(int)),
-		}}
-	}*/
 
 	var storageReference types.Reference
 	storageProfileValue := d.Get("storage_profile").(string)
@@ -278,12 +254,15 @@ func resourceVcdIndependentDiskRead(d *schema.ResourceData, meta interface{}) er
 }
 
 func setMainData(d *schema.ResourceData, disk *govcd.Disk) {
+	sizeInMb := int64(0)
+	if disk.Disk.Size != 0 && disk.Disk.Size >= 1024*1024 {
+		sizeInMb = disk.Disk.Size / 1024 / 1024
+	}
 	d.SetId(disk.Disk.Id)
 	_ = d.Set("name", disk.Disk.Name)
 	_ = d.Set("description", disk.Disk.Description)
 	_ = d.Set("storage_profile", disk.Disk.StorageProfile.Name)
-	// we enable this when when we solve https://github.com/terraform-providers/terraform-provider-vcd/issues/355
-	//_ = d.Set("size_in_bytes", disk.Disk.Size)
+	_ = d.Set("size_in_mb", sizeInMb)
 	_ = d.Set("bus_type", busTypesFromValues[disk.Disk.BusType])
 	_ = d.Set("bus_sub_type", busSubTypesFromValues[disk.Disk.BusSubType])
 	_ = d.Set("iops", disk.Disk.Iops)

@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
@@ -59,7 +59,7 @@ func resourceVcdLBVirtualServer() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				Description:  "IP address that the load balancer listens on",
-				ValidateFunc: validation.SingleIP(),
+				ValidateFunc: validation.IsIPAddress,
 			},
 			"protocol": &schema.Schema{
 				Type:         schema.TypeString,

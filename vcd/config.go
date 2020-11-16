@@ -7,12 +7,20 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
+	"sync"
 	"time"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/mutexkv"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
+
+func init() {
+	separator := os.Getenv("VCD_IMPORT_SEPARATOR")
+	if separator != "" {
+		ImportSeparator = separator
+	}
+}
 
 type Config struct {
 	User            string
@@ -24,6 +32,16 @@ type Config struct {
 	Href            string
 	MaxRetryTimeout int
 	InsecureFlag    bool
+
+	// UseSamlAdfs specifies if SAML auth is used for authenticating vCD instead of local login.
+	// The following conditions must be met so that authentication SAML authentication works:
+	// * SAML IdP (Identity Provider) is Active Directory Federation Service (ADFS)
+	// * Authentication endpoint "/adfs/services/trust/13/usernamemixed" must be enabled on ADFS
+	// server
+	UseSamlAdfs bool
+	// CustomAdfsRptId allows to set custom Relaying Party Trust identifier. By default vCD Entity
+	// ID is used as Relaying Party Trust identifier.
+	CustomAdfsRptId string
 }
 
 type VCDClient struct {
@@ -66,15 +84,28 @@ type cachedConnection struct {
 	connection *VCDClient
 }
 
+type cacheStorage struct {
+	// conMap holds cached VDC authenticated connection
+	conMap map[string]cachedConnection
+	// cacheClientServedCount records how many times we have cached a connection
+	cacheClientServedCount int
+	sync.Mutex
+}
+
+// reset clears cache to force re-authentication
+func (c *cacheStorage) reset() {
+	c.Lock()
+	defer c.Unlock()
+	c.cacheClientServedCount = 0
+	c.conMap = make(map[string]cachedConnection)
+}
+
 var (
 	// Enables the caching of authenticated connections
 	enableConnectionCache bool = os.Getenv("VCD_CACHE") != ""
 
 	// Cached VDC authenticated connection
-	cachedVCDClients = make(map[string]cachedConnection)
-
-	// Records how many times we have cached a connection
-	cacheClientServedCount int = 0
+	cachedVCDClients = &cacheStorage{conMap: make(map[string]cachedConnection)}
 
 	// Invalidates the cache after a given time (connection tokens usually expire after 20 to 30 minutes)
 	maxConnectionValidity time.Duration = 20 * time.Minute
@@ -100,8 +131,8 @@ func debugPrintf(format string, args ...interface{}) {
 	}
 }
 
-// This is a global MutexKV for all resources
-var vcdMutexKV = mutexkv.NewMutexKV()
+// This is a global mutexKV for all resources
+var vcdMutexKV = newMutexKV()
 
 func (cli *VCDClient) lockVapp(d *schema.ResourceData) {
 	vappName := d.Get("name").(string)
@@ -109,7 +140,7 @@ func (cli *VCDClient) lockVapp(d *schema.ResourceData) {
 		panic("vApp name not found")
 	}
 	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), vappName)
-	vcdMutexKV.Lock(key)
+	vcdMutexKV.kvLock(key)
 }
 
 func (cli *VCDClient) unLockVapp(d *schema.ResourceData) {
@@ -118,7 +149,7 @@ func (cli *VCDClient) unLockVapp(d *schema.ResourceData) {
 		panic("vApp name not found")
 	}
 	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), vappName)
-	vcdMutexKV.Unlock(key)
+	vcdMutexKV.kvUnlock(key)
 }
 
 // locks an edge gateway resource
@@ -130,7 +161,7 @@ func (cli *VCDClient) lockEdgeGateway(d *schema.ResourceData) {
 		panic("edge gateway name not found")
 	}
 	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), edgeGatewayName)
-	vcdMutexKV.Lock(key)
+	vcdMutexKV.kvLock(key)
 }
 
 // unlocks an edge gateway resource
@@ -142,7 +173,25 @@ func (cli *VCDClient) unlockEdgeGateway(d *schema.ResourceData) {
 		panic("edge gateway name not found")
 	}
 	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), edgeGatewayName)
-	vcdMutexKV.Unlock(key)
+	vcdMutexKV.kvUnlock(key)
+}
+
+// lockParentVappWithName locks using provided vappName.
+// Parent means the resource belongs to the vApp being locked
+func (cli *VCDClient) lockParentVappWithName(d *schema.ResourceData, vappName string) {
+	if vappName == "" {
+		panic("vApp name not found")
+	}
+	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), vappName)
+	vcdMutexKV.kvLock(key)
+}
+
+func (cli *VCDClient) unLockParentVappWithName(d *schema.ResourceData, vappName string) {
+	if vappName == "" {
+		panic("vApp name not found")
+	}
+	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), vappName)
+	vcdMutexKV.kvUnlock(key)
 }
 
 // function lockParentVapp locks using vapp_name name existing in resource parameters.
@@ -153,7 +202,7 @@ func (cli *VCDClient) lockParentVapp(d *schema.ResourceData) {
 		panic("vApp name not found")
 	}
 	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), vappName)
-	vcdMutexKV.Lock(key)
+	vcdMutexKV.kvLock(key)
 }
 
 func (cli *VCDClient) unLockParentVapp(d *schema.ResourceData) {
@@ -162,7 +211,35 @@ func (cli *VCDClient) unLockParentVapp(d *schema.ResourceData) {
 		panic("vApp name not found")
 	}
 	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s", cli.getOrgName(d), cli.getVdcName(d), vappName)
-	vcdMutexKV.Unlock(key)
+	vcdMutexKV.kvUnlock(key)
+}
+
+// lockParentVm locks using vapp_name and vm_name names existing in resource parameters.
+// Parent means the resource belongs to the VM being locked
+func (cli *VCDClient) lockParentVm(d *schema.ResourceData) {
+	vappName := d.Get("vapp_name").(string)
+	if vappName == "" {
+		panic("vApp name not found")
+	}
+	vmName := d.Get("vm_name").(string)
+	if vmName == "" {
+		panic("vmName name not found")
+	}
+	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s|vm:%s", cli.getOrgName(d), cli.getVdcName(d), vappName, vmName)
+	vcdMutexKV.kvLock(key)
+}
+
+func (cli *VCDClient) unLockParentVm(d *schema.ResourceData) {
+	vappName := d.Get("vapp_name").(string)
+	if vappName == "" {
+		panic("vApp name not found")
+	}
+	vmName := d.Get("vm_name").(string)
+	if vmName == "" {
+		panic("vmName name not found")
+	}
+	key := fmt.Sprintf("org:%s|vdc:%s|vapp:%s|vm:%s", cli.getOrgName(d), cli.getVdcName(d), vappName, vmName)
+	vcdMutexKV.kvUnlock(key)
 }
 
 // function lockParentEdgeGtw locks using edge_gateway name existing in resource parameters.
@@ -173,7 +250,7 @@ func (cli *VCDClient) lockParentEdgeGtw(d *schema.ResourceData) {
 		panic("edge gateway not found")
 	}
 	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), edgeGtwName)
-	vcdMutexKV.Lock(key)
+	vcdMutexKV.kvLock(key)
 }
 
 func (cli *VCDClient) unLockParentEdgeGtw(d *schema.ResourceData) {
@@ -182,7 +259,7 @@ func (cli *VCDClient) unLockParentEdgeGtw(d *schema.ResourceData) {
 		panic("edge gateway not found")
 	}
 	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), edgeGtwName)
-	vcdMutexKV.Unlock(key)
+	vcdMutexKV.kvUnlock(key)
 }
 
 func (cli *VCDClient) getOrgName(d *schema.ResourceData) string {
@@ -311,7 +388,11 @@ func (cli *VCDClient) GetEdgeGatewayFromResource(d *schema.ResourceData, edgeGat
 func ProviderAuthenticate(client *govcd.VCDClient, user, password, token, org string) error {
 	var err error
 	if token != "" {
-		err = client.SetToken(org, govcd.AuthorizationHeader, token)
+		if len(token) > 32 {
+			err = client.SetToken(org, govcd.BearerTokenHeader, token)
+		} else {
+			err = client.SetToken(org, govcd.AuthorizationHeader, token)
+		}
 		if err != nil {
 			err = fmt.Errorf("error during token-based authentication: %s", err)
 		}
@@ -322,7 +403,6 @@ func ProviderAuthenticate(client *govcd.VCDClient, user, password, token, org st
 }
 
 func (c *Config) Client() (*VCDClient, error) {
-
 	rawData := c.User + "#" +
 		c.Password + "#" +
 		c.Token + "#" +
@@ -331,14 +411,20 @@ func (c *Config) Client() (*VCDClient, error) {
 	checksum := fmt.Sprintf("%x", sha1.Sum([]byte(rawData)))
 
 	// The cached connection is served only if the variable VCD_CACHE is set
-	client, ok := cachedVCDClients[checksum]
+	cachedVCDClients.Lock()
+	client, ok := cachedVCDClients.conMap[checksum]
+	cachedVCDClients.Unlock()
 	if ok && enableConnectionCache {
-		cacheClientServedCount += 1
+		cachedVCDClients.Lock()
+		cachedVCDClients.cacheClientServedCount += 1
+		cachedVCDClients.Unlock()
 		// debugPrintf("[%s] cached connection served %d times (size:%d)\n",
 		elapsed := time.Since(client.initTime)
 		if elapsed > maxConnectionValidity {
 			debugPrintf("cached connection invalidated after %2.0f minutes \n", maxConnectionValidity.Minutes())
-			delete(cachedVCDClients, checksum)
+			cachedVCDClients.Lock()
+			delete(cachedVCDClients.conMap, checksum)
+			cachedVCDClients.Unlock()
 		} else {
 			return client.connection, nil
 		}
@@ -349,9 +435,14 @@ func (c *Config) Client() (*VCDClient, error) {
 		return nil, fmt.Errorf("something went wrong while retrieving URL: %s", err)
 	}
 
+	userAgent := buildUserAgent(BuildVersion, c.SysOrg)
+
 	vcdClient := &VCDClient{
 		VCDClient: govcd.NewVCDClient(*authUrl, c.InsecureFlag,
-			govcd.WithMaxRetryTimeout(c.MaxRetryTimeout)),
+			govcd.WithMaxRetryTimeout(c.MaxRetryTimeout),
+			govcd.WithSamlAdfs(c.UseSamlAdfs, c.CustomAdfsRptId),
+			govcd.WithHttpUserAgent(userAgent),
+		),
 		SysOrg:          c.SysOrg,
 		Org:             c.Org,
 		Vdc:             c.Vdc,
@@ -362,14 +453,15 @@ func (c *Config) Client() (*VCDClient, error) {
 	if err != nil {
 		return nil, fmt.Errorf("something went wrong during authentication: %s", err)
 	}
-	cachedVCDClients[checksum] = cachedConnection{initTime: time.Now(), connection: vcdClient}
+	cachedVCDClients.Lock()
+	cachedVCDClients.conMap[checksum] = cachedConnection{initTime: time.Now(), connection: vcdClient}
+	cachedVCDClients.Unlock()
 
 	return vcdClient, nil
 }
 
-// Returns the name of the function that called the
-// current function.
-// It is used for tracing
+// callFuncName returns the name of the function that called the current function. It is used for
+// tracing
 func callFuncName() string {
 	fpcs := make([]uintptr, 1)
 	n := runtime.Callers(3, fpcs)
@@ -382,9 +474,10 @@ func callFuncName() string {
 	return ""
 }
 
-func init() {
-	separator := os.Getenv("VCD_IMPORT_SEPARATOR")
-	if separator != "" {
-		ImportSeparator = separator
-	}
+// buildUserAgent helps to construct HTTP User-Agent header
+func buildUserAgent(version, sysOrg string) string {
+	userAgent := fmt.Sprintf("terraform-provider-vcd/%s (%s/%s; isProvider:%t)",
+		version, runtime.GOOS, runtime.GOARCH, strings.ToLower(sysOrg) == "system")
+
+	return userAgent
 }

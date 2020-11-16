@@ -6,12 +6,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/terraform"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 // To execute this test, run
-// go test -v -timeout 0 -tags multivm -run TestAccVcdVAppVmMulti .
+// go test -v -timeout 0 -tags "multivm functional" -run TestAccVcdVAppVmMulti .
 // Extends TestAccVcdVappVM with multiple VMs
 func TestAccVcdVAppVmMulti(t *testing.T) {
 	var (
@@ -50,9 +50,9 @@ func TestAccVcdVAppVmMulti(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckVcdVAppVmMultiDestroy,
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckVcdVAppVmMultiDestroy,
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
@@ -61,7 +61,7 @@ func TestAccVcdVAppVmMulti(t *testing.T) {
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_vm."+vmName1, "name", vmName1),
 					resource.TestCheckResourceAttr(
-						"vcd_vapp_vm."+vmName1, "ip", "10.10.102.161"),
+						"vcd_vapp_vm."+vmName1, "network.0.ip", "10.10.102.161"),
 					resource.TestCheckResourceAttr(
 						"vcd_vapp_vm."+vmName1, "power_on", "true"),
 				),
@@ -143,7 +143,7 @@ resource "vcd_independent_disk" "{{.diskResourceName}}" {
   org             = "{{.Org}}"
   vdc             = "{{.Vdc}}"
   name            = "{{.diskName}}"
-  size            = "{{.size}}"
+  size_in_mb      = "{{.size}}"
   bus_type        = "{{.busType}}"
   bus_sub_type    = "{{.busSubType}}"
   storage_profile = "{{.storageProfileName}}"
@@ -153,21 +153,32 @@ resource "vcd_vapp" "{{.VappName}}" {
   name = "{{.VappName}}"
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
-  depends_on = ["vcd_network_routed.{{.NetworkName}}"]
+}
+
+resource "vcd_vapp_org_network" "vappNetwork1" {
+  org                = "{{.Org}}"
+  vdc                = "{{.Vdc}}"
+  vapp_name          = vcd_vapp.{{.VappName}}.name
+  org_network_name   = vcd_network_routed.{{.NetworkName}}.name 
 }
 
 resource "vcd_vapp_vm" "{{.VmName1}}" {
   org           = "{{.Org}}"
   vdc           = "{{.Vdc}}"
   vapp_name     = vcd_vapp.{{.VappName}}.name
-  network_name  = vcd_network_routed.{{.NetworkName}}.name
   name          = "{{.VmName1}}"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
   memory        = 1024
   cpus          = 2
   cpu_cores     = 1
-  ip            = "10.10.102.161"
+
+  network {
+    type               = "org"
+    name               = vcd_vapp_org_network.vappNetwork1.org_network_name
+    ip_allocation_mode = "MANUAL"
+    ip            = "10.10.102.161"
+  }
 
   disk {
     name = vcd_independent_disk.{{.diskResourceName}}.name
@@ -182,32 +193,40 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
   org           = "{{.Org}}"
   vdc           = "{{.Vdc}}"
   vapp_name     = vcd_vapp.{{.VappName}}.name
-  network_name  = vcd_network_routed.{{.NetworkName}}.name
   name          = "{{.VmName2}}"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
   memory        = 1024
   cpus          = 2
-  cpu_cores     = 1
-  ip            = "10.10.102.162"
+  cpu_cores     = 1 
 
-  depends_on    = ["vcd_vapp.{{.VappName}}", "vcd_network_routed.{{.NetworkName}}"]
+  network {
+    type               = "org"
+    name               = vcd_vapp_org_network.vappNetwork1.org_network_name
+    ip_allocation_mode = "MANUAL"
+    ip            = "10.10.102.162"
+  }
+
 }
 
 resource "vcd_vapp_vm" "{{.VmName3}}" {
   org           = "{{.Org}}"
   vdc           = "{{.Vdc}}"
   vapp_name     = vcd_vapp.{{.VappName}}.name
-  network_name  = vcd_network_routed.{{.NetworkName}}.name
   name          = "{{.VmName3}}"
   catalog_name  = "{{.Catalog}}"
   template_name = "{{.CatalogItem}}"
   memory        = 1024
   cpus          = 2
   cpu_cores     = 1
-  ip            = "10.10.102.163"
+  
+  network {
+    type               = "org"
+    name               = vcd_vapp_org_network.vappNetwork1.org_network_name
+    ip_allocation_mode = "MANUAL"
+    ip            = "10.10.102.163"
+  }
 
-  depends_on    = ["vcd_vapp.{{.VappName}}", "vcd_network_routed.{{.NetworkName}}"]
 }
 
 `

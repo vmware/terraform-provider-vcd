@@ -4,15 +4,13 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func datasourceVcdOrgVdc() *schema.Resource {
 	capacityWithUsage := schema.Schema{
 		Type:     schema.TypeList,
 		Computed: true,
-		MinItems: 1,
-		MaxItems: 1,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"allocated": {
@@ -30,10 +28,6 @@ func datasourceVcdOrgVdc() *schema.Resource {
 					Computed: true,
 				},
 				"used": {
-					Type:     schema.TypeInt,
-					Computed: true,
-				},
-				"overhead": {
 					Type:     schema.TypeInt,
 					Computed: true,
 				},
@@ -61,12 +55,10 @@ func datasourceVcdOrgVdc() *schema.Resource {
 			"allocation_model": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "The allocation model used by this VDC; must be one of {AllocationVApp, AllocationPool, ReservationPool}",
+				Description: "The allocation model used by this VDC; must be one of {AllocationVApp, AllocationPool, ReservationPool, Flex}",
 			},
 			"compute_capacity": &schema.Schema{
 				Computed: true,
-				MinItems: 1,
-				MaxItems: 1,
 				Type:     schema.TypeList,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -99,7 +91,6 @@ func datasourceVcdOrgVdc() *schema.Resource {
 			"storage_profile": &schema.Schema{
 				Type:     schema.TypeList,
 				Computed: true,
-				MinItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
@@ -121,6 +112,11 @@ func datasourceVcdOrgVdc() *schema.Resource {
 							Type:        schema.TypeBool,
 							Computed:    true,
 							Description: "True if this is default storage profile for this VDC. The default storage profile is used when an object that can specify a storage profile is created with no storage profile specified.",
+						},
+						"storage_used_in_mb": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: "Storage used in MB",
 						},
 					},
 				},
@@ -177,10 +173,33 @@ func datasourceVcdOrgVdc() *schema.Resource {
 				Computed:    true,
 				Description: "True if discovery of vCenter VMs is enabled for resource pools backing this VDC. If left unspecified, the actual behaviour depends on enablement at the organization level and at the system level.",
 			},
+			"elasticity": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if the Flex VDC is elastic.",
+			},
+			"include_vm_memory_overhead": &schema.Schema{
+				Type:        schema.TypeBool,
+				Computed:    true,
+				Description: "True if the Flex VDC includes memory overhead into its accounting for admission control.",
+			},
 			"metadata": {
 				Type:        schema.TypeMap,
 				Computed:    true,
 				Description: "Key and value pairs for Org VDC metadata",
+			},
+			"vm_sizing_policy_ids": {
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "Set of VM sizing policy IDs",
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
+			"default_vm_sizing_policy_id": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "ID of default VM sizing policy ID",
 			},
 		},
 	}

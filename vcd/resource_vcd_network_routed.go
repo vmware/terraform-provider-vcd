@@ -4,12 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"log"
-	"regexp"
 	"strings"
 
-	"github.com/hashicorp/terraform-plugin-sdk/helper/hashcode"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
@@ -19,6 +17,7 @@ func resourceVcdNetworkRouted() *schema.Resource {
 		Create: resourceVcdNetworkRoutedCreate,
 		Read:   resourceVcdNetworkRoutedRead,
 		Delete: resourceVcdNetworkDeleteLocked,
+		Update: resourceVcdNetworkRoutedUpdate,
 		Importer: &schema.ResourceImporter{
 			State: resourceVcdNetworkRoutedImport,
 		},
@@ -26,7 +25,6 @@ func resourceVcdNetworkRouted() *schema.Resource {
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "A unique name for the network",
 			},
 			"org": {
@@ -53,7 +51,6 @@ func resourceVcdNetworkRouted() *schema.Resource {
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional description for the network",
 			},
 
@@ -74,7 +71,7 @@ func resourceVcdNetworkRouted() *schema.Resource {
 				ForceNew:     true,
 				Default:      "255.255.255.0",
 				Description:  "The netmask for the new network",
-				ValidateFunc: validation.SingleIP(),
+				ValidateFunc: validation.IsIPAddress,
 			},
 
 			"gateway": &schema.Schema{
@@ -82,39 +79,32 @@ func resourceVcdNetworkRouted() *schema.Resource {
 				Optional:     true,
 				ForceNew:     true,
 				Description:  "The gateway of this network",
-				ValidateFunc: validation.SingleIP(),
+				ValidateFunc: validation.IsIPAddress,
 			},
 
 			"dns1": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
-				ForceNew:     true,
-				Default:      "8.8.8.8",
 				Description:  "First DNS server to use",
-				ValidateFunc: validation.SingleIP(),
+				ValidateFunc: validation.IsIPAddress,
 			},
 
 			"dns2": &schema.Schema{
 				Type:         schema.TypeString,
 				Optional:     true,
-				ForceNew:     true,
-				Default:      "8.8.4.4",
 				Description:  "Second DNS server to use",
-				ValidateFunc: validation.SingleIP(),
+				ValidateFunc: validation.IsIPAddress,
 			},
 
 			"dns_suffix": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "A FQDN for the virtual machines on this network",
 			},
 
 			"href": &schema.Schema{
 				Type:        schema.TypeString,
-				Optional:    true,
 				Computed:    true,
-				ForceNew:    true,
 				Description: "Network Hypertext Reference",
 			},
 
@@ -122,14 +112,12 @@ func resourceVcdNetworkRouted() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     false,
-				ForceNew:    true,
 				Description: "Defines if this network is shared between multiple VDCs in the Org",
 			},
 
 			"dhcp_pool": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "A range of IPs to issue to virtual machines that don't have a static IP",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -137,39 +125,35 @@ func resourceVcdNetworkRouted() *schema.Resource {
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "The first address in the IP Range",
-							ValidateFunc: validation.SingleIP(),
+							ValidateFunc: validation.IsIPAddress,
 						},
 
 						"end_address": &schema.Schema{
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "The final address in the IP Range",
-							ValidateFunc: validation.SingleIP(),
+							ValidateFunc: validation.IsIPAddress,
 						},
 
 						"default_lease_time": &schema.Schema{
-							Type:             schema.TypeInt,
-							Removed:          "vCD doesn't process this input. It sets the value to max_lease_time",
-							Default:          3600,
-							Optional:         true,
-							DiffSuppressFunc: suppressAlways(),
-							Description:      "The default DHCP lease time to use",
+							Type:        schema.TypeInt,
+							Computed:    true, // vCD doesn't process this field as input. It sets the value to max_lease_time
+							Description: "The default DHCP lease time to use",
 						},
 
 						"max_lease_time": &schema.Schema{
 							Type:        schema.TypeInt,
 							Default:     7200,
 							Optional:    true,
-							Description: "HThe maximum DHCP lease time to use",
+							Description: "The maximum DHCP lease time to use",
 						},
 					},
 				},
-				Set: resourceVcdNetworkIPAddressHash,
+				Set: resourceVcdNetworkRoutedDhcpPoolHash,
 			},
 			"static_ip_pool": &schema.Schema{
 				Type:        schema.TypeSet,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "A range of IPs permitted to be used as static IPs for virtual machines",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -177,18 +161,18 @@ func resourceVcdNetworkRouted() *schema.Resource {
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "The first address in the IP Range",
-							ValidateFunc: validation.SingleIP(),
+							ValidateFunc: validation.IsIPAddress,
 						},
 
 						"end_address": &schema.Schema{
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "The final address in the IP Range",
-							ValidateFunc: validation.SingleIP(),
+							ValidateFunc: validation.IsIPAddress,
 						},
 					},
 				},
-				Set: resourceVcdNetworkIPAddressHash,
+				Set: resourceVcdNetworkStaticIpPoolHash,
 			},
 		},
 	}
@@ -307,19 +291,16 @@ func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origi
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
-	identifier := d.Id()
 
-	if identifier == "" {
-		identifier = d.Get("name").(string)
-	}
-	network, err := vdc.GetOrgVdcNetworkByNameOrId(identifier, false)
+	network, err := getNetwork(d, vcdClient, origin == "datasource", "routed")
 	if err != nil {
 		if origin == "resource" {
-			log.Printf("[DEBUG] Network %s no longer exists. Removing from tfstate", identifier)
+			networkName := d.Get("name").(string)
+			log.Printf("[DEBUG] Network %s no longer exists. Removing from tfstate", networkName)
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("[network routed read] error retrieving Org VDC network %s: %s", identifier, err)
+		return fmt.Errorf("[routed network read] error retrieving Org VDC network  %s", err)
 	}
 	edgeGatewayName := d.Get("edge_gateway").(string)
 
@@ -327,21 +308,20 @@ func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origi
 	if edgeGatewayName == "" {
 		edgeGatewayName, err = vdc.FindEdgeGatewayNameByNetwork(network.OrgVDCNetwork.Name)
 		if err != nil {
-			return fmt.Errorf("[network_routed read] no edge gateway connection found for network %s: %s", network.OrgVDCNetwork.Name, err)
+			return fmt.Errorf("[routed network read] no edge gateway connection found for network %s: %s", network.OrgVDCNetwork.Name, err)
 		}
 		_ = d.Set("edge_gateway", edgeGatewayName)
 	}
 	edgeGateway, err := vdc.GetEdgeGatewayByName(edgeGatewayName, false)
 	if err != nil {
 		log.Printf("[DEBUG] error retrieving edge gateway")
-		return fmt.Errorf("[network routed read] error retrieving edge gateway %s: %s", edgeGatewayName, err)
+		return fmt.Errorf("[routed network read] error retrieving edge gateway %s: %s", edgeGatewayName, err)
 	}
 
 	_ = d.Set("name", network.OrgVDCNetwork.Name)
 	_ = d.Set("href", network.OrgVDCNetwork.HREF)
 	_ = d.Set("shared", network.OrgVDCNetwork.IsShared)
 	if c := network.OrgVDCNetwork.Configuration; c != nil {
-		_ = d.Set("fence_mode", c.FenceMode)
 		if c.IPScopes != nil {
 			_ = d.Set("gateway", c.IPScopes.IPScope[0].Gateway)
 			_ = d.Set("netmask", c.IPScopes.IPScope[0].Netmask)
@@ -354,43 +334,43 @@ func genericVcdNetworkRoutedRead(d *schema.ResourceData, meta interface{}, origi
 	dhcp := getDhcpFromEdgeGateway(network.OrgVDCNetwork.HREF, edgeGateway)
 	if len(dhcp) > 0 {
 		newSet := &schema.Set{
-			F: resourceVcdNetworkIPAddressHash,
+			F: resourceVcdNetworkRoutedDhcpPoolHash,
 		}
 		for _, element := range dhcp {
 			newSet.Add(element)
 		}
 		err := d.Set("dhcp_pool", newSet)
 		if err != nil {
-			return fmt.Errorf("[network routed read] dhcp set: %s", err)
+			return fmt.Errorf("[routed network read] dhcp set: %s", err)
 		}
 	}
 
 	staticIpPool := getStaticIpPool(network)
 	if len(staticIpPool) > 0 {
 		newSet := &schema.Set{
-			F: resourceVcdNetworkIPAddressHash,
+			F: resourceVcdNetworkStaticIpPoolHash,
 		}
 		for _, element := range staticIpPool {
 			newSet.Add(element)
 		}
 		err := d.Set("static_ip_pool", newSet)
 		if err != nil {
-			return fmt.Errorf("[network routed read] static_ip set: %s", err)
+			return fmt.Errorf("[routed network read] static_ip set: %s", err)
 		}
 	}
 
 	if network.OrgVDCNetwork.Configuration.SubInterface == nil {
-		d.Set("interface_type", "internal")
+		_ = d.Set("interface_type", "internal")
 	} else {
 		if *network.OrgVDCNetwork.Configuration.SubInterface {
-			d.Set("interface_type", "subinterface")
+			_ = d.Set("interface_type", "subinterface")
 		} else {
 			if *network.OrgVDCNetwork.Configuration.DistributedInterface {
-				d.Set("interface_type", "distributed")
+				_ = d.Set("interface_type", "distributed")
 			}
 		}
 	}
-	d.Set("description", network.OrgVDCNetwork.Description)
+	_ = d.Set("description", network.OrgVDCNetwork.Description)
 
 	d.SetId(network.OrgVDCNetwork.ID)
 	return nil
@@ -419,20 +399,6 @@ func getStaticIpPool(network *govcd.OrgVDCNetwork) []map[string]interface{} {
 	return staticIpPool
 }
 
-// hasSameUuid compares two IDs (or HREF)
-// and returns true if the UUID part of the two input strings are the same.
-// This is useful when comparing a HREF to a ID, or a HREF from an admin path
-// to a HREF from a regular user path.
-func haveSameUuid(s1, s2 string) bool {
-	reUuid := regexp.MustCompile(`/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})$`)
-	s1List := reUuid.FindAllStringSubmatch(s1, -1)
-	s2List := reUuid.FindAllStringSubmatch(s2, -1)
-	if len(s1List) > 0 && len(s1List[0]) > 0 && len(s2List) > 0 && len(s2List[0]) > 0 {
-		return s1List[0][1] == s2List[0][1]
-	}
-	return false
-}
-
 // getDhcpFromEdgeGateway examines the edge gateway for a DHCP service
 // that is registered to the given network HREF.
 // Returns an array of string maps suitable to be passed to d.Set("dhcp_pool", value)
@@ -449,12 +415,16 @@ func getDhcpFromEdgeGateway(networkHref string, edgeGateway *govcd.EdgeGateway) 
 		return dhcpConfig
 	}
 	for _, dhcp := range gwConf.EdgeGatewayServiceConfiguration.GatewayDhcpService.Pool {
+		// This check should avoid a crash when the network is not referenced. See Issue #500
+		if dhcp.Network == nil {
+			continue
+		}
 		if haveSameUuid(dhcp.Network.HREF, networkHref) {
 			dhcpRec := map[string]interface{}{
 				"start_address":      dhcp.LowIPAddress,
 				"end_address":        dhcp.HighIPAddress,
-				"default_lease_time": dhcp.MaxLeaseTime,
 				"max_lease_time":     dhcp.MaxLeaseTime,
+				"default_lease_time": dhcp.DefaultLeaseTime,
 			}
 			dhcpConfig = append(dhcpConfig, dhcpRec)
 		}
@@ -480,7 +450,7 @@ func resourceVcdNetworkDelete(d *schema.ResourceData, meta interface{}) error {
 
 	network, err := vdc.GetOrgVdcNetworkByNameOrId(d.Id(), false)
 	if err != nil {
-		return fmt.Errorf("[network delete] error retrieving Org VDC network: %s", err)
+		return fmt.Errorf("[routed network delete] error retrieving Org VDC network: %s", err)
 	}
 
 	task, err := network.Delete()
@@ -495,7 +465,10 @@ func resourceVcdNetworkDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceVcdNetworkIPAddressHash(v interface{}) int {
+// resourceVcdNetworkStaticIpPoolHash computes a hash for a Static IP pool
+func resourceVcdNetworkStaticIpPoolHash(v interface{}) int {
+	// Handle this function with care.
+	// Changing the hash algorithm will trigger a plan update.
 	var buf bytes.Buffer
 	m := v.(map[string]interface{})
 	buf.WriteString(fmt.Sprintf("%s-",
@@ -503,7 +476,35 @@ func resourceVcdNetworkIPAddressHash(v interface{}) int {
 	buf.WriteString(fmt.Sprintf("%s-",
 		strings.ToLower(m["end_address"].(string))))
 
-	return hashcode.String(buf.String())
+	return hashcodeString(buf.String())
+}
+
+func genericResourceVcdNetworkDhcpPoolHash(v interface{}, networkType string) int {
+	// Handle this function with care.
+	// Changing the hash algorithm will trigger a plan update.
+	var buf bytes.Buffer
+	m := v.(map[string]interface{})
+	buf.WriteString(fmt.Sprintf("%s-",
+		strings.ToLower(m["start_address"].(string))))
+	buf.WriteString(fmt.Sprintf("%s-",
+		strings.ToLower(m["end_address"].(string))))
+	buf.WriteString(fmt.Sprintf("%d-",
+		m["max_lease_time"].(int)))
+
+	switch networkType {
+	case "isolated":
+		buf.WriteString(fmt.Sprintf("%d-", m["default_lease_time"].(int)))
+	case "routed":
+		// do nothing
+	default:
+		panic(fmt.Sprintf("network type %s not supported", networkType))
+	}
+	return hashcodeString(buf.String())
+}
+
+// resourceVcdNetworkRoutedDhcpPoolHash computes a hash for a DHCP pool
+func resourceVcdNetworkRoutedDhcpPoolHash(v interface{}) int {
+	return genericResourceVcdNetworkDhcpPoolHash(v, "routed")
 }
 
 // resourceVcdNetworkRoutedImport is responsible for importing the resource.
@@ -522,24 +523,24 @@ func resourceVcdNetworkIPAddressHash(v interface{}) int {
 func resourceVcdNetworkRoutedImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
-		return nil, fmt.Errorf("[network routed import] resource name must be specified as org-name.vdc-name.network-name")
+		return nil, fmt.Errorf("[routed network import] resource name must be specified as org-name.vdc-name.network-name")
 	}
 	orgName, vdcName, networkName := resourceURI[0], resourceURI[1], resourceURI[2]
 
 	vcdClient := meta.(*VCDClient)
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if err != nil {
-		return nil, fmt.Errorf("[network routed import] unable to find VDC %s: %s ", vdcName, err)
+		return nil, fmt.Errorf("[routed network import] unable to find VDC %s: %s ", vdcName, err)
 	}
 
 	network, err := vdc.GetOrgVdcNetworkByName(networkName, false)
 	if err != nil {
-		return nil, fmt.Errorf("[network_routed import] error retrieving network %s: %s", networkName, err)
+		return nil, fmt.Errorf("[routed network import] error retrieving network %s: %s", networkName, err)
 	}
 
 	edgeGatewayName, err := vdc.FindEdgeGatewayNameByNetwork(networkName)
 	if err != nil {
-		return nil, fmt.Errorf("[network_routed import] no edge gateway connection found for network %s: %s", network.OrgVDCNetwork.Name, err)
+		return nil, fmt.Errorf("[routed network] no edge gateway connection found for network %s: %s", network.OrgVDCNetwork.Name, err)
 	}
 
 	_ = d.Set("org", orgName)
@@ -548,4 +549,79 @@ func resourceVcdNetworkRoutedImport(d *schema.ResourceData, meta interface{}) ([
 	d.SetId(network.OrgVDCNetwork.ID)
 
 	return []*schema.ResourceData{d}, nil
+}
+
+func resourceVcdNetworkRoutedUpdate(d *schema.ResourceData, meta interface{}) error {
+	vcdClient := meta.(*VCDClient)
+	vcdClient.lockParentEdgeGtw(d)
+	defer vcdClient.unLockParentEdgeGtw(d)
+
+	networkName := d.Get("name").(string)
+	description := d.Get("description").(string)
+	dns1 := d.Get("dns1").(string)
+	dns2 := d.Get("dns2").(string)
+	dnsSuffix := d.Get("dns_suffix").(string)
+	isShared := d.Get("shared").(bool)
+	networkInterface := d.Get("interface_type").(string)
+
+	identifier := d.Id()
+	if identifier == "" {
+		identifier = networkName
+	}
+	network, err := getNetwork(d, vcdClient, false, "routed")
+	if err != nil {
+		return fmt.Errorf("[routed network update] error getting network %s: %s", identifier, err)
+	}
+	network.OrgVDCNetwork.Name = networkName
+	network.OrgVDCNetwork.Description = description
+	network.OrgVDCNetwork.IsShared = d.Get("shared").(bool)
+	ipRanges, err := expandIPRange(d.Get("static_ip_pool").(*schema.Set).List())
+	if err != nil {
+		return err
+	}
+
+	trueValue := true
+	switch strings.ToLower(networkInterface) {
+	case "internal":
+		// default: no configuration is needed
+		network.OrgVDCNetwork.Configuration.SubInterface = nil
+	case "subinterface":
+		network.OrgVDCNetwork.Configuration.SubInterface = &trueValue
+	case "distributed":
+		network.OrgVDCNetwork.Configuration.DistributedInterface = &trueValue
+	}
+	network.OrgVDCNetwork.IsShared = isShared
+	network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].DNS1 = dns1
+	network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].DNS2 = dns2
+	network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].DNSSuffix = dnsSuffix
+	network.OrgVDCNetwork.Configuration.IPScopes.IPScope[0].IPRanges = &ipRanges
+
+	err = network.Update()
+	if err != nil {
+		return fmt.Errorf("[routed network update] error updating network %s: %s", network.OrgVDCNetwork.Name, err)
+	}
+	if d.HasChange("dhcp_pool") {
+		_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+		}
+		edgeGatewayName := d.Get("edge_gateway").(string)
+		edgeGateway, err := vdc.GetEdgeGatewayByName(edgeGatewayName, false)
+		if err != nil {
+			return fmt.Errorf(errorUnableToFindEdgeGateway, err)
+		}
+		if dhcp, ok := d.GetOk("dhcp_pool"); ok {
+			task, err := edgeGateway.AddDhcpPool(network.OrgVDCNetwork, dhcp.(*schema.Set).List())
+			if err != nil {
+				return fmt.Errorf("error updating DHCP pool: %s", err)
+			}
+
+			err = task.WaitTaskCompletion()
+			if err != nil {
+				return fmt.Errorf(errorCompletingTask, err)
+			}
+		}
+	}
+
+	return resourceVcdNetworkRoutedRead(d, meta)
 }
