@@ -1,4 +1,4 @@
---
+---
 layout: "vcd"
 page_title: "vCloudDirector: vcd_resource_list"
 sidebar_current: "docs-vcd-datasource-resource-list"
@@ -118,7 +118,7 @@ output "net_list" {
 
 // Uses the list of networks to get the data source of each
 data "vcd_network_routed" "full_networks" {
-  for_each = toset(data.vcd_resource_list.net_list.list)
+  for_each = toset(data.vcd_resource_list.list_of_nets.list)
   name     = each.value
   org      = "my-org"
   vdc      = "my-vdc"

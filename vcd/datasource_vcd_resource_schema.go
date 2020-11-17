@@ -95,7 +95,7 @@ func datasourceVcdResourceSchemaRead(d *schema.ResourceData, meta interface{}) e
 
 	d.SetId(d.Get("name").(string))
 
-	resource, ok := globalResourceMap[resourceType]
+	resource, ok := GlobalResourceMap[resourceType]
 	if !ok {
 		return fmt.Errorf("unhandled resource %s", resourceType)
 	}

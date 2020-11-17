@@ -1,4 +1,4 @@
---
+---
 layout: "vcd"
 page_title: "vCloudDirector: vcd_resource_schema"
 sidebar_current: "docs-vcd-datasource-resource-schema"

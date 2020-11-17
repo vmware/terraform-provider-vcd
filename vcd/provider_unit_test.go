@@ -125,7 +125,7 @@ func TestVcdResources(t *testing.T) {
 		{
 			name:    "GetAllResources",
 			args:    args{nameRegexp: "", includeDeprecated: true},
-			want:    globalResourceMap,
+			want:    GlobalResourceMap,
 			wantLen: len(Provider().Resources()),
 			wantErr: false,
 		},

@@ -18,7 +18,7 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
+		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
 			resource.TestStep{
