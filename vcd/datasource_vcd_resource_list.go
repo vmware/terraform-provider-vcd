@@ -469,6 +469,9 @@ func lbServiceMonitorList(d *schema.ResourceData, meta interface{}) (list []stri
 
 	var items []resourceRef
 	lbServiceMonitorList, err := edgeGateway.GetLbServiceMonitors()
+	if err != nil {
+		return list, fmt.Errorf("error retrieving LB service monitor list: %s ", err)
+	}
 	for _, sm := range lbServiceMonitorList {
 		items = append(items, resourceRef{
 			name: sm.Name,
@@ -487,6 +490,9 @@ func lbVirtualServerList(d *schema.ResourceData, meta interface{}) (list []strin
 	}
 	var items []resourceRef
 	lbVirtualServerList, err := edgeGateway.GetLbVirtualServers()
+	if err != nil {
+		return list, fmt.Errorf("error retrieving LB virtual server list: %s ", err)
+	}
 	for _, vs := range lbVirtualServerList {
 		items = append(items, resourceRef{
 			name: vs.Name,
@@ -505,6 +511,9 @@ func nsxvFirewallList(d *schema.ResourceData, meta interface{}) (list []string, 
 
 	var items []resourceRef
 	fwRuleList, err := edgeGateway.GetAllNsxvFirewallRules()
+	if err != nil {
+		return list, fmt.Errorf("error retrieving NSXV firewall rule list: %s ", err)
+	}
 	for _, fw := range fwRuleList {
 		items = append(items, resourceRef{
 			name: fw.Name,
@@ -523,6 +532,9 @@ func lbAppRuleList(d *schema.ResourceData, meta interface{}) (list []string, err
 
 	var items []resourceRef
 	ruleList, err := edgeGateway.GetLbAppRules()
+	if err != nil {
+		return list, fmt.Errorf("error retrieving LB app rule list: %s ", err)
+	}
 	for _, fw := range ruleList {
 		items = append(items, resourceRef{
 			name: fw.Name,
@@ -541,6 +553,9 @@ func lbAppProfileList(d *schema.ResourceData, meta interface{}) (list []string, 
 
 	var items []resourceRef
 	profiles, err := edgeGateway.GetLbAppProfiles()
+	if err != nil {
+		return list, fmt.Errorf("error retrieving LB app profile list: %s ", err)
+	}
 	for _, fw := range profiles {
 		items = append(items, resourceRef{
 			name: fw.Name,
@@ -559,6 +574,9 @@ func nsxvNatRuleList(natType string, d *schema.ResourceData, meta interface{}) (
 
 	var items []resourceRef
 	rules, err := edgeGateway.GetNsxvNatRules()
+	if err != nil {
+		return list, fmt.Errorf("error retrieving NSXV NAT rule list: %s ", err)
+	}
 	for _, rule := range rules {
 		if rule.Action == natType {
 			items = append(items, resourceRef{
