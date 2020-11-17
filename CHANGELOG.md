@@ -1,10 +1,5 @@
 ## 3.1.0 (Unreleased)
 
-FEATURES:
-
-**New Data source:** `vcd_info` info about vCD entities
-**New Data source:** `vcd_structure` definition of vCD resources structure
-
 ## 3.0.0 (October 16, 2020)
 
 FEATURES
