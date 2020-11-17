@@ -2,6 +2,7 @@ package vcd
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -589,12 +590,15 @@ func nsxvNatRuleList(natType string, d *schema.ResourceData, meta interface{}) (
 	return genericResourceList("vcd_lb_app_profile", listMode, separator, []string{orgName, vdcName, edgeGateway.EdgeGateway.Name}, items)
 }
 
-func getResourcesList() (list []string, err error) {
+func getResourcesList() ([]string, error) {
+	var list []string
 	resources := GlobalResourceMap
 	for resource := range resources {
 		list = append(list, resource)
 	}
-	return
+	// Returns the list of resources in alphabetical order, to keep a consistent state
+	sort.Strings(list)
+	return list, nil
 }
 
 func datasourceVcdResourceListRead(d *schema.ResourceData, meta interface{}) error {
@@ -636,9 +640,9 @@ func datasourceVcdResourceListRead(d *schema.ResourceData, meta interface{}) err
 		list, err = lbAppProfileList(d, meta)
 	case "vcd_nsxv_firewall_rule", "nsxv_firewall_rule":
 		list, err = nsxvFirewallList(d, meta)
-	case "vcd_nsxv_dnat_rule", "nsxv_dnat_rule":
+	case "vcd_nsxv_dnat", "nsxv_dnat":
 		list, err = nsxvNatRuleList("dnat", d, meta)
-	case "vcd_nsxv_snat_rule", "nsxv_snat_rule":
+	case "vcd_nsxv_snat", "nsxv_snat":
 		list, err = nsxvNatRuleList("snat", d, meta)
 	case "vcd_network_isolated", "vcd_network_direct", "vcd_network_routed",
 		"network", "networks", "network_direct", "network_routed", "network_isolated":
