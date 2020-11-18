@@ -43,6 +43,9 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 		case (dataSourceName == "vcd_nsxt_tier0_router" || dataSourceName == "vcd_external_network_v2" || dataSourceName == "vcd_nsxt_manager") &&
 			(testConfig.Nsxt.Manager == "" || testConfig.Nsxt.Tier0router == "") || !usingSysAdmin():
 			t.Skip(`No NSX-T configuration detected`)
+		// vcd_resource_list and vcd_resource_schema don't search for real entities
+		case dataSourceName == "vcd_resource_list" || dataSourceName == "vcd_resource_schema":
+			t.Skip(`not a real data source`)
 		}
 
 		// Get list of mandatory fields in schema for a particular data source
