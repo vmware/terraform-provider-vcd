@@ -1,8 +1,10 @@
 package vcd
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
@@ -52,7 +54,7 @@ func datasourceVcdResourceSchema() *schema.Resource {
 		},
 	}
 	return &schema.Resource{
-		Read: datasourceVcdResourceSchemaRead,
+		ReadContext: datasourceVcdResourceSchemaRead,
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
@@ -89,7 +91,7 @@ func datasourceVcdResourceSchema() *schema.Resource {
 	}
 }
 
-func datasourceVcdResourceSchemaRead(d *schema.ResourceData, meta interface{}) error {
+func datasourceVcdResourceSchemaRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	resourceType := d.Get("resource_type").(string)
 
@@ -97,7 +99,7 @@ func datasourceVcdResourceSchemaRead(d *schema.ResourceData, meta interface{}) e
 
 	resource, ok := GlobalResourceMap[resourceType]
 	if !ok {
-		return fmt.Errorf("unhandled resource %s", resourceType)
+		return diag.FromErr(fmt.Errorf("unhandled resource %s", resourceType))
 	}
 
 	attr := resource.CoreConfigSchema().Attributes
@@ -161,9 +163,13 @@ func datasourceVcdResourceSchemaRead(d *schema.ResourceData, meta interface{}) e
 	if len(blockData) > 0 {
 		err := d.Set("block_attributes", blockData)
 		if err != nil {
-			return err
+			return diag.FromErr(err)
 		}
 	}
 
-	return d.Set("attributes", data)
+	err := d.Set("attributes", data)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return diag.Diagnostics{}
 }
