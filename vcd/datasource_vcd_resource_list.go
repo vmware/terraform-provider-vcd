@@ -1,10 +1,12 @@
 package vcd
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
@@ -18,7 +20,7 @@ type resourceRef struct {
 
 func datasourceVcdResourceList() *schema.Resource {
 	return &schema.Resource{
-		Read: datasourceVcdResourceListRead,
+		ReadContext: datasourceVcdResourceListRead,
 		Schema: map[string]*schema.Schema{
 			"org": {
 				Type:     schema.TypeString,
@@ -174,7 +176,8 @@ func catalogList(d *schema.ResourceData, meta interface{}) (list []string, err e
 	return genericResourceList("vcd_catalog", listMode, nameIdSeparator, []string{org.AdminOrg.Name}, items)
 }
 
-func catalogItemList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+// catalogItemList finds either catalogItem or mediaItem
+func catalogItemList(d *schema.ResourceData, meta interface{}, wantMedia bool) (list []string, err error) {
 	client := meta.(*VCDClient)
 
 	listMode := d.Get("list_mode").(string)
@@ -194,12 +197,24 @@ func catalogItemList(d *schema.ResourceData, meta interface{}) (list []string, e
 	var items []resourceRef
 
 	for _, catalogItems := range catalog.Catalog.CatalogItems {
-		for _, catalogItem := range catalogItems.CatalogItem {
-			items = append(items, resourceRef{
-				name: catalogItem.Name,
-				id:   catalogItem.ID,
-				href: catalogItem.HREF,
-			})
+		for _, reference := range catalogItems.CatalogItem {
+			wanted := true
+			catalogItem, err := catalog.GetCatalogItemByHref(reference.HREF)
+			if err != nil {
+				return list, err
+			}
+			if catalogItem.CatalogItem.Entity.Type == "application/vnd.vmware.vcloud.media+xml" {
+				wanted = wantMedia
+			}
+
+			if wanted {
+				items = append(items, resourceRef{
+					name: reference.Name,
+					id:   reference.ID,
+					href: reference.HREF,
+				})
+			}
+
 		}
 	}
 	return genericResourceList("vcd_catalog_item", listMode, nameIdSeparator, []string{org.AdminOrg.Name, catalogName}, items)
@@ -292,8 +307,6 @@ func networkList(d *schema.ResourceData, meta interface{}) (list []string, err e
 			list = append(list, network.OrgVDCNetwork.Name+nameIdSeparator+network.OrgVDCNetwork.ID)
 		case "hierarchy":
 			list = append(list, org.Org.Name+nameIdSeparator+vdc.Vdc.Name+nameIdSeparator+network.OrgVDCNetwork.Name)
-		case "tree":
-			list = append(list, network.OrgVDCNetwork.Name+nameIdSeparator+network.OrgVDCNetwork.ID)
 		case "href":
 			list = append(list, network.OrgVDCNetwork.HREF)
 		case "import":
@@ -567,6 +580,35 @@ func lbAppProfileList(d *schema.ResourceData, meta interface{}) (list []string, 
 	return genericResourceList("vcd_lb_app_profile", listMode, separator, []string{orgName, vdcName, edgeGateway.EdgeGateway.Name}, items)
 }
 
+func ipsetList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+
+	client := meta.(*VCDClient)
+
+	listMode := d.Get("list_mode").(string)
+	nameIdSeparator := d.Get("name_id_separator").(string)
+	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
+	if err != nil {
+		return list, err
+	}
+
+	var items []resourceRef
+
+	ipSets, err := vdc.GetAllNsxvIpSets()
+	// we only fail on errors other than an empty list
+	if err != nil && !govcd.IsNotFound(err) {
+		return list, err
+	}
+
+	for _, ipSet := range ipSets {
+		items = append(items, resourceRef{
+			name: ipSet.Name,
+			id:   ipSet.ID,
+			href: "",
+		})
+	}
+	return genericResourceList("vcd_ipset", listMode, nameIdSeparator, []string{org.Org.Name, vdc.Vdc.Name}, items)
+}
+
 func nsxvNatRuleList(natType string, d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	orgName, vdcName, listMode, separator, edgeGateway, err := getEdgeGatewayDetails(d, meta)
 	if err != nil {
@@ -601,7 +643,7 @@ func getResourcesList() ([]string, error) {
 	return list, nil
 }
 
-func datasourceVcdResourceListRead(d *schema.ResourceData, meta interface{}) error {
+func datasourceVcdResourceListRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 
 	requested := d.Get("resource_type")
 	var err error
@@ -619,7 +661,9 @@ func datasourceVcdResourceListRead(d *schema.ResourceData, meta interface{}) err
 	case "vcd_catalog", "catalog", "catalogs":
 		list, err = catalogList(d, meta)
 	case "vcd_catalog_item", "catalog_item", "catalog_items", "catalogitem", "catalogitems":
-		list, err = catalogItemList(d, meta)
+		list, err = catalogItemList(d, meta, false)
+	case "vcd_catalog_media", "catalog_media", "media_items", "mediaitems", "mediaitem":
+		list, err = catalogItemList(d, meta, true)
 	case "vcd_vapp", "vapp", "vapps":
 		list, err = vappList(d, meta)
 	case "vcd_vapp_vm", "vapp_vm", "vapp_vms":
@@ -640,6 +684,8 @@ func datasourceVcdResourceListRead(d *schema.ResourceData, meta interface{}) err
 		list, err = lbAppProfileList(d, meta)
 	case "vcd_nsxv_firewall_rule", "nsxv_firewall_rule":
 		list, err = nsxvFirewallList(d, meta)
+	case "vcd_ipset", "ipset":
+		list, err = ipsetList(d, meta)
 	case "vcd_nsxv_dnat", "nsxv_dnat":
 		list, err = nsxvNatRuleList("dnat", d, meta)
 	case "vcd_nsxv_snat", "nsxv_snat":
@@ -650,25 +696,22 @@ func datasourceVcdResourceListRead(d *schema.ResourceData, meta interface{}) err
 
 		//// place holder to remind of what needs to be implemented
 		//	case "edgegateway_vpn",
-		//		"dnat", "snat",
-		//		"ipset",
 		//		"vapp_network",
 		//		"independent_disk",
-		//		"catalog_media",
 		//		"inserted_media":
 		//		list, err = []string{"not implemented yet"}, nil
 	default:
-		return fmt.Errorf("unhandled resource type '%s'", requested)
+		return diag.FromErr(fmt.Errorf("unhandled resource type '%s'", requested))
 	}
 
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	err = d.Set("list", list)
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 	d.SetId(d.Get("name").(string))
 
-	return nil
+	return diag.Diagnostics{}
 }
