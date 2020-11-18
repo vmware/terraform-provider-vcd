@@ -3,13 +3,27 @@
 package vcd
 
 import (
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"fmt"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 func TestAccVcdDatasourceResourceSchema(t *testing.T) {
 
-	configText := templateFill(testAccCheckVcdDatasourceStructure, StringMap{})
+	for name := range GlobalResourceMap {
+		t.Run(name, func(t *testing.T) { runResourceSchemaTest(name, t) })
+	}
+}
+
+func runResourceSchemaTest(name string, t *testing.T) {
+
+	var data = StringMap{
+		"ResName":  name,
+		"ResType":  name,
+		"FuncName": fmt.Sprintf("ResourceSchema-%s", name),
+	}
+	configText := templateFill(testAccCheckVcdDatasourceStructure, data)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -17,7 +31,7 @@ func TestAccVcdDatasourceResourceSchema(t *testing.T) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		Steps: []resource.TestStep{
@@ -25,7 +39,7 @@ func TestAccVcdDatasourceResourceSchema(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"data.vcd_resource_schema.struct_org", "name", "struct_org"),
+						"data.vcd_resource_schema."+name, "name", name),
 				),
 			},
 		},
@@ -33,12 +47,13 @@ func TestAccVcdDatasourceResourceSchema(t *testing.T) {
 }
 
 const testAccCheckVcdDatasourceStructure = `
-data "vcd_resource_schema" "struct_org" {
-  name          = "struct_org"
-  resource_type = "vcd_org"
+# skip-binary-test: plan would not work because of random field order
+data "vcd_resource_schema" "{{.ResName}}" {
+  name          = "{{.ResName}}"
+  resource_type = "{{.ResType}}"
 }
 
 output "resources" {
-  value = data.vcd_resource_schema.struct_org
+  value = data.vcd_resource_schema.{{.ResName}}
 }
 `

@@ -43,13 +43,16 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 		{"network_routed-parent", "vcd_network_routed", testConfig.VCD.Vdc},
 		{"network_direct", "vcd_network_direct", ""},
 		{"network_direct-parent", "vcd_network_direct", testConfig.VCD.Vdc},
+		{"ipset", "vcd_ipset", ""},
 		{"vapp", "vcd_vapp", ""},
 		{"vapp-parent", "vcd_vapp", testConfig.VCD.Vdc},
 
 		// test for VM requires a VApp as parent, which may not be guaranteed, as there is none in the config file
 		//{"vapp_vm", "vcd_vapp_vm", "TestVapp"},
 
+		// tests in this last group always require an explicit parent
 		{"catalog_item", "vcd_catalog_item", testConfig.VCD.Catalog.Name},
+		{"catalog_media", "vcd_catalog_media", testConfig.VCD.Catalog.Name},
 		{"nsxv_dnat", "vcd_nsxv_dnat", testConfig.Networking.EdgeGateway},
 		{"nsxv_snat", "vcd_nsxv_snat", testConfig.Networking.EdgeGateway},
 		{"nsxv_firewall_rule", "vcd_nsxv_firewall_rule", testConfig.Networking.EdgeGateway},
