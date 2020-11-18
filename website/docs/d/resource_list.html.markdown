@@ -10,7 +10,7 @@ description: |-
 
 Provides a vCloud Director generic data source. It provides a list of existing resources in various formats.
 
-Supported in provider *v2.7+*
+Supported in provider *v3.1+*
 
 ## Example Usage 1
 
@@ -118,14 +118,31 @@ output "net_list" {
 
 // Uses the list of networks to get the data source of each
 data "vcd_network_routed" "full_networks" {
-  for_each = toset(data.vcd_resource_list.list_of_nets.list)
-  name     = each.value
-  org      = "my-org"
-  vdc      = "my-vdc"
+  count = length(data.vcd_resource_list.list_of_nets.list)
+  name     = data.vcd_resource_list.list_of_nets.list[count.index]
+  org      = "datacloud"
+  vdc      = "vdc-datacloud"
+}
+
+output "net" {
+    value = data.vcd_network_routed.full_networks
+}
+
+// creates a new resource for each data source
+resource "vcd_network_routed" "new_net" {
+  count        = length(data.vcd_network_routed.full_networks)
+  name         = "${data.vcd_network_routed.full_networks[count.index].name}-2"
+  edge_gateway = "${data.vcd_network_routed.full_networks[count.index].edge_gateway}"
+  gateway      = "192.168.${count.index+10}.1"
+
+  static_ip_pool {
+    start_address = "10.10.${count.index+10}.152"
+    end_address   = "10.10.${count.index+10}.254"
+  }
 }
 /* 
-full_networks = {
-  "net-datacloud-r  urn:vcloud:network:04915abf-0c91-4919-878e-0f292e032e2b" = {
+full_networks = [
+  {
     "description" = "net-datacloud-r"
     "dhcp_pool" = []
     "dns1" = "8.8.8.8"
@@ -147,7 +164,7 @@ full_networks = {
     ]
     "vdc" = "vdc-datacloud"
   }
-  "net-datacloud-r2  urn:vcloud:network:2cc713b1-134f-4f21-9208-79f1e4f3ee36" = {
+  {
     "description" = ""
     "dhcp_pool" = []
     "dns1" = ""
@@ -169,7 +186,7 @@ full_networks = {
     ]
     "vdc" = "vdc-datacloud"
   }
-}
+]
 */
 ```
 
@@ -203,8 +220,7 @@ The following arguments are supported:
     * `hierarchy`: All the ancestor names (if any) followed by the resource name, separated by `name_id_separator`
     * `import`: A terraform client command to import the resource
 * `name_id_separator` (Optional) A string separating name and ID in the list. Default is "  " (two spaces)
-* `parent` (Optional) The resource parent, such as "vapp" or "catalog", when needed. If not provided, all available
-resources will be listed. E.g.: for a "vm", if no vApp name is provided as parent, all VMs are listed.
+* `parent` (Optional) The resource parent, such as vApp, catalog, or edge gateway name, when needed. 
 
 ## Attribute Reference
 

@@ -10,7 +10,7 @@ description: |-
 
 Provides a vCloud Director generic structure data source. It shows the structure of any vCD resource.
 
-Supported in provider *v2.7+*
+Supported in provider *v3.1+*
 
 ## Example Usage 1
 
