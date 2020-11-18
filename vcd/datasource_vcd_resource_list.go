@@ -91,7 +91,7 @@ func orgList(d *schema.ResourceData, meta interface{}) (list []string, err error
 
 	listMode := d.Get("list_mode").(string)
 	nameIdSeparator := d.Get("name_id_separator").(string)
-	orgList, err := GetOrgList(client.VCDClient)
+	orgList, err := client.VCDClient.GetOrgList()
 	if err != nil {
 		return list, err
 	}
@@ -334,7 +334,7 @@ func edgeGatewayList(d *schema.ResourceData, meta interface{}) (list []string, e
 	}
 
 	var items []resourceRef
-	edgeGatewayList, err := GetEdgeGatewayRecordsType(&client.Client, vdc, false)
+	edgeGatewayList, err := vdc.GetEdgeGatewayRecordsType(false)
 	if err != nil {
 		return list, err
 	}
