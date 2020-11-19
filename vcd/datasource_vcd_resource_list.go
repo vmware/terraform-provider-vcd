@@ -120,6 +120,9 @@ func orgList(d *schema.ResourceData, meta interface{}) (list []string, err error
 func externalNetworkList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
 
+	if !client.VCDClient.Client.IsSysAdmin {
+		return []string{}, nil
+	}
 	listMode := d.Get("list_mode").(string)
 	nameIdSeparator := d.Get("name_id_separator").(string)
 	externalNetworks, err := client.GetExternalNetworks()
@@ -289,7 +292,7 @@ func networkList(d *schema.ResourceData, meta interface{}) (list []string, err e
 		}
 		resourceName := "network"
 		if wantedType != "network" {
-			resourceName = "network_" + networkType
+			resourceName = "vcd_network_" + networkType
 		}
 		if wantedType != resourceName {
 			continue
