@@ -634,7 +634,7 @@ func nsxvNatRuleList(natType string, d *schema.ResourceData, meta interface{}) (
 
 func getResourcesList() ([]string, error) {
 	var list []string
-	resources := GlobalResourceMap
+	resources := globalResourceMap
 	for resource := range resources {
 		list = append(list, resource)
 	}

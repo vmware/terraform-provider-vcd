@@ -25,7 +25,7 @@ func DataSources(nameRegexp string, includeDeprecated bool) (map[string]*schema.
 // When 'nameRegexp' is not empty - it will return only those matching the regexp
 // When 'includeDeprecated' is false - it will skip out the resources which have a DeprecationMessage set
 func Resources(nameRegexp string, includeDeprecated bool) (map[string]*schema.Resource, error) {
-	return vcdSchemaFilter(GlobalResourceMap, nameRegexp, includeDeprecated)
+	return vcdSchemaFilter(globalResourceMap, nameRegexp, includeDeprecated)
 }
 
 var globalDataSourceMap = map[string]*schema.Resource{
@@ -66,7 +66,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_resource_schema":     datasourceVcdResourceSchema(),    // 3.1
 }
 
-var GlobalResourceMap = map[string]*schema.Resource{
+var globalResourceMap = map[string]*schema.Resource{
 
 	"vcd_network_routed":       resourceVcdNetworkRouted(),            // 2.0
 	"vcd_network_direct":       resourceVcdNetworkDirect(),            // 2.0
@@ -208,7 +208,7 @@ func Provider() *schema.Provider {
 				Description: "Defines the import separation string to be used with 'terraform import'",
 			},
 		},
-		ResourcesMap:   GlobalResourceMap,
+		ResourcesMap:   globalResourceMap,
 		DataSourcesMap: globalDataSourceMap,
 		ConfigureFunc:  providerConfigure,
 	}
