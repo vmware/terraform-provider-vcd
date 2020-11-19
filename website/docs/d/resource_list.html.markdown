@@ -21,7 +21,7 @@ data "vcd_resource_list" "list_of_orgs" {
   list_mode     = "name"
 }
 
-// Shows the list of organizations
+# Shows the list of organizations
 output "org_list" {
   value = data.vcd_resource_list.list_of_orgs.list
 }
@@ -43,7 +43,7 @@ data "vcd_resource_list" "list_of_orgs" {
   list_mode     = "name_id"
 }
 
-// Shows the list of organizations with the corresponding ID
+# Shows the list of organizations with the corresponding ID
 output "org_list" {
   value = data.vcd_resource_list.list_of_orgs.list
 }
@@ -60,11 +60,11 @@ output:
 ```hcl
 data "vcd_resource_list" "list_of_nets" {
   name          = "list_of_nets"
-  resource_type = "network" // Finds all networks, regardless of their type
+  resource_type = "network" # Finds all networks, regardless of their type
   list_mode     = "import"
 }
 
-// Shows the list of all networks with the corresponding import command
+# Shows the list of all networks with the corresponding import command
 output "net_list" {
   value = data.vcd_resource_list.list_of_nets.list
 }
@@ -83,11 +83,11 @@ list_networks_import = [
 ```hcl
 data "vcd_resource_list" "list_network_hierarchy" {
   name          = "list_of_nets"
-  resource_type = "network" // Finds all networks, regardless of their type
+  resource_type = "network" # Finds all networks, regardless of their type
   list_mode     = "hierarchy"
 }
 
-// Shows the list of all networks with their parent entities
+# Shows the list of all networks with their parent entities
 output "net_network_hierarchy" {
   value = data.vcd_resource_list.list_network_hierarchy.list
 }
@@ -111,12 +111,12 @@ data "vcd_resource_list" "list_of_nets" {
   list_mode     = "name"
 }
 
-// Shows the list of routed networks
+# Shows the list of routed networks
 output "net_list" {
   value = data.vcd_resource_list.list_of_nets.list
 }
 
-// Uses the list of networks to get the data source of each
+# Uses the list of networks to get the data source of each
 data "vcd_network_routed" "full_networks" {
   count = length(data.vcd_resource_list.list_of_nets.list)
   name     = data.vcd_resource_list.list_of_nets.list[count.index]
@@ -128,7 +128,7 @@ output "net" {
     value = data.vcd_network_routed.full_networks
 }
 
-// creates a new resource for each data source
+# creates a new resource for each data source
 resource "vcd_network_routed" "new_net" {
   count        = length(data.vcd_network_routed.full_networks)
   name         = "${data.vcd_network_routed.full_networks[count.index].name}-2"
@@ -198,9 +198,49 @@ data "vcd_resource_list" "list_of_resources" {
   resource_type = "resources"
 }
 
-// Shows the list of resource types for VCD provider
+# Shows the list of resource types for VCD provider
 output "resource_list" {
   value = data.vcd_resource_list.list_of_resources.list
+}
+```
+
+
+## Example Usage 7
+```hcl
+data "vcd_resource_list" "list_catalog_items" {
+  name          = "list_of_catalog_items"
+  resource_type = "vcd_catalog_item" 
+  parent        = "cat-datacloud"      # name of the catalog to be listed
+  list_mode     = "name"
+}
+
+# Shows the list of all catalog items
+output "catalog_items" {
+  value = data.vcd_resource_list.list_of_catalog_items.list
+}
+
+/*
+output: 
+catalog_items = [
+  "photon-hw11",
+  "Linux1",
+  "debian-7",
+]
+*/
+```
+
+## Example Usage 8
+```hcl
+data "vcd_resource_list" "list_lb_virtual_servers" {
+  name          = "list_of_virtual_servers"
+  resource_type = "vcd_lb_virtual_server" 
+  parent        = "gw-datacloud"      # name of the edge gateway to be listed
+  list_mode     = "name"
+}
+
+# Shows the list of all LB virtual servers
+output "lb_virtual_servers" {
+  value = data.vcd_resource_list.list_lb_virtual_servers.list
 }
 ```
 
