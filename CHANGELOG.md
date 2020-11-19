@@ -1,5 +1,7 @@
 ## 3.1.0 (Unreleased)
 
+Changes in progress for v3.1.0 are available at [.changes/v3.1.0](https://github.com/vmware/terraform-provider-vcd/tree/master/.changes/v3.1.0) until the release.
+
 ## 3.0.0 (October 16, 2020)
 
 FEATURES
@@ -178,7 +180,6 @@ NOTES:
   data races. Additionally GNUMakefile supports `make installrace` and `make buildrace` to build
   binary with race detection enabled. ([#453](https://github.com/vmware/terraform-provider-vcd/issues/453))
 * Add `make test-upgrade-prepare` directive ([#462](https://github.com/vmware/terraform-provider-vcd/issues/462))
->>>>>>> master
 
 ## 2.6.0 (December 13, 2019)
 
