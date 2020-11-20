@@ -251,7 +251,30 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to use, optional if defined at provider level
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 * `name` - (Required) An unique name to identify the data source
-* `resource_type` (Required) Which resource we want to list
+* `resource_type` (Required) Which resource we want to list. Supported keywords are:
+    * `resources`  (list the resource types in the provider)
+    * `vcd_org`
+    * `vcd_external_network`
+    * `vcd_org_vdc`
+    * `vcd_catalog`
+    * `vcd_catalog_item`
+    * `vcd_catalog_media`
+    * `vcd_vapp`
+    * `vcd_vapp_vm`
+    * `vcd_org_user`
+    * `vcd_edgegateway`
+    * `vcd_lb_server_pool`
+    * `vcd_lb_service_monitor`
+    * `vcd_lb_virtual_server`
+    * `vcd_lb_app_rule`
+    * `vcd_lb_app_profile`
+    * `vcd_nsxv_firewall_rule`
+    * `vcd_ipset`
+    * `vcd_nsxv_dnat`
+    * `vcd_nsxv_snat`
+    * `vcd_network_isolated`
+    * `vcd_network_direct`
+    * `vcd_network_routed`,
 * `list_mode` (Optional) How the list should be built. One of:
     * `name` (default): Only the resource name
     * `id`: Only the resource ID
