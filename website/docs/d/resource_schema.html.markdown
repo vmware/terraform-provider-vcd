@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_resource_schema
 
-Provides a vCloud Director generic structure data source. It shows the structure of any vCD resource.
+Provides a vCloud Director generic structure data source. It shows the structure of any VCD resource.
 
 Supported in provider *v3.1+*
 

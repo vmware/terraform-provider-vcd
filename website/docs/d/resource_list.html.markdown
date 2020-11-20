@@ -3,16 +3,20 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_resource_list"
 sidebar_current: "docs-vcd-datasource-resource-list"
 description: |-
-  Provides lists of vCD resources
+  Provides lists of VCD resources
 ---
 
 # vcd\_resource_list
 
 Provides a vCloud Director generic data source. It provides a list of existing resources in various formats.
+Some of these lists are only informative (i.e. users will look at them to get general information about the existing
+resources) and some are usable directly from Terraform, where the list can be re-used to create data sources, and the
+data sources in turn can help generate more resources. 
+The data created by this data source can also be reused by third party tools to create more complex tasks.
 
 Supported in provider *v3.1+*
 
-## Example Usage 1
+## Example 1 - List of organizations - name
 
 ```hcl
 data "vcd_resource_list" "list_of_orgs" {
@@ -34,7 +38,7 @@ output:
 */
 ```
 
-## Example Usage 2
+## Example 2 - List of organizations - name and ID
 
 ```hcl
 data "vcd_resource_list" "list_of_orgs" {
@@ -56,7 +60,8 @@ output:
 */
 ```
 
-## Example Usage 3
+## Example 3 - List of network s - output import
+
 ```hcl
 data "vcd_resource_list" "list_of_nets" {
   name          = "list_of_nets"
@@ -79,7 +84,8 @@ list_networks_import = [
 */
 ```
 
-## Example Usage 4
+## Example 4 - List of networks - hierarchy
+
 ```hcl
 data "vcd_resource_list" "list_network_hierarchy" {
   name          = "list_of_nets"
@@ -103,7 +109,8 @@ list_networks_hierarchy = [
 */
 ```
 
-## Example Usage 5
+## Example 5 - Data sources from list of networks - cascade to new networks
+
 ```hcl
 data "vcd_resource_list" "list_of_nets" {
   name          = "list_of_nets"
@@ -190,7 +197,7 @@ full_networks = [
 */
 ```
 
-## Example Usage 6
+## Example 6 - List of resources
 
 ```hcl
 data "vcd_resource_list" "list_of_resources" {
@@ -205,7 +212,8 @@ output "resource_list" {
 ```
 
 
-## Example Usage 7
+## Example 7 - List of catalog items
+
 ```hcl
 data "vcd_resource_list" "list_catalog_items" {
   name          = "list_of_catalog_items"
@@ -229,7 +237,8 @@ catalog_items = [
 */
 ```
 
-## Example Usage 8
+## Example 8 - List of LB virtual servers
+
 ```hcl
 data "vcd_resource_list" "list_lb_virtual_servers" {
   name          = "list_of_virtual_servers"
