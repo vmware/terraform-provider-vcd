@@ -91,11 +91,11 @@ func runResourceInfoTest(def listDef, t *testing.T) {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	if !usingSysAdmin() && (def.resourceType == "vcd_external_network") {
-		def.knownItem = ""
+		t.Skip("test with external network requires system administrator privileges")
 	}
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	// networks aren't in the configuration file, but we can easily search for existing ones
 	if strings.HasPrefix(def.resourceType, "vcd_network") {

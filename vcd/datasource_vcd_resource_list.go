@@ -121,7 +121,7 @@ func externalNetworkList(d *schema.ResourceData, meta interface{}) (list []strin
 	client := meta.(*VCDClient)
 
 	if !client.VCDClient.Client.IsSysAdmin {
-		return []string{}, nil
+		return []string{}, fmt.Errorf("external network list requires system administrator privileges")
 	}
 	listMode := d.Get("list_mode").(string)
 	nameIdSeparator := d.Get("name_id_separator").(string)
