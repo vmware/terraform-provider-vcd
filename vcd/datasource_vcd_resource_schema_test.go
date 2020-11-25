@@ -47,7 +47,6 @@ func runResourceSchemaTest(name string, t *testing.T) {
 }
 
 const testAccCheckVcdDatasourceStructure = `
-# skip-binary-test: plan would not work because of random field order
 data "vcd_resource_schema" "{{.ResName}}" {
   name          = "{{.ResName}}"
   resource_type = "{{.ResType}}"

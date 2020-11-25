@@ -10,7 +10,7 @@ import (
 
 func datasourceVcdResourceSchema() *schema.Resource {
 	Attribute := schema.Schema{
-		Type:        schema.TypeList,
+		Type:        schema.TypeSet,
 		Computed:    true,
 		Description: "Attributes of the resource",
 		Elem: &schema.Resource{
@@ -69,7 +69,7 @@ func datasourceVcdResourceSchema() *schema.Resource {
 			"attributes": &Attribute,
 			"block_attributes": &schema.Schema{
 				Computed: true,
-				Type:     schema.TypeList,
+				Type:     schema.TypeSet,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": &schema.Schema{
