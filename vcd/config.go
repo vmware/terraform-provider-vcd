@@ -278,6 +278,29 @@ func (cli *VCDClient) getVdcName(d *schema.ResourceData) string {
 	return orgName
 }
 
+// // getVdc finds a pair of org and vdc using the names provided
+// // in the args. If the names are empty, it will use the default
+// // org and vdc names from the provider.
+// func (cli *VCDClient) getVdc(orgName, vdcName string) (vdc *govcd.Vdc, err error) {
+//
+// 	if vdcName == "" {
+// 		vdcName = cli.Vdc
+// 	}
+//
+// 	if vdcName == "" {
+// 		return nil, fmt.Errorf("empty VDC name provided")
+// 	}
+//
+// 	vdc, err = cli.GetOrgAndVdc(orgName, vdcName)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("error retrieving VDC %s: %s", vdcName, err)
+// 	}
+// 	if vdc == nil || vdc.Vdc.ID == "" || vdc.Vdc.HREF == "" || vdc.Vdc.Name == "" {
+// 		return nil, fmt.Errorf("error retrieving VDC %s: not found", vdcName)
+// 	}
+// 	return vdc, err
+// }
+
 // GetOrgAndVdc finds a pair of org and vdc using the names provided
 // in the args. If the names are empty, it will use the default
 // org and vdc names from the provider.

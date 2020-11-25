@@ -119,9 +119,11 @@ type TestConfig struct {
 		} `json:"peer"`
 	} `json:"networking"`
 	Nsxt struct {
-		Manager        string `json:"manager"`
-		Tier0router    string `json:"tier0router"`
-		Tier0routerVrf string `json:"tier0routervrf"`
+		Manager         string `json:"manager"`
+		Tier0router     string `json:"tier0router"`
+		Tier0routerVrf  string `json:"tier0routervrf"`
+		Vdc             string `json:"vdc"`
+		ExternalNetwork string `json:"externalNetwork"`
 	} `json:"nsxt"`
 	Logging struct {
 		Enabled         bool   `json:"enabled,omitempty"`
@@ -907,6 +909,20 @@ func importStateIdOrgVdcObject(vcd TestConfig, objectName string) resource.Impor
 		return testConfig.VCD.Org +
 			ImportSeparator +
 			testConfig.VCD.Vdc +
+			ImportSeparator +
+			objectName, nil
+	}
+}
+
+// Used by all entities that depend on Org + NSX-T VDC (such as Vapp, networks, edge gateway)
+func importStateIdOrgNsxtVdcObject(vcd TestConfig, objectName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		if testConfig.VCD.Org == "" || testConfig.Nsxt.Vdc == "" || objectName == "" {
+			return "", fmt.Errorf("missing information to generate import path")
+		}
+		return testConfig.VCD.Org +
+			ImportSeparator +
+			testConfig.Nsxt.Vdc +
 			ImportSeparator +
 			objectName, nil
 	}
