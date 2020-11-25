@@ -329,7 +329,7 @@ func getNsxtEdgeGatewayUplinksType(d *schema.ResourceData) []types.OpenAPIEdgeGa
 	// first item in JSON list therefore if `primary_ip` was specified one must shuffle slice elements so that the one
 	// with primary_ip is first.
 	// The order does not really matter for Terraform schema as TypeSet is used, but user must get expected primary_ip.
-	if isPrimaryIpSet == true {
+	if isPrimaryIpSet {
 		subnetZero := subnetSlice[0]
 		subnetSlice[0] = subnetSlice[primaryIpIndex]
 		subnetSlice[primaryIpIndex] = subnetZero
