@@ -29,6 +29,8 @@ data "vcd_resource_list" "list_of_orgs" {
 output "org_list" {
   value = data.vcd_resource_list.list_of_orgs.list
 }
+```
+```
 /* 
 output:
   "org_list" = [
@@ -51,6 +53,8 @@ data "vcd_resource_list" "list_of_orgs" {
 output "org_list" {
   value = data.vcd_resource_list.list_of_orgs.list
 }
+```
+```
 /* 
 output:
   "org_list" = [
@@ -60,7 +64,7 @@ output:
 */
 ```
 
-## Example 3 - List of network s - output import
+## Example 3 - List of networks - output import
 
 ```hcl
 data "vcd_resource_list" "list_of_nets" {
@@ -74,6 +78,8 @@ output "net_list" {
   value = data.vcd_resource_list.list_of_nets.list
 }
 
+```
+```
 /*
 output: 
 list_networks_import = [
@@ -98,6 +104,8 @@ output "net_network_hierarchy" {
   value = data.vcd_resource_list.list_network_hierarchy.list
 }
 
+```
+```
 /*
 output: 
 list_networks_hierarchy = [
@@ -147,6 +155,8 @@ resource "vcd_network_routed" "new_net" {
     end_address   = "10.10.${count.index+10}.254"
   }
 }
+```
+```
 /* 
 full_networks = [
   {
@@ -227,6 +237,8 @@ output "catalog_items" {
   value = data.vcd_resource_list.list_of_catalog_items.list
 }
 
+```
+```
 /*
 output: 
 catalog_items = [
