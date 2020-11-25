@@ -58,6 +58,16 @@ To add filtering for a new data source:
 
 5. Extend the test `TestAccSearchEngine` in `datasource_filter_test.go` to include the new type.
 
+
+## Listings
+
+Every new **resource** needs to have a listing function, to be added in `datasource_vcd_resource_list`, so that we can
+return a list of such resource entities.
+See `externalNetworkList`, `networkList`, and `lb{ServerPool|ServiceMonitor|VirtualServer}List` for examples.
+
+Once the listing function is ready, we need to add one `case` item to `datasourceVcdResourceListRead` and the name of
+the resource in the documentation (`website/docs/d/resource_list.html.markdown`)
+
 ## Testing
 
 Every feature in the provider must include testing. See
