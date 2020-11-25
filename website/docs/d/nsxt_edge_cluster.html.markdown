@@ -14,7 +14,7 @@ Supported in provider *v3.1+*
 
 ~> **Note:** This resource uses new VMware Cloud Director
 [OpenAPI](https://code.vmware.com/docs/11982/getting-started-with-vmware-cloud-director-openapi) and
-requires at least VCD *10.1.1+* and NSX-T *3.1+*.
+requires at least VCD *10.1.1+* and NSX-T.
 
 ## Example Usage 
 

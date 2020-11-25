@@ -24,27 +24,27 @@ func datasourceVcdNsxtEdgeCluster() *schema.Resource {
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Name of NSX-T Edge Cluster.",
+				Description: "Name of NSX-T Edge Cluster",
 			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Description of NSX-T Edge Cluster.",
+				Description: "Description of NSX-T Edge Cluster",
 			},
 			"node_count": &schema.Schema{
 				Type:        schema.TypeInt,
 				Computed:    true,
-				Description: "Number of nodes in NSX-T Edge Cluster.",
+				Description: "Number of nodes in NSX-T Edge Cluster",
 			},
 			"node_type": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Node type of NSX-T Edge Cluster.",
+				Description: "Node type of NSX-T Edge Cluster",
 			},
 			"deployment_type": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Deployment type of NSX-T Edge Cluster.",
+				Description: "Deployment type of NSX-T Edge Cluster",
 			},
 		},
 	}
@@ -61,7 +61,7 @@ func datasourceNsxtEdgeCluster(d *schema.ResourceData, meta interface{}) error {
 
 	nsxtEdgeCluster, err := vdc.GetNsxtEdgeClusterByName(nsxtEdgeClusterName)
 	if err != nil {
-		return fmt.Errorf("could not find NSX-T edge cluster by name '%s': %s", nsxtEdgeClusterName, err)
+		return fmt.Errorf("could not find NSX-T Edge Cluster by name '%s': %s", nsxtEdgeClusterName, err)
 	}
 
 	_ = d.Set("description", nsxtEdgeCluster.NsxtEdgeCluster.Description)
@@ -69,12 +69,6 @@ func datasourceNsxtEdgeCluster(d *schema.ResourceData, meta interface{}) error {
 	_ = d.Set("node_type", nsxtEdgeCluster.NsxtEdgeCluster.NodeType)
 	_ = d.Set("deployment_type", nsxtEdgeCluster.NsxtEdgeCluster.DeploymentType)
 
-	// // We try to keep IDs clean
-	// id := extractUuid(nsxtManagers[0].HREF)
-	// urn, err := govcd.BuildUrnWithUuid("urn:vcloud:nsxtmanager:", id)
-	// if err != nil {
-	// 	return fmt.Errorf("could not construct URN from id '%s': %s", id, err)
-	// }
 	d.SetId(nsxtEdgeCluster.NsxtEdgeCluster.ID)
 
 	return nil

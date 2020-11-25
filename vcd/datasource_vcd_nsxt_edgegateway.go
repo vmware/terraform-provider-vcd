@@ -1,12 +1,17 @@
 package vcd
 
 import (
+	"context"
+	"fmt"
+	"log"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 	return &schema.Resource{
-		Read: resourceVcdNsxtEdgeGatewayRead,
+		ReadContext: datasourceVcdNsxtEdgeGatewayRead,
 		Schema: map[string]*schema.Schema{
 			"org": &schema.Schema{
 				Type:     schema.TypeString,
@@ -43,7 +48,7 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 			},
 			"subnet": {
 				Description: "One or more blocks with external network information to be attached to this gateway's interface",
-				Required:    true,
+				Computed:    true,
 				Type:        schema.TypeSet,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -99,4 +104,29 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 			},
 		},
 	}
+}
+
+func datasourceVcdNsxtEdgeGatewayRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	log.Printf("[TRACE] NSX-T edge gateway datasource read initiated")
+
+	vcdClient := meta.(*VCDClient)
+
+	org, _, err := vcdClient.GetOrgAndVdcFromResource(d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("error retrieving Org: %s", err))
+	}
+
+	edge, err := org.GetNsxtEdgeGatewayByName(d.Get("name").(string))
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("could not retrieve NSX-T edge gateway: %s", err))
+	}
+
+	err = setNsxtEdgeGatewayData(edge.EdgeGateway, d)
+	if err != nil {
+		return diag.FromErr(fmt.Errorf("error reading NSX-T edge gateway data: %s", err))
+	}
+
+	d.SetId(edge.EdgeGateway.ID)
+
+	return nil
 }

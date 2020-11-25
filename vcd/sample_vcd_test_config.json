@@ -93,9 +93,16 @@
     "externalNetworkPortGroupType": "DV_PORTGROUP"
   },
   "nsxt": {
+    "//": "NSX-T manager name to be used as defined in VCD",
     "manager": "nsxManager1",
+    "//": "NSX-T tier-0 router used for external network tests",
     "tier0router": "tier-0-2",
-    "tier0routervrf": "tier-0-2"
+    "//": "NSX-T tier-0 VRF router used for external network tests",
+    "tier0routervrf": "tier-0-2",
+    "//": "Existing External Network with correct configuration",
+    "externalNetwork": "tier-0-backed-external-network",
+    "//": "Existing NSX-T based VDC",
+    "vdc": "nsxt-vdc-dainius"
   },
   "logging" : {
     "//": "Enables logging from go-vcloud-director in vendor",

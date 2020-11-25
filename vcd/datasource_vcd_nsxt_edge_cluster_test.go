@@ -1,4 +1,4 @@
-// +build functional  ALL
+// +build functional nsxt ALL
 
 package vcd
 
@@ -26,8 +26,13 @@ func TestAccVcdNsxtEdgeCluster(t *testing.T) {
 	}
 
 	edgeClusters, err := vdc.GetAllNsxtEdgeClusters(nil)
+	if err != nil {
+		t.Errorf("got error retrieving Edge Clusters: %s", err)
+		t.FailNow()
+	}
 	if len(edgeClusters) < 1 {
 		t.Errorf("no edge clusters found")
+		t.FailNow()
 	}
 
 	var params = StringMap{
@@ -55,7 +60,6 @@ func TestAccVcdNsxtEdgeCluster(t *testing.T) {
 					// Check if result is UUID (e.g. 6c188839-ba06-4ceb-8255-2622fe69ce7c)
 					resource.TestMatchResourceAttr(datasourceName, "id", regexp.MustCompile(`^[a-zA-Z0-9-_]{36}$`)),
 					resource.TestCheckResourceAttr(datasourceName, "name", edgeClusters[0].NsxtEdgeCluster.Name),
-					// resource.TestCheckResourceAttrSet(datasourceName, "description"),
 					resource.TestCheckResourceAttrSet(datasourceName, "node_count"),
 					resource.TestCheckResourceAttrSet(datasourceName, "node_type"),
 					resource.TestCheckResourceAttrSet(datasourceName, "deployment_type"),
