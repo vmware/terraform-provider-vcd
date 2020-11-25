@@ -92,6 +92,10 @@ func minIfLess(min, value int) int {
 // TestAccClientUserAgent ensures that client initialization config.Client() used by provider initializes
 // go-vcloud-director client by having User-Agent set
 func TestAccClientUserAgent(t *testing.T) {
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	clientConfig := Config{
 		User:            testConfig.Provider.User,
 		Password:        testConfig.Provider.Password,

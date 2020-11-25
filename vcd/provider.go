@@ -62,6 +62,8 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_tier0_router":   datasourceVcdNsxtTier0Router(),   // 3.0
 	"vcd_portgroup":           datasourceVcdPortgroup(),         // 3.0
 	"vcd_vcenter":             datasourceVcdVcenter(),           // 3.0
+	"vcd_resource_list":       datasourceVcdResourceList(),      // 3.1
+	"vcd_resource_schema":     datasourceVcdResourceSchema(),    // 3.1
 }
 
 var globalResourceMap = map[string]*schema.Resource{
