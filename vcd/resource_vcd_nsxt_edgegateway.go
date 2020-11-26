@@ -189,12 +189,12 @@ func resourceVcdNsxtEdgeGatewayRead(ctx context.Context, d *schema.ResourceData,
 
 	vcdClient := meta.(*VCDClient)
 
-	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error getting adminOrg: %s", err))
+		return diag.FromErr(fmt.Errorf("error retrieving VDC: %s", err))
 	}
 
-	edge, err := adminOrg.GetNsxtEdgeGatewayById(d.Id())
+	edge, err := vdc.GetNsxtEdgeGatewayById(d.Id())
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("could not retrieve NSX-T edge gateway: %s", err))
 	}
@@ -211,13 +211,12 @@ func resourceVcdNsxtEdgeGatewayDelete(ctx context.Context, d *schema.ResourceDat
 	log.Printf("[TRACE] edge gateway deletion initiated")
 
 	vcdClient := meta.(*VCDClient)
-
-	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return diag.FromErr(fmt.Errorf("error getting adminOrg: %s", err))
+		return diag.FromErr(fmt.Errorf("error retrieving VDC: %s", err))
 	}
 
-	edge, err := adminOrg.GetNsxtEdgeGatewayById(d.Id())
+	edge, err := vdc.GetNsxtEdgeGatewayById(d.Id())
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("could not retrieve NSX-T edge gateway: %s", err))
 	}
@@ -241,12 +240,13 @@ func resourceVcdNsxtEdgeGatewayImport(ctx context.Context, d *schema.ResourceDat
 	orgName, vdcName, edgeName := resourceURI[0], resourceURI[1], resourceURI[2]
 
 	vcdClient := meta.(*VCDClient)
-	adminOrg, err := vcdClient.GetAdminOrg(orgName)
+
+	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if err != nil {
-		return nil, fmt.Errorf("unable to find org %s: %s", orgName, err)
+		return nil, fmt.Errorf("unable to find org %s: %s", vdcName, err)
 	}
 
-	edge, err := adminOrg.GetNsxtEdgeGatewayByName(edgeName)
+	edge, err := vdc.GetNsxtEdgeGatewayByName(edgeName)
 	if err != nil {
 		return nil, fmt.Errorf("could not retrieve NSX-T edge gateway with ID '%s': %s", d.Id(), err)
 	}
@@ -269,8 +269,6 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vdc *govcd.Vdc) (*types.Open
 			Subnets:   types.OpenAPIEdgeGatewaySubnets{getNsxtEdgeGatewayUplinksType(d)},
 			Dedicated: d.Get("dedicate_external_network").(bool),
 		}},
-		// OrgVdcNetworkCount:        0,
-		// OpenAPIEdgeGatewayBacking: types.OpenAPIEdgeGatewayBacking{},
 		OrgVdc: &types.OpenApiReference{
 			ID: vdc.Vdc.ID,
 		},
@@ -319,8 +317,8 @@ func getNsxtEdgeGatewayUplinksType(d *schema.ResourceData) []types.OpenAPIEdgeGa
 	}
 
 	// VCD API is very odd in how it assigns primary_ip. The defined subnet having primary_ip must be sent to API as
-	// first item in JSON list therefore if `primary_ip` was specified one must shuffle slice elements so that the one
-	// with primary_ip is first.
+	// first item in JSON list therefore if `primary_ip` was specified in other item than first one must shuffle slice
+	// elements so that the one with primary_ip is first.
 	// The order does not really matter for Terraform schema as TypeSet is used, but user must get expected primary_ip.
 	if isPrimaryIpSet {
 		subnetZero := subnetSlice[0]

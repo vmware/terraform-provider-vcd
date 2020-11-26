@@ -106,12 +106,12 @@ func datasourceVcdNsxtEdgeGatewayRead(ctx context.Context, d *schema.ResourceDat
 
 	vcdClient := meta.(*VCDClient)
 
-	org, _, err := vcdClient.GetOrgAndVdcFromResource(d)
+	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error retrieving Org: %s", err))
 	}
 
-	edge, err := org.GetNsxtEdgeGatewayByName(d.Get("name").(string))
+	edge, err := vdc.GetNsxtEdgeGatewayByName(d.Get("name").(string))
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("could not retrieve NSX-T edge gateway: %s", err))
 	}
