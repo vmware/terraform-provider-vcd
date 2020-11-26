@@ -376,6 +376,7 @@ func nsxtEdgeGatewayList(d *schema.ResourceData, meta interface{}) (list []strin
 		items = append(items, resourceRef{
 			name: nsxtEdgeGateway.EdgeGateway.Name,
 			id:   nsxtEdgeGateway.EdgeGateway.ID,
+			href: "",
 		})
 	}
 	return genericResourceList("vcd_nsxt_edgegateway", listMode, nameIdSeparator, []string{org.Org.Name, vdc.Vdc.Name}, items)
