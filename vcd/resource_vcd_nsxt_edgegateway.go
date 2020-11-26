@@ -266,7 +266,7 @@ func getNsxtEdgeGatewayType(d *schema.ResourceData, vdc *govcd.Vdc) (*types.Open
 		Description: d.Get("description").(string),
 		EdgeGatewayUplinks: []types.EdgeGatewayUplinks{types.EdgeGatewayUplinks{
 			UplinkID:  d.Get("external_network_id").(string),
-			Subnets:   types.OpenAPIEdgeGatewaySubnets{getNsxtEdgeGatewayUplinksType(d)},
+			Subnets:   types.OpenAPIEdgeGatewaySubnets{Values: getNsxtEdgeGatewayUplinksType(d)},
 			Dedicated: d.Get("dedicate_external_network").(bool),
 		}},
 		OrgVdc: &types.OpenApiReference{
@@ -310,7 +310,7 @@ func getNsxtEdgeGatewayUplinksType(d *schema.ResourceData) []types.OpenAPIEdgeGa
 
 		// Only feed in ip range allocations if they are defined
 		if ipRanges := getNsxtEdgeGatewayUplinkRangeTypes(subnetMap); ipRanges != nil {
-			singleSubnet.IPRanges = &types.OpenApiIPRanges{ipRanges}
+			singleSubnet.IPRanges = &types.OpenApiIPRanges{Values: ipRanges}
 		}
 
 		subnetSlice[index] = singleSubnet
