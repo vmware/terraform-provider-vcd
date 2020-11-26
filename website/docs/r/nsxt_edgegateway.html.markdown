@@ -1,7 +1,7 @@
 ---
 layout: "vcd"
 page_title: "vCloudDirector: vcd_nsxt_edgegateway"
-sidebar_current: "docs-vcd-resource-nsxt-edge-gatewa"
+sidebar_current: "docs-vcd-resource-nsxt-edge-gateway"
 description: |-
   Provides a VMware Cloud Director NSX-T edge gateway. This can be used to create and delete NSX-T edge gateways connected to external networks.
 ---
@@ -26,8 +26,8 @@ data "vcd_external_network_v2" "nsxt-ext-net" {
 }
 
 resource "vcd_nsxt_edgegateway" "nsxt-edge" {
-  org                     = "dainius"
-  vdc                     = "nsxt-vdc-dainius"
+  org                     = "my-org"
+  vdc                     = "nsxt-vdc"
   name                    = "nsxt-edge"
   description             = "Description"
 
@@ -36,16 +36,19 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   subnet {
      gateway               = "10.150.191.253"
      prefix_length         = "19"
+     # primary_ip should fall into defined "allocated_ips" range as otherwise
+     # next apply will report additional range of "allocated_ips" with the range
+     # containing single "primary_ip" and will cause non-empty plan.
      primary_ip            = "10.150.160.137"
      allocated_ips {
        start_address = "10.150.160.137"
-       end_address   = "10.150.160.137"
+       end_address   = "10.150.160.138"
      }
   }
 }
 ```
 
-## Example Usage (Using custom Edge Cluster)
+## Example Usage (Using custom Edge Cluster and multiple subnets)
 
 ```hcl
 data "vcd_nsxt_edge_cluster" "secondary" {
@@ -58,16 +61,22 @@ data "vcd_external_network_v2" "nsxt-ext-net" {
 }
 
 resource "vcd_nsxt_edgegateway" "nsxt-edge" {
-  org                     = "dainius"
-  vdc                     = "nsxt-vdc-dainius"
+  org                     = "my-org"
+  vdc                     = "nsxt-vdc"
   name                    = "nsxt-edge"
   description             = "Description"
 
   external_network_id = data.vcd_external_network_v2.nsxt-ext-net.id
 
+  # Custom edge cluster reference
+  edge_cluster_id = data.vcd_nsxt_edge_cluster.secondary.id
+
   subnet {
      gateway               = "10.150.191.253"
      prefix_length         = "19"
+     # primary_ip should fall into defined "allocated_ips" range as otherwise
+     # next apply will report additional range of "allocated_ips" with the range
+     # containing single "primary_ip" and will cause non-empty plan.
      primary_ip            = "10.150.160.137"
      allocated_ips {
        start_address = "10.150.160.137"
@@ -75,8 +84,35 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
      }
   }
 
-  # Custom edge cluster reference
-  edge_cluster_id = data.vcd_nsxt_edge_cluster.secondary.id
+  subnet {
+     gateway       = "77.77.77.1"
+     prefix_length = "26"
+
+     allocated_ips {
+       start_address = "77.77.77.10"
+       end_address   = "77.77.77.12"
+     }
+  }
+
+  subnet {
+     gateway       = "88.88.88.1"
+     prefix_length = "24"
+
+     allocated_ips {
+       start_address = "88.88.88.91"
+       end_address   = "88.88.88.92"
+     }
+
+     allocated_ips {
+       start_address = "88.88.88.94"
+       end_address   = "88.88.88.95"
+     }
+
+     allocated_ips {
+       start_address = "88.88.88.97"
+       end_address   = "88.88.88.98"
+     }
+  }
 }
 ```
 
@@ -97,13 +133,12 @@ The following arguments are supported:
 ## Edge Gateway Subnet
 
 * `gateway` (Required) - Gateway for a subnet in external network
-* `netmask` (Required) - Netmask of a subnet in external network
-* `ip_address` (Optional) - IP address to assign to edge gateway interface (will be auto-assigned if
-  unspecified)
-* `use_for_default_route` (Optional) - Should this network be used as default gateway on edge
-  gateway. Default is `false`.
+* `prefix_length` (Required) - Prefix length of a subnet in external network (e.g. 24 for netmask of 255.255.255.0)
+* `primary_ip` (Optional) - Primary IP address for edge gateway. **Note:** `primary_ip` must fall into `allocated_ips`
+block range as otherwise `plan` will not be clean with a new range defined for that particular block. There __can only
+be one__ `primary_ip` defined for edge gateway.
 * `allocated_ips` (Required) - One or more blocks of [ip ranges](#edgegateway-subnet-ip-allocation) in the subnet to be
-* sub-allocated
+allocated
 
 <a id="edgegateway-subnet-ip-allocation"></a>
 ## Edge Gateway Subnet IP Allocation
@@ -116,53 +151,25 @@ The following arguments are supported:
 
 The following attributes are exported on this resource:
 
-* `default_external_network_ip` (*v2.6+*) - IP address of edge gateway used for default network
-* `external_network_ips` (*v2.6+*) - A list of IP addresses assigned to edge gateway interfaces
-  connected to external networks.
+* `primary_ip` - Primary IP address exposed for an easy access without nesting.
 
 
 ## Importing
-
-Supported in provider *v2.5+*
 
 ~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
 configuration. [More information.][docs-import]
 
 An existing edge gateway can be [imported][docs-import] into this resource via supplying its path.
-The path for this resource is made of org-name.vdc-name.edge-name
+The path for this resource is made of org-name.vdc-name.nsxt-edge-name
 For example, using this structure, representing an edge gateway that was **not** created using Terraform:
 
-```hcl
-resource "vcd_edgegateway" "tf-edgegateway" {
-  name              = "my-edge-gw"
-  org               = "my-org"
-  vdc               = "my-vdc"
-  configuration     = "COMPUTE"
-
-  external_network {
-      name = "my-ext-net1"
-
-      subnet {
-        ip_address            = "192.168.30.51"
-        gateway               = "192.168.30.49"
-        netmask               = "255.255.255.240"
-        use_for_default_route = true
-      }
-  }
-
-}
-```
-
-You can import such resource into terraform state using one of the commands below
+You can import such resource into terraform state using the command below:
 
 ```
-terraform import vcd_edgegateway.tf-egw my-org.my-vdc.my-edge-gw
-
-terraform import vcd_edgegateway.tf-egw my-org.my-vdc.63ed92de-4001-450c-879f-deadbeef0123
+terraform import vcd_nsxt_edgegateway.tf-egw my-org.my-vdc.my-edge-gw
 ```
 
 * **Note 1**: the separator can be changed using `Provider.import_separator` or variable `VCD_IMPORT_SEPARATOR`
-* **Note 2**: the identifier of the resource could be either the edge gateway name or the ID
 
 [docs-import]:https://www.terraform.io/docs/import/
 

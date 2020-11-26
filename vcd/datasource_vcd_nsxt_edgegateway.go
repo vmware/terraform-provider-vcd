@@ -62,11 +62,6 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 							Description: "Netmask address for a subnet (e.g. 24 for /24)",
 							Type:        schema.TypeInt,
 						},
-						"enabled": {
-							Computed:    true,
-							Description: "Specifies if the subnet is enabled",
-							Type:        schema.TypeBool,
-						},
 						"primary_ip": {
 							Computed:    true,
 							Type:        schema.TypeString,

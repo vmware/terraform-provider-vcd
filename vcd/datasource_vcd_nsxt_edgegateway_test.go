@@ -39,7 +39,6 @@ func TestAccVcdNsxtEdgeGatewayMultipleSubnetsAndDS(t *testing.T) {
 	}
 
 	params["FuncName"] = t.Name() + "step1"
-	params["SkipTest"] = "# skip-binary-test: customization.force=true must always request for update"
 	configText1 := templateFill(testAccNsxtEdgeGatewayMultipleSubnetsDS, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -60,6 +59,7 @@ func TestAccVcdNsxtEdgeGatewayMultipleSubnetsAndDS(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "name", params["NsxtEdgeGatewayVcd"].(string)),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "primary_ip", "99.99.99.23"),
 					resource.TestCheckResourceAttrSet("vcd_nsxt_edgegateway.nsxt-edge", "external_network_id"),
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_edgegateway.nsxt-edge", "subnet.*", map[string]string{
 						"gateway":       "88.88.88.1",
@@ -235,7 +235,6 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   subnet {
      gateway       = "77.77.77.1"
      prefix_length = "26"
-     # primary_ip    = "88.88.88.88"
 
      allocated_ips {
        start_address = "77.77.77.10"
@@ -245,6 +244,7 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
 }
 `
 const testAccNsxtEdgeGatewayMultipleSubnetsDS = testAccNsxtEdgeGatewayMultipleSubnets + `
+# skip-binary-test: resource and data source cannot refer itself in a single file
 data "vcd_nsxt_edgegateway" "egw-ds" {
   org                     = "{{.Org}}"
   vdc                     = "{{.NsxtVdc}}"

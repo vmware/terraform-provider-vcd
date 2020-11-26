@@ -37,12 +37,6 @@ var nsxtEdgeSubnet = &schema.Resource{
 			Description: "Netmask address for a subnet (e.g. 24 for /24)",
 			Type:        schema.TypeInt,
 		},
-		"enabled": {
-			Optional:    true,
-			Default:     true,
-			Description: "Specifies if the subnet is enabled",
-			Type:        schema.TypeBool,
-		},
 		"primary_ip": {
 			Optional:    true,
 			Type:        schema.TypeString,
@@ -150,7 +144,7 @@ func resourceVcdNsxtEdgeGatewayCreate(ctx context.Context, d *schema.ResourceDat
 
 	d.SetId(createdEdgeGateway.EdgeGateway.ID)
 
-	return nil
+	return resourceVcdNsxtEdgeGatewayRead(ctx, d, meta)
 }
 
 // resourceVcdNsxtEdgeGatewayUpdate
@@ -186,7 +180,7 @@ func resourceVcdNsxtEdgeGatewayUpdate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(fmt.Errorf("error updating edge gateway with ID '%s': %s", d.Id(), err))
 	}
 
-	return nil
+	return resourceVcdNsxtEdgeGatewayRead(ctx, d, meta)
 }
 
 // resourceVcdNsxtEdgeGatewayRead
@@ -308,7 +302,6 @@ func getNsxtEdgeGatewayUplinksType(d *schema.ResourceData) []types.OpenAPIEdgeGa
 		singleSubnet := types.OpenAPIEdgeGatewaySubnetValue{
 			Gateway:      subnetMap["gateway"].(string),
 			PrefixLength: subnetMap["prefix_length"].(int),
-			Enabled:      subnetMap["enabled"].(bool),
 			PrimaryIP:    subnetMap["primary_ip"].(string),
 		}
 
@@ -368,7 +361,7 @@ func setNsxtEdgeGatewayData(e *types.OpenAPIEdgeGateway, d *schema.ResourceData)
 	}
 
 	// NSX-T edge gateways support only 1 uplink. Edge gateway can only be connected to one external network (in NSX-T terms
-	// Tier 1 gateway can only be connected to 1 Tier 0 gateway)
+	// Tier 1 gateway can only be connected to single Tier 0 gateway)
 	edgeUplink := e.EdgeGatewayUplinks[0]
 
 	_ = d.Set("dedicate_external_network", edgeUplink.Dedicated)
@@ -379,7 +372,8 @@ func setNsxtEdgeGatewayData(e *types.OpenAPIEdgeGateway, d *schema.ResourceData)
 	for _, subnetValue := range edgeUplink.Subnets.Values {
 
 		// Edge Gateway API returns all subnets defined on external network. However if they don't have "ranges" defined
-		// - it means they are not allocated to edge gateway and Terraform should not display it.
+		// - it means they are not allocated to edge gateway and Terraform should not display it as UI does not display
+		// them as well
 		ipRangeCount := len(subnetValue.IPRanges.Values)
 		if ipRangeCount == 0 {
 			continue
@@ -389,13 +383,11 @@ func setNsxtEdgeGatewayData(e *types.OpenAPIEdgeGateway, d *schema.ResourceData)
 
 		oneSubnet["gateway"] = subnetValue.Gateway
 		oneSubnet["prefix_length"] = subnetValue.PrefixLength
-		oneSubnet["enabled"] = subnetValue.Enabled
 
-		// If primary IP exists - set it to schema and at the computed variable at global level for easier access
+		// If primary IP exists - set it to schema and computed variable at the top level for easier access
 		if subnetValue.PrimaryIP != "" {
 			oneSubnet["primary_ip"] = subnetValue.PrimaryIP
-
-			d.Set("primary_ip", subnetValue.PrimaryIP)
+			_ = d.Set("primary_ip", subnetValue.PrimaryIP)
 		}
 
 		// Check for allocated IPs
