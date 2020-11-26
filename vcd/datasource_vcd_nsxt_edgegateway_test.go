@@ -3,6 +3,7 @@
 package vcd
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -45,10 +46,6 @@ func TestAccVcdNsxtEdgeGatewayMultipleSubnetsAndDS(t *testing.T) {
 		return
 	}
 
-	if !usingSysAdmin() {
-		t.Skip("Edge Gateway tests require system admin privileges")
-		return
-	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -249,5 +246,50 @@ data "vcd_nsxt_edgegateway" "egw-ds" {
   org                     = "{{.Org}}"
   vdc                     = "{{.NsxtVdc}}"
   name                    = "{{.NsxtEdgeGatewayVcd}}"
+}
+`
+
+// TestAccVcdNsxtEdgeGatewayDSDoesNotAcceptNsxv expects to get an error because it tries to lookup NSX-V edge gateway
+// using NSX-T datasource. Although OpenAPI endpoint does return both types by default - the NSX-T edge gateway
+// retrieval functions are not expected to find it. This is because NSX-T structure is less nested and allows to have
+// simpler schema.
+func TestAccVcdNsxtEdgeGatewayDSDoesNotAcceptNsxv(t *testing.T) {
+	vcdClient := createTemporaryVCDConnection()
+	if vcdClient.Client.APIVCDMaxVersionIs("< 34.0") {
+		t.Skip(t.Name() + " requires at least API v34.0 (vCD 10.1+)")
+	}
+
+	// String map to fill the template
+	var params = StringMap{
+		"Org":                 testConfig.VCD.Org,
+		"NsxvVdc":             testConfig.VCD.Vdc,
+		"NsxvEdgeGatewayName": testConfig.Networking.EdgeGateway,
+		"Tags":                "gateway nsxt",
+	}
+
+	configText := templateFill(testAccVcdNsxtEdgeGatewayDSDoesNotAcceptNsxv, params)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config:      configText,
+				ExpectError: regexp.MustCompile(".*entity not found.*"),
+			},
+		},
+	})
+}
+
+const testAccVcdNsxtEdgeGatewayDSDoesNotAcceptNsxv = `
+# skip-binary-test: should fail on purpose because NSX-T datasource should not accept NSX-V edge gateway
+data "vcd_nsxt_edgegateway" "nsxv-try" {
+  org                     = "{{.Org}}"
+  vdc                     = "{{.NsxvVdc}}"
+  name                    = "{{.NsxvEdgeGatewayName}}"
 }
 `
