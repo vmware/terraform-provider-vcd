@@ -123,7 +123,6 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 		// vcd_portgroup requires portgroup  type
 		if dataSourceName == "vcd_portgroup" && mandatoryFields[fieldIndex] == "type" {
 			templateFields = templateFields + `type = "` + testConfig.Networking.ExternalNetworkPortGroupType + `"` + "\n"
-			return templateFields
 		}
 
 		switch mandatoryFields[fieldIndex] {
