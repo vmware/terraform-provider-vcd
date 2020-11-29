@@ -47,6 +47,7 @@ func TestAccVcdNsxtEdgeGatewayMultipleSubnetsAndDS(t *testing.T) {
 	}
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText1)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,

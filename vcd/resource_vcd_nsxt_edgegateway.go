@@ -15,12 +15,12 @@ import (
 var nsxtEdgeSubnetRange = &schema.Resource{
 	Schema: map[string]*schema.Schema{
 		"start_address": {
-			Required: true,
 			Type:     schema.TypeString,
+			Required: true,
 		},
 		"end_address": {
-			Required: true,
 			Type:     schema.TypeString,
+			Required: true,
 		},
 	},
 }
@@ -28,24 +28,24 @@ var nsxtEdgeSubnetRange = &schema.Resource{
 var nsxtEdgeSubnet = &schema.Resource{
 	Schema: map[string]*schema.Schema{
 		"gateway": {
+			Type:        schema.TypeString,
 			Required:    true,
 			Description: "Gateway address for a subnet",
-			Type:        schema.TypeString,
 		},
 		"prefix_length": {
+			Type:        schema.TypeInt,
 			Required:    true,
 			Description: "Netmask address for a subnet (e.g. 24 for /24)",
-			Type:        schema.TypeInt,
 		},
 		"primary_ip": {
-			Optional:    true,
 			Type:        schema.TypeString,
+			Optional:    true,
 			Description: "Primary IP address for the edge gateway - will be auto-assigned if not defined",
 		},
 		"allocated_ips": {
+			Type:        schema.TypeSet,
 			Optional:    true,
 			Computed:    true,
-			Type:        schema.TypeSet,
 			Description: "Define zero or more blocks to sub-allocate pools on the edge gateway",
 			Elem:        nsxtEdgeSubnetRange,
 		},
@@ -97,14 +97,14 @@ func resourceVcdNsxtEdgeGateway() *schema.Resource {
 				Description: "External network ID",
 			},
 			"subnet": {
-				Description: "One or more blocks with external network information to be attached to this gateway's interface",
-				Required:    true,
 				Type:        schema.TypeSet,
+				Required:    true,
+				Description: "One or more blocks with external network information to be attached to this gateway's interface",
 				Elem:        nsxtEdgeSubnet,
 			},
 			"primary_ip": {
-				Computed:    true,
 				Type:        schema.TypeString,
+				Computed:    true,
 				Description: "Primary IP address of edge gateway. Read-only (can be specified in specific subnet)",
 			},
 			"edge_cluster_id": &schema.Schema{

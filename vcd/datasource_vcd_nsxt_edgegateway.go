@@ -47,39 +47,39 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 				Description: "External network ID",
 			},
 			"subnet": {
-				Description: "One or more blocks with external network information to be attached to this gateway's interface",
-				Computed:    true,
 				Type:        schema.TypeSet,
+				Computed:    true,
+				Description: "One or more blocks with external network information to be attached to this gateway's interface",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"gateway": {
+							Type:        schema.TypeString,
 							Computed:    true,
 							Description: "Gateway address for a subnet",
-							Type:        schema.TypeString,
 						},
 						"prefix_length": {
+							Type:        schema.TypeInt,
 							Computed:    true,
 							Description: "Netmask address for a subnet (e.g. 24 for /24)",
-							Type:        schema.TypeInt,
 						},
 						"primary_ip": {
-							Computed:    true,
 							Type:        schema.TypeString,
+							Computed:    true,
 							Description: "IP address on the edge gateway - will be auto-assigned if not defined",
 						},
 						"allocated_ips": {
-							Computed:    true,
 							Type:        schema.TypeSet,
+							Computed:    true,
 							Description: "Define zero or more blocks to sub-allocate pools on the edge gateway",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"start_address": {
-										Computed: true,
 										Type:     schema.TypeString,
+										Computed: true,
 									},
 									"end_address": {
-										Computed: true,
 										Type:     schema.TypeString,
+										Computed: true,
 									},
 								},
 							},
@@ -88,8 +88,8 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 				},
 			},
 			"primary_ip": {
-				Computed:    true,
 				Type:        schema.TypeString,
+				Computed:    true,
 				Description: "Primary IP address of edge gateway. Read-only (can be specified in specific subnet)",
 			},
 			"edge_cluster_id": &schema.Schema{

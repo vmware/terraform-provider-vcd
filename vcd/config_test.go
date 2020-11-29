@@ -693,7 +693,7 @@ func setCatalogStorageProfile() {
 		panic(err)
 	}
 
-	// Explicitly set catalog to use vcd.config.VCD.StorageProfile.SP1 because having multiple VDCs
+	// Explicitly set catalog to use storage profile from NSX-V VDC
 	adminCatalog.AdminCatalog.CatalogStorageProfiles = &types.CatalogStorageProfiles{[]*types.Reference{&types.Reference{
 		HREF: vdc.Vdc.VdcStorageProfiles.VdcStorageProfile[0].HREF,
 		Name: vdc.Vdc.VdcStorageProfiles.VdcStorageProfile[0].Name,
@@ -708,7 +708,7 @@ func setCatalogStorageProfile() {
 	}
 }
 
-//Creates catalog and/or catalog item if they are not preconfigured.
+// createSuiteCatalogAndItem creates catalog and/or catalog item if they are not preconfigured.
 func createSuiteCatalogAndItem(config TestConfig) {
 	fmt.Printf("Checking resources to create for test suite...\n")
 
