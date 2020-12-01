@@ -90,6 +90,8 @@ func TestAccVcdCatalog(t *testing.T) {
 	})
 }
 
+// TestAccVcdCatalogWithStorageProfile is very similar to TestAccVcdCatalog, but it ensure that a catalog can be created
+// using specific storage profile
 func TestAccVcdCatalogWithStorageProfile(t *testing.T) {
 	var params = StringMap{
 		"Org":            testConfig.VCD.Org,
@@ -99,7 +101,7 @@ func TestAccVcdCatalogWithStorageProfile(t *testing.T) {
 		"Tags":           "catalog",
 	}
 
-	configText := templateFill(testAccCheckVcdCatalog, params)
+	configText := templateFill(testAccCheckVcdCatalogStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	if vcdShortTest {
