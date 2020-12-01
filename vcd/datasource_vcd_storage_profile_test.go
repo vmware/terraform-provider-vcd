@@ -1,4 +1,4 @@
-// +build catalog ALL functional
+// +build catalog vdc ALL functional
 
 package vcd
 
@@ -9,8 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccVcdStorageProfile(t *testing.T) {
-
+func TestAccVcdStorageProfileDS(t *testing.T) {
 	var params = StringMap{
 		"Org":                testConfig.VCD.Org,
 		"Vdc":                testConfig.VCD.Vdc,

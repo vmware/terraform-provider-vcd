@@ -4,6 +4,7 @@ package vcd
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -18,7 +19,6 @@ var TestAccVcdCatalogName = "TestAccVcdCatalog"
 var TestAccVcdCatalogDescription = "TestAccVcdCatalogBasicDescription"
 
 func TestAccVcdCatalog(t *testing.T) {
-
 	var params = StringMap{
 		"Org":            testConfig.VCD.Org,
 		"CatalogName":    TestAccVcdCatalogName,
@@ -53,7 +53,7 @@ func TestAccVcdCatalog(t *testing.T) {
 					testAccCheckVcdCatalogExists(resourceAddress),
 					resource.TestCheckResourceAttr(resourceAddress, "name", TestAccVcdCatalogName),
 					resource.TestCheckResourceAttr(resourceAddress, "description", TestAccVcdCatalogDescription),
-					resource.TestCheckNoResourceAttr(resourceAddress, "storage_profile"),
+					resource.TestCheckResourceAttr(resourceAddress, "storage_profile_id", ""),
 				),
 			},
 			// Set storage profile for existing catalog
@@ -63,7 +63,8 @@ func TestAccVcdCatalog(t *testing.T) {
 					testAccCheckVcdCatalogExists(resourceAddress),
 					resource.TestCheckResourceAttr(resourceAddress, "name", TestAccVcdCatalogName),
 					resource.TestCheckResourceAttr(resourceAddress, "description", TestAccVcdCatalogDescription),
-					resource.TestCheckResourceAttr(resourceAddress, "storage_profile", testConfig.VCD.ProviderVdc.StorageProfile),
+					resource.TestMatchResourceAttr(resourceAddress, "storage_profile_id",
+						regexp.MustCompile(`^urn:vcloud:vdcstorageProfile:.*`)),
 				),
 			},
 			// Remove storage profile just like it was provisioned in step 0
@@ -74,16 +75,55 @@ func TestAccVcdCatalog(t *testing.T) {
 					testAccCheckVcdCatalogExists(resourceAddress),
 					resource.TestCheckResourceAttr(resourceAddress, "name", TestAccVcdCatalogName),
 					resource.TestCheckResourceAttr(resourceAddress, "description", TestAccVcdCatalogDescription),
-					resource.TestCheckNoResourceAttr(resourceAddress, "storage_profile"),
+					resource.TestCheckResourceAttr(resourceAddress, "storage_profile_id", ""),
 				),
 			},
 			resource.TestStep{
-				ResourceName:      "vcd_catalog." + TestAccVcdCatalogName,
+				ResourceName:      resourceAddress,
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgObject(testConfig, TestAccVcdCatalogName),
 				// These fields can't be retrieved from catalog data
 				ImportStateVerifyIgnore: []string{"delete_force", "delete_recursive"},
+			},
+		},
+	})
+}
+
+func TestAccVcdCatalogWithStorageProfile(t *testing.T) {
+	var params = StringMap{
+		"Org":            testConfig.VCD.Org,
+		"CatalogName":    TestAccVcdCatalogName,
+		"Description":    TestAccVcdCatalogDescription,
+		"StorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+		"Tags":           "catalog",
+	}
+
+	configText := templateFill(testAccCheckVcdCatalog, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	resourceAddress := "vcd_catalog." + TestAccVcdCatalogName
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckCatalogDestroy,
+		Steps: []resource.TestStep{
+			// Provision catalog without storage profile
+			resource.TestStep{
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdCatalogExists(resourceAddress),
+					resource.TestCheckResourceAttr(resourceAddress, "name", TestAccVcdCatalogName),
+					resource.TestCheckResourceAttr(resourceAddress, "description", TestAccVcdCatalogDescription),
+					resource.TestMatchResourceAttr(resourceAddress, "storage_profile_id",
+						regexp.MustCompile(`^urn:vcloud:vdcstorageProfile:.*`)),
+				),
 			},
 		},
 	})
@@ -143,7 +183,7 @@ const testAccCheckVcdCatalog = `
 resource "vcd_catalog" "{{.CatalogName}}" {
   org = "{{.Org}}" 
   
-  name = "{{.CatalogName}}"
+  name        = "{{.CatalogName}}"
   description = "{{.Description}}"
 
   delete_force      = "true"
@@ -152,12 +192,16 @@ resource "vcd_catalog" "{{.CatalogName}}" {
 `
 
 const testAccCheckVcdCatalogStep1 = `
+data "vcd_storage_profile" "sp" {
+	name = "{{.StorageProfile}}"
+}
+
 resource "vcd_catalog" "{{.CatalogName}}" {
   org = "{{.Org}}" 
   
-  name = "{{.CatalogName}}"
-  description = "{{.Description}}"
-  storage_profile = "{{.StorageProfile}}"
+  name               = "{{.CatalogName}}"
+  description        = "{{.Description}}"
+  storage_profile_id = data.vcd_storage_profile.sp.id
 
   delete_force      = "true"
   delete_recursive  = "true"

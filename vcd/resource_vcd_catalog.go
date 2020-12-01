@@ -39,10 +39,10 @@ func resourceVcdCatalog() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 			},
-			"storage_profile": &schema.Schema{
+			"storage_profile_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Optional storage profile name",
+				Description: "Optional storage profile ID",
 			},
 			"created": &schema.Schema{
 				Type:        schema.TypeString,
@@ -103,12 +103,11 @@ func resourceVcdCatalogCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	var storageProfiles *types.CatalogStorageProfiles
-	storageProfileName := d.Get("storage_profile").(string)
-
-	if storageProfileName != "" {
-		storageProfileReference, err := getStorageProfileReferenceByName(adminOrg, storageProfileName)
+	storageProfileId := d.Get("storage_profile_id").(string)
+	if storageProfileId != "" {
+		storageProfileReference, err := adminOrg.GetStorageProfileReferenceById(storageProfileId, false)
 		if err != nil {
-			return fmt.Errorf("couuld not proces storage profile '%s': %s", storageProfileName, err)
+			return fmt.Errorf("error looking up Storage Profile '%s' reference: %s", storageProfileId, err)
 		}
 		storageProfiles = &types.CatalogStorageProfiles{VdcStorageProfile: []*types.Reference{storageProfileReference}}
 	}
@@ -149,14 +148,14 @@ func resourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
 		// By default API does not return Storage Profile Name in response. It has ID and HREF, but not Name so name
 		// must be looked up
 		storageProfileId := adminCatalog.AdminCatalog.CatalogStorageProfiles.VdcStorageProfile[0].ID
-		storageProfileReference, err := adminOrg.GetStorageProfileReferenceById(storageProfileId, false)
-		if err != nil {
-			return fmt.Errorf("error retrieving storage profile reference: %s", err)
-		}
-		_ = d.Set("storage_profile", storageProfileReference.Name)
+		// storageProfileReference, err := adminOrg.GetStorageProfileReferenceById(storageProfileId, false)
+		// if err != nil {
+		// 	return fmt.Errorf("error retrieving storage profile reference: %s", err)
+		// }
+		_ = d.Set("storage_profile_id", storageProfileId)
 	} else {
 		// In case no storage profile are defined in API call
-		_ = d.Set("storage_profile", "")
+		_ = d.Set("storage_profile_id", "")
 	}
 
 	_ = d.Set("description", adminCatalog.AdminCatalog.Description)
@@ -184,19 +183,19 @@ func resourceVcdCatalogUpdate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	// Perform storage profile updates
-	if d.HasChange("storage_profile") {
-		storageProfileName := d.Get("storage_profile").(string)
+	if d.HasChange("storage_profile_id") {
+		storageProfileId := d.Get("storage_profile_id").(string)
 
-		// Unset storage profile name (use any)
-		if storageProfileName == "" {
+		// Unset storage profile (use any available in Org)
+		if storageProfileId == "" {
 			// Set empty structure as `nil` would not update it at all
 			adminCatalog.AdminCatalog.CatalogStorageProfiles = &types.CatalogStorageProfiles{VdcStorageProfile: []*types.Reference{}}
 		}
 
-		if storageProfileName != "" {
-			storageProfileReference, err := getStorageProfileReferenceByName(adminOrg, storageProfileName)
+		if storageProfileId != "" {
+			storageProfileReference, err := adminOrg.GetStorageProfileReferenceById(storageProfileId, false)
 			if err != nil {
-				return fmt.Errorf("couuld not proces storage profile '%s': %s", storageProfileName, err)
+				return fmt.Errorf("couuld not proces storage profile '%s': %s", storageProfileId, err)
 			}
 			adminCatalog.AdminCatalog.CatalogStorageProfiles = &types.CatalogStorageProfiles{VdcStorageProfile: []*types.Reference{storageProfileReference}}
 		}
@@ -261,6 +260,9 @@ func resourceVcdCatalogImport(d *schema.ResourceData, meta interface{}) ([]*sche
 		return nil, govcd.ErrorEntityNotFound
 	}
 
+	_ = d.Set("org", orgName)
+	_ = d.Set("name", catalogName)
+	_ = d.Set("description", catalog.Catalog.Description)
 	d.SetId(catalog.Catalog.ID)
 
 	// Fill in other fields
