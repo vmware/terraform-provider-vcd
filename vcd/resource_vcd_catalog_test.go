@@ -10,45 +10,78 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-var TestAccVcdCatalog = "TestAccVcdCatalogBasic"
+func init() {
+	testingTags["catalog"] = "resource_vcd_catalog_test.go"
+}
+
+var TestAccVcdCatalogName = "TestAccVcdCatalog"
 var TestAccVcdCatalogDescription = "TestAccVcdCatalogBasicDescription"
 
-func TestAccVcdCatalogBasic(t *testing.T) {
+func TestAccVcdCatalog(t *testing.T) {
 
 	var params = StringMap{
-		"Org":         testConfig.VCD.Org,
-		"CatalogName": TestAccVcdCatalog,
-		"Description": TestAccVcdCatalogDescription,
-		"Tags":        "catalog",
+		"Org":            testConfig.VCD.Org,
+		"CatalogName":    TestAccVcdCatalogName,
+		"Description":    TestAccVcdCatalogDescription,
+		"StorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
+		"Tags":           "catalog",
 	}
 
-	configText := templateFill(testAccCheckVcdCatalogBasic, params)
+	configText := templateFill(testAccCheckVcdCatalog, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+	params["FuncName"] = t.Name() + "step1"
+	configText1 := templateFill(testAccCheckVcdCatalogStep1, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText1)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
-	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+	resourceAddress := "vcd_catalog." + TestAccVcdCatalogName
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckCatalogDestroy,
 		Steps: []resource.TestStep{
+			// Provision catalog without storage profile
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdCatalogExists("vcd_catalog."+TestAccVcdCatalog),
-					resource.TestCheckResourceAttr(
-						"vcd_catalog."+TestAccVcdCatalog, "name", TestAccVcdCatalog),
-					resource.TestCheckResourceAttr(
-						"vcd_catalog."+TestAccVcdCatalog, "description", TestAccVcdCatalogDescription),
+					testAccCheckVcdCatalogExists(resourceAddress),
+					resource.TestCheckResourceAttr(resourceAddress, "name", TestAccVcdCatalogName),
+					resource.TestCheckResourceAttr(resourceAddress, "description", TestAccVcdCatalogDescription),
+					resource.TestCheckNoResourceAttr(resourceAddress, "storage_profile"),
+				),
+			},
+			// Set storage profile for existing catalog
+			resource.TestStep{
+				Config: configText1,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdCatalogExists(resourceAddress),
+					resource.TestCheckResourceAttr(resourceAddress, "name", TestAccVcdCatalogName),
+					resource.TestCheckResourceAttr(resourceAddress, "description", TestAccVcdCatalogDescription),
+					resource.TestCheckResourceAttr(resourceAddress, "storage_profile", testConfig.VCD.ProviderVdc.StorageProfile),
+				),
+			},
+			// Remove storage profile just like it was provisioned in step 0
+			resource.TestStep{
+
+				Config: configText,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdCatalogExists(resourceAddress),
+					resource.TestCheckResourceAttr(resourceAddress, "name", TestAccVcdCatalogName),
+					resource.TestCheckResourceAttr(resourceAddress, "description", TestAccVcdCatalogDescription),
+					resource.TestCheckNoResourceAttr(resourceAddress, "storage_profile"),
 				),
 			},
 			resource.TestStep{
-				ResourceName:      "vcd_catalog." + TestAccVcdCatalog,
+				ResourceName:      "vcd_catalog." + TestAccVcdCatalogName,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgObject(testConfig, TestAccVcdCatalog),
+				ImportStateIdFunc: importStateIdOrgObject(testConfig, TestAccVcdCatalogName),
 				// These fields can't be retrieved from catalog data
 				ImportStateVerifyIgnore: []string{"delete_force", "delete_recursive"},
 			},
@@ -86,7 +119,7 @@ func testAccCheckVcdCatalogExists(name string) resource.TestCheckFunc {
 func testAccCheckCatalogDestroy(s *terraform.State) error {
 	conn := testAccProvider.Meta().(*VCDClient)
 	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "vcd_catalog" && rs.Primary.Attributes["name"] != TestAccVcdCatalog {
+		if rs.Type != "vcd_catalog" && rs.Primary.Attributes["name"] != TestAccVcdCatalogName {
 			continue
 		}
 
@@ -106,16 +139,25 @@ func testAccCheckCatalogDestroy(s *terraform.State) error {
 	return nil
 }
 
-func init() {
-	testingTags["catalog"] = "resource_vcd_catalog_test.go"
-}
-
-const testAccCheckVcdCatalogBasic = `
+const testAccCheckVcdCatalog = `
 resource "vcd_catalog" "{{.CatalogName}}" {
   org = "{{.Org}}" 
   
   name = "{{.CatalogName}}"
   description = "{{.Description}}"
+
+  delete_force      = "true"
+  delete_recursive  = "true"
+}
+`
+
+const testAccCheckVcdCatalogStep1 = `
+resource "vcd_catalog" "{{.CatalogName}}" {
+  org = "{{.Org}}" 
+  
+  name = "{{.CatalogName}}"
+  description = "{{.Description}}"
+  storage_profile = "{{.StorageProfile}}"
 
   delete_force      = "true"
   delete_recursive  = "true"

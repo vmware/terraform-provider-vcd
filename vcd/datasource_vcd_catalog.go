@@ -24,6 +24,11 @@ func datasourceVcdCatalog() *schema.Resource {
 				Description:  "Name of the catalog. (Optional if 'filter' is used)",
 				ExactlyOneOf: []string{"name", "filter"},
 			},
+			"storage_profile": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "Optional storage profile name",
+			},
 			"created": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
