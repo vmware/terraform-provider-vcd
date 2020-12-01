@@ -3,6 +3,8 @@ package vcd
 import (
 	"context"
 
+	"github.com/vmware/go-vcloud-director/v2/govcd"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -45,8 +47,8 @@ func datasourceVcdStorageProfileRead(ctx context.Context, d *schema.ResourceData
 	name := d.Get("name").(string)
 	storageProfileReference, err := vdc.FindStorageProfileReference(name)
 	if err != nil {
-		return diag.Errorf("error finding Storage Profile '%s' in VDC '%s': %s",
-			name, vdc.Vdc.Name, err)
+		return diag.Errorf("%s: error finding Storage Profile '%s' in VDC '%s': %s",
+			govcd.ErrorEntityNotFound, name, vdc.Vdc.Name, err)
 	}
 	d.SetId(storageProfileReference.ID)
 	return nil
