@@ -65,31 +65,6 @@ func resourceVcdCatalog() *schema.Resource {
 	}
 }
 
-func getStorageProfileReferenceByName(adminOrg *govcd.AdminOrg, storageProfileName string) (*types.Reference, error) {
-	var storageProfileFound bool
-	var storageProfileReference *types.Reference
-
-	allOrgStorageProfiles, err := adminOrg.GetAllStorageProfileReferences(false)
-	if err != nil {
-		return nil, fmt.Errorf("error looking up storage profiles: %s", err)
-	}
-
-	for _, orgStorageProfile := range allOrgStorageProfiles {
-		if orgStorageProfile.Name == storageProfileName {
-			storageProfileFound = true
-			storageProfileReference = orgStorageProfile
-			break
-		}
-	}
-
-	if !storageProfileFound {
-		return nil, fmt.Errorf("could not find storage profile with name '%s' in Org '%s'",
-			storageProfileName, adminOrg.AdminOrg.Name)
-	}
-
-	return storageProfileReference, nil
-}
-
 func resourceVcdCatalogCreate(d *schema.ResourceData, meta interface{}) error {
 	log.Printf("[TRACE] Catalog creation initiated")
 
