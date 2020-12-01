@@ -3,12 +3,12 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_nsxt_edgegateway"
 sidebar_current: "docs-vcd-resource-nsxt-edge-gateway"
 description: |-
-  Provides a VMware Cloud Director NSX-T edge gateway. This can be used to create and delete NSX-T edge gateways connected to external networks.
+  Provides a VMware Cloud Director NSX-T edge gateway. This can be used to create, update, and delete NSX-T edge gateways connected to external networks.
 ---
 
 # vcd\_nsxt\_edgegateway
 
-Provides a VMware Cloud Director NSX-T edge gateway. This can be used to create and delete NSX-T edge gateways connected
+Provides a VMware Cloud Director NSX-T edge gateway. This can be used to create, update, and delete NSX-T edge gateways connected
 to external networks.
 
 Supported in provider *v3.1+*
@@ -125,7 +125,8 @@ The following arguments are supported:
 * `vdc` - (Optional) The name of VDC that owns the edge gateway. Optional if defined at provider level.
 * `name` - (Required) A unique name for the edge gateway.
 * `description` - (Optional) A unique name for the edge gateway.
-* `external_network_id` - (Required) A unique name for the edge gateway.
+* `external_network_id` - (Required) An external network ID. **Note.** Data source [vcd_external_network_v2](/docs/providers/vcd/d/external_network_v2.html)
+can be used to lookup ID by name.
 * `subnet` - (Required) One or more [subnets](#edgegateway-subnet) defined for edge gateway.
 * `edge_cluster_id` - (Optional) Specific Edge Cluster ID if required
 
@@ -163,10 +164,31 @@ An existing edge gateway can be [imported][docs-import] into this resource via s
 The path for this resource is made of org-name.vdc-name.nsxt-edge-name
 For example, using this structure, representing an edge gateway that was **not** created using Terraform:
 
+```hcl
+resource "vcd_nsxt_edgegateway" "nsxt-edge" {
+  org                     = "my-org"
+  vdc                     = "nsxt-vdc"
+  name                    = "nsxt-edge"
+  description             = "Description"
+
+  external_network_id = data.vcd_external_network_v2.nsxt-ext-net.id
+
+  subnet {
+     gateway               = "10.10.10.1"
+     prefix_length         = "24"
+     primary_ip            = "10.10.10.10"
+     allocated_ips {
+       start_address = "10.10.10.10"
+       end_address   = "10.10.10.30"
+     }
+  }
+}
+```
+
 You can import such resource into terraform state using the command below:
 
 ```
-terraform import vcd_nsxt_edgegateway.tf-egw my-org.my-vdc.my-edge-gw
+terraform import vcd_nsxt_edgegateway.nsxt-edge my-org.nsxt-vdc.nsxt-edge
 ```
 
 * **Note 1**: the separator can be changed using `Provider.import_separator` or variable `VCD_IMPORT_SEPARATOR`
