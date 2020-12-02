@@ -21,7 +21,7 @@ func TestAccVcdStorageProfileDS(t *testing.T) {
 	}
 
 	// Lookup
-	storageProfileId := findStorageProfileIdInCatalog(t, testConfig.VCD.ProviderVdc.StorageProfile)
+	storageProfileId := findStorageProfileIdInVdc(t, testConfig.VCD.ProviderVdc.StorageProfile)
 
 	var params = StringMap{
 		"Org":                testConfig.VCD.Org,
@@ -90,8 +90,8 @@ func checkStorageProfileOriginatesInParentVdc(resource, storageProfileName, orgN
 	}
 }
 
-// findStorageProfileIdInCatalog should find storage profile ID using
-func findStorageProfileIdInCatalog(t *testing.T, storageProfileName string) string {
+// findStorageProfileIdInVdc should find storage profile ID using the ID that comes from data source
+func findStorageProfileIdInVdc(t *testing.T, storageProfileName string) string {
 	vcdClient := createTemporaryVCDConnection()
 	adminOrg, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
 	if err != nil {

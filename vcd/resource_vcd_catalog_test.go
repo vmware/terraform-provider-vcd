@@ -64,7 +64,7 @@ func TestAccVcdCatalog(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceAddress, "name", TestAccVcdCatalogName),
 					resource.TestCheckResourceAttr(resourceAddress, "description", TestAccVcdCatalogDescription),
 					resource.TestMatchResourceAttr(resourceAddress, "storage_profile_id",
-						regexp.MustCompile(`^urn:vcloud:vdcstorageProfile:.*`)),
+						regexp.MustCompile(`^urn:vcloud:vdcstorageProfile:`)),
 				),
 			},
 			// Remove storage profile just like it was provisioned in step 0
@@ -95,6 +95,7 @@ func TestAccVcdCatalog(t *testing.T) {
 func TestAccVcdCatalogWithStorageProfile(t *testing.T) {
 	var params = StringMap{
 		"Org":            testConfig.VCD.Org,
+		"Vdc":            testConfig.VCD.Vdc,
 		"CatalogName":    TestAccVcdCatalogName,
 		"Description":    TestAccVcdCatalogDescription,
 		"StorageProfile": testConfig.VCD.ProviderVdc.StorageProfile,
@@ -110,6 +111,7 @@ func TestAccVcdCatalogWithStorageProfile(t *testing.T) {
 	}
 
 	resourceAddress := "vcd_catalog." + TestAccVcdCatalogName
+	dataSourceAddress := "data.vcd_storage_profile.sp"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -124,7 +126,12 @@ func TestAccVcdCatalogWithStorageProfile(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceAddress, "name", TestAccVcdCatalogName),
 					resource.TestCheckResourceAttr(resourceAddress, "description", TestAccVcdCatalogDescription),
 					resource.TestMatchResourceAttr(resourceAddress, "storage_profile_id",
-						regexp.MustCompile(`^urn:vcloud:vdcstorageProfile:.*`)),
+						regexp.MustCompile(`^urn:vcloud:vdcstorageProfile:`)),
+					resource.TestCheckResourceAttrPair(resourceAddress, "storage_profile_id", dataSourceAddress, "id"),
+					checkStorageProfileOriginatesInParentVdc(dataSourceAddress,
+						params["StorageProfile"].(string),
+						params["Org"].(string),
+						params["Vdc"].(string)),
 				),
 			},
 		},
