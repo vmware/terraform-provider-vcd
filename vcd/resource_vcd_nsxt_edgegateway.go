@@ -44,9 +44,9 @@ var nsxtEdgeSubnet = &schema.Resource{
 		},
 		"allocated_ips": {
 			Type:        schema.TypeSet,
-			Optional:    true,
-			Computed:    true,
-			Description: "Define zero or more blocks to sub-allocate pools on the edge gateway",
+			Required:    true,
+			MinItems:    1,
+			Description: "Define one or more blocks to sub-allocate pools on the edge gateway",
 			Elem:        nsxtEdgeSubnetRange,
 		},
 	},

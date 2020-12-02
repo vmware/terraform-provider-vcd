@@ -65,12 +65,12 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 						"primary_ip": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "IP address on the edge gateway - will be auto-assigned if not defined",
+							Description: "IP address on the edge gateway ",
 						},
 						"allocated_ips": {
 							Type:        schema.TypeSet,
 							Computed:    true,
-							Description: "Define zero or more blocks to sub-allocate pools on the edge gateway",
+							Description: "One or more blocks to sub-allocate pools on the edge gateway",
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"start_address": {
@@ -90,12 +90,12 @@ func datasourceVcdNsxtEdgeGateway() *schema.Resource {
 			"primary_ip": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Primary IP address of edge gateway. Read-only (can be specified in specific subnet)",
+				Description: "Primary IP address of edge gateway",
 			},
 			"edge_cluster_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
-				Description: "Select specific NSX-T Edge Cluster. Will be inherited from external network if not specified",
+				Description: "NSX-T Edge Cluster ID.",
 			},
 		},
 	}
