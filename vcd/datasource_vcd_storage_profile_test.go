@@ -1,4 +1,4 @@
-// +build catalog vdc ALL functional
+// +build catalog ALL functional
 
 package vcd
 
