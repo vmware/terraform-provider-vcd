@@ -123,10 +123,6 @@ func resourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
 		// By default API does not return Storage Profile Name in response. It has ID and HREF, but not Name so name
 		// must be looked up
 		storageProfileId := adminCatalog.AdminCatalog.CatalogStorageProfiles.VdcStorageProfile[0].ID
-		// storageProfileReference, err := adminOrg.GetStorageProfileReferenceById(storageProfileId, false)
-		// if err != nil {
-		// 	return fmt.Errorf("error retrieving storage profile reference: %s", err)
-		// }
 		_ = d.Set("storage_profile_id", storageProfileId)
 	} else {
 		// In case no storage profile are defined in API call
