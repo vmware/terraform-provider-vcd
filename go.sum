@@ -36,8 +36,8 @@ dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7
 github.com/BurntSushi/toml v0.3.1 h1:WXkYYl6Yr3qBf1K79EBnL4mak0OimBfB0XUf9Vl28OQ=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
-github.com/Didainius/go-vcloud-director/v2 v2.9.1-0.20201201213127-e7460c77ca2f h1:wXRjl8qENlyGE8PFcznahMKC1qzzy+oXUYvWoozuta8=
-github.com/Didainius/go-vcloud-director/v2 v2.9.1-0.20201201213127-e7460c77ca2f/go.mod h1:czvTQZlB4/WsOsL7rMVCb+SYAPJhx/dYoS/Sk7rc/O0=
+github.com/Didainius/go-vcloud-director/v2 v2.9.1-0.20201203070703-768a16180783 h1:BOu+DUOwJ7y2iU8GXev4SlyFzDkRVNxcdKyUH2QOwGM=
+github.com/Didainius/go-vcloud-director/v2 v2.9.1-0.20201203070703-768a16180783/go.mod h1:czvTQZlB4/WsOsL7rMVCb+SYAPJhx/dYoS/Sk7rc/O0=
 github.com/agext/levenshtein v1.2.1 h1:QmvMAjj2aEICytGiWzmxoE0x2KZvE0fvmqMOfy2tjT8=
 github.com/agext/levenshtein v1.2.1/go.mod h1:JEDfjyjHDjOF/1e4FlBE/PkbqA9OfWu2ki2W0IB5558=
 github.com/agext/levenshtein v1.2.2 h1:0S/Yg6LYmFJ5stwQeRp6EeOcCbj7xiqQSdNelsXvaqE=
