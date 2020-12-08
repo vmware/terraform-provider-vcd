@@ -116,7 +116,7 @@ func findStorageProfileIdInVdc(t *testing.T, storageProfileName string) string {
 		}
 	}
 	if foundVdc == nil {
-		t.Errorf("unable to find Vdc '%s'", testConfig.VCD.Vdc)
+		t.Errorf("unable to find VDC '%s'", testConfig.VCD.Vdc)
 		t.FailNow()
 	}
 

@@ -31,6 +31,7 @@ func TestAccVcdCatalog(t *testing.T) {
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
 	params["FuncName"] = t.Name() + "step1"
+	params["Description"] = "TestAccVcdCatalogBasicDescription-description"
 	configText1 := templateFill(testAccCheckVcdCatalogStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText1)
 
@@ -39,7 +40,9 @@ func TestAccVcdCatalog(t *testing.T) {
 		return
 	}
 
-	resourceAddress := "vcd_catalog." + TestAccVcdCatalogName
+	resourceAddress := "vcd_catalog.test-catalog"
+	// Use field value caching function across multiple test steps to ensure object wasn't recreated (ID did not change)
+	cachedId := &testCachedFieldValue{}
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -50,21 +53,23 @@ func TestAccVcdCatalog(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdCatalogExists(resourceAddress),
+					cachedId.cacheTestResourceFieldValue(resourceAddress, "id"),
 					resource.TestCheckResourceAttr(resourceAddress, "name", TestAccVcdCatalogName),
 					resource.TestCheckResourceAttr(resourceAddress, "description", TestAccVcdCatalogDescription),
 					resource.TestCheckResourceAttr(resourceAddress, "storage_profile_id", ""),
+					testAccCheckVcdCatalogExists(resourceAddress),
 				),
 			},
 			// Set storage profile for existing catalog
 			resource.TestStep{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdCatalogExists(resourceAddress),
+					cachedId.testCheckCachedResourceFieldValue(resourceAddress, "id"),
 					resource.TestCheckResourceAttr(resourceAddress, "name", TestAccVcdCatalogName),
-					resource.TestCheckResourceAttr(resourceAddress, "description", TestAccVcdCatalogDescription),
+					resource.TestCheckResourceAttr(resourceAddress, "description", "TestAccVcdCatalogBasicDescription-description"),
 					resource.TestMatchResourceAttr(resourceAddress, "storage_profile_id",
 						regexp.MustCompile(`^urn:vcloud:vdcstorageProfile:`)),
+					testAccCheckVcdCatalogExists(resourceAddress),
 				),
 			},
 			// Remove storage profile just like it was provisioned in step 0
@@ -72,10 +77,11 @@ func TestAccVcdCatalog(t *testing.T) {
 
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdCatalogExists(resourceAddress),
+					cachedId.testCheckCachedResourceFieldValue(resourceAddress, "id"),
 					resource.TestCheckResourceAttr(resourceAddress, "name", TestAccVcdCatalogName),
 					resource.TestCheckResourceAttr(resourceAddress, "description", TestAccVcdCatalogDescription),
 					resource.TestCheckResourceAttr(resourceAddress, "storage_profile_id", ""),
+					testAccCheckVcdCatalogExists(resourceAddress),
 				),
 			},
 			resource.TestStep{
@@ -110,7 +116,7 @@ func TestAccVcdCatalogWithStorageProfile(t *testing.T) {
 		return
 	}
 
-	resourceAddress := "vcd_catalog." + TestAccVcdCatalogName
+	resourceAddress := "vcd_catalog.test-catalog"
 	dataSourceAddress := "data.vcd_storage_profile.sp"
 
 	resource.Test(t, resource.TestCase{
@@ -118,7 +124,7 @@ func TestAccVcdCatalogWithStorageProfile(t *testing.T) {
 		ProviderFactories: testAccProviders,
 		CheckDestroy:      testAccCheckCatalogDestroy,
 		Steps: []resource.TestStep{
-			// Provision catalog without storage profile
+			// Provision with storage profile
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
@@ -189,7 +195,7 @@ func testAccCheckCatalogDestroy(s *terraform.State) error {
 }
 
 const testAccCheckVcdCatalog = `
-resource "vcd_catalog" "{{.CatalogName}}" {
+resource "vcd_catalog" "test-catalog" {
   org = "{{.Org}}" 
   
   name        = "{{.CatalogName}}"
@@ -205,7 +211,7 @@ data "vcd_storage_profile" "sp" {
 	name = "{{.StorageProfile}}"
 }
 
-resource "vcd_catalog" "{{.CatalogName}}" {
+resource "vcd_catalog" "test-catalog" {
   org = "{{.Org}}" 
   
   name               = "{{.CatalogName}}"

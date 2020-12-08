@@ -33,11 +33,9 @@ func resourceVcdCatalog() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
 			},
 			"storage_profile_id": &schema.Schema{
 				Type:        schema.TypeString,
@@ -166,10 +164,14 @@ func resourceVcdCatalogUpdate(d *schema.ResourceData, meta interface{}) error {
 		if storageProfileId != "" {
 			storageProfileReference, err := adminOrg.GetStorageProfileReferenceById(storageProfileId, false)
 			if err != nil {
-				return fmt.Errorf("couuld not proces storage profile '%s': %s", storageProfileId, err)
+				return fmt.Errorf("could not process storage profile '%s': %s", storageProfileId, err)
 			}
 			adminCatalog.AdminCatalog.CatalogStorageProfiles = &types.CatalogStorageProfiles{VdcStorageProfile: []*types.Reference{storageProfileReference}}
 		}
+	}
+
+	if d.HasChange("description") {
+		adminCatalog.AdminCatalog.Description = d.Get("description").(string)
 	}
 
 	err = adminCatalog.Update()
