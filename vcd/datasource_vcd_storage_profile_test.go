@@ -85,7 +85,7 @@ func checkStorageProfileOriginatesInParentVdc(resource, storageProfileName, orgN
 			}
 		}
 
-		return fmt.Errorf("could not validate storage profile '%s' with ID '%s' belongs to Vdc '%s",
+		return fmt.Errorf("could not validate storage profile '%s' with ID '%s' belongs to VDC '%s",
 			storageProfileName, resourceId, testConfig.VCD.Vdc)
 	}
 }

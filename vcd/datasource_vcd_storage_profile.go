@@ -41,7 +41,7 @@ func datasourceVcdStorageProfileRead(ctx context.Context, d *schema.ResourceData
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return diag.Errorf("error reading Org and Vdc: %s", err)
+		return diag.Errorf("error reading Org and VDC: %s", err)
 	}
 
 	name := d.Get("name").(string)

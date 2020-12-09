@@ -29,7 +29,7 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations.
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level.
-* `name` - (Required) Storage profile name
+* `name` - (Required) Storage profile name.
 
 ## Attribute reference
 

@@ -151,6 +151,14 @@ func resourceVcdCatalogUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error retrieving catalog %s : %s", d.Id(), err)
 	}
 
+	// Create a copy of adminCatalog to only set and change things which are related to this update section and skip the
+	// other fields. This is important as this provider does not cover all settings available in API and they should not be
+	// overwritten.
+	newAdminCatalog := govcd.NewAdminCatalog(&vcdClient.VCDClient.Client)
+	newAdminCatalog.AdminCatalog.ID = adminCatalog.AdminCatalog.ID
+	newAdminCatalog.AdminCatalog.HREF = adminCatalog.AdminCatalog.HREF
+	newAdminCatalog.AdminCatalog.Name = adminCatalog.AdminCatalog.Name
+
 	// Perform storage profile updates
 	if d.HasChange("storage_profile_id") {
 		storageProfileId := d.Get("storage_profile_id").(string)
@@ -158,23 +166,23 @@ func resourceVcdCatalogUpdate(d *schema.ResourceData, meta interface{}) error {
 		// Unset storage profile (use any available in Org)
 		if storageProfileId == "" {
 			// Set empty structure as `nil` would not update it at all
-			adminCatalog.AdminCatalog.CatalogStorageProfiles = &types.CatalogStorageProfiles{VdcStorageProfile: []*types.Reference{}}
+			newAdminCatalog.AdminCatalog.CatalogStorageProfiles = &types.CatalogStorageProfiles{VdcStorageProfile: []*types.Reference{}}
 		}
 
 		if storageProfileId != "" {
 			storageProfileReference, err := adminOrg.GetStorageProfileReferenceById(storageProfileId, false)
 			if err != nil {
-				return fmt.Errorf("could not process storage profile '%s': %s", storageProfileId, err)
+				return fmt.Errorf("could not process Storage Profile '%s': %s", storageProfileId, err)
 			}
-			adminCatalog.AdminCatalog.CatalogStorageProfiles = &types.CatalogStorageProfiles{VdcStorageProfile: []*types.Reference{storageProfileReference}}
+			newAdminCatalog.AdminCatalog.CatalogStorageProfiles = &types.CatalogStorageProfiles{VdcStorageProfile: []*types.Reference{storageProfileReference}}
 		}
 	}
 
 	if d.HasChange("description") {
-		adminCatalog.AdminCatalog.Description = d.Get("description").(string)
+		newAdminCatalog.AdminCatalog.Description = d.Get("description").(string)
 	}
 
-	err = adminCatalog.Update()
+	err = newAdminCatalog.Update()
 	if err != nil {
 		return fmt.Errorf("error updating catalog '%s': %s", adminCatalog.AdminCatalog.Name, err)
 	}
