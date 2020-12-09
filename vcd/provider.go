@@ -66,6 +66,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_resource_schema":     datasourceVcdResourceSchema(),    // 3.1
 	"vcd_nsxt_edge_cluster":   datasourceVcdNsxtEdgeCluster(),   // 3.1
 	"vcd_nsxt_edgegateway":    datasourceVcdNsxtEdgeGateway(),   // 3.1
+	"vcd_storage_profile":     datasourceVcdStorageProfile(),    // 3.1
 }
 
 var globalResourceMap = map[string]*schema.Resource{
