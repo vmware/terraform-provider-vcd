@@ -24,6 +24,8 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -119,9 +121,11 @@ type TestConfig struct {
 		} `json:"peer"`
 	} `json:"networking"`
 	Nsxt struct {
-		Manager        string `json:"manager"`
-		Tier0router    string `json:"tier0router"`
-		Tier0routerVrf string `json:"tier0routervrf"`
+		Manager         string `json:"manager"`
+		Tier0router     string `json:"tier0router"`
+		Tier0routerVrf  string `json:"tier0routervrf"`
+		Vdc             string `json:"vdc"`
+		ExternalNetwork string `json:"externalNetwork"`
 	} `json:"nsxt"`
 	Logging struct {
 		Enabled         bool   `json:"enabled,omitempty"`
@@ -651,6 +655,9 @@ func TestMain(m *testing.M) {
 		createSuiteCatalogAndItem(testConfig)
 	}
 
+	// Ensure that catalog uses storage from NSX-V VDC
+	setCatalogStorageProfile()
+
 	// Runs all test functions
 	exitCode := m.Run()
 
@@ -667,7 +674,41 @@ func TestMain(m *testing.M) {
 	os.Exit(exitCode)
 }
 
-//Creates catalog and/or catalog item if they are not preconfigured.
+// setCatalogStorageProfile ensures that pre-created catalog uses storage profile from the same VDC
+// Having a storage profile from different VDC would return random errors because of not accessible storage with templates
+func setCatalogStorageProfile() {
+	vcdClient := createTemporaryVCDConnection()
+
+	adminOrg, err := vcdClient.GetAdminOrgByName(testConfig.VCD.Org)
+	if err != nil {
+		panic(err)
+	}
+
+	adminCatalog, err := adminOrg.GetAdminCatalogByName(testConfig.VCD.Catalog.Name, true)
+	if err != nil {
+		panic(err)
+	}
+	_, vdc, err := vcdClient.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+	if err != nil {
+		panic(err)
+	}
+
+	// Explicitly set catalog to use storage profile from NSX-V VDC
+	adminCatalog.AdminCatalog.CatalogStorageProfiles = &types.CatalogStorageProfiles{[]*types.Reference{&types.Reference{
+		HREF: vdc.Vdc.VdcStorageProfiles.VdcStorageProfile[0].HREF,
+		Name: vdc.Vdc.VdcStorageProfiles.VdcStorageProfile[0].Name,
+	}}}
+
+	fmt.Printf("Setting catalog '%s' to use '%s' storage profile from VDC '%s'\n",
+		adminCatalog.AdminCatalog.Name, vdc.Vdc.VdcStorageProfiles.VdcStorageProfile[0].Name, testConfig.VCD.Vdc)
+
+	err = adminCatalog.Update()
+	if err != nil {
+		panic(err)
+	}
+}
+
+// createSuiteCatalogAndItem creates catalog and/or catalog item if they are not preconfigured.
 func createSuiteCatalogAndItem(config TestConfig) {
 	fmt.Printf("Checking resources to create for test suite...\n")
 
@@ -907,6 +948,21 @@ func importStateIdOrgVdcObject(vcd TestConfig, objectName string) resource.Impor
 		return testConfig.VCD.Org +
 			ImportSeparator +
 			testConfig.VCD.Vdc +
+			ImportSeparator +
+			objectName, nil
+	}
+}
+
+// importStateIdOrgNsxtVdcObject can be used by all entities that depend on Org + NSX-T VDC (such as Vapp, networks,
+// edge gateway) in NSX-T VDC
+func importStateIdOrgNsxtVdcObject(vcd TestConfig, objectName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		if testConfig.VCD.Org == "" || testConfig.Nsxt.Vdc == "" || objectName == "" {
+			return "", fmt.Errorf("missing information to generate import path")
+		}
+		return testConfig.VCD.Org +
+			ImportSeparator +
+			testConfig.Nsxt.Vdc +
 			ImportSeparator +
 			objectName, nil
 	}

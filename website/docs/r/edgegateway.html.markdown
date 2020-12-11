@@ -17,11 +17,6 @@ Supported in provider *v2.4+*
 You must use `System Adminstrator` account in `provider` configuration
 and then provide `org` and `vdc` arguments for edge gateway to work.
 
-~> **Note:** Load balancing capabilities will work only when edge gateway is `advanced`. Load
-balancing settings will be **ignored** when it is not. Refer to [official vCloud Director documentation]
-(https://docs.vmware.com/en/vCloud-Director/9.7/com.vmware.vcloud.tenantportal.doc/GUID-7E082E77-B459-4CE7-806D-2769F7CB5624.html) 
-for more information.
-
 ## Example Usage
 
 ```hcl
@@ -120,7 +115,7 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to which the VDC belongs. Optional if defined at provider level.
 * `vdc` - (Optional) The name of VDC that owns the edge gateway. Optional if defined at provider level. 
 * `name` - (Required) A unique name for the edge gateway.
-* `external_network` - (Optional, *v2.6+*) One or more blocks defining external networks, their
+* `external_network` - (Required, *v2.6+*) One or more blocks defining external networks, their
   subnets, IP addresses and  IP pool suballocation attached to edge gateway interfaces. Details are
   in [external network](#external-network) block below.
 * `configuration` - (Required) Configuration of the vShield edge VM for this gateway. One of: `compact`, `full` ("Large"), `x-large`, `full4` ("Quad Large").

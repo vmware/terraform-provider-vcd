@@ -36,7 +36,7 @@ func TestProviderVersion(t *testing.T) {
 		panic(fmt.Errorf("could not read index file %s: %v", indexFile, err))
 	}
 
-	vcdHeader := `# VMware vCloud Director Provider`
+	vcdHeader := `# VMware Cloud Director Provider`
 	expectedText := vcdHeader + ` ` + currentProviderVersion
 	reExpectedVersion := regexp.MustCompile(`(?m)^` + expectedText)
 	reFoundVersion := regexp.MustCompile(`(?m)^` + vcdHeader + ` \d+\.\d+`)

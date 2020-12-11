@@ -3,24 +3,24 @@ layout: "vcd"
 page_title: "Provider: VMware vCloudDirector"
 sidebar_current: "docs-vcd-index"
 description: |-
-  The VMware vCloud Director provider is used to interact with the resources supported by VMware vCloud Director. The provider needs to be configured with the proper credentials before it can be used.
+  The VMware Cloud Director provider is used to interact with the resources supported by VMware Cloud Director. The provider needs to be configured with the proper credentials before it can be used.
 ---
 
-# VMware vCloud Director Provider 3.1
+# VMware Cloud Director Provider 3.1
 
-The VMware vCloud Director provider is used to interact with the resources supported by VMware vCloud Director. The provider needs to be configured with the proper credentials before it can be used.
+The VMware Cloud Director provider is used to interact with the resources supported by VMware Cloud Director. The provider needs to be configured with the proper credentials before it can be used.
 
 Use the navigation to the left to read about the available resources. Please refer to
 [CHANGELOG.md](https://github.com/vmware/terraform-provider-vcd/blob/master/CHANGELOG.md)
 to track feature additions.
 
-~> **NOTE:** The VMware vCloud Director Provider documentation pages include *v2.x+* or *v3.x+* labels in resource and/or field
+~> **NOTE:** The VMware Cloud Director Provider documentation pages include *v2.x+* or *v3.x+* labels in resource and/or field
 descriptions. These labels are designed to show at which provider version a certain feature was introduced.
 When upgrading the provider please check for such labels for the resources you are using.
 
-## Supported vCD Versions
+## Supported VCD Versions
 
-The following vCloud Director versions are supported by this provider:
+The following Cloud Director versions are supported by this provider:
 
 * 9.7
 * 10.0
@@ -52,7 +52,7 @@ The following fields were removed from resources in *v3.0*:
 The most common - tenant - use case when you set user to organization administrator and when all resources are in a single organization. 
 
 ```hcl
-# Configure the VMware vCloud Director Provider
+# Configure the VMware Cloud Director Provider
 provider "vcd" {
   user                 = var.vcd_user
   password             = var.vcd_pass
@@ -75,7 +75,7 @@ resource "vcd_network_routed" "net" {
 When you want to manage resources across different organizations from a single configuration.
 
 ```hcl
-# Configure the VMware vCloud Director Provider
+# Configure the VMware Cloud Director Provider
 provider "vcd" {
   user                 = "administrator"
   password             = var.vcd_pass
@@ -108,7 +108,7 @@ resource "vcd_network_routed" "net2" {
 When you want to manage resources across different organizations but set a default one. 
 
 ```hcl
-# Configure the VMware vCloud Director Provider
+# Configure the VMware Cloud Director Provider
 provider "vcd" {
   user                 = "administrator"
   password             = var.vcd_pass
@@ -201,13 +201,13 @@ Using a token produced by an org admin to run a task that requires a system admi
 Take special attention to `user`, `use_saml_adfs` and `saml_rpt_id` fields.
 
 ```hcl
-# Configure the VMware vCloud Director Provider
+# Configure the VMware Cloud Director Provider
 provider "vcd" {
   user                 = "test@contoso.com"
   password             = var.vcd_pass
   sysorg               = "my-org"
   auth_type            = "saml_adfs"
-  # If `saml_adfs_rpt_id` is not specified - vCD SAML Entity ID will be used automatically
+  # If `saml_adfs_rpt_id` is not specified - VCD SAML Entity ID will be used automatically
   saml_adfs_rpt_id     = "my-custom-rpt-id"
   org                  = var.vcd_org                  # Default for resources
   vdc                  = var.vcd_vdc                  # Default for resources
@@ -219,19 +219,19 @@ provider "vcd" {
 
 ## Argument Reference
 
-The following arguments are used to configure the VMware vCloud Director Provider:
+The following arguments are used to configure the VMware Cloud Director Provider:
 
-* `user` - (Required) This is the username for vCloud Director API operations. Can also be specified
+* `user` - (Required) This is the username for Cloud Director API operations. Can also be specified
   with the `VCD_USER` environment variable. *v2.0+* `user` may be "administrator" (set `org` or
   `sysorg` to "System" in this case). 
   *v2.9+* When using with SAML and ADFS - username format must be in Active Directory format -
   `user@contoso.com` or `contoso.com\user` in combination with `use_saml_adfs` option.
   
-* `password` - (Required) This is the password for vCloud Director API operations. Can
+* `password` - (Required) This is the password for Cloud Director API operations. Can
   also be specified with the `VCD_PASSWORD` environment variable.
 
 * `auth_type` - (Optional) `integrated`, `token` or `saml_adfs`. Default is `integrated`.
-  * `integrated` - vCD local users and LDAP users (provided LDAP is configured for Organization).
+  * `integrated` - VCD local users and LDAP users (provided LDAP is configured for Organization).
   * `saml_adfs` allows to use SAML login flow with Active Directory Federation
   Services (ADFS) using "/adfs/services/trust/13/usernamemixed" endpoint. Please note that
   credentials for ADFS should be formatted as `user@contoso.com` or `contoso.com\user`. Can also be
@@ -244,11 +244,11 @@ The following arguments are used to configure the VMware vCloud Director Provide
    values. A token can be specified with the `VCD_TOKEN` environment variable.
    Both a (deprecated) authorization token or a bearer token (*v3.1+*) can be used in this field.
 
-* `saml_adfs_rpt_id` - (Optional) When using `auth_type=saml_adfs` vCD SAML entity ID will be used
+* `saml_adfs_rpt_id` - (Optional) When using `auth_type=saml_adfs` VCD SAML entity ID will be used
   as Relaying Party Trust Identifier (RPT ID) by default. If a different RPT ID is needed - one can
   set it using this field. It can also be set with `VCD_SAML_ADFS_RPT_ID` environment variable.
 
-* `org` - (Required) This is the vCloud Director Org on which to run API
+* `org` - (Required) This is the Cloud Director Org on which to run API
   operations. Can also be specified with the `VCD_ORG` environment
   variable.  
   *v2.0+* `org` may be set to "System" when connection as Sys Admin is desired
@@ -260,17 +260,17 @@ The following arguments are used to configure the VMware vCloud Director Provide
    `user` to "administrator" to free up `org` argument for setting a default organization
    for resources to use.
    
-* `url` - (Required) This is the URL for the vCloud Director API endpoint. e.g.
+* `url` - (Required) This is the URL for the Cloud Director API endpoint. e.g.
   https://server.domain.com/api. Can also be specified with the `VCD_URL` environment variable.
   
-* `vdc` - (Optional) This is the virtual datacenter within vCloud Director to run
+* `vdc` - (Optional) This is the virtual datacenter within Cloud Director to run
   API operations against. If not set the plugin will select the first virtual
   datacenter available to your Org. Can also be specified with the `VCD_VDC` environment
   variable.
   
 * `max_retry_timeout` - (Optional) This provides you with the ability to specify the maximum
   amount of time (in seconds) you are prepared to wait for interactions on resources managed
-  by vCloud Director to be successful. If a resource action fails, the action will be retried
+  by Cloud Director to be successful. If a resource action fails, the action will be retried
   (as long as it is still within the `max_retry_timeout` value) to try and ensure success.
   Defaults to 60 seconds if not set.
   Can also be specified with the `VCD_MAX_RETRY_TIMEOUT` environment variable.
@@ -295,7 +295,7 @@ The following arguments are used to configure the VMware vCloud Director Provide
 
 ## Connection Cache (*2.0+*)
 
-vCloud Director connection calls can be expensive, and if a definition file contains several resources, it may trigger 
+Cloud Director connection calls can be expensive, and if a definition file contains several resources, it may trigger 
 multiple connections. There is a cache engine, disabled by default, which can be activated by the `VCD_CACHE` 
 environment variable. When enabled, the provider will not reconnect, but reuse an active connection for up to 20 
 minutes, and then connect again.
