@@ -284,6 +284,7 @@ The following arguments are supported:
     * `vcd_vapp_vm`
     * `vcd_org_user`
     * `vcd_edgegateway`
+    * `vcd_nsxt_edgegateway`
     * `vcd_lb_server_pool`
     * `vcd_lb_service_monitor`
     * `vcd_lb_virtual_server`

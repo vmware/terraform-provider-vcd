@@ -192,6 +192,7 @@ terraform import vcd_nsxt_edgegateway.nsxt-edge my-org.nsxt-vdc.nsxt-edge
 ```
 
 * **Note 1**: the separator can be changed using `Provider.import_separator` or variable `VCD_IMPORT_SEPARATOR`
+* **Note 2**: it is possible to list all available NSX-T edge gateways using data source [vcd_resource_list](/docs/providers/vcd/d/resource_list.html#vcd_nsxt_edgegateway)
 
 [docs-import]:https://www.terraform.io/docs/import/
 
