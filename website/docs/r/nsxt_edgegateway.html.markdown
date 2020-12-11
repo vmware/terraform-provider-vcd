@@ -11,8 +11,6 @@ description: |-
 Provides a VMware Cloud Director NSX-T edge gateway. This can be used to create, update, and delete NSX-T edge gateways connected
 to external networks.
 
-Supported in provider *v3.1+*
-
 ~> **Note:** Only `System Administrator` can create an edge gateway.
 You must use `System Adminstrator` account in `provider` configuration
 and then provide `org` and `vdc` arguments for edge gateway to work.
