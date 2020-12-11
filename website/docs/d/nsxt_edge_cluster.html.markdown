@@ -12,9 +12,9 @@ Provides a data source for available NSX-T Edge Clusters.
 
 Supported in provider *v3.1+*
 
-~> **Note:** This resource uses new VMware Cloud Director
+-> **Note:** This data source uses new VMware Cloud Director
 [OpenAPI](https://code.vmware.com/docs/11982/getting-started-with-vmware-cloud-director-openapi) and
-requires at least VCD *10.1.1+* and NSX-T.
+requires at least VCD *10.1.1+* and NSX-T *3.0+*.
 
 ## Example Usage 
 

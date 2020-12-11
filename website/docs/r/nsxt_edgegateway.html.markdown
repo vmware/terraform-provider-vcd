@@ -15,6 +15,12 @@ to external networks.
 You must use `System Adminstrator` account in `provider` configuration
 and then provide `org` and `vdc` arguments for edge gateway to work.
 
+-> **Note:** This resource uses new VMware Cloud Director
+[OpenAPI](https://code.vmware.com/docs/11982/getting-started-with-vmware-cloud-director-openapi) and
+requires at least VCD *10.1.1+* and NSX-T *3.0+*.
+
+Supported in provider *v3.1+*.
+
 ## Example Usage (Simple case)
 
 ```hcl
