@@ -16,8 +16,8 @@ func TestAccVcdNsxtEdgeCluster(t *testing.T) {
 	}
 
 	vcdClient := createTemporaryVCDConnection()
-	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
-		t.Skip(t.Name() + " requires at least API v33.0 (vCD 10+)")
+	if vcdClient.Client.APIVCDMaxVersionIs("< 34.0") {
+		t.Skip(t.Name() + " requires at least API v34.0 (vCD 10.1+)")
 	}
 
 	_, vdc, err := vcdClient.GetOrgAndVdc(testConfig.VCD.Org, testConfig.Nsxt.Vdc)
