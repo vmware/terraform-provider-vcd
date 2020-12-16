@@ -1,1 +1,1 @@
-* **New Data Source**: `vcd_storage_profile` for storage profile lookup [GH-602]
+**New Data Source**: `vcd_storage_profile` for storage profile lookup [GH-602]
