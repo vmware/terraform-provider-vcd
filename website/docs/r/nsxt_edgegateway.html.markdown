@@ -71,6 +71,7 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   description             = "Description"
 
   external_network_id = data.vcd_external_network_v2.nsxt-ext-net.id
+  dedicate_external_network = true
 
   # Custom edge cluster reference
   edge_cluster_id = data.vcd_nsxt_edge_cluster.secondary.id
@@ -133,6 +134,7 @@ The following arguments are supported:
 can be used to lookup ID by name.
 * `subnet` - (Required) One or more [subnets](#edgegateway-subnet) defined for edge gateway.
 * `edge_cluster_id` - (Optional) Specific Edge Cluster ID if required
+* `dedicate_external_network` - (Optional) Dedicating the External Network will enable Route Advertisement for this Edge Gateway. Default `false`.
 
 <a id="edgegateway-subnet"></a>
 ## Edge Gateway Subnet
