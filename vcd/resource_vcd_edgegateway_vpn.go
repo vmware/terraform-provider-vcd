@@ -1,6 +1,7 @@
 package vcd
 
 //lint:file-ignore SA1019 ignore deprecated functions
+//lint:file-ignore U1000 ignore because it is a working example
 
 import (
 	"fmt"
@@ -9,6 +10,44 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
+
+var edgeVpnlocalSubnetResource = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"local_subnet_name": &schema.Schema{
+			Type:     schema.TypeString,
+			Required: true,
+		},
+
+		"local_subnet_gateway": &schema.Schema{
+			Type:     schema.TypeString,
+			Required: true,
+		},
+
+		"local_subnet_mask": &schema.Schema{
+			Type:     schema.TypeString,
+			Required: true,
+		},
+	},
+}
+
+var edgeVpnpeerSubnetResource = &schema.Resource{
+	Schema: map[string]*schema.Schema{
+		"peer_subnet_name": &schema.Schema{
+			Type:     schema.TypeString,
+			Required: true,
+		},
+
+		"peer_subnet_gateway": &schema.Schema{
+			Type:     schema.TypeString,
+			Required: true,
+		},
+
+		"peer_subnet_mask": &schema.Schema{
+			Type:     schema.TypeString,
+			Required: true,
+		},
+	},
+}
 
 func resourceVcdEdgeGatewayVpn() *schema.Resource {
 	return &schema.Resource{
@@ -95,48 +134,14 @@ func resourceVcdEdgeGatewayVpn() *schema.Resource {
 				Type:     schema.TypeSet,
 				Optional: true,
 				ForceNew: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"local_subnet_name": &schema.Schema{
-							Type:     schema.TypeString,
-							Required: true,
-						},
-
-						"local_subnet_gateway": &schema.Schema{
-							Type:     schema.TypeString,
-							Required: true,
-						},
-
-						"local_subnet_mask": &schema.Schema{
-							Type:     schema.TypeString,
-							Required: true,
-						},
-					},
-				},
+				Elem:     edgeVpnlocalSubnetResource,
 			},
 
 			"peer_subnets": &schema.Schema{
 				Type:     schema.TypeSet,
 				Optional: true,
 				ForceNew: true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"peer_subnet_name": &schema.Schema{
-							Type:     schema.TypeString,
-							Required: true,
-						},
-
-						"peer_subnet_gateway": &schema.Schema{
-							Type:     schema.TypeString,
-							Required: true,
-						},
-
-						"peer_subnet_mask": &schema.Schema{
-							Type:     schema.TypeString,
-							Required: true,
-						},
-					},
-				},
+				Elem:     edgeVpnpeerSubnetResource,
 			},
 		},
 	}
@@ -303,14 +308,40 @@ func resourceVcdEdgeGatewayVpnRead(d *schema.ResourceData, meta interface{}) err
 		_ = d.Set("mtu", tunnel.Mtu)
 		_ = d.Set("peer_ip_address", tunnel.PeerIPAddress)
 		_ = d.Set("peer_id", tunnel.PeerID)
-		err := convertAndSet("local_subnets", "local", tunnel.LocalSubnet, d)
-		if err != nil {
-			return fmt.Errorf("error setting 'local_subnets': %s", err)
-		}
-		err = convertAndSet("peer_subnets", "peer", tunnel.PeerSubnet, d)
-		if err != nil {
-			return fmt.Errorf("error setting 'peer_subnets': %s", err)
-		}
+
+		// Read for local_subnets and peer_subnets never worked and it is impossible to fix it with current resource
+		// design because not all data can be retrieved. Detailed explanation and code demonstrating read problems is
+		// below;.
+		//
+		// local_subnets and peer_subnets cannot be read because API does not return all values that are sent
+		// Also some values are returned different than sent.
+		// Example POST:
+		// <LocalSubnet>
+		//    <Name>WEB_EAST</Name>
+		//    <Gateway>10.150.192.1</Gateway>
+		//    <Netmask>255.255.255.0</Netmask>
+		// </LocalSubnet>
+		// Example GET after that:
+		// 	<LocalSubnet>
+		//    <Name>10.150.192.0/24</Name>
+		//    <Gateway>10.150.192.0</Gateway>
+		//    <Netmask>255.255.255.0</Netmask>
+		//  </LocalSubnet>
+		//
+		// In the example above - one can see that only Netmask is returned in the same format as sent. Name is ignored
+		// at all. Because it is TypeSet - we cannot set "partial" data as it would immediately cause Diff.
+
+		// Uncomment code below to enable "READ" functionality and witness problems described above.
+		//
+		// err := convertAndSet("local_subnets", "local", edgeVpnlocalSubnetResource, tunnel.LocalSubnet, d)
+		// if err != nil {
+		// 	return fmt.Errorf("error setting 'local_subnets': %s", err)
+		// }
+		// err = convertAndSet("peer_subnets", "peer", edgeVpnpeerSubnetResource, tunnel.PeerSubnet, d)
+		// if err != nil {
+		// 	return fmt.Errorf("error setting 'peer_subnets': %s", err)
+		// }
+
 	} else {
 		return fmt.Errorf("multiple tunnels not currently supported")
 	}
@@ -318,8 +349,8 @@ func resourceVcdEdgeGatewayVpnRead(d *schema.ResourceData, meta interface{}) err
 	return nil
 }
 
-func convertAndSet(key, prefix string, subNets []*types.IpsecVpnSubnet, d *schema.ResourceData) error {
-	var items []map[string]interface{}
+func convertAndSet(key, prefix string, hashObejct *schema.Resource, subNets []*types.IpsecVpnSubnet, d *schema.ResourceData) error {
+	var items []interface{}
 
 	for _, subNet := range subNets {
 		item := map[string]interface{}{
@@ -329,5 +360,8 @@ func convertAndSet(key, prefix string, subNets []*types.IpsecVpnSubnet, d *schem
 		}
 		items = append(items, item)
 	}
-	return d.Set(key, items)
+
+	itemsHash := schema.NewSet(schema.HashResource(hashObejct), items)
+
+	return d.Set(key, itemsHash)
 }
