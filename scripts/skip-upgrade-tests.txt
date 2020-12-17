@@ -136,7 +136,7 @@ vcd.TestAccVcdVAppProperties.tf v2.9.0 "default value power_on changed from true
 vcd.TestAccVcdVAppVm_Clone.tf v2.9.0 "default value power_on changed from true to false"
 vcd.TestAccVcdVAppVm_HardwareVirtualization.tf v2.9.0 "default value power_on changed from true to false"
 vcd.TestAccVcdVAppVmProperties-step1.tf v2.9.0 "default value power_on changed from true to false"
-vcd.TestAccVcdVAppVmProperties-step2.tf v2.9.0 "default value power_onvcd.TestAccVcdVappOrgNetworkDS.tf changed from true to false"
+vcd.TestAccVcdVAppVmProperties-step2.tf v2.9.0 "default value power_on changed from true to false"
 vcd.TestAccVcdVAppVmProperties.tf v2.9.0 "default value power_on changed from true to false"
 vcd.TestAccVcdVAppVmUpdateCustomization.tf v2.9.0 "default value power_on changed from true to false"
 vcd.TestAccVcdVmInternalDisk-CreateALl.tf v2.9.0 "field size removed from independent disk"
