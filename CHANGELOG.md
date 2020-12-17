@@ -26,7 +26,7 @@ BUG FIXES
 
 NOTES
 
-* Bump terraform-plugin-sdk to v2.2.0 ([#576](https://github.com/vmware/terraform-provider-vcd/issues/576))
+* Bump terraform-plugin-sdk to v2.2.0 ([#576](https://github.com/vmware/terraform-provider-vcd/issues/576), [#594](https://github.com/vmware/terraform-provider-vcd/issues/594))
 
 ## 3.0.0 (October 16, 2020)
 
