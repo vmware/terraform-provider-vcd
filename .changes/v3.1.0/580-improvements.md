@@ -1,1 +1,1 @@
-* `resource/vcd_vapp_vm` field `storage_profile` is updatable [GH-580]
+* `resource/vcd_vapp_vm` adds support to update storage_profile [GH-580]
