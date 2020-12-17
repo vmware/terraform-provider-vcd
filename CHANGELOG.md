@@ -11,11 +11,11 @@ FEATURES
 
 IMPROVEMENTS
 
-* `resource/vcd_vapp_vm` adds support to update storage_profile ([#580](https://github.com/vmware/terraform-provider-vcd/issues/580))
-* `resource/vcd_org_vdc` adds support to update storage_profile ([#583](https://github.com/vmware/terraform-provider-vcd/issues/583))
+* `resource/vcd_vapp_vm` adds support to update `storage_profile` ([#580](https://github.com/vmware/terraform-provider-vcd/issues/580))
+* `resource/vcd_org_vdc` adds support to update storage_profile` ([#583](https://github.com/vmware/terraform-provider-vcd/issues/583))
 * `resource/vcd_org_vdc` new computed field `storage_used_in_mb` ([#583](https://github.com/vmware/terraform-provider-vcd/issues/583))
 * `resource/vcd_catalog` allows to set and update `storage_profile_id` ([#602](https://github.com/vmware/terraform-provider-vcd/issues/602))
-* `resource/vcd_catalog` supports update for `description` ([#602](https://github.com/vmware/terraform-provider-vcd/issues/602))
+* `resource/vcd_catalog` adds support to update `description` ([#602](https://github.com/vmware/terraform-provider-vcd/issues/602))
 * `datasource/vcd_catalog` exports `storage_profile_id` ([#602](https://github.com/vmware/terraform-provider-vcd/issues/602))
 * Provider: add support for bearer tokens in addition to authorization tokens ([#590](https://github.com/vmware/terraform-provider-vcd/issues/590))
 * Provider: automatically use `/cloudapi/1.0.0/sessions/provider` when `/api/sessions` is disabled ([#590](https://github.com/vmware/terraform-provider-vcd/issues/590))
