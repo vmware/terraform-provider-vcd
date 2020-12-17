@@ -11,7 +11,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
 )
 
-var edgeVpnlocalSubnetResource = &schema.Resource{
+var edgeVpnLocalSubnetResource = &schema.Resource{
 	Schema: map[string]*schema.Schema{
 		"local_subnet_name": &schema.Schema{
 			Type:     schema.TypeString,
@@ -30,7 +30,7 @@ var edgeVpnlocalSubnetResource = &schema.Resource{
 	},
 }
 
-var edgeVpnpeerSubnetResource = &schema.Resource{
+var edgeVpnPeerSubnetResource = &schema.Resource{
 	Schema: map[string]*schema.Schema{
 		"peer_subnet_name": &schema.Schema{
 			Type:     schema.TypeString,
@@ -134,14 +134,14 @@ func resourceVcdEdgeGatewayVpn() *schema.Resource {
 				Type:     schema.TypeSet,
 				Optional: true,
 				ForceNew: true,
-				Elem:     edgeVpnlocalSubnetResource,
+				Elem:     edgeVpnLocalSubnetResource,
 			},
 
 			"peer_subnets": &schema.Schema{
 				Type:     schema.TypeSet,
 				Optional: true,
 				ForceNew: true,
-				Elem:     edgeVpnpeerSubnetResource,
+				Elem:     edgeVpnPeerSubnetResource,
 			},
 		},
 	}
@@ -333,11 +333,11 @@ func resourceVcdEdgeGatewayVpnRead(d *schema.ResourceData, meta interface{}) err
 
 		// Uncomment code below to enable "READ" functionality and witness problems described above.
 		//
-		// err := convertAndSet("local_subnets", "local", edgeVpnlocalSubnetResource, tunnel.LocalSubnet, d)
+		// err := convertAndSet("local_subnets", "local", edgeVpnLocalSubnetResource, tunnel.LocalSubnet, d)
 		// if err != nil {
 		// 	return fmt.Errorf("error setting 'local_subnets': %s", err)
 		// }
-		// err = convertAndSet("peer_subnets", "peer", edgeVpnpeerSubnetResource, tunnel.PeerSubnet, d)
+		// err = convertAndSet("peer_subnets", "peer", edgeVpnPeerSubnetResource, tunnel.PeerSubnet, d)
 		// if err != nil {
 		// 	return fmt.Errorf("error setting 'peer_subnets': %s", err)
 		// }
