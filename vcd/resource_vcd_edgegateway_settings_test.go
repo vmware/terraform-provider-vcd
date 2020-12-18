@@ -344,14 +344,6 @@ resource "vcd_edgegateway_settings" "{{.EgwSettings}}" {
     ignore_changes = [lb_logging_enabled, lb_loglevel]
   }
 }
-
-output "egw" {
-  value = vcd_edgegateway.egw
-}
-
-output "egw_settings" {
-  value = vcd_edgegateway_settings.{{.EgwSettings}}
-}
 `
 
 const testAccEdgeGatewaySettingsSimple = `
