@@ -126,6 +126,8 @@ type TestConfig struct {
 		Tier0routerVrf  string `json:"tier0routervrf"`
 		Vdc             string `json:"vdc"`
 		ExternalNetwork string `json:"externalNetwork"`
+		EdgeGateway     string `json:"edgeGateway"`
+		UnusedSegment   string `json:"unusedSegment"`
 	} `json:"nsxt"`
 	Logging struct {
 		Enabled         bool   `json:"enabled,omitempty"`

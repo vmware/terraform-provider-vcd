@@ -12,6 +12,9 @@ Provides a vCloud Director Org VDC routed Network data source. This can be used 
 
 Supported in provider *v2.5+*
 
+-> **Note:** This data source supports only NSX-V backed Org VDC networks.
+Please use newer `vcd_network_routed_v2` data source which is compatible with both NSX-V and NSX-T.
+
 ## Example Usage
 
 ```hcl
