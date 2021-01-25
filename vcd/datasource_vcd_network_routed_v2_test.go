@@ -1,3 +1,5 @@
+// +build network ALL functional
+
 package vcd
 
 import (
