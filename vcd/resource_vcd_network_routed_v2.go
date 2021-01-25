@@ -232,11 +232,11 @@ func resourceVcdNetworkRoutedV2Import(ctx context.Context, d *schema.ResourceDat
 
 	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkByName(networkName)
 	if err != nil {
-		return nil, fmt.Errorf("error reading network with name '%s': %s", networkName, err)
+		return nil, fmt.Errorf("[routed network import] error reading network with name '%s': %s", networkName, err)
 	}
 
 	if !orgNetwork.IsRouted() {
-		return nil, fmt.Errorf("Org network with name '%s' found, but is not of type Routed (type is '%s')",
+		return nil, fmt.Errorf("[routed network import] Org network with name '%s' found, but is not of type Routed (type is '%s')",
 			networkName, orgNetwork.GetType())
 	}
 
@@ -251,7 +251,7 @@ func setOpenApiOrgVdcNetworkData(d *schema.ResourceData, orgVdcNetwork *types.Op
 
 	_ = d.Set("name", orgVdcNetwork.Name)
 	_ = d.Set("description", orgVdcNetwork.Description)
-	// Check if values are not empty
+
 	if orgVdcNetwork.Connection != nil {
 		_ = d.Set("edge_gateway_id", orgVdcNetwork.Connection.RouterRef.ID)
 		_ = d.Set("interface_type", orgVdcNetwork.Connection.ConnectionType)
