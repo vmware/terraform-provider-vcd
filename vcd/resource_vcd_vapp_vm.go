@@ -1320,9 +1320,9 @@ func genericVcdVAppVmRead(d *schema.ResourceData, meta interface{}, origin strin
 	_ = d.Set("cpu_hot_add_enabled", vm.VM.VMCapabilities.CPUHotAddEnabled)
 	_ = d.Set("memory_hot_add_enabled", vm.VM.VMCapabilities.MemoryHotAddEnabled)
 
-	cpus := 0
+	cpus := int64(0)
 	coresPerSocket := 0
-	memory := 0
+	memory := int64(0)
 	for _, item := range vm.VM.VirtualHardwareSection.Item {
 		if item.ResourceType == 3 {
 			cpus += item.VirtualQuantity

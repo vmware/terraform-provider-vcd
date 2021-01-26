@@ -6,6 +6,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -320,6 +322,72 @@ func networkList(d *schema.ResourceData, meta interface{}) (list []string, err e
 				vdc.Vdc.Name,
 				ImportSeparator,
 				network.OrgVDCNetwork.Name))
+		}
+	}
+
+	return list, nil
+}
+
+// orgNetworkListV2 uses OpenAPI endpoint to query Org VDC networks and return their list
+func orgNetworkListV2(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	wantedType := d.Get("resource_type").(string)
+	listMode := d.Get("list_mode").(string)
+	nameIdSeparator := d.Get("name_id_separator").(string)
+	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
+	if err != nil {
+		return list, err
+	}
+
+	orgVdcNetworkList, err := vdc.GetAllOpenApiOrgVdcNetworks(nil)
+	if err != nil {
+		return list, err
+	}
+	for _, net := range orgVdcNetworkList {
+		var resourceName string
+		switch net.OpenApiOrgVdcNetwork.NetworkType {
+		// Direct is NSX-V only - might not be implemented
+		// case types.OrgVdcNetworkTypeDirect:
+		// networkType = "direct"
+		// resourceName = "vcd_network_direct_v2"
+		case types.OrgVdcNetworkTypeRouted:
+			resourceName = "vcd_network_routed_v2"
+		case types.OrgVdcNetworkTypeIsolated:
+			resourceName = "vcd_network_isolated_v2"
+		case types.OrgVdcNetworkTypeOpaque:
+			// networkType = "imported"
+			resourceName = "vcd_network_imported"
+		}
+
+		// Skip undesired network types
+		if wantedType != resourceName {
+			continue
+		}
+
+		switch listMode {
+		case "name":
+			list = append(list, net.OpenApiOrgVdcNetwork.Name)
+		case "id":
+			list = append(list, net.OpenApiOrgVdcNetwork.ID)
+		case "name_id":
+			list = append(list, net.OpenApiOrgVdcNetwork.Name+nameIdSeparator+net.OpenApiOrgVdcNetwork.ID)
+		case "hierarchy":
+			list = append(list, org.Org.Name+nameIdSeparator+vdc.Vdc.Name+nameIdSeparator+net.OpenApiOrgVdcNetwork.Name)
+		case "href":
+			href, err := client.Client.OpenApiBuildEndpoint(types.OpenApiPathVersion1_0_0, types.OpenApiEndpointOrgVdcNetworks, net.OpenApiOrgVdcNetwork.ID)
+			if err != nil {
+				return nil, err
+			}
+			list = append(list, href.Path)
+		case "import":
+			list = append(list, fmt.Sprintf("terraform import %s.%s %s%s%s%s%s",
+				resourceName, net.OpenApiOrgVdcNetwork.Name,
+				org.Org.Name,
+				ImportSeparator,
+				vdc.Vdc.Name,
+				ImportSeparator,
+				net.OpenApiOrgVdcNetwork.Name))
 		}
 	}
 
@@ -724,6 +792,8 @@ func datasourceVcdResourceListRead(ctx context.Context, d *schema.ResourceData, 
 	case "vcd_network_isolated", "vcd_network_direct", "vcd_network_routed",
 		"network", "networks", "network_direct", "network_routed", "network_isolated":
 		list, err = networkList(d, meta)
+	case "vcd_network_routed_v2":
+		list, err = orgNetworkListV2(d, meta)
 
 		//// place holder to remind of what needs to be implemented
 		//	case "edgegateway_vpn",
