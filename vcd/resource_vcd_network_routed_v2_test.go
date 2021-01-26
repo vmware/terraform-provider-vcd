@@ -3,7 +3,10 @@
 package vcd
 
 import (
+	"fmt"
 	"testing"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
@@ -29,35 +32,30 @@ func TestAccVcdNetworkRoutedV2NsxvInterfaceTypes(t *testing.T) {
 	configText1 := templateFill(testAccVcdNetworkRoutedV2Nsxv, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
-	// params["FuncName"] = t.Name() + "-step2"
-	// params["InterfaceType"] = "distributed"
-	// configText2 := templateFill(testAccVcdNetworkRoutedV2Nsxv, params)
-	// debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
-
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		PreCheck:          func() { testAccPreCheck(t) },
-		// CheckDestroy:      testAccCheckVcdLbVirtualServerDestroy(params["VirtualServerName"].(string)),
+		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.VCD.Vdc, t.Name()),
 		Steps: []resource.TestStep{
-			resource.TestStep{ // step 0
+			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
 				),
 			},
-			resource.TestStep{ // step 0
+			resource.TestStep{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
 				),
 			},
 			// Check that import works
-			resource.TestStep{ // step 1
+			resource.TestStep{
 				ResourceName:      "vcd_network_routed_v2.net1",
 				ImportState:       true,
 				ImportStateVerify: true,
@@ -109,7 +107,7 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 		"Vdc":         testConfig.Nsxt.Vdc,
 		"EdgeGw":      testConfig.Nsxt.EdgeGateway,
 		"NetworkName": t.Name(),
-		// "Tags": "lb lbVirtualServer",
+		"Tags":        "network",
 	}
 
 	configText := templateFill(TestAccVcdNetworkRoutedV2NsxtStep1, params)
@@ -131,10 +129,10 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 	// Ensure the resource is never recreated - ID stays the same
 	cachedId := &testCachedFieldValue{}
 
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		PreCheck:          func() { testAccPreCheck(t) },
-		// CheckDestroy:      testAccCheckVcdLbVirtualServerDestroy(params["VirtualServerName"].(string)),
+		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, t.Name()),
 		Steps: []resource.TestStep{
 			resource.TestStep{ // step 1
 				Config: configText,
@@ -285,3 +283,21 @@ resource "vcd_network_routed_v2" "net1" {
   prefix_length = 24
 }
 `
+
+func testAccCheckOpenApiVcdNetworkDestroy(vdcName, networkName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		conn := testAccProvider.Meta().(*VCDClient)
+
+		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, vdcName)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingVdcFromOrg, vdcName, testConfig.VCD.Org, err)
+		}
+
+		_, err = vdc.GetOpenApiOrgVdcNetworkByName(networkName)
+		if err == nil {
+			return fmt.Errorf("network %s still exists", networkName)
+		}
+
+		return nil
+	}
+}
