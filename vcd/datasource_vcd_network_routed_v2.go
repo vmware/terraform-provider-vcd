@@ -3,6 +3,8 @@ package vcd
 import (
 	"context"
 
+	"github.com/vmware/go-vcloud-director/v2/govcd"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -27,8 +29,22 @@ func datasourceVcdNetworkRoutedV2() *schema.Resource {
 			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
 				Description: "Routed network name",
+			},
+			"filter": &schema.Schema{
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				MinItems:    1,
+				Optional:    true,
+				Description: "Criteria for retrieving a network by various attributes",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"name_regex": elementNameRegex,
+						"ip":         elementIp,
+						"metadata":   elementMetadata,
+					},
+				},
 			},
 			"edge_gateway_id": &schema.Schema{
 				Type:        schema.TypeString,
@@ -103,17 +119,36 @@ func datasourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceDat
 		return diag.Errorf("error retrieving VDC: %s", err)
 	}
 
-	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkByName(d.Get("name").(string))
-	if err != nil {
-		return diag.Errorf("error getting Org Vdc network: %s", err)
+	if !nameOrFilterIsSet(d) {
+		return diag.Errorf(noNameOrFilterError, "vcd_network_routed_v2")
 	}
 
-	err = setOpenApiOrgVdcNetworkData(d, orgNetwork.OpenApiOrgVdcNetwork)
+	name := d.Get("name").(string)
+
+	// Try to search by filter if it exists
+	var network *govcd.OpenApiOrgVdcNetwork
+	filter, hasFilter := d.GetOk("filter")
+	if hasFilter && name == "" {
+		network, err = getOpenApiOrgVdcNetworkByFilter(vdc, filter, "routed")
+		if err != nil {
+			return diag.FromErr(err)
+		}
+
+	}
+
+	if name != "" {
+		network, err = vdc.GetOpenApiOrgVdcNetworkByName(d.Get("name").(string))
+		if err != nil {
+			return diag.Errorf("error getting Org Vdc network: %s", err)
+		}
+	}
+
+	err = setOpenApiOrgVdcNetworkData(d, network.OpenApiOrgVdcNetwork)
 	if err != nil {
 		return diag.Errorf("error setting Org Vdc network data: %s", err)
 	}
 
-	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
+	d.SetId(network.OpenApiOrgVdcNetwork.ID)
 
 	return nil
 }
