@@ -14,7 +14,6 @@ import (
 // TestAccVcdNetworkRoutedV2NsxvInterfaceTypes attempts to test all supported interface types for
 // NSX-V Org VDC routed network
 func TestAccVcdNetworkRoutedV2NsxvInterfaceTypes(t *testing.T) {
-	// String map to fill the template
 	var params = StringMap{
 		"Org":           testConfig.VCD.Org,
 		"Vdc":           testConfig.VCD.Vdc,
@@ -94,6 +93,7 @@ resource "vcd_network_routed_v2" "net1" {
 }
 `
 
+// TestAccVcdNetworkRoutedV2Nsxt tests out NSX-T backed Org VDC networking capabilities
 func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 	vcdClient := createTemporaryVCDConnection()
 	if vcdClient.Client.APIVCDMaxVersionIs("< 34.0") {
