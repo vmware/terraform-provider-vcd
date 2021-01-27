@@ -16,10 +16,15 @@ func TestAccVcdNetworkRoutedV2NsxtDS(t *testing.T) {
 	}
 	skipNoNsxtConfiguration(t)
 
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
 	// String map to fill the template
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
-		"Vdc":         testConfig.Nsxt.Vdc,
+		"NsxtVdc":     testConfig.Nsxt.Vdc,
 		"EdgeGw":      testConfig.Nsxt.EdgeGateway,
 		"NetworkName": t.Name(),
 	}
@@ -82,7 +87,7 @@ func TestAccVcdNetworkRoutedV2NsxtDS(t *testing.T) {
 const testAccVcdNetworkRoutedV2NsxtDS = TestAccVcdNetworkRoutedV2NsxtStep1 + `
 data "vcd_network_routed_v2" "ds" {
   org  = "{{.Org}}"
-  vdc  = "{{.Vdc}}"
+  vdc  = "{{.NsxtVdc}}"
   name = "nsxt-routed-test-initial"
 }
 `
@@ -90,7 +95,7 @@ data "vcd_network_routed_v2" "ds" {
 const testAccVcdNetworkRoutedV2NsxtDSStep3 = TestAccVcdNetworkRoutedV2NsxtStep1 + `
 data "vcd_network_routed_v2" "ds" {
   org  = "{{.Org}}"
-  vdc  = "{{.Vdc}}"
+  vdc  = "{{.NsxtVdc}}"
   
   filter {
 	name_regex = "^nsxt-routed"
@@ -101,7 +106,7 @@ data "vcd_network_routed_v2" "ds" {
 const testAccVcdNetworkRoutedV2NsxtDSStep4 = TestAccVcdNetworkRoutedV2NsxtStep1 + `
 data "vcd_network_routed_v2" "ds" {
   org  = "{{.Org}}"
-  vdc  = "{{.Vdc}}"
+  vdc  = "{{.NsxtVdc}}"
   
   filter {
 	ip = "1.1.1"
