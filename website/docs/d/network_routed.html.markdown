@@ -12,8 +12,9 @@ Provides a vCloud Director Org VDC routed Network data source. This can be used 
 
 Supported in provider *v2.5+*
 
--> **Note:** This data source supports only NSX-V backed Org VDC networks and is deprecated.
-Please use newer `vcd_network_routed_v2` data source which is compatible with both NSX-V and NSX-T.
+-> **Note:** This data source supports only NSX-V backed Org VDC networks and is **deprecated**.
+Please use newer [`vcd_network_routed_v2`](/docs/providers/vcd/d/network_routed_v2.html)
+data source which is compatible with both NSX-V and NSX-T.
 
 ## Example Usage
 

@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_network\_routed\_v2
 
-Provides a vCloud Director Org VDC routed Network data source. This can be used to reference internal networks for vApps to connect.
+Provides a VMware Cloud Director Org VDC routed Network data source. This can be used to reference internal networks for vApps to connect.
 
 Supported in provider *v3.2+* for both NSX-T and NSX-V VDCs.
 
