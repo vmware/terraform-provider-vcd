@@ -28,7 +28,8 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
-* `name` - (Required) A unique name for the network
+* `name` - (Required) A unique name for the network (optional when `filter` is used)
+* `filter` - (Optional; *2.9+*) Retrieves the data source using one or more filter parameters
 
 ## Attribute reference
 
