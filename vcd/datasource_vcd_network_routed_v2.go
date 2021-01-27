@@ -28,16 +28,18 @@ func datasourceVcdNetworkRoutedV2() *schema.Resource {
 				Description: "The name of VDC to use, optional if defined at provider level",
 			},
 			"name": &schema.Schema{
-				Type:        schema.TypeString,
-				Optional:    true,
-				Description: "Routed network name",
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: []string{"name", "filter"},
+				Description:  "A unique name for this network (optional if 'filter' is used)",
 			},
 			"filter": &schema.Schema{
-				Type:        schema.TypeList,
-				MaxItems:    1,
-				MinItems:    1,
-				Optional:    true,
-				Description: "Criteria for retrieving a network by various attributes",
+				Type:         schema.TypeList,
+				MaxItems:     1,
+				MinItems:     1,
+				Optional:     true,
+				ExactlyOneOf: []string{"name", "filter"},
+				Description:  "Criteria for retrieving a network by various attributes",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name_regex": elementNameRegex,
