@@ -118,7 +118,7 @@ func datasourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceDat
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return diag.Errorf("error retrieving VDC: %s", err)
+		return diag.Errorf("[routed network read v2] error retrieving VDC: %s", err)
 	}
 
 	if !nameOrFilterIsSet(d) {
@@ -141,13 +141,13 @@ func datasourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceDat
 	if name != "" {
 		network, err = vdc.GetOpenApiOrgVdcNetworkByName(d.Get("name").(string))
 		if err != nil {
-			return diag.Errorf("error getting Org Vdc network: %s", err)
+			return diag.Errorf("[routed network read v2] error getting Org Vdc network: %s", err)
 		}
 	}
 
 	err = setOpenApiOrgVdcNetworkData(d, network.OpenApiOrgVdcNetwork)
 	if err != nil {
-		return diag.Errorf("error setting Org Vdc network data: %s", err)
+		return diag.Errorf("[routed network read v2] error setting Org Vdc network data: %s", err)
 	}
 
 	d.SetId(network.OpenApiOrgVdcNetwork.ID)

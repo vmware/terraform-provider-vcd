@@ -188,6 +188,5 @@ data "vcd_network_routed_v2" "ds" {
   filter {
     name_regex = "{{.NetworkName}}"
   }
-  
 }
 `
