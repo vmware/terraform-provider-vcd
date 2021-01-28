@@ -356,6 +356,32 @@ func edgeGatewayList(d *schema.ResourceData, meta interface{}) (list []string, e
 	return genericResourceList("vcd_edgegateway", listMode, nameIdSeparator, []string{org.Org.Name, vdc.Vdc.Name}, items)
 }
 
+func nsxtEdgeGatewayList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	listMode := d.Get("list_mode").(string)
+	nameIdSeparator := d.Get("name_id_separator").(string)
+	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
+	if err != nil {
+		return list, err
+	}
+
+	var items []resourceRef
+	nsxtEdgeGatewayList, err := vdc.GetAllNsxtEdgeGateways(nil)
+	if err != nil {
+		return list, err
+	}
+	for _, nsxtEdgeGateway := range nsxtEdgeGatewayList {
+
+		items = append(items, resourceRef{
+			name: nsxtEdgeGateway.EdgeGateway.Name,
+			id:   nsxtEdgeGateway.EdgeGateway.ID,
+			href: "",
+		})
+	}
+	return genericResourceList("vcd_nsxt_edgegateway", listMode, nameIdSeparator, []string{org.Org.Name, vdc.Vdc.Name}, items)
+}
+
 func vappList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
 
@@ -675,6 +701,8 @@ func datasourceVcdResourceListRead(ctx context.Context, d *schema.ResourceData, 
 		list, err = orgUserList(d, meta)
 	case "vcd_edgegateway", "edge_gateway", "edge", "edgegateway":
 		list, err = edgeGatewayList(d, meta)
+	case "vcd_nsxt_edgegateway", "nsxt_edge_gateway", "nsxt_edge", "nsxt_edgegateway":
+		list, err = nsxtEdgeGatewayList(d, meta)
 	case "vcd_lb_server_pool", "lb_server_pool":
 		list, err = lbServerPoolList(d, meta)
 	case "vcd_lb_service_monitor", "lb_service_monitor":

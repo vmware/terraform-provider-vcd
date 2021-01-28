@@ -1,6 +1,36 @@
-## 3.1.0 (Unreleased)
+## 3.2.0 (Unreleased)
 
-Changes in progress for v3.1.0 are available at [.changes/v3.1.0](https://github.com/vmware/terraform-provider-vcd/tree/master/.changes/v3.1.0) until the release.
+Changes in progress for v3.2.0 are available at [.changes/v3.2.0](https://github.com/vmware/terraform-provider-vcd/tree/master/.changes/v3.2.0) until the release.
+
+## 3.1.0 (December 18, 2020)
+
+FEATURES
+
+* **New Resource:** `vcd_nsxt_edgegateway` - NSX-T edge gateway ([#600](https://github.com/vmware/terraform-provider-vcd/issues/600), [#608](https://github.com/vmware/terraform-provider-vcd/issues/608))
+* **New Data source:** `vcd_nsxt_edgegateway` - NSX-T edge gateway ([#600](https://github.com/vmware/terraform-provider-vcd/issues/600))
+* **New Data source:** `vcd_nsxt_edge_cluster` - allows to lookup ID and other details of NSX-T Edge Cluster ([#600](https://github.com/vmware/terraform-provider-vcd/issues/600))
+* **New Data source:** `vcd_resource_list` info about VCD entities ([#594](https://github.com/vmware/terraform-provider-vcd/issues/594))
+* **New Data source:** `vcd_resource_schema` definition of VCD resources schema ([#594](https://github.com/vmware/terraform-provider-vcd/issues/594))
+* **New Data Source**: `vcd_storage_profile` for storage profile lookup ([#602](https://github.com/vmware/terraform-provider-vcd/issues/602))
+
+IMPROVEMENTS
+
+* `resource/vcd_vapp_vm` adds support to update `storage_profile` ([#580](https://github.com/vmware/terraform-provider-vcd/issues/580))
+* `resource/vcd_org_vdc` adds support to update `storage_profile` ([#583](https://github.com/vmware/terraform-provider-vcd/issues/583))
+* `resource/vcd_org_vdc` new computed field `storage_used_in_mb` ([#583](https://github.com/vmware/terraform-provider-vcd/issues/583))
+* `resource/vcd_catalog` allows to set and update `storage_profile_id` ([#602](https://github.com/vmware/terraform-provider-vcd/issues/602))
+* `resource/vcd_catalog` adds support to update `description` ([#602](https://github.com/vmware/terraform-provider-vcd/issues/602))
+* `datasource/vcd_catalog` exports `storage_profile_id` ([#602](https://github.com/vmware/terraform-provider-vcd/issues/602))
+* Provider: add support for bearer tokens in addition to authorization tokens ([#590](https://github.com/vmware/terraform-provider-vcd/issues/590))
+* Provider: automatically use `/cloudapi/1.0.0/sessions/provider` when `/api/sessions` is disabled ([#590](https://github.com/vmware/terraform-provider-vcd/issues/590))
+
+BUG FIXES
+
+* `resource/vcd_external_network_v2` may fail when creating NSX-V network backed by standard vSwitch port group ([#600](https://github.com/vmware/terraform-provider-vcd/issues/600))
+
+NOTES
+
+* Bump terraform-plugin-sdk to v2.2.0 ([#576](https://github.com/vmware/terraform-provider-vcd/issues/576), [#594](https://github.com/vmware/terraform-provider-vcd/issues/594))
 
 ## 3.0.0 (October 16, 2020)
 

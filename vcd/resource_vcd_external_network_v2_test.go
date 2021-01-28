@@ -15,6 +15,12 @@ import (
 )
 
 func TestAccVcdExternalNetworkV2NsxtVrf(t *testing.T) {
+	// As of 10.1.2 release it is not officially supported (support only introduced in 10.2.0) therefore skipping this test s	for
+	// 10.1.X. 10.1.1 allowed to create it, but 10.1.2 introduced a validator and throws error.
+	client := createTemporaryVCDConnection()
+	if client.Client.APIVCDMaxVersionIs("< 35") {
+		t.Skip("NSX-T VRF-Lite backed external networks are officially supported only in 10.2.0+")
+	}
 	testAccVcdExternalNetworkV2Nsxt(t, testConfig.Nsxt.Tier0routerVrf)
 }
 

@@ -1,4 +1,4 @@
-// +build vapp vm user nsxt extnetwork network gateway ALL functional
+// +build vapp vm user nsxt extnetwork network gateway catalog ALL functional
 
 package vcd
 
@@ -56,6 +56,7 @@ func (c *testCachedFieldValue) testCheckCachedResourceFieldValue(resource, field
 			return fmt.Errorf("field %s in resource %s does not exist", field, resource)
 		}
 
+		debugPrintf("# Comparing field %s '%s==%s' in resource '%s'", field, value, c.fieldValue, resource)
 		if value != c.fieldValue {
 			return fmt.Errorf("got '%s - %s' field value %s, expected: %s",
 				resource, field, value, c.fieldValue)

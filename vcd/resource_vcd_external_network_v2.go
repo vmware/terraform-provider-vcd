@@ -308,6 +308,13 @@ func getExternalNetworkV2BackingType(vcdClient *VCDClient, d *schema.ResourceDat
 
 			// Lookup portgroup type to avoid user passing it because it was already present in datasource
 			pgType, err := getPortGroupTypeById(vcdClient, nsxvNetworkStrings["portgroup_id"], nsxvNetworkStrings["vcenter_id"])
+
+			// For standard vSwitch portgroups VCD reports the type to be "NETWORK", but OpenAPI external network
+			// requires parameter "PORTGROUP".
+			if pgType == types.ExternalNetworkBackingTypeNetwork {
+				pgType = "PORTGROUP"
+			}
+
 			if err != nil {
 				return types.ExternalNetworkV2Backings{}, fmt.Errorf("error validating portgroup type: %s", err)
 			}

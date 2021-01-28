@@ -25,6 +25,28 @@ resource "vcd_catalog" "myNewCatalog" {
 }
 ```
 
+## Example Usage (Custom storage profile)
+
+```hcl
+
+data "vcd_storage_profile" "sp1" {
+  org  = "my-org"
+  vdc  = "my-vdc"
+  name = "ssd-storage-profile"
+}
+
+resource "vcd_catalog" "myNewCatalog" {
+  org = "my-org"
+
+  name               = "my-catalog"
+  description        = "catalog for files"
+  storage_profile_id = data.vcd_storage_profile.sp1.id
+
+  delete_recursive = "true"
+  delete_force     = "true"
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -32,6 +54,8 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `name` - (Required) Catalog name
 * `description` - (Optional) - Description of catalog
+* `storage_profile_id` (Optional, *v3.1+*) Allows to set specific storage profile to be used for catalog. **Note.** Data
+source [vcd_storage_profile](/docs/providers/vcd/d/storage_profile.html) can help to lookup storage profile ID.
 * `delete_recursive` - (Required) - When destroying use delete_recursive=True to remove the catalog and any objects it contains that are in a state that normally allows removal
 * `delete_force` -(Required) - When destroying use delete_force=True with delete_recursive=True to remove a catalog and any objects it contains, regardless of their state
 

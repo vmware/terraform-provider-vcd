@@ -5,6 +5,8 @@ import (
 	"log"
 	"strings"
 
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
@@ -31,11 +33,14 @@ func resourceVcdCatalog() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
-
 			"description": &schema.Schema{
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
+			},
+			"storage_profile_id": &schema.Schema{
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: "Optional storage profile ID",
 			},
 			"created": &schema.Schema{
 				Type:        schema.TypeString,
@@ -70,7 +75,20 @@ func resourceVcdCatalogCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	catalog, err := adminOrg.CreateCatalog(d.Get("name").(string), d.Get("description").(string))
+	var storageProfiles *types.CatalogStorageProfiles
+	storageProfileId := d.Get("storage_profile_id").(string)
+	if storageProfileId != "" {
+		storageProfileReference, err := adminOrg.GetStorageProfileReferenceById(storageProfileId, false)
+		if err != nil {
+			return fmt.Errorf("error looking up Storage Profile '%s' reference: %s", storageProfileId, err)
+		}
+		storageProfiles = &types.CatalogStorageProfiles{VdcStorageProfile: []*types.Reference{storageProfileReference}}
+	}
+
+	name := d.Get("name").(string)
+	description := d.Get("description").(string)
+
+	catalog, err := adminOrg.CreateCatalogWithStorageProfile(name, description, storageProfiles)
 	if err != nil {
 		log.Printf("[TRACE] Error creating Catalog: %#v", err)
 		return fmt.Errorf("error creating Catalog: %#v", err)
@@ -91,23 +109,85 @@ func resourceVcdCatalogRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrg, err)
 	}
 
-	catalog, err := adminOrg.GetCatalogByNameOrId(d.Id(), false)
+	adminCatalog, err := adminOrg.GetAdminCatalogByNameOrId(d.Id(), false)
 	if err != nil {
 		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
 		d.SetId("")
 		return fmt.Errorf("error retrieving catalog %s : %s", d.Id(), err)
 	}
 
-	_ = d.Set("description", catalog.Catalog.Description)
-	_ = d.Set("created", catalog.Catalog.DateCreated)
-	d.SetId(catalog.Catalog.ID)
-	log.Printf("[TRACE] Catalog read completed: %#v", catalog.Catalog)
+	// Check if storage profile is set. Although storage profile structure accepts a list, in UI only one can be picked
+	if adminCatalog.AdminCatalog.CatalogStorageProfiles != nil && len(adminCatalog.AdminCatalog.CatalogStorageProfiles.VdcStorageProfile) > 0 {
+		// By default API does not return Storage Profile Name in response. It has ID and HREF, but not Name so name
+		// must be looked up
+		storageProfileId := adminCatalog.AdminCatalog.CatalogStorageProfiles.VdcStorageProfile[0].ID
+		_ = d.Set("storage_profile_id", storageProfileId)
+	} else {
+		// In case no storage profile are defined in API call
+		_ = d.Set("storage_profile_id", "")
+	}
+
+	_ = d.Set("description", adminCatalog.AdminCatalog.Description)
+	_ = d.Set("created", adminCatalog.AdminCatalog.DateCreated)
+	d.SetId(adminCatalog.AdminCatalog.ID)
+	log.Printf("[TRACE] Catalog read completed: %#v", adminCatalog.AdminCatalog)
 	return nil
 }
 
-//update function for "delete_force", "delete_recursive" no actions needed
-func resourceVcdCatalogUpdate(d *schema.ResourceData, m interface{}) error {
-	return nil
+// resourceVcdCatalogUpdate does not require actions for  fields "delete_force", "delete_recursive", but does allow to
+// change `storage_profile`
+func resourceVcdCatalogUpdate(d *schema.ResourceData, meta interface{}) error {
+	vcdClient := meta.(*VCDClient)
+
+	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
+	if err != nil {
+		return fmt.Errorf(errorRetrievingOrg, err)
+	}
+
+	adminCatalog, err := adminOrg.GetAdminCatalogByNameOrId(d.Id(), false)
+	if err != nil {
+		log.Printf("[DEBUG] Unable to find catalog. Removing from tfstate")
+		d.SetId("")
+		return fmt.Errorf("error retrieving catalog %s : %s", d.Id(), err)
+	}
+
+	// Create a copy of adminCatalog to only set and change things which are related to this update section and skip the
+	// other fields. This is important as this provider does not cover all settings available in API and they should not be
+	// overwritten.
+	newAdminCatalog := govcd.NewAdminCatalog(&vcdClient.VCDClient.Client)
+	newAdminCatalog.AdminCatalog.ID = adminCatalog.AdminCatalog.ID
+	newAdminCatalog.AdminCatalog.HREF = adminCatalog.AdminCatalog.HREF
+	newAdminCatalog.AdminCatalog.Name = adminCatalog.AdminCatalog.Name
+
+	// Perform storage profile updates
+	if d.HasChange("storage_profile_id") {
+		storageProfileId := d.Get("storage_profile_id").(string)
+
+		// Unset storage profile (use any available in Org)
+		if storageProfileId == "" {
+			// Set empty structure as `nil` would not update it at all
+			newAdminCatalog.AdminCatalog.CatalogStorageProfiles = &types.CatalogStorageProfiles{VdcStorageProfile: []*types.Reference{}}
+		}
+
+		if storageProfileId != "" {
+			storageProfileReference, err := adminOrg.GetStorageProfileReferenceById(storageProfileId, false)
+			if err != nil {
+				return fmt.Errorf("could not process Storage Profile '%s': %s", storageProfileId, err)
+			}
+			newAdminCatalog.AdminCatalog.CatalogStorageProfiles = &types.CatalogStorageProfiles{VdcStorageProfile: []*types.Reference{storageProfileReference}}
+		}
+	}
+
+	if d.HasChange("description") {
+		newAdminCatalog.AdminCatalog.Description = d.Get("description").(string)
+	}
+
+	err = newAdminCatalog.Update()
+	if err != nil {
+		return fmt.Errorf("error updating catalog '%s': %s", adminCatalog.AdminCatalog.Name, err)
+	}
+
+	return resourceVcdCatalogRead(d, meta)
 }
 
 func resourceVcdCatalogDelete(d *schema.ResourceData, meta interface{}) error {
@@ -137,7 +217,7 @@ func resourceVcdCatalogDelete(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-// Imports a Catalog into Terraform state
+// resourceVcdCatalogImport imports a Catalog into Terraform state
 // This function task is to get the data from vCD and fill the resource data container
 // Expects the d.ID() to be a path to the resource made of org_name.catalog_name
 //
@@ -165,6 +245,12 @@ func resourceVcdCatalogImport(d *schema.ResourceData, meta interface{}) ([]*sche
 	_ = d.Set("name", catalogName)
 	_ = d.Set("description", catalog.Catalog.Description)
 	d.SetId(catalog.Catalog.ID)
+
+	// Fill in other fields
+	err = resourceVcdCatalogRead(d, meta)
+	if err != nil {
+		return nil, err
+	}
 
 	return []*schema.ResourceData{d}, nil
 }

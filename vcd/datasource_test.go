@@ -35,14 +35,18 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 
 		// Skip sub-test if conditions are not met
 		switch {
-		case dataSourceName == "vcd_external_network" && !usingSysAdmin():
-			t.Skip(`Works only with system admin privileges`)
-		case dataSourceName == "vcd_external_network_v2" && vcdClient.Client.APIVCDMaxVersionIs("< 33") &&
+		case (dataSourceName == "vcd_external_network" || dataSourceName == "vcd_vcenter" || dataSourceName == "vcd_portgroup") &&
 			!usingSysAdmin():
+			t.Skip(`Works only with system admin privileges`)
+		case dataSourceName == "vcd_external_network_v2" && vcdClient.Client.APIVCDMaxVersionIs("< 33"):
 			t.Skip("External network V2 requires at least API version 33 (VCD 10.0+)")
-		case (dataSourceName == "vcd_nsxt_tier0_router" || dataSourceName == "vcd_external_network_v2" || dataSourceName == "vcd_nsxt_manager") &&
+		case (dataSourceName == "vcd_nsxt_edgegateway" || dataSourceName == "vcd_nsxt_edge_cluster") &&
+			vcdClient.Client.APIVCDMaxVersionIs("< 34"):
+			t.Skip("this datasource requires at least API version 34 (VCD 10.1+)")
+		case (dataSourceName == "vcd_nsxt_tier0_router" || dataSourceName == "vcd_external_network_v2" ||
+			dataSourceName == "vcd_nsxt_manager" || dataSourceName == "vcd_nsxt_edge_cluster") &&
 			(testConfig.Nsxt.Manager == "" || testConfig.Nsxt.Tier0router == "") || !usingSysAdmin():
-			t.Skip(`No NSX-T configuration detected`)
+			t.Skip(`No NSX-T configuration detected or not running as System user`)
 		// vcd_resource_list and vcd_resource_schema don't search for real entities
 		case dataSourceName == "vcd_resource_list" || dataSourceName == "vcd_resource_schema":
 			t.Skip(`not a real data source`)
@@ -119,7 +123,6 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 		// vcd_portgroup requires portgroup  type
 		if dataSourceName == "vcd_portgroup" && mandatoryFields[fieldIndex] == "type" {
 			templateFields = templateFields + `type = "` + testConfig.Networking.ExternalNetworkPortGroupType + `"` + "\n"
-			return templateFields
 		}
 
 		switch mandatoryFields[fieldIndex] {
