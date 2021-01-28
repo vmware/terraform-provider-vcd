@@ -658,7 +658,7 @@ func TestMain(m *testing.M) {
 	}
 
 	// Ensure that catalog uses storage from NSX-V VDC
-	setCatalogStorageProfile()
+	// setCatalogStorageProfile()
 
 	// Runs all test functions
 	exitCode := m.Run()

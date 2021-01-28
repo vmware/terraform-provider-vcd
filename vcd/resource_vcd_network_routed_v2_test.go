@@ -95,6 +95,10 @@ resource "vcd_network_routed_v2" "net1" {
 
 // TestAccVcdNetworkRoutedV2Nsxt tests out NSX-T backed Org VDC networking capabilities
 func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	vcdClient := createTemporaryVCDConnection()
 	if vcdClient.Client.APIVCDMaxVersionIs("< 34.0") {
 		t.Skip(t.Name() + " requires at least API v34.0 (vCD 10.1.1+)")
@@ -120,11 +124,6 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 	params["FuncName"] = t.Name() + "-step3"
 	configText3 := templateFill(TestAccVcdNetworkRoutedV2NsxtStep3, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
-
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 
 	// Ensure the resource is never recreated - ID stays the same
 	cachedId := &testCachedFieldValue{}

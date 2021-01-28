@@ -96,7 +96,7 @@ function short_test {
     if [ -z "$DRY_RUN" ]
     then
         go test -race -i ${TEST} || exit 1
-        VCD_SHORT_TEST=1 go test -race -tags "functional $MORE_TAGS" -v -timeout 3m
+        VCD_SHORT_TEST=1 go test -race -tags "functional $MORE_TAGS" -v -timeout 3m || exit 1
     fi
     if [ -n "$VCD_TEST_ORG_USER" ]
     then

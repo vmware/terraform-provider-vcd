@@ -10,16 +10,16 @@ import (
 )
 
 func TestAccVcdNetworkRoutedV2NsxtDS(t *testing.T) {
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
 	vcdClient := createTemporaryVCDConnection()
 	if vcdClient.Client.APIVCDMaxVersionIs("< 34.0") {
 		t.Skip(t.Name() + " requires at least API v34.0 (vCD 10.1.1+)")
 	}
 	skipNoNsxtConfiguration(t)
-
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 
 	// String map to fill the template
 	var params = StringMap{

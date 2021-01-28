@@ -15,6 +15,11 @@ func TestAccVcdNsxtEdgeCluster(t *testing.T) {
 		return
 	}
 
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
 	vcdClient := createTemporaryVCDConnection()
 	if vcdClient.Client.APIVCDMaxVersionIs("< 34.0") {
 		t.Skip(t.Name() + " requires at least API v34.0 (vCD 10.1+)")
@@ -42,10 +47,6 @@ func TestAccVcdNsxtEdgeCluster(t *testing.T) {
 	}
 
 	configText := templateFill(nsxtEdgeClusterDatasource, params)
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 

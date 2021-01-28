@@ -15,6 +15,11 @@ func TestAccVcdExternalNetworkV2Datasource(t *testing.T) {
 		return
 	}
 
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
 	vcdClient := createTemporaryVCDConnection()
 	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
 		t.Skip(t.Name() + " requires at least API v33.0 (vCD 10+)")
@@ -26,10 +31,6 @@ func TestAccVcdExternalNetworkV2Datasource(t *testing.T) {
 	}
 
 	configText := templateFill(externalNetworkV2Datasource, params)
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 
