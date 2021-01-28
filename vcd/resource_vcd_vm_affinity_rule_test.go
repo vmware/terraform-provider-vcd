@@ -19,8 +19,8 @@ import (
 type affinityRuleData struct {
 	name        string               // Name of the rule
 	polarity    string               // Affinity or Anti-Affinity
-	creationVms map[string]*types.VM // List of the VMs to add on creation
-	updateVms   map[string]*types.VM // List of the VMs to add on update
+	creationVms map[string]*types.Vm // List of the VMs to add on creation
+	updateVms   map[string]*types.Vm // List of the VMs to add on update
 }
 
 // TestAccVcdVmAffinityRule creates the pre-requisites for the VM affinity rule test
@@ -128,11 +128,11 @@ func TestAccVcdVmAffinityRule(t *testing.T) {
 		runVmAffinityRuleTest(affinityRuleData{
 			name:     "Test_VmAffinityRule1",
 			polarity: types.PolarityAffinity,
-			creationVms: map[string]*types.VM{
+			creationVms: map[string]*types.Vm{
 				"Test_EmptyVm1a": vappList[0].VApp.Children.VM[0],
 				"Test_EmptyVm1b": vappList[0].VApp.Children.VM[1],
 			},
-			updateVms: map[string]*types.VM{
+			updateVms: map[string]*types.Vm{
 				"Test_EmptyVm2a": vappList[1].VApp.Children.VM[0],
 				"Test_EmptyVm2b": vappList[1].VApp.Children.VM[1],
 			},
@@ -143,12 +143,12 @@ func TestAccVcdVmAffinityRule(t *testing.T) {
 		runVmAffinityRuleTest(affinityRuleData{
 			name:     "Test_VmAffinityRule2",
 			polarity: types.PolarityAffinity,
-			creationVms: map[string]*types.VM{
+			creationVms: map[string]*types.Vm{
 				"Test_EmptyVm1a": vappList[0].VApp.Children.VM[0],
 				"Test_EmptyVm1b": vappList[0].VApp.Children.VM[1],
 				"Test_EmptyVm2a": vappList[1].VApp.Children.VM[0],
 			},
-			updateVms: map[string]*types.VM{
+			updateVms: map[string]*types.Vm{
 				"Test_EmptyVm3a": vappList[2].VApp.Children.VM[0],
 				"Test_EmptyVm3b": vappList[2].VApp.Children.VM[1],
 			},
@@ -159,7 +159,7 @@ func TestAccVcdVmAffinityRule(t *testing.T) {
 		runVmAffinityRuleTest(affinityRuleData{
 			name:     "Test_VmAffinityRule3",
 			polarity: types.PolarityAffinity,
-			creationVms: map[string]*types.VM{
+			creationVms: map[string]*types.Vm{
 				"Test_EmptyVm1a": vappList[0].VApp.Children.VM[0],
 				"Test_EmptyVm1b": vappList[0].VApp.Children.VM[1],
 				"Test_EmptyVm2a": vappList[1].VApp.Children.VM[0],
@@ -175,11 +175,11 @@ func TestAccVcdVmAffinityRule(t *testing.T) {
 		runVmAffinityRuleTest(affinityRuleData{
 			name:     "Test_VmAffinityRule4",
 			polarity: types.PolarityAntiAffinity,
-			creationVms: map[string]*types.VM{
+			creationVms: map[string]*types.Vm{
 				"Test_EmptyVm1a": vappList[0].VApp.Children.VM[0],
 				"Test_EmptyVm2a": vappList[1].VApp.Children.VM[0],
 			},
-			updateVms: map[string]*types.VM{
+			updateVms: map[string]*types.Vm{
 				"Test_EmptyVm3a": vappList[2].VApp.Children.VM[0],
 			},
 		}, t)
