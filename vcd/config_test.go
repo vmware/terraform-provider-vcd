@@ -588,6 +588,25 @@ func setTestEnv() {
 	}
 }
 
+// getVcdVersion returns the VCD version (three digits + build number)
+// To get the version, we establish a new connection with the credentials
+// chosen for the current test.
+func getVcdVersion(config TestConfig) (string, error) {
+	vcdClient, err := getTestVCDFromJson(config)
+	if vcdClient == nil || err != nil {
+		return "", err
+	}
+	err = ProviderAuthenticate(vcdClient, config.Provider.User, config.Provider.Password, config.Provider.Token, config.Provider.SysOrg)
+	if err != nil {
+		return "", err
+	}
+	version, _, err := vcdClient.Client.GetVcdVersion()
+	if err != nil {
+		return "", err
+	}
+	return version, nil
+}
+
 // This function is called before any other test
 func TestMain(m *testing.M) {
 
@@ -626,7 +645,11 @@ func TestMain(m *testing.M) {
 			fmt.Println("No configuration file found")
 			os.Exit(1)
 		}
-		fmt.Printf("Connecting to %s\n", testConfig.Provider.Url)
+		versionInfo, err := getVcdVersion(testConfig)
+		if err == nil {
+			versionInfo = fmt.Sprintf("(version %s)", versionInfo)
+		}
+		fmt.Printf("Connecting to %s %s\n", testConfig.Provider.Url, versionInfo)
 
 		authentication := "password"
 		if testConfig.Provider.UseSamlAdfs {
