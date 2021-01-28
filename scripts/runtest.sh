@@ -268,6 +268,7 @@ function make_token {
 }
 
 function check_static {
+    set -x
     static_check=$(exists_in_path staticcheck)
     if [  -z "$staticcheck" -a -n "$TRAVIS" ]
     then
@@ -319,6 +320,7 @@ function check_static {
     else
         echo "*** staticcheck executable not found - Check skipped"
     fi
+    set +x
 }
 case $wanted in
     static)
