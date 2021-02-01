@@ -42,14 +42,14 @@ func TestAccVcdNetworkRoutedV2NsxvInterfaceTypes(t *testing.T) {
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
-					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "inteface_type", "INTERNAL"),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "interface_type", "INTERNAL"),
 				),
 			},
 			resource.TestStep{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
-					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "inteface_type", "SUBINTERFACE"),
+					resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "interface_type", "SUBINTERFACE"),
 				),
 			},
 			// Check that import works
