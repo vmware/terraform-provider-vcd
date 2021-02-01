@@ -194,7 +194,7 @@ var (
 	// Distributed networks require an edge gateway with distributed routing enabled,
 	// which in turn requires a NSX controller. To run the distributed test, users
 	// need to set the environment variable VCD_TEST_DISTRIBUTED_NETWORK
-	testDistributedNetworks = os.Getenv("VCD_TEST_DISTRIBUTED_NETWORK") != ""
+	testDistributedNetworks = false
 )
 
 const (
@@ -247,6 +247,10 @@ var (
 	// Keeps track of test artifact names, to avoid duplicates
 	testArtifactNames = make(map[string]string)
 )
+
+func testDistributedNetworksEnabled() bool {
+	return testDistributedNetworks || os.Getenv("VCD_TEST_DISTRIBUTED_NETWORK") != ""
+}
 
 // Returns true if the current configuration uses a system administrator for connections
 func usingSysAdmin() bool {
