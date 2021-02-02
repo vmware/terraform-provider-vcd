@@ -1614,7 +1614,6 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	log.Printf("[TRACE] Removing VM: %s", vm.VM.Name)
-	// sleep() sad
 	err = vapp.RemoveVM(*vm)
 	if err != nil {
 		return fmt.Errorf("error deleting: %s", err)

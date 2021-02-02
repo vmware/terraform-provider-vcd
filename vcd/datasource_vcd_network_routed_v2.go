@@ -61,7 +61,7 @@ func datasourceVcdNetworkRoutedV2() *schema.Resource {
 			"interface_type": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Interface type (only for NSX-V networks). One of 'INTERNAL', 'UPLINK', 'TRUNK', 'SUBINTERFACE'",
+				Description: "Interface type (only for NSX-V networks). One of 'INTERNAL' (default), 'DISTRIBUTED', 'SUBINTERFACE'",
 			},
 			"gateway": &schema.Schema{
 				Type:        schema.TypeString,
@@ -141,13 +141,13 @@ func datasourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceDat
 	if name != "" {
 		network, err = vdc.GetOpenApiOrgVdcNetworkByName(d.Get("name").(string))
 		if err != nil {
-			return diag.Errorf("[routed network read v2] error getting Org Vdc network: %s", err)
+			return diag.Errorf("[routed network read v2] error getting Org VDC network: %s", err)
 		}
 	}
 
 	err = setOpenApiOrgVdcNetworkData(d, network.OpenApiOrgVdcNetwork)
 	if err != nil {
-		return diag.Errorf("[routed network read v2] error setting Org Vdc network data: %s", err)
+		return diag.Errorf("[routed network read v2] error setting Org VDC network data: %s", err)
 	}
 
 	d.SetId(network.OpenApiOrgVdcNetwork.ID)
