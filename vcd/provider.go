@@ -112,6 +112,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_vm_sizing_policy":     resourceVcdVmSizingPolicy(),           // 3.0
 	"vcd_nsxt_edgegateway":     resourceVcdNsxtEdgeGateway(),          // 3.1
 	"vcd_network_routed_v2":    resourceVcdNetworkRoutedV2(),          // 3.2
+	"vcd_network_isolated_v2":  resourceVcdNetworkIsolatedV2(),        // 3.2
 }
 
 // Provider returns a terraform.ResourceProvider.
