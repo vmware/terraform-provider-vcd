@@ -49,7 +49,7 @@ func resourceVcdNetworkIsolatedV2() *schema.Resource {
 			"is_shared": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Description: "Share this network with other VDCs in this organization. Default - false",
+				Description: "NSX-V only - share this network with other VDCs in this organization. Default - false",
 			},
 			"gateway": &schema.Schema{
 				Type:        schema.TypeString,
@@ -129,7 +129,7 @@ func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceD
 		return diag.Errorf("[isolated network update v2] error getting Org Vdc network: %s", err)
 	}
 
-	networkType, err := getOpenApiOrgVdcNetworkType(d, vdc)
+	networkType, err := getOpenApiOrgVdcIsolatedNetworkType(d, vdc)
 	if err != nil {
 		return diag.FromErr(err)
 	}
