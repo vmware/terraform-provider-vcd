@@ -46,7 +46,6 @@ func resourceVcdNetworkIsolatedV2() *schema.Resource {
 				Optional:    true,
 				Description: "Network description",
 			},
-			// TODO - needs a govcd patch
 			"is_shared": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -239,7 +238,7 @@ func setOpenApiOrgVdcIsolatedNetworkData(d *schema.ResourceData, orgVdcNetwork *
 	_ = d.Set("dns1", orgVdcNetwork.Subnets.Values[0].DNSServer1)
 	_ = d.Set("dns2", orgVdcNetwork.Subnets.Values[0].DNSServer2)
 	_ = d.Set("dns_suffix", orgVdcNetwork.Subnets.Values[0].DNSSuffix)
-	_ = d.Set("dns_suffix", orgVdcNetwork)
+	_ = d.Set("is_shared", orgVdcNetwork.Shared)
 
 	// If any IP sets are available
 	if len(orgVdcNetwork.Subnets.Values[0].IPRanges.Values) > 0 {
@@ -268,6 +267,7 @@ func getOpenApiOrgVdcIsolatedNetworkType(d *schema.ResourceData, vdc *govcd.Vdc)
 		OrgVdc:      &types.OpenApiReference{ID: vdc.Vdc.ID},
 
 		NetworkType: types.OrgVdcNetworkTypeIsolated,
+		Shared:      takeBoolPointer(d.Get("is_shared").(bool)),
 
 		Subnets: types.OrgVdcNetworkSubnets{
 			Values: []types.OrgVdcNetworkSubnetValues{

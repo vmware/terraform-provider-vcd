@@ -39,6 +39,7 @@ func TestAccVcdNetworkIsolatedV2(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "gateway", "1.1.1.1"),
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "prefix_length", "24"),
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "static_ip_pool.#", "1"),
+					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "is_shared", "true"),
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_network_isolated_v2.net1", "static_ip_pool.*", map[string]string{
 						"start_address": "1.1.1.10",
 						"end_address":   "1.1.1.20",
@@ -61,8 +62,10 @@ resource "vcd_network_isolated_v2" "net1" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
   name = "{{.NetworkName}}"
-  description = "NSX-V isolated network test OpenAPI"
   
+  description = "NSX-V isolated network test OpenAPI" 
+  is_shared   = true
+
   gateway = "1.1.1.1"
   prefix_length = 24
 

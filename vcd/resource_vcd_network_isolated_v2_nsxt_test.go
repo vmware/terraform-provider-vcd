@@ -26,7 +26,7 @@ func TestAccVcdNetworkIsolatedV2Nsxt(t *testing.T) {
 		"NsxtVdc":     testConfig.Nsxt.Vdc,
 		"EdgeGw":      testConfig.Nsxt.EdgeGateway,
 		"NetworkName": t.Name(),
-		"Tags":        "network",
+		"Tags":        "network nsxt",
 	}
 
 	configText := templateFill(TestAccVcdNetworkRoutedV2NsxtStep1, params)
