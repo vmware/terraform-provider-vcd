@@ -6,7 +6,7 @@ import (
 
 func datasourceVcdNetworkIsolated() *schema.Resource {
 	return &schema.Resource{
-		DeprecationMessage: "Please use 'vcd_network_routed_v2' data source which supports NSX-T and NSX-V",
+		DeprecationMessage: "Please use 'vcd_network_isolated_v2' data source which supports NSX-T and NSX-V",
 		Read:               datasourceVcdNetworkIsolatedRead,
 		Schema: map[string]*schema.Schema{
 			"name": &schema.Schema{

@@ -13,6 +13,9 @@ internal networks for vApps to connect. This network is not attached to external
 
 Supported in provider *v2.5+*
 
+~> **Note:** This data source supports only NSX-V backed Org VDC networks and is **deprecated**.
+Please use newer [`vcd_network_isolated_v2`](/docs/providers/vcd/d/network_isolated_v2.html)
+data source which is compatible with both NSX-V and NSX-T.
 ## Example Usage
 
 ```hcl

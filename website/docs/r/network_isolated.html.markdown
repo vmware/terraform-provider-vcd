@@ -13,6 +13,9 @@ modify, and delete internal networks for vApps to connect. This network is not a
 
 Supported in provider *v2.0+*
 
+~> **Note:** This resource supports only NSX-V backed Org VDC networks and is **deprecated**.
+Please use newer [`vcd_network_isolated_v2`](/docs/providers/vcd/r/network_isolated_v2.html) resource
+which is compatible with both NSX-V and NSX-T.
 ## Example Usage
 
 ```hcl
@@ -51,7 +54,7 @@ The following arguments are supported:
 * `dns2` - (Optional) Second DNS server to use.
 * `dns_suffix` - (Optional) A FQDN for the virtual machines on this network
 * `shared` - (Optional) Defines if this network is shared between multiple VDCs
-  in the Org.  Defaults to `false`.
+in the Org. Defaults to `false`.
 * `dhcp_pool` - (Optional) A range of IPs to issue to virtual machines that don't
   have a static IP; see [IP Pools](#ip-pools) below for details.
 * `static_ip_pool` - (Optional) A range of IPs permitted to be used as static IPs for

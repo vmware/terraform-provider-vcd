@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccVcdNetworkIsolatedV2(t *testing.T) {
+func TestAccVcdNetworkIsolatedV2Nsxv(t *testing.T) {
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
 		"Vdc":         testConfig.VCD.Vdc,
