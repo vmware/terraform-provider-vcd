@@ -54,7 +54,7 @@ The following arguments are supported:
 * `dns2` - (Optional) Second DNS server to use.
 * `dns_suffix` - (Optional) A FQDN for the virtual machines on this network
 * `shared` - (Optional) Defines if this network is shared between multiple VDCs
-in the Org. Defaults to `false`.
+  in the Org.  Defaults to `false`.
 * `dhcp_pool` - (Optional) A range of IPs to issue to virtual machines that don't
   have a static IP; see [IP Pools](#ip-pools) below for details.
 * `static_ip_pool` - (Optional) A range of IPs permitted to be used as static IPs for
