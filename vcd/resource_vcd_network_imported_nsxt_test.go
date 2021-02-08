@@ -37,9 +37,9 @@ func TestAccVcdNetworkImportedV2Nsxt(t *testing.T) {
 	configText := templateFill(TestAccVcdNetworkImportedV2NsxtStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
 
-	// params["FuncName"] = t.Name() + "-step2"
-	// configText2 := templateFill(TestAccVcdNetworkRoutedV2NsxtStep2, params)
-	// debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+	params["FuncName"] = t.Name() + "-step2"
+	configText2 := templateFill(TestAccVcdNetworkImportedV2NsxtStep2, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 	//
 	// params["FuncName"] = t.Name() + "-step3"
 	// configText3 := templateFill(TestAccVcdNetworkRoutedV2NsxtStep3, params)
@@ -67,6 +67,27 @@ func TestAccVcdNetworkImportedV2Nsxt(t *testing.T) {
 					resource.TestCheckTypeSetElemNestedAttrs("vcd_network_imported.net1", "static_ip_pool.*", map[string]string{
 						"start_address": "1.1.1.10",
 						"end_address":   "1.1.1.20",
+					}),
+				),
+			},
+			resource.TestStep{ // step 2
+				Config: configText2,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					cachedId.cacheTestResourceFieldValue("vcd_network_imported.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_network_imported.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_network_imported.net1", "nsxt_logical_switch_id"),
+					resource.TestCheckResourceAttr("vcd_network_imported.net1", "name", "updated-nsxt-imported-test-initial"),
+					resource.TestCheckResourceAttr("vcd_network_imported.net1", "description", "Updated NSX-T imported network test OpenAPI"),
+					resource.TestCheckResourceAttr("vcd_network_imported.net1", "gateway", "1.1.1.1"),
+					resource.TestCheckResourceAttr("vcd_network_imported.net1", "prefix_length", "24"),
+					resource.TestCheckResourceAttr("vcd_network_imported.net1", "static_ip_pool.#", "2"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_network_imported.net1", "static_ip_pool.*", map[string]string{
+						"start_address": "1.1.1.10",
+						"end_address":   "1.1.1.20",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_network_imported.net1", "static_ip_pool.*", map[string]string{
+						"start_address": "1.1.1.40",
+						"end_address":   "1.1.1.50",
 					}),
 				),
 			},
@@ -106,7 +127,7 @@ func TestAccVcdNetworkImportedV2Nsxt(t *testing.T) {
 				// It is impossible to read 'nsxt_logical_switch_name' for already consumed NSX-T segment (API returns
 				// only unused segments) therefore this field cannot be set during read operations.
 				ImportStateVerifyIgnore: []string{"nsxt_logical_switch_name"},
-				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(testConfig, "nsxt-imported-test-initial"),
+				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(testConfig, "updated-nsxt-imported-test-initial"),
 			},
 			//
 			// resource.TestStep{ // step 4
@@ -141,6 +162,30 @@ resource "vcd_network_imported" "net1" {
   static_ip_pool {
 	start_address = "1.1.1.10"
     end_address = "1.1.1.20"
+  }
+}
+`
+
+const TestAccVcdNetworkImportedV2NsxtStep2 = `
+resource "vcd_network_imported" "net1" {
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+  name = "updated-nsxt-imported-test-initial"
+  description = "Updated NSX-T imported network test OpenAPI"
+
+  nsxt_logical_switch_name = "{{.NsxtImportSegment}}"
+
+  gateway = "1.1.1.1"
+  prefix_length = 24
+
+  static_ip_pool {
+	start_address = "1.1.1.10"
+    end_address = "1.1.1.20"
+  }
+
+  static_ip_pool {
+	start_address = "1.1.1.40"
+    end_address = "1.1.1.50"
   }
 }
 `

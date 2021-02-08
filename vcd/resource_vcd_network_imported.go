@@ -109,7 +109,7 @@ func resourceVcdNetworkImportedV2Create(ctx context.Context, d *schema.ResourceD
 		return diag.Errorf("[imported network create] this resource supports only NSX-T")
 	}
 
-	networkType, err := getOpenApiOrgVdcImportedNetworkType(d, vdc, vcdClient)
+	networkType, err := getOpenApiOrgVdcImportedNetworkType(d, vdc, true)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -150,10 +150,13 @@ func resourceVcdNetworkImportedV2Update(ctx context.Context, d *schema.ResourceD
 		return diag.Errorf("[imported network update] error getting Org VDC network: %s", err)
 	}
 
-	networkType, err := getOpenApiOrgVdcImportedNetworkType(d, vdc, vcdClient)
+	networkType, err := getOpenApiOrgVdcImportedNetworkType(d, vdc, false)
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
+	// Feed in backing network ID, because it cannot be looked up
+	networkType.BackingNetworkId = orgNetwork.OpenApiOrgVdcNetwork.BackingNetworkId
 
 	// Explicitly add ID to the new type because function `getOpenApiOrgVdcNetworkType` only sets other fields
 	networkType.ID = d.Id()
@@ -279,11 +282,6 @@ func setOpenApiOrgVdcImportedNetworkData(d *schema.ResourceData, orgVdcNetwork *
 
 	_ = d.Set("nsxt_logical_switch_id", orgVdcNetwork.BackingNetworkId)
 
-	// if orgVdcNetwork.Connection != nil {
-	// 	_ = d.Set("edge_gateway_id", orgVdcNetwork.Connection.RouterRef.ID)
-	// 	_ = d.Set("interface_type", orgVdcNetwork.Connection.ConnectionType)
-	// }
-
 	// Only one subnet can be defined although the structure accepts slice
 	_ = d.Set("gateway", orgVdcNetwork.Subnets.Values[0].Gateway)
 	_ = d.Set("prefix_length", orgVdcNetwork.Subnets.Values[0].PrefixLength)
@@ -312,14 +310,7 @@ func setOpenApiOrgVdcImportedNetworkData(d *schema.ResourceData, orgVdcNetwork *
 	return nil
 }
 
-func getOpenApiOrgVdcImportedNetworkType(d *schema.ResourceData, vdc *govcd.Vdc, client *VCDClient) (*types.OpenApiOrgVdcNetwork, error) {
-
-	// Lookup NSX-T logical switch
-	// client.Ge
-	nsxtImportableSwitch, err := vdc.GetNsxtImportableSwitchByName(d.Get("nsxt_logical_switch_name").(string))
-	if err != nil {
-		return nil, fmt.Errorf("unable to find NSX-T logical switch: %s", err)
-	}
+func getOpenApiOrgVdcImportedNetworkType(d *schema.ResourceData, vdc *govcd.Vdc, isCreate bool) (*types.OpenApiOrgVdcNetwork, error) {
 
 	orgVdcNetworkConfig := &types.OpenApiOrgVdcNetwork{
 		Name:        d.Get("name").(string),
@@ -329,7 +320,6 @@ func getOpenApiOrgVdcImportedNetworkType(d *schema.ResourceData, vdc *govcd.Vdc,
 		// 'OPAQUE' type is used for imported network
 		NetworkType: types.OrgVdcNetworkTypeOpaque,
 
-		BackingNetworkId: nsxtImportableSwitch.NsxtImportableSwitch.ID,
 		Subnets: types.OrgVdcNetworkSubnets{
 			Values: []types.OrgVdcNetworkSubnetValues{
 				{
@@ -344,6 +334,17 @@ func getOpenApiOrgVdcImportedNetworkType(d *schema.ResourceData, vdc *govcd.Vdc,
 				},
 			},
 		},
+	}
+
+	// Lookup NSX-T logical switch in Create phase only, because there is no API to return the network after it is
+	// consumed
+	if isCreate {
+		nsxtImportableSwitch, err := vdc.GetNsxtImportableSwitchByName(d.Get("nsxt_logical_switch_name").(string))
+		if err != nil {
+			return nil, fmt.Errorf("unable to find NSX-T logical switch: %s", err)
+		}
+
+		orgVdcNetworkConfig.BackingNetworkId = nsxtImportableSwitch.NsxtImportableSwitch.ID
 	}
 
 	return orgVdcNetworkConfig, nil
