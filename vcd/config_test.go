@@ -1180,4 +1180,7 @@ func skipNoNsxtConfiguration(t *testing.T) {
 	if testConfig.Nsxt.Tier0routerVrf == "" {
 		t.Skip(generalMessage + "No VRF NSX-T Tier-0 specified")
 	}
+	if testConfig.Nsxt.NsxtImportSegment == "" {
+		t.Skip(generalMessage + "No NSX-T importable segment specified ")
+	}
 }
