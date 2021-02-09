@@ -125,6 +125,11 @@ func datasourceVcdNetworkimportedRead(ctx context.Context, d *schema.ResourceDat
 		}
 	}
 
+	if !network.IsImported() {
+		return diag.Errorf("[imported network import] Org network with name '%s' found, but is not of type Imported (OPAQUE) (type is '%s')",
+			network.OpenApiOrgVdcNetwork.Name, network.GetType())
+	}
+
 	err = setOpenApiOrgVdcImportedNetworkData(d, network.OpenApiOrgVdcNetwork)
 	if err != nil {
 		return diag.Errorf("[imported network read] error setting Org VDC network data: %s", err)
