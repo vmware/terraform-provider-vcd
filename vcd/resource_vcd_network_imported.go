@@ -12,14 +12,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceVcdNetworkImportedV2() *schema.Resource {
+func resourceVcdNetworkimported() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceVcdNetworkImportedV2Create,
-		ReadContext:   resourceVcdNetworkImportedV2Read,
-		UpdateContext: resourceVcdNetworkImportedV2Update,
-		DeleteContext: resourceVcdNetworkImportedV2Delete,
+		CreateContext: resourceVcdNetworkimportedCreate,
+		ReadContext:   resourceVcdNetworkimportedRead,
+		UpdateContext: resourceVcdNetworkimportedUpdate,
+		DeleteContext: resourceVcdNetworkimportedDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceVcdNetworkImportedV2Import,
+			StateContext: resourceVcdNetworkimportedImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -92,8 +92,8 @@ func resourceVcdNetworkImportedV2() *schema.Resource {
 	}
 }
 
-// resourceVcdNetworkImportedV2Create
-func resourceVcdNetworkImportedV2Create(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+// resourceVcdNetworkimportedCreate
+func resourceVcdNetworkimportedCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	if !vcdClient.Client.IsSysAdmin {
@@ -121,11 +121,11 @@ func resourceVcdNetworkImportedV2Create(ctx context.Context, d *schema.ResourceD
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
 
-	return resourceVcdNetworkImportedV2Read(ctx, d, meta)
+	return resourceVcdNetworkimportedRead(ctx, d, meta)
 }
 
-// resourceVcdNetworkImportedV2Update
-func resourceVcdNetworkImportedV2Update(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+// resourceVcdNetworkimportedUpdate
+func resourceVcdNetworkimportedUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	if !vcdClient.Client.IsSysAdmin {
 		return diag.Errorf("Only System Administrator can operate NSX-T Imported networks")
@@ -166,11 +166,11 @@ func resourceVcdNetworkImportedV2Update(ctx context.Context, d *schema.ResourceD
 		return diag.Errorf("[imported network update] error updating Org VDC network: %s", err)
 	}
 
-	return resourceVcdNetworkImportedV2Read(ctx, d, meta)
+	return resourceVcdNetworkimportedRead(ctx, d, meta)
 }
 
-// resourceVcdNetworkImportedV2Read
-func resourceVcdNetworkImportedV2Read(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+// resourceVcdNetworkimportedRead
+func resourceVcdNetworkimportedRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	if !vcdClient.Client.IsSysAdmin {
 		return diag.Errorf("Only System Administrator can operate NSX-T Imported networks")
@@ -205,8 +205,8 @@ func resourceVcdNetworkImportedV2Read(ctx context.Context, d *schema.ResourceDat
 	return nil
 }
 
-// resourceVcdNetworkImportedV2Delete
-func resourceVcdNetworkImportedV2Delete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+// resourceVcdNetworkimportedDelete
+func resourceVcdNetworkimportedDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	if !vcdClient.Client.IsSysAdmin {
 		return diag.Errorf("Only System Administrator can operate NSX-T Imported networks")
@@ -234,8 +234,8 @@ func resourceVcdNetworkImportedV2Delete(ctx context.Context, d *schema.ResourceD
 	return nil
 }
 
-// resourceVcdNetworkImportedV2Import
-func resourceVcdNetworkImportedV2Import(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+// resourceVcdNetworkimportedImport
+func resourceVcdNetworkimportedImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("[imported network import] resource name must be specified as org-name.vdc-name.network-name")
