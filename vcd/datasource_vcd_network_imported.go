@@ -111,7 +111,10 @@ func datasourceVcdNetworkimportedRead(ctx context.Context, d *schema.ResourceDat
 	var network *govcd.OpenApiOrgVdcNetwork
 	filter, hasFilter := d.GetOk("filter")
 	if hasFilter && name == "" {
-		network, err = getOpenApiOrgVdcNetworkByFilter(vdc, filter, "imported")
+		// This is an "imported" network, but "isolated" is fed into filtering because
+		// network.LinkType for "imported" network has the same value as "isolated"
+		// (network.LinkType=2)
+		network, err = getOpenApiOrgVdcNetworkByFilter(vdc, filter, "isolated")
 		if err != nil {
 			return diag.FromErr(err)
 		}

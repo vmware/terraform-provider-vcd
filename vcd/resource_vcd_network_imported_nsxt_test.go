@@ -8,8 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-// TestAccVcdNetworkRoutedV2Nsxt tests out NSX-T backed Org VDC networking capabilities
-func TestAccVcdNetworkImportedV2Nsxt(t *testing.T) {
+// TestAccVcdNetworkImportedNsxt tests out NSX-T backed Org VDC networking capabilities
+func TestAccVcdNetworkImportedNsxt(t *testing.T) {
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -31,7 +31,7 @@ func TestAccVcdNetworkImportedV2Nsxt(t *testing.T) {
 		"EdgeGw":            testConfig.Nsxt.EdgeGateway,
 		"NetworkName":       t.Name(),
 		"NsxtImportSegment": testConfig.Nsxt.NsxtImportSegment,
-		"Tags":              "network",
+		"Tags":              "network nsxt",
 	}
 
 	configText := templateFill(TestAccVcdNetworkImportedV2NsxtStep1, params)
@@ -94,25 +94,25 @@ func TestAccVcdNetworkImportedV2Nsxt(t *testing.T) {
 			// resource.TestStep{ // step 2
 			// 	Config: configText2,
 			// 	Check: resource.ComposeAggregateTestCheckFunc(
-			// 		cachedId.testCheckCachedResourceFieldValue("vcd_network_routed_v2.net1", "id"),
-			// 		resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
-			// 		resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "name", t.Name()),
-			// 		resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "description", "Updated"),
-			// 		resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "edge_gateway_id"),
-			// 		resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "gateway", "1.1.1.1"),
-			// 		resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "prefix_length", "24"),
-			// 		resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "static_ip_pool.#", "3"),
-			// 		resource.TestCheckTypeSetElemNestedAttrs("vcd_network_routed_v2.net1", "static_ip_pool.*", map[string]string{
+			// 		cachedId.testCheckCachedResourceFieldValue("vcd_network_imported.net1", "id"),
+			// 		resource.TestCheckResourceAttrSet("vcd_network_imported.net1", "id"),
+			// 		resource.TestCheckResourceAttr("vcd_network_imported.net1", "name", t.Name()),
+			// 		resource.TestCheckResourceAttr("vcd_network_imported.net1", "description", "Updated"),
+			// 		resource.TestCheckResourceAttrSet("vcd_network_imported.net1", "edge_gateway_id"),
+			// 		resource.TestCheckResourceAttr("vcd_network_imported.net1", "gateway", "1.1.1.1"),
+			// 		resource.TestCheckResourceAttr("vcd_network_imported.net1", "prefix_length", "24"),
+			// 		resource.TestCheckResourceAttr("vcd_network_imported.net1", "static_ip_pool.#", "3"),
+			// 		resource.TestCheckTypeSetElemNestedAttrs("vcd_network_imported.net1", "static_ip_pool.*", map[string]string{
 			// 			"start_address": "1.1.1.10",
 			// 			"end_address":   "1.1.1.20",
 			// 		}),
 			//
-			// 		resource.TestCheckTypeSetElemNestedAttrs("vcd_network_routed_v2.net1", "static_ip_pool.*", map[string]string{
+			// 		resource.TestCheckTypeSetElemNestedAttrs("vcd_network_imported.net1", "static_ip_pool.*", map[string]string{
 			// 			"start_address": "1.1.1.40",
 			// 			"end_address":   "1.1.1.50",
 			// 		}),
 			//
-			// 		resource.TestCheckTypeSetElemNestedAttrs("vcd_network_routed_v2.net1", "static_ip_pool.*", map[string]string{
+			// 		resource.TestCheckTypeSetElemNestedAttrs("vcd_network_imported.net1", "static_ip_pool.*", map[string]string{
 			// 			"start_address": "1.1.1.60",
 			// 			"end_address":   "1.1.1.70",
 			// 		}),
@@ -133,14 +133,14 @@ func TestAccVcdNetworkImportedV2Nsxt(t *testing.T) {
 			// resource.TestStep{ // step 4
 			// 	Config: configText3,
 			// 	Check: resource.ComposeAggregateTestCheckFunc(
-			// 		cachedId.testCheckCachedResourceFieldValue("vcd_network_routed_v2.net1", "id"),
-			// 		resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
-			// 		resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "name", t.Name()),
-			// 		resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "description", "Updated"),
-			// 		resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "edge_gateway_id"),
-			// 		resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "gateway", "1.1.1.1"),
-			// 		resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "prefix_length", "24"),
-			// 		resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "static_ip_pool.#", "0"),
+			// 		cachedId.testCheckCachedResourceFieldValue("vcd_network_imported.net1", "id"),
+			// 		resource.TestCheckResourceAttrSet("vcd_network_imported.net1", "id"),
+			// 		resource.TestCheckResourceAttr("vcd_network_imported.net1", "name", t.Name()),
+			// 		resource.TestCheckResourceAttr("vcd_network_imported.net1", "description", "Updated"),
+			// 		resource.TestCheckResourceAttrSet("vcd_network_imported.net1", "edge_gateway_id"),
+			// 		resource.TestCheckResourceAttr("vcd_network_imported.net1", "gateway", "1.1.1.1"),
+			// 		resource.TestCheckResourceAttr("vcd_network_imported.net1", "prefix_length", "24"),
+			// 		resource.TestCheckResourceAttr("vcd_network_imported.net1", "static_ip_pool.#", "0"),
 			// 	),
 			// },
 		},
@@ -198,7 +198,7 @@ resource "vcd_network_imported" "net1" {
 //   name = "{{.EdgeGw}}"
 // }
 //
-// resource "vcd_network_routed_v2" "net1" {
+// resource "vcd_network_imported" "net1" {
 //   org  = "{{.Org}}"
 //   vdc  = "{{.NsxtVdc}}"
 //   name = "{{.NetworkName}}"
@@ -233,7 +233,7 @@ resource "vcd_network_imported" "net1" {
 //   name = "{{.EdgeGw}}"
 // }
 //
-// resource "vcd_network_routed_v2" "net1" {
+// resource "vcd_network_imported" "net1" {
 //   org  = "{{.Org}}"
 //   vdc  = "{{.NsxtVdc}}"
 //   name = "{{.NetworkName}}"
