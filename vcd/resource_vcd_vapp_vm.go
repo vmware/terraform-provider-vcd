@@ -2121,6 +2121,9 @@ func resourceVcdVappVmImport(d *schema.ResourceData, meta interface{}) ([]*schem
 	if standaloneVm {
 		if isUuid {
 			vm, err = vdc.QueryVmById(vmIdentifier)
+			if err != nil {
+				return nil, fmt.Errorf("[VM import] error retrieving VM %s by ID: %s", vmIdentifier, err)
+			}
 		} else {
 			vmByName, listStr, err := getVmByName(vcdClient, vmIdentifier)
 			if err != nil {
