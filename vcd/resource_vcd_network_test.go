@@ -253,7 +253,7 @@ func TestAccVcdNetworkRoutedStaticSub2(t *testing.T) {
 }
 
 func TestAccVcdNetworkRoutedStaticDist(t *testing.T) {
-	if !testDistributedNetworks {
+	if !testDistributedNetworksEnabled() {
 		t.Skip("Distributed test skipped: not enabled")
 	}
 	var def = networkDef{
@@ -282,7 +282,7 @@ func TestAccVcdNetworkRoutedStaticDist(t *testing.T) {
 }
 
 func TestAccVcdNetworkRoutedStaticDist2(t *testing.T) {
-	if !testDistributedNetworks {
+	if !testDistributedNetworksEnabled() {
 		t.Skip("Distributed test skipped: not enabled")
 	}
 	var def = networkDef{

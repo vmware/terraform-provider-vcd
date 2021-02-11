@@ -293,6 +293,10 @@ example for usage details.
 * `prevent_update_power_off` - (Optional; *v3.0+*) True if the update of resource should fail when virtual machine power off needed. Default is `false`.
 * `sizing_policy_id` (Optional; *v3.0+*, *vCD 10.0+*) VM sizing policy ID. Has to be assigned to Org VDC using `vcd_org_vdc.vm_sizing_policy_ids` and `vcd_org_vdc.default_vm_sizing_policy_id`.
 
+## Attribute reference
+
+* `vm_type` (computed; *3.2+*) - type of the VM (either `vapp` or `standalone`)
+
 <a id="disk"></a>
 ## Disk
 
