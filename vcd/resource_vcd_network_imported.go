@@ -97,7 +97,7 @@ func resourceVcdNetworkimportedCreate(ctx context.Context, d *schema.ResourceDat
 	vcdClient := meta.(*VCDClient)
 
 	if !vcdClient.Client.IsSysAdmin {
-		return diag.Errorf("[imported network create] Only System Administrator can operate NSX-T Imported networks")
+		return diag.Errorf("[imported network create] only System Administrator can operate NSX-T Imported networks")
 	}
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -128,7 +128,7 @@ func resourceVcdNetworkimportedCreate(ctx context.Context, d *schema.ResourceDat
 func resourceVcdNetworkimportedUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	if !vcdClient.Client.IsSysAdmin {
-		return diag.Errorf("Only System Administrator can operate NSX-T Imported networks")
+		return diag.Errorf("[imported network update] only System Administrator can operate NSX-T Imported networks")
 	}
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -173,7 +173,7 @@ func resourceVcdNetworkimportedUpdate(ctx context.Context, d *schema.ResourceDat
 func resourceVcdNetworkimportedRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	if !vcdClient.Client.IsSysAdmin {
-		return diag.Errorf("Only System Administrator can operate NSX-T Imported networks")
+		return diag.Errorf("[imported network read] only System Administrator can operate NSX-T Imported networks")
 	}
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -209,7 +209,7 @@ func resourceVcdNetworkimportedRead(ctx context.Context, d *schema.ResourceData,
 func resourceVcdNetworkimportedDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	if !vcdClient.Client.IsSysAdmin {
-		return diag.Errorf("Only System Administrator can operate NSX-T Imported networks")
+		return diag.Errorf("[imported network delete] only System Administrator can operate NSX-T Imported networks")
 	}
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -244,7 +244,7 @@ func resourceVcdNetworkimportedImport(ctx context.Context, d *schema.ResourceDat
 
 	vcdClient := meta.(*VCDClient)
 	if !vcdClient.Client.IsSysAdmin {
-		return nil, fmt.Errorf("Only System Administrator can operate NSX-T Imported networks")
+		return nil, fmt.Errorf("[imported network import] only System Administrator can operate NSX-T Imported networks")
 	}
 
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
