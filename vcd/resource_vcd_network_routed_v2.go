@@ -58,7 +58,7 @@ func resourceVcdNetworkRoutedV2() *schema.Resource {
 				Type:             schema.TypeString,
 				Optional:         true,
 				Default:          "internal",
-				Description:      "Optional interface type (only for NSX-V networks). One of 'INTERNAL' (default), 'UPLINK', 'TRUNK', 'SUBINTERFACE'",
+				Description:      "Optional interface type (only for NSX-V networks). One of 'INTERNAL' (default), 'DISTRIBUTED', 'SUBINTERFACE'",
 				ValidateFunc:     validation.StringInSlice([]string{"internal", "subinterface", "distributed"}, true),
 				DiffSuppressFunc: suppressCase,
 			},
@@ -116,7 +116,7 @@ func resourceVcdNetworkRoutedV2Create(ctx context.Context, d *schema.ResourceDat
 
 	orgNetwork, err := vdc.CreateOpenApiOrgVdcNetwork(networkType)
 	if err != nil {
-		return diag.Errorf("[routed network create v2] error creating Org Vdc routed network: %s", err)
+		return diag.Errorf("[routed network create v2] error creating Org VDC routed network: %s", err)
 	}
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
@@ -143,7 +143,7 @@ func resourceVcdNetworkRoutedV2Update(ctx context.Context, d *schema.ResourceDat
 		return nil
 	}
 	if err != nil {
-		return diag.Errorf("[routed network update v2] error getting Org Vdc network: %s", err)
+		return diag.Errorf("[routed network update v2] error getting Org VDC network: %s", err)
 	}
 
 	networkType, err := getOpenApiOrgVdcNetworkType(d, vdc)
@@ -156,7 +156,7 @@ func resourceVcdNetworkRoutedV2Update(ctx context.Context, d *schema.ResourceDat
 
 	_, err = orgNetwork.Update(networkType)
 	if err != nil {
-		return diag.Errorf("[routed network update v2] error updating Org Vdc network: %s", err)
+		return diag.Errorf("[routed network update v2] error updating Org VDC network: %s", err)
 	}
 
 	return resourceVcdNetworkRoutedV2Read(ctx, d, meta)
@@ -178,12 +178,12 @@ func resourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceData,
 		return nil
 	}
 	if err != nil {
-		return diag.Errorf("[routed network read v2] error getting Org Vdc network: %s", err)
+		return diag.Errorf("[routed network read v2] error getting Org VDC network: %s", err)
 	}
 
 	err = setOpenApiOrgVdcNetworkData(d, orgNetwork.OpenApiOrgVdcNetwork)
 	if err != nil {
-		return diag.Errorf("[routed network read v2] error setting Org Vdc network data: %s", err)
+		return diag.Errorf("[routed network read v2] error setting Org VDC network data: %s", err)
 	}
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
@@ -205,12 +205,12 @@ func resourceVcdNetworkRoutedV2Delete(ctx context.Context, d *schema.ResourceDat
 
 	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkById(d.Id())
 	if err != nil {
-		return diag.Errorf("[routed network delete v2] error getting Org Vdc network: %s", err)
+		return diag.Errorf("[routed network delete v2] error getting Org VDC network: %s", err)
 	}
 
 	err = orgNetwork.Delete()
 	if err != nil {
-		return diag.Errorf("[routed network delete v2] error deleting Org Vdc network: %s", err)
+		return diag.Errorf("[routed network delete v2] error deleting Org VDC network: %s", err)
 	}
 
 	return nil

@@ -31,7 +31,7 @@ func TestAccVcdNetworkRoutedV2NsxvDS(t *testing.T) {
 	networkType := "vcd_network_routed"
 	data, ok := availableNetworks[networkType]
 	if !ok {
-		t.Skip("no routed network found ")
+		t.Skip("no routed network found")
 		return
 	}
 

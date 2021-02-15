@@ -3,12 +3,14 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_network_routed_v2"
 sidebar_current: "docs-vcd-data-source-network-routed-v2"
 description: |-
-  Provides a vCloud Director Org VDC routed Network. This can be used to reference internal networks for vApps to connect.
+  Provides a VMware Cloud Director Org VDC routed Network data source to read data or reference  existing network
+  (backed by NSX-T or NSX-V).
 ---
 
 # vcd\_network\_routed\_v2
 
-Provides a VMware Cloud Director Org VDC routed Network data source. This can be used to reference internal networks for vApps to connect.
+Provides a VMware Cloud Director Org VDC routed Network data source to read data or reference  existing network
+(backed by NSX-T or NSX-V).
 
 Supported in provider *v3.2+* for both NSX-T and NSX-V VDCs.
 
@@ -41,6 +43,5 @@ All attributes defined in [routed network resource](/docs/providers/vcd/r/networ
 
 * `name_regex` (Optional) matches the name using a regular expression.
 * `ip` (Optional) matches the IP of the resource using a regular expression.
-* `metadata` (Optional) One or more parameters that will match metadata contents.
 
 See [Filters reference](/docs/providers/vcd/guides/data_source_filters.html) for details and examples.

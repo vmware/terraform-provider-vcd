@@ -4,13 +4,13 @@ page_title: "VMware Cloud Director: vcd_network_routed_v2"
 sidebar_current: "docs-vcd-resource-network-routed-v2"
 description: |-
   Provides a VMware Cloud Director Org VDC routed Network. This can be used to create, modify, and
-  delete internal networks for vApps to connect backed by NSX-T and NSX-V.
+  delete routed VDC networks (backed by NSX-T or NSX-V).
 ---
 
 # vcd\_network\_routed\_v2
 
 Provides a VMware Cloud Director Org VDC routed Network. This can be used to create, modify, and
-delete internal networks for vApps to connect backed by NSX-T and NSX-V.
+delete routed VDC networks (backed by NSX-T or NSX-V).
 
 Supported in provider *v3.2+* for both NSX-T and NSX-V VDCs.
 
@@ -21,7 +21,7 @@ resource "vcd_network_routed_v2" "nsxt-backed" {
   org  = "my-org"
   vdc  = "my-nsxt-org-vdc"
   name = "nsxt-routed 1"
-  description = "My first routed Org VDC network backed by NSX-T"
+  description = "My routed Org VDC network backed by NSX-T"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 

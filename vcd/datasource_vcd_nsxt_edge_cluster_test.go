@@ -10,6 +10,8 @@ import (
 )
 
 func TestAccVcdNsxtEdgeCluster(t *testing.T) {
+	skipNoNsxtConfiguration(t)
+
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
 		return
