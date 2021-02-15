@@ -269,7 +269,7 @@ function make_token {
 
 function check_static {
     static_check=$(exists_in_path staticcheck)
-    if [  -z "$staticcheck" -a -n "$TRAVIS" ]
+    if [  -z "$staticcheck" -a -n "$GITHUB_ACTIONS" ]
     then
         # Variables found in staticcheck-config.sh
         # STATICCHECK_URL
@@ -320,6 +320,7 @@ function check_static {
         echo "*** staticcheck executable not found - Check skipped"
     fi
 }
+
 case $wanted in
     static)
         check_static

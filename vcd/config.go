@@ -242,23 +242,81 @@ func (cli *VCDClient) unLockParentVm(d *schema.ResourceData) {
 	vcdMutexKV.kvUnlock(key)
 }
 
-// function lockParentEdgeGtw locks using edge_gateway name existing in resource parameters.
+// function lockParentEdgeGtw locks using edge_gateway or edge_gateway_id name existing in resource parameters.
+// If edge_gateway_id is present it is being looked up and stored as name in the lock so that resources that use ID
+// and resources that use name can acquire the same lock.
 // Parent means the resource belongs to the edge gateway being locked
 func (cli *VCDClient) lockParentEdgeGtw(d *schema.ResourceData) {
-	edgeGtwName := d.Get("edge_gateway").(string)
-	if edgeGtwName == "" {
+	var edgeGtwIdValue string
+	var edgeGtwNameValue string
+
+	edgeGtwId := d.Get("edge_gateway_id")
+	if edgeGtwId != nil {
+		edgeGtwIdValue = edgeGtwId.(string)
+	}
+
+	edgeGtwName := d.Get("edge_gateway")
+	if edgeGtwName != nil {
+		edgeGtwNameValue = edgeGtwName.(string)
+	}
+
+	// If none are specified - panic
+	if edgeGtwIdValue == "" && edgeGtwNameValue == "" {
 		panic("edge gateway not found")
 	}
-	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), edgeGtwName)
+
+	// Only Edge gateway name ('edge_gateway' field) was specified - need to lookup ID
+	if edgeGtwNameValue != "" && edgeGtwIdValue == "" {
+		egw, err := cli.GetEdgeGatewayFromResource(d, "edge_gateway")
+		if err != nil {
+			panic(fmt.Sprintf("edge gateway '%s' not found: %s", edgeGtwNameValue, err))
+		}
+
+		edgeGtwIdValue = egw.EdgeGateway.ID
+	}
+
+	if edgeGtwIdValue == "" {
+		panic("edge gateway ID not found")
+	}
+
+	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), edgeGtwIdValue)
 	vcdMutexKV.kvLock(key)
 }
 
 func (cli *VCDClient) unLockParentEdgeGtw(d *schema.ResourceData) {
-	edgeGtwName := d.Get("edge_gateway").(string)
-	if edgeGtwName == "" {
+	var edgeGtwIdValue string
+	var edgeGtwNameValue string
+
+	edgeGtwId := d.Get("edge_gateway_id")
+	if edgeGtwId != nil {
+		edgeGtwIdValue = edgeGtwId.(string)
+	}
+
+	edgeGtwName := d.Get("edge_gateway")
+	if edgeGtwName != nil {
+		edgeGtwNameValue = edgeGtwName.(string)
+	}
+
+	// If none are specified - panic
+	if edgeGtwIdValue == "" && edgeGtwNameValue == "" {
 		panic("edge gateway not found")
 	}
-	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), edgeGtwName)
+
+	// Only Edge gateway name ('edge_gateway' field) was specified - need to lookup ID
+	if edgeGtwNameValue != "" && edgeGtwIdValue == "" {
+		egw, err := cli.GetEdgeGatewayFromResource(d, "edge_gateway")
+		if err != nil {
+			panic(fmt.Sprintf("edge gateway '%s' not found: %s", edgeGtwNameValue, err))
+		}
+
+		edgeGtwIdValue = egw.EdgeGateway.ID
+	}
+
+	if edgeGtwIdValue == "" {
+		panic("edge gateway ID not found")
+	}
+
+	key := fmt.Sprintf("org:%s|vdc:%s|edge:%s", cli.getOrgName(d), cli.getVdcName(d), edgeGtwIdValue)
 	vcdMutexKV.kvUnlock(key)
 }
 

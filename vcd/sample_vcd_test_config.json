@@ -102,7 +102,11 @@
     "//": "Existing External Network with correct configuration",
     "externalNetwork": "tier-0-backed-external-network",
     "//": "Existing NSX-T based VDC",
-    "vdc": "nsxt-vdc-dainius"
+    "vdc": "nsxt-vdc-dainius",
+    "//": "Existing NSX-T Edge Gateway",
+    "edgeGateway": "nsxt-gw",
+    "//": "Existing NSX-T segment to test Org VDC Imported network",
+    "nsxtImportSegment": "import-segment"
   },
   "logging" : {
     "//": "Enables logging from go-vcloud-director in vendor",

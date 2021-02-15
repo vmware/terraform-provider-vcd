@@ -369,17 +369,21 @@ func getSubnetsType(d *schema.ResourceData) []types.ExternalNetworkV2Subnet {
 			Enabled:      subnetMap["enabled"].(bool),
 		}
 		// Loop over IP ranges (static IP pools)
-		subnet.IPRanges = types.ExternalNetworkV2IPRanges{Values: processIpRanges(subnetMap)}
+		subnet.IPRanges = types.ExternalNetworkV2IPRanges{Values: processIpRangesInMap(subnetMap)}
 
 		subnetSlice[subnetIndex] = subnet
 	}
 	return subnetSlice
 }
 
-func processIpRanges(subnetMap map[string]interface{}) []types.ExternalNetworkV2IPRange {
-	rrr := subnetMap["static_ip_pool"].(*schema.Set)
-	subnetRng := make([]types.ExternalNetworkV2IPRange, len(rrr.List()))
-	for rangeIndex, subnetRange := range rrr.List() {
+func processIpRangesInMap(subnetMap map[string]interface{}) []types.ExternalNetworkV2IPRange {
+	staticIpRange := subnetMap["static_ip_pool"].(*schema.Set)
+	return processIpRanges(staticIpRange)
+}
+
+func processIpRanges(staticIpPool *schema.Set) []types.ExternalNetworkV2IPRange {
+	subnetRng := make([]types.ExternalNetworkV2IPRange, len(staticIpPool.List()))
+	for rangeIndex, subnetRange := range staticIpPool.List() {
 		subnetRangeStr := convertToStringMap(subnetRange.(map[string]interface{}))
 		oneRange := types.ExternalNetworkV2IPRange{
 			StartAddress: subnetRangeStr["start_address"],
