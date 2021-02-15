@@ -135,6 +135,38 @@ func getNetworkByFilter(vdc *govcd.Vdc, filter interface{}, wanted string) (*gov
 	return network, nil
 }
 
+// getOpenApiOrgVdcNetworkByFilter finds a network using a filter block
+func getOpenApiOrgVdcNetworkByFilter(vdc *govcd.Vdc, filter interface{}, wanted string) (*govcd.OpenApiOrgVdcNetwork, error) {
+	queryType := types.QtOrgVdcNetwork
+	var searchFunc = func(queryType string, criteria *govcd.FilterDef) ([]govcd.QueryItem, string, error) {
+		items, explanation, err := vdc.SearchByFilter(queryType, "vdc", criteria)
+		var newItems []govcd.QueryItem
+		for _, item := range items {
+			if item.GetType() == "network_"+wanted {
+				newItems = append(newItems, item)
+			}
+		}
+		// If no items were found, we need to bail out here. If we don't,
+		// we will get the standard error message from getEntityByFilter, which may contain
+		// references to networks of different type
+		if len(newItems) == 0 {
+			return nil, "", fmt.Errorf("no network_%s found", wanted)
+		}
+		return newItems, explanation, err
+	}
+
+	queryItem, err := getEntityByFilter(searchFunc, queryType, "network_"+wanted, filter)
+	if err != nil {
+		return nil, err
+	}
+
+	network, err := vdc.GetOpenApiOrgVdcNetworkByName(queryItem.GetName())
+	if err != nil {
+		return nil, fmt.Errorf("[getNetworkByFilter] error retrieving network %s: %s", queryItem.GetName(), err)
+	}
+	return network, nil
+}
+
 // getEdgeGatewayByFilter finds an edge gateway using a filter block
 func getEdgeGatewayByFilter(vdc *govcd.Vdc, filter interface{}) (*govcd.EdgeGateway, error) {
 	queryType := types.QtEdgeGateway

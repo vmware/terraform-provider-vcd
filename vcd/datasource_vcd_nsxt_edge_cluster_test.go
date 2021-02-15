@@ -10,8 +10,15 @@ import (
 )
 
 func TestAccVcdNsxtEdgeCluster(t *testing.T) {
+	skipNoNsxtConfiguration(t)
+
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
+		return
+	}
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 
@@ -42,10 +49,6 @@ func TestAccVcdNsxtEdgeCluster(t *testing.T) {
 	}
 
 	configText := templateFill(nsxtEdgeClusterDatasource, params)
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 

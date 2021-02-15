@@ -14,10 +14,11 @@ import (
 
 func resourceVcdNetworkRouted() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdNetworkRoutedCreate,
-		Read:   resourceVcdNetworkRoutedRead,
-		Delete: resourceVcdNetworkDeleteLocked,
-		Update: resourceVcdNetworkRoutedUpdate,
+		Create:             resourceVcdNetworkRoutedCreate,
+		Read:               resourceVcdNetworkRoutedRead,
+		Delete:             resourceVcdNetworkDeleteLocked,
+		Update:             resourceVcdNetworkRoutedUpdate,
+		DeprecationMessage: "Please use 'vcd_network_routed_v2' resource which supports NSX-T and NSX-V",
 		Importer: &schema.ResourceImporter{
 			State: resourceVcdNetworkRoutedImport,
 		},

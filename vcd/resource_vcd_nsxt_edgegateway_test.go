@@ -84,7 +84,7 @@ func TestAccVcdNsxtEdgeGateway(t *testing.T) {
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "name", params["NsxtEdgeGatewayVcd"].(string)),
-					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "dedicate_external_network", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "dedicate_external_network", "false"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "primary_ip", nsxtExtNet.ExternalNetwork.Subnets.Values[0].IPRanges.Values[0].EndAddress),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "description", "Updated-Description"),
 					resource.TestCheckResourceAttr("vcd_nsxt_edgegateway.nsxt-edge", "edge_cluster_id", params["EdgeClusterId"].(string)),
@@ -146,7 +146,7 @@ resource "vcd_nsxt_edgegateway" "nsxt-edge" {
   edge_cluster_id         = "{{.EdgeClusterId}}"
 
   external_network_id = data.vcd_external_network_v2.existing-extnet.id
-  dedicate_external_network = true
+  dedicate_external_network = false
 
   subnet {
      gateway               = tolist(data.vcd_external_network_v2.existing-extnet.ip_scope)[0].gateway

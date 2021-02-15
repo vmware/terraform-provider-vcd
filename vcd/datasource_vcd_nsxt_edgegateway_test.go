@@ -255,6 +255,10 @@ data "vcd_nsxt_edgegateway" "egw-ds" {
 // retrieval functions are not expected to find it. This is because NSX-T structure is less nested and allows to have
 // simpler schema.
 func TestAccVcdNsxtEdgeGatewayDSDoesNotAcceptNsxv(t *testing.T) {
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	vcdClient := createTemporaryVCDConnection()
 	if vcdClient.Client.APIVCDMaxVersionIs("< 34.0") {
 		t.Skip(t.Name() + " requires at least API v34.0 (vCD 10.1+)")
@@ -269,10 +273,7 @@ func TestAccVcdNsxtEdgeGatewayDSDoesNotAcceptNsxv(t *testing.T) {
 	}
 
 	configText := templateFill(testAccVcdNsxtEdgeGatewayDSDoesNotAcceptNsxv, params)
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
+
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

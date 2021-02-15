@@ -45,6 +45,7 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 		{"network_isolated", "vcd_network_isolated", "", ""},
 		{"network_isolated-parent", "vcd_network_isolated", testConfig.VCD.Vdc, ""},
 		{"network_routed", "vcd_network_routed", "", "net-datacloud-r"},
+		{"vcd_network_routed_v2", "vcd_network_routed_v2", testConfig.Nsxt.Vdc, ""},
 		{"network_routed-parent", "vcd_network_routed", testConfig.VCD.Vdc, ""},
 		{"network_direct", "vcd_network_direct", "", ""},
 		{"network_direct-parent", "vcd_network_direct", testConfig.VCD.Vdc, ""},
