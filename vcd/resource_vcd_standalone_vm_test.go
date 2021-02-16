@@ -1,24 +1,26 @@
-// +build vm ALL functional
+// +build vm standalone ALL functional
+// +build !skipStandalone
 
 package vcd
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func init() {
-	testingTags["vm"] = "resource_vcd_vm_test.go"
+	testingTags["standalone"] = "resource_vcd_vapp_vm_test.go"
 }
 
-func TestAccVcdStandaloneVm_Basic(t *testing.T) {
-	var standaloneVmName = "TestStandaloneVmTemplate"
-	//var vapp govcd.VApp
-	//var vm govcd.VM
-	var diskResourceName = "TestAccVcdVAppVm_Basic_1"
-	var diskName = "TestAccVcdIndependentDiskBasic"
+func TestAccVcdStandaloneVmTemplate(t *testing.T) {
+	// making sure the VM name is unique
+	var standaloneVmName = fmt.Sprintf("%s-%d", t.Name(), os.Getpid())
+	var diskResourceName = fmt.Sprintf("%s_disk", t.Name())
+	var diskName = fmt.Sprintf("%s-disk", t.Name())
 
 	var params = StringMap{
 		"Org":                testConfig.VCD.Org,
@@ -35,7 +37,7 @@ func TestAccVcdStandaloneVm_Basic(t *testing.T) {
 		"busSubType":         "lsilogicsas",
 		"storageProfileName": "*",
 		"diskResourceName":   diskResourceName,
-		"Tags":               "vm",
+		"Tags":               "vm standalone",
 	}
 
 	configText := templateFill(testAccCheckVcdStandaloneVm_basic, params)
@@ -48,12 +50,12 @@ func TestAccVcdStandaloneVm_Basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
-		//CheckDestroy:      testAccCheckVcdVAppVmDestroy(vappName2),
+		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					//testAccCheckVcdVAppVmExists(vappName2, standaloneVmName, "vcd_vm."+standaloneVmName, &vapp, &vm),
+					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName),
 					resource.TestCheckResourceAttr(
 						"vcd_vm."+standaloneVmName, "name", standaloneVmName),
 					resource.TestCheckResourceAttr(
@@ -88,11 +90,8 @@ func TestAccVcdStandaloneVm_Basic(t *testing.T) {
 }
 
 func TestAccVcdStandaloneEmptyVm(t *testing.T) {
-	var (
-		//vapp        govcd.VApp
-		//vm          govcd.VM
-		netVmName1 string = t.Name() + "VM"
-	)
+	// making sure the VM name is unique
+	standaloneVmName := fmt.Sprintf("%s-%d", t.Name(), os.Getpid())
 
 	if testConfig.Media.MediaName == "" {
 		fmt.Println("Warning: `MediaName` is not configured: boot image won't be tested.")
@@ -105,8 +104,8 @@ func TestAccVcdStandaloneEmptyVm(t *testing.T) {
 		"Catalog":     testSuiteCatalogName,
 		"CatalogItem": testSuiteCatalogOVAItem,
 		"VAppName":    "",
-		"VMName":      netVmName1,
-		"Tags":        "vm",
+		"VMName":      standaloneVmName,
+		"Tags":        "vm standalone",
 		"Media":       testConfig.Media.MediaName,
 	}
 
@@ -126,124 +125,113 @@ func TestAccVcdStandaloneEmptyVm(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
-		//CheckDestroy:      testAccCheckVcdVAppVmDestroy(netVappName),
+		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName),
 		Steps: []resource.TestStep{
-			// Step 0 - Create with variations of all possible NICs
 			resource.TestStep{
 				Config: configTextVM,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					//testAccCheckVcdVAppVmExists(netVappName, netVmName1, "vcd_vm."+netVmName1, &vapp, &vm),
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "name", netVmName1),
+					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "name", standaloneVmName),
 
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.0.name", "multinic-net"),
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.0.type", "org"),
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.0.is_primary", "false"),
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.0.ip_allocation_mode", "POOL"),
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.0.ip", "11.10.0.152"),
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.0.adapter_type", "PCNet32"),
-					resource.TestCheckResourceAttrSet("vcd_vm."+netVmName1, "network.0.mac"),
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.0.connected", "true"),
-					nic0Mac.cacheTestResourceFieldValue("vcd_vm."+netVmName1, "network.0.mac"),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.0.name", "multinic-net"),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.0.type", "org"),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.0.is_primary", "false"),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.0.ip_allocation_mode", "POOL"),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.0.ip", "11.10.0.152"),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.0.adapter_type", "PCNet32"),
+					resource.TestCheckResourceAttrSet("vcd_vm."+standaloneVmName, "network.0.mac"),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.0.connected", "true"),
+					nic0Mac.cacheTestResourceFieldValue("vcd_vm."+standaloneVmName, "network.0.mac"),
 
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.1.name", "multinic-net2"),
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.1.type", "org"),
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.1.is_primary", "true"),
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.1.ip_allocation_mode", "DHCP"),
-					// resource.TestCheckResourceAttrSet("vcd_vm."+netVmName1, "network.1.ip"), // We cannot guarantee DHCP
-					resource.TestCheckResourceAttrSet("vcd_vm."+netVmName1, "network.1.mac"),
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.1.connected", "true"),
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.1.adapter_type", "VMXNET3"),
-					nic1Mac.cacheTestResourceFieldValue("vcd_vm."+netVmName1, "network.1.mac"),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.1.name", "multinic-net2"),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.1.type", "org"),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.1.is_primary", "true"),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.1.ip_allocation_mode", "DHCP"),
+					// resource.TestCheckResourceAttrSet("vcd_vm."+standaloneVmName, "network.1.ip"), // We cannot guarantee DHCP
+					resource.TestCheckResourceAttrSet("vcd_vm."+standaloneVmName, "network.1.mac"),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.1.connected", "true"),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.1.adapter_type", "VMXNET3"),
+					nic1Mac.cacheTestResourceFieldValue("vcd_vm."+standaloneVmName, "network.1.mac"),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "os_type", "sles11_64Guest"),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "hardware_version", "vmx-13"),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "expose_hardware_virtualization", "true"),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "computer_name", "compName"),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "description", "test empty standalone VM"),
 
-					/*
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.2.name", "multinic-net"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.2.type", "org"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.2.is_primary", "false"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.2.ip_allocation_mode", "MANUAL"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.2.ip", "11.10.0.170"),
-						resource.TestCheckResourceAttrSet("vcd_vm."+netVmName1, "network.2.mac"),
-						// Adapter type is set to "E1000"
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.2.adapter_type", "E1000"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.2.connected", "true"),
-						nic2Mac.cacheTestResourceFieldValue("vcd_vm."+netVmName1, "network.2.mac"),
-
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.3.name", "multinic-net2"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.3.type", "org"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.3.is_primary", "false"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.3.ip_allocation_mode", "POOL"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.3.ip", "12.10.0.152"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.3.connected", "true"),
-						resource.TestCheckResourceAttrSet("vcd_vm."+netVmName1, "network.3.mac"),
-						// Adapter type is set to "E1000E"
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.3.adapter_type", "E1000E"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.3.mac", "00:00:00:11:11:11"),
-
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.4.name", ""),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.4.type", "none"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.4.is_primary", "false"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.4.ip_allocation_mode", "NONE"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.4.ip", ""),
-						resource.TestCheckResourceAttrSet("vcd_vm."+netVmName1, "network.4.mac"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.4.connected", "false"),
-
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.5.name", ""),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.5.type", "none"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.5.is_primary", "false"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.5.ip_allocation_mode", "NONE"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.5.ip", ""),
-						resource.TestCheckResourceAttrSet("vcd_vm."+netVmName1, "network.5.mac"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.5.connected", "false"),
-
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.6.name", "vapp-net"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.6.type", "vapp"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.6.is_primary", "false"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.6.ip_allocation_mode", "POOL"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.6.ip", "192.168.2.51"),
-						resource.TestCheckResourceAttrSet("vcd_vm."+netVmName1, "network.6.mac"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.6.connected", "true"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.6.adapter_type", "VMXNET3"),
-
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.7.name", "vapp-routed-net"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.7.type", "vapp"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.7.is_primary", "false"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.7.ip_allocation_mode", "MANUAL"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.7.connected", "true"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.7.ip", "192.168.2.2"),
-
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.8.name", "multinic-net"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.8.type", "org"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.8.is_primary", "false"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.8.ip_allocation_mode", "POOL"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.8.connected", "true"),
-
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.9.name", "multinic-net2"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.9.type", "org"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.9.is_primary", "false"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.9.ip_allocation_mode", "POOL"),
-						resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "network.9.connected", "true"),
-					*/
-
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "os_type", "sles11_64Guest"),
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "hardware_version", "vmx-13"),
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "expose_hardware_virtualization", "true"),
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "computer_name", "compName"),
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "description", "test empty standalone VM"),
-
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "cpu_hot_add_enabled", "true"),
-					resource.TestCheckResourceAttr("vcd_vm."+netVmName1, "memory_hot_add_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "cpu_hot_add_enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "memory_hot_add_enabled", "true"),
 				),
 			},
 		},
 	})
 }
 
+func testAccCheckVcdStandaloneVmExists(vmName, node string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[node]
+		if !ok {
+			return fmt.Errorf("not found: %s", node)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("no VM ID is set")
+		}
+
+		conn := testAccProvider.Meta().(*VCDClient)
+		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
+		}
+
+		_, err = vdc.QueryVmByName(vmName)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
+func testAccCheckVcdStandaloneVmDestroy(vmName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		conn := testAccProvider.Meta().(*VCDClient)
+
+		for _, rs := range s.RootModule().Resources {
+			if rs.Type != "vcd_vm" {
+				continue
+			}
+			_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+			if err != nil {
+				return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
+			}
+
+			_, err = vdc.QueryVmByName(vmName)
+
+			if err == nil {
+				return fmt.Errorf("VM still exist")
+			}
+
+			return nil
+		}
+
+		return nil
+	}
+}
+
 const testAccCheckVcdStandaloneVm_basic = `
-resource "vcd_network_routed" "{{.NetworkName}}" {
-  name         = "{{.NetworkName}}"
-  org          = "{{.Org}}"
-  vdc          = "{{.Vdc}}"
-  edge_gateway = "{{.EdgeGateway}}"
-  gateway      = "10.10.102.1"
+data "vcd_edgegateway" "existing" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+  name = "{{.EdgeGateway}}"
+}
+
+resource "vcd_network_routed_v2" "{{.NetworkName}}" {
+  name            = "{{.NetworkName}}"
+  org             = "{{.Org}}"
+  vdc             = "{{.Vdc}}"
+  edge_gateway_id = data.vcd_edgegateway.existing.id
+  gateway         = "10.10.102.1"
+  prefix_length   = 24
 
   static_ip_pool {
     start_address = "10.10.102.2"
@@ -279,7 +267,7 @@ resource "vcd_vm" "{{.VmName}}" {
 
   network {
     type               = "org"
-    name               = vcd_network_routed.{{.NetworkName}}.name
+    name               = vcd_network_routed_v2.{{.NetworkName}}.name
     ip_allocation_mode = "MANUAL"
     ip                 = "10.10.102.161"
   }
@@ -306,6 +294,12 @@ output "vm" {
 `
 
 const testAccCheckVcdStandaloneEmptyVmNetworkShared = `
+data "vcd_edgegateway" "existing" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+  name = "{{.EdgeGateway}}"
+}
+
 resource "vcd_network_routed" "net" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
@@ -325,13 +319,14 @@ resource "vcd_network_routed" "net" {
   }
 }
 
-resource "vcd_network_routed" "net2" {
+resource "vcd_network_routed_v2" "net2" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
-  name         = "multinic-net2"
-  edge_gateway = "{{.EdgeGateway}}"
-  gateway      = "12.10.0.1"
+  name            = "multinic-net2"
+  edge_gateway_id = data.vcd_edgegateway.existing.id
+  gateway         = "12.10.0.1"
+  prefix_length   = 24
 
   static_ip_pool {
     start_address = "12.10.0.152"
@@ -374,10 +369,9 @@ resource "vcd_vm" "{{.VMName}}" {
 
   network {
     type               = "org"
-    name               = vcd_network_routed.net2.name
+    name               = vcd_network_routed_v2.net2.name
     ip_allocation_mode = "DHCP"
     is_primary         = true
   }
-
- }
+}
 `

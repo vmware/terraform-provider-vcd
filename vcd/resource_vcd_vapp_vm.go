@@ -642,16 +642,16 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType st
 				ComputePolicy:    vmComputePolicy,
 				Description:      description,
 				SourcedVmTemplateItem: &types.SourcedVmTemplateParams{
-					LocalityParams: nil,
+					//LocalityParams: &types.LocalityParams{},
 					Source: &types.Reference{
 						HREF: vmTemplate.HREF,
 						ID:   vmTemplate.ID,
 						Type: vmTemplate.Type,
 						Name: vmTemplate.Name,
 					},
-					StorageProfile:  storageProfilePtr,
-					VmCapabilities:  nil,
-					VmGeneralParams: nil,
+					StorageProfile: storageProfilePtr,
+					//VmCapabilities:  nil,
+					//VmGeneralParams: nil,
 					VmTemplateInstantiationParams: &types.InstantiationParams{
 						NetworkConnectionSection: &networkConnectionSection,
 					},
@@ -1408,6 +1408,7 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, v
 				return fmt.Errorf("[VM read] error retrieving VM %s by name: %s\n%s\n%s", identifier, errByName, listStr, err)
 			}
 			vm = vmByName
+			err = nil
 		}
 	} else {
 		vapp, err = vdc.GetVAppByName(vappName, false)
@@ -1422,7 +1423,7 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, v
 			d.SetId("")
 			return nil
 		}
-		return fmt.Errorf("[VM read] error getting VM : %s", err)
+		return fmt.Errorf("[VM read] error getting VM %s : %s", identifier, err)
 	}
 	if vapp == nil {
 		vapp, err = vm.GetParentVApp()
