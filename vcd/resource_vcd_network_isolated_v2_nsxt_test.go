@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-// TestAccVcdNetworkRoutedV2Nsxt tests out NSX-T backed Org VDC networking capabilities
+// TestAccVcdNetworkIsolatedV2Nsxt tests out NSX-T backed Org VDC networking capabilities
 func TestAccVcdNetworkIsolatedV2Nsxt(t *testing.T) {
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -102,22 +102,6 @@ func TestAccVcdNetworkIsolatedV2Nsxt(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_network_isolated_v2.net1", "static_ip_pool.#", "0"),
 				),
 			},
-			//
-
-			//
-			// resource.TestStep{ // step 4
-			// 	Config: configText3,
-			// 	Check: resource.ComposeAggregateTestCheckFunc(
-			// 		cachedId.testCheckCachedResourceFieldValue("vcd_network_routed_v2.net1", "id"),
-			// 		resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
-			// 		resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "name", t.Name()),
-			// 		resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "description", "Updated"),
-			// 		resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "edge_gateway_id"),
-			// 		resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "gateway", "1.1.1.1"),
-			// 		resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "prefix_length", "24"),
-			// 		resource.TestCheckResourceAttr("vcd_network_routed_v2.net1", "static_ip_pool.#", "0"),
-			// 	),
-			// },
 		},
 	})
 }

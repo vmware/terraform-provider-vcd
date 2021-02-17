@@ -31,7 +31,7 @@ func TestAccVcdNetworkIsolatedV2NsxvDS(t *testing.T) {
 	networkType := "vcd_network_isolated"
 	data, ok := availableNetworks[networkType]
 	if !ok {
-		t.Skip("no routed network found ")
+		t.Skip("no isolated network found ")
 		return
 	}
 
