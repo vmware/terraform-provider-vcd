@@ -103,7 +103,6 @@ func TestAccVcdStandaloneEmptyVm(t *testing.T) {
 		"EdgeGateway": testConfig.Networking.EdgeGateway,
 		"Catalog":     testSuiteCatalogName,
 		"CatalogItem": testSuiteCatalogOVAItem,
-		"VAppName":    "",
 		"VMName":      standaloneVmName,
 		"Tags":        "vm standalone",
 		"Media":       testConfig.Media.MediaName,
@@ -133,17 +132,17 @@ func TestAccVcdStandaloneEmptyVm(t *testing.T) {
 					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "name", standaloneVmName),
 
-					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.0.name", "multinic-net"),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.0.name", "multinic-net2"),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.0.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.0.is_primary", "false"),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.0.ip_allocation_mode", "POOL"),
-					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.0.ip", "11.10.0.152"),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.0.ip", "12.10.0.152"),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.0.adapter_type", "PCNet32"),
 					resource.TestCheckResourceAttrSet("vcd_vm."+standaloneVmName, "network.0.mac"),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.0.connected", "true"),
 					nic0Mac.cacheTestResourceFieldValue("vcd_vm."+standaloneVmName, "network.0.mac"),
 
-					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.1.name", "multinic-net2"),
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.1.name", "multinic-net"),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.1.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.1.is_primary", "true"),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.1.ip_allocation_mode", "DHCP"),
@@ -361,7 +360,7 @@ resource "vcd_vm" "{{.VMName}}" {
 
   network {
     type               = "org"
-    name               = vcd_network_routed.net.name
+    name               = vcd_network_routed_v2.net2.name
     ip_allocation_mode = "POOL"
     is_primary         = false
 	adapter_type       = "PCNet32"
@@ -369,7 +368,7 @@ resource "vcd_vm" "{{.VMName}}" {
 
   network {
     type               = "org"
-    name               = vcd_network_routed_v2.net2.name
+    name               = vcd_network_routed.net.name
     ip_allocation_mode = "DHCP"
     is_primary         = true
   }
