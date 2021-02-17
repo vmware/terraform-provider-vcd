@@ -25,6 +25,7 @@ func TestAccVcdNetworkIsolatedV2NsxtDS(t *testing.T) {
 		"Org":         testConfig.VCD.Org,
 		"NsxtVdc":     testConfig.Nsxt.Vdc,
 		"NetworkName": t.Name(),
+		"Tags":        "network nsxt",
 	}
 
 	params["FuncName"] = t.Name() + "-DS"

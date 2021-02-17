@@ -41,6 +41,7 @@ func TestAccVcdNetworkRoutedV2NsxvDS(t *testing.T) {
 		"Vdc":         testConfig.VCD.Vdc,
 		"EdgeGw":      testConfig.Nsxt.EdgeGateway,
 		"NetworkName": data.network.Name,
+		"Tags":        "network",
 	}
 
 	configText := templateFill(testAccVcdNetworkRoutedV2NsxvDS, params)

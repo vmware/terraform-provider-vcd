@@ -40,6 +40,7 @@ func TestAccVcdNetworkIsolatedV2NsxvDS(t *testing.T) {
 		"Org":         testConfig.VCD.Org,
 		"Vdc":         testConfig.VCD.Vdc,
 		"NetworkName": data.network.Name,
+		"Tags":        "network",
 	}
 
 	configText := templateFill(testAccVcdNetworkIsolatedV2NsxvDS, params)
@@ -60,7 +61,6 @@ func TestAccVcdNetworkIsolatedV2NsxvDS(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_network_isolated_v2.ds", "id", data.network.ID),
 					resource.TestCheckResourceAttr("data.vcd_network_isolated_v2.ds", "name", data.network.Name),
 					resource.TestCheckResourceAttrSet("data.vcd_network_isolated_v2.ds", "gateway"),
-					// resource.TestCheckResourceAttrSet("data.vcd_network_isolated_v2.ds", "description"),
 					resource.TestCheckResourceAttrSet("data.vcd_network_isolated_v2.ds", "prefix_length"),
 				),
 			},
@@ -71,7 +71,6 @@ func TestAccVcdNetworkIsolatedV2NsxvDS(t *testing.T) {
 					resource.TestCheckResourceAttr("data.vcd_network_isolated_v2.ds", "id", data.network.ID),
 					resource.TestCheckResourceAttr("data.vcd_network_isolated_v2.ds", "name", data.network.Name),
 					resource.TestCheckResourceAttrSet("data.vcd_network_isolated_v2.ds", "gateway"),
-					// resource.TestCheckResourceAttrSet("data.vcd_network_isolated_v2.ds", "description"),
 					resource.TestCheckResourceAttrSet("data.vcd_network_isolated_v2.ds", "prefix_length"),
 				),
 			},

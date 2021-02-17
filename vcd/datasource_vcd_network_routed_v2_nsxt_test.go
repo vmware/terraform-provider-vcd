@@ -26,6 +26,7 @@ func TestAccVcdNetworkRoutedV2NsxtDS(t *testing.T) {
 		"NsxtVdc":     testConfig.Nsxt.Vdc,
 		"EdgeGw":      testConfig.Nsxt.EdgeGateway,
 		"NetworkName": t.Name(),
+		"Tags":        "network nsxt",
 	}
 
 	params["FuncName"] = t.Name() + "-DS"
