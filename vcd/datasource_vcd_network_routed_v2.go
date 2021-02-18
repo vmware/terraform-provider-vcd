@@ -44,7 +44,6 @@ func datasourceVcdNetworkRoutedV2() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"name_regex": elementNameRegex,
 						"ip":         elementIp,
-						"metadata":   elementMetadata,
 					},
 				},
 			},
@@ -143,11 +142,6 @@ func datasourceVcdNetworkRoutedV2Read(ctx context.Context, d *schema.ResourceDat
 		if err != nil {
 			return diag.Errorf("[routed network read v2] error getting Org VDC network: %s", err)
 		}
-	}
-
-	if !network.IsRouted() {
-		return diag.Errorf("[routed network import] Org network with name '%s' found, but is not of type Imported (NAT_ROUTED) (type is '%s')",
-			network.OpenApiOrgVdcNetwork.Name, network.GetType())
 	}
 
 	err = setOpenApiOrgVdcNetworkData(d, network.OpenApiOrgVdcNetwork)
