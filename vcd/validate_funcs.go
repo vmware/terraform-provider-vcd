@@ -8,7 +8,19 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
+
+// vmNetworkTypeValidator checks the valid network types for a VM
+// It allows only 'org' and 'none' for standalone VMs, and adds 'vapp'
+// for VMs inside a regular vApp
+func vmNetworkTypeValidator(vmType string) schema.SchemaValidateFunc {
+	allowed := []string{"org", "none"}
+	if vmType == vappVmType {
+		allowed = append(allowed, "vapp")
+	}
+	return validation.StringInSlice(allowed, false)
+}
 
 // noopValueWarningValidator is a no-op validator which only emits warning string when fieldValue
 // is set to the specified one
