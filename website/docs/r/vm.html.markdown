@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_vm"
+page_title: "VMware Cloud Director: vcd_vm"
 sidebar_current: "docs-vcd-resource-vm"
 description: |-
   Provides a vCloud Director VM resource. This can be used to create, modify, and delete standalone VMs.
@@ -8,20 +8,26 @@ description: |-
 
 # vcd\_vm
 
-Provides a vCloud Director standalone VM resource. This can be used to create, modify, and delete standalone VMs.
+Provides a VMware Cloud Director standalone VM resource. This can be used to create, modify, and delete standalone VMs.
 
 Supported in provider *v3.2+*
 
 ## Example Usage
 
 ```hcl
+resource "vcd_vm" "TestVm" {
+  name          = "TestVm"
 
-data "vcd_vapp" "web" {
-  name= "web"
-}
+  catalog_name  = "cat-datacloud"
+  template_name = "photon-hw11"
+  cpus          = 2
+  memory        = 2048
 
-data "vcd_vapp_vm" "web1" {
-  name = "web1"
+  network {
+    name               = "net-datacloud-r"
+    type               = "org"
+    ip_allocation_mode = "POOL"
+  }
 }
 ```
 
@@ -48,18 +54,9 @@ General notes:
 For example, given this input
 ```hcl
 resource "vcd_vm" "TestVm" {
+  org           = "datacloud"
+  vdc           = "vdc-datacloud"
   name          = "TestVm"
-  
-  catalog_name  = "cat-datacloud"
-  template_name = "photon-hw11"
-  cpus          = 2
-  memory        = 2048
-
-  network {
-    name               = "net-datacloud-r"
-    type               = "org"
-    ip_allocation_mode = "POOL"
-  }
 }
 ```
 

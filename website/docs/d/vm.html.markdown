@@ -1,26 +1,21 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_vm"
+page_title: "VMware Cloud Director: vcd_vm"
 sidebar_current: "docs-vcd-datasource-vm"
 description: |-
-  Provides a vCloud Director VM data source. This can be used to access standalone VMs.
+  Provides a VMware Cloud Director VM data source. This can be used to access standalone VMs.
 ---
 
 # vcd\_vm
 
-Provides a vCloud Director standalone VM data source. This can be used to access standalone VMs.
+Provides a VMware Cloud Director standalone VM data source. This can be used to access standalone VMs.
 
 Supported in provider *v3.2+*
 
 ## Example Usage
 
 ```hcl
-
-data "vcd_vapp" "web" {
-  name= "web"
-}
-
-data "vcd_vapp_vm" "web1" {
+data "vcd_vm" "web1" {
   name = "web1"
 }
 ```
@@ -43,7 +38,7 @@ This fact has consequences when defining a data source, where we identify the VM
   
 For example, given this input
 ```hcl
-data "vcd_vapp_vm" "test_vm" {
+data "vcd_vm" "test_vm" {
   name = "TestVm"
 }
 ```
@@ -66,7 +61,7 @@ urn:vcloud:vm:41d5d5a7-040e-49cb-a516-5a604211a395 Debian GNU/Linux 10 (32-bit) 
 We can achieve the goal by providing the ID instead of the name
 
 ```hcl
-data "vcd_vapp_vm" "test_vm" {
+data "vcd_vm" "test_vm" {
   name = "urn:vcloud:vm:26c04f4d-2185-4a33-8ef9-019768d29003"
 }
 ```

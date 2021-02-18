@@ -19,21 +19,21 @@ resource "vcd_network_direct" "direct-external" {
   name             = "net"
   external_network = "my-ext-net"
 }
-​
+
 resource "vcd_vapp" "web" {
   name = "web"
 }
-​
+
 resource "vcd_vapp_org_network" "routed-net" {
   vapp_name        = vcd_vapp.web.name
   org_network_name = "my-vdc-int-net"
 }
-​
+
 resource "vcd_vapp_org_network" "direct-net" {
   vapp_name        = vcd_vapp.web.name
   org_network_name = vcd_network_direct.direct-external.name
 }
-​
+
 resource "vcd_vapp_network" "vapp-net" {
   name               = "my-vapp-net"
   vapp_name          = vcd_vapp.web.name
@@ -43,14 +43,14 @@ resource "vcd_vapp_network" "vapp-net" {
   dns2               = "192.168.2.2"
   dns_suffix         = "mybiz.biz"
   guest_vlan_allowed = true
-​
+
   static_ip_pool {
     start_address = "192.168.2.51"
     end_address   = "192.168.2.100"
   }
-​
+
 }
-​
+
 resource "vcd_vapp_vm" "web1" {
   vapp_name     = vcd_vapp.web.name
   name          = "web1"
@@ -59,19 +59,19 @@ resource "vcd_vapp_vm" "web1" {
   memory        = 1024
   cpus          = 2
   cpu_cores     = 1
-​
+
   metadata = {
     role    = "web"
     env     = "staging"
     version = "v1"
     my_key  = "my value"
   }
-​
+
   guest_properties = {
     "guest.hostname"   = "my-host"
     "another.var.name" = "var-value"
   }
-​
+
   network {
     type               = "org"
     name               = vcd_vapp_org_network.direct-net.org_network_name
@@ -86,7 +86,7 @@ resource "vcd_independent_disk" "disk1" {
   bus_type     = "SCSI"
   bus_sub_type = "VirtualSCSI"
 }
-​
+
 resource "vcd_vapp_vm" "web2" {
   vapp_name     = vcd_vapp.web.name
   name          = "web2"
@@ -94,44 +94,44 @@ resource "vcd_vapp_vm" "web2" {
   template_name = "photon-os"
   memory        = 1024
   cpus          = 1
-​
+
   metadata = {
     role    = "web"
     env     = "staging"
     version = "v1"
     my_key  = "my value"
   }
-​
+
   guest_properties = {
     "guest.hostname" = "my-hostname"
     "guest.other"    = "another-setting"
   }
-​
+
   network {
     type               = "org"
     name               = vcd_vapp_org_network.routed-net.org_network_name
     ip_allocation_mode = "POOL"
     is_primary         = true
   }
-​
+
   network {
     type               = "vapp"
     name               = vcd_vapp_network.vapp-net.name
     ip_allocation_mode = "POOL"
   }
-​
+
   network {
     type               = "none"
     ip_allocation_mode = "NONE"
     connected          = false
   }
-​
+
   disk {
     name        = vcd_independent_disk.disk1.name
     bus_number  = 1
     unit_number = 0
   }
-​
+
 }
 ```
 
@@ -295,7 +295,7 @@ example for usage details.
 
 ## Attribute reference
 
-* `vm_type` (computed; *3.2+*) - type of the VM (either `vapp` or `standalone`)
+* `vm_type` (*3.2+*) - type of the VM (either `vapp` or `standalone`)
 
 <a id="disk"></a>
 ## Disk
