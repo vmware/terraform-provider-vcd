@@ -477,7 +477,7 @@ func vappList(d *schema.ResourceData, meta interface{}) (list []string, err erro
 	return genericResourceList("vcd_vapp", listMode, nameIdSeparator, []string{org.Org.Name, vdc.Vdc.Name}, items)
 }
 
-func vappVmList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+func vmList(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (list []string, err error) {
 	client := meta.(*VCDClient)
 
 	listMode := d.Get("list_mode").(string)
@@ -486,42 +486,23 @@ func vappVmList(d *schema.ResourceData, meta interface{}) (list []string, err er
 	if err != nil {
 		return list, err
 	}
+
 	vappName := d.Get("parent").(string)
-	if vappName == "" {
-		return list, fmt.Errorf(`vApp name (as "parent") is required for VM lists`)
-	}
-	vapp, err := vdc.GetVAppByName(vappName, false)
-	if err != nil {
-		return list, fmt.Errorf("error retrieving vApp '%s': %s ", vappName, err)
-	}
-
-	var items []resourceRef
-	for _, vm := range vapp.VApp.Children.VM {
-		items = append(items, resourceRef{
-			name: vm.Name,
-			id:   vm.ID,
-			href: vm.HREF,
-		})
-	}
-	return genericResourceList("vcd_vapp_vm", listMode, nameIdSeparator, []string{org.Org.Name, vdc.Vdc.Name, vappName}, items)
-}
-
-func standaloneVmList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
-	client := meta.(*VCDClient)
-
-	listMode := d.Get("list_mode").(string)
-	nameIdSeparator := d.Get("name_id_separator").(string)
-	org, vdc, err := client.GetOrgAndVdc(d.Get("org").(string), d.Get("vdc").(string))
-	if err != nil {
-		return list, err
-	}
-
-	vmList, err := client.Client.QueryVmList(types.VmQueryFilterOnlyDeployed)
+	vmList, err := vdc.QueryVmList(types.VmQueryFilterOnlyDeployed)
 	if err != nil {
 		return nil, err
 	}
 	var items []resourceRef
 	for _, vm := range vmList {
+		if vmType == standaloneVmType && !vm.AutoNature {
+			continue
+		}
+		if vmType == vappVmType && vm.AutoNature {
+			continue
+		}
+		if vappName != "" && vappName != vm.ContainerName {
+			continue
+		}
 		items = append(items, resourceRef{
 			name:     vm.Name,
 			id:       "urn:vcloud:vm:" + extractUuid(vm.HREF),
@@ -801,9 +782,11 @@ func datasourceVcdResourceListRead(ctx context.Context, d *schema.ResourceData, 
 	case "vcd_vapp", "vapp", "vapps":
 		list, err = vappList(d, meta)
 	case "vcd_vapp_vm", "vapp_vm", "vapp_vms":
-		list, err = vappVmList(d, meta)
-	case "vcd_vm", "standalone_vm", "vm", "vms":
-		list, err = standaloneVmList(d, meta)
+		list, err = vmList(d, meta, vappVmType)
+	case "vcd_vm", "standalone_vm":
+		list, err = vmList(d, meta, standaloneVmType)
+	case "vcd_all_vm", "vm", "vms":
+		list, err = vmList(d, meta, typeOfVm("all"))
 	case "vcd_org_user", "org_user", "user", "users":
 		list, err = orgUserList(d, meta)
 	case "vcd_edgegateway", "edge_gateway", "edge", "edgegateway":
