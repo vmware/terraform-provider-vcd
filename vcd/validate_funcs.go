@@ -14,7 +14,7 @@ import (
 // vmNetworkTypeValidator checks the valid network types for a VM
 // It allows only 'org' and 'none' for standalone VMs, and adds 'vapp'
 // for VMs inside a regular vApp
-func vmNetworkTypeValidator(vmType string) schema.SchemaValidateFunc {
+func vmNetworkTypeValidator(vmType typeOfVm) schema.SchemaValidateFunc {
 	allowed := []string{"org", "none"}
 	if vmType == vappVmType {
 		allowed = append(allowed, "vapp")

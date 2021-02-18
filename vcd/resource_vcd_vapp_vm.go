@@ -19,13 +19,43 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
+type typeOfVm string
+
 const (
-	standaloneVmType = "standalone"
-	vappVmType       = "vapp"
+	standaloneVmType typeOfVm = "standalone"
+	vappVmType       typeOfVm = "vapp"
 )
 
+
+func resourceVcdVAppVm() *schema.Resource {
+
+	return &schema.Resource{
+		Create: resourceVcdVAppVmCreate,
+		Update: resourceVcdVAppVmUpdate,
+		Read:   resourceVcdVAppVmRead,
+		Delete: resourceVcdVAppVmDelete,
+		Importer: &schema.ResourceImporter{
+			State: resourceVcdVappVmImport,
+		},
+		Schema: vmSchemaFunc(vappVmType),
+	}
+}
+
+func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
+	return genericResourceVmCreate(d, meta, vappVmType)
+}
+
+func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
+	return genericVcdVmRead(d, meta, "resource", vappVmType)
+}
+
+func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
+	return genericResourceVcdVmUpdate(d, meta, vappVmType)
+}
+
+
 // VM Schema is defined as global so that it can be directly accessible in other places
-func vmSchemaFunc(vmType string) map[string]*schema.Schema {
+func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"vapp_name": &schema.Schema{
 			Type:        schema.TypeString,
@@ -493,20 +523,6 @@ func vmSchemaFunc(vmType string) map[string]*schema.Schema {
 	}
 }
 
-func resourceVcdVAppVm() *schema.Resource {
-
-	return &schema.Resource{
-		Create: resourceVcdVAppVmCreate,
-		Update: resourceVcdVAppVmUpdate,
-		Read:   resourceVcdVAppVmRead,
-		Delete: resourceVcdVAppVmDelete,
-		Importer: &schema.ResourceImporter{
-			State: resourceVcdVappVmImport,
-		},
-		Schema: vmSchemaFunc(vappVmType),
-	}
-}
-
 // vmTemplatefromVappTemplate returns a given VM from a vApp template
 // If no name is provided, it returns the first VM from the template
 func vmTemplatefromVappTemplate(name string, vappTemplate *types.VAppTemplate) *types.VAppTemplate {
@@ -521,11 +537,7 @@ func vmTemplatefromVappTemplate(name string, vappTemplate *types.VAppTemplate) *
 	return nil
 }
 
-func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
-	return genericResourceVmCreate(d, meta, vappVmType)
-}
-
-func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType string) error {
+func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType typeOfVm) error {
 	util.Logger.Printf("[DEBUG] [VM create] started")
 	vcdClient := meta.(*VCDClient)
 
@@ -647,7 +659,6 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType st
 				ComputePolicy:    vmComputePolicy,
 				Description:      description,
 				SourcedVmTemplateItem: &types.SourcedVmTemplateParams{
-					//LocalityParams: &types.LocalityParams{},
 					Source: &types.Reference{
 						HREF: vmTemplate.HREF,
 						ID:   vmTemplate.ID,
@@ -655,8 +666,6 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType st
 						Name: vmTemplate.Name,
 					},
 					StorageProfile: storageProfilePtr,
-					//VmCapabilities:  nil,
-					//VmGeneralParams: nil,
 					VmTemplateInstantiationParams: &types.InstantiationParams{
 						NetworkConnectionSection: &networkConnectionSection,
 					},
@@ -696,7 +705,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType st
 
 		// VM creation already succeeded so ID must be set
 		d.SetId(vm.VM.ID)
-		_ = d.Set("vm_type", vmType)
+		_ = d.Set("vm_type", string(vmType))
 
 		err = handleExposeHardwareVirtualization(d, vm)
 		if err != nil {
@@ -732,7 +741,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType st
 		}
 
 		// TODO do not trigger resourceVcdVAppVmUpdate from create. These must be separate actions.
-		err = resourceVcdVAppVmUpdateExecute(d, meta, "create")
+		err = resourceVcdVAppVmUpdateExecute(d, meta, "create", vmType)
 		if err != nil {
 			errAttachedDisk := updateStateOfAttachedDisks(d, *vm, vdc)
 			if errAttachedDisk != nil {
@@ -759,7 +768,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType st
 		}
 		util.Logger.Printf("[VM create] vApp after creation %# v", pretty.Formatter(vapp.VApp))
 		_ = d.Set("vapp_name", vapp.VApp.Name)
-		return resourceVcdVAppVmRead(d, meta)
+		return genericVcdVmRead(d, meta, "create", vmType)
 	}
 
 	log.Printf("[DEBUG] [VM create] finished")
@@ -838,11 +847,7 @@ func getVmIndependentDisks(vm govcd.VM) []string {
 	return disks
 }
 
-func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
-	return genericResourceVcdVmUpdate(d, meta, vappVmType)
-}
-
-func genericResourceVcdVmUpdate(d *schema.ResourceData, meta interface{}, vmType string) error {
+func genericResourceVcdVmUpdate(d *schema.ResourceData, meta interface{}, vmType typeOfVm) error {
 	log.Printf("[DEBUG] [VM update] started with lock")
 	vcdClient := meta.(*VCDClient)
 
@@ -860,7 +865,7 @@ func genericResourceVcdVmUpdate(d *schema.ResourceData, meta interface{}, vmType
 	// update so that its value can be written into statefile and be accessible in read function
 	if onlyHasChange("network_dhcp_wait_seconds", vmSchemaFunc(vmType), d) {
 		log.Printf("[DEBUG] [VM update] exiting early because only 'network_dhcp_wait_seconds' has change")
-		return resourceVcdVAppVmRead(d, meta)
+		return genericVcdVmRead(d, meta, "update", vmType)
 	}
 
 	err := resourceVmHotUpdate(d, meta)
@@ -868,7 +873,7 @@ func genericResourceVcdVmUpdate(d *schema.ResourceData, meta interface{}, vmType
 		return err
 	}
 
-	return resourceVcdVAppVmUpdateExecute(d, meta, "update")
+	return resourceVcdVAppVmUpdateExecute(d, meta, "update", vmType)
 }
 
 func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}) error {
@@ -1033,7 +1038,7 @@ func changeMemorySize(d *schema.ResourceData, vm *govcd.VM) error {
 	return nil
 }
 
-func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, executionType string) error {
+func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, executionType string, vmType typeOfVm) error {
 	log.Printf("[DEBUG] [VM update] started without lock")
 
 	vcdClient, org, vdc, vapp, identifier, vm, err := getVmFromResource(d, meta)
@@ -1273,7 +1278,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		}
 	}
 	log.Printf("[DEBUG] [VM update] finished")
-	return resourceVcdVAppVmRead(d, meta)
+	return genericVcdVmRead(d, meta, "update", vmType)
 }
 
 func getVmFromResource(d *schema.ResourceData, meta interface{}) (*VCDClient, *govcd.Org, *govcd.Vdc, *govcd.VApp, string, *govcd.VM, error) {
@@ -1382,11 +1387,7 @@ func attachDetachDisks(d *schema.ResourceData, vm govcd.VM, vdc *govcd.Vdc) erro
 	return nil
 }
 
-func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
-	return genericVcdVmRead(d, meta, "resource", vappVmType)
-}
-
-func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, vmType string) error {
+func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, vmType typeOfVm) error {
 	log.Printf("[DEBUG] [VM read] started with origin %s", origin)
 	vcdClient := meta.(*VCDClient)
 
@@ -1408,7 +1409,7 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, v
 	if vappName == "" {
 		vm, err = vdc.QueryVmById(identifier)
 		if govcd.IsNotFound(err) {
-			vmByName, listStr, errByName := getVmByName(vcdClient, identifier)
+			vmByName, listStr, errByName := getVmByName(vcdClient, vdc, identifier)
 			if errByName != nil && listStr != "" {
 				return fmt.Errorf("[VM read] error retrieving VM %s by name: %s\n%s\n%s", identifier, errByName, listStr, err)
 			}
@@ -1442,7 +1443,7 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, v
 	_ = d.Set("vapp_name", vapp.VApp.Name)
 	_ = d.Set("description", vm.VM.Description)
 	d.SetId(vm.VM.ID)
-	_ = d.Set("vm_type", vmType)
+	_ = d.Set("vm_type", string(vmType))
 
 	networks, err := readNetworks(d, *vm, *vapp)
 	if err != nil {
@@ -1824,7 +1825,7 @@ func networksToConfig(d *schema.ResourceData, vdc *govcd.Vdc, vapp *govcd.VApp, 
 				return types.NetworkConnectionSection{}, fmt.Errorf("vApp Org network : %s is not found", networkName)
 			}
 		}
-		if networkType == vappVmType && !isStandaloneVm {
+		if networkType == "vapp" && !isStandaloneVm {
 			isVappNetwork, err := isItVappNetwork(networkName, *vapp)
 			if err != nil {
 				return types.NetworkConnectionSection{}, fmt.Errorf("unable to find vApp network %s: %s", networkName, err)
@@ -2130,7 +2131,7 @@ func resourceVcdVappVmImport(d *schema.ResourceData, meta interface{}) ([]*schem
 				return nil, fmt.Errorf("[VM import] error retrieving VM %s by ID: %s", vmIdentifier, err)
 			}
 		} else {
-			vmByName, listStr, err := getVmByName(vcdClient, vmIdentifier)
+			vmByName, listStr, err := getVmByName(vcdClient, vdc, vmIdentifier)
 			if err != nil {
 				return nil, fmt.Errorf("[VM import] error retrieving VM %s by name: %s\n%s", vmIdentifier, err, listStr)
 			}
@@ -2159,9 +2160,9 @@ func resourceVcdVappVmImport(d *schema.ResourceData, meta interface{}) ([]*schem
 // getVmByName returns a VM by the given name if found unequivocally
 // If there are more than one instance by the wanted name, it also returns a list of
 // matching VMs with sample information (ID, guest OS, network name, IP address)
-func getVmByName(client *VCDClient, name string) (*govcd.VM, string, error) {
+func getVmByName(client *VCDClient, vdc *govcd.Vdc, name string) (*govcd.VM, string, error) {
 
-	vmList, err := client.Client.QueryVmList(types.VmQueryFilterOnlyDeployed)
+	vmList, err := vdc.QueryVmList(types.VmQueryFilterOnlyDeployed)
 	if err != nil {
 		return nil, "", err
 	}
