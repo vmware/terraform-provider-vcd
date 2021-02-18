@@ -19,14 +19,19 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
+const (
+	standaloneVmType = "standalone"
+	vappVmType       = "vapp"
+)
+
 // VM Schema is defined as global so that it can be directly accessible in other places
 func vmSchemaFunc(vmType string) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"vapp_name": &schema.Schema{
 			Type:        schema.TypeString,
-			Required:    vmType == "vapp",
-			Optional:    vmType == "standalone",
-			Computed:    vmType == "standalone",
+			Required:    vmType == vappVmType,
+			Optional:    vmType == standaloneVmType,
+			Computed:    vmType == standaloneVmType,
 			ForceNew:    true,
 			Description: "The vApp this VM belongs to - Required, unless it is a standalone VM",
 		},
@@ -166,7 +171,7 @@ func vmSchemaFunc(vmType string) map[string]*schema.Schema {
 					"type": {
 						Required:     true,
 						Type:         schema.TypeString,
-						ValidateFunc: validation.StringInSlice([]string{"vapp", "org", "none"}, false),
+						ValidateFunc: vmNetworkTypeValidator(vmType),
 						Description:  "Network type to use: 'vapp', 'org' or 'none'. Use 'vapp' for vApp network, 'org' to attach Org VDC network. 'none' for empty NIC.",
 					},
 					"ip_allocation_mode": {
@@ -498,7 +503,7 @@ func resourceVcdVAppVm() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: resourceVcdVappVmImport,
 		},
-		Schema: vmSchemaFunc("vapp"),
+		Schema: vmSchemaFunc(vappVmType),
 	}
 }
 
@@ -517,7 +522,7 @@ func vmTemplatefromVappTemplate(name string, vappTemplate *types.VAppTemplate) *
 }
 
 func resourceVcdVAppVmCreate(d *schema.ResourceData, meta interface{}) error {
-	return genericResourceVmCreate(d, meta, "vapp")
+	return genericResourceVmCreate(d, meta, vappVmType)
 }
 
 func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType string) error {
@@ -525,13 +530,13 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType st
 	vcdClient := meta.(*VCDClient)
 
 	vappName := d.Get("vapp_name").(string)
-	if vappName == "" && vmType == "vapp" {
+	if vappName == "" && vmType == vappVmType {
 		return fmt.Errorf("vApp name is mandatory for this VM type")
 	}
-	if vappName != "" && vmType == "standalone" {
+	if vappName != "" && vmType == standaloneVmType {
 		return fmt.Errorf("vApp name must not be set for a standalone VM")
 	}
-	if vappName != "" && vmType == "vapp" {
+	if vappName != "" && vmType == vappVmType {
 		vcdClient.lockParentVapp(d)
 		defer vcdClient.unLockParentVapp(d)
 	}
@@ -834,7 +839,7 @@ func getVmIndependentDisks(vm govcd.VM) []string {
 }
 
 func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
-	return genericResourceVcdVmUpdate(d, meta, "vapp")
+	return genericResourceVcdVmUpdate(d, meta, vappVmType)
 }
 
 func genericResourceVcdVmUpdate(d *schema.ResourceData, meta interface{}, vmType string) error {
@@ -846,7 +851,7 @@ func genericResourceVcdVmUpdate(d *schema.ResourceData, meta interface{}, vmType
 	// To avoid them, below block is using mutex as a workaround,
 	// so that the one vApp VMs are created not in parallelisation.
 
-	if vmType == "vapp" {
+	if vmType == vappVmType {
 		vcdClient.lockParentVapp(d)
 		defer vcdClient.unLockParentVapp(d)
 	}
@@ -1378,7 +1383,7 @@ func attachDetachDisks(d *schema.ResourceData, vm govcd.VM, vdc *govcd.Vdc) erro
 }
 
 func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
-	return genericVcdVmRead(d, meta, "resource", "vapp")
+	return genericVcdVmRead(d, meta, "resource", vappVmType)
 }
 
 func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, vmType string) error {
@@ -1778,6 +1783,7 @@ func resourceVcdVmIndependentDiskHash(v interface{}) int {
 func networksToConfig(d *schema.ResourceData, vdc *govcd.Vdc, vapp *govcd.VApp, vcdClient *VCDClient) (types.NetworkConnectionSection, error) {
 	networks := d.Get("network").([]interface{})
 
+	isStandaloneVm := vapp == nil || (vapp != nil && vapp.VApp.IsAutoNature)
 	networkConnectionSection := types.NetworkConnectionSection{}
 
 	// sets existing primary network connection index. Further changes index only if change is found
@@ -1809,7 +1815,7 @@ func networksToConfig(d *schema.ResourceData, vdc *govcd.Vdc, vapp *govcd.VApp, 
 		}
 
 		networkType := nic["type"].(string)
-		if networkType == "org" && vapp != nil && !vapp.VApp.IsAutoNature {
+		if networkType == "org" && !isStandaloneVm {
 			isVappOrgNetwork, err := isItVappOrgNetwork(networkName, *vapp)
 			if err != nil {
 				return types.NetworkConnectionSection{}, err
@@ -1818,8 +1824,7 @@ func networksToConfig(d *schema.ResourceData, vdc *govcd.Vdc, vapp *govcd.VApp, 
 				return types.NetworkConnectionSection{}, fmt.Errorf("vApp Org network : %s is not found", networkName)
 			}
 		}
-
-		if networkType == "vapp" && vapp != nil && !vapp.VApp.IsAutoNature {
+		if networkType == vappVmType && !isStandaloneVm {
 			isVappNetwork, err := isItVappNetwork(networkName, *vapp)
 			if err != nil {
 				return types.NetworkConnectionSection{}, fmt.Errorf("unable to find vApp network %s: %s", networkName, err)

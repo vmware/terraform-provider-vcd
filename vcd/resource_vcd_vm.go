@@ -14,19 +14,19 @@ func resourceVcdStandaloneVm() *schema.Resource {
 		Importer: &schema.ResourceImporter{
 			State: resourceVcdVappVmImport,
 		},
-		Schema:      vmSchemaFunc("standalone"),
+		Schema:      vmSchemaFunc(standaloneVmType),
 		Description: "Standalone VM",
 	}
 }
 
 func resourceVcdStandaloneVmCreate(d *schema.ResourceData, meta interface{}) error {
-	return genericResourceVmCreate(d, meta, "standalone")
+	return genericResourceVmCreate(d, meta, standaloneVmType)
 }
 
 func resourceVcdStandaloneVmUpdate(d *schema.ResourceData, meta interface{}) error {
-	return genericResourceVcdVmUpdate(d, meta, "standalone")
+	return genericResourceVcdVmUpdate(d, meta, standaloneVmType)
 }
 
 func resourceVcdVStandaloneVmRead(d *schema.ResourceData, meta interface{}) error {
-	return genericVcdVmRead(d, meta, "resource", "standalone")
+	return genericVcdVmRead(d, meta, "resource", standaloneVmType)
 }
