@@ -57,6 +57,8 @@ func TestAccVcdStandaloneVmTemplate(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName),
 					resource.TestCheckResourceAttr(
+						"vcd_vm."+standaloneVmName, "vm_type", string(standaloneVmType)),
+					resource.TestCheckResourceAttr(
 						"vcd_vm."+standaloneVmName, "name", standaloneVmName),
 					resource.TestCheckResourceAttr(
 						"vcd_vm."+standaloneVmName, "description", "test standalone VM"),
@@ -111,7 +113,6 @@ func TestAccVcdStandaloneEmptyVm(t *testing.T) {
 	// Create objects for testing field values across update steps
 	nic0Mac := testCachedFieldValue{}
 	nic1Mac := testCachedFieldValue{}
-	//nic2Mac := testCachedFieldValue{}
 
 	configTextVM := templateFill(testAccCheckVcdStandaloneEmptyVm, params)
 
