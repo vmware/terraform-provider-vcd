@@ -22,7 +22,7 @@ import (
 type typeOfVm string
 
 const (
-	standaloneVmType typeOfVm = "standaloneVM"
+	standaloneVmType typeOfVm = "StandaloneVM"
 	vappVmType       typeOfVm = "VmInVapp"
 )
 
@@ -2105,6 +2105,8 @@ func setGuestProperties(d *schema.ResourceData, properties *types.ProductSection
 // Example resource name (_resource_name_): vcd_vapp_vm.VM_name
 // Example import path for VM within vApp (_the_id_string_): org-name.vdc-name.vapp-name.vm-name
 // Example import path for standalone VM (_the_id_string_): org-name.vdc-name.vm-name
+// or
+// Example import path for standalone VM (_the_id_string_): org-name.vdc-name.vm-ID
 //
 // The VM identifier can be either the VM name or its ID
 // If we are dealing with standalone VMs, the name can retrieve duplicates. When that happens, the import fails
@@ -2121,13 +2123,15 @@ func resourceVcdVappVmImport(d *schema.ResourceData, meta interface{}) ([]*schem
 	var vmIdentifier string
 	standaloneVm := false
 
+	// With three arguments, we expect a standalone VM
 	if len(resourceURI) == 3 {
 		// standalone VM
 		orgName, vdcName, vmIdentifier = resourceURI[0], resourceURI[1], resourceURI[2]
 		standaloneVm = true
 	} else {
+		// With 4 arguments, it's a VM within a vApp
 		if len(resourceURI) != 4 {
-			return nil, fmt.Errorf("[VM import] resource name must be specified as org-name.vdc-name.vapp-name.vm-name")
+			return nil, fmt.Errorf("[VM import] resource name must be specified as org-name.vdc-name.vapp-name.vm-name-or-ID")
 		}
 		orgName, vdcName, vappName, vmIdentifier = resourceURI[0], resourceURI[1], resourceURI[2], resourceURI[3]
 	}
@@ -2155,7 +2159,7 @@ func resourceVcdVappVmImport(d *schema.ResourceData, meta interface{}) ([]*schem
 	} else {
 		vapp, err = vdc.GetVAppByName(vappName, false)
 		if err != nil {
-			return nil, fmt.Errorf("[VM import] error retrieving vapp %s: %s", vappName, err)
+			return nil, fmt.Errorf("[VM import] error retrieving vApp %s: %s", vappName, err)
 		}
 		vm, err = vapp.GetVMByNameOrId(vmIdentifier, false)
 		if err != nil {
