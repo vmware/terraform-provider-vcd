@@ -83,7 +83,7 @@ The following arguments are supported:
 <a id="ip-pools"></a>
 ## IP Pools
 
-Static IP Pools and DHCP Pools support the following attributes:
+Static IP Pools support the following attributes:
 
 * `start_address` - (Required) The first address in the IP Range
 * `end_address` - (Required) The final address in the IP Range
