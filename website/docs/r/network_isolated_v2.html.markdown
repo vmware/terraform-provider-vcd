@@ -70,7 +70,7 @@ The following arguments are supported:
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 * `name` - (Required) A unique name for the network
 * `description` - (Optional) An optional description of the network
-* `shared` - (Optional) **NSX-V only.** Defines if this network is shared between multiple VDCs
+* `is_shared` - (Optional) **NSX-V only.** Defines if this network is shared between multiple VDCs
   in the Org.  Defaults to `false`.
 * `gateway` (Required) The gateway for this network (e.g. 192.168.1.1)
 * `prefix_length` - (Required) The prefix length for the new network (e.g. 24 for netmask 255.255.255.0).
