@@ -102,7 +102,7 @@ func resourceVcdNetworkIsolatedV2Create(ctx context.Context, d *schema.ResourceD
 
 	orgNetwork, err := vdc.CreateOpenApiOrgVdcNetwork(networkType)
 	if err != nil {
-		return diag.Errorf("[isolated network v2 create] error creating Org Vdc isolated network: %s", err)
+		return diag.Errorf("[isolated network v2 create] error creating Org VDC isolated network: %s", err)
 	}
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
@@ -126,7 +126,7 @@ func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceD
 		return nil
 	}
 	if err != nil {
-		return diag.Errorf("[isolated network v2 update] error getting Org Vdc network: %s", err)
+		return diag.Errorf("[isolated network v2 update] error getting Org VDC network: %s", err)
 	}
 
 	networkType, err := getOpenApiOrgVdcIsolatedNetworkType(d, vdc)
@@ -139,7 +139,7 @@ func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceD
 
 	_, err = orgNetwork.Update(networkType)
 	if err != nil {
-		return diag.Errorf("[isolated network v2 update] error updating Org Vdc network: %s", err)
+		return diag.Errorf("[isolated network v2 update] error updating Org VDC network: %s", err)
 	}
 
 	return resourceVcdNetworkIsolatedV2Read(ctx, d, meta)
@@ -161,12 +161,12 @@ func resourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceDat
 		return nil
 	}
 	if err != nil {
-		return diag.Errorf("[isolated network v2 read] error getting Org Vdc network: %s", err)
+		return diag.Errorf("[isolated network v2 read] error getting Org VDC network: %s", err)
 	}
 
 	err = setOpenApiOrgVdcIsolatedNetworkData(d, orgNetwork.OpenApiOrgVdcNetwork)
 	if err != nil {
-		return diag.Errorf("[isolated network v2 read] error setting Org Vdc network data: %s", err)
+		return diag.Errorf("[isolated network v2 read] error setting Org VDC network data: %s", err)
 	}
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
@@ -185,12 +185,12 @@ func resourceVcdNetworkIsolatedV2Delete(ctx context.Context, d *schema.ResourceD
 
 	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkById(d.Id())
 	if err != nil {
-		return diag.Errorf("[isolated network v2 delete] error getting Org Vdc network: %s", err)
+		return diag.Errorf("[isolated network v2 delete] error getting Org VDC network: %s", err)
 	}
 
 	err = orgNetwork.Delete()
 	if err != nil {
-		return diag.Errorf("[isolated network v2 delete] error deleting Org Vdc network: %s", err)
+		return diag.Errorf("[isolated network v2 delete] error deleting Org VDC network: %s", err)
 	}
 
 	return nil

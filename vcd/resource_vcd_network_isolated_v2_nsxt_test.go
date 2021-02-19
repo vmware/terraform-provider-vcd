@@ -119,7 +119,7 @@ resource "vcd_network_isolated_v2" "net1" {
 
   static_ip_pool {
 	start_address = "1.1.1.10"
-    end_address = "1.1.1.20"
+	end_address = "1.1.1.20"
   }
 }
 `
@@ -142,7 +142,7 @@ resource "vcd_network_isolated_v2" "net1" {
 
   static_ip_pool {
 	start_address = "1.1.1.30"
-    end_address   = "1.1.1.40"
+	end_address   = "1.1.1.40"
   }
 }
 `
@@ -156,6 +156,5 @@ resource "vcd_network_isolated_v2" "net1" {
 
   gateway = "1.1.1.1"
   prefix_length = 24
-
 }
 `
