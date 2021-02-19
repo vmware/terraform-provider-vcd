@@ -1,5 +1,5 @@
-// +build standalone vm ALL functional
-// +build !skipStandalone
+// +build standaloneVm vm ALL functional
+// +build !skipStandaloneVm
 
 package vcd
 
@@ -22,7 +22,7 @@ func TestAccVcdStandaloneVmDhcpWait(t *testing.T) {
 		"Catalog":         testSuiteCatalogName,
 		"CatalogItem":     testSuiteCatalogOVAItem,
 		"VMName":          standaloneVmName,
-		"Tags":            "standalone vm",
+		"Tags":            "standaloneVm vm",
 		"DhcpWaitSeconds": 300,
 	}
 

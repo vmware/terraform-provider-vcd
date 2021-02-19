@@ -1,5 +1,5 @@
-// +build standalone vm ALL functional
-// +build !skipStandalone
+// +build standaloneVm vm ALL functional
+// +build !skipStandaloneVm
 
 package vcd
 
@@ -29,7 +29,7 @@ func TestAccVcdStandaloneVmUpdateCustomization(t *testing.T) {
 		"CatalogItem": testSuiteCatalogOVAItem,
 		"VMName":      standaloneVmName,
 		"NetworkName": testConfig.TestEnvBuild.IsolatedNetwork,
-		"Tags":        "standalone vm",
+		"Tags":        "standaloneVm vm",
 	}
 
 	configTextVM := templateFill(testAccCheckVcdVmUpdateCustomization, params)
@@ -97,7 +97,7 @@ func TestAccVcdStandaloneVmCreateCustomization(t *testing.T) {
 		"CatalogItem":   testSuiteCatalogOVAItem,
 		"NetworkName":   testConfig.TestEnvBuild.IsolatedNetwork,
 		"VMName":        standaloneVmName,
-		"Tags":          "standalone vm",
+		"Tags":          "standaloneVm vm",
 		"Customization": "true",
 	}
 	params["SkipTest"] = "# skip-binary-test: customization.force=true must always request for update"
@@ -249,7 +249,7 @@ func TestAccVcdStandaloneVmCustomizationSettings(t *testing.T) {
 		"Catalog":     testSuiteCatalogName,
 		"CatalogItem": testSuiteCatalogOVAItem,
 		"VMName":      standaloneVmName,
-		"Tags":        "standalone vm",
+		"Tags":        "standaloneVm vm",
 	}
 
 	configTextVM := templateFill(testAccCheckVcdVmUpdateCustomizationSettings, params)

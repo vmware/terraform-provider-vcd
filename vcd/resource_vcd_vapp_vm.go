@@ -26,7 +26,6 @@ const (
 	vappVmType       typeOfVm = "vapp"
 )
 
-
 func resourceVcdVAppVm() *schema.Resource {
 
 	return &schema.Resource{
@@ -52,7 +51,6 @@ func resourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
 func resourceVcdVAppVmUpdate(d *schema.ResourceData, meta interface{}) error {
 	return genericResourceVcdVmUpdate(d, meta, vappVmType)
 }
-
 
 // VM Schema is defined as global so that it can be directly accessible in other places
 func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {

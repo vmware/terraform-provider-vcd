@@ -1,5 +1,5 @@
-// +build vm standalone ALL functional
-// +build !skipStandalone
+// +build vm standaloneVm ALL functional
+// +build !skipStandaloneVm
 
 package vcd
 
@@ -20,7 +20,7 @@ func TestAccVcdStandaloneVmCapabilities(t *testing.T) {
 		"Catalog":     testSuiteCatalogName,
 		"CatalogItem": testSuiteCatalogOVAItem,
 		"VmName":      standaloneVmName,
-		"Tags":        "vm standalone",
+		"Tags":        "vm standaloneVm",
 	}
 
 	configText := templateFill(testAccCheckVcdVm_capabilities, params)

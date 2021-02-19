@@ -1,4 +1,4 @@
-// +build vapp vm user nsxt extnetwork network gateway catalog standalone ALL functional
+// +build vapp vm user nsxt extnetwork network gateway catalog standaloneVm ALL functional
 
 package vcd
 

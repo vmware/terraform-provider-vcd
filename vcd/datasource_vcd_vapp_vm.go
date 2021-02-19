@@ -6,13 +6,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func vcdVmDS(vmType string) map[string]*schema.Schema {
+func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 	return map[string]*schema.Schema{
 		"vapp_name": &schema.Schema{
 			Type:        schema.TypeString,
-			Required:    vmType == "vapp",
-			Optional:    vmType == "standalone",
-			Computed:    vmType == "standalone",
+			Required:    vmType == vappVmType,
+			Optional:    vmType == standaloneVmType,
+			Computed:    vmType == standaloneVmType,
 			Description: "The vApp this VM belongs to - Required, unless it is a standalone VM",
 		},
 		"vm_type": &schema.Schema{
@@ -336,10 +336,10 @@ func vcdVmDS(vmType string) map[string]*schema.Schema {
 func datasourceVcdVAppVm() *schema.Resource {
 	return &schema.Resource{
 		Read:   datasourceVcdVAppVmRead,
-		Schema: vcdVmDS("vapp"),
+		Schema: vcdVmDS(vappVmType),
 	}
 }
 
 func datasourceVcdVAppVmRead(d *schema.ResourceData, meta interface{}) error {
-	return genericVcdVmRead(d, meta, "datasource", "vapp")
+	return genericVcdVmRead(d, meta, "datasource", vappVmType)
 }

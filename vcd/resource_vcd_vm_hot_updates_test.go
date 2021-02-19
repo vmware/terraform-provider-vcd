@@ -1,5 +1,5 @@
-// +build standalone vm ALL functional
-// +build !skipStandalone
+// +build standaloneVm vm ALL functional
+// +build !skipStandaloneVm
 
 package vcd
 
@@ -30,7 +30,7 @@ func TestAccVcdStandaloneHotUpdateVm(t *testing.T) {
 		"Catalog":         testSuiteCatalogName,
 		"CatalogItem":     testSuiteCatalogOVAItem,
 		"VMName":          standaloneVmName,
-		"Tags":            "standalone vm",
+		"Tags":            "standaloneVm vm",
 		"Media":           testConfig.Media.MediaName,
 		"StorageProfile":  testConfig.VCD.ProviderVdc.StorageProfile,
 		"StorageProfile2": testConfig.VCD.ProviderVdc.StorageProfile2,

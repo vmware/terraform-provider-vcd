@@ -1,5 +1,5 @@
-// +build vm standalone ALL functional
-// +build !skipStandalone
+// +build vm standaloneVm ALL functional
+// +build !skipStandaloneVm
 
 package vcd
 
@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	testingTags["standalone"] = "resource_vcd_vapp_vm_test.go"
+	testingTags["standaloneVm"] = "resource_vcd_vapp_vm_test.go"
 }
 
 func TestAccVcdStandaloneVmTemplate(t *testing.T) {
@@ -37,7 +37,7 @@ func TestAccVcdStandaloneVmTemplate(t *testing.T) {
 		"busSubType":         "lsilogicsas",
 		"storageProfileName": "*",
 		"diskResourceName":   diskResourceName,
-		"Tags":               "vm standalone",
+		"Tags":               "vm standaloneVm",
 	}
 
 	configText := templateFill(testAccCheckVcdStandaloneVm_basic, params)
@@ -106,7 +106,7 @@ func TestAccVcdStandaloneEmptyVm(t *testing.T) {
 		"Catalog":     testSuiteCatalogName,
 		"CatalogItem": testSuiteCatalogOVAItem,
 		"VMName":      standaloneVmName,
-		"Tags":        "vm standalone",
+		"Tags":        "vm standaloneVm",
 		"Media":       testConfig.Media.MediaName,
 	}
 

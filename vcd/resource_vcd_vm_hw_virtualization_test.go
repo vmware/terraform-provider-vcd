@@ -1,5 +1,5 @@
-// +build standalone vm ALL functional
-// +build !skipStandalone
+// +build standaloneVm vm ALL functional
+// +build !skipStandaloneVm
 
 package vcd
 
@@ -23,7 +23,7 @@ func TestAccVcdStandaloneVm_HardwareVirtualization(t *testing.T) {
 		"CatalogItem":                  testSuiteCatalogOVAItem,
 		"VmName":                       standaloneVmName,
 		"ExposeHardwareVirtualization": "false",
-		"Tags":                         "standalone vm",
+		"Tags":                         "standaloneVm vm",
 	}
 
 	configTextStep0 := templateFill(testAccCheckVcdVm_hardwareVirtualization, params)
