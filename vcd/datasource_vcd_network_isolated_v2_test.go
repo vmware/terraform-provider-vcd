@@ -24,7 +24,7 @@ func TestAccVcdNetworkIsolatedV2NsxvDS(t *testing.T) {
 		return
 	}
 	if len(availableNetworks) == 0 {
-		t.Skip("No networks found - data source test skipped")
+		t.Skip("no networks found - data source test skipped")
 		return
 	}
 

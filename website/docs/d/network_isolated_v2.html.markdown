@@ -3,12 +3,12 @@ layout: "vcd"
 page_title: "vCloudDirector: vcd_network_isolated_v2"
 sidebar_current: "docs-vcd-data-source-network-isolated-v2"
 description: |-
-  Provides a VMware Cloud Director Org VDC isolated Network data source to read data or reference existing network
+  Provides a VMware Cloud Director Org VDC isolated Network data source to read data or reference existing network.
 ---
 
 # vcd\_network\_isolated\_v2
 
-Provides a VMware Cloud Director Org VDC isolated Network data source to read data or reference existing network
+Provides a VMware Cloud Director Org VDC isolated Network data source to read data or reference existing network.
 
 Supported in provider *v3.2+* for both NSX-T and NSX-V VDCs.
 

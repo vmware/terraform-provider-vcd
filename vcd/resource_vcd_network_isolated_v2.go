@@ -92,7 +92,7 @@ func resourceVcdNetworkIsolatedV2Create(ctx context.Context, d *schema.ResourceD
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return diag.Errorf("[isolated network create v2] error retrieving VDC: %s", err)
+		return diag.Errorf("[isolated network v2 create] error retrieving VDC: %s", err)
 	}
 
 	networkType, err := getOpenApiOrgVdcIsolatedNetworkType(d, vdc)
@@ -102,7 +102,7 @@ func resourceVcdNetworkIsolatedV2Create(ctx context.Context, d *schema.ResourceD
 
 	orgNetwork, err := vdc.CreateOpenApiOrgVdcNetwork(networkType)
 	if err != nil {
-		return diag.Errorf("[isolated network create v2] error creating Org Vdc isolated network: %s", err)
+		return diag.Errorf("[isolated network v2 create] error creating Org Vdc isolated network: %s", err)
 	}
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
@@ -116,7 +116,7 @@ func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceD
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return diag.Errorf("[isolated network update v2] error retrieving VDC: %s", err)
+		return diag.Errorf("[isolated network v2 update] error retrieving VDC: %s", err)
 	}
 
 	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkById(d.Id())
@@ -126,7 +126,7 @@ func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceD
 		return nil
 	}
 	if err != nil {
-		return diag.Errorf("[isolated network update v2] error getting Org Vdc network: %s", err)
+		return diag.Errorf("[isolated network v2 update] error getting Org Vdc network: %s", err)
 	}
 
 	networkType, err := getOpenApiOrgVdcIsolatedNetworkType(d, vdc)
@@ -139,7 +139,7 @@ func resourceVcdNetworkIsolatedV2Update(ctx context.Context, d *schema.ResourceD
 
 	_, err = orgNetwork.Update(networkType)
 	if err != nil {
-		return diag.Errorf("[isolated network update v2] error updating Org Vdc network: %s", err)
+		return diag.Errorf("[isolated network v2 update] error updating Org Vdc network: %s", err)
 	}
 
 	return resourceVcdNetworkIsolatedV2Read(ctx, d, meta)
@@ -151,7 +151,7 @@ func resourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceDat
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return diag.Errorf("[isolated network read v2] error retrieving VDC: %s", err)
+		return diag.Errorf("[isolated network v2 read] error retrieving VDC: %s", err)
 	}
 
 	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkById(d.Id())
@@ -161,12 +161,12 @@ func resourceVcdNetworkIsolatedV2Read(ctx context.Context, d *schema.ResourceDat
 		return nil
 	}
 	if err != nil {
-		return diag.Errorf("[isolated network read v2] error getting Org Vdc network: %s", err)
+		return diag.Errorf("[isolated network v2 read] error getting Org Vdc network: %s", err)
 	}
 
 	err = setOpenApiOrgVdcIsolatedNetworkData(d, orgNetwork.OpenApiOrgVdcNetwork)
 	if err != nil {
-		return diag.Errorf("[isolated network read v2] error setting Org Vdc network data: %s", err)
+		return diag.Errorf("[isolated network v2 read] error setting Org Vdc network data: %s", err)
 	}
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
@@ -180,17 +180,17 @@ func resourceVcdNetworkIsolatedV2Delete(ctx context.Context, d *schema.ResourceD
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return diag.Errorf("[isolated network delete v2] error retrieving VDC: %s", err)
+		return diag.Errorf("[isolated network v2 delete] error retrieving VDC: %s", err)
 	}
 
 	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkById(d.Id())
 	if err != nil {
-		return diag.Errorf("[isolated network delete v2] error getting Org Vdc network: %s", err)
+		return diag.Errorf("[isolated network v2 delete] error getting Org Vdc network: %s", err)
 	}
 
 	err = orgNetwork.Delete()
 	if err != nil {
-		return diag.Errorf("[isolated network delete v2] error deleting Org Vdc network: %s", err)
+		return diag.Errorf("[isolated network v2 delete] error deleting Org Vdc network: %s", err)
 	}
 
 	return nil
@@ -200,23 +200,23 @@ func resourceVcdNetworkIsolatedV2Delete(ctx context.Context, d *schema.ResourceD
 func resourceVcdNetworkIsolatedV2Import(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
-		return nil, fmt.Errorf("[isolated network import v2] resource name must be specified as org-name.vdc-name.network-name")
+		return nil, fmt.Errorf("[isolated network v2 import] resource name must be specified as org-name.vdc-name.network-name")
 	}
 	orgName, vdcName, networkName := resourceURI[0], resourceURI[1], resourceURI[2]
 
 	vcdClient := meta.(*VCDClient)
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if err != nil {
-		return nil, fmt.Errorf("[isolated network import v2] unable to find VDC %s: %s ", vdcName, err)
+		return nil, fmt.Errorf("[isolated network v2 import] unable to find VDC %s: %s ", vdcName, err)
 	}
 
 	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkByName(networkName)
 	if err != nil {
-		return nil, fmt.Errorf("[isolated network import v2] error reading network with name '%s': %s", networkName, err)
+		return nil, fmt.Errorf("[isolated network v2 import] error reading network with name '%s': %s", networkName, err)
 	}
 
 	if !orgNetwork.IsIsolated() {
-		return nil, fmt.Errorf("[isolated network import v2] Org network with name '%s' found, but is not of type Isolated (type is '%s')",
+		return nil, fmt.Errorf("[isolated network v2 import] Org network with name '%s' found, but is not of type Isolated (type is '%s')",
 			networkName, orgNetwork.GetType())
 	}
 
