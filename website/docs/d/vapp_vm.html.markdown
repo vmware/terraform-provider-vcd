@@ -88,7 +88,7 @@ The following arguments are supported:
 
 ## Attribute reference
 
-* `vm_type` (*3.2+*) - type of the VM (either `vapp` or `standalone`)
+* `vm_type` (*3.2+*) - type of the VM (either `VmInVapp` or `StandaloneVm`)
 * `computer_name` -  Computer name to assign to this virtual machine. 
 * `catalog_name` -  The catalog name in which to find the given vApp Template
 * `template_name` -  The name of the vApp Template to use

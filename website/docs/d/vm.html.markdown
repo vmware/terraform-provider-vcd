@@ -20,12 +20,7 @@ data "vcd_vm" "web1" {
 }
 ```
 
-## Arguments and attributes reference
-
-This data source provides all arguments and attributes available for `vcd_vapp_vm`, with the only difference that the
-`vapp_name` should be left empty.
-
-General notes:
+## General notes
 
 * Although from the UI standpoint a standalone VM appears to exist without a vApp, in reality there is a hidden vApp that
 is generated automatically when the VM is created, and removed when the VM is terminated. The field `vapp_name` is populated
@@ -72,3 +67,16 @@ data.vcd_vm.test_vm: Refreshing state...
 
 Apply complete! Resources: 0 added, 0 changed, 0 destroyed.
 ```
+
+## Argument Reference
+
+The following arguments are supported:
+
+* `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
+* `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
+* `name` - (Required) A name or ID for the standalone VM in VDC
+
+## Attributes reference
+
+This data source provides all attributes available for `vcd_vapp_vm`.
+

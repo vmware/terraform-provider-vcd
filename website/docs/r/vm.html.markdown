@@ -3,12 +3,12 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_vm"
 sidebar_current: "docs-vcd-resource-vm"
 description: |-
-  Provides a vCloud Director VM resource. This can be used to create, modify, and delete standalone VMs.
+  Provides a vCloud Director VM resource. This can be used to create, modify, and delete Standalone VMs.
 ---
 
 # vcd\_vm
 
-Provides a VMware Cloud Director standalone VM resource. This can be used to create, modify, and delete standalone VMs.
+Provides a VMware Cloud Director standalone VM resource. This can be used to create, modify, and delete Standalone VMs.
 
 Supported in provider *v3.2+*
 
@@ -34,7 +34,7 @@ resource "vcd_vm" "TestVm" {
 ## Arguments and attributes reference
 
 This resource provides all arguments and attributes available for `vcd_vapp_vm`, with the only difference that the
-`vapp_name` is not required.
+`vapp_name` should be left empty.
 
 General notes:
 

@@ -295,7 +295,7 @@ example for usage details.
 
 ## Attribute reference
 
-* `vm_type` (*3.2+*) - type of the VM (either `vapp` or `standalone`)
+* `vm_type` (*3.2+*) - type of the VM (either `VmInVapp` or `StandaloneVm`)
 
 <a id="disk"></a>
 ## Disk
