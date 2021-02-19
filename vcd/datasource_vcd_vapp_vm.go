@@ -2,6 +2,8 @@ package vcd
 
 //lint:file-ignore SA1019 ignore deprecated functions
 import (
+	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -18,7 +20,7 @@ func vcdVmDS(vmType typeOfVm) map[string]*schema.Schema {
 		"vm_type": &schema.Schema{
 			Type:        schema.TypeString,
 			Computed:    true,
-			Description: "Type of VM: either 'vapp' or 'standalone'",
+			Description: fmt.Sprintf("Type of VM: either '%s' or '%s'", vappVmType, standaloneVmType),
 		},
 		"name": &schema.Schema{
 			Type:        schema.TypeString,

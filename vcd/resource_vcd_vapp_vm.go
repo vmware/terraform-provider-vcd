@@ -22,8 +22,8 @@ import (
 type typeOfVm string
 
 const (
-	standaloneVmType typeOfVm = "standalone"
-	vappVmType       typeOfVm = "vapp"
+	standaloneVmType typeOfVm = "standaloneVM"
+	vappVmType       typeOfVm = "VmInVapp"
 )
 
 func resourceVcdVAppVm() *schema.Resource {
@@ -66,7 +66,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 		"vm_type": &schema.Schema{
 			Type:        schema.TypeString,
 			Computed:    true,
-			Description: "Type of VM: either 'vapp' or 'standalone'",
+			Description: fmt.Sprintf("Type of VM: either '%s' or '%s'", vappVmType, standaloneVmType),
 		},
 		"name": &schema.Schema{
 			Type:        schema.TypeString,
@@ -648,6 +648,10 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 
 		if vappName == "" {
 			// Build a standalone VM
+			if vmComputePolicy != nil && vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
+				util.Logger.Printf("[Warning] compute policy is ignored because VCD version doesn't support it")
+				vmComputePolicy = nil
+			}
 			vmTemplate := vmTemplatefromVappTemplate(d.Get("vm_name_in_template").(string), vappTemplate.VAppTemplate)
 			vmParams := types.InstantiateVmTemplateParams{
 				Xmlns:            types.XMLNamespaceVCloud,
@@ -701,9 +705,15 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 			}
 		}
 
+		var computedVmType string
+		if vapp.VApp.IsAutoNature {
+			computedVmType = string(standaloneVmType)
+		} else {
+			computedVmType = string(vappVmType)
+		}
 		// VM creation already succeeded so ID must be set
 		d.SetId(vm.VM.ID)
-		_ = d.Set("vm_type", string(vmType))
+		_ = d.Set("vm_type", computedVmType)
 
 		err = handleExposeHardwareVirtualization(d, vm)
 		if err != nil {
@@ -1436,12 +1446,18 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, v
 		}
 	}
 
+	var computedVmType string
+	if vapp.VApp.IsAutoNature {
+		computedVmType = string(standaloneVmType)
+	} else {
+		computedVmType = string(vappVmType)
+	}
 	// org, vdc, and vapp_name are already implicitly set
 	_ = d.Set("name", vm.VM.Name)
 	_ = d.Set("vapp_name", vapp.VApp.Name)
 	_ = d.Set("description", vm.VM.Description)
 	d.SetId(vm.VM.ID)
-	_ = d.Set("vm_type", string(vmType))
+	_ = d.Set("vm_type", computedVmType)
 
 	networks, err := readNetworks(d, *vm, *vapp)
 	if err != nil {
@@ -2461,8 +2477,8 @@ func addEmptyVm(d *schema.ResourceData, vcdClient *VCDClient, org *govcd.Org, vd
 			PowerOn:     false,
 			Description: recomposeVAppParamsForEmptyVm.CreateItem.Description,
 			CreateVm: &types.Vm{
-				Name: vmName,
-				//Description:               recomposeVAppParamsForEmptyVm.CreateItem.Description,
+				Name:                      vmName,
+				ComputePolicy:             recomposeVAppParamsForEmptyVm.CreateItem.ComputePolicy,
 				NetworkConnectionSection:  recomposeVAppParamsForEmptyVm.CreateItem.NetworkConnectionSection,
 				VmSpecSection:             recomposeVAppParamsForEmptyVm.CreateItem.VmSpecSection,
 				GuestCustomizationSection: recomposeVAppParamsForEmptyVm.CreateItem.GuestCustomizationSection,

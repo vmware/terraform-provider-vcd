@@ -23,7 +23,7 @@ data "vcd_vm" "web1" {
 ## Arguments and attributes reference
 
 This data source provides all arguments and attributes available for `vcd_vapp_vm`, with the only difference that the
-`vapp_name` is not required.
+`vapp_name` should be left empty.
 
 General notes:
 
