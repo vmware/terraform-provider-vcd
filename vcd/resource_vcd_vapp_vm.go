@@ -1422,7 +1422,7 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, v
 				return fmt.Errorf("[VM read] error retrieving VM %s by name: %s\n%s\n%s", identifier, errByName, listStr, err)
 			}
 			vm = vmByName
-			err = nil
+			err = errByName
 		}
 	} else {
 		vapp, err = vdc.GetVAppByName(vappName, false)
