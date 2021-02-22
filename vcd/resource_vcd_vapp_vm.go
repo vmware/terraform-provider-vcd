@@ -22,8 +22,8 @@ import (
 type typeOfVm string
 
 const (
-	standaloneVmType typeOfVm = "StandaloneVM"
-	vappVmType       typeOfVm = "VmInVapp"
+	standaloneVmType typeOfVm = "vcd_vm"
+	vappVmType       typeOfVm = "vcd_vapp_vm"
 )
 
 func resourceVcdVAppVm() *schema.Resource {
@@ -60,7 +60,7 @@ func vmSchemaFunc(vmType typeOfVm) map[string]*schema.Schema {
 			Required:    vmType == vappVmType,
 			Optional:    vmType == standaloneVmType,
 			Computed:    vmType == standaloneVmType,
-			ForceNew:    true,
+			ForceNew:    vmType == vappVmType,
 			Description: "The vApp this VM belongs to - Required, unless it is a standalone VM",
 		},
 		"vm_type": &schema.Schema{
@@ -592,7 +592,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 			}
 			vappTemplate, err = catalogItem.GetVAppTemplate()
 			if err != nil {
-				return fmt.Errorf("error finding VAppTemplate: %s", err)
+				return fmt.Errorf("[VM create] error finding VAppTemplate %s: %s", templateName, err)
 			}
 
 		}
@@ -601,7 +601,7 @@ func genericResourceVmCreate(d *schema.ResourceData, meta interface{}, vmType ty
 		if vappName != "" {
 			vapp, err = vdc.GetVAppByName(vappName, false)
 			if err != nil {
-				return fmt.Errorf("error finding vApp: %s", err)
+				return fmt.Errorf("[VM create] error finding vApp %s: %s", vappName, err)
 			}
 		}
 
@@ -876,7 +876,7 @@ func genericResourceVcdVmUpdate(d *schema.ResourceData, meta interface{}, vmType
 		return genericVcdVmRead(d, meta, "update", vmType)
 	}
 
-	err := resourceVmHotUpdate(d, meta)
+	err := resourceVmHotUpdate(d, meta, vmType)
 	if err != nil {
 		return err
 	}
@@ -884,8 +884,8 @@ func genericResourceVcdVmUpdate(d *schema.ResourceData, meta interface{}, vmType
 	return resourceVcdVAppVmUpdateExecute(d, meta, "update", vmType)
 }
 
-func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}) error {
-	vcdClient, _, vdc, vapp, _, vm, err := getVmFromResource(d, meta)
+func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOfVm) error {
+	vcdClient, _, vdc, vapp, _, vm, err := getVmFromResource(d, meta, vmType)
 	if err != nil {
 		return err
 	}
@@ -1049,7 +1049,7 @@ func changeMemorySize(d *schema.ResourceData, vm *govcd.VM) error {
 func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, executionType string, vmType typeOfVm) error {
 	log.Printf("[DEBUG] [VM update] started without lock")
 
-	vcdClient, org, vdc, vapp, identifier, vm, err := getVmFromResource(d, meta)
+	vcdClient, org, vdc, vapp, identifier, vm, err := getVmFromResource(d, meta, vmType)
 	if err != nil {
 		return err
 	}
@@ -1289,7 +1289,7 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 	return genericVcdVmRead(d, meta, "update", vmType)
 }
 
-func getVmFromResource(d *schema.ResourceData, meta interface{}) (*VCDClient, *govcd.Org, *govcd.Vdc, *govcd.VApp, string, *govcd.VM, error) {
+func getVmFromResource(d *schema.ResourceData, meta interface{}, vmType typeOfVm) (*VCDClient, *govcd.Org, *govcd.Vdc, *govcd.VApp, string, *govcd.VM, error) {
 	vcdClient := meta.(*VCDClient)
 
 	org, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
@@ -1297,10 +1297,18 @@ func getVmFromResource(d *schema.ResourceData, meta interface{}) (*VCDClient, *g
 		return nil, nil, nil, nil, "", nil, fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
+	vappName := d.Get("vapp_name").(string)
+	vapp, err := vdc.GetVAppByName(vappName, false)
 
 	if err != nil {
-		return nil, nil, nil, nil, "", nil, fmt.Errorf("error finding vApp: %s", err)
+		additionalMessage := ""
+		if vmType == standaloneVmType {
+			additionalMessage = fmt.Sprintf("\nAdding a vApp name to a standalone VM is not allowed." +
+				"Please use 'vcd_vapp_vm' resource to specify vApp")
+			_ = d.Set("vapp_name", "")
+		}
+
+		return nil, nil, nil, nil, "", nil, fmt.Errorf("[getVmFromResource] error finding vApp '%s': %s%s", vappName, err, additionalMessage)
 	}
 
 	identifier := d.Id()
@@ -1404,6 +1412,11 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, v
 		return fmt.Errorf("[VM read ]"+errorRetrievingOrgAndVdc, err)
 	}
 
+	isStandalone := false
+	setVmType, ok := d.GetOk("vm_type")
+	if ok {
+		isStandalone = setVmType.(string) == string(standaloneVmType)
+	}
 	var vapp *govcd.VApp
 	var vm *govcd.VM
 	identifier := d.Id()
@@ -1427,7 +1440,13 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, v
 	} else {
 		vapp, err = vdc.GetVAppByName(vappName, false)
 		if err != nil {
-			return fmt.Errorf("[VM read] error finding vAp %sp: %s", vappName, err)
+			additionalMessage := ""
+			if isStandalone {
+				additionalMessage = fmt.Sprintf("\nAdding a vApp name to a standalone VM is not allowed." +
+					"Please use 'vcd_vapp_vm' resource to specify vApp")
+				_ = d.Set("vapp_name", "")
+			}
+			return fmt.Errorf("[VM read] error finding vApp '%s': %s%s", vappName, err, additionalMessage)
 		}
 		vm, err = vapp.GetVMByNameOrId(identifier, false)
 	}
@@ -1709,10 +1728,11 @@ func resourceVcdVAppVmDelete(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
-	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
+	vappName := d.Get("vapp_name").(string)
+	vapp, err := vdc.GetVAppByName(vappName, false)
 
 	if err != nil {
-		return fmt.Errorf("error finding vApp: %s", err)
+		return fmt.Errorf("[VM delete] error finding vApp '%s': %s", vappName, err)
 	}
 
 	identifier := d.Id()
