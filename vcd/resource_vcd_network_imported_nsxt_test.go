@@ -91,34 +91,6 @@ func TestAccVcdNetworkImportedNsxt(t *testing.T) {
 					}),
 				),
 			},
-			// resource.TestStep{ // step 2
-			// 	Config: configText2,
-			// 	Check: resource.ComposeAggregateTestCheckFunc(
-			// 		cachedId.testCheckCachedResourceFieldValue("vcd_network_imported.net1", "id"),
-			// 		resource.TestCheckResourceAttrSet("vcd_network_imported.net1", "id"),
-			// 		resource.TestCheckResourceAttr("vcd_network_imported.net1", "name", t.Name()),
-			// 		resource.TestCheckResourceAttr("vcd_network_imported.net1", "description", "Updated"),
-			// 		resource.TestCheckResourceAttrSet("vcd_network_imported.net1", "edge_gateway_id"),
-			// 		resource.TestCheckResourceAttr("vcd_network_imported.net1", "gateway", "1.1.1.1"),
-			// 		resource.TestCheckResourceAttr("vcd_network_imported.net1", "prefix_length", "24"),
-			// 		resource.TestCheckResourceAttr("vcd_network_imported.net1", "static_ip_pool.#", "3"),
-			// 		resource.TestCheckTypeSetElemNestedAttrs("vcd_network_imported.net1", "static_ip_pool.*", map[string]string{
-			// 			"start_address": "1.1.1.10",
-			// 			"end_address":   "1.1.1.20",
-			// 		}),
-			//
-			// 		resource.TestCheckTypeSetElemNestedAttrs("vcd_network_imported.net1", "static_ip_pool.*", map[string]string{
-			// 			"start_address": "1.1.1.40",
-			// 			"end_address":   "1.1.1.50",
-			// 		}),
-			//
-			// 		resource.TestCheckTypeSetElemNestedAttrs("vcd_network_imported.net1", "static_ip_pool.*", map[string]string{
-			// 			"start_address": "1.1.1.60",
-			// 			"end_address":   "1.1.1.70",
-			// 		}),
-			// 	),
-			// },
-			//
 			// Check that import works
 			resource.TestStep{ // step 3
 				ResourceName:      "vcd_network_imported.net1",
@@ -129,20 +101,6 @@ func TestAccVcdNetworkImportedNsxt(t *testing.T) {
 				ImportStateVerifyIgnore: []string{"nsxt_logical_switch_name"},
 				ImportStateIdFunc:       importStateIdOrgNsxtVdcObject(testConfig, "updated-nsxt-imported-test-initial"),
 			},
-			//
-			// resource.TestStep{ // step 4
-			// 	Config: configText3,
-			// 	Check: resource.ComposeAggregateTestCheckFunc(
-			// 		cachedId.testCheckCachedResourceFieldValue("vcd_network_imported.net1", "id"),
-			// 		resource.TestCheckResourceAttrSet("vcd_network_imported.net1", "id"),
-			// 		resource.TestCheckResourceAttr("vcd_network_imported.net1", "name", t.Name()),
-			// 		resource.TestCheckResourceAttr("vcd_network_imported.net1", "description", "Updated"),
-			// 		resource.TestCheckResourceAttrSet("vcd_network_imported.net1", "edge_gateway_id"),
-			// 		resource.TestCheckResourceAttr("vcd_network_imported.net1", "gateway", "1.1.1.1"),
-			// 		resource.TestCheckResourceAttr("vcd_network_imported.net1", "prefix_length", "24"),
-			// 		resource.TestCheckResourceAttr("vcd_network_imported.net1", "static_ip_pool.#", "0"),
-			// 	),
-			// },
 		},
 	})
 }
@@ -156,12 +114,12 @@ resource "vcd_network_imported" "net1" {
 
   nsxt_logical_switch_name = "{{.NsxtImportSegment}}"
 
-  gateway = "1.1.1.1"
+  gateway       = "1.1.1.1"
   prefix_length = 24
 
   static_ip_pool {
 	start_address = "1.1.1.10"
-    end_address = "1.1.1.20"
+	end_address   = "1.1.1.20"
   }
 }
 `
@@ -175,73 +133,17 @@ resource "vcd_network_imported" "net1" {
 
   nsxt_logical_switch_name = "{{.NsxtImportSegment}}"
 
-  gateway = "1.1.1.1"
+  gateway       = "1.1.1.1"
   prefix_length = 24
 
   static_ip_pool {
 	start_address = "1.1.1.10"
-    end_address = "1.1.1.20"
+	end_address   = "1.1.1.20"
   }
 
   static_ip_pool {
 	start_address = "1.1.1.40"
-    end_address = "1.1.1.50"
+	end_address   = "1.1.1.50"
   }
 }
 `
-
-//
-// const TestAccVcdNetworkRoutedV2NsxtStep2 = `
-// data "vcd_nsxt_edgegateway" "existing" {
-//   org  = "{{.Org}}"
-//   vdc  = "{{.NsxtVdc}}"
-//   name = "{{.EdgeGw}}"
-// }
-//
-// resource "vcd_network_imported" "net1" {
-//   org  = "{{.Org}}"
-//   vdc  = "{{.NsxtVdc}}"
-//   name = "{{.NetworkName}}"
-//   description = "Updated"
-//
-//   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
-//
-//   gateway = "1.1.1.1"
-//   prefix_length = 24
-//
-//   static_ip_pool {
-// 	start_address = "1.1.1.10"
-//     end_address = "1.1.1.20"
-//   }
-//
-//   static_ip_pool {
-// 	start_address = "1.1.1.40"
-//     end_address = "1.1.1.50"
-//   }
-//
-//   static_ip_pool {
-// 	start_address = "1.1.1.60"
-//     end_address = "1.1.1.70"
-//   }
-// }
-// `
-//
-// const TestAccVcdNetworkRoutedV2NsxtStep3 = `
-// data "vcd_nsxt_edgegateway" "existing" {
-//   org  = "{{.Org}}"
-//   vdc  = "{{.NsxtVdc}}"
-//   name = "{{.EdgeGw}}"
-// }
-//
-// resource "vcd_network_imported" "net1" {
-//   org  = "{{.Org}}"
-//   vdc  = "{{.NsxtVdc}}"
-//   name = "{{.NetworkName}}"
-//   description = "Updated"
-//
-//   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
-//
-//   gateway = "1.1.1.1"
-//   prefix_length = 24
-// }
-// `

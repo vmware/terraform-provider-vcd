@@ -4,7 +4,7 @@ page_title: "VMware Cloud Director: vcd_network_imported"
 sidebar_current: "docs-vcd-resource-network-imported"
 description: |-
   Provides a VMware Cloud Director Org VDC imported Network. This can be used to create, modify, and
-  delete routed VDC networks (backed by NSX-T).
+  delete imported VDC networks (backed by NSX-T).
 ---
 
 # vcd\_network\_imported
@@ -18,24 +18,24 @@ Supported in provider *v3.2+* for NSX-T VDCs only.
 
 ```hcl
 resource "vcd_network_imported" "nsxt-backed" {
-  org  = "my-org"
-  vdc  = "my-nsxt-org-vdc"
-  name = "nsxt-imported"
+  org         = "my-org"
+  vdc         = "my-nsxt-org-vdc"
+  name        = "nsxt-imported"
   description = "My imported Org VDC network backed by NSX-T"
 
   nsxt_logical_switch_name = "nsxt_segment_name"
 
-  gateway = "1.1.1.1"
+  gateway       = "1.1.1.1"
   prefix_length = 24
 
   static_ip_pool {
     start_address = "1.1.1.10"
-    end_address = "1.1.1.20"
+    end_address   = "1.1.1.20"
   }
 
   static_ip_pool {
     start_address = "1.1.1.100"
-    end_address = "1.1.1.103"
+    end_address   = "1.1.1.103"
   }
 }
 ```
@@ -64,7 +64,7 @@ The following arguments are supported:
 <a id="ip-pools"></a>
 ## IP Pools
 
-Static IP Pools and DHCP Pools support the following attributes:
+Static IP Pools  support the following attributes:
 
 * `start_address` - (Required) The first address in the IP Range
 * `end_address` - (Required) The final address in the IP Range
@@ -88,9 +88,9 @@ For example, using this structure, representing a routed network that was **not*
 
 ```hcl
 resource "vcd_network_imported" "tf-mynet" {
-  name              = "my-net"
-  org               = "my-org"
-  vdc               = "my-vdc"
+  name = "my-net"
+  org  = "my-org"
+  vdc  = "my-vdc"
   ...
 }
 ```
