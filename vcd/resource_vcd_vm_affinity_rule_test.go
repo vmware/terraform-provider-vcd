@@ -246,6 +246,8 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 
 	var rule govcd.VmAffinityRule
 	resourceName := "vcd_vm_affinity_rule." + data.name
+	datasourceById := "data.vcd_vm_affinity_rule.ds_affinity_rule_by_name"
+	datasourceByName := "data.vcd_vm_affinity_rule.ds_affinity_rule_by_id"
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
@@ -266,8 +268,10 @@ func runVmAffinityRuleTest(data affinityRuleData, t *testing.T) {
 						resourceName, "vm_ids.#", fmt.Sprintf("%d", len(data.creationVms))),
 					resource.TestCheckResourceAttr(
 						resourceName, "polarity", data.polarity),
-					resource.TestCheckOutput("name_of_rule_by_id", data.name),
-					resource.TestCheckOutput("polarity_of_rule_by_name", data.polarity),
+					resource.TestCheckResourceAttrPair(resourceName, "name", datasourceById, "name"),
+					resource.TestCheckResourceAttrPair(resourceName, "polarity", datasourceById, "polarity"),
+					resource.TestCheckResourceAttrPair(resourceName, "name", datasourceByName, "name"),
+					resource.TestCheckResourceAttrPair(resourceName, "polarity", datasourceByName, "polarity"),
 				),
 			},
 			// Tests update
@@ -577,13 +581,5 @@ data "vcd_vm_affinity_rule" "ds_affinity_rule_by_name" {
 data "vcd_vm_affinity_rule" "ds_affinity_rule_by_id" {
 	rule_id = vcd_vm_affinity_rule.{{.AffinityRuleIdentifier}}.id
 	depends_on = [vcd_vm_affinity_rule.{{.AffinityRuleIdentifier}}]
-}
-
-output "polarity_of_rule_by_name" {
-	value = data.vcd_vm_affinity_rule.ds_affinity_rule_by_name.polarity
-}
-
-output "name_of_rule_by_id" {
-	value = data.vcd_vm_affinity_rule.ds_affinity_rule_by_id.name
 }
 `
