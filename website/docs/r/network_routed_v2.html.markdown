@@ -18,24 +18,24 @@ Supported in provider *v3.2+* for both NSX-T and NSX-V VDCs.
 
 ```hcl
 resource "vcd_network_routed_v2" "nsxt-backed" {
-  org  = "my-org"
-  vdc  = "my-nsxt-org-vdc"
-  name = "nsxt-routed 1"
+  org         = "my-org"
+  vdc         = "my-nsxt-org-vdc"
+  name        = "nsxt-routed 1"
   description = "My routed Org VDC network backed by NSX-T"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
-  gateway = "1.1.1.1"
+  gateway       = "1.1.1.1"
   prefix_length = 24
 
   static_ip_pool {
     start_address = "1.1.1.10"
-    end_address = "1.1.1.20"
+    end_address   = "1.1.1.20"
   }
 
   static_ip_pool {
     start_address = "1.1.1.100"
-    end_address = "1.1.1.103"
+    end_address   = "1.1.1.103"
   }
 }
 ```
@@ -44,21 +44,21 @@ resource "vcd_network_routed_v2" "nsxt-backed" {
 
 ```hcl
 resource "vcd_network_routed_v2" "nsxv-backed" {
-  org  = "my-org"
-  vdc  = "my-nsxv-org-vdc"
-  name = "nsxv-routed-network"
+  org         = "my-org"
+  vdc         = "my-nsxv-org-vdc"
+  name        = "nsxv-routed-network"
   description = "NSX-V routed network"
 
   interface_type = "subinterface"
 
   edge_gateway_id = data.vcd_edgegateway.existing.id
 
-  gateway = "1.1.1.1"
+  gateway       = "1.1.1.1"
   prefix_length = 24
 
   static_ip_pool {
     start_address = "1.1.1.10"
-    end_address = "1.1.1.20"
+    end_address   = "1.1.1.20"
   }
 }
 ```

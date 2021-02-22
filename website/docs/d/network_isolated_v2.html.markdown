@@ -37,8 +37,6 @@ All attributes defined in [isolated network resource](/docs/providers/vcd/r/netw
 
 ## Filter arguments
 
-(Supported in provider *v2.9+*)
-
 * `name_regex` (Optional) matches the name using a regular expression.
 * `ip` (Optional) matches the IP of the resource using a regular expression.
 

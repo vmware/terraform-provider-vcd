@@ -132,12 +132,12 @@ resource "vcd_network_isolated_v2" "net1" {
   name        = "{{.NetworkName}}"
   description = "updated NSX-T isolated network test"
 
-  gateway = "1.1.1.1"
+  gateway       = "1.1.1.1"
   prefix_length = 24
 
   static_ip_pool {
 	start_address = "1.1.1.10"
-    end_address   = "1.1.1.20"
+	end_address   = "1.1.1.20"
   }
 
   static_ip_pool {
@@ -152,9 +152,8 @@ resource "vcd_network_isolated_v2" "net1" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
   
-  name        = "{{.NetworkName}}"
-
-  gateway = "1.1.1.1"
+  name          = "{{.NetworkName}}"
+  gateway       = "1.1.1.1"
   prefix_length = 24
 }
 `

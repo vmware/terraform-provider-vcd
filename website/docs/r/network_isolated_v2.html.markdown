@@ -18,23 +18,23 @@ Supported in provider *v3.2+* for both NSX-T and NSX-V VDCs.
 
 ```hcl
 resource "vcd_network_isolated_v2" "nsxt-backed" {
-  org  = "my-org"
-  vdc  = "my-nsxt-org-vdc"
+  org = "my-org"
+  vdc = "my-nsxt-org-vdc"
 
   name        = "nsxt-isolated 1"
   description = "My isolated Org VDC network backed by NSX-T"
 
-  gateway = "1.1.1.1"
+  gateway       = "1.1.1.1"
   prefix_length = 24
 
   static_ip_pool {
     start_address = "1.1.1.10"
-    end_address = "1.1.1.20"
+    end_address   = "1.1.1.20"
   }
 
   static_ip_pool {
     start_address = "1.1.1.100"
-    end_address = "1.1.1.103"
+    end_address   = "1.1.1.103"
   }
 }
 ```
@@ -43,20 +43,20 @@ resource "vcd_network_isolated_v2" "nsxt-backed" {
 
 ```hcl
 resource "vcd_network_isolated_v2" "nsxv-backed" {
-  org  = "my-org"
-  vdc  = "my-nsxv-org-vdc"
-  
+  org = "my-org"
+  vdc = "my-nsxv-org-vdc"
+
   name        = "nsxv-isolated-network"
   description = "NSX-V isolated network"
 
   is_shared = true
 
-  gateway = "1.1.1.1"
+  gateway       = "1.1.1.1"
   prefix_length = 24
 
   static_ip_pool {
     start_address = "1.1.1.10"
-    end_address = "1.1.1.20"
+    end_address   = "1.1.1.20"
   }
 }
 ```
