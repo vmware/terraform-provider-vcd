@@ -228,7 +228,7 @@ provider "vcd" {
   vdc                  = "{{.Vdc}}"
   allow_unverified_ssl = "{{.AllowInsecure}}"
   max_retry_timeout    = {{.MaxRetryTimeout}}
-  version              = "~> {{.VersionRequired}}"
+  #version             = "~> {{.VersionRequired}}"
   logging              = {{.Logging}}
   logging_file         = "{{.LoggingFile}}"
 }
