@@ -60,15 +60,15 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 
 	params["FuncName"] = t.Name() + "-step3"
 	configTextVMUpdateStep3 := templateFill(testAccCheckVcdVAppHotUpdateVmStep3, params)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVMUpdateStep2)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVMUpdateStep3)
 
 	params["FuncName"] = t.Name() + "-step4"
 	configTextVMUpdateStep4 := templateFill(testAccCheckVcdVAppHotUpdateVmStep4, params)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVMUpdateStep2)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVMUpdateStep4)
 
 	params["FuncName"] = t.Name() + "-step5"
 	configTextVMUpdateStep5 := templateFill(testAccCheckVcdVAppHotUpdateVmStep5, params)
-	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVMUpdateStep2)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configTextVMUpdateStep5)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)

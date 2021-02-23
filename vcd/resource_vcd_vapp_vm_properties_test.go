@@ -9,10 +9,6 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
-func init() {
-	testingTags["vm"] = "resource_vcd_vapp_vm_properties_test.go"
-}
-
 func TestAccVcdVAppVmProperties(t *testing.T) {
 	var vapp govcd.VApp
 	var vm govcd.VM

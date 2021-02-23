@@ -281,7 +281,9 @@ The following arguments are supported:
     * `vcd_catalog_item`
     * `vcd_catalog_media`
     * `vcd_vapp`
-    * `vcd_vapp_vm`
+    * `vcd_vapp_vm` (only VMs within a vApp)
+    * `vcd_all_vm`  (both standalone VMs and VMs within a vApp)
+    * `vcd_vm`      (only standalone VMs)
     * `vcd_org_user`
     * `vcd_edgegateway`
     * `vcd_nsxt_edgegateway`
