@@ -9,6 +9,10 @@ import (
 )
 
 func TestAccVcdNsxtNetworkImported(t *testing.T) {
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 
 	vcdClient := createTemporaryVCDConnection()
 	if vcdClient.Client.APIVCDMaxVersionIs("< 34.0") {
@@ -37,10 +41,6 @@ func TestAccVcdNsxtNetworkImported(t *testing.T) {
 	configText2 := templateFill(TestAccVcdNetworkImportedV2NsxtStep2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 	// Ensure the resource is never recreated - ID stays the same
 	cachedId := &testCachedFieldValue{}
 
