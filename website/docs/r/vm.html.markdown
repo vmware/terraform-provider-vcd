@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_vm"
 sidebar_current: "docs-vcd-resource-vm"
 description: |-
-  Provides a vCloud Director VM resource. This can be used to create, modify, and delete Standalone VMs.
+  Provides a VMware Cloud Director standalone VM resource. This can be used to create, modify, and delete Standalone VMs.
 ---
 
 # vcd\_vm
