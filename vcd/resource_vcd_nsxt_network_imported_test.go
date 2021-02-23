@@ -8,8 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-// TestAccVcdNetworkImportedNsxt tests out NSX-T backed Org VDC networking capabilities
-func TestAccVcdNetworkImportedNsxt(t *testing.T) {
+func TestAccVcdNsxtNetworkImported(t *testing.T) {
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -56,15 +55,15 @@ func TestAccVcdNetworkImportedNsxt(t *testing.T) {
 			resource.TestStep{ // step 1
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					cachedId.cacheTestResourceFieldValue("vcd_network_imported.net1", "id"),
-					resource.TestCheckResourceAttrSet("vcd_network_imported.net1", "id"),
-					resource.TestCheckResourceAttrSet("vcd_network_imported.net1", "nsxt_logical_switch_id"),
-					resource.TestCheckResourceAttr("vcd_network_imported.net1", "name", "nsxt-imported-test-initial"),
-					resource.TestCheckResourceAttr("vcd_network_imported.net1", "description", "NSX-T imported network test OpenAPI"),
-					resource.TestCheckResourceAttr("vcd_network_imported.net1", "gateway", "1.1.1.1"),
-					resource.TestCheckResourceAttr("vcd_network_imported.net1", "prefix_length", "24"),
-					resource.TestCheckResourceAttr("vcd_network_imported.net1", "static_ip_pool.#", "1"),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_network_imported.net1", "static_ip_pool.*", map[string]string{
+					cachedId.cacheTestResourceFieldValue("vcd_nsxt_network_imported.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_network_imported.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_network_imported.net1", "nsxt_logical_switch_id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.net1", "name", "nsxt-imported-test-initial"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.net1", "description", "NSX-T imported network test OpenAPI"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.net1", "gateway", "1.1.1.1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.net1", "prefix_length", "24"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.net1", "static_ip_pool.#", "1"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_network_imported.net1", "static_ip_pool.*", map[string]string{
 						"start_address": "1.1.1.10",
 						"end_address":   "1.1.1.20",
 					}),
@@ -73,19 +72,19 @@ func TestAccVcdNetworkImportedNsxt(t *testing.T) {
 			resource.TestStep{ // step 2
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					cachedId.cacheTestResourceFieldValue("vcd_network_imported.net1", "id"),
-					resource.TestCheckResourceAttrSet("vcd_network_imported.net1", "id"),
-					resource.TestCheckResourceAttrSet("vcd_network_imported.net1", "nsxt_logical_switch_id"),
-					resource.TestCheckResourceAttr("vcd_network_imported.net1", "name", "updated-nsxt-imported-test-initial"),
-					resource.TestCheckResourceAttr("vcd_network_imported.net1", "description", "Updated NSX-T imported network test OpenAPI"),
-					resource.TestCheckResourceAttr("vcd_network_imported.net1", "gateway", "1.1.1.1"),
-					resource.TestCheckResourceAttr("vcd_network_imported.net1", "prefix_length", "24"),
-					resource.TestCheckResourceAttr("vcd_network_imported.net1", "static_ip_pool.#", "2"),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_network_imported.net1", "static_ip_pool.*", map[string]string{
+					cachedId.cacheTestResourceFieldValue("vcd_nsxt_network_imported.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_network_imported.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_network_imported.net1", "nsxt_logical_switch_id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.net1", "name", "updated-nsxt-imported-test-initial"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.net1", "description", "Updated NSX-T imported network test OpenAPI"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.net1", "gateway", "1.1.1.1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.net1", "prefix_length", "24"),
+					resource.TestCheckResourceAttr("vcd_nsxt_network_imported.net1", "static_ip_pool.#", "2"),
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_network_imported.net1", "static_ip_pool.*", map[string]string{
 						"start_address": "1.1.1.10",
 						"end_address":   "1.1.1.20",
 					}),
-					resource.TestCheckTypeSetElemNestedAttrs("vcd_network_imported.net1", "static_ip_pool.*", map[string]string{
+					resource.TestCheckTypeSetElemNestedAttrs("vcd_nsxt_network_imported.net1", "static_ip_pool.*", map[string]string{
 						"start_address": "1.1.1.40",
 						"end_address":   "1.1.1.50",
 					}),
@@ -93,7 +92,7 @@ func TestAccVcdNetworkImportedNsxt(t *testing.T) {
 			},
 			// Check that import works
 			resource.TestStep{ // step 3
-				ResourceName:      "vcd_network_imported.net1",
+				ResourceName:      "vcd_nsxt_network_imported.net1",
 				ImportState:       true,
 				ImportStateVerify: true,
 				// It is impossible to read 'nsxt_logical_switch_name' for already consumed NSX-T segment (API returns
@@ -106,7 +105,7 @@ func TestAccVcdNetworkImportedNsxt(t *testing.T) {
 }
 
 const TestAccVcdNetworkImportedV2NsxtStep1 = `
-resource "vcd_network_imported" "net1" {
+resource "vcd_nsxt_network_imported" "net1" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
   name = "nsxt-imported-test-initial"
@@ -125,7 +124,7 @@ resource "vcd_network_imported" "net1" {
 `
 
 const TestAccVcdNetworkImportedV2NsxtStep2 = `
-resource "vcd_network_imported" "net1" {
+resource "vcd_nsxt_network_imported" "net1" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
   name = "updated-nsxt-imported-test-initial"

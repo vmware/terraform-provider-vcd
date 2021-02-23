@@ -12,14 +12,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceVcdNetworkimported() *schema.Resource {
+func resourceVcdNsxtNetworkImported() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceVcdNetworkimportedCreate,
-		ReadContext:   resourceVcdNetworkimportedRead,
-		UpdateContext: resourceVcdNetworkimportedUpdate,
-		DeleteContext: resourceVcdNetworkimportedDelete,
+		CreateContext: resourceVcdNsxtNetworkimportedCreate,
+		ReadContext:   resourceVcdNsxtNetworkimportedRead,
+		UpdateContext: resourceVcdNsxtNetworkimportedUpdate,
+		DeleteContext: resourceVcdNsxtNetworkimportedDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceVcdNetworkimportedImport,
+			StateContext: resourceVcdNsxtNetworkimportedImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -92,21 +92,21 @@ func resourceVcdNetworkimported() *schema.Resource {
 	}
 }
 
-// resourceVcdNetworkimportedCreate
-func resourceVcdNetworkimportedCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+// resourceVcdNsxtNetworkimportedCreate
+func resourceVcdNsxtNetworkimportedCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	if !vcdClient.Client.IsSysAdmin {
-		return diag.Errorf("[imported network create] only System Administrator can operate NSX-T Imported networks")
+		return diag.Errorf("[nsxt imported network create] only System Administrator can operate NSX-T Imported networks")
 	}
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return diag.Errorf("[imported network create] error retrieving VDC: %s", err)
+		return diag.Errorf("[nsxt imported network create] error retrieving VDC: %s", err)
 	}
 
 	if !vdc.IsNsxt() {
-		return diag.Errorf("[imported network create] this resource supports only NSX-T")
+		return diag.Errorf("[nsxt imported network create] this resource supports only NSX-T")
 	}
 
 	networkType, err := getOpenApiOrgVdcImportedNetworkType(d, vdc, true)
@@ -116,28 +116,28 @@ func resourceVcdNetworkimportedCreate(ctx context.Context, d *schema.ResourceDat
 
 	orgNetwork, err := vdc.CreateOpenApiOrgVdcNetwork(networkType)
 	if err != nil {
-		return diag.Errorf("[imported network create] error creating Org VDC imported network: %s", err)
+		return diag.Errorf("[nsxt imported network create] error creating Org VDC imported network: %s", err)
 	}
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
 
-	return resourceVcdNetworkimportedRead(ctx, d, meta)
+	return resourceVcdNsxtNetworkimportedRead(ctx, d, meta)
 }
 
-// resourceVcdNetworkimportedUpdate
-func resourceVcdNetworkimportedUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+// resourceVcdNsxtNetworkimportedUpdate
+func resourceVcdNsxtNetworkimportedUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	if !vcdClient.Client.IsSysAdmin {
-		return diag.Errorf("[imported network update] only System Administrator can operate NSX-T Imported networks")
+		return diag.Errorf("[nsxt imported network update] only System Administrator can operate NSX-T Imported networks")
 	}
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return diag.Errorf("[imported network update] error retrieving VDC: %s", err)
+		return diag.Errorf("[nsxt imported network update] error retrieving VDC: %s", err)
 	}
 
 	if !vdc.IsNsxt() {
-		return diag.Errorf("[imported network update] this resource supports only NSX-T")
+		return diag.Errorf("[nsxt imported network update] this resource supports only NSX-T")
 	}
 
 	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkById(d.Id())
@@ -147,7 +147,7 @@ func resourceVcdNetworkimportedUpdate(ctx context.Context, d *schema.ResourceDat
 		return nil
 	}
 	if err != nil {
-		return diag.Errorf("[imported network update] error getting Org VDC network: %s", err)
+		return diag.Errorf("[nsxt imported network update] error getting Org VDC network: %s", err)
 	}
 
 	networkType, err := getOpenApiOrgVdcImportedNetworkType(d, vdc, false)
@@ -163,26 +163,26 @@ func resourceVcdNetworkimportedUpdate(ctx context.Context, d *schema.ResourceDat
 
 	_, err = orgNetwork.Update(networkType)
 	if err != nil {
-		return diag.Errorf("[imported network update] error updating Org VDC network: %s", err)
+		return diag.Errorf("[nsxt imported network update] error updating Org VDC network: %s", err)
 	}
 
-	return resourceVcdNetworkimportedRead(ctx, d, meta)
+	return resourceVcdNsxtNetworkimportedRead(ctx, d, meta)
 }
 
-// resourceVcdNetworkimportedRead
-func resourceVcdNetworkimportedRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+// resourceVcdNsxtNetworkimportedRead
+func resourceVcdNsxtNetworkimportedRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	if !vcdClient.Client.IsSysAdmin {
-		return diag.Errorf("[imported network read] only System Administrator can operate NSX-T Imported networks")
+		return diag.Errorf("[nsxt imported network read] only System Administrator can operate NSX-T Imported networks")
 	}
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return diag.Errorf("[imported network read] error retrieving VDC: %s", err)
+		return diag.Errorf("[nsxt imported network read] error retrieving VDC: %s", err)
 	}
 
 	if !vdc.IsNsxt() {
-		return diag.Errorf("[imported network read] this resource supports only NSX-T")
+		return diag.Errorf("[nsxt imported network read] this resource supports only NSX-T")
 	}
 
 	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkById(d.Id())
@@ -192,12 +192,12 @@ func resourceVcdNetworkimportedRead(ctx context.Context, d *schema.ResourceData,
 		return nil
 	}
 	if err != nil {
-		return diag.Errorf("[imported network read] error getting Org VDC network: %s", err)
+		return diag.Errorf("[nsxt imported network read] error getting Org VDC network: %s", err)
 	}
 
 	err = setOpenApiOrgVdcImportedNetworkData(d, orgNetwork.OpenApiOrgVdcNetwork)
 	if err != nil {
-		return diag.Errorf("[imported network read] error setting Org VDC network data: %s", err)
+		return diag.Errorf("[nsxt imported network read] error setting Org VDC network data: %s", err)
 	}
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
@@ -205,64 +205,64 @@ func resourceVcdNetworkimportedRead(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-// resourceVcdNetworkimportedDelete
-func resourceVcdNetworkimportedDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+// resourceVcdNsxtNetworkimportedDelete
+func resourceVcdNsxtNetworkimportedDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	if !vcdClient.Client.IsSysAdmin {
-		return diag.Errorf("[imported network delete] only System Administrator can operate NSX-T Imported networks")
+		return diag.Errorf("[nsxt imported network delete] only System Administrator can operate NSX-T Imported networks")
 	}
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return diag.Errorf("[imported network delete] error retrieving VDC: %s", err)
+		return diag.Errorf("[nsxt imported network delete] error retrieving VDC: %s", err)
 	}
 
 	if !vdc.IsNsxt() {
-		return diag.Errorf("[imported network delete] this resource supports only NSX-T")
+		return diag.Errorf("[nsxt imported network delete] this resource supports only NSX-T")
 	}
 
 	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkById(d.Id())
 	if err != nil {
-		return diag.Errorf("[imported network delete] error getting Org VDC network: %s", err)
+		return diag.Errorf("[nsxt imported network delete] error getting Org VDC network: %s", err)
 	}
 
 	err = orgNetwork.Delete()
 	if err != nil {
-		return diag.Errorf("[imported network delete] error deleting Org VDC network: %s", err)
+		return diag.Errorf("[nsxt imported network delete] error deleting Org VDC network: %s", err)
 	}
 
 	return nil
 }
 
-// resourceVcdNetworkimportedImport
-func resourceVcdNetworkimportedImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+// resourceVcdNsxtNetworkimportedImport
+func resourceVcdNsxtNetworkimportedImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
-		return nil, fmt.Errorf("[imported network import] resource name must be specified as org-name.vdc-name.network-name")
+		return nil, fmt.Errorf("[nsxt imported network import] resource name must be specified as org-name.vdc-name.network-name")
 	}
 	orgName, vdcName, networkName := resourceURI[0], resourceURI[1], resourceURI[2]
 
 	vcdClient := meta.(*VCDClient)
 	if !vcdClient.Client.IsSysAdmin {
-		return nil, fmt.Errorf("[imported network import] only System Administrator can operate NSX-T Imported networks")
+		return nil, fmt.Errorf("[nsxt imported network import] only System Administrator can operate NSX-T Imported networks")
 	}
 
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if err != nil {
-		return nil, fmt.Errorf("[imported network import] unable to find VDC %s: %s ", vdcName, err)
+		return nil, fmt.Errorf("[nsxt imported network import] unable to find VDC %s: %s ", vdcName, err)
 	}
 
 	if !vdc.IsNsxt() {
-		return nil, fmt.Errorf("[imported network import] this resource supports only NSX-T")
+		return nil, fmt.Errorf("[nsxt imported network import] this resource supports only NSX-T")
 	}
 
 	orgNetwork, err := vdc.GetOpenApiOrgVdcNetworkByName(networkName)
 	if err != nil {
-		return nil, fmt.Errorf("[imported network import] error reading network with name '%s': %s", networkName, err)
+		return nil, fmt.Errorf("[nsxt imported network import] error reading network with name '%s': %s", networkName, err)
 	}
 
 	if !orgNetwork.IsImported() {
-		return nil, fmt.Errorf("[imported network import] Org network with name '%s' found, but is not of type Imported (OPAQUE) (type is '%s')",
+		return nil, fmt.Errorf("[nsxt imported network import] Org network with name '%s' found, but is not of type Imported (OPAQUE) (type is '%s')",
 			networkName, orgNetwork.GetType())
 	}
 

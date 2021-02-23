@@ -9,9 +9,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func datasourceVcdNetworkimported() *schema.Resource {
+func datasourceVcdNsxtNetworkImported() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: datasourceVcdNetworkimportedRead,
+		ReadContext: datasourceVcdNsxtNetworkImportedRead,
 
 		Schema: map[string]*schema.Schema{
 			"org": {
@@ -93,16 +93,16 @@ func datasourceVcdNetworkimported() *schema.Resource {
 	}
 }
 
-func datasourceVcdNetworkimportedRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func datasourceVcdNsxtNetworkImportedRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
-		return diag.Errorf("[imported network read] error retrieving VDC: %s", err)
+		return diag.Errorf("[nsxt imported network read] error retrieving VDC: %s", err)
 	}
 
 	if !nameOrFilterIsSet(d) {
-		return diag.Errorf(noNameOrFilterError, "vcd_network_imported")
+		return diag.Errorf(noNameOrFilterError, "vcd_nsxt_network_imported")
 	}
 
 	name := d.Get("name").(string)
@@ -124,18 +124,18 @@ func datasourceVcdNetworkimportedRead(ctx context.Context, d *schema.ResourceDat
 	if name != "" {
 		network, err = vdc.GetOpenApiOrgVdcNetworkByName(d.Get("name").(string))
 		if err != nil {
-			return diag.Errorf("[imported network read] error getting Org VDC network: %s", err)
+			return diag.Errorf("[nsxt imported network read] error getting Org VDC network: %s", err)
 		}
 	}
 
 	if !network.IsImported() {
-		return diag.Errorf("[imported network import] Org network with name '%s' found, but is not of type Imported (OPAQUE) (type is '%s')",
+		return diag.Errorf("[nsxt imported network import] Org network with name '%s' found, but is not of type Imported (OPAQUE) (type is '%s')",
 			network.OpenApiOrgVdcNetwork.Name, network.GetType())
 	}
 
 	err = setOpenApiOrgVdcImportedNetworkData(d, network.OpenApiOrgVdcNetwork)
 	if err != nil {
-		return diag.Errorf("[imported network read] error setting Org VDC network data: %s", err)
+		return diag.Errorf("[nsxt imported network read] error setting Org VDC network data: %s", err)
 	}
 
 	d.SetId(network.OpenApiOrgVdcNetwork.ID)

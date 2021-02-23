@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccVcdNetworkImportedNsxtDS(t *testing.T) {
+func TestAccVcdNsxtNetworkImportedDS(t *testing.T) {
 	skipNoNsxtConfiguration(t)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -54,31 +54,31 @@ func TestAccVcdNetworkImportedNsxtDS(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("vcd_network_imported.net1", "id")),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_network_imported.net1", "id")),
 			},
 
 			resource.TestStep{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("vcd_network_imported.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_network_imported.net1", "id"),
 					// Ensure that all fields are the same except field count '%' (because datasource has `filter` field)
-					resourceFieldsEqual("vcd_network_imported.net1", "data.vcd_network_imported.ds", []string{"%", "nsxt_logical_switch_name"}),
+					resourceFieldsEqual("vcd_nsxt_network_imported.net1", "data.vcd_nsxt_network_imported.ds", []string{"%", "nsxt_logical_switch_name"}),
 				),
 			},
 			resource.TestStep{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("vcd_network_imported.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_network_imported.net1", "id"),
 					// Ensure that all fields are the same except field count '%' (because datasource has `filter` field)
-					resourceFieldsEqual("vcd_network_imported.net1", "data.vcd_network_imported.ds", []string{"%", "nsxt_logical_switch_name"}),
+					resourceFieldsEqual("vcd_nsxt_network_imported.net1", "data.vcd_nsxt_network_imported.ds", []string{"%", "nsxt_logical_switch_name"}),
 				),
 			},
 			resource.TestStep{
 				Config: configText4,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("vcd_network_imported.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_network_imported.net1", "id"),
 					// Ensure that all fields are the same except field count '%' (because datasource has `filter` field)
-					resourceFieldsEqual("vcd_network_imported.net1", "data.vcd_network_imported.ds", []string{"%", "nsxt_logical_switch_name"}),
+					resourceFieldsEqual("vcd_nsxt_network_imported.net1", "data.vcd_nsxt_network_imported.ds", []string{"%", "nsxt_logical_switch_name"}),
 				),
 			},
 		},
@@ -86,7 +86,7 @@ func TestAccVcdNetworkImportedNsxtDS(t *testing.T) {
 }
 
 const testAccVcdNetworkImportedNsxtDS = TestAccVcdNetworkImportedV2NsxtStep1 + `
-data "vcd_network_imported" "ds" {
+data "vcd_nsxt_network_imported" "ds" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
   name = "nsxt-imported-test-initial"
@@ -94,7 +94,7 @@ data "vcd_network_imported" "ds" {
 `
 
 const testAccVcdNetworkImportedNsxtDSStep3 = TestAccVcdNetworkImportedV2NsxtStep1 + `
-data "vcd_network_imported" "ds" {
+data "vcd_nsxt_network_imported" "ds" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
 
@@ -105,7 +105,7 @@ data "vcd_network_imported" "ds" {
 `
 
 const testAccVcdNetworkImportedNsxtDSStep4 = TestAccVcdNetworkImportedV2NsxtStep1 + `
-data "vcd_network_imported" "ds" {
+data "vcd_nsxt_network_imported" "ds" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
 

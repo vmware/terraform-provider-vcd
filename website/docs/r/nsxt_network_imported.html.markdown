@@ -1,23 +1,23 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: vcd_network_imported"
-sidebar_current: "docs-vcd-resource-network-imported"
+page_title: "VMware Cloud Director: vcd_nsxt_network_imported"
+sidebar_current: "docs-vcd-resource-nsxt-network-imported"
 description: |-
   Provides a VMware Cloud Director Org VDC imported Network. This can be used to create, modify, and
   delete imported VDC networks (backed by NSX-T).
 ---
 
-# vcd\_network\_imported
+# vcd\_nsxt\_network\_imported
 
 Provides a VMware Cloud Director Org VDC imported Network. This can be used to create, modify, and
-delete routed VDC networks (backed by NSX-T).
+delete imported VDC networks (backed by NSX-T).
 
 Supported in provider *v3.2+* for NSX-T VDCs only.
 
 ## Example Usage (NSX-T backed imported Org VDC network)
 
 ```hcl
-resource "vcd_network_imported" "nsxt-backed" {
+resource "vcd_nsxt_network_imported" "nsxt-backed" {
   org         = "my-org"
   vdc         = "my-nsxt-org-vdc"
   name        = "nsxt-imported"
@@ -82,12 +82,12 @@ configuration. [More information.][docs-import]
 
 
 
-An existing routed network can be [imported][docs-import] into this resource via supplying its path.
+An existing imported network can be [imported][docs-import] into this resource via supplying its path.
 The path for this resource is made of orgName.vdcName.networkName.
-For example, using this structure, representing a routed network that was **not** created using Terraform:
+For example, using this structure, representing a imported network that was **not** created using Terraform:
 
 ```hcl
-resource "vcd_network_imported" "tf-mynet" {
+resource "vcd_nsxt_network_imported" "tf-mynet" {
   name = "my-net"
   org  = "my-org"
   vdc  = "my-vdc"
@@ -95,10 +95,10 @@ resource "vcd_network_imported" "tf-mynet" {
 }
 ```
 
-You can import such routed network into terraform state using this command
+You can import such imported network into terraform state using this command
 
 ```
-terraform import vcd_network_imported.tf-mynet my-org.my-vdc.my-net
+terraform import vcd_nsxt_network_imported.tf-mynet my-org.my-vdc.my-net
 ```
 
 NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR
