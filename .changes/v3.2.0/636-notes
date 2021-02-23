@@ -1,0 +1,1 @@
+* Deprecate `vcd_network_isolated` resource and data source in favor of `vcd_network_routed_v2` [GH-636]

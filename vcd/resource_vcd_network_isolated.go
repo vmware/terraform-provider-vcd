@@ -13,10 +13,11 @@ import (
 
 func resourceVcdNetworkIsolated() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVcdNetworkIsolatedCreate,
-		Read:   resourceVcdNetworkIsolatedRead,
-		Update: resourceVcdNetworkIsolatedUpdate,
-		Delete: resourceVcdNetworkDelete,
+		DeprecationMessage: "Please use 'vcd_network_isolated_v2' resource which supports NSX-T and NSX-V",
+		Create:             resourceVcdNetworkIsolatedCreate,
+		Read:               resourceVcdNetworkIsolatedRead,
+		Update:             resourceVcdNetworkIsolatedUpdate,
+		Delete:             resourceVcdNetworkDelete,
 		Importer: &schema.ResourceImporter{
 			State: resourceVcdNetworkIsolatedImport,
 		},

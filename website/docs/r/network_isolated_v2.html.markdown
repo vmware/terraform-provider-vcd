@@ -1,29 +1,28 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: vcd_network_routed_v2"
-sidebar_current: "docs-vcd-resource-network-routed-v2"
+page_title: "VMware Cloud Director: vcd_network_isolated_v2"
+sidebar_current: "docs-vcd-resource-network-isolated-v2"
 description: |-
-  Provides a VMware Cloud Director Org VDC routed Network. This can be used to create, modify, and
-  delete routed VDC networks (backed by NSX-T or NSX-V).
+  Provides a VMware Cloud Director Org VDC isolated Network. This can be used to create, modify, and
+  delete isolated VDC networks (backed by NSX-T or NSX-V).
 ---
 
-# vcd\_network\_routed\_v2
+# vcd\_network\_isolated\_v2
 
-Provides a VMware Cloud Director Org VDC routed Network. This can be used to create, modify, and
-delete routed VDC networks (backed by NSX-T or NSX-V).
+Provides a VMware Cloud Director Org VDC isolated Network. This can be used to create, modify, and
+delete isolated VDC networks (backed by NSX-T or NSX-V).
 
 Supported in provider *v3.2+* for both NSX-T and NSX-V VDCs.
 
-## Example Usage (NSX-T backed routed Org VDC network)
+## Example Usage (NSX-T backed isolated Org VDC network)
 
 ```hcl
-resource "vcd_network_routed_v2" "nsxt-backed" {
-  org         = "my-org"
-  vdc         = "my-nsxt-org-vdc"
-  name        = "nsxt-routed 1"
-  description = "My routed Org VDC network backed by NSX-T"
+resource "vcd_network_isolated_v2" "nsxt-backed" {
+  org = "my-org"
+  vdc = "my-nsxt-org-vdc"
 
-  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  name        = "nsxt-isolated 1"
+  description = "My isolated Org VDC network backed by NSX-T"
 
   gateway       = "1.1.1.1"
   prefix_length = 24
@@ -40,18 +39,17 @@ resource "vcd_network_routed_v2" "nsxt-backed" {
 }
 ```
 
-## Example Usage (NSX-V backed routed Org VDC network using `subinterface` NIC)
+## Example Usage (NSX-V backed isolated Org VDC network shared with other VDCs)
 
 ```hcl
-resource "vcd_network_routed_v2" "nsxv-backed" {
-  org         = "my-org"
-  vdc         = "my-nsxv-org-vdc"
-  name        = "nsxv-routed-network"
-  description = "NSX-V routed network"
+resource "vcd_network_isolated_v2" "nsxv-backed" {
+  org = "my-org"
+  vdc = "my-nsxv-org-vdc"
 
-  interface_type = "subinterface"
+  name        = "nsxv-isolated-network"
+  description = "NSX-V isolated network"
 
-  edge_gateway_id = data.vcd_edgegateway.existing.id
+  is_shared = true
 
   gateway       = "1.1.1.1"
   prefix_length = 24
@@ -67,14 +65,13 @@ resource "vcd_network_routed_v2" "nsxv-backed" {
 
 The following arguments are supported:
 
-* `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when
-  connected as sysadmin working across different organisations
+* `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful 
+  when connected as sysadmin working across different organisations
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 * `name` - (Required) A unique name for the network
 * `description` - (Optional) An optional description of the network
-* `interface_type` - (Optional) An interface for the network. One of `internal` (default), `subinterface`, 
-  `distributed` (requires the edge gateway to support distributed networks). NSX-T supports only `internal`
-* `edge_gateway_id` - (Required) The ID name of the edge gateway (NSX-V or NSX-T)
+* `is_shared` - (Optional) **NSX-V only.** Defines if this network is shared between multiple VDCs
+  in the Org.  Defaults to `false`.
 * `gateway` (Required) The gateway for this network (e.g. 192.168.1.1)
 * `prefix_length` - (Required) The prefix length for the new network (e.g. 24 for netmask 255.255.255.0).
 * `dns1` - (Optional) First DNS server to use.
@@ -86,7 +83,7 @@ The following arguments are supported:
 <a id="ip-pools"></a>
 ## IP Pools
 
-Static IP Pools and DHCP Pools support the following attributes:
+Static IP Pools support the following attributes:
 
 * `start_address` - (Required) The first address in the IP Range
 * `end_address` - (Required) The final address in the IP Range
@@ -96,12 +93,12 @@ Static IP Pools and DHCP Pools support the following attributes:
 ~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
 configuration. [More information.][docs-import]
 
-An existing routed network can be [imported][docs-import] into this resource via supplying its path.
+An existing isolated network can be [imported][docs-import] into this resource via supplying its path.
 The path for this resource is made of orgName.vdcName.networkName.
-For example, using this structure, representing a routed network that was **not** created using Terraform:
+For example, using this structure, representing a isolated network that was **not** created using Terraform:
 
 ```hcl
-resource "vcd_network_routed_v2" "tf-mynet" {
+resource "vcd_network_isolated_v2" "tf-mynet" {
   name              = "my-net"
   org               = "my-org"
   vdc               = "my-vdc"
@@ -109,10 +106,10 @@ resource "vcd_network_routed_v2" "tf-mynet" {
 }
 ```
 
-You can import such routed network into terraform state using this command
+You can import such isolated network into terraform state using this command
 
 ```
-terraform import vcd_network_routed_v2.tf-mynet my-org.my-vdc.my-net
+terraform import vcd_network_isolated_v2.tf-mynet my-org.my-vdc.my-net
 ```
 
 NOTE: the default separator (.) can be changed using Provider.import_separator or variable VCD_IMPORT_SEPARATOR

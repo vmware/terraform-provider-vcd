@@ -1,23 +1,21 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_network_routed_v2"
-sidebar_current: "docs-vcd-data-source-network-routed-v2"
+page_title: "vCloudDirector: vcd_network_isolated_v2"
+sidebar_current: "docs-vcd-data-source-network-isolated-v2"
 description: |-
-  Provides a VMware Cloud Director Org VDC routed Network data source to read data or reference  existing network
-  (backed by NSX-T or NSX-V).
+  Provides a VMware Cloud Director Org VDC isolated Network data source to read data or reference existing network.
 ---
 
-# vcd\_network\_routed\_v2
+# vcd\_network\_isolated\_v2
 
-Provides a VMware Cloud Director Org VDC routed Network data source to read data or reference  existing network
-(backed by NSX-T or NSX-V).
+Provides a VMware Cloud Director Org VDC isolated Network data source to read data or reference existing network.
 
 Supported in provider *v3.2+* for both NSX-T and NSX-V VDCs.
 
 ## Example Usage
 
 ```hcl
-data "vcd_network_routed_v2" "net" {
+data "vcd_network_isolated_v2" "net" {
   org  = "my-org" # Optional
   vdc  = "my-vdc" # Optional
   name = "my-net"
@@ -35,7 +33,7 @@ The following arguments are supported:
 
 ## Attribute reference
 
-All attributes defined in [routed network resource](/docs/providers/vcd/r/network_routed_v2.html#attribute-reference) are supported.
+All attributes defined in [isolated network resource](/docs/providers/vcd/r/network_isolated_v2.html#attribute-reference) are supported.
 
 ## Filter arguments
 
