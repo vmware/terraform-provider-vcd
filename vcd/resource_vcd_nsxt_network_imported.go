@@ -14,12 +14,12 @@ import (
 
 func resourceVcdNsxtNetworkImported() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceVcdNsxtNetworkimportedCreate,
-		ReadContext:   resourceVcdNsxtNetworkimportedRead,
-		UpdateContext: resourceVcdNsxtNetworkimportedUpdate,
-		DeleteContext: resourceVcdNsxtNetworkimportedDelete,
+		CreateContext: resourceVcdNsxtNetworkImportedCreate,
+		ReadContext:   resourceVcdNsxtNetworkImportedRead,
+		UpdateContext: resourceVcdNsxtNetworkImportedUpdate,
+		DeleteContext: resourceVcdNsxtNetworkImportedDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceVcdNsxtNetworkimportedImport,
+			StateContext: resourceVcdNsxtNetworkImportedImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -92,8 +92,8 @@ func resourceVcdNsxtNetworkImported() *schema.Resource {
 	}
 }
 
-// resourceVcdNsxtNetworkimportedCreate
-func resourceVcdNsxtNetworkimportedCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+// resourceVcdNsxtNetworkImportedCreate
+func resourceVcdNsxtNetworkImportedCreate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	if !vcdClient.Client.IsSysAdmin {
@@ -121,11 +121,11 @@ func resourceVcdNsxtNetworkimportedCreate(ctx context.Context, d *schema.Resourc
 
 	d.SetId(orgNetwork.OpenApiOrgVdcNetwork.ID)
 
-	return resourceVcdNsxtNetworkimportedRead(ctx, d, meta)
+	return resourceVcdNsxtNetworkImportedRead(ctx, d, meta)
 }
 
-// resourceVcdNsxtNetworkimportedUpdate
-func resourceVcdNsxtNetworkimportedUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+// resourceVcdNsxtNetworkImportedUpdate
+func resourceVcdNsxtNetworkImportedUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	if !vcdClient.Client.IsSysAdmin {
 		return diag.Errorf("[nsxt imported network update] only System Administrator can operate NSX-T Imported networks")
@@ -166,11 +166,11 @@ func resourceVcdNsxtNetworkimportedUpdate(ctx context.Context, d *schema.Resourc
 		return diag.Errorf("[nsxt imported network update] error updating Org VDC network: %s", err)
 	}
 
-	return resourceVcdNsxtNetworkimportedRead(ctx, d, meta)
+	return resourceVcdNsxtNetworkImportedRead(ctx, d, meta)
 }
 
-// resourceVcdNsxtNetworkimportedRead
-func resourceVcdNsxtNetworkimportedRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+// resourceVcdNsxtNetworkImportedRead
+func resourceVcdNsxtNetworkImportedRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	if !vcdClient.Client.IsSysAdmin {
 		return diag.Errorf("[nsxt imported network read] only System Administrator can operate NSX-T Imported networks")
@@ -205,8 +205,8 @@ func resourceVcdNsxtNetworkimportedRead(ctx context.Context, d *schema.ResourceD
 	return nil
 }
 
-// resourceVcdNsxtNetworkimportedDelete
-func resourceVcdNsxtNetworkimportedDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+// resourceVcdNsxtNetworkImportedDelete
+func resourceVcdNsxtNetworkImportedDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	if !vcdClient.Client.IsSysAdmin {
 		return diag.Errorf("[nsxt imported network delete] only System Administrator can operate NSX-T Imported networks")
@@ -234,8 +234,8 @@ func resourceVcdNsxtNetworkimportedDelete(ctx context.Context, d *schema.Resourc
 	return nil
 }
 
-// resourceVcdNsxtNetworkimportedImport
-func resourceVcdNsxtNetworkimportedImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+// resourceVcdNsxtNetworkImportedImport
+func resourceVcdNsxtNetworkImportedImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 3 {
 		return nil, fmt.Errorf("[nsxt imported network import] resource name must be specified as org-name.vdc-name.network-name")
