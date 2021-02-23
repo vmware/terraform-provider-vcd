@@ -8,6 +8,14 @@ pause_file=$runtime_dir/pause
 dash_line="# ---------------------------------------------------------"
 export upgrading=""
 
+version_file=../../VERSION
+
+if [ ! -f $version_file ]
+then
+  echo "version file ${version_file} not found"
+  exit 1
+fi
+provider_version=$(cat $version_file | sed -e 's/^v//' | tr -d ' \t\n')
 # env script will only run if explicitly called.
 build_script=cust.full-env.tf
 unset in_building
@@ -149,7 +157,8 @@ function check_terraform_version {
 terraform {
   required_providers {
     vcd = {
-      source = "vmware/vcd"
+      source  = "vmware/vcd"
+      version = "~> $provider_version"
     }
   }
   # required_version = ">= 0.13"
@@ -604,6 +613,7 @@ do
                     # Set exact Terraform version constraint `version = "3.0"` instead of `version = "~> 3.0"` as such
                     # constraint would still pull newer version and this is bad for upgrade tests
                     sed -i -e 's/version *= "~> '${short_from}'"/version = "'${short_from}'"/'  config.tf
+                    sed -i -e 's/version *= "~> '${short_from}'"/version = "'${short_from}'"/'  versions.tf
                     run terraform init
                     run terraform version
                 fi
