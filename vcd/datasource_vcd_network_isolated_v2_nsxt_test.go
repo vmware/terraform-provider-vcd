@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccVcdNetworkRoutedV2NsxtDS(t *testing.T) {
+func TestAccVcdNetworkIsolatedV2NsxtDS(t *testing.T) {
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -24,87 +24,86 @@ func TestAccVcdNetworkRoutedV2NsxtDS(t *testing.T) {
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
 		"NsxtVdc":     testConfig.Nsxt.Vdc,
-		"EdgeGw":      testConfig.Nsxt.EdgeGateway,
 		"NetworkName": t.Name(),
 		"Tags":        "network nsxt",
 	}
 
 	params["FuncName"] = t.Name() + "-DS"
-	configText := templateFill(TestAccVcdNetworkRoutedV2NsxtStep1, params)
+	configText := templateFill(TestAccVcdNetworkIsolatedV2NsxtStep1, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
 
 	params["FuncName"] = t.Name() + "-DS-step2"
-	configText2 := templateFill(testAccVcdNetworkRoutedV2NsxtDS, params)
+	configText2 := templateFill(testAccVcdNetworkIsolatedV2NsxtDS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText)
 
 	params["FuncName"] = t.Name() + "-DS-step3"
-	configText3 := templateFill(testAccVcdNetworkRoutedV2NsxtDSStep3, params)
+	configText3 := templateFill(testAccVcdNetworkIsolatedV2NsxtDSStep3, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
 
 	params["FuncName"] = t.Name() + "-DS-step4"
-	configText4 := templateFill(testAccVcdNetworkRoutedV2NsxtDSStep4, params)
+	configText4 := templateFill(testAccVcdNetworkIsolatedV2NsxtDSStep4, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4)
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		PreCheck:          func() { testAccPreCheck(t) },
-		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, "nsxt-routed-test-initial"),
+		CheckDestroy:      testAccCheckOpenApiVcdNetworkDestroy(testConfig.Nsxt.Vdc, "nsxt-isolated-test-initial"),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id")),
+					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id")),
 			},
 
 			resource.TestStep{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
 					// Ensure that all fields are the same except field count '%' (because datasource has `filter` field)
-					resourceFieldsEqual("vcd_network_routed_v2.net1", "data.vcd_network_routed_v2.ds", []string{"%"}),
+					resourceFieldsEqual("vcd_network_isolated_v2.net1", "data.vcd_network_isolated_v2.ds", []string{"%"}),
 				),
 			},
 			resource.TestStep{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
 					// Ensure that all fields are the same except field count '%' (because datasource has `filter` field)
-					resourceFieldsEqual("vcd_network_routed_v2.net1", "data.vcd_network_routed_v2.ds", []string{"%"}),
+					resourceFieldsEqual("vcd_network_isolated_v2.net1", "data.vcd_network_isolated_v2.ds", []string{"%"}),
 				),
 			},
 			resource.TestStep{
 				Config: configText4,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("vcd_network_routed_v2.net1", "id"),
+					resource.TestCheckResourceAttrSet("vcd_network_isolated_v2.net1", "id"),
 					// Ensure that all fields are the same except field count '%' (because datasource has `filter` field)
-					resourceFieldsEqual("vcd_network_routed_v2.net1", "data.vcd_network_routed_v2.ds", []string{"%"}),
+					resourceFieldsEqual("vcd_network_isolated_v2.net1", "data.vcd_network_isolated_v2.ds", []string{"%"}),
 				),
 			},
 		},
 	})
 }
 
-const testAccVcdNetworkRoutedV2NsxtDS = TestAccVcdNetworkRoutedV2NsxtStep1 + `
-data "vcd_network_routed_v2" "ds" {
+const testAccVcdNetworkIsolatedV2NsxtDS = TestAccVcdNetworkIsolatedV2NsxtStep1 + `
+data "vcd_network_isolated_v2" "ds" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
-  name = "nsxt-routed-test-initial"
+  name = "nsxt-isolated-test-initial"
 }
 `
 
-const testAccVcdNetworkRoutedV2NsxtDSStep3 = TestAccVcdNetworkRoutedV2NsxtStep1 + `
-data "vcd_network_routed_v2" "ds" {
+const testAccVcdNetworkIsolatedV2NsxtDSStep3 = TestAccVcdNetworkIsolatedV2NsxtStep1 + `
+data "vcd_network_isolated_v2" "ds" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
 
   filter {
-	name_regex = "^nsxt-routed"
+	name_regex = "^nsxt-isolated"
   }
 }
 `
 
-const testAccVcdNetworkRoutedV2NsxtDSStep4 = TestAccVcdNetworkRoutedV2NsxtStep1 + `
-data "vcd_network_routed_v2" "ds" {
+const testAccVcdNetworkIsolatedV2NsxtDSStep4 = TestAccVcdNetworkIsolatedV2NsxtStep1 + `
+data "vcd_network_isolated_v2" "ds" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
 

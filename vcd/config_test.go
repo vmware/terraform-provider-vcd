@@ -1,4 +1,4 @@
-// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool lbAppProfile lbAppRule lbVirtualServer access_control user search auth nsxt ALL
+// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool lbAppProfile lbAppRule lbVirtualServer access_control user standaloneVm search auth nsxt ALL
 
 package vcd
 
@@ -228,7 +228,7 @@ provider "vcd" {
   vdc                  = "{{.Vdc}}"
   allow_unverified_ssl = "{{.AllowInsecure}}"
   max_retry_timeout    = {{.MaxRetryTimeout}}
-  version              = "~> {{.VersionRequired}}"
+  #version             = "~> {{.VersionRequired}}"
   logging              = {{.Logging}}
   logging_file         = "{{.LoggingFile}}"
 }

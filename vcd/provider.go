@@ -67,7 +67,9 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_edge_cluster":   datasourceVcdNsxtEdgeCluster(),   // 3.1
 	"vcd_nsxt_edgegateway":    datasourceVcdNsxtEdgeGateway(),   // 3.1
 	"vcd_storage_profile":     datasourceVcdStorageProfile(),    // 3.1
+	"vcd_vm":                  datasourceVcdStandaloneVm(),      // 3.2
 	"vcd_network_routed_v2":   datasourceVcdNetworkRoutedV2(),   // 3.2
+	"vcd_network_isolated_v2": datasourceVcdNetworkIsolatedV2(), // 3.2
 	"vcd_network_imported":    datasourceVcdNetworkimported(),   // 3.2
 }
 
@@ -112,7 +114,9 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_external_network_v2":  resourceVcdExternalNetworkV2(),        // 3.0
 	"vcd_vm_sizing_policy":     resourceVcdVmSizingPolicy(),           // 3.0
 	"vcd_nsxt_edgegateway":     resourceVcdNsxtEdgeGateway(),          // 3.1
+	"vcd_vm":                   resourceVcdStandaloneVm(),             // 3.2
 	"vcd_network_routed_v2":    resourceVcdNetworkRoutedV2(),          // 3.2
+	"vcd_network_isolated_v2":  resourceVcdNetworkIsolatedV2(),        // 3.2
 	"vcd_network_imported":     resourceVcdNetworkimported(),          // 3.2
 }
 

@@ -13,6 +13,10 @@ modify, and delete internal networks for vApps to connect. This network is not a
 
 Supported in provider *v2.0+*
 
+~> **Note:** This resource supports only NSX-V backed Org VDC networks and is **deprecated**.
+Please use newer [`vcd_network_isolated_v2`](/docs/providers/vcd/r/network_isolated_v2.html) resource
+which is compatible with both NSX-V and NSX-T.
+
 ## Example Usage
 
 ```hcl

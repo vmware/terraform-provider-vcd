@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccVcdNetworkRoutedV2NsxvDS(t *testing.T) {
+func TestAccVcdNetworkIsolatedV2NsxvDS(t *testing.T) {
 	// This test requires access to the vCD before filling templates
 	// Thus it won't run in the short test
 	if vcdShortTest {
@@ -24,14 +24,14 @@ func TestAccVcdNetworkRoutedV2NsxvDS(t *testing.T) {
 		return
 	}
 	if len(availableNetworks) == 0 {
-		t.Skip("No networks found - data source test skipped")
+		t.Skip("no networks found - data source test skipped")
 		return
 	}
 
-	networkType := "vcd_network_routed"
+	networkType := "vcd_network_isolated"
 	data, ok := availableNetworks[networkType]
 	if !ok {
-		t.Skip("no routed network found")
+		t.Skip("no isolated network found ")
 		return
 	}
 
@@ -39,16 +39,15 @@ func TestAccVcdNetworkRoutedV2NsxvDS(t *testing.T) {
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
 		"Vdc":         testConfig.VCD.Vdc,
-		"EdgeGw":      testConfig.Nsxt.EdgeGateway,
 		"NetworkName": data.network.Name,
 		"Tags":        "network",
 	}
 
-	configText := templateFill(testAccVcdNetworkRoutedV2NsxvDS, params)
+	configText := templateFill(testAccVcdNetworkIsolatedV2NsxvDS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText)
 
 	params["FuncName"] = t.Name() + "-step2"
-	configText2 := templateFill(testAccVcdNetworkRoutedV2NsxvDSNameFilter, params)
+	configText2 := templateFill(testAccVcdNetworkIsolatedV2NsxvDSNameFilter, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
 	resource.Test(t, resource.TestCase{
@@ -58,32 +57,38 @@ func TestAccVcdNetworkRoutedV2NsxvDS(t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("data.vcd_network_routed_v2.ds", "id"),
-					resource.TestCheckResourceAttr("data.vcd_network_routed_v2.ds", "id", data.network.ID),
-					resource.TestCheckResourceAttr("data.vcd_network_routed_v2.ds", "name", data.network.Name)),
+					resource.TestCheckResourceAttrSet("data.vcd_network_isolated_v2.ds", "id"),
+					resource.TestCheckResourceAttr("data.vcd_network_isolated_v2.ds", "id", data.network.ID),
+					resource.TestCheckResourceAttr("data.vcd_network_isolated_v2.ds", "name", data.network.Name),
+					resource.TestCheckResourceAttrSet("data.vcd_network_isolated_v2.ds", "gateway"),
+					resource.TestCheckResourceAttrSet("data.vcd_network_isolated_v2.ds", "prefix_length"),
+				),
 			},
 			resource.TestStep{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrSet("data.vcd_network_routed_v2.ds", "id"),
-					resource.TestCheckResourceAttr("data.vcd_network_routed_v2.ds", "id", data.network.ID),
-					resource.TestCheckResourceAttr("data.vcd_network_routed_v2.ds", "name", data.network.Name)),
+					resource.TestCheckResourceAttrSet("data.vcd_network_isolated_v2.ds", "id"),
+					resource.TestCheckResourceAttr("data.vcd_network_isolated_v2.ds", "id", data.network.ID),
+					resource.TestCheckResourceAttr("data.vcd_network_isolated_v2.ds", "name", data.network.Name),
+					resource.TestCheckResourceAttrSet("data.vcd_network_isolated_v2.ds", "gateway"),
+					resource.TestCheckResourceAttrSet("data.vcd_network_isolated_v2.ds", "prefix_length"),
+				),
 			},
 		},
 	})
 
 }
 
-const testAccVcdNetworkRoutedV2NsxvDS = `
-data "vcd_network_routed_v2" "ds" {
+const testAccVcdNetworkIsolatedV2NsxvDS = `
+data "vcd_network_isolated_v2" "ds" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
   name = "{{.NetworkName}}"
 }
 `
 
-const testAccVcdNetworkRoutedV2NsxvDSNameFilter = `
-data "vcd_network_routed_v2" "ds" {
+const testAccVcdNetworkIsolatedV2NsxvDSNameFilter = `
+data "vcd_network_isolated_v2" "ds" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
   filter {
