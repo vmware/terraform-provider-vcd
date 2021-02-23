@@ -9,10 +9,7 @@ import (
 )
 
 func TestAccVcdNsxtNetworkImported(t *testing.T) {
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
+
 	vcdClient := createTemporaryVCDConnection()
 	if vcdClient.Client.APIVCDMaxVersionIs("< 34.0") {
 		t.Skip(t.Name() + " requires at least API v34.0 (vCD 10.1.1+)")
@@ -39,11 +36,11 @@ func TestAccVcdNsxtNetworkImported(t *testing.T) {
 	params["FuncName"] = t.Name() + "-step2"
 	configText2 := templateFill(TestAccVcdNetworkImportedV2NsxtStep2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
-	//
-	// params["FuncName"] = t.Name() + "-step3"
-	// configText3 := templateFill(TestAccVcdNetworkRoutedV2NsxtStep3, params)
-	// debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
 
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 	// Ensure the resource is never recreated - ID stays the same
 	cachedId := &testCachedFieldValue{}
 
