@@ -44,7 +44,6 @@ func datasourceVcdNsxtNetworkImported() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"name_regex": elementNameRegex,
 						"ip":         elementIp,
-						"metadata":   elementMetadata,
 					},
 				},
 			},
