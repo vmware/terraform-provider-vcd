@@ -9,7 +9,6 @@ import (
 )
 
 func TestAccVcdNsxtNetworkImportedDS(t *testing.T) {
-	skipNoNsxtConfiguration(t)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -19,6 +18,11 @@ func TestAccVcdNsxtNetworkImportedDS(t *testing.T) {
 	if vcdClient.Client.APIVCDMaxVersionIs("< 34.0") {
 		t.Skip(t.Name() + " requires at least API v34.0 (vCD 10.1.1+)")
 	}
+	if !vcdClient.Client.IsSysAdmin {
+		t.Skip(t.Name() + " only System Administrator can create Imported networks")
+	}
+
+	skipNoNsxtConfiguration(t)
 
 	// String map to fill the template
 	var params = StringMap{
