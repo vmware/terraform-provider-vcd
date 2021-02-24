@@ -49,9 +49,12 @@ The following arguments are supported:
   connected as sysadmin working across different organisations
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
 * `name` - (Required) A unique name for the network
-* `nsxt_logical_switch_name` - (Required) Name of an existing NSX-T segment. **Note** it will never
-  be refreshed because API does not allow reading this name after it is consumed. Instead ID will be
-  stored in `nsxt_logical_switch_id` attribute
+* `nsxt_logical_switch_name` - (Required) Unique name of an existing NSX-T segment. 
+  **Note** it will never be refreshed because API does not allow reading this name after it is
+  consumed. Instead ID will be stored in `nsxt_logical_switch_id` attribute.
+  
+  This resource **will fail** if multiple segments with the same name are available. One can rename 
+  them in NSX-T manager to make them unique.
 * `description` - (Optional) An optional description of the network
 * `gateway` (Required) The gateway for this network (e.g. 192.168.1.1)
 * `prefix_length` - (Required) The prefix length for the new network (e.g. 24 for netmask 255.255.255.0).
