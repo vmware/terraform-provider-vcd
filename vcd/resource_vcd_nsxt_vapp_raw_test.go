@@ -27,7 +27,7 @@ func TestAccVcdNsxtVAppRaw_Basic(t *testing.T) {
 		"Catalog":     testSuiteCatalogName,
 		"CatalogItem": testSuiteCatalogOVAItem,
 		"VappName":    "TestAccVcdNsxtVAppRawVapp",
-		"VmName1":      "TestAccVcdNsxtVAppRawVm1",
+		"VmName1":     "TestAccVcdNsxtVAppRawVm1",
 		"VmName2":     "TestAccVcdNsxtVAppRawVm2",
 		"Media":       testConfig.Media.MediaName,
 		"Tags":        "vapp vm nsxt",
