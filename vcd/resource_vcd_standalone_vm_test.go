@@ -22,9 +22,11 @@ func TestAccVcdStandaloneVmTemplate(t *testing.T) {
 	var diskResourceName = fmt.Sprintf("%s_disk", t.Name())
 	var diskName = fmt.Sprintf("%s-disk", t.Name())
 
+	orgName := testConfig.VCD.Org
+	vdcName := testConfig.VCD.Vdc
 	var params = StringMap{
-		"Org":                testConfig.VCD.Org,
-		"Vdc":                testConfig.VCD.Vdc,
+		"Org":                orgName,
+		"Vdc":                vdcName,
 		"EdgeGateway":        testConfig.Networking.EdgeGateway,
 		"NetworkName":        "TestAccVcdVAppVmNet",
 		"Catalog":            testSuiteCatalogName,
@@ -50,12 +52,12 @@ func TestAccVcdStandaloneVmTemplate(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName),
+		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, orgName, vdcName),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName),
+					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, orgName, vdcName),
 					resource.TestCheckResourceAttr(
 						"vcd_vm."+standaloneVmName, "vm_type", string(standaloneVmType)),
 					resource.TestCheckResourceAttr(
@@ -99,9 +101,11 @@ func TestAccVcdStandaloneEmptyVm(t *testing.T) {
 		fmt.Println("Warning: `MediaName` is not configured: boot image won't be tested.")
 	}
 
+	orgName := testConfig.VCD.Org
+	vdcName := testConfig.VCD.Vdc
 	var params = StringMap{
-		"Org":         testConfig.VCD.Org,
-		"Vdc":         testConfig.VCD.Vdc,
+		"Org":         orgName,
+		"Vdc":         vdcName,
 		"EdgeGateway": testConfig.Networking.EdgeGateway,
 		"Catalog":     testSuiteCatalogName,
 		"CatalogItem": testSuiteCatalogOVAItem,
@@ -125,12 +129,12 @@ func TestAccVcdStandaloneEmptyVm(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName),
+		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, orgName, vdcName),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configTextVM,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName),
+					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, orgName, vdcName),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "name", standaloneVmName),
 
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.0.name", "multinic-net2"),
@@ -166,7 +170,13 @@ func TestAccVcdStandaloneEmptyVm(t *testing.T) {
 	})
 }
 
-func testAccCheckVcdStandaloneVmExists(vmName, node string) resource.TestCheckFunc {
+func testAccCheckVcdStandaloneVmExists(vmName, node, orgName, vdcName string) resource.TestCheckFunc {
+	if orgName == "" {
+		orgName = testConfig.VCD.Org
+	}
+	if vdcName == "" {
+		vdcName = testConfig.VCD.Vdc
+	}
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[node]
 		if !ok {
@@ -178,9 +188,9 @@ func testAccCheckVcdStandaloneVmExists(vmName, node string) resource.TestCheckFu
 		}
 
 		conn := testAccProvider.Meta().(*VCDClient)
-		_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+		_, vdc, err := conn.GetOrgAndVdc(orgName, vdcName)
 		if err != nil {
-			return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
+			return fmt.Errorf(errorRetrievingVdcFromOrg, vdcName, orgName, err)
 		}
 
 		_, err = vdc.QueryVmByName(vmName)
@@ -192,7 +202,13 @@ func testAccCheckVcdStandaloneVmExists(vmName, node string) resource.TestCheckFu
 	}
 }
 
-func testAccCheckVcdStandaloneVmDestroy(vmName string) resource.TestCheckFunc {
+func testAccCheckVcdStandaloneVmDestroy(vmName string, orgName string, vdcName string) resource.TestCheckFunc {
+	if orgName == "" {
+		orgName = testConfig.VCD.Org
+	}
+	if vdcName == "" {
+		vdcName = testConfig.VCD.Vdc
+	}
 	return func(s *terraform.State) error {
 		conn := testAccProvider.Meta().(*VCDClient)
 
@@ -200,9 +216,9 @@ func testAccCheckVcdStandaloneVmDestroy(vmName string) resource.TestCheckFunc {
 			if rs.Type != "vcd_vm" {
 				continue
 			}
-			_, vdc, err := conn.GetOrgAndVdc(testConfig.VCD.Org, testConfig.VCD.Vdc)
+			_, vdc, err := conn.GetOrgAndVdc(orgName, vdcName)
 			if err != nil {
-				return fmt.Errorf(errorRetrievingVdcFromOrg, testConfig.VCD.Vdc, testConfig.VCD.Org, err)
+				return fmt.Errorf(errorRetrievingVdcFromOrg, vdcName, orgName, err)
 			}
 
 			_, err = vdc.QueryVmByName(vmName)

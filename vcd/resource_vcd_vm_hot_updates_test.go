@@ -67,13 +67,13 @@ func TestAccVcdStandaloneHotUpdateVm(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName),
+		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, "", ""),
 		Steps: []resource.TestStep{
 			// Step 0 - create
 			resource.TestStep{
 				Config: configTextVM,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName),
+					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, "", ""),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "name", standaloneVmName),
 
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "cpu_hot_add_enabled", "true"),
@@ -107,7 +107,7 @@ func TestAccVcdStandaloneHotUpdateVm(t *testing.T) {
 			resource.TestStep{
 				Config: configTextVMUpdateStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName),
+					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, "", ""),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "name", standaloneVmName),
 
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "cpu_hot_add_enabled", "true"),
@@ -144,7 +144,7 @@ func TestAccVcdStandaloneHotUpdateVm(t *testing.T) {
 			resource.TestStep{
 				Config: configTextVMUpdateStep3,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName),
+					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, "", ""),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "name", standaloneVmName),
 
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "cpu_hot_add_enabled", "true"),
@@ -175,7 +175,7 @@ func TestAccVcdStandaloneHotUpdateVm(t *testing.T) {
 			resource.TestStep{
 				Config: configTextVMUpdateStep5,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName),
+					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, "", ""),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "name", standaloneVmName),
 
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "cpu_hot_add_enabled", "true"),

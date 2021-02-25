@@ -48,14 +48,14 @@ func TestAccVcdStandaloneVmUpdateCustomization(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName),
+		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, "", ""),
 		Steps: []resource.TestStep{
 			// Step 0 - Create without customization flag
 			resource.TestStep{
 				Config: configTextVM,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdStandaloneVMCustomization("vcd_vm.test-vm", false),
-					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm.test-vm"),
+					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm.test-vm", "", ""),
 					resource.TestCheckResourceAttr("vcd_vm.test-vm", "name", standaloneVmName),
 					resource.TestCheckResourceAttr("vcd_vm.test-vm", "network.#", "0"),
 
@@ -69,7 +69,7 @@ func TestAccVcdStandaloneVmUpdateCustomization(t *testing.T) {
 				ExpectNonEmptyPlan: true,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckVcdStandaloneVMCustomization("vcd_vm.test-vm", true),
-					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm.test-vm"),
+					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm.test-vm", "", ""),
 					resource.TestCheckResourceAttr("vcd_vm.test-vm", "name", standaloneVmName),
 					resource.TestCheckResourceAttr("vcd_vm.test-vm", "network.#", "1"),
 
@@ -111,7 +111,7 @@ func TestAccVcdStandaloneVmCreateCustomization(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName),
+		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, "", ""),
 		Steps: []resource.TestStep{
 			// Step 0 - Create new VM and force customization initially
 			resource.TestStep{
@@ -119,7 +119,7 @@ func TestAccVcdStandaloneVmCreateCustomization(t *testing.T) {
 				// The plan should never be empty because force works as a flag and every update triggers "update"
 				ExpectNonEmptyPlan: true,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm.test-vm"),
+					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm.test-vm", "", ""),
 					resource.TestCheckResourceAttr("vcd_vm.test-vm", "name", standaloneVmName),
 					resource.TestCheckResourceAttr("vcd_vm.test-vm", "network.#", "1"),
 
@@ -269,13 +269,13 @@ func TestAccVcdStandaloneVmCustomizationSettings(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName),
+		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, "", ""),
 		Steps: []resource.TestStep{
 			// Step 1
 			resource.TestStep{
 				Config: configTextVM,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm.test-vm"),
+					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm.test-vm", "", ""),
 					resource.TestCheckResourceAttr("vcd_vm.test-vm", "name", standaloneVmName),
 					resource.TestCheckResourceAttr("vcd_vm.test-vm", "network.#", "0"),
 
@@ -294,7 +294,7 @@ func TestAccVcdStandaloneVmCustomizationSettings(t *testing.T) {
 				// recreation of the VM
 				Config: configTextVMStep1,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm.test-vm-step2"),
+					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm.test-vm-step2", "", ""),
 					resource.TestCheckResourceAttr("vcd_vm.test-vm-step2", "name", standaloneVmName),
 					resource.TestCheckResourceAttr("vcd_vm.test-vm-step2", "network.#", "0"),
 
@@ -315,7 +315,7 @@ func TestAccVcdStandaloneVmCustomizationSettings(t *testing.T) {
 				// to prove that values are actually set and try to be applied on vCD.
 				ExpectError: regexp.MustCompile(`Join Domain is not supported for OS type .*`),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm.test-vm-step3"),
+					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm.test-vm-step3", "", ""),
 					resource.TestCheckResourceAttr("vcd_vm.test-vm-step3", "name", standaloneVmName),
 					resource.TestCheckResourceAttr("vcd_vm.test-vm-step3", "network.#", "0"),
 
