@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 func init() {
@@ -168,70 +167,6 @@ func TestAccVcdStandaloneEmptyVm(t *testing.T) {
 			},
 		},
 	})
-}
-
-func testAccCheckVcdStandaloneVmExists(vmName, node, orgName, vdcName string) resource.TestCheckFunc {
-	if orgName == "" {
-		orgName = testConfig.VCD.Org
-	}
-	if vdcName == "" {
-		vdcName = testConfig.VCD.Vdc
-	}
-	return func(s *terraform.State) error {
-		rs, ok := s.RootModule().Resources[node]
-		if !ok {
-			return fmt.Errorf("not found: %s", node)
-		}
-
-		if rs.Primary.ID == "" {
-			return fmt.Errorf("no VM ID is set")
-		}
-
-		conn := testAccProvider.Meta().(*VCDClient)
-		_, vdc, err := conn.GetOrgAndVdc(orgName, vdcName)
-		if err != nil {
-			return fmt.Errorf(errorRetrievingVdcFromOrg, vdcName, orgName, err)
-		}
-
-		_, err = vdc.QueryVmByName(vmName)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	}
-}
-
-func testAccCheckVcdStandaloneVmDestroy(vmName string, orgName string, vdcName string) resource.TestCheckFunc {
-	if orgName == "" {
-		orgName = testConfig.VCD.Org
-	}
-	if vdcName == "" {
-		vdcName = testConfig.VCD.Vdc
-	}
-	return func(s *terraform.State) error {
-		conn := testAccProvider.Meta().(*VCDClient)
-
-		for _, rs := range s.RootModule().Resources {
-			if rs.Type != "vcd_vm" {
-				continue
-			}
-			_, vdc, err := conn.GetOrgAndVdc(orgName, vdcName)
-			if err != nil {
-				return fmt.Errorf(errorRetrievingVdcFromOrg, vdcName, orgName, err)
-			}
-
-			_, err = vdc.QueryVmByName(vmName)
-
-			if err == nil {
-				return fmt.Errorf("VM still exist")
-			}
-
-			return nil
-		}
-
-		return nil
-	}
 }
 
 const testAccCheckVcdStandaloneVm_basic = `
