@@ -3,16 +3,16 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_network_imported"
 sidebar_current: "docs-vcd-resource-nsxt-network-imported"
 description: |-
-  Provides a VMware Cloud Director Org VDC imported Network. This can be used to create, modify, and
-  delete imported VDC networks (backed by NSX-T).
+  Provides a VMware Cloud Director Org VDC NSX-T Imported Network type. This can be used to create, modify, and delete NSX-T VDC networks of Imported type (backed by NSX-T).
 ---
 
 # vcd\_nsxt\_network\_imported
 
-Provides a VMware Cloud Director Org VDC imported Network. This can be used to create, modify, and
-delete imported VDC networks (backed by NSX-T).
+Provides a VMware Cloud Director Org VDC NSX-T Imported Network type. This can be used to create, modify, and delete NSX-T VDC networks of Imported type (backed by NSX-T).
 
 Supported in provider *v3.2+* for NSX-T VDCs only.
+
+~> This is **not Terraform imported** resource, but a special **Imported** type of **Org VDC network** in NSX-T VDC. Read more about Imported Network in [official VCD documentation]((https://docs.vmware.com/en/VMware-Cloud-Director/10.2/VMware-Cloud-Director-Tenant-Portal-Guide/GUID-FB303D62-67EA-4209-BE4D-C3746481BCC8.html).
 
 ## Example Usage (NSX-T backed imported Org VDC network)
 
@@ -21,7 +21,7 @@ resource "vcd_nsxt_network_imported" "nsxt-backed" {
   org         = "my-org"
   vdc         = "my-nsxt-org-vdc"
   name        = "nsxt-imported"
-  description = "My imported Org VDC network backed by NSX-T"
+  description = "My NSX-T VDC Imported network type"
 
   nsxt_logical_switch_name = "nsxt_segment_name"
 
@@ -77,17 +77,17 @@ Static IP Pools  support the following attributes:
 
 ## Importing
 
-~> **Note:** After import the field `nsxt_logical_switch_name` will remain empty because it is
+~> After import the field `nsxt_logical_switch_name` will remain empty because it is
 impossible to read it in API once it is consumed by network.
 
-~> **Note:** The current implementation of Terraform import can only import resources into the state. It does not generate
+~> The current implementation of Terraform import can only import resources into the state. It does not generate
 configuration. [More information.][docs-import]
 
 
 
-An existing imported network can be [imported][docs-import] into this resource via supplying its path.
+An existing NSX-T VDC Imported network can be [imported][docs-import] into this Terraform resource via supplying its path.
 The path for this resource is made of orgName.vdcName.networkName.
-For example, using this structure, representing a imported network that was **not** created using Terraform:
+For example, using this structure, representing an NSX-T Imported Network that was **not** created using Terraform:
 
 ```hcl
 resource "vcd_nsxt_network_imported" "tf-mynet" {
@@ -98,7 +98,7 @@ resource "vcd_nsxt_network_imported" "tf-mynet" {
 }
 ```
 
-You can import such imported network into terraform state using this command
+You can import such NSX-T VDC Imported network type into terraform state using this command
 
 ```
 terraform import vcd_nsxt_network_imported.tf-mynet my-org.my-vdc.my-net
