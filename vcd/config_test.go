@@ -331,7 +331,10 @@ func templateFill(tmpl string, data StringMap) string {
 		data["Url"] = testConfig.Provider.Url
 		data["SysOrg"] = testConfig.Provider.SysOrg
 		data["Org"] = testConfig.VCD.Org
-		data["Vdc"] = testConfig.VCD.Vdc
+		vdcName, found := data["Vdc"]
+		if !found || vdcName == "" {
+			data["Vdc"] = testConfig.VCD.Vdc
+		}
 		data["AllowInsecure"] = testConfig.Provider.AllowInsecure
 		data["MaxRetryTimeout"] = testConfig.Provider.MaxRetryTimeout
 		data["VersionRequired"] = currentProviderVersion
@@ -1179,5 +1182,69 @@ func skipNoNsxtConfiguration(t *testing.T) {
 	}
 	if testConfig.Nsxt.Tier0routerVrf == "" {
 		t.Skip(generalMessage + "No VRF NSX-T Tier-0 specified")
+	}
+}
+
+func testAccCheckVcdStandaloneVmExists(vmName, node, orgName, vdcName string) resource.TestCheckFunc {
+	if orgName == "" {
+		orgName = testConfig.VCD.Org
+	}
+	if vdcName == "" {
+		vdcName = testConfig.VCD.Vdc
+	}
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[node]
+		if !ok {
+			return fmt.Errorf("not found: %s", node)
+		}
+
+		if rs.Primary.ID == "" {
+			return fmt.Errorf("no VM ID is set")
+		}
+
+		conn := testAccProvider.Meta().(*VCDClient)
+		_, vdc, err := conn.GetOrgAndVdc(orgName, vdcName)
+		if err != nil {
+			return fmt.Errorf(errorRetrievingVdcFromOrg, vdcName, orgName, err)
+		}
+
+		_, err = vdc.QueryVmByName(vmName)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	}
+}
+
+func testAccCheckVcdStandaloneVmDestroy(vmName string, orgName string, vdcName string) resource.TestCheckFunc {
+	if orgName == "" {
+		orgName = testConfig.VCD.Org
+	}
+	if vdcName == "" {
+		vdcName = testConfig.VCD.Vdc
+	}
+	return func(s *terraform.State) error {
+		conn := testAccProvider.Meta().(*VCDClient)
+
+		for _, rs := range s.RootModule().Resources {
+			if rs.Type != "vcd_vm" {
+				continue
+			}
+			_, vdc, err := conn.GetOrgAndVdc(orgName, vdcName)
+			if err != nil {
+				return fmt.Errorf(errorRetrievingVdcFromOrg, vdcName, orgName, err)
+			}
+
+			_, err = vdc.QueryVmByName(vmName)
+
+			if err == nil {
+				return fmt.Errorf("VM still exist")
+			}
+
+			return nil
+		}
+
+		return nil
 	}
 }

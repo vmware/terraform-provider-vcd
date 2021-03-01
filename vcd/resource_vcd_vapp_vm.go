@@ -2095,10 +2095,10 @@ func getGuestProperties(d *schema.ResourceData) (*types.ProductSectionList, erro
 func setGuestProperties(d *schema.ResourceData, properties *types.ProductSectionList) error {
 	data := make(map[string]string)
 
-	// if properties object does not have actual properties - set state to empty
+	// if properties object does not have actual properties - do not set it at all (leave Terraform 'null')
 	log.Printf("[TRACE] Setting empty properties into statefile because no properties were specified")
 	if properties == nil || properties.ProductSection == nil || len(properties.ProductSection.Property) == 0 {
-		return d.Set("guest_properties", make(map[string]string))
+		return nil
 	}
 
 	for _, prop := range properties.ProductSection.Property {
