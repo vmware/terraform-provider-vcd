@@ -1,4 +1,4 @@
-// +build vm standaloneVm ALL functional
+// +build vm nsxt standaloneVm ALL functional
 // +build !skipStandaloneVm
 
 package vcd
@@ -15,19 +15,25 @@ func init() {
 	testingTags["standaloneVm"] = "resource_vcd_vapp_vm_test.go"
 }
 
-func TestAccVcdStandaloneVmTemplate(t *testing.T) {
+func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
+
+	if testConfig.Nsxt.Vdc == "" || testConfig.Nsxt.EdgeGateway == "" {
+		t.Skip("Either NSXT VDC or edge gateway not defined")
+		return
+	}
+
 	// making sure the VM name is unique
 	var standaloneVmName = fmt.Sprintf("%s-%d", t.Name(), os.Getpid())
 	var diskResourceName = fmt.Sprintf("%s_disk", t.Name())
 	var diskName = fmt.Sprintf("%s-disk", t.Name())
 
 	orgName := testConfig.VCD.Org
-	vdcName := testConfig.VCD.Vdc
+	vdcName := testConfig.Nsxt.Vdc
 	var params = StringMap{
 		"Org":                orgName,
 		"Vdc":                vdcName,
-		"EdgeGateway":        testConfig.Networking.EdgeGateway,
-		"NetworkName":        "TestAccVcdVAppVmNet",
+		"EdgeGateway":        testConfig.Nsxt.EdgeGateway,
+		"NetworkName":        "TestAccVcdNsxtStandaloneVmNet",
 		"Catalog":            testSuiteCatalogName,
 		"CatalogItem":        testSuiteCatalogOVAItem,
 		"VmName":             standaloneVmName,
@@ -38,10 +44,10 @@ func TestAccVcdStandaloneVmTemplate(t *testing.T) {
 		"busSubType":         "lsilogicsas",
 		"storageProfileName": "*",
 		"diskResourceName":   diskResourceName,
-		"Tags":               "vm standaloneVm",
+		"Tags":               "vm standaloneVm nsxt",
 	}
 
-	configText := templateFill(testAccCheckVcdStandaloneVm_basic, params)
+	configText := templateFill(testAccCheckVcdNsxtStandaloneVm_basic, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -83,7 +89,7 @@ func TestAccVcdStandaloneVmTemplate(t *testing.T) {
 				ResourceName:      "vcd_vm." + standaloneVmName,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdOrgVdcObject(testConfig, standaloneVmName),
+				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, standaloneVmName),
 				// These fields can't be retrieved from user data
 				ImportStateVerifyIgnore: []string{"template_name", "catalog_name",
 					"accept_all_eulas", "power_on", "computer_name", "prevent_update_power_off"},
@@ -92,7 +98,13 @@ func TestAccVcdStandaloneVmTemplate(t *testing.T) {
 	})
 }
 
-func TestAccVcdStandaloneEmptyVm(t *testing.T) {
+func TestAccVcdNsxtStandaloneEmptyVm(t *testing.T) {
+
+	if testConfig.Nsxt.Vdc == "" || testConfig.Nsxt.EdgeGateway == "" {
+		t.Skip("Either NSXT VDC or edge gateway not defined")
+		return
+	}
+
 	// making sure the VM name is unique
 	standaloneVmName := fmt.Sprintf("%s-%d", t.Name(), os.Getpid())
 
@@ -101,11 +113,11 @@ func TestAccVcdStandaloneEmptyVm(t *testing.T) {
 	}
 
 	orgName := testConfig.VCD.Org
-	vdcName := testConfig.VCD.Vdc
+	vdcName := testConfig.Nsxt.Vdc
 	var params = StringMap{
 		"Org":         orgName,
 		"Vdc":         vdcName,
-		"EdgeGateway": testConfig.Networking.EdgeGateway,
+		"EdgeGateway": testConfig.Nsxt.EdgeGateway,
 		"Catalog":     testSuiteCatalogName,
 		"CatalogItem": testSuiteCatalogOVAItem,
 		"VMName":      standaloneVmName,
@@ -117,7 +129,7 @@ func TestAccVcdStandaloneEmptyVm(t *testing.T) {
 	nic0Mac := testCachedFieldValue{}
 	nic1Mac := testCachedFieldValue{}
 
-	configTextVM := templateFill(testAccCheckVcdStandaloneEmptyVm, params)
+	configTextVM := templateFill(testAccCheckVcdNsxtStandaloneEmptyVm, params)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -149,8 +161,7 @@ func TestAccVcdStandaloneEmptyVm(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.1.name", "multinic-net"),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.1.type", "org"),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.1.is_primary", "true"),
-					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.1.ip_allocation_mode", "DHCP"),
-					// resource.TestCheckResourceAttrSet("vcd_vm."+standaloneVmName, "network.1.ip"), // We cannot guarantee DHCP
+					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.1.ip_allocation_mode", "POOL"),
 					resource.TestCheckResourceAttrSet("vcd_vm."+standaloneVmName, "network.1.mac"),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.1.connected", "true"),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "network.1.adapter_type", "VMXNET3"),
@@ -169,8 +180,8 @@ func TestAccVcdStandaloneEmptyVm(t *testing.T) {
 	})
 }
 
-const testAccCheckVcdStandaloneVm_basic = `
-data "vcd_edgegateway" "existing" {
+const testAccCheckVcdNsxtStandaloneVm_basic = `
+data "vcd_nsxt_edgegateway" "existing" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
   name = "{{.EdgeGateway}}"
@@ -180,7 +191,7 @@ resource "vcd_network_routed_v2" "{{.NetworkName}}" {
   name            = "{{.NetworkName}}"
   org             = "{{.Org}}"
   vdc             = "{{.Vdc}}"
-  edge_gateway_id = data.vcd_edgegateway.existing.id
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
   gateway         = "10.10.102.1"
   prefix_length   = 24
 
@@ -244,25 +255,21 @@ output "vm" {
 }
 `
 
-const testAccCheckVcdStandaloneEmptyVmNetworkShared = `
-data "vcd_edgegateway" "existing" {
+const testAccCheckVcdNsxtStandaloneEmptyVmNetworkShared = `
+data "vcd_nsxt_edgegateway" "existing" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
   name = "{{.EdgeGateway}}"
 }
 
-resource "vcd_network_routed" "net" {
+resource "vcd_network_routed_v2" "net" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
 
-  name         = "multinic-net"
-  edge_gateway = "{{.EdgeGateway}}"
-  gateway      = "11.10.0.1"
-
-  dhcp_pool {
-    start_address = "11.10.0.2"
-    end_address   = "11.10.0.100"
-  }
+  name            = "multinic-net"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  prefix_length   = 24
+  gateway         = "11.10.0.1"
 
   static_ip_pool {
     start_address = "11.10.0.152"
@@ -275,7 +282,7 @@ resource "vcd_network_routed_v2" "net2" {
   vdc = "{{.Vdc}}"
 
   name            = "multinic-net2"
-  edge_gateway_id = data.vcd_edgegateway.existing.id
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
   gateway         = "12.10.0.1"
   prefix_length   = 24
 
@@ -286,7 +293,7 @@ resource "vcd_network_routed_v2" "net2" {
 }
 `
 
-const testAccCheckVcdStandaloneEmptyVm = testAccCheckVcdStandaloneEmptyVmNetworkShared + `
+const testAccCheckVcdNsxtStandaloneEmptyVm = testAccCheckVcdNsxtStandaloneEmptyVmNetworkShared + `
 resource "vcd_vm" "{{.VMName}}" {
   org = "{{.Org}}"
   vdc = "{{.Vdc}}"
@@ -320,8 +327,8 @@ resource "vcd_vm" "{{.VMName}}" {
 
   network {
     type               = "org"
-    name               = vcd_network_routed.net.name
-    ip_allocation_mode = "DHCP"
+    name               = vcd_network_routed_v2.net.name
+    ip_allocation_mode = "POOL"
     is_primary         = true
   }
 }

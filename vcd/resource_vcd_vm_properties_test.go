@@ -41,12 +41,12 @@ func TestAccVcdStandaloneVmProperties(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName),
+		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, "", ""),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName),
+					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, "", ""),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "name", standaloneVmName),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, `guest_properties.guest.hostname`, "test-host"),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, `guest_properties.guest.another.subkey`, "another-value"),
@@ -55,7 +55,7 @@ func TestAccVcdStandaloneVmProperties(t *testing.T) {
 			resource.TestStep{
 				Config: configText1,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName),
+					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, "", ""),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "name", standaloneVmName),
 					resource.TestCheckNoResourceAttr("vcd_vm."+standaloneVmName, `guest_properties.guest.hostname`),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, `guest_properties.guest.another.subkey`, "new-value"),
@@ -65,7 +65,7 @@ func TestAccVcdStandaloneVmProperties(t *testing.T) {
 			resource.TestStep{
 				Config: configText2,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName),
+					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, "", ""),
 					resource.TestCheckResourceAttr("vcd_vm."+standaloneVmName, "name", standaloneVmName),
 					resource.TestCheckNoResourceAttr("vcd_vm."+standaloneVmName, `guest_properties`),
 				),

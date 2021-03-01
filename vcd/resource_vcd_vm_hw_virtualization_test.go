@@ -40,12 +40,12 @@ func TestAccVcdStandaloneVm_HardwareVirtualization(t *testing.T) {
 	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
-		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName),
+		CheckDestroy:      testAccCheckVcdStandaloneVmDestroy(standaloneVmName, "", ""),
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config: configTextStep0,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName),
+					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, "", ""),
 					resource.TestCheckResourceAttr(
 						"vcd_vm."+standaloneVmName, "name", standaloneVmName),
 					resource.TestCheckResourceAttr(
@@ -55,7 +55,7 @@ func TestAccVcdStandaloneVm_HardwareVirtualization(t *testing.T) {
 			resource.TestStep{
 				Config: configTextStep1,
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName),
+					testAccCheckVcdStandaloneVmExists(standaloneVmName, "vcd_vm."+standaloneVmName, "", ""),
 					resource.TestCheckResourceAttr(
 						"vcd_vm."+standaloneVmName, "name", standaloneVmName),
 					resource.TestCheckResourceAttr(
