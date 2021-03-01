@@ -348,17 +348,12 @@ func orgNetworkListV2(d *schema.ResourceData, meta interface{}) (list []string, 
 	for _, net := range orgVdcNetworkList {
 		var resourceName string
 		switch net.OpenApiOrgVdcNetwork.NetworkType {
-		// Direct is NSX-V only - might not be implemented
-		// case types.OrgVdcNetworkTypeDirect:
-		// networkType = "direct"
-		// resourceName = "vcd_network_direct_v2"
 		case types.OrgVdcNetworkTypeRouted:
 			resourceName = "vcd_network_routed_v2"
 		case types.OrgVdcNetworkTypeIsolated:
 			resourceName = "vcd_network_isolated_v2"
-		case types.OrgVdcNetworkTypeOpaque:
-			// networkType = "imported"
-			resourceName = "vcd_network_imported"
+		case types.OrgVdcNetworkTypeOpaque: // Used for Imported
+			resourceName = "vcd_nsxt_network_imported"
 		}
 
 		// Skip undesired network types
@@ -814,7 +809,7 @@ func datasourceVcdResourceListRead(ctx context.Context, d *schema.ResourceData, 
 	case "vcd_network_isolated", "vcd_network_direct", "vcd_network_routed",
 		"network", "networks", "network_direct", "network_routed", "network_isolated":
 		list, err = networkList(d, meta)
-	case "vcd_network_routed_v2":
+	case "vcd_network_routed_v2", "vcd_network_isolated_v2", "vcd_nsxt_network_imported":
 		list, err = orgNetworkListV2(d, meta)
 
 		//// place holder to remind of what needs to be implemented

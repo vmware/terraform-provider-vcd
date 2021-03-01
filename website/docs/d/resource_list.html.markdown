@@ -298,7 +298,10 @@ The following arguments are supported:
     * `vcd_nsxv_snat`
     * `vcd_network_isolated`
     * `vcd_network_direct`
-    * `vcd_network_routed`,
+    * `vcd_network_routed`
+    * `vcd_network_routed_v2`
+    * `vcd_network_isolated_v2`
+    * `vcd_nsxt_network_imported`
 * `list_mode` (Optional) How the list should be built. One of:
     * `name` (default): Only the resource name
     * `id`: Only the resource ID
