@@ -1,13 +1,13 @@
 # Contributing to terraform-provider-vcd
 
-The **terraform-provider-vcd** project team welcomes contributions from the community. 
-Before you start working with any contribution, please read our [Developer Certificate of Origin](https://cla.vmware.com/dco).
+The **Terraform VMware Cloud Provider** project team welcomes contributions from the community. 
+Before you start working with any contribution, please read our [Developer Certificate of Origin (DCO)](https://cla.vmware.com/dco).
 All contributions to this repository must be signed as described on that page. Your signature certifies that you wrote the patch or have the right to pass it on as an open-source patch.
-
+You can either add the signature manually (`Signed-off-by: John Doe <john.doe@email.com>`) or use `git commit --signoff`.
 
 ## Community
 
-Terraform-provider-vcd contributors can discuss matters here:
+Terraform VMware Cloud Provider contributors can discuss matters here:
 https://vmwarecode.slack.com, channel `#vcd-terraform-dev`
 
 ## Code Contribution Flow
@@ -28,6 +28,15 @@ contributors. Typical contribution flow steps are:
 Example:
 
 ``` shell
+# git user configuration: need to do only once
+git config --global user.name "John Doe"
+git config --global user.email johndoe@example.com
+
+# clone preparation: need to do only once
+git clone https://github.com/{your-github-username}/terraform-provider-vcd.git 
+cd terraform-provider-vcd
+
+# branch manipulation
 git remote add upstream https://github.com/vmware/terraform-provider-vcd.git
 git checkout -b my-new-feature
 git add filename1 [filename2 filename3]
@@ -35,9 +44,8 @@ git commit --signoff filename1 [filename2 filename3]
 git push origin my-new-feature
 ```
 
-If this process sounds unfamiliar have a look at the
-excellent [overview of collaboration via pull requests on
-GitHub](https://help.github.com/categories/collaborating-with-issues-and-pull-requests) for more information.
+If this process sounds unfamiliar have a look at [first time git setup](https://git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup) 
+for the initial operations, and the excellent [overview of collaboration via pull requests on GitHub](https://help.github.com/categories/collaborating-with-issues-and-pull-requests) for more information.
 
 ## Coding Style
 
@@ -59,9 +67,7 @@ See [**CODING_GUIDELINES**](CODING_GUIDELINES.md) for more advice on how to writ
 
 We follow the conventions on [How to Write a Git Commit Message](http://chris.beams.io/posts/git-commit/).
 
-Be sure to include any related GitHub
-issue references in the commit message.  See [GFM
-syntax](https://guides.github.com/features/mastering-markdown/#GitHub-flavored-markdown)
+Be sure to include any related GitHub issue references in the commit message.  See [GFM syntax](https://guides.github.com/features/mastering-markdown/#GitHub-flavored-markdown)
 for referencing issues.
 
 ### Staying In Sync With Upstream
@@ -78,7 +84,7 @@ git merge master
 ```
 If there are conflicts you'll need to [merge them now](https://stackoverflow.com/questions/161813/how-to-resolve-merge-conflicts-in-git).
 
-### Updating pull requests
+### Updating Pull Requests
 
 If your PR fails to pass CI, or if you get change requests from the reviewers, you need to apply fixes in your local
 repository, and then submit the changes.
@@ -89,6 +95,7 @@ git add filename
 git commit -v --signoff filename
 git push origin my-new-feature
 ```
+Please see our [Developer Certificate of Origin (DCO)](https://cla.vmware.com/dco) for details on signing commits.
 
 Be sure to add a comment to the PR indicating your new changes are ready to review, as GitHub does not generate a
 notification when you run `git push`.
