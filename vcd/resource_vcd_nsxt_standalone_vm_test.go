@@ -6,6 +6,7 @@ package vcd
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -15,6 +16,7 @@ func init() {
 	testingTags["standaloneVm"] = "resource_vcd_vapp_vm_test.go"
 }
 
+// TestAccVcdNsxtStandaloneVmTemplate tests NSX-T Routed network DHCP pools, static pools and manual IP assignment
 func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 
 	if testConfig.Nsxt.Vdc == "" || testConfig.Nsxt.EdgeGateway == "" {
@@ -34,6 +36,7 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 		"Vdc":                vdcName,
 		"EdgeGateway":        testConfig.Nsxt.EdgeGateway,
 		"NetworkName":        "TestAccVcdNsxtStandaloneVmNet",
+		"ImportSegment":      testConfig.Nsxt.NsxtImportSegment,
 		"Catalog":            testSuiteCatalogName,
 		"CatalogItem":        testSuiteCatalogOVAItem,
 		"VmName":             standaloneVmName,
@@ -73,6 +76,15 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 						"vcd_vm."+standaloneVmName, "computer_name", standaloneVmName+"-unique"),
 					resource.TestCheckResourceAttr(
 						"vcd_vm."+standaloneVmName, "network.0.ip", "10.10.102.161"),
+					// Due to DHCP nature it is not guaranteed to be reported quickly enough
+					// resource.TestCheckResourceAttrSet(
+					// 	"vcd_vm."+standaloneVmName, "network.1.ip"),
+					resource.TestMatchResourceAttr(
+						"vcd_vm."+standaloneVmName, "network.2.ip", regexp.MustCompile(`^10\.10\.102\.`)),
+					resource.TestMatchResourceAttr(
+						"vcd_vm."+standaloneVmName, "network.3.ip", regexp.MustCompile(`^110\.10\.102\.`)),
+					resource.TestMatchResourceAttr(
+						"vcd_vm."+standaloneVmName, "network.4.ip", regexp.MustCompile(`^12\.12\.2\.`)),
 					resource.TestCheckResourceAttr(
 						"vcd_vm."+standaloneVmName, "power_on", "true"),
 					resource.TestCheckResourceAttr(
@@ -91,8 +103,11 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, standaloneVmName),
 				// These fields can't be retrieved from user data
+				// "network.1.ip" is a DHCP value. It may happen so that during "read" IP is still not reported, but
+				// it is reported during import
+				// "network_dhcp_wait_seconds" is a user setting and cannot be imported
 				ImportStateVerifyIgnore: []string{"template_name", "catalog_name",
-					"accept_all_eulas", "power_on", "computer_name", "prevent_update_power_off"},
+					"accept_all_eulas", "power_on", "computer_name", "prevent_update_power_off", "network.1.ip", "network_dhcp_wait_seconds"},
 			},
 		},
 	})
@@ -197,7 +212,53 @@ resource "vcd_network_routed_v2" "{{.NetworkName}}" {
 
   static_ip_pool {
     start_address = "10.10.102.2"
-    end_address   = "10.10.102.254"
+    end_address   = "10.10.102.200"
+  }
+}
+
+resource "vcd_network_isolated_v2" "net-test" {
+  name            = "{{.NetworkName}}-isolated"
+  org             = "{{.Org}}"
+  vdc             = "{{.Vdc}}"
+  
+  gateway         = "110.10.102.1"
+  prefix_length   = 26
+
+  static_ip_pool {
+    start_address = "110.10.102.2"
+    end_address   = "110.10.102.20"
+  }
+}
+
+resource "vcd_nsxt_network_dhcp" "{{.NetworkName}}-dhcp" {
+  org             = "{{.Org}}"
+  vdc             = "{{.Vdc}}"
+  
+  org_network_id  = vcd_network_routed_v2.{{.NetworkName}}.id
+
+  pool {
+    start_address = "10.10.102.210"
+    end_address   = "10.10.102.220"
+  }
+
+  pool {
+    start_address = "10.10.102.230"
+    end_address   = "10.10.102.240"
+  }
+}
+
+resource "vcd_nsxt_network_imported" "imported-test" {
+  name            = "{{.NetworkName}}-imported"
+  org             = "{{.Org}}"
+  vdc             = "{{.Vdc}}"
+  gateway         = "12.12.2.1"
+  prefix_length   = 24
+
+  nsxt_logical_switch_name = "{{.ImportSegment}}"
+
+  static_ip_pool {
+    start_address = "12.12.2.10"
+    end_address   = "12.12.2.15"
   }
 }
 
@@ -227,6 +288,11 @@ resource "vcd_vm" "{{.VmName}}" {
     vm_metadata = "VM Metadata."
   }
 
+  # This is short enough to not wait for IP retrieval, but is useful to check that
+  # DHCP lookup functions internally do not fail. It may emit WARNING message during
+  # test run, but these are just to inform that 10 seconds is too short time.
+  network_dhcp_wait_seconds = 10
+
   network {
     type               = "org"
     name               = vcd_network_routed_v2.{{.NetworkName}}.name
@@ -234,11 +300,38 @@ resource "vcd_vm" "{{.VmName}}" {
     ip                 = "10.10.102.161"
   }
 
+  network {
+    type               = "org"
+    name               = vcd_network_routed_v2.{{.NetworkName}}.name
+    ip_allocation_mode = "DHCP"
+  }
+
+  network {
+    type               = "org"
+    name               = vcd_network_routed_v2.{{.NetworkName}}.name
+    ip_allocation_mode = "POOL"
+  }
+
+  network {
+    type               = "org"
+    name               = vcd_network_isolated_v2.net-test.name
+    ip_allocation_mode = "POOL"
+  }
+
+  network {
+    type               = "org"
+    name               = vcd_nsxt_network_imported.imported-test.name
+    ip_allocation_mode = "POOL"
+  }
+
   disk {
     name        = vcd_independent_disk.{{.diskResourceName}}.name
     bus_number  = 1
     unit_number = 0
   }
+
+  depends_on = [vcd_network_routed_v2.{{.NetworkName}}, vcd_network_isolated_v2.net-test, 
+                vcd_nsxt_network_imported.imported-test]
 }
 
 output "disk" {

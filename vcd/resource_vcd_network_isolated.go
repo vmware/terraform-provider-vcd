@@ -13,11 +13,10 @@ import (
 
 func resourceVcdNetworkIsolated() *schema.Resource {
 	return &schema.Resource{
-		DeprecationMessage: "Please use 'vcd_network_isolated_v2' resource which supports NSX-T and NSX-V",
-		Create:             resourceVcdNetworkIsolatedCreate,
-		Read:               resourceVcdNetworkIsolatedRead,
-		Update:             resourceVcdNetworkIsolatedUpdate,
-		Delete:             resourceVcdNetworkDelete,
+		Create: resourceVcdNetworkIsolatedCreate,
+		Read:   resourceVcdNetworkIsolatedRead,
+		Update: resourceVcdNetworkIsolatedUpdate,
+		Delete: resourceVcdNetworkDelete,
 		Importer: &schema.ResourceImporter{
 			State: resourceVcdNetworkIsolatedImport,
 		},
@@ -164,6 +163,10 @@ func resourceVcdNetworkIsolatedCreate(d *schema.ResourceData, meta interface{}) 
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	}
+
+	if vdc.IsNsxt() {
+		fmt.Fprintf(getTerraformStdout(), "WARNING: please use 'vcd_network_isolated_v2' for NSX-T VDCs")
 	}
 
 	gatewayName := d.Get("gateway").(string)
@@ -367,6 +370,10 @@ func resourceVcdNetworkIsolatedImport(d *schema.ResourceData, meta interface{}) 
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if err != nil {
 		return nil, fmt.Errorf("[isolated network import] unable to find VDC %s: %s ", vdcName, err)
+	}
+
+	if vdc.IsNsxt() {
+		return nil, fmt.Errorf("[isolated network import] please use 'vcd_network_isolated_v2' for NSX-T VDCs")
 	}
 
 	network, err := vdc.GetOrgVdcNetworkByName(networkName, false)

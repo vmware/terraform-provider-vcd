@@ -274,6 +274,10 @@ func resourceVcdEdgeGatewayCreate(d *schema.ResourceData, meta interface{}) erro
 		return fmt.Errorf("no valid VDC named '%s' was found", vdcName)
 	}
 
+	if vdc.IsNsxt() {
+		return fmt.Errorf("please use 'vcd_nsxt_edgegateway' for NSX-T backed VDC")
+	}
+
 	var gwInterfaces []*types.GatewayInterface
 
 	log.Printf("[TRACE] creating edge gateway using 'external_network' blocks")
@@ -366,6 +370,11 @@ func genericVcdEdgeGatewayRead(d *schema.ResourceData, meta interface{}, origin 
 	if err != nil {
 		return fmt.Errorf("[edgegateway read] error retrieving org and vdc: %s", err)
 	}
+
+	if vdc.IsNsxt() {
+		return fmt.Errorf("please use 'vcd_nsxt_edgegateway' for NSX-T backed VDC")
+	}
+
 	var edgeGateway *govcd.EdgeGateway
 	var hasFilter bool
 	var filter interface{}
@@ -500,6 +509,11 @@ func resourceVcdEdgeGatewayImport(d *schema.ResourceData, meta interface{}) ([]*
 	if err != nil {
 		return nil, fmt.Errorf("unable to find VDC %s: %s", vdcName, err)
 	}
+
+	if vdc.IsNsxt() {
+		return nil, fmt.Errorf("please use 'vcd_nsxt_edgegateway' for NSX-T backed VDC")
+	}
+
 	edgeGateway, err := vdc.GetEdgeGatewayByNameOrId(edgeName, false)
 	if err != nil {
 		return nil, fmt.Errorf(errorUnableToFindEdgeGateway, err)

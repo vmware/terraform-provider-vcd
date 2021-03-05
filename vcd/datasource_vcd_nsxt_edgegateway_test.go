@@ -251,9 +251,8 @@ data "vcd_nsxt_edgegateway" "egw-ds" {
 `
 
 // TestAccVcdNsxtEdgeGatewayDSDoesNotAcceptNsxv expects to get an error because it tries to lookup NSX-V edge gateway
-// using NSX-T datasource. Although OpenAPI endpoint does return both types by default - the NSX-T edge gateway
-// retrieval functions are not expected to find it. This is because NSX-T structure is less nested and allows to have
-// simpler schema.
+// using NSX-T datasource. There is a validator inside `vcd_nsxt_edgegateway` which is supposed to refer to
+// `vcd_edgegateway` when VDC is NSX-V
 func TestAccVcdNsxtEdgeGatewayDSDoesNotAcceptNsxv(t *testing.T) {
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -281,7 +280,7 @@ func TestAccVcdNsxtEdgeGatewayDSDoesNotAcceptNsxv(t *testing.T) {
 		Steps: []resource.TestStep{
 			resource.TestStep{
 				Config:      configText,
-				ExpectError: regexp.MustCompile(".*entity not found.*"),
+				ExpectError: regexp.MustCompile("please use 'vcd_edgegateway' for NSX-V backed VDC"),
 			},
 		},
 	})

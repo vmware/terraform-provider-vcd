@@ -167,6 +167,10 @@ func resourceVappNetworkCreate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
 	}
 
+	if orgNetworkName, ok := d.GetOk("org_network_name"); ok && vdc.IsNsxt() {
+		return fmt.Errorf("org network '%s' cannot be connected in NSX-T VDC", orgNetworkName)
+	}
+
 	vapp, err := vdc.GetVAppByName(d.Get("vapp_name").(string), false)
 	if err != nil {
 		return fmt.Errorf("error finding vApp. %s", err)

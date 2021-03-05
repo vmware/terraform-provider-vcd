@@ -127,6 +127,10 @@ func resourceVcdNsxtEdgeGatewayCreate(ctx context.Context, d *schema.ResourceDat
 		return diag.FromErr(fmt.Errorf("error retrieving VDC: %s", err))
 	}
 
+	if vdc.IsNsxv() {
+		return diag.Errorf("please use 'vcd_edgegateway' for NSX-V backed VDC")
+	}
+
 	adminOrg, err := vcdClient.GetAdminOrgFromResource(d)
 	if err != nil {
 		return diag.FromErr(fmt.Errorf("error getting adminOrg: %s", err))
@@ -244,6 +248,10 @@ func resourceVcdNsxtEdgeGatewayImport(ctx context.Context, d *schema.ResourceDat
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if err != nil {
 		return nil, fmt.Errorf("unable to find org %s: %s", vdcName, err)
+	}
+
+	if vdc.IsNsxv() {
+		return nil, fmt.Errorf("please use 'vcd_edgegateway' for NSX-V backed VDC")
 	}
 
 	edge, err := vdc.GetNsxtEdgeGatewayByName(edgeName)

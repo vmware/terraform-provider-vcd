@@ -71,6 +71,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_network_routed_v2":     datasourceVcdNetworkRoutedV2(),     // 3.2
 	"vcd_network_isolated_v2":   datasourceVcdNetworkIsolatedV2(),   // 3.2
 	"vcd_nsxt_network_imported": datasourceVcdNsxtNetworkImported(), // 3.2
+	"vcd_nsxt_network_dhcp":     datasourceVcdOpenApiDhcp(),         // 3.2
 }
 
 var globalResourceMap = map[string]*schema.Resource{
@@ -118,6 +119,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_network_routed_v2":     resourceVcdNetworkRoutedV2(),          // 3.2
 	"vcd_network_isolated_v2":   resourceVcdNetworkIsolatedV2(),        // 3.2
 	"vcd_nsxt_network_imported": resourceVcdNsxtNetworkImported(),      // 3.2
+	"vcd_nsxt_network_dhcp":     resourceVcdOpenApiDhcp(),              // 3.2
 }
 
 // Provider returns a terraform.ResourceProvider.

@@ -3,6 +3,7 @@
 package vcd
 
 import (
+	"fmt"
 	"regexp"
 	"testing"
 
@@ -57,6 +58,12 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 		mandatoryRuntimeFields := getMandatoryDataSourceRuntimeFields(dataSourceName)
 		mandatoryFields = append(mandatoryFields, mandatoryRuntimeFields...)
 		addedParams := addMandatoryParams(dataSourceName, mandatoryFields, t, vcdClient)
+
+		// Inject NSX-T VDC for resources that are known to require it
+		switch dataSourceName {
+		case "vcd_nsxt_edgegateway":
+			addedParams += fmt.Sprintf(`vdc = "%s"`, testConfig.Nsxt.Vdc)
+		}
 
 		var params = StringMap{
 			"DataSourceName":  dataSourceName,
@@ -159,6 +166,9 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			templateFields = templateFields + `name = "does-not-exist"` + "\n"
 		case "org_network_name":
 			templateFields = templateFields + `org_network_name = "does-not-exist"` + "\n"
+		// OpenAPI requires org_network_id to be a valid URN - chances of duplicating it are close enough to zero
+		case "org_network_id":
+			templateFields = templateFields + `org_network_id = "urn:vcloud:network:784feb3d-87e4-4905-202a-bfe9faa5476f"` + "\n"
 		}
 
 	}
