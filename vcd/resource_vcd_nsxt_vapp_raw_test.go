@@ -4,6 +4,7 @@ package vcd
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -11,7 +12,7 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
-func TestAccVcdNsxtVAppRaw_Basic(t *testing.T) {
+func TestAccVcdNsxtVAppRawAllNsxtNetworks(t *testing.T) {
 
 	if testConfig.Nsxt.Vdc == "" || testConfig.Nsxt.EdgeGateway == "" {
 		t.Skip("Either NSXT VDC or edge gateway not defined")
@@ -20,17 +21,18 @@ func TestAccVcdNsxtVAppRaw_Basic(t *testing.T) {
 	var vapp govcd.VApp
 
 	var params = StringMap{
-		"Org":         testConfig.VCD.Org,
-		"Vdc":         testConfig.Nsxt.Vdc,
-		"EdgeGateway": testConfig.Nsxt.EdgeGateway,
-		"NetworkName": "TestAccVcdNsxtVAppRawNet",
-		"Catalog":     testSuiteCatalogName,
-		"CatalogItem": testSuiteCatalogOVAItem,
-		"VappName":    "TestAccVcdNsxtVAppRawVapp",
-		"VmName1":     "TestAccVcdNsxtVAppRawVm1",
-		"VmName2":     "TestAccVcdNsxtVAppRawVm2",
-		"Media":       testConfig.Media.MediaName,
-		"Tags":        "vapp vm nsxt",
+		"Org":           testConfig.VCD.Org,
+		"Vdc":           testConfig.Nsxt.Vdc,
+		"EdgeGateway":   testConfig.Nsxt.EdgeGateway,
+		"ImportSegment": testConfig.Nsxt.NsxtImportSegment,
+		"NetworkName":   "TestAccVcdNsxtVAppRawNet",
+		"Catalog":       testSuiteCatalogName,
+		"CatalogItem":   testSuiteCatalogOVAItem,
+		"VappName":      "TestAccVcdNsxtVAppRawVapp",
+		"VmName1":       "TestAccVcdNsxtVAppRawVm1",
+		"VmName2":       "TestAccVcdNsxtVAppRawVm2",
+		"Media":         testConfig.Media.MediaName,
+		"Tags":          "vapp vm nsxt",
 	}
 	configText := templateFill(testAccCheckVcdNsxtVAppRaw_basic, params)
 	if vcdShortTest {
@@ -53,6 +55,9 @@ func TestAccVcdNsxtVAppRaw_Basic(t *testing.T) {
 						fmt.Sprintf("vcd_vapp_vm.%s", params["VmName1"].(string)), "name", params["VmName1"].(string)),
 					resource.TestCheckResourceAttr(
 						fmt.Sprintf("vcd_vapp_vm.%s", params["VmName2"].(string)), "name", params["VmName2"].(string)),
+					resource.TestMatchResourceAttr("vcd_vapp_vm.TestAccVcdNsxtVAppRawVm1", "network.0.ip", regexp.MustCompile(`^10\.10\.102\.3`)),
+					resource.TestMatchResourceAttr("vcd_vapp_vm.TestAccVcdNsxtVAppRawVm1", "network.1.ip", regexp.MustCompile(`^130\.10\.102\.`)),
+					resource.TestMatchResourceAttr("vcd_vapp_vm.TestAccVcdNsxtVAppRawVm1", "network.2.ip", regexp.MustCompile(`^12\.12\.2\.`)),
 				),
 			},
 		},
@@ -128,7 +133,53 @@ resource "vcd_network_routed_v2" "{{.NetworkName}}" {
 
   static_ip_pool {
     start_address = "10.10.102.2"
-    end_address   = "10.10.102.254"
+    end_address   = "10.10.102.199"
+  }
+}
+
+resource "vcd_nsxt_network_dhcp" "{{.NetworkName}}-dhcp" {
+  org             = "{{.Org}}"
+  vdc             = "{{.Vdc}}"
+  
+  org_network_id  = vcd_network_routed_v2.{{.NetworkName}}.id
+
+  pool {
+    start_address = "10.10.102.210"
+    end_address   = "10.10.102.220"
+  }
+
+  pool {
+    start_address = "10.10.102.230"
+    end_address   = "10.10.102.240"
+  }
+}
+
+
+resource "vcd_network_isolated_v2" "isolated-test" {
+  name            = "{{.NetworkName}}-isolated"
+  org             = "{{.Org}}"
+  vdc             = "{{.Vdc}}"
+  gateway         = "130.10.102.1"
+  prefix_length   = 24
+
+  static_ip_pool {
+    start_address = "130.10.102.2"
+    end_address   = "130.10.102.254"
+  }
+}
+
+resource "vcd_nsxt_network_imported" "imported-test" {
+  name            = "{{.NetworkName}}-imported"
+  org             = "{{.Org}}"
+  vdc             = "{{.Vdc}}"
+  gateway         = "12.12.2.1"
+  prefix_length   = 24
+
+  nsxt_logical_switch_name = "{{.ImportSegment}}"
+
+  static_ip_pool {
+    start_address = "12.12.2.10"
+    end_address   = "12.12.2.15"
   }
 }
 
@@ -139,11 +190,31 @@ resource "vcd_vapp" "{{.VappName}}" {
   depends_on   = [vcd_network_routed_v2.{{.NetworkName}}]
 }
 
-resource "vcd_vapp_org_network" "vappNetwork1" {
+resource "vcd_vapp_org_network" "routed" {
   org                = "{{.Org}}"
   vdc                = "{{.Vdc}}"
   vapp_name          = vcd_vapp.{{.VappName}}.name
   org_network_name   = vcd_network_routed_v2.{{.NetworkName}}.name 
+
+  depends_on = [vcd_network_routed_v2.{{.NetworkName}}]
+}
+
+resource "vcd_vapp_org_network" "isolated" {
+  org                = "{{.Org}}"
+  vdc                = "{{.Vdc}}"
+  vapp_name          = vcd_vapp.{{.VappName}}.name
+  org_network_name   = vcd_network_isolated_v2.isolated-test.name 
+
+  depends_on = [vcd_network_isolated_v2.isolated-test]
+}
+
+resource "vcd_vapp_org_network" "imoported" {
+  org                = "{{.Org}}"
+  vdc                = "{{.Vdc}}"
+  vapp_name          = vcd_vapp.{{.VappName}}.name
+  org_network_name   = vcd_nsxt_network_imported.imported-test.name 
+
+  depends_on = [vcd_nsxt_network_imported.imported-test]
 }
 
 resource "vcd_vapp_vm" "{{.VmName1}}" {
@@ -158,9 +229,29 @@ resource "vcd_vapp_vm" "{{.VmName1}}" {
 
   network {
     type               = "org"
-    name               = vcd_vapp_org_network.vappNetwork1.org_network_name
+    name               = vcd_vapp_org_network.routed.org_network_name
     ip_allocation_mode = "POOL"
   }
+
+  network {
+    type               = "org"
+    name               = vcd_vapp_org_network.isolated.org_network_name
+    ip_allocation_mode = "POOL"
+  }
+
+  network {
+    type               = "org"
+    name               = vcd_vapp_org_network.imoported.org_network_name
+    ip_allocation_mode = "POOL"
+  }
+
+  network {
+    type               = "org"
+    name               = vcd_vapp_org_network.routed.org_network_name
+    ip_allocation_mode = "DHCP"
+  }
+
+  depends_on = [vcd_vapp_org_network.routed, vcd_vapp_org_network.isolated, vcd_vapp_org_network.imoported]
 }
 
 resource "vcd_vapp_vm" "{{.VmName2}}" {
@@ -188,10 +279,19 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
 
   network {
     type               = "org"
-    name               = vcd_vapp_org_network.vappNetwork1.org_network_name
+    name               = vcd_vapp_org_network.routed.org_network_name
     ip_allocation_mode = "POOL"
     is_primary         = true
 	adapter_type       = "PCNet32"
   }
+
+  network {
+    type               = "org"
+    name               = vcd_vapp_org_network.isolated.org_network_name
+    ip_allocation_mode = "POOL"
+    adapter_type       = "PCNet32"
+  }
+
+  depends_on = [vcd_vapp_org_network.routed, vcd_vapp_org_network.isolated]
 }
 `

@@ -14,11 +14,10 @@ import (
 
 func resourceVcdNetworkRouted() *schema.Resource {
 	return &schema.Resource{
-		Create:             resourceVcdNetworkRoutedCreate,
-		Read:               resourceVcdNetworkRoutedRead,
-		Delete:             resourceVcdNetworkDeleteLocked,
-		Update:             resourceVcdNetworkRoutedUpdate,
-		DeprecationMessage: "Please use 'vcd_network_routed_v2' resource which supports NSX-T and NSX-V",
+		Create: resourceVcdNetworkRoutedCreate,
+		Read:   resourceVcdNetworkRoutedRead,
+		Delete: resourceVcdNetworkDeleteLocked,
+		Update: resourceVcdNetworkRoutedUpdate,
 		Importer: &schema.ResourceImporter{
 			State: resourceVcdNetworkRoutedImport,
 		},
@@ -188,6 +187,10 @@ func resourceVcdNetworkRoutedCreate(d *schema.ResourceData, meta interface{}) er
 	_, vdc, err := vcdClient.GetOrgAndVdcFromResource(d)
 	if err != nil {
 		return fmt.Errorf(errorRetrievingOrgAndVdc, err)
+	}
+
+	if vdc.IsNsxt() {
+		fmt.Fprintf(getTerraformStdout(), "WARNING: please use 'vcd_network_routed_v2' for NSX-T VDCs")
 	}
 
 	edgeGatewayName := d.Get("edge_gateway").(string)
@@ -532,6 +535,10 @@ func resourceVcdNetworkRoutedImport(d *schema.ResourceData, meta interface{}) ([
 	_, vdc, err := vcdClient.GetOrgAndVdc(orgName, vdcName)
 	if err != nil {
 		return nil, fmt.Errorf("[routed network import] unable to find VDC %s: %s ", vdcName, err)
+	}
+
+	if vdc.IsNsxt() {
+		return nil, fmt.Errorf("[routed network import] please use 'vcd_network_routed_v2' for NSX-T VDCs")
 	}
 
 	network, err := vdc.GetOrgVdcNetworkByName(networkName, false)

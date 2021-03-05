@@ -144,16 +144,12 @@ function echo_verbose {
     fi
 }
 
-function check_terraform_version {
+function add_versions_config {
 
     fname=$1
     dir=$2
     has_terraform=$(grep '^\s*terraform {' $fname)
-    if [ -z "$has_terraform" ]
-    then
-        if [[ $terraform_major -gt 0 || $terraform_major -eq 0 && $terraform_minor -gt 12 ]]
-        then
-            cat << EOF > $dir/versions.tf
+    cat << EOF > $dir/versions.tf
 terraform {
   required_providers {
     vcd = {
@@ -165,9 +161,6 @@ terraform {
 }
 
 EOF
-        fi
-    fi
-
 }
 
 
@@ -189,7 +182,7 @@ function validate_script {
     fi
     mkdir vtmp
     cp $script vtmp
-    check_terraform_version $script vtmp
+    add_versions_config $script vtmp
     cd vtmp
     terraform init > init.out 2>&1
     exit_code=$?
@@ -584,7 +577,7 @@ do
     if [ "${operations[0]}" == "init" ]
     then
         cp $CF $opsdir/config.tf
-        check_terraform_version $CF $opsdir
+        add_versions_config $CF $opsdir
     fi
     if [ -z "$DRY_RUN" ]
     then
@@ -610,10 +603,11 @@ do
             init)
                 if [ -n "$upgrading" ]
                     then
+                    # Remove any version definition in config.tf because it is deprecated
+                    sed -i -e '/version *=/d' config.tf
                     # Set exact Terraform version constraint `version = "3.0"` instead of `version = "~> 3.0"` as such
                     # constraint would still pull newer version and this is bad for upgrade tests
-                    sed -i -e 's/version *= "~> '${short_from}'"/version = "'${short_from}'"/'  config.tf
-                    sed -i -e 's/version *= "~> '${short_from}'"/version = "'${short_from}'"/'  versions.tf
+                    sed -i -e 's/version *= ".*"/version = "'${short_from}'"/'  versions.tf
                     run terraform init
                     run terraform version
                 fi
@@ -642,7 +636,7 @@ do
                     if [ -n "$upgrading" ]
                     then
                         # Replace the version in HCL configuration file
-                        sed -i -e 's/version *= "'${short_from}'"/version = "'${short_to}'"/'  config.tf
+                        sed -i -e 's/version *= "'${short_from}'"/version = "'${short_to}'"/' versions.tf
                         run terraform init -upgrade
                         run terraform version
                     fi

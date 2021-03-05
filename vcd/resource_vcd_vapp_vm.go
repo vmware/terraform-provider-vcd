@@ -1478,7 +1478,7 @@ func genericVcdVmRead(d *schema.ResourceData, meta interface{}, origin string, v
 	d.SetId(vm.VM.ID)
 	_ = d.Set("vm_type", computedVmType)
 
-	networks, err := readNetworks(d, *vm, *vapp)
+	networks, err := readNetworks(d, *vm, *vapp, vdc)
 	if err != nil {
 		return fmt.Errorf("[VM read] failed reading network details: %s", err)
 	}
@@ -1940,7 +1940,7 @@ func getVmNicIndexesWithDhcpEnabled(networkConnectionSection *types.NetworkConne
 }
 
 // readNetworks returns network configuration for saving into statefile
-func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp) ([]map[string]interface{}, error) {
+func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp, vdc *govcd.Vdc) ([]map[string]interface{}, error) {
 	// Determine type for all networks in vApp
 	vAppNetworkConfig, err := vapp.GetNetworkConfig()
 	if err != nil {
@@ -2017,7 +2017,10 @@ func readNetworks(d *schema.ResourceData, vm govcd.VM, vapp govcd.VApp) ([]map[s
 				vm.VM.Name, maxDhcpWaitSeconds, dhcpNicIndexes)
 
 			start := time.Now()
-			nicIps, timeout, err := vm.WaitForDhcpIpByNicIndexes(dhcpNicIndexes, maxDhcpWaitSecondsInt, true)
+
+			// Only use DHCP lease check if it is NSX-V as NSX-T Edge Gateway does not expose it and errors on such query
+			useNsxvDhcpLeaseCheck := vdc.IsNsxv()
+			nicIps, timeout, err := vm.WaitForDhcpIpByNicIndexes(dhcpNicIndexes, maxDhcpWaitSecondsInt, useNsxvDhcpLeaseCheck)
 			if err != nil {
 				return nil, fmt.Errorf("unable to to lookup DHCP IPs for VM NICs '%v': %s", dhcpNicIndexes, err)
 			}
