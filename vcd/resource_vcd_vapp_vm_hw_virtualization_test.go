@@ -10,6 +10,7 @@ import (
 )
 
 func TestAccVcdVAppVm_HardwareVirtualization(t *testing.T) {
+	preTestChecks(t)
 	vappNameHwVirt := "TestAccVcdVAppHwVirt"
 	vmNameHwVirt := "TestAccVcdVAppHwVirt"
 	var vapp govcd.VApp
@@ -66,6 +67,7 @@ func TestAccVcdVAppVm_HardwareVirtualization(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdVAppVm_hardwareVirtualization = `

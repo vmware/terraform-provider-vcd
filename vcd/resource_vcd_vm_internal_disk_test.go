@@ -12,6 +12,7 @@ import (
 )
 
 func TestAccVcdVmInternalDisk(t *testing.T) {
+	preTestChecks(t)
 
 	// In general VM internal disks works with Org users, but since we need to create VDC with disabled fast provisioning value, we have to be sys admins
 	if !usingSysAdmin() {
@@ -150,6 +151,7 @@ func TestAccVcdVmInternalDisk(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testCheckInternalDiskNonStringOutputs(internalDiskSize int) resource.TestCheckFunc {

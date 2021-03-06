@@ -15,6 +15,7 @@ import (
 )
 
 func TestAccVcdStorageProfileDS(t *testing.T) {
+	preTestChecks(t)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -51,6 +52,7 @@ func TestAccVcdStorageProfileDS(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 // checkStorageProfileOriginatesInParentVdc tries to evaluate reverse order and ensure that the found storage profile ID

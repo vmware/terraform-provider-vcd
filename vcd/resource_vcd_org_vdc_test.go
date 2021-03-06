@@ -11,6 +11,7 @@ func init() {
 }
 
 func TestAccVcdOrgVdcReservationPool(t *testing.T) {
+	preTestChecks(t)
 	if !usingSysAdmin() {
 		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
 	}
@@ -51,9 +52,11 @@ func TestAccVcdOrgVdcReservationPool(t *testing.T) {
 	}
 
 	runOrgVdcTest(t, params, allocationModel)
+	postTestChecks(t)
 }
 
 func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
+	preTestChecks(t)
 	if !usingSysAdmin() {
 		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
 	}
@@ -93,9 +96,11 @@ func TestAccVcdOrgVdcAllocationPool(t *testing.T) {
 	}
 
 	runOrgVdcTest(t, params, allocationModel)
+	postTestChecks(t)
 }
 
 func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
+	preTestChecks(t)
 	if !usingSysAdmin() {
 		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
 	}
@@ -135,9 +140,11 @@ func TestAccVcdOrgVdcAllocationVApp(t *testing.T) {
 	}
 
 	runOrgVdcTest(t, params, allocationModel)
+	postTestChecks(t)
 }
 
 func TestAccVcdOrgVdcAllocationFlex(t *testing.T) {
+	preTestChecks(t)
 	if !usingSysAdmin() {
 		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
 	}
@@ -177,6 +184,7 @@ func TestAccVcdOrgVdcAllocationFlex(t *testing.T) {
 		"MemoryOverheadUpdateValueForAssert": "true",
 	}
 	runOrgVdcTest(t, params, allocationModel)
+	postTestChecks(t)
 }
 
 func validateConfiguration(t *testing.T) {

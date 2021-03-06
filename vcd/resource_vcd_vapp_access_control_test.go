@@ -13,6 +13,7 @@ import (
 )
 
 func TestAccVcdVappAccessControl(t *testing.T) {
+	preTestChecks(t)
 
 	if testConfig.VCD.Org == "" {
 		t.Skip("[TestAccVcdVappAccessControl] no Org found in configuration")
@@ -158,6 +159,7 @@ func TestAccVcdVappAccessControl(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckVcdVappAccessControlExists(resourceName string, orgName, vdcName string) resource.TestCheckFunc {

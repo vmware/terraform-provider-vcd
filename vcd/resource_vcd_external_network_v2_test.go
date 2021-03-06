@@ -15,6 +15,7 @@ import (
 )
 
 func TestAccVcdExternalNetworkV2NsxtVrf(t *testing.T) {
+	preTestChecks(t)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -26,10 +27,13 @@ func TestAccVcdExternalNetworkV2NsxtVrf(t *testing.T) {
 		t.Skip("NSX-T VRF-Lite backed external networks are officially supported only in 10.2.0+")
 	}
 	testAccVcdExternalNetworkV2Nsxt(t, testConfig.Nsxt.Tier0routerVrf)
+	postTestChecks(t)
 }
 
 func TestAccVcdExternalNetworkV2Nsxt(t *testing.T) {
+	preTestChecks(t)
 	testAccVcdExternalNetworkV2Nsxt(t, testConfig.Nsxt.Tier0router)
+	postTestChecks(t)
 }
 
 func testAccVcdExternalNetworkV2Nsxt(t *testing.T, nsxtTier0Router string) {
@@ -248,6 +252,7 @@ output "nsxt-tier0-router" {
 `
 
 func TestAccVcdExternalNetworkV2Nsxv(t *testing.T) {
+	preTestChecks(t)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -363,6 +368,7 @@ func TestAccVcdExternalNetworkV2Nsxv(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdExternalNetworkV2NsxvDs = `

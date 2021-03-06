@@ -13,6 +13,7 @@ import (
 )
 
 func TestAccVcdStandaloneVmWithVmSizing(t *testing.T) {
+	preTestChecks(t)
 	var (
 		standaloneVmName        = fmt.Sprintf("%s-%d", t.Name(), os.Getpid())
 		netVmName1              = standaloneVmName + "-1"
@@ -202,6 +203,7 @@ func TestAccVcdStandaloneVmWithVmSizing(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckVcdStandaloneVmExistsByVdc(vdcName, vmName, node string) resource.TestCheckFunc {

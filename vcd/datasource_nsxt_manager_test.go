@@ -10,6 +10,7 @@ import (
 )
 
 func TestAccVcdDatasourceNsxtManager(t *testing.T) {
+	preTestChecks(t)
 
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
@@ -47,6 +48,7 @@ func TestAccVcdDatasourceNsxtManager(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdNsxtManager = `

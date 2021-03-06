@@ -13,6 +13,7 @@ import (
 var TestVmPolicy = "TestVmPolicyBasic"
 
 func TestAccVcdVmSizingPolicy(t *testing.T) {
+	preTestChecks(t)
 	if !usingSysAdmin() {
 		t.Skip("TestAccVcdVmSizingPolicy requires system admin privileges")
 	}
@@ -193,6 +194,7 @@ func TestAccVcdVmSizingPolicy(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func importStateVmSizingPolicyByIdOrName(testConfig TestConfig, resourceName string, byId bool) resource.ImportStateIdFunc {

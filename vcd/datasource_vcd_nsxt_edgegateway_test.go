@@ -12,6 +12,7 @@ import (
 // TestAccVcdNsxtEdgeGatewayMultipleSubnets test creates its own external network with many subnets and tests if edge
 // gateway resource can correctly consume these multiple subnets
 func TestAccVcdNsxtEdgeGatewayMultipleSubnetsAndDS(t *testing.T) {
+	preTestChecks(t)
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
 		return
@@ -113,6 +114,7 @@ func TestAccVcdNsxtEdgeGatewayMultipleSubnetsAndDS(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccNsxtEdgeGatewayMultipleSubnets = `
@@ -254,6 +256,7 @@ data "vcd_nsxt_edgegateway" "egw-ds" {
 // using NSX-T datasource. There is a validator inside `vcd_nsxt_edgegateway` which is supposed to refer to
 // `vcd_edgegateway` when VDC is NSX-V
 func TestAccVcdNsxtEdgeGatewayDSDoesNotAcceptNsxv(t *testing.T) {
+	preTestChecks(t)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -284,6 +287,7 @@ func TestAccVcdNsxtEdgeGatewayDSDoesNotAcceptNsxv(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccVcdNsxtEdgeGatewayDSDoesNotAcceptNsxv = `

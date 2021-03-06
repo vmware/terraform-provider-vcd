@@ -10,6 +10,7 @@ import (
 )
 
 func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
+	preTestChecks(t)
 
 	if testConfig.VCD.Catalog.VmName1InMultiVmItem == "" || testConfig.VCD.Catalog.VmName2InMultiVmItem == "" {
 		t.Skip("Variables vmName1InMultiVmItem, VmName2InMultiVmItem  must be set to run multi VM in vApp template tests")
@@ -96,6 +97,7 @@ func TestAccVcdVAppMultiVmInTemplate(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const defaultCatalogItem = `

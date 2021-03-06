@@ -13,6 +13,7 @@ import (
 )
 
 func TestAccVcdVAppHotUpdateVm(t *testing.T) {
+	preTestChecks(t)
 	var (
 		vapp        govcd.VApp
 		vm          govcd.VM
@@ -235,6 +236,7 @@ func TestAccVcdVAppHotUpdateVm(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckVcdVmNotRestarted(n string, vappName, vmName string) resource.TestCheckFunc {

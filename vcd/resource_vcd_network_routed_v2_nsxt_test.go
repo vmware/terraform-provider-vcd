@@ -10,6 +10,7 @@ import (
 
 // TestAccVcdNetworkRoutedV2Nsxt tests out NSX-T backed Org VDC networking capabilities
 func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
+	preTestChecks(t)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -116,6 +117,7 @@ func TestAccVcdNetworkRoutedV2Nsxt(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const TestAccVcdNetworkRoutedV2NsxtStep1 = `

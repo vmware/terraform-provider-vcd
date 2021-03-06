@@ -10,6 +10,7 @@ import (
 )
 
 func TestAccVcdVpn_Basic(t *testing.T) {
+	preTestChecks(t)
 	var vpnName string = "TestAccVcdVpnVpn"
 
 	// String map to fill the template
@@ -54,6 +55,7 @@ func TestAccVcdVpn_Basic(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckVcdVpnDestroy(s *terraform.State) error {

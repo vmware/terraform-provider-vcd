@@ -9,6 +9,7 @@ import (
 )
 
 func TestAccVcdNetworkRoutedV2NsxtDS(t *testing.T) {
+	preTestChecks(t)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -82,6 +83,7 @@ func TestAccVcdNetworkRoutedV2NsxtDS(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccVcdNetworkRoutedV2NsxtDS = TestAccVcdNetworkRoutedV2NsxtStep1 + `

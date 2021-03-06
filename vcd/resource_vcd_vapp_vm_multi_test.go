@@ -14,6 +14,7 @@ import (
 // go test -v -timeout 0 -tags "multivm functional" -run TestAccVcdVAppVmMulti .
 // Extends TestAccVcdVappVM with multiple VMs
 func TestAccVcdVAppVmMulti(t *testing.T) {
+	preTestChecks(t)
 	var (
 		diskResourceNameM string = "TestAccVcdVAppVmMulti"
 		vappName2         string = "TestAccVcdVAppVmVappM"
@@ -68,6 +69,7 @@ func TestAccVcdVAppVmMulti(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckVcdVAppVmMultiExists(n string, vappName, vmName string) resource.TestCheckFunc {

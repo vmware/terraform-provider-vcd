@@ -98,6 +98,7 @@ func getAvailableNetworks() error {
 }
 
 func TestAccVcdNetworkDirectDS(t *testing.T) {
+	preTestChecks(t)
 	// This test requires access to the vCD before filling templates
 	// Thus it won't run in the short test
 	if vcdShortTest {
@@ -159,9 +160,11 @@ func TestAccVcdNetworkDirectDS(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func TestAccVcdNetworkRoutedDS(t *testing.T) {
+	preTestChecks(t)
 	// This test requires access to the vCD before filling templates
 	// Thus it won't run in the short test
 	if vcdShortTest {
@@ -216,9 +219,11 @@ func TestAccVcdNetworkRoutedDS(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func TestAccVcdNetworkIsolatedDS(t *testing.T) {
+	preTestChecks(t)
 	// This test requires access to the vCD before filling templates
 	// Thus it won't run in the short test
 	if vcdShortTest {
@@ -274,6 +279,7 @@ func TestAccVcdNetworkIsolatedDS(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const datasourceTestNetworkDirect = `

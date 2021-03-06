@@ -12,6 +12,7 @@ import (
 )
 
 func TestAccVcdVAppRaw_Basic(t *testing.T) {
+	preTestChecks(t)
 	var vapp govcd.VApp
 
 	var params = StringMap{
@@ -46,6 +47,7 @@ func TestAccVcdVAppRaw_Basic(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckVcdVAppRawExists(n string, vapp *govcd.VApp) resource.TestCheckFunc {

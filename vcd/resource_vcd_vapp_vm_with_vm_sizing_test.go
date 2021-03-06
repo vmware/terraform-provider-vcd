@@ -12,6 +12,7 @@ import (
 )
 
 func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
+	preTestChecks(t)
 	var (
 		vm            govcd.VM
 		netVappName   string = t.Name()
@@ -199,6 +200,7 @@ func TestAccVcdVAppVmWithVmSizing(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckVcdVAppVmExistsByVdc(vdcName, vappName, vmName, node string, vm *govcd.VM) resource.TestCheckFunc {

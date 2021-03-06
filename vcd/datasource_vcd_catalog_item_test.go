@@ -15,6 +15,7 @@ import (
 // Using a catalog item data source we create another catalog item
 // where the description is the first data source ID
 func TestAccVcdCatalogAndItemDatasource(t *testing.T) {
+	preTestChecks(t)
 	var TestCatalogItemDS = "TestCatalogItemDS"
 
 	var params = StringMap{
@@ -73,6 +74,7 @@ func TestAccVcdCatalogAndItemDatasource(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func catalogItemDestroyed(catalog, itemName string) resource.TestCheckFunc {

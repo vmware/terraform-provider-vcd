@@ -16,6 +16,7 @@ import (
 // TestAccVcdNsxtEdgeGateway tests out creating and updating edge gateway using existing external network
 // testConfig.Nsxt.ExternalNetwork which is expected to be correctly configured.
 func TestAccVcdNsxtEdgeGateway(t *testing.T) {
+	preTestChecks(t)
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
 		return
@@ -107,6 +108,7 @@ func TestAccVcdNsxtEdgeGateway(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccNsxtEdgeGatewayDataSources = `

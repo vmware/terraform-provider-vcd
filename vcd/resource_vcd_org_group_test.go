@@ -27,6 +27,7 @@ import (
 // access internet so that it can download docker image. Also the environment where test is run must
 // be able to access external network IP so that monitoring is possible.
 func TestAccVcdOrgGroup(t *testing.T) {
+	preTestChecks(t)
 	if !usingSysAdmin() {
 		t.Skip("TestAccVcdOrgGroup requires system admin privileges")
 		return
@@ -174,6 +175,7 @@ func TestAccVcdOrgGroup(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 // testAccCheckVcdGroupDestroy verifies if Org Group with given name does not exist in vCD

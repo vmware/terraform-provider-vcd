@@ -10,6 +10,7 @@ import (
 )
 
 func TestAccVcdNsxtEdgeCluster(t *testing.T) {
+	preTestChecks(t)
 	skipNoNsxtConfiguration(t)
 
 	if !usingSysAdmin() {
@@ -70,6 +71,7 @@ func TestAccVcdNsxtEdgeCluster(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const nsxtEdgeClusterDatasource = `

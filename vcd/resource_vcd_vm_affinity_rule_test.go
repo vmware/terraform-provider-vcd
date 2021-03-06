@@ -26,6 +26,7 @@ type affinityRuleData struct {
 // TestAccVcdVmAffinityRule creates the pre-requisites for the VM affinity rule test
 // Creates several definitions, and calls runVmAffinityRuleTest for each one
 func TestAccVcdVmAffinityRule(t *testing.T) {
+	preTestChecks(t)
 	// This test requires access to the vCD before filling templates
 	// Thus it won't run in the short test
 	if vcdShortTest {
@@ -184,7 +185,7 @@ func TestAccVcdVmAffinityRule(t *testing.T) {
 			},
 		}, t)
 	})
-
+	postTestChecks(t)
 }
 
 // runVmAffinityRuleTest runs the test for a VM affinity rule definition

@@ -18,6 +18,7 @@ import (
 // power on and force customization. (VM must be un-deployed for customization to work, otherwise it would stay in
 // "GC_PENDING" state for long time)
 func TestAccVcdVAppVmUpdateCustomization(t *testing.T) {
+	preTestChecks(t)
 	var (
 		vapp        govcd.VApp
 		vm          govcd.VM
@@ -83,6 +84,7 @@ func TestAccVcdVAppVmUpdateCustomization(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 // TestAccVcdVAppVmCreateCustomization tests that setting attribute customizaton.force to `true`
@@ -91,6 +93,7 @@ func TestAccVcdVAppVmUpdateCustomization(t *testing.T) {
 // power on and force customization. (VM must be un-deployed for customization to work, otherwise it would stay in
 // "GC_PENDING" state for long time)
 func TestAccVcdVAppVmCreateCustomization(t *testing.T) {
+	preTestChecks(t)
 	var (
 		vapp        govcd.VApp
 		vm          govcd.VM
@@ -139,6 +142,7 @@ func TestAccVcdVAppVmCreateCustomization(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 // testAccCheckVcdVMCustomization functions acts as a check and a function which waits until
@@ -288,6 +292,7 @@ resource "vcd_vapp_vm" "test-vm" {
 // TestAccVcdVAppVmCreateCustomizationFalse checks if VM is booted up successfully when  customization.force=true.
 // This test covers a previous bug.
 func TestAccVcdVAppVmCreateCustomizationFalse(t *testing.T) {
+	preTestChecks(t)
 	var (
 		vapp        govcd.VApp
 		vm          govcd.VM
@@ -330,10 +335,12 @@ func TestAccVcdVAppVmCreateCustomizationFalse(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 // TestAccVcdVAppVmCustomizationSettings tests out possible customization options
 func TestAccVcdVAppVmCustomizationSettings(t *testing.T) {
+	preTestChecks(t)
 	var (
 		vapp        govcd.VApp
 		vm          govcd.VM
@@ -430,6 +437,7 @@ func TestAccVcdVAppVmCustomizationSettings(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdVAppVmUpdateCustomizationSettings = testAccCheckVcdVAppVmCustomizationShared + `

@@ -16,6 +16,7 @@ import (
 // sources defined in this provider always return error and substring 'govcd.ErrorEntityNotFound' in it when an object
 // is not found.
 func TestAccDataSourceNotFound(t *testing.T) {
+	preTestChecks(t)
 	// Exit the test early
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -29,6 +30,7 @@ func TestAccDataSourceNotFound(t *testing.T) {
 	for _, dataSource := range Provider().DataSources() {
 		t.Run(dataSource.Name, testSpecificDataSourceNotFound(t, dataSource.Name, vcdClient))
 	}
+	postTestChecks(t)
 }
 
 func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClient *VCDClient) func(*testing.T) {

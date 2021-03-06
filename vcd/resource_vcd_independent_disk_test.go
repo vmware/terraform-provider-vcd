@@ -17,6 +17,7 @@ var resourceNameSecond = "TestAccVcdIndependentDiskBasic_2"
 var name = "TestAccVcdIndependentDiskBasic"
 
 func TestAccVcdIndependentDiskBasic(t *testing.T) {
+	preTestChecks(t)
 	if !usingSysAdmin() {
 		t.Skip("TestAccVcdIndependentDiskBasic requires system admin privileges")
 	}
@@ -85,6 +86,7 @@ func TestAccVcdIndependentDiskBasic(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckDiskCreated(itemName string) resource.TestCheckFunc {

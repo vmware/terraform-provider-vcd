@@ -5,6 +5,7 @@ package vcd
 import "testing"
 
 func TestAccVcdOrgVdcNsxt(t *testing.T) {
+	preTestChecks(t)
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
 	}
@@ -45,4 +46,5 @@ func TestAccVcdOrgVdcNsxt(t *testing.T) {
 	}
 
 	runOrgVdcTest(t, params, allocationModel)
+	postTestChecks(t)
 }

@@ -13,6 +13,7 @@ import (
 )
 
 func TestAccVcdEdgeGatewaySettingsFull(t *testing.T) {
+	preTestChecks(t)
 	if !usingSysAdmin() {
 		t.Skip("Edge Gateway resource tests require system admin privileges")
 		return
@@ -67,6 +68,7 @@ func TestAccVcdEdgeGatewaySettingsFull(t *testing.T) {
 	}
 	configText := templateFill(testAccEdgeGatewaySettingsFull, params)
 	debugPrintf("#[DEBUG] %s", configText)
+	postTestChecks(t)
 }
 
 func getEdgeGatewayInfo() (*govcd.EdgeGateway, error) {
@@ -95,6 +97,7 @@ func getEdgeGatewayInfo() (*govcd.EdgeGateway, error) {
 }
 
 func TestAccVcdEdgeGatewaySettingsBasic(t *testing.T) {
+	preTestChecks(t)
 
 	testName := "EdgeGatewaySettingsBasic"
 	var existingEgw *govcd.EdgeGateway
@@ -202,6 +205,7 @@ func TestAccVcdEdgeGatewaySettingsBasic(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 // boolComparisonToErr returns an error if the two provided values don't match

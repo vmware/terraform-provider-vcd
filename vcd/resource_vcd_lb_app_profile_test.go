@@ -15,6 +15,7 @@ import (
 )
 
 func TestAccVcdLBAppProfile(t *testing.T) {
+	preTestChecks(t)
 	// String map to fill the template
 	var params = StringMap{
 		"Org":            testConfig.VCD.Org,
@@ -185,6 +186,7 @@ func TestAccVcdLBAppProfile(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckVcdLBAppProfileDestroy(appProfileName string) resource.TestCheckFunc {

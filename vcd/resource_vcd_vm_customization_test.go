@@ -19,6 +19,7 @@ import (
 // power on and force customization. (VM must be un-deployed for customization to work, otherwise it would stay in
 // "GC_PENDING" state for long time)
 func TestAccVcdStandaloneVmUpdateCustomization(t *testing.T) {
+	preTestChecks(t)
 	var standaloneVmName = fmt.Sprintf("%s-%d", t.Name(), os.Getpid())
 
 	var params = StringMap{
@@ -79,6 +80,7 @@ func TestAccVcdStandaloneVmUpdateCustomization(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 // TestAccVcdStandaloneVmCreateCustomization tests that setting attribute customizaton.force to `true`
@@ -87,6 +89,7 @@ func TestAccVcdStandaloneVmUpdateCustomization(t *testing.T) {
 // power on and force customization. (VM must be un-deployed for customization to work, otherwise it would stay in
 // "GC_PENDING" state for long time)
 func TestAccVcdStandaloneVmCreateCustomization(t *testing.T) {
+	preTestChecks(t)
 	var standaloneVmName = fmt.Sprintf("%s-%d", t.Name(), os.Getpid())
 
 	var params = StringMap{
@@ -130,6 +133,7 @@ func TestAccVcdStandaloneVmCreateCustomization(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 // testAccCheckVcdStandaloneVMCustomization functions acts as a check and a function which waits until
@@ -240,6 +244,7 @@ resource "vcd_vm" "test-vm" {
 
 // TestAccVcdStandaloneVmCustomizationSettings tests out possible customization options
 func TestAccVcdStandaloneVmCustomizationSettings(t *testing.T) {
+	preTestChecks(t)
 	var standaloneVmName = fmt.Sprintf("%s-%d", t.Name(), os.Getpid())
 
 	var params = StringMap{
@@ -330,6 +335,7 @@ func TestAccVcdStandaloneVmCustomizationSettings(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdVmUpdateCustomizationSettings = `
