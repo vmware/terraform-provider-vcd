@@ -11,6 +11,7 @@
 - [Handling failures in binary tests](#handling-failures-in-binary-tests)
 - [Upgrade testing](#upgrade-testing)
 - [Custom terraform scripts](#custom-terraform-scripts)
+- [Conditional running of tests](#conditional-running-of-tests)
 - [Environment variables and corresponding flags](#environment-variables-and-corresponding-flags)
 
 ## Meeting prerequisites: Building the test environment
@@ -486,16 +487,17 @@ There are a few tags that help us gain some control on the flow:
 
 When `-vcd-pre-post-checks` is used, we have several advantages:
 
-1) After each successful test, the test name gets recorded in a file `vcd_test_pass_list_{VCD_IP}.txt`, and each failed
+1. After each successful test, the test name gets recorded in a file `vcd_test_pass_list_{VCD_IP}.txt`, and each failed
    test goes to `vcd_test_fail_list_{VCD_IP}.txt`. When running the suite on the same VCD a second time, all tests in
    the `pass` list are skipped. If the test run was interrupted (see #2 below), we can only run the tests that did not
    run in the previous attempt.
-2) We can interrupt the tests by creating a file `skip_vcd_tests` in the `./vcd` directory. When this file is found by
-   the pre-run routine, all the tests are skipped. The file `skip_vcd_tests` will be removed automatically at the next run.
-3) We can skip one or more tests conditionally, using `-vcd-skip-pattern="{REGEXP}"`. All the test with a name that
+2. We can **gracefully** interrupt the tests by creating a file `skip_vcd_tests` in the `./vcd` directory. 
+   When this file is found by the pre-run routine, all the tests are skipped. The file `skip_vcd_tests` will be removed
+   automatically at the next run.
+3. We can skip one or more tests conditionally, using `-vcd-skip-pattern="{REGEXP}"`. All the test with a name that
    matches the pattern are skipped.
-4) We can re-run only the tests that failed in the previous run, using `-vcd-re-run-failed`.
-5) We can add monitoring information with `-vcd-show-count`, `-vcd-show-elapsed-time`, `-vcd-show-timestamp`.
+4. We can re-run only the tests that failed in the previous run, using `-vcd-re-run-failed`.
+5. We can add monitoring information with `-vcd-show-count`, `-vcd-show-elapsed-time`, `-vcd-show-timestamp`.
 
 If we use `-vcd-pre-post-checks` and the run was successful, the next run will skip all tests, because the test names
 would be all found in `vcd_test_pass_list_{VCD_IP}.txt`. To run again the test from scratch, we could either remove
