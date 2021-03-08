@@ -12,6 +12,7 @@ import (
 )
 
 func TestAccVcdStandaloneVmProperties(t *testing.T) {
+	preTestChecks(t)
 	var standaloneVmName = fmt.Sprintf("%s-%d", t.Name(), os.Getpid())
 
 	var params = StringMap{
@@ -72,6 +73,7 @@ func TestAccVcdStandaloneVmProperties(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdVm_properties = `

@@ -20,6 +20,7 @@ type listDef struct {
 }
 
 func TestAccVcdDatasourceResourceList(t *testing.T) {
+	preTestChecks(t)
 
 	var lists = []listDef{
 		{"resources", "resources", "", "vcd_org"},
@@ -73,6 +74,7 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 	for _, def := range lists {
 		t.Run(def.name+"-"+def.resourceType, func(t *testing.T) { runResourceInfoTest(def, t) })
 	}
+	postTestChecks(t)
 }
 
 func runResourceInfoTest(def listDef, t *testing.T) {

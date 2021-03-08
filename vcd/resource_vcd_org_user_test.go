@@ -83,6 +83,7 @@ func prepareUserData(t *testing.T) []userTestData {
 }
 
 func TestAccVcdOrgUserBasic(t *testing.T) {
+	preTestChecks(t)
 
 	userData := prepareUserData(t)
 	willSkipTests := false
@@ -135,9 +136,11 @@ func TestAccVcdOrgUserBasic(t *testing.T) {
 		return
 	}
 	cleanUserData(t)
+	postTestChecks(t)
 }
 
 func TestAccVcdOrgUserFull(t *testing.T) {
+	preTestChecks(t)
 
 	userData := prepareUserData(t)
 	willSkipTests := false
@@ -253,11 +256,13 @@ func TestAccVcdOrgUserFull(t *testing.T) {
 		return
 	}
 	cleanUserData(t)
+	postTestChecks(t)
 }
 
 // Tests the creation of a user that copies
 // properties values from organization data source
 func TestAccVcdOrgUserWithDS(t *testing.T) {
+	preTestChecks(t)
 
 	userData := prepareUserData(t)
 
@@ -314,6 +319,7 @@ func TestAccVcdOrgUserWithDS(t *testing.T) {
 		})
 	}
 	cleanUserData(t)
+	postTestChecks(t)
 }
 
 func testAccCheckVcdUserDestroy(userName string) resource.TestCheckFunc {

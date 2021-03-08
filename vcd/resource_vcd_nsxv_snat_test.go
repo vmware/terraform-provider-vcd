@@ -10,6 +10,7 @@ import (
 )
 
 func TestAccVcdEdgeSnat(t *testing.T) {
+	preTestChecks(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -88,6 +89,7 @@ func TestAccVcdEdgeSnat(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccNetForNat = `

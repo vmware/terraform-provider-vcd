@@ -36,6 +36,12 @@ func init() {
 	// To list the flags when we run "go test -tags functional -vcd-help", the flag name must start with "vcd"
 	// They will all appear alongside the native flags when we use an invalid one
 	setBoolFlag(&vcdHelp, "vcd-help", "VCD_HELP", "Show vcd flags")
+	setBoolFlag(&vcdRemoveTestList, "vcd-remove-test-list", "VCD_REMOVE_TEST_LIST", "Remove list of test runs")
+	setBoolFlag(&vcdPrePostChecks, "vcd-pre-post-checks", "VCD_PRE_POST_CHECKS", "Perform checks before and after tests")
+	setBoolFlag(&vcdShowTimestamp, "vcd-show-timestamp", "VCD_SHOW_TIMESTAMP", "Show timestamp in pre and post checks")
+	setBoolFlag(&vcdShowElapsedTime, "vcd-show-elapsed-time", "VCD_SHOW_ELAPSED_TIME", "Show elapsed time since the start of the suite in pre and post checks")
+	setBoolFlag(&vcdShowCount, "vcd-show-count", "VCD_SHOW_COUNT", "Show number of pass/fail tests")
+	setBoolFlag(&vcdReRunFailed, "vcd-re-run-failed", "VCD_RE_RUN_FAILED", "Run only tests that failed in a previous run")
 	setBoolFlag(&testDistributedNetworks, "vcd-test-distributed", "", "enables testing of distributed network")
 	setBoolFlag(&enableDebug, "vcd-debug", "GOVCD_DEBUG", "enables debug output")
 	setBoolFlag(&vcdTestVerbose, "vcd-verbose", "TEST_VERBOSE", "enables verbose output")
@@ -45,6 +51,7 @@ func init() {
 	setBoolFlag(&vcdSkipTemplateWriting, "vcd-skip-template-write", envVcdSkipTemplateWriting, "Skip writing templates to file")
 	setBoolFlag(&vcdRemoveOrgVdcFromTemplate, "vcd-remove-org-vdc-from-template", envVcdRemoveOrgVdcFromTemplate, "Remove org and VDC from template")
 	setBoolFlag(&vcdTestOrgUser, "vcd-test-org-user", envVcdTestOrgUser, "Run tests with org user")
+	setStringFlag(&vcdSkipPattern, "vcd-skip-pattern", "VCD_SKIP_PATTERN", "Skip tests that match the pattern (implies vcd-pre-post-checks")
 
 }
 
@@ -188,6 +195,38 @@ var (
 	// vcdTestOrgUser enables testing with the Org User
 	vcdTestOrgUser = false
 
+	// vcdRemoveTestList triggers the removal of the test run list if present
+	vcdRemoveTestList = false
+
+	// vcdPrePostChecks enables pre and post checks for all tests
+	vcdPrePostChecks = false
+
+	// vcdReRunFailed will run only tests that failed in a previous run
+	vcdReRunFailed = false
+
+	// vcdShowTimestamp shows a time stamp at the start of each test
+	vcdShowTimestamp = false
+
+	// vcdShowElapsedTime shows the elapsed time since the start od the suite
+	vcdShowElapsedTime = false
+
+	// vcdShowCount shows the count of pass/skip/fail at the end of the suite
+	vcdShowCount = false
+
+	// vcdSkipPattern will skip all tests with a name that matches a given pattern
+	vcdSkipPattern string
+
+	// vcdSkipAllFile is the name of the file that will skip all the tests if found during a pre-test check
+	vcdSkipAllFile = "skip_vcd_tests"
+
+	// vcdStartTime is he time when the tests started
+	vcdStartTime = time.Now()
+
+	// vcdPassCount, vcdFailCount, vcdSkipCount are the global counters for the tests result
+	vcdPassCount = 0
+	vcdFailCount = 0
+	vcdSkipCount = 0
+
 	// vcdHelp displays the vcd-* flags
 	vcdHelp = false
 
@@ -195,6 +234,9 @@ var (
 	// which in turn requires a NSX controller. To run the distributed test, users
 	// need to set the environment variable VCD_TEST_DISTRIBUTED_NETWORK
 	testDistributedNetworks = false
+
+	// runTestRunListFileLock regulates access to the list of run tests
+	runTestRunListFileLock = newMutexKVSilent()
 )
 
 const (
@@ -637,6 +679,15 @@ func TestMain(m *testing.M) {
 		fmt.Println()
 		os.Exit(0)
 	}
+	// If any of the checks is enabled, we enable the pre and post test functions
+	if vcdSkipPattern != "" || vcdShowElapsedTime || vcdShowTimestamp || vcdRemoveTestList ||
+		vcdShowCount || vcdReRunFailed {
+		vcdPrePostChecks = true
+	}
+	if vcdPrePostChecks {
+		// remove the user-placed skip file
+		_ = os.Remove(vcdSkipAllFile)
+	}
 
 	// Fills the configuration variable: it will be available to all tests,
 	// or the whole suite will fail if it is not found.
@@ -645,6 +696,16 @@ func TestMain(m *testing.M) {
 	configFile := getConfigFileName()
 	if configFile != "" {
 		testConfig = getConfigStruct(configFile)
+	}
+	if vcdRemoveTestList {
+		for _, ft := range []string{"pass", "fail"} {
+			err := removeTestRunList(ft)
+			if err != nil {
+				fmt.Printf("Error removing testRunList: %s", err)
+				fmt.Printf("You should remove the file %s manually before trying again", getTestListFile(ft))
+				os.Exit(0)
+			}
+		}
 	}
 	if !vcdShortTest {
 
@@ -695,6 +756,9 @@ func TestMain(m *testing.M) {
 		} else {
 			fmt.Printf("TestSuite destroy skipped - preserve turned on \n")
 		}
+	}
+	if vcdShowCount {
+		fmt.Printf("Pass: %5d - Skip: %5d - Fail: %5d\n", vcdPassCount, vcdSkipCount, vcdFailCount)
 	}
 
 	// TODO: cleanup leftovers
@@ -1035,6 +1099,16 @@ func setBoolFlag(varPointer *bool, name, envVar, help string) {
 	flag.BoolVar(varPointer, name, *varPointer, help)
 }
 
+// setStringFlag binds a flag to a string variable (passed as pointer)
+// it also uses an optional environment variable that, if set, will
+// update the variable before binding it to the flag.
+func setStringFlag(varPointer *string, name, envVar, help string) {
+	if envVar != "" && os.Getenv(envVar) != "" {
+		*varPointer = os.Getenv(envVar)
+	}
+	flag.StringVar(varPointer, name, *varPointer, help)
+}
+
 type envHelper struct {
 	vars map[string]string
 }
@@ -1250,4 +1324,189 @@ func testAccCheckVcdStandaloneVmDestroy(vmName string, orgName string, vdcName s
 
 		return nil
 	}
+}
+
+func timeStamp() string {
+	now := time.Now()
+	return now.Format(time.RFC3339)
+}
+
+// preTestChecks is to be called at the beginning of a test function.
+// It allows for several skipping mechanisms:
+//
+// 1) It will skip if the file 'skip_vcd_tests' is found.
+//   This allows to interrupt the test suite in  a clean way, by creating the skipping trigger file
+//   during the test run
+//   When the user creates such file, the tests still running will continue until their natural end
+//   and the other tests will skip
+//
+// 2) if the file 'skip_vcd_tests' contains a pattern, only the tests with a name that match such pattern will skip
+//
+// 3) It will skip if a test has already run successfully. This is useful when the suite was interrupted,
+//   so that we can repeat the run without repeating the tests that have succeeded
+//
+// 4) It will skip the test if a given environment variable was set
+//
+// 5) It will skip the test if the option -vcd-skip-pattern or the environment variable 'VCD_SKIP_PATTERN'
+//   contains a pattern that matches the test name.
+// 6) If the flag -vcd-re-run-failed is true, it will only run the tests that failed in the previous run
+func preTestChecks(t *testing.T) {
+	// if the test runs without -vcd-pre-post-checks, all post-checks will be skipped
+	if !vcdPrePostChecks {
+		return
+	}
+	if vcdShowTimestamp {
+		fmt.Printf("Test started at: %s\n", timeStamp())
+	}
+	if vcdShowElapsedTime {
+		elapsed := time.Since(vcdStartTime)
+		fmt.Printf("Elapsed: %s\n", elapsed.String())
+	}
+	if fileExists(vcdSkipAllFile) {
+		vcdSkipCount += 1
+		t.Skip(fmt.Sprintf("File '%s' found at %s. Test %s skipped", vcdSkipAllFile, timeStamp(), t.Name()))
+	}
+	if vcdSkipPattern != "" {
+		re := regexp.MustCompile(vcdSkipPattern)
+		if re.MatchString(t.Name()) {
+			vcdSkipCount += 1
+			t.Skip(fmt.Sprintf("Skip pattern '%s' matches test name '%s'", vcdSkipPattern, t.Name()))
+		}
+	}
+	skipEnvVar := fmt.Sprintf("skip-%s", t.Name())
+
+	if vcdTestVerbose {
+		fmt.Printf("ENV VAR for %s: %s\n", t.Name(), skipEnvVar)
+	}
+	if os.Getenv(skipEnvVar) != "" {
+		vcdSkipCount += 1
+		t.Skip(fmt.Sprintf("variable '%s' was set.", skipEnvVar))
+	}
+	// If this test has run already, we skip it
+	if isTestInFile(t.Name(), "pass") {
+		vcdSkipCount += 1
+		t.Skip(fmt.Sprintf("test '%s' found in '%s' ", t.Name(), getTestListFile("pass")))
+	}
+	if vcdReRunFailed {
+		if !isTestInFile(t.Name(), "fail") {
+			vcdSkipCount += 1
+			t.Skip("only running tests that have failed at the previous run")
+		}
+	}
+}
+
+// postTestChecks runs checks after the test
+// It performs the following:
+// 1) shows a time stamp (if enabled by -vcd-show-timestamp
+// 2) stores file name in the "pass" or "fail" list, depending on their outcome. The lists are distinct by VCD IP
+// 3) increments the pass/fail counters
+func postTestChecks(t *testing.T) {
+	// if the test runs without -vcd-pre-post-checks, all post-checks will be skipped
+	if !vcdPrePostChecks {
+		return
+	}
+	if vcdShowTimestamp {
+		fmt.Printf("Test ended at at: %s\n", timeStamp())
+	}
+	var err error
+	var fileType = "pass"
+	if t.Failed() {
+		fileType = "fail"
+		vcdFailCount += 1
+	} else {
+		vcdPassCount += 1
+	}
+	err = addToTestRunList(t.Name(), fileType)
+	if err != nil {
+		fmt.Printf("WARNING: error adding test name '%s' to file '%s'\n", t.Name(), getTestListFile(fileType))
+	}
+}
+
+// getTestListFile returns the name of the file containing the wanted (pass/fail) list
+// for the VCD being tested
+func getTestListFile(fileType string) string {
+	if testConfig.Provider.Url == "" {
+		return ""
+	}
+	testingVcdIp := strings.Replace(testConfig.Provider.Url, "https://", "", -1)
+	testingVcdIp = strings.Replace(testingVcdIp, "/api", "", -1)
+	testingVcdIp = strings.Replace(testingVcdIp, "/", "", -1)
+	testingVcdIp = strings.Replace(testingVcdIp, ".", "-", -1)
+	return fmt.Sprintf("vcd_test_%s_list-%s.txt", fileType, testingVcdIp)
+}
+
+// isTestInFile returns true if a given test name is found in the wanted (pass/fail) list
+func isTestInFile(testName, fileType string) bool {
+	fileName := getTestListFile(fileType)
+	if fileName == "" {
+		return false
+	}
+	runTestRunListFileLock.kvLock(fileName)
+	defer runTestRunListFileLock.kvUnlock(fileName)
+	if !fileExists(fileName) {
+		return false
+	}
+	f, err := os.Open(fileName) // #nosec G304
+	if err != nil {
+		return false
+	}
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := strings.TrimSpace(scanner.Text())
+		if line == testName {
+			return true
+		}
+	}
+	return false
+}
+
+// removeTestRunList removes the wanted (pass/fail) list for the VCD being tested
+// This operation is triggered by -vcd-remove-test-list, and it is needed to run
+// a test again after running with -vcd-pre-post-checks
+func removeTestRunList(fileType string) error {
+	fileName := getTestListFile(fileType)
+	runTestRunListFileLock.kvLock(fileName)
+	defer runTestRunListFileLock.kvUnlock(fileName)
+	if fileExists(vcdSkipAllFile) {
+		err := os.Remove(vcdSkipAllFile)
+		if err != nil {
+			return err
+		}
+	}
+	if !fileExists(fileName) {
+		fmt.Printf("[removeTestRunList] '%s' not found\n", fileName)
+		return nil
+	}
+	return os.Remove(fileName)
+}
+
+// addToTestRunList adds a given test name to a wanted (pass/fail) list
+func addToTestRunList(testName, fileType string) error {
+	fileName := getTestListFile(fileType)
+	if fileName == "" {
+		return nil
+	}
+	runTestRunListFileLock.kvLock(fileName)
+	defer runTestRunListFileLock.kvUnlock(fileName)
+
+	var file *os.File
+	var err error
+	if fileExists(fileName) {
+		file, err = os.OpenFile(fileName, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+	} else {
+		file, err = os.Create(fileName)
+	}
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	w := bufio.NewWriter(file)
+	_, err = fmt.Fprintf(w, "%s\n", testName)
+	if err != nil {
+		return fmt.Errorf("error writing to file %s: %s", fileName, err)
+	}
+	return w.Flush()
 }

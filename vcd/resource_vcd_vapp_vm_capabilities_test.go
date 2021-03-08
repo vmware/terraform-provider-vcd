@@ -10,6 +10,7 @@ import (
 )
 
 func TestAccVcdVAppVmCapabilities(t *testing.T) {
+	preTestChecks(t)
 	var vapp govcd.VApp
 	var vm govcd.VM
 
@@ -58,6 +59,7 @@ func TestAccVcdVAppVmCapabilities(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdVAppVm_capabilities = `

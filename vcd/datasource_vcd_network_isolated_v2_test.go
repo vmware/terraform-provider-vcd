@@ -10,6 +10,7 @@ import (
 )
 
 func TestAccVcdNetworkIsolatedV2NsxvDS(t *testing.T) {
+	preTestChecks(t)
 	// This test requires access to the vCD before filling templates
 	// Thus it won't run in the short test
 	if vcdShortTest {
@@ -76,7 +77,7 @@ func TestAccVcdNetworkIsolatedV2NsxvDS(t *testing.T) {
 			},
 		},
 	})
-
+	postTestChecks(t)
 }
 
 const testAccVcdNetworkIsolatedV2NsxvDS = `

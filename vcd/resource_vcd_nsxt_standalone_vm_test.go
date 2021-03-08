@@ -18,6 +18,7 @@ func init() {
 
 // TestAccVcdNsxtStandaloneVmTemplate tests NSX-T Routed network DHCP pools, static pools and manual IP assignment
 func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
+	preTestChecks(t)
 
 	if testConfig.Nsxt.Vdc == "" || testConfig.Nsxt.EdgeGateway == "" {
 		t.Skip("Either NSXT VDC or edge gateway not defined")
@@ -111,9 +112,11 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func TestAccVcdNsxtStandaloneEmptyVm(t *testing.T) {
+	preTestChecks(t)
 
 	if testConfig.Nsxt.Vdc == "" || testConfig.Nsxt.EdgeGateway == "" {
 		t.Skip("Either NSXT VDC or edge gateway not defined")
@@ -193,6 +196,7 @@ func TestAccVcdNsxtStandaloneEmptyVm(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdNsxtStandaloneVm_basic = `

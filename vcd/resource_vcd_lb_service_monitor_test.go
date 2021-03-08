@@ -16,6 +16,7 @@ import (
 )
 
 func TestAccVcdLbServiceMonitor(t *testing.T) {
+	preTestChecks(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -93,6 +94,7 @@ func TestAccVcdLbServiceMonitor(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckVcdLbServiceMonitorDestroy(serviceMonitorName string) resource.TestCheckFunc {

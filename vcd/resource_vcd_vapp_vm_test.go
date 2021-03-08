@@ -18,6 +18,7 @@ var vappName2 string = "TestAccVcdVAppVmVapp"
 var vmName string = "TestAccVcdVAppVmVm"
 
 func TestAccVcdVAppVm_Basic(t *testing.T) {
+	preTestChecks(t)
 	var vapp govcd.VApp
 	var vm govcd.VM
 	var diskResourceName = "TestAccVcdVAppVm_Basic_1"
@@ -87,9 +88,11 @@ func TestAccVcdVAppVm_Basic(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func TestAccVcdVAppVm_Clone(t *testing.T) {
+	preTestChecks(t)
 	var vapp govcd.VApp
 	var vm govcd.VM
 
@@ -157,6 +160,7 @@ func TestAccVcdVAppVm_Clone(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdVAppVm_basic = `

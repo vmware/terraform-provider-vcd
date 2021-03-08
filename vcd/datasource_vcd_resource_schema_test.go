@@ -10,10 +10,12 @@ import (
 )
 
 func TestAccVcdDatasourceResourceSchema(t *testing.T) {
+	preTestChecks(t)
 
 	for name := range globalResourceMap {
 		t.Run(name, func(t *testing.T) { runResourceSchemaTest(name, t) })
 	}
+	postTestChecks(t)
 }
 
 func runResourceSchemaTest(name string, t *testing.T) {

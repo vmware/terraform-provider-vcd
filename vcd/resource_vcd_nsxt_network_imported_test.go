@@ -9,6 +9,7 @@ import (
 )
 
 func TestAccVcdNsxtNetworkImported(t *testing.T) {
+	preTestChecks(t)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -99,6 +100,7 @@ func TestAccVcdNsxtNetworkImported(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const TestAccVcdNetworkImportedV2NsxtStep1 = `

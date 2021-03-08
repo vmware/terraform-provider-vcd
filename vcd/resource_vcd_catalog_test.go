@@ -19,6 +19,7 @@ var TestAccVcdCatalogName = "TestAccVcdCatalog"
 var TestAccVcdCatalogDescription = "TestAccVcdCatalogBasicDescription"
 
 func TestAccVcdCatalog(t *testing.T) {
+	preTestChecks(t)
 	var params = StringMap{
 		"Org":            testConfig.VCD.Org,
 		"CatalogName":    TestAccVcdCatalogName,
@@ -94,11 +95,13 @@ func TestAccVcdCatalog(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 // TestAccVcdCatalogWithStorageProfile is very similar to TestAccVcdCatalog, but it ensure that a catalog can be created
 // using specific storage profile
 func TestAccVcdCatalogWithStorageProfile(t *testing.T) {
+	preTestChecks(t)
 	var params = StringMap{
 		"Org":            testConfig.VCD.Org,
 		"Vdc":            testConfig.VCD.Vdc,
@@ -142,6 +145,7 @@ func TestAccVcdCatalogWithStorageProfile(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckVcdCatalogExists(name string) resource.TestCheckFunc {

@@ -14,6 +14,7 @@ import (
 )
 
 func TestAccVcdIpSet(t *testing.T) {
+	preTestChecks(t)
 
 	// String map to fill the template
 	var params = StringMap{
@@ -110,6 +111,7 @@ func TestAccVcdIpSet(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckVcdIpSetDestroy(resource, ipSetName string) resource.TestCheckFunc {

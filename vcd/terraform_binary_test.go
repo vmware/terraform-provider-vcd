@@ -42,6 +42,7 @@ func readFile(filename string) (string, error) {
 
 // Fills custom templates with data from configuration file
 func TestCustomTemplates(t *testing.T) {
+	// do not add pre/post checks
 	var binaryTestList []string
 
 	fileList, err := ioutil.ReadDir(customTemplatesDirectory)

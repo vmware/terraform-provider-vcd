@@ -13,6 +13,7 @@ import (
 )
 
 func TestAccVcdVApp_Basic(t *testing.T) {
+	preTestChecks(t)
 	var vapp govcd.VApp
 	var vappName = "TestAccVcdVAppVapp"
 
@@ -81,6 +82,7 @@ func TestAccVcdVApp_Basic(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckVcdVAppExists(n string, vapp *govcd.VApp) resource.TestCheckFunc {

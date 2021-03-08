@@ -12,6 +12,7 @@ import (
 )
 
 func TestAccVcdStandaloneVmCapabilities(t *testing.T) {
+	preTestChecks(t)
 
 	var standaloneVmName = fmt.Sprintf("%s-%d", t.Name(), os.Getpid())
 	var params = StringMap{
@@ -59,6 +60,7 @@ func TestAccVcdStandaloneVmCapabilities(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdVm_capabilities = `

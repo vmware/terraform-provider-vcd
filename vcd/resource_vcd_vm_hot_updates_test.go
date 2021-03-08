@@ -13,6 +13,7 @@ import (
 )
 
 func TestAccVcdStandaloneHotUpdateVm(t *testing.T) {
+	preTestChecks(t)
 	var standaloneVmName = fmt.Sprintf("%s-%d", t.Name(), os.Getpid())
 
 	if testConfig.Media.MediaName == "" {
@@ -200,6 +201,7 @@ func TestAccVcdStandaloneHotUpdateVm(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testStandaloneSharedHotUpdate = `

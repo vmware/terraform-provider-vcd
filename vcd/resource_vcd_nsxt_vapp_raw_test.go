@@ -13,6 +13,7 @@ import (
 )
 
 func TestAccVcdNsxtVAppRawAllNsxtNetworks(t *testing.T) {
+	preTestChecks(t)
 
 	if testConfig.Nsxt.Vdc == "" || testConfig.Nsxt.EdgeGateway == "" {
 		t.Skip("Either NSXT VDC or edge gateway not defined")
@@ -62,6 +63,7 @@ func TestAccVcdNsxtVAppRawAllNsxtNetworks(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckVcdNsxtVAppRawExists(n string, vapp *govcd.VApp) resource.TestCheckFunc {

@@ -9,6 +9,7 @@ import (
 )
 
 func TestAccVcdNetworkIsolatedV2Nsxv(t *testing.T) {
+	preTestChecks(t)
 	var params = StringMap{
 		"Org":         testConfig.VCD.Org,
 		"Vdc":         testConfig.VCD.Vdc,
@@ -55,6 +56,7 @@ func TestAccVcdNetworkIsolatedV2Nsxv(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccVcdNetworkIsolatedV2Nsxv = `

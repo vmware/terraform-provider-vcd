@@ -15,6 +15,7 @@ var TestAccVcdCatalogItem = "TestAccVcdCatalogItemBasic"
 var TestAccVcdCatalogItemDescription = "TestAccVcdCatalogItemBasicDescription"
 
 func TestAccVcdCatalogItemBasic(t *testing.T) {
+	preTestChecks(t)
 
 	var params = StringMap{
 		"Org":             testConfig.VCD.Org,
@@ -74,6 +75,7 @@ func TestAccVcdCatalogItemBasic(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func preRunChecks(t *testing.T) {

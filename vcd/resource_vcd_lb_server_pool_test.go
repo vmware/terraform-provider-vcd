@@ -15,6 +15,7 @@ import (
 )
 
 func TestAccVcdLbServerPool(t *testing.T) {
+	preTestChecks(t)
 	// String map to fill the template
 	var params = StringMap{
 		"Org":                testConfig.VCD.Org,
@@ -215,6 +216,7 @@ func TestAccVcdLbServerPool(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckVcdLbServerPoolDestroy(serverPoolName string) resource.TestCheckFunc {

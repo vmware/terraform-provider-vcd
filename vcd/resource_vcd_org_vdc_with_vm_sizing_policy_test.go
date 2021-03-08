@@ -10,6 +10,7 @@ import (
 )
 
 func TestAccVcdOrgVdcWithVmSizingPolicy(t *testing.T) {
+	preTestChecks(t)
 	if !usingSysAdmin() {
 		t.Skip("TestAccVcdOrgVdcWithVmSizingPolicy requires system admin privileges")
 	}
@@ -201,6 +202,7 @@ func TestAccVcdOrgVdcWithVmSizingPolicy(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func init() {

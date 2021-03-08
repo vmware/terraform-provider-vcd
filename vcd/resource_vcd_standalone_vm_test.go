@@ -16,6 +16,7 @@ func init() {
 }
 
 func TestAccVcdStandaloneVmTemplate(t *testing.T) {
+	preTestChecks(t)
 	// making sure the VM name is unique
 	var standaloneVmName = fmt.Sprintf("%s-%d", t.Name(), os.Getpid())
 	var diskResourceName = fmt.Sprintf("%s_disk", t.Name())
@@ -90,9 +91,11 @@ func TestAccVcdStandaloneVmTemplate(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func TestAccVcdStandaloneEmptyVm(t *testing.T) {
+	preTestChecks(t)
 	// making sure the VM name is unique
 	standaloneVmName := fmt.Sprintf("%s-%d", t.Name(), os.Getpid())
 
@@ -167,6 +170,7 @@ func TestAccVcdStandaloneEmptyVm(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdStandaloneVm_basic = `

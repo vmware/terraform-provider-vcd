@@ -13,6 +13,7 @@ import (
 )
 
 func TestAccVcdStandaloneVmDhcpWait(t *testing.T) {
+	preTestChecks(t)
 	var standaloneVmName = fmt.Sprintf("%s-%d", t.Name(), os.Getpid())
 
 	var params = StringMap{
@@ -104,6 +105,7 @@ func TestAccVcdStandaloneVmDhcpWait(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdVmDhcpWaitShared = `

@@ -16,6 +16,7 @@ import (
 // Using a catalog media data source we create another catalog media
 // where the description is the first data source ID
 func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
+	preTestChecks(t)
 	var TestCatalogMediaDS = "TestCatalogMediaDS"
 	var TestAccVcdDataSourceMedia = "TestAccVcdCatalogMediaBasic"
 	var TestAccVcdDataSourceMediaDescription = "TestAccVcdCatalogMediaBasicDescription"
@@ -59,6 +60,7 @@ func TestAccVcdCatalogAndMediaDatasource(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func catalogMediaDestroyed(catalog, mediaName string) resource.TestCheckFunc {

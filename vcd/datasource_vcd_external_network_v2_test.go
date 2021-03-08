@@ -10,6 +10,7 @@ import (
 )
 
 func TestAccVcdExternalNetworkV2Datasource(t *testing.T) {
+	preTestChecks(t)
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
 		return
@@ -57,6 +58,7 @@ func TestAccVcdExternalNetworkV2Datasource(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const externalNetworkV2Datasource = `

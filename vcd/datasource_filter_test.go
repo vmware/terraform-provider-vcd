@@ -297,6 +297,7 @@ func generateTemplates(matches []govcd.FilterMatch) (string, map[string]string, 
 // 2. It will then generate the HCL script for the data source
 // 3. The test will check that each data source matches the expected entity name
 func TestAccSearchEngine(t *testing.T) {
+	preTestChecks(t)
 	// This test requires access to the vCD before filling templates
 	// Thus it won't run in the short test
 	if vcdShortTest {
@@ -311,6 +312,7 @@ func TestAccSearchEngine(t *testing.T) {
 	t.Run("media", func(t *testing.T) { runSearchTest(types.QtMedia, "media", t) })
 	t.Run("catalog", func(t *testing.T) { runSearchTest(types.QtCatalog, "catalog", t) })
 	t.Run("edge_gateway", func(t *testing.T) { runSearchTest(types.QtEdgeGateway, "edge_gateway", t) })
+	postTestChecks(t)
 }
 
 // runSearchTest builds the test elements for the given entityType and run the test itself

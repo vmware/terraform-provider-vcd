@@ -20,12 +20,14 @@ var testAccProvider *schema.Provider
 var testAccProviders map[string]func() (*schema.Provider, error)
 
 func TestProvider(t *testing.T) {
+	// Do not add pre and post checks
 	if err := Provider().InternalValidate(); err != nil {
 		t.Fatalf("err: %s", err)
 	}
 }
 
 func TestProvider_impl(t *testing.T) {
+	// Do not add pre and post checks
 	var _ *schema.Provider = Provider()
 }
 
@@ -92,6 +94,7 @@ func minIfLess(min, value int) int {
 // TestAccClientUserAgent ensures that client initialization config.Client() used by provider initializes
 // go-vcloud-director client by having User-Agent set
 func TestAccClientUserAgent(t *testing.T) {
+	// Do not add pre and post checks
 	// Exit the test early
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)

@@ -15,6 +15,7 @@ import (
 // To execute this test, run
 // go test -v -timeout 0 -tags multivm -run TestAccVcdVAppRawMulti .
 func TestAccVcdVAppRawMulti(t *testing.T) {
+	preTestChecks(t)
 	var vapp govcd.VApp
 
 	var params = StringMap{
@@ -51,6 +52,7 @@ func TestAccVcdVAppRawMulti(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func testAccCheckVcdVAppRawMultiExists(n string, vapp *govcd.VApp) resource.TestCheckFunc {

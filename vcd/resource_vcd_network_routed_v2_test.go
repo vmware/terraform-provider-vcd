@@ -11,6 +11,7 @@ import (
 // TestAccVcdNetworkRoutedV2NsxvInterfaceTypes attempts to test all supported interface types (except distributed) for
 // NSX-V Org VDC routed network
 func TestAccVcdNetworkRoutedV2NsxvInterfaceTypes(t *testing.T) {
+	preTestChecks(t)
 	var params = StringMap{
 		"Org":           testConfig.VCD.Org,
 		"Vdc":           testConfig.VCD.Vdc,
@@ -61,9 +62,11 @@ func TestAccVcdNetworkRoutedV2NsxvInterfaceTypes(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 func TestAccVcdNetworkRoutedV2NsxvDistributedInterface(t *testing.T) {
+	preTestChecks(t)
 	if !testDistributedNetworksEnabled() {
 		t.Skip("Distributed test skipped: not enabled")
 	}
@@ -117,6 +120,7 @@ func TestAccVcdNetworkRoutedV2NsxvDistributedInterface(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccVcdNetworkRoutedV2Nsxv = `

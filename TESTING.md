@@ -11,6 +11,7 @@
 - [Handling failures in binary tests](#handling-failures-in-binary-tests)
 - [Upgrade testing](#upgrade-testing)
 - [Custom terraform scripts](#custom-terraform-scripts)
+- [Conditional running of tests](#conditional-running-of-tests)
 - [Environment variables and corresponding flags](#environment-variables-and-corresponding-flags)
 
 ## Meeting prerequisites: Building the test environment
@@ -470,6 +471,40 @@ To run these tests, you go inside `test-artifacts` and execute:
 
 The execution then proceeds as explained in [Binary testing](#Binary-testing).
 
+## Conditional running of tests
+
+The whole test suite takes several hours to run. If some errors happen during the run, we need to clean up and try again
+from the beginning, which is not always convenient.
+There are a few tags that help us gain some control on the flow:
+
+* `-vcd-pre-post-checks`    Global switch enabling checks before and after tests (false). Also activated by using any of the flags below.
+* `-vcd-re-run-failed`      Run only tests that failed in a previous run (false)
+* `-vcd-remove-test-list`   Remove list of test runs (false)
+* `-vcd-show-count`         Show number of pass/fail tests (false)
+* `-vcd-show-elapsed-time`  Show elapsed time since the start of the suite in pre and post checks (false)
+* `-vcd-show-timestamp`     Show timestamp in pre and post checks (false)
+* `-vcd-skip-pattern`       Skip tests that match the pattern (implies vcd-pre-post-checks ()
+
+When `-vcd-pre-post-checks` is used, we have several advantages:
+
+1. After each successful test, the test name gets recorded in a file `vcd_test_pass_list_{VCD_IP}.txt`, and each failed
+   test goes to `vcd_test_fail_list_{VCD_IP}.txt`. When running the suite on the same VCD a second time, all tests in
+   the `pass` list are skipped. If the test run was interrupted (see #2 below), we can only run the tests that did not
+   run in the previous attempt.
+2. We can **gracefully** interrupt the tests by creating a file `skip_vcd_tests` in the `./vcd` directory. 
+   When this file is found by the pre-run routine, all the tests are skipped. The file `skip_vcd_tests` will be removed
+   automatically at the next run.
+3. We can skip one or more tests conditionally, using `-vcd-skip-pattern="{REGEXP}"`. All the test with a name that
+   matches the pattern are skipped.
+4. We can re-run only the tests that failed in the previous run, using `-vcd-re-run-failed`.
+5. We can add monitoring information with `-vcd-show-count`, `-vcd-show-elapsed-time`, `-vcd-show-timestamp`.
+
+If we use `-vcd-pre-post-checks` and the run was successful, the next run will skip all tests, because the test names
+would be all found in `vcd_test_pass_list_{VCD_IP}.txt`. To run again the test from scratch, we could either remove
+the file manually, or use the tag `-vcd-remove-test-list`.
+
+**VERY IMPORTANT**: for the conditional running to work, each test must have a call to `preTestChecks(t)`  at the beginning
+and to `postTestChecks(t)` right before the end.
 
 ## Environment variables and corresponding flags
 
@@ -500,5 +535,13 @@ used in the documentation index.
 * `GOVCD_KEEP_TEST_OBJECTS=1` does not delete test objects created with `VCD_TEST_DATA_GENERATION`
 * `VCD_MAX_ITEMS=number` during filter engine tests, limits the collection of data sources of a given type to the number
   indicated. The default is 5. The maximum is 100.
+* `VCD_PRE_POST_CHECKS` (`-vcd-pre-post-checks`) Perform checks before and after tests (false)
+* `VCD_RE_RUN_FAILED` (`-vcd-re-run-failed`) Run only tests that failed in a previous run (false)
+* `VCD_REMOVE_TEST_LIST` (`-vcd-remove-test-list`) Remove list of test runs (false)
+* `VCD_SHOW_COUNT` (`-vcd-show-count`) Show number of pass/fail tests (false)
+* `VCD_SHOW_ELAPSED_TIME` (`-vcd-show-elapsed-time`) Show elapsed time since the start of the suite in pre and post checks (false)
+* `VCD_SHOW_TIMESTAMP` (`-vcd-show-timestamp`) Show timestamp in pre and post checks (false)
+* `VCD_SKIP_PATTERN` (`-vcd-skip-pattern`) Skip tests that match the pattern (implies vcd-pre-post-checks ()
+
 
 When both the environment variable and the command line option are possible, the environment variable gets evaluated first.

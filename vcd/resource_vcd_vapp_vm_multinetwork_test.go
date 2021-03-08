@@ -10,6 +10,7 @@ import (
 )
 
 func TestAccVcdVAppVmMultiNIC(t *testing.T) {
+	preTestChecks(t)
 	var (
 		vapp        govcd.VApp
 		vm          govcd.VM
@@ -252,6 +253,7 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 			},
 		},
 	})
+	postTestChecks(t)
 }
 
 const testAccCheckVcdVAppVmNetworkShared = `
