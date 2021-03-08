@@ -120,36 +120,43 @@ func runResourceInfoTest(def listDef, t *testing.T) {
 			resource.TestStep{
 				Config: configText,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(
-						"data.vcd_resource_list."+def.name, "name", def.name),
-					checkListForKnownItem(def.resourceType, "resources", def.knownItem),
+					resource.TestCheckResourceAttr("data.vcd_resource_list."+def.name, "name", def.name),
+					checkListForKnownItem(def.name, def.knownItem),
 				),
 			},
 		},
 	})
 }
 
-func checkListForKnownItem(resType, name, wanted string) resource.TestCheckFunc {
+func checkListForKnownItem(resName, wanted string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		if wanted == "" {
 			return nil
 		}
-		ms := s.RootModule()
-		rs, ok := ms.Outputs[name]
+
+		resourcePath := "data.vcd_resource_list." + resName
+
+		resource, ok := s.RootModule().Resources[resourcePath]
 		if !ok {
-			return fmt.Errorf("not found: %s", name)
+			return fmt.Errorf("resource %s not found", resName)
 		}
-		rawList := rs.Value.([]interface{})
-		var list = make([]string, len(rawList))
-		for i, rawItem := range rawList {
-			list[i] = rawItem.(string)
+
+		var list = make([]string, 0)
+
+		for key, value := range resource.Primary.Attributes {
+
+			if strings.HasPrefix(key, "list") {
+				list = append(list, value)
+			}
+
 		}
+
 		for _, item := range list {
 			if item == wanted {
 				return nil
 			}
 		}
-		return fmt.Errorf("item '%s' not found in list %s", wanted, name)
+		return fmt.Errorf("item '%s' not found in list %s", wanted, resourcePath)
 	}
 }
 
@@ -158,19 +165,11 @@ data "vcd_resource_list" "{{.ResName}}" {
   name          = "{{.ResName}}"
   resource_type = "{{.ResType}}"
 }
-
-output "resources" {
-  value = data.vcd_resource_list.{{.ResName}}.list
-}
 `
 const testAccCheckVcdDatasourceInfoWithParent = `
 data "vcd_resource_list" "{{.ResName}}" {
   name          = "{{.ResName}}"
   resource_type = "{{.ResType}}"
   parent        = "{{.ResParent}}"
-}
-
-output "resources" {
-  value = data.vcd_resource_list.{{.ResName}}.list
 }
 `

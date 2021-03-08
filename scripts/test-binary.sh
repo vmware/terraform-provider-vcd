@@ -604,7 +604,7 @@ do
                 if [ -n "$upgrading" ]
                     then
                     # Remove any version definition in config.tf because it is deprecated
-                    sed -i -e '/version *=/d' config.tf
+                    sed  -i -e '/^\s*version *=/d' config.tf
                     # Set exact Terraform version constraint `version = "3.0"` instead of `version = "~> 3.0"` as such
                     # constraint would still pull newer version and this is bad for upgrade tests
                     sed -i -e 's/version *= ".*"/version = "'${short_from}'"/'  versions.tf
