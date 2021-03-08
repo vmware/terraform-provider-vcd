@@ -477,7 +477,7 @@ The whole test suite takes several hours to run. If some errors happen during th
 from the beginning, which is not always convenient.
 There are a few tags that help us gain some control on the flow:
 
-* `-vcd-pre-post-checks`    Perform checks before and after tests (false)
+* `-vcd-pre-post-checks`    Global switch enabling checks before and after tests (false). Also activated by using any of the flags below.
 * `-vcd-re-run-failed`      Run only tests that failed in a previous run (false)
 * `-vcd-remove-test-list`   Remove list of test runs (false)
 * `-vcd-show-count`         Show number of pass/fail tests (false)
