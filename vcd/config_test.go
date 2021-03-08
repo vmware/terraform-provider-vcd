@@ -1420,9 +1420,6 @@ func postTestChecks(t *testing.T) {
 	if err != nil {
 		fmt.Printf("WARNING: error adding test name '%s' to file '%s'\n", t.Name(), getTestListFile(fileType))
 	}
-	//if vcdShowCount {
-	//	fmt.Printf("Pass: %5d - Skip: %5d - Fail: %5d\n", vcdPassCount, vcdSkipCount, vcdFailCount)
-	//}
 }
 
 // getTestListFile returns the name of the file containing the wanted (pass/fail) list
