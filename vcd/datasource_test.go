@@ -44,8 +44,8 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 		case dataSourceName == "vcd_external_network_v2" && vcdClient.Client.APIVCDMaxVersionIs("< 33"):
 			t.Skip("External network V2 requires at least API version 33 (VCD 10.0+)")
 		case (dataSourceName == "vcd_nsxt_edgegateway" || dataSourceName == "vcd_nsxt_edge_cluster") &&
-			vcdClient.Client.APIVCDMaxVersionIs("< 34"):
-			t.Skip("this datasource requires at least API version 34 (VCD 10.1+)")
+			(vcdClient.Client.APIVCDMaxVersionIs("< 34") || testConfig.Nsxt.Vdc == ""):
+			t.Skip("this datasource requires at least API version 34 (VCD 10.1+) and NSX-T VDC specified in configuration")
 		case (dataSourceName == "vcd_nsxt_tier0_router" || dataSourceName == "vcd_external_network_v2" ||
 			dataSourceName == "vcd_nsxt_manager" || dataSourceName == "vcd_nsxt_edge_cluster") &&
 			(testConfig.Nsxt.Manager == "" || testConfig.Nsxt.Tier0router == "") || !usingSysAdmin():
