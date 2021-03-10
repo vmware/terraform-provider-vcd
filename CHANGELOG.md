@@ -1,6 +1,27 @@
-## 3.2.0 (Unreleased)
+## 3.2.0 (March 10, 2021)
 
-Changes in progress for v3.2.0 are available at [.changes/v3.2.0](https://github.com/vmware/terraform-provider-vcd/tree/master/.changes/v3.2.0) until the release.
+## FEATURES
+* **New Resource:** `vcd_network_routed_v2` for NSX-T and NSX-V routed networks [GH-628]
+* **New Data source:** `vcd_network_routed_v2` for NSX-T and NSX-V routed networks [GH-628]
+* **New Resource:** `vcd_network_isolated_v2` for NSX-T and NSX-V routed networks [GH-636]
+* **New Data source:** `vcd_network_isolated_v2` for NSX-T and NSX-V routed networks [GH-636]
+* **New Resource:** `vcd_vm` - Standalone VM [GH-638]
+* **New Data source:** `vcd_vm` - Standalone VM [GH-638]
+* **New Resource:** `vcd_nsxt_network_imported` for NSX-T imported networks [GH-645]
+* **New Data source:** `vcd_nsxt_network_imported` for NSX-T imported networks [GH-645]
+* **New Resource:** `vcd_nsxt_network_dhcp` for NSX-T routed network DHCP configuration [GH-650]
+* **New Data source:** `vcd_nsxt_network_dhcp` for NSX-T routed network DHCP configuration [GH-650]
+
+## IMPROVEMENTS
+* `make install` will use lightweight tags for build version injection [GH-628]
+* `datasource/vcd_resource_list` adds `vcd_vm` to the supported resource types [GH-638]
+* `vcd_edgegateway` resource and datasource throws error (on create, import and datasource read) and refers to `vcd_nsxt_edgegateway` for NSX-T backed VDC [GH-650]
+* `vcd_nsxt_edgegateway` resource and datasource throws error (on create, import and datasource read) and refers to `vcd_edgegateway` for NSX-V backed VDC [GH-650]
+* `vcd_network_isolated`and `vcd_network_routed` throw warnings on create and errors on import by referring to `vcd_network_isolated_v2`and `vcd_network_routed_v2` for NSX VDCs [GH-650]
+* `vcd_vapp_network` throws error when `org_network_name` is specified for NSX-T VDC (because NSX-T networks cannot be attached to vApp networks) [GH-650]
+
+## NOTES
+* Internal functions `lockParentEdgeGtw` and `unLockParentEdgeGtw` will handle Edge Gateway locks when `name` or `id` reference is used [GH-628]
 
 ## 3.1.0 (December 18, 2020)
 
