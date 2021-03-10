@@ -1,4 +1,4 @@
-## 3.2.0 (March 10, 2021)
+## 3.2.0 (March 11, 2021)
 
 ## FEATURES
 * **New Resource:** `vcd_network_routed_v2` for NSX-T and NSX-V routed networks ([#628](https://github.com/vmware/terraform-provider-vcd/issues/628))
