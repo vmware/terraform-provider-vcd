@@ -1,6 +1,29 @@
-## 3.2.0 (Unreleased)
+## 3.2.0 (March 11, 2021)
 
-Changes in progress for v3.2.0 are available at [.changes/v3.2.0](https://github.com/vmware/terraform-provider-vcd/tree/master/.changes/v3.2.0) until the release.
+## FEATURES
+* **New Resource:** `vcd_network_routed_v2` for NSX-T and NSX-V routed networks ([#628](https://github.com/vmware/terraform-provider-vcd/issues/628))
+* **New Data source:** `vcd_network_routed_v2` for NSX-T and NSX-V routed networks ([#628](https://github.com/vmware/terraform-provider-vcd/issues/628))
+* **New Resource:** `vcd_network_isolated_v2` for NSX-T and NSX-V isolated networks ([#636](https://github.com/vmware/terraform-provider-vcd/issues/636))
+* **New Data source:** `vcd_network_isolated_v2` for NSX-T and NSX-V isolated networks ([#636](https://github.com/vmware/terraform-provider-vcd/issues/636))
+* **New Resource:** `vcd_vm` - Standalone VM ([#638](https://github.com/vmware/terraform-provider-vcd/issues/638))
+* **New Data source:** `vcd_vm` - Standalone VM ([#638](https://github.com/vmware/terraform-provider-vcd/issues/638))
+* **New Resource:** `vcd_nsxt_network_imported` for NSX-T imported networks ([#645](https://github.com/vmware/terraform-provider-vcd/issues/645))
+* **New Data source:** `vcd_nsxt_network_imported` for NSX-T imported networks ([#645](https://github.com/vmware/terraform-provider-vcd/issues/645))
+* **New Resource:** `vcd_nsxt_network_dhcp` for NSX-T routed network DHCP configuration ([#650](https://github.com/vmware/terraform-provider-vcd/issues/650))
+* **New Data source:** `vcd_nsxt_network_dhcp` for NSX-T routed network DHCP configuration ([#650](https://github.com/vmware/terraform-provider-vcd/issues/650))
+
+## IMPROVEMENTS
+* `make install` will use lightweight tags for build version injection ([#628](https://github.com/vmware/terraform-provider-vcd/issues/628))
+* `datasource/vcd_resource_list` adds `vcd_vm` to the supported resource types ([#638](https://github.com/vmware/terraform-provider-vcd/issues/638))
+* `datasource/vcd_resource_list` adds `vcd_network_routed_v2` to the supported resource types ([#628](https://github.com/vmware/terraform-provider-vcd/issues/628))
+* `datasource/vcd_resource_list` adds `vcd_network_isolated_v2` to the supported resource types ([#636](https://github.com/vmware/terraform-provider-vcd/issues/636))
+* `datasource/vcd_resource_list` adds `vcd_nsxt_network_imported` to the supported resource types ([#645](https://github.com/vmware/terraform-provider-vcd/issues/645))
+* `vcd_edgegateway` resource and datasource throws error (on create, import and datasource read) and refers to `vcd_nsxt_edgegateway` for NSX-T backed VDC ([#650](https://github.com/vmware/terraform-provider-vcd/issues/650))
+* `vcd_network_isolated`and `vcd_network_routed` throw warnings on create and errors on import by referring to `vcd_network_isolated_v2`and `vcd_network_routed_v2` for NSX VDCs ([#650](https://github.com/vmware/terraform-provider-vcd/issues/650))
+* `vcd_vapp_network` throws error when `org_network_name` is specified for NSX-T VDC (because NSX-T networks cannot be attached to vApp networks) ([#650](https://github.com/vmware/terraform-provider-vcd/issues/650))
+
+## NOTES
+* Internal functions `lockParentEdgeGtw` and `unLockParentEdgeGtw` will handle Edge Gateway locks when `name` or `id` reference is used ([#628](https://github.com/vmware/terraform-provider-vcd/issues/628))
 
 ## 3.1.0 (December 18, 2020)
 

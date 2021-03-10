@@ -150,6 +150,7 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			}
 			templateFields = templateFields + `vapp_name = "` + vapp.VApp.Name + `"` + "\n"
 		case "nsxt_manager_id":
+			skipNoNsxtConfiguration(t)
 			// This test needs a valid nsxt_manager_id
 			nsxtManager, err := vcdClient.QueryNsxtManagerByName(testConfig.Nsxt.Manager)
 			if err != nil {
