@@ -607,7 +607,7 @@ do
                     sed  -i -e '/^\s*version *=/d' config.tf
                     # Set exact Terraform version constraint `version = "3.0"` instead of `version = "~> 3.0"` as such
                     # constraint would still pull newer version and this is bad for upgrade tests
-                    sed -i -e 's/version *= ".*"/version = "'${short_from}'"/'  versions.tf
+                    sed -i -e '/^\s*version *= ".*"/version = "'${short_from}'"/'  versions.tf
                     run terraform init
                     run terraform version
                 fi
