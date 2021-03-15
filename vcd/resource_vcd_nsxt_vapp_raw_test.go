@@ -56,7 +56,7 @@ func TestAccVcdNsxtVAppRawAllNsxtNetworks(t *testing.T) {
 						fmt.Sprintf("vcd_vapp_vm.%s", params["VmName1"].(string)), "name", params["VmName1"].(string)),
 					resource.TestCheckResourceAttr(
 						fmt.Sprintf("vcd_vapp_vm.%s", params["VmName2"].(string)), "name", params["VmName2"].(string)),
-					resource.TestMatchResourceAttr("vcd_vapp_vm.TestAccVcdNsxtVAppRawVm1", "network.0.ip", regexp.MustCompile(`^10\.10\.102\.3`)),
+					resource.TestMatchResourceAttr("vcd_vapp_vm.TestAccVcdNsxtVAppRawVm1", "network.0.ip", regexp.MustCompile(`^10\.10\.102\.`)),
 					resource.TestMatchResourceAttr("vcd_vapp_vm.TestAccVcdNsxtVAppRawVm1", "network.1.ip", regexp.MustCompile(`^130\.10\.102\.`)),
 					resource.TestMatchResourceAttr("vcd_vapp_vm.TestAccVcdNsxtVAppRawVm1", "network.2.ip", regexp.MustCompile(`^12\.12\.2\.`)),
 				),
