@@ -148,13 +148,14 @@ function add_versions_config {
 
     fname=$1
     dir=$2
+    used_version=$3
     has_terraform=$(grep '^\s*terraform {' $fname)
     cat << EOF > $dir/versions.tf
 terraform {
   required_providers {
     vcd = {
       source  = "vmware/vcd"
-      version = "~> $provider_version"
+      version = "$used_version"
     }
   }
   # required_version = ">= 0.13"
@@ -182,7 +183,7 @@ function validate_script {
     fi
     mkdir vtmp
     cp $script vtmp
-    add_versions_config $script vtmp
+    add_versions_config $script vtmp $provider_version
     cd vtmp
     terraform init > init.out 2>&1
     exit_code=$?
@@ -577,7 +578,7 @@ do
     if [ "${operations[0]}" == "init" ]
     then
         cp $CF $opsdir/config.tf
-        add_versions_config $CF $opsdir
+        add_versions_config $CF $opsdir $provider_version
     fi
     if [ -z "$DRY_RUN" ]
     then
@@ -605,9 +606,10 @@ do
                     then
                     # Remove any version definition in config.tf because it is deprecated
                     sed  -i -e '/^\s*version *=/d' config.tf
-                    # Set exact Terraform version constraint `version = "3.0"` instead of `version = "~> 3.0"` as such
-                    # constraint would still pull newer version and this is bad for upgrade tests
-                    sed -i -e 's/version *= ".*"/version = "'${short_from}'"/'  versions.tf
+
+                    # recreate versions.tf with "short_from" version
+                    add_versions_config "versions.tf" "${PWD}" "${short_from}"
+
                     run terraform init
                     run terraform version
                 fi
@@ -635,8 +637,8 @@ do
                     # Explicitly change provider version and run `terraform init -upgrade`
                     if [ -n "$upgrading" ]
                     then
-                        # Replace the version in HCL configuration file
-                        sed -i -e 's/version *= "'${short_from}'"/version = "'${short_to}'"/' versions.tf
+                        # recreate versions.tf with "short_to" version
+                        add_versions_config "versions.tf" "${PWD}" "${short_to}"
                         run terraform init -upgrade
                         run terraform version
                     fi
