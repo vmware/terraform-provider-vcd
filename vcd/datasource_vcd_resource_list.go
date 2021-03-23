@@ -401,11 +401,11 @@ func edgeGatewayList(d *schema.ResourceData, meta interface{}) (list []string, e
 	}
 
 	var items []resourceRef
-	edgeGatewayList, err := vdc.GetEdgeGatewayRecordsType(false)
+	edgeGatewayList, err := vdc.QueryEdgeGatewayList()
 	if err != nil {
 		return list, err
 	}
-	for _, ert := range edgeGatewayList.EdgeGatewayRecord {
+	for _, ert := range edgeGatewayList {
 
 		edgeGateway, err := vdc.GetEdgeGatewayByName(ert.Name, false)
 		if err != nil {
