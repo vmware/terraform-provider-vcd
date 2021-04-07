@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: vcd_nsxt_network-dhcp"
+page_title: "VMware Cloud Director: vcd_nsxt_network_dhcp"
 sidebar_current: "docs-vcd-resource-nsxt-network-dhcp"
 description: |-
   Provides a resource to manage DHCP pools for NSX-T Org VDC Routed network.
