@@ -245,6 +245,8 @@ output "disk_unit_number" {
 }
 output "vm" {
   value = vcd_vm.{{.VmName}}
+  
+  sensitive = true
 }
 `
 
