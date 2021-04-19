@@ -135,9 +135,10 @@ func TestAccVcdNsxtSecurityGroup(t *testing.T) {
 	configText1 := templateFill(testAccNsxtSecurityGroupDatasource, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText1)
 
+	delete(params, "SkipTest")
 	params["FuncName"] = t.Name() + "-step3"
 	configText2 := templateFill(testAccNsxtSecurityGroupStep3, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText1)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText2)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -313,7 +314,7 @@ resource "vcd_nsxt_security_group" "group1" {
 }
 `
 
-const testAccNsxtSecurityGroupStep3 = testAccNsxtSecurityGroupPrereqs + `
+const testAccNsxtSecurityGroupStep3 = testAccNsxtSecurityGroupPrereqsEmpty + `
 resource "vcd_nsxt_security_group" "group1" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
@@ -321,12 +322,11 @@ resource "vcd_nsxt_security_group" "group1" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
   name = "test-security-group-changed"
-
-  depends_on = [vcd_vapp_vm.emptyVM, vcd_vm.emptyVM]
 }
 `
 
 const testAccNsxtSecurityGroupDatasource = testAccNsxtSecurityGroup + `
+# skip-binary-test: Terraform resource cannot have resource and datasource in the same file
 data "vcd_nsxt_security_group" "group1" {
 	org  = "{{.Org}}"
 	vdc  = "{{.NsxtVdc}}"
