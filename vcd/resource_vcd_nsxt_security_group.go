@@ -108,6 +108,7 @@ func resourceVcdSecurityGroupCreate(ctx context.Context, d *schema.ResourceData,
 	fwGroup := getNsxtSecurityGroupType(d)
 
 	createdFwGroup, err := vdc.CreateNsxtFirewallGroup(fwGroup)
+	err = improveErrorMessageOnIncorrectMembership(err, fwGroup, vdc)
 	if err != nil {
 		return diag.Errorf("error creating NSX-T Security Group '%s': %s", fwGroup.Name, err)
 	}
@@ -137,6 +138,7 @@ func resourceVcdSecurityGroupUpdate(ctx context.Context, d *schema.ResourceData,
 	updateFwGroup.ID = d.Id()
 
 	_, err = fwGroup.Update(updateFwGroup)
+	err = improveErrorMessageOnIncorrectMembership(err, updateFwGroup, vdc)
 	if err != nil {
 		return diag.Errorf("error updating NSX-T Security Group '%s': %s", fwGroup.NsxtFirewallGroup.Name, err)
 	}
@@ -317,4 +319,32 @@ func getNsxtSecurityGroupType(d *schema.ResourceData) *types.NsxtFirewallGroup {
 	}
 
 	return fwGroup
+}
+
+// improveErrorMessageOnIncorrectMembership checks if error message is similar to the one that is returned when a
+// non Routed Org VDC network ID is passed for Security Group membership and adds additional hint.
+func improveErrorMessageOnIncorrectMembership(err error, fwGroup *types.NsxtFirewallGroup, vdc *govcd.Vdc) error {
+	// See if error message contains an indication to non Routed networks
+	if err != nil && strings.Contains(err.Error(), `No access to entity "com.vmware.vcloud.entity.gateway`) {
+		hasAtLeastOneNonRoutedNetwork := false
+		for i := range fwGroup.Members {
+			orgNet, err2 := vdc.GetOpenApiOrgVdcNetworkById(fwGroup.Members[i].ID)
+
+			// when unable to validate network types - just return the original API error `err`
+			if err2 != nil {
+				return fmt.Errorf("error creating NSX-T Security Group '%s': %s", fwGroup.Name, err)
+			}
+
+			if !orgNet.IsRouted() {
+				hasAtLeastOneNonRoutedNetwork = true
+			}
+
+		}
+
+		if hasAtLeastOneNonRoutedNetwork {
+			err = fmt.Errorf("%s - %s", err.Error(), "Not all member network IDs reference to Routed Org networks.")
+		}
+	}
+
+	return err
 }

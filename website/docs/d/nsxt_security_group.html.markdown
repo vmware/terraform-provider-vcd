@@ -14,7 +14,7 @@ Provides a datasource to access NSX-T Security Group configuration. Security gro
 data center group networks to which distributed firewall rules apply. Grouping networks helps you to
 reduce the total number of distributed firewall rules to be created. 
 
-Supported in provider *v3.2+* and VCD 10.1+ with NSX-T backed VDCs.
+Supported in provider *v3.3+* and VCD 10.1+ with NSX-T backed VDCs.
 
 ## Example Usage 1
 

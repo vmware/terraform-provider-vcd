@@ -336,10 +336,11 @@ data "vcd_nsxt_security_group" "group1" {
 }
 `
 
-// TestAccVcdNsxtSecurityGroupIncorrectEdgeGateway is expected to fail when:
+// TestAccVcdNsxtSecurityGroupInvalidConfigs is expected to fail when:
 // * NSX-V Edge Gateway ID is supplied
 // * Invalid (non existent) Edge Gateway ID is presented
-func TestAccVcdNsxtSecurityGroupIncorrectEdgeGateway(t *testing.T) {
+// * Isolated Org Vdc network added as a member
+func TestAccVcdNsxtSecurityGroupInvalidConfigs(t *testing.T) {
 	preTestChecks(t)
 	skipNoNsxtConfiguration(t)
 
@@ -365,6 +366,10 @@ func TestAccVcdNsxtSecurityGroupIncorrectEdgeGateway(t *testing.T) {
 	configText1 := templateFill(testAccVcdNsxtSecurityGroupIncorrectEdgeGatewayStep2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText1)
 
+	params["FuncName"] = t.Name() + "-step3"
+	configText2 := templateFill(testAccVcdNsxtSecurityGroupIncorrectEdgeGatewayStep3, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText2)
+
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
 		PreCheck:          func() { testAccPreCheck(t) },
@@ -379,6 +384,10 @@ func TestAccVcdNsxtSecurityGroupIncorrectEdgeGateway(t *testing.T) {
 			resource.TestStep{
 				Config:      configText1,
 				ExpectError: regexp.MustCompile(`error creating NSX-T Security Group`),
+			},
+			resource.TestStep{
+				Config:      configText2,
+				ExpectError: regexp.MustCompile(`Not all member network IDs reference to Routed Org networks`),
 			},
 		},
 	})
@@ -415,6 +424,37 @@ resource "vcd_nsxt_security_group" "group1" {
 	name = "test-security-group"
 	description = "test-security-group-description"
   }
+`
+
+const testAccVcdNsxtSecurityGroupIncorrectEdgeGatewayStep3 = `
+resource "vcd_network_isolated_v2" "nsxt-backed" {
+	org  = "{{.Org}}"
+	vdc  = "{{.NsxtVdc}}"
+
+  name        = "nsxt-isolated-test"
+  description = "My isolated Org VDC network backed by NSX-T"
+
+  gateway       = "52.1.1.1"
+  prefix_length = 24
+
+  static_ip_pool {
+    start_address = "52.1.1.10"
+    end_address   = "52.1.1.20"
+  }
+
+}
+resource "vcd_nsxt_security_group" "group1" {
+  org  = "{{.Org}}"
+  vdc  = "{{.NsxtVdc}}"
+  
+  # A correct syntax of non existing NSX-T Edge Gateway
+  edge_gateway_id = "urn:vcloud:gateway:71df3e4b-6da9-404d-8e44-1111111c1c38"
+  
+  name = "test-security-group"
+  description = "test-security-group-description"
+  
+  member_org_network_ids = [vcd_network_isolated_v2.nsxt-backed.id]
+}
 `
 
 func testAccCheckNsxtFirewallGroupDestroy(vdcName, firewalGroupName, firewallGroupType string) resource.TestCheckFunc {
