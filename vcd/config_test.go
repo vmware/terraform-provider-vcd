@@ -666,6 +666,14 @@ func TestMain(m *testing.M) {
 	// Enable custom flags
 	flag.Parse()
 	setTestEnv()
+	flag.CommandLine.VisitAll(func(f *flag.Flag) {
+		if f.Name == "test.v" {
+			if f.Value.String() == "false" {
+				fmt.Printf("Missing '-v' flag\n")
+				os.Exit(1)
+			}
+		}
+	})
 	// If -vcd-help was in the command line
 	if vcdHelp {
 		fmt.Println("vcd flags:")
