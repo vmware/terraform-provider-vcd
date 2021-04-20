@@ -201,7 +201,7 @@ func TestAccVcdNsxtSecurityGroup(t *testing.T) {
 				ResourceName:      "vcd_nsxt_security_group.group1",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-security-group"),
+				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-security-group-changed"),
 			},
 		},
 	})
@@ -234,6 +234,7 @@ resource "vcd_vm" "emptyVM" {
 	org  = "{{.Org}}"
 	vdc  = "{{.NsxtVdc}}"
 
+    power_on      = false
 	name          = "standalone-VM"
 	computer_name = "emptyVM"
 	memory        = 2048
@@ -245,7 +246,7 @@ resource "vcd_vm" "emptyVM" {
 	
 	network {
 		type               = "org"
-		name               = vcd_network_routed_v2.nsxt-backed[0].name
+		name               = (vcd_network_routed_v2.nsxt-backed[0].id == "always-not-equal" ? null : vcd_network_routed_v2.nsxt-backed[0].name)
 		ip_allocation_mode = "POOL"
 		is_primary         = true
 	}
@@ -258,7 +259,8 @@ resource "vcd_vapp" "web" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
 
-  name = "web"
+  name     = "web"
+  power_on = false
 }
 
 resource "vcd_vapp_org_network" "vappOrgNet" {
@@ -266,9 +268,7 @@ resource "vcd_vapp_org_network" "vappOrgNet" {
 	vdc  = "{{.NsxtVdc}}"
   
 	vapp_name         = vcd_vapp.web.name
-  
-   # Comment below line to create an isolated vApp network
-	org_network_name  = vcd_network_routed_v2.nsxt-backed[1].name
+	org_network_name  = (vcd_network_routed_v2.nsxt-backed[1].id == "always-not-equal" ? null : vcd_network_routed_v2.nsxt-backed[1].name)
 
 	depends_on = [vcd_vapp.web,vcd_network_routed_v2.nsxt-backed]
   }
@@ -277,6 +277,7 @@ resource "vcd_vapp_vm" "emptyVM" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
 
+  power_on      = false
   vapp_name     = vcd_vapp.web.name
   name          = "vapp-vm"
   computer_name = "emptyVM"
@@ -289,7 +290,7 @@ resource "vcd_vapp_vm" "emptyVM" {
 
   network {
 	type               = "org"
-	name               = vcd_network_routed_v2.nsxt-backed[1].name
+	name               = (vcd_vapp_org_network.vappOrgNet.id == "always-not-equal" ? null : vcd_vapp_org_network.vappOrgNet.org_network_name)
 	ip_allocation_mode = "POOL"
 	is_primary         = true
   }
