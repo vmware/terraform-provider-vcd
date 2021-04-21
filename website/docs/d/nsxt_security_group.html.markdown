@@ -19,7 +19,7 @@ Supported in provider *v3.3+* and VCD 10.1+ with NSX-T backed VDCs.
 ## Example Usage 1
 
 ```hcl
-resource "vcd_nsxt_security_group" "group1" {
+data "vcd_nsxt_security_group" "group1" {
   org  = "my-org"
   vdc  = "my-org-vdc"
 
