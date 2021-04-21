@@ -168,8 +168,6 @@ func resourceVcdSecurityGroupRead(ctx context.Context, d *schema.ResourceData, m
 		return diag.Errorf("error reading NSX-T Security Group: %s", err)
 	}
 
-	// time.Sleep(60 * time.Second)
-
 	// A separate GET call is required to get all associated VMs
 	associatedVms, err := fwGroup.GetAssociatedVms()
 	if err != nil {
@@ -209,7 +207,6 @@ func resourceVcdSecurityGroupDelete(ctx context.Context, d *schema.ResourceData,
 	return nil
 }
 
-// resourceVcdSecurityGroupImport
 func resourceVcdSecurityGroupImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	resourceURI := strings.Split(d.Id(), ImportSeparator)
 	if len(resourceURI) != 4 {

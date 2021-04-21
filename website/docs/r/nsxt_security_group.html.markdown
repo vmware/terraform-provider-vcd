@@ -3,16 +3,16 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_security_group"
 sidebar_current: "docs-vcd-resource-nsxt-security-group"
 description: |-
-  Provides a resource to manage NSX-T Security Group. Security groups are groups of data center
-  group networks to which distributed firewall rules apply. Grouping networks helps you to reduce
-  the total number of distributed firewall rules to be created. 
+Provides a resource to manage NSX-T Security Group. Security groups are groups of data center
+group networks to which distributed firewall rules apply. Grouping networks helps you to reduce
+the total number of distributed firewall rules to be created.
 ---
 
 # vcd\_nsxt\_security\_group
 
 Provides a resource to manage NSX-T Security Group. Security groups are groups of data center group
 networks to which distributed firewall rules apply. Grouping networks helps you to reduce the total
-number of distributed firewall rules to be created. 
+number of distributed firewall rules to be created.
 
 Supported in provider *v3.3+* and VCD 10.1+ with NSX-T backed VDCs.
 
@@ -75,6 +75,9 @@ Each member VM contains following attributes:
 * `vapp_id` - Parent vApp ID for member VM (empty for standalone VMs)
 * `vapp_name` - Parent vApp Name for member VM (empty for standalone VMs)
 
+~> There may be cases where Org Networks and Security Groups are already created, but
+not all VMs are already created and not shown in this structure. Additional `depends_on` can ensure
+that Security Group is created only after all networks and VMs are there.
 
 ## Importing
 
