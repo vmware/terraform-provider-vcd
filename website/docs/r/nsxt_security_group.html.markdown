@@ -16,8 +16,6 @@ number of distributed firewall rules to be created.
 
 Supported in provider *v3.3+* and VCD 10.1+ with NSX-T backed VDCs.
 
-## Specific usage notes
-
 ## Example Usage 1 (Security Group with member networks)
 
 ```hcl
@@ -25,7 +23,7 @@ resource "vcd_nsxt_security_group" "frontend-servers" {
   org  = "my-org"
   vdc  = "my-nsxt-vdc"
 
-  # refering to a datasource for existing NSX-T Edge Gateway
+  # Referring to a datasource for existing NSX-T Edge Gateway
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
   name = "frontend-servers"
@@ -41,7 +39,7 @@ resource "vcd_nsxt_security_group" "group1" {
   org  = "my-org"
   vdc  = "my-nsxt-vdc"
 
-  # refering to a datasource for existing NSX-T Edge Gateway
+  # Referring to a datasource for existing NSX-T Edge Gateway
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
   name = "precreated security group"
