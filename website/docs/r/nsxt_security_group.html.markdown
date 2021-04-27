@@ -26,8 +26,8 @@ resource "vcd_nsxt_security_group" "frontend-servers" {
   # Referring to a datasource for existing NSX-T Edge Gateway
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
-  name = "frontend-servers"
-  description = "Security group consisting of frontend servers"
+  name        = "frontend-servers"
+  description = "Security Group for a network connecting the frontend servers"
 
   member_org_network_ids = [vcd_network_routed_v2.frontend.id]
 }
