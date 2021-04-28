@@ -24,9 +24,9 @@ func resourceVcdVApp() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
+				Type:     schema.TypeString,
+				Required: true,
+				//ForceNew:    true,
 				Description: "A name for the vApp, unique withing the VDC",
 			},
 			"org": {
@@ -92,10 +92,11 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	vappName := d.Get("name").(string)
+	vappDescription := d.Get("description").(string)
 	vcdClient.lockVapp(d)
 	defer vcdClient.unLockVapp(d)
 
-	e := vdc.ComposeRawVApp(d.Get("name").(string))
+	e := vdc.ComposeRawVApp(vappName, vappDescription)
 
 	if e != nil {
 		return fmt.Errorf("error: %#v", e)
@@ -151,6 +152,12 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error finding VApp: %#v", err)
 	}
 
+	if d.HasChange("name") || d.HasChange("description") {
+		err = vapp.UpdateNameDescription(d.Get("name").(string), d.Get("description").(string))
+		if err != nil {
+			return fmt.Errorf("error updating VApp: %s", err)
+		}
+	}
 	if d.HasChange("guest_properties") {
 		vappProperties, err := getGuestProperties(d)
 		if err != nil {
