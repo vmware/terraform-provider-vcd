@@ -24,9 +24,8 @@ func resourceVcdVApp() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"name": {
-				Type:     schema.TypeString,
-				Required: true,
-				//ForceNew:    true,
+				Type:        schema.TypeString,
+				Required:    true,
 				Description: "A name for the vApp, unique withing the VDC",
 			},
 			"org": {
