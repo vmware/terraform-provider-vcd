@@ -10,10 +10,10 @@ import (
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 )
 
-func TestAccVcdVApp_Update(t *testing.T) {
+func TestAccVcdVAppUpdate(t *testing.T) {
 	preTestChecks(t)
 	var vapp govcd.VApp
-	var vappName = "TestAccVcdVAppUpdate"
+	var vappName = t.Name()
 	var vappDescription = "A long description going up to 256 characters. " + strings.Repeat("x", 209)
 	var vappUpdateDescription = "A shorter description."
 	var vappUpdateName = vappName + "_new"
@@ -24,28 +24,34 @@ func TestAccVcdVApp_Update(t *testing.T) {
 		"VappDef":         vappName,
 		"VappName":        vappName,
 		"VappDescription": vappDescription,
-		"FuncName":        "TestAccVcdVApp_Update",
+		"FuncName":        t.Name(),
 		"Note":            "",
 		"Tags":            "vapp",
 	}
-	configText := templateFill(testAccCheckVcdVAppUpdate, params)
+	configText := templateFill(testAccVcdVAppUpdate, params)
 
-	params["FuncName"] = "TestAccCheckVcdVApp_Update_update"
+	params["FuncName"] = t.Name() + "_update"
 	params["VappDescription"] = vappUpdateDescription
 	params["VappName"] = vappUpdateName
 	params["Note"] = "# skip-binary-test: only for updates"
-	configTextUpdate := templateFill(testAccCheckVcdVAppUpdate, params)
+	configTextUpdate := templateFill(testAccVcdVAppUpdate, params)
 
-	params["FuncName"] = "TestAccCheckVcdVApp_Update_restore"
+	params["FuncName"] = t.Name() + "_removal"
+	params["VappDescription"] = ""
+	configRemoveDescription := templateFill(testAccVcdVAppUpdate, params)
+
+	params["FuncName"] = t.Name() + "_restore"
 	params["VappDescription"] = vappDescription
 	params["VappName"] = vappName
-	configTextRestore := templateFill(testAccCheckVcdVAppUpdate, params)
+	configTextRestore := templateFill(testAccVcdVAppUpdate, params)
+
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION basic: %s\n", configText)
 	debugPrintf("#[DEBUG] CONFIGURATION update: %s\n", configTextUpdate)
+	debugPrintf("#[DEBUG] CONFIGURATION removal: %s\n", configRemoveDescription)
 	debugPrintf("#[DEBUG] CONFIGURATION restore: %s\n", configTextRestore)
 
 	resourceName := "vcd_vapp." + vappName
@@ -72,6 +78,15 @@ func TestAccVcdVApp_Update(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "description", vappUpdateDescription),
 				),
 			},
+			// remove description
+			resource.TestStep{
+				Config: configRemoveDescription,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckVcdVAppExists(resourceName, &vapp),
+					resource.TestCheckResourceAttr(resourceName, "name", vappUpdateName),
+					resource.TestCheckResourceAttr(resourceName, "description", ""),
+				),
+			},
 			// Restore original values
 			resource.TestStep{
 				Config: configTextRestore,
@@ -86,7 +101,7 @@ func TestAccVcdVApp_Update(t *testing.T) {
 	postTestChecks(t)
 }
 
-const testAccCheckVcdVAppUpdate = `
+const testAccVcdVAppUpdate = `
 {{.Note}}
 resource "vcd_vapp" "{{.VappDef}}" {
   org         = "{{.Org}}"
