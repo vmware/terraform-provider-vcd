@@ -152,7 +152,7 @@ func resourceVcdVAppUpdate(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("error finding VApp: %#v", err)
 	}
 
-	if d.HasChange("name") || d.HasChange("description") {
+	if d.HasChange("description") {
 		err = vapp.UpdateNameDescription(d.Get("name").(string), d.Get("description").(string))
 		if err != nil {
 			return fmt.Errorf("error updating VApp: %s", err)
