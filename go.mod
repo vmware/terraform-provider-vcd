@@ -10,4 +10,6 @@ require (
 	github.com/vmware/go-vcloud-director/v2 v2.12.0-alpha.1
 )
 
-replace github.com/vmware/go-vcloud-director/v2 => github.com/dataclouder/go-vcloud-director/v2 v2.5.0-alpha.4.0.20210428122234-d5c42d5f6c37
+replace github.com/vmware/go-vcloud-director/v2 => github.com/dataclouder/go-vcloud-director/v2 v2.5.0-alpha.4.0.20210429082455-9994e0748a7b
+
+// replace github.com/vmware/go-vcloud-director/v2 => ../go-vcloud-director
