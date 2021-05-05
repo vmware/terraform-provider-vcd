@@ -10,11 +10,11 @@ description: |-
 
 # vcd\_nsxt\_security\_group
 
+Supported in provider *v3.3+* and VCD 10.1+ with NSX-T backed VDCs.
+
 Provides a datasource to access NSX-T Security Group configuration. Security groups are groups of
 data center group networks to which distributed firewall rules apply. Grouping networks helps you to
-reduce the total number of distributed firewall rules to be created. 
-
-Supported in provider *v3.3+* and VCD 10.1+ with NSX-T backed VDCs.
+reduce the total number of distributed firewall rules to be created.
 
 ## Example Usage 1
 

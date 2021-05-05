@@ -210,72 +210,72 @@ func TestAccVcdNsxtSecurityGroup(t *testing.T) {
 
 const testAccNsxtSecurityGroupPrereqs = testAccNsxtSecurityGroupPrereqsEmpty + `
 resource "vcd_network_routed_v2" "nsxt-backed" {
-	# This value could be larger to test more members, but left 2 for the sake of testing speed
-	count = 2
+  # This value could be larger to test more members, but left 2 for the sake of testing speed
+  count = 2
 
-	org  = "{{.Org}}"
-	vdc  = "{{.NsxtVdc}}"
-	name        = "nsxt-routed-${count.index}"
-	description = "My routed Org VDC network backed by NSX-T"
-  
-	edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
-  
-	gateway       = "212.1.${count.index}.1"
-	prefix_length = 24
-  
-	static_ip_pool {
-	  start_address = "212.1.${count.index}.10"
-	  end_address   = "212.1.${count.index}.20"
-	}
+  org         = "{{.Org}}"
+  vdc         = "{{.NsxtVdc}}"
+  name        = "nsxt-routed-${count.index}"
+  description = "My routed Org VDC network backed by NSX-T"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+
+  gateway       = "212.1.${count.index}.1"
+  prefix_length = 24
+
+  static_ip_pool {
+    start_address = "212.1.${count.index}.10"
+    end_address   = "212.1.${count.index}.20"
+  }
 }
 
 # Create stanadlone VM to check membership
 resource "vcd_vm" "emptyVM" {
-	org  = "{{.Org}}"
-	vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
-    power_on      = false
-	name          = "standalone-VM"
-	computer_name = "emptyVM"
-	memory        = 2048
-	cpus          = 2
-	cpu_cores     = 1
-  
-	os_type = "sles10_64Guest"
-	hardware_version = "vmx-14"
-	
-	network {
-		type               = "org"
-		name               = (vcd_network_routed_v2.nsxt-backed[0].id == "always-not-equal" ? null : vcd_network_routed_v2.nsxt-backed[0].name)
-		ip_allocation_mode = "POOL"
-		is_primary         = true
-	}
+  power_on      = false
+  name          = "standalone-VM"
+  computer_name = "emptyVM"
+  memory        = 2048
+  cpus          = 2
+  cpu_cores     = 1
 
-	depends_on = [vcd_network_routed_v2.nsxt-backed]
+  os_type          = "sles10_64Guest"
+  hardware_version = "vmx-14"
+
+  network {
+    type               = "org"
+    name               = (vcd_network_routed_v2.nsxt-backed[0].id == "always-not-equal" ? null : vcd_network_routed_v2.nsxt-backed[0].name)
+    ip_allocation_mode = "POOL"
+    is_primary         = true
   }
+
+  depends_on = [vcd_network_routed_v2.nsxt-backed]
+}
 
 # Create a vApp and VM
 resource "vcd_vapp" "web" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   name     = "web"
   power_on = false
 }
 
 resource "vcd_vapp_org_network" "vappOrgNet" {
-	org  = "{{.Org}}"
-	vdc  = "{{.NsxtVdc}}"
-  
-	vapp_name         = vcd_vapp.web.name
-	org_network_name  = (vcd_network_routed_v2.nsxt-backed[1].id == "always-not-equal" ? null : vcd_network_routed_v2.nsxt-backed[1].name)
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
-	depends_on = [vcd_vapp.web,vcd_network_routed_v2.nsxt-backed]
-  }
+  vapp_name        = vcd_vapp.web.name
+  org_network_name = (vcd_network_routed_v2.nsxt-backed[1].id == "always-not-equal" ? null : vcd_network_routed_v2.nsxt-backed[1].name)
+
+  depends_on = [vcd_vapp.web, vcd_network_routed_v2.nsxt-backed]
+}
 
 resource "vcd_vapp_vm" "emptyVM" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   power_on      = false
   vapp_name     = vcd_vapp.web.name
@@ -285,28 +285,28 @@ resource "vcd_vapp_vm" "emptyVM" {
   cpus          = 2
   cpu_cores     = 1
 
-  os_type = "sles10_64Guest"
+  os_type          = "sles10_64Guest"
   hardware_version = "vmx-14"
 
   network {
-	type               = "org"
-	name               = (vcd_vapp_org_network.vappOrgNet.id == "always-not-equal" ? null : vcd_vapp_org_network.vappOrgNet.org_network_name)
-	ip_allocation_mode = "POOL"
-	is_primary         = true
+    type               = "org"
+    name               = (vcd_vapp_org_network.vappOrgNet.id == "always-not-equal" ? null : vcd_vapp_org_network.vappOrgNet.org_network_name)
+    ip_allocation_mode = "POOL"
+    is_primary         = true
   }
 
-  depends_on = [vcd_vapp_org_network.vappOrgNet,vcd_network_routed_v2.nsxt-backed]
+  depends_on = [vcd_vapp_org_network.vappOrgNet, vcd_network_routed_v2.nsxt-backed]
 }
 `
 
 const testAccNsxtSecurityGroup = testAccNsxtSecurityGroupPrereqs + `
 resource "vcd_nsxt_security_group" "group1" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
-  name = "test-security-group"
+  name        = "test-security-group"
   description = "test-security-group-description"
 
   member_org_network_ids = vcd_network_routed_v2.nsxt-backed.*.id
@@ -317,8 +317,8 @@ resource "vcd_nsxt_security_group" "group1" {
 
 const testAccNsxtSecurityGroupStep3 = testAccNsxtSecurityGroupPrereqsEmpty + `
 resource "vcd_nsxt_security_group" "group1" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
@@ -329,11 +329,11 @@ resource "vcd_nsxt_security_group" "group1" {
 const testAccNsxtSecurityGroupDatasource = testAccNsxtSecurityGroup + `
 # skip-binary-test: Terraform resource cannot have resource and datasource in the same file
 data "vcd_nsxt_security_group" "group1" {
-	org  = "{{.Org}}"
-	vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
-	edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
-	name            = "test-security-group"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  name            = "test-security-group"
 }
 `
 
@@ -397,40 +397,40 @@ func TestAccVcdNsxtSecurityGroupInvalidConfigs(t *testing.T) {
 
 const testAccVcdNsxtSecurityGroupIncorrectEdgeGateway = `
 data "vcd_edgegateway" "existing" {
-	org  = "{{.Org}}"
-	vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
-	name = "{{.EdgeGw}}"
+  name = "{{.EdgeGw}}"
 }
 
 resource "vcd_nsxt_security_group" "group1" {
-	org  = "{{.Org}}"
-	vdc  = "{{.NsxtVdc}}"
-  
-	edge_gateway_id = data.vcd_edgegateway.existing.id
-  
-	name = "test-security-group"
-	description = "test-security-group-description"
-  }
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+
+  edge_gateway_id = data.vcd_edgegateway.existing.id
+
+  name        = "test-security-group"
+  description = "test-security-group-description"
+}
 `
 
 const testAccVcdNsxtSecurityGroupIncorrectEdgeGatewayStep2 = `
 resource "vcd_nsxt_security_group" "group1" {
-	org  = "{{.Org}}"
-	vdc  = "{{.NsxtVdc}}"
-  
-	# A correct syntax of non existing NSX-T Edge Gateway
-	edge_gateway_id = "urn:vcloud:gateway:71df3e4b-6da9-404d-8e44-1111111c1c38"
-  
-	name = "test-security-group"
-	description = "test-security-group-description"
-  }
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+
+  # A correct syntax of non existing NSX-T Edge Gateway
+  edge_gateway_id = "urn:vcloud:gateway:71df3e4b-6da9-404d-8e44-1111111c1c38"
+
+  name        = "test-security-group"
+  description = "test-security-group-description"
+}
 `
 
 const testAccVcdNsxtSecurityGroupIncorrectEdgeGatewayStep3 = `
 resource "vcd_network_isolated_v2" "nsxt-backed" {
-	org  = "{{.Org}}"
-	vdc  = "{{.NsxtVdc}}"
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
 
   name        = "nsxt-isolated-test"
   description = "My isolated Org VDC network backed by NSX-T"
@@ -445,15 +445,15 @@ resource "vcd_network_isolated_v2" "nsxt-backed" {
 
 }
 resource "vcd_nsxt_security_group" "group1" {
-  org  = "{{.Org}}"
-  vdc  = "{{.NsxtVdc}}"
-  
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+
   # A correct syntax of non existing NSX-T Edge Gateway
   edge_gateway_id = "urn:vcloud:gateway:71df3e4b-6da9-404d-8e44-1111111c1c38"
-  
-  name = "test-security-group"
+
+  name        = "test-security-group"
   description = "test-security-group-description"
-  
+
   member_org_network_ids = [vcd_network_isolated_v2.nsxt-backed.id]
 }
 `

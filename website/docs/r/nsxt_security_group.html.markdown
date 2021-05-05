@@ -3,18 +3,18 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_security_group"
 sidebar_current: "docs-vcd-resource-nsxt-security-group"
 description: |-
-Provides a resource to manage NSX-T Security Group. Security groups are groups of data center
-group networks to which distributed firewall rules apply. Grouping networks helps you to reduce
-the total number of distributed firewall rules to be created.
+  Provides a resource to manage NSX-T Security Group. Security groups are groups of data center
+  group networks to which distributed firewall rules apply. Grouping networks helps you to reduce
+  the total number of distributed firewall rules to be created.
 ---
 
 # vcd\_nsxt\_security\_group
 
+Supported in provider *v3.3+* and VCD 10.1+ with NSX-T backed VDCs.
+
 Provides a resource to manage NSX-T Security Group. Security groups are groups of data center group
 networks to which distributed firewall rules apply. Grouping networks helps you to reduce the total
 number of distributed firewall rules to be created.
-
-Supported in provider *v3.3+* and VCD 10.1+ with NSX-T backed VDCs.
 
 ## Example Usage 1 (Security Group with member networks)
 

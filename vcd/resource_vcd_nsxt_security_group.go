@@ -83,8 +83,8 @@ var nsxtFirewallGroupMemberVms = &schema.Resource{
 			Description: "Member VM Name",
 		},
 		"vapp_id": {
-			Type:     schema.TypeString,
-			Optional: true, Computed: true,
+			Type:        schema.TypeString,
+			Computed:    true,
 			Description: "Parent vApp name (if exists) for member VM",
 		},
 		"vapp_name": {
