@@ -53,6 +53,7 @@ The following arguments are supported:
 
 ## Attribute reference
 
+* `description` An optional description for the vApp
 * `href` - The vApp Hyper Reference
 * `metadata` -  Key value map of metadata to assign to this vApp. Key and value can be any string. 
 * `guest_properties` -  Key value map of vApp guest properties.
