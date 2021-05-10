@@ -144,7 +144,7 @@ func resourceVcdIndependentDiskCreate(d *schema.ResourceData, meta interface{}) 
 	if sizeProvided {
 		diskCreateParams = &types.DiskCreateParams{Disk: &types.Disk{
 			Name:   diskName,
-			SizeMb: size.(int64),
+			SizeMb: int64(size.(int)),
 		}}
 	}
 
