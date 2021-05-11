@@ -666,6 +666,14 @@ func TestMain(m *testing.M) {
 	// Enable custom flags
 	flag.Parse()
 	setTestEnv()
+	flag.CommandLine.VisitAll(func(f *flag.Flag) {
+		if f.Name == "test.v" {
+			if f.Value.String() == "false" {
+				fmt.Printf("Missing '-v' flag\n")
+				os.Exit(1)
+			}
+		}
+	})
 	// If -vcd-help was in the command line
 	if vcdHelp {
 		fmt.Println("vcd flags:")
@@ -1064,6 +1072,22 @@ func importStateIdEdgeGatewayObject(vcd TestConfig, edgeGatewayName, objectName 
 		return testConfig.VCD.Org +
 			ImportSeparator +
 			testConfig.VCD.Vdc +
+			ImportSeparator +
+			edgeGatewayName +
+			ImportSeparator +
+			objectName, nil
+	}
+}
+
+// importStateIdNsxtEdgeGatewayObject used by all entities that depend on Org + NSX-T VDC + edge gateway (such as FW, NAT, Security Groups)
+func importStateIdNsxtEdgeGatewayObject(vcd TestConfig, edgeGatewayName, objectName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || edgeGatewayName == "" || objectName == "" {
+			return "", fmt.Errorf("missing information to generate import path")
+		}
+		return testConfig.VCD.Org +
+			ImportSeparator +
+			testConfig.Nsxt.Vdc +
 			ImportSeparator +
 			edgeGatewayName +
 			ImportSeparator +

@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: vcd_nsxt_dhcp_relay"
+page_title: "VMware Cloud Director: vcd_nsxt_network_dhcp"
 sidebar_current: "docs-vcd-datasource-nsxt-network-dhcp"
 description: |-
   Provides a data source to read DHCP pools for NSX-T Org VDC Routed network.

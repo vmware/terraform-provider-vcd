@@ -43,7 +43,8 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 			t.Skip(`Works only with system admin privileges`)
 		case dataSourceName == "vcd_external_network_v2" && vcdClient.Client.APIVCDMaxVersionIs("< 33"):
 			t.Skip("External network V2 requires at least API version 33 (VCD 10.0+)")
-		case (dataSourceName == "vcd_nsxt_edgegateway" || dataSourceName == "vcd_nsxt_edge_cluster") &&
+		case (dataSourceName == "vcd_nsxt_edgegateway" || dataSourceName == "vcd_nsxt_edge_cluster" ||
+			dataSourceName == "vcd_nsxt_security_group") &&
 			(vcdClient.Client.APIVCDMaxVersionIs("< 34") || testConfig.Nsxt.Vdc == ""):
 			t.Skip("this datasource requires at least API version 34 (VCD 10.1+) and NSX-T VDC specified in configuration")
 		case (dataSourceName == "vcd_nsxt_tier0_router" || dataSourceName == "vcd_external_network_v2" ||
@@ -140,6 +141,13 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			templateFields = templateFields + `org = "` + testConfig.VCD.Org + `"` + "\n"
 		case "edge_gateway":
 			templateFields = templateFields + `edge_gateway = "` + testConfig.Networking.EdgeGateway + `"` + "\n"
+		case "edge_gateway_id":
+			nsxtEdgeGw, err := vcdClient.GetNsxtEdgeGateway(testConfig.VCD.Org, testConfig.Nsxt.Vdc, testConfig.Nsxt.EdgeGateway)
+			if err != nil {
+				t.Skipf("Unable to lookup NSX-T Edge Gateway '%s' : %s", testConfig.Nsxt.EdgeGateway, err)
+				return ""
+			}
+			templateFields = templateFields + `edge_gateway_id = "` + nsxtEdgeGw.EdgeGateway.ID + `"` + "\n"
 		case "catalog":
 			templateFields = templateFields + `catalog = "` + testConfig.VCD.Catalog.Name + `"` + "\n"
 		case "vapp_name":
