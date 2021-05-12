@@ -43,8 +43,8 @@ func datasourceVcdNsxtIpSet() *schema.Resource {
 				Description: "IP set description",
 			},
 			"ip_addresses": {
-				Computed:    true,
 				Type:        schema.TypeSet,
+				Computed:    true,
 				Description: "A set of IP address, CIDR, IP range objects",
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
