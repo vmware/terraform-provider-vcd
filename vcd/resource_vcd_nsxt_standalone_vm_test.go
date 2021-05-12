@@ -20,6 +20,11 @@ func init() {
 func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 	preTestChecks(t)
 
+	vcdClient := createTemporaryVCDConnection()
+	if !vcdClient.Client.IsSysAdmin {
+		t.Skip(t.Name() + " only System Administrator can create Imported networks")
+	}
+
 	if testConfig.Nsxt.Vdc == "" || testConfig.Nsxt.EdgeGateway == "" {
 		t.Skip("Either NSXT VDC or edge gateway not defined")
 		return
