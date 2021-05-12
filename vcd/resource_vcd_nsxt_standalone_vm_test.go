@@ -19,6 +19,10 @@ func init() {
 // TestAccVcdNsxtStandaloneVmTemplate tests NSX-T Routed network DHCP pools, static pools and manual IP assignment
 func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 	preTestChecks(t)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 
 	vcdClient := createTemporaryVCDConnection()
 	if !vcdClient.Client.IsSysAdmin {
