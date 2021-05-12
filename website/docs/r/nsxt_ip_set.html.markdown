@@ -9,10 +9,10 @@ description: |-
 
 # vcd\_nsxt\_ip\_set
 
+Supported in provider *v3.3+* and VCD 10.1+ with NSX-T backed VDCs.
+
 Provides a resource to manage NSX-T IP Set. IP sets are groups of objects to which the firewall rules apply. Combining 
 multiple objects into IP sets helps reduce the total number of firewall rules to be created.
-
-Supported in provider *v3.3+* and VCD 10.1+ with NSX-T backed VDCs.
 
 ## Specific usage notes
 
@@ -49,7 +49,7 @@ The following arguments are supported:
 * `description` - (Optional) An optional description of the IP Set
 * `edge_gateway_id` - (Required) The ID of the edge gateway (NSX-T only). Can be looked up using
   `vcd_nsxt_edgegateway` datasource
-* `ip_addresses` (Optional) A set of Org Network IDs
+* `ip_addresses` (Optional) A set of IP addresses, subnets or ranges (IPv4 or IPv6)
 
 ## Importing
 
