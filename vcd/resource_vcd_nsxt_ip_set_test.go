@@ -217,7 +217,7 @@ func TestAccVcdNsxtIpSet(t *testing.T) {
 }
 
 const testAccNsxtIpSetPrereqs = `
-data "vcd_nsxt_edgegateway" "existing" {
+data "vcd_nsxt_edgegateway" "existing_gw" {
   org = "{{.Org}}"
   vdc = "{{.NsxtVdc}}"
 
@@ -230,7 +230,7 @@ resource "vcd_nsxt_ip_set" "set1" {
   org = "{{.Org}}"
   vdc = "{{.NsxtVdc}}"
 
-  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing_gw.id
 
   name        = "test-ip-set"
   description = "test-ip-set-description"
@@ -242,7 +242,7 @@ resource "vcd_nsxt_ip_set" "set1" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
 
-  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing_gw.id
 
   name = "test-ip-set-changed"
 }
@@ -253,7 +253,7 @@ resource "vcd_nsxt_ip_set" "set1" {
   org = "{{.Org}}"
   vdc = "{{.NsxtVdc}}"
 
-  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing_gw.id
 
   name = "test-ip-set-changed"
 
@@ -272,7 +272,7 @@ resource "vcd_nsxt_ip_set" "set1" {
   org = "{{.Org}}"
   vdc = "{{.NsxtVdc}}"
 
-  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing_gw.id
 
   name = "test-ip-set-changed"
 
@@ -289,7 +289,7 @@ data "vcd_nsxt_ip_set" "ds" {
   org = "{{.Org}}"
   vdc = "{{.NsxtVdc}}"
 
-  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing_gw.id
   name            = "test-ip-set-changed"
 }
 `

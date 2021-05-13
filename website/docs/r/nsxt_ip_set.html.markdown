@@ -48,7 +48,7 @@ The following arguments are supported:
 * `name` - (Required) A unique name for IP Set
 * `description` - (Optional) An optional description of the IP Set
 * `edge_gateway_id` - (Required) The ID of the edge gateway (NSX-T only). Can be looked up using
-  `vcd_nsxt_edgegateway` datasource
+  `vcd_nsxt_edgegateway` data source
 * `ip_addresses` (Optional) A set of IP addresses, subnets or ranges (IPv4 or IPv6)
 
 ## Importing

@@ -30,7 +30,7 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 	}
 
 	if testConfig.Nsxt.Vdc == "" || testConfig.Nsxt.EdgeGateway == "" {
-		t.Skip("Either NSXT VDC or edge gateway not defined")
+		t.Skip("Either NSX-T VDC or Edge Gateway not defined")
 		return
 	}
 

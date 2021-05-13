@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_nsxt_security_group"
 sidebar_current: "docs-vcd-datasource-nsxt-security-group"
 description: |-
-  Provides a datasource to access NSX-T Security Group configuration. Security groups are groups of
+  Provides a data source to access NSX-T Security Group configuration. Security groups are groups of
   data center group networks to which distributed firewall rules apply. Grouping networks helps you 
   to reduce the total number of distributed firewall rules to be created. 
 ---
@@ -12,7 +12,7 @@ description: |-
 
 Supported in provider *v3.3+* and VCD 10.1+ with NSX-T backed VDCs.
 
-Provides a datasource to access NSX-T Security Group configuration. Security groups are groups of
+Provides a data source to access NSX-T Security Group configuration. Security groups are groups of
 data center group networks to which distributed firewall rules apply. Grouping networks helps you to
 reduce the total number of distributed firewall rules to be created.
 
