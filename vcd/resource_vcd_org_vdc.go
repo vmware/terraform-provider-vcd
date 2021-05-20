@@ -824,7 +824,9 @@ func addAssignedVmSizingPolicies(vcdClient *VCDClient, d *schema.ResourceData, m
 }
 
 func createOrUpdateMetadata(d *schema.ResourceData, meta interface{}) error {
-
+	
+	time.Sleep(5 * time.Second)
+	
 	log.Printf("[TRACE] adding/updating metadata to VDC")
 
 	vcdClient := meta.(*VCDClient)
