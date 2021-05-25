@@ -392,6 +392,34 @@ func (cli *VCDClient) GetAdminOrg(orgName string) (org *govcd.AdminOrg, err erro
 	return org, err
 }
 
+// GetOrg finds org using the names provided in the args.
+// If the name is empty, it will use the default
+// org name from the provider.
+func (cli *VCDClient) GetOrg(orgName string) (org *govcd.Org, err error) {
+
+	if orgName == "" {
+		orgName = cli.Org
+	}
+	if orgName == "" {
+		return nil, fmt.Errorf("empty Org name provided")
+	}
+
+	org, err = cli.VCDClient.GetOrgByName(orgName)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving Org %s: %s", orgName, err)
+	}
+	if org.Org.Name == "" || org.Org.HREF == "" || org.Org.ID == "" {
+		return nil, fmt.Errorf("empty Org %s found", orgName)
+	}
+	return org, err
+}
+
+// Same as GetOrg, but using data from the resource, if available.
+func (cli *VCDClient) GetOrgFromResource(d *schema.ResourceData) (org *govcd.Org, err error) {
+	orgName := d.Get("org").(string)
+	return cli.GetOrg(orgName)
+}
+
 // Same as GetOrgAndVdc, but using data from the resource, if available.
 func (cli *VCDClient) GetOrgAndVdcFromResource(d *schema.ResourceData) (org *govcd.Org, vdc *govcd.Vdc, err error) {
 	orgName := d.Get("org").(string)

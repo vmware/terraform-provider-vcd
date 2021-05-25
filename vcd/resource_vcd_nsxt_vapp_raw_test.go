@@ -14,11 +14,21 @@ import (
 
 func TestAccVcdNsxtVAppRawAllNsxtNetworks(t *testing.T) {
 	preTestChecks(t)
-
-	if testConfig.Nsxt.Vdc == "" || testConfig.Nsxt.EdgeGateway == "" {
-		t.Skip("Either NSXT VDC or edge gateway not defined")
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
 		return
 	}
+
+	vcdClient := createTemporaryVCDConnection()
+	if !vcdClient.Client.IsSysAdmin {
+		t.Skip(t.Name() + " only System Administrator can create Imported networks")
+	}
+
+	if testConfig.Nsxt.Vdc == "" || testConfig.Nsxt.EdgeGateway == "" {
+		t.Skip("Either NSX-T VDC or Edge Gateway not defined")
+		return
+	}
+
 	var vapp govcd.VApp
 
 	var params = StringMap{
@@ -36,10 +46,6 @@ func TestAccVcdNsxtVAppRawAllNsxtNetworks(t *testing.T) {
 		"Tags":          "vapp vm nsxt",
 	}
 	configText := templateFill(testAccCheckVcdNsxtVAppRaw_basic, params)
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },

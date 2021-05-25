@@ -235,7 +235,7 @@ func resourceVcdSecurityGroupImport(ctx context.Context, d *schema.ResourceData,
 
 	securityGroup, err := edgeGateway.GetNsxtFirewallGroupByName(securityGroupName, types.FirewallGroupTypeSecurityGroup)
 	if err != nil {
-		return nil, fmt.Errorf("unable to find Security Group '%s': %s", edgeGatewayName, err)
+		return nil, fmt.Errorf("unable to find Security Group '%s': %s", securityGroupName, err)
 	}
 
 	if !securityGroup.IsSecurityGroup() {

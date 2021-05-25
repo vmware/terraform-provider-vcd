@@ -1025,7 +1025,7 @@ func isNetworkRemovedInVcd101(d *schema.ResourceData, meta interface{}) bool {
 func changeCpuCount(d *schema.ResourceData, vm *govcd.VM) error {
 	task, err := vm.ChangeCPUCount(d.Get("cpus").(int))
 	if err != nil {
-		return fmt.Errorf("error changing cpus: %s", err)
+		return fmt.Errorf("error setting CPU count: %s", err)
 	}
 	err = task.WaitTaskCompletion()
 	if err != nil {
@@ -1143,13 +1143,6 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			}
 		}
 
-		if cpusNeedsColdChange || executionType == "create" {
-			err = changeCpuCount(d, vm)
-			if err != nil {
-				return err
-			}
-		}
-
 		if d.HasChange("cpu_cores") {
 			coreCounts := d.Get("cpu_cores").(int)
 			task, err := vm.ChangeCPUCountWithCore(d.Get("cpus").(int), &coreCounts)
@@ -1160,6 +1153,13 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 			err = task.WaitTaskCompletion()
 			if err != nil {
 				return fmt.Errorf(errorCompletingTask, err)
+			}
+		}
+
+		if cpusNeedsColdChange || executionType == "create" {
+			err = changeCpuCount(d, vm)
+			if err != nil {
+				return err
 			}
 		}
 
