@@ -52,7 +52,7 @@ func datasourceVcdNsxtAppPortProfile() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				Description:  "Scope - 'SYSTEM', 'PROVIDER', or 'TENANT'",
+				Description:  "Scope - 'SYSTEM', 'PROVIDER' or 'TENANT'",
 				ValidateFunc: validation.StringInSlice([]string{"SYSTEM", "PROVIDER", "TENANT"}, false),
 			},
 			"nsxt_manager_id": &schema.Schema{

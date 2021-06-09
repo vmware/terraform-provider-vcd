@@ -236,7 +236,7 @@ func resourceVcdNsxtAppPortProfileImport(ctx context.Context, d *schema.Resource
 	switch len(resourceURI) {
 	case 2: // PROVIDER scope
 		if !vcdClient.Client.IsSysAdmin {
-			return nil, errors.New("only System user can modify PROVIDER scoped NSX-T Application Port " +
+			return nil, errors.New("only System user can modify PROVIDER scope NSX-T Application Port " +
 				"Profiles. Please use data source instead")
 		}
 

@@ -4,9 +4,8 @@ page_title: "VMware Cloud Director: vcd_nsxt_app_port_profile"
 sidebar_current: "docs-vcd-data-source-nsxt-app-port-profile"
 description: |-
   Provides a data source to read NSX-T Application Port Profiles. Application Port Profiles include 
-  a combination of a protocol, and a port, or a group of ports, that is used for firewall and NAT
-  services on the edge gateway. In addition to the default port profiles that are preconfigured for
-  NSX-T Data Center.
+  a combination of a protocol, and a port, or a group of ports, that is used for Firewall and NAT
+  services on the Edge Gateway.
 ---
 
 # vcd\_nsxt\_app\_port\_profile
@@ -14,9 +13,8 @@ description: |-
 Supported in provider *v3.3+* and VCD 10.1+ with NSX-T backed VDCs.
 
 Provides a data source to read NSX-T Application Port Profiles. Application Port Profiles include a
-combination of a protocol and a port, or a group of ports, that is used for firewall and NAT
-services on the edge gateway. In addition to the default port profiles that are preconfigured for
-NSX-T Data Center.
+combination of a protocol and a port, or a group of ports, that is used for Firewall and NAT
+services on the Edge Gateway.
 
 ## Example Usage 1 (Find an Application Port Profile defined by Provider)
 
