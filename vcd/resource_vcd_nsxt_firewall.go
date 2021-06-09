@@ -44,7 +44,7 @@ func resourceVcdNsxtFirewall() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Edge Gateway ID in which Firewall rule is located",
+				Description: "Edge Gateway ID in which Firewall Rule are located",
 			},
 			"rule": &schema.Schema{
 				Type:        schema.TypeList, // Firewall rule order matters
@@ -281,7 +281,6 @@ func setNsxtFirewallData(fwRules []*types.NsxtFirewallRule, d *schema.ResourceDa
 			"destinations": destinationSet,
 			"applications": appPortProfileSet,
 		}
-
 	}
 
 	return d.Set("rule", result)
@@ -290,7 +289,6 @@ func setNsxtFirewallData(fwRules []*types.NsxtFirewallRule, d *schema.ResourceDa
 func getNsxtFirewallTypes(d *schema.ResourceData) []*types.NsxtFirewallRule {
 	ruleInterfaceSlice := d.Get("rule").([]interface{})
 	if len(ruleInterfaceSlice) > 0 {
-
 		result := make([]*types.NsxtFirewallRule, len(ruleInterfaceSlice))
 		for index, oneRule := range ruleInterfaceSlice {
 			oneRuleMapInterface := oneRule.(map[string]interface{})
@@ -319,7 +317,6 @@ func getNsxtFirewallTypes(d *schema.ResourceData) []*types.NsxtFirewallRule {
 				sourceGroups := convertSchemaSetToSliceOfStrings(oneRuleMapInterface["applications"].(*schema.Set))
 				result[index].ApplicationPortProfiles = convertSliceOfStringsToOpenApiReferenceIds(sourceGroups)
 			}
-
 		}
 		return result
 	}

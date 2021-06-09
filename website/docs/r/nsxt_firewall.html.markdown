@@ -4,7 +4,7 @@ page_title: "VMware Cloud Director: vcd_nsxt_firewall"
 sidebar_current: "docs-vcd-data-source-nsxt-firewall"
 description: |-
   Provides a resource to manage NSX-T Firewall. Firewalls allow user to control the incoming and 
-  outgoing network traffic to and from an NSX-T Data Center edge gateway, you create firewall rules.
+  outgoing network traffic to and from an NSX-T Data Center Edge Gateway.
 ---
 
 # vcd\_nsxt\_firewall
@@ -12,7 +12,7 @@ description: |-
 Supported in provider *v3.3+* and VCD 10.1+ with NSX-T backed Edge Gateways.
 
 Provides a resource to manage NSX-T Firewall. Firewalls allow user to control the incoming and 
-outgoing network traffic to and from an NSX-T Data Center edge gateway, you create firewall rules.
+outgoing network traffic to and from an NSX-T Data Center Edge Gateway.
 
 ## Example Usage 1 (Single rule to allow all IPv4 traffic from anywhere to anywhere)
 ```hcl
@@ -95,7 +95,7 @@ Each Firewall Rule contains following attributes:
 Leaving it empty matches `Any` (all)
 * `destinations` - (Optional) A set of source object Firewall Groups (`IP Sets` or `Security groups`). 
 Leaving it empty matches `Any` (all)
-* `applications` - (Optional) A set of application port profiles. Leaving it empty matches  (all)
+* `applications` - (Optional) A set of Application Port Profiles. Leaving it empty matches `Any` (all)
 
 ## Importing
 

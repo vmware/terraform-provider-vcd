@@ -63,7 +63,6 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.enabled", "true"),
 				),
 			},
-
 			resource.TestStep{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
@@ -171,8 +170,7 @@ resource "vcd_nsxt_security_group" "group" {
   org   = "{{.Org}}"
   vdc   = "{{.NsxtVdc}}"
 
-  # Referring to a datasource for testing NSX-T Edge Gateway
-
+  # Referring to a data source for testing NSX-T Edge Gateway
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing.id
 
   name        = "test security group - ${count.index}"

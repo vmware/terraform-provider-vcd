@@ -29,7 +29,7 @@ func datasourceVcdNsxtFirewall() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Edge Gateway ID in which Firewall rules are located",
+				Description: "Edge Gateway ID in which Firewall Rules are located",
 			},
 			"rule": &schema.Schema{
 				Type:        schema.TypeList, // Firewall rule order matters
