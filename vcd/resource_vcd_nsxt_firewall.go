@@ -94,7 +94,7 @@ func resourceVcdNsxtFirewall() *schema.Resource {
 							Description:  "Defines if the rule should 'ALLOW' or 'DROP' matching traffic",
 							ValidateFunc: validation.StringInSlice([]string{"ALLOW", "DROP"}, false),
 						},
-						"sources": {
+						"source_ids": {
 							Type:        schema.TypeSet,
 							Optional:    true,
 							Description: "A set of Source Firewall Group IDs (IP Sets or Security Groups). Leaving it empty means 'Any'",
@@ -102,7 +102,7 @@ func resourceVcdNsxtFirewall() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"destinations": {
+						"destination_ids": {
 							Type:        schema.TypeSet,
 							Optional:    true,
 							Description: "A set of Destination Firewall Group IDs (IP Sets or Security Groups). Leaving it empty means 'Any'",
@@ -110,7 +110,7 @@ func resourceVcdNsxtFirewall() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"applications": {
+						"app_port_profile_ids": {
 							Type:        schema.TypeSet,
 							Optional:    true,
 							Description: "A set of Application Port Profile IDs. Leaving it empty means 'Any'",
@@ -270,16 +270,16 @@ func setNsxtFirewallData(fwRules []*types.NsxtFirewallRule, d *schema.ResourceDa
 		appPortProfileSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), appPortProfileInterface)
 
 		result[index] = map[string]interface{}{
-			"id":           value.ID,
-			"name":         value.Name,
-			"action":       value.Action,
-			"enabled":      value.Enabled,
-			"ip_protocol":  value.IpProtocol,
-			"direction":    value.Direction,
-			"logging":      value.Logging,
-			"sources":      sourceSet,
-			"destinations": destinationSet,
-			"applications": appPortProfileSet,
+			"id":                   value.ID,
+			"name":                 value.Name,
+			"action":               value.Action,
+			"enabled":              value.Enabled,
+			"ip_protocol":          value.IpProtocol,
+			"direction":            value.Direction,
+			"logging":              value.Logging,
+			"source_ids":           sourceSet,
+			"destination_ids":      destinationSet,
+			"app_port_profile_ids": appPortProfileSet,
 		}
 	}
 
@@ -303,18 +303,18 @@ func getNsxtFirewallTypes(d *schema.ResourceData) []*types.NsxtFirewallRule {
 				Version:    nil,
 			}
 
-			if oneRuleMapInterface["sources"] != nil {
-				sourceGroups := convertSchemaSetToSliceOfStrings(oneRuleMapInterface["sources"].(*schema.Set))
+			if oneRuleMapInterface["source_ids"] != nil {
+				sourceGroups := convertSchemaSetToSliceOfStrings(oneRuleMapInterface["source_ids"].(*schema.Set))
 				result[index].SourceFirewallGroups = convertSliceOfStringsToOpenApiReferenceIds(sourceGroups)
 			}
 
-			if oneRuleMapInterface["destinations"] != nil {
-				sourceGroups := convertSchemaSetToSliceOfStrings(oneRuleMapInterface["destinations"].(*schema.Set))
+			if oneRuleMapInterface["destination_ids"] != nil {
+				sourceGroups := convertSchemaSetToSliceOfStrings(oneRuleMapInterface["destination_ids"].(*schema.Set))
 				result[index].DestinationFirewallGroups = convertSliceOfStringsToOpenApiReferenceIds(sourceGroups)
 			}
 
-			if oneRuleMapInterface["applications"] != nil {
-				sourceGroups := convertSchemaSetToSliceOfStrings(oneRuleMapInterface["applications"].(*schema.Set))
+			if oneRuleMapInterface["app_port_profile_ids"] != nil {
+				sourceGroups := convertSchemaSetToSliceOfStrings(oneRuleMapInterface["app_port_profile_ids"].(*schema.Set))
 				result[index].ApplicationPortProfiles = convertSliceOfStringsToOpenApiReferenceIds(sourceGroups)
 			}
 		}

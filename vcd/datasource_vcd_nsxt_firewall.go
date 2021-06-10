@@ -71,7 +71,7 @@ func datasourceVcdNsxtFirewall() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
-						"sources": {
+						"source_ids": {
 							Type:        schema.TypeSet,
 							Computed:    true,
 							Description: "A set of Source Firewall Group IDs (IP Sets or Security Groups). Leaving it empty means 'Any'",
@@ -79,7 +79,7 @@ func datasourceVcdNsxtFirewall() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"destinations": {
+						"destination_ids": {
 							Type:        schema.TypeSet,
 							Computed:    true,
 							Description: "A set of Destination Firewall Group IDs (IP Sets or Security Groups). Leaving it empty means 'Any'",
@@ -87,7 +87,7 @@ func datasourceVcdNsxtFirewall() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
-						"applications": {
+						"app_port_profile_ids": {
 							Type:        schema.TypeSet,
 							Computed:    true,
 							Description: "A set of Application Port Profile IDs. Leaving it empty means 'Any'",

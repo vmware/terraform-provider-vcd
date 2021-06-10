@@ -43,28 +43,28 @@ resource "vcd_nsxt_firewall" "testing" {
     name        = "first rule"
     direction   = "IN"
     ip_protocol = "IPV4"
-    sources     = [vcd_nsxt_security_group.frontend.id]
+    source_ids  = [vcd_nsxt_security_group.frontend.id]
   }
 
   # Rule #2 - Drops and logs all outgoing IPv6 traffic to `vcd_nsxt_security_group.group.2.id`
   rule {
-    name         = "drop IPv6 with destination to security group 2"
-    direction    = "OUT"
-    ip_protocol  = "IPV6"
-    destinations = [vcd_nsxt_security_group.group2.id]
-    action       = "DROP"
-    logging      = true
+    name            = "drop IPv6 with destination to security group 2"
+    direction       = "OUT"
+    ip_protocol     = "IPV6"
+    destination_ids = [vcd_nsxt_security_group.group2.id]
+    action          = "DROP"
+    logging         = true
   }
   
   # Rule #3 - Allows IPv4 and IPv6 traffic in both directions:
   # from vcd_nsxt_security_group.group.1.id to all list of security groups vcd_nsxt_security_group.group.*.id
   # from list of security groups vcd_nsxt_security_group.group.*.id to vcd_nsxt_security_group.group.1.id
   rule {
-    name         = "test_rule-3"
-    direction    = "IN_OUT"
-    ip_protocol  = "IPV4_IPV6"
-    sources      = [vcd_nsxt_security_group.group.1.id]
-    destinations = vcd_nsxt_security_group.group.*.id
+    name            = "test_rule-3"
+    direction       = "IN_OUT"
+    ip_protocol     = "IPV4_IPV6"
+    source_ids      = [vcd_nsxt_security_group.group.1.id]
+    destination_ids = vcd_nsxt_security_group.group.*.id
   }
 }
 ```
@@ -91,9 +91,9 @@ Each Firewall Rule contains following attributes:
 * `enabled` - (Optional) Defines if the rule is enabled (default `true`)
 * `logging` - (Optional) Defines if logging for this rule is enabled (default `false`)
 * `action` - (Optional) Defines if it should `ALLOW` or `DROP` traffic (default `ALLOW`)
-* `sources` - (Optional) A set of source object Firewall Groups (`IP Sets` or `Security groups`). 
+* `source_ids` - (Optional) A set of source object Firewall Groups (`IP Sets` or `Security groups`). 
 Leaving it empty matches `Any` (all)
-* `destinations` - (Optional) A set of source object Firewall Groups (`IP Sets` or `Security groups`). 
+* `destination_ids` - (Optional) A set of source object Firewall Groups (`IP Sets` or `Security groups`). 
 Leaving it empty matches `Any` (all)
 * `applications` - (Optional) A set of Application Port Profiles. Leaving it empty matches `Any` (all)
 

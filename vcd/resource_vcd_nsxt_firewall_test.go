@@ -83,9 +83,9 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.logging", "false"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.action", "ALLOW"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.enabled", "true"),
-					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.sources.#", "3"),
-					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.destinations.#", "0"),
-					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.applications.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.source_ids.#", "3"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.destination_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.app_port_profile_ids.#", "0"),
 
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.name", "test_rule-2"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.direction", "OUT"),
@@ -93,9 +93,9 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.logging", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.action", "DROP"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.enabled", "true"),
-					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.sources.#", "0"),
-					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.destinations.#", "1"),
-					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.applications.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.source_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.destination_ids.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.app_port_profile_ids.#", "0"),
 
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.name", "test_rule-3"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.direction", "IN_OUT"),
@@ -103,9 +103,9 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.logging", "false"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.action", "ALLOW"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.enabled", "true"),
-					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.sources.#", "1"),
-					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.destinations.#", "3"),
-					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.applications.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.source_ids.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.destination_ids.#", "3"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.app_port_profile_ids.#", "0"),
 				),
 			},
 			resource.TestStep{
@@ -188,24 +188,24 @@ resource "vcd_nsxt_firewall" "testing" {
     name        = "test_rule"
     direction   = "IN"
     ip_protocol = "IPV4"
-    sources     = vcd_nsxt_security_group.group.*.id
+    source_ids  = vcd_nsxt_security_group.group.*.id
   }
 
   rule {
-    name         = "test_rule-2"
-    direction    = "OUT"
-    ip_protocol  = "IPV6"
-    destinations = [vcd_nsxt_security_group.group.2.id]
-    action       = "DROP"
-    logging      = true
+    name            = "test_rule-2"
+    direction       = "OUT"
+    ip_protocol     = "IPV6"
+    destination_ids = [vcd_nsxt_security_group.group.2.id]
+    action          = "DROP"
+    logging         = true
   }
 
   rule {
-    name         = "test_rule-3"
-    direction    = "IN_OUT"
-    ip_protocol  = "IPV4_IPV6"
-    sources      = [vcd_nsxt_security_group.group.1.id]
-    destinations = vcd_nsxt_security_group.group.*.id
+    name            = "test_rule-3"
+    direction       = "IN_OUT"
+    ip_protocol     = "IPV4_IPV6"
+    source_ids      = [vcd_nsxt_security_group.group.1.id]
+    destination_ids = vcd_nsxt_security_group.group.*.id
   }
 }
 `
