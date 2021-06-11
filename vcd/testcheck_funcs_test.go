@@ -118,7 +118,7 @@ func resourceFieldsEqual(firstObject, secondObject string, excludeFields []strin
 
 		for fieldName := range resource1.Primary.Attributes {
 			// Do not validate the fields marked for exclusion
-			if stringInSlice(fieldName, excludeFields) {
+			if excludeFields != nil && stringInSlice(fieldName, excludeFields) {
 				continue
 			}
 
