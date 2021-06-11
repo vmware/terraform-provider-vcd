@@ -155,6 +155,9 @@ type TestConfig struct {
 		UploadProgress  bool   `json:"uploadProgress,omitempty"`
 		MediaName       string `json:"mediaName,omitempty"`
 	} `json:"media"`
+	Misc struct {
+		LdapContainer string `json:"ldapContainer,omitempty"`
+	} `json:"misc"`
 	// Data used to create a new environment, in addition to the regular test configuration file
 	TestEnvBuild struct {
 		Gateway                      string `json:"gateway"`                      // Gateway for external network
@@ -1030,6 +1033,16 @@ func importStateIdOrgNsxtVdcObject(vcd TestConfig, objectName string) resource.I
 			testConfig.Nsxt.Vdc +
 			ImportSeparator +
 			objectName, nil
+	}
+}
+
+// importStateIdNsxtManagerObject can be used by all entities that depend on NSX-T manager name + objectName
+func importStateIdNsxtManagerObject(vcd TestConfig, objectName string) resource.ImportStateIdFunc {
+	return func(*terraform.State) (string, error) {
+		if testConfig.Nsxt.Manager == "" || objectName == "" {
+			return "", fmt.Errorf("missing information to generate import path")
+		}
+		return testConfig.Nsxt.Manager + ImportSeparator + objectName, nil
 	}
 }
 

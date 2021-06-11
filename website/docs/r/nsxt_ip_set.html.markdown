@@ -16,7 +16,7 @@ multiple objects into IP sets helps reduce the total number of firewall rules to
 
 ## Specific usage notes
 
-## Example Usage 1 (IP set with multiple IP address ranges defined)
+## Example Usage (IP set with multiple IP address ranges defined)
 
 ```hcl
 resource "vcd_nsxt_ip_set" "set1" {

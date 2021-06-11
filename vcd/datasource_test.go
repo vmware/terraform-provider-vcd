@@ -180,6 +180,8 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 		// OpenAPI requires org_network_id to be a valid URN - chances of duplicating it are close enough to zero
 		case "org_network_id":
 			templateFields = templateFields + `org_network_id = "urn:vcloud:network:784feb3d-87e4-4905-202a-bfe9faa5476f"` + "\n"
+		case "scope":
+			templateFields = templateFields + `scope = "TENANT"` + "\n"
 		}
 
 	}
