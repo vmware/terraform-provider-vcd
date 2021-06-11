@@ -72,7 +72,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_network_isolated_v2":   datasourceVcdNetworkIsolatedV2(),   // 3.2
 	"vcd_nsxt_network_imported": datasourceVcdNsxtNetworkImported(), // 3.2
 	"vcd_nsxt_network_dhcp":     datasourceVcdOpenApiDhcp(),         // 3.2
-	"vcd_nsxt_security_group":   datasourceVcdNsxtSecurityGroup(),   // 3.2
+	"vcd_nsxt_security_group":   datasourceVcdNsxtSecurityGroup(),   // 3.3
 	"vcd_nsxt_ip_set":           datasourceVcdNsxtIpSet(),           // 3.3
 	"vcd_nsxt_app_port_profile": datasourceVcdNsxtAppPortProfile(),  // 3.3
 	"vcd_nsxt_firewall":         datasourceVcdNsxtFirewall(),        // 3.3
