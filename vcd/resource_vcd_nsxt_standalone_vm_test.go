@@ -19,9 +19,18 @@ func init() {
 // TestAccVcdNsxtStandaloneVmTemplate tests NSX-T Routed network DHCP pools, static pools and manual IP assignment
 func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 	preTestChecks(t)
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	vcdClient := createTemporaryVCDConnection()
+	if !vcdClient.Client.IsSysAdmin {
+		t.Skip(t.Name() + " only System Administrator can create Imported networks")
+	}
 
 	if testConfig.Nsxt.Vdc == "" || testConfig.Nsxt.EdgeGateway == "" {
-		t.Skip("Either NSXT VDC or edge gateway not defined")
+		t.Skip("Either NSX-T VDC or Edge Gateway not defined")
 		return
 	}
 
