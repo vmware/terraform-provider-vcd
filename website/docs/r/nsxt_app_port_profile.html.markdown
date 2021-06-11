@@ -14,11 +14,11 @@ description: |-
 Supported in provider *v3.3+* and VCD 10.1+ with NSX-T backed VDCs.
 
 Provides a resource to manage NSX-T Application Port Profiles. Application Port Profiles include a
-combination of a protocol, and a port, or a group of ports, that is used for Firewall and NAT
+combination of a protocol and a port, or a group of ports, that is used for Firewall and NAT
 services on the Edge Gateway. In addition to the default Port Profiles that are preconfigured for
 NSX-T Data Center, you can create custom Application Port Profiles.
 
-## Example Usage 1 (Define System wide Application Port Profile)
+## Example Usage 1 (Define Provider wide Application Port Profile)
 
 ```hcl
 resource "vcd_nsxt_app_port_profile" "icmpv4" {
@@ -27,7 +27,7 @@ resource "vcd_nsxt_app_port_profile" "icmpv4" {
   name        = "ICMP custom profile"
   description = "Application port profile for ICMPv4"
   
-  scope           = "SYSTEM"
+  scope           = "PROVIDER"
   nsxt_manager_id = data.vcd_nsxt_manager.first.id
 
   app_port {
