@@ -61,6 +61,9 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.logging", "false"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.action", "ALLOW"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.enabled", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.source_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.destination_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.app_port_profile_ids.#", "0"),
 				),
 			},
 			resource.TestStep{
@@ -95,7 +98,7 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.source_ids.#", "0"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.destination_ids.#", "1"),
-					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.app_port_profile_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.app_port_profile_ids.#", "1"),
 
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.name", "test_rule-3"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.direction", "IN_OUT"),
@@ -105,7 +108,7 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.source_ids.#", "1"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.destination_ids.#", "3"),
-					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.app_port_profile_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.app_port_profile_ids.#", "2"),
 				),
 			},
 			resource.TestStep{
@@ -165,6 +168,37 @@ resource "vcd_nsxt_firewall" "testing" {
 const testAccVcdNsxtFirewallAndDs = testAccVcdNsxtFirewall + testAccVcdNsxtFirewallDS
 
 const testAccVcdNsxtFirewall2 = testAccVcdNsxtFirewallPrereqs + `
+
+data "vcd_nsxt_app_port_profile" "ssh" {
+  scope = "SYSTEM"
+  name  = "SSH"
+}
+
+resource "vcd_nsxt_app_port_profile" "custom-app" {
+  org   = "{{.Org}}"
+  vdc   = "{{.NsxtVdc}}"
+
+  name        = "custom app profile"
+  description = "Application port profile for custom application"
+
+  scope       = "TENANT"
+
+  app_port {
+    protocol = "ICMPv6"
+  }
+
+  app_port {
+    protocol = "TCP"
+    port     = ["2000", "2010-2020", "12345", "65000"]
+  }
+
+  app_port {
+    protocol = "UDP"
+    port     = ["40000-60000"]
+  }
+}
+
+
 resource "vcd_nsxt_security_group" "group" {
   count = 3
   org   = "{{.Org}}"
@@ -192,20 +226,22 @@ resource "vcd_nsxt_firewall" "testing" {
   }
 
   rule {
-    name            = "test_rule-2"
-    direction       = "OUT"
-    ip_protocol     = "IPV6"
-    destination_ids = [vcd_nsxt_security_group.group.2.id]
-    action          = "DROP"
-    logging         = true
+    name                 = "test_rule-2"
+    direction            = "OUT"
+    ip_protocol          = "IPV6"
+    destination_ids      = [vcd_nsxt_security_group.group.2.id]
+    app_port_profile_ids = [data.vcd_nsxt_app_port_profile.ssh.id]
+    action               = "DROP"
+    logging              = true
   }
 
   rule {
-    name            = "test_rule-3"
-    direction       = "IN_OUT"
-    ip_protocol     = "IPV4_IPV6"
-    source_ids      = [vcd_nsxt_security_group.group.1.id]
-    destination_ids = vcd_nsxt_security_group.group.*.id
+    name                 = "test_rule-3"
+    direction            = "IN_OUT"
+    ip_protocol          = "IPV4_IPV6"
+    source_ids           = [vcd_nsxt_security_group.group.1.id]
+    destination_ids      = vcd_nsxt_security_group.group.*.id
+    app_port_profile_ids = [data.vcd_nsxt_app_port_profile.ssh.id, vcd_nsxt_app_port_profile.custom-app.id]
   }
 }
 `

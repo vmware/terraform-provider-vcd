@@ -56,7 +56,7 @@ resource "vcd_nsxt_firewall" "testing" {
     logging         = true
   }
   
-  # Rule #3 - Allows IPv4 and IPv6 traffic in both directions:
+  # Rule #3 - Allows IPv4 and IPv6 traffic of 2 Application Port Profiles in both directions:
   # from vcd_nsxt_security_group.group.1.id to all list of security groups vcd_nsxt_security_group.group.*.id
   # from list of security groups vcd_nsxt_security_group.group.*.id to vcd_nsxt_security_group.group.1.id
   rule {
@@ -65,6 +65,7 @@ resource "vcd_nsxt_firewall" "testing" {
     ip_protocol     = "IPV4_IPV6"
     source_ids      = [vcd_nsxt_security_group.group.1.id]
     destination_ids = vcd_nsxt_security_group.group.*.id
+    app_port_profile_ids = [app_port_profile_ids = [data.vcd_nsxt_app_port_profile.ssh.id, vcd_nsxt_app_port_profile.custom-app.id]
   }
 }
 ```
@@ -95,7 +96,7 @@ Each Firewall Rule contains following attributes:
 Leaving it empty matches `Any` (all)
 * `destination_ids` - (Optional) A set of source object Firewall Groups (`IP Sets` or `Security groups`). 
 Leaving it empty matches `Any` (all)
-* `applications` - (Optional) A set of Application Port Profiles. Leaving it empty matches `Any` (all)
+* `app_port_profile_ids` - (Optional) A set of Application Port Profiles. Leaving it empty matches `Any` (all)
 
 ## Importing
 
