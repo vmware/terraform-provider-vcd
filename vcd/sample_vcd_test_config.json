@@ -137,6 +137,11 @@
     "//": "Already uploaded media name",
     "mediaName" : "linuxOS"
   },
+  "misc": {
+    "//": "ldapContainer can be used to pull default LDAP testing container 'rroemhild/test-openldap' from a local",
+    "//": "Docker registry. This can help to overcome Docker registry throttling",
+    "ldapContainer": ""
+  },
   "testEnvBuild": {
     "//": "This section is optional for running tests. It's only needed to build the test environment in a new vCD",
 

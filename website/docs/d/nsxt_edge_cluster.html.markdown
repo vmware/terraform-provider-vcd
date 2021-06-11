@@ -30,7 +30,7 @@ data "vcd_nsxt_edge_cluster" "first" {
 The following arguments are supported:
 
 * `name` - (Required) NSX-T Edge Cluster name. **Note.** NSX-T does allow to have duplicate names therefore to be able
-to correctly use this datasource there should not be multiple NSX-T Edge Clusters with the same name defined.
+to correctly use this data source there should not be multiple NSX-T Edge Clusters with the same name defined.
 
 ## Attribute reference
 

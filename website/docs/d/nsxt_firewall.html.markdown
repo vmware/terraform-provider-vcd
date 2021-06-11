@@ -17,7 +17,7 @@ user to control the incoming and outgoing network traffic to and from an NSX-T D
 Edge Gateway.
 
 
-## Example Usage 1 (Read a list of firewall rules on Edge Gateway)
+## Example Usage (Read a list of firewall rules on Edge Gateway)
 ```hcl
 data "vcd_nsxt_firewall" "testing" {
   org  = "my-org"
