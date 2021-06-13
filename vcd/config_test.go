@@ -1096,7 +1096,7 @@ func importStateIdEdgeGatewayObject(vcd TestConfig, edgeGatewayName, objectName 
 func importStateIdNsxtEdgeGatewayObject(vcd TestConfig, edgeGatewayName, objectName string) resource.ImportStateIdFunc {
 	return func(*terraform.State) (string, error) {
 		if testConfig.VCD.Org == "" || testConfig.VCD.Vdc == "" || edgeGatewayName == "" || objectName == "" {
-			return "", fmt.Errorf("missing information to generate import path")
+			return "", fmt.Errorf("missing information to generate import path for object %s", objectName)
 		}
 		return testConfig.VCD.Org +
 			ImportSeparator +
