@@ -84,7 +84,7 @@ func datasourceVcdNsxtNatRule() *schema.Resource {
 			"firewall_match": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "VCD 10.2.2+ Determines how the firewall matches the address during NATing if firewall stage is not skipped. Below are valid values.",
+				Description: "VCD 10.2.2+ Determines how the firewall matches the address during NATing if firewall stage is not skipped. One of 'MATCH_INTERNAL_ADDRESS', 'MATCH_EXTERNAL_ADDRESS', 'BYPASS'",
 			},
 			"priority": &schema.Schema{
 				Type:        schema.TypeInt,

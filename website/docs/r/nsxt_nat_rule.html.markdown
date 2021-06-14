@@ -135,7 +135,6 @@ The following arguments are supported:
     organization VDC out to an external network or to another organization VDC network.
   * `REFLEXIVE` (VCD 10.3+)  is also known as Stateless NAT. This translates an internal IP to an external IP and vice 
     versa. The number of internal addresses should be exactly the same as that of external addresses.
-
 * `external_addresses` (Optional) IP address or CIDR of external network.
 * `internal_addresses` (Optional) IP address or CIDR of the virtual machines for which you are
   configuring NAT.
@@ -154,17 +153,12 @@ The following arguments are supported:
   is missing **Gateway -> Configure System Logging** right) to enable logging, but API does not
   return error and it is not possible to validate it. `terraform plan` might show difference on
   every update.
-
-
 * `firewall_match` (Optional, VCD 10.2.2+) - You can set a firewall match rule to determine how
   firewall is applied during NAT. One of `MATCH_INTERNAL_ADDRESS`, `MATCH_EXTERNAL_ADDRESS`,
   `BYPASS`
-
   * `MATCH_INTERNAL_ADDRESS` - applies firewall rules to the internal address of a NAT rule
   * `MATCH_EXTERNAL_ADDRESS` - applies firewall rules to the external address of a NAT rule
   * `BYPASS` - skip applying firewall rules to NAT rule
-
-
 * `priority` (Optional, VCD 10.2.2+) - if an address has multiple NAT rules, you can assign these
   rules different priorities to determine the order in which they are applied. A lower value means a
   higher priority for this rule. 
