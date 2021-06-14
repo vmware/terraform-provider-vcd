@@ -21,6 +21,7 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 		"NsxtVdc":     testConfig.Nsxt.Vdc,
 		"EdgeGw":      testConfig.Nsxt.EdgeGateway,
 		"NetworkName": t.Name(),
+		"Enabled":     "true",
 		"Tags":        "network nsxt",
 	}
 
@@ -38,6 +39,11 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 	params["FuncName"] = t.Name() + "-step4"
 	configText4 := templateFill(testAccVcdNsxtFirewall2AndDs, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4)
+
+	params["FuncName"] = t.Name() + "-step5"
+	params["Enabled"] = "false"
+	configText5 := templateFill(testAccVcdNsxtFirewall2, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 5: %s", configText5)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -118,6 +124,43 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 					resource.TestCheckResourceAttrPair("vcd_nsxt_firewall.testing", "id", "vcd_nsxt_firewall.testing", "edge_gateway_id"),
 					// Validating that datasource populates the same fields as resource
 					resourceFieldsEqual("vcd_nsxt_firewall.testing", "data.vcd_nsxt_firewall.testing", nil),
+				),
+			},
+			resource.TestStep{
+				Config: configText5,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestMatchResourceAttr("vcd_nsxt_firewall.testing", "id", regexp.MustCompile(`^urn:vcloud:gateway:.*$`)),
+					resource.TestCheckResourceAttrPair("vcd_nsxt_firewall.testing", "id", "vcd_nsxt_firewall.testing", "edge_gateway_id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.#", "3"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.name", "test_rule"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.direction", "IN"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.ip_protocol", "IPV4"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.logging", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.action", "ALLOW"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.source_ids.#", "3"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.destination_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.0.app_port_profile_ids.#", "0"),
+
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.name", "test_rule-2"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.direction", "OUT"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.ip_protocol", "IPV6"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.logging", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.action", "DROP"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.source_ids.#", "0"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.destination_ids.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.app_port_profile_ids.#", "1"),
+
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.name", "test_rule-3"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.direction", "IN_OUT"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.ip_protocol", "IPV4_IPV6"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.logging", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.action", "ALLOW"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.enabled", "false"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.source_ids.#", "1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.destination_ids.#", "3"),
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.2.app_port_profile_ids.#", "2"),
 				),
 			},
 			resource.TestStep{
@@ -223,6 +266,7 @@ resource "vcd_nsxt_firewall" "testing" {
     direction   = "IN"
     ip_protocol = "IPV4"
     source_ids  = vcd_nsxt_security_group.group.*.id
+    enabled     = {{.Enabled}}
   }
 
   rule {
@@ -233,6 +277,7 @@ resource "vcd_nsxt_firewall" "testing" {
     app_port_profile_ids = [data.vcd_nsxt_app_port_profile.ssh.id]
     action               = "DROP"
     logging              = true
+	enabled              = {{.Enabled}}
   }
 
   rule {
@@ -242,6 +287,7 @@ resource "vcd_nsxt_firewall" "testing" {
     source_ids           = [vcd_nsxt_security_group.group.1.id]
     destination_ids      = vcd_nsxt_security_group.group.*.id
     app_port_profile_ids = [data.vcd_nsxt_app_port_profile.ssh.id, vcd_nsxt_app_port_profile.custom-app.id]
+    enabled              = {{.Enabled}}
   }
 }
 `
