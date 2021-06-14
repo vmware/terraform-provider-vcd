@@ -190,7 +190,7 @@ $ terraform import vcd_nsxt_nat_rule.dnat my-org.nsxt-vdc.nsxt-gw.dnat1
 vcd_nsxt_nat_rule.dnat: Importing from ID "my-org.nsxt-vdc.nsxt-gw.dnat1"...
 # The following NAT rules with Name 'dnat1' are available
 # Please use ID instead of Name in import path to pick exact rule
-ID                                   Name  Rule Type Internal Address External Address
+ID                                   Name  Rule Type Internal Address   External Address
 04fde766-2cbd-4986-93bb-7f57e59c6b19 dnat1 DNAT      1.1.1.1            10.1.2.139
 f40e3d68-cfa6-42ea-83ed-5571659b3e7b dnat1 DNAT      2.2.2.2            10.1.2.139
 
