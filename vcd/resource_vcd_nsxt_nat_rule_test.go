@@ -69,11 +69,11 @@ func TestAccVcdNsxtNatRuleDnat(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat", "name", "test-dnat-rule"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat", "rule_type", "DNAT"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat", "description", "description"),
-					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.dnat", "external_addresses"),
-					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat", "internal_addresses", "11.11.11.2"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.dnat", "external_address"),
+					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat", "internal_address", "11.11.11.2"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat", "logging", "false"),
 					resource.TestCheckNoResourceAttr("vcd_nsxt_nat_rule.dnat", "app_port_profile_id"),
-					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat", "snat_destination_addresses", ""),
+					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat", "snat_destination_address", ""),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat", "enabled", "true"),
 					natRuleId.cacheTestResourceFieldValue("vcd_nsxt_nat_rule.dnat", "id"),
 				),
@@ -93,12 +93,12 @@ func TestAccVcdNsxtNatRuleDnat(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat", "name", "test-dnat-rule-updated"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat", "rule_type", "DNAT"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat", "description", "updated-description"),
-					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.dnat", "external_addresses"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.dnat", "external_address"),
 					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.dnat", "app_port_profile_id"),
-					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat", "internal_addresses", "11.11.11.0/32"),
+					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat", "internal_address", "11.11.11.0/32"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat", "logging", "false"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat", "dnat_external_port", "8888"),
-					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat", "snat_destination_addresses", ""),
+					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat", "snat_destination_address", ""),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.dnat", "enabled", "false"),
 				),
 			},
@@ -161,8 +161,8 @@ resource "vcd_nsxt_nat_rule" "dnat" {
   description = "description"
 
   # Using primary_ip from edge gateway
-  external_addresses = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
-  internal_addresses = "11.11.11.2"
+  external_address = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
+  internal_address = "11.11.11.2"
 }
 `
 
@@ -185,8 +185,8 @@ resource "vcd_nsxt_nat_rule" "dnat" {
   description = "updated-description"
   
   # Using primary_ip from edge gateway
-  external_addresses  = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
-  internal_addresses  = "11.11.11.0/32"
+  external_address  = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
+  internal_address  = "11.11.11.0/32"
   dnat_external_port  = 8888
   app_port_profile_id = data.vcd_nsxt_app_port_profile.custom.id
   
@@ -223,8 +223,8 @@ resource "vcd_nsxt_nat_rule" "dnat" {
   description = "updated-description"
   
   # Using primary_ip from edge gateway
-  external_addresses  = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
-  internal_addresses  = "11.11.11.0/32"
+  external_address  = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
+  internal_address  = "11.11.11.0/32"
   dnat_external_port  = 8888
   app_port_profile_id = vcd_nsxt_app_port_profile.custom-app.id
   
@@ -266,8 +266,8 @@ func TestAccVcdNsxtNatRuleNoDnat(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.no-dnat", "name", "test-no-dnat-rule"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.no-dnat", "rule_type", "NO_DNAT"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.no-dnat", "description", ""),
-					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.no-dnat", "external_addresses"),
-					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.no-dnat", "internal_addresses", ""),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.no-dnat", "external_address"),
+					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.no-dnat", "internal_address", ""),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.no-dnat", "logging", "false"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.no-dnat", "dnat_external_port", "7777"),
 				),
@@ -295,7 +295,7 @@ resource "vcd_nsxt_nat_rule" "no-dnat" {
 
   
   # Using primary_ip from edge gateway
-  external_addresses = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
+  external_address = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
   dnat_external_port = 7777
 }
 `
@@ -351,10 +351,10 @@ func TestAccVcdNsxtNatRuleSnat(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.snat", "name", "test-snat-rule"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.snat", "rule_type", "SNAT"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.snat", "description", "description"),
-					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.snat", "external_addresses"),
-					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.snat", "internal_addresses", "11.11.11.2"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.snat", "external_address"),
+					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.snat", "internal_address", "11.11.11.2"),
 					resource.TestCheckNoResourceAttr("vcd_nsxt_nat_rule.snat", "app_port_profile_id"),
-					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.snat", "snat_destination_addresses", "8.8.8.8"),
+					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.snat", "snat_destination_address", "8.8.8.8"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.snat", "enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.snat", "logging", "false"),
 				),
@@ -374,10 +374,10 @@ func TestAccVcdNsxtNatRuleSnat(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.snat", "name", "test-snat-rule-updated"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.snat", "rule_type", "SNAT"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.snat", "description", ""),
-					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.snat", "external_addresses"),
-					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.snat", "internal_addresses", "10.10.10.2"),
+					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.snat", "external_address"),
+					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.snat", "internal_address", "10.10.10.0/24"),
 					resource.TestCheckNoResourceAttr("vcd_nsxt_nat_rule.snat", "app_port_profile_id"),
-					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.snat", "snat_destination_addresses", ""),
+					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.snat", "snat_destination_address", ""),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.snat", "enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.snat", "logging", "false"),
 				),
@@ -412,9 +412,9 @@ resource "vcd_nsxt_nat_rule" "snat" {
   description = "description"
   
   # Using primary_ip from edge gateway
-  external_addresses         = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
-  internal_addresses         = "11.11.11.2"
-  snat_destination_addresses = "8.8.8.8"
+  external_address         = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
+  internal_address         = "11.11.11.2"
+  snat_destination_address = "8.8.8.8"
 }
 `
 const testAccNsxtNatSnatDS = testAccNsxtNatSnat + natRuleDataSourceDefinition
@@ -431,8 +431,8 @@ resource "vcd_nsxt_nat_rule" "snat" {
   description = ""
   
   # Using primary_ip from edge gateway
-  external_addresses         = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
-  internal_addresses         = "10.10.10.2"
+  external_address         = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
+  internal_address         = "10.10.10.0/24"
   logging = false
 }
 `
@@ -472,7 +472,7 @@ func TestAccVcdNsxtNatRuleNoSnat(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.no-snat", "name", "test-no-snat-rule"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.no-snat", "description", "description"),
 					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.no-snat", "rule_type", "NO_SNAT"),
-					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.no-snat", "internal_addresses", "11.11.11.0/24"),
+					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.no-snat", "internal_address", "11.11.11.0/24"),
 				),
 			},
 			resource.TestStep{
@@ -498,7 +498,7 @@ resource "vcd_nsxt_nat_rule" "no-snat" {
   description = "description"
   
   # Using primary_ip from edge gateway
-  internal_addresses         = "11.11.11.0/24"
+  internal_address         = "11.11.11.0/24"
 }
 `
 
@@ -612,8 +612,8 @@ resource "vcd_nsxt_nat_rule" "dnat-match" {
   description = "description"
 
   # Using primary_ip from edge gateway
-  external_addresses = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
-  internal_addresses = "11.11.11.2"
+  external_address = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
+  internal_address = "11.11.11.2"
 
   firewall_match = "{{.FirewallMatch}}"
   priority       = "{{.Priority}}"
@@ -730,8 +730,8 @@ resource "vcd_nsxt_nat_rule" "reflexive" {
   description = "description"
 
   # Using primary_ip from edge gateway
-  external_addresses = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
-  internal_addresses = "11.11.11.2"
+  external_address = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
+  internal_address = "11.11.11.2"
 
   firewall_match = "{{.FirewallMatch}}"
   priority       = "{{.Priority}}"

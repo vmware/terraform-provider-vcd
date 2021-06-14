@@ -19,7 +19,7 @@ a public to a private IP address, you create a destination NAT (DNAT) rule.
 -> When you configure a SNAT or a DNAT rule on an Edge Gateway in the VMware Cloud Director
 environment, you always configure the rule from the perspective of your organization VDC.
 
-## Example Usage 1 (SNAT rule translates to primary Edge Gateway IP for traffic going from 11.11.11.2 to 8.8.8.8)
+## Example Usage 1 (SNAT rule translates to primary Edge Gateway IP for traffic going from 11.11.11.0/24 to 8.8.8.8)
 
 ```hcl
 resource "vcd_nsxt_nat_rule" "snat" {
@@ -33,9 +33,9 @@ resource "vcd_nsxt_nat_rule" "snat" {
   description = "description"
 
   # Using primary_ip from edge gateway
-  external_addresses         = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
-  internal_addresses         = "11.11.11.2"
-  snat_destination_addresses = "8.8.8.8"
+  external_address         = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
+  internal_address         = "11.11.11.0/24"
+  snat_destination_address = "8.8.8.8"
   logging = true
 }
 ```
@@ -52,7 +52,7 @@ resource "vcd_nsxt_nat_rule" "no-snat" {
   rule_type   = "NO_SNAT"
   description = "description"
 
-  internal_addresses  = "11.11.11.0/24"
+  internal_address = "11.11.11.0/24"
 }
 ```
 
@@ -69,9 +69,9 @@ resource "vcd_nsxt_nat_rule" "dnat" {
   description = "description"
 
   # Using primary_ip from edge gateway
-  external_addresses = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
-  internal_addresses = "11.11.11.2"
-  logging            = true
+  external_address = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
+  internal_address = "11.11.11.2"
+  logging          = true
 }
 ```
 
@@ -88,12 +88,12 @@ resource "vcd_nsxt_nat_rule" "no-dnat" {
 
 
   # Using primary_ip from edge gateway
-  external_addresses = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
+  external_address   = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
   dnat_external_port = 7777
 }
 ```
 
-## Example Usage 5 (Reflexive NAT rule (Stateless NAT))
+## Example Usage 5 (Reflexive NAT rule also known as Stateless NAT)
 ```hcl
 resource "vcd_nsxt_nat_rule" "reflexive" {
   org = "my-org"
@@ -106,8 +106,8 @@ resource "vcd_nsxt_nat_rule" "reflexive" {
 
 
   # Using primary_ip from edge gateway
-  external_addresses = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
-  internal_addresses = "11.11.11.2"
+  external_address = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
+  internal_address = "11.11.11.2"
 }
 ```
 
@@ -123,31 +123,31 @@ The following arguments are supported:
 * `name` - (Required) A name for NAT rule
 * `description` - (Optional) An optional description of the NAT rule
 * `enabled` (Optional) - Enables or disables NAT rule (default `true`)
-* `rule_type` - (Required) One of `DNAT`, `NO_DNAT`, `SNAT`, `NO_SNAT`
-  * `DNAT` rule translates the IP address and optionally the port (using `dnat_external_port`) of
-    packets received by an organization VDC network that are coming from an external network or from
-    another organization VDC network.
-  * `NO_DNAT` rule prevents the translation of the external IP address of packets received by an
-    organization VDC from an external network or from another organization VDC network.
-  * `SNAT` rule translates the source IP address of packets sent from an organization VDC network
-    out to an external network or to another organization VDC network.
-  * `NO_SNAT` rule prevents the translation of the internal IP address of packets sent from an
-    organization VDC out to an external network or to another organization VDC network.
+* `rule_type` - (Required) One of `DNAT`, `NO_DNAT`, `SNAT`, `NO_SNAT`, `REFLEXIVE`
+  * `DNAT` rule translates the external IP to an internal IP and is used for inbound traffic
+  * `NO_DNAT` prevents external IP translation 
+  * `SNAT` translates an internal IP to an external IP and is used for outbound traffic
+  * `NO_SNAT` prevents internal IP translation
   * `REFLEXIVE` (VCD 10.3+)  is also known as Stateless NAT. This translates an internal IP to an external IP and vice 
     versa. The number of internal addresses should be exactly the same as that of external addresses.
-* `external_addresses` (Optional) IP address or CIDR of external network.
-* `internal_addresses` (Optional) IP address or CIDR of the virtual machines for which you are
-  configuring NAT.
+* `external_address` (Optional) The external address for the NAT Rule. This must be supplied as a single IP or Network
+  CIDR. For a `DNAT` rule, this is the external facing IP Address for incoming traffic. For an `SNAT` rule, this is the 
+  external facing IP Address for outgoing traffic. These IPs are typically allocated/suballocated IP Addresses on the 
+  Edge Gateway. For a `REFLEXIVE` rule, these are the external facing IPs.
+* `internal_address` (Optional) The internal address for the NAT Rule. This must be supplied as a single IP or
+  Network CIDR. For a `DNAT` rule, this is the internal IP address for incoming traffic. For an `SNAT` rule, this is the
+  internal IP Address for outgoing traffic. For a `REFLEXIVE` rule, these are the internal IPs.
+  These IPs are typically the Private IPs that are allocated to workloads.
 * `app_port_profile_id` (Optional) - Application Port Profile to which to apply the rule. The
   Application Port Profile includes a port, and a protocol that the incoming traffic uses on the edge
   gateway to connect to the internal network.  Can be looked up using `vcd_nsxt_app_port_profile`
   data source or created using `vcd_nsxt_app_port_profile` resource
-* `dnat_external_port` (Optional) - For `DNAT` only. Enter a port into which the DNAT
-  rule is translating for the packets inbound to the virtual machines.
-* `snat_destination_addresses` (Optional) For `SNAT` only. If you want the rule to apply only for
-  traffic to a specific domain, enter an IP address for this domain or an IP address range in CIDR
-  format. If you leave this text box blank, the SNAT rule applies to all destinations outside of the
-  local subnet.
+* `dnat_external_port` (Optional) - For `DNAT` only. This represents the external port number or port range when doing 
+  `DNAT` port forwarding from external to internal. The default dnatExternalPort is “ANY” meaning traffic on any port
+  for the given IPs selected will be translated.
+* `snat_destination_address` (Optional) For `SNAT` only. The destination addresses to match in the `SNAT` Rule. This 
+  must be supplied as a single IP or Network CIDR. Providing no value for this field results in match with ANY 
+  destination network.
 * `logging` (Optional) - Enable to have the address translation performed by this rule logged
   (default `false`). **Note** User might lack rights (**Organization Administrator** role by default
   is missing **Gateway -> Configure System Logging** right) to enable logging, but API does not
@@ -190,7 +190,7 @@ $ terraform import vcd_nsxt_nat_rule.dnat my-org.nsxt-vdc.nsxt-gw.dnat1
 vcd_nsxt_nat_rule.dnat: Importing from ID "my-org.nsxt-vdc.nsxt-gw.dnat1"...
 # The following NAT rules with Name 'dnat1' are available
 # Please use ID instead of Name in import path to pick exact rule
-ID                                   Name  Rule Type Internal Addresses External Addresses
+ID                                   Name  Rule Type Internal Address External Address
 04fde766-2cbd-4986-93bb-7f57e59c6b19 dnat1 DNAT      1.1.1.1            10.1.2.139
 f40e3d68-cfa6-42ea-83ed-5571659b3e7b dnat1 DNAT      2.2.2.2            10.1.2.139
 

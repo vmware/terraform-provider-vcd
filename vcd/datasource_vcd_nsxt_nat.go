@@ -46,12 +46,12 @@ func datasourceVcdNsxtNatRule() *schema.Resource {
 				Computed:    true,
 				Description: "Description of NAT rule",
 			},
-			"external_addresses": &schema.Schema{
+			"external_address": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "IP address or CIDR of external network",
 			},
-			"internal_addresses": &schema.Schema{
+			"internal_address": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "IP address or CIDR of the virtual machines for which you are configuring NAT",
@@ -66,7 +66,7 @@ func datasourceVcdNsxtNatRule() *schema.Resource {
 				Computed:    true,
 				Description: "For DNAT only. Port into which the DNAT rule is translating for the packets inbound to the virtual machines.",
 			},
-			"snat_destination_addresses": &schema.Schema{
+			"snat_destination_address": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "For SNAT only. Limits SNAT rule by destination IP address or range in CIDR format.",

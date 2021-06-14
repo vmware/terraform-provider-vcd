@@ -64,12 +64,12 @@ func resourceVcdNsxtNatRule() *schema.Resource {
 				Optional:    true,
 				Description: "Description of NAT rule",
 			},
-			"external_addresses": &schema.Schema{
+			"external_address": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "IP address or CIDR of external network",
 			},
-			"internal_addresses": &schema.Schema{
+			"internal_address": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "IP address or CIDR of the virtual machines for which you are configuring NAT",
@@ -84,7 +84,7 @@ func resourceVcdNsxtNatRule() *schema.Resource {
 				Optional:    true,
 				Description: "For DNAT only. Enter a port into which the DNAT rule is translating for the packets inbound to the virtual machines.",
 			},
-			"snat_destination_addresses": &schema.Schema{
+			"snat_destination_address": &schema.Schema{
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: "For SNAT only. If you want the rule to apply only for traffic to a specific domain, enter an IP address for this domain or an IP address range in CIDR format.",
@@ -310,9 +310,9 @@ func getNsxtNatType(d *schema.ResourceData, client *VCDClient) (*types.NsxtNatRu
 		Name:                     d.Get("name").(string),
 		Description:              d.Get("description").(string),
 		Enabled:                  d.Get("enabled").(bool),
-		ExternalAddresses:        d.Get("external_addresses").(string),
-		InternalAddresses:        d.Get("internal_addresses").(string),
-		SnatDestinationAddresses: d.Get("snat_destination_addresses").(string),
+		ExternalAddresses:        d.Get("external_address").(string),
+		InternalAddresses:        d.Get("internal_address").(string),
+		SnatDestinationAddresses: d.Get("snat_destination_address").(string),
 		Logging:                  d.Get("logging").(bool),
 	}
 
@@ -347,9 +347,9 @@ func getNsxtNatType(d *schema.ResourceData, client *VCDClient) (*types.NsxtNatRu
 func setNsxtNatRuleData(rule *types.NsxtNatRule, d *schema.ResourceData, client *VCDClient) error {
 	_ = d.Set("name", rule.Name)
 	_ = d.Set("description", rule.Description)
-	_ = d.Set("external_addresses", rule.ExternalAddresses)
-	_ = d.Set("internal_addresses", rule.InternalAddresses)
-	_ = d.Set("snat_destination_addresses", rule.SnatDestinationAddresses)
+	_ = d.Set("external_address", rule.ExternalAddresses)
+	_ = d.Set("internal_address", rule.InternalAddresses)
+	_ = d.Set("snat_destination_address", rule.SnatDestinationAddresses)
 	_ = d.Set("logging", rule.Logging)
 	_ = d.Set("enabled", rule.Enabled)
 	if rule.ApplicationPortProfile != nil {
@@ -389,7 +389,7 @@ func dumpNatRulesToScreen(name string, allRules []*govcd.NsxtNatRule) {
 	fmt.Fprintf(stdout, "# Please use ID instead of Name in import path to pick exact rule\n")
 
 	w := tabwriter.NewWriter(stdout, 1, 1, 1, ' ', 0)
-	fmt.Fprintln(w, "ID\tName\tRule Type\tInternal Addresses\tExternal Addresses")
+	fmt.Fprintln(w, "ID\tName\tRule Type\tInternal Address\tExternal Address")
 	for _, rule := range allRules {
 		if rule.NsxtNatRule.Name != name {
 			continue
