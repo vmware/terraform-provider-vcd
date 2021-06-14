@@ -93,6 +93,24 @@ resource "vcd_nsxt_nat_rule" "no-dnat" {
 }
 ```
 
+## Example Usage 5 (Reflexive NAT rule (Stateless NAT))
+```hcl
+resource "vcd_nsxt_nat_rule" "reflexive" {
+  org = "my-org"
+  vdc = "nsxt-vdc"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+
+  name      = "test-reflexive"
+  rule_type = "REFLEXIVE"
+
+
+  # Using primary_ip from edge gateway
+  external_addresses = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
+  internal_addresses = "11.11.11.2"
+}
+```
+
 ## Argument Reference
 
 The following arguments are supported:
@@ -115,6 +133,8 @@ The following arguments are supported:
     out to an external network or to another organization VDC network.
   * `NO_SNAT` rule prevents the translation of the internal IP address of packets sent from an
     organization VDC out to an external network or to another organization VDC network.
+  * `REFLEXIVE` (VCD 10.3+)  is also known as Stateless NAT. This translates an internal IP to an external IP and vice 
+    versa. The number of internal addresses should be exactly the same as that of external addresses.
 
 * `external_addresses` (Optional) IP address or CIDR of external network.
 * `internal_addresses` (Optional) IP address or CIDR of the virtual machines for which you are

@@ -56,8 +56,8 @@ func resourceVcdNsxtNatRule() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				Description:  "Rule type - one of 'DNAT', 'NO_DNAT', 'SNAT', 'NO_SNAT'",
-				ValidateFunc: validation.StringInSlice([]string{"DNAT", "NO_DNAT", "SNAT", "NO_SNAT"}, false),
+				Description:  "Rule type - one of 'DNAT', 'NO_DNAT', 'SNAT', 'NO_SNAT', 'REFLEXIVE'",
+				ValidateFunc: validation.StringInSlice([]string{"DNAT", "NO_DNAT", "SNAT", "NO_SNAT", "REFLEXIVE"}, false),
 			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
@@ -292,6 +292,11 @@ func resourceVcdNsxtNatRuleImport(ctx context.Context, d *schema.ResourceData, m
 }
 
 func getNsxtNatType(d *schema.ResourceData, client *VCDClient) (*types.NsxtNatRule, error) {
+	// REFLEXIVE rule_type is only supported in VCD 10.3+
+	if d.Get("rule_type").(string) == types.NsxtNatRuleTypeReflexive && client.Client.APIVCDMaxVersionIs("< 36.0") {
+		return nil, fmt.Errorf("rule_type 'REFLEXIVE' can only be used for VCD 10.3+")
+	}
+
 	firewallMatch, firewallMatchOk := d.GetOk("firewall_match")
 	priority, priorityOk := d.GetOk("priority")
 
@@ -305,11 +310,16 @@ func getNsxtNatType(d *schema.ResourceData, client *VCDClient) (*types.NsxtNatRu
 		Name:                     d.Get("name").(string),
 		Description:              d.Get("description").(string),
 		Enabled:                  d.Get("enabled").(bool),
-		RuleType:                 d.Get("rule_type").(string),
 		ExternalAddresses:        d.Get("external_addresses").(string),
 		InternalAddresses:        d.Get("internal_addresses").(string),
 		SnatDestinationAddresses: d.Get("snat_destination_addresses").(string),
 		Logging:                  d.Get("logging").(bool),
+	}
+
+	if client.Client.APIVCDMaxVersionIs(">= 36.0") {
+		nsxtNatRule.Type = d.Get("rule_type").(string)
+	} else {
+		nsxtNatRule.RuleType = d.Get("rule_type").(string)
 	}
 
 	// DnatExternalPort field was replacement for InternalPort field. When using API < 35.2 InternalPort field should be
@@ -342,7 +352,6 @@ func setNsxtNatRuleData(rule *types.NsxtNatRule, d *schema.ResourceData, client 
 	_ = d.Set("snat_destination_addresses", rule.SnatDestinationAddresses)
 	_ = d.Set("logging", rule.Logging)
 	_ = d.Set("enabled", rule.Enabled)
-	_ = d.Set("rule_type", rule.RuleType)
 	if rule.ApplicationPortProfile != nil {
 		_ = d.Set("app_port_profile_id", rule.ApplicationPortProfile.ID)
 	}
@@ -358,6 +367,13 @@ func setNsxtNatRuleData(rule *types.NsxtNatRule, d *schema.ResourceData, client 
 
 	if client.Client.APIVCDMaxVersionIs("< 35.2") {
 		_ = d.Set("dnat_external_port", rule.InternalPort)
+	}
+
+	// API V36.0+ uses Type field instead of RuleType
+	if client.Client.APIVCDMaxVersionIs(">= 36.0") {
+		_ = d.Set("rule_type", rule.Type)
+	} else {
+		_ = d.Set("rule_type", rule.RuleType)
 	}
 
 	return nil

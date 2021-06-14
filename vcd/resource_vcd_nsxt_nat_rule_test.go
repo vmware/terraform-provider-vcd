@@ -187,6 +187,7 @@ resource "vcd_nsxt_nat_rule" "dnat" {
   # Using primary_ip from edge gateway
   external_addresses  = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
   internal_addresses  = "11.11.11.0/32"
+  dnat_external_port  = 8888
   app_port_profile_id = data.vcd_nsxt_app_port_profile.custom.id
   
   enabled = false
@@ -521,6 +522,7 @@ func TestAccVcdNsxtNatRuleFirewallMatchPriority(t *testing.T) {
 	)
 	client := createTemporaryVCDConnection()
 	if client.Client.APIVCDMaxVersionIs("< 35.2") {
+		fmt.Println("# expecting an error for unsupported fields 'firewall_match' and 'priority'")
 		expectError = regexp.MustCompile(`firewall_match and priority fields can only be set for VCD 10.2.2+`)
 		expectImportError = regexp.MustCompile(`unable to find NAT Rule`)
 	}
@@ -607,6 +609,124 @@ resource "vcd_nsxt_nat_rule" "dnat-match" {
 
   name        = "test-dnat-rule-match-and-priority"
   rule_type   = "DNAT"
+  description = "description"
+
+  # Using primary_ip from edge gateway
+  external_addresses = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
+  internal_addresses = "11.11.11.2"
+
+  firewall_match = "{{.FirewallMatch}}"
+  priority       = "{{.Priority}}"
+}
+`
+
+func TestAccVcdNsxtNatRuleReflexive(t *testing.T) {
+	preTestChecks(t)
+	skipNoNsxtConfiguration(t)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	// expectError must stay nil for versions > 10.3.0, because we expect it to work. For lower versions - it must have
+	// match the runtime validation error
+	var (
+		expectError       *regexp.Regexp
+		expectImportError *regexp.Regexp
+	)
+	client := createTemporaryVCDConnection()
+	if client.Client.APIVCDMaxVersionIs("< 36.0") {
+		fmt.Println("# expecting an error for unsupported NAT Rule Type 'REFLEXIVE'")
+		expectError = regexp.MustCompile(`rule_type 'REFLEXIVE' can only be used for VCD 10.3+`)
+		expectImportError = regexp.MustCompile(`unable to find NAT Rule`)
+	}
+
+	// String map to fill the template
+	var params = StringMap{
+		"Org":           testConfig.VCD.Org,
+		"NsxtVdc":       testConfig.Nsxt.Vdc,
+		"EdgeGw":        testConfig.Nsxt.EdgeGateway,
+		"NetworkName":   t.Name(),
+		"Tags":          "network nsxt",
+		"FirewallMatch": "MATCH_INTERNAL_ADDRESS",
+		"Priority":      "10",
+	}
+
+	configText1 := templateFill(testAccNsxtNatRuleReflexive, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
+
+	params["FuncName"] = t.Name() + "-step2"
+	params["FirewallMatch"] = "MATCH_EXTERNAL_ADDRESS"
+	params["Priority"] = "30"
+	configText2 := templateFill(testAccNsxtNatRuleReflexive, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
+
+	params["FuncName"] = t.Name() + "-step3"
+	params["FirewallMatch"] = "BYPASS"
+	params["Priority"] = "0"
+	configText3 := templateFill(testAccNsxtNatRuleReflexive, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
+
+	resource.Test(t, resource.TestCase{
+		ProviderFactories: testAccProviders,
+		PreCheck:          func() { testAccPreCheck(t) },
+		CheckDestroy:      testAccCheckNsxtNatRuleDestroy("test-dnat-rule-match-and-priority"),
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config:      configText1,
+				ExpectError: expectError,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.reflexive", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.reflexive", "name", "test-reflexive-rule-match-and-priority"),
+					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.reflexive", "rule_type", "REFLEXIVE"),
+					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.reflexive", "firewall_match", "MATCH_INTERNAL_ADDRESS"),
+					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.reflexive", "priority", "10"),
+				),
+			},
+			resource.TestStep{
+				Config:      configText2,
+				ExpectError: expectError,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.reflexive", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.reflexive", "name", "test-reflexive-rule-match-and-priority"),
+					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.reflexive", "rule_type", "REFLEXIVE"),
+					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.reflexive", "firewall_match", "MATCH_EXTERNAL_ADDRESS"),
+					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.reflexive", "priority", "30"),
+				),
+			},
+			resource.TestStep{
+				Config:      configText3,
+				ExpectError: expectError,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttrSet("vcd_nsxt_nat_rule.reflexive", "id"),
+					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.reflexive", "name", "test-reflexive-rule-match-and-priority"),
+					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.reflexive", "rule_type", "REFLEXIVE"),
+					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.reflexive", "firewall_match", "BYPASS"),
+					resource.TestCheckResourceAttr("vcd_nsxt_nat_rule.reflexive", "priority", "0"),
+				),
+			},
+			resource.TestStep{
+				ResourceName:      "vcd_nsxt_nat_rule.reflexive",
+				ExpectError:       expectImportError,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdNsxtEdgeGatewayObject(testConfig, testConfig.Nsxt.EdgeGateway, "test-reflexive-rule-match-and-priority"),
+			},
+		},
+	})
+	postTestChecks(t)
+}
+
+const testAccNsxtNatRuleReflexive = testAccNsxtSecurityGroupPrereqsEmpty + `
+resource "vcd_nsxt_nat_rule" "reflexive" {
+  org = "{{.Org}}"
+  vdc = "{{.NsxtVdc}}"
+
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+
+  name        = "test-reflexive-rule-match-and-priority"
+  rule_type   = "REFLEXIVE"
   description = "description"
 
   # Using primary_ip from edge gateway
