@@ -23,6 +23,7 @@ resource "vcd_nsxt_firewall" "testing" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing.id
 
   rule {
+    action      = "ALLOW"
     name        = "allow all IPv4 traffic"
     direction   = "IN_OUT"
     ip_protocol = "IPV4"
@@ -40,6 +41,7 @@ resource "vcd_nsxt_firewall" "testing" {
 
   # Rule #1 - Allows in IPv4 traffic from security group `vcd_nsxt_security_group.group1.id`
   rule {
+    action      = "ALLOW"
     name        = "first rule"
     direction   = "IN"
     ip_protocol = "IPV4"
@@ -48,11 +50,11 @@ resource "vcd_nsxt_firewall" "testing" {
 
   # Rule #2 - Drops and logs all outgoing IPv6 traffic to `vcd_nsxt_security_group.group.2.id`
   rule {
+    action          = "DROP"
     name            = "drop IPv6 with destination to security group 2"
     direction       = "OUT"
     ip_protocol     = "IPV6"
     destination_ids = [vcd_nsxt_security_group.group2.id]
-    action          = "DROP"
     logging         = true
   }
   
@@ -60,6 +62,7 @@ resource "vcd_nsxt_firewall" "testing" {
   # from vcd_nsxt_security_group.group.1.id to all list of security groups vcd_nsxt_security_group.group.*.id
   # from list of security groups vcd_nsxt_security_group.group.*.id to vcd_nsxt_security_group.group.1.id
   rule {
+    action          = "ALLOW"
     name            = "test_rule-3"
     direction       = "IN_OUT"
     ip_protocol     = "IPV4_IPV6"
@@ -89,9 +92,9 @@ Each Firewall Rule contains following attributes:
 * `name` - (Required) Explanatory name for firewall rule (uniqueness not enforced)
 * `direction` - (Required) One of `IN`, `OUT`, or `IN_OUT`
 * `ip_protocol` - (Required) One of `IPV4`,  `IPV6`, or `IPV4_IPV6`
+* `action` - (Required) Defines if it should `ALLOW` or `DROP` traffic
 * `enabled` - (Optional) Defines if the rule is enabled (default `true`)
 * `logging` - (Optional) Defines if logging for this rule is enabled (default `false`)
-* `action` - (Optional) Defines if it should `ALLOW` or `DROP` traffic (default `ALLOW`)
 * `source_ids` - (Optional) A set of source object Firewall Groups (`IP Sets` or `Security groups`). 
 Leaving it empty matches `Any` (all)
 * `destination_ids` - (Optional) A set of source object Firewall Groups (`IP Sets` or `Security groups`). 

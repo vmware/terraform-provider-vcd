@@ -201,6 +201,7 @@ resource "vcd_nsxt_firewall" "testing" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing.id
 
   rule {
+    action      = "ALLOW"
     name        = "test_rule"
     direction   = "IN"
     ip_protocol = "IPV4"
@@ -262,6 +263,7 @@ resource "vcd_nsxt_firewall" "testing" {
   edge_gateway_id = data.vcd_nsxt_edgegateway.testing.id
 
   rule {
+    action      = "ALLOW"
     name        = "test_rule"
     direction   = "IN"
     ip_protocol = "IPV4"
@@ -270,17 +272,18 @@ resource "vcd_nsxt_firewall" "testing" {
   }
 
   rule {
+    action               = "DROP"
     name                 = "test_rule-2"
     direction            = "OUT"
     ip_protocol          = "IPV6"
     destination_ids      = [vcd_nsxt_security_group.group.2.id]
     app_port_profile_ids = [data.vcd_nsxt_app_port_profile.ssh.id]
-    action               = "DROP"
     logging              = true
 	enabled              = {{.Enabled}}
   }
 
   rule {
+    action               = "ALLOW"
     name                 = "test_rule-3"
     direction            = "IN_OUT"
     ip_protocol          = "IPV4_IPV6"

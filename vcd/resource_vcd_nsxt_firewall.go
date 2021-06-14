@@ -75,6 +75,12 @@ func resourceVcdNsxtFirewall() *schema.Resource {
 							Description:  "Firewall Rule Protocol (One of 'IPV4', 'IPV6', 'IPV4_IPV6')",
 							ValidateFunc: validation.StringInSlice([]string{"IPV4", "IPV6", "IPV4_IPV6"}, false),
 						},
+						"action": &schema.Schema{
+							Type:         schema.TypeString,
+							Required:     true,
+							Description:  "Defines if the rule should 'ALLOW' or 'DROP' matching traffic",
+							ValidateFunc: validation.StringInSlice([]string{"ALLOW", "DROP"}, false),
+						},
 						"enabled": &schema.Schema{
 							Type:        schema.TypeBool,
 							Optional:    true,
@@ -86,13 +92,6 @@ func resourceVcdNsxtFirewall() *schema.Resource {
 							Optional:    true,
 							Default:     false,
 							Description: "Defines if matching traffic should be logged",
-						},
-						"action": &schema.Schema{
-							Type:         schema.TypeString,
-							Optional:     true,
-							Default:      "ALLOW",
-							Description:  "Defines if the rule should 'ALLOW' or 'DROP' matching traffic",
-							ValidateFunc: validation.StringInSlice([]string{"ALLOW", "DROP"}, false),
 						},
 						"source_ids": {
 							Type:        schema.TypeSet,
