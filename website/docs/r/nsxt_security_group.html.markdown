@@ -23,7 +23,7 @@ resource "vcd_nsxt_security_group" "frontend-servers" {
   org  = "my-org"
   vdc  = "my-nsxt-vdc"
 
-  # Referring to a datasource for existing NSX-T Edge Gateway
+  # Referring to a data source for existing NSX-T Edge Gateway
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
   name        = "frontend-servers"
@@ -39,7 +39,7 @@ resource "vcd_nsxt_security_group" "group1" {
   org  = "my-org"
   vdc  = "my-nsxt-vdc"
 
-  # Referring to a datasource for existing NSX-T Edge Gateway
+  # Referring to a data source for existing NSX-T Edge Gateway
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
   name = "precreated security group"
@@ -57,7 +57,7 @@ The following arguments are supported:
 * `name` - (Required) A unique name for Security Group
 * `description` - (Optional) An optional description of the Security Group
 * `edge_gateway_id` - (Required) The ID of the edge gateway (NSX-T only). Can be looked up using
-  `vcd_nsxt_edgegateway` datasource
+  `vcd_nsxt_edgegateway` data source
 * `member_org_network_ids` (Optional) A set of Org Network IDs
 
 ## Attribute Reference

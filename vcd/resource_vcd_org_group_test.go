@@ -38,14 +38,22 @@ func TestAccVcdOrgGroup(t *testing.T) {
 		return
 	}
 
+	ldapContainerName := "rroemhild/test-openldap"
+	// Override LDAP container name if it is specified in config
+	if testConfig.Misc.LdapContainer != "" {
+		ldapContainerName = testConfig.Misc.LdapContainer
+	}
+
 	ldapConfigParams := struct {
-		ExternalNetwork string
-		GuestImage      string
-		CatalogName     string
+		ExternalNetwork   string
+		GuestImage        string
+		CatalogName       string
+		LdapContainerName string
 	}{
-		ExternalNetwork: testConfig.Networking.ExternalNetwork,
-		GuestImage:      testConfig.VCD.Catalog.CatalogItem,
-		CatalogName:     testConfig.VCD.Catalog.Name,
+		ExternalNetwork:   testConfig.Networking.ExternalNetwork,
+		GuestImage:        testConfig.VCD.Catalog.CatalogItem,
+		CatalogName:       testConfig.VCD.Catalog.Name,
+		LdapContainerName: ldapContainerName,
 	}
 	// getLdapSetupTemplate does not use regular templateFill because this part is used for
 	// automated LDAP configuration setup
@@ -246,7 +254,7 @@ resource "vcd_vapp_vm" "ldap-container" {
 			done
 			systemctl enable docker
 			systemctl start docker
-			docker run --name ldap-server --restart=always --privileged -d -p 389:389 rroemhild/test-openldap
+			docker run --name ldap-server --restart=always -d -p 389:10389 rroemhild/test-openldap
 		} &
 		EOT
   }
