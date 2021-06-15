@@ -241,11 +241,9 @@ func getRights(client *VCDClient, org *govcd.AdminOrg, label string, d *schema.R
 
 	var right *types.Right
 	var err error
-	var names []string
 
 	for _, r := range rights {
 		rn := r.(string)
-		names = append(names, rn)
 		if org != nil {
 			right, err = org.GetRightByName(rn)
 		} else {
