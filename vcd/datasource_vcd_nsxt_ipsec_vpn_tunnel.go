@@ -54,7 +54,7 @@ func datasourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 			"local_ip_address": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "IPv4 Address for the endpoint. This has to be a suballocated IP on the Edge Gateway.",
+				Description: "IPv4 Address for the endpoint. This has to be a sub-allocated IP on the Edge Gateway.",
 			},
 			"local_networks": {
 				Type:        schema.TypeSet,
@@ -91,70 +91,77 @@ func datasourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 						"ike_version": &schema.Schema{
 							Type:        schema.TypeString,
 							Required:    true,
-							Description: "",
+							Description: "IKE version one of IKE_V1, IKE_V2, IKE_FLEX",
 						},
 						"ike_encryption_algorithms": &schema.Schema{
 							Type:        schema.TypeSet,
 							Computed:    true,
-							Description: "",
+							Description: "Encryption algorithms. One of SHA1, SHA2_256, SHA2_384, SHA2_512",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
 						},
 						"ike_digest_algorithms": &schema.Schema{
-							Type:        schema.TypeSet,
-							Computed:    true,
-							Description: "",
+							Type:     schema.TypeSet,
+							Computed: true,
+							Description: "Secure hashing algorithms to use during the IKE negotiation. One of SHA1, " +
+								"SHA2_256, SHA2_384, SHA2_512",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
 						},
 						"ike_dh_groups": &schema.Schema{
-							Type:        schema.TypeSet,
-							Computed:    true,
-							Description: "",
+							Type:     schema.TypeSet,
+							Computed: true,
+							Description: "Diffie-Hellman groups to be used if Perfect Forward Secrecy is enabled. One " +
+								"of GROUP2, GROUP5, GROUP14, GROUP15, GROUP16, GROUP19, GROUP20, GROUP21",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
 						},
 						"ike_sa_lifetime": &schema.Schema{
-							Type:        schema.TypeInt,
-							Computed:    true,
-							Description: "Security Association life time (in seconds)",
+							Type:     schema.TypeInt,
+							Computed: true,
+							Description: "Security Association life time (in seconds). It is number of seconds " +
+								"before the IPsec tunnel needs to reestablish",
 						},
 
 						"tunnel_pfs_enabled": &schema.Schema{
 							Type:        schema.TypeBool,
 							Computed:    true,
-							Description: "Perfect Forward Secrecy",
+							Description: "Perfect Forward Secrecy Enabled or Disabled. Default (enabled)",
 						},
 
 						"tunnel_df_policy": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "Perfect Forward Secrecy",
+							Description: "Policy for handling defragmentation bit. One of COPY, CLEAR",
 						},
 
 						"tunnel_encryption_algorithms": &schema.Schema{
-							Type:        schema.TypeSet,
-							Computed:    true,
-							Description: "",
+							Type:     schema.TypeSet,
+							Computed: true,
+							Description: "Encryption algorithms to use in IPSec tunnel establishment. One of AES_128, " +
+								"AES_256, AES_GCM_128, AES_GCM_192, AES_GCM_256, NO_ENCRYPTION_AUTH_AES_GMAC_128, " +
+								"NO_ENCRYPTION_AUTH_AES_GMAC_192, NO_ENCRYPTION_AUTH_AES_GMAC_256, NO_ENCRYPTION",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
 						},
 						"tunnel_digest_algorithms": &schema.Schema{
-							Type:        schema.TypeSet,
-							Optional:    true,
-							Description: "",
+							Type:     schema.TypeSet,
+							Optional: true,
+							Description: "Digest algorithms to be used for message digest. One of SHA1, SHA2_256, " +
+								"SHA2_384, SHA2_512",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
 						},
 						"tunnel_dh_groups": &schema.Schema{
-							Type:        schema.TypeSet,
-							Computed:    true,
-							Description: "",
+							Type:     schema.TypeSet,
+							Computed: true,
+							Description: "Diffie-Hellman groups to be used is PFS is enabled. One of GROUP2, GROUP5, " +
+								"GROUP14, GROUP15, GROUP16, GROUP19, GROUP20, GROUP21",
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -165,9 +172,10 @@ func datasourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 							Description: "Security Association life time (in seconds)",
 						},
 						"dpd_probe_internal": &schema.Schema{
-							Type:        schema.TypeInt,
-							Computed:    true,
-							Description: "Dead Peer Detection probe interval (in seconds)",
+							Type:     schema.TypeInt,
+							Computed: true,
+							Description: "Value in seconds of dead probe detection interval. Minimum is 3 seconds and " +
+								"the maximum is 60 seconds",
 						},
 					},
 				},
@@ -210,9 +218,10 @@ func datasourceVcdNsxtIpSecVpnTunnelRead(ctx context.Context, d *schema.Resource
 		return diag.Errorf("error retrieving Edge Gateway: %s", err)
 	}
 
-	ipSecVpnTunnel, err := nsxtEdge.GetIpSecVpnByName(d.Get("name").(string))
+	ipSecVpnTunnelName := d.Get("name").(string)
+	ipSecVpnTunnel, err := nsxtEdge.GetIpSecVpnTunnelByName(ipSecVpnTunnelName)
 	if err != nil {
-		return diag.Errorf("error retrieving NSX-T IPsec VPN Tunnel configuration for deletion: %s", err)
+		return diag.Errorf("error retrieving NSX-T IPsec VPN Tunnel configuration with name '%s;: %s", ipSecVpnTunnelName, err)
 	}
 
 	// Set general schema for configuration

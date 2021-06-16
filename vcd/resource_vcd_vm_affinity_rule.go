@@ -242,8 +242,7 @@ func genericVcdVmAffinityRuleRead(d *schema.ResourceData, meta interface{}, orig
 			endpointVMs = append(endpointVMs, normalizeId("urn:vcloud:vm:", ref.ID))
 		}
 	}
-	endpointVmSlice := convertStringsToInterfaceSlice(endpointVMs)
-	endpointVmSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointVmSlice)
+	endpointVmSet := convertStringsTotTypeSet(endpointVMs)
 	err = d.Set("vm_ids", endpointVmSet)
 	if err != nil {
 		return fmt.Errorf("[VM affinity rule read] error setting the list of VM IDs: %s ", err)
