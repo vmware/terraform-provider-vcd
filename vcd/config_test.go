@@ -262,15 +262,15 @@ const (
 #
 
 provider "vcd" {
-  user                 = "{{.User}}"
-  password             = "{{.Password}}"
+  user                 = "{{.PrUser}}"
+  password             = "{{.PrPassword}}"
   token                = "{{.Token}}"
   auth_type            = "{{.AuthType}}"
   saml_adfs_rpt_id     = "{{.SamlAdfsCustomRptId}}"
-  url                  = "{{.Url}}"
-  sysorg               = "{{.SysOrg}}"
-  org                  = "{{.Org}}"
-  vdc                  = "{{.Vdc}}"
+  url                  = "{{.PrUrl}}"
+  sysorg               = "{{.PrSysOrg}}"
+  org                  = "{{.PrOrg}}"
+  vdc                  = "{{.PrVdc}}"
   allow_unverified_ssl = "{{.AllowInsecure}}"
   max_retry_timeout    = {{.MaxRetryTimeout}}
   #version             = "~> {{.VersionRequired}}"
@@ -369,16 +369,16 @@ func templateFill(tmpl string, data StringMap) string {
 
 		// The data structure used to fill the template is integrated with
 		// provider data
-		data["User"] = testConfig.Provider.User
-		data["Password"] = testConfig.Provider.Password
+		data["PrUser"] = testConfig.Provider.User
+		data["PrPassword"] = testConfig.Provider.Password
 		data["SamlAdfsCustomRptId"] = testConfig.Provider.CustomAdfsRptId
 		data["Token"] = testConfig.Provider.Token
-		data["Url"] = testConfig.Provider.Url
-		data["SysOrg"] = testConfig.Provider.SysOrg
-		data["Org"] = testConfig.VCD.Org
-		vdcName, found := data["Vdc"]
+		data["PrUrl"] = testConfig.Provider.Url
+		data["PrSysOrg"] = testConfig.Provider.SysOrg
+		data["PrOrg"] = testConfig.VCD.Org
+		vdcName, found := data["PrVdc"]
 		if !found || vdcName == "" {
-			data["Vdc"] = testConfig.VCD.Vdc
+			data["PrVdc"] = testConfig.VCD.Vdc
 		}
 		data["AllowInsecure"] = testConfig.Provider.AllowInsecure
 		data["MaxRetryTimeout"] = testConfig.Provider.MaxRetryTimeout
