@@ -105,7 +105,12 @@ by the same principles:
 * If you get an error about missing implied rights, you add them to the list.
 
 This operation is different from what we do in the UI, where when we select a right, the implied rights are added automatically.
-In Terraform operations, we need to enter every right explicitly.
+In Terraform operations, we need to enter every right explicitly. This matter of implied rights may be confusing: rights
+are not regular or implied per se: it depends on their relative status. For example, if you create a role with only
+right "*Catalog: View Private and Shared Catalogs*", it will work. This is the main right, and it is accepted as such.
+But if you want to create a role with only right "*Catalog: Edit Properties*", then it complains that you are missing
+the implied right "*Catalog: View Private and Shared Catalogs*". Consequently, if you know that to edit a catalog you
+first need to see it, you add both rights, and don't consider either of them to be implied.
 
 For example, lets say, for the sake of simplicity, that you want to create a role with just two rights, as listed below:
 
