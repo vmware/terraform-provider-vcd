@@ -102,7 +102,10 @@ Adding rights to one of the rights containers (Role, Global Role, Rights Bundle)
 by the same principles:
 
 * You add an array of rights names to the `rights` field of the entity;
-* If you get an error about missing implied rights, you add them to the list
+* If you get an error about missing implied rights, you add them to the list.
+
+This operation is different from what we do in the UI, where when we select a right, the implied rights are added automatically.
+In Terraform operations, we need to enter every right explicitly.
 
 For example, lets say, for the sake of simplicity, that you want to create a role with just two rights, as listed below:
 
