@@ -52,13 +52,13 @@ output "vapp-author" {
   value = data.vcd_role.vapp-author
 }
 
-data "vcd_respurce_list" "rights-list" {
+data "vcd_resource_list" "rights-list" {
   name          = "rights-list"
   resource_type = "rights"
 }
 
 output "rights-list" {
- value = data.vcd_respurce_list.rights-list
+ value = data.vcd_resource_list.rights-list
 }
 ```
 
