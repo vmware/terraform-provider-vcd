@@ -23,7 +23,7 @@ Roles management is a combination of four entities:
 
 There are similarities among Roles, Global Roles, and Rights Bundles: all three are collections of rights for different
 purposes. The similarity is in the way we create and modify these resources. We can add and remove rights to obtain a
-different resource.
+different resource. For the purpose of describing their common functionalities, we can call these three entities **Rights Containers**.
 
 There are also similarities between Global Roles and Rights Bundles: both resources need to be published to one or more
 tenants in order to be effective. Both can become isolated if we remove all tenants, or can be maximized if we publish
@@ -39,11 +39,32 @@ script, and would also increase the amount of computing needed to run a script.
 To see the list of available rights, you can do one of the following:
 
 * make a data source of several existing Roles, Global Roles, or Rights Bundles, and use an `output` structure to show the contents;
-* use a data source of `vcd_resource_list` to show the rights available to a given organization.
+* use a data source of [`vcd_resource_list`](/docs/providers/vcd/d/vcd_resource_list.html) to show the rights available to a given organization.
 
-A right can have a list of **implied rights**. When such list exists, it means that, in addition to the main right, you must
-include all the implied rights to the rights container. If you don't include the implied rights, you will get an error, listing
-all the rights that are missing from your entity.
+Examples:
+
+```hcl
+data "vcd_role" "vapp-author" {
+  name = "vApp Author"
+}
+
+output "vapp-author" {
+  value = data.vcd_role.vapp-author
+}
+
+data "vcd_respurce_list" "rights-list" {
+  name          = "rights-list"
+  resource_type = "rights"
+}
+
+output "rights-list" {
+ value = data.vcd_respurce_list.rights-list
+}
+```
+
+A right can have a list of **implied rights**. When such list exists, it means that, in addition to the main right, **you must
+include all the implied rights** to the rights container (role, global role, rights bundle). If you don't include the
+implied rights, you will get an error, listing all the rights that are missing from your entity.
 
 
 ## Roles
@@ -73,6 +94,147 @@ in `first-org` will see the usual roles, with the usual sets of rights. The Org 
 will see the same roles, but with only half the rights, as the _managing_ rights will be missing. While this is an extreme
 example, it serves to illustrate the function of rights bundles. You can create general purpose global roles for several
 tenants, and then limit their reach by adding or removing rights to the rights bundle governing different tenants.
+
+
+## How to include rights and implied rights into a rights container
+
+Adding rights to one of the rights containers (Role, Global Role, Rights Bundle) is a comparable operation that works
+by the same principles:
+
+* You add an array of rights names to the `rights` field of the entity;
+* If you get an error about missing implied rights, you add them to the list
+
+For example, lets say, for the sake of simplicity, that you want to create a role with just two rights, as listed below:
+
+```hcl
+resource "vcd_role" "new-role" {
+  org         = "datacloud"
+  name        = "new-role"
+  description = "new role"
+  rights = [
+    "Catalog: Add vApp from My Cloud",
+    "Catalog: Edit Properties",
+  ]
+}
+```
+
+When you run `terraform apply`, you get this error:
+
+```
+vcd_role.new-role: Creating...
+╷
+│ Error: The rights set for this role require the following implied rights to be added:
+│ "vApp Template / Media: Edit",
+│ "vApp Template / Media: View",
+│ "Catalog: View Private and Shared Catalogs",
+│
+│
+│   with vcd_role.new-role,
+│   on config.tf line 91, in resource "vcd_role" "new-role":
+│   91: resource "vcd_role" "new-role" {
+│
+```
+Thus, you update the script to include the rights mentioned in the error message
+
+```hcl
+resource "vcd_role" "new-role" {
+  org         = "datacloud"
+  name        = "new-role"
+  description = "new role"
+  rights = [
+    "Catalog: Add vApp from My Cloud",
+    "Catalog: Edit Properties",
+    "vApp Template / Media: Edit",
+    "vApp Template / Media: View",
+    "Catalog: View Private and Shared Catalogs",
+  ]
+}
+```
+
+Then repeat `terraform apply`. This time the operation succeeds.
+
+The corresponding structure for global role and rights bundle are almost the same. You just need to add the tenants
+management fields.
+
+```hcl
+resource "vcd_global_role" "new-global-role" {
+  name        = "new-global-role"
+  description = "new global role"
+  rights = [
+    "Catalog: Add vApp from My Cloud",
+    "Catalog: Edit Properties",
+    "vApp Template / Media: Edit",
+    "vApp Template / Media: View",
+    "Catalog: View Private and Shared Catalogs",
+  ]
+  publish_to_all_tenants = true
+}
+
+resource "vcd_rights_bundle" "new-rights-bundle" {
+ name        = "new-rights-bundle"
+ description = "new rights bundle"
+ rights = [
+  "Catalog: Add vApp from My Cloud",
+  "Catalog: Edit Properties",
+  "vApp Template / Media: Edit",
+  "vApp Template / Media: View",
+  "Catalog: View Private and Shared Catalogs",
+ ]
+ publish_to_all_tenants = true
+}
+```
+
+## Tenant management
+
+Rights Bundle and Global Roles have a `tenants` section where you can list to which tenants the resource should be
+published, meaning which tenants can feel the effects of this resource.
+
+There are two fields related to managing tenants:
+
+* `publish_to_all_tenants` with value "true" or "false".
+    * If true, the resource will be published to all tenants, even if they don't exist yet. All future organizations will get to feel the benefits or restrictions published by the resource
+    * If false, then we take into account the `tenants` field.
+* `tenants` is a list of organizations (tenants) to which we want the effects of this resource to apply.
+
+Examples:
+
+```hcl
+resource "vcd_global_role" "new-global-role" {
+  name        = "new-global-role"
+  description = "new global role"
+  rights = [ /* rights list goes here */ ]
+  publish_to_all_tenants = true
+}
+```
+This global role will be published to all tenants, including the ones that will be created after this resource.
+
+Now we modify it:
+
+```hcl
+resource "vcd_global_role" "new-global-role" {
+  name        = "new-global-role"
+  description = "new global role"
+  rights = [ /* rights list goes here */ ]
+  publish_to_all_tenants = false
+  tenants = [ "org1", "org2" ]
+```
+
+The effects of this global role are only propagated to `org1` and `org2`. Other organizations cease to see the role that
+was instantiated by thsi global role.
+
+Let's do another change:
+
+```hcl
+resource "vcd_global_role" "new-global-role" {
+  name        = "new-global-role"
+  description = "new global role"
+  rights = [ /* rights list goes here */ ]
+  publish_to_all_tenants = false
+```
+
+The `tenants` field is removed, meaning that we don't publish to anyone. And since `publish_to_all_tenants` is false,
+the tenants previously in the list are removed from publishing, making the global role isolated. It won't have
+any effect on any organization until we update its tenants list.
 
 ## How to change an existing rights container
 
@@ -120,5 +282,5 @@ with "publish to a single tenant".
 
 ## References
 
-* [Predefined Roles and Their Rights](https://docs.vmware.com/en/VMware-Cloud-Director/9.5/com.vmware.vcloud.spportal.doc/GUID-BC504F6B-3D38-4F25-AACF-ED584063754F.html)
+* [Managing Rights and Roles](https://docs.vmware.com/en/VMware-Cloud-Director/10.2/VMware-Cloud-Director-Service-Provider-Admin-Portal-Guide/GUID-816FBBBC-2CDA-4B1D-9B1A-C22BC31B46F2.html)
 * [VMware Cloud Director – Simple Rights Management with Bundles](https://blogs.vmware.com/cloudprovider/2019/12/effective-rights-bundles.html)
