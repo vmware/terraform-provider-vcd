@@ -69,12 +69,21 @@ func convertSchemaSetToSliceOfStrings(param *schema.Set) []string {
 	return result
 }
 
-func convertToTypeSet(param []string) []interface{} {
+func convertStringsToInterfaceSlice(param []string) []interface{} {
 	slice := make([]interface{}, len(param))
 	for index, value := range param {
 		slice[index] = value
 	}
 	return slice
+}
+
+// convertStringsTotTypeSet accepts a slice of strings and returns a *schema.Set suitable for storing in Terraform
+// set of strings
+func convertStringsTotTypeSet(slice []string) *schema.Set {
+	sliceOfInterfaces := convertStringsToInterfaceSlice(slice)
+	set := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), sliceOfInterfaces)
+
+	return set
 }
 
 // takeBoolPointer accepts a boolean and returns a pointer to this value.

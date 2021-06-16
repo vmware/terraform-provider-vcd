@@ -308,14 +308,14 @@ func setDhcpRelayServerData(d *schema.ResourceData, edgeRelay *types.EdgeDhcpRel
 		return nil
 	}
 
-	relayServerIpAddresses := convertToTypeSet(relayServer.IpAddress)
+	relayServerIpAddresses := convertStringsToInterfaceSlice(relayServer.IpAddress)
 	relayServerIpAddressesSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), relayServerIpAddresses)
 	err := d.Set("ip_addresses", relayServerIpAddressesSet)
 	if err != nil {
 		return fmt.Errorf("could not save ip_addresses to schema: %s", err)
 	}
 
-	relayServerDomainNames := convertToTypeSet(relayServer.Fqdns)
+	relayServerDomainNames := convertStringsToInterfaceSlice(relayServer.Fqdns)
 	relayServerDomainNamesSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), relayServerDomainNames)
 	err = d.Set("domain_names", relayServerDomainNamesSet)
 	if err != nil {
@@ -326,7 +326,7 @@ func setDhcpRelayServerData(d *schema.ResourceData, edgeRelay *types.EdgeDhcpRel
 		return fmt.Errorf("could not find names for all IP set IDs: %s", err)
 	}
 
-	relayServerIpSetNames := convertToTypeSet(ipSetNames)
+	relayServerIpSetNames := convertStringsToInterfaceSlice(ipSetNames)
 	relayServerIpSetNamesSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), relayServerIpSetNames)
 	err = d.Set("ip_sets", relayServerIpSetNamesSet)
 	if err != nil {

@@ -211,7 +211,7 @@ func setNsxtIpSetData(d *schema.ResourceData, ipSetType *types.NsxtFirewallGroup
 	_ = d.Set("name", ipSetType.Name)
 	_ = d.Set("description", ipSetType.Description)
 
-	ipSetInterface := convertToTypeSet(ipSetType.IpAddresses)
+	ipSetInterface := convertStringsToInterfaceSlice(ipSetType.IpAddresses)
 	ipSetSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), ipSetInterface)
 
 	err := d.Set("ip_addresses", ipSetSet)

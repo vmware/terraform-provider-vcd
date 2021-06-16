@@ -638,15 +638,15 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 	if err != nil {
 		return nil, fmt.Errorf("could not convert org network IDs to names: %s", err)
 	}
-	endpointNetworksSlice := convertToTypeSet(endpointNetworkNames)
+	endpointNetworksSlice := convertStringsToInterfaceSlice(endpointNetworkNames)
 	endpointNetworksSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointNetworksSlice)
 
 	// Convert virtual machine IDs to set
-	endpointVmSlice := convertToTypeSet(endpointVMs)
+	endpointVmSlice := convertStringsToInterfaceSlice(endpointVMs)
 	endpointVmSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointVmSlice)
 
 	// Convert `ip_addresses` to set
-	endpointIpsSlice := convertToTypeSet(endpoint.IpAddresses)
+	endpointIpsSlice := convertStringsToInterfaceSlice(endpoint.IpAddresses)
 	endpointIpsSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointIpsSlice)
 
 	// Convert `gateway_interfaces` vNic IDs to network names as the UI does it so
@@ -654,7 +654,7 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 	if err != nil {
 		return nil, err
 	}
-	endpointGatewayInterfaceSlice := convertToTypeSet(vnicGroupIdStrings)
+	endpointGatewayInterfaceSlice := convertStringsToInterfaceSlice(vnicGroupIdStrings)
 	endpointGatewayInterfaceSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointGatewayInterfaceSlice)
 
 	// Convert ipset IDs to set of names and create a TypeSet of it
@@ -662,12 +662,12 @@ func getEndpointData(endpoint types.EdgeFirewallEndpoint, edge *govcd.EdgeGatewa
 	if err != nil {
 		return nil, fmt.Errorf("could not IP set IDs to names: %s", err)
 	}
-	endpointIpSetSlice := convertToTypeSet(endpointIpSetNames)
+	endpointIpSetSlice := convertStringsToInterfaceSlice(endpointIpSetNames)
 	endpointIpSetSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointIpSetSlice)
 
 	// TODO uncomment when Security groups are supported
 	// Convert security group IDs to set
-	// endpointSecurityGroupSlice := convertToTypeSet(endpointSecurityGroups)
+	// endpointSecurityGroupSlice := convertStringsToInterfaceSlice(endpointSecurityGroups)
 	// endpointSecurityGroupSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), endpointSecurityGroupSlice)
 
 	// Insert all sets into single element block ready to be ('source' or 'destination')

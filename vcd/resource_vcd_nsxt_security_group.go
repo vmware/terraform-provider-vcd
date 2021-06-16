@@ -261,7 +261,7 @@ func setNsxtSecurityGroupData(d *schema.ResourceData, fw *types.NsxtFirewallGrou
 	}
 
 	// Convert `member_org_network_ids` to set
-	memberNetIds := convertToTypeSet(netIds)
+	memberNetIds := convertStringsToInterfaceSlice(netIds)
 	memberNetSet := schema.NewSet(schema.HashSchema(&schema.Schema{Type: schema.TypeString}), memberNetIds)
 
 	err := d.Set("member_org_network_ids", memberNetSet)
