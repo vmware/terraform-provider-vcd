@@ -61,7 +61,7 @@ The following arguments are supported:
 
 * `description` - A description of the right
 * `category_id` - The ID of the category for this right
-* `bundle_key` - Key used for rights bundles
+* `bundle_key` - Key used for internationalization
 * `right type` - Type of the right (VIEW or MODIFY)
 * `implied_rights` - List of rights that are implied with this one
 

@@ -87,7 +87,7 @@ The following arguments are supported:
 ## Attribute Reference
 
 * `description` - A description of the global role
-* `bundle_key` - Key used for rights bundles. Default "com.vmware.vcloud.undefined.key"
+* `bundle_key` - Key used for internationalization.
 * `rights` - List of rights assigned to this role
 * `publish_to_all_tenants` - When true, publishes the global role to all tenants
 * `tenants` - List of tenants to which this global role gets published. Ignored if `publish_to_all_tenants` is true.

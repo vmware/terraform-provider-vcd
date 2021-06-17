@@ -59,6 +59,7 @@ data "vcd_resource_list" "rights-list" {
 
 output "rights-list" {
  value = data.vcd_resource_list.rights-list
+ value = data.vcd_resource_list.rights-list
 }
 ```
 

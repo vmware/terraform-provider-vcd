@@ -40,9 +40,8 @@ func resourceVcdRole() *schema.Resource {
 			},
 			"bundle_key": &schema.Schema{
 				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     types.VcloudUndefinedKey,
-				Description: "Key used for right bundles",
+				Computed:    true,
+				Description: "Key used for internationalization",
 			},
 			"read_only": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -79,7 +78,7 @@ func resourceRoleCreate(ctx context.Context, d *schema.ResourceData, meta interf
 	role, err := org.CreateRole(&types.Role{
 		Name:        roleName,
 		Description: d.Get("description").(string),
-		BundleKey:   d.Get("bundle_key").(string),
+		BundleKey:   types.VcloudUndefinedKey,
 	})
 	if err != nil {
 		return diag.Errorf("[role create] error creating role %s: %s", roleName, err)
@@ -165,10 +164,9 @@ func resourceRoleUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 		return diag.Errorf("[role update] error retrieving role %s: %s", roleName, err)
 	}
 
-	if d.HasChange("name") || d.HasChange("description") || d.HasChange("bundle_key") {
+	if d.HasChange("name") || d.HasChange("description") {
 		role.Role.Name = roleName
 		role.Role.Description = d.Get("description").(string)
-		role.Role.BundleKey = d.Get("bundle_key").(string)
 		_, err = role.Update()
 		if err != nil {
 			return diag.Errorf("[role update] error updating role %s: %s", roleName, err)

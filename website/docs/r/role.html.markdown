@@ -37,12 +37,12 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `name` - (Required) The name of the role.
 * `description` - (Required) A description of the role
-* `bundle_key` - (Optional) Key used for rights bundles. Default "com.vmware.vcloud.undefined.key"
 * `rights` - (Optional) List of rights assigned to this role
 
 ## Attribute Reference
 
 * `read_only` - Whether this role is read-only
+* `bundle_key` - Key used for internationalization
 
 ## Importing
 

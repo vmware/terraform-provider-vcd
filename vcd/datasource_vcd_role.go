@@ -30,7 +30,7 @@ func datasourceVcdRole() *schema.Resource {
 			"bundle_key": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Key used for right bundles",
+				Description: "Key used for internationalization",
 			},
 			"read_only": &schema.Schema{
 				Type:        schema.TypeBool,

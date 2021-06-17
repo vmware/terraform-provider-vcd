@@ -40,7 +40,6 @@ The following arguments are supported:
 
 * `name` - (Required) The name of the rights bundle.
 * `description` - (Required) A description of the rights bundle
-* `bundle_key` - (Optional) Key used for rights bundles. Default "com.vmware.vcloud.undefined.key"
 * `rights` - (Optional) List of rights assigned to this role
 * `publish_to_all_tenants` - (Required) When true, publishes the rights bundle to all tenants
 * `tenants` - (Optional) List of tenants to which this rights bundle gets published. Ignored if `publish_to_all_tenants` is true.
@@ -48,6 +47,7 @@ The following arguments are supported:
 ## Attribute Reference
 
 * `read_only` - Whether this rights bundle is read-only
+* `bundle_key` - Key used for internationalization
 
 ## Importing
 

@@ -40,7 +40,6 @@ The following arguments are supported:
 
 * `name` - (Required) The name of the global role.
 * `description` - (Required) A description of the global role
-* `bundle_key` - (Optional) Key used for rights bundles. Default "com.vmware.vcloud.undefined.key"
 * `rights` - (Optional) List of rights assigned to this role
 * `publish_to_all_tenants` - (Required) When true, publishes the global role to all tenants
 * `tenants` - (Optional) List of tenants to which this global role gets published. Ignored if `publish_to_all_tenants` is true.
@@ -48,6 +47,7 @@ The following arguments are supported:
 ## Attribute Reference
 
 * `read_only` - Whether this global role is read-only
+* `bundle_key` - Key used for internationalization
 
 ## Importing
 

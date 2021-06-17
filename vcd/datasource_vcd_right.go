@@ -29,7 +29,7 @@ func datasourceVcdRight() *schema.Resource {
 			"bundle_key": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Key used for right bundles",
+				Description: "Key used for internationalization",
 			},
 			"right_type": &schema.Schema{
 				Type:        schema.TypeString,

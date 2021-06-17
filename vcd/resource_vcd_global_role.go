@@ -33,9 +33,8 @@ func resourceVcdGlobalRole() *schema.Resource {
 			},
 			"bundle_key": &schema.Schema{
 				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     types.VcloudUndefinedKey,
-				Description: "Key used for right bundles",
+				Computed:    true,
+				Description: "Key used for internationalization",
 			},
 			"read_only": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -77,7 +76,7 @@ func resourceGlobalRoleCreate(ctx context.Context, d *schema.ResourceData, meta 
 	globalRole, err := vcdClient.Client.CreateGlobalRole(&types.GlobalRole{
 		Name:        globalRoleName,
 		Description: d.Get("description").(string),
-		BundleKey:   d.Get("bundle_key").(string),
+		BundleKey:   types.VcloudUndefinedKey,
 		PublishAll:  takeBoolPointer(publishToAllTenants),
 	})
 	if err != nil {
@@ -206,10 +205,9 @@ func resourceGlobalRoleUpdate(ctx context.Context, d *schema.ResourceData, meta 
 		}
 	}
 
-	if d.HasChange("name") || d.HasChange("description") || d.HasChange("bundle_key") || d.HasChange("publish_to_all_tenants") {
+	if d.HasChange("name") || d.HasChange("description") || d.HasChange("publish_to_all_tenants") {
 		globalRole.GlobalRole.Name = globalRoleName
 		globalRole.GlobalRole.Description = d.Get("description").(string)
-		globalRole.GlobalRole.BundleKey = d.Get("bundle_key").(string)
 		globalRole.GlobalRole.PublishAll = takeBoolPointer(publishToAllTenants)
 		_, err = globalRole.Update()
 		if err != nil {

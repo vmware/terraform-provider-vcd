@@ -33,9 +33,8 @@ func resourceVcdRightsBundle() *schema.Resource {
 			},
 			"bundle_key": &schema.Schema{
 				Type:        schema.TypeString,
-				Optional:    true,
-				Default:     types.VcloudUndefinedKey,
-				Description: "Key used for right bundles",
+				Computed:    true,
+				Description: "Key used for internationalization",
 			},
 			"read_only": &schema.Schema{
 				Type:        schema.TypeBool,
@@ -75,7 +74,7 @@ func resourceRightsBundleCreate(ctx context.Context, d *schema.ResourceData, met
 	rightsBundle, err := vcdClient.Client.CreateRightsBundle(&types.RightsBundle{
 		Name:        rightsBundleName,
 		Description: d.Get("description").(string),
-		BundleKey:   d.Get("bundle_key").(string),
+		BundleKey:   types.VcloudUndefinedKey,
 		PublishAll:  takeBoolPointer(publishToAllTenants),
 	})
 	if err != nil {
@@ -202,10 +201,9 @@ func resourceRightsBundleUpdate(ctx context.Context, d *schema.ResourceData, met
 		}
 	}
 
-	if d.HasChange("name") || d.HasChange("description") || d.HasChange("bundle_key") || d.HasChange("publish_to_all_tenants") {
+	if d.HasChange("name") || d.HasChange("description") || d.HasChange("publish_to_all_tenants") {
 		rightsBundle.RightsBundle.Name = rightsBundleName
 		rightsBundle.RightsBundle.Description = d.Get("description").(string)
-		rightsBundle.RightsBundle.BundleKey = d.Get("bundle_key").(string)
 		rightsBundle.RightsBundle.PublishAll = takeBoolPointer(publishToAllTenants)
 		_, err = rightsBundle.Update()
 		if err != nil {
