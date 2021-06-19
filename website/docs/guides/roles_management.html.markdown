@@ -288,6 +288,98 @@ $ terraform import vcd_rights_bundle.new-rb "Default Rights Bundle"
 Now you can run `terraform apply`, which will remove the default condition of "publish to all tenants", replacing it
 with "publish to a single tenant".
 
+## How to clone a rights container
+
+In the UI, there is a "clone" button that lets us create a new role, global role, or rights bundle, and then modify it.
+In Terraform, we need to take a different approach, as there is no such thing as cloning a resource.
+The operation requires three steps:
+
+(1)<br>
+Create a data source for the rights container, with an `output` structure that shows the full contents. For example,
+to clone a global role:
+
+```hcl
+data "vcd_global_role" "vapp-user" {
+  name = "vApp User"
+}
+
+output "vapp-user" {
+  value = data.vcd_global_role.vapp-user
+}
+```
+
+(2)<br>
+Using the data from the output, copy the rights section into a new resource
+
+From this:
+```
+vapp-user = {
+  "bundle_key" = "ROLE_VAPP_USER"
+  "description" = "Rights given to a user who uses vApps created by others"
+  "id" = "urn:vcloud:globalRole:ff1e0c91-1288-3664-82b7-a6fa303af4d1"
+  "name" = "vApp User"
+  "publish_to_all_tenants" = true
+  "read_only" = false
+  "rights" = toset([
+    "Organization vDC Compute Policy: View",
+    "Organization vDC Named Disk: View Properties",
+    "UI Plugins: View",
+    "vApp Template / Media: View",
+    "vApp Template: Checkout",
+    "vApp: Copy",
+    "vApp: Delete",
+    "vApp: Edit Properties",
+    "vApp: Edit VM Network",
+    "vApp: Edit VM Properties",
+    "vApp: Manage VM Password Settings",
+    "vApp: Power Operations",
+    "vApp: Sharing",
+    "vApp: Snapshot Operations",
+    "vApp: Use Console",
+    "vApp: View ACL",
+    "vApp: View VM metrics",
+  ])
+  "tenants" = toset([
+    "org1",
+    "org2",
+  ])
+}
+```
+
+to this:
+```hcl
+resource "vcd_global_role" "new-vapp-user" {
+  name                   = "new vApp User"
+  description            = "New rights given to a user who uses vApps created by others"
+  name                   = "New vApp User"
+  publish_to_all_tenants = false
+  rights = [
+    "Organization vDC Compute Policy: View",
+    "Organization vDC Named Disk: View Properties",
+    "UI Plugins: View",
+    "vApp Template / Media: View",
+    "vApp Template: Checkout",
+    "vApp: Copy",
+    "vApp: Delete",
+    "vApp: Edit Properties",
+    "vApp: Edit VM Network",
+    "vApp: Edit VM Properties",
+    "vApp: Manage VM Password Settings",
+    "vApp: Power Operations",
+    "vApp: Sharing",
+    "vApp: Snapshot Operations",
+    "vApp: Use Console",
+    "vApp: View ACL",
+    "vApp: View VM metrics",
+  ]
+  tenants" = [
+    "org2",
+  ]
+}
+```
+
+(3) <br>
+Remove the data source and apply the changes.
 
 ## References
 
