@@ -389,11 +389,7 @@ func testAccCheckVmAffinityRuleDestroy(rule *govcd.VmAffinityRule, orgName, vdcN
 // makeEmptyVapp creates a given vApp without any VM
 func makeEmptyVapp(vdc *govcd.Vdc, name string, description string) (*govcd.VApp, error) {
 
-	err := vdc.ComposeRawVApp(name, description)
-	if err != nil {
-		return nil, err
-	}
-	vapp, err := vdc.GetVAppByName(name, true)
+	vapp, err := vdc.CreateRawVApp(name, description)
 	if err != nil {
 		return nil, err
 	}
