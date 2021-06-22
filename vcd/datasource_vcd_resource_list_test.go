@@ -25,6 +25,9 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 	var lists = []listDef{
 		{"resources", "resources", "", "vcd_org"},
 		{"orgs", "vcd_org", "", testConfig.VCD.Org},
+		{"global_role", "vcd_global_role", "", "vApp Author"},
+		{"rights_bundle", "vcd_rights_bundle", "", "Default Rights Bundle"},
+		{"right", "vcd_right", "", "Catalog: Change Owner"},
 
 		// entities belonging to an Org don't require an explicit parent, as it is given from the Org passed in the provider
 		// For each resource, we test with and without and explicit parent
@@ -36,6 +39,7 @@ func TestAccVcdDatasourceResourceList(t *testing.T) {
 		{"catalog-parent", "vcd_catalog", testConfig.VCD.Org, testConfig.VCD.Catalog.Name},
 		{"VDC", "vcd_org_vdc", "", testConfig.VCD.Vdc},
 		{"VDC-parent", "vcd_org_vdc", testConfig.VCD.Org, testConfig.VCD.Vdc},
+		{"role-parent", "vcd_role", testConfig.VCD.Org, "vApp Author"},
 
 		// entities belonging to a VDC don't require an explicit parent, as it is given from the VDC passed in the provider
 		// For each resource, we test with and without and explicit parent
