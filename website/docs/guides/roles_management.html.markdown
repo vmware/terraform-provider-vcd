@@ -31,7 +31,7 @@ to all tenants without providing a list. In this later case, the resource will b
 
 ## Rights
 
-**Rights**([`vcd_right`](/docs/providers/vcd/d/right.html)) are available as data sources. They can't be created by either provider or tenants.
+**Rights** ([`vcd_right`](/docs/providers/vcd/d/right.html)) are available as data sources. They can't be created by either provider or tenants.
 They are building blocks for the other three entities (Roles, Global Roles, Rights Bundles), and can be used by simply
 stating their name within the containing entity. You can also use data sources, but it would make for a crowded HCL
 script, and would also increase the amount of computing needed to run a script. 
