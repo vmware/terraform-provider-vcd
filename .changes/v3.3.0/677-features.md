@@ -1,0 +1,7 @@
+* **New Resource:** `vcd_role` for provider and tenant role management [GH-677]
+* **New Resource:** `vcd_global_role` for provider role management [GH-677]
+* **New Resource:** `vcd_rights_bundle` for provider role management [GH-677]
+* **New Data source:** `vcd_right` for provider and tenant role management [GH-677]
+* **New Data source:** `vcd_role` for provider and tenant role management [GH-677]
+* **New Data source:** `vcd_global_role` for provider role management [GH-677]
+* **New Data source:** `vcd_rights_bundle` for provider role management [GH-677]

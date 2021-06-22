@@ -86,7 +86,7 @@ The following arguments are supported:
   `vcd_nsxt_edgegateway` data source
 * `name` - (Required) A name for NSX-T IPsec VPN Tunnel
 * `description` - (Optional) An optional description of the NSX-T IPsec VPN Tunnel
-* `enabled` - (Optional) Enables or disables IPsec VPN (default `true`)
+* `enabled` - (Optional) Enables or disables IPsec VPN Tunnel (default `true`)
 * `pre_shared_key` - (Required) Pre-shared key for negotiation. **Note** the pre-shared key must be the same on the 
 other end of the IPSec VPN tunnel.
 * `local_ip_address` - (Required) IPv4 Address for the endpoint. This has to be a suballocated IP on the Edge Gateway.
@@ -108,7 +108,7 @@ other end of the IPSec VPN tunnel.
   `GROUP2`, `GROUP5`, `GROUP14`, `GROUP15`, `GROUP16`, `GROUP19`, `GROUP20`, `GROUP21`
 * `ike_sa_lifetime` - (Required) Security association lifetime in seconds. It is number of seconds before the IPsec 
   tunnel needs to reestablish
-* `tunnel_pfs_enabled` - (Required) PerfectForwardSecrecyEnabled enabled or disabled.
+* `tunnel_pfs_enabled` - (Required) PFS (Perfect Forward Secrecy) enabled or disabled.
 * `tunnel_df_policy` - (Required) Policy for handling defragmentation bit. One of COPY, CLEAR
 * `tunnel_encryption_algorithms` - (Required) Encryption algorithms to use in IPSec tunnel establishment. 
   One of `AES_128`, `AES_256`, `AES_GCM_128`, `AES_GCM_192`, `AES_GCM_256`, `NO_ENCRYPTION_AUTH_AES_GMAC_128`,
@@ -129,7 +129,7 @@ other end of the IPSec VPN tunnel.
 * `ike_fail_reason` - Provides more details of failure if the IKE service is not UP
 
 
-* `ip_addresses` (Optional) A set of IP addresses, subnets or ranges (IPv4 or IPv6)
+-> Status related fields might not immediatelly show up. It depends on when NSX-T updates its status
 
 ## Importing
 
