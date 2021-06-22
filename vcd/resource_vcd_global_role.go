@@ -115,11 +115,18 @@ func resourceGlobalRoleRead(ctx context.Context, d *schema.ResourceData, meta in
 func genericGlobalRoleRead(ctx context.Context, d *schema.ResourceData, meta interface{}, origin, operation string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
+	var globalRole *govcd.GlobalRole
+	var err error
 	globalRoleName := d.Get("name").(string)
+	identifier := d.Id()
+	if identifier == "" {
+		globalRole, err = vcdClient.Client.GetGlobalRoleByName(globalRoleName)
+	} else {
+		globalRole, err = vcdClient.Client.GetGlobalRoleById(identifier)
+	}
 
-	globalRole, err := vcdClient.Client.GetGlobalRoleByName(globalRoleName)
 	if err != nil {
-		if origin == "resource" {
+		if origin == "resource" && govcd.ContainsNotFound(err) {
 			d.SetId("")
 			return nil
 		}
@@ -148,9 +155,11 @@ func genericGlobalRoleRead(ctx context.Context, d *schema.ResourceData, meta int
 	for _, right := range rights {
 		assignedRights = append(assignedRights, right.Name)
 	}
-	err = d.Set("rights", assignedRights)
-	if err != nil {
-		return diag.Errorf("[global role read-%s] error setting rights for global role %s: %s", operation, globalRoleName, err)
+	if len(assignedRights) > 0 {
+		err = d.Set("rights", assignedRights)
+		if err != nil {
+			return diag.Errorf("[global role read-%s] error setting rights for global role %s: %s", operation, globalRoleName, err)
+		}
 	}
 
 	tenants, err := globalRole.GetTenants(nil)
@@ -162,9 +171,11 @@ func genericGlobalRoleRead(ctx context.Context, d *schema.ResourceData, meta int
 	for _, tenant := range tenants {
 		registeredTenants = append(registeredTenants, tenant.Name)
 	}
-	err = d.Set("tenants", registeredTenants)
-	if err != nil {
-		return diag.Errorf("[global role read-%s] error setting tenants for global role %s: %s", operation, globalRoleName, err)
+	if len(registeredTenants) > 0 {
+		err = d.Set("tenants", registeredTenants)
+		if err != nil {
+			return diag.Errorf("[global role read-%s] error setting tenants for global role %s: %s", operation, globalRoleName, err)
+		}
 	}
 
 	return nil
@@ -177,18 +188,7 @@ func resourceGlobalRoleUpdate(ctx context.Context, d *schema.ResourceData, meta 
 
 	publishToAllTenants := d.Get("publish_to_all_tenants").(bool)
 
-	var globalRole *govcd.GlobalRole
-	var err error
-	identifier := d.Id()
-	if identifier == "" {
-		if d.HasChange("name") {
-			return diag.Errorf("[global role update] name change was requested, but the global role ID was not found in Terraform state")
-		}
-		globalRole, err = vcdClient.Client.GetGlobalRoleByName(globalRoleName)
-	} else {
-		globalRole, err = vcdClient.Client.GetGlobalRoleById(identifier)
-	}
-
+	globalRole, err := vcdClient.Client.GetGlobalRoleById(d.Id())
 	if err != nil {
 		return diag.Errorf("[global role update] error retrieving global role %s: %s", globalRoleName, err)
 	}

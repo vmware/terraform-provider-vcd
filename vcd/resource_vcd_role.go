@@ -102,15 +102,23 @@ func genericRoleRead(ctx context.Context, d *schema.ResourceData, meta interface
 
 	roleName := d.Get("name").(string)
 	orgName := d.Get("org").(string)
+	identifier := d.Id()
+
+	var role *govcd.Role
+	var err error
 
 	org, err := vcdClient.GetAdminOrg(orgName)
 	if err != nil {
 		return diag.Errorf("[role %s-%s] error retrieving Org %s: %s", operation, origin, orgName, err)
 	}
 
-	role, err := org.GetRoleByName(roleName)
+	if identifier == "" {
+		role, err = org.GetRoleByName(roleName)
+	} else {
+		role, err = org.GetRoleById(identifier)
+	}
 	if err != nil {
-		if origin == "resource" {
+		if origin == "resource" && govcd.ContainsNotFound(err) {
 			d.SetId("")
 			return nil
 		}
@@ -132,9 +140,11 @@ func genericRoleRead(ctx context.Context, d *schema.ResourceData, meta interface
 	for _, right := range rights {
 		assignedRights = append(assignedRights, right.Name)
 	}
-	err = d.Set("rights", assignedRights)
-	if err != nil {
-		return diag.Errorf("[role %s-%s] error setting rights for role %s: %s", operation, origin, roleName, err)
+	if len(assignedRights) > 0 {
+		err = d.Set("rights", assignedRights)
+		if err != nil {
+			return diag.Errorf("[role %s-%s] error setting rights for role %s: %s", operation, origin, roleName, err)
+		}
 	}
 	return nil
 }
@@ -150,16 +160,7 @@ func resourceRoleUpdate(ctx context.Context, d *schema.ResourceData, meta interf
 		return diag.Errorf("[role update] error retrieving Org %s: %s", orgName, err)
 	}
 
-	var role *govcd.Role
-	identifier := d.Id()
-	if identifier != "" {
-		role, err = org.GetRoleById(identifier)
-	} else {
-		if d.HasChange("name") {
-			return diag.Errorf("[role update] name change was requested, but the role ID was not found in Terraform state")
-		}
-		role, err = org.GetRoleByName(roleName)
-	}
+	role, err := org.GetRoleById(d.Id())
 	if err != nil {
 		return diag.Errorf("[role update] error retrieving role %s: %s", roleName, err)
 	}

@@ -49,7 +49,7 @@ func resourceVcdRightsBundle() *schema.Resource {
 			},
 			"publish_to_all_tenants": &schema.Schema{
 				Type:        schema.TypeBool,
-				Optional:    true,
+				Required:    true,
 				Description: "When true, publishes the rights bundle to all tenants",
 			},
 			"tenants": &schema.Schema{
@@ -113,11 +113,18 @@ func resourceRightsBundleRead(ctx context.Context, d *schema.ResourceData, meta 
 func genericRightsBundleRead(ctx context.Context, d *schema.ResourceData, meta interface{}, origin, operation string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
+	var rightsBundle *govcd.RightsBundle
+	var err error
 	rightsBundleName := d.Get("name").(string)
+	identifier := d.Id()
 
-	rightsBundle, err := vcdClient.Client.GetRightsBundleByName(rightsBundleName)
+	if identifier == "" {
+		rightsBundle, err = vcdClient.Client.GetRightsBundleByName(rightsBundleName)
+	} else {
+		rightsBundle, err = vcdClient.Client.GetRightsBundleById(identifier)
+	}
 	if err != nil {
-		if origin == "resource" {
+		if origin == "resource" && govcd.ContainsNotFound(err) {
 			d.SetId("")
 			return nil
 		}
@@ -138,9 +145,11 @@ func genericRightsBundleRead(ctx context.Context, d *schema.ResourceData, meta i
 	for _, right := range rights {
 		assignedRights = append(assignedRights, right.Name)
 	}
-	err = d.Set("rights", assignedRights)
-	if err != nil {
-		return diag.Errorf("[rights bundle read-%s] error setting rights for rights bundle %s: %s", operation, rightsBundleName, err)
+	if len(assignedRights) > 0 {
+		err = d.Set("rights", assignedRights)
+		if err != nil {
+			return diag.Errorf("[rights bundle read-%s] error setting rights for rights bundle %s: %s", operation, rightsBundleName, err)
+		}
 	}
 
 	tenants, err := rightsBundle.GetTenants(nil)
@@ -157,10 +166,12 @@ func genericRightsBundleRead(ctx context.Context, d *schema.ResourceData, meta i
 	for _, tenant := range tenants {
 		registeredTenants = append(registeredTenants, tenant.Name)
 	}
-	if !*rightsBundle.RightsBundle.PublishAll {
-		err = d.Set("tenants", registeredTenants)
-		if err != nil {
-			return diag.Errorf("[rights bundle read-%s] error setting tenants for rights bundle %s: %s", operation, rightsBundleName, err)
+	if !publishAll {
+		if len(registeredTenants) > 0 {
+			err = d.Set("tenants", registeredTenants)
+			if err != nil {
+				return diag.Errorf("[rights bundle read-%s] error setting tenants for rights bundle %s: %s", operation, rightsBundleName, err)
+			}
 		}
 	}
 
@@ -174,18 +185,7 @@ func resourceRightsBundleUpdate(ctx context.Context, d *schema.ResourceData, met
 
 	publishToAllTenants := d.Get("publish_to_all_tenants").(bool)
 
-	var rightsBundle *govcd.RightsBundle
-	var err error
-	identifier := d.Id()
-	if identifier == "" {
-		if d.HasChange("name") {
-			return diag.Errorf("[rights bundle update] name change was requested, but the rights bundle ID was not found in Terraform state")
-		}
-		rightsBundle, err = vcdClient.Client.GetRightsBundleByName(rightsBundleName)
-	} else {
-		rightsBundle, err = vcdClient.Client.GetRightsBundleById(identifier)
-	}
-
+	rightsBundle, err := vcdClient.Client.GetRightsBundleById(d.Id())
 	if err != nil {
 		return diag.Errorf("[rights bundle update] error retrieving rights bundle %s: %s", rightsBundleName, err)
 	}

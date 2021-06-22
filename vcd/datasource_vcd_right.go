@@ -24,7 +24,7 @@ func datasourceVcdRight() *schema.Resource {
 			"category_id": &schema.Schema{
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: "Id of the category for this right",
+				Description: "ID of the category for this right",
 			},
 			"bundle_key": &schema.Schema{
 				Type:        schema.TypeString,
