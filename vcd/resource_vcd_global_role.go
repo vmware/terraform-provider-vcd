@@ -105,6 +105,7 @@ func resourceGlobalRoleCreate(ctx context.Context, d *schema.ResourceData, meta 
 			return diag.Errorf("[global role create] error publishing to tenants - global role %s: %s", globalRoleName, err)
 		}
 	}
+	d.SetId(globalRole.GlobalRole.Id)
 	return genericGlobalRoleRead(ctx, d, meta, "resource", "create")
 }
 

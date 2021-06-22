@@ -103,6 +103,7 @@ func resourceRightsBundleCreate(ctx context.Context, d *schema.ResourceData, met
 			return diag.Errorf("[rights bundle create] error publishing to tenants - rights bundle %s: %s", rightsBundleName, err)
 		}
 	}
+	d.SetId(rightsBundle.RightsBundle.Id)
 	return genericRightsBundleRead(ctx, d, meta, "resource", "create")
 }
 

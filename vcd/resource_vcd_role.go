@@ -90,6 +90,7 @@ func resourceRoleCreate(ctx context.Context, d *schema.ResourceData, meta interf
 		}
 	}
 
+	d.SetId(role.Role.ID)
 	return genericRoleRead(ctx, d, meta, "resource", "create")
 }
 
