@@ -288,7 +288,7 @@ $ terraform import vcd_rights_bundle.new-rb "Default Rights Bundle"
 Now you can run `terraform apply`, which will remove the default condition of "publish to all tenants", replacing it
 with "publish to a single tenant".
 
-## How to clone a rights container
+## How to clone a rights container - method 1
 
 In the UI, there is a "clone" button that lets us create a new role, global role, or rights bundle, and then modify it.
 In Terraform, we need to take a different approach, as there is no such thing as cloning a resource.
@@ -312,6 +312,7 @@ output "vapp-user" {
 Using the data from the output, copy the rights section into a new resource
 
 From this:
+
 ```
 vapp-user = {
   "bundle_key" = "ROLE_VAPP_USER"
@@ -347,6 +348,7 @@ vapp-user = {
 ```
 
 to this:
+
 ```hcl
 resource "vcd_global_role" "new-vapp-user" {
   name                   = "new vApp User"
@@ -380,6 +382,60 @@ resource "vcd_global_role" "new-vapp-user" {
 
 (3) <br>
 Remove the data source and apply the changes.
+
+## How to clone a rights container - method 2
+
+If you want to take one or more rights container as a basis for a new one, you may use some Terraform built-in functions
+to combine sets of rights without writing down all of them.
+
+### Example 1 - make a new global role with some rights removed from an existing one
+
+Using [setsubtract](https://www.terraform.io/docs/language/functions/setsubtract.html) we can remove one or more items
+from a given set.
+
+```hcl
+data "vcd_global_role" "vapp-user" {
+  name = "vApp User"
+}
+
+resource "vcd_global_role" "new-vapp-user" {
+  name                   = "new-vapp-user"
+  description            = "new global role from CLI"
+  publish_to_all_tenants = true
+  rights = setsubtract(
+    data.vcd_global_role.vapp-user.rights,                  # rights from existing global role
+    ["vApp: Edit VM Network", "vApp: Edit VM Properties", ] # rights to be removed
+  )
+}
+```
+
+### Example 2 - make a new global role with a few rights more than an existing one
+
+With the function [setunion](https://www.terraform.io/docs/language/functions/setunion.html) we can combine several
+sets into one. For example, we can take the rights from both "vApp User" and "Catalog Author" into a new global role,
+and if we want we can even add extra rights that we specify manually.
+
+```hcl
+data "vcd_global_role" "vapp-user" {
+  name = "vApp User"
+}
+
+data "vcd_global_role" "catalog-author" {
+  name = "Catalog Author"
+}
+
+resource "vcd_global_role" "super-vapp-user" {
+  name                   = "super-vapp-user"
+  description            = "Another global role from CLI"
+  publish_to_all_tenants = true
+  rights = setunion(
+    data.vcd_global_role.vapp-user.rights,      # rights from existing global role
+    data.vcd_global_role.catalog-author.rights, # rights from existing global role
+    ["API Explorer: View"],                     # more rights to be added
+  )
+}
+```
+
 
 ## References
 
