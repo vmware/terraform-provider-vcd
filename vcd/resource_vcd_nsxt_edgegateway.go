@@ -200,6 +200,10 @@ func resourceVcdNsxtEdgeGatewayRead(ctx context.Context, d *schema.ResourceData,
 
 	edge, err := vdc.GetNsxtEdgeGatewayById(d.Id())
 	if err != nil {
+		if govcd.ContainsNotFound(err) {
+			d.SetId("")
+			return nil
+		}
 		return diag.FromErr(fmt.Errorf("could not retrieve NSX-T edge gateway: %s", err))
 	}
 
