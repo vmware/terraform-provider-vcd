@@ -205,7 +205,7 @@ func resourceVcdNsxtFirewallDelete(ctx context.Context, d *schema.ResourceData, 
 		return diag.Errorf("error retrieving all NSX-T Firewall Rules: %s", err)
 	}
 
-	err = allRules.DeleteAll()
+	err = allRules.DeleteAllRules()
 	if err != nil {
 		return diag.Errorf("error deleting NSX-T Firewall Rules : %s", err)
 	}
