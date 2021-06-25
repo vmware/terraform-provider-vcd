@@ -90,7 +90,7 @@ func datasourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"ike_version": &schema.Schema{
 							Type:        schema.TypeString,
-							Required:    true,
+							Computed:    true,
 							Description: "IKE version one of IKE_V1, IKE_V2, IKE_FLEX",
 						},
 						"ike_encryption_algorithms": &schema.Schema{
@@ -150,7 +150,7 @@ func datasourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 						},
 						"tunnel_digest_algorithms": &schema.Schema{
 							Type:     schema.TypeSet,
-							Optional: true,
+							Computed: true,
 							Description: "Digest algorithms to be used for message digest. One of SHA1, SHA2_256, " +
 								"SHA2_384, SHA2_512",
 							Elem: &schema.Schema{
@@ -180,7 +180,6 @@ func datasourceVcdNsxtIpSecVpnTunnel() *schema.Resource {
 					},
 				},
 			},
-			// Computed attributes from here
 			"security_profile": &schema.Schema{
 				Type:     schema.TypeString,
 				Computed: true,

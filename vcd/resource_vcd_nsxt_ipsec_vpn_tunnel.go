@@ -357,7 +357,7 @@ func resourceVcdNsxtIpSecVpnTunnelRead(ctx context.Context, d *schema.ResourceDa
 		if govcd.ContainsNotFound(err) {
 			d.SetId("")
 		}
-		return diag.Errorf("error retrieving NSX-T IPsec VPN Tunnel configuration for deletion: %s", err)
+		return diag.Errorf("error retrieving NSX-T IPsec VPN Tunnel configuration: %s", err)
 	}
 
 	// Set general schema for configuration

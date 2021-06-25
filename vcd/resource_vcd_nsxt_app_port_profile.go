@@ -375,8 +375,8 @@ func setNsxtAppPortProfileData(d *schema.ResourceData, appPortProfile *types.Nsx
 			appPortMap := make(map[string]interface{})
 			appPortMap["protocol"] = value.Protocol
 
-			desinationPortSet := convertStringsTotTypeSet(value.DestinationPorts)
-			appPortMap["port"] = desinationPortSet
+			desitnationPortSet := convertStringsTotTypeSet(value.DestinationPorts)
+			appPortMap["port"] = desitnationPortSet
 
 			resultSet[index] = appPortMap
 
