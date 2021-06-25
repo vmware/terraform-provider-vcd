@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_vapp_access_control"
+page_title: "VMware Cloud Director: vcd_vapp_access_control"
 sidebar_current: "docs-vcd-resource-vapp-access-control"
 description: |-
-  Provides a vCloud Director Access Control structure for a vApp.
+  Provides a VMware Cloud Director Access Control structure for a vApp.
 ---
 
 # vcd\_vapp\_access\_control
 
-Provides a vCloud Director Access Control structure for a vApp. This can be used to create, update, and delete access control structures for a vApp.
+Provides a VMware Cloud Director Access Control structure for a vApp. This can be used to create, update, and delete access control structures for a vApp.
 
 ~> **Warning:** The access control info is tied to a vApp. Thus, there could be only one instance per vApp. Using a different
 definition for the same vApp ID will result in a previous instance to be overwritten.

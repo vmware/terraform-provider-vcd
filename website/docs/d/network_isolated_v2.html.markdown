@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_network_isolated_v2"
+page_title: "VMware Cloud Director: vcd_network_isolated_v2"
 sidebar_current: "docs-vcd-data-source-network-isolated-v2"
 description: |-
   Provides a VMware Cloud Director Org VDC isolated Network data source to read data or reference existing network.

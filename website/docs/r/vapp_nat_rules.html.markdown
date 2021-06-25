@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_vapp_nat_rules"
+page_title: "VMware Cloud Director: vcd_vapp_nat_rules"
 sidebar_current: "docs-vcd-resource-vapp-nat-rules"
 description: |-
-  Provides a vCloud Director vApp NAT resource. This can be used to create, modify, and delete NAT rules.
+  Provides a VMware Cloud Director vApp NAT resource. This can be used to create, modify, and delete NAT rules.
 ---
 
 # vcd\_vapp\_nat\_rules
 
-Provides a vCloud Director vApp NAT resource. This can be used to create,
+Provides a VMware Cloud Director vApp NAT resource. This can be used to create,
 modify, and delete NAT rules in a [vApp network](/docs/providers/vcd/r/vapp_network.html).
 NAT rules can be applied to [vApp networks connected to Org network](/docs/providers/vcd/r/vapp_network.html) or [vApp org networks](/docs/providers/vcd/r/vapp_org_network.html) which are fenced.
 

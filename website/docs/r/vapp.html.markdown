@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_vapp"
+page_title: "VMware Cloud Director: vcd_vapp"
 sidebar_current: "docs-vcd-resource-vapp"
 description: |-
-  Provides a vCloud Director vApp resource. This can be used to create, modify, and delete vApps.
+  Provides a VMware Cloud Director vApp resource. This can be used to create, modify, and delete vApps.
 ---
 
 # vcd\_vapp
 
-Provides a vCloud Director vApp resource. This can be used to create, modify, and delete vApps.
+Provides a VMware Cloud Director vApp resource. This can be used to create, modify, and delete vApps.
 
 ## Example of vApp with 2 VMs
 

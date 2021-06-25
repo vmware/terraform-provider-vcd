@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_nsxt_edgegateway"
+page_title: "VMware Cloud Director: vcd_nsxt_edgegateway"
 sidebar_current: "docs-vcd-resource-nsxt-edge-gateway"
 description: |-
   Provides a VMware Cloud Director NSX-T edge gateway. This can be used to create, update, and delete NSX-T edge gateways connected to external networks.

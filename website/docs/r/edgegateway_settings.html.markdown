@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_edgegateway_settings"
+page_title: "VMware Cloud Director: vcd_edgegateway_settings"
 sidebar_current: "docs-vcd-resource-edgegateway-settings"
 description: |-
-  Provides a vCloud Director edge gateway global settings. This can be used to update global edge gateways settings related to firewall and load balancing.
+  Provides a VMware Cloud Director edge gateway global settings. This can be used to update global edge gateways settings related to firewall and load balancing.
 ---
 
 # vcd\_edgegateway\_settings
 
-Provides a resource that can update vCloud Director edge gateway global settings either as System Administrator or as
+Provides a resource that can update VMware Cloud Director edge gateway global settings either as System Administrator or as
 Organization user.
 
 The main use case of this resource is to allow both providers and tenants to change edge gateways global settings (such as

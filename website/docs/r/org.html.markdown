@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_org"
+page_title: "VMware Cloud Director: vcd_org"
 sidebar_current: "docs-vcd-resource-org"
 description: |-
-  Provides a vCloud Director Organization resource. This can be used to create  delete, and update an organization.
+  Provides a VMware Cloud Director Organization resource. This can be used to create  delete, and update an organization.
 ---
 
 # vcd\_org
 
-Provides a vCloud Director Org resource. This can be used to create, update, and delete an organization.
+Provides a VMware Cloud Director Org resource. This can be used to create, update, and delete an organization.
 Requires system administrator privileges.
 
 Supported in provider *v2.0+*

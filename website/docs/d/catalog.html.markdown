@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_catalog"
+page_title: "VMware Cloud Director: vcd_catalog"
 sidebar_current: "docs-vcd-data-source-catalog"
 description: |-
   Provides a catalog data source.
@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_catalog
 
-Provides a vCloud Director Catalog data source. A Catalog can be used to manage catalog items and media items.
+Provides a VMware Cloud Director Catalog data source. A Catalog can be used to manage catalog items and media items.
 
 Supported in provider *v2.5+*
 

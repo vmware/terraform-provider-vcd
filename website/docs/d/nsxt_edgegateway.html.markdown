@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_nsxt_edgegateway"
+page_title: "VMware Cloud Director: vcd_nsxt_edgegateway"
 sidebar_current: "docs-vcd-data-source-nsxt-edge-gateway"
 description: |-
   Provides a VMware Cloud Director NSX-T edge gateway data source. This can be used to read NSX-T edge gateway configurations.

@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_vapp_static_routing"
+page_title: "VMware Cloud Director: vcd_vapp_static_routing"
 sidebar_current: "docs-vcd-resource-vapp-static-routing"
 description: |-
-  Provides a vCloud Director vApp static routing resource. This can be used to create, modify, and delete static routing rules.
+  Provides a VMware Cloud Director vApp static routing resource. This can be used to create, modify, and delete static routing rules.
 ---
 
 # vcd\_vapp\_static\_routing
 
-Provides a vCloud Director vApp static routing resource. This can be used to create,
+Provides a VMware Cloud Director vApp static routing resource. This can be used to create,
 modify, and delete static routing rules in a [vApp network](/docs/providers/vcd/r/vapp_network.html).
 
 ~> **Note:** Resource used for vApp network, not vApp Org network.

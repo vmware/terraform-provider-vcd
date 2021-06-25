@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_nsxv_ip_set"
+page_title: "VMware Cloud Director: vcd_nsxv_ip_set"
 sidebar_current: "docs-vcd-resource-ipset"
 description: |-
   Provides an IP set resource.
@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_nsxv\_ip\_set
 
-Provides a vCloud Director IP set resource. An IP set is a group of IP addresses that you can add as
+Provides a VMware Cloud Director IP set resource. An IP set is a group of IP addresses that you can add as
   the source or destination in a firewall rule or in DHCP relay configuration.
 
 

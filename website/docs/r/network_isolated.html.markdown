@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_network_isolated"
+page_title: "VMware Cloud Director: vcd_network_isolated"
 sidebar_current: "docs-vcd-resource-network-isolated"
 description: |-
-  Provides a vCloud Director Org VDC isolated Network. This can be used to create, modify, and delete internal networks for vApps to connect.
+  Provides a VMware Cloud Director Org VDC isolated Network. This can be used to create, modify, and delete internal networks for vApps to connect.
 ---
 
 # vcd\_network\_isolated
 
-Provides a vCloud Director Org VDC isolated Network. This can be used to create,
+Provides a VMware Cloud Director Org VDC isolated Network. This can be used to create,
 modify, and delete internal networks for vApps to connect. This network is not attached to external networks or routers.
 
 Supported in provider *v2.0+*

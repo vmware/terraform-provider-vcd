@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: data source filters"
+page_title: "VMware Cloud Director: data source filters"
 sidebar_current: "docs-vcd-guides-filters"
 description: |-
   Provides guidance on filters.

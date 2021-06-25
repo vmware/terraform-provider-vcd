@@ -1,9 +1,9 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_vm_internal_disk"
+page_title: "VMware Cloud Director: vcd_vm_internal_disk"
 sidebar_current: "docs-vcd-vm-internal-disk"
 description: |-
-  Provides a vCloud Director VM internal disk resource. This can be used to create and delete VM internal disks.
+  Provides a VMware Cloud Director VM internal disk resource. This can be used to create and delete VM internal disks.
 ---
 
 # vcd\_vm\_internal\_disk

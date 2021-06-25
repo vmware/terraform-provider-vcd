@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_catalog_item"
+page_title: "VMware Cloud Director: vcd_catalog_item"
 sidebar_current: "docs-vcd-resource-catalog-item"
 description: |-
-  Provides a vCloud Director catalog item resource. This can be used to upload and delete OVA file inside a catalog.
+  Provides a VMware Cloud Director catalog item resource. This can be used to upload and delete OVA file inside a catalog.
 ---
 
 # vcd\_catalog\_item
 
-Provides a vCloud Director catalog item resource. This can be used to upload OVA to catalog and delete it.
+Provides a VMware Cloud Director catalog item resource. This can be used to upload OVA to catalog and delete it.
 
 Supported in provider *v2.0+*
 

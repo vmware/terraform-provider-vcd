@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_lb_app_rule"
+page_title: "VMware Cloud Director: vcd_lb_app_rule"
 sidebar_current: "docs-vcd-data-source-lb-app-rule"
 description: |-
   Provides an NSX edge gateway load balancer application rule data source.
@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_lb\_app\_rule
 
-Provides a vCloud Director Edge Gateway Load Balancer Application Rule data source. An application
+Provides a VMware Cloud Director Edge Gateway Load Balancer Application Rule data source. An application
 rule allows to directly manipulate and manage IP application traffic with load balancer.
 
 ~> **Note:** See additional support notes in [application rule resource page]

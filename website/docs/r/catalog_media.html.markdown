@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_catalog_media"
+page_title: "VMware Cloud Director: vcd_catalog_media"
 sidebar_current: "docs-vcd-resource-catalog-media"
 description: |-
-  Provides a vCloud Director media resource. This can be used to upload and delete media (ISO) file inside a catalog.
+  Provides a VMware Cloud Director media resource. This can be used to upload and delete media (ISO) file inside a catalog.
 ---
 
 # vcd\_catalog\_media
 
-Provides a vCloud Director media resource. This can be used to upload media to catalog and delete it.
+Provides a VMware Cloud Director media resource. This can be used to upload media to catalog and delete it.
 
 Supported in provider *v2.0+*
 

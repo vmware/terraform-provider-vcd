@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_independent_disk"
+page_title: "VMware Cloud Director: vcd_independent_disk"
 sidebar_current: "docs-vcd-independent-disk"
 description: |-
-  Provides a vCloud Director independent disk resource. This can be used to create and delete independent disks.
+  Provides a VMware Cloud Director independent disk resource. This can be used to create and delete independent disks.
 ---
 
 # vcd\_independent\_disk
 
-Provides a vCloud Director independent disk resource. This can be used to create and delete independent disks.
+Provides a VMware Cloud Director independent disk resource. This can be used to create and delete independent disks.
 
 ## Example Usage
 

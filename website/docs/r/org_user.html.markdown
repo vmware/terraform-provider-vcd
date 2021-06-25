@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_org_user"
+page_title: "VMware Cloud Director: vcd_org_user"
 sidebar_current: "docs-vcd-resource-org-user"
 description: |-
-  Provides a vCloud Director Organization user. This can be used to create, update, and delete organization users.
+  Provides a VMware Cloud Director Organization user. This can be used to create, update, and delete organization users.
 ---
 
 # vcd\_org\_user
 
-Provides a vCloud Director Org User. This can be used to create, update, and delete organization users, including org administrators.
+Provides a VMware Cloud Director Org User. This can be used to create, update, and delete organization users, including org administrators.
 
 Supported in provider *v2.4+*
 

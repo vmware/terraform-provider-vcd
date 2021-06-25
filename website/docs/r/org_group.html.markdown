@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_org_group"
+page_title: "VMware Cloud Director: vcd_org_group"
 sidebar_current: "docs-vcd-resource-org-group"
 description: |-
-  Provides a vCloud Director Organization group. This can be used to create, update, and delete organization groups defined in SAML or LDAP.
+  Provides a VMware Cloud Director Organization group. This can be used to create, update, and delete organization groups defined in SAML or LDAP.
 ---
 
 # vcd\_org\_group
 
-Provides a vCloud Director Organization group. This can be used to create, update, and delete
+Provides a VMware Cloud Director Organization group. This can be used to create, update, and delete
 organization groups defined in `SAML` or `LDAP`.
 
 Supported in provider *v2.9+*

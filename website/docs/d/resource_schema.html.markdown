@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_resource_schema"
+page_title: "VMware Cloud Director: vcd_resource_schema"
 sidebar_current: "docs-vcd-datasource-resource-schema"
 description: |-
   Provides information about a vCD resource structure
@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_resource_schema
 
-Provides a vCloud Director generic structure data source. It shows the structure of any VCD resource.
+Provides a VMware Cloud Director generic structure data source. It shows the structure of any VCD resource.
 
 Supported in provider *v3.1+*
 

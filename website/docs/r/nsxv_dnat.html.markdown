@@ -1,15 +1,15 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_nsxv_dnat"
+page_title: "VMware Cloud Director: vcd_nsxv_dnat"
 sidebar_current: "docs-vcd-resource-nsxv-dnat"
 description: |-
-  Provides a vCloud Director DNAT resource for advanced edge gateways (NSX-V). This can be used to create,
+  Provides a VMware Cloud Director DNAT resource for advanced edge gateways (NSX-V). This can be used to create,
   modify, and delete destination NATs to map an external IP/port to an internal IP/port.
 ---
 
 # vcd\_nsxv\_dnat
 
-Provides a vCloud Director DNAT resource for advanced edge gateways (NSX-V). This can be used to create,
+Provides a VMware Cloud Director DNAT resource for advanced edge gateways (NSX-V). This can be used to create,
 modify, and delete destination NATs to map an external IP/port to an internal IP/port.
 
 ~> **Note:** This resource requires advanced edge gateway.
