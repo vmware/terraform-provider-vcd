@@ -465,9 +465,8 @@ func getComputeStorageProfiles(vcdClient *VCDClient, profile *types.VdcStoragePr
 		storageProfileData["limit"] = vdcStorageProfileDetails.Limit
 		storageProfileData["default"] = vdcStorageProfileDetails.Default
 		storageProfileData["enabled"] = vdcStorageProfileDetails.Enabled
-		if vdcStorageProfileDetails.ProviderVdcStorageProfile != nil {
-			storageProfileData["name"] = vdcStorageProfileDetails.ProviderVdcStorageProfile.Name
-		}
+		storageProfileData["name"] = vdcStorageProfileDetails.Name
+
 		storageProfileData["storage_used_in_mb"] = vdcStorageProfileDetails.StorageUsedMB
 		root = append(root, storageProfileData)
 	}
