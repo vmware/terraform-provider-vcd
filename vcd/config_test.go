@@ -1547,3 +1547,9 @@ func addToTestRunList(testName, fileType string) error {
 	}
 	return w.Flush()
 }
+
+// noTestCredentials helps to check if a config file with credentials is actually provided. It helps to conditionally
+// ignore tests in such case
+func noTestCredentials() bool {
+	return testConfig.Provider.User == ""
+}

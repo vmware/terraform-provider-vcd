@@ -621,6 +621,10 @@ resource "vcd_nsxt_nat_rule" "dnat-match" {
 `
 
 func TestAccVcdNsxtNatRuleReflexive(t *testing.T) {
+	if noTestCredentials() {
+		t.Skip("Skipping test run as no credentials are provided and this test needs to lookup VCD version")
+		return
+	}
 	preTestChecks(t)
 	skipNoNsxtConfiguration(t)
 
