@@ -30,6 +30,7 @@ vcd/go-vcloud-director.log
 vcd/test-artifacts
 website/vendor
 vcd/org_user_pwd.txt
+vcd/vcd_test_pass_list*.txt
 
 # Test exclusions
 !command/test-fixtures/**/*.tfstate
