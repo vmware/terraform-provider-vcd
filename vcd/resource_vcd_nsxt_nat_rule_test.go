@@ -624,23 +624,12 @@ func TestAccVcdNsxtNatRuleReflexive(t *testing.T) {
 	preTestChecks(t)
 	skipNoNsxtConfiguration(t)
 
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
-
 	// expectError must stay nil for versions > 10.3.0, because we expect it to work. For lower versions - it must have
 	// match the runtime validation error
 	var (
 		expectError       *regexp.Regexp
 		expectImportError *regexp.Regexp
 	)
-	client := createTemporaryVCDConnection()
-	if client.Client.APIVCDMaxVersionIs("< 36.0") {
-		fmt.Println("# expecting an error for unsupported NAT Rule Type 'REFLEXIVE'")
-		expectError = regexp.MustCompile(`rule_type 'REFLEXIVE' can only be used for VCD 10.3+`)
-		expectImportError = regexp.MustCompile(`unable to find NAT Rule`)
-	}
 
 	// String map to fill the template
 	var params = StringMap{
@@ -651,6 +640,15 @@ func TestAccVcdNsxtNatRuleReflexive(t *testing.T) {
 		"Tags":          "network nsxt",
 		"FirewallMatch": "MATCH_INTERNAL_ADDRESS",
 		"Priority":      "10",
+		"SkipNotice":    "",
+	}
+
+	client := createTemporaryVCDConnection()
+	if client.Client.APIVCDMaxVersionIs("< 36.0") {
+		fmt.Println("# expecting an error for unsupported NAT Rule Type 'REFLEXIVE'")
+		expectError = regexp.MustCompile(`rule_type 'REFLEXIVE' can only be used for VCD 10.3+`)
+		expectImportError = regexp.MustCompile(`unable to find NAT Rule`)
+		params["SkipNotice"] = "# skip-binary-test: rule_type 'REFLEXIVE' can only be used for VCD 10.3+"
 	}
 
 	configText1 := templateFill(testAccNsxtNatRuleReflexive, params)
@@ -667,6 +665,11 @@ func TestAccVcdNsxtNatRuleReflexive(t *testing.T) {
 	params["Priority"] = "0"
 	configText3 := templateFill(testAccNsxtNatRuleReflexive, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText3)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
@@ -719,6 +722,7 @@ func TestAccVcdNsxtNatRuleReflexive(t *testing.T) {
 }
 
 const testAccNsxtNatRuleReflexive = testAccNsxtSecurityGroupPrereqsEmpty + `
+{{.SkipNotice}}
 resource "vcd_nsxt_nat_rule" "reflexive" {
   org = "{{.Org}}"
   vdc = "{{.NsxtVdc}}"
