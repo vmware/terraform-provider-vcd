@@ -156,6 +156,122 @@ func externalNetworkList(d *schema.ResourceData, meta interface{}) (list []strin
 	return list, err
 }
 
+func rightsList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+	org, err := client.GetAdminOrg(d.Get("org").(string))
+	if err != nil {
+		return list, err
+	}
+	listMode := d.Get("list_mode").(string)
+	nameIdSeparator := d.Get("name_id_separator").(string)
+	rights, err := org.GetAllRights(nil)
+
+	if err != nil {
+		return list, err
+	}
+	for _, right := range rights {
+		switch listMode {
+		case "name", "hierarchy":
+			list = append(list, right.Name)
+		case "id":
+			list = append(list, right.ID)
+		case "name_id":
+			list = append(list, right.Name+nameIdSeparator+right.ID)
+		case "href":
+			list = append(list, "")
+		case "import":
+			list = append(list, "")
+		}
+	}
+	return list, err
+}
+
+func rolesList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	org, err := client.GetAdminOrg(d.Get("org").(string))
+	if err != nil {
+		return list, err
+	}
+
+	listMode := d.Get("list_mode").(string)
+	nameIdSeparator := d.Get("name_id_separator").(string)
+	roles, err := org.GetAllRoles(nil)
+
+	if err != nil {
+		return list, err
+	}
+	for _, role := range roles {
+		switch listMode {
+		case "name", "hierarchy":
+			list = append(list, role.Role.Name)
+		case "id":
+			list = append(list, role.Role.ID)
+		case "name_id":
+			list = append(list, role.Role.Name+nameIdSeparator+role.Role.ID)
+		case "href":
+			list = append(list, "")
+		case "import":
+			list = append(list, fmt.Sprintf("terraform import vcd_role.%s %s.%s", role.Role.Name, org.AdminOrg.Name, role.Role.Name))
+		}
+	}
+	return list, err
+}
+
+func globalRolesList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	listMode := d.Get("list_mode").(string)
+	nameIdSeparator := d.Get("name_id_separator").(string)
+	globalRoles, err := client.Client.GetAllGlobalRoles(nil)
+
+	if err != nil {
+		return list, err
+	}
+	for _, role := range globalRoles {
+		switch listMode {
+		case "name", "hierarchy":
+			list = append(list, role.GlobalRole.Name)
+		case "id":
+			list = append(list, role.GlobalRole.Id)
+		case "name_id":
+			list = append(list, role.GlobalRole.Name+nameIdSeparator+role.GlobalRole.Id)
+		case "href":
+			list = append(list, "")
+		case "import":
+			list = append(list, fmt.Sprintf("terraform import vcd_global_role.%s %s", role.GlobalRole.Name, role.GlobalRole.Name))
+		}
+	}
+	return list, err
+}
+
+func rightsBundlesList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
+	client := meta.(*VCDClient)
+
+	listMode := d.Get("list_mode").(string)
+	nameIdSeparator := d.Get("name_id_separator").(string)
+	rightsBundles, err := client.Client.GetAllRightsBundles(nil)
+
+	if err != nil {
+		return list, err
+	}
+	for _, role := range rightsBundles {
+		switch listMode {
+		case "name", "hierarchy":
+			list = append(list, role.RightsBundle.Name)
+		case "id":
+			list = append(list, role.RightsBundle.Id)
+		case "name_id":
+			list = append(list, role.RightsBundle.Name+nameIdSeparator+role.RightsBundle.Id)
+		case "href":
+			list = append(list, "")
+		case "import":
+			list = append(list, fmt.Sprintf("terraform import vcd_rights_bundle.%s %s", role.RightsBundle.Name, role.RightsBundle.Name))
+		}
+	}
+	return list, err
+}
+
 func catalogList(d *schema.ResourceData, meta interface{}) (list []string, err error) {
 	client := meta.(*VCDClient)
 
@@ -811,6 +927,14 @@ func datasourceVcdResourceListRead(ctx context.Context, d *schema.ResourceData, 
 		list, err = networkList(d, meta)
 	case "vcd_network_routed_v2", "vcd_network_isolated_v2", "vcd_nsxt_network_imported":
 		list, err = orgNetworkListV2(d, meta)
+	case "vcd_right", "rights":
+		list, err = rightsList(d, meta)
+	case "vcd_rights_bundle", "rights_bundle":
+		list, err = rightsBundlesList(d, meta)
+	case "vcd_role", "roles":
+		list, err = rolesList(d, meta)
+	case "vcd_global_role", "global_roles":
+		list, err = globalRolesList(d, meta)
 
 		//// place holder to remind of what needs to be implemented
 		//	case "edgegateway_vpn",
