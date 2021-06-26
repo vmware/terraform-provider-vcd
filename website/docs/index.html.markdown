@@ -25,6 +25,7 @@ The following Cloud Director versions are supported by this provider:
 * 10.0
 * 10.1
 * 10.2
+* 10.3
 
 ## Removed resources and fields
 
