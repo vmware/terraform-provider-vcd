@@ -14,8 +14,6 @@ Supported in provider *v3.3+* and VCD 10.1+ with NSX-T backed VDCs.
 Provides a resource to manage NSX-T IP Set. IP sets are groups of objects to which the firewall rules apply. Combining 
 multiple objects into IP sets helps reduce the total number of firewall rules to be created.
 
-## Specific usage notes
-
 ## Example Usage (IP set with multiple IP address ranges defined)
 
 ```hcl
