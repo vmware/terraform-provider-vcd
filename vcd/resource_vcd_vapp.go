@@ -96,20 +96,9 @@ func resourceVcdVAppCreate(d *schema.ResourceData, meta interface{}) error {
 	vcdClient.lockVapp(d)
 	defer vcdClient.unLockVapp(d)
 
-	e := vdc.ComposeRawVApp(vappName, vappDescription)
-
-	if e != nil {
-		return fmt.Errorf("error: %#v", e)
-	}
-
-	e = vdc.Refresh()
-	if e != nil {
-		return fmt.Errorf("error: %#v", e)
-	}
-
-	vapp, err := vdc.GetVAppByName(vappName, true)
+	vapp, err := vdc.CreateRawVApp(vappName, vappDescription)
 	if err != nil {
-		return fmt.Errorf("unable to find vApp by name %s: %s", vappName, err)
+		return fmt.Errorf("error creating vApp %s: %s", vappName, err)
 	}
 
 	if _, ok := d.GetOk("guest_properties"); ok {
