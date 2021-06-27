@@ -81,6 +81,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_app_port_profile": datasourceVcdNsxtAppPortProfile(),  // 3.3
 	"vcd_nsxt_nat_rule":         datasourceVcdNsxtNatRule(),         // 3.3
 	"vcd_nsxt_firewall":         datasourceVcdNsxtFirewall(),        // 3.3
+	"vcd_nsxt_ipsec_vpn_tunnel": datasourceVcdNsxtIpSecVpnTunnel(),  // 3.3
 }
 
 var globalResourceMap = map[string]*schema.Resource{
@@ -136,6 +137,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_firewall":         resourceVcdNsxtFirewall(),             // 3.3
 	"vcd_nsxt_app_port_profile": resourceVcdNsxtAppPortProfile(),       // 3.3
 	"vcd_nsxt_nat_rule":         resourceVcdNsxtNatRule(),              // 3.3
+	"vcd_nsxt_ipsec_vpn_tunnel": resourceVcdNsxtIpSecVpnTunnel(),       // 3.3
 }
 
 // Provider returns a terraform.ResourceProvider.

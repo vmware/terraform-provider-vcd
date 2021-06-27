@@ -326,7 +326,7 @@ data "vcd_nsxt_manager" "main" {
 
 const testAccVcdNsxtAppPortProfileProviderStep1 = testAccVcdNsxtAppPortProfileProviderNsxtManagerDS + `
 resource "vcd_nsxt_app_port_profile" "custom" {
-  org  = "{{.Org}}"
+  org  = "System"
   name = "custom_app_prof"
 
   description     = "Application port profile for custom"
@@ -342,7 +342,7 @@ resource "vcd_nsxt_app_port_profile" "custom" {
 const testAccVcdNsxtAppPortProfileProviderStep1AndDS = testAccVcdNsxtAppPortProfileProviderStep1 + `
 # skip-binary-test: data source test only works in acceptance tests
 data "vcd_nsxt_app_port_profile" "custom" {
-  org   = "{{.Org}}"
+  org   = "System"
   name  = "custom_app_prof"
   scope = "PROVIDER"
 }
@@ -350,7 +350,7 @@ data "vcd_nsxt_app_port_profile" "custom" {
 
 const testAccVcdNsxtAppPortProfileProviderStep2 = testAccVcdNsxtAppPortProfileProviderNsxtManagerDS + `
 resource "vcd_nsxt_app_port_profile" "custom" {
-  org  = "{{.Org}}"
+  org  = "System"
   name = "custom_app_prof-updated"
 
   description     = "Application port profile for custom-updated"
@@ -375,7 +375,7 @@ resource "vcd_nsxt_app_port_profile" "custom" {
 
 const testAccVcdNsxtAppPortProfileProviderStep4 = testAccVcdNsxtAppPortProfileProviderNsxtManagerDS + `
 resource "vcd_nsxt_app_port_profile" "custom" {
-  org  = "{{.Org}}"
+  org  = "System"
   name = "custom_app_prof-updated"
 
   scope           = "PROVIDER"
