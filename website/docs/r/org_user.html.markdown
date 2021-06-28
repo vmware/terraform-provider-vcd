@@ -97,7 +97,7 @@ resource "vcd_org_user" "test_sys_user" {
 The following arguments are supported:
 
 * `org` - (Optional) The name of organization to which the user belongs. Optional if defined at provider level. If we 
-  want to create an user at provider level, use use "System" as org name.
+  want to create a user at provider level, use "System" as org name.
 * `name` - (Required) A unique name for the user.
 * `password` - (Optional, but required if `password_file` was not given) The user password. This value is never returned 
   on read. It is inspected on create and modify. To modify, fill with a different value. Note that if you remove the 
