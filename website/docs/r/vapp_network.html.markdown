@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_vapp_network"
+page_title: "VMware Cloud Director: vcd_vapp_network"
 sidebar_current: "docs-vcd-resource-vapp-network"
 description: |-
  Allows to provision a vApp network and optionally connect it to an existing Org VDC network.

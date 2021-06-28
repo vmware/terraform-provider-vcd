@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_nsxt_network_imported"
+page_title: "VMware Cloud Director: vcd_nsxt_network_imported"
 sidebar_current: "docs-vcd-data-source-nsxt-network-imported"
 description: |-
   Provides a VMware Cloud Director Org VDC NSX-T Imported Network data source to read data or reference existing network.

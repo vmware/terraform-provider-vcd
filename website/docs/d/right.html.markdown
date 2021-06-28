@@ -3,7 +3,7 @@ layout: "vcd"
 page_title: "VMware Cloud Director: vcd_right"
 sidebar_current: "docs-vcd-data-source-right"
 description: |-
- Provides a vCloud Director Organization Right data source. This can be used to read existing rights
+ Provides a VMware Cloud Director Organization Right data source. This can be used to read existing rights
 ---
 
 # vcd\_right

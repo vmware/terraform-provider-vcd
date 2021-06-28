@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "Provider: VMware vCloudDirector"
+page_title: "Provider: VMware Cloud Director"
 sidebar_current: "docs-vcd-index"
 description: |-
   The VMware Cloud Director provider is used to interact with the resources supported by VMware Cloud Director. The provider needs to be configured with the proper credentials before it can be used.
@@ -25,6 +25,7 @@ The following Cloud Director versions are supported by this provider:
 * 10.0
 * 10.1
 * 10.2
+* 10.3
 
 ## Removed resources and fields
 

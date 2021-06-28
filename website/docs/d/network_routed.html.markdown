@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_network_routed"
+page_title: "VMware Cloud Director: vcd_network_routed"
 sidebar_current: "docs-vcd-data-source-network-routed"
 description: |-
-  Provides a vCloud Director Org VDC routed Network. This can be used to reference internal networks for vApps to connect.
+  Provides a VMware Cloud Director Org VDC routed Network. This can be used to reference internal networks for vApps to connect.
 ---
 
 # vcd\_network\_routed
 
-Provides a vCloud Director Org VDC routed Network data source. This can be used to reference internal networks for vApps to connect.
+Provides a VMware Cloud Director Org VDC routed Network data source. This can be used to reference internal networks for vApps to connect.
 
 Supported in provider *v2.5+*
 

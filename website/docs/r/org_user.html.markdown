@@ -1,20 +1,24 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_org_user"
+page_title: "VMware Cloud Director: vcd_org_user"
 sidebar_current: "docs-vcd-resource-org-user"
 description: |-
-  Provides a vCloud Director Organization user. This can be used to create, update, and delete organization users.
+  Provides a VMware Cloud Director Organization user. This can be used to create, update, and delete users.
 ---
 
 # vcd\_org\_user
 
-Provides a vCloud Director Org User. This can be used to create, update, and delete organization users, including org administrators.
+Provides a VMware Cloud Director Org User. This can be used to create, update, and delete users, including system and org administrators.
+
+If we have the right permissions, we can create both organization and System users: to do so, we indicate "System" as organization name.
+
+The users being created can be assigned either pre-existing roles or [custom roles](/docs/providers/vcd/r/role.html).
 
 Supported in provider *v2.4+*
 
 ~> **Note:** Only `System Administrator` or `Org Administrator` users can create users.
 
-## Example Usage
+## Example Usage 1 - A simple organization user
 
 ```hcl
 # A simple user created with the minimum of properties
@@ -48,11 +52,52 @@ resource "vcd_org_user" "test_user_vapp_author" {
 }
 ```
 
+## Example Usage 2 - A System user
+
+```hcl
+# A new system administrator
+resource "vcd_org_user" "my-sys-admin" {
+  org           = "System"
+  name          = "my-sys-admin"
+  description   = "a new sys admin"
+  role          = "System Administrator"
+  password      = "change-me-soon"
+}
+```
+
+## Example Usage 3 - A System user with custom role
+
+```hcl
+resource "vcd_role" "new-sys-role" {
+  org         = "System"
+  name        = "new-role"
+  description = "new role from CLI"
+  rights = [
+    "Catalog: Add vApp from My Cloud",
+    "Catalog: Edit Properties",
+    "Catalog: View Private and Shared Catalogs",
+    "Organization vDC Compute Policy: View",
+    "vApp Template / Media: Edit",
+    "vApp Template / Media: View",
+  ]
+}
+
+resource "vcd_org_user" "test_sys_user" {
+  org            = "System"
+  name           = "custom-sys-user"
+  password       = "mypass"
+  role           = vcd_role.new-sys-role.name
+  take_ownership = true
+}
+```
+
+
 ## Argument Reference
 
 The following arguments are supported:
 
-* `org` - (Optional) The name of organization to which the user belongs. Optional if defined at provider level.
+* `org` - (Optional) The name of organization to which the user belongs. Optional if defined at provider level. If we 
+  want to create a user at provider level, use "System" as org name.
 * `name` - (Required) A unique name for the user.
 * `password` - (Optional, but required if `password_file` was not given) The user password. This value is never returned 
   on read. It is inspected on create and modify. To modify, fill with a different value. Note that if you remove the 

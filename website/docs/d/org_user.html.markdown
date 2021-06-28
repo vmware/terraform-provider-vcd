@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_org_user"
+page_title: "VMware Cloud Director: vcd_org_user"
 sidebar_current: "docs-vcd-datasource-org-user"
 description: |-
-  Provides a vCloud Director Organization user data source. This can be used to read organization users.
+  Provides a VMware Cloud Director Organization user data source. This can be used to read organization users.
 ---
 
 # vcd\_org\_user
 
-Provides a vCloud Director Org User data source. This can be used to read organization users, including org administrators.
+Provides a VMware Cloud Director Org User data source. This can be used to read organization users, including org administrators.
 
 Supported in provider *v3.0+*
 

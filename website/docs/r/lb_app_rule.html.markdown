@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_lb_app_rule"
+page_title: "VMware Cloud Director: vcd_lb_app_rule"
 sidebar_current: "docs-vcd-resource-lb-app-rule"
 description: |-
   Provides an NSX edge gateway load balancer application rule resource.
@@ -8,16 +8,16 @@ description: |-
 
 # vcd\_lb\_app\_rule
 
-Provides a vCloud Director Edge Gateway Load Balancer Application Rule resource. An application rule
+Provides a VMware Cloud Director Edge Gateway Load Balancer Application Rule resource. An application rule
 allows to directly manipulate and manage IP application traffic with load balancer.
 
 ~> **Note:** To make load balancing work one must ensure that load balancing is enabled on edge
 gateway (edge gateway must be advanced).
 This depends on NSX version to work properly. Please refer to [VMware Product Interoperability
 Matrices](https://www.vmware.com/resources/compatibility/sim/interop_matrix.php#interop&29=&93=) 
-to check supported vCloud director and NSX for vSphere configurations.
+to check supported VMware Cloud Director and NSX for vSphere configurations.
 
-~> **Note:** The vCloud Director API for NSX supports a subset of the operations and objects defined
+~> **Note:** The VMware Cloud Director API for NSX supports a subset of the operations and objects defined
 in the NSX vSphere API Guide. The API supports NSX 6.2, 6.3, and 6.4.
 
 Supported in provider *v2.4+*
@@ -62,7 +62,7 @@ The following arguments are supported:
 * `script` - (Required) A multiline application rule script.
 Terraform's [HEREDOC syntax](https://www.terraform.io/docs/configuration/expressions.html#string-literals)
 may be useful for multiline scripts. **Note:** For information on
-the application rule syntax, see more in [vCloud Director documentation]
+the application rule syntax, see more in [VMware Cloud Director documentation]
 (https://docs.vmware.com/en/vCloud-Director/9.7/com.vmware.vcloud.tenantportal.doc/GUID-AFF9F70F-85C9-4053-BA69-F2B062F34C7F.html)
 
 ## Attribute Reference

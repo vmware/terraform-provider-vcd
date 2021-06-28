@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_external_network"
+page_title: "VMware Cloud Director: vcd_external_network"
 sidebar_current: "docs-vcd-resource-external-network"
 description: |-
-  Provides a vCloud Director external network resource.  This can be used to create and delete external networks.
+  Provides a VMware Cloud Director external network resource.  This can be used to create and delete external networks.
 ---
 
 # vcd\_external\_network
 
-Provides a vCloud Director external network resource.  This can be used to create and delete external networks.
+Provides a VMware Cloud Director external network resource.  This can be used to create and delete external networks.
 Requires system administrator privileges.
 
 Supported in provider *v2.2+*

@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_org_vdc"
+page_title: "VMware Cloud Director: vcd_org_vdc"
 sidebar_current: "docs-vcd-resource-org-vdc"
 description: |-
-  Provides a vCloud Director Organization VDC resource. This can be used to create and delete an Organization VDC.
+  Provides a VMware Cloud Director Organization VDC resource. This can be used to create and delete an Organization VDC.
 ---
 
 # vcd\_org\_vdc
 
-Provides a vCloud Director Organization VDC resource. This can be used to create and delete an Organization VDC.
+Provides a VMware Cloud Director Organization VDC resource. This can be used to create and delete an Organization VDC.
 Requires system administrator privileges.
 
 -> **Note:** This resource supports NSX-T and NSX-V based Org Vdcs by providing relevant

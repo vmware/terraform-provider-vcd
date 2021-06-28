@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_nsxv_dhcp_relay"
+page_title: "VMware Cloud Director: vcd_nsxv_dhcp_relay"
 sidebar_current: "docs-vcd-datasource-nsxv-dhcp-relay"
 description: |-
   Provides an NSX edge gateway DHCP relay configuration data source.
@@ -8,9 +8,9 @@ description: |-
 
 # vcd\_nsxv\_dhcp\_relay
 
-Provides a vCloud Director Edge Gateway DHCP relay configuration data source. The DHCP relay
-capability provided by NSX in vCloud Director environment allows to leverage existing DHCP
-infrastructure from within vCloud Director environment without any interruption to the IP address
+Provides a VMware Cloud Director Edge Gateway DHCP relay configuration data source. The DHCP relay
+capability provided by NSX in VMware Cloud Director environment allows to leverage existing DHCP
+infrastructure from within VMware Cloud Director environment without any interruption to the IP address
 management in existing DHCP infrastructure. DHCP messages are relayed from virtual machines to the
 designated DHCP servers in your physical DHCP infrastructure, which allows IP addresses controlled
 by the NSX software to continue to be in sync with IP addresses in the rest of your DHCP-controlled

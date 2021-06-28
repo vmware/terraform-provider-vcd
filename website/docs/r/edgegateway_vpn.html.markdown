@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_edgegateway_vpn"
+page_title: "VMware Cloud Director: vcd_edgegateway_vpn"
 sidebar_current: "docs-vcd-resource-edgegateway-vpn"
 description: |-
-  Provides a vCloud Director IPsec VPN. This can be used to create, modify, and delete VPN settings and rules.
+  Provides a VMware Cloud Director IPsec VPN. This can be used to create, modify, and delete VPN settings and rules.
 ---
 
 # vcd\_edgegateway\_vpn
 
-Provides a vCloud Director IPsec VPN. This can be used to create,
+Provides a VMware Cloud Director IPsec VPN. This can be used to create,
 modify, and delete VPN settings and rules.
 
 ## Example Usage

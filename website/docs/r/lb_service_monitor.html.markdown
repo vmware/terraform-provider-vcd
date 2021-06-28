@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_lb_service_monitor"
+page_title: "VMware Cloud Director: vcd_lb_service_monitor"
 sidebar_current: "docs-vcd-resource-lb-service-monitor"
 description: |-
   Provides an NSX edge gateway load balancer service monitor resource.
@@ -8,15 +8,15 @@ description: |-
 
 # vcd\_lb\_service\_monitor
 
-Provides a vCloud Director Edge Gateway Load Balancer Service Monitor resource. A service monitor 
+Provides a VMware Cloud Director Edge Gateway Load Balancer Service Monitor resource. A service monitor 
 defines health check parameters for a particular type of network traffic. It can be associated with
 a pool. Pool members are monitored according to the service monitor parameters. 
 
 ~> **Note:** To make load balancing work one must ensure that load balancing is enabled on edge gateway (edge gateway must be advanced).
 This depends on NSX version to work properly. Please refer to [VMware Product Interoperability Matrices](https://www.vmware.com/resources/compatibility/sim/interop_matrix.php#interop&29=&93=) 
-to check supported vCloud director and NSX for vSphere configurations.
+to check supported VMware Cloud Director and NSX for vSphere configurations.
 
-~> **Note:** The vCloud Director API for NSX supports a subset of the operations and objects defined in the NSX vSphere 
+~> **Note:** The VMware Cloud Director API for NSX supports a subset of the operations and objects defined in the NSX vSphere 
 API Guide. The API supports NSX 6.2, 6.3, and 6.4.
 
 Supported in provider *v2.4+*

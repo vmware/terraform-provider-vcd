@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_lb_service_monitor"
+page_title: "VMware Cloud Director: vcd_lb_service_monitor"
 sidebar_current: "docs-vcd-data-source-lb-service-monitor"
 description: |-
   Provides an NSX edge gateway load balancer service monitor data source.
@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_lb\_service\_monitor
 
-Provides a vCloud Director Edge Gateway Load Balancer Service Monitor data source. A service monitor 
+Provides a VMware Cloud Director Edge Gateway Load Balancer Service Monitor data source. A service monitor 
 defines health check parameters for a particular type of network traffic. It can be associated with
 a pool. Pool members are monitored according to the service monitor parameters. See example usage of
 this data source in [server pool resource page](/docs/providers/vcd/r/lb_server_pool.html).

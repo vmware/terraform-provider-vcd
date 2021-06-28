@@ -1,6 +1,6 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_org"
+page_title: "VMware Cloud Director: vcd_org"
 sidebar_current: "docs-vcd-data-source-org"
 description: |-
   Provides an organization data source.
@@ -8,7 +8,7 @@ description: |-
 
 # vcd\_org
 
-Provides a vCloud Director Org data source. An organization can be used to manage catalogs, virtual
+Provides a VMware Cloud Director Org data source. An organization can be used to manage catalogs, virtual
 data centers, and users.
 
 Supported in provider *v2.5+*

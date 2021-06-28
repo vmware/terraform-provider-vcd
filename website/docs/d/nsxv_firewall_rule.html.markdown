@@ -1,15 +1,15 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_nsxv_firewall_rule"
+page_title: "VMware Cloud Director: vcd_nsxv_firewall_rule"
 sidebar_current: "docs-vcd-data-source-nsxv-firewall-rule"
 description: |-
-  Provides a vCloud Director firewall rule data source for advanced edge gateways (NSX-V). This can
+  Provides a VMware Cloud Director firewall rule data source for advanced edge gateways (NSX-V). This can
   be used to read existing rules by ID and use its attributes in other resources.
 ---
 
 # vcd\_nsxv\_firewall\_rule
 
-Provides a vCloud Director firewall rule data source for advanced edge gateways (NSX-V). This can be
+Provides a VMware Cloud Director firewall rule data source for advanced edge gateways (NSX-V). This can be
 used to read existing rules by ID and use its attributes in other resources.
 
 ~> **Note:** This data source requires advanced edge gateway.

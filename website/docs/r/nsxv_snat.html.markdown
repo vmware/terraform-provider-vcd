@@ -1,15 +1,15 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_nsxv_snat"
+page_title: "VMware Cloud Director: vcd_nsxv_snat"
 sidebar_current: "docs-vcd-resource-nsxv-snat"
 description: |-
-  Provides a vCloud Director SNAT resource for advanced edge gateways (NSX-V). This
+  Provides a VMware Cloud Director SNAT resource for advanced edge gateways (NSX-V). This
   can be used to create, modify, and delete source NATs to allow vApps to send external traffic.
 ---
 
 # vcd\_nsxv\_snat
 
-Provides a vCloud Director SNAT resource for advanced edge gateways (NSX-V). This
+Provides a VMware Cloud Director SNAT resource for advanced edge gateways (NSX-V). This
 can be used to create, modify, and delete source NATs to allow vApps to send external traffic.
 
 ~> **Note:** This resource requires advanced edge gateway.

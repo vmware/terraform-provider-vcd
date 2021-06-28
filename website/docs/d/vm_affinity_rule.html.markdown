@@ -1,15 +1,15 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_vm_affinity_rule"
+page_title: "VMware Cloud Director: vcd_vm_affinity_rule"
 sidebar_current: "docs-vcd-datasource-vm-affinity-rule"
 description: |-
-  Provides a vCloud Director VM affinity rule data source. This can be
+  Provides a VMware Cloud Director VM affinity rule data source. This can be
   used to read VM affinity and anti-affinity rules.
 ---
 
 # vcd\_vm\_affinity\_rule
 
-Provides a vCloud Director VM affinity rule data source. This can be
+Provides a VMware Cloud Director VM affinity rule data source. This can be
 used to read VM affinity and anti-affinity rules.
 
 Supported in provider *v2.9+*

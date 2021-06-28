@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_vapp_vm"
+page_title: "VMware Cloud Director: vcd_vapp_vm"
 sidebar_current: "docs-vcd-datasource-vapp-vm"
 description: |-
-  Provides a vCloud Director VM data source. This can be used to access VMs within a vApp.
+  Provides a VMware Cloud Director VM data source. This can be used to access VMs within a vApp.
 ---
 
 # vcd\_vapp\_vm
 
-Provides a vCloud Director VM data source. This can be used to access VMs within a vApp.
+Provides a VMware Cloud Director VM data source. This can be used to access VMs within a vApp.
 
 Supported in provider *v2.6+*
 

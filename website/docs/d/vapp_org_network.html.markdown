@@ -1,14 +1,14 @@
 ---
 layout: "vcd"
-page_title: "vCloudDirector: vcd_vapp_org_network"
+page_title: "VMware Cloud Director: vcd_vapp_org_network"
 sidebar_current: "docs-vcd-datasource-vapp-org-network"
 description: |-
-  Provides a data source for vCloud director Org network attached to vApp. This can be used to access vApp Org network.
+  Provides a data source for VMware Cloud Director Org network attached to vApp. This can be used to access vApp Org network.
 ---
 
 # vcd\_vapp\_org\_network
 
-Provides a data source for vCloud director Org network attached to vApp. This can be used to access vApp Org VDC network.
+Provides a data source for VMware Cloud Director Org network attached to vApp. This can be used to access vApp Org VDC network.
 
 Supported in provider *v2.7+*
 
