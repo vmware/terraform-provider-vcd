@@ -1571,6 +1571,6 @@ func skipTestForVcdExactVersion(t *testing.T, exactSkipVersion, skipReason strin
 		t.Fatalf("could not process versions")
 	}
 	if vcdVersion.Version.Equal(expectedVersion) {
-		t.Skipf("skipping test because for VCD version %s because %s", exactSkipVersion, skipReason)
+		t.Skipf("skipping test on VCD version %s because %s", exactSkipVersion, skipReason)
 	}
 }
