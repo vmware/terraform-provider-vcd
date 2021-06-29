@@ -247,6 +247,8 @@ resource "vcd_network_isolated_v2" "net-test" {
     start_address = "110.10.102.2"
     end_address   = "110.10.102.20"
   }
+
+  depends_on = [vcd_network_routed_v2.{{.NetworkName}}]
 }
 
 resource "vcd_nsxt_network_dhcp" "{{.NetworkName}}-dhcp" {
@@ -279,6 +281,8 @@ resource "vcd_nsxt_network_imported" "imported-test" {
     start_address = "12.12.2.10"
     end_address   = "12.12.2.15"
   }
+
+  depends_on = [vcd_network_isolated_v2.net-test]
 }
 
 resource "vcd_independent_disk" "{{.diskResourceName}}" {
