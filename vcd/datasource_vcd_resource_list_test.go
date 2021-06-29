@@ -101,8 +101,10 @@ func runResourceInfoTest(def listDef, t *testing.T) {
 		return
 	}
 
-	if !usingSysAdmin() && (def.resourceType == "vcd_external_network") {
-		t.Skip("test with external network requires system administrator privileges")
+	if !usingSysAdmin() && (def.resourceType == "vcd_external_network" ||
+		def.resourceType == "vcd_global_role" ||
+		def.resourceType == "vcd_rights_bundle") {
+		t.Skip(fmt.Sprintf("test with %s requires system administrator privileges", def.resourceType))
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 

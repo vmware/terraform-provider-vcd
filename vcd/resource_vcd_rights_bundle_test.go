@@ -12,6 +12,10 @@ import (
 
 func TestAccVcdRightsBundle(t *testing.T) {
 	preTestChecks(t)
+	if !usingSysAdmin() {
+		t.Skip("TestAccVcdRightsBundle requires system admin privileges")
+		return
+	}
 	var rightsBundleName = t.Name()
 	var rightsBundleUpdateName = t.Name() + "-update"
 	var rightsBundleDescription = "A long description containing some text."
