@@ -5,6 +5,7 @@ package vcd
 import (
 	"fmt"
 	"regexp"
+	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -13,7 +14,13 @@ import (
 
 func TestAccVcdNsxtFirewall(t *testing.T) {
 	preTestChecks(t)
+	if noTestCredentials() {
+		t.Skip("Skipping test run as no credentials are provided and this test needs to lookup VCD version")
+		return
+	}
 	skipNoNsxtConfiguration(t)
+
+	client := createTemporaryVCDConnection()
 
 	// String map to fill the template
 	var params = StringMap{
@@ -22,7 +29,10 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 		"EdgeGw":      testConfig.Nsxt.EdgeGateway,
 		"NetworkName": t.Name(),
 		"Enabled":     "true",
-		"Tags":        "network nsxt",
+		// Logging can not be enabled with Org Admin by default therefore this value depends on tests being run as
+		// sysadmin (set to 'true') or an org admin (set to 'false')
+		"Logging": strconv.FormatBool(client.Client.IsSysAdmin),
+		"Tags":    "network nsxt",
 	}
 
 	configText1 := templateFill(testAccVcdNsxtFirewall, params)
@@ -99,7 +109,8 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.name", "test_rule-2"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.direction", "OUT"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.ip_protocol", "IPV6"),
-					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.logging", "true"),
+					// Logging can only be true with Sysadmin and this test conditionally sets it to true for Sysadmin tests
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.logging", strconv.FormatBool(client.Client.IsSysAdmin)),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.action", "DROP"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.enabled", "true"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.source_ids.#", "0"),
@@ -145,7 +156,8 @@ func TestAccVcdNsxtFirewall(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.name", "test_rule-2"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.direction", "OUT"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.ip_protocol", "IPV6"),
-					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.logging", "true"),
+					// Logging can only be true with Sysadmin and this test conditionally sets it to true for Sysadmin tests
+					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.logging", strconv.FormatBool(client.Client.IsSysAdmin)),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.action", "DROP"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.enabled", "false"),
 					resource.TestCheckResourceAttr("vcd_nsxt_firewall.testing", "rule.1.source_ids.#", "0"),
@@ -278,8 +290,8 @@ resource "vcd_nsxt_firewall" "testing" {
     ip_protocol          = "IPV6"
     destination_ids      = [vcd_nsxt_security_group.group.2.id]
     app_port_profile_ids = [data.vcd_nsxt_app_port_profile.ssh.id]
-    logging              = true
-	enabled              = {{.Enabled}}
+    logging              = {{.Logging}}
+    enabled              = {{.Enabled}}
   }
 
   rule {

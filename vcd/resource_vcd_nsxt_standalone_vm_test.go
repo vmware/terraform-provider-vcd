@@ -17,17 +17,22 @@ func init() {
 }
 
 // TestAccVcdNsxtStandaloneVmTemplate tests NSX-T Routed network DHCP pools, static pools and manual IP assignment
+// Note. This test triggers a bug in 10.2.2.17855680 and fails. Because of this reason it is skipped on exactly this
+// version.
 func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 	preTestChecks(t)
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
+	if noTestCredentials() {
+		t.Skip("Skipping test run as no credentials are provided and this test needs to lookup VCD version")
 		return
 	}
+	skipNoNsxtConfiguration(t)
 
 	vcdClient := createTemporaryVCDConnection()
 	if !vcdClient.Client.IsSysAdmin {
 		t.Skip(t.Name() + " only System Administrator can create Imported networks")
 	}
+
+	skipTestForVcdExactVersion(t, "10.2.2.17855680", "removal of standalone VM with NICs fails")
 
 	if testConfig.Nsxt.Vdc == "" || testConfig.Nsxt.EdgeGateway == "" {
 		t.Skip("Either NSX-T VDC or Edge Gateway not defined")
@@ -67,6 +72,7 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 	}
 
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
@@ -241,6 +247,8 @@ resource "vcd_network_isolated_v2" "net-test" {
     start_address = "110.10.102.2"
     end_address   = "110.10.102.20"
   }
+
+  depends_on = [vcd_network_routed_v2.{{.NetworkName}}]
 }
 
 resource "vcd_nsxt_network_dhcp" "{{.NetworkName}}-dhcp" {
@@ -273,6 +281,8 @@ resource "vcd_nsxt_network_imported" "imported-test" {
     start_address = "12.12.2.10"
     end_address   = "12.12.2.15"
   }
+
+  depends_on = [vcd_network_isolated_v2.net-test]
 }
 
 resource "vcd_independent_disk" "{{.diskResourceName}}" {

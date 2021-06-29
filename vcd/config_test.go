@@ -24,6 +24,8 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/hashicorp/go-version"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -1552,4 +1554,23 @@ func addToTestRunList(testName, fileType string) error {
 // ignore tests in such case
 func noTestCredentials() bool {
 	return testConfig.Provider.User == ""
+}
+
+// skipTestForVcdExactVersion allows to skip tests for specific VCD version
+// exactSkipVersion must match exact VCD version (e.g. 10.2.2.17855680)
+func skipTestForVcdExactVersion(t *testing.T, exactSkipVersion, skipReason string) {
+	vcdClient := createTemporaryVCDConnection()
+
+	vcdVersion, err := vcdClient.Client.GetVcdFullVersion()
+	if err != nil {
+		t.Fatalf("Could not determine VCD version")
+	}
+
+	expectedVersion, err := version.NewVersion(exactSkipVersion)
+	if err != nil {
+		t.Fatalf("could not process versions")
+	}
+	if vcdVersion.Version.Equal(expectedVersion) {
+		t.Skipf("skipping test on VCD version %s because %s", exactSkipVersion, skipReason)
+	}
 }
