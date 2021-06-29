@@ -38,7 +38,9 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 
 		// Skip sub-test if conditions are not met
 		switch {
-		case (dataSourceName == "vcd_external_network" || dataSourceName == "vcd_vcenter" || dataSourceName == "vcd_portgroup") &&
+		case (dataSourceName == "vcd_external_network" || dataSourceName == "vcd_vcenter" ||
+			dataSourceName == "vcd_portgroup" || dataSourceName == "vcd_global_role" ||
+			dataSourceName == "vcd_rights_bundle") &&
 			!usingSysAdmin():
 			t.Skip(`Works only with system admin privileges`)
 		case dataSourceName == "vcd_external_network_v2" && vcdClient.Client.APIVCDMaxVersionIs("< 33"):

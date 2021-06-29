@@ -12,6 +12,10 @@ import (
 
 func TestAccVcdGlobalRole(t *testing.T) {
 	preTestChecks(t)
+	if !usingSysAdmin() {
+		t.Skip("TestAccVcdGlobalRole requires system admin privileges")
+		return
+	}
 	var globalRoleName = t.Name()
 	var globalRoleUpdateName = t.Name() + "-update"
 	var globalRoleDescription = "A long description containing some text."
