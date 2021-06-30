@@ -1,6 +1,48 @@
-## 3.3.0 (Unreleased)
+## 3.3.0 (June 30, 2021)
 
-Changes in progress for v3.3.0 are available at [.changes/v3.3.0](https://github.com/vmware/terraform-provider-vcd/tree/master/.changes/v3.3.0) until the release.
+## FEATURES
+* **New Resource:** `vcd_nsxt_security_group` for NSX-T Edge Gateways ([#663](https://github.com/vmware/terraform-provider-vcd/pull/663))
+* **New Data source:** `vcd_nsxt_security_group` for NSX-T Edge Gateways ([#663](https://github.com/vmware/terraform-provider-vcd/pull/663))
+* **New Resource:** `vcd_nsxt_app_port_profile` for NSX-T Application Port Profile management ([#673](https://github.com/vmware/terraform-provider-vcd/pull/673))
+* **New Data source:** `vcd_nsxt_app_port_profile` for NSX-T Application Port Profile management ([#673](https://github.com/vmware/terraform-provider-vcd/pull/673))
+* **New Resource:** `vcd_nsxt_firewall` for NSX-T Edge Gateways ([#663](https://github.com/vmware/terraform-provider-vcd/pull/663))
+* **New Data Source:** `vcd_nsxt_firewall` for NSX-T Edge Gateways ([#663](https://github.com/vmware/terraform-provider-vcd/pull/663))
+* **New Resource:** `vcd_nsxt_nat_rule` for NSX-T Edge Gateways ([#676](https://github.com/vmware/terraform-provider-vcd/pull/676))
+* **New Data source:** `vcd_nsxt_nat_rule` for NSX-T Edge Gateways ([#676](https://github.com/vmware/terraform-provider-vcd/pull/676))
+* **New Resource:** `vcd_role` for provider and tenant role management ([#677](https://github.com/vmware/terraform-provider-vcd/pull/677))
+* **New Resource:** `vcd_global_role` for provider role management ([#677](https://github.com/vmware/terraform-provider-vcd/pull/677))
+* **New Resource:** `vcd_rights_bundle` for provider role management ([#677](https://github.com/vmware/terraform-provider-vcd/pull/677))
+* **New Data source:** `vcd_right` for provider and tenant role management ([#677](https://github.com/vmware/terraform-provider-vcd/pull/677))
+* **New Data source:** `vcd_role` for provider and tenant role management ([#677](https://github.com/vmware/terraform-provider-vcd/pull/677))
+* **New Data source:** `vcd_global_role` for provider role management ([#677](https://github.com/vmware/terraform-provider-vcd/pull/677))
+* **New Data source:** `vcd_rights_bundle` for provider role management ([#677](https://github.com/vmware/terraform-provider-vcd/pull/677))
+* **New Resource:** `vcd_nsxt_ipsec_vpn_tunnel` for NSX-T IPsec VPN Tunnel management ([#678](https://github.com/vmware/terraform-provider-vcd/pull/678))
+* **New Data source:** `vcd_nsxt_ipsec_vpn_tunnel` for NSX-T IPsec VPN Tunnel management ([#678](https://github.com/vmware/terraform-provider-vcd/pull/678))
+
+## IMPROVEMENTS
+* Fix a few typos and add example in Routed Network V2 docs ([#663](https://github.com/vmware/terraform-provider-vcd/pull/663))
+* Add compatibility with Terraform 0.15.0 for `TestAccVcdNsxtStandaloneVmTemplate` and
+  `TestAccVcdStandaloneVmTemplate` ([#663](https://github.com/vmware/terraform-provider-vcd/pull/663))
+* Tests: add optional test config variable Misc.LdapContainer to override default LDAP container location.  
+  (can be used to overcome Docker registry throttling issues for pulling testing LDAP container) ([#673](https://github.com/vmware/terraform-provider-vcd/pull/673))
+* `datasource/vcd_resource_list` adds `vcd_right`, `vcd_role`, `vcd_global_role`, `vcd_rights_bundle` to the supported resource types ([#677](https://github.com/vmware/terraform-provider-vcd/pull/677))
+* Replace `vdc.ComposeRawVApp` with `vdc.CreateRawVApp` ([#681](https://github.com/vmware/terraform-provider-vcd/pull/681))
+* Change "vCloud Director" or "vCloudDirector" to "VMware Cloud Director" in all docs. ([#682](https://github.com/vmware/terraform-provider-vcd/pull/682))
+* Update `org_user` docs to include creation of system users. ([#682](https://github.com/vmware/terraform-provider-vcd/pull/682))
+
+## BUG FIXES
+* `resource/vcd_edgegateway` not retrieved when there are more than 25 items ([#660](https://github.com/vmware/terraform-provider-vcd/pull/660))
+* (Issue #633) vApp description was ignored in creation and update. ([#664](https://github.com/vmware/terraform-provider-vcd/pull/664))
+* (Issue #634) Setting CPU count to less than what the template has throws error. ([#673](https://github.com/vmware/terraform-provider-vcd/pull/673))
+* Tests: LDAP related tests had incorrect port mapping after image update ([#673](https://github.com/vmware/terraform-provider-vcd/pull/673))
+* `resource/vcd_org_vdc` complained about storage profile name update from empty to specified on some VCD versions ([#676](https://github.com/vmware/terraform-provider-vcd/pull/676))
+
+## NOTES
+* Bump terraform-plugin-sdk to 2.4.4 ([#657](https://github.com/vmware/terraform-provider-vcd/pull/657))
+* Add VCDClient.GetNsxtEdgeGateway, VCDClient.GetNsxtEdgeGatewayById, and
+  GetNsxtEdgeGatewayFromResourceById convenience functions ([#663](https://github.com/vmware/terraform-provider-vcd/pull/663))
+* Add `importStateIdNsxtEdgeGatewayObject` function for import testing of NSX-T Edge Gateway child
+  objects ([#663](https://github.com/vmware/terraform-provider-vcd/pull/663))
 
 ## 3.2.0 (March 11, 2021)
 
