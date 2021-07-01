@@ -3,6 +3,8 @@
 ## FEATURES
 * **New Resource:** `vcd_nsxt_security_group` for NSX-T Edge Gateways ([#663](https://github.com/vmware/terraform-provider-vcd/pull/663))
 * **New Data source:** `vcd_nsxt_security_group` for NSX-T Edge Gateways ([#663](https://github.com/vmware/terraform-provider-vcd/pull/663))
+* **New Resource:** `vcd_nsxt_ip_set` for NSX-T IP Set management ([#668](https://github.com/vmware/terraform-provider-vcd/pull/668))
+* **New Data source:** `vcd_nsxt_ip_set` for NSX-T IP Set management ([#668](https://github.com/vmware/terraform-provider-vcd/pull/668))
 * **New Resource:** `vcd_nsxt_app_port_profile` for NSX-T Application Port Profile management ([#673](https://github.com/vmware/terraform-provider-vcd/pull/673))
 * **New Data source:** `vcd_nsxt_app_port_profile` for NSX-T Application Port Profile management ([#673](https://github.com/vmware/terraform-provider-vcd/pull/673))
 * **New Resource:** `vcd_nsxt_firewall` for NSX-T Edge Gateways ([#663](https://github.com/vmware/terraform-provider-vcd/pull/663))
