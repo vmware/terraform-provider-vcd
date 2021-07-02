@@ -111,4 +111,3 @@ resource "vcd_vm" "standaloneVm" {
     ip_allocation_mode = "POOL"
   }
 }
-
