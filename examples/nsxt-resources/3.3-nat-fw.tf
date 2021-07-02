@@ -22,7 +22,7 @@ data "vcd_nsxt_edgegateway" "existing" {
   vdc  = "nsxt-vdc"
   name = "nsxt-gw"
 }
-​
+
 resource "vcd_network_routed_v2" "db-net" {
   org  = "sample-org"
   vdc  = "nsxt-vdc"
