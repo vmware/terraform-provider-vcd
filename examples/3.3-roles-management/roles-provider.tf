@@ -17,11 +17,11 @@ provider "vcd" {
 
 // Creates a new org
 resource "vcd_org" "another-org" {
-  name              = var.org
-  full_name         = "another org"
-  description       = "Organization ${var.org}"
-  delete_force      = "true"
-  delete_recursive  = "true"
+  name             = var.org
+  full_name        = "another org"
+  description      = "Organization ${var.org}"
+  delete_force     = "true"
+  delete_recursive = "true"
 }
 
 // Creates a new user. It is used for the credentials of the tenant script

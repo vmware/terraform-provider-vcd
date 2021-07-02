@@ -17,7 +17,7 @@ resource "vcd_nsxt_ipsec_vpn_tunnel" "first-tunnel" {
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
-  name           = "IPSec VPN tunnel 3.3.0"
+  name = "IPSec VPN tunnel 3.3.0"
   # The pre-shared key must be the same on the other end of the IPSec VPN tunnel. 
   pre_shared_key = "secret-shared-key"
 

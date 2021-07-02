@@ -16,8 +16,8 @@ provider "vcd" {
 
 // The new role, deriving from the global role, is now available in the organization, as seen by the tenant
 data "vcd_role" "super-vapp-author" {
-  org      = var.org
-  name     = "super-vapp-author"
+  org  = var.org
+  name = "super-vapp-author"
 }
 
 output "org_role" {

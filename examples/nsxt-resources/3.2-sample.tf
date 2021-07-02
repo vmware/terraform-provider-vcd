@@ -21,12 +21,12 @@ resource "vcd_network_routed_v2" "net_r_v2" {
 }
 
 resource "vcd_network_isolated_v2" "net_i_v2" {
-  name            = "net_i_v2"
-  org             = "datacloud"
-  vdc             = "nsxt-vdc-datacloud"
-  
-  gateway         = "110.10.102.1"
-  prefix_length   = 26
+  name = "net_i_v2"
+  org  = "datacloud"
+  vdc  = "nsxt-vdc-datacloud"
+
+  gateway       = "110.10.102.1"
+  prefix_length = 26
 
   static_ip_pool {
     start_address = "110.10.102.2"
@@ -35,10 +35,10 @@ resource "vcd_network_isolated_v2" "net_i_v2" {
 }
 
 resource "vcd_nsxt_network_dhcp" "net_r_dhcp" {
-  org             = "datacloud"
-  vdc             = "nsxt-vdc-datacloud"
-  
-  org_network_id  = vcd_network_routed_v2.net_r_v2.id
+  org = "datacloud"
+  vdc = "nsxt-vdc-datacloud"
+
+  org_network_id = vcd_network_routed_v2.net_r_v2.id
 
   pool {
     start_address = "10.10.102.210"
@@ -52,11 +52,11 @@ resource "vcd_nsxt_network_dhcp" "net_r_dhcp" {
 }
 
 resource "vcd_nsxt_network_imported" "imported-test" {
-  name            = "imported-test"
-  org             = "datacloud"
-  vdc             = "nsxt-vdc-datacloud"
-  gateway         = "12.12.2.1"
-  prefix_length   = 24
+  name          = "imported-test"
+  org           = "datacloud"
+  vdc           = "nsxt-vdc-datacloud"
+  gateway       = "12.12.2.1"
+  prefix_length = 24
 
   nsxt_logical_switch_name = "segment-datacloud"
 

@@ -114,7 +114,7 @@ resource "vcd_nsxt_nat_rule" "dnat" {
   # DNAT rule to one of application servers
   internal_address    = "192.168.1.10"
   app_port_profile_id = vcd_nsxt_app_port_profile.tcp-3306.id
-  dnat_external_port = "443"
+  dnat_external_port  = "443"
 }
 
 resource "vcd_nsxt_nat_rule" "snat" {
@@ -123,8 +123,8 @@ resource "vcd_nsxt_nat_rule" "snat" {
 
   edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
 
-  name        = "App Server SNAT"
-  rule_type   = "SNAT"
+  name      = "App Server SNAT"
+  rule_type = "SNAT"
 
   external_address = tolist(data.vcd_nsxt_edgegateway.existing.subnet)[0].primary_ip
   internal_address = "192.168.1.10"
