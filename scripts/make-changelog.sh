@@ -52,7 +52,6 @@ do
     for f in $(ls *${section}.md | sort -n)
     do
         cat $f
-        echo ""
     done
     echo ""
 done
