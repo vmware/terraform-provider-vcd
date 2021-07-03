@@ -1,4 +1,4 @@
-// +build vapp vm ALL functional
+// +build vapp vm catalog ALL functional
 
 package vcd
 

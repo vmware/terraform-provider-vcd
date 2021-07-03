@@ -330,7 +330,7 @@ resource "vcd_vapp_vm" "test-vm" {
 
 // spawnTestOrgVdcSharedCatalog spawns an Org to be used in tests
 func spawnTestOrgVdcSharedCatalog(client *VCDClient, t *testing.T) func() {
-	fmt.Print("# Setting up prerequisites using SDK (non Terraform definitions)")
+	fmt.Println("# Setting up prerequisites using SDK (non Terraform definitions)")
 	fmt.Printf("# Using user 'System' (%t) to prepare environment\n", client.Client.IsSysAdmin)
 
 	existingOrg, err := client.GetAdminOrgByName(testConfig.VCD.Org)
