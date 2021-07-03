@@ -6,6 +6,10 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
+	"time"
+
+	"github.com/vmware/go-vcloud-director/v2/govcd"
+	"github.com/vmware/go-vcloud-director/v2/types/v56"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -226,3 +230,263 @@ resource "vcd_catalog" "test-catalog" {
   delete_recursive  = "true"
 }
 `
+
+// TestAccVcdCatalogSharedAccess is a test to cover bugfix when Organization Administrator is not able to lookup shared
+// catalog from another Org
+// Because of limited Terraform acceptance test functionality it uses go-vcloud-director SDK to pre-configure
+// environment explicitly using System Org (even if it the test is run as Org user). The following objects are created
+// using SDK (their cleanup is deferred):
+// * Org
+// * Vdc inside newly created Org
+// * Catalog inside newly created Org. This catalog is shared with Org defined in testConfig.VCD.Org variable
+// * Uploads A minimal vApp template to save on upload / VM spawn time
+//
+// After these objects are pre-created using SDK, terraform definition is used to spawn a VM by using template in a
+// catalog from another Org. This test works in both System and Org admin roles but the bug (which was introduced in SDK
+// v2.12.0 and terraform-provider-vcd v3.3.0) occurred only for Organization Administrator user.
+//
+// Original issue -  https://github.com/vmware/terraform-provider-vcd/issues/689
+func TestAccVcdCatalogSharedAccess(t *testing.T) {
+	preTestChecks(t)
+	// This test manipulates VCD during runtime using SDK and is not possible to run as binary or upgrade test
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
+	// initiate System client ignoring value of `VCD_TEST_ORG_USER` flag and create pre-requisite objects
+	systemClient := createSystemTemporaryVCDConnection()
+	cleanupFunction := spawnTestOrgVdcSharedCatalog(systemClient, t)
+	defer cleanupFunction()
+
+	var params = StringMap{
+		"Org":               testConfig.VCD.Org,
+		"Vdc":               testConfig.VCD.Vdc,
+		"TestName":          t.Name(),
+		"SharedCatalog":     t.Name(),
+		"SharedCatalogItem": "vapp-template",
+		"Tags":              "catalog",
+	}
+
+	configText1 := templateFill(testAccCheckVcdCatalogShared, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText1)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy: resource.ComposeTestCheckFunc(
+			testAccCheckVcdVAppVmDestroy(t.Name()),
+			testAccCheckVcdStandaloneVmDestroy("test-standalone-vm", "", ""),
+		),
+
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: configText1,
+				Check: resource.ComposeTestCheckFunc(
+					// There is no need to check for much resources - the main point is to have the VMs created
+					// without failures for catalog lookups or similar problems
+					resource.TestCheckResourceAttrSet("vcd_vm.test-vm", "id"),
+					resource.TestCheckResourceAttrSet("vcd_vapp.singleVM", "id"),
+					resource.TestCheckResourceAttrSet("vcd_vapp_vm.test-vm", "id"),
+				),
+			},
+		},
+	})
+
+	postTestChecks(t)
+}
+
+const testAccCheckVcdCatalogShared = `
+resource "vcd_vm" "test-vm" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  name          = "test-standalone-vm"
+  catalog_name  = "{{.SharedCatalog}}"
+  template_name = "{{.SharedCatalogItem}}"
+  power_on      = false
+}
+
+resource "vcd_vapp" "singleVM" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  name = "{{.TestName}}"
+}
+
+resource "vcd_vapp_vm" "test-vm" {
+  org = "{{.Org}}"
+  vdc = "{{.Vdc}}"
+
+  vapp_name     = vcd_vapp.singleVM.name
+  name          = "test-vapp-vm"
+  catalog_name  = "{{.SharedCatalog}}"
+  template_name = "{{.SharedCatalogItem}}"
+  power_on      = false
+
+  depends_on = [vcd_vapp.singleVM]
+}
+`
+
+// spawnTestOrgVdcSharedCatalog spawns an Org to be used in tests
+func spawnTestOrgVdcSharedCatalog(client *VCDClient, t *testing.T) func() {
+	fmt.Print("# Setting up prerequisites using SDK (non Terraform definitions)")
+	fmt.Printf("# Using user 'System' (%t) to prepare environment\n", client.Client.IsSysAdmin)
+
+	existingOrg, err := client.GetAdminOrgByName(testConfig.VCD.Org)
+	if err != nil {
+		t.Fatalf("error getting existing Org '%s': %s", testConfig.VCD.Org, err)
+	}
+	task, err := govcd.CreateOrg(client.VCDClient, t.Name(), t.Name(), t.Name(), existingOrg.AdminOrg.OrgSettings, true)
+	if err != nil {
+		t.Fatalf("error creating Org '%s': %s", t.Name(), err)
+	}
+	err = task.WaitTaskCompletion()
+	if err != nil {
+		t.Fatalf("task failed for Org '%s' creation: %s", t.Name(), err)
+	}
+	newAdminOrg, err := client.GetAdminOrgByName(t.Name())
+	if err != nil {
+		t.Fatalf("error getting new Org '%s': %s", t.Name(), err)
+	}
+	fmt.Printf("# Created new Org '%s'\n", newAdminOrg.AdminOrg.Name)
+
+	existingVdc, err := existingOrg.GetAdminVDCByName(testConfig.VCD.Vdc, false)
+	if err != nil {
+		t.Fatalf("error retrieving existing VDC '%s': %s", testConfig.VCD.Vdc, err)
+	}
+	vdcConfiguration := &types.VdcConfiguration{
+		Name:            t.Name() + "-VDC",
+		Xmlns:           types.XMLNamespaceVCloud,
+		AllocationModel: "Flex",
+		ComputeCapacity: []*types.ComputeCapacity{
+			&types.ComputeCapacity{
+				CPU: &types.CapacityWithUsage{
+					Units:     "MHz",
+					Allocated: 1024,
+					Limit:     1024,
+				},
+				Memory: &types.CapacityWithUsage{
+					Allocated: 1024,
+					Limit:     1024,
+					Units:     "MB",
+				},
+			},
+		},
+		VdcStorageProfile: []*types.VdcStorageProfileConfiguration{&types.VdcStorageProfileConfiguration{
+			Enabled: true,
+			Units:   "MB",
+			Limit:   1024,
+			Default: true,
+			ProviderVdcStorageProfile: &types.Reference{
+				HREF: getVdcProviderVdcStorageProfileHref(client),
+			},
+		},
+		},
+		NetworkPoolReference: &types.Reference{
+			HREF: existingVdc.AdminVdc.NetworkPoolReference.HREF,
+		},
+		ProviderVdcReference: &types.Reference{
+			HREF: existingVdc.AdminVdc.ProviderVdcReference.HREF,
+		},
+		IsEnabled:             true,
+		IsThinProvision:       true,
+		UsesFastProvisioning:  true,
+		IsElastic:             takeBoolPointer(true),
+		IncludeMemoryOverhead: takeBoolPointer(true),
+	}
+
+	vdc, err := newAdminOrg.CreateOrgVdc(vdcConfiguration)
+	if err != nil {
+		t.Fatalf("%s", err)
+	}
+	fmt.Printf("# Created new Vdc '%s' inside Org '%s'\n", vdc.Vdc.Name, newAdminOrg.AdminOrg.Name)
+
+	catalog, err := newAdminOrg.CreateCatalog(t.Name(), t.Name())
+	if err != nil {
+		t.Fatalf("%s", err)
+	}
+	fmt.Printf("# Created new Catalog '%s' inside Org '%s'\n", catalog.AdminCatalog.Name, newAdminOrg.AdminOrg.Name)
+
+	// Share new Catalog in newOrgName1 with default test Org vcd.Org
+	readOnly := "ReadOnly"
+	accessControl := &types.ControlAccessParams{
+		IsSharedToEveryone:  false,
+		EveryoneAccessLevel: &readOnly,
+		AccessSettings: &types.AccessSettingList{
+			AccessSetting: []*types.AccessSetting{&types.AccessSetting{
+				Subject: &types.LocalSubject{
+					HREF: existingOrg.AdminOrg.HREF,
+					Name: existingOrg.AdminOrg.Name,
+					Type: types.MimeOrg,
+				},
+				AccessLevel: "ReadOnly",
+			}},
+		},
+	}
+	err = catalog.SetAccessControl(accessControl, false)
+	if err != nil {
+		t.Fatalf("%s", err)
+	}
+	fmt.Printf("# Shared new Catalog '%s' with existing Org '%s'\n",
+		catalog.AdminCatalog.Name, existingOrg.AdminOrg.Name)
+
+	uploadTask, err := catalog.UploadOvf(testConfig.Ova.OvaPath, "vapp-template", "upload from test", 1024)
+	if err != nil {
+		t.Fatalf("error uploading template: %s", err)
+	}
+
+	err = uploadTask.WaitTaskCompletion()
+	if err != nil {
+		t.Fatalf("error uploading template: %s", err)
+	}
+	fmt.Printf("# Uploaded vApp template '%s' to shared new Catalog '%s' in new Org '%s' with existing Org '%s'\n",
+		"vapp-template", catalog.AdminCatalog.Name, newAdminOrg.AdminOrg.Name, existingOrg.AdminOrg.Name)
+
+	return func() {
+		fmt.Println("# Cleaning up")
+		if catalog != (govcd.AdminCatalog{}) {
+			err = catalog.Delete(true, true)
+			if err != nil {
+				t.Errorf("error cleaning up catalog: %s", err)
+			}
+			// The catalog.Delete ignores the task returned and does not wait for the operation to complete. This code
+			// was made for a particular bugfix therefore other parts of code were not altered/fixed.
+			for i := 0; i < 30; i++ {
+				_, err := existingOrg.GetAdminCatalogById(catalog.AdminCatalog.ID, true)
+				if govcd.ContainsNotFound(err) {
+					break
+				} else {
+					time.Sleep(time.Second)
+				}
+			}
+		}
+
+		if vdc != nil {
+			err = vdc.DeleteWait(true, true)
+			if err != nil {
+				t.Errorf("error cleaning up VDC: %s", err)
+			}
+		}
+
+		if newAdminOrg != nil {
+			err = newAdminOrg.Refresh()
+			if err != nil {
+				t.Errorf("error refreshing Org: %s", err)
+			}
+			err = newAdminOrg.Delete(true, true)
+			if err != nil {
+				t.Errorf("error cleaning up Org: %s", err)
+			}
+		}
+	}
+}
+
+func getVdcProviderVdcStorageProfileHref(client *VCDClient) string {
+	results, _ := client.QueryWithNotEncodedParams(nil, map[string]string{
+		"type":   "providerVdcStorageProfile",
+		"filter": fmt.Sprintf("name==%s", testConfig.VCD.ProviderVdc.StorageProfile2),
+	})
+	providerVdcStorageProfileHref := results.Results.ProviderVdcStorageProfileRecord[0].HREF
+	return providerVdcStorageProfileHref
+}
