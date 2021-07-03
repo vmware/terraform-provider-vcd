@@ -1,3 +1,9 @@
+## 3.3.1 (TBC)
+
+## BUG FIXES
+* (Issue #689) `resource/vcd_vm` and `resource/vcd_vapp_vm` cannot find templates in shared catalogs from other Orgs 
+  ([#691](https://github.com/vmware/terraform-provider-vcd/pull/691))
+
 ## 3.3.0 (June 30, 2021)
 
 ## FEATURES
