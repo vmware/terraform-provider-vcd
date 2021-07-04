@@ -256,8 +256,13 @@ func TestAccVcdCatalogSharedAccess(t *testing.T) {
 
 	// initiate System client ignoring value of `VCD_TEST_ORG_USER` flag and create pre-requisite objects
 	systemClient := createSystemTemporaryVCDConnection()
-	cleanupFunction := spawnTestOrgVdcSharedCatalog(systemClient, t)
-	defer cleanupFunction()
+	catalog, vdc, oldOrg, newOrg, err := spawnTestOrgVdcSharedCatalog(systemClient, t.Name())
+	if err != nil {
+		testOrgVdcSharedCatalogCleanUp(catalog, vdc, oldOrg, newOrg, t)
+		t.Fatalf("%s", err)
+	}
+	// call cleanup ath the end of the test with any of the entities that have been created up to that point
+	defer func() { testOrgVdcSharedCatalogCleanUp(catalog, vdc, oldOrg, newOrg, t) }()
 
 	var params = StringMap{
 		"Org":               testConfig.VCD.Org,
@@ -329,34 +334,35 @@ resource "vcd_vapp_vm" "test-vm" {
 `
 
 // spawnTestOrgVdcSharedCatalog spawns an Org to be used in tests
-func spawnTestOrgVdcSharedCatalog(client *VCDClient, t *testing.T) func() {
+func spawnTestOrgVdcSharedCatalog(client *VCDClient, name string) (govcd.AdminCatalog, *govcd.Vdc, *govcd.AdminOrg, *govcd.AdminOrg, error) {
 	fmt.Println("# Setting up prerequisites using SDK (non Terraform definitions)")
 	fmt.Printf("# Using user 'System' (%t) to prepare environment\n", client.Client.IsSysAdmin)
 
 	existingOrg, err := client.GetAdminOrgByName(testConfig.VCD.Org)
 	if err != nil {
-		t.Fatalf("error getting existing Org '%s': %s", testConfig.VCD.Org, err)
+		return govcd.AdminCatalog{}, nil, nil, nil, fmt.Errorf("error getting existing Org '%s': %s", testConfig.VCD.Org, err)
 	}
-	task, err := govcd.CreateOrg(client.VCDClient, t.Name(), t.Name(), t.Name(), existingOrg.AdminOrg.OrgSettings, true)
+	task, err := govcd.CreateOrg(client.VCDClient, name, name, name, existingOrg.AdminOrg.OrgSettings, true)
 	if err != nil {
-		t.Fatalf("error creating Org '%s': %s", t.Name(), err)
+		return govcd.AdminCatalog{}, nil, existingOrg, nil, fmt.Errorf("error creating Org '%s': %s", name, err)
 	}
 	err = task.WaitTaskCompletion()
 	if err != nil {
-		t.Fatalf("task failed for Org '%s' creation: %s", t.Name(), err)
+		return govcd.AdminCatalog{}, nil, existingOrg, nil, fmt.Errorf("task failed for Org '%s' creation: %s", name, err)
 	}
-	newAdminOrg, err := client.GetAdminOrgByName(t.Name())
+	newAdminOrg, err := client.GetAdminOrgByName(name)
 	if err != nil {
-		t.Fatalf("error getting new Org '%s': %s", t.Name(), err)
+		return govcd.AdminCatalog{}, nil, existingOrg, nil, fmt.Errorf("error getting new Org '%s': %s", name, err)
 	}
 	fmt.Printf("# Created new Org '%s'\n", newAdminOrg.AdminOrg.Name)
 
 	existingVdc, err := existingOrg.GetAdminVDCByName(testConfig.VCD.Vdc, false)
 	if err != nil {
-		t.Fatalf("error retrieving existing VDC '%s': %s", testConfig.VCD.Vdc, err)
+		return govcd.AdminCatalog{}, nil, existingOrg, newAdminOrg, fmt.Errorf("error retrieving existing VDC '%s': %s", testConfig.VCD.Vdc, err)
+
 	}
 	vdcConfiguration := &types.VdcConfiguration{
-		Name:            t.Name() + "-VDC",
+		Name:            name + "-VDC",
 		Xmlns:           types.XMLNamespaceVCloud,
 		AllocationModel: "Flex",
 		ComputeCapacity: []*types.ComputeCapacity{
@@ -398,13 +404,13 @@ func spawnTestOrgVdcSharedCatalog(client *VCDClient, t *testing.T) func() {
 
 	vdc, err := newAdminOrg.CreateOrgVdc(vdcConfiguration)
 	if err != nil {
-		t.Fatalf("%s", err)
+		return govcd.AdminCatalog{}, nil, existingOrg, newAdminOrg, err
 	}
 	fmt.Printf("# Created new Vdc '%s' inside Org '%s'\n", vdc.Vdc.Name, newAdminOrg.AdminOrg.Name)
 
-	catalog, err := newAdminOrg.CreateCatalog(t.Name(), t.Name())
+	catalog, err := newAdminOrg.CreateCatalog(name, name)
 	if err != nil {
-		t.Fatalf("%s", err)
+		return govcd.AdminCatalog{}, vdc, existingOrg, newAdminOrg, err
 	}
 	fmt.Printf("# Created new Catalog '%s' inside Org '%s'\n", catalog.AdminCatalog.Name, newAdminOrg.AdminOrg.Name)
 
@@ -426,58 +432,61 @@ func spawnTestOrgVdcSharedCatalog(client *VCDClient, t *testing.T) func() {
 	}
 	err = catalog.SetAccessControl(accessControl, false)
 	if err != nil {
-		t.Fatalf("%s", err)
+		return catalog, vdc, existingOrg, newAdminOrg, err
 	}
 	fmt.Printf("# Shared new Catalog '%s' with existing Org '%s'\n",
 		catalog.AdminCatalog.Name, existingOrg.AdminOrg.Name)
 
 	uploadTask, err := catalog.UploadOvf(testConfig.Ova.OvaPath, "vapp-template", "upload from test", 1024)
 	if err != nil {
-		t.Fatalf("error uploading template: %s", err)
+		return catalog, vdc, existingOrg, newAdminOrg, fmt.Errorf("error uploading template: %s", err)
 	}
 
 	err = uploadTask.WaitTaskCompletion()
 	if err != nil {
-		t.Fatalf("error uploading template: %s", err)
+		return catalog, vdc, existingOrg, newAdminOrg, fmt.Errorf("error uploading template: %s", err)
 	}
 	fmt.Printf("# Uploaded vApp template '%s' to shared new Catalog '%s' in new Org '%s' with existing Org '%s'\n",
 		"vapp-template", catalog.AdminCatalog.Name, newAdminOrg.AdminOrg.Name, existingOrg.AdminOrg.Name)
 
-	return func() {
-		fmt.Println("# Cleaning up")
-		if catalog != (govcd.AdminCatalog{}) {
-			err = catalog.Delete(true, true)
-			if err != nil {
-				t.Errorf("error cleaning up catalog: %s", err)
-			}
-			// The catalog.Delete ignores the task returned and does not wait for the operation to complete. This code
-			// was made for a particular bugfix therefore other parts of code were not altered/fixed.
-			for i := 0; i < 30; i++ {
-				_, err := existingOrg.GetAdminCatalogById(catalog.AdminCatalog.ID, true)
-				if govcd.ContainsNotFound(err) {
-					break
-				} else {
-					time.Sleep(time.Second)
-				}
+	return catalog, vdc, existingOrg, newAdminOrg, nil
+}
+
+func testOrgVdcSharedCatalogCleanUp(catalog govcd.AdminCatalog, vdc *govcd.Vdc, existingOrg, newAdminOrg *govcd.AdminOrg, t *testing.T) {
+	fmt.Println("# Cleaning up")
+	var err error
+	if catalog != (govcd.AdminCatalog{}) {
+		err = catalog.Delete(true, true)
+		if err != nil {
+			t.Errorf("error cleaning up catalog: %s", err)
+		}
+		// The catalog.Delete ignores the task returned and does not wait for the operation to complete. This code
+		// was made for a particular bugfix therefore other parts of code were not altered/fixed.
+		for i := 0; i < 30; i++ {
+			_, err := existingOrg.GetAdminCatalogById(catalog.AdminCatalog.ID, true)
+			if govcd.ContainsNotFound(err) {
+				break
+			} else {
+				time.Sleep(time.Second)
 			}
 		}
+	}
 
-		if vdc != nil {
-			err = vdc.DeleteWait(true, true)
-			if err != nil {
-				t.Errorf("error cleaning up VDC: %s", err)
-			}
+	if vdc != nil {
+		err = vdc.DeleteWait(true, true)
+		if err != nil {
+			t.Errorf("error cleaning up VDC: %s", err)
 		}
+	}
 
-		if newAdminOrg != nil {
-			err = newAdminOrg.Refresh()
-			if err != nil {
-				t.Errorf("error refreshing Org: %s", err)
-			}
-			err = newAdminOrg.Delete(true, true)
-			if err != nil {
-				t.Errorf("error cleaning up Org: %s", err)
-			}
+	if newAdminOrg != nil {
+		err = newAdminOrg.Refresh()
+		if err != nil {
+			t.Errorf("error refreshing Org: %s", err)
+		}
+		err = newAdminOrg.Delete(true, true)
+		if err != nil {
+			t.Errorf("error cleaning up Org: %s", err)
 		}
 	}
 }
