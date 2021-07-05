@@ -3,6 +3,9 @@
 package vcd
 
 import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"strings"
 	"testing"
 
@@ -72,6 +75,46 @@ func createTemporaryVCDConnection() *VCDClient {
 		Href:            testConfig.Provider.Url,
 		InsecureFlag:    testConfig.Provider.AllowInsecure,
 		MaxRetryTimeout: testConfig.Provider.MaxRetryTimeout,
+	}
+	conn, err := config.Client()
+	if err != nil {
+		panic("unable to initialize VCD connection :" + err.Error())
+	}
+	return conn
+}
+
+// createSystemTemporaryVCDConnection is like createTemporaryVCDConnection but it will ignore all conditional
+// configurations like `VCD_TEST_ORG_USER=1` and will still return a System client instead of user one. This allows to
+// perform System actions (entities which require System rights - Org, Vdc, etc...)
+func createSystemTemporaryVCDConnection() *VCDClient {
+	var configStruct TestConfig
+	configFileName := getConfigFileName()
+
+	// Looks if the configuration file exists before attempting to read it
+	if configFileName == "" {
+		panic(fmt.Errorf("configuration file %s not found", configFileName))
+	}
+	jsonFile, err := ioutil.ReadFile(configFileName)
+	if err != nil {
+		panic(fmt.Errorf("could not read config file %s: %v", configFileName, err))
+	}
+	err = json.Unmarshal(jsonFile, &configStruct)
+	if err != nil {
+		panic(fmt.Errorf("could not unmarshal json file: %v", err))
+	}
+
+	config := Config{
+		User:            configStruct.Provider.User,
+		Password:        configStruct.Provider.Password,
+		Token:           configStruct.Provider.Token,
+		UseSamlAdfs:     configStruct.Provider.UseSamlAdfs,
+		CustomAdfsRptId: configStruct.Provider.CustomAdfsRptId,
+		SysOrg:          configStruct.Provider.SysOrg,
+		Org:             configStruct.VCD.Org,
+		Vdc:             configStruct.VCD.Vdc,
+		Href:            configStruct.Provider.Url,
+		InsecureFlag:    configStruct.Provider.AllowInsecure,
+		MaxRetryTimeout: configStruct.Provider.MaxRetryTimeout,
 	}
 	conn, err := config.Client()
 	if err != nil {
