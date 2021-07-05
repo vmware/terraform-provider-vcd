@@ -1,4 +1,4 @@
-## 3.3.1 (TBC)
+## 3.3.1 (5 July, 2021)
 
 ## BUG FIXES
 * (Issue #689) `resource/vcd_vm` and `resource/vcd_vapp_vm` cannot find templates in shared catalogs from other Orgs 
