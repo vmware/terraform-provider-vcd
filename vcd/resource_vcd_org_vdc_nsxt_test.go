@@ -14,19 +14,20 @@ func TestAccVcdOrgVdcNsxt(t *testing.T) {
 	allocationModel := "ReservationPool"
 
 	var params = StringMap{
-		"VdcName":                   t.Name(),
-		"OrgName":                   testConfig.VCD.Org,
-		"AllocationModel":           "ReservationPool",
-		"ProviderVdc":               testConfig.VCD.NsxtProviderVdc.Name,
-		"NetworkPool":               testConfig.VCD.NsxtProviderVdc.NetworkPool,
-		"Allocated":                 "1024",
-		"Reserved":                  "1024",
-		"Limit":                     "1024",
-		"LimitIncreased":            "1100",
-		"AllocatedIncreased":        "1100",
-		"ProviderVdcStorageProfile": testConfig.VCD.NsxtProviderVdc.StorageProfile,
-		"Tags":                      "vdc nsxt",
-		"FuncName":                  t.Name(),
+		"VdcName":                    t.Name(),
+		"OrgName":                    testConfig.VCD.Org,
+		"AllocationModel":            "ReservationPool",
+		"ProviderVdc":                testConfig.VCD.NsxtProviderVdc.Name,
+		"NetworkPool":                testConfig.VCD.NsxtProviderVdc.NetworkPool,
+		"Allocated":                  "1024",
+		"Reserved":                   "1024",
+		"Limit":                      "1024",
+		"LimitIncreased":             "1100",
+		"AllocatedIncreased":         "1100",
+		"ProviderVdcStorageProfile":  testConfig.VCD.NsxtProviderVdc.StorageProfile,
+		"ProviderVdcStorageProfile2": "", // The configuration file is missing the second storage profile for NSXT.
+		"Tags":                       "vdc nsxt",
+		"FuncName":                   t.Name(),
 		// cause vDC ignores empty values and use default
 		"MemoryGuaranteed": "1",
 		"CpuGuaranteed":    "1",
