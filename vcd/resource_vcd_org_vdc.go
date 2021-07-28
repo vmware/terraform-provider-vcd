@@ -702,7 +702,7 @@ func updateStorageProfiles(set *schema.Set, client *VCDClient, adminVdc, changed
 	for _, spCombo := range newStorageProfiles {
 		storageProfile, err := client.QueryProviderVdcStorageProfileByName(spCombo.configuration["name"].(string), adminVdc.AdminVdc.ProviderVdcReference.HREF)
 		if err != nil {
-			return err
+			return fmt.Errorf("[updateStorageProfileDetails] error retrieving storage profile: %s", err)
 		}
 		err = adminVdc.AddStorageProfileWait(&types.VdcStorageProfileConfiguration{
 			Enabled: spCombo.configuration["enabled"].(bool),
@@ -1175,7 +1175,7 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 
 		sp, err := vcdClient.QueryProviderVdcStorageProfileByName(storageConfiguration["name"].(string), providerVdcResults[0].HREF)
 		if err != nil {
-			return &types.VdcConfiguration{}, err
+			return &types.VdcConfiguration{}, fmt.Errorf("[getVcdVdcInput] error retrieving storage profile: %s", err)
 		}
 
 		vdcStorageProfile := &types.VdcStorageProfileConfiguration{
