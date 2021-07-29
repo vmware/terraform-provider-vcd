@@ -25,7 +25,7 @@ func TestAccVcdOrgVdcNsxt(t *testing.T) {
 		"LimitIncreased":             "1100",
 		"AllocatedIncreased":         "1100",
 		"ProviderVdcStorageProfile":  testConfig.VCD.NsxtProviderVdc.StorageProfile,
-		"ProviderVdcStorageProfile2": "", // The configuration file is missing the second storage profile for NSXT.
+		"ProviderVdcStorageProfile2": "", // The configuration file is missing the second storage profile for NSX-T.
 		"Tags":                       "vdc nsxt",
 		"FuncName":                   t.Name(),
 		// cause vDC ignores empty values and use default

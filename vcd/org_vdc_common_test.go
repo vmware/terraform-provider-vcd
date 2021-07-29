@@ -29,7 +29,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 
 	// If a second storage profile is defined in the configuration, we add its parameters in the update
 	if secondStorageProfile != "" {
-		unfilledTemplate := template.Must(template.New("").Parse(simpleStorageProfile))
+		unfilledTemplate := template.Must(template.New("").Parse(additionalStorageProfile))
 		buf := &bytes.Buffer{}
 		err := unfilledTemplate.Execute(buf, map[string]interface{}{
 			"StorageProfileName":    secondStorageProfile,
@@ -155,6 +155,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 						"default": "true",
 						"limit":   "20480",
 					}),
+					// This test runs only if we have a second storage profile
 					testConditionalCheck(secondStorageProfile != "",
 						testAccFindValuesInSet(resourceDef, "storage_profile", map[string]string{
 							"name":    secondStorageProfile,
@@ -182,6 +183,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 						resourceDef, "elasticity", regexp.MustCompile(`^`+params["ElasticityUpdateValueForAssert"].(string)+`$`)),
 					resource.TestMatchResourceAttr(
 						resourceDef, "include_vm_memory_overhead", regexp.MustCompile(`^`+params["MemoryOverheadUpdateValueForAssert"].(string)+`$`)),
+					// This test runs only if we have a second storage profile
 					testConditionalCheck(secondStorageProfile != "",
 						resource.TestCheckResourceAttr(resourceDef, "storage_profile.#", "2")),
 				),
@@ -189,6 +191,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 			// Test removal of second storage profile
 			resource.TestStep{
 				Config: secondUpdateText,
+				// This test runs only if we have a second storage profile
 				Check: testConditionalCheck(secondStorageProfile != "", resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceDef, "storage_profile.#", "1"),
 					testAccFindValuesInSet(resourceDef, "storage_profile", map[string]string{
@@ -388,7 +391,11 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
 }
 `
 
-const simpleStorageProfile = `
+// additionalStorageProfile is a component that allows the insertion of a second storage profile
+// when one was defined in the configuration file.
+// The start/end labels will be replaced by comment markers, thus eliminating the
+// second storage profile from the script, so that we can test the removal of the storage profile.
+const additionalStorageProfile = `
   #START_STORAGE_PROFILE
   storage_profile {
     name    = "{{.StorageProfileName}}"
