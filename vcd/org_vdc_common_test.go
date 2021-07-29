@@ -156,6 +156,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 						"limit":   "20480",
 					}),
 					// This test runs only if we have a second storage profile
+					// It retrieves the details of the second storage profile
 					testConditionalCheck(secondStorageProfile != "",
 						testAccFindValuesInSet(resourceDef, "storage_profile", map[string]string{
 							"name":    secondStorageProfile,
@@ -184,6 +185,7 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 					resource.TestMatchResourceAttr(
 						resourceDef, "include_vm_memory_overhead", regexp.MustCompile(`^`+params["MemoryOverheadUpdateValueForAssert"].(string)+`$`)),
 					// This test runs only if we have a second storage profile
+					// This check makes sure we have 2 storage profiles
 					testConditionalCheck(secondStorageProfile != "",
 						resource.TestCheckResourceAttr(resourceDef, "storage_profile.#", "2")),
 				),
@@ -193,7 +195,9 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 				Config: secondUpdateText,
 				// This test runs only if we have a second storage profile
 				Check: testConditionalCheck(secondStorageProfile != "", resource.ComposeTestCheckFunc(
+					// After the removal, we will only have one storage profile
 					resource.TestCheckResourceAttr(resourceDef, "storage_profile.#", "1"),
+					// This check will find only the first storage profile, since the second one will have been deleted
 					testAccFindValuesInSet(resourceDef, "storage_profile", map[string]string{
 						"name":    params["ProviderVdcStorageProfile"].(string),
 						"enabled": "true",
