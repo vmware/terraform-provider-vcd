@@ -574,7 +574,7 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 		vdcStorageProfilesConfigurations := d.Get("storage_profile").(*schema.Set)
 		err = updateStorageProfiles(vdcStorageProfilesConfigurations, vcdClient, adminVdc, changedAdminVdc)
 		if err != nil {
-			return err
+			return fmt.Errorf("[VDC update] error updating storage profiles: %s", err)
 		}
 	}
 	log.Printf("[TRACE] VDC update completed: %s", adminVdc.AdminVdc.Name)
@@ -603,7 +603,7 @@ func updateStorageProfileDetails(vcdClient *VCDClient, adminVdc *govcd.AdminVdc,
 		},
 	})
 	if err != nil {
-		return fmt.Errorf("error updating VDC storage profile: %s", err)
+		return fmt.Errorf("error updating VDC storage profile '%s': %s", storageConfiguration["name"].(string), err)
 	}
 	return nil
 }
@@ -621,6 +621,7 @@ func updateStorageProfiles(set *schema.Set, client *VCDClient, adminVdc, changed
 		defaultSp               = make(map[string]bool)
 	)
 
+	var isDefaultStorageProfileNew = false
 	// 1. find existing storage profiles: SP are both in the definition and in the VDC
 	for _, storageConfigurationValues := range set.List() {
 		storageConfiguration := storageConfigurationValues.(map[string]interface{})
@@ -649,6 +650,7 @@ func updateStorageProfiles(set *schema.Set, client *VCDClient, adminVdc, changed
 		if !found {
 			if storageConfiguration["default"].(bool) {
 				defaultSp[storageConfiguration["name"].(string)] = true
+				isDefaultStorageProfileNew = true
 			}
 			newStorageProfiles = append(newStorageProfiles, storageProfileCombo{
 				configuration: storageConfiguration,
@@ -680,21 +682,26 @@ func updateStorageProfiles(set *schema.Set, client *VCDClient, adminVdc, changed
 
 	// 4. Check that there is one and only one default element
 	if len(defaultSp) == 0 {
-		return fmt.Errorf("no default storage profile left after update")
+		return fmt.Errorf("updateStorageProfiles] no default storage profile left after update")
 	}
 	if len(defaultSp) > 1 {
 		defaultItems := ""
 		for d := range defaultSp {
 			defaultItems += " " + d
 		}
-		return fmt.Errorf("more than one default storage profile defined [%s]", defaultItems)
+		return fmt.Errorf("updateStorageProfiles] more than one default storage profile defined [%s]", defaultItems)
 	}
 
-	// 5. Update existing storage profiles
-	for _, spCombo := range existingStorageProfiles {
-		err := updateStorageProfileDetails(client, adminVdc, spCombo.reference, spCombo.configuration)
+	// 5. Set the default storage profile early
+	if !isDefaultStorageProfileNew {
+		defaultSpName := ""
+		for name := range defaultSp {
+			defaultSpName = name
+			break
+		}
+		err := adminVdc.SetDefaultStorageProfile(defaultSpName)
 		if err != nil {
-			return err
+			return fmt.Errorf("[updateStorageProfiles] error setting default storage profile '%s': %s", defaultSpName, err)
 		}
 	}
 
@@ -702,7 +709,7 @@ func updateStorageProfiles(set *schema.Set, client *VCDClient, adminVdc, changed
 	for _, spCombo := range newStorageProfiles {
 		storageProfile, err := client.QueryProviderVdcStorageProfileByName(spCombo.configuration["name"].(string), adminVdc.AdminVdc.ProviderVdcReference.HREF)
 		if err != nil {
-			return fmt.Errorf("[updateStorageProfileDetails] error retrieving storage profile: %s", err)
+			return fmt.Errorf("[updateStorageProfiles] error retrieving storage profile: %s", err)
 		}
 		err = adminVdc.AddStorageProfileWait(&types.VdcStorageProfileConfiguration{
 			Enabled: spCombo.configuration["enabled"].(bool),
@@ -715,15 +722,23 @@ func updateStorageProfiles(set *schema.Set, client *VCDClient, adminVdc, changed
 			},
 		}, "")
 		if err != nil {
-			return fmt.Errorf("error adding new storage profile: %s", err)
+			return fmt.Errorf("[updateStorageProfiles] error adding new storage profile: %s", err)
 		}
 	}
 
-	// 7. Delete unwanted storage profiles
+	// 7. Update existing storage profiles
+	for _, spCombo := range existingStorageProfiles {
+		err := updateStorageProfileDetails(client, adminVdc, spCombo.reference, spCombo.configuration)
+		if err != nil {
+			return fmt.Errorf("[updateStorageProfiles] error updating storage profile '%s': %s", spCombo.reference.Name, err)
+		}
+	}
+
+	// 8. Delete unwanted storage profiles
 	for _, spCombo := range removeStorageProfiles {
 		err := adminVdc.RemoveStorageProfileWait(spCombo.reference.Name)
 		if err != nil {
-			return fmt.Errorf("error removing storage profile %s: %s", spCombo.reference.Name, err)
+			return fmt.Errorf("[updateStorageProfiles] error removing storage profile %s: %s", spCombo.reference.Name, err)
 		}
 	}
 
