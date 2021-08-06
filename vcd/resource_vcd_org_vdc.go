@@ -572,7 +572,7 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	if d.HasChange("storage_profile") {
 		vdcStorageProfilesConfigurations := d.Get("storage_profile").(*schema.Set)
-		err = updateStorageProfiles(vdcStorageProfilesConfigurations, vcdClient, adminVdc, changedAdminVdc)
+		err = updateStorageProfiles(vdcStorageProfilesConfigurations, vcdClient, adminVdc, d.Get("provider_vdc_name").(string))
 		if err != nil {
 			return fmt.Errorf("[VDC update] error updating storage profiles: %s", err)
 		}
@@ -608,7 +608,7 @@ func updateStorageProfileDetails(vcdClient *VCDClient, adminVdc *govcd.AdminVdc,
 	return nil
 }
 
-func updateStorageProfiles(set *schema.Set, client *VCDClient, adminVdc, changedAdminVdc *govcd.AdminVdc) error {
+func updateStorageProfiles(set *schema.Set, client *VCDClient, adminVdc *govcd.AdminVdc, providerVdcName string) error {
 
 	type storageProfileCombo struct {
 		configuration map[string]interface{}
@@ -709,7 +709,7 @@ func updateStorageProfiles(set *schema.Set, client *VCDClient, adminVdc, changed
 	for _, spCombo := range newStorageProfiles {
 		storageProfile, err := client.QueryProviderVdcStorageProfileByName(spCombo.configuration["name"].(string), adminVdc.AdminVdc.ProviderVdcReference.HREF)
 		if err != nil {
-			return fmt.Errorf("[updateStorageProfiles] error retrieving storage profile '%s': %s", spCombo.configuration["name"].(string), err)
+			return fmt.Errorf("[updateStorageProfiles] error retrieving storage profile '%s' from provider VDC '%s': %s", spCombo.configuration["name"].(string), providerVdcName, err)
 		}
 		err = adminVdc.AddStorageProfileWait(&types.VdcStorageProfileConfiguration{
 			Enabled: spCombo.configuration["enabled"].(bool),
@@ -1190,7 +1190,7 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 
 		sp, err := vcdClient.QueryProviderVdcStorageProfileByName(storageConfiguration["name"].(string), providerVdcResults[0].HREF)
 		if err != nil {
-			return &types.VdcConfiguration{}, fmt.Errorf("[getVcdVdcInput] error retrieving storage profile '%s': %s", storageConfiguration["name"].(string), err)
+			return &types.VdcConfiguration{}, fmt.Errorf("[getVcdVdcInput] error retrieving storage profile '%s' from provider VDC '%s': %s", storageConfiguration["name"].(string), providerVdcResults[0].Name, err)
 		}
 
 		vdcStorageProfile := &types.VdcStorageProfileConfiguration{
