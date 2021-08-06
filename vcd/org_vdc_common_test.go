@@ -3,9 +3,12 @@
 package vcd
 
 import (
+	"bytes"
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
+	"text/template"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -16,11 +19,29 @@ var TestAccVcdVdc = "TestAccVcdVdcBasic"
 func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 
 	if !usingSysAdmin() {
-		t.Skip("TestAccVcdVdcBasic requires system admin privileges")
+		t.Skip(t.Name() + " requires system admin privileges")
 		return
 	}
 
+	secondStorageProfile := params["ProviderVdcStorageProfile2"].(string)
 	configText := templateFill(testAccCheckVcdVdc_basic, params)
+	params["SecondStorageProfile"] = ""
+
+	// If a second storage profile is defined in the configuration, we add its parameters in the update
+	if secondStorageProfile != "" {
+		unfilledTemplate := template.Must(template.New("").Parse(additionalStorageProfile))
+		buf := &bytes.Buffer{}
+		err := unfilledTemplate.Execute(buf, map[string]interface{}{
+			"StorageProfileName":    secondStorageProfile,
+			"StorageProfileDefault": false,
+		})
+		if err == nil {
+			params["SecondStorageProfile"] = buf.String()
+		} else {
+			fmt.Printf("[WARNING] error reported while filling second storage profile details: %s\n", err)
+		}
+	}
+
 	params["FuncName"] = t.Name() + "-Update"
 	updateText := templateFill(testAccCheckVcdVdc_update, params)
 	if vcdShortTest {
@@ -29,7 +50,10 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 	}
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s", updateText)
+	secondUpdateText := strings.Replace(updateText, "#START_STORAGE_PROFILE", "/*", 1)
+	secondUpdateText = strings.Replace(secondUpdateText, "#END_STORAGE_PROFILE", "*/", 1)
 
+	resourceDef := "vcd_org_vdc." + params["VdcName"].(string)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
@@ -40,55 +64,55 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckVcdVdcExists("vcd_org_vdc."+params["VdcName"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "name", params["VdcName"].(string)),
+						resourceDef, "name", params["VdcName"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "org", testConfig.VCD.Org),
+						resourceDef, "org", testConfig.VCD.Org),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "allocation_model", allocationModel),
+						resourceDef, "allocation_model", allocationModel),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "network_pool_name", params["NetworkPool"].(string)),
+						resourceDef, "network_pool_name", params["NetworkPool"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "provider_vdc_name", params["ProviderVdc"].(string)),
+						resourceDef, "provider_vdc_name", params["ProviderVdc"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "enabled", "true"),
+						resourceDef, "enabled", "true"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "enable_thin_provisioning", "true"),
+						resourceDef, "enable_thin_provisioning", "true"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "enable_fast_provisioning", "true"),
+						resourceDef, "enable_fast_provisioning", "true"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "delete_force", "true"),
+						resourceDef, "delete_force", "true"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "delete_recursive", "true"),
+						resourceDef, "delete_recursive", "true"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "metadata.vdc_metadata", "VDC Metadata"),
+						resourceDef, "metadata.vdc_metadata", "VDC Metadata"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "storage_profile.0.name", params["ProviderVdcStorageProfile"].(string)),
+						resourceDef, "storage_profile.0.name", params["ProviderVdcStorageProfile"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "storage_profile.0.enabled", "true"),
+						resourceDef, "storage_profile.0.enabled", "true"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "storage_profile.0.limit", "10240"),
+						resourceDef, "storage_profile.0.limit", "10240"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "storage_profile.0.default", "true"),
+						resourceDef, "storage_profile.0.default", "true"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "compute_capacity.0.cpu.0.allocated", params["Allocated"].(string)),
+						resourceDef, "compute_capacity.0.cpu.0.allocated", params["Allocated"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "compute_capacity.0.cpu.0.limit", params["Limit"].(string)),
+						resourceDef, "compute_capacity.0.cpu.0.limit", params["Limit"].(string)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "compute_capacity.0.cpu.0.reserved", regexp.MustCompile(`^\d+$`)),
+						resourceDef, "compute_capacity.0.cpu.0.reserved", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "compute_capacity.0.cpu.0.used", regexp.MustCompile(`^\d+$`)),
+						resourceDef, "compute_capacity.0.cpu.0.used", regexp.MustCompile(`^\d+$`)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "compute_capacity.0.memory.0.allocated", params["Allocated"].(string)),
+						resourceDef, "compute_capacity.0.memory.0.allocated", params["Allocated"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "compute_capacity.0.memory.0.limit", params["Limit"].(string)),
+						resourceDef, "compute_capacity.0.memory.0.limit", params["Limit"].(string)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d+$`)),
+						resourceDef, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "compute_capacity.0.memory.0.used", regexp.MustCompile(`^\d+$`)),
+						resourceDef, "compute_capacity.0.memory.0.used", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "elasticity", regexp.MustCompile(`^`+params["ElasticityValueForAssert"].(string)+`$`)),
+						resourceDef, "elasticity", regexp.MustCompile(`^`+params["ElasticityValueForAssert"].(string)+`$`)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "include_vm_memory_overhead", regexp.MustCompile(`^`+params["MemoryOverheadValueForAssert"].(string)+`$`)),
+						resourceDef, "include_vm_memory_overhead", regexp.MustCompile(`^`+params["MemoryOverheadValueForAssert"].(string)+`$`)),
 				),
 			},
 			resource.TestStep{
@@ -96,64 +120,91 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 				Check: resource.ComposeTestCheckFunc(
 					testVcdVdcUpdated("vcd_org_vdc."+params["VdcName"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "name", params["VdcName"].(string)),
+						resourceDef, "name", params["VdcName"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "org", testConfig.VCD.Org),
+						resourceDef, "org", testConfig.VCD.Org),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "allocation_model", allocationModel),
+						resourceDef, "allocation_model", allocationModel),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "network_pool_name", params["NetworkPool"].(string)),
+						resourceDef, "network_pool_name", params["NetworkPool"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "provider_vdc_name", params["ProviderVdc"].(string)),
+						resourceDef, "provider_vdc_name", params["ProviderVdc"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "enabled", "false"),
+						resourceDef, "enabled", "false"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "enable_thin_provisioning", "false"),
+						resourceDef, "enable_thin_provisioning", "false"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "enable_fast_provisioning", "false"),
+						resourceDef, "enable_fast_provisioning", "false"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "delete_force", "false"),
+						resourceDef, "delete_force", "false"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "delete_recursive", "false"),
+						resourceDef, "delete_recursive", "false"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "memory_guaranteed", params["MemoryGuaranteed"].(string)),
+						resourceDef, "memory_guaranteed", params["MemoryGuaranteed"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "cpu_guaranteed", params["CpuGuaranteed"].(string)),
+						resourceDef, "cpu_guaranteed", params["CpuGuaranteed"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "metadata.vdc_metadata", "VDC Metadata"),
+						resourceDef, "metadata.vdc_metadata", "VDC Metadata"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "metadata.vdc_metadata2", "VDC Metadata2"),
+						resourceDef, "metadata.vdc_metadata2", "VDC Metadata2"),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "metadata.vdc_metadata2", "VDC Metadata2"),
+						resourceDef, "metadata.vdc_metadata2", "VDC Metadata2"),
+					testAccFindValuesInSet(resourceDef, "storage_profile", map[string]string{
+						"name":    params["ProviderVdcStorageProfile"].(string),
+						"enabled": "true",
+						"default": "true",
+						"limit":   "20480",
+					}),
+					// This test runs only if we have a second storage profile
+					// It retrieves the details of the second storage profile
+					testConditionalCheck(secondStorageProfile != "",
+						testAccFindValuesInSet(resourceDef, "storage_profile", map[string]string{
+							"name":    secondStorageProfile,
+							"enabled": "true",
+							"default": "false",
+							"limit":   "20480",
+						})),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "storage_profile.0.name", params["ProviderVdcStorageProfile"].(string)),
+						resourceDef, "compute_capacity.0.cpu.0.allocated", params["AllocatedIncreased"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "storage_profile.0.enabled", "true"),
-					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "storage_profile.0.limit", "20480"),
-					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "storage_profile.0.default", "true"),
-					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "compute_capacity.0.cpu.0.allocated", params["AllocatedIncreased"].(string)),
-					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "compute_capacity.0.cpu.0.limit", params["LimitIncreased"].(string)),
+						resourceDef, "compute_capacity.0.cpu.0.limit", params["LimitIncreased"].(string)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "compute_capacity.0.cpu.0.reserved", regexp.MustCompile(`^\d+$`)),
+						resourceDef, "compute_capacity.0.cpu.0.reserved", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "compute_capacity.0.cpu.0.used", regexp.MustCompile(`^\d+$`)),
+						resourceDef, "compute_capacity.0.cpu.0.used", regexp.MustCompile(`^\d+$`)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "compute_capacity.0.memory.0.allocated", params["AllocatedIncreased"].(string)),
+						resourceDef, "compute_capacity.0.memory.0.allocated", params["AllocatedIncreased"].(string)),
 					resource.TestCheckResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "compute_capacity.0.memory.0.limit", params["LimitIncreased"].(string)),
+						resourceDef, "compute_capacity.0.memory.0.limit", params["LimitIncreased"].(string)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d+$`)),
+						resourceDef, "compute_capacity.0.memory.0.reserved", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "compute_capacity.0.memory.0.used", regexp.MustCompile(`^\d+$`)),
+						resourceDef, "compute_capacity.0.memory.0.used", regexp.MustCompile(`^\d+$`)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "elasticity", regexp.MustCompile(`^`+params["ElasticityUpdateValueForAssert"].(string)+`$`)),
+						resourceDef, "elasticity", regexp.MustCompile(`^`+params["ElasticityUpdateValueForAssert"].(string)+`$`)),
 					resource.TestMatchResourceAttr(
-						"vcd_org_vdc."+params["VdcName"].(string), "include_vm_memory_overhead", regexp.MustCompile(`^`+params["MemoryOverheadUpdateValueForAssert"].(string)+`$`)),
+						resourceDef, "include_vm_memory_overhead", regexp.MustCompile(`^`+params["MemoryOverheadUpdateValueForAssert"].(string)+`$`)),
+					// This test runs only if we have a second storage profile
+					// This check makes sure we have 2 storage profiles
+					testConditionalCheck(secondStorageProfile != "",
+						resource.TestCheckResourceAttr(resourceDef, "storage_profile.#", "2")),
 				),
+			},
+			// Test removal of second storage profile
+			resource.TestStep{
+				Config: secondUpdateText,
+				// This test runs only if we have a second storage profile
+				Check: testConditionalCheck(secondStorageProfile != "", resource.ComposeTestCheckFunc(
+					// After the removal, we will only have one storage profile
+					resource.TestCheckResourceAttr(resourceDef, "storage_profile.#", "1"),
+					// This check will find only the first storage profile, since the second one will have been deleted
+					testAccFindValuesInSet(resourceDef, "storage_profile", map[string]string{
+						"name":    params["ProviderVdcStorageProfile"].(string),
+						"enabled": "true",
+						"default": "true",
+						"limit":   "20480",
+					}),
+				)),
 			},
 			resource.TestStep{
 				ResourceName:      "vcd_org_vdc." + params["VdcName"].(string),
@@ -165,6 +216,14 @@ func runOrgVdcTest(t *testing.T, params StringMap, allocationModel string) {
 			},
 		},
 	})
+}
+
+// testConditionalCheck runs the wanted check only if the preliminary condition is true
+func testConditionalCheck(condition bool, f resource.TestCheckFunc) resource.TestCheckFunc {
+	if condition {
+		return f
+	}
+	return func(s *terraform.State) error { return nil }
 }
 
 func testAccCheckVcdVdcExists(name string) resource.TestCheckFunc {
@@ -317,6 +376,8 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
     default = true
   }
 
+  {{.SecondStorageProfile}}
+
   metadata = {
     vdc_metadata  = "VDC Metadata"
     vdc_metadata2 = "VDC Metadata2"
@@ -332,4 +393,19 @@ resource "vcd_org_vdc" "{{.VdcName}}" {
   {{.FlexElasticKey}}        {{.equalsChar}} {{.FlexElasticValueUpdate}}
   {{.FlexMemoryOverheadKey}} {{.equalsChar}} {{.FlexMemoryOverheadValueUpdate}}
 }
+`
+
+// additionalStorageProfile is a component that allows the insertion of a second storage profile
+// when one was defined in the configuration file.
+// The start/end labels will be replaced by comment markers, thus eliminating the
+// second storage profile from the script, so that we can test the removal of the storage profile.
+const additionalStorageProfile = `
+  #START_STORAGE_PROFILE
+  storage_profile {
+    name    = "{{.StorageProfileName}}"
+    enabled = true
+    limit   = 20480
+    default = {{.StorageProfileDefault}}
+  }
+  #END_STORAGE_PROFILE
 `

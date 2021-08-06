@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/vmware/go-vcloud-director/v2/govcd"
 	"github.com/vmware/go-vcloud-director/v2/types/v56"
+	"github.com/vmware/go-vcloud-director/v2/util"
 )
 
 func resourceVcdOrgVdc() *schema.Resource {
@@ -113,7 +114,7 @@ func resourceVcdOrgVdc() *schema.Resource {
 			"storage_profile": &schema.Schema{
 				Type:        schema.TypeSet,
 				Required:    true,
-				ForceNew:    true,
+				ForceNew:    false,
 				MinItems:    1,
 				Description: "Storage profiles supported by this VDC.",
 				Elem: &schema.Resource{
@@ -456,7 +457,7 @@ func getComputeStorageProfiles(vcdClient *VCDClient, profile *types.VdcStoragePr
 	root := make([]map[string]interface{}, 0)
 
 	for _, vdcStorageProfile := range profile.VdcStorageProfile {
-		vdcStorageProfileDetails, err := govcd.GetStorageProfileByHref(vcdClient.VCDClient, vdcStorageProfile.HREF)
+		vdcStorageProfileDetails, err := vcdClient.GetStorageProfileByHref(vdcStorageProfile.HREF)
 		if err != nil {
 			return nil, err
 		}
@@ -571,41 +572,177 @@ func resourceVcdVdcUpdate(d *schema.ResourceData, meta interface{}) error {
 
 	if d.HasChange("storage_profile") {
 		vdcStorageProfilesConfigurations := d.Get("storage_profile").(*schema.Set)
-		for _, storageConfigurationValues := range vdcStorageProfilesConfigurations.List() {
-			storageConfiguration := storageConfigurationValues.(map[string]interface{})
-			var matchedStorageProfile types.Reference
-			for _, vdcStorageProfile := range adminVdc.AdminVdc.VdcStorageProfiles.VdcStorageProfile {
-				if storageConfiguration["name"].(string) == vdcStorageProfile.Name {
-					matchedStorageProfile = *vdcStorageProfile
+		err = updateStorageProfiles(vdcStorageProfilesConfigurations, vcdClient, adminVdc, d.Get("provider_vdc_name").(string))
+		if err != nil {
+			return fmt.Errorf("[VDC update] error updating storage profiles: %s", err)
+		}
+	}
+	log.Printf("[TRACE] VDC update completed: %s", adminVdc.AdminVdc.Name)
+	return resourceVcdVdcRead(d, meta)
+}
+
+func updateStorageProfileDetails(vcdClient *VCDClient, adminVdc *govcd.AdminVdc, storageProfile *types.Reference, storageConfiguration map[string]interface{}) error {
+	util.Logger.Printf("updating storage profile %#v", storageProfile)
+	uuid, err := govcd.GetUuidFromHref(storageProfile.HREF, true)
+	if err != nil {
+		return fmt.Errorf("error parsing VDC storage profile ID : %s", err)
+	}
+	vdcStorageProfileDetails, err := vcdClient.GetStorageProfileByHref(storageProfile.HREF)
+	if err != nil {
+		return fmt.Errorf("error getting VDC storage profile: %s", err)
+	}
+	_, err = adminVdc.UpdateStorageProfile(uuid, &types.AdminVdcStorageProfile{
+		Name:         storageConfiguration["name"].(string),
+		IopsSettings: nil,
+		Units:        "MB", // only this value is supported
+		Limit:        int64(storageConfiguration["limit"].(int)),
+		Default:      storageConfiguration["default"].(bool),
+		Enabled:      takeBoolPointer(storageConfiguration["enabled"].(bool)),
+		ProviderVdcStorageProfile: &types.Reference{
+			HREF: vdcStorageProfileDetails.ProviderVdcStorageProfile.HREF,
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("error updating VDC storage profile '%s': %s", storageConfiguration["name"].(string), err)
+	}
+	return nil
+}
+
+func updateStorageProfiles(set *schema.Set, client *VCDClient, adminVdc *govcd.AdminVdc, providerVdcName string) error {
+
+	type storageProfileCombo struct {
+		configuration map[string]interface{}
+		reference     *types.Reference
+	}
+	var (
+		existingStorageProfiles []storageProfileCombo
+		newStorageProfiles      []storageProfileCombo
+		removeStorageProfiles   []storageProfileCombo
+		defaultSp               = make(map[string]bool)
+	)
+
+	var isDefaultStorageProfileNew = false
+	// 1. find existing storage profiles: SP are both in the definition and in the VDC
+	for _, storageConfigurationValues := range set.List() {
+		storageConfiguration := storageConfigurationValues.(map[string]interface{})
+		for _, vdcStorageProfile := range adminVdc.AdminVdc.VdcStorageProfiles.VdcStorageProfile {
+			if storageConfiguration["name"].(string) == vdcStorageProfile.Name {
+				if storageConfiguration["default"].(bool) {
+					defaultSp[storageConfiguration["name"].(string)] = true
 				}
-			}
-			uuid, err := govcd.GetUuidFromHref(matchedStorageProfile.HREF, true)
-			if err != nil {
-				return fmt.Errorf("error parsing VDC storage profile ID : %s", err)
-			}
-			vdcStorageProfileDetails, err := govcd.GetStorageProfileByHref(vcdClient.VCDClient, matchedStorageProfile.HREF)
-			if err != nil {
-				return fmt.Errorf("error getting VDC storage profile: %s", err)
-			}
-			_, err = changedAdminVdc.UpdateStorageProfile(uuid, &types.AdminVdcStorageProfile{
-				Name:         storageConfiguration["name"].(string),
-				IopsSettings: nil,
-				Units:        "MB", // only this value is supported
-				Limit:        int64(storageConfiguration["limit"].(int)),
-				Default:      storageConfiguration["default"].(bool),
-				Enabled:      takeBoolPointer(storageConfiguration["enabled"].(bool)),
-				ProviderVdcStorageProfile: &types.Reference{
-					HREF: vdcStorageProfileDetails.ProviderVdcStorageProfile.HREF,
-				},
-			})
-			if err != nil {
-				return fmt.Errorf("error updating VDC storage profile: %s", err)
+				existingStorageProfiles = append(existingStorageProfiles, storageProfileCombo{
+					configuration: storageConfiguration,
+					reference:     vdcStorageProfile,
+				})
 			}
 		}
 	}
 
-	log.Printf("[TRACE] VDC update completed: %s", adminVdc.AdminVdc.Name)
-	return resourceVcdVdcRead(d, meta)
+	// 2. find new storage profiles: SP are in the definition, but not in the VDC
+	for _, storageConfigurationValues := range set.List() {
+		storageConfiguration := storageConfigurationValues.(map[string]interface{})
+		found := false
+		for _, vdcStorageProfile := range adminVdc.AdminVdc.VdcStorageProfiles.VdcStorageProfile {
+			if storageConfiguration["name"].(string) == vdcStorageProfile.Name {
+				found = true
+			}
+		}
+		if !found {
+			if storageConfiguration["default"].(bool) {
+				defaultSp[storageConfiguration["name"].(string)] = true
+				isDefaultStorageProfileNew = true
+			}
+			newStorageProfiles = append(newStorageProfiles, storageProfileCombo{
+				configuration: storageConfiguration,
+				reference:     nil,
+			})
+		}
+	}
+
+	// 3 find removed storage profiles: SP are in the VDC, but not in the definition
+	for _, vdcStorageProfile := range adminVdc.AdminVdc.VdcStorageProfiles.VdcStorageProfile {
+		found := false
+		for _, storageConfigurationValues := range set.List() {
+			storageConfiguration := storageConfigurationValues.(map[string]interface{})
+			if storageConfiguration["name"].(string) == vdcStorageProfile.Name {
+				found = true
+			}
+		}
+		if !found {
+			_, isDefault := defaultSp[vdcStorageProfile.Name]
+			if isDefault {
+				delete(defaultSp, vdcStorageProfile.Name)
+			}
+			removeStorageProfiles = append(removeStorageProfiles, storageProfileCombo{
+				configuration: nil,
+				reference:     vdcStorageProfile,
+			})
+		}
+	}
+
+	// 4. Check that there is one and only one default element
+	if len(defaultSp) == 0 {
+		return fmt.Errorf("updateStorageProfiles] no default storage profile left after update")
+	}
+	if len(defaultSp) > 1 {
+		defaultItems := ""
+		for d := range defaultSp {
+			defaultItems += " " + d
+		}
+		return fmt.Errorf("updateStorageProfiles] more than one default storage profile defined [%s]", defaultItems)
+	}
+
+	// 5. Set the default storage profile early
+	if !isDefaultStorageProfileNew {
+		defaultSpName := ""
+		for name := range defaultSp {
+			defaultSpName = name
+			break
+		}
+		err := adminVdc.SetDefaultStorageProfile(defaultSpName)
+		if err != nil {
+			return fmt.Errorf("[updateStorageProfiles] error setting default storage profile '%s': %s", defaultSpName, err)
+		}
+	}
+
+	// 6. Add new storage profiles
+	for _, spCombo := range newStorageProfiles {
+		storageProfile, err := client.QueryProviderVdcStorageProfileByName(spCombo.configuration["name"].(string), adminVdc.AdminVdc.ProviderVdcReference.HREF)
+		if err != nil {
+			return fmt.Errorf("[updateStorageProfiles] error retrieving storage profile '%s' from provider VDC '%s': %s", spCombo.configuration["name"].(string), providerVdcName, err)
+		}
+		err = adminVdc.AddStorageProfileWait(&types.VdcStorageProfileConfiguration{
+			Enabled: spCombo.configuration["enabled"].(bool),
+			Units:   "MB",
+			Limit:   int64(spCombo.configuration["limit"].(int)),
+			Default: spCombo.configuration["default"].(bool),
+			ProviderVdcStorageProfile: &types.Reference{
+				HREF: storageProfile.HREF,
+				Name: storageProfile.Name,
+			},
+		}, "")
+		if err != nil {
+			return fmt.Errorf("[updateStorageProfiles] error adding new storage profile: %s", err)
+		}
+	}
+
+	// 7. Update existing storage profiles
+	for _, spCombo := range existingStorageProfiles {
+		err := updateStorageProfileDetails(client, adminVdc, spCombo.reference, spCombo.configuration)
+		if err != nil {
+			return fmt.Errorf("[updateStorageProfiles] error updating storage profile '%s': %s", spCombo.reference.Name, err)
+		}
+	}
+
+	// 8. Delete unwanted storage profiles
+	for _, spCombo := range removeStorageProfiles {
+		err := adminVdc.RemoveStorageProfileWait(spCombo.reference.Name)
+		if err != nil {
+			return fmt.Errorf("[updateStorageProfiles] error removing storage profile %s: %s", spCombo.reference.Name, err)
+		}
+	}
+
+	return nil
 }
 
 // Deletes a VDC, optionally removing all objects in it as well
@@ -1051,9 +1188,9 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 	for _, storageConfigurationValues := range vdcStorageProfilesConfigurations.List() {
 		storageConfiguration := storageConfigurationValues.(map[string]interface{})
 
-		href, err := getStorageProfileHREF(vcdClient, storageConfiguration["name"].(string))
+		sp, err := vcdClient.QueryProviderVdcStorageProfileByName(storageConfiguration["name"].(string), providerVdcResults[0].HREF)
 		if err != nil {
-			return &types.VdcConfiguration{}, err
+			return &types.VdcConfiguration{}, fmt.Errorf("[getVcdVdcInput] error retrieving storage profile '%s' from provider VDC '%s': %s", storageConfiguration["name"].(string), providerVdcResults[0].Name, err)
 		}
 
 		vdcStorageProfile := &types.VdcStorageProfileConfiguration{
@@ -1062,7 +1199,7 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 			Default: storageConfiguration["default"].(bool),
 			Enabled: storageConfiguration["enabled"].(bool),
 			ProviderVdcStorageProfile: &types.Reference{
-				HREF: href,
+				HREF: sp.HREF,
 			},
 		}
 		vdcStorageProfiles = append(vdcStorageProfiles, vdcStorageProfile)
@@ -1146,24 +1283,6 @@ func getVcdVdcInput(d *schema.ResourceData, vcdClient *VCDClient) (*types.VdcCon
 	}
 
 	return params, nil
-}
-
-func getStorageProfileHREF(vcdClient *VCDClient, name string) (string, error) {
-	storageProfileRecords, err := govcd.QueryProviderVdcStorageProfileByName(vcdClient.VCDClient, name)
-	if err != nil {
-		return "", err
-	}
-	if len(storageProfileRecords) == 0 {
-		return "", fmt.Errorf("no provider VDC storage profile found with name %s", name)
-	}
-
-	// additional filtering done cause name like `*` returns more value and have to be manually selected
-	for _, profileRecord := range storageProfileRecords {
-		if profileRecord.Name == name {
-			return profileRecord.HREF, nil
-		}
-	}
-	return "", fmt.Errorf("no provider VDC storage profile found with name %s", name)
 }
 
 // resourceVcdOrgVdcImport is responsible for importing the resource.
