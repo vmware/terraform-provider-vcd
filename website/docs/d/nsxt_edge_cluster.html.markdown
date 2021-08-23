@@ -31,7 +31,7 @@ data "vcd_nsxt_edge_cluster" "first" {
 
 The following arguments are supported:
 
-* `org` - (Optional) The name of organization to  which edge cluster belongs. Optional if defined at provider level.
+* `org` - (Optional) The name of organization to which edge cluster belongs. Optional if defined at provider level.
 * `vdc` - (Optional) The name of VDC that owns the edge cluster. Optional if defined at provider level.
 * `name` - (Required) NSX-T Edge Cluster name. **Note.** NSX-T does allow to have duplicate names therefore to be able
 to correctly use this data source there should not be multiple NSX-T Edge Clusters with the same name defined.
