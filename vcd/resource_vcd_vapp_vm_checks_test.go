@@ -1,3 +1,4 @@
+//go:build vapp || vm || catalog || ALL || functional
 // +build vapp vm catalog ALL functional
 
 package vcd

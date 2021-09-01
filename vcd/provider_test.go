@@ -1,3 +1,4 @@
+//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbAppProfile || lbAppRule || lbServiceMonitor || lbServerPool || lbVirtualServer || user || access_control || standaloneVm || search || auth || nsxt || role || ALL
 // +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbAppProfile lbAppRule lbServiceMonitor lbServerPool lbVirtualServer user access_control standaloneVm search auth nsxt role ALL
 
 package vcd

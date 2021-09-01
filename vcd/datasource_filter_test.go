@@ -1,3 +1,4 @@
+//go:build search || functional || ALL
 // +build search functional ALL
 
 package vcd

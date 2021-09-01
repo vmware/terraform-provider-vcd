@@ -1,3 +1,4 @@
+//go:build vm || functional || affinity || ALL
 // +build vm functional affinity ALL
 
 package vcd

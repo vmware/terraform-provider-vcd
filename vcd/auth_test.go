@@ -1,3 +1,4 @@
+//go:build functional || auth || ALL
 // +build functional auth ALL
 
 package vcd

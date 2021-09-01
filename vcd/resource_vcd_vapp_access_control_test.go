@@ -1,3 +1,4 @@
+//go:build vapp || functional || access_control || ALL
 // +build vapp functional access_control ALL
 
 package vcd

@@ -1,3 +1,4 @@
+//go:build vdc || nsxt || ALL || functional
 // +build vdc nsxt ALL functional
 
 package vcd

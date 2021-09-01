@@ -1,3 +1,4 @@
+//go:build disk || ALL || functional
 // +build disk ALL functional
 
 package vcd

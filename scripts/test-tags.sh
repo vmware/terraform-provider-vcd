@@ -17,8 +17,8 @@ then
 fi
 
 start=$(date +%s)
-tags1=$(head -n 1 config_test.go | sed -e 's/^.*build //')
-tags2=$(head -n 1 provider_test.go | sed -e 's/^.*build //')
+tags1=$(head -n 1 config_test.go | sed -e 's/^.*build //;s/|| //g')
+tags2=$(head -n 1 provider_test.go | sed -e 's/^.*build //;s/|| //g')
 tags=$(echo $tags1 $tags2 | tr " " "\n" | sort | uniq| tr "\n" " "; echo) 
 
 echo "=== RUN TagsTest"

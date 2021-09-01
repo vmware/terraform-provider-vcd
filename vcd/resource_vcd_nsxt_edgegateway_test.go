@@ -1,3 +1,4 @@
+//go:build gateway || nsxt || ALL || functional
 // +build gateway nsxt ALL functional
 
 package vcd
