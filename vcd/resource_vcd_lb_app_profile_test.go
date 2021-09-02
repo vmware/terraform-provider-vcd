@@ -1,3 +1,4 @@
+//go:build gateway || lb || lbAppProfile || ALL || functional
 // +build gateway lb lbAppProfile ALL functional
 
 package vcd

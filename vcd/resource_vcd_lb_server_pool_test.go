@@ -1,3 +1,4 @@
+//go:build gateway || lb || lbServerPool || ALL || functional
 // +build gateway lb lbServerPool ALL functional
 
 package vcd

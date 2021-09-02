@@ -1,3 +1,4 @@
+//go:build (standaloneVm || vm || ALL || functional) && !skipStandaloneVm
 // +build standaloneVm vm ALL functional
 // +build !skipStandaloneVm
 

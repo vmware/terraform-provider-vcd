@@ -1,3 +1,4 @@
+//go:build user || functional || ALL
 // +build user functional ALL
 
 package vcd

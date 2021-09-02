@@ -1,3 +1,4 @@
+//go:build functional || network || extnetwork || nsxt || ALL
 // +build functional network extnetwork nsxt ALL
 
 package vcd

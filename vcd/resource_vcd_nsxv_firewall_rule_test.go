@@ -1,3 +1,4 @@
+//go:build gateway || firewall || ALL || functional
 // +build gateway firewall ALL functional
 
 package vcd
