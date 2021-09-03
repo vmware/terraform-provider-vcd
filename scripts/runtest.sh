@@ -258,7 +258,15 @@ function make_token {
     echo "missing url from configuration file. Can't retrieve token"
     exit 1
   fi
-  auth=$(echo -n "$user@$sysorg:$password" |base64)
+
+  options=""
+  os=$(uname -s)
+  is_linux=$(echo "$os" | grep -i linux)
+  if [ -n "$is_linux" ]
+  then
+    options="-w 0"
+  fi
+  auth=$(echo -n "$user@$sysorg:$password" |base64 $options)
 
   echo "# Connecting to $url ($sysorg)"
   curl --silent --head --insecure \

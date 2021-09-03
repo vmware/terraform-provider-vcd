@@ -13,7 +13,15 @@ then
     exit 1
 fi
 
-auth=$(echo -n "$user@$org:$password" |base64)
+options=""
+os=$(uname -s)
+is_linux=$(echo "$os" | grep -i linux)
+if [ -n "$is_linux" ]
+then
+  options="-w 0"
+fi
+
+auth=$(echo -n "$user@$org:$password" |base64 $options)
 
 curl -I -k --header "Accept: application/*;version=32.0" \
     --header "Authorization: Basic $auth" \
