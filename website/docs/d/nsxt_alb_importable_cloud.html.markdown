@@ -20,11 +20,11 @@ Cloud configured in ALB Controller.
 
 ```hcl
 data "vcd_nsxt_alb_controller" "first" {
-  name = "aviController1-renamed"
+  name = "alb-controller"
 }
 
 data "vcd_nsxt_alb_importable_cloud" "cld" {
-  name          = "NSXT bos1-vcloud-static-171-68.eng.vmware.com"
+  name          = "NSXT Importable Cloud"
   controller_id = data.vcd_nsxt_alb_controller.first.id
 }
 ```

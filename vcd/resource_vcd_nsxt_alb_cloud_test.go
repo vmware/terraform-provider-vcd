@@ -43,9 +43,9 @@ func TestAccVcdNsxtAlbCloud(t *testing.T) {
 	configText2 := templateFill(testAccVcdNsxtAlbCloudStep2, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 2: %s", configText2)
 
-	params["FuncName"] = t.Name() + "-step3"
-	configText4 := templateFill(testAccVcdNsxtAlbCloudStep3DS, params)
-	debugPrintf("#[DEBUG] CONFIGURATION for step 3: %s", configText4)
+	params["FuncName"] = t.Name() + "-step4"
+	configText4 := templateFill(testAccVcdNsxtAlbCloudStep4DS, params)
+	debugPrintf("#[DEBUG] CONFIGURATION for step 4: %s", configText4)
 
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
@@ -140,12 +140,11 @@ resource "vcd_nsxt_alb_cloud" "first" {
 }
 `
 
-const testAccVcdNsxtAlbCloudStep3DS = testAccVcdNsxtAlbCloudStep2 + `
+const testAccVcdNsxtAlbCloudStep4DS = testAccVcdNsxtAlbCloudStep2 + `
 # skip-binary-test: Data Source test
 data "vcd_nsxt_alb_cloud" "first" {
-  name        = vcd_nsxt_alb_cloud.first.name
-
-  controller_id       = vcd_nsxt_alb_controller.first.id
+  name          = vcd_nsxt_alb_cloud.first.name
+  controller_id = vcd_nsxt_alb_controller.first.id
 }
 `
 

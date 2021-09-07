@@ -26,7 +26,7 @@ between different service engine groups.
 resource "vcd_nsxt_alb_controller" "first" {
   name         = "aviController1"
   description  = "first alb controller"
-  url          = "https://bos1-vcloud-static-171-4.eng.vmware.com"
+  url          = "https://controller.myXZ"
   username     = "admin"
   password     = "Welcome@1234"
   license_type = "ENTERPRISE"

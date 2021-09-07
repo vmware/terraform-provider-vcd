@@ -105,10 +105,10 @@ func resourceVcdAlbServiceEngineGroupCreate(ctx context.Context, d *schema.Resou
 			d.Get("service_engine_group_name").(string), err)
 	}
 
-	albSEGroupConfig := getNsxtAlbServiceEngineGroupType(d, albImportableSeGroup.NsxtAlbImportableServiceEngineGroups.ID)
-	createdAlbController, err := vcdClient.CreateNsxtAlbServiceEngineGroup(albSEGroupConfig)
+	albSeGroupConfig := getNsxtAlbServiceEngineGroupType(d, albImportableSeGroup.NsxtAlbImportableServiceEngineGroups.ID)
+	createdAlbController, err := vcdClient.CreateNsxtAlbServiceEngineGroup(albSeGroupConfig)
 	if err != nil {
-		return diag.Errorf("error creating NSX-T ALB Service Engine Group '%s': %s", albSEGroupConfig.Name, err)
+		return diag.Errorf("error creating NSX-T ALB Service Engine Group '%s': %s", albSeGroupConfig.Name, err)
 	}
 
 	d.SetId(createdAlbController.NsxtAlbServiceEngineGroup.ID)
@@ -154,6 +154,7 @@ func resourceVcdAlbServiceEngineGroupRead(ctx context.Context, d *schema.Resourc
 	if err != nil {
 		if govcd.ContainsNotFound(err) {
 			d.SetId("")
+			return nil
 		}
 		return diag.Errorf("unable to find NSX-T ALB Service Engine Group: %s", err)
 	}
@@ -173,10 +174,7 @@ func resourceVcdAlbServiceEngineGroupRead(ctx context.Context, d *schema.Resourc
 		}
 	}
 
-	err = setNsxtAlbServiceEngineGroupData(d, albSeGroup.NsxtAlbServiceEngineGroup)
-	if err != nil {
-		return diag.Errorf("error setting NSX-T ALB Service Engine Group data: %s", err)
-	}
+	setNsxtAlbServiceEngineGroupData(d, albSeGroup.NsxtAlbServiceEngineGroup)
 
 	return nil
 }
@@ -237,7 +235,7 @@ func getNsxtAlbServiceEngineGroupType(d *schema.ResourceData, impServiceEngineGr
 	return albControllerType
 }
 
-func setNsxtAlbServiceEngineGroupData(d *schema.ResourceData, albController *types.NsxtAlbServiceEngineGroup) error {
+func setNsxtAlbServiceEngineGroupData(d *schema.ResourceData, albController *types.NsxtAlbServiceEngineGroup) {
 	_ = d.Set("name", albController.Name)
 	_ = d.Set("description", albController.Description)
 	_ = d.Set("reservation_model", albController.ReservationType)
@@ -248,6 +246,4 @@ func setNsxtAlbServiceEngineGroupData(d *schema.ResourceData, albController *typ
 	_ = d.Set("deployed_virtual_services", albController.NumDeployedVirtualServices)
 	_ = d.Set("ha_mode", albController.HaMode)
 	_ = d.Set("overallocated", albController.OverAllocated)
-
-	return nil
 }

@@ -115,14 +115,12 @@ func resourceVcdAlbControllerRead(ctx context.Context, d *schema.ResourceData, m
 	if err != nil {
 		if govcd.ContainsNotFound(err) {
 			d.SetId("")
+			return nil
 		}
 		return diag.Errorf("unable to find NSX-T ALB Controller: %s", err)
 	}
 
-	err = setNsxtAlbControllerData(d, albController.NsxtAlbController)
-	if err != nil {
-		return diag.Errorf("error setting NSX-T ALB Controller data: %s", err)
-	}
+	setNsxtAlbControllerData(d, albController.NsxtAlbController)
 
 	return nil
 }
@@ -175,13 +173,11 @@ func getNsxtAlbControllerType(d *schema.ResourceData) *types.NsxtAlbController {
 	return albControllerType
 }
 
-func setNsxtAlbControllerData(d *schema.ResourceData, albController *types.NsxtAlbController) error {
+func setNsxtAlbControllerData(d *schema.ResourceData, albController *types.NsxtAlbController) {
 	_ = d.Set("name", albController.Name)
 	_ = d.Set("description", albController.Description)
 	_ = d.Set("url", albController.Url)
 	_ = d.Set("username", albController.Username)
 	_ = d.Set("license_type", albController.LicenseType)
 	_ = d.Set("version", albController.Version)
-
-	return nil
 }

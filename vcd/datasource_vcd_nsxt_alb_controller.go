@@ -59,11 +59,7 @@ func datasourceVcdAlbControllerRead(ctx context.Context, d *schema.ResourceData,
 			d.Get("name").(string), err)
 	}
 
-	err = setNsxtAlbControllerData(d, albController.NsxtAlbController)
-	if err != nil {
-		return diag.Errorf("error setting NSX-T ALB Controller data: %s", err)
-	}
-
+	setNsxtAlbControllerData(d, albController.NsxtAlbController)
 	d.SetId(albController.NsxtAlbController.ID)
 
 	return nil

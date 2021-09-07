@@ -94,11 +94,7 @@ func datasourceVcdAlbServiceEngineGroupRead(ctx context.Context, d *schema.Resou
 		}
 	}
 
-	err = setNsxtAlbServiceEngineGroupData(d, albSeGroup.NsxtAlbServiceEngineGroup)
-	if err != nil {
-		return diag.Errorf("error setting NSX-T ALB Service Engine Group data: %s", err)
-	}
-
+	setNsxtAlbServiceEngineGroupData(d, albSeGroup.NsxtAlbServiceEngineGroup)
 	d.SetId(albSeGroup.NsxtAlbServiceEngineGroup.ID)
 
 	return nil

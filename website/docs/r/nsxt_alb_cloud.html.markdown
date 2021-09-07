@@ -24,7 +24,7 @@ data "vcd_nsxt_alb_controller" "main" {
 }
 
 data "vcd_nsxt_alb_importable_cloud" "cld" {
-  name          = "NSXT bos1-vcloud-static-171-68.eng.vmware.com"
+  name          = "NSXT Importable Cloud"
   controller_id = vcd_nsxt_alb_controller.first.id
 }
 

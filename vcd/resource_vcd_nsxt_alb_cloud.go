@@ -32,8 +32,8 @@ func resourceVcdAlbCloud() *schema.Resource {
 			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
-				ForceNew:    true,
 				Optional:    true,
+				ForceNew:    true,
 				Description: "NSX-T ALB Cloud description",
 			},
 			"controller_id": &schema.Schema{
@@ -101,6 +101,7 @@ func resourceVcdAlbCloudRead(ctx context.Context, d *schema.ResourceData, meta i
 	if err != nil {
 		if govcd.ContainsNotFound(err) {
 			d.SetId("")
+			return nil
 		}
 		return diag.Errorf("unable to find NSX-T ALB Cloud: %s", err)
 	}
