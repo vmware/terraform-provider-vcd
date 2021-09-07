@@ -1,0 +1,7 @@
+* **New Resource:** `vcd_nsxt_alb_controller` for managing NSX-T ALB Controllers [GH-709]
+* **New Data source:** `vcd_nsxt_alb_controller` for reading NSX-T ALB Controllers [GH-709]
+* **New Resource:** `vcd_nsxt_alb_cloud` for managing NSX-T ALB Clouds [GH-709]
+* **New Data source:** `vcd_nsxt_alb_cloud` for reading NSX-T ALB Clouds [GH-709]
+* **New Data source:** `vcd_nsxt_alb_importable_cloud` for reading NSX-T ALB Importable Clouds [GH-709]
+* **New Resource:** `vcd_nsxt_alb_service_engine_group` for managing NSX-T ALB Service Engine Groups [GH-709]
+* **New Data source:** `vcd_nsxt_alb_service_engine_group` for reading NSX-T ALB Service Engine Groups [GH-709]

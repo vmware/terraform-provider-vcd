@@ -1,5 +1,5 @@
-//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || ALL
-// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool lbAppProfile lbAppRule lbVirtualServer access_control user standaloneVm search auth nsxt role ALL
+//go:build api || functional || catalog || vapp || network || extnetwork || org || query || vm || vdc || gateway || disk || binary || lb || lbServiceMonitor || lbServerPool || lbAppProfile || lbAppRule || lbVirtualServer || access_control || user || standaloneVm || search || auth || nsxt || role || alb || ALL
+// +build api functional catalog vapp network extnetwork org query vm vdc gateway disk binary lb lbServiceMonitor lbServerPool lbAppProfile lbAppRule lbVirtualServer access_control user standaloneVm search auth nsxt role alb ALL
 
 package vcd
 
@@ -136,6 +136,11 @@ type TestConfig struct {
 		ExternalNetwork   string `json:"externalNetwork"`
 		EdgeGateway       string `json:"edgeGateway"`
 		NsxtImportSegment string `json:"nsxtImportSegment"`
+
+		NsxtAlbControllerUrl      string `json:"nsxtAlbControllerUrl"`
+		NsxtAlbControllerUser     string `json:"nsxtAlbControllerUser"`
+		NsxtAlbControllerPassword string `json:"nsxtAlbControllerPassword"`
+		NsxtAlbImportableCloud    string `json:"nsxtAlbImportableCloud"`
 	} `json:"nsxt"`
 	Logging struct {
 		Enabled         bool   `json:"enabled,omitempty"`
@@ -1299,6 +1304,26 @@ func skipNoNsxtConfiguration(t *testing.T) {
 	}
 	if testConfig.Nsxt.NsxtImportSegment == "" {
 		t.Skip(generalMessage + "No NSX-T importable segment specified ")
+	}
+}
+
+func skipNoNsxtAlbConfiguration(t *testing.T) {
+	generalMessage := "Missing NSX-T ALB config: "
+
+	if testConfig.Nsxt.NsxtAlbControllerUrl == "" {
+		t.Skip(generalMessage + "URL")
+	}
+
+	if testConfig.Nsxt.NsxtAlbControllerUser == "" {
+		t.Skip(generalMessage + "User")
+	}
+
+	if testConfig.Nsxt.NsxtAlbControllerPassword == "" {
+		t.Skip(generalMessage + "Password")
+	}
+
+	if testConfig.Nsxt.NsxtAlbImportableCloud == "" {
+		t.Skip(generalMessage + "Importable Cloud")
 	}
 }
 
