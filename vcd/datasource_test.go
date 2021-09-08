@@ -55,6 +55,9 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 			dataSourceName == "vcd_nsxt_manager" || dataSourceName == "vcd_nsxt_edge_cluster") &&
 			(testConfig.Nsxt.Manager == "" || testConfig.Nsxt.Tier0router == "" || !usingSysAdmin()):
 			t.Skip(`No NSX-T configuration detected or not running as System user`)
+		case dataSourceName == "vcd_nsxt_alb_controller" || dataSourceName == "vcd_nsxt_alb_cloud" ||
+			dataSourceName == "vcd_nsxt_alb_importable_cloud" || dataSourceName == "vcd_nsxt_alb_service_engine_group":
+			skipNoNsxtAlbConfiguration(t)
 		// vcd_resource_list and vcd_resource_schema don't search for real entities
 		case dataSourceName == "vcd_resource_list" || dataSourceName == "vcd_resource_schema":
 			t.Skip(`not a real data source`)
@@ -186,6 +189,8 @@ func addMandatoryParams(dataSourceName string, mandatoryFields []string, t *test
 			templateFields = templateFields + `org_network_id = "urn:vcloud:network:784feb3d-87e4-4905-202a-bfe9faa5476f"` + "\n"
 		case "scope":
 			templateFields = templateFields + `scope = "TENANT"` + "\n"
+		case "controller_id":
+			templateFields = templateFields + `controller_id = "urn:vcloud:loadBalancerController:90337fee-f332-40f2-a124-96e890eb1522"` + "\n"
 		}
 
 	}

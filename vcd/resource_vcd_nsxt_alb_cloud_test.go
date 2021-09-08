@@ -144,7 +144,6 @@ const testAccVcdNsxtAlbCloudStep4DS = testAccVcdNsxtAlbCloudStep2 + `
 # skip-binary-test: Data Source test
 data "vcd_nsxt_alb_cloud" "first" {
   name          = vcd_nsxt_alb_cloud.first.name
-  controller_id = vcd_nsxt_alb_controller.first.id
 }
 `
 

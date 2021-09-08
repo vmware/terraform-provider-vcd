@@ -11,17 +11,16 @@ func datasourceVcdAlbCloud() *schema.Resource {
 	return &schema.Resource{
 		ReadContext: datasourceVcdAlbCloudRead,
 		Schema: map[string]*schema.Schema{
-			"controller_id": &schema.Schema{
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: "NSX-T ALB Importable Cloud ID",
-			},
 			"name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 				Description: "NSX-T ALB Cloud name",
+			},
+			"controller_id": &schema.Schema{
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "NSX-T ALB Importable Cloud ID",
 			},
 			"description": &schema.Schema{
 				Type:        schema.TypeString,
