@@ -29,6 +29,7 @@ func TestAccVcdNsxtAlbServiceEngineGroup(t *testing.T) {
 
 	// String map to fill the template
 	var params = StringMap{
+		"ControllerName":     t.Name(),
 		"ControllerUrl":      testConfig.Nsxt.NsxtAlbControllerUrl,
 		"ControllerUsername": testConfig.Nsxt.NsxtAlbControllerUser,
 		"ControllerPassword": testConfig.Nsxt.NsxtAlbControllerPassword,
@@ -155,7 +156,7 @@ data "vcd_nsxt_alb_importable_cloud" "cld" {
 }
 
 resource "vcd_nsxt_alb_controller" "first" {
-  name         = "aviController1"
+  name         = "{{.ControllerName}}"
   description  = "first alb controller"
   url          = "{{.ControllerUrl}}"
   username     = "{{.ControllerUsername}}"

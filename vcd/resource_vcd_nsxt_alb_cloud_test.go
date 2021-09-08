@@ -29,6 +29,7 @@ func TestAccVcdNsxtAlbCloud(t *testing.T) {
 
 	// String map to fill the template
 	var params = StringMap{
+		"ControllerName":     t.Name(),
 		"ControllerUrl":      testConfig.Nsxt.NsxtAlbControllerUrl,
 		"ControllerUsername": testConfig.Nsxt.NsxtAlbControllerUser,
 		"ControllerPassword": testConfig.Nsxt.NsxtAlbControllerPassword,
@@ -105,7 +106,7 @@ func TestAccVcdNsxtAlbCloud(t *testing.T) {
 
 const testAccVcdNsxtAlbCloudPrereqs = `
 resource "vcd_nsxt_alb_controller" "first" {
-  name         = "aviController1"
+  name         = "{{.ControllerName}}"
   description  = "first alb controller"
   url          = "{{.ControllerUrl}}"
   username     = "{{.ControllerUsername}}"

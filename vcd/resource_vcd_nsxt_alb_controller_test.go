@@ -28,6 +28,7 @@ func TestAccVcdNsxtAlbController(t *testing.T) {
 
 	// String map to fill the template
 	var params = StringMap{
+		"ControllerName":     t.Name(),
 		"ControllerUrl":      testConfig.Nsxt.NsxtAlbControllerUrl,
 		"ControllerUsername": testConfig.Nsxt.NsxtAlbControllerUser,
 		"ControllerPassword": testConfig.Nsxt.NsxtAlbControllerPassword,
@@ -59,7 +60,7 @@ func TestAccVcdNsxtAlbController(t *testing.T) {
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_controller.first", "id", regexp.MustCompile(`\d*`)),
-					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "name", "aviController1"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "name", t.Name()),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "description", "first alb controller"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "username", testConfig.Nsxt.NsxtAlbControllerUser),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "password", testConfig.Nsxt.NsxtAlbControllerPassword),
@@ -70,7 +71,7 @@ func TestAccVcdNsxtAlbController(t *testing.T) {
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_controller.first", "id", regexp.MustCompile(`\d*`)),
-					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "name", "aviController1-renamed"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "name", t.Name()+"-renamed"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "description", ""),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "username", testConfig.Nsxt.NsxtAlbControllerUser),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_controller.first", "password", testConfig.Nsxt.NsxtAlbControllerPassword),
@@ -81,7 +82,7 @@ func TestAccVcdNsxtAlbController(t *testing.T) {
 				ResourceName:            "vcd_nsxt_alb_controller.first",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateId:           "aviController1-renamed",
+				ImportStateId:           t.Name() + "-renamed",
 				ImportStateVerifyIgnore: []string{"password"},
 			},
 			resource.TestStep{
@@ -100,7 +101,7 @@ func TestAccVcdNsxtAlbController(t *testing.T) {
 
 const testAccVcdNsxtAlbController = `
 resource "vcd_nsxt_alb_controller" "first" {
-  name         = "aviController1"
+  name         = "{{.ControllerName}}"
   description  = "first alb controller"
   url          = "{{.ControllerUrl}}"
   username     = "{{.ControllerUsername}}"
@@ -111,7 +112,7 @@ resource "vcd_nsxt_alb_controller" "first" {
 
 const testAccVcdNsxtAlbControllerStep2 = `
 resource "vcd_nsxt_alb_controller" "first" {
-  name         = "aviController1-renamed"
+  name         = "{{.ControllerName}}-renamed"
   url          = "{{.ControllerUrl}}"
   username     = "{{.ControllerUsername}}"
   password     = "{{.ControllerPassword}}"
@@ -122,7 +123,7 @@ resource "vcd_nsxt_alb_controller" "first" {
 const testAccVcdNsxtAlbControllerStep3DS = `
 # skip-binary-test: Data Source test
 resource "vcd_nsxt_alb_controller" "first" {
-  name         = "aviController1-renamed"
+  name         = "{{.ControllerName}}-renamed"
   url          = "{{.ControllerUrl}}"
   username     = "{{.ControllerUsername}}"
   password     = "{{.ControllerPassword}}"
@@ -130,7 +131,7 @@ resource "vcd_nsxt_alb_controller" "first" {
 }
 
 data "vcd_nsxt_alb_controller" "first" {
-  name = "aviController1-renamed"
+  name = "{{.ControllerName}}-renamed"
 }
 `
 
