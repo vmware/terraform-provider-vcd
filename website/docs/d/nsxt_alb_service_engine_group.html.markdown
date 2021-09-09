@@ -41,4 +41,5 @@ The following arguments are supported:
 ## Attribute Reference
 
 All the arguments and attributes defined in
-[`vcd_nsxt_alb_service_engine_group`](/docs/providers/vcd/r/nsxt_alb_service_engine_group.html) resource are available.
+[`vcd_nsxt_alb_service_engine_group`](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_service_engine_group)
+resource are available.

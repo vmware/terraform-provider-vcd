@@ -40,4 +40,4 @@ The following arguments are supported:
 ## Attribute Reference
 
 All the arguments and attributes defined in
-[`vcd_nsxt_alb_controller`](/docs/providers/vcd/r/nsxt_alb_controller.html) resource are available.
+[`vcd_nsxt_alb_controller`](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_controller) resource are available.

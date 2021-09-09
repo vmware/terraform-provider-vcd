@@ -62,7 +62,8 @@ The following arguments are supported:
 
 * `name` - (Required) A name for NSX-T ALB Service Engine Group
 * `description` - (Optional) An optional description NSX-T ALB Service Engine Group
-* `alb_cloud_id` - (Required) A reference NSX-T ALB Cloud. Can be looked up using `vcd_nsxt_alb_cloud` entity
+* `alb_cloud_id` - (Required) A reference NSX-T ALB Cloud. Can be looked up using `vcd_nsxt_alb_cloud` resource or data
+  source
 * `reservation_model` - (Required) Definition if the Service Engine Group is `DEDICATED` or `SHARED`
 * `service_engine_group_name` - (Required) Name of available Service Engine Group in ALB
 * `sync_on_refresh` (Optional) - A special argument `sync_on_refresh` which is not passed to VCD, but alters behaviour

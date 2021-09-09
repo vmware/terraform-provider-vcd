@@ -36,5 +36,4 @@ The following arguments are supported:
 ## Attribute Reference
 
 All the arguments and attributes defined in
-[`vcd_nsxt_alb_cloud`](/docs/providers/vcd/r/nsxt_alb_cloud.html) resource are available.
-                       /docs/providers/aws/r/mq_broker.html
+[`vcd_nsxt_alb_cloud`](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_cloud) resource are available.
