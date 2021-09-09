@@ -49,7 +49,7 @@ func resourceVcdAlbServiceEngineGroup() *schema.Resource {
 			},
 			// Ideally this should be a reference by ID and a data source for lookup. However, the Importable Service
 			// Engine Group API endpoint does not return entities once they are consumed, and it is impossible to make
-			// data source.
+			// a data source.
 			"service_engine_group_name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
@@ -124,7 +124,7 @@ func resourceVcdAlbServiceEngineGroupUpdate(ctx context.Context, d *schema.Resou
 
 	// If the only value for update is for 'sync_on_refresh' flag - there is no need to perform any API calls
 	if !d.HasChangeExcept("sync_on_refresh") {
-		return nil
+		return resourceVcdAlbServiceEngineGroupRead(ctx, d, meta)
 	}
 
 	albSeGroup, err := vcdClient.GetAlbServiceEngineGroupById(d.Id())

@@ -32,7 +32,7 @@ func TestAccVcdNsxtAlbController(t *testing.T) {
 		"ControllerUrl":      testConfig.Nsxt.NsxtAlbControllerUrl,
 		"ControllerUsername": testConfig.Nsxt.NsxtAlbControllerUser,
 		"ControllerPassword": testConfig.Nsxt.NsxtAlbControllerPassword,
-		"Tags":               "alb",
+		"Tags":               "nsxt alb",
 	}
 
 	configText1 := templateFill(testAccVcdNsxtAlbController, params)

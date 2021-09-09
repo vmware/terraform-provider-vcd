@@ -34,7 +34,7 @@ func TestAccVcdNsxtAlbServiceEngineGroup(t *testing.T) {
 		"ControllerUsername": testConfig.Nsxt.NsxtAlbControllerUser,
 		"ControllerPassword": testConfig.Nsxt.NsxtAlbControllerPassword,
 		"ImportableCloud":    testConfig.Nsxt.NsxtAlbImportableCloud,
-		"Tags":               "alb",
+		"Tags":               "nsxt alb",
 	}
 
 	configText1 := templateFill(testAccVcdNsxtAlbServiceEngineStep1, params)

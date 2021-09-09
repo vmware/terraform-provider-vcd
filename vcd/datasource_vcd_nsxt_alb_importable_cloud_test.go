@@ -31,7 +31,7 @@ func TestAccVcdNsxtAlbImportableCloudDS(t *testing.T) {
 		"ControllerUsername": testConfig.Nsxt.NsxtAlbControllerUser,
 		"ControllerPassword": testConfig.Nsxt.NsxtAlbControllerPassword,
 		"ImportableCloud":    testConfig.Nsxt.NsxtAlbImportableCloud,
-		"Tags":               "alb",
+		"Tags":               "alb nsxt",
 	}
 	configText1 := templateFill(testAccVcdNsxtAlbImportableCloud, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)

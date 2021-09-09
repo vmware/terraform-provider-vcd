@@ -24,7 +24,8 @@ between different service engine groups.
 
 ```hcl
 data "vcd_nsxt_alb_service_engine_group" "demo" {
-  name = "configured-service-engine-group"
+  name            = "configured-service-engine-group"
+  sync_on_refresh = false
 }
 ```
 
@@ -33,10 +34,9 @@ data "vcd_nsxt_alb_service_engine_group" "demo" {
 The following arguments are supported:
 
 * `name` - (Required)  - Name of Service Engine Group.
-
-~> There is a special argument `sync_on_refresh` which is not passed to VCD, but alters behaviour of this resource so
-that it performs a Sync operation on every Terraform refresh. *Note* this may impact refresh performance, but should
-ensure up-to-date information is read. Default is **false**.
+* `sync_on_refresh` (Optional) - A special argument `sync_on_refresh` which is not passed to VCD, but alters behaviour
+  of this resource so that it performs a Sync operation on every Terraform refresh. *Note* this may impact refresh
+  performance, but should ensure up-to-date information is read. Default is **false**.
 
 ## Attribute Reference
 
