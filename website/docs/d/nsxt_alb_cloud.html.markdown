@@ -16,6 +16,9 @@ consists of an NSX-T Manager and an NSX-T Data Center transport zone.
 
 ~> Only `System Administrator` can use this data source.
 
+~> VCD 10.3.0 has a caching bug which prevents listing importable clouds immediately after ALB Controller is created.
+This data should be available 15 minutes after the Controller is created.
+
 ## Example Usage
 
 ```hcl
@@ -34,3 +37,4 @@ The following arguments are supported:
 
 All the arguments and attributes defined in
 [`vcd_nsxt_alb_cloud`](/docs/providers/vcd/r/nsxt_alb_cloud.html) resource are available.
+                       /docs/providers/aws/r/mq_broker.html

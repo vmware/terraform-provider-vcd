@@ -18,6 +18,9 @@ instances serve as a central control plane for the load-balancing services provi
 
 ~> Only `System Administrator` can create this resource.
 
+~> VCD 10.3.0 has a caching bug which prevents listing importable clouds immediately after ALB Controller is created.
+This data should be available 15 minutes after the Controller is created.
+
 ## Example Usage (Adding NSX-T ALB Controller to provider)
 
 ```hcl
