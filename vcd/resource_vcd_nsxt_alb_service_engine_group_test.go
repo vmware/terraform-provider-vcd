@@ -162,7 +162,6 @@ locals {
   controller_id = vcd_nsxt_alb_controller.first.id
 }
 
-
 resource "vcd_nsxt_alb_controller" "first" {
   name         = "{{.ControllerName}}"
   description  = "first alb controller"
