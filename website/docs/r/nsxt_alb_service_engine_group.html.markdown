@@ -23,6 +23,13 @@ between different service engine groups.
 ## Example Usage (Adding NSX-T ALB Service Engine Group)
 
 ```hcl
+# Local variable is used to avoid direct reference and cover Terraform core bug https://github.com/hashicorp/terraform/issues/29484
+# Even changing NSX-T ALB Controller name in UI, plan will cause to recreate all resources depending 
+# on `vcd_nsxt_alb_importable_cloud` data source if this indirect reference (via local) variable is not used.
+locals {
+  controller_id = vcd_nsxt_alb_controller.first.id
+}
+
 resource "vcd_nsxt_alb_controller" "first" {
   name         = "aviController1"
   description  = "first alb controller"
@@ -34,7 +41,7 @@ resource "vcd_nsxt_alb_controller" "first" {
 
 data "vcd_nsxt_alb_importable_cloud" "cld" {
   name          = "importable-cloud-name"
-  controller_id = vcd_nsxt_alb_controller.first.id
+  controller_id = local.controller_id
 }
 
 resource "vcd_nsxt_alb_cloud" "first" {

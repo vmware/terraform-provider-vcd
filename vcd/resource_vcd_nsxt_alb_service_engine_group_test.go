@@ -152,8 +152,16 @@ func TestAccVcdNsxtAlbServiceEngineGroup(t *testing.T) {
 const testAccVcdNsxtAlbServiceEnginePrereqs = `
 data "vcd_nsxt_alb_importable_cloud" "cld" {
   name          = "{{.ImportableCloud}}"
+  controller_id = local.controller_id
+}
+
+# Local variable is used to avoid direct reference and cover Terraform core bug https://github.com/hashicorp/terraform/issues/29484
+# Even changing NSX-T ALB Controller name in UI, plan will cause to recreate all resources depending 
+# on vcd_nsxt_alb_importable_cloud data source if this indirect reference (via local) variable is not used.
+locals {
   controller_id = vcd_nsxt_alb_controller.first.id
 }
+
 
 resource "vcd_nsxt_alb_controller" "first" {
   name         = "{{.ControllerName}}"
