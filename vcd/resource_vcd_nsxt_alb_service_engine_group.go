@@ -50,7 +50,7 @@ func resourceVcdAlbServiceEngineGroup() *schema.Resource {
 			// Ideally this should be a reference by ID and a data source for lookup. However, the Importable Service
 			// Engine Group API endpoint does not return entities once they are consumed, and it is impossible to make
 			// a data source.
-			"service_engine_group_name": &schema.Schema{
+			"importable_service_engine_group_name": &schema.Schema{
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
@@ -99,10 +99,10 @@ func resourceVcdAlbServiceEngineGroupCreate(ctx context.Context, d *schema.Resou
 
 	// Lookup Importable Service Engine Group
 	albImportableSeGroup, err := vcdClient.GetAlbImportableServiceEngineGroupByName(
-		d.Get("alb_cloud_id").(string), d.Get("service_engine_group_name").(string))
+		d.Get("alb_cloud_id").(string), d.Get("importable_service_engine_group_name").(string))
 	if err != nil {
 		return diag.Errorf("unable to find Importable Service Engine Group by Name '%s': %s",
-			d.Get("service_engine_group_name").(string), err)
+			d.Get("importable_service_engine_group_name").(string), err)
 	}
 
 	albSeGroupConfig := getNsxtAlbServiceEngineGroupType(d, albImportableSeGroup.NsxtAlbImportableServiceEngineGroups.ID)

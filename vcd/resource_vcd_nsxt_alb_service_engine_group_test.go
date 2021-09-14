@@ -73,7 +73,7 @@ func TestAccVcdNsxtAlbServiceEngineGroup(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "description", ""),
 					resource.TestCheckResourceAttrSet("vcd_nsxt_alb_service_engine_group.first", "alb_cloud_id"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "reservation_model", "DEDICATED"),
-					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "service_engine_group_name", "Default-Group"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "importable_service_engine_group_name", "Default-Group"),
 					resource.TestCheckResourceAttrSet("vcd_nsxt_alb_service_engine_group.first", "max_virtual_services"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "reserved_virtual_services", "0"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "deployed_virtual_services", "0"),
@@ -90,7 +90,7 @@ func TestAccVcdNsxtAlbServiceEngineGroup(t *testing.T) {
 				// Because the Importable Service Engine Group API does not list objects once they are consumed
 				// by Service Engine Group - it is impossible to lookup name when having only ID. Therefore, on import
 				// this field remains empty.
-				ImportStateVerifyIgnore: []string{"service_engine_group_name"},
+				ImportStateVerifyIgnore: []string{"importable_service_engine_group_name"},
 			},
 			resource.TestStep{
 				Config: configText2,
@@ -100,7 +100,7 @@ func TestAccVcdNsxtAlbServiceEngineGroup(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "description", "test-description"),
 					resource.TestCheckResourceAttrSet("vcd_nsxt_alb_service_engine_group.first", "alb_cloud_id"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "reservation_model", "SHARED"),
-					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "service_engine_group_name", "Default-Group"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "importable_service_engine_group_name", "Default-Group"),
 					resource.TestCheckResourceAttrSet("vcd_nsxt_alb_service_engine_group.first", "max_virtual_services"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "reserved_virtual_services", "0"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "deployed_virtual_services", "0"),
@@ -113,7 +113,7 @@ func TestAccVcdNsxtAlbServiceEngineGroup(t *testing.T) {
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_service_engine_group.first", "id", regexp.MustCompile(`\d*`)),
-					// Number of fields '%' differs because datasource does not have `service_engine_group_name` as it
+					// Number of fields '%' differs because datasource does not have `importable_service_engine_group_name` as it
 					// is impossible to read it after it is consumed
 					resourceFieldsEqual("data.vcd_nsxt_alb_service_engine_group.first", "vcd_nsxt_alb_service_engine_group.first", []string{"%"}),
 				),
@@ -126,7 +126,7 @@ func TestAccVcdNsxtAlbServiceEngineGroup(t *testing.T) {
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "description", "test-description"),
 					resource.TestCheckResourceAttrSet("vcd_nsxt_alb_service_engine_group.first", "alb_cloud_id"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "reservation_model", "SHARED"),
-					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "service_engine_group_name", "Default-Group"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "importable_service_engine_group_name", "Default-Group"),
 					resource.TestCheckResourceAttrSet("vcd_nsxt_alb_service_engine_group.first", "max_virtual_services"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "reserved_virtual_services", "0"),
 					resource.TestCheckResourceAttr("vcd_nsxt_alb_service_engine_group.first", "deployed_virtual_services", "0"),
@@ -139,7 +139,7 @@ func TestAccVcdNsxtAlbServiceEngineGroup(t *testing.T) {
 				Config: configText5,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_service_engine_group.first", "id", regexp.MustCompile(`\d*`)),
-					// Number of fields '%' differs because datasource does not have `service_engine_group_name` as it
+					// Number of fields '%' differs because datasource does not have `importable_service_engine_group_name` as it
 					// is impossible to read it after it is consumed
 					resourceFieldsEqual("data.vcd_nsxt_alb_service_engine_group.first", "vcd_nsxt_alb_service_engine_group.first", []string{"%"}),
 				),
@@ -185,7 +185,7 @@ const testAccVcdNsxtAlbServiceEngineStep1 = testAccVcdNsxtAlbServiceEnginePrereq
 resource "vcd_nsxt_alb_service_engine_group" "first" {
   name                      = "first-se"
   alb_cloud_id              = vcd_nsxt_alb_cloud.first.id
-  service_engine_group_name = "Default-Group"
+  importable_service_engine_group_name = "Default-Group"
   reservation_model         = "DEDICATED"
 }
 `
@@ -195,7 +195,7 @@ resource "vcd_nsxt_alb_service_engine_group" "first" {
   name                      = "first-se-updated"
   description               = "test-description"
   alb_cloud_id              = vcd_nsxt_alb_cloud.first.id
-  service_engine_group_name = "Default-Group"
+  importable_service_engine_group_name = "Default-Group"
   reservation_model         = "SHARED"
 }
 `
@@ -206,7 +206,7 @@ resource "vcd_nsxt_alb_service_engine_group" "first" {
   name                      = "first-se-updated"
   description               = "test-description"
   alb_cloud_id              = vcd_nsxt_alb_cloud.first.id
-  service_engine_group_name = "Default-Group"
+  importable_service_engine_group_name = "Default-Group"
   reservation_model         = "SHARED"
 }
 
@@ -220,7 +220,7 @@ resource "vcd_nsxt_alb_service_engine_group" "first" {
   name                      = "first-se-updated"
   description               = "test-description"
   alb_cloud_id              = vcd_nsxt_alb_cloud.first.id
-  service_engine_group_name = "Default-Group"
+  importable_service_engine_group_name = "Default-Group"
   reservation_model         = "SHARED"
   
   # This feature remains not fully tested as it will impact some of the attributes, but only when tenant operations
@@ -236,7 +236,7 @@ resource "vcd_nsxt_alb_service_engine_group" "first" {
   name                      = "first-se-updated"
   description               = "test-description"
   alb_cloud_id              = vcd_nsxt_alb_cloud.first.id
-  service_engine_group_name = "Default-Group"
+  importable_service_engine_group_name = "Default-Group"
   reservation_model         = "SHARED"
   
   # This feature remains not fully tested as it will impact some of the attributes, but only when tenant operations

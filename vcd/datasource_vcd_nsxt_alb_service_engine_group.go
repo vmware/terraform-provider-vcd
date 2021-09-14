@@ -61,7 +61,7 @@ func datasourceVcdAlbServiceEngineGroup() *schema.Resource {
 			"overallocated": &schema.Schema{
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Description: "Boolean value that shows if ",
+				Description: "Boolean value that shows if virtual services are overallocated",
 			},
 		},
 	}

@@ -16,7 +16,7 @@ func resourceVcdAlbCloud() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdAlbCloudCreate,
 		ReadContext:   resourceVcdAlbCloudRead,
-		// Update for NSX-T ALB Cloud configuration is not supported in VCD <= 10.3
+		// Update of NSX-T ALB Cloud configuration is not supported in VCD <= 10.3
 		// UpdateContext: resourceVcdAlbCloudUpdate,
 		DeleteContext: resourceVcdAlbCloudDelete,
 		Importer: &schema.ResourceImporter{

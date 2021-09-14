@@ -20,8 +20,9 @@ Balancer.
 
 ~> Only `System Administrator` can use this data source.
 
-~> VCD 10.3.0 has a caching bug which prevents listing importable clouds immediately after ALB Controller is created.
-This data should be available 15 minutes after the Controller is created.
+~> VCD 10.3.0 has a caching bug which prevents listing importable clouds immediately (retrieved using
+[`vcd_nsxt_alb_importable_cloud`](/providers/vmware/vcd/latest/docs/data-sources/nsxt_alb_importable_cloud)) after ALB
+Controller is created. This data should be available 15 minutes after the Controller is created.
 
 ## Example Usage
 

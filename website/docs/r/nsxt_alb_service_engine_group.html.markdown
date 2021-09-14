@@ -54,12 +54,12 @@ resource "vcd_nsxt_alb_cloud" "first" {
 }
 
 resource "vcd_nsxt_alb_service_engine_group" "first" {
-  name                      = "demo-service-engine"
-  description               = "Service Engine for Terraform documentation"
-  alb_cloud_id              = vcd_nsxt_alb_cloud.first.id
-  service_engine_group_name = "Default-Group"
-  reservation_model         = "SHARED"
-  sync_on_refresh           = false
+  name                                 = "demo-service-engine"
+  description                          = "Service Engine for Terraform documentation"
+  alb_cloud_id                         = vcd_nsxt_alb_cloud.first.id
+  importable_service_engine_group_name = "Default-Group"
+  reservation_model                    = "SHARED"
+  sync_on_refresh                      = false
 }
 ```
 
@@ -72,7 +72,7 @@ The following arguments are supported:
 * `alb_cloud_id` - (Required) A reference NSX-T ALB Cloud. Can be looked up using `vcd_nsxt_alb_cloud` resource or data
   source
 * `reservation_model` - (Required) Definition if the Service Engine Group is `DEDICATED` or `SHARED`
-* `service_engine_group_name` - (Required) Name of available Service Engine Group in ALB
+* `importable_service_engine_group_name` - (Required) Name of available Service Engine Group in ALB
 * `sync_on_refresh` (Optional) - A special argument that is not passed to VCD, but alters behaviour of this resource so
   that it performs a Sync operation on every Terraform refresh. *Note* this may impact refresh performance, but should
   ensure up-to-date information is read. Default is **false**.
