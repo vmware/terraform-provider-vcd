@@ -223,9 +223,9 @@ resource "vcd_nsxt_alb_service_engine_group" "first" {
   importable_service_engine_group_name = "Default-Group"
   reservation_model         = "SHARED"
   
-  # This feature remains not fully tested as it will impact some of the attributes, but only when tenant operations
-  # are available. It will be possible to explicitly check that Sync worked. Now this test ensures it does not break
-  # code. 
+  # TODO: This feature remains not fully tested as it will impact some of the attributes, but only when tenant
+  # operations are available. It will be possible to explicitly check that Sync worked. Now this test ensures it does
+  # not break code.
   sync_on_refresh = true
 }
 `
@@ -239,9 +239,9 @@ resource "vcd_nsxt_alb_service_engine_group" "first" {
   importable_service_engine_group_name = "Default-Group"
   reservation_model         = "SHARED"
   
-  # This feature remains not fully tested as it will impact some of the attributes, but only when tenant operations
-  # are available. It will be possible to explicitly check that Sync worked. Now this test ensures it does not break
-  # code. 
+  # TODO: This feature remains not fully tested as it will impact some of the attributes, but only when tenant
+  # operations are available. It will be possible to explicitly check that Sync worked. Now this test ensures it does
+  # not break code. 
   sync_on_refresh = true
 }
 
