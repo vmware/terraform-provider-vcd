@@ -60,7 +60,12 @@ func datasourceVcdExternalNetworkV2() *schema.Resource {
 						"nsxt_tier0_router_id": &schema.Schema{
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: "ID of NSX-T Tier-0 router",
+							Description: "ID of NSX-T Tier-0 router (for T0 gateway backed external network)",
+						},
+						"nsxt_segment_name": &schema.Schema{
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: "Name of NSX-T segment (for NSX-T segment backed external network)",
 						},
 					},
 				},
@@ -82,5 +87,5 @@ func datasourceVcdExternalNetworkV2Read(d *schema.ResourceData, meta interface{}
 
 	d.SetId(extNet.ExternalNetwork.ID)
 
-	return setExternalNetworkV2Data(d, extNet.ExternalNetwork)
+	return setExternalNetworkV2Data(d, extNet.ExternalNetwork, vcdClient)
 }

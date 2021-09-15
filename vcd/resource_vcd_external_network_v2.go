@@ -90,11 +90,21 @@ var networkV2NsxtNetwork = &schema.Resource{
 			ForceNew:    true,
 			Description: "ID of NSX-T manager",
 		},
+		// NSX-T Tier 0 router backed external network
 		"nsxt_tier0_router_id": &schema.Schema{
-			Type:        schema.TypeString,
-			Required:    true,
-			ForceNew:    true,
-			Description: "ID of NSX-T Tier-0 router",
+			Type:         schema.TypeString,
+			Optional:     true,
+			ForceNew:     true,
+			Description:  "ID of NSX-T Tier-0 router (for T0 gateway backed external network)",
+			ExactlyOneOf: []string{"nsxt_network.0.nsxt_tier0_router_id", "nsxt_network.0.nsxt_segment_name"},
+		},
+		// NSX-T segment backed external network (VCD 10.3+)
+		"nsxt_segment_name": &schema.Schema{
+			Type:         schema.TypeString,
+			Optional:     true,
+			ForceNew:     true,
+			Description:  "Name of NSX-T segment (for NSX-T segment backed external network)",
+			ExactlyOneOf: []string{"nsxt_network.0.nsxt_tier0_router_id", "nsxt_network.0.nsxt_segment_name"},
 		},
 	},
 }
@@ -152,12 +162,12 @@ func resourceVcdExternalNetworkV2() *schema.Resource {
 				Elem:        networkV2VsphereNetwork,
 			},
 			"nsxt_network": &schema.Schema{
-				Type:         schema.TypeSet,
+				Type:         schema.TypeList,
 				Optional:     true,
 				ExactlyOneOf: []string{"vsphere_network", "nsxt_network"},
 				MaxItems:     1,
 				ForceNew:     true,
-				Description:  "Reference to NSX-T Tier-0 router and manager",
+				Description:  "Reference to NSX-T Tier-0 router or Segment and manager",
 				Elem:         networkV2NsxtNetwork,
 			},
 		},
@@ -168,7 +178,7 @@ func resourceVcdExternalNetworkV2Create(d *schema.ResourceData, meta interface{}
 	vcdClient := meta.(*VCDClient)
 	log.Printf("[TRACE] external network V2 creation initiated")
 
-	netType, err := getExternalNetworkV2Type(vcdClient, d)
+	netType, err := getExternalNetworkV2Type(vcdClient, d, "")
 	if err != nil {
 		return fmt.Errorf("could not get network data: %s", err)
 	}
@@ -193,7 +203,12 @@ func resourceVcdExternalNetworkV2Update(d *schema.ResourceData, meta interface{}
 		return fmt.Errorf("could not find external network V2 by ID '%s': %s", d.Id(), err)
 	}
 
-	netType, err := getExternalNetworkV2Type(vcdClient, d)
+	var knownNsxtSegmentId string
+	if extNet.ExternalNetwork.NetworkBackings.Values[0].BackingTypeValue == types.ExternalNetworkBackingTypeNsxtSegment {
+		knownNsxtSegmentId = extNet.ExternalNetwork.NetworkBackings.Values[0].BackingID
+	}
+
+	netType, err := getExternalNetworkV2Type(vcdClient, d, knownNsxtSegmentId)
 	if err != nil {
 		return fmt.Errorf("could not get network data: %s", err)
 	}
@@ -222,7 +237,7 @@ func resourceVcdExternalNetworkV2Read(d *schema.ResourceData, meta interface{}) 
 		return fmt.Errorf("could not find external network V2 by ID '%s': %s", d.Id(), err)
 	}
 
-	return setExternalNetworkV2Data(d, extNet.ExternalNetwork)
+	return setExternalNetworkV2Data(d, extNet.ExternalNetwork, vcdClient)
 }
 
 func resourceVcdExternalNetworkV2Delete(d *schema.ResourceData, meta interface{}) error {
@@ -246,7 +261,6 @@ func resourceVcdExternalNetworkV2Delete(d *schema.ResourceData, meta interface{}
 // Example import path (id): externalNetworkName
 // Example import command:   terraform import vcd_external_network_v2.externalNetworkResourceName externalNetworkName
 func resourceVcdExternalNetworkV2Import(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-
 	vcdClient := meta.(*VCDClient)
 
 	extNetRes, err := govcd.GetExternalNetworkV2ByName(vcdClient.VCDClient, d.Id())
@@ -256,13 +270,13 @@ func resourceVcdExternalNetworkV2Import(d *schema.ResourceData, meta interface{}
 
 	d.SetId(extNetRes.ExternalNetwork.ID)
 
-	setExternalNetworkV2Data(d, extNetRes.ExternalNetwork)
+	setExternalNetworkV2Data(d, extNetRes.ExternalNetwork, vcdClient)
 
 	return []*schema.ResourceData{d}, nil
 }
 
-func getExternalNetworkV2Type(vcdClient *VCDClient, d *schema.ResourceData) (*types.ExternalNetworkV2, error) {
-	networkBackings, err := getExternalNetworkV2BackingType(vcdClient, d)
+func getExternalNetworkV2Type(vcdClient *VCDClient, d *schema.ResourceData, knownNsxtSegmentId string) (*types.ExternalNetworkV2, error) {
+	networkBackings, err := getExternalNetworkV2BackingType(vcdClient, d, knownNsxtSegmentId)
 	if err != nil {
 		return nil, fmt.Errorf("error getting network backing type: %s", err)
 	}
@@ -278,21 +292,51 @@ func getExternalNetworkV2Type(vcdClient *VCDClient, d *schema.ResourceData) (*ty
 	return newExtNet, nil
 }
 
-func getExternalNetworkV2BackingType(vcdClient *VCDClient, d *schema.ResourceData) (types.ExternalNetworkV2Backings, error) {
+func getExternalNetworkV2BackingType(vcdClient *VCDClient, d *schema.ResourceData, knownNsxtSegmentId string) (types.ExternalNetworkV2Backings, error) {
 	var backings types.ExternalNetworkV2Backings
 	// var backing types.ExternalNetworkV2Backing
 	// Network backings
-	nsxtNetwork := d.Get("nsxt_network").(*schema.Set)
+	nsxtNetworkSlice := d.Get("nsxt_network").([]interface{})
 	nsxvNetwork := d.Get("vsphere_network").(*schema.Set)
 
 	switch {
 	// NSX-T network defined. Can only be one.
-	case len(nsxtNetwork.List()) > 0:
-		nsxtNetworkSlice := nsxtNetwork.List()
+	case len(nsxtNetworkSlice) > 0:
 		nsxtNetworkStrings := convertToStringMap(nsxtNetworkSlice[0].(map[string]interface{}))
+
+		var backingId string
+		var backingType string
+
+		switch {
+		// External network backed by NSX-T Tier 0 router
+		case nsxtNetworkStrings["nsxt_tier0_router_id"] != "":
+			backingId = nsxtNetworkStrings["nsxt_tier0_router_id"]
+			backingType = types.ExternalNetworkBackingTypeNsxtTier0Router
+		// External network backed by NSX-T Segment
+		case nsxtNetworkStrings["nsxt_segment_name"] != "":
+			// for create operation NSX-T Segment ID can be looked up using nsxt_segment_name because it is not yet
+			// consumed
+			if knownNsxtSegmentId == "" {
+				// bareNsxtManagerUuid
+				bareNsxtManagerUuid := extractUuid(nsxtNetworkStrings["nsxt_manager_id"])
+				filter := map[string]string{"nsxTManager": bareNsxtManagerUuid}
+				nsxtImportableSwitch, err := vcdClient.GetFilteredNsxtImportableSwitchesByName(filter, nsxtNetworkStrings["nsxt_segment_name"])
+				if err != nil {
+					return types.ExternalNetworkV2Backings{}, fmt.Errorf("unable to find NSX-T logical switch: %s", err)
+				}
+				backingId = nsxtImportableSwitch.NsxtImportableSwitch.ID
+			} else {
+				// for update operation the existing NSX-T Segment ID must be fed in because consumed NSX-T segment can
+				// not be looked up anymore
+				backingId = knownNsxtSegmentId
+			}
+
+			backingType = types.ExternalNetworkBackingTypeNsxtSegment
+		}
+
 		backing := types.ExternalNetworkV2Backing{
-			BackingID:   nsxtNetworkStrings["nsxt_tier0_router_id"], // Tier 0- router
-			BackingType: types.ExternalNetworkBackingTypeNsxtTier0Router,
+			BackingID:        backingId, // Tier 0 router or NSX-T Importable Switch ID
+			BackingTypeValue: backingType,
 			NetworkProvider: types.NetworkProvider{
 				ID: nsxtNetworkStrings["nsxt_manager_id"], // NSX-T manager
 			},
@@ -330,6 +374,21 @@ func getExternalNetworkV2BackingType(vcdClient *VCDClient, d *schema.ResourceDat
 			backings.Values = append(backings.Values, backing)
 		}
 	}
+
+	// external network API has changed field from types.ExternalNetworkV2Backings.BackingType to
+	// types.ExternalNetworkV2Backings.BackingTypeValue in version 35.0 (VCD 10.2). This resource must still support
+	// both versions therefore field translation is required.
+	//
+	// The main code branch works with newer field values, but VCD 10.1 is still supported at this time
+	// This loop translates requests to still work with pre VCD 10.2 versions.
+	// TO-DO remove this translation with VCD 10.1 EOL
+	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") { // types.ExternalNetworkV2Backings.BackingType
+		for index := range backings.Values {
+			backings.Values[index].BackingType = backings.Values[index].BackingTypeValue
+			backings.Values[index].BackingTypeValue = ""
+		}
+	}
+
 	return backings, nil
 }
 
@@ -394,7 +453,7 @@ func processIpRanges(staticIpPool *schema.Set) []types.ExternalNetworkV2IPRange 
 	return subnetRng
 }
 
-func setExternalNetworkV2Data(d *schema.ResourceData, net *types.ExternalNetworkV2) error {
+func setExternalNetworkV2Data(d *schema.ResourceData, net *types.ExternalNetworkV2, vcdClient *VCDClient) error {
 	_ = d.Set("name", net.Name)
 	_ = d.Set("description", net.Description)
 
@@ -431,9 +490,21 @@ func setExternalNetworkV2Data(d *schema.ResourceData, net *types.ExternalNetwork
 		return fmt.Errorf("error setting 'ip_scope' block: %s", err)
 	}
 
+	// external network API has changed field from types.ExternalNetworkV2Backings.BackingType to
+	// types.ExternalNetworkV2Backings.BackingTypeValue in version 35.0 (VCD 10.2). This resource must still support
+	// both versions therefore field translation is required.
+	//
+	// The main code branch works with newer field values, but VCD 10.1 is still supported at this time
+	// This loop translates requests to still work with pre VCD 10.2 versions.
+	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") { // types.ExternalNetworkV2Backings.BackingType
+		for index := range net.NetworkBackings.Values {
+			net.NetworkBackings.Values[index].BackingTypeValue = net.NetworkBackings.Values[index].BackingType
+		}
+	}
+
 	// Switch on first value of backing ID. If it is NSX-T - it can be only one block (limited by schema).
 	// NSX-V can have more than one
-	switch net.NetworkBackings.Values[0].BackingType {
+	switch net.NetworkBackings.Values[0].BackingTypeValue {
 	// Some versions of VCD behave strangely in API. They do accept a parameter of types.ExternalNetworkBackingTypeNetwork
 	// as it was always the case, but in response they do return "PORTGROUP".
 	case types.ExternalNetworkBackingDvPortgroup, types.ExternalNetworkBackingTypeNetwork, "PORTGROUP":
@@ -453,11 +524,7 @@ func setExternalNetworkV2Data(d *schema.ResourceData, net *types.ExternalNetwork
 			return fmt.Errorf("error setting 'vsphere_network' block: %s", err)
 		}
 
-	// TODO API V34.0 !Important!
-	// When a VRF Tier-0 router is used - responded backingType is "UNKNOWN" until API v34.0 where
-	// field `BackingType` is deprecated in favor of `backingTypeValue` which supports explicit
-	// `NSXT_VRF_TIER0`. VRF Tier-0 routers are only officially supported in 10.2 release.
-	case types.ExternalNetworkBackingTypeNsxtTier0Router, "UNKNOWN":
+	case types.ExternalNetworkBackingTypeNsxtTier0Router, types.ExternalNetworkBackingTypeNsxtVrfTier0Router:
 		backingInterface := make([]interface{}, 1)
 		backing := net.NetworkBackings.Values[0]
 		backingMap := make(map[string]interface{})
@@ -465,8 +532,19 @@ func setExternalNetworkV2Data(d *schema.ResourceData, net *types.ExternalNetwork
 		backingMap["nsxt_tier0_router_id"] = backing.BackingID
 
 		backingInterface[0] = backingMap
-		backingSet := schema.NewSet(schema.HashResource(networkV2NsxtNetwork), backingInterface)
-		err := d.Set("nsxt_network", backingSet)
+		err := d.Set("nsxt_network", backingInterface)
+		if err != nil {
+			return fmt.Errorf("error setting 'nsxt_network' block: %s", err)
+		}
+	case types.ExternalNetworkBackingTypeNsxtSegment:
+		backingInterface := make([]interface{}, 1)
+		backing := net.NetworkBackings.Values[0]
+		backingMap := make(map[string]interface{})
+		backingMap["nsxt_manager_id"] = backing.NetworkProvider.ID
+		backingMap["nsxt_segment_name"] = backing.Name
+
+		backingInterface[0] = backingMap
+		err := d.Set("nsxt_network", backingInterface)
 		if err != nil {
 			return fmt.Errorf("error setting 'nsxt_network' block: %s", err)
 		}

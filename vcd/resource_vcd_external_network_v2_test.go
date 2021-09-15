@@ -31,7 +31,7 @@ func TestAccVcdExternalNetworkV2NsxtVrf(t *testing.T) {
 	postTestChecks(t)
 }
 
-func TestAccVcdExternalNetworkV2Nsxt(t *testing.T) {
+func TestAccVcdExternalNetworkV2NsxtT0Router(t *testing.T) {
 	preTestChecks(t)
 	testAccVcdExternalNetworkV2Nsxt(t, testConfig.Nsxt.Tier0router)
 	postTestChecks(t)
@@ -47,7 +47,7 @@ func testAccVcdExternalNetworkV2Nsxt(t *testing.T, nsxtTier0Router string) {
 	skipNoNsxtConfiguration(t)
 	vcdClient := createTemporaryVCDConnection()
 	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
-		t.Skip(t.Name() + " requires at least API v33.0 (vCD 10+)")
+		t.Skip(t.Name() + " requires at least API v33.0 (VCD 10+)")
 	}
 
 	startAddress := "192.168.30.51"
@@ -220,6 +220,7 @@ output "nsxt-tier0-router" {
   value = tolist(vcd_external_network_v2.ext-net-nsxt.nsxt_network)[0].nsxt_tier0_router_id
 }
 `
+
 const testAccCheckVcdExternalNetworkV2NsxtStep1 = testAccCheckVcdExternalNetworkV2NsxtDS + `
 # skip-binary-test: only for updates
 resource "vcd_external_network_v2" "ext-net-nsxt" {
@@ -265,7 +266,7 @@ func TestAccVcdExternalNetworkV2Nsxv(t *testing.T) {
 
 	vcdClient := createTemporaryVCDConnection()
 	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
-		t.Skip(t.Name() + " requires at least API v33.0 (vCD 10+)")
+		t.Skip(t.Name() + " requires at least API v33.0 (VCD 10+)")
 	}
 
 	description := "Test External Network"
@@ -462,6 +463,303 @@ output "vcenter-id" {
 
 output "portgroup-id" {
   value = tolist(vcd_external_network_v2.ext-net-nsxv.vsphere_network)[0].portgroup_id
+}
+`
+
+func TestAccVcdExternalNetworkV2NsxtSegment(t *testing.T) {
+	preTestChecks(t)
+	if !usingSysAdmin() {
+		t.Skip(t.Name() + " requires system admin privileges")
+		return
+	}
+
+	skipNoNsxtConfiguration(t)
+	vcdClient := createTemporaryVCDConnection()
+	if vcdClient.Client.APIVCDMaxVersionIs("< 36.0") {
+		t.Skip(t.Name() + " requires at least API v36.0 (VCD 10.3+)")
+	}
+
+	startAddress := "192.168.30.51"
+	endAddress := "192.168.30.62"
+	description := "Test External Network"
+	var params = StringMap{
+		"NsxtManager":         testConfig.Nsxt.Manager,
+		"NsxtSegment":         testConfig.Nsxt.NsxtImportSegment,
+		"ExternalNetworkName": t.Name(),
+		"Type":                testConfig.Networking.ExternalNetworkPortGroupType,
+		"PortGroup":           testConfig.Networking.ExternalNetworkPortGroup,
+		"Vcenter":             testConfig.Networking.Vcenter,
+		"StartAddress":        startAddress,
+		"EndAddress":          endAddress,
+		"Description":         description,
+		"Gateway":             "192.168.30.49",
+		"Netmask":             "24",
+		"Tags":                "network extnetwork nsxt",
+	}
+
+	params["FuncName"] = t.Name()
+	configText := templateFill(testAccCheckVcdExternalNetworkV2NsxtSegment, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+	params["FuncName"] = t.Name() + "step1"
+	configText1 := templateFill(testAccCheckVcdExternalNetworkV2NsxtSegmentStep2, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText1)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	resourceName := "vcd_external_network_v2.ext-net-nsxt"
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		CheckDestroy:      testAccCheckExternalNetworkDestroyV2(t.Name()),
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config: configText,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
+					resource.TestCheckResourceAttr(resourceName, "description", description),
+					resource.TestCheckResourceAttr(resourceName, "vsphere_network.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "nsxt_network.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "ip_scope.#", "2"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*", map[string]string{
+						"dns1":          "",
+						"dns2":          "",
+						"dns_suffix":    "",
+						"enabled":       "false",
+						"gateway":       "192.168.30.49",
+						"prefix_length": "24",
+					}),
+
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*.static_ip_pool.*", map[string]string{
+						"start_address": "192.168.30.51",
+						"end_address":   "192.168.30.62",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*", map[string]string{
+						"dns1":          "",
+						"dns2":          "",
+						"dns_suffix":    "",
+						"enabled":       "true",
+						"gateway":       "14.14.14.1",
+						"prefix_length": "24",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*.static_ip_pool.*", map[string]string{
+						"start_address": "14.14.14.20",
+						"end_address":   "14.14.14.25",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*.static_ip_pool.*", map[string]string{
+						"start_address": "14.14.14.10",
+						"end_address":   "14.14.14.15",
+					}),
+					resource.TestCheckResourceAttr(resourceName, "nsxt_network.#", "1"),
+				),
+			},
+			resource.TestStep{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateIdFunc: importStateIdTopHierarchy(t.Name()),
+			},
+			resource.TestStep{
+				Config: configText1,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "name", t.Name()),
+					resource.TestCheckResourceAttr(resourceName, "description", description),
+					resource.TestCheckResourceAttr(resourceName, "vsphere_network.#", "0"),
+					resource.TestCheckResourceAttr(resourceName, "nsxt_network.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "ip_scope.#", "1"),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*", map[string]string{
+						"dns1":          "",
+						"dns2":          "",
+						"dns_suffix":    "",
+						"enabled":       "true",
+						"gateway":       "192.168.30.49",
+						"prefix_length": "24",
+					}),
+					resource.TestCheckTypeSetElemNestedAttrs(resourceName, "ip_scope.*.static_ip_pool.*", map[string]string{
+						"start_address": "192.168.30.51",
+						"end_address":   "192.168.30.62",
+					}),
+					resource.TestCheckResourceAttr(resourceName, "nsxt_network.#", "1"),
+				),
+			},
+		},
+	})
+
+	postTestChecks(t)
+}
+
+const testAccCheckVcdExternalNetworkV2NsxtSegment = `
+data "vcd_nsxt_manager" "main" {
+  name = "{{.NsxtManager}}"
+}
+
+resource "vcd_external_network_v2" "ext-net-nsxt" {
+  name        = "{{.ExternalNetworkName}}"
+  description = "{{.Description}}"
+
+  nsxt_network {
+    nsxt_manager_id   = data.vcd_nsxt_manager.main.id
+    nsxt_segment_name = "{{.NsxtSegment}}"
+  }
+
+  ip_scope {
+    enabled       = false
+    gateway       = "{{.Gateway}}"
+    prefix_length = "{{.Netmask}}"
+
+    static_ip_pool {
+      start_address = "{{.StartAddress}}"
+      end_address   = "{{.EndAddress}}"
+    }
+  }
+
+  ip_scope {
+    gateway       = "14.14.14.1"
+    prefix_length = "24"
+
+    static_ip_pool {
+      start_address = "14.14.14.10"
+      end_address   = "14.14.14.15"
+    }
+    
+    static_ip_pool {
+      start_address = "14.14.14.20"
+      end_address   = "14.14.14.25"
+    }
+  }
+}
+`
+
+const testAccCheckVcdExternalNetworkV2NsxtSegmentStep2 = `
+# skip-binary-test: only for updates
+data "vcd_nsxt_manager" "main" {
+  name = "{{.NsxtManager}}"
+}
+
+resource "vcd_external_network_v2" "ext-net-nsxt" {
+  name        = "{{.ExternalNetworkName}}"
+  description = "{{.Description}}"
+
+  nsxt_network {
+    nsxt_manager_id   = data.vcd_nsxt_manager.main.id
+    nsxt_segment_name = "{{.NsxtSegment}}"
+  }
+
+  ip_scope {
+    enabled       = true
+    gateway       = "{{.Gateway}}"
+    prefix_length = "{{.Netmask}}"
+
+    static_ip_pool {
+      start_address = "{{.StartAddress}}"
+      end_address   = "{{.EndAddress}}"
+    }
+  }
+}
+`
+
+func TestAccVcdExternalNetworkV2NsxtConfigError(t *testing.T) {
+	preTestChecks(t)
+	if !usingSysAdmin() {
+		t.Skip(t.Name() + " requires system admin privileges")
+		return
+	}
+
+	skipNoNsxtConfiguration(t)
+	vcdClient := createTemporaryVCDConnection()
+	if vcdClient.Client.APIVCDMaxVersionIs("< 33.0") {
+		t.Skip(t.Name() + " requires at least API v33.0 (VCD 10.1+)")
+	}
+
+	startAddress := "192.168.30.51"
+	endAddress := "192.168.30.62"
+	description := "Test External Network"
+	var params = StringMap{
+		"NsxtManager":         testConfig.Nsxt.Manager,
+		"NsxtSegment":         testConfig.Nsxt.NsxtImportSegment,
+		"NsxtTier0Router":     testConfig.Nsxt.Tier0router,
+		"ExternalNetworkName": t.Name(),
+		"Type":                testConfig.Networking.ExternalNetworkPortGroupType,
+		"PortGroup":           testConfig.Networking.ExternalNetworkPortGroup,
+		"Vcenter":             testConfig.Networking.Vcenter,
+		"StartAddress":        startAddress,
+		"EndAddress":          endAddress,
+		"Description":         description,
+		"Gateway":             "192.168.30.49",
+		"Netmask":             "24",
+		"Tags":                "network extnetwork nsxt",
+	}
+
+	params["FuncName"] = t.Name()
+	configText := templateFill(testAccCheckVcdExternalNetworkV2NsxtConfigError, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config:      configText,
+				ExpectError: regexp.MustCompile(`Invalid combination of arguments`),
+			},
+		},
+	})
+
+	postTestChecks(t)
+}
+
+const testAccCheckVcdExternalNetworkV2NsxtConfigError = `
+# skip-binary-test: fails on purpose
+data "vcd_nsxt_manager" "main" {
+  name = "{{.NsxtManager}}"
+}
+
+data "vcd_nsxt_tier0_router" "router" {
+  name            = "{{.NsxtTier0Router}}"
+  nsxt_manager_id = data.vcd_nsxt_manager.main.id
+}
+
+resource "vcd_external_network_v2" "ext-net-nsxt" {
+  name        = "{{.ExternalNetworkName}}"
+  description = "{{.Description}}"
+
+  nsxt_network {
+    nsxt_manager_id   = data.vcd_nsxt_manager.main.id
+    nsxt_segment_name = "{{.NsxtSegment}}"
+    nsxt_tier0_router_id = data.vcd_nsxt_tier0_router.router.id
+  }
+
+  ip_scope {
+    enabled       = false
+    gateway       = "{{.Gateway}}"
+    prefix_length = "{{.Netmask}}"
+
+    static_ip_pool {
+      start_address = "{{.StartAddress}}"
+      end_address   = "{{.EndAddress}}"
+    }
+  }
+
+  ip_scope {
+    gateway       = "14.14.14.1"
+    prefix_length = "24"
+
+    static_ip_pool {
+      start_address = "14.14.14.10"
+      end_address   = "14.14.14.15"
+    }
+    
+    static_ip_pool {
+      start_address = "14.14.14.20"
+      end_address   = "14.14.14.25"
+    }
+  }
 }
 `
 
