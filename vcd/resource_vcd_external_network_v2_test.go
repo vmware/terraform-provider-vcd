@@ -466,6 +466,59 @@ output "portgroup-id" {
 }
 `
 
+// TestAccVcdExternalNetworkV2NsxtSegmentUnsupported tries to create NSX-T Segment backed network on versions that
+// do not support it and expects a correctly handled error to avoid crashes and/or non-informative error messages
+func TestAccVcdExternalNetworkV2NsxtSegmentUnsupported(t *testing.T) {
+	preTestChecks(t)
+	if !usingSysAdmin() {
+		t.Skip(t.Name() + " requires system admin privileges")
+		return
+	}
+
+	skipNoNsxtConfiguration(t)
+	vcdClient := createTemporaryVCDConnection()
+	if vcdClient.Client.APIVCDMaxVersionIs(">= 36.0") {
+		t.Skip(t.Name() + " this test check requires API version <36.0 (VCD 10.3+)")
+	}
+
+	startAddress := "192.168.30.51"
+	endAddress := "192.168.30.62"
+	description := "Test External Network"
+	var params = StringMap{
+		"NsxtManager":         testConfig.Nsxt.Manager,
+		"NsxtSegment":         testConfig.Nsxt.NsxtImportSegment,
+		"ExternalNetworkName": t.Name(),
+		"Type":                testConfig.Networking.ExternalNetworkPortGroupType,
+		"PortGroup":           testConfig.Networking.ExternalNetworkPortGroup,
+		"Vcenter":             testConfig.Networking.Vcenter,
+		"StartAddress":        startAddress,
+		"EndAddress":          endAddress,
+		"Description":         description,
+		"Gateway":             "192.168.30.49",
+		"Netmask":             "24",
+		"Tags":                "network extnetwork nsxt",
+	}
+
+	params["FuncName"] = t.Name()
+	skipBinaryConfig := `# skip-binary-test: expected to fail` + testAccCheckVcdExternalNetworkV2NsxtSegment
+	configText := templateFill(skipBinaryConfig, params)
+	debugPrintf("#[DEBUG] CONFIGURATION: %s", configText)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:          func() { testAccPreCheck(t) },
+		ProviderFactories: testAccProviders,
+		Steps: []resource.TestStep{
+			resource.TestStep{
+				Config:      configText,
+				ExpectError: regexp.MustCompile(`NSX-T Segment backed External Network is only supported in VCD 10.3.0+`),
+			},
+		},
+	})
+
+	postTestChecks(t)
+
+}
+
 func TestAccVcdExternalNetworkV2NsxtSegment(t *testing.T) {
 	preTestChecks(t)
 	if !usingSysAdmin() {

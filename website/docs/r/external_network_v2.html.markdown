@@ -83,7 +83,7 @@ resource "vcd_external_network_v2" "ext-net-nsxt-segment" {
 
   nsxt_network {
     nsxt_manager_id   = data.vcd_nsxt_manager.main.id
-    nsxt_segment_name = "existing-nsxt-segment-
+    nsxt_segment_name = "existing-nsxt-segment"
   }
 
   ip_scope {
@@ -189,8 +189,7 @@ The following arguments are supported:
 * `nsxt_manager_id` - (Required) NSX-T manager ID. Can be looked up using [`vcd_nsxt_manager`](/docs/providers/vcd/d/nsxt_manager.html) data source.
 * `nsxt_tier0_router_id` - (Optional) NSX-T Tier-0 router ID. Can be looked up using
   [`vcd_nsxt_tier0_router`](/docs/providers/vcd/d/nsxt_tier0_router.html) data source.
-* `nsxt_segment_name` - (Optional; *v3.4+*; *VCD 10.3+*) Existing NSX-T segment name. **Note** due to API limitations this
-value will not be read on refresh.
+* `nsxt_segment_name` - (Optional; *v3.4+*; *VCD 10.3+*) Existing NSX-T segment name.
 
 ## Importing
 
