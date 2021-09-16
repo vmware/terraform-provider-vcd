@@ -114,8 +114,10 @@ else
     fi
 
     # Creates the plugin and the test scripts with the older release
+    echo "#!/usr/bin/env bash" > scripts/gofmtcheck.sh
     make test-binary-prepare
     check_exit_code "error preparing binary tests"
+    git checkout master scripts/gofmtcheck.sh
 
     # Back to the current version
     git checkout $branch

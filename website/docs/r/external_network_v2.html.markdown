@@ -70,7 +70,7 @@ resource "vcd_external_network_v2" "ext-net-nsxt-t0" {
 }
 ```
 
-## Example Usage (NSX-T segment backed external network [only VCD 10.3+])
+## Example Usage (NSX-T Segment backed External Network with a Direct Org VDC network [only VCD 10.3+])
 
 ```hcl
 data "vcd_nsxt_manager" "main" {
@@ -112,6 +112,15 @@ resource "vcd_external_network_v2" "ext-net-nsxt-segment" {
       end_address   = "14.14.14.25"
     }
   }
+}
+
+resource "vcd_network_direct" "net" {
+  vdc = "nsxt-vdc"
+
+  name             = "direct-net"
+  external_network = vcd_external_network_v2.ext-net-nsxt-segment.name
+
+  depends_on = [vcd_external_network_v2.ext-net-nsxt]
 }
 ```
 

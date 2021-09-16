@@ -592,10 +592,14 @@ do
     then
         major_from=$(echo $from_version | tr -d 'v' | tr '.' ' '| awk '{print $1}')
         minor_from=$(echo $from_version | tr -d 'v' | tr '.' ' '| awk '{print $2}')
+        patch_from=$(echo $from_version | tr -d 'v' | tr '.' ' '| awk '{print $3}')
         major_to=$(echo $to_version | tr -d 'v' | tr '.' ' '| awk '{print $1}')
         minor_to=$(echo $to_version | tr -d 'v' | tr '.' ' '| awk '{print $2}')
+        patch_to=$(echo $to_version | tr -d 'v' | tr '.' ' '| awk '{print $3}')
         short_from="${major_from}.${minor_from}"
         short_to="${major_to}.${minor_to}"
+        long_from="${major_from}.${minor_from}.${patch_from}"
+        long_to="${major_to}.${minor_to}.${patch_to}"
     fi
 
     for phase in ${operations[*]}
@@ -608,7 +612,7 @@ do
                     sed  -i -e '/^\s*version *=/d' config.tf
 
                     # recreate versions.tf with "short_from" version
-                    add_versions_config "versions.tf" "${PWD}" "${short_from}"
+                    add_versions_config "versions.tf" "${PWD}" "${long_from}"
 
                     run terraform init
                     run terraform version
@@ -638,7 +642,7 @@ do
                     if [ -n "$upgrading" ]
                     then
                         # recreate versions.tf with "short_to" version
-                        add_versions_config "versions.tf" "${PWD}" "${short_to}"
+                        add_versions_config "versions.tf" "${PWD}" "${long_to}"
                         run terraform init -upgrade
                         run terraform version
                     fi

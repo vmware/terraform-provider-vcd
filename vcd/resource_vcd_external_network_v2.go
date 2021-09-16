@@ -369,8 +369,8 @@ func getExternalNetworkV2BackingType(vcdClient *VCDClient, d *schema.ResourceDat
 			}
 
 			backing := types.ExternalNetworkV2Backing{
-				BackingID:   nsxvNetworkStrings["portgroup_id"],
-				BackingType: pgType,
+				BackingID:        nsxvNetworkStrings["portgroup_id"],
+				BackingTypeValue: pgType,
 				NetworkProvider: types.NetworkProvider{
 					ID: nsxvNetworkStrings["vcenter_id"],
 				},
