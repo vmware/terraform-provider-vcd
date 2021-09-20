@@ -167,7 +167,7 @@ func resourceVcdExternalNetworkV2() *schema.Resource {
 				ExactlyOneOf: []string{"vsphere_network", "nsxt_network"},
 				MaxItems:     1,
 				ForceNew:     true,
-				Description:  "Reference to NSX-T Tier-0 router or Segment and manager",
+				Description:  "Reference to NSX-T Tier-0 router or segment and manager",
 				Elem:         networkV2NsxtNetwork,
 			},
 		},

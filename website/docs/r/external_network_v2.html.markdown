@@ -20,7 +20,7 @@ requires at least VCD *10.0+*. It supports both NSX-T and NSX-V backed networks 
 
 Supported in provider *v3.0+*.
 
-## Example Usage (NSX-T Tier 0 router backed external network)
+## Example Usage (NSX-T Tier 0 Router backed External Network)
 
 ```hcl
 data "vcd_nsxt_manager" "main" {
@@ -71,6 +71,10 @@ resource "vcd_external_network_v2" "ext-net-nsxt-t0" {
 ```
 
 ## Example Usage (NSX-T Segment backed External Network with a Direct Org VDC network [only VCD 10.3+])
+
+-> NSX-T **Segment backed External Network** is similar to **Imported Org VDC network**. The difference is that
+**External Network can consume one NSX-T Segment and then many VDCs can use it by using NSX-T Direct Network**, 
+while Org VDC Imported network directly requires one NSX-T Segment
 
 ```hcl
 data "vcd_nsxt_manager" "main" {
