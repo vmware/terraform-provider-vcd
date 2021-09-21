@@ -15,8 +15,8 @@ func TestAccVcdVAppVmMultiNIC(t *testing.T) {
 	var (
 		vapp        govcd.VApp
 		vm          govcd.VM
-		netVappName string = t.Name()
-		netVmName1  string = t.Name() + "VM"
+		netVappName = t.Name()
+		netVmName1  = t.Name() + "VM"
 	)
 
 	var params = StringMap{
