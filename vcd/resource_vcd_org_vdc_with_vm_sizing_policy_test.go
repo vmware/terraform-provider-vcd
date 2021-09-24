@@ -222,7 +222,7 @@ resource "vcd_vm_sizing_policy" "minSize2" {
 
   cpu {
     shares                = "886"
-    limit_in_mhz          = "2400"
+    limit_in_mhz          = "12375"
     count                 = "9"
     speed_in_mhz          = "2500"
     cores_per_socket      = "3"
@@ -237,7 +237,7 @@ resource "vcd_vm_sizing_policy" "minSize3" {
 
   cpu {
     shares                = "886"
-    limit_in_mhz          = "2400"
+    limit_in_mhz          = "12375"
     count                 = "9"
     speed_in_mhz          = "2500"
     cores_per_socket      = "3"
@@ -309,7 +309,7 @@ resource "vcd_vm_sizing_policy" "minSize2" {
 
   cpu {
     shares                = "886"
-    limit_in_mhz          = "2400"
+    limit_in_mhz          = "12375"
     count                 = "9"
     speed_in_mhz          = "2500"
     cores_per_socket      = "3"
@@ -324,7 +324,7 @@ resource "vcd_vm_sizing_policy" "minSize3" {
 
   cpu {
     shares                = "886"
-    limit_in_mhz          = "2400"
+    limit_in_mhz          = "12375"
     count                 = "9"
     speed_in_mhz          = "2500"
     cores_per_socket      = "3"
