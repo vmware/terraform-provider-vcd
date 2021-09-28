@@ -904,7 +904,10 @@ func resourceVmHotUpdate(d *schema.ResourceData, meta interface{}, vmType typeOf
 	}
 
 	// due the bug in VCD 10.1 hot update possible for adding new or update existing network, removing of network has to be done with cold update
-	if d.HasChange("network") && !isNetworkRemovedInVcd101(d, meta) {
+	// There are a few cases when hot NIC updates are not possible:
+	// * VCD 10.1 does not allow to remove NICs
+	// * Primary NIC cannot be removed on a powered on VM
+	if d.HasChange("network") && !isNetworkRemovedInVcd101(d, meta) && !isPrimaryNicRemoved(d) {
 		networkConnectionSection, err := networksToConfig(d, vdc, vapp, vcdClient)
 		if err != nil {
 			return fmt.Errorf("unable to setup network configuration for update: %s", err)
@@ -1022,6 +1025,24 @@ func isNetworkRemovedInVcd101(d *schema.ResourceData, meta interface{}) bool {
 	return len(oldNetworks) > len(newNetworks) && vcdClient.Client.APIVCDMaxVersionIs("= 34.0")
 }
 
+// isPrimaryNicRemoved checks if new schema has a primary NIC at all
+func isPrimaryNicRemoved(d *schema.ResourceData) bool {
+	_, newNetworkRaw := d.GetChange("network")
+	newNetworks := newNetworkRaw.([]interface{})
+
+	var foundPrimaryNic bool
+	for _, newNet := range newNetworks {
+		netMap := newNet.(map[string]interface{})
+		isPrimary := netMap["is_primary"].(bool)
+		if isPrimary {
+			foundPrimaryNic = true
+			break
+		}
+	}
+
+	return !foundPrimaryNic
+}
+
 func changeCpuCount(d *schema.ResourceData, vm *govcd.VM) error {
 	task, err := vm.ChangeCPUCount(d.Get("cpus").(int))
 	if err != nil {
@@ -1089,14 +1110,16 @@ func resourceVcdVAppVmUpdateExecute(d *schema.ResourceData, meta interface{}, ex
 		if !d.Get("cpu_hot_add_enabled").(bool) && d.HasChange("cpus") {
 			cpusNeedsColdChange = true
 		}
-		if d.HasChange("network") && isNetworkRemovedInVcd101(d, meta) {
+		if d.HasChange("network") && (isNetworkRemovedInVcd101(d, meta) || isPrimaryNicRemoved(d)) {
 			networksNeedsColdChange = true
 		}
-	} else if len(d.Get("network").([]interface{})) > 0 {
+	}
+	if executionType == "create" && len(d.Get("network").([]interface{})) > 0 {
 		networksNeedsColdChange = true
 	}
+	log.Printf("[TRACE] VM %s requires cold changes: memory(%t), cpu(%t), network(%t)", vm.VM.Name, memoryNeedsColdChange, cpusNeedsColdChange, networksNeedsColdChange)
 
-	// this represent fields which has to be changed in cold (with VM power off)
+	// this represents fields which have to be changed in cold (with VM power off)
 	if d.HasChanges("cpu_cores", "power_on", "disk", "expose_hardware_virtualization", "boot_image",
 		"hardware_version", "os_type", "description", "cpu_hot_add_enabled",
 		"memory_hot_add_enabled") || memoryNeedsColdChange || cpusNeedsColdChange || networksNeedsColdChange {
