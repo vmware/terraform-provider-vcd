@@ -9,6 +9,7 @@ import (
 	"os"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
@@ -67,6 +68,8 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 	}
 
 	configText := templateFill(testAccCheckVcdNsxtStandaloneVm_basic, params)
+	params["FuncName"] = t.Name() + "-step2"
+	configText2 := templateFill(testAccCheckVcdNsxtStandaloneVm_basicCleanup, params)
 	if vcdShortTest {
 		t.Skip(acceptanceTestsSkipped)
 		return
@@ -125,6 +128,15 @@ func TestAccVcdNsxtStandaloneVmTemplate(t *testing.T) {
 				// "network_dhcp_wait_seconds" is a user setting and cannot be imported
 				ImportStateVerifyIgnore: []string{"template_name", "catalog_name",
 					"accept_all_eulas", "power_on", "computer_name", "prevent_update_power_off", "network.1.ip", "network_dhcp_wait_seconds"},
+			},
+			// This step ensures that VM and disk are removed, but networks are left
+			resource.TestStep{
+				Config: configText2,
+			},
+			// This step gives 10-second sleep timer so that cleanup bug is not hit in VCD 10.3
+			resource.TestStep{
+				Config:    configText2,
+				PreConfig: func() { time.Sleep(10 * time.Second) },
 			},
 		},
 	})
@@ -216,6 +228,7 @@ func TestAccVcdNsxtStandaloneEmptyVm(t *testing.T) {
 }
 
 const testAccCheckVcdNsxtStandaloneVm_basic = `
+# skip-binary-test: removing NSX-T Org networks right after standalone VM fails in 10.3
 data "vcd_nsxt_edgegateway" "existing" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
@@ -234,6 +247,8 @@ resource "vcd_network_routed_v2" "{{.NetworkName}}" {
     start_address = "10.10.102.2"
     end_address   = "10.10.102.200"
   }
+
+  depends_on = [vcd_nsxt_network_imported.imported-test]
 }
 
 resource "vcd_network_isolated_v2" "net-test" {
@@ -248,8 +263,6 @@ resource "vcd_network_isolated_v2" "net-test" {
     start_address = "110.10.102.2"
     end_address   = "110.10.102.20"
   }
-
-  depends_on = [vcd_network_routed_v2.{{.NetworkName}}]
 }
 
 resource "vcd_nsxt_network_dhcp" "{{.NetworkName}}-dhcp" {
@@ -294,6 +307,9 @@ resource "vcd_independent_disk" "{{.diskResourceName}}" {
   bus_type        = "{{.busType}}"
   bus_sub_type    = "{{.busSubType}}"
   storage_profile = "{{.storageProfileName}}"
+
+  depends_on = [vcd_network_routed_v2.{{.NetworkName}}, vcd_network_isolated_v2.net-test, 
+                vcd_nsxt_network_imported.imported-test]
 }
 
 resource "vcd_vm" "{{.VmName}}" {
@@ -354,8 +370,7 @@ resource "vcd_vm" "{{.VmName}}" {
     unit_number = 0
   }
 
-  depends_on = [vcd_network_routed_v2.{{.NetworkName}}, vcd_network_isolated_v2.net-test, 
-                vcd_nsxt_network_imported.imported-test]
+  depends_on = [vcd_independent_disk.{{.diskResourceName}}]
 }
 
 output "disk" {
@@ -371,6 +386,78 @@ output "vm" {
   value = vcd_vm.{{.VmName}}
   
   sensitive = true
+}
+`
+
+const testAccCheckVcdNsxtStandaloneVm_basicCleanup = `
+data "vcd_nsxt_edgegateway" "existing" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+  name = "{{.EdgeGateway}}"
+}
+
+resource "vcd_network_routed_v2" "{{.NetworkName}}" {
+  name            = "{{.NetworkName}}"
+  org             = "{{.Org}}"
+  vdc             = "{{.Vdc}}"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  gateway         = "10.10.102.1"
+  prefix_length   = 24
+
+  static_ip_pool {
+    start_address = "10.10.102.2"
+    end_address   = "10.10.102.200"
+  }
+
+  depends_on = [vcd_nsxt_network_imported.imported-test]
+}
+
+resource "vcd_network_isolated_v2" "net-test" {
+  name            = "{{.NetworkName}}-isolated"
+  org             = "{{.Org}}"
+  vdc             = "{{.Vdc}}"
+  
+  gateway         = "110.10.102.1"
+  prefix_length   = 26
+
+  static_ip_pool {
+    start_address = "110.10.102.2"
+    end_address   = "110.10.102.20"
+  }
+}
+
+resource "vcd_nsxt_network_dhcp" "{{.NetworkName}}-dhcp" {
+  org             = "{{.Org}}"
+  vdc             = "{{.Vdc}}"
+  
+  org_network_id  = vcd_network_routed_v2.{{.NetworkName}}.id
+
+  pool {
+    start_address = "10.10.102.210"
+    end_address   = "10.10.102.220"
+  }
+
+  pool {
+    start_address = "10.10.102.230"
+    end_address   = "10.10.102.240"
+  }
+}
+
+resource "vcd_nsxt_network_imported" "imported-test" {
+  name            = "{{.NetworkName}}-imported"
+  org             = "{{.Org}}"
+  vdc             = "{{.Vdc}}"
+  gateway         = "12.12.2.1"
+  prefix_length   = 24
+
+  nsxt_logical_switch_name = "{{.ImportSegment}}"
+
+  static_ip_pool {
+    start_address = "12.12.2.10"
+    end_address   = "12.12.2.15"
+  }
+
+  depends_on = [vcd_network_isolated_v2.net-test]
 }
 `
 

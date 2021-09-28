@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"regexp"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -47,7 +48,10 @@ func TestAccVcdNsxtVAppRawAllNsxtNetworks(t *testing.T) {
 		"Tags":          "vapp vm nsxt",
 	}
 	configText := templateFill(testAccCheckVcdNsxtVAppRaw_basic, params)
+	params["FuncName"] = t.Name() + "-step2"
+	configText2 := templateFill(testAccCheckVcdNsxtVAppRaw_basicCleanup, params)
 	debugPrintf("#[DEBUG] CONFIGURATION: %s\n", configText)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { testAccPreCheck(t) },
 		ProviderFactories: testAccProviders,
@@ -67,6 +71,15 @@ func TestAccVcdNsxtVAppRawAllNsxtNetworks(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_vapp_vm.TestAccVcdNsxtVAppRawVm1", "network.1.ip", regexp.MustCompile(`^130\.10\.102\.`)),
 					resource.TestMatchResourceAttr("vcd_vapp_vm.TestAccVcdNsxtVAppRawVm1", "network.2.ip", regexp.MustCompile(`^12\.12\.2\.`)),
 				),
+			},
+			// This step ensures that VM and disk are removed, but networks are left
+			resource.TestStep{
+				Config: configText2,
+			},
+			// This step gives 10-second sleep timer so that cleanup bug is not hit in VCD 10.3
+			resource.TestStep{
+				Config:    configText2,
+				PreConfig: func() { time.Sleep(10 * time.Second) },
 			},
 		},
 	})
@@ -126,6 +139,7 @@ func testAccCheckVcdNsxtVAppRawDestroy(s *terraform.State) error {
 }
 
 const testAccCheckVcdNsxtVAppRaw_basic = `
+# skip-binary-test: removing NSX-T Org networks right after VM fails in 10.3
 data "vcd_nsxt_edgegateway" "existing" {
   org  = "{{.Org}}"
   vdc  = "{{.Vdc}}"
@@ -217,7 +231,7 @@ resource "vcd_vapp_org_network" "isolated" {
   depends_on = [vcd_network_isolated_v2.isolated-test]
 }
 
-resource "vcd_vapp_org_network" "imoported" {
+resource "vcd_vapp_org_network" "imported" {
   org                = "{{.Org}}"
   vdc                = "{{.Vdc}}"
   vapp_name          = vcd_vapp.{{.VappName}}.name
@@ -250,7 +264,7 @@ resource "vcd_vapp_vm" "{{.VmName1}}" {
 
   network {
     type               = "org"
-    name               = vcd_vapp_org_network.imoported.org_network_name
+    name               = vcd_vapp_org_network.imported.org_network_name
     ip_allocation_mode = "POOL"
   }
 
@@ -260,7 +274,7 @@ resource "vcd_vapp_vm" "{{.VmName1}}" {
     ip_allocation_mode = "DHCP"
   }
 
-  depends_on = [vcd_vapp_org_network.routed, vcd_vapp_org_network.isolated, vcd_vapp_org_network.imoported]
+  depends_on = [vcd_vapp_org_network.routed, vcd_vapp_org_network.isolated, vcd_vapp_org_network.imported]
 }
 
 resource "vcd_vapp_vm" "{{.VmName2}}" {
@@ -302,5 +316,73 @@ resource "vcd_vapp_vm" "{{.VmName2}}" {
   }
 
   depends_on = [vcd_vapp_org_network.routed, vcd_vapp_org_network.isolated]
+}
+`
+
+const testAccCheckVcdNsxtVAppRaw_basicCleanup = `
+data "vcd_nsxt_edgegateway" "existing" {
+  org  = "{{.Org}}"
+  vdc  = "{{.Vdc}}"
+  name = "{{.EdgeGateway}}"
+}
+
+resource "vcd_network_routed_v2" "{{.NetworkName}}" {
+  name            = "{{.NetworkName}}"
+  org             = "{{.Org}}"
+  vdc             = "{{.Vdc}}"
+  edge_gateway_id = data.vcd_nsxt_edgegateway.existing.id
+  gateway         = "10.10.102.1"
+  prefix_length   = 24
+
+  static_ip_pool {
+    start_address = "10.10.102.2"
+    end_address   = "10.10.102.199"
+  }
+}
+
+resource "vcd_nsxt_network_dhcp" "{{.NetworkName}}-dhcp" {
+  org             = "{{.Org}}"
+  vdc             = "{{.Vdc}}"
+  
+  org_network_id  = vcd_network_routed_v2.{{.NetworkName}}.id
+
+  pool {
+    start_address = "10.10.102.210"
+    end_address   = "10.10.102.220"
+  }
+
+  pool {
+    start_address = "10.10.102.230"
+    end_address   = "10.10.102.240"
+  }
+}
+
+
+resource "vcd_network_isolated_v2" "isolated-test" {
+  name            = "{{.NetworkName}}-isolated"
+  org             = "{{.Org}}"
+  vdc             = "{{.Vdc}}"
+  gateway         = "130.10.102.1"
+  prefix_length   = 24
+
+  static_ip_pool {
+    start_address = "130.10.102.2"
+    end_address   = "130.10.102.254"
+  }
+}
+
+resource "vcd_nsxt_network_imported" "imported-test" {
+  name            = "{{.NetworkName}}-imported"
+  org             = "{{.Org}}"
+  vdc             = "{{.Vdc}}"
+  gateway         = "12.12.2.1"
+  prefix_length   = 24
+
+  nsxt_logical_switch_name = "{{.ImportSegment}}"
+
+  static_ip_pool {
+    start_address = "12.12.2.10"
+    end_address   = "12.12.2.15"
+  }
 }
 `
