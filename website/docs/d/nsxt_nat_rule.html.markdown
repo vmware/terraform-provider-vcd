@@ -45,4 +45,4 @@ names should be unique so that they can be distinguished.
 ## Attribute Reference
 
 All the arguments and attributes defined in
-[`vcd_nsxt_nat_rule`](/docs/providers/vcd/r/nsxt_nat_rule.html) resource are available.
+[`vcd_nsxt_nat_rule`](/providers/vmware/vcd/latest/docs/resources/nsxt_nat_rule) resource are available.

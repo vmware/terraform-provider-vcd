@@ -14,7 +14,7 @@ traffic. After configuring a profile, you associate it with a virtual server. Th
 then processes traffic according to the values specified in the profile.
 
 ~> **Note:** See additional support notes in [application profile resource page]
-(/docs/providers/vcd/r/lb_app_profile.html).
+(/providers/vmware/vcd/latest/docs/resources/lb_app_profile).
 
 Supported in provider *v2.4+*
 

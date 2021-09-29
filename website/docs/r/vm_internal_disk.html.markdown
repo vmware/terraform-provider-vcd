@@ -10,7 +10,7 @@ description: |-
 
 This can be used to create, update and delete VM internal disks on already created VMs.
 
-~> **Note:** To adjust disk parameters when creating a new VM, please use [override_template_disk](/docs/providers/vcd/r/vapp_vm.html#override-template-disk).
+~> **Note:** To adjust disk parameters when creating a new VM, please use [override_template_disk](/providers/vmware/vcd/latest/docs/resources/vapp_vm#override-template-disk).
 
 To manage disks which already exist inside a VM, please [import](#importing) them first.
 

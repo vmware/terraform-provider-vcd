@@ -33,7 +33,7 @@ The following arguments are supported:
 
 ## Attribute reference
 
-All attributes defined in [isolated network resource](/docs/providers/vcd/r/network_isolated_v2.html#attribute-reference) are supported.
+All attributes defined in [isolated network resource](/providers/vmware/vcd/latest/docs/resources/network_isolated_v2#attribute-reference) are supported.
 
 ## Filter arguments
 

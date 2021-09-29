@@ -13,7 +13,7 @@ Requires system administrator privileges.
 
 Supported in provider *v2.2+*
 
-~> **Note:** For NSX-T suported external network please use [vcd_external_network_v2](/docs/providers/vcd/r/external_network_v2.html)
+~> **Note:** For NSX-T suported external network please use [vcd_external_network_v2](/providers/vmware/vcd/latest/docs/resources/external_network_v2)
 
 ## Example Usage
 
@@ -148,4 +148,4 @@ NOTE: the default separator (.) can be changed using Provider.import_separator o
 While the above structure is the minimum needed to get an import, it is not sufficient to run `terraform plan`,
 as it lacks several mandatory fields. To use the imported resource, you will need to add the missing properties
 using the data in `terraform.tfstate` as a reference. If the resource does not need modifications, consider using
-an [external network data source](/docs/providers/vcd/d/external_network.html) instead. 
+an [external network data source](/providers/vmware/vcd/latest/docs/data-sources/external_network) instead. 

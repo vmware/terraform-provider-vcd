@@ -35,7 +35,7 @@ The following arguments are supported:
 
 ## Attribute reference
 
-All attributes defined in [imported network resource](/docs/providers/vcd/r/nsxt_network_imported.html#attribute-reference) are supported.
+All attributes defined in [imported network resource](/providers/vmware/vcd/latest/docs/resources/nsxt_network_imported#attribute-reference) are supported.
 
 ## Filter arguments
 

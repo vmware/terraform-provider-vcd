@@ -35,5 +35,5 @@ The following arguments are supported:
 
 ## Attribute Reference
 
-All properties defined in [vcd_external_network_v2](/docs/providers/vcd/r/external_network_v2.html)
+All properties defined in [vcd_external_network_v2](/providers/vmware/vcd/latest/docs/resources/external_network_v2)
 resource are available.
