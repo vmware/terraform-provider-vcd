@@ -40,5 +40,5 @@ The following arguments are supported:
 
 ## Attribute Reference
 
-All the attributes defined in [`vcd_nsxv_dhcp_relay`](/providers/vmware/vcd/latest/docs/resources/nsxv_dhcp_relay.html)
+All the attributes defined in [`vcd_nsxv_dhcp_relay`](/providers/vmware/vcd/latest/docs/resources/nsxv_dhcp_relay)
 resource are available.

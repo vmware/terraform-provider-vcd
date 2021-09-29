@@ -40,4 +40,4 @@ The following arguments are supported:
 ## Attribute Reference
 
 All the arguments and attributes defined in
-[`vcd_nsxt_ip_set`](/providers/vmware/vcd/latest/docs/resources/nsxt_ip_set.html) resource are available.
+[`vcd_nsxt_ip_set`](/providers/vmware/vcd/latest/docs/resources/nsxt_ip_set) resource are available.

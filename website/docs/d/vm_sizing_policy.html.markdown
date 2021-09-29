@@ -31,5 +31,5 @@ The following arguments are supported:
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `name` - (Required) The name VM sizing policy
 
-All arguments defined in [`vcd_vm_sizing_policy`](/providers/vmware/vcd/latest/docs/resources/vm_sizing_policy.html#argument-reference) are supported.
+All arguments defined in [`vcd_vm_sizing_policy`](/providers/vmware/vcd/latest/docs/resources/vm_sizing_policy#argument-reference) are supported.
 

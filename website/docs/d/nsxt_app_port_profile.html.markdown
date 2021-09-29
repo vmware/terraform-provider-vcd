@@ -60,5 +60,5 @@ The following arguments are supported:
 ## Attribute Reference
 
 All the arguments and attributes defined in
-[`vcd_nsxt_app_port_profile`](/providers/vmware/vcd/latest/docs/resources/nsxt_app_port_profile.html) resource
+[`vcd_nsxt_app_port_profile`](/providers/vmware/vcd/latest/docs/resources/nsxt_app_port_profile) resource
 are available.

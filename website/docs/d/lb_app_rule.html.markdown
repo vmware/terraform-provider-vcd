@@ -12,7 +12,7 @@ Provides a VMware Cloud Director Edge Gateway Load Balancer Application Rule dat
 rule allows to directly manipulate and manage IP application traffic with load balancer.
 
 ~> **Note:** See additional support notes in [application rule resource page]
-(/providers/vmware/vcd/latest/docs/resources/lb_app_rule.html).
+(/providers/vmware/vcd/latest/docs/resources/lb_app_rule).
 
 Supported in provider *v2.4+*
 

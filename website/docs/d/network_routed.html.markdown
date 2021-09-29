@@ -13,7 +13,7 @@ Provides a VMware Cloud Director Org VDC routed Network data source. This can be
 Supported in provider *v2.5+*
 
 ~> **Note:** This data source supports only NSX-V backed Org VDC networks.
-Please use newer [`vcd_network_routed_v2`](/providers/vmware/vcd/latest/docs/data-sources/network_routed_v2.html)
+Please use newer [`vcd_network_routed_v2`](/providers/vmware/vcd/latest/docs/data-sources/network_routed_v2)
 data source which is compatible with NSX-T.
 
 ## Example Usage
@@ -60,7 +60,7 @@ The following arguments are supported:
 
 ## Attribute reference
 
-All attributes defined in [routed network resource](/providers/vmware/vcd/latest/docs/resources/network_routed.html#attribute-reference) are supported.
+All attributes defined in [routed network resource](/providers/vmware/vcd/latest/docs/resources/network_routed#attribute-reference) are supported.
 
 ## Filter arguments
 

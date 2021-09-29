@@ -45,11 +45,11 @@ The following arguments are supported:
 ## Attribute Reference
 
 * `description` - Network friendly description
-* `ip_scope` -  A list of IP scopes for the network. See [IP Scope](/providers/vmware/vcd/latest/docs/resources/external_network.html#ipscope)
+* `ip_scope` -  A list of IP scopes for the network. See [IP Scope](/providers/vmware/vcd/latest/docs/resources/external_network#ipscope)
    for details.
 * `vsphere_network` -  A list of DV_PORTGROUP or NETWORK objects names that back this network. Each referenced 
   DV_PORTGROUP or NETWORK must exist on a vCenter server registered with the system.
-  See [vSphere Network](/providers/vmware/vcd/latest/docs/resources/external_network.html#vspherenetwork) for details.
+  See [vSphere Network](/providers/vmware/vcd/latest/docs/resources/external_network#vspherenetwork) for details.
 * `retain_net_info_across_deployments` -  Specifies whether the network resources such as IP/MAC of router will be 
   retained across deployments.
 

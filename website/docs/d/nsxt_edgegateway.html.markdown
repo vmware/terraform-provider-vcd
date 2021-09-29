@@ -37,5 +37,5 @@ The following arguments are supported:
 
 ## Attribute reference
 
-All properties defined in [vcd_nsxt_edgegateway](/providers/vmware/vcd/latest/docs/resources/nsxt_edgegateway.html)
+All properties defined in [vcd_nsxt_edgegateway](/providers/vmware/vcd/latest/docs/resources/nsxt_edgegateway)
 resource are available.

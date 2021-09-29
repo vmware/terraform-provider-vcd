@@ -58,7 +58,7 @@ The following arguments are supported:
 
 ## Attribute Reference
 
-All attributes defined in [edge gateway resource](/providers/vmware/vcd/latest/docs/resources/edgegateway.html#attribute-reference) are supported.
+All attributes defined in [edge gateway resource](/providers/vmware/vcd/latest/docs/resources/edgegateway#attribute-reference) are supported.
 
 ## Filter arguments
 

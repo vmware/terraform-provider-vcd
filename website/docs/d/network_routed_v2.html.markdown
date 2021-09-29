@@ -35,7 +35,7 @@ The following arguments are supported:
 
 ## Attribute reference
 
-All attributes defined in [routed network resource](/providers/vmware/vcd/latest/docs/resources/network_routed_v2.html#attribute-reference) are supported.
+All attributes defined in [routed network resource](/providers/vmware/vcd/latest/docs/resources/network_routed_v2#attribute-reference) are supported.
 
 ## Filter arguments
 

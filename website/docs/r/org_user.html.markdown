@@ -12,7 +12,7 @@ Provides a VMware Cloud Director Org User. This can be used to create, update, a
 
 If we have the right permissions, we can create both organization and System users: to do so, we indicate "System" as organization name.
 
-The users being created can be assigned either pre-existing roles or [custom roles](/providers/vmware/vcd/latest/docs/resources/role.html).
+The users being created can be assigned either pre-existing roles or [custom roles](/providers/vmware/vcd/latest/docs/resources/role).
 
 Supported in provider *v2.4+*
 

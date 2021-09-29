@@ -38,5 +38,5 @@ The following arguments are supported:
 
 ## Attribute reference
 
-All attributes defined in [organization VDC resource](/providers/vmware/vcd/latest/docs/resources/org_vdc.html#attribute-reference) are supported.
+All attributes defined in [organization VDC resource](/providers/vmware/vcd/latest/docs/resources/org_vdc#attribute-reference) are supported.
 

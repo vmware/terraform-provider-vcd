@@ -34,4 +34,4 @@ The following arguments are supported:
 
 ## Attribute Reference
 
-All the attributes defined in [`vcd_nsxv_ip_set`](/providers/vmware/vcd/latest/docs/resources/nsxv_ip_set.html) resource are available.
+All the attributes defined in [`vcd_nsxv_ip_set`](/providers/vmware/vcd/latest/docs/resources/nsxv_ip_set) resource are available.

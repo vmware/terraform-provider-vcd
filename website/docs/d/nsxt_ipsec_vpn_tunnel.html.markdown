@@ -43,4 +43,4 @@ The following arguments are supported:
 ## Attribute Reference
 
 All the arguments and attributes defined in
-[`vcd_nsxt_ipsec_vpn_tunnel`](/providers/vmware/vcd/latest/docs/resources/nsxt_ipsec_vpn_tunnel.html) resource are available.
+[`vcd_nsxt_ipsec_vpn_tunnel`](/providers/vmware/vcd/latest/docs/resources/nsxt_ipsec_vpn_tunnel) resource are available.

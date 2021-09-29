@@ -14,7 +14,7 @@ modify, and delete internal networks for vApps to connect.
 Supported in provider *v2.0+*
 
 ~> **Note:** This resource supports only NSX-V backed Org VDC networks.
-Please use newer [`vcd_network_routed_v2`](/providers/vmware/vcd/latest/docs/resources/network_routed_v2.html) resource
+Please use newer [`vcd_network_routed_v2`](/providers/vmware/vcd/latest/docs/resources/network_routed_v2) resource
 which is compatible with NSX-T.
 
 ## Example Usage

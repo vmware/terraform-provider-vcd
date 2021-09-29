@@ -36,9 +36,9 @@ The following arguments are supported:
 
 * `org` - (Optional) The name of organization to use, optional if defined at provider level. Useful when connected as sysadmin working across different organisations
 * `vdc` - (Optional) The name of VDC to use, optional if defined at provider level
-* `id` - (Optional) Disk id or name is required. If both provided - Id is used. Id can be found by using import function [Listing independent disk IDs](/providers/vmware/vcd/latest/docs/resources/independent_disk.html#listing-independent-disk-ids) 
+* `id` - (Optional) Disk id or name is required. If both provided - Id is used. Id can be found by using import function [Listing independent disk IDs](/providers/vmware/vcd/latest/docs/resources/independent_disk#listing-independent-disk-ids) 
 * `name` - (Optional) Disk name.  **Warning** please use `id` as there is possibility to have more than one independent disk with same name. As result data source will fail.
 
 ## Attribute reference
 
-All attributes defined in [independent disk](/providers/vmware/vcd/latest/docs/resources/independent_disk.html#attribute-reference) are supported.
+All attributes defined in [independent disk](/providers/vmware/vcd/latest/docs/resources/independent_disk#attribute-reference) are supported.

@@ -44,7 +44,7 @@ The following arguments are supported:
 
 ## Attribute reference
 
-All attributes defined in [catalog_media](/providers/vmware/vcd/latest/docs/resources/catalog_media.html#attribute-reference) are supported.
+All attributes defined in [catalog_media](/providers/vmware/vcd/latest/docs/resources/catalog_media#attribute-reference) are supported.
 
 ## Filter arguments
 
