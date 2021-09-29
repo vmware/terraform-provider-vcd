@@ -58,6 +58,9 @@ func testSpecificDataSourceNotFound(t *testing.T, dataSourceName string, vcdClie
 		case dataSourceName == "vcd_nsxt_alb_controller" || dataSourceName == "vcd_nsxt_alb_cloud" ||
 			dataSourceName == "vcd_nsxt_alb_importable_cloud" || dataSourceName == "vcd_nsxt_alb_service_engine_group":
 			skipNoNsxtAlbConfiguration(t)
+			if !usingSysAdmin() {
+				t.Skip(`Works only with system admin privileges`)
+			}
 		// vcd_resource_list and vcd_resource_schema don't search for real entities
 		case dataSourceName == "vcd_resource_list" || dataSourceName == "vcd_resource_schema":
 			t.Skip(`not a real data source`)
