@@ -41,5 +41,5 @@ The following arguments are supported:
 
 ## Attribute reference
 
-All attributes defined in [`vcd_vapp_network`](/docs/providers/vcd/r/vapp_network.html#attribute-reference) are supported.
+All attributes defined in [`vcd_vapp_network`](/providers/vmware/vcd/latest/docs/resources/vapp_network.html#attribute-reference) are supported.
 

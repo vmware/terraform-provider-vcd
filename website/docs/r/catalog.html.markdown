@@ -55,7 +55,7 @@ The following arguments are supported:
 * `name` - (Required) Catalog name
 * `description` - (Optional) - Description of catalog
 * `storage_profile_id` (Optional, *v3.1+*) Allows to set specific storage profile to be used for catalog. **Note.** Data
-source [vcd_storage_profile](/docs/providers/vcd/d/storage_profile.html) can help to lookup storage profile ID.
+source [vcd_storage_profile](/providers/vmware/vcd/latest/docs/data-sources/storage_profile.html) can help to lookup storage profile ID.
 * `delete_recursive` - (Required) - When destroying use delete_recursive=True to remove the catalog and any objects it contains that are in a state that normally allows removal
 * `delete_force` -(Required) - When destroying use delete_force=True with delete_recursive=True to remove a catalog and any objects it contains, regardless of their state
 

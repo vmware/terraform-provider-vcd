@@ -39,5 +39,5 @@ The following arguments are supported:
 
 ## Attribute reference
 
-All properties defined in [vcd_nsxt_firewall](/docs/providers/vcd/r/nsxt_firewall.html)
+All properties defined in [vcd_nsxt_firewall](/providers/vmware/vcd/latest/docs/resources/nsxt_firewall.html)
 resource are available.

@@ -42,5 +42,5 @@ The following arguments are supported:
 
 ## Attribute Reference
 
-All the attributes defined in [`vcd_nsxt_network_dhcp`](/docs/providers/vcd/r/nsxt_network_dhcp.html)
+All the attributes defined in [`vcd_nsxt_network_dhcp`](/providers/vmware/vcd/latest/docs/resources/nsxt_network_dhcp.html)
 resource are available.

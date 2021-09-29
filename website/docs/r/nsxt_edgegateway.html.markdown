@@ -130,7 +130,7 @@ The following arguments are supported:
 * `vdc` - (Optional) The name of VDC that owns the edge gateway. Optional if defined at provider level.
 * `name` - (Required) A unique name for the edge gateway.
 * `description` - (Optional) A unique name for the edge gateway.
-* `external_network_id` - (Required) An external network ID. **Note.** Data source [vcd_external_network_v2](/docs/providers/vcd/d/external_network_v2.html)
+* `external_network_id` - (Required) An external network ID. **Note.** Data source [vcd_external_network_v2](/providers/vmware/vcd/latest/docs/data-sources/external_network_v2.html)
 can be used to lookup ID by name.
 * `subnet` - (Required) One or more [subnets](#edgegateway-subnet) defined for edge gateway.
 * `edge_cluster_id` - (Optional) Specific Edge Cluster ID if required
@@ -198,7 +198,7 @@ terraform import vcd_nsxt_edgegateway.nsxt-edge my-org.nsxt-vdc.nsxt-edge
 ```
 
 * **Note 1**: the separator can be changed using `Provider.import_separator` or variable `VCD_IMPORT_SEPARATOR`
-* **Note 2**: it is possible to list all available NSX-T edge gateways using data source [vcd_resource_list](/docs/providers/vcd/d/resource_list.html#vcd_nsxt_edgegateway)
+* **Note 2**: it is possible to list all available NSX-T edge gateways using data source [vcd_resource_list](/providers/vmware/vcd/latest/docs/data-sources/resource_list.html#vcd_nsxt_edgegateway)
 
 [docs-import]:https://www.terraform.io/docs/import/
 

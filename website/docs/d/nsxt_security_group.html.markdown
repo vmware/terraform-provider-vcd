@@ -42,4 +42,4 @@ The following arguments are supported:
 ## Attribute Reference
 
 All the arguments and attributes defined in
-[`vcd_nsxt_security_group`](/docs/providers/vcd/r/nsxt_security_group.html) resource are available.
+[`vcd_nsxt_security_group`](/providers/vmware/vcd/latest/docs/resources/nsxt_security_group.html) resource are available.

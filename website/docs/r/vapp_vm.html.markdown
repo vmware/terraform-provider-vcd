@@ -287,7 +287,7 @@ example for usage details.
   Tools are not present on the VM.
 * `os_type` - (Optional; *v2.9+*) Operating System type. Possible values can be found in [Os Types](#os-types). Required when creating empty VM.
 * `hardware_version` - (Optional; *v2.9+*) Virtual Hardware Version (e.g.`vmx-14`, `vmx-13`, `vmx-12`, etc.). Required when creating empty VM.
-* `boot_image` - (Optional; *v2.9+*) Media name to mount as boot image. Image is mounted only during VM creation. On update if value is changed to empty it will eject the mounted media. If you want to mount an image later, please use [vcd_inserted_media](/docs/providers/vcd/r/inserted_media.html).  
+* `boot_image` - (Optional; *v2.9+*) Media name to mount as boot image. Image is mounted only during VM creation. On update if value is changed to empty it will eject the mounted media. If you want to mount an image later, please use [vcd_inserted_media](/providers/vmware/vcd/latest/docs/resources/inserted_media.html).  
 * `cpu_hot_add_enabled` - (Optional; *v3.0+*) True if the virtual machine supports addition of virtual CPUs while powered on. Default is `false`.
 * `memory_hot_add_enabled` - (Optional; *v3.0+*) True if the virtual machine supports addition of memory while powered on. Default is `false`.
 * `prevent_update_power_off` - (Optional; *v3.0+*) True if the update of resource should fail when virtual machine power off needed. Default is `false`.
@@ -356,7 +356,7 @@ example for usage details.
 <a id="override-template-disk"></a>
 ## Override template disk
 Allows to update internal disk in template before first VM boot. Disk is matched by `bus_type`, `bus_number` and `unit_number`.
-Changes are ignored on update. This part isn't reread on refresh. To manage internal disk later please use [`vcd_vm_internal_disk`](/docs/providers/vcd/r/vm_internal_disk.html) resource.
+Changes are ignored on update. This part isn't reread on refresh. To manage internal disk later please use [`vcd_vm_internal_disk`](/providers/vmware/vcd/latest/docs/resources/vm_internal_disk.html) resource.
  
 ~> **Note:** Managing disks in VM is possible only when VDC fast provisioned is disabled.
 

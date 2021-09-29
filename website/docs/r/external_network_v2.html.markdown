@@ -193,15 +193,15 @@ The following arguments are supported:
 <a id="vspherenetwork"></a>
 ## vSphere Network
 
-* `vcenter_id` - (Required) vCenter ID. Can be looked up using [`vcd_vcenter`](/docs/providers/vcd/d/vcenter.html) data source.
-* `portgroup_id` - (Required) vSphere portgroup ID. Can be looked up using  [`vcd_portgroup`](/docs/providers/vcd/d/portgroup.html) data source.
+* `vcenter_id` - (Required) vCenter ID. Can be looked up using [`vcd_vcenter`](/providers/vmware/vcd/latest/docs/data-sources/vcenter.html) data source.
+* `portgroup_id` - (Required) vSphere portgroup ID. Can be looked up using  [`vcd_portgroup`](/providers/vmware/vcd/latest/docs/data-sources/portgroup.html) data source.
 
 <a id="nsxtnetwork"></a>
 ## NSX-T Network
 
-* `nsxt_manager_id` - (Required) NSX-T manager ID. Can be looked up using [`vcd_nsxt_manager`](/docs/providers/vcd/d/nsxt_manager.html) data source.
+* `nsxt_manager_id` - (Required) NSX-T manager ID. Can be looked up using [`vcd_nsxt_manager`](/providers/vmware/vcd/latest/docs/data-sources/nsxt_manager.html) data source.
 * `nsxt_tier0_router_id` - (Optional) NSX-T Tier-0 router ID. Can be looked up using
-  [`vcd_nsxt_tier0_router`](/docs/providers/vcd/d/nsxt_tier0_router.html) data source.
+  [`vcd_nsxt_tier0_router`](/providers/vmware/vcd/latest/docs/data-sources/nsxt_tier0_router.html) data source.
 * `nsxt_segment_name` - (Optional; *v3.4+*; *VCD 10.3+*) Existing NSX-T segment name.
 
 ## Importing
@@ -232,4 +232,4 @@ NOTE: the default separator (.) can be changed using Provider.import_separator o
 While the above structure is the minimum needed to get an import, it is not sufficient to run `terraform plan`,
 as it lacks several mandatory fields. To use the imported resource, you will need to add the missing properties
 using the data in `terraform.tfstate` as a reference. If the resource does not need modifications, consider using
-an [external network data source](/docs/providers/vcd/d/external_network_v2.html) instead. 
+an [external network data source](/providers/vmware/vcd/latest/docs/data-sources/external_network_v2.html) instead. 

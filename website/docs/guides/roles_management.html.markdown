@@ -31,7 +31,7 @@ to all tenants without providing a list. In this later case, the resource will b
 
 ## Rights
 
-**Rights** ([`vcd_right`](/docs/providers/vcd/d/right.html)) are available as data sources. They can't be created by either provider or tenants.
+**Rights** ([`vcd_right`](/providers/vmware/vcd/latest/docs/data-sources/right.html)) are available as data sources. They can't be created by either provider or tenants.
 They are building blocks for the other three entities (Roles, Global Roles, Rights Bundles), and can be used by simply
 stating their name within the containing entity. You can also use data sources, but it would make for a crowded HCL
 script, and would also increase the amount of computing needed to run a script. 
@@ -39,7 +39,7 @@ script, and would also increase the amount of computing needed to run a script.
 To see the list of available rights, you can do one of the following:
 
 * make a data source of several existing Roles, Global Roles, or Rights Bundles, and use an `output` structure to show the contents;
-* use a data source of [`vcd_resource_list`](/docs/providers/vcd/d/vcd_resource_list.html) to show the rights available to a given organization.
+* use a data source of [`vcd_resource_list`](/providers/vmware/vcd/latest/docs/data-sources/vcd_resource_list.html) to show the rights available to a given organization.
 
 Examples:
 
@@ -70,21 +70,21 @@ implied rights, you will get an error, listing all the rights that are missing f
 
 ## Roles
 
-A **Role** ([`vcd_role`](/docs/providers/vcd/r/role.html)) is a set of rights that can be assigned to a user. When choosing a role for a user, we see a list of predefined
+A **Role** ([`vcd_role`](/providers/vmware/vcd/latest/docs/resources/role.html)) is a set of rights that can be assigned to a user. When choosing a role for a user, we see a list of predefined
 roles that are available to the organization. That list is the result of the **Global Roles** defined by the provider
 and published to the tenant we are using, in addition to the roles that were created by the organization administrator.
 As such, roles always belong to an organization. To define or use a role at provider level, we use the "System" organization.
 
 ## Global Roles
 
-A **Global Role** ([`vcd_global_role`](/docs/providers/vcd/r/global_role.html)) is a definition of a role that is _published_ to one or more tenants, which in turn will see such global
+A **Global Role** ([`vcd_global_role`](/providers/vmware/vcd/latest/docs/resources/global_role.html)) is a definition of a role that is _published_ to one or more tenants, which in turn will see such global
 roles converted into the roles they can use.
 Provider can add, modify, and delete global roles. They can also alter the list of publication for each global role, to
 make them available to a selected set of tenants.
 
 ## Rights Bundles
 
-A **Rights Bundle** ([`vcd_rights_bundle`](/docs/providers/vcd/r/rights_bundle.html)) is a set of rights that can be made available to tenants. While global roles define tenant roles, a
+A **Rights Bundle** ([`vcd_rights_bundle`](/providers/vmware/vcd/latest/docs/resources/rights_bundle.html)) is a set of rights that can be made available to tenants. While global roles define tenant roles, a
 rights bundle define which rights, independently of a global role listing, can be given to one or more tenants.
 
 An example is necessary to understand the concept.
