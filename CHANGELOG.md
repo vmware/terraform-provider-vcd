@@ -1,6 +1,33 @@
-## 3.4.0 (Unreleased)
+## 3.4.0 (30 September, 2021)
 
-Changes in progress for v3.4.0 are available at [.changes/v3.4.0](https://github.com/vmware/terraform-provider-vcd/tree/master/.changes/v3.4.0) until the release.
+## FEATURES
+* **New Resource:** `vcd_nsxt_alb_controller` for managing NSX-T ALB Controllers (provider configuration) ([#709](https://github.com/vmware/terraform-provider-vcd/pull/709))
+* **New Data source:** `vcd_nsxt_alb_controller` for reading NSX-T ALB Controllers (provider configuration)  ([#709](https://github.com/vmware/terraform-provider-vcd/pull/709),[#718](https://github.com/vmware/terraform-provider-vcd/pull/718))
+* **New Resource:** `vcd_nsxt_alb_cloud` for managing NSX-T ALB Clouds (provider configuration)  ([#709](https://github.com/vmware/terraform-provider-vcd/pull/709))
+* **New Data source:** `vcd_nsxt_alb_cloud` for reading NSX-T ALB Clouds (provider configuration)  ([#709](https://github.com/vmware/terraform-provider-vcd/pull/709),[#718](https://github.com/vmware/terraform-provider-vcd/pull/718))
+* **New Data source:** `vcd_nsxt_alb_importable_cloud` for reading NSX-T ALB Importable Clouds (provider configuration)  ([#709](https://github.com/vmware/terraform-provider-vcd/pull/709),[#718](https://github.com/vmware/terraform-provider-vcd/pull/718))
+* **New Resource:** `vcd_nsxt_alb_service_engine_group` for managing NSX-T ALB Service Engine Groups (provider configuration)  ([#709](https://github.com/vmware/terraform-provider-vcd/pull/709))
+* **New Data source:** `vcd_nsxt_alb_service_engine_group` for reading NSX-T ALB Service Engine Groups (provider configuration)  ([#709](https://github.com/vmware/terraform-provider-vcd/pull/709),[#718](https://github.com/vmware/terraform-provider-vcd/pull/718))
+
+## IMPROVEMENTS
+* **Resource** and **Data source** `vcd_external_network_v2` support NSX-T Segment backed network ([#711](https://github.com/vmware/terraform-provider-vcd/pull/711))
+* `vcd_org_vdc`: it is now possible adding and removing storage profiles ([#698](https://github.com/vmware/terraform-provider-vcd/pull/698))
+* `data/vcd_nsxt_edge_cluster` add documentation for missing fields ([#700](https://github.com/vmware/terraform-provider-vcd/pull/700))
+* Bump Terraform SDK to 2.7.0 ([#701](https://github.com/vmware/terraform-provider-vcd/pull/701))
+* Formatted HCL docs using `terraform fmt`  ([#705](https://github.com/vmware/terraform-provider-vcd/pull/705))
+* Updated attribute syntax to use first class expressions ([#705](https://github.com/vmware/terraform-provider-vcd/pull/705))
+* Align build tags to match go fmt with Go 1.17 ([#707](https://github.com/vmware/terraform-provider-vcd/pull/707))
+* Improve `test-tags.sh` script to handle new build tag format ([#707](https://github.com/vmware/terraform-provider-vcd/pull/707))
+* Prevent invalid space in the base64 encoded authentication string in the token scripts specific for Linux ([#708](https://github.com/vmware/terraform-provider-vcd/pull/708))
+
+## BUG FIXES
+* Fix Issue #696: Catalog deletion failure returns as success ([#698](https://github.com/vmware/terraform-provider-vcd/pull/698))
+* Fix Issue #648 `vcd_org_vdc`: adding a storage profile requires the vdc to be replaced ([#698](https://github.com/vmware/terraform-provider-vcd/pull/698))
+* Primary NIC removal for `vcd_vapp_vm` and `vcd_vapp` is done in cold fashion ([#716](https://github.com/vmware/terraform-provider-vcd/pull/716))
+* Change broken docs reference links with final docs format
+
+## NOTES
+* Drop support for VCD 10.0 ([#704](https://github.com/vmware/terraform-provider-vcd/pull/704))
 
 ## 3.3.1 (5 July, 2021)
 
