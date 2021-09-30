@@ -29,7 +29,7 @@
 ## NOTES
 * Drop support for VCD 10.0 ([#704](https://github.com/vmware/terraform-provider-vcd/pull/704))
 
-## 3.3.1 (5 July, 2021)
+## 3.3.1 (July 5, 2021)
 
 ## BUG FIXES
 * (Issue #689) `resource/vcd_vm` and `resource/vcd_vapp_vm` cannot find templates in shared catalogs from other Orgs 
