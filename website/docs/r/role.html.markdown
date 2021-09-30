@@ -75,5 +75,5 @@ at this stage will show the difference between the minimal configuration file an
 
 ## More information
 
-See [Roles management](/docs/providers/vcd/guides/roles_management.html) for a broader description of how roles and
+See [Roles management](/providers/vmware/vcd/latest/docs/guides/roles_management) for a broader description of how roles and
 rights work together.
