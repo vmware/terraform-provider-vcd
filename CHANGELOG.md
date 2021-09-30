@@ -1,4 +1,4 @@
-## 3.4.0 (30 September, 2021)
+## 3.4.0 (September 30, 2021)
 
 ## FEATURES
 * **New Resource:** `vcd_nsxt_alb_controller` for managing NSX-T ALB Controllers (provider configuration) ([#709](https://github.com/vmware/terraform-provider-vcd/pull/709))
