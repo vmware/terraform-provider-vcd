@@ -24,7 +24,7 @@ labels: enhancement
 
 * vcd_XXX
 
-### Potential Terraform Configuration
+### Terraform Configuration (if it applies)
 
 <!--- Information about code formatting: https://help.github.com/articles/basic-writing-and-formatting-syntax/#quoting-code --->
 
@@ -34,7 +34,7 @@ without modules. It will help us to respond and replicate the problem quicker. I
 some HCL error while doing so.
 
 For bigger configs you may use [Gist(s)](https://gist.github.com) or a service like Dropbox and
-share a link to the ZIP file. For security, you can also encrypt the files using our GPG public key.
+share a link to the ZIP file.
 ```
 
 ### References
@@ -46,4 +46,4 @@ Are there any other GitHub issues (open or closed) or pull requests that should 
 
 --->
 
-* #0000
+* Issue #0000
