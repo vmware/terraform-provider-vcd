@@ -1,3 +1,7 @@
+## 3.5.0 (Unreleased)
+
+Changes in progress for v3.5.0 are available at [.changes/v3.5.0](https://github.com/vmware/terraform-provider-vcd/tree/master/.changes/v3.5.0) until the release.
+
 ## 3.4.0 (September 30, 2021)
 
 ## FEATURES

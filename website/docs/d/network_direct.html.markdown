@@ -85,4 +85,4 @@ The following arguments are supported:
 * `ip` (Optional) matches the IP of the resource using a regular expression.
 * `metadata` (Optional) One or more parameters that will match metadata contents.
 
-See [Filters reference](/docs/providers/vcd/guides/data_source_filters.html) for details and examples.
+See [Filters reference](/providers/vmware/vcd/latest/docs/guides/data_source_filters) for details and examples.
