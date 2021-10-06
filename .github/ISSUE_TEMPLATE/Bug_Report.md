@@ -63,6 +63,9 @@ What actually happened?
 Please list the steps required to reproduce the issue, for example:
 1. `terraform apply`
 
+### User Access rights 
+Information about user used. Role and/or more exact rights if it is customized.
+
 ### Important Factoids
 Is there anything atypical about your accounts that we should know?
 
