@@ -11,12 +11,6 @@ import (
 
 // TestAccVcdNsxtAlbGeneralSettingsDS assumes that NSX-T ALB is not configured and General Settings shows "Inactive"
 func TestAccVcdNsxtAlbGeneralSettingsDS(t *testing.T) {
-	preTestChecks(t)
-	if !usingSysAdmin() {
-		t.Skip(t.Name() + " requires system admin privileges")
-		return
-	}
-
 	vcdClient := createTemporaryVCDConnection()
 	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") {
 		t.Skip(t.Name() + " requires at least API v35.0 (vCD 10.2+)")

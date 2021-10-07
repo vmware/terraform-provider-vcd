@@ -1,12 +1,15 @@
 package vcd
 
 import (
+	"context"
+
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func datasourceVcdAlbGeneralSettings() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: resourceAndDatasourceVcdAlbGeneralSettingsRead,
+		ReadContext: datasourceVcdAlbGeneralSettingsRead,
 
 		Schema: map[string]*schema.Schema{
 			"org": {
@@ -41,4 +44,8 @@ func datasourceVcdAlbGeneralSettings() *schema.Resource {
 			},
 		},
 	}
+}
+
+func datasourceVcdAlbGeneralSettingsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return vcdAlbGeneralSettingsRead(meta, d, "datasource")
 }

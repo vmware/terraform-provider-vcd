@@ -18,7 +18,7 @@ func resourceVcdAlbGeneralSettings() *schema.Resource {
 	return &schema.Resource{
 		CreateContext: resourceVcdAlbGeneralSettingsCreateUpdate,
 		UpdateContext: resourceVcdAlbGeneralSettingsCreateUpdate,
-		ReadContext:   resourceAndDatasourceVcdAlbGeneralSettingsRead,
+		ReadContext:   resourceVcdAlbGeneralSettingsRead,
 		DeleteContext: resourceVcdAlbGeneralSettingsDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: resourceVcdAlbGeneralSettingsImport,
@@ -85,10 +85,16 @@ func resourceVcdAlbGeneralSettingsCreateUpdate(ctx context.Context, d *schema.Re
 	// ALB configuration does not have its own ID, but is done for each Edge Gateway therefore
 	d.SetId(edgeGatewayId)
 
-	return resourceAndDatasourceVcdAlbGeneralSettingsRead(ctx, d, meta)
+	return resourceVcdAlbGeneralSettingsRead(ctx, d, meta)
 }
 
-func resourceAndDatasourceVcdAlbGeneralSettingsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbGeneralSettingsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return vcdAlbGeneralSettingsRead(meta, d, "resource")
+}
+
+// vcdAlbGeneralSettingsRead is used for read in resource and data source. The only difference between the two is that a
+// resource should unset ID, while a data source should return an error
+func vcdAlbGeneralSettingsRead(meta interface{}, d *schema.ResourceData, resourceType string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	orgName := d.Get("org").(string)
@@ -97,8 +103,8 @@ func resourceAndDatasourceVcdAlbGeneralSettingsRead(ctx context.Context, d *sche
 
 	nsxtEdge, err := vcdClient.GetNsxtEdgeGatewayById(orgName, vdcName, edgeGatewayId)
 	if err != nil {
-		// Edge Gateway being not found means that this resource is removed
-		if govcd.ContainsNotFound(err) {
+		// Edge Gateway being not found means that this resource is removed. Data source should still return error.
+		if govcd.ContainsNotFound(err) && resourceType == "resource" {
 			d.SetId("")
 			return nil
 		}
