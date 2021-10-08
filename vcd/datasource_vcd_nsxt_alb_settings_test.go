@@ -11,6 +11,15 @@ import (
 
 // TestAccVcdNsxtAlbSettingsDS assumes that NSX-T ALB is not configured and General Settings shows "Inactive"
 func TestAccVcdNsxtAlbSettingsDS(t *testing.T) {
+	preTestChecks(t)
+
+	// This test requires access to the vCD before filling templates
+	// Thus it won't run in the short test
+	if vcdShortTest {
+		t.Skip(acceptanceTestsSkipped)
+		return
+	}
+
 	vcdClient := createTemporaryVCDConnection()
 	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") {
 		t.Skip(t.Name() + " requires at least API v35.0 (vCD 10.2+)")
@@ -27,11 +36,6 @@ func TestAccVcdNsxtAlbSettingsDS(t *testing.T) {
 
 	configText1 := templateFill(testAccVcdNsxtAlbSettingsDS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
-
-	if vcdShortTest {
-		t.Skip(acceptanceTestsSkipped)
-		return
-	}
 
 	resource.Test(t, resource.TestCase{
 		ProviderFactories: testAccProviders,
