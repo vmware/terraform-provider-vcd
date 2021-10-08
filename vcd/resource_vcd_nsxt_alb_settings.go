@@ -14,14 +14,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceVcdAlbGeneralSettings() *schema.Resource {
+func resourceVcdAlbSettings() *schema.Resource {
 	return &schema.Resource{
-		CreateContext: resourceVcdAlbGeneralSettingsCreateUpdate,
-		UpdateContext: resourceVcdAlbGeneralSettingsCreateUpdate,
-		ReadContext:   resourceVcdAlbGeneralSettingsRead,
-		DeleteContext: resourceVcdAlbGeneralSettingsDelete,
+		CreateContext: resourceVcdAlbSettingsCreateUpdate,
+		UpdateContext: resourceVcdAlbSettingsCreateUpdate,
+		ReadContext:   resourceVcdAlbSettingsRead,
+		DeleteContext: resourceVcdAlbSettingsDelete,
 		Importer: &schema.ResourceImporter{
-			StateContext: resourceVcdAlbGeneralSettingsImport,
+			StateContext: resourceVcdAlbSettingsImport,
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -60,9 +60,9 @@ func resourceVcdAlbGeneralSettings() *schema.Resource {
 	}
 }
 
-// resourceVcdAlbGeneralSettingsCreateUpdate covers Create and Update functionality for resource because the API
+// resourceVcdAlbSettingsCreateUpdate covers Create and Update functionality for resource because the API
 // endpoint only supports PUT and GET
-func resourceVcdAlbGeneralSettingsCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbSettingsCreateUpdate(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
@@ -77,7 +77,7 @@ func resourceVcdAlbGeneralSettingsCreateUpdate(ctx context.Context, d *schema.Re
 	}
 
 	albConfig := getNsxtAlbConfigurationType(d)
-	_, err = nsxtEdge.UpdateAlbGeneralSettings(albConfig)
+	_, err = nsxtEdge.UpdateAlbSettings(albConfig)
 	if err != nil {
 		return diag.Errorf("error setting NSX-T ALB General Settings: %s", err)
 	}
@@ -85,16 +85,16 @@ func resourceVcdAlbGeneralSettingsCreateUpdate(ctx context.Context, d *schema.Re
 	// ALB configuration does not have its own ID, but is done for each Edge Gateway therefore
 	d.SetId(edgeGatewayId)
 
-	return resourceVcdAlbGeneralSettingsRead(ctx, d, meta)
+	return resourceVcdAlbSettingsRead(ctx, d, meta)
 }
 
-func resourceVcdAlbGeneralSettingsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return vcdAlbGeneralSettingsRead(meta, d, "resource")
+func resourceVcdAlbSettingsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return vcdAlbSettingsRead(meta, d, "resource")
 }
 
-// vcdAlbGeneralSettingsRead is used for read in resource and data source. The only difference between the two is that a
+// vcdAlbSettingsRead is used for read in resource and data source. The only difference between the two is that a
 // resource should unset ID, while a data source should return an error
-func vcdAlbGeneralSettingsRead(meta interface{}, d *schema.ResourceData, resourceType string) diag.Diagnostics {
+func vcdAlbSettingsRead(meta interface{}, d *schema.ResourceData, resourceType string) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 
 	orgName := d.Get("org").(string)
@@ -112,7 +112,7 @@ func vcdAlbGeneralSettingsRead(meta interface{}, d *schema.ResourceData, resourc
 		return diag.Errorf("error retrieving Edge Gateway: %s", err)
 	}
 
-	albConfig, err := nsxtEdge.GetAlbGeneralSettings()
+	albConfig, err := nsxtEdge.GetAlbSettings()
 	if err != nil {
 		return diag.Errorf("error retrieve NSX-T ALB General Settings: %s", err)
 	}
@@ -123,7 +123,7 @@ func vcdAlbGeneralSettingsRead(meta interface{}, d *schema.ResourceData, resourc
 	return nil
 }
 
-func resourceVcdAlbGeneralSettingsDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+func resourceVcdAlbSettingsDelete(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	vcdClient := meta.(*VCDClient)
 	vcdClient.lockParentEdgeGtw(d)
 	defer vcdClient.unLockParentEdgeGtw(d)
@@ -140,7 +140,7 @@ func resourceVcdAlbGeneralSettingsDelete(ctx context.Context, d *schema.Resource
 	return diag.FromErr(nsxtEdge.DisableAlb())
 }
 
-func resourceVcdAlbGeneralSettingsImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
+func resourceVcdAlbSettingsImport(ctx context.Context, d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	log.Printf("[TRACE] NSX-T ALB General Settings import initiated")
 
 	resourceURI := strings.Split(d.Id(), ImportSeparator)

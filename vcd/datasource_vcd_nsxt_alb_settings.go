@@ -7,9 +7,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func datasourceVcdAlbGeneralSettings() *schema.Resource {
+func datasourceVcdAlbSettings() *schema.Resource {
 	return &schema.Resource{
-		ReadContext: datasourceVcdAlbGeneralSettingsRead,
+		ReadContext: datasourceVcdAlbSettingsRead,
 
 		Schema: map[string]*schema.Schema{
 			"org": {
@@ -46,6 +46,6 @@ func datasourceVcdAlbGeneralSettings() *schema.Resource {
 	}
 }
 
-func datasourceVcdAlbGeneralSettingsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	return vcdAlbGeneralSettingsRead(meta, d, "datasource")
+func datasourceVcdAlbSettingsRead(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	return vcdAlbSettingsRead(meta, d, "datasource")
 }

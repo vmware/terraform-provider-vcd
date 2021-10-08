@@ -14,14 +14,14 @@ import (
 // (e.g. 'go build -ldflags="-X 'github.com/vmware/terraform-provider-vcd/v3/vcd.BuildVersion=v1.0.0'"')
 var BuildVersion = "unset"
 
-// DataSources is a public function which allows to filter and access all defined data sources
+// DataSources is a public function which allows filtering and access all defined data sources
 // When 'nameRegexp' is not empty - it will return only those matching the regexp
 // When 'includeDeprecated' is false - it will skip out the resources which have a DeprecationMessage set
 func DataSources(nameRegexp string, includeDeprecated bool) (map[string]*schema.Resource, error) {
 	return vcdSchemaFilter(globalDataSourceMap, nameRegexp, includeDeprecated)
 }
 
-// Resources is a public function which allows to filter and access all defined resources
+// Resources is a public function which allows filtering and access all defined resources
 // When 'nameRegexp' is not empty - it will return only those matching the regexp
 // When 'includeDeprecated' is false - it will skip out the resources which have a DeprecationMessage set
 func Resources(nameRegexp string, includeDeprecated bool) (map[string]*schema.Resource, error) {
@@ -86,7 +86,7 @@ var globalDataSourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_alb_controller":           datasourceVcdAlbController(),         // 3.4
 	"vcd_nsxt_alb_cloud":                datasourceVcdAlbCloud(),              // 3.4
 	"vcd_nsxt_alb_service_engine_group": datasourceVcdAlbServiceEngineGroup(), // 3.4
-	"vcd_nsxt_alb_general_settings":     datasourceVcdAlbGeneralSettings(),    // 3.5
+	"vcd_nsxt_alb_settings":             datasourceVcdAlbSettings(),           // 3.5
 }
 
 var globalResourceMap = map[string]*schema.Resource{
@@ -146,7 +146,7 @@ var globalResourceMap = map[string]*schema.Resource{
 	"vcd_nsxt_alb_cloud":                resourceVcdAlbCloud(),                 // 3.4
 	"vcd_nsxt_alb_controller":           resourceVcdAlbController(),            // 3.4
 	"vcd_nsxt_alb_service_engine_group": resourceVcdAlbServiceEngineGroup(),    // 3.4
-	"vcd_nsxt_alb_general_settings":     resourceVcdAlbGeneralSettings(),       // 3.5
+	"vcd_nsxt_alb_settings":             resourceVcdAlbSettings(),              // 3.5
 }
 
 // Provider returns a terraform.ResourceProvider.

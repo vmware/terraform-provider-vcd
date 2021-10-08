@@ -1,13 +1,13 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: vcd_nsxt_alb_general_settings"
-sidebar_current: "docs-vcd-resource-nsxt-alb-general-settings"
+page_title: "VMware Cloud Director: vcd_nsxt_alb_settings"
+sidebar_current: "docs-vcd-resource-nsxt-alb-settings"
 description: |-
   Provides a resource to manage NSX-T ALB General Settings for particular NSX-T Edge Gateway. One can activate or
   deactivate NSX-T ALB for a defined Edge Gateway.
 ---
 
-# vcd\_nsxt\_alb\_general\_settings
+# vcd\_nsxt\_alb\_settings
 
 Supported in provider *v3.5+* and VCD 10.2+ with NSX-T and ALB.
 
@@ -26,7 +26,7 @@ data "vcd_nsxt_edgegateway" "existing" {
   name = "nsxt-gw"
 }
 
-resource "vcd_nsxt_alb_general_settings" "org1" {
+resource "vcd_nsxt_alb_settings" "org1" {
   org  = "my-org"
   vdc  = "nsxt-vdc"
 
@@ -63,7 +63,7 @@ path for it. An example is below:
 [docs-import]: https://www.terraform.io/docs/import/
 
 ```
-terraform import vcd_nsxt_alb_general_settings.imported my-org.my-vdc.my-nsxt-edge-gateway-name
+terraform import vcd_nsxt_alb_settings.imported my-org.my-vdc.my-nsxt-edge-gateway-name
 ```
 
 The above would import the NSX-T ALB General Settings for Edge Gateway named `my-nsxt-edge-gateway-name` in Org `my-org`

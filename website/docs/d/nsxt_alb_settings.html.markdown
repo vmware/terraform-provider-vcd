@@ -1,12 +1,12 @@
 ---
 layout: "vcd"
-page_title: "VMware Cloud Director: vcd_nsxt_alb_general_settings"
-sidebar_current: "docs-vcd-datasource-nsxt-alb-general-settings"
+page_title: "VMware Cloud Director: vcd_nsxt_alb_settings"
+sidebar_current: "docs-vcd-datasource-nsxt-alb-settings"
 description: |-
   Provides a data source to read NSX-T ALB General Settings for particular NSX-T Edge Gateway.
 ---
 
-# vcd\_nsxt\_alb\_general\_settings
+# vcd\_nsxt\_alb\_settings
 
 Supported in provider *v3.5+* and VCD 10.2+ with NSX-T and ALB.
 
@@ -22,7 +22,7 @@ data "vcd_nsxt_edgegateway" "existing" {
   name = "nsxt-gw"
 }
 
-data "vcd_nsxt_alb_general_settings" "test" {
+data "vcd_nsxt_alb_settings" "test" {
   org  = "my-org"
   vdc  = "nsxt-vdc"
 
@@ -42,4 +42,4 @@ The following arguments are supported:
 ## Attribute Reference
 
 All the arguments and attributes defined in
-[`vcd_nsxt_alb_general_settings`](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_general_settings) resource are available.
+[`vcd_nsxt_alb_settings`](/providers/vmware/vcd/latest/docs/resources/nsxt_alb_settings) resource are available.

@@ -13,7 +13,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccVcdNsxtAlbGeneralSettings(t *testing.T) {
+func TestAccVcdNsxtAlbSettings(t *testing.T) {
 	preTestChecks(t)
 	if !usingSysAdmin() {
 		t.Skip(t.Name() + " requires system admin privileges")
@@ -65,7 +65,7 @@ func TestAccVcdNsxtAlbGeneralSettings(t *testing.T) {
 			testAccCheckVcdAlbControllerDestroy("vcd_nsxt_alb_controller.first"),
 			testAccCheckVcdAlbServiceEngineGroupDestroy("vcd_nsxt_alb_cloud.first"),
 			testAccCheckVcdAlbCloudDestroy("vcd_nsxt_alb_cloud.first"),
-			testAccCheckVcdNsxtEdgeGatewayAlbGeneralSettingsDestroy(params["EdgeGw"].(string)),
+			testAccCheckVcdNsxtEdgeGatewayAlbSettingsDestroy(params["EdgeGw"].(string)),
 		),
 
 		Steps: []resource.TestStep{
@@ -76,20 +76,20 @@ func TestAccVcdNsxtAlbGeneralSettings(t *testing.T) {
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_cloud.first", "id", regexp.MustCompile(`\d*`)),
 					resource.TestMatchResourceAttr("vcd_nsxt_alb_service_engine_group.first", "id", regexp.MustCompile(`\d*`)),
 					resource.TestMatchResourceAttr("data.vcd_nsxt_alb_importable_cloud.cld", "id", regexp.MustCompile(`\d*`)),
-					resource.TestCheckResourceAttr("vcd_nsxt_alb_general_settings.test", "service_network_specification", "192.168.255.1/25"),
-					resource.TestCheckResourceAttr("vcd_nsxt_alb_general_settings.test", "is_active", "true"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "service_network_specification", "192.168.255.1/25"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "is_active", "true"),
 				),
 			},
 			resource.TestStep{
 				Config: configText2,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestMatchResourceAttr("vcd_nsxt_alb_general_settings.test", "id", regexp.MustCompile(`\d*`)),
-					resource.TestCheckResourceAttr("vcd_nsxt_alb_general_settings.test", "service_network_specification", ""),
-					resource.TestCheckResourceAttr("vcd_nsxt_alb_general_settings.test", "is_active", "false"),
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_settings.test", "id", regexp.MustCompile(`\d*`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "service_network_specification", ""),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "is_active", "false"),
 				),
 			},
 			resource.TestStep{
-				ResourceName:      "vcd_nsxt_alb_general_settings.test",
+				ResourceName:      "vcd_nsxt_alb_settings.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, params["EdgeGw"].(string)),
@@ -98,13 +98,13 @@ func TestAccVcdNsxtAlbGeneralSettings(t *testing.T) {
 			resource.TestStep{
 				Config: configText3,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestMatchResourceAttr("vcd_nsxt_alb_general_settings.test", "id", regexp.MustCompile(`\d*`)),
-					resource.TestCheckResourceAttr("vcd_nsxt_alb_general_settings.test", "service_network_specification", "82.10.10.1/25"),
-					resource.TestCheckResourceAttr("vcd_nsxt_alb_general_settings.test", "is_active", "true"),
+					resource.TestMatchResourceAttr("vcd_nsxt_alb_settings.test", "id", regexp.MustCompile(`\d*`)),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "service_network_specification", "82.10.10.1/25"),
+					resource.TestCheckResourceAttr("vcd_nsxt_alb_settings.test", "is_active", "true"),
 				),
 			},
 			resource.TestStep{
-				ResourceName:      "vcd_nsxt_alb_general_settings.test",
+				ResourceName:      "vcd_nsxt_alb_settings.test",
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: importStateIdOrgNsxtVdcObject(testConfig, params["EdgeGw"].(string)),
@@ -161,7 +161,7 @@ data "vcd_nsxt_edgegateway" "existing" {
   name = "{{.EdgeGw}}"
 }
 
-resource "vcd_nsxt_alb_general_settings" "test" {
+resource "vcd_nsxt_alb_settings" "test" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
 
@@ -181,7 +181,7 @@ data "vcd_nsxt_edgegateway" "existing" {
   name = "{{.EdgeGw}}"
 }
 
-resource "vcd_nsxt_alb_general_settings" "test" {
+resource "vcd_nsxt_alb_settings" "test" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
 
@@ -194,7 +194,7 @@ resource "vcd_nsxt_alb_general_settings" "test" {
 }
 `
 
-func testAccCheckVcdNsxtEdgeGatewayAlbGeneralSettingsDestroy(edgeName string) resource.TestCheckFunc {
+func testAccCheckVcdNsxtEdgeGatewayAlbSettingsDestroy(edgeName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		for _, rs := range s.RootModule().Resources {
@@ -219,7 +219,7 @@ func testAccCheckVcdNsxtEdgeGatewayAlbGeneralSettingsDestroy(edgeName string) re
 				return fmt.Errorf("error looking up NSX-T edge gateway %s", edgeName)
 			}
 
-			albConfig, err := egw.GetAlbGeneralSettings()
+			albConfig, err := egw.GetAlbSettings()
 			if err != nil {
 				return fmt.Errorf("error retrieving NSX-T ALB General Settings: %s", err)
 			}

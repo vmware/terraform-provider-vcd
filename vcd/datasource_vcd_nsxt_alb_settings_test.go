@@ -9,8 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-// TestAccVcdNsxtAlbGeneralSettingsDS assumes that NSX-T ALB is not configured and General Settings shows "Inactive"
-func TestAccVcdNsxtAlbGeneralSettingsDS(t *testing.T) {
+// TestAccVcdNsxtAlbSettingsDS assumes that NSX-T ALB is not configured and General Settings shows "Inactive"
+func TestAccVcdNsxtAlbSettingsDS(t *testing.T) {
 	vcdClient := createTemporaryVCDConnection()
 	if vcdClient.Client.APIVCDMaxVersionIs("< 35.0") {
 		t.Skip(t.Name() + " requires at least API v35.0 (vCD 10.2+)")
@@ -25,7 +25,7 @@ func TestAccVcdNsxtAlbGeneralSettingsDS(t *testing.T) {
 		"Tags":    "nsxt alb",
 	}
 
-	configText1 := templateFill(testAccVcdNsxtAlbGeneralSettingsDS, params)
+	configText1 := templateFill(testAccVcdNsxtAlbSettingsDS, params)
 	debugPrintf("#[DEBUG] CONFIGURATION for step 1: %s", configText1)
 
 	if vcdShortTest {
@@ -41,8 +41,8 @@ func TestAccVcdNsxtAlbGeneralSettingsDS(t *testing.T) {
 			resource.TestStep{
 				Config: configText1,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr("data.vcd_nsxt_alb_general_settings.test", "is_active", "false"),
-					resource.TestCheckResourceAttr("data.vcd_nsxt_alb_general_settings.test", "service_network_specification", ""),
+					resource.TestCheckResourceAttr("data.vcd_nsxt_alb_settings.test", "is_active", "false"),
+					resource.TestCheckResourceAttr("data.vcd_nsxt_alb_settings.test", "service_network_specification", ""),
 				),
 			},
 		},
@@ -50,7 +50,7 @@ func TestAccVcdNsxtAlbGeneralSettingsDS(t *testing.T) {
 	postTestChecks(t)
 }
 
-const testAccVcdNsxtAlbGeneralSettingsDS = `
+const testAccVcdNsxtAlbSettingsDS = `
 data "vcd_nsxt_edgegateway" "existing" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
@@ -58,7 +58,7 @@ data "vcd_nsxt_edgegateway" "existing" {
   name = "{{.EdgeGw}}"
 }
 
-data "vcd_nsxt_alb_general_settings" "test" {
+data "vcd_nsxt_alb_settings" "test" {
   org  = "{{.Org}}"
   vdc  = "{{.NsxtVdc}}"
 
