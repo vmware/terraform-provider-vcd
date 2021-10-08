@@ -44,13 +44,13 @@ function terraform_fmt_check {
     hcl_file=$1
 
     # OUTPUT=`terraform fmt -check -diff $hcl_file 2>&1`
-    terraform fmt -check $hcl_file
+    terraform fmt -check $hcl_file &>/dev/null
     retVal=$?
     if [ $retVal -ne 0 ]; then
         FOUND_ERROR=1
 
         echo "Error: file ${hcl_file} 'terraform fmt'"
-        terraform fmt -diff -check $hcl_file
+        terraform fmt -no-color -diff -check $hcl_file 2>&1
     fi
     cd ..
 }
